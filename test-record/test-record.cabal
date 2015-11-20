@@ -1,0 +1,19 @@
+name:           test-record
+version:        0.1
+cabal-version:  >=1.10
+build-type:     Simple
+author:         mik
+
+executable test-record
+  hs-source-dirs:  src
+  main-is:         Main.hs
+  default-language:
+    Haskell2010
+  build-depends:
+    base,
+    record == 0.4.*,
+    basic-lens == 0.0.*
+  ghc-options:
+    -Wall -F -pgmF record-preprocessor
+  default-extensions:
+    DataKinds
