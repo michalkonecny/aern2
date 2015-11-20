@@ -1,0 +1,14 @@
+name:           aern2-real
+version:        0.1
+cabal-version:  >=1.2
+build-type:     Simple
+author:         Michal Konecny
+
+library
+  hs-source-dirs:  src
+  build-depends:   base >= 4 && <5
+  ghc-options:     -O2 -Wall
+  exposed-modules: 
+    AERN2.Real.Operations,
+    AERN2.Real.IntegerRational
+
