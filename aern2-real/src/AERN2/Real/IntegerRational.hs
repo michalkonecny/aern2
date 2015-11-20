@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE RebindableSyntax, TypeFamilies, MultiParamTypeClasses #-}
 
-module AERN2.Real.IntegerRational () where
+module AERN2.Real.IntegerRational where
 
 {- imports -}
 
