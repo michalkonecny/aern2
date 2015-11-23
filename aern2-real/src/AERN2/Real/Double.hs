@@ -2,31 +2,52 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE RebindableSyntax #-}
-module AERN2.Real.Double (withUpwardsRounding) where
+module AERN2.Real.Double (withUpwardsRounding, rational2DoubleUp) where
 
 import Prelude hiding ((+),(*),(/),(-),fromInteger,fromRational)
 import qualified Prelude as P
+import Data.Ratio (numerator,denominator)
 
 import Numeric.IEEE.RoundMode (getRound, setRound, RoundMode(Upward))
 import System.IO.Unsafe (unsafePerformIO)
 
 import AERN2.Real.Operations
 
+rational2DoubleUp :: Rational -> Double
+rational2DoubleUp r =
+    (P.fromInteger (numerator r))
+    P./
+    (P.negate $ P.fromInteger (P.negate $ denominator r)) -- round the denominator downward!
+
 instance CanNeg Double where
     type NegType Double = Double
     neg = P.negate
+
+instance CanNegSameType Double
+
+instance CanAbs Double where
+    type AbsType Double = Double
+    abs = P.abs
+
+instance CanAbsSameType Double
 
 instance CanAdd Double Double where
     type AddType Double Double = Double
     add d1 d2 = d1 P.+ d2
 
+instance CanAddSameType Double
+
 instance CanMul Double Double where
     type MulType Double Double = Double
     mul d1 d2 = d1 P.* d2
 
+instance CanMulSameType Double
+
 instance CanDiv Double Double where
     type DivType Double Double = Double
     div d1 d2 = d1 P./ d2
+
+instance CanDivSameType Double
 
 {-| Try to set the FPU to rounding towards +infinity before evaluating the argument. -}
 withUpwardsRounding :: a -> a

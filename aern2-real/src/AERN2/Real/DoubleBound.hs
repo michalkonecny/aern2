@@ -9,7 +9,8 @@ module AERN2.Real.DoubleBound (DoubleBound(..), rational2DoubleBound) where
 
 import Prelude hiding ((+),(*),(/),(-),fromInteger,fromRational)
 import qualified Prelude as P
-import Data.Ratio (numerator,denominator)
+
+import Data.Convertible
 
 import AERN2.Real.Double
 import AERN2.Real.Operations
@@ -26,25 +27,34 @@ instance Show DoubleBound where
     show (DoubleBound d) = show d
 
 rational2DoubleBound :: Rational -> DoubleBound
-rational2DoubleBound a
-    | a >= 0.0 = DoubleBound $ _fromRationalUp a
-    | otherwise = error "Trying to construct a negative DoubleBound."
+rational2DoubleBound = convert
 
-_fromRationalUp :: Rational -> Double
-_fromRationalUp r =
-    (P.fromInteger (numerator r))
-    P./
-    (P.negate $ P.fromInteger (P.negate $ denominator r)) -- round the denominator downward!
+instance Convertible Rational DoubleBound where
+    safeConvert a
+        | a >= 0.0 = Right $ DoubleBound $ rational2DoubleUp a
+        | otherwise = error "Trying to construct a negative DoubleBound."
 
 instance CanAdd DoubleBound DoubleBound where
     type AddType DoubleBound DoubleBound = DoubleBound
     add (DoubleBound a) (DoubleBound b) = DoubleBound $ withUpwardsRounding $ a P.+ b
 
-{-
+instance CanAddSameType DoubleBound
+
 instance CanMul DoubleBound DoubleBound where
     type MulType DoubleBound DoubleBound = DoubleBound
     mul (DoubleBound a) (DoubleBound b) = DoubleBound $ withUpwardsRounding $ a P.* b
--}
+
+instance CanMulSameType DoubleBound
+
+instance CanMul DoubleBound Double where
+    type MulType DoubleBound Double = DoubleBound
+    mul (DoubleBound a) b = DoubleBound $ withUpwardsRounding $ a P.* b
+
+instance CanMul Double DoubleBound where
+    type MulType Double DoubleBound = DoubleBound
+    mul a (DoubleBound b) = DoubleBound $ withUpwardsRounding $ a P.* b
+
+instance CanMulBy DoubleBound Double
 
 instance CanMul DoubleBound Integer where
     type MulType DoubleBound Integer = DoubleBound
@@ -58,6 +68,8 @@ instance CanMul Integer DoubleBound where
         | i >= 0 = DoubleBound $ withUpwardsRounding $ (P.fromInteger i) P.* b
         | otherwise = error "trying to multiply DoubleBound by a negative integer"
 
+instance CanMulBy DoubleBound Integer
+
 instance CanDiv DoubleBound Integer where
     type DivType DoubleBound Integer = DoubleBound
     div (DoubleBound a) i
@@ -67,11 +79,15 @@ instance CanDiv DoubleBound Integer where
 instance CanMul DoubleBound Rational where
     type MulType DoubleBound Rational = DoubleBound
     mul (DoubleBound a) r
-        | r >= 0.0 = DoubleBound $ withUpwardsRounding $ a P.* (_fromRationalUp r)
+        | r >= 0.0 = DoubleBound $ withUpwardsRounding $ a P.* (rational2DoubleUp r)
         | otherwise = error "trying to multiply DoubleBound by a negative integer"
 
 instance CanMul Rational DoubleBound where
     type MulType Rational DoubleBound = DoubleBound
     mul r (DoubleBound b)
-        | r >= 0.0 = DoubleBound $ withUpwardsRounding $ (_fromRationalUp r) P.* b
+        | r >= 0.0 = DoubleBound $ withUpwardsRounding $ (rational2DoubleUp r) P.* b
         | otherwise = error "trying to multiply DoubleBound by a negative integer"
+
+instance CanMulBy DoubleBound Rational
+
+        

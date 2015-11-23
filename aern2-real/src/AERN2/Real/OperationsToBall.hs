@@ -5,7 +5,7 @@
 
 module AERN2.Real.OperationsToBall where
 
-import Prelude hiding ((+),(*),(/),(-),fromInteger,fromRational)
+import Prelude hiding ((+),(*),(/),(-),abs,fromInteger,fromRational)
 --import qualified Prelude as P
 
 import AERN2.Real.Operations
@@ -39,9 +39,6 @@ type family ErrorBoundType a
 
 class (CanNeg a) => CanNegB a where
     negB :: a -> Ball (NegType a)
-
-class (CanHalve a) => CanHalveB a where
-    halfB :: a -> Ball (HalfType a)
 
 class (CanRecip a) => CanRecipB a where
     recipB :: a -> Ball (RecipType a)

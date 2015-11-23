@@ -53,18 +53,38 @@ class CanNeg a where
     type NegType a = a -- default
     neg :: a -> NegType a
 
-class CanHalve a where
-    type HalfType a :: *
-    type HalfType a = a -- default
-    half :: a -> HalfType a
+class
+    (CanNeg a, NegType a ~ a) => 
+    CanNegSameType a
+
+class CanAbs a where
+    type AbsType a :: *
+    type AbsType a = a -- default
+    abs :: a -> AbsType a
+
+class
+    (CanAbs a, AbsType a ~ a) => 
+    CanAbsSameType a
 
 class CanRecip a where
     type RecipType a :: *
     recip :: a -> RecipType a
 
+class
+    (CanRecip a, RecipType a ~ a) => 
+    CanRecipSameType a
+
 class CanAdd a b where
     type AddType a b :: *
     add :: a -> b -> AddType a b
+
+class
+    (CanAdd a a, AddType a a ~ a) => 
+    CanAddSameType a
+
+class
+    (CanAdd a b, AddType a b ~ a, CanAdd b a, AddType b a ~ a) => 
+    CanAddThis a b
 
 class CanSub a b where
     type SubType a b :: *
@@ -73,9 +93,26 @@ class CanSub a b where
     default sub :: (CanNeg b, CanAdd a c, c~NegType b) => a -> b -> AddType a (NegType b)
     sub x y = add x (neg y)
 
+class
+    (CanSub a a, SubType a a ~ a) => 
+    CanSubSameType a
+
+class
+    (CanSub a b, SubType a b ~ a) => 
+    CanSubThis a b
+
 class CanMul a b where
     type MulType a b :: *
     mul :: a -> b -> MulType a b
+
+class
+    (CanMul a a, MulType a a ~ a) => 
+    CanMulSameType a
+
+class
+    (CanMul a b, MulType a b ~ a, CanMul b a, MulType b a ~ a) => 
+    CanMulBy a b
+
 
 class CanDiv a b where
     type DivType a b :: *
@@ -84,12 +121,27 @@ class CanDiv a b where
     default div :: (CanRecip b, CanMul a c, c~RecipType b) => a -> b -> MulType a (RecipType b)
     div x y = mul x (recip y)
 
+class
+    (CanDiv a a, DivType a a ~ a) => 
+    CanDivSameType a
+
+class
+    (CanDiv a b, DivType a b ~ a) => 
+    CanDivBy a b
+
 class CanPow a b where
     type PowType a b :: *
     pow :: a -> b -> PowType a b
+
+class
+    (CanPow a b, PowType a b ~ a) => 
+    CanPowBy a b
 
 class CanSqrt a where
     type SqrtType a :: *
     sqrt :: a -> SqrtType a
 
+class
+    (CanSqrt a, SqrtType a ~ a) => 
+    CanSqrtSameType a
 
