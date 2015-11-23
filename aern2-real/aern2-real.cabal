@@ -6,9 +6,16 @@ author:         Michal Konecny
 
 library
   hs-source-dirs:  src
-  build-depends:   base >= 4 && <5
+  build-depends:   
+    base >= 4 && <5,
+    ieee-utils-tempfix >= 0.4
   ghc-options:     -O2 -Wall
   exposed-modules: 
-    AERN2.Real.Operations,
+    AERN2.Real.Operations
     AERN2.Real.IntegerRational
+    AERN2.Real.Double
+    AERN2.Real.DoubleBound
+    AERN2.Real.OperationsToBall
+    AERN2.Real.DoubleToBall
+    AERN2.Real.Ball
 

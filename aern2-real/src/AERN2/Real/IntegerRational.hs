@@ -1,8 +1,10 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE RebindableSyntax, TypeFamilies, MultiParamTypeClasses #-}
+{-# LANGUAGE RebindableSyntax #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
-module AERN2.Real.IntegerRational where
+module AERN2.Real.IntegerRational () where
 
 {- imports -}
 
