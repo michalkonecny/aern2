@@ -17,11 +17,11 @@ import AERN2.Real.Operations
 
 {- examples -}
 
-_test1 :: Rational
-_test1 = 2 * 3 + (1/2) ^ 2
+_example1 :: Rational
+_example1 = 2 * 3 + (1/2) ^ 2
 
-_test2 :: Integer -- cannot be Int
-_test2 = 2 * 3 + 2 ^ 2
+_example2 :: Integer -- cannot be Int
+_example2 = 2 * 3 + 2 ^ 2
 
 {- operations on Integers -}
 
