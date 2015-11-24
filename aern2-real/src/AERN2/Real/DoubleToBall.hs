@@ -15,11 +15,6 @@ import AERN2.Real.DoubleBound
 import AERN2.Real.OperationsToBall
 import AERN2.Real.Operations
 
-newtype DoubleB = DoubleB Double
-
-instance Show DoubleB where
-    show (DoubleB d) = show d
-
 type instance ErrorBoundType Double = DoubleBound
 
 instance CanNegB Double where
@@ -28,15 +23,17 @@ instance CanNegB Double where
 
 instance CanAddB Double Double where
     addB d1 d2 =
-        Ball sumUp (DoubleBound $ sumUp P.- sumDn)
+        Ball sumUp (DoubleBound errorBound)
         where
+        errorBound = withUpwardsRounding $ sumUp P.- sumDn
         sumUp = withUpwardsRounding $ d1 + d2
         sumDn = withUpwardsRounding $ neg $ (neg d1) + (neg d2)
 
 instance CanMulB Double Double where
     mulB d1 d2 =
-        Ball prodUp (DoubleBound $ prodUp P.- prodDn)
+        Ball prodUp (DoubleBound errorBound)
         where
+        errorBound = withUpwardsRounding $ prodUp P.- prodDn 
         prodUp = withUpwardsRounding $ d1 * d2
         prodDn = withUpwardsRounding $ neg $ (neg d1) * d2
 

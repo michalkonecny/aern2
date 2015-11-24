@@ -17,8 +17,10 @@ library
     AERN2.Real.IntegerRational
     AERN2.Real.OperationsToBall
     AERN2.Real.Ball
-    AERN2.Real.Double
     AERN2.Real.DoubleBound
+    AERN2.Real.Double
     AERN2.Real.DoubleToBall
     AERN2.Real.Rounded
+    AERN2.Real.RoundedToBall
+  other-modules:   AERN2.Real.Examples
 

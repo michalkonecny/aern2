@@ -21,7 +21,6 @@ ballFromRational ::
     =>
     (Rational, Rational) -> Ball a
 ballFromRational (x,e) = Ball (convert x) (convert e) 
-    
 
 instance
     (CanAddB a a, CanAddSameType a,
