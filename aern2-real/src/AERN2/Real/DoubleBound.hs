@@ -38,12 +38,14 @@ instance CanAdd DoubleBound DoubleBound where
     type AddType DoubleBound DoubleBound = DoubleBound
     add (DoubleBound a) (DoubleBound b) = DoubleBound $ withUpwardsRounding $ a P.+ b
 
+instance CanAddThis DoubleBound DoubleBound
 instance CanAddSameType DoubleBound
 
 instance CanMul DoubleBound DoubleBound where
     type MulType DoubleBound DoubleBound = DoubleBound
     mul (DoubleBound a) (DoubleBound b) = DoubleBound $ withUpwardsRounding $ a P.* b
 
+instance CanMulBy DoubleBound DoubleBound
 instance CanMulSameType DoubleBound
 
 instance CanMul DoubleBound Double where

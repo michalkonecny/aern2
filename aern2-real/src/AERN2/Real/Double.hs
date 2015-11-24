@@ -36,18 +36,21 @@ instance CanAdd Double Double where
     type AddType Double Double = Double
     add d1 d2 = d1 P.+ d2
 
+instance CanAddThis Double Double
 instance CanAddSameType Double
 
 instance CanMul Double Double where
     type MulType Double Double = Double
     mul d1 d2 = d1 P.* d2
 
+instance CanMulBy Double Double
 instance CanMulSameType Double
 
 instance CanDiv Double Double where
     type DivType Double Double = Double
     div d1 d2 = d1 P./ d2
 
+instance CanDivBy Double Double
 instance CanDivSameType Double
 
 {-| Try to set the FPU to rounding towards +infinity before evaluating the argument. -}

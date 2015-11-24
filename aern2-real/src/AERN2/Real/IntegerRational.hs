@@ -41,16 +41,19 @@ instance CanAdd Integer Integer where
     type AddType Integer Integer = Integer
     add a b = a P.+ b
 
+instance CanAddThis Integer Integer
 instance CanAddSameType Integer
 
 instance CanSub Integer Integer -- the default implementation is fine
 
+instance CanSubThis Integer Integer
 instance CanSubSameType Integer
     
 instance CanMul Integer Integer where
     type MulType Integer Integer = Integer
     mul a b = a P.* b
 
+instance CanMulBy Integer Integer
 instance CanMulSameType Integer
     
 instance CanPow Integer Integer where
@@ -81,16 +84,19 @@ instance CanAdd Rational Rational where
     type AddType Rational Rational = Rational
     add a b = a P.+ b
 
+instance CanAddThis Rational Rational
 instance CanAddSameType Rational
 
 instance CanSub Rational Rational -- the default implementation is fine
 
+instance CanSubThis Rational Rational
 instance CanSubSameType Rational
     
 instance CanMul Rational Rational where
     type MulType Rational Rational = Rational
     mul a b = a P.* b
 
+instance CanMulBy Rational Rational
 instance CanMulSameType Rational
     
 instance CanPow Rational Integer where
@@ -105,6 +111,7 @@ instance CanRecipSameType Rational
 
 instance CanDiv Rational Rational
 
+instance CanDivBy Rational Rational
 instance CanDivSameType Rational
 
 {- operations mixing Integer and Rational -}

@@ -34,7 +34,14 @@ instance
         where
         (Ball x12 e12) = x1 +: x2
         
-instance 
+instance
+    (CanAddSameType a, CanAddB a a, 
+     CanAbsSameType a,
+     CanAddSameType (ErrorBoundType a)) 
+    => 
+    CanAddThis (Ball a) (Ball a)
+
+instance
     (CanAddSameType a, CanAddB a a, 
      CanAbsSameType a,
      CanAddSameType (ErrorBoundType a)) 
@@ -42,7 +49,7 @@ instance
     CanAddSameType (Ball a)
 
 instance
-    (CanMulB a a, 
+    (CanMulB a a,
      CanMulSameType a, 
      CanAbsSameType a,
      CanMulBy (ErrorBoundType a) a,
@@ -56,6 +63,26 @@ instance
         Ball x12 (e12 + e1*(abs x2) + e2*(abs x1) + e1*e2)
         where
         (Ball x12 e12) = x1 *: x2
+
+instance
+    (CanMulB a a,
+     CanMulSameType a, 
+     CanAbsSameType a,
+     CanMulBy (ErrorBoundType a) a,
+     CanAddSameType (ErrorBoundType a), 
+     CanMulSameType (ErrorBoundType a)) 
+    => 
+    CanMulBy (Ball a) (Ball a)
+
+instance
+    (CanMulB a a,
+     CanMulSameType a, 
+     CanAbsSameType a,
+     CanMulBy (ErrorBoundType a) a,
+     CanAddSameType (ErrorBoundType a), 
+     CanMulSameType (ErrorBoundType a)) 
+    => 
+    CanMulSameType (Ball a)
 
 {- 
     TODO: Instances such as: 

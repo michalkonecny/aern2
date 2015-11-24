@@ -79,12 +79,12 @@ class CanAdd a b where
     add :: a -> b -> AddType a b
 
 class
-    (CanAdd a a, AddType a a ~ a) => 
-    CanAddSameType a
-
-class
     (CanAdd a b, AddType a b ~ a, CanAdd b a, AddType b a ~ a) => 
     CanAddThis a b
+
+class
+    (CanAddThis a a) => 
+    CanAddSameType a
 
 class CanSub a b where
     type SubType a b :: *
@@ -94,25 +94,24 @@ class CanSub a b where
     sub x y = add x (neg y)
 
 class
-    (CanSub a a, SubType a a ~ a) => 
-    CanSubSameType a
-
-class
     (CanSub a b, SubType a b ~ a) => 
     CanSubThis a b
+
+class
+    (CanSubThis a a) => 
+    CanSubSameType a
 
 class CanMul a b where
     type MulType a b :: *
     mul :: a -> b -> MulType a b
 
 class
-    (CanMul a a, MulType a a ~ a) => 
-    CanMulSameType a
-
-class
     (CanMul a b, MulType a b ~ a, CanMul b a, MulType b a ~ a) => 
     CanMulBy a b
 
+class
+    (CanMulBy a a) => 
+    CanMulSameType a
 
 class CanDiv a b where
     type DivType a b :: *
@@ -122,12 +121,12 @@ class CanDiv a b where
     div x y = mul x (recip y)
 
 class
-    (CanDiv a a, DivType a a ~ a) => 
-    CanDivSameType a
-
-class
     (CanDiv a b, DivType a b ~ a) => 
     CanDivBy a b
+
+class
+    (CanDivBy a a) => 
+    CanDivSameType a
 
 class CanPow a b where
     type PowType a b :: *
