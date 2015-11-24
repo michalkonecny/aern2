@@ -17,8 +17,8 @@ import AERN2.Real.Operations
 
 {- example -}
 
-_test1 :: DoubleBound
-_test1 = 2*((rational2DoubleBound 0.01) + 0.1*(rational2DoubleBound 0.01)/3)
+_example1 :: DoubleBound
+_example1 = 2*((rational2DoubleBound 0.01) + 0.1*(rational2DoubleBound 0.01)/3)
 
 {-| A non-negative Double value to serve as an error bound. Arithmetic is rounded towards +infinity. -}
 newtype DoubleBound = DoubleBound Double
