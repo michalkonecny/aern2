@@ -4,7 +4,7 @@
 {-# LANGUAGE RebindableSyntax #-}
 module AERN2.Real.Double (withUpwardsRounding, rational2DoubleUp) where
 
-import Prelude hiding ((+),(*),(/),(-),fromInteger,fromRational)
+import Prelude
 import qualified Prelude as P
 import Data.Ratio (numerator,denominator)
 
@@ -15,6 +15,7 @@ import AERN2.Real.Operations
 
 rational2DoubleUp :: Rational -> Double
 rational2DoubleUp r =
+    withUpwardsRounding $
     (P.fromInteger (numerator r))
     P./
     (P.negate $ P.fromInteger (P.negate $ denominator r)) -- round the denominator downward!
