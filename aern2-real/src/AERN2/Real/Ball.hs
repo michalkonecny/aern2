@@ -59,5 +59,14 @@ instance
         (Ball x12 e12) = x1 *: x2
 
 {- 
-    TODO: Instances for other operations. 
+    TODO: Instances such as: 
+        CanAddThis (Ball a) Integer 
+        CanAddThis (Ball a) Rational 
+        CanSubThis (Ball a) Integer 
+        CanSubThis (Ball a) Rational 
+        CanMulBy (Ball a) Integer 
+        CanMulBy (Ball a) Rational 
+        CanDivBy (Ball a) Integer 
+        CanDivBy (Ball a) Rational
+        CanCosine (Ball a) 
 -} 

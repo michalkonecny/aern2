@@ -40,6 +40,3 @@ instance CanMulB Double Double where
         prodUp = withUpwardsRounding $ d1 * d2
         prodDn = withUpwardsRounding $ neg $ (neg d1) * d2
 
-{-
-    TODO: add instances of the other classes in OperationsToBall.
--}
