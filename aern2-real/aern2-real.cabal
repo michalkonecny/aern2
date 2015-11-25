@@ -12,7 +12,7 @@ library
     convertible >= 1.1,
     haskell-mpfr,
     arithmoi
-  ghc-options:     -O2 -Wall
+  ghc-options:     -O2 -Wall  -fno-warn-orphans
   exposed-modules: 
     AERN2.Real.Operations,
     AERN2.Real.IntegerRational,
@@ -21,6 +21,11 @@ library
     AERN2.Real.DoubleBound,
     AERN2.Real.Double,
     AERN2.Real.DoubleToBall,
-    AERN2.Real.Examples,
-    AERN2.Real.CauchyReal
+    AERN2.Real.MPFloat,
+    AERN2.Real.MPFloatToBall,
+    AERN2.Real.Examples
+  extensions:      
+                   MultiParamTypeClasses, 
+                   RebindableSyntax, 
+                   TypeFamilies
 

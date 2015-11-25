@@ -5,10 +5,14 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-module AERN2.Real.DoubleToBall where
+module AERN2.Real.DoubleToBall 
+(rationals2ballDouble)
+where
 
 import Prelude hiding ((+),(*),(/),(-),fromInteger,fromRational)
 import qualified Prelude as P
+
+import Data.Convertible
 
 import AERN2.Real.Double
 import AERN2.Real.DoubleBound
@@ -17,9 +21,13 @@ import AERN2.Real.Operations
 
 type instance ErrorBoundType Double = DoubleBound
 
+rationals2ballDouble :: (Rational, Rational) -> Ball Double
+rationals2ballDouble (x,e) =
+    Ball (convert x) (convert e)
+
 instance CanNegB Double where
     negB d1 =
-        Ball (neg d1) (rational2DoubleBound 0.0) -- negation is exact
+        Ball (neg d1) (convert 0.0) -- negation is exact
 
 instance CanAddB Double Double where
     addB d1 d2 =
