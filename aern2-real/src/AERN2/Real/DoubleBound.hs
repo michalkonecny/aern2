@@ -12,8 +12,11 @@ import qualified Prelude as P
 
 import Data.Convertible
 
+import Math.NumberTheory.Logarithms
+
 import AERN2.Real.Double
 import AERN2.Real.Operations
+import AERN2.Real.OperationsToBall
 
 {- example -}
 
@@ -33,6 +36,10 @@ instance Convertible Rational DoubleBound where
     safeConvert a
         | a >= 0.0 = Right $ DoubleBound $ rational2DoubleUp a
         | otherwise = error "Trying to construct a negative DoubleBound."
+
+instance CanMeasureError DoubleBound where
+    errorIndex (DoubleBound d) = 
+        toInteger $ integerLog2 $ floor $ P.recip d
 
 instance CanAdd DoubleBound DoubleBound where
     type AddType DoubleBound DoubleBound = DoubleBound

@@ -37,6 +37,15 @@ instance (Show a, Show (ErrorBoundType a)) => Show (Ball a)
 
 type family ErrorBoundType a
 
+class CanMeasureError e where
+    {-| 
+        Compute the largest @i@ for which it holds @0 <= e <= 2^(-i)@.
+        <br/>
+        This computation is not always 100% meeting the above specification.
+        It may sometimes give a one-off result when e is close to 2^(-i) for some i.
+     -}
+    errorIndex :: e -> Integer
+
 class (CanNeg a) => CanNegB a where
     negB :: a -> Ball (NegType a)
 

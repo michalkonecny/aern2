@@ -6,9 +6,9 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
-module AERN2.Real.Ball where
+module AERN2.Real.Ball (Ball(..), ballFromRational, ballAccuracy) where
 
-import Prelude hiding ((+),(*),(/),(-),abs,fromInteger,fromRational)
+import Prelude hiding ((+),(*),(/),(-),abs,recip,fromInteger,fromRational)
 --import qualified Prelude as P
 
 import Data.Convertible
@@ -21,6 +21,13 @@ ballFromRational ::
     =>
     (Rational, Rational) -> Ball a
 ballFromRational (x,e) = Ball (convert x) (convert e) 
+
+ballAccuracy :: 
+    CanMeasureError (ErrorBoundType a) 
+    =>
+    Ball a -> Integer
+ballAccuracy (Ball _ e) = 
+    errorIndex e
 
 instance
     (CanAddB a a, CanAddSameType a,
