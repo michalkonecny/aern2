@@ -6,7 +6,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module AERN2.Real.MPFloatToBall 
-(rational2MPBall, rationals2MPBall, MPBall)
+(MPBall, rational2MPBall, rationals2MPBall, piBallUsingPrecision)
 where
 
 import Prelude hiding ((+),(*),(/),(-),fromInteger,fromRational)
@@ -34,6 +34,13 @@ rational2MPBall p x =
     where
     xUp = rational2MPFloatUp p x
     xDn = neg (rational2MPFloatUp p (neg x))
+
+piBallUsingPrecision :: Precision -> MPBall
+piBallUsingPrecision p =
+    Ball piUp (piUp - piDn)
+    where
+    piUp = piMPFloatUp p
+    piDn = piMPFloatDn p
 
 instance CanNegB MPFloat where
     negB x1 =

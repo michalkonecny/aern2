@@ -1,7 +1,7 @@
 {-# LANGUAGE StandaloneDeriving, GeneralizedNewtypeDeriving, TypeSynonymInstances #-}
 
 module AERN2.Real.MPFloat 
-(MPFloat, rational2MPFloatUp, zeroMPFloat, Precision(..))
+(MPFloat, Precision(..), rational2MPFloatUp, zeroMPFloat, piMPFloatUp, piMPFloatDn)
 where
 
 import Prelude hiding (fromInteger)
@@ -25,6 +25,14 @@ rational2MPFloatUp (Precision p) r =
     
 zeroMPFloat :: MPFloat
 zeroMPFloat = M.zero
+    
+piMPFloatUp :: Precision -> MPFloat
+piMPFloatUp (Precision p) =
+    M.pi M.Up (P.fromInteger p)
+    
+piMPFloatDn :: Precision -> MPFloat
+piMPFloatDn (Precision p) =
+    M.pi M.Down (P.fromInteger p)
     
 instance CanMeasureError MPFloat where
     errorIndex x = 

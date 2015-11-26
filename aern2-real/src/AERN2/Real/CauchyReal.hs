@@ -5,9 +5,17 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
-module AERN2.Real.CauchyReal where
+module AERN2.Real.CauchyReal 
+(
+    CauchyReal,
+    showCauchyReal,
+    cauchyReal2ball,
+    rational2CauchyReal,
+    pi
+)
+where
 
-import Prelude hiding ((+),(*),(/),(-),fromInteger,fromRational)
+import Prelude hiding ((+),(*),(/),(-),pi,fromInteger,fromRational)
 --import qualified Prelude as P
 
 import AERN2.Real.MPFloat
@@ -19,26 +27,35 @@ import AERN2.Real.Operations
 {-| Invariant: For any @(CauchyReal seq)@ it holds @ball_error (seq i) <= 2^^(-i)@ -}
 data CauchyReal = CauchyReal (Integer -> MPBall) 
 
-rational2CauchyReal :: Rational -> CauchyReal
-rational2CauchyReal q =
-    CauchyReal $ convergent2Cauchy $ \ i -> rational2MPBall (Precision i) q 
-
-convergent2Cauchy :: 
-    (Integer -> MPBall) -> Integer -> MPBall
-convergent2Cauchy convergentSeq i =
-    aux 2
-    where
-    aux j 
-        | ballAccuracy xj >= i = xj
-        | otherwise = aux (j*2)
-        where
-        xj = convergentSeq j 
-
 cauchyReal2ball :: CauchyReal -> Integer -> MPBall
 cauchyReal2ball (CauchyReal getBall) i = getBall i
 
 showCauchyReal :: Integer -> CauchyReal -> String
 showCauchyReal i r = show (cauchyReal2ball r i)
+
+convergent2Cauchy :: 
+    (Integer -> MPBall) -> (Integer -> MPBall)
+convergent2Cauchy convergentSeq i =
+    aux 2 3
+    where
+    aux j j'
+        | ballAccuracy xj >= i = xj
+        | j > maxPrecision = error "convergent2Cauchy: the sequence either converges too slowly or it does not converge"
+        | otherwise = aux j' (j+j') -- try precisions following the Fibonacci sequence
+        where
+        xj = convergentSeq j
+        maxPrecision = 1000000
+
+rational2CauchyReal :: Rational -> CauchyReal
+rational2CauchyReal q =
+    CauchyReal $ convergent2Cauchy $ \ p -> rational2MPBall (Precision p) q 
+
+pi :: CauchyReal
+pi = CauchyReal piByAccuracy
+    
+piByAccuracy :: Integer -> MPBall
+piByAccuracy =
+    convergent2Cauchy (\ p -> piBallUsingPrecision (Precision p))
 
 {- operations mixing Ball and CauchyReal -}
 
