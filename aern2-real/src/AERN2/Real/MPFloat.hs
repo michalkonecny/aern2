@@ -1,14 +1,17 @@
 {-# LANGUAGE StandaloneDeriving, GeneralizedNewtypeDeriving, TypeSynonymInstances #-}
 
 module AERN2.Real.MPFloat 
-(MPFloat, rational2MPFloat, zeroMPFloat, Precision(..), defaultPrecision)
+(MPFloat, rational2MPFloatUp, zeroMPFloat, Precision(..))
 where
 
 import Prelude hiding (fromInteger)
 import qualified Prelude as P
 
+import Math.NumberTheory.Logarithms
+
 import qualified Data.Approximate.MPFRLowLevel as M
 
+import AERN2.Real.OperationsToBall
 import AERN2.Real.Operations
 
 
@@ -16,15 +19,18 @@ type MPFloat = M.Rounded
 newtype Precision = Precision Integer
     deriving (P.Eq, P.Ord, P.Show, P.Enum, P.Num, P.Real, P.Integral)
 
-rational2MPFloat :: Precision -> Rational -> MPFloat
-rational2MPFloat (Precision p) r =
+rational2MPFloatUp :: Precision -> Rational -> MPFloat
+rational2MPFloatUp (Precision p) r =
     M.fromRationalA M.Up (P.fromInteger p) r
     
 zeroMPFloat :: MPFloat
 zeroMPFloat = M.zero
     
-defaultPrecision :: Precision
-defaultPrecision = Precision 100
+instance CanMeasureError MPFloat where
+    errorIndex x = 
+        toInteger $ integerLog2 $ floor $ M.toRationalA $ M.div M.Down (M.getPrec x) one x
+        where
+        one = M.fromIntegerA M.Up (M.getPrec x) 1
     
 instance CanNeg MPFloat where
     type NegType MPFloat = MPFloat

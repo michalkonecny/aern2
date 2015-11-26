@@ -23,7 +23,8 @@ library
     AERN2.Real.DoubleToBall,
     AERN2.Real.MPFloat,
     AERN2.Real.MPFloatToBall,
-    AERN2.Real.Examples
+    AERN2.Real.Examples,
+    AERN2.Real.CauchyReal
   extensions:      
                    MultiParamTypeClasses, 
                    RebindableSyntax, 

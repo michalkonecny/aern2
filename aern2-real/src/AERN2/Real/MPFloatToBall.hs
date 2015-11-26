@@ -6,21 +6,34 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module AERN2.Real.MPFloatToBall 
-(rationals2ballMPFloat)
+(rational2MPBall, rationals2MPBall, MPBall)
 where
 
 import Prelude hiding ((+),(*),(/),(-),fromInteger,fromRational)
 --import qualified Prelude as P
 
-import AERN2.Real.MPFloat
 import AERN2.Real.OperationsToBall
 import AERN2.Real.Operations
+import AERN2.Real.MPFloat
+import AERN2.Real.IntegerRational ()
 
 type instance ErrorBoundType MPFloat = MPFloat
 
-rationals2ballMPFloat :: Precision -> (Rational, Rational) -> Ball MPFloat
-rationals2ballMPFloat p (x,e) =
-    Ball (rational2MPFloat p x) (rational2MPFloat p e)
+type MPBall = Ball MPFloat
+
+rationals2MPBall :: Precision -> (Rational, Rational) -> MPBall 
+rationals2MPBall p (x,e) =
+    Ball xUp (xe + eUp)
+    where
+    (Ball xUp xe) = rational2MPBall p x
+    eUp = rational2MPFloatUp p e
+    
+rational2MPBall :: Precision -> Rational -> MPBall
+rational2MPBall p x =
+    Ball xUp (xUp - xDn)
+    where
+    xUp = rational2MPFloatUp p x
+    xDn = neg (rational2MPFloatUp p (neg x))
 
 instance CanNegB MPFloat where
     negB x1 =
