@@ -26,25 +26,25 @@ rationals2MPBall p (x,e) =
     Ball xUp (xe + eUp)
     where
     (Ball xUp xe) = rational2MPBall p x
-    eUp = rational2MPFloatUp p e
+    eUp = fromRationalUp p e
     
 rational2MPBall :: Precision -> Rational -> MPBall
 rational2MPBall p x =
     Ball xUp (xUp - xDn)
     where
-    xUp = rational2MPFloatUp p x
-    xDn = neg (rational2MPFloatUp p (neg x))
+    xUp = fromRationalUp p x
+    xDn = fromRationalDown p x
 
 piBallUsingPrecision :: Precision -> MPBall
 piBallUsingPrecision p =
-    Ball piUp (piUp - piDn)
+    Ball piU (piU - piD)
     where
-    piUp = piMPFloatUp p
-    piDn = piMPFloatDn p
+    piU = piUp p
+    piD = piDown p
 
 instance CanNegB MPFloat where
     negB x1 =
-        Ball (neg x1) zeroMPFloat -- negation is exact
+        Ball (neg x1) zero -- negation is exact
 
 instance CanAddB MPFloat MPFloat where
     addB d1 d2 =

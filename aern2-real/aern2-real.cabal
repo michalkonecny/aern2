@@ -29,7 +29,6 @@ library
     AERN2.Real.Ball,
     AERN2.Real.DoubleBound,
     AERN2.Real.Double,
-    AERN2.Real.DoubleToBall,
     AERN2.Real.MPFloat,
     AERN2.Real.MPFloatToBall,
     AERN2.Real.Examples,

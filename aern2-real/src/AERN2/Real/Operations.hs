@@ -144,3 +144,12 @@ class
     (CanSqrt a, SqrtType a ~ a) => 
     CanSqrtSameType a
 
+class CanSineCosine a where
+    type SineCosineType a :: *
+    sin :: a -> SineCosineType a
+    cos :: a -> SineCosineType a
+
+class
+    (CanSineCosine a, SineCosineType a ~ a) => 
+    CanSineCosineSameType a
+
