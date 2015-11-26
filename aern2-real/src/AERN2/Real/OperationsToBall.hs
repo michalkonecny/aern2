@@ -33,7 +33,7 @@ data Ball a = Ball { ball_value :: a, ball_error :: ErrorBoundType a }
 
 instance (Show a, Show (ErrorBoundType a)) => Show (Ball a)
     where
-    show (Ball x e) = "[" ++ show x ++ "±" ++ show e ++ "]"
+    show (Ball x e) = "[" ++ show x ++ " ± " ++ show e ++ "]"
 
 type family ErrorBoundType a
 
