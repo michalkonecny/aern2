@@ -48,6 +48,32 @@ instance
     CanAddSameType (Ball a)
 
 instance
+    (CanSubB a a, CanSubSameType a,
+     CanAddSameType (ErrorBoundType a)) 
+    => 
+    (CanSub (Ball a) (Ball a))  
+    where
+    type SubType (Ball a) (Ball a) = Ball a
+    sub (Ball x1 e1) (Ball x2 e2) =
+        Ball x12 (e12 + e1 + e2)
+        where
+        (Ball x12 e12) = x1 -: x2
+        
+instance
+    (CanSubSameType a, CanSubB a a, 
+     CanAbsSameType a,
+     CanAddSameType (ErrorBoundType a)) 
+    => 
+    CanSubThis (Ball a) (Ball a)
+
+instance
+    (CanSubSameType a, CanSubB a a, 
+     CanAbsSameType a,
+     CanAddSameType (ErrorBoundType a)) 
+    => 
+    CanSubSameType (Ball a)
+
+instance
     (CanMulB a a,
      CanMulSameType a, 
      CanAbsSameType a,

@@ -43,3 +43,6 @@ cauchyThird = rational2CauchyReal (1/3)
 
 cauchyThirdWithAccuracy :: Integer -> MPBall
 cauchyThirdWithAccuracy = cauchyReal2ball cauchyThird
+
+ballPluscauchy :: MPBall
+ballPluscauchy = ballRadd + cauchyThird 

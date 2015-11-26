@@ -48,22 +48,28 @@ instance
     type AddType MPBall CauchyReal = MPBall
     add a (CauchyReal b) = add a (b (ballAccuracy a))
 
-{-
-
 instance
-    (CanMeasureError (ErrorBoundType a), CanAddSameType (Ball a))
-    => 
-    CanAdd (CauchyReal a) (Ball a) 
+    CanAdd CauchyReal  MPBall 
     where
-    type AddType (CauchyReal a) (Ball a) = (Ball a)
+    type AddType CauchyReal MPBall = MPBall
     add (CauchyReal a) b = add (a (ballAccuracy b)) b
 
-instance
-    (CanMeasureError (ErrorBoundType a), CanAddSameType (Ball a))
-    => 
-    CanAddThis (Ball a) (CauchyReal a) 
+instance CanAddThis MPBall CauchyReal
 
--}
+instance
+    CanSub MPBall CauchyReal 
+    where
+    type SubType MPBall CauchyReal = MPBall
+    sub a (CauchyReal b) = sub a (b (ballAccuracy a))
+
+instance
+    CanSub CauchyReal  MPBall 
+    where
+    type SubType CauchyReal MPBall = MPBall
+    sub (CauchyReal a) b = sub (a (ballAccuracy b)) b
+
+instance CanSubThis MPBall CauchyReal
+
 
 {- TODO
 instance CanSub (Ball a) (CauchyReal a)

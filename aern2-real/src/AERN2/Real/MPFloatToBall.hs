@@ -47,6 +47,14 @@ instance CanAddB MPFloat MPFloat where
         sumUp = d1 + d2
         sumDn = neg $ (neg d1) + (neg d2)
 
+instance CanSubB MPFloat MPFloat where
+    subB d1 d2 =
+        Ball sumUp errorBound
+        where
+        errorBound = sumUp - sumDn
+        sumUp = d1 - d2
+        sumDn = neg $ (neg d1) - (neg d2)
+
 instance CanMulB MPFloat MPFloat where
     mulB d1 d2 =
         Ball prodUp errorBound
