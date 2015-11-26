@@ -10,8 +10,6 @@ The following is an example repl session:
 > cabal repl
 ...
 *AERN2.Real.Operations> :module +AERN2.Real.CauchyReal 
-*AERN2.Real.Operations AERN2.Real.CauchyReal> 1 + 1
-2
 *AERN2.Real.Operations AERN2.Real.CauchyReal> :t 1 + 1
 1 + 1 :: Integer
 *AERN2.Real.Operations AERN2.Real.CauchyReal> :t 1 + 1/3
