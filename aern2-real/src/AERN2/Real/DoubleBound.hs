@@ -5,7 +5,10 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-module AERN2.Real.DoubleBound (DoubleBound(..), rational2DoubleBound) where
+module AERN2.Real.DoubleBound 
+    (DoubleBound(..), 
+     rational2DoubleBound, errorIndex) 
+where
 
 import Prelude hiding ((+),(*),(/),(-),fromInteger,fromRational)
 import qualified Prelude as P
@@ -20,7 +23,6 @@ import Data.Convertible
 import Math.NumberTheory.Logarithms
 
 import AERN2.Real.Operations
-import AERN2.Real.OperationsToBall
 
 {- example -}
 
@@ -41,9 +43,9 @@ instance Convertible Rational DoubleBound where
         | a >= 0.0 = Right $ DoubleBound $ rational2DoubleUp a
         | otherwise = error "Trying to construct a negative DoubleBound."
 
-instance CanMeasureError DoubleBound where
-    errorIndex (DoubleBound d) = 
-        toInteger $ integerLog2 $ floor $ P.recip d
+errorIndex :: DoubleBound -> Integer
+errorIndex (DoubleBound d) = 
+    toInteger $ integerLog2 $ floor $ P.recip d
 
 instance CanAdd DoubleBound DoubleBound where
     type AddType DoubleBound DoubleBound = DoubleBound

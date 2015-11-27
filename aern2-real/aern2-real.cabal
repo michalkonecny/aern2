@@ -25,13 +25,11 @@ library
   exposed-modules: 
     AERN2.Real.Operations,
     AERN2.Real.IntegerRational,
-    AERN2.Real.OperationsToBall,
-    AERN2.Real.Ball,
     AERN2.Real.DoubleBound,
     AERN2.Real.MPFloat,
-    AERN2.Real.MPFloatToBall,
     AERN2.Real.Examples,
-    AERN2.Real.CauchyReal
+    AERN2.Real.CauchyReal,
+    AERN2.Real.MPBall
   extensions:      
                    MultiParamTypeClasses, 
                    RebindableSyntax, 

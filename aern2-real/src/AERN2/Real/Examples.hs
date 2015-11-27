@@ -6,16 +6,13 @@ module AERN2.Real.Examples where
 import Prelude hiding ((+),(*),(/),(-),pi,fromInteger,fromRational)
 
 import AERN2.Real.Operations
-import AERN2.Real.OperationsToBall (Ball(..))
 import AERN2.Real.IntegerRational ()
-import AERN2.Real.Ball (ballAccuracy)
-import AERN2.Real.MPFloat (MPFloat, Precision(..))
-import AERN2.Real.MPFloatToBall (rationals2MPBall, MPBall)
-import AERN2.Real.CauchyReal (CauchyReal, rational2CauchyReal, cauchyReal2ball, pi)
-
+import AERN2.Real.MPBall (rationals2MPBall, MPBall, ballAccuracy)
+import AERN2.Real.MPFloat (Precision(..))
+import AERN2.Real.CauchyReal (CauchyReal, rational2CauchyReal, cauchyReal2ball)
 
 ballR1 :: MPBall
-ballR1 = rationals2MPBall (Precision 1000) (2.0,1/300) :: Ball MPFloat 
+ballR1 = rationals2MPBall (Precision 1000) (2.0,1/300) :: MPBall 
 
 ballRadd :: MPBall
 ballRadd = ballR1 + ballR1
@@ -32,5 +29,5 @@ cauchyThird = rational2CauchyReal (1/3)
 cauchyThirdWithAccuracy :: Integer -> MPBall
 cauchyThirdWithAccuracy = cauchyReal2ball cauchyThird
 
-ballPluscauchy :: MPBall
-ballPluscauchy = ballR1 + pi 
+--ballPluscauchy :: MPBall
+--ballPluscauchy = ballR1 + pi 
