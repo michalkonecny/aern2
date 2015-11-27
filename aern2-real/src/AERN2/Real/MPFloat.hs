@@ -1,24 +1,28 @@
 {-# LANGUAGE StandaloneDeriving, GeneralizedNewtypeDeriving, TypeSynonymInstances #-}
 
 module AERN2.Real.MPFloat 
-    (MPFloat, Precision(..), 
-     toRational, toDoubleUp, toDoubleDown, getDoubleBound,
-     zero, rationalUp, rationalDown, 
-     neg, abs, absDB, addUp, addDown, subUp, subDown, subDB, mulUp, mulDown, divUp, divDown, 
+    (MPFloat, Precision(..), setPrecisionUp,
+     toRational, toDoubleUp, toDoubleDown,
+     zero, rationalUp, rationalDown, integerUp, integerDown,
+     neg, abs, addUp, addDown, subUp, subDown, 
+     mulUp, mulDown, divUp, divDown, recipUp, recipDown, 
      piUp, piDown,
      cosUp, cosDown, sinUp, sinDown)
 where
 
-import Prelude hiding (fromInteger, toRational, abs)
+import Prelude hiding (fromInteger, fromRational, toRational, abs)
 import qualified Prelude as P
 
 import qualified Data.Approximate.MPFRLowLevel as MPLow
 
-import AERN2.Real.DoubleBound
+import AERN2.Real.Operations (fromInteger, fromRational)
 
 type MPFloat = MPLow.Rounded
 newtype Precision = Precision Integer
     deriving (P.Eq, P.Ord, P.Show, P.Enum, P.Num, P.Real, P.Integral)
+
+setPrecisionUp :: Precision -> MPFloat -> MPFloat
+setPrecisionUp (Precision p) = MPLow.set MPLow.Up (P.fromInteger p)
 
 {- conversions -}
 
@@ -31,30 +35,29 @@ toDoubleUp = MPLow.toDoubleA MPLow.Up
 toDoubleDown :: MPFloat -> Double
 toDoubleDown = MPLow.toDoubleA MPLow.Down
     
-getDoubleBound :: MPFloat -> DoubleBound
-getDoubleBound = DoubleBound . toDoubleUp 
-    
 {- constants -}
 
 zero :: MPFloat
 zero = MPLow.zero
     
+one :: MPFloat
+one = rationalUp (Precision 20) 1.0
+    
+integerUp :: Precision -> Integer -> MPFloat
+integerUp p i = rationalUp p (P.fromInteger i)
+    
+integerDown :: Precision -> Integer -> MPFloat
+integerDown p i = rationalDown p (P.fromInteger i)
+    
 rationalUp :: Precision -> Rational -> MPFloat
-rationalUp (Precision p) r =
-    MPLow.fromRationalA MPLow.Up (P.fromInteger p) r
+rationalUp (Precision p) x =
+    MPLow.fromRationalA MPLow.Up (P.fromInteger p) x
     
 rationalDown :: Precision -> Rational -> MPFloat
-rationalDown (Precision p) r =
-    MPLow.fromRationalA MPLow.Down (P.fromInteger p) r
+rationalDown (Precision p) x =
+    MPLow.fromRationalA MPLow.Down (P.fromInteger p) x
     
-piUp :: Precision -> MPFloat
-piUp (Precision p) =
-    MPLow.pi MPLow.Up (P.fromInteger p)
-    
-piDown :: Precision -> MPFloat
-piDown (Precision p) =
-    MPLow.pi MPLow.Down (P.fromInteger p)
-    
+{- common functions -}
 
 neg :: MPFloat -> MPFloat
 neg = unaryUp MPLow.neg
@@ -63,9 +66,6 @@ abs :: MPLow.Rounded -> MPFloat
 abs x 
     | x < MPLow.zero = neg x
     | otherwise = x
-
-absDB :: MPFloat -> DoubleBound
-absDB = getDoubleBound . abs
 
 addUp, addDown :: MPFloat -> MPFloat -> MPFloat
 addUp = binaryUp MPLow.add
@@ -83,10 +83,22 @@ divUp,divDown :: MPFloat -> MPFloat -> MPFloat
 divUp = binaryUp MPLow.div
 divDown = binaryDown MPLow.div
 
-subDB :: MPFloat -> MPFloat -> DoubleBound
-a `subDB` b = getDoubleBound $ a `subUp` b 
+recipUp :: MPFloat -> MPFloat
+recipUp x = divUp one x
 
+recipDown :: MPFloat -> MPFloat
+recipDown x = divDown one x
 
+{- special constants and functions -}
+
+piUp :: Precision -> MPFloat
+piUp (Precision p) =
+    MPLow.pi MPLow.Up (P.fromInteger p)
+    
+piDown :: Precision -> MPFloat
+piDown (Precision p) =
+    MPLow.pi MPLow.Down (P.fromInteger p)
+    
 cosUp :: MPFloat -> MPFloat
 cosUp = unaryUp MPLow.cos
 

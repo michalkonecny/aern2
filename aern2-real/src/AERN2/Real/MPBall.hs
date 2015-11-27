@@ -14,13 +14,14 @@ where
 import Prelude hiding ((+),(*),(/),(-),abs,recip,fromInteger,fromRational)
 --import qualified Prelude as P
 
-import AERN2.Real.DoubleBound
+import qualified AERN2.Real.ErrorBound as EB
+import AERN2.Real.ErrorBound (ErrorBound)
 import qualified AERN2.Real.MPFloat as MP
 import AERN2.Real.MPFloat (MPFloat)
 import AERN2.Real.Operations
 
 
-data MPBall = MPBall { ball_value :: MPFloat, ball_error :: DoubleBound }
+data MPBall = MPBall { ball_value :: MPFloat, ball_error :: ErrorBound }
 
 instance Show MPBall
     where
@@ -31,11 +32,11 @@ rationals2MPBall p (x,e) =
     MPBall xUp (xe + eUp)
     where
     (MPBall xUp xe) = rational2MPBall p x
-    eUp = rational2DoubleBound e
+    eUp = EB.rational2ErrorBound e
     
 rational2MPBall :: MP.Precision -> Rational -> MPBall
 rational2MPBall p x =
-    MPBall xUp (xUp `MP.subDB` xDn)
+    MPBall xUp (xUp `EB.subMP` xDn)
     where
     xUp = MP.rationalUp p x
     xDn = MP.rationalDown p x
@@ -43,7 +44,7 @@ rational2MPBall p x =
 ballAccuracy :: 
     MPBall -> Integer
 ballAccuracy (MPBall _ e) = 
-    errorIndex e
+    EB.accuracyIndex e
 
 instance CanNeg MPBall where
     type NegType MPBall = MPBall
@@ -54,7 +55,7 @@ instance CanNegSameType MPBall
 instance CanAdd MPBall MPBall where
     type AddType MPBall MPBall = MPBall
     add (MPBall x1 e1) (MPBall x2 e2) =
-        MPBall sumUp ((sumUp `MP.subDB` sumDn) + e1 + e2)
+        MPBall sumUp ((sumUp `EB.subMP` sumDn) + e1 + e2)
         where
         sumUp = MP.addUp x1 x2
         sumDn = MP.addDown x1 x2
@@ -76,11 +77,11 @@ instance CanSubSameType MPBall
 instance CanMul MPBall MPBall where
     type MulType MPBall MPBall = MPBall
     mul (MPBall x1 e1) (MPBall x2 e2) =
-        MPBall x12Up (e12 + e1*(MP.absDB x2) + e2*(MP.absDB x1) + e1*e2)
+        MPBall x12Up (e12 + e1*(EB.absMP x2) + e2*(EB.absMP x1) + e1*e2)
         where
         x12Up = MP.mulUp x1 x2 
         x12Down = MP.mulDown x1 x2
-        e12 = MP.getDoubleBound $ MP.subUp x12Up x12Down
+        e12 = EB.mp2ErrorBound $ MP.subUp x12Up x12Down
 
 instance CanMulBy MPBall MPBall
 
