@@ -23,10 +23,10 @@ library
     arithmoi
   ghc-options:     -O2 -Wall  -fno-warn-orphans
   exposed-modules: 
+    AERN2.Real.Examples,
     AERN2.Real.Operations,
     AERN2.Real.IntegerRational,
     AERN2.Real.MPFloat,
-    AERN2.Real.Examples,
     AERN2.Real.CauchyReal,
     AERN2.Real.MPBall,
     AERN2.Real.ErrorBound

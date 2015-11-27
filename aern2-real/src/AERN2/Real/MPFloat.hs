@@ -1,7 +1,7 @@
 {-# LANGUAGE StandaloneDeriving, GeneralizedNewtypeDeriving, TypeSynonymInstances #-}
 
 module AERN2.Real.MPFloat 
-    (MPFloat, Precision(..), setPrecisionUp,
+    (MPFloat, Precision, prec, maximumPrecision, setPrecisionUp,
      toRational, toDoubleUp, toDoubleDown,
      zero, rationalUp, rationalDown, integerUp, integerDown,
      neg, abs, addUp, addDown, subUp, subDown, 
@@ -23,6 +23,18 @@ newtype Precision = Precision Integer
 
 setPrecisionUp :: Precision -> MPFloat -> MPFloat
 setPrecisionUp (Precision p) = MPLow.set MPLow.Up (P.fromInteger p)
+
+prec :: Integer -> Precision
+prec p 
+    | p < 2 = error errmsg  
+    | p > maximumPrecision = error errmsg
+    | otherwise = Precision p
+    where
+    errmsg =
+        "Precision must be between 2 and " ++ show maximumPrecision ++ " (given: p=" ++ show p ++ ")."
+
+maximumPrecision :: Integer
+maximumPrecision = 1000000
 
 {- conversions -}
 

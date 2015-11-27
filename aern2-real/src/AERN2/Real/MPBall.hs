@@ -8,7 +8,8 @@
 {-# LANGUAGE UndecidableInstances #-}
 module AERN2.Real.MPBall
     (MPBall(..), ballAccuracy,
-     rational2MPBall, rationals2MPBall) 
+     rational2MPBall, rationals2MPBall,
+     piBallUsingPrecision) 
 where
 
 import Prelude hiding ((+),(*),(/),(-),abs,recip,fromInteger,fromRational)
@@ -17,7 +18,7 @@ import Prelude hiding ((+),(*),(/),(-),abs,recip,fromInteger,fromRational)
 import qualified AERN2.Real.ErrorBound as EB
 import AERN2.Real.ErrorBound (ErrorBound)
 import qualified AERN2.Real.MPFloat as MP
-import AERN2.Real.MPFloat (MPFloat)
+import AERN2.Real.MPFloat (MPFloat, Precision)
 import AERN2.Real.Operations
 
 
@@ -87,14 +88,14 @@ instance CanMulBy MPBall MPBall
 
 instance CanMulSameType MPBall
 
+piBallUsingPrecision :: Precision -> MPBall
+piBallUsingPrecision p = MPBall piUp (piUp `EB.subMP` piDown)
+    where
+    piUp = MP.piUp p 
+    piDown = MP.piDown p 
+
 {- 
     TODO: Instances such as: 
-        CanAddThis MPBall Integer 
-        CanAddThis MPBall Rational 
-        CanSubThis MPBall Integer 
-        CanSubThis MPBall Rational 
-        CanMulBy MPBall Integer 
-        CanMulBy MPBall Rational 
         CanDivBy MPBall Integer 
         CanDivBy MPBall Rational
         CanCosine MPBall 

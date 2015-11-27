@@ -10,16 +10,15 @@ module AERN2.Real.CauchyReal
     CauchyReal,
     showCauchyReal,
     cauchyReal2ball,
-    rational2CauchyReal
---    ,
---    pi
+    rational2CauchyReal,
+    pi
 )
 where
 
 import Prelude hiding ((+),(*),(/),(-),pi,fromInteger,fromRational)
 --import qualified Prelude as P
 
-import AERN2.Real.MPFloat (Precision(..))
+import AERN2.Real.MPFloat (prec)
 import AERN2.Real.MPBall
 import AERN2.Real.IntegerRational ()
 import AERN2.Real.Operations
@@ -49,14 +48,14 @@ convergent2Cauchy convergentSeq i =
 
 rational2CauchyReal :: Rational -> CauchyReal
 rational2CauchyReal q =
-    CauchyReal $ convergent2Cauchy $ \ p -> rational2MPBall (Precision p) q 
+    CauchyReal $ convergent2Cauchy $ \ p -> rational2MPBall (prec p) q 
 
---pi :: CauchyReal
---pi = CauchyReal piByAccuracy
---    
---piByAccuracy :: Integer -> MPBall
---piByAccuracy =
---    convergent2Cauchy (\ p -> piBallUsingPrecision (Precision p))
+pi :: CauchyReal
+pi = CauchyReal piByAccuracy
+    
+piByAccuracy :: Integer -> MPBall
+piByAccuracy =
+    convergent2Cauchy (\ p -> piBallUsingPrecision (prec p))
 
 {- operations mixing Ball and CauchyReal -}
 

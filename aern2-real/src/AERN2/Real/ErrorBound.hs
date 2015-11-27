@@ -17,7 +17,7 @@ import Prelude hiding ((+),(*),(/),(-),fromInteger,fromRational, abs)
 import Math.NumberTheory.Logarithms
 
 import qualified AERN2.Real.MPFloat as MP
-import AERN2.Real.MPFloat (MPFloat, Precision(..))
+import AERN2.Real.MPFloat (MPFloat, Precision, prec)
 import AERN2.Real.Operations
 
 {- example -}
@@ -32,7 +32,7 @@ instance Show ErrorBound where
     show (ErrorBound d) = show d
 
 errorBoundPrecision :: Precision
-errorBoundPrecision = Precision 53
+errorBoundPrecision = prec 53
 
 rational2ErrorBound :: Rational -> ErrorBound
 rational2ErrorBound x
