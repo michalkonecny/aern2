@@ -22,13 +22,20 @@ module AERN2.Real.Operations
 )
 where
 
-import Prelude (Integer,Rational,Bool,id,otherwise)
+import Prelude hiding ((+),(*),(/),(-),(^),abs,recip,div,negate,fromInteger,fromRational,sqrt,cos,sin)
 
-import qualified Prelude as P
+import qualified Prelude as P (fromInteger)
 
 {- 
     The following arranges that all numeric literals are monomorphic and of the type Integer or Rational.
 -}
+
+_example1 :: Integer -- inferred
+_example1 = 1 -- not polymorphic 
+_example2 :: Rational -- inferred
+_example2 = 1.0 -- not polymorphic
+_example3 :: Int
+_example3 = int 1 -- the easiest way to get Int literals (1 :: Int does not compile)
 
 fromInteger :: Integer -> Integer
 fromInteger = id
@@ -42,8 +49,16 @@ ifThenElse b e1 e2
     | b = e1
     | otherwise = e2
 
-int :: Integer -> P.Int
-int = P.fromInteger
+int :: Integer -> Int
+int i 
+    | iInIntRange = P.fromInteger i
+    | otherwise = error $ "int out of range: " ++ show i 
+    where
+    iInIntRange =
+        i >= toInteger (minBound :: Int)
+        &&
+        i <= toInteger (maxBound :: Int)
+
 
 {- 
     The following mixed-type operators shadow the classic mono-type Prelude versions. 
