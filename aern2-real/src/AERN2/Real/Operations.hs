@@ -5,11 +5,26 @@
 --{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RebindableSyntax #-}
 
-module AERN2.Real.Operations where
+module AERN2.Real.Operations 
+(
+    fromInteger, fromRational, ifThenElse, int,
+    negate, CanNeg(..), CanNegSameType,
+    (+), (-), (*), (/), (^),
+    CanAbs(..), CanAbsSameType,
+    CanAdd(..), CanAddThis, CanAddSameType,
+    CanSub(..), CanSubThis, CanSubSameType,
+    CanMul(..), CanMulBy, CanMulSameType,
+    CanPow(..), CanPowBy,
+    CanDiv(..), CanDivBy, CanDivSameType,
+    CanRecip(..), CanRecipSameType,
+    CanSqrt(..), CanSqrtSameType,
+    CanSineCosine(..), CanSineCosineSameType
+)
+where
 
 import Prelude (Integer,Rational,Bool,id,otherwise)
 
---import qualified Prelude as P
+import qualified Prelude as P
 
 {- 
     The following arranges that all numeric literals are monomorphic and of the type Integer or Rational.
@@ -26,6 +41,9 @@ ifThenElse :: Bool -> t -> t -> t
 ifThenElse b e1 e2
     | b = e1
     | otherwise = e2
+
+int :: Integer -> P.Int
+int = P.fromInteger
 
 {- 
     The following mixed-type operators shadow the classic mono-type Prelude versions. 
@@ -152,4 +170,3 @@ class CanSineCosine a where
 class
     (CanSineCosine a, SineCosineType a ~ a) => 
     CanSineCosineSameType a
-
