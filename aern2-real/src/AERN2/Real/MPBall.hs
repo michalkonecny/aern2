@@ -100,3 +100,46 @@ piBallUsingPrecision p = MPBall piUp (piUp `EB.subMP` piDown)
         CanDivBy MPBall Rational
         CanCosine MPBall 
 -} 
+
+{- generic methods for computing real functions from MPFR-approximations -}
+
+{-
+Computes a real function f from MPFR-approximations l,u with l(x) <= f(x) <= u(x) and a number lip which is a
+Lipschitz constant for f, i.e. |f(x) - f(y)| <= lip * |x - y| for all x,y.
+-}
+fromApproxWithLipschitz :: (MPFloat -> MPFloat) -> (MPFloat -> MPFloat) -> MPFloat -> MPBall -> MPBall
+fromApproxWithLipschitz l u lip x = MPBall fc err
+                                  where
+                                  e2mp :: EB.ErrorBound -> MPFloat
+                                  e2mp (EB.ErrorBound a) = a
+                                  centre = ball_value x
+                                  fu = u centre
+                                  fl = l centre
+                                  fc = MP.divUp (MP.addUp fu fl) (MP.integerDown (MP.prec 53) 2)
+                                  err = EB.ErrorBound (MP.mulUp lip (e2mp $ ball_error x))  +  (EB.ErrorBound $ max (MP.distUp fc fl) (MP.distUp fc fu))
+
+{-
+Computes a monotone real function f from MPFR-approximations l,u with l(x) <= f(x) <= u(x) for all x.
+-}
+monotoneFromApprox :: (MPFloat -> MPFloat) -> (MPFloat -> MPFloat) -> MPBall -> MPBall
+monotoneFromApprox l u x = MPBall fc err
+                           where
+                           e2mp :: EB.ErrorBound -> MPFloat
+                           e2mp (EB.ErrorBound a) = a
+                           c    = ball_value x
+                           r    = e2mp (ball_error x)
+                           fu   = u (MP.addUp c r)
+                           fd   = l (MP.subDown c r)
+                           fc   = MP.divUp (MP.addUp fu fd) (MP.integerDown (MP.prec 53) 2)
+                           err = EB.ErrorBound $ max (MP.distUp fc fu) (MP.distUp fc fd)
+
+{- common functions -}
+
+instance CanSqrt MPBall where
+        type SqrtType MPBall = MPBall
+        sqrt x = monotoneFromApprox MP.sqrtDown MP.sqrtUp x     
+        
+instance CanSineCosine MPBall where
+        type SineCosineType MPBall = MPBall
+        sin x = fromApproxWithLipschitz MP.sinDown MP.sinUp (MP.integerUp (MP.prec 53) 1) x
+        cos x = fromApproxWithLipschitz MP.cosDown MP.cosUp (MP.integerUp (MP.prec 53) 1) x

@@ -5,9 +5,9 @@ module AERN2.Real.MPFloat
      toRational, toDoubleUp, toDoubleDown,
      zero, rationalUp, rationalDown, integerUp, integerDown,
      neg, abs, addUp, addDown, subUp, subDown, 
-     mulUp, mulDown, divUp, divDown, recipUp, recipDown, 
+     mulUp, mulDown, divUp, divDown, recipUp, recipDown, distUp, distDown,
      piUp, piDown,
-     cosUp, cosDown, sinUp, sinDown)
+     cosUp, cosDown, sinUp, sinDown, sqrtUp, sqrtDown)
 where
 
 import Prelude hiding (fromInteger, fromRational, toRational, abs)
@@ -68,6 +68,20 @@ rationalUp (Precision p) x =
 rationalDown :: Precision -> Rational -> MPFloat
 rationalDown (Precision p) x =
     MPLow.fromRationalA MPLow.Down (P.fromInteger p) x
+
+-- we need if-then-else below...
+ifThenElse :: Bool -> t -> t -> t
+ifThenElse b e1 e2
+    | b = e1
+    | otherwise = e2
+
+--Computes an upper bound to the distance |x - y| of x and y.
+distUp :: MPFloat -> MPFloat -> MPFloat
+distUp x y = if x >= y then subUp x y else subUp y x
+
+--Computes a lower bound to the distance |x - y| of x and y.
+distDown :: MPFloat -> MPFloat -> MPFloat
+distDown x y = if x >= y then subDown x y else subDown y x
     
 {- common functions -}
 
@@ -122,6 +136,12 @@ sinUp = unaryUp MPLow.sin
 
 sinDown :: MPFloat -> MPFloat
 sinDown = unaryDown MPLow.sin
+
+sqrtUp :: MPFloat -> MPFloat
+sqrtUp = unaryUp MPLow.sqrt
+
+sqrtDown :: MPFloat -> MPFloat
+sqrtDown = unaryDown MPLow.sqrt
 
 {- auxiliary functions to automatically determine result precision from operand precisions -}
 
