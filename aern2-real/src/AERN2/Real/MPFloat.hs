@@ -3,7 +3,7 @@
 module AERN2.Real.MPFloat 
     (MPFloat, Precision, prec, getPrecision, maximumPrecision, setPrecisionUp,
      toRational, toDoubleUp, toDoubleDown,
-     zero, rationalUp, rationalDown, integerUp, integerDown,
+     zero, one, two, rationalUp, rationalDown, integerUp, integerDown,
      neg, abs, addUp, addDown, subUp, subDown, 
      distUp, distDown, avgUp, avgDown, 
      mulUp, mulDown, divUp, divDown, recipUp, recipDown,

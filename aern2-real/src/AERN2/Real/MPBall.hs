@@ -161,6 +161,8 @@ piBallUsingPrecision p = MPBall piUp (piUp `EB.subMP` piDown)
     piUp = MP.piUp p 
     piDown = MP.piDown p 
 
+{- Integer-Ball operations -}
+
 instance CanAdd Integer MPBall where
     type AddType Integer MPBall = MPBall
     add a b = (fromIntegerP (getPrecision b) a) + b
@@ -247,11 +249,27 @@ ball2endpoints x = (l,u)
 {- common functions -}
 
 instance CanSqrt MPBall where
-        type SqrtType MPBall = MPBall
-        sqrt x = monotoneFromApprox MP.sqrtDown MP.sqrtUp x     
+    type SqrtType MPBall = MPBall
+    sqrt x = monotoneFromApprox MP.sqrtDown MP.sqrtUp x     
         
 instance CanSineCosine MPBall where
-        type SineCosineType MPBall = MPBall
-        sin x = fromApproxWithLipschitz MP.sinDown MP.sinUp (MP.integerUp (MP.prec 53) 1) x
-        cos x = fromApproxWithLipschitz MP.cosDown MP.cosUp (MP.integerUp (MP.prec 53) 1) x
+    type SineCosineType MPBall = MPBall
+    sin = sinB 1
+    cos = cosB 1
 
+
+sinB :: Integer -> MPBall -> MPBall
+sinB i x = 
+    fromApproxWithLipschitz MP.sinDown MP.sinUp lip x
+    where
+    lip
+        | i == 0 = MP.one
+        | otherwise = snd $ ball2endpoints $ abs $ cosB (i - 1) x
+
+cosB :: Integer -> MPBall -> MPBall
+cosB i x = 
+    fromApproxWithLipschitz MP.cosDown MP.cosUp lip x
+    where
+    lip
+        | i == 0 = MP.one
+        | otherwise = snd $ ball2endpoints $ abs $ sinB (i - 1) x
