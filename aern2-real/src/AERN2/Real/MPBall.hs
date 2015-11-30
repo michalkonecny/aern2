@@ -47,6 +47,10 @@ ballAccuracy ::
 ballAccuracy (MPBall _ e) = 
     EB.accuracyIndex e
 
+ballNonZero :: MPBall -> Bool
+ballNonZero (MPBall x e) =
+    (MP.abs x) `MP.subDown` (EB.er2mp e) > MP.zero
+
 instance CanNeg MPBall where
     type NegType MPBall = MPBall
     neg (MPBall x1 e1) = MPBall (MP.neg x1) e1
@@ -82,11 +86,50 @@ instance CanMul MPBall MPBall where
         where
         x12Up = MP.mulUp x1 x2 
         x12Down = MP.mulDown x1 x2
-        e12 = EB.mp2ErrorBound $ MP.subUp x12Up x12Down
+        e12 = EB.mp2ErrorBound $ x12Up `MP.subUp` x12Down
 
 instance CanMulBy MPBall MPBall
 
 instance CanMulSameType MPBall
+
+instance CanDiv MPBall MPBall where
+    type DivType MPBall MPBall = MPBall
+    div (MPBall x1 e1) b2@(MPBall x2 e2) 
+        | ballNonZero b2 =
+            MPBall x12Up err
+        | otherwise =
+            error $ "Division by MPBall that contains 0: " ++ show b2
+        where
+        x12Up = MP.divUp x1 x2 
+        x12Down = MP.divDown x1 x2
+        e12 = EB.mp2ErrorBound $ x12Up `MP.subUp` x12Down
+        err =
+            ((e12 * (EB.mp2ErrorBound (MP.abs x2))) -- e12 * |x2|
+             +
+             e1
+             +
+             (EB.mp2ErrorBound (MP.abs x12Up) * e2) -- e2 * |x|
+            ) 
+            * 
+            (EB.mp2ErrorBound $ MP.recipUp (MP.abs x2 `MP.subDown` (EB.er2mp e2))) 
+                -- 1/(|x2| - e2) rounded upwards 
+{-
+A derivation of the above formula for an upper bound on the error:
+
+    * e = 
+        * = max ( (x1 ± e1) / (x2 ± e2) - x )
+        * = max ( ( x1 ± e1 - (x*(x2 ± e2) ) / (x2 ± e2) )
+        * ≤ max ( ( x1 ± e1 - ((x1/x2) ± e12)x2 ± x*e2 ) / (x2 ± e2) )
+        * = max ( ( x1 ± e1 - x1 ± e12*x2 ± x*e2 ) / (x2 ± e2) )
+        * = max ( ( ± e1 ± e12*x2 ± x*e2 ) / (x2 ± e2) )
+        * ≤ (e1 + e12*|x2| + |x|*e2 ) / (|x2| - e2)
+        * ≤ (e1 +^ e12*^|x2| +^ |x|*^e2 ) /^ (|x2| -. e2)
+-}                
+
+
+instance CanDivBy MPBall MPBall
+
+instance CanDivSameType MPBall
 
 piBallUsingPrecision :: Precision -> MPBall
 piBallUsingPrecision p = MPBall piUp (piUp `EB.subMP` piDown)
