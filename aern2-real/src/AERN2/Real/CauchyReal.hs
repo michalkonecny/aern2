@@ -111,6 +111,83 @@ instance CanDivBy CauchyReal CauchyReal
 instance CanDivSameType CauchyReal
 
 
+{- CauchyReal-Integer operations -}
+
+instance CanAdd Integer CauchyReal where
+    type AddType Integer CauchyReal = CauchyReal
+    add a (CauchyReal getB2) = CauchyReal (\i -> a + (getB2 i))
+
+instance CanSub Integer CauchyReal
+
+instance CanAdd CauchyReal Integer where
+    type AddType CauchyReal Integer = CauchyReal
+    add (CauchyReal getB1) b = CauchyReal (\i -> (getB1 i) + b)
+
+instance CanAddThis CauchyReal Integer
+
+instance CanSub CauchyReal Integer
+
+instance CanSubThis CauchyReal Integer
+
+instance CanMul Integer CauchyReal where
+    type MulType Integer CauchyReal = CauchyReal
+    mul a (CauchyReal getB2) = CauchyReal (\i -> a * (getB2 i))
+
+instance CanMul CauchyReal Integer where
+    type MulType CauchyReal Integer = CauchyReal
+    mul (CauchyReal getB1) b = CauchyReal (\i -> (getB1 i) * b)
+
+instance CanMulBy CauchyReal Integer
+
+instance CanDiv Integer CauchyReal where
+    type DivType Integer CauchyReal = CauchyReal
+    div a (CauchyReal getB2) = CauchyReal (\i -> a / (getB2 i))
+
+instance CanDiv CauchyReal Integer where
+    type DivType CauchyReal Integer = CauchyReal
+    div (CauchyReal getB1) b = CauchyReal (\i -> (getB1 i) / b)
+
+instance CanDivBy CauchyReal Integer
+
+{- CauchyReal-Rational operations -}
+
+instance CanAdd Rational CauchyReal where
+    type AddType Rational CauchyReal = CauchyReal
+    add a (CauchyReal getB2) = CauchyReal (\i -> a + (getB2 i))
+
+instance CanSub Rational CauchyReal
+
+instance CanAdd CauchyReal Rational where
+    type AddType CauchyReal Rational = CauchyReal
+    add (CauchyReal getB1) b = CauchyReal (\i -> (getB1 i) + b)
+
+instance CanAddThis CauchyReal Rational
+
+instance CanSub CauchyReal Rational
+
+instance CanSubThis CauchyReal Rational
+
+instance CanMul Rational CauchyReal where
+    type MulType Rational CauchyReal = CauchyReal
+    mul a (CauchyReal getB2) = CauchyReal (\i -> a * (getB2 i))
+
+instance CanMul CauchyReal Rational where
+    type MulType CauchyReal Rational = CauchyReal
+    mul (CauchyReal getB1) b = CauchyReal (\i -> (getB1 i) * b)
+
+instance CanMulBy CauchyReal Rational
+
+instance CanDiv Rational CauchyReal where
+    type DivType Rational CauchyReal = CauchyReal
+    div a (CauchyReal getB2) = CauchyReal (\i -> a / (getB2 i))
+
+instance CanDiv CauchyReal Rational where
+    type DivType CauchyReal Rational = CauchyReal
+    div (CauchyReal getB1) b = CauchyReal (\i -> (getB1 i) / b)
+
+instance CanDivBy CauchyReal Rational
+
+
 {- operations mixing MPBall and CauchyReal, resulting in an MPBall -}
 
 instance
