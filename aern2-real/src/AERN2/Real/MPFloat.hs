@@ -4,8 +4,8 @@ module AERN2.Real.MPFloat
     (MPFloat, Precision, prec, maximumPrecision, setPrecisionUp,
      toRational, toDoubleUp, toDoubleDown,
      zero, rationalUp, rationalDown, integerUp, integerDown,
-     neg, abs, addUp, addDown, subUp, subDown, 
-     mulUp, mulDown, divUp, divDown, recipUp, recipDown, distUp, distDown,
+     neg, abs, addUp, addDown, subUp, subDown, distUp, distDown,
+     mulUp, mulDown, divUp, divDown, recipUp, recipDown,
      piUp, piDown,
      cosUp, cosDown, sinUp, sinDown, sqrtUp, sqrtDown)
 where
@@ -75,11 +75,11 @@ ifThenElse b e1 e2
     | b = e1
     | otherwise = e2
 
---Computes an upper bound to the distance |x - y| of x and y.
+-- | Computes an upper bound to the distance @|x - y|@ of @x@ and @y@.
 distUp :: MPFloat -> MPFloat -> MPFloat
 distUp x y = if x >= y then subUp x y else subUp y x
 
---Computes a lower bound to the distance |x - y| of x and y.
+-- | Computes a lower bound to the distance @|x - y|@ of @x@ and @y@.
 distDown :: MPFloat -> MPFloat -> MPFloat
 distDown x y = if x >= y then subDown x y else subDown y x
     

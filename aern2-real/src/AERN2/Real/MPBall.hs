@@ -116,18 +116,33 @@ fromApproxWithLipschitz l u lip x = MPBall fc err
                                   fc = MP.divUp (MP.addUp fu fl) (MP.integerDown (MP.prec 53) 2)
                                   err = EB.ErrorBound (MP.mulUp lip (er2mp $ ball_error x))  +  (EB.ErrorBound $ max (MP.distUp fc fl) (MP.distUp fc fu))
 
-{-
-Computes a monotone real function f from MPFR-approximations l,u with l(x) <= f(x) <= u(x) for all x.
+{-|
+    Computes a monotone real function @f@ from correctly rounded MPFR-approximations.
 -}
-monotoneFromApprox :: (MPFloat -> MPFloat) -> (MPFloat -> MPFloat) -> MPBall -> MPBall
-monotoneFromApprox l u x = MPBall fc err
-                           where
-                           c    = ball_value x
-                           r    = er2mp (ball_error x)
-                           fu   = u (MP.addUp c r)
-                           fd   = l (MP.subDown c r)
-                           fc   = MP.divUp (MP.addUp fu fd) (MP.integerDown (MP.prec 53) 2)
-                           err = EB.ErrorBound $ max (MP.distUp fc fu) (MP.distUp fc fd)
+monotoneFromApprox :: 
+    (MPFloat -> MPFloat) {-^ @fDown@: a version of @f@ on MPFloat rounding *downwards* -} -> 
+    (MPFloat -> MPFloat) {-^ @fUp@: a version of @f@ on MPFloat rounding *upwards* -} -> 
+    (MPBall -> MPBall) {-^ @f@ on MPBall rounding *outwards* -}
+monotoneFromApprox fDown fUp x = 
+    endpoints2Ball (fDown l) (fUp u)
+    where
+    (l,u) = ball2endpoints x
+
+endpoints2Ball :: MPFloat -> MPFloat -> MPBall
+endpoints2Ball l u =
+    MPBall c e
+    where
+    c = (l `MP.addUp` u) `MP.divUp` (MP.integerDown (MP.prec 10) 2)
+    e = EB.ErrorBound $ max (MP.distUp c l) (MP.distUp c u)
+
+ball2endpoints :: MPBall -> (MPFloat, MPFloat)
+ball2endpoints x = (l,u)
+    where
+    c    = ball_value x
+    r    = er2mp (ball_error x)
+    l   = c `MP.subDown` r
+    u   = c `MP.addUp` r
+    
 
 {- common functions -}
 
