@@ -161,7 +161,7 @@ piBallUsingPrecision p = MPBall piUp (piUp `EB.subMP` piDown)
     piUp = MP.piUp p 
     piDown = MP.piDown p 
 
-{- Integer-Ball operations -}
+{- Ball-Integer operations -}
 
 instance CanAdd Integer MPBall where
     type AddType Integer MPBall = MPBall
@@ -198,6 +198,44 @@ instance CanDiv MPBall Integer where
     div a b = a / (fromIntegerP (getPrecision a) b)
 
 instance CanDivBy MPBall Integer
+
+{- Ball-Rational operations -}
+
+instance CanAdd Rational MPBall where
+    type AddType Rational MPBall = MPBall
+    add a b = (fromRationalP (getPrecision b) a) + b
+
+instance CanSub Rational MPBall
+
+instance CanAdd MPBall Rational where
+    type AddType MPBall Rational = MPBall
+    add a b = a + (fromRationalP (getPrecision a) b)
+
+instance CanAddThis MPBall Rational
+
+instance CanSub MPBall Rational
+
+instance CanSubThis MPBall Rational
+
+instance CanMul Rational MPBall where
+    type MulType Rational MPBall = MPBall
+    mul a b = (fromRationalP (getPrecision b) a) * b
+
+instance CanMul MPBall Rational where
+    type MulType MPBall Rational = MPBall
+    mul a b = a * (fromRationalP (getPrecision a) b)
+
+instance CanMulBy MPBall Rational
+
+instance CanDiv Rational MPBall where
+    type DivType Rational MPBall = MPBall
+    div a b = (fromRationalP (getPrecision b) a) / b
+
+instance CanDiv MPBall Rational where
+    type DivType MPBall Rational = MPBall
+    div a b = a / (fromRationalP (getPrecision a) b)
+
+instance CanDivBy MPBall Rational
 
 {- generic methods for computing real functions from MPFR-approximations -}
 
