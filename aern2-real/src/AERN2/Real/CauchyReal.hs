@@ -57,7 +57,7 @@ piByAccuracy :: Integer -> MPBall
 piByAccuracy =
     convergent2Cauchy (\ p -> piBallUsingPrecision (prec p))
 
-{- operations mixing Ball and CauchyReal -}
+{- operations mixing MPBall and CauchyReal, resulting in an MPBall -}
 
 instance
     CanAdd MPBall CauchyReal 
@@ -87,31 +87,32 @@ instance
 
 instance CanSubThis MPBall CauchyReal
 
+instance
+    CanMul MPBall CauchyReal 
+    where
+    type MulType MPBall CauchyReal = MPBall
+    mul a (CauchyReal b) = mul a (b (ballAccuracy a))
 
-{- TODO
-instance CanSub (Ball a) (CauchyReal a)
+instance
+    CanMul CauchyReal  MPBall 
+    where
+    type MulType CauchyReal MPBall = MPBall
+    mul (CauchyReal a) b = mul (a (ballAccuracy b)) b
 
-instance CanSub (CauchyReal a) (Ball a)
+instance CanMulBy MPBall CauchyReal
 
-instance CanSubThis (CauchyReal a) (Ball a)
+instance
+    CanDiv MPBall CauchyReal 
+    where
+    type DivType MPBall CauchyReal = MPBall
+    div a (CauchyReal b) = mul a (b (ballAccuracy a))
 
-instance CanMul (Ball a) (CauchyReal a) where
-    type MulType (Ball a) (CauchyReal a) = (Ball a)
-    mul a b = (P.from(Ball a) a) P.* b
+instance
+    CanDiv CauchyReal  MPBall 
+    where
+    type DivType CauchyReal MPBall = MPBall
+    div (CauchyReal a) b = mul (a (ballAccuracy b)) b
 
-instance CanMul (CauchyReal a) (Ball a) where
-    type MulType (CauchyReal a) (Ball a) = (Ball a)
-    mul a b = a P.* (P.from(Ball a) b)
+instance CanDivBy MPBall CauchyReal
 
-instance CanMulBy (CauchyReal a) (Ball a)
 
-instance CanDiv (Ball a) (CauchyReal a) where
-    type DivType (Ball a) (CauchyReal a) = (Ball a)
-    div a b = (P.from(Ball a) a) P./ b
-
-instance CanDiv (CauchyReal a) (Ball a) where
-    type DivType (CauchyReal a) (Ball a) = (Ball a)
-    div a b = a P./ (P.from(Ball a) b)
-
-instance CanDivBy (CauchyReal a) (Ball a)
--}
