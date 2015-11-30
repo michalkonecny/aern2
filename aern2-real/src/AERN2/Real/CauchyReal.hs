@@ -15,7 +15,7 @@ module AERN2.Real.CauchyReal
 )
 where
 
-import Prelude hiding ((+),(*),(/),(-),pi,fromInteger,fromRational)
+import Prelude hiding ((+),(*),(/),(-),abs,recip,pi,fromInteger,fromRational)
 --import qualified Prelude as P
 
 import AERN2.Real.MPFloat (prec)
@@ -64,6 +64,51 @@ instance CanNeg CauchyReal where
     neg (CauchyReal getB) = CauchyReal (\i -> neg $ getB i)
 
 instance CanNegSameType CauchyReal
+
+instance CanAbs CauchyReal where
+    type AbsType CauchyReal = CauchyReal
+    abs (CauchyReal getB) = CauchyReal (\i -> abs $ getB i)
+
+instance CanAbsSameType CauchyReal
+
+instance CanRecip CauchyReal where
+    type RecipType CauchyReal = CauchyReal
+    recip (CauchyReal getB) = CauchyReal (\i -> recip $ getB i)
+
+instance CanRecipSameType CauchyReal
+
+instance CanAdd CauchyReal CauchyReal where
+    type AddType CauchyReal CauchyReal = CauchyReal
+    add (CauchyReal getB1) (CauchyReal getB2) =
+        CauchyReal (\i -> (getB1 i) + (getB2 i))
+
+instance CanAddThis CauchyReal CauchyReal
+
+instance CanAddSameType CauchyReal
+
+instance (CanSub CauchyReal CauchyReal)  
+        
+instance CanSubThis CauchyReal CauchyReal
+
+instance CanSubSameType CauchyReal
+
+instance CanMul CauchyReal CauchyReal where
+    type MulType CauchyReal CauchyReal = CauchyReal
+    mul (CauchyReal getB1) (CauchyReal getB2) =
+        CauchyReal (\i -> (getB1 i) * (getB2 i))
+
+instance CanMulBy CauchyReal CauchyReal
+
+instance CanMulSameType CauchyReal
+
+instance CanDiv CauchyReal CauchyReal where
+    type DivType CauchyReal CauchyReal = CauchyReal
+    div (CauchyReal getB1) (CauchyReal getB2) =
+        CauchyReal (\i -> (getB1 i) / (getB2 i))
+
+instance CanDivBy CauchyReal CauchyReal
+
+instance CanDivSameType CauchyReal
 
 
 {- operations mixing MPBall and CauchyReal, resulting in an MPBall -}
