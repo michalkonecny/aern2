@@ -39,7 +39,7 @@ convergent2Cauchy convergentSeq i =
     aux 2 3
     where
     aux j j'
-        | ballAccuracy xj >= i = xj
+        | getAccuracy xj >= i = xj
         | j > maxPrecision = error "convergent2Cauchy: the sequence either converges too slowly or it does not converge"
         | otherwise = aux j' (j+j') -- try precisions following the Fibonacci sequence
         where
@@ -48,7 +48,7 @@ convergent2Cauchy convergentSeq i =
 
 rational2CauchyReal :: Rational -> CauchyReal
 rational2CauchyReal q =
-    CauchyReal $ convergent2Cauchy $ \ p -> rational2MPBall (prec p) q 
+    CauchyReal $ convergent2Cauchy $ \ p -> fromRationalP (prec p) q 
 
 pi :: CauchyReal
 pi = CauchyReal piByAccuracy
@@ -57,19 +57,28 @@ piByAccuracy :: Integer -> MPBall
 piByAccuracy =
     convergent2Cauchy (\ p -> piBallUsingPrecision (prec p))
 
+{- Operations among CauchyReal's -}
+
+instance CanNeg CauchyReal where
+    type NegType CauchyReal = CauchyReal
+    neg (CauchyReal getB) = CauchyReal (\i -> neg $ getB i)
+
+instance CanNegSameType CauchyReal
+
+
 {- operations mixing MPBall and CauchyReal, resulting in an MPBall -}
 
 instance
     CanAdd MPBall CauchyReal 
     where
     type AddType MPBall CauchyReal = MPBall
-    add a (CauchyReal b) = add a (b (ballAccuracy a))
+    add a (CauchyReal b) = add a (b (getAccuracy a))
 
 instance
     CanAdd CauchyReal  MPBall 
     where
     type AddType CauchyReal MPBall = MPBall
-    add (CauchyReal a) b = add (a (ballAccuracy b)) b
+    add (CauchyReal a) b = add (a (getAccuracy b)) b
 
 instance CanAddThis MPBall CauchyReal
 
@@ -77,13 +86,13 @@ instance
     CanSub MPBall CauchyReal 
     where
     type SubType MPBall CauchyReal = MPBall
-    sub a (CauchyReal b) = sub a (b (ballAccuracy a))
+    sub a (CauchyReal b) = sub a (b (getAccuracy a))
 
 instance
     CanSub CauchyReal  MPBall 
     where
     type SubType CauchyReal MPBall = MPBall
-    sub (CauchyReal a) b = sub (a (ballAccuracy b)) b
+    sub (CauchyReal a) b = sub (a (getAccuracy b)) b
 
 instance CanSubThis MPBall CauchyReal
 
@@ -91,13 +100,13 @@ instance
     CanMul MPBall CauchyReal 
     where
     type MulType MPBall CauchyReal = MPBall
-    mul a (CauchyReal b) = mul a (b (ballAccuracy a))
+    mul a (CauchyReal b) = mul a (b (getAccuracy a))
 
 instance
     CanMul CauchyReal  MPBall 
     where
     type MulType CauchyReal MPBall = MPBall
-    mul (CauchyReal a) b = mul (a (ballAccuracy b)) b
+    mul (CauchyReal a) b = mul (a (getAccuracy b)) b
 
 instance CanMulBy MPBall CauchyReal
 
@@ -105,13 +114,13 @@ instance
     CanDiv MPBall CauchyReal 
     where
     type DivType MPBall CauchyReal = MPBall
-    div a (CauchyReal b) = mul a (b (ballAccuracy a))
+    div a (CauchyReal b) = mul a (b (getAccuracy a))
 
 instance
     CanDiv CauchyReal  MPBall 
     where
     type DivType CauchyReal MPBall = MPBall
-    div (CauchyReal a) b = mul (a (ballAccuracy b)) b
+    div (CauchyReal a) b = mul (a (getAccuracy b)) b
 
 instance CanDivBy MPBall CauchyReal
 

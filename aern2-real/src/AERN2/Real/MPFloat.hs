@@ -1,7 +1,7 @@
 {-# LANGUAGE StandaloneDeriving, GeneralizedNewtypeDeriving, TypeSynonymInstances #-}
 
 module AERN2.Real.MPFloat 
-    (MPFloat, Precision, prec, maximumPrecision, setPrecisionUp,
+    (MPFloat, Precision, prec, getPrecision, maximumPrecision, setPrecisionUp,
      toRational, toDoubleUp, toDoubleDown,
      zero, rationalUp, rationalDown, integerUp, integerDown,
      neg, abs, addUp, addDown, subUp, subDown, 
@@ -36,6 +36,9 @@ prec p
 
 maximumPrecision :: Integer
 maximumPrecision = 1000000
+
+getPrecision :: MPFloat -> Precision
+getPrecision x = Precision (P.toInteger $ MPLow.getPrec x)
 
 {- conversions -}
 

@@ -7,14 +7,15 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
 module AERN2.Real.MPBall
-    (MPBall(..), ballAccuracy,
-     rational2MPBall, rationals2MPBall,
+    (MPBall(..), getAccuracy,
+     fromIntegerP, fromRationalP, fromRationalBallP, 
      piBallUsingPrecision) 
 where
 
 import Prelude hiding ((+),(*),(/),(-),abs,recip,fromInteger,fromRational)
 --import qualified Prelude as P
 
+import AERN2.Real.IntegerRational ()
 import qualified AERN2.Real.ErrorBound as EB
 import AERN2.Real.ErrorBound (ErrorBound(..))
 import qualified AERN2.Real.MPFloat as MP
@@ -28,27 +29,38 @@ instance Show MPBall
     where
     show (MPBall x e) = "[" ++ show x ++ " ± " ++ show e ++ "]"
 
-rationals2MPBall :: MP.Precision -> (Rational, Rational) -> MPBall 
-rationals2MPBall p (x,e) =
+fromRationalBallP :: MP.Precision -> (Rational, Rational) -> MPBall 
+fromRationalBallP p (x,e) =
     MPBall xUp (xe + eUp)
     where
-    (MPBall xUp xe) = rational2MPBall p x
+    (MPBall xUp xe) = fromRationalP p x
     eUp = EB.rational2ErrorBound e
     
-rational2MPBall :: MP.Precision -> Rational -> MPBall
-rational2MPBall p x =
+fromRationalP :: MP.Precision -> Rational -> MPBall
+fromRationalP p x =
     MPBall xUp (xUp `EB.subMP` xDn)
     where
     xUp = MP.rationalUp p x
     xDn = MP.rationalDown p x
 
-ballAccuracy :: 
+fromIntegerP :: MP.Precision -> Integer -> MPBall
+fromIntegerP p x =
+    MPBall xUp (xUp `EB.subMP` xDn)
+    where
+    xUp = MP.integerUp p x
+    xDn = MP.integerDown p x
+
+getAccuracy :: 
     MPBall -> Integer
-ballAccuracy (MPBall _ e) = 
+getAccuracy (MPBall _ e) = 
     EB.accuracyIndex e
 
-ballNonZero :: MPBall -> Bool
-ballNonZero (MPBall x e) =
+getPrecision :: MPBall -> Precision
+getPrecision (MPBall x _) =
+    MP.getPrecision x
+
+isNonZero :: MPBall -> Bool
+isNonZero (MPBall x e) =
     (MP.abs x) `MP.subDown` (EB.er2mp e) > MP.zero
 
 instance CanNeg MPBall where
@@ -56,6 +68,18 @@ instance CanNeg MPBall where
     neg (MPBall x1 e1) = MPBall (MP.neg x1) e1
 
 instance CanNegSameType MPBall
+
+instance CanAbs MPBall where
+    type AbsType MPBall = MPBall
+    abs (MPBall x1 e1) = MPBall (MP.abs x1) e1
+
+instance CanAbsSameType MPBall
+
+instance CanRecip MPBall where
+    type RecipType MPBall = MPBall
+    recip b = 1 / b
+
+instance CanRecipSameType MPBall
 
 instance CanAdd MPBall MPBall where
     type AddType MPBall MPBall = MPBall
@@ -95,7 +119,7 @@ instance CanMulSameType MPBall
 instance CanDiv MPBall MPBall where
     type DivType MPBall MPBall = MPBall
     div (MPBall x1 e1) b2@(MPBall x2 e2) 
-        | ballNonZero b2 =
+        | isNonZero b2 =
             MPBall x12Up err
         | otherwise =
             error $ "Division by MPBall that contains 0: " ++ show b2
@@ -137,12 +161,41 @@ piBallUsingPrecision p = MPBall piUp (piUp `EB.subMP` piDown)
     piUp = MP.piUp p 
     piDown = MP.piDown p 
 
-{- 
-    TODO: Instances such as: 
-        CanDivBy MPBall Integer 
-        CanDivBy MPBall Rational
-        CanCosine MPBall 
--} 
+instance CanAdd Integer MPBall where
+    type AddType Integer MPBall = MPBall
+    add a b = (fromIntegerP (getPrecision b) a) + b
+
+instance CanSub Integer MPBall
+
+instance CanAdd MPBall Integer where
+    type AddType MPBall Integer = MPBall
+    add a b = a + (fromIntegerP (getPrecision a) b)
+
+instance CanAddThis MPBall Integer
+
+instance CanSub MPBall Integer
+
+instance CanSubThis MPBall Integer
+
+instance CanMul Integer MPBall where
+    type MulType Integer MPBall = MPBall
+    mul a b = (fromIntegerP (getPrecision b) a) * b
+
+instance CanMul MPBall Integer where
+    type MulType MPBall Integer = MPBall
+    mul a b = a * (fromIntegerP (getPrecision a) b)
+
+instance CanMulBy MPBall Integer
+
+instance CanDiv Integer MPBall where
+    type DivType Integer MPBall = MPBall
+    div a b = (fromIntegerP (getPrecision b) a) / b
+
+instance CanDiv MPBall Integer where
+    type DivType MPBall Integer = MPBall
+    div a b = a / (fromIntegerP (getPrecision a) b)
+
+instance CanDivBy MPBall Integer
 
 {- generic methods for computing real functions from MPFR-approximations -}
 
@@ -201,3 +254,4 @@ instance CanSineCosine MPBall where
         type SineCosineType MPBall = MPBall
         sin x = fromApproxWithLipschitz MP.sinDown MP.sinUp (MP.integerUp (MP.prec 53) 1) x
         cos x = fromApproxWithLipschitz MP.cosDown MP.cosUp (MP.integerUp (MP.prec 53) 1) x
+
