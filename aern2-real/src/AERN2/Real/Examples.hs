@@ -10,13 +10,13 @@ module AERN2.Real.Examples
      module Prelude)
 where
 
-import Prelude hiding ((+),(*),(/),(-),(^),abs,recip,div,negate,pi,fromInteger,fromRational,sqrt,cos,sin)
+import Prelude hiding ((+),(*),(/),(-),(^),abs,recip,div,negate,pi,toRational,fromInteger,fromRational,sqrt,cos,sin)
 
 import AERN2.Real.Operations
 import AERN2.Real.IntegerRational ()
-import AERN2.Real.MPBall (rationals2MPBall, MPBall, ballAccuracy, piBallUsingPrecision)
-import AERN2.Real.MPFloat (Precision, prec)
-import AERN2.Real.CauchyReal (CauchyReal, rational2CauchyReal, cauchyReal2ball, pi)
+import AERN2.Real.MPBall
+import AERN2.Real.MPFloat hiding (abs, neg)
+import AERN2.Real.CauchyReal
 
 ballR1 :: MPBall
 ballR1 = rationals2MPBall (prec 1000) (2.0,1/300) :: MPBall 
