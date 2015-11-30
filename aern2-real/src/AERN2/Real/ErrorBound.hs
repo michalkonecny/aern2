@@ -26,7 +26,7 @@ _example1 :: ErrorBound
 _example1 = 2*((rational2ErrorBound 0.01) + 0.1*(rational2ErrorBound 0.01)/3)
 
 {-| A non-negative Double value to serve as an error bound. Arithmetic is rounded towards +infinity. -}
-newtype ErrorBound = ErrorBound MPFloat
+newtype ErrorBound = ErrorBound { er2mp :: MPFloat }
 
 instance Show ErrorBound where
     show (ErrorBound d) = show d
