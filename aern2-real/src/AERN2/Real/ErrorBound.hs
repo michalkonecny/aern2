@@ -6,7 +6,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module AERN2.Real.ErrorBound 
-    (ErrorBound(..), 
+    (ErrorBound, er2mp, 
      rational2ErrorBound,
      mp2ErrorBound, absMP, subMP,
      accuracyIndex) 

@@ -4,7 +4,8 @@ module AERN2.Real.MPFloat
     (MPFloat, Precision, prec, maximumPrecision, setPrecisionUp,
      toRational, toDoubleUp, toDoubleDown,
      zero, rationalUp, rationalDown, integerUp, integerDown,
-     neg, abs, addUp, addDown, subUp, subDown, distUp, distDown,
+     neg, abs, addUp, addDown, subUp, subDown, 
+     distUp, distDown, avgUp, avgDown, 
      mulUp, mulDown, divUp, divDown, recipUp, recipDown,
      piUp, piDown,
      cosUp, cosDown, sinUp, sinDown, sqrtUp, sqrtDown)
@@ -55,6 +56,9 @@ zero = MPLow.zero
 one :: MPFloat
 one = rationalUp (Precision 20) 1.0
     
+two :: MPFloat
+two = rationalUp (Precision 20) 2.0
+    
 integerUp :: Precision -> Integer -> MPFloat
 integerUp p i = rationalUp p (P.fromInteger i)
     
@@ -83,6 +87,12 @@ distUp x y = if x >= y then subUp x y else subUp y x
 distDown :: MPFloat -> MPFloat -> MPFloat
 distDown x y = if x >= y then subDown x y else subDown y x
     
+avgUp :: MPFloat -> MPFloat -> MPFloat
+avgUp x y = (x `addUp` y) `divUp` two
+
+avgDown :: MPFloat -> MPFloat -> MPFloat
+avgDown x y = (x `addDown` y) `divDown` two
+
 {- common functions -}
 
 neg :: MPFloat -> MPFloat
