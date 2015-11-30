@@ -93,11 +93,7 @@ instance CanAddThis MPBall MPBall
 
 instance CanAddSameType MPBall
 
-instance
-    (CanSub MPBall MPBall)  
-    where
-    type SubType MPBall MPBall = MPBall
-    sub b1 b2 = add b1 (neg b2)
+instance CanSub MPBall MPBall  
         
 instance CanSubThis MPBall MPBall
 
