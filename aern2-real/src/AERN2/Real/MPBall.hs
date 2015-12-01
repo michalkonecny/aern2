@@ -4,7 +4,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 module AERN2.Real.MPBall
     (MPBall(..), getAccuracy, getPrecision,
-     isNonZero, getBallNormLog,
+     isNonZero,
      integer, integerP,  toIntegerUp, toIntegerDown,
      rationalP, rationalBallP, 
      piBallUsingPrecision) 
@@ -81,27 +81,22 @@ isNonZero (MPBall x e) =
     (MP.abs x) `MP.subDown` (EB.er2mp e) > MP.zero
 
 
-{-|
-    For a ball @b@, return an integer @i@ with @|ball| <= 2^i@.
-    Moreover, @i@ is close to the smallest integer with this property.
-    If ball == 0 then return Nothing.  
--}
-getBallNormLog :: MPBall -> Maybe Integer
-getBallNormLog ball
-    | integerBound > 1 = 
-        Just $ toInteger $ integerLog2 $ integerBound
-    | integerRecipBound > 1 = 
-        Just $ 1 + (neg $ toInteger $ integerLog2 $ integerRecipBound)
-    | otherwise = Nothing
-    where
-    ballR =
-        endpoints2Ball r r
+instance HasNorm MPBall where
+    getNormLog ball
+        | integerBound > 1 = 
+            NormBits $ toInteger $ integerLog2 $ integerBound
+        | integerRecipBound > 1 = 
+            NormBits  $ 1 + (neg $ toInteger $ integerLog2 $ integerRecipBound)
+        | otherwise = NormZero
         where
-        r = snd $ ball2endpoints $ abs ball
-    integerBound = toIntegerUp ballR
-    integerRecipBound 
-        | isNonZero ballR = toIntegerUp (1 / ballR)
-        | otherwise = 0
+        ballR =
+            endpoints2Ball r r
+            where
+            r = snd $ ball2endpoints $ abs ball
+        integerBound = toIntegerUp ballR
+        integerRecipBound 
+            | isNonZero ballR = toIntegerUp (1 / ballR)
+            | otherwise = 0
 
 instance HasEq MPBall MPBall where
     type EqCompareType MPBall MPBall = Maybe Bool

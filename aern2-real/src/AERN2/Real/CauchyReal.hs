@@ -29,7 +29,7 @@ import AERN2.Real.Accuracy (Accuracy)
 import AERN2.Real.MPFloat (prec)
 import qualified AERN2.Real.MPBall as MB
 import AERN2.Real.MPBall (MPBall)
-import AERN2.Real.IntegerRational
+import AERN2.Real.IntegerRational ()
 import AERN2.Real.Operations
 --import AERN2.Real.OperationsToBall ()
 
@@ -118,20 +118,20 @@ instance CanMul CauchyReal CauchyReal where
             where
             jInit1 = 
                 case maybeA2NormLog of
-                    Just a2NormLog -> max (A.bits 0) (i + a2NormLog + 1)
-                    Nothing -> A.bits 0
+                    NormBits a2NormLog -> max (A.bits 0) (i + a2NormLog + 1)
+                    NormZero -> A.bits 0
             jInit2 = 
                 case maybeA1NormLog of
-                    Just a1NormLog -> max (A.bits 0) (i + a1NormLog + 1)
-                    Nothing -> A.bits 0
+                    NormBits a1NormLog -> max (A.bits 0) (i + a1NormLog + 1)
+                    NormZero -> A.bits 0
             maybeA1NormLog = getSeqNormLog i getB1   
             maybeA2NormLog = getSeqNormLog i getB2   
 
-getSeqNormLog :: Accuracy -> (Accuracy -> MPBall) -> Maybe Integer
+getSeqNormLog :: Accuracy -> (Accuracy -> MPBall) -> NormLog
 getSeqNormLog i getB =
     case 1 < getB0 of
-        Just True -> MB.getBallNormLog getB0
-        _ -> MB.getBallNormLog (getB i)
+        Just True -> getNormLog getB0
+        _ -> getNormLog (getB i)
     where
     getB0 = getB (A.bits 0)
 
@@ -150,13 +150,13 @@ instance CanDiv CauchyReal CauchyReal where
             where
             jInit1 = 
                 case maybeA2NormLog of
-                    Just a2NormLog -> max 0 (i - a2NormLog + 1)
-                    Nothing -> A.bits 0 -- denominator == 0, we have no chance...
+                    NormBits a2NormLog -> max 0 (i - a2NormLog + 1)
+                    NormZero -> A.bits 0 -- denominator == 0, we have no chance...
             jInit2 =
                 case (maybeA1NormLog, maybeA2NormLog) of
-                    (_, Nothing) -> A.bits 0 -- denominator == 0, we have no chance... 
-                    (Nothing, _) -> A.bits 0 -- numerator == 0, it does not matter 
-                    (Just a1NormLog, Just a2NormLog) -> 
+                    (_, NormZero) -> A.bits 0 -- denominator == 0, we have no chance... 
+                    (NormZero, _) -> A.bits 0 -- numerator == 0, it does not matter 
+                    (NormBits a1NormLog, NormBits a2NormLog) -> 
                         max 0 (i + a1NormLog + 1 - 2 * a2NormLog)
             maybeA1NormLog = getSeqNormLog i getB1
             maybeA2NormLog = getSeqNormLog i getB2   
@@ -174,8 +174,8 @@ instance CanSqrt CauchyReal where
             where
             jInit = 
                 case maybeSqrtNormLog of
-                    Just sqrtNormLog -> max 0 (i - 1 - sqrtNormLog)
-                    Nothing -> i
+                    NormBits sqrtNormLog -> max 0 (i - 1 - sqrtNormLog)
+                    NormZero -> i
             maybeSqrtNormLog = getSeqNormLog i (\j -> sqrt (getB1 j)) 
 
 instance CanSineCosine CauchyReal where
@@ -279,9 +279,9 @@ instance CanMul Integer CauchyReal where
             where
             jInit = 
                 case maybeA1NormLog of
-                    Just a1NormLog -> max 0 (i + a1NormLog)
-                    Nothing -> A.bits 0
-            maybeA1NormLog = getIntegerNormLog a1
+                    NormBits a1NormLog -> max 0 (i + a1NormLog)
+                    NormZero -> A.bits 0
+            maybeA1NormLog = getNormLog a1
 
 
 instance CanMul CauchyReal Integer where
@@ -301,11 +301,11 @@ instance CanDiv Integer CauchyReal where
             where
             jInit =
                 case (maybeA1NormLog, maybeA2NormLog) of
-                    (_, Nothing) -> A.bits 0 -- denominator == 0, we have no chance... 
-                    (Nothing, _) -> A.bits 0 -- numerator == 0, it does not matter 
-                    (Just a1NormLog, Just a2NormLog) -> 
+                    (_, NormZero) -> A.bits 0 -- denominator == 0, we have no chance... 
+                    (NormZero, _) -> A.bits 0 -- numerator == 0, it does not matter 
+                    (NormBits a1NormLog, NormBits a2NormLog) -> 
                         max 0 (i + a1NormLog - 2 * a2NormLog)
-            maybeA1NormLog = getIntegerNormLog a1
+            maybeA1NormLog = getNormLog a1
             maybeA2NormLog = getSeqNormLog i getB2   
 
 
@@ -319,9 +319,9 @@ instance CanDiv CauchyReal Integer where
             where
             jInit = 
                 case maybeA2NormLog of
-                    Just a2NormLog -> max 0 (i - a2NormLog)
-                    Nothing -> A.bits 0 -- denominator == 0, we have no chance...
-            maybeA2NormLog = getIntegerNormLog a2  
+                    NormBits a2NormLog -> max 0 (i - a2NormLog)
+                    NormZero -> A.bits 0 -- denominator == 0, we have no chance...
+            maybeA2NormLog = getNormLog a2  
 
 instance CanDivBy CauchyReal Integer
 
@@ -363,9 +363,9 @@ instance CanMul Rational CauchyReal where
             where
             jInit = 
                 case maybeA1NormLog of
-                    Just a1NormLog -> max 0 (i + a1NormLog)
-                    Nothing -> A.bits 0
-            maybeA1NormLog = getRationalNormLog a1
+                    NormBits a1NormLog -> max 0 (i + a1NormLog)
+                    NormZero -> A.bits 0
+            maybeA1NormLog = getNormLog a1
 
 instance CanMul CauchyReal Rational where
     type MulType CauchyReal Rational = CauchyReal
@@ -384,11 +384,11 @@ instance CanDiv Rational CauchyReal where
             where
             jInit =
                 case (maybeA1NormLog, maybeA2NormLog) of
-                    (_, Nothing) -> A.bits 0 -- denominator == 0, we have no chance... 
-                    (Nothing, _) -> A.bits 0 -- numerator == 0, it does not matter 
-                    (Just a1NormLog, Just a2NormLog) -> 
+                    (_, NormZero) -> A.bits 0 -- denominator == 0, we have no chance... 
+                    (NormZero, _) -> A.bits 0 -- numerator == 0, it does not matter 
+                    (NormBits a1NormLog, NormBits a2NormLog) -> 
                         max 0 (i + a1NormLog - 2 * a2NormLog)
-            maybeA1NormLog = getRationalNormLog a1
+            maybeA1NormLog = getNormLog a1
             maybeA2NormLog = getSeqNormLog i getB2   
 
 instance CanDiv CauchyReal Rational where

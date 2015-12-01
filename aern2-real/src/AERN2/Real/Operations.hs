@@ -6,6 +6,7 @@ module AERN2.Real.Operations
     fromInteger, fromRational, ifThenElse, int,
     (==), (/=), (>), (<), (<=), (>=),
     HasEq(..), HasOrder(..),
+    HasNorm(..), NormLog(..),
     negate, CanNeg(..), CanNegSameType,
     (+), (-), (*), (/), (^),
     CanAbs(..), CanAbsSameType,
@@ -109,6 +110,16 @@ class HasOrder a b where
     greaterThan :: a -> b -> OrderCompareType a b
     leq :: a -> b -> OrderCompareType a b
     geq :: a -> b -> OrderCompareType a b
+
+class HasNorm a where
+    {-|
+        For a value @x@, return @NormBits j@ where $j$ is close
+        to the smallest @i@ with @|x| <= 2^i@.
+        If @x == 0@ then return @NormZero@.
+    -}
+    getNormLog :: a -> NormLog
+
+data NormLog = NormBits Integer | NormZero
 
 class CanNeg a where
     type NegType a :: *
