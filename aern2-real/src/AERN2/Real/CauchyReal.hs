@@ -26,7 +26,7 @@ import Prelude hiding
 import qualified AERN2.Real.Accuracy as A
 import AERN2.Real.Accuracy (Accuracy)
 
-import AERN2.Real.MPFloat (prec)
+import AERN2.Real.MPFloat (Precision)
 import qualified AERN2.Real.MPBall as MB
 import AERN2.Real.MPBall (MPBall)
 import AERN2.Real.IntegerRational ()
@@ -46,31 +46,26 @@ showCauchyReal :: A.Accuracy -> CauchyReal -> String
 showCauchyReal a r = show (cauchyReal2ball r a)
 
 convergent2Cauchy :: 
-    (Integer -> MPBall) -> (A.Accuracy -> MPBall)
-convergent2Cauchy _convergentSeq A.Exact =
-    error "Could not produce an exact representation for this CauchyReal."
-    -- TODO: try a certain accuracy and see whether the ball happens to be exact
+    (Precision -> MPBall) -> (A.Accuracy -> MPBall)
 convergent2Cauchy convergentSeq i =
-    aux 2 3
+    findAccurate $ map convergentSeq MB.standardPrecisions
     where
-    aux j j'
-        | MB.getAccuracy xj >= i = xj
-        | j > maxPrecision = error "convergent2Cauchy: the sequence either converges too slowly or it does not converge"
-        | otherwise = aux j' (j+j') -- try precisions following the Fibonacci sequence
-        where
-        xj = convergentSeq j
-        maxPrecision = 1000000
+    findAccurate [] =
+        error "convergent2Cauchy: the sequence either converges too slowly or it does not converge"
+    findAccurate (b : rest)
+        | MB.getAccuracy b >= i = b
+        | otherwise = findAccurate rest
 
 rational2CauchyReal :: Rational -> CauchyReal
 rational2CauchyReal q =
-    CauchyReal $ convergent2Cauchy $ \ p -> MB.rationalP (prec p) q 
+    CauchyReal $ convergent2Cauchy $ \ p -> MB.rationalP p q 
 
 pi :: CauchyReal
 pi = CauchyReal piByAccuracy
     
 piByAccuracy :: Accuracy -> MPBall
 piByAccuracy =
-    convergent2Cauchy (\ p -> MB.piBallUsingPrecision (prec p))
+    convergent2Cauchy (\ p -> MB.piBallUsingPrecision p)
 
 {- Operations among CauchyReal's -}
 
@@ -327,12 +322,12 @@ instance CanDivBy CauchyReal Integer
 
 instance CanSqrt Integer where
     type SqrtType Integer = CauchyReal
-    sqrt x = CauchyReal (convergent2Cauchy $ \p -> sqrt (MB.integerP (prec p) x))      
+    sqrt x = CauchyReal (convergent2Cauchy $ \p -> sqrt (MB.integerP p x))      
         
 instance CanSineCosine Integer where
     type SineCosineType Integer = CauchyReal
-    sin x = CauchyReal (convergent2Cauchy $ \p -> sin (MB.integerP (prec p) x))
-    cos x = CauchyReal (convergent2Cauchy $ \p -> cos (MB.integerP (prec p) x))
+    sin x = CauchyReal (convergent2Cauchy $ \p -> sin (MB.integerP p x))
+    cos x = CauchyReal (convergent2Cauchy $ \p -> cos (MB.integerP p x))
 
 
 {- CauchyReal-Rational operations -}
@@ -399,12 +394,12 @@ instance CanDivBy CauchyReal Rational
 
 instance CanSqrt Rational where
     type SqrtType Rational = CauchyReal
-    sqrt x = CauchyReal (convergent2Cauchy $ \p -> sqrt (MB.rationalP (prec p) x))      
+    sqrt x = CauchyReal (convergent2Cauchy $ \p -> sqrt (MB.rationalP p x))      
         
 instance CanSineCosine Rational where
     type SineCosineType Rational = CauchyReal
-    sin x = CauchyReal (convergent2Cauchy $ \p -> sin (MB.rationalP (prec p) x))
-    cos x = CauchyReal (convergent2Cauchy $ \p -> cos (MB.rationalP (prec p) x))
+    sin x = CauchyReal (convergent2Cauchy $ \p -> sin (MB.rationalP p x))
+    cos x = CauchyReal (convergent2Cauchy $ \p -> cos (MB.rationalP p x))
 
 
 {- operations mixing MPBall and CauchyReal, resulting in an MPBall -}

@@ -3,7 +3,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
 module AERN2.Real.MPBall
-    (MPBall(..), getAccuracy, getPrecision,
+    (MPBall(..), getAccuracy, getPrecision, MP.standardPrecisions,
      isNonZero,
      integer, integerP,  toIntegerUp, toIntegerDown,
      rationalP, rationalBallP, 
