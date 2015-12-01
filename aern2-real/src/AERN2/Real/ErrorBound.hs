@@ -14,7 +14,7 @@ where
 
 import Prelude hiding ((+),(*),(/),(-),fromInteger,fromRational, abs)
 
-import Math.NumberTheory.Logarithms
+import Math.NumberTheory.Logarithms (integerLog2)
 
 import qualified AERN2.Real.MPFloat as MP
 import AERN2.Real.MPFloat (MPFloat, Precision, prec)

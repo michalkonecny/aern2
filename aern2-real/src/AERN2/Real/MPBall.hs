@@ -7,8 +7,9 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
 module AERN2.Real.MPBall
-    (MPBall(..), getAccuracy,
-     fromIntegerP, fromRationalP, fromRationalBallP, 
+    (MPBall(..), getAccuracy, getPrecision,
+     fromIntegerP,  toIntegerUp, toIntegerDown,
+     fromRationalP, fromRationalBallP, 
      piBallUsingPrecision) 
 where
 
@@ -49,6 +50,11 @@ fromIntegerP p x =
     where
     xUp = MP.integerUp p x
     xDn = MP.integerDown p x
+
+toIntegerUp :: MPBall -> Integer
+toIntegerUp x = ceiling $ MP.toRational $ snd $ ball2endpoints x
+toIntegerDown :: MPBall -> Integer
+toIntegerDown x = floor $ MP.toRational $ fst $ ball2endpoints x
 
 getAccuracy :: 
     MPBall -> Integer

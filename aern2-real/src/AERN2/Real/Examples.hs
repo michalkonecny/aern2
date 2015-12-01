@@ -15,7 +15,7 @@ import Prelude hiding ((+),(*),(/),(-),(^),abs,recip,div,negate,pi,toRational,fr
 import AERN2.Real.Operations
 import AERN2.Real.IntegerRational ()
 import AERN2.Real.MPBall
-import AERN2.Real.MPFloat hiding (abs, neg)
+import AERN2.Real.MPFloat hiding (abs, neg, getPrecision)
 import AERN2.Real.CauchyReal
 
 ballR1 :: MPBall

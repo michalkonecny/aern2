@@ -18,11 +18,16 @@ where
 import Prelude hiding ((+),(*),(/),(-),abs,recip,pi,fromInteger,fromRational,sqrt,sin,cos)
 --import qualified Prelude as P
 
+import Math.NumberTheory.Logarithms (integerLog2)
+
 import AERN2.Real.MPFloat (prec)
 import AERN2.Real.MPBall
 import AERN2.Real.IntegerRational ()
 import AERN2.Real.Operations
 --import AERN2.Real.OperationsToBall ()
+
+import Debug.Trace (trace)
+_ = trace
 
 {-| Invariant: For any @(CauchyReal seq)@ it holds @ball_error (seq i) <= 2^^(-i)@ -}
 data CauchyReal = CauchyReal (Integer -> MPBall) 
@@ -114,6 +119,45 @@ instance CanDivBy CauchyReal CauchyReal
 instance CanDivSameType CauchyReal
 -}
 
+{-
+Typically ensureAccuracy1 is called with a j such that the result is of
+accuracy >= i.  In some cases j needs to be slightly increased.  
+For example:
+
+*AERN2.Real.Examples> cauchyReal2ball (10 * pi) 138
+ensureAccuracy1: i = 138; j = 141; result accuracy = 137
+ensureAccuracy1: i = 138; j = 142; result accuracy = 137
+ensureAccuracy1: i = 138; j = 143; result accuracy = 226
+[31.41592653589793 ± 5.216071149404186e-69]
+
+*AERN2.Real.Examples> cauchyReal2ball (pi / 10) 56
+ensureAccuracy1: i = 56; j = 53; result accuracy = 55
+ensureAccuracy1: i = 56; j = 54; result accuracy = 89
+[3.141592653589793e-1 ± 1.454028420503369e-27]
+
+-}
+ensureAccuracy1 ::
+    Integer -> Integer -> (Integer -> MPBall) -> MPBall
+ensureAccuracy1 i j getB 
+    | getAccuracy result >= i = 
+        -- TODO: disable this trace 
+        trace (
+            "ensureAccuracy1: i = " ++ show i ++ 
+            "; j = " ++ show j ++ 
+            "; result accuracy = " ++ (show $ getAccuracy result)
+        ) $ 
+        result
+    | otherwise =
+        -- TODO: disable this trace 
+        trace (
+            "ensureAccuracy1: i = " ++ show i ++ 
+            "; j = " ++ show j ++ 
+            "; result accuracy = " ++ (show $ getAccuracy result)
+        ) $ 
+        ensureAccuracy1 i (j+1) getB
+    where
+    result = getB j
+
 {- CauchyReal-Integer operations -}
 
 instance CanAdd Integer CauchyReal where
@@ -132,28 +176,54 @@ instance CanSub CauchyReal Integer
 
 instance CanSubThis CauchyReal Integer
 
-{- TODO: preserve fast convergence
-
 instance CanMul Integer CauchyReal where
     type MulType Integer CauchyReal = CauchyReal
-    mul a (CauchyReal getB2) = CauchyReal (\i -> a * (getB2 i))
+    mul a (CauchyReal getB2) = 
+        CauchyReal getB
+        where
+        getB i =
+            ensureAccuracy1 i jInit (\j -> a * (getB2 j))
+            where
+            jInit 
+                | a == 0 = 0
+                | otherwise = i + aNorm
+            aNorm = toInteger $ integerLog2 $ abs a 
+
 
 instance CanMul CauchyReal Integer where
     type MulType CauchyReal Integer = CauchyReal
-    mul (CauchyReal getB1) b = CauchyReal (\i -> (getB1 i) * b)
+    mul a b = mul b a 
 
 instance CanMulBy CauchyReal Integer
 
 instance CanDiv Integer CauchyReal where
     type DivType Integer CauchyReal = CauchyReal
-    div a (CauchyReal getB2) = CauchyReal (\i -> a / (getB2 i))
+    div a (CauchyReal getB2) = 
+        CauchyReal getB
+        where
+        getB i =
+            ensureAccuracy1 i jInit (\j -> a / (getB2 j))
+            where
+            jInit 
+                | a == 0 = 0
+                | otherwise = i + aNormLog + 2 * bRecipNormLog
+            aNormLog = toInteger $ integerLog2 $ abs a
+            bRecipNormLog = toInteger $ integerLog2 $ toIntegerUp $ abs $ (1 / getB2 i) 
 
 instance CanDiv CauchyReal Integer where
     type DivType CauchyReal Integer = CauchyReal
-    div (CauchyReal getB1) b = CauchyReal (\i -> (getB1 i) / b)
+    div (CauchyReal getB1) a = 
+        CauchyReal getB
+        where
+        getB i =
+            ensureAccuracy1 i jInit (\j -> (getB1 j) / a)
+            where
+            jInit 
+                | a == 0 = 0
+                | otherwise = i - aNorm
+            aNorm = toInteger $ integerLog2 $ abs a 
 
 instance CanDivBy CauchyReal Integer
--}
 
 instance CanSqrt Integer where
     type SqrtType Integer = CauchyReal
@@ -183,27 +253,44 @@ instance CanSub CauchyReal Rational
 
 instance CanSubThis CauchyReal Rational
 
-{- TODO: preserve fast convergence
 instance CanMul Rational CauchyReal where
     type MulType Rational CauchyReal = CauchyReal
-    mul a (CauchyReal getB2) = CauchyReal (\i -> a * (getB2 i))
+    mul a (CauchyReal getB2) = 
+        CauchyReal getB
+        where
+        getB i =
+            ensureAccuracy1 i jInit (\j -> a * (getB2 j))
+            where
+            jInit 
+                | a == 0.0 = 0
+                | otherwise = i + aNorm
+            aNorm = toInteger $ integerLog2 $ ceiling $ abs a 
 
 instance CanMul CauchyReal Rational where
     type MulType CauchyReal Rational = CauchyReal
-    mul (CauchyReal getB1) b = CauchyReal (\i -> (getB1 i) * b)
+    mul a b = mul b a
 
 instance CanMulBy CauchyReal Rational
 
 instance CanDiv Rational CauchyReal where
     type DivType Rational CauchyReal = CauchyReal
-    div a (CauchyReal getB2) = CauchyReal (\i -> a / (getB2 i))
+    div a (CauchyReal getB2) = 
+        CauchyReal getB
+        where
+        getB i =
+            ensureAccuracy1 i jInit (\j -> a / (getB2 j))
+            where
+            jInit 
+                | a == 0.0 = 0
+                | otherwise = i + aNormLog + 2 * bRecipNormLog
+            aNormLog = toInteger $ integerLog2 $ ceiling $ abs a
+            bRecipNormLog = toInteger $ integerLog2 $ toIntegerUp $ abs $ (1 / getB2 i) 
 
 instance CanDiv CauchyReal Rational where
     type DivType CauchyReal Rational = CauchyReal
-    div (CauchyReal getB1) b = CauchyReal (\i -> (getB1 i) / b)
+    div a b = mul (1/b) a 
 
 instance CanDivBy CauchyReal Rational
--}
 
 instance CanSqrt Rational where
     type SqrtType Rational = CauchyReal
