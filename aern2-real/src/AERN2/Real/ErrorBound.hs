@@ -1,7 +1,3 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 
@@ -9,13 +5,19 @@ module AERN2.Real.ErrorBound
     (ErrorBound, er2mp, 
      rational2ErrorBound,
      mp2ErrorBound, absMP, subMP,
-     accuracyIndex) 
+     getAccuracy) 
 where
 
-import Prelude hiding ((+),(*),(/),(-),fromInteger,fromRational, abs)
+import Prelude hiding
+    ((==),(/=),(<),(>),(<=),(>=),
+     (+),(*),(/),(-),(^),abs,min,max,
+     recip,div,negate,
+     fromInteger,fromRational,
+     sqrt,cos,sin)
 
 import Math.NumberTheory.Logarithms (integerLog2)
 
+import qualified AERN2.Real.Accuracy as A
 import qualified AERN2.Real.MPFloat as MP
 import AERN2.Real.MPFloat (MPFloat, Precision, prec)
 import AERN2.Real.Operations
@@ -51,9 +53,11 @@ a `subMP` b = mp2ErrorBound $ a `MP.subUp` b
 absMP :: MPFloat -> ErrorBound
 absMP = mp2ErrorBound . MP.abs
 
-accuracyIndex :: ErrorBound -> Integer
-accuracyIndex (ErrorBound e) = 
-    toInteger $ integerLog2 $ floor $ MP.toRational $ MP.recipDown e
+getAccuracy :: ErrorBound -> A.Accuracy
+getAccuracy (ErrorBound e) 
+    | e > MP.zero = 
+        A.bits $ toInteger $ integerLog2 $ floor $ MP.toRational $ MP.recipDown e
+    | otherwise = A.Exact
 
 instance CanAdd ErrorBound ErrorBound where
     type AddType ErrorBound ErrorBound = ErrorBound

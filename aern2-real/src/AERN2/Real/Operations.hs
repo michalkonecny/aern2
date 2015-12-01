@@ -1,16 +1,15 @@
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE UndecidableInstances  #-}
---{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE RebindableSyntax #-}
 
 module AERN2.Real.Operations 
 (
     fromInteger, fromRational, ifThenElse, int,
+    (==), (/=), (>), (<), (<=), (>=),
+    HasEq(..), HasOrder(..),
     negate, CanNeg(..), CanNegSameType,
     (+), (-), (*), (/), (^),
     CanAbs(..), CanAbsSameType,
+    CanMinMax(..), CanMinMaxThis, CanMinMaxSameType,
     CanAdd(..), CanAddThis, CanAddSameType,
     CanSub(..), CanSubThis, CanSubSameType,
     CanMul(..), CanMulBy, CanMulSameType,
@@ -22,9 +21,14 @@ module AERN2.Real.Operations
 )
 where
 
-import Prelude hiding ((+),(*),(/),(-),(^),abs,recip,div,negate,fromInteger,fromRational,sqrt,cos,sin)
+import Prelude hiding
+    ((==),(/=),(<),(>),(<=),(>=),
+     (+),(*),(/),(-),(^),abs,min,max,
+     recip,div,negate,
+     fromInteger,fromRational,
+     sqrt,cos,sin)
 
-import qualified Prelude as P (fromInteger)
+import qualified Prelude as P (fromInteger, (<=), (>=))
 
 {- 
     The following arranges that all numeric literals are monomorphic and of the type Integer or Rational.
@@ -55,9 +59,9 @@ int i
     | otherwise = error $ "int out of range: " ++ show i 
     where
     iInIntRange =
-        i >= toInteger (minBound :: Int)
+        i P.>= toInteger (minBound :: Int)
         &&
-        i <= toInteger (maxBound :: Int)
+        i P.<= toInteger (maxBound :: Int)
 
 
 {- 
@@ -80,6 +84,31 @@ negate x = neg x
 (/) x y = div x y
 (^) :: CanPow a b => a -> b -> PowType a b
 (^) x y = pow x y
+
+(==) :: HasEq a b => a -> b -> EqCompareType a b
+(==) x y = equalTo x y
+(/=) :: HasEq a b => a -> b -> EqCompareType a b
+(/=) x y = notEqualTo x y
+(<) :: HasOrder a b => a -> b -> OrderCompareType a b
+(<) x y = lessThan x y
+(>) :: HasOrder a b => a -> b -> OrderCompareType a b
+(>) x y = greaterThan x y
+(<=) :: HasOrder a b => a -> b -> OrderCompareType a b
+(<=) x y = leq x y
+(>=) :: HasOrder a b => a -> b -> OrderCompareType a b
+(>=) x y = geq x y
+
+class HasEq a b where
+    type EqCompareType a b
+    equalTo :: a -> b -> EqCompareType a b
+    notEqualTo :: a -> b -> EqCompareType a b
+
+class HasOrder a b where
+    type OrderCompareType a b
+    lessThan :: a -> b -> OrderCompareType a b
+    greaterThan :: a -> b -> OrderCompareType a b
+    leq :: a -> b -> OrderCompareType a b
+    geq :: a -> b -> OrderCompareType a b
 
 class CanNeg a where
     type NegType a :: *
@@ -106,6 +135,19 @@ class CanRecip a where
 class
     (CanRecip a, RecipType a ~ a) => 
     CanRecipSameType a
+
+class CanMinMax a b where
+    type MinMaxType a b :: *
+    min :: a -> b -> MinMaxType a b
+    max :: a -> b -> MinMaxType a b
+
+class
+    (CanMinMax a b, MinMaxType a b ~ a, CanMinMax b a, MinMaxType b a ~ a) => 
+    CanMinMaxThis a b
+
+class
+    (CanMinMaxThis a a) => 
+    CanMinMaxSameType a
 
 class CanAdd a b where
     type AddType a b :: *

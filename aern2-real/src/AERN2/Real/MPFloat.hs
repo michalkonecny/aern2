@@ -11,12 +11,19 @@ module AERN2.Real.MPFloat
      cosUp, cosDown, sinUp, sinDown, sqrtUp, sqrtDown)
 where
 
-import Prelude hiding (fromInteger, fromRational, toRational, abs)
+import Prelude hiding
+    ((==),(/=),(<),(>),(<=),(>=),
+     (+),(*),(/),(-),(^),abs,min,max,
+     recip,div,negate,
+     fromInteger,fromRational, toRational,
+     sqrt,cos,sin)
 import qualified Prelude as P
+
+import AERN2.Real.IntegerRational ()
 
 import qualified Data.Approximate.MPFRLowLevel as MPLow
 
-import AERN2.Real.Operations (fromInteger, fromRational)
+import AERN2.Real.Operations hiding (abs,neg)
 
 type MPFloat = MPLow.Rounded
 newtype Precision = Precision Integer
@@ -51,6 +58,18 @@ toDoubleUp = MPLow.toDoubleA MPLow.Up
 toDoubleDown :: MPFloat -> Double
 toDoubleDown = MPLow.toDoubleA MPLow.Down
     
+instance HasEq MPFloat MPFloat where
+    type EqCompareType MPFloat MPFloat = Bool
+    equalTo = (P.==)
+    notEqualTo = (P./=)
+
+instance HasOrder MPFloat MPFloat where
+    type OrderCompareType MPFloat MPFloat = Bool
+    lessThan = (P.<)
+    greaterThan = (P.>)
+    leq = (P.<=)
+    geq = (P.>=)
+    
 {- constants -}
 
 zero :: MPFloat
@@ -75,12 +94,6 @@ rationalUp (Precision p) x =
 rationalDown :: Precision -> Rational -> MPFloat
 rationalDown (Precision p) x =
     MPLow.fromRationalA MPLow.Down (P.fromInteger p) x
-
--- we need if-then-else below...
-ifThenElse :: Bool -> t -> t -> t
-ifThenElse b e1 e2
-    | b = e1
-    | otherwise = e2
 
 -- | Computes an upper bound to the distance @|x - y|@ of @x@ and @y@.
 distUp :: MPFloat -> MPFloat -> MPFloat
@@ -177,12 +190,12 @@ binaryUp ::
     (MPFloat -> MPFloat -> MPFloat)
 binaryUp opRP x y = opRP MPLow.Up p x y
     where
-    p = (MPLow.getPrec x) `max` (MPLow.getPrec y)
+    p = (MPLow.getPrec x) `P.max` (MPLow.getPrec y)
 
 binaryDown :: 
     (MPLow.RoundMode -> MPLow.Precision -> MPFloat -> MPFloat -> MPFloat) ->
     (MPFloat -> MPFloat -> MPFloat)
 binaryDown opRP x y = opRP MPLow.Down p x y
     where
-    p = (MPLow.getPrec x) `max` (MPLow.getPrec y)
+    p = (MPLow.getPrec x) `P.max` (MPLow.getPrec y)
     

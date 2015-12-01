@@ -1,7 +1,3 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -14,12 +10,18 @@ module AERN2.Real.MPBall
      piBallUsingPrecision) 
 where
 
-import Prelude hiding ((+),(*),(/),(-),abs,recip,fromInteger,fromRational)
---import qualified Prelude as P
+import Prelude hiding
+    ((==),(/=),(<),(>),(<=),(>=),
+     (+),(*),(/),(-),(^),abs,min,max,
+     recip,div,negate,
+     fromInteger,fromRational,
+     sqrt,cos,sin)
+import qualified Prelude as P
 
 import Math.NumberTheory.Logarithms (integerLog2)
 
 import AERN2.Real.IntegerRational ()
+import qualified AERN2.Real.Accuracy as A
 import qualified AERN2.Real.ErrorBound as EB
 import AERN2.Real.ErrorBound (ErrorBound(..))
 import qualified AERN2.Real.MPFloat as MP
@@ -60,9 +62,9 @@ toIntegerDown :: MPBall -> Integer
 toIntegerDown x = floor $ MP.toRational $ fst $ ball2endpoints x
 
 getAccuracy :: 
-    MPBall -> Integer
+    MPBall -> A.Accuracy
 getAccuracy (MPBall _ e) = 
-    EB.accuracyIndex e
+    EB.getAccuracy e
 
 getPrecision :: MPBall -> Precision
 getPrecision (MPBall x _) =
@@ -301,7 +303,7 @@ endpoints2Ball l u =
     MPBall c e
     where
     c = MP.avgUp l u
-    e = EB.mp2ErrorBound $ max (MP.distUp c l) (MP.distUp c u)
+    e = EB.mp2ErrorBound $ P.max (MP.distUp c l) (MP.distUp c u)
 
 ball2endpoints :: MPBall -> (MPFloat, MPFloat)
 ball2endpoints x = (l,u)

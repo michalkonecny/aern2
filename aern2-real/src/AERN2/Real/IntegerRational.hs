@@ -1,8 +1,4 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 
 module AERN2.Real.IntegerRational 
 (getIntegerNormLog, getRationalNormLog) 
@@ -10,7 +6,12 @@ where
 
 {- imports -}
 
-import Prelude hiding ((+),(*),(/),(-),(^),abs,recip,fromInteger,fromRational)
+import Prelude hiding
+    ((==),(/=),(<),(>),(<=),(>=),
+     (+),(*),(/),(-),(^),abs,min,max,
+     recip,div,negate,
+     fromInteger,fromRational,
+     sqrt,cos,sin)
 import qualified Prelude as P
 
 import Data.Ratio ((%))
@@ -38,6 +39,56 @@ getRationalNormLog x
     | abs x >= 1.0 = Just $ toInteger $ integerLog2 $ ceiling $ abs x
     | otherwise = Just $ 1 + (neg $ toInteger $ integerLog2 $ floor (1 / (abs x)))
 
+{- comparisons -}
+
+instance HasEq Integer Integer where
+    type EqCompareType Integer Integer = Bool
+    equalTo = (P.==)
+    notEqualTo = (P./=)
+
+instance HasOrder Integer Integer where
+    type OrderCompareType Integer Integer = Bool
+    lessThan = (P.<)
+    greaterThan = (P.>)
+    leq = (P.<=)
+    geq = (P.>=)
+
+instance HasEq Rational Rational where
+    type EqCompareType Rational Rational = Bool
+    equalTo = (P.==)
+    notEqualTo = (P./=)
+
+instance HasOrder Rational Rational where
+    type OrderCompareType Rational Rational = Bool
+    lessThan = (P.<)
+    greaterThan = (P.>)
+    leq = (P.<=)
+    geq = (P.>=)
+
+instance HasEq Integer Rational where
+    type EqCompareType Integer Rational = Bool
+    equalTo a b = (P.fromInteger a) P.== b
+    notEqualTo a b = (P.fromInteger a) P./= b
+
+instance HasOrder Integer Rational where
+    type OrderCompareType Integer Rational = Bool
+    lessThan a b = (P.fromInteger a) P.< b
+    greaterThan a b = (P.fromInteger a) P.> b
+    leq a b = (P.fromInteger a) P.<= b
+    geq a b = (P.fromInteger a) P.>= b
+
+instance HasEq Rational Integer where
+    type EqCompareType Rational Integer = Bool
+    equalTo a b = equalTo b a
+    notEqualTo a b = notEqualTo b a 
+
+instance HasOrder Rational Integer where
+    type OrderCompareType Rational Integer = Bool
+    lessThan a b = greaterThan b a
+    greaterThan a b = lessThan b a
+    leq a b = geq b a
+    geq a b = leq b a
+
 
 {- operations on Integers -}
 
@@ -52,6 +103,14 @@ instance CanAbs Integer where
     abs a = P.abs a
     
 instance CanAbsSameType Integer
+
+instance CanMinMax Integer Integer where
+    type MinMaxType Integer Integer = Integer
+    min a b = P.min a b
+    max a b = P.max a b
+
+instance CanMinMaxThis Integer Integer
+instance CanMinMaxSameType Integer
 
 instance CanAdd Integer Integer where
     type AddType Integer Integer = Integer
@@ -95,7 +154,15 @@ instance CanAbs Rational where
     abs a = P.abs a
 
 instance CanAbsSameType Rational
-    
+
+instance CanMinMax Rational Rational where
+    type MinMaxType Rational Rational = Rational
+    min a b = P.min a b
+    max a b = P.max a b
+
+instance CanMinMaxThis Rational Rational
+instance CanMinMaxSameType Rational
+
 instance CanAdd Rational Rational where
     type AddType Rational Rational = Rational
     add a b = a P.+ b

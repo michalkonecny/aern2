@@ -15,10 +15,16 @@ module AERN2.Real.CauchyReal
 )
 where
 
-import Prelude hiding ((+),(*),(/),(-),abs,recip,pi,fromInteger,fromRational,sqrt,sin,cos)
+import Prelude hiding
+    ((==),(/=),(<),(>),(<=),(>=),
+     (+),(*),(/),(-),(^),abs,min,max,
+     recip,div,negate,
+     fromInteger,fromRational,
+     pi,sqrt,cos,sin)
 --import qualified Prelude as P
 
-import Math.NumberTheory.Logarithms (integerLog2)
+import qualified AERN2.Real.Accuracy as A
+import AERN2.Real.Accuracy (Accuracy)
 
 import AERN2.Real.MPFloat (prec)
 import AERN2.Real.MPBall
@@ -30,16 +36,19 @@ import Debug.Trace (trace)
 _ = trace
 
 {-| Invariant: For any @(CauchyReal seq)@ it holds @ball_error (seq i) <= 2^^(-i)@ -}
-data CauchyReal = CauchyReal (Integer -> MPBall) 
+data CauchyReal = CauchyReal (A.Accuracy -> MPBall) 
 
-cauchyReal2ball :: CauchyReal -> Integer -> MPBall
-cauchyReal2ball (CauchyReal getBall) i = getBall i
+cauchyReal2ball :: CauchyReal -> A.Accuracy -> MPBall
+cauchyReal2ball (CauchyReal getBall) a = getBall a
 
-showCauchyReal :: Integer -> CauchyReal -> String
-showCauchyReal i r = show (cauchyReal2ball r i)
+showCauchyReal :: A.Accuracy -> CauchyReal -> String
+showCauchyReal a r = show (cauchyReal2ball r a)
 
 convergent2Cauchy :: 
-    (Integer -> MPBall) -> (Integer -> MPBall)
+    (Integer -> MPBall) -> (A.Accuracy -> MPBall)
+convergent2Cauchy _convergentSeq A.Exact =
+    error "Could not produce an exact representation for this CauchyReal."
+    -- TODO: try a certain accuracy and see whether the ball happens to be exact
 convergent2Cauchy convergentSeq i =
     aux 2 3
     where
@@ -58,7 +67,7 @@ rational2CauchyReal q =
 pi :: CauchyReal
 pi = CauchyReal piByAccuracy
     
-piByAccuracy :: Integer -> MPBall
+piByAccuracy :: Accuracy -> MPBall
 piByAccuracy =
     convergent2Cauchy (\ p -> piBallUsingPrecision (prec p))
 
@@ -108,12 +117,12 @@ instance CanMul CauchyReal CauchyReal where
             where
             jInit1 = 
                 case maybeA2NormLog of
-                    Just a2NormLog -> max 0 (i + a2NormLog + 1)
-                    Nothing -> 0
+                    Just a2NormLog -> max (A.bits 0) (i + a2NormLog + 1)
+                    Nothing -> A.bits 0
             jInit2 = 
                 case maybeA1NormLog of
-                    Just a1NormLog -> max 0 (i + a1NormLog + 1)
-                    Nothing -> 0
+                    Just a1NormLog -> max (A.bits 0) (i + a1NormLog + 1)
+                    Nothing -> A.bits 0
             maybeA1NormLog = getBallNormLog (getB1 i)   
             maybeA2NormLog = getBallNormLog (getB2 i)   
 
@@ -133,11 +142,11 @@ instance CanDiv CauchyReal CauchyReal where
             jInit1 = 
                 case maybeA2NormLog of
                     Just a2NormLog -> max 0 (i - a2NormLog + 1)
-                    Nothing -> 0 -- denominator == 0, we have no chance...
+                    Nothing -> A.bits 0 -- denominator == 0, we have no chance...
             jInit2 =
                 case (maybeA1NormLog, maybeA2NormLog) of
-                    (_, Nothing) -> 0 -- denominator == 0, we have no chance... 
-                    (Nothing, _) -> 0 -- numerator == 0, it does not matter 
+                    (_, Nothing) -> A.bits 0 -- denominator == 0, we have no chance... 
+                    (Nothing, _) -> A.bits 0 -- numerator == 0, it does not matter 
                     (Just a1NormLog, Just a2NormLog) -> 
                         max 0 (i + a1NormLog + 1 - 2 * a2NormLog)
             maybeA1NormLog = getBallNormLog (getB1 i)   
@@ -147,6 +156,23 @@ instance CanDivBy CauchyReal CauchyReal
 
 instance CanDivSameType CauchyReal
 
+instance CanSqrt CauchyReal where
+    type SqrtType CauchyReal = CauchyReal
+    sqrt (CauchyReal getB1) = CauchyReal getB
+        where
+        getB i = 
+            ensureAccuracy1 i jInit (\j -> sqrt (getB1 j))
+            where
+            jInit = 
+                case maybeSqrtNormLog of
+                    Just sqrtNormLog -> max 0 (i - 1 - sqrtNormLog)
+                    Nothing -> i
+            maybeSqrtNormLog = getBallNormLog (sqrt (getB1 i)) 
+
+instance CanSineCosine CauchyReal where
+    type SineCosineType CauchyReal = CauchyReal
+    sin (CauchyReal getB1) = CauchyReal (\ i -> sin (getB1 i))
+    cos (CauchyReal getB1) = CauchyReal (\ i -> cos (getB1 i))
 
 {-
 Typically ensureAccuracy1 is called with a j such that the result is of
@@ -166,7 +192,7 @@ ensureAccuracy1: i = 56; j = 54; result accuracy = 89
 
 -}
 ensureAccuracy1 ::
-    Integer -> Integer -> (Integer -> MPBall) -> MPBall
+    Accuracy -> Accuracy -> (Accuracy -> MPBall) -> MPBall
 ensureAccuracy1 i j getB 
     | getAccuracy result >= i = 
         -- TODO: disable this trace 
@@ -188,7 +214,7 @@ ensureAccuracy1 i j getB
     result = getB j
 
 ensureAccuracy2 ::
-    Integer -> Integer -> Integer -> (Integer -> Integer -> MPBall) -> MPBall
+    Accuracy -> Accuracy -> Accuracy -> (Accuracy -> Accuracy -> MPBall) -> MPBall
 ensureAccuracy2 i j1 j2 getB 
     | getAccuracy result >= i = 
         -- TODO: disable this trace 
@@ -245,7 +271,7 @@ instance CanMul Integer CauchyReal where
             jInit = 
                 case maybeA1NormLog of
                     Just a1NormLog -> max 0 (i + a1NormLog)
-                    Nothing -> 0
+                    Nothing -> A.bits 0
             maybeA1NormLog = getIntegerNormLog a1
 
 
@@ -266,8 +292,8 @@ instance CanDiv Integer CauchyReal where
             where
             jInit =
                 case (maybeA1NormLog, maybeA2NormLog) of
-                    (_, Nothing) -> 0 -- denominator == 0, we have no chance... 
-                    (Nothing, _) -> 0 -- numerator == 0, it does not matter 
+                    (_, Nothing) -> A.bits 0 -- denominator == 0, we have no chance... 
+                    (Nothing, _) -> A.bits 0 -- numerator == 0, it does not matter 
                     (Just a1NormLog, Just a2NormLog) -> 
                         max 0 (i + a1NormLog - 2 * a2NormLog)
             maybeA1NormLog = getIntegerNormLog a1
@@ -285,7 +311,7 @@ instance CanDiv CauchyReal Integer where
             jInit = 
                 case maybeA2NormLog of
                     Just a2NormLog -> max 0 (i - a2NormLog)
-                    Nothing -> 0 -- denominator == 0, we have no chance...
+                    Nothing -> A.bits 0 -- denominator == 0, we have no chance...
             maybeA2NormLog = getIntegerNormLog a2  
 
 instance CanDivBy CauchyReal Integer
@@ -329,7 +355,7 @@ instance CanMul Rational CauchyReal where
             jInit = 
                 case maybeA1NormLog of
                     Just a1NormLog -> max 0 (i + a1NormLog)
-                    Nothing -> 0
+                    Nothing -> A.bits 0
             maybeA1NormLog = getRationalNormLog a1
 
 instance CanMul CauchyReal Rational where
@@ -349,8 +375,8 @@ instance CanDiv Rational CauchyReal where
             where
             jInit =
                 case (maybeA1NormLog, maybeA2NormLog) of
-                    (_, Nothing) -> 0 -- denominator == 0, we have no chance... 
-                    (Nothing, _) -> 0 -- numerator == 0, it does not matter 
+                    (_, Nothing) -> A.bits 0 -- denominator == 0, we have no chance... 
+                    (Nothing, _) -> A.bits 0 -- numerator == 0, it does not matter 
                     (Just a1NormLog, Just a2NormLog) -> 
                         max 0 (i + a1NormLog - 2 * a2NormLog)
             maybeA1NormLog = getRationalNormLog a1
