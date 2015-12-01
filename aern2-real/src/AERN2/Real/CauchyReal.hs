@@ -15,7 +15,7 @@ module AERN2.Real.CauchyReal
 )
 where
 
-import Prelude hiding ((+),(*),(/),(-),abs,recip,pi,fromInteger,fromRational)
+import Prelude hiding ((+),(*),(/),(-),abs,recip,pi,fromInteger,fromRational,sqrt,sin,cos)
 --import qualified Prelude as P
 
 import AERN2.Real.MPFloat (prec)
@@ -71,16 +71,18 @@ instance CanAbs CauchyReal where
 
 instance CanAbsSameType CauchyReal
 
+{- TODO: preserve fast convergence
 instance CanRecip CauchyReal where
     type RecipType CauchyReal = CauchyReal
     recip (CauchyReal getB) = CauchyReal (\i -> recip $ getB i)
 
 instance CanRecipSameType CauchyReal
+-}
 
 instance CanAdd CauchyReal CauchyReal where
     type AddType CauchyReal CauchyReal = CauchyReal
     add (CauchyReal getB1) (CauchyReal getB2) =
-        CauchyReal (\i -> (getB1 i) + (getB2 i))
+        CauchyReal (\i -> (getB1 (i+1)) + (getB2 (i+1)))
 
 instance CanAddThis CauchyReal CauchyReal
 
@@ -92,6 +94,7 @@ instance CanSubThis CauchyReal CauchyReal
 
 instance CanSubSameType CauchyReal
 
+{- TODO: preserve fast convergence
 instance CanMul CauchyReal CauchyReal where
     type MulType CauchyReal CauchyReal = CauchyReal
     mul (CauchyReal getB1) (CauchyReal getB2) =
@@ -109,7 +112,7 @@ instance CanDiv CauchyReal CauchyReal where
 instance CanDivBy CauchyReal CauchyReal
 
 instance CanDivSameType CauchyReal
-
+-}
 
 {- CauchyReal-Integer operations -}
 
@@ -128,6 +131,8 @@ instance CanAddThis CauchyReal Integer
 instance CanSub CauchyReal Integer
 
 instance CanSubThis CauchyReal Integer
+
+{- TODO: preserve fast convergence
 
 instance CanMul Integer CauchyReal where
     type MulType Integer CauchyReal = CauchyReal
@@ -148,6 +153,17 @@ instance CanDiv CauchyReal Integer where
     div (CauchyReal getB1) b = CauchyReal (\i -> (getB1 i) / b)
 
 instance CanDivBy CauchyReal Integer
+-}
+
+instance CanSqrt Integer where
+    type SqrtType Integer = CauchyReal
+    sqrt x = CauchyReal (convergent2Cauchy $ \p -> sqrt (fromIntegerP (prec p) x))      
+        
+instance CanSineCosine Integer where
+    type SineCosineType Integer = CauchyReal
+    sin x = CauchyReal (convergent2Cauchy $ \p -> sin (fromIntegerP (prec p) x))
+    cos x = CauchyReal (convergent2Cauchy $ \p -> cos (fromIntegerP (prec p) x))
+
 
 {- CauchyReal-Rational operations -}
 
@@ -167,6 +183,7 @@ instance CanSub CauchyReal Rational
 
 instance CanSubThis CauchyReal Rational
 
+{- TODO: preserve fast convergence
 instance CanMul Rational CauchyReal where
     type MulType Rational CauchyReal = CauchyReal
     mul a (CauchyReal getB2) = CauchyReal (\i -> a * (getB2 i))
@@ -186,6 +203,16 @@ instance CanDiv CauchyReal Rational where
     div (CauchyReal getB1) b = CauchyReal (\i -> (getB1 i) / b)
 
 instance CanDivBy CauchyReal Rational
+-}
+
+instance CanSqrt Rational where
+    type SqrtType Rational = CauchyReal
+    sqrt x = CauchyReal (convergent2Cauchy $ \p -> sqrt (fromRationalP (prec p) x))      
+        
+instance CanSineCosine Rational where
+    type SineCosineType Rational = CauchyReal
+    sin x = CauchyReal (convergent2Cauchy $ \p -> sin (fromRationalP (prec p) x))
+    cos x = CauchyReal (convergent2Cauchy $ \p -> cos (fromRationalP (prec p) x))
 
 
 {- operations mixing MPBall and CauchyReal, resulting in an MPBall -}
