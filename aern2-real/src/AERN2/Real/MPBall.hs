@@ -5,8 +5,8 @@
 module AERN2.Real.MPBall
     (MPBall(..), getAccuracy, getPrecision,
      isNonZero, getBallNormLog,
-     fromIntegerP,  toIntegerUp, toIntegerDown,
-     fromRationalP, fromRationalBallP, 
+     integer, integerP,  toIntegerUp, toIntegerDown,
+     rationalP, rationalBallP, 
      piBallUsingPrecision) 
 where
 
@@ -35,26 +35,32 @@ instance Show MPBall
     where
     show (MPBall x e) = "[" ++ show x ++ " ± " ++ show e ++ "]"
 
-fromRationalBallP :: MP.Precision -> (Rational, Rational) -> MPBall 
-fromRationalBallP p (x,e) =
+rationalBallP :: MP.Precision -> (Rational, Rational) -> MPBall 
+rationalBallP p (x,e) =
     MPBall xUp (xe + eUp)
     where
-    (MPBall xUp xe) = fromRationalP p x
+    (MPBall xUp xe) = rationalP p x
     eUp = EB.rational2ErrorBound e
     
-fromRationalP :: MP.Precision -> Rational -> MPBall
-fromRationalP p x =
+rationalP :: MP.Precision -> Rational -> MPBall
+rationalP p x =
     MPBall xUp (xUp `EB.subMP` xDn)
     where
     xUp = MP.rationalUp p x
     xDn = MP.rationalDown p x
 
-fromIntegerP :: MP.Precision -> Integer -> MPBall
-fromIntegerP p x =
+integerP :: MP.Precision -> Integer -> MPBall
+integerP p x =
     MPBall xUp (xUp `EB.subMP` xDn)
     where
     xUp = MP.integerUp p x
     xDn = MP.integerDown p x
+
+integer :: Integer -> MPBall
+integer x =
+    MPBall xMP (EB.rational2ErrorBound 0.0)
+    where
+    xMP = MP.integer x
 
 toIntegerUp :: MPBall -> Integer
 toIntegerUp x = ceiling $ MP.toRational $ snd $ ball2endpoints x
@@ -96,6 +102,61 @@ getBallNormLog ball
     integerRecipBound 
         | isNonZero ballR = toIntegerUp (1 / ballR)
         | otherwise = 0
+
+instance HasEq MPBall MPBall where
+    type EqCompareType MPBall MPBall = Maybe Bool
+    equalTo b1 b2 =
+        case (getAccuracy b1, getAccuracy b2, b1 < b2, b2 < b1) of
+            (A.Exact, A.Exact, Just False, Just False) -> Just True
+            (_, _, Just True, _) -> Just False
+            (_, _, _, Just True) -> Just False
+            _ -> Nothing
+    notEqualTo b1 b2 = fmap not $ equalTo b1 b2
+        
+instance HasOrder MPBall MPBall where
+    type OrderCompareType MPBall MPBall = Maybe Bool
+    lessThan (MPBall x1 e1) (MPBall x2 e2) 
+        | (x1 `MP.addUp` e1MP) < (x2 `MP.subDown` e2MP) = Just True
+        | (x1 `MP.subDown` e1MP) >= (x2 `MP.addUp` e2MP) = Just False
+        | otherwise = Nothing
+        where
+        e1MP = EB.er2mp e1
+        e2MP = EB.er2mp e2
+    leq (MPBall x1 e1) (MPBall x2 e2) 
+        | (x1 `MP.addUp` e1MP) <= (x2 `MP.subDown` e2MP) = Just True
+        | (x1 `MP.subDown` e1MP) > (x2 `MP.addUp` e2MP) = Just False
+        | otherwise = Nothing
+        where
+        e1MP = EB.er2mp e1
+        e2MP = EB.er2mp e2
+    greaterThan a b = lessThan b a
+    geq a b = leq b a
+
+instance HasEq MPBall Integer where
+    type EqCompareType MPBall Integer = Maybe Bool
+    equalTo b1 n2 = equalTo b1 (integer n2)
+    notEqualTo b1 n2 = notEqualTo b1 (integer n2)
+
+instance HasEq Integer MPBall where
+    type EqCompareType Integer MPBall = Maybe Bool
+    equalTo n1 b2 = equalTo (integer n1) b2
+    notEqualTo n1 b2 = notEqualTo (integer n1) b2
+
+instance HasOrder MPBall Integer where
+    type OrderCompareType MPBall Integer = Maybe Bool
+    lessThan b1 n2 = lessThan b1 (integer n2) 
+    leq b1 n2 = leq b1 (integer n2) 
+    greaterThan b1 n2 = greaterThan b1 (integer n2) 
+    geq b1 n2 = geq b1 (integer n2) 
+
+instance HasOrder Integer MPBall where
+    type OrderCompareType Integer MPBall = Maybe Bool
+    lessThan n1 b2 = lessThan (integer n1) b2
+    leq n1 b2 = leq (integer n1) b2
+    greaterThan n1 b2 = greaterThan (integer n1) b2
+    geq n1 b2 = geq (integer n1) b2
+
+
 
 instance CanNeg MPBall where
     type NegType MPBall = MPBall
@@ -195,13 +256,13 @@ piBallUsingPrecision p = MPBall piUp (piUp `EB.subMP` piDown)
 
 instance CanAdd Integer MPBall where
     type AddType Integer MPBall = MPBall
-    add a b = (fromIntegerP (getPrecision b) a) + b
+    add a b = (integerP (getPrecision b) a) + b
 
 instance CanSub Integer MPBall
 
 instance CanAdd MPBall Integer where
     type AddType MPBall Integer = MPBall
-    add a b = a + (fromIntegerP (getPrecision a) b)
+    add a b = a + (integerP (getPrecision a) b)
 
 instance CanAddThis MPBall Integer
 
@@ -211,21 +272,21 @@ instance CanSubThis MPBall Integer
 
 instance CanMul Integer MPBall where
     type MulType Integer MPBall = MPBall
-    mul a b = (fromIntegerP (getPrecision b) a) * b
+    mul a b = (integerP (getPrecision b) a) * b
 
 instance CanMul MPBall Integer where
     type MulType MPBall Integer = MPBall
-    mul a b = a * (fromIntegerP (getPrecision a) b)
+    mul a b = a * (integerP (getPrecision a) b)
 
 instance CanMulBy MPBall Integer
 
 instance CanDiv Integer MPBall where
     type DivType Integer MPBall = MPBall
-    div a b = (fromIntegerP (getPrecision b) a) / b
+    div a b = (integerP (getPrecision b) a) / b
 
 instance CanDiv MPBall Integer where
     type DivType MPBall Integer = MPBall
-    div a b = a / (fromIntegerP (getPrecision a) b)
+    div a b = a / (integerP (getPrecision a) b)
 
 instance CanDivBy MPBall Integer
 
@@ -233,13 +294,13 @@ instance CanDivBy MPBall Integer
 
 instance CanAdd Rational MPBall where
     type AddType Rational MPBall = MPBall
-    add a b = (fromRationalP (getPrecision b) a) + b
+    add a b = (rationalP (getPrecision b) a) + b
 
 instance CanSub Rational MPBall
 
 instance CanAdd MPBall Rational where
     type AddType MPBall Rational = MPBall
-    add a b = a + (fromRationalP (getPrecision a) b)
+    add a b = a + (rationalP (getPrecision a) b)
 
 instance CanAddThis MPBall Rational
 
@@ -249,21 +310,21 @@ instance CanSubThis MPBall Rational
 
 instance CanMul Rational MPBall where
     type MulType Rational MPBall = MPBall
-    mul a b = (fromRationalP (getPrecision b) a) * b
+    mul a b = (rationalP (getPrecision b) a) * b
 
 instance CanMul MPBall Rational where
     type MulType MPBall Rational = MPBall
-    mul a b = a * (fromRationalP (getPrecision a) b)
+    mul a b = a * (rationalP (getPrecision a) b)
 
 instance CanMulBy MPBall Rational
 
 instance CanDiv Rational MPBall where
     type DivType Rational MPBall = MPBall
-    div a b = (fromRationalP (getPrecision b) a) / b
+    div a b = (rationalP (getPrecision b) a) / b
 
 instance CanDiv MPBall Rational where
     type DivType MPBall Rational = MPBall
-    div a b = a / (fromRationalP (getPrecision a) b)
+    div a b = a / (rationalP (getPrecision a) b)
 
 instance CanDivBy MPBall Rational
 

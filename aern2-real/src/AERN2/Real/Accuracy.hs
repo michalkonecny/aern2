@@ -9,8 +9,6 @@ import Prelude hiding
      fromInteger,fromRational, toRational, toInteger,
      sqrt,cos,sin)
 
---import Math.NumberTheory.Logarithms (integerLog2)
-
 import AERN2.Real.IntegerRational ()
 import AERN2.Real.Operations
 

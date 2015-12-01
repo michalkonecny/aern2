@@ -21,12 +21,12 @@ import Prelude hiding
 import AERN2.Real.Operations
 import AERN2.Real.IntegerRational
 import AERN2.Real.MPBall
-import AERN2.Real.MPFloat hiding (abs, neg, getPrecision)
+import AERN2.Real.MPFloat hiding (abs, neg, getPrecision, integer)
 import AERN2.Real.CauchyReal
 import AERN2.Real.Accuracy as A
 
 ballR1 :: MPBall
-ballR1 = fromRationalBallP (prec 1000) (2.0,1/300) :: MPBall 
+ballR1 = rationalBallP (prec 1000) (2.0,1/300) :: MPBall 
 
 ballRadd :: MPBall
 ballRadd = ballR1 + ballR1

@@ -1,9 +1,10 @@
 {-# LANGUAGE StandaloneDeriving, GeneralizedNewtypeDeriving, TypeSynonymInstances #-}
 
 module AERN2.Real.MPFloat 
-    (MPFloat, Precision, prec, getPrecision, maximumPrecision, setPrecisionUp,
+    (MPFloat, Precision, prec, getPrecision, maximumPrecision, standardPrecisions, 
+     setPrecisionUp,
      toRational, toDoubleUp, toDoubleDown,
-     zero, one, two, rationalUp, rationalDown, integerUp, integerDown,
+     zero, one, two, integer, integerUp, integerDown, rationalUp, rationalDown,
      neg, abs, addUp, addDown, subUp, subDown, 
      distUp, distDown, avgUp, avgDown, 
      mulUp, mulDown, divUp, divDown, recipUp, recipDown,
@@ -69,23 +70,42 @@ instance HasOrder MPFloat MPFloat where
     greaterThan = (P.>)
     leq = (P.<=)
     geq = (P.>=)
-    
+
 {- constants -}
 
 zero :: MPFloat
 zero = MPLow.zero
     
 one :: MPFloat
-one = rationalUp (Precision 20) 1.0
+one = integer 1
     
 two :: MPFloat
-two = rationalUp (Precision 20) 2.0
+two = integer 2
     
 integerUp :: Precision -> Integer -> MPFloat
 integerUp p i = rationalUp p (P.fromInteger i)
     
 integerDown :: Precision -> Integer -> MPFloat
 integerDown p i = rationalDown p (P.fromInteger i)
+    
+integer :: Integer -> MPFloat
+integer n =
+    findExact $ map upDown standardPrecisions
+    where
+    upDown p = (integerDown p n, integerUp p n)
+    findExact [] = 
+        error $ "integer too high to represent exactly: " ++ show n
+    findExact ((nDown, nUp) : rest)
+        | nDown == nUp = nUp
+        | otherwise = findExact rest
+
+standardPrecisions :: [Precision]
+standardPrecisions =
+    map Precision $ aux 8 13
+    where
+    aux j j' 
+        | j <= maximumPrecision = j : (aux j' (j+j'))
+        | otherwise = []
     
 rationalUp :: Precision -> Rational -> MPFloat
 rationalUp (Precision p) x =

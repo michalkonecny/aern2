@@ -37,7 +37,7 @@ getRationalNormLog :: Rational -> Maybe Integer
 getRationalNormLog x
     | x == 0.0 = Nothing
     | abs x >= 1.0 = Just $ toInteger $ integerLog2 $ ceiling $ abs x
-    | otherwise = Just $ 1 + (neg $ toInteger $ integerLog2 $ floor (1 / (abs x)))
+    | otherwise = Just $ neg $ toInteger $ integerLog2 $ ceiling (1 / (abs x))
 
 {- comparisons -}
 
