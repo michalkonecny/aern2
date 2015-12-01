@@ -4,14 +4,18 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
-module AERN2.Real.IntegerRational () where
+module AERN2.Real.IntegerRational 
+(getIntegerNormLog, getRationalNormLog) 
+where
 
 {- imports -}
 
-import Prelude (Integer,Rational)
+import Prelude hiding ((+),(*),(/),(-),(^),abs,recip,fromInteger,fromRational)
 import qualified Prelude as P
 
 import Data.Ratio ((%))
+
+import Math.NumberTheory.Logarithms (integerLog2)
 
 import AERN2.Real.Operations
 
@@ -22,6 +26,18 @@ _example1 = 2 * 3 + (1/2) ^ 2
 
 _example2 :: Integer -- cannot be Int
 _example2 = 2 * 3 + 2 ^ 2
+
+getIntegerNormLog :: Integer -> Maybe Integer
+getIntegerNormLog n
+    | n == 0 = Nothing
+    | otherwise = Just $ toInteger $ integerLog2 $ abs n
+
+getRationalNormLog :: Rational -> Maybe Integer
+getRationalNormLog x
+    | x == 0.0 = Nothing
+    | abs x >= 1.0 = Just $ toInteger $ integerLog2 $ ceiling $ abs x
+    | otherwise = Just $ 1 + (neg $ toInteger $ integerLog2 $ floor (1 / (abs x)))
+
 
 {- operations on Integers -}
 

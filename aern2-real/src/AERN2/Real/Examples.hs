@@ -6,6 +6,7 @@ module AERN2.Real.Examples
      module AERN2.Real.Operations,
      module AERN2.Real.MPFloat,
      module AERN2.Real.MPBall,
+     module AERN2.Real.IntegerRational,
      module AERN2.Real.CauchyReal,
      module Prelude)
 where
@@ -13,7 +14,7 @@ where
 import Prelude hiding ((+),(*),(/),(-),(^),abs,recip,div,negate,pi,toRational,fromInteger,fromRational,sqrt,cos,sin)
 
 import AERN2.Real.Operations
-import AERN2.Real.IntegerRational ()
+import AERN2.Real.IntegerRational
 import AERN2.Real.MPBall
 import AERN2.Real.MPFloat hiding (abs, neg, getPrecision)
 import AERN2.Real.CauchyReal

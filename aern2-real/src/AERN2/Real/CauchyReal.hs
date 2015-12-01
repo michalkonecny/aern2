@@ -22,7 +22,7 @@ import Math.NumberTheory.Logarithms (integerLog2)
 
 import AERN2.Real.MPFloat (prec)
 import AERN2.Real.MPBall
-import AERN2.Real.IntegerRational ()
+import AERN2.Real.IntegerRational
 import AERN2.Real.Operations
 --import AERN2.Real.OperationsToBall ()
 
@@ -76,18 +76,17 @@ instance CanAbs CauchyReal where
 
 instance CanAbsSameType CauchyReal
 
-{- TODO: preserve fast convergence
 instance CanRecip CauchyReal where
     type RecipType CauchyReal = CauchyReal
-    recip (CauchyReal getB) = CauchyReal (\i -> recip $ getB i)
+    recip a = 1 / a
 
 instance CanRecipSameType CauchyReal
--}
 
 instance CanAdd CauchyReal CauchyReal where
     type AddType CauchyReal CauchyReal = CauchyReal
     add (CauchyReal getB1) (CauchyReal getB2) =
-        CauchyReal (\i -> (getB1 (i+1)) + (getB2 (i+1)))
+        CauchyReal $
+            \i -> ensureAccuracy2 i i i (\j1 j2 -> (getB1 j1) + (getB2 j2))
 
 instance CanAddThis CauchyReal CauchyReal
 
@@ -99,11 +98,24 @@ instance CanSubThis CauchyReal CauchyReal
 
 instance CanSubSameType CauchyReal
 
-{- TODO: preserve fast convergence
 instance CanMul CauchyReal CauchyReal where
     type MulType CauchyReal CauchyReal = CauchyReal
     mul (CauchyReal getB1) (CauchyReal getB2) =
-        CauchyReal (\i -> (getB1 i) * (getB2 i))
+        CauchyReal getB
+        where
+        getB i =
+            ensureAccuracy2 i jInit1 jInit2 (\j1 j2 -> (getB1 j1) * (getB2 j2))
+            where
+            jInit1 = 
+                case maybeA2NormLog of
+                    Just a2NormLog -> max 0 (i + a2NormLog + 1)
+                    Nothing -> 0
+            jInit2 = 
+                case maybeA1NormLog of
+                    Just a1NormLog -> max 0 (i + a1NormLog + 1)
+                    Nothing -> 0
+            maybeA1NormLog = getBallNormLog (getB1 i)   
+            maybeA2NormLog = getBallNormLog (getB2 i)   
 
 instance CanMulBy CauchyReal CauchyReal
 
@@ -112,12 +124,29 @@ instance CanMulSameType CauchyReal
 instance CanDiv CauchyReal CauchyReal where
     type DivType CauchyReal CauchyReal = CauchyReal
     div (CauchyReal getB1) (CauchyReal getB2) =
-        CauchyReal (\i -> (getB1 i) / (getB2 i))
+        CauchyReal getB
+        where
+        getB i =
+            ensureAccuracy2 i jInit1 jInit2 (\j1 j2 -> (getB1 j1) / (getB2 j2))
+            -- TODO: increase j2 to avoid divide by zero errors
+            where
+            jInit1 = 
+                case maybeA2NormLog of
+                    Just a2NormLog -> max 0 (i - a2NormLog + 1)
+                    Nothing -> 0 -- denominator == 0, we have no chance...
+            jInit2 =
+                case (maybeA1NormLog, maybeA2NormLog) of
+                    (_, Nothing) -> 0 -- denominator == 0, we have no chance... 
+                    (Nothing, _) -> 0 -- numerator == 0, it does not matter 
+                    (Just a1NormLog, Just a2NormLog) -> 
+                        max 0 (i + a1NormLog + 1 - 2 * a2NormLog)
+            maybeA1NormLog = getBallNormLog (getB1 i)   
+            maybeA2NormLog = getBallNormLog (getB2 i)   
 
 instance CanDivBy CauchyReal CauchyReal
 
 instance CanDivSameType CauchyReal
--}
+
 
 {-
 Typically ensureAccuracy1 is called with a j such that the result is of
@@ -158,17 +187,46 @@ ensureAccuracy1 i j getB
     where
     result = getB j
 
+ensureAccuracy2 ::
+    Integer -> Integer -> Integer -> (Integer -> Integer -> MPBall) -> MPBall
+ensureAccuracy2 i j1 j2 getB 
+    | getAccuracy result >= i = 
+        -- TODO: disable this trace 
+        trace (
+            "ensureAccuracy2: i = " ++ show i ++ 
+            "; j1 = " ++ show j1 ++ 
+            "; j2 = " ++ show j2 ++ 
+            "; result accuracy = " ++ (show $ getAccuracy result)
+        ) $ 
+        result
+    | otherwise =
+        -- TODO: disable this trace 
+        trace (
+            "ensureAccuracy2: i = " ++ show i ++ 
+            "; j1 = " ++ show j1 ++ 
+            "; j2 = " ++ show j2 ++ 
+            "; result accuracy = " ++ (show $ getAccuracy result)
+        ) $ 
+        ensureAccuracy2 i (j1+1)(j2+1) getB
+    where
+    result = getB j1 j2
+
 {- CauchyReal-Integer operations -}
 
 instance CanAdd Integer CauchyReal where
     type AddType Integer CauchyReal = CauchyReal
-    add a (CauchyReal getB2) = CauchyReal (\i -> a + (getB2 i))
+    add a (CauchyReal getB2) = 
+        CauchyReal $
+            \i -> ensureAccuracy1 i i (\j -> a + (getB2 j))
+        
 
 instance CanSub Integer CauchyReal
 
 instance CanAdd CauchyReal Integer where
     type AddType CauchyReal Integer = CauchyReal
-    add (CauchyReal getB1) b = CauchyReal (\i -> (getB1 i) + b)
+    add (CauchyReal getB1) b = 
+        CauchyReal $
+            \i -> ensureAccuracy1 i i (\j -> (getB1 j) + b)
 
 instance CanAddThis CauchyReal Integer
 
@@ -178,16 +236,17 @@ instance CanSubThis CauchyReal Integer
 
 instance CanMul Integer CauchyReal where
     type MulType Integer CauchyReal = CauchyReal
-    mul a (CauchyReal getB2) = 
+    mul a1 (CauchyReal getB2) = 
         CauchyReal getB
         where
         getB i =
-            ensureAccuracy1 i jInit (\j -> a * (getB2 j))
+            ensureAccuracy1 i jInit (\j -> a1 * (getB2 j))
             where
-            jInit 
-                | a == 0 = 0
-                | otherwise = i + aNorm
-            aNorm = toInteger $ integerLog2 $ abs a 
+            jInit = 
+                case maybeA1NormLog of
+                    Just a1NormLog -> max 0 (i + a1NormLog)
+                    Nothing -> 0
+            maybeA1NormLog = getIntegerNormLog a1
 
 
 instance CanMul CauchyReal Integer where
@@ -198,30 +257,36 @@ instance CanMulBy CauchyReal Integer
 
 instance CanDiv Integer CauchyReal where
     type DivType Integer CauchyReal = CauchyReal
-    div a (CauchyReal getB2) = 
+    div a1 (CauchyReal getB2) = 
         CauchyReal getB
         where
         getB i =
-            ensureAccuracy1 i jInit (\j -> a / (getB2 j))
+            ensureAccuracy1 i jInit (\j -> a1 / (getB2 j))
+            -- TODO: increase j to avoid divide by zero errors
             where
-            jInit 
-                | a == 0 = 0
-                | otherwise = i + aNormLog + 2 * bRecipNormLog
-            aNormLog = toInteger $ integerLog2 $ abs a
-            bRecipNormLog = toInteger $ integerLog2 $ toIntegerUp $ abs $ (1 / getB2 i) 
+            jInit =
+                case (maybeA1NormLog, maybeA2NormLog) of
+                    (_, Nothing) -> 0 -- denominator == 0, we have no chance... 
+                    (Nothing, _) -> 0 -- numerator == 0, it does not matter 
+                    (Just a1NormLog, Just a2NormLog) -> 
+                        max 0 (i + a1NormLog - 2 * a2NormLog)
+            maybeA1NormLog = getIntegerNormLog a1
+            maybeA2NormLog = getBallNormLog (getB2 i)   
+
 
 instance CanDiv CauchyReal Integer where
     type DivType CauchyReal Integer = CauchyReal
-    div (CauchyReal getB1) a = 
+    div (CauchyReal getB1) a2 = 
         CauchyReal getB
         where
         getB i =
-            ensureAccuracy1 i jInit (\j -> (getB1 j) / a)
+            ensureAccuracy1 i jInit (\j -> (getB1 j) / a2)
             where
-            jInit 
-                | a == 0 = 0
-                | otherwise = i - aNorm
-            aNorm = toInteger $ integerLog2 $ abs a 
+            jInit = 
+                case maybeA2NormLog of
+                    Just a2NormLog -> max 0 (i - a2NormLog)
+                    Nothing -> 0 -- denominator == 0, we have no chance...
+            maybeA2NormLog = getIntegerNormLog a2  
 
 instance CanDivBy CauchyReal Integer
 
@@ -255,16 +320,17 @@ instance CanSubThis CauchyReal Rational
 
 instance CanMul Rational CauchyReal where
     type MulType Rational CauchyReal = CauchyReal
-    mul a (CauchyReal getB2) = 
+    mul a1 (CauchyReal getB2) = 
         CauchyReal getB
         where
         getB i =
-            ensureAccuracy1 i jInit (\j -> a * (getB2 j))
+            ensureAccuracy1 i jInit (\j -> a1 * (getB2 j))
             where
-            jInit 
-                | a == 0.0 = 0
-                | otherwise = i + aNorm
-            aNorm = toInteger $ integerLog2 $ ceiling $ abs a 
+            jInit = 
+                case maybeA1NormLog of
+                    Just a1NormLog -> max 0 (i + a1NormLog)
+                    Nothing -> 0
+            maybeA1NormLog = getRationalNormLog a1
 
 instance CanMul CauchyReal Rational where
     type MulType CauchyReal Rational = CauchyReal
@@ -274,17 +340,21 @@ instance CanMulBy CauchyReal Rational
 
 instance CanDiv Rational CauchyReal where
     type DivType Rational CauchyReal = CauchyReal
-    div a (CauchyReal getB2) = 
+    div a1 (CauchyReal getB2) = 
         CauchyReal getB
         where
         getB i =
-            ensureAccuracy1 i jInit (\j -> a / (getB2 j))
+            ensureAccuracy1 i jInit (\j -> a1 / (getB2 j))
+            -- TODO: increase j to avoid divide by zero errors
             where
-            jInit 
-                | a == 0.0 = 0
-                | otherwise = i + aNormLog + 2 * bRecipNormLog
-            aNormLog = toInteger $ integerLog2 $ ceiling $ abs a
-            bRecipNormLog = toInteger $ integerLog2 $ toIntegerUp $ abs $ (1 / getB2 i) 
+            jInit =
+                case (maybeA1NormLog, maybeA2NormLog) of
+                    (_, Nothing) -> 0 -- denominator == 0, we have no chance... 
+                    (Nothing, _) -> 0 -- numerator == 0, it does not matter 
+                    (Just a1NormLog, Just a2NormLog) -> 
+                        max 0 (i + a1NormLog - 2 * a2NormLog)
+            maybeA1NormLog = getRationalNormLog a1
+            maybeA2NormLog = getBallNormLog (getB2 i)   
 
 instance CanDiv CauchyReal Rational where
     type DivType CauchyReal Rational = CauchyReal
