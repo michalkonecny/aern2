@@ -25,17 +25,26 @@ import AERN2.Real.MPFloat hiding (abs, neg, getPrecision, integer)
 import AERN2.Real.CauchyReal
 import AERN2.Real.Accuracy as A
 
-ballR1 :: MPBall
-ballR1 = rationalBallP (prec 1000) (2.0,1/300) :: MPBall 
+ball1 :: MPBall
+ball1 = rationalBallP (prec 1000) (2.0,1/300) 
 
-ballRadd :: MPBall
-ballRadd = ballR1 + ballR1
+ball2 :: MPBall
+ball2 = integer (5^100)
 
-ballRmul :: MPBall
-ballRmul = ballR1 * ballR1
+balladd :: MPBall
+balladd = ball1 + ball1
 
-ballR1Accuracy :: Accuracy
-ballR1Accuracy = getAccuracy ballR1
+ballmul :: MPBall
+ballmul = ball1 * ball1
+
+ball1Accuracy :: Accuracy
+ball1Accuracy = getAccuracy ball1
+
+ballComp1 :: Maybe Bool
+ballComp1 = ball1 < ballmul
+
+ballComp2 :: Maybe Bool
+ballComp2 = ball1 == ball1
 
 cauchyThird :: CauchyReal
 cauchyThird = rational2CauchyReal (1/3) 
@@ -43,5 +52,8 @@ cauchyThird = rational2CauchyReal (1/3)
 cauchyThirdWithAccuracy :: Accuracy -> MPBall
 cauchyThirdWithAccuracy = cauchyReal2ball cauchyThird
 
-ballPluscauchy :: MPBall
-ballPluscauchy = ballR1 + pi 
+cauchyArithmetic :: CauchyReal
+cauchyArithmetic = 1 + pi + cos(pi/3)
+
+ballPlusCauchy :: MPBall
+ballPlusCauchy = ball1 + cauchyArithmetic 
