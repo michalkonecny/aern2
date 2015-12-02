@@ -1,8 +1,8 @@
 {-# LANGUAGE StandaloneDeriving, GeneralizedNewtypeDeriving, TypeSynonymInstances #-}
 
 module AERN2.Real.MPFloat 
-    (MPFloat, Precision, prec, getPrecision, maximumPrecision, standardPrecisions, 
-     setPrecisionUp,
+    (MPFloat, Precision, prec, prec2integer, maximumPrecision, standardPrecisions, 
+     getPrecision, setPrecisionUp,
      toRational, toDoubleUp, toDoubleDown,
      zero, one, two, integer, integerUp, integerDown, rationalUp, rationalDown,
      neg, abs, addUp, addDown, subUp, subDown, 
@@ -29,6 +29,9 @@ import AERN2.Real.Operations hiding (abs,neg)
 type MPFloat = MPLow.Rounded
 newtype Precision = Precision Integer
     deriving (P.Eq, P.Ord, P.Show, P.Enum, P.Num, P.Real, P.Integral)
+
+prec2integer :: Precision -> Integer
+prec2integer (Precision p) = p
 
 setPrecisionUp :: Precision -> MPFloat -> MPFloat
 setPrecisionUp (Precision p) = MPLow.set MPLow.Up (P.fromInteger p)

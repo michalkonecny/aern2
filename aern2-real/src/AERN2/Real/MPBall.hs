@@ -4,7 +4,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 module AERN2.Real.MPBall
     (MPBall(..), getAccuracy, 
-     getPrecision, MP.standardPrecisions, MP.Precision, MP.prec,
+     getPrecision, MP.standardPrecisions, MP.Precision, MP.prec, MP.prec2integer,
      isNonZero,
      toIntegerUp, toIntegerDown,
      integer2Ball, integer2BallP,  

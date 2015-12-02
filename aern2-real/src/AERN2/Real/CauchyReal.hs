@@ -23,12 +23,9 @@ import Prelude hiding
      pi,sqrt,cos,sin)
 --import qualified Prelude as P
 
-import qualified AERN2.Real.Accuracy as A
-import AERN2.Real.Accuracy (Accuracy)
+import AERN2.Real.Accuracy
 
-import AERN2.Real.MPFloat (Precision)
 import AERN2.Real.MPBall
-import AERN2.Real.MPBall (MPBall)
 import AERN2.Real.IntegerRational ()
 import AERN2.Real.Operations
 --import AERN2.Real.OperationsToBall ()
@@ -37,16 +34,16 @@ import Debug.Trace (trace)
 _ = trace
 
 {-| Invariant: For any @(CauchyReal seq)@ it holds @ball_error (seq i) <= 2^^(-i)@ -}
-data CauchyReal = CauchyReal (A.Accuracy -> MPBall) 
+data CauchyReal = CauchyReal (Accuracy -> MPBall) 
 
-cauchyReal2ball :: CauchyReal -> A.Accuracy -> MPBall
+cauchyReal2ball :: CauchyReal -> Accuracy -> MPBall
 cauchyReal2ball (CauchyReal getBall) a = getBall a
 
-showCauchyReal :: A.Accuracy -> CauchyReal -> String
+showCauchyReal :: Accuracy -> CauchyReal -> String
 showCauchyReal a r = show (cauchyReal2ball r a)
 
 convergent2Cauchy :: 
-    (Precision -> MPBall) -> (A.Accuracy -> MPBall)
+    (Precision -> MPBall) -> (Accuracy -> MPBall)
 convergent2Cauchy convergentSeq i =
     findAccurate $ map convergentSeq standardPrecisions
     where
@@ -117,12 +114,12 @@ instance CanMul CauchyReal CauchyReal where
             where
             jInit1 = 
                 case maybeA2NormLog of
-                    NormBits a2NormLog -> max (A.bits 0) (i + a2NormLog + 1)
-                    NormZero -> A.bits 0
+                    NormBits a2NormLog -> max (bits 0) (i + a2NormLog + 1)
+                    NormZero -> bits 0
             jInit2 = 
                 case maybeA1NormLog of
-                    NormBits a1NormLog -> max (A.bits 0) (i + a1NormLog + 1)
-                    NormZero -> A.bits 0
+                    NormBits a1NormLog -> max (bits 0) (i + a1NormLog + 1)
+                    NormZero -> bits 0
             maybeA1NormLog = getSeqNormLog i getB1   
             maybeA2NormLog = getSeqNormLog i getB2   
 
@@ -132,7 +129,7 @@ getSeqNormLog i getB =
         Just True -> getNormLog getB0
         _ -> getNormLog (getB i)
     where
-    getB0 = getB (A.bits 0)
+    getB0 = getB (bits 0)
 
 instance CanMulBy CauchyReal CauchyReal
 
@@ -150,11 +147,11 @@ instance CanDiv CauchyReal CauchyReal where
             jInit1 = 
                 case maybeA2NormLog of
                     NormBits a2NormLog -> max 0 (i - a2NormLog + 1)
-                    NormZero -> A.bits 0 -- denominator == 0, we have no chance...
+                    NormZero -> bits 0 -- denominator == 0, we have no chance...
             jInit2 =
                 case (maybeA1NormLog, maybeA2NormLog) of
-                    (_, NormZero) -> A.bits 0 -- denominator == 0, we have no chance... 
-                    (NormZero, _) -> A.bits 0 -- numerator == 0, it does not matter 
+                    (_, NormZero) -> bits 0 -- denominator == 0, we have no chance... 
+                    (NormZero, _) -> bits 0 -- numerator == 0, it does not matter 
                     (NormBits a1NormLog, NormBits a2NormLog) -> 
                         max 0 (i + a1NormLog + 1 - 2 * a2NormLog)
             maybeA1NormLog = getSeqNormLog i getB1
@@ -279,7 +276,7 @@ instance CanMul Integer CauchyReal where
             jInit = 
                 case maybeA1NormLog of
                     NormBits a1NormLog -> max 0 (i + a1NormLog)
-                    NormZero -> A.bits 0
+                    NormZero -> bits 0
             maybeA1NormLog = getNormLog a1
 
 
@@ -300,8 +297,8 @@ instance CanDiv Integer CauchyReal where
             where
             jInit =
                 case (maybeA1NormLog, maybeA2NormLog) of
-                    (_, NormZero) -> A.bits 0 -- denominator == 0, we have no chance... 
-                    (NormZero, _) -> A.bits 0 -- numerator == 0, it does not matter 
+                    (_, NormZero) -> bits 0 -- denominator == 0, we have no chance... 
+                    (NormZero, _) -> bits 0 -- numerator == 0, it does not matter 
                     (NormBits a1NormLog, NormBits a2NormLog) -> 
                         max 0 (i + a1NormLog - 2 * a2NormLog)
             maybeA1NormLog = getNormLog a1
@@ -319,7 +316,7 @@ instance CanDiv CauchyReal Integer where
             jInit = 
                 case maybeA2NormLog of
                     NormBits a2NormLog -> max 0 (i - a2NormLog)
-                    NormZero -> A.bits 0 -- denominator == 0, we have no chance...
+                    NormZero -> bits 0 -- denominator == 0, we have no chance...
             maybeA2NormLog = getNormLog a2  
 
 instance CanDivBy CauchyReal Integer
@@ -363,7 +360,7 @@ instance CanMul Rational CauchyReal where
             jInit = 
                 case maybeA1NormLog of
                     NormBits a1NormLog -> max 0 (i + a1NormLog)
-                    NormZero -> A.bits 0
+                    NormZero -> bits 0
             maybeA1NormLog = getNormLog a1
 
 instance CanMul CauchyReal Rational where
@@ -383,8 +380,8 @@ instance CanDiv Rational CauchyReal where
             where
             jInit =
                 case (maybeA1NormLog, maybeA2NormLog) of
-                    (_, NormZero) -> A.bits 0 -- denominator == 0, we have no chance... 
-                    (NormZero, _) -> A.bits 0 -- numerator == 0, it does not matter 
+                    (_, NormZero) -> bits 0 -- denominator == 0, we have no chance... 
+                    (NormZero, _) -> bits 0 -- numerator == 0, it does not matter 
                     (NormBits a1NormLog, NormBits a2NormLog) -> 
                         max 0 (i + a1NormLog - 2 * a2NormLog)
             maybeA1NormLog = getNormLog a1
@@ -412,13 +409,13 @@ instance
     CanAdd MPBall CauchyReal 
     where
     type AddType MPBall CauchyReal = MPBall
-    add a (CauchyReal b) = add a (b (getAccuracy a))
+    add a (CauchyReal b) = add a (b (getAccuracyIfExactUsePrec a))
 
 instance
     CanAdd CauchyReal  MPBall 
     where
     type AddType CauchyReal MPBall = MPBall
-    add (CauchyReal a) b = add (a (getAccuracy b)) b
+    add a b = add b a
 
 instance CanAddThis MPBall CauchyReal
 
@@ -426,13 +423,13 @@ instance
     CanSub MPBall CauchyReal 
     where
     type SubType MPBall CauchyReal = MPBall
-    sub a (CauchyReal b) = sub a (b (getAccuracy a))
+    sub a (CauchyReal b) = sub a (b (getAccuracyIfExactUsePrec a))
 
 instance
     CanSub CauchyReal  MPBall 
     where
     type SubType CauchyReal MPBall = MPBall
-    sub (CauchyReal a) b = sub (a (getAccuracy b)) b
+    sub (CauchyReal a) b = sub (a (getAccuracyIfExactUsePrec b)) b
 
 instance CanSubThis MPBall CauchyReal
 
@@ -440,13 +437,13 @@ instance
     CanMul MPBall CauchyReal 
     where
     type MulType MPBall CauchyReal = MPBall
-    mul a (CauchyReal b) = mul a (b (getAccuracy a))
+    mul a (CauchyReal b) = mul a (b (getAccuracyIfExactUsePrec a))
 
 instance
     CanMul CauchyReal  MPBall 
     where
     type MulType CauchyReal MPBall = MPBall
-    mul (CauchyReal a) b = mul (a (getAccuracy b)) b
+    mul a b = mul b a
 
 instance CanMulBy MPBall CauchyReal
 
@@ -454,14 +451,18 @@ instance
     CanDiv MPBall CauchyReal 
     where
     type DivType MPBall CauchyReal = MPBall
-    div a (CauchyReal b) = mul a (b (getAccuracy a))
+    div a (CauchyReal b) = mul a (b (getAccuracyIfExactUsePrec a))
 
 instance
     CanDiv CauchyReal  MPBall 
     where
     type DivType CauchyReal MPBall = MPBall
-    div (CauchyReal a) b = mul (a (getAccuracy b)) b
+    div (CauchyReal a) b = mul (a (getAccuracyIfExactUsePrec b)) b
 
 instance CanDivBy MPBall CauchyReal
 
-
+getAccuracyIfExactUsePrec :: MPBall -> Accuracy
+getAccuracyIfExactUsePrec ball =
+    case getAccuracy ball of
+        Exact -> bits (prec2integer $ getPrecision ball) -- should we also consider the norm of the ball? 
+        result -> result
