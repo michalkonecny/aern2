@@ -3,7 +3,7 @@
 
 module AERN2.Real.Operations 
 (
-    fromInteger, fromRational, ifThenElse, int,
+    fromInteger, fromRational, ifThenElse, fromInt, toInt,
     (==), (/=), (>), (<), (<=), (>=),
     HasEq(..), HasOrder(..),
     HasNorm(..), NormLog(..),
@@ -29,7 +29,7 @@ import Prelude hiding
      fromInteger,fromRational,
      sqrt,cos,sin)
 
-import qualified Prelude as P (fromInteger, (<=), (>=))
+import qualified Prelude as P (toInteger, fromInteger, (<=), (>=))
 
 {- 
     The following arranges that all numeric literals are monomorphic and of the type Integer or Rational.
@@ -40,7 +40,9 @@ _example1 = 1 -- not polymorphic
 _example2 :: Rational -- inferred
 _example2 = 1.0 -- not polymorphic
 _example3 :: Int
-_example3 = int 1 -- the easiest way to get Int literals (1 :: Int does not compile)
+_example3 = toInt 1 -- the easiest way to get Int literals (1 :: Int does not compile)
+_example4 :: Integer
+_example4 = fromInt (length [])
 
 fromInteger :: Integer -> Integer
 fromInteger = id
@@ -54,8 +56,8 @@ ifThenElse b e1 e2
     | b = e1
     | otherwise = e2
 
-int :: Integer -> Int
-int i 
+toInt :: Integer -> Int
+toInt i 
     | iInIntRange = P.fromInteger i
     | otherwise = error $ "int out of range: " ++ show i 
     where
@@ -64,6 +66,8 @@ int i
         &&
         i P.<= toInteger (maxBound :: Int)
 
+fromInt :: Int -> Integer
+fromInt = P.toInteger
 
 {- 
     The following mixed-type operators shadow the classic mono-type Prelude versions. 
