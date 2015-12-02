@@ -3,11 +3,13 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
 module AERN2.Real.MPBall
-    (MPBall(..), getAccuracy, getPrecision, MP.standardPrecisions,
+    (MPBall(..), getAccuracy, 
+     getPrecision, MP.standardPrecisions, MP.Precision, MP.prec,
      isNonZero,
-     integer2Ball, integer2BallP,  toIntegerUp, toIntegerDown,
+     toIntegerUp, toIntegerDown,
+     integer2Ball, integer2BallP,  
      rational2BallP, rationalBall2BallP, 
-     piBallUsingPrecision) 
+     piBallP) 
 where
 
 import Prelude hiding
@@ -241,8 +243,8 @@ instance CanDivBy MPBall MPBall
 
 instance CanDivSameType MPBall
 
-piBallUsingPrecision :: Precision -> MPBall
-piBallUsingPrecision p = MPBall piUp (piUp `EB.subMP` piDown)
+piBallP :: Precision -> MPBall
+piBallP p = MPBall piUp (piUp `EB.subMP` piDown)
     where
     piUp = MP.piUp p 
     piDown = MP.piDown p 

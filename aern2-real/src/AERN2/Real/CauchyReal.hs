@@ -69,7 +69,7 @@ pi = CauchyReal piByAccuracy
     
 piByAccuracy :: Accuracy -> MPBall
 piByAccuracy =
-    convergent2Cauchy (\ p -> piBallUsingPrecision p)
+    convergent2Cauchy (\ p -> piBallP p)
 
 {- Operations among CauchyReal's -}
 
