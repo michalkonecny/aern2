@@ -14,7 +14,7 @@ The following steps have been tested on Ubuntu 14.04:
   * `> ln -s ../cabal.sandbox.config .`
   * `> cabal install`
   * This package will fail to install if you do not have automake-1.15.  Nevertheless, it can be made to work with automake-1.14 (which comes with Ubuntu 14.04 LTS), eg using symbolic links for the binaries.
-* Install aern2.
+* Install aern2-real:
   * `> cd ..`
   * `> git clone git@github.com:michalkonecny/aern2.git`
   * `> cd aern2/aern2-real`
