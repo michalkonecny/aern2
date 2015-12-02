@@ -1,9 +1,11 @@
 # aern2
-A Haskell library for Approximating Exact Real Numbers (AERN) based on interval computation. 
+A Haskell library for Approximating Exact Real Numbers (AERN) based on interval computation.
 
 *This is a work in progress.*
 
-The following is an example repl session:
+Links: [installation instructions](docs/INSTALL.md)
+
+The following is an example interactive session:
 
 ```
 > cd aern2-real
@@ -49,4 +51,3 @@ pi :: CauchyReal
 ```
 
 You can also start by cloning the module [AERN2.Real.Examples](https://github.com/michalkonecny/aern2/blob/master/aern2-real/src/AERN2/Real/Examples.hs).
-
