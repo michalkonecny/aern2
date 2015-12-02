@@ -1,11 +1,10 @@
 module FnReps.FunctionAbstraction where
 
---import Numeric.AERN.MPFRBasis.Interval
-import Numeric.AERN.DoubleBasis.Interval
+import AERN2.Real
 
-type RA = DI
+type RA = MPBall
 
-class (Floating fn) => RF fn where
+class RF fn where
     evalMI :: fn -> RA -> RA
     constFn :: RA -> fn
     idFn :: fn

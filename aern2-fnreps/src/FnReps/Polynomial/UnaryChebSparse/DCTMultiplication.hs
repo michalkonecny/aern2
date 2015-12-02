@@ -12,34 +12,36 @@ module FnReps.Polynomial.UnaryChebSparse.DCTMultiplication
 --(multiplyDCT_terms)
 where
 
---import Numeric.AERN.MPFRBasis.Interval
-import Numeric.AERN.DoubleBasis.Interval
-import Numeric.AERN.RealArithmetic.RefinementOrderRounding ((/|), (|*))
+import AERN2.Real
 
-import Math.NumberTheory.Logarithms (intLog2)
+import Math.NumberTheory.Logarithms (integerLog2)
 
 import qualified Data.HashMap.Strict as HM
-import Data.List (sortBy)
+import Data.List (sortBy, genericIndex)
 
 import Debug.Trace (trace)
 
---type RA = MI
-type RA = DI
+type RA = MPBall
 
-testDirect =
+(!!!) :: [a] -> Integer -> a
+(!!!) = genericIndex
+
+_exampleDirect :: HM.HashMap Integer RA
+_exampleDirect =
     multiplyDirect_terms p1 p2
     
-testDCT =
+_exampleDCT :: HM.HashMap Integer RA
+_exampleDCT =
     multiplyDCT_terms p1 p2
     
-p1 :: HM.HashMap Int RA
-p1 = HM.fromList [(i,1) | i <- [0..500]]
+p1 :: HM.HashMap Integer RA
+p1 = HM.fromList [(i,integer2BallP (prec 100) 1) | i <- [0..10]]
 
-p2 :: HM.HashMap Int RA
-p2 = HM.fromList [(i,2) | i <- [0..500]]
+p2 :: HM.HashMap Integer RA
+p2 = HM.fromList [(i,integer2BallP (prec 100) 2) | i <- [0..10]]
 
 multiplyDirect_terms
-     :: HM.HashMap Int RA -> HM.HashMap Int RA -> HM.HashMap Int RA
+     :: HM.HashMap Integer RA -> HM.HashMap Integer RA -> HM.HashMap Integer RA
 multiplyDirect_terms terms1 terms2 =
     terms
     where
@@ -56,7 +58,7 @@ multiplyDirect_terms terms1 terms2 =
                 (j,b) <- HM.toList terms2
             ]
             
-multiplyDCT_terms :: HM.HashMap Int RA -> HM.HashMap Int RA -> HM.HashMap Int RA
+multiplyDCT_terms :: HM.HashMap Integer RA -> HM.HashMap Integer RA -> HM.HashMap Integer RA
 multiplyDCT_terms termsA termsB =
     trace
     (
@@ -73,7 +75,7 @@ multiplyDCT_terms termsA termsB =
     ) $
     HM.fromList $ zip [0..] (c0Double / 2 : c)
     where
-    (c0Double : c) = map (* (2 /| cN)) (tDCT_I_nlogn cT) -- interpolate the values using a polynomial 
+    (c0Double : c) = map (* (2 / cN)) (tDCT_I_nlogn cT) -- interpolate the values using a polynomial 
      
     cT = zipWith (*) aT bT -- multiplication of the cN+1 values of the polynomials on the grid
     
@@ -81,13 +83,13 @@ multiplyDCT_terms termsA termsB =
     bT = tDCT_I_nlogn b -- compute the values of the polynomial termsB on a grid
     
     -- convert from sparse to dense representation:
-    a = pad0 $ (2 * a0) : [HM.lookupDefault 0 i termsA | i <- [1..dA]]
-    a0 = HM.lookupDefault 0 0 termsA
-    b = pad0 $ (2 * b0) : [HM.lookupDefault 0 i termsB | i <- [1..dB]]
-    b0 = HM.lookupDefault 0 0 termsB
-    pad0 list = take (cN + 1) $ list ++ (repeat 0)
+    a = pad0 $ (2 * a0) : [HM.lookupDefault (integer2Ball 0) i termsA | i <- [1..dA]]
+    a0 = HM.lookupDefault (integer2Ball 0)  0 termsA
+    b = pad0 $ (2 * b0) : [HM.lookupDefault (integer2Ball 0)  i termsB | i <- [1..dB]]
+    b0 = HM.lookupDefault (integer2Ball 0) 0 termsB
+    pad0 list = take (toInt $ cN + 1) $ list ++ (repeat (integer2Ball 0))
     
-    cN = 2 ^ (1 + (intLog2 $ max 1 (dA + dB)))
+    cN = 2 ^ (1 + (fromInt $ integerLog2 $ max 1 (dA + dB)))
     dA = maximum $ HM.keys termsA
     dB = maximum $ HM.keys termsB
 
@@ -102,22 +104,20 @@ tDCT_I_reference ::
     [RA] {-^ @a@ a vector of validated real numbers -} -> 
     [RA] {-^ @a~@ a vector of validated real numbers -}
 tDCT_I_reference a =
-    [sum [ (eps cN k) * (a !! k) * cos ( ((mu * k) |* rPi) /| cN)
+    [sum [ (eps cN k) * (a !!! k) * cos ( ((mu * k) * pi) / cN)
             | k <- [0..cN] 
          ] 
         | mu <- [0..cN]
     ]
     where
-    cN = length a - 1
-    rPi = piOut -- rSample
---    (rSample : _) = g
+    cN = fromInt (length a) - 1
 
 {-| An auxiliary family of constants, frequently used in Chebyshev-basis expansions. -}
-eps :: Int -> Int -> RA
+eps :: Integer -> Integer -> Rational
 eps n k 
     | k == 0 = 0.5
     | k == n = 0.5
-    | otherwise = 1 
+    | otherwise = 1.0 
 
 
 {-|
@@ -135,14 +135,14 @@ tDCT_I_nlogn a
     | otherwise = map aTilde [0..cN]
     where
     aTilde i 
-        | even i = fTilde !! (i `div` 2)
-        | otherwise = gTilde !! ((i - 1) `div` 2)
+        | even i = fTilde !!! (floor (i/2))
+        | otherwise = gTilde !!! (floor ((i - 1) `div` 2))
     fTilde = tDCT_I_nlogn f
     gTilde = tDCT_III_nlogn g
-    f = [ (a !! ell) + (a !! (cN - ell)) | ell <- [0..cN1]]
-    g = [ (a !! ell) - (a !! (cN - ell)) | ell <- [0..cN1-1]]
-    cN = (length a) - 1
-    cN1 = cN `div` 2
+    f = [ (a !!! ell) + (a !!! (cN - ell)) | ell <- [0..cN1]]
+    g = [ (a !!! ell) - (a !!! (cN - ell)) | ell <- [0..cN1-1]]
+    cN = fromInt (length a) - 1
+    cN1 = floor (cN / 2)
 
 {-|
     DCT-III computed directly from its definition in
@@ -154,21 +154,19 @@ tDCT_III_reference ::
     [RA] {-^ g a vector of validated real numbers -} -> 
     [RA] {-^ g~ a vector of validated real numbers -}
 tDCT_III_reference g =
-    [sum [ (eps cN1 k) * (g !! k) * cos ( (((2*j+1)*k) |* rPi) /| cN)
+    [sum [ (eps cN1 k) * (g !!! k) * cos ( (((2*j+1)*k) * pi) / cN)
             | k <- [0..(cN1-1)] 
          ] 
         | j <- [0..(cN1-1)]
     ]
     where
     cN = cN1 * 2
-    cN1 = length g
-    rPi = piOut -- rSample
---    (rSample : _) = g
+    cN1 = fromInt (length g)
 
 {-|
     DCT-III computed via SDCT-III.  The reduction is described on page 20. 
     
-    Precondition: length g is a power of 2
+    Precondition: fromInt (length g) is a power of 2
 -}
 tDCT_III_nlogn :: 
     [RA] {-^ g a vector of validated real numbers -} -> 
@@ -180,9 +178,9 @@ tDCT_III_nlogn g =
     h2g h = map get_g [0..cN1-1]
         where
         get_g i  
-            | even i = h !! (i `div` 2)
-            | otherwise = h !! ((2*cN1 - i - 1) `div` 2)   
-    cN1 = length g
+            | even i = h !!! (floor (i/2 :: Rational))
+            | otherwise = h !!! (floor $ (2*cN1 - i - 1)/2)   
+    cN1 = fromInt (length g)
 
 
 {-|
@@ -199,19 +197,17 @@ tSDCT_III_reference h =
 --        "rPi = " ++ show rPi
 --        ++ "\ncN = " ++ show cN
 --        ++ "\ncN1 = " ++ show cN1
---        ++ "\n( (((4*3+1)*3 :: Int) |* rPi) /| cN) = " ++ show (( (((4*3+1)*3 :: Int) |* rPi) /| cN))
---        ++ "\ncos ( (((4*3+1)*3 :: Int) |* rPi) /| cN) = " ++ show (cos ( (((4*3+1)*3 :: Int) |* rPi) /| cN))
+--        ++ "\n( (((4*3+1)*3 :: Integer) |* rPi) /| cN) = " ++ show (( (((4*3+1)*3 :: Integer) |* rPi) /| cN))
+--        ++ "\ncos ( (((4*3+1)*3 :: Integer) |* rPi) /| cN) = " ++ show (cos ( (((4*3+1)*3 :: Integer) |* rPi) /| cN))
 --    ) $
-    [sum [ (h !! ell) * cos ( (((4*j+1)*ell) |* rPi) /| cN)
+    [sum [ (h !!! ell) * cos ( (((4*j+1)*ell) * pi) / cN)
             | ell <- [0..(cN1-1)] 
          ] 
         | j <- [0..(cN1-1)]
     ]
     where
     cN = cN1 * 2
-    cN1 = length h
-    rPi = piOut -- rSample
---    (rSample : _) = h
+    cN1 = fromInt (length h)
 
 {-|
     Simplified DCT-III computed as described in 
@@ -230,7 +226,7 @@ tSDCT_III_nlogn h =
         sortBy (\ (i,_,_) (j,_,_) -> compare i j) $ 
         splitUntilSingletons $ [(0, h, 1)]
     where
-    splitUntilSingletons :: [(Int, [RA], Int)] -> [(Int, [RA], Int)]
+    splitUntilSingletons :: [(Integer, [RA], Integer)] -> [(Integer, [RA], Integer)]
     splitUntilSingletons groups
         | allSingletons = groups
         | otherwise =
@@ -240,7 +236,7 @@ tSDCT_III_nlogn h =
         allSingletons = and $ map isSingleton groups
         isSingleton (_, [_], _) = True
         isSingleton _ = False
-    splitGroup :: (Int, [RA], Int) -> [(Int, [RA], Int)]
+    splitGroup :: (Integer, [RA], Integer) -> [(Integer, [RA], Integer)]
     splitGroup (c_Itau_minus_1, hItau_minus_1, two_pow_tau_minus_1) =
         [subgroup 0, subgroup 1]
         where
@@ -250,32 +246,29 @@ tSDCT_III_nlogn h =
              2 * two_pow_tau_minus_1)
             where
             hItau 0 = 
-                (hItau_minus_1 !! 0) 
+                (hItau_minus_1 !!! 0) 
                 + 
-                (minusOnePow bit_iTauMinus1) * (hItau_minus_1 !! (c_Ntau_plus_1)) * gamma
+                (minusOnePow bit_iTauMinus1) * (hItau_minus_1 !!! (c_Ntau_plus_1)) * gamma
             hItau n = 
-                (hItau_minus_1 !! n)
+                (hItau_minus_1 !!! n)
                 -
-                (hItau_minus_1 !! (c_Ntau - n))
+                (hItau_minus_1 !!! (c_Ntau - n))
                 + 
-                (((2 :: Int) |* (minusOnePow bit_iTauMinus1)) * (hItau_minus_1 !! (c_Ntau_plus_1+n)) * gamma)
+                ((2 * (minusOnePow bit_iTauMinus1)) * (hItau_minus_1 !!! (c_Ntau_plus_1+n)) * gamma)
             gamma =
-                cos $ (((4 * c_Itau_minus_1) + 1) |* rPi) /| (4*two_pow_tau_minus_1)
-        c_Ntau = length hItau_minus_1
+                cos $ (((4 * c_Itau_minus_1) + 1) * pi) / (4*two_pow_tau_minus_1)
+        c_Ntau = fromInt (length hItau_minus_1)
         c_Ntau_plus_1 
-            | even c_Ntau = c_Ntau `div` 2
+            | even c_Ntau = floor (c_Ntau/2)
             | otherwise = error "tSDCT_III_nlogn: precondition violated: (length h) has to be a power of 2"
         
-    minusOnePow :: Int -> RA
+    minusOnePow :: Integer -> Integer
     minusOnePow 0 = 1
     minusOnePow 1 = -1 
     minusOnePow _ = error "tSDCT_III_nlogn: minusOnePow called with a value other than 0,1"
 
-    rPi = piOut -- rSample
---    (rSample : _) = h
-
 {-
-allBits :: Int -> [[Int]]
+allBits :: Integer -> [[Integer]]
 allBits n 
     | n > 0 =
         (map (0:) allBits_n_minus_1) ++ (map (1:) allBits_n_minus_1)
@@ -298,34 +291,32 @@ aux1 h =
     ]
     where
     htld j =
-        (h !! 0) 
+        (h !!! 0) 
         +
         (sum 
             [
-                ((h !! n) - (h !! (cN1 - n)))
+                ((h !!! n) - (h !!! (cN1 - n)))
                 *
-                (cos ((((4*j + 1)*n) |* rPi)/| cN))
+                (cos ((((4*j + 1)*n) * pi)/| cN))
                 | n <- [1..(cN2 - 1)]
             ]
         ) 
         +
         2 * cos(((4*j + 1) |* rPi)/ 4) *
         (
-            0.5 * (h !! cN2)
+            0.5 * (h !!! cN2)
             +
             (sum
                 [
-                    (h !! (cN2 + n))
+                    (h !!! (cN2 + n))
                     *
-                    (cos ((((4*j + 1)*(n)) |* rPi)/| cN))
+                    (cos ((((4*j + 1)*(n)) * pi)/| cN))
                     | n <- [1..(cN2 - 1)]
                 ]
             )
         )
     cN = cN1 * 2
-    cN1 = length h
-    cN2 = cN1 `div` 2
-    rPi = piOut -- rSample
-    (rSample : _) = h
+    cN1 = fromInt (length h)
+    cN2 = floor (cN1/2)
     
 -}

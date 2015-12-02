@@ -7,7 +7,7 @@ License-File:   LICENCE
 Author:         Michal Konecny, Eike Neumann (Aston University)
 Copyright:      (c) 2015 Michal Konecny, Eike Neumann
 Maintainer:     mikkonecny@gmail.com
-Homepage:       http://code.google.com/p/aern/
+Homepage:       https://github.com/michalkonecny/aern2
 Stability:      experimental
 Category:       Data, Math
 Synopsis:       compare real function representations
@@ -20,19 +20,23 @@ Library
   Build-Depends:
         base >= 4.4,
         containers >= 0.3,
-        aern-real == 0.1,
+        aern2-real == 0.1,
         unordered-containers,
         arithmoi
-  exposed-modules: FnReps.FunctionAbstraction
-  other-modules:
-                    FnReps.Polynomial.UnaryChebSparse,
-                    FnReps.Polynomial.UnaryChebSparse.DCTMultiplication
+  exposed-modules: 
+                   FnReps.Polynomial.UnaryChebSparse,
+                   FnReps.Polynomial.UnaryChebSparse.DCTMultiplication,
+                   FnReps.FunctionAbstraction
+  extensions:       
+                    MultiParamTypeClasses, 
+                    RebindableSyntax, 
+                    TypeFamilies
 
 executable fnreps
   Build-Depends:
         base >= 4.4,
         containers >= 0.3,
-        aern-real == 0.1,
+        aern2-real == 0.1,
         unordered-containers,
         arithmoi
   hs-source-dirs:  src
