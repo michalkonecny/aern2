@@ -9,7 +9,7 @@ where
 
 import Prelude hiding
     ((==),(/=),(<),(>),(<=),(>=),
-     (+),(*),(/),(-),(^),abs,min,max,
+     (+),(*),(/),(-),(^),sum,product,abs,min,max,
      recip,div,negate,
      fromInteger,fromRational,toRational,toInteger,
      pi,sqrt,cos,sin)

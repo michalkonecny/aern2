@@ -12,7 +12,7 @@ where
 
 import Prelude hiding
     ((==),(/=),(<),(>),(<=),(>=),
-     (+),(*),(/),(-),(^),abs,min,max,
+     (+),(*),(/),(-),(^),sum,product,abs,min,max,
      recip,div,negate,
      fromInteger,fromRational,toRational,
      pi,sqrt,cos,sin)
@@ -25,10 +25,10 @@ import AERN2.Real.CauchyReal
 import AERN2.Real.Accuracy
 
 ball1 :: MPBall
-ball1 = rationalBallP (prec 1000) (2.0,1/300) 
+ball1 = rationalBall2BallP (prec 1000) (2.0,1/300) 
 
 ball2 :: MPBall
-ball2 = integer (5^100)
+ball2 = integer2Ball (5^100)
 
 balladd :: MPBall
 balladd = ball1 + ball1

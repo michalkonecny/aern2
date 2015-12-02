@@ -8,7 +8,7 @@ module AERN2.Real.Operations
     HasEq(..), HasOrder(..),
     HasNorm(..), NormLog(..),
     negate, CanNeg(..), CanNegSameType,
-    (+), (-), (*), (/), (^),
+    (+), (-), (*), (/), (^), sum, product,
     CanAbs(..), CanAbsSameType,
     CanMinMax(..), CanMinMaxThis, CanMinMaxSameType,
     CanAdd(..), CanAddThis, CanAddSameType,
@@ -24,7 +24,7 @@ where
 
 import Prelude hiding
     ((==),(/=),(<),(>),(<=),(>=),
-     (+),(*),(/),(-),(^),abs,min,max,
+     (+),(*),(/),(-),(^),sum,product,abs,min,max,
      recip,div,negate,
      fromInteger,fromRational,
      sqrt,cos,sin)
@@ -89,6 +89,10 @@ negate x = neg x
 (/) x y = div x y
 (^) :: CanPow a b => a -> b -> PowType a b
 (^) x y = pow x y
+sum :: (CanAddSameType a) => [a] -> a
+sum = foldr1 (+)
+product :: (CanMulSameType a) => [a] -> a
+product = foldr1 (*)
 
 (==) :: HasEq a b => a -> b -> EqCompareType a b
 (==) x y = equalTo x y

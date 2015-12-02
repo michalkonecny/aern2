@@ -10,7 +10,7 @@ module AERN2.Real.CauchyReal
     CauchyReal,
     showCauchyReal,
     cauchyReal2ball,
-    rational2CauchyReal,
+    integer2CauchyReal, rational2CauchyReal,
     pi
 )
 where
@@ -27,7 +27,7 @@ import qualified AERN2.Real.Accuracy as A
 import AERN2.Real.Accuracy (Accuracy)
 
 import AERN2.Real.MPFloat (Precision)
-import qualified AERN2.Real.MPBall as MB
+import AERN2.Real.MPBall
 import AERN2.Real.MPBall (MPBall)
 import AERN2.Real.IntegerRational ()
 import AERN2.Real.Operations
@@ -48,24 +48,28 @@ showCauchyReal a r = show (cauchyReal2ball r a)
 convergent2Cauchy :: 
     (Precision -> MPBall) -> (A.Accuracy -> MPBall)
 convergent2Cauchy convergentSeq i =
-    findAccurate $ map convergentSeq MB.standardPrecisions
+    findAccurate $ map convergentSeq standardPrecisions
     where
     findAccurate [] =
         error "convergent2Cauchy: the sequence either converges too slowly or it does not converge"
     findAccurate (b : rest)
-        | MB.getAccuracy b >= i = b
+        | getAccuracy b >= i = b
         | otherwise = findAccurate rest
+
+integer2CauchyReal :: Integer -> CauchyReal
+integer2CauchyReal n =
+    CauchyReal $ convergent2Cauchy $ \ p -> integer2BallP p n 
 
 rational2CauchyReal :: Rational -> CauchyReal
 rational2CauchyReal q =
-    CauchyReal $ convergent2Cauchy $ \ p -> MB.rationalP p q 
+    CauchyReal $ convergent2Cauchy $ \ p -> rational2BallP p q 
 
 pi :: CauchyReal
 pi = CauchyReal piByAccuracy
     
 piByAccuracy :: Accuracy -> MPBall
 piByAccuracy =
-    convergent2Cauchy (\ p -> MB.piBallUsingPrecision p)
+    convergent2Cauchy (\ p -> piBallUsingPrecision p)
 
 {- Operations among CauchyReal's -}
 
@@ -198,12 +202,12 @@ ensureAccuracy1: i = 56; j = 54; result accuracy = 89
 ensureAccuracy1 ::
     Accuracy -> Accuracy -> (Accuracy -> MPBall) -> MPBall
 ensureAccuracy1 i j getB 
-    | MB.getAccuracy result >= i = 
+    | getAccuracy result >= i = 
         -- TODO: disable this trace 
         trace (
             "ensureAccuracy1: i = " ++ show i ++ 
             "; j = " ++ show j ++ 
-            "; result accuracy = " ++ (show $ MB.getAccuracy result)
+            "; result accuracy = " ++ (show $ getAccuracy result)
         ) $ 
         result
     | otherwise =
@@ -211,7 +215,7 @@ ensureAccuracy1 i j getB
         trace (
             "ensureAccuracy1: i = " ++ show i ++ 
             "; j = " ++ show j ++ 
-            "; result accuracy = " ++ (show $ MB.getAccuracy result)
+            "; result accuracy = " ++ (show $ getAccuracy result)
         ) $ 
         ensureAccuracy1 i (j+1) getB
     where
@@ -220,13 +224,13 @@ ensureAccuracy1 i j getB
 ensureAccuracy2 ::
     Accuracy -> Accuracy -> Accuracy -> (Accuracy -> Accuracy -> MPBall) -> MPBall
 ensureAccuracy2 i j1 j2 getB 
-    | MB.getAccuracy result >= i = 
+    | getAccuracy result >= i = 
         -- TODO: disable this trace 
         trace (
             "ensureAccuracy2: i = " ++ show i ++ 
             "; j1 = " ++ show j1 ++ 
             "; j2 = " ++ show j2 ++ 
-            "; result accuracy = " ++ (show $ MB.getAccuracy result)
+            "; result accuracy = " ++ (show $ getAccuracy result)
         ) $ 
         result
     | otherwise =
@@ -235,7 +239,7 @@ ensureAccuracy2 i j1 j2 getB
             "ensureAccuracy2: i = " ++ show i ++ 
             "; j1 = " ++ show j1 ++ 
             "; j2 = " ++ show j2 ++ 
-            "; result accuracy = " ++ (show $ MB.getAccuracy result)
+            "; result accuracy = " ++ (show $ getAccuracy result)
         ) $ 
         ensureAccuracy2 i (j1+1)(j2+1) getB
     where
@@ -322,12 +326,12 @@ instance CanDivBy CauchyReal Integer
 
 instance CanSqrt Integer where
     type SqrtType Integer = CauchyReal
-    sqrt x = CauchyReal (convergent2Cauchy $ \p -> sqrt (MB.integerP p x))      
+    sqrt x = CauchyReal (convergent2Cauchy $ \p -> sqrt (integer2BallP p x))      
         
 instance CanSineCosine Integer where
     type SineCosineType Integer = CauchyReal
-    sin x = CauchyReal (convergent2Cauchy $ \p -> sin (MB.integerP p x))
-    cos x = CauchyReal (convergent2Cauchy $ \p -> cos (MB.integerP p x))
+    sin x = CauchyReal (convergent2Cauchy $ \p -> sin (integer2BallP p x))
+    cos x = CauchyReal (convergent2Cauchy $ \p -> cos (integer2BallP p x))
 
 
 {- CauchyReal-Rational operations -}
@@ -394,12 +398,12 @@ instance CanDivBy CauchyReal Rational
 
 instance CanSqrt Rational where
     type SqrtType Rational = CauchyReal
-    sqrt x = CauchyReal (convergent2Cauchy $ \p -> sqrt (MB.rationalP p x))      
+    sqrt x = CauchyReal (convergent2Cauchy $ \p -> sqrt (rational2BallP p x))      
         
 instance CanSineCosine Rational where
     type SineCosineType Rational = CauchyReal
-    sin x = CauchyReal (convergent2Cauchy $ \p -> sin (MB.rationalP p x))
-    cos x = CauchyReal (convergent2Cauchy $ \p -> cos (MB.rationalP p x))
+    sin x = CauchyReal (convergent2Cauchy $ \p -> sin (rational2BallP p x))
+    cos x = CauchyReal (convergent2Cauchy $ \p -> cos (rational2BallP p x))
 
 
 {- operations mixing MPBall and CauchyReal, resulting in an MPBall -}
@@ -408,13 +412,13 @@ instance
     CanAdd MPBall CauchyReal 
     where
     type AddType MPBall CauchyReal = MPBall
-    add a (CauchyReal b) = add a (b (MB.getAccuracy a))
+    add a (CauchyReal b) = add a (b (getAccuracy a))
 
 instance
     CanAdd CauchyReal  MPBall 
     where
     type AddType CauchyReal MPBall = MPBall
-    add (CauchyReal a) b = add (a (MB.getAccuracy b)) b
+    add (CauchyReal a) b = add (a (getAccuracy b)) b
 
 instance CanAddThis MPBall CauchyReal
 
@@ -422,13 +426,13 @@ instance
     CanSub MPBall CauchyReal 
     where
     type SubType MPBall CauchyReal = MPBall
-    sub a (CauchyReal b) = sub a (b (MB.getAccuracy a))
+    sub a (CauchyReal b) = sub a (b (getAccuracy a))
 
 instance
     CanSub CauchyReal  MPBall 
     where
     type SubType CauchyReal MPBall = MPBall
-    sub (CauchyReal a) b = sub (a (MB.getAccuracy b)) b
+    sub (CauchyReal a) b = sub (a (getAccuracy b)) b
 
 instance CanSubThis MPBall CauchyReal
 
@@ -436,13 +440,13 @@ instance
     CanMul MPBall CauchyReal 
     where
     type MulType MPBall CauchyReal = MPBall
-    mul a (CauchyReal b) = mul a (b (MB.getAccuracy a))
+    mul a (CauchyReal b) = mul a (b (getAccuracy a))
 
 instance
     CanMul CauchyReal  MPBall 
     where
     type MulType CauchyReal MPBall = MPBall
-    mul (CauchyReal a) b = mul (a (MB.getAccuracy b)) b
+    mul (CauchyReal a) b = mul (a (getAccuracy b)) b
 
 instance CanMulBy MPBall CauchyReal
 
@@ -450,13 +454,13 @@ instance
     CanDiv MPBall CauchyReal 
     where
     type DivType MPBall CauchyReal = MPBall
-    div a (CauchyReal b) = mul a (b (MB.getAccuracy a))
+    div a (CauchyReal b) = mul a (b (getAccuracy a))
 
 instance
     CanDiv CauchyReal  MPBall 
     where
     type DivType CauchyReal MPBall = MPBall
-    div (CauchyReal a) b = mul (a (MB.getAccuracy b)) b
+    div (CauchyReal a) b = mul (a (getAccuracy b)) b
 
 instance CanDivBy MPBall CauchyReal
 
