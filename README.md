@@ -8,8 +8,9 @@ Links: [installation instructions](docs/INSTALL.md)
 The following is an example interactive session, illustrating
 the fact that:
 * Arithmetic operations such as `+` can mix types.
-* Numeric literals as not polymorphic.
+* Numeric literals are not polymorphic.
 * `pi` is an exact real.
+* One can combine exact reals and integers in arithmetic expressions.
 * One can compute a high precision ball enclosure for an exact real.
 
 ```
