@@ -22,7 +22,7 @@ import AERN2.Real.IntegerRational ()
 import AERN2.Real.MPBall
 import AERN2.Real.MPFloat hiding (abs, neg, getPrecision, integer)
 import AERN2.Real.CauchyReal
-import AERN2.Real.Accuracy as A
+import AERN2.Real.Accuracy
 
 ball1 :: MPBall
 ball1 = rationalBallP (prec 1000) (2.0,1/300) 

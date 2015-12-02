@@ -1,12 +1,12 @@
 module AERN2.Real.Accuracy 
-    (Accuracy(Exact), bits, toInteger) 
+    (Accuracy(Exact), bits, fromAccuracy) 
 where
 
 import Prelude hiding
     ((==),(/=),(<),(>),(<=),(>=),
      (+),(*),(/),(-),(^),abs,min,max,
      recip,div,negate,
-     fromInteger,fromRational, toRational, toInteger,
+     fromInteger,fromRational, toRational,
      sqrt,cos,sin)
 
 import AERN2.Real.IntegerRational ()
@@ -18,7 +18,7 @@ _example1 :: Accuracy
 _example1 = 1 + 2*(bits 100)
 
 {-| A non-negative Double value to serve as an error bound. Arithmetic is rounded towards +infinity. -}
-data Accuracy = Exact | Bits { toInteger :: Integer }
+data Accuracy = Exact | Bits { fromAccuracy :: Integer }
 
 bits :: Integer -> Accuracy
 bits i = Bits i 
