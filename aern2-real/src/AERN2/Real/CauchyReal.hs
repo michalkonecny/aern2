@@ -31,7 +31,14 @@ import AERN2.Real.Operations
 --import AERN2.Real.OperationsToBall ()
 
 import Debug.Trace (trace)
-_ = trace
+
+shouldTrace :: Bool
+shouldTrace = False
+
+maybeTrace :: String -> a -> a
+maybeTrace 
+    | shouldTrace = trace
+    | otherwise = const id
 
 {-| Invariant: For any @(CauchyReal seq)@ it holds @ball_error (seq i) <= 2^^(-i)@ -}
 data CauchyReal = CauchyReal (Accuracy -> MPBall) 
@@ -200,16 +207,14 @@ ensureAccuracy1 ::
     Accuracy -> Accuracy -> (Accuracy -> MPBall) -> MPBall
 ensureAccuracy1 i j getB 
     | getAccuracy result >= i = 
-        -- TODO: disable this trace 
-        trace (
+        maybeTrace (
             "ensureAccuracy1: i = " ++ show i ++ 
             "; j = " ++ show j ++ 
             "; result accuracy = " ++ (show $ getAccuracy result)
         ) $ 
         result
     | otherwise =
-        -- TODO: disable this trace 
-        trace (
+        maybeTrace (
             "ensureAccuracy1: i = " ++ show i ++ 
             "; j = " ++ show j ++ 
             "; result accuracy = " ++ (show $ getAccuracy result)
@@ -222,8 +227,7 @@ ensureAccuracy2 ::
     Accuracy -> Accuracy -> Accuracy -> (Accuracy -> Accuracy -> MPBall) -> MPBall
 ensureAccuracy2 i j1 j2 getB 
     | getAccuracy result >= i = 
-        -- TODO: disable this trace 
-        trace (
+        maybeTrace (
             "ensureAccuracy2: i = " ++ show i ++ 
             "; j1 = " ++ show j1 ++ 
             "; j2 = " ++ show j2 ++ 
@@ -231,8 +235,7 @@ ensureAccuracy2 i j1 j2 getB
         ) $ 
         result
     | otherwise =
-        -- TODO: disable this trace 
-        trace (
+        maybeTrace (
             "ensureAccuracy2: i = " ++ show i ++ 
             "; j1 = " ++ show j1 ++ 
             "; j2 = " ++ show j2 ++ 

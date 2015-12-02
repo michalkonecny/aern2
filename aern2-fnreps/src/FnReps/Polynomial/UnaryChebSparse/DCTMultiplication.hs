@@ -21,6 +21,14 @@ import Data.List (sortBy, genericIndex)
 
 import Debug.Trace (trace)
 
+shouldTrace :: Bool
+shouldTrace = False
+
+maybeTrace :: String -> a -> a
+maybeTrace 
+    | shouldTrace = trace
+    | otherwise = const id
+
 type RA = MPBall
 
 (!!!) :: [a] -> Integer -> a
@@ -35,10 +43,10 @@ _exampleDCT =
     multiplyDCT_terms p1 p2
     
 p1 :: HM.HashMap Integer RA
-p1 = HM.fromList [(i,integer2BallP (prec 100) 1) | i <- [0..10]]
+p1 = HM.fromList [(i,integer2BallP (prec 100) 1) | i <- [0..1000]]
 
 p2 :: HM.HashMap Integer RA
-p2 = HM.fromList [(i,integer2BallP (prec 100) 2) | i <- [0..10]]
+p2 = HM.fromList [(i,integer2BallP (prec 100) 2) | i <- [0..1000]]
 
 multiplyDirect_terms
      :: HM.HashMap Integer RA -> HM.HashMap Integer RA -> HM.HashMap Integer RA
@@ -60,7 +68,7 @@ multiplyDirect_terms terms1 terms2 =
             
 multiplyDCT_terms :: HM.HashMap Integer RA -> HM.HashMap Integer RA -> HM.HashMap Integer RA
 multiplyDCT_terms termsA termsB =
-    trace
+    maybeTrace
     (
         "multiplyDCT_terms:"
         ++ "\n dA = " ++ show dA
@@ -193,13 +201,6 @@ tSDCT_III_reference ::
     [RA] {-^ h a vector of validated real numbers -} -> 
     [RA] {-^ h~ a vector of validated real numbers -}
 tSDCT_III_reference h =
---    trace (
---        "rPi = " ++ show rPi
---        ++ "\ncN = " ++ show cN
---        ++ "\ncN1 = " ++ show cN1
---        ++ "\n( (((4*3+1)*3 :: Integer) |* rPi) /| cN) = " ++ show (( (((4*3+1)*3 :: Integer) |* rPi) /| cN))
---        ++ "\ncos ( (((4*3+1)*3 :: Integer) |* rPi) /| cN) = " ++ show (cos ( (((4*3+1)*3 :: Integer) |* rPi) /| cN))
---    ) $
     [sum [ (h !!! ell) * cos ( (((4*j+1)*ell) * pi) / cN)
             | ell <- [0..(cN1-1)] 
          ] 
