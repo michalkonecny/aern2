@@ -20,4 +20,5 @@ The following steps have been tested on Ubuntu 14.04:
   * `> git clone git@github.com:michalkonecny/aern2.git`
   * `> cd aern2/aern2-real`
   * `> ln -s ../../cabal.sandbox.config .`
+  * ``> cabal sandbox add-source `pwd```
   * `> cabal install`
