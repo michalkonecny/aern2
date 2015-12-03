@@ -1,5 +1,4 @@
-{-# LANGUAGE DefaultSignatures #-}
-{-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE DefaultSignatures, UndecidableInstances, TypeSynonymInstances, FlexibleInstances  #-}
 
 module AERN2.Real.Operations 
 (
@@ -74,7 +73,7 @@ fromInt = P.toInteger
 
 {-| 
     This is useful for embedding integers into other types
-    when using the monomorphic fromInteger. 
+    when using the monomorphic fromInteger.
 -}
 class HasIntegers a where
     integer :: Integer -> a
