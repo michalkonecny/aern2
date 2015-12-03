@@ -91,16 +91,17 @@ integerUp p i = rationalUp p (P.fromInteger i)
 integerDown :: Precision -> Integer -> MPFloat
 integerDown p i = rationalDown p (P.fromInteger i)
     
-integer :: Integer -> MPFloat
-integer n =
-    findExact $ map upDown standardPrecisions
-    where
-    upDown p = (integerDown p n, integerUp p n)
-    findExact [] = 
-        error $ "integer too high to represent exactly: " ++ show n
-    findExact ((nDown, nUp) : rest)
-        | nDown == nUp = nUp
-        | otherwise = findExact rest
+    
+instance HasIntegers MPFloat where
+    integer n =
+        findExact $ map upDown standardPrecisions
+        where
+        upDown p = (integerDown p n, integerUp p n)
+        findExact [] = 
+            error $ "integer too high to represent exactly: " ++ show n
+        findExact ((nDown, nUp) : rest)
+            | nDown == nUp = nUp
+            | otherwise = findExact rest
 
 standardPrecisions :: [Precision]
 standardPrecisions =

@@ -20,7 +20,7 @@ import Prelude hiding
 import AERN2.Real.Operations
 import AERN2.Real.IntegerRational ()
 import AERN2.Real.MPBall
-import AERN2.Real.MPFloat hiding (abs, neg, getPrecision, integer)
+import AERN2.Real.MPFloat hiding (abs, neg, getPrecision)
 import AERN2.Real.CauchyReal
 import AERN2.Real.Accuracy
 
@@ -28,7 +28,7 @@ ball1 :: MPBall
 ball1 = rationalBall2BallP (prec 1000) (2.0,1/300) 
 
 ball2 :: MPBall
-ball2 = integer2Ball (5^100)
+ball2 = integer (5^100)
 
 balladd :: MPBall
 balladd = ball1 + ball1
@@ -46,7 +46,7 @@ ballComp2 :: Maybe Bool
 ballComp2 = ball1 == ball1
 
 cauchyThird :: CauchyReal
-cauchyThird = rational2CauchyReal (1/3) 
+cauchyThird = rational (1/3) 
 
 cauchyThirdWithAccuracy :: Accuracy -> MPBall
 cauchyThirdWithAccuracy = cauchyReal2ball cauchyThird

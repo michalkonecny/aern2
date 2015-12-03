@@ -65,11 +65,14 @@ integer2BallP p x =
     xUp = MP.integerUp p x
     xDn = MP.integerDown p x
 
+instance HasIntegers MPBall where
+    integer x =
+        MPBall xMP (EB.rational2ErrorBound 0.0)
+        where
+        xMP = integer x
+        
 integer2Ball :: Integer -> MPBall
-integer2Ball x =
-    MPBall xMP (EB.rational2ErrorBound 0.0)
-    where
-    xMP = MP.integer x
+integer2Ball = integer
 
 toIntegerUp :: MPBall -> Integer
 toIntegerUp x = ceiling $ MP.toRational $ snd $ ball2endpoints x

@@ -60,13 +60,19 @@ convergent2Cauchy convergentSeq i =
         | getAccuracy b >= i = b
         | otherwise = findAccurate rest
 
+instance HasIntegers CauchyReal where
+    integer n =
+        CauchyReal $ convergent2Cauchy $ \ p -> integer2BallP p n 
+
 integer2CauchyReal :: Integer -> CauchyReal
-integer2CauchyReal n =
-    CauchyReal $ convergent2Cauchy $ \ p -> integer2BallP p n 
+integer2CauchyReal = integer
+
+instance HasRationals CauchyReal where
+    rational q =
+        CauchyReal $ convergent2Cauchy $ \ p -> rational2BallP p q 
 
 rational2CauchyReal :: Rational -> CauchyReal
-rational2CauchyReal q =
-    CauchyReal $ convergent2Cauchy $ \ p -> rational2BallP p q 
+rational2CauchyReal = rational
 
 pi :: CauchyReal
 pi = CauchyReal piByAccuracy

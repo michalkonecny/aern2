@@ -4,6 +4,7 @@
 module AERN2.Real.Operations 
 (
     fromInteger, fromRational, ifThenElse, fromInt, toInt,
+    HasIntegers(..), HasRationals(..),
     (==), (/=), (>), (<), (<=), (>=),
     HasEq(..), HasOrder(..),
     HasNorm(..), NormLog(..),
@@ -69,6 +70,28 @@ toInt i
 
 fromInt :: Int -> Integer
 fromInt = P.toInteger
+
+
+{-| 
+    This is useful for embedding integers into other types
+    when using the monomorphic fromInteger. 
+-}
+class HasIntegers a where
+    integer :: Integer -> a
+    default integer :: (Num a) => Integer -> a
+    integer n = P.fromInteger n 
+
+instance HasIntegers Integer
+instance HasIntegers Rational
+
+{-| 
+    This is useful for embedding rationals into other types
+    when using the monomorphic fromRational. 
+-}
+class HasRationals a where
+    rational :: Rational -> a 
+
+
 
 {- 
     The following mixed-type operators shadow the classic mono-type Prelude versions. 
