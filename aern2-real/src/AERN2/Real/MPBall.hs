@@ -33,6 +33,13 @@ import AERN2.Real.Operations
 
 data MPBall = MPBall { ball_value :: MPFloat, ball_error :: ErrorBound }
 
+instance Ring MPBall
+instance Field MPBall
+instance CanAddMulScalar MPBall Integer
+instance CanAddMulDivScalar MPBall Integer
+instance CanAddMulScalar MPBall Rational
+instance CanAddMulDivScalar MPBall Rational
+
 instance Show MPBall
     where
     show (MPBall x e) = "[" ++ show x ++ " ± " ++ show e ++ "]"

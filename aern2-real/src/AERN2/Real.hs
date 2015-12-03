@@ -1,9 +1,9 @@
 module AERN2.Real
-    (module AERN2.Real.Operations,
+    (module Prelude,
+     module AERN2.Real.Operations,
      module AERN2.Real.MPBall,
      module AERN2.Real.Accuracy,
-     module AERN2.Real.CauchyReal,
-     module Prelude)
+     module AERN2.Real.CauchyReal)
 where
 
 import Prelude hiding
@@ -18,3 +18,4 @@ import AERN2.Real.Accuracy
 import AERN2.Real.IntegerRational ()
 import AERN2.Real.MPBall
 import AERN2.Real.CauchyReal
+

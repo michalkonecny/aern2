@@ -17,6 +17,7 @@ module AERN2.Real.Operations
     CanPow(..), CanPowBy,
     CanDiv(..), CanDivBy, CanDivSameType,
     CanRecip(..), CanRecipSameType,
+    Ring, Field, CanAddMulScalar, CanAddMulDivScalar,
     CanSqrt(..), CanSqrtSameType,
     CanSineCosine(..), CanSineCosineSameType
 )
@@ -230,6 +231,29 @@ class
     (CanPow a b, PowType a b ~ a) => 
     CanPowBy a b
 
+class
+    (CanNegSameType a, CanAddSameType a, CanSubSameType a, CanMulSameType a, 
+     HasEq a a, HasOrder a a)
+    => 
+    Ring a
+    
+class
+    (Ring a, CanDivSameType a, CanRecipSameType a)
+    =>
+    Field a
+    
+class
+    (CanAddThis a s, CanMulBy a s)
+    =>
+    CanAddMulScalar a s 
+    
+class
+    (CanAddMulScalar a s, CanDivBy a s)
+    =>
+    CanAddMulDivScalar a s 
+    
+
+
 class CanSqrt a where
     type SqrtType a :: *
     sqrt :: a -> SqrtType a
@@ -246,3 +270,5 @@ class CanSineCosine a where
 class
     (CanSineCosine a, SineCosineType a ~ a) => 
     CanSineCosineSameType a
+
+    
