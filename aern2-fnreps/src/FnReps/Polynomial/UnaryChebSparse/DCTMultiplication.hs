@@ -6,7 +6,10 @@
     http://dx.doi.org/10.1016/0024-3795(95)00696-6
 -}
 module FnReps.Polynomial.UnaryChebSparse.DCTMultiplication 
-(_exampleDirect, _exampleDCT)
+(_exampleDCT, _exampleDirect, 
+ tDCT_I_nlogn, tDCT_III_nlogn, tSDCT_III_nlogn,
+ tDCT_I_reference, tDCT_III_reference, tSDCT_III_reference
+ )
 where
 
 import Math.NumberTheory.Logarithms (integerLog2)
