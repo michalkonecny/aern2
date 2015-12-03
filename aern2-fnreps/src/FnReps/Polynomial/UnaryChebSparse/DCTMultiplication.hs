@@ -6,12 +6,11 @@
     http://dx.doi.org/10.1016/0024-3795(95)00696-6
 -}
 module FnReps.Polynomial.UnaryChebSparse.DCTMultiplication 
---(multiplyDCT_terms)
+(_exampleDirect, _exampleDCT)
 where
 
 import Math.NumberTheory.Logarithms (integerLog2)
 
-import qualified Data.HashMap.Strict as HM
 import Data.List (sortBy, genericIndex)
 
 import AERN2.Real
@@ -19,6 +18,7 @@ import AERN2.Real
 import FnReps.Polynomial.UnaryChebSparse.Basics
 
 import Debug.Trace (trace)
+
 
 shouldTrace :: Bool
 shouldTrace = False
@@ -28,25 +28,29 @@ maybeTrace
     | shouldTrace = trace
     | otherwise = const id
 
-_exampleDirect :: HM.HashMap Integer RA
+_exampleDirect :: Terms
 _exampleDirect =
     multiplyDirect_terms p1 p2
     
-_exampleDCT :: HM.HashMap Integer RA
+_exampleDCT :: Terms
 _exampleDCT =
     multiplyDCT_terms p1 p2
     
-p1 :: HM.HashMap Integer RA
-p1 = HM.fromList [(i,integer2BallP (prec 100) 1) | i <- [0..1000]]
+p1 :: Terms
+p1 = terms_fromList [(i,integer2BallP (prec 100) 1) | i <- [0..1000]]
 
-p2 :: HM.HashMap Integer RA
-p2 = HM.fromList [(i,integer2BallP (prec 100) 2) | i <- [0..1000]]
+p2 :: Terms
+p2 = terms_fromList [(i,integer2BallP (prec 100) 2) | i <- [0..1000]]
 
 
 instance CanMul UnaryChebSparse UnaryChebSparse where
     type MulType UnaryChebSparse UnaryChebSparse = UnaryChebSparse
     (UnaryChebSparse termsL) `mul` (UnaryChebSparse termsR) =
-        UnaryChebSparse $ multiplyDCT_terms termsL termsR
+        UnaryChebSparse $ multiply_terms termsL termsR
+        where
+        multiply_terms
+            | ((terms_size termsL) * (terms_size termsR)) < 40000 = multiplyDirect_terms
+            | otherwise = multiplyDCT_terms
 
 instance CanMulBy UnaryChebSparse UnaryChebSparse
 instance CanMulSameType UnaryChebSparse
@@ -56,24 +60,24 @@ instance CanMulSameType UnaryChebSparse
 (!!!) = genericIndex
 
 multiplyDirect_terms
-     :: HM.HashMap Integer RA -> HM.HashMap Integer RA -> HM.HashMap Integer RA
+     :: Terms -> Terms -> Terms
 multiplyDirect_terms terms1 terms2 =
     terms
     where
     terms =
-        foldl addTerm HM.empty newTerms
+        foldl addTerm terms_empty newTerms
         where
         addTerm prevTerms (i,a) = 
-            HM.insertWith (+) i a prevTerms 
+            terms_insertWith (+) i a prevTerms 
         newTerms =
             concat
             [   let c = a*b/2 in [(i+j, c), (abs (i-j), c)]
                 | 
-                (i,a) <- HM.toList terms1,
-                (j,b) <- HM.toList terms2
+                (i,a) <- terms_toList terms1,
+                (j,b) <- terms_toList terms2
             ]
             
-multiplyDCT_terms :: HM.HashMap Integer RA -> HM.HashMap Integer RA -> HM.HashMap Integer RA
+multiplyDCT_terms :: Terms -> Terms -> Terms
 multiplyDCT_terms termsA termsB =
     maybeTrace
     (
@@ -88,7 +92,7 @@ multiplyDCT_terms termsA termsB =
         ++ "\n cT = " ++ show cT
         ++ "\n c = " ++ show c
     ) $
-    HM.fromList $ zip [0..] (c0Double / 2 : c)
+    terms_fromList $ zip [0..] (c0Double / 2 : c)
     where
     (c0Double : c) = map (* (2 / cN)) (tDCT_I_nlogn cT) -- interpolate the values using a polynomial 
      
@@ -98,15 +102,15 @@ multiplyDCT_terms termsA termsB =
     bT = tDCT_I_nlogn b -- compute the values of the polynomial termsB on a grid
     
     -- convert from sparse to dense representation:
-    a = pad0 $ (2 * a0) : [HM.lookupDefault (integer2Ball 0) i termsA | i <- [1..dA]]
-    a0 = HM.lookupDefault (integer2Ball 0)  0 termsA
-    b = pad0 $ (2 * b0) : [HM.lookupDefault (integer2Ball 0)  i termsB | i <- [1..dB]]
-    b0 = HM.lookupDefault (integer2Ball 0) 0 termsB
+    a = pad0 $ (2 * a0) : [terms_lookupDefault (integer2Ball 0) i termsA | i <- [1..dA]]
+    a0 = terms_lookupDefault (integer2Ball 0)  0 termsA
+    b = pad0 $ (2 * b0) : [terms_lookupDefault (integer2Ball 0)  i termsB | i <- [1..dB]]
+    b0 = terms_lookupDefault (integer2Ball 0) 0 termsB
     pad0 list = take (toInt $ cN + 1) $ list ++ (repeat (integer2Ball 0))
     
     cN = 2 ^ (1 + (fromInt $ integerLog2 $ max 1 (dA + dB)))
-    dA = maximum $ HM.keys termsA
-    dB = maximum $ HM.keys termsB
+    dA = maximum $ terms_keys termsA
+    dB = maximum $ terms_keys termsB
 
 {-|
     DCT-I computed directly from its definition in

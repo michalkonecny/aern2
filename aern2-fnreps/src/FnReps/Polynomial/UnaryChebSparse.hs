@@ -1,6 +1,7 @@
 module FnReps.Polynomial.UnaryChebSparse 
 (
-    UnaryChebSparse, fromList
+    UnaryChebSparse, fromList,
+    module AERN2.Real
 )
 where
 
