@@ -28,19 +28,6 @@ maybeTrace
     | shouldTrace = trace
     | otherwise = const id
 
-
-instance CanMul UnaryChebSparse UnaryChebSparse where
-    type MulType UnaryChebSparse UnaryChebSparse = UnaryChebSparse
-    (UnaryChebSparse termsL) `mul` (UnaryChebSparse termsR) =
-        UnaryChebSparse $ multiplyDCT_terms termsL termsR
-
-instance CanMulBy UnaryChebSparse UnaryChebSparse
-instance CanMulSameType UnaryChebSparse
-
-
-(!!!) :: [a] -> Integer -> a
-(!!!) = genericIndex
-
 _exampleDirect :: HM.HashMap Integer RA
 _exampleDirect =
     multiplyDirect_terms p1 p2
@@ -54,6 +41,19 @@ p1 = HM.fromList [(i,integer2BallP (prec 100) 1) | i <- [0..1000]]
 
 p2 :: HM.HashMap Integer RA
 p2 = HM.fromList [(i,integer2BallP (prec 100) 2) | i <- [0..1000]]
+
+
+instance CanMul UnaryChebSparse UnaryChebSparse where
+    type MulType UnaryChebSparse UnaryChebSparse = UnaryChebSparse
+    (UnaryChebSparse termsL) `mul` (UnaryChebSparse termsR) =
+        UnaryChebSparse $ multiplyDCT_terms termsL termsR
+
+instance CanMulBy UnaryChebSparse UnaryChebSparse
+instance CanMulSameType UnaryChebSparse
+
+
+(!!!) :: [a] -> Integer -> a
+(!!!) = genericIndex
 
 multiplyDirect_terms
      :: HM.HashMap Integer RA -> HM.HashMap Integer RA -> HM.HashMap Integer RA
