@@ -136,8 +136,6 @@ instance HasOrder MPBall MPBall where
         where
         e1MP = EB.er2mp e1
         e2MP = EB.er2mp e2
-    greaterThan a b = lessThan b a
-    geq a b = leq b a
 
 instance HasEq MPBall Integer where
     type EqCompareType MPBall Integer = Maybe Bool
@@ -153,16 +151,11 @@ instance HasOrder MPBall Integer where
     type OrderCompareType MPBall Integer = Maybe Bool
     lessThan b1 n2 = lessThan b1 (integer2Ball n2) 
     leq b1 n2 = leq b1 (integer2Ball n2) 
-    greaterThan b1 n2 = greaterThan b1 (integer2Ball n2) 
-    geq b1 n2 = geq b1 (integer2Ball n2) 
 
 instance HasOrder Integer MPBall where
     type OrderCompareType Integer MPBall = Maybe Bool
     lessThan n1 b2 = lessThan (integer2Ball n1) b2
     leq n1 b2 = leq (integer2Ball n1) b2
-    greaterThan n1 b2 = greaterThan (integer2Ball n1) b2
-    geq n1 b2 = geq (integer2Ball n1) b2
-
 
 
 instance CanNeg MPBall where

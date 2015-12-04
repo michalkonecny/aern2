@@ -30,7 +30,7 @@ import Prelude hiding
      fromInteger,fromRational,
      sqrt,cos,sin)
 
-import qualified Prelude as P (toInteger, fromInteger, (<=), (>=))
+import qualified Prelude as P
 
 {- 
     The following arranges that all numeric literals are monomorphic and of the type Integer or Rational.
@@ -132,15 +132,23 @@ product = foldr1 (*)
 
 class HasEq a b where
     type EqCompareType a b
+    type EqCompareType a b = Bool -- default
     equalTo :: a -> b -> EqCompareType a b
     notEqualTo :: a -> b -> EqCompareType a b
+    default notEqualTo :: (EqCompareType a b ~ Bool) => a -> b -> EqCompareType a b
+    notEqualTo a b = not $ equalTo a b 
 
 class HasOrder a b where
     type OrderCompareType a b
+    type OrderCompareType a b = Bool -- default
     lessThan :: a -> b -> OrderCompareType a b
     greaterThan :: a -> b -> OrderCompareType a b
+    default greaterThan :: (OrderCompareType a b ~ OrderCompareType b a, HasOrder b a) => a -> b -> OrderCompareType a b
+    greaterThan a b = lessThan b a
     leq :: a -> b -> OrderCompareType a b
     geq :: a -> b -> OrderCompareType a b
+    default geq :: (OrderCompareType a b ~ OrderCompareType b a, HasOrder b a) => a -> b -> OrderCompareType a b
+    geq a b = leq b a
 
 class HasNorm a where
     {-|
@@ -150,7 +158,14 @@ class HasNorm a where
     -}
     getNormLog :: a -> NormLog
 
-data NormLog = NormBits Integer | NormZero
+data NormLog =  NormZero | NormBits Integer
+    deriving (Eq, Ord)
+
+instance HasEq NormLog NormLog where
+    equalTo a b = a P.== b
+instance HasOrder NormLog NormLog where
+    lessThan a b = a P.< b
+    leq a b = a P.<= b
 
 class CanNeg a where
     type NegType a :: *
