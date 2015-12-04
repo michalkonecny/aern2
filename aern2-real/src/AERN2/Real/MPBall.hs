@@ -179,25 +179,21 @@ instance HasOrder Rational MPBall where
 
 
 instance CanNeg MPBall where
-    type NegType MPBall = MPBall
     neg (MPBall x1 e1) = MPBall (MP.neg x1) e1
 
 instance CanNegSameType MPBall
 
 instance CanAbs MPBall where
-    type AbsType MPBall = MPBall
     abs (MPBall x1 e1) = MPBall (MP.abs x1) e1
 
 instance CanAbsSameType MPBall
 
 instance CanRecip MPBall where
-    type RecipType MPBall = MPBall
     recip b = 1 / b
 
 instance CanRecipSameType MPBall
 
 instance CanAdd MPBall MPBall where
-    type AddType MPBall MPBall = MPBall
     add (MPBall x1 e1) (MPBall x2 e2) =
         MPBall sumUp ((sumUp `EB.subMP` sumDn) + e1 + e2)
         where
@@ -215,7 +211,6 @@ instance CanSubThis MPBall MPBall
 instance CanSubSameType MPBall
 
 instance CanMul MPBall MPBall where
-    type MulType MPBall MPBall = MPBall
     mul (MPBall x1 e1) (MPBall x2 e2) =
         MPBall x12Up (e12 + e1*(EB.absMP x2) + e2*(EB.absMP x1) + e1*e2)
         where
@@ -228,8 +223,7 @@ instance CanMulBy MPBall MPBall
 instance CanMulSameType MPBall
 
 instance CanDiv MPBall MPBall where
-    type DivType MPBall MPBall = MPBall
-    div (MPBall x1 e1) b2@(MPBall x2 e2) 
+    div (MPBall x1 e1) b2@(MPBall x2 e2)
         | isNonZero b2 =
             MPBall x12Up err
         | otherwise =
@@ -398,11 +392,9 @@ ball2endpoints x = (l,u)
 {- common functions -}
 
 instance CanSqrt MPBall where
-    type SqrtType MPBall = MPBall
     sqrt x = monotoneFromApprox MP.sqrtDown MP.sqrtUp x     
         
 instance CanSineCosine MPBall where
-    type SineCosineType MPBall = MPBall
     sin = sinB 1
     cos = cosB 1
 

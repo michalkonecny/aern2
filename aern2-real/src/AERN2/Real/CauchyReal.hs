@@ -84,25 +84,21 @@ piByAccuracy =
 {- Operations among CauchyReal's -}
 
 instance CanNeg CauchyReal where
-    type NegType CauchyReal = CauchyReal
     neg (CauchyReal getB) = CauchyReal (\i -> neg $ getB i)
 
 instance CanNegSameType CauchyReal
 
 instance CanAbs CauchyReal where
-    type AbsType CauchyReal = CauchyReal
     abs (CauchyReal getB) = CauchyReal (\i -> abs $ getB i)
 
 instance CanAbsSameType CauchyReal
 
 instance CanRecip CauchyReal where
-    type RecipType CauchyReal = CauchyReal
     recip a = 1 / a
 
 instance CanRecipSameType CauchyReal
 
 instance CanAdd CauchyReal CauchyReal where
-    type AddType CauchyReal CauchyReal = CauchyReal
     add (CauchyReal getB1) (CauchyReal getB2) =
         CauchyReal $
             \i -> ensureAccuracy2 i i i (\j1 j2 -> (getB1 j1) + (getB2 j2))
@@ -118,7 +114,6 @@ instance CanSubThis CauchyReal CauchyReal
 instance CanSubSameType CauchyReal
 
 instance CanMul CauchyReal CauchyReal where
-    type MulType CauchyReal CauchyReal = CauchyReal
     mul (CauchyReal getB1) (CauchyReal getB2) =
         CauchyReal getB
         where
@@ -149,7 +144,6 @@ instance CanMulBy CauchyReal CauchyReal
 instance CanMulSameType CauchyReal
 
 instance CanDiv CauchyReal CauchyReal where
-    type DivType CauchyReal CauchyReal = CauchyReal
     div (CauchyReal getB1) (CauchyReal getB2) =
         CauchyReal getB
         where
@@ -175,7 +169,6 @@ instance CanDivBy CauchyReal CauchyReal
 instance CanDivSameType CauchyReal
 
 instance CanSqrt CauchyReal where
-    type SqrtType CauchyReal = CauchyReal
     sqrt (CauchyReal getB1) = CauchyReal getB
         where
         getB i = 
@@ -188,7 +181,6 @@ instance CanSqrt CauchyReal where
             maybeSqrtNormLog = getSeqNormLog i (\j -> sqrt (getB1 j)) 
 
 instance CanSineCosine CauchyReal where
-    type SineCosineType CauchyReal = CauchyReal
     sin (CauchyReal getB1) = CauchyReal (\ i -> sin (getB1 i))
     cos (CauchyReal getB1) = CauchyReal (\ i -> cos (getB1 i))
 

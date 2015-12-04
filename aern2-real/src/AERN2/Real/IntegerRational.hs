@@ -73,19 +73,16 @@ instance HasOrder Rational Integer where
 {- operations on Integers -}
 
 instance CanNeg Integer where
-    type NegType Integer = Integer
     neg a = P.negate a
     
 instance CanNegSameType Integer
 
 instance CanAbs Integer where
-    type AbsType Integer = Integer
     abs a = P.abs a
     
 instance CanAbsSameType Integer
 
 instance CanMinMax Integer Integer where
-    type MinMaxType Integer Integer = Integer
     min a b = P.min a b
     max a b = P.max a b
 
@@ -93,7 +90,6 @@ instance CanMinMaxThis Integer Integer
 instance CanMinMaxSameType Integer
 
 instance CanAdd Integer Integer where
-    type AddType Integer Integer = Integer
     add a b = a P.+ b
 
 instance CanAddThis Integer Integer
@@ -105,14 +101,12 @@ instance CanSubThis Integer Integer
 instance CanSubSameType Integer
     
 instance CanMul Integer Integer where
-    type MulType Integer Integer = Integer
     mul a b = a P.* b
 
 instance CanMulBy Integer Integer
 instance CanMulSameType Integer
     
 instance CanPow Integer Integer where
-    type PowType Integer Integer = Integer
     pow a b = a P.^ b
     
 instance CanRecip Integer where
@@ -124,19 +118,16 @@ instance CanDiv Integer Integer -- the default implementation is fine
 {- operations on Rationals -}
     
 instance CanNeg Rational where
-    type NegType Rational = Rational
     neg a = P.negate a
 
 instance CanNegSameType Rational
     
 instance CanAbs Rational where
-    type AbsType Rational = Rational
     abs a = P.abs a
 
 instance CanAbsSameType Rational
 
 instance CanMinMax Rational Rational where
-    type MinMaxType Rational Rational = Rational
     min a b = P.min a b
     max a b = P.max a b
 
@@ -144,7 +135,6 @@ instance CanMinMaxThis Rational Rational
 instance CanMinMaxSameType Rational
 
 instance CanAdd Rational Rational where
-    type AddType Rational Rational = Rational
     add a b = a P.+ b
 
 instance CanAddThis Rational Rational
@@ -156,18 +146,15 @@ instance CanSubThis Rational Rational
 instance CanSubSameType Rational
     
 instance CanMul Rational Rational where
-    type MulType Rational Rational = Rational
     mul a b = a P.* b
 
 instance CanMulBy Rational Rational
 instance CanMulSameType Rational
     
 instance CanPow Rational Integer where
-    type PowType Rational Integer = Rational
     pow a b = a P.^ b
     
 instance CanRecip Rational where
-    type RecipType Rational = Rational
     recip a = 1 / a
 
 instance CanRecipSameType Rational

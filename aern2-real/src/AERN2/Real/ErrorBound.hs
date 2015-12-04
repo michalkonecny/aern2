@@ -60,14 +60,12 @@ getAccuracy (ErrorBound e)
     | otherwise = A.Exact
 
 instance CanAdd ErrorBound ErrorBound where
-    type AddType ErrorBound ErrorBound = ErrorBound
     add (ErrorBound a) (ErrorBound b) = ErrorBound $ a `MP.addUp` b
 
 instance CanAddThis ErrorBound ErrorBound
 instance CanAddSameType ErrorBound
 
 instance CanMul ErrorBound ErrorBound where
-    type MulType ErrorBound ErrorBound = ErrorBound
     mul (ErrorBound a) (ErrorBound b) = ErrorBound $ a `MP.mulUp` b
 
 instance CanMulBy ErrorBound ErrorBound

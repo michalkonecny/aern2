@@ -187,6 +187,7 @@ class
 
 class CanRecip a where
     type RecipType a :: *
+    type RecipType a = a -- default
     recip :: a -> RecipType a
 
 class
@@ -195,6 +196,7 @@ class
 
 class CanMinMax a b where
     type MinMaxType a b :: *
+    type MinMaxType a b = a -- default
     min :: a -> b -> MinMaxType a b
     max :: a -> b -> MinMaxType a b
 
@@ -208,6 +210,7 @@ class
 
 class CanAdd a b where
     type AddType a b :: *
+    type AddType a b = a -- default
     add :: a -> b -> AddType a b
 
 class
@@ -235,6 +238,7 @@ class
 
 class CanMul a b where
     type MulType a b :: *
+    type MulType a b = a -- default
     mul :: a -> b -> MulType a b
 
 class
@@ -262,6 +266,7 @@ class
 
 class CanPow a b where
     type PowType a b :: *
+    type PowType a b = a -- default
     pow :: a -> b -> PowType a b
 
 class
@@ -293,6 +298,7 @@ class
 
 class CanSqrt a where
     type SqrtType a :: *
+    type SqrtType a = a -- default
     sqrt :: a -> SqrtType a
 
 class
@@ -301,6 +307,7 @@ class
 
 class CanSineCosine a where
     type SineCosineType a :: *
+    type SineCosineType a = a -- default
     sin :: a -> SineCosineType a
     cos :: a -> SineCosineType a
 

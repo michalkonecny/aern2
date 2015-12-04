@@ -63,16 +63,11 @@ toDoubleDown :: MPFloat -> Double
 toDoubleDown = MPLow.toDoubleA MPLow.Down
     
 instance HasEq MPFloat MPFloat where
-    type EqCompareType MPFloat MPFloat = Bool
     equalTo = (P.==)
-    notEqualTo = (P./=)
 
 instance HasOrder MPFloat MPFloat where
-    type OrderCompareType MPFloat MPFloat = Bool
     lessThan = (P.<)
-    greaterThan = (P.>)
     leq = (P.<=)
-    geq = (P.>=)
 
 {- constants -}
 
