@@ -157,6 +157,26 @@ instance HasOrder Integer MPBall where
     lessThan n1 b2 = lessThan (integer2Ball n1) b2
     leq n1 b2 = leq (integer2Ball n1) b2
 
+instance HasEq MPBall Rational where
+    type EqCompareType MPBall Rational = Maybe Bool
+    equalTo b1 q2 = equalTo b1 (rational2BallP (getPrecision b1) q2)
+    notEqualTo b1 q2 = notEqualTo b1 (rational2BallP (getPrecision b1) q2)
+
+instance HasEq Rational MPBall where
+    type EqCompareType Rational MPBall = Maybe Bool
+    equalTo q1 b2 = equalTo (rational2BallP (getPrecision b2) q1) b2
+    notEqualTo q1 b2 = notEqualTo (rational2BallP (getPrecision b2) q1) b2
+
+instance HasOrder MPBall Rational where
+    type OrderCompareType MPBall Rational = Maybe Bool
+    lessThan b1 q2 = lessThan b1 (rational2BallP (getPrecision b1) q2) 
+    leq b1 q2 = leq b1 (rational2BallP (getPrecision b1) q2) 
+
+instance HasOrder Rational MPBall where
+    type OrderCompareType Rational MPBall = Maybe Bool
+    lessThan q1 b2 = lessThan (rational2BallP (getPrecision b2) q1) b2
+    leq q1 b2 = leq (rational2BallP (getPrecision b2) q1) b2
+
 
 instance CanNeg MPBall where
     type NegType MPBall = MPBall
