@@ -4,14 +4,17 @@ module FnReps.Polynomial.UnaryChebSparse.Basics
     UnaryChebSparse(..),
     fromList,
     Terms,
+    Degree,
     terms_size,
     terms_empty,
-    terms_keys,
+    terms_degrees,
+    terms_coeffs,
     terms_insertWith,
     terms_fromList,
     terms_toList,
     terms_lookupDefault,
-    terms_unionWith
+    terms_unionWith,
+    terms_filter
 )
 where
 
@@ -37,34 +40,40 @@ instance Show UnaryChebSparse where
     show (UnaryChebSparse terms) =
         "(UnaryChebSparse " ++ show (terms_toList terms) ++ ")"  
 
-fromList :: [(Integer, RA)] -> UnaryChebSparse
+type Degree = Integer
+
+fromList :: [(Degree, RA)] -> UnaryChebSparse
 fromList termsAsList =
     UnaryChebSparse (terms_fromList termsAsList)
 
-type Terms = Map.Map Integer RA
-terms_size :: Terms -> Integer
+type Terms = Map.Map Degree RA
+terms_size :: Terms -> Degree
 terms_size = fromInt . Map.size
 terms_empty :: Terms
 terms_empty = Map.empty
-terms_keys :: Terms -> [Integer]
-terms_keys = Map.keys
-terms_insertWith :: (RA -> RA -> RA) -> Integer -> RA -> Terms -> Terms
+terms_degrees :: Terms -> [Degree]
+terms_degrees = Map.keys
+terms_coeffs :: Terms -> [RA]
+terms_coeffs = Map.elems
+terms_insertWith :: (RA -> RA -> RA) -> Degree -> RA -> Terms -> Terms
 terms_insertWith = Map.insertWith
-terms_fromList :: [(Integer, RA)] -> Terms
+terms_fromList :: [(Degree, RA)] -> Terms
 terms_fromList = Map.fromList
-terms_toList :: Terms -> [(Integer, RA)]
+terms_toList :: Terms -> [(Degree, RA)]
 terms_toList = Map.toList
-terms_lookupDefault :: RA -> Integer -> Terms -> RA
+terms_lookupDefault :: RA -> Degree -> Terms -> RA
 terms_lookupDefault d k m = case Map.lookup k m of Nothing -> d; Just v -> v
 terms_unionWith :: (RA -> RA -> RA) -> Terms -> Terms -> Terms
 terms_unionWith = Map.unionWith
+terms_filter :: (Degree -> RA -> Bool) -> Terms -> Terms
+terms_filter = Map.filterWithKey
 
 -- alternative map implementation:
 --type Terms = HM.HashMap Integer RA
 --terms_empty :: Terms
 --terms_empty = HM.empty
---terms_keys :: Terms -> [Integer]
---terms_keys = HM.keys
+--terms_degrees :: Terms -> [Integer]
+--terms_degrees = HM.keys
 --terms_insertWith :: (RA -> RA -> RA) -> Integer -> RA -> Terms -> Terms
 --terms_insertWith = HM.insertWith
 --terms_fromList :: [(Integer, RA)] -> Terms

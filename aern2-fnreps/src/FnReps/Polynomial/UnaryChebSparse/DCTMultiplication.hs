@@ -6,7 +6,8 @@
     http://dx.doi.org/10.1016/0024-3795(95)00696-6
 -}
 module FnReps.Polynomial.UnaryChebSparse.DCTMultiplication 
-(_exampleDCT, _exampleDirect, 
+( 
+ multiplyDirect_terms, multiplyDCT_terms,
  tDCT_I_nlogn, tDCT_III_nlogn, tSDCT_III_nlogn,
  tDCT_I_reference, tDCT_III_reference, tSDCT_III_reference
  )
@@ -30,21 +31,6 @@ maybeTrace :: String -> a -> a
 maybeTrace 
     | shouldTrace = trace
     | otherwise = const id
-
-_exampleDirect :: Terms
-_exampleDirect =
-    multiplyDirect_terms p1 p2
-    
-_exampleDCT :: Terms
-_exampleDCT =
-    multiplyDCT_terms p1 p2
-    
-p1 :: Terms
-p1 = terms_fromList [(i,integer2BallP (prec 100) 1) | i <- [0..1000]]
-
-p2 :: Terms
-p2 = terms_fromList [(i,integer2BallP (prec 100) 2) | i <- [0..1000]]
-
 
 instance CanMul UnaryChebSparse UnaryChebSparse where
     type MulType UnaryChebSparse UnaryChebSparse = UnaryChebSparse
@@ -112,8 +98,8 @@ multiplyDCT_terms termsA termsB =
     pad0 list = take (toInt $ cN + 1) $ list ++ (repeat (integer2Ball 0))
     
     cN = 2 ^ (1 + (fromInt $ integerLog2 $ max 1 (dA + dB)))
-    dA = maximum $ terms_keys termsA
-    dB = maximum $ terms_keys termsB
+    dA = maximum $ terms_degrees termsA
+    dB = maximum $ terms_degrees termsB
 
 {-|
     DCT-I computed directly from its definition in

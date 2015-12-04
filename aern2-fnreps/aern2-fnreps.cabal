@@ -23,12 +23,13 @@ Library
         aern2-real == 0.1,
         unordered-containers,
         arithmoi
-  exposed-modules: FnReps.Polynomial.UnaryChebSparse
   extensions:       
                     MultiParamTypeClasses, 
                     RebindableSyntax, 
                     TypeFamilies
   other-modules:    
                     FnReps.Polynomial.UnaryChebSparse.Basics,
-                    FnReps.Polynomial.UnaryChebSparse.DCTMultiplication
+                    FnReps.Polynomial.UnaryChebSparse.DCTMultiplication,
+                    FnReps.Polynomial.UnaryChebSparse.SizeReduction
+  exposed-modules:  FnReps.Polynomial.UnaryChebSparse
 
