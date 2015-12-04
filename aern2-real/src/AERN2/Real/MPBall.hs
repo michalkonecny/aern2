@@ -97,7 +97,7 @@ instance HasNorm MPBall where
     getNormLog ball
         | integerBound > 1 = 
             NormBits $ toInteger $ integerLog2 $ integerBound
-        | integerRecipBound > 1 = 
+        | integerRecipBound >= 1 = 
             NormBits  $ 1 + (neg $ toInteger $ integerLog2 $ integerRecipBound)
         | otherwise = NormZero
         where
@@ -108,7 +108,7 @@ instance HasNorm MPBall where
         integerBound = toIntegerUp ballR
         integerRecipBound 
             | isNonZero ballR = toIntegerUp (1 / ballR)
-            | otherwise = 0
+            | otherwise = -1
 
 instance HasEq MPBall MPBall where
     type EqCompareType MPBall MPBall = Maybe Bool

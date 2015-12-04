@@ -159,7 +159,7 @@ class HasNorm a where
     getNormLog :: a -> NormLog
 
 data NormLog =  NormZero | NormBits Integer
-    deriving (Eq, Ord)
+    deriving (Eq, Ord, Show)
 
 instance HasEq NormLog NormLog where
     equalTo a b = a P.== b
