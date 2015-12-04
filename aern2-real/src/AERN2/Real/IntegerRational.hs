@@ -6,19 +6,10 @@ where
 
 {- imports -}
 
-import Prelude hiding
-    ((==),(/=),(<),(>),(<=),(>=),
-     (+),(*),(/),(-),(^),abs,min,max,
-     recip,div,negate,
-     fromInteger,fromRational,
-     sqrt,cos,sin)
+import AERN2.Real.Operations -- includes relevant parts of Prelude
 import qualified Prelude as P
 
 import Data.Ratio ((%))
-
-import Math.NumberTheory.Logarithms (integerLog2)
-
-import AERN2.Real.Operations
 
 {- examples -}
 
@@ -27,17 +18,6 @@ _example1 = 2 * 3 + (1/2) ^ 2
 
 _example2 :: Integer -- cannot be Int
 _example2 = 2 * 3 + 2 ^ 2
-
-instance HasNorm Integer where
-    getNormLog n 
-        | n == 0 = NormZero
-        | otherwise = NormBits $ toInteger $ integerLog2 $ abs n
-
-instance HasNorm Rational where
-    getNormLog x 
-        | x == 0.0 = NormZero
-        | abs x >= 1.0 = NormBits $ toInteger $ integerLog2 $ ceiling $ abs x
-        | otherwise = NormBits $ neg $ toInteger $ integerLog2 $ ceiling (1 / (abs x))
 
 {- comparisons -}
 

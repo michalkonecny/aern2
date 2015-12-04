@@ -12,13 +12,9 @@ module AERN2.Real.MPBall
      piBallP) 
 where
 
-import Prelude hiding
-    ((==),(/=),(<),(>),(<=),(>=),
-     (+),(*),(/),(-),(^),abs,min,max,
-     recip,div,negate,
-     fromInteger,fromRational,
-     sqrt,cos,sin)
 import qualified Prelude as P
+import AERN2.Real.Operations
+import AERN2.Real.Norm
 
 import Math.NumberTheory.Logarithms (integerLog2)
 
@@ -28,7 +24,6 @@ import qualified AERN2.Real.ErrorBound as EB
 import AERN2.Real.ErrorBound (ErrorBound(..))
 import qualified AERN2.Real.MPFloat as MP
 import AERN2.Real.MPFloat (MPFloat, Precision)
-import AERN2.Real.Operations
 
 
 data MPBall = MPBall { ball_value :: MPFloat, ball_error :: ErrorBound }

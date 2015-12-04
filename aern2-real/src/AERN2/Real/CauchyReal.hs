@@ -15,20 +15,13 @@ module AERN2.Real.CauchyReal
 )
 where
 
-import Prelude hiding
-    ((==),(/=),(<),(>),(<=),(>=),
-     (+),(*),(/),(-),(^),abs,min,max,
-     recip,div,negate,
-     fromInteger,fromRational,
-     pi,sqrt,cos,sin)
 --import qualified Prelude as P
-
+import AERN2.Real.Operations
+import AERN2.Real.Norm
 import AERN2.Real.Accuracy
 
 import AERN2.Real.MPBall
 import AERN2.Real.IntegerRational ()
-import AERN2.Real.Operations
---import AERN2.Real.OperationsToBall ()
 
 import Debug.Trace (trace)
 

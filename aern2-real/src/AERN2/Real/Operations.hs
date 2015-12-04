@@ -2,11 +2,11 @@
 
 module AERN2.Real.Operations 
 (
+    module Prelude,
     fromInteger, fromRational, ifThenElse, fromInt, toInt,
     HasIntegers(..), HasRationals(..),
     (==), (/=), (>), (<), (<=), (>=),
     HasEq(..), HasOrder(..),
-    HasNorm(..), NormLog(..),
     negate, CanNeg(..), CanNegSameType,
     (+), (-), (*), (/), (^), sum, product,
     CanAbs(..), CanAbsSameType,
@@ -28,7 +28,7 @@ import Prelude hiding
      (+),(*),(/),(-),(^),sum,product,abs,min,max,
      recip,div,negate,
      fromInteger,fromRational,
-     sqrt,cos,sin)
+     pi,sqrt,cos,sin)
 
 import qualified Prelude as P
 
@@ -150,22 +150,20 @@ class HasOrder a b where
     default geq :: (OrderCompareType a b ~ OrderCompareType b a, HasOrder b a) => a -> b -> OrderCompareType a b
     geq a b = leq b a
 
-class HasNorm a where
-    {-|
-        For a value @x@, return @NormBits j@ where $j$ is close
-        to the smallest @i@ with @|x| <= 2^i@.
-        If @x == 0@ then return @NormZero@.
-    -}
-    getNormLog :: a -> NormLog
+class CanMinMax a b where
+    type MinMaxType a b :: *
+    type MinMaxType a b = a -- default
+    min :: a -> b -> MinMaxType a b
+    max :: a -> b -> MinMaxType a b
 
-data NormLog =  NormZero | NormBits Integer
-    deriving (Eq, Ord, Show)
+class
+    (CanMinMax a b, MinMaxType a b ~ a, CanMinMax b a, MinMaxType b a ~ a) => 
+    CanMinMaxThis a b
 
-instance HasEq NormLog NormLog where
-    equalTo a b = a P.== b
-instance HasOrder NormLog NormLog where
-    lessThan a b = a P.< b
-    leq a b = a P.<= b
+class
+    (CanMinMaxThis a a) => 
+    CanMinMaxSameType a
+
 
 class CanNeg a where
     type NegType a :: *
@@ -193,20 +191,6 @@ class CanRecip a where
 class
     (CanRecip a, RecipType a ~ a) => 
     CanRecipSameType a
-
-class CanMinMax a b where
-    type MinMaxType a b :: *
-    type MinMaxType a b = a -- default
-    min :: a -> b -> MinMaxType a b
-    max :: a -> b -> MinMaxType a b
-
-class
-    (CanMinMax a b, MinMaxType a b ~ a, CanMinMax b a, MinMaxType b a ~ a) => 
-    CanMinMaxThis a b
-
-class
-    (CanMinMaxThis a a) => 
-    CanMinMaxSameType a
 
 class CanAdd a b where
     type AddType a b :: *

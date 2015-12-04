@@ -12,19 +12,13 @@ module AERN2.Real.MPFloat
      cosUp, cosDown, sinUp, sinDown, sqrtUp, sqrtDown)
 where
 
-import Prelude hiding
-    ((==),(/=),(<),(>),(<=),(>=),
-     (+),(*),(/),(-),(^),abs,min,max,
-     recip,div,negate,
-     fromInteger,fromRational, toRational,
-     sqrt,cos,sin)
+import AERN2.Real.Operations hiding (abs,neg,toRational)
 import qualified Prelude as P
 
 import AERN2.Real.IntegerRational ()
 
 import qualified Data.Approximate.MPFRLowLevel as MPLow
 
-import AERN2.Real.Operations hiding (abs,neg)
 
 type MPFloat = MPLow.Rounded
 newtype Precision = Precision Integer

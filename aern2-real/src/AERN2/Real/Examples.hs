@@ -1,26 +1,13 @@
-{-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE DataKinds #-}
-
 module AERN2.Real.Examples 
     (module AERN2.Real.Examples,
      module AERN2.Real.Operations,
-     module AERN2.Real.MPFloat,
      module AERN2.Real.MPBall,
-     module AERN2.Real.CauchyReal,
-     module Prelude)
+     module AERN2.Real.CauchyReal)
 where
-
-import Prelude hiding
-    ((==),(/=),(<),(>),(<=),(>=),
-     (+),(*),(/),(-),(^),sum,product,abs,min,max,
-     recip,div,negate,
-     fromInteger,fromRational,toRational,
-     pi,sqrt,cos,sin)
 
 import AERN2.Real.Operations
 import AERN2.Real.IntegerRational ()
 import AERN2.Real.MPBall
-import AERN2.Real.MPFloat hiding (abs, neg, getPrecision)
 import AERN2.Real.CauchyReal
 import AERN2.Real.Accuracy
 
