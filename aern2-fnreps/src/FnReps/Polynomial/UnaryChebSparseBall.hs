@@ -29,6 +29,10 @@ instance CanAdd UnaryChebSparseBall UnaryChebSparseBall where
 
 instance CanAddThis UnaryChebSparseBall UnaryChebSparseBall
 instance CanAddSameType UnaryChebSparseBall
+
+instance CanSub UnaryChebSparseBall UnaryChebSparseBall
+instance CanSubThis UnaryChebSparseBall UnaryChebSparseBall
+instance CanSubSameType UnaryChebSparseBall
         
 instance CanMul UnaryChebSparseBall UnaryChebSparseBall where
     mul = ucsLift2 addAndReduce
