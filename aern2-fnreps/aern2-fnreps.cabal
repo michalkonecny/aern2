@@ -31,5 +31,7 @@ Library
                     FnReps.Polynomial.UnaryChebSparse.Basics,
                     FnReps.Polynomial.UnaryChebSparse.DCTMultiplication,
                     FnReps.Polynomial.UnaryChebSparse.SizeReduction
-  exposed-modules:  FnReps.Polynomial.UnaryChebSparse
+  exposed-modules:  
+                    FnReps.Polynomial.UnaryChebSparse,
+                    FnReps.Polynomial.UnaryChebSparseBall
 
