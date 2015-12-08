@@ -2,12 +2,9 @@ module FnReps.Polynomial.UnaryChebSparse
 (
     UnaryChebSparse, fromList,
     reduceDegreeAndSweep,
-    Degree,
-    module AERN2.Real
+    Degree
 )
 where
-
-import AERN2.Real
 
 import FnReps.Polynomial.UnaryChebSparse.Basics
 import FnReps.Polynomial.UnaryChebSparse.SizeReduction

@@ -17,8 +17,6 @@ import Math.NumberTheory.Logarithms (integerLog2)
 
 import Data.List (sortBy, genericIndex)
 
-import AERN2.Real
-
 import FnReps.Polynomial.UnaryChebSparse.Basics
 
 import Debug.Trace (trace)

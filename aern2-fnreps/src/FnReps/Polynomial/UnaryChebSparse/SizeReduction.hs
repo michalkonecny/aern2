@@ -2,7 +2,6 @@ module FnReps.Polynomial.UnaryChebSparse.SizeReduction
 
 where
 
-import AERN2.Real
 import FnReps.Polynomial.UnaryChebSparse.Basics
 
 {-|
