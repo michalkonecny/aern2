@@ -1,12 +1,31 @@
 module FnReps.Polynomial.UnaryChebSparseBall 
 (
     UnaryChebSparseBall,
+    getMaxDegree,
+    setMaxDegree,
+    getThresholdNormLog,
+    setThresholdNormLog,
+    setMaxDegreeNormLog,
     Degree
 )
 where
 
 import AERN2.Real
 import FnReps.Polynomial.UnaryChebSparse
+
+_example1 :: UnaryChebSparseBall
+_example1 = 
+    UnaryChebSparseBall poly 100 NormZero
+    where
+    poly = fromList [(0, rationalBall 1.0),(1, rationalBall (1/100)),(3, rationalBall 1.0)]
+    rationalBall x = rational2BallP p x
+    p = prec 100
+
+_example1Reduced1 :: UnaryChebSparseBall
+_example1Reduced1 = setMaxDegree 1 _example1
+
+_example2 :: UnaryChebSparseBall
+_example2 = _example1 * _example1
 
 data UnaryChebSparseBall =
     UnaryChebSparseBall
@@ -15,6 +34,58 @@ data UnaryChebSparseBall =
         ucsBall_maxDegree :: Degree,
         ucsBall_thresholdNormLog :: NormLog  
     }
+    deriving (Show)
+
+getMaxDegree :: UnaryChebSparseBall -> Degree
+getMaxDegree = ucsBall_maxDegree
+
+setMaxDegree :: Degree -> UnaryChebSparseBall -> UnaryChebSparseBall
+setMaxDegree maxDegree b =
+    b 
+    { ucsBall_poly = update $ ucsBall_poly b, 
+      ucsBall_maxDegree = maxDegree
+    }
+    where
+    update
+        | maxDegree < bMaxDegree = 
+            reduceDegreeAndSweep maxDegree bThresholdNormLog
+        | otherwise = id 
+    bMaxDegree = ucsBall_maxDegree b
+    bThresholdNormLog = ucsBall_thresholdNormLog b
+
+getThresholdNormLog :: UnaryChebSparseBall -> NormLog
+getThresholdNormLog = ucsBall_thresholdNormLog
+
+setThresholdNormLog :: NormLog -> UnaryChebSparseBall -> UnaryChebSparseBall
+setThresholdNormLog normLog b =
+    b 
+    { ucsBall_poly = update $ ucsBall_poly b, 
+      ucsBall_thresholdNormLog = normLog
+    }
+    where
+    update
+        | normLog > bThresholdNormLog = 
+            reduceDegreeAndSweep bMaxDegree normLog
+        | otherwise = id 
+    bMaxDegree = ucsBall_maxDegree b
+    bThresholdNormLog = ucsBall_thresholdNormLog b
+
+
+setMaxDegreeNormLog :: Degree -> NormLog -> UnaryChebSparseBall -> UnaryChebSparseBall
+setMaxDegreeNormLog maxDegree normLog b =
+    b 
+    { ucsBall_poly = update $ ucsBall_poly b, 
+      ucsBall_maxDegree = maxDegree,
+      ucsBall_thresholdNormLog = normLog
+    }
+    where
+    update
+        | maxDegree < bMaxDegree || normLog > bThresholdNormLog = 
+            reduceDegreeAndSweep maxDegree bThresholdNormLog
+        | otherwise = id 
+    bMaxDegree = ucsBall_maxDegree b
+    bThresholdNormLog = ucsBall_thresholdNormLog b
+
 
 instance CanNeg UnaryChebSparseBall where
     neg b = b { ucsBall_poly = neg (ucsBall_poly b) }

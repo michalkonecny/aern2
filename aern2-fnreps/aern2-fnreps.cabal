@@ -25,13 +25,13 @@ Library
         arithmoi
   extensions:       
                     MultiParamTypeClasses, 
-                    RebindableSyntax, 
+                    RebindableSyntax,
                     TypeFamilies
   other-modules:    
                     FnReps.Polynomial.UnaryChebSparse.Basics,
                     FnReps.Polynomial.UnaryChebSparse.DCTMultiplication,
                     FnReps.Polynomial.UnaryChebSparse.SizeReduction
   exposed-modules:  
-                    FnReps.Polynomial.UnaryChebSparse,
-                    FnReps.Polynomial.UnaryChebSparseBall
+                    FnReps.Polynomial.UnaryChebSparseBall,
+                    FnReps.Polynomial.UnaryChebSparse
 

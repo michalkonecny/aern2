@@ -18,13 +18,16 @@ reduceDegreeAndSweep maxDegree thresholdNormLog (UnaryChebSparse terms) =
     Compensate for the drops in the constant term.
 -}
 reduceDegreeAndSweepTerms :: Degree -> NormLog -> Terms -> Terms
-reduceDegreeAndSweepTerms maxDegree thresholdNormLog terms =
-    terms_insertWith (+) 0 errorBall (terms_filter isOK terms)
+reduceDegreeAndSweepTerms maxDegree thresholdNormLog terms 
+    | terms_size koTerms == 0 = terms
+    | otherwise = 
+        terms_insertWith (+) 0 errorBall (terms_filter isOK terms)
     where
     errorBall =
-        sum $ map (* unitInterval) $ terms_coeffs $ terms_filter isNotOK terms
-        where
+        sum $ map (* unitInterval) $ terms_coeffs koTerms
+        where 
         unitInterval = rationalBall2BallP (prec 2) (0.0,1.0) -- [0+-1]
+    koTerms = terms_filter isNotOK terms
     isOK deg coeff =
         deg <= maxDegree && (deg == 0 || getNormLog coeff > thresholdNormLog)
     isNotOK deg coeff = 
