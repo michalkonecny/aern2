@@ -2,7 +2,8 @@ module FnReps.Polynomial.UnaryChebSparse
 (
     UnaryChebSparse, fromList,
     reduceDegreeAndSweep,
-    Degree
+    Degree,
+    _exampleDirect, _exampleDCT
 )
 where
 
