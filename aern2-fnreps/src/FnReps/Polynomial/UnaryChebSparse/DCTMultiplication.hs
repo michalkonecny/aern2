@@ -36,8 +36,7 @@ instance CanMul UnaryChebSparse UnaryChebSparse where
         UnaryChebSparse $ multiply_terms termsL termsR
         where
         multiply_terms
-            | ((terms_size termsL) * (terms_size termsR)) < 40000 =
-                -- TODO: improve the above criterion; take into account also the degrees 
+            | ((terms_size termsL) + (terms_size termsR)) < 500 =
                 multiplyDirect_terms
             | otherwise = multiplyDCT_terms
 
