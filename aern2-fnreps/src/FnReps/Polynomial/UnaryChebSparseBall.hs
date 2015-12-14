@@ -30,7 +30,8 @@ _example2 = _example1 * _example1
 data UnaryChebSparseBall =
     UnaryChebSparseBall
     {
-        ucsBall_poly :: UnaryChebSparse,
+        ucsBall_poly :: UnaryChebSparse, -- enclosure over the domain [-1,1]
+        ucsBall_domain :: (MPBall, MPBall), -- an interval; the domain to translate into
         ucsBall_maxDegree :: Degree,
         ucsBall_thresholdNormLog :: NormLog  
     }
