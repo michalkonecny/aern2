@@ -8,7 +8,8 @@ module AERN2.Real.MPBall
      isNonZero,
      toIntegerUp, toIntegerDown,
      integer2Ball, integer2BallP,  
-     rational2BallP, rationalBall2BallP, 
+     rational2BallP, rationalBall2BallP,
+     ball2endpoints, endpoints2Ball,
      piBallP) 
 where
 
@@ -70,9 +71,9 @@ integer2Ball :: Integer -> MPBall
 integer2Ball = integer
 
 toIntegerUp :: MPBall -> Integer
-toIntegerUp x = ceiling $ MP.toRational $ snd $ ball2endpoints x
+toIntegerUp x = ceiling $ MP.toRational $ snd $ ball2endpointsMP x
 toIntegerDown :: MPBall -> Integer
-toIntegerDown x = floor $ MP.toRational $ fst $ ball2endpoints x
+toIntegerDown x = floor $ MP.toRational $ fst $ ball2endpointsMP x
 
 getAccuracy :: 
     MPBall -> A.Accuracy
@@ -97,9 +98,9 @@ instance HasNorm MPBall where
         | otherwise = NormZero
         where
         ballR =
-            endpoints2Ball r r
+            endpointsMP2Ball r r
             where
-            r = snd $ ball2endpoints $ abs ball
+            r = snd $ ball2endpointsMP $ abs ball
         integerBound = toIntegerUp ballR
         integerRecipBound 
             | isNonZero ballR = toIntegerUp (1 / ballR)
@@ -353,7 +354,7 @@ fromApproxWithLipschitz fDown fUp lip _x@(MPBall xc xe) =
     where
     fxl = fDown xc
     fxu = fUp xc
-    (MPBall fxc fxe) = endpoints2Ball fxl fxu 
+    (MPBall fxc fxe) = endpointsMP2Ball fxl fxu 
     err = (EB.mp2ErrorBound lip) * xe  +  fxe
 
 {-|
@@ -364,24 +365,38 @@ monotoneFromApprox ::
     (MPFloat -> MPFloat) {-^ @fUp@: a version of @f@ on MPFloat rounding *upwards* -} -> 
     (MPBall -> MPBall) {-^ @f@ on MPBall rounding *outwards* -}
 monotoneFromApprox fDown fUp x = 
-    endpoints2Ball (fDown l) (fUp u)
+    endpointsMP2Ball (fDown l) (fUp u)
     where
-    (l,u) = ball2endpoints x
+    (l,u) = ball2endpointsMP x
 
-endpoints2Ball :: MPFloat -> MPFloat -> MPBall
-endpoints2Ball l u =
+endpointsMP2Ball :: MPFloat -> MPFloat -> MPBall
+endpointsMP2Ball l u =
     MPBall c e
     where
     c = MP.avgUp l u
     e = EB.mp2ErrorBound $ P.max (MP.distUp c l) (MP.distUp c u)
 
-ball2endpoints :: MPBall -> (MPFloat, MPFloat)
-ball2endpoints x = (l,u)
+ball2endpointsMP :: MPBall -> (MPFloat, MPFloat)
+ball2endpointsMP x = (l,u)
     where
     c    = ball_value x
     r    = er2mp (ball_error x)
     l   = c `MP.subDown` r
     u   = c `MP.addUp` r
+
+endpoints2Ball :: MPBall -> MPBall -> MPBall
+endpoints2Ball l u =
+    endpointsMP2Ball lMP uMP
+    where
+    (lMP, _) = ball2endpointsMP l
+    (_, uMP) = ball2endpointsMP u
+
+ball2endpoints :: MPBall -> (MPBall, MPBall)
+ball2endpoints x = (l,u)
+    where
+    l = MPBall lMP (EB.rational2ErrorBound 0.0)
+    u = MPBall uMP (EB.rational2ErrorBound 0.0)
+    (lMP, uMP) = ball2endpointsMP x
     
 
 {- common functions -}
@@ -400,7 +415,7 @@ sinB i x =
     where
     lip
         | i == 0 = MP.one
-        | otherwise = snd $ ball2endpoints $ abs $ cosB (i - 1) x
+        | otherwise = snd $ ball2endpointsMP $ abs $ cosB (i - 1) x
 
 cosB :: Integer -> MPBall -> MPBall
 cosB i x = 
@@ -408,4 +423,4 @@ cosB i x =
     where
     lip
         | i == 0 = MP.one
-        | otherwise = snd $ ball2endpoints $ abs $ sinB (i - 1) x
+        | otherwise = snd $ ball2endpointsMP $ abs $ sinB (i - 1) x
