@@ -259,7 +259,7 @@ class
 
 class
     (CanNegSameType a, CanAddSameType a, CanSubSameType a, CanMulSameType a, 
-     HasEq a a, HasOrder a a)
+     HasEq a a, HasOrder a a, HasIntegers a)
     => 
     Ring a
     
