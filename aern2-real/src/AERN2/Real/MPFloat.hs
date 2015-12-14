@@ -83,7 +83,7 @@ integerDown p i = rationalDown p (P.fromInteger i)
     
 instance HasIntegers MPFloat where
     integer n =
-        findExact $ map upDown standardPrecisions
+        findExact $ map upDown $ drop (toInt 4) standardPrecisions
         where
         upDown p = (integerDown p n, integerUp p n)
         findExact [] = 
