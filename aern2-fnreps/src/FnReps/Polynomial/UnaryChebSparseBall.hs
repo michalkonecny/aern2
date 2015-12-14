@@ -15,7 +15,7 @@ import FnReps.Polynomial.UnaryChebSparse
 
 _example1 :: UnaryChebSparseBall
 _example1 = 
-    UnaryChebSparseBall poly 100 NormZero
+    UnaryChebSparseBall poly (integer (-1), integer 1) 100 NormZero
     where
     poly = fromList [(0, rationalBall 1.0),(1, rationalBall (1/100)),(3, rationalBall 1.0)]
     rationalBall x = rational2BallP p x
