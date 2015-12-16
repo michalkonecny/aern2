@@ -123,6 +123,7 @@ ucsLift2 polyOpWithSizeLimits a b =
     UnaryChebSparseBall
     {
         ucsBall_poly = polyOpWithSizeLimits maxDegree thresholdNormLog aPoly bPoly,
+        ucsBall_domain = aDom,
         ucsBall_maxDegree = maxDegree,
         ucsBall_thresholdNormLog = thresholdNormLog
     }
@@ -131,4 +132,6 @@ ucsLift2 polyOpWithSizeLimits a b =
     thresholdNormLog = min (ucsBall_thresholdNormLog a) (ucsBall_thresholdNormLog b)
     aPoly = ucsBall_poly a
     bPoly = ucsBall_poly b
+    aDom = ucsBall_domain a
+    _bDom = ucsBall_domain b -- TODO check for domain equality
     

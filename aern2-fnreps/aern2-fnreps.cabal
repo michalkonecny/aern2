@@ -30,7 +30,8 @@ Library
   other-modules:    
                     FnReps.Polynomial.UnaryChebSparse.Basics,
                     FnReps.Polynomial.UnaryChebSparse.DCTMultiplication,
-                    FnReps.Polynomial.UnaryChebSparse.SizeReduction
+                    FnReps.Polynomial.UnaryChebSparse.SizeReduction,
+                    FnReps.Polynomial.UnaryChebSparse.EvaluationRootFinding
   exposed-modules:  
                     FnReps.Polynomial.UnaryChebSparseBall,
                     FnReps.Polynomial.UnaryChebSparse
