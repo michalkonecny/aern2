@@ -31,7 +31,8 @@ Library
                     FnReps.Polynomial.UnaryChebSparse.Basics,
                     FnReps.Polynomial.UnaryChebSparse.DCTMultiplication,
                     FnReps.Polynomial.UnaryChebSparse.SizeReduction,
-                    FnReps.Polynomial.UnaryChebSparse.EvaluationRootFinding
+                    FnReps.Polynomial.UnaryChebSparse.EvaluationRootFinding,
+                    FnReps.Polynomial.UnaryPowerBase
   exposed-modules:  
                     FnReps.Polynomial.UnaryChebSparseBall,
                     FnReps.Polynomial.UnaryChebSparse

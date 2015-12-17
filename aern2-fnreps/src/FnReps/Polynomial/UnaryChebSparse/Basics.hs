@@ -8,12 +8,13 @@ module FnReps.Polynomial.UnaryChebSparse.Basics
     Degree,
     terms_size,
     terms_empty,
+    terms_degree,
     terms_degrees,
     terms_coeffs,
     terms_insertWith,
     terms_fromList,
     terms_toList,
-    terms_lookupDefault,
+    terms_lookupCoeff,
     terms_unionWith,
     terms_filter
 )
@@ -48,10 +49,12 @@ fromList termsAsList =
     UnaryChebSparse (terms_fromList termsAsList)
 
 type Terms = Map.Map Degree RA
-terms_size :: Terms -> Degree
+terms_size :: Terms -> Integer
 terms_size = fromInt . Map.size
 terms_empty :: Terms
 terms_empty = Map.empty
+terms_degree :: Terms -> Degree
+terms_degree = fst . Map.findMax
 terms_degrees :: Terms -> [Degree]
 terms_degrees = Map.keys
 terms_coeffs :: Terms -> [RA]
@@ -62,8 +65,8 @@ terms_fromList :: [(Degree, RA)] -> Terms
 terms_fromList = Map.fromList
 terms_toList :: Terms -> [(Degree, RA)]
 terms_toList = Map.toList
-terms_lookupDefault :: RA -> Degree -> Terms -> RA
-terms_lookupDefault d k m = case Map.lookup k m of Nothing -> d; Just v -> v
+terms_lookupCoeff :: Terms -> Degree -> RA
+terms_lookupCoeff terms deg = case Map.lookup deg terms of Nothing -> (integer 0); Just cf -> cf
 terms_unionWith :: (RA -> RA -> RA) -> Terms -> Terms -> Terms
 terms_unionWith = Map.unionWith
 terms_filter :: (Degree -> RA -> Bool) -> Terms -> Terms
@@ -87,14 +90,12 @@ terms_filter = Map.filterWithKey
 --terms_unionWith = HM.unionWith
 
 instance CanNeg UnaryChebSparse where
-    type NegType UnaryChebSparse = UnaryChebSparse
     neg (UnaryChebSparse terms) = 
         UnaryChebSparse $ fmap neg terms 
 
 instance CanNegSameType UnaryChebSparse
 
 instance CanAdd UnaryChebSparse UnaryChebSparse where
-    type AddType UnaryChebSparse UnaryChebSparse = UnaryChebSparse
     (UnaryChebSparse termsL) `add` (UnaryChebSparse termsR) =
         UnaryChebSparse $ terms_unionWith (+) termsL termsR
 

@@ -90,10 +90,10 @@ multiplyDCT_terms termsA termsB =
     bT = tDCT_I_nlogn b -- compute the values of the polynomial termsB on a grid
     
     -- convert from sparse to dense representation:
-    a = pad0 $ (2 * a0) : [terms_lookupDefault (integer2Ball 0) i termsA | i <- [1..dA]]
-    a0 = terms_lookupDefault (integer2Ball 0)  0 termsA
-    b = pad0 $ (2 * b0) : [terms_lookupDefault (integer2Ball 0)  i termsB | i <- [1..dB]]
-    b0 = terms_lookupDefault (integer2Ball 0) 0 termsB
+    a = pad0 $ (2 * a0) : [terms_lookupCoeff termsA i | i <- [1..dA]]
+    a0 = terms_lookupCoeff termsA 0
+    b = pad0 $ (2 * b0) : [terms_lookupCoeff termsB i | i <- [1..dB]]
+    b0 = terms_lookupCoeff termsB 0
     pad0 list = take (toInt $ cN + 1) $ list ++ (repeat (integer2Ball 0))
     
     cN = 2 ^ (1 + (fromInt $ integerLog2 $ max 1 (dA + dB)))
