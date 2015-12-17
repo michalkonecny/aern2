@@ -3,7 +3,7 @@
 
 module AERN2.Real.ErrorBound 
     (ErrorBound, er2mp, 
-     rational2ErrorBound,
+     zero, rational2ErrorBound,
      mp2ErrorBound, absMP, subMP,
      getAccuracy) 
 where
@@ -35,6 +35,9 @@ instance Show ErrorBound where
 
 errorBoundPrecision :: Precision
 errorBoundPrecision = prec 53
+
+zero :: ErrorBound
+zero = ErrorBound $ MP.rationalUp errorBoundPrecision 0.0
 
 rational2ErrorBound :: Rational -> ErrorBound
 rational2ErrorBound x

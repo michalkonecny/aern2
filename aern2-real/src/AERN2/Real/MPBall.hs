@@ -10,6 +10,7 @@ module AERN2.Real.MPBall
      integer2Ball, integer2BallP,  
      rational2BallP, rationalBall2BallP,
      ball2endpoints, endpoints2Ball,
+     getCentreAndErrorBall,
      piBallP) 
 where
 
@@ -65,7 +66,7 @@ integer2BallP p x =
 
 instance HasIntegers MPBall where
     integer x =
-        MPBall xMP (EB.rational2ErrorBound 0.0)
+        MPBall xMP EB.zero
         where
         xMP = integer x
         
@@ -396,10 +397,16 @@ endpoints2Ball l u =
 ball2endpoints :: MPBall -> (MPBall, MPBall)
 ball2endpoints x = (l,u)
     where
-    l = MPBall lMP (EB.rational2ErrorBound 0.0)
-    u = MPBall uMP (EB.rational2ErrorBound 0.0)
+    l = MPBall lMP EB.zero
+    u = MPBall uMP EB.zero
     (lMP, uMP) = ball2endpointsMP x
     
+getCentreAndErrorBall :: MPBall -> (MPBall, MPBall)
+getCentreAndErrorBall x = (cB,eB)
+    where
+    (MPBall cMP eEB) = x
+    cB = MPBall cMP EB.zero
+    eB = MPBall MP.zero eEB
 
 {- common functions -}
 
