@@ -134,18 +134,30 @@ class HasEq a b where
     type EqCompareType a b
     type EqCompareType a b = Bool -- default
     equalTo :: a -> b -> EqCompareType a b
+    default equalTo :: (EqCompareType a b ~ Bool, a~b, P.Eq a) => a -> b -> EqCompareType a b
+    equalTo = (P.==)
     notEqualTo :: a -> b -> EqCompareType a b
     default notEqualTo :: (EqCompareType a b ~ Bool) => a -> b -> EqCompareType a b
     notEqualTo a b = not $ equalTo a b 
+
+instance HasEq Bool Bool
+instance (HasEq a a, EqCompareType a a ~ Bool) => HasEq (Maybe a) (Maybe a) where
+    equalTo Nothing Nothing = True
+    equalTo (Just a) (Just b) = equalTo a b
+    equalTo _ _ = False 
 
 class HasOrder a b where
     type OrderCompareType a b
     type OrderCompareType a b = Bool -- default
     lessThan :: a -> b -> OrderCompareType a b
+    default lessThan :: (OrderCompareType a b ~ Bool, a~b, P.Ord a) => a -> b -> OrderCompareType a b
+    lessThan = (P.<)
     greaterThan :: a -> b -> OrderCompareType a b
     default greaterThan :: (OrderCompareType a b ~ OrderCompareType b a, HasOrder b a) => a -> b -> OrderCompareType a b
     greaterThan a b = lessThan b a
     leq :: a -> b -> OrderCompareType a b
+    default leq :: (OrderCompareType a b ~ Bool, a~b, P.Ord a) => a -> b -> OrderCompareType a b
+    leq = (P.<=)
     geq :: a -> b -> OrderCompareType a b
     default geq :: (OrderCompareType a b ~ OrderCompareType b a, HasOrder b a) => a -> b -> OrderCompareType a b
     geq a b = leq b a
