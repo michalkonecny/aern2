@@ -108,8 +108,8 @@ multiplyDCT_terms termsA termsB =
     It is to be used only for N<8 and as a reference in tests.
 -}
 tDCT_I_reference :: 
-    [RA] {-^ @a@ a vector of validated real numbers -} -> 
-    [RA] {-^ @a~@ a vector of validated real numbers -}
+    [MPBall] {-^ @a@ a vector of validated real numbers -} -> 
+    [MPBall] {-^ @a~@ a vector of validated real numbers -}
 tDCT_I_reference a =
     [sum [ (eps cN k) * (a !!! k) * cos ( ((mu * k) * pi) / cN)
             | k <- [0..cN] 
@@ -134,8 +134,8 @@ eps n k
     Precondition: (length a) = 1+2^{t+1} where t > 1
 -}
 tDCT_I_nlogn :: 
-    [RA] {-^ @a@ a vector of validated real numbers -} -> 
-    [RA] {-^ @a~@ a vector of validated real numbers -}
+    [MPBall] {-^ @a@ a vector of validated real numbers -} -> 
+    [MPBall] {-^ @a~@ a vector of validated real numbers -}
 
 tDCT_I_nlogn a 
     | cN < 8 = tDCT_I_reference a
@@ -158,8 +158,8 @@ tDCT_I_nlogn a
     This is quite inefficient.  It is to be used only as a reference in tests.
 -}
 tDCT_III_reference :: 
-    [RA] {-^ g a vector of validated real numbers -} -> 
-    [RA] {-^ g~ a vector of validated real numbers -}
+    [MPBall] {-^ g a vector of validated real numbers -} -> 
+    [MPBall] {-^ g~ a vector of validated real numbers -}
 tDCT_III_reference g =
     [sum [ (eps cN1 k) * (g !!! k) * cos ( (((2*j+1)*k) * pi) / cN)
             | k <- [0..(cN1-1)] 
@@ -176,8 +176,8 @@ tDCT_III_reference g =
     Precondition: fromInt (length g) is a power of 2
 -}
 tDCT_III_nlogn :: 
-    [RA] {-^ g a vector of validated real numbers -} -> 
-    [RA] {-^ g~ a vector of validated real numbers -}
+    [MPBall] {-^ g a vector of validated real numbers -} -> 
+    [MPBall] {-^ g~ a vector of validated real numbers -}
 tDCT_III_nlogn g =
     h2g $ tSDCT_III_nlogn $ map g2h $ zip [0..] g 
     where
@@ -197,8 +197,8 @@ tDCT_III_nlogn g =
     This is quite inefficient.  It is to be used only as a reference in tests.
 -}
 tSDCT_III_reference :: 
-    [RA] {-^ h a vector of validated real numbers -} -> 
-    [RA] {-^ h~ a vector of validated real numbers -}
+    [MPBall] {-^ h a vector of validated real numbers -} -> 
+    [MPBall] {-^ h~ a vector of validated real numbers -}
 tSDCT_III_reference h =
     [sum [ (h !!! ell) * cos ( (((4*j+1)*ell) * pi) / cN)
             | ell <- [0..(cN1-1)] 
@@ -219,14 +219,14 @@ tSDCT_III_reference h =
     Precondition: length h is a power of 2
 -}
 tSDCT_III_nlogn :: 
-    [RA] {-^ h a vector of validated real numbers -} -> 
-    [RA] {-^ h~ a vector of validated real numbers -}
+    [MPBall] {-^ h a vector of validated real numbers -} -> 
+    [MPBall] {-^ h~ a vector of validated real numbers -}
 tSDCT_III_nlogn h =
     map (\ (_,[a],_) -> a) $
         sortBy (\ (i,_,_) (j,_,_) -> compare i j) $ 
         splitUntilSingletons $ [(0, h, 1)]
     where
-    splitUntilSingletons :: [(Integer, [RA], Integer)] -> [(Integer, [RA], Integer)]
+    splitUntilSingletons :: [(Integer, [MPBall], Integer)] -> [(Integer, [MPBall], Integer)]
     splitUntilSingletons groups
         | allSingletons = groups
         | otherwise =
@@ -236,7 +236,7 @@ tSDCT_III_nlogn h =
         allSingletons = and $ map isSingleton groups
         isSingleton (_, [_], _) = True
         isSingleton _ = False
-    splitGroup :: (Integer, [RA], Integer) -> [(Integer, [RA], Integer)]
+    splitGroup :: (Integer, [MPBall], Integer) -> [(Integer, [MPBall], Integer)]
     splitGroup (c_Itau_minus_1, hItau_minus_1, two_pow_tau_minus_1) =
         [subgroup 0, subgroup 1]
         where

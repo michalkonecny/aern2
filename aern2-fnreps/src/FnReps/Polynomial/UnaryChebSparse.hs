@@ -1,15 +1,19 @@
 module FnReps.Polynomial.UnaryChebSparse 
 (
-    UnaryChebSparse, fromList,
-    reduceDegreeAndSweep,
+    UnaryChebSparse(..), fromList,
     Degree,
-    _exampleDirect, _exampleDCT
+    toPowerBase,
+    evalDirectOnBall,
+    evalDirect,
+    reduceDegreeAndSweep,
+    _exampleDirect, _exampleDCT,
 )
 where
 
 import FnReps.Polynomial.UnaryChebSparse.Basics
 import FnReps.Polynomial.UnaryChebSparse.SizeReduction
 import FnReps.Polynomial.UnaryChebSparse.DCTMultiplication (multiplyDirect_terms, multiplyDCT_terms)
+import FnReps.Polynomial.UnaryChebSparse.EvaluationRootFinding
 
 _example1 :: UnaryChebSparse
 _example1 = 

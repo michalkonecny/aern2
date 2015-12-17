@@ -1,7 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables, FlexibleContexts #-}
 module FnReps.Polynomial.UnaryChebSparse.EvaluationRootFinding 
 (
-    evalDirect, evalDirectOnBall
+    evalDirect, evalDirectOnBall, toPowerBase
 )
 where
 
@@ -10,12 +10,12 @@ import FnReps.Polynomial.UnaryChebSparse.Basics
 import FnReps.Polynomial.UnaryPowerBase
 
 
---{-|
---    An evaluation of the polynomial at the ball x using Clenshaw Algorithm
---    (https://en.wikipedia.org/wiki/Clenshaw_algorithm#Special_case_for_Chebyshev_series). 
----}
---toPowerBasis :: UnaryChebSparse -> UnaryPowerBase -> UnaryPowerBase
---toPowerBasis = evalDirect
+{-|
+    An evaluation of the polynomial at the ball x using Clenshaw Algorithm
+    (https://en.wikipedia.org/wiki/Clenshaw_algorithm#Special_case_for_Chebyshev_series). 
+-}
+toPowerBase :: UnaryChebSparse -> UnaryPowerBase
+toPowerBase p = evalDirect p (UnaryPowerBase [integer2Ball 0, integer2Ball 1])
 
 
 {-|
@@ -25,31 +25,35 @@ import FnReps.Polynomial.UnaryPowerBase
 evalDirect :: 
     (Ring ra, 
      CanAddMulDivScalar ra Integer,
-     CanAddMulScalar ra RA) 
+     CanAddMulScalar ra MPBall) 
     => 
     UnaryChebSparse -> ra -> ra
 evalDirect (UnaryChebSparse terms) (x :: ra) =
-    ((b 0) - (b 2))/2
+    (b0 - b2)/2
     where
     n = terms_degree terms
-    b :: Integer -> ra
-    b k
-        | k > n = integer 0
-        | otherwise = (a k) + 2 * x * (b (k+1)) - (b (k + 2))
-    a k = terms_lookupCoeff terms k 
+    (b0:_:b2:_) = bs
+    bs :: [ra]
+    bs = reverse $ aux n (integer 0) (integer 0)
+    aux k bKp2 bKp1 
+        | k == 0 = [bKp2, bKp1, bK] 
+        | otherwise = bKp2 : aux (k - 1) bKp1 bK
+        where
+        bK = (a k) + 2 * x * bKp1 - bKp2
+    a k = terms_lookupCoeffDoubleConstTerm terms k 
 
 
 {-|
     An evaluation of the polynomial at the ball x using Clenshaw Algorithm
     (https://en.wikipedia.org/wiki/Clenshaw_algorithm#Special_case_for_Chebyshev_series). 
 -}
-evalDirectOnBall :: UnaryChebSparse -> RA -> RA
+evalDirectOnBall :: UnaryChebSparse -> MPBall -> MPBall
 evalDirectOnBall = evalDirect
 
 {-|
     An evaluation of the polynomial at the ball x using an estimated Lipschitz constant on x. 
 -}
-evalOnBallUsingLipschitz :: UnaryChebSparse -> RA -> RA
+evalOnBallUsingLipschitz :: UnaryChebSparse -> MPBall -> MPBall
 evalOnBallUsingLipschitz =
     error "evalOnBallUsingLipschitz not implemented yet"
 

@@ -11,7 +11,7 @@ module FnReps.Polynomial.UnaryChebSparseBall
 where
 
 import AERN2.Real
-import FnReps.Polynomial.UnaryChebSparse
+import FnReps.Polynomial.UnaryChebSparse hiding (_example1)
 
 _example1 :: UnaryChebSparseBall
 _example1 = 
