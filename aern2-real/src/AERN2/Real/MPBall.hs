@@ -31,6 +31,8 @@ data MPBall = MPBall { ball_value :: MPFloat, ball_error :: ErrorBound }
 
 instance Ring MPBall
 instance Field MPBall
+instance CanAddMulScalar MPBall MPBall
+instance CanAddMulDivScalar MPBall MPBall
 instance CanAddMulScalar MPBall Integer
 instance CanAddMulDivScalar MPBall Integer
 instance CanAddMulScalar MPBall Rational
