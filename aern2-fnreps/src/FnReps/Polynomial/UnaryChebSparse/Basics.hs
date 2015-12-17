@@ -3,6 +3,7 @@ module FnReps.Polynomial.UnaryChebSparse.Basics
     module AERN2.Real,
     UnaryChebSparse(..),
     fromList,
+    fromListRationalWithPrec,
     Terms,
     Degree,
     terms_size,
@@ -28,7 +29,7 @@ import AERN2.Real
 
 {-|
     Unary polynomials over the domain @[-1,1]@ with interval coefficients in the Chebyshev basis.
-    The interval coefficients are supposed to have a very small width except in the constant term.
+    The interval coefficients are supposed to have zero radius, except in the constant term.
 -}
 data UnaryChebSparse = 
     UnaryChebSparse
@@ -53,6 +54,13 @@ type Degree = Integer
 fromList :: [(Degree, MPBall)] -> UnaryChebSparse
 fromList termsAsList =
     UnaryChebSparse (terms_fromList termsAsList)
+
+fromListRationalWithPrec :: Precision -> [(Degree, Rational)] -> UnaryChebSparse
+fromListRationalWithPrec p termsAsList =
+    UnaryChebSparse (terms_fromList $ map r2b termsAsList)
+    where
+    r2b (deg, q) = (deg, rational2BallP p q)
+
 
 type Terms = Map.Map Degree MPBall
 terms_size :: Terms -> Integer

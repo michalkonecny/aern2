@@ -1,6 +1,6 @@
 module FnReps.Polynomial.UnaryChebSparse 
 (
-    UnaryChebSparse(..), fromList,
+    UnaryChebSparse(..), fromList, fromListRationalWithPrec,
     Degree,
     toPowerBase,
     evalDirectOnBall,
@@ -17,9 +17,8 @@ import FnReps.Polynomial.UnaryChebSparse.EvaluationRootFinding
 
 _example1 :: UnaryChebSparse
 _example1 = 
-    fromList [(0, rationalBall 1.0),(1, rationalBall (1/100)),(3, rationalBall 1.0)]
+    fromListRationalWithPrec p [(0, 1.0),(1, 1/100),(3, 1.0)]
     where
-    rationalBall x = rational2BallP p x
     p = prec 100
 
 _example1Reduced1 :: UnaryChebSparse
