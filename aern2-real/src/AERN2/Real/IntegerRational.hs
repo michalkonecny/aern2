@@ -28,12 +28,34 @@ instance HasOrder Integer Integer where
     lessThan = (P.<)
     leq = (P.<=)
 
+instance HasEq Int Int where
+    equalTo = (P.==)
+
+instance HasOrder Int Int where
+    lessThan = (P.<)
+    leq = (P.<=)
+
 instance HasEq Rational Rational where
     equalTo = (P.==)
 
 instance HasOrder Rational Rational where
     lessThan = (P.<)
     leq = (P.<=)
+
+instance HasEq Int Integer where
+    equalTo a b = (fromInt a) P.== b
+
+instance HasOrder Int Integer where
+    lessThan a b = (fromInt a) P.< b
+    leq a b = (fromInt a) P.<= b
+
+instance HasEq Integer Int where
+    equalTo a b = equalTo b a
+
+instance HasOrder Integer Int where
+    lessThan a b = greaterThan b a
+    leq a b = geq b a
+
 
 instance HasEq Integer Rational where
     equalTo a b = (P.fromInteger a) P.== b
@@ -46,6 +68,20 @@ instance HasEq Rational Integer where
     equalTo a b = equalTo b a
 
 instance HasOrder Rational Integer where
+    lessThan a b = greaterThan b a
+    leq a b = geq b a
+
+instance HasEq Int Rational where
+    equalTo a b = (P.fromInteger $ fromInt a) P.== b
+
+instance HasOrder Int Rational where
+    lessThan a b = (P.fromInteger $ fromInt a) P.< b
+    leq a b = (P.fromInteger $ fromInt a) P.<= b
+
+instance HasEq Rational Int where
+    equalTo a b = equalTo b a
+
+instance HasOrder Rational Int where
     lessThan a b = greaterThan b a
     leq a b = geq b a
 
