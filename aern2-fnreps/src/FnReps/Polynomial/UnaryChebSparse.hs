@@ -1,10 +1,11 @@
 module FnReps.Polynomial.UnaryChebSparse 
 (
     UnaryChebSparse(..), fromList, fromListRationalWithPrec,
-    Degree,
+    normaliseCoeffs,
     toPowerBase,
     evalDirectOnBall,
     evalDirect,
+    Degree,
     reduceDegreeAndSweep,
     _exampleDirect, _exampleDCT,
 )

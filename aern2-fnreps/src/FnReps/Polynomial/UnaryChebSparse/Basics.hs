@@ -4,8 +4,9 @@ module FnReps.Polynomial.UnaryChebSparse.Basics
     UnaryChebSparse(..),
     fromList,
     fromListRationalWithPrec,
-    Terms,
+    normaliseCoeffs,
     Degree,
+    Terms,
     terms_size,
     terms_empty,
     terms_degree,
@@ -51,17 +52,6 @@ instance Show UnaryChebSparse where
 
 type Degree = Integer
 
-fromList :: [(Degree, MPBall)] -> UnaryChebSparse
-fromList termsAsList =
-    UnaryChebSparse (terms_fromList termsAsList)
-
-fromListRationalWithPrec :: Precision -> [(Degree, Rational)] -> UnaryChebSparse
-fromListRationalWithPrec p termsAsList =
-    UnaryChebSparse (terms_fromList $ map r2b termsAsList)
-    where
-    r2b (deg, q) = (deg, rational2BallP p q)
-
-
 type Terms = Map.Map Degree MPBall
 terms_size :: Terms -> Integer
 terms_size = fromInt . Map.size
@@ -106,6 +96,32 @@ terms_filter = Map.filterWithKey
 --terms_lookupDefault = HM.lookupDefault
 --terms_unionWith :: (MPBall -> MPBall -> MPBall) -> Terms -> Terms -> Terms
 --terms_unionWith = HM.unionWith
+
+
+fromList :: [(Degree, MPBall)] -> UnaryChebSparse
+fromList termsAsList =
+    UnaryChebSparse (terms_fromList termsAsList)
+
+fromListRationalWithPrec :: Precision -> [(Degree, Rational)] -> UnaryChebSparse
+fromListRationalWithPrec p termsAsList =
+    UnaryChebSparse (terms_fromList $ map r2b termsAsList)
+    where
+    r2b (deg, q) = (deg, rational2BallP p q)
+
+{-|
+    Convert any non-exact coefficients of non-constant terms to exact coefficients.
+-}
+normaliseCoeffs :: UnaryChebSparse -> UnaryChebSparse
+normaliseCoeffs (UnaryChebSparse terms) =
+    UnaryChebSparse (terms_insertWith (+) 0 errorBall (terms_fromList termListN))
+    where
+    termList = terms_toList terms
+    (termListN, errorBalls) = unzip $ map normaliseTerm termList
+    normaliseTerm (deg, coeff) = ((deg, centre), errorB)
+        where
+        (centre, errorB) = getCentreAndErrorBall coeff
+    errorBall = sum errorBalls
+
 
 instance CanNeg UnaryChebSparse where
     neg (UnaryChebSparse terms) = 
