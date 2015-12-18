@@ -20,11 +20,17 @@ library
   Build-Depends:   
         base >= 4.4,
         containers >= 0.3,
-        aern2-real
+        aern2-real,
+        fgl
   extensions:      
                    MultiParamTypeClasses, 
+                   OverloadedStrings, 
                    RebindableSyntax, 
                    TypeFamilies
   exposed-modules: AERN2.Net
-  other-modules:   AERN2.Net.Basics
+  other-modules:   
+                   AERN2.Net.Spec,
+                   AERN2.Net.Spec.Types,
+                   AERN2.Net.Spec.Examples,
+                   AERN2.Net.Spec.Check
 
