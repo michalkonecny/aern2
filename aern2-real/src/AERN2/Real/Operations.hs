@@ -141,9 +141,14 @@ class HasEq a b where
     notEqualTo a b = not $ equalTo a b 
 
 instance HasEq Bool Bool
+instance HasEq Char Char
 instance (HasEq a a, EqCompareType a a ~ Bool) => HasEq (Maybe a) (Maybe a) where
     equalTo Nothing Nothing = True
     equalTo (Just a) (Just b) = equalTo a b
+    equalTo _ _ = False 
+instance (HasEq a a, EqCompareType a a ~ Bool) => HasEq [a] [a] where
+    equalTo [] [] = True
+    equalTo (h1:t1) (h2:t2) = (equalTo h1 h2) && (equalTo t1 t2)
     equalTo _ _ = False 
 
 class HasOrder a b where
