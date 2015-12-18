@@ -56,24 +56,31 @@ data ProcessSpec
 
 newtype ProcessName = ProcessName String
     deriving (Show, Eq, Ord, IsString)
+instance HasEq ProcessName ProcessName
 
 newtype SocketName = SocketName String
     deriving (Show, Eq, Ord, IsString)
+instance HasEq SocketName SocketName
 
 newtype ProcessID = ProcessID String
     deriving (Show, Eq, Ord, IsString)
+instance HasEq ProcessID ProcessID
 
-data ProcessSocketId
-    = InputSocket SocketName
-    | OutputSocket SocketName
-    deriving (Show)
+processInvertInOut :: ProcessSpec -> ProcessSpec
+processInvertInOut ps =
+    ps
+    { 
+        procSpec_outputs = procSpec_inputs ps,  
+        procSpec_inputs = procSpec_outputs ps  
+    }
 
 {- Dataflow network specifications -}
 
 data NetworkSpec =
     NetworkSpec
     {
-        netSpec_processes :: Map.Map ProcessID ProcessSpec,
+        netSpec_process :: ProcessSpec,
+        netSpec_subprocesses :: Map.Map ProcessID ProcessSpec,
         netSpec_connections :: Gr SocketSpec RealType
     } 
     deriving (Show)
@@ -85,3 +92,13 @@ data SocketSpec =
         sockSpec_process_socket_id :: ProcessSocketId
     }
     deriving (Show)
+
+data ProcessSocketId
+    = InputSocket SocketName
+    | OutputSocket SocketName
+    deriving (Show)
+
+socketInvertInOut :: ProcessSocketId -> ProcessSocketId
+socketInvertInOut (InputSocket name) = OutputSocket name
+socketInvertInOut (OutputSocket name) = InputSocket name
+

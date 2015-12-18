@@ -9,7 +9,7 @@ import qualified Data.Graph.Inductive.Graph as G
 import qualified Data.Map as Map
 
 typeCheckNetwork :: NetworkSpec -> [String]
-typeCheckNetwork (NetworkSpec processes connections) =
+typeCheckNetwork (NetworkSpec process subprocesses connections) =
     -- TODO: check that all processes have all their sockets in the graph
     -- TODO: check that no process' socket appears twice in the graph
     foldl checkSocket [] $ map (G.context connections) $ G.nodes connections
@@ -19,10 +19,15 @@ typeCheckNetwork (NetworkSpec processes connections) =
         where
         (incomingEdges, _, socketSpec, outgoingEdges) = socketContext
         (SocketSpec processId socketId) = socketSpec
-        checkProcessIdAndContinue =
-            case Map.lookup processId processes of
-                Just procSpec -> checkSocketWithProcSpec procSpec
-                Nothing -> newMsg $ "Socket " ++ show socketSpec ++ " contains an invalid ProcessID."
+        checkProcessIdAndContinue 
+            | processId == (ProcessID "self") =
+                checkSocketWithProcSpec (processInvertInOut process)
+            | otherwise = 
+                case Map.lookup processId subprocesses of
+                    Just procSpec ->
+                        checkSocketWithProcSpec procSpec
+                    Nothing -> 
+                        newMsg $ "Socket " ++ show socketSpec ++ " contains an invalid ProcessID."
         checkSocketWithProcSpec procSpec =
             case (socketId, incomingEdges, outgoingEdges) of
                 (InputSocket _, _, (_:_)) ->
@@ -41,7 +46,7 @@ typeCheckNetwork (NetworkSpec processes connections) =
                                         ++ show badones ++ "."
                         _ -> 
                             newMsg $ 
-                                "Input socket " ++ show socketSpec ++ " does not exist in process"
+                                "Input socket " ++ show socketSpec ++ " does not exist in process "
                                 ++ show (procSpec_name procSpec) ++ "."
                 (OutputSocket _, (_:_), _) ->
                     newMsg $ "Output socket " ++ show socketSpec ++ " used as an input socket."
@@ -57,7 +62,7 @@ typeCheckNetwork (NetworkSpec processes connections) =
                                         ++ show badones ++ "."
                         _ -> 
                             newMsg $ 
-                                "Output socket " ++ show sockName ++ " does not exist in process"
+                                "Output socket " ++ show sockName ++ " does not exist in process "
                                 ++ show (procSpec_name procSpec) ++ "."
         newMsg msg = msg : prevMessages
     
