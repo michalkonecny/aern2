@@ -5,6 +5,7 @@ import AERN2.Real
 
 import Data.String (IsString(..))
 
+import qualified Data.Graph.Inductive.Graph as G
 import Data.Graph.Inductive.PatriciaTree (Gr)
 import qualified Data.Map as Map
 
@@ -80,10 +81,21 @@ data NetworkSpec =
     NetworkSpec
     {
         netSpec_process :: ProcessSpec,
-        netSpec_subprocesses :: Map.Map ProcessID ProcessSpec,
+        netSpec_subprocesses :: Map.Map ProcessID ProcessInNetSpec,
         netSpec_connections :: Gr SocketSpec RealType
     } 
     deriving (Show)
+
+data ProcessInNetSpec =
+    ProcessInNetSpec
+    {
+        procInNet_procSpec :: ProcessSpec,
+        procInNet_inputNodes :: ProcessNodes,
+        procInNet_outputNodes :: ProcessNodes
+    }
+    deriving (Show)
+
+type ProcessNodes = Map.Map ProcessSocketId G.Node
 
 data SocketSpec =
     SocketSpec
@@ -91,12 +103,12 @@ data SocketSpec =
         sockSpec_process_id :: ProcessID,
         sockSpec_process_socket_id :: ProcessSocketId
     }
-    deriving (Show)
+    deriving (Show, Eq, Ord)
 
 data ProcessSocketId
     = InputSocket SocketName
     | OutputSocket SocketName
-    deriving (Show)
+    deriving (Show, Eq, Ord)
 
 socketInvertInOut :: ProcessSocketId -> ProcessSocketId
 socketInvertInOut (InputSocket name) = OutputSocket name

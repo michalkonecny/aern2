@@ -19,17 +19,17 @@ import AERN2.Net.Spec.Check
 _pi_PS :: ProcessSpec
 _pi_PS = const_PS "pi" real_RT
     
-_expR_PS :: ProcessSpec
-_expR_PS = unary_PS "expR" real_RT
+_sqrtR_PS :: ProcessSpec
+_sqrtR_PS = unary_PS "sqrtR" real_RT
     
 _plusR_PS :: ProcessSpec
-_plusR_PS = binary_PS "+" real_RT
+_plusR_PS = binary_PS "+R" real_RT
     
 _timesR_PS :: ProcessSpec
-_timesR_PS = binary_PS "*" real_RT
+_timesR_PS = binary_PS "*R" real_RT
     
 _displayR_PS :: ProcessSpec
-_displayR_PS = sink_PS "display" real_RT
+_displayR_PS = sink_PS "displayR" real_RT
     
 empty_PS :: ProcessName -> ProcessSpec
 empty_PS name =
@@ -82,20 +82,20 @@ sink_PS name t =
 {-|
     A closed network computing and displaying the constant real number:
      
-    @pi * exp(pi)@  
+    @pi * sqrt(pi)@  
 -}
 _example1_NS :: NetworkSpec
 _example1_NS =
     NetworkSpec
     {
-        netSpec_process = empty_PS "Dpiexppi",
+        netSpec_process = empty_PS "Dpisqrtpi",
         netSpec_subprocesses = Map.fromList 
             [
 --                ("pi0", _pi_PS),
-                ("pi1", _pi_PS),
-                ("exp1", _expR_PS),
-                ("times1", _timesR_PS),
-                ("ui1", _displayR_PS)
+                ("pi1", ProcessInNetSpec _pi_PS Map.empty (Map.fromList [(OutputSocket "res", piOut)])),
+                ("sqrt1", ProcessInNetSpec _sqrtR_PS (Map.fromList [(InputSocket "op", sqrt1In)]) (Map.fromList [(OutputSocket "res", sqrt1Out)])),
+                ("times1", ProcessInNetSpec _timesR_PS  (Map.fromList [(InputSocket "op1", times1In1), (InputSocket "op2", times1In2)]) (Map.fromList [(OutputSocket "res", times1Out)])),
+                ("result", ProcessInNetSpec _displayR_PS (Map.fromList [(InputSocket "sink", uiIn)]) Map.empty)
             ],
          netSpec_connections = 
             G.mkGraph nodes edges
@@ -109,18 +109,18 @@ _example1_NS =
             (times1In1, SocketSpec "times1" (InputSocket "op1")),
             (times1In2, SocketSpec "times1" (InputSocket "op2")),
             (times1Out, SocketSpec "times1" (OutputSocket "res")),
-            (exp1In, SocketSpec "exp1" (InputSocket "op")),
-            (exp1Out, SocketSpec "exp1" (OutputSocket "res")),
-            (uiIn, SocketSpec "ui1" (InputSocket "sink"))
+            (sqrt1In, SocketSpec "sqrt1" (InputSocket "op")),
+            (sqrt1Out, SocketSpec "sqrt1" (OutputSocket "res")),
+            (uiIn, SocketSpec "result" (InputSocket "sink"))
         ]
     edges = 
         [
             (piOut, times1In1, real_RT),
-            (piOut, exp1In, real_RT),
-            (exp1Out, times1In2, real_RT),
+            (piOut, sqrt1In, real_RT),
+            (sqrt1Out, times1In2, real_RT),
             (times1Out, uiIn, real_RT)
         ]
-    piOut:exp1In:exp1Out:times1In1:times1In2:times1Out:uiIn
+    piOut:sqrt1In:sqrt1Out:times1In1:times1In2:times1Out:uiIn
 --        :aux
         : _ = map toInt [1..]
     
@@ -128,17 +128,17 @@ _example1_NS =
 {-| 
     An open network computing the unary function:
     
-    @x * exp(x)@ 
+    @x * sqrt(x)@ 
 -}
 _example2_NS :: NetworkSpec
 _example2_NS =
     NetworkSpec
     {
-        netSpec_process = unary_PS "xexpx" real_RT,
+        netSpec_process = unary_PS "xsqrtx" real_RT,
         netSpec_subprocesses = Map.fromList 
             [
-                ("exp1", _expR_PS),
-                ("times1", _timesR_PS)
+                ("sqrt1", ProcessInNetSpec _sqrtR_PS (Map.fromList [(InputSocket "op", sqrt1In)]) (Map.fromList [(OutputSocket "res", sqrt1Out)])),
+                ("times1", ProcessInNetSpec _timesR_PS  (Map.fromList [(InputSocket "op1", times1In1), (InputSocket "op2", times1In2)]) (Map.fromList [(OutputSocket "res", times1Out)]))
             ],
          netSpec_connections = 
             G.mkGraph nodes edges
@@ -150,16 +150,16 @@ _example2_NS =
             (times1In1, SocketSpec "times1" (InputSocket "op1")),
             (times1In2, SocketSpec "times1" (InputSocket "op2")),
             (times1Out, SocketSpec "times1" (OutputSocket "res")),
-            (exp1In, SocketSpec "exp1" (InputSocket "op")),
-            (exp1Out, SocketSpec "exp1" (OutputSocket "res")),
+            (sqrt1In, SocketSpec "sqrt1" (InputSocket "op")),
+            (sqrt1Out, SocketSpec "sqrt1" (OutputSocket "res")),
             (selfOut, SocketSpec "self" (InputSocket "res")) -- output socket on the outside, ie input socket for its subprocesses
         ]
     edges = 
         [
             (selfIn, times1In1, real_RT),
-            (selfIn, exp1In, real_RT),
-            (exp1Out, times1In2, real_RT),
+            (selfIn, sqrt1In, real_RT),
+            (sqrt1Out, times1In2, real_RT),
             (times1Out, selfOut, real_RT)
         ]
-    exp1In:exp1Out:times1In1:times1In2:times1Out:selfIn:selfOut: _ = map toInt [1..]
+    sqrt1In:sqrt1Out:times1In1:times1In2:times1Out:selfIn:selfOut: _ = map toInt [1..]
     

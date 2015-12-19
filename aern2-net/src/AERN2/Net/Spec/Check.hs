@@ -24,8 +24,9 @@ typeCheckNetwork (NetworkSpec process subprocesses connections) =
                 checkSocketWithProcSpec (processInvertInOut process)
             | otherwise = 
                 case Map.lookup processId subprocesses of
-                    Just procSpec ->
-                        checkSocketWithProcSpec procSpec
+                    Just procInNetInfo ->
+                        checkSocketWithProcSpec $ procInNet_procSpec procInNetInfo
+                        -- TODO: check also that the nodes in procInNetInfo are correct
                     Nothing -> 
                         newMsg $ "Socket " ++ show socketSpec ++ " contains an invalid ProcessID."
         checkSocketWithProcSpec procSpec =
@@ -34,6 +35,8 @@ typeCheckNetwork (NetworkSpec process subprocesses connections) =
                     newMsg $ "Input socket " ++ show socketSpec ++ " used as an output socket."
                 (InputSocket _, [], _) ->
                     newMsg $ "Input socket " ++ show socketSpec ++ " is not connected to any channel."
+                (InputSocket _, (_:_:_), _) ->
+                    newMsg $ "Input socket " ++ show socketSpec ++ " has more than one source."
                 (InputSocket sockName, _, []) ->
                     case Map.lookup sockName (procSpec_inputs procSpec) of
                         Just sockType ->
