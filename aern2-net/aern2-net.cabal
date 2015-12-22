@@ -28,5 +28,7 @@ library
                    RebindableSyntax, 
                    TypeFamilies
   exposed-modules: AERN2.Net
-  other-modules:   AERN2.Net.Spec
+  other-modules:   
+                   AERN2.Net.Spec,
+                   AERN2.Net.Spec.Arrow
 
