@@ -17,7 +17,9 @@ import Control.Arrow
     > net = let x = var "x" in pi * sqrt(x) * x@ 
 -}
 
--- pi * sqrt(x) * x
+{- mini examples -}
+
+-- | pi * sqrt(x) * x
 _anet1 :: (HasRealOps to r) => r `to` r
 _anet1 =
     proc x -> do
@@ -27,7 +29,7 @@ _anet1 =
         psxx <- mulR -< (psx,x)
         returnA -< psxx
 
--- sqrt(x^2+y^2+z^2)    
+-- | sqrt(x^2+y^2+z^2)    
 _anet2 :: (HasRealOps to r) => (r,r,r) `to` r
 _anet2 =
     proc (x,y,z) -> do
@@ -39,6 +41,7 @@ _anet2 =
         r <- sqrtR -< x2y2z2
         returnA -< r
 
+{-| An arrow enriched with arithmetic operations. -}
 class (Arrow a) => HasRealOps a r where
     piR :: a () r -- TODO: change () to (SizeLimits r)
     sqrtR :: a r r
