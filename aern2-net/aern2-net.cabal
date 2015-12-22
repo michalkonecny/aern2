@@ -28,10 +28,5 @@ library
                    RebindableSyntax, 
                    TypeFamilies
   exposed-modules: AERN2.Net
-  other-modules:   
-                   AERN2.Net.Spec,
-                   AERN2.Net.Spec.Types,
-                   AERN2.Net.Spec.Examples,
-                   AERN2.Net.Spec.Check,
-                   AERN2.Net.Interpreted.SerialAccuracyQ
+  other-modules:   AERN2.Net.Spec
 
