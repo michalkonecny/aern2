@@ -21,7 +21,8 @@ library
         base >= 4.4,
         containers >= 0.3,
         aern2-real,
-        fgl
+        fgl,
+        stm
   extensions:      
                    MultiParamTypeClasses, 
                    OverloadedStrings, 
