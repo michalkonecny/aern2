@@ -26,19 +26,10 @@ data NormLog
     deriving (Eq, Ord, Show)
 
 instance HasEq NormLog NormLog where
-    equalTo a b = a P.== b
 
 instance HasOrder NormLog NormLog where
-    lessThan a b = a P.< b
-    leq a b = a P.<= b
 
 instance CanMinMax NormLog NormLog where
-    min NormZero _ = NormZero
-    min _ NormZero = NormZero
-    min (NormBits a) (NormBits b) = NormBits (min a b) 
-    max NormZero b = b
-    max a NormZero = a
-    max (NormBits a) (NormBits b) = NormBits (max a b) 
 
 instance HasNorm Integer where
     getNormLog n 

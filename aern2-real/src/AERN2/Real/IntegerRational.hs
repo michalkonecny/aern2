@@ -99,8 +99,6 @@ instance CanAbs Integer where
 instance CanAbsSameType Integer
 
 instance CanMinMax Integer Integer where
-    min a b = P.min a b
-    max a b = P.max a b
 
 instance CanMinMaxThis Integer Integer
 instance CanMinMaxSameType Integer
@@ -144,8 +142,6 @@ instance CanAbs Rational where
 instance CanAbsSameType Rational
 
 instance CanMinMax Rational Rational where
-    min a b = P.min a b
-    max a b = P.max a b
 
 instance CanMinMaxThis Rational Rational
 instance CanMinMaxSameType Rational

@@ -18,7 +18,8 @@ _example1 :: Accuracy
 _example1 = 1 + 2*(bits 100)
 
 {-| A non-negative Double value to serve as an error bound. Arithmetic is rounded towards +infinity. -}
-data Accuracy = Exact | Bits { fromAccuracy :: Integer }
+data Accuracy = Bits { fromAccuracy :: Integer } | Exact
+    deriving (Eq, Ord)
 
 bits :: Integer -> Accuracy
 bits i = Bits i 
@@ -28,30 +29,10 @@ instance Show Accuracy where
     show (Exact) = "Exact"
 
 instance HasEq Accuracy Accuracy where
-    type EqCompareType Accuracy Accuracy = Bool
-    equalTo (Bits a) (Bits b) = a == b
-    equalTo Exact Exact = True
-    equalTo _ _ = False
-    notEqualTo a b = not (a == b)
 
 instance HasOrder Accuracy Accuracy where
-    type OrderCompareType Accuracy Accuracy = Bool
-    lessThan (Bits a) (Bits b) = a < b
-    lessThan Exact Exact = False
-    lessThan _ Exact = True
-    lessThan Exact _ = False
-    greaterThan a b = lessThan b a
-    leq a b = (a == b) || (lessThan a b)
-    geq a b = leq b a
 
 instance CanMinMax Accuracy Accuracy where
-    type MinMaxType Accuracy Accuracy = Accuracy
-    min (Bits a) (Bits b) = Bits $ min a b
-    min Exact a = a
-    min a Exact = a
-    max (Bits a) (Bits b) = Bits $ max a b
-    max Exact _ = Exact
-    max _ Exact = Exact
 
 instance CanMinMaxThis Accuracy Accuracy
 instance CanMinMaxSameType Accuracy

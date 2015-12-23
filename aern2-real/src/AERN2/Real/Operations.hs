@@ -172,6 +172,10 @@ class CanMinMax a b where
     type MinMaxType a b = a -- default
     min :: a -> b -> MinMaxType a b
     max :: a -> b -> MinMaxType a b
+    default min :: (MinMaxType a b ~ a, a~b, P.Ord a) => a -> a -> a
+    min = P.min
+    default max :: (MinMaxType a b ~ a, a~b, P.Ord a) => a -> a -> a
+    max = P.max
 
 class
     (CanMinMax a b, MinMaxType a b ~ a, CanMinMax b a, MinMaxType b a ~ a) => 
