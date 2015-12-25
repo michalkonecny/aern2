@@ -1,10 +1,11 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE Arrows, EmptyDataDecls, GADTs, StandaloneDeriving, TypeOperators, TypeSynonymInstances, FlexibleInstances, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE Arrows, EmptyDataDecls, GADTs, StandaloneDeriving, TypeOperators, TypeSynonymInstances, FlexibleInstances, GeneralizedNewtypeDeriving, FlexibleContexts #-}
 
 module AERN2.Net.Spec.Arrow where
 
 import AERN2.Real hiding (id, (.))
 --import Data.String (IsString(..),fromString)
+import Data.String (fromString)
 
 import Control.Category
 import Control.Arrow
@@ -13,7 +14,6 @@ import qualified Data.Map as Map
 import Control.Concurrent.STM (atomically)
 import qualified Control.Concurrent.STM as STM
 import Control.Concurrent (forkIO)
-import Control.Monad (forever)
 
 {- TODO
     Provide instances of "AERN2.Real.Operations" for arbitrary arrows,
@@ -24,6 +24,15 @@ import Control.Monad (forever)
 -}
 
 {- mini examples -}
+
+_test :: Integer -> IO MPBall
+_test p =
+    do
+    resultCh <- runKleisli (_anet0 :: KIO () CauchyRealChannelPair) ()
+    aMap <- getAnswers [(bits p, resultCh)]
+    endOfQueries [resultCh]
+    let (Just a) = Map.lookup 1 aMap
+    return a
 
 -- | sqrt(pi) + pi
 _anet0 :: (HasRealOps to r) => () `to` r
@@ -91,10 +100,16 @@ instance HasRealOps KIO CauchyRealChannelPair where
     -- TODO: complete and test
     
 type KIO = Kleisli IO
+
 type CauchyRealChannelPair = QAChannel Accuracy MPBall 
 type QAChannel q a = (QChannel q, AChannel q a)
-type QChannel q = STM.TChan q
+
 type AChannel q a = STM.TVar (Map.Map q (Maybe a))
+type QChannel q = STM.TChan (Query q)
+data Query q = Query q | EndOfQueries
+    deriving (Eq, Ord, Show)
+
+
 
 addSTM ::
     (CauchyRealChannelPair, CauchyRealChannelPair) -> IO CauchyRealChannelPair
@@ -112,15 +127,27 @@ sqrtSTM ch =
             NormBits sqrtNormLog -> return $ max 0 (q - 1 - sqrtNormLog)
             NormZero -> return q
 
-{-|
+{-|data Query q =
+    Query q | EndOfQueries
+    deriving (Eq, Ord, Show)
+
+
     Investigate the approximate magnitude of @(fn x)@ where @x@ is the value of the channel @ch@.
     First try with a very low accuracy and, if the value is close to 0, try with the 
     given accuracy @q@ (assuming it is higher).
 -}
-getChannelFunctionNormLog ::
-    Accuracy {-^ @q@ -} -> 
-    CauchyRealChannelPair {-^ @ch@ -} -> 
-    (MPBall -> MPBall) {-^ @fn@ -} -> 
+--getChannelFunctionNormLog ::
+--    Accuracy {-^ @q@ -} -> 
+--    CauchyRealChannelPair {-^ @ch@ -} -> 
+--    (MPBall -> MPBall) {-^ @fn@ -} -> 
+--    IO NormLog {-^ approximate log norm of @fn(value of ch)@ -}
+getChannelFunctionNormLog :: 
+    (HasNorm a, HasNorm t, HasOrder Integer a,
+     OrderCompareType Integer a ~ Maybe Bool) 
+    =>
+    Accuracy {-^ @q@ -} ->
+    QAChannel Accuracy t {-^ @ch@ -} ->
+    (t -> a) {-^ @fn@ -} -> 
     IO NormLog {-^ approximate log norm of @fn(value of ch)@ -}
 getChannelFunctionNormLog q ch fn =
     do
@@ -140,15 +167,18 @@ constSTM ::
     CauchyReal ->
     () -> IO CauchyRealChannelPair
 constSTM r _ = 
-    qaChannel handleQuery
+    qaChannel handleQuery (return ())
     where
     handleQuery aTV q =
         do
+--        putStrLn $ "constSTM: starting handleQuery q = " ++ show q
         let a = cauchyReal2ball r q
         atomically $
             do
             qaMap <- STM.readTVar aTV
             STM.writeTVar aTV (Map.insert q (Just a) qaMap) 
+--        putStrLn $ "constSTM: written a = " ++ show a
+--        putStrLn $ "constSTM: ending handleQuery q = " ++ show q
 
 unarySTM ::
     (MPBall -> MPBall)
@@ -156,7 +186,7 @@ unarySTM ::
     -> (CauchyRealChannelPair)
     -> IO CauchyRealChannelPair
 unarySTM op getQ1 (ch1) = 
-    qaChannel handleQuery
+    qaChannel handleQuery  (endOfQueries [ch1])
     where
     handleQuery aTV q =
         do
@@ -180,7 +210,7 @@ binarySTM ::
     -> (CauchyRealChannelPair, CauchyRealChannelPair)
     -> IO CauchyRealChannelPair
 binarySTM op getQ1 getQ2 (ch1, ch2) = 
-    qaChannel handleQuery
+    qaChannel handleQuery (endOfQueries [ch1, ch2])
     where
     handleQuery aTV q =
         do
@@ -221,8 +251,11 @@ ensureAccuracyM1 i j1 getB =
 
 
 qaChannel :: 
-   (Ord q) => (AChannel q a -> q -> IO ()) -> IO (QAChannel q a)
-qaChannel handleQuery =
+   (Ord q) => 
+   (AChannel q a -> q -> IO ()) -> 
+   (IO ()) ->
+   IO (QAChannel q a)
+qaChannel handleQuery onEndOfQueries =
     do
     qTC <- STM.newTChanIO
     aTV <- STM.newTVarIO Map.empty
@@ -230,15 +263,19 @@ qaChannel handleQuery =
     return (qTC, aTV)
     where
     respondToQueries (qTC,aTV) =
-        forever $
-            do
-            q <- atomically $ STM.peekTChan qTC
-            isNewQuery <- atomically $ registerQueryIfNew q
-            if isNewQuery
-                then forkIO $ handleQuery aTV q
-                else return undefined 
-                {- ignore the query, it is either already answered 
-                   or worked on by another handler -}
+        do
+        qOrEnd <- atomically $ STM.readTChan qTC
+        case qOrEnd of
+            EndOfQueries -> onEndOfQueries
+            Query q ->
+                do
+                isNewQuery <- atomically $ registerQueryIfNew q
+                if isNewQuery
+                    then (forkIO $ handleQuery aTV q) >> return ()
+                    else return ()
+                        {- ignore the query, it is either already answered 
+                           or worked on by another handler -}
+                respondToQueries (qTC,aTV)
         where
         registerQueryIfNew q =
             do
@@ -257,15 +294,16 @@ getAnswers queries =
     atomically $ waitForResults resultsTV
     where
     getAnswer resultsTV (i,(q,(qTC, aTV))) =
-        atomically $ 
         do
-        aMap <- STM.readTVar aTV
-        case Map.lookup q aMap of
-            Just (Just a) -> gotResult a
-            _ ->
-                do
-                STM.writeTChan qTC q
+        atomically $ STM.writeTChan qTC (Query q)
+        atomically $ waitForResult
         where
+        waitForResult =
+            do
+            aMap <- STM.readTVar aTV
+            case Map.lookup q aMap of
+                Just (Just a) -> gotResult a
+                _ -> STM.retry
         gotResult a =
             do
             results <- STM.readTVar resultsTV
@@ -277,6 +315,9 @@ getAnswers queries =
             then return results
             else STM.retry 
 
+endOfQueries :: [QAChannel q a] -> IO ()
+endOfQueries channels =
+    mapM_ (\(ch, _) -> atomically $ STM.writeTChan ch EndOfQueries) channels
 
 {-
 
