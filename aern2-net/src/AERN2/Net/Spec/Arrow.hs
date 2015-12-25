@@ -76,6 +76,7 @@ instance HasRealOps (->) MPBall where
 {- TODO: move this to various more appropriate modules -}
 
 instance HasRealOps KIO CauchyRealChannelPair where
+    sqrtR = Kleisli sqrtSTM
     addR = Kleisli addSTM
     -- TODO: complete and test
     
@@ -87,14 +88,71 @@ type AChannel q a = STM.TVar (Map.Map q (Maybe a))
 
 addSTM ::
     (CauchyRealChannelPair, CauchyRealChannelPair) -> IO CauchyRealChannelPair
-addSTM = binarySTM (+) id id
+addSTM = binarySTM (+) return return
 
---binarySTM ::
---    (CauchyRealChannelPair, CauchyRealChannelPair) -> IO CauchyRealChannelPair
+sqrtSTM ::
+    (CauchyRealChannelPair) -> IO CauchyRealChannelPair
+sqrtSTM ch = 
+    unarySTM sqrt getInitQ ch -- TODO: improve the initial query
+    where
+    getInitQ q =
+        do
+        maybeSqrtNormLog <- getChannelFunctionNormLog q ch sqrt
+        case maybeSqrtNormLog of
+            NormBits sqrtNormLog -> return $ max 0 (q - 1 - sqrtNormLog)
+            NormZero -> return q
+
+{-|
+    Investigate the approximate magnitude of @(fn x)@ where @x@ is the value of the channel @ch@.
+    First try with a very low accuracy and, if the value is close to 0, try with the 
+    given accuracy @q@ (assuming it is higher).
+-}
+getChannelFunctionNormLog ::
+    Accuracy {-^ @q@ -} -> 
+    CauchyRealChannelPair {-^ @ch@ -} -> 
+    (MPBall -> MPBall) {-^ @fn@ -} -> 
+    IO NormLog {-^ approximate log norm of @fn(value of ch)@ -}
+getChannelFunctionNormLog q ch fn =
+    do
+    aMap0 <- getAnswers [(bits 0, ch)]
+    let (Just x0) = Map.lookup 1 aMap0
+    let fnx0 = fn x0
+    case 1 < fnx0 of
+        Just True -> return $ getNormLog x0
+        _ -> 
+            do
+            aMap <- getAnswers [(q,ch)]
+            let (Just x) = Map.lookup 1 aMap
+            let fnx = fn x
+            return $ getNormLog fnx
+
+unarySTM ::
+    (MPBall -> MPBall)
+    -> (Accuracy -> IO Accuracy)
+    -> (CauchyRealChannelPair)
+    -> IO CauchyRealChannelPair
+unarySTM op getQ1 (ch1) = 
+    qaChannel handleQuery
+    where
+    handleQuery aTV q =
+        do
+        qi1 <- getQ1 q
+        a <- ensureAccuracyM1 q qi1 opWithQ1
+        atomically $
+            do
+            qaMap <- STM.readTVar aTV
+            STM.writeTVar aTV (Map.insert q (Just a) qaMap) 
+        where
+        opWithQ1 q1 =
+            do
+            aMap <- getAnswers $ [(q1,ch1)]
+            let (Just a1) = Map.lookup 1 aMap 
+            return $ op a1 
+
 binarySTM :: 
     (MPBall -> MPBall -> MPBall)
-    -> (Accuracy -> Accuracy)
-    -> (Accuracy -> Accuracy)
+    -> (Accuracy -> IO Accuracy)
+    -> (Accuracy -> IO Accuracy)
     -> (CauchyRealChannelPair, CauchyRealChannelPair)
     -> IO CauchyRealChannelPair
 binarySTM op getQ1 getQ2 (ch1, ch2) = 
@@ -102,15 +160,15 @@ binarySTM op getQ1 getQ2 (ch1, ch2) =
     where
     handleQuery aTV q =
         do
-        a <- ensureAccuracyM2 q qi1 qi2 addWithQ1Q2
+        qi1 <- getQ1 q
+        qi2 <- getQ2 q
+        a <- ensureAccuracyM2 q qi1 qi2 opWithQ1Q2
         atomically $
             do
             qaMap <- STM.readTVar aTV
             STM.writeTVar aTV (Map.insert q (Just a) qaMap) 
         where
-        qi1 = getQ1 q
-        qi2 = getQ2 q
-        addWithQ1Q2 q1 q2 =
+        opWithQ1Q2 q1 q2 =
             do
             aMap <- getAnswers $ [(q1,ch1), (q2, ch2)]
             let (Just a1) = Map.lookup 1 aMap 
@@ -126,6 +184,16 @@ ensureAccuracyM2 i j1 j2 getB =
     if getAccuracy result >= i 
         then return result
         else ensureAccuracyM2 i (j1+1)(j2+1) getB
+
+ensureAccuracyM1 ::
+    (Monad m) =>
+    Accuracy -> Accuracy -> (Accuracy -> m MPBall) -> m MPBall
+ensureAccuracyM1 i j1 getB =
+    do
+    result <- getB j1
+    if getAccuracy result >= i 
+        then return result
+        else ensureAccuracyM1 i (j1+1) getB
 
 
 qaChannel :: 
