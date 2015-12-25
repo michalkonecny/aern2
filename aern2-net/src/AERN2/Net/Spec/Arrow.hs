@@ -25,6 +25,15 @@ import Control.Monad (forever)
 
 {- mini examples -}
 
+-- | sqrt(pi) + pi
+_anet0 :: (HasRealOps to r) => () `to` r
+_anet0 =
+    proc _ -> do
+        p <- piR -< ()
+        sp <- sqrtR -< p
+        psp <- addR -< (p,sp)
+        returnA -< psp
+
 -- | pi * sqrt(x) * x
 _anet1 :: (HasRealOps to r) => r `to` r
 _anet1 =
@@ -76,6 +85,7 @@ instance HasRealOps (->) MPBall where
 {- TODO: move this to various more appropriate modules -}
 
 instance HasRealOps KIO CauchyRealChannelPair where
+    piR = Kleisli $ constSTM pi
     sqrtR = Kleisli sqrtSTM
     addR = Kleisli addSTM
     -- TODO: complete and test
@@ -125,6 +135,20 @@ getChannelFunctionNormLog q ch fn =
             let (Just x) = Map.lookup 1 aMap
             let fnx = fn x
             return $ getNormLog fnx
+
+constSTM ::
+    CauchyReal ->
+    () -> IO CauchyRealChannelPair
+constSTM r _ = 
+    qaChannel handleQuery
+    where
+    handleQuery aTV q =
+        do
+        let a = cauchyReal2ball r q
+        atomically $
+            do
+            qaMap <- STM.readTVar aTV
+            STM.writeTVar aTV (Map.insert q (Just a) qaMap) 
 
 unarySTM ::
     (MPBall -> MPBall)
