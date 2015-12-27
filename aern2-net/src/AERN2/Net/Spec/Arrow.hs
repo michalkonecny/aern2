@@ -214,14 +214,20 @@ executeNetMPrintLog code =
                     [] -> STM.retry
                     _ -> return (newMessages, messagesNow)
             
+disableNetLogs :: Bool
+disableNetLogs = False
+--disableNetLogs = True
+            
 netLogMessage :: String -> NetM ()
-netLogMessage message =
-    do
-    netInfoTV <- ask
-    atomicallyNetM $ 
+netLogMessage message 
+    | disableNetLogs = return ()
+    | otherwise =
         do
-        netInfo <- STM.readTVar netInfoTV
-        STM.writeTVar netInfoTV (netInfo { net_log = (net_log netInfo ++ [message]) } )
+        netInfoTV <- ask
+        atomicallyNetM $ 
+            do
+            netInfo <- STM.readTVar netInfoTV
+            STM.writeTVar netInfoTV (netInfo { net_log = (net_log netInfo ++ [message]) } )
 
 atomicallyNetM :: STM.STM a -> NetM a 
 atomicallyNetM =
