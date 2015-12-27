@@ -45,8 +45,9 @@ showCauchyReal a r = show (cauchyReal2ball r a)
 convergent2Cauchy :: 
     (Precision -> MPBall) -> (Accuracy -> MPBall)
 convergent2Cauchy convergentSeq i =
-    findAccurate $ map convergentSeq standardPrecisions
+    findAccurate $ map convergentSeq $ dropWhile lowPrec standardPrecisions
     where
+    lowPrec p = prec2integer p < fromAccuracy i
     findAccurate [] =
         error "convergent2Cauchy: the sequence either converges too slowly or it does not converge"
     findAccurate (b : rest)
