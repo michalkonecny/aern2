@@ -7,7 +7,7 @@ import AERN2.Net.Spec.Arrow
 {- Direct evaluation using CauchyReal -}
 
 instance ArrowReal (->) CauchyReal where
-    piA = const pi
+    realA r _name = const r
     sqrtA = sqrt
     addA = uncurry (+)
     mulA = uncurry (*)

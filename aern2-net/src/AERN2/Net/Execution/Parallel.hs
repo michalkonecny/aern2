@@ -46,7 +46,7 @@ _anet3parCauchy (x,y,z) p =
 {- Network evaluation using Cauchy reals with each process running in parallel -}
 
 instance ArrowReal NetA CauchyRealChannelPair where
-    piA = Kleisli piSTM
+    realA r name = Kleisli $ constSTM (ChannelName name) r
     sqrtA = Kleisli sqrtSTM
     addA = Kleisli addSTM
     mulA = Kleisli mulSTM
@@ -129,9 +129,6 @@ type AChannel q a = STM.TVar (Map.Map q (Maybe a))
 type QChannel q = STM.TChan (Query q)
 data Query q = Query q | EndOfQueries
     deriving (Eq, Ord, Show)
-
-piSTM :: () -> NetM CauchyRealChannelPair
-piSTM = constSTM "pi" pi
 
 addSTM ::
     (CauchyRealChannelPair, CauchyRealChannelPair) -> NetM CauchyRealChannelPair

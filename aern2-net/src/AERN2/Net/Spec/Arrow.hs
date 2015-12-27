@@ -61,11 +61,14 @@ _anet3 =
 
 {-| An arrow enriched with real arithmetic operations. -}
 class (Arrow to) => ArrowReal to r where
-    piA :: () `to` r -- TODO: change () to (SizeLimits r)
+    realA :: CauchyReal -> String -> (() `to` r) -- TODO: change () to (SizeLimits r)
     sqrtA :: r `to` r
     mulA :: (r,r) `to` r
     addA :: (r,r) `to` r
 -- TODO: add more operations
+
+piA :: (ArrowReal to r) => () `to` r
+piA = realA pi "pi"
 
 class (ArrowReal to r) => ArrowRealInterval to r ri where
     getEndpointsA :: ri `to` (r,r)
