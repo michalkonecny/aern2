@@ -45,7 +45,7 @@ _anet3parCauchy (x,y,z) p =
 
 {- Network evaluation using Cauchy reals with each process running in parallel -}
 
-instance HasRealOps NetA CauchyRealChannelPair where
+instance ArrowReal NetA CauchyRealChannelPair where
     piA = Kleisli piSTM
     sqrtA = Kleisli sqrtSTM
     addA = Kleisli addSTM

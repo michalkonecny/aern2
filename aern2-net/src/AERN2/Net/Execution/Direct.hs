@@ -6,7 +6,7 @@ import AERN2.Net.Spec.Arrow
 
 {- Direct evaluation using CauchyReal -}
 
-instance HasRealOps (->) CauchyReal where
+instance ArrowReal (->) CauchyReal where
     piA = const pi
     sqrtA = sqrt
     addA = uncurry (+)
@@ -14,7 +14,7 @@ instance HasRealOps (->) CauchyReal where
 
 {- Direct evaluation using MPBall -}
 
-instance HasRealOps (->) MPBall where
+instance ArrowReal (->) MPBall where
 --    piA p = cauchyReal2ball (prec2integer p) pi -- TODO: enable when we have (SizeLimits MPBall)
     sqrtA = sqrt
     addA = uncurry (+)
