@@ -94,4 +94,10 @@ class (ArrowRealInterval to r ri) => ArrowRealFn to r ri f where
     getDomainA :: f `to` (VarMap ri)
     evalAtPointA :: (f,VarMap r) `to` r
     evalOnIntervalA :: (f,VarMap ri) `to` ri
+    fixSomeVariablesA :: (f, VarMap r) `to` f
 
+class (ArrowRealUnaryFn to r ri f) => ArrowRealUnaryFnFromArrow to r ri f where
+    encloseUFn :: (ArrowReal to2 r2) => (r2 `to2` r2, ri) -> () `to` f
+
+class (ArrowRealFn to r ri f) => ArrowRealFnFromArrow to r ri f where
+    encloseFn :: (ArrowReal to2 r2) => (VarMap r2 `to2` r2, VarMap ri) -> () `to` f
