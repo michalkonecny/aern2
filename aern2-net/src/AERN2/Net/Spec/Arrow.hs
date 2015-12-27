@@ -59,13 +59,36 @@ _anet3 =
         r <- sqrtA -< x2y2z2
         returnA -< r
 
-{-| An arrow enriched with arithmetic operations. -}
+{-| An arrow enriched with real arithmetic operations. -}
 class (Arrow to) => ArrowReal to r where
-    piA :: to () r -- TODO: change () to (SizeLimits r)
-    sqrtA :: to r r
-    mulA :: to (r,r) r
-    addA :: to (r,r) r
--- TODO: add more operators, allow mixed types as in AERN2.Real.Operations
+    piA :: () `to` r -- TODO: change () to (SizeLimits r)
+    sqrtA :: r `to` r
+    mulA :: (r,r) `to` r
+    addA :: (r,r) `to` r
+-- TODO: add more operations
 
+class (ArrowReal to r) => ArrowRealInterval to r ri where
+    getEndpointsA :: ri `to` (r,r)
+    fromEndpointsA :: (r,r) `to` ri
+    splitIntervalA :: ri `to` (ri, ri)
+    subEqIntervalA :: (ri, ri) `to` Bool 
 
+class (ArrowRealInterval to r ri) => ArrowRealUnaryFn to r ri f where
+    constUFnA :: (ri, r) `to` f
+    projUFnA :: ri `to` f
+    getDomainUFnA :: f `to` ri
+    evalAtPointUFnA :: (f,r) `to` r
+    evalOnIntervalUFnA :: (f,ri) `to` ri
+
+newtype VarName = VarName String
+    deriving (IsString, Eq, Ord, Show)
+
+type VarMap = Map.Map VarName
+
+class (ArrowRealInterval to r ri) => ArrowRealFn to r ri f where
+    constFnA :: (VarMap ri, r) `to` f
+    projFnA :: (VarMap ri, VarName) `to` f
+    getDomainA :: f `to` (VarMap ri)
+    evalAtPointA :: (f,VarMap r) `to` r
+    evalOnIntervalA :: (f,VarMap ri) `to` ri
 

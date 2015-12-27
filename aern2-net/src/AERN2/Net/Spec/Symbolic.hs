@@ -22,9 +22,6 @@ data RealExpr' a
     | UnaryOp String a 
     | BinaryOp String a a 
 
-newtype VarName = VarName String
-    deriving (Show, IsString)
-
 data RealExpr = RealExpr (RealExpr' RealExpr)
 -- Use Data.Fix from data-fix 0.0.1?
 
