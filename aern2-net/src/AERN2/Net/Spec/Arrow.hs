@@ -1,105 +1,239 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE Arrows, EmptyDataDecls, GADTs, StandaloneDeriving, TypeOperators, TypeSynonymInstances, FlexibleInstances, GeneralizedNewtypeDeriving, FlexibleContexts #-}
+{-# LANGUAGE Arrows, EmptyDataDecls, GADTs, StandaloneDeriving, TypeOperators, TypeSynonymInstances, FlexibleInstances, GeneralizedNewtypeDeriving, FlexibleContexts, UndecidableInstances #-}
 
 module AERN2.Net.Spec.Arrow where
 
 import AERN2.Real hiding (id, (.))
---import Data.String (IsString(..),fromString)
-import Data.String (fromString)
+import Data.String (IsString(..),fromString)
 
 import Control.Category
 import Control.Arrow
 import qualified Data.Map as Map
 
+import Control.Monad.Reader
+
 import Control.Concurrent.STM (atomically)
 import qualified Control.Concurrent.STM as STM
 import Control.Concurrent (forkIO)
 
-{- TODO
-    Provide instances of "AERN2.Real.Operations" for arbitrary arrows,
-    so that networks can be defined by simple arithmetic expressions, such as:
-    
-    > net :: (HasRealOps to r) => r `to` r
-    > net = let x = var "x" in pi * sqrt(x) * x@ 
--}
 
 {- mini examples -}
 
-_test :: Integer -> IO MPBall
-_test p =
-    do
-    resultCh <- runKleisli (_anet0 :: KIO () CauchyRealChannelPair) ()
-    aMap <- getAnswers [(bits p, resultCh)]
-    endOfQueries [resultCh]
-    let (Just a) = Map.lookup 1 aMap
-    return a
+_test0 :: Integer -> IO MPBall
+_test0 p =
+    executeNetMPrintLog $
+        do
+        resultCh <- runKleisli (_anet0 :: NetA () CauchyRealChannelPair) ()
+        aMap <- getAnswers [(bits p, resultCh)]
+        endOfQueries [resultCh]
+        let (Just a) = Map.lookup 1 aMap
+        return a
 
 -- | sqrt(pi) + pi
 _anet0 :: (HasRealOps to r) => () `to` r
 _anet0 =
     proc _ -> do
-        p <- piR -< ()
-        sp <- sqrtR -< p
-        psp <- addR -< (p,sp)
+        p <- piA -< ()
+        sp <- sqrtA -< p
+        psp <- addA -< (p,sp)
         returnA -< psp
 
 -- | pi * sqrt(x) * x
 _anet1 :: (HasRealOps to r) => r `to` r
 _anet1 =
     proc x -> do
-        p <- piR -< ()
-        sx <- sqrtR -< x
-        psx <- mulR -< (p,sx)
-        psxx <- mulR -< (psx,x)
+        p <- piA -< ()
+        sx <- sqrtA -< x
+        psx <- mulA -< (p,sx)
+        psxx <- mulA -< (psx,x)
         returnA -< psxx
 
 -- | sqrt(x^2+y^2+z^2)    
 _anet2 :: (HasRealOps to r) => (r,r,r) `to` r
 _anet2 =
     proc (x,y,z) -> do
-        x2 <- mulR -< (x,x)
-        y2 <- mulR -< (y,y)
-        z2 <- mulR -< (z,z)
-        x2y2 <- addR -< (x2,y2)
-        x2y2z2 <- addR -< (x2y2, z2)
-        r <- sqrtR -< x2y2z2
+        x2 <- mulA -< (x,x)
+        y2 <- mulA -< (y,y)
+        z2 <- mulA -< (z,z)
+        x2y2 <- addA -< (x2,y2)
+        x2y2z2 <- addA -< (x2y2, z2)
+        r <- sqrtA -< x2y2z2
+        returnA -< r
+
+_test3 :: (Rational, Rational, Rational) -> Integer -> IO MPBall
+_test3 (x,y,z) p =
+    executeNetMPrintLog $
+        do
+        channels <- mapM mkChannel $ [("x",x), ("y",y), ("z",z)]
+        let envCh = Map.fromList channels
+        resultCh <- runKleisli _anet3 envCh
+        aMap <- getAnswers [(bits p, resultCh)]
+        endOfQueries [resultCh]
+        let (Just a) = Map.lookup 1 aMap
+        return a
+        where
+        mkChannel (name, value) =
+            do
+            ch <- constSTM (ChannelName name) (rational value) ()
+            return (name, ch)
+
+
+-- | sqrt(x^2+y^2+z^2)    
+_anet3 :: (HasRealOps to r) => (Map.Map String r) `to` r
+_anet3 =
+    proc valMap -> do
+        let (Just x) = Map.lookup "x" valMap
+        let (Just y) = Map.lookup "y" valMap
+        let (Just z) = Map.lookup "z" valMap
+        x2 <- mulA -< (x,x)
+        y2 <- mulA -< (y,y)
+        z2 <- mulA -< (z,z)
+        x2y2 <- addA -< (x2,y2)
+        x2y2z2 <- addA -< (x2y2, z2)
+        r <- sqrtA -< x2y2z2
         returnA -< r
 
 {-| An arrow enriched with arithmetic operations. -}
-class (Arrow a) => HasRealOps a r where
-    piR :: a () r -- TODO: change () to (SizeLimits r)
-    sqrtR :: a r r
-    mulR :: a (r,r) r
-    addR :: a (r,r) r
--- TODO: add more operators
+class (Arrow to) => HasRealOps to r where
+    piA :: to () r -- TODO: change () to (SizeLimits r)
+    sqrtA :: to r r
+    mulA :: to (r,r) r
+    addA :: to (r,r) r
+-- TODO: add more operators, allow mixed types as in AERN2.Real.Operations
+
+{- TODO
+    Provide instances of "AERN2.Real.Operations" for arbitrary arrows,
+    so that networks can be defined by simple arithmetic expressions, such as:
+    
+    > net :: (HasRealOps to r) => (r `to` r)
+    > net = toArrow $ let x = var "x" in pi * sqrt(x) * x 
+-}
+
+data RealExpr' a
+    = Var VarName
+    | Const (Maybe String) CauchyReal 
+    | UnaryOp String a 
+    | BinaryOp String a a 
+
+newtype VarName = VarName String
+    deriving (Show, IsString)
+
+data RealExpr = RealExpr (RealExpr' RealExpr)
+-- Use Data.Fix from data-fix 0.0.1?
+
+{- TODO:
+    toArrow :: (HasRealOps to r) => RealExpr -> (Map.Map VarName r) `to` r
+    
+-}
+
+
+--_e :: (HasRealOps to r) => () `to` r
+--_e = fromA $ sqrt (A piA)
+--
+--newtype A t = A { fromA :: t }
+--
+--varA :: (HasRealOps to r) => VarName -> to r r
+--varA name =
+--    undefined 
+--
+--instance
+--    (HasRealOps to r) =>
+--    CanSqrt (A (to ins r))
+--    where
+--    type SqrtType (A (to ins r)) = A (to ins r)
+--    sqrt (A x) = A (x >>> sqrtA)
+    
 
 {- Direct evaluation using CauchyReal -}
 
 instance HasRealOps (->) CauchyReal where
-    piR = const pi
-    sqrtR = sqrt
-    addR = uncurry (+)
-    mulR = uncurry (*)
+    piA = const pi
+    sqrtA = sqrt
+    addA = uncurry (+)
+    mulA = uncurry (*)
 
-{- Direct evaluation using MPBall -}
-
-instance HasRealOps (->) MPBall where
---    piR p = cauchyReal2ball (prec2integer p) pi -- TODO: enable when we have (SizeLimits MPBall)
-    sqrtR = sqrt
-    addR = uncurry (+)
-    mulR = uncurry (*)
+--{- Direct evaluation using MPBall -}
+--
+--instance HasRealOps (->) MPBall where
+----    piA p = cauchyReal2ball (prec2integer p) pi -- TODO: enable when we have (SizeLimits MPBall)
+--    sqrtA = sqrt
+--    addA = uncurry (+)
+--    mulA = uncurry (*)
 
 {- Evaluation using Cauchy reals with each process running in parallel -}
 
 {- TODO: move this to various more appropriate modules -}
 
-instance HasRealOps KIO CauchyRealChannelPair where
-    piR = Kleisli $ constSTM pi
-    sqrtR = Kleisli sqrtSTM
-    addR = Kleisli addSTM
-    -- TODO: complete and test
+instance HasRealOps NetA CauchyRealChannelPair where
+    piA = Kleisli piSTM
+    sqrtA = Kleisli sqrtSTM
+    addA = Kleisli addSTM
+    mulA = Kleisli mulSTM
     
-type KIO = Kleisli IO
+type NetA = Kleisli NetM
+type NetM = ReaderT (STM.TVar NetInfo) IO
+
+data NetInfo =
+    NetInfo
+    {
+        net_log :: [String]
+    }
+    deriving (Show)
+
+initNetInfo :: NetInfo
+initNetInfo =
+    NetInfo
+    {
+        net_log = []
+    }
+
+executeNetMPrintLog :: NetM t -> IO t
+executeNetMPrintLog code =
+    do
+    netInfoTV <- STM.newTVarIO initNetInfo
+    _ <- forkIO $ monitorLog netInfoTV
+    runReaderT code netInfoTV
+    where
+    monitorLog netInfoTV =
+        do
+        netInfo0 <- atomically $ STM.readTVar netInfoTV
+        keepPrintingMessages (net_log netInfo0)
+        where
+        keepPrintingMessages messagesPrev =
+            do
+            (newMessages, messagesNow) <- atomically waitForChange
+            mapM_ putStrLn newMessages
+            keepPrintingMessages messagesNow
+            where
+            waitForChange =
+                do
+                netInfoNow <- STM.readTVar netInfoTV
+                let messagesNow = net_log netInfoNow
+                let newMessages = drop (length messagesPrev) messagesNow
+                case newMessages of
+                    [] -> STM.retry
+                    _ -> return (newMessages, messagesNow)
+            
+netLogMessage :: String -> NetM ()
+netLogMessage message =
+    do
+    netInfoTV <- ask
+    atomicallyNetM $ 
+        do
+        netInfo <- STM.readTVar netInfoTV
+        STM.writeTVar netInfoTV (netInfo { net_log = (net_log netInfo ++ [message]) } )
+
+atomicallyNetM :: STM.STM a -> NetM a 
+atomicallyNetM =
+    liftIO . atomically
+
+forkNetM :: (NetM ()) -> NetM ()
+forkNetM code =
+    do
+    netInfoTV <- ask
+    _ <- liftIO $ forkIO $ runReaderT code netInfoTV
+    return ()
+
 
 type CauchyRealChannelPair = QAChannel Accuracy MPBall 
 type QAChannel q a = (QChannel q, AChannel q a)
@@ -109,16 +243,21 @@ type QChannel q = STM.TChan (Query q)
 data Query q = Query q | EndOfQueries
     deriving (Eq, Ord, Show)
 
-
+piSTM :: () -> NetM CauchyRealChannelPair
+piSTM = constSTM "pi" pi
 
 addSTM ::
-    (CauchyRealChannelPair, CauchyRealChannelPair) -> IO CauchyRealChannelPair
-addSTM = binarySTM (+) return return
+    (CauchyRealChannelPair, CauchyRealChannelPair) -> NetM CauchyRealChannelPair
+addSTM = binarySTM "+" (+) return return
+
+mulSTM ::
+    (CauchyRealChannelPair, CauchyRealChannelPair) -> NetM CauchyRealChannelPair
+mulSTM = binarySTM "*" (*) return return -- TODO
 
 sqrtSTM ::
-    (CauchyRealChannelPair) -> IO CauchyRealChannelPair
+    (CauchyRealChannelPair) -> NetM CauchyRealChannelPair
 sqrtSTM ch = 
-    unarySTM sqrt getInitQ ch -- TODO: improve the initial query
+    unarySTM "sqrt" sqrt getInitQ ch -- TODO: improve the initial query
     where
     getInitQ q =
         do
@@ -140,7 +279,7 @@ sqrtSTM ch =
 --    Accuracy {-^ @q@ -} -> 
 --    CauchyRealChannelPair {-^ @ch@ -} -> 
 --    (MPBall -> MPBall) {-^ @fn@ -} -> 
---    IO NormLog {-^ approximate log norm of @fn(value of ch)@ -}
+--    NetM NormLog {-^ approximate log norm of @fn(value of ch)@ -}
 getChannelFunctionNormLog :: 
     (HasNorm a, HasNorm t, HasOrder Integer a,
      OrderCompareType Integer a ~ Maybe Bool) 
@@ -148,7 +287,7 @@ getChannelFunctionNormLog ::
     Accuracy {-^ @q@ -} ->
     QAChannel Accuracy t {-^ @ch@ -} ->
     (t -> a) {-^ @fn@ -} -> 
-    IO NormLog {-^ approximate log norm of @fn(value of ch)@ -}
+    NetM NormLog {-^ approximate log norm of @fn(value of ch)@ -}
 getChannelFunctionNormLog q ch fn =
     do
     aMap0 <- getAnswers [(bits 0, ch)]
@@ -164,16 +303,17 @@ getChannelFunctionNormLog q ch fn =
             return $ getNormLog fnx
 
 constSTM ::
+    ChannelName ->
     CauchyReal ->
-    () -> IO CauchyRealChannelPair
-constSTM r _ = 
-    qaChannel handleQuery (return ())
+    () -> NetM CauchyRealChannelPair
+constSTM chName r _ = 
+    qaChannel chName handleQuery (return ())
     where
     handleQuery aTV q =
         do
 --        putStrLn $ "constSTM: starting handleQuery q = " ++ show q
         let a = cauchyReal2ball r q
-        atomically $
+        atomicallyNetM $
             do
             qaMap <- STM.readTVar aTV
             STM.writeTVar aTV (Map.insert q (Just a) qaMap) 
@@ -181,18 +321,19 @@ constSTM r _ =
 --        putStrLn $ "constSTM: ending handleQuery q = " ++ show q
 
 unarySTM ::
-    (MPBall -> MPBall)
-    -> (Accuracy -> IO Accuracy)
+    ChannelName
+    -> (MPBall -> MPBall)
+    -> (Accuracy -> NetM Accuracy)
     -> (CauchyRealChannelPair)
-    -> IO CauchyRealChannelPair
-unarySTM op getQ1 (ch1) = 
-    qaChannel handleQuery  (endOfQueries [ch1])
+    -> NetM CauchyRealChannelPair
+unarySTM chName op getQ1 (ch1) = 
+    qaChannel chName handleQuery  (endOfQueries [ch1])
     where
     handleQuery aTV q =
         do
         qi1 <- getQ1 q
         a <- ensureAccuracyM1 q qi1 opWithQ1
-        atomically $
+        atomicallyNetM $
             do
             qaMap <- STM.readTVar aTV
             STM.writeTVar aTV (Map.insert q (Just a) qaMap) 
@@ -204,20 +345,21 @@ unarySTM op getQ1 (ch1) =
             return $ op a1 
 
 binarySTM :: 
-    (MPBall -> MPBall -> MPBall)
-    -> (Accuracy -> IO Accuracy)
-    -> (Accuracy -> IO Accuracy)
+    ChannelName
+    -> (MPBall -> MPBall -> MPBall)
+    -> (Accuracy -> NetM Accuracy)
+    -> (Accuracy -> NetM Accuracy)
     -> (CauchyRealChannelPair, CauchyRealChannelPair)
-    -> IO CauchyRealChannelPair
-binarySTM op getQ1 getQ2 (ch1, ch2) = 
-    qaChannel handleQuery (endOfQueries [ch1, ch2])
+    -> NetM CauchyRealChannelPair
+binarySTM chName op getQ1 getQ2 (ch1, ch2) = 
+    qaChannel chName handleQuery (endOfQueries [ch1, ch2])
     where
     handleQuery aTV q =
         do
         qi1 <- getQ1 q
         qi2 <- getQ2 q
         a <- ensureAccuracyM2 q qi1 qi2 opWithQ1Q2
-        atomically $
+        atomicallyNetM $
             do
             qaMap <- STM.readTVar aTV
             STM.writeTVar aTV (Map.insert q (Just a) qaMap) 
@@ -249,54 +391,76 @@ ensureAccuracyM1 i j1 getB =
         then return result
         else ensureAccuracyM1 i (j1+1) getB
 
+newtype ChannelName = ChannelName String
+    deriving (Show, IsString)
 
 qaChannel :: 
-   (Ord q) => 
-   (AChannel q a -> q -> IO ()) -> 
-   (IO ()) ->
-   IO (QAChannel q a)
-qaChannel handleQuery onEndOfQueries =
-    do
-    qTC <- STM.newTChanIO
-    aTV <- STM.newTVarIO Map.empty
-    _ <- forkIO $ respondToQueries (qTC,aTV)
-    return (qTC, aTV)
-    where
-    respondToQueries (qTC,aTV) =
+   (Ord q, Show q, Show a) => 
+   ChannelName ->
+   (AChannel q a -> q -> NetM ()) -> 
+   (NetM ()) ->
+   NetM (QAChannel q a)
+qaChannel chName handleQuery onEndOfQueries =
         do
-        qOrEnd <- atomically $ STM.readTChan qTC
-        case qOrEnd of
-            EndOfQueries -> onEndOfQueries
-            Query q ->
-                do
-                isNewQuery <- atomically $ registerQueryIfNew q
-                if isNewQuery
-                    then (forkIO $ handleQuery aTV q) >> return ()
-                    else return ()
-                        {- ignore the query, it is either already answered 
-                           or worked on by another handler -}
-                respondToQueries (qTC,aTV)
+        netLogMessage $ show chName ++ ": starting" 
+        qTC <- atomicallyNetM $ STM.newTChan
+        aTV <- atomicallyNetM $ STM.newTVar Map.empty
+        forkNetM $ respondToQueries (qTC,aTV)
+        return (qTC, aTV)
         where
-        registerQueryIfNew q =
+        respondToQueries (qTC,aTV) =
             do
-            qaMap <- STM.readTVar aTV
-            let mmA = Map.lookup q qaMap
-            case mmA of
-                Just _ -> return False
-                _ -> do { STM.writeTVar aTV (Map.insert q Nothing qaMap); return True }
+            qOrEnd <- atomicallyNetM $ STM.readTChan qTC
+            case qOrEnd of
+                EndOfQueries ->
+                    do
+                    netLogMessage $ show chName ++ ": terminating" 
+                    onEndOfQueries
+                Query q ->
+                    do
+                    netLogMessage $ show chName ++ ": received query " ++ show q 
+                    isNewQuery <- atomicallyNetM $ registerQueryIfNew q
+                    netLogMessage $ show chName ++ ": query " ++ show q ++ " is new? " ++ show isNewQuery 
+                    if isNewQuery
+                        then
+                            do 
+                            forkNetM $
+                                do 
+                                handleQuery aTV q
+                                netLogMessage $ show chName ++ ": handler finished for query " ++ show q
+                                (Just (Just a)) <- atomicallyNetM $ lookupQuery q
+                                netLogMessage $ show chName ++ ": answer for query " ++ show q ++ ": " ++ show a
+                        else
+                            do
+                            netLogMessage $ show chName ++ ": ignoring query: " ++ show q 
+                            return ()
+                            {- ignore the query, it is either already answered 
+                               or worked on by another handler -}
+                    respondToQueries (qTC,aTV)
+            where
+            registerQueryIfNew q =
+                do
+                qaMap <- STM.readTVar aTV
+                let mmA = Map.lookup q qaMap
+                case mmA of
+                    Just _ -> return False
+                    _ -> do { STM.writeTVar aTV (Map.insert q Nothing qaMap); return True }
+            lookupQuery q =
+                do
+                qaMap <- STM.readTVar aTV
+                return $ Map.lookup q qaMap
 
-
-getAnswers :: (Ord q) => [(q, QAChannel q a)] -> IO (Map.Map Integer a)
+getAnswers :: (Ord q) => [(q, QAChannel q a)] -> NetM (Map.Map Integer a)
 getAnswers queries =
     do
-    resultsTV <- STM.newTVarIO Map.empty
-    mapM_ forkIO $ map (getAnswer resultsTV) $ zip [1..] queries
-    atomically $ waitForResults resultsTV
+    resultsTV <- atomicallyNetM $ STM.newTVar Map.empty
+    mapM_ forkNetM $ map (getAnswer resultsTV) $ zip [1..] queries
+    atomicallyNetM $ waitForResults resultsTV
     where
     getAnswer resultsTV (i,(q,(qTC, aTV))) =
         do
-        atomically $ STM.writeTChan qTC (Query q)
-        atomically $ waitForResult
+        atomicallyNetM $ STM.writeTChan qTC (Query q)
+        atomicallyNetM $ waitForResult
         where
         waitForResult =
             do
@@ -315,70 +479,7 @@ getAnswers queries =
             then return results
             else STM.retry 
 
-endOfQueries :: [QAChannel q a] -> IO ()
+endOfQueries :: [QAChannel q a] -> NetM ()
 endOfQueries channels =
-    mapM_ (\(ch, _) -> atomically $ STM.writeTChan ch EndOfQueries) channels
+    mapM_ (\(ch, _) -> atomicallyNetM $ STM.writeTChan ch EndOfQueries) channels
 
-{-
-
---newtype CauchyRealWithLog = CauchyRealWithLog (Accuracy -> (MPBall, [LogMessage]))
---
---newtype LogMessage = LogMessage String deriving (Eq, Ord, Show, IsString)
-
-instance HasRealOps QueryTracing (CauchyReal, SocketId)
-     
-type QueryTracing = Kleisli (State ([SocketId], [LogMessage]))
-newtype SocketId = SocketId Integer 
-newtype LogMessage = LogMessage String
-
-
-type CauchyRealA to = [Accuracy] `to` [(Accuracy, MPBall)]
-
-instance (Arrow to) => CanNeg (CauchyRealA to) where
-    neg x = 
-        proc ac -> 
-            do
-            xB <- x -< ac
-            returnA -< (neg xB)
---        (arr neg) <<< x -- is this equivalent or not?
-    
-
-instance (Arrow to) => CanAdd (CauchyRealA to) (CauchyRealA to) where
-    add x y =
---        proc ac ->
---            do
-            
-ensureAccuracy1 ::
-    (Arrow to) =>
-    Maybe Accuracy -> (Maybe MPBall -> Accuracy -> Accuracy) -> (Accuracy `to` MPBall) -> (CauchyRealA to)
-ensureAccuracy1 maybeProbeAc getInitialAc getBallA =
-    proc ac ->
-        do
-        maybeProbeBall <- case maybeProbeAc of
-            Just probeAc -> 
-                do
-                probeBall <- getBallA -< probeAc
-                returnA -< probeBall
-            Nothing -> returnA -< Nothing
-        let initialAc = getInitialAc maybeProbeBall ac
-        ball1 <- getBallA -< initialAc
-
---    | getAccuracy result >= i = 
---        result
---    | otherwise =
---        ensureAccuracy1 i (j+1) getB
---    where
---    result = getB j
-
-            
---ensureAccuracy2 ::
---    Accuracy -> Accuracy -> Accuracy -> (Accuracy -> Accuracy -> MPBall) -> MPBall
---ensureAccuracy2 i j1 j2 getB 
---    | getAccuracy result >= i = 
---        result
---    | otherwise =
---        ensureAccuracy2 i (j1+1)(j2+1) getB
---    where
---    result = getB j1 j2
-
--}

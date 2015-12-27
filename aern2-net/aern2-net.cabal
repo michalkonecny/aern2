@@ -22,7 +22,8 @@ library
         containers >= 0.3,
         aern2-real,
         fgl,
-        stm
+        stm,
+        mtl
   extensions:      
                    MultiParamTypeClasses, 
                    OverloadedStrings, 
