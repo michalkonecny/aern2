@@ -31,6 +31,9 @@ library
                    TypeFamilies
   exposed-modules: AERN2.Net
   other-modules:   
+                   AERN2.Net.Execution.Parallel,
                    AERN2.Net.Spec,
-                   AERN2.Net.Spec.Arrow
+                   AERN2.Net.Spec.Arrow,
+                   AERN2.Net.Execution.Direct,
+                   AERN2.Net.Spec.Symbolic
 
