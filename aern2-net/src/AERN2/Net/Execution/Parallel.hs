@@ -150,11 +150,7 @@ sqrtSTM ch =
             NormBits sqrtNormLog -> return $ max 0 (q - 1 - sqrtNormLog)
             NormZero -> return q
 
-{-|data Query q =
-    Query q | EndOfQueries
-    deriving (Eq, Ord, Show)
-
-
+{-|
     Investigate the approximate magnitude of @(fn x)@ where @x@ is the value of the channel @ch@.
     First try with a very low accuracy and, if the value is close to 0, try with the 
     given accuracy @q@ (assuming it is higher).
