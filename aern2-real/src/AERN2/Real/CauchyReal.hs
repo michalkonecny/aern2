@@ -8,10 +8,11 @@
 module AERN2.Real.CauchyReal 
 (
     CauchyReal,
-    convergent2Cauchy,
     showCauchyReal,
     cauchyReal2ball,
     integer2CauchyReal, rational2CauchyReal,
+    convergent2CauchyReal,
+    pickNonZeroReal,
     pi
 )
 where
@@ -25,6 +26,7 @@ import AERN2.Real.MPBall
 import AERN2.Real.IntegerRational ()
 
 import Debug.Trace (trace)
+import Data.List (findIndex)
 
 shouldTrace :: Bool
 shouldTrace = False
@@ -35,7 +37,8 @@ maybeTrace
     | otherwise = const id
 
 {-| Invariant: For any @(CauchyReal seq)@ it holds @ball_error (seq i) <= 2^^(-i)@ -}
-data CauchyReal = CauchyReal (Accuracy -> MPBall) 
+data CauchyReal = 
+    CauchyReal { unCauchyReal :: Accuracy -> MPBall } 
 
 cauchyReal2ball :: CauchyReal -> Accuracy -> MPBall
 cauchyReal2ball (CauchyReal getBall) a = getBall a
@@ -43,16 +46,16 @@ cauchyReal2ball (CauchyReal getBall) a = getBall a
 showCauchyReal :: Accuracy -> CauchyReal -> String
 showCauchyReal a r = show (cauchyReal2ball r a)
 
-convergent2Cauchy :: 
+convergent2CauchyReal :: 
     [MPBall] -> CauchyReal
-convergent2Cauchy convergentSeq =
+convergent2CauchyReal convergentSeq =
     CauchyReal sq
     where
     sq i =
         findAccurate convergentSeq
         where
         findAccurate [] =
-            error "convergent2Cauchy: the sequence either converges too slowly or it does not converge"
+            error "convergent2CauchyReal: the sequence either converges too slowly or it does not converge"
         findAccurate (b : rest)
             | getAccuracy b >= i = b
             | otherwise = findAccurate rest
@@ -89,6 +92,67 @@ rational2CauchyReal = rational
 
 pi :: CauchyReal
 pi = seqByPrecision2Cauchy (\ p -> piBallP p)
+
+{- Comparisons of CauchyReals -}
+
+compareTryAccuracies :: [Accuracy]
+compareTryAccuracies =
+    map bits $ aux 8 13
+    where
+    aux j j' 
+        | j <= maximumCompareAccuracy = j : (aux j' (j+j'))
+        | otherwise = []
+
+maximumCompareAccuracy :: Integer
+maximumCompareAccuracy = 10000
+
+tryStandardCompareAccuracies :: 
+   [Accuracy -> MPBall] -> ([MPBall] -> Maybe t) -> t
+tryStandardCompareAccuracies rs rel =
+    aux compareTryAccuracies
+    where
+    aux (a : rest) =
+        case rel (map ($ a) rs) of
+            Just tv -> tv
+            Nothing -> aux rest
+    aux [] =
+        error "CauchyReal comparison undecided even using maximum standard accuracy"
+
+instance HasOrder CauchyReal CauchyReal where
+    type OrderCompareType CauchyReal CauchyReal = Bool
+    lessThan (CauchyReal r1) (CauchyReal r2) =
+        tryStandardCompareAccuracies [r1,r2] (\[b1,b2] -> b1 `lessThan` b2)
+    leq (CauchyReal r1) (CauchyReal r2) = 
+        tryStandardCompareAccuracies [r1,r2] (\[b1,b2] -> b1 `leq` b2)
+
+instance HasOrder Integer CauchyReal where
+    type OrderCompareType Integer CauchyReal = Bool
+    lessThan n r = lessThan ((integer n) :: CauchyReal) r
+    leq n r = leq ((integer n) :: CauchyReal) r
+    
+instance HasOrder CauchyReal Integer where
+    type OrderCompareType CauchyReal Integer = Bool
+    lessThan r n = lessThan r ((integer n) :: CauchyReal)
+    leq r n = leq r ((integer n) :: CauchyReal)
+    
+instance HasOrder Rational CauchyReal where
+    type OrderCompareType Rational CauchyReal = Bool
+    lessThan q r = lessThan ((rational q) :: CauchyReal) r
+    leq q r = leq ((rational q) :: CauchyReal) r
+    
+instance HasOrder CauchyReal Rational where
+    type OrderCompareType CauchyReal Rational = Bool
+    lessThan r q = lessThan r ((rational q) :: CauchyReal)
+    leq r q = leq r ((rational q) :: CauchyReal)
+
+pickNonZeroReal :: [(CauchyReal, a)] -> (CauchyReal, a)
+pickNonZeroReal rvs =
+    tryStandardCompareAccuracies (map unCauchyReal rs) findNonZero
+    where 
+    rs = map fst rvs
+    findNonZero bs =
+        fmap (rvs !!) (findIndex id (map isNonZero bs))
+
 
 {- Operations among CauchyReal's -}
 
