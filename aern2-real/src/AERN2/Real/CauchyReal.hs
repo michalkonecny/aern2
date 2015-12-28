@@ -8,6 +8,7 @@
 module AERN2.Real.CauchyReal 
 (
     CauchyReal,
+    convergent2Cauchy,
     showCauchyReal,
     cauchyReal2ball,
     integer2CauchyReal, rational2CauchyReal,
@@ -43,27 +44,39 @@ showCauchyReal :: Accuracy -> CauchyReal -> String
 showCauchyReal a r = show (cauchyReal2ball r a)
 
 convergent2Cauchy :: 
-    (Precision -> MPBall) -> (Accuracy -> MPBall)
+    (Integer -> MPBall) -> (Accuracy -> MPBall)
 convergent2Cauchy convergentSeq i =
-    findAccurate $ map convergentSeq $ dropWhile lowPrec standardPrecisions
+    findAccurate $ map convergentSeq $ [0..]
     where
-    lowPrec p = prec2integer p < fromAccuracy i
     findAccurate [] =
         error "convergent2Cauchy: the sequence either converges too slowly or it does not converge"
     findAccurate (b : rest)
         | getAccuracy b >= i = b
         | otherwise = findAccurate rest
 
+seqByPrecision2Cauchy :: 
+    (Precision -> MPBall) -> (Accuracy -> MPBall)
+seqByPrecision2Cauchy seqByPrecision i =
+    findAccurate $ map seqByPrecision $ dropWhile lowPrec standardPrecisions
+    where
+    lowPrec p = prec2integer p < fromAccuracy i
+    findAccurate [] =
+        error "seqByPrecision2Cauchy: the sequence either converges too slowly or it does not converge"
+    findAccurate (b : rest)
+        | getAccuracy b >= i = b
+        | otherwise = findAccurate rest
+
+
 instance HasIntegers CauchyReal where
     integer n =
-        CauchyReal $ convergent2Cauchy $ \ p -> integer2BallP p n 
+        CauchyReal $ seqByPrecision2Cauchy $ \ p -> integer2BallP p n 
 
 integer2CauchyReal :: Integer -> CauchyReal
 integer2CauchyReal = integer
 
 instance HasRationals CauchyReal where
     rational q =
-        CauchyReal $ convergent2Cauchy $ \ p -> rational2BallP p q 
+        CauchyReal $ seqByPrecision2Cauchy $ \ p -> rational2BallP p q 
 
 rational2CauchyReal :: Rational -> CauchyReal
 rational2CauchyReal = rational
@@ -73,7 +86,7 @@ pi = CauchyReal piByAccuracy
     
 piByAccuracy :: Accuracy -> MPBall
 piByAccuracy =
-    convergent2Cauchy (\ p -> piBallP p)
+    seqByPrecision2Cauchy (\ p -> piBallP p)
 
 {- Operations among CauchyReal's -}
 
@@ -318,12 +331,12 @@ instance CanDivBy CauchyReal Integer
 
 instance CanSqrt Integer where
     type SqrtType Integer = CauchyReal
-    sqrt x = CauchyReal (convergent2Cauchy $ \p -> sqrt (integer2BallP p x))      
+    sqrt x = CauchyReal (seqByPrecision2Cauchy $ \p -> sqrt (integer2BallP p x))      
         
 instance CanSineCosine Integer where
     type SineCosineType Integer = CauchyReal
-    sin x = CauchyReal (convergent2Cauchy $ \p -> sin (integer2BallP p x))
-    cos x = CauchyReal (convergent2Cauchy $ \p -> cos (integer2BallP p x))
+    sin x = CauchyReal (seqByPrecision2Cauchy $ \p -> sin (integer2BallP p x))
+    cos x = CauchyReal (seqByPrecision2Cauchy $ \p -> cos (integer2BallP p x))
 
 
 {- CauchyReal-Rational operations -}
@@ -390,12 +403,12 @@ instance CanDivBy CauchyReal Rational
 
 instance CanSqrt Rational where
     type SqrtType Rational = CauchyReal
-    sqrt x = CauchyReal (convergent2Cauchy $ \p -> sqrt (rational2BallP p x))      
+    sqrt x = CauchyReal (seqByPrecision2Cauchy $ \p -> sqrt (rational2BallP p x))      
         
 instance CanSineCosine Rational where
     type SineCosineType Rational = CauchyReal
-    sin x = CauchyReal (convergent2Cauchy $ \p -> sin (rational2BallP p x))
-    cos x = CauchyReal (convergent2Cauchy $ \p -> cos (rational2BallP p x))
+    sin x = CauchyReal (seqByPrecision2Cauchy $ \p -> sin (rational2BallP p x))
+    cos x = CauchyReal (seqByPrecision2Cauchy $ \p -> cos (rational2BallP p x))
 
 
 {- operations mixing MPBall and CauchyReal, resulting in an MPBall -}
