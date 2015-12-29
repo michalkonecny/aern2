@@ -9,6 +9,7 @@ module AERN2.Real.CauchyReal
 (
     CauchyReal,
     showCauchyReal,
+    mapCauchyRealUnsafe,
     cauchyReal2ball,
     integer2CauchyReal, rational2CauchyReal,
     convergent2CauchyReal,
@@ -45,6 +46,9 @@ cauchyReal2ball (CauchyReal getBall) a = getBall a
 
 showCauchyReal :: Accuracy -> CauchyReal -> String
 showCauchyReal a r = show (cauchyReal2ball r a)
+
+mapCauchyRealUnsafe :: (Accuracy -> MPBall -> MPBall) -> CauchyReal -> CauchyReal
+mapCauchyRealUnsafe f (CauchyReal sq) = CauchyReal (\ ac -> f ac (sq ac) ) 
 
 convergent2CauchyReal :: 
     [MPBall] -> CauchyReal
