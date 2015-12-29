@@ -15,10 +15,10 @@ The following steps have been tested on Ubuntu 14.04:
   * ``> cabal sandbox add-source `pwd```
   * `> cabal install`
   * This package will fail to install if you do not have automake-1.15.  Nevertheless, it can be made to work with automake-1.14 (which comes with Ubuntu 14.04 LTS), eg using symbolic links for the binaries.
-* Install aern2-real:
+* Install aern2-num:
   * `> cd ..`
   * `> git clone git@github.com:michalkonecny/aern2.git`
-  * `> cd aern2/aern2-real`
+  * `> cd aern2/aern2-num`
   * `> ln -s ../../cabal.sandbox.config .`
   * ``> cabal sandbox add-source `pwd```
   * `> cabal install`
