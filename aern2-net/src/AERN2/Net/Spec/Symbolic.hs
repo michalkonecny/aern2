@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeOperators, GeneralizedNewtypeDeriving #-}
 module AERN2.Net.Spec.Symbolic where
 
-import AERN2.Real
+import AERN2.Num
 import Data.String (IsString(..),fromString)
 
 import AERN2.Net.Spec.Arrow

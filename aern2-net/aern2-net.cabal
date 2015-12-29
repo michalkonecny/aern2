@@ -20,7 +20,7 @@ library
   Build-Depends:   
         base >= 4.4,
         containers >= 0.3,
-        aern2-real,
+        aern2-num == 0.1,
         fgl,
         stm,
         mtl

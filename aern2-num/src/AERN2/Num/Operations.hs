@@ -1,6 +1,6 @@
 {-# LANGUAGE DefaultSignatures, UndecidableInstances, TypeSynonymInstances, FlexibleInstances  #-}
 
-module AERN2.Real.Operations 
+module AERN2.Num.Operations
 (
     module Prelude,
     fromInteger, fromRational, ifThenElse, fromInt, toInt,

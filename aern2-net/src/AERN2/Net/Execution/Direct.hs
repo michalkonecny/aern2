@@ -3,7 +3,7 @@ module AERN2.Net.Execution.Direct
 (Interval(..), rati2MPBall, UnaryFnMPBall, UnaryFnCR)
 where
 
-import AERN2.Real
+import AERN2.Num
 import Data.String (fromString)
 
 import AERN2.Net.Spec.Arrow

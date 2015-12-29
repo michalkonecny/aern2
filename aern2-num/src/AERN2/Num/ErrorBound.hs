@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-module AERN2.Real.ErrorBound 
+module AERN2.Num.ErrorBound 
     (ErrorBound, er2mp, 
      zero, rational2ErrorBound,
      mp2ErrorBound, absMP, subMP,
@@ -17,10 +17,10 @@ import Prelude hiding
 
 import Math.NumberTheory.Logarithms (integerLog2)
 
-import qualified AERN2.Real.Accuracy as A
-import qualified AERN2.Real.MPFloat as MP
-import AERN2.Real.MPFloat (MPFloat, Precision, prec)
-import AERN2.Real.Operations
+import qualified AERN2.Num.Accuracy as A
+import qualified AERN2.Num.MPFloat as MP
+import AERN2.Num.MPFloat (MPFloat, Precision, prec)
+import AERN2.Num.Operations
 
 {- example -}
 

@@ -1,4 +1,4 @@
-module AERN2.Real.Accuracy 
+module AERN2.Num.Accuracy 
     (Accuracy(Exact), bits, fromAccuracy) 
 where
 
@@ -9,8 +9,8 @@ import Prelude hiding
      fromInteger,fromRational, toRational,
      sqrt,cos,sin)
 
-import AERN2.Real.IntegerRational ()
-import AERN2.Real.Operations
+import AERN2.Num.IntegerRational ()
+import AERN2.Num.Operations
 
 {- example -}
 

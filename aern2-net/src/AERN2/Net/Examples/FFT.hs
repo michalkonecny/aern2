@@ -1,7 +1,7 @@
 {-# LANGUAGE Arrows, TypeOperators #-}
 module AERN2.Net.Examples.FFT where
 
-import AERN2.Real
+import AERN2.Num
 import Data.String (fromString)
 
 import AERN2.Net.Spec.Arrow

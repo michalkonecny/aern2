@@ -20,7 +20,7 @@ module AERN2.Net.Spec.Arrow
 )
 where
 
-import AERN2.Real hiding (id, (.))
+import AERN2.Num hiding (id, (.))
 import Data.String (IsString(..),fromString)
 
 --import Control.Category

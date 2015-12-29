@@ -1,6 +1,6 @@
 module FnReps.FunctionAbstraction where
 
-import AERN2.Real
+import AERN2.Num
 
 type RA = MPBall
 

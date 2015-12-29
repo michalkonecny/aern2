@@ -1,6 +1,6 @@
 {-# LANGUAGE StandaloneDeriving, GeneralizedNewtypeDeriving, TypeSynonymInstances #-}
 
-module AERN2.Real.MPFloat 
+module AERN2.Num.MPFloat 
     (MPFloat, Precision, prec, prec2integer, maximumPrecision, standardPrecisions, 
      getPrecision, setPrecisionUp,
      toRational, toDoubleUp, toDoubleDown,
@@ -12,10 +12,10 @@ module AERN2.Real.MPFloat
      cosUp, cosDown, sinUp, sinDown, sqrtUp, sqrtDown)
 where
 
-import AERN2.Real.Operations hiding (abs,neg,toRational)
+import AERN2.Num.Operations hiding (abs,neg,toRational)
 import qualified Prelude as P
 
-import AERN2.Real.IntegerRational ()
+import AERN2.Num.IntegerRational ()
 
 import qualified Data.Approximate.MPFRLowLevel as MPLow
 

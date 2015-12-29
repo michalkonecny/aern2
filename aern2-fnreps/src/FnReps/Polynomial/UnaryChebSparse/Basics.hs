@@ -1,6 +1,6 @@
 module FnReps.Polynomial.UnaryChebSparse.Basics 
 (
-    module AERN2.Real,
+    module AERN2.Num,
     UnaryChebSparse(..),
     fromList,
     fromListRationalWithPrec,
@@ -26,7 +26,7 @@ import qualified Data.List as List
 import qualified Data.Map as Map
 --import qualified Data.HashMap.Strict as HM
 
-import AERN2.Real
+import AERN2.Num
 
 {-|
     Unary polynomials over the domain @[-1,1]@ with interval coefficients in the Chebyshev basis.

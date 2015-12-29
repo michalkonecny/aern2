@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, GeneralizedNewtypeDeriving, FlexibleContexts #-}
 module AERN2.Net.Execution.Parallel where
 
-import AERN2.Real hiding (id, (.))
+import AERN2.Num hiding (id, (.))
 import Data.String (IsString(..),fromString)
 
 import AERN2.Net.Spec.Arrow

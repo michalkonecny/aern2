@@ -3,7 +3,7 @@ module FnReps.Polynomial.UnaryPowerBase
 (UnaryPowerBase(..))
 where
 
-import AERN2.Real
+import AERN2.Num
 
 import qualified Data.List as List
 

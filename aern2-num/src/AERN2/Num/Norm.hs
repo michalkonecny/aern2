@@ -1,13 +1,13 @@
 {-# LANGUAGE FlexibleInstances #-}
-module AERN2.Real.Norm 
+module AERN2.Num.Norm 
 (
     HasNorm(..), NormLog(..)
 )
 where
 
-import AERN2.Real.Operations
+import AERN2.Num.Operations
 import qualified Prelude as P
-import AERN2.Real.IntegerRational ()
+import AERN2.Num.IntegerRational ()
 
 import Math.NumberTheory.Logarithms (integerLog2)
 

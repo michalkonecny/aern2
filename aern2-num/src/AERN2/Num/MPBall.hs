@@ -2,7 +2,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
-module AERN2.Real.MPBall
+module AERN2.Num.MPBall
     (MPBall(..), getAccuracy, getFiniteAccuracy,
      getPrecision, MP.standardPrecisions, MP.Precision, MP.prec, MP.prec2integer,
      isNonZero,
@@ -15,17 +15,17 @@ module AERN2.Real.MPBall
 where
 
 import qualified Prelude as P
-import AERN2.Real.Operations
-import AERN2.Real.Norm
+import AERN2.Num.Operations
+import AERN2.Num.Norm
 
 import Math.NumberTheory.Logarithms (integerLog2)
 
-import AERN2.Real.IntegerRational ()
-import qualified AERN2.Real.Accuracy as A
-import qualified AERN2.Real.ErrorBound as EB
-import AERN2.Real.ErrorBound (ErrorBound(..))
-import qualified AERN2.Real.MPFloat as MP
-import AERN2.Real.MPFloat (MPFloat, Precision)
+import AERN2.Num.IntegerRational ()
+import qualified AERN2.Num.Accuracy as A
+import qualified AERN2.Num.ErrorBound as EB
+import AERN2.Num.ErrorBound (ErrorBound(..))
+import qualified AERN2.Num.MPFloat as MP
+import AERN2.Num.MPFloat (MPFloat, Precision)
 
 
 data MPBall = MPBall { ball_value :: MPFloat, ball_error :: ErrorBound }

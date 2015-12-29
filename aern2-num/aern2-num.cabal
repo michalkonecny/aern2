@@ -1,4 +1,4 @@
-name:           aern2-real
+name:           aern2-num
 version:        0.1
 cabal-version:  >= 1.2
 build-type:     Simple
@@ -22,19 +22,19 @@ library
     haskell-mpfr,
     arithmoi
   ghc-options:     -O2 -Wall  -fno-warn-orphans
-  exposed-modules: 
-    AERN2.Real,
-    AERN2.Real.Accuracy,
-    AERN2.Real.CauchyReal,
-    AERN2.Real.ErrorBound,
-    AERN2.Real.Examples,
-    AERN2.Real.IntegerRational,
-    AERN2.Real.MPBall,
-    AERN2.Real.MPFloat,
-    AERN2.Real.Norm,
-    AERN2.Real.Operations
   extensions:      
                    MultiParamTypeClasses, 
                    RebindableSyntax, 
                    TypeFamilies
+  exposed-modules: AERN2.Num
+  other-modules:   
+                   AERN2.Num.Accuracy,
+                   AERN2.Num.CauchyReal,
+                   AERN2.Num.ErrorBound,
+                   AERN2.Num.Examples,
+                   AERN2.Num.IntegerRational,
+                   AERN2.Num.MPBall,
+                   AERN2.Num.MPFloat,
+                   AERN2.Num.Norm,
+                   AERN2.Num.Operations
 

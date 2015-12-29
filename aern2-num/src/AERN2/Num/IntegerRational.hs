@@ -1,12 +1,12 @@
 {-# LANGUAGE FlexibleInstances #-}
 
-module AERN2.Real.IntegerRational 
+module AERN2.Num.IntegerRational 
 () 
 where
 
 {- imports -}
 
-import AERN2.Real.Operations -- includes relevant parts of Prelude
+import AERN2.Num.Operations -- includes relevant parts of Prelude
 import qualified Prelude as P
 
 import Data.Ratio ((%))

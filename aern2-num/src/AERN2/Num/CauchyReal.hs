@@ -5,7 +5,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
-module AERN2.Real.CauchyReal 
+module AERN2.Num.CauchyReal 
 (
     CauchyReal,
     showCauchyReal,
@@ -19,12 +19,12 @@ module AERN2.Real.CauchyReal
 where
 
 --import qualified Prelude as P
-import AERN2.Real.Operations
-import AERN2.Real.Norm
-import AERN2.Real.Accuracy
+import AERN2.Num.Operations
+import AERN2.Num.Norm
+import AERN2.Num.Accuracy
 
-import AERN2.Real.MPBall
-import AERN2.Real.IntegerRational ()
+import AERN2.Num.MPBall
+import AERN2.Num.IntegerRational ()
 
 import Debug.Trace (trace)
 import Data.List (findIndex)
@@ -266,13 +266,13 @@ Typically ensureAccuracy1 is called with a j such that the result is of
 accuracy >= i.  In some cases j needs to be slightly increased.  
 For example:
 
-*AERN2.Real.Examples> cauchyReal2ball (10 * pi) 138
+*AERN2.Num.Examples> cauchyReal2ball (10 * pi) 138
 ensureAccuracy1: i = 138; j = 141; result accuracy = 137
 ensureAccuracy1: i = 138; j = 142; result accuracy = 137
 ensureAccuracy1: i = 138; j = 143; result accuracy = 226
 [31.41592653589793 ± 5.216071149404186e-69]
 
-*AERN2.Real.Examples> cauchyReal2ball (pi / 10) 56
+*AERN2.Num.Examples> cauchyReal2ball (pi / 10) 56
 ensureAccuracy1: i = 56; j = 53; result accuracy = 55
 ensureAccuracy1: i = 56; j = 54; result accuracy = 89
 [3.141592653589793e-1 ± 1.454028420503369e-27]

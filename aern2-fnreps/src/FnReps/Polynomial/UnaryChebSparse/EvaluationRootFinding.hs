@@ -5,7 +5,7 @@ module FnReps.Polynomial.UnaryChebSparse.EvaluationRootFinding
 )
 where
 
-import AERN2.Real
+import AERN2.Num
 import FnReps.Polynomial.UnaryChebSparse.Basics
 import FnReps.Polynomial.UnaryPowerBase
 
