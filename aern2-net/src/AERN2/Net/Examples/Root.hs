@@ -1,7 +1,7 @@
 {-# LANGUAGE Arrows, TypeOperators #-}
 module AERN2.Net.Examples.Root where
 
-import AERN2.Real hiding ((.), id)
+import AERN2.Real
 import Data.String (fromString)
 
 import AERN2.Net.Spec.Arrow
@@ -9,14 +9,78 @@ import Control.Arrow
 
 import AERN2.Net.Execution.Direct
 
--- FIXME: this is terribly slow compared to rootByTrisectionNoNet
-rootTestDirect :: CauchyReal
-rootTestDirect =
+import Debug.Trace (trace)
+
+shouldTrace :: Bool
+shouldTrace = False
+--shouldTrace = True
+
+maybeTrace :: String -> a -> a
+maybeTrace 
+    | shouldTrace = trace
+    | otherwise = const id
+
+{-
+    The following 3 tests were executed using fresh ghci sessions on 2015-12-29 using a 2012 i7 laptop:
+    
+*AERN2.Net AERN2.Net.Examples.Root> cauchyReal2ball rootTestDirectFnMPBall (bits 1000)
+[1.414213562373095 ± 4.429356626880511e-302]
+(0.33 secs, 175505200 bytes)
+    
+*AERN2.Net AERN2.Net.Examples.Root> cauchyReal2ball rootTestDirectFnCR  (bits 1000)
+[1.414213562373095 ± 4.429356626880511e-302]
+(0.55 secs, 331385640 bytes)
+
+*AERN2.Net AERN2.Net.Examples.Root> cauchyReal2ball rootTestDirectNoNet   (bits 1000)
+[1.414213562373095 ± 4.429356626880511e-302]
+(0.59 secs, 329167792 bytes)
+
+-}
+
+rootTestDirectNoNet :: CauchyReal
+rootTestDirectNoNet =
+    rootByTrisectionNoNet (\ x -> x * x - 2) (Interval 1.0 2.0)
+
+rootTestDirectFnCR :: CauchyReal
+rootTestDirectFnCR =
     rootByTrisection (sqr, dom)
     where
     sqr :: UnaryFnCR
-    sqr = (dom, \x -> x * x - 2)
-    dom :: Interval CauchyReal
+    sqr = (dom, fn)
+        where
+        fn x 
+            | shouldTrace = mapCauchyRealUnsafe tr $ x * x - 2
+            | otherwise = x * x - 2
+            where
+            tr ac b =
+                trace
+                (
+                    "sqr: ac = " ++ show ac 
+                    ++ "; x = " ++ show (cauchyReal2ball x ac) 
+                    ++ "; result = " ++ show b
+                )
+                b
+    dom :: UFnDom UnaryFnCR
+    dom = Interval (integer 1) (integer 2) 
+
+rootTestDirectFnMPBall :: CauchyReal
+rootTestDirectFnMPBall =
+    rootByTrisection (sqr, dom)
+    where
+    sqr :: UnaryFnMPBall
+    sqr = (dom, fn)
+        where
+        fn x 
+            | shouldTrace = tr $ x * x - 2
+            | otherwise = x * x - 2
+            where
+            tr b =
+                trace
+                (
+                    "sqr: x = " ++ show x ++ "; result = " ++ show b
+                )
+                b
+    dom :: UFnDom UnaryFnMPBall
     dom = Interval (integer 1) (integer 2) 
 
 {-|
@@ -26,15 +90,15 @@ rootTestDirect =
     Compute @x@ using trisection.
 -}
 rootByTrisection ::
-    (ArrowRealUnaryFn to r ri fn)
+    (ArrowRealUnaryFn to fn, UFnDomR fn ~ UFnR fn)
     =>
-    (fn, ri) `to` r
+    (fn, UFnDom fn) `to` (UFnR fn)
 rootByTrisection =
     proc (fn, xInit) ->
         do
-        z <- realA (integer 0) "0" -< ()
+        z <- realConstA "0" (integer 0) -< ()
         (l,_) <- getEndpointsA -< xInit
-        fn_l <- evalAtPointUFnA -< (fn,l)
+        fn_l <- evalAtUFnDomEA -< (fn,l)
         isDecreasing <- lessA -< (z, fn_l)
         sq <- aux -< (z, isDecreasing, fn, xInit)
         result <- limitIntervalsToRealA -< sq 
@@ -58,17 +122,10 @@ rootByTrisection =
     splitAwayFromRoot =
         proc (fn,l,r) ->
             do
-            -- TODO: simplify this arrow using AERN2.Net.Spec.Symbolic
-            l9 <- mulConstA (integer 9) "*9" -< l
-            r7 <- mulConstA (integer 7) "*7" -< r
-            l9r7 <- addA -< (l9, r7)
-            m1 <- mulConstA (rational $ 1/16) "/16" -< l9r7
-            l7 <- mulConstA (integer 7) "*7" -< l
-            r9 <- mulConstA (integer 9) "*9" -< r
-            l7r9 <- addA -< (l7, r9)
-            m2 <- mulConstA (rational $ 1/16) "/16" -< l7r9
-            fn_m1 <- evalAtPointUFnA -< (fn, m1)
-            fn_m2 <- evalAtPointUFnA -< (fn, m2)
+            m1 <- rationalOpA "m1" (\[l,r] -> (9*l + 7*r)/16) -< [l,r] 
+            m2 <- rationalOpA "m2" (\[l,r] -> (7*l + 9*r)/16) -< [l,r] 
+            fn_m1 <- evalAtUFnDomEA -< (fn, m1)
+            fn_m2 <- evalAtUFnDomEA -< (fn, m2)
             (fn_m, m) <- pickNonZeroA -< [(fn_m1, m1), (fn_m2, m2)]
             returnA -< (m, fn_m)
 

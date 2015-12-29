@@ -45,11 +45,14 @@ _anet3parCauchy (x,y,z) p =
 
 {- Network evaluation using Cauchy reals with each process running in parallel -}
 
-instance ArrowReal NetA CauchyRealChannelPair where
-    realA r name = Kleisli $ constSTM (ChannelName name) r
-    sqrtA = Kleisli sqrtSTM
+instance ArrowRational NetA CauchyRealChannelPair where
+    rationalConstA name r = Kleisli $ constSTM (ChannelName name) (rational r)
     addA = Kleisli addSTM
     mulA = Kleisli mulSTM
+
+instance ArrowReal NetA CauchyRealChannelPair where
+    realConstA name r = Kleisli $ constSTM (ChannelName name) r
+    sqrtA = Kleisli sqrtSTM
     
 type NetA = Kleisli NetM
 type NetM = ReaderT (STM.TVar NetInfo) IO

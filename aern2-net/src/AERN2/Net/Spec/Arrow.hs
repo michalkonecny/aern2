@@ -1,4 +1,4 @@
-{-# LANGUAGE Arrows, TypeOperators, GeneralizedNewtypeDeriving, FunctionalDependencies #-}
+{-# LANGUAGE Arrows, TypeOperators, GeneralizedNewtypeDeriving, FunctionalDependencies, DataKinds, FlexibleContexts #-}
 
 module AERN2.Net.Spec.Arrow where
 
@@ -60,50 +60,69 @@ _anet3 =
         returnA -< r
 
 {-| An arrow enriched with real arithmetic operations. -}
-class (ArrowChoice to) => ArrowReal to r where
+class (ArrowChoice to) => ArrowRational to r where
     lessA :: (r,r) `to` Bool
     leqA :: (r,r) `to` Bool
-    pickNonZeroA :: [(r,a)] `to` (r,a)
-    realA :: CauchyReal -> String -> (() `to` r) -- TODO: change () to (SizeLimits r)
+    rationalConstA :: String -> Rational -> (() `to` r)
+    rationalOpA ::  String -> ([Rational] -> Rational) -> ([r] `to` r) -- use a Rational computation, bypassing the arrow 
     addA :: (r,r) `to` r
-    addConstA :: CauchyReal -> String -> r `to` r
     mulA :: (r,r) `to` r
-    mulConstA :: CauchyReal -> String -> r `to` r
+
+class (ArrowRational to r) => ArrowReal to r where
+    pickNonZeroA :: [(r,a)] `to` (r,a)
+    realConstA :: String -> CauchyReal -> (() `to` r) -- TODO: change () to (SizeLimits r)
+    realOpA ::  String -> ([CauchyReal] -> CauchyReal) -> ([r] `to` r) -- use a CauchyReal computation, bypassing the arrow 
+    addRealA :: CauchyReal -> String -> r `to` r
+    mulRealA :: CauchyReal -> String -> r `to` r
     sqrtA :: r `to` r
 -- TODO: add more operations
 
-piA :: (ArrowReal to r) => () `to` r
-piA = realA pi "pi"
 
-class (ArrowReal to r) => ArrowRealInterval to r ri | ri -> r where
-    getEndpointsA :: ri `to` (r,r)
-    fromEndpointsA :: (r,r) `to` ri
-    limitIntervalsToRealA :: [ri] `to` r 
+piA :: (ArrowReal to r) => () `to` r
+piA = realConstA "pi" pi
+
+type UFnDomE f = IntervalE (UFnDom f)
+type FnDomE f = IntervalE (FnDom f)
+type UFnDomR f = IntervalR (UFnDom f)
+type FnDomR f = IntervalR (FnDom f)
+
+class (ArrowRational to (IntervalE ri)) => ArrowRationalInterval to ri where
+    type IntervalE ri
+    type IntervalR ri
+    getEndpointsA :: ri `to` (IntervalE ri,IntervalE ri)
+    fromEndpointsA :: (IntervalE ri,IntervalE ri) `to` ri
+    limitIntervalsToRealA :: [ri] `to` IntervalR ri 
 --    splitIntervalA :: ri `to` (ri, ri)
 --    subEqIntervalA :: (ri, ri) `to` Bool
 
-class (ArrowRealInterval to r ri) => ArrowRealUnaryFn to r ri f | f -> ri where
-    constUFnA :: (ri, r) `to` f
-    projUFnA :: ri `to` f
-    getDomainUFnA :: f `to` ri
-    evalAtPointUFnA :: (f,r) `to` r
-    evalOnIntervalUFnA :: (f,ri) `to` ri
+class (ArrowRationalInterval to (UFnDom f), ArrowReal to (UFnR f)) => ArrowRealUnaryFn to f where
+    type UFnDom f
+    type UFnR f
+    constUFnA :: (UFnDom f, UFnR f) `to` f
+    projUFnA :: (UFnDom f) `to` f
+    getDomainUFnA :: f `to` (UFnDom f)
+    evalAtPointUFnA :: (f, UFnR f) `to` (UFnR f)
+    evalAtUFnDomEA :: (f, UFnDomE f) `to` (UFnR f)
+    evalOnIntervalUFnA :: (f, UFnDom f) `to` (UFnDom f)
 
 newtype VarName = VarName String
     deriving (IsString, Eq, Ord, Show)
 
 type VarMap = Map.Map VarName
 
-class (ArrowRealInterval to r ri) => ArrowRealFn to r ri f | f -> ri where
-    constFnA :: (VarMap ri, r) `to` f
-    projFnA :: (VarMap ri, VarName) `to` f
-    getDomainA :: f `to` (VarMap ri)
-    evalAtPointA :: (f,VarMap r) `to` r
-    evalOnIntervalA :: (f,VarMap ri) `to` ri
-    fixSomeVariablesA :: (f, VarMap r) `to` f
+class (ArrowRationalInterval to (FnDom f), ArrowReal to (FnR f)) => ArrowRealFn to f where
+    type FnDom f
+    type FnR f
+    constFnA :: (VarMap (FnDom f), FnR f) `to` f
+    projFnA :: (VarMap (FnDom f), VarName) `to` f
+    getDomainA :: f `to` (VarMap (FnDom f))
+    evalAtPointFnA :: (f,VarMap (FnR f)) `to` (FnR f)
+    evalAtFnDomEA :: (f,VarMap (FnDomE f)) `to` (FnR f)
+    evalOnIntervalA :: (f,VarMap (FnDom f)) `to` ri
+    fixSomeVariablesA :: (f, VarMap (FnR f)) `to` f
 
-class (ArrowRealUnaryFn to r ri f) => ArrowRealUnaryFnFromArrow to r ri f where
-    encloseUFn :: (ArrowReal to2 r2) => (r2 `to2` r2, ri) -> () `to` f
+class (ArrowRealUnaryFn to f) => ArrowRealUnaryFnFromArrow to f where
+    encloseUFn :: (ArrowReal to2 r2) => (r2 `to2` r2, UFnDom f) -> () `to` f
 
-class (ArrowRealFn to r ri f) => ArrowRealFnFromArrow to r ri f where
-    encloseFn :: (ArrowReal to2 r2) => (VarMap r2 `to2` r2, VarMap ri) -> () `to` f
+class (ArrowRealFn to f) => ArrowRealFnFromArrow to f where
+    encloseFn :: (ArrowReal to2 r2) => (VarMap r2 `to2` r2, VarMap (FnDom f)) -> () `to` f
