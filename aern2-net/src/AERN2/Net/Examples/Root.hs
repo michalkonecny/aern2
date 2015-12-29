@@ -7,6 +7,17 @@ import Data.String (fromString)
 import AERN2.Net.Spec.Arrow
 import Control.Arrow
 
+import AERN2.Net.Execution.Direct
+
+-- FIXME: this is terribly slow compared to rootByTrisectionNoNet
+rootTestDirect :: CauchyReal
+rootTestDirect =
+    rootByTrisection (sqr, dom)
+    where
+    sqr :: UnaryFnCR
+    sqr = (dom, \x -> x * x - 2)
+    dom :: Interval CauchyReal
+    dom = Interval (integer 1) (integer 2) 
 
 {-|
     Precondition: @fn@ is a function with a unique root @x@ on the domain @initX@
@@ -91,19 +102,4 @@ rootByTrisectionNoNet fn initX@(Interval initL _) =
                 Interval l m
         
     
-{- TODO The following should move somewhere to aern-real -}
-
-data Interval a = Interval a a
-
-rati2MPBall :: Interval Rational -> MPBall
-rati2MPBall (Interval l r) =
-    endpoints2Ball lMP rMP
-    where
-    lMP = q2MP l
-    rMP = q2MP r
-    q2MP q =
-        case nl of
-            NormBits i -> rational2BallP (prec (max 10 (10 - i))) q
-            NormZero -> error "rati2MPBall does not work for a singleton interval"
-    nl = getNormLog (r - l)
     

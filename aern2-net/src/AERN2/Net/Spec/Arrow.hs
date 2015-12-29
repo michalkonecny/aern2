@@ -61,15 +61,15 @@ _anet3 =
 
 {-| An arrow enriched with real arithmetic operations. -}
 class (ArrowChoice to) => ArrowReal to r where
-    realA :: CauchyReal -> String -> (() `to` r) -- TODO: change () to (SizeLimits r)
-    sqrtA :: r `to` r
-    mulA :: (r,r) `to` r
-    mulConstA :: CauchyReal -> String -> r `to` r
-    addA :: (r,r) `to` r
-    addConstA :: CauchyReal -> String -> r `to` r
     lessA :: (r,r) `to` Bool
     leqA :: (r,r) `to` Bool
     pickNonZeroA :: [(r,a)] `to` (r,a)
+    realA :: CauchyReal -> String -> (() `to` r) -- TODO: change () to (SizeLimits r)
+    addA :: (r,r) `to` r
+    addConstA :: CauchyReal -> String -> r `to` r
+    mulA :: (r,r) `to` r
+    mulConstA :: CauchyReal -> String -> r `to` r
+    sqrtA :: r `to` r
 -- TODO: add more operations
 
 piA :: (ArrowReal to r) => () `to` r
@@ -78,9 +78,9 @@ piA = realA pi "pi"
 class (ArrowReal to r) => ArrowRealInterval to r ri | ri -> r where
     getEndpointsA :: ri `to` (r,r)
     fromEndpointsA :: (r,r) `to` ri
-    splitIntervalA :: ri `to` (ri, ri)
-    subEqIntervalA :: (ri, ri) `to` Bool
     limitIntervalsToRealA :: [ri] `to` r 
+--    splitIntervalA :: ri `to` (ri, ri)
+--    subEqIntervalA :: (ri, ri) `to` Bool
 
 class (ArrowRealInterval to r ri) => ArrowRealUnaryFn to r ri f | f -> ri where
     constUFnA :: (ri, r) `to` f
