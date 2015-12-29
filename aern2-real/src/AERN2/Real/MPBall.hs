@@ -6,7 +6,7 @@ module AERN2.Real.MPBall
     (MPBall(..), getAccuracy, getFiniteAccuracy,
      getPrecision, MP.standardPrecisions, MP.Precision, MP.prec, MP.prec2integer,
      isNonZero,
-     toIntegerUp, toIntegerDown,
+     toIntegerUp, toIntegerDown, toRationalUp, toRationalDown,
      integer2Ball, integer2BallP,  
      rational2BallP, rationalBall2BallP,
      ball2endpoints, endpoints2Ball,
@@ -74,9 +74,14 @@ integer2Ball :: Integer -> MPBall
 integer2Ball = integer
 
 toIntegerUp :: MPBall -> Integer
-toIntegerUp x = ceiling $ MP.toRational $ snd $ ball2endpointsMP x
+toIntegerUp x = ceiling $ toRationalUp x
 toIntegerDown :: MPBall -> Integer
-toIntegerDown x = floor $ MP.toRational $ fst $ ball2endpointsMP x
+toIntegerDown x = floor $ toRationalDown x
+
+toRationalUp :: MPBall -> Rational
+toRationalUp x = MP.toRational $ snd $ ball2endpointsMP x
+toRationalDown :: MPBall -> Rational
+toRationalDown x = MP.toRational $ fst $ ball2endpointsMP x
 
 getAccuracy :: 
     MPBall -> A.Accuracy
