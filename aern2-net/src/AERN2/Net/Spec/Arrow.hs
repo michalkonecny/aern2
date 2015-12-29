@@ -1,6 +1,24 @@
 {-# LANGUAGE Arrows, TypeOperators, GeneralizedNewtypeDeriving, FunctionalDependencies, DataKinds, FlexibleContexts #-}
 
-module AERN2.Net.Spec.Arrow where
+module AERN2.Net.Spec.Arrow 
+(
+    _anet0, _anet1, _anet2, _anet3,
+    ArrowRational(..),
+    ArrowReal(..),
+    piA,
+    ArrowComplex(..),
+    Complex(..),
+    ArrowRationalInterval(..),
+    ArrowRealUnaryFn(..),
+    UFnDomE, UFnDomR,
+    ArrowRealFn(..),
+    FnDomE, FnDomR,
+    VarName, VarMap,
+    ArrowRealUnaryFnFromArrow(..),
+    ArrowRealFnFromArrow(..),
+    mapA, zipWithA
+)
+where
 
 import AERN2.Real hiding (id, (.))
 import Data.String (IsString(..),fromString)
@@ -44,7 +62,7 @@ _anet2 =
         returnA -< r
 
 
--- | sqrt(x^2+y^2+z^2)    
+-- | sqrt(x^2+y^2+z^2)
 _anet3 :: (ArrowReal to r) => (Map.Map String r) `to` r
 _anet3 =
     proc valMap -> do
@@ -75,16 +93,20 @@ class (ArrowRational to r) => ArrowReal to r where
     addRealA :: CauchyReal -> String -> r `to` r
     mulRealA :: CauchyReal -> String -> r `to` r
     sqrtA :: r `to` r
+    expA :: r `to` r
 -- TODO: add more operations
-
 
 piA :: (ArrowReal to r) => () `to` r
 piA = realConstA "pi" pi
 
-type UFnDomE f = IntervalE (UFnDom f)
-type FnDomE f = IntervalE (FnDom f)
-type UFnDomR f = IntervalR (UFnDom f)
-type FnDomR f = IntervalR (FnDom f)
+class (ArrowReal to c) => ArrowComplex to c where
+    complexConstA :: String -> Complex -> (() `to` c) -- TODO: change () to (SizeLimits c)
+    complexOpA ::  String -> ([Complex] -> Complex) -> ([c] `to` c) -- use a Complex computation, bypassing the arrow 
+    addComplexA :: Complex -> String -> c `to` c
+    mulComplexA :: Complex -> String -> c `to` c
+
+-- TODO: move Complex to aern2-real
+data Complex = CauchyReal :+ CauchyReal 
 
 class (ArrowRational to (IntervalE ri)) => ArrowRationalInterval to ri where
     type IntervalE ri
@@ -94,6 +116,9 @@ class (ArrowRational to (IntervalE ri)) => ArrowRationalInterval to ri where
     limitIntervalsToRealA :: [ri] `to` IntervalR ri 
 --    splitIntervalA :: ri `to` (ri, ri)
 --    subEqIntervalA :: (ri, ri) `to` Bool
+
+type UFnDomE f = IntervalE (UFnDom f)
+type UFnDomR f = IntervalR (UFnDom f)
 
 class (ArrowRationalInterval to (UFnDom f), ArrowReal to (UFnR f)) => ArrowRealUnaryFn to f where
     type UFnDom f
@@ -109,6 +134,9 @@ newtype VarName = VarName String
     deriving (IsString, Eq, Ord, Show)
 
 type VarMap = Map.Map VarName
+
+type FnDomE f = IntervalE (FnDom f)
+type FnDomR f = IntervalR (FnDom f)
 
 class (ArrowRationalInterval to (FnDom f), ArrowReal to (FnR f)) => ArrowRealFn to f where
     type FnDom f
@@ -126,3 +154,28 @@ class (ArrowRealUnaryFn to f) => ArrowRealUnaryFnFromArrow to f where
 
 class (ArrowRealFn to f) => ArrowRealFnFromArrow to f where
     encloseFn :: (ArrowReal to2 r2) => (VarMap r2 `to2` r2, VarMap (FnDom f)) -> () `to` f
+
+{- Utilities for arrow programming -}
+
+mapA :: (ArrowChoice to) => (a `to` b) -> ([a] `to` [b])
+mapA processOne =
+    proc xs ->
+        case xs of
+            [] -> returnA -< []
+            (x : xrest) -> 
+                do
+                y <- processOne -< x
+                yrest <- mapA processOne -< xrest
+                returnA -< y : yrest
+
+zipWithA :: (ArrowChoice to) => ((a,b) `to` c) -> (([a],[b]) `to` [c])
+zipWithA processOne =
+    proc (xs, ys) ->
+        case (xs, ys) of
+            ([], _) -> returnA -< []
+            (_, []) -> returnA -< []
+            (x : xrest, y : yrest) -> 
+                do
+                z <- processOne -< (x,y)
+                zrest <- zipWithA processOne -< (xrest, yrest)
+                returnA -< z : zrest
