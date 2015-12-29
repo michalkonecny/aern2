@@ -3,7 +3,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
 module AERN2.Real.MPBall
-    (MPBall(..), getAccuracy, 
+    (MPBall(..), getAccuracy, getFiniteAccuracy,
      getPrecision, MP.standardPrecisions, MP.Precision, MP.prec, MP.prec2integer,
      isNonZero,
      toIntegerUp, toIntegerDown,
@@ -82,6 +82,12 @@ getAccuracy ::
     MPBall -> A.Accuracy
 getAccuracy (MPBall _ e) = 
     EB.getAccuracy e
+
+getFiniteAccuracy :: MPBall -> A.Accuracy
+getFiniteAccuracy b =
+    case getAccuracy b of
+        A.Exact -> A.bits $ MP.prec2integer (getPrecision b)
+        a -> a
 
 getPrecision :: MPBall -> Precision
 getPrecision (MPBall x _) =
