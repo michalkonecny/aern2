@@ -84,14 +84,15 @@ class (ArrowChoice to) => ArrowRational to r where
     rationalConstA :: String -> Rational -> (() `to` r)
     rationalOpA ::  String -> ([Rational] -> Rational) -> ([r] `to` r) -- use a Rational computation, bypassing the arrow 
     addA :: (r,r) `to` r
+    subA :: (r,r) `to` r
     mulA :: (r,r) `to` r
 
 class (ArrowRational to r) => ArrowReal to r where
     pickNonZeroA :: [(r,a)] `to` (r,a)
     realConstA :: String -> CauchyReal -> (() `to` r) -- TODO: change () to (SizeLimits r)
     realOpA ::  String -> ([CauchyReal] -> CauchyReal) -> ([r] `to` r) -- use a CauchyReal computation, bypassing the arrow 
-    addRealA :: CauchyReal -> String -> r `to` r
-    mulRealA :: CauchyReal -> String -> r `to` r
+    addRealA :: String -> CauchyReal -> r `to` r
+    mulRealA :: String -> CauchyReal -> r `to` r
     sqrtA :: r `to` r
     expA :: r `to` r
 -- TODO: add more operations
@@ -102,8 +103,8 @@ piA = realConstA "pi" pi
 class (ArrowReal to c) => ArrowComplex to c where
     complexConstA :: String -> Complex -> (() `to` c) -- TODO: change () to (SizeLimits c)
     complexOpA ::  String -> ([Complex] -> Complex) -> ([c] `to` c) -- use a Complex computation, bypassing the arrow 
-    addComplexA :: Complex -> String -> c `to` c
-    mulComplexA :: Complex -> String -> c `to` c
+    addComplexA :: String -> Complex -> c `to` c
+    mulComplexA :: String -> Complex -> c `to` c
 
 class (ArrowRational to (IntervalE ri)) => ArrowRationalInterval to ri where
     type IntervalE ri
@@ -154,25 +155,29 @@ class (ArrowRealFn to f) => ArrowRealFnFromArrow to f where
 
 {- Utilities for arrow programming -}
 
-mapA :: (ArrowChoice to) => (a `to` b) -> ([a] `to` [b])
-mapA processOne =
-    proc xs ->
-        case xs of
-            [] -> returnA -< []
-            (x : xrest) -> 
-                do
-                y <- processOne -< x
-                yrest <- mapA processOne -< xrest
-                returnA -< y : yrest
+mapA :: (ArrowChoice to) => (Integer -> (a `to` b)) -> ([a] `to` [b])
+mapA processOne = aux 0
+    where
+    aux k =
+        proc xs ->
+            case xs of
+                [] -> returnA -< []
+                (x : xrest) -> 
+                    do
+                    y <- processOne k -< x
+                    yrest <- aux (k + 1) -< xrest
+                    returnA -< y : yrest
 
-zipWithA :: (ArrowChoice to) => ((a,b) `to` c) -> (([a],[b]) `to` [c])
-zipWithA processOne =
-    proc (xs, ys) ->
-        case (xs, ys) of
-            ([], _) -> returnA -< []
-            (_, []) -> returnA -< []
-            (x : xrest, y : yrest) -> 
-                do
-                z <- processOne -< (x,y)
-                zrest <- zipWithA processOne -< (xrest, yrest)
-                returnA -< z : zrest
+zipWithA :: (ArrowChoice to) => (Integer -> ((a,b) `to` c)) -> (([a],[b]) `to` [c])
+zipWithA processOne = aux 0
+    where
+    aux k =
+        proc (xs, ys) ->
+            case (xs, ys) of
+                ([], _) -> returnA -< []
+                (_, []) -> returnA -< []
+                (x : xrest, y : yrest) -> 
+                    do
+                    z <- processOne k -< (x,y)
+                    zrest <- aux (k+1) -< (xrest, yrest)
+                    returnA -< z : zrest

@@ -41,8 +41,8 @@ instance ArrowReal (->) CauchyReal where
     pickNonZeroA = pickNonZeroReal
     realConstA _name r = const r
     realOpA _name f = f
-    addRealA r _name = (r +) 
-    mulRealA r _name = (r *) 
+    addRealA _name r = (r +)
+    mulRealA _name r = (r *) 
     sqrtA = sqrt
 
 
