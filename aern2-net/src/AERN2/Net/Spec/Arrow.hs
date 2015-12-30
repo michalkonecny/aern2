@@ -105,9 +105,6 @@ class (ArrowReal to c) => ArrowComplex to c where
     addComplexA :: Complex -> String -> c `to` c
     mulComplexA :: Complex -> String -> c `to` c
 
--- TODO: move Complex to aern2-real
-data Complex = CauchyReal :+ CauchyReal 
-
 class (ArrowRational to (IntervalE ri)) => ArrowRationalInterval to ri where
     type IntervalE ri
     type IntervalR ri

@@ -36,5 +36,6 @@ library
                    AERN2.Num.MPBall,
                    AERN2.Num.MPFloat,
                    AERN2.Num.Norm,
-                   AERN2.Num.Operations
+                   AERN2.Num.Operations,
+                   AERN2.Num.Complex
 
