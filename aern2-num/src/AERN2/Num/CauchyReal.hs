@@ -31,6 +31,7 @@ import Data.List (findIndex)
 
 shouldTrace :: Bool
 shouldTrace = False
+--shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace 
@@ -257,6 +258,18 @@ instance CanSqrt CauchyReal where
                     NormZero -> i
             maybeSqrtNormLog = getSeqNormLog i (\j -> sqrt (getB1 j)) 
 
+instance CanExp CauchyReal where
+    exp (CauchyReal getB1) = CauchyReal getB
+        where
+        getB i = 
+            ensureAccuracy1 i jInit (\j -> exp (getB1 j))
+            where
+            jInit = 
+                case maybeExpNormLog of
+                    NormBits expNormLog -> i + expNormLog + 1
+                    NormZero -> i -- this should never happen
+            maybeExpNormLog = getSeqNormLog i (\j -> exp (getB1 j)) 
+
 instance CanSineCosine CauchyReal where
     sin (CauchyReal getB1) = CauchyReal (\ i -> sin (getB1 i))
     cos (CauchyReal getB1) = CauchyReal (\ i -> cos (getB1 i))
@@ -403,6 +416,10 @@ instance CanSqrt Integer where
     type SqrtType Integer = CauchyReal
     sqrt x = seqByPrecision2Cauchy $ \p -> sqrt (integer2BallP p x)      
         
+instance CanExp Integer where
+    type ExpType Integer = CauchyReal
+    exp x = seqByPrecision2Cauchy $ \p -> exp (integer2BallP p x)
+        
 instance CanSineCosine Integer where
     type SineCosineType Integer = CauchyReal
     sin x = seqByPrecision2Cauchy $ \p -> sin (integer2BallP p x)
@@ -473,12 +490,16 @@ instance CanDivBy CauchyReal Rational
 
 instance CanSqrt Rational where
     type SqrtType Rational = CauchyReal
-    sqrt x = seqByPrecision2Cauchy $ \p -> sqrt (rational2BallP p x)      
+    sqrt x = seqByPrecision2Cauchy $ \p -> sqrt (rational2BallP p x)
+        
+instance CanExp Rational where
+    type ExpType Rational = CauchyReal
+    exp x = seqByPrecision2Cauchy $ \p -> exp (rational2BallP p x)
         
 instance CanSineCosine Rational where
     type SineCosineType Rational = CauchyReal
     sin x = seqByPrecision2Cauchy $ \p -> sin (rational2BallP p x)
-    cos x = seqByPrecision2Cauchy $ \p -> cos (rational2BallP p x)  
+    cos x = seqByPrecision2Cauchy $ \p -> cos (rational2BallP p x)
 
 
 {- operations mixing MPBall and CauchyReal, resulting in an MPBall -}

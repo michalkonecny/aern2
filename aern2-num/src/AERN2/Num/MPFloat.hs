@@ -9,7 +9,7 @@ module AERN2.Num.MPFloat
      distUp, distDown, avgUp, avgDown, 
      mulUp, mulDown, divUp, divDown, recipUp, recipDown,
      piUp, piDown,
-     cosUp, cosDown, sinUp, sinDown, sqrtUp, sqrtDown)
+     cosUp, cosDown, sinUp, sinDown, sqrtUp, sqrtDown, expUp, expDown)
 where
 
 import AERN2.Num.Operations hiding (abs,neg,toRational)
@@ -181,6 +181,12 @@ sqrtUp = unaryUp MPLow.sqrt
 
 sqrtDown :: MPFloat -> MPFloat
 sqrtDown = unaryDown MPLow.sqrt
+
+expUp :: MPFloat -> MPFloat
+expUp = unaryUp MPLow.exp
+
+expDown :: MPFloat -> MPFloat
+expDown = unaryDown MPLow.exp
 
 {- auxiliary functions to automatically determine result precision from operand precisions -}
 

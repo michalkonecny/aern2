@@ -19,6 +19,7 @@ module AERN2.Num.Operations
     CanRecip(..), CanRecipSameType,
     Ring, Field, CanAddMulScalar, CanAddMulDivScalar,
     CanSqrt(..), CanSqrtSameType,
+    CanExp(..), CanExpSameType,
     CanSineCosine(..), CanSineCosineSameType
 )
 where
@@ -28,7 +29,7 @@ import Prelude hiding
      (+),(*),(/),(-),(^),sum,product,abs,min,max,
      recip,div,negate,
      fromInteger,fromRational,
-     pi,sqrt,cos,sin)
+     pi,sqrt,exp,cos,sin)
 
 import qualified Prelude as P
 
@@ -309,6 +310,15 @@ class CanSqrt a where
 class
     (CanSqrt a, SqrtType a ~ a) => 
     CanSqrtSameType a
+
+class CanExp a where
+    type ExpType a :: *
+    type ExpType a = a -- default
+    exp :: a -> ExpType a
+
+class
+    (CanExp a, ExpType a ~ a) => 
+    CanExpSameType a
 
 class CanSineCosine a where
     type SineCosineType a :: *

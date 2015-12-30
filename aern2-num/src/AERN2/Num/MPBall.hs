@@ -424,6 +424,9 @@ getCentreAndErrorBall x = (cB,eB)
 instance CanSqrt MPBall where
     sqrt x = monotoneFromApprox MP.sqrtDown MP.sqrtUp x     
         
+instance CanExp MPBall where
+    exp x = monotoneFromApprox MP.expDown MP.expUp x     
+        
 instance CanSineCosine MPBall where
     sin = sinB 1
     cos = cosB 1

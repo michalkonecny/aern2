@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
 module AERN2.Num.Complex 
 (
-    Complex(..),
+    Complex(..), complexI,
     complex2balls,
     showComplex,
     integer2Complex, rational2Complex, cauchyReal2Complex
@@ -16,6 +16,9 @@ import AERN2.Num.Accuracy
 data Complex = CauchyReal :+ CauchyReal 
 
 infixr 5 :+
+
+complexI :: Complex
+complexI = (integer 0) :+ (integer 1)
 
 complex2balls :: Complex -> Accuracy -> (MPBall, MPBall)
 complex2balls (r :+ i) a = 
@@ -202,3 +205,7 @@ instance CanDiv Complex CauchyReal where
     div (r :+ i) a = r / a :+ i / a
 
 instance CanDivBy Complex CauchyReal
+
+instance CanExp Complex where
+    exp (r :+ i) =
+        (exp r) * (cos i :+ sin i)
