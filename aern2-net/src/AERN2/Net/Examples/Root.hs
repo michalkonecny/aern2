@@ -31,14 +31,14 @@ maybeTrace
 [1.414213562373095 ± 4.429356626880511e-302]
 (0.55 secs, 331385640 bytes)
 
-*AERN2.Net AERN2.Net.Examples.Root> cauchyReal2ball rootTestDirectNoNet   (bits 1000)
+*AERN2.Net AERN2.Net.Examples.Root> cauchyReal2ball rootTestNoNet   (bits 1000)
 [1.414213562373095 ± 4.429356626880511e-302]
 (0.59 secs, 329167792 bytes)
 
 -}
 
-rootTestDirectNoNet :: CauchyReal
-rootTestDirectNoNet =
+rootTestNoNet :: CauchyReal
+rootTestNoNet =
     rootByTrisectionNoNet (\ x -> x * x - 2) (Interval 1.0 2.0)
 
 rootTestDirectFnCR :: CauchyReal

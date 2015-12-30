@@ -1,6 +1,7 @@
 {-# LANGUAGE Arrows, TypeOperators #-}
 module AERN2.Net.Examples.FFT 
 (
+    fftTestDirect,
     dftCooleyTukey
 )
 where
@@ -11,19 +12,30 @@ import Data.String (fromString)
 import AERN2.Net.Spec.Arrow
 import Control.Arrow
 
---import AERN2.Net.Execution.Direct
---
---import Debug.Trace (trace)
---
---shouldTrace :: Bool
---shouldTrace = False
-----shouldTrace = True
---
---maybeTrace :: String -> a -> a
---maybeTrace 
---    | shouldTrace = trace
---    | otherwise = const id
+import AERN2.Net.Execution.Direct ()
 
+import Debug.Trace (trace)
+
+shouldTrace :: Bool
+--shouldTrace = False
+shouldTrace = True
+
+maybeTrace :: String -> a -> a
+maybeTrace 
+    | shouldTrace = trace
+    | otherwise = const id
+
+fftTestDirect :: Integer -> Accuracy -> [(MPBall, MPBall)]
+fftTestDirect nN ac=
+    map (\ c -> complex2balls c ac) $ fftWithInput ()
+    where
+    fftWithInput =
+        proc () ->
+            do
+            x <- rationalListA "input" input -< ()
+            dftCooleyTukey nN -< x
+    input :: [Rational]
+    input = map integer [1..nN] 
 
 {-|
     Discrete Furier Transform using the Cooley and Tukey Radix-2 algorithm.
@@ -80,7 +92,16 @@ ditfft2 nN s
     nNhalf = round (nN / 2)
     twiddle k = 
         proc x_k_plus_NHalf ->
-            mulComplexA "exp(-2*pi*i*k/nN)*" (exp(-2*pi*i*k/nN)) -< x_k_plus_NHalf
+            mulComplexA "exp(-2*pi*i*k/nN)*" cT -< x_k_plus_NHalf
+        where
+        cT = 
+            maybeTrace
+            (
+                "twiddle with k = " ++ show k ++ "; ... = " ++ showComplex (bits 100) (-2*pi*i*k/nN)
+            )
+            c
+        c = exp(-2*pi*i*k/nN)
+        
     i = complexI
     
                 

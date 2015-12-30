@@ -19,32 +19,68 @@ maybeTrace
     | shouldTrace = trace
     | otherwise = const id
 
-{- Direct evaluation using CauchyReal -}
+{- Direct evaluation using Rational -}
 
 instance ArrowRational (->) Rational where
     lessA = uncurry (<)
     leqA = uncurry (<=)
     addA = uncurry (+)
+    subA = uncurry (-)
     mulA = uncurry (*)
-    rationalConstA _name r = const $ r
+    rationalConstA _name r = const r
+    rationalListA _name rs = const rs
     rationalOpA _name f = f
+
+{- Direct evaluation using CauchyReal -}
 
 instance ArrowRational (->) CauchyReal where
     lessA = uncurry (<)
     leqA = uncurry (<=)
     addA = uncurry (+)
+    subA = uncurry (-)
     mulA = uncurry (*)
     rationalConstA _name r = const $ rational r
-    rationalOpA _name f = error "rationalOpA not implemented for CauchyReal"
+    rationalListA _name rs = const $ map rational rs
+    rationalOpA = error "rationalOpA not implemented for CauchyReal"
 
 instance ArrowReal (->) CauchyReal where
     pickNonZeroA = pickNonZeroReal
     realConstA _name r = const r
+    realListA _name rs = const rs
     realOpA _name f = f
     addRealA _name r = (r +)
     mulRealA _name r = (r *) 
     sqrtA = sqrt
+    expA = exp
 
+{- Direct evaluation using Complex -}
+
+instance ArrowRational (->) Complex where
+    lessA = error "lessA not implemented for Complex"
+    leqA = error "leqA not implemented for Complex"
+    addA = uncurry (+)
+    subA = uncurry (-)
+    mulA = uncurry (*)
+    rationalConstA _name r = const $ rational r
+    rationalListA _name rs = const $ map rational rs
+    rationalOpA = error "rationalOpA not implemented for Complex"
+
+instance ArrowReal (->) Complex where
+    pickNonZeroA = error "pickNonZeroA for Complex not implemented yet"
+    realConstA _name r = const $ cauchyReal2Complex r
+    realListA _name rs = const $ map cauchyReal2Complex rs
+    realOpA = error "realOpA not implemented for Complex"
+    addRealA _name r = (r +)
+    mulRealA _name r = (r *) 
+    sqrtA = error "sqrtA for Complex not implemented yet"
+    expA = exp
+
+instance ArrowComplex (->) Complex where
+    complexConstA _name r = const r
+    complexListA _name rs = const rs
+    complexOpA _name f = f
+    addComplexA _name r = (r +)
+    mulComplexA _name r = (r *) 
 
 {- TODO The Interval type should move somewhere to aern-real -}
 
@@ -91,8 +127,8 @@ cri2MPBall (Interval l r) =
     nl = getNormLog ((cauchyReal2ball r a0) - (cauchyReal2ball l a0))
     a0 = bits 10
 
-mpBall2cri :: MPBall -> Interval CauchyReal
-mpBall2cri b =
+_mpBall2cri :: MPBall -> Interval CauchyReal
+_mpBall2cri b =
     maybeTrace
     (
         "mpBall2cri: b = " ++ show b
@@ -147,7 +183,7 @@ instance ArrowRealUnaryFn (->) UnaryFnCR
     getDomainUFnA (dom, _) = dom
     evalAtPointUFnA ((_dom, f), r) = f r 
     evalAtUFnDomEA ((_dom, f), r) = f (rational r) 
-    evalOnIntervalUFnA ((_dom, f), ri) = 
+    evalOnIntervalUFnA ((_dom, _f), _ri) = 
         error "evalOnIntervalUFnA not implemented for UnaryFnCR"
 
 

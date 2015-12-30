@@ -82,6 +82,7 @@ class (ArrowChoice to) => ArrowRational to r where
     lessA :: (r,r) `to` Bool
     leqA :: (r,r) `to` Bool
     rationalConstA :: String -> Rational -> (() `to` r)
+    rationalListA :: String -> [Rational] -> (() `to` [r])
     rationalOpA ::  String -> ([Rational] -> Rational) -> ([r] `to` r) -- use a Rational computation, bypassing the arrow 
     addA :: (r,r) `to` r
     subA :: (r,r) `to` r
@@ -90,6 +91,7 @@ class (ArrowChoice to) => ArrowRational to r where
 class (ArrowRational to r) => ArrowReal to r where
     pickNonZeroA :: [(r,a)] `to` (r,a)
     realConstA :: String -> CauchyReal -> (() `to` r) -- TODO: change () to (SizeLimits r)
+    realListA :: String -> [CauchyReal] -> (() `to` [r]) -- TODO: change () to (SizeLimits r)
     realOpA ::  String -> ([CauchyReal] -> CauchyReal) -> ([r] `to` r) -- use a CauchyReal computation, bypassing the arrow 
     addRealA :: String -> CauchyReal -> r `to` r
     mulRealA :: String -> CauchyReal -> r `to` r
@@ -102,6 +104,7 @@ piA = realConstA "pi" pi
 
 class (ArrowReal to c) => ArrowComplex to c where
     complexConstA :: String -> Complex -> (() `to` c) -- TODO: change () to (SizeLimits c)
+    complexListA :: String -> [Complex] -> (() `to` [c]) -- TODO: change () to (SizeLimits c)
     complexOpA ::  String -> ([Complex] -> Complex) -> ([c] `to` c) -- use a Complex computation, bypassing the arrow 
     addComplexA :: String -> Complex -> c `to` c
     mulComplexA :: String -> Complex -> c `to` c
