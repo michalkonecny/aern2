@@ -18,6 +18,7 @@ module AERN2.Num.Operations
     CanDiv(..), CanDivBy, CanDivSameType,
     CanRecip(..), CanRecipSameType,
     Ring, Field, CanAddMulScalar, CanAddMulDivScalar,
+--    RationalLike,
     CanSqrt(..), CanSqrtSameType,
     CanExp(..), CanExpSameType,
     CanSineCosine(..), CanSineCosineSameType
@@ -300,6 +301,11 @@ class
     =>
     CanAddMulDivScalar a s 
     
+
+--class
+--    (HasIntegers a, HasRationals a, Field a, CanAddMulDivScalar a a, CanAddMulDivScalar a Integer, CanAddMulDivScalar a Rational)
+--    =>
+--    RationalLike a
 
 
 class CanSqrt a where

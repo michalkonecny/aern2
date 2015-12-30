@@ -36,11 +36,13 @@ integer2Complex :: Integer -> Complex
 integer2Complex = integer
 
 instance HasRationals Complex where
-    rational q =
-        (rational q) :+ (integer 0)
+    rational = rational2Complex
 
 rational2Complex :: Rational -> Complex
-rational2Complex = rational
+rational2Complex q = (rational q) :+ (integer 0)
+
+instance HasReals Complex where
+    cauchyReal = cauchyReal2Complex
 
 cauchyReal2Complex :: CauchyReal -> Complex
 cauchyReal2Complex r = r :+ (integer 0)

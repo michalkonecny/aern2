@@ -7,6 +7,8 @@
 {-# LANGUAGE UndecidableInstances #-}
 module AERN2.Num.CauchyReal 
 (
+    HasReals(..),
+--    RealLike,
     CauchyReal,
     showCauchyReal,
     mapCauchyRealUnsafe,
@@ -37,6 +39,17 @@ maybeTrace :: String -> a -> a
 maybeTrace 
     | shouldTrace = trace
     | otherwise = const id
+
+class HasReals a where
+    cauchyReal :: CauchyReal -> a
+    
+instance HasReals CauchyReal where
+    cauchyReal = id
+
+--class
+--    (RationalLike a, HasReals a, CanAddMulDivScalar a CauchyReal, CanSqrt a, CanExp a, CanSineCosine a)
+--    => 
+--    RealLike a
 
 {-| Invariant: For any @(CauchyReal seq)@ it holds @ball_error (seq i) <= 2^^(-i)@ -}
 data CauchyReal = 
