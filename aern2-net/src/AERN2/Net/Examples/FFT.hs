@@ -17,8 +17,8 @@ import AERN2.Net.Execution.Direct ()
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
---shouldTrace = False
-shouldTrace = True
+shouldTrace = False
+--shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace 

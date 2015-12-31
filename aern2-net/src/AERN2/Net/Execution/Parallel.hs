@@ -254,26 +254,6 @@ binarySTM chName op getQ1 getQ2 (ch1, ch2) =
             let (Just a2) = Map.lookup 2 aMap 
             return $ op a1 a2 
 
-ensureAccuracyM2 ::
-    (Monad m) =>
-    Accuracy -> Accuracy -> Accuracy -> (Accuracy -> Accuracy -> m MPBall) -> m MPBall
-ensureAccuracyM2 i j1 j2 getB =
-    do
-    result <- getB j1 j2
-    if getAccuracy result >= i 
-        then return result
-        else ensureAccuracyM2 i (j1+1)(j2+1) getB
-
-ensureAccuracyM1 ::
-    (Monad m) =>
-    Accuracy -> Accuracy -> (Accuracy -> m MPBall) -> m MPBall
-ensureAccuracyM1 i j1 getB =
-    do
-    result <- getB j1
-    if getAccuracy result >= i 
-        then return result
-        else ensureAccuracyM1 i (j1+1) getB
-
 newtype ChannelName = ChannelName String
     deriving (Show, IsString)
 

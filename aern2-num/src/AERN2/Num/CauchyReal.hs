@@ -15,6 +15,7 @@ module AERN2.Num.CauchyReal
     cauchyReal2ball,
     integer2CauchyReal, rational2CauchyReal,
     convergent2CauchyReal,
+    ensureAccuracyM2, ensureAccuracyM1,
     pickNonZeroReal,
     pi
 )
@@ -345,6 +346,28 @@ ensureAccuracy2 i j1 j2 getB
         ensureAccuracy2 i (j1+1)(j2+1) getB
     where
     result = getB j1 j2
+
+ensureAccuracyM2 ::
+    (Monad m) =>
+    Accuracy -> Accuracy -> Accuracy -> (Accuracy -> Accuracy -> m MPBall) -> m MPBall
+ensureAccuracyM2 i j1 j2 getB =
+    do
+    result <- getB j1 j2
+    if getAccuracy result >= i 
+        then return result
+        else ensureAccuracyM2 i (j1+1)(j2+1) getB
+
+ensureAccuracyM1 ::
+    (Monad m) =>
+    Accuracy -> Accuracy -> (Accuracy -> m MPBall) -> m MPBall
+ensureAccuracyM1 i j1 getB =
+    do
+    result <- getB j1
+    if getAccuracy result >= i 
+        then return result
+        else ensureAccuracyM1 i (j1+1) getB
+
+
 
 {- CauchyReal-Integer operations -}
 
