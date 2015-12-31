@@ -28,12 +28,12 @@ import AERN2.Num.Accuracy
 import AERN2.Num.MPBall
 import AERN2.Num.IntegerRational ()
 
-import Debug.Trace (trace)
 import Data.List (findIndex)
+import Debug.Trace (trace)
 
 shouldTrace :: Bool
-shouldTrace = False
---shouldTrace = True
+--shouldTrace = False
+shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace 

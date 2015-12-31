@@ -80,6 +80,7 @@ instance CanMul Complex Complex where
     mul (r1 :+ i1) (r2 :+ i2) =
         (r1 * r2 - i1 * i2) :+ (r1 * i2 + r2 * i1)
 
+
 instance CanMulBy Complex Complex
 
 instance CanMulSameType Complex

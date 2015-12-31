@@ -27,6 +27,17 @@ import AERN2.Num.ErrorBound (ErrorBound(..))
 import qualified AERN2.Num.MPFloat as MP
 import AERN2.Num.MPFloat (MPFloat, Precision)
 
+import Debug.Trace (trace)
+
+shouldTrace :: Bool
+shouldTrace = False
+--shouldTrace = True
+
+maybeTrace :: String -> a -> a
+maybeTrace 
+    | shouldTrace = trace
+    | otherwise = const id
+
 
 data MPBall = MPBall { ball_value :: MPFloat, ball_error :: ErrorBound }
 
@@ -85,8 +96,14 @@ toRationalDown x = MP.toRational $ fst $ ball2endpointsMP x
 
 getAccuracy :: 
     MPBall -> A.Accuracy
-getAccuracy (MPBall _ e) = 
-    EB.getAccuracy e
+getAccuracy (MPBall _ e) =
+    maybeTrace
+    (
+        "MPBall.getAccuracy: e = " ++ show e ++ "; ac = " ++ show ac
+    )
+    ac
+    where 
+    ac = EB.getAccuracy e
 
 getFiniteAccuracy :: MPBall -> A.Accuracy
 getFiniteAccuracy b =
@@ -105,11 +122,12 @@ isNonZero (MPBall x e) =
 
 instance HasNorm MPBall where
     getNormLog ball
+        | not (isNonZero ballR) = NormZero
         | integerBound > 1 = 
             NormBits $ toInteger $ integerLog2 $ integerBound
         | integerRecipBound >= 1 = 
             NormBits  $ 1 + (neg $ toInteger $ integerLog2 $ integerRecipBound)
-        | otherwise = NormZero
+        | otherwise = error "internal error in getNormLog"
         where
         ballR =
             endpointsMP2Ball r r
