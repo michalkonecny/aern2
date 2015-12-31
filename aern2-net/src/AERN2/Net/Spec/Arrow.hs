@@ -97,6 +97,8 @@ class (ArrowRational to r) => ArrowReal to r where
     mulRealA :: String -> CauchyReal -> r `to` r
     sqrtA :: r `to` r
     expA :: r `to` r
+    sinA :: r `to` r
+    cosA :: r `to` r
 -- TODO: add more operations
 
 piA :: (ArrowReal to r) => () `to` r

@@ -1,12 +1,17 @@
 {-# LANGUAGE CPP, FlexibleInstances #-}
 module AERN2.Net.Execution.Direct 
-(Interval(..), rati2MPBall, UnaryFnMPBall, UnaryFnCR)
+(
+    _anet0directCauchy, _anet3directCauchy,
+    Interval(..), rati2MPBall, UnaryFnMPBall, UnaryFnCR
+)
 where
 
 import AERN2.Num
 import Data.String (fromString)
 
 import AERN2.Net.Spec.Arrow
+
+import qualified Data.Map as Map
 
 import Debug.Trace (trace)
 
@@ -18,6 +23,20 @@ maybeTrace :: String -> a -> a
 maybeTrace 
     | shouldTrace = trace
     | otherwise = const id
+
+
+_anet0directCauchy :: Integer -> MPBall
+_anet0directCauchy p =
+    cauchyReal2ball (_anet0 ()) (bits p)
+
+_anet3directCauchy :: (Rational, Rational, Rational) -> Integer -> MPBall
+_anet3directCauchy (x,y,z) p =
+    cauchyReal2ball (_anet3 inputs) (bits p)
+    where
+    inputs = Map.fromList [("x",xCR), ("y",yCR), ("z",zCR)]
+    xCR = rational x
+    yCR = rational y
+    zCR = rational z
 
 {- Direct evaluation using Rational -}
 
@@ -52,6 +71,8 @@ instance ArrowReal (->) CauchyReal where
     mulRealA _name r = (r *) 
     sqrtA = sqrt
     expA = exp
+    sinA = sin
+    cosA = cos
 
 {- Direct evaluation using Complex -}
 
