@@ -30,9 +30,8 @@ maybeTrace
     | shouldTrace = trace
     | otherwise = const id
 
-instance CanMul UnaryChebSparse UnaryChebSparse where
-    type MulType UnaryChebSparse UnaryChebSparse = UnaryChebSparse
-    (UnaryChebSparse termsL) `mul` (UnaryChebSparse termsR) =
+instance CanMulA (->) UnaryChebSparse UnaryChebSparse where
+    mulA (UnaryChebSparse termsL, UnaryChebSparse termsR) =
         UnaryChebSparse $ multiply_terms termsL termsR
         where
         multiply_terms
@@ -42,7 +41,6 @@ instance CanMul UnaryChebSparse UnaryChebSparse where
 
 instance CanMulBy UnaryChebSparse UnaryChebSparse
 instance CanMulSameType UnaryChebSparse
-
 
 (!!!) :: [a] -> Integer -> a
 (!!!) = genericIndex

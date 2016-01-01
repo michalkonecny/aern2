@@ -28,13 +28,13 @@ instance Show UnaryPowerBase where
                 | deg == 1 = "*x"
                 | otherwise = "*x^" ++ show deg  
     
-instance CanNeg UnaryPowerBase where
-    neg (UnaryPowerBase terms) = UnaryPowerBase $ map neg terms
+instance CanNegA (->) UnaryPowerBase where
+    negA (UnaryPowerBase terms) = UnaryPowerBase $ map neg terms
     
 instance CanNegSameType UnaryPowerBase
 
-instance CanAdd UnaryPowerBase UnaryPowerBase where
-    (UnaryPowerBase termsL) `add` (UnaryPowerBase termsR) =
+instance CanAddA (->) UnaryPowerBase UnaryPowerBase where
+    addA (UnaryPowerBase termsL, UnaryPowerBase termsR) =
         UnaryPowerBase (termsL `addTerms` termsR) 
 
 addTerms :: [MPBall] -> [MPBall] -> [MPBall]
@@ -51,8 +51,8 @@ instance CanSub UnaryPowerBase UnaryPowerBase
 instance CanSubThis UnaryPowerBase UnaryPowerBase
 instance CanSubSameType UnaryPowerBase
 
-instance CanMul UnaryPowerBase UnaryPowerBase where
-    (UnaryPowerBase termsL) `mul` (UnaryPowerBase termsR) =
+instance CanMulA (->) UnaryPowerBase UnaryPowerBase where
+    mulA (UnaryPowerBase termsL, UnaryPowerBase termsR) =
         UnaryPowerBase $ terms
         where
         terms = foldl1 addTerms (map mulTermsLBy $ zip [0..] termsR)
@@ -62,44 +62,45 @@ instance CanMul UnaryPowerBase UnaryPowerBase where
 instance CanMulBy UnaryPowerBase UnaryPowerBase
 instance CanMulSameType UnaryPowerBase
     
-instance HasEq UnaryPowerBase UnaryPowerBase where
-    equalTo = error "UnaryPowerBase equalTo not implemented yet."
-instance HasOrder UnaryPowerBase UnaryPowerBase where
-    lessThan = error "UnaryPowerBase lessThan not implemented yet."
-    leq = error "UnaryPowerBase leq not implemented yet."
-instance HasIntegers UnaryPowerBase where
-    integer n = UnaryPowerBase [integer n]
+instance HasEqA (->) UnaryPowerBase UnaryPowerBase where
+    equalToA = error "UnaryPowerBase equalTo not implemented yet."
+instance HasOrderA (->) UnaryPowerBase UnaryPowerBase where
+    lessThanA = error "UnaryPowerBase lessThan not implemented yet."
+    leqA = error "UnaryPowerBase leq not implemented yet."
+
+instance ConvertibleA (->) Integer UnaryPowerBase where
+    convertA n = UnaryPowerBase [mpBall n]
     
 instance Ring UnaryPowerBase
 
 
-instance CanAdd UnaryPowerBase Integer where
-    type AddType UnaryPowerBase Integer = UnaryPowerBase
-    (UnaryPowerBase (c : rest)) `add` n =
+instance CanAddA (->) UnaryPowerBase Integer where
+    type AddTypeA (->) UnaryPowerBase Integer = UnaryPowerBase
+    addA (UnaryPowerBase (c : rest), n) =
         UnaryPowerBase (n + c : rest)  
-    (UnaryPowerBase []) `add` _ =
+    addA (UnaryPowerBase [], _) =
         error "UnaryPowerBase has to have a constant term."  
-instance CanAdd Integer UnaryPowerBase where
-    type AddType Integer UnaryPowerBase = UnaryPowerBase
-    n `add` p = p + n 
+instance CanAddA (->) Integer UnaryPowerBase where
+    type AddTypeA (->) Integer UnaryPowerBase = UnaryPowerBase
+    addA (n, p) = p + n 
 instance CanAddThis UnaryPowerBase Integer
 
 instance CanSub UnaryPowerBase Integer
 instance CanSub Integer UnaryPowerBase
 instance CanSubThis UnaryPowerBase Integer
 
-instance CanMul UnaryPowerBase Integer where
-    type MulType UnaryPowerBase Integer = UnaryPowerBase
-    (UnaryPowerBase terms) `mul` n =
+instance CanMulA (->) UnaryPowerBase Integer where
+    type MulTypeA (->) UnaryPowerBase Integer = UnaryPowerBase
+    mulA (UnaryPowerBase terms, n) =
         UnaryPowerBase (map (* n) terms)  
-instance CanMul Integer UnaryPowerBase where
-    type MulType Integer UnaryPowerBase = UnaryPowerBase
-    n `mul` p = p * n 
+instance CanMulA (->) Integer UnaryPowerBase where
+    type MulTypeA (->) Integer UnaryPowerBase = UnaryPowerBase
+    mulA (n, p) = p * n 
 instance CanMulBy UnaryPowerBase Integer
 
-instance CanDiv UnaryPowerBase Integer where
-    type DivType UnaryPowerBase Integer = UnaryPowerBase
-    (UnaryPowerBase terms) `div` n =
+instance CanDivA (->) UnaryPowerBase Integer where
+    type DivTypeA (->) UnaryPowerBase Integer = UnaryPowerBase
+    divA (UnaryPowerBase terms, n) =
         UnaryPowerBase (map (/ n) terms)  
 instance CanDivBy UnaryPowerBase Integer
 
@@ -107,66 +108,66 @@ instance CanAddMulScalar UnaryPowerBase Integer
 instance CanAddMulDivScalar UnaryPowerBase Integer
 
 
-instance CanAdd UnaryPowerBase Rational where
-    type AddType UnaryPowerBase Rational = UnaryPowerBase
-    (UnaryPowerBase (c : rest)) `add` n =
+instance CanAddA (->) UnaryPowerBase Rational where
+    type AddTypeA (->) UnaryPowerBase Rational = UnaryPowerBase
+    addA (UnaryPowerBase (c : rest), n) =
         UnaryPowerBase (n + c : rest)  
-    (UnaryPowerBase []) `add` _ =
+    addA (UnaryPowerBase [], _) =
         error "UnaryPowerBase has to have a constant term."  
-instance CanAdd Rational UnaryPowerBase where
-    type AddType Rational UnaryPowerBase = UnaryPowerBase
-    n `add` p = p + n 
+instance CanAddA (->) Rational UnaryPowerBase where
+    type AddTypeA (->) Rational UnaryPowerBase = UnaryPowerBase
+    addA (n, p) = p + n 
 instance CanAddThis UnaryPowerBase Rational
 
 instance CanSub UnaryPowerBase Rational
 instance CanSub Rational UnaryPowerBase
 instance CanSubThis UnaryPowerBase Rational
 
-instance CanMul UnaryPowerBase Rational where
-    type MulType UnaryPowerBase Rational = UnaryPowerBase
-    (UnaryPowerBase terms) `mul` n =
+instance CanMulA (->) UnaryPowerBase Rational where
+    type MulTypeA (->) UnaryPowerBase Rational = UnaryPowerBase
+    mulA (UnaryPowerBase terms, n) =
         UnaryPowerBase (map (* n) terms)  
-instance CanMul Rational UnaryPowerBase where
-    type MulType Rational UnaryPowerBase = UnaryPowerBase
-    n `mul` p = p * n 
+instance CanMulA (->) Rational UnaryPowerBase where
+    type MulTypeA (->) Rational UnaryPowerBase = UnaryPowerBase
+    mulA (n, p) = p * n 
 instance CanMulBy UnaryPowerBase Rational
 
-instance CanDiv UnaryPowerBase Rational where
-    type DivType UnaryPowerBase Rational = UnaryPowerBase
-    (UnaryPowerBase terms) `div` n =
+instance CanDivA (->) UnaryPowerBase Rational where
+    type DivTypeA (->) UnaryPowerBase Rational = UnaryPowerBase
+    divA (UnaryPowerBase terms, n) =
         UnaryPowerBase (map (/ n) terms)  
 instance CanDivBy UnaryPowerBase Rational
 
 instance CanAddMulScalar UnaryPowerBase Rational
 instance CanAddMulDivScalar UnaryPowerBase Rational
 
-instance CanAdd UnaryPowerBase MPBall where
-    type AddType UnaryPowerBase MPBall = UnaryPowerBase
-    (UnaryPowerBase (c : rest)) `add` n =
+instance CanAddA (->) UnaryPowerBase MPBall where
+    type AddTypeA (->) UnaryPowerBase MPBall = UnaryPowerBase
+    addA (UnaryPowerBase (c : rest), n) =
         UnaryPowerBase (n + c : rest)  
-    (UnaryPowerBase []) `add` _ =
+    addA (UnaryPowerBase [], _) =
         error "UnaryPowerBase has to have a constant term."  
-instance CanAdd MPBall UnaryPowerBase where
-    type AddType MPBall UnaryPowerBase = UnaryPowerBase
-    n `add` p = p + n 
+instance CanAddA (->) MPBall UnaryPowerBase where
+    type AddTypeA (->) MPBall UnaryPowerBase = UnaryPowerBase
+    addA (n, p) = p + n 
 instance CanAddThis UnaryPowerBase MPBall
 
 instance CanSub UnaryPowerBase MPBall
 instance CanSub MPBall UnaryPowerBase
 instance CanSubThis UnaryPowerBase MPBall
 
-instance CanMul UnaryPowerBase MPBall where
-    type MulType UnaryPowerBase MPBall = UnaryPowerBase
-    (UnaryPowerBase terms) `mul` n =
+instance CanMulA (->) UnaryPowerBase MPBall where
+    type MulTypeA (->) UnaryPowerBase MPBall = UnaryPowerBase
+    mulA (UnaryPowerBase terms, n) =
         UnaryPowerBase (map (* n) terms)  
-instance CanMul MPBall UnaryPowerBase where
-    type MulType MPBall UnaryPowerBase = UnaryPowerBase
-    n `mul` p = p * n 
+instance CanMulA (->) MPBall UnaryPowerBase where
+    type MulTypeA (->) MPBall UnaryPowerBase = UnaryPowerBase
+    mulA (n, p) = p * n 
 instance CanMulBy UnaryPowerBase MPBall
 
-instance CanDiv UnaryPowerBase MPBall where
-    type DivType UnaryPowerBase MPBall = UnaryPowerBase
-    (UnaryPowerBase terms) `div` n =
+instance CanDivA (->) UnaryPowerBase MPBall where
+    type DivTypeA (->) UnaryPowerBase MPBall = UnaryPowerBase
+    divA (UnaryPowerBase terms, n) =
         UnaryPowerBase (map (/ n) terms)  
 instance CanDivBy UnaryPowerBase MPBall
 

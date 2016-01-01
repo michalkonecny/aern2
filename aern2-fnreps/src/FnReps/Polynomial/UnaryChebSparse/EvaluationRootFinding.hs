@@ -34,7 +34,7 @@ evalDirect (UnaryChebSparse terms) (x :: ra) =
     n = terms_degree terms
     (b0:_:b2:_) = bs
     bs :: [ra]
-    bs = reverse $ aux n (integer 0) (integer 0)
+    bs = reverse $ aux n (convert 0) (convert 0)
     aux k bKp2 bKp1 
         | k == 0 = [bKp2, bKp1, bK] 
         | otherwise = bKp2 : aux (k - 1) bKp1 bK

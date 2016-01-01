@@ -70,7 +70,7 @@ terms_fromList = Map.fromList
 terms_toList :: Terms -> [(Degree, MPBall)]
 terms_toList = Map.toList
 terms_lookupCoeff :: Terms -> Degree -> MPBall
-terms_lookupCoeff terms deg = case Map.lookup deg terms of Nothing -> (integer 0); Just cf -> cf
+terms_lookupCoeff terms deg = case Map.lookup deg terms of Nothing -> (mpBall 0); Just cf -> cf
 terms_lookupCoeffDoubleConstTerm :: Terms -> Degree -> MPBall
 terms_lookupCoeffDoubleConstTerm terms deg 
     | deg == 0 = 2 * (terms_lookupCoeff terms deg)
@@ -123,14 +123,14 @@ normaliseCoeffs (UnaryChebSparse terms) =
     errorBall = sum errorBalls
 
 
-instance CanNeg UnaryChebSparse where
-    neg (UnaryChebSparse terms) = 
+instance CanNegA (->) UnaryChebSparse where
+    negA (UnaryChebSparse terms) = 
         UnaryChebSparse $ fmap neg terms 
 
 instance CanNegSameType UnaryChebSparse
 
-instance CanAdd UnaryChebSparse UnaryChebSparse where
-    (UnaryChebSparse termsL) `add` (UnaryChebSparse termsR) =
+instance CanAddA (->) UnaryChebSparse UnaryChebSparse where
+    addA (UnaryChebSparse termsL, UnaryChebSparse termsR) =
         UnaryChebSparse $ terms_unionWith (+) termsL termsR
 
 instance CanAddThis UnaryChebSparse UnaryChebSparse

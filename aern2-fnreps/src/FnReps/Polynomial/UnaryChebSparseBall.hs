@@ -11,27 +11,27 @@ module FnReps.Polynomial.UnaryChebSparseBall
 where
 
 import AERN2.Num
-import FnReps.Polynomial.UnaryChebSparse hiding (_example1)
+import FnReps.Polynomial.UnaryChebSparse
 
-_example1 :: UnaryChebSparseBall
-_example1 = 
-    UnaryChebSparseBall poly (integer (-1), integer 1) 100 NormZero
+_ucsBall1 :: UnaryChebSparseBall
+_ucsBall1 = 
+    UnaryChebSparseBall poly (-1.0, 1.0) 100 NormZero
     where
     poly = fromList [(0, rationalBall 1.0),(1, rationalBall (1/100)),(3, rationalBall 1.0)]
     rationalBall x = rational2BallP p x
     p = prec 100
 
-_example1Reduced1 :: UnaryChebSparseBall
-_example1Reduced1 = setMaxDegree 1 _example1
+_ucsBall1Reduced1 :: UnaryChebSparseBall
+_ucsBall1Reduced1 = setMaxDegree 1 _ucsBall1
 
-_example2 :: UnaryChebSparseBall
-_example2 = _example1 * _example1
+_ucsBall2 :: UnaryChebSparseBall
+_ucsBall2 = _ucsBall1 * _ucsBall1
 
 data UnaryChebSparseBall =
     UnaryChebSparseBall
     {
         ucsBall_poly :: UnaryChebSparse, -- enclosure over the domain [-1,1]
-        ucsBall_domain :: (MPBall, MPBall), -- an interval; the domain to translate into
+        ucsBall_domain :: (Rational, Rational), -- an interval; the domain to translate into
         ucsBall_maxDegree :: Degree,
         ucsBall_thresholdNormLog :: NormLog  
     }
@@ -88,13 +88,13 @@ setMaxDegreeNormLog maxDegree normLog b =
     bThresholdNormLog = ucsBall_thresholdNormLog b
 
 
-instance CanNeg UnaryChebSparseBall where
-    neg b = b { ucsBall_poly = neg (ucsBall_poly b) }
+instance CanNegA (->) UnaryChebSparseBall where
+    negA b = b { ucsBall_poly = neg (ucsBall_poly b) }
     
 instance CanNegSameType UnaryChebSparseBall
 
-instance CanAdd UnaryChebSparseBall UnaryChebSparseBall where
-    add = ucsLift2 addAndReduce
+instance CanAddA (->) UnaryChebSparseBall UnaryChebSparseBall where
+    addA = ucsLift2 addAndReduce
         where
         addAndReduce maxDegree thresholdNormLog a b =
             reduceDegreeAndSweep maxDegree thresholdNormLog $ a + b
@@ -106,8 +106,8 @@ instance CanSub UnaryChebSparseBall UnaryChebSparseBall
 instance CanSubThis UnaryChebSparseBall UnaryChebSparseBall
 instance CanSubSameType UnaryChebSparseBall
         
-instance CanMul UnaryChebSparseBall UnaryChebSparseBall where
-    mul = ucsLift2 addAndReduce
+instance CanMulA (->) UnaryChebSparseBall UnaryChebSparseBall where
+    mulA = ucsLift2 addAndReduce
         where
         addAndReduce maxDegree thresholdNormLog a b =
             reduceDegreeAndSweep maxDegree thresholdNormLog $ a * b
@@ -118,8 +118,8 @@ instance CanMulSameType UnaryChebSparseBall
 ucsLift2 :: 
     (Degree -> NormLog -> UnaryChebSparse -> UnaryChebSparse -> UnaryChebSparse)
     -> 
-    (UnaryChebSparseBall -> UnaryChebSparseBall -> UnaryChebSparseBall)
-ucsLift2 polyOpWithSizeLimits a b =
+    (UnaryChebSparseBall, UnaryChebSparseBall) -> UnaryChebSparseBall
+ucsLift2 polyOpWithSizeLimits (a, b) =
     UnaryChebSparseBall
     {
         ucsBall_poly = polyOpWithSizeLimits maxDegree thresholdNormLog aPoly bPoly,
