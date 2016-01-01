@@ -12,7 +12,7 @@ module AERN2.Num.CauchyReal
     mapCauchyRealUnsafe,
     cauchyReal2ball,
     HasCauchyRealsA, HasCauchyReals,
-    CanBeCauchyRealA, cauchyRealA, cauchyRealNamedA, cauchyRealsA, CanBeCauchyReal, cauchyReal, cauchyReals,
+    CanBeCauchyRealA, cauchyRealA, cauchyRealNamedA, cauchyRealsA, cauchyRealsNamedA, CanBeCauchyReal, cauchyReal, cauchyReals,
     integer2CauchyReal, rational2CauchyReal,
     convergent2CauchyReal,
     ensureAccuracyM2, ensureAccuracyM1,
@@ -102,6 +102,8 @@ cauchyRealNamedA :: (CanBeCauchyRealA to a) => String -> a `to` CauchyReal
 cauchyRealNamedA = convertNamedA
 cauchyRealsA :: (CanBeCauchyRealA to a) => [a] `to` [CauchyReal]
 cauchyRealsA = convertListA
+cauchyRealsNamedA :: (CanBeCauchyRealA to a) => String -> [a] `to` [CauchyReal]
+cauchyRealsNamedA = convertListNamedA
 type CanBeCauchyReal a = CanBeCauchyRealA (->) a
 cauchyReal :: (CanBeCauchyReal a) => a -> CauchyReal
 cauchyReal = convert

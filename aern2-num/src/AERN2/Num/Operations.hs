@@ -6,13 +6,13 @@ module AERN2.Num.Operations
     fromInteger, fromRational, ifThenElse, 
     fromInt, toInt,
     ArrowConvert(..), Fn2Arrow, fn2arrow, fn2arrowNamed, Arrow2Fn, arrow2fn,
-    ConvertibleA(..), Convertible, convert, convertList,
+    ConvertibleA(..), convertListNamedA, Convertible, convert, convertList,
     HasIntsA, HasInts, fromIntDefault, 
-    CanBeIntA, intA, intNamedA, intsA, CanBeInt, int, intDefault, ints,
+    CanBeIntA, intA, intNamedA, intsA, intsNamedA, CanBeInt, int, intDefault, ints,
     HasIntegersA, HasIntegers, fromIntegerDefault, 
-    CanBeIntegerA, integerA, integerNamedA, integersA, CanBeInteger, integer, integerDefault, integers, 
+    CanBeIntegerA, integerA, integerNamedA, integersA, integersNamedA, CanBeInteger, integer, integerDefault, integers, 
     HasRationalsA, HasRationals, fromRationalDefault, 
-    CanBeRationalA, rationalA, rationalNamedA, rationalsA, CanBeRational, rational, rationalDefault, rationals,
+    CanBeRationalA, rationalA, rationalNamedA, rationalsA, rationalsNamedA, CanBeRational, rational, rationalDefault, rationals,
     HasEqA(..), HasOrderA(..),
     HasEq, HasOrder, equalTo, notEqualTo, lessThan, leq, greaterThan, geq,
     (==), (/=), (>), (<), (<=), (>=),    
@@ -115,6 +115,21 @@ class (ArrowChoice to) => ConvertibleA to a b where
                     ys <- convertListA -< xs
                     returnA -< (y:ys)
 
+convertListNamedA :: (ConvertibleA to a b) => String -> [a] `to` [b]
+convertListNamedA name = aux 0
+    where
+    aux i =
+        proc list ->
+            case list of
+                [] -> returnA -< []
+                (x:xs) ->
+                    do
+                    y <- convertNamedA name_i -< x
+                    ys <- aux (i P.+ 1) -< xs
+                    returnA -< (y:ys)
+        where
+        name_i = name ++ "." ++ show i
+
 type Convertible = ConvertibleA (->)
 
 convert :: (Convertible a b) => a -> b
@@ -148,6 +163,8 @@ integerNamedA :: (CanBeIntegerA to a) => String -> a `to` Integer
 integerNamedA = convertNamedA
 integersA :: (CanBeIntegerA to a) => [a] `to` [Integer]
 integersA = convertListA
+integersNamedA :: (CanBeIntegerA to a) => String -> [a] `to` [Integer]
+integersNamedA = convertListNamedA
 
 {-|
     This is useful for converting int obtained eg by 'length' to integer,
@@ -177,6 +194,8 @@ intNamedA :: (CanBeIntA to a) => String -> a `to` Int
 intNamedA = convertNamedA
 intsA :: (CanBeIntA to a) => [a] `to` [Int]
 intsA = convertListA
+intsNamedA :: (CanBeIntA to a) => String -> [a] `to` [Int]
+intsNamedA = convertListNamedA
 
 {-|
     This is useful for calls such as: @drop (int 1) list@
@@ -207,6 +226,8 @@ rationalNamedA :: (CanBeRationalA to a) => String -> a `to` Rational
 rationalNamedA = convertNamedA
 rationalsA :: (CanBeRationalA to a) => [a] `to` [Rational]
 rationalsA = convertListA
+rationalsNamedA :: (CanBeRationalA to a) => String -> [a] `to` [Rational]
+rationalsNamedA = convertListNamedA
 
 {-|
     This is useful for calls such as: @drop (rational 1) list@
