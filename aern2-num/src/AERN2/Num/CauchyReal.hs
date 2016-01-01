@@ -195,6 +195,11 @@ pickNonZeroReal rvs =
 
 {- Operations among CauchyReal's -}
 
+instance Ring CauchyReal
+instance Field CauchyReal
+instance CanAddMulScalar CauchyReal CauchyReal
+instance CanAddMulDivScalar CauchyReal CauchyReal
+
 instance CanNegA (->) CauchyReal where
     negA (CauchyReal getB) = CauchyReal (\i -> neg $ getB i)
 
@@ -397,6 +402,9 @@ ensureAccuracyM1 i j1 getB =
 
 {- CauchyReal-Integer operations -}
 
+instance CanAddMulScalar CauchyReal Integer
+instance CanAddMulDivScalar CauchyReal Integer
+
 instance CanAddA (->) Integer CauchyReal where
     type AddTypeA (->) Integer CauchyReal = CauchyReal
     addA (a, CauchyReal getB2) = 
@@ -490,6 +498,9 @@ instance CanSineCosineA (->) Integer where
 
 {- CauchyReal-Rational operations -}
 
+instance CanAddMulScalar CauchyReal Rational
+instance CanAddMulDivScalar CauchyReal Rational
+
 instance CanAddA (->) Rational CauchyReal where
     type AddTypeA (->) Rational CauchyReal = CauchyReal
     addA (a, CauchyReal getB2) = CauchyReal (\i -> a + (getB2 i))
@@ -565,6 +576,9 @@ instance CanSineCosineA (->) Rational where
 
 
 {- operations mixing MPBall and CauchyReal, resulting in an MPBall -}
+
+instance CanAddMulScalar MPBall CauchyReal
+instance CanAddMulDivScalar MPBall CauchyReal
 
 instance
     CanAddA (->) MPBall CauchyReal 
