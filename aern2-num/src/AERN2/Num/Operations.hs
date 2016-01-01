@@ -5,8 +5,10 @@ module AERN2.Num.Operations
     module Prelude, (.), id,
     fromInteger, fromRational, ifThenElse, 
     fromInt, toInt,
-    HasIntsA(..), HasIntegersA(..), HasRationalsA(..),
-    HasInts, HasIntegers, HasRationals, int, integer, rational,
+    ConvertibleA(..), Convertible, convert,
+    HasIntsA, intA, HasInts, int, intDefault,
+    HasIntegersA, integerA, HasIntegers, integer, integerDefault, 
+    HasRationalsA, rationalA, HasRationals, rational, rationalDefault,
     HasEqA(..), HasOrderA(..),
     HasEq, HasOrder, equalTo, notEqualTo, lessThan, leq, greaterThan, geq,
     (==), (/=), (>), (<), (<=), (>=),
@@ -78,54 +80,61 @@ fromInt :: Int -> Integer
 fromInt = P.toInteger
 
 
+class ConvertibleA to a b where
+    convertA :: a `to` b
+
+type Convertible = ConvertibleA (->)
+
+convert :: (Convertible a b) => a -> b
+convert = convertA
+
+type HasIntegersA to = ConvertibleA to Integer
+integerA :: (HasIntegersA to a) => Integer `to` a
+integerA = convertA
+
 {-| 
     This is useful for embedding integers into other types
     when using the monomorphic fromInteger.
 -}
-class HasIntegersA to a where
-    integerA :: Integer `to` a
-    default integerA :: (to ~ (->), Num a) => Integer -> a
-    integerA n = P.fromInteger n 
-
 type HasIntegers = HasIntegersA (->)
-
 integer :: (HasIntegers a) => Integer -> a
 integer = integerA
+integerDefault :: (Num a) => Integer -> a
+integerDefault n = P.fromInteger n 
 
-instance HasIntegers Int
-instance HasIntegers Integer
-instance HasIntegers Rational
+instance ConvertibleA (->) Integer Int where convertA = integerDefault
+instance ConvertibleA (->) Integer Integer where convertA = id
+instance ConvertibleA (->) Integer Rational where convertA = integerDefault
 
-class HasIntsA to a where
-    intA :: Int `to` a
-    default intA :: (to ~ (->), Num a) => Int -> a
-    intA n = P.fromIntegral n
+type HasIntsA to = ConvertibleA to Int
+intA :: (HasIntsA to a) => Int `to` a
+intA = convertA
 
 type HasInts = HasIntsA (->)
-
 int :: (HasInts a) => Int -> a
 int = intA
+intDefault :: (Num a) => Int -> a
+intDefault = P.fromIntegral
 
-instance HasInts Int
-instance HasInts Integer
-instance HasInts Rational
-
+instance ConvertibleA (->) Int Int where convertA = id
+instance ConvertibleA (->) Int Integer where convertA = intDefault
+instance ConvertibleA (->) Int Rational where convertA = intDefault
 
 {-| 
     This is useful for embedding rationals into other types
     when using the monomorphic fromRational. 
 -}
-class HasRationalsA to a where
-    rationalA :: Rational `to` a 
-    default rationalA :: (to ~ (->), Fractional a) => Rational -> a
-    rationalA n = P.fromRational n 
+type HasRationalsA to = ConvertibleA to Rational
+rationalA :: (HasRationalsA to a) => Rational `to` a
+rationalA = convertA
 
 type HasRationals = HasRationalsA (->)
-
 rational :: (HasRationals a) => Rational -> a
 rational = rationalA
+rationalDefault :: (Fractional a) => Rational -> a
+rationalDefault = P.fromRational 
 
-instance HasRationals Rational
+instance ConvertibleA (->) Rational Rational where convertA = id
 
 {- 
     The following mixed-type operators shadow the classic mono-type Prelude versions. 

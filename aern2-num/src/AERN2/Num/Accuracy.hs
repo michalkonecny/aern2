@@ -2,13 +2,6 @@ module AERN2.Num.Accuracy
     (Accuracy(Exact), bits, fromAccuracy) 
 where
 
-import Prelude hiding
-    ((==),(/=),(<),(>),(<=),(>=),
-     (+),(*),(/),(-),(^),abs,min,max,
-     recip,div,negate,
-     fromInteger,fromRational, toRational,
-     sqrt,cos,sin)
-
 import AERN2.Num.IntegerRational ()
 import AERN2.Num.Operations
 
@@ -22,7 +15,7 @@ data Accuracy = Bits { fromAccuracy :: Integer } | Exact
     deriving (Eq, Ord)
 
 bits :: Integer -> Accuracy
-bits i = Bits i 
+bits i = Bits i
 
 instance Show Accuracy where
     show (Bits a) = "Bits " ++ show a

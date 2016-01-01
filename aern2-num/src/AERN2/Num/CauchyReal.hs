@@ -7,7 +7,7 @@
 {-# LANGUAGE UndecidableInstances, TypeOperators, ConstraintKinds #-}
 module AERN2.Num.CauchyReal 
 (
-    HasRealsA(..), HasReals, cauchyReal,
+    HasRealsA, cauchyRealA, HasReals, cauchyReal,
     CauchyReal,
     showCauchyReal,
     mapCauchyRealUnsafe,
@@ -27,7 +27,7 @@ import AERN2.Num.Accuracy
 import AERN2.Num.MPBall
 import AERN2.Num.IntegerRational ()
 
-import Control.Arrow
+--import Control.Arrow
 
 import Data.List (findIndex)
 import Debug.Trace (trace)
@@ -41,16 +41,16 @@ maybeTrace
     | shouldTrace = trace
     | otherwise = const id
 
-class (Arrow to) => HasRealsA to a where
-    cauchyRealA :: CauchyReal `to` a
-    
+type HasRealsA to = ConvertibleA to CauchyReal
+cauchyRealA :: (HasRealsA to a) => CauchyReal `to` a
+cauchyRealA = convertA
+
 type HasReals = HasRealsA (->)
     
 cauchyReal :: (HasReals a) => CauchyReal -> a
 cauchyReal = cauchyRealA
     
-instance HasRealsA (->) CauchyReal where
-    cauchyRealA = id
+instance ConvertibleA (->) CauchyReal CauchyReal where convertA = id
 
 --class
 --    (RationalLike a, HasReals a, CanAddMulDivScalar a CauchyReal, CanSqrt a, CanExp a, CanSineCosine a)
@@ -100,15 +100,15 @@ seqByPrecision2Cauchy seqByPrecision =
             | otherwise = findAccurate rest
 
 
-instance HasIntegersA (->) CauchyReal where
-    integerA n =
+instance ConvertibleA (->) Integer CauchyReal where
+    convertA n =
         seqByPrecision2Cauchy $ \ p -> integer2BallP p n 
 
 integer2CauchyReal :: Integer -> CauchyReal
 integer2CauchyReal = integer
 
-instance HasRationalsA (->) CauchyReal where
-    rationalA q =
+instance ConvertibleA (->) Rational CauchyReal where
+    convertA q =
         seqByPrecision2Cauchy $ \ p -> rational2BallP p q 
 
 rational2CauchyReal :: Rational -> CauchyReal

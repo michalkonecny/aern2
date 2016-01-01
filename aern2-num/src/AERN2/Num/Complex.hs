@@ -1,6 +1,7 @@
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances #-}
+{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, TypeOperators, ConstraintKinds, FlexibleContexts #-}
 module AERN2.Num.Complex 
 (
+    HasComplexA, complexA, HasComplex, complex,
     Complex(..), complexI,
     complex2balls,
     showComplex,
@@ -12,6 +13,17 @@ import AERN2.Num.Operations
 import AERN2.Num.CauchyReal
 import AERN2.Num.MPBall
 import AERN2.Num.Accuracy
+
+type HasComplexA to = ConvertibleA to Complex
+complexA :: (HasComplexA to a) => Complex `to` a
+complexA = convertA
+
+type HasComplex = HasComplexA (->)
+    
+complex :: (HasComplex a) => Complex -> a
+complex = complexA
+    
+instance ConvertibleA (->) Complex Complex where convertA = id
 
 data Complex = CauchyReal :+ CauchyReal 
 
@@ -28,24 +40,24 @@ showComplex :: Accuracy -> Complex -> String
 showComplex a (r :+ i) = 
     "(" ++ show (cauchyReal2ball r a) ++ ":+" ++ show (cauchyReal2ball i a) ++ ")"
 
-instance HasIntegersA (->) Complex where
-    integerA n =
+instance ConvertibleA (->) Integer Complex where
+    convertA n =
         (integer n) :+ (integer 0)
 
 integer2Complex :: Integer -> Complex
 integer2Complex = integer
 
-instance HasRationalsA (->) Complex where
-    rationalA = rational2Complex
+instance ConvertibleA (->) Rational Complex where
+    convertA q = (rational q) :+ (integer 0)
 
 rational2Complex :: Rational -> Complex
-rational2Complex q = (rational q) :+ (integer 0)
+rational2Complex = rational
 
-instance HasRealsA (->) Complex where
-    cauchyRealA = cauchyReal2Complex
+instance ConvertibleA (->) CauchyReal Complex where
+    convertA r = r :+ (integer 0)
 
 cauchyReal2Complex :: CauchyReal -> Complex
-cauchyReal2Complex r = r :+ (integer 0)
+cauchyReal2Complex = cauchyReal
 
 {- Operations among Complex numbers -}
 

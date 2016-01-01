@@ -75,8 +75,8 @@ integer2BallP p x =
     xUp = MP.integerUp p x
     xDn = MP.integerDown p x
 
-instance HasIntegersA (->) MPBall where
-    integerA x =
+instance ConvertibleA (->) Integer MPBall where
+    convertA x =
         MPBall xMP EB.zero
         where
         xMP = integer x

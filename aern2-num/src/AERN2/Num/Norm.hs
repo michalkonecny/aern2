@@ -6,7 +6,7 @@ module AERN2.Num.Norm
 where
 
 import AERN2.Num.Operations
-import qualified Prelude as P
+--import qualified Prelude as P
 import AERN2.Num.IntegerRational ()
 
 import Math.NumberTheory.Logarithms (integerLog2)

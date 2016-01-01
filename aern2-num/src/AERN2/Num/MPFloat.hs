@@ -78,8 +78,8 @@ integerDown :: Precision -> Integer -> MPFloat
 integerDown p i = rationalDown p (P.fromInteger i)
     
     
-instance HasIntegersA (->) MPFloat where
-    integerA n =
+instance ConvertibleA (->) Integer MPFloat where
+    convertA n =
         findExact $ map upDown $ drop (toInt 4) standardPrecisions
         where
         upDown p = (integerDown p n, integerUp p n)

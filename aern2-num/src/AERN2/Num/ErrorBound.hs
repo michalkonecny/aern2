@@ -9,7 +9,6 @@ module AERN2.Num.ErrorBound
 where
 
 import AERN2.Num.Operations
-import Control.Category ((.))
 
 import Math.NumberTheory.Logarithms (integerLog2)
 
