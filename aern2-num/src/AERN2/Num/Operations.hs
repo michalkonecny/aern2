@@ -14,7 +14,7 @@ module AERN2.Num.Operations
     HasRationalsA, HasRationals, fromRationalDefault, 
     CanBeRationalA, rationalA, rationalNamedA, rationalsA, rationalsNamedA, CanBeRational, rational, rationalDefault, rationals,
     HasEqA(..), HasOrderA(..),
-    HasEq, HasOrder, equalTo, notEqualTo, lessThan, leq, greaterThan, geq,
+    HasEq, EqCompareType, HasOrder, OrderCompareType, equalTo, notEqualTo, lessThan, leq, greaterThan, geq,
     (==), (/=), (>), (<), (<=), (>=),    
     CanMinMaxA(..), CanMinMaxThisA, CanMinMaxSameTypeA,
     CanMinMax, CanMinMaxThis, CanMinMaxSameType, min, max,
