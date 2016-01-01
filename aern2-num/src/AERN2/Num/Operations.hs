@@ -5,10 +5,10 @@ module AERN2.Num.Operations
     module Prelude, (.), id,
     fromInteger, fromRational, ifThenElse, 
     fromInt, toInt,
-    ConvertibleA(..), Convertible, convert,
-    HasIntsA, intA, HasInts, int, intDefault,
-    HasIntegersA, integerA, HasIntegers, integer, integerDefault, 
-    HasRationalsA, rationalA, HasRationals, rational, rationalDefault,
+    ConvertibleA(..), Convertible, convert, convertList,
+    HasIntsA, intA, intsA, HasInts, int, intDefault, ints,
+    HasIntegersA, integerA, integersA, HasIntegers, integer, integerDefault, integers, 
+    HasRationalsA, rationalA, rationalsA, HasRationals, rational, rationalDefault, rationals,
     HasEqA(..), HasOrderA(..),
     HasEq, HasOrder, equalTo, notEqualTo, lessThan, leq, greaterThan, geq,
     (==), (/=), (>), (<), (<=), (>=),
@@ -80,17 +80,32 @@ fromInt :: Int -> Integer
 fromInt = P.toInteger
 
 
-class ConvertibleA to a b where
+class (ArrowChoice to) => ConvertibleA to a b where
     convertA :: a `to` b
+    convertListA :: [a] `to` [b]
+    convertListA =
+        proc list ->
+            case list of
+                [] -> returnA -< []
+                (x:xs) ->
+                    do
+                    y <- convertA -< x
+                    ys <- convertListA -< xs
+                    returnA -< (y:ys)
 
 type Convertible = ConvertibleA (->)
 
 convert :: (Convertible a b) => a -> b
 convert = convertA
+convertList :: (Convertible a b) => [a] -> [b]
+convertList = map convert
+
 
 type HasIntegersA to = ConvertibleA to Integer
 integerA :: (HasIntegersA to a) => Integer `to` a
 integerA = convertA
+integersA :: (HasIntegersA to a) => [Integer] `to` [a]
+integersA = convertListA
 
 {-| 
     This is useful for embedding integers into other types
@@ -98,27 +113,33 @@ integerA = convertA
 -}
 type HasIntegers = HasIntegersA (->)
 integer :: (HasIntegers a) => Integer -> a
-integer = integerA
+integer = convert
 integerDefault :: (Num a) => Integer -> a
 integerDefault n = P.fromInteger n 
+integers :: (HasIntegers a) => [Integer] -> [a]
+integers = convertList
 
-instance ConvertibleA (->) Integer Int where convertA = integerDefault
-instance ConvertibleA (->) Integer Integer where convertA = id
-instance ConvertibleA (->) Integer Rational where convertA = integerDefault
+instance ConvertibleA (->) Integer Int where convertA = integerDefault; convertListA = convertList
+instance ConvertibleA (->) Integer Integer where convertA = id; convertListA = id
+instance ConvertibleA (->) Integer Rational where convertA = integerDefault; convertListA = convertList
 
 type HasIntsA to = ConvertibleA to Int
 intA :: (HasIntsA to a) => Int `to` a
 intA = convertA
+intsA :: (HasIntsA to a) => [Int] `to` [a]
+intsA = convertListA
 
 type HasInts = HasIntsA (->)
 int :: (HasInts a) => Int -> a
-int = intA
+int = convert
 intDefault :: (Num a) => Int -> a
 intDefault = P.fromIntegral
+ints :: (HasInts a) => [Int] -> [a]
+ints = convertList
 
-instance ConvertibleA (->) Int Int where convertA = id
-instance ConvertibleA (->) Int Integer where convertA = intDefault
-instance ConvertibleA (->) Int Rational where convertA = intDefault
+instance ConvertibleA (->) Int Int where convertA = id; convertListA = id
+instance ConvertibleA (->) Int Integer where convertA = intDefault; convertListA = convertList
+instance ConvertibleA (->) Int Rational where convertA = intDefault; convertListA = convertList
 
 {-| 
     This is useful for embedding rationals into other types
@@ -127,14 +148,18 @@ instance ConvertibleA (->) Int Rational where convertA = intDefault
 type HasRationalsA to = ConvertibleA to Rational
 rationalA :: (HasRationalsA to a) => Rational `to` a
 rationalA = convertA
+rationalsA :: (HasRationalsA to a) => [Rational] `to` [a]
+rationalsA = convertListA
 
 type HasRationals = HasRationalsA (->)
 rational :: (HasRationals a) => Rational -> a
-rational = rationalA
+rational = convert
 rationalDefault :: (Fractional a) => Rational -> a
 rationalDefault = P.fromRational 
+rationals :: (HasRationals a) => [Rational] -> [a]
+rationals = convertList
 
-instance ConvertibleA (->) Rational Rational where convertA = id
+instance ConvertibleA (->) Rational Rational where convertA = id; convertListA = id
 
 {- 
     The following mixed-type operators shadow the classic mono-type Prelude versions. 

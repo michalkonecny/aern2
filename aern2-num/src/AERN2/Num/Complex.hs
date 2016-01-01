@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, TypeOperators, ConstraintKinds, FlexibleContexts #-}
 module AERN2.Num.Complex 
 (
-    HasComplexA, complexA, HasComplex, complex,
+    HasComplexA, complexA, complexListA, HasComplex, complex, complexList,
     Complex(..), complexI,
     complex2balls,
     showComplex,
@@ -17,13 +17,17 @@ import AERN2.Num.Accuracy
 type HasComplexA to = ConvertibleA to Complex
 complexA :: (HasComplexA to a) => Complex `to` a
 complexA = convertA
+complexListA :: (HasComplexA to a) => [Complex] `to` [a]
+complexListA = convertListA
 
 type HasComplex = HasComplexA (->)
     
 complex :: (HasComplex a) => Complex -> a
-complex = complexA
+complex = convert
+complexList :: (HasComplex a) => [Complex] -> [a]
+complexList = convertList
     
-instance ConvertibleA (->) Complex Complex where convertA = id
+instance ConvertibleA (->) Complex Complex where convertA = id; convertListA = id
 
 data Complex = CauchyReal :+ CauchyReal 
 

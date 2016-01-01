@@ -7,7 +7,7 @@
 {-# LANGUAGE UndecidableInstances, TypeOperators, ConstraintKinds #-}
 module AERN2.Num.CauchyReal 
 (
-    HasRealsA, cauchyRealA, HasReals, cauchyReal,
+    HasRealsA, cauchyRealA, cauchyRealsA, HasReals, cauchyReal, cauchyReals,
     CauchyReal,
     showCauchyReal,
     mapCauchyRealUnsafe,
@@ -44,13 +44,17 @@ maybeTrace
 type HasRealsA to = ConvertibleA to CauchyReal
 cauchyRealA :: (HasRealsA to a) => CauchyReal `to` a
 cauchyRealA = convertA
+cauchyRealsA :: (HasRealsA to a) => [CauchyReal] `to` [a]
+cauchyRealsA = convertListA
 
 type HasReals = HasRealsA (->)
     
 cauchyReal :: (HasReals a) => CauchyReal -> a
-cauchyReal = cauchyRealA
+cauchyReal = convert
+cauchyReals :: (HasReals a) => [CauchyReal] -> [a]
+cauchyReals = convertList
     
-instance ConvertibleA (->) CauchyReal CauchyReal where convertA = id
+instance ConvertibleA (->) CauchyReal CauchyReal where convertA = id; convertListA = id
 
 --class
 --    (RationalLike a, HasReals a, CanAddMulDivScalar a CauchyReal, CanSqrt a, CanExp a, CanSineCosine a)
