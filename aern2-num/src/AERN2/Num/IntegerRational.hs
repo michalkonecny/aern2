@@ -110,9 +110,12 @@ instance CanMulA (->) Integer Integer where
 
 instance CanMulBy Integer Integer
 instance CanMulSameType Integer
-    
+        
 instance CanPowA (->) Integer Integer where
     powA = uncurry (P.^)
+    
+instance RingA (->) Integer
+instance CanAddMulScalarA (->) Integer Integer
     
 instance CanRecipA (->) Integer where
     type RecipTypeA (->) Integer = Rational
@@ -168,6 +171,11 @@ instance CanDivA (->) Rational Rational where
 instance CanDivBy Rational Rational
 instance CanDivSameType Rational
 
+instance RingA (->) Rational
+instance FieldA (->) Rational
+instance CanAddMulScalarA (->) Rational Rational
+instance CanAddMulDivScalarA (->) Rational Rational
+
 {- operations mixing Integer and Rational -}
 
 instance CanAddA (->) Integer Rational where
@@ -206,4 +214,5 @@ instance CanDivA (->) Rational Integer where
 
 instance CanDivBy Rational Integer
 
-
+instance CanAddMulScalarA (->) Rational Integer
+instance CanAddMulDivScalarA (->) Rational Integer
