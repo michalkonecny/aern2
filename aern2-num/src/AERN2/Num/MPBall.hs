@@ -5,7 +5,7 @@
 module AERN2.Num.MPBall
     (MPBall(..), getAccuracy, getFiniteAccuracy,
      HasMPBallsA, HasMPBalls,
-     CanBeMPBallA, mpBallA, mpBallsA, CanBeMPBall, mpBall, mpBalls,
+     CanBeMPBallA, mpBallA, mpBallNamedA, mpBallsA, CanBeMPBall, mpBall, mpBalls,
      getPrecision, MP.standardPrecisions, MP.Precision, MP.prec, MP.prec2integer,
      isNonZero,
      toIntegerUp, toIntegerDown, toRationalUp, toRationalDown,
@@ -83,6 +83,8 @@ type HasMPBalls = HasMPBallsA (->)
 type CanBeMPBallA to a = ConvertibleA to a MPBall
 mpBallA :: (CanBeMPBallA to a) => a `to` MPBall
 mpBallA = convertA
+mpBallNamedA :: (CanBeMPBallA to a) => String -> a `to` MPBall
+mpBallNamedA = convertNamedA
 mpBallsA :: (CanBeMPBallA to a) => [a] `to` [MPBall]
 mpBallsA = convertListA
 type CanBeMPBall a = CanBeMPBallA (->) a

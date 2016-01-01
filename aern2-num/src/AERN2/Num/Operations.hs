@@ -8,11 +8,11 @@ module AERN2.Num.Operations
     ArrowConvert(..), Fn2Arrow, fn2arrow, Arrow2Fn, arrow2fn,
     ConvertibleA(..), Convertible, convert, convertList,
     HasIntsA, HasInts, fromIntDefault, 
-    CanBeIntA, intA, intsA, CanBeInt, int, intDefault, ints,
+    CanBeIntA, intA, intNamedA, intsA, CanBeInt, int, intDefault, ints,
     HasIntegersA, HasIntegers, fromIntegerDefault, 
-    CanBeIntegerA, integerA, integersA, CanBeInteger, integer, integerDefault, integers, 
+    CanBeIntegerA, integerA, integerNamedA, integersA, CanBeInteger, integer, integerDefault, integers, 
     HasRationalsA, HasRationals, fromRationalDefault, 
-    CanBeRationalA, rationalA, rationalsA, CanBeRational, rational, rationalDefault, rationals,
+    CanBeRationalA, rationalA, rationalNamedA, rationalsA, CanBeRational, rational, rationalDefault, rationals,
     HasEqA(..), HasOrderA(..),
     HasEq, HasOrder, equalTo, notEqualTo, lessThan, leq, greaterThan, geq,
     (==), (/=), (>), (<), (<=), (>=),    
@@ -87,6 +87,8 @@ fromInt = P.toInteger
 
 class ArrowConvert a1 to1 b1 a2 to2 b2 where 
     arrow2arrow :: (a1 `to1` b1) -> (a2 `to2` b2)
+    arrow2arrowNamed :: String -> (a1 `to1` b1) -> (a2 `to2` b2)
+    arrow2arrowNamed _ = arrow2arrow
 
 type Fn2Arrow to a1 b1 a2 b2 = ArrowConvert  a1 (->) b1 a2 to b2
 fn2arrow :: (Fn2Arrow to a1 b1 a2 b2) => (a1 -> b1) -> (a2 `to` b2)
@@ -98,6 +100,8 @@ arrow2fn = arrow2arrow
 
 class (ArrowChoice to) => ConvertibleA to a b where
     convertA :: a `to` b
+    convertNamedA :: String -> a `to` b
+    convertNamedA _ = convertA -- the name can be useful in some Arrows, eg to name a network node
     convertListA :: [a] `to` [b]
     convertListA =
         proc list ->
@@ -138,6 +142,8 @@ instance ConvertibleA (->) Integer Rational where convertA = fromIntegerDefault;
 type CanBeIntegerA to a = ConvertibleA to a Integer
 integerA :: (CanBeIntegerA to a) => a `to` Integer
 integerA = convertA
+integerNamedA :: (CanBeIntegerA to a) => String -> a `to` Integer
+integerNamedA = convertNamedA
 integersA :: (CanBeIntegerA to a) => [a] `to` [Integer]
 integersA = convertListA
 
@@ -165,6 +171,8 @@ fromIntDefault = P.fromIntegral
 type CanBeIntA to a = ConvertibleA to a Int
 intA :: (CanBeIntA to a) => a `to` Int
 intA = convertA
+intNamedA :: (CanBeIntA to a) => String -> a `to` Int
+intNamedA = convertNamedA
 intsA :: (CanBeIntA to a) => [a] `to` [Int]
 intsA = convertListA
 
@@ -193,6 +201,8 @@ fromRationalDefault = P.fromRational
 type CanBeRationalA to a = ConvertibleA to a Rational
 rationalA :: (CanBeRationalA to a) => a `to` Rational
 rationalA = convertA
+rationalNamedA :: (CanBeRationalA to a) => String -> a `to` Rational
+rationalNamedA = convertNamedA
 rationalsA :: (CanBeRationalA to a) => [a] `to` [Rational]
 rationalsA = convertListA
 

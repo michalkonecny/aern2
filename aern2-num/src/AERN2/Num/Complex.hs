@@ -5,7 +5,7 @@ module AERN2.Num.Complex
     complex2balls,
     showComplex,
     HasComplexA, HasComplex,
-    CanBeComplexA, complexA, complexListA, CanBeComplex, complex, complexList,
+    CanBeComplexA, complexA, complexNamedA, complexListA, CanBeComplex, complex, complexList,
     integer2Complex, rational2Complex, cauchyReal2Complex
 )
 where
@@ -38,6 +38,8 @@ type HasComplex = HasComplexA (->)
 type CanBeComplexA to a = ConvertibleA to a Complex
 complexA :: (CanBeComplexA to a) => a `to` Complex
 complexA = convertA
+complexNamedA :: (CanBeComplexA to a) => String -> a `to` Complex
+complexNamedA = convertNamedA
 complexListA :: (CanBeComplexA to a) => [a] `to` [Complex]
 complexListA = convertListA
 type CanBeComplex a = CanBeComplexA (->) a
