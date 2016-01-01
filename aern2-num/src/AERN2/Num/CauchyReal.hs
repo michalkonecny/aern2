@@ -16,7 +16,6 @@ module AERN2.Num.CauchyReal
     integer2CauchyReal, rational2CauchyReal,
     convergent2CauchyReal,
     ensureAccuracyM2, ensureAccuracyM1,
-    pickNonZeroReal,
     pi
 )
 where
@@ -30,7 +29,6 @@ import AERN2.Num.IntegerRational ()
 
 --import Control.Arrow
 
-import Data.List (findIndex)
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
@@ -165,6 +163,22 @@ instance HasOrderA (->) CauchyReal CauchyReal where
     leqA (CauchyReal r1, CauchyReal r2) = 
         tryStandardCompareAccuracies [r1,r2] (\[b1,b2] -> b1 `leq` b2)
 
+instance HasParallelComparisonsA (->) CauchyReal where
+    pickNonZeroA rvs =
+        tryStandardCompareAccuracies (map unCauchyReal rs) findNonZero
+        where
+        rs = map fst rvs
+        findNonZero bs =
+            aux True $ zip bs rvs
+            where
+            aux False [] = Nothing
+            aux True [] = Just Nothing
+            aux allFalse ((b, result) : rest) =
+                case b /= 0 of
+                    Just True -> Just (Just result)
+                    Just False -> aux allFalse rest
+                    Nothing -> aux False rest
+
 instance HasEqA (->) Integer CauchyReal where
     equalToA (n, r) = equalTo ((convert n) :: CauchyReal) r
 
@@ -192,14 +206,6 @@ instance HasEqA (->) CauchyReal Rational where
 instance HasOrderA (->) CauchyReal Rational where
     lessThanA (r, q) = lessThan r ((convert q) :: CauchyReal)
     leqA (r, q) = leq r ((convert q) :: CauchyReal)
-
-pickNonZeroReal :: [(CauchyReal, a)] -> (CauchyReal, a)
-pickNonZeroReal rvs =
-    tryStandardCompareAccuracies (map unCauchyReal rs) findNonZero
-    where 
-    rs = map fst rvs
-    findNonZero bs =
-        fmap (rvs !!) (findIndex id (map isNonZero bs))
 
 
 {- Operations among CauchyReal's -}
