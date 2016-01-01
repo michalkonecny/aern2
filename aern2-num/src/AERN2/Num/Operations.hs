@@ -11,9 +11,10 @@ module AERN2.Num.Operations
     HasRationalsA, rationalA, rationalsA, HasRationals, rational, rationalDefault, rationals,
     HasEqA(..), HasOrderA(..),
     HasEq, HasOrder, equalTo, notEqualTo, lessThan, leq, greaterThan, geq,
-    (==), (/=), (>), (<), (<=), (>=),
+    (==), (/=), (>), (<), (<=), (>=),    
     CanMinMaxA(..), CanMinMaxThisA, CanMinMaxSameTypeA,
     CanMinMax, CanMinMaxThis, CanMinMaxSameType, min, max,
+    HasParallelComparisonsA(..), HasParallelComparisons, pickNonZero,
     CanNegA(..), CanNegSameTypeA,
     CanNeg, CanNegSameType, neg, negate, 
     CanAbsA(..), CanAbsSameTypeA,
@@ -285,6 +286,14 @@ class
     CanMinMaxSameTypeA to a
 
 type CanMinMaxSameType = CanMinMaxSameTypeA (->)
+
+
+class (Arrow to) => (HasParallelComparisonsA to a) where
+    pickNonZeroA :: [(a,b)] `to` (Maybe (a,b))
+
+type HasParallelComparisons = HasParallelComparisonsA (->)
+pickNonZero :: (HasParallelComparisons a) => [(a,b)] -> (Maybe (a,b))
+pickNonZero = pickNonZeroA
 
 {- negation -}
 
