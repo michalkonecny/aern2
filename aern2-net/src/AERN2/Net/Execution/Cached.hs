@@ -3,6 +3,8 @@ module AERN2.Net.Execution.Cached
 
 where
 
+{- TODO: Adapt to unified arrow operation definitions
+
 import AERN2.Num hiding (id, (.))
 import Data.String (IsString(..),fromString)
 
@@ -248,4 +250,4 @@ binaryRCached _valName op getQ1Q2 (CachedCauchyReal id1, CachedCauchyReal id2) =
             a1 <- getAnswer QACauchyReal id1 q1 
             a2 <- getAnswer QACauchyReal id2 q2 
             return $ op a1 a2
-            
+-}            

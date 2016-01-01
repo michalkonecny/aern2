@@ -32,10 +32,9 @@ fftTestDirect nN ac=
     fftWithInput =
         proc () ->
             do
-            x <- rationalListA "input" input -< ()
+            x <- complexListNamedA "input" -< input
             dftCooleyTukey nN -< x
-    input :: [Rational]
-    input = map integer [1..nN] 
+    input = map rational [1..nN] 
 
 {-|
     Discrete Furier Transform using the Cooley and Tukey Radix-2 algorithm.
@@ -49,7 +48,7 @@ fftTestDirect nN ac=
     * The input list has exactly @N@ elements.
 -}
 dftCooleyTukey :: 
-    (ArrowComplex to r)
+    (ComplexA to r)
     =>
     Integer {-^ @N@ -} -> 
     [r] `to` [r]
@@ -70,7 +69,7 @@ dftCooleyTukey nN = ditfft2 nN 1
     * The input list has at least @s*(N-1) + 1@ elements.
 -}
 ditfft2 :: 
-    (ArrowComplex to r)
+    (ComplexA to r)
     =>
     Integer {-^ @N@ -} -> 
     Integer {-^ @s@ -} ->
@@ -83,7 +82,7 @@ ditfft2 nN s
         proc x ->
             do
             vTX0 <- ditfft2 nNhalf (2 * s) -< x 
-            vTXNhalf <- ditfft2 nNhalf (2 * s) -< (drop (toInt s) x)
+            vTXNhalf <- ditfft2 nNhalf (2 * s) -< (drop (int s) x)
             vTXNhalfTwiddled <- mapA twiddle -< vTXNhalf
             vX0 <- zipWithA (const addA) -< (vTX0, vTXNhalfTwiddled)
             vXNhalf <- zipWithA (const subA) -< (vTX0, vTXNhalfTwiddled)
@@ -92,7 +91,11 @@ ditfft2 nN s
     nNhalf = round (nN / 2)
     twiddle k = 
         proc x_k_plus_NHalf ->
-            mulComplexA "exp(-2*pi*i*k/nN)*" cT -< x_k_plus_NHalf
+            do
+            tc <- convertNamedA "exp(-2*pi*i*k/nN)*" -< cT 
+            r <- mulA -< (x_k_plus_NHalf, tc)
+            let _ = [tc,r,x_k_plus_NHalf]
+            returnA -< r
         where
         cT = 
             maybeTrace

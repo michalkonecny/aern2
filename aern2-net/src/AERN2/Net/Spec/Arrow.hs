@@ -1,29 +1,28 @@
-{-# LANGUAGE Arrows, TypeOperators, GeneralizedNewtypeDeriving, FunctionalDependencies, DataKinds, FlexibleContexts #-}
+{-# LANGUAGE Arrows, TypeOperators, GeneralizedNewtypeDeriving, FunctionalDependencies, DataKinds, FlexibleContexts, ConstraintKinds #-}
 
 module AERN2.Net.Spec.Arrow 
 (
     _anet0, _anet1, _anet2, _anet3,
-    ArrowRational(..),
-    ArrowReal(..),
+    CanEmbedFnA, embedFnNamedA,
+    RationalA,
+    RealA,
     piA,
-    ArrowComplex(..),
-    Complex(..),
-    ArrowRationalInterval(..),
-    ArrowRealUnaryFn(..),
+    ComplexA,
+    RationalIntervalA(..),
+    RealUnaryFnA(..),
     UFnDomE, UFnDomR,
-    ArrowRealFn(..),
+    RealFnA(..),
     FnDomE, FnDomR,
     VarName, VarMap,
-    ArrowRealUnaryFnFromArrow(..),
-    ArrowRealFnFromArrow(..),
+    RealUnaryFnFromArrowA(..),
+    RealFnFromArrowA(..),
     mapA, zipWithA
 )
 where
 
-import AERN2.Num hiding (id, (.))
+import AERN2.Num
 import Data.String (IsString(..),fromString)
 
---import Control.Category
 import Control.Arrow
 import qualified Data.Map as Map
 
@@ -31,26 +30,28 @@ import qualified Data.Map as Map
 {- mini examples -}
 
 -- | sqrt(pi) + pi
-_anet0 :: (ArrowReal to r) => () `to` r
+_anet0 :: (RealA to r) => () `to` r
 _anet0 =
     proc _ -> do
         p <- piA -< ()
         sp <- sqrtA -< p
         psp <- addA -< (p,sp)
+        let _ = [p,psp] -- ensure the type of p is the same as the type of the result
         returnA -< psp
 
 -- | pi * sqrt(x) * x
-_anet1 :: (ArrowReal to r) => r `to` r
+_anet1 :: (RealA to r) => r `to` r
 _anet1 =
     proc x -> do
         p <- piA -< ()
         sx <- sqrtA -< x
         psx <- mulA -< (p,sx)
         psxx <- mulA -< (psx,x)
+        let _ = [p,psxx] -- ensure the type of p is the same as the type of the result
         returnA -< psxx
 
 -- | sqrt(x^2+y^2+z^2)    
-_anet2 :: (ArrowReal to r) => (r,r,r) `to` r
+_anet2 :: (RealA to r) => (r,r,r) `to` r
 _anet2 =
     proc (x,y,z) -> do
         x2 <- mulA -< (x,x)
@@ -63,7 +64,7 @@ _anet2 =
 
 
 -- | sqrt(x^2+y^2+z^2)
-_anet3 :: (ArrowReal to r) => (Map.Map String r) `to` r
+_anet3 :: (RealA to r) => (Map.Map String r) `to` r
 _anet3 =
     proc valMap -> do
         let (Just x) = Map.lookup "x" valMap
@@ -77,41 +78,33 @@ _anet3 =
         r <- sqrtA -< x2y2z2
         returnA -< r
 
+type CanEmbedFnA to r1 r2 = ArrowConvert [r1] (->) r1 [r2] to r2
+
+{-| use a normal computation, bypassing the arrow -}
+embedFnNamedA ::
+    (CanEmbedFnA to r1 r2) => String -> ([r1] -> r1) -> [r2] `to` r2
+embedFnNamedA = fn2arrowNamed
+
+
 {-| An arrow enriched with real arithmetic operations. -}
-class (ArrowChoice to) => ArrowRational to r where
-    lessA :: (r,r) `to` Bool
-    leqA :: (r,r) `to` Bool
-    rationalConstA :: String -> Rational -> (() `to` r)
-    rationalListA :: String -> [Rational] -> (() `to` [r])
-    rationalOpA ::  String -> ([Rational] -> Rational) -> ([r] `to` r) -- use a Rational computation, bypassing the arrow 
-    addA :: (r,r) `to` r
-    subA :: (r,r) `to` r
-    mulA :: (r,r) `to` r
+class
+    (HasRationalsA to r, HasEqA to r r, HasOrderA to r r, RingA to r) 
+    => 
+    RationalA to r
 
-class (ArrowRational to r) => ArrowReal to r where
-    pickNonZeroA :: [(r,a)] `to` (r,a)
-    realConstA :: String -> CauchyReal -> (() `to` r) -- TODO: change () to (SizeLimits r)
-    realListA :: String -> [CauchyReal] -> (() `to` [r]) -- TODO: change () to (SizeLimits r)
-    realOpA ::  String -> ([CauchyReal] -> CauchyReal) -> ([r] `to` r) -- use a CauchyReal computation, bypassing the arrow 
-    addRealA :: String -> CauchyReal -> r `to` r
-    mulRealA :: String -> CauchyReal -> r `to` r
-    sqrtA :: r `to` r
-    expA :: r `to` r
-    sinA :: r `to` r
-    cosA :: r `to` r
--- TODO: add more operations
+class
+    (RationalA to r, HasCauchyRealsA to r, CanSqrtSameTypeA to r, CanExpSameTypeA to r, CanSineCosineSameTypeA to r) 
+    => 
+    RealA to r
 
-piA :: (ArrowReal to r) => () `to` r
-piA = realConstA "pi" pi
+piA :: (HasCauchyRealsA to r) => () `to` r
+piA = proc () -> convertA -< pi -- TODO: use convertNamedA instead and add the name "pi"
 
-class (ArrowReal to c) => ArrowComplex to c where
-    complexConstA :: String -> Complex -> (() `to` c) -- TODO: change () to (SizeLimits c)
-    complexListA :: String -> [Complex] -> (() `to` [c]) -- TODO: change () to (SizeLimits c)
-    complexOpA ::  String -> ([Complex] -> Complex) -> ([c] `to` c) -- use a Complex computation, bypassing the arrow 
-    addComplexA :: String -> Complex -> c `to` c
-    mulComplexA :: String -> Complex -> c `to` c
+class 
+    (RealA to c, HasComplexA to c) => 
+    ComplexA to c
 
-class (ArrowRational to (IntervalE ri)) => ArrowRationalInterval to ri where
+class (RationalA to (IntervalE ri)) => RationalIntervalA to ri where
     type IntervalE ri
     type IntervalR ri
     getEndpointsA :: ri `to` (IntervalE ri,IntervalE ri)
@@ -123,7 +116,7 @@ class (ArrowRational to (IntervalE ri)) => ArrowRationalInterval to ri where
 type UFnDomE f = IntervalE (UFnDom f)
 type UFnDomR f = IntervalR (UFnDom f)
 
-class (ArrowRationalInterval to (UFnDom f), ArrowReal to (UFnR f)) => ArrowRealUnaryFn to f where
+class (RationalIntervalA to (UFnDom f), RealA to (UFnR f)) => RealUnaryFnA to f where
     type UFnDom f
     type UFnR f
     constUFnA :: (UFnDom f, UFnR f) `to` f
@@ -141,7 +134,7 @@ type VarMap = Map.Map VarName
 type FnDomE f = IntervalE (FnDom f)
 type FnDomR f = IntervalR (FnDom f)
 
-class (ArrowRationalInterval to (FnDom f), ArrowReal to (FnR f)) => ArrowRealFn to f where
+class (RationalIntervalA to (FnDom f), RealA to (FnR f)) => RealFnA to f where
     type FnDom f
     type FnR f
     constFnA :: (VarMap (FnDom f), FnR f) `to` f
@@ -152,11 +145,11 @@ class (ArrowRationalInterval to (FnDom f), ArrowReal to (FnR f)) => ArrowRealFn 
     evalOnIntervalA :: (f,VarMap (FnDom f)) `to` ri
     fixSomeVariablesA :: (f, VarMap (FnR f)) `to` f
 
-class (ArrowRealUnaryFn to f) => ArrowRealUnaryFnFromArrow to f where
-    encloseUFn :: (ArrowReal to2 r2) => (r2 `to2` r2, UFnDom f) -> () `to` f
+class (RealUnaryFnA to f) => RealUnaryFnFromArrowA to f where
+    encloseUFn :: (RealA to2 r2) => (r2 `to2` r2, UFnDom f) -> () `to` f
 
-class (ArrowRealFn to f) => ArrowRealFnFromArrow to f where
-    encloseFn :: (ArrowReal to2 r2) => (VarMap r2 `to2` r2, VarMap (FnDom f)) -> () `to` f
+class (RealFnA to f) => RealFnFromArrowA to f where
+    encloseFn :: (RealA to2 r2) => (VarMap r2 `to2` r2, VarMap (FnDom f)) -> () `to` f
 
 {- Utilities for arrow programming -}
 

@@ -1,4 +1,4 @@
-{-# LANGUAGE Arrows, TypeOperators #-}
+{-# LANGUAGE Arrows, TypeOperators, FlexibleContexts #-}
 module AERN2.Net.Examples.Root where
 
 import AERN2.Num
@@ -61,7 +61,7 @@ rootTestDirectFnCR =
                 )
                 b
     dom :: UFnDom UnaryFnCR
-    dom = Interval (integer 1) (integer 2) 
+    dom = Interval 1.0 2.0 
 
 rootTestDirectFnMPBall :: CauchyReal
 rootTestDirectFnMPBall =
@@ -81,7 +81,7 @@ rootTestDirectFnMPBall =
                 )
                 b
     dom :: UFnDom UnaryFnMPBall
-    dom = Interval (integer 1) (integer 2) 
+    dom = Interval 1.0 2.0 
 
 {-|
     Precondition: @fn@ is a function with a unique root @x@ on the domain @initX@
@@ -90,18 +90,22 @@ rootTestDirectFnMPBall =
     Compute @x@ using trisection.
 -}
 rootByTrisection ::
-    (ArrowRealUnaryFn to fn, UFnDomR fn ~ UFnR fn)
+    (RealUnaryFnA to fn, 
+     UFnDomR fn ~ UFnR fn,
+     Bool ~ OrderCompareTypeA to (UFnR fn) (UFnR fn),
+     CanEmbedFnA to Rational (UFnDomE fn), 
+     HasParallelComparisonsA to (UFnR fn))
     =>
     (fn, UFnDom fn) `to` (UFnR fn)
 rootByTrisection =
     proc (fn, xInit) ->
         do
-        z <- realConstA "0" (integer 0) -< ()
+        z <- convertNamedA "0" -< 0
         (l,_) <- getEndpointsA -< xInit
         fn_l <- evalAtUFnDomEA -< (fn,l)
-        isDecreasing <- lessA -< (z, fn_l)
+        isDecreasing <- lessThanA -< (z, fn_l)
         sq <- aux -< (z, isDecreasing, fn, xInit)
-        result <- limitIntervalsToRealA -< sq 
+        result <- limitIntervalsToRealA -< sq
         returnA -< result
     where
     aux =
@@ -109,7 +113,8 @@ rootByTrisection =
             do
             (l,r) <- getEndpointsA -< xPrev
             (m, fn_m) <- splitAwayFromRoot -< (fn,l,r)
-            isPositiveAtM <- lessA -< (z, fn_m)
+            isPositiveAtM <- lessThanA -< (z, fn_m)
+            let _ = [z, fn_m]
             xNew <- if isPositiveAtM == isDecreasing
                 then do
                     res <- fromEndpointsA -< (m,r)
@@ -122,12 +127,20 @@ rootByTrisection =
     splitAwayFromRoot =
         proc (fn,l,r) ->
             do
-            m1 <- rationalOpA "m1" (\[l,r] -> (9*l + 7*r)/16) -< [l,r] 
-            m2 <- rationalOpA "m2" (\[l,r] -> (7*l + 9*r)/16) -< [l,r] 
+            m1 <- embedFnNamedA "m1" getM1 -< [l,r] 
+            m2 <- embedFnNamedA "m2" getM2 -< [l,r] 
             fn_m1 <- evalAtUFnDomEA -< (fn, m1)
             fn_m2 <- evalAtUFnDomEA -< (fn, m2)
-            (fn_m, m) <- pickNonZeroA -< [(fn_m1, m1), (fn_m2, m2)]
+            Just (fn_m, m) <- pickNonZeroA -< [(fn_m1, m1), (fn_m2, m2)]
+            let _ = [l,r,m1,m2]
             returnA -< (m, fn_m)
+        where
+        getM1 :: [Rational] -> Rational
+        getM1 [l, r] = (9*l + 7*r)/16
+        getM1 _ = error "getM1"
+        getM2 :: [Rational] -> Rational
+        getM2 [l, r] = (7*l + 9*r)/16
+        getM2 _ = error "getM2"
 
 {-|
     Precondition: @fn@ is a function with a unique root @x@ on the domain @initX@
@@ -144,13 +157,13 @@ rootByTrisectionNoNet ::
 rootByTrisectionNoNet fn initX@(Interval initL _) =
     convergent2CauchyReal $ aux initX
     where
-    isDecreasing = fn (rational initL) > 0
+    isDecreasing = fn (cauchyReal initL) > 0
     aux xPrev@(Interval l r) =
         (rati2MPBall xPrev) : (aux xNew)
         where
         m1 = (9*l + 7*r)/16
         m2 = (7*l + 9*r)/16
-        (fn_m, m) = pickNonZeroReal [(fn (rational m1), m1), (fn (rational m2), m2)]
+        Just (fn_m, m) = pickNonZeroA [(fn (cauchyReal m1), m1), (fn (cauchyReal m2), m2)]
         isPositiveAtM = fn_m > 0
         xNew 
             | (isDecreasing == isPositiveAtM) = 

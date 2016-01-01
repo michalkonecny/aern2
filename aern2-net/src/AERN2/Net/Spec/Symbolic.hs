@@ -25,6 +25,6 @@ data RealExpr' a
 data RealExpr = RealExpr (RealExpr' RealExpr)
 -- Use Data.Fix from data-fix 0.0.1?
 
-toArrow :: (ArrowReal to r) => RealExpr -> ((Map.Map VarName r) `to` r)
+toArrow :: (RealA to r) => RealExpr -> ((Map.Map VarName r) `to` r)
 toArrow =
     undefined -- TODO

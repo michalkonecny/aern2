@@ -1,6 +1,8 @@
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, GeneralizedNewtypeDeriving, FlexibleContexts #-}
 module AERN2.Net.Execution.Parallel where
 
+{- TODO: Adapt to unified arrow operation definitions
+
 import AERN2.Num hiding (id, (.))
 import Data.String (IsString(..),fromString)
 
@@ -346,3 +348,4 @@ endOfQueries :: [QAChannel q a] -> NetM ()
 endOfQueries channels =
     mapM_ (\(ch, _) -> atomicallyNetM $ STM.writeTChan ch EndOfQueries) channels
 
+-}

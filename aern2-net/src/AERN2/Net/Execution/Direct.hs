@@ -33,77 +33,36 @@ _anet3directCauchy :: (Rational, Rational, Rational) -> Integer -> MPBall
 _anet3directCauchy (x,y,z) p =
     cauchyReal2ball (_anet3 inputs) (bits p)
     where
-    inputs = Map.fromList [("x",xCR), ("y",yCR), ("z",zCR)]
-    xCR = rational x
-    yCR = rational y
-    zCR = rational z
+    inputs = Map.fromList $ zip ["x","y","z"] $ map cauchyReal [x,y,z]
 
 {- Direct evaluation using Rational -}
 
-instance ArrowRational (->) Rational where
-    lessA = uncurry (<)
-    leqA = uncurry (<=)
-    addA = uncurry (+)
-    subA = uncurry (-)
-    mulA = uncurry (*)
-    rationalConstA _name r = const r
-    rationalListA _name rs = const rs
-    rationalOpA _name f = f
+instance RationalA (->) Rational
+
+instance ArrowConvert [Rational] (->) Rational [Rational] (->) Rational where
+    arrow2arrow = id
 
 {- Direct evaluation using CauchyReal -}
 
-instance ArrowRational (->) CauchyReal where
-    lessA = uncurry (<)
-    leqA = uncurry (<=)
-    addA = uncurry (+)
-    subA = uncurry (-)
-    mulA = uncurry (*)
-    rationalConstA _name r = const $ rational r
-    rationalListA _name rs = const $ map rational rs
-    rationalOpA = error "rationalOpA not implemented for CauchyReal"
+instance RationalA (->) CauchyReal
 
-instance ArrowReal (->) CauchyReal where
-    pickNonZeroA = pickNonZeroReal
-    realConstA _name r = const r
-    realListA _name rs = const rs
-    realOpA _name f = f
-    addRealA _name r = (r +)
-    mulRealA _name r = (r *) 
-    sqrtA = sqrt
-    expA = exp
-    sinA = sin
-    cosA = cos
+instance RealA (->) CauchyReal
+
+instance ArrowConvert [CauchyReal] (->) CauchyReal [CauchyReal] (->) CauchyReal where
+    arrow2arrow = id
 
 {- Direct evaluation using Complex -}
 
-instance ArrowRational (->) Complex where
-    lessA = error "lessA not implemented for Complex"
-    leqA = error "leqA not implemented for Complex"
-    addA = uncurry (+)
-    subA = uncurry (-)
-    mulA = uncurry (*)
-    rationalConstA _name r = const $ rational r
-    rationalListA _name rs = const $ map rational rs
-    rationalOpA = error "rationalOpA not implemented for Complex"
+instance RationalA (->) Complex
 
-instance ArrowReal (->) Complex where
-    pickNonZeroA = error "pickNonZeroA for Complex not implemented yet"
-    realConstA _name r = const $ cauchyReal2Complex r
-    realListA _name rs = const $ map cauchyReal2Complex rs
-    realOpA = error "realOpA not implemented for Complex"
-    addRealA _name r = (r +)
-    mulRealA _name r = (r *) 
-    sqrtA = error "sqrtA for Complex not implemented yet"
-    expA = exp
+instance RealA (->) Complex
 
-instance ArrowComplex (->) Complex where
-    complexConstA _name r = const r
-    complexListA _name rs = const rs
-    complexOpA _name f = f
-    addComplexA _name r = (r +)
-    mulComplexA _name r = (r *) 
+instance ComplexA (->) Complex where
 
-{- TODO The Interval type should move somewhere to aern-real -}
+instance ArrowConvert [Complex] (->) Complex [Complex] (->) Complex where
+    arrow2arrow = id
+
+{- TODO The Interval type should move somewhere to aern-num -}
 
 data Interval a = Interval a a
     deriving (Show)
@@ -161,23 +120,25 @@ _mpBall2cri b =
     (lMP, rMP) = ball2endpoints b
 
 -- the following instance is currently not used
-instance ArrowRationalInterval (->) (Interval CauchyReal) where
+instance RationalIntervalA (->) (Interval CauchyReal) where
     type (IntervalE (Interval CauchyReal)) = CauchyReal
     type (IntervalR (Interval CauchyReal)) = CauchyReal
     getEndpointsA (Interval l r) = (l,r)
     fromEndpointsA (l,r) = Interval l r
     limitIntervalsToRealA sq = convergent2CauchyReal $ map cri2MPBall sq
 
-instance ArrowRationalInterval (->) (Interval Rational) where
+instance RationalIntervalA (->) (Interval Rational) where
     type (IntervalE (Interval Rational)) = Rational
     type (IntervalR (Interval Rational)) = CauchyReal
     getEndpointsA (Interval l r) = (l, r)
     fromEndpointsA (l,r) = (Interval l r)
     limitIntervalsToRealA sq = convergent2CauchyReal $ map rati2MPBall sq
 
+{- TODO The following function types should move to aern-function, when it is created -}
+
 type UnaryFnMPBall = (Interval Rational, MPBall -> MPBall) 
 
-instance ArrowRealUnaryFn (->) UnaryFnMPBall where
+instance RealUnaryFnA (->) UnaryFnMPBall where
     type UFnDom UnaryFnMPBall = Interval Rational
     type UFnR UnaryFnMPBall = CauchyReal
     constUFnA (dom, r) = (dom, \b -> cauchyReal2ball r (getFiniteAccuracy b))
@@ -195,7 +156,7 @@ instance ArrowRealUnaryFn (->) UnaryFnMPBall where
 
 type UnaryFnCR = (Interval Rational, CauchyReal -> CauchyReal) 
 
-instance ArrowRealUnaryFn (->) UnaryFnCR
+instance RealUnaryFnA (->) UnaryFnCR
     where
     type UFnDom UnaryFnCR = Interval Rational
     type UFnR UnaryFnCR = CauchyReal
@@ -203,15 +164,8 @@ instance ArrowRealUnaryFn (->) UnaryFnCR
     projUFnA dom = (dom, id)
     getDomainUFnA (dom, _) = dom
     evalAtPointUFnA ((_dom, f), r) = f r 
-    evalAtUFnDomEA ((_dom, f), r) = f (rational r) 
+    evalAtUFnDomEA ((_dom, f), r) = f (cauchyReal r) 
     evalOnIntervalUFnA ((_dom, _f), _ri) = 
         error "evalOnIntervalUFnA not implemented for UnaryFnCR"
 
 
---{- Direct evaluation using MPBall -}
---
---instance ArrowReal (->) MPBall where
-----    piA p = cauchyReal2ball (prec2integer p) pi -- TODO: enable when we have (SizeLimits MPBall)
---    sqrtA = sqrt
---    addA = uncurry (+)
---    mulA = uncurry (*)
