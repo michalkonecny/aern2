@@ -146,30 +146,41 @@ tryStandardCompareAccuracies rs rel =
     aux [] =
         error "CauchyReal comparison undecided even using maximum standard accuracy"
 
+instance HasEqA (->) CauchyReal CauchyReal where
+    equalToA (CauchyReal r1, CauchyReal r2) =
+        tryStandardCompareAccuracies [r1,r2] (\[b1,b2] -> b1 == b2)
+
 instance HasOrderA (->) CauchyReal CauchyReal where
-    type OrderCompareTypeA (->) CauchyReal CauchyReal = Bool
     lessThanA (CauchyReal r1, CauchyReal r2) =
         tryStandardCompareAccuracies [r1,r2] (\[b1,b2] -> b1 `lessThan` b2)
     leqA (CauchyReal r1, CauchyReal r2) = 
         tryStandardCompareAccuracies [r1,r2] (\[b1,b2] -> b1 `leq` b2)
 
+instance HasEqA (->) Integer CauchyReal where
+    equalToA (n, r) = equalTo ((integer n) :: CauchyReal) r
+
 instance HasOrderA (->) Integer CauchyReal where
-    type OrderCompareTypeA (->) Integer CauchyReal = Bool
     lessThanA (n, r) = lessThan ((integer n) :: CauchyReal) r
     leqA (n, r) = leq ((integer n) :: CauchyReal) r
     
+instance HasEqA (->) CauchyReal Integer where
+    equalToA (r, n) = equalTo r ((integer n) :: CauchyReal)
+
 instance HasOrderA (->) CauchyReal Integer where
-    type OrderCompareTypeA (->) CauchyReal Integer = Bool
     lessThanA (r, n) = lessThan r ((integer n) :: CauchyReal)
     leqA (r, n) = leq r ((integer n) :: CauchyReal)
     
+instance HasEqA (->) Rational CauchyReal where
+    equalToA (q, r) = equalTo ((rational q) :: CauchyReal) r
+
 instance HasOrderA (->) Rational CauchyReal where
-    type OrderCompareTypeA (->) Rational CauchyReal = Bool
     lessThanA (q, r) = lessThan ((rational q) :: CauchyReal) r
     leqA (q, r) = leq ((rational q) :: CauchyReal) r
     
+instance HasEqA (->) CauchyReal Rational where
+    equalToA (r, q) = equalTo r ((rational q) :: CauchyReal)
+
 instance HasOrderA (->) CauchyReal Rational where
-    type OrderCompareTypeA (->) CauchyReal Rational = Bool
     lessThanA (r, q) = lessThan r ((rational q) :: CauchyReal)
     leqA (r, q) = leq r ((rational q) :: CauchyReal)
 
@@ -281,6 +292,8 @@ instance CanSqrtA (->) CauchyReal where
                     NormZero -> i
             maybeSqrtNormLog = getSeqNormLog i (\j -> sqrt (getB1 j)) 
 
+instance CanSqrtSameTypeA (->) CauchyReal
+
 instance CanExpA (->) CauchyReal where
     expA (CauchyReal getB1) = CauchyReal getB
         where
@@ -293,9 +306,13 @@ instance CanExpA (->) CauchyReal where
                     NormZero -> i -- this should never happen
             maybeExpNormLog = getSeqNormLog i (\j -> exp (getB1 j)) 
 
+instance CanExpSameTypeA (->) CauchyReal
+
 instance CanSineCosineA (->) CauchyReal where
     sinA (CauchyReal getB1) = CauchyReal (\ i -> sin (getB1 i))
     cosA (CauchyReal getB1) = CauchyReal (\ i -> cos (getB1 i))
+
+instance CanSineCosineSameTypeA (->) CauchyReal
 
 {-
 Typically ensureAccuracy1 is called with a j such that the result is of

@@ -63,6 +63,57 @@ instance ConvertibleA (->) CauchyReal Complex where
 cauchyReal2Complex :: CauchyReal -> Complex
 cauchyReal2Complex = cauchyReal
 
+{- Comparison of complex numbers -}
+
+instance HasEqA (->) Complex Complex where
+    equalToA (r1 :+ i1, r2 :+ i2) = r1 == r2 && i1 == i2
+
+instance HasOrderA (->) Complex Complex where
+    lessThanA (r1 :+ i1, r2 :+ i2) = (r1 <= r2 && i1 <= i2) && (r1 /= r2 || i1 /= i2)
+    leqA (r1 :+ i1, r2 :+ i2) = (r1 <= r2 && i1 <= i2)
+
+instance HasEqA (->) Complex Integer where
+    equalToA (c, n) = equalTo c (integer n :: Complex) 
+
+instance HasOrderA (->) Complex Integer where
+    lessThanA (c, n) = lessThan c (integer n :: Complex) 
+    leqA (c, n) = leq c (integer n :: Complex) 
+
+instance HasEqA (->) Integer Complex where
+    equalToA (n, c) = equalTo (integer n :: Complex) c 
+
+instance HasOrderA (->) Integer Complex where
+    lessThanA (n, c) = lessThan (integer n :: Complex) c 
+    leqA (n, c) = leq (integer n :: Complex) c
+
+instance HasEqA (->) Complex Rational where
+    equalToA (c, n) = equalTo c (rational n :: Complex) 
+
+instance HasOrderA (->) Complex Rational where
+    lessThanA (c, n) = lessThan c (rational n :: Complex) 
+    leqA (c, n) = leq c (rational n :: Complex) 
+
+instance HasEqA (->) Rational Complex where
+    equalToA (n, c) = equalTo (rational n :: Complex) c 
+
+instance HasOrderA (->) Rational Complex where
+    lessThanA (n, c) = lessThan (rational n :: Complex) c 
+    leqA (n, c) = leq (rational n :: Complex) c
+
+instance HasEqA (->) Complex CauchyReal where
+    equalToA (c, n) = equalTo c (cauchyReal n :: Complex) 
+
+instance HasOrderA (->) Complex CauchyReal where
+    lessThanA (c, n) = lessThan c (cauchyReal n :: Complex) 
+    leqA (c, n) = leq c (cauchyReal n :: Complex) 
+
+instance HasEqA (->) CauchyReal Complex where
+    equalToA (n, c) = equalTo (cauchyReal n :: Complex) c 
+
+instance HasOrderA (->) CauchyReal Complex where
+    lessThanA (n, c) = lessThan (cauchyReal n :: Complex) c 
+    leqA (n, c) = leq (cauchyReal n :: Complex) c
+
 {- Operations among Complex numbers -}
 
 instance CanNegA (->) Complex where
@@ -110,6 +161,8 @@ instance CanDivA (->) Complex Complex where
 instance CanDivBy Complex Complex
 
 instance CanDivSameType Complex
+
+instance Ring Complex
 
 {- Complex-Integer operations -}
 
@@ -225,6 +278,20 @@ instance CanDivA (->) Complex CauchyReal where
 
 instance CanDivBy Complex CauchyReal
 
+instance CanSqrtA (->) Complex where
+    sqrtA = error "Complex sqrt not implemented yet"
+
+instance CanSqrtSameType Complex
+
 instance CanExpA (->) Complex where
     expA (r :+ i) =
         (exp r) * (cos i :+ sin i)
+
+instance CanExpSameType Complex
+
+instance CanSineCosineA (->) Complex where
+    sinA = error "Complex sin not implemented yet"
+    cosA = error "Complex cos not implemented yet"
+
+instance CanSineCosineSameType Complex
+
