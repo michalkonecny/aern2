@@ -5,7 +5,7 @@ module AERN2.Num.Operations
     module Prelude, (.), id,
     fromInteger, fromRational, ifThenElse, 
     fromInt, toInt,
-    ArrowConvert(..), Fn2Arrow, fn2arrow, Arrow2Fn, arrow2fn,
+    ArrowConvert(..), Fn2Arrow, fn2arrow, fn2arrowNamed, Arrow2Fn, arrow2fn,
     ConvertibleA(..), Convertible, convert, convertList,
     HasIntsA, HasInts, fromIntDefault, 
     CanBeIntA, intA, intNamedA, intsA, CanBeInt, int, intDefault, ints,
@@ -93,6 +93,8 @@ class ArrowConvert a1 to1 b1 a2 to2 b2 where
 type Fn2Arrow to a1 b1 a2 b2 = ArrowConvert  a1 (->) b1 a2 to b2
 fn2arrow :: (Fn2Arrow to a1 b1 a2 b2) => (a1 -> b1) -> (a2 `to` b2)
 fn2arrow = arrow2arrow
+fn2arrowNamed :: (Fn2Arrow to a1 b1 a2 b2) => String -> (a1 -> b1) -> (a2 `to` b2)
+fn2arrowNamed = arrow2arrowNamed
 
 type Arrow2Fn to a1 b1 a2 b2 = ArrowConvert  a1 to b1 a2 (->) b2
 arrow2fn :: (Arrow2Fn to a1 b1 a2 b2) => (a1 `to` b1) -> (a2 -> b2)
