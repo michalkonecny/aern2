@@ -7,7 +7,7 @@ module AERN2.Num
      module AERN2.Num.Complex)
 where
 
-import AERN2.Num.Operations
+import AERN2.Num.Operations 
 import AERN2.Num.Norm
 import AERN2.Num.Accuracy
 import AERN2.Num.IntegerRational ()

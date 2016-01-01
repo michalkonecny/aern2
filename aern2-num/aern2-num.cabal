@@ -30,12 +30,12 @@ library
   other-modules:   
                    AERN2.Num.Accuracy,
                    AERN2.Num.CauchyReal,
+                   AERN2.Num.Complex,
                    AERN2.Num.ErrorBound,
                    AERN2.Num.Examples,
                    AERN2.Num.IntegerRational,
                    AERN2.Num.MPBall,
                    AERN2.Num.MPFloat,
                    AERN2.Num.Norm,
-                   AERN2.Num.Operations,
-                   AERN2.Num.Complex
+                   AERN2.Num.Operations
 

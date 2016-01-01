@@ -28,43 +28,43 @@ showComplex :: Accuracy -> Complex -> String
 showComplex a (r :+ i) = 
     "(" ++ show (cauchyReal2ball r a) ++ ":+" ++ show (cauchyReal2ball i a) ++ ")"
 
-instance HasIntegers Complex where
-    integer n =
+instance HasIntegersA (->) Complex where
+    integerA n =
         (integer n) :+ (integer 0)
 
 integer2Complex :: Integer -> Complex
 integer2Complex = integer
 
-instance HasRationals Complex where
-    rational = rational2Complex
+instance HasRationalsA (->) Complex where
+    rationalA = rational2Complex
 
 rational2Complex :: Rational -> Complex
 rational2Complex q = (rational q) :+ (integer 0)
 
-instance HasReals Complex where
-    cauchyReal = cauchyReal2Complex
+instance HasRealsA (->) Complex where
+    cauchyRealA = cauchyReal2Complex
 
 cauchyReal2Complex :: CauchyReal -> Complex
 cauchyReal2Complex r = r :+ (integer 0)
 
 {- Operations among Complex numbers -}
 
-instance CanNeg Complex where
-    neg (r :+ i) = (neg r) :+ (neg i)
+instance CanNegA (->) Complex where
+    negA (r :+ i) = (neg r) :+ (neg i)
 
 instance CanNegSameType Complex
 
-instance CanAbs Complex where
-    type AbsType Complex = CauchyReal
-    abs (r :+ i) = sqrt (r*r + i*i)
+instance CanAbsA (->) Complex where
+    type AbsTypeA (->) Complex = CauchyReal
+    absA (r :+ i) = sqrt (r*r + i*i)
 
-instance CanRecip Complex where
-    recip a = 1 / a
+instance CanRecipA (->) Complex where
+    recipA a = 1 / a
 
 instance CanRecipSameType Complex
 
-instance CanAdd Complex Complex where
-    add (r1 :+ i1) (r2 :+ i2) = (r1 + r2) :+ (i1 + i2)
+instance CanAddA (->) Complex Complex where
+    addA (r1 :+ i1, r2 :+ i2) = (r1 + r2) :+ (i1 + i2)
 
 instance CanAddThis Complex Complex
 
@@ -76,8 +76,8 @@ instance CanSubThis Complex Complex
 
 instance CanSubSameType Complex
 
-instance CanMul Complex Complex where
-    mul (r1 :+ i1) (r2 :+ i2) =
+instance CanMulA (->) Complex Complex where
+    mulA (r1 :+ i1, r2 :+ i2) =
         (r1 * r2 - i1 * i2) :+ (r1 * i2 + r2 * i1)
 
 
@@ -85,8 +85,8 @@ instance CanMulBy Complex Complex
 
 instance CanMulSameType Complex
 
-instance CanDiv Complex Complex where
-    div (r1 :+ i1) (r2 :+ i2) =
+instance CanDivA (->) Complex Complex where
+    divA (r1 :+ i1, r2 :+ i2) =
         ((r1 * r2 + i1 * i2)/d) :+ ((r2 * i1 - r1 * i2)/d)
         where
         d = r2*r2 + i2 * i2
@@ -97,15 +97,15 @@ instance CanDivSameType Complex
 
 {- Complex-Integer operations -}
 
-instance CanAdd Integer Complex where
-    type AddType Integer Complex = Complex
-    add a (r :+ i) = (a + r :+ i) 
+instance CanAddA (->) Integer Complex where
+    type AddTypeA (->) Integer Complex = Complex
+    addA (a, r :+ i) = (a + r :+ i) 
 
 instance CanSub Integer Complex
 
-instance CanAdd Complex Integer where
-    type AddType Complex Integer = Complex
-    add = flip add 
+instance CanAddA (->) Complex Integer where
+    type AddTypeA (->) Complex Integer = Complex
+    addA (a,b) = add b a 
 
 instance CanAddThis Complex Integer
 
@@ -113,37 +113,37 @@ instance CanSub Complex Integer
 
 instance CanSubThis Complex Integer
 
-instance CanMul Integer Complex where
-    type MulType Integer Complex = Complex
-    mul a (r :+ i) = (a * r :+ a * i) 
+instance CanMulA (->) Integer Complex where
+    type MulTypeA (->) Integer Complex = Complex
+    mulA (a, r :+ i) = (a * r :+ a * i) 
 
-instance CanMul Complex Integer where
-    type MulType Complex Integer = Complex
-    mul a b = mul b a 
+instance CanMulA (->) Complex Integer where
+    type MulTypeA (->) Complex Integer = Complex
+    mulA (a, b) = mul b a 
 
 instance CanMulBy Complex Integer
 
-instance CanDiv Integer Complex where
-    type DivType Integer Complex = Complex
-    div a b = (integer2Complex a) / b
+instance CanDivA (->) Integer Complex where
+    type DivTypeA (->) Integer Complex = Complex
+    divA (a, b) = (integer2Complex a) / b
 
-instance CanDiv Complex Integer where
-    type DivType Complex Integer = Complex
-    div (r :+ i) a = r / a :+ i / a 
+instance CanDivA (->) Complex Integer where
+    type DivTypeA (->) Complex Integer = Complex
+    divA (r :+ i, a) = r / a :+ i / a 
 
 instance CanDivBy Complex Integer
 
 {- Complex-Rational operations -}
 
-instance CanAdd Rational Complex where
-    type AddType Rational Complex = Complex
-    add a (r :+ i) = (a + r :+ i) 
+instance CanAddA (->) Rational Complex where
+    type AddTypeA (->) Rational Complex = Complex
+    addA (a, r :+ i) = (a + r :+ i) 
 
 instance CanSub Rational Complex
 
-instance CanAdd Complex Rational where
-    type AddType Complex Rational = Complex
-    add = flip add 
+instance CanAddA (->) Complex Rational where
+    type AddTypeA (->) Complex Rational = Complex
+    addA (a,b) = add b a 
 
 instance CanAddThis Complex Rational
 
@@ -151,37 +151,37 @@ instance CanSub Complex Rational
 
 instance CanSubThis Complex Rational
 
-instance CanMul Rational Complex where
-    type MulType Rational Complex = Complex
-    mul a (r :+ i) = (a * r :+ a * i) 
+instance CanMulA (->) Rational Complex where
+    type MulTypeA (->) Rational Complex = Complex
+    mulA (a, r :+ i) = (a * r :+ a * i) 
 
-instance CanMul Complex Rational where
-    type MulType Complex Rational = Complex
-    mul = flip mul 
+instance CanMulA (->) Complex Rational where
+    type MulTypeA (->) Complex Rational = Complex
+    mulA (a,b) = mul b a 
 
 instance CanMulBy Complex Rational
 
-instance CanDiv Rational Complex where
-    type DivType Rational Complex = Complex
-    div a b = (rational2Complex a) / b
+instance CanDivA (->) Rational Complex where
+    type DivTypeA (->) Rational Complex = Complex
+    divA (a, b) = (rational2Complex a) / b
 
-instance CanDiv Complex Rational where
-    type DivType Complex Rational = Complex
-    div (r :+ i) a = r / a :+ i / a
+instance CanDivA (->) Complex Rational where
+    type DivTypeA (->) Complex Rational = Complex
+    divA (r :+ i, a) = r / a :+ i / a
 
 instance CanDivBy Complex Rational
 
 {- Complex-CauchyReal operations -}
 
-instance CanAdd CauchyReal Complex where
-    type AddType CauchyReal Complex = Complex
-    add a (r :+ i) = (a + r :+ i) 
+instance CanAddA (->) CauchyReal Complex where
+    type AddTypeA (->) CauchyReal Complex = Complex
+    addA (a, r :+ i) = (a + r :+ i) 
 
 instance CanSub CauchyReal Complex
 
-instance CanAdd Complex CauchyReal where
-    type AddType Complex CauchyReal = Complex
-    add = flip add 
+instance CanAddA (->) Complex CauchyReal where
+    type AddTypeA (->) Complex CauchyReal = Complex
+    addA (a,b)= add b a 
 
 instance CanAddThis Complex CauchyReal
 
@@ -189,26 +189,26 @@ instance CanSub Complex CauchyReal
 
 instance CanSubThis Complex CauchyReal
 
-instance CanMul CauchyReal Complex where
-    type MulType CauchyReal Complex = Complex
-    mul a (r :+ i) = (a * r :+ a * i) 
+instance CanMulA (->) CauchyReal Complex where
+    type MulTypeA (->) CauchyReal Complex = Complex
+    mulA (a, r :+ i) = (a * r :+ a * i) 
 
-instance CanMul Complex CauchyReal where
-    type MulType Complex CauchyReal = Complex
-    mul = flip mul 
+instance CanMulA (->) Complex CauchyReal where
+    type MulTypeA (->) Complex CauchyReal = Complex
+    mulA (a,b) = mul b a 
 
 instance CanMulBy Complex CauchyReal
 
-instance CanDiv CauchyReal Complex where
-    type DivType CauchyReal Complex = Complex
-    div a b = (cauchyReal2Complex a) / b
+instance CanDivA (->) CauchyReal Complex where
+    type DivTypeA (->) CauchyReal Complex = Complex
+    divA (a, b) = (cauchyReal2Complex a) / b
 
-instance CanDiv Complex CauchyReal where
-    type DivType Complex CauchyReal = Complex
-    div (r :+ i) a = r / a :+ i / a
+instance CanDivA (->) Complex CauchyReal where
+    type DivTypeA (->) Complex CauchyReal = Complex
+    divA (r :+ i, a) = r / a :+ i / a
 
 instance CanDivBy Complex CauchyReal
 
-instance CanExp Complex where
-    exp (r :+ i) =
+instance CanExpA (->) Complex where
+    expA (r :+ i) =
         (exp r) * (cos i :+ sin i)

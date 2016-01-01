@@ -1,32 +1,47 @@
-{-# LANGUAGE DefaultSignatures, UndecidableInstances, TypeSynonymInstances, FlexibleInstances  #-}
+{-# LANGUAGE Arrows, DefaultSignatures, UndecidableInstances, TypeSynonymInstances, FlexibleInstances, TypeOperators, FlexibleContexts, ConstraintKinds  #-}
 
 module AERN2.Num.Operations
 (
-    module Prelude,
-    fromInteger, fromRational, ifThenElse, fromInt, toInt,
-    HasIntegers(..), HasRationals(..),
+    module Prelude, (.), id,
+    fromInteger, fromRational, ifThenElse, 
+    fromInt, toInt,
+    HasIntsA(..), HasIntegersA(..), HasRationalsA(..),
+    HasInts, HasIntegers, HasRationals, int, integer, rational,
+    HasEqA(..), HasOrderA(..),
+    HasEq, HasOrder, equalTo, notEqualTo, lessThan, leq, greaterThan, geq,
     (==), (/=), (>), (<), (<=), (>=),
-    HasEq(..), HasOrder(..),
-    negate, CanNeg(..), CanNegSameType,
-    (+), (-), (*), (/), (^), sum, product,
-    CanAbs(..), CanAbsSameType,
-    CanMinMax(..), CanMinMaxThis, CanMinMaxSameType,
-    CanAdd(..), CanAddThis, CanAddSameType,
-    CanSub(..), CanSubThis, CanSubSameType,
-    CanMul(..), CanMulBy, CanMulSameType,
-    CanPow(..), CanPowBy,
-    CanDiv(..), CanDivBy, CanDivSameType,
-    CanRecip(..), CanRecipSameType,
+    CanMinMaxA(..), CanMinMaxThisA, CanMinMaxSameTypeA,
+    CanMinMax, CanMinMaxThis, CanMinMaxSameType, min, max,
+    CanNegA(..), CanNegSameTypeA,
+    CanNeg, CanNegSameType, neg, negate, 
+    CanAbsA(..), CanAbsSameTypeA,
+    CanAbs, CanAbsSameType, abs,
+    CanAddA(..), CanAddThisA, CanAddSameTypeA, sumA,
+    CanAdd, CanAddThis, CanAddSameType, add, sum, (+),
+    CanSubA(..), CanSubThisA, CanSubSameTypeA,
+    CanSub, CanSubThis, CanSubSameType, sub, (-),
+    CanMulA(..), CanMulByA, CanMulSameTypeA, productA, 
+    CanMul, CanMulBy, CanMulSameType, mul, (*), product,
+    CanPowA(..), CanPowByA,
+    CanPow, CanPowBy, pow, (^),
+    CanDivA(..), CanDivByA, CanDivSameTypeA,
+    CanDiv, CanDivBy, CanDivSameType, div, (/),
+    CanRecipA(..), CanRecipSameTypeA,
+    CanRecip, CanRecipSameType, recip,
+    RingA, FieldA, CanAddMulScalarA, CanAddMulDivScalarA,
     Ring, Field, CanAddMulScalar, CanAddMulDivScalar,
---    RationalLike,
-    CanSqrt(..), CanSqrtSameType,
-    CanExp(..), CanExpSameType,
-    CanSineCosine(..), CanSineCosineSameType
+    CanSqrtA(..), CanSqrtSameTypeA,
+    CanSqrt, CanSqrtSameType, sqrt,
+    CanExpA(..), CanExpSameTypeA,
+    CanExp, CanExpSameType, exp,
+    CanSineCosineA(..), CanSineCosineSameTypeA,
+    CanSineCosine, CanSineCosineSameType, sin, cos
 )
 where
 
 import Prelude hiding
-    ((==),(/=),(<),(>),(<=),(>=),
+    (id, (.),
+     (==),(/=),(<),(>),(<=),(>=),
      (+),(*),(/),(-),(^),sum,product,abs,min,max,
      recip,div,negate,
      fromInteger,fromRational,
@@ -34,18 +49,8 @@ import Prelude hiding
 
 import qualified Prelude as P
 
-{- 
-    The following arranges that all numeric literals are monomorphic and of the type Integer or Rational.
--}
-
-_example1 :: Integer -- inferred
-_example1 = 1 -- not polymorphic 
-_example2 :: Rational -- inferred
-_example2 = 1.0 -- not polymorphic
-_example3 :: Int
-_example3 = toInt 1 -- the easiest way to get Int literals (1 :: Int does not compile)
-_example4 :: Integer
-_example4 = fromInt (length [])
+import Control.Category
+import Control.Arrow
 
 fromInteger :: Integer -> Integer
 fromInteger = id
@@ -77,22 +82,50 @@ fromInt = P.toInteger
     This is useful for embedding integers into other types
     when using the monomorphic fromInteger.
 -}
-class HasIntegers a where
-    integer :: Integer -> a
-    default integer :: (Num a) => Integer -> a
-    integer n = P.fromInteger n 
+class HasIntegersA to a where
+    integerA :: Integer `to` a
+    default integerA :: (to ~ (->), Num a) => Integer -> a
+    integerA n = P.fromInteger n 
 
+type HasIntegers = HasIntegersA (->)
+
+integer :: (HasIntegers a) => Integer -> a
+integer = integerA
+
+instance HasIntegers Int
 instance HasIntegers Integer
 instance HasIntegers Rational
+
+class HasIntsA to a where
+    intA :: Int `to` a
+    default intA :: (to ~ (->), Num a) => Int -> a
+    intA n = P.fromIntegral n
+
+type HasInts = HasIntsA (->)
+
+int :: (HasInts a) => Int -> a
+int = intA
+
+instance HasInts Int
+instance HasInts Integer
+instance HasInts Rational
+
 
 {-| 
     This is useful for embedding rationals into other types
     when using the monomorphic fromRational. 
 -}
-class HasRationals a where
-    rational :: Rational -> a 
+class HasRationalsA to a where
+    rationalA :: Rational `to` a 
+    default rationalA :: (to ~ (->), Fractional a) => Rational -> a
+    rationalA n = P.fromRational n 
 
+type HasRationals = HasRationalsA (->)
 
+rational :: (HasRationals a) => Rational -> a
+rational = rationalA
+
+instance HasRationals Rational
 
 {- 
     The following mixed-type operators shadow the classic mono-type Prelude versions. 
@@ -102,238 +135,442 @@ infixl 8 ^
 infixl 7 *, /
 infixl 6 +, -
 
+{- equality -}
+
+class Arrow to => HasEqA to a b where
+    type EqCompareTypeA to a b
+    type EqCompareTypeA to a b = Bool -- default
+    equalToA :: (a,b) `to` (EqCompareTypeA to a b)
+    -- default equalToA via Prelude for (->) and Bool:
+    default equalToA :: (to ~ (->), EqCompareTypeA (->) a b ~ Bool, a~b, P.Eq a) => (a,b) -> Bool
+    equalToA = uncurry (P.==)
+    notEqualToA :: (a,b) `to` (EqCompareTypeA to a b)
+    -- default notEqualToA via equalToA for Bool:
+    default notEqualToA :: 
+        (CanNegSameTypeA to (EqCompareTypeA to a b)) => 
+        (a,b) `to` (EqCompareTypeA to a b)
+    notEqualToA = negA <<< equalToA
+
+type HasEq = HasEqA (->)
+type EqCompareType a b = EqCompareTypeA (->) a b
+
+equalTo :: (HasEq a b) => a -> b -> EqCompareType a b
+equalTo = curry equalToA
+notEqualTo :: (HasEq a b) => a -> b -> EqCompareType a b
+notEqualTo = curry notEqualToA
+
+(==) :: (HasEq a b) => a -> b -> EqCompareType a b
+(==) = equalTo
+(/=) :: (HasEq a b) => a -> b -> EqCompareType a b
+(/=) = notEqualTo
+
+instance HasEqA (->) Bool Bool
+instance HasEqA (->) Char Char
+instance (HasEqA (->) a a, EqCompareTypeA (->) a a ~ Bool) => HasEqA (->) (Maybe a) (Maybe a) where
+    equalToA (Nothing, Nothing) = True
+    equalToA (Just a, Just b) = equalToA (a, b)
+    equalToA _ = False 
+instance (HasEqA (->) a a, EqCompareTypeA (->) a a ~ Bool) => HasEqA (->) [a] [a] where
+    equalToA ([],[]) = True
+    equalToA (h1:t1, h2:t2) = (equalToA (h1, h2)) && (equalToA (t1, t2))
+    equalToA _ = False 
+
+{- order -}
+
+class Arrow to => HasOrderA to a b where
+    type OrderCompareTypeA to a b
+    type OrderCompareTypeA to a b = Bool -- default
+    lessThanA :: (a,b) `to` OrderCompareTypeA to a b
+    default lessThanA :: 
+        (to ~ (->), OrderCompareTypeA to a b ~ Bool, a~b, P.Ord a) => 
+        (a,b) -> OrderCompareTypeA to a b
+    lessThanA = uncurry (P.<)
+    greaterThanA :: (a,b) `to` OrderCompareTypeA to a b
+    default greaterThanA :: 
+        (OrderCompareTypeA to a b ~ OrderCompareTypeA to b a, HasOrderA to b a) => 
+        (a,b) `to` OrderCompareTypeA to a b
+    greaterThanA = proc (a,b) -> lessThanA -< (b,a)
+    leqA :: (a,b) `to` OrderCompareTypeA to a b
+    default leqA :: 
+        (to ~ (->), OrderCompareTypeA to a b ~ Bool, a~b, P.Ord a) => 
+        (a,b) `to` OrderCompareTypeA to a b
+    leqA = uncurry (P.<=)
+    geqA :: (a,b) `to` OrderCompareTypeA to a b
+    default geqA :: 
+        (OrderCompareTypeA to a b ~ OrderCompareTypeA to b a, HasOrderA to b a) => 
+        (a,b) `to` OrderCompareTypeA to a b
+    geqA = proc (a,b) -> leqA -< (b,a)
+
+type HasOrder = HasOrderA (->)
+type OrderCompareType a b = OrderCompareTypeA (->) a b
+
+lessThan :: (HasOrder a b) => a -> b -> OrderCompareType a b
+lessThan = curry lessThanA
+leq :: (HasOrder a b) => a -> b -> OrderCompareType a b
+leq = curry leqA
+greaterThan :: (HasOrder a b) => a -> b -> OrderCompareType a b
+greaterThan = curry greaterThanA
+geq :: (HasOrder a b) => a -> b -> OrderCompareType a b
+geq = curry geqA
+
+(<) :: (HasOrder a b) => a -> b -> OrderCompareType a b
+(<) = lessThan
+(<=) :: (HasOrder a b) => a -> b -> OrderCompareType a b
+(<=) = leq
+(>) :: (HasOrder a b) => a -> b -> OrderCompareType a b
+(>) = greaterThan
+(>=) :: (HasOrder a b) => a -> b -> OrderCompareType a b
+(>=) = geq
+
+class (Arrow to) => CanMinMaxA to a b where
+    type MinMaxTypeA to a b
+    type MinMaxTypeA to a b = a -- default
+    minA :: (a,b) `to` MinMaxTypeA to a b
+    maxA :: (a,b) `to` MinMaxTypeA to a b
+    default minA :: (to ~ (->), MinMaxTypeA to a b ~ a, a~b, P.Ord a) => (a,a) -> a
+    minA = uncurry P.min
+    default maxA :: (to ~ (->), MinMaxTypeA to a b ~ a, a~b, P.Ord a) => (a,a) -> a
+    maxA = uncurry P.max
+
+type CanMinMax = CanMinMaxA (->)
+type MinMaxType a b = MinMaxTypeA (->) a b
+
+min :: (CanMinMax a b) => a -> b -> MinMaxType a b
+min = curry minA
+max :: (CanMinMax a b) => a -> b -> MinMaxType a b
+max = curry maxA
+
+class
+    (CanMinMaxA to a b, MinMaxTypeA to a b ~ a, CanMinMaxA to b a, MinMaxTypeA to b a ~ a) => 
+    CanMinMaxThisA to a b
+
+type CanMinMaxThis = CanMinMaxThisA (->)
+
+class
+    (CanMinMaxThisA to a a) => 
+    CanMinMaxSameTypeA to a
+
+type CanMinMaxSameType = CanMinMaxSameTypeA (->)
+
+{- negation -}
+
+class (Arrow to) => CanNegA to a where
+    type NegTypeA to a :: *
+    type NegTypeA to a = a -- default
+    negA :: a `to` NegTypeA to a
+
+type CanNeg = CanNegA (->)
+type NegType a = NegTypeA (->) a
+
+neg :: CanNeg a => a -> NegType a
+neg = negA
+
 negate :: CanNeg a => a -> NegType a
-negate x = neg x
+negate = neg
+
+class
+    (CanNegA to a, NegTypeA to a ~ a) => 
+    CanNegSameTypeA to a
+
+type CanNegSameType = CanNegSameTypeA (->)
+
+instance (Arrow to) => CanNegA to Bool where
+    negA = arr not
+
+instance (Arrow to) => CanNegSameTypeA to Bool
+
+{- abs -}
+
+class (Arrow to) => CanAbsA to a where
+    type AbsTypeA to a
+    type AbsTypeA to a = a -- default
+    absA :: a `to` AbsTypeA to a
+
+type CanAbs = CanAbsA (->)
+type AbsType a = AbsTypeA (->) a
+
+abs :: (CanAbs a) => a -> AbsType a
+abs = absA
+
+class
+    (CanAbsA to a, AbsTypeA to a ~ a) => 
+    CanAbsSameTypeA to a
+
+type CanAbsSameType = CanAbsSameTypeA (->)
+
+{- recip -}
+
+class CanRecipA to a where
+    type RecipTypeA to a
+    type RecipTypeA to a = a -- default
+    recipA :: a `to` RecipTypeA to a
+
+type CanRecip = CanRecipA (->)
+type RecipType a = RecipTypeA (->) a
+
+recip :: (CanRecip a) => a -> RecipType a
+recip = recipA 
+
+class
+    (CanRecipA to a, RecipTypeA to a ~ a) => 
+    CanRecipSameTypeA to a
+
+type CanRecipSameType = CanRecipSameTypeA (->)
+
+{- add -}
+
+class (Arrow to) => CanAddA to a b where
+    type AddTypeA to a b :: *
+    type AddTypeA to a b = a -- default
+    addA :: (a,b) `to` AddTypeA to a b
+
+type CanAdd = CanAddA (->)
+type AddType a b = AddTypeA (->) a b
+
+add :: (CanAdd a b) => a -> b -> AddType a b
+add = curry addA
+
 (+) :: CanAdd a b => a -> b -> AddType a b
-(+) x y = add x y
+(+) = add
+
+class
+    (CanAddA to a b, AddTypeA to a b ~ a, CanAddA to b a, AddTypeA to b a ~ a) => 
+    CanAddThisA to a b
+
+type CanAddThis = CanAddThisA (->)
+
+class
+    (CanAddThisA to a a) => 
+    CanAddSameTypeA to a
+
+type CanAddSameType = CanAddSameTypeA (->)
+
+sumA :: (ArrowChoice to, CanAddSameTypeA to a, HasIntegersA to a) => [a] `to` a
+sumA = 
+    proc list ->
+        case list of
+            [] -> integerA -< 0
+            (x:xs) -> 
+                do
+                a <- sumA -< xs
+                r <- addA -< (x, a)
+                returnA -< r
+
+sum :: (CanAddSameType a, HasIntegers a) => [a] -> a
+sum = sumA
+
+{- sub -}
+
+class CanSubA to a b where
+    type SubTypeA to a b :: *
+    type SubTypeA to a b = AddTypeA to a (NegTypeA to b)
+    subA :: (a,b) `to` SubTypeA to a b
+    default subA :: (CanNegA to b, CanAddA to a c, c~NegTypeA to b) => (a,b) `to` AddTypeA to a (NegTypeA to b)
+    subA = 
+        proc (x,y) -> 
+            do
+            yn <- negA -< y
+            r <- addA -< (x,yn)
+            returnA -< r
+
+type CanSub = CanSubA (->)
+type SubType a b = SubTypeA (->) a b
+
+sub :: (CanSub a b) => a -> b -> SubType a b
+sub = curry subA
+
 (-) :: CanSub a b => a -> b -> SubType a b
-(-) x y = sub x y
+(-) = sub
+
+class
+    (CanSubA to a b, SubTypeA to a b ~ a) => 
+    CanSubThisA to a b
+
+type CanSubThis = CanSubThisA (->)
+
+class
+    (CanSubThisA to a a) => 
+    CanSubSameTypeA to a
+
+type CanSubSameType = CanSubSameTypeA (->)
+
+{- mul -}
+
+class (Arrow to) => CanMulA to a b where
+    type MulTypeA to a b
+    type MulTypeA to a b = a -- default
+    mulA :: (a,b) `to` MulTypeA to a b
+
+type CanMul = CanMulA (->)
+type MulType a b = MulTypeA (->) a b
+
+mul :: (CanMul a b) => a -> b -> MulType a b
+mul = curry mulA
+
 (*) :: CanMul a b => a -> b -> MulType a b
-(*) x y = mul x y
+(*) = mul
+
+class
+    (CanMulA to a b, MulTypeA to a b ~ a, CanMulA to b a, MulTypeA to b a ~ a) => 
+    CanMulByA to a b
+
+type CanMulBy = CanMulByA (->)
+
+class
+    (CanMulByA to a a) => 
+    CanMulSameTypeA to a
+
+type CanMulSameType = CanMulSameTypeA (->)
+
+productA :: (ArrowChoice to, CanMulSameTypeA to a, HasIntegersA to a) => [a] `to` a
+productA = 
+    proc list ->
+        case list of
+            [] -> integerA -< 1
+            (x:xs) -> 
+                do
+                a <- productA -< xs
+                r <- mulA -< (x, a)
+                returnA -< r
+
+product :: (CanMulSameType a, HasIntegers a) => [a] -> a
+product = productA
+
+{- div -}
+
+class (Arrow to) => CanDivA to a b where
+    type DivTypeA to a b :: *
+    type DivTypeA to a b = MulTypeA to a (RecipTypeA to b)
+    divA :: (a,b) `to` DivTypeA to a b
+    default divA :: (CanRecipA to b, CanMulA to a c, c~RecipTypeA to b) => (a,b) `to` MulTypeA to a (RecipTypeA to b)
+    divA =
+        proc (x,y) ->
+            do
+            ry <- recipA -< y
+            r <- mulA -< (x,ry)
+            returnA -< r
+
+type CanDiv = CanDivA (->)
+type DivType a b = DivTypeA (->) a b
+
+div :: (CanDiv a b) => a -> b -> DivType a b
+div = curry divA
+
 (/) :: CanDiv a b => a -> b -> DivType a b
-(/) x y = div x y
-(^) :: CanPow a b => a -> b -> PowType a b
-(^) x y = pow x y
-sum :: (CanAddSameType a) => [a] -> a
-sum = foldr1 (+)
-product :: (CanMulSameType a) => [a] -> a
-product = foldr1 (*)
-
-(==) :: HasEq a b => a -> b -> EqCompareType a b
-(==) x y = equalTo x y
-(/=) :: HasEq a b => a -> b -> EqCompareType a b
-(/=) x y = notEqualTo x y
-(<) :: HasOrder a b => a -> b -> OrderCompareType a b
-(<) x y = lessThan x y
-(>) :: HasOrder a b => a -> b -> OrderCompareType a b
-(>) x y = greaterThan x y
-(<=) :: HasOrder a b => a -> b -> OrderCompareType a b
-(<=) x y = leq x y
-(>=) :: HasOrder a b => a -> b -> OrderCompareType a b
-(>=) x y = geq x y
-
-class HasEq a b where
-    type EqCompareType a b
-    type EqCompareType a b = Bool -- default
-    equalTo :: a -> b -> EqCompareType a b
-    default equalTo :: (EqCompareType a b ~ Bool, a~b, P.Eq a) => a -> b -> EqCompareType a b
-    equalTo = (P.==)
-    notEqualTo :: a -> b -> EqCompareType a b
-    default notEqualTo :: (EqCompareType a b ~ Bool) => a -> b -> EqCompareType a b
-    notEqualTo a b = not $ equalTo a b 
-
-instance HasEq Bool Bool
-instance HasEq Char Char
-instance (HasEq a a, EqCompareType a a ~ Bool) => HasEq (Maybe a) (Maybe a) where
-    equalTo Nothing Nothing = True
-    equalTo (Just a) (Just b) = equalTo a b
-    equalTo _ _ = False 
-instance (HasEq a a, EqCompareType a a ~ Bool) => HasEq [a] [a] where
-    equalTo [] [] = True
-    equalTo (h1:t1) (h2:t2) = (equalTo h1 h2) && (equalTo t1 t2)
-    equalTo _ _ = False 
-
-class HasOrder a b where
-    type OrderCompareType a b
-    type OrderCompareType a b = Bool -- default
-    lessThan :: a -> b -> OrderCompareType a b
-    default lessThan :: (OrderCompareType a b ~ Bool, a~b, P.Ord a) => a -> b -> OrderCompareType a b
-    lessThan = (P.<)
-    greaterThan :: a -> b -> OrderCompareType a b
-    default greaterThan :: (OrderCompareType a b ~ OrderCompareType b a, HasOrder b a) => a -> b -> OrderCompareType a b
-    greaterThan a b = lessThan b a
-    leq :: a -> b -> OrderCompareType a b
-    default leq :: (OrderCompareType a b ~ Bool, a~b, P.Ord a) => a -> b -> OrderCompareType a b
-    leq = (P.<=)
-    geq :: a -> b -> OrderCompareType a b
-    default geq :: (OrderCompareType a b ~ OrderCompareType b a, HasOrder b a) => a -> b -> OrderCompareType a b
-    geq a b = leq b a
-
-class CanMinMax a b where
-    type MinMaxType a b :: *
-    type MinMaxType a b = a -- default
-    min :: a -> b -> MinMaxType a b
-    max :: a -> b -> MinMaxType a b
-    default min :: (MinMaxType a b ~ a, a~b, P.Ord a) => a -> a -> a
-    min = P.min
-    default max :: (MinMaxType a b ~ a, a~b, P.Ord a) => a -> a -> a
-    max = P.max
+(/) = div
 
 class
-    (CanMinMax a b, MinMaxType a b ~ a, CanMinMax b a, MinMaxType b a ~ a) => 
-    CanMinMaxThis a b
+    (CanDivA to a b, DivTypeA to a b ~ a) => 
+    CanDivByA to a b
+
+type CanDivBy = CanDivByA (->)
 
 class
-    (CanMinMaxThis a a) => 
-    CanMinMaxSameType a
+    (CanDivByA to a a) => 
+    CanDivSameTypeA to a
 
+type CanDivSameType = CanDivSameTypeA (->)
 
-class CanNeg a where
-    type NegType a :: *
-    type NegType a = a -- default
-    neg :: a -> NegType a
+class CanPowA to a b where
+    type PowTypeA to a b
+    type PowTypeA to a b = a -- default
+    powA :: (a,b) `to` PowTypeA to a b
 
-class
-    (CanNeg a, NegType a ~ a) => 
-    CanNegSameType a
+type CanPow = CanPowA (->)
+type PowType a b = PowTypeA (->) a b
 
-class CanAbs a where
-    type AbsType a :: *
-    type AbsType a = a -- default
-    abs :: a -> AbsType a
+pow :: (CanPow a b) => a -> b -> PowType a b
+pow = curry powA
 
-class
-    (CanAbs a, AbsType a ~ a) => 
-    CanAbsSameType a
-
-class CanRecip a where
-    type RecipType a :: *
-    type RecipType a = a -- default
-    recip :: a -> RecipType a
+(^) :: (CanPow a b) => a -> b -> PowType a b
+(^) = pow
 
 class
-    (CanRecip a, RecipType a ~ a) => 
-    CanRecipSameType a
+    (CanPowA to a b, PowTypeA to a b ~ a) => 
+    CanPowByA to a b
 
-class CanAdd a b where
-    type AddType a b :: *
-    type AddType a b = a -- default
-    add :: a -> b -> AddType a b
+type CanPowBy = CanPowByA (->)
 
 class
-    (CanAdd a b, AddType a b ~ a, CanAdd b a, AddType b a ~ a) => 
-    CanAddThis a b
-
-class
-    (CanAddThis a a) => 
-    CanAddSameType a
-
-class CanSub a b where
-    type SubType a b :: *
-    type SubType a b = AddType a (NegType b)
-    sub :: a -> b -> SubType a b
-    default sub :: (CanNeg b, CanAdd a c, c~NegType b) => a -> b -> AddType a (NegType b)
-    sub x y = add x (neg y)
-
-class
-    (CanSub a b, SubType a b ~ a) => 
-    CanSubThis a b
-
-class
-    (CanSubThis a a) => 
-    CanSubSameType a
-
-class CanMul a b where
-    type MulType a b :: *
-    type MulType a b = a -- default
-    mul :: a -> b -> MulType a b
-
-class
-    (CanMul a b, MulType a b ~ a, CanMul b a, MulType b a ~ a) => 
-    CanMulBy a b
-
-class
-    (CanMulBy a a) => 
-    CanMulSameType a
-
-class CanDiv a b where
-    type DivType a b :: *
-    type DivType a b = MulType a (RecipType b)
-    div :: a -> b -> DivType a b
-    default div :: (CanRecip b, CanMul a c, c~RecipType b) => a -> b -> MulType a (RecipType b)
-    div x y = mul x (recip y)
-
-class
-    (CanDiv a b, DivType a b ~ a) => 
-    CanDivBy a b
-
-class
-    (CanDivBy a a) => 
-    CanDivSameType a
-
-class CanPow a b where
-    type PowType a b :: *
-    type PowType a b = a -- default
-    pow :: a -> b -> PowType a b
-
-class
-    (CanPow a b, PowType a b ~ a) => 
-    CanPowBy a b
-
-class
-    (CanNegSameType a, CanAddSameType a, CanSubSameType a, CanMulSameType a, 
-     HasEq a a, HasOrder a a, HasIntegers a)
+    (CanNegSameTypeA to a, CanAddSameTypeA to a, CanSubSameTypeA to a, CanMulSameTypeA to a, 
+     HasEqA to a a, HasOrderA to a a, HasIntegersA to a)
     => 
-    Ring a
-    
+    RingA to a
+
+type Ring = RingA (->)
+
 class
-    (Ring a, CanDivSameType a, CanRecipSameType a)
+    (RingA to a, CanDivSameTypeA to a, CanRecipSameTypeA to a)
     =>
-    Field a
+    FieldA to a
     
+type Field = FieldA (->)
+
 class
-    (CanAddThis a s, CanMulBy a s)
+    (CanAddThisA to a s, CanMulByA to a s)
     =>
-    CanAddMulScalar a s 
+    CanAddMulScalarA to a s 
+    
+type CanAddMulScalar = CanAddMulScalarA (->)
     
 class
-    (CanAddMulScalar a s, CanDivBy a s)
+    (CanAddMulScalarA to a s, CanDivByA to a s)
     =>
-    CanAddMulDivScalar a s 
+    CanAddMulDivScalarA to a s 
     
+type CanAddMulDivScalar = CanAddMulDivScalarA (->)
 
---class
---    (HasIntegers a, HasRationals a, Field a, CanAddMulDivScalar a a, CanAddMulDivScalar a Integer, CanAddMulDivScalar a Rational)
---    =>
---    RationalLike a
+class CanSqrtA to a where
+    type SqrtTypeA to a :: *
+    type SqrtTypeA to a = a -- default
+    sqrtA :: a `to` SqrtTypeA to a
 
+type CanSqrt = CanSqrtA (->)
+type SqrtType a = SqrtTypeA (->) a
 
-class CanSqrt a where
-    type SqrtType a :: *
-    type SqrtType a = a -- default
-    sqrt :: a -> SqrtType a
-
-class
-    (CanSqrt a, SqrtType a ~ a) => 
-    CanSqrtSameType a
-
-class CanExp a where
-    type ExpType a :: *
-    type ExpType a = a -- default
-    exp :: a -> ExpType a
+sqrt :: (CanSqrt a) => a -> SqrtType a
+sqrt = sqrtA
 
 class
-    (CanExp a, ExpType a ~ a) => 
-    CanExpSameType a
+    (CanSqrtA to a, SqrtTypeA to a ~ a) => 
+    CanSqrtSameTypeA to a
 
-class CanSineCosine a where
-    type SineCosineType a :: *
-    type SineCosineType a = a -- default
-    sin :: a -> SineCosineType a
-    cos :: a -> SineCosineType a
+type CanSqrtSameType = CanSqrtSameTypeA (->)
+
+class CanExpA to a where
+    type ExpTypeA to a :: *
+    type ExpTypeA to a = a -- default
+    expA :: a `to` ExpTypeA to a
+
+type CanExp = CanExpA (->)
+type ExpType a = ExpTypeA (->) a
+
+exp :: (CanExp a) => a -> ExpType a
+exp = expA
 
 class
-    (CanSineCosine a, SineCosineType a ~ a) => 
-    CanSineCosineSameType a
+    (CanExpA to a, ExpTypeA to a ~ a) => 
+    CanExpSameTypeA to a
 
+type CanExpSameType = CanExpSameTypeA (->)
+
+class CanSineCosineA to a where
+    type SineCosineTypeA to a :: *
+    type SineCosineTypeA to a = a -- default
+    sinA :: a `to` SineCosineTypeA to a
+    cosA :: a `to` SineCosineTypeA to a
+
+type CanSineCosine = CanSineCosineA (->)
+type SineCosineType a = SineCosineTypeA (->) a
+
+sin :: (CanSineCosine a) => a -> SineCosineType a
+sin = sinA
+cos :: (CanSineCosine a) => a -> SineCosineType a
+cos = cosA
+
+class
+    (CanSineCosineA to a, SineCosineTypeA to a ~ a) => 
+    CanSineCosineSameTypeA to a
+
+type CanSineCosineSameType = CanSineCosineSameTypeA (->)
     

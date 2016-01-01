@@ -36,7 +36,7 @@ shouldTrace = False
 maybeTrace :: String -> a -> a
 maybeTrace 
     | shouldTrace = trace
-    | otherwise = const id
+    | otherwise = const P.id
 
 
 data MPBall = MPBall { ball_value :: MPFloat, ball_error :: ErrorBound }
@@ -75,8 +75,8 @@ integer2BallP p x =
     xUp = MP.integerUp p x
     xDn = MP.integerDown p x
 
-instance HasIntegers MPBall where
-    integer x =
+instance HasIntegersA (->) MPBall where
+    integerA x =
         MPBall xMP EB.zero
         where
         xMP = integer x
@@ -138,26 +138,26 @@ instance HasNorm MPBall where
             | isNonZero ballR = toIntegerUp (1 / ballR)
             | otherwise = -1
 
-instance HasEq MPBall MPBall where
-    type EqCompareType MPBall MPBall = Maybe Bool
-    equalTo b1 b2 =
+instance HasEqA (->) MPBall MPBall where
+    type EqCompareTypeA (->) MPBall MPBall = Maybe Bool
+    equalToA (b1, b2) =
         case (getAccuracy b1, getAccuracy b2, b1 < b2, b2 < b1) of
             (A.Exact, A.Exact, Just False, Just False) -> Just True
             (_, _, Just True, _) -> Just False
             (_, _, _, Just True) -> Just False
             _ -> Nothing
-    notEqualTo b1 b2 = fmap not $ equalTo b1 b2
+    notEqualToA (b1, b2) = fmap not $ equalTo b1 b2
         
-instance HasOrder MPBall MPBall where
-    type OrderCompareType MPBall MPBall = Maybe Bool
-    lessThan (MPBall x1 e1) (MPBall x2 e2) 
+instance HasOrderA (->) MPBall MPBall where
+    type OrderCompareTypeA (->) MPBall MPBall = Maybe Bool
+    lessThanA (MPBall x1 e1, MPBall x2 e2) 
         | (x1 `MP.addUp` e1MP) < (x2 `MP.subDown` e2MP) = Just True
         | (x1 `MP.subDown` e1MP) >= (x2 `MP.addUp` e2MP) = Just False
         | otherwise = Nothing
         where
         e1MP = EB.er2mp e1
         e2MP = EB.er2mp e2
-    leq (MPBall x1 e1) (MPBall x2 e2) 
+    leqA (MPBall x1 e1, MPBall x2 e2) 
         | (x1 `MP.addUp` e1MP) <= (x2 `MP.subDown` e2MP) = Just True
         | (x1 `MP.subDown` e1MP) > (x2 `MP.addUp` e2MP) = Just False
         | otherwise = Nothing
@@ -165,64 +165,64 @@ instance HasOrder MPBall MPBall where
         e1MP = EB.er2mp e1
         e2MP = EB.er2mp e2
 
-instance HasEq MPBall Integer where
-    type EqCompareType MPBall Integer = Maybe Bool
-    equalTo b1 n2 = equalTo b1 (integer2Ball n2)
-    notEqualTo b1 n2 = notEqualTo b1 (integer2Ball n2)
+instance HasEqA (->) MPBall Integer where
+    type EqCompareTypeA (->) MPBall Integer = Maybe Bool
+    equalToA (b1, n2) = equalTo b1 (integer2Ball n2)
+    notEqualToA (b1, n2) = notEqualTo b1 (integer2Ball n2)
 
-instance HasEq Integer MPBall where
-    type EqCompareType Integer MPBall = Maybe Bool
-    equalTo n1 b2 = equalTo (integer2Ball n1) b2
-    notEqualTo n1 b2 = notEqualTo (integer2Ball n1) b2
+instance HasEqA (->) Integer MPBall where
+    type EqCompareTypeA (->) Integer MPBall = Maybe Bool
+    equalToA (n1, b2) = equalTo (integer2Ball n1) b2
+    notEqualToA (n1, b2) = notEqualTo (integer2Ball n1) b2
 
-instance HasOrder MPBall Integer where
-    type OrderCompareType MPBall Integer = Maybe Bool
-    lessThan b1 n2 = lessThan b1 (integer2Ball n2) 
-    leq b1 n2 = leq b1 (integer2Ball n2) 
+instance HasOrderA (->) MPBall Integer where
+    type OrderCompareTypeA (->) MPBall Integer = Maybe Bool
+    lessThanA (b1, n2) = lessThan b1 (integer2Ball n2) 
+    leqA (b1, n2) = leq b1 (integer2Ball n2) 
 
-instance HasOrder Integer MPBall where
-    type OrderCompareType Integer MPBall = Maybe Bool
-    lessThan n1 b2 = lessThan (integer2Ball n1) b2
-    leq n1 b2 = leq (integer2Ball n1) b2
+instance HasOrderA (->) Integer MPBall where
+    type OrderCompareTypeA (->) Integer MPBall = Maybe Bool
+    lessThanA (n1, b2) = lessThan (integer2Ball n1) b2
+    leqA (n1, b2) = leq (integer2Ball n1) b2
 
-instance HasEq MPBall Rational where
-    type EqCompareType MPBall Rational = Maybe Bool
-    equalTo b1 q2 = equalTo b1 (rational2BallP (getPrecision b1) q2)
-    notEqualTo b1 q2 = notEqualTo b1 (rational2BallP (getPrecision b1) q2)
+instance HasEqA (->) MPBall Rational where
+    type EqCompareTypeA (->) MPBall Rational = Maybe Bool
+    equalToA (b1, q2) = equalTo b1 (rational2BallP (getPrecision b1) q2)
+    notEqualToA (b1, q2) = notEqualTo b1 (rational2BallP (getPrecision b1) q2)
 
-instance HasEq Rational MPBall where
-    type EqCompareType Rational MPBall = Maybe Bool
-    equalTo q1 b2 = equalTo (rational2BallP (getPrecision b2) q1) b2
-    notEqualTo q1 b2 = notEqualTo (rational2BallP (getPrecision b2) q1) b2
+instance HasEqA (->) Rational MPBall where
+    type EqCompareTypeA (->) Rational MPBall = Maybe Bool
+    equalToA (q1, b2) = equalTo (rational2BallP (getPrecision b2) q1) b2
+    notEqualToA (q1, b2) = notEqualTo (rational2BallP (getPrecision b2) q1) b2
 
-instance HasOrder MPBall Rational where
-    type OrderCompareType MPBall Rational = Maybe Bool
-    lessThan b1 q2 = lessThan b1 (rational2BallP (getPrecision b1) q2) 
-    leq b1 q2 = leq b1 (rational2BallP (getPrecision b1) q2) 
+instance HasOrderA (->) MPBall Rational where
+    type OrderCompareTypeA (->) MPBall Rational = Maybe Bool
+    lessThanA (b1, q2) = lessThan b1 (rational2BallP (getPrecision b1) q2) 
+    leqA (b1, q2) = leq b1 (rational2BallP (getPrecision b1) q2) 
 
-instance HasOrder Rational MPBall where
-    type OrderCompareType Rational MPBall = Maybe Bool
-    lessThan q1 b2 = lessThan (rational2BallP (getPrecision b2) q1) b2
-    leq q1 b2 = leq (rational2BallP (getPrecision b2) q1) b2
+instance HasOrderA (->) Rational MPBall where
+    type OrderCompareTypeA (->) Rational MPBall = Maybe Bool
+    lessThanA (q1, b2) = lessThan (rational2BallP (getPrecision b2) q1) b2
+    leqA (q1, b2) = leq (rational2BallP (getPrecision b2) q1) b2
 
 
-instance CanNeg MPBall where
-    neg (MPBall x1 e1) = MPBall (MP.neg x1) e1
+instance CanNegA (->) MPBall where
+    negA (MPBall x1 e1) = MPBall (MP.neg x1) e1
 
 instance CanNegSameType MPBall
 
-instance CanAbs MPBall where
-    abs (MPBall x1 e1) = MPBall (MP.abs x1) e1
+instance CanAbsA (->) MPBall where
+    absA (MPBall x1 e1) = MPBall (MP.abs x1) e1
 
 instance CanAbsSameType MPBall
 
-instance CanRecip MPBall where
-    recip b = 1 / b
+instance CanRecipA (->) MPBall where
+    recipA b = 1 / b
 
 instance CanRecipSameType MPBall
 
-instance CanAdd MPBall MPBall where
-    add (MPBall x1 e1) (MPBall x2 e2) =
+instance CanAddA (->) MPBall MPBall where
+    addA (MPBall x1 e1, MPBall x2 e2) =
         MPBall sumUp ((sumUp `EB.subMP` sumDn) + e1 + e2)
         where
         sumUp = MP.addUp x1 x2
@@ -238,8 +238,8 @@ instance CanSubThis MPBall MPBall
 
 instance CanSubSameType MPBall
 
-instance CanMul MPBall MPBall where
-    mul (MPBall x1 e1) (MPBall x2 e2) =
+instance CanMulA (->) MPBall MPBall where
+    mulA (MPBall x1 e1, MPBall x2 e2) =
         MPBall x12Up (e12 + e1*(EB.absMP x2) + e2*(EB.absMP x1) + e1*e2)
         where
         x12Up = MP.mulUp x1 x2 
@@ -250,8 +250,8 @@ instance CanMulBy MPBall MPBall
 
 instance CanMulSameType MPBall
 
-instance CanDiv MPBall MPBall where
-    div (MPBall x1 e1) b2@(MPBall x2 e2)
+instance CanDivA (->) MPBall MPBall where
+    divA (MPBall x1 e1, b2@(MPBall x2 e2))
         | isNonZero b2 =
             MPBall x12Up err
         | otherwise =
@@ -296,15 +296,15 @@ piBallP p = MPBall piUp (piUp `EB.subMP` piDown)
 
 {- Ball-Integer operations -}
 
-instance CanAdd Integer MPBall where
-    type AddType Integer MPBall = MPBall
-    add a b = (integer2BallP (getPrecision b) a) + b
+instance CanAddA (->) Integer MPBall where
+    type AddTypeA (->) Integer MPBall = MPBall
+    addA (a, b) = (integer2BallP (getPrecision b) a) + b
 
 instance CanSub Integer MPBall
 
-instance CanAdd MPBall Integer where
-    type AddType MPBall Integer = MPBall
-    add a b = a + (integer2BallP (getPrecision a) b)
+instance CanAddA (->) MPBall Integer where
+    type AddTypeA (->) MPBall Integer = MPBall
+    addA (a, b) = a + (integer2BallP (getPrecision a) b)
 
 instance CanAddThis MPBall Integer
 
@@ -312,37 +312,37 @@ instance CanSub MPBall Integer
 
 instance CanSubThis MPBall Integer
 
-instance CanMul Integer MPBall where
-    type MulType Integer MPBall = MPBall
-    mul a b = (integer2BallP (getPrecision b) a) * b
+instance CanMulA (->) Integer MPBall where
+    type MulTypeA (->) Integer MPBall = MPBall
+    mulA (a, b) = (integer2BallP (getPrecision b) a) * b
 
-instance CanMul MPBall Integer where
-    type MulType MPBall Integer = MPBall
-    mul a b = a * (integer2BallP (getPrecision a) b)
+instance CanMulA (->) MPBall Integer where
+    type MulTypeA (->) MPBall Integer = MPBall
+    mulA (a, b) = a * (integer2BallP (getPrecision a) b)
 
 instance CanMulBy MPBall Integer
 
-instance CanDiv Integer MPBall where
-    type DivType Integer MPBall = MPBall
-    div a b = (integer2BallP (getPrecision b) a) / b
+instance CanDivA (->) Integer MPBall where
+    type DivTypeA (->) Integer MPBall = MPBall
+    divA (a, b) = (integer2BallP (getPrecision b) a) / b
 
-instance CanDiv MPBall Integer where
-    type DivType MPBall Integer = MPBall
-    div a b = a / (integer2BallP (getPrecision a) b)
+instance CanDivA (->) MPBall Integer where
+    type DivTypeA (->) MPBall Integer = MPBall
+    divA (a, b) = a / (integer2BallP (getPrecision a) b)
 
 instance CanDivBy MPBall Integer
 
 {- Ball-Rational operations -}
 
-instance CanAdd Rational MPBall where
-    type AddType Rational MPBall = MPBall
-    add a b = (rational2BallP (getPrecision b) a) + b
+instance CanAddA (->) Rational MPBall where
+    type AddTypeA (->) Rational MPBall = MPBall
+    addA (a, b) = (rational2BallP (getPrecision b) a) + b
 
 instance CanSub Rational MPBall
 
-instance CanAdd MPBall Rational where
-    type AddType MPBall Rational = MPBall
-    add a b = a + (rational2BallP (getPrecision a) b)
+instance CanAddA (->) MPBall Rational where
+    type AddTypeA (->) MPBall Rational = MPBall
+    addA (a, b) = a + (rational2BallP (getPrecision a) b)
 
 instance CanAddThis MPBall Rational
 
@@ -350,23 +350,23 @@ instance CanSub MPBall Rational
 
 instance CanSubThis MPBall Rational
 
-instance CanMul Rational MPBall where
-    type MulType Rational MPBall = MPBall
-    mul a b = (rational2BallP (getPrecision b) a) * b
+instance CanMulA (->) Rational MPBall where
+    type MulTypeA (->) Rational MPBall = MPBall
+    mulA (a, b) = (rational2BallP (getPrecision b) a) * b
 
-instance CanMul MPBall Rational where
-    type MulType MPBall Rational = MPBall
-    mul a b = a * (rational2BallP (getPrecision a) b)
+instance CanMulA (->) MPBall Rational where
+    type MulTypeA (->) MPBall Rational = MPBall
+    mulA (a, b) = a * (rational2BallP (getPrecision a) b)
 
 instance CanMulBy MPBall Rational
 
-instance CanDiv Rational MPBall where
-    type DivType Rational MPBall = MPBall
-    div a b = (rational2BallP (getPrecision b) a) / b
+instance CanDivA (->) Rational MPBall where
+    type DivTypeA (->) Rational MPBall = MPBall
+    divA (a, b) = (rational2BallP (getPrecision b) a) / b
 
-instance CanDiv MPBall Rational where
-    type DivType MPBall Rational = MPBall
-    div a b = a / (rational2BallP (getPrecision a) b)
+instance CanDivA (->) MPBall Rational where
+    type DivTypeA (->) MPBall Rational = MPBall
+    divA (a, b) = a / (rational2BallP (getPrecision a) b)
 
 instance CanDivBy MPBall Rational
 
@@ -439,15 +439,15 @@ getCentreAndErrorBall x = (cB,eB)
 
 {- common functions -}
 
-instance CanSqrt MPBall where
-    sqrt x = monotoneFromApprox MP.sqrtDown MP.sqrtUp x     
+instance CanSqrtA (->) MPBall where
+    sqrtA x = monotoneFromApprox MP.sqrtDown MP.sqrtUp x     
         
-instance CanExp MPBall where
-    exp x = monotoneFromApprox MP.expDown MP.expUp x     
+instance CanExpA (->) MPBall where
+    expA x = monotoneFromApprox MP.expDown MP.expUp x     
         
-instance CanSineCosine MPBall where
-    sin = sinB 1
-    cos = cosB 1
+instance CanSineCosineA (->) MPBall where
+    sinA = sinB 1
+    cosA = cosB 1
 
 
 sinB :: Integer -> MPBall -> MPBall

@@ -57,11 +57,8 @@ toDoubleDown :: MPFloat -> Double
 toDoubleDown = MPLow.toDoubleA MPLow.Down
     
 instance HasEq MPFloat MPFloat where
-    equalTo = (P.==)
 
 instance HasOrder MPFloat MPFloat where
-    lessThan = (P.<)
-    leq = (P.<=)
 
 {- constants -}
 
@@ -81,8 +78,8 @@ integerDown :: Precision -> Integer -> MPFloat
 integerDown p i = rationalDown p (P.fromInteger i)
     
     
-instance HasIntegers MPFloat where
-    integer n =
+instance HasIntegersA (->) MPFloat where
+    integerA n =
         findExact $ map upDown $ drop (toInt 4) standardPrecisions
         where
         upDown p = (integerDown p n, integerUp p n)
