@@ -1,9 +1,11 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE UndecidableInstances, TypeOperators, ConstraintKinds #-}
 module AERN2.Num.MPBall
     (MPBall(..), getAccuracy, getFiniteAccuracy,
+     HasMPBallsA, HasMPBalls,
+     CanBeMPBallA, mpBallA, mpBallsA, CanBeMPBall, mpBall, mpBalls,
      getPrecision, MP.standardPrecisions, MP.Precision, MP.prec, MP.prec2integer,
      isNonZero,
      toIntegerUp, toIntegerDown, toRationalUp, toRationalDown,
@@ -75,14 +77,30 @@ integer2BallP p x =
     xUp = MP.integerUp p x
     xDn = MP.integerDown p x
 
+type HasMPBallsA to = ConvertibleA to MPBall
+type HasMPBalls = HasMPBallsA (->)
+
+type CanBeMPBallA to a = ConvertibleA to a MPBall
+mpBallA :: (CanBeMPBallA to a) => a `to` MPBall
+mpBallA = convertA
+mpBallsA :: (CanBeMPBallA to a) => [a] `to` [MPBall]
+mpBallsA = convertListA
+type CanBeMPBall a = CanBeMPBallA (->) a
+mpBall :: (CanBeMPBall a) => a -> MPBall
+mpBall = convert
+mpBalls :: (CanBeMPBall a) => [a] -> [MPBall]
+mpBalls = convertList
+
+-- | HasIntegers MPBall, CanBeMPBall Integer
 instance ConvertibleA (->) Integer MPBall where
     convertA x =
         MPBall xMP EB.zero
         where
-        xMP = integer x
+        xMP = convert x
+        
         
 integer2Ball :: Integer -> MPBall
-integer2Ball = integer
+integer2Ball = convert
 
 toIntegerUp :: MPBall -> Integer
 toIntegerUp x = ceiling $ toRationalUp x

@@ -66,10 +66,10 @@ zero :: MPFloat
 zero = MPLow.zero
     
 one :: MPFloat
-one = integer 1
+one = convert 1
     
 two :: MPFloat
-two = integer 2
+two = convert 2
     
 integerUp :: Precision -> Integer -> MPFloat
 integerUp p i = rationalUp p (P.fromInteger i)

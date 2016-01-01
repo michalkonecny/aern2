@@ -1,10 +1,11 @@
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, TypeOperators, ConstraintKinds, FlexibleContexts #-}
 module AERN2.Num.Complex 
 (
-    HasComplexA, complexA, complexListA, HasComplex, complex, complexList,
     Complex(..), complexI,
     complex2balls,
     showComplex,
+    HasComplexA, HasComplex,
+    CanBeComplexA, complexA, complexListA, CanBeComplex, complex, complexList,
     integer2Complex, rational2Complex, cauchyReal2Complex
 )
 where
@@ -14,27 +15,12 @@ import AERN2.Num.CauchyReal
 import AERN2.Num.MPBall
 import AERN2.Num.Accuracy
 
-type HasComplexA to = ConvertibleA to Complex
-complexA :: (HasComplexA to a) => Complex `to` a
-complexA = convertA
-complexListA :: (HasComplexA to a) => [Complex] `to` [a]
-complexListA = convertListA
-
-type HasComplex = HasComplexA (->)
-    
-complex :: (HasComplex a) => Complex -> a
-complex = convert
-complexList :: (HasComplex a) => [Complex] -> [a]
-complexList = convertList
-    
-instance ConvertibleA (->) Complex Complex where convertA = id; convertListA = id
-
 data Complex = CauchyReal :+ CauchyReal 
 
 infixr 5 :+
 
 complexI :: Complex
-complexI = (integer 0) :+ (integer 1)
+complexI = (cauchyReal 0) :+ (cauchyReal 1)
 
 complex2balls :: Complex -> Accuracy -> (MPBall, MPBall)
 complex2balls (r :+ i) a = 
@@ -44,24 +30,42 @@ showComplex :: Accuracy -> Complex -> String
 showComplex a (r :+ i) = 
     "(" ++ show (cauchyReal2ball r a) ++ ":+" ++ show (cauchyReal2ball i a) ++ ")"
 
+instance ConvertibleA (->) Complex Complex where convertA = id; convertListA = id
+
+type HasComplexA to = ConvertibleA to Complex
+type HasComplex = HasComplexA (->)
+
+type CanBeComplexA to a = ConvertibleA to a Complex
+complexA :: (CanBeComplexA to a) => a `to` Complex
+complexA = convertA
+complexListA :: (CanBeComplexA to a) => [a] `to` [Complex]
+complexListA = convertListA
+type CanBeComplex a = CanBeComplexA (->) a
+complex :: (CanBeComplex a) => a -> Complex
+complex = convert
+complexList :: (CanBeComplex a) => [a] -> [Complex]
+complexList = convertList
+
+-- | HasIntegers Complex, CanBeComplex Integer
 instance ConvertibleA (->) Integer Complex where
     convertA n =
-        (integer n) :+ (integer 0)
+        (cauchyReal n) :+ (cauchyReal 0)
 
 integer2Complex :: Integer -> Complex
-integer2Complex = integer
+integer2Complex = convert
 
+-- | HasRationals Complex, CanBeComplex Rational
 instance ConvertibleA (->) Rational Complex where
-    convertA q = (rational q) :+ (integer 0)
+    convertA q = (cauchyReal q) :+ (cauchyReal 0)
 
 rational2Complex :: Rational -> Complex
-rational2Complex = rational
+rational2Complex = convert
 
 instance ConvertibleA (->) CauchyReal Complex where
-    convertA r = r :+ (integer 0)
+    convertA r = r :+ (cauchyReal 0)
 
 cauchyReal2Complex :: CauchyReal -> Complex
-cauchyReal2Complex = cauchyReal
+cauchyReal2Complex = convert
 
 {- Comparison of complex numbers -}
 
@@ -73,46 +77,46 @@ instance HasOrderA (->) Complex Complex where
     leqA (r1 :+ i1, r2 :+ i2) = (r1 <= r2 && i1 <= i2)
 
 instance HasEqA (->) Complex Integer where
-    equalToA (c, n) = equalTo c (integer n :: Complex) 
+    equalToA (c, n) = equalTo c (complex n) 
 
 instance HasOrderA (->) Complex Integer where
-    lessThanA (c, n) = lessThan c (integer n :: Complex) 
-    leqA (c, n) = leq c (integer n :: Complex) 
+    lessThanA (c, n) = lessThan c (complex n) 
+    leqA (c, n) = leq c (complex n) 
 
 instance HasEqA (->) Integer Complex where
-    equalToA (n, c) = equalTo (integer n :: Complex) c 
+    equalToA (n, c) = equalTo (complex n) c 
 
 instance HasOrderA (->) Integer Complex where
-    lessThanA (n, c) = lessThan (integer n :: Complex) c 
-    leqA (n, c) = leq (integer n :: Complex) c
+    lessThanA (n, c) = lessThan (complex n) c 
+    leqA (n, c) = leq (complex n) c
 
 instance HasEqA (->) Complex Rational where
-    equalToA (c, n) = equalTo c (rational n :: Complex) 
+    equalToA (c, n) = equalTo c (complex n) 
 
 instance HasOrderA (->) Complex Rational where
-    lessThanA (c, n) = lessThan c (rational n :: Complex) 
-    leqA (c, n) = leq c (rational n :: Complex) 
+    lessThanA (c, n) = lessThan c (complex n) 
+    leqA (c, n) = leq c (complex n) 
 
 instance HasEqA (->) Rational Complex where
-    equalToA (n, c) = equalTo (rational n :: Complex) c 
+    equalToA (n, c) = equalTo (complex n) c 
 
 instance HasOrderA (->) Rational Complex where
-    lessThanA (n, c) = lessThan (rational n :: Complex) c 
-    leqA (n, c) = leq (rational n :: Complex) c
+    lessThanA (n, c) = lessThan (complex n) c 
+    leqA (n, c) = leq (complex n) c
 
 instance HasEqA (->) Complex CauchyReal where
-    equalToA (c, n) = equalTo c (cauchyReal n :: Complex) 
+    equalToA (c, n) = equalTo c (complex n) 
 
 instance HasOrderA (->) Complex CauchyReal where
-    lessThanA (c, n) = lessThan c (cauchyReal n :: Complex) 
-    leqA (c, n) = leq c (cauchyReal n :: Complex) 
+    lessThanA (c, n) = lessThan c (complex n) 
+    leqA (c, n) = leq c (complex n) 
 
 instance HasEqA (->) CauchyReal Complex where
-    equalToA (n, c) = equalTo (cauchyReal n :: Complex) c 
+    equalToA (n, c) = equalTo (complex n) c 
 
 instance HasOrderA (->) CauchyReal Complex where
-    lessThanA (n, c) = lessThan (cauchyReal n :: Complex) c 
-    leqA (n, c) = leq (cauchyReal n :: Complex) c
+    lessThanA (n, c) = lessThan (complex n) c 
+    leqA (n, c) = leq (complex n) c
 
 {- Operations among Complex numbers -}
 

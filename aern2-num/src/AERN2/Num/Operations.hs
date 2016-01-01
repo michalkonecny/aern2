@@ -7,9 +7,12 @@ module AERN2.Num.Operations
     fromInt, toInt,
     ArrowConvert(..), Fn2Arrow, fn2arrow, Arrow2Fn, arrow2fn,
     ConvertibleA(..), Convertible, convert, convertList,
-    HasIntsA, intA, intsA, HasInts, int, intDefault, ints,
-    HasIntegersA, integerA, integersA, HasIntegers, integer, integerDefault, integers, 
-    HasRationalsA, rationalA, rationalsA, HasRationals, rational, rationalDefault, rationals,
+    HasIntsA, HasInts, fromIntDefault, 
+    CanBeIntA, intA, intsA, CanBeInt, int, intDefault, ints,
+    HasIntegersA, HasIntegers, fromIntegerDefault, 
+    CanBeIntegerA, integerA, integersA, CanBeInteger, integer, integerDefault, integers, 
+    HasRationalsA, HasRationals, fromRationalDefault, 
+    CanBeRationalA, rationalA, rationalsA, CanBeRational, rational, rationalDefault, rationals,
     HasEqA(..), HasOrderA(..),
     HasEq, HasOrder, equalTo, notEqualTo, lessThan, leq, greaterThan, geq,
     (==), (/=), (>), (<), (<=), (>=),    
@@ -113,66 +116,97 @@ convert = convertA
 convertList :: (Convertible a b) => [a] -> [b]
 convertList = map convert
 
+instance ConvertibleA (->) Int Int where convertA = id; convertListA = id
+instance ConvertibleA (->) Integer Integer where convertA = id; convertListA = id
+instance ConvertibleA (->) Rational Rational where convertA = id; convertListA = id
 
+{-|
+    This is useful so that 'convert' can be used as a replacement 
+    for 'P.fromInteger' when all integer literals are of type Integer.
+    For example, we can say @cauchyReal2ball (convert 1)@.
+-}
 type HasIntegersA to = ConvertibleA to Integer
-integerA :: (HasIntegersA to a) => Integer `to` a
+type HasIntegers = HasIntegersA (->)
+fromIntegerDefault :: (Num a) => Integer -> a
+fromIntegerDefault = P.fromInteger
+
+-- | ie HasIntegers Int
+instance ConvertibleA (->) Integer Int where convertA = toInt; convertListA = convertList
+-- | ie HasIntegers Rational
+instance ConvertibleA (->) Integer Rational where convertA = fromIntegerDefault; convertListA = convertList
+
+type CanBeIntegerA to a = ConvertibleA to a Integer
+integerA :: (CanBeIntegerA to a) => a `to` Integer
 integerA = convertA
-integersA :: (HasIntegersA to a) => [Integer] `to` [a]
+integersA :: (CanBeIntegerA to a) => [a] `to` [Integer]
 integersA = convertListA
 
-{-| 
-    This is useful for embedding integers into other types
-    when using the monomorphic fromInteger.
+{-|
+    This is useful for converting int obtained eg by 'length' to integer,
+    so that it can be easily mixed with Integers.
 -}
-type HasIntegers = HasIntegersA (->)
-integer :: (HasIntegers a) => Integer -> a
+type CanBeInteger a = CanBeIntegerA (->) a
+integer :: (CanBeInteger a) => a -> Integer
 integer = convert
-integerDefault :: (Num a) => Integer -> a
-integerDefault n = P.fromInteger n 
-integers :: (HasIntegers a) => [Integer] -> [a]
+integerDefault :: (Integral a) => a -> Integer
+integerDefault = P.toInteger
+integers :: (CanBeInteger a) => [a] -> [Integer]
 integers = convertList
 
-instance ConvertibleA (->) Integer Int where convertA = integerDefault; convertListA = convertList
-instance ConvertibleA (->) Integer Integer where convertA = id; convertListA = id
-instance ConvertibleA (->) Integer Rational where convertA = integerDefault; convertListA = convertList
+-- | ie CanBeInteger Int
+instance ConvertibleA (->) Int Integer where convertA = integerDefault; convertListA = convertList
+
 
 type HasIntsA to = ConvertibleA to Int
-intA :: (HasIntsA to a) => Int `to` a
+type HasInts = HasIntsA (->)
+fromIntDefault :: (Num a) => Int -> a
+fromIntDefault = P.fromIntegral
+
+type CanBeIntA to a = ConvertibleA to a Int
+intA :: (CanBeIntA to a) => a `to` Int
 intA = convertA
-intsA :: (HasIntsA to a) => [Int] `to` [a]
+intsA :: (CanBeIntA to a) => [a] `to` [Int]
 intsA = convertListA
 
-type HasInts = HasIntsA (->)
-int :: (HasInts a) => Int -> a
+{-|
+    This is useful for calls such as: @drop (int 1) list@
+-}
+type CanBeInt a = CanBeIntA (->) a
+int :: (CanBeInt a) => a -> Int
 int = convert
-intDefault :: (Num a) => Int -> a
-intDefault = P.fromIntegral
-ints :: (HasInts a) => [Int] -> [a]
+intDefault :: (Integral a) => a -> Int
+intDefault = toInt . P.toInteger
+ints :: (CanBeInt a) => [a] -> [Int]
 ints = convertList
 
-instance ConvertibleA (->) Int Int where convertA = id; convertListA = id
-instance ConvertibleA (->) Int Integer where convertA = intDefault; convertListA = convertList
-instance ConvertibleA (->) Int Rational where convertA = intDefault; convertListA = convertList
 
-{-| 
-    This is useful for embedding rationals into other types
-    when using the monomorphic fromRational. 
+{-|
+    This is useful so that 'convert' can be used as a replacement 
+    for 'P.fromRational' when all rational literals are of type Rational.
+    For example, we can say @cauchyReal2ball (convert 0.5)@.
 -}
 type HasRationalsA to = ConvertibleA to Rational
-rationalA :: (HasRationalsA to a) => Rational `to` a
+type HasRationals = HasRationalsA (->)
+fromRationalDefault :: (Fractional a) => Rational -> a
+fromRationalDefault = P.fromRational
+
+type CanBeRationalA to a = ConvertibleA to a Rational
+rationalA :: (CanBeRationalA to a) => a `to` Rational
 rationalA = convertA
-rationalsA :: (HasRationalsA to a) => [Rational] `to` [a]
+rationalsA :: (CanBeRationalA to a) => [a] `to` [Rational]
 rationalsA = convertListA
 
-type HasRationals = HasRationalsA (->)
-rational :: (HasRationals a) => Rational -> a
+{-|
+    This is useful for calls such as: @drop (rational 1) list@
+-}
+type CanBeRational a = CanBeRationalA (->) a
+rational :: (CanBeRational a) => a -> Rational
 rational = convert
-rationalDefault :: (Fractional a) => Rational -> a
-rationalDefault = P.fromRational 
-rationals :: (HasRationals a) => [Rational] -> [a]
+rationalDefault :: (P.Real a) => a -> Rational
+rationalDefault = P.toRational
+rationals :: (CanBeRational a) => [a] -> [Rational]
 rationals = convertList
 
-instance ConvertibleA (->) Rational Rational where convertA = id; convertListA = id
 
 {- 
     The following mixed-type operators shadow the classic mono-type Prelude versions. 
@@ -404,7 +438,7 @@ sumA :: (ArrowChoice to, CanAddSameTypeA to a, HasIntegersA to a) => [a] `to` a
 sumA = 
     proc list ->
         case list of
-            [] -> integerA -< 0
+            [] -> convertA -< 0
             (x:xs) -> 
                 do
                 a <- sumA -< xs
@@ -481,7 +515,7 @@ productA :: (ArrowChoice to, CanMulSameTypeA to a, HasIntegersA to a) => [a] `to
 productA = 
     proc list ->
         case list of
-            [] -> integerA -< 1
+            [] -> convertA -< 1
             (x:xs) -> 
                 do
                 a <- productA -< xs

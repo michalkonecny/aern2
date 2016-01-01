@@ -7,11 +7,12 @@
 {-# LANGUAGE UndecidableInstances, TypeOperators, ConstraintKinds #-}
 module AERN2.Num.CauchyReal 
 (
-    HasRealsA, cauchyRealA, cauchyRealsA, HasReals, cauchyReal, cauchyReals,
     CauchyReal,
     showCauchyReal,
     mapCauchyRealUnsafe,
     cauchyReal2ball,
+    HasCauchyRealsA, HasCauchyReals,
+    CanBeCauchyRealA, cauchyRealA, cauchyRealsA, CanBeCauchyReal, cauchyReal, cauchyReals,
     integer2CauchyReal, rational2CauchyReal,
     convergent2CauchyReal,
     ensureAccuracyM2, ensureAccuracyM1,
@@ -41,20 +42,8 @@ maybeTrace
     | shouldTrace = trace
     | otherwise = const id
 
-type HasRealsA to = ConvertibleA to CauchyReal
-cauchyRealA :: (HasRealsA to a) => CauchyReal `to` a
-cauchyRealA = convertA
-cauchyRealsA :: (HasRealsA to a) => [CauchyReal] `to` [a]
-cauchyRealsA = convertListA
-
-type HasReals = HasRealsA (->)
-    
-cauchyReal :: (HasReals a) => CauchyReal -> a
-cauchyReal = convert
-cauchyReals :: (HasReals a) => [CauchyReal] -> [a]
-cauchyReals = convertList
-    
 instance ConvertibleA (->) CauchyReal CauchyReal where convertA = id; convertListA = id
+
 
 --class
 --    (RationalLike a, HasReals a, CanAddMulDivScalar a CauchyReal, CanSqrt a, CanExp a, CanSineCosine a)
@@ -103,20 +92,36 @@ seqByPrecision2Cauchy seqByPrecision =
             | getAccuracy b >= i = b
             | otherwise = findAccurate rest
 
+type HasCauchyRealsA to = ConvertibleA to CauchyReal
+type HasCauchyReals = HasCauchyRealsA (->)
 
+type CanBeCauchyRealA to a = ConvertibleA to a CauchyReal
+cauchyRealA :: (CanBeCauchyRealA to a) => a `to` CauchyReal
+cauchyRealA = convertA
+cauchyRealsA :: (CanBeCauchyRealA to a) => [a] `to` [CauchyReal]
+cauchyRealsA = convertListA
+type CanBeCauchyReal a = CanBeCauchyRealA (->) a
+cauchyReal :: (CanBeCauchyReal a) => a -> CauchyReal
+cauchyReal = convert
+cauchyReals :: (CanBeCauchyReal a) => [a] -> [CauchyReal]
+cauchyReals = convertList
+    
+
+-- | HasIntegers CauchyReal, CanBeCauchyReal Integer
 instance ConvertibleA (->) Integer CauchyReal where
     convertA n =
         seqByPrecision2Cauchy $ \ p -> integer2BallP p n 
 
 integer2CauchyReal :: Integer -> CauchyReal
-integer2CauchyReal = integer
+integer2CauchyReal = convert
 
+-- | HasRationals CauchyReal, CanBeCauchyReal Rational
 instance ConvertibleA (->) Rational CauchyReal where
     convertA q =
         seqByPrecision2Cauchy $ \ p -> rational2BallP p q 
 
 rational2CauchyReal :: Rational -> CauchyReal
-rational2CauchyReal = rational
+rational2CauchyReal = convert
 
 pi :: CauchyReal
 pi = seqByPrecision2Cauchy (\ p -> piBallP p)
@@ -157,32 +162,32 @@ instance HasOrderA (->) CauchyReal CauchyReal where
         tryStandardCompareAccuracies [r1,r2] (\[b1,b2] -> b1 `leq` b2)
 
 instance HasEqA (->) Integer CauchyReal where
-    equalToA (n, r) = equalTo ((integer n) :: CauchyReal) r
+    equalToA (n, r) = equalTo ((convert n) :: CauchyReal) r
 
 instance HasOrderA (->) Integer CauchyReal where
-    lessThanA (n, r) = lessThan ((integer n) :: CauchyReal) r
-    leqA (n, r) = leq ((integer n) :: CauchyReal) r
+    lessThanA (n, r) = lessThan ((convert n) :: CauchyReal) r
+    leqA (n, r) = leq ((convert n) :: CauchyReal) r
     
 instance HasEqA (->) CauchyReal Integer where
-    equalToA (r, n) = equalTo r ((integer n) :: CauchyReal)
+    equalToA (r, n) = equalTo r ((convert n) :: CauchyReal)
 
 instance HasOrderA (->) CauchyReal Integer where
-    lessThanA (r, n) = lessThan r ((integer n) :: CauchyReal)
-    leqA (r, n) = leq r ((integer n) :: CauchyReal)
+    lessThanA (r, n) = lessThan r ((convert n) :: CauchyReal)
+    leqA (r, n) = leq r ((convert n) :: CauchyReal)
     
 instance HasEqA (->) Rational CauchyReal where
-    equalToA (q, r) = equalTo ((rational q) :: CauchyReal) r
+    equalToA (q, r) = equalTo ((convert q) :: CauchyReal) r
 
 instance HasOrderA (->) Rational CauchyReal where
-    lessThanA (q, r) = lessThan ((rational q) :: CauchyReal) r
-    leqA (q, r) = leq ((rational q) :: CauchyReal) r
+    lessThanA (q, r) = lessThan ((convert q) :: CauchyReal) r
+    leqA (q, r) = leq ((convert q) :: CauchyReal) r
     
 instance HasEqA (->) CauchyReal Rational where
-    equalToA (r, q) = equalTo r ((rational q) :: CauchyReal)
+    equalToA (r, q) = equalTo r ((convert q) :: CauchyReal)
 
 instance HasOrderA (->) CauchyReal Rational where
-    lessThanA (r, q) = lessThan r ((rational q) :: CauchyReal)
-    leqA (r, q) = leq r ((rational q) :: CauchyReal)
+    lessThanA (r, q) = lessThan r ((convert q) :: CauchyReal)
+    leqA (r, q) = leq r ((convert q) :: CauchyReal)
 
 pickNonZeroReal :: [(CauchyReal, a)] -> (CauchyReal, a)
 pickNonZeroReal rvs =

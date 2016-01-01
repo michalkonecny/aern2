@@ -9,7 +9,7 @@ ball1 :: MPBall
 ball1 = rationalBall2BallP (prec 1000) (2.0,1/300) 
 
 ball2 :: MPBall
-ball2 = integer (5^100)
+ball2 = mpBall (5^100)
 
 balladd :: MPBall
 balladd = ball1 + ball1
@@ -27,7 +27,7 @@ ballComp2 :: Maybe Bool
 ballComp2 = ball1 == ball1
 
 cauchyThird :: CauchyReal
-cauchyThird = rational (1/3) 
+cauchyThird = cauchyReal (1/3) 
 
 cauchyThirdWithAccuracy :: Accuracy -> MPBall
 cauchyThirdWithAccuracy = cauchyReal2ball cauchyThird
