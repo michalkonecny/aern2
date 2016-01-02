@@ -383,7 +383,7 @@ instance (HasEqA (->) a a, EqCompareTypeA (->) a a ~ Bool) => HasEqA (->) [a] [a
 
 {- order -}
 
-class (Arrow to, HasBoolsA to (OrderCompareTypeA to a b)) => HasOrderA to a b where
+class (Arrow to, BoolA to (OrderCompareTypeA to a b)) => HasOrderA to a b where
     type OrderCompareTypeA to a b
     type OrderCompareTypeA to a b = Bool -- default
     lessThanA :: (a,b) `to` OrderCompareTypeA to a b

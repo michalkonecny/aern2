@@ -49,9 +49,9 @@ instance ArrowConvert [CauchyReal] (->) CauchyReal [CauchyReal] (->) CauchyReal 
 
 {- Direct evaluation using Complex -}
 
---instance RealA (->) (Complex CauchyReal)
---
---instance ComplexA CauchyReal (->) (Complex CauchyReal) where
+instance RealA (->) (Complex CauchyReal)
+
+instance ComplexA (->) (Complex CauchyReal)
 
 instance ArrowConvert [Complex CauchyReal] (->) (Complex CauchyReal) [(Complex CauchyReal)] (->) (Complex CauchyReal) where
     arrow2arrow = id
