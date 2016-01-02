@@ -171,6 +171,7 @@ instance CanDivBy Complex Complex
 instance CanDivSameType Complex
 
 instance Ring Complex
+instance Field Complex
 
 {- Complex-Integer operations -}
 
