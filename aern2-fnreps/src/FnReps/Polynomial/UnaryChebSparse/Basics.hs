@@ -54,7 +54,7 @@ type Degree = Integer
 
 type Terms = Map.Map Degree MPBall
 terms_size :: Terms -> Integer
-terms_size = fromInt . Map.size
+terms_size = integer . Map.size
 terms_empty :: Terms
 terms_empty = Map.empty
 terms_degree :: Terms -> Degree

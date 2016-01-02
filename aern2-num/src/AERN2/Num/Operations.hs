@@ -4,7 +4,6 @@ module AERN2.Num.Operations
 (
     module Prelude, (.), id,
     fromInteger, fromRational, ifThenElse, 
-    fromInt, toInt,
     ArrowConvert(..), Fn2Arrow, fn2arrow, fn2arrowNamed, Arrow2Fn, arrow2fn,
     ConvertibleA(..), convertListNamedA, Convertible, convert, convertList,
     HasIntsA, HasInts, fromIntDefault, 
@@ -153,7 +152,7 @@ fromIntegerDefault = P.fromInteger
 
 -- | ie HasIntegers Int
 instance ConvertibleA (->) Integer Int where convertA = toInt; convertListA = convertList
--- | ie HasIntegers Rational
+-- | ie HasIntegers Rational, CanBeRational Integer
 instance ConvertibleA (->) Integer Rational where convertA = fromIntegerDefault; convertListA = convertList
 
 type CanBeIntegerA to a = ConvertibleA to a Integer
@@ -181,11 +180,13 @@ integers = convertList
 -- | ie CanBeInteger Int
 instance ConvertibleA (->) Int Integer where convertA = integerDefault; convertListA = convertList
 
-
 type HasIntsA to = ConvertibleA to Int
 type HasInts = HasIntsA (->)
 fromIntDefault :: (Num a) => Int -> a
 fromIntDefault = P.fromIntegral
+
+-- | ie HasInts Rational, CanBeRational Int
+instance ConvertibleA (->) Int Rational where convertA = fromIntDefault; convertListA = convertList
 
 type CanBeIntA to a = ConvertibleA to a Int
 intA :: (CanBeIntA to a) => a `to` Int
@@ -239,7 +240,6 @@ rationalDefault :: (P.Real a) => a -> Rational
 rationalDefault = P.toRational
 rationals :: (CanBeRational a) => [a] -> [Rational]
 rationals = convertList
-
 
 {- 
     The following mixed-type operators shadow the classic mono-type Prelude versions. 

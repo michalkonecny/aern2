@@ -49,11 +49,11 @@ instance ArrowConvert [CauchyReal] (->) CauchyReal [CauchyReal] (->) CauchyReal 
 
 {- Direct evaluation using Complex -}
 
-instance RealA (->) Complex
+--instance RealA (->) (Complex CauchyReal)
+--
+--instance ComplexA CauchyReal (->) (Complex CauchyReal) where
 
-instance ComplexA (->) Complex where
-
-instance ArrowConvert [Complex] (->) Complex [Complex] (->) Complex where
+instance ArrowConvert [Complex CauchyReal] (->) (Complex CauchyReal) [(Complex CauchyReal)] (->) (Complex CauchyReal) where
     arrow2arrow = id
 
 {- TODO The Interval type should move somewhere to aern-num -}

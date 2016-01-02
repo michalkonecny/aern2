@@ -94,8 +94,8 @@ piA :: (HasCauchyRealsA to r) => () `to` r
 piA = proc () -> convertA -< pi -- TODO: use convertNamedA instead and add the name "pi"
 
 class 
-    (RealA to c, HasComplexA to c) => 
-    ComplexA to c
+    (RealA to c, HasComplexA r to c) => 
+    ComplexA r to c
 
 class (FieldA to (IntervalE ri)) => RationalIntervalA to ri where
     type IntervalE ri

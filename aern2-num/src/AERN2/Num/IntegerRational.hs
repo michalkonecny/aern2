@@ -34,11 +34,11 @@ instance HasEqA (->) Rational Rational where
 instance HasOrderA (->) Rational Rational where
 
 instance HasEqA (->) Int Integer where
-    equalToA (a, b) = (fromInt a) P.== b
+    equalToA (a, b) = (integer a) P.== b
 
 instance HasOrderA (->) Int Integer where
-    lessThanA (a, b) = (fromInt a) P.< b
-    leqA (a, b) = (fromInt a) P.<= b
+    lessThanA (a, b) = (integer a) P.< b
+    leqA (a, b) = (integer a) P.<= b
 
 instance HasEqA (->) Integer Int where
     equalToA (a, b) = b == a
@@ -63,11 +63,11 @@ instance HasOrderA (->) Rational Integer where
     leqA (a, b) = geq b a
 
 instance HasEqA (->) Int Rational where
-    equalToA (a, b) = (P.fromInteger $ fromInt a) P.== b
+    equalToA (a, b) = (rational a) P.== b
 
 instance HasOrderA (->) Int Rational where
-    lessThanA (a, b) = (P.fromInteger $ fromInt a) P.< b
-    leqA (a, b) = (P.fromInteger $ fromInt a) P.<= b
+    lessThanA (a, b) = (rational a) P.< b
+    leqA (a, b) = (rational a) P.<= b
 
 instance HasEqA (->) Rational Int where
     equalToA (a, b) = equalTo b a

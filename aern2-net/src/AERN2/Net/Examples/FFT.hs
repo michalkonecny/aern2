@@ -1,10 +1,12 @@
 {-# LANGUAGE Arrows, TypeOperators #-}
 module AERN2.Net.Examples.FFT 
-(
-    fftTestDirect,
-    dftCooleyTukey
-)
+--(
+--    fftTestDirect,
+--    dftCooleyTukey
+--)
 where
+
+{- TODO: re-enable when Complex is defined again
 
 import AERN2.Num
 import Data.String (fromString)
@@ -27,7 +29,7 @@ maybeTrace
 
 fftTestDirect :: Integer -> Accuracy -> [(MPBall, MPBall)]
 fftTestDirect nN ac=
-    map (\ c -> complex2balls c ac) $ fftWithInput ()
+    map (\ c -> complexCR2balls c ac) $ fftWithInput ()
     where
     fftWithInput =
         proc () ->
@@ -69,11 +71,11 @@ dftCooleyTukey nN = ditfft2 nN 1
     * The input list has at least @s*(N-1) + 1@ elements.
 -}
 ditfft2 :: 
-    (ComplexA to r)
+    (ComplexA r to c)
     =>
     Integer {-^ @N@ -} -> 
     Integer {-^ @s@ -} ->
-    [r] `to` [r]
+    [c] `to` [c]
 ditfft2 nN s
     | nN == 1 =
         proc (x0:_) -> 
@@ -107,4 +109,4 @@ ditfft2 nN s
         
     i = complexI
     
-                
+-}

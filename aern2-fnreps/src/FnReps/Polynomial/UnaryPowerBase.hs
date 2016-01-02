@@ -57,7 +57,7 @@ instance CanMulA (->) UnaryPowerBase UnaryPowerBase where
         where
         terms = foldl1 addTerms (map mulTermsLBy $ zip [0..] termsR)
         mulTermsLBy (deg, coeff) = 
-            (replicate (toInt deg) (integer2Ball 0)) ++ map (* coeff) termsL
+            (replicate (int deg) (integer2Ball 0)) ++ map (* coeff) termsL
 
 instance CanMulBy UnaryPowerBase UnaryPowerBase
 instance CanMulSameType UnaryPowerBase
