@@ -622,7 +622,7 @@ class
 type Ring = RingA (->)
 
 class
-    (RingA to a, CanDivSameTypeA to a, CanRecipSameTypeA to a)
+    (RingA to a, CanDivSameTypeA to a, CanRecipSameTypeA to a, HasRationalsA to a)
     =>
     FieldA to a
     

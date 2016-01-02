@@ -15,6 +15,7 @@ module AERN2.Num.CauchyReal
     CanBeCauchyRealA, cauchyRealA, cauchyRealNamedA, cauchyRealsA, cauchyRealsNamedA, CanBeCauchyReal, cauchyReal, cauchyReals,
     integer2CauchyReal, rational2CauchyReal,
     convergent2CauchyReal,
+    compareTryAccuracies,
     ensureAccuracyM2, ensureAccuracyM1,
     pi
 )
@@ -146,8 +147,8 @@ tryStandardCompareAccuracies ::
 tryStandardCompareAccuracies rs rel =
     aux compareTryAccuracies
     where
-    aux (a : rest) =
-        case rel (map ($ a) rs) of
+    aux (ac : rest) =
+        case rel (map ($ ac) rs) of
             Just tv -> tv
             Nothing -> aux rest
     aux [] =

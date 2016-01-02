@@ -102,6 +102,14 @@ instance ConvertibleA (->) Integer MPBall where
         where
         xMP = convert x
         
+-- | HasRationalsA MPBall, CanBeMPBall Rational
+instance ConvertibleA (->) Rational MPBall where
+    convertA x =
+        case EB.getAccuracy e of
+            A.Exact -> b
+            _ -> error "failed to convert a rational to an exact MPBall"
+        where
+        b@(MPBall _ e) = rational2BallP (MP.prec 100) x
         
 integer2Ball :: Integer -> MPBall
 integer2Ball = convert
