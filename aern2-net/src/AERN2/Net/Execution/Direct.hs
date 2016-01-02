@@ -37,14 +37,10 @@ _anet3directCauchy (x,y,z) p =
 
 {- Direct evaluation using Rational -}
 
-instance RationalA (->) Rational
-
 instance ArrowConvert [Rational] (->) Rational [Rational] (->) Rational where
     arrow2arrow = id
 
 {- Direct evaluation using CauchyReal -}
-
-instance RationalA (->) CauchyReal
 
 instance RealA (->) CauchyReal
 
@@ -52,8 +48,6 @@ instance ArrowConvert [CauchyReal] (->) CauchyReal [CauchyReal] (->) CauchyReal 
     arrow2arrow = id
 
 {- Direct evaluation using Complex -}
-
-instance RationalA (->) Complex
 
 instance RealA (->) Complex
 

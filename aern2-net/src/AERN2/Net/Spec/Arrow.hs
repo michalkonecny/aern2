@@ -4,7 +4,6 @@ module AERN2.Net.Spec.Arrow
 (
     _anet0, _anet1, _anet2, _anet3,
     CanEmbedFnA, embedFnNamedA,
-    RationalA,
     RealA,
     piA,
     ComplexA,
@@ -86,14 +85,8 @@ embedFnNamedA ::
 embedFnNamedA = fn2arrowNamed
 
 
-{-| An arrow enriched with real arithmetic operations. -}
 class
-    (HasRationalsA to r, HasEqA to r r, HasOrderA to r r, RingA to r) 
-    => 
-    RationalA to r
-
-class
-    (RationalA to r, HasCauchyRealsA to r, CanSqrtSameTypeA to r, CanExpSameTypeA to r, CanSineCosineSameTypeA to r) 
+    (FieldA to r, HasCauchyRealsA to r, CanSqrtSameTypeA to r, CanExpSameTypeA to r, CanSineCosineSameTypeA to r) 
     => 
     RealA to r
 
@@ -104,7 +97,7 @@ class
     (RealA to c, HasComplexA to c) => 
     ComplexA to c
 
-class (RationalA to (IntervalE ri)) => RationalIntervalA to ri where
+class (FieldA to (IntervalE ri)) => RationalIntervalA to ri where
     type IntervalE ri
     type IntervalR ri
     getEndpointsA :: ri `to` (IntervalE ri,IntervalE ri)
