@@ -15,6 +15,7 @@ module AERN2.Num.Operations
     HasBoolsA, HasBools, 
     notA, not, 
     CanAndOrA(..), andA, orA, CanAndOr, AndOrType, (&&), (||), and, or,
+    BoolA,
     HasEqA(..), HasOrderA(..),
     HasEq, EqCompareType, HasOrder, OrderCompareType, equalTo, notEqualTo, lessThan, leq, greaterThan, geq,
     (==), (/=), (>), (<), (<=), (>=),    
@@ -260,8 +261,8 @@ infixr 2  ||
 type HasBoolsA to = ConvertibleA to Bool
 type HasBools = HasBoolsA (->)
 
-instance ConvertibleA (->) Bool Bool where convertA = id; convertListA = id 
-instance ConvertibleA (->) Bool (Maybe Bool) where
+instance (ArrowChoice to) => ConvertibleA to Bool Bool where convertA = arr id; convertListA = arr id 
+instance (ArrowChoice to) => ConvertibleA to Bool (Maybe Bool) where
     convertA = arr Just
 
 notA :: (CanNegA to a) => a `to` (NegTypeA to a)
@@ -276,6 +277,7 @@ instance (Arrow to) => CanNegA to (Maybe Bool) where
     negA = arr (fmap P.not)
 
 instance (Arrow to) => CanNegSameTypeA to Bool
+instance (Arrow to) => CanNegSameTypeA to (Maybe Bool)
 
 class Arrow to => CanAndOrA to a b where
     type AndOrTypeA to a b
@@ -309,6 +311,14 @@ and = andA
 or :: (CanAndOrSameType a, HasBools a) => [a] -> a
 or = orA
 
+class
+    (ArrowChoice to, HasBoolsA to a, CanNegSameTypeA to a, CanAndOrSameTypeA to a)
+    => 
+    BoolA to a 
+
+instance (ArrowChoice to) => BoolA to Bool
+instance (ArrowChoice to) => BoolA to (Maybe Bool)
+
 instance (Arrow to) => CanAndOrA to Bool Bool where
     and2A = arr (uncurry (P.&&))
     or2A = arr (uncurry (P.||))
@@ -333,7 +343,7 @@ instance (Arrow to) => CanAndOrA to (Maybe Bool) Bool where
 
 {- equality -}
 
-class Arrow to => HasEqA to a b where
+class (Arrow to, BoolA to (EqCompareTypeA to a b)) => HasEqA to a b where
     type EqCompareTypeA to a b
     type EqCompareTypeA to a b = Bool -- default
     equalToA :: (a,b) `to` (EqCompareTypeA to a b)
@@ -373,7 +383,7 @@ instance (HasEqA (->) a a, EqCompareTypeA (->) a a ~ Bool) => HasEqA (->) [a] [a
 
 {- order -}
 
-class Arrow to => HasOrderA to a b where
+class (Arrow to, HasBoolsA to (OrderCompareTypeA to a b)) => HasOrderA to a b where
     type OrderCompareTypeA to a b
     type OrderCompareTypeA to a b = Bool -- default
     lessThanA :: (a,b) `to` OrderCompareTypeA to a b

@@ -75,11 +75,11 @@ rational2Complex = convert
 
 {- Comparison of complex numbers -}
 
-{- TODO
-
 instance (HasEqA (->) r r) => HasEqA (->) (Complex r) (Complex r) where
     type EqCompareTypeA (->) (Complex r) (Complex r) = EqCompareTypeA (->) r r 
     equalToA (r1 :+ i1, r2 :+ i2) = r1 == r2 && i1 == i2
+
+{- TODO
 
 
 instance HasOrderA (->) (Complex r) (Complex r) where
