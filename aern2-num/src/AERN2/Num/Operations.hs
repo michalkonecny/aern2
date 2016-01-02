@@ -3,7 +3,7 @@
 module AERN2.Num.Operations
 (
     module Prelude, (.), id,
-    fromInteger, fromRational, ifThenElse, 
+    fromInteger, fromRational, ifThenElse,
     ArrowConvert(..), Fn2Arrow, fn2arrow, fn2arrowNamed, Arrow2Fn, arrow2fn,
     ConvertibleA(..), convertListNamedA, Convertible, convert, convertList,
     HasIntsA, HasInts, fromIntDefault, 
@@ -12,6 +12,9 @@ module AERN2.Num.Operations
     CanBeIntegerA, integerA, integerNamedA, integersA, integersNamedA, CanBeInteger, integer, integerDefault, integers, 
     HasRationalsA, HasRationals, fromRationalDefault, 
     CanBeRationalA, rationalA, rationalNamedA, rationalsA, rationalsNamedA, CanBeRational, rational, rationalDefault, rationals,
+    HasBoolsA, HasBools, 
+    notA, not, 
+    CanAndOrA(..), andA, orA, CanAndOr, AndOrType, (&&), (||), and, or,
     HasEqA(..), HasOrderA(..),
     HasEq, EqCompareType, HasOrder, OrderCompareType, equalTo, notEqualTo, lessThan, leq, greaterThan, geq,
     (==), (/=), (>), (<), (<=), (>=),    
@@ -41,12 +44,13 @@ module AERN2.Num.Operations
     CanExpA(..), CanExpSameTypeA,
     CanExp, CanExpSameType, exp,
     CanSineCosineA(..), CanSineCosineSameTypeA,
-    CanSineCosine, CanSineCosineSameType, sin, cos
+    CanSineCosine, CanSineCosineSameType, sin, cos,
+    mapA, zipWithA, foldlA
 )
 where
 
 import Prelude hiding
-    (id, (.),
+    (id, (.), (&&), (||), not, and, or,
      (==),(/=),(<),(>),(<=),(>=),
      (+),(*),(/),(-),(^),sum,product,abs,min,max,
      recip,div,negate,
@@ -69,20 +73,6 @@ ifThenElse :: Bool -> t -> t -> t
 ifThenElse b e1 e2
     | b = e1
     | otherwise = e2
-
-toInt :: Integer -> Int
-toInt i 
-    | iInIntRange = P.fromInteger i
-    | otherwise = error $ "int out of range: " ++ show i 
-    where
-    iInIntRange =
-        i P.>= toInteger (minBound :: Int)
-        &&
-        i P.<= toInteger (maxBound :: Int)
-
-fromInt :: Int -> Integer
-fromInt = P.toInteger
-
 
 class ArrowConvert a1 to1 b1 a2 to2 b2 where 
     arrow2arrow :: (a1 `to1` b1) -> (a2 `to2` b2)
@@ -209,6 +199,15 @@ intDefault = toInt . P.toInteger
 ints :: (CanBeInt a) => [a] -> [Int]
 ints = convertList
 
+toInt :: Integer -> Int
+toInt i 
+    | iInIntRange = P.fromInteger i
+    | otherwise = error $ "int out of range: " ++ show i 
+    where
+    iInIntRange =
+        i P.>= toInteger (minBound :: Int)
+        &&
+        i P.<= toInteger (maxBound :: Int)
 
 {-|
     This is useful so that 'convert' can be used as a replacement 
@@ -245,9 +244,92 @@ rationals = convertList
     The following mixed-type operators shadow the classic mono-type Prelude versions. 
 -}
 
-infixl 8 ^
-infixl 7 *, /
-infixl 6 +, -
+infixr 8  ^
+infixl 7  *, /  -- , ‘quot‘, ‘rem‘, ‘div‘, ‘mod‘  
+infixl 6  +, -
+
+infix  4  ==, /=, <, <=, >=, >
+infixr 3  &&  
+infixr 2  ||  
+--infixl 1  >>, >>=  
+--infixr 1  =<<  
+--infixr 0  $, $!, ‘seq‘ 
+
+{- Booleans, Kleeneans -}
+
+type HasBoolsA to = ConvertibleA to Bool
+type HasBools = HasBoolsA (->)
+
+instance ConvertibleA (->) Bool Bool where convertA = id; convertListA = id 
+instance ConvertibleA (->) Bool (Maybe Bool) where
+    convertA = arr Just
+
+notA :: (CanNegA to a) => a `to` (NegTypeA to a)
+notA = negA
+not :: (CanNeg a) => a -> (NegType a)
+not = neg
+
+instance (Arrow to) => CanNegA to Bool where
+    negA = arr P.not
+
+instance (Arrow to) => CanNegA to (Maybe Bool) where
+    negA = arr (fmap P.not)
+
+instance (Arrow to) => CanNegSameTypeA to Bool
+
+class Arrow to => CanAndOrA to a b where
+    type AndOrTypeA to a b
+    type AndOrTypeA to a b = a
+    and2A :: (a,b) `to` AndOrTypeA to a b
+    or2A :: (a,b) `to` AndOrTypeA to a b
+
+andA :: (ArrowChoice to, CanAndOrSameTypeA to a, HasBoolsA to a) => [a] `to` a
+andA = foldlA and2A True
+orA :: (ArrowChoice to, CanAndOrSameTypeA to a, HasBoolsA to a) => [a] `to` a
+orA = foldlA or2A False
+
+
+type CanAndOr = CanAndOrA (->)
+type AndOrType a b = AndOrTypeA (->) a b
+
+(&&) :: (CanAndOr a b) => a -> b -> AndOrType a b
+(&&) = curry and2A
+(||) :: (CanAndOr a b) => a -> b -> AndOrType a b
+(||) = curry or2A
+
+class
+    (CanAndOrA to a a, AndOrTypeA to a a ~ a)
+    =>
+    CanAndOrSameTypeA to a
+
+type CanAndOrSameType = CanAndOrSameTypeA (->)
+
+and :: (CanAndOrSameType a, HasBools a) => [a] -> a
+and = andA
+or :: (CanAndOrSameType a, HasBools a) => [a] -> a
+or = orA
+
+instance (Arrow to) => CanAndOrA to Bool Bool where
+    and2A = arr (uncurry (P.&&))
+    or2A = arr (uncurry (P.||))
+
+instance (Arrow to) => CanAndOrSameTypeA to Bool
+
+instance (Arrow to) => CanAndOrA to (Maybe Bool) (Maybe Bool) where
+    and2A = arr (\(aM,bM) -> (do a <- aM; b <- bM; Just (a P.&& b)))
+    or2A = arr (\(aM,bM) -> (do a <- aM; b <- bM; Just (a P.|| b)))
+
+instance (Arrow to) => CanAndOrSameTypeA to (Maybe Bool)
+
+instance (Arrow to) => CanAndOrA to Bool (Maybe Bool) where
+    type AndOrTypeA to Bool (Maybe Bool) = Maybe Bool
+    and2A = arr (\(a,bM) -> (do b <- bM; Just (a P.&& b)))
+    or2A = arr (\(a,bM) -> (do b <- bM; Just (a P.|| b)))
+
+instance (Arrow to) => CanAndOrA to (Maybe Bool) Bool where
+    type AndOrTypeA to (Maybe Bool) Bool = Maybe Bool
+    and2A = arr (\(aM,b) -> (do a <- aM; Just (a P.&& b)))
+    or2A = arr (\(aM,b) -> (do a <- aM; Just (a P.|| b)))
 
 {- equality -}
 
@@ -395,11 +477,6 @@ class
     CanNegSameTypeA to a
 
 type CanNegSameType = CanNegSameTypeA (->)
-
-instance (Arrow to) => CanNegA to Bool where
-    negA = arr not
-
-instance (Arrow to) => CanNegSameTypeA to Bool
 
 {- abs -}
 
@@ -696,3 +773,46 @@ class
 
 type CanSineCosineSameType = CanSineCosineSameTypeA (->)
     
+{- Utilities for arrow programming -}
+
+mapA :: (ArrowChoice to) => (Integer -> (a `to` b)) -> ([a] `to` [b])
+mapA processOne = aux 0
+    where
+    aux k =
+        proc xs ->
+            case xs of
+                [] -> returnA -< []
+                (x : xrest) -> 
+                    do
+                    y <- processOne k -< x
+                    yrest <- aux (k P.+ 1) -< xrest
+                    returnA -< y : yrest
+
+zipWithA :: (ArrowChoice to) => (Integer -> ((a,b) `to` c)) -> (([a],[b]) `to` [c])
+zipWithA processOne = aux 0
+    where
+    aux k =
+        proc (xs, ys) ->
+            case (xs, ys) of
+                ([], _) -> returnA -< []
+                (_, []) -> returnA -< []
+                (x : xrest, y : yrest) -> 
+                    do
+                    z <- processOne k -< (x,y)
+                    zrest <- aux (k P.+ 1) -< (xrest, yrest)
+                    returnA -< z : zrest
+
+foldlA :: 
+    (ArrowChoice to, CanAndOrSameTypeA to a, ConvertibleA to b a) 
+    => 
+    ((a,a) `to` a) -> b -> ([a] `to` a)
+foldlA opA b =
+    proc list ->
+        case list of
+            [] -> convertA -< b
+            (x:xs) -> 
+                do
+                a <- foldlA opA b -< xs
+                r <- opA -< (x, a)
+                returnA -< r
+

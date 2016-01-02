@@ -14,8 +14,7 @@ module AERN2.Net.Spec.Arrow
     FnDomE, FnDomR,
     VarName, VarMap,
     RealUnaryFnFromArrowA(..),
-    RealFnFromArrowA(..),
-    mapA, zipWithA
+    RealFnFromArrowA(..)
 )
 where
 
@@ -144,31 +143,3 @@ class (RealUnaryFnA to f) => RealUnaryFnFromArrowA to f where
 class (RealFnA to f) => RealFnFromArrowA to f where
     encloseFn :: (RealA to2 r2) => (VarMap r2 `to2` r2, VarMap (FnDom f)) -> () `to` f
 
-{- Utilities for arrow programming -}
-
-mapA :: (ArrowChoice to) => (Integer -> (a `to` b)) -> ([a] `to` [b])
-mapA processOne = aux 0
-    where
-    aux k =
-        proc xs ->
-            case xs of
-                [] -> returnA -< []
-                (x : xrest) -> 
-                    do
-                    y <- processOne k -< x
-                    yrest <- aux (k + 1) -< xrest
-                    returnA -< y : yrest
-
-zipWithA :: (ArrowChoice to) => (Integer -> ((a,b) `to` c)) -> (([a],[b]) `to` [c])
-zipWithA processOne = aux 0
-    where
-    aux k =
-        proc (xs, ys) ->
-            case (xs, ys) of
-                ([], _) -> returnA -< []
-                (_, []) -> returnA -< []
-                (x : xrest, y : yrest) -> 
-                    do
-                    z <- processOne k -< (x,y)
-                    zrest <- aux (k+1) -< (xrest, yrest)
-                    returnA -< z : zrest
