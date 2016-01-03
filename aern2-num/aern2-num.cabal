@@ -20,10 +20,12 @@ library
     ieee-utils-tempfix >= 0.4,
     convertible >= 1.1,
     haskell-mpfr,
-    arithmoi
+    arithmoi,
+    containers
   ghc-options:     -O2 -Wall  -fno-warn-orphans
   extensions:      
                    MultiParamTypeClasses, 
+                   OverloadedStrings, 
                    RebindableSyntax, 
                    TypeFamilies
   exposed-modules: AERN2.Num
@@ -37,5 +39,6 @@ library
                    AERN2.Num.MPBall,
                    AERN2.Num.MPFloat,
                    AERN2.Num.Norm,
-                   AERN2.Num.Operations
+                   AERN2.Num.Operations,
+                   AERN2.Num.SymbolicArrow
 

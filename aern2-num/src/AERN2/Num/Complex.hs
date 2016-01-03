@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, TypeOperators, ConstraintKinds, FlexibleContexts, UndecidableInstances #-}
+{-# LANGUAGE Arrows, TypeSynonymInstances, FlexibleInstances, TypeOperators, ConstraintKinds, FlexibleContexts, UndecidableInstances #-}
 module AERN2.Num.Complex 
 (
     Complex(..), complexI,
@@ -14,6 +14,8 @@ import AERN2.Num.Operations
 import AERN2.Num.CauchyReal
 import AERN2.Num.MPBall
 import AERN2.Num.Accuracy
+
+import Control.Arrow
 
 data Complex r = r :+ r 
 
@@ -31,16 +33,19 @@ showComplexCR a (r :+ i) =
     "(" ++ show (cauchyReal2ball r a) ++ ":+" ++ show (cauchyReal2ball i a) ++ ")"
 
 instance
-    (ConvertibleA (->) r1 r2)
+    (ConvertibleA to r1 r2)
     => 
-    ConvertibleA (->) (Complex r1) (Complex r2) 
+    ConvertibleA to (Complex r1) (Complex r2) 
     where
-    convertA (r :+ i) = (convert r :+ convert i)
+    convertA =
+        proc (r :+ i) ->
+            do
+            r' <- convertA -< r  
+            i' <- convertA -< i
+            returnA -< (r' :+ i')
 
 type HasComplexA r to = ConvertibleA to (Complex r)
 type HasComplex r = HasComplexA r (->)
-
-
 
 type CanBeComplexA r to a = ConvertibleA to a (Complex r)
 complexA :: (CanBeComplexA r to a) => a `to` (Complex r)
@@ -58,23 +63,44 @@ complexList :: (CanBeComplex r a) => [a] -> [(Complex r)]
 complexList = convertList
 
 -- | HasIntegers (Complex r), CanBeComplex Integer
-instance (HasIntegers r) => ConvertibleA (->) Integer (Complex r) where
-    convertA n =
-        (convert n) :+ (convert 0)
+instance (HasIntegersA to r) => ConvertibleA to Integer (Complex r) where
+    convertA = toComplexA
 
 -- | HasRationals (Complex r), CanBeComplex Rational
-instance (HasRationals r) => ConvertibleA (->) Rational (Complex r) where
-    convertA q = (convert q) :+ (convert 0.0)
+instance (HasRationalsA to r, HasIntegersA to r) => ConvertibleA to Rational (Complex r) where
+    convertA = toComplexA
 
 -- | HasCauchyReals (Complex r), CanBeComplex CauchyReal
-instance (HasCauchyReals r, HasIntegers r) => ConvertibleA (->) CauchyReal (Complex r) where
-    convertA q = (convert q) :+ (convert 0)
+instance (HasCauchyRealsA to r, HasIntegersA to r) => ConvertibleA to CauchyReal (Complex r) where
+    convertA = toComplexA
+
+toComplexA ::
+    (ConvertibleA to a r, HasIntegersA to r)
+    =>
+    a `to` Complex r
+toComplexA =
+    proc x ->
+        do
+        x' <- convertA -< x  
+        z <- convertA -< 0
+        returnA -< (x' :+ z)
 
 {- Comparison of complex numbers -}
 
-instance (HasEqA (->) r r) => HasEqA (->) (Complex r) (Complex r) where
-    type EqCompareTypeA (->) (Complex r) (Complex r) = EqCompareTypeA (->) r r 
-    equalToA (r1 :+ i1, r2 :+ i2) = r1 == r2 && i1 == i2
+instance (HasEqA to r r) => HasEqA to (Complex r) (Complex r) where
+    type EqCompareTypeA to (Complex r) (Complex r) = EqCompareTypeA to r r 
+    equalToA =
+        proc (r1 :+ i1, r2 :+ i2) ->
+{-
+    TODO: introduce the following method for writing arrows using symbolic expressions:
+            [rp| r1 == r2 && i1 == i2)|] -- quasi-quotation
+-}
+--            r1 == r2 && i1 == i2
+            do
+            rEqual <- equalToA -< (r1,r2)
+            iEqual <- equalToA -< (i1,i2)
+            bothEqual <- and2A -< (rEqual, iEqual) 
+            returnA -< bothEqual
 
 instance 
     (HasOrderA (->) r r, HasEqA (->) r r,

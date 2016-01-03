@@ -14,7 +14,7 @@ module AERN2.Num.Operations
     CanBeRationalA, rationalA, rationalNamedA, rationalsA, rationalsNamedA, CanBeRational, rational, rationalDefault, rationals,
     HasBoolsA, HasBools, 
     notA, not, 
-    CanAndOrA(..), andA, orA, CanAndOr, AndOrType, (&&), (||), and, or,
+    CanAndOrA(..), CanAndOrSameTypeA, andA, orA, CanAndOr, CanAndOrSameType, AndOrType, (&&), (||), and, or,
     BoolA,
     HasEqA(..), HasOrderA(..),
     HasEq, EqCompareType, HasOrder, OrderCompareType, equalTo, notEqualTo, lessThan, leq, greaterThan, geq,
@@ -46,7 +46,8 @@ module AERN2.Num.Operations
     CanExp, CanExpSameType, exp,
     CanSineCosineA(..), CanSineCosineSameTypeA,
     CanSineCosine, CanSineCosineSameType, sin, cos,
-    mapA, zipWithA, foldlA
+    mapA, zipWithA, foldlA, sequenceA,
+    IsString, fromString
 )
 where
 
@@ -59,6 +60,7 @@ import Prelude hiding
      pi,sqrt,exp,cos,sin)
 
 import qualified Prelude as P
+import Data.String (IsString(..),fromString)
 
 import Control.Category
 import Control.Arrow
@@ -509,7 +511,7 @@ type CanAbsSameType = CanAbsSameTypeA (->)
 
 {- recip -}
 
-class CanRecipA to a where
+class (Arrow to) => CanRecipA to a where
     type RecipTypeA to a
     type RecipTypeA to a = a -- default
     recipA :: a `to` RecipTypeA to a
@@ -570,7 +572,7 @@ sum = sumA
 
 {- sub -}
 
-class CanSubA to a b where
+class (Arrow to) => CanSubA to a b where
     type SubTypeA to a b :: *
     type SubTypeA to a b = AddTypeA to a (NegTypeA to b)
     subA :: (a,b) `to` SubTypeA to a b
@@ -826,3 +828,11 @@ foldlA opA b =
                 r <- opA -< (x, a)
                 returnA -< r
 
+sequenceA :: (ArrowChoice to) => [(a `to` b)] -> (a `to` [b])
+sequenceA [] = proc _ -> returnA -< []
+sequenceA (f:fs) =
+    proc input ->
+        do
+        r <- f -< input
+        rs <- sequenceA fs -< input
+        returnA -< (r:rs)
