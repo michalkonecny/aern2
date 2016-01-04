@@ -170,6 +170,38 @@ instance HasEqA (->) RealExpr Integer where
     type EqCompareTypeA (->) RealExpr Integer = RealPred
     equalToA (e1,e2) = equalToA (e1, integer2expr e2) 
 
+instance HasEqA (->) Integer RealExpr where
+    type EqCompareTypeA (->) Integer RealExpr = RealPred
+    equalToA (e1,e2) = equalToA (integer2expr e1, e2) 
+
+instance HasOrderA (->) RealExpr Integer where
+    type OrderCompareTypeA (->) RealExpr Integer = RealPred
+    lessThanA (e1,e2) = lessThanA (e1, integer2expr e2) 
+    leqA (e1,e2) = leqA (e1, integer2expr e2) 
+
+instance HasOrderA (->) Integer RealExpr where
+    type OrderCompareTypeA (->) Integer RealExpr = RealPred
+    lessThanA (e1,e2) = lessThanA (integer2expr e1, e2) 
+    leqA (e1,e2) = leqA (integer2expr e1, e2) 
+
+instance HasEqA (->) RealExpr Rational where
+    type EqCompareTypeA (->) RealExpr Rational = RealPred
+    equalToA (e1,e2) = equalToA (e1, rational2expr e2) 
+
+instance HasEqA (->) Rational RealExpr where
+    type EqCompareTypeA (->) Rational RealExpr = RealPred
+    equalToA (e1,e2) = equalToA (rational2expr e1, e2) 
+
+instance HasOrderA (->) RealExpr Rational where
+    type OrderCompareTypeA (->) RealExpr Rational = RealPred
+    lessThanA (e1,e2) = lessThanA (e1, rational2expr e2) 
+    leqA (e1,e2) = leqA (e1, rational2expr e2) 
+
+instance HasOrderA (->) Rational RealExpr where
+    type OrderCompareTypeA (->) Rational RealExpr = RealPred
+    lessThanA (e1,e2) = lessThanA (rational2expr e1, e2) 
+    leqA (e1,e2) = leqA (rational2expr e1, e2) 
+
 
 {- numeric operations -}
 

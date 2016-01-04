@@ -51,12 +51,12 @@ _pred1Direct :: Rational -> Bool
 _pred1Direct x =
     (realPred2arrow _pred1 (Map.fromList [("x",cauchyReal x)]))
 
-_rPredA1Direct :: Rational -> Rational -> Bool
-_rPredA1Direct xO yO =
-    (theArrow (cauchyReal xO, cauchyReal yO))
+_rPredA1Direct :: Rational -> Bool
+_rPredA1Direct xO =
+    (theArrow (cauchyReal xO))
     where
     theArrow =
-        $(predA[|let [x,y]=vars in x <= y && y <= x + x |])
+        $(predA[|let [x]=vars in 1 <= x && x <= 1.5 |])
     
     
 
