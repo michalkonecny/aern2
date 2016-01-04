@@ -1,6 +1,8 @@
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, TemplateHaskell #-}
 {-# OPTIONS_GHC -fno-warn-missing-methods #-}
-module AERN2.Num.SymbolicArrow.TH where
+module AERN2.Num.SymbolicArrow.TH 
+(exprA, predA, vars, R(..))
+where
 
 import Language.Haskell.TH
 import Control.Arrow
@@ -16,7 +18,38 @@ exprA expM =
     e <- expM
     let (eWithVars, varNames) = getVarsAndFillInExpr e []
     eA <- [| (arr (\ $(varTupleP varNames) -> Map.fromList $(varMapList varNames)))  >>> (realExpr2arrow ($(return eWithVars))) |]
+    _ <- varTupleP [] -- useless, only here to avoid an erroneous unused warning
     eT <- [t| (FieldA to r, ConvertibleA to CauchyReal r) => to $(inputType varNames [t|r|]) r  |]
+    return $ SigE eA eT
+    where
+    varMapList varNames =
+        do
+        elems <- mapM mkVarPair varNames
+        return $ ListE elems
+        where
+        mkVarPair varNameS =
+            [| ($(return $ LitE $ StringL varNameS), $(varE (mkName varNameS)) ) |]
+    varTupleP varNames =
+        do
+        return $ TupP $ map mkVarP varNames
+        where
+        mkVarP varNameS =
+            VarP (mkName varNameS)
+    inputType varNames rM =
+        do
+        r <- rM
+        return $ foldr (addR r) (TupleT (length varNames)) varNames
+        where
+        addR r _ prevType = AppT prevType r
+            
+predA :: (Q Exp) -> (Q Exp)
+predA expM = 
+    do
+    e <- expM
+    let (eWithVars, varNames) = getVarsAndFillInExpr e []
+    eA <- [| (arr (\ $(varTupleP varNames) -> Map.fromList $(varMapList varNames)))  >>> (realPred2arrow ($(return eWithVars))) |]
+    _ <- varTupleP [] -- useless, only here to avoid an erroneous unused warning
+    eT <- [t| (FieldA to r, HasCauchyRealsA to r, EqCompareTypeA to r r ~ b, OrderCompareTypeA to r r ~ b, BoolA to b) => to $(inputType varNames [t|r|]) b  |]
     return $ SigE eA eT
     where
     varMapList varNames =
@@ -83,6 +116,7 @@ getVarsAndFillInValD pat body prevVars =
                 where
                 reVar = 
                     AppE (VarE (mkName "AERN2.Num.SymbolicArrow.Expression.var")) (LitE (StringL (show varName)))
+            processPat _ _ = error "AERN2.Num.SymbolicArrow.TH.getVarsAndFillInValD: internal error"
         _ ->
             (pat, body, prevVars)
 

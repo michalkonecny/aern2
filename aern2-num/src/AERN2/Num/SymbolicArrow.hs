@@ -1,4 +1,4 @@
-{-# LANGUAGE Arrows, TemplateHaskell, ScopedTypeVariables, FlexibleContexts #-}
+{-# LANGUAGE Arrows, TemplateHaskell, ScopedTypeVariables, FlexibleContexts, TypeOperators #-}
 module AERN2.Num.SymbolicArrow where
 
 import qualified Data.Map as Map
@@ -46,11 +46,17 @@ _pred1 =
     &&
     (var "x") <= (integer2expr 2) 
 
-{- TODO
-
 
 _pred1Direct :: Rational -> Bool
 _pred1Direct x =
     (realPred2arrow _pred1 (Map.fromList [("x",cauchyReal x)]))
-        
--}
+
+_rPredA1Direct :: Rational -> Rational -> Bool
+_rPredA1Direct xO yO =
+    (theArrow (cauchyReal xO, cauchyReal yO))
+    where
+    theArrow =
+        $(predA[|let [x,y]=vars in x <= y && y <= x + x |])
+    
+    
+
