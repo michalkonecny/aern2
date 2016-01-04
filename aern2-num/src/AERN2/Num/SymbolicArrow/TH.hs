@@ -9,7 +9,6 @@ import Control.Arrow
 import qualified Data.Map as Map
 
 import AERN2.Num.Operations
-import AERN2.Num.CauchyReal
 import AERN2.Num.SymbolicArrow.Expression
 
 exprA :: (Q Exp) -> (Q Exp)
@@ -19,7 +18,7 @@ exprA expM =
     let (eWithVars, varNames) = getVarsAndFillInExpr e []
     eA <- [| (arr (\ $(varTupleP varNames) -> Map.fromList $(varMapList varNames)))  >>> (realExpr2arrow ($(return eWithVars))) |]
     _ <- varTupleP [] -- useless, only here to avoid an erroneous unused warning
-    eT <- [t| (FieldA to r, ConvertibleA to CauchyReal r) => to $(inputType varNames [t|r|]) r  |]
+    eT <- [t| (RealExprA to r) => to $(inputType varNames [t|r|]) r  |]
     return $ SigE eA eT
     where
     varMapList varNames =
@@ -49,7 +48,7 @@ predA expM =
     let (eWithVars, varNames) = getVarsAndFillInExpr e []
     eA <- [| (arr (\ $(varTupleP varNames) -> Map.fromList $(varMapList varNames)))  >>> (realPred2arrow ($(return eWithVars))) |]
     _ <- varTupleP [] -- useless, only here to avoid an erroneous unused warning
-    eT <- [t| (FieldA to r, HasCauchyRealsA to r, EqCompareTypeA to r r ~ b, OrderCompareTypeA to r r ~ b, BoolA to b) => to $(inputType varNames [t|r|]) b  |]
+    eT <- [t| (RealPredA to r b) => to $(inputType varNames [t|r|]) b  |]
     return $ SigE eA eT
     where
     varMapList varNames =
