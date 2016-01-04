@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, TemplateHaskell #-}
 {-# OPTIONS_GHC -fno-warn-missing-methods #-}
 module AERN2.Num.SymbolicArrow.TH 
-(exprA, predA, vars, R(..))
+(exprA, predA, vars)
 where
 
 import Language.Haskell.TH
@@ -120,106 +120,5 @@ getVarsAndFillInValD pat body prevVars =
         _ ->
             (pat, body, prevVars)
 
-vars :: [R]
+vars :: [RealExpr]
 vars = []
-
-data R = R
-instance Ring R
-instance Field R
-instance HasIntegers R
-instance HasRationals R
-instance HasCauchyReals R
-instance HasEqA (->) R R where
-    equalToA = error "R"
-instance HasOrderA (->) R R where
-    lessThanA = error "R"
-    leqA = error "R"
-instance CanNeg R
-instance CanNegSameType R
-instance CanRecip R
-instance CanRecipSameType R
-instance CanAdd R R
-instance CanAddThis R R
-instance CanAddSameType R
-instance CanSub R R
-instance CanSubThis R R
-instance CanSubSameType R
-instance CanMul R R
-instance CanMulBy R R
-instance CanMulSameType R
-instance CanDiv R R
-instance CanDivBy R R
-instance CanDivSameType R
-
-instance CanAddA (->) R Integer where
-    type AddTypeA (->) R Integer = R
-instance CanAddA (->) Integer R where
-    type AddTypeA (->) Integer R = R
-instance CanAddThis R Integer
-
-instance CanSubA (->) R Integer where
-    type SubTypeA (->) R Integer = R
-instance CanSubA (->) Integer R where
-    type SubTypeA (->) Integer R = R
-instance CanSubThis R Integer
-
-instance CanMulA (->) R Integer where
-    type MulTypeA (->) R Integer = R
-instance CanMulA (->) Integer R where
-    type MulTypeA (->) Integer R = R
-instance CanMulBy R Integer
-
-instance CanDivA (->) R Integer where
-    type DivTypeA (->) R Integer = R
-instance CanDivA (->) Integer R where
-    type DivTypeA (->) Integer R = R
-instance CanDivBy R Integer
-
-instance CanAddA (->) R Rational where
-    type AddTypeA (->) R Rational = R
-instance CanAddA (->) Rational R where
-    type AddTypeA (->) Rational R = R
-instance CanAddThis R Rational
-
-instance CanSubA (->) R Rational where
-    type SubTypeA (->) R Rational = R
-instance CanSubA (->) Rational R where
-    type SubTypeA (->) Rational R = R
-instance CanSubThis R Rational
-
-instance CanMulA (->) R Rational where
-    type MulTypeA (->) R Rational = R
-instance CanMulA (->) Rational R where
-    type MulTypeA (->) Rational R = R
-instance CanMulBy R Rational
-
-instance CanDivA (->) R Rational where
-    type DivTypeA (->) R Rational = R
-instance CanDivA (->) Rational R where
-    type DivTypeA (->) Rational R = R
-instance CanDivBy R Rational
-
-instance CanAddA (->) R CauchyReal where
-    type AddTypeA (->) R CauchyReal = R
-instance CanAddA (->) CauchyReal R where
-    type AddTypeA (->) CauchyReal R = R
-instance CanAddThis R CauchyReal
-
-instance CanSubA (->) R CauchyReal where
-    type SubTypeA (->) R CauchyReal = R
-instance CanSubA (->) CauchyReal R where
-    type SubTypeA (->) CauchyReal R = R
-instance CanSubThis R CauchyReal
-
-instance CanMulA (->) R CauchyReal where
-    type MulTypeA (->) R CauchyReal = R
-instance CanMulA (->) CauchyReal R where
-    type MulTypeA (->) CauchyReal R = R
-instance CanMulBy R CauchyReal
-
-instance CanDivA (->) R CauchyReal where
-    type DivTypeA (->) R CauchyReal = R
-instance CanDivA (->) CauchyReal R where
-    type DivTypeA (->) CauchyReal R = R
-instance CanDivBy R CauchyReal
-    
