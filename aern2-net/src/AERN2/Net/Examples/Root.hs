@@ -155,7 +155,7 @@ rootByTrisectionNoNet ::
     Interval Rational {-^ @initX@ -} -> 
     CauchyReal {-^ @x@ -}
 rootByTrisectionNoNet fn initX@(Interval initL _) =
-    convergent2CauchyReal $ aux initX
+    convergent2CauchyReal Nothing $ aux initX
     where
     isDecreasing = fn (cauchyReal initL) > 0
     aux xPrev@(Interval l r) =

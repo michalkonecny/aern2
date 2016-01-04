@@ -109,8 +109,8 @@ _mpBall2cri b =
     ) $
     Interval l r
     where
-    l = convergent2CauchyReal $ repeat lMP
-    r = convergent2CauchyReal $ repeat rMP
+    l = convergent2CauchyReal Nothing $ repeat lMP
+    r = convergent2CauchyReal Nothing $ repeat rMP
     (lMP, rMP) = ball2endpoints b
 
 -- the following instance is currently not used
@@ -119,14 +119,14 @@ instance RationalIntervalA (->) (Interval CauchyReal) where
     type (IntervalR (Interval CauchyReal)) = CauchyReal
     getEndpointsA (Interval l r) = (l,r)
     fromEndpointsA (l,r) = Interval l r
-    limitIntervalsToRealA sq = convergent2CauchyReal $ map cri2MPBall sq
+    limitIntervalsToRealA sq = convergent2CauchyReal Nothing $ map cri2MPBall sq
 
 instance RationalIntervalA (->) (Interval Rational) where
     type (IntervalE (Interval Rational)) = Rational
     type (IntervalR (Interval Rational)) = CauchyReal
     getEndpointsA (Interval l r) = (l, r)
     fromEndpointsA (l,r) = (Interval l r)
-    limitIntervalsToRealA sq = convergent2CauchyReal $ map rati2MPBall sq
+    limitIntervalsToRealA sq = convergent2CauchyReal Nothing $ map rati2MPBall sq
 
 {- TODO The following function types should move to aern-function, when it is created -}
 
@@ -139,11 +139,11 @@ instance RealUnaryFnA (->) UnaryFnMPBall where
     projUFnA dom = (dom, id)
     getDomainUFnA (dom, _) = dom
     evalAtPointUFnA ((_dom, f), r) = 
-        convergent2CauchyReal $ 
+        convergent2CauchyReal Nothing $ 
             map f $
                 map (cauchyReal2ball r) (map bits [1..])
     evalAtUFnDomEA ((_dom, f), r) = 
-        convergent2CauchyReal $ 
+        convergent2CauchyReal Nothing $ 
             map f $ map (flip rational2BallP r) standardPrecisions
     evalOnIntervalUFnA ((_dom, f), ri) =  
         mpBall2rati $ f (rati2MPBall ri)

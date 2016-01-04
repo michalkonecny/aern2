@@ -11,6 +11,7 @@ module AERN2.Num.CauchyReal
     showCauchyReal,
     mapCauchyRealUnsafe,
     cauchyReal2ball,
+    cauchyRealName,
     HasCauchyRealsA, HasCauchyReals,
     CanBeCauchyRealA, cauchyRealA, cauchyRealNamedA, cauchyRealsA, cauchyRealsNamedA, CanBeCauchyReal, cauchyReal, cauchyReals,
     integer2CauchyReal, rational2CauchyReal,
@@ -51,21 +52,24 @@ instance ConvertibleA (->) CauchyReal CauchyReal where convertA = id; convertLis
 
 {-| Invariant: For any @(CauchyReal seq)@ it holds @ball_error (seq i) <= 2^^(-i)@ -}
 data CauchyReal = 
-    CauchyReal { unCauchyReal :: Accuracy -> MPBall } 
+    CauchyReal { cr_name :: Maybe String, cr_seq :: Accuracy -> MPBall } 
 
 cauchyReal2ball :: CauchyReal -> Accuracy -> MPBall
-cauchyReal2ball (CauchyReal getBall) a = getBall a
+cauchyReal2ball = cr_seq
+
+cauchyRealName :: CauchyReal -> Maybe String
+cauchyRealName = cr_name
 
 showCauchyReal :: Accuracy -> CauchyReal -> String
 showCauchyReal a r = show (cauchyReal2ball r a)
 
 mapCauchyRealUnsafe :: (Accuracy -> MPBall -> MPBall) -> CauchyReal -> CauchyReal
-mapCauchyRealUnsafe f (CauchyReal sq) = CauchyReal (\ ac -> f ac (sq ac) ) 
+mapCauchyRealUnsafe f (CauchyReal name sq) = CauchyReal name (\ ac -> f ac (sq ac) ) 
 
 convergent2CauchyReal :: 
-    [MPBall] -> CauchyReal
-convergent2CauchyReal convergentSeq =
-    CauchyReal sq
+    Maybe String -> [MPBall] -> CauchyReal
+convergent2CauchyReal name convergentSeq =
+    CauchyReal name sq
     where
     sq i =
         findAccurate convergentSeq
@@ -77,9 +81,9 @@ convergent2CauchyReal convergentSeq =
             | otherwise = findAccurate rest
 
 seqByPrecision2Cauchy :: 
-    (Precision -> MPBall) -> CauchyReal
-seqByPrecision2Cauchy seqByPrecision =
-    CauchyReal sq    
+    Maybe String -> (Precision -> MPBall) -> CauchyReal
+seqByPrecision2Cauchy name seqByPrecision =
+    CauchyReal name sq
     where
     sq i =
         findAccurate $ map seqByPrecision $ dropWhile lowPrec standardPrecisions
@@ -113,7 +117,9 @@ cauchyReals = convertList
 -- | HasIntegers CauchyReal, CanBeCauchyReal Integer
 instance ConvertibleA (->) Integer CauchyReal where
     convertA n =
-        seqByPrecision2Cauchy $ \ p -> integer2BallP p n 
+        seqByPrecision2Cauchy (Just $ show n) $ \ p -> integer2BallP p n 
+    convertNamedA name n =
+        seqByPrecision2Cauchy (Just name) $ \ p -> integer2BallP p n 
 
 integer2CauchyReal :: Integer -> CauchyReal
 integer2CauchyReal = convert
@@ -121,13 +127,15 @@ integer2CauchyReal = convert
 -- | HasRationals CauchyReal, CanBeCauchyReal Rational
 instance ConvertibleA (->) Rational CauchyReal where
     convertA q =
-        seqByPrecision2Cauchy $ \ p -> rational2BallP p q 
+        seqByPrecision2Cauchy (Just $ show q) $ \ p -> rational2BallP p q 
+    convertNamedA name n =
+        seqByPrecision2Cauchy (Just name) $ \ p -> rational2BallP p n 
 
 rational2CauchyReal :: Rational -> CauchyReal
 rational2CauchyReal = convert
 
 pi :: CauchyReal
-pi = seqByPrecision2Cauchy (\ p -> piBallP p)
+pi = seqByPrecision2Cauchy (Just "pi") (\ p -> piBallP p)
 
 {- Comparisons of CauchyReals -}
 
@@ -155,18 +163,18 @@ tryStandardCompareAccuracies rs rel =
         error "CauchyReal comparison undecided even using maximum standard accuracy"
 
 instance HasEqA (->) CauchyReal CauchyReal where
-    equalToA (CauchyReal r1, CauchyReal r2) =
+    equalToA (CauchyReal _ r1, CauchyReal _ r2) =
         tryStandardCompareAccuracies [r1,r2] (\[b1,b2] -> b1 == b2)
 
 instance HasOrderA (->) CauchyReal CauchyReal where
-    lessThanA (CauchyReal r1, CauchyReal r2) =
+    lessThanA (CauchyReal _ r1, CauchyReal _ r2) =
         tryStandardCompareAccuracies [r1,r2] (\[b1,b2] -> b1 `lessThan` b2)
-    leqA (CauchyReal r1, CauchyReal r2) = 
+    leqA (CauchyReal _ r1, CauchyReal _ r2) = 
         tryStandardCompareAccuracies [r1,r2] (\[b1,b2] -> b1 `leq` b2)
 
 instance HasParallelComparisonsA (->) CauchyReal where
     pickNonZeroA rvs =
-        tryStandardCompareAccuracies (map unCauchyReal rs) findNonZero
+        tryStandardCompareAccuracies (map cr_seq rs) findNonZero
         where
         rs = map fst rvs
         findNonZero bs =
@@ -217,12 +225,12 @@ instance CanAddMulScalar CauchyReal CauchyReal
 instance CanAddMulDivScalar CauchyReal CauchyReal
 
 instance CanNegA (->) CauchyReal where
-    negA (CauchyReal getB) = CauchyReal (\i -> neg $ getB i)
+    negA (CauchyReal _ getB) = CauchyReal Nothing (\i -> neg $ getB i)
 
 instance CanNegSameType CauchyReal
 
 instance CanAbsA (->) CauchyReal where
-    absA (CauchyReal getB) = CauchyReal (\i -> abs $ getB i)
+    absA (CauchyReal _ getB) = CauchyReal Nothing (\i -> abs $ getB i)
 
 instance CanAbsSameType CauchyReal
 
@@ -232,8 +240,8 @@ instance CanRecipA (->) CauchyReal where
 instance CanRecipSameType CauchyReal
 
 instance CanAddA (->) CauchyReal CauchyReal where
-    addA (CauchyReal getB1, CauchyReal getB2) =
-        CauchyReal $
+    addA (CauchyReal _ getB1, CauchyReal _ getB2) =
+        CauchyReal Nothing $
             \i -> ensureAccuracy2 i i i (\j1 j2 -> (getB1 j1) + (getB2 j2))
 
 instance CanAddThis CauchyReal CauchyReal
@@ -247,8 +255,8 @@ instance CanSubThis CauchyReal CauchyReal
 instance CanSubSameType CauchyReal
 
 instance CanMulA (->) CauchyReal CauchyReal where
-    mulA (CauchyReal getB1, CauchyReal getB2) =
-        CauchyReal getB
+    mulA (CauchyReal _ getB1, CauchyReal _ getB2) =
+        CauchyReal Nothing getB
         where
         getB i =
             ensureAccuracy2 i jInit1 jInit2 (\j1 j2 -> (getB1 j1) * (getB2 j2))
@@ -277,8 +285,8 @@ instance CanMulBy CauchyReal CauchyReal
 instance CanMulSameType CauchyReal
 
 instance CanDivA (->) CauchyReal CauchyReal where
-    divA (CauchyReal getB1, CauchyReal getB2) =
-        CauchyReal getB
+    divA (CauchyReal _ getB1, CauchyReal _ getB2) =
+        CauchyReal Nothing getB
         where
         getB i =
             ensureAccuracy2 i jInit1 jInit2 (\j1 j2 -> (getB1 j1) / (getB2 j2))
@@ -302,7 +310,7 @@ instance CanDivBy CauchyReal CauchyReal
 instance CanDivSameType CauchyReal
 
 instance CanSqrtA (->) CauchyReal where
-    sqrtA (CauchyReal getB1) = CauchyReal getB
+    sqrtA (CauchyReal _ getB1) = CauchyReal Nothing getB
         where
         getB i = 
             ensureAccuracy1 i jInit (\j -> sqrt (getB1 j))
@@ -316,7 +324,7 @@ instance CanSqrtA (->) CauchyReal where
 instance CanSqrtSameTypeA (->) CauchyReal
 
 instance CanExpA (->) CauchyReal where
-    expA (CauchyReal getB1) = CauchyReal getB
+    expA (CauchyReal _ getB1) = CauchyReal Nothing getB
         where
         getB i = 
             ensureAccuracy1 i jInit (\j -> exp (getB1 j))
@@ -330,8 +338,8 @@ instance CanExpA (->) CauchyReal where
 instance CanExpSameTypeA (->) CauchyReal
 
 instance CanSineCosineA (->) CauchyReal where
-    sinA (CauchyReal getB1) = CauchyReal (\ i -> sin (getB1 i))
-    cosA (CauchyReal getB1) = CauchyReal (\ i -> cos (getB1 i))
+    sinA (CauchyReal _ getB1) = CauchyReal Nothing (\ i -> sin (getB1 i))
+    cosA (CauchyReal _ getB1) = CauchyReal Nothing (\ i -> cos (getB1 i))
 
 instance CanSineCosineSameTypeA (->) CauchyReal
 
@@ -423,8 +431,8 @@ instance CanAddMulDivScalar CauchyReal Integer
 
 instance CanAddA (->) Integer CauchyReal where
     type AddTypeA (->) Integer CauchyReal = CauchyReal
-    addA (a, CauchyReal getB2) = 
-        CauchyReal $
+    addA (a, CauchyReal _ getB2) = 
+        CauchyReal Nothing $
             \i -> ensureAccuracy1 i i (\j -> a + (getB2 j))
         
 
@@ -432,8 +440,8 @@ instance CanSub Integer CauchyReal
 
 instance CanAddA (->) CauchyReal Integer where
     type AddTypeA (->) CauchyReal Integer = CauchyReal
-    addA (CauchyReal getB1, b) = 
-        CauchyReal $
+    addA (CauchyReal _ getB1, b) = 
+        CauchyReal Nothing $
             \i -> ensureAccuracy1 i i (\j -> (getB1 j) + b)
 
 instance CanAddThis CauchyReal Integer
@@ -444,8 +452,8 @@ instance CanSubThis CauchyReal Integer
 
 instance CanMulA (->) Integer CauchyReal where
     type MulTypeA (->) Integer CauchyReal = CauchyReal
-    mulA (a1, CauchyReal getB2) = 
-        CauchyReal getB
+    mulA (a1, CauchyReal _ getB2) = 
+        CauchyReal Nothing getB
         where
         getB i =
             ensureAccuracy1 i jInit (\j -> a1 * (getB2 j))
@@ -465,8 +473,8 @@ instance CanMulBy CauchyReal Integer
 
 instance CanDivA (->) Integer CauchyReal where
     type DivTypeA (->) Integer CauchyReal = CauchyReal
-    divA (a1, CauchyReal getB2) = 
-        CauchyReal getB
+    divA (a1, CauchyReal _ getB2) = 
+        CauchyReal Nothing getB
         where
         getB i =
             ensureAccuracy1 i jInit (\j -> a1 / (getB2 j))
@@ -484,8 +492,8 @@ instance CanDivA (->) Integer CauchyReal where
 
 instance CanDivA (->) CauchyReal Integer where
     type DivTypeA (->) CauchyReal Integer = CauchyReal
-    divA (CauchyReal getB1, a2) = 
-        CauchyReal getB
+    divA (CauchyReal _ getB1, a2) = 
+        CauchyReal Nothing getB
         where
         getB i =
             ensureAccuracy1 i jInit (\j -> (getB1 j) / a2)
@@ -500,16 +508,16 @@ instance CanDivBy CauchyReal Integer
 
 instance CanSqrtA (->) Integer where
     type SqrtTypeA (->) Integer = CauchyReal
-    sqrtA x = seqByPrecision2Cauchy $ \p -> sqrt (integer2BallP p x)      
+    sqrtA x = seqByPrecision2Cauchy Nothing $ \p -> sqrt (integer2BallP p x)      
         
 instance CanExpA (->) Integer where
     type ExpTypeA (->) Integer = CauchyReal
-    expA x = seqByPrecision2Cauchy $ \p -> exp (integer2BallP p x)
+    expA x = seqByPrecision2Cauchy Nothing $ \p -> exp (integer2BallP p x)
         
 instance CanSineCosineA (->) Integer where
     type SineCosineTypeA (->) Integer = CauchyReal
-    sinA x = seqByPrecision2Cauchy $ \p -> sin (integer2BallP p x)
-    cosA x = seqByPrecision2Cauchy $ \p -> cos (integer2BallP p x)
+    sinA x = seqByPrecision2Cauchy Nothing $ \p -> sin (integer2BallP p x)
+    cosA x = seqByPrecision2Cauchy Nothing $ \p -> cos (integer2BallP p x)
 
 
 {- CauchyReal-Rational operations -}
@@ -519,13 +527,13 @@ instance CanAddMulDivScalar CauchyReal Rational
 
 instance CanAddA (->) Rational CauchyReal where
     type AddTypeA (->) Rational CauchyReal = CauchyReal
-    addA (a, CauchyReal getB2) = CauchyReal (\i -> a + (getB2 i))
+    addA (a, CauchyReal _ getB2) = CauchyReal Nothing (\i -> a + (getB2 i))
 
 instance CanSub Rational CauchyReal
 
 instance CanAddA (->) CauchyReal Rational where
     type AddTypeA (->) CauchyReal Rational = CauchyReal
-    addA (CauchyReal getB1, b) = CauchyReal (\i -> (getB1 i) + b)
+    addA (CauchyReal _ getB1, b) = CauchyReal Nothing (\i -> (getB1 i) + b)
 
 instance CanAddThis CauchyReal Rational
 
@@ -535,8 +543,8 @@ instance CanSubThis CauchyReal Rational
 
 instance CanMulA (->) Rational CauchyReal where
     type MulTypeA (->) Rational CauchyReal = CauchyReal
-    mulA (a1, CauchyReal getB2) = 
-        CauchyReal getB
+    mulA (a1, CauchyReal _ getB2) = 
+        CauchyReal Nothing getB
         where
         getB i =
             ensureAccuracy1 i jInit (\j -> a1 * (getB2 j))
@@ -555,8 +563,8 @@ instance CanMulBy CauchyReal Rational
 
 instance CanDivA (->) Rational CauchyReal where
     type DivTypeA (->) Rational CauchyReal = CauchyReal
-    divA (a1, CauchyReal getB2) = 
-        CauchyReal getB
+    divA (a1, CauchyReal _ getB2) = 
+        CauchyReal Nothing getB
         where
         getB i =
             ensureAccuracy1 i jInit (\j -> a1 / (getB2 j))
@@ -579,16 +587,16 @@ instance CanDivBy CauchyReal Rational
 
 instance CanSqrtA (->) Rational where
     type SqrtTypeA (->) Rational = CauchyReal
-    sqrtA x = seqByPrecision2Cauchy $ \p -> sqrt (rational2BallP p x)
+    sqrtA x = seqByPrecision2Cauchy Nothing $ \p -> sqrt (rational2BallP p x)
         
 instance CanExpA (->) Rational where
     type ExpTypeA (->) Rational = CauchyReal
-    expA x = seqByPrecision2Cauchy $ \p -> exp (rational2BallP p x)
+    expA x = seqByPrecision2Cauchy Nothing $ \p -> exp (rational2BallP p x)
         
 instance CanSineCosineA (->) Rational where
     type SineCosineTypeA (->) Rational = CauchyReal
-    sinA x = seqByPrecision2Cauchy $ \p -> sin (rational2BallP p x)
-    cosA x = seqByPrecision2Cauchy $ \p -> cos (rational2BallP p x)
+    sinA x = seqByPrecision2Cauchy Nothing $ \p -> sin (rational2BallP p x)
+    cosA x = seqByPrecision2Cauchy Nothing $ \p -> cos (rational2BallP p x)
 
 
 {- operations mixing MPBall and CauchyReal, resulting in an MPBall -}
@@ -600,7 +608,7 @@ instance
     CanAddA (->) MPBall CauchyReal 
     where
     type AddTypeA (->) MPBall CauchyReal = MPBall
-    addA (a, CauchyReal b) = add a (b (getAccuracyIfExactUsePrec a))
+    addA (a, CauchyReal _ b) = add a (b (getAccuracyIfExactUsePrec a))
 
 instance
     CanAddA (->) CauchyReal  MPBall 
@@ -622,7 +630,7 @@ instance
     CanMulA (->) MPBall CauchyReal 
     where
     type MulTypeA (->) MPBall CauchyReal = MPBall
-    mulA (a, CauchyReal b) = mul a (b (getAccuracyIfExactUsePrec a))
+    mulA (a, CauchyReal _ b) = mul a (b (getAccuracyIfExactUsePrec a))
 
 instance
     CanMulA (->) CauchyReal  MPBall 
@@ -636,13 +644,13 @@ instance
     CanDivA (->) MPBall CauchyReal 
     where
     type DivTypeA (->) MPBall CauchyReal = MPBall
-    divA (a, CauchyReal b) = mul a (b (getAccuracyIfExactUsePrec a))
+    divA (a, CauchyReal _ b) = mul a (b (getAccuracyIfExactUsePrec a))
 
 instance
     CanDivA (->) CauchyReal  MPBall 
     where
     type DivTypeA (->) CauchyReal MPBall = MPBall
-    divA (CauchyReal a, b) = mul (a (getAccuracyIfExactUsePrec b)) b
+    divA (CauchyReal _ a, b) = mul (a (getAccuracyIfExactUsePrec b)) b
 
 instance CanDivBy MPBall CauchyReal
 

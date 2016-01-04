@@ -21,7 +21,11 @@ library
     convertible >= 1.1,
     haskell-mpfr,
     arithmoi,
-    containers
+    containers,
+    template-haskell,
+    regex-posix,
+    syb,
+    parsec
   ghc-options:     -O2 -Wall  -fno-warn-orphans
   extensions:      
                    MultiParamTypeClasses, 
@@ -40,5 +44,6 @@ library
                    AERN2.Num.MPFloat,
                    AERN2.Num.Norm,
                    AERN2.Num.Operations,
-                   AERN2.Num.SymbolicArrow
+                   AERN2.Num.SymbolicArrow,
+                   AERN2.Num.SymbolicArrow.TH
 
