@@ -6,7 +6,8 @@ module AERN2.Num.Complex
     showComplexCR,
     HasComplexA, HasComplex,
     CanBeComplexA, complexA, complexNamedA, complexListA, complexListNamedA, 
-    CanBeComplex, complex, complexList
+    CanBeComplex, complex, complexList,
+    convertFirstA, convertSecondA, flipA -- TODO: move these to a separate module
 )
 where
 
@@ -18,7 +19,8 @@ import AERN2.Num.SymbolicArrow
 
 import Control.Arrow
 
-data Complex r = r :+ r 
+data Complex r = r :+ r
+    deriving Show 
 
 infixr 5 :+
 
@@ -431,6 +433,11 @@ convertFirstA opA =
         x <- convertA -< xI
         opA -< (x,y)
 
+flipA ::
+    (Arrow to) =>
+    ((a,b) `to` c) -> ((b,a) `to` c) 
+flipA opA =
+    proc (x,y) -> opA -< (y,x) 
 
 convertSecondRealOnlyA ::
     (Arrow to, ConvertibleA to a r) =>
@@ -451,12 +458,6 @@ convertFirstRealOnlyA opA =
         x <- convertA -< xI
         r' <- opA -< (x,r)
         returnA -< (r' :+ i)
-
---flipA ::
---    (Arrow to) =>
---    ((a,b) `to` c) -> ((b,a) `to` c) 
---flipA opA =
---    proc (x,y) -> opA -< (y,x) 
 
 binaryRel ::
     (Arrow to) => 
