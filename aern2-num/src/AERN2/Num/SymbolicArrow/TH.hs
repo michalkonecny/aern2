@@ -48,7 +48,7 @@ predA expM =
     let (eWithVars, varNames) = getVarsAndFillInExpr e []
     eA <- [| (arr (\ $(varTupleP varNames) -> Map.fromList $(varMapList varNames)))  >>> (realPred2arrow ($(return eWithVars))) |]
     _ <- varTupleP [] -- useless, only here to avoid an erroneous unused warning
-    eT <- [t| (RealPredA to r b) => to $(inputType varNames [t|r|]) b  |]
+    eT <- [t| (RealPredA to r) => to $(inputType varNames [t|r|]) (EqCompareTypeA to r r)  |]
     return $ SigE eA eT
     where
     varMapList varNames =
@@ -114,7 +114,7 @@ getVarsAndFillInValD pat body prevVars =
                 (reVar : prevREVars, (show varName) : vars1)
                 where
                 reVar = 
-                    AppE (VarE (mkName "AERN2.Num.SymbolicArrow.Expression.var")) (LitE (StringL (show varName)))
+                    AppE (VarE (mkName "AERN2.Num.SymbolicArrow.var")) (LitE (StringL (show varName)))
             processPat _ _ = error "AERN2.Num.SymbolicArrow.TH.getVarsAndFillInValD: internal error"
         _ ->
             (pat, body, prevVars)

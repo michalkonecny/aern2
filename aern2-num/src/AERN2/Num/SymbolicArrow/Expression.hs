@@ -1,5 +1,7 @@
 {-# LANGUAGE Arrows, GeneralizedNewtypeDeriving, OverloadedStrings, TypeOperators, FlexibleContexts, TypeSynonymInstances, FlexibleInstances, Rank2Types #-}
-module AERN2.Num.SymbolicArrow.Expression where
+module AERN2.Num.SymbolicArrow.Expression 
+(RealExprA, RealPredA, RealExpr, RealPred, realExpr2arrow, realPred2arrow, var)
+where
 
 import Control.Arrow
 import qualified Data.Map as Map
@@ -14,7 +16,7 @@ data RealExpr' expr
     | RFunct (Maybe String) (forall to r. (RealExprA to r) => [r] `to` r) [expr]
 
 data RealPred' pred
-    = RRel (Maybe String) (forall to r b. (RealPredA to r b) => [r] `to` b) [RealExpr]
+    = RRel (Maybe String) (forall to r. (RealPredA to r) => [r] `to` (EqCompareTypeA to r r)) [RealExpr]
     | BFunct (Maybe String) (forall to b. (BoolA to b) => [b] `to` b) [pred]
 
 data RealExpr = RealExpr (RealExpr' RealExpr)
@@ -29,14 +31,12 @@ class
 
 class
     (RealExprA to r,
-     BoolA to b, 
-     EqCompareTypeA to r r ~ b, 
-     OrderCompareTypeA to r r ~ b)
+     OrderCompareTypeA to r r ~ EqCompareTypeA to r r)
     =>
-    RealPredA to r b
+    RealPredA to r
 
 instance RealExprA (->) CauchyReal
-instance RealPredA (->) CauchyReal Bool
+instance RealPredA (->) CauchyReal
 
 {- TODO: use this inside RealExpr nodes:
 
@@ -68,20 +68,20 @@ rational2expr x = RealExpr (RRat Nothing x)
 cauchyReal2expr :: CauchyReal -> RealExpr
 cauchyReal2expr x = RealExpr (RFunct Nothing (proc [] -> convertA -< x) [])
 
-integer2exprNamed :: String -> Integer -> RealExpr
-integer2exprNamed name x = RealExpr (RInt (Just name) x)
-
-rational2exprNamed :: String -> Rational -> RealExpr
-rational2exprNamed name x = RealExpr (RRat (Just name) x)
-
-cauchyReal2exprNamed :: String -> CauchyReal -> RealExpr
-cauchyReal2exprNamed name x = RealExpr (RFunct (Just name) (proc [] -> convertA -< x) [])
+--integer2exprNamed :: String -> Integer -> RealExpr
+--integer2exprNamed name x = RealExpr (RInt (Just name) x)
+--
+--rational2exprNamed :: String -> Rational -> RealExpr
+--rational2exprNamed name x = RealExpr (RRat (Just name) x)
+--
+--cauchyReal2exprNamed :: String -> CauchyReal -> RealExpr
+--cauchyReal2exprNamed name x = RealExpr (RFunct (Just name) (proc [] -> convertA -< x) [])
 
 bool2pred :: Bool -> RealPred
 bool2pred x = RealPred (BFunct Nothing (proc [] -> convertA -< x) [])
 
-bool2predNamed :: String -> Bool -> RealPred
-bool2predNamed name x = RealPred (BFunct (Just name) (proc [] -> convertA -< x) [])
+--bool2predNamed :: String -> Bool -> RealPred
+--bool2predNamed name x = RealPred (BFunct (Just name) (proc [] -> convertA -< x) [])
 
 unaryFn :: (Arrow to) => (a `to` a) -> ([a] `to` a)
 unaryFn fn = proc [x] -> fn -< x
@@ -105,7 +105,7 @@ realExpr2arrow (RealExpr expr) =
                     case Map.lookup name varMap of 
                         Just value -> value; 
                         _ -> error ("AERN2.Num.SymbolicArrow: " ++ show name ++ " not found")
-        -- TODO: find a way to avoid the conversion
+        -- TODO: use RIR to avoid the conversion 
         RInt _maybeName n ->    
             proc _varMap -> convertA -< n
         RRat _maybeName n ->
@@ -119,7 +119,7 @@ realExpr2arrow (RealExpr expr) =
             argArrows = map realExpr2arrow args        
 
 realPred2arrow :: 
-    (RealPredA to r b) => RealPred -> ((VarMap r) `to` b)
+    (RealPredA to r) => RealPred -> ((VarMap r) `to` (EqCompareTypeA to r r))
 realPred2arrow (RealPred predicate) =
     case predicate of
         RRel _maybeName fnA args ->
@@ -248,8 +248,131 @@ instance CanDivA (->) RealExpr RealExpr where
 instance CanDivByA (->) RealExpr RealExpr
 instance CanDivSameTypeA (->) RealExpr
 
-
-{- TODO
+instance CanAddMulScalarA (->) RealExpr Integer
 instance CanAddMulDivScalarA (->) RealExpr Integer
+
+instance CanAddA (->) RealExpr Integer where
+    type AddTypeA (->) RealExpr Integer = RealExpr
+    addA (e1,e2) = RealExpr (RFunct (Just "+") (binaryFn addA) [e1,integer2expr e2])
+
+instance CanAddA (->) Integer RealExpr where
+    type AddTypeA (->) Integer RealExpr = RealExpr
+    addA (e1,e2) = RealExpr (RFunct (Just "+") (binaryFn addA) [integer2expr e1,e2])
+
+instance CanAddThisA (->) RealExpr Integer
+
+instance CanSubA (->) RealExpr Integer where
+    type SubTypeA (->) RealExpr Integer = RealExpr
+    subA (e1,e2) = RealExpr (RFunct (Just "-") (binaryFn subA) [e1,integer2expr e2])
+
+instance CanSubA (->) Integer RealExpr where
+    type SubTypeA (->) Integer RealExpr = RealExpr
+    subA (e1,e2) = RealExpr (RFunct (Just "-") (binaryFn subA) [integer2expr e1,e2])
+
+instance CanSubThisA (->) RealExpr Integer
+
+instance CanMulA (->) RealExpr Integer where
+    type MulTypeA (->) RealExpr Integer = RealExpr
+    mulA (e1,e2) = RealExpr (RFunct (Just "*") (binaryFn mulA) [e1,integer2expr e2])
+
+instance CanMulA (->) Integer RealExpr where
+    type MulTypeA (->) Integer RealExpr = RealExpr
+    mulA (e1,e2) = RealExpr (RFunct (Just "*") (binaryFn mulA) [integer2expr e1,e2])
+
+instance CanMulByA (->) RealExpr Integer
+
+instance CanDivA (->) RealExpr Integer where
+    type DivTypeA (->) RealExpr Integer = RealExpr
+    divA (e1,e2) = RealExpr (RFunct (Just "/") (binaryFn divA) [e1,integer2expr e2])
+
+instance CanDivA (->) Integer RealExpr where
+    type DivTypeA (->) Integer RealExpr = RealExpr
+    divA (e1,e2) = RealExpr (RFunct (Just "/") (binaryFn divA) [integer2expr e1,e2])
+
+instance CanDivByA (->) RealExpr Integer
+
+instance CanAddMulScalarA (->) RealExpr Rational
 instance CanAddMulDivScalarA (->) RealExpr Rational
--}
+
+instance CanAddA (->) RealExpr Rational where
+    type AddTypeA (->) RealExpr Rational = RealExpr
+    addA (e1,e2) = RealExpr (RFunct (Just "+") (binaryFn addA) [e1,rational2expr e2])
+
+instance CanAddA (->) Rational RealExpr where
+    type AddTypeA (->) Rational RealExpr = RealExpr
+    addA (e1,e2) = RealExpr (RFunct (Just "+") (binaryFn addA) [rational2expr e1,e2])
+
+instance CanAddThisA (->) RealExpr Rational
+
+instance CanSubA (->) RealExpr Rational where
+    type SubTypeA (->) RealExpr Rational = RealExpr
+    subA (e1,e2) = RealExpr (RFunct (Just "-") (binaryFn subA) [e1,rational2expr e2])
+
+instance CanSubA (->) Rational RealExpr where
+    type SubTypeA (->) Rational RealExpr = RealExpr
+    subA (e1,e2) = RealExpr (RFunct (Just "-") (binaryFn subA) [rational2expr e1,e2])
+
+instance CanSubThisA (->) RealExpr Rational
+
+instance CanMulA (->) RealExpr Rational where
+    type MulTypeA (->) RealExpr Rational = RealExpr
+    mulA (e1,e2) = RealExpr (RFunct (Just "*") (binaryFn mulA) [e1,rational2expr e2])
+
+instance CanMulA (->) Rational RealExpr where
+    type MulTypeA (->) Rational RealExpr = RealExpr
+    mulA (e1,e2) = RealExpr (RFunct (Just "*") (binaryFn mulA) [rational2expr e1,e2])
+
+instance CanMulByA (->) RealExpr Rational
+
+instance CanDivA (->) RealExpr Rational where
+    type DivTypeA (->) RealExpr Rational = RealExpr
+    divA (e1,e2) = RealExpr (RFunct (Just "/") (binaryFn divA) [e1,rational2expr e2])
+
+instance CanDivA (->) Rational RealExpr where
+    type DivTypeA (->) Rational RealExpr = RealExpr
+    divA (e1,e2) = RealExpr (RFunct (Just "/") (binaryFn divA) [rational2expr e1,e2])
+
+instance CanDivByA (->) RealExpr Rational
+
+instance CanAddMulScalarA (->) RealExpr CauchyReal
+instance CanAddMulDivScalarA (->) RealExpr CauchyReal
+
+instance CanAddA (->) RealExpr CauchyReal where
+    type AddTypeA (->) RealExpr CauchyReal = RealExpr
+    addA (e1,e2) = RealExpr (RFunct (Just "+") (binaryFn addA) [e1,cauchyReal2expr e2])
+
+instance CanAddA (->) CauchyReal RealExpr where
+    type AddTypeA (->) CauchyReal RealExpr = RealExpr
+    addA (e1,e2) = RealExpr (RFunct (Just "+") (binaryFn addA) [cauchyReal2expr e1,e2])
+
+instance CanAddThisA (->) RealExpr CauchyReal
+
+instance CanSubA (->) RealExpr CauchyReal where
+    type SubTypeA (->) RealExpr CauchyReal = RealExpr
+    subA (e1,e2) = RealExpr (RFunct (Just "-") (binaryFn subA) [e1,cauchyReal2expr e2])
+
+instance CanSubA (->) CauchyReal RealExpr where
+    type SubTypeA (->) CauchyReal RealExpr = RealExpr
+    subA (e1,e2) = RealExpr (RFunct (Just "-") (binaryFn subA) [cauchyReal2expr e1,e2])
+
+instance CanSubThisA (->) RealExpr CauchyReal
+
+instance CanMulA (->) RealExpr CauchyReal where
+    type MulTypeA (->) RealExpr CauchyReal = RealExpr
+    mulA (e1,e2) = RealExpr (RFunct (Just "*") (binaryFn mulA) [e1,cauchyReal2expr e2])
+
+instance CanMulA (->) CauchyReal RealExpr where
+    type MulTypeA (->) CauchyReal RealExpr = RealExpr
+    mulA (e1,e2) = RealExpr (RFunct (Just "*") (binaryFn mulA) [cauchyReal2expr e1,e2])
+
+instance CanMulByA (->) RealExpr CauchyReal
+
+instance CanDivA (->) RealExpr CauchyReal where
+    type DivTypeA (->) RealExpr CauchyReal = RealExpr
+    divA (e1,e2) = RealExpr (RFunct (Just "/") (binaryFn divA) [e1,cauchyReal2expr e2])
+
+instance CanDivA (->) CauchyReal RealExpr where
+    type DivTypeA (->) CauchyReal RealExpr = RealExpr
+    divA (e1,e2) = RealExpr (RFunct (Just "/") (binaryFn divA) [cauchyReal2expr e1,e2])
+
+instance CanDivByA (->) RealExpr CauchyReal
