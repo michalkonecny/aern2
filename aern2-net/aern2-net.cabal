@@ -35,7 +35,6 @@ library
                    AERN2.Net.Spec,
                    AERN2.Net.Spec.Arrow,
                    AERN2.Net.Execution.Direct,
-                   AERN2.Net.Spec.Symbolic,
                    AERN2.Net.Examples.Root,
                    AERN2.Net.Examples.FFT,
                    AERN2.Net.Execution.QACached,

@@ -2,7 +2,6 @@
 module AERN2.Net.Examples.Root where
 
 import AERN2.Num
-import Data.String (fromString)
 
 import AERN2.Net.Spec.Arrow
 import Control.Arrow

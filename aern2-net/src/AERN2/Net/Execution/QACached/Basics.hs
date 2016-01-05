@@ -3,7 +3,6 @@
 module AERN2.Net.Execution.QACached.Basics where
 
 import AERN2.Num
-import Data.String (IsString(..),fromString)
 
 import Control.Arrow
 import qualified Data.Map as Map

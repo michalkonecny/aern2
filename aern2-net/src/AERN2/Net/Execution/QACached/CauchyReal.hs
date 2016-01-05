@@ -3,7 +3,6 @@
 module AERN2.Net.Execution.QACached.CauchyReal where
 
 import AERN2.Num
-import Data.String (IsString(..),fromString)
 
 import AERN2.Net.Execution.QACached.Basics 
 
@@ -33,6 +32,8 @@ newtype QACached_CauchyReal = QACached_CauchyReal ValueId
 instance RingA QACachedA QACached_CauchyReal
 instance FieldA QACachedA QACached_CauchyReal
 instance RealA QACachedA QACached_CauchyReal
+instance RealExprA QACachedA QACached_CauchyReal
+instance RealPredA QACachedA QACached_CauchyReal
 
 
 -- | HasIntegersA QACached_CauchyReal
@@ -172,6 +173,197 @@ instance CanSineCosineA QACachedA QACached_CauchyReal where
     cosA = Kleisli $ unaryCRCachedM "cos" cos return
 
 instance CanSineCosineSameTypeA QACachedA QACached_CauchyReal
+
+
+{- QACached_CauchyReal mixed with Integer -}
+
+instance HasEqA QACachedA QACached_CauchyReal Integer where
+    type EqCompareTypeA QACachedA QACached_CauchyReal Integer = Bool
+    equalToA = convertSecondA equalToA
+
+instance HasEqA QACachedA Integer QACached_CauchyReal where
+    type EqCompareTypeA QACachedA Integer QACached_CauchyReal = Bool
+    equalToA = convertFirstA equalToA
+
+instance HasOrderA QACachedA QACached_CauchyReal Integer where
+    type OrderCompareTypeA QACachedA QACached_CauchyReal Integer = Bool
+    lessThanA = convertSecondA lessThanA
+    leqA = convertSecondA leqA
+
+instance HasOrderA QACachedA Integer QACached_CauchyReal where
+    type OrderCompareTypeA QACachedA Integer QACached_CauchyReal = Bool
+    lessThanA = convertFirstA lessThanA
+    leqA = convertFirstA leqA
+
+instance CanAddA QACachedA QACached_CauchyReal Integer where
+    type AddTypeA QACachedA QACached_CauchyReal Integer = QACached_CauchyReal
+    addA = convertSecondA addA
+
+instance CanAddA QACachedA Integer QACached_CauchyReal where
+    type AddTypeA QACachedA Integer QACached_CauchyReal = QACached_CauchyReal
+    addA = convertFirstA addA
+
+instance CanAddThisA QACachedA QACached_CauchyReal Integer
+
+instance CanSubA QACachedA QACached_CauchyReal Integer where
+    type SubTypeA QACachedA QACached_CauchyReal Integer = QACached_CauchyReal
+    subA = convertSecondA subA
+
+instance CanSubA QACachedA Integer QACached_CauchyReal where
+    type SubTypeA QACachedA Integer QACached_CauchyReal = QACached_CauchyReal
+    subA = convertFirstA subA
+
+instance CanSubThisA QACachedA QACached_CauchyReal Integer
+
+instance CanMulA QACachedA QACached_CauchyReal Integer where
+    type MulTypeA QACachedA QACached_CauchyReal Integer = QACached_CauchyReal
+    mulA = convertSecondA mulA
+
+instance CanMulA QACachedA Integer QACached_CauchyReal where
+    type MulTypeA QACachedA Integer QACached_CauchyReal = QACached_CauchyReal
+    mulA = convertFirstA mulA
+
+instance CanMulByA QACachedA QACached_CauchyReal Integer
+
+instance CanDivA QACachedA QACached_CauchyReal Integer where
+    type DivTypeA QACachedA QACached_CauchyReal Integer = QACached_CauchyReal
+    divA = convertSecondA divA
+
+instance CanDivA QACachedA Integer QACached_CauchyReal where
+    type DivTypeA QACachedA Integer QACached_CauchyReal = QACached_CauchyReal
+    divA = convertFirstA divA
+
+instance CanDivByA QACachedA QACached_CauchyReal Integer
+
+instance CanAddMulScalarA QACachedA QACached_CauchyReal Integer
+instance CanAddMulDivScalarA QACachedA QACached_CauchyReal Integer
+
+{- QACached_CauchyReal mixed with Rational -}
+
+instance HasEqA QACachedA QACached_CauchyReal Rational where
+    type EqCompareTypeA QACachedA QACached_CauchyReal Rational = Bool
+    equalToA = convertSecondA equalToA
+
+instance HasEqA QACachedA Rational QACached_CauchyReal where
+    type EqCompareTypeA QACachedA Rational QACached_CauchyReal = Bool
+    equalToA = convertFirstA equalToA
+
+instance HasOrderA QACachedA QACached_CauchyReal Rational where
+    type OrderCompareTypeA QACachedA QACached_CauchyReal Rational = Bool
+    lessThanA = convertSecondA lessThanA
+    leqA = convertSecondA leqA
+
+instance HasOrderA QACachedA Rational QACached_CauchyReal where
+    type OrderCompareTypeA QACachedA Rational QACached_CauchyReal = Bool
+    lessThanA = convertFirstA lessThanA
+    leqA = convertFirstA leqA
+
+instance CanAddA QACachedA QACached_CauchyReal Rational where
+    type AddTypeA QACachedA QACached_CauchyReal Rational = QACached_CauchyReal
+    addA = convertSecondA addA
+
+instance CanAddA QACachedA Rational QACached_CauchyReal where
+    type AddTypeA QACachedA Rational QACached_CauchyReal = QACached_CauchyReal
+    addA = convertFirstA addA
+
+instance CanAddThisA QACachedA QACached_CauchyReal Rational
+
+instance CanSubA QACachedA QACached_CauchyReal Rational where
+    type SubTypeA QACachedA QACached_CauchyReal Rational = QACached_CauchyReal
+    subA = convertSecondA subA
+
+instance CanSubA QACachedA Rational QACached_CauchyReal where
+    type SubTypeA QACachedA Rational QACached_CauchyReal = QACached_CauchyReal
+    subA = convertFirstA subA
+
+instance CanSubThisA QACachedA QACached_CauchyReal Rational
+
+instance CanMulA QACachedA QACached_CauchyReal Rational where
+    type MulTypeA QACachedA QACached_CauchyReal Rational = QACached_CauchyReal
+    mulA = convertSecondA mulA
+
+instance CanMulA QACachedA Rational QACached_CauchyReal where
+    type MulTypeA QACachedA Rational QACached_CauchyReal = QACached_CauchyReal
+    mulA = convertFirstA mulA
+
+instance CanMulByA QACachedA QACached_CauchyReal Rational
+
+instance CanDivA QACachedA QACached_CauchyReal Rational where
+    type DivTypeA QACachedA QACached_CauchyReal Rational = QACached_CauchyReal
+    divA = convertSecondA divA
+
+instance CanDivA QACachedA Rational QACached_CauchyReal where
+    type DivTypeA QACachedA Rational QACached_CauchyReal = QACached_CauchyReal
+    divA = convertFirstA divA
+
+instance CanDivByA QACachedA QACached_CauchyReal Rational
+
+instance CanAddMulScalarA QACachedA QACached_CauchyReal Rational
+instance CanAddMulDivScalarA QACachedA QACached_CauchyReal Rational
+
+{- QACached_CauchyReal mixed with CauchyReal -}
+
+instance HasEqA QACachedA QACached_CauchyReal CauchyReal where
+    type EqCompareTypeA QACachedA QACached_CauchyReal CauchyReal = Bool
+    equalToA = convertSecondA equalToA
+
+instance HasEqA QACachedA CauchyReal QACached_CauchyReal where
+    type EqCompareTypeA QACachedA CauchyReal QACached_CauchyReal = Bool
+    equalToA = convertFirstA equalToA
+
+instance HasOrderA QACachedA QACached_CauchyReal CauchyReal where
+    type OrderCompareTypeA QACachedA QACached_CauchyReal CauchyReal = Bool
+    lessThanA = convertSecondA lessThanA
+    leqA = convertSecondA leqA
+
+instance HasOrderA QACachedA CauchyReal QACached_CauchyReal where
+    type OrderCompareTypeA QACachedA CauchyReal QACached_CauchyReal = Bool
+    lessThanA = convertFirstA lessThanA
+    leqA = convertFirstA leqA
+
+instance CanAddA QACachedA QACached_CauchyReal CauchyReal where
+    type AddTypeA QACachedA QACached_CauchyReal CauchyReal = QACached_CauchyReal
+    addA = convertSecondA addA
+
+instance CanAddA QACachedA CauchyReal QACached_CauchyReal where
+    type AddTypeA QACachedA CauchyReal QACached_CauchyReal = QACached_CauchyReal
+    addA = convertFirstA addA
+
+instance CanAddThisA QACachedA QACached_CauchyReal CauchyReal
+
+instance CanSubA QACachedA QACached_CauchyReal CauchyReal where
+    type SubTypeA QACachedA QACached_CauchyReal CauchyReal = QACached_CauchyReal
+    subA = convertSecondA subA
+
+instance CanSubA QACachedA CauchyReal QACached_CauchyReal where
+    type SubTypeA QACachedA CauchyReal QACached_CauchyReal = QACached_CauchyReal
+    subA = convertFirstA subA
+
+instance CanSubThisA QACachedA QACached_CauchyReal CauchyReal
+
+instance CanMulA QACachedA QACached_CauchyReal CauchyReal where
+    type MulTypeA QACachedA QACached_CauchyReal CauchyReal = QACached_CauchyReal
+    mulA = convertSecondA mulA
+
+instance CanMulA QACachedA CauchyReal QACached_CauchyReal where
+    type MulTypeA QACachedA CauchyReal QACached_CauchyReal = QACached_CauchyReal
+    mulA = convertFirstA mulA
+
+instance CanMulByA QACachedA QACached_CauchyReal CauchyReal
+
+instance CanDivA QACachedA QACached_CauchyReal CauchyReal where
+    type DivTypeA QACachedA QACached_CauchyReal CauchyReal = QACached_CauchyReal
+    divA = convertSecondA divA
+
+instance CanDivA QACachedA CauchyReal QACached_CauchyReal where
+    type DivTypeA QACachedA CauchyReal QACached_CauchyReal = QACached_CauchyReal
+    divA = convertFirstA divA
+
+instance CanDivByA QACachedA QACached_CauchyReal CauchyReal
+
+instance CanAddMulScalarA QACachedA QACached_CauchyReal CauchyReal
+instance CanAddMulDivScalarA QACachedA QACached_CauchyReal CauchyReal
+
 
 getCachedCRFunctionNormLog :: 
     Accuracy -> 

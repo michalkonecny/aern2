@@ -3,6 +3,7 @@ module AERN2.Net.Execution.QACached
 (
     module AERN2.Net.Execution.QACached.Basics,
     module AERN2.Net.Execution.QACached.CauchyReal,
+    module AERN2.Net.Execution.QACached.Complex,
     module AERN2.Net.Execution.QACached
 )
 where
@@ -10,7 +11,8 @@ where
 import AERN2.Num
 
 import AERN2.Net.Execution.QACached.Basics
-import AERN2.Net.Execution.QACached.CauchyReal 
+import AERN2.Net.Execution.QACached.CauchyReal
+import AERN2.Net.Execution.QACached.Complex
 
 import AERN2.Net.Spec.Arrow
 import Control.Arrow (runKleisli)
