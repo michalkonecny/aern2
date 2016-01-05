@@ -1,5 +1,6 @@
 module AERN2.Num
     (module AERN2.Num.Operations,
+     module AERN2.Num.SymbolicArrow,
      module AERN2.Num.Norm,
      module AERN2.Num.MPBall,
      module AERN2.Num.Accuracy,
@@ -8,6 +9,7 @@ module AERN2.Num
 where
 
 import AERN2.Num.Operations 
+import AERN2.Num.SymbolicArrow
 import AERN2.Num.Norm
 import AERN2.Num.Accuracy
 import AERN2.Num.IntegerRational ()
