@@ -1,4 +1,4 @@
-{-# LANGUAGE Arrows, TypeSynonymInstances, FlexibleInstances, TypeOperators, ConstraintKinds, FlexibleContexts, UndecidableInstances #-}
+{-# LANGUAGE Arrows, TypeSynonymInstances, FlexibleInstances, TypeOperators, ConstraintKinds, FlexibleContexts, UndecidableInstances, TemplateHaskell #-}
 module AERN2.Num.Complex 
 (
     Complex(..), complexI,
@@ -14,6 +14,7 @@ import AERN2.Num.Operations
 import AERN2.Num.CauchyReal
 import AERN2.Num.MPBall
 import AERN2.Num.Accuracy
+import AERN2.Num.SymbolicArrow
 
 import Control.Arrow
 
@@ -87,315 +88,390 @@ toComplexA =
 
 {- Comparison of complex numbers -}
 
-instance (HasEqA to r r) => HasEqA to (Complex r) (Complex r) where
+instance (RealPredA to r) => HasEqA to (Complex r) (Complex r) where
     type EqCompareTypeA to (Complex r) (Complex r) = EqCompareTypeA to r r 
     equalToA =
-        proc (r1 :+ i1, r2 :+ i2) ->
-{-
-    TODO: introduce the following method for writing arrows using symbolic expressions:
-            [rp| r1 == r2 && i1 == i2)|] -- quasi-quotation
--}
---            r1 == r2 && i1 == i2
-            do
-            rEqual <- equalToA -< (r1,r2)
-            iEqual <- equalToA -< (i1,i2)
-            bothEqual <- and2A -< (rEqual, iEqual) 
-            returnA -< bothEqual
+        binaryRel $(predA [| let [r1,i1,r2,i2] = vars in r1 == r2 && i1 == i2|])
+        
+instance
+    (RealPredA to r) =>
+    HasOrderA to (Complex r) (Complex r) 
+    where
+    type OrderCompareTypeA to (Complex r) (Complex r) = OrderCompareTypeA to r r 
+    lessThanA =
+        binaryRel $(predA [|let [r1,i1,r2,i2] = vars in (r1 <= r2 && i1 <= i2) && (r1 /= r2 || i1 /= i2)|])
+    leqA =
+        binaryRel $(predA [|let [r1,i1,r2,i2] = vars in (r1 <= r2 && i1 <= i2)|])
 
 instance 
-    (HasOrderA (->) r r, HasEqA (->) r r,
-     EqCompareTypeA (->) r r ~ OrderCompareTypeA (->) r r) 
-    => 
-    HasOrderA (->) (Complex r) (Complex r) 
+    (RealPredA to r) =>
+    HasEqA to (Complex r) Integer 
     where
-    type OrderCompareTypeA (->) (Complex r) (Complex r) = OrderCompareTypeA (->) r r 
-    lessThanA (r1 :+ i1, r2 :+ i2) = (r1 <= r2 && i1 <= i2) && (r1 /= r2 || i1 /= i2)
-    leqA (r1 :+ i1, r2 :+ i2) = (r1 <= r2 && i1 <= i2)
-
+    type EqCompareTypeA to (Complex r) Integer = EqCompareTypeA to (Complex r) (Complex r)
+    equalToA = convertSecondA equalToA
 
 instance 
-    (HasIntegers r, HasEqA (->) r r) 
-    => 
-    HasEqA (->) (Complex r) Integer 
-    where
-    type EqCompareTypeA (->) (Complex r) Integer = EqCompareTypeA (->) (Complex r) (Complex r)
-    equalToA (c, n) = equalTo c nC
-        where 
-        nC = complex n
-        _ = [c, nC] 
-
-instance (HasIntegers r, HasEqA (->) r r) => HasEqA (->) Integer (Complex r) where
-    type EqCompareTypeA (->) Integer (Complex r) = EqCompareTypeA (->) (Complex r) (Complex r)
-    equalToA (n, c) = equalTo c n
+    (RealPredA to r) =>
+    HasEqA to Integer (Complex r) where
+    type EqCompareTypeA to Integer (Complex r) = EqCompareTypeA to (Complex r) (Complex r)
+    equalToA = convertFirstA equalToA
 
 instance
-    (HasIntegers r,
-     HasOrderA (->) r r, HasEqA (->) r r,
-     EqCompareTypeA (->) r r ~ OrderCompareTypeA (->) r r) 
-    => 
-    HasOrderA (->) (Complex r) Integer 
+    (RealPredA to r) =>
+    HasOrderA to (Complex r) Integer 
     where
-    type OrderCompareTypeA (->) (Complex r) Integer = OrderCompareTypeA (->) (Complex r) (Complex r)
-    lessThanA (c, n) = lessThan c nC
-        where 
-        nC = complex n
-        _ = [c, nC] 
-    leqA (c, n) = leq c nC
-        where 
-        nC = complex n
-        _ = [c, nC] 
+    type OrderCompareTypeA to (Complex r) Integer = OrderCompareTypeA to (Complex r) (Complex r)
+    lessThanA = convertSecondA lessThanA
+    leqA = convertSecondA leqA
 
 instance
-    (HasIntegers r,
-     HasOrderA (->) r r, HasEqA (->) r r,
-     EqCompareTypeA (->) r r ~ OrderCompareTypeA (->) r r) 
-    => 
-    HasOrderA (->) Integer (Complex r) 
+    (RealPredA to r) =>
+    HasOrderA to Integer (Complex r) 
     where
-    type OrderCompareTypeA (->) Integer (Complex r) = OrderCompareTypeA (->) (Complex r) (Complex r)
-    lessThanA (n, c) = lessThan nC c
-        where 
-        nC = complex n
-        _ = [c, nC] 
-    leqA (n, c) = leq nC c
-        where 
-        nC = complex n
-        _ = [c, nC] 
+    type OrderCompareTypeA to Integer (Complex r) = OrderCompareTypeA to (Complex r) (Complex r)
+    lessThanA = convertFirstA lessThanA
+    leqA = convertFirstA leqA
 
-{- TODO: 
-    * Comparisons between Complex r and Rational.
-    * Comparisons between Complex r and CauchyReal.
+instance 
+    (RealPredA to r) =>
+    HasEqA to (Complex r) Rational 
+    where
+    type EqCompareTypeA to (Complex r) Rational = EqCompareTypeA to (Complex r) (Complex r)
+    equalToA = convertSecondA equalToA
 
-instance HasEqA (->) (Complex r) Rational where
-    equalToA (c, n) = equalTo c (complex n) 
+instance 
+    (RealPredA to r) =>
+    HasEqA to Rational (Complex r) where
+    type EqCompareTypeA to Rational (Complex r) = EqCompareTypeA to (Complex r) (Complex r)
+    equalToA = convertFirstA equalToA
 
-instance HasOrderA (->) (Complex r) Rational where
-    lessThanA (c, n) = lessThan c (complex n) 
-    leqA (c, n) = leq c (complex n) 
+instance
+    (RealPredA to r) =>
+    HasOrderA to (Complex r) Rational 
+    where
+    type OrderCompareTypeA to (Complex r) Rational = OrderCompareTypeA to (Complex r) (Complex r)
+    lessThanA = convertSecondA lessThanA
+    leqA = convertSecondA leqA
 
-instance HasEqA (->) Rational (Complex r) where
-    equalToA (n, c) = equalTo (complex n) c 
+instance
+    (RealPredA to r) =>
+    HasOrderA to Rational (Complex r) 
+    where
+    type OrderCompareTypeA to Rational (Complex r) = OrderCompareTypeA to (Complex r) (Complex r)
+    lessThanA = convertFirstA lessThanA
+    leqA = convertFirstA leqA
 
-instance HasOrderA (->) Rational (Complex r) where
-    lessThanA (n, c) = lessThan (complex n) c 
-    leqA (n, c) = leq (complex n) c
+instance 
+    (RealPredA to r) =>
+    HasEqA to (Complex r) CauchyReal 
+    where
+    type EqCompareTypeA to (Complex r) CauchyReal = EqCompareTypeA to (Complex r) (Complex r)
+    equalToA = convertSecondA equalToA
 
-instance HasEqA (->) (Complex r) CauchyReal where
-    equalToA (c, n) = equalTo c (complex n) 
+instance 
+    (RealPredA to r) =>
+    HasEqA to CauchyReal (Complex r) where
+    type EqCompareTypeA to CauchyReal (Complex r) = EqCompareTypeA to (Complex r) (Complex r)
+    equalToA = convertFirstA equalToA
 
-instance HasOrderA (->) (Complex r) CauchyReal where
-    lessThanA (c, n) = lessThan c (complex n) 
-    leqA (c, n) = leq c (complex n) 
+instance
+    (RealPredA to r) =>
+    HasOrderA to (Complex r) CauchyReal 
+    where
+    type OrderCompareTypeA to (Complex r) CauchyReal = OrderCompareTypeA to (Complex r) (Complex r)
+    lessThanA = convertSecondA lessThanA
+    leqA = convertSecondA leqA
 
-instance HasEqA (->) CauchyReal (Complex r) where
-    equalToA (n, c) = equalTo (complex n) c 
+instance
+    (RealPredA to r) =>
+    HasOrderA to CauchyReal (Complex r) 
+    where
+    type OrderCompareTypeA to CauchyReal (Complex r) = OrderCompareTypeA to (Complex r) (Complex r)
+    lessThanA = convertFirstA lessThanA
+    leqA = convertFirstA leqA
 
-instance HasOrderA (->) CauchyReal (Complex r) where
-    lessThanA (n, c) = lessThan (complex n) c 
-    leqA (n, c) = leq (complex n) c
--}
 
 {- Operations among (Complex r) numbers -}
 
-instance (CanNegSameTypeA (->) r) => CanNegA (->) (Complex r) where
-    negA (r :+ i) = (neg r) :+ (neg i)
+instance (RealExprA to r) => CanNegA to (Complex r) where
+    type NegTypeA to (Complex r) = Complex r
+    negA =
+        unaryOp ($(exprA[|let [r,_i]=vars in neg r|]),  
+                 $(exprA[|let [_r,i]=vars in neg i|]))
+        -- TODO add support for tuples of expresions in exprA
 
-instance (CanNegSameTypeA (->) r) => CanNegSameType (Complex r)
+instance (RealExprA to r) => CanNegSameTypeA to (Complex r)
 
-instance (CanSqrtSameTypeA (->) r, RingA (->) r) => CanAbsA (->) (Complex r) where
-    type AbsTypeA (->) (Complex r) = r
-    absA (r :+ i) = sqrt (r*r + i*i)
+instance (CanSqrtSameTypeA to r, RealExprA to r) => CanAbsA to (Complex r) where
+    type AbsTypeA to (Complex r) = r
+    absA =
+        proc (r :+ i) ->
+             $(exprA[| let [r,i]=vars in sqrt (r*r + i*i) |]) -< (r,i)
 
-instance (FieldA (->) r) => CanRecipA (->) (Complex r) where
-    recipA a = 1/a
+instance (RealExprA to r) => CanRecipA to (Complex r) where
+--    recipA a = 1/a -- TODO
 
-instance (FieldA (->) r) => CanRecipSameType (Complex r)
+instance (RealExprA to r) => CanRecipSameTypeA to (Complex r)
 
-instance (CanAddSameTypeA (->) r) => CanAddA (->) (Complex r) (Complex r) where
-    addA (r1 :+ i1, r2 :+ i2) = (r1 + r2) :+ (i1 + i2)
+instance (RealExprA to r) => CanAddA to (Complex r) (Complex r) where
+    addA =
+        binaryOp ($(exprA[|let [r1,_i1,r2,_i2]=vars in r1 + r2 |]), 
+                  $(exprA[|let [_r1,i1,_r2,i2]=vars in i1 + i2 |])) 
 
-instance (CanAddSameTypeA (->) r) => CanAddThis (Complex r) (Complex r)
+instance (RealExprA to r) => CanAddThisA to (Complex r) (Complex r)
+instance (RealExprA to r) => CanAddSameTypeA to (Complex r)
 
-instance (CanAddSameTypeA (->) r) => CanAddSameType (Complex r)
+instance (RealExprA to r) => (CanSubA to (Complex r) (Complex r))  
+instance (RealExprA to r) => CanSubThisA to (Complex r) (Complex r)
+instance (RealExprA to r) => CanSubSameTypeA to (Complex r)
 
-instance (CanAddSameTypeA (->) r, CanNegSameTypeA (->) r) => (CanSub (Complex r) (Complex r))  
+instance (RealExprA to r) => CanMulA to (Complex r) (Complex r) where
+    mulA =
+        binaryOp ($(exprA[|let [r1,i1,r2,i2]=vars in r1 * r2 - i1 * i2 |]), 
+                  $(exprA[|let [r1,i1,r2,i2]=vars in r1 * i2 + r2 * i1|])) 
+
+instance (RealExprA to r) => CanMulByA to (Complex r) (Complex r)
+instance (RealExprA to r) => CanMulSameTypeA to (Complex r)
+
+instance (RealExprA to r) => CanDivA to (Complex r) (Complex r) where
+    divA =
+        binaryOp ($(exprA[|let [r1,i1,r2,i2]=vars in (r1 * r2 + i1 * i2)/(r2*r2 + i2 * i2) |]), 
+                  $(exprA[|let [r1,i1,r2,i2]=vars in (r2 * i1 - r1 * i2)/(r2*r2 + i2 * i2) |])) 
         
-instance (CanAddSameTypeA (->) r, CanNegSameTypeA (->) r) => CanSubThis (Complex r) (Complex r)
+instance (RealExprA to r) => CanDivByA to (Complex r) (Complex r)
 
-instance (CanAddSameTypeA (->) r, CanNegSameTypeA (->) r) => CanSubSameType (Complex r)
+instance (RealExprA to r) => CanDivSameTypeA to (Complex r)
 
-instance (RingA (->) r) => CanMulA (->) (Complex r) (Complex r) where
-    mulA (r1 :+ i1, r2 :+ i2) =
-        (r1 * r2 - i1 * i2) :+ (r1 * i2 + r2 * i1)
-
-
-instance (RingA (->) r) => CanMulBy (Complex r) (Complex r)
-
-instance (RingA (->) r) => CanMulSameType (Complex r)
-
-instance (FieldA (->) r) => CanDivA (->) (Complex r) (Complex r) where
-    divA (r1 :+ i1, r2 :+ i2) =
-        ((r1 * r2 + i1 * i2)/d) :+ ((r2 * i1 - r1 * i2)/d)
-        where
-        d = r2*r2 + i2 * i2
-        
-instance (FieldA (->) r) => CanDivBy (Complex r) (Complex r)
-
-instance (FieldA (->) r) => CanDivSameType (Complex r)
-
-instance (RingA (->) r, OrderCompareTypeA (->) r r ~ EqCompareTypeA (->) r r) => 
-    Ring (Complex r)
-instance (FieldA (->) r, OrderCompareTypeA (->) r r ~ EqCompareTypeA (->) r r) => 
-    Field (Complex r)
+instance (RealPredA to r) => RingA to (Complex r)
+instance (RealPredA to r) => FieldA to (Complex r)
 
 {- (Complex r)-Integer operations -}
 
-instance (CanAddThisA (->) r Integer) => CanAddA (->) Integer (Complex r) where
-    type AddTypeA (->) Integer (Complex r) = (Complex r)
-    addA (a, r :+ i) = (a + r :+ i) 
+instance (RealExprA to r) => CanAddA to Integer (Complex r) where
+    type AddTypeA to Integer (Complex r) = (Complex r)
+    addA = convertFirstRealOnlyA addA 
 
 
-instance (CanAddThisA (->) r Integer, CanNegSameTypeA (->) r) => CanSub Integer (Complex r)
+instance (RealExprA to r) => CanSubA to Integer (Complex r)
 
-instance (CanAddThisA (->) r Integer) => CanAddA (->) (Complex r) Integer where
-    type AddTypeA (->) (Complex r) Integer = (Complex r)
-    addA (a,b) = add b a 
 
-instance (CanAddThisA (->) r Integer) => CanAddThis (Complex r) Integer
+instance (RealExprA to r) => CanAddA to (Complex r) Integer where
+    type AddTypeA to (Complex r) Integer = (Complex r)
+    addA = convertSecondRealOnlyA addA 
 
-instance (CanAddThisA (->) r Integer) => CanSub (Complex r) Integer
 
-instance (CanAddThisA (->) r Integer) => CanSubThis (Complex r) Integer
+instance (RealExprA to r) => CanAddThisA to (Complex r) Integer
 
-instance (CanMulByA (->) r Integer) => CanMulA (->) Integer (Complex r) where
-    type MulTypeA (->) Integer (Complex r) = (Complex r)
-    mulA (a, r :+ i) = (a * r :+ a * i) 
+instance (RealExprA to r) => CanSubA to (Complex r) Integer where
+    type SubTypeA to (Complex r) Integer = (Complex r)
+    subA = convertSecondRealOnlyA subA 
 
-instance (CanMulByA (->) r Integer) => CanMulA (->) (Complex r) Integer where
-    type MulTypeA (->) (Complex r) Integer = (Complex r)
-    mulA (a, b) = mul b a 
 
-instance (CanMulByA (->) r Integer) => CanMulBy (Complex r) Integer
+instance (RealExprA to r) => CanSubThisA to (Complex r) Integer
 
-instance (FieldA (->) r) => CanDivA (->) Integer (Complex r) where
-    type DivTypeA (->) Integer (Complex r) = (Complex r)
-    divA (a, b) = aC / b
-        where
-        aC = complex a
-        _ = [aC,b]
+instance (RealExprA to r) => CanMulA to Integer (Complex r) where
+    type MulTypeA to Integer (Complex r) = (Complex r)
+    mulA = convertFirstA mulA 
 
-instance (CanDivByA (->) r Integer) => CanDivA (->) (Complex r) Integer where
-    type DivTypeA (->) (Complex r) Integer = (Complex r)
-    divA (r :+ i, a) = r / a :+ i / a 
+instance (RealExprA to r) => CanMulA to (Complex r) Integer where
+    type MulTypeA to (Complex r) Integer = (Complex r)
+    mulA = convertSecondA mulA 
 
-instance (CanDivByA (->) r Integer) => CanDivBy (Complex r) Integer
+instance (RealExprA to r) => CanMulByA to (Complex r) Integer
+
+instance (RealExprA to r) => CanDivA to Integer (Complex r) where
+    type DivTypeA to Integer (Complex r) = (Complex r)
+    divA = convertFirstA divA
+
+instance (RealExprA to r) => CanDivA to (Complex r) Integer where
+    type DivTypeA to (Complex r) Integer = (Complex r)
+    divA = convertSecondA divA -- (r :+ i, a) = r / a :+ i / a 
+
+instance (RealExprA to r) => CanDivByA to (Complex r) Integer
+
 
 {- (Complex r)-Rational operations -}
 
-instance (CanAddThisA (->) r Rational) => CanAddA (->) Rational (Complex r) where
-    type AddTypeA (->) Rational (Complex r) = (Complex r)
-    addA (a, r :+ i) = (a + r :+ i) 
+instance (RealExprA to r) => CanAddA to Rational (Complex r) where
+    type AddTypeA to Rational (Complex r) = (Complex r)
+    addA = convertFirstRealOnlyA addA 
 
 
-instance (CanAddThisA (->) r Rational, CanNegSameTypeA (->) r) => CanSub Rational (Complex r)
+instance (RealExprA to r) => CanSubA to Rational (Complex r)
 
-instance (CanAddThisA (->) r Rational) => CanAddA (->) (Complex r) Rational where
-    type AddTypeA (->) (Complex r) Rational = (Complex r)
-    addA (a,b) = add b a 
 
-instance (CanAddThisA (->) r Rational) => CanAddThis (Complex r) Rational
+instance (RealExprA to r) => CanAddA to (Complex r) Rational where
+    type AddTypeA to (Complex r) Rational = (Complex r)
+    addA = convertSecondRealOnlyA addA 
 
-instance (CanAddThisA (->) r Rational) => CanSub (Complex r) Rational
 
-instance (CanAddThisA (->) r Rational) => CanSubThis (Complex r) Rational
+instance (RealExprA to r) => CanAddThisA to (Complex r) Rational
 
-instance (CanMulByA (->) r Rational) => CanMulA (->) Rational (Complex r) where
-    type MulTypeA (->) Rational (Complex r) = (Complex r)
-    mulA (a, r :+ i) = (a * r :+ a * i) 
+instance (RealExprA to r) => CanSubA to (Complex r) Rational where
+    type SubTypeA to (Complex r) Rational = (Complex r)
+    subA = convertSecondRealOnlyA subA 
 
-instance (CanMulByA (->) r Rational) => CanMulA (->) (Complex r) Rational where
-    type MulTypeA (->) (Complex r) Rational = (Complex r)
-    mulA (a, b) = mul b a 
 
-instance (CanMulByA (->) r Rational) => CanMulBy (Complex r) Rational
+instance (RealExprA to r) => CanSubThisA to (Complex r) Rational
 
-instance (FieldA (->) r) => CanDivA (->) Rational (Complex r) where
-    type DivTypeA (->) Rational (Complex r) = (Complex r)
-    divA (a, b) = aC / b
-        where
-        aC = complex a
-        _ = [aC,b]
+instance (RealExprA to r) => CanMulA to Rational (Complex r) where
+    type MulTypeA to Rational (Complex r) = (Complex r)
+    mulA = convertFirstA mulA 
 
-instance (CanDivByA (->) r Rational) => CanDivA (->) (Complex r) Rational where
-    type DivTypeA (->) (Complex r) Rational = (Complex r)
-    divA (r :+ i, a) = r / a :+ i / a 
+instance (RealExprA to r) => CanMulA to (Complex r) Rational where
+    type MulTypeA to (Complex r) Rational = (Complex r)
+    mulA = convertSecondA mulA 
 
-instance (CanDivByA (->) r Rational) => CanDivBy (Complex r) Rational
+instance (RealExprA to r) => CanMulByA to (Complex r) Rational
+
+instance (RealExprA to r) => CanDivA to Rational (Complex r) where
+    type DivTypeA to Rational (Complex r) = (Complex r)
+    divA = convertFirstA divA
+
+instance (RealExprA to r) => CanDivA to (Complex r) Rational where
+    type DivTypeA to (Complex r) Rational = (Complex r)
+    divA = convertSecondA divA -- (r :+ i, a) = r / a :+ i / a 
+
+instance (RealExprA to r) => CanDivByA to (Complex r) Rational
+
 
 {- (Complex r)-CauchyReal operations -}
 
-instance (CanAddThisA (->) r CauchyReal) => CanAddA (->) CauchyReal (Complex r) where
-    type AddTypeA (->) CauchyReal (Complex r) = (Complex r)
-    addA (a, r :+ i) = (a + r :+ i) 
+instance (RealExprA to r) => CanAddA to CauchyReal (Complex r) where
+    type AddTypeA to CauchyReal (Complex r) = (Complex r)
+    addA = convertFirstRealOnlyA addA 
 
 
-instance (CanAddThisA (->) r CauchyReal, CanNegSameTypeA (->) r) => CanSub CauchyReal (Complex r)
+instance (RealExprA to r) => CanSubA to CauchyReal (Complex r)
 
-instance (CanAddThisA (->) r CauchyReal) => CanAddA (->) (Complex r) CauchyReal where
-    type AddTypeA (->) (Complex r) CauchyReal = (Complex r)
-    addA (a,b) = add b a 
 
-instance (CanAddThisA (->) r CauchyReal) => CanAddThis (Complex r) CauchyReal
+instance (RealExprA to r) => CanAddA to (Complex r) CauchyReal where
+    type AddTypeA to (Complex r) CauchyReal = (Complex r)
+    addA = convertSecondRealOnlyA addA 
 
-instance (CanAddThisA (->) r CauchyReal) => CanSub (Complex r) CauchyReal
 
-instance (CanAddThisA (->) r CauchyReal) => CanSubThis (Complex r) CauchyReal
+instance (RealExprA to r) => CanAddThisA to (Complex r) CauchyReal
 
-instance (CanMulByA (->) r CauchyReal) => CanMulA (->) CauchyReal (Complex r) where
-    type MulTypeA (->) CauchyReal (Complex r) = (Complex r)
-    mulA (a, r :+ i) = (a * r :+ a * i) 
+instance (RealExprA to r) => CanSubA to (Complex r) CauchyReal where
+    type SubTypeA to (Complex r) CauchyReal = (Complex r)
+    subA = convertSecondRealOnlyA subA 
 
-instance (CanMulByA (->) r CauchyReal) => CanMulA (->) (Complex r) CauchyReal where
-    type MulTypeA (->) (Complex r) CauchyReal = (Complex r)
-    mulA (a, b) = mul b a 
 
-instance (CanMulByA (->) r CauchyReal) => CanMulBy (Complex r) CauchyReal
+instance (RealExprA to r) => CanSubThisA to (Complex r) CauchyReal
 
-instance (FieldA (->) r, HasCauchyReals r) => CanDivA (->) CauchyReal (Complex r) where
-    type DivTypeA (->) CauchyReal (Complex r) = (Complex r)
-    divA (a, b) = aC / b
-        where
-        aC = complex a
-        _ = [aC,b]
+instance (RealExprA to r) => CanMulA to CauchyReal (Complex r) where
+    type MulTypeA to CauchyReal (Complex r) = (Complex r)
+    mulA = convertFirstA mulA 
 
-instance (CanDivByA (->) r CauchyReal) => CanDivA (->) (Complex r) CauchyReal where
-    type DivTypeA (->) (Complex r) CauchyReal = (Complex r)
-    divA (r :+ i, a) = r / a :+ i / a 
+instance (RealExprA to r) => CanMulA to (Complex r) CauchyReal where
+    type MulTypeA to (Complex r) CauchyReal = (Complex r)
+    mulA = convertSecondA mulA 
 
-instance (CanDivByA (->) r CauchyReal) => CanDivBy (Complex r) CauchyReal
+instance (RealExprA to r) => CanMulByA to (Complex r) CauchyReal
+
+instance (RealExprA to r) => CanDivA to CauchyReal (Complex r) where
+    type DivTypeA to CauchyReal (Complex r) = (Complex r)
+    divA = convertFirstA divA
+
+instance (RealExprA to r) => CanDivA to (Complex r) CauchyReal where
+    type DivTypeA to (Complex r) CauchyReal = (Complex r)
+    divA = convertSecondA divA -- (r :+ i, a) = r / a :+ i / a 
+
+instance (RealExprA to r) => CanDivByA to (Complex r) CauchyReal
 
 {- Selected complex functions -}
 
 
-instance CanSqrtA (->) (Complex r) where
+instance (RealExprA to r) => CanSqrtA to (Complex r) where
     sqrtA = error "Complex sqrt not implemented yet"
 
-instance CanSqrtSameType (Complex r)
+instance (RealExprA to r) => CanSqrtSameTypeA to (Complex r)
 
-instance 
-    (RingA (->) r, CanExpSameTypeA (->) r, CanSineCosineSameTypeA (->) r) 
-    => 
-    CanExpA (->) (Complex r) where
-    expA (r :+ i) =
-        (exp r :+ convert 0) * (cos i :+ sin i)
+instance (RealExprA to r) => CanExpA to (Complex r) where
+    expA =
+        unaryOp ($(exprA[|let [r1,i1]=vars in (exp r1) * (cos i1)|]),
+                 $(exprA[|let [r1,i1]=vars in (exp r1) * (sin i1)|]))
+--     (r :+ i) =
+--        (exp r :+ convert 0) * (cos i :+ sin i)
 
-instance
-    (RingA (->) r, CanExpSameTypeA (->) r, CanSineCosineSameTypeA (->) r) 
-    => 
-    CanExpSameType (Complex r)
+instance (RealExprA to r) => CanExpSameTypeA to (Complex r)
     
-instance CanSineCosineA (->) (Complex r) where
+instance (RealExprA to r) => CanSineCosineA to (Complex r) where
     sinA = error "(Complex r) sin not implemented yet"
     cosA = error "(Complex r) cos not implemented yet"
 
-instance CanSineCosineSameType (Complex r)
+instance (RealExprA to r) => CanSineCosineSameTypeA to (Complex r)
+
+{- auxiliary function -}
+
+convertSecondA ::
+    (Arrow to, ConvertibleA to a r) =>
+    ((r,r) `to` b) -> ((r,a) `to` b) 
+convertSecondA opA =
+    proc (x,yI) ->
+        do
+        y <- convertA -< yI
+        opA -< (x,y)
+
+convertFirstA ::
+    (Arrow to, ConvertibleA to a r) =>
+    ((r,r) `to` b) -> ((a,r) `to` b) 
+convertFirstA opA =
+    proc (xI,y) ->
+        do
+        x <- convertA -< xI
+        opA -< (x,y)
+
+
+convertSecondRealOnlyA ::
+    (Arrow to, ConvertibleA to a r) =>
+    ((r,r) `to` r) -> ((Complex r,a) `to` Complex r) 
+convertSecondRealOnlyA opA =
+    proc (r :+ i,yI) ->
+        do
+        y <- convertA -< yI
+        r' <- opA -< (r,y)
+        returnA -< (r' :+ i)
+
+convertFirstRealOnlyA ::
+    (Arrow to, ConvertibleA to a r) =>
+    ((r,r) `to` r) -> ((a,Complex r) `to` Complex r) 
+convertFirstRealOnlyA opA =
+    proc (xI,r :+ i) ->
+        do
+        x <- convertA -< xI
+        r' <- opA -< (x,r)
+        returnA -< (r' :+ i)
+
+flipA ::
+    (Arrow to) =>
+    ((a,b) `to` c) -> ((b,a) `to` c) 
+flipA opA =
+    proc (x,y) -> opA -< (y,x) 
+
+binaryRel ::
+    (Arrow to) => 
+    ((r,r,r,r) `to` a) -> ((Complex r, Complex r) `to` a)
+binaryRel tupleA =
+    proc (r1 :+ i1, r2 :+ i2) -> tupleA -< (r1,i1,r2,i2)
+
+binaryOp ::
+    (Arrow to) => 
+    ((r,r,r,r) `to` r, (r,r,r,r) `to` r) -> ((Complex r, Complex r) `to` (Complex r))
+binaryOp (realA, imagA) =
+    proc (r1 :+ i1, r2 :+ i2) ->
+        do
+        r <- realA  -< (r1,i1,r2,i2)
+        i <- imagA  -< (r1,i1,r2,i2)
+        returnA -< (r :+ i)
+
+unaryOp ::
+    (Arrow to) => 
+    ((r,r) `to` r, (r,r) `to` r) -> ((Complex r) `to` (Complex r))
+unaryOp (realA, imagA) =
+    proc (r1 :+ i1) ->
+        do
+        r <- realA  -< (r1,i1)
+        i <- imagA  -< (r1,i1)
+        returnA -< (r :+ i)
+

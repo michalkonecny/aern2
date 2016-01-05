@@ -23,7 +23,8 @@ data RealExpr = RealExpr (RealExpr' RealExpr)
 data RealPred = RealPred (RealPred' RealPred)
 
 class
-    (FieldA to r, HasCauchyRealsA to r, 
+    (FieldA to r, HasCauchyRealsA to r,
+     CanSqrtSameTypeA to r, CanExpSameTypeA to r, CanSineCosineSameTypeA to r, 
      CanAddMulDivScalarA to r Integer, 
      CanAddMulDivScalarA to r Rational)
     => 
@@ -376,3 +377,21 @@ instance CanDivA (->) CauchyReal RealExpr where
     divA (e1,e2) = RealExpr (RFunct (Just "/") (binaryFn divA) [cauchyReal2expr e1,e2])
 
 instance CanDivByA (->) RealExpr CauchyReal
+
+
+instance CanSqrtA (->) RealExpr where
+    sqrtA e1 = RealExpr (RFunct (Just "sqrt") (unaryFn sqrtA) [e1])
+
+instance CanSqrtSameType RealExpr
+
+instance CanExpA (->) RealExpr where
+    expA e1 = RealExpr (RFunct (Just "exp") (unaryFn expA) [e1])
+
+instance CanExpSameType RealExpr
+
+instance CanSineCosineA (->) RealExpr where
+    sinA e1 = RealExpr (RFunct (Just "sin") (unaryFn sinA) [e1])
+    cosA e1 = RealExpr (RFunct (Just "cos") (unaryFn cosA) [e1])
+
+instance CanSineCosineSameType RealExpr
+
