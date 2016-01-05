@@ -8,9 +8,8 @@ module AERN2.Net.Execution.QACached
 where
 
 import AERN2.Num
-import Data.String (IsString(..),fromString)
 
-import AERN2.Net.Execution.QACached.Basics 
+import AERN2.Net.Execution.QACached.Basics
 import AERN2.Net.Execution.QACached.CauchyReal 
 
 import AERN2.Net.Spec.Arrow

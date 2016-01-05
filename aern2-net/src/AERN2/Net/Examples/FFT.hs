@@ -7,12 +7,12 @@ module AERN2.Net.Examples.FFT
 where
 
 import AERN2.Num
-import Data.String (fromString)
 
 import AERN2.Net.Spec.Arrow
 import Control.Arrow
 
 import AERN2.Net.Execution.Direct ()
+import AERN2.Net.Execution.QACached
 
 import Debug.Trace (trace)
 
@@ -36,8 +36,25 @@ fftTestDirect nN ac =
             dftCooleyTukey nN -< x
     input = map rational [1..nN] 
 
+{- TODO
+fftTestCached :: Integer -> Accuracy -> [(MPBall, MPBall)]
+fftTestCached nN ac =
+    executeQACachedM $
+        do
+        rs <- runKleisli (fftWithInput :: QACachedA () [QACached_ComplexCR]) ()
+        anss <- mapM (\(QACached_ComplexCR rId) -> getAnswer QAP_ComplexCR rId ac) rs
+        return anss
+    where
+    fftWithInput =
+        proc () ->
+            do
+            x <- complexListNamedA "input" -< input
+            dftCooleyTukey nN -< x
+    input = map rational [1..nN] 
+-}
+
 {-|
-    Discrete Furier Transform using the Cooley and Tukey Radix-2 algorithm.
+    Discrete Fourier Transform using the Cooley and Tukey Radix-2 algorithm.
     
     Preconditions:
     
