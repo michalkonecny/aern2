@@ -209,7 +209,7 @@ instance (CanSqrtSameTypeA to r, RealExprA to r) => CanAbsA to (Complex r) where
              $(exprA[| let [r,i]=vars in sqrt (r*r + i*i) |]) -< (r,i)
 
 instance (RealExprA to r) => CanRecipA to (Complex r) where
---    recipA a = 1/a -- TODO
+    recipA = proc x -> divA -< (1,x)
 
 instance (RealExprA to r) => CanRecipSameTypeA to (Complex r)
 
@@ -443,11 +443,11 @@ convertFirstRealOnlyA opA =
         r' <- opA -< (x,r)
         returnA -< (r' :+ i)
 
-flipA ::
-    (Arrow to) =>
-    ((a,b) `to` c) -> ((b,a) `to` c) 
-flipA opA =
-    proc (x,y) -> opA -< (y,x) 
+--flipA ::
+--    (Arrow to) =>
+--    ((a,b) `to` c) -> ((b,a) `to` c) 
+--flipA opA =
+--    proc (x,y) -> opA -< (y,x) 
 
 binaryRel ::
     (Arrow to) => 
