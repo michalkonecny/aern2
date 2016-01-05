@@ -219,39 +219,89 @@ instance (RealExprA to r) => CanRecipA to (Complex r) where
 
 instance (RealExprA to r) => CanRecipSameTypeA to (Complex r)
 
-instance (RealExprA to r) => CanAddA to (Complex r) (Complex r) where
+instance 
+    (CanAddA to r1 r2) => 
+    CanAddA to (Complex r1) (Complex r2) 
+    where   
+    type AddTypeA  to (Complex r1) (Complex r2) = Complex (AddTypeA to r1 r2)
     addA =
-        binaryOp ($(exprA[|let [r1,_i1,r2,_i2]=vars in r1 + r2 |]), 
-                  $(exprA[|let [_r1,i1,_r2,i2]=vars in i1 + i2 |])) 
+        proc (r1 :+ i1, r2 :+ i2) ->
+            do
+            r <- addA -< (r1,r2)
+            i <- addA -< (i1,i2)
+            returnA -< r :+ i
 
-instance (RealExprA to r) => CanAddThisA to (Complex r) (Complex r)
+instance (CanAddThisA to r1 r2) => CanAddThisA to (Complex r1) (Complex r2)
 instance (RealExprA to r) => CanAddSameTypeA to (Complex r)
 
-instance (RealExprA to r) => (CanSubA to (Complex r) (Complex r))  
-instance (RealExprA to r) => CanSubThisA to (Complex r) (Complex r)
+instance (CanAddA to r1 r2, RealExprA to r2) => (CanSubA to (Complex r1) (Complex r2))  
+instance (CanAddThisA to r1 r2, RealExprA to r2) => CanSubThisA to (Complex r1) (Complex r2)
 instance (RealExprA to r) => CanSubSameTypeA to (Complex r)
 
-instance (RealExprA to r) => CanMulA to (Complex r) (Complex r) where
+instance 
+    (CanMulA to r1 r2, RealExprA to (MulTypeA to r1 r2)) => 
+    CanMulA to (Complex r1) (Complex r2) 
+    where   
+    type MulTypeA  to (Complex r1) (Complex r2) = Complex (MulTypeA to r1 r2)
     mulA =
-        binaryOp ($(exprA[|let [r1,i1,r2,i2]=vars in r1 * r2 - i1 * i2 |]), 
-                  $(exprA[|let [r1,i1,r2,i2]=vars in r1 * i2 + r2 * i1|])) 
+        proc (r1 :+ i1, r2 :+ i2) ->
+            do
+            r1r2 <- mulA -< (r1,r2)
+            r1i2 <- mulA -< (r1,i2)
+            i1r2 <- mulA -< (i1,r2)
+            i1i2 <- mulA -< (i1,i2)
+            r <- subA -< (r1r2, i1i2)
+            i <- addA -< (r1i2, i1r2)
+            returnA -< r :+ i
+--        binaryOp ($(exprA[|let [r1,i1,r2,i2]=vars in r1 * r2 - i1 * i2 |]), 
+--                  $(exprA[|let [r1,i1,r2,i2]=vars in r1 * i2 + i1 * r2|])) 
 
-instance (RealExprA to r) => CanMulByA to (Complex r) (Complex r)
+instance (CanMulByA to r1 r2, RealExprA to r1) => CanMulByA to (Complex r1) (Complex r2)
 instance (RealExprA to r) => CanMulSameTypeA to (Complex r)
 
-instance (RealExprA to r) => CanDivA to (Complex r) (Complex r) where
+instance 
+    (CanMulA to r1 r2, RealExprA to (MulTypeA to r1 r2),
+     RealExprA to r2, CanDivByA to (MulTypeA to r1 r2) r2) 
+    => 
+    CanDivA to (Complex r1) (Complex r2) 
+    where   
+    type DivTypeA  to (Complex r1) (Complex r2) = Complex (MulTypeA to r1 r2)
     divA =
-        binaryOp ($(exprA[|let [r1,i1,r2,i2]=vars in (r1 * r2 + i1 * i2)/(r2*r2 + i2 * i2) |]), 
-                  $(exprA[|let [r1,i1,r2,i2]=vars in (r2 * i1 - r1 * i2)/(r2*r2 + i2 * i2) |])) 
+        proc (r1 :+ i1, r2 :+ i2) ->
+            do
+            r1r2 <- mulA -< (r1,r2)
+            r1i2 <- mulA -< (r1,i2)
+            i1r2 <- mulA -< (i1,r2)
+            i1i2 <- mulA -< (i1,i2)
+            rNum <- addA -< (r1r2, i1i2)
+            iNum <- subA -< (i1r2, r1i2)
+            r2r2 <- mulA -< (r2,r2)
+            i2i2 <- mulA -< (i2,i2)
+            d <- addA -< (r2r2, i2i2)
+            r <- divA -< (rNum, d)
+            i <- divA -< (iNum, d)
+            returnA -< r :+ i
+--        binaryOp ($(exprA[|let [r1,i1,r2,i2]=vars in (r1 * r2 + i1 * i2)/(r2*r2 + i2 * i2) |]), 
+--                  $(exprA[|let [r1,i1,r2,i2]=vars in (i1 * r2 - r1 * i2)/(r2*r2 + i2 * i2) |])) 
         
-instance (RealExprA to r) => CanDivByA to (Complex r) (Complex r)
-
+instance 
+    (CanMulByA to r1 r2, RealExprA to r1,
+     RealExprA to r2, CanDivByA to r1 r2) 
+    => 
+    CanDivByA to (Complex r1) (Complex r2)
 instance (RealExprA to r) => CanDivSameTypeA to (Complex r)
 
+instance 
+    (CanAddThisA to r1 r2, CanMulByA to r1 r2, RealExprA to r1) 
+    => 
+    CanAddMulScalarA to (Complex r1) (Complex r2)
+instance 
+    (CanAddThisA to r1 r2, CanMulByA to r1 r2, RealExprA to r1,
+     RealExprA to r2, CanDivByA to r1 r2) 
+    => 
+    CanAddMulDivScalarA to (Complex r1) (Complex r2)
 instance (RealPredA to r) => RingA to (Complex r)
 instance (RealPredA to r) => FieldA to (Complex r)
-instance (RealPredA to r) => CanAddMulScalarA to (Complex r) (Complex r)
-instance (RealPredA to r) => CanAddMulDivScalarA to (Complex r) (Complex r)
 
 {- (Complex r)-Integer operations -}
 
@@ -504,10 +554,10 @@ binaryRel ::
 binaryRel tupleA =
     proc (r1 :+ i1, r2 :+ i2) -> tupleA -< (r1,i1,r2,i2)
 
-binaryOp ::
+_binaryOp ::
     (Arrow to) => 
     ((r,r,r,r) `to` r, (r,r,r,r) `to` r) -> ((Complex r, Complex r) `to` (Complex r))
-binaryOp (realA, imagA) =
+_binaryOp (realA, imagA) =
     proc (r1 :+ i1, r2 :+ i2) ->
         do
         r <- realA  -< (r1,i1,r2,i2)
