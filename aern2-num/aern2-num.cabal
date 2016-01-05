@@ -45,5 +45,6 @@ library
                    AERN2.Num.Norm,
                    AERN2.Num.Operations,
                    AERN2.Num.SymbolicArrow,
+                   AERN2.Num.SymbolicArrow.Expression,
                    AERN2.Num.SymbolicArrow.TH
 
