@@ -3,10 +3,10 @@ module AERN2.Num.Complex
 (
     Complex(..), complexI,
     complexCR2balls,
-    showComplexCR
-    ,
+    showComplexCR,
     HasComplexA, HasComplex,
-    CanBeComplexA, complexA, complexNamedA, complexListA, complexListNamedA, CanBeComplex, complex, complexList
+    CanBeComplexA, complexA, complexNamedA, complexListA, complexListNamedA, 
+    CanBeComplex, complex, complexList
 )
 where
 
@@ -247,6 +247,9 @@ instance (RealPredA to r) => FieldA to (Complex r)
 
 {- (Complex r)-Integer operations -}
 
+instance (RealExprA to r) => CanAddMulScalarA to (Complex r) Integer
+instance (RealExprA to r) => CanAddMulDivScalarA to (Complex r) Integer
+
 instance (RealExprA to r) => CanAddA to Integer (Complex r) where
     type AddTypeA to Integer (Complex r) = (Complex r)
     addA = convertFirstRealOnlyA addA 
@@ -292,6 +295,9 @@ instance (RealExprA to r) => CanDivByA to (Complex r) Integer
 
 {- (Complex r)-Rational operations -}
 
+instance (RealExprA to r) => CanAddMulScalarA to (Complex r) Rational
+instance (RealExprA to r) => CanAddMulDivScalarA to (Complex r) Rational
+
 instance (RealExprA to r) => CanAddA to Rational (Complex r) where
     type AddTypeA to Rational (Complex r) = (Complex r)
     addA = convertFirstRealOnlyA addA 
@@ -336,6 +342,9 @@ instance (RealExprA to r) => CanDivByA to (Complex r) Rational
 
 
 {- (Complex r)-CauchyReal operations -}
+
+instance (RealExprA to r) => CanAddMulScalarA to (Complex r) CauchyReal
+instance (RealExprA to r) => CanAddMulDivScalarA to (Complex r) CauchyReal
 
 instance (RealExprA to r) => CanAddA to CauchyReal (Complex r) where
     type AddTypeA to CauchyReal (Complex r) = (Complex r)
