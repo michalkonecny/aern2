@@ -8,6 +8,7 @@ import qualified Data.Map as Map
 
 import AERN2.Num.Operations
 import AERN2.Num.CauchyReal
+import AERN2.Num.MPBall
 
 data RealExpr' expr
     = Var VarName
@@ -38,6 +39,15 @@ class
 
 instance RealExprA (->) CauchyReal
 instance RealPredA (->) CauchyReal
+
+instance RealExprA (->) MPBall
+instance RealPredA (->) MPBall
+
+instance ConvertibleA (->) CauchyReal MPBall where
+    convertA =
+        error "conversion from CauchyReal to MPBall not implemented"
+
+
 
 {- TODO: use this inside RealExpr nodes:
 

@@ -77,6 +77,10 @@ instance (HasRationalsA to r, HasIntegersA to r) => ConvertibleA to Rational (Co
 instance (HasCauchyRealsA to r, HasIntegersA to r) => ConvertibleA to CauchyReal (Complex r) where
     convertA = toComplexA
 
+-- | HasMPBall (Complex r), CanBeComplex r MPBall
+instance (HasMPBallsA to r, HasIntegersA to r) => ConvertibleA to MPBall (Complex r) where
+    convertA = toComplexA
+
 toComplexA ::
     (ConvertibleA to a r, HasIntegersA to r)
     =>
@@ -246,6 +250,8 @@ instance (RealExprA to r) => CanDivSameTypeA to (Complex r)
 
 instance (RealPredA to r) => RingA to (Complex r)
 instance (RealPredA to r) => FieldA to (Complex r)
+instance (RealPredA to r) => CanAddMulScalarA to (Complex r) (Complex r)
+instance (RealPredA to r) => CanAddMulDivScalarA to (Complex r) (Complex r)
 
 {- (Complex r)-Integer operations -}
 
@@ -276,21 +282,28 @@ instance (RealExprA to r) => CanSubThisA to (Complex r) Integer
 
 instance (RealExprA to r) => CanMulA to Integer (Complex r) where
     type MulTypeA to Integer (Complex r) = (Complex r)
-    mulA = convertFirstA mulA 
+    mulA =
+        binaryLeftROp 
+            ($(exprA[|let [r,r2,_i2]=vars in r*r2 |]), 
+             $(exprA[|let [r,_r2,i2]=vars in r*i2 |])) 
 
 instance (RealExprA to r) => CanMulA to (Complex r) Integer where
     type MulTypeA to (Complex r) Integer = (Complex r)
-    mulA = convertSecondA mulA 
+    mulA = flipA mulA 
 
 instance (RealExprA to r) => CanMulByA to (Complex r) Integer
 
 instance (RealExprA to r) => CanDivA to Integer (Complex r) where
     type DivTypeA to Integer (Complex r) = (Complex r)
-    divA = convertFirstA divA
+    divA =
+        binaryLeftROp 
+            ($(exprA[|let [r,r2,i2]=vars in (r*r2)/(r2*r2 + i2*i2) |]), 
+             $(exprA[|let [r,r2,i2]=vars in (neg r*i2)/(r2*r2 + i2*i2) |])) 
 
 instance (RealExprA to r) => CanDivA to (Complex r) Integer where
     type DivTypeA to (Complex r) Integer = (Complex r)
-    divA = convertSecondA divA -- (r :+ i, a) = r / a :+ i / a 
+    divA = 
+        proc (c,r) -> mulA -< (c, 1/r) 
 
 instance (RealExprA to r) => CanDivByA to (Complex r) Integer
 
@@ -324,21 +337,28 @@ instance (RealExprA to r) => CanSubThisA to (Complex r) Rational
 
 instance (RealExprA to r) => CanMulA to Rational (Complex r) where
     type MulTypeA to Rational (Complex r) = (Complex r)
-    mulA = convertFirstA mulA 
+    mulA =
+        binaryLeftROp 
+            ($(exprA[|let [r,r2,_i2]=vars in r*r2 |]), 
+             $(exprA[|let [r,_r2,i2]=vars in r*i2 |])) 
 
 instance (RealExprA to r) => CanMulA to (Complex r) Rational where
     type MulTypeA to (Complex r) Rational = (Complex r)
-    mulA = convertSecondA mulA 
+    mulA = flipA mulA 
 
 instance (RealExprA to r) => CanMulByA to (Complex r) Rational
 
 instance (RealExprA to r) => CanDivA to Rational (Complex r) where
     type DivTypeA to Rational (Complex r) = (Complex r)
-    divA = convertFirstA divA
+    divA =
+        binaryLeftROp 
+            ($(exprA[|let [r,r2,i2]=vars in (r*r2)/(r2*r2 + i2*i2) |]), 
+             $(exprA[|let [r,r2,i2]=vars in (neg r*i2)/(r2*r2 + i2*i2) |])) 
 
 instance (RealExprA to r) => CanDivA to (Complex r) Rational where
     type DivTypeA to (Complex r) Rational = (Complex r)
-    divA = convertSecondA divA -- (r :+ i, a) = r / a :+ i / a 
+    divA = 
+        proc (c,r) -> mulA -< (c, 1/r) 
 
 instance (RealExprA to r) => CanDivByA to (Complex r) Rational
 
@@ -372,21 +392,28 @@ instance (RealExprA to r) => CanSubThisA to (Complex r) CauchyReal
 
 instance (RealExprA to r) => CanMulA to CauchyReal (Complex r) where
     type MulTypeA to CauchyReal (Complex r) = (Complex r)
-    mulA = convertFirstA mulA 
-
+    mulA =
+        binaryLeftROp 
+            ($(exprA[|let [r,r2,_i2]=vars in r*r2 |]), 
+             $(exprA[|let [r,_r2,i2]=vars in r*i2 |])) 
+ 
 instance (RealExprA to r) => CanMulA to (Complex r) CauchyReal where
     type MulTypeA to (Complex r) CauchyReal = (Complex r)
-    mulA = convertSecondA mulA 
+    mulA = flipA mulA 
 
 instance (RealExprA to r) => CanMulByA to (Complex r) CauchyReal
 
 instance (RealExprA to r) => CanDivA to CauchyReal (Complex r) where
     type DivTypeA to CauchyReal (Complex r) = (Complex r)
-    divA = convertFirstA divA
+    divA =
+        binaryLeftROp 
+            ($(exprA[|let [r,r2,i2]=vars in (r*r2)/(r2*r2 + i2*i2) |]), 
+             $(exprA[|let [r,r2,i2]=vars in (neg r*i2)/(r2*r2 + i2*i2) |])) 
 
 instance (RealExprA to r) => CanDivA to (Complex r) CauchyReal where
     type DivTypeA to (Complex r) CauchyReal = (Complex r)
-    divA = convertSecondA divA -- (r :+ i, a) = r / a :+ i / a 
+    divA = 
+        proc (c,r) -> mulA -< (c, 1/r) 
 
 instance (RealExprA to r) => CanDivByA to (Complex r) CauchyReal
 
@@ -458,6 +485,18 @@ convertFirstRealOnlyA opA =
         x <- convertA -< xI
         r' <- opA -< (x,r)
         returnA -< (r' :+ i)
+
+binaryLeftROp ::
+    (Arrow to, ConvertibleA to a r) => 
+    ((r,r,r) `to` r, (r,r,r) `to` r) -> ((a, Complex r) `to` (Complex r))
+binaryLeftROp (realA, imagA) =
+    proc (xI, r2 :+ i2) ->
+        do
+        x <- convertA -< xI
+        r <- realA  -< (x,r2,i2)
+        i <- imagA  -< (x,r2,i2)
+        returnA -< (r :+ i)
+
 
 binaryRel ::
     (Arrow to) => 

@@ -20,6 +20,7 @@ import qualified Prelude as P
 import AERN2.Num.Operations
 import AERN2.Num.Norm
 
+import Control.Arrow
 import Math.NumberTheory.Logarithms (integerLog2)
 
 import AERN2.Num.IntegerRational ()
@@ -94,6 +95,9 @@ mpBall :: (CanBeMPBall a) => a -> MPBall
 mpBall = convert
 mpBalls :: (CanBeMPBall a) => [a] -> [MPBall]
 mpBalls = convertList
+
+instance (ArrowChoice to) => ConvertibleA to MPBall MPBall where
+    convertA = arr id
 
 -- | HasIntegers MPBall, CanBeMPBall Integer
 instance ConvertibleA (->) Integer MPBall where
@@ -472,13 +476,18 @@ getCentreAndErrorBall x = (cB,eB)
 instance CanSqrtA (->) MPBall where
     sqrtA x = monotoneFromApprox MP.sqrtDown MP.sqrtUp x     
         
+instance CanSqrtSameTypeA (->) MPBall
+        
 instance CanExpA (->) MPBall where
     expA x = monotoneFromApprox MP.expDown MP.expUp x     
+
+instance CanExpSameTypeA (->) MPBall
         
 instance CanSineCosineA (->) MPBall where
     sinA = sinB 1
     cosA = cosB 1
 
+instance CanSineCosineSameTypeA (->) MPBall
 
 sinB :: Integer -> MPBall -> MPBall
 sinB i x = 
