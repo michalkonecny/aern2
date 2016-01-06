@@ -21,23 +21,23 @@ the fact that:
 1 :: Integer
 *AERN2.Num> :t 1+1/3
 1+1/3 :: Rational
-*AERN2.Num> [1..100] !! (toInt 3)
+*AERN2.Num> [1..100] !! (int 3)
 4
-*AERN2.Num> fromInt (length [1]) + 1/3
+*AERN2.Num> integer (length [1]) + 1/3
 4 % 3
 *AERN2.Num> (length []) + 1/3
 
 <interactive>:8:13:
-    No instance for (CanAdd Int Rational) arising from a use of ‘+’
+    No instance for (CanAddA (->) Int Rational) arising from a use of ‘+’
     In the expression: (length []) + 1 / 3
     In an equation for ‘it’: it = (length []) + 1 / 3
 
 ...
-*AERN2.Num> cauchyReal2ball (rational2CauchyReal (1/3)) (bits 1000)
+*AERN2.Num> cauchyReal2ball (cauchyReal (1/3)) (bits 1000)
 [3.333333333333333e-1 ± 8.996362134434827e-482]
-*AERN2.Num> cauchyReal2ball (rational2CauchyReal (1/3)) Exact
+*AERN2.Num> cauchyReal2ball (cauchyReal (1/3)) Exact
 *** Exception: convergent2Cauchy: the sequence either converges too slowly or it does not converge
-*AERN2.Num> cauchyReal2ball (rational2CauchyReal 0.125) Exact
+*AERN2.Num> cauchyReal2ball (cauchyReal 0.125) Exact
 [1.25e-1 ± 0]
 ...
 *AERN2.Num> :t pi
