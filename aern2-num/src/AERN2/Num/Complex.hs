@@ -1,7 +1,7 @@
 {-# LANGUAGE Arrows, TypeSynonymInstances, FlexibleInstances, TypeOperators, ConstraintKinds, FlexibleContexts, UndecidableInstances, TemplateHaskell #-}
 module AERN2.Num.Complex 
 (
-    Complex(..), complexI,
+    Complex(..), complex_iA, complex_i,
     complexCR2balls,
     showComplexCR,
     HasComplexA, HasComplex,
@@ -24,8 +24,16 @@ data Complex r = r :+ r
 
 infixr 5 :+
 
-complexI :: (HasIntegers r) => Complex r
-complexI = (convert 0) :+ (convert 1)
+complex_i :: (HasIntegers r) => Complex r
+complex_i = complex_iA ()
+
+complex_iA :: (HasIntegersA to r) => () `to` Complex r
+complex_iA =
+    proc () ->
+        do
+        zero <- convertA -< 0
+        one <- convertA -< 1
+        returnA -< zero :+ one 
 
 complexCR2balls :: (Complex CauchyReal) -> Accuracy -> (MPBall, MPBall)
 complexCR2balls (r :+ i) a = 

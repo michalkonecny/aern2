@@ -5,35 +5,17 @@ where
 
 import AERN2.Num
 
-ball1 :: MPBall
-ball1 = rationalBall2BallP (prec 1000) (2.0,1/300) 
+import Control.Arrow
 
-ball2 :: MPBall
-ball2 = mpBall (5^100)
+{---------- examples from MAP2016 talk -----------}
 
-balladd :: MPBall
-balladd = ball1 + ball1
+{--- ordinary function arrow versions ---}
 
-ballmul :: MPBall
-ballmul = ball1 * ball1
 
-ball1Accuracy :: Accuracy
-ball1Accuracy = getAccuracy ball1
+twiddle :: (Integer, Integer) -> Complex CauchyReal
+twiddle(k,n) =  exp(-2*k*complex_i*pi/n)
 
-ballComp1 :: Maybe Bool
-ballComp1 = ball1 < ballmul
+{--- arrow-generic versions ---}
 
-ballComp2 :: Maybe Bool
-ballComp2 = ball1 == ball1
-
-cauchyThird :: CauchyReal
-cauchyThird = cauchyReal (1/3) 
-
-cauchyThirdWithAccuracy :: Accuracy -> MPBall
-cauchyThirdWithAccuracy = cauchyReal2ball cauchyThird
-
-cauchyArithmetic :: CauchyReal
-cauchyArithmetic = 1 + pi + cos(pi/3)
-
-ballPlusCauchy :: MPBall
-ballPlusCauchy = ball1 + cauchyArithmetic
+twiddleA :: (RealPredA to r) => (Integer, Integer) -> () `to` (Complex r)
+twiddleA(k,n) = $(exprA[| let [i]=vars in exp(-2*k*i*pi/n)|]) <<< complex_iA

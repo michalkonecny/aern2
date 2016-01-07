@@ -10,6 +10,4 @@ import AERN2.Net.Execution.QACached.CauchyReal
 type QACached_Complex = Complex QACached_CauchyReal
 
 instance RealA QACachedA (Complex QACached_CauchyReal)
-instance RealExprA QACachedA (Complex QACached_CauchyReal)
-instance RealPredA QACachedA (Complex QACached_CauchyReal)
 instance ComplexA QACachedA (Complex QACached_CauchyReal)

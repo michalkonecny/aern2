@@ -1,4 +1,4 @@
-{-# LANGUAGE Arrows, TypeOperators #-}
+{-# LANGUAGE Arrows, TypeOperators, TemplateHaskell #-}
 module AERN2.Net.Examples.FFT 
 (
     fftTestDirectCR,
@@ -10,12 +10,13 @@ where
 
 import AERN2.Num
 
-import AERN2.Net.Spec.Arrow
+--import AERN2.Net.Spec.Arrow
 import Control.Arrow
 
 import AERN2.Net.Execution.Direct ()
 import AERN2.Net.Execution.QACached
 
+{-
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
@@ -26,6 +27,7 @@ maybeTrace :: String -> a -> a
 maybeTrace 
     | shouldTrace = trace
     | otherwise = const id
+-}
 
 fftTestDirectCR :: Integer -> Accuracy -> [(MPBall, MPBall)]
 fftTestDirectCR nN ac =
@@ -82,10 +84,10 @@ fftTestCached nN ac =
     * The input list has exactly @N@ elements.
 -}
 dftCooleyTukey :: 
-    (ComplexA to c)
+    (RealPredA to r)
     =>
     Integer {-^ @N@ -} -> 
-    [c] `to` [c]
+    [Complex r] `to` [Complex r]
 dftCooleyTukey nN = ditfft2 nN 1
 
 {-|
@@ -103,11 +105,11 @@ dftCooleyTukey nN = ditfft2 nN 1
     * The input list has at least @s*(N-1) + 1@ elements.
 -}
 ditfft2 :: 
-    (ComplexA to c)
+    (RealPredA to r)
     =>
     Integer {-^ @N@ -} -> 
     Integer {-^ @s@ -} ->
-    [c] `to` [c]
+    [Complex r] `to` [Complex r]
 ditfft2 nN s
     | nN == 1 =
         proc (x0:_) -> 
@@ -126,18 +128,9 @@ ditfft2 nN s
     twiddle k = 
         proc x_k_plus_NHalf ->
             do
+            c <- $(exprA[|let [i] = vars in exp(-2*pi*i*k/nN)|]) <<< complex_iA -< ()  
             r <- mulA -< (x_k_plus_NHalf, c)
-            let _ = [r,x_k_plus_NHalf]
+            let _ = [c,r,x_k_plus_NHalf]
             returnA -< r
-        where
-        c = 
-            maybeTrace
-            (
-                "twiddle with k = " ++ show k ++ "; ... = " ++ showComplexCR (bits 100) c'
-            )
-            c'
-            where
-            c' = exp(-2*pi*i*k/nN)
-        i = complexI :: Complex CauchyReal
     
                 
