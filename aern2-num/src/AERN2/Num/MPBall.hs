@@ -240,10 +240,11 @@ instance HasOrderA (->) Rational MPBall where
     leqA (q1, b2) = leq (rational2BallP (getPrecision b2) q1) b2
 
 
-instance CanNegA (->) MPBall where
-    negA (MPBall x1 e1) = MPBall (MP.neg x1) e1
+instance (Arrow to) => CanNegA to MPBall where
+    negA = arr aux
+        where aux (MPBall x1 e1) = MPBall (MP.neg x1) e1
 
-instance CanNegSameType MPBall
+instance (Arrow to) => CanNegSameTypeA to MPBall
 
 instance CanAbsA (->) MPBall where
     absA (MPBall x1 e1) = MPBall (MP.abs x1) e1

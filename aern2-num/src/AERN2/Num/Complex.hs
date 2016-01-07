@@ -6,8 +6,7 @@ module AERN2.Num.Complex
     showComplexCR,
     HasComplexA, HasComplex,
     CanBeComplexA, complexA, complexNamedA, complexListA, complexListNamedA, 
-    CanBeComplex, complex, complexList,
-    convertFirstA, convertSecondA, flipA -- TODO: move these to a separate module
+    CanBeComplex, complex, complexList
 )
 where
 
@@ -491,30 +490,6 @@ instance (RealExprA to r) => CanSineCosineA to (Complex r) where
 instance (RealExprA to r) => CanSineCosineSameTypeA to (Complex r)
 
 {- auxiliary function -}
-
-convertSecondA ::
-    (Arrow to, ConvertibleA to a r) =>
-    ((r,r) `to` b) -> ((r,a) `to` b) 
-convertSecondA opA =
-    proc (x,yI) ->
-        do
-        y <- convertA -< yI
-        opA -< (x,y)
-
-convertFirstA ::
-    (Arrow to, ConvertibleA to a r) =>
-    ((r,r) `to` b) -> ((a,r) `to` b) 
-convertFirstA opA =
-    proc (xI,y) ->
-        do
-        x <- convertA -< xI
-        opA -< (x,y)
-
-flipA ::
-    (Arrow to) =>
-    ((a,b) `to` c) -> ((b,a) `to` c) 
-flipA opA =
-    proc (x,y) -> opA -< (y,x) 
 
 convertSecondRealOnlyA ::
     (Arrow to, ConvertibleA to a r) =>

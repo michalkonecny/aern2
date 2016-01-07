@@ -25,7 +25,8 @@ library
     template-haskell,
     regex-posix,
     syb,
-    parsec
+    parsec,
+    mtl
   ghc-options:     -O2 -Wall  -fno-warn-orphans
   extensions:      
                    MultiParamTypeClasses, 
@@ -46,5 +47,6 @@ library
                    AERN2.Num.Operations,
                    AERN2.Num.SymbolicArrow,
                    AERN2.Num.SymbolicArrow.Expression,
-                   AERN2.Num.SymbolicArrow.TH
+                   AERN2.Num.SymbolicArrow.TH,
+                   AERN2.Num.CauchyReal.InnerType
 

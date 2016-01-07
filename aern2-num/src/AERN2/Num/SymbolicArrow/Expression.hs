@@ -37,8 +37,8 @@ class
     =>
     RealPredA to r
 
-instance RealExprA (->) CauchyReal
-instance RealPredA (->) CauchyReal
+instance RealExprA (->) (CauchyReal)
+instance RealPredA (->) (CauchyReal)
 
 instance RealExprA (->) MPBall
 instance RealPredA (->) MPBall

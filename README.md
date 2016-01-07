@@ -28,7 +28,8 @@ the fact that:
 *AERN2.Num> (length []) + 1/3
 
 <interactive>:8:13:
-    No instance for (CanAddA (->) Int Rational) arising from a use of ‘+’
+    No instance for (CanAddA (->) Int Rational)
+      arising from a use of ‘+’
     In the expression: (length []) + 1 / 3
     In an equation for ‘it’: it = (length []) + 1 / 3
 
@@ -42,8 +43,8 @@ the fact that:
 ...
 *AERN2.Num> :t pi
 pi :: CauchyReal
-*AERN2.Num> :t cos (pi/3) + sin(pi/3)
-cos (pi/3) + sin(pi/3) :: CauchyReal
+*AERN2.Num> cauchyReal2ball (cos (pi/3) + sin(pi/3)) (bits 10000)
+[1.366025403784439 ± 6.78652891474534e-3295]
 *AERN2.Num> :set +s
 *AERN2.Num> cauchyReal2ball pi (bits 10)
 [3.1416015625 ± 4.8828125e-4]

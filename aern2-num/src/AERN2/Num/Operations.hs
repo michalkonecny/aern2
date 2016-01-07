@@ -4,13 +4,14 @@ module AERN2.Num.Operations
 (
     module Prelude, (.), id,
     fromInteger, fromRational, ifThenElse,
+    IsString, fromString,
     ArrowConvert(..), Fn2Arrow, fn2arrow, fn2arrowNamed, Arrow2Fn, arrow2fn,
     ConvertibleA(..), convertListNamedA, Convertible, convert, convertList,
-    HasIntsA, HasInts, fromIntDefault, 
+    HasIntsA, HasInts, fromIntADefault, 
     CanBeIntA, intA, intNamedA, intsA, intsNamedA, CanBeInt, int, intDefault, ints,
-    HasIntegersA, HasIntegers, fromIntegerDefault, 
-    CanBeIntegerA, integerA, integerNamedA, integersA, integersNamedA, CanBeInteger, integer, integerDefault, integers, 
-    HasRationalsA, HasRationals, fromRationalDefault, 
+    HasIntegersA, HasIntegers, fromIntegerADefault, 
+    CanBeIntegerA, integerA, integerNamedA, integersA, integersNamedA, CanBeInteger, integer, integerADefault, integers, 
+    HasRationalsA, HasRationals, fromRationalADefault, 
     CanBeRationalA, rationalA, rationalNamedA, rationalsA, rationalsNamedA, CanBeRational, rational, rationalDefault, rationals,
     HasBoolsA, HasBools, 
     notA, not, 
@@ -47,7 +48,7 @@ module AERN2.Num.Operations
     CanSineCosineA(..), CanSineCosineSameTypeA,
     CanSineCosine, CanSineCosineSameType, sin, cos,
     mapA, zipWithA, foldlA, sequenceA,
-    IsString, fromString
+    convertFirstA, convertSecondA, flipA
 )
 where
 
@@ -129,9 +130,9 @@ convert = convertA
 convertList :: (Convertible a b) => [a] -> [b]
 convertList = map convert
 
-instance ConvertibleA (->) Int Int where convertA = id; convertListA = id
-instance ConvertibleA (->) Integer Integer where convertA = id; convertListA = id
-instance ConvertibleA (->) Rational Rational where convertA = id; convertListA = id
+instance (ArrowChoice to) => ConvertibleA to Int Int where convertA = id; convertListA = id
+instance (ArrowChoice to) => ConvertibleA to Integer Integer where convertA = id; convertListA = id
+instance (ArrowChoice to) => ConvertibleA to Rational Rational where convertA = id; convertListA = id
 
 {-|
     This is useful so that 'convert' can be used as a replacement 
@@ -140,17 +141,21 @@ instance ConvertibleA (->) Rational Rational where convertA = id; convertListA =
 -}
 type HasIntegersA to = ConvertibleA to Integer
 type HasIntegers = HasIntegersA (->)
-fromIntegerDefault :: (Num a) => Integer -> a
-fromIntegerDefault = P.fromInteger
+fromIntegerADefault :: (ArrowChoice to, Num a) => Integer `to` a
+fromIntegerADefault = arr P.fromInteger
 
 -- | ie HasIntegers Int
-instance ConvertibleA (->) Integer Int where convertA = toInt; convertListA = convertList
+instance (ArrowChoice to) => ConvertibleA to Integer Int where 
+    convertA = arr toInt
 -- | ie HasIntegers Rational, CanBeRational Integer
-instance ConvertibleA (->) Integer Rational where convertA = fromIntegerDefault; convertListA = convertList
+instance (ArrowChoice to) => ConvertibleA to Integer Rational where 
+    convertA = fromIntegerADefault
 
 type CanBeIntegerA to a = ConvertibleA to a Integer
 integerA :: (CanBeIntegerA to a) => a `to` Integer
 integerA = convertA
+integerADefault :: (Integral a, ArrowChoice to) => a `to` Integer
+integerADefault = arr P.toInteger
 integerNamedA :: (CanBeIntegerA to a) => String -> a `to` Integer
 integerNamedA = convertNamedA
 integersA :: (CanBeIntegerA to a) => [a] `to` [Integer]
@@ -165,21 +170,21 @@ integersNamedA = convertListNamedA
 type CanBeInteger a = CanBeIntegerA (->) a
 integer :: (CanBeInteger a) => a -> Integer
 integer = convert
-integerDefault :: (Integral a) => a -> Integer
-integerDefault = P.toInteger
 integers :: (CanBeInteger a) => [a] -> [Integer]
 integers = convertList
 
 -- | ie CanBeInteger Int
-instance ConvertibleA (->) Int Integer where convertA = integerDefault; convertListA = convertList
+instance (ArrowChoice to) => ConvertibleA to Int Integer where 
+    convertA = integerADefault
 
 type HasIntsA to = ConvertibleA to Int
 type HasInts = HasIntsA (->)
-fromIntDefault :: (Num a) => Int -> a
-fromIntDefault = P.fromIntegral
+fromIntADefault :: (ArrowChoice to, Num a) => Int `to` a
+fromIntADefault = arr P.fromIntegral
 
 -- | ie HasInts Rational, CanBeRational Int
-instance ConvertibleA (->) Int Rational where convertA = fromIntDefault; convertListA = convertList
+instance (ArrowChoice to) => ConvertibleA to Int Rational where 
+    convertA = fromIntADefault
 
 type CanBeIntA to a = ConvertibleA to a Int
 intA :: (CanBeIntA to a) => a `to` Int
@@ -219,8 +224,8 @@ toInt i
 -}
 type HasRationalsA to = ConvertibleA to Rational
 type HasRationals = HasRationalsA (->)
-fromRationalDefault :: (Fractional a) => Rational -> a
-fromRationalDefault = P.fromRational
+fromRationalADefault :: (ArrowChoice to, Fractional a) => Rational `to` a
+fromRationalADefault = arr P.fromRational
 
 type CanBeRationalA to a = ConvertibleA to a Rational
 rationalA :: (CanBeRationalA to a) => a `to` Rational
@@ -350,8 +355,8 @@ class (Arrow to, BoolA to (EqCompareTypeA to a b)) => HasEqA to a b where
     type EqCompareTypeA to a b = Bool -- default
     equalToA :: (a,b) `to` (EqCompareTypeA to a b)
     -- default equalToA via Prelude for (->) and Bool:
-    default equalToA :: (to ~ (->), EqCompareTypeA (->) a b ~ Bool, a~b, P.Eq a) => (a,b) -> Bool
-    equalToA = uncurry (P.==)
+    default equalToA :: (EqCompareTypeA to a b ~ Bool, a~b, P.Eq a) => (a,b) `to` Bool
+    equalToA = arr $ uncurry (P.==)
     notEqualToA :: (a,b) `to` (EqCompareTypeA to a b)
     -- default notEqualToA via equalToA for Bool:
     default notEqualToA :: 
@@ -372,16 +377,29 @@ notEqualTo = curry notEqualToA
 (/=) :: (HasEq a b) => a -> b -> EqCompareType a b
 (/=) = notEqualTo
 
-instance HasEqA (->) Bool Bool
-instance HasEqA (->) Char Char
-instance (HasEqA (->) a a, EqCompareTypeA (->) a a ~ Bool) => HasEqA (->) (Maybe a) (Maybe a) where
-    equalToA (Nothing, Nothing) = True
-    equalToA (Just a, Just b) = equalToA (a, b)
-    equalToA _ = False 
-instance (HasEqA (->) a a, EqCompareTypeA (->) a a ~ Bool) => HasEqA (->) [a] [a] where
-    equalToA ([],[]) = True
-    equalToA (h1:t1, h2:t2) = (equalToA (h1, h2)) && (equalToA (t1, t2))
-    equalToA _ = False 
+instance (ArrowChoice to) => HasEqA to Bool Bool
+instance (ArrowChoice to) => HasEqA to Char Char
+instance (HasEqA to a a, BoolA to a) => HasEqA to (Maybe a) (Maybe a) where
+    type EqCompareTypeA to (Maybe a) (Maybe a) = EqCompareTypeA to a a
+    equalToA =
+        proc (ma, mb) ->
+            case (ma, mb) of 
+                (Nothing, Nothing) -> convertA -< True
+                (Just a, Just b) -> equalToA -< (a, b)
+                _ -> convertA -< False 
+instance (HasEqA to a a, BoolA to (EqCompareTypeA to a a)) => HasEqA to [a] [a] where
+    type EqCompareTypeA to [a] [a] = EqCompareTypeA to a a
+    equalToA =
+        proc (l1, l2) ->
+            case (l1,l2) of
+                ([],[]) -> convertA -< True
+                (h1:t1, h2:t2) ->
+                    do
+                    hEq <- equalToA -< (h1, h2)
+                    tEq <- equalToA -< (t1, t2)
+                    and2A -< (hEq, tEq)
+                _ -> convertA -< False 
+
 
 {- order -}
 
@@ -390,9 +408,9 @@ class (Arrow to, BoolA to (OrderCompareTypeA to a b)) => HasOrderA to a b where
     type OrderCompareTypeA to a b = Bool -- default
     lessThanA :: (a,b) `to` OrderCompareTypeA to a b
     default lessThanA :: 
-        (to ~ (->), OrderCompareTypeA to a b ~ Bool, a~b, P.Ord a) => 
-        (a,b) -> OrderCompareTypeA to a b
-    lessThanA = uncurry (P.<)
+        (OrderCompareTypeA to a b ~ Bool, a~b, P.Ord a) => 
+        (a,b) `to` OrderCompareTypeA to a b
+    lessThanA = arr $ uncurry (P.<)
     greaterThanA :: (a,b) `to` OrderCompareTypeA to a b
     default greaterThanA :: 
         (OrderCompareTypeA to a b ~ OrderCompareTypeA to b a, HasOrderA to b a) => 
@@ -400,9 +418,9 @@ class (Arrow to, BoolA to (OrderCompareTypeA to a b)) => HasOrderA to a b where
     greaterThanA = proc (a,b) -> lessThanA -< (b,a)
     leqA :: (a,b) `to` OrderCompareTypeA to a b
     default leqA :: 
-        (to ~ (->), OrderCompareTypeA to a b ~ Bool, a~b, P.Ord a) => 
+        (OrderCompareTypeA to a b ~ Bool, a~b, P.Ord a) => 
         (a,b) `to` OrderCompareTypeA to a b
-    leqA = uncurry (P.<=)
+    leqA = arr $ uncurry (P.<=)
     geqA :: (a,b) `to` OrderCompareTypeA to a b
     default geqA :: 
         (OrderCompareTypeA to a b ~ OrderCompareTypeA to b a, HasOrderA to b a) => 
@@ -435,10 +453,10 @@ class (Arrow to) => CanMinMaxA to a b where
     type MinMaxTypeA to a b = a -- default
     minA :: (a,b) `to` MinMaxTypeA to a b
     maxA :: (a,b) `to` MinMaxTypeA to a b
-    default minA :: (to ~ (->), MinMaxTypeA to a b ~ a, a~b, P.Ord a) => (a,a) -> a
-    minA = uncurry P.min
-    default maxA :: (to ~ (->), MinMaxTypeA to a b ~ a, a~b, P.Ord a) => (a,a) -> a
-    maxA = uncurry P.max
+    default minA :: (MinMaxTypeA to a b ~ a, a~b, P.Ord a) => (a,a) `to` a
+    minA = arr $ uncurry P.min
+    default maxA :: (MinMaxTypeA to a b ~ a, a~b, P.Ord a) => (a,a) `to` a
+    maxA = arr $ uncurry P.max
 
 type CanMinMax = CanMinMaxA (->)
 type MinMaxType a b = MinMaxTypeA (->) a b
@@ -536,12 +554,12 @@ class (Arrow to) => CanAddA to a b where
     addA :: (a,b) `to` AddTypeA to a b
 
 type CanAdd = CanAddA (->)
-type AddType a b = AddTypeA (->) a b
+--type AddType a b = AddTypeA (->) a b
 
-add :: (CanAdd a b) => a -> b -> AddType a b
+add :: (CanAdd a b) => a -> b -> AddTypeA (->) a b
 add = curry addA
 
-(+) :: CanAdd a b => a -> b -> AddType a b
+(+) :: CanAdd a b => a -> b -> AddTypeA (->) a b
 (+) = add
 
 class
@@ -585,12 +603,12 @@ class (Arrow to) => CanSubA to a b where
             returnA -< r
 
 type CanSub = CanSubA (->)
-type SubType a b = SubTypeA (->) a b
+--type SubType a b = SubTypeA (->) a b
 
-sub :: (CanSub a b) => a -> b -> SubType a b
+sub :: (CanSub a b) => a -> b -> SubTypeA (->) a b
 sub = curry subA
 
-(-) :: CanSub a b => a -> b -> SubType a b
+(-) :: CanSub a b => a -> b -> SubTypeA (->) a b
 (-) = sub
 
 class
@@ -613,12 +631,12 @@ class (Arrow to) => CanMulA to a b where
     mulA :: (a,b) `to` MulTypeA to a b
 
 type CanMul = CanMulA (->)
-type MulType a b = MulTypeA (->) a b
+--type MulType a b = MulTypeA (->) a b
 
-mul :: (CanMul a b) => a -> b -> MulType a b
+mul :: (CanMul a b) => a -> b -> MulTypeA (->) a b
 mul = curry mulA
 
-(*) :: CanMul a b => a -> b -> MulType a b
+(*) :: CanMul a b => a -> b -> MulTypeA (->) a b
 (*) = mul
 
 class
@@ -662,12 +680,12 @@ class (Arrow to) => CanDivA to a b where
             returnA -< r
 
 type CanDiv = CanDivA (->)
-type DivType a b = DivTypeA (->) a b
+--type DivType a b = DivTypeA (->) a b
 
-div :: (CanDiv a b) => a -> b -> DivType a b
+div :: (CanDiv a b) => a -> b -> DivTypeA (->) a b
 div = curry divA
 
-(/) :: CanDiv a b => a -> b -> DivType a b
+(/) :: CanDiv a b => a -> b -> DivTypeA (->) a b
 (/) = div
 
 class
@@ -836,3 +854,28 @@ sequenceA (f:fs) =
         r <- f -< input
         rs <- sequenceA fs -< input
         returnA -< (r:rs)
+
+convertSecondA ::
+    (Arrow to, ConvertibleA to a r) =>
+    ((r,r) `to` b) -> ((r,a) `to` b) 
+convertSecondA opA =
+    proc (x,yI) ->
+        do
+        y <- convertA -< yI
+        opA -< (x,y)
+
+convertFirstA ::
+    (Arrow to, ConvertibleA to a r) =>
+    ((r,r) `to` b) -> ((a,r) `to` b) 
+convertFirstA opA =
+    proc (xI,y) ->
+        do
+        x <- convertA -< xI
+        opA -< (x,y)
+
+flipA ::
+    (Arrow to) =>
+    ((a,b) `to` c) -> ((b,a) `to` c) 
+flipA opA =
+    proc (x,y) -> opA -< (y,x) 
+

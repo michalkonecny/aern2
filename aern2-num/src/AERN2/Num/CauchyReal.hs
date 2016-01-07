@@ -4,10 +4,10 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE UndecidableInstances, TypeOperators, ConstraintKinds #-}
-module AERN2.Num.CauchyReal 
+{-# LANGUAGE UndecidableInstances, TypeOperators, ConstraintKinds, Arrows #-}
+module AERN2.Num.CauchyReal
 (
-    CauchyReal,
+    CauchyReal, AsCauchyReal(..), CanAsCauchyRealA(..),
     showCauchyReal,
     mapCauchyRealUnsafe,
     cauchyReal2ball,
@@ -17,10 +17,12 @@ module AERN2.Num.CauchyReal
     integer2CauchyReal, rational2CauchyReal,
     convergent2CauchyReal,
     compareTryAccuracies,
-    ensureAccuracyM2, ensureAccuracyM1,
+    ensureAccuracyA2, ensureAccuracyA1, 
     pi
 )
 where
+
+import Control.Arrow
 
 import AERN2.Num.Operations
 import AERN2.Num.Norm
@@ -28,8 +30,7 @@ import AERN2.Num.Accuracy
 
 import AERN2.Num.MPBall
 import AERN2.Num.IntegerRational ()
-
---import Control.Arrow
+import AERN2.Num.CauchyReal.InnerType
 
 import Debug.Trace (trace)
 
@@ -42,34 +43,28 @@ maybeTrace
     | shouldTrace = trace
     | otherwise = const id
 
-instance ConvertibleA (->) CauchyReal CauchyReal where convertA = id; convertListA = id
 
+type CauchyReal = AsCauchyReal CauchyReal_
 
---class
---    (RationalLike a, HasReals a, CanAddMulDivScalar a CauchyReal, CanSqrt a, CanExp a, CanSineCosine a)
---    => 
---    RealLike a
-
-{-| Invariant: For any @(CauchyReal seq)@ it holds @ball_error (seq i) <= 2^^(-i)@ -}
-data CauchyReal = 
-    CauchyReal { cr_name :: Maybe String, cr_seq :: Accuracy -> MPBall } 
+newtype AsCauchyReal r = AsCauchyReal { unAsCauchyReal :: r }
 
 cauchyReal2ball :: CauchyReal -> Accuracy -> MPBall
-cauchyReal2ball = cr_seq
+cauchyReal2ball = cr_seq . unAsCauchyReal
 
 cauchyRealName :: CauchyReal -> Maybe String
-cauchyRealName = cr_name
+cauchyRealName = cr_name . unAsCauchyReal
 
 showCauchyReal :: Accuracy -> CauchyReal -> String
 showCauchyReal a r = show (cauchyReal2ball r a)
 
 mapCauchyRealUnsafe :: (Accuracy -> MPBall -> MPBall) -> CauchyReal -> CauchyReal
-mapCauchyRealUnsafe f (CauchyReal name sq) = CauchyReal name (\ ac -> f ac (sq ac) ) 
+mapCauchyRealUnsafe f (AsCauchyReal (CauchyReal_ name sq)) = 
+    AsCauchyReal (CauchyReal_ name (\ ac -> f ac (sq ac) )) 
 
 convergent2CauchyReal :: 
     Maybe String -> [MPBall] -> CauchyReal
 convergent2CauchyReal name convergentSeq =
-    CauchyReal name sq
+    AsCauchyReal $ CauchyReal_ name sq
     where
     sq i =
         findAccurate convergentSeq
@@ -83,17 +78,46 @@ convergent2CauchyReal name convergentSeq =
 seqByPrecision2Cauchy :: 
     Maybe String -> (Precision -> MPBall) -> CauchyReal
 seqByPrecision2Cauchy name seqByPrecision =
-    CauchyReal name sq
+    AsCauchyReal $ CauchyReal_ name $
+        seqByPrecision2CauchySeq seqByPrecision
+
+seqByPrecision2CauchySeq :: 
+    (Precision -> MPBall) -> (Accuracy -> MPBall)
+seqByPrecision2CauchySeq seqByPrecision i =
+    findAccurate $ map seqByPrecision $ dropWhile lowPrec standardPrecisions
     where
-    sq i =
-        findAccurate $ map seqByPrecision $ dropWhile lowPrec standardPrecisions
-        where
-        lowPrec p = prec2integer p < fromAccuracy i
-        findAccurate [] =
-            error "seqByPrecision2Cauchy: the sequence either converges too slowly or it does not converge"
-        findAccurate (b : rest)
-            | getAccuracy b >= i = b
-            | otherwise = findAccurate rest
+    lowPrec p = 
+        case i of 
+            Exact -> False
+            _ -> bits (prec2integer p) < i
+    findAccurate [] =
+        error "seqByPrecision2CauchySeq: the sequence either converges too slowly or it does not converge"
+    findAccurate (b : rest)
+        | getAccuracy b >= i = b
+        | otherwise = findAccurate rest
+
+pi :: CauchyReal
+pi = seqByPrecision2Cauchy (Just "pi") (\ p -> piBallP p)
+
+
+{- Arrow class for arrow-generic CauchyReal operations -}
+
+{-| Invariant: For any instance it should hold: @width(getAnswerCRA i) <= 2^^(-i)@ -}
+class (ArrowChoice to) => CanAsCauchyRealA to r where
+    getAnswerCRA :: (r,Accuracy) `to` MPBall
+    getNameCRA :: r `to` Maybe String
+    newCRA :: (Maybe String, Accuracy `to` MPBall) `to` r
+
+instance CanAsCauchyRealA (->) CauchyReal_ where
+    getAnswerCRA (r,ac) = cr_seq r ac
+    getNameCRA = cr_name
+    newCRA (name, ac2b) = CauchyReal_ name ac2b
+
+{- conversions -}
+
+--instance (CanAsCauchyRealA to r) => ConvertibleA to (AsCauchyReal r) (AsCauchyReal r) where 
+--    convertA = id
+--    convertListA = id
 
 type HasCauchyRealsA to = ConvertibleA to CauchyReal
 type HasCauchyReals = HasCauchyRealsA (->)
@@ -112,30 +136,46 @@ cauchyReal :: (CanBeCauchyReal a) => a -> CauchyReal
 cauchyReal = convert
 cauchyReals :: (CanBeCauchyReal a) => [a] -> [CauchyReal]
 cauchyReals = convertList
-    
 
 -- | HasIntegers CauchyReal, CanBeCauchyReal Integer
-instance ConvertibleA (->) Integer CauchyReal where
-    convertA n =
-        seqByPrecision2Cauchy (Just $ show n) $ \ p -> integer2BallP p n 
-    convertNamedA name n =
-        seqByPrecision2Cauchy (Just name) $ \ p -> integer2BallP p n 
+instance (CanAsCauchyRealA to r) => ConvertibleA to Integer (AsCauchyReal r) where
+    convertA = proc n ->
+        do
+        r <- newCRA -< (Just $ show n, arr $ seqByPrecision2CauchySeq $ \ p -> integer2BallP p n)
+        returnA -< AsCauchyReal r 
+    convertNamedA name = proc n ->
+        do
+        r <- newCRA -< (Just name, arr $ seqByPrecision2CauchySeq $ \ p -> integer2BallP p n) 
+        returnA -< AsCauchyReal r 
 
 integer2CauchyReal :: Integer -> CauchyReal
 integer2CauchyReal = convert
 
+
 -- | HasRationals CauchyReal, CanBeCauchyReal Rational
-instance ConvertibleA (->) Rational CauchyReal where
-    convertA q =
-        seqByPrecision2Cauchy (Just $ show q) $ \ p -> rational2BallP p q 
-    convertNamedA name n =
-        seqByPrecision2Cauchy (Just name) $ \ p -> rational2BallP p n 
+instance (CanAsCauchyRealA to r) => ConvertibleA to Rational (AsCauchyReal r) where
+    convertA = proc n ->
+        do
+        r <- newCRA -< (Just $ show n, arr $ seqByPrecision2CauchySeq $ \ p -> rational2BallP p n)
+        returnA -< AsCauchyReal r 
+    convertNamedA name = proc n ->
+        do
+        r <- newCRA -< (Just name, arr $ seqByPrecision2CauchySeq $ \ p -> rational2BallP p n) 
+        returnA -< AsCauchyReal r 
 
 rational2CauchyReal :: Rational -> CauchyReal
 rational2CauchyReal = convert
 
-pi :: CauchyReal
-pi = seqByPrecision2Cauchy (Just "pi") (\ p -> piBallP p)
+instance (CanAsCauchyRealA to r1, CanAsCauchyRealA to r2) => ConvertibleA to (AsCauchyReal r1) (AsCauchyReal r2) where
+    convertA = proc (AsCauchyReal r1) ->
+        do
+        name <- getNameCRA -< r1
+        r2 <- newCRA -< (name, proc ac -> getAnswerCRA -< (r1,ac))
+        returnA -< AsCauchyReal r2 
+    convertNamedA name = proc (AsCauchyReal r1) ->
+        do
+        r2 <- newCRA -< (Just name, proc ac -> getAnswerCRA -< (r1,ac))
+        returnA -< AsCauchyReal r2 
 
 {- Comparisons of CauchyReals -}
 
@@ -150,34 +190,48 @@ compareTryAccuracies =
 maximumCompareAccuracy :: Integer
 maximumCompareAccuracy = 10000
 
-tryStandardCompareAccuracies :: 
-   [Accuracy -> MPBall] -> ([MPBall] -> Maybe t) -> t
-tryStandardCompareAccuracies rs rel =
-    aux compareTryAccuracies
+tryStandardCompareAccuracies ::
+   (CanAsCauchyRealA to r) => 
+   ([MPBall] -> Maybe t, [AsCauchyReal r]) `to` t
+tryStandardCompareAccuracies =
+    proc (rel, rs) -> 
+        aux compareTryAccuracies -< (rel, map unAsCauchyReal rs)
     where
     aux (ac : rest) =
-        case rel (map ($ ac) rs) of
-            Just tv -> tv
-            Nothing -> aux rest
+        proc (rel, rs) ->
+            do
+            bs <- mapA (const getAnswerCRA) -< map (flip (,) ac) rs
+            case rel bs of
+                Just tv -> returnA -< tv
+                Nothing -> aux rest -< (rel,rs)
     aux [] =
         error "CauchyReal comparison undecided even using maximum standard accuracy"
 
-instance HasEqA (->) CauchyReal CauchyReal where
-    equalToA (CauchyReal _ r1, CauchyReal _ r2) =
-        tryStandardCompareAccuracies [r1,r2] (\[b1,b2] -> b1 == b2)
+instance (CanAsCauchyRealA to r1, CanAsCauchyRealA to r2) => 
+    HasEqA to (AsCauchyReal r1) (AsCauchyReal r2) 
+    where
+    equalToA = 
+        convertFirstA $
+        proc (r1,r2) ->
+            tryStandardCompareAccuracies -< (\[b1,b2] -> b1 == b2, [r1,r2])
 
-instance HasOrderA (->) CauchyReal CauchyReal where
-    lessThanA (CauchyReal _ r1, CauchyReal _ r2) =
-        tryStandardCompareAccuracies [r1,r2] (\[b1,b2] -> b1 `lessThan` b2)
-    leqA (CauchyReal _ r1, CauchyReal _ r2) = 
-        tryStandardCompareAccuracies [r1,r2] (\[b1,b2] -> b1 `leq` b2)
+instance (CanAsCauchyRealA to r1, CanAsCauchyRealA to r2) => 
+    HasOrderA to (AsCauchyReal r1) (AsCauchyReal r2) 
+    where
+    lessThanA =
+        convertFirstA $ 
+        proc (r1,r2) ->
+            tryStandardCompareAccuracies -< (\[b1,b2] -> b1 < b2, [r1,r2])
+    leqA = 
+        convertFirstA $ 
+        proc (r1,r2) ->
+            tryStandardCompareAccuracies -< (\[b1,b2] -> b1 <= b2, [r1,r2])
 
-instance HasParallelComparisonsA (->) CauchyReal where
-    pickNonZeroA rvs =
-        tryStandardCompareAccuracies (map cr_seq rs) findNonZero
+instance (CanAsCauchyRealA to r) => HasParallelComparisonsA to (AsCauchyReal r) where
+    pickNonZeroA = proc rvs ->
+        tryStandardCompareAccuracies -< (findNonZero rvs, map fst rvs)
         where
-        rs = map fst rvs
-        findNonZero bs =
+        findNonZero rvs bs =
             aux True $ zip bs rvs
             where
             aux False [] = Nothing
@@ -188,165 +242,164 @@ instance HasParallelComparisonsA (->) CauchyReal where
                     Just False -> aux allFalse rest
                     Nothing -> aux False rest
 
-instance HasEqA (->) Integer CauchyReal where
-    equalToA (n, r) = equalTo ((convert n) :: CauchyReal) r
+instance (CanAsCauchyRealA to r) => HasEqA to Integer (AsCauchyReal r) where
+    equalToA = convertFirstA equalToA 
 
-instance HasOrderA (->) Integer CauchyReal where
-    lessThanA (n, r) = lessThan ((convert n) :: CauchyReal) r
-    leqA (n, r) = leq ((convert n) :: CauchyReal) r
+instance (CanAsCauchyRealA to r) => HasOrderA to Integer (AsCauchyReal r) where
+    lessThanA = convertFirstA lessThanA
+    leqA = convertFirstA leqA
     
-instance HasEqA (->) CauchyReal Integer where
-    equalToA (r, n) = equalTo r ((convert n) :: CauchyReal)
+instance (CanAsCauchyRealA to r) => HasEqA to (AsCauchyReal r) Integer where
+    equalToA = convertSecondA equalToA 
 
-instance HasOrderA (->) CauchyReal Integer where
-    lessThanA (r, n) = lessThan r ((convert n) :: CauchyReal)
-    leqA (r, n) = leq r ((convert n) :: CauchyReal)
+instance (CanAsCauchyRealA to r) => HasOrderA to (AsCauchyReal r) Integer where
+    lessThanA = convertSecondA lessThanA
+    leqA = convertSecondA leqA
     
-instance HasEqA (->) Rational CauchyReal where
-    equalToA (q, r) = equalTo ((convert q) :: CauchyReal) r
+instance (CanAsCauchyRealA to r) => HasEqA to Rational (AsCauchyReal r) where
+    equalToA = convertFirstA equalToA 
 
-instance HasOrderA (->) Rational CauchyReal where
-    lessThanA (q, r) = lessThan ((convert q) :: CauchyReal) r
-    leqA (q, r) = leq ((convert q) :: CauchyReal) r
+instance (CanAsCauchyRealA to r) => HasOrderA to Rational (AsCauchyReal r) where
+    lessThanA = convertFirstA lessThanA
+    leqA = convertFirstA leqA
     
-instance HasEqA (->) CauchyReal Rational where
-    equalToA (r, q) = equalTo r ((convert q) :: CauchyReal)
+instance (CanAsCauchyRealA to r) => HasEqA to (AsCauchyReal r) Rational where
+    equalToA = convertSecondA equalToA 
 
-instance HasOrderA (->) CauchyReal Rational where
-    lessThanA (r, q) = lessThan r ((convert q) :: CauchyReal)
-    leqA (r, q) = leq r ((convert q) :: CauchyReal)
-
+instance (CanAsCauchyRealA to r) => HasOrderA to (AsCauchyReal r) Rational where
+    lessThanA = convertSecondA lessThanA
+    leqA = convertSecondA leqA
 
 {- Operations among CauchyReal's -}
 
-instance Ring CauchyReal
-instance Field CauchyReal
-instance CanAddMulScalar CauchyReal CauchyReal
-instance CanAddMulDivScalar CauchyReal CauchyReal
+instance 
+    (CanAsCauchyRealA to r, CanAddSameTypeA to r, CanMulSameTypeA to r) => 
+    RingA to (AsCauchyReal r)
 
-instance CanNegA (->) CauchyReal where
-    negA (CauchyReal _ getB) = CauchyReal Nothing (\i -> neg $ getB i)
+instance 
+    (CanAsCauchyRealA to r, CanAddSameTypeA to r, CanMulSameTypeA to r, CanDivSameTypeA to r) => 
+    FieldA to (AsCauchyReal r)
 
-instance CanNegSameType CauchyReal
+instance 
+    (CanAsCauchyRealA to r, CanAddMulScalarA to r r) => 
+    CanAddMulScalarA to (AsCauchyReal r) (AsCauchyReal r)
+instance 
+    (CanAsCauchyRealA to r, CanAddMulDivScalarA to r r) => 
+    CanAddMulDivScalarA to (AsCauchyReal r) (AsCauchyReal r)
 
-instance CanAbsA (->) CauchyReal where
-    absA (CauchyReal _ getB) = CauchyReal Nothing (\i -> abs $ getB i)
-
-instance CanAbsSameType CauchyReal
-
-instance CanRecipA (->) CauchyReal where
-    recipA a = 1 / a
-
-instance CanRecipSameType CauchyReal
-
-instance CanAddA (->) CauchyReal CauchyReal where
-    addA (CauchyReal _ getB1, CauchyReal _ getB2) =
-        CauchyReal Nothing $
-            \i -> ensureAccuracy2 i i i (\j1 j2 -> (getB1 j1) + (getB2 j2))
-
-instance CanAddThis CauchyReal CauchyReal
-
-instance CanAddSameType CauchyReal
-
-instance (CanSub CauchyReal CauchyReal)  
-        
-instance CanSubThis CauchyReal CauchyReal
-
-instance CanSubSameType CauchyReal
-
-instance CanMulA (->) CauchyReal CauchyReal where
-    mulA (CauchyReal _ getB1, CauchyReal _ getB2) =
-        CauchyReal Nothing getB
-        where
-        getB i =
-            ensureAccuracy2 i jInit1 jInit2 (\j1 j2 -> (getB1 j1) * (getB2 j2))
-            where
-            jInit1 = 
-                case maybeA2NormLog of
-                    NormBits a2NormLog -> max (bits 0) (i + a2NormLog + 1)
-                    NormZero -> bits 0
-            jInit2 = 
-                case maybeA1NormLog of
-                    NormBits a1NormLog -> max (bits 0) (i + a1NormLog + 1)
-                    NormZero -> bits 0
-            maybeA1NormLog = getSeqNormLog i getB1   
-            maybeA2NormLog = getSeqNormLog i getB2   
-
-getSeqNormLog :: Accuracy -> (Accuracy -> MPBall) -> NormLog
-getSeqNormLog i getB =
-    case 1 < getB0 of
-        Just True -> getNormLog getB0
-        _ -> getNormLog (getB i)
+unaryOp ::
+    (CanAsCauchyRealA to r1, CanAsCauchyRealA to r) 
+    =>
+    String ->
+    (MPBall -> MPBall) -> 
+    ((Accuracy, r1) `to` (Accuracy, Maybe MPBall)) -> 
+    (AsCauchyReal r1) `to` (AsCauchyReal r)
+unaryOp name op getInitQ1 =
+    proc (AsCauchyReal r1) ->
+        do
+        r <- newCRA -< (Just name, ac2b r1)
+        returnA -< AsCauchyReal r
     where
-    getB0 = getB (bits 0)
-
-instance CanMulBy CauchyReal CauchyReal
-
-instance CanMulSameType CauchyReal
-
-instance CanDivA (->) CauchyReal CauchyReal where
-    divA (CauchyReal _ getB1, CauchyReal _ getB2) =
-        CauchyReal Nothing getB
+    ac2b r1 = proc ac ->
+        do
+        q1InitMB <- getInitQ1 -< (ac, r1)
+        ensureAccuracyA1 getA1 op -< (ac, q1InitMB)
         where
-        getB i =
-            ensureAccuracy2 i jInit1 jInit2 (\j1 j2 -> (getB1 j1) / (getB2 j2))
-            -- TODO: increase j2 to avoid divide by zero errors
-            where
-            jInit1 = 
-                case maybeA2NormLog of
-                    NormBits a2NormLog -> max 0 (i - a2NormLog + 1)
-                    NormZero -> bits 0 -- denominator == 0, we have no chance...
-            jInit2 =
-                case (maybeA1NormLog, maybeA2NormLog) of
-                    (_, NormZero) -> bits 0 -- denominator == 0, we have no chance... 
-                    (NormZero, _) -> bits 0 -- numerator == 0, it does not matter 
-                    (NormBits a1NormLog, NormBits a2NormLog) -> 
-                        max 0 (i + a1NormLog + 1 - 2 * a2NormLog)
-            maybeA1NormLog = getSeqNormLog i getB1
-            maybeA2NormLog = getSeqNormLog i getB2   
+        getA1 =
+            proc q1 -> getAnswerCRA -< (r1,q1)
 
-instance CanDivBy CauchyReal CauchyReal
-
-instance CanDivSameType CauchyReal
-
-instance CanSqrtA (->) CauchyReal where
-    sqrtA (CauchyReal _ getB1) = CauchyReal Nothing getB
+unaryOpWithPureArg ::
+    (CanAsCauchyRealA to r1, CanAsCauchyRealA to r) 
+    =>
+    String ->
+    (MPBall -> t -> MPBall) -> 
+    ((Accuracy, r1, t) `to` (Accuracy, Maybe MPBall)) -> 
+    (AsCauchyReal r1, t) `to` (AsCauchyReal r)
+unaryOpWithPureArg name op getInitQ1T =
+    proc (AsCauchyReal r1, t) ->
+        do
+        r <- newCRA -< (Just name, ac2b r1 t)
+        returnA -< AsCauchyReal r
+    where
+    ac2b r1 t = proc ac ->
+        do
+        q1InitMB <- getInitQ1T -< (ac, r1, t)
+        ensureAccuracyA1 getA1 (flip op t) -< (ac, q1InitMB)
         where
-        getB i = 
-            ensureAccuracy1 i jInit (\j -> sqrt (getB1 j))
-            where
-            jInit = 
-                case maybeSqrtNormLog of
-                    NormBits sqrtNormLog -> max 0 (i - 1 - sqrtNormLog)
-                    NormZero -> i
-            maybeSqrtNormLog = getSeqNormLog i (\j -> sqrt (getB1 j)) 
+        getA1 =
+            proc q1 -> getAnswerCRA -< (r1,q1)
 
-instance CanSqrtSameTypeA (->) CauchyReal
-
-instance CanExpA (->) CauchyReal where
-    expA (CauchyReal _ getB1) = CauchyReal Nothing getB
+binaryOp ::
+    (CanAsCauchyRealA to r1, CanAsCauchyRealA to r2, CanAsCauchyRealA to r) 
+    =>
+    String ->
+    (MPBall -> MPBall -> MPBall) -> 
+    ((Accuracy, r1, r2) `to` ((Accuracy, Maybe MPBall), (Accuracy, Maybe MPBall))) -> 
+    (AsCauchyReal r1, AsCauchyReal r2) `to` (AsCauchyReal r)
+binaryOp name op getInitQ1Q2 =
+    proc (AsCauchyReal r1, AsCauchyReal r2) ->
+        do
+        r <- newCRA -< (Just name, ac2b r1 r2)
+        returnA -< AsCauchyReal r
+    where
+    ac2b r1 r2 = proc ac ->
+        do
+        (q1InitMB, q2InitMB) <- getInitQ1Q2 -< (ac,r1,r2)
+        ensureAccuracyA2 getA1 getA2 op -< (ac, q1InitMB, q2InitMB)
         where
-        getB i = 
-            ensureAccuracy1 i jInit (\j -> exp (getB1 j))
-            where
-            jInit = 
-                case maybeExpNormLog of
-                    NormBits expNormLog -> i + expNormLog + 1
-                    NormZero -> i -- this should never happen
-            maybeExpNormLog = getSeqNormLog i (\j -> exp (getB1 j)) 
+        getA1 =
+            proc q1 -> getAnswerCRA -< (r1,q1)
+        getA2 =
+            proc q2 -> getAnswerCRA -< (r2,q2)
 
-instance CanExpSameTypeA (->) CauchyReal
+getInitQ1FromSimple ::
+    Arrow to =>
+    Accuracy `to` q -> 
+    (Accuracy, r1) `to` (q, Maybe MPBall)
+getInitQ1FromSimple simpleA  = proc (q, _) ->
+    do 
+    initQ <- simpleA -< q
+    returnA -< (initQ, Nothing)
 
-instance CanSineCosineA (->) CauchyReal where
-    sinA (CauchyReal _ getB1) = CauchyReal Nothing (\ i -> sin (getB1 i))
-    cosA (CauchyReal _ getB1) = CauchyReal Nothing (\ i -> cos (getB1 i))
+getInitQ1TFromSimple ::
+    Arrow to =>
+    Accuracy `to` q -> 
+    (Accuracy, r1, t) `to` (q, Maybe MPBall)
+getInitQ1TFromSimple simpleA  = proc (q, _, _) ->
+    do 
+    initQ <- simpleA -< q
+    returnA -< (initQ, Nothing)
 
-instance CanSineCosineSameTypeA (->) CauchyReal
+getInitQ1Q2FromSimple ::
+    Arrow to =>
+    Accuracy `to` (q,q) -> 
+    (Accuracy, r1, r2) `to` ((q, Maybe MPBall), (q, Maybe MPBall))
+getInitQ1Q2FromSimple simpleA  = proc (q, _, _) ->
+    do 
+    (initQ1, initQ2) <- simpleA -< q
+    returnA -< ((initQ1, Nothing), (initQ2, Nothing))
+
+getCRFnNormLog :: 
+    (CanAsCauchyRealA to r) => (r, Accuracy, MPBall -> MPBall) `to` (NormLog, MPBall)
+getCRFnNormLog = proc (r,q,fn) ->
+    do
+    b <- getAnswerCRA -< (r, q)
+    returnA -< (getNormLog (fn b), b)
+-- the following seems to be wasteful unless the cost of asking grows very fast with accuracy:
+--    b0 <- getAnswerCRA -< (r, bits 0)
+--    case 1 < b0 of
+--        Just True -> returnA -< (getNormLog (fn b0), b0)
+--        _ ->
+--            do
+--            b <- getAnswerCRA -< (r, q) 
+--            returnA -< (getNormLog (fn b), b)
 
 {-
+
 Typically ensureAccuracy1 is called with a j such that the result is of
 accuracy >= i.  In some cases j needs to be slightly increased.  
-For example:
+
+For example (using old version of ensureAccuracy1):
 
 *AERN2.Num.Examples> cauchyReal2ball (10 * pi) 138
 ensureAccuracy1: i = 138; j = 141; result accuracy = 137
@@ -360,302 +413,512 @@ ensureAccuracy1: i = 56; j = 54; result accuracy = 89
 [3.141592653589793e-1 ± 1.454028420503369e-27]
 
 -}
-ensureAccuracy1 ::
-    Accuracy -> Accuracy -> (Accuracy -> MPBall) -> MPBall
-ensureAccuracy1 i j getB 
-    | getAccuracy result >= i = 
-        maybeTrace (
-            "ensureAccuracy1: i = " ++ show i ++ 
-            "; j = " ++ show j ++ 
-            "; result accuracy = " ++ (show $ getAccuracy result)
-        ) $ 
-        result
-    | otherwise =
-        maybeTrace (
-            "ensureAccuracy1: i = " ++ show i ++ 
-            "; j = " ++ show j ++ 
-            "; result accuracy = " ++ (show $ getAccuracy result)
-        ) $ 
-        ensureAccuracy1 i (j+1) getB
+
+ensureAccuracyA1 ::
+    (ArrowChoice to) =>
+    (Accuracy `to` MPBall) ->
+    (MPBall -> MPBall) ->
+    ((Accuracy, (Accuracy, Maybe MPBall)) `to` MPBall)
+ensureAccuracyA1 getA1 op = 
+    proc (q,(j1, mB)) ->
+        do
+        let mResult = fmap op mB
+        case mResult of
+            Just result | getAccuracy result >= q -> 
+                returnA -< 
+                    maybeTrace (
+                        "ensureAccuracy1: Pre-computed result sufficient. (q = " ++ show q ++ 
+                        "; j1 = " ++ show j1 ++ 
+                        "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
+                    ) $ 
+                    result
+            _ -> aux -< (q,j1)
     where
-    result = getB j
+    aux =
+        proc (q,j1) ->
+            do
+            a1 <- getA1 -< j1
+            let result = op a1
+            if getAccuracy result >= q
+                then returnA -< 
+                    maybeTrace (
+                        "ensureAccuracy1: Succeeded. (q = " ++ show q ++ 
+                        "; j1 = " ++ show j1 ++ 
+                        "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
+                    ) $ 
+                    result
+                else aux -< 
+                    maybeTrace (
+                        "ensureAccuracy1: Not enough ... (q = " ++ show q ++ 
+                        "; j1 = " ++ show j1 ++ 
+                        "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
+                    ) $ 
+                    (q, j1+1)
 
-ensureAccuracy2 ::
-    Accuracy -> Accuracy -> Accuracy -> (Accuracy -> Accuracy -> MPBall) -> MPBall
-ensureAccuracy2 i j1 j2 getB 
-    | getAccuracy result >= i = 
-        maybeTrace (
-            "ensureAccuracy2: i = " ++ show i ++ 
-            "; j1 = " ++ show j1 ++ 
-            "; j2 = " ++ show j2 ++ 
-            "; result accuracy = " ++ (show $ getAccuracy result)
-        ) $ 
-        result
-    | otherwise =
-        maybeTrace (
-            "ensureAccuracy2: i = " ++ show i ++ 
-            "; j1 = " ++ show j1 ++ 
-            "; j2 = " ++ show j2 ++ 
-            "; result accuracy = " ++ (show $ getAccuracy result)
-        ) $ 
-        ensureAccuracy2 i (j1+1)(j2+1) getB
+ensureAccuracyA2 ::
+    (ArrowChoice to) =>
+    (Accuracy `to` MPBall) ->
+    (Accuracy `to` MPBall) ->
+    (MPBall -> MPBall -> MPBall) ->
+    ((Accuracy, (Accuracy, Maybe MPBall), (Accuracy, Maybe MPBall)) `to` MPBall)
+ensureAccuracyA2 getA1 getA2 op =
+    proc (q,(j1, mB1),(j2, mB2)) ->
+        do
+        let mResult = do b1 <- mB1; b2 <- mB2; Just $ op b1 b2
+        case mResult of
+            Just result | getAccuracy result >= q -> 
+                returnA -< 
+                    maybeTrace (
+                        "ensureAccuracy2: Pre-computed result sufficient. (q = " ++ show q ++ 
+                        "; j1 = " ++ show j1 ++ 
+                        "; j2 = " ++ show j2 ++ 
+                        "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
+                    ) $ 
+                result
+            _ -> aux -< (q,j1,j2)
     where
-    result = getB j1 j2
+    aux =
+        proc (q, j1, j2) ->
+            do
+            a1 <- getA1 -< j1
+            a2 <- getA2 -< j2
+            let result = op a1 a2 
+            if getAccuracy result >= q
+                then returnA -< 
+                    maybeTrace (
+                        "ensureAccuracy2: Succeeded. (q = " ++ show q ++ 
+                        "; j1 = " ++ show j1 ++ 
+                        "; j2 = " ++ show j2 ++ 
+                        "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
+                    ) $ 
+                    result
+                else aux -< 
+                    maybeTrace (
+                        "ensureAccuracy2: Not enough ... (q = " ++ show q ++ 
+                        "; j1 = " ++ show j1 ++ 
+                        "; j2 = " ++ show j2 ++ 
+                        "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
+                    ) $ 
+                    (q,j1+1,j2+1)
 
-ensureAccuracyM2 ::
-    (Monad m) =>
-    Accuracy -> Accuracy -> Accuracy -> (Accuracy -> Accuracy -> m MPBall) -> m MPBall
-ensureAccuracyM2 i j1 j2 getB =
-    do
-    result <- getB j1 j2
-    if getAccuracy result >= i 
-        then return result
-        else ensureAccuracyM2 i (j1+1)(j2+1) getB
 
-ensureAccuracyM1 ::
-    (Monad m) =>
-    Accuracy -> Accuracy -> (Accuracy -> m MPBall) -> m MPBall
-ensureAccuracyM1 i j1 getB =
-    do
-    result <- getB j1
-    if getAccuracy result >= i 
-        then return result
-        else ensureAccuracyM1 i (j1+1) getB
+instance (CanAsCauchyRealA to r) => CanNegA to (AsCauchyReal r) where
+    negA = unaryOp "neg" neg (getInitQ1FromSimple id)
+    
+instance (CanAsCauchyRealA to r) => CanNegSameTypeA to (AsCauchyReal r)
+
+instance (CanAsCauchyRealA to r) => CanAbsA to (AsCauchyReal r) where
+    absA = unaryOp "abs" abs (getInitQ1FromSimple id)
+
+instance (CanAsCauchyRealA to r) => CanAbsSameTypeA to (AsCauchyReal r)
+
+instance (CanAsCauchyRealA to r) => CanRecipA to (AsCauchyReal r) where
+    recipA = proc a -> divA -< (1, a)
+
+instance (CanAsCauchyRealA to r) => CanRecipSameTypeA to (AsCauchyReal r)
+
+instance 
+    (CanAsCauchyRealA to r1, CanAsCauchyRealA to r2,
+     CanAsCauchyRealA to (AddTypeA to r1 r2), 
+     CanAddA to r1 r2) 
+    => 
+    CanAddA to (AsCauchyReal r1) (AsCauchyReal r2)
+    where
+    type AddTypeA to (AsCauchyReal r1) (AsCauchyReal r2) = AsCauchyReal (AddTypeA to r1 r2)
+    addA = binaryOp "+" add (getInitQ1Q2FromSimple $ proc q -> returnA -< (q,q))
+
+instance (CanAsCauchyRealA to r1, CanAsCauchyRealA to r2, CanAddThisA to r1 r2) => 
+    CanAddThisA to (AsCauchyReal r1) (AsCauchyReal r2)
+instance (CanAsCauchyRealA to r, CanAddSameTypeA to r) => 
+    CanAddSameTypeA to (AsCauchyReal r)
+
+instance
+    (CanAsCauchyRealA to r1, CanAsCauchyRealA to r2,
+     CanAsCauchyRealA to (AddTypeA to r1 r2), 
+     CanAddA to r1 r2) 
+    => 
+    CanSubA to (AsCauchyReal r1) (AsCauchyReal r2)
+instance (CanAsCauchyRealA to r1, CanAsCauchyRealA to r2, CanAddThisA to r1 r2) => 
+    CanSubThisA to (AsCauchyReal r1) (AsCauchyReal r2)
+instance (CanAsCauchyRealA to r, CanAddSameTypeA to r) => 
+    CanSubSameTypeA to (AsCauchyReal r)
+
+
+instance
+    (CanAsCauchyRealA to r1, CanAsCauchyRealA to r2, 
+     CanMulA to r1 r2, CanAsCauchyRealA to (MulTypeA to r1 r2)) 
+    => 
+    CanMulA to (AsCauchyReal r1) (AsCauchyReal r2) 
+    where
+    type MulTypeA to (AsCauchyReal r1) (AsCauchyReal r2) = AsCauchyReal (MulTypeA to r1 r2)
+    mulA = binaryOp "*" mul getInitQ1Q2 
+        where
+        getInitQ1Q2 =
+            proc (q, a1, a2) ->
+                do
+                (a1NormLog, b1) <- getCRFnNormLog -< (a1,q,id)
+                (a2NormLog, b2) <- getCRFnNormLog -< (a2,q,id)
+                let jInit1 = case a2NormLog of 
+                        NormBits a2NL -> max (bits 0) (q + a2NL + 1)
+                        NormZero -> bits 0
+                let jInit2 = case a1NormLog of 
+                        NormBits a1NL -> max (bits 0) (q + a1NL + 1)
+                        NormZero -> bits 0
+                returnA -< ((jInit1, Just b1), (jInit2, Just b2))
+
+instance 
+    (CanAsCauchyRealA to r1, CanAsCauchyRealA to r2, CanMulByA to r1 r2) => 
+    CanMulByA to (AsCauchyReal r1) (AsCauchyReal r2) 
+instance 
+    (CanAsCauchyRealA to r, CanMulSameTypeA to r) => 
+    CanMulSameTypeA to (AsCauchyReal r) 
+
+instance
+    (CanAsCauchyRealA to r1, CanAsCauchyRealA to r2, 
+     CanDivA to r1 r2, CanAsCauchyRealA to (DivTypeA to r1 r2)) 
+    => 
+    CanDivA to (AsCauchyReal r1) (AsCauchyReal r2) 
+    where
+    type DivTypeA to (AsCauchyReal r1) (AsCauchyReal r2) = AsCauchyReal (DivTypeA to r1 r2)
+    divA = binaryOp "/" div getInitQ1Q2 
+        where
+        getInitQ1Q2 =
+            proc (q, a1, a2) ->
+                do
+                (a1NormLog, b1) <- getCRFnNormLog -< (a1,q,id)
+                (a2NormLog, b2) <- getCRFnNormLog -< (a2,q,id)
+                let jInit1 = case a2NormLog of 
+                        NormBits a2NL -> max 0 (q - a2NL + 1)
+                        NormZero -> bits 0 -- denominator == 0, we have no chance...
+                let jInit2 = case (a1NormLog, a2NormLog) of
+                        (_, NormZero) -> bits 0 -- denominator == 0, we have no chance... 
+                        (NormZero, _) -> bits 0 -- numerator == 0, it does not matter 
+                        (NormBits a1NL, NormBits a2NL) -> max 0 (q + a1NL + 1 - 2 * a2NL)
+                returnA -< ((jInit1, Just b1), (jInit2, Just b2))
+
+
+instance 
+    (CanAsCauchyRealA to r1, CanAsCauchyRealA to r2, CanDivByA to r1 r2) => 
+    CanDivByA to (AsCauchyReal r1) (AsCauchyReal r2) 
+instance 
+    (CanAsCauchyRealA to r, CanDivSameTypeA to r) => 
+    CanDivSameTypeA to (AsCauchyReal r) 
+
+instance (CanAsCauchyRealA to r) => CanSqrtA to (AsCauchyReal r) where
+    sqrtA = unaryOp "sqrt" sqrt getInitQ1
+        where
+        getInitQ1 =
+            proc (q, a1) ->
+                do
+                (a1NormLog, b) <- getCRFnNormLog -< (a1,q, sqrt)
+                let jInit = case a1NormLog of
+                        NormBits sqrtNormLog -> max 0 (q - 1 - sqrtNormLog)
+                        NormZero -> q
+                returnA -< (jInit, Just b)
+
+
+
+instance (CanAsCauchyRealA to r) => CanSqrtSameTypeA to (AsCauchyReal r)
+
+instance (CanAsCauchyRealA to r) => CanExpA to (AsCauchyReal r) where
+    expA = unaryOp "exp" exp getInitQ1
+        where
+        getInitQ1 =
+            proc (q, a1) ->
+                do
+                (a1NormLog, b) <- getCRFnNormLog -< (a1,q, exp)
+                let jInit = case a1NormLog of
+                        NormBits expNormLog -> q + expNormLog + 1
+                        NormZero -> q -- this should never happen
+                returnA -< (jInit, Just b)
+
+instance (CanAsCauchyRealA to r) => CanExpSameTypeA to (AsCauchyReal r)
+
+
+instance (CanAsCauchyRealA to r) => CanSineCosineA to (AsCauchyReal r) where
+    sinA = unaryOp "sin" sin (getInitQ1FromSimple id)
+    cosA = unaryOp "cos" cos (getInitQ1FromSimple id)
+
+instance (CanAsCauchyRealA to r) => CanSineCosineSameTypeA to (AsCauchyReal r)
 
 
 
 {- CauchyReal-Integer operations -}
 
-instance CanAddMulScalar CauchyReal Integer
-instance CanAddMulDivScalar CauchyReal Integer
+instance (CanAsCauchyRealA to r) => CanAddMulScalarA to (AsCauchyReal r) Integer
+instance (CanAsCauchyRealA to r) => CanAddMulDivScalarA to (AsCauchyReal r) Integer
 
-instance CanAddA (->) Integer CauchyReal where
-    type AddTypeA (->) Integer CauchyReal = CauchyReal
-    addA (a, CauchyReal _ getB2) = 
-        CauchyReal Nothing $
-            \i -> ensureAccuracy1 i i (\j -> a + (getB2 j))
+instance (CanAsCauchyRealA to r) => CanAddA to Integer (AsCauchyReal r) where
+    type AddTypeA to Integer (AsCauchyReal r) = (AsCauchyReal r)
+    addA =
+        proc (n,r) -> 
+            unaryOpWithPureArg "+" (add) (getInitQ1TFromSimple id) -< (r, n)
         
+instance (CanAsCauchyRealA to r) => CanSubA to Integer (AsCauchyReal r)
 
-instance CanSub Integer CauchyReal
 
-instance CanAddA (->) CauchyReal Integer where
-    type AddTypeA (->) CauchyReal Integer = CauchyReal
-    addA (CauchyReal _ getB1, b) = 
-        CauchyReal Nothing $
-            \i -> ensureAccuracy1 i i (\j -> (getB1 j) + b)
+instance (CanAsCauchyRealA to r) => CanAddA to (AsCauchyReal r) Integer where
+    type AddTypeA to (AsCauchyReal r) Integer = (AsCauchyReal r)
+    addA =
+        proc (r,n) -> 
+            unaryOpWithPureArg "+" add (getInitQ1TFromSimple id) -< (r, n)
 
-instance CanAddThis CauchyReal Integer
 
-instance CanSub CauchyReal Integer
+instance (CanAsCauchyRealA to r) => CanAddThisA to (AsCauchyReal r) Integer
 
-instance CanSubThis CauchyReal Integer
+instance (CanAsCauchyRealA to r) => CanSubA to (AsCauchyReal r) Integer
 
-instance CanMulA (->) Integer CauchyReal where
-    type MulTypeA (->) Integer CauchyReal = CauchyReal
-    mulA (a1, CauchyReal _ getB2) = 
-        CauchyReal Nothing getB
+instance (CanAsCauchyRealA to r) => CanSubThisA to (AsCauchyReal r) Integer
+
+instance (CanAsCauchyRealA to r) => CanMulA to Integer (AsCauchyReal r) where
+    type MulTypeA to Integer (AsCauchyReal r) = (AsCauchyReal r)
+    mulA =
+        proc (n,r) ->
+            unaryOpWithPureArg "*" mul getInitQ1T -< (r,n)
         where
-        getB i =
-            ensureAccuracy1 i jInit (\j -> a1 * (getB2 j))
-            where
-            jInit = 
-                case maybeA1NormLog of
-                    NormBits a1NormLog -> max 0 (i + a1NormLog)
-                    NormZero -> bits 0
-            maybeA1NormLog = getNormLog a1
+        getInitQ1T =
+            proc (q, _a1, n) ->
+                do
+                let nNormLog = getNormLog n
+                let jInit1 = case nNormLog of 
+                        NormBits nNL -> max (bits 0) (q + nNL + 1)
+                        NormZero -> bits 0
+                returnA -< (jInit1, Nothing)
+
+instance (CanAsCauchyRealA to r) => CanMulA to (AsCauchyReal r) Integer where
+    type MulTypeA to (AsCauchyReal r) Integer = (AsCauchyReal r)
+    mulA = flipA mulA 
+
+instance (CanAsCauchyRealA to r) => CanMulByA to (AsCauchyReal r) Integer
 
 
-instance CanMulA (->) CauchyReal Integer where
-    type MulTypeA (->) CauchyReal Integer = CauchyReal
-    mulA (a, b) = mul b a 
-
-instance CanMulBy CauchyReal Integer
-
-instance CanDivA (->) Integer CauchyReal where
-    type DivTypeA (->) Integer CauchyReal = CauchyReal
-    divA (a1, CauchyReal _ getB2) = 
-        CauchyReal Nothing getB
+instance (CanAsCauchyRealA to r) => CanDivA to Integer (AsCauchyReal r) where
+    type DivTypeA to Integer (AsCauchyReal r) = (AsCauchyReal r)
+    divA =
+        proc (n,r) ->
+            unaryOpWithPureArg "/" div getInitQ1T -< (r,n) 
+            -- TODO: wrap div with an operation checking for division by zero to avoid crashes
         where
-        getB i =
-            ensureAccuracy1 i jInit (\j -> a1 / (getB2 j))
-            -- TODO: increase j to avoid divide by zero errors
-            where
-            jInit =
-                case (maybeA1NormLog, maybeA2NormLog) of
-                    (_, NormZero) -> bits 0 -- denominator == 0, we have no chance... 
-                    (NormZero, _) -> bits 0 -- numerator == 0, it does not matter 
-                    (NormBits a1NormLog, NormBits a2NormLog) -> 
-                        max 0 (i + a1NormLog - 2 * a2NormLog)
-            maybeA1NormLog = getNormLog a1
-            maybeA2NormLog = getSeqNormLog i getB2   
+        getInitQ1T =
+            proc (q, a2, n) ->
+                do
+                let nNormLog = getNormLog n
+                (a2NormLog, b2) <- getCRFnNormLog -< (a2,q,id)
+                let jInit2 = case (nNormLog, a2NormLog) of
+                        (_, NormZero) -> bits 0 -- denominator == 0, we have no chance... 
+                        (NormZero, _) -> bits 0 -- numerator == 0, it does not matter 
+                        (NormBits nNL, NormBits a2NL) -> max 0 (q + nNL + 1 - 2 * a2NL)
+                returnA -< ((jInit2, Just b2))
 
-
-instance CanDivA (->) CauchyReal Integer where
-    type DivTypeA (->) CauchyReal Integer = CauchyReal
-    divA (CauchyReal _ getB1, a2) = 
-        CauchyReal Nothing getB
+instance (CanAsCauchyRealA to r) => CanDivA to (AsCauchyReal r) Integer where
+    type DivTypeA to (AsCauchyReal r) Integer = (AsCauchyReal r)
+    divA =
+        proc (r,n) ->
+            unaryOpWithPureArg "*" div getInitQ1T -< (r,n)
         where
-        getB i =
-            ensureAccuracy1 i jInit (\j -> (getB1 j) / a2)
-            where
-            jInit = 
-                case maybeA2NormLog of
-                    NormBits a2NormLog -> max 0 (i - a2NormLog)
-                    NormZero -> bits 0 -- denominator == 0, we have no chance...
-            maybeA2NormLog = getNormLog a2  
+        getInitQ1T =
+            proc (q, _a1, n) ->
+                do
+                let nNormLog = getNormLog n
+                let jInit1 = case nNormLog of 
+                        NormBits nNL -> max (bits 0) (q - nNL + 1)
+                        NormZero -> bits 0 -- denominator == 0, we have no chance...
+                returnA -< (jInit1, Nothing)
 
-instance CanDivBy CauchyReal Integer
+instance (CanAsCauchyRealA to r) => CanDivByA to (AsCauchyReal r) Integer
 
-instance CanSqrtA (->) Integer where
-    type SqrtTypeA (->) Integer = CauchyReal
-    sqrtA x = seqByPrecision2Cauchy Nothing $ \p -> sqrt (integer2BallP p x)      
-        
-instance CanExpA (->) Integer where
-    type ExpTypeA (->) Integer = CauchyReal
-    expA x = seqByPrecision2Cauchy Nothing $ \p -> exp (integer2BallP p x)
-        
-instance CanSineCosineA (->) Integer where
-    type SineCosineTypeA (->) Integer = CauchyReal
-    sinA x = seqByPrecision2Cauchy Nothing $ \p -> sin (integer2BallP p x)
-    cosA x = seqByPrecision2Cauchy Nothing $ \p -> cos (integer2BallP p x)
+instance (Arrow to ) => CanSqrtA to Integer where
+    type SqrtTypeA to Integer = CauchyReal
+    sqrtA = proc x ->
+        returnA -< seqByPrecision2Cauchy (Just $ "sqrt " ++ show x) $ 
+                        \p -> sqrt (integer2BallP p x)      
 
+instance (Arrow to ) => CanExpA to Integer where
+    type ExpTypeA to Integer = CauchyReal
+    expA = proc x -> 
+        returnA -< seqByPrecision2Cauchy (Just $ "exp " ++ show x) $ 
+                        \p -> exp (integer2BallP p x)
+
+instance (Arrow to) => CanSineCosineA to Integer where
+    type SineCosineTypeA to Integer = CauchyReal
+    sinA = proc x -> 
+        returnA -< seqByPrecision2Cauchy (Just $ "sin " ++ show x) $ 
+                        \p -> sin (integer2BallP p x)
+    cosA = proc x -> 
+        returnA -< seqByPrecision2Cauchy (Just $ "cos " ++ show x) $ 
+                        \p -> cos (integer2BallP p x)
 
 {- CauchyReal-Rational operations -}
 
-instance CanAddMulScalar CauchyReal Rational
-instance CanAddMulDivScalar CauchyReal Rational
+instance (CanAsCauchyRealA to r) => CanAddMulScalarA to (AsCauchyReal r) Rational
+instance (CanAsCauchyRealA to r) => CanAddMulDivScalarA to (AsCauchyReal r) Rational
 
-instance CanAddA (->) Rational CauchyReal where
-    type AddTypeA (->) Rational CauchyReal = CauchyReal
-    addA (a, CauchyReal _ getB2) = CauchyReal Nothing (\i -> a + (getB2 i))
-
-instance CanSub Rational CauchyReal
-
-instance CanAddA (->) CauchyReal Rational where
-    type AddTypeA (->) CauchyReal Rational = CauchyReal
-    addA (CauchyReal _ getB1, b) = CauchyReal Nothing (\i -> (getB1 i) + b)
-
-instance CanAddThis CauchyReal Rational
-
-instance CanSub CauchyReal Rational
-
-instance CanSubThis CauchyReal Rational
-
-instance CanMulA (->) Rational CauchyReal where
-    type MulTypeA (->) Rational CauchyReal = CauchyReal
-    mulA (a1, CauchyReal _ getB2) = 
-        CauchyReal Nothing getB
-        where
-        getB i =
-            ensureAccuracy1 i jInit (\j -> a1 * (getB2 j))
-            where
-            jInit = 
-                case maybeA1NormLog of
-                    NormBits a1NormLog -> max 0 (i + a1NormLog)
-                    NormZero -> bits 0
-            maybeA1NormLog = getNormLog a1
-
-instance CanMulA (->) CauchyReal Rational where
-    type MulTypeA (->) CauchyReal Rational = CauchyReal
-    mulA (a, b) = mul b a
-
-instance CanMulBy CauchyReal Rational
-
-instance CanDivA (->) Rational CauchyReal where
-    type DivTypeA (->) Rational CauchyReal = CauchyReal
-    divA (a1, CauchyReal _ getB2) = 
-        CauchyReal Nothing getB
-        where
-        getB i =
-            ensureAccuracy1 i jInit (\j -> a1 / (getB2 j))
-            -- TODO: increase j to avoid divide by zero errors
-            where
-            jInit =
-                case (maybeA1NormLog, maybeA2NormLog) of
-                    (_, NormZero) -> bits 0 -- denominator == 0, we have no chance... 
-                    (NormZero, _) -> bits 0 -- numerator == 0, it does not matter 
-                    (NormBits a1NormLog, NormBits a2NormLog) -> 
-                        max 0 (i + a1NormLog - 2 * a2NormLog)
-            maybeA1NormLog = getNormLog a1
-            maybeA2NormLog = getSeqNormLog i getB2   
-
-instance CanDivA (->) CauchyReal Rational where
-    type DivTypeA (->) CauchyReal Rational = CauchyReal
-    divA (a, b) = mul (1/b) a 
-
-instance CanDivBy CauchyReal Rational
-
-instance CanSqrtA (->) Rational where
-    type SqrtTypeA (->) Rational = CauchyReal
-    sqrtA x = seqByPrecision2Cauchy Nothing $ \p -> sqrt (rational2BallP p x)
+instance (CanAsCauchyRealA to r) => CanAddA to Rational (AsCauchyReal r) where
+    type AddTypeA to Rational (AsCauchyReal r) = (AsCauchyReal r)
+    addA =
+        proc (n,r) -> 
+            unaryOpWithPureArg "+" (add) (getInitQ1TFromSimple id) -< (r, n)
         
-instance CanExpA (->) Rational where
-    type ExpTypeA (->) Rational = CauchyReal
-    expA x = seqByPrecision2Cauchy Nothing $ \p -> exp (rational2BallP p x)
-        
-instance CanSineCosineA (->) Rational where
-    type SineCosineTypeA (->) Rational = CauchyReal
-    sinA x = seqByPrecision2Cauchy Nothing $ \p -> sin (rational2BallP p x)
-    cosA x = seqByPrecision2Cauchy Nothing $ \p -> cos (rational2BallP p x)
+instance (CanAsCauchyRealA to r) => CanSubA to Rational (AsCauchyReal r)
 
+
+instance (CanAsCauchyRealA to r) => CanAddA to (AsCauchyReal r) Rational where
+    type AddTypeA to (AsCauchyReal r) Rational = (AsCauchyReal r)
+    addA =
+        proc (r,n) -> 
+            unaryOpWithPureArg "+" add (getInitQ1TFromSimple id) -< (r, n)
+
+
+instance (CanAsCauchyRealA to r) => CanAddThisA to (AsCauchyReal r) Rational
+
+instance (CanAsCauchyRealA to r) => CanSubA to (AsCauchyReal r) Rational
+
+instance (CanAsCauchyRealA to r) => CanSubThisA to (AsCauchyReal r) Rational
+
+instance (CanAsCauchyRealA to r) => CanMulA to Rational (AsCauchyReal r) where
+    type MulTypeA to Rational (AsCauchyReal r) = (AsCauchyReal r)
+    mulA =
+        proc (n,r) ->
+            unaryOpWithPureArg "*" mul getInitQ1T -< (r,n)
+        where
+        getInitQ1T =
+            proc (q, _a1, n) ->
+                do
+                let nNormLog = getNormLog n
+                let jInit1 = case nNormLog of 
+                        NormBits nNL -> max (bits 0) (q + nNL + 1)
+                        NormZero -> bits 0
+                returnA -< (jInit1, Nothing)
+
+instance (CanAsCauchyRealA to r) => CanMulA to (AsCauchyReal r) Rational where
+    type MulTypeA to (AsCauchyReal r) Rational = (AsCauchyReal r)
+    mulA = flipA mulA 
+
+instance (CanAsCauchyRealA to r) => CanMulByA to (AsCauchyReal r) Rational
+
+
+instance (CanAsCauchyRealA to r) => CanDivA to Rational (AsCauchyReal r) where
+    type DivTypeA to Rational (AsCauchyReal r) = (AsCauchyReal r)
+    divA =
+        proc (n,r) ->
+            unaryOpWithPureArg "/" div getInitQ1T -< (r,n) 
+            -- TODO: wrap div with an operation checking for division by zero to avoid crashes
+        where
+        getInitQ1T =
+            proc (q, a2, n) ->
+                do
+                let nNormLog = getNormLog n
+                (a2NormLog, b2) <- getCRFnNormLog -< (a2,q,id)
+                let jInit2 = case (nNormLog, a2NormLog) of
+                        (_, NormZero) -> bits 0 -- denominator == 0, we have no chance... 
+                        (NormZero, _) -> bits 0 -- numerator == 0, it does not matter 
+                        (NormBits nNL, NormBits a2NL) -> max 0 (q + nNL + 1 - 2 * a2NL)
+                returnA -< ((jInit2, Just b2))
+
+instance (CanAsCauchyRealA to r) => CanDivA to (AsCauchyReal r) Rational where
+    type DivTypeA to (AsCauchyReal r) Rational = (AsCauchyReal r)
+    divA =
+        proc (r,n) ->
+            unaryOpWithPureArg "*" div getInitQ1T -< (r,n)
+        where
+        getInitQ1T =
+            proc (q, _a1, n) ->
+                do
+                let nNormLog = getNormLog n
+                let jInit1 = case nNormLog of 
+                        NormBits nNL -> max (bits 0) (q - nNL + 1)
+                        NormZero -> bits 0 -- denominator == 0, we have no chance...
+                returnA -< (jInit1, Nothing)
+
+instance (CanAsCauchyRealA to r) => CanDivByA to (AsCauchyReal r) Rational
+
+instance (Arrow to ) => CanSqrtA to Rational where
+    type SqrtTypeA to Rational = CauchyReal
+    sqrtA = proc x ->
+        returnA -< seqByPrecision2Cauchy (Just $ "sqrt " ++ show x) $ 
+                        \p -> sqrt (rational2BallP p x)      
+
+instance (Arrow to ) => CanExpA to Rational where
+    type ExpTypeA to Rational = CauchyReal
+    expA = proc x -> 
+        returnA -< seqByPrecision2Cauchy (Just $ "exp " ++ show x) $ 
+                        \p -> exp (rational2BallP p x)
+
+instance (Arrow to) => CanSineCosineA to Rational where
+    type SineCosineTypeA to Rational = CauchyReal
+    sinA = proc x -> 
+        returnA -< seqByPrecision2Cauchy (Just $ "sin " ++ show x) $ 
+                        \p -> sin (rational2BallP p x)
+    cosA = proc x -> 
+        returnA -< seqByPrecision2Cauchy (Just $ "cos " ++ show x) $ 
+                        \p -> cos (rational2BallP p x)
 
 {- operations mixing MPBall and CauchyReal, resulting in an MPBall -}
 
-instance CanAddMulScalar MPBall CauchyReal
-instance CanAddMulDivScalar MPBall CauchyReal
+instance (CanAsCauchyRealA to r) => CanAddMulScalarA to MPBall (AsCauchyReal r)
+instance (CanAsCauchyRealA to r) => CanAddMulDivScalarA to MPBall (AsCauchyReal r)
 
-instance
-    CanAddA (->) MPBall CauchyReal 
-    where
-    type AddTypeA (->) MPBall CauchyReal = MPBall
-    addA (a, CauchyReal _ b) = add a (b (getAccuracyIfExactUsePrec a))
-
-instance
-    CanAddA (->) CauchyReal  MPBall 
-    where
-    type AddTypeA (->) CauchyReal MPBall = MPBall
-    addA (a, b) = add b a
-
-instance CanAddThis MPBall CauchyReal
-
-instance
-    CanSub MPBall CauchyReal 
-
-instance
-    CanSub CauchyReal  MPBall 
-
-instance CanSubThis MPBall CauchyReal
-
-instance
-    CanMulA (->) MPBall CauchyReal 
-    where
-    type MulTypeA (->) MPBall CauchyReal = MPBall
-    mulA (a, CauchyReal _ b) = mul a (b (getAccuracyIfExactUsePrec a))
-
-instance
-    CanMulA (->) CauchyReal  MPBall 
-    where
-    type MulTypeA (->) CauchyReal MPBall = MPBall
-    mulA (a, b) = mul b a
-
-instance CanMulBy MPBall CauchyReal
-
-instance
-    CanDivA (->) MPBall CauchyReal 
-    where
-    type DivTypeA (->) MPBall CauchyReal = MPBall
-    divA (a, CauchyReal _ b) = mul a (b (getAccuracyIfExactUsePrec a))
-
-instance
-    CanDivA (->) CauchyReal  MPBall 
-    where
-    type DivTypeA (->) CauchyReal MPBall = MPBall
-    divA (CauchyReal _ a, b) = mul (a (getAccuracyIfExactUsePrec b)) b
-
-instance CanDivBy MPBall CauchyReal
+binaryMPRealA :: 
+    CanAsCauchyRealA to r =>
+    (MPBall -> MPBall -> t) -> (MPBall, AsCauchyReal r) `to` t
+binaryMPRealA op =
+    proc (a, AsCauchyReal r) ->
+        do
+        let ac = getAccuracyIfExactUsePrec a
+        b <- getAnswerCRA -< (r,ac+1)
+        returnA -< a `op` b
 
 getAccuracyIfExactUsePrec :: MPBall -> Accuracy
 getAccuracyIfExactUsePrec ball =
     case getAccuracy ball of
         Exact -> bits (prec2integer $ getPrecision ball) -- should we also consider the norm of the ball? 
         result -> result
+
+instance
+    (CanAsCauchyRealA to r) => CanAddA to MPBall (AsCauchyReal r) 
+    where
+    type AddTypeA to MPBall (AsCauchyReal r) = MPBall
+    addA = binaryMPRealA add
+
+instance
+    (CanAsCauchyRealA to r) => CanAddA to (AsCauchyReal r) MPBall 
+    where
+    type AddTypeA to (AsCauchyReal r) MPBall = MPBall
+    addA = flipA addA
+
+
+instance (CanAsCauchyRealA to r) => CanAddThisA to MPBall (AsCauchyReal r)
+
+instance (CanAsCauchyRealA to r) => CanSubA to MPBall (AsCauchyReal r) 
+instance (CanAsCauchyRealA to r) => CanSubA to (AsCauchyReal r) MPBall 
+instance (CanAsCauchyRealA to r) => CanSubThisA to MPBall (AsCauchyReal r)
+
+instance
+    (CanAsCauchyRealA to r) => CanMulA to MPBall (AsCauchyReal r) 
+    where
+    type MulTypeA to MPBall (AsCauchyReal r) = MPBall
+    mulA = binaryMPRealA mul
+
+instance
+    (CanAsCauchyRealA to r) => CanMulA to (AsCauchyReal r)  MPBall 
+    where
+    type MulTypeA to (AsCauchyReal r) MPBall = MPBall
+    mulA = flipA mulA
+
+
+instance (CanAsCauchyRealA to r) => CanMulByA to MPBall (AsCauchyReal r)
+
+instance
+    (CanAsCauchyRealA to r) => CanDivA to MPBall (AsCauchyReal r) 
+    where
+    type DivTypeA to MPBall (AsCauchyReal r) = MPBall
+    divA = binaryMPRealA div
+
+instance
+    (CanAsCauchyRealA to r) => CanDivA to (AsCauchyReal r)  MPBall 
+    where
+    type DivTypeA to (AsCauchyReal r) MPBall = MPBall
+    divA = proc (r,b) -> mulA -< (r,1/b)
+
+instance (CanAsCauchyRealA to r) => CanDivByA to MPBall (AsCauchyReal r)
+

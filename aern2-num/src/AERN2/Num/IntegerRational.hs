@@ -9,6 +9,8 @@ where
 import AERN2.Num.Operations  -- includes relevant parts of Prelude
 import qualified Prelude as P
 
+import Control.Arrow
+
 import Data.Ratio ((%))
 
 {- examples -}
@@ -21,73 +23,77 @@ _example2 = 2 * 3 + 2 ^ 2
 
 {- comparisons -}
 
-instance HasEqA (->) Integer Integer where
+instance (ArrowChoice to) => HasEqA to Integer Integer where
 
-instance HasOrderA (->) Integer Integer where
+instance (ArrowChoice to) => HasOrderA to Integer Integer where
 
-instance HasEqA (->) Int Int where
+instance (ArrowChoice to) => HasEqA to Int Int where
 
-instance HasOrderA (->) Int Int where
+instance (ArrowChoice to) => HasOrderA to Int Int where
 
-instance HasEqA (->) Rational Rational where
+instance (ArrowChoice to) => HasEqA to Rational Rational where
 
-instance HasOrderA (->) Rational Rational where
+instance (ArrowChoice to) => HasOrderA to Rational Rational where
 
-instance HasEqA (->) Int Integer where
-    equalToA (a, b) = (integer a) P.== b
+instance (ArrowChoice to) => HasEqA to Int Integer where
+    equalToA = convertFirstA equalToA
 
-instance HasOrderA (->) Int Integer where
-    lessThanA (a, b) = (integer a) P.< b
-    leqA (a, b) = (integer a) P.<= b
+instance (ArrowChoice to) => HasOrderA to Int Integer where
+    lessThanA = convertFirstA lessThanA
+    leqA = convertFirstA leqA
 
-instance HasEqA (->) Integer Int where
-    equalToA (a, b) = b == a
+instance (ArrowChoice to) => HasEqA to Integer Int where
+    equalToA = convertSecondA equalToA
 
-instance HasOrderA (->) Integer Int where
-    lessThanA (a, b) = greaterThan b a
-    leqA (a, b) = geq b a
+instance (ArrowChoice to) => HasOrderA to Integer Int where
+    lessThanA = convertSecondA lessThanA
+    leqA = convertSecondA leqA
 
 
-instance HasEqA (->) Integer Rational where
-    equalToA (a, b) = (P.fromInteger a) P.== b
+instance (ArrowChoice to) => HasEqA to Integer Rational where
+    equalToA = convertFirstA equalToA
 
-instance HasOrderA (->) Integer Rational where
-    lessThanA (a, b) = (P.fromInteger a) P.< b
-    leqA (a, b) = (P.fromInteger a) P.<= b
+instance (ArrowChoice to) => HasOrderA to Integer Rational where
+    lessThanA = convertFirstA lessThanA
+    leqA = convertFirstA leqA
 
-instance HasEqA (->) Rational Integer where
-    equalToA (a, b) = equalTo b a
+instance (ArrowChoice to) => HasEqA to Rational Integer where
+    equalToA = convertSecondA equalToA
 
-instance HasOrderA (->) Rational Integer where
-    lessThanA (a, b) = greaterThan b a
-    leqA (a, b) = geq b a
+instance (ArrowChoice to) => HasOrderA to Rational Integer where
+    lessThanA = convertSecondA lessThanA
+    leqA = convertSecondA leqA
 
-instance HasEqA (->) Int Rational where
-    equalToA (a, b) = (rational a) P.== b
+instance (ArrowChoice to) => HasEqA to Int Rational where
+    equalToA = convertFirstA equalToA
 
-instance HasOrderA (->) Int Rational where
-    lessThanA (a, b) = (rational a) P.< b
-    leqA (a, b) = (rational a) P.<= b
+instance (ArrowChoice to) => HasOrderA to Int Rational where
+    lessThanA = convertFirstA lessThanA
+    leqA = convertFirstA leqA
 
-instance HasEqA (->) Rational Int where
-    equalToA (a, b) = equalTo b a
+instance (ArrowChoice to) => HasEqA to Rational Int where
+    equalToA = convertSecondA equalToA
 
-instance HasOrderA (->) Rational Int where
-    lessThanA (a, b) = greaterThan b a
-    leqA (a, b) = geq b a
+instance (ArrowChoice to) => HasOrderA to Rational Int where
+    lessThanA = convertSecondA equalToA
+    leqA = convertSecondA equalToA
 
 
 {- operations on Integers -}
 
-instance CanNegA (->) Integer where
-    negA a = P.negate a
+instance (ArrowChoice to) => CanNegA to Integer where
+    negA = arr P.negate
     
 instance CanNegSameType Integer
 
-instance CanAbsA (->) Integer where
-    absA a = P.abs a
+instance (ArrowChoice to) => CanAbsA to Integer where
+    absA = arr P.abs
     
-instance CanAbsSameType Integer
+instance (ArrowChoice to) => CanAbsSameTypeA to Integer
+
+{- TODO 
+    Make the following instances arrow-generic.
+-}
 
 instance CanMinMax Integer Integer where
 
@@ -125,15 +131,15 @@ instance CanDiv Integer Integer -- the default implementation is fine
     
 {- operations on Rationals -}
     
-instance CanNegA (->) Rational where
-    negA a = P.negate a
-
-instance CanNegSameType Rational
+instance (ArrowChoice to) => CanNegA to Rational where
+    negA = arr P.negate
     
-instance CanAbsA (->) Rational where
-    absA a = P.abs a
+instance CanNegSameType Rational
 
-instance CanAbsSameType Rational
+instance (ArrowChoice to) => CanAbsA to Rational where
+    absA = arr P.abs
+    
+instance (ArrowChoice to) => CanAbsSameTypeA to Rational
 
 instance CanMinMax Rational Rational where
 
