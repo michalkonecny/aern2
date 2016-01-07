@@ -102,26 +102,26 @@ rootByTrisection =
         z <- convertNamedA "0" -< 0
         (l,_) <- getEndpointsA -< xInit
         fn_l <- evalAtUFnDomEA -< (fn,l)
-        isDecreasing <- lessThanA -< (z, fn_l)
-        sq <- aux -< (z, isDecreasing, fn, xInit)
+        isPositiveAtL <- lessThanA -< (z, fn_l)
+        sq <- aux -< (z, isPositiveAtL, fn, xInit)
         result <- limitIntervalsToRealA -< sq
         returnA -< result
     where
     aux =
-        proc (z, isDecreasing, fn, xPrev) ->
+        proc (z, isPositiveAtL, fn, xPrev) ->
             do
             (l,r) <- getEndpointsA -< xPrev
             (m, fn_m) <- splitAwayFromRoot -< (fn,l,r)
             isPositiveAtM <- lessThanA -< (z, fn_m)
             let _ = [z, fn_m]
-            xNew <- if isPositiveAtM == isDecreasing
+            xNew <- if isPositiveAtM == isPositiveAtL
                 then do
                     res <- fromEndpointsA -< (m,r)
                     returnA -< res
                 else do
                     res <- fromEndpointsA -< (l,m)
                     returnA -< res
-            restX <- aux -< (z, isDecreasing, fn, xNew)
+            restX <- aux -< (z, isPositiveAtL, fn, xNew)
             returnA -< (xPrev : restX)
     splitAwayFromRoot =
         proc (fn,l,r) ->

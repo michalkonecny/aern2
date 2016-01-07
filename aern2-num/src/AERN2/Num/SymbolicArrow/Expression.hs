@@ -37,8 +37,16 @@ class
     =>
     RealPredA to r
 
-instance RealExprA (->) (CauchyReal)
-instance RealPredA (->) (CauchyReal)
+instance 
+    (CanAsCauchyRealA to r, CanAddSameTypeA to r, CanSubSameTypeA to r, 
+     CanMulSameTypeA to r, CanDivSameTypeA to r) 
+    => 
+    RealExprA to (AsCauchyReal r)
+instance 
+    (CanAsCauchyRealA to r, CanAddSameTypeA to r, CanSubSameTypeA to r, 
+     CanMulSameTypeA to r, CanDivSameTypeA to r) 
+    => 
+    RealPredA to (AsCauchyReal r)
 
 instance RealExprA (->) MPBall
 instance RealPredA (->) MPBall

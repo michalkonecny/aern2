@@ -343,47 +343,47 @@ getCachedMPBFunctionNormLog ::
     QACachedM NormLog
 getCachedMPBFunctionNormLog q (QACached_MPBall rId) fn =
     do
-    x0 <- getAnswer QAP_MPBall rId q
+    x0 <- getAnswer QAP_MPBall (rId, q)
     let fnx0 = fn x0
     case 1 < fnx0 of
         Just True -> return $ getNormLog fnx0
         _ -> 
             do
-            x <- getAnswer QAP_MPBall rId q
+            x <- getAnswer QAP_MPBall (rId, q)
             let fnx = fn x
             return $ getNormLog fnx
 
 constMPBCachedM ::
     String -> 
     (Precision -> MPBall) -> QACachedM QACached_MPBall
-constMPBCachedM _constName r =
+constMPBCachedM constName r =
     fmap QACached_MPBall $
         newId QAP_MPBall $ 
-            \p -> (return $ r p)
+            (Just constName, \p -> (return $ r p))
             
 unaryMPBCachedM ::
     String -> 
     (MPBall -> MPBall) -> 
     (QACached_MPBall) -> QACachedM QACached_MPBall
-unaryMPBCachedM _valName op (QACached_MPBall id1) =    
-    fmap QACached_MPBall $ newId QAP_MPBall handleQuery
+unaryMPBCachedM valName op (QACached_MPBall id1) =    
+    fmap QACached_MPBall $ newId QAP_MPBall (Just valName, handleQuery)
     where
     handleQuery q =
         do
-        a1 <- getAnswer QAP_MPBall id1 q 
+        a1 <- getAnswer QAP_MPBall (id1, q) 
         return $ op a1 
 
 binaryMPBCachedM ::
     String -> 
     (MPBall -> MPBall -> MPBall) -> 
     (QACached_MPBall, QACached_MPBall) -> QACachedM QACached_MPBall
-binaryMPBCachedM _valName op (QACached_MPBall id1, QACached_MPBall id2) =    
-    fmap QACached_MPBall $ newId QAP_MPBall handleQuery
+binaryMPBCachedM valName op (QACached_MPBall id1, QACached_MPBall id2) =    
+    fmap QACached_MPBall $ newId QAP_MPBall (Just valName, handleQuery)
     where
     handleQuery q =
         do
-        a1 <- getAnswer QAP_MPBall id1 q 
-        a2 <- getAnswer QAP_MPBall id2 q 
+        a1 <- getAnswer QAP_MPBall (id1, q)
+        a2 <- getAnswer QAP_MPBall (id2, q) 
         return $ op a1 a2
 
 relMPBCachedM ::
@@ -396,7 +396,7 @@ relMPBCachedM _valName rel rs =
     where
     aux (ac:rest) =
         do
-        bs <- mapM (\(QACached_MPBall rId) -> getAnswer QAP_MPBall rId ac) rs
+        bs <- mapM (\(QACached_MPBall rId) -> getAnswer QAP_MPBall (rId, ac)) rs
         case rel bs of
             Just result -> return result
             Nothing -> aux rest

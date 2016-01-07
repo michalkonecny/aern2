@@ -1,7 +1,8 @@
 {-# LANGUAGE Arrows, TypeOperators #-}
 module AERN2.Net.Examples.FFT 
 (
-    fftTestDirect,
+    fftTestDirectCR,
+    fftTestDirectMPB,
     fftTestCached,
     dftCooleyTukey
 )
@@ -26,8 +27,8 @@ maybeTrace
     | shouldTrace = trace
     | otherwise = const id
 
-fftTestDirect :: Integer -> Accuracy -> [(MPBall, MPBall)]
-fftTestDirect nN ac =
+fftTestDirectCR :: Integer -> Accuracy -> [(MPBall, MPBall)]
+fftTestDirectCR nN ac =
     map (\ c -> complexCR2balls c ac) $ fftWithInput ()
     where
     fftWithInput =
@@ -37,19 +38,31 @@ fftTestDirect nN ac =
             dftCooleyTukey nN -< x
     input = map rational [1..nN] 
 
+fftTestDirectMPB :: Integer -> Precision -> [(Complex MPBall)]
+fftTestDirectMPB nN p =
+    fftWithInput ()
+    where
+    fftWithInput =
+        proc () ->
+            do
+            x <- complexListNamedA "input" -< input
+            dftCooleyTukey nN -< x
+    input = map (integer2BallP p) [1..nN] 
+
 fftTestCached :: Integer -> Accuracy -> [(Complex MPBall)]
 fftTestCached nN ac =
-    executeQACachedM $
+    executeQACachedA $ proc () ->
         do
-        rs <- runKleisli (fftWithInput :: QACachedA () [QACached_Complex]) ()
-        anss <- mapM getComplexAnswer rs
-        return anss
+        rs <- (fftWithInput :: QACachedA () [QACached_Complex]) -< ()
+        mapA getComplexAnswer -< rs
     where
-    getComplexAnswer (QACached_CauchyReal rId :+ QACached_CauchyReal iId) =
+    getComplexAnswer _ = proc (r :+ i) ->
         do
-        rA <- getAnswer QAP_CauchyReal rId ac
-        iA <- getAnswer QAP_CauchyReal iId ac
-        return (rA :+ iA)
+        let (AsCauchyReal ur) = r :: QACached_CauchyReal
+        let (AsCauchyReal ui) = i
+        rA <- getAnswerCRA -< (ur, ac)
+        iA <- getAnswerCRA -< (ui, ac)
+        returnA -< (rA :+ iA)
     fftWithInput =
         proc () ->
             do
@@ -113,18 +126,18 @@ ditfft2 nN s
     twiddle k = 
         proc x_k_plus_NHalf ->
             do
-            tc <- convertNamedA "exp(-2*pi*i*k/nN)*" -< cT 
-            r <- mulA -< (x_k_plus_NHalf, tc)
-            let _ = [tc,r,x_k_plus_NHalf]
+            r <- mulA -< (x_k_plus_NHalf, c)
+            let _ = [r,x_k_plus_NHalf]
             returnA -< r
         where
-        cT = 
+        c = 
             maybeTrace
             (
-                "twiddle with k = " ++ show k ++ "; ... = " ++ showComplexCR (bits 100) c
+                "twiddle with k = " ++ show k ++ "; ... = " ++ showComplexCR (bits 100) c'
             )
-            c
-        c = exp(-2*pi*i*k/nN)
+            c'
+            where
+            c' = exp(-2*pi*i*k/nN)
         i = complexI :: Complex CauchyReal
     
                 

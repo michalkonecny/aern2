@@ -19,7 +19,6 @@ module AERN2.Net.Spec.Arrow
 where
 
 import AERN2.Num
-import Data.String (IsString(..),fromString)
 
 import Control.Arrow
 import qualified Data.Map as Map
@@ -93,7 +92,10 @@ piA :: (HasCauchyRealsA to r) => () `to` r
 piA = proc () -> convertA -< pi -- TODO: use convertNamedA instead and add the name "pi"
 
 class 
-    (RealA to c, HasComplexA CauchyReal to c) => 
+    (RealA to c, 
+     HasComplexA CauchyReal to c,
+     CanAddMulScalarA to c (Complex CauchyReal)) 
+    => 
     ComplexA to c
 
 class (FieldA to (IntervalE ri)) => RationalIntervalA to ri where

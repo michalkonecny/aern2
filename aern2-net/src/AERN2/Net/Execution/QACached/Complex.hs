@@ -5,7 +5,7 @@ import AERN2.Num
 
 import AERN2.Net.Spec.Arrow
 import AERN2.Net.Execution.QACached.Basics 
-import AERN2.Net.Execution.QACached.CauchyReal 
+import AERN2.Net.Execution.QACached.CauchyReal
 
 type QACached_Complex = Complex QACached_CauchyReal
 

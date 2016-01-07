@@ -7,7 +7,6 @@ module AERN2.Net.Execution.Direct
 where
 
 import AERN2.Num
-import Data.String (fromString)
 
 import AERN2.Net.Spec.Arrow
 
@@ -47,13 +46,29 @@ instance RealA (->) CauchyReal
 instance ArrowConvert [CauchyReal] (->) CauchyReal [CauchyReal] (->) CauchyReal where
     arrow2arrow = id
 
-{- Direct evaluation using Complex -}
+{- Direct evaluation using MPBall -}
+
+instance RealA (->) MPBall
+
+instance ArrowConvert [MPBall] (->) MPBall [MPBall] (->) MPBall where
+    arrow2arrow = id
+
+{- Direct evaluation using Complex CauchyReal -}
 
 instance RealA (->) (Complex CauchyReal)
 
 instance ComplexA (->) (Complex CauchyReal)
 
 instance ArrowConvert [Complex CauchyReal] (->) (Complex CauchyReal) [(Complex CauchyReal)] (->) (Complex CauchyReal) where
+    arrow2arrow = id
+
+{- Direct evaluation using Complex MPBall -}
+
+instance RealA (->) (Complex MPBall)
+
+instance ComplexA (->) (Complex MPBall)
+
+instance ArrowConvert [Complex MPBall] (->) (Complex MPBall) [(Complex MPBall)] (->) (Complex MPBall) where
     arrow2arrow = id
 
 {- TODO The Interval type should move somewhere to aern-num -}

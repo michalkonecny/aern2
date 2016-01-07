@@ -1,4 +1,4 @@
-{-# LANGUAGE ExistentialQuantification, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE ExistentialQuantification, GeneralizedNewtypeDeriving, TypeOperators #-}
 {-| Types for cached execution of general QA-networks. -}
 module AERN2.Net.Execution.QACached.Basics where
 
@@ -14,9 +14,9 @@ import Unsafe.Coerce
 type QACachedA = Kleisli QACachedM
 type QACachedM = State QANetInfo
 
-executeQACachedM :: (QACachedM a) -> a
-executeQACachedM code =
-    fst $ (runState code) initQANetInfo
+executeQACachedA :: (() `QACachedA` a) -> a
+executeQACachedA code =
+    fst $ (runState $ runKleisli code ()) initQANetInfo
 
 data QANetInfo =
     QANetInfo
@@ -53,8 +53,8 @@ data QAComputation p =
 newtype ValueId = ValueId Integer
     deriving (Show, Eq, Ord, Enum)
 
-newId :: (QAProtocol p) => p -> (Q p -> (QACachedM (A p))) -> QACachedM ValueId
-newId p q2a =
+newId :: (QAProtocol p) => p -> (Maybe String, Q p -> (QACachedM (A p))) -> QACachedM ValueId
+newId p (_name, q2a) =
     do
     ni <- get
     let (i, ni') = aux ni
@@ -69,8 +69,8 @@ newId p q2a =
           | otherwise = succ $ fst (Map.findMax id2value)
         id2value' = Map.insert i (AnyQAComputation (QAComputation p (newCache p) q2a)) id2value
 
-getAnswer :: (QAProtocol p) => p -> ValueId -> Q p -> QACachedM (A p)
-getAnswer p valueId q =
+getAnswer :: (QAProtocol p) => p -> (ValueId, Q p) -> QACachedM (A p)
+getAnswer p (valueId, q) =
     do
     ni <- get
     aux ni
@@ -79,7 +79,11 @@ getAnswer p valueId q =
         do
         (a, cache') <- getAnswerUsingCacheIfPossible p qaComputation q
         ni2 <- get
-        put $ ni2 { net_id2value = Map.insert valueId (AnyQAComputation (QAComputation p cache' q2a)) id2value }
+        put $ ni2 
+            { net_id2value = 
+                Map.insert valueId 
+                    (AnyQAComputation (QAComputation p cache' q2a)) 
+                    id2value }
         return a
         where
         id2value = net_id2value ni
