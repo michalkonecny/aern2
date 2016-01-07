@@ -109,20 +109,20 @@ class (CanReadAsCauchyRealA to r, CanCreateAsCauchyRealA to r) => CanAsCauchyRea
 
 {-| Invariant: For any instance it should hold: @width(getAnswerCRA i) <= 2^^(-i)@ -}
 class (ArrowChoice to) => CanReadAsCauchyRealA to r where
-    getAnswerCRA :: (r,Accuracy) `to` MPBall
-    getNameCRA :: r `to` Maybe String
+    getAnswerCRA :: (AsCauchyReal r,Accuracy) `to` MPBall
+    getNameCRA :: AsCauchyReal r `to` Maybe String
 
 class (ArrowChoice to) => CanCreateAsCauchyRealA to r where
-    newCRA :: (Maybe String, Accuracy `to` MPBall) `to` r
+    newCRA :: (Maybe String, Accuracy `to` MPBall) `to` AsCauchyReal r
 
 instance CanAsCauchyRealA (->) CauchyReal_
 
 instance (ArrowChoice to) => CanReadAsCauchyRealA to CauchyReal_ where
-    getAnswerCRA = arr $ \ (r,ac) -> cr_seq r ac
-    getNameCRA = arr cr_name
+    getAnswerCRA = arr $ \ (AsCauchyReal r,ac) -> cr_seq r ac
+    getNameCRA = arr $ cr_name . unAsCauchyReal 
 
 instance CanCreateAsCauchyRealA (->) CauchyReal_ where
-    newCRA (name, ac2b) = CauchyReal_ name ac2b
+    newCRA (name, ac2b) = AsCauchyReal $ CauchyReal_ name ac2b
 
 {- conversions -}
 
@@ -152,12 +152,10 @@ cauchyReals = convertList
 instance (CanAsCauchyRealA to r) => ConvertibleA to Integer (AsCauchyReal r) where
     convertA = proc n ->
         do
-        r <- newCRA -< (Just $ show n, arr $ seqByPrecision2CauchySeq $ \ p -> integer2BallP p n)
-        returnA -< AsCauchyReal r 
+        newCRA -< (Just $ show n, arr $ seqByPrecision2CauchySeq $ \ p -> integer2BallP p n)
     convertNamedA name = proc n ->
         do
-        r <- newCRA -< (Just name, arr $ seqByPrecision2CauchySeq $ \ p -> integer2BallP p n) 
-        returnA -< AsCauchyReal r 
+        newCRA -< (Just name, arr $ seqByPrecision2CauchySeq $ \ p -> integer2BallP p n) 
 
 integer2CauchyReal :: Integer -> CauchyReal
 integer2CauchyReal = convert
@@ -167,26 +165,22 @@ integer2CauchyReal = convert
 instance (CanAsCauchyRealA to r) => ConvertibleA to Rational (AsCauchyReal r) where
     convertA = proc n ->
         do
-        r <- newCRA -< (Just $ show n, arr $ seqByPrecision2CauchySeq $ \ p -> rational2BallP p n)
-        returnA -< AsCauchyReal r 
+        newCRA -< (Just $ show n, arr $ seqByPrecision2CauchySeq $ \ p -> rational2BallP p n)
     convertNamedA name = proc n ->
         do
-        r <- newCRA -< (Just name, arr $ seqByPrecision2CauchySeq $ \ p -> rational2BallP p n) 
-        returnA -< AsCauchyReal r 
+        newCRA -< (Just name, arr $ seqByPrecision2CauchySeq $ \ p -> rational2BallP p n) 
 
 rational2CauchyReal :: Rational -> CauchyReal
 rational2CauchyReal = convert
 
 instance (CanReadAsCauchyRealA to r1, CanCreateAsCauchyRealA to r2) => ConvertibleA to (AsCauchyReal r1) (AsCauchyReal r2) where
-    convertA = proc (AsCauchyReal r1) ->
+    convertA = proc r1 ->
         do
         name <- getNameCRA -< r1
-        r2 <- newCRA -< (name, proc ac -> getAnswerCRA -< (r1,ac))
-        returnA -< AsCauchyReal r2 
-    convertNamedA name = proc (AsCauchyReal r1) ->
+        newCRA -< (name, proc ac -> getAnswerCRA -< (r1,ac))
+    convertNamedA name = proc r1 ->
         do
-        r2 <- newCRA -< (Just name, proc ac -> getAnswerCRA -< (r1,ac))
-        returnA -< AsCauchyReal r2 
+        newCRA -< (Just name, proc ac -> getAnswerCRA -< (r1,ac))
 
 {- Comparisons of CauchyReals -}
 
@@ -206,7 +200,7 @@ tryStandardCompareAccuracies ::
    ([MPBall] -> Maybe t, [AsCauchyReal r]) `to` t
 tryStandardCompareAccuracies =
     proc (rel, rs) -> 
-        aux compareTryAccuracies -< (rel, map unAsCauchyReal rs)
+        aux compareTryAccuracies -< (rel, rs)
     where
     aux (ac : rest) =
         proc (rel, rs) ->
@@ -314,13 +308,12 @@ unaryOp ::
     =>
     String ->
     (MPBall -> MPBall) -> 
-    ((Accuracy, r1) `to` (Accuracy, Maybe MPBall)) -> 
+    ((Accuracy, AsCauchyReal r1) `to` (Accuracy, Maybe MPBall)) -> 
     (AsCauchyReal r1) `to` (AsCauchyReal r)
 unaryOp name op getInitQ1 =
-    proc (AsCauchyReal r1) ->
+    proc r1 ->
         do
-        r <- newCRA -< (Just name, ac2b r1)
-        returnA -< AsCauchyReal r
+        newCRA -< (Just name, ac2b r1)
     where
     ac2b r1 = proc ac ->
         do
@@ -335,13 +328,12 @@ unaryOpWithPureArg ::
     =>
     String ->
     (MPBall -> t -> MPBall) -> 
-    ((Accuracy, r1, t) `to` (Accuracy, Maybe MPBall)) -> 
+    ((Accuracy, AsCauchyReal r1, t) `to` (Accuracy, Maybe MPBall)) -> 
     (AsCauchyReal r1, t) `to` (AsCauchyReal r)
 unaryOpWithPureArg name op getInitQ1T =
-    proc (AsCauchyReal r1, t) ->
+    proc (r1, t) ->
         do
-        r <- newCRA -< (Just name, ac2b r1 t)
-        returnA -< AsCauchyReal r
+        newCRA -< (Just name, ac2b r1 t)
     where
     ac2b r1 t = proc ac ->
         do
@@ -356,13 +348,12 @@ binaryOp ::
     =>
     String ->
     (MPBall -> MPBall -> MPBall) -> 
-    ((Accuracy, r1, r2) `to` ((Accuracy, Maybe MPBall), (Accuracy, Maybe MPBall))) -> 
+    ((Accuracy, AsCauchyReal r1, AsCauchyReal r2) `to` ((Accuracy, Maybe MPBall), (Accuracy, Maybe MPBall))) -> 
     (AsCauchyReal r1, AsCauchyReal r2) `to` (AsCauchyReal r)
 binaryOp name op getInitQ1Q2 =
-    proc (AsCauchyReal r1, AsCauchyReal r2) ->
+    proc (r1, r2) ->
         do
-        r <- newCRA -< (Just name, ac2b r1 r2)
-        returnA -< AsCauchyReal r
+        newCRA -< (Just name, ac2b r1 r2)
     where
     ac2b r1 r2 = proc ac ->
         do
@@ -402,7 +393,7 @@ getInitQ1Q2FromSimple simpleA  = proc (q, _, _) ->
     returnA -< ((initQ1, Nothing), (initQ2, Nothing))
 
 getCRFnNormLog :: 
-    (CanReadAsCauchyRealA to r) => (r, Accuracy, MPBall -> MPBall) `to` (NormLog, MPBall)
+    (CanReadAsCauchyRealA to r) => (AsCauchyReal r, Accuracy, MPBall -> MPBall) `to` (NormLog, MPBall)
 getCRFnNormLog = proc (r,q,fn) ->
     do
     b <- getAnswerCRA -< (r, q)
@@ -888,7 +879,7 @@ binaryMPRealA ::
     CanAsCauchyRealA to r =>
     (MPBall -> MPBall -> t) -> (MPBall, AsCauchyReal r) `to` t
 binaryMPRealA op =
-    proc (a, AsCauchyReal r) ->
+    proc (a, r) ->
         do
         let ac = getAccuracyIfExactUsePrec a
         b <- getAnswerCRA -< (r,ac+1)

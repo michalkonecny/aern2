@@ -24,8 +24,7 @@ _anet0cachedCauchy p =
         proc () ->
             do
             r <- _anet0  -< ()
-            let (AsCauchyReal ur) = r :: QACached_CauchyReal
-            getAnswerCRA -< (ur, bits p)
+            getAnswerCRA -< (r :: QACached_CauchyReal, bits p)
 
 _anet3cachedCauchy :: (Rational, Rational, Rational) -> Integer -> MPBall
 _anet3cachedCauchy (x,y,z) p =
@@ -35,11 +34,10 @@ _anet3cachedCauchy (x,y,z) p =
             channels <- mapA mkInput -< [("x",x), ("y",y), ("z",z)]
             let envCh = Map.fromList channels
             r <- _anet3 -< envCh
-            let (AsCauchyReal ur) = r :: QACached_CauchyReal
-            getAnswerCRA -< (ur, bits p)
+            getAnswerCRA -< (r, bits p)
         where
         mkInput = proc (name, value) ->
             do
-            ch <- newCRA -< (Just name, proc ac -> returnA -< (cauchyReal2ball (cauchyReal value) ac))
-            returnA -< (name, AsCauchyReal ch)
+            r <- newCRA -< (Just name, proc ac -> returnA -< (cauchyReal2ball (cauchyReal value) ac))
+            returnA -< (name, r :: QACached_CauchyReal)
 

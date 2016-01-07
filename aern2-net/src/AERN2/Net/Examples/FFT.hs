@@ -60,10 +60,8 @@ fftTestCached nN ac =
     where
     getComplexAnswer = proc (r :+ i) ->
         do
-        let (AsCauchyReal ur) = r :: QACached_CauchyReal
-        let (AsCauchyReal ui) = i
-        rA <- getAnswerCRA -< (ur, ac)
-        iA <- getAnswerCRA -< (ui, ac)
+        rA <- getAnswerCRA -< (r, ac)
+        iA <- getAnswerCRA -< (i, ac)
         returnA -< (rA :+ iA)
     fftWithInput =
         proc () ->

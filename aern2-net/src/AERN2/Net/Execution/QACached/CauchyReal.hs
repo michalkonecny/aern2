@@ -40,15 +40,15 @@ instance CanAsCauchyRealA QACachedA QACached_CauchyReal_
 
 instance CanReadAsCauchyRealA QACachedA QACached_CauchyReal_ where
     getAnswerCRA = 
-        Kleisli $ \(r, ac) -> getAnswer QAP_CauchyReal (cachedCR_id r, ac)
-    getNameCRA = arr cachedCR_name
+        Kleisli $ \(r, ac) -> getAnswer QAP_CauchyReal (cachedCR_id $ unAsCauchyReal r, ac)
+    getNameCRA = arr $ cachedCR_name . unAsCauchyReal
 
 instance CanCreateAsCauchyRealA QACachedA QACached_CauchyReal_ where
     newCRA = 
         Kleisli $ \ (name, ac2b) ->
             do
             valueId <- newId  QAP_CauchyReal (name, runKleisli ac2b)
-            return $ QACached_CauchyReal_ name valueId 
+            return $ AsCauchyReal $ QACached_CauchyReal_ name valueId 
 
 
 instance RealA QACachedA QACached_CauchyReal
