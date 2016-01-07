@@ -40,7 +40,6 @@ library
                    AERN2.Net.Execution.QACached.CauchyReal,
                    AERN2.Net.Execution.QACached.CauchyReal.InnerType,
                    AERN2.Net.Execution.QACached.Complex,
-                   AERN2.Net.Execution.QACached.MPBall,
                    AERN2.Net.Spec,
                    AERN2.Net.Spec.Arrow
 

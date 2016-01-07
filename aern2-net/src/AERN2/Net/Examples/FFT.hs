@@ -118,7 +118,7 @@ ditfft2 nN s
         proc x ->
             do
             vTX0 <- ditfft2 nNhalf (2 * s) -< x 
-            vTXNhalf <- ditfft2 nNhalf (2 * s) -< (drop (int s) x)
+            vTXNhalf <- ditfft2 nNhalf (2 * s) -< drop (int s) x
             vTXNhalfTwiddled <- mapA twiddle -< vTXNhalf
             vX0 <- zipWithA (const addA) -< (vTX0, vTXNhalfTwiddled)
             vXNhalf <- zipWithA (const subA) -< (vTX0, vTXNhalfTwiddled)
@@ -128,9 +128,10 @@ ditfft2 nN s
     twiddle k = 
         proc x_k_plus_NHalf ->
             do
-            c <- $(exprA[|let [i] = vars in exp(-2*pi*i*k/nN)|]) <<< complex_iA -< ()  
+            i <- complex_iA -< ()
+            c <- $(exprA[|let [i] = vars in exp(-2*pi*i*k/nN)|]) -< i  
             r <- mulA -< (x_k_plus_NHalf, c)
-            let _ = [c,r,x_k_plus_NHalf]
+            let _ = [i,c,r,x_k_plus_NHalf]
             returnA -< r
     
                 

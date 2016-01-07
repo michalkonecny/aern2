@@ -1,3 +1,5 @@
+{--- THIS MODULE IS CURRENTLY NOT USED AND MAINTAINED ---}
+
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, FlexibleContexts #-}
 {-| Concrete types and instances for QA-networks with balls approximating real numbers -}
 module AERN2.Net.Execution.QACached.MPBall where
