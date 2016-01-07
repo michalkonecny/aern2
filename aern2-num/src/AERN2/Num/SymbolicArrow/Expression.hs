@@ -3,10 +3,12 @@ module AERN2.Num.SymbolicArrow.Expression
 (RealExprA, RealPredA, RealExpr, RealPred, realExpr2arrow, realPred2arrow, var)
 where
 
+import AERN2.Num.Operations
+import qualified Prelude
+
 import Control.Arrow
 import qualified Data.Map as Map
 
-import AERN2.Num.Operations
 import AERN2.Num.CauchyReal
 import AERN2.Num.MPBall
 
@@ -223,6 +225,15 @@ instance HasOrderA (->) Rational RealExpr where
 
 
 {- numeric operations -}
+
+-- providing this only because Template Haskell translates (-x) to (Prelude.negate x)  
+instance Num RealExpr where
+    fromInteger = convert
+    negate = negate
+    (+) = (+)
+    (*) = (*)
+    abs = error "RealExpr Prelude.abs not implemented"
+    signum = error "RealExpr Prelude.signum not implemented"
 
 instance RingA (->) RealExpr
 instance FieldA (->) RealExpr

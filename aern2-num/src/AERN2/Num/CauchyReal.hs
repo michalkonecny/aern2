@@ -23,9 +23,11 @@ module AERN2.Num.CauchyReal
 )
 where
 
+import AERN2.Num.Operations
+import qualified Prelude
+
 import Control.Arrow
 
-import AERN2.Num.Operations
 import AERN2.Num.Norm
 import AERN2.Num.Accuracy
 
@@ -280,6 +282,15 @@ instance (CanAsCauchyRealA to r) => HasOrderA to (AsCauchyReal r) Rational where
     leqA = convertSecondA leqA
 
 {- Operations among CauchyReal's -}
+
+-- providing this only because Template Haskell translates (-x) to (Prelude.negate x)  
+instance Num CauchyReal where
+    fromInteger = convert
+    negate = negate
+    (+) = (+)
+    (*) = (*)
+    abs = error "RealExpr Prelude.abs not implemented"
+    signum = error "RealExpr Prelude.signum not implemented"
 
 instance 
     (CanAsCauchyRealA to r, CanAddSameTypeA to r, CanSubSameTypeA to r, 

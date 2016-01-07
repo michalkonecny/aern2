@@ -29,10 +29,13 @@ library
     mtl
   ghc-options:     -O2 -Wall  -fno-warn-orphans
   extensions:      
+                   Arrows, 
                    MultiParamTypeClasses, 
                    OverloadedStrings, 
                    RebindableSyntax, 
-                   TypeFamilies
+                   TemplateHaskell, 
+                   TypeFamilies, 
+                   TypeOperators
   exposed-modules: AERN2.Num
   other-modules:   
                    AERN2.Num.Accuracy,

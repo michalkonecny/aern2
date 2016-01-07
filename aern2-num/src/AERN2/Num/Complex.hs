@@ -15,6 +15,7 @@ import AERN2.Num.CauchyReal
 import AERN2.Num.MPBall
 import AERN2.Num.Accuracy
 import AERN2.Num.SymbolicArrow
+import AERN2.Num.SymbolicArrow.Expression (var)
 
 import Control.Arrow
 
@@ -96,7 +97,7 @@ toComplexA =
 instance (RealPredA to r) => HasEqA to (Complex r) (Complex r) where
     type EqCompareTypeA to (Complex r) (Complex r) = EqCompareTypeA to r r 
     equalToA =
-        binaryRel $(predA [| let [r1,i1,r2,i2] = vars in r1 == r2 && i1 == i2|])
+        binaryRel $(predAinternal [| let [r1,i1,r2,i2] = vars in r1 == r2 && i1 == i2|])
         
 instance
     (RealPredA to r) =>
@@ -104,9 +105,9 @@ instance
     where
     type OrderCompareTypeA to (Complex r) (Complex r) = OrderCompareTypeA to r r 
     lessThanA =
-        binaryRel $(predA [|let [r1,i1,r2,i2] = vars in (r1 <= r2 && i1 <= i2) && (r1 /= r2 || i1 /= i2)|])
+        binaryRel $(predAinternal [|let [r1,i1,r2,i2] = vars in (r1 <= r2 && i1 <= i2) && (r1 /= r2 || i1 /= i2)|])
     leqA =
-        binaryRel $(predA [|let [r1,i1,r2,i2] = vars in (r1 <= r2 && i1 <= i2)|])
+        binaryRel $(predAinternal [|let [r1,i1,r2,i2] = vars in (r1 <= r2 && i1 <= i2)|])
 
 instance 
     (RealPredA to r) =>
@@ -201,8 +202,8 @@ instance
 instance (RealExprA to r) => CanNegA to (Complex r) where
     type NegTypeA to (Complex r) = Complex r
     negA =
-        unaryOp ($(exprA[|let [r,_i]=vars in neg r|]),  
-                 $(exprA[|let [_r,i]=vars in neg i|]))
+        unaryOp ($(exprAinternal[|let [r,_i]=vars in neg r|]),  
+                 $(exprAinternal[|let [_r,i]=vars in neg i|]))
         -- TODO add support for tuples of expresions in exprA
 
 instance (RealExprA to r) => CanNegSameTypeA to (Complex r)
@@ -211,7 +212,7 @@ instance (CanSqrtSameTypeA to r, RealExprA to r) => CanAbsA to (Complex r) where
     type AbsTypeA to (Complex r) = r
     absA =
         proc (r :+ i) ->
-             $(exprA[| let [r,i]=vars in sqrt (r*r + i*i) |]) -< (r,i)
+             $(exprAinternal[| let [r,i]=vars in sqrt (r*r + i*i) |]) -< (r,i)
 
 instance (RealExprA to r) => CanRecipA to (Complex r) where
     recipA = proc x -> divA -< (1,x)
@@ -314,6 +315,8 @@ instance
     CanAddMulDivScalarA to (Complex r1) (Complex r2)
 instance (RealPredA to r) => RingA to (Complex r)
 instance (RealPredA to r) => FieldA to (Complex r)
+instance (RealPredA to r) => RealExprA to (Complex r)
+instance (RealPredA to r) => RealPredA to (Complex r)
 
 {- (Complex r)-Integer operations -}
 
@@ -346,8 +349,8 @@ instance (RealExprA to r) => CanMulA to Integer (Complex r) where
     type MulTypeA to Integer (Complex r) = (Complex r)
     mulA =
         binaryLeftROp 
-            ($(exprA[|let [r,r2,_i2]=vars in r*r2 |]), 
-             $(exprA[|let [r,_r2,i2]=vars in r*i2 |])) 
+            ($(exprAinternal[|let [r,r2,_i2]=vars in r*r2 |]), 
+             $(exprAinternal[|let [r,_r2,i2]=vars in r*i2 |])) 
 
 instance (RealExprA to r) => CanMulA to (Complex r) Integer where
     type MulTypeA to (Complex r) Integer = (Complex r)
@@ -359,8 +362,8 @@ instance (RealExprA to r) => CanDivA to Integer (Complex r) where
     type DivTypeA to Integer (Complex r) = (Complex r)
     divA =
         binaryLeftROp 
-            ($(exprA[|let [r,r2,i2]=vars in (r*r2)/(r2*r2 + i2*i2) |]), 
-             $(exprA[|let [r,r2,i2]=vars in (neg r*i2)/(r2*r2 + i2*i2) |])) 
+            ($(exprAinternal[|let [r,r2,i2]=vars in (r*r2)/(r2*r2 + i2*i2) |]), 
+             $(exprAinternal[|let [r,r2,i2]=vars in (neg r*i2)/(r2*r2 + i2*i2) |])) 
 
 instance (RealExprA to r) => CanDivA to (Complex r) Integer where
     type DivTypeA to (Complex r) Integer = (Complex r)
@@ -401,8 +404,8 @@ instance (RealExprA to r) => CanMulA to Rational (Complex r) where
     type MulTypeA to Rational (Complex r) = (Complex r)
     mulA =
         binaryLeftROp 
-            ($(exprA[|let [r,r2,_i2]=vars in r*r2 |]), 
-             $(exprA[|let [r,_r2,i2]=vars in r*i2 |])) 
+            ($(exprAinternal[|let [r,r2,_i2]=vars in r*r2 |]), 
+             $(exprAinternal[|let [r,_r2,i2]=vars in r*i2 |])) 
 
 instance (RealExprA to r) => CanMulA to (Complex r) Rational where
     type MulTypeA to (Complex r) Rational = (Complex r)
@@ -414,8 +417,8 @@ instance (RealExprA to r) => CanDivA to Rational (Complex r) where
     type DivTypeA to Rational (Complex r) = (Complex r)
     divA =
         binaryLeftROp 
-            ($(exprA[|let [r,r2,i2]=vars in (r*r2)/(r2*r2 + i2*i2) |]), 
-             $(exprA[|let [r,r2,i2]=vars in (neg r*i2)/(r2*r2 + i2*i2) |])) 
+            ($(exprAinternal[|let [r,r2,i2]=vars in (r*r2)/(r2*r2 + i2*i2) |]), 
+             $(exprAinternal[|let [r,r2,i2]=vars in (neg r*i2)/(r2*r2 + i2*i2) |])) 
 
 instance (RealExprA to r) => CanDivA to (Complex r) Rational where
     type DivTypeA to (Complex r) Rational = (Complex r)
@@ -456,8 +459,8 @@ instance (RealExprA to r) => CanMulA to CauchyReal (Complex r) where
     type MulTypeA to CauchyReal (Complex r) = (Complex r)
     mulA =
         binaryLeftROp 
-            ($(exprA[|let [r,r2,_i2]=vars in r*r2 |]), 
-             $(exprA[|let [r,_r2,i2]=vars in r*i2 |])) 
+            ($(exprAinternal[|let [r,r2,_i2]=vars in r*r2 |]), 
+             $(exprAinternal[|let [r,_r2,i2]=vars in r*i2 |])) 
  
 instance (RealExprA to r) => CanMulA to (Complex r) CauchyReal where
     type MulTypeA to (Complex r) CauchyReal = (Complex r)
@@ -469,8 +472,8 @@ instance (RealExprA to r) => CanDivA to CauchyReal (Complex r) where
     type DivTypeA to CauchyReal (Complex r) = (Complex r)
     divA =
         binaryLeftROp 
-            ($(exprA[|let [r,r2,i2]=vars in (r*r2)/(r2*r2 + i2*i2) |]), 
-             $(exprA[|let [r,r2,i2]=vars in (neg r*i2)/(r2*r2 + i2*i2) |])) 
+            ($(exprAinternal[|let [r,r2,i2]=vars in (r*r2)/(r2*r2 + i2*i2) |]), 
+             $(exprAinternal[|let [r,r2,i2]=vars in (neg r*i2)/(r2*r2 + i2*i2) |])) 
 
 instance (RealExprA to r) => CanDivA to (Complex r) CauchyReal where
     type DivTypeA to (Complex r) CauchyReal = (Complex r)
@@ -489,8 +492,8 @@ instance (RealExprA to r) => CanSqrtSameTypeA to (Complex r)
 
 instance (RealExprA to r) => CanExpA to (Complex r) where
     expA =
-        unaryOp ($(exprA[|let [r1,i1]=vars in (exp r1) * (cos i1)|]),
-                 $(exprA[|let [r1,i1]=vars in (exp r1) * (sin i1)|]))
+        unaryOp ($(exprAinternal[|let [r1,i1]=vars in (exp r1) * (cos i1)|]),
+                 $(exprAinternal[|let [r1,i1]=vars in (exp r1) * (sin i1)|]))
 --     (r :+ i) =
 --        (exp r :+ convert 0) * (cos i :+ sin i)
 
