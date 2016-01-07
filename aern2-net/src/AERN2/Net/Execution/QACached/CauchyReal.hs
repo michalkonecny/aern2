@@ -28,7 +28,7 @@ instance QAProtocol QAP_CauchyReal where
         | Map.null cacheMap || qMax < q =
             do
             a <- q2a q
-            return (a, Map.insert q a cacheMap)
+            return (a, Map.insert (getAccuracy a) a cacheMap)
         | otherwise = return (aMax, cacheMap)
         where
         (qMax, aMax) = Map.findMax cacheMap
