@@ -15,7 +15,7 @@ import AERN2.Net.Execution.QACached.Basics
 
 import qualified Data.Map as Map
 
-data QAP_CauchyReal = QAP_CauchyReal
+data QAP_CauchyReal = QAP_CauchyReal deriving Show
 
 instance QAProtocol QAP_CauchyReal where
     type Q QAP_CauchyReal = Accuracy
@@ -26,10 +26,16 @@ instance QAProtocol QAP_CauchyReal where
         | Map.null cacheMap || qMax < q =
             do
             a <- q2a q
-            return (a, Map.insert (getAccuracy a) a cacheMap)
-        | otherwise = return (aMax, cacheMap)
+            return (a, Map.insert (getAccuracy a) a cacheMap, message)
+        | otherwise = return (aMax, cacheMap, "used cache")
         where
         (qMax, aMax) = Map.findMax cacheMap
+        message 
+            | Map.null cacheMap =
+                "cache was empty"
+            | otherwise = 
+                "not used cache; q = " ++ show q ++ "; qMax = " ++ show qMax
+            
 
 
 type QACached_CauchyReal = AsCauchyReal QACached_CauchyReal_

@@ -1,4 +1,4 @@
-{-# LANGUAGE ExistentialQuantification, GeneralizedNewtypeDeriving, TypeOperators #-}
+{-# LANGUAGE ExistentialQuantification, GeneralizedNewtypeDeriving, TypeOperators, FlexibleContexts #-}
 {-| Types for cached execution of general QA-networks. -}
 module AERN2.Net.Execution.QACached.Basics where
 
@@ -24,8 +24,24 @@ executeQACachedA code =
 printQANetLogThenResult :: (Show a) =>(QANetLog, a) -> IO ()
 printQANetLogThenResult (lg, result) =
     do
-    mapM_ putStrLn (map show lg)
+    printLog lg
     putStrLn $ show result
+
+printLog :: QANetLog -> IO ()
+printLog = aux 0
+    where
+    aux _ [] = return ()
+    aux level (item : rest) =
+        do
+        putStrLn $ indent ++ show item
+        aux level' rest
+        where
+        indent = replicate (int levelNow) ' '
+        (levelNow, level') =
+            case item of
+                QANetLog_Query _ _ -> (level + 1, level + 1)
+                QANetLogAnswer _ _ _ -> (level, level - 1)
+                _ -> (level, level) 
 
 data QANetInfo =
     QANetInfo
@@ -41,11 +57,12 @@ data QANetLogItem
         ValueId -- new value
         [ValueId] -- dependent values
         String -- name
-    | QANetLogQuery 
+    | QANetLog_Query 
         ValueId -- the value being queried 
         String -- description of query
     | QANetLogAnswer 
         ValueId -- the value being described
+        String -- information about the use of cache 
         String -- description of answer
     deriving Show
 
@@ -61,12 +78,12 @@ data AnyQAComputation =
     forall p . (QAProtocol p) => -- existentially quantified type
         AnyQAComputation (QAComputation p)
 
-class QAProtocol p where
+class (Show (Q p), Show (A p), Show p) => QAProtocol p where
     type Q p
     type A p
     type QACache p
     newCache :: p -> QACache p
-    getAnswerUsingCacheIfPossible :: p -> QAComputation p -> Q p -> QACachedM (A p, QACache p)
+    getAnswerUsingCacheIfPossible :: p -> QAComputation p -> Q p -> QACachedM (A p, QACache p, String)
 
 data QAComputation p = 
     QAComputation  
@@ -105,17 +122,23 @@ getAnswer :: (QAProtocol p) => p -> (ValueId, Q p) -> QACachedM (A p)
 getAnswer p (valueId, q) =
     do
     ni <- get
-    aux ni
+    let ni' = logQuery ni
+    put ni'
+    aux ni'
     where
+    logQuery ni =
+        ni { net_log = (net_log ni) ++ [logItem] }
+        where
+        logItem = QANetLog_Query valueId (show q)
     aux ni =
         do
-        (a, cache') <- getAnswerUsingCacheIfPossible p qaComputation q
+        (a, cache', usedCache) <- getAnswerUsingCacheIfPossible p qaComputation q
         ni2 <- get
         put $ ni2 
-            { net_id2value = 
-                Map.insert valueId 
-                    (AnyQAComputation (QAComputation p cache' q2a)) 
-                    id2value }
+            { 
+                net_id2value = id2value' ni2 cache',
+                net_log = lg2 ni2 a usedCache
+            }
         return a
         where
         id2value = net_id2value ni
@@ -123,4 +146,11 @@ getAnswer p (valueId, q) =
             Just (AnyQAComputation comp) -> unsafeCoerce comp
             Nothing -> error $ "unknown valueId " ++ show valueId
         QAComputation _ _ q2a = qaComputation
-
+        id2value' ni2 cache' =
+            Map.insert valueId 
+                (AnyQAComputation (QAComputation p cache' q2a)) 
+                (net_id2value ni2)
+        lg2 ni2 a usedCache = (net_log ni2) ++ [logItem a usedCache]
+        logItem a usedCache = 
+            QANetLogAnswer valueId usedCache (show a)
+            
