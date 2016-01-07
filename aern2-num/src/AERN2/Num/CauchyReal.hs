@@ -9,6 +9,8 @@ module AERN2.Num.CauchyReal
 (
     AsCauchyReal(..), CauchyReal_, CauchyReal,  
     CanReadAsCauchyRealA(..), CanCreateAsCauchyRealA(..), CanAsCauchyRealA,
+    SupportsSenderIdA(..), HasSenderIdA(..),
+    CanCombineCRsA(..), CanCombineCRwithA,
     showCauchyReal,
     mapCauchyRealUnsafe,
     cauchyReal2ball,
@@ -33,7 +35,6 @@ import AERN2.Num.Accuracy
 
 import AERN2.Num.MPBall
 import AERN2.Num.IntegerRational ()
-import AERN2.Num.CauchyReal.InnerType
 
 import Debug.Trace (trace)
 
@@ -48,6 +49,9 @@ maybeTrace
 
 
 type CauchyReal = AsCauchyReal CauchyReal_
+
+data CauchyReal_ = 
+    CauchyReal_ { cr_name :: Maybe String, cr_seq :: Accuracy -> MPBall } 
 
 newtype AsCauchyReal r = AsCauchyReal { unAsCauchyReal :: r }
 
@@ -107,22 +111,67 @@ pi = seqByPrecision2Cauchy (Just "pi") (\ p -> piBallP p)
 
 class (CanReadAsCauchyRealA to r, CanCreateAsCauchyRealA to r) => CanAsCauchyRealA to r
 
+-- TODO: Make the following classes specialisations of general QA classes, evolution of QAProtocol
 {-| Invariant: For any instance it should hold: @width(getAnswerCRA i) <= 2^^(-i)@ -}
-class (ArrowChoice to) => CanReadAsCauchyRealA to r where
+class (ArrowChoice to, HasSenderIdA to r) => CanReadAsCauchyRealA to r where
     getAnswerCRA :: (AsCauchyReal r,Accuracy) `to` MPBall
     getNameCRA :: AsCauchyReal r `to` Maybe String
 
-class (ArrowChoice to) => CanCreateAsCauchyRealA to r where
-    newCRA :: (Maybe String, Accuracy `to` MPBall) `to` AsCauchyReal r
+class (ArrowChoice to, SupportsSenderIdA to r) => CanCreateAsCauchyRealA to r where
+    newCRA :: ([SenderId to r], Maybe String, Accuracy `to` MPBall) `to` AsCauchyReal r
 
+-- TODO: this should move to a general QA module
+class (ArrowLoop to) => SupportsSenderIdA to r where
+    type SenderId to r
+
+class (SupportsSenderIdA to r) => HasSenderIdA to r where
+    getSenderIdA :: r `to` (SenderId to r)
+
+
+    
 instance CanAsCauchyRealA (->) CauchyReal_
 
-instance (ArrowChoice to) => CanReadAsCauchyRealA to CauchyReal_ where
+instance (ArrowChoice to, ArrowLoop to) => CanReadAsCauchyRealA to CauchyReal_ where
     getAnswerCRA = arr $ \ (AsCauchyReal r,ac) -> cr_seq r ac
     getNameCRA = arr $ cr_name . unAsCauchyReal 
 
 instance CanCreateAsCauchyRealA (->) CauchyReal_ where
-    newCRA (name, ac2b) = AsCauchyReal $ CauchyReal_ name ac2b
+    newCRA (_, name, ac2b) = AsCauchyReal $ CauchyReal_ name ac2b
+
+instance (ArrowLoop to) => SupportsSenderIdA to CauchyReal_ where
+    type SenderId to CauchyReal_ = ()
+instance (ArrowLoop to) => HasSenderIdA to CauchyReal_ where
+    getSenderIdA = arr $ const ()
+
+instance SupportsSenderIdA to r => SupportsSenderIdA to (AsCauchyReal r) where
+    type SenderId to (AsCauchyReal r) = SenderId to r
+instance HasSenderIdA to r => HasSenderIdA to (AsCauchyReal r) where
+    getSenderIdA = proc (AsCauchyReal r) -> getSenderIdA -< r
+
+
+class 
+    (CanReadAsCauchyRealA to r1, CanReadAsCauchyRealA to r2, 
+    CanCreateAsCauchyRealA to (CombinedCRs to r1 r2)) 
+    => 
+    CanCombineCRsA to r1 r2 
+    where
+    type CombinedCRs to r1 r2
+    getSourcesOfCombinedCRs :: 
+        (AsCauchyReal r1, AsCauchyReal r2) `to` [SenderId to (CombinedCRs to r1 r2)]  
+    
+
+class
+    (CanCombineCRsA to r1 r2, CombinedCRs to r1 r2 ~ r1,
+     CanCombineCRsA to r2 r1, CombinedCRs to r2 r1 ~ r1,
+     CanAsCauchyRealA to r1)
+    =>
+    CanCombineCRwithA to r1 r2 
+
+instance CanCombineCRsA (->) CauchyReal_ CauchyReal_ where
+    type CombinedCRs (->) CauchyReal_ CauchyReal_ = CauchyReal_
+    getSourcesOfCombinedCRs = const []
+
+instance CanCombineCRwithA (->) CauchyReal_ CauchyReal_
 
 {- conversions -}
 
@@ -149,38 +198,39 @@ cauchyReals :: (CanBeCauchyReal a) => [a] -> [CauchyReal]
 cauchyReals = convertList
 
 -- | HasIntegers CauchyReal, CanBeCauchyReal Integer
-instance (CanAsCauchyRealA to r) => ConvertibleA to Integer (AsCauchyReal r) where
+instance (CanAsCauchyRealA to r, SupportsSenderIdA to r) => ConvertibleA to Integer (AsCauchyReal r) where
     convertA = proc n ->
-        do
-        newCRA -< (Just $ show n, arr $ seqByPrecision2CauchySeq $ \ p -> integer2BallP p n)
+        newCRA -< ([], Just $ show n, arr $ seqByPrecision2CauchySeq $ \ p -> integer2BallP p n)
     convertNamedA name = proc n ->
-        do
-        newCRA -< (Just name, arr $ seqByPrecision2CauchySeq $ \ p -> integer2BallP p n) 
+        newCRA -< ([], Just name, arr $ seqByPrecision2CauchySeq $ \ p -> integer2BallP p n)
 
 integer2CauchyReal :: Integer -> CauchyReal
 integer2CauchyReal = convert
 
 
 -- | HasRationals CauchyReal, CanBeCauchyReal Rational
-instance (CanAsCauchyRealA to r) => ConvertibleA to Rational (AsCauchyReal r) where
+instance (CanAsCauchyRealA to r, SupportsSenderIdA to r) => ConvertibleA to Rational (AsCauchyReal r) where
     convertA = proc n ->
-        do
-        newCRA -< (Just $ show n, arr $ seqByPrecision2CauchySeq $ \ p -> rational2BallP p n)
+        newCRA -< ([], Just $ show n, arr $ seqByPrecision2CauchySeq $ \ p -> rational2BallP p n)
     convertNamedA name = proc n ->
-        do
-        newCRA -< (Just name, arr $ seqByPrecision2CauchySeq $ \ p -> rational2BallP p n) 
+        newCRA -< ([], Just name, arr $ seqByPrecision2CauchySeq $ \ p -> rational2BallP p n) 
 
 rational2CauchyReal :: Rational -> CauchyReal
 rational2CauchyReal = convert
 
-instance (CanReadAsCauchyRealA to r1, CanCreateAsCauchyRealA to r2) => ConvertibleA to (AsCauchyReal r1) (AsCauchyReal r2) where
+instance 
+    (CanReadAsCauchyRealA to r1,
+     CanCreateAsCauchyRealA to r2) 
+    => 
+    ConvertibleA to (AsCauchyReal r1) (AsCauchyReal r2) 
+    where
     convertA = proc r1 ->
         do
         name <- getNameCRA -< r1
-        newCRA -< (name, proc ac -> getAnswerCRA -< (r1,ac))
+        newCRA -< ([], name, proc ac -> getAnswerCRA -< (r1,ac))
     convertNamedA name = proc r1 ->
         do
-        newCRA -< (Just name, proc ac -> getAnswerCRA -< (r1,ac))
+        newCRA -< ([], Just name, proc ac -> getAnswerCRA -< (r1,ac))
 
 {- Comparisons of CauchyReals -}
 
@@ -212,7 +262,7 @@ tryStandardCompareAccuracies =
     aux [] =
         error "CauchyReal comparison undecided even using maximum standard accuracy"
 
-instance (CanAsCauchyRealA to r1, CanAsCauchyRealA to r2) => 
+instance (CanAsCauchyRealA to r1, CanAsCauchyRealA to r2, SenderId to r2 ~ SenderId to r1) => 
     HasEqA to (AsCauchyReal r1) (AsCauchyReal r2) 
     where
     equalToA = 
@@ -220,7 +270,7 @@ instance (CanAsCauchyRealA to r1, CanAsCauchyRealA to r2) =>
         proc (r1,r2) ->
             tryStandardCompareAccuracies -< (\[b1,b2] -> b1 == b2, [r1,r2])
 
-instance (CanAsCauchyRealA to r1, CanAsCauchyRealA to r2) => 
+instance (CanAsCauchyRealA to r1, CanAsCauchyRealA to r2, SenderId to r2 ~ SenderId to r1) => 
     HasOrderA to (AsCauchyReal r1) (AsCauchyReal r2) 
     where
     lessThanA =
@@ -287,24 +337,23 @@ instance Num CauchyReal where
     signum = error "RealExpr Prelude.signum not implemented"
 
 instance 
-    (CanAsCauchyRealA to r, CanAddSameTypeA to r, CanSubSameTypeA to r, 
-     CanMulSameTypeA to r) => 
+    (CanCombineCRwithA to r r) => 
     RingA to (AsCauchyReal r)
 
 instance 
-    (CanAsCauchyRealA to r, CanAddSameTypeA to r, CanSubSameTypeA to r, 
-     CanMulSameTypeA to r, CanDivSameTypeA to r) => 
+    (CanCombineCRwithA to r r) => 
     FieldA to (AsCauchyReal r)
 
 instance 
-    (CanAsCauchyRealA to r1, CanReadAsCauchyRealA to r2, CanAddMulScalarA to r1 r2) => 
+    (CanCombineCRwithA to r1 r2) => 
     CanAddMulScalarA to (AsCauchyReal r1) (AsCauchyReal r2)
 instance 
-    (CanAsCauchyRealA to r1, CanReadAsCauchyRealA to r2, CanAddMulDivScalarA to r1 r2) => 
+    (CanCombineCRwithA to r1 r2) 
+    => 
     CanAddMulDivScalarA to (AsCauchyReal r1) (AsCauchyReal r2)
 
 unaryOp ::
-    (CanAsCauchyRealA to r1, CanAsCauchyRealA to r) 
+    (CanAsCauchyRealA to r1, CanAsCauchyRealA to r, SenderId to r1 ~ SenderId to r) 
     =>
     String ->
     (MPBall -> MPBall) -> 
@@ -313,7 +362,8 @@ unaryOp ::
 unaryOp name op getInitQ1 =
     proc r1 ->
         do
-        newCRA -< (Just name, ac2b r1)
+        r1Id <- getSenderIdA -< r1
+        newCRA -< ([r1Id], Just name, ac2b r1)
     where
     ac2b r1 = proc ac ->
         do
@@ -324,7 +374,8 @@ unaryOp name op getInitQ1 =
             proc q1 -> getAnswerCRA -< (r1,q1)
 
 unaryOpWithPureArg ::
-    (CanReadAsCauchyRealA to r1, CanCreateAsCauchyRealA to r) 
+    (CanReadAsCauchyRealA to r1, CanCreateAsCauchyRealA to r, 
+     SenderId to r1 ~ SenderId to r) 
     =>
     String ->
     (MPBall -> t -> MPBall) -> 
@@ -333,7 +384,8 @@ unaryOpWithPureArg ::
 unaryOpWithPureArg name op getInitQ1T =
     proc (r1, t) ->
         do
-        newCRA -< (Just name, ac2b r1 t)
+        r1Id <- getSenderIdA -< r1
+        newCRA -< ([r1Id], Just name, ac2b r1 t)
     where
     ac2b r1 t = proc ac ->
         do
@@ -344,16 +396,18 @@ unaryOpWithPureArg name op getInitQ1T =
             proc q1 -> getAnswerCRA -< (r1,q1)
 
 binaryOp ::
-    (CanReadAsCauchyRealA to r1, CanReadAsCauchyRealA to r2, CanCreateAsCauchyRealA to r) 
+    (CanReadAsCauchyRealA to r1, CanReadAsCauchyRealA to r2, 
+     CanCombineCRsA to r1 r2) 
     =>
     String ->
     (MPBall -> MPBall -> MPBall) -> 
     ((Accuracy, AsCauchyReal r1, AsCauchyReal r2) `to` ((Accuracy, Maybe MPBall), (Accuracy, Maybe MPBall))) -> 
-    (AsCauchyReal r1, AsCauchyReal r2) `to` (AsCauchyReal r)
+    (AsCauchyReal r1, AsCauchyReal r2) `to` (AsCauchyReal (CombinedCRs to r1 r2))
 binaryOp name op getInitQ1Q2 =
     proc (r1, r2) ->
         do
-        newCRA -< (Just name, ac2b r1 r2)
+        sources <- getSourcesOfCombinedCRs -< (r1, r2)
+        newCRA -< (sources, Just name, ac2b r1 r2)
     where
     ac2b r1 r2 = proc ac ->
         do
@@ -532,42 +586,45 @@ instance (CanAsCauchyRealA to r) => CanRecipSameTypeA to (AsCauchyReal r)
 
 instance 
     (CanReadAsCauchyRealA to r1, CanReadAsCauchyRealA to r2,
-     CanCreateAsCauchyRealA to (AddTypeA to r1 r2), 
-     CanAddA to r1 r2) 
+     CanCombineCRsA to r1 r2) 
     => 
     CanAddA to (AsCauchyReal r1) (AsCauchyReal r2)
     where
-    type AddTypeA to (AsCauchyReal r1) (AsCauchyReal r2) = AsCauchyReal (AddTypeA to r1 r2)
+    type AddTypeA to (AsCauchyReal r1) (AsCauchyReal r2) = AsCauchyReal (CombinedCRs to r1 r2)
     addA = binaryOp "+" add (getInitQ1Q2FromSimple $ proc q -> returnA -< (q,q))
 
-instance (CanAsCauchyRealA to r1, CanReadAsCauchyRealA to r2, CanAddThisA to r1 r2) => 
+instance 
+    (CanAsCauchyRealA to r1, CanReadAsCauchyRealA to r2, CanCombineCRwithA to r1 r2) => 
     CanAddThisA to (AsCauchyReal r1) (AsCauchyReal r2)
-instance (CanAsCauchyRealA to r, CanAddSameTypeA to r) => 
+instance 
+    (CanAsCauchyRealA to r, CanCombineCRwithA to r r) => 
     CanAddSameTypeA to (AsCauchyReal r)
 
 instance
     (CanReadAsCauchyRealA to r1, CanReadAsCauchyRealA to r2,
-     CanCreateAsCauchyRealA to (SubTypeA to r1 r2), 
-     CanSubA to r1 r2) 
+     CanCombineCRsA to r1 r2) 
     => 
     CanSubA to (AsCauchyReal r1) (AsCauchyReal r2) 
     where
-    type SubTypeA to (AsCauchyReal r1) (AsCauchyReal r2) = AsCauchyReal (SubTypeA to r1 r2)
+    type SubTypeA to (AsCauchyReal r1) (AsCauchyReal r2) = AsCauchyReal (CombinedCRs to r1 r2)
     subA = binaryOp "-" sub (getInitQ1Q2FromSimple $ proc q -> returnA -< (q,q))
 
-instance (CanAsCauchyRealA to r1, CanReadAsCauchyRealA to r2, CanSubThisA to r1 r2) => 
+instance 
+    (CanAsCauchyRealA to r1, CanReadAsCauchyRealA to r2, 
+     CanCombineCRwithA to r1 r2) 
+    => 
     CanSubThisA to (AsCauchyReal r1) (AsCauchyReal r2)
-instance (CanAsCauchyRealA to r, CanSubSameTypeA to r) => 
+instance (CanAsCauchyRealA to r, CanCombineCRwithA to r r) => 
     CanSubSameTypeA to (AsCauchyReal r)
 
 
 instance
     (CanReadAsCauchyRealA to r1, CanReadAsCauchyRealA to r2, 
-     CanMulA to r1 r2, CanCreateAsCauchyRealA to (MulTypeA to r1 r2)) 
+     CanCombineCRsA to r1 r2) 
     => 
     CanMulA to (AsCauchyReal r1) (AsCauchyReal r2) 
     where
-    type MulTypeA to (AsCauchyReal r1) (AsCauchyReal r2) = AsCauchyReal (MulTypeA to r1 r2)
+    type MulTypeA to (AsCauchyReal r1) (AsCauchyReal r2) = AsCauchyReal (CombinedCRs to r1 r2)
     mulA = binaryOp "*" mul getInitQ1Q2 
         where
         getInitQ1Q2 =
@@ -584,19 +641,21 @@ instance
                 returnA -< ((jInit1, Just b1), (jInit2, Just b2))
 
 instance 
-    (CanAsCauchyRealA to r1, CanReadAsCauchyRealA to r2, CanMulByA to r1 r2) => 
+    (CanAsCauchyRealA to r1, CanReadAsCauchyRealA to r2, 
+     CanCombineCRwithA to r1 r2) 
+    => 
     CanMulByA to (AsCauchyReal r1) (AsCauchyReal r2) 
 instance 
-    (CanAsCauchyRealA to r, CanMulSameTypeA to r) => 
+    (CanAsCauchyRealA to r, CanCombineCRwithA to r r) => 
     CanMulSameTypeA to (AsCauchyReal r) 
 
 instance
-    (CanReadAsCauchyRealA to r1, CanReadAsCauchyRealA to r2, 
-     CanDivA to r1 r2, CanCreateAsCauchyRealA to (DivTypeA to r1 r2)) 
+    (CanReadAsCauchyRealA to r1, CanReadAsCauchyRealA to r2,
+     CanCombineCRsA to r1 r2) 
     => 
     CanDivA to (AsCauchyReal r1) (AsCauchyReal r2) 
     where
-    type DivTypeA to (AsCauchyReal r1) (AsCauchyReal r2) = AsCauchyReal (DivTypeA to r1 r2)
+    type DivTypeA to (AsCauchyReal r1) (AsCauchyReal r2) = AsCauchyReal (CombinedCRs to r1 r2)
     divA = binaryOp "/" div getInitQ1Q2 
         where
         getInitQ1Q2 =
@@ -615,10 +674,12 @@ instance
 
 
 instance 
-    (CanAsCauchyRealA to r1, CanReadAsCauchyRealA to r2, CanDivByA to r1 r2) => 
+    (CanAsCauchyRealA to r1, CanReadAsCauchyRealA to r2, 
+     CanCombineCRwithA to r1 r2) 
+    => 
     CanDivByA to (AsCauchyReal r1) (AsCauchyReal r2) 
 instance 
-    (CanAsCauchyRealA to r, CanDivSameTypeA to r) => 
+    (CanAsCauchyRealA to r, CanCombineCRwithA to r r) => 
     CanDivSameTypeA to (AsCauchyReal r) 
 
 instance (CanAsCauchyRealA to r) => CanSqrtA to (AsCauchyReal r) where

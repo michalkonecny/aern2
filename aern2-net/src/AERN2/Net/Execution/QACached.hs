@@ -18,7 +18,7 @@ import AERN2.Net.Spec.Arrow
 import Control.Arrow
 import qualified Data.Map as Map
 
-_anet0cachedCauchy :: Integer -> MPBall
+_anet0cachedCauchy :: Integer -> (QANetLog, MPBall)
 _anet0cachedCauchy p =
     executeQACachedA $
         proc () ->
@@ -26,7 +26,7 @@ _anet0cachedCauchy p =
             r <- _anet0  -< ()
             getAnswerCRA -< (r :: QACached_CauchyReal, bits p)
 
-_anet3cachedCauchy :: (Rational, Rational, Rational) -> Integer -> MPBall
+_anet3cachedCauchy :: (Rational, Rational, Rational) -> Integer -> (QANetLog, MPBall)
 _anet3cachedCauchy (x,y,z) p =
     executeQACachedA $
         proc () ->
@@ -38,6 +38,6 @@ _anet3cachedCauchy (x,y,z) p =
         where
         mkInput = proc (name, value) ->
             do
-            r <- newCRA -< (Just name, proc ac -> returnA -< (cauchyReal2ball (cauchyReal value) ac))
+            r <- newCRA -< ([], Just name, proc ac -> returnA -< (cauchyReal2ball (cauchyReal value) ac))
             returnA -< (name, r :: QACached_CauchyReal)
 

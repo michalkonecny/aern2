@@ -25,10 +25,13 @@ library
         stm,
         mtl
   extensions:      
+                   Arrows, 
                    MultiParamTypeClasses, 
                    OverloadedStrings, 
                    RebindableSyntax, 
-                   TypeFamilies
+                   TemplateHaskell, 
+                   TypeFamilies, 
+                   TypeOperators
   exposed-modules: AERN2.Net
   other-modules:   
                    AERN2.Net.Examples.FFT,
@@ -38,7 +41,6 @@ library
                    AERN2.Net.Execution.QACached,
                    AERN2.Net.Execution.QACached.Basics,
                    AERN2.Net.Execution.QACached.CauchyReal,
-                   AERN2.Net.Execution.QACached.CauchyReal.InnerType,
                    AERN2.Net.Execution.QACached.Complex,
                    AERN2.Net.Spec,
                    AERN2.Net.Spec.Arrow

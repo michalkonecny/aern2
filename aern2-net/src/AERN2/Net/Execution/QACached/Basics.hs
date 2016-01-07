@@ -14,16 +14,40 @@ import Unsafe.Coerce
 type QACachedA = Kleisli QACachedM
 type QACachedM = State QANetInfo
 
-executeQACachedA :: (() `QACachedA` a) -> a
+executeQACachedA :: (() `QACachedA` a) -> (QANetLog, a)
 executeQACachedA code =
-    fst $ (runState $ runKleisli code ()) initQANetInfo
+    (lg, result)
+    where
+    (result, ni) = (runState $ runKleisli code ()) initQANetInfo
+    lg = net_log ni
+
+printQANetLogThenResult :: (Show a) =>(QANetLog, a) -> IO ()
+printQANetLogThenResult (lg, result) =
+    do
+    mapM_ putStrLn (map show lg)
+    putStrLn $ show result
 
 data QANetInfo =
     QANetInfo
     {
         net_id2value :: Map.Map ValueId AnyQAComputation,
-        net_log :: [String]
+        net_log :: QANetLog
     }
+
+type QANetLog = [QANetLogItem]
+
+data QANetLogItem
+    = QANetLogCreate 
+        ValueId -- new value
+        [ValueId] -- dependent values
+        String -- name
+    | QANetLogQuery 
+        ValueId -- the value being queried 
+        String -- description of query
+    | QANetLogAnswer 
+        ValueId -- the value being described
+        String -- description of answer
+    deriving Show
 
 initQANetInfo :: QANetInfo
 initQANetInfo =
@@ -53,8 +77,8 @@ data QAComputation p =
 newtype ValueId = ValueId Integer
     deriving (Show, Eq, Ord, Enum)
 
-newId :: (QAProtocol p) => p -> (Maybe String, Q p -> (QACachedM (A p))) -> QACachedM ValueId
-newId p (_name, q2a) =
+newId :: (QAProtocol p) => p -> ([ValueId], Maybe String, Q p -> (QACachedM (A p))) -> QACachedM ValueId
+newId p (sources, name, q2a) =
     do
     ni <- get
     let (i, ni') = aux ni
@@ -62,12 +86,20 @@ newId p (_name, q2a) =
     return i
     where
     aux ni =
-        (i, ni { net_id2value = id2value' } )
+        (i, ni { net_id2value = id2value', net_log = net_log' } )
         where
         id2value = net_id2value ni
+        lg = net_log ni
         i | Map.null id2value = (ValueId 1)
           | otherwise = succ $ fst (Map.findMax id2value)
         id2value' = Map.insert i (AnyQAComputation (QAComputation p (newCache p) q2a)) id2value
+        net_log' = lg ++ [logItem]
+        logItem =
+            QANetLogCreate i sources nameS
+        nameS =
+            case name of
+                Just n -> n
+                _ -> "(anonymous)"
 
 getAnswer :: (QAProtocol p) => p -> (ValueId, Q p) -> QACachedM (A p)
 getAnswer p (valueId, q) =

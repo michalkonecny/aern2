@@ -42,14 +42,10 @@ class
     RealPredA to r
 
 instance 
-    (CanAsCauchyRealA to r, CanAddSameTypeA to r, CanSubSameTypeA to r, 
-     CanMulSameTypeA to r, CanDivSameTypeA to r, CanAddMulDivScalarA to r CauchyReal_) 
-    => 
+    (CanCombineCRwithA to r r, CanCombineCRwithA to r CauchyReal_) => 
     RealExprA to (AsCauchyReal r)
-instance 
-    (CanAsCauchyRealA to r, CanAddSameTypeA to r, CanSubSameTypeA to r, 
-     CanMulSameTypeA to r, CanDivSameTypeA to r, CanAddMulDivScalarA to r CauchyReal_) 
-    => 
+instance
+    (CanCombineCRwithA to r r, CanCombineCRwithA to r CauchyReal_) => 
     RealPredA to (AsCauchyReal r)
 
 instance RealExprA (->) MPBall

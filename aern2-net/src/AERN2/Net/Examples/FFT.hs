@@ -51,7 +51,7 @@ fftTestDirectMPB nN p =
             dftCooleyTukey nN -< x
     input = map (integer2BallP p) [1..nN] 
 
-fftTestCached :: Integer -> Accuracy -> [(Complex MPBall)]
+fftTestCached :: Integer -> Accuracy -> (QANetLog, [(Complex MPBall)])
 fftTestCached nN ac =
     executeQACachedA $ proc () ->
         do
