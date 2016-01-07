@@ -211,7 +211,7 @@ tryStandardCompareAccuracies =
     aux (ac : rest) =
         proc (rel, rs) ->
             do
-            bs <- mapA (const getAnswerCRA) -< map (flip (,) ac) rs
+            bs <- mapA getAnswerCRA -< map (flip (,) ac) rs
             case rel bs of
                 Just tv -> returnA -< tv
                 Nothing -> aux rest -< (rel,rs)

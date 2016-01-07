@@ -47,7 +47,8 @@ module AERN2.Num.Operations
     CanExp, CanExpSameType, exp,
     CanSineCosineA(..), CanSineCosineSameTypeA,
     CanSineCosine, CanSineCosineSameType, sin, cos,
-    mapA, zipWithA, foldlA, sequenceA,
+    mapA, mapAwithPos, zipWithA, zipWithAwithPos, 
+    foldlA, sequenceA,
     convertFirstA, convertSecondA, flipA
 )
 where
@@ -805,8 +806,11 @@ type CanSineCosineSameType = CanSineCosineSameTypeA (->)
     
 {- Utilities for arrow programming -}
 
-mapA :: (ArrowChoice to) => (Integer -> (a `to` b)) -> ([a] `to` [b])
-mapA processOne = aux 0
+mapA :: (ArrowChoice to) => (a `to` b) -> ([a] `to` [b])
+mapA processOne = mapAwithPos (const processOne)
+
+mapAwithPos :: (ArrowChoice to) => (Integer -> (a `to` b)) -> ([a] `to` [b])
+mapAwithPos processOne = aux 0
     where
     aux k =
         proc xs ->
@@ -818,8 +822,11 @@ mapA processOne = aux 0
                     yrest <- aux (k P.+ 1) -< xrest
                     returnA -< y : yrest
 
-zipWithA :: (ArrowChoice to) => (Integer -> ((a,b) `to` c)) -> (([a],[b]) `to` [c])
-zipWithA processOne = aux 0
+zipWithA :: (ArrowChoice to) => ((a,b) `to` c) -> (([a],[b]) `to` [c])
+zipWithA processOne = zipWithAwithPos (const processOne)
+
+zipWithAwithPos :: (ArrowChoice to) => (Integer -> ((a,b) `to` c)) -> (([a],[b]) `to` [c])
+zipWithAwithPos processOne = aux 0
     where
     aux k =
         proc (xs, ys) ->

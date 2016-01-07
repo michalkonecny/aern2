@@ -1,4 +1,4 @@
-{-# LANGUAGE Arrows, GeneralizedNewtypeDeriving, OverloadedStrings, TypeOperators, FlexibleContexts, TypeSynonymInstances, FlexibleInstances, Rank2Types #-}
+{-# LANGUAGE Arrows, GeneralizedNewtypeDeriving, OverloadedStrings, TypeOperators, FlexibleContexts, TypeSynonymInstances, FlexibleInstances, Rank2Types, UndecidableInstances #-}
 module AERN2.Num.SymbolicArrow.Expression 
 (RealExprA, RealPredA, RealExpr, RealPred, realExpr2arrow, realPred2arrow, var)
 where
@@ -26,10 +26,12 @@ data RealExpr = RealExpr (RealExpr' RealExpr)
 data RealPred = RealPred (RealPred' RealPred)
 
 class
-    (FieldA to r, HasCauchyRealsA to r,
+    (FieldA to r,
+     HasCauchyRealsA to r,
      CanSqrtSameTypeA to r, CanExpSameTypeA to r, CanSineCosineSameTypeA to r, 
      CanAddMulDivScalarA to r Integer, 
-     CanAddMulDivScalarA to r Rational)
+     CanAddMulDivScalarA to r Rational,
+     CanAddMulDivScalarA to r CauchyReal)
     => 
     RealExprA to r 
 
@@ -41,12 +43,12 @@ class
 
 instance 
     (CanAsCauchyRealA to r, CanAddSameTypeA to r, CanSubSameTypeA to r, 
-     CanMulSameTypeA to r, CanDivSameTypeA to r) 
+     CanMulSameTypeA to r, CanDivSameTypeA to r, CanAddMulDivScalarA to r CauchyReal_) 
     => 
     RealExprA to (AsCauchyReal r)
 instance 
     (CanAsCauchyRealA to r, CanAddSameTypeA to r, CanSubSameTypeA to r, 
-     CanMulSameTypeA to r, CanDivSameTypeA to r) 
+     CanMulSameTypeA to r, CanDivSameTypeA to r, CanAddMulDivScalarA to r CauchyReal_) 
     => 
     RealPredA to (AsCauchyReal r)
 

@@ -58,7 +58,7 @@ fftTestCached nN ac =
         rs <- (fftWithInput :: QACachedA () [QACached_Complex]) -< ()
         mapA getComplexAnswer -< rs
     where
-    getComplexAnswer _ = proc (r :+ i) ->
+    getComplexAnswer = proc (r :+ i) ->
         do
         let (AsCauchyReal ur) = r :: QACached_CauchyReal
         let (AsCauchyReal ui) = i
@@ -119,19 +119,18 @@ ditfft2 nN s
             do
             vTX0 <- ditfft2 nNhalf (2 * s) -< x 
             vTXNhalf <- ditfft2 nNhalf (2 * s) -< drop (int s) x
-            vTXNhalfTwiddled <- mapA twiddle -< vTXNhalf
-            vX0 <- zipWithA (const addA) -< (vTX0, vTXNhalfTwiddled)
-            vXNhalf <- zipWithA (const subA) -< (vTX0, vTXNhalfTwiddled)
+            vTXNhalfTwiddled <- mapAwithPos twiddle -< vTXNhalf
+            vX0 <- zipWithA addA -< (vTX0, vTXNhalfTwiddled)
+            vXNhalf <- zipWithA subA -< (vTX0, vTXNhalfTwiddled)
             returnA -< vX0 ++ vXNhalf
     where
     nNhalf = round (nN / 2)
     twiddle k = 
         proc x_k_plus_NHalf ->
             do
-            i <- complex_iA -< ()
-            c <- $(exprA[|let [i] = vars in exp(-2*pi*i*k/nN)|]) -< i  
-            r <- mulA -< (x_k_plus_NHalf, c)
-            let _ = [i,c,r,x_k_plus_NHalf]
-            returnA -< r
-    
-                
+--            c <- $(exprA[|let [i] = vars in exp(-2*pi*i*k/nN)|]) <<< complex_iA -< ()
+--            let _ = [c,x_k_plus_NHalf]
+--            mulA -< (x_k_plus_NHalf, c)
+            mulA -< (x_k_plus_NHalf, exp(-2*pi*i*k/nN))
+        where
+        i = complex_i :: Complex CauchyReal                

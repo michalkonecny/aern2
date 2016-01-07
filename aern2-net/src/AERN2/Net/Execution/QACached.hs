@@ -38,7 +38,7 @@ _anet3cachedCauchy (x,y,z) p =
             let (AsCauchyReal ur) = r :: QACached_CauchyReal
             getAnswerCRA -< (ur, bits p)
         where
-        mkInput _ = proc (name, value) ->
+        mkInput = proc (name, value) ->
             do
             ch <- newCRA -< (Just name, proc ac -> returnA -< (cauchyReal2ball (cauchyReal value) ac))
             returnA -< (name, AsCauchyReal ch)
