@@ -7,6 +7,7 @@ module AERN2.Num.MPBall
      HasMPBallsA, HasMPBalls,
      CanBeMPBallA, mpBallA, mpBallNamedA, mpBallsA, mpBallsNamedA, CanBeMPBall, mpBall, mpBalls,
      getPrecision, MP.standardPrecisions, MP.Precision, MP.prec, MP.prec2integer,
+     iterateUntilAccurate,
      isNonZero,
      toIntegerUp, toIntegerDown, toRationalUp, toRationalDown,
      integer2Ball, integer2BallP,  
@@ -150,6 +151,17 @@ getFiniteAccuracy b =
 getPrecision :: MPBall -> Precision
 getPrecision (MPBall x _) =
     MP.getPrecision x
+
+    
+iterateUntilAccurate :: A.Accuracy -> (Precision -> MPBall) -> [(Precision, MPBall)]
+iterateUntilAccurate accuracy fn =
+    stopWhenAccurate $ zip ps (map fn ps)
+    where
+    ps = MP.standardPrecisions
+    stopWhenAccurate [] = []
+    stopWhenAccurate ((p, result) : rest)
+        | getAccuracy result >= accuracy = [(p, result)]
+        | otherwise = (p, result) : (stopWhenAccurate rest)
 
 isNonZero :: MPBall -> Bool
 isNonZero (MPBall x e) =

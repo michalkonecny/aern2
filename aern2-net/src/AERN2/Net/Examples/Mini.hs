@@ -19,8 +19,8 @@ twiddleA(k,n) = $(exprA[| let [i]=vars in exp(-2*k*i*pi/n)|]) <<< complex_iA
 
 {--- the logistic map ---}
 
-logistic :: Rational -> Integer -> CauchyReal -> CauchyReal
-logistic c n =
+logisticNoA :: Rational -> Integer -> CauchyReal -> CauchyReal
+logisticNoA c n =
     foldl1 (.) (replicate (int n) step)
     where
     step x = c * x * (1 - x)
@@ -31,8 +31,8 @@ logisticA c n =
     where
     step = $(exprA[|let [x]=vars in  c * x * (1 - x)|])
     
-logisticCached :: Rational -> Integer -> CauchyReal -> CauchyReal
-logisticCached c n x0 =
+logisticQACached :: Rational -> Integer -> CauchyReal -> CauchyReal
+logisticQACached c n x0 =
     newCRA ([], Nothing, ac2ball)
     where
     ac2ball ac =
@@ -43,26 +43,14 @@ logisticCached c n x0 =
             r <- logisticA c n <<< convertA -< x0
             getAnswerCRA -< (r :: QACached_CauchyReal,ac)
             
-logisticIterate :: Rational -> Integer -> CauchyReal -> CauchyReal
-logisticIterate c n x0 =
+logisticMPBIterate :: Rational -> Integer -> CauchyReal -> CauchyReal
+logisticMPBIterate c n x0 =
     newCRA ([], Nothing, ac2ball)
     where
     ac2ball ac =
-        snd $ last $ iterateUntilAccurate 100 ac auxP  
+        snd $ last $ iterateUntilAccurate ac auxP  
     auxP p = 
         logisticA c n x0p
         where
         x0p = cauchyReal2ball x0 ac
         ac = bits $ prec2integer p
-    
-iterateUntilAccurate :: Integer -> Accuracy -> (Precision -> MPBall) -> [(Precision, MPBall)]
-iterateUntilAccurate iterLimit accuracy fn =
-    stopWhenAccurate $ 
-        take (int iterLimit) $ 
-            zip ps (map fn ps)
-    where
-    ps = standardPrecisions
-    stopWhenAccurate [] = []
-    stopWhenAccurate ((p, result) : rest)
-        | getAccuracy result >= accuracy = [(p, result)]
-        | otherwise = (p, result) : (stopWhenAccurate rest)
