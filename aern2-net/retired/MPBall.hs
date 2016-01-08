@@ -2,7 +2,7 @@
 
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, FlexibleContexts #-}
 {-| Concrete types and instances for QA-networks with balls approximating real numbers -}
-module AERN2.Net.Execution.QACached.MPBall where
+module  where
 
 import AERN2.Num
 
@@ -12,7 +12,7 @@ import AERN2.Net.Spec.Arrow
 import Control.Arrow
 import qualified Data.Map as Map
 
-data QAP_MPBall = QAP_MPBall
+data QAP_MPBall = QAP_MPBall deriving (Show)
 
 instance QAProtocol QAP_MPBall where
     type Q QAP_MPBall = Precision
@@ -361,14 +361,14 @@ constMPBCachedM ::
 constMPBCachedM constName r =
     fmap QACached_MPBall $
         newId QAP_MPBall $ 
-            (Just constName, \p -> (return $ r p))
+            ([], Just constName, \p -> (return $ r p))
             
 unaryMPBCachedM ::
     String -> 
     (MPBall -> MPBall) -> 
     (QACached_MPBall) -> QACachedM QACached_MPBall
 unaryMPBCachedM valName op (QACached_MPBall id1) =    
-    fmap QACached_MPBall $ newId QAP_MPBall (Just valName, handleQuery)
+    fmap QACached_MPBall $ newId QAP_MPBall ([], Just valName, handleQuery)
     where
     handleQuery q =
         do
@@ -380,7 +380,7 @@ binaryMPBCachedM ::
     (MPBall -> MPBall -> MPBall) -> 
     (QACached_MPBall, QACached_MPBall) -> QACachedM QACached_MPBall
 binaryMPBCachedM valName op (QACached_MPBall id1, QACached_MPBall id2) =    
-    fmap QACached_MPBall $ newId QAP_MPBall (Just valName, handleQuery)
+    fmap QACached_MPBall $ newId QAP_MPBall ([], Just valName, handleQuery)
     where
     handleQuery q =
         do
