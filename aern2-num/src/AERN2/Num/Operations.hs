@@ -39,6 +39,7 @@ module AERN2.Num.Operations
     CanDiv, CanDivBy, CanDivSameType, div, (/),
     CanRecipA(..), CanRecipSameTypeA,
     CanRecip, CanRecipSameType, recip,
+    CanPlusMinusA(..), CanPlusMinus, (+-),
     RingA, FieldA, CanAddMulScalarA, CanAddMulDivScalarA,
     Ring, Field, CanAddMulScalar, CanAddMulDivScalar,
     CanSqrtA(..), CanSqrtSameTypeA,
@@ -803,6 +804,19 @@ class
     CanSineCosineSameTypeA to a
 
 type CanSineCosineSameType = CanSineCosineSameTypeA (->)
+    
+{- Interval operations -}    
+    
+class CanPlusMinusA to a b where
+    type PlusMinusTypeA to a b
+    --type PlusMinusTypeA to a b = Interval a a -- default? But requires interval type
+    plusMinusA :: (a,b) `to` PlusMinusTypeA to a b                
+
+type CanPlusMinus = CanPlusMinusA (->)
+type PlusMinusType a b = PlusMinusTypeA (->) a b
+
+(+-) :: (CanPlusMinus a b) => a -> b -> PlusMinusType a b
+(+-) = curry plusMinusA
     
 {- Utilities for arrow programming -}
 

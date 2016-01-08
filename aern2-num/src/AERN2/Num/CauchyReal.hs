@@ -30,6 +30,8 @@ import qualified Prelude
 
 import Control.Arrow
 
+import AERN2.Num.Interval
+
 import AERN2.Num.Norm
 import AERN2.Num.Accuracy
 
@@ -1000,3 +1002,20 @@ instance
 
 instance (CanAsCauchyRealA to r) => CanDivByA to MPBall (AsCauchyReal r)
 
+{- Interval operations -}
+
+instance (Arrow to, CanAbsSameTypeA to r2, CanReadAsCauchyRealA to r1, CanAsCauchyRealA to r2,
+          CanCombineCRsA to r1 r2) => CanPlusMinusA to (AsCauchyReal r1) (AsCauchyReal r2) where
+        type PlusMinusTypeA to (AsCauchyReal r1) (AsCauchyReal r2) = Interval (AsCauchyReal (CombinedCRs to r1 r2))
+        plusMinusA = proc (x, y) ->
+                        do
+                        absY <- absA -< y
+                        l <- subA -< (x,absY)
+                        r <- addA -< (x,absY)
+                        returnA -< Interval l r
+
+                        
+{- (CanReadAsCauchyRealA to r1, CanReadAsCauchyRealA to r2,
+     CanCombineCRsA to r1 r2) 
+    => 
+    CanAddA to (AsCauchyReal r1) (AsCauchyReal r2) -}                        

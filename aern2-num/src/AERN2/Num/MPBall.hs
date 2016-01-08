@@ -30,6 +30,8 @@ import AERN2.Num.ErrorBound (ErrorBound(..))
 import qualified AERN2.Num.MPFloat as MP
 import AERN2.Num.MPFloat (MPFloat, Precision)
 
+import AERN2.Num.Interval
+
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
@@ -256,18 +258,21 @@ instance CanRecipA (->) MPBall where
 
 instance CanRecipSameType MPBall
 
-instance CanAddA (->) MPBall MPBall where
-    addA (MPBall x1 e1, MPBall x2 e2) =
-        MPBall sumUp ((sumUp `EB.subMP` sumDn) + e1 + e2)
+instance (Arrow to) => CanAddA to MPBall MPBall where
+    type AddTypeA to MPBall MPBall = MPBall
+    addA  =
+        arr $ \ (x, y) -> fn (x, y)
         where
-        sumUp = MP.addUp x1 x2
-        sumDn = MP.addDown x1 x2
+        fn (MPBall x1 e1, MPBall x2 e2) = MPBall sumUp ((sumUp `EB.subMP` sumDn) + e1 + e2)
+                                                 where
+                                                 sumUp = MP.addUp x1 x2
+                                                 sumDn = MP.addDown x1 x2
 
 instance CanAddThis MPBall MPBall
 
 instance CanAddSameType MPBall
 
-instance CanSub MPBall MPBall  
+instance (Arrow to) => CanSubA to MPBall MPBall  
         
 instance CanSubThis MPBall MPBall
 
@@ -369,9 +374,9 @@ instance CanDivBy MPBall Integer
 
 {- Ball-Rational operations -}
 
-instance CanAddA (->) Rational MPBall where
-    type AddTypeA (->) Rational MPBall = MPBall
-    addA (a, b) = (rational2BallP (getPrecision b) a) + b
+instance (Arrow to) => CanAddA to Rational MPBall where
+    type AddTypeA to Rational MPBall = MPBall
+    addA = arr $ \ (a, b) -> (rational2BallP (getPrecision b) a) + b
 
 instance CanSub Rational MPBall
 
@@ -471,6 +476,16 @@ getCentreAndErrorBall x = (cB,eB)
     (MPBall cMP eEB) = x
     cB = MPBall cMP EB.zero
     eB = MPBall MP.zero eEB
+
+{- Interval operations -}
+
+instance (Arrow to) => CanPlusMinusA to MPBall MPBall where
+        type PlusMinusTypeA to MPBall MPBall = Interval MPBall
+        plusMinusA = proc (x, y) ->
+                        do
+                        l <- subA -< (x,y)
+                        r <- addA -< (x,y)
+                        returnA -< Interval l r
 
 {- common functions -}
 
