@@ -93,8 +93,10 @@ piA = proc () -> convertA -< pi -- TODO: use convertNamedA instead and add the n
 
 class 
     (RealA to c, 
-     HasComplexA CauchyReal to c,
-     CanAddMulScalarA to c (Complex CauchyReal)) 
+     HasComplexA CauchyReal to c
+--     , TODO
+--     CanAddMulScalarA to c (Complex CauchyReal)
+     ) 
     => 
     ComplexA to c
 
