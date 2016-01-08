@@ -242,7 +242,10 @@ instance
 instance (CanAddThisA to r1 r2) => CanAddThisA to (Complex r1) (Complex r2)
 instance (RealExprA to r) => CanAddSameTypeA to (Complex r)
 
-instance (CanSubA to r1 r2, RealExprA to r2) => (CanSubA to (Complex r1) (Complex r2))  
+instance 
+    (CanSubA to r1 r2) 
+    => 
+    (CanSubA to (Complex r1) (Complex r2))  
     where   
     type SubTypeA  to (Complex r1) (Complex r2) = Complex (SubTypeA to r1 r2)
     subA =
@@ -255,7 +258,10 @@ instance (CanSubThisA to r1 r2, RealExprA to r2) => CanSubThisA to (Complex r1) 
 instance (RealExprA to r) => CanSubSameTypeA to (Complex r)
 
 instance 
-    (CanMulA to r1 r2, RealExprA to (MulTypeA to r1 r2)) => 
+    (CanMulA to r1 r2, 
+     CanSubSameTypeA to (MulTypeA to r1 r2),
+     CanAddSameTypeA to (MulTypeA to r1 r2)) 
+    => 
     CanMulA to (Complex r1) (Complex r2) 
     where   
     type MulTypeA  to (Complex r1) (Complex r2) = Complex (MulTypeA to r1 r2)
@@ -313,11 +319,11 @@ instance
 instance (RealExprA to r) => CanDivSameTypeA to (Complex r)
 
 instance 
-    (CanAddThisA to r1 r2, CanMulByA to r1 r2, RealExprA to r1) 
-    => 
+    (CanAddThisA to r1 r2, CanSubThisA to r1 r2, CanMulByA to r1 r2, RealExprA to r1, RealExprA to r2) 
+    =>
     CanAddMulScalarA to (Complex r1) (Complex r2)
 instance 
-    (CanAddThisA to r1 r2, CanMulByA to r1 r2, RealExprA to r1,
+    (CanAddThisA to r1 r2, CanSubThisA to r1 r2, CanMulByA to r1 r2, RealExprA to r1,
      RealExprA to r2, CanDivByA to r1 r2) 
     => 
     CanAddMulDivScalarA to (Complex r1) (Complex r2)

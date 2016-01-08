@@ -84,141 +84,137 @@ instance (ArrowChoice to) => HasOrderA to Rational Int where
 instance (ArrowChoice to) => CanNegA to Integer where
     negA = arr P.negate
     
-instance CanNegSameType Integer
+instance (ArrowChoice to) => CanNegSameTypeA to Integer
 
 instance (ArrowChoice to) => CanAbsA to Integer where
     absA = arr P.abs
     
 instance (ArrowChoice to) => CanAbsSameTypeA to Integer
 
-{- TODO 
-    Make the following instances arrow-generic.
--}
+instance (ArrowChoice to) => CanMinMaxA to Integer Integer where
 
-instance CanMinMax Integer Integer where
+instance (ArrowChoice to) => CanMinMaxThisA to Integer Integer
+instance (ArrowChoice to) => CanMinMaxSameTypeA to Integer
 
-instance CanMinMaxThis Integer Integer
-instance CanMinMaxSameType Integer
+instance (ArrowChoice to) => CanAddA to Integer Integer where
+    addA = arr $ uncurry (P.+)
 
-instance CanAddA (->) Integer Integer where
-    addA (a, b) = a P.+ b
+instance (ArrowChoice to) => CanAddThisA to Integer Integer
+instance (ArrowChoice to) => CanAddSameTypeA to Integer
 
-instance CanAddThis Integer Integer
-instance CanAddSameType Integer
+instance (ArrowChoice to) => CanSubA to Integer Integer -- the default implementation is fine
 
-instance CanSub Integer Integer -- the default implementation is fine
-
-instance CanSubThis Integer Integer
-instance CanSubSameType Integer
+instance (ArrowChoice to) => CanSubThisA to Integer Integer
+instance (ArrowChoice to) => CanSubSameTypeA to Integer
     
-instance CanMulA (->) Integer Integer where
-    mulA = uncurry (P.*)
+instance (ArrowChoice to) => CanMulA to Integer Integer where
+    mulA = arr $ uncurry (P.*)
 
-instance CanMulBy Integer Integer
-instance CanMulSameType Integer
+instance (ArrowChoice to) => CanMulByA to Integer Integer
+instance (ArrowChoice to) => CanMulSameTypeA to Integer
         
-instance CanPowA (->) Integer Integer where
-    powA = uncurry (P.^)
+instance (ArrowChoice to) => CanPowA to Integer Integer where
+    powA = arr $ uncurry (P.^)
     
-instance RingA (->) Integer
-instance CanAddMulScalarA (->) Integer Integer
+instance (ArrowChoice to) => RingA to Integer
+instance (ArrowChoice to) => CanAddMulScalarA to Integer Integer
     
-instance CanRecipA (->) Integer where
-    type RecipTypeA (->) Integer = Rational
-    recipA a = 1 % a
+instance (ArrowChoice to) => CanRecipA to Integer where
+    type RecipTypeA to Integer = Rational
+    recipA = arr $ \ a -> 1 % a
 
-instance CanDiv Integer Integer -- the default implementation is fine
+instance (ArrowChoice to) => CanDivA to Integer Integer -- the default implementation is fine
     
 {- operations on Rationals -}
     
 instance (ArrowChoice to) => CanNegA to Rational where
     negA = arr P.negate
     
-instance CanNegSameType Rational
+instance (ArrowChoice to) => CanNegSameTypeA to Rational
 
 instance (ArrowChoice to) => CanAbsA to Rational where
     absA = arr P.abs
     
 instance (ArrowChoice to) => CanAbsSameTypeA to Rational
 
-instance CanMinMax Rational Rational where
+instance (ArrowChoice to) => CanMinMaxA to Rational Rational where
 
-instance CanMinMaxThis Rational Rational
-instance CanMinMaxSameType Rational
+instance (ArrowChoice to) => CanMinMaxThisA to Rational Rational
+instance (ArrowChoice to) => CanMinMaxSameTypeA to Rational
 
-instance CanAddA (->) Rational Rational where
-    addA = uncurry (P.+)
+instance (ArrowChoice to) => CanAddA to Rational Rational where
+    addA = arr $ uncurry (P.+)
 
-instance CanAddThis Rational Rational
-instance CanAddSameType Rational
+instance (ArrowChoice to) => CanAddThisA to Rational Rational
+instance (ArrowChoice to) => CanAddSameTypeA to Rational
 
-instance CanSub Rational Rational -- the default implementation is fine
+instance (ArrowChoice to) => CanSubA to Rational Rational -- the default implementation is fine
 
-instance CanSubThis Rational Rational
-instance CanSubSameType Rational
+instance (ArrowChoice to) => CanSubThisA to Rational Rational
+instance (ArrowChoice to) => CanSubSameTypeA to Rational
     
-instance CanMulA (->) Rational Rational where
-    mulA = uncurry (P.*)
+instance (ArrowChoice to) => CanMulA to Rational Rational where
+    mulA = arr $ uncurry (P.*)
 
-instance CanMulBy Rational Rational
-instance CanMulSameType Rational
+instance (ArrowChoice to) => CanMulByA to Rational Rational
+instance (ArrowChoice to) => CanMulSameTypeA to Rational
     
-instance CanPowA (->) Rational Integer where
-    powA = uncurry (P.^)
+instance (ArrowChoice to) => CanPowA to Rational Integer where
+    powA = arr $ uncurry (P.^)
     
-instance CanRecipA (->) Rational where
-    recipA a = 1 / a
+instance (ArrowChoice to) => CanRecipA to Rational where
+    recipA = arr $ \a -> 1 / a
 
-instance CanRecipSameType Rational
+instance (ArrowChoice to) => CanRecipSameTypeA to Rational
 
-instance CanDivA (->) Rational Rational where
-    divA = uncurry (P./)
+instance (ArrowChoice to) => CanDivA to Rational Rational where
+    divA = arr $ uncurry (P./)
 
-instance CanDivBy Rational Rational
-instance CanDivSameType Rational
+instance (ArrowChoice to) => CanDivByA to Rational Rational
+instance (ArrowChoice to) => CanDivSameTypeA to Rational
 
-instance RingA (->) Rational
-instance FieldA (->) Rational
-instance CanAddMulScalarA (->) Rational Rational
-instance CanAddMulDivScalarA (->) Rational Rational
+instance (ArrowChoice to) => RingA to Rational
+instance (ArrowChoice to) => FieldA to Rational
+instance (ArrowChoice to) => CanAddMulScalarA to Rational Rational
+instance (ArrowChoice to) => CanAddMulDivScalarA to Rational Rational
 
 {- operations mixing Integer and Rational -}
 
-instance CanAddA (->) Integer Rational where
-    type AddTypeA (->) Integer Rational = Rational
-    addA (a, b) = (P.fromInteger a) P.+ b
+instance (ArrowChoice to) => CanAddA to Integer Rational where
+    type AddTypeA to Integer Rational = Rational
+    addA = arr $ \ (a, b) -> (P.fromInteger a) P.+ b
 
-instance CanSub Integer Rational
+instance (ArrowChoice to) => CanSubA to Integer Rational
 
-instance CanAddA (->) Rational Integer where
-    type AddTypeA (->) Rational Integer = Rational
-    addA (a, b) = a P.+ (P.fromInteger b)
+instance (ArrowChoice to) => CanAddA to Rational Integer where
+    type AddTypeA to Rational Integer = Rational
+    addA = arr $ \ (a, b) -> a P.+ (P.fromInteger b)
 
-instance CanAddThis Rational Integer
+instance (ArrowChoice to) => CanAddThisA to Rational Integer
 
-instance CanSub Rational Integer
+instance (ArrowChoice to) => CanSubA to Rational Integer
 
-instance CanSubThis Rational Integer
+instance (ArrowChoice to) => CanSubThisA to Rational Integer
 
-instance CanMulA (->) Integer Rational where
-    type MulTypeA (->) Integer Rational = Rational
-    mulA (a, b) = (P.fromInteger a) P.* b
+instance (ArrowChoice to) => CanMulA to Integer Rational where
+    type MulTypeA to Integer Rational = Rational
+    mulA = arr $ \(a, b) -> (P.fromInteger a) P.* b
 
-instance CanMulA (->) Rational Integer where
-    type MulTypeA (->) Rational Integer = Rational
-    mulA (a, b) = a P.* (P.fromInteger b)
+instance (ArrowChoice to) => CanMulA to Rational Integer where
+    type MulTypeA to Rational Integer = Rational
+    mulA = arr $ \(a, b) -> a P.* (P.fromInteger b)
 
-instance CanMulBy Rational Integer
+instance (ArrowChoice to) => CanMulByA to Rational Integer
 
-instance CanDivA (->) Integer Rational where
-    type DivTypeA (->) Integer Rational = Rational
-    divA (a, b) = (P.fromInteger a) P./ b
+instance (ArrowChoice to) => CanDivA to Integer Rational where
+    type DivTypeA to Integer Rational = Rational
+    divA = arr $ \(a, b) -> (P.fromInteger a) P./ b
 
-instance CanDivA (->) Rational Integer where
-    type DivTypeA (->) Rational Integer = Rational
-    divA (a, b) = a P./ (P.fromInteger b)
+instance (ArrowChoice to) => CanDivA to Rational Integer where
+    type DivTypeA to Rational Integer = Rational
+    divA = arr $ \(a, b) -> a P./ (P.fromInteger b)
 
-instance CanDivBy Rational Integer
+instance (ArrowChoice to) => CanDivByA to Rational Integer
 
-instance CanAddMulScalarA (->) Rational Integer
-instance CanAddMulDivScalarA (->) Rational Integer
+instance (ArrowChoice to) => CanAddMulScalarA to Rational Integer
+instance (ArrowChoice to) => CanAddMulDivScalarA to Rational Integer

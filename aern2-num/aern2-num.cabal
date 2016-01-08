@@ -42,7 +42,6 @@ library
                    AERN2.Num.CauchyReal,
                    AERN2.Num.Complex,
                    AERN2.Num.ErrorBound,
-                   AERN2.Num.Examples,
                    AERN2.Num.IntegerRational,
                    AERN2.Num.Interval,
                    AERN2.Num.MPBall,

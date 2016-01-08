@@ -49,7 +49,7 @@ module AERN2.Num.Operations
     CanSineCosineA(..), CanSineCosineSameTypeA,
     CanSineCosine, CanSineCosineSameType, sin, cos,
     mapA, mapAwithPos, zipWithA, zipWithAwithPos, 
-    foldlA, sequenceA,
+    foldlA, mergeInputsA,
     convertFirstA, convertSecondA, flipA
 )
 where
@@ -738,7 +738,7 @@ class
 type Field = FieldA (->)
 
 class
-    (CanAddThisA to a s, CanMulByA to a s)
+    (CanAddThisA to a s, CanSubThisA to a s, CanMulByA to a s)
     =>
     CanAddMulScalarA to a s 
     
@@ -867,13 +867,13 @@ foldlA opA b =
                 r <- opA -< (x, a)
                 returnA -< r
 
-sequenceA :: (ArrowChoice to) => [(a `to` b)] -> (a `to` [b])
-sequenceA [] = proc _ -> returnA -< []
-sequenceA (f:fs) =
+mergeInputsA :: (ArrowChoice to) => [(a `to` b)] -> (a `to` [b])
+mergeInputsA [] = proc _ -> returnA -< []
+mergeInputsA (f:fs) =
     proc input ->
         do
         r <- f -< input
-        rs <- sequenceA fs -< input
+        rs <- mergeInputsA fs -< input
         returnA -< (r:rs)
 
 convertSecondA ::

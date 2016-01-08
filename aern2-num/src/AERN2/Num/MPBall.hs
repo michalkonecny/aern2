@@ -113,7 +113,7 @@ instance ConvertibleA (->) Rational MPBall where
     convertA x =
         case EB.getAccuracy e of
             A.Exact -> b
-            _ -> error "failed to convert a rational to an exact MPBall"
+            _ -> error $ "failed to convert a rational to an exact MPBall: " ++ show x
         where
         b@(MPBall _ e) = rational2BallP (MP.prec 100) x
         
