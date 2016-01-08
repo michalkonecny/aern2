@@ -30,8 +30,6 @@ import AERN2.Num.ErrorBound (ErrorBound(..))
 import qualified AERN2.Num.MPFloat as MP
 import AERN2.Num.MPFloat (MPFloat, Precision)
 
-import AERN2.Num.Interval
-
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
@@ -248,8 +246,8 @@ instance (Arrow to) => CanNegA to MPBall where
 
 instance (Arrow to) => CanNegSameTypeA to MPBall
 
-instance CanAbsA (->) MPBall where
-    absA (MPBall x1 e1) = MPBall (MP.abs x1) e1
+instance (Arrow to) => CanAbsA to MPBall where
+    absA = arr $ \(MPBall x1 e1) -> MPBall (MP.abs x1) e1
 
 instance CanAbsSameType MPBall
 
@@ -476,16 +474,6 @@ getCentreAndErrorBall x = (cB,eB)
     (MPBall cMP eEB) = x
     cB = MPBall cMP EB.zero
     eB = MPBall MP.zero eEB
-
-{- Interval operations -}
-
-instance (Arrow to) => CanPlusMinusA to MPBall MPBall where
-        type PlusMinusTypeA to MPBall MPBall = Interval MPBall
-        plusMinusA = proc (x, y) ->
-                        do
-                        l <- subA -< (x,y)
-                        r <- addA -< (x,y)
-                        returnA -< Interval l r
 
 {- common functions -}
 
