@@ -40,6 +40,7 @@ module AERN2.Num.Operations
     CanRecipA(..), CanRecipSameTypeA,
     CanRecip, CanRecipSameType, recip,
     CanPlusMinusA(..), CanPlusMinus, (+-),
+    CanLimitA(..), lim,
     RingA, FieldA, CanAddMulScalarA, CanAddMulDivScalarA,
     Ring, Field, CanAddMulScalar, CanAddMulDivScalar,
     CanSqrtA(..), CanSqrtSameTypeA,
@@ -817,6 +818,22 @@ type PlusMinusType a b = PlusMinusTypeA (->) a b
 
 (+-) :: (CanPlusMinus a b) => a -> b -> PlusMinusType a b
 (+-) = curry plusMinusA
+
+{- limit -}
+class CanLimitA to a where
+        type LimitTypeA to a
+        --type ApproxTypeA to a
+        --type ApproxTypeA to a = a
+        limA :: (Integer -> a) `to` LimitTypeA to a
+        --approx :: (LimitTypeA to a, Accuracy) `to` ApproxType to a
+        
+
+type CanLimit = CanLimitA (->)
+
+type LimitType = LimitTypeA (->)
+
+lim :: (CanLimit a) => (Integer -> a) -> LimitTypeA (->) a
+lim = limA
     
 {- Utilities for arrow programming -}
 
