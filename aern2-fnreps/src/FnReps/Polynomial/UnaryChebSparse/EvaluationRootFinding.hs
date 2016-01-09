@@ -15,7 +15,7 @@ import FnReps.Polynomial.UnaryPowerBase
     (https://en.wikipedia.org/wiki/Clenshaw_algorithm#Special_case_for_Chebyshev_series). 
 -}
 toPowerBase :: UnaryChebSparse -> UnaryPowerBase
-toPowerBase p = evalDirect p (UnaryPowerBase [integer2Ball 0, integer2Ball 1])
+toPowerBase p = evalDirect p (UnaryPowerBase [mpBall 0, mpBall 1])
 
 
 {-|
@@ -53,8 +53,8 @@ evalDirectOnBall = evalDirect
 {-|
     An evaluation of the polynomial at the ball x using an estimated Lipschitz constant on x. 
 -}
-evalOnBallUsingLipschitz :: UnaryChebSparse -> MPBall -> MPBall
-evalOnBallUsingLipschitz =
+_evalOnBallUsingLipschitz :: UnaryChebSparse -> MPBall -> MPBall
+_evalOnBallUsingLipschitz =
     error "evalOnBallUsingLipschitz not implemented yet"
 
 {-|

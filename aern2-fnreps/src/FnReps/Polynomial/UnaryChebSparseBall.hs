@@ -17,9 +17,8 @@ _ucsBall1 :: UnaryChebSparseBall
 _ucsBall1 = 
     UnaryChebSparseBall poly (-1.0, 1.0) 100 NormZero
     where
-    poly = fromList [(0, rationalBall 1.0),(1, rationalBall (1/100)),(3, rationalBall 1.0)]
-    rationalBall x = rational2BallP p x
-    p = prec 100
+    poly = fromList [(0, b 1.0),(1, b (1/100)),(3, b 1.0)]
+    b x = rational2BallP (prec 100) x
 
 _ucsBall1Reduced1 :: UnaryChebSparseBall
 _ucsBall1Reduced1 = setMaxDegree 1 _ucsBall1
