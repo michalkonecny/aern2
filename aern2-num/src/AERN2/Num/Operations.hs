@@ -40,7 +40,7 @@ module AERN2.Num.Operations
     CanRecipA(..), CanRecipSameTypeA,
     CanRecip, CanRecipSameType, recip,
     CanPlusMinusA(..), CanPlusMinus, (+-),
-    CanLimitA(..), lim,
+    CanLimitA(..), CanLimit, lim,
     RingA, FieldA, CanAddMulScalarA, CanAddMulDivScalarA,
     Ring, Field, CanAddMulScalar, CanAddMulDivScalar,
     CanSqrtA(..), CanSqrtSameTypeA,
@@ -830,7 +830,7 @@ class CanLimitA to a where
 
 type CanLimit = CanLimitA (->)
 
-type LimitType = LimitTypeA (->)
+type LimitType a = LimitTypeA (->) a
 
 lim :: (CanLimit a) => (Integer -> a) -> LimitTypeA (->) a
 lim = limA
