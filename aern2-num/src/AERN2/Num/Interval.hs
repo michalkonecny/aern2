@@ -1,4 +1,4 @@
-{-# LANGUAGE Arrows, FlexibleInstances, UndecidableInstances #-}
+{-# LANGUAGE Arrows, FlexibleInstances, UndecidableInstances, FlexibleContexts #-}
 module AERN2.Num.Interval where
 
 import AERN2.Num.Operations
@@ -10,9 +10,8 @@ import AERN2.Num.CauchyReal
 data Interval a = Interval a a
     deriving (Show)
     
-pm :: () => a -> a -> Interval a
-pm = undefined
-
+{- Elementary Operations -}
+    
 instance (CanAddA to a b) =>
         CanAddA to (Interval a) (Interval b)
         where
@@ -63,15 +62,59 @@ instance (CanMulA to a b, CanMinMaxSameTypeA to (MulTypeA to a b), CanRecipSameT
                         ret <- mulA -< (i0,i1)
                         returnA -< ret
 
+widthA :: (Arrow to, CanSubA to a a) => Interval a `to` SubTypeA to a a 
+widthA = proc(Interval l r) ->
+                do
+                w <- subA -< (r,l)
+                returnA -< w
+                
+width :: (CanSub a a) => Interval a -> SubTypeA (->) a a
+width = widthA
+
+{- Selection -}
+
+class (Arrow to) => CanSelectFromIntervalA to a where
+        pickAnyA :: Interval a `to` a
+        pickAnyA = proc(Interval l _) -> returnA -< l 
+
+instance (Arrow to) => CanSelectFromIntervalA to MPBall where
+        pickAnyA = arr $ \ (Interval l r) -> (l + r)/2
+        
+
+instance (Arrow to, CanAsCauchyRealA to a, CanCombineCRsA to a a,
+          CanAddSameTypeA to (AsCauchyReal a), CanDivSameTypeA to (AsCauchyReal a)) 
+          => CanSelectFromIntervalA to (AsCauchyReal a) where
+        pickAnyA = proc(Interval l r) ->
+                        do
+                        sm <- addA -< (l,r)
+                        mid <- divA -< (sm,2)
+                        returnA -< mid
+
 {- Limits -} 
 
-instance (Arrow to) => CanLimitA to (Interval MPBall) where
+instance (ArrowChoice to) => CanLimitA to (Interval MPBall) where
         type LimitTypeA to (Interval MPBall) = CauchyReal 
-        limA = undefined          
-
+        limA = arr $ \xs -> convergent2CauchyReal Nothing $ map (\(Interval l r) -> endpoints2Ball l r) xs
+        
 instance (Arrow to, CanAsCauchyRealA to a) => CanLimitA to (Interval (AsCauchyReal a)) where
         type LimitTypeA to (Interval (AsCauchyReal a)) = AsCauchyReal a
-        limA = undefined   
+        limA = proc(xs) -> newCRA -< ([],Nothing, fn xs)
+                where
+                fn xs =
+                        proc acc ->
+                                do
+                                bs <- mapA getBallA -< zip xs (repeat $ acc + 1)
+                                returnA -< findAccurate acc bs
+                getBallA = proc(Interval l r,acc) -> 
+                        do
+                        lApprox <- getAnswerCRA -< (l,acc)
+                        rApprox <- getAnswerCRA -< (r,acc)
+                        returnA -< endpoints2Ball lApprox rApprox
+                findAccurate _ []     = undefined
+                findAccurate acc (x:xs) = if getAccuracy x >= acc then
+                                                x
+                                          else
+                                                findAccurate acc xs                         
         
 {- MPBall plus-minus -}
 
@@ -87,7 +130,7 @@ instance (Arrow to) => CanPlusMinusA to MPBall MPBall where
 
 {- Cauchy-real plus-minus -}
 
-instance (Arrow to, CanAbsSameTypeA to r2, CanReadAsCauchyRealA to r1, CanAsCauchyRealA to r2,
+instance (Arrow to, CanAbsSameTypeA to (AsCauchyReal r2), CanReadAsCauchyRealA to r1, CanAsCauchyRealA to r2,
           CanCombineCRsA to r1 r2) => CanPlusMinusA to (AsCauchyReal r1) (AsCauchyReal r2) where
         type PlusMinusTypeA to (AsCauchyReal r1) (AsCauchyReal r2) = Interval (AsCauchyReal (CombinedCRs to r1 r2))
         plusMinusA = proc (x, y) ->
@@ -96,4 +139,5 @@ instance (Arrow to, CanAbsSameTypeA to r2, CanReadAsCauchyRealA to r1, CanAsCauc
                         l <- subA -< (x,absY)
                         r <- addA -< (x,absY)
                         returnA -< Interval l r
+
                                                        
