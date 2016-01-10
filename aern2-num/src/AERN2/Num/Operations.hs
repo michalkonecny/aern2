@@ -39,8 +39,6 @@ module AERN2.Num.Operations
     CanDiv, CanDivBy, CanDivSameType, div, (/),
     CanRecipA(..), CanRecipSameTypeA,
     CanRecip, CanRecipSameType, recip,
-    CanPlusMinusA(..), CanPlusMinus, (+-),
-    CanLimitA(..), CanLimit, LimitType, lim,
     RingA, FieldA, CanAddMulScalarA, CanAddMulDivScalarA,
     Ring, Field, CanAddMulScalar, CanAddMulDivScalar,
     CanSqrtA(..), CanSqrtSameTypeA,
@@ -49,6 +47,8 @@ module AERN2.Num.Operations
     CanExp, CanExpSameType, exp,
     CanSineCosineA(..), CanSineCosineSameTypeA,
     CanSineCosine, CanSineCosineSameType, sin, cos,
+    CanPlusMinusA(..), CanPlusMinus, (+-),
+    CanLimitA(..), CanLimit, LimitType, lim,
     mapA, mapAwithPos, zipWithA, zipWithAwithPos, 
     foldlA, mergeInputsA,
     convertFirstA, convertSecondA, flipA
