@@ -114,8 +114,8 @@ instance (Arrow to, CanAsCauchyRealA to a) => CanLimitA to (Interval (AsCauchyRe
                 findAccurate acc (x:xs) = if getAccuracy x >= acc then
                                                 x
                                           else
-                                                findAccurate acc xs                         
-        
+                                                findAccurate acc xs                                    
+                                                         
 {- MPBall plus-minus -}
 
 instance (Arrow to) => CanPlusMinusA to MPBall MPBall where

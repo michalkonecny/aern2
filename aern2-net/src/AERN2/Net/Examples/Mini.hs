@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 module AERN2.Net.Examples.Mini 
     (module AERN2.Net.Examples.Mini,
      module AERN2.Num)
@@ -63,3 +64,19 @@ logisticMPBIterate c n x0 =
         where
         x0p = cauchyReal2ball x0 ac
         ac = bits $ prec2integer p
+
+{- Example: naive exponential function on [-1,1] -} 
+
+listFromLambda :: (Integer -> a) -> [a] --TODO define limit using lambda and remove this
+listFromLambda fn = listFromLambdaAcc fn 0
+                    where
+                    listFromLambdaAcc fn n = (fn n):(listFromLambdaAcc fn (n + 1))
+
+limF :: (CanLimitA (->) a) => (Integer -> a) -> LimitTypeA (->) a                  
+limF = lim . listFromLambda
+                                    
+{-expLim :: CauchyReal -> CauchyReal
+expLim x = limF (\n -> (sum [(x^k)/(k!) | k <- [0..n]]) +- errorBound (x,n))
+           where
+           errorBound (y,n) = ((abs y)^(n + 1))*3/((n + 1)!) -}--TODO error bound only valid on [-1,1]
+                                                                           -- more general error bound: 3^ceil(x)   
