@@ -181,30 +181,39 @@ instance (Arrow to, CanAsCauchyRealA to a, CanCombineCRsA to a a,
 
 {- Limits -} 
 
-instance (ArrowChoice to) => CanLimitA to (Interval MPBall) where
+{-instance (ArrowChoice to) => CanLimitA to (Interval MPBall) where
         type LimitTypeA to (Interval MPBall) = CauchyReal 
-        limA = arr $ \xs -> convergent2CauchyReal Nothing $ map (\(Interval l r) -> endpoints2Ball l r) xs
+        limA = proc(getApprox) ->
+                 do
+                 newCRA -< ([], Nothing, findAccurate (makeBall getApprox))
+               where
+               makeBall :: (Accuracy -> Interval MPBall) -> Accuracy -> MPBall
+               makeBall getApprox acc = endpoints2Ball l r
+                                        where
+                                        (Interval l r) = getApprox acc
+               findAccurate n f acc = if getAccuracy (f n) >= acc then
+                                        (f n)
+                                      else
+                                        findAccurate (n + 1) f acc-}
         
 instance (Arrow to, CanAsCauchyRealA to a) => CanLimitA to (Interval (AsCauchyReal a)) where
         type LimitTypeA to (Interval (AsCauchyReal a)) = AsCauchyReal a
-        limA = proc(xs) -> newCRA -< ([],Nothing, fn xs)
+        limA = proc(getApprox) -> newCRA -< ([],Nothing, findAccurate getApprox 0)
                 where
-                fn xs =
-                        proc acc ->
+                getApproxBallA getApprox = proc (n,acc1) ->
                                 do
-                                bs <- mapA getBallA -< zip xs (repeat $ acc + 1)
-                                returnA -< findAccurate acc bs
-                getBallA = proc(Interval l r,acc) -> 
+                                let (Interval l r) = getApprox n
+                                lApprox <- getAnswerCRA -< (l,acc1)
+                                rApprox <- getAnswerCRA -< (r,acc1) 
+                                returnA -< endpoints2Ball lApprox rApprox
+                findAccurate getApprox n = proc(acc) ->
                         do
-                        lApprox <- getAnswerCRA -< (l,acc)
-                        rApprox <- getAnswerCRA -< (r,acc)
-                        returnA -< endpoints2Ball lApprox rApprox
-                findAccurate _ []     = undefined
-                findAccurate acc (x:xs) = if getAccuracy x >= acc then
-                                                x
-                                          else
-                                                findAccurate acc xs                                    
-                                                         
+                        b <- getApproxBallA getApprox -< (n, acc+1) -- TODO more clever strategy than "acc + 1"?
+                        if getAccuracy b >= acc then
+                                       returnA -< b
+                                       else
+                                       findAccurate getApprox (n + 1) -< (acc)                      
+
 {- MPBall plus-minus -}
 
 instance (Arrow to) => CanPlusMinusA to MPBall MPBall where
