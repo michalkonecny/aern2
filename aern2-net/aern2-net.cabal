@@ -28,6 +28,7 @@ library
                    Arrows, 
                    MultiParamTypeClasses, 
                    OverloadedStrings, 
+                   PostfixOperators, 
                    RebindableSyntax, 
                    TemplateHaskell, 
                    TypeFamilies, 

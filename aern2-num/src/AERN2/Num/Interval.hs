@@ -43,12 +43,12 @@ instance (CanMulA to a b, CanMinMaxSameTypeA to (MulTypeA to a b)) =>
                 r0l1 <- mulA -< (r0,l1)
                 r0r1 <- mulA -< (r0,r1)
                 l <- minA -< (l0l1,l0r1)
-                l <- minA -< (l, r0l1)
-                l <- minA -< (l, r0r1)
+                l' <- minA -< (l, r0l1)
+                l'' <- minA -< (l', r0r1)
                 r <- maxA -< (l0l1,l0r1)
-                r <- maxA -< (r, r0l1)
-                r <- maxA -< (r, r0r1)
-                returnA -< Interval l r
+                r' <- maxA -< (r, r0l1)
+                r'' <- maxA -< (r', r0r1)
+                returnA -< Interval l'' r''
                 
 instance (CanMulA to a b, CanMinMaxSameTypeA to (MulTypeA to a b), CanRecipSameTypeA to b) =>
         CanDivA to (Interval a) (Interval b)
