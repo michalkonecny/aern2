@@ -1,7 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 
 module AERN2.Num.IntegerRational 
-() 
+(factorial, (!)) 
 where
 
 {- imports -}
@@ -12,6 +12,7 @@ import qualified Prelude as P
 import Control.Arrow
 
 import Data.Ratio ((%))
+import Data.List (foldl')
 
 {- examples -}
 
@@ -20,6 +21,15 @@ _example1 = 2 * 3 + (1/2) ^ 2
 
 _example2 :: Integer -- cannot be Int
 _example2 = 2 * 3 + 2 ^ 2
+
+{- factorial -}
+
+factorial :: Integer -> Integer
+factorial n = foldl' (*) 1 [1..n] 
+
+(!) :: Integer -> Integer
+(!) = factorial
+
 
 {- comparisons -}
 
