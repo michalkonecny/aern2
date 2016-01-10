@@ -75,8 +75,8 @@ listFromLambda fn = listFromLambdaAcc fn 0
 limF :: (CanLimitA (->) a) => (Integer -> a) -> LimitTypeA (->) a                  
 limF = lim . listFromLambda
                                     
-{-expLim :: CauchyReal -> CauchyReal
+expLim :: CauchyReal -> CauchyReal
 expLim x = limF (\n -> (sum [(x^k)/(k!) | k <- [0..n]]) +- errorBound (x,n))
            where
-           errorBound (y,n) = ((abs y)^(n + 1))*3/((n + 1)!) -}--TODO error bound only valid on [-1,1]
+           errorBound (y,n) = ((abs y)^(n + 1))*3/((n + 1)!)  --TODO error bound only valid on [-1,1]
                                                                            -- more general error bound: 3^ceil(x)   
