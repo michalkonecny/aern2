@@ -832,7 +832,7 @@ class CanLimitA to a where
         type LimitTypeA to a
         --type ApproxTypeA to a
         --type ApproxTypeA to a = a
-        limA :: [a] `to` LimitTypeA to a
+        limA :: (Integer -> a) `to` LimitTypeA to a
         --approx :: (LimitTypeA to a, Accuracy) `to` ApproxType to a
         
 
@@ -840,7 +840,7 @@ type CanLimit = CanLimitA (->)
 
 type LimitType a = LimitTypeA (->) a
 
-lim :: (CanLimit a) => [a] -> LimitTypeA (->) a
+lim :: (CanLimit a) => (Integer -> a) -> LimitTypeA (->) a
 lim = limA
     
 {- Utilities for arrow programming -}
