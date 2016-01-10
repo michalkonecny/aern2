@@ -48,8 +48,8 @@ module AERN2.Num.Operations
     CanSineCosineA(..), CanSineCosineSameTypeA,
     CanSineCosine, CanSineCosineSameType, sin, cos,
     CanPlusMinusA(..), CanPlusMinus, (+-),
-    CanLimitA(..), CanLimit, LimitType, lim,
-    mapA, mapAwithPos, zipWithA, zipWithAwithPos, 
+    CanLimitA(..), CanLimit, LimitType, lim, iterateLim,
+    iterateA, mapA, mapAwithPos, zipWithA, zipWithAwithPos, 
     foldlA, mergeInputsA,
     convertFirstA, convertSecondA, flipA
 )
@@ -828,11 +828,14 @@ type PlusMinusType a b = PlusMinusTypeA (->) a b
 (+-) = curry plusMinusA
 
 {- limit -}
-class CanLimitA to a where
+class (Arrow to) => CanLimitA to a where
         type LimitTypeA to a
         --type ApproxTypeA to a
         --type ApproxTypeA to a = a
+        limListA :: [a] `to` LimitTypeA to a
         limA :: (Integer -> a) `to` LimitTypeA to a
+        limA = proc fn -> limListA -< map fn [1..]
+            
         --approx :: (LimitTypeA to a, Accuracy) `to` ApproxType to a
         
 
@@ -843,7 +846,24 @@ type LimitType a = LimitTypeA (->) a
 lim :: (CanLimit a) => (Integer -> a) -> LimitTypeA (->) a
 lim = limA
     
+
+iterateLim :: 
+    (CanLimitA (->) a) => 
+    a -> (a -> a) -> LimitType a
+iterateLim initX intervalFn =
+    lim (\n -> ((iterate intervalFn) initX) !! (int n))
+-- TODO: make iterateLim arrow-generic
+
+    
 {- Utilities for arrow programming -}
+
+iterateA :: (Arrow to) => (a `to` a) -> a `to` [a]
+iterateA fnA =
+    proc a0 ->
+        do
+        a1 <- fnA -< a0
+        rest <- iterateA fnA -< a1
+        returnA -< a0 : rest
 
 mapA :: (ArrowChoice to) => (a `to` b) -> ([a] `to` [b]) 
 mapA processOne = mapAwithPos (const processOne)

@@ -91,10 +91,4 @@ newton ::
     Interval r -> LimitType (Interval r)
 newton f f' iX_0 = 
     iterateLim iX_0 $ \ iX -> let x = singleton (pickAnyA iX) in - (f x)/(f' iX)
-
-iterateLim :: 
-    (CanLimitA (->) (Interval r)) => 
-    (Interval r) -> (Interval r -> Interval r) -> LimitType (Interval r)
-iterateLim initX intervalFn =
-    lim (\n -> ((iterate intervalFn) initX) !! (int n))
     
