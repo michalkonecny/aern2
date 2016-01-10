@@ -73,9 +73,6 @@ instance ArrowConvert [Complex MPBall] (->) (Complex MPBall) [(Complex MPBall)] 
 
 {- TODO The Interval type should move somewhere to aern-num -}
 
-data Interval a = Interval a a
-    deriving (Show)
-
 rati2MPBall :: Interval Rational -> MPBall
 rati2MPBall il@(Interval l r) =
     maybeTrace
