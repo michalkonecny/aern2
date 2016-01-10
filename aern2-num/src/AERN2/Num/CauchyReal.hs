@@ -649,6 +649,30 @@ instance
     (CanAsCauchyRealA to r, CanCombineCRwithA to r r) => 
     CanMulSameTypeA to (AsCauchyReal r) 
 
+
+instance
+    (CanAsCauchyRealA to r, CanCombineCRwithA to r r)
+    => 
+    CanPowA to (AsCauchyReal r) Integer
+    where
+    powA =
+        proc (r,n) ->
+            unaryOpWithPureArg "^" pow getInitQ1T -< (r,n)
+        where
+        getInitQ1T =
+            proc (q, r, n) ->
+                do
+                (rNormLog, b) <- getCRFnNormLog -< (r,q,(\x -> n * (x ^ (n-1))))
+                let jInit1 = case rNormLog of 
+                        NormBits rNL -> max (bits 0) (q + rNL)
+                        NormZero -> bits 0
+                returnA -< (jInit1, Just b)
+    
+instance 
+    (CanAsCauchyRealA to r, CanCombineCRwithA to r r)
+    => 
+    CanPowByA to (AsCauchyReal r) Integer
+
 instance
     (CanReadAsCauchyRealA to r1, CanReadAsCauchyRealA to r2,
      CanCombineCRsA to r1 r2) 

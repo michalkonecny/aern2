@@ -300,6 +300,10 @@ instance CanMulBy MPBall MPBall
 
 instance CanMulSameType MPBall
 
+instance CanPowA (->) MPBall Integer
+instance CanPowByA (->) MPBall Integer
+
+
 instance CanDivA (->) MPBall MPBall where
     divA (MPBall x1 e1, b2@(MPBall x2 e2))
         | isNonZero b2 =

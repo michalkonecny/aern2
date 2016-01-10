@@ -707,6 +707,14 @@ class CanPowA to a b where
     type PowTypeA to a b
     type PowTypeA to a b = a -- default
     powA :: (a,b) `to` PowTypeA to a b
+    default powA :: 
+        (b~Integer, HasIntegersA to a, CanMulSameTypeA to a, PowTypeA to a b~a) 
+        =>
+        (a,b) `to` PowTypeA to a b
+    powA =
+        proc (a,n) ->
+            productA -< (replicate (int n) a) 
+            -- TODO: replace with a more efficient method based on halving n
 
 type CanPow = CanPowA (->)
 type PowType a b = PowTypeA (->) a b
