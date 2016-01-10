@@ -36,12 +36,21 @@ logisticQACached c n x0 =
     newCRA ([], Nothing, ac2ball)
     where
     ac2ball ac =
-        snd $ executeQACachedA (auxA ac)
-    auxA ac =
+        snd $ logisticQACachedMPBall c n x0 ac
+            
+logisticQACachedMPBall :: Rational -> Integer -> CauchyReal -> (Accuracy -> (QANetLog, MPBall))
+logisticQACachedMPBall c n x0 ac =
+    executeQACachedA auxA
+    where
+    auxA =
         proc () ->
             do
             r <- logisticA c n <<< convertA -< x0
             getAnswerCRA -< (r :: QACached_CauchyReal,ac)
+    
+logisticQACachedMPBallPrintLog :: Rational -> Integer -> CauchyReal -> Accuracy -> IO ()
+logisticQACachedMPBallPrintLog c n x0 ac =
+    printQANetLogThenResult (logisticQACachedMPBall c n x0 ac)
             
 logisticMPBIterate :: Rational -> Integer -> CauchyReal -> CauchyReal
 logisticMPBIterate c n x0 =
