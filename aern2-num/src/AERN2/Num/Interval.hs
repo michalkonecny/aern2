@@ -10,17 +10,61 @@ import AERN2.Num.CauchyReal
 data Interval a = Interval a a
     deriving (Show)
     
-{- Elementary Operations -}
+singleton :: a -> Interval a
+singleton a = Interval a a
+
+widthA :: (Arrow to, CanSubA to a a) => Interval a `to` SubTypeA to a a 
+widthA = proc(Interval l r) ->
+                do
+                w <- subA -< (r,l)
+                returnA -< w
+                
+width :: (CanSub a a) => Interval a -> SubTypeA (->) a a
+width = widthA
+    
+{- Interval-Interval arithmetic operations -}
+
+instance (CanNegA to a) =>
+        CanNegA to (Interval a)
+        where
+        type NegTypeA to (Interval a) = Interval (NegTypeA to a)
+        negA = proc (Interval l0 r0) ->
+                do
+                r <- negA -< l0
+                l <- negA -< r0
+                returnA -< Interval l r
+
+instance (CanNegSameTypeA to a) =>
+        CanNegSameTypeA to (Interval a)
+
+instance (CanRecipA to a) =>
+        CanRecipA to (Interval a)
+        where
+        type RecipTypeA to (Interval a) = Interval (RecipTypeA to a)
+        recipA = proc (Interval l0 r0) ->
+                do --TODO support division by zero
+                r <- recipA -< l0
+                l <- recipA -< r0
+                returnA -< Interval l r
+
+instance (CanRecipSameTypeA to a) =>
+        CanRecipSameTypeA to (Interval a)
+
     
 instance (CanAddA to a b) =>
         CanAddA to (Interval a) (Interval b)
         where
         type AddTypeA to (Interval a) (Interval b) = Interval (AddTypeA to a b)
         addA = proc (Interval l0 r0, Interval l1 r1) ->
-                       do
-                       l <- addA -< (l0, l1)
-                       r <- addA -< (r0, r1)
-                       returnA -< Interval l r
+                do
+                l <- addA -< (l0, l1)
+                r <- addA -< (r0, r1)
+                returnA -< Interval l r
+
+instance (CanAddThisA to a b) =>
+        CanAddThisA to (Interval a) (Interval b)
+instance (CanAddSameTypeA to a) =>
+        CanAddSameTypeA to (Interval a)
 
 instance (CanSubA to a b) =>
         CanSubA to (Interval a) (Interval b)
@@ -31,6 +75,11 @@ instance (CanSubA to a b) =>
                 l <- subA -< (l0, r1)
                 r <- subA -< (r0, l1)
                 returnA -< Interval l r
+
+instance (CanSubThisA to a b) =>
+        CanSubThisA to (Interval a) (Interval b)
+instance (CanSubSameTypeA to a) =>
+        CanSubSameTypeA to (Interval a)
 
 instance (CanMulA to a b, CanMinMaxSameTypeA to (MulTypeA to a b)) =>
         CanMulA to (Interval a) (Interval b)
@@ -49,27 +98,67 @@ instance (CanMulA to a b, CanMinMaxSameTypeA to (MulTypeA to a b)) =>
                 r' <- maxA -< (r, r0l1)
                 r'' <- maxA -< (r', r0r1)
                 returnA -< Interval l'' r''
-                
+
+instance (CanMulByA to a b, CanMinMaxSameTypeA to a) =>
+        CanMulByA to (Interval a) (Interval b)
+instance (CanMulSameTypeA to a, CanMinMaxSameTypeA to a) =>
+        CanMulSameTypeA to (Interval a)
+
+
 instance (CanMulA to a b, CanMinMaxSameTypeA to (MulTypeA to a b), CanRecipSameTypeA to b) =>
         CanDivA to (Interval a) (Interval b)
         where
         type DivTypeA to (Interval a) (Interval b) = Interval (MulTypeA to a b)
-        divA  =  proc (i0, Interval l1 r1) ->
-                        do --TODO support division by zero
-                        l1Inv <- recipA -< l1
-                        r1Inv <- recipA -< r1
-                        let i1 = Interval r1Inv l1Inv
-                        ret <- mulA -< (i0,i1)
-                        returnA -< ret
+        divA = proc (i0, Interval l1 r1) ->
+                do --TODO support division by zero
+                l1Inv <- recipA -< l1
+                r1Inv <- recipA -< r1
+                let i1 = Interval r1Inv l1Inv
+                ret <- mulA -< (i0,i1)
+                returnA -< ret
 
-widthA :: (Arrow to, CanSubA to a a) => Interval a `to` SubTypeA to a a 
-widthA = proc(Interval l r) ->
+instance (CanMulByA to a b, CanMinMaxSameTypeA to a, CanRecipSameTypeA to b) =>
+        CanDivByA to (Interval a) (Interval b)
+instance (CanMulSameTypeA to a, CanMinMaxSameTypeA to a, CanRecipSameTypeA to a) =>
+        CanDivSameTypeA to (Interval a)
+
+{- Interval-Integer arithmetic operations -}
+
+    
+instance (CanAddA to a Integer) =>
+        CanAddA to (Interval a) Integer
+        where
+        type AddTypeA to (Interval a) Integer = Interval (AddTypeA to a Integer)
+        addA = proc (Interval l0 r0, n) ->
                 do
-                w <- subA -< (r,l)
-                returnA -< w
-                
-width :: (CanSub a a) => Interval a -> SubTypeA (->) a a
-width = widthA
+                l <- addA -< (l0, n)
+                r <- addA -< (r0, n)
+                returnA -< Interval l r
+
+instance (CanAddA to Integer b) =>
+        CanAddA to Integer (Interval b)
+        where
+        type AddTypeA to Integer (Interval b) = Interval (AddTypeA to Integer b)
+        addA = proc (n, Interval l1 r1) ->
+                do
+                l <- addA -< (n, l1)
+                r <- addA -< (n, r1)
+                returnA -< Interval l r
+
+instance (CanAddThisA to a Integer) =>
+        CanAddThisA to (Interval a) Integer
+
+instance (ArrowChoice to, CanAddA to a Integer) =>
+        CanSubA to (Interval a) Integer
+instance (ArrowChoice to, CanAddThisA to a Integer) =>
+        CanSubThisA to (Interval a) Integer
+
+instance (ArrowChoice to, CanAddA to Integer a, CanNegSameTypeA to a) =>
+    CanSubA to Integer (Interval a)
+
+{- TODO: provide also mixed multiplication and division
+
+-}
 
 {- Selection -}
 

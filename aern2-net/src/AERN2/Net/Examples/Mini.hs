@@ -79,4 +79,30 @@ expLim :: CauchyReal -> CauchyReal
 expLim x = limF (\n -> (sum [(x^k)/(k!) | k <- [0..n]]) +- errorBound (x,n))
            where
            errorBound (y,n) = ((abs y)^(n + 1))*3/((n + 1)!)  --TODO error bound only valid on [-1,1]
-                                                                           -- more general error bound: 3^ceil(x)   
+                                                                           -- more general error bound: 3^ceil(x)
+
+{- Newton iteration -}
+
+{- TODO
+newtonTest1 =
+    newton f f' (Interval (cauchyReal 0) (cauchyReal 0))
+    where
+    f x = x*x - 2
+    f' x = 2*x 
+-}
+    
+newton :: 
+    (CanSelectFromIntervalA (->) r, CanDivSameTypeA (->) (Interval r),
+     CanLimitA (->) (Interval r), CanNegSameTypeA (->) (Interval r)) 
+     =>
+    (Interval r -> Interval r) -> (Interval r -> Interval r) -> 
+    Interval r -> LimitType (Interval r)
+newton f f' iX_0 = 
+    iterateLim iX_0 $ \ iX -> let x = singleton (pickAnyA iX) in - (f x)/(f' iX)
+
+iterateLim :: 
+    (CanLimitA (->) (Interval r)) => 
+    (Interval r) -> (Interval r -> Interval r) -> LimitType (Interval r)
+iterateLim initX intervalFn =
+    limF (\n -> ((iterate intervalFn) initX) !! (int n))
+    
