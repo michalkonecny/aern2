@@ -6,7 +6,8 @@ module AERN2.Num
      module AERN2.Num.Accuracy,
      module AERN2.Num.IntegerRational,
      module AERN2.Num.CauchyReal,
-     module AERN2.Num.Complex)
+     module AERN2.Num.Complex,
+     module AERN2.Num.Interval)
 where
 
 import AERN2.Num.Operations
@@ -17,6 +18,7 @@ import AERN2.Num.IntegerRational
 import AERN2.Num.MPBall
 import AERN2.Num.CauchyReal
 import AERN2.Num.Complex
+import AERN2.Num.Interval
 
 {- example arrow-generic expressions -}
 
