@@ -15,10 +15,10 @@ import AERN2.Net.Strategy.QACached
 example0 :: CauchyReal -> CauchyReal
 example0 x = sqrt(x) + x
 
-example0exprA ::
+example0directA ::
     (RealExprA to r) => r `to` r
-example0exprA =
-    $(exprA[|let [x] = vars in sqrt(x) + x|]) 
+example0directA =
+    addA <<< first sqrtA <<< arr (\x -> (x,x))
 
 example0procA ::
     (RealExprA to r) => r `to` r
@@ -28,10 +28,10 @@ example0procA =
         temp1 <- sqrtA -< x
         addA -< (temp1, x)
 
-example0directA ::
+example0exprA ::
     (RealExprA to r) => r `to` r
-example0directA =
-    addA <<< first sqrtA <<< arr (\x -> (x,x))
+example0exprA =
+    $(exprA[|let [x] = vars in sqrt(x) + x|]) 
 
 example0directA_TestCached :: Accuracy -> IO ()
 example0directA_TestCached ac =
