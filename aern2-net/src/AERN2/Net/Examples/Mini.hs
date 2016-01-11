@@ -10,6 +10,39 @@ import Control.Arrow
 
 import AERN2.Net.Execution.QACached
 
+{--- a very simple real expression ---}
+
+example0 :: CauchyReal -> CauchyReal
+example0 x = sqrt(x) + x
+
+example0exprA ::
+    (RealExprA to r) => r `to` r
+example0exprA =
+    $(exprA[|let [x] = vars in sqrt(x) + x|]) 
+
+example0procA ::
+    (RealExprA to r) => r `to` r
+example0procA = 
+    proc x ->
+        do
+        temp1 <- sqrtA -< x
+        addA -< (temp1, x)
+
+example0directA ::
+    (RealExprA to r) => r `to` r
+example0directA =
+    addA <<< first sqrtA <<< arr (\x -> (x,x))
+
+example0directA_TestCached :: Accuracy -> IO ()
+example0directA_TestCached ac =
+    printQANetLogThenResult $
+        executeQACachedA $
+            proc () ->
+                do
+                x <- convertA -< 1/3
+                r <- example0directA -< x :: QACached_CauchyReal
+                getAnswerCRA -< (r,ac)
+
 {--- a simple complex expression, a part of FFT ---}
 
 twiddle :: (Integer, Integer) -> Complex CauchyReal
@@ -21,14 +54,14 @@ twiddleA(k,n) = $(exprA[| let [i]=vars in exp(-2*k*i*pi/n)|]) <<< complex_iA
 {--- the logistic map ---}
 
 logisticNoA :: Rational -> Integer -> CauchyReal -> CauchyReal
-logisticNoA c n =
-    foldl1 (.) (replicate (int n) step)
+logisticNoA c n x0 =
+    foldl1 (.) (replicate (int n) step) x0
     where
     step x = c * x * (1 - x)
 
 logisticA :: (RealExprA to r) => Rational -> Integer -> r `to` r
 logisticA c n =
-    foldl1 (<<<) (replicate (int n) step) 
+    (foldl1 (<<<) (replicate (int n) step)) 
     where
     step = $(exprA[|let [x]=vars in  c * x * (1 - x)|])
     
@@ -91,4 +124,18 @@ newton ::
     Interval r -> LimitType (Interval r)
 newton f f' iX_0 = 
     iterateLim iX_0 $ \ iX -> let x = singleton (pickAnyA iX) in - (f x)/(f' iX)
+    
+{-
+
+newtonA :: 
+    (CanSelectFromIntervalA (->) r, CanDivSameTypeA (->) (Interval r),
+     CanLimitA (->) (Interval r), CanNegSameTypeA (->) (Interval r)) 
+     =>
+    (Interval r `to` Interval r) -> 
+    (Interval r `to` Interval r) -> 
+    Interval r `to` LimitType (Interval r)
+newtonA f f' iX_0 = 
+    iterateLim iX_0 $ \ iX -> let x = singleton (pickAnyA iX) in - (f x)/(f' iX)
+
+-}
     
