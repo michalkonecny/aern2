@@ -7,7 +7,7 @@ where
 
 import AERN2.Num
 
-import AERN2.Net.RealFunction
+import AERN2.RealFunction
 
 --import qualified Data.Map as Map
 

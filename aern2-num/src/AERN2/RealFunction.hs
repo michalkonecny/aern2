@@ -1,6 +1,6 @@
 {-# LANGUAGE Arrows, TypeOperators, GeneralizedNewtypeDeriving, FunctionalDependencies, DataKinds, FlexibleContexts, ConstraintKinds #-}
 
-module AERN2.Net.RealFunction 
+module AERN2.RealFunction 
 (
     CanEmbedFnA, embedFnNamedA,
     RationalIntervalA(..),

@@ -3,7 +3,7 @@ module AERN2.Net.Examples.Root where
 
 import AERN2.Num
 
-import AERN2.Net.RealFunction
+import AERN2.RealFunction
 import Control.Arrow
 
 import AERN2.Net.Strategy.Direct
