@@ -212,8 +212,24 @@ instance (Arrow to, CanAsCauchyRealA to a) => CanLimitA to (Interval (AsCauchyRe
                         if getAccuracy b >= acc then
                                        returnA -< b
                                        else
-                                       findAccurate getApprox (n + 1) -< (acc)                      
-
+                                       findAccurate getApprox (n + 1) -< (acc)     
+        limListA = proc(xs) -> newCRA -< ([],Nothing, fn xs)
+                where
+                fn xs =
+                        proc acc ->
+                                do
+                                bs <- mapA getBallA -< zip xs (repeat $ acc + 1)
+                                returnA -< findAccurate acc bs
+                getBallA = proc(Interval l r,acc) -> 
+                        do
+                        lApprox <- getAnswerCRA -< (l,acc)
+                        rApprox <- getAnswerCRA -< (r,acc)
+                        returnA -< endpoints2Ball lApprox rApprox
+                findAccurate _ []     = undefined
+                findAccurate acc (x:xs) = if getAccuracy x >= acc then
+                                                x
+                                          else
+                                                findAccurate acc xs      
 {- MPBall plus-minus -}
 
 instance (Arrow to) => CanPlusMinusA to MPBall MPBall where
