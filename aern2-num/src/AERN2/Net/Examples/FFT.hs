@@ -82,7 +82,7 @@ fftTestCached nN ac =
     * The input list has exactly @N@ elements.
 -}
 dftCooleyTukey :: 
-    (RealExprA to r)
+    (ArrowReal to r)
     =>
     Integer {-^ @N@ -} -> 
     [Complex r] `to` [Complex r]
@@ -103,7 +103,7 @@ dftCooleyTukey nN = ditfft2 nN 1
     * The input list has at least @s*(N-1) + 1@ elements.
 -}
 ditfft2 :: 
-    (RealExprA to r)
+    (ArrowReal to r)
     =>
     Integer {-^ @N@ -} -> 
     Integer {-^ @s@ -} ->
@@ -117,13 +117,13 @@ ditfft2 nN s
             do
             vTX0 <- ditfft2 nNhalf (2 * s) -< x 
             vTXNhalf <- ditfft2 nNhalf (2 * s) -< drop (int s) x
-            vTXNhalfTwiddled <- mapAwithPos twiddle -< vTXNhalf
+            vTXNhalfTwiddled <- mapAwithPos twiddleA -< vTXNhalf
             vX0 <- zipWithA addA -< (vTX0, vTXNhalfTwiddled)
             vXNhalf <- zipWithA subA -< (vTX0, vTXNhalfTwiddled)
             returnA -< vX0 ++ vXNhalf
     where
     nNhalf = round (nN / 2)
-    twiddle k = 
+    twiddleA k = 
         proc x_k_plus_NHalf ->
             do
 --            c <- $(exprA[|let [i] = vars in exp(-2*pi*i*k/nN)|]) <<< complex_iA -< ()
