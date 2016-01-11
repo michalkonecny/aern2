@@ -52,9 +52,12 @@ absMP = mp2ErrorBound . MP.abs
 
 getAccuracy :: ErrorBound -> A.Accuracy
 getAccuracy (ErrorBound e) 
-    | e > MP.zero = 
-        A.bits $ toInteger $ integerLog2 $ ceiling $ MP.toRational $ MP.recipDown e
-    | otherwise = A.Exact
+    | e > MP.zero && eRecipN > 0 = 
+        A.bits $ toInteger $ integerLog2 eRecipN
+    | e == MP.zero = A.Exact
+    | otherwise = A.NoInformation
+    where
+    eRecipN = ceiling $ MP.toRational $ MP.recipDown e
 
 instance CanAddA (->) ErrorBound ErrorBound where
     addA (ErrorBound a, ErrorBound b) = ErrorBound $ a `MP.addUp` b
