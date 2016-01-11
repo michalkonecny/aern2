@@ -48,7 +48,7 @@ module AERN2.Num.Operations
     CanSineCosineA(..), CanSineCosineSameTypeA,
     CanSineCosine, CanSineCosineSameType, sin, cos,
     CanPlusMinusA(..), CanPlusMinus, (+-),
-    CanLimitA(..), CanLimit, LimitType, lim, iterateLim,
+    CanLimitA(..), CanLimit, LimitType, lim, iterateLim, iterateLimA,
     iterateA, mapA, mapAwithPos, zipWithA, zipWithAwithPos, 
     foldlA, mergeInputsA,
     convertFirstA, convertSecondA, flipA
@@ -854,6 +854,14 @@ iterateLim initX intervalFn =
     limListA (iterate intervalFn initX)
 -- TODO: make iterateLim arrow-generic
 
+iterateLimA ::
+        (Arrow to, CanLimitA to a) =>
+        (a `to` a) -> a `to` LimitTypeA to a
+iterateLimA f = proc(x) -> 
+                  do
+                  xs <- iterateA f -< x
+                  l <- limListA -< xs
+                  returnA -< l      
     
 {- Utilities for arrow programming -}
 
