@@ -7,6 +7,7 @@ where
 import AERN2.Num
 
 import Control.Arrow
+import Control.Exception
 
 import AERN2.Net.Strategy.QACached
 
@@ -65,6 +66,12 @@ logisticA c n =
     where
     step = $(exprA[|let [x]=vars in  c * x * (1 - x)|])
     
+logisticWithHookA :: (RealExprA to r) => (r `to` r) -> Rational -> Integer -> r `to` r
+logisticWithHookA hook c n =
+    (foldl1 (<<<) (replicate (int n) step)) 
+    where
+    step = $(exprA[|let [x]=vars in  c * x * (1 - x)|]) >>> hook
+    
 logisticQACached :: Rational -> Integer -> CauchyReal -> CauchyReal
 logisticQACached c n x0 =
     newCRA ([], Nothing, ac2ball)
@@ -86,17 +93,25 @@ logisticQACachedMPBallPrintLog :: Rational -> Integer -> CauchyReal -> Accuracy 
 logisticQACachedMPBallPrintLog c n x0 ac =
     printQANetLogThenResult (logisticQACachedMPBall c n x0 ac)
             
+logisticMPB :: Rational -> Integer -> MPBall -> MPBall
+logisticMPB = logisticA
+
 logisticMPBIterate :: Rational -> Integer -> CauchyReal -> CauchyReal
 logisticMPBIterate c n x0 =
     newCRA ([], Nothing, ac2ball)
     where
     ac2ball ac =
-        snd $ last $ iterateUntilAccurate ac auxP  
-    auxP p = 
-        logisticA c n x0p
+        case last $ iterateUntilAccurate ac (auxP ac) of
+            (_, Just ball) -> ball
+            _ -> error "logisticMPBIterate: failed"  
+    auxP ac p = 
+        logisticWithHookA check c n x0p
         where
-        x0p = cauchyReal2ball x0 ac
-        ac = bits $ prec2integer p
+        x0p = cauchyReal2ball x0 pA
+        pA = bits $ prec2integer p
+        check ball 
+            | getAccuracy ball < ac  = throw LossOfPrecision 
+            | otherwise = ball 
 
 {- Example: naive exponential function on [-1,1] -} 
                                     

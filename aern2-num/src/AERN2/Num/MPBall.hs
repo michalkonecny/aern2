@@ -21,6 +21,8 @@ import qualified Prelude as P
 import AERN2.Num.Operations
 import AERN2.Num.Norm
 
+import Control.Exception
+import System.IO.Unsafe
 import Control.Arrow
 import Math.NumberTheory.Logarithms (integerLog2)
 
@@ -151,15 +153,20 @@ getPrecision (MPBall x _) =
     MP.getPrecision x
 
     
-iterateUntilAccurate :: A.Accuracy -> (Precision -> MPBall) -> [(Precision, MPBall)]
+iterateUntilAccurate :: A.Accuracy -> (Precision -> MPBall) -> [(Precision, Maybe MPBall)]
 iterateUntilAccurate accuracy fn =
-    stopWhenAccurate $ zip ps (map fn ps)
+    stopWhenAccurate $ zip ps (map fnWrap ps)
     where
+    fnWrap p =
+        unsafePerformIO $ 
+            catch (return $! Just $! fn p) 
+                (\e -> let _ = e :: SomeException in return Nothing)
     ps = MP.standardPrecisions
     stopWhenAccurate [] = []
-    stopWhenAccurate ((p, result) : rest)
-        | getAccuracy result >= accuracy = [(p, result)]
-        | otherwise = (p, result) : (stopWhenAccurate rest)
+    stopWhenAccurate ((p, maybeResult) : rest) =
+        case maybeResult of
+            Just result | getAccuracy result >= accuracy -> [(p, maybeResult)]
+            _ -> (p, maybeResult) : (stopWhenAccurate rest)
 
 isNonZero :: MPBall -> Bool
 isNonZero (MPBall x e) =
