@@ -40,16 +40,21 @@ fftTestDirectCR nN ac =
             dftCooleyTukey nN -< x
     input = map rational [1..nN] 
 
-fftTestDirectMPB :: Integer -> Precision -> [(Complex MPBall)]
+fftTestDirectMPB :: Integer -> Precision -> ([(Complex MPBall)], Accuracy)
 fftTestDirectMPB nN p =
-    fftWithInput ()
+    (result, getAccuracyAll result)
     where
+    result = fftWithInput ()
     fftWithInput =
         proc () ->
             do
             x <- complexListNamedA "input" -< input
             dftCooleyTukey nN -< x
-    input = map (integer2BallP p) [1..nN] 
+    input = map (integer2BallP p) [1..nN]
+    getAccuracyAll x =
+        foldl1 min $ map getAccuracyC x
+        where
+        getAccuracyC (r :+ i) = getAccuracy r `min` getAccuracy i 
 
 fftTestCached :: Integer -> Accuracy -> (QANetLog, [(Complex MPBall)])
 fftTestCached nN ac =
