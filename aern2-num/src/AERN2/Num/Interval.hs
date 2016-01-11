@@ -156,6 +156,18 @@ instance (ArrowChoice to, CanAddThisA to a Integer) =>
 instance (ArrowChoice to, CanAddA to Integer a, CanNegSameTypeA to a) =>
     CanSubA to Integer (Interval a)
 
+instance (ArrowChoice to, CanMulA to Integer a) => --TODO: could get rid of arrow choice at the expense of adding CanMinMaxA.
+         CanMulA to Integer (Interval a)           --      but this is potentially less efficient, and is currently not supported
+         where                                     --      by CauchyReal
+         type MulTypeA to Integer (Interval a) = Interval (MulTypeA to Integer a)
+         mulA = proc(n, Interval l r) ->
+                do
+                nl <- mulA -< (n,l)
+                nr <- mulA -< (n,r)
+                case n >= 0 of
+                        True  -> returnA -< Interval nl nr
+                        False -> returnA -< Interval nr nl
+                
 {- TODO: provide also mixed multiplication and division
 
 -}

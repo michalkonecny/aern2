@@ -108,22 +108,29 @@ expLim x = lim (\n -> (sum [(x^k)/(k!) | k <- [0..n]]) +- errorBound (x,n))
 
 {- Newton iteration -}
 
-{- TODO
 newtonTest1 =
-    newton f f' (Interval (cauchyReal 0) (cauchyReal 0))
+    newton f f' (Interval (cauchyReal 1) (cauchyReal 2))
     where
     f x = x*x - 2
     f' x = 2*x 
--}
     
 newton :: 
     (CanSelectFromIntervalA (->) r, CanDivSameTypeA (->) (Interval r),
-     CanLimitA (->) (Interval r), CanNegSameTypeA (->) (Interval r)) 
+     CanLimitA (->) (Interval r), CanNegSameTypeA (->) (Interval r), CanSubSameTypeA (->) (Interval r)) 
      =>
     (Interval r -> Interval r) -> (Interval r -> Interval r) -> 
     Interval r -> LimitType (Interval r)
 newton f f' iX_0 = 
-    iterateLim iX_0 $ \ iX -> let x = singleton (pickAnyA iX) in - (f x)/(f' iX)
+    iterateLim iX_0 $ \ iX -> let x = singleton (pickAnyA iX) in x - (f x)/(f' iX)
+
+newtonTest2 =
+    newtonIt f f' (Interval (cauchyReal 1) (cauchyReal 2))
+    where
+    f x = x*x - 2
+    f' x = 2*x 
+
+newtonIt f f' iX_0 =
+        iterate (\ iX -> let x = singleton (pickAnyA iX) in x - (f x)/(f' iX)) iX_0
     
 {- TODO
 

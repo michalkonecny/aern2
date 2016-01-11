@@ -50,6 +50,13 @@ maybeTrace
 
 type CauchyReal = AsCauchyReal CauchyReal_
 
+--TODO remove?
+
+instance Show CauchyReal where
+        show x = show $ cauchyReal2ball x (bits 53)
+--
+
+
 data CauchyReal_ = 
     CauchyReal_ { cr_name :: Maybe String, cr_seq :: Accuracy -> MPBall } 
 
@@ -743,7 +750,37 @@ instance (CanAsCauchyRealA to r) => CanSineCosineA to (AsCauchyReal r) where
 
 instance (CanAsCauchyRealA to r) => CanSineCosineSameTypeA to (AsCauchyReal r)
 
+{- min and max -}
 
+instance (ArrowChoice to,CanAsCauchyRealA to r,
+         HasOrderA to (AsCauchyReal r) (AsCauchyReal r)) =>
+         CanMinMaxA to (AsCauchyReal r) (AsCauchyReal r) where
+         type MinMaxTypeA to (AsCauchyReal r) (AsCauchyReal r) = AsCauchyReal r
+         maxA = proc(x, y) -> newCRA -< ([], Nothing, findMax x y)
+                 where
+                 findMax x y = proc(acc) ->
+                                do
+                                xApprox <- getAnswerCRA -< (x, acc)
+                                yApprox <- getAnswerCRA -< (y, acc)
+                                case xApprox < yApprox of
+                                        Just True -> returnA -< yApprox
+                                        _         -> returnA -< xApprox
+         minA = proc(x, y) -> newCRA -< ([], Nothing, findMax x y)
+                 where
+                 findMax x y = proc(acc) ->
+                                do
+                                xApprox <- getAnswerCRA -< (x, acc)
+                                yApprox <- getAnswerCRA -< (y, acc)
+                                case xApprox < yApprox of
+                                        Just True -> returnA -< xApprox
+                                        _         -> returnA -< yApprox                               
+
+
+instance (ArrowChoice to,CanAsCauchyRealA to r, HasOrderA to (AsCauchyReal r) (AsCauchyReal r)) => 
+                CanMinMaxThisA to (AsCauchyReal r) (AsCauchyReal r)  
+
+instance (ArrowChoice to,CanAsCauchyRealA to r, HasOrderA to (AsCauchyReal r) (AsCauchyReal r)) => 
+                CanMinMaxSameTypeA to (AsCauchyReal r)         
 
 {- CauchyReal-Integer operations -}
 
@@ -798,7 +835,7 @@ instance (CanAsCauchyRealA to r) => CanDivA to Integer (AsCauchyReal r) where
     type DivTypeA to Integer (AsCauchyReal r) = (AsCauchyReal r)
     divA =
         proc (n,r) ->
-            unaryOpWithPureArg "/" div getInitQ1T -< (r,n) 
+            unaryOpWithPureArg "/" (flip div) getInitQ1T -< (r,n) 
             -- TODO: wrap div with an operation checking for division by zero to avoid crashes
         where
         getInitQ1T =
@@ -1023,9 +1060,4 @@ instance
     divA = proc (r,b) -> mulA -< (r,1/b)
 
 instance (CanAsCauchyRealA to r) => CanDivByA to MPBall (AsCauchyReal r)
-                        
-{- Limits -}
-
-instance CanLimitA (->) MPBall where
-        type LimitTypeA (->) MPBall = CauchyReal
-        limA = undefined             
+                                
