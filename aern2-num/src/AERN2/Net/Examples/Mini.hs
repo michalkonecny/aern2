@@ -128,15 +128,44 @@ newtonTest1 =
     where
     f x = x*x - 2
     f' x = 2*x 
+
+newtonTestA =
+    newtonA f f' (Interval (cauchyReal 1) (cauchyReal 2))
+    where
+    f = proc(x) -> do
+                   sq <- mulA -< (x,x)
+                   diff <- subA -< (sq,2)
+                   returnA -< diff
+    f' = proc(x) -> do
+                    tx <- mulA -< (2,x)
+                    returnA -< tx
     
 newton :: 
     (CanSelectFromIntervalA (->) r, CanDivSameTypeA (->) (Interval r),
-     CanLimitA (->) (Interval r), CanNegSameTypeA (->) (Interval r), CanSubSameTypeA (->) (Interval r)) 
+     CanLimitA (->) (Interval r), CanSubSameTypeA (->) (Interval r)) 
      =>
     (Interval r -> Interval r) -> (Interval r -> Interval r) -> 
     Interval r -> LimitType (Interval r)
 newton f f' iX_0 = 
     iterateLim iX_0 $ \ iX -> let x = singleton (pickAnyA iX) in x - (f x)/(f' iX)
+
+newtonA ::
+     (Arrow to, CanSelectFromIntervalA to r, CanDivSameTypeA to (Interval r),
+     CanLimitA to (Interval r), CanSubSameTypeA to (Interval r)) 
+     =>
+    (Interval r `to` Interval r) -> (Interval r `to` Interval r) -> 
+    Interval r `to` LimitTypeA to (Interval r)
+newtonA f f' = iterateLimA funA
+               where
+               funA = proc(iX) ->
+                      do
+                      p <- pickAnyA -< iX
+                      let x = singleton p
+                      fx <- f -< x
+                      f'iX <- f' -< iX
+                      quot <- divA -< (fx,f'iX)
+                      it <- subA -< (x,quot)
+                      returnA -< it
 
 newtonTest2 =
     newtonIt f f' (Interval (cauchyReal 1) (cauchyReal 2))
