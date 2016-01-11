@@ -1,6 +1,6 @@
 {-# LANGUAGE ExistentialQuantification, GeneralizedNewtypeDeriving, TypeOperators, FlexibleContexts #-}
 {-| Types for cached execution of general QA-networks. -}
-module AERN2.Net.Execution.QACached.Basics where
+module AERN2.Net.Strategy.QACached.Basics where
 
 import AERN2.Num
 

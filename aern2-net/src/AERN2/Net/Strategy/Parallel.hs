@@ -1,5 +1,5 @@
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, GeneralizedNewtypeDeriving, FlexibleContexts #-}
-module AERN2.Net.Execution.Parallel where
+module AERN2.Net.Strategy.Parallel where
 
 {- TODO: Adapt to unified arrow operation definitions
 

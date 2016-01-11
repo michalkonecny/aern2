@@ -38,12 +38,5 @@ library
                    AERN2.Net.Examples.FFT,
                    AERN2.Net.Examples.Mini,
                    AERN2.Net.Examples.Root,
-                   AERN2.Net.Execution.Direct,
-                   AERN2.Net.Execution.Parallel,
-                   AERN2.Net.Execution.QACached,
-                   AERN2.Net.Execution.QACached.Basics,
-                   AERN2.Net.Execution.QACached.CauchyReal,
-                   AERN2.Net.Execution.QACached.Complex,
-                   AERN2.Net.Spec,
-                   AERN2.Net.Spec.Arrow
+                   AERN2.Net.RealFunction
 

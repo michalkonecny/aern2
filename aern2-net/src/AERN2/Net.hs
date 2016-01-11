@@ -1,13 +1,11 @@
 module AERN2.Net 
 (
     module AERN2.Num,
-    module AERN2.Net.Spec,
-    module AERN2.Net.Execution.Direct,
-    module AERN2.Net.Execution.QACached
+    module AERN2.Net.Strategy.Direct,
+    module AERN2.Net.Strategy.QACached
 )
 where
 
 import AERN2.Num
-import AERN2.Net.Spec
-import AERN2.Net.Execution.Direct
-import AERN2.Net.Execution.QACached
+import AERN2.Net.Strategy.Direct
+import AERN2.Net.Strategy.QACached

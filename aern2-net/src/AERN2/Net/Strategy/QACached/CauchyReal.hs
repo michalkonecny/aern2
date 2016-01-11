@@ -1,6 +1,6 @@
 {-# LANGUAGE TypeSynonymInstances, FlexibleInstances, FlexibleContexts #-}
 {-| Concrete types and instances for QA-networks with real numbers -}
-module AERN2.Net.Execution.QACached.CauchyReal 
+module AERN2.Net.Strategy.QACached.CauchyReal 
 (
     QAP_CauchyReal, QACached_CauchyReal
 )
@@ -9,9 +9,8 @@ where
 import AERN2.Num
 
 import Control.Arrow
-import AERN2.Net.Spec.Arrow
 
-import AERN2.Net.Execution.QACached.Basics 
+import AERN2.Net.Strategy.QACached.Basics 
 
 import qualified Data.Map as Map
 
@@ -92,6 +91,5 @@ instance CanCombineCRsA QACachedA CauchyReal_ QACached_CauchyReal_ where
 
 instance CanCombineCRwithA QACachedA QACached_CauchyReal_ CauchyReal_
 
-instance RealA QACachedA QACached_CauchyReal
 
 

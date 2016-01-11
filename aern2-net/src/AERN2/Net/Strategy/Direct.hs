@@ -1,16 +1,15 @@
 {-# LANGUAGE CPP, FlexibleInstances #-}
-module AERN2.Net.Execution.Direct 
+module AERN2.Net.Strategy.Direct 
 (
-    _anet0directCauchy, _anet3directCauchy,
     Interval(..), rati2MPBall, UnaryFnMPBall, UnaryFnCR
 )
 where
 
 import AERN2.Num
 
-import AERN2.Net.Spec.Arrow
+import AERN2.Net.RealFunction
 
-import qualified Data.Map as Map
+--import qualified Data.Map as Map
 
 import Debug.Trace (trace)
 
@@ -24,16 +23,6 @@ maybeTrace
     | otherwise = const id
 
 
-_anet0directCauchy :: Integer -> MPBall
-_anet0directCauchy p =
-    cauchyReal2ball (_anet0 ()) (bits p)
-
-_anet3directCauchy :: (Rational, Rational, Rational) -> Integer -> MPBall
-_anet3directCauchy (x,y,z) p =
-    cauchyReal2ball (_anet3 inputs) (bits p)
-    where
-    inputs = Map.fromList $ zip ["x","y","z"] $ map cauchyReal [x,y,z]
-
 {- Direct evaluation using Rational -}
 
 instance ArrowConvert [Rational] (->) Rational [Rational] (->) Rational where
@@ -41,32 +30,20 @@ instance ArrowConvert [Rational] (->) Rational [Rational] (->) Rational where
 
 {- Direct evaluation using CauchyReal -}
 
-instance RealA (->) CauchyReal
-
 instance ArrowConvert [CauchyReal] (->) CauchyReal [CauchyReal] (->) CauchyReal where
     arrow2arrow = id
 
 {- Direct evaluation using MPBall -}
-
-instance RealA (->) MPBall
 
 instance ArrowConvert [MPBall] (->) MPBall [MPBall] (->) MPBall where
     arrow2arrow = id
 
 {- Direct evaluation using Complex CauchyReal -}
 
-instance RealA (->) (Complex CauchyReal)
-
-instance ComplexA (->) (Complex CauchyReal)
-
 instance ArrowConvert [Complex CauchyReal] (->) (Complex CauchyReal) [(Complex CauchyReal)] (->) (Complex CauchyReal) where
     arrow2arrow = id
 
 {- Direct evaluation using Complex MPBall -}
-
-instance RealA (->) (Complex MPBall)
-
-instance ComplexA (->) (Complex MPBall)
 
 instance ArrowConvert [Complex MPBall] (->) (Complex MPBall) [(Complex MPBall)] (->) (Complex MPBall) where
     arrow2arrow = id

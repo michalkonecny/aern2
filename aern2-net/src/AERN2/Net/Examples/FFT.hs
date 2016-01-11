@@ -13,8 +13,8 @@ import AERN2.Num
 --import AERN2.Net.Spec.Arrow
 import Control.Arrow
 
-import AERN2.Net.Execution.Direct ()
-import AERN2.Net.Execution.QACached
+import AERN2.Net.Strategy.Direct ()
+import AERN2.Net.Strategy.QACached
 
 {-
 import Debug.Trace (trace)

@@ -3,10 +3,10 @@ module AERN2.Net.Examples.Root where
 
 import AERN2.Num
 
-import AERN2.Net.Spec.Arrow
+import AERN2.Net.RealFunction
 import Control.Arrow
 
-import AERN2.Net.Execution.Direct
+import AERN2.Net.Strategy.Direct
 
 import Debug.Trace (trace)
 

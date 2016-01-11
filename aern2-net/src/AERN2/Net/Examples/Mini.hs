@@ -8,7 +8,7 @@ import AERN2.Num
 
 import Control.Arrow
 
-import AERN2.Net.Execution.QACached
+import AERN2.Net.Strategy.QACached
 
 {--- a very simple real expression ---}
 
