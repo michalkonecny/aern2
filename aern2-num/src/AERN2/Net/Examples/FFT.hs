@@ -2,8 +2,9 @@
 module AERN2.Net.Examples.FFT 
 (
     fftTestDirectCR,
+    fftTestCachedCR,
     fftTestDirectMPB,
-    fftTestCached,
+    fftTestMPBiterate,
     dftCooleyTukey
 )
 where
@@ -56,8 +57,28 @@ fftTestDirectMPB nN p =
         where
         getAccuracyC (r :+ i) = getAccuracy r `min` getAccuracy i 
 
-fftTestCached :: Integer -> Accuracy -> (QANetLog, [(Complex MPBall)])
-fftTestCached nN ac =
+fftTestMPBiterate :: Integer -> Accuracy -> [(Complex MPBall)]
+fftTestMPBiterate nN ac =
+    case last $ iterateUntilOK (\x -> getAccuracyAll x >= ac) (auxP ac) of
+        (_, Just ball) -> ball
+        _ -> error "fftTestMPBiterate: failed"  
+    where
+    auxP _ac p =
+        fftWithInput ()
+        where
+        fftWithInput =
+            proc () ->
+                do
+                x <- complexListNamedA "input" -< input
+                dftCooleyTukey nN -< x
+        input = map (integer2BallP p) [1..nN]
+    getAccuracyAll x =
+        foldl1 min $ map getAccuracyC x
+        where
+        getAccuracyC (r :+ i) = getAccuracy r `min` getAccuracy i 
+
+fftTestCachedCR :: Integer -> Accuracy -> (QANetLog, [(Complex MPBall)])
+fftTestCachedCR nN ac =
     executeQACachedA $ proc () ->
         do
         rs <- (fftWithInput :: QACachedA () [QACached_Complex]) -< ()

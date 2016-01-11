@@ -7,7 +7,7 @@ module AERN2.Num.MPBall
      HasMPBallsA, HasMPBalls,
      CanBeMPBallA, mpBallA, mpBallNamedA, mpBallsA, mpBallsNamedA, CanBeMPBall, mpBall, mpBalls,
      getPrecision, MP.standardPrecisions, MP.Precision, MP.prec, MP.prec2integer,
-     iterateUntilAccurate,
+     iterateUntilAccurate, iterateUntilOK,
      isNonZero,
      toIntegerUp, toIntegerDown, toRationalUp, toRationalDown,
      integer2Ball, integer2BallP,  
@@ -152,9 +152,12 @@ getPrecision :: MPBall -> Precision
 getPrecision (MPBall x _) =
     MP.getPrecision x
 
-    
+
 iterateUntilAccurate :: A.Accuracy -> (Precision -> MPBall) -> [(Precision, Maybe MPBall)]
-iterateUntilAccurate accuracy fn =
+iterateUntilAccurate ac = iterateUntilOK (\result -> getAccuracy result >= ac) 
+
+iterateUntilOK :: (a -> Bool) -> (Precision -> a) -> [(Precision, Maybe a)]
+iterateUntilOK isOK fn =
     stopWhenAccurate $ zip ps (map fnWrap ps)
     where
     fnWrap p =
@@ -165,7 +168,7 @@ iterateUntilAccurate accuracy fn =
     stopWhenAccurate [] = []
     stopWhenAccurate ((p, maybeResult) : rest) =
         case maybeResult of
-            Just result | getAccuracy result >= accuracy -> [(p, maybeResult)]
+            Just result | isOK result -> [(p, maybeResult)]
             _ -> (p, maybeResult) : (stopWhenAccurate rest)
 
 isNonZero :: MPBall -> Bool
