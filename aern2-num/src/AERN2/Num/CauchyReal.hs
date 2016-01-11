@@ -128,7 +128,7 @@ class (ArrowChoice to, SupportsSenderIdA to r) => CanCreateAsCauchyRealA to r wh
     newCRA :: ([SenderId to r], Maybe String, Accuracy `to` MPBall) `to` AsCauchyReal r
 
 -- TODO: this should move to a general QA module
-class (ArrowLoop to) => SupportsSenderIdA to r where
+class (Arrow to) => SupportsSenderIdA to r where
     type SenderId to r
 
 class (SupportsSenderIdA to r) => HasSenderIdA to r where
@@ -138,16 +138,16 @@ class (SupportsSenderIdA to r) => HasSenderIdA to r where
     
 instance CanAsCauchyRealA (->) CauchyReal_
 
-instance (ArrowChoice to, ArrowLoop to) => CanReadAsCauchyRealA to CauchyReal_ where
+instance (ArrowChoice to, Arrow to) => CanReadAsCauchyRealA to CauchyReal_ where
     getAnswerCRA = arr $ \ (AsCauchyReal r,ac) -> cr_seq r ac
     getNameCRA = arr $ cr_name . unAsCauchyReal 
 
 instance CanCreateAsCauchyRealA (->) CauchyReal_ where
     newCRA (_, name, ac2b) = AsCauchyReal $ CauchyReal_ name ac2b
 
-instance (ArrowLoop to) => SupportsSenderIdA to CauchyReal_ where
+instance (Arrow to) => SupportsSenderIdA to CauchyReal_ where
     type SenderId to CauchyReal_ = ()
-instance (ArrowLoop to) => HasSenderIdA to CauchyReal_ where
+instance (Arrow to) => HasSenderIdA to CauchyReal_ where
     getSenderIdA = arr $ const ()
 
 instance SupportsSenderIdA to r => SupportsSenderIdA to (AsCauchyReal r) where
@@ -382,7 +382,7 @@ unaryOp name op getInitQ1 =
 
 unaryOpWithPureArg ::
     (CanReadAsCauchyRealA to r1, CanCreateAsCauchyRealA to r, 
-     SenderId to r1 ~ SenderId to r) 
+     SenderId to r1 ~ SenderId to r, Show t) 
     =>
     String ->
     (MPBall -> t -> MPBall) -> 
@@ -392,7 +392,7 @@ unaryOpWithPureArg name op getInitQ1T =
     proc (r1, t) ->
         do
         r1Id <- getSenderIdA -< r1
-        newCRA -< ([r1Id], Just name, ac2b r1 t)
+        newCRA -< ([r1Id], Just (name ++ "(" ++ show t ++ ")"), ac2b r1 t)
     where
     ac2b r1 t = proc ac ->
         do

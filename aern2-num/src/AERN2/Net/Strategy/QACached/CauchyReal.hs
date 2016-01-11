@@ -56,9 +56,9 @@ instance CanCreateAsCauchyRealA QACachedA QACached_CauchyReal_ where
             valueId <- newId  QAP_CauchyReal (sources, name, runKleisli ac2b)
             return $ AsCauchyReal $ QACached_CauchyReal_ name valueId 
 
-instance (ArrowLoop to) => SupportsSenderIdA to QACached_CauchyReal_ where
+instance (Arrow to) => SupportsSenderIdA to QACached_CauchyReal_ where
     type SenderId to QACached_CauchyReal_ = ValueId
-instance (ArrowLoop to) => HasSenderIdA to QACached_CauchyReal_ where
+instance (Arrow to) => HasSenderIdA to QACached_CauchyReal_ where
     getSenderIdA =
         proc r -> returnA -< cachedCR_id r
 
