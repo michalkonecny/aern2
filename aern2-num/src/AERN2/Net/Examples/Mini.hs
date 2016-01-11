@@ -17,12 +17,12 @@ example0 :: CauchyReal -> CauchyReal
 example0 x = sqrt(x) + x
 
 example0directA ::
-    (RealExprA to r) => r `to` r
+    (ArrowReal to r) => r `to` r
 example0directA =
     addA <<< first sqrtA <<< arr (\x -> (x,x))
 
 example0procA ::
-    (RealExprA to r) => r `to` r
+    (ArrowReal to r) => r `to` r
 example0procA = 
     proc x ->
         do
@@ -30,7 +30,7 @@ example0procA =
         addA -< (temp1, x)
 
 example0exprA ::
-    (RealExprA to r) => r `to` r
+    (ArrowReal to r) => r `to` r
 example0exprA =
     $(exprA[|let [x] = vars in sqrt(x) + x|]) 
 
@@ -49,7 +49,7 @@ example0directA_TestCached ac =
 twiddle :: (Integer, Integer) -> Complex CauchyReal
 twiddle(k,n) =  exp(-2*k*complex_i*pi/n)
 
-twiddleA :: (RealPredA to r) => (Integer, Integer) -> () `to` (Complex r)
+twiddleA :: (ArrowReal to r) => (Integer, Integer) -> () `to` (Complex r)
 twiddleA(k,n) = $(exprA[| let [i]=vars in exp(-2*k*i*pi/n)|]) <<< complex_iA
 
 {--- the logistic map ---}
@@ -60,13 +60,13 @@ logisticNoA c n x0 =
     where
     step x = c * x * (1 - x)
 
-logisticA :: (RealExprA to r) => Rational -> Integer -> r `to` r
+logisticA :: (ArrowReal to r) => Rational -> Integer -> r `to` r
 logisticA c n =
     (foldl1 (<<<) (replicate (int n) step)) 
     where
     step = $(exprA[|let [x]=vars in  c * x * (1 - x)|])
     
-logisticWithHookA :: (RealExprA to r) => (r `to` r) -> Rational -> Integer -> r `to` r
+logisticWithHookA :: (ArrowReal to r) => (r `to` r) -> Rational -> Integer -> r `to` r
 logisticWithHookA hook c n =
     (foldl1 (<<<) (replicate (int n) step)) 
     where

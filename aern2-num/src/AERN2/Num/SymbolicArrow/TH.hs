@@ -58,7 +58,7 @@ predA_ varQualifiedName expM =
     let (eWithVars, varNames) = getVarsAndFillInExpr varQualifiedName e []
     eA <- [| (arr (\ $(varTupleP varNames) -> Map.fromList $(varMapList varNames)))  >>> (realPred2arrow ($(return eWithVars))) |]
     _ <- varTupleP [] -- useless, only here to avoid an erroneous unused warning
-    eT <- [t| (RealPredA to r) => to $(inputType varNames [t|r|]) (EqCompareTypeA to r r)  |]
+    eT <- [t| (RealExprA to r) => to $(inputType varNames [t|r|]) (EqCompareTypeA to r r)  |]
     return $ SigE eA eT
     where
     varMapList varNames =

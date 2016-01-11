@@ -102,13 +102,13 @@ toComplexA =
 
 {- Comparison of complex numbers -}
 
-instance (RealPredA to r) => HasEqA to (Complex r) (Complex r) where
+instance (RealExprA to r) => HasEqA to (Complex r) (Complex r) where
     type EqCompareTypeA to (Complex r) (Complex r) = EqCompareTypeA to r r 
     equalToA =
         binaryRel $(predAinternal [| let [r1,i1,r2,i2] = vars in r1 == r2 && i1 == i2|])
         
 instance
-    (RealPredA to r) =>
+    (RealExprA to r) =>
     HasOrderA to (Complex r) (Complex r) 
     where
     type OrderCompareTypeA to (Complex r) (Complex r) = OrderCompareTypeA to r r 
@@ -118,20 +118,20 @@ instance
         binaryRel $(predAinternal [|let [r1,i1,r2,i2] = vars in (r1 <= r2 && i1 <= i2)|])
 
 instance 
-    (RealPredA to r) =>
+    (RealExprA to r) =>
     HasEqA to (Complex r) Integer 
     where
     type EqCompareTypeA to (Complex r) Integer = EqCompareTypeA to (Complex r) (Complex r)
     equalToA = convertSecondA equalToA
 
 instance 
-    (RealPredA to r) =>
+    (RealExprA to r) =>
     HasEqA to Integer (Complex r) where
     type EqCompareTypeA to Integer (Complex r) = EqCompareTypeA to (Complex r) (Complex r)
     equalToA = convertFirstA equalToA
 
 instance
-    (RealPredA to r) =>
+    (RealExprA to r) =>
     HasOrderA to (Complex r) Integer 
     where
     type OrderCompareTypeA to (Complex r) Integer = OrderCompareTypeA to (Complex r) (Complex r)
@@ -139,7 +139,7 @@ instance
     leqA = convertSecondA leqA
 
 instance
-    (RealPredA to r) =>
+    (RealExprA to r) =>
     HasOrderA to Integer (Complex r) 
     where
     type OrderCompareTypeA to Integer (Complex r) = OrderCompareTypeA to (Complex r) (Complex r)
@@ -147,20 +147,20 @@ instance
     leqA = convertFirstA leqA
 
 instance 
-    (RealPredA to r) =>
+    (RealExprA to r) =>
     HasEqA to (Complex r) Rational 
     where
     type EqCompareTypeA to (Complex r) Rational = EqCompareTypeA to (Complex r) (Complex r)
     equalToA = convertSecondA equalToA
 
 instance 
-    (RealPredA to r) =>
+    (RealExprA to r) =>
     HasEqA to Rational (Complex r) where
     type EqCompareTypeA to Rational (Complex r) = EqCompareTypeA to (Complex r) (Complex r)
     equalToA = convertFirstA equalToA
 
 instance
-    (RealPredA to r) =>
+    (RealExprA to r) =>
     HasOrderA to (Complex r) Rational 
     where
     type OrderCompareTypeA to (Complex r) Rational = OrderCompareTypeA to (Complex r) (Complex r)
@@ -168,7 +168,7 @@ instance
     leqA = convertSecondA leqA
 
 instance
-    (RealPredA to r) =>
+    (RealExprA to r) =>
     HasOrderA to Rational (Complex r) 
     where
     type OrderCompareTypeA to Rational (Complex r) = OrderCompareTypeA to (Complex r) (Complex r)
@@ -176,20 +176,20 @@ instance
     leqA = convertFirstA leqA
 
 instance 
-    (RealPredA to r) =>
+    (RealExprA to r) =>
     HasEqA to (Complex r) CauchyReal 
     where
     type EqCompareTypeA to (Complex r) CauchyReal = EqCompareTypeA to (Complex r) (Complex r)
     equalToA = convertSecondA equalToA
 
 instance 
-    (RealPredA to r) =>
+    (RealExprA to r) =>
     HasEqA to CauchyReal (Complex r) where
     type EqCompareTypeA to CauchyReal (Complex r) = EqCompareTypeA to (Complex r) (Complex r)
     equalToA = convertFirstA equalToA
 
 instance
-    (RealPredA to r) =>
+    (RealExprA to r) =>
     HasOrderA to (Complex r) CauchyReal 
     where
     type OrderCompareTypeA to (Complex r) CauchyReal = OrderCompareTypeA to (Complex r) (Complex r)
@@ -197,7 +197,7 @@ instance
     leqA = convertSecondA leqA
 
 instance
-    (RealPredA to r) =>
+    (RealExprA to r) =>
     HasOrderA to CauchyReal (Complex r) 
     where
     type OrderCompareTypeA to CauchyReal (Complex r) = OrderCompareTypeA to (Complex r) (Complex r)
@@ -327,10 +327,9 @@ instance
      RealExprA to r2, CanDivByA to r1 r2) 
     => 
     CanAddMulDivScalarA to (Complex r1) (Complex r2)
-instance (RealPredA to r) => RingA to (Complex r)
-instance (RealPredA to r) => FieldA to (Complex r)
-instance (RealPredA to r) => RealExprA to (Complex r)
-instance (RealPredA to r) => RealPredA to (Complex r)
+instance (RealExprA to r) => RingA to (Complex r)
+instance (RealExprA to r) => FieldA to (Complex r)
+instance (RealExprA to r) => RealExprA to (Complex r)
 
 {- (Complex r)-Integer operations -}
 

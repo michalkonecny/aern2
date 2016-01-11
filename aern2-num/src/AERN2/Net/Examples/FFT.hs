@@ -82,7 +82,7 @@ fftTestCached nN ac =
     * The input list has exactly @N@ elements.
 -}
 dftCooleyTukey :: 
-    (RealPredA to r)
+    (RealExprA to r)
     =>
     Integer {-^ @N@ -} -> 
     [Complex r] `to` [Complex r]
@@ -103,7 +103,7 @@ dftCooleyTukey nN = ditfft2 nN 1
     * The input list has at least @s*(N-1) + 1@ elements.
 -}
 ditfft2 :: 
-    (RealPredA to r)
+    (RealExprA to r)
     =>
     Integer {-^ @N@ -} -> 
     Integer {-^ @s@ -} ->

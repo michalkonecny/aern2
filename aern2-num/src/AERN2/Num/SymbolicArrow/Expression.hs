@@ -1,6 +1,6 @@
-{-# LANGUAGE Arrows, GeneralizedNewtypeDeriving, OverloadedStrings, TypeOperators, FlexibleContexts, TypeSynonymInstances, FlexibleInstances, Rank2Types, UndecidableInstances #-}
+{-# LANGUAGE Arrows, GeneralizedNewtypeDeriving, OverloadedStrings, TypeOperators, FlexibleContexts, TypeSynonymInstances, FlexibleInstances, Rank2Types, UndecidableInstances, ConstraintKinds #-}
 module AERN2.Num.SymbolicArrow.Expression 
-(RealExprA, RealPredA, RealExpr, RealPred, realExpr2arrow, realPred2arrow, var)
+(ArrowReal, RealExprA, RealExpr, RealPred, realExpr2arrow, realPred2arrow, var)
 where
 
 import AERN2.Num.Operations
@@ -20,7 +20,7 @@ data RealExpr' expr
 
 
 data RealPred' pred
-    = RRel (Maybe String) (forall to r. (RealPredA to r) => [r] `to` (EqCompareTypeA to r r)) [RealExpr]
+    = RRel (Maybe String) (forall to r. (RealExprA to r) => [r] `to` (EqCompareTypeA to r r)) [RealExpr]
 -- TODO: use RIR also in relations 
     | BFunct (Maybe String) (forall to b. (BoolA to b) => [b] `to` b) [pred]
 
@@ -39,26 +39,19 @@ class
      CanSubA to CauchyReal r,  SubTypeA to CauchyReal r ~ r,
      CanDivA to Integer r,  DivTypeA to Integer r ~ r,
      CanDivA to Rational r,  DivTypeA to Rational r ~ r, 
-     CanDivA to CauchyReal r,  DivTypeA to CauchyReal r ~ r
+     CanDivA to CauchyReal r,  DivTypeA to CauchyReal r ~ r,
+     OrderCompareTypeA to r r ~ EqCompareTypeA to r r
      )
     => 
     RealExprA to r 
 
-class
-    (RealExprA to r,
-     OrderCompareTypeA to r r ~ EqCompareTypeA to r r)
-    =>
-    RealPredA to r
+type ArrowReal = RealExprA
 
 instance 
     (CanCombineCRwithA to r r, CanCombineCRwithA to r CauchyReal_) => 
     RealExprA to (AsCauchyReal r)
-instance
-    (CanCombineCRwithA to r r, CanCombineCRwithA to r CauchyReal_) => 
-    RealPredA to (AsCauchyReal r)
 
 instance RealExprA (->) MPBall
-instance RealPredA (->) MPBall
 
 instance ConvertibleA (->) CauchyReal MPBall where
     convertA =
@@ -234,7 +227,7 @@ divRIR =
             (RIR_Real a, RIR_Real b) -> do r <- divA -< (a,b); returnA -< RIR_Real r 
 
 realPred2arrow :: 
-    (RealPredA to r) => RealPred -> ((VarMap r) `to` (EqCompareTypeA to r r))
+    (RealExprA to r) => RealPred -> ((VarMap r) `to` (EqCompareTypeA to r r))
 realPred2arrow (RealPred predicate) =
     case predicate of
         RRel _maybeName fnA args ->
