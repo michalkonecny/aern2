@@ -125,7 +125,7 @@ newton ::
 newton f f' iX_0 = 
     iterateLim iX_0 $ \ iX -> let x = singleton (pickAnyA iX) in - (f x)/(f' iX)
     
-{-
+{- TODO
 
 newtonA :: 
     (CanSelectFromIntervalA (->) r, CanDivSameTypeA (->) (Interval r),
