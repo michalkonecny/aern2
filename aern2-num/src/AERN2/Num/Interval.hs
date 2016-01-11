@@ -156,6 +156,18 @@ instance (ArrowChoice to, CanAddThisA to a Integer) =>
 instance (ArrowChoice to, CanAddA to Integer a, CanNegSameTypeA to a) =>
     CanSubA to Integer (Interval a)
 
+instance (ArrowChoice to, CanMulA to Integer a) => --TODO: could get rid of arrow choice at the expense of adding CanMinMaxA.
+         CanMulA to Integer (Interval a)           --      but this is potentially less efficient, and is currently not supported
+         where                                     --      by CauchyReal
+         type MulTypeA to Integer (Interval a) = Interval (MulTypeA to Integer a)
+         mulA = proc(n, Interval l r) ->
+                do
+                nl <- mulA -< (n,l)
+                nr <- mulA -< (n,r)
+                case n >= 0 of
+                        True  -> returnA -< Interval nl nr
+                        False -> returnA -< Interval nr nl
+                
 {- TODO: provide also mixed multiplication and division
 
 -}
@@ -212,8 +224,24 @@ instance (Arrow to, CanAsCauchyRealA to a) => CanLimitA to (Interval (AsCauchyRe
                         if getAccuracy b >= acc then
                                        returnA -< b
                                        else
-                                       findAccurate getApprox (n + 1) -< (acc)                      
-
+                                       findAccurate getApprox (n + 1) -< (acc)     
+        limListA = proc(xs) -> newCRA -< ([],Nothing, fn xs)
+                where
+                fn xs =
+                        proc acc ->
+                                do
+                                bs <- mapA getBallA -< zip xs (repeat $ acc + 1)
+                                returnA -< findAccurate acc bs
+                getBallA = proc(Interval l r,acc) -> 
+                        do
+                        lApprox <- getAnswerCRA -< (l,acc)
+                        rApprox <- getAnswerCRA -< (r,acc)
+                        returnA -< endpoints2Ball lApprox rApprox
+                findAccurate _ []     = undefined
+                findAccurate acc (x:xs) = if getAccuracy x >= acc then
+                                                x
+                                          else
+                                                findAccurate acc xs      
 {- MPBall plus-minus -}
 
 instance (Arrow to) => CanPlusMinusA to MPBall MPBall where

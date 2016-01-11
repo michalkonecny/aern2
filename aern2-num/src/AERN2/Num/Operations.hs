@@ -851,7 +851,7 @@ iterateLim ::
     (CanLimitA (->) a) => 
     a -> (a -> a) -> LimitType a
 iterateLim initX intervalFn =
-    lim (\n -> ((iterate intervalFn) initX) !! (int n))
+    limListA (iterate intervalFn initX)
 -- TODO: make iterateLim arrow-generic
 
     
