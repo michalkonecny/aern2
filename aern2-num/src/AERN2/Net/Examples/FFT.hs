@@ -81,7 +81,7 @@ fftTestCachedCR :: Integer -> Accuracy -> (QANetLog, [(Complex MPBall)])
 fftTestCachedCR nN ac =
     executeQACachedA $ proc () ->
         do
-        rs <- (fftWithInput :: QACachedA () [QACached_Complex]) -< ()
+        rs <- (fftWithInput :: QACachedA () [Complex QACached_CauchyReal]) -< ()
         mapA getComplexAnswer -< rs
     where
     getComplexAnswer = proc (r :+ i) ->

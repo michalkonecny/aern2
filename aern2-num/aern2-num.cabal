@@ -50,7 +50,6 @@ library
                    AERN2.Net.Strategy.QACached,
                    AERN2.Net.Strategy.QACached.Basics,
                    AERN2.Net.Strategy.QACached.CauchyReal,
-                   AERN2.Net.Strategy.QACached.Complex,
                    AERN2.Num.Accuracy,
                    AERN2.Num.CauchyReal,
                    AERN2.Num.Complex,

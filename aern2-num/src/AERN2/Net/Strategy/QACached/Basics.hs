@@ -1,4 +1,4 @@
-{-# LANGUAGE ExistentialQuantification, GeneralizedNewtypeDeriving, TypeOperators, FlexibleContexts #-}
+{-# LANGUAGE CPP, ExistentialQuantification, GeneralizedNewtypeDeriving, TypeOperators, FlexibleContexts #-}
 {-| Types for cached execution of general QA-networks. -}
 module AERN2.Net.Strategy.QACached.Basics where
 
@@ -10,6 +10,19 @@ import qualified Data.Map as Map
 import Control.Monad.State
 
 import Unsafe.Coerce
+
+import Debug.Trace (trace)
+
+#if 1
+shouldTrace :: Bool
+shouldTrace = False
+--shouldTrace = True
+
+maybeTrace :: String -> a -> a
+maybeTrace 
+    | shouldTrace = trace
+    | otherwise = const id
+#endif
 
 type QACachedA = Kleisli QACachedM
 type QACachedM = State QANetInfo
@@ -96,6 +109,7 @@ newtype ValueId = ValueId Integer
 
 newId :: (QAProtocol p) => p -> ([ValueId], Maybe String, Q p -> (QACachedM (A p))) -> QACachedM ValueId
 newId p (sources, name, q2a) =
+    maybeTrace ("newId: " ++ show name) $
     do
     ni <- get
     let (i, ni') = aux ni
@@ -120,6 +134,7 @@ newId p (sources, name, q2a) =
 
 getAnswer :: (QAProtocol p) => p -> (ValueId, Q p) -> QACachedM (A p)
 getAnswer p (valueId, q) =
+    maybeTrace ("getAnswer: q = " ++ show q) $
     do
     ni <- get
     let ni' = logQuery ni

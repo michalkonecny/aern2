@@ -208,7 +208,7 @@ instance (Arrow to, CanAsCauchyRealA to a, CanCombineCRsA to a a,
                                       else
                                         findAccurate (n + 1) f acc-}
         
-instance (Arrow to, CanAsCauchyRealA to a) => CanLimitA to (Interval (AsCauchyReal a)) where
+instance (CanAsCauchyRealA to a) => CanLimitA to (Interval (AsCauchyReal a)) where
     type LimitTypeA to (Interval (AsCauchyReal a)) = AsCauchyReal a
     limListA = proc(xs) -> newCRA -< ([],Nothing, fn xs)
         where
@@ -221,9 +221,9 @@ instance (Arrow to, CanAsCauchyRealA to a) => CanLimitA to (Interval (AsCauchyRe
             lApprox <- getAnswerCRA -< (l,acc)
             rApprox <- getAnswerCRA -< (r,acc)
             returnA -< endpoints2Ball lApprox rApprox
-        findAccurate acc (x:xs) 
-            | getAccuracy x >= acc = x
-            | otherwise = findAccurate acc xs      
+        findAccurate acc (b:bs) 
+            | getAccuracy b >= acc = b
+            | otherwise = findAccurate acc bs      
         findAccurate _ [] = error "internal error in AERN2.Num.Interval.limListA"
 
 {- MPBall plus-minus -}
