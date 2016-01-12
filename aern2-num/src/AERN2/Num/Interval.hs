@@ -209,39 +209,23 @@ instance (Arrow to, CanAsCauchyRealA to a, CanCombineCRsA to a a,
                                         findAccurate (n + 1) f acc-}
         
 instance (Arrow to, CanAsCauchyRealA to a) => CanLimitA to (Interval (AsCauchyReal a)) where
-        type LimitTypeA to (Interval (AsCauchyReal a)) = AsCauchyReal a
-        limA = proc(getApprox) -> newCRA -< ([],Nothing, findAccurate getApprox 0)
-                where
-                getApproxBallA getApprox = proc (n,acc1) ->
-                                do
-                                let (Interval l r) = getApprox n
-                                lApprox <- getAnswerCRA -< (l,acc1)
-                                rApprox <- getAnswerCRA -< (r,acc1) 
-                                returnA -< endpoints2Ball lApprox rApprox
-                findAccurate getApprox n = proc(acc) ->
-                        do
-                        b <- getApproxBallA getApprox -< (n, acc+1) -- TODO more clever strategy than "acc + 1"?
-                        if getAccuracy b >= acc then
-                                       returnA -< b
-                                       else
-                                       findAccurate getApprox (n + 1) -< (acc)     
-        limListA = proc(xs) -> newCRA -< ([],Nothing, fn xs)
-                where
-                fn xs =
-                        proc acc ->
-                                do
-                                bs <- mapA getBallA -< zip xs (repeat $ acc + 1)
-                                returnA -< findAccurate acc bs
-                getBallA = proc(Interval l r,acc) -> 
-                        do
-                        lApprox <- getAnswerCRA -< (l,acc)
-                        rApprox <- getAnswerCRA -< (r,acc)
-                        returnA -< endpoints2Ball lApprox rApprox
-                findAccurate _ []     = undefined
-                findAccurate acc (x:xs) = if getAccuracy x >= acc then
-                                                x
-                                          else
-                                                findAccurate acc xs      
+    type LimitTypeA to (Interval (AsCauchyReal a)) = AsCauchyReal a
+    limListA = proc(xs) -> newCRA -< ([],Nothing, fn xs)
+        where
+        fn xs = proc acc ->
+            do
+            bs <- mapA getBallA -< zip xs (repeat $ acc + 1)
+            returnA -< findAccurate acc bs
+        getBallA = proc(Interval l r,acc) -> 
+            do
+            lApprox <- getAnswerCRA -< (l,acc)
+            rApprox <- getAnswerCRA -< (r,acc)
+            returnA -< endpoints2Ball lApprox rApprox
+        findAccurate acc (x:xs) 
+            | getAccuracy x >= acc = x
+            | otherwise = findAccurate acc xs      
+        findAccurate _ [] = error "internal error in AERN2.Num.Interval.limListA"
+
 {- MPBall plus-minus -}
 
 instance (Arrow to) => CanPlusMinusA to MPBall MPBall where

@@ -151,6 +151,17 @@ recipRIR =
             (RIR_Int a) -> do r <- recipA -< a; returnA -< RIR_Rat r
             (RIR_Rat a) -> do r <- recipA -< a; returnA -< RIR_Rat r
 
+powRIR :: 
+    (RealExprA to r) =>
+    Integer ->
+    [RIR r] `to` (RIR r)
+powRIR n =
+    proc [ar] ->
+        case ar of
+            (RIR_Real a) -> do r <- powA -< (a,n); returnA -< RIR_Real r
+            (RIR_Int a) -> do r <- powA -< (a,n); returnA -< RIR_Int r
+            (RIR_Rat a) -> do r <- powA -< (a,n); returnA -< RIR_Rat r
+
 unaryToR_RIR :: 
     (RealExprA to r) =>
     (r `to` r) ->
@@ -360,19 +371,18 @@ instance CanMulA (->) RealExpr RealExpr where
 instance CanMulByA (->) RealExpr RealExpr
 instance CanMulSameTypeA (->) RealExpr
 
+instance CanPowA (->) RealExpr Integer where
+    powA (e1,n) = RealExpr (RFunct (Just "^") (powRIR n) [e1])
+instance CanPowByA (->) RealExpr Integer
+
 instance CanDivA (->) RealExpr RealExpr where
     divA (e1,e2) = RealExpr (RFunct (Just "/") divRIR [e1,e2])
 
 instance CanDivByA (->) RealExpr RealExpr
 instance CanDivSameTypeA (->) RealExpr
 
-{- TODO
-
 instance CanAddMulScalarA (->) RealExpr Integer
 instance CanAddMulDivScalarA (->) RealExpr Integer
-
--}
-
 
 instance CanAddA (->) RealExpr Integer where
     type AddTypeA (->) RealExpr Integer = RealExpr

@@ -129,11 +129,34 @@ logisticMPBIteratePrintProgress c n x0 ac =
 
 {- Example: naive exponential function on [-1,1] -} 
                                     
-expLim :: CauchyReal -> CauchyReal
-expLim x = lim (\n -> (sum [(x^k)/(k!) | k <- [0..n]]) +- errorBound (x,n))
+myExp :: CauchyReal -> CauchyReal
+myExp x = lim (\n -> (sum [(x^k)/(k!) | k <- [0..n]]) +- errorBound (x,n))
            where
-           errorBound (y,n) = ((abs y)^(n + 1))*3/((n + 1)!)  --TODO error bound only valid on [-1,1]
-                                                             -- more general error bound: 3^ceil(x)
+           errorBound (y,n) = ((abs y)^(n + 1))*3/((n + 1)!)  
+            -- Error bound only valid on [-1,1].
+            -- A more general error bound: 3^ceil(x)
+
+myExpA :: 
+    (ArrowReal to r, CanAbsSameTypeA to r,
+     CanPlusMinusA to r r, PlusMinusTypeA to r r ~ Interval r, 
+     CanLimitA to (Interval r)) 
+    => 
+    r `to` LimitTypeA to (Interval r)
+myExpA = 
+    limA $ \n -> 
+        proc x -> do
+            terms <- mapA termA -< [(x,k) | k <- [0..n]]
+            s <- sumA -< terms
+            absx <- absA -< x
+            eb <- $(exprA[| let [absx] = vars in ((absx)^(n + 1))*3/((n + 1)!)|]) -< absx
+            let _ = [x,eb,s] ++ terms
+            plusMinusA -< (s,eb)
+    where
+    termA = proc (x,k) ->
+        do
+        temp1 <- powA -< (x,k)
+        divA -< (temp1, (k!))
+
 
 {- Newton iteration -}
 

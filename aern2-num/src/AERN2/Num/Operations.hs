@@ -732,7 +732,8 @@ class
 type CanPowBy = CanPowByA (->)
 
 class
-    (CanNegSameTypeA to a, CanAddSameTypeA to a, CanSubSameTypeA to a, CanMulSameTypeA to a, 
+    (CanNegSameTypeA to a, CanAddSameTypeA to a, CanSubSameTypeA to a, CanMulSameTypeA to a,
+     CanPowByA to a Integer,
      HasEqA to a a, HasOrderA to a a, HasIntegersA to a)
     => 
     RingA to a
@@ -828,13 +829,16 @@ type PlusMinusType a b = PlusMinusTypeA (->) a b
 (+-) = curry plusMinusA
 
 {- limit -}
-class (Arrow to) => CanLimitA to a where
+class (ArrowChoice to) => CanLimitA to a where
         type LimitTypeA to a
         --type ApproxTypeA to a
         --type ApproxTypeA to a = a
         limListA :: [a] `to` LimitTypeA to a
-        limA :: (Integer -> a) `to` LimitTypeA to a
-        limA = proc fn -> limListA -< map fn [1..]
+        limA :: (Integer -> (b `to` a)) -> b `to` LimitTypeA to a
+        limA fnA = 
+            proc b -> do 
+                rs <- mergeInputsA (map fnA [1..]) -< b
+                limListA -< rs 
             
         --approx :: (LimitTypeA to a, Accuracy) `to` ApproxType to a
         
@@ -844,7 +848,7 @@ type CanLimit = CanLimitA (->)
 type LimitType a = LimitTypeA (->) a
 
 lim :: (CanLimit a) => (Integer -> a) -> LimitTypeA (->) a
-lim = limA
+lim sq = limA (\n () -> sq n) ()
     
 
 iterateLim :: 

@@ -125,6 +125,7 @@ instance (ArrowChoice to) => CanMulSameTypeA to Integer
         
 instance (ArrowChoice to) => CanPowA to Integer Integer where
     powA = arr $ uncurry (P.^)
+instance (ArrowChoice to) => CanPowByA to Integer Integer
     
 instance (ArrowChoice to) => RingA to Integer
 instance (ArrowChoice to) => CanAddMulScalarA to Integer Integer
@@ -171,6 +172,8 @@ instance (ArrowChoice to) => CanMulSameTypeA to Rational
     
 instance (ArrowChoice to) => CanPowA to Rational Integer where
     powA = arr $ uncurry (P.^)
+instance (ArrowChoice to) => CanPowByA to Rational Integer
+
     
 instance (ArrowChoice to) => CanRecipA to Rational where
     recipA = arr $ \a -> 1 / a
