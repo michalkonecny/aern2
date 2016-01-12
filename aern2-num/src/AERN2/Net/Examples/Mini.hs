@@ -113,6 +113,20 @@ logisticMPBIterate c n x0 =
             | getAccuracy ball < ac  = throw LossOfPrecision 
             | otherwise = ball 
 
+logisticMPBIteratePrintProgress :: Rational -> Integer -> CauchyReal -> Accuracy -> IO ()
+logisticMPBIteratePrintProgress c n x0 ac =
+    mapM_ printInfo (iterInfos)
+    where
+    iterInfos = iterateUntilAccurate ac auxP
+    auxP p = 
+        logisticWithHookA id c n x0p
+        where
+        x0p = cauchyReal2ball x0 pA
+        pA = bits $ prec2integer p
+    printInfo (p, maybeBall) =
+        do
+        putStrLn $ show p ++ ": result = " ++ show maybeBall
+
 {- Example: naive exponential function on [-1,1] -} 
                                     
 expLim :: CauchyReal -> CauchyReal
@@ -123,58 +137,72 @@ expLim x = lim (\n -> (sum [(x^k)/(k!) | k <- [0..n]]) +- errorBound (x,n))
 
 {- Newton iteration -}
 
-newtonTest1 =
+newtonTest :: CauchyReal
+newtonTest =
     newton f f' (Interval (cauchyReal 1) (cauchyReal 2))
     where
     f x = x*x - 2
     f' x = 2*x 
 
+newtonTestA :: CauchyReal
 newtonTestA =
     newtonA f f' (Interval (cauchyReal 1) (cauchyReal 2))
     where
-    f = proc(x) -> do
-                   sq <- mulA -< (x,x)
-                   diff <- subA -< (sq,2)
-                   returnA -< diff
-    f' = proc(x) -> do
-                    tx <- mulA -< (2,x)
-                    returnA -< tx
+    f = proc(x) -> 
+        do
+        sq <- mulA -< (x,x)
+        diff <- subA -< (sq,2)
+        returnA -< diff
+    f' = proc(x) -> 
+        do
+        tx <- mulA -< (2,x)
+        returnA -< tx
     
 newton :: 
     (CanSelectFromIntervalA (->) r, CanDivSameTypeA (->) (Interval r),
      CanLimitA (->) (Interval r), CanSubSameTypeA (->) (Interval r)) 
      =>
-    (Interval r -> Interval r) -> (Interval r -> Interval r) -> 
+    (r -> r) -> 
+    (Interval r -> Interval r) -> 
     Interval r -> LimitType (Interval r)
 newton f f' iX_0 = 
-    iterateLim iX_0 $ \ iX -> let x = singleton (pickAnyA iX) in x - (f x)/(f' iX)
+    iterateLim iX_0 $ \ iX -> let x = pickAnyA iX in (singleton x) - (singleton $ f x)/(f' iX)
 
 newtonA ::
-     (Arrow to, CanSelectFromIntervalA to r, CanDivSameTypeA to (Interval r),
-     CanLimitA to (Interval r), CanSubSameTypeA to (Interval r)) 
+     (ArrowReal to r, CanSelectFromIntervalA to r, 
+      CanDivSameTypeA to (Interval r),
+      CanLimitA to (Interval r)) 
      =>
-    (Interval r `to` Interval r) -> (Interval r `to` Interval r) -> 
+    (r `to` r) -> 
+    (Interval r `to` Interval r) -> 
     Interval r `to` LimitTypeA to (Interval r)
-newtonA f f' = iterateLimA funA
-               where
-               funA = proc(iX) ->
-                      do
-                      p <- pickAnyA -< iX
-                      let x = singleton p
-                      fx <- f -< x
-                      f'iX <- f' -< iX
-                      quot <- divA -< (fx,f'iX)
-                      it <- subA -< (x,quot)
-                      returnA -< it
+newtonA f f' = 
+    iterateLimA $
+        proc iX ->
+            do
+            x <- pickAnyA -< iX
+            fx <- f -< x
+            f'iX <- f' -< iX
+            temp1 <- divA -< (singleton fx,f'iX)
+            subA -< (singleton x,temp1)
 
-newtonTest2 =
-    newtonIt f f' (Interval (cauchyReal 1) (cauchyReal 2))
+newtonIterateTest :: [Interval CauchyReal]
+newtonIterateTest =
+    newtonIterate f f' (Interval (cauchyReal 1) (cauchyReal 2))
     where
     f x = x*x - 2
     f' x = 2*x 
 
-newtonIt f f' iX_0 =
-        iterate (\ iX -> let x = singleton (pickAnyA iX) in x - (f x)/(f' iX)) iX_0
+newtonIterate ::
+    (CanSelectFromIntervalA (->) r, CanDivSameTypeA (->) (Interval r),
+     CanLimitA (->) (Interval r), CanSubSameTypeA (->) (Interval r)) 
+     =>
+    (r -> r) -> 
+    (Interval r -> Interval r) -> 
+    Interval r -> 
+    [(Interval r)]
+newtonIterate f f' iX_0 =
+    iterate (\ iX -> let x = pickAnyA iX in (singleton x) - (singleton $ f x)/(f' iX)) iX_0
     
 {- TODO
 
