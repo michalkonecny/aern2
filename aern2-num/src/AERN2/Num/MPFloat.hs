@@ -1,4 +1,4 @@
-{-# LANGUAGE StandaloneDeriving, GeneralizedNewtypeDeriving, TypeSynonymInstances #-}
+{-# LANGUAGE StandaloneDeriving, GeneralizedNewtypeDeriving, TypeSynonymInstances, FlexibleInstances #-}
 
 module AERN2.Num.MPFloat 
     (MPFloat, Precision, prec, prec2integer, maximumPrecision, standardPrecisions, 
@@ -15,6 +15,8 @@ where
 import AERN2.Num.Operations hiding (abs,neg,toRational)
 import qualified Prelude as P
 
+import Control.Arrow
+
 import AERN2.Num.IntegerRational ()
 
 import qualified Data.Approximate.MPFRLowLevel as MPLow
@@ -23,6 +25,9 @@ import qualified Data.Approximate.MPFRLowLevel as MPLow
 type MPFloat = MPLow.Rounded
 newtype Precision = Precision Integer
     deriving (P.Eq, P.Ord, P.Show, P.Enum, P.Num, P.Real, P.Integral)
+
+instance (ArrowChoice to) => HasEqA to Precision Precision
+instance (ArrowChoice to) => HasOrderA to Precision Precision
 
 prec2integer :: Precision -> Integer
 prec2integer (Precision p) = p

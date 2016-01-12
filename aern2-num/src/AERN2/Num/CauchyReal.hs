@@ -143,7 +143,10 @@ instance (ArrowChoice to, Arrow to) => CanReadAsCauchyRealA to CauchyReal_ where
     getNameCRA = arr $ cr_name . unAsCauchyReal 
 
 instance CanCreateAsCauchyRealA (->) CauchyReal_ where
-    newCRA (_, name, ac2b) = AsCauchyReal $ CauchyReal_ name ac2b
+    newCRA (_, name, ac2b) = AsCauchyReal $ CauchyReal_ name ac2b'
+        where
+        ac2b' ac = setPrecisionMatchAccuracy ac $ ac2b ac
+              
 
 instance (Arrow to) => SupportsSenderIdA to CauchyReal_ where
     type SenderId to CauchyReal_ = ()
@@ -569,8 +572,13 @@ ensureAccuracyA2 getA1 getA2 op =
                 else aux -< 
                     maybeTrace (
                         "ensureAccuracy2: Not enough ... (q = " ++ show q ++ 
+                        "; a1 = " ++ show a1 ++ 
+                        "; getPrecision a1 = " ++ show (getPrecision a1) ++ 
                         "; j1 = " ++ show j1 ++ 
+                        "; a2 = " ++ show a2 ++ 
+                        "; getPrecision a2 = " ++ show (getPrecision a2) ++ 
                         "; j2 = " ++ show j2 ++ 
+                        "; result = " ++ (show $ result) ++
                         "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
                     ) $ 
                     (q,j1+1,j2+1)

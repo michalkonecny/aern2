@@ -154,7 +154,9 @@ getAnswer p (valueId, q) =
                 net_id2value = id2value' ni2 cache',
                 net_log = lg2 ni2 a usedCache
             }
-        return a
+        return $
+            maybeTrace ("getAnswer: a = " ++ show a) $ 
+                a
         where
         id2value = net_id2value ni
         qaComputation = case Map.lookup valueId id2value of 

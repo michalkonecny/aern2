@@ -179,9 +179,29 @@ newtonTest =
     f x = x*x - 2
     f' x = 2*x 
 
-newtonTestA :: CauchyReal
-newtonTestA =
-    newtonA f f' (Interval (cauchyReal 1) (cauchyReal 2))
+newtonTestADirect :: Accuracy -> MPBall
+newtonTestADirect acc =
+    cauchyReal2ball (newtonA f f' (Interval (cauchyReal 1) (cauchyReal 2))) acc
+    where
+    f = proc(x) -> 
+        do
+        sq <- mulA -< (x,x)
+        diff <- subA -< (sq,2)
+        returnA -< diff
+    f' = proc(x) -> 
+        do
+        tx <- mulA -< (2,x)
+        returnA -< tx
+
+newtonTestACached :: Accuracy -> (QANetLog, MPBall)
+newtonTestACached acc =
+    executeQACachedA $ proc () -> do
+        l <- convertA -< 1
+        r <- convertA -< 2
+        x <- newtonA f f' -< (Interval l r)
+        b <- getAnswerCRA -< (x,acc)
+        let _ = [l,r,x :: QACached_CauchyReal]
+        returnA -< b
     where
     f = proc(x) -> 
         do

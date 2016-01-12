@@ -26,7 +26,7 @@ instance QAProtocol QAP_CauchyReal where
             do
             a <- q2a q
             return (a, Map.insert (getAccuracy a) a cacheMap, message)
-        | otherwise = return (aMax, cacheMap, "used cache")
+        | otherwise = return (setPrecisionMatchAccuracy q aMax, cacheMap, "used cache")
         where
         (qMax, aMax) = Map.findMax cacheMap
         message 
@@ -53,8 +53,11 @@ instance CanCreateAsCauchyRealA QACachedA QACached_CauchyReal_ where
     newCRA = 
         Kleisli $ \ (sources, name, ac2b) ->
             do
-            valueId <- newId  QAP_CauchyReal (sources, name, runKleisli ac2b)
+            valueId <- newId  QAP_CauchyReal (sources, name, runKleisli $ amend ac2b)
             return $ AsCauchyReal $ QACached_CauchyReal_ name valueId 
+            where
+            amend ac2b =
+                proc ac -> do b <- ac2b -< ac; returnA -< setPrecisionMatchAccuracy ac b  
 
 instance (Arrow to) => SupportsSenderIdA to QACached_CauchyReal_ where
     type SenderId to QACached_CauchyReal_ = ValueId

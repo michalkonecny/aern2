@@ -230,7 +230,21 @@ instance (CanAsCauchyRealA to a) => CanLimitA to (Interval (AsCauchyReal a)) whe
                 b <- i2ball -< (ri, acc + 1)
                 if getAccuracy b >= acc 
                     then returnA -< b
-                    else getBallA x (n+1) -< acc 
+                    else getBallA x (n+1) -< acc
+    iterateLimA fnA =
+        proc x0 -> newCRA -< ([], Nothing, getBallA x0)
+        where
+        getBallA x = 
+            proc acc -> auxA -< (x,acc)
+        auxA = 
+            proc (x,acc) ->
+                do
+                ri <- fnA -< x
+                b <- i2ball -< (ri, acc + 2)
+                if getAccuracy b >= acc 
+                    then returnA -< b
+                    else auxA -< (ri,acc)
+            
 
 i2ball :: (CanReadAsCauchyRealA to r) => (Interval (AsCauchyReal r), Accuracy) `to` MPBall         
 i2ball = proc(Interval l r,acc) -> 
