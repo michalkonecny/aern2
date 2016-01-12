@@ -852,16 +852,16 @@ iterateLim ::
     a -> (a -> a) -> LimitType a
 iterateLim initX intervalFn =
     limListA (iterate intervalFn initX)
--- TODO: make iterateLim arrow-generic
 
 iterateLimA ::
-        (Arrow to, CanLimitA to a) =>
-        (a `to` a) -> a `to` LimitTypeA to a
-iterateLimA f = proc(x) -> 
-                  do
-                  xs <- iterateA f -< x
-                  l <- limListA -< xs
-                  returnA -< l      
+    (Arrow to, CanLimitA to a) =>
+    (a `to` a) -> a `to` LimitTypeA to a
+iterateLimA f = 
+    proc(x) -> 
+        do
+        xs <- iterateA f -< x
+        l <- limListA -< xs
+        returnA -< l      
     
 {- Utilities for arrow programming -}
 
