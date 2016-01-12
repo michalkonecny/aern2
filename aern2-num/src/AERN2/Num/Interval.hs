@@ -4,6 +4,7 @@ module AERN2.Num.Interval where
 import AERN2.Num.Operations
 import Control.Arrow
 
+import AERN2.Num.Accuracy
 import AERN2.Num.MPBall
 import AERN2.Num.CauchyReal
 
@@ -214,17 +215,30 @@ instance (CanAsCauchyRealA to a) => CanLimitA to (Interval (AsCauchyReal a)) whe
         where
         fn xs = proc acc ->
             do
-            bs <- mapA getBallA -< zip xs (repeat $ acc + 1)
+            bs <- mapA i2ball -< zip xs (repeat $ acc + 1)
             returnA -< findAccurate acc bs
-        getBallA = proc(Interval l r,acc) -> 
-            do
-            lApprox <- getAnswerCRA -< (l,acc)
-            rApprox <- getAnswerCRA -< (r,acc)
-            returnA -< endpoints2Ball lApprox rApprox
         findAccurate acc (b:bs) 
             | getAccuracy b >= acc = b
             | otherwise = findAccurate acc bs      
         findAccurate _ [] = error "internal error in AERN2.Num.Interval.limListA"
+    limA fnAseq = proc x -> newCRA -< ([], Nothing, getBallA x 0)
+        where
+        getBallA x n = 
+            proc acc ->
+                do
+                ri <- fnAseq n -< x
+                b <- i2ball -< (ri, acc + 1)
+                if getAccuracy b >= acc 
+                    then returnA -< b
+                    else getBallA x (n+1) -< acc 
+
+i2ball :: (CanReadAsCauchyRealA to r) => (Interval (AsCauchyReal r), Accuracy) `to` MPBall         
+i2ball = proc(Interval l r,acc) -> 
+    do
+    lApprox <- getAnswerCRA -< (l,acc)
+    rApprox <- getAnswerCRA -< (r,acc)
+    returnA -< endpoints2Ball lApprox rApprox
+
 
 {- MPBall plus-minus -}
 

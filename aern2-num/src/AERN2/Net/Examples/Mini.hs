@@ -157,6 +157,10 @@ myExpA =
         temp1 <- powA -< (x,k)
         divA -< (temp1, (k!))
 
+myExpTestDirect :: Rational -> Accuracy -> MPBall
+myExpTestDirect x =
+    cauchyReal2ball $ myExpA (cauchyReal x)
+
 myExpTestCached :: Rational -> Accuracy -> (QANetLog, MPBall)
 myExpTestCached xRat ac =
     executeQACachedA $
@@ -169,12 +173,13 @@ myExpTestCached xRat ac =
 testCachedLim = 
     printQANetLogThenResult $
     executeQACachedA $ proc () -> do
-        x <- convertA -< 1
-        let xI = singleton x
-        l <- limListA -< repeat xI
-        b <- getAnswerCRA -< (l :: QACached_CauchyReal, bits 100)
-        let _ = [l,x]
+        x <- limA sqA -< ()
+        b <- getAnswerCRA -< (x :: QACached_CauchyReal, bits 100)
         returnA -< b
+        where
+        sqA n = proc () -> do 
+            x <- convertA -< 1
+            returnA -< singleton (x :: QACached_CauchyReal)
 
 {- Newton iteration -}
 
