@@ -170,17 +170,6 @@ myExpTestCached xRat ac =
             b <- getAnswerCRA -< (r,ac)
             returnA -< b
 
-testCachedLim = 
-    printQANetLogThenResult $
-    executeQACachedA $ proc () -> do
-        x <- limA sqA -< ()
-        b <- getAnswerCRA -< (x :: QACached_CauchyReal, bits 100)
-        returnA -< b
-        where
-        sqA n = proc () -> do 
-            x <- convertA -< 1
-            returnA -< singleton (x :: QACached_CauchyReal)
-
 {- Newton iteration -}
 
 newtonTest :: CauchyReal
