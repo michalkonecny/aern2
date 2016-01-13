@@ -424,10 +424,8 @@ binaryOp name op getInitQ1Q2 =
         (q1InitMB, q2InitMB) <- getInitQ1Q2 -< (ac,r1,r2)
         ensureAccuracyA2 getA1 getA2 op -< (ac, q1InitMB, q2InitMB)
         where
-        getA1 =
-            proc q1 -> getAnswerCRA -< (r1,q1)
-        getA2 =
-            proc q2 -> getAnswerCRA -< (r2,q2)
+        getA1 = proc q1 -> getAnswerCRA -< (r1,q1)
+        getA2 = proc q2 -> getAnswerCRA -< (r2,q2)
 
 getInitQ1FromSimple ::
     Arrow to =>
@@ -600,13 +598,15 @@ instance (CanAsCauchyRealA to r) => CanRecipA to (AsCauchyReal r) where
 instance (CanAsCauchyRealA to r) => CanRecipSameTypeA to (AsCauchyReal r)
 
 instance 
-    (CanReadAsCauchyRealA to r1, CanReadAsCauchyRealA to r2,
-     CanCombineCRsA to r1 r2) 
+    (CanCombineCRsA to r1 r2) 
     => 
     CanAddA to (AsCauchyReal r1) (AsCauchyReal r2)
     where
-    type AddTypeA to (AsCauchyReal r1) (AsCauchyReal r2) = AsCauchyReal (CombinedCRs to r1 r2)
-    addA = binaryOp "+" add (getInitQ1Q2FromSimple $ proc q -> returnA -< (q,q))
+    type AddTypeA to (AsCauchyReal r1) (AsCauchyReal r2) = 
+        AsCauchyReal (CombinedCRs to r1 r2)
+    addA = 
+        binaryOp "+" add 
+            (getInitQ1Q2FromSimple $ proc q -> returnA -< (q,q))
 
 instance 
     (CanAsCauchyRealA to r1, CanReadAsCauchyRealA to r2, CanCombineCRwithA to r1 r2) => 

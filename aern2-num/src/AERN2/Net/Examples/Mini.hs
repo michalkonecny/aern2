@@ -29,6 +29,14 @@ example0procA =
         temp1 <- sqrtA -< x
         addA -< (temp1, x)
 
+--example0procA_BAD ::
+--    (ArrowReal to r) => r `to` r
+--example0procA_BAD = 
+--    proc x ->
+--        do
+--        temp1 <- sqrtA x -< ()
+--        addA -< (temp1, x)
+
 example0exprA ::
     (ArrowReal to r) => r `to` r
 example0exprA =
