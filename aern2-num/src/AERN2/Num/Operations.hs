@@ -48,7 +48,7 @@ module AERN2.Num.Operations
     CanSineCosineA(..), CanSineCosineSameTypeA,
     CanSineCosine, CanSineCosineSameType, sin, cos,
     CanPlusMinusA(..), CanPlusMinus, (+-),
-    CanLimitA(..), CanLimit, LimitType, lim, iterateLim, iterateLimA,
+    CanLimitA(..), CanLimit, LimitType, lim, iterateLim,
     iterateA, mapA, mapAwithPos, zipWithA, zipWithAwithPos, 
     foldlA, mergeInputsA,
     convertFirstA, convertSecondA, flipA

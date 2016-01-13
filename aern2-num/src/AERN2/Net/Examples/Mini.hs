@@ -148,10 +148,13 @@ myExpA =
             terms <- mapA termA -< [(x,k) | k <- [0..n]]
             s <- sumA -< terms
             absx <- absA -< x
-            eb <- $(exprA[| let [absx] = vars in ((absx)^(n + 1))*3/((n + 1)!)|]) -< absx
-            let _ = [x,eb,s] ++ terms
+            eb <- errorBoundA n -< absx
             plusMinusA -< (s,eb)
     where
+    errorBoundA n = 
+        $(exprA[| let [absx] = vars in (absx^(n + 1))*3/((n + 1)!)|])
+        where
+        _ = n :: Integer
     termA = proc (x,k) ->
         do
         temp1 <- powA -< (x,k)
