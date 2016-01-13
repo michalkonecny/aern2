@@ -42,8 +42,8 @@ example0exprA ::
 example0exprA =
     $(exprA[|let [x] = vars in sqrt(x) + x|]) 
 
-example0directA_TestCached :: Accuracy -> IO ()
-example0directA_TestCached ac =
+example0TestCached :: Accuracy -> IO ()
+example0TestCached ac =
     printQANetLogThenResult $
         executeQACachedA $
             proc () ->
