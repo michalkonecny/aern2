@@ -158,7 +158,7 @@ setPrecisionMatchAccuracy acc b@(MPBall x e)
     | p < p' = (MPBall x' e)
     | otherwise = b
     where
-    p' = MP.prec $ A.fromAccuracy acc 
+    p' = MP.prec $ max 2 (A.fromAccuracy acc) 
     p = MP.getPrecision x
     x' = MP.setPrecisionUp p' x
 
