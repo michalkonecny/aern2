@@ -831,21 +831,10 @@ type PlusMinusType a b = PlusMinusTypeA (->) a b
 {- limit -}
 class (ArrowChoice to) => CanLimitA to a where
         type LimitTypeA to a
+        limA :: (Integer -> (b `to` a)) -> b `to` LimitTypeA to a
+        iterateLimA :: (a `to` a) -> a `to` LimitTypeA to a
         --type ApproxTypeA to a
         --type ApproxTypeA to a = a
---        limListA :: [a] `to` LimitTypeA to a
-        limA :: (Integer -> (b `to` a)) -> b `to` LimitTypeA to a
---        limA fnA = 
---            proc b -> do 
---                rs <- mergeInputsA (map fnA [1..]) -< b
---                limListA -< rs
-        iterateLimA :: (a `to` a) -> a `to` LimitTypeA to a
---        iterateLimA fA =
---            proc(x) -> 
---                do
---                xs <- iterateA fA -< x
---                l <- limListA -< xs
---                returnA -< l      
         --approx :: (LimitTypeA to a, Accuracy) `to` ApproxType to a
         
 
