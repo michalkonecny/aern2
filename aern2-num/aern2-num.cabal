@@ -10,7 +10,7 @@ license:        BSD3
 homepage:       https://github.com/michalkonecny/aern2
 synopsis:       Real numbers and their interval/ball approximations
 category:       Math
-copyright:      Michal Konecny, Pieter Collins, 2015
+copyright:      Michal Konecny, Eike Neumann, Pieter Collins, 2015, 2016
 license-file:   LICENSE
 
 library
