@@ -833,7 +833,7 @@ class (ArrowChoice to) => CanLimitA to a where
         type LimitTypeA to a
         --type ApproxTypeA to a
         --type ApproxTypeA to a = a
-        limListA :: [a] `to` LimitTypeA to a
+--        limListA :: [a] `to` LimitTypeA to a
         limA :: (Integer -> (b `to` a)) -> b `to` LimitTypeA to a
 --        limA fnA = 
 --            proc b -> do 

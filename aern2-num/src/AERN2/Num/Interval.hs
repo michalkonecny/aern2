@@ -211,16 +211,16 @@ instance (Arrow to, CanAsCauchyRealA to a, CanCombineCRsA to a a,
         
 instance (CanAsCauchyRealA to a) => CanLimitA to (Interval (AsCauchyReal a)) where
     type LimitTypeA to (Interval (AsCauchyReal a)) = AsCauchyReal a
-    limListA = proc(xs) -> newCRA -< ([],Nothing, fn xs)
-        where
-        fn xs = proc acc ->
-            do
-            bs <- mapA i2ball -< zip xs (repeat $ acc + 1)
-            returnA -< findAccurate acc bs
-        findAccurate acc (b:bs) 
-            | getAccuracy b >= acc = b
-            | otherwise = findAccurate acc bs      
-        findAccurate _ [] = error "internal error in AERN2.Num.Interval.limListA"
+--    limListA = proc(xs) -> newCRA -< ([],Nothing, fn xs)
+--        where
+--        fn xs = proc acc ->
+--            do
+--            bs <- mapA i2ball -< zip xs (repeat $ acc + 1)
+--            returnA -< findAccurate acc bs
+--        findAccurate acc (b:bs) 
+--            | getAccuracy b >= acc = b
+--            | otherwise = findAccurate acc bs      
+--        findAccurate _ [] = error "internal error in AERN2.Num.Interval.limListA"
     limA fnAseq = proc x -> newCRA -< ([], Nothing, getBallA x 0)
         where
         getBallA x n = 
