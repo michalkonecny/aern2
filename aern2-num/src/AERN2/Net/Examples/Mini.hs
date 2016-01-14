@@ -42,15 +42,14 @@ example0exprA ::
 example0exprA =
     $(exprA[|let [x] = vars in sqrt(x) + x|]) 
 
-example0TestCached :: Accuracy -> IO ()
+example0TestCached :: Accuracy -> (QANetLog, MPBall)
 example0TestCached ac =
-    printQANetLogThenResult $
-        executeQACachedA $
-            proc () ->
-                do
-                x <- convertA -< 1/3
-                r <- example0directA -< x :: QACached_CauchyReal
-                getAnswerCRA -< (r,ac)
+    executeQACachedA $
+        proc () ->
+            do
+            x <- convertA -< 1/3
+            r <- example0directA -< x :: QACached_CauchyReal
+            getAnswerCRA -< (r,ac)
 
 {--- a simple complex expression, a part of FFT ---}
 

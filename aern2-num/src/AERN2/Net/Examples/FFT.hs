@@ -157,4 +157,5 @@ ditfft2 nN s
 --            mulA -< (x_k_plus_NHalf, c)
             mulA -< (x_k_plus_NHalf, exp(-2*pi*i*k/nN))
         where
-        i = complex_i :: Complex CauchyReal                
+        i = complex_i :: Complex CauchyReal
+
