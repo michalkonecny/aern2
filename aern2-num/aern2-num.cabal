@@ -43,6 +43,7 @@ library
                    AERN2.Net.Examples.Mini,
                    AERN2.Net.Examples.Root,
                    AERN2.Num,
+                   AERN2.NumPreludeCompatible,
                    AERN2.RealFunction
   other-modules:   
                    AERN2.Net.Strategy.Direct,
