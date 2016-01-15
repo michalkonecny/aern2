@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE UndecidableInstances, TypeOperators, ConstraintKinds #-}
+{-# LANGUAGE UndecidableInstances, ConstraintKinds #-}
 module AERN2.Num.MPBall
     (MPBall(..), getAccuracy, getFiniteAccuracy,
      HasMPBallsA, HasMPBalls,

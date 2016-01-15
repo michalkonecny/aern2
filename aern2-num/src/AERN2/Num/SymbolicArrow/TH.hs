@@ -1,5 +1,5 @@
-{-# LANGUAGE TypeSynonymInstances, FlexibleInstances, TemplateHaskell #-}
 {-# OPTIONS_GHC -fno-warn-missing-methods #-}
+{-# LANGUAGE TemplateHaskell #-}
 module AERN2.Num.SymbolicArrow.TH 
 (exprA, predA, vars, exprAinternal, predAinternal)
 where

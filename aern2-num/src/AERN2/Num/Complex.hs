@@ -1,4 +1,4 @@
-{-# LANGUAGE Arrows, TypeSynonymInstances, FlexibleInstances, TypeOperators, ConstraintKinds, FlexibleContexts, UndecidableInstances, TemplateHaskell #-}
+{-# LANGUAGE ConstraintKinds, FlexibleInstances, FlexibleContexts, UndecidableInstances, TemplateHaskell #-}
 module AERN2.Num.Complex 
 (
     Complex(..), complex_iA, complex_i,

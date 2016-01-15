@@ -1,4 +1,4 @@
-{-# LANGUAGE Arrows, GeneralizedNewtypeDeriving, OverloadedStrings, TypeOperators, FlexibleContexts, TypeSynonymInstances, FlexibleInstances, Rank2Types, UndecidableInstances, ConstraintKinds #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, OverloadedStrings, FlexibleContexts, FlexibleInstances, Rank2Types, UndecidableInstances, ConstraintKinds #-}
 module AERN2.Num.SymbolicArrow.Expression 
 (ArrowReal, RealExprA, RealExpr, RealPred, realExpr2arrow, realPred2arrow, var)
 where

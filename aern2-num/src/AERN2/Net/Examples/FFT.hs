@@ -1,4 +1,4 @@
-{-# LANGUAGE Arrows, TypeOperators, TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell #-}
 module AERN2.Net.Examples.FFT 
 (
     fftTestDirectCR,

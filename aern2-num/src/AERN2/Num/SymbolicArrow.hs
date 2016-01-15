@@ -1,4 +1,3 @@
-{-# LANGUAGE Arrows, TemplateHaskell, ScopedTypeVariables, FlexibleContexts, TypeOperators #-}
 module AERN2.Num.SymbolicArrow 
 ( 
     module AERN2.Num.SymbolicArrow.TH, 

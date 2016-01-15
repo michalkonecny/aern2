@@ -1,4 +1,4 @@
-{-# LANGUAGE Arrows, TypeOperators, GeneralizedNewtypeDeriving, FunctionalDependencies, DataKinds, FlexibleContexts, ConstraintKinds #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, FunctionalDependencies, FlexibleContexts, ConstraintKinds #-}
 
 module AERN2.RealFunction 
 (

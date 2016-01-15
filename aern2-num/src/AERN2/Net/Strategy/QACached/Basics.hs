@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, ExistentialQuantification, GeneralizedNewtypeDeriving, TypeOperators, FlexibleContexts #-}
+{-# LANGUAGE CPP, ExistentialQuantification, GeneralizedNewtypeDeriving, FlexibleContexts #-}
 {-| Types for cached execution of general QA-networks. -}
 module AERN2.Net.Strategy.QACached.Basics where
 

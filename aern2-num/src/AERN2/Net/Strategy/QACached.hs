@@ -1,4 +1,3 @@
-{-# LANGUAGE Arrows, StandaloneDeriving, ExistentialQuantification, TypeSynonymInstances, FlexibleInstances, GeneralizedNewtypeDeriving, FlexibleContexts, TypeOperators #-}
 module AERN2.Net.Strategy.QACached 
 (
     module AERN2.Net.Strategy.QACached.Basics,

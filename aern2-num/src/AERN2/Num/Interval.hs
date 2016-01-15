@@ -1,4 +1,4 @@
-{-# LANGUAGE Arrows, FlexibleInstances, UndecidableInstances, FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances, UndecidableInstances, FlexibleContexts #-}
 module AERN2.Num.Interval where
 
 import AERN2.Num.Operations

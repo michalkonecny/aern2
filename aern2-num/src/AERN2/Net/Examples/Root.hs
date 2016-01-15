@@ -1,4 +1,4 @@
-{-# LANGUAGE Arrows, TypeOperators, FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts #-}
 module AERN2.Net.Examples.Root where
 
 import AERN2.Num
