@@ -1081,6 +1081,7 @@ instance Fractional CauchyReal where
 
 instance Floating CauchyReal where
     pi = pi
+    sqrt = sqrt
     exp = exp
     sin = sin
     cos = cos
