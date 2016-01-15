@@ -11,6 +11,8 @@ module AERN2.Num.Complex
 where
 
 import AERN2.Num.Operations
+import qualified Prelude
+
 import AERN2.Num.CauchyReal
 import AERN2.Num.MPBall
 import AERN2.Num.Accuracy
@@ -583,3 +585,33 @@ unaryOp (realA, imagA) =
         i <- imagA  -< (r1,i1)
         returnA -< (r :+ i)
 
+{- Instances of Prelude numerical classes provided for convenient use outside AERN2 
+   and also because Template Haskell translates (-x) to (Prelude.negate x) -}  
+instance Num (Complex CauchyReal) where
+    fromInteger = convert
+    negate = negate
+    (+) = (+)
+    (*) = (*)
+    abs c = abs c :+ (cauchyReal 0)
+    signum = error "Prelude.signum not implemented for (Complex CauchyReal)"
+
+instance Eq (Complex CauchyReal) where
+    (==) = (==)
+
+instance Ord (Complex CauchyReal) where
+    compare r1 r2 
+        | r1 < r2 = LT
+        | r1 > r2 = GT
+        | r1 == r2 = EQ
+        | otherwise = error "AERN2.Num.(Complex CauchyReal): compare: impossible case"
+        
+instance Fractional (Complex CauchyReal) where
+    fromRational = convert
+    recip = recip
+    (/) = (/)
+
+instance Floating (Complex CauchyReal) where
+    pi = pi :+ (cauchyReal 0)
+    exp = exp
+    sin = sin
+    cos = cos

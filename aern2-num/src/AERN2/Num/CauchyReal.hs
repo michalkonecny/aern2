@@ -331,15 +331,6 @@ instance (CanAsCauchyRealA to r) => HasOrderA to (AsCauchyReal r) Rational where
 
 {- Operations among CauchyReal's -}
 
--- providing this only because Template Haskell translates (-x) to (Prelude.negate x)  
-instance Num CauchyReal where
-    fromInteger = convert
-    negate = negate
-    (+) = (+)
-    (*) = (*)
-    abs = error "RealExpr Prelude.abs not implemented"
-    signum = error "RealExpr Prelude.signum not implemented"
-
 instance 
     (CanCombineCRwithA to r r) => 
     RingA to (AsCauchyReal r)
@@ -1062,4 +1053,36 @@ instance
     divA = proc (r,b) -> mulA -< (r,1/b)
 
 instance (CanAsCauchyRealA to r) => CanDivByA to MPBall (AsCauchyReal r)
-                                
+
+{- Instances of Prelude numerical classes provided for convenient use outside AERN2 
+   and also because Template Haskell translates (-x) to (Prelude.negate x) -}  
+instance Num CauchyReal where
+    fromInteger = convert
+    negate = negate
+    (+) = (+)
+    (*) = (*)
+    abs = abs
+    signum = error "Prelude.signum not implemented for CauchyReal"
+
+instance Eq CauchyReal where
+    (==) = (==)
+
+instance Ord CauchyReal where
+    compare r1 r2 
+        | r1 < r2 = LT
+        | r1 > r2 = GT
+        | r1 == r2 = EQ
+        | otherwise = error "AERN2.Num.CauchyReal: compare: impossible case"
+        
+instance Fractional CauchyReal where
+    fromRational = convert
+    recip = recip
+    (/) = (/)
+
+instance Floating CauchyReal where
+    pi = pi
+    exp = exp
+    sin = sin
+    cos = cos
+    
+        
