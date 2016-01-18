@@ -116,7 +116,7 @@ rootByTrisection =
                     returnA -< Interval m r
                 else do
                     returnA -< Interval l m
-            aux -< ((xNew, z), (z, isPositiveAtL, fn))
+            returnA -< ((xNew, z), (z, isPositiveAtL, fn))
     splitAwayFromRoot =
         proc (fn,l,r) ->
             do
