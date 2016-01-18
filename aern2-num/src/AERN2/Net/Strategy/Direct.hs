@@ -102,6 +102,7 @@ _mpBall2cri b =
     r = convergent2CauchyReal Nothing $ repeat rMP
     (lMP, rMP) = ball2endpoints b
 
+{-
 -- the following instance is currently not used
 instance RationalIntervalA (->) (Interval CauchyReal) where
     type (IntervalE (Interval CauchyReal)) = CauchyReal
@@ -116,22 +117,23 @@ instance RationalIntervalA (->) (Interval Rational) where
     getEndpointsA (Interval l r) = (l, r)
     fromEndpointsA (l,r) = (Interval l r)
     limitIntervalsToRealA sq = convergent2CauchyReal Nothing $ map rati2MPBall sq
+-}
 
 {- TODO The following function types should move to aern-function, when it is created -}
 
 type UnaryFnMPBall = (Interval Rational, MPBall -> MPBall) 
 
 instance RealUnaryFnA (->) UnaryFnMPBall where
-    type UFnDom UnaryFnMPBall = Interval Rational
-    type UFnR UnaryFnMPBall = CauchyReal
+    type UFnIn UnaryFnMPBall = Rational
+    type UFnOut UnaryFnMPBall = CauchyReal
     constUFnA (dom, r) = (dom, \b -> cauchyReal2ball r (getFiniteAccuracy b))
     projUFnA dom = (dom, id)
     getDomainUFnA (dom, _) = dom
+--    evalAtLimPointUFnA ((_dom, f), r) = 
+--        convergent2CauchyReal Nothing $ 
+--            map f $
+--                map (cauchyReal2ball r) (map bits [1..])
     evalAtPointUFnA ((_dom, f), r) = 
-        convergent2CauchyReal Nothing $ 
-            map f $
-                map (cauchyReal2ball r) (map bits [1..])
-    evalAtUFnDomEA ((_dom, f), r) = 
         convergent2CauchyReal Nothing $ 
             map f $ map (flip rational2BallP r) standardPrecisions
     evalOnIntervalUFnA ((_dom, f), ri) =  
@@ -141,13 +143,13 @@ type UnaryFnCR = (Interval Rational, CauchyReal -> CauchyReal)
 
 instance RealUnaryFnA (->) UnaryFnCR
     where
-    type UFnDom UnaryFnCR = Interval Rational
-    type UFnR UnaryFnCR = CauchyReal
+    type UFnIn UnaryFnCR = Rational
+    type UFnOut UnaryFnCR = CauchyReal
     constUFnA (dom, r) = (dom, const r)
     projUFnA dom = (dom, id)
     getDomainUFnA (dom, _) = dom
-    evalAtPointUFnA ((_dom, f), r) = f r 
-    evalAtUFnDomEA ((_dom, f), r) = f (cauchyReal r) 
+--    evalAtLimPointUFnA ((_dom, f), r) = f r 
+    evalAtPointUFnA ((_dom, f), r) = f (cauchyReal r) 
     evalOnIntervalUFnA ((_dom, _f), _ri) = 
         error "evalOnIntervalUFnA not implemented for UnaryFnCR"
 

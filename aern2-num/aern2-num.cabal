@@ -45,7 +45,7 @@ library
                    AERN2.Num,
                    AERN2.NumPreludeCompatible,
                    AERN2.RealFunction
-  other-modules:   
+  other-modules: 
                    AERN2.Net.Strategy.Direct,
                    AERN2.Net.Strategy.Parallel,
                    AERN2.Net.Strategy.QACached,
@@ -63,6 +63,5 @@ library
                    AERN2.Num.Operations,
                    AERN2.Num.SymbolicArrow,
                    AERN2.Num.SymbolicArrow.Expression,
-                   AERN2.Num.SymbolicArrow.TH,
-                   StrategyClassesMockup1
+                   AERN2.Num.SymbolicArrow.TH
 

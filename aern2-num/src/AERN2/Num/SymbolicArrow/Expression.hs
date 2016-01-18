@@ -27,25 +27,7 @@ data RealPred' pred
 data RealExpr = RealExpr (RealExpr' RealExpr)
 data RealPred = RealPred (RealPred' RealPred)
 
-class
-    (FieldA to r,
-     HasCauchyRealsA to r,
-     CanSqrtSameTypeA to r, CanExpSameTypeA to r, CanSineCosineSameTypeA to r, 
-     CanAddMulDivScalarA to r Integer, 
-     CanAddMulDivScalarA to r Rational,
-     CanAddMulDivScalarA to r CauchyReal,
-     CanSubA to Integer r,  SubTypeA to Integer r ~ r,
-     CanSubA to Rational r,  SubTypeA to Rational r ~ r, 
-     CanSubA to CauchyReal r,  SubTypeA to CauchyReal r ~ r,
-     CanDivA to Integer r,  DivTypeA to Integer r ~ r,
-     CanDivA to Rational r,  DivTypeA to Rational r ~ r, 
-     CanDivA to CauchyReal r,  DivTypeA to CauchyReal r ~ r,
-     OrderCompareTypeA to r r ~ EqCompareTypeA to r r
-     )
-    => 
-    RealExprA to r 
-
-type ArrowReal = RealExprA
+type RealExprA =  ArrowReal
 
 instance 
     (CanCombineCRwithA to r r, CanCombineCRwithA to r CauchyReal_) => 

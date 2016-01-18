@@ -59,7 +59,6 @@ rootTestDirectFnCR =
                     ++ "; result = " ++ show b
                 )
                 b
-    dom :: UFnDom UnaryFnCR
     dom = Interval 1.0 2.0 
 
 rootTestDirectFnMPBall :: CauchyReal
@@ -79,7 +78,6 @@ rootTestDirectFnMPBall =
                     "sqr: x = " ++ show x ++ "; result = " ++ show b
                 )
                 b
-    dom :: UFnDom UnaryFnMPBall
     dom = Interval 1.0 2.0 
 
 {-|
@@ -90,46 +88,42 @@ rootTestDirectFnMPBall =
 -}
 rootByTrisection ::
     (RealUnaryFnA to fn, 
-     UFnDomR fn ~ UFnR fn,
-     Bool ~ OrderCompareTypeA to (UFnR fn) (UFnR fn),
-     CanEmbedFnA to Rational (UFnDomE fn), 
-     HasParallelComparisonsA to (UFnR fn))
+     CanLimitA to (Interval (UFnIn fn), UFnOut fn),
+     LimitTypeA to (Interval (UFnIn fn), UFnOut fn) ~ UFnOut fn,
+     Bool ~ OrderCompareTypeA to (UFnOut fn) (UFnOut fn),
+     CanEmbedFnA to Rational (UFnIn fn), 
+     HasParallelComparisonsA to (UFnOut fn))
     =>
-    (fn, UFnDom fn) `to` (UFnR fn)
+    (fn, Interval (UFnIn fn)) `to` (UFnOut fn)
 rootByTrisection =
-    proc (fn, xInit) ->
+    proc (fn, xInit@(Interval l _)) ->
         do
         z <- convertNamedA "0" -< 0
-        (l,_) <- getEndpointsA -< xInit
-        fn_l <- evalAtUFnDomEA -< (fn,l)
+        fn_l <- evalAtPointUFnA -< (fn,l)
         isPositiveAtL <- lessThanA -< (z, fn_l)
-        sq <- aux -< (z, isPositiveAtL, fn, xInit)
-        result <- limitIntervalsToRealA -< sq
-        returnA -< result
+        iterateLimWithA aux -< ((xInit, z), (z, isPositiveAtL, fn))
+--        result <- limitIntervalsToRealA -< sq
+--        returnA -< result
     where
     aux =
-        proc (z, isPositiveAtL, fn, xPrev) ->
+        proc (((Interval l r), _), (z, isPositiveAtL, fn)) ->
             do
-            (l,r) <- getEndpointsA -< xPrev
             (m, fn_m) <- splitAwayFromRoot -< (fn,l,r)
             isPositiveAtM <- lessThanA -< (z, fn_m)
             let _ = [z, fn_m]
             xNew <- if isPositiveAtM == isPositiveAtL
                 then do
-                    res <- fromEndpointsA -< (m,r)
-                    returnA -< res
+                    returnA -< Interval m r
                 else do
-                    res <- fromEndpointsA -< (l,m)
-                    returnA -< res
-            restX <- aux -< (z, isPositiveAtL, fn, xNew)
-            returnA -< (xPrev : restX)
+                    returnA -< Interval l m
+            aux -< ((xNew, z), (z, isPositiveAtL, fn))
     splitAwayFromRoot =
         proc (fn,l,r) ->
             do
             m1 <- embedFnNamedA "m1" getM1 -< [l,r] 
             m2 <- embedFnNamedA "m2" getM2 -< [l,r] 
-            fn_m1 <- evalAtUFnDomEA -< (fn, m1)
-            fn_m2 <- evalAtUFnDomEA -< (fn, m2)
+            fn_m1 <- evalAtPointUFnA -< (fn, m1)
+            fn_m2 <- evalAtPointUFnA -< (fn, m2)
             Just (fn_m, m) <- pickNonZeroA -< [(fn_m1, m1), (fn_m2, m2)]
             let _ = [l,r,m1,m2]
             returnA -< (m, fn_m)

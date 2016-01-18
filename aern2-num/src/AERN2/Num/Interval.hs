@@ -231,7 +231,7 @@ instance (CanAsCauchyRealA to a) => CanLimitA to (Interval (AsCauchyReal a)) whe
                 if getAccuracy b >= acc 
                     then returnA -< b
                     else getBallA x (n+1) -< acc
-    iterateLimA fnA =
+    iterateLimWithA fnA =
         proc x0 -> newCRA -< ([], Nothing, getBallA x0)
         where
         getBallA x = 
@@ -239,12 +239,11 @@ instance (CanAsCauchyRealA to a) => CanLimitA to (Interval (AsCauchyReal a)) whe
         auxA = 
             proc (x,acc) ->
                 do
-                ri <- fnA -< x
+                x'@(ri, _) <- fnA -< x
                 b <- i2ball -< (ri, acc + 2)
                 if getAccuracy b >= acc 
                     then returnA -< b
-                    else auxA -< (ri,acc)
-            
+                    else auxA -< (x',acc)
 
 i2ball :: (CanReadAsCauchyRealA to r) => (Interval (AsCauchyReal r), Accuracy) `to` MPBall         
 i2ball = proc(Interval l r,acc) -> 
@@ -253,6 +252,41 @@ i2ball = proc(Interval l r,acc) ->
     rApprox <- getAnswerCRA -< (r,acc)
     returnA -< endpoints2Ball lApprox rApprox
 
+instance (CanCreateAsCauchyRealA to r) => CanLimitA to (Interval Rational, AsCauchyReal r) where
+    type LimitTypeA to (Interval Rational, AsCauchyReal r) = AsCauchyReal r
+    limA fnAseq = proc x -> newCRA -< ([], Nothing, getBallA x 0)
+        where
+        getBallA x n = 
+            proc acc ->
+                do
+                (ri, _) <- fnAseq n -< x
+                let b = ri2ball ri acc
+                if getAccuracy b >= acc 
+                    then returnA -< b
+                    else getBallA x (n+1) -< acc
+            where
+    iterateLimWithA fnA =
+        proc x0 -> newCRA -< ([], Nothing, getBallA x0)
+        where
+        getBallA x = 
+            proc acc -> auxA -< (x,acc)
+        auxA = 
+            proc (x,acc) ->
+                do
+                x'@((ri, _),_) <- fnA -< x
+                let b = ri2ball ri (acc + 2)
+                if getAccuracy b >= acc 
+                    then returnA -< b
+                    else auxA -< (x',acc)
+            
+
+ri2ball :: Interval Rational -> Accuracy -> MPBall
+ri2ball (Interval l r) acc =
+    endpoints2Ball lB rB
+    where
+    lB = rational2BallP p l
+    rB = rational2BallP p r
+    p = prec $ fromAccuracy acc
 
 {- MPBall plus-minus -}
 

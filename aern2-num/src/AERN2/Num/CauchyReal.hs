@@ -1,6 +1,7 @@
 {-# LANGUAGE FlexibleInstances, FlexibleContexts, UndecidableInstances, ConstraintKinds #-}
 module AERN2.Num.CauchyReal
 (
+    ArrowReal,
     AsCauchyReal(..), CauchyReal_, CauchyReal,  
     CanReadAsCauchyRealA(..), CanCreateAsCauchyRealA(..), CanAsCauchyRealA,
     SupportsSenderIdA(..), HasSenderIdA(..),
@@ -40,6 +41,26 @@ maybeTrace :: String -> a -> a
 maybeTrace 
     | shouldTrace = trace
     | otherwise = const id
+
+
+class
+    (FieldA to r,
+     HasCauchyRealsA to r,
+     CanSqrtSameTypeA to r, CanExpSameTypeA to r, CanSineCosineSameTypeA to r, 
+     CanAddMulDivScalarA to r Integer, 
+     CanAddMulDivScalarA to r Rational,
+     CanAddMulDivScalarA to r CauchyReal,
+     CanSubA to Integer r,  SubTypeA to Integer r ~ r,
+     CanSubA to Rational r,  SubTypeA to Rational r ~ r, 
+     CanSubA to CauchyReal r,  SubTypeA to CauchyReal r ~ r,
+     CanDivA to Integer r,  DivTypeA to Integer r ~ r,
+     CanDivA to Rational r,  DivTypeA to Rational r ~ r, 
+     CanDivA to CauchyReal r,  DivTypeA to CauchyReal r ~ r,
+     OrderCompareTypeA to r r ~ EqCompareTypeA to r r
+     )
+    => 
+    ArrowReal to r 
+
 
 
 type CauchyReal = AsCauchyReal CauchyReal_

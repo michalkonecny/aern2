@@ -814,7 +814,8 @@ class
     CanSineCosineSameTypeA to a
 
 type CanSineCosineSameType = CanSineCosineSameTypeA (->)
-    
+
+
 {- Interval operations -}    
     
 class CanPlusMinusA to a b where
@@ -833,6 +834,10 @@ class (ArrowChoice to) => CanLimitA to a where
         type LimitTypeA to a
         limA :: (Integer -> (b `to` a)) -> b `to` LimitTypeA to a
         iterateLimA :: (a `to` a) -> a `to` LimitTypeA to a
+        iterateLimA fnA =
+            proc a -> 
+                (iterateLimWithA $ proc (a,()) -> do r <- fnA -< a; returnA -< (r,())) -< (a,())
+        iterateLimWithA :: ((a,b) `to` (a,b)) -> (a,b) `to` LimitTypeA to a
         --type ApproxTypeA to a
         --type ApproxTypeA to a = a
         --approx :: (LimitTypeA to a, Accuracy) `to` ApproxType to a
@@ -851,7 +856,7 @@ iterateLim ::
     a -> (a -> a) -> LimitType a
 iterateLim = flip iterateLimA 
 
-    
+
 {- Utilities for arrow programming -}
 
 iterateA :: (Arrow to) => (a `to` a) -> a `to` [a]
