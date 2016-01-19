@@ -686,10 +686,10 @@ instance
                 (a1NormLog, b1) <- getCRFnNormLog -< (a1,q,id)
                 (a2NormLog, b2) <- getCRFnNormLog -< (a2,q,id)
                 let jInit1 = case a2NormLog of 
-                        NormBits a2NL -> max (bits 0) (q + a2NL + 1)
+                        NormBits a2NL -> max (bits 0) (q + a2NL)
                         NormZero -> bits 0
                 let jInit2 = case a1NormLog of 
-                        NormBits a1NL -> max (bits 0) (q + a1NL + 1)
+                        NormBits a1NL -> max (bits 0) (q + a1NL)
                         NormZero -> bits 0
                 returnA -< ((jInit1, Just b1), (jInit2, Just b2))
 
@@ -741,12 +741,12 @@ instance
                 (a1NormLog, b1) <- getCRFnNormLog -< (a1,q,id)
                 (a2NormLog, b2) <- getCRFnNormLog -< (a2,q,id)
                 let jInit1 = case a2NormLog of 
-                        NormBits a2NL -> max 0 (q - a2NL + 1)
+                        NormBits a2NL -> max 0 (q - a2NL)
                         NormZero -> bits 0 -- denominator == 0, we have no chance...
                 let jInit2 = case (a1NormLog, a2NormLog) of
                         (_, NormZero) -> bits 0 -- denominator == 0, we have no chance... 
                         (NormZero, _) -> bits 0 -- numerator == 0, it does not matter 
-                        (NormBits a1NL, NormBits a2NL) -> max 0 (q + a1NL + 1 - 2 * a2NL)
+                        (NormBits a1NL, NormBits a2NL) -> max 0 (q + a1NL - 2 * a2NL)
                 returnA -< ((jInit1, Just b1), (jInit2, Just b2))
 
 
@@ -783,7 +783,7 @@ instance (CanAsCauchyRealA to r) => CanExpA to (AsCauchyReal r) where
                 do
                 (a1NormLog, b) <- getCRFnNormLog -< (a1,q, exp)
                 let jInit = case a1NormLog of
-                        NormBits expNormLog -> q + expNormLog + 1
+                        NormBits expNormLog -> q + expNormLog
                         NormZero -> q -- this should never happen
                 returnA -< (jInit, Just b)
 
@@ -866,7 +866,7 @@ instance (CanAsCauchyRealA to r) => CanMulA to Integer (AsCauchyReal r) where
                 do
                 let nNormLog = getNormLog n
                 let jInit1 = case nNormLog of 
-                        NormBits nNL -> max (bits 0) (q + nNL + 1)
+                        NormBits nNL -> max (bits 0) (q + nNL)
                         NormZero -> bits 0
                 returnA -< (jInit1, Nothing)
 
@@ -892,7 +892,7 @@ instance (CanAsCauchyRealA to r) => CanDivA to Integer (AsCauchyReal r) where
                 let jInit2 = case (nNormLog, a2NormLog) of
                         (_, NormZero) -> bits 0 -- denominator == 0, we have no chance... 
                         (NormZero, _) -> bits 0 -- numerator == 0, it does not matter 
-                        (NormBits nNL, NormBits a2NL) -> max 0 (q + nNL + 1 - 2 * a2NL)
+                        (NormBits nNL, NormBits a2NL) -> max 0 (q + nNL - 2 * a2NL)
                 returnA -< ((jInit2, Just b2))
 
 instance (CanAsCauchyRealA to r) => CanDivA to (AsCauchyReal r) Integer where
@@ -906,7 +906,7 @@ instance (CanAsCauchyRealA to r) => CanDivA to (AsCauchyReal r) Integer where
                 do
                 let nNormLog = getNormLog n
                 let jInit1 = case nNormLog of 
-                        NormBits nNL -> max (bits 0) (q - nNL + 1)
+                        NormBits nNL -> max (bits 0) (q - nNL)
                         NormZero -> bits 0 -- denominator == 0, we have no chance...
                 returnA -< (jInit1, Nothing)
 
@@ -971,7 +971,7 @@ instance (CanAsCauchyRealA to r) => CanMulA to Rational (AsCauchyReal r) where
                 do
                 let nNormLog = getNormLog n
                 let jInit1 = case nNormLog of 
-                        NormBits nNL -> max (bits 0) (q + nNL + 1)
+                        NormBits nNL -> max (bits 0) (q + nNL)
                         NormZero -> bits 0
                 returnA -< (jInit1, Nothing)
 
@@ -997,7 +997,7 @@ instance (CanAsCauchyRealA to r) => CanDivA to Rational (AsCauchyReal r) where
                 let jInit2 = case (nNormLog, a2NormLog) of
                         (_, NormZero) -> bits 0 -- denominator == 0, we have no chance... 
                         (NormZero, _) -> bits 0 -- numerator == 0, it does not matter 
-                        (NormBits nNL, NormBits a2NL) -> max 0 (q + nNL + 1 - 2 * a2NL)
+                        (NormBits nNL, NormBits a2NL) -> max 0 (q + nNL - 2 * a2NL)
                 returnA -< ((jInit2, Just b2))
 
 instance (CanAsCauchyRealA to r) => CanDivA to (AsCauchyReal r) Rational where
@@ -1011,7 +1011,7 @@ instance (CanAsCauchyRealA to r) => CanDivA to (AsCauchyReal r) Rational where
                 do
                 let nNormLog = getNormLog n
                 let jInit1 = case nNormLog of 
-                        NormBits nNL -> max (bits 0) (q - nNL + 1)
+                        NormBits nNL -> max (bits 0) (q - nNL)
                         NormZero -> bits 0 -- denominator == 0, we have no chance...
                 returnA -< (jInit1, Nothing)
 
