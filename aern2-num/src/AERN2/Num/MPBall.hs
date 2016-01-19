@@ -43,7 +43,7 @@ shouldTrace = False
 maybeTrace :: String -> a -> a
 maybeTrace 
     | shouldTrace = trace
-    | otherwise = const P.id
+    | otherwise = const id
 
 
 data MPBall = MPBall { ball_value :: MPFloat, ball_error :: ErrorBound }

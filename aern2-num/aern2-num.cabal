@@ -64,5 +64,6 @@ library
                    AERN2.Num.Operations,
                    AERN2.Num.SymbolicArrow,
                    AERN2.Num.SymbolicArrow.Expression,
-                   AERN2.Num.SymbolicArrow.TH
+                   AERN2.Num.SymbolicArrow.TH,
+                   StrategyClassesMockup2
 

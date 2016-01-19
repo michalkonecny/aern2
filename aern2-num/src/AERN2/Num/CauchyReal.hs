@@ -77,8 +77,8 @@ data CauchyReal_ =
 
 {-|
     Construct a CauchyReal_ with unsafe memoization, inspired by
-    https://hackage.haskell.org/package/ireal-0.2.3/docs/src/Data-Number-IReal-UnsafeMemo.html#unsafeMemo
-    which itself is inspired by Lennart Augustsson's uglymemo.
+    https://hackage.haskell.org/package/ireal-0.2.3/docs/src/Data-Number-IReal-UnsafeMemo.html#unsafeMemo,
+    which, in turn, is inspired by Lennart Augustsson's uglymemo.
     
     For the sake of efficiency, cr_ should be used in place of the CauchyReal_ constructor.
 -}
