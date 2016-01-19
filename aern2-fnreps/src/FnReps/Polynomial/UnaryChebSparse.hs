@@ -3,11 +3,9 @@ module FnReps.Polynomial.UnaryChebSparse
     _ucspoly1, _ucspoly1Reduced1, _ucspoly1Reduced2, _ucspolyDirect, _ucspolyDCT,
     UnaryChebSparse(..), fromList, fromListRationalWithPrec,
     normaliseCoeffs,
-    toPowerBase,
-    evalDirectOnBall,
-    evalDirect,
     Degree,
-    reduceDegreeAndSweep
+    reduceDegreeAndSweep,
+    module FnReps.Polynomial.UnaryChebSparse.EvaluationRootFinding
 )
 where
 

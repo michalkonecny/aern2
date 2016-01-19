@@ -1,13 +1,25 @@
 {-# LANGUAGE ScopedTypeVariables, FlexibleContexts #-}
 module FnReps.Polynomial.UnaryChebSparse.EvaluationRootFinding 
 (
-    evalDirect, evalDirectOnBall, toPowerBase
+    evalDirect, evalDirectOnBall, evalLipschitzOnBall, toPowerBase
 )
 where
 
 import AERN2.Num
 import FnReps.Polynomial.UnaryChebSparse.Basics
 import FnReps.Polynomial.UnaryPowerBase
+
+import Debug.Trace (trace)
+
+shouldTrace :: Bool
+--shouldTrace = False
+shouldTrace = True
+
+maybeTrace :: String -> a -> a
+maybeTrace 
+    | shouldTrace = trace
+    | otherwise = const id
+
 
 
 {-|
@@ -53,9 +65,21 @@ evalDirectOnBall = evalDirect
 {-|
     An evaluation of the polynomial at the ball x using an estimated Lipschitz constant on x. 
 -}
-_evalOnBallUsingLipschitz :: UnaryChebSparse -> MPBall -> MPBall
-_evalOnBallUsingLipschitz =
-    error "evalOnBallUsingLipschitz not implemented yet"
+evalLipschitzOnBall :: UnaryChebSparse -> MPBall -> MPBall
+evalLipschitzOnBall p@(UnaryChebSparse terms) b =
+    maybeTrace
+    (
+        "evalLipschitzOnBall:" ++
+        "\n lp = " ++ show lp ++
+        "\n b_centre = " ++ show b_centre ++
+        "\n b_errorBall = " ++ show b_errorBall ++
+        "\n evalDirectOnBall p b_centre = " ++ show (evalDirectOnBall p b_centre)
+    )
+    result
+    where
+    result = (evalDirectOnBall p b_centre) + b_errorBall * lp
+    (b_centre, b_errorBall) = getCentreAndErrorBall b
+    lp = sum (map abs $ terms_coeffs terms) * (terms_degree terms)^2
 
 {-|
     This function is not implemented yet.  It is not yet clear whether it will be needed. 
