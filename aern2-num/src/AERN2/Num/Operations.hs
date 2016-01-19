@@ -1,4 +1,4 @@
-{-# LANGUAGE Arrows, DefaultSignatures, UndecidableInstances, TypeSynonymInstances, FlexibleInstances, TypeOperators, FlexibleContexts, ConstraintKinds  #-}
+{-# LANGUAGE Arrows, DefaultSignatures, UndecidableInstances, TypeSynonymInstances, FlexibleInstances, TypeOperators, FlexibleContexts, ConstraintKinds, GeneralizedNewtypeDeriving  #-}
 
 module AERN2.Num.Operations
 (
@@ -49,6 +49,7 @@ module AERN2.Num.Operations
     CanSineCosine, CanSineCosineSameType, sin, cos,
     CanPlusMinusA(..), CanPlusMinus, (+-),
     CanLimitA(..), CanLimit, LimitType, lim, iterateLim,
+    VarName(..), VarMap,
     iterateA, mapA, mapAwithPos, zipWithA, zipWithAwithPos, 
     foldlA, mergeInputsA,
     convertFirstA, convertSecondA, flipA
@@ -65,6 +66,7 @@ import Prelude hiding
 
 import qualified Prelude as P
 import Data.String (IsString(..),fromString)
+import qualified Data.Map as Map
 
 import Control.Category
 import Control.Arrow
@@ -855,6 +857,12 @@ iterateLim ::
     (CanLimitA (->) a) => 
     a -> (a -> a) -> LimitType a
 iterateLim = flip iterateLimA 
+
+{-| Variable names for symbolic expressions, many-variate functions, etc. -}
+newtype VarName = VarName String
+    deriving (IsString, Eq, Ord, Show)
+
+type VarMap = Map.Map VarName
 
 
 {- Utilities for arrow programming -}

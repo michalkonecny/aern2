@@ -1,4 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving, OverloadedStrings, FlexibleContexts, FlexibleInstances, Rank2Types, UndecidableInstances, ConstraintKinds #-}
+{-# LANGUAGE OverloadedStrings, FlexibleContexts, FlexibleInstances, Rank2Types, UndecidableInstances, ConstraintKinds #-}
 module AERN2.Num.SymbolicArrow.Expression 
 (ArrowReal, RealExprA, RealExpr, RealPred, realExpr2arrow, realPred2arrow, var)
 where
@@ -8,12 +8,11 @@ import qualified Prelude
 
 import Control.Arrow
 import qualified Data.Map as Map
-
 import AERN2.Num.CauchyReal
 import AERN2.Num.MPBall
 
 data RealExpr' expr
-    = Var VarName
+    = Var VarName 
     | RInt (Maybe String) Integer
     | RRat (Maybe String) Rational
     | RFunct (Maybe String) (forall to r. (RealExprA to r) => [RIR r] `to` (RIR r)) [expr]
@@ -38,13 +37,6 @@ instance RealExprA (->) MPBall
 instance ConvertibleA (->) CauchyReal MPBall where
     convertA =
         error "conversion from CauchyReal to MPBall not implemented"
-
-
-
-newtype VarName = VarName String
-    deriving (IsString, Eq, Ord, Show)
-
-type VarMap = Map.Map VarName
 
 var :: String -> RealExpr
 var name = RealExpr (Var (VarName name))

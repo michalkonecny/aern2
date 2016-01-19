@@ -43,11 +43,6 @@ class (RealExprA to (UFnOut f)) => RealUnaryFnA to f where
     evalAtPointUFnA :: (f, UFnIn f) `to` (UFnOut f)
     evalOnIntervalUFnA :: (f, Interval (UFnIn f)) `to` Interval (UFnIn f)
 
---newtype VarName = VarName String
---    deriving (IsString, Eq, Ord, Show)
---
---type VarMap = Map.Map VarName
---
 --type FnDomE f = IntervalE (FnDom f)
 --type FnDomR f = IntervalR (FnDom f)
 --
