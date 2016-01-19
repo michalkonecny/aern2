@@ -26,7 +26,8 @@ library
     regex-posix,
     syb,
     parsec,
-    mtl
+    mtl,
+    stm
   ghc-options:     -O2 -Wall  -fno-warn-orphans
   extensions:      
                    Arrows, 

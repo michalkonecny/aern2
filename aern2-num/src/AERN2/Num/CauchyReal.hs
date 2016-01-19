@@ -24,6 +24,8 @@ import AERN2.Num.Operations
 import qualified Prelude
 
 import Control.Arrow
+import Control.Concurrent.MVar
+import System.IO.Unsafe (unsafePerformIO)
 
 import AERN2.Num.Norm
 import AERN2.Num.Accuracy
@@ -65,15 +67,44 @@ class
 
 type CauchyReal = AsCauchyReal CauchyReal_
 
---TODO remove?
-
 instance Show CauchyReal where
         show x = show $ cauchyReal2ball x (bits 53)
---
 
 
 data CauchyReal_ = 
     CauchyReal_ { cr_name :: Maybe String, cr_seq :: Accuracy -> MPBall } 
+
+
+{-|
+    Construct a CauchyReal_ with unsafe memoization, inspired by
+    https://hackage.haskell.org/package/ireal-0.2.3/docs/src/Data-Number-IReal-UnsafeMemo.html#unsafeMemo
+    which itself is inspired by Lennart Augustsson's uglymemo.
+    
+    For the sake of efficiency, cr_ should be used in place of the CauchyReal_ constructor.
+-}
+cr_ :: Maybe String -> (Accuracy -> MPBall) -> CauchyReal_ 
+cr_ name sq = CauchyReal_ name unsafeMemo
+    where
+    unsafeMemo = unsafePerformIO . unsafePerformIO memoIO
+    memoIO =
+        do
+        cacheVar <- newMVar Nothing
+        return $ useMVar cacheVar
+        where
+        useMVar cacheVar ac =
+            do
+            maybeCache <- readMVar cacheVar
+            case maybeCache of
+                Just (acC, bC) | acC >= ac ->
+                    do
+                    return bC
+                _ -> 
+                    do
+                    modifyMVar_ cacheVar (const (return (Just (getAccuracy b, b))))
+                    return b
+                    where
+                    b = sq ac
+            
 
 newtype AsCauchyReal r = AsCauchyReal { unAsCauchyReal :: r }
 
@@ -88,12 +119,12 @@ showCauchyReal a r = show (cauchyReal2ball r a)
 
 mapCauchyRealUnsafe :: (Accuracy -> MPBall -> MPBall) -> CauchyReal -> CauchyReal
 mapCauchyRealUnsafe f (AsCauchyReal (CauchyReal_ name sq)) = 
-    AsCauchyReal (CauchyReal_ name (\ ac -> f ac (sq ac) )) 
+    AsCauchyReal (CauchyReal_ name (\ ac -> f ac (sq ac))) 
 
 convergent2CauchyReal :: 
     Maybe String -> [MPBall] -> CauchyReal
 convergent2CauchyReal name convergentSeq =
-    AsCauchyReal $ CauchyReal_ name sq
+    AsCauchyReal $ cr_ name sq
     where
     sq i =
         findAccurate convergentSeq
@@ -107,8 +138,8 @@ convergent2CauchyReal name convergentSeq =
 seqByPrecision2Cauchy :: 
     Maybe String -> (Precision -> MPBall) -> CauchyReal
 seqByPrecision2Cauchy name seqByPrecision =
-    AsCauchyReal $ CauchyReal_ name $
-        seqByPrecision2CauchySeq seqByPrecision
+    AsCauchyReal $ cr_ name
+        (seqByPrecision2CauchySeq seqByPrecision)
 
 seqByPrecision2CauchySeq :: 
     (Precision -> MPBall) -> (Accuracy -> MPBall)
@@ -149,19 +180,20 @@ class (Arrow to) => SupportsSenderIdA to r where
 class (SupportsSenderIdA to r) => HasSenderIdA to r where
     getSenderIdA :: r `to` (SenderId to r)
 
-
-    
 instance CanAsCauchyRealA (->) CauchyReal_
 
-instance (ArrowChoice to, Arrow to) => CanReadAsCauchyRealA to CauchyReal_ where
-    getAnswerCRA = arr $ \ (AsCauchyReal r,ac) -> cr_seq r ac
-    getNameCRA = arr $ cr_name . unAsCauchyReal 
-
 instance CanCreateAsCauchyRealA (->) CauchyReal_ where
-    newCRA (_, name, ac2b) = AsCauchyReal $ CauchyReal_ name ac2b'
+    newCRA (_, name, ac2b) = AsCauchyReal $ cr_ name ac2b'
         where
         ac2b' ac = setPrecisionMatchAccuracy ac $ ac2b ac
               
+instance (ArrowChoice to, Arrow to) => CanReadAsCauchyRealA to CauchyReal_ where
+    getNameCRA = arr $ cr_name . unAsCauchyReal 
+    getAnswerCRA = arr getAnswerCR
+
+getAnswerCR :: (CauchyReal, Accuracy) -> MPBall
+getAnswerCR (AsCauchyReal r,ac) = cr_seq r ac
+    
 
 instance (Arrow to) => SupportsSenderIdA to CauchyReal_ where
     type SenderId to CauchyReal_ = ()
