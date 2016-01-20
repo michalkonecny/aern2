@@ -615,3 +615,14 @@ instance Floating (Complex CauchyReal) where
     exp = exp
     sin = sin
     cos = cos
+    sqrt = error "CauchyReal: sqrt not implemented yet"
+    log = error "CauchyReal: log not implemented yet"
+    atan = error "CauchyReal: atan not implemented yet"
+    atanh = error "CauchyReal: atanh not implemented yet"
+    asin = error "CauchyReal: asin not implemented yet"
+    acos = error "CauchyReal: acos not implemented yet"
+    sinh = error "CauchyReal: sinh not implemented yet"
+    cosh = error "CauchyReal: cosh not implemented yet"
+    asinh = error "CauchyReal: asinh not implemented yet"
+    acosh = error "CauchyReal: acosh not implemented yet"
+    
