@@ -194,7 +194,9 @@ instance (Arrow to, CanAsCauchyRealA to a, CanCombineCRsA to a a,
 
 {- Limits -} 
 
-{-instance (ArrowChoice to) => CanLimitA to (Interval MPBall) where
+{-
+
+instance (ArrowChoice to) => CanLimitA to (Interval MPBall) where
         type LimitTypeA to (Interval MPBall) = CauchyReal 
         limA = proc(getApprox) ->
                  do
@@ -207,8 +209,9 @@ instance (Arrow to, CanAsCauchyRealA to a, CanCombineCRsA to a a,
                findAccurate n f acc = if getAccuracy (f n) >= acc then
                                         (f n)
                                       else
-                                        findAccurate (n + 1) f acc-}
-        
+                                        findAccurate (n + 1) f acc
+-}
+
 instance (CanAsCauchyRealA to a) => CanLimitA to (Interval (AsCauchyReal a)) where
     type LimitTypeA to (Interval (AsCauchyReal a)) = AsCauchyReal a
 --    limListA = proc(xs) -> newCRA -< ([],Nothing, fn xs)
@@ -278,6 +281,14 @@ instance (CanCreateAsCauchyRealA to r) => CanLimitA to (Interval Rational, AsCau
                 if getAccuracy b >= acc 
                     then returnA -< b
                     else auxA -< (x',acc)
+            
+
+instance (ArrowChoice to) => CanLimitA to (Interval Rational) where
+    type LimitTypeA to (Interval Rational) = CauchyReal
+    limA = 
+        error "limA not implemented for Interval Rational, instead use instance for (Interval Rational, CauchyReal)"
+    iterateLimWithA =
+        error "iterateLimWithA not implemented for Interval Rational, instead use instance for (Interval Rational, CauchyReal)"
             
 
 ri2ball :: Interval Rational -> Accuracy -> MPBall

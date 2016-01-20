@@ -73,8 +73,8 @@ mpBall2rati b =
     l = toRationalDown b
     r = toRationalUp b
 
-cri2MPBall :: Interval CauchyReal -> MPBall
-cri2MPBall (Interval l r) =
+_cri2MPBall :: Interval CauchyReal -> MPBall
+_cri2MPBall (Interval l r) =
     maybeTrace
     (
         "cri2MPBall: Interval " ++ show lMP ++ " " ++ show rMP
@@ -129,11 +129,11 @@ instance RealUnaryFnA (->) UnaryFnMPBall where
     constUFnA (dom, r) = (dom, \b -> cauchyReal2ball r (getFiniteAccuracy b))
     projUFnA dom = (dom, id)
     getDomainUFnA (dom, _) = dom
---    evalAtLimPointUFnA ((_dom, f), r) = 
---        convergent2CauchyReal Nothing $ 
---            map f $
---                map (cauchyReal2ball r) (map bits [1..])
-    evalAtPointUFnA ((_dom, f), r) = 
+    evalAtOutPointUFnA ((_dom, f), r) = 
+        convergent2CauchyReal Nothing $ 
+            map f $
+                map (cauchyReal2ball r) (map bits [1..])
+    evalAtInPointUFnA ((_dom, f), r) = 
         convergent2CauchyReal Nothing $ 
             map f $ map (flip rational2BallP r) standardPrecisions
     evalOnIntervalUFnA ((_dom, f), ri) =  
@@ -148,8 +148,8 @@ instance RealUnaryFnA (->) UnaryFnCR
     constUFnA (dom, r) = (dom, const r)
     projUFnA dom = (dom, id)
     getDomainUFnA (dom, _) = dom
---    evalAtLimPointUFnA ((_dom, f), r) = f r 
-    evalAtPointUFnA ((_dom, f), r) = f (cauchyReal r) 
+    evalAtOutPointUFnA ((_dom, f), r) = f r 
+    evalAtInPointUFnA ((_dom, f), r) = f (cauchyReal r) 
     evalOnIntervalUFnA ((_dom, _f), _ri) = 
         error "evalOnIntervalUFnA not implemented for UnaryFnCR"
 

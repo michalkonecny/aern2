@@ -33,14 +33,14 @@ import AERN2.Num
 --type UFnDomE f = IntervalE (UFnDom f)
 --type UFnDomR f = IntervalR (UFnDom f)
 
-class (RealExprA to (UFnOut f)) => RealUnaryFnA to f where
+class (RealExprA to (UFnOut f), UFnOut f ~ LimitTypeA to (Interval (UFnIn f))) => RealUnaryFnA to f where
     type UFnIn f
     type UFnOut f
     constUFnA :: (Interval (UFnIn f), UFnOut f) `to` f
     projUFnA :: Interval (UFnIn f) `to` f
     getDomainUFnA :: f `to` (Interval (UFnIn f))
-    evalAtLimPointUFnA :: (f, LimitTypeA to (Interval (UFnIn f))) `to` (UFnOut f)
-    evalAtPointUFnA :: (f, UFnIn f) `to` (UFnOut f)
+    evalAtOutPointUFnA :: (f, UFnOut f) `to` (UFnOut f)
+    evalAtInPointUFnA :: (f, UFnIn f) `to` (UFnOut f)
     evalOnIntervalUFnA :: (f, Interval (UFnIn f)) `to` Interval (UFnIn f)
 
 --type FnDomE f = IntervalE (FnDom f)
