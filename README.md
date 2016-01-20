@@ -1,7 +1,7 @@
 # aern2
-A Haskell library for Approximating Exact Real Numbers (AERN) based on interval computation.
+__A Haskell library for Approximating Exact Real Numbers (AERN) based on interval computation__
 
-*This is a work in progress.*
+_This is work in progress._
 
 Links: [installation instructions](docs/INSTALL.md)
 
