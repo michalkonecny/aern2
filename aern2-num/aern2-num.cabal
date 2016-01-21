@@ -54,6 +54,7 @@ library
                    AERN2.Net.Strategy.QACached.CauchyReal,
                    AERN2.Num.Accuracy,
                    AERN2.Num.CauchyReal,
+                   AERN2.Num.CauchyRealA,
                    AERN2.Num.Complex,
                    AERN2.Num.ErrorBound,
                    AERN2.Num.IntegerRational,
