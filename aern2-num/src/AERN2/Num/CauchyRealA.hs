@@ -575,11 +575,11 @@ instance
         getInitQ1Q2 =
             proc (q, a1, a2) ->
                 do
-                (a1NormLog, b1) <- getCRFnNormLog -< (a1,q,id)
                 (a2NormLog, b2) <- getCRFnNormLog -< (a2,q,id)
                 let jInit1 = case a2NormLog of 
                         NormBits a2NL -> max 0 (q - a2NL)
                         NormZero -> bits 0 -- denominator == 0, we have no chance...
+                (a1NormLog, b1) <- getCRFnNormLog -< (a1,jInit1,id)
                 let jInit2 = case (a1NormLog, a2NormLog) of
                         (_, NormZero) -> bits 0 -- denominator == 0, we have no chance... 
                         (NormZero, _) -> bits 0 -- numerator == 0, it does not matter 
