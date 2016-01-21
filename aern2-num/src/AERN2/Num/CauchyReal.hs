@@ -89,8 +89,8 @@ cr_ name sq = CauchyReal_ name unsafeMemo
     memoIO =
         do
         cacheVar <- newMVar Nothing
-        putStrLn "new cr_"
---        return $ useMVar cacheVar
+--        putStrLn "new cr_"
+        return $ useMVar cacheVar
         where
         useMVar cacheVar ac =
             do
