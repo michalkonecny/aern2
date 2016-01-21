@@ -524,6 +524,7 @@ instance
                 let jInit2 = case a1NormLog of 
                         NormBits a1NL -> max (bits 0) (q + a1NL)
                         NormZero -> bits 0
+                -- favouring 2*x over x*2 in a Num instance
                 (a2NormLog, b2) <- getCRFnNormLog -< (a2,jInit2,id)
                 let jInit1 = case a2NormLog of 
                         NormBits a2NL -> max (bits 0) (q + a2NL)
@@ -575,12 +576,16 @@ instance
         getInitQ1Q2 =
             proc (q, a1, a2) ->
                 do
-                -- favouring x/(convert 2) over (convert 2)/x
-                (a2NormLog, b2) <- getCRFnNormLog -< (a2,q,id)
+                -- In a Fractional instance, optimising 3/x and not optimising x/3 etc.
+                -- In a Fractional instance, x/3 should be replaced by (1/3)*x etc.
+                (a1NormLog, b1) <- getCRFnNormLog -< (a1,q,id)
+                let jPre2 = case (a1NormLog) of
+                        (NormZero) -> bits 0 -- numerator == 0, it does not matter 
+                        (NormBits a1NL) -> max 0 (q + a1NL)
+                (a2NormLog, b2) <- getCRFnNormLog -< (a2,jPre2,id)
                 let jInit1 = case a2NormLog of 
                         NormBits a2NL -> max 0 (q - a2NL)
                         NormZero -> bits 0 -- denominator == 0, we have no chance...
-                (a1NormLog, b1) <- getCRFnNormLog -< (a1,jInit1,id)
                 let jInit2 = case (a1NormLog, a2NormLog) of
                         (_, NormZero) -> bits 0 -- denominator == 0, we have no chance... 
                         (NormZero, _) -> bits 0 -- numerator == 0, it does not matter 
