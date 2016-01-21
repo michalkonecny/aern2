@@ -572,3 +572,50 @@ cosB i x =
     lip
         | i == 0 = MP.one
         | otherwise = snd $ ball2endpointsMP $ abs $ sinB (i - 1) x
+
+{- Instances of Prelude numerical classes provided for convenient use outside AERN2 
+   and also because Template Haskell translates (-x) to (Prelude.negate x) -}  
+instance Num MPBall where
+    fromInteger = convert
+    negate = negate
+    (+) = (+)
+    (*) = (*)
+    abs = abs
+    signum = error "Prelude.signum not implemented for MPBall"
+
+instance Eq MPBall where
+    a == b = (a == b) == Just True
+    a /= b = (a /= b) == Just True
+
+instance Ord MPBall where
+    a < b =  (a < b) == Just True
+    a <= b =  (a <= b) == Just True
+    a > b =  (a > b) == Just True
+    a >= b =  (a >= b) == Just True
+    compare r1 r2 
+        | (r1 < r2) == Just True = LT
+        | (r1 > r2) == Just True = GT
+        | (r1 == r2) == Just True = EQ
+        | otherwise = error "AERN2.Num.MPBall: compare: cannot decide"
+        
+instance Fractional MPBall where
+    fromRational = convert -- will work only for dyadic rationals
+    recip = recip
+    (/) = (/)
+
+instance Floating MPBall where
+    pi = error "MPBall: pi not implemented" -- no global precision to pick
+    sqrt = sqrt
+    exp = exp
+    sin = sin
+    cos = cos
+    log = error "MPBall: log not implemented yet"
+    atan = error "MPBall: atan not implemented yet"
+    atanh = error "MPBall: atanh not implemented yet"
+    asin = error "MPBall: asin not implemented yet"
+    acos = error "MPBall: acos not implemented yet"
+    sinh = error "MPBall: sinh not implemented yet"
+    cosh = error "MPBall: cosh not implemented yet"
+    asinh = error "MPBall: asinh not implemented yet"
+    acosh = error "MPBall: acosh not implemented yet"
+    
