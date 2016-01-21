@@ -89,7 +89,8 @@ cr_ name sq = CauchyReal_ name unsafeMemo
     memoIO =
         do
         cacheVar <- newMVar Nothing
-        return $ useMVar cacheVar
+        putStrLn "new cr_"
+--        return $ useMVar cacheVar
         where
         useMVar cacheVar ac =
             do
@@ -97,10 +98,12 @@ cr_ name sq = CauchyReal_ name unsafeMemo
             case maybeCache of
                 Just (acC, bC) | acC >= ac ->
                     do
-                    return bC
+--                    putStrLn $ "cr_: using cache: ac = " ++ show ac ++ "; acC = " ++ show acC ++ "; bC = " ++ show bC ++ "; prec = " ++ show (getPrecision $ setPrecisionMatchAccuracy ac bC)
+                    return $ setPrecisionMatchAccuracy ac bC
                 _ -> 
                     do
                     modifyMVar_ cacheVar (const (return (Just (getAccuracy b, b))))
+--                    putStrLn $ "cr_: amending cache: ac = " ++ show ac ++ "; b = " ++ show b
                     return b
                     where
                     b = sq ac
