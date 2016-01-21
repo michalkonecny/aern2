@@ -70,7 +70,8 @@ fftTestMPBiterate nN ac =
             proc () ->
                 do
                 x <- complexListNamedA "input" -< input
-                dftCooleyTukey nN -< x
+                r <- dftCooleyTukey nN -< x
+                returnA -< Just r
         input = map (integer2BallP p) [1..nN]
     getAccuracyAll x =
         foldl1 min $ map getAccuracyC x

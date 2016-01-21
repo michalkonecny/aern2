@@ -8,6 +8,7 @@ module AERN2.Num.MPBall
      CanBeMPBallA, mpBallA, mpBallNamedA, mpBallsA, mpBallsNamedA, CanBeMPBall, mpBall, mpBalls,
      getPrecision, setPrecisionMatchAccuracy, 
      MP.standardPrecisions, MP.Precision, MP.prec, MP.prec2integer,
+     iterateUntilAccurateA, iterateUntilOKA,
      iterateUntilAccurate, iterateUntilOK,
      isNonZero,
      toIntegerUp, toIntegerDown, toRationalUp, toRationalDown,
@@ -22,8 +23,8 @@ import qualified Prelude as P
 import AERN2.Num.Operations
 import AERN2.Num.Norm
 
-import Control.Exception
-import System.IO.Unsafe
+--import Control.Exception
+--import System.IO.Unsafe
 import Control.Arrow
 import Math.NumberTheory.Logarithms (integerLog2)
 
@@ -162,23 +163,51 @@ setPrecisionMatchAccuracy acc b@(MPBall x e)
     p = MP.getPrecision x
     x' = MP.setPrecisionUp p' x
 
-iterateUntilAccurate :: A.Accuracy -> (Precision -> MPBall) -> [(Precision, Maybe MPBall)]
-iterateUntilAccurate ac = iterateUntilOK (\result -> getAccuracy result >= ac) 
+iterateUntilAccurateA :: 
+    (ArrowChoice to) => 
+    A.Accuracy -> 
+    (Precision `to` Maybe MPBall) -> 
+    () `to` [(Precision, Maybe MPBall)]
+iterateUntilAccurateA ac = 
+    iterateUntilOKA (\result -> getAccuracy result >= ac) 
 
-iterateUntilOK :: (a -> Bool) -> (Precision -> a) -> [(Precision, Maybe a)]
-iterateUntilOK isOK fn =
-    stopWhenAccurate $ zip ps (map fnWrap ps)
+iterateUntilAccurate :: 
+    A.Accuracy -> 
+    (Precision -> Maybe MPBall) -> 
+    [(Precision, Maybe MPBall)]
+iterateUntilAccurate ac fn = iterateUntilAccurateA ac fn () 
+
+iterateUntilOKA :: 
+    (ArrowChoice to) => 
+    (a -> Bool) -> 
+    (Precision `to` Maybe a) -> 
+    () `to` [(Precision, Maybe a)]
+iterateUntilOKA isOK fnA =
+    stopWhenAccurate ps
     where
-    fnWrap p =
-        unsafePerformIO $ 
-            catch (return $! Just $! fn p) 
-                (\e -> let _ = e :: SomeException in return Nothing)
+--    fnWrap p =
+--        unsafePerformIO $ 
+--            catch (return $! Just $! fn p) 
+--                (\e -> let _ = e :: SomeException in return Nothing)
     ps = MP.standardPrecisions
-    stopWhenAccurate [] = []
-    stopWhenAccurate ((p, maybeResult) : rest) =
-        case maybeResult of
-            Just result | isOK result -> [(p, maybeResult)]
-            _ -> (p, maybeResult) : (stopWhenAccurate rest)
+    stopWhenAccurate [] = arr $ const []
+    stopWhenAccurate (p : rest) =
+        proc () ->
+            do
+            maybeResult <- fnA -< p
+            case maybeResult of
+                Just result | isOK result -> returnA -< [(p, maybeResult)]
+                _ ->
+                    do
+                    restResults <- stopWhenAccurate rest -< ()
+                    returnA -<  (p, maybeResult) : restResults
+
+iterateUntilOK :: 
+    (a -> Bool) -> 
+    (Precision -> Maybe a) -> 
+    [(Precision, Maybe a)]
+iterateUntilOK isOK fn = iterateUntilOKA isOK fn ()
+
 
 isNonZero :: MPBall -> Bool
 isNonZero (MPBall x e) =

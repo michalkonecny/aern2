@@ -73,11 +73,15 @@ logisticA c n =
     where
     step = $(exprA[|let [x]=vars in  c * x * (1 - x)|])
     
-logisticWithHookA :: (ArrowReal to r) => (r `to` r) -> Rational -> Integer -> r `to` r
+logisticWithHookA :: (ArrowReal to r) => (r `to` Maybe r) -> Rational -> Integer -> r `to` Maybe r
 logisticWithHookA hook c n =
-    (foldl1 (<<<) (replicate (int n) step)) 
+    (foldl1 (<<<) (replicate (int n) step)) <<< arr Just 
     where
-    step = $(exprA[|let [x]=vars in  c * x * (1 - x)|]) >>> hook
+    step = 
+        proc maybeX ->
+            case maybeX of
+                Just x -> hook <<< $(exprA[|let [x]=vars in  c * x * (1 - x)|]) -< x
+                Nothing -> returnA -< Nothing
     
 logisticQACached :: Rational -> Integer -> CauchyReal -> CauchyReal
 logisticQACached c n x0 =
@@ -117,8 +121,8 @@ logisticMPBIterate c n x0 =
         x0p = cauchyReal2ball x0 pA
         pA = bits $ prec2integer p
         check ball 
-            | getAccuracy ball < ac  = throw LossOfPrecision 
-            | otherwise = ball 
+            | getAccuracy ball < ac = Nothing -- throw LossOfPrecision 
+            | otherwise = Just ball 
 
 logisticMPBIteratePrintProgress :: Rational -> Integer -> CauchyReal -> Accuracy -> IO ()
 logisticMPBIteratePrintProgress c n x0 ac =
@@ -126,10 +130,13 @@ logisticMPBIteratePrintProgress c n x0 ac =
     where
     iterInfos = iterateUntilAccurate ac auxP
     auxP p = 
-        logisticWithHookA id c n x0p
+        logisticWithHookA check c n x0p
         where
         x0p = cauchyReal2ball x0 pA
         pA = bits $ prec2integer p
+        check ball 
+            | getAccuracy ball < ac = Nothing -- throw LossOfPrecision 
+            | otherwise = Just ball 
     printInfo (p, maybeBall) =
         do
         putStrLn $ show p ++ ": result = " ++ show maybeBall
