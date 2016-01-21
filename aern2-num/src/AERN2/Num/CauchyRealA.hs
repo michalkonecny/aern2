@@ -575,6 +575,7 @@ instance
         getInitQ1Q2 =
             proc (q, a1, a2) ->
                 do
+                -- favouring x/(convert 2) over (convert 2)/x
                 (a2NormLog, b2) <- getCRFnNormLog -< (a2,q,id)
                 let jInit1 = case a2NormLog of 
                         NormBits a2NL -> max 0 (q - a2NL)
