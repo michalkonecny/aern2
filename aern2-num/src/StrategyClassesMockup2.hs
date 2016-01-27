@@ -15,25 +15,25 @@ exampleRealGeneric1 :: RealGeneric (GPair GR GR) GR
 exampleRealGeneric1 = 
     RealGeneric (anyStrategy addA)
 
-exampleRealGeneric1EvalWithOrdFuncReal :: (CauchyReal, CauchyReal) -> CauchyReal
-exampleRealGeneric1EvalWithOrdFuncReal =
-    withEvalStrategyReal exampleRealGeneric1 EvalWithOrdFuncReal
+exampleRealGeneric1EvalReal_OrdFun :: (CauchyReal, CauchyReal) -> CauchyReal
+exampleRealGeneric1EvalReal_OrdFun =
+    withEvalStrategyReal exampleRealGeneric1 EvalReal_OrdFun
 
 exampleRealGeneric2 :: RealGeneric GR (GPair GR GR)
 exampleRealGeneric2 = 
     RealGeneric (anyStrategy $ proc x -> do nx <- negA -< x; returnA -< (x,nx))
 
-exampleRealGeneric2EvalWithOrdFuncReal :: CauchyReal -> (CauchyReal, CauchyReal)
-exampleRealGeneric2EvalWithOrdFuncReal =
-    withEvalStrategyReal exampleRealGeneric2 EvalWithOrdFuncReal
+exampleRealGeneric2EvalReal_OrdFun :: CauchyReal -> (CauchyReal, CauchyReal)
+exampleRealGeneric2EvalReal_OrdFun =
+    withEvalStrategyReal exampleRealGeneric2 EvalReal_OrdFun
 
 exampleRealGeneric3 :: RealGeneric GR (GList GR)
 exampleRealGeneric3 = 
     RealGeneric (anyStrategy $ proc x -> do nx <- negA -< x; returnA -< [x,nx])
 
-exampleRealGeneric3EvalWithOrdFuncReal :: CauchyReal -> [CauchyReal]
-exampleRealGeneric3EvalWithOrdFuncReal =
-    withEvalStrategyReal exampleRealGeneric3 EvalWithOrdFuncReal
+exampleRealGeneric3EvalReal_OrdFun :: CauchyReal -> [CauchyReal]
+exampleRealGeneric3EvalReal_OrdFun =
+    withEvalStrategyReal exampleRealGeneric3 EvalReal_OrdFun
 
 
 {-| strategy for evaluating arrow-generic real expressions  -}
@@ -46,13 +46,26 @@ class
     type ES_r s -- ^ Real number type
     type ES_kl s -- ^ Kleenean type (eg Maybe Boolean) 
 
--- example instance
-data EvalWithOrdFuncReal = EvalWithOrdFuncReal
+-- example instances
+data EvalReal_OrdFun = EvalReal_OrdFun
+data EvalReal_FixedPrecision = EvalReal_FixedPrecision
 
-instance EvalStrategyReal EvalWithOrdFuncReal where
-    type ES_to EvalWithOrdFuncReal = (->)
-    type ES_r EvalWithOrdFuncReal = CauchyReal
-    type ES_kl EvalWithOrdFuncReal = Accuracy -> Maybe Bool
+instance EvalStrategyReal EvalReal_OrdFun where
+    type ES_to EvalReal_OrdFun = (->)
+    type ES_r EvalReal_OrdFun = CauchyReal
+    type ES_kl EvalReal_OrdFun = Accuracy -> Maybe Bool
+
+instance EvalStrategyReal EvalReal_FixedPrecision where
+    type ES_to EvalReal_FixedPrecision = WithPrecisionPolicy (->)
+    type ES_r EvalReal_FixedPrecision = MPBall
+    type ES_kl EvalReal_FixedPrecision = Maybe Bool
+
+{- TODO
+    Make EvalReal_FixedPrecision really work - add all necessary instances.
+    
+    Provide iRRAM-style computation as an *adaptor* from EvalReal_FixedPrecision
+    to EvalReal_OrdFun.
+-}
 
 {-| Strategy-generic expression -}
 data RealGeneric i o = RealGeneric
