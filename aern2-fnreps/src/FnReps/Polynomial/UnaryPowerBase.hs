@@ -40,9 +40,9 @@ instance CanAddA (->) UnaryPowerBase UnaryPowerBase where
 addTerms :: [MPBall] -> [MPBall] -> [MPBall]
 addTerms termsL termsR
     | length termsL < length termsR =
-        zipWith (+) (termsL ++ repeat (integer2Ball 0)) termsR
+        zipWith (+) (termsL ++ repeat (mpBall 0)) termsR
     | otherwise =
-        zipWith (+) termsL (termsR ++ repeat (integer2Ball 0))
+        zipWith (+) termsL (termsR ++ repeat (mpBall 0))
 
 instance CanAddThis UnaryPowerBase UnaryPowerBase
 instance CanAddSameType UnaryPowerBase
@@ -57,7 +57,7 @@ instance CanMulA (->) UnaryPowerBase UnaryPowerBase where
         where
         terms = foldl1 addTerms (map mulTermsLBy $ zip [0..] termsR)
         mulTermsLBy (deg, coeff) = 
-            (replicate (int deg) (integer2Ball 0)) ++ map (* coeff) termsL
+            (replicate (int deg) (mpBall 0)) ++ map (* coeff) termsL
 
 instance CanMulBy UnaryPowerBase UnaryPowerBase
 instance CanMulSameType UnaryPowerBase
@@ -70,6 +70,9 @@ instance HasOrderA (->) UnaryPowerBase UnaryPowerBase where
 
 instance ConvertibleA (->) Integer UnaryPowerBase where
     convertA n = UnaryPowerBase [mpBall n]
+    
+instance CanPowA (->) UnaryPowerBase Integer
+instance CanPowByA (->) UnaryPowerBase Integer
     
 instance Ring UnaryPowerBase
 

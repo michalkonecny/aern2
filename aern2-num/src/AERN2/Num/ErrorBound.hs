@@ -31,21 +31,21 @@ errorBoundPrecision :: Precision
 errorBoundPrecision = prec 53
 
 zero :: ErrorBound
-zero = ErrorBound $ MP.rationalUp errorBoundPrecision 0.0
+zero = ErrorBound $ MP.fromRationalUp errorBoundPrecision 0.0
 
 rational2ErrorBound :: Rational -> ErrorBound
 rational2ErrorBound x
-    | x >= 0.0 = ErrorBound $ MP.rationalUp errorBoundPrecision x
+    | x >= 0.0 = ErrorBound $ MP.fromRationalUp errorBoundPrecision x
     | otherwise = error $ "Trying to construct a negative ErrorBound: " ++ show x
 
 mp2ErrorBound :: MPFloat -> ErrorBound
 mp2ErrorBound x 
-    | x >= (MP.rationalUp errorBoundPrecision 0.0) = 
+    | x >= (MP.fromRationalUp errorBoundPrecision 0.0) = 
         ErrorBound (MP.setPrecisionUp errorBoundPrecision x)
     | otherwise = error $ "Trying to construct a negative ErrorBound: " ++ show x
     
 subMP :: MPFloat -> MPFloat -> ErrorBound
-a `subMP` b = mp2ErrorBound $ a `MP.subUp` b 
+a `subMP` b = mp2ErrorBound $ a -^ b 
 
 absMP :: MPFloat -> ErrorBound
 absMP = mp2ErrorBound . MP.abs
@@ -57,16 +57,16 @@ getAccuracy (ErrorBound e)
     | e == MP.zero = A.Exact
     | otherwise = A.NoInformation
     where
-    eRecipN = ceiling $ MP.toRational $ MP.recipDown e
+    eRecipN = ceiling $ MP.toRational $ MP.recipDown ppErrorBound e
 
 instance CanAddA (->) ErrorBound ErrorBound where
-    addA (ErrorBound a, ErrorBound b) = ErrorBound $ a `MP.addUp` b
+    addA (ErrorBound a, ErrorBound b) = ErrorBound $ a +^ b
 
 instance CanAddThis ErrorBound ErrorBound
 instance CanAddSameType ErrorBound
 
 instance CanMulA (->) ErrorBound ErrorBound where
-    mulA (ErrorBound a, ErrorBound b) = ErrorBound $ a `MP.mulUp` b
+    mulA (ErrorBound a, ErrorBound b) = ErrorBound $ a *^ b
 
 instance CanMulBy ErrorBound ErrorBound
 instance CanMulSameType ErrorBound
@@ -74,13 +74,13 @@ instance CanMulSameType ErrorBound
 instance CanMulA (->) ErrorBound Integer where
     type MulTypeA (->) ErrorBound Integer = ErrorBound
     mulA (ErrorBound a, i)
-        | i >= 0 = ErrorBound $ a `MP.mulUp` (MP.integerUp errorBoundPrecision i)
+        | i >= 0 = ErrorBound $ a *^ (MP.fromIntegerUp errorBoundPrecision i)
         | otherwise = error "trying to multiply ErrorBound by a negative integer"
 
 instance CanMulA (->) Integer ErrorBound where
     type MulTypeA (->) Integer ErrorBound = ErrorBound
     mulA (i, ErrorBound b)
-        | i >= 0 = ErrorBound $ (MP.integerUp errorBoundPrecision i) `MP.mulUp` b
+        | i >= 0 = ErrorBound $ (MP.fromIntegerUp errorBoundPrecision i) *^ b
         | otherwise = error "trying to multiply ErrorBound by a negative integer"
 
 instance CanMulBy ErrorBound Integer
@@ -88,20 +88,33 @@ instance CanMulBy ErrorBound Integer
 instance CanDivA (->) ErrorBound Integer where
     type DivTypeA (->) ErrorBound Integer = ErrorBound
     divA (ErrorBound a, i)
-        | i > 0 = ErrorBound $ a `MP.divUp` (MP.integerUp errorBoundPrecision i)
+        | i > 0 = ErrorBound $ a /^ (MP.fromIntegerUp errorBoundPrecision i)
         | otherwise = error "trying to multiply ErrorBound by a non-positive integer"
 
 instance CanMulA (->) ErrorBound Rational where
     type MulTypeA (->) ErrorBound Rational = ErrorBound
     mulA (ErrorBound a, r)
-        | r >= 0.0 = ErrorBound $ a `MP.mulUp` (MP.rationalUp errorBoundPrecision r)
+        | r >= 0.0 = ErrorBound $ a *^ (MP.fromRationalUp errorBoundPrecision r)
         | otherwise = error "trying to multiply ErrorBound by a negative integer"
 
 instance CanMulA (->) Rational ErrorBound where
     type MulTypeA (->) Rational ErrorBound = ErrorBound
     mulA (r, ErrorBound b)
-        | r >= 0.0 = ErrorBound $ (MP.rationalUp errorBoundPrecision r) `MP.mulUp` b
+        | r >= 0.0 = ErrorBound $ (MP.fromRationalUp errorBoundPrecision r) *^ b
         | otherwise = error "trying to multiply ErrorBound by a negative integer"
 
 instance CanMulBy ErrorBound Rational
+
+ppErrorBound :: MP.PrecisionPolicy
+ppErrorBound = 
+    MP.PrecisionPolicy errorBoundPrecision MP.PrecisionPolicyMode_UseCurrent
+    
+(+^) :: MPFloat -> MPFloat -> MPFloat
+(+^) = MP.addUp ppErrorBound
+(-^) :: MPFloat -> MPFloat -> MPFloat
+(-^) = MP.subUp ppErrorBound
+(*^) :: MPFloat -> MPFloat -> MPFloat
+(*^) = MP.mulUp ppErrorBound
+(/^) :: MPFloat -> MPFloat -> MPFloat
+(/^) = MP.divUp ppErrorBound
 

@@ -92,7 +92,7 @@ multiplyDCT_terms termsA termsB =
     a0 = terms_lookupCoeff termsA 0
     b = pad0 $ (2 * b0) : [terms_lookupCoeff termsB i | i <- [1..dB]]
     b0 = terms_lookupCoeff termsB 0
-    pad0 list = take (int $ cN + 1) $ list ++ (repeat (integer2Ball 0))
+    pad0 list = take (int $ cN + 1) $ list ++ (repeat (mpBall 0))
     
     cN = 2 ^ (1 + (integer $ integerLog2 $ max 1 (dA + dB)))
     dA = maximum $ terms_degrees termsA

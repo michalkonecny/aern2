@@ -301,26 +301,36 @@ ri2ball (Interval l r) acc =
 
 {- MPBall plus-minus -}
 
-instance (Arrow to) => CanPlusMinusA to MPBall MPBall where
-        type PlusMinusTypeA to MPBall MPBall = Interval MPBall
-        plusMinusA = proc (x, y) ->
-                        do
-                        absY <- absA -< y
-                        l <- subA -< (x,absY)
-                        r <- addA -< (x,absY)
-                        returnA -< Interval l r  
+instance 
+    (ArrowPrecisionPolicy to) => 
+    CanPlusMinusA to MPBall MPBall 
+    where
+    type PlusMinusTypeA to MPBall MPBall = Interval MPBall
+    plusMinusA = 
+        proc (x, y) ->
+            do
+            absY <- absA -< y
+            l <- subA -< (x,absY)
+            r <- addA -< (x,absY)
+            returnA -< Interval l r  
                         
 
 {- Cauchy-real plus-minus -}
 
-instance (Arrow to, CanAbsSameTypeA to (AsCauchyReal r2), CanReadAsCauchyRealA to r1, CanAsCauchyRealA to r2,
-          CanCombineCRsA to r1 r2) => CanPlusMinusA to (AsCauchyReal r1) (AsCauchyReal r2) where
-        type PlusMinusTypeA to (AsCauchyReal r1) (AsCauchyReal r2) = Interval (AsCauchyReal (CombinedCRs to r1 r2))
-        plusMinusA = proc (x, y) ->
-                        do
-                        absY <- absA -< y
-                        l <- subA -< (x,absY)
-                        r <- addA -< (x,absY)
-                        returnA -< Interval l r
+instance 
+    (CanAbsSameTypeA to (AsCauchyReal r2), 
+     CanReadAsCauchyRealA to r1, CanAsCauchyRealA to r2,
+     CanCombineCRsA to r1 r2) 
+    => 
+    CanPlusMinusA to (AsCauchyReal r1) (AsCauchyReal r2) 
+    where
+    type PlusMinusTypeA to (AsCauchyReal r1) (AsCauchyReal r2) = Interval (AsCauchyReal (CombinedCRs to r1 r2))
+    plusMinusA = 
+        proc (x, y) ->
+            do
+            absY <- absA -< y
+            l <- subA -< (x,absY)
+            r <- addA -< (x,absY)
+            returnA -< Interval l r
 
                                                        

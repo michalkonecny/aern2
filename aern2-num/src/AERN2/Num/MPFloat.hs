@@ -1,10 +1,12 @@
 {-# LANGUAGE StandaloneDeriving, GeneralizedNewtypeDeriving, TypeSynonymInstances, FlexibleInstances #-}
 
 module AERN2.Num.MPFloat 
-    (MPFloat, Precision, prec, prec2integer, maximumPrecision, standardPrecisions, 
+    (MPFloat, Precision, prec, prec2integer, defaultPrecision, maximumPrecision, standardPrecisions, 
      getPrecision, setPrecisionUp,
+     PrecisionPolicyMode(..), PrecisionPolicy(..), defaultPrecisionPolicy, maxPrecisionPolicy, 
+     ArrowPrecisionPolicy(..), WithPrecisionPolicy(..), arrPP, 
      toRational, toDoubleUp, toDoubleDown,
-     zero, one, two, integer, integerUp, integerDown, rationalUp, rationalDown,
+     zero, one, two, fromIntegerUp, fromIntegerDown, fromRationalUp, fromRationalDown,
      neg, abs, addUp, addDown, subUp, subDown, 
      distUp, distDown, avgUp, avgDown, 
      mulUp, mulDown, divUp, divDown, recipUp, recipDown,
@@ -15,6 +17,7 @@ where
 import AERN2.Num.Operations hiding (abs,neg,toRational)
 import qualified Prelude as P
 
+import Control.Category
 import Control.Arrow
 
 import AERN2.Num.IntegerRational ()
@@ -23,6 +26,9 @@ import qualified Data.Approximate.MPFRLowLevel as MPLow
 
 
 type MPFloat = MPLow.Rounded
+
+{- Precision type -}
+
 newtype Precision = Precision Integer
     deriving (P.Eq, P.Ord, P.Show, P.Enum, P.Num, P.Real, P.Integral)
 
@@ -38,17 +44,77 @@ setPrecisionUp (Precision p) = MPLow.set MPLow.Up (P.fromInteger p)
 prec :: Integer -> Precision
 prec p 
     | p < 2 = error errmsg  
-    | p > maximumPrecision = error errmsg
+    | Precision p > maximumPrecision = error errmsg
     | otherwise = Precision p
     where
     errmsg =
         "Precision must be between 2 and " ++ show maximumPrecision ++ " (given: p=" ++ show p ++ ")."
 
-maximumPrecision :: Integer
-maximumPrecision = 1000000
+maximumPrecision :: Precision
+maximumPrecision = Precision 1000000
+
+defaultPrecision :: Precision
+defaultPrecision = Precision 100
 
 getPrecision :: MPFloat -> Precision
 getPrecision x = Precision (P.toInteger $ MPLow.getPrec x)
+
+{- Precision policy -}
+
+data PrecisionPolicy =
+    PrecisionPolicy
+    {
+        precPolicy_precision :: Precision,
+        precPolicy_mode :: PrecisionPolicyMode
+    }
+
+data PrecisionPolicyMode
+    = PrecisionPolicyMode_UseMax
+    | PrecisionPolicyMode_UseCurrent
+    | PrecisionPolicyMode_KeepExactDyadic
+    
+defaultPrecisionPolicy :: PrecisionPolicy
+defaultPrecisionPolicy =
+    PrecisionPolicy defaultPrecision PrecisionPolicyMode_UseMax
+
+maxPrecisionPolicy :: PrecisionPolicy
+maxPrecisionPolicy =
+    PrecisionPolicy defaultPrecision PrecisionPolicyMode_KeepExactDyadic
+
+-- TODO: generalise "ArrowPrecisionPolicy to" to "ArrowCurrentEffort e to" 
+{-| A class of Arrows that can provide current precision. -}
+class (ArrowChoice to) => ArrowPrecisionPolicy to where
+    getPrecisionPolicy :: () `to` PrecisionPolicy
+    
+arrPP :: (ArrowPrecisionPolicy to) => (PrecisionPolicy -> a -> b) ->  (a `to` b)
+arrPP fn =
+    proc a ->
+        do
+        pp <- getPrecisionPolicy -< ()
+        returnA -< fn pp a
+
+instance ArrowPrecisionPolicy (->) where
+    getPrecisionPolicy _ = defaultPrecisionPolicy
+    
+{-| Add a current precision to an arrow. -}
+newtype WithPrecisionPolicy to a b = 
+    WithPrecisionPolicy { runWithPrecisionPolicy :: (PrecisionPolicy ->  a `to` b) } 
+
+instance (ArrowChoice to) => ArrowPrecisionPolicy (WithPrecisionPolicy to) where
+    getPrecisionPolicy = WithPrecisionPolicy $ \ p -> proc () -> returnA -< p
+
+instance (Category to) => Category (WithPrecisionPolicy to) where
+     id = WithPrecisionPolicy $ const id
+     (WithPrecisionPolicy f) . (WithPrecisionPolicy g) = WithPrecisionPolicy $  \ p -> (f p) . (g p) 
+
+instance (Arrow to) => Arrow (WithPrecisionPolicy to) where
+    arr f = WithPrecisionPolicy $ const $ arr f
+    first (WithPrecisionPolicy f) = WithPrecisionPolicy $ \ p -> first (f p) 
+
+instance (ArrowChoice to) => ArrowChoice (WithPrecisionPolicy to) where
+    left (WithPrecisionPolicy f) = WithPrecisionPolicy $ \ p -> left (f p)
+
+
 
 {- conversions -}
 
@@ -76,18 +142,18 @@ one = convert 1
 two :: MPFloat
 two = convert 2
     
-integerUp :: Precision -> Integer -> MPFloat
-integerUp p i = rationalUp p (P.fromInteger i)
+fromIntegerUp :: Precision -> Integer -> MPFloat
+fromIntegerUp p i = fromRationalUp p (P.fromInteger i)
     
-integerDown :: Precision -> Integer -> MPFloat
-integerDown p i = rationalDown p (P.fromInteger i)
+fromIntegerDown :: Precision -> Integer -> MPFloat
+fromIntegerDown p i = fromRationalDown p (P.fromInteger i)
     
-    
+
 instance ConvertibleA (->) Integer MPFloat where
     convertA n =
         findExact $ map upDown $ drop (int 4) standardPrecisions
         where
-        upDown p = (integerDown p n, integerUp p n)
+        upDown p = (fromIntegerDown p n, fromIntegerUp p n)
         findExact [] = 
             error $ "integer too high to represent exactly: " ++ show n
         findExact ((nDown, nUp) : rest)
@@ -99,30 +165,30 @@ standardPrecisions =
     map Precision $ aux 8 13
     where
     aux j j' 
-        | j <= maximumPrecision = j : (aux j' (j+j'))
+        | Precision j <= maximumPrecision = j : (aux j' (j+j'))
         | otherwise = []
     
-rationalUp :: Precision -> Rational -> MPFloat
-rationalUp (Precision p) x =
+fromRationalUp :: Precision -> Rational -> MPFloat
+fromRationalUp (Precision p) x =
     MPLow.fromRationalA MPLow.Up (P.fromInteger p) x
     
-rationalDown :: Precision -> Rational -> MPFloat
-rationalDown (Precision p) x =
+fromRationalDown :: Precision -> Rational -> MPFloat
+fromRationalDown (Precision p) x =
     MPLow.fromRationalA MPLow.Down (P.fromInteger p) x
 
 -- | Computes an upper bound to the distance @|x - y|@ of @x@ and @y@.
-distUp :: MPFloat -> MPFloat -> MPFloat
-distUp x y = if x >= y then subUp x y else subUp y x
+distUp :: PrecisionPolicy -> MPFloat -> MPFloat -> MPFloat
+distUp pp x y = if x >= y then subUp pp x y else subUp pp y x
 
 -- | Computes a lower bound to the distance @|x - y|@ of @x@ and @y@.
-distDown :: MPFloat -> MPFloat -> MPFloat
-distDown x y = if x >= y then subDown x y else subDown y x
+distDown :: PrecisionPolicy -> MPFloat -> MPFloat -> MPFloat
+distDown pp x y = if x >= y then subDown pp x y else subDown pp y x
     
-avgUp :: MPFloat -> MPFloat -> MPFloat
-avgUp x y = (x `addUp` y) `divUp` two
+avgUp :: PrecisionPolicy -> MPFloat -> MPFloat -> MPFloat
+avgUp pp x y = divUp pp (addUp pp x y) two
 
-avgDown :: MPFloat -> MPFloat -> MPFloat
-avgDown x y = (x `addDown` y) `divDown` two
+avgDown :: PrecisionPolicy -> MPFloat -> MPFloat -> MPFloat
+avgDown pp x y = divDown pp two (addDown pp x y)
 
 {- common functions -}
 
@@ -134,27 +200,27 @@ abs x
     | x < MPLow.zero = neg x
     | otherwise = x
 
-addUp, addDown :: MPFloat -> MPFloat -> MPFloat
-addUp = binaryUp MPLow.add
-addDown = binaryDown MPLow.add
+addUp, addDown :: PrecisionPolicy -> MPFloat -> MPFloat -> MPFloat
+addUp = binaryUp True MPLow.add
+addDown = binaryDown True MPLow.add
 
-subUp, subDown :: MPFloat -> MPFloat -> MPFloat
-subUp = binaryUp MPLow.sub
-subDown = binaryDown MPLow.sub
+subUp, subDown :: PrecisionPolicy -> MPFloat -> MPFloat -> MPFloat
+subUp = binaryUp True MPLow.sub
+subDown = binaryDown True MPLow.sub
 
-mulUp, mulDown :: MPFloat -> MPFloat -> MPFloat
-mulUp = binaryUp MPLow.mul
-mulDown = binaryDown MPLow.mul
+mulUp, mulDown :: PrecisionPolicy -> MPFloat -> MPFloat -> MPFloat
+mulUp = binaryUp True MPLow.mul
+mulDown = binaryDown True MPLow.mul
 
-divUp,divDown :: MPFloat -> MPFloat -> MPFloat
-divUp = binaryUp MPLow.div
-divDown = binaryDown MPLow.div
+divUp,divDown :: PrecisionPolicy -> MPFloat -> MPFloat -> MPFloat
+divUp = binaryUp False MPLow.div
+divDown = binaryDown False MPLow.div
 
-recipUp :: MPFloat -> MPFloat
-recipUp x = divUp one x
+recipUp :: PrecisionPolicy -> MPFloat -> MPFloat
+recipUp pp x = divUp pp one x
 
-recipDown :: MPFloat -> MPFloat
-recipDown x = divDown one x
+recipDown :: PrecisionPolicy -> MPFloat -> MPFloat
+recipDown pp x = divDown pp one x
 
 {- special constants and functions -}
 
@@ -207,16 +273,41 @@ unaryDown opRP x = opRP MPLow.Down p x
     p = MPLow.getPrec x
 
 binaryUp :: 
+    Bool ->
     (MPLow.RoundMode -> MPLow.Precision -> MPFloat -> MPFloat -> MPFloat) ->
-    (MPFloat -> MPFloat -> MPFloat)
-binaryUp opRP x y = opRP MPLow.Up p x y
-    where
-    p = (MPLow.getPrec x) `P.max` (MPLow.getPrec y)
+    (PrecisionPolicy -> MPFloat -> MPFloat -> MPFloat)
+binaryUp = binaryApprox True
 
 binaryDown :: 
+    Bool ->
     (MPLow.RoundMode -> MPLow.Precision -> MPFloat -> MPFloat -> MPFloat) ->
-    (MPFloat -> MPFloat -> MPFloat)
-binaryDown opRP x y = opRP MPLow.Down p x y
+    (PrecisionPolicy -> MPFloat -> MPFloat -> MPFloat)
+binaryDown = binaryApprox False
+    
+binaryApprox :: 
+    Bool -> Bool ->
+    (MPLow.RoundMode -> MPLow.Precision -> MPFloat -> MPFloat -> MPFloat) ->
+    (PrecisionPolicy -> MPFloat -> MPFloat -> MPFloat)
+binaryApprox isUp canBeExact opRP pp x y = 
+    case precPolicy_mode pp of
+        PrecisionPolicyMode_UseCurrent ->
+            withPrec pCurr
+        PrecisionPolicyMode_KeepExactDyadic | canBeExact ->
+            getExact pMax
+        _ ->
+            withPrec pMax
     where
-    p = (MPLow.getPrec x) `P.max` (MPLow.getPrec y)
+    pMax = pCurr `P.max` (getPrecision x) `P.max` (getPrecision y)
+    pCurr = precPolicy_precision pp
+    withPrec (Precision p)
+        | isUp = opRP MPLow.Up (P.fromInteger p) x y
+        | otherwise = opRP MPLow.Down (P.fromInteger p) x y
+    getExact (Precision p)
+        | rUp P.== rDown = rUp
+        | otherwise = getExact (Precision $ 2*p)
+        where
+        rUp = opRP MPLow.Up (P.fromInteger p) x y
+        rDown = opRP MPLow.Down (P.fromInteger p) x y
+        
+        
     

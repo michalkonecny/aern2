@@ -1,3 +1,4 @@
+{-# LANGUAGE Arrows #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -7,12 +8,15 @@ module AERN2.Num.MPBall
      HasMPBallsA, HasMPBalls,
      CanBeMPBallA, mpBallA, mpBallNamedA, mpBallsA, mpBallsNamedA, CanBeMPBall, mpBall, mpBalls,
      getPrecision, setPrecisionMatchAccuracy, 
-     MP.standardPrecisions, MP.Precision, MP.prec, MP.prec2integer,
+     MP.maximumPrecision, MP.defaultPrecision, MP.standardPrecisions, MP.Precision, MP.prec, MP.prec2integer,
+     PrecisionPolicyMode(..), PrecisionPolicy(..), defaultPrecisionPolicy, maxPrecisionPolicy, 
+     ArrowPrecisionPolicy(..), WithPrecisionPolicy(..),
      iterateUntilAccurateA, iterateUntilOKA,
      iterateUntilAccurate, iterateUntilOK,
      isNonZero,
      toIntegerUp, toIntegerDown, toRationalUp, toRationalDown,
-     integer2Ball, integer2BallP,  
+--     integer2Ball, 
+     integer2BallP,
      rational2BallP, rationalBall2BallP,
      ball2endpoints, endpoints2Ball,
      getCentreAndErrorBall,
@@ -25,6 +29,7 @@ import AERN2.Num.Norm
 
 --import Control.Exception
 --import System.IO.Unsafe
+import Control.Category
 import Control.Arrow
 import Math.NumberTheory.Logarithms (integerLog2)
 
@@ -33,7 +38,10 @@ import qualified AERN2.Num.Accuracy as A
 import qualified AERN2.Num.ErrorBound as EB
 import AERN2.Num.ErrorBound (ErrorBound(..))
 import qualified AERN2.Num.MPFloat as MP
-import AERN2.Num.MPFloat (MPFloat, Precision)
+import AERN2.Num.MPFloat 
+    (MPFloat, Precision,
+     PrecisionPolicyMode(..), PrecisionPolicy(..), defaultPrecisionPolicy, maxPrecisionPolicy, 
+     ArrowPrecisionPolicy(..), WithPrecisionPolicy(..), arrPP)
 
 import Debug.Trace (trace)
 
@@ -73,18 +81,19 @@ rational2BallP :: MP.Precision -> Rational -> MPBall
 rational2BallP p x =
     MPBall xUp (xUp `EB.subMP` xDn)
     where
-    xUp = MP.rationalUp p x
-    xDn = MP.rationalDown p x
+    xUp = MP.fromRationalUp p x
+    xDn = MP.fromRationalDown p x
 
 integer2BallP :: MP.Precision -> Integer -> MPBall
 integer2BallP p x =
     MPBall xUp (xUp `EB.subMP` xDn)
     where
-    xUp = MP.integerUp p x
-    xDn = MP.integerDown p x
+    xUp = MP.fromIntegerUp p x
+    xDn = MP.fromIntegerDown p x
 
 type HasMPBallsA to = ConvertibleA to MPBall
 type HasMPBalls = HasMPBallsA (->)
+
 
 type CanBeMPBallA to a = ConvertibleA to a MPBall
 mpBallA :: (CanBeMPBallA to a) => a `to` MPBall
@@ -105,23 +114,40 @@ instance (ArrowChoice to) => ConvertibleA to MPBall MPBall where
     convertA = arr id
 
 -- | HasIntegers MPBall, CanBeMPBall Integer
-instance ConvertibleA (->) Integer MPBall where
-    convertA x =
-        MPBall xMP EB.zero
+instance (ArrowPrecisionPolicy to) => ConvertibleA to Integer MPBall where
+    convertA =
+        proc x ->
+            do
+            pp <- getPrecisionPolicy -< ()
+            returnA -< convertByPP pp x
         where
-        xMP = convert x
+        convertByPP pp x =
+            case precPolicy_mode pp of
+                PrecisionPolicyMode_UseCurrent -> xP 
+                PrecisionPolicyMode_UseMax ->
+                    if getPrecision xExact < p then xP else xExact
+                PrecisionPolicyMode_KeepExactDyadic -> xExact 
+            where
+            xExact = MPBall (convert x) EB.zero
+            xP = integer2BallP p x
+            p = precPolicy_precision pp
+            
         
 -- | HasRationalsA MPBall, CanBeMPBall Rational
-instance ConvertibleA (->) Rational MPBall where
-    convertA x =
-        case EB.getAccuracy e of
-            A.Exact -> b
-            _ -> error $ "failed to convert a rational to an exact MPBall: " ++ show x
+instance (ArrowPrecisionPolicy to) => ConvertibleA to Rational MPBall where
+    convertA =
+        proc x ->
+            do
+            pp <- getPrecisionPolicy -< ()
+            returnA -< convertByPP pp x
         where
-        b@(MPBall _ e) = rational2BallP (MP.prec 100) x
+        convertByPP pp x = xP
+            where
+            xP = rational2BallP p x
+            p = precPolicy_precision pp
         
-integer2Ball :: Integer -> MPBall
-integer2Ball = convert
+--integer2Ball :: Integer -> MPBall
+--integer2Ball = convert
 
 toIntegerUp :: MPBall -> Integer
 toIntegerUp x = ceiling $ toRationalUp x
@@ -211,7 +237,9 @@ iterateUntilOK isOK fn = iterateUntilOKA isOK fn ()
 
 isNonZero :: MPBall -> Bool
 isNonZero (MPBall x e) =
-    (MP.abs x) `MP.subDown` (EB.er2mp e) > MP.zero
+    (MP.abs x) -. (EB.er2mp e) > MP.zero
+    where
+    (-.) = MP.subDown defaultPrecisionPolicy
 
 
 instance HasNorm MPBall where
@@ -232,72 +260,80 @@ instance HasNorm MPBall where
             | isNonZero ballR = toIntegerUp (1 / ballR)
             | otherwise = -1
 
-instance HasEqA (->) MPBall MPBall where
-    type EqCompareTypeA (->) MPBall MPBall = Maybe Bool
-    equalToA (b1, b2) =
+instance (ArrowChoice to) => HasEqA to MPBall MPBall where
+    type EqCompareTypeA to MPBall MPBall = Maybe Bool
+    equalToA = arr $ \ (b1, b2) ->
         case (getAccuracy b1, getAccuracy b2, b1 < b2, b2 < b1) of
             (A.Exact, A.Exact, Just False, Just False) -> Just True
             (_, _, Just True, _) -> Just False
             (_, _, _, Just True) -> Just False
             _ -> Nothing
-    notEqualToA (b1, b2) = fmap not $ equalTo b1 b2
+    notEqualToA = arr $ \ (b1, b2) -> fmap not $ equalTo b1 b2
         
-instance HasOrderA (->) MPBall MPBall where
-    type OrderCompareTypeA (->) MPBall MPBall = Maybe Bool
-    lessThanA (MPBall x1 e1, MPBall x2 e2) 
-        | (x1 `MP.addUp` e1MP) < (x2 `MP.subDown` e2MP) = Just True
-        | (x1 `MP.subDown` e1MP) >= (x2 `MP.addUp` e2MP) = Just False
-        | otherwise = Nothing
+instance (ArrowPrecisionPolicy to) => HasOrderA to MPBall MPBall where
+    type OrderCompareTypeA to MPBall MPBall = Maybe Bool
+    lessThanA = arrPP aux
         where
-        e1MP = EB.er2mp e1
-        e2MP = EB.er2mp e2
-    leqA (MPBall x1 e1, MPBall x2 e2) 
-        | (x1 `MP.addUp` e1MP) <= (x2 `MP.subDown` e2MP) = Just True
-        | (x1 `MP.subDown` e1MP) > (x2 `MP.addUp` e2MP) = Just False
-        | otherwise = Nothing
+        aux pp (MPBall x1 e1, MPBall x2 e2) 
+            | (x1 +^ e1MP) < (x2 -. e2MP) = Just True
+            | (x1 -. e1MP) >= (x2 +^ e2MP) = Just False
+            | otherwise = Nothing
+            where
+            e1MP = EB.er2mp e1
+            e2MP = EB.er2mp e2
+            (+^) = MP.addUp pp
+            (-.) = MP.subDown pp
+    leqA = arrPP aux
         where
-        e1MP = EB.er2mp e1
-        e2MP = EB.er2mp e2
+        aux pp (MPBall x1 e1, MPBall x2 e2) 
+            | (x1 +^ e1MP) <= (x2 -. e2MP) = Just True
+            | (x1 -. e1MP) > (x2 +^ e2MP) = Just False
+            | otherwise = Nothing
+            where
+            e1MP = EB.er2mp e1
+            e2MP = EB.er2mp e2
+            (+^) = MP.addUp pp
+            (-.) = MP.subDown pp
 
-instance HasEqA (->) MPBall Integer where
-    type EqCompareTypeA (->) MPBall Integer = Maybe Bool
-    equalToA (b1, n2) = equalTo b1 (integer2Ball n2)
-    notEqualToA (b1, n2) = notEqualTo b1 (integer2Ball n2)
+instance (ArrowPrecisionPolicy to) => HasEqA to MPBall Integer where
+    type EqCompareTypeA to MPBall Integer = Maybe Bool
+    equalToA = convertSecondA equalToA
+    notEqualToA = convertSecondA notEqualToA
 
-instance HasEqA (->) Integer MPBall where
-    type EqCompareTypeA (->) Integer MPBall = Maybe Bool
-    equalToA (n1, b2) = equalTo (integer2Ball n1) b2
-    notEqualToA (n1, b2) = notEqualTo (integer2Ball n1) b2
+instance (ArrowPrecisionPolicy to) => HasEqA to Integer MPBall where
+    type EqCompareTypeA to Integer MPBall = Maybe Bool
+    equalToA = convertFirstA equalToA
+    notEqualToA = convertFirstA notEqualToA
 
-instance HasOrderA (->) MPBall Integer where
-    type OrderCompareTypeA (->) MPBall Integer = Maybe Bool
-    lessThanA (b1, n2) = lessThan b1 (integer2Ball n2) 
-    leqA (b1, n2) = leq b1 (integer2Ball n2) 
+instance (ArrowPrecisionPolicy to) => HasOrderA to MPBall Integer where
+    type OrderCompareTypeA to MPBall Integer = Maybe Bool
+    lessThanA = convertSecondA lessThanA 
+    leqA = convertSecondA leqA 
 
-instance HasOrderA (->) Integer MPBall where
-    type OrderCompareTypeA (->) Integer MPBall = Maybe Bool
-    lessThanA (n1, b2) = lessThan (integer2Ball n1) b2
-    leqA (n1, b2) = leq (integer2Ball n1) b2
+instance (ArrowPrecisionPolicy to) => HasOrderA to Integer MPBall where
+    type OrderCompareTypeA to Integer MPBall = Maybe Bool
+    lessThanA = convertFirstA lessThanA
+    leqA = convertFirstA leqA
 
-instance HasEqA (->) MPBall Rational where
-    type EqCompareTypeA (->) MPBall Rational = Maybe Bool
-    equalToA (b1, q2) = equalTo b1 (rational2BallP (getPrecision b1) q2)
-    notEqualToA (b1, q2) = notEqualTo b1 (rational2BallP (getPrecision b1) q2)
+instance (ArrowPrecisionPolicy to) => HasEqA to MPBall Rational where
+    type EqCompareTypeA to MPBall Rational = Maybe Bool
+    equalToA = convertSecondA equalToA
+    notEqualToA = convertSecondA notEqualToA
 
-instance HasEqA (->) Rational MPBall where
-    type EqCompareTypeA (->) Rational MPBall = Maybe Bool
-    equalToA (q1, b2) = equalTo (rational2BallP (getPrecision b2) q1) b2
-    notEqualToA (q1, b2) = notEqualTo (rational2BallP (getPrecision b2) q1) b2
+instance (ArrowPrecisionPolicy to) => HasEqA to Rational MPBall where
+    type EqCompareTypeA to Rational MPBall = Maybe Bool
+    equalToA = convertFirstA equalToA
+    notEqualToA = convertFirstA notEqualToA
 
-instance HasOrderA (->) MPBall Rational where
-    type OrderCompareTypeA (->) MPBall Rational = Maybe Bool
-    lessThanA (b1, q2) = lessThan b1 (rational2BallP (getPrecision b1) q2) 
-    leqA (b1, q2) = leq b1 (rational2BallP (getPrecision b1) q2) 
+instance (ArrowPrecisionPolicy to) => HasOrderA to MPBall Rational where
+    type OrderCompareTypeA to MPBall Rational = Maybe Bool
+    lessThanA = convertSecondA lessThanA 
+    leqA = convertSecondA leqA 
 
-instance HasOrderA (->) Rational MPBall where
-    type OrderCompareTypeA (->) Rational MPBall = Maybe Bool
-    lessThanA (q1, b2) = lessThan (rational2BallP (getPrecision b2) q1) b2
-    leqA (q1, b2) = leq (rational2BallP (getPrecision b2) q1) b2
+instance (ArrowPrecisionPolicy to) => HasOrderA to Rational MPBall where
+    type OrderCompareTypeA to Rational MPBall = Maybe Bool
+    lessThanA = convertFirstA lessThanA
+    leqA = convertFirstA leqA
 
 
 instance (Arrow to) => CanNegA to MPBall where
@@ -311,67 +347,75 @@ instance (Arrow to) => CanAbsA to MPBall where
 
 instance CanAbsSameType MPBall
 
-instance CanRecipA (->) MPBall where
-    recipA b = 1 / b
+instance (ArrowPrecisionPolicy to) => CanRecipA to MPBall where
+    recipA = proc b -> divA -< (1, b)
 
-instance CanRecipSameType MPBall
+instance (ArrowPrecisionPolicy to) => CanRecipSameTypeA to MPBall
 
-instance (Arrow to) => CanAddA to MPBall MPBall where
+instance (ArrowPrecisionPolicy to) => CanAddA to MPBall MPBall where
     type AddTypeA to MPBall MPBall = MPBall
     addA  =
-        arr $ \ (x, y) -> fn (x, y)
+        arrPP fn 
         where
-        fn (MPBall x1 e1, MPBall x2 e2) = MPBall sumUp ((sumUp `EB.subMP` sumDn) + e1 + e2)
-                                                 where
-                                                 sumUp = MP.addUp x1 x2
-                                                 sumDn = MP.addDown x1 x2
+        fn pp (MPBall x1 e1, MPBall x2 e2) = 
+            MPBall sumUp ((sumUp `EB.subMP` sumDn) + e1 + e2)
+            where
+            sumUp = MP.addUp pp x1 x2
+            sumDn = MP.addDown pp x1 x2
 
-instance CanAddThis MPBall MPBall
+instance (ArrowPrecisionPolicy to) => CanAddThisA to MPBall MPBall
 
-instance CanAddSameType MPBall
+instance (ArrowPrecisionPolicy to) => CanAddSameTypeA to MPBall
 
-instance (Arrow to) => CanSubA to MPBall MPBall  
+instance (ArrowPrecisionPolicy to) => CanSubA to MPBall MPBall  
         
-instance CanSubThis MPBall MPBall
+instance (ArrowPrecisionPolicy to) => CanSubThisA to MPBall MPBall
 
-instance CanSubSameType MPBall
+instance (ArrowPrecisionPolicy to) => CanSubSameTypeA to MPBall
 
-instance CanMulA (->) MPBall MPBall where
-    mulA (MPBall x1 e1, MPBall x2 e2) =
-        MPBall x12Up (e12 + e1*(EB.absMP x2) + e2*(EB.absMP x1) + e1*e2)
+instance (ArrowPrecisionPolicy to) => CanMulA to MPBall MPBall where
+    mulA = arrPP fn
         where
-        x12Up = MP.mulUp x1 x2 
-        x12Down = MP.mulDown x1 x2
-        e12 = EB.mp2ErrorBound $ x12Up `MP.subUp` x12Down
+        fn pp (MPBall x1 e1, MPBall x2 e2) =
+            MPBall x12Up (e12 + e1*(EB.absMP x2) + e2*(EB.absMP x1) + e1*e2)
+            where
+            x12Up = MP.mulUp pp x1 x2 
+            x12Down = MP.mulDown pp x1 x2
+            e12 = EB.mp2ErrorBound $ x12Up -^ x12Down
+            (-^) = MP.subUp pp
 
-instance CanMulBy MPBall MPBall
+instance (ArrowPrecisionPolicy to) => CanMulByA to MPBall MPBall
 
-instance CanMulSameType MPBall
+instance (ArrowPrecisionPolicy to) => CanMulSameTypeA to MPBall
 
-instance CanPowA (->) MPBall Integer
-instance CanPowByA (->) MPBall Integer
+instance (ArrowPrecisionPolicy to) => CanPowA to MPBall Integer
+instance (ArrowPrecisionPolicy to) => CanPowByA to MPBall Integer
 
 
-instance CanDivA (->) MPBall MPBall where
-    divA (MPBall x1 e1, b2@(MPBall x2 e2))
-        | isNonZero b2 =
-            MPBall x12Up err
-        | otherwise =
-            error $ "Division by MPBall that contains 0: " ++ show b2
+instance (ArrowPrecisionPolicy to) => CanDivA to MPBall MPBall where
+    divA = arrPP fn
         where
-        x12Up = MP.divUp x1 x2 
-        x12Down = MP.divDown x1 x2
-        e12 = EB.mp2ErrorBound $ x12Up `MP.subUp` x12Down
-        err =
-            ((e12 * (EB.mp2ErrorBound (MP.abs x2))) -- e12 * |x2|
-             +
-             e1
-             +
-             (EB.mp2ErrorBound (MP.abs x12Up) * e2) -- e2 * |x|
-            ) 
-            * 
-            (EB.mp2ErrorBound $ MP.recipUp (MP.abs x2 `MP.subDown` (EB.er2mp e2))) 
-                -- 1/(|x2| - e2) rounded upwards 
+        fn pp (MPBall x1 e1, b2@(MPBall x2 e2))
+            | isNonZero b2 =
+                MPBall x12Up err
+            | otherwise =
+                error $ "Division by MPBall that contains 0: " ++ show b2
+            where
+            x12Up = MP.divUp pp x1 x2 
+            x12Down = MP.divDown pp x1 x2
+            e12 = EB.mp2ErrorBound $ x12Up -^ x12Down
+            err =
+                ((e12 * (EB.mp2ErrorBound (MP.abs x2))) -- e12 * |x2|
+                 +
+                 e1
+                 +
+                 (EB.mp2ErrorBound (MP.abs x12Up) * e2) -- e2 * |x|
+                ) 
+                * 
+                (EB.mp2ErrorBound $ MP.recipUp pp (MP.abs x2 -. (EB.er2mp e2))) 
+                    -- 1/(|x2| - e2) rounded upwards 
+            (-^) = MP.subUp pp
+            (-.) = MP.subDown pp
 {-
 A derivation of the above formula for an upper bound on the error:
 
@@ -386,9 +430,9 @@ A derivation of the above formula for an upper bound on the error:
 -}                
 
 
-instance CanDivBy MPBall MPBall
+instance (ArrowPrecisionPolicy to) => CanDivByA to MPBall MPBall
 
-instance CanDivSameType MPBall
+instance (ArrowPrecisionPolicy to) => CanDivSameTypeA to MPBall
 
 piBallP :: Precision -> MPBall
 piBallP p = MPBall piUp (piUp `EB.subMP` piDown)
@@ -398,79 +442,81 @@ piBallP p = MPBall piUp (piUp `EB.subMP` piDown)
 
 {- Ball-Integer operations -}
 
-instance CanAddA (->) Integer MPBall where
-    type AddTypeA (->) Integer MPBall = MPBall
-    addA (a, b) = (integer2BallP (getPrecision b) a) + b
+instance (ArrowPrecisionPolicy to) => CanAddA to Integer MPBall where
+    type AddTypeA to Integer MPBall = MPBall
+    addA = convertFirstA addA 
+    -- arr $ \ (a, b) -> (integer2BallP (getPrecision b) a) + b
 
 instance CanSub Integer MPBall
 
-instance CanAddA (->) MPBall Integer where
-    type AddTypeA (->) MPBall Integer = MPBall
-    addA (a, b) = a + (integer2BallP (getPrecision a) b)
+instance (ArrowPrecisionPolicy to) => CanAddA to MPBall Integer where
+    type AddTypeA to MPBall Integer = MPBall
+    addA = convertSecondA addA 
+    -- arr $ \ (a, b) -> a + (integer2BallP (getPrecision a) b)
 
-instance CanAddThis MPBall Integer
+instance (ArrowPrecisionPolicy to) => CanAddThisA to MPBall Integer
 
-instance CanSub MPBall Integer
+instance (ArrowPrecisionPolicy to) => CanSubA to MPBall Integer
 
-instance CanSubThis MPBall Integer
+instance (ArrowPrecisionPolicy to) => CanSubThisA to MPBall Integer
 
-instance CanMulA (->) Integer MPBall where
-    type MulTypeA (->) Integer MPBall = MPBall
-    mulA (a, b) = (integer2BallP (getPrecision b) a) * b
+instance (ArrowPrecisionPolicy to) => CanMulA to Integer MPBall where
+    type MulTypeA to Integer MPBall = MPBall
+    mulA = convertFirstA mulA
 
-instance CanMulA (->) MPBall Integer where
-    type MulTypeA (->) MPBall Integer = MPBall
-    mulA (a, b) = a * (integer2BallP (getPrecision a) b)
+instance (ArrowPrecisionPolicy to) => CanMulA to MPBall Integer where
+    type MulTypeA to MPBall Integer = MPBall
+    mulA = convertSecondA mulA
 
-instance CanMulBy MPBall Integer
+instance (ArrowPrecisionPolicy to) => CanMulByA to MPBall Integer
 
-instance CanDivA (->) Integer MPBall where
-    type DivTypeA (->) Integer MPBall = MPBall
-    divA (a, b) = (integer2BallP (getPrecision b) a) / b
+instance (ArrowPrecisionPolicy to) => CanDivA to Integer MPBall where
+    type DivTypeA to Integer MPBall = MPBall
+    divA = convertFirstA divA
 
-instance CanDivA (->) MPBall Integer where
-    type DivTypeA (->) MPBall Integer = MPBall
-    divA (a, b) = a / (integer2BallP (getPrecision a) b)
+instance (ArrowPrecisionPolicy to) => CanDivA to MPBall Integer where
+    type DivTypeA to MPBall Integer = MPBall
+    divA = convertSecondA divA
 
-instance CanDivBy MPBall Integer
+instance (ArrowPrecisionPolicy to) => CanDivByA to MPBall Integer
 
 {- Ball-Rational operations -}
 
-instance (Arrow to) => CanAddA to Rational MPBall where
+instance (ArrowPrecisionPolicy to) => CanAddA to Rational MPBall where
     type AddTypeA to Rational MPBall = MPBall
-    addA = arr $ \ (a, b) -> (rational2BallP (getPrecision b) a) + b
+    addA = convertFirstA addA
 
-instance CanSub Rational MPBall
+instance (ArrowPrecisionPolicy to) => CanSubA to Rational MPBall
 
-instance CanAddA (->) MPBall Rational where
-    type AddTypeA (->) MPBall Rational = MPBall
-    addA (a, b) = a + (rational2BallP (getPrecision a) b)
+instance (ArrowPrecisionPolicy to) => CanAddA to MPBall Rational where
+    type AddTypeA to MPBall Rational = MPBall
+    addA = convertSecondA addA
 
-instance CanAddThis MPBall Rational
+instance (ArrowPrecisionPolicy to) => CanAddThisA to MPBall Rational
 
-instance CanSub MPBall Rational
+instance (ArrowPrecisionPolicy to) => CanSubA to MPBall Rational
 
-instance CanSubThis MPBall Rational
+instance (ArrowPrecisionPolicy to) => CanSubThisA to MPBall Rational
 
-instance CanMulA (->) Rational MPBall where
-    type MulTypeA (->) Rational MPBall = MPBall
-    mulA (a, b) = (rational2BallP (getPrecision b) a) * b
+instance (ArrowPrecisionPolicy to) => CanMulA to Rational MPBall where
+    type MulTypeA to Rational MPBall = MPBall
+    mulA = convertFirstA mulA
 
-instance CanMulA (->) MPBall Rational where
-    type MulTypeA (->) MPBall Rational = MPBall
-    mulA (a, b) = a * (rational2BallP (getPrecision a) b)
+instance (ArrowPrecisionPolicy to) => CanMulA to MPBall Rational where
+    type MulTypeA to MPBall Rational = MPBall
+    mulA = convertSecondA mulA
 
-instance CanMulBy MPBall Rational
+instance (ArrowPrecisionPolicy to) => CanMulByA to MPBall Rational
 
-instance CanDivA (->) Rational MPBall where
-    type DivTypeA (->) Rational MPBall = MPBall
-    divA (a, b) = (rational2BallP (getPrecision b) a) / b
+instance (ArrowPrecisionPolicy to) => CanDivA to Rational MPBall where
+    type DivTypeA to Rational MPBall = MPBall
+    divA = convertFirstA divA
 
-instance CanDivA (->) MPBall Rational where
-    type DivTypeA (->) MPBall Rational = MPBall
-    divA (a, b) = a / (rational2BallP (getPrecision a) b)
+instance (ArrowPrecisionPolicy to) => CanDivA to MPBall Rational where
+    type DivTypeA to MPBall Rational = MPBall
+    divA = convertSecondA divA
 
-instance CanDivBy MPBall Rational
+instance (ArrowPrecisionPolicy to) => CanDivByA to MPBall Rational
 
 {- generic methods for computing real functions from MPFR-approximations -}
 
@@ -507,16 +553,19 @@ endpointsMP2Ball :: MPFloat -> MPFloat -> MPBall
 endpointsMP2Ball l u =
     MPBall c e
     where
-    c = MP.avgUp l u
-    e = EB.mp2ErrorBound $ P.max (MP.distUp c l) (MP.distUp c u)
+    c = MP.avgUp pp l u
+    e = EB.mp2ErrorBound $ P.max (MP.distUp pp c l) (MP.distUp pp c u)
+    pp = defaultPrecisionPolicy
 
 ball2endpointsMP :: MPBall -> (MPFloat, MPFloat)
 ball2endpointsMP x = (l,u)
     where
     c    = ball_value x
     r    = er2mp (ball_error x)
-    l   = c `MP.subDown` r
-    u   = c `MP.addUp` r
+    l   = c -. r
+    u   = c +^ r
+    (-.) = MP.subDown defaultPrecisionPolicy
+    (+^) = MP.addUp defaultPrecisionPolicy
 
 endpoints2Ball :: MPBall -> MPBall -> MPBall
 endpoints2Ball l u =
@@ -541,21 +590,21 @@ getCentreAndErrorBall x = (cB,eB)
 
 {- common functions -}
 
-instance CanSqrtA (->) MPBall where
-    sqrtA x = monotoneFromApprox MP.sqrtDown MP.sqrtUp x     
+instance (Arrow to) => CanSqrtA to MPBall where
+    sqrtA = arr $ monotoneFromApprox MP.sqrtDown MP.sqrtUp     
         
-instance CanSqrtSameTypeA (->) MPBall
+instance (Arrow to) => CanSqrtSameTypeA to MPBall
         
-instance CanExpA (->) MPBall where
-    expA x = monotoneFromApprox MP.expDown MP.expUp x     
+instance (Arrow to) => CanExpA to MPBall where
+    expA = arr $ monotoneFromApprox MP.expDown MP.expUp     
 
-instance CanExpSameTypeA (->) MPBall
+instance (Arrow to) => CanExpSameTypeA to MPBall
         
-instance CanSineCosineA (->) MPBall where
-    sinA = sinB 1
-    cosA = cosB 1
+instance (Arrow to) => CanSineCosineA to MPBall where
+    sinA = arr $ sinB 1
+    cosA = arr $ cosB 1
 
-instance CanSineCosineSameTypeA (->) MPBall
+instance (Arrow to) => CanSineCosineSameTypeA to MPBall
 
 sinB :: Integer -> MPBall -> MPBall
 sinB i x = 
