@@ -28,16 +28,6 @@ data RealPred = RealPred (RealPred' RealPred)
 
 type RealExprA =  ArrowReal
 
-instance 
-    (CanCombineCRwithA to r r, CanCombineCRwithA to r CauchyReal_) => 
-    RealExprA to (AsCauchyReal r)
-
-instance RealExprA (->) MPBall
-
-instance ConvertibleA (->) CauchyReal MPBall where
-    convertA =
-        error "conversion from CauchyReal to MPBall not implemented"
-
 var :: String -> RealExpr
 var name = RealExpr (Var (VarName name))
 

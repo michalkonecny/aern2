@@ -60,7 +60,6 @@ instance SupportsSenderIdA to r => SupportsSenderIdA to (AsCauchyReal r) where
 instance HasSenderIdA to r => HasSenderIdA to (AsCauchyReal r) where
     getSenderIdA = proc (AsCauchyReal r) -> getSenderIdA -< r
 
-
 class 
     (CanReadAsCauchyRealA to r1, CanReadAsCauchyRealA to r2, 
     CanCreateAsCauchyRealA to (CombinedCRs to r1 r2)) 
@@ -78,6 +77,7 @@ class
      CanAsCauchyRealA to r1)
     =>
     CanCombineCRwithA to r1 r2 
+
 
 {- conversions -}
 

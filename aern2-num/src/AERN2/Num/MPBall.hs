@@ -57,14 +57,14 @@ maybeTrace
 
 data MPBall = MPBall { ball_value :: MPFloat, ball_error :: ErrorBound }
 
-instance Ring MPBall
-instance Field MPBall
-instance CanAddMulScalar MPBall MPBall
-instance CanAddMulDivScalar MPBall MPBall
-instance CanAddMulScalar MPBall Integer
-instance CanAddMulDivScalar MPBall Integer
-instance CanAddMulScalar MPBall Rational
-instance CanAddMulDivScalar MPBall Rational
+instance (ArrowPrecisionPolicy to) => RingA to MPBall
+instance (ArrowPrecisionPolicy to) => FieldA to MPBall
+instance (ArrowPrecisionPolicy to) => CanAddMulScalarA to MPBall MPBall
+instance (ArrowPrecisionPolicy to) => CanAddMulDivScalarA to MPBall MPBall
+instance (ArrowPrecisionPolicy to) => CanAddMulScalarA to MPBall Integer
+instance (ArrowPrecisionPolicy to) => CanAddMulDivScalarA to MPBall Integer
+instance (ArrowPrecisionPolicy to) => CanAddMulScalarA to MPBall Rational
+instance (ArrowPrecisionPolicy to) => CanAddMulDivScalarA to MPBall Rational
 
 instance Show MPBall
     where
@@ -447,8 +447,6 @@ instance (ArrowPrecisionPolicy to) => CanAddA to Integer MPBall where
     addA = convertFirstA addA 
     -- arr $ \ (a, b) -> (integer2BallP (getPrecision b) a) + b
 
-instance CanSub Integer MPBall
-
 instance (ArrowPrecisionPolicy to) => CanAddA to MPBall Integer where
     type AddTypeA to MPBall Integer = MPBall
     addA = convertSecondUsingA integer2BallP addA 
@@ -459,6 +457,8 @@ instance (ArrowPrecisionPolicy to) => CanAddThisA to MPBall Integer
 instance (ArrowPrecisionPolicy to) => CanSubA to MPBall Integer
 
 instance (ArrowPrecisionPolicy to) => CanSubThisA to MPBall Integer
+
+instance (ArrowPrecisionPolicy to) => CanSubA to Integer MPBall
 
 instance (ArrowPrecisionPolicy to) => CanMulA to Integer MPBall where
     type MulTypeA to Integer MPBall = MPBall

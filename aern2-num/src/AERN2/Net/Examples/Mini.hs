@@ -7,7 +7,7 @@ where
 import AERN2.Num
 
 import Control.Arrow
-import Control.Exception
+--import Control.Exception
 
 import AERN2.Net.Strategy.QACached
 
@@ -105,7 +105,10 @@ logisticQACachedMPBallPrintLog c n x0 ac =
     printQANetLogThenResult (logisticQACachedMPBall c n x0 ac)
             
 logisticMPB :: Rational -> Integer -> MPBall -> MPBall
-logisticMPB = logisticA
+logisticMPB c n x0 =
+    runWithPrecisionPolicy (logisticA c n) pp x0 
+    where
+    pp = PrecisionPolicy (getPrecision x0) PrecisionPolicyMode_UseCurrent
 
 logisticMPBIterate :: Rational -> Integer -> CauchyReal -> CauchyReal
 logisticMPBIterate c n x0 =
@@ -116,30 +119,31 @@ logisticMPBIterate c n x0 =
             (_, Just ball) -> ball
             _ -> error "logisticMPBIterate: failed"  
     auxP ac p = 
-        logisticWithHookA check c n x0p
+        runWithPrecisionPolicy (logisticWithHookA (arr check) c n) pp x0p
         where
+        pp = PrecisionPolicy p PrecisionPolicyMode_UseCurrent
         x0p = cauchyReal2ball x0 pA
         pA = bits $ prec2integer p
         check ball 
             | getAccuracy ball < ac = Nothing -- throw LossOfPrecision 
             | otherwise = Just ball 
 
-logisticMPBIteratePrintProgress :: Rational -> Integer -> CauchyReal -> Accuracy -> IO ()
-logisticMPBIteratePrintProgress c n x0 ac =
-    mapM_ printInfo (iterInfos)
-    where
-    iterInfos = iterateUntilAccurate ac auxP
-    auxP p = 
-        logisticWithHookA check c n x0p
-        where
-        x0p = cauchyReal2ball x0 pA
-        pA = bits $ prec2integer p
-        check ball 
-            | getAccuracy ball < ac = Nothing -- throw LossOfPrecision 
-            | otherwise = Just ball 
-    printInfo (p, maybeBall) =
-        do
-        putStrLn $ show p ++ ": result = " ++ show maybeBall
+--logisticMPBIteratePrintProgress :: Rational -> Integer -> CauchyReal -> Accuracy -> IO ()
+--logisticMPBIteratePrintProgress c n x0 ac =
+--    mapM_ printInfo (iterInfos)
+--    where
+--    iterInfos = iterateUntilAccurate ac auxP
+--    auxP p = 
+--        logisticWithHookA check c n x0p
+--        where
+--        x0p = cauchyReal2ball x0 pA
+--        pA = bits $ prec2integer p
+--        check ball 
+--            | getAccuracy ball < ac = Nothing -- throw LossOfPrecision 
+--            | otherwise = Just ball 
+--    printInfo (p, maybeBall) =
+--        do
+--        putStrLn $ show p ++ ": result = " ++ show maybeBall
 
 {- Example: naive exponential function on [-1,1] -} 
                                     

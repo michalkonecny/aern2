@@ -45,13 +45,13 @@ fftTestDirectMPB :: Integer -> Precision -> ([(Complex MPBall)], Accuracy)
 fftTestDirectMPB nN p =
     (result, getAccuracyAll result)
     where
-    result = fftWithInput ()
+    result = runWithPrecisionPolicy fftWithInput pp ()
+    pp = PrecisionPolicy p PrecisionPolicyMode_UseCurrent
     fftWithInput =
         proc () ->
             do
-            x <- complexListNamedA "input" -< input
+            x <- complexListNamedA "input" -< [1..nN]
             dftCooleyTukey nN -< x
-    input = map (integer2BallP p) [1..nN]
     getAccuracyAll x =
         foldl1 min $ map getAccuracyC x
         where
@@ -64,15 +64,15 @@ fftTestMPBiterate nN ac =
         _ -> error "fftTestMPBiterate: failed"  
     where
     auxP _ac p =
-        fftWithInput ()
+        runWithPrecisionPolicy fftWithInput pp ()
         where
+        pp = PrecisionPolicy p PrecisionPolicyMode_UseCurrent
         fftWithInput =
             proc () ->
                 do
-                x <- complexListNamedA "input" -< input
+                x <- complexListNamedA "input" -< [1..nN]
                 r <- dftCooleyTukey nN -< x
                 returnA -< Just r
-        input = map (integer2BallP p) [1..nN]
     getAccuracyAll x =
         foldl1 min $ map getAccuracyC x
         where

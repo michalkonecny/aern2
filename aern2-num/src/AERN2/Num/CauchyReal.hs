@@ -58,16 +58,21 @@ class
     => 
     ArrowReal to r 
 
-
+instance 
+--    (ArrowPrecisionPolicy to) => 
+    ArrowReal (WithPrecisionPolicy (->)) MPBall
 
 type CauchyReal = AsCauchyReal CauchyReal_
 
 instance Show CauchyReal where
         show x = show $ cauchyReal2ball x (bits 53)
 
-
 data CauchyReal_ = 
     CauchyReal_ { cr_name :: Maybe String, cr_seq :: Accuracy -> MPBall } 
+
+instance 
+    (CanCombineCRwithA to r r, CanCombineCRwithA to r CauchyReal_) => 
+    ArrowReal to (AsCauchyReal r)
 
 
 {-|
@@ -139,13 +144,23 @@ seqByPrecision2Cauchy name seqByPrecision =
 
 
 instance CanAsCauchyRealA (->) CauchyReal_
+instance CanAsCauchyRealA (WithPrecisionPolicy (->)) CauchyReal_
 
 instance CanCreateAsCauchyRealA (->) CauchyReal_ where
     newCRA (_, name, ac2b) = AsCauchyReal $ cr_ name ac2b'
         where
         ac2b' ac = setPrecisionMatchAccuracy ac $ ac2b ac
               
-instance (ArrowChoice to, Arrow to) => CanReadAsCauchyRealA to CauchyReal_ where
+instance CanCreateAsCauchyRealA (WithPrecisionPolicy (->)) CauchyReal_ where
+    newCRA = 
+        proc (_, name, ac2b) ->
+            do
+            pp <- getPrecisionPolicy -< () 
+            returnA -< AsCauchyReal $ cr_ name (amend $ runWithPrecisionPolicy ac2b pp)
+        where
+        amend ac2b ac = setPrecisionMatchAccuracy ac $ ac2b ac
+              
+instance (ArrowChoice to) => CanReadAsCauchyRealA to CauchyReal_ where
     getNameCRA = arr $ cr_name . unAsCauchyReal 
     getAnswerCRA = arr getAnswerCR
 
@@ -190,6 +205,18 @@ integer2CauchyReal = convert
 
 rational2CauchyReal :: Rational -> CauchyReal
 rational2CauchyReal = convert
+
+instance ConvertibleA (->) CauchyReal MPBall where
+    convertA =
+        error "conversion from CauchyReal to MPBall is allowed only in the WithPrecisionPolicy (->) arrow."
+
+instance (CanAsCauchyRealA (WithPrecisionPolicy to) r, ArrowChoice to) => 
+    ConvertibleA (WithPrecisionPolicy to) (AsCauchyReal r) MPBall where
+    convertA =
+        proc x ->
+            do
+            pp <- getPrecisionPolicy -< ()
+            getAnswerCRA -< (x, bits $ prec2integer $ precPolicy_precision pp)
 
 {- CauchyReal-producing operations -}
 
