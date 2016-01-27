@@ -220,9 +220,8 @@ instance (CanAsCauchyRealA (WithPrecisionPolicy to) r, ArrowChoice to) =>
 
 {- CauchyReal-producing operations -}
 
-
 pi :: CauchyReal
-pi = seqByPrecision2Cauchy (Just "pi") (\ p -> piBallP p)
+pi = piA ()
 
 instance (Arrow to ) => CanSqrtA to Integer where
     type SqrtTypeA to Integer = CauchyReal

@@ -41,6 +41,7 @@ module AERN2.Num.Operations
     CanRecip, CanRecipSameType, recip,
     RingA, FieldA, CanAddMulScalarA, CanAddMulDivScalarA,
     Ring, Field, CanAddMulScalar, CanAddMulDivScalar,
+    HasPiA(..), HasPi,
     CanSqrtA(..), CanSqrtSameTypeA,
     CanSqrt, CanSqrtSameType, sqrt,
     CanExpA(..), CanExpSameTypeA,
@@ -762,6 +763,11 @@ class
     CanAddMulDivScalarA to a s 
     
 type CanAddMulDivScalar = CanAddMulDivScalarA (->)
+
+class HasPiA to a where
+    piA :: () `to` a
+
+type HasPi = HasPiA (->)
 
 class CanSqrtA to a where
     type SqrtTypeA to a :: *

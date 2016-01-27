@@ -615,6 +615,17 @@ instance (CanAsCauchyRealA to r) => CanSqrtA to (AsCauchyReal r) where
                 returnA -< (jInit, Just b)
 
 
+instance (CanCreateAsCauchyRealA to r) => HasPiA to (AsCauchyReal r) where
+    piA = 
+        proc () -> 
+            newCRA -< ([], Just "pi", arr piSeq)
+        where
+        piSeq =
+            seqByPrecision2CauchySeq (\ p -> piBallP p)
+--pi :: CauchyReal
+--pi = seqByPrecision2Cauchy (Just "pi") (\ p -> piBallP p)
+
+
 
 instance (CanAsCauchyRealA to r) => CanSqrtSameTypeA to (AsCauchyReal r)
 
