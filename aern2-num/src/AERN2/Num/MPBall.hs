@@ -297,8 +297,8 @@ instance (ArrowPrecisionPolicy to) => HasOrderA to MPBall MPBall where
 
 instance (ArrowPrecisionPolicy to) => HasEqA to MPBall Integer where
     type EqCompareTypeA to MPBall Integer = Maybe Bool
-    equalToA = convertSecondA equalToA
-    notEqualToA = convertSecondA notEqualToA
+    equalToA = convertSecondUsingA integer2BallP equalToA
+    notEqualToA = convertSecondUsingA integer2BallP notEqualToA
 
 instance (ArrowPrecisionPolicy to) => HasEqA to Integer MPBall where
     type EqCompareTypeA to Integer MPBall = Maybe Bool
@@ -307,8 +307,8 @@ instance (ArrowPrecisionPolicy to) => HasEqA to Integer MPBall where
 
 instance (ArrowPrecisionPolicy to) => HasOrderA to MPBall Integer where
     type OrderCompareTypeA to MPBall Integer = Maybe Bool
-    lessThanA = convertSecondA lessThanA 
-    leqA = convertSecondA leqA 
+    lessThanA = convertSecondUsingA integer2BallP lessThanA 
+    leqA = convertSecondUsingA integer2BallP leqA 
 
 instance (ArrowPrecisionPolicy to) => HasOrderA to Integer MPBall where
     type OrderCompareTypeA to Integer MPBall = Maybe Bool
@@ -317,8 +317,8 @@ instance (ArrowPrecisionPolicy to) => HasOrderA to Integer MPBall where
 
 instance (ArrowPrecisionPolicy to) => HasEqA to MPBall Rational where
     type EqCompareTypeA to MPBall Rational = Maybe Bool
-    equalToA = convertSecondA equalToA
-    notEqualToA = convertSecondA notEqualToA
+    equalToA = convertSecondUsingA rational2BallP equalToA
+    notEqualToA = convertSecondUsingA rational2BallP notEqualToA
 
 instance (ArrowPrecisionPolicy to) => HasEqA to Rational MPBall where
     type EqCompareTypeA to Rational MPBall = Maybe Bool
@@ -327,8 +327,8 @@ instance (ArrowPrecisionPolicy to) => HasEqA to Rational MPBall where
 
 instance (ArrowPrecisionPolicy to) => HasOrderA to MPBall Rational where
     type OrderCompareTypeA to MPBall Rational = Maybe Bool
-    lessThanA = convertSecondA lessThanA 
-    leqA = convertSecondA leqA 
+    lessThanA = convertSecondUsingA rational2BallP lessThanA 
+    leqA = convertSecondUsingA rational2BallP leqA 
 
 instance (ArrowPrecisionPolicy to) => HasOrderA to Rational MPBall where
     type OrderCompareTypeA to Rational MPBall = Maybe Bool
@@ -451,7 +451,7 @@ instance CanSub Integer MPBall
 
 instance (ArrowPrecisionPolicy to) => CanAddA to MPBall Integer where
     type AddTypeA to MPBall Integer = MPBall
-    addA = convertSecondA addA 
+    addA = convertSecondUsingA integer2BallP addA 
     -- arr $ \ (a, b) -> a + (integer2BallP (getPrecision a) b)
 
 instance (ArrowPrecisionPolicy to) => CanAddThisA to MPBall Integer
@@ -466,7 +466,7 @@ instance (ArrowPrecisionPolicy to) => CanMulA to Integer MPBall where
 
 instance (ArrowPrecisionPolicy to) => CanMulA to MPBall Integer where
     type MulTypeA to MPBall Integer = MPBall
-    mulA = convertSecondA mulA
+    mulA = convertSecondUsingA integer2BallP mulA
 
 instance (ArrowPrecisionPolicy to) => CanMulByA to MPBall Integer
 
@@ -476,7 +476,7 @@ instance (ArrowPrecisionPolicy to) => CanDivA to Integer MPBall where
 
 instance (ArrowPrecisionPolicy to) => CanDivA to MPBall Integer where
     type DivTypeA to MPBall Integer = MPBall
-    divA = convertSecondA divA
+    divA = convertSecondUsingA integer2BallP divA
 
 instance (ArrowPrecisionPolicy to) => CanDivByA to MPBall Integer
 
@@ -490,7 +490,7 @@ instance (ArrowPrecisionPolicy to) => CanSubA to Rational MPBall
 
 instance (ArrowPrecisionPolicy to) => CanAddA to MPBall Rational where
     type AddTypeA to MPBall Rational = MPBall
-    addA = convertSecondA addA
+    addA = convertSecondUsingA rational2BallP addA
 
 instance (ArrowPrecisionPolicy to) => CanAddThisA to MPBall Rational
 
@@ -504,19 +504,36 @@ instance (ArrowPrecisionPolicy to) => CanMulA to Rational MPBall where
 
 instance (ArrowPrecisionPolicy to) => CanMulA to MPBall Rational where
     type MulTypeA to MPBall Rational = MPBall
-    mulA = convertSecondA mulA
+    mulA = convertSecondUsingA rational2BallP mulA
 
 instance (ArrowPrecisionPolicy to) => CanMulByA to MPBall Rational
 
 instance (ArrowPrecisionPolicy to) => CanDivA to Rational MPBall where
     type DivTypeA to Rational MPBall = MPBall
-    divA = convertFirstA divA
+    divA = convertFirstUsingA rational2BallP divA
 
 instance (ArrowPrecisionPolicy to) => CanDivA to MPBall Rational where
     type DivTypeA to MPBall Rational = MPBall
-    divA = convertSecondA divA
+    divA = convertSecondUsingA rational2BallP divA
 
 instance (ArrowPrecisionPolicy to) => CanDivByA to MPBall Rational
+
+convertFirstUsingA ::
+    (Arrow to) =>
+    (Precision -> a -> MPBall) -> ((MPBall,MPBall) `to` b) -> ((a,MPBall) `to` b) 
+convertFirstUsingA convertP opA =
+    proc (xI,y) ->
+        do
+        opA -< (convertP (getPrecision y) xI,y)
+
+convertSecondUsingA ::
+    (Arrow to) =>
+    (Precision -> a -> MPBall) -> ((MPBall,MPBall) `to` b) -> ((MPBall,a) `to` b) 
+convertSecondUsingA convertP opA =
+    proc (x,yI) ->
+        do
+        opA -< (x, convertP (getPrecision x) yI)
+
 
 {- generic methods for computing real functions from MPFR-approximations -}
 
@@ -605,6 +622,7 @@ instance (Arrow to) => CanSineCosineA to MPBall where
     cosA = arr $ cosB 1
 
 instance (Arrow to) => CanSineCosineSameTypeA to MPBall
+
 
 sinB :: Integer -> MPBall -> MPBall
 sinB i x = 
