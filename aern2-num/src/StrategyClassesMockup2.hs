@@ -19,6 +19,12 @@ exampleRealGeneric1EvalReal_OrdFun :: (CauchyReal, CauchyReal) -> CauchyReal
 exampleRealGeneric1EvalReal_OrdFun =
     withEvalStrategyReal exampleRealGeneric1 EvalReal_OrdFun
 
+exampleRealGeneric1EvalReal_FixedPrec :: Precision -> (MPBall, MPBall) -> MPBall
+exampleRealGeneric1EvalReal_FixedPrec p =
+    runWithPrecisionPolicy (withEvalStrategyReal exampleRealGeneric1 EvalReal_FixedPrecision) pp
+    where
+    pp = defaultPrecisionPolicy { precPolicy_precision = p }
+
 exampleRealGeneric2 :: RealGeneric GR (GPair GR GR)
 exampleRealGeneric2 = 
     RealGeneric (anyStrategy $ proc x -> do nx <- negA -< x; returnA -< (x,nx))
@@ -26,6 +32,12 @@ exampleRealGeneric2 =
 exampleRealGeneric2EvalReal_OrdFun :: CauchyReal -> (CauchyReal, CauchyReal)
 exampleRealGeneric2EvalReal_OrdFun =
     withEvalStrategyReal exampleRealGeneric2 EvalReal_OrdFun
+
+exampleRealGeneric2EvalReal_FixedPrec :: Precision -> MPBall -> (MPBall, MPBall)
+exampleRealGeneric2EvalReal_FixedPrec p =
+    runWithPrecisionPolicy (withEvalStrategyReal exampleRealGeneric2 EvalReal_FixedPrecision) pp
+    where
+    pp = defaultPrecisionPolicy { precPolicy_precision = p }
 
 exampleRealGeneric3 :: RealGeneric GR (GList GR)
 exampleRealGeneric3 = 
@@ -59,13 +71,6 @@ instance EvalStrategyReal EvalReal_FixedPrecision where
     type ES_to EvalReal_FixedPrecision = WithPrecisionPolicy (->)
     type ES_r EvalReal_FixedPrecision = MPBall
     type ES_kl EvalReal_FixedPrecision = Maybe Bool
-
-{- TODO
-    Make EvalReal_FixedPrecision really work - add all necessary instances.
-    
-    Provide iRRAM-style computation as an *adaptor* from EvalReal_FixedPrecision
-    to EvalReal_OrdFun.
--}
 
 {-| Strategy-generic expression -}
 data RealGeneric i o = RealGeneric
