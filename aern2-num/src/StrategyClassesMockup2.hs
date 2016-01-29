@@ -63,6 +63,7 @@ class
 -- example instances
 data EvalReal_OrdFun = EvalReal_OrdFun
 data EvalReal_FixedPrecision = EvalReal_FixedPrecision
+data EvalReal_IncreasePrecision = EvalReal_IncreasePrecision
 
 instance EvalStrategyReal EvalReal_OrdFun where
     type ES_to EvalReal_OrdFun = (->)
@@ -73,6 +74,22 @@ instance EvalStrategyReal EvalReal_FixedPrecision where
     type ES_to EvalReal_FixedPrecision = WithPrecisionPolicy (->)
     type ES_r EvalReal_FixedPrecision = MPBall
     type ES_kl EvalReal_FixedPrecision = Maybe Bool
+
+instance EvalStrategyReal EvalReal_IncreasePrecision where
+    type ES_to EvalReal_IncreasePrecision = (->)
+    type ES_r EvalReal_IncreasePrecision = CauchyReal
+    type ES_kl EvalReal_IncreasePrecision = Accuracy -> Maybe Bool
+    withEvalStrategyReal fnG _ input =
+        undefined -- TODO
+--        fromPrecisionSequence (\p -> runWithPrecisionPolicy fnMB (ppUseCurr p) (encloseWithPrecision p input)) 
+--        where
+--        fnMB = fnG `withEvalStrategyReal` EvalReal_FixedPrecision 
+
+class CanEncloseWithPrecision r b where
+    encloseWithPrecision :: Precision -> r -> b
+
+class CanMakeFromPrecisionSequence r b where
+    fromPrecisionSequence :: (Precision -> b) -> r
 
 {-| Strategy-generic expression -}
 data RealGeneric i o = RealGeneric
