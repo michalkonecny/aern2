@@ -3,7 +3,8 @@
 module AERN2.Num.MPFloat 
     (MPFloat, Precision, prec, prec2integer, defaultPrecision, maximumPrecision, standardPrecisions, 
      getPrecision, setPrecisionUp,
-     PrecisionPolicyMode(..), PrecisionPolicy(..), defaultPrecisionPolicy, maxPrecisionPolicy, 
+     PrecisionPolicyMode(..), PrecisionPolicy(..), defaultPrecisionPolicy, maxPrecisionPolicy,
+     ppUseCurr, ppUseMax, ppKeepExact, 
      ArrowPrecisionPolicy(..), WithPrecisionPolicy(..), arrPP, 
      toRational, toDoubleUp, toDoubleDown,
      zero, one, two, fromIntegerUp, fromIntegerDown, fromRationalUp, fromRationalDown,
@@ -76,6 +77,18 @@ data PrecisionPolicyMode
 defaultPrecisionPolicy :: PrecisionPolicy
 defaultPrecisionPolicy =
     PrecisionPolicy defaultPrecision PrecisionPolicyMode_UseMax
+
+ppUseCurr :: Precision -> PrecisionPolicy
+ppUseCurr p =
+    PrecisionPolicy p PrecisionPolicyMode_UseCurrent
+
+ppUseMax :: Precision -> PrecisionPolicy
+ppUseMax p =
+    PrecisionPolicy p PrecisionPolicyMode_UseMax
+
+ppKeepExact :: Precision -> PrecisionPolicy
+ppKeepExact p =
+    PrecisionPolicy p PrecisionPolicyMode_KeepExactDyadic
 
 maxPrecisionPolicy :: PrecisionPolicy
 maxPrecisionPolicy =

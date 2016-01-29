@@ -59,7 +59,7 @@ fftTestDirectMPB nN p =
 
 fftTestMPBiterate :: Integer -> Accuracy -> [(Complex MPBall)]
 fftTestMPBiterate nN ac =
-    case last $ iterateUntilOK (\x -> getAccuracyAll x >= ac) (auxP ac) of
+    case last $ iterateUntilOK (\mx -> case mx of Just x -> getAccuracyAll x >= ac; _ -> False) (auxP ac) of
         (_, Just ball) -> ball
         _ -> error "fftTestMPBiterate: failed"  
     where

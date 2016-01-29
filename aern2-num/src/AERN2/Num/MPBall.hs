@@ -25,6 +25,7 @@ module AERN2.Num.MPBall
      getPrecision, setPrecisionMatchAccuracy, 
      MP.maximumPrecision, MP.defaultPrecision, MP.standardPrecisions, MP.Precision, MP.prec, MP.prec2integer,
      PrecisionPolicyMode(..), PrecisionPolicy(..), defaultPrecisionPolicy, maxPrecisionPolicy, 
+     ppUseCurr, ppUseMax, ppKeepExact, 
      ArrowPrecisionPolicy(..), WithPrecisionPolicy(..),
      iterateUntilAccurateA, iterateUntilOKA,
      iterateUntilAccurate, iterateUntilOK,
@@ -56,6 +57,7 @@ import qualified AERN2.Num.MPFloat as MP
 import AERN2.Num.MPFloat 
     (MPFloat, Precision,
      PrecisionPolicyMode(..), PrecisionPolicy(..), defaultPrecisionPolicy, maxPrecisionPolicy, 
+     ppUseCurr, ppUseMax, ppKeepExact, 
      ArrowPrecisionPolicy(..), WithPrecisionPolicy(..), arrPP)
 
 import Debug.Trace (trace)
@@ -210,7 +212,10 @@ iterateUntilAccurateA ::
     (Precision `to` Maybe MPBall) -> 
     () `to` [(Precision, Maybe MPBall)]
 iterateUntilAccurateA ac = 
-    iterateUntilOKA (\result -> getAccuracy result >= ac) 
+    iterateUntilOKA $ \maybeResult -> 
+        case maybeResult of 
+            Just result -> getAccuracy result >= ac
+            _ -> False 
 
 iterateUntilAccurate :: 
     A.Accuracy -> 
@@ -221,8 +226,8 @@ iterateUntilAccurate ac fn = iterateUntilAccurateA ac fn ()
 iterateUntilOKA :: 
     (ArrowChoice to) => 
     (a -> Bool) -> 
-    (Precision `to` Maybe a) -> 
-    () `to` [(Precision, Maybe a)]
+    (Precision `to` a) -> 
+    () `to` [(Precision, a)]
 iterateUntilOKA isOK fnA =
     stopWhenAccurate ps
     where
@@ -235,18 +240,18 @@ iterateUntilOKA isOK fnA =
     stopWhenAccurate (p : rest) =
         proc () ->
             do
-            maybeResult <- fnA -< p
-            case maybeResult of
-                Just result | isOK result -> returnA -< [(p, maybeResult)]
-                _ ->
+            result <- fnA -< p
+            if isOK result 
+                then returnA -< [(p, result)]
+                else
                     do
                     restResults <- stopWhenAccurate rest -< ()
-                    returnA -<  (p, maybeResult) : restResults
+                    returnA -<  (p, result) : restResults
 
 iterateUntilOK :: 
     (a -> Bool) -> 
-    (Precision -> Maybe a) -> 
-    [(Precision, Maybe a)]
+    (Precision -> a) -> 
+    [(Precision, a)]
 iterateUntilOK isOK fn = iterateUntilOKA isOK fn ()
 
 
