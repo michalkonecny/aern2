@@ -17,11 +17,11 @@ exampleRealGeneric1 =
 
 exampleRealGeneric1EvalReal_OrdFun :: (CauchyReal, CauchyReal) -> CauchyReal
 exampleRealGeneric1EvalReal_OrdFun =
-    withEvalStrategyReal exampleRealGeneric1 EvalReal_OrdFun
+    exampleRealGeneric1 `withEvalStrategyReal` EvalReal_OrdFun
 
 exampleRealGeneric1EvalReal_FixedPrec :: Precision -> (MPBall, MPBall) -> MPBall
 exampleRealGeneric1EvalReal_FixedPrec p =
-    runWithPrecisionPolicy (withEvalStrategyReal exampleRealGeneric1 EvalReal_FixedPrecision) pp
+    runWithPrecisionPolicy (exampleRealGeneric1 `withEvalStrategyReal` EvalReal_FixedPrecision) pp
     where
     pp = defaultPrecisionPolicy { precPolicy_precision = p }
 
@@ -31,11 +31,11 @@ exampleRealGeneric2 =
 
 exampleRealGeneric2EvalReal_OrdFun :: CauchyReal -> (CauchyReal, CauchyReal)
 exampleRealGeneric2EvalReal_OrdFun =
-    withEvalStrategyReal exampleRealGeneric2 EvalReal_OrdFun
+    exampleRealGeneric2 `withEvalStrategyReal` EvalReal_OrdFun
 
 exampleRealGeneric2EvalReal_FixedPrec :: Precision -> MPBall -> (MPBall, MPBall)
 exampleRealGeneric2EvalReal_FixedPrec p =
-    runWithPrecisionPolicy (withEvalStrategyReal exampleRealGeneric2 EvalReal_FixedPrecision) pp
+    runWithPrecisionPolicy (exampleRealGeneric2 `withEvalStrategyReal` EvalReal_FixedPrecision) pp
     where
     pp = defaultPrecisionPolicy { precPolicy_precision = p }
 
@@ -45,7 +45,7 @@ exampleRealGeneric3 =
 
 exampleRealGeneric3EvalReal_OrdFun :: CauchyReal -> [CauchyReal]
 exampleRealGeneric3EvalReal_OrdFun =
-    withEvalStrategyReal exampleRealGeneric3 EvalReal_OrdFun
+    exampleRealGeneric3 `withEvalStrategyReal` EvalReal_OrdFun
 
 
 {-| strategy for evaluating arrow-generic real expressions  -}
@@ -56,7 +56,9 @@ class
     where
     type ES_to s :: * -> * -> *
     type ES_r s -- ^ Real number type
-    type ES_kl s -- ^ Kleenean type (eg Maybe Boolean) 
+    type ES_kl s -- ^ Kleenean type (eg Maybe Boolean)
+    withEvalStrategyReal :: RealGeneric i o -> s -> (ES_to s) (GType2ESType (i s)) (GType2ESType (o s))
+    withEvalStrategyReal = withEvalStrategyReal_  
 
 -- example instances
 data EvalReal_OrdFun = EvalReal_OrdFun
@@ -75,7 +77,7 @@ instance EvalStrategyReal EvalReal_FixedPrecision where
 {-| Strategy-generic expression -}
 data RealGeneric i o = RealGeneric
     { 
-        withEvalStrategyReal :: 
+        withEvalStrategyReal_ :: 
             (forall s. EvalStrategyReal s => s -> (ES_to s) (GType2ESType (i s)) (GType2ESType (o s))) 
     }
 
