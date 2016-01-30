@@ -10,7 +10,7 @@ module AERN2.Num.CauchyReal
     HasCauchyRealsA, HasCauchyReals,
     CanBeCauchyRealA, cauchyRealA, cauchyRealNamedA, cauchyRealsA, cauchyRealsNamedA, CanBeCauchyReal, cauchyReal, cauchyReals,
     integer2CauchyReal, rational2CauchyReal,
-    convergent2CauchyReal,
+    convergent2CauchyReal,  seqByPrecision2Cauchy,
     pi,
     module AERN2.Num.CauchyRealA
 )
