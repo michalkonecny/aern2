@@ -1,8 +1,4 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE TypeFamilies, FlexibleInstances, RankNTypes, EmptyDataDecls, UndecidableInstances #-}
---{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, RankNTypes, EmptyDataDecls, UndecidableInstances #-}
 
 module StrategyClassesMockup2 where
 
@@ -22,9 +18,7 @@ exampleRealGeneric1EvalReal_OrdFun =
 
 exampleRealGeneric1EvalReal_FixedPrec :: Precision -> (MPBall, MPBall) -> MPBall
 exampleRealGeneric1EvalReal_FixedPrec p =
-    runWithPrecisionPolicy (exampleRealGeneric1 `withEvalStrategyReal` EvalReal_FixedPrecision) pp
-    where
-    pp = defaultPrecisionPolicy { precPolicy_precision = p }
+    runWithPrecisionPolicy (exampleRealGeneric1 `withEvalStrategyReal` EvalReal_FixedPrecision) (ppUseCurr p)
 
 exampleRealGeneric1EvalReal_IncreasePrecision :: (CauchyReal, CauchyReal) -> CauchyReal
 exampleRealGeneric1EvalReal_IncreasePrecision =
@@ -40,9 +34,7 @@ exampleRealGeneric2EvalReal_OrdFun =
 
 exampleRealGeneric2EvalReal_FixedPrec :: Precision -> MPBall -> (MPBall, MPBall)
 exampleRealGeneric2EvalReal_FixedPrec p =
-    runWithPrecisionPolicy (exampleRealGeneric2 `withEvalStrategyReal` EvalReal_FixedPrecision) pp
-    where
-    pp = defaultPrecisionPolicy { precPolicy_precision = p }
+    runWithPrecisionPolicy (exampleRealGeneric2 `withEvalStrategyReal` EvalReal_FixedPrecision) (ppUseCurr p)
 
 exampleRealGeneric2EvalReal_IncreasePrecision :: CauchyReal -> (CauchyReal, CauchyReal)
 exampleRealGeneric2EvalReal_IncreasePrecision =
