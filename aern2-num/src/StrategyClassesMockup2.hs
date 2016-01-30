@@ -12,41 +12,74 @@ exampleRealGeneric1 :: RealGeneric (GPair GR GR) GR
 exampleRealGeneric1 = 
     RealGeneric (anyStrategy addA)
 
-exampleRealGeneric1EvalReal_OrdFun :: (CauchyReal, CauchyReal) -> CauchyReal
-exampleRealGeneric1EvalReal_OrdFun =
-    exampleRealGeneric1 `withEvalStrategyReal` EvalReal_OrdFun
+exampleRealGeneric1EvalReal_CauchyReal :: (CauchyReal, CauchyReal) -> CauchyReal
+exampleRealGeneric1EvalReal_CauchyReal =
+    exampleRealGeneric1 `withEvalStrategyReal` EvalReal_CauchyReal
 
 exampleRealGeneric1EvalReal_FixedPrec :: Precision -> (MPBall, MPBall) -> MPBall
 exampleRealGeneric1EvalReal_FixedPrec p =
-    runWithPrecisionPolicy (exampleRealGeneric1 `withEvalStrategyReal` EvalReal_FixedPrecision) (ppUseCurr p)
+    runWithPrecisionPolicy (exampleRealGeneric1 `withEvalStrategyReal` EvalReal_BallFixedPrec) (ppUseCurr p)
 
-exampleRealGeneric1EvalReal_IncreasePrecision :: (CauchyReal, CauchyReal) -> CauchyReal
-exampleRealGeneric1EvalReal_IncreasePrecision =
-    exampleRealGeneric1 `withEvalStrategyReal` EvalReal_IncreasePrecision
+exampleRealGeneric1EvalReal_BallIncreasePrec :: (CauchyReal, CauchyReal) -> CauchyReal
+exampleRealGeneric1EvalReal_BallIncreasePrec =
+    exampleRealGeneric1 `withEvalStrategyReal` EvalReal_BallIncreasePrec
 
 exampleRealGeneric2 :: RealGeneric GR (GPair GR GR)
 exampleRealGeneric2 = 
     RealGeneric (anyStrategy $ proc x -> do nx <- negA -< x; returnA -< (x,nx))
 
-exampleRealGeneric2EvalReal_OrdFun :: CauchyReal -> (CauchyReal, CauchyReal)
-exampleRealGeneric2EvalReal_OrdFun =
-    exampleRealGeneric2 `withEvalStrategyReal` EvalReal_OrdFun
+exampleRealGeneric2EvalReal_CauchyReal :: CauchyReal -> (CauchyReal, CauchyReal)
+exampleRealGeneric2EvalReal_CauchyReal =
+    exampleRealGeneric2 `withEvalStrategyReal` EvalReal_CauchyReal
 
 exampleRealGeneric2EvalReal_FixedPrec :: Precision -> MPBall -> (MPBall, MPBall)
 exampleRealGeneric2EvalReal_FixedPrec p =
-    runWithPrecisionPolicy (exampleRealGeneric2 `withEvalStrategyReal` EvalReal_FixedPrecision) (ppUseCurr p)
+    runWithPrecisionPolicy (exampleRealGeneric2 `withEvalStrategyReal` EvalReal_BallFixedPrec) (ppUseCurr p)
 
-exampleRealGeneric2EvalReal_IncreasePrecision :: CauchyReal -> (CauchyReal, CauchyReal)
-exampleRealGeneric2EvalReal_IncreasePrecision =
-    exampleRealGeneric2 `withEvalStrategyReal` EvalReal_IncreasePrecision
+exampleRealGeneric2EvalReal_BallIncreasePrec :: CauchyReal -> (CauchyReal, CauchyReal)
+exampleRealGeneric2EvalReal_BallIncreasePrec =
+    exampleRealGeneric2 `withEvalStrategyReal` EvalReal_BallIncreasePrec
 
 exampleRealGeneric3 :: RealGeneric GR (GList GR)
 exampleRealGeneric3 = 
     RealGeneric (anyStrategy $ proc x -> do nx <- negA -< x; returnA -< [x,nx])
 
-exampleRealGeneric3EvalReal_OrdFun :: CauchyReal -> [CauchyReal]
-exampleRealGeneric3EvalReal_OrdFun =
-    exampleRealGeneric3 `withEvalStrategyReal` EvalReal_OrdFun
+exampleRealGeneric3EvalReal_CauchyReal :: CauchyReal -> [CauchyReal]
+exampleRealGeneric3EvalReal_CauchyReal =
+    exampleRealGeneric3 `withEvalStrategyReal` EvalReal_CauchyReal
+
+{-| Strategy-generic expression -}
+
+data RealGeneric i o = RealGeneric
+    { 
+        withEvalStrategyReal_ :: 
+            (forall s. EvalStrategyReal s i o => s -> (ES_to s) (GType2ESType (i s)) (GType2ESType (o s))) 
+    }
+
+{-| This trivial synonym helps to make expressions that return one real number more readable, eg: 
+    @RealGeneric (anyStrategy addA)@
+-}
+anyStrategy :: a -> b -> a
+anyStrategy = const
+
+data GR s
+data GKL s
+
+data GNil s
+data GPair (t1 :: * -> *) (t2 :: * -> *) s
+data GTriple (t1 :: * -> *) (t2 :: * -> *) (t3 :: * -> *) s
+data GList (t :: * -> *) s
+data GVarMap (t :: * -> *) s
+
+type family GType2ESType s
+
+type instance GType2ESType (GR s) = ES_r s
+type instance GType2ESType (GKL s) = ES_kl s
+type instance GType2ESType (GNil s) = ()
+type instance GType2ESType (GPair t1 t2 s) = (GType2ESType (t1 s), GType2ESType (t2 s))
+type instance GType2ESType (GTriple t1 t2 t3 s) = (GType2ESType (t1 s), GType2ESType (t2 s), GType2ESType (t3 s))
+type instance GType2ESType (GList t s) = [GType2ESType (t s)]
+type instance GType2ESType (GVarMap t s) = VarMap (GType2ESType (t s))
 
 
 {-| strategy for evaluating arrow-generic real expressions  -}
@@ -61,39 +94,40 @@ class
     withEvalStrategyReal :: RealGeneric i o -> s -> (ES_to s) (GType2ESType (i s)) (GType2ESType (o s))
     withEvalStrategyReal = withEvalStrategyReal_  
 
--- example instances
-data EvalReal_OrdFun = EvalReal_OrdFun
-data EvalReal_FixedPrecision = EvalReal_FixedPrecision
-data EvalReal_IncreasePrecision = EvalReal_IncreasePrecision
+{----- specific strategies -----}
 
-instance EvalStrategyReal EvalReal_OrdFun i o where
-    type ES_to EvalReal_OrdFun = (->)
-    type ES_r EvalReal_OrdFun = CauchyReal
-    type ES_kl EvalReal_OrdFun = Accuracy -> Maybe Bool
+data EvalReal_CauchyReal = EvalReal_CauchyReal
+data EvalReal_BallFixedPrec = EvalReal_BallFixedPrec
+data EvalReal_BallIncreasePrec = EvalReal_BallIncreasePrec
 
-instance EvalStrategyReal EvalReal_FixedPrecision i o where
-    type ES_to EvalReal_FixedPrecision = WithPrecisionPolicy (->)
-    type ES_r EvalReal_FixedPrecision = MPBall
-    type ES_kl EvalReal_FixedPrecision = Maybe Bool
+instance EvalStrategyReal EvalReal_CauchyReal i o where
+    type ES_to EvalReal_CauchyReal = (->)
+    type ES_r EvalReal_CauchyReal = CauchyReal
+    type ES_kl EvalReal_CauchyReal = Accuracy -> Maybe Bool
+
+instance EvalStrategyReal EvalReal_BallFixedPrec i o where
+    type ES_to EvalReal_BallFixedPrec = WithPrecisionPolicy (->)
+    type ES_r EvalReal_BallFixedPrec = MPBall
+    type ES_kl EvalReal_BallFixedPrec = Maybe Bool
 
 instance
     (CanMakeFromPrecisionSequence
-        (GType2ESType (o EvalReal_IncreasePrecision))
-        (GType2ESType (o EvalReal_FixedPrecision)),
+        (GType2ESType (o EvalReal_BallIncreasePrec))
+        (GType2ESType (o EvalReal_BallFixedPrec)),
      CanEncloseWithPrecision
-        (GType2ESType (i EvalReal_IncreasePrecision))
-        (GType2ESType (i EvalReal_FixedPrecision))
+        (GType2ESType (i EvalReal_BallIncreasePrec))
+        (GType2ESType (i EvalReal_BallFixedPrec))
     )
     => 
-    EvalStrategyReal EvalReal_IncreasePrecision i o 
+    EvalStrategyReal EvalReal_BallIncreasePrec i o 
     where
-    type ES_to EvalReal_IncreasePrecision = (->)
-    type ES_r EvalReal_IncreasePrecision = CauchyReal
-    type ES_kl EvalReal_IncreasePrecision = Accuracy -> Maybe Bool
+    type ES_to EvalReal_BallIncreasePrec = (->)
+    type ES_r EvalReal_BallIncreasePrec = CauchyReal
+    type ES_kl EvalReal_BallIncreasePrec = Accuracy -> Maybe Bool
     withEvalStrategyReal fnG _ input =
         fromPrecisionSequence (\p -> runWithPrecisionPolicy fnMB (ppUseCurr p) (encloseWithPrecision p input)) 
         where
-        fnMB = fnG `withEvalStrategyReal` EvalReal_FixedPrecision 
+        fnMB = fnG `withEvalStrategyReal` EvalReal_BallFixedPrec 
 
 class CanEncloseWithPrecision r b where
     encloseWithPrecision :: Precision -> r -> b
@@ -180,37 +214,5 @@ instance
         (fromPrecisionSequence ((\(a,_,_) -> a) . sq), 
          fromPrecisionSequence ((\(_,b,_) -> b) . sq),
          fromPrecisionSequence ((\(_,_,c) -> c) . sq))
-
-{-| Strategy-generic expression -}
-data RealGeneric i o = RealGeneric
-    { 
-        withEvalStrategyReal_ :: 
-            (forall s. EvalStrategyReal s i o => s -> (ES_to s) (GType2ESType (i s)) (GType2ESType (o s))) 
-    }
-
-{-| This trivial synonym helps to make expressions that return one real number more readable, eg: 
-    @RealGeneric (anyStrategy addA)@
--}
-anyStrategy :: a -> b -> a
-anyStrategy = const
-
-data GR s
-data GKL s
-
-data GNil s
-data GPair (t1 :: * -> *) (t2 :: * -> *) s
-data GTriple (t1 :: * -> *) (t2 :: * -> *) (t3 :: * -> *) s
-data GList (t :: * -> *) s
-data GVarMap (t :: * -> *) s
-
-type family GType2ESType s
-
-type instance GType2ESType (GR s) = ES_r s
-type instance GType2ESType (GKL s) = ES_kl s
-type instance GType2ESType (GNil s) = ()
-type instance GType2ESType (GPair t1 t2 s) = (GType2ESType (t1 s), GType2ESType (t2 s))
-type instance GType2ESType (GTriple t1 t2 t3 s) = (GType2ESType (t1 s), GType2ESType (t2 s), GType2ESType (t3 s))
-type instance GType2ESType (GList t s) = [GType2ESType (t s)]
-type instance GType2ESType (GVarMap t s) = VarMap (GType2ESType (t s))
 
 
