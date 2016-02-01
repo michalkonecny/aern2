@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, FlexibleInstances, RankNTypes, EmptyDataDecls, UndecidableInstances, ExistentialQuantification #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, RankNTypes, EmptyDataDecls, UndecidableInstances, ExistentialQuantification, DefaultSignatures #-}
 
 module StrategyClassesMockup2 where
 
@@ -42,20 +42,42 @@ exampleRealGeneric2EvalReal_BallIncreasePrec :: CauchyReal -> (CauchyReal, Cauch
 exampleRealGeneric2EvalReal_BallIncreasePrec =
     exampleRealGeneric2 `withEvalStrategyReal` EvalReal_BallIncreasePrec
 
--- TODO
---exampleRealGenericNested :: RealGeneric GR GR
---exampleRealGenericNested = 
---    RealGeneric (anyStrategy $ proc x -> do nx <- realGenericA "neg" myNeg -< x; returnA -< nx)
---    where
---    myNeg = RealGeneric (anyStrategy $ negA)
+exampleRealGenericNested :: RealGeneric GR GR
+exampleRealGenericNested = 
+    RealGeneric $ \ s ->
+        case getSubStrategy s GR GR "neg" of
+            SubEvalStrategyReal negStrategy ->
+                proc x -> 
+                    do
+--                    nx <- realGenericA "neg" myNeg -< x
+                    nx <- arrow2arrow (withEvalStrategyReal myNeg negStrategy) -< x
+                    let _ = [x,nx]
+                    addA -< (1,nx)
+    where        
+    myNeg :: RealGeneric GR GR
+    myNeg = RealGeneric (anyStrategy negA)
 
+exampleRealGenericNested_CauchyReal :: CauchyReal -> CauchyReal
+exampleRealGenericNested_CauchyReal =
+    exampleRealGenericNested `withEvalStrategyReal` EvalReal_CauchyReal
 
+exampleRealGenericNested_BallIncreasePrec :: CauchyReal -> CauchyReal
+exampleRealGenericNested_BallIncreasePrec =
+    exampleRealGenericNested `withEvalStrategyReal` EvalReal_BallIncreasePrec
+
+{- TODO:
+
+exampleRealGenericNested_CauchyReal_BallIncreasePrec  :: CauchyReal -> CauchyReal
+exampleRealGenericNested_CauchyReal_BallIncreasePrec =
+    exampleRealGenericNested `withEvalStrategyReal` 
+        (EvalReal_Nested EvalReal_CauchyReal ["neg", EvalReal_BallIncreasePrec])
+-}
 
 {-| Strategy-generic expression -}
 data RealGeneric i o = RealGeneric
     { 
         withEvalStrategyReal_ :: 
-            (forall s. EvalStrategyReal s i o => s -> (ES_to s) (GType2ESType (i s)) (GType2ESType (o s))) 
+            (forall s. (EvalStrategyReal s i o) => s -> (ES_to s) (GType2ESType (i s)) (GType2ESType (o s))) 
     }
 
 {-| This trivial synonym helps to make expressions that return one real number more readable, eg: 
@@ -64,14 +86,15 @@ data RealGeneric i o = RealGeneric
 anyStrategy :: a -> b -> a
 anyStrategy = const
 
-data GR s
-data GKL s
+data GR s = GR
+data GKL s = GKL
 
-data GNil s
-data GPair (t1 :: * -> *) (t2 :: * -> *) s
-data GTriple (t1 :: * -> *) (t2 :: * -> *) (t3 :: * -> *) s
-data GList (t :: * -> *) s
-data GVarMap (t :: * -> *) s
+data GNil s = GNIL
+data GPair (t1 :: * -> *) (t2 :: * -> *) s = GPair (t1 s) (t2 s)
+data GTriple (t1 :: * -> *) (t2 :: * -> *) (t3 :: * -> *) s = GTriple (t1 s) (t2 s) (t3 s)
+data GList (t :: * -> *) s = GList (t s)
+data GVarMap (t :: * -> *) s = GVarMap (t s)
+
 
 type family GType2ESType s
 
@@ -86,7 +109,8 @@ type instance GType2ESType (GVarMap t s) = VarMap (GType2ESType (t s))
 
 {-| strategy for evaluating arrow-generic real expressions  -}
 class
-    (ArrowReal (ES_to s) (ES_r s))
+    (ArrowReal (ES_to s) (ES_r s),
+     HaveASubStrategy s)
     => 
     EvalStrategyReal s i o
     where
@@ -95,22 +119,48 @@ class
     type ES_kl s -- ^ Kleenean type (eg Maybe Boolean)
     withEvalStrategyReal :: RealGeneric i o -> s -> (ES_to s) (GType2ESType (i s)) (GType2ESType (o s))
     withEvalStrategyReal = withEvalStrategyReal_
-    -- TODO: test whether the following works 
-    getNestedStrategy :: forall iN oN . (EvalStrategyReal s iN oN) => s -> String -> SomeEvalStrategyReal iN oN
-    getNestedStrategy s _ = SomeEvalStrategyReal s
+    
+class
+    HaveASubStrategy s
+    where
+    getSubStrategy ::
+        (EvalStrategyReal s i o)
+        => 
+        s -> (i s) -> (o s) -> 
+        String -> 
+        SubEvalStrategyReal s i o
+    default getSubStrategy ::
+        (EvalStrategyReal s i o, 
+         ArrowConvert
+            (GType2ESType (i s)) (ES_to s) (GType2ESType (o s)) 
+            (GType2ESType (i s)) (ES_to s) (GType2ESType (o s)))
+        => 
+        s -> (i s) -> (o s) -> 
+        String -> 
+        SubEvalStrategyReal s i o
+    getSubStrategy s _ _ _ = SubEvalStrategyReal s
 
-data SomeEvalStrategyReal i o =
-    forall s. (EvalStrategyReal s i o) => SomeEvalStrategyReal s
+data SubEvalStrategyReal s i o =
+    forall sN. 
+        (EvalStrategyReal sN i o, 
+         ArrowConvert
+            (GType2ESType (i sN)) (ES_to sN) (GType2ESType (o sN)) 
+            (GType2ESType (i s )) (ES_to s ) (GType2ESType (o s )) 
+        ) 
+        => 
+        SubEvalStrategyReal sN
 
 {----- specific strategies -----}
 
 data EvalReal_CauchyReal = EvalReal_CauchyReal
+instance HaveASubStrategy EvalReal_CauchyReal
 instance EvalStrategyReal EvalReal_CauchyReal i o where
     type ES_to EvalReal_CauchyReal = (->)
     type ES_r EvalReal_CauchyReal = CauchyReal
     type ES_kl EvalReal_CauchyReal = Accuracy -> Maybe Bool
 
 data EvalReal_BallFixedPrec = EvalReal_BallFixedPrec
+instance HaveASubStrategy EvalReal_BallFixedPrec
 instance EvalStrategyReal EvalReal_BallFixedPrec i o where
     type ES_to EvalReal_BallFixedPrec = WithPrecisionPolicy (->)
     type ES_r EvalReal_BallFixedPrec = MPBall
@@ -134,6 +184,8 @@ instance EvalStrategyReal EvalReal_BallFixedPrec i o where
 
 data EvalReal_BallIncreasePrec = EvalReal_BallIncreasePrec
 instance
+    HaveASubStrategy EvalReal_BallIncreasePrec
+instance
     (CanEncloseWithPrecision
         (GType2ESType (i EvalReal_BallIncreasePrec))
         (GType2ESType (i EvalReal_BallFixedPrec))
@@ -151,7 +203,7 @@ instance
     withEvalStrategyReal fnG _ input =
         fromPrecisionSequence (\p -> runWithPrecisionPolicy fnMB (ppUseCurr p) (encloseWithPrecision p input)) 
         where
-        fnMB = fnG `withEvalStrategyReal` EvalReal_BallFixedPrec 
+        fnMB = fnG `withEvalStrategyReal` EvalReal_BallFixedPrec
 
 class CanEncloseWithPrecision r b where
     encloseWithPrecision :: Precision -> r -> b

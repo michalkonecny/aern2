@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, RankNTypes, EmptyDataDecls, UndecidableInstances, ExistentialQuantification #-}
 
-module StrategyClassesMockup3 where
+module  where
 
 import AERN2.Num
 
@@ -44,21 +44,20 @@ class
     sample_i = error "sample_i"
     sample_o :: o s
     sample_o = error "sample_o"
+    withEvalStrategyReal ::
+        s ->
+        (i s) ->
+        (o s) ->
+        ((ES_to s) (GType2ESType (i s)) (GType2ESType (o s))) ->
+        ((ES_to s) (GType2ESType (i s)) (GType2ESType (o s)))
+    withEvalStrategyReal _ _ _ a = a
+
+
 
 ex1_arrowGeneric ::
     (ArrowReal to r) =>
     (r,r) `to` r
 ex1_arrowGeneric = addA
-
-makeStrategyGeneric ::
-    (EvalStrategyReal s i o) 
-    =>
-    s ->
-    (i s) ->
-    (o s) ->
-    ((ES_to s) (GType2ESType (i s)) (GType2ESType (o s))) ->
-    ((ES_to s) (GType2ESType (i s)) (GType2ESType (o s)))
-makeStrategyGeneric _ _ _ a = a
 
 ex1_withStrategy ::
     (EvalStrategyReal s (GPair GR GR) GR,
@@ -67,7 +66,7 @@ ex1_withStrategy ::
     s -> ES_to s (ES_r s, ES_r s) (ES_r s)
     -- the above type is auto-derived!
 ex1_withStrategy s =
-    makeStrategyGeneric s (GPair GR GR) GR ex1_arrowGeneric
+    withEvalStrategyReal s (GPair GR GR) GR ex1_arrowGeneric
 
 ex1_CR :: (CauchyReal, CauchyReal) -> CauchyReal
 ex1_CR = ex1_withStrategy EvalReal_CauchyReal
@@ -121,6 +120,10 @@ instance
     where
     type ES_to EvalReal_BallIncreasePrec = (->)
     type ES_r EvalReal_BallIncreasePrec = CauchyReal
+    withEvalStrategyReal _ is os fnA input = 
+        fromPrecisionSequence (\p -> runWithPrecisionPolicy fnMB (ppUseCurr p) (encloseWithPrecision p input)) 
+        where
+        fnMB = withEvalStrategyReal EvalReal_BallFixedPrec is os fnA 
 
 class CanEncloseWithPrecision r b where
     encloseWithPrecision :: Precision -> r -> b

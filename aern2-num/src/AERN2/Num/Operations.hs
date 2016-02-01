@@ -89,6 +89,9 @@ class ArrowConvert a1 to1 b1 a2 to2 b2 where
     arrow2arrowNamed :: String -> (a1 `to1` b1) -> (a2 `to2` b2)
     arrow2arrowNamed _ = arrow2arrow
 
+instance ArrowConvert a (->) b a (->) b where
+    arrow2arrow = id
+
 type Fn2Arrow to a1 b1 a2 b2 = ArrowConvert  a1 (->) b1 a2 to b2
 fn2arrow :: (Fn2Arrow to a1 b1 a2 b2) => (a1 -> b1) -> (a2 `to` b2)
 fn2arrow = arrow2arrow

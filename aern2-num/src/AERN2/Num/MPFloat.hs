@@ -127,6 +127,8 @@ instance (Arrow to) => Arrow (WithPrecisionPolicy to) where
 instance (ArrowChoice to) => ArrowChoice (WithPrecisionPolicy to) where
     left (WithPrecisionPolicy f) = WithPrecisionPolicy $ \ p -> left (f p)
 
+instance ArrowConvert a (WithPrecisionPolicy (->)) b a (WithPrecisionPolicy (->)) b where
+    arrow2arrow = id
 
 
 {- conversions -}
