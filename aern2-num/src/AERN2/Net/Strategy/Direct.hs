@@ -23,33 +23,6 @@ maybeTrace
     | otherwise = const id
 
 
-{- Direct evaluation using Rational -}
-
-instance ArrowConvert [Rational] (->) Rational [Rational] (->) Rational where
-    arrow2arrow = id
-
-{- Direct evaluation using CauchyReal -}
-
-instance ArrowConvert [CauchyReal] (->) CauchyReal [CauchyReal] (->) CauchyReal where
-    arrow2arrow = id
-
-{- Direct evaluation using MPBall -}
-
-instance ArrowConvert [MPBall] (->) MPBall [MPBall] (->) MPBall where
-    arrow2arrow = id
-
-{- Direct evaluation using Complex CauchyReal -}
-
-instance ArrowConvert [Complex CauchyReal] (->) (Complex CauchyReal) [(Complex CauchyReal)] (->) (Complex CauchyReal) where
-    arrow2arrow = id
-
-{- Direct evaluation using Complex MPBall -}
-
-instance ArrowConvert [Complex MPBall] (->) (Complex MPBall) [(Complex MPBall)] (->) (Complex MPBall) where
-    arrow2arrow = id
-
-{- TODO The Interval type should move somewhere to aern-num -}
-
 rati2MPBall :: Interval Rational -> MPBall
 rati2MPBall il@(Interval l r) =
     maybeTrace
@@ -119,7 +92,7 @@ instance RationalIntervalA (->) (Interval Rational) where
     limitIntervalsToRealA sq = convergent2CauchyReal Nothing $ map rati2MPBall sq
 -}
 
-{- TODO The following function types should move to aern-function, when it is created -}
+{- TODO The following function types should move to aern2-function, when it is created -}
 
 type UnaryFnMPBall = (Interval Rational, MPBall -> MPBall) 
 
