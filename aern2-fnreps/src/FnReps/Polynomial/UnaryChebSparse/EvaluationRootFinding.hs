@@ -1,13 +1,17 @@
-{-# LANGUAGE ScopedTypeVariables, FlexibleContexts #-}
+{-# LANGUAGE Arrows, ScopedTypeVariables, FlexibleContexts, TypeOperators, TemplateHaskell, OverloadedStrings #-}
 module FnReps.Polynomial.UnaryChebSparse.EvaluationRootFinding 
 (
-    evalDirect, evalDirectOnBall, evalLipschitzOnBall, toPowerBase
+    evalDirectA, evalDirectOnBall, evalLipschitzOnBall 
+--   , toPowerBase
+    , evalExample1, evalExample2
 )
 where
 
 import AERN2.Num
 import FnReps.Polynomial.UnaryChebSparse.Basics
-import FnReps.Polynomial.UnaryPowerBase
+--import FnReps.Polynomial.UnaryPowerBase
+
+import Control.Arrow
 
 import Debug.Trace (trace)
 
@@ -21,38 +25,78 @@ maybeTrace
     | otherwise = const id
 
 
+{- examples/mini tests -}
 
 {-|
-    An evaluation of the polynomial at the ball x using Clenshaw Algorithm
-    (https://en.wikipedia.org/wiki/Clenshaw_algorithm#Special_case_for_Chebyshev_series). 
+    This example evaluates with a good accuracy when using ppKeepExact
+    in the definition of evalDirectOnBall:
+        
+    >  [-9.994985025164541e-4 ± 6.276990874746879e-30]
+    >  (0.08 secs, 83619528 bytes)
+     
+    This example loses accuracy when replacing ppKeepExact with ppUseMax
+    in the definition of evalDirectOnBall:
+    
+    >  [-9.994985025164541e-4 ± 4.820648236480696e173]
+    >  (0.08 secs, 109772888 bytes)
 -}
-toPowerBase :: UnaryChebSparse -> UnaryPowerBase
-toPowerBase p = evalDirect p (UnaryPowerBase [mpBall 0, mpBall 1])
+evalExample1 :: MPBall
+evalExample1 =
+    evalDirectOnBall poly (mpBall 0.5)
+    where
+    poly =
+        normaliseCoeffs $
+            fromListRationalWithPrec (prec 100) [(n, (1/n))| n <- [1..1000] ]
+
+evalExample2 :: MPBall
+evalExample2 =
+    evalLipschitzOnBall poly (endpoints2Ball (mpBall 0) (mpBall 1))
+    where
+    poly =
+        normaliseCoeffs $
+            fromListRationalWithPrec (prec 100) [(n, (1/n))| n <- [1..1000] ]
+
+
+--{-|
+--    An evaluation of the polynomial at the ball x using Clenshaw Algorithm
+--    (https://en.wikipedia.org/wiki/Clenshaw_algorithm#Special_case_for_Chebyshev_series). 
+---}
+--toPowerBase :: UnaryChebSparse -> UnaryPowerBase
+--toPowerBase p = evalDirectA (p, UnaryPowerBase [mpBall 0, mpBall 1])
 
 
 {-|
     An evaluation of the polynomial at x using Clenshaw Algorithm
     (https://en.wikipedia.org/wiki/Clenshaw_algorithm#Special_case_for_Chebyshev_series). 
 -}
-evalDirect :: 
-    (Ring ra, 
-     CanAddMulDivScalar ra Integer,
-     CanAddMulScalar ra MPBall) 
+evalDirectA :: 
+    (ArrowReal to ra,
+     CanAddMulScalarA to ra MPBall) 
     => 
-    UnaryChebSparse -> ra -> ra
-evalDirect (UnaryChebSparse terms) (x :: ra) =
-    (b0 - b2)/2
+    (UnaryChebSparse, ra) `to` ra
+evalDirectA =
+    proc (UnaryChebSparse terms, x) ->
+        do
+        let n = terms_degree terms
+        z <- convertA -< 0 
+        bs <- aux -< (terms,x,n,z,z)
+        let _ = x : z : bs
+        let (b0:_:b2:_) = reverse bs 
+        $(exprA[| let [b0,b2] = vars in (b0 - b2)/2|]) -< (b0,b2)
     where
-    n = terms_degree terms
-    (b0:_:b2:_) = bs
-    bs :: [ra]
-    bs = reverse $ aux n (convert 0) (convert 0)
-    aux k bKp2 bKp1 
-        | k == 0 = [bKp2, bKp1, bK] 
-        | otherwise = bKp2 : aux (k - 1) bKp1 bK
-        where
-        bK = (a k) + 2 * x * bKp1 - bKp2
-    a k = terms_lookupCoeffDoubleConstTerm terms k 
+    aux =
+        proc (terms,x,k,bKp2,bKp1) ->
+            do
+            bKPre <- $(exprA [| let [x, bKp2, bKp1] = vars in 2 * x * bKp1 - bKp2 |]) -< (x, bKp2, bKp1)
+            let ak = terms_lookupCoeffDoubleConstTerm terms k
+            bK <- addA -< (ak, bKPre)
+            if k == 0
+                then returnA -< [bKp2, bKp1, bK] 
+                else
+                    do
+                    rest <- aux -< (terms,x, k-1, bKp1, bK)
+                    returnA -< bKp2 : rest
+     
 
 
 {-|
@@ -60,7 +104,8 @@ evalDirect (UnaryChebSparse terms) (x :: ra) =
     (https://en.wikipedia.org/wiki/Clenshaw_algorithm#Special_case_for_Chebyshev_series). 
 -}
 evalDirectOnBall :: UnaryChebSparse -> MPBall -> MPBall
-evalDirectOnBall = evalDirect
+evalDirectOnBall poly x =  
+    runWithPrecisionPolicy evalDirectA (ppKeepExact defaultPrecision) (poly, x)
 
 {-|
     An evaluation of the polynomial at the ball x using an estimated Lipschitz constant on x. 
