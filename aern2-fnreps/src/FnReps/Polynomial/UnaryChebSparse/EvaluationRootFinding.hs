@@ -50,12 +50,11 @@ evalExample1 =
 
 evalExample2 :: MPBall
 evalExample2 =
-    evalLipschitzOnBall poly (endpoints2Ball (mpBall 0) (mpBall 1))
+    evalLipschitzOnBall poly (endpoints2Ball (mpBall (0.5-(1/10^(20)))) (mpBall (0.5 + 1/10^(20))))
     where
     poly =
         normaliseCoeffs $
             fromListRationalWithPrec (prec 100) [(n, (1/n))| n <- [1..1000] ]
-
 
 --{-|
 --    An evaluation of the polynomial at the ball x using Clenshaw Algorithm
