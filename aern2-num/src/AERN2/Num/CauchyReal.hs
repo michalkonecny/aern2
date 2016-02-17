@@ -179,6 +179,12 @@ instance CanCombineCRsA (->) CauchyReal_ CauchyReal_ where
 
 instance CanCombineCRwithA (->) CauchyReal_ CauchyReal_
 
+instance CanCombineCRsA (WithPrecisionPolicy (->)) CauchyReal_ CauchyReal_ where
+    type CombinedCRs (WithPrecisionPolicy (->)) CauchyReal_ CauchyReal_ = CauchyReal_
+    getSourcesOfCombinedCRs = arr $ const []
+
+instance CanCombineCRwithA (WithPrecisionPolicy (->)) CauchyReal_ CauchyReal_
+
 {- conversions -}
 
 type HasCauchyRealsA to = ConvertibleA to CauchyReal

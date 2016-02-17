@@ -2,11 +2,11 @@
 module FnReps.Polynomial.UnaryChebSparse.PolyBall 
 (
     -- * examples
-    ucsBall_2,
-    ucsBall_x,
-    eval_ucsBall_x,
+    ball_2,
+    ball_x,
+    eval_ball_x,
     -- * data type definition
-    PolyBall,
+    PolyBall(..),
     getMaxDegree,
     setMaxDegree,
     defaultMaxDegree,
@@ -27,45 +27,45 @@ import FnReps.Polynomial.UnaryChebSparse.Poly
 
 {- examples -}
 
-_ucsBall1 :: PolyBall
-_ucsBall1 = 
+_ball1 :: PolyBall
+_ball1 = 
     PolyBall poly (Interval (-1.0) 1.0) 100 NormZero
     where
     poly = fromList [(0, b 1.0),(1, b (1/100)),(3, b 1.0)]
     b x = rational2BallP (prec 100) x
 
-_ucsBall1Reduced1 :: PolyBall
-_ucsBall1Reduced1 = setMaxDegree 1 _ucsBall1
+_ball1Reduced1 :: PolyBall
+_ball1Reduced1 = setMaxDegree 1 _ball1
 
-_ucsBall2 :: PolyBall
-_ucsBall2 = _ucsBall1 * _ucsBall1
+_ball2 :: PolyBall
+_ball2 = _ball1 * _ball1
 
-ucsBall_2 :: PolyBall
-ucsBall_2 =
+ball_2 :: PolyBall
+ball_2 =
     c2
     where
     c2 = constUnaryFnA (Interval 0.0 2.0, mpBall 2) 
 
-ucsBall_x :: PolyBall
-ucsBall_x =
+ball_x :: PolyBall
+ball_x =
     x
     where
     x = projUnaryFnA (Interval 0.0 2.0) 
 
-eval_ucsBall_x :: Rational -> MPBall
-eval_ucsBall_x v =
-    evalAtInPointUnaryFnA (ucsBall_x, v)
+eval_ball_x :: Rational -> MPBall
+eval_ball_x v =
+    evalAtInPointUnaryFnA (ball_x, v)
 
 {- type definition -} 
 
 data PolyBall =
     PolyBall
     {
-        ucsBall_poly :: Poly, -- enclosure over the domain [-1,1]
---        ucsBall_coeffPrec :: Precision,
-        ucsBall_domain :: Interval Rational, -- an interval; the domain to translate into
-        ucsBall_maxDegree :: Degree,
-        ucsBall_sqeepThresholdNormLog :: NormLog  
+        ball_poly :: Poly, -- enclosure over the domain [-1,1]
+--        ball_coeffPrec :: Precision,
+        ball_domain :: Interval Rational, -- an interval; the domain to translate into
+        ball_maxDegree :: Degree,
+        ball_sqeepThresholdNormLog :: NormLog  
     }
     deriving (Show)
 
@@ -79,58 +79,66 @@ defaultSweepThresholdNormLog :: NormLog
 defaultSweepThresholdNormLog = NormZero
 
 --getCoeffPrecision :: PolyBall -> Precision
---getCoeffPrecision = ucsBall_coeffPrec
+--getCoeffPrecision = ball_coeffPrec
 
 getMaxDegree :: PolyBall -> Degree
-getMaxDegree = ucsBall_maxDegree
+getMaxDegree = ball_maxDegree
 
 setMaxDegree :: Degree -> PolyBall -> PolyBall
 setMaxDegree maxDegree b =
     b 
-    { ucsBall_poly = update $ ucsBall_poly b, 
-      ucsBall_maxDegree = maxDegree
+    { ball_poly = update $ ball_poly b, 
+      ball_maxDegree = maxDegree
     }
     where
     update
         | maxDegree < bMaxDegree = 
             reduceDegreeAndSweep maxDegree bThresholdNormLog
         | otherwise = id 
-    bMaxDegree = ucsBall_maxDegree b
-    bThresholdNormLog = ucsBall_sqeepThresholdNormLog b
+    bMaxDegree = ball_maxDegree b
+    bThresholdNormLog = ball_sqeepThresholdNormLog b
 
 getThresholdNormLog :: PolyBall -> NormLog
-getThresholdNormLog = ucsBall_sqeepThresholdNormLog
+getThresholdNormLog = ball_sqeepThresholdNormLog
 
 setThresholdNormLog :: NormLog -> PolyBall -> PolyBall
 setThresholdNormLog normLog b =
     b 
-    { ucsBall_poly = update $ ucsBall_poly b, 
-      ucsBall_sqeepThresholdNormLog = normLog
+    { ball_poly = update $ ball_poly b, 
+      ball_sqeepThresholdNormLog = normLog
     }
     where
     update
         | normLog > bThresholdNormLog = 
             reduceDegreeAndSweep bMaxDegree normLog
         | otherwise = id 
-    bMaxDegree = ucsBall_maxDegree b
-    bThresholdNormLog = ucsBall_sqeepThresholdNormLog b
+    bMaxDegree = ball_maxDegree b
+    bThresholdNormLog = ball_sqeepThresholdNormLog b
 
 
 setMaxDegreeNormLog :: Degree -> NormLog -> PolyBall -> PolyBall
 setMaxDegreeNormLog maxDegree normLog b =
     b 
-    { ucsBall_poly = update $ ucsBall_poly b, 
-      ucsBall_maxDegree = maxDegree,
-      ucsBall_sqeepThresholdNormLog = normLog
+    { ball_poly = update $ ball_poly b, 
+      ball_maxDegree = maxDegree,
+      ball_sqeepThresholdNormLog = normLog
     }
     where
     update
         | maxDegree < bMaxDegree || normLog > bThresholdNormLog = 
             reduceDegreeAndSweep maxDegree bThresholdNormLog
         | otherwise = id 
-    bMaxDegree = ucsBall_maxDegree b
-    bThresholdNormLog = ucsBall_sqeepThresholdNormLog b
+    bMaxDegree = ball_maxDegree b
+    bThresholdNormLog = ball_sqeepThresholdNormLog b
 
+
+instance HasPrecision PolyBall
+    where
+    getPrecision = getPrecision . ball_poly
+
+instance HasAccuracy PolyBall
+    where
+    getAccuracy = getAccuracy . ball_poly
 
 {- basic function operations -} 
 
@@ -141,7 +149,7 @@ instance
     type UnaryFnIn PolyBall = Rational
     type UnaryFnOut PolyBall = MPBall
     getDomainUnaryFnA =
-        arr ucsBall_domain
+        arr ball_domain
     constUnaryFnA =
         proc (dom, value) ->
             do
@@ -160,7 +168,7 @@ instance
             let poly = normaliseCoeffs $ fromList [(0,a0),(1,a1)]
             returnA -< PolyBall poly dom maxDeg sweepThreshold 
     evalOnIntervalUnaryFnA =
-        error "PolyBall evalOnIntervalUnaryFnA not implemented yet"
+        error "UnaryChebSparse.PolyBall evalOnIntervalUnaryFnA not implemented yet"
     evalAtInPointUnaryFnA =
         proc (f, x) ->
             do
@@ -169,8 +177,8 @@ instance
     evalAtOutPointUnaryFnA =
         proc (fB, x) ->
             do
-            let fP = ucsBall_poly fB
-            let (Interval l r) = ucsBall_domain fB
+            let fP = ball_poly fB
+            let (Interval l r) = ball_domain fB
             let xU = (2*x - r - l)/(r-l)
             case getAccuracy x of
                 Exact ->
@@ -182,7 +190,7 @@ instance
 
 
 instance CanNegA (->) PolyBall where
-    negA b = b { ucsBall_poly = neg (ucsBall_poly b) }
+    negA b = b { ball_poly = neg (ball_poly b) }
     
 instance CanNegSameType PolyBall
 
@@ -215,16 +223,16 @@ ucsLift2 ::
 ucsLift2 polyOpWithSizeLimits (a, b) =
     PolyBall
     {
-        ucsBall_poly = polyOpWithSizeLimits maxDegree sqeepThresholdNormLog aPoly bPoly,
-        ucsBall_domain = aDom,
-        ucsBall_maxDegree = maxDegree,
-        ucsBall_sqeepThresholdNormLog = sqeepThresholdNormLog
+        ball_poly = polyOpWithSizeLimits maxDegree sqeepThresholdNormLog aPoly bPoly,
+        ball_domain = aDom,
+        ball_maxDegree = maxDegree,
+        ball_sqeepThresholdNormLog = sqeepThresholdNormLog
     }
     where
-    maxDegree = max (ucsBall_maxDegree a) (ucsBall_maxDegree b)
-    sqeepThresholdNormLog = min (ucsBall_sqeepThresholdNormLog a) (ucsBall_sqeepThresholdNormLog b)
-    aPoly = ucsBall_poly a
-    bPoly = ucsBall_poly b
-    aDom = ucsBall_domain a
-    _bDom = ucsBall_domain b -- TODO check for domain equality
+    maxDegree = max (ball_maxDegree a) (ball_maxDegree b)
+    sqeepThresholdNormLog = min (ball_sqeepThresholdNormLog a) (ball_sqeepThresholdNormLog b)
+    aPoly = ball_poly a
+    bPoly = ball_poly b
+    aDom = ball_domain a
+    _bDom = ball_domain b -- TODO check for domain equality
     

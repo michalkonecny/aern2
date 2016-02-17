@@ -39,5 +39,6 @@ Library
                     FnReps.Polynomial.UnaryChebSparse.Poly.SizeReduction
   exposed-modules:  
                     FnReps.Polynomial.UnaryChebSparse.PolyBall,
+                    FnReps.Polynomial.UnaryChebSparse.RealFn,
                     FnReps.Polynomial.UnaryPowerBase
 
