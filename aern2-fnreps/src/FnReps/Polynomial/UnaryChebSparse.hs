@@ -1,3 +1,4 @@
+{-# LANGUAGE UndecidableInstances #-}
 module FnReps.Polynomial.UnaryChebSparse 
 (
     _ucspoly1, _ucspoly1Reduced1, _ucspoly1Reduced2, _ucspolyDirect, _ucspolyDCT,
@@ -8,6 +9,11 @@ module FnReps.Polynomial.UnaryChebSparse
     module FnReps.Polynomial.UnaryChebSparse.EvaluationRootFinding
 )
 where
+
+import AERN2.Num
+import AERN2.RealFunction
+
+import Control.Arrow
 
 import FnReps.Polynomial.UnaryChebSparse.Basics
 import FnReps.Polynomial.UnaryChebSparse.SizeReduction
@@ -41,5 +47,35 @@ _ucsterms2 :: Terms
 _ucsterms2 = terms_fromList [(i,integer2BallP (prec 100) 2) | i <- [0..1000]]
 
 
-    
+instance
+    (ArrowReal to MPBall) => 
+    RealUnaryFnA to UnaryChebSparse
+    where
+    type UnaryFnIn UnaryChebSparse = Rational
+    type UnaryFnOut UnaryChebSparse = MPBall
+    getDomainUnaryFnA =
+        proc _ -> returnA -< Interval (-1.0) 1.0
+    constUnaryFnA =
+        proc (_dom, value) ->
+            returnA -< fromList [(0,value)]
+    projUnaryFnA =
+        proc (_dom) ->
+            do
+            one <- convertA -< 1
+            returnA -< fromList [(1,one)]
+    evalOnIntervalUnaryFnA =
+        error "UnaryChebSparse evalOnIntervalUnaryFnA not implemented yet"
+    evalAtInPointUnaryFnA =
+        proc (f, x) ->
+            do
+            xB <- convertA -< x
+            evalAtOutPointUnaryFnA -< (f,xB)
+    evalAtOutPointUnaryFnA =
+        proc (f, x) ->
+            do
+            case getAccuracy x of
+                Exact ->
+                    returnA -< evalDirectOnBall f x
+                _ ->  
+                    returnA -< evalLipschitzOnBall f x
 

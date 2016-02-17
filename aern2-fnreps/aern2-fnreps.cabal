@@ -24,9 +24,13 @@ Library
         unordered-containers,
         arithmoi
   extensions:       
+                    Arrows, 
+                    FlexibleContexts, 
+                    FlexibleInstances, 
                     MultiParamTypeClasses, 
-                    RebindableSyntax,
-                    TypeFamilies
+                    RebindableSyntax, 
+                    TypeFamilies, 
+                    TypeOperators
   other-modules:    
                     FnReps.Polynomial.UnaryChebSparse.Basics,
                     FnReps.Polynomial.UnaryChebSparse.DCTMultiplication,
