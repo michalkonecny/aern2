@@ -1,5 +1,5 @@
 {-# LANGUAGE Arrows, ScopedTypeVariables, FlexibleContexts, TypeOperators, TemplateHaskell, OverloadedStrings #-}
-module FnReps.Polynomial.UnaryChebSparse.EvaluationRootFinding 
+module FnReps.Polynomial.UnaryChebSparse.Poly.EvaluationRootFinding 
 (
     evalDirectA, evalDirectOnBall, evalLipschitzOnBall 
 --   , toPowerBase
@@ -8,7 +8,7 @@ module FnReps.Polynomial.UnaryChebSparse.EvaluationRootFinding
 where
 
 import AERN2.Num
-import FnReps.Polynomial.UnaryChebSparse.Basics
+import FnReps.Polynomial.UnaryChebSparse.Poly.Basics
 --import FnReps.Polynomial.UnaryPowerBase
 
 import Control.Arrow
@@ -60,7 +60,7 @@ evalExample2 =
 --    An evaluation of the polynomial at the ball x using Clenshaw Algorithm
 --    (https://en.wikipedia.org/wiki/Clenshaw_algorithm#Special_case_for_Chebyshev_series). 
 ---}
---toPowerBase :: UnaryChebSparse -> UnaryPowerBase
+--toPowerBase :: Poly -> UnaryPowerBase
 --toPowerBase p = evalDirectA (p, UnaryPowerBase [mpBall 0, mpBall 1])
 
 
@@ -72,9 +72,9 @@ evalDirectA ::
     (ArrowReal to ra,
      CanAddMulScalarA to ra MPBall) 
     => 
-    (UnaryChebSparse, ra) `to` ra
+    (Poly, ra) `to` ra
 evalDirectA =
-    proc (UnaryChebSparse terms, x) ->
+    proc (Poly terms, x) ->
         do
         let n = terms_degree terms
         z <- convertA -< 0 
@@ -102,15 +102,15 @@ evalDirectA =
     An evaluation of the polynomial at the ball x using Clenshaw Algorithm
     (https://en.wikipedia.org/wiki/Clenshaw_algorithm#Special_case_for_Chebyshev_series). 
 -}
-evalDirectOnBall :: UnaryChebSparse -> MPBall -> MPBall
+evalDirectOnBall :: Poly -> MPBall -> MPBall
 evalDirectOnBall poly x =  
     runWithPrecisionPolicy evalDirectA (ppKeepExact defaultPrecision) (poly, x)
 
 {-|
     An evaluation of the polynomial at the ball x using an estimated Lipschitz constant on x. 
 -}
-evalLipschitzOnBall :: UnaryChebSparse -> MPBall -> MPBall
-evalLipschitzOnBall p@(UnaryChebSparse terms) b =
+evalLipschitzOnBall :: Poly -> MPBall -> MPBall
+evalLipschitzOnBall p@(Poly terms) b =
     maybeTrace
     (
         "evalLipschitzOnBall:" ++
@@ -135,7 +135,7 @@ evalLipschitzOnBall p@(UnaryChebSparse terms) b =
     * An interval polynomial P admits a (non-interval) polynomial p if each coefficient
     of p is inside the corresponding interval coefficient of P.
 -}
-_findAllRoots :: Accuracy -> UnaryChebSparse -> [MPBall]
+_findAllRoots :: Accuracy -> Poly -> [MPBall]
 _findAllRoots = error "findAllRoots not implemented yet"
 {-
     TODO:

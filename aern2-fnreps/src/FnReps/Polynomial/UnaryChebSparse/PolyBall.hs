@@ -1,12 +1,12 @@
 {-# LANGUAGE UndecidableInstances #-}
-module FnReps.Polynomial.UnaryChebSparseBall 
+module FnReps.Polynomial.UnaryChebSparse.PolyBall 
 (
     -- * examples
     ucsBall_2,
     ucsBall_x,
     eval_ucsBall_x,
     -- * data type definition
-    UnaryChebSparseBall,
+    PolyBall,
     getMaxDegree,
     setMaxDegree,
     defaultMaxDegree,
@@ -23,30 +23,30 @@ import AERN2.RealFunction
 
 import Control.Arrow
 
-import FnReps.Polynomial.UnaryChebSparse
+import FnReps.Polynomial.UnaryChebSparse.Poly
 
 {- examples -}
 
-_ucsBall1 :: UnaryChebSparseBall
+_ucsBall1 :: PolyBall
 _ucsBall1 = 
-    UnaryChebSparseBall poly (Interval (-1.0) 1.0) 100 NormZero
+    PolyBall poly (Interval (-1.0) 1.0) 100 NormZero
     where
     poly = fromList [(0, b 1.0),(1, b (1/100)),(3, b 1.0)]
     b x = rational2BallP (prec 100) x
 
-_ucsBall1Reduced1 :: UnaryChebSparseBall
+_ucsBall1Reduced1 :: PolyBall
 _ucsBall1Reduced1 = setMaxDegree 1 _ucsBall1
 
-_ucsBall2 :: UnaryChebSparseBall
+_ucsBall2 :: PolyBall
 _ucsBall2 = _ucsBall1 * _ucsBall1
 
-ucsBall_2 :: UnaryChebSparseBall
+ucsBall_2 :: PolyBall
 ucsBall_2 =
     c2
     where
     c2 = constUnaryFnA (Interval 0.0 2.0, mpBall 2) 
 
-ucsBall_x :: UnaryChebSparseBall
+ucsBall_x :: PolyBall
 ucsBall_x =
     x
     where
@@ -58,10 +58,10 @@ eval_ucsBall_x v =
 
 {- type definition -} 
 
-data UnaryChebSparseBall =
-    UnaryChebSparseBall
+data PolyBall =
+    PolyBall
     {
-        ucsBall_poly :: UnaryChebSparse, -- enclosure over the domain [-1,1]
+        ucsBall_poly :: Poly, -- enclosure over the domain [-1,1]
 --        ucsBall_coeffPrec :: Precision,
         ucsBall_domain :: Interval Rational, -- an interval; the domain to translate into
         ucsBall_maxDegree :: Degree,
@@ -78,13 +78,13 @@ defaultMaxDegree = 100
 defaultSweepThresholdNormLog :: NormLog
 defaultSweepThresholdNormLog = NormZero
 
---getCoeffPrecision :: UnaryChebSparseBall -> Precision
+--getCoeffPrecision :: PolyBall -> Precision
 --getCoeffPrecision = ucsBall_coeffPrec
 
-getMaxDegree :: UnaryChebSparseBall -> Degree
+getMaxDegree :: PolyBall -> Degree
 getMaxDegree = ucsBall_maxDegree
 
-setMaxDegree :: Degree -> UnaryChebSparseBall -> UnaryChebSparseBall
+setMaxDegree :: Degree -> PolyBall -> PolyBall
 setMaxDegree maxDegree b =
     b 
     { ucsBall_poly = update $ ucsBall_poly b, 
@@ -98,10 +98,10 @@ setMaxDegree maxDegree b =
     bMaxDegree = ucsBall_maxDegree b
     bThresholdNormLog = ucsBall_sqeepThresholdNormLog b
 
-getThresholdNormLog :: UnaryChebSparseBall -> NormLog
+getThresholdNormLog :: PolyBall -> NormLog
 getThresholdNormLog = ucsBall_sqeepThresholdNormLog
 
-setThresholdNormLog :: NormLog -> UnaryChebSparseBall -> UnaryChebSparseBall
+setThresholdNormLog :: NormLog -> PolyBall -> PolyBall
 setThresholdNormLog normLog b =
     b 
     { ucsBall_poly = update $ ucsBall_poly b, 
@@ -116,7 +116,7 @@ setThresholdNormLog normLog b =
     bThresholdNormLog = ucsBall_sqeepThresholdNormLog b
 
 
-setMaxDegreeNormLog :: Degree -> NormLog -> UnaryChebSparseBall -> UnaryChebSparseBall
+setMaxDegreeNormLog :: Degree -> NormLog -> PolyBall -> PolyBall
 setMaxDegreeNormLog maxDegree normLog b =
     b 
     { ucsBall_poly = update $ ucsBall_poly b, 
@@ -136,10 +136,10 @@ setMaxDegreeNormLog maxDegree normLog b =
 
 instance
     (ArrowReal to MPBall, ArrowReal to CauchyReal) => 
-    RealUnaryFnA to UnaryChebSparseBall
+    RealUnaryFnA to PolyBall
     where
-    type UnaryFnIn UnaryChebSparseBall = Rational
-    type UnaryFnOut UnaryChebSparseBall = MPBall
+    type UnaryFnIn PolyBall = Rational
+    type UnaryFnOut PolyBall = MPBall
     getDomainUnaryFnA =
         arr ucsBall_domain
     constUnaryFnA =
@@ -148,7 +148,7 @@ instance
             poly <- constUnaryFnA -< (ucsFixedDomain, value)
             let maxDeg = defaultMaxDegree
             let sweepThreshold = defaultSweepThresholdNormLog
-            returnA -< UnaryChebSparseBall poly dom maxDeg sweepThreshold 
+            returnA -< PolyBall poly dom maxDeg sweepThreshold 
     projUnaryFnA =
         proc dom@(Interval l r) ->
             do
@@ -158,9 +158,9 @@ instance
             let maxDeg = defaultMaxDegree
             let sweepThreshold = defaultSweepThresholdNormLog
             let poly = normaliseCoeffs $ fromList [(0,a0),(1,a1)]
-            returnA -< UnaryChebSparseBall poly dom maxDeg sweepThreshold 
+            returnA -< PolyBall poly dom maxDeg sweepThreshold 
     evalOnIntervalUnaryFnA =
-        error "UnaryChebSparseBall evalOnIntervalUnaryFnA not implemented yet"
+        error "PolyBall evalOnIntervalUnaryFnA not implemented yet"
     evalAtInPointUnaryFnA =
         proc (f, x) ->
             do
@@ -181,39 +181,39 @@ instance
 {- pointwise arithmetic -} 
 
 
-instance CanNegA (->) UnaryChebSparseBall where
+instance CanNegA (->) PolyBall where
     negA b = b { ucsBall_poly = neg (ucsBall_poly b) }
     
-instance CanNegSameType UnaryChebSparseBall
+instance CanNegSameType PolyBall
 
-instance CanAddA (->) UnaryChebSparseBall UnaryChebSparseBall where
+instance CanAddA (->) PolyBall PolyBall where
     addA = ucsLift2 addAndReduce
         where
         addAndReduce maxDegree sqeepThresholdNormLog a b =
             reduceDegreeAndSweep maxDegree sqeepThresholdNormLog $ a + b
 
-instance CanAddThis UnaryChebSparseBall UnaryChebSparseBall
-instance CanAddSameType UnaryChebSparseBall
+instance CanAddThis PolyBall PolyBall
+instance CanAddSameType PolyBall
 
-instance CanSub UnaryChebSparseBall UnaryChebSparseBall
-instance CanSubThis UnaryChebSparseBall UnaryChebSparseBall
-instance CanSubSameType UnaryChebSparseBall
+instance CanSub PolyBall PolyBall
+instance CanSubThis PolyBall PolyBall
+instance CanSubSameType PolyBall
         
-instance CanMulA (->) UnaryChebSparseBall UnaryChebSparseBall where
+instance CanMulA (->) PolyBall PolyBall where
     mulA = ucsLift2 addAndReduce
         where
         addAndReduce maxDegree sqeepThresholdNormLog a b =
             reduceDegreeAndSweep maxDegree sqeepThresholdNormLog $ a * b
 
-instance CanMulBy UnaryChebSparseBall UnaryChebSparseBall
-instance CanMulSameType UnaryChebSparseBall
+instance CanMulBy PolyBall PolyBall
+instance CanMulSameType PolyBall
         
 ucsLift2 :: 
-    (Degree -> NormLog -> UnaryChebSparse -> UnaryChebSparse -> UnaryChebSparse)
+    (Degree -> NormLog -> Poly -> Poly -> Poly)
     -> 
-    (UnaryChebSparseBall, UnaryChebSparseBall) -> UnaryChebSparseBall
+    (PolyBall, PolyBall) -> PolyBall
 ucsLift2 polyOpWithSizeLimits (a, b) =
-    UnaryChebSparseBall
+    PolyBall
     {
         ucsBall_poly = polyOpWithSizeLimits maxDegree sqeepThresholdNormLog aPoly bPoly,
         ucsBall_domain = aDom,

@@ -1,7 +1,7 @@
-module FnReps.Polynomial.UnaryChebSparse.Basics 
+module FnReps.Polynomial.UnaryChebSparse.Poly.Basics 
 (
     module AERN2.Num,
-    UnaryChebSparse(..),
+    Poly(..),
     fromList,
     fromListRationalWithPrec,
     normaliseCoeffs,
@@ -32,15 +32,15 @@ import AERN2.Num
     Unary polynomials over the domain @[-1,1]@ with interval coefficients in the Chebyshev basis.
     The interval coefficients are supposed to have zero radius, except in the constant term.
 -}
-data UnaryChebSparse = 
-    UnaryChebSparse
+data Poly = 
+    Poly
     {
         unaryChebSparse_terms :: Terms
     }
 --    deriving (Show)
 
-instance Show UnaryChebSparse where
-    show (UnaryChebSparse terms) =
+instance Show Poly where
+    show (Poly terms) =
         List.intercalate " + " $
             map showTerm $ reverse $ List.sortBy (\(a,_) (b,_) -> compare b a) $ reverse $ terms_toList terms
         where
@@ -98,22 +98,22 @@ terms_filter = Map.filterWithKey
 --terms_unionWith = HM.unionWith
 
 
-fromList :: [(Degree, MPBall)] -> UnaryChebSparse
+fromList :: [(Degree, MPBall)] -> Poly
 fromList termsAsList =
-    UnaryChebSparse (terms_fromList termsAsList)
+    Poly (terms_fromList termsAsList)
 
-fromListRationalWithPrec :: Precision -> [(Degree, Rational)] -> UnaryChebSparse
+fromListRationalWithPrec :: Precision -> [(Degree, Rational)] -> Poly
 fromListRationalWithPrec p termsAsList =
-    UnaryChebSparse (terms_fromList $ map r2b termsAsList)
+    Poly (terms_fromList $ map r2b termsAsList)
     where
     r2b (deg, q) = (deg, rational2BallP p q)
 
 {-|
     Convert any non-exact coefficients of non-constant terms to exact coefficients.
 -}
-normaliseCoeffs :: UnaryChebSparse -> UnaryChebSparse
-normaliseCoeffs (UnaryChebSparse terms) =
-    UnaryChebSparse (terms_insertWith (+) 0 errorBall (terms_fromList termListN))
+normaliseCoeffs :: Poly -> Poly
+normaliseCoeffs (Poly terms) =
+    Poly (terms_insertWith (+) 0 errorBall (terms_fromList termListN))
     where
     termList = terms_toList terms
     (termListN, errorBalls) = unzip $ map normaliseTerm termList
@@ -123,20 +123,20 @@ normaliseCoeffs (UnaryChebSparse terms) =
     errorBall = sum errorBalls
 
 
-instance CanNegA (->) UnaryChebSparse where
-    negA (UnaryChebSparse terms) = 
-        UnaryChebSparse $ fmap neg terms 
+instance CanNegA (->) Poly where
+    negA (Poly terms) = 
+        Poly $ fmap neg terms 
 
-instance CanNegSameType UnaryChebSparse
+instance CanNegSameType Poly
 
-instance CanAddA (->) UnaryChebSparse UnaryChebSparse where
-    addA (UnaryChebSparse termsL, UnaryChebSparse termsR) =
-        UnaryChebSparse $ terms_unionWith (+) termsL termsR
+instance CanAddA (->) Poly Poly where
+    addA (Poly termsL, Poly termsR) =
+        Poly $ terms_unionWith (+) termsL termsR
 
-instance CanAddThis UnaryChebSparse UnaryChebSparse
-instance CanAddSameType UnaryChebSparse
+instance CanAddThis Poly Poly
+instance CanAddSameType Poly
     
-instance CanSub UnaryChebSparse UnaryChebSparse
-instance CanSubThis UnaryChebSparse UnaryChebSparse
-instance CanSubSameType UnaryChebSparse
+instance CanSub Poly Poly
+instance CanSubThis Poly Poly
+instance CanSubSameType Poly
     

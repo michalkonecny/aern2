@@ -1,16 +1,16 @@
-module FnReps.Polynomial.UnaryChebSparse.SizeReduction 
+module FnReps.Polynomial.UnaryChebSparse.Poly.SizeReduction 
 
 where
 
-import FnReps.Polynomial.UnaryChebSparse.Basics
+import FnReps.Polynomial.UnaryChebSparse.Poly.Basics
 
 {-|
     Drop all terms that whose degree is above the given limit or whose norm is at or below the threshold.
     Compensate for the drops in the constant term.
 -}
-reduceDegreeAndSweep :: Degree -> NormLog -> UnaryChebSparse -> UnaryChebSparse
-reduceDegreeAndSweep maxDegree thresholdNormLog (UnaryChebSparse terms) =
-    UnaryChebSparse $ reduceDegreeAndSweepTerms maxDegree thresholdNormLog terms
+reduceDegreeAndSweep :: Degree -> NormLog -> Poly -> Poly
+reduceDegreeAndSweep maxDegree thresholdNormLog (Poly terms) =
+    Poly $ reduceDegreeAndSweepTerms maxDegree thresholdNormLog terms
     
 {-|
     Drop all terms that whose degree is above the given limit or whose norm is at or below the threshold.

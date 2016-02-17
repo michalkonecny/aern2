@@ -32,12 +32,12 @@ Library
                     TypeFamilies, 
                     TypeOperators
   other-modules:    
-                    FnReps.Polynomial.UnaryChebSparse.Basics,
-                    FnReps.Polynomial.UnaryChebSparse.DCTMultiplication,
-                    FnReps.Polynomial.UnaryChebSparse.SizeReduction,
-                    FnReps.Polynomial.UnaryChebSparse.EvaluationRootFinding,
-                    FnReps.Polynomial.UnaryPowerBase
+                    FnReps.Polynomial.UnaryChebSparse.Poly,
+                    FnReps.Polynomial.UnaryChebSparse.Poly.Basics,
+                    FnReps.Polynomial.UnaryChebSparse.Poly.DCTMultiplication,
+                    FnReps.Polynomial.UnaryChebSparse.Poly.EvaluationRootFinding,
+                    FnReps.Polynomial.UnaryChebSparse.Poly.SizeReduction
   exposed-modules:  
-                    FnReps.Polynomial.UnaryChebSparseBall,
-                    FnReps.Polynomial.UnaryChebSparse
+                    FnReps.Polynomial.UnaryChebSparse.PolyBall,
+                    FnReps.Polynomial.UnaryPowerBase
 

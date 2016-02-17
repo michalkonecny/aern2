@@ -5,7 +5,7 @@
     Linear Algebra Appl., vol. 252, no. 1-3, pp. 1–25, Feb. 1997
     http://dx.doi.org/10.1016/0024-3795(95)00696-6
 -}
-module FnReps.Polynomial.UnaryChebSparse.DCTMultiplication 
+module FnReps.Polynomial.UnaryChebSparse.Poly.DCTMultiplication 
 ( 
  multiplyDirect_terms, multiplyDCT_terms,
  tDCT_I_nlogn, tDCT_III_nlogn, tSDCT_III_nlogn,
@@ -17,7 +17,7 @@ import Math.NumberTheory.Logarithms (integerLog2)
 
 import Data.List (sortBy, genericIndex)
 
-import FnReps.Polynomial.UnaryChebSparse.Basics
+import FnReps.Polynomial.UnaryChebSparse.Poly.Basics
 
 import Debug.Trace (trace)
 
@@ -30,17 +30,17 @@ maybeTrace
     | shouldTrace = trace
     | otherwise = const id
 
-instance CanMulA (->) UnaryChebSparse UnaryChebSparse where
-    mulA (UnaryChebSparse termsL, UnaryChebSparse termsR) =
-        UnaryChebSparse $ multiply_terms termsL termsR
+instance CanMulA (->) Poly Poly where
+    mulA (Poly termsL, Poly termsR) =
+        Poly $ multiply_terms termsL termsR
         where
         multiply_terms
             | ((terms_size termsL) + (terms_size termsR)) < 500 =
                 multiplyDirect_terms
             | otherwise = multiplyDCT_terms
 
-instance CanMulBy UnaryChebSparse UnaryChebSparse
-instance CanMulSameType UnaryChebSparse
+instance CanMulBy Poly Poly
+instance CanMulSameType Poly
 
 (!!!) :: [a] -> Integer -> a
 (!!!) = genericIndex

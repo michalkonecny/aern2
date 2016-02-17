@@ -1,13 +1,13 @@
 {-# LANGUAGE UndecidableInstances #-}
-module FnReps.Polynomial.UnaryChebSparse 
+module FnReps.Polynomial.UnaryChebSparse.Poly 
 (
     _ucspoly1, _ucspoly1Reduced1, _ucspoly1Reduced2, _ucspolyDirect, _ucspolyDCT,
-    UnaryChebSparse(..), fromList, fromListRationalWithPrec,
+    Poly(..), fromList, fromListRationalWithPrec,
     ucsFixedDomain,
     normaliseCoeffs,
     Degree,
     reduceDegreeAndSweep,
-    module FnReps.Polynomial.UnaryChebSparse.EvaluationRootFinding
+    module FnReps.Polynomial.UnaryChebSparse.Poly.EvaluationRootFinding
 )
 where
 
@@ -16,21 +16,21 @@ import AERN2.RealFunction
 
 import Control.Arrow
 
-import FnReps.Polynomial.UnaryChebSparse.Basics
-import FnReps.Polynomial.UnaryChebSparse.SizeReduction
-import FnReps.Polynomial.UnaryChebSparse.DCTMultiplication (multiplyDirect_terms, multiplyDCT_terms)
-import FnReps.Polynomial.UnaryChebSparse.EvaluationRootFinding
+import FnReps.Polynomial.UnaryChebSparse.Poly.Basics
+import FnReps.Polynomial.UnaryChebSparse.Poly.SizeReduction
+import FnReps.Polynomial.UnaryChebSparse.Poly.DCTMultiplication (multiplyDirect_terms, multiplyDCT_terms)
+import FnReps.Polynomial.UnaryChebSparse.Poly.EvaluationRootFinding
 
-_ucspoly1 :: UnaryChebSparse
+_ucspoly1 :: Poly
 _ucspoly1 = 
     fromListRationalWithPrec p [(0, 1.0),(1, 1/100),(3, 1.0)]
     where
     p = prec 100
 
-_ucspoly1Reduced1 :: UnaryChebSparse
+_ucspoly1Reduced1 :: Poly
 _ucspoly1Reduced1 =  reduceDegreeAndSweep 3 (NormBits (-2)) _ucspoly1
 
-_ucspoly1Reduced2 :: UnaryChebSparse
+_ucspoly1Reduced2 :: Poly
 _ucspoly1Reduced2 =  reduceDegreeAndSweep 2 (NormZero) _ucspoly1
 
 _ucspolyDirect :: Terms
@@ -52,10 +52,10 @@ ucsFixedDomain = Interval (-1.0) 1.0
 
 instance
     (ArrowReal to MPBall) => 
-    RealUnaryFnA to UnaryChebSparse
+    RealUnaryFnA to Poly
     where
-    type UnaryFnIn UnaryChebSparse = Rational
-    type UnaryFnOut UnaryChebSparse = MPBall
+    type UnaryFnIn Poly = Rational
+    type UnaryFnOut Poly = MPBall
     getDomainUnaryFnA =
         arr $ const ucsFixedDomain
     constUnaryFnA =
@@ -67,7 +67,7 @@ instance
             a1 <- convertA -< 1
             returnA -< fromList [(1,a1)]
     evalOnIntervalUnaryFnA =
-        error "UnaryChebSparse evalOnIntervalUnaryFnA not implemented yet"
+        error "Poly evalOnIntervalUnaryFnA not implemented yet"
     evalAtInPointUnaryFnA =
         proc (f, x) ->
             do
