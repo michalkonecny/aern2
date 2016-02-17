@@ -2,7 +2,8 @@
 module AERN2.Num.Precision
 (
      HasPrecision(..), Precision, prec, prec2integer, 
-     defaultPrecision, maximumPrecision, standardPrecisions, precisionTimes2, 
+     defaultPrecision, maximumPrecision, standardPrecisions, precisionTimes2,
+     iterateUntilOKA, iterateUntilOK,
      PrecisionPolicyMode(..), PrecisionPolicy(..), defaultPrecisionPolicy, maxPrecisionPolicy,
      ppUseCurr, ppUseMax, ppKeepExact, 
      ArrowPrecisionPolicy(..), WithPrecisionPolicy(..), arrPP, 
@@ -89,6 +90,39 @@ ppKeepExact p =
 maxPrecisionPolicy :: PrecisionPolicy
 maxPrecisionPolicy =
     PrecisionPolicy defaultPrecision PrecisionPolicyMode_KeepExactDyadic
+
+iterateUntilOKA :: 
+    (ArrowChoice to) => 
+    (a -> Bool) -> 
+    (Precision `to` a) -> 
+    () `to` [(Precision, a)]
+iterateUntilOKA isOK fnA =
+    stopWhenAccurate ps
+    where
+--    fnWrap p =
+--        unsafePerformIO $ 
+--            catch (return $! Just $! fn p) 
+--                (\e -> let _ = e :: SomeException in return Nothing)
+    ps = standardPrecisions
+    stopWhenAccurate [] = arr $ const []
+    stopWhenAccurate (p : rest) =
+        proc () ->
+            do
+            result <- fnA -< p
+            if isOK result 
+                then returnA -< [(p, result)]
+                else
+                    do
+                    restResults <- stopWhenAccurate rest -< ()
+                    returnA -<  (p, result) : restResults
+
+iterateUntilOK :: 
+    (a -> Bool) -> 
+    (Precision -> a) -> 
+    [(Precision, a)]
+iterateUntilOK isOK fn = iterateUntilOKA isOK fn ()
+
+
 
 -- TODO: generalise "ArrowPrecisionPolicy to" to "ArrowCurrentEffort e to" 
 {-| A class of Arrows that can provide current precision. -}

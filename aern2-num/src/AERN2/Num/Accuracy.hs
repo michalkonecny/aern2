@@ -1,19 +1,20 @@
 module AERN2.Num.Accuracy 
-    (HasAccuracy(..),Accuracy(NoInformation, Exact), bits, fromAccuracy) 
+    (Accuracy(NoInformation, Exact), bits, fromAccuracy,
+     HasAccuracy(..), getFiniteAccuracy, 
+     iterateUntilAccurateA, iterateUntilAccurate) 
 where
 
-import AERN2.Num.IntegerRational ()
 import AERN2.Num.Operations
+import Control.Arrow
+
+import AERN2.Num.Precision
+import AERN2.Num.IntegerRational ()
 
 {- example -}
 
 _example1 :: Accuracy
 _example1 = 1 + 2*(bits 100)
 
-
-class HasAccuracy a
-    where
-    getAccuracy :: a -> Accuracy
 
 {-| A non-negative Double value to serve as an error bound. Arithmetic is rounded towards +infinity. -}
 data Accuracy = NoInformation | Bits { fromAccuracy :: Integer } | Exact 
@@ -99,3 +100,39 @@ instance CanAddThis Accuracy Integer
 instance CanSub Accuracy Integer where
 
 instance CanSubThis Accuracy Integer
+
+class HasAccuracy a
+    where
+    getAccuracy :: a -> Accuracy
+
+{-| Return accuracy, except when the element is Exact, return its nominal Precision dressed as Accuracy. 
+    This function is useful when we have a convergent sequence where all elements happen to be
+    actually equal to the limit and we need the property that the sequence elements keep improving.
+-}
+getFiniteAccuracy ::
+    (HasAccuracy t, HasPrecision t) => 
+    t -> Accuracy
+getFiniteAccuracy b =
+    case getAccuracy b of
+        Exact -> bits $ prec2integer (getPrecision b)
+        a -> a
+
+iterateUntilAccurateA :: 
+    (ArrowChoice to, HasAccuracy t) 
+    => 
+    Accuracy -> 
+    (Precision `to` Maybe t) -> 
+    () `to` [(Precision, Maybe t)]
+iterateUntilAccurateA ac = 
+    iterateUntilOKA $ \maybeResult -> 
+        case maybeResult of 
+            Just result -> getAccuracy result >= ac
+            _ -> False 
+
+iterateUntilAccurate ::
+    (HasAccuracy t) => 
+    Accuracy -> 
+    (Precision -> Maybe t) -> 
+    [(Precision, Maybe t)]
+iterateUntilAccurate ac fn = iterateUntilAccurateA ac fn () 
+
