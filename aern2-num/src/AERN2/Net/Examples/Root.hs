@@ -88,18 +88,18 @@ rootTestDirectFnMPBall =
 -}
 rootByTrisection ::
     (RealUnaryFnA to fn, 
-     CanLimitA to (Interval (UFnIn fn), UFnOut fn),
-     LimitTypeA to (Interval (UFnIn fn), UFnOut fn) ~ UFnOut fn,
-     Bool ~ OrderCompareTypeA to (UFnOut fn) (UFnOut fn),
-     CanEmbedFnA to Rational (UFnIn fn), 
-     HasParallelComparisonsA to (UFnOut fn))
+     CanLimitA to (Interval (UnaryFnIn fn), UnaryFnOut fn),
+     LimitTypeA to (Interval (UnaryFnIn fn), UnaryFnOut fn) ~ UnaryFnOut fn,
+     Bool ~ OrderCompareTypeA to (UnaryFnOut fn) (UnaryFnOut fn),
+     CanEmbedFnA to Rational (UnaryFnIn fn), 
+     HasParallelComparisonsA to (UnaryFnOut fn))
     =>
-    (fn, Interval (UFnIn fn)) `to` (UFnOut fn)
+    (fn, Interval (UnaryFnIn fn)) `to` (UnaryFnOut fn)
 rootByTrisection =
     proc (fn, xInit@(Interval l _)) ->
         do
         z <- convertNamedA "0" -< 0
-        fn_l <- evalAtInPointUFnA -< (fn,l)
+        fn_l <- evalAtInPointUnaryFnA -< (fn,l)
         isPositiveAtL <- lessThanA -< (z, fn_l)
         iterateLimWithA aux -< ((xInit, z), (z, isPositiveAtL, fn))
 --        result <- limitIntervalsToRealA -< sq
@@ -122,8 +122,8 @@ rootByTrisection =
             do
             m1 <- embedFnNamedA "m1" getM1 -< [l,r] 
             m2 <- embedFnNamedA "m2" getM2 -< [l,r] 
-            fn_m1 <- evalAtInPointUFnA -< (fn, m1)
-            fn_m2 <- evalAtInPointUFnA -< (fn, m2)
+            fn_m1 <- evalAtInPointUnaryFnA -< (fn, m1)
+            fn_m2 <- evalAtInPointUnaryFnA -< (fn, m2)
             Just (fn_m, m) <- pickNonZeroA -< [(fn_m1, m1), (fn_m2, m2)]
             let _ = [l,r,m1,m2]
             returnA -< (m, fn_m)

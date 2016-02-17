@@ -4,7 +4,7 @@ module AERN2.RealFunction
 (
 --    RationalIntervalA(..),
     RealUnaryFnA(..),
---    UFnDomE, UFnDomR,
+--    UnaryFnDomE, UnaryFnDomR,
 --    RealFnA(..),
 --    FnDomE, FnDomR,
 --    VarName, VarMap,
@@ -30,18 +30,22 @@ import AERN2.Num
 ----    splitIntervalA :: ri `to` (ri, ri)
 ----    subEqIntervalA :: (ri, ri) `to` Bool
 --
---type UFnDomE f = IntervalE (UFnDom f)
---type UFnDomR f = IntervalR (UFnDom f)
+--type UnaryFnDomE f = IntervalE (UnaryFnDom f)
+--type UnaryFnDomR f = IntervalR (UnaryFnDom f)
 
-class (RealExprA to (UFnOut f), UFnOut f ~ LimitTypeA to (Interval (UFnIn f))) => RealUnaryFnA to f where
-    type UFnIn f
-    type UFnOut f
-    constUFnA :: (Interval (UFnIn f), UFnOut f) `to` f
-    projUFnA :: Interval (UFnIn f) `to` f
-    getDomainUFnA :: f `to` (Interval (UFnIn f))
-    evalAtOutPointUFnA :: (f, UFnOut f) `to` (UFnOut f)
-    evalAtInPointUFnA :: (f, UFnIn f) `to` (UFnOut f)
-    evalOnIntervalUFnA :: (f, Interval (UFnIn f)) `to` Interval (UFnIn f)
+class 
+    (ArrowReal to (UnaryFnOut f), 
+     UnaryFnOut f ~ LimitTypeA to (Interval (UnaryFnIn f))) 
+    => 
+    RealUnaryFnA to f where
+    type UnaryFnIn f
+    type UnaryFnOut f
+    constUnaryFnA :: (Interval (UnaryFnIn f), UnaryFnOut f) `to` f
+    projUnaryFnA :: Interval (UnaryFnIn f) `to` f
+    getDomainUnaryFnA :: f `to` (Interval (UnaryFnIn f))
+    evalAtOutPointUnaryFnA :: (f, UnaryFnOut f) `to` (UnaryFnOut f)
+    evalAtInPointUnaryFnA :: (f, UnaryFnIn f) `to` (UnaryFnOut f)
+    evalOnIntervalUnaryFnA :: (f, Interval (UnaryFnIn f)) `to` Interval (UnaryFnIn f)
 
 --type FnDomE f = IntervalE (FnDom f)
 --type FnDomR f = IntervalR (FnDom f)
@@ -58,7 +62,7 @@ class (RealExprA to (UFnOut f), UFnOut f ~ LimitTypeA to (Interval (UFnIn f))) =
 --    fixSomeVariablesA :: (f, VarMap (FnR f)) `to` f
 
 --class (RealUnaryFnA to f) => RealUnaryFnFromArrowA to f where
---    encloseUFn :: (RealExprA to2 r2) => (r2 `to2` r2, UFnDom f) -> () `to` f
+--    encloseUnaryFn :: (RealExprA to2 r2) => (r2 `to2` r2, UnaryFnDom f) -> () `to` f
 --
 --class (RealFnA to f) => RealFnFromArrowA to f where
 --    encloseFn :: (RealExprA to2 r2) => (VarMap r2 `to2` r2, VarMap (FnDom f)) -> () `to` f

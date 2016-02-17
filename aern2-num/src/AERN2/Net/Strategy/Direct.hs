@@ -97,33 +97,33 @@ instance RationalIntervalA (->) (Interval Rational) where
 type UnaryFnMPBall = (Interval Rational, MPBall -> MPBall) 
 
 instance RealUnaryFnA (->) UnaryFnMPBall where
-    type UFnIn UnaryFnMPBall = Rational
-    type UFnOut UnaryFnMPBall = CauchyReal
-    constUFnA (dom, r) = (dom, \b -> cauchyReal2ball r (getFiniteAccuracy b))
-    projUFnA dom = (dom, id)
-    getDomainUFnA (dom, _) = dom
-    evalAtOutPointUFnA ((_dom, f), r) = 
+    type UnaryFnIn UnaryFnMPBall = Rational
+    type UnaryFnOut UnaryFnMPBall = CauchyReal
+    constUnaryFnA (dom, r) = (dom, \b -> cauchyReal2ball r (getFiniteAccuracy b))
+    projUnaryFnA dom = (dom, id)
+    getDomainUnaryFnA (dom, _) = dom
+    evalAtOutPointUnaryFnA ((_dom, f), r) = 
         convergent2CauchyReal Nothing $ 
             map f $
                 map (cauchyReal2ball r) (map bits [1..])
-    evalAtInPointUFnA ((_dom, f), r) = 
+    evalAtInPointUnaryFnA ((_dom, f), r) = 
         convergent2CauchyReal Nothing $ 
             map f $ map (flip rational2BallP r) standardPrecisions
-    evalOnIntervalUFnA ((_dom, f), ri) =  
+    evalOnIntervalUnaryFnA ((_dom, f), ri) =  
         mpBall2rati $ f (rati2MPBall ri)
 
 type UnaryFnCR = (Interval Rational, CauchyReal -> CauchyReal) 
 
 instance RealUnaryFnA (->) UnaryFnCR
     where
-    type UFnIn UnaryFnCR = Rational
-    type UFnOut UnaryFnCR = CauchyReal
-    constUFnA (dom, r) = (dom, const r)
-    projUFnA dom = (dom, id)
-    getDomainUFnA (dom, _) = dom
-    evalAtOutPointUFnA ((_dom, f), r) = f r 
-    evalAtInPointUFnA ((_dom, f), r) = f (cauchyReal r) 
-    evalOnIntervalUFnA ((_dom, _f), _ri) = 
-        error "evalOnIntervalUFnA not implemented for UnaryFnCR"
+    type UnaryFnIn UnaryFnCR = Rational
+    type UnaryFnOut UnaryFnCR = CauchyReal
+    constUnaryFnA (dom, r) = (dom, const r)
+    projUnaryFnA dom = (dom, id)
+    getDomainUnaryFnA (dom, _) = dom
+    evalAtOutPointUnaryFnA ((_dom, f), r) = f r 
+    evalAtInPointUnaryFnA ((_dom, f), r) = f (cauchyReal r) 
+    evalOnIntervalUnaryFnA ((_dom, _f), _ri) = 
+        error "evalOnIntervalUnaryFnA not implemented for UnaryFnCR"
 
 
