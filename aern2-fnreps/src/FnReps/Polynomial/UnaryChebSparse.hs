@@ -3,6 +3,7 @@ module FnReps.Polynomial.UnaryChebSparse
 (
     _ucspoly1, _ucspoly1Reduced1, _ucspoly1Reduced2, _ucspolyDirect, _ucspolyDCT,
     UnaryChebSparse(..), fromList, fromListRationalWithPrec,
+    ucsFixedDomain,
     normaliseCoeffs,
     Degree,
     reduceDegreeAndSweep,
@@ -46,6 +47,8 @@ _ucsterms1 = terms_fromList [(i,integer2BallP (prec 100) 1) | i <- [0..1000]]
 _ucsterms2 :: Terms
 _ucsterms2 = terms_fromList [(i,integer2BallP (prec 100) 2) | i <- [0..1000]]
 
+ucsFixedDomain :: Interval Rational
+ucsFixedDomain = Interval (-1.0) 1.0
 
 instance
     (ArrowReal to MPBall) => 
@@ -54,15 +57,15 @@ instance
     type UnaryFnIn UnaryChebSparse = Rational
     type UnaryFnOut UnaryChebSparse = MPBall
     getDomainUnaryFnA =
-        proc _ -> returnA -< Interval (-1.0) 1.0
+        arr $ const ucsFixedDomain
     constUnaryFnA =
         proc (_dom, value) ->
             returnA -< fromList [(0,value)]
     projUnaryFnA =
         proc (_dom) ->
             do
-            one <- convertA -< 1
-            returnA -< fromList [(1,one)]
+            a1 <- convertA -< 1
+            returnA -< fromList [(1,a1)]
     evalOnIntervalUnaryFnA =
         error "UnaryChebSparse evalOnIntervalUnaryFnA not implemented yet"
     evalAtInPointUnaryFnA =
