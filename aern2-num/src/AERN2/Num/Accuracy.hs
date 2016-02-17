@@ -1,5 +1,5 @@
 module AERN2.Num.Accuracy 
-    (Accuracy(NoInformation, Exact), bits, fromAccuracy) 
+    (HasAccuracy(..),Accuracy(NoInformation, Exact), bits, fromAccuracy) 
 where
 
 import AERN2.Num.IntegerRational ()
@@ -9,6 +9,11 @@ import AERN2.Num.Operations
 
 _example1 :: Accuracy
 _example1 = 1 + 2*(bits 100)
+
+
+class HasAccuracy a
+    where
+    getAccuracy :: a -> Accuracy
 
 {-| A non-negative Double value to serve as an error bound. Arithmetic is rounded towards +infinity. -}
 data Accuracy = NoInformation | Bits { fromAccuracy :: Integer } | Exact 

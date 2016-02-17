@@ -19,14 +19,11 @@ Precision 2
 
 -}
 module AERN2.Num.MPBall
-    (MPBall(..), getAccuracy, getFiniteAccuracy,
+    (MPBall(..), getFiniteAccuracy,
      HasMPBallsA, HasMPBalls,
      CanBeMPBallA, mpBallA, mpBallNamedA, mpBallsA, mpBallsNamedA, CanBeMPBall, mpBall, mpBalls,
-     getPrecision, setPrecisionMatchAccuracy, 
-     MP.maximumPrecision, MP.defaultPrecision, MP.standardPrecisions, MP.Precision, MP.prec, MP.prec2integer,
-     PrecisionPolicyMode(..), PrecisionPolicy(..), defaultPrecisionPolicy, maxPrecisionPolicy, 
-     ppUseCurr, ppUseMax, ppKeepExact, 
-     ArrowPrecisionPolicy(..), WithPrecisionPolicy(..),
+     setPrecisionMatchAccuracy, 
+     module AERN2.Num.Precision,
      iterateUntilAccurateA, iterateUntilOKA,
      iterateUntilAccurate, iterateUntilOK,
      isNonZero,
@@ -50,15 +47,12 @@ import Control.Arrow
 import Math.NumberTheory.Logarithms (integerLog2)
 
 import AERN2.Num.IntegerRational ()
-import qualified AERN2.Num.Accuracy as A
+import AERN2.Num.Accuracy
 import qualified AERN2.Num.ErrorBound as EB
 import AERN2.Num.ErrorBound (ErrorBound(..))
 import qualified AERN2.Num.MPFloat as MP
-import AERN2.Num.MPFloat 
-    (MPFloat, Precision,
-     PrecisionPolicyMode(..), PrecisionPolicy(..), defaultPrecisionPolicy, maxPrecisionPolicy, 
-     ppUseCurr, ppUseMax, ppKeepExact, 
-     ArrowPrecisionPolicy(..), WithPrecisionPolicy(..), arrPP)
+import AERN2.Num.MPFloat (MPFloat)
+import AERN2.Num.Precision
 
 import Debug.Trace (trace)
 
@@ -176,39 +170,37 @@ toRationalUp x = MP.toRational $ snd $ ball2endpointsMP x
 toRationalDown :: MPBall -> Rational
 toRationalDown x = MP.toRational $ fst $ ball2endpointsMP x
 
-getAccuracy :: 
-    MPBall -> A.Accuracy
-getAccuracy (MPBall _ e) =
-    maybeTrace
-    (
-        "MPBall.getAccuracy: e = " ++ show e ++ "; ac = " ++ show ac
-    )
-    ac
-    where 
-    ac = EB.getAccuracy e
+instance HasAccuracy MPBall where
+    getAccuracy (MPBall _ e) =
+        maybeTrace
+        (
+            "MPBall.getAccuracy: e = " ++ show e ++ "; ac = " ++ show ac
+        )
+        ac
+        where 
+        ac = EB.getAccuracy e
 
-getFiniteAccuracy :: MPBall -> A.Accuracy
+getFiniteAccuracy :: MPBall -> Accuracy
 getFiniteAccuracy b =
     case getAccuracy b of
-        A.Exact -> A.bits $ MP.prec2integer (getPrecision b)
+        Exact -> bits $ MP.prec2integer (getPrecision b)
         a -> a
 
-getPrecision :: MPBall -> Precision
-getPrecision (MPBall x _) =
-    MP.getPrecision x
+instance HasPrecision MPBall where
+    getPrecision (MPBall x _) = getPrecision x
 
-setPrecisionMatchAccuracy :: A.Accuracy -> MPBall -> MPBall
+setPrecisionMatchAccuracy :: Accuracy -> MPBall -> MPBall
 setPrecisionMatchAccuracy acc b@(MPBall x e) 
     | p < p' = (MPBall x' e)
     | otherwise = b
     where
-    p' = MP.prec $ max 2 (A.fromAccuracy acc) 
+    p' = MP.prec $ max 2 (fromAccuracy acc) 
     p = MP.getPrecision x
     x' = MP.setPrecisionUp p' x
 
 iterateUntilAccurateA :: 
     (ArrowChoice to) => 
-    A.Accuracy -> 
+    Accuracy -> 
     (Precision `to` Maybe MPBall) -> 
     () `to` [(Precision, Maybe MPBall)]
 iterateUntilAccurateA ac = 
@@ -218,7 +210,7 @@ iterateUntilAccurateA ac =
             _ -> False 
 
 iterateUntilAccurate :: 
-    A.Accuracy -> 
+    Accuracy -> 
     (Precision -> Maybe MPBall) -> 
     [(Precision, Maybe MPBall)]
 iterateUntilAccurate ac fn = iterateUntilAccurateA ac fn () 
@@ -284,7 +276,7 @@ instance (ArrowChoice to) => HasEqA to MPBall MPBall where
     type EqCompareTypeA to MPBall MPBall = Maybe Bool
     equalToA = arr $ \ (b1, b2) ->
         case (getAccuracy b1, getAccuracy b2, b1 < b2, b2 < b1) of
-            (A.Exact, A.Exact, Just False, Just False) -> Just True
+            (Exact, Exact, Just False, Just False) -> Just True
             (_, _, Just True, _) -> Just False
             (_, _, _, Just True) -> Just False
             _ -> Nothing

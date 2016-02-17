@@ -1,136 +1,41 @@
-{-# LANGUAGE StandaloneDeriving, GeneralizedNewtypeDeriving, TypeSynonymInstances, FlexibleInstances #-}
-
+{-# LANGUAGE TypeSynonymInstances #-}
 module AERN2.Num.MPFloat 
-    (MPFloat, Precision, prec, prec2integer, defaultPrecision, maximumPrecision, standardPrecisions, 
-     getPrecision, setPrecisionUp,
-     PrecisionPolicyMode(..), PrecisionPolicy(..), defaultPrecisionPolicy, maxPrecisionPolicy,
-     ppUseCurr, ppUseMax, ppKeepExact, 
-     ArrowPrecisionPolicy(..), WithPrecisionPolicy(..), arrPP, 
+    (
+     -- * Precision operations
+     module AERN2.Num.Precision,
+     -- * MPFR numbers and their basic operations
+     MPFloat, setPrecisionUp,
      toRational, toDoubleUp, toDoubleDown,
+     -- * MPFR number constructors
      zero, one, two, fromIntegerUp, fromIntegerDown, fromRationalUp, fromRationalDown,
+     piUp, piDown,
+     -- * MPFR number basic arithmetic
      neg, abs, addUp, addDown, subUp, subDown, 
      distUp, distDown, avgUp, avgDown, 
      mulUp, mulDown, divUp, divDown, recipUp, recipDown,
-     piUp, piDown,
+     -- * MPFR number selected operations
      cosUp, cosDown, sinUp, sinDown, sqrtUp, sqrtDown, expUp, expDown)
 where
 
 import AERN2.Num.Operations hiding (abs,neg,toRational)
 import qualified Prelude as P
 
-import Control.Category
-import Control.Arrow
-
 import AERN2.Num.IntegerRational ()
+import AERN2.Num.Precision
 
 import qualified Data.Approximate.MPFRLowLevel as MPLow
 
 
 type MPFloat = MPLow.Rounded
 
-{- Precision type -}
-
-newtype Precision = Precision Integer
-    deriving (P.Eq, P.Ord, P.Show, P.Enum, P.Num, P.Real, P.Integral)
-
-instance (ArrowChoice to) => HasEqA to Precision Precision
-instance (ArrowChoice to) => HasOrderA to Precision Precision
-instance (ArrowChoice to) => CanMinMaxA to Precision Precision
-
-prec2integer :: Precision -> Integer
-prec2integer (Precision p) = p
+instance HasPrecision MPFloat where
+    getPrecision x = prec (P.toInteger $ MPLow.getPrec x)
 
 setPrecisionUp :: Precision -> MPFloat -> MPFloat
-setPrecisionUp (Precision p) = MPLow.set MPLow.Up (P.fromInteger p)
+setPrecisionUp p = MPLow.set MPLow.Up (p2mpfrPrec p)
 
-prec :: Integer -> Precision
-prec p 
-    | p < 2 = error errmsg  
-    | Precision p > maximumPrecision = error errmsg
-    | otherwise = Precision p
-    where
-    errmsg =
-        "Precision must be between 2 and " ++ show maximumPrecision ++ " (given: p=" ++ show p ++ ")."
-
-maximumPrecision :: Precision
-maximumPrecision = Precision 1000000
-
-defaultPrecision :: Precision
-defaultPrecision = Precision 100
-
-getPrecision :: MPFloat -> Precision
-getPrecision x = Precision (P.toInteger $ MPLow.getPrec x)
-
-{- Precision policy -}
-
-data PrecisionPolicy =
-    PrecisionPolicy
-    {
-        precPolicy_precision :: Precision,
-        precPolicy_mode :: PrecisionPolicyMode
-    }
-
-data PrecisionPolicyMode
-    = PrecisionPolicyMode_UseMax
-    | PrecisionPolicyMode_UseCurrent
-    | PrecisionPolicyMode_KeepExactDyadic
-    
-defaultPrecisionPolicy :: PrecisionPolicy
-defaultPrecisionPolicy =
-    PrecisionPolicy defaultPrecision PrecisionPolicyMode_UseMax
-
-ppUseCurr :: Precision -> PrecisionPolicy
-ppUseCurr p =
-    PrecisionPolicy p PrecisionPolicyMode_UseCurrent
-
-ppUseMax :: Precision -> PrecisionPolicy
-ppUseMax p =
-    PrecisionPolicy p PrecisionPolicyMode_UseMax
-
-ppKeepExact :: Precision -> PrecisionPolicy
-ppKeepExact p =
-    PrecisionPolicy p PrecisionPolicyMode_KeepExactDyadic
-
-maxPrecisionPolicy :: PrecisionPolicy
-maxPrecisionPolicy =
-    PrecisionPolicy defaultPrecision PrecisionPolicyMode_KeepExactDyadic
-
--- TODO: generalise "ArrowPrecisionPolicy to" to "ArrowCurrentEffort e to" 
-{-| A class of Arrows that can provide current precision. -}
-class (ArrowChoice to) => ArrowPrecisionPolicy to where
-    getPrecisionPolicy :: () `to` PrecisionPolicy
-    
-arrPP :: (ArrowPrecisionPolicy to) => (PrecisionPolicy -> a -> b) ->  (a `to` b)
-arrPP fn =
-    proc a ->
-        do
-        pp <- getPrecisionPolicy -< ()
-        returnA -< fn pp a
-
-instance ArrowPrecisionPolicy (->) where
-    getPrecisionPolicy _ = defaultPrecisionPolicy
-    
-{-| Add a current precision to an arrow. -}
-newtype WithPrecisionPolicy to a b = 
-    WithPrecisionPolicy { runWithPrecisionPolicy :: (PrecisionPolicy ->  a `to` b) } 
-
-instance (ArrowChoice to) => ArrowPrecisionPolicy (WithPrecisionPolicy to) where
-    getPrecisionPolicy = WithPrecisionPolicy $ \ p -> proc () -> returnA -< p
-
-instance (Category to) => Category (WithPrecisionPolicy to) where
-     id = WithPrecisionPolicy $ const id
-     (WithPrecisionPolicy f) . (WithPrecisionPolicy g) = WithPrecisionPolicy $  \ p -> (f p) . (g p) 
-
-instance (Arrow to) => Arrow (WithPrecisionPolicy to) where
-    arr f = WithPrecisionPolicy $ const $ arr f
-    first (WithPrecisionPolicy f) = WithPrecisionPolicy $ \ p -> first (f p) 
-
-instance (ArrowChoice to) => ArrowChoice (WithPrecisionPolicy to) where
-    left (WithPrecisionPolicy f) = WithPrecisionPolicy $ \ p -> left (f p)
-
-instance ArrowConvert a (WithPrecisionPolicy (->)) b a (WithPrecisionPolicy (->)) b where
-    arrow2arrow = id
-
+p2mpfrPrec :: Precision -> MPLow.Precision
+p2mpfrPrec = P.fromInteger . prec2integer
 
 {- conversions -}
 
@@ -176,21 +81,13 @@ instance ConvertibleA (->) Integer MPFloat where
             | nDown == nUp = nUp
             | otherwise = findExact rest
 
-standardPrecisions :: [Precision]
-standardPrecisions =
-    map Precision $ aux 8 13
-    where
-    aux j j' 
-        | Precision j <= maximumPrecision = j : (aux j' (j+j'))
-        | otherwise = []
-    
 fromRationalUp :: Precision -> Rational -> MPFloat
-fromRationalUp (Precision p) x =
-    MPLow.fromRationalA MPLow.Up (P.fromInteger p) x
+fromRationalUp p x =
+    MPLow.fromRationalA MPLow.Up (p2mpfrPrec p) x
     
 fromRationalDown :: Precision -> Rational -> MPFloat
-fromRationalDown (Precision p) x =
-    MPLow.fromRationalA MPLow.Down (P.fromInteger p) x
+fromRationalDown p x =
+    MPLow.fromRationalA MPLow.Down (p2mpfrPrec p) x
 
 -- | Computes an upper bound to the distance @|x - y|@ of @x@ and @y@.
 distUp :: PrecisionPolicy -> MPFloat -> MPFloat -> MPFloat
@@ -241,12 +138,12 @@ recipDown pp x = divDown pp one x
 {- special constants and functions -}
 
 piUp :: Precision -> MPFloat
-piUp (Precision p) =
-    MPLow.pi MPLow.Up (P.fromInteger p)
+piUp p =
+    MPLow.pi MPLow.Up (p2mpfrPrec p)
     
 piDown :: Precision -> MPFloat
-piDown (Precision p) =
-    MPLow.pi MPLow.Down (P.fromInteger p)
+piDown p =
+    MPLow.pi MPLow.Down (p2mpfrPrec p)
     
 cosUp :: MPFloat -> MPFloat
 cosUp = unaryUp MPLow.cos
@@ -315,15 +212,15 @@ binaryApprox isUp canBeExact opRP pp x y =
     where
     pMax = pCurr `P.max` (getPrecision x) `P.max` (getPrecision y)
     pCurr = precPolicy_precision pp
-    withPrec (Precision p)
-        | isUp = opRP MPLow.Up (P.fromInteger p) x y
-        | otherwise = opRP MPLow.Down (P.fromInteger p) x y
-    getExact (Precision p)
+    withPrec p
+        | isUp = opRP MPLow.Up (p2mpfrPrec p) x y
+        | otherwise = opRP MPLow.Down (p2mpfrPrec p) x y
+    getExact p
         | rUp P.== rDown = rUp
-        | otherwise = getExact (Precision $ 2*p)
+        | otherwise = getExact (precisionTimes2 p)
         where
-        rUp = opRP MPLow.Up (P.fromInteger p) x y
-        rDown = opRP MPLow.Down (P.fromInteger p) x y
+        rUp = opRP MPLow.Up (p2mpfrPrec p) x y
+        rDown = opRP MPLow.Down (p2mpfrPrec p) x y
         
         
     
