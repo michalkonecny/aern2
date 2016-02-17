@@ -35,6 +35,7 @@ newtype Precision = Precision Integer
 
 instance (ArrowChoice to) => HasEqA to Precision Precision
 instance (ArrowChoice to) => HasOrderA to Precision Precision
+instance (ArrowChoice to) => CanMinMaxA to Precision Precision
 
 prec2integer :: Precision -> Integer
 prec2integer (Precision p) = p
