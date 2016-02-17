@@ -15,7 +15,6 @@ import qualified Prelude
 
 import AERN2.Num.CauchyReal
 import AERN2.Num.MPBall
-import AERN2.Num.Accuracy
 import AERN2.Num.SymbolicArrow
 import AERN2.Num.SymbolicArrow.Expression (var)
 

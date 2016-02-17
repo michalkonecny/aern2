@@ -19,7 +19,7 @@ Precision 2
 
 -}
 module AERN2.Num.MPBall
-    (MPBall(..), getFiniteAccuracy,
+    (MPBall(..),
      HasMPBallsA, HasMPBalls,
      CanBeMPBallA, mpBallA, mpBallNamedA, mpBallsA, mpBallsNamedA, CanBeMPBall, mpBall, mpBalls,
      setPrecisionMatchAccuracy, 
