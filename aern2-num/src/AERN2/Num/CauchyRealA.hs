@@ -5,7 +5,6 @@ module AERN2.Num.CauchyRealA
     CanReadAsCauchyRealA(..), CanCreateAsCauchyRealA(..), CanAsCauchyRealA,
     SupportsSenderIdA(..), HasSenderIdA(..),
     CanCombineCRsA(..), CanCombineCRwithA,
-    seqByPrecision2CauchySeq,
     compareTryAccuracies, maximumCompareAccuracy, tryStandardCompareAccuracies,
     ensureAccuracyA2, ensureAccuracyA1
 )
@@ -80,21 +79,6 @@ class
 
 
 {- conversions -}
-
-seqByPrecision2CauchySeq :: 
-    (Precision -> MPBall) -> (Accuracy -> MPBall)
-seqByPrecision2CauchySeq seqByPrecision i =
-    findAccurate $ map seqByPrecision $ dropWhile lowPrec standardPrecisions
-    where
-    lowPrec p = 
-        case i of 
-            Exact -> False
-            _ -> bits (prec2integer p) < i
-    findAccurate [] =
-        error "seqByPrecision2CauchySeq: the sequence either converges too slowly or it does not converge"
-    findAccurate (b : rest)
-        | getAccuracy b >= i = b
-        | otherwise = findAccurate rest
 
 
 -- | HasIntegers CauchyReal, CanBeCauchyReal Integer

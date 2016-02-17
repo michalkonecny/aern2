@@ -1,7 +1,8 @@
 module AERN2.Num.Accuracy 
     (Accuracy(NoInformation, Exact), bits, fromAccuracy,
      HasAccuracy(..), getFiniteAccuracy, 
-     iterateUntilAccurateA, iterateUntilAccurate) 
+     iterateUntilAccurateA, iterateUntilAccurate,
+     seqByPrecision2CauchySeq) 
 where
 
 import AERN2.Num.Operations
@@ -135,4 +136,20 @@ iterateUntilAccurate ::
     (Precision -> Maybe t) -> 
     [(Precision, Maybe t)]
 iterateUntilAccurate ac fn = iterateUntilAccurateA ac fn () 
+
+seqByPrecision2CauchySeq ::
+    (HasAccuracy t) => 
+    (Precision -> t) -> (Accuracy -> t)
+seqByPrecision2CauchySeq seqByPrecision i =
+    findAccurate $ map seqByPrecision $ dropWhile lowPrec standardPrecisions
+    where
+    lowPrec p = 
+        case i of 
+            Exact -> False
+            _ -> bits (prec2integer p) < i
+    findAccurate [] =
+        error "seqByPrecision2CauchySeq: the sequence either converges too slowly or it does not converge"
+    findAccurate (b : rest)
+        | getAccuracy b >= i = b
+        | otherwise = findAccurate rest
 
