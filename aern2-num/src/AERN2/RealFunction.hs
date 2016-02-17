@@ -10,7 +10,6 @@ module AERN2.RealFunction
 --    VarName, VarMap,
 --    RealUnaryFnFromArrowA(..),
 --    RealFnFromArrowA(..),
-    CanEmbedFnA, embedFnNamedA
 )
 where
 
@@ -68,9 +67,3 @@ class
 --    encloseFn :: (RealExprA to2 r2) => (VarMap r2 `to2` r2, VarMap (FnDom f)) -> () `to` f
 
 
-type CanEmbedFnA to r1 r2 = ArrowConvert [r1] (->) r1 [r2] to r2
-
-{-| use a normal computation, bypassing the arrow -}
-embedFnNamedA ::
-    (CanEmbedFnA to r1 r2) => String -> ([r1] -> r1) -> [r2] `to` r2
-embedFnNamedA = fn2arrowNamed

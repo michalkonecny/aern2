@@ -7,6 +7,7 @@ module AERN2.Num.Operations
     IsString, fromString,
     ArrowConvert(..), Fn2Arrow, fn2arrow, fn2arrowNamed, Arrow2Fn, arrow2fn,
     ConvertibleA(..), convertListNamedA, Convertible, convert, convertList,
+    CanEmbedFnA, embedFnNamedA,
     HasIntsA, HasInts, fromIntADefault, 
     CanBeIntA, intA, intNamedA, intsA, intsNamedA, CanBeInt, int, intDefault, ints,
     HasIntegersA, HasIntegers, fromIntegerADefault, 
@@ -101,6 +102,13 @@ fn2arrowNamed = arrow2arrowNamed
 type Arrow2Fn to a1 b1 a2 b2 = ArrowConvert  a1 to b1 a2 (->) b2
 arrow2fn :: (Arrow2Fn to a1 b1 a2 b2) => (a1 `to` b1) -> (a2 -> b2)
 arrow2fn = arrow2arrow
+
+type CanEmbedFnA to r1 r2 = ArrowConvert [r1] (->) r1 [r2] to r2
+
+{-| use a normal computation, bypassing the arrow -}
+embedFnNamedA ::
+    (CanEmbedFnA to r1 r2) => String -> ([r1] -> r1) -> [r2] `to` r2
+embedFnNamedA = fn2arrowNamed
 
 class (ArrowChoice to) => ConvertibleA to a b where
     convertA :: a `to` b
