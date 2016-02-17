@@ -9,7 +9,6 @@ import qualified Prelude
 import Control.Arrow
 import qualified Data.Map as Map
 import AERN2.Num.CauchyReal
-import AERN2.Num.MPBall
 
 data RealExpr' expr
     = Var VarName 
