@@ -58,9 +58,8 @@ class
     => 
     ArrowReal to r 
 
-instance 
---    (ArrowPrecisionPolicy to) => 
-    ArrowReal (WithPrecisionPolicy (->)) MPBall
+instance ArrowReal (WithPrecisionPolicy (->)) MPBall
+instance ArrowReal (->) MPBall
 
 type CauchyReal = AsCauchyReal CauchyReal_
 
