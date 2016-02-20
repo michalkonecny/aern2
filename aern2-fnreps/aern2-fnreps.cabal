@@ -37,8 +37,8 @@ Library
                     FnReps.Polynomial.UnaryChebSparse.Poly.DCTMultiplication,
                     FnReps.Polynomial.UnaryChebSparse.Poly.EvaluationRootFinding,
                     FnReps.Polynomial.UnaryChebSparse.Poly.SizeReduction,
-                    FnReps.Polynomial.UnaryPowerDense.Basics,
-                    FnReps.Polynomial.UnaryPowerDense.EvaluationRootFinding
+                    FnReps.Polynomial.UnaryPowerDense.EvaluationRootFinding,
+                    FnReps.Polynomial.UnaryPowerDense.Basics
   exposed-modules:  
                     FnReps.Polynomial.UnaryChebSparse.PolyBall,
                     FnReps.Polynomial.UnaryChebSparse.RealFn,
