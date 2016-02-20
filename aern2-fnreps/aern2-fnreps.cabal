@@ -40,5 +40,6 @@ Library
   exposed-modules:  
                     FnReps.Polynomial.UnaryChebSparse.PolyBall,
                     FnReps.Polynomial.UnaryChebSparse.RealFn,
-                    FnReps.Polynomial.UnaryPowerBase
+                    FnReps.Polynomial.UnaryPowerBase,
+                    FnReps.Polynomial.UnaryPowerDense
 
