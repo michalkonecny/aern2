@@ -1,7 +1,7 @@
 module FnReps.Polynomial.UnaryPowerDense.Poly.Basics
 (
     module AERN2.Num,
-    UnaryPowerDense(..),
+    Poly(..),
     fromList,
     fromIntegerListP,
     fromRationalListP,
@@ -34,14 +34,14 @@ import AERN2.Num
 {-|
     Unary polynomials over the domain @[-1,1]@ with interval coefficients in the monomial basis.
 -}
-data UnaryPowerDense = 
-    UnaryPowerDense
+data Poly = 
+    Poly
     {
         unaryPowerDense_terms :: Terms
     }
 
-instance Show UnaryPowerDense where
-    show (UnaryPowerDense terms) =
+instance Show Poly where
+    show (Poly terms) =
         List.intercalate " + " $
             map showTerm $ reverse $ List.sortBy (\(a,_) (b,_) -> compare b a) $ reverse $ terms_toList terms
         where
@@ -98,67 +98,67 @@ terms_filter = Map.filterWithKey
 --terms_unionWith :: (MPBall -> MPBall -> MPBall) -> Terms -> Terms -> Terms
 --terms_unionWith = HM.unionWith
 
-degree :: UnaryPowerDense -> Integer
-degree (UnaryPowerDense ts) = terms_degree ts
+degree :: Poly -> Integer
+degree (Poly ts) = terms_degree ts
 
-fromList :: [(Degree, MPBall)] -> UnaryPowerDense
+fromList :: [(Degree, MPBall)] -> Poly
 fromList termsAsList =
-    UnaryPowerDense (terms_fromList termsAsList)
+    Poly (terms_fromList termsAsList)
 
-fromIntegerListP :: Precision -> [(Degree,Integer)] -> UnaryPowerDense
+fromIntegerListP :: Precision -> [(Degree,Integer)] -> Poly
 fromIntegerListP p termsAsList =
-    UnaryPowerDense (terms_fromList $ map i2b termsAsList)
+    Poly (terms_fromList $ map i2b termsAsList)
     where
     i2b (deg,c) = (deg, integer2BallP p c)
 
-fromRationalListP :: Precision -> [(Degree, Rational)] -> UnaryPowerDense
+fromRationalListP :: Precision -> [(Degree, Rational)] -> Poly
 fromRationalListP p termsAsList =
-    UnaryPowerDense (terms_fromList $ map r2b termsAsList)
+    Poly (terms_fromList $ map r2b termsAsList)
     where
     r2b (deg, q) = (deg, rational2BallP p q)
 
-instance CanNegA (->) UnaryPowerDense where
-    negA (UnaryPowerDense terms) = 
-        UnaryPowerDense $ fmap neg terms 
+instance CanNegA (->) Poly where
+    negA (Poly terms) = 
+        Poly $ fmap neg terms 
 
-instance CanNegSameType UnaryPowerDense
+instance CanNegSameType Poly
 
-instance CanAddA (->) UnaryPowerDense UnaryPowerDense where
-    addA (UnaryPowerDense termsL, UnaryPowerDense termsR) =
-        UnaryPowerDense $ terms_unionWith (+) termsL termsR
+instance CanAddA (->) Poly Poly where
+    addA (Poly termsL, Poly termsR) =
+        Poly $ terms_unionWith (+) termsL termsR
 
-instance CanAddA (->) MPBall UnaryPowerDense where
-    type AddTypeA (->) MPBall UnaryPowerDense = UnaryPowerDense
-    addA (c, UnaryPowerDense ts) =
-        UnaryPowerDense $ Map.insert 0 (c + terms_lookupCoeff ts 0) ts
+instance CanAddA (->) MPBall Poly where
+    type AddTypeA (->) MPBall Poly = Poly
+    addA (c, Poly ts) =
+        Poly $ Map.insert 0 (c + terms_lookupCoeff ts 0) ts
 
-instance CanAddThis UnaryPowerDense UnaryPowerDense
-instance CanAddSameType UnaryPowerDense
+instance CanAddThis Poly Poly
+instance CanAddSameType Poly
     
-instance CanSub UnaryPowerDense UnaryPowerDense
-instance CanSubThis UnaryPowerDense UnaryPowerDense
-instance CanSubSameType UnaryPowerDense
+instance CanSub Poly Poly
+instance CanSubThis Poly Poly
+instance CanSubSameType Poly
 
-instance CanMulA (->) MPBall UnaryPowerDense where
-        type MulTypeA (->) MPBall UnaryPowerDense = UnaryPowerDense
-        mulA (l, UnaryPowerDense terms) =
-                UnaryPowerDense $ Map.mapWithKey (\_ c -> c*l) terms
+instance CanMulA (->) MPBall Poly where
+        type MulTypeA (->) MPBall Poly = Poly
+        mulA (l, Poly terms) =
+                Poly $ Map.mapWithKey (\_ c -> c*l) terms
     
-instance CanMulA (->) UnaryPowerDense UnaryPowerDense where
-    type MulTypeA (->) UnaryPowerDense UnaryPowerDense = UnaryPowerDense
-    mulA (UnaryPowerDense ts, UnaryPowerDense ts') =
-        Map.foldl' (+) (fromList [(0,integer2BallP (prec 53) 0)]) $ Map.mapWithKey (\p c -> c*(UnaryPowerDense $ Map.mapKeys (\p' -> p' + p) ts')) ts  
+instance CanMulA (->) Poly Poly where
+    type MulTypeA (->) Poly Poly = Poly
+    mulA (Poly ts, Poly ts') =
+        Map.foldl' (+) (fromList [(0,integer2BallP (prec 53) 0)]) $ Map.mapWithKey (\p c -> c*(Poly $ Map.mapKeys (\p' -> p' + p) ts')) ts  
 
-shiftRight :: Integer -> UnaryPowerDense -> UnaryPowerDense
-shiftRight n (UnaryPowerDense ts) = UnaryPowerDense $ Map.mapKeys (\p -> p + n) ts
+shiftRight :: Integer -> Poly -> Poly
+shiftRight n (Poly ts) = Poly $ Map.mapKeys (\p -> p + n) ts
 
-shiftLeft :: Integer -> UnaryPowerDense -> UnaryPowerDense
-shiftLeft n (UnaryPowerDense ts) = UnaryPowerDense $ Map.filterWithKey (\p _ -> p >= 0)  $ Map.mapKeys (\p -> p - n) ts
+shiftLeft :: Integer -> Poly -> Poly
+shiftLeft n (Poly ts) = Poly $ Map.filterWithKey (\p _ -> p >= 0)  $ Map.mapKeys (\p -> p - n) ts
 
-{-takeTerms :: Integer -> UnaryPowerDense -> UnaryPowerDense
-takeTerms n (UnaryPowerDense ts) = UnaryPowerDense $ Map.filterWithKey (\p c -> p <= n) ts
+{-takeTerms :: Integer -> Poly -> Poly
+takeTerms n (Poly ts) = Poly $ Map.filterWithKey (\p c -> p <= n) ts
         
-karatsuba :: UnaryPowerDense -> UnaryPowerDense -> UnaryPowerDense
+karatsuba :: Poly -> Poly -> Poly
 karatsuba p q =
     if degree p < 5 || degree q < 5 then 
         p * q

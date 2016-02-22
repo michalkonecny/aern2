@@ -18,28 +18,28 @@ import AERN2.Num
 import FnReps.Polynomial.UnaryPowerDense.Poly.Basics
 
 --TODO: make this more generic
-eval :: UnaryPowerDense -> MPBall -> MPBall
-eval poly@(UnaryPowerDense ts) x =
+eval :: Poly -> MPBall -> MPBall
+eval poly@(Poly ts) x =
     evalHornerAcc (degree poly) $ (integer2BallP (prec 53) 0)
     where
     evalHornerAcc 0 sm = x*sm + terms_lookupCoeff ts 0
     evalHornerAcc (k + 1) sm = evalHornerAcc k $ x*sm + terms_lookupCoeff ts (k + 1)
     evalHornerAcc _ _ = error ""
 
-evalOnRational :: UnaryPowerDense -> Rational -> MPBall
-evalOnRational poly@(UnaryPowerDense ts) x =
+evalOnRational :: Poly -> Rational -> MPBall
+evalOnRational poly@(Poly ts) x =
     evalOnRationalHornerAcc (degree poly) $ (integer2BallP (prec 53) 0)
     where
     evalOnRationalHornerAcc 0 sm = x*sm + terms_lookupCoeff ts 0
     evalOnRationalHornerAcc (k + 1) sm = evalOnRationalHornerAcc k $ (rational2BallP (getPrecision sm) x)*sm + terms_lookupCoeff ts (k + 1) -- TODO maybe get the right precision in the beginning to avoid overhead
     evalOnRationalHornerAcc _ _ = error ""
 
-derivative :: UnaryPowerDense -> UnaryPowerDense
-derivative (UnaryPowerDense ts) = UnaryPowerDense $ Map.filterWithKey (\k _ -> k >= 0) $ Map.mapKeys (\k -> k - 1) $ Map.mapWithKey (\p c -> c*p) ts
+derivative :: Poly -> Poly
+derivative (Poly ts) = Poly $ Map.filterWithKey (\k _ -> k >= 0) $ Map.mapKeys (\k -> k - 1) $ Map.mapWithKey (\p c -> c*p) ts
 
 -- TODO: maybe make this more "usable" by replacing the output type with Maybe Integer in case of undecidable inequality     
-signVariations :: UnaryPowerDense -> Integer
-signVariations poly@(UnaryPowerDense ts) = 
+signVariations :: Poly -> Integer
+signVariations poly@(Poly ts) = 
         snd $ Map.foldl' (\(sg,vrs) -> \sg' ->  if sg' == 0 || sg == sg' then (sg,vrs) else (sg',vrs + 1)) (sgn (snd $ Map.findMin ts),0) $ Map.map (\c -> sgn c) ts
         where
         sgn x = case x >= 0 of
@@ -50,48 +50,48 @@ signVariations poly@(UnaryPowerDense ts) =
                         Just False -> -1
                         Nothing -> error $ "cannot compute sign variations: undecidable inequality " ++ (show x) ++ " >= 0, \n in the polynomial \n" ++ (show poly)
 
-reflect :: UnaryPowerDense -> UnaryPowerDense
-reflect poly@(UnaryPowerDense ts) = UnaryPowerDense ts'
+reflect :: Poly -> Poly
+reflect poly@(Poly ts) = Poly ts'
                                where
                                ts' = Map.mapKeys (\p -> deg - p) ts
                                deg = degree poly 
 
-translate :: Rational -> UnaryPowerDense -> UnaryPowerDense
-translate t poly@(UnaryPowerDense ts) =
+translate :: Rational -> Poly -> Poly
+translate t poly@(Poly ts) =
     translateAcc (degree poly - 1) $ (fromList [(0,terms_lookupCoeff ts (degree poly))])
     where
     translateAcc (-1) poly' = poly'
     translateAcc n poly' = let c = terms_lookupCoeff ts n in
                             translateAcc (n - 1) $ c + shiftRight 1 poly' - (rational2BallP (getPrecision c) t)*poly'
 
-scale :: Rational -> UnaryPowerDense -> UnaryPowerDense
-scale l (UnaryPowerDense ts) = UnaryPowerDense ts'
+scale :: Rational -> Poly -> Poly
+scale l (Poly ts) = Poly ts'
                                     where
                                     ts' = Map.mapWithKey (\p c -> c*l^p) ts
                                     
 
 --TODO compute separable part to deal with multiple zeroes
-transform :: Rational -> Rational -> UnaryPowerDense -> UnaryPowerDense
+transform :: Rational -> Rational -> Poly -> Poly
 transform l r = (translate (-1.0)) . (reflect) . (scale (r - l)) . (translate (-l)) --do transform directly?    
 
-rootIndicator :: Rational -> Rational -> UnaryPowerDense -> Integer
+rootIndicator :: Rational -> Rational -> Poly -> Integer
 rootIndicator l r = signVariations . transform l r 
 
 {- returns If this functions returns "Just True", then there is a single simple root.
            If it returns "Just False", then there is no root.
            If it returns "Nothing" we do not know.  -}
-hasSingleRoot :: Rational -> Rational -> UnaryPowerDense -> Maybe Bool
+hasSingleRoot :: Rational -> Rational -> Poly -> Maybe Bool
 hasSingleRoot l r p = case rootIndicator l r p of
                         0 -> Just False
                         1 -> Just True
                         _ -> Nothing
 
-{-hasSomeRoot :: Rational -> Rational -> UnaryPowerDense -> Maybe Bool
+{-hasSomeRoot :: Rational -> Rational -> Poly -> Maybe Bool
 hasSomeRoot l r p = if changesSign l r p then
                         Just True
                     else hasSingleRoot l r p
 
-changesSign :: Rational -> Rational -> UnaryPowerDense -> Bool
+changesSign :: Rational -> Rational -> Poly -> Bool
 changesSign l r p  = case (lPos,rPos) of
                         (Just True, Just False) -> True
                         (Just False, Just True) -> True
@@ -100,7 +100,7 @@ changesSign l r p  = case (lPos,rPos) of
                         lPos = (evalOnRational p l) > 0
                         rPos = (evalOnRational p r) > 0-}
 
-isolateRoots :: Rational -> Rational -> UnaryPowerDense -> [Interval Rational]
+isolateRoots :: Rational -> Rational -> Poly -> [Interval Rational]
 isolateRoots l r p = refine l r
                      where
                      refine :: Rational -> Rational -> [Interval Rational]
@@ -111,7 +111,7 @@ isolateRoots l r p = refine l r
                                                               where
                                                               m = findMidpoint l' r' p
 
-findMidpoint :: Rational -> Rational -> UnaryPowerDense -> Rational
+findMidpoint :: Rational -> Rational -> Poly -> Rational
 findMidpoint l r p = findMidpointAcc l r p 2 1
                      where
                      findMidpointAcc l' r' p' n k = case evalOnRational p' ((l' * (n - k) + k*r')/n) /= 0 of
@@ -121,7 +121,7 @@ findMidpoint l r p = findMidpointAcc l r p 2 1
                                                           else
                                                             findMidpointAcc l' r' p' (n + 1) 1 --TODO better strategy?
                                                               
-approximateRootNaive :: Rational -> Rational -> Accuracy -> UnaryPowerDense -> MPBall
+approximateRootNaive :: Rational -> Rational -> Accuracy -> Poly -> MPBall
 approximateRootNaive l r a p = if getAccuracy (ri2ball (Interval l r) (a + 2)) >= a then
                                 ri2ball (Interval l r) a
                            else
@@ -134,7 +134,7 @@ approximateRootNaive l r a p = if getAccuracy (ri2ball (Interval l r) (a + 2)) >
                                                 Just False -> (ml,r)
                                                 Nothing -> error "Illegal use of approximateRootNaive: polynomial must have a unique simple root in the given interval"       
        
-approximateRootByTrisection :: Rational -> Rational -> Accuracy -> UnaryPowerDense -> MPBall
+approximateRootByTrisection :: Rational -> Rational -> Accuracy -> Poly -> MPBall
 approximateRootByTrisection l r a p = case evalOnRational p l > 0 of
                                         Just False -> aux l r a p False
                                         Just True  -> aux l r a p True
@@ -147,7 +147,7 @@ approximateRootByTrisection l r a p = case evalOnRational p l > 0 of
                                         Just (l'',r'',posL') -> aux l'' r'' a' p' posL'
                                         Nothing -> ri2ball (Interval l' r') a        
                                         
-trisect :: Rational -> Rational -> Bool -> UnaryPowerDense -> Maybe (Rational,Rational, Bool) -- l', r', l' positive?
+trisect :: Rational -> Rational -> Bool -> Poly -> Maybe (Rational,Rational, Bool) -- l', r', l' positive?
 trisect l r posL p = case (posML,posMR) of
                         (Just True, _) -> Just $ if not posL then (l,ml,posL) else (ml,r,True)
                         (Just False,_) -> Just $ if posL     then (l,ml,posL) else (ml,r,False)
@@ -160,7 +160,7 @@ trisect l r posL p = case (posML,posMR) of
                      posML = evalOnRational p ml > 0
                      posMR = evalOnRational p mr > 0                                                          
 
-approximateRootByBisection :: Rational -> Rational -> Accuracy -> UnaryPowerDense -> MPBall
+approximateRootByBisection :: Rational -> Rational -> Accuracy -> Poly -> MPBall
 approximateRootByBisection l r a p = case evalOnRational p l > 0 of
                                         Just False -> aux l r a p False
                                         Just True  -> aux l r a p True
@@ -177,7 +177,7 @@ approximateRootByBisection l r a p = case evalOnRational p l > 0 of
                                              (False, Just True)  -> aux l' m  a' p' False
                                              (_,_) -> ri2ball (Interval l' r') a
 
-findMidpoint' :: Rational -> Rational -> UnaryPowerDense -> (Rational, Maybe Bool)
+findMidpoint' :: Rational -> Rational -> Poly -> (Rational, Maybe Bool)
 findMidpoint' l r p = case evalOnRational p m > 0.0 of
                         Just True  -> (m, Just True)
                         Just False -> (m, Just False)
@@ -185,22 +185,22 @@ findMidpoint' l r p = case evalOnRational p m > 0.0 of
                       where
                       m  = (l + r)/2               
 
-{-markovBound :: Rational -> Rational -> UnaryPowerDense -> MPBall
+{-markovBound :: Rational -> Rational -> Poly -> MPBall
 markovBound l r p  = (degree p')^2 * Map.foldl' (\x y -> x + abs(y)) (integer2Ball 0) ts
                      where
-                     p'@(UnaryPowerDense ts) = translate (-l) $ scale (r - l) p   -}                  
+                     p'@(Poly ts) = translate (-l) $ scale (r - l) p   -}                  
        
 {- -}                            
-allRoots :: Rational -> Rational -> Accuracy -> UnaryPowerDense -> [MPBall]
+allRoots :: Rational -> Rational -> Accuracy -> Poly -> [MPBall]
 allRoots = allRootsByTrisection   
 
-allRootsNaive :: Rational -> Rational -> Accuracy -> UnaryPowerDense -> [MPBall] -- this function is just to test the correctness of the algorithm.. do not call it on big polynomials!
+allRootsNaive :: Rational -> Rational -> Accuracy -> Poly -> [MPBall] -- this function is just to test the correctness of the algorithm.. do not call it on big polynomials!
 allRootsNaive l r a p = map (\(Interval l' r') -> approximateRootNaive l' r' a p) $ isolateRoots l r p
 
-allRootsByTrisection :: Rational -> Rational -> Accuracy -> UnaryPowerDense -> [MPBall]
+allRootsByTrisection :: Rational -> Rational -> Accuracy -> Poly -> [MPBall]
 allRootsByTrisection l r a p = map (\(Interval l' r') -> approximateRootByTrisection l' r' a p) $ isolateRoots l r p   
   
-allRootsByBisection :: Rational -> Rational -> Accuracy -> UnaryPowerDense -> [MPBall]
+allRootsByBisection :: Rational -> Rational -> Accuracy -> Poly -> [MPBall]
 allRootsByBisection l r a p = map (\(Interval l' r') -> approximateRootByBisection l' r' a p) $ isolateRoots l r p  
 
 {- auxiliary function -}
