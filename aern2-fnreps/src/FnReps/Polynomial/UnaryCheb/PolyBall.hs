@@ -1,5 +1,5 @@
 {-# LANGUAGE UndecidableInstances #-}
-module FnReps.Polynomial.UnaryChebSparse.PolyBall 
+module FnReps.Polynomial.UnaryCheb.PolyBall 
 (
     -- * examples
     ball_2,
@@ -23,7 +23,7 @@ import AERN2.RealFunction
 
 import Control.Arrow
 
-import FnReps.Polynomial.UnaryChebSparse.Poly
+import FnReps.Polynomial.UnaryCheb.Poly
 
 {- examples -}
 

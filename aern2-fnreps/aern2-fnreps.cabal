@@ -32,18 +32,18 @@ Library
                     TypeFamilies, 
                     TypeOperators
   other-modules:    
-                    FnReps.Polynomial.UnaryChebSparse.Poly,
-                    FnReps.Polynomial.UnaryChebSparse.Poly.Basics,
-                    FnReps.Polynomial.UnaryChebSparse.Poly.DCTMultiplication,
-                    FnReps.Polynomial.UnaryChebSparse.Poly.EvaluationRootFinding,
-                    FnReps.Polynomial.UnaryChebSparse.Poly.SizeReduction,
-                    FnReps.Polynomial.UnaryPowerDense.Poly.Basics,
-                    FnReps.Polynomial.UnaryPowerDense.Poly.EvaluationRootFinding
+                    FnReps.Polynomial.UnaryCheb.Poly,
+                    FnReps.Polynomial.UnaryCheb.Poly.Basics,
+                    FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication,
+                    FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding,
+                    FnReps.Polynomial.UnaryCheb.Poly.SizeReduction,
+                    FnReps.Polynomial.UnaryPower.Poly.Basics,
+                    FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding
   exposed-modules:  
-                    FnReps.Polynomial.UnaryChebSparse.PolyBall,
-                    FnReps.Polynomial.UnaryChebSparse.RealFn,
-                    FnReps.Polynomial.UnaryPowerBase,
-                    FnReps.Polynomial.UnaryPowerDense.Poly
+                    FnReps.Polynomial.UnaryCheb.PolyBall,
+                    FnReps.Polynomial.UnaryCheb.RealFn,
+                    FnReps.Polynomial.UnaryPower.Poly,
+                    FnReps.Polynomial.UnaryPowerBase
 
 nse
 

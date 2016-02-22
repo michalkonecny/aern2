@@ -1,5 +1,5 @@
 {-# LANGUAGE UndecidableInstances #-}
-module FnReps.Polynomial.UnaryChebSparse.Poly 
+module FnReps.Polynomial.UnaryCheb.Poly 
 (
     _ucspoly1, _ucspoly1Reduced1, _ucspoly1Reduced2, _ucspolyDirect, _ucspolyDCT,
     Poly(..), fromList, fromListRationalWithPrec,
@@ -7,7 +7,7 @@ module FnReps.Polynomial.UnaryChebSparse.Poly
     normaliseCoeffs,
     Degree,
     reduceDegreeAndSweep,
-    module FnReps.Polynomial.UnaryChebSparse.Poly.EvaluationRootFinding
+    module FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding
 )
 where
 
@@ -16,10 +16,10 @@ import AERN2.RealFunction
 
 import Control.Arrow
 
-import FnReps.Polynomial.UnaryChebSparse.Poly.Basics
-import FnReps.Polynomial.UnaryChebSparse.Poly.SizeReduction
-import FnReps.Polynomial.UnaryChebSparse.Poly.DCTMultiplication (multiplyDirect_terms, multiplyDCT_terms)
-import FnReps.Polynomial.UnaryChebSparse.Poly.EvaluationRootFinding
+import FnReps.Polynomial.UnaryCheb.Poly.Basics
+import FnReps.Polynomial.UnaryCheb.Poly.SizeReduction
+import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication (multiplyDirect_terms, multiplyDCT_terms)
+import FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding
 
 _ucspoly1 :: Poly
 _ucspoly1 = 
@@ -75,7 +75,7 @@ instance
             a1 <- convertA -< 1
             returnA -< fromList [(1,a1)]
     evalOnIntervalUnaryFnA =
-        error "UnaryChebSparse.Poly evalOnIntervalUnaryFnA not implemented yet"
+        error "UnaryCheb.Poly evalOnIntervalUnaryFnA not implemented yet"
     evalAtInPointUnaryFnA =
         proc (f, x) ->
             do

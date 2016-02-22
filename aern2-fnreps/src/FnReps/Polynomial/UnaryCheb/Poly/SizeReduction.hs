@@ -1,8 +1,8 @@
-module FnReps.Polynomial.UnaryChebSparse.Poly.SizeReduction 
+module FnReps.Polynomial.UnaryCheb.Poly.SizeReduction 
 
 where
 
-import FnReps.Polynomial.UnaryChebSparse.Poly.Basics
+import FnReps.Polynomial.UnaryCheb.Poly.Basics
 
 {-|
     Drop all terms that whose degree is above the given limit or whose norm is at or below the threshold.

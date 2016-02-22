@@ -5,7 +5,7 @@
     Linear Algebra Appl., vol. 252, no. 1-3, pp. 1–25, Feb. 1997
     http://dx.doi.org/10.1016/0024-3795(95)00696-6
 -}
-module FnReps.Polynomial.UnaryChebSparse.Poly.DCTMultiplication 
+module FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication 
 ( 
  multiplyDirect_terms, multiplyDCT_terms,
  tDCT_I_nlogn, tDCT_III_nlogn, tSDCT_III_nlogn,
@@ -17,7 +17,7 @@ import Math.NumberTheory.Logarithms (integerLog2)
 
 import Data.List (sortBy, genericIndex)
 
-import FnReps.Polynomial.UnaryChebSparse.Poly.Basics
+import FnReps.Polynomial.UnaryCheb.Poly.Basics
 
 import Debug.Trace (trace)
 

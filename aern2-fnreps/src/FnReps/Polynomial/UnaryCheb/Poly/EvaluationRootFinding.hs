@@ -1,5 +1,5 @@
 {-# LANGUAGE Arrows, ScopedTypeVariables, FlexibleContexts, TypeOperators, TemplateHaskell, OverloadedStrings #-}
-module FnReps.Polynomial.UnaryChebSparse.Poly.EvaluationRootFinding 
+module FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding 
 (
     evalDirectA, evalDirectOnBall, evalLipschitzOnBall 
 --   , toPowerBase
@@ -8,7 +8,7 @@ module FnReps.Polynomial.UnaryChebSparse.Poly.EvaluationRootFinding
 where
 
 import AERN2.Num
-import FnReps.Polynomial.UnaryChebSparse.Poly.Basics
+import FnReps.Polynomial.UnaryCheb.Poly.Basics
 --import FnReps.Polynomial.UnaryPowerBase
 
 import Control.Arrow

@@ -1,12 +1,11 @@
-module FnReps.Polynomial.UnaryPowerDense.Poly.Basics
+module FnReps.Polynomial.UnaryCheb.Poly.Basics 
 (
     module AERN2.Num,
     Poly(..),
     fromList,
-    fromIntegerListP,
-    fromRationalListP,
+    fromListRationalWithPrec,
+    normaliseCoeffs,
     Degree,
-    degree,
     Terms,
     terms_size,
     terms_empty,
@@ -19,26 +18,26 @@ module FnReps.Polynomial.UnaryPowerDense.Poly.Basics
     terms_lookupCoeff,
     terms_lookupCoeffDoubleConstTerm,
     terms_unionWith,
-    terms_filter,
-    shiftLeft,
-    shiftRight
+    terms_filter
 )
 where
 
 import qualified Data.List as List
 import qualified Data.Map as Map
+--import qualified Data.HashMap.Strict as HM
 
---import qualified Prelude as Prelude
 import AERN2.Num
 
 {-|
-    Unary polynomials over the domain @[-1,1]@ with interval coefficients in the monomial basis.
+    Unary polynomials over the domain @[-1,1]@ with interval coefficients in the Chebyshev basis.
+    The interval coefficients are supposed to have zero radius, except in the constant term.
 -}
 data Poly = 
     Poly
     {
-        unaryPowerDense_terms :: Terms
+        unaryChebSparse_terms :: Terms
     }
+--    deriving (Show)
 
 instance Show Poly where
     show (Poly terms) =
@@ -49,7 +48,7 @@ instance Show Poly where
             where
             showPower
                 | deg == 0 = ""
-                | otherwise = "*X^" ++ show deg  
+                | otherwise = "*T_" ++ show deg  
 
 type Degree = Integer
 
@@ -98,24 +97,31 @@ terms_filter = Map.filterWithKey
 --terms_unionWith :: (MPBall -> MPBall -> MPBall) -> Terms -> Terms -> Terms
 --terms_unionWith = HM.unionWith
 
-degree :: Poly -> Integer
-degree (Poly ts) = terms_degree ts
 
 fromList :: [(Degree, MPBall)] -> Poly
 fromList termsAsList =
     Poly (terms_fromList termsAsList)
 
-fromIntegerListP :: Precision -> [(Degree,Integer)] -> Poly
-fromIntegerListP p termsAsList =
-    Poly (terms_fromList $ map i2b termsAsList)
-    where
-    i2b (deg,c) = (deg, integer2BallP p c)
-
-fromRationalListP :: Precision -> [(Degree, Rational)] -> Poly
-fromRationalListP p termsAsList =
+fromListRationalWithPrec :: Precision -> [(Degree, Rational)] -> Poly
+fromListRationalWithPrec p termsAsList =
     Poly (terms_fromList $ map r2b termsAsList)
     where
     r2b (deg, q) = (deg, rational2BallP p q)
+
+{-|
+    Convert any non-exact coefficients of non-constant terms to exact coefficients.
+-}
+normaliseCoeffs :: Poly -> Poly
+normaliseCoeffs (Poly terms) =
+    Poly (terms_insertWith (+) 0 errorBall (terms_fromList termListN))
+    where
+    termList = terms_toList terms
+    (termListN, errorBalls) = unzip $ map normaliseTerm termList
+    normaliseTerm (deg, coeff) = ((deg, centre), errorB)
+        where
+        (centre, errorB) = getCentreAndErrorBall coeff
+    errorBall = sum errorBalls
+
 
 instance CanNegA (->) Poly where
     negA (Poly terms) = 
@@ -127,51 +133,10 @@ instance CanAddA (->) Poly Poly where
     addA (Poly termsL, Poly termsR) =
         Poly $ terms_unionWith (+) termsL termsR
 
-instance CanAddA (->) MPBall Poly where
-    type AddTypeA (->) MPBall Poly = Poly
-    addA (c, Poly ts) =
-        Poly $ Map.insert 0 (c + terms_lookupCoeff ts 0) ts
-
 instance CanAddThis Poly Poly
 instance CanAddSameType Poly
     
 instance CanSub Poly Poly
 instance CanSubThis Poly Poly
 instance CanSubSameType Poly
-
-instance CanMulA (->) MPBall Poly where
-        type MulTypeA (->) MPBall Poly = Poly
-        mulA (l, Poly terms) =
-                Poly $ Map.mapWithKey (\_ c -> c*l) terms
     
-instance CanMulA (->) Poly Poly where
-    type MulTypeA (->) Poly Poly = Poly
-    mulA (Poly ts, Poly ts') =
-        Map.foldl' (+) (fromList [(0,integer2BallP (prec 53) 0)]) $ Map.mapWithKey (\p c -> c*(Poly $ Map.mapKeys (\p' -> p' + p) ts')) ts  
-
-shiftRight :: Integer -> Poly -> Poly
-shiftRight n (Poly ts) = Poly $ Map.mapKeys (\p -> p + n) ts
-
-shiftLeft :: Integer -> Poly -> Poly
-shiftLeft n (Poly ts) = Poly $ Map.filterWithKey (\p _ -> p >= 0)  $ Map.mapKeys (\p -> p - n) ts
-
-{-takeTerms :: Integer -> Poly -> Poly
-takeTerms n (Poly ts) = Poly $ Map.filterWithKey (\p c -> p <= n) ts
-        
-karatsuba :: Poly -> Poly -> Poly
-karatsuba p q =
-    if degree p < 5 || degree q < 5 then 
-        p * q
-    else 
-        shiftRight (2*m) r2 + shiftRight m r1 + r0
-        where
-        m = (degree p) `Prelude.div` 2
-        r2 = karatsuba p1 q1
-        r1 = karatsuba (p1 + p0) (q1 + q0) - r2 - r0 
-        r0 = karatsuba p0 q0
-        p1 = shiftLeft m p
-        q1 = shiftLeft m q
-        p0 = takeTerms (m - 1) p
-        q0 = takeTerms (m - 1) q-}
-
-
