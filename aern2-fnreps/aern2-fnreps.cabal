@@ -42,8 +42,7 @@ Library
   exposed-modules:  
                     FnReps.Polynomial.UnaryCheb.PolyBall,
                     FnReps.Polynomial.UnaryCheb.RealFn,
-                    FnReps.Polynomial.UnaryPower.Poly,
-                    FnReps.Polynomial.UnaryPowerBase
+                    FnReps.Polynomial.UnaryPower.Poly
 
 nse
 

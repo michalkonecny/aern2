@@ -50,14 +50,6 @@ _ucsterms2 = terms_fromList [(i,integer2BallP (prec 100) 2) | i <- [0..1000]]
 ucsFixedDomain :: Interval Rational
 ucsFixedDomain = Interval (-1.0) 1.0
 
-instance HasPrecision Poly where
-    getPrecision (Poly terms) =
-        foldl1 min $ map getPrecision $ terms_coeffs terms
-
-instance HasAccuracy Poly where
-    getAccuracy (Poly terms) =
-        getAccuracy $ terms_lookupCoeff terms 0
-
 instance
     (ArrowReal to MPBall) => 
     RealUnaryFnA to Poly

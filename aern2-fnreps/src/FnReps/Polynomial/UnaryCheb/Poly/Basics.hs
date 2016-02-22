@@ -123,6 +123,14 @@ normaliseCoeffs (Poly terms) =
     errorBall = sum errorBalls
 
 
+instance HasPrecision Poly where
+    getPrecision (Poly terms) =
+        foldl1 min $ map getPrecision $ terms_coeffs terms
+
+instance HasAccuracy Poly where
+    getAccuracy (Poly terms) =
+        getAccuracy $ terms_lookupCoeff terms 0
+
 instance CanNegA (->) Poly where
     negA (Poly terms) = 
         Poly $ fmap neg terms 

@@ -9,7 +9,7 @@ where
 
 import AERN2.Num
 import FnReps.Polynomial.UnaryCheb.Poly.Basics
---import FnReps.Polynomial.UnaryPowerBase
+import qualified FnReps.Polynomial.UnaryPower.Poly as PowerBasis
 
 import Control.Arrow
 
@@ -60,8 +60,32 @@ evalExample2 =
 --    An evaluation of the polynomial at the ball x using Clenshaw Algorithm
 --    (https://en.wikipedia.org/wiki/Clenshaw_algorithm#Special_case_for_Chebyshev_series). 
 ---}
---toPowerBase :: Poly -> UnaryPowerBase
---toPowerBase p = evalDirectA (p, UnaryPowerBase [mpBall 0, mpBall 1])
+--toPowerBase :: Poly -> PowerBasis.Poly
+--toPowerBase p = evalDirect p (PowerBasis.fromIntegerListP (getPrecision p) [(0,0),(1,1)])
+
+--{-|
+--    An evaluation of the polynomial at x using Clenshaw Algorithm
+--    (https://en.wikipedia.org/wiki/Clenshaw_algorithm#Special_case_for_Chebyshev_series). 
+---}
+--evalDirect :: 
+--    (Ring ra, 
+--     CanAddMulDivScalar ra Integer,
+--     CanAddMulScalar ra MPBall) 
+--    => 
+--    Poly -> ra -> ra
+--evalDirect (Poly terms) (x :: ra) =
+--    (b0 - b2)/2
+--    where
+--    n = terms_degree terms
+--    (b0:_:b2:_) = bs
+--    bs :: [ra]
+--    bs = reverse $ aux n (convert 0) (convert 0)
+--    aux k bKp2 bKp1 
+--        | k == 0 = [bKp2, bKp1, bK] 
+--        | otherwise = bKp2 : aux (k - 1) bKp1 bK
+--        where
+--        bK = (a k) + 2 * x * bKp1 - bKp2
+--    a k = terms_lookupCoeffDoubleConstTerm terms k 
 
 
 {-|
