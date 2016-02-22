@@ -130,6 +130,9 @@ evalDirectOnBall :: Poly -> MPBall -> MPBall
 evalDirectOnBall poly x =  
     runWithPrecisionPolicy evalDirectA (ppKeepExact defaultPrecision) (poly, x)
 
+evalDirectOnRational :: Poly -> Rational -> MPBall
+evalDirectOnRational poly@(Poly ts) x = evalDirectOnBall poly (rational2BallP (getPrecision $ head $ terms_coeffs ts) x)
+
 {-|
     An evaluation of the polynomial at the ball x using an estimated Lipschitz constant on x. 
 -}
@@ -172,3 +175,30 @@ _findAllRoots = error "findAllRoots not implemented yet"
     or the given accuracy threshold is reached. 
     
 -}
+
+
+approximateRoot :: Rational -> Rational -> Accuracy -> Poly -> MPBall
+approximateRoot l r a p = case evalDirectOnRational p l > 0 of
+                                        Just False -> aux l r a p False
+                                        Just True  -> aux l r a p True
+                                        Nothing    -> ri2ball (Interval l r) a
+                                      where
+                                      aux l' r' a' p' posL =
+                                       if getAccuracy (ri2ball (Interval l' r') (a + 2)) >= a then
+                                            ri2ball (Interval l' r') a
+                                       else case trisect l' r' posL p of
+                                        Just (l'',r'',posL') -> aux l'' r'' a' p' posL'
+                                        Nothing -> ri2ball (Interval l' r') a        
+                                        
+trisect :: Rational -> Rational -> Bool -> Poly -> Maybe (Rational,Rational, Bool) -- l', r', l' positive?
+trisect l r posL p = case (posML,posMR) of
+                        (Just True, _) -> Just $ if not posL then (l,ml,posL) else (ml,r,True)
+                        (Just False,_) -> Just $ if posL     then (l,ml,posL) else (ml,r,False)
+                        (_, Just True) -> Just $ if posL     then (mr,r,True) else (l,mr, posL)
+                        (_, Just False)-> Just $ if not posL then (mr,r, False) else (l, mr, posL)
+                        (_,_)          -> Nothing
+                     where
+                     ml = (9*l + 7*r)/16
+                     mr = (7*l + 9*r)/16
+                     posML = evalDirectOnRational p ml > 0
+                     posMR = evalDirectOnRational p mr > 0
