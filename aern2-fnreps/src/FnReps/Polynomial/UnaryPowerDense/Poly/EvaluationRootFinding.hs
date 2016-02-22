@@ -1,5 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables, FlexibleContexts #-}
-module FnReps.Polynomial.UnaryPowerDense.EvaluationRootFinding
+module FnReps.Polynomial.UnaryPowerDense.Poly.EvaluationRootFinding
 (
     eval,
     derivative,
@@ -15,7 +15,7 @@ where
 
 import qualified Data.Map as Map
 import AERN2.Num
-import FnReps.Polynomial.UnaryPowerDense.Basics
+import FnReps.Polynomial.UnaryPowerDense.Poly.Basics
 
 --TODO: make this more generic
 eval :: UnaryPowerDense -> MPBall -> MPBall

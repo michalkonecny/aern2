@@ -1,15 +1,15 @@
-module FnReps.Polynomial.UnaryPowerDense
+module FnReps.Polynomial.UnaryPowerDense.Poly
 (
-module FnReps.Polynomial.UnaryPowerDense.Basics,
-module FnReps.Polynomial.UnaryPowerDense.EvaluationRootFinding,
+module FnReps.Polynomial.UnaryPowerDense.Poly.Basics,
+module FnReps.Polynomial.UnaryPowerDense.Poly.EvaluationRootFinding,
 truncatedSin,
 truncatedCos,
 sinCos
 )
 where
 
-import FnReps.Polynomial.UnaryPowerDense.Basics
-import FnReps.Polynomial.UnaryPowerDense.EvaluationRootFinding
+import FnReps.Polynomial.UnaryPowerDense.Poly.Basics
+import FnReps.Polynomial.UnaryPowerDense.Poly.EvaluationRootFinding
 import qualified Data.List as List
 
 truncatedSin :: Integer -> UnaryPowerDense

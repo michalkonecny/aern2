@@ -1,4 +1,4 @@
-module FnReps.Polynomial.UnaryPowerDense.Basics
+module FnReps.Polynomial.UnaryPowerDense.Poly.Basics
 (
     module AERN2.Num,
     UnaryPowerDense(..),
