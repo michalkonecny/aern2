@@ -23,10 +23,22 @@ maybeTrace
 {- examples -}
 
 rf_x :: RealFn
-rf_x = projUnaryFnA (Interval 0.0 (1/3))
+rf_x = projUnaryFnA (Interval 0.0 (4/3))
+
+rf_2x :: RealFn
+rf_2x = rf_x + rf_x
+
+rf_x2 :: RealFn
+rf_x2 = rf_x * rf_x
 
 rf_x_pi :: CauchyReal
-rf_x_pi = evalAtOutPointUnaryFnA (rf_x, pi) 
+rf_x_pi = evalAtOutPointUnaryFnA (rf_x, pi/4)
+
+rf_2x_pi :: CauchyReal
+rf_2x_pi = evalAtOutPointUnaryFnA (rf_2x, pi/4)
+
+rf_x2_pi :: CauchyReal
+rf_x2_pi = evalAtOutPointUnaryFnA (rf_x2, pi/4)
 
 {- type definition -} 
 
@@ -36,6 +48,10 @@ data RealFn =
         rFn_withAccuracy :: Accuracy -> PolyBall,
         rFn_rough :: PolyBall
     }
+
+instance Show RealFn where
+    show (RealFn withAccuracy _) =
+        show $ withAccuracy (bits 100)
 
 {- basic function operations -} 
 
@@ -102,53 +118,42 @@ instance
 
 {- pointwise arithmetic -} 
 
+instance CanNegA (->) RealFn where
+    negA = lift1 negA 
 
---instance CanNegA (->) PolyBall where
---    negA b = b { ucsBall_poly = neg (ucsBall_poly b) }
---    
---instance CanNegSameType PolyBall
---
---instance CanAddA (->) PolyBall PolyBall where
---    addA = ucsLift2 addAndReduce
---        where
---        addAndReduce maxDegree sqeepThresholdNormLog a b =
---            reduceDegreeAndSweep maxDegree sqeepThresholdNormLog $ a + b
---
---instance CanAddThis PolyBall PolyBall
---instance CanAddSameType PolyBall
---
---instance CanSub PolyBall PolyBall
---instance CanSubThis PolyBall PolyBall
---instance CanSubSameType PolyBall
---        
---instance CanMulA (->) PolyBall PolyBall where
---    mulA = ucsLift2 addAndReduce
---        where
---        addAndReduce maxDegree sqeepThresholdNormLog a b =
---            reduceDegreeAndSweep maxDegree sqeepThresholdNormLog $ a * b
---
---instance CanMulBy PolyBall PolyBall
---instance CanMulSameType PolyBall
---        
---ucsLift2 :: 
---    (Degree -> NormLog -> Poly -> Poly -> Poly)
---    -> 
---    (PolyBall, PolyBall) -> PolyBall
---ucsLift2 polyOpWithSizeLimits (a, b) =
---    PolyBall
---    {
---        ucsBall_poly = polyOpWithSizeLimits maxDegree sqeepThresholdNormLog aPoly bPoly,
---        ucsBall_domain = aDom,
---        ucsBall_maxDegree = maxDegree,
---        ucsBall_sqeepThresholdNormLog = sqeepThresholdNormLog
---    }
---    where
---    maxDegree = max (ucsBall_maxDegree a) (ucsBall_maxDegree b)
---    sqeepThresholdNormLog = min (ucsBall_sqeepThresholdNormLog a) (ucsBall_sqeepThresholdNormLog b)
---    aPoly = ucsBall_poly a
---    bPoly = ucsBall_poly b
---    aDom = ucsBall_domain a
---    _bDom = ucsBall_domain b -- TODO check for domain equality
-    
-    
+instance CanNegSameType RealFn
 
+{-
+    TODO
+    Recompute when the result is not sufficiently accurate.
+    Use the same method as for CauchyReal.
+-}
+
+instance CanAddA (->) RealFn RealFn where
+    addA = lift2 addA
+
+instance CanAddThis RealFn RealFn
+instance CanAddSameType RealFn
+
+instance CanSub RealFn RealFn
+instance CanSubThis RealFn RealFn
+instance CanSubSameType RealFn
+        
+instance CanMulA (->) RealFn RealFn where
+    mulA = lift2 mulA
+
+instance CanMulBy RealFn RealFn
+instance CanMulSameType RealFn
+
+lift1 :: 
+    (PolyBall -> PolyBall) -> 
+    (RealFn -> RealFn)
+lift1 opB (RealFn withAccuracy withAccuracy0) =
+    RealFn (\a -> opB $ withAccuracy a) (opB withAccuracy0) 
+
+lift2 :: 
+    ((PolyBall, PolyBall) -> PolyBall) -> 
+    ((RealFn, RealFn) -> RealFn)
+lift2 opB (RealFn withAccuracyA withAccuracy0A, RealFn withAccuracyB withAccuracy0B) =
+    RealFn (\a -> opB (withAccuracyA a, withAccuracyB a)) (opB (withAccuracy0A, withAccuracy0B)) 
+    

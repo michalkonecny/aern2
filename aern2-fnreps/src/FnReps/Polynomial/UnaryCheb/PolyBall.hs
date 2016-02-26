@@ -24,6 +24,7 @@ import AERN2.RealFunction
 import Control.Arrow
 
 import FnReps.Polynomial.UnaryCheb.Poly
+import Data.Ratio
 
 {- examples -}
 
@@ -65,9 +66,20 @@ data PolyBall =
 --        ball_coeffPrec :: Precision,
         ball_domain :: Interval Rational, -- an interval; the domain to translate into
         ball_maxDegree :: Degree,
-        ball_sqeepThresholdNormLog :: NormLog  
+        ball_sweepThresholdNormLog :: NormLog  
     }
-    deriving (Show)
+
+instance Show PolyBall where
+    show (PolyBall poly dom maxDeg sweepT) =
+        "(\\x∈" ++ showDom dom ++ " -> " ++ show poly 
+            ++ "{mxd:" ++ show maxDeg ++ ";swp:" ++ show sweepT ++ "})"
+        where
+        showDom (Interval l r) =
+            "[" ++ showQ l ++ "," ++ showQ r ++ "]"
+        showQ q     
+            | numerator q == 0 = "0"
+            | denominator q == 1 = show $ numerator q
+            | otherwise = (show $ numerator q) ++ "/" ++ (show $ denominator q)
 
 --defaultCoeffPrecision :: Precision
 --defaultCoeffPrecision = prec 100
@@ -96,16 +108,16 @@ setMaxDegree maxDegree b =
             reduceDegreeAndSweep maxDegree bThresholdNormLog
         | otherwise = id 
     bMaxDegree = ball_maxDegree b
-    bThresholdNormLog = ball_sqeepThresholdNormLog b
+    bThresholdNormLog = ball_sweepThresholdNormLog b
 
 getThresholdNormLog :: PolyBall -> NormLog
-getThresholdNormLog = ball_sqeepThresholdNormLog
+getThresholdNormLog = ball_sweepThresholdNormLog
 
 setThresholdNormLog :: NormLog -> PolyBall -> PolyBall
 setThresholdNormLog normLog b =
     b 
     { ball_poly = update $ ball_poly b, 
-      ball_sqeepThresholdNormLog = normLog
+      ball_sweepThresholdNormLog = normLog
     }
     where
     update
@@ -113,7 +125,7 @@ setThresholdNormLog normLog b =
             reduceDegreeAndSweep bMaxDegree normLog
         | otherwise = id 
     bMaxDegree = ball_maxDegree b
-    bThresholdNormLog = ball_sqeepThresholdNormLog b
+    bThresholdNormLog = ball_sweepThresholdNormLog b
 
 
 setMaxDegreeNormLog :: Degree -> NormLog -> PolyBall -> PolyBall
@@ -121,7 +133,7 @@ setMaxDegreeNormLog maxDegree normLog b =
     b 
     { ball_poly = update $ ball_poly b, 
       ball_maxDegree = maxDegree,
-      ball_sqeepThresholdNormLog = normLog
+      ball_sweepThresholdNormLog = normLog
     }
     where
     update
@@ -129,7 +141,7 @@ setMaxDegreeNormLog maxDegree normLog b =
             reduceDegreeAndSweep maxDegree bThresholdNormLog
         | otherwise = id 
     bMaxDegree = ball_maxDegree b
-    bThresholdNormLog = ball_sqeepThresholdNormLog b
+    bThresholdNormLog = ball_sweepThresholdNormLog b
 
 
 instance HasPrecision PolyBall
@@ -197,8 +209,8 @@ instance CanNegSameType PolyBall
 instance CanAddA (->) PolyBall PolyBall where
     addA = ucsLift2 addAndReduce
         where
-        addAndReduce maxDegree sqeepThresholdNormLog a b =
-            reduceDegreeAndSweep maxDegree sqeepThresholdNormLog $ a + b
+        addAndReduce maxDegree sweepThresholdNormLog a b =
+            reduceDegreeAndSweep maxDegree sweepThresholdNormLog $ a + b
 
 instance CanAddThis PolyBall PolyBall
 instance CanAddSameType PolyBall
@@ -210,8 +222,8 @@ instance CanSubSameType PolyBall
 instance CanMulA (->) PolyBall PolyBall where
     mulA = ucsLift2 addAndReduce
         where
-        addAndReduce maxDegree sqeepThresholdNormLog a b =
-            reduceDegreeAndSweep maxDegree sqeepThresholdNormLog $ a * b
+        addAndReduce maxDegree sweepThresholdNormLog a b =
+            reduceDegreeAndSweep maxDegree sweepThresholdNormLog $ a * b
 
 instance CanMulBy PolyBall PolyBall
 instance CanMulSameType PolyBall
@@ -223,14 +235,14 @@ ucsLift2 ::
 ucsLift2 polyOpWithSizeLimits (a, b) =
     PolyBall
     {
-        ball_poly = polyOpWithSizeLimits maxDegree sqeepThresholdNormLog aPoly bPoly,
+        ball_poly = polyOpWithSizeLimits maxDegree sweepThresholdNormLog aPoly bPoly,
         ball_domain = aDom,
         ball_maxDegree = maxDegree,
-        ball_sqeepThresholdNormLog = sqeepThresholdNormLog
+        ball_sweepThresholdNormLog = sweepThresholdNormLog
     }
     where
     maxDegree = max (ball_maxDegree a) (ball_maxDegree b)
-    sqeepThresholdNormLog = min (ball_sqeepThresholdNormLog a) (ball_sqeepThresholdNormLog b)
+    sweepThresholdNormLog = min (ball_sweepThresholdNormLog a) (ball_sweepThresholdNormLog b)
     aPoly = ball_poly a
     bPoly = ball_poly b
     aDom = ball_domain a
