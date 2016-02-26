@@ -138,14 +138,14 @@ evalDirectOnRational poly@(Poly ts) x = evalDirectOnBall poly (rational2BallP (g
 -}
 evalLipschitzOnBall :: Poly -> MPBall -> MPBall
 evalLipschitzOnBall p@(Poly terms) b =
-    maybeTrace
-    (
-        "evalLipschitzOnBall:" ++
-        "\n lp = " ++ show lp ++
-        "\n b_centre = " ++ show b_centre ++
-        "\n b_errorBall = " ++ show b_errorBall ++
-        "\n evalDirectOnBall p b_centre = " ++ show (evalDirectOnBall p b_centre)
-    )
+--    maybeTrace
+--    (
+--        "evalLipschitzOnBall:" ++
+--        "\n lp = " ++ show lp ++
+--        "\n b_centre = " ++ show b_centre ++
+--        "\n b_errorBall = " ++ show b_errorBall ++
+--        "\n evalDirectOnBall p b_centre = " ++ show (evalDirectOnBall p b_centre)
+--    )
     result
     where
     result = (evalDirectOnBall p b_centre) + b_errorBall * lp

@@ -9,11 +9,24 @@ import Control.Arrow
 
 import FnReps.Polynomial.UnaryCheb.PolyBall
 
+import Debug.Trace (trace)
+
+shouldTrace :: Bool
+shouldTrace = False
+--shouldTrace = True
+
+maybeTrace :: String -> a -> a
+maybeTrace 
+    | shouldTrace = trace
+    | otherwise = const id
+
 {- examples -}
 
 rf_x :: RealFn
-rf_x_wa :: Accuracy -> PolyBall
-rf_x@(RealFn rf_x_wa _) = projUnaryFnA (Interval 0.0 (1/3))
+rf_x = projUnaryFnA (Interval 0.0 (1/3))
+
+rf_x_pi :: CauchyReal
+rf_x_pi = evalAtOutPointUnaryFnA (rf_x, pi) 
 
 {- type definition -} 
 
@@ -45,22 +58,47 @@ instance
                 runWithPrecisionPolicy (proc () -> projUnaryFnA -< dom) (ppKeepExact p) ()
     evalOnIntervalUnaryFnA =
         error "UnaryChebSparse.RealFn evalOnIntervalUnaryFnA not implemented yet"
---    evalAtInPointUnaryFnA =
---        proc (f, x) ->
---            do
---            xB <- convertA -< x
---            evalAtOutPointUnaryFnA -< (f,xB)
---    evalAtOutPointUnaryFnA =
---        proc (fB, x) ->
---            do
---            let fP = ucsBall_poly fB
---            let (Interval l r) = ucsBall_domain fB
---            let xU = (2*x - r - l)/(r-l)
---            case getAccuracy x of
---                Exact ->
---                    returnA -< evalDirectOnBall fP xU
---                _ ->  
---                    returnA -< evalLipschitzOnBall fP xU
+    evalAtInPointUnaryFnA (f, x) =
+        evalAtOutPointUnaryFnA (f, convert x)
+    evalAtOutPointUnaryFnA (RealFn fR f0, xR) =
+        newCRA ([], Nothing, resWithAcc)
+        where
+        resWithAcc acc =
+            keepIncreasingEffort' (evalAtOutPointUnaryFnA (f0,x0)) (zip fAccuracies fSeq0) (zip xAccuracies xSeq0)
+            where
+            fSeq0 = f0 : (map fR [(acc-1)..])
+            fAccuracies = (bits 0) : [(acc-1)..]
+            xSeq0@(x0:_) = map (cauchyReal2ball xR) [acc..]
+            xAccuracies = [acc..]
+            keepIncreasingEffort' resCurrent fSeq@((fA,_f):_) xSeq@((xA,x):_) =
+                maybeTrace (
+                    "evalAtOutPointUnaryFnA.keepIncreasingEffort:"
+                    ++ "\n accuracy for f = " ++ show fA
+                    ++ "\n accuracy for x = " ++ show xA
+                    ++ "\n x = " ++ show x
+                    ++ "\n resCurrent = " ++ show resCurrent
+                    ++ "\n getAccuracy resCurrent = " ++ show (getAccuracy resCurrent)
+                    ++ "\n requested accuracy = " ++ show acc
+                ) $
+                keepIncreasingEffort resCurrent fSeq xSeq
+            keepIncreasingEffort' _ _ _ = error "keepIncreasingEffort'"
+            keepIncreasingEffort resCurrent fSeq@((_,f):fRest@((_,fNext):_)) xSeq@((_,x):xRest@((_,xNext):_)) 
+                | accCurrent >= acc = resCurrent
+                | accNextX > accCurrent =
+                    keepIncreasingEffort' resNextX fSeq xRest
+                | accNextF > accCurrent =
+                    keepIncreasingEffort' resNextF fRest xSeq
+                | otherwise = 
+                    keepIncreasingEffort' resNextXNextF fRest xRest
+                where
+                accCurrent = getAccuracy resCurrent
+                resNextX = evalAtOutPointUnaryFnA (f,xNext)
+                accNextX = getAccuracy resNextX
+                resNextF = evalAtOutPointUnaryFnA (fNext,x)
+                accNextF = getAccuracy resNextF
+                resNextXNextF = evalAtOutPointUnaryFnA (fNext,xNext)
+            keepIncreasingEffort _ _ _ =
+                error "internal error in FnReps.Polynomial.UnaryCheb.RealFn RealUnaryFnA.evalAtOutPointUnaryFnA"
 
 {- pointwise arithmetic -} 
 
