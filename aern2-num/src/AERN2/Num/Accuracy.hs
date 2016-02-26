@@ -21,6 +21,16 @@ _example1 = 1 + 2*(bits 100)
 data Accuracy = NoInformation | Bits { fromAccuracy :: Integer } | Exact 
     deriving (Eq, Ord)
 
+instance Enum Accuracy where
+    fromEnum NoInformation = minBound
+    fromEnum (Bits i) = int i
+    fromEnum Exact = maxBound
+    toEnum i = Bits (integer i)
+
+instance Bounded Accuracy where
+    minBound = NoInformation
+    maxBound = Exact
+    
 bits :: Integer -> Accuracy
 bits i = Bits i
 
