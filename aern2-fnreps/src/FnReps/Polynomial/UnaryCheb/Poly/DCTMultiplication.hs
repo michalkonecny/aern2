@@ -8,6 +8,7 @@
 module FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication 
 ( 
  multiplyDirect_terms, multiplyDCT_terms,
+ lift2_DCT,
  tDCT_I_nlogn, tDCT_III_nlogn, tSDCT_III_nlogn,
  tDCT_I_reference, tDCT_III_reference, tSDCT_III_reference
  )
@@ -63,8 +64,15 @@ multiplyDirect_terms terms1 terms2 =
                 (j,b) <- terms_toList terms2
             ]
             
+
 multiplyDCT_terms :: Terms -> Terms -> Terms
-multiplyDCT_terms termsA termsB =
+multiplyDCT_terms = lift2_DCT (*)
+
+
+lift2_DCT :: 
+    (MPBall -> MPBall -> MPBall) -> 
+    (Terms -> Terms -> Terms)
+lift2_DCT op termsA termsB =
     maybeTrace
     (
         "multiplyDCT_terms:"
@@ -82,7 +90,7 @@ multiplyDCT_terms termsA termsB =
     where
     (c0Double : c) = map (* (2 / cN)) (tDCT_I_nlogn cT) -- interpolate the values using a polynomial 
      
-    cT = zipWith (*) aT bT -- multiplication of the cN+1 values of the polynomials on the grid
+    cT = zipWith op aT bT -- multiplication of the cN+1 values of the polynomials on the grid
     
     aT = tDCT_I_nlogn a -- compute the values of the polynomial termsA on a grid
     bT = tDCT_I_nlogn b -- compute the values of the polynomial termsB on a grid
