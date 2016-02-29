@@ -49,7 +49,7 @@ instance Show Poly where
             where
             showPower
                 | deg == 0 = ""
-                | otherwise = "*X^" ++ show deg  
+                | otherwise = "*x^" ++ show deg  
 
 data ApproxPoly = ApproxPoly Accuracy Poly
 
@@ -69,7 +69,7 @@ instance Show ApproxPoly where
             (approxCoeff, coeffInaccurate) = getApproximate ac coeff
             showPower
                 | deg == 0 = ""
-                | otherwise = "*X^" ++ show deg  
+                | otherwise = "*x^" ++ show deg  
 
 type Degree = Integer
 
