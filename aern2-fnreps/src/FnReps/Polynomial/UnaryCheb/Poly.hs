@@ -7,6 +7,7 @@ module FnReps.Polynomial.UnaryCheb.Poly
     normaliseCoeffs,
     Degree,
     reduceDegreeAndSweep,
+    module FnReps.Polynomial.UnaryCheb.Poly.Division,
     module FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding
 )
 where
@@ -19,6 +20,7 @@ import Control.Arrow
 import FnReps.Polynomial.UnaryCheb.Poly.Basics
 import FnReps.Polynomial.UnaryCheb.Poly.SizeReduction
 import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication (multiplyDirect_terms, multiplyDCT_terms)
+import FnReps.Polynomial.UnaryCheb.Poly.Division
 import FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding
 
 _ucspoly1 :: Poly
