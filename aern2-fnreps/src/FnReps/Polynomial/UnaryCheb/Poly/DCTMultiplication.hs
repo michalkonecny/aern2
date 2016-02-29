@@ -25,6 +25,7 @@ import Debug.Trace (trace)
 
 shouldTrace :: Bool
 shouldTrace = False
+--shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace 
@@ -72,12 +73,10 @@ lift2_DCT ::
 lift2_DCT op termsA termsB =
     maybeTrace
     (
-        "multiplyDCT_terms:"
+        "lift2_DCT:"
+        ++ "\n cN = " ++ show cN
         ++ "\n dA = " ++ show dA
         ++ "\n dB = " ++ show dB
-        ++ "\n cN = " ++ show cN
-        ++ "\n a = " ++ show a
-        ++ "\n b = " ++ show b
         ++ "\n aT = " ++ show aT
         ++ "\n bT = " ++ show bT
         ++ "\n cT = " ++ show cT
@@ -89,19 +88,24 @@ lift2_DCT op termsA termsB =
      
     cT = zipWith op aT bT -- multiplication of the cN+1 values of the polynomials on the grid
     
-    aT = tDCT_I_nlogn a -- compute the values of the polynomial termsA on a grid
-    bT = tDCT_I_nlogn b -- compute the values of the polynomial termsB on a grid
-    
-    -- convert from sparse to dense representation:
-    a = pad0 $ (2 * a0) : [terms_lookupCoeff termsA i | i <- [1..dA]]
-    a0 = terms_lookupCoeff termsA 0
-    b = pad0 $ (2 * b0) : [terms_lookupCoeff termsB i | i <- [1..dB]]
-    b0 = terms_lookupCoeff termsB 0
-    pad0 list = take (int $ cN + 1) $ list ++ (repeat (mpBall 0))
+    aT = coeffs2gridvalues cN termsA
+    bT = coeffs2gridvalues cN termsB
     
     cN = 2 ^ (1 + (integer $ integerLog2 $ max 1 (dA + dB)))
-    dA = maximum $ terms_degrees termsA
-    dB = maximum $ terms_degrees termsB
+    dA = terms_degree termsA
+    dB = terms_degree termsB
+
+{-| 
+    Compute the values of the polynomial termsA on a grid.
+-}
+coeffs2gridvalues :: Integer -> Terms -> [MPBall]
+coeffs2gridvalues cN terms =
+    tDCT_I_nlogn coeffs
+    where
+    -- convert from sparse to dense representation:
+    coeffs = pad0 $ map (terms_lookupCoeffDoubleConstTerm terms) [0..(terms_degree terms)]
+    pad0 list = take (int $ cN + 1) $ list ++ (repeat (mpBall 0))
+
 
 {-|
     DCT-I computed directly from its definition in
