@@ -39,7 +39,8 @@ Library
                     FnReps.Polynomial.UnaryCheb.Poly.SizeReduction,
                     FnReps.Polynomial.UnaryPower.Poly.Basics,
                     FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding,
-                    FnReps.Polynomial.UnaryCheb.Poly.Division
+                    FnReps.Polynomial.UnaryCheb.Poly.Division,
+                    FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power
   exposed-modules:  
                     FnReps.Polynomial.UnaryCheb.PolyBall,
                     FnReps.Polynomial.UnaryCheb.RealFn,

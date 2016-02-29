@@ -28,7 +28,7 @@ where
 import qualified Data.List as List
 import qualified Data.Map as Map
 
---import qualified Prelude as Prelude
+import qualified Prelude as Prelude
 import AERN2.Num
 
 {-|
@@ -146,8 +146,11 @@ instance CanMulA (->) MPBall Poly where
     
 instance CanMulA (->) Poly Poly where
     type MulTypeA (->) Poly Poly = Poly
-    mulA (Poly ts, Poly ts') =
-        Map.foldl' (+) (fromList [(0,integer2BallP (prec 53) 0)]) $ Map.mapWithKey (\p c -> c*(Poly $ Map.mapKeys (\p' -> p' + p) ts')) ts  
+    mulA (p@(Poly ts), q@(Poly ts')) =
+        if terms_degree ts > 100 || terms_degree ts' > 100 then --TODO: best strategy?
+            karatsuba p q
+        else
+            Map.foldl' (+) (fromList [(0,integer2BallP (prec 53) 0)]) $ Map.mapWithKey (\p c -> c*(Poly $ Map.mapKeys (\p' -> p' + p) ts')) ts  
 
 shiftRight :: Integer -> Poly -> Poly
 shiftRight n (Poly ts) = Poly $ Map.mapKeys (\p -> p + n) ts
@@ -155,13 +158,13 @@ shiftRight n (Poly ts) = Poly $ Map.mapKeys (\p -> p + n) ts
 shiftLeft :: Integer -> Poly -> Poly
 shiftLeft n (Poly ts) = Poly $ Map.filterWithKey (\p _ -> p >= 0)  $ Map.mapKeys (\p -> p - n) ts
 
-{-takeTerms :: Integer -> Poly -> Poly
+takeTerms :: Integer -> Poly -> Poly
 takeTerms n (Poly ts) = Poly $ Map.filterWithKey (\p c -> p <= n) ts
         
 karatsuba :: Poly -> Poly -> Poly
-karatsuba p q =
-    if degree p < 5 || degree q < 5 then 
-        p * q
+karatsuba p@(Poly ts) q@(Poly ts') =
+    if degree p < 25 || degree q < 25 then -- TODO best strategy?
+        Map.foldl' (+) (fromList [(0,integer2BallP (prec 53) 0)]) $ Map.mapWithKey (\p c -> c*(Poly $ Map.mapKeys (\p' -> p' + p) ts')) ts
     else 
         shiftRight (2*m) r2 + shiftRight m r1 + r0
         where
@@ -172,6 +175,6 @@ karatsuba p q =
         p1 = shiftLeft m p
         q1 = shiftLeft m q
         p0 = takeTerms (m - 1) p
-        q0 = takeTerms (m - 1) q-}
+        q0 = takeTerms (m - 1) q
 
 
