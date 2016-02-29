@@ -51,6 +51,26 @@ instance Show Poly where
                 | deg == 0 = ""
                 | otherwise = "*X^" ++ show deg  
 
+data ApproxPoly = ApproxPoly Accuracy Poly
+
+instance HasApproximate Poly where
+    type Approximate Poly = ApproxPoly
+    getApproximate = ApproxPoly
+
+instance Show ApproxPoly where
+    show (ApproxPoly ac (Poly terms)) =
+        List.intercalate " + " $
+            map showTerm $ reverse $ List.sortBy (\(a,_) (b,_) -> compare b a) $ reverse $ terms_toList terms
+        where
+        showTerm (deg, coeff) = showApproxCoeff ++ showPower
+            where
+            showApproxCoeff =
+                show approxCoeff ++ (if coeffInaccurate then "!" else "")
+            (approxCoeff, coeffInaccurate) = getApproximate ac coeff
+            showPower
+                | deg == 0 = ""
+                | otherwise = "*X^" ++ show deg  
+
 type Degree = Integer
 
 type Terms = Map.Map Degree MPBall

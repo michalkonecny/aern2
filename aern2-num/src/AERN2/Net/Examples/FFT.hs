@@ -10,6 +10,7 @@ module AERN2.Net.Examples.FFT
 where
 
 import AERN2.Num
+import qualified Prelude as P (round)
 
 --import AERN2.Net.Spec.Arrow
 import Control.Arrow
@@ -149,7 +150,7 @@ ditfft2 nN s
             vXNhalf <- zipWithA subA -< (vTX0, vTXNhalfTwiddled)
             returnA -< vX0 ++ vXNhalf
     where
-    nNhalf = round (nN / 2)
+    nNhalf = P.round (nN / 2) -- TODO: introduce class CanHalve with operation halve
     twiddleA k = 
         proc x_k_plus_NHalf ->
             do

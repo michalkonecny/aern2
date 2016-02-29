@@ -7,6 +7,7 @@ module FnReps.Polynomial.UnaryCheb.PolyBall
     eval_ball_x,
     -- * data type definition
     PolyBall(..),
+    ApproxPolyBall(..),
     getMaxDegree,
     setMaxDegree,
     defaultMaxDegree,
@@ -86,6 +87,30 @@ instance Show PolyBall where
             | numerator q == 0 = "0"
             | denominator q == 1 = show $ numerator q
             | otherwise = (show $ numerator q) ++ "/" ++ (show $ denominator q)
+
+data ApproxPolyBall = ApproxPolyBall Accuracy PolyBall
+
+instance HasApproximate PolyBall where
+    type Approximate PolyBall = ApproxPolyBall
+    getApproximate = ApproxPolyBall
+
+instance Show ApproxPolyBall where
+    show (ApproxPolyBall ac (PolyBall poly dom maxDeg sweepT)) =
+        "(\\x∈" ++ showDom ++ " -> " ++ show (getApproximate ac polyOnDom) 
+            ++ " {mxd:" ++ show maxDeg ++ ";swp:" ++ show sweepT ++ "})"
+        where
+        polyOnDom =
+            PowerBasis.translate ((rD+lD)/2) $
+            PowerBasis.scale (2/(rD-lD)) $
+            cheb2Power poly
+        (Interval lD rD) = dom
+        showDom =
+            "[" ++ showQ lD ++ "," ++ showQ rD ++ "]"
+        showQ q     
+            | numerator q == 0 = "0"
+            | denominator q == 1 = show $ numerator q
+            | otherwise = (show $ numerator q) ++ "/" ++ (show $ denominator q)
+    
 
 --defaultCoeffPrecision :: Precision
 --defaultCoeffPrecision = prec 100

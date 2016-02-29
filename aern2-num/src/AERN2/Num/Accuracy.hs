@@ -2,7 +2,8 @@ module AERN2.Num.Accuracy
     (Accuracy(NoInformation, Exact), bits, fromAccuracy,
      HasAccuracy(..), getFiniteAccuracy, 
      iterateUntilAccurateA, iterateUntilAccurate,
-     seqByPrecision2CauchySeq) 
+     seqByPrecision2CauchySeq,
+     HasApproximate(..)) 
 where
 
 import AERN2.Num.Operations
@@ -162,4 +163,8 @@ seqByPrecision2CauchySeq seqByPrecision i =
     findAccurate (b : rest)
         | getAccuracy b >= i = b
         | otherwise = findAccurate rest
+
+class HasApproximate t where
+    type Approximate t
+    getApproximate :: Accuracy -> t -> (Approximate t)
 

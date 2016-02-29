@@ -177,6 +177,22 @@ instance HasAccuracy MPBall where
         where 
         ac = EB.getAccuracy e
 
+instance HasApproximate MPBall where
+    type Approximate MPBall = (MPFloat, Bool)
+    getApproximate ac b@(MPBall x e) =
+        (approx, isAccurate)
+        where
+        isAccurate = getAccuracy b < ac
+        approx
+            | closeToN = n
+            | otherwise = x
+            where
+            n = MP.round pp x
+            eMP = EB.er2mp e
+            closeToN = ((MP.abs $ x -^ n) <= eMP)
+            pp = ppKeepExact (getPrecision x)
+            (-^) = MP.subUp pp
+
 instance HasPrecision MPBall where
     getPrecision (MPBall x _) = getPrecision x
 

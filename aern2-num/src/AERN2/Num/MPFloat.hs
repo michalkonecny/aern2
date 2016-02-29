@@ -13,6 +13,7 @@ module AERN2.Num.MPFloat
      neg, abs, addUp, addDown, subUp, subDown, 
      distUp, distDown, avgUp, avgDown, 
      mulUp, mulDown, divUp, divDown, recipUp, recipDown,
+     round,
      -- * MPFR number selected operations
      cosUp, cosDown, sinUp, sinDown, sqrtUp, sqrtDown, expUp, expDown)
 where
@@ -106,6 +107,9 @@ avgUp pp x y = divUp pp (addUp pp x y) two
 avgDown :: PrecisionPolicy -> MPFloat -> MPFloat -> MPFloat
 avgDown pp x y = divDown pp two (addDown pp x y)
 
+round :: PrecisionPolicy -> MPFloat -> MPFloat
+round pp = MPLow.round (p2mpfrPrec $ precPolicy_precision pp) 
+
 {- common functions -}
 
 neg :: MPFloat -> MPFloat
@@ -137,6 +141,7 @@ recipUp pp x = divUp pp one x
 
 recipDown :: PrecisionPolicy -> MPFloat -> MPFloat
 recipDown pp x = divDown pp one x
+
 
 {- special constants and functions -}
 

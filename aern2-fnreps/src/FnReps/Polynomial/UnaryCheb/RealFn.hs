@@ -53,6 +53,16 @@ instance Show RealFn where
     show (RealFn withAccuracy _) =
         show $ withAccuracy (bits 100)
 
+data ApproxRealFn = ApproxRealFn Accuracy RealFn
+
+instance HasApproximate RealFn where
+    type Approximate RealFn = ApproxRealFn
+    getApproximate = ApproxRealFn
+
+instance Show ApproxRealFn where
+    show (ApproxRealFn ac (RealFn withAccuracy _)) =
+        show $ getApproximate ac $ withAccuracy ac
+    
 {- basic function operations -} 
 
 instance

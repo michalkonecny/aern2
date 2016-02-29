@@ -62,7 +62,7 @@ where
 import Prelude hiding
     (id, (.), (&&), (||), not, and, or,
      (==),(/=),(<),(>),(<=),(>=),
-     (+),(*),(/),(-),(^),sum,product,abs,min,max,
+     (+),(*),(/),(-),(^),sum,product,abs,min,max,round,
      recip,div,negate,
      fromInteger,fromRational,
      pi,sqrt,exp,cos,sin)
