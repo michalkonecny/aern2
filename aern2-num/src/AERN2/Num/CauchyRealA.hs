@@ -847,7 +847,8 @@ binaryMPRealA op =
         do
         let ac = getAccuracyIfExactUsePrec a
         b <- getAnswerCRA -< (r,ac+1)
-        returnA -< a `op` b
+        returnA -< a `op` (setPrecision (getPrecision a) b)
+                        -- avoid a potentially costly increase in precision
 
 getAccuracyIfExactUsePrec :: MPBall -> Accuracy
 getAccuracyIfExactUsePrec ball =
