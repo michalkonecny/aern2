@@ -14,11 +14,11 @@ module FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication
  )
 where
 
+import FnReps.Polynomial.UnaryCheb.Poly.Basics
+
 import Math.NumberTheory.Logarithms (integerLog2)
 
-import Data.List (sortBy, genericIndex)
-
-import FnReps.Polynomial.UnaryCheb.Poly.Basics
+import Data.List (sortBy)
 
 import Debug.Trace (trace)
 
@@ -42,9 +42,6 @@ instance CanMulA (->) Poly Poly where
 
 instance CanMulBy Poly Poly
 instance CanMulSameType Poly
-
-(!!!) :: [a] -> Integer -> a
-(!!!) = genericIndex
 
 multiplyDirect_terms
      :: Terms -> Terms -> Terms
