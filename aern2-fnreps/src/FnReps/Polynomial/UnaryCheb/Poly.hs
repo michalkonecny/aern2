@@ -8,7 +8,8 @@ module FnReps.Polynomial.UnaryCheb.Poly
     Degree,
     reduceDegreeAndSweep,
     module FnReps.Polynomial.UnaryCheb.Poly.Division,
-    module FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding
+    module FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding,
+    module FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power
 )
 where
 
@@ -22,6 +23,7 @@ import FnReps.Polynomial.UnaryCheb.Poly.SizeReduction
 import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication (multiplyDirect_terms, multiplyDCT_terms)
 import FnReps.Polynomial.UnaryCheb.Poly.Division
 import FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding
+import FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power
 
 _ucspoly1 :: Poly
 _ucspoly1 = 

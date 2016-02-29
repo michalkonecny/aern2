@@ -7,6 +7,9 @@ import qualified FnReps.Polynomial.UnaryCheb.Poly.Basics as Cheb
 import AERN2.Num
 import Math.NumberTheory.Logarithms (integerLog2)
 
+instance Show Cheb.Poly where
+    show = show . cheb2Power 
+
 
 cheb2Power :: Cheb.Poly -> Power.Poly
 cheb2Power (Cheb.Poly ts) = (aux 0 0) * (PolyVec (Power.fromIntegerListP (prec 53) [(0,1)]) (Power.fromIntegerListP (prec 53) [(1,1)]))

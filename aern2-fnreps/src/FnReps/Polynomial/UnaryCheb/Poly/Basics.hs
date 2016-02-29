@@ -22,7 +22,6 @@ module FnReps.Polynomial.UnaryCheb.Poly.Basics
 )
 where
 
-import qualified Data.List as List
 import qualified Data.Map as Map
 --import qualified Data.HashMap.Strict as HM
 
@@ -37,18 +36,6 @@ data Poly =
     {
         unaryChebSparse_terms :: Terms
     }
---    deriving (Show)
-
-instance Show Poly where
-    show (Poly terms) =
-        List.intercalate " + " $
-            map showTerm $ reverse $ List.sortBy (\(a,_) (b,_) -> compare b a) $ reverse $ terms_toList terms
-        where
-        showTerm (deg, coeff) = show coeff ++ showPower
-            where
-            showPower
-                | deg == 0 = ""
-                | otherwise = "*T_" ++ show deg  
 
 type Degree = Integer
 

@@ -24,6 +24,7 @@ import AERN2.RealFunction
 import Control.Arrow
 
 import FnReps.Polynomial.UnaryCheb.Poly
+import qualified FnReps.Polynomial.UnaryPower.Poly as PowerBasis (translate, scale)
 import Data.Ratio
 
 {- examples -}
@@ -71,11 +72,16 @@ data PolyBall =
 
 instance Show PolyBall where
     show (PolyBall poly dom maxDeg sweepT) =
-        "(\\x∈" ++ showDom dom ++ " -> " ++ show poly 
-            ++ "{mxd:" ++ show maxDeg ++ ";swp:" ++ show sweepT ++ "})"
+        "(\\x∈" ++ showDom ++ " -> " ++ show polyOnDom 
+            ++ " {mxd:" ++ show maxDeg ++ ";swp:" ++ show sweepT ++ "})"
         where
-        showDom (Interval l r) =
-            "[" ++ showQ l ++ "," ++ showQ r ++ "]"
+        polyOnDom =
+            PowerBasis.translate ((rD+lD)/2) $
+            PowerBasis.scale (2/(rD-lD)) $
+            cheb2Power poly
+        (Interval lD rD) = dom
+        showDom =
+            "[" ++ showQ lD ++ "," ++ showQ rD ++ "]"
         showQ q     
             | numerator q == 0 = "0"
             | denominator q == 1 = show $ numerator q

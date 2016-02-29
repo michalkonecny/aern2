@@ -23,7 +23,7 @@ maybeTrace
 {- examples -}
 
 rf_x :: RealFn
-rf_x = projUnaryFnA (Interval 0.0 (4/3))
+rf_x = projUnaryFnA (Interval (-1.0) (4.0))
 
 rf_2x :: RealFn
 rf_2x = rf_x + rf_x

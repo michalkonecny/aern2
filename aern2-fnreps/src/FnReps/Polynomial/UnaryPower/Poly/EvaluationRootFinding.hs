@@ -9,7 +9,9 @@ module FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding
     allRootsNaive,
     approximateRootByTrisection,
     approximateRootByBisection,
-    approximateRootNaive
+    approximateRootNaive,
+    translate,
+    scale
 )
 where
 
