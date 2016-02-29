@@ -4,7 +4,7 @@ module AERN2.Num.MPFloat
      -- * Precision operations
      module AERN2.Num.Precision,
      -- * MPFR numbers and their basic operations
-     MPFloat, setPrecisionUp,
+     MPFloat, setPrecisionUp, setPrecisionDown,
      toRational, toDoubleUp, toDoubleDown,
      -- * MPFR number constructors
      zero, one, two, fromIntegerUp, fromIntegerDown, fromRationalUp, fromRationalDown,
@@ -33,6 +33,9 @@ instance HasPrecision MPFloat where
 
 setPrecisionUp :: Precision -> MPFloat -> MPFloat
 setPrecisionUp p = MPLow.set MPLow.Up (p2mpfrPrec p)
+
+setPrecisionDown :: Precision -> MPFloat -> MPFloat
+setPrecisionDown p = MPLow.set MPLow.Down (p2mpfrPrec p)
 
 p2mpfrPrec :: Precision -> MPLow.Precision
 p2mpfrPrec = P.fromInteger . prec2integer

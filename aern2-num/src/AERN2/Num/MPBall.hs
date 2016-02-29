@@ -22,7 +22,7 @@ module AERN2.Num.MPBall
     (MPBall(..),
      HasMPBallsA, HasMPBalls,
      CanBeMPBallA, mpBallA, mpBallNamedA, mpBallsA, mpBallsNamedA, CanBeMPBall, mpBall, mpBalls,
-     setPrecisionMatchAccuracy, 
+     setPrecisionMatchAccuracy, setPrecision, 
      module AERN2.Num.Precision,
      module AERN2.Num.Accuracy,
      isNonZero,
@@ -189,6 +189,13 @@ setPrecisionMatchAccuracy acc b@(MPBall x e)
     p = MP.getPrecision x
     x' = MP.setPrecisionUp p' x
 
+setPrecision :: Precision -> MPBall -> MPBall
+setPrecision p (MPBall x e) =
+    MPBall xUp (e + (xUp `EB.subMP` xDown))
+    where
+    xUp = MP.setPrecisionUp p x
+    xDown = MP.setPrecisionDown p x
+    
 
 isNonZero :: MPBall -> Bool
 isNonZero (MPBall x e) =

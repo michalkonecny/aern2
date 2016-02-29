@@ -10,6 +10,7 @@ module AERN2.Num.Operations
     CanEmbedFnA, embedFnNamedA,
     HasIntsA, HasInts, fromIntADefault, 
     CanBeIntA, intA, intNamedA, intsA, intsNamedA, CanBeInt, int, intDefault, ints,
+    (!!!),
     HasIntegersA, HasIntegers, fromIntegerADefault, 
     CanBeIntegerA, integerA, integerNamedA, integersA, integersNamedA, CanBeInteger, integer, integerADefault, integers, 
     HasRationalsA, HasRationals, fromRationalADefault, 
@@ -69,6 +70,7 @@ import Prelude hiding
 import qualified Prelude as P
 import Data.String (IsString(..),fromString)
 import qualified Data.Map as Map
+import qualified Data.List as List
 
 import Control.Category
 import Control.Arrow
@@ -233,6 +235,9 @@ toInt i
         i P.>= toInteger (minBound :: Int)
         &&
         i P.<= toInteger (maxBound :: Int)
+
+(!!!) :: [a] -> Integer -> a
+(!!!) = List.genericIndex
 
 {-|
     This is useful so that 'convert' can be used as a replacement 
