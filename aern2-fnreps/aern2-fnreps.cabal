@@ -5,7 +5,7 @@ Build-Type:     Simple
 License:        BSD3
 License-File:   LICENCE
 Author:         Michal Konecny, Eike Neumann (Aston University)
-Copyright:      (c) 2015 Michal Konecny, Eike Neumann
+Copyright:      (c) 2015, 2016 Michal Konecny, Eike Neumann
 Maintainer:     mikkonecny@gmail.com
 Homepage:       https://github.com/michalkonecny/aern2
 Stability:      experimental
