@@ -15,6 +15,7 @@ module FnReps.Polynomial.UnaryCheb.PolyBall
     setThresholdNormLog,
     defaultSweepThresholdNormLog,
     setMaxDegreeNormLog,
+    getDegree,
     Degree
 )
 where
@@ -59,6 +60,12 @@ eval_ball_x :: Rational -> MPBall
 eval_ball_x v =
     evalAtInPointUnaryFnA (ball_x, v)
 
+_ball_DivDCT :: Degree -> PolyBall -> PolyBall -> PolyBall
+_ball_DivDCT d a b =
+    ucsLift2 (_ucspoly_DivDCT d) (a, b)
+--    where
+--    maxDeg = getDegree a `max` getDegree b
+
 {- type definition -} 
 
 data PolyBall =
@@ -70,6 +77,9 @@ data PolyBall =
         ball_maxDegree :: Degree,
         ball_sweepThresholdNormLog :: NormLog  
     }
+
+getDegree :: PolyBall -> Degree
+getDegree = poly_degree . ball_poly
 
 instance Show PolyBall where
     show (PolyBall poly dom maxDeg sweepT) =
@@ -393,7 +403,7 @@ ucsLift2 polyOpWithSizeLimits (a, b) =
         ball_sweepThresholdNormLog = sweepThresholdNormLog
     }
     where
-    maxDegree = max (ball_maxDegree a) (ball_maxDegree b)
+    maxDegree = (ball_maxDegree a) `max` (ball_maxDegree b)
     sweepThresholdNormLog = min (ball_sweepThresholdNormLog a) (ball_sweepThresholdNormLog b)
     aPoly = ball_poly a
     bPoly = ball_poly b

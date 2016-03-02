@@ -6,6 +6,7 @@ module FnReps.Polynomial.UnaryCheb.Poly
     _ucspoly_DivDCT,
     Poly(..), showRawPoly, printRawPoly, fromList, fromListRationalWithPrec,
     ucsFixedDomain,
+    poly_degree,
     normaliseCoeffs,
     Degree,
     reduceDegreeAndSweep,
@@ -61,6 +62,9 @@ _ucspoly_DivDCT d (Poly terms1) (Poly terms2) =
 
 ucsFixedDomain :: Interval Rational
 ucsFixedDomain = Interval (-1.0) 1.0
+
+poly_degree :: Poly -> Degree
+poly_degree (Poly terms) = terms_degree terms 
 
 instance
     (ArrowReal to MPBall) => 
