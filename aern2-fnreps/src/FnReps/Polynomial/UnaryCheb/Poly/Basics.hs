@@ -2,6 +2,7 @@ module FnReps.Polynomial.UnaryCheb.Poly.Basics
 (
     module AERN2.Num,
     Poly(..),
+    showRawPoly, printRawPoly,
     fromList,
     fromListRationalWithPrec,
     normaliseCoeffs,
@@ -26,6 +27,7 @@ import qualified Data.Map as Map
 --import qualified Data.HashMap.Strict as HM
 
 import AERN2.Num
+import qualified Data.List as List
 
 {-|
     Unary polynomials over the domain @[-1,1]@ with interval coefficients in the Chebyshev basis.
@@ -83,6 +85,20 @@ terms_filter = Map.filterWithKey
 --terms_lookupDefault = HM.lookupDefault
 --terms_unionWith :: (MPBall -> MPBall -> MPBall) -> Terms -> Terms -> Terms
 --terms_unionWith = HM.unionWith
+
+printRawPoly :: Poly -> IO ()
+printRawPoly = putStrLn . showRawPoly
+
+showRawPoly :: Poly -> String
+showRawPoly (Poly terms) =
+    List.intercalate " + " $
+        map showTerm $ reverse $ List.sortBy (\(a,_) (b,_) -> compare b a) $ reverse $ terms_toList terms
+    where
+    showTerm (deg, coeff) = show coeff ++ showPower
+        where
+        showPower
+            | deg == 0 = ""
+            | otherwise = "*T_" ++ show deg  
 
 
 fromList :: [(Degree, MPBall)] -> Poly
