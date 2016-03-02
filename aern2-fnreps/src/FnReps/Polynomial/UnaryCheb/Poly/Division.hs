@@ -4,8 +4,8 @@ import FnReps.Polynomial.UnaryCheb.Poly.Basics
 import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication
 
 
-divideDCT_terms :: Terms -> Terms -> Terms
-divideDCT_terms = lift2_DCT (/)
+divideDCT_terms :: Degree -> Terms -> Terms -> Terms
+divideDCT_terms d = lift2_DCT (const $ const $ d) (/)
     {- 
         TODO
         Add a bound on the interpolation error.
