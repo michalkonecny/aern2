@@ -52,9 +52,9 @@ _ucspoly_MultiplyDirect (Poly terms1) (Poly terms2) =
 _ucspoly_ones :: Precision -> Degree -> Poly
 _ucspoly_ones p d = Poly $ terms_fromList [(i,integer2BallP p 1) | i <- [0..d]]
 
-_ucspoly_DivDCT :: Poly -> Poly -> Poly
-_ucspoly_DivDCT (Poly terms1) (Poly terms2) =
-    Poly $ divideDCT_terms terms1 terms2 
+_ucspoly_DivDCT :: Degree -> Poly -> Poly -> Poly
+_ucspoly_DivDCT d (Poly terms1) (Poly terms2) =
+    Poly $ divideDCT_terms d terms1 terms2 
 
 
 {- RealUnaryFnA instance and related definitions -}

@@ -155,6 +155,113 @@ instance CanMulA (->) RealFn RealFn where
 instance CanMulBy RealFn RealFn
 instance CanMulSameType RealFn
 
+{- Mixed operations with Integer -}
+    
+instance CanAddA (->) RealFn Integer where
+    type AddTypeA (->) RealFn Integer = RealFn
+    addA (a, n) = lift1 (+n) a
+    
+instance CanAddA (->) Integer RealFn where
+    type AddTypeA (->) Integer RealFn = RealFn
+    addA (n, a) = lift1 (+n) a
+
+instance CanAddThis RealFn Integer
+
+instance CanSub RealFn Integer
+instance CanSubThis RealFn Integer
+
+instance CanSubA (->) Integer RealFn where
+    type SubTypeA (->) Integer RealFn = RealFn
+    subA (n, a) = addA (n, neg a)
+
+instance CanMulA (->) RealFn Integer where
+    type MulTypeA (->) RealFn Integer = RealFn
+    mulA (a, n) = lift1 (*n) a
+    
+instance CanMulA (->) Integer RealFn where
+    type MulTypeA (->) Integer RealFn = RealFn
+    mulA (n, a) = lift1 (*n) a
+
+instance CanMulBy RealFn Integer
+
+instance CanDivA (->) RealFn Integer where
+    type DivTypeA (->) RealFn Integer = RealFn
+    divA (a, n) = lift1 (/n) a
+    
+instance CanDivBy RealFn Integer
+
+{- Mixed operations with Rational -}
+    
+instance CanAddA (->) RealFn Rational where
+    type AddTypeA (->) RealFn Rational = RealFn
+    addA (a, n) = lift1 (+n) a
+    
+instance CanAddA (->) Rational RealFn where
+    type AddTypeA (->) Rational RealFn = RealFn
+    addA (n, a) = lift1 (+n) a
+
+instance CanAddThis RealFn Rational
+
+instance CanSub RealFn Rational
+instance CanSubThis RealFn Rational
+
+instance CanSubA (->) Rational RealFn where
+    type SubTypeA (->) Rational RealFn = RealFn
+    subA (n, a) = addA (n, neg a)
+
+instance CanMulA (->) RealFn Rational where
+    type MulTypeA (->) RealFn Rational = RealFn
+    mulA (a, n) = lift1 (*n) a
+    
+instance CanMulA (->) Rational RealFn where
+    type MulTypeA (->) Rational RealFn = RealFn
+    mulA (n, a) = lift1 (*n) a
+
+instance CanMulBy RealFn Rational
+
+instance CanDivA (->) RealFn Rational where
+    type DivTypeA (->) RealFn Rational = RealFn
+    divA (a, n) = lift1 (/n) a
+    
+instance CanDivBy RealFn Rational
+
+{- Mixed operations with MPBall -}
+    
+instance CanAddA (->) RealFn MPBall where
+    type AddTypeA (->) RealFn MPBall = RealFn
+    addA (a, n) = lift1 (+n) a
+    
+instance CanAddA (->) MPBall RealFn where
+    type AddTypeA (->) MPBall RealFn = RealFn
+    addA (n, a) = lift1 (+n) a
+
+instance CanAddThis RealFn MPBall
+
+instance CanSub RealFn MPBall
+instance CanSubThis RealFn MPBall
+
+instance CanSubA (->) MPBall RealFn where
+    type SubTypeA (->) MPBall RealFn = RealFn
+    subA (n, a) = addA (n, neg a)
+
+instance CanMulA (->) RealFn MPBall where
+    type MulTypeA (->) RealFn MPBall = RealFn
+    mulA (a, n) = lift1 (*n) a
+    
+instance CanMulA (->) MPBall RealFn where
+    type MulTypeA (->) MPBall RealFn = RealFn
+    mulA (n, a) = lift1 (*n) a
+
+instance CanMulBy RealFn MPBall
+
+instance CanDivA (->) RealFn MPBall where
+    type DivTypeA (->) RealFn MPBall = RealFn
+    divA (a, n) = lift1 (/n) a
+    
+instance CanDivBy RealFn MPBall
+
+
+
 lift1 :: 
     (PolyBall -> PolyBall) -> 
     (RealFn -> RealFn)

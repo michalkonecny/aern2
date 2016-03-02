@@ -68,6 +68,8 @@ terms_unionWith :: (MPBall -> MPBall -> MPBall) -> Terms -> Terms -> Terms
 terms_unionWith = Map.unionWith
 terms_filter :: (Degree -> MPBall -> Bool) -> Terms -> Terms
 terms_filter = Map.filterWithKey
+terms_updateConst :: (MPBall -> MPBall) -> Terms -> Terms
+terms_updateConst updateFn = Map.adjust updateFn 0
 
 -- alternative map implementation:
 --type Terms = HM.HashMap Integer MPBall
@@ -151,3 +153,123 @@ instance CanSub Poly Poly
 instance CanSubThis Poly Poly
 instance CanSubSameType Poly
     
+{- Mixed operations with Integer -}
+    
+instance CanAddA (->) Poly Integer where
+    type AddTypeA (->) Poly Integer = Poly
+    addA (Poly terms, n) =
+        Poly $ terms_updateConst (+n) terms
+    
+instance CanAddA (->) Integer Poly where
+    type AddTypeA (->) Integer Poly = Poly
+    addA (n, Poly terms) =
+        Poly $ terms_updateConst (+n) terms
+
+instance CanAddThis Poly Integer
+
+instance CanSub Poly Integer
+instance CanSubThis Poly Integer
+
+instance CanSubA (->) Integer Poly where
+    type SubTypeA (->) Integer Poly = Poly
+    subA (n, poly) = addA (n,  neg poly)
+
+instance CanMulA (->) Poly Integer where
+    type MulTypeA (->) Poly Integer = Poly
+    mulA (Poly terms, n) =
+        Poly $ terms_updateConst (*n) terms
+    
+instance CanMulA (->) Integer Poly where
+    type MulTypeA (->) Integer Poly = Poly
+    mulA (n, Poly terms) =
+        Poly $ terms_updateConst (*n) terms
+
+instance CanMulBy Poly Integer
+
+instance CanDivA (->) Poly Integer where
+    type DivTypeA (->) Poly Integer = Poly
+    divA (Poly terms, n) =
+        Poly $ terms_updateConst (/n) terms
+    
+instance CanDivBy Poly Integer
+    
+{- Mixed operations with Rational -}
+    
+instance CanAddA (->) Poly Rational where
+    type AddTypeA (->) Poly Rational = Poly
+    addA (Poly terms, n) =
+        Poly $ terms_updateConst (+n) terms
+    
+instance CanAddA (->) Rational Poly where
+    type AddTypeA (->) Rational Poly = Poly
+    addA (n, Poly terms) =
+        Poly $ terms_updateConst (+n) terms
+
+instance CanAddThis Poly Rational
+
+instance CanSub Poly Rational
+instance CanSubThis Poly Rational
+
+instance CanSubA (->) Rational Poly where
+    type SubTypeA (->) Rational Poly = Poly
+    subA (n, poly) = addA (n,  neg poly)
+
+instance CanMulA (->) Poly Rational where
+    type MulTypeA (->) Poly Rational = Poly
+    mulA (Poly terms, n) =
+        Poly $ terms_updateConst (*n) terms
+    
+instance CanMulA (->) Rational Poly where
+    type MulTypeA (->) Rational Poly = Poly
+    mulA (n, Poly terms) =
+        Poly $ terms_updateConst (*n) terms
+
+instance CanMulBy Poly Rational
+
+instance CanDivA (->) Poly Rational where
+    type DivTypeA (->) Poly Rational = Poly
+    divA (Poly terms, n) =
+        Poly $ terms_updateConst (/n) terms
+    
+instance CanDivBy Poly Rational
+
+{- Mixed operations with MPBall -}
+    
+instance CanAddA (->) Poly MPBall where
+    type AddTypeA (->) Poly MPBall = Poly
+    addA (Poly terms, n) =
+        Poly $ terms_updateConst (+n) terms
+    
+instance CanAddA (->) MPBall Poly where
+    type AddTypeA (->) MPBall Poly = Poly
+    addA (n, Poly terms) =
+        Poly $ terms_updateConst (+n) terms
+
+instance CanAddThis Poly MPBall
+
+instance CanSub Poly MPBall
+instance CanSubThis Poly MPBall
+
+instance CanSubA (->) MPBall Poly where
+    type SubTypeA (->) MPBall Poly = Poly
+    subA (n, poly) = addA (n,  neg poly)
+
+instance CanMulA (->) Poly MPBall where
+    type MulTypeA (->) Poly MPBall = Poly
+    mulA (Poly terms, n) =
+        Poly $ terms_updateConst (*n) terms
+    
+instance CanMulA (->) MPBall Poly where
+    type MulTypeA (->) MPBall Poly = Poly
+    mulA (n, Poly terms) =
+        Poly $ terms_updateConst (*n) terms
+
+instance CanMulBy Poly MPBall
+
+instance CanDivA (->) Poly MPBall where
+    type DivTypeA (->) Poly MPBall = Poly
+    divA (Poly terms, n) =
+        Poly $ terms_updateConst (/n) terms
+    
+instance CanDivBy Poly MPBall
+

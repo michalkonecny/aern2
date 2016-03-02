@@ -64,13 +64,14 @@ multiplyDirect_terms terms1 terms2 =
             
 
 multiplyDCT_terms :: Terms -> Terms -> Terms
-multiplyDCT_terms = lift2_DCT (*)
+multiplyDCT_terms = lift2_DCT (+) (*)
 
 
 lift2_DCT :: 
+    (Degree -> Degree -> Degree) ->
     (MPBall -> MPBall -> MPBall) -> 
     (Terms -> Terms -> Terms)
-lift2_DCT op termsA termsB =
+lift2_DCT getDegree op termsA termsB =
     maybeTrace
     (
         "lift2_DCT:"
@@ -83,6 +84,7 @@ lift2_DCT op termsA termsB =
         ++ "\n c = " ++ show c
     ) $
     terms_fromList $ zip [0..] (c0Double / 2 : c)
+--    terms_fromList [(0, mpBall 1)] -- dummy for debugging exceptions
     where
     (c0Double : c) = map (* (2 / cN)) (tDCT_I_nlogn cT) -- interpolate the values using a polynomial 
      
@@ -91,7 +93,7 @@ lift2_DCT op termsA termsB =
     aT = coeffs2gridvalues cN termsA
     bT = coeffs2gridvalues cN termsB
     
-    cN = 2 ^ (1 + (integer $ integerLog2 $ max 1 (dA + dB)))
+    cN = 2 ^ (1 + (integer $ integerLog2 $ max 1 (getDegree dA dB)))
     dA = terms_degree termsA
     dB = terms_degree termsB
 

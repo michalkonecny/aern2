@@ -238,10 +238,7 @@ instance CanNegA (->) PolyBall where
 instance CanNegSameType PolyBall
 
 instance CanAddA (->) PolyBall PolyBall where
-    addA = ucsLift2 addAndReduce
-        where
-        addAndReduce maxDegree sweepThresholdNormLog a b =
-            reduceDegreeAndSweep maxDegree sweepThresholdNormLog $ a + b
+    addA = ucsLift2 (+)
 
 instance CanAddThis PolyBall PolyBall
 instance CanAddSameType PolyBall
@@ -251,22 +248,146 @@ instance CanSubThis PolyBall PolyBall
 instance CanSubSameType PolyBall
         
 instance CanMulA (->) PolyBall PolyBall where
-    mulA = ucsLift2 addAndReduce
-        where
-        addAndReduce maxDegree sweepThresholdNormLog a b =
-            reduceDegreeAndSweep maxDegree sweepThresholdNormLog $ a * b
+    mulA = ucsLift2 (*)
 
 instance CanMulBy PolyBall PolyBall
 instance CanMulSameType PolyBall
         
+{- Mixed operations with Integer -}
+    
+instance CanAddA (->) PolyBall Integer where
+    type AddTypeA (->) PolyBall Integer = PolyBall
+    addA (a, n) = ucsLift1 (+n) a
+    
+instance CanAddA (->) Integer PolyBall where
+    type AddTypeA (->) Integer PolyBall = PolyBall
+    addA (n, a) = ucsLift1 (+n) a
+
+instance CanAddThis PolyBall Integer
+
+instance CanSub PolyBall Integer
+instance CanSubThis PolyBall Integer
+
+instance CanSubA (->) Integer PolyBall where
+    type SubTypeA (->) Integer PolyBall = PolyBall
+    subA (n, a) = addA (n, neg a)
+
+instance CanMulA (->) PolyBall Integer where
+    type MulTypeA (->) PolyBall Integer = PolyBall
+    mulA (a, n) = ucsLift1 (*n) a
+    
+instance CanMulA (->) Integer PolyBall where
+    type MulTypeA (->) Integer PolyBall = PolyBall
+    mulA (n, a) = ucsLift1 (*n) a
+
+instance CanMulBy PolyBall Integer
+
+instance CanDivA (->) PolyBall Integer where
+    type DivTypeA (->) PolyBall Integer = PolyBall
+    divA (a, n) = ucsLift1 (/n) a
+    
+instance CanDivBy PolyBall Integer
+
+{- Mixed operations with Rational -}
+    
+instance CanAddA (->) PolyBall Rational where
+    type AddTypeA (->) PolyBall Rational = PolyBall
+    addA (a, n) = ucsLift1 (+n) a
+    
+instance CanAddA (->) Rational PolyBall where
+    type AddTypeA (->) Rational PolyBall = PolyBall
+    addA (n, a) = ucsLift1 (+n) a
+
+instance CanAddThis PolyBall Rational
+
+instance CanSub PolyBall Rational
+instance CanSubThis PolyBall Rational
+
+instance CanSubA (->) Rational PolyBall where
+    type SubTypeA (->) Rational PolyBall = PolyBall
+    subA (n, a) = addA (n, neg a)
+
+instance CanMulA (->) PolyBall Rational where
+    type MulTypeA (->) PolyBall Rational = PolyBall
+    mulA (a, n) = ucsLift1 (*n) a
+    
+instance CanMulA (->) Rational PolyBall where
+    type MulTypeA (->) Rational PolyBall = PolyBall
+    mulA (n, a) = ucsLift1 (*n) a
+
+instance CanMulBy PolyBall Rational
+
+instance CanDivA (->) PolyBall Rational where
+    type DivTypeA (->) PolyBall Rational = PolyBall
+    divA (a, n) = ucsLift1 (/n) a
+    
+instance CanDivBy PolyBall Rational
+
+{- Mixed operations with MPBall -}
+    
+instance CanAddA (->) PolyBall MPBall where
+    type AddTypeA (->) PolyBall MPBall = PolyBall
+    addA (a, n) = ucsLift1 (+n) a
+    
+instance CanAddA (->) MPBall PolyBall where
+    type AddTypeA (->) MPBall PolyBall = PolyBall
+    addA (n, a) = ucsLift1 (+n) a
+
+instance CanAddThis PolyBall MPBall
+
+instance CanSub PolyBall MPBall
+instance CanSubThis PolyBall MPBall
+
+instance CanSubA (->) MPBall PolyBall where
+    type SubTypeA (->) MPBall PolyBall = PolyBall
+    subA (n, a) = addA (n, neg a)
+
+instance CanMulA (->) PolyBall MPBall where
+    type MulTypeA (->) PolyBall MPBall = PolyBall
+    mulA (a, n) = ucsLift1 (*n) a
+    
+instance CanMulA (->) MPBall PolyBall where
+    type MulTypeA (->) MPBall PolyBall = PolyBall
+    mulA (n, a) = ucsLift1 (*n) a
+
+instance CanMulBy PolyBall MPBall
+
+instance CanDivA (->) PolyBall MPBall where
+    type DivTypeA (->) PolyBall MPBall = PolyBall
+    divA (a, n) = ucsLift1 (/n) a
+    
+instance CanDivBy PolyBall MPBall
+
+{- utilities -}
+
+ucsLift1 :: 
+    (Poly -> Poly)
+    -> 
+    PolyBall -> PolyBall
+ucsLift1 polyOpWithSizeLimits a =
+    PolyBall
+    {
+        ball_poly = reduceDegreeAndSweep maxDegree sweepThresholdNormLog $ polyOpWithSizeLimits aPoly,
+        ball_domain = aDom,
+        ball_maxDegree = maxDegree,
+        ball_sweepThresholdNormLog = sweepThresholdNormLog
+    }
+    where
+    maxDegree = ball_maxDegree a
+    sweepThresholdNormLog = ball_sweepThresholdNormLog a
+    aPoly = ball_poly a
+    aDom = ball_domain a
+
+        
 ucsLift2 :: 
-    (Degree -> NormLog -> Poly -> Poly -> Poly)
+    (Poly -> Poly -> Poly)
     -> 
     (PolyBall, PolyBall) -> PolyBall
 ucsLift2 polyOpWithSizeLimits (a, b) =
     PolyBall
     {
-        ball_poly = polyOpWithSizeLimits maxDegree sweepThresholdNormLog aPoly bPoly,
+        ball_poly = 
+            reduceDegreeAndSweep maxDegree sweepThresholdNormLog $ polyOpWithSizeLimits aPoly bPoly,
         ball_domain = aDom,
         ball_maxDegree = maxDegree,
         ball_sweepThresholdNormLog = sweepThresholdNormLog
