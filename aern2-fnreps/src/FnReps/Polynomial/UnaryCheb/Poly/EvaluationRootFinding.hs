@@ -8,8 +8,9 @@ module FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding
 where
 
 import AERN2.Num
+import AERN2.RealFunction
+
 import FnReps.Polynomial.UnaryCheb.Poly.Basics
-import qualified FnReps.Polynomial.UnaryPower.Poly as PowerBasis
 
 import Control.Arrow
 
@@ -55,6 +56,42 @@ evalExample2 =
     poly =
         normaliseCoeffs $
             fromListRationalWithPrec (prec 100) [(n, (1/n))| n <- [1..1000] ]
+
+{- RealUnaryFnA instance -}
+
+instance
+    (ArrowReal to MPBall) => 
+    RealUnaryFnA to Poly
+    where
+    type UnaryFnIn Poly = Rational
+    type UnaryFnOut Poly = MPBall
+    getDomainUnaryFnA =
+        arr $ const polyFixedDomain
+    constUnaryFnA =
+        proc (_dom, value) ->
+            returnA -< fromList [(0,value)]
+    projUnaryFnA =
+        proc (_dom) ->
+            do
+            a1 <- convertA -< 1
+            returnA -< fromList [(1,a1)]
+    evalOnIntervalUnaryFnA =
+        error "UnaryCheb.Poly evalOnIntervalUnaryFnA not implemented yet"
+    evalAtInPointUnaryFnA =
+        proc (f, x) ->
+            do
+            xB <- convertA -< x
+            evalAtOutPointUnaryFnA -< (f,xB)
+    evalAtOutPointUnaryFnA =
+        proc (f, x) ->
+            do
+            case getAccuracy x of
+                Exact ->
+                    returnA -< evalDirectOnBall f x
+                _ ->  
+                    returnA -< evalLipschitzOnBall f x
+
+
 
 --{-|
 --    An evaluation of the polynomial at the ball x using Clenshaw Algorithm

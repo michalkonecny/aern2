@@ -62,7 +62,7 @@ eval_ball_x v =
 
 _ball_DivDCT :: Degree -> PolyBall -> PolyBall -> PolyBall
 _ball_DivDCT d a b =
-    ucsLift2 (_ucspoly_DivDCT d) (a, b)
+    ucsLift2 (divideDCT_poly d) (a, b)
 --    where
 --    maxDeg = getDegree a `max` getDegree b
 
@@ -206,7 +206,7 @@ instance
     constUnaryFnA =
         proc (dom, value) ->
             do
-            poly <- constUnaryFnA -< (ucsFixedDomain, value)
+            poly <- constUnaryFnA -< (polyFixedDomain, value)
             let maxDeg = defaultMaxDegree
             let sweepThreshold = defaultSweepThresholdNormLog
             returnA -< PolyBall poly dom maxDeg sweepThreshold 

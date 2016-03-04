@@ -2,6 +2,8 @@ module FnReps.Polynomial.UnaryCheb.Poly.Basics
 (
     module AERN2.Num,
     Poly(..),
+    poly_degree,
+    polyFixedDomain, 
     showRawPoly, printRawPoly,
     fromList,
     fromListRationalWithPrec,
@@ -19,7 +21,8 @@ module FnReps.Polynomial.UnaryCheb.Poly.Basics
     terms_lookupCoeff,
     terms_lookupCoeffDoubleConstTerm,
     terms_unionWith,
-    terms_filter
+    terms_filter,
+    terms_updateConst
 )
 where
 
@@ -36,10 +39,16 @@ import qualified Data.List as List
 data Poly = 
     Poly
     {
-        unaryChebSparse_terms :: Terms
+        poly_terms :: Terms
     }
 
 type Degree = Integer
+
+poly_degree :: Poly -> Degree
+poly_degree (Poly terms) = terms_degree terms 
+
+polyFixedDomain :: Interval Rational
+polyFixedDomain = Interval (-1.0) 1.0
 
 type Terms = Map.Map Degree MPBall
 terms_size :: Terms -> Integer
