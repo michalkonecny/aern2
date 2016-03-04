@@ -39,8 +39,8 @@ rati2MPBall il@(Interval l r) =
             NormZero -> error "rati2MPBall does not work for a singleton interval"
     nl = getNormLog (r - l)
 
-mpBall2rati :: MPBall -> Interval Rational
-mpBall2rati b =
+_mpBall2rati :: MPBall -> Interval Rational
+_mpBall2rati b =
     Interval l r
     where
     l = toRationalDown b
@@ -63,8 +63,8 @@ _cri2MPBall (Interval l r) =
     nl = getNormLog ((cauchyReal2ball r a0) - (cauchyReal2ball l a0))
     a0 = bits 10
 
-_mpBall2cri :: MPBall -> Interval CauchyReal
-_mpBall2cri b =
+mpBall2cri :: MPBall -> Interval CauchyReal
+mpBall2cri b =
     maybeTrace
     (
         "mpBall2cri: b = " ++ show b
@@ -110,7 +110,7 @@ instance RealUnaryFnA (->) UnaryFnMPBall where
         convergent2CauchyReal Nothing $ 
             map f $ map (flip rational2BallP r) standardPrecisions
     evalOnIntervalUnaryFnA ((_dom, f), ri) =  
-        mpBall2rati $ f (rati2MPBall ri)
+        mpBall2cri $ f (rati2MPBall ri) -- TODO: not computing the maximum extension, should do 
 
 type UnaryFnCR = (Interval Rational, CauchyReal -> CauchyReal) 
 
