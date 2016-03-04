@@ -24,6 +24,6 @@ class
     getDomainUnaryFnA :: f `to` (Interval (UnaryFnIn f))
     evalAtOutPointUnaryFnA :: (f, UnaryFnOut f) `to` (UnaryFnOut f)
     evalAtInPointUnaryFnA :: (f, UnaryFnIn f) `to` (UnaryFnOut f)
-    evalOnIntervalUnaryFnA :: (f, Interval (UnaryFnIn f)) `to` Interval (UnaryFnIn f)
+    evalOnIntervalUnaryFnA :: (f, Interval (UnaryFnIn f)) `to` Interval (UnaryFnOut f)
 
 
