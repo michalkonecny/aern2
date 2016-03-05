@@ -273,6 +273,19 @@ instance (ArrowPrecisionPolicy to) => HasOrderA to MPBall MPBall where
             (+^) = MP.addUp pp
             (-.) = MP.subDown pp
 
+instance (ArrowPrecisionPolicy to) => CanMinMaxA to MPBall MPBall where
+    minA = arr $ byMPendpoints P.min
+    maxA = arr $ byMPendpoints P.max
+
+byMPendpoints :: 
+    (MPFloat -> MPFloat -> MPFloat) -> 
+    (MPBall, MPBall) -> MPBall
+byMPendpoints op (b1, b2) =
+    endpointsMP2Ball (l1 `op` l2) (r1 `op` r2)
+    where
+    (l1,r1) = ball2endpointsMP b1
+    (l2,r2) = ball2endpointsMP b2
+
 instance (ArrowPrecisionPolicy to) => HasEqA to MPBall Integer where
     type EqCompareTypeA to MPBall Integer = Maybe Bool
     equalToA = convertSecondUsingA integer2BallP equalToA
@@ -312,6 +325,26 @@ instance (ArrowPrecisionPolicy to) => HasOrderA to Rational MPBall where
     type OrderCompareTypeA to Rational MPBall = Maybe Bool
     lessThanA = convertFirstUsingA rational2BallP lessThanA
     leqA = convertFirstUsingA rational2BallP leqA
+
+instance (ArrowPrecisionPolicy to) => CanMinMaxA to Integer MPBall where
+    type MinMaxTypeA to Integer MPBall = MPBall
+    minA = convertFirstUsingA integer2BallP minA
+    maxA = convertFirstUsingA integer2BallP maxA
+
+instance (ArrowPrecisionPolicy to) => CanMinMaxA to MPBall Integer where
+    type MinMaxTypeA to MPBall Integer = MPBall
+    minA = convertSecondUsingA integer2BallP minA
+    maxA = convertSecondUsingA integer2BallP maxA
+
+instance (ArrowPrecisionPolicy to) => CanMinMaxA to Rational MPBall where
+    type MinMaxTypeA to Rational MPBall = MPBall
+    minA = convertFirstUsingA rational2BallP minA
+    maxA = convertFirstUsingA rational2BallP maxA
+
+instance (ArrowPrecisionPolicy to) => CanMinMaxA to MPBall Rational where
+    type MinMaxTypeA to MPBall Rational = MPBall
+    minA = convertSecondUsingA rational2BallP minA
+    maxA = convertSecondUsingA rational2BallP maxA
 
 
 instance (Arrow to) => CanNegA to MPBall where
