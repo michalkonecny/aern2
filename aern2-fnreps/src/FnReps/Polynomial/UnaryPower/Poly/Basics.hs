@@ -167,9 +167,9 @@ instance CanMulA (->) MPBall Poly where
 instance CanMulA (->) Poly Poly where
     type MulTypeA (->) Poly Poly = Poly
     mulA (p@(Poly ts), q@(Poly ts')) =
-        if terms_degree ts > 100 || terms_degree ts' > 100 then --TODO: best strategy?
+        {-if terms_degree ts > 100 || terms_degree ts' > 100 then --TODO: best strategy?
             karatsuba p q
-        else
+        else-}
             Map.foldl' (+) (fromList [(0,integer2BallP (prec 53) 0)]) $ Map.mapWithKey (\p c -> c*(Poly $ Map.mapKeys (\p' -> p' + p) ts')) ts  
 
 shiftRight :: Integer -> Poly -> Poly

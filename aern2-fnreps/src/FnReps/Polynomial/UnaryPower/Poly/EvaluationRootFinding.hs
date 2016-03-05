@@ -2,16 +2,13 @@
 module FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding
 (
     eval,
+    range,
     derivative,
     allRoots,
-    allRootsByTrisection,
-    allRootsByBisection,
-    allRootsNaive,
-    approximateRootByTrisection,
-    approximateRootByBisection,
-    approximateRootNaive,
+    isolateRoots,
     translate,
-    scale
+    scale,
+    roots
 )
 where
 
@@ -25,32 +22,110 @@ eval poly@(Poly ts) x =
     evalHornerAcc (degree poly) $ (integer2BallP (prec 53) 0)
     where
     evalHornerAcc 0 sm = x*sm + terms_lookupCoeff ts 0
-    evalHornerAcc (k + 1) sm = evalHornerAcc k $ x*sm + terms_lookupCoeff ts (k + 1)
-    evalHornerAcc _ _ = error ""
+    evalHornerAcc k sm = evalHornerAcc (k - 1) $ x*sm + terms_lookupCoeff ts k
 
 evalOnRational :: Poly -> Rational -> MPBall
 evalOnRational poly@(Poly ts) x =
     evalOnRationalHornerAcc (degree poly) $ (integer2BallP (prec 53) 0)
     where
     evalOnRationalHornerAcc 0 sm = x*sm + terms_lookupCoeff ts 0
-    evalOnRationalHornerAcc (k + 1) sm = evalOnRationalHornerAcc k $ (rational2BallP (getPrecision sm) x)*sm + terms_lookupCoeff ts (k + 1) -- TODO maybe get the right precision in the beginning to avoid overhead
-    evalOnRationalHornerAcc _ _ = error ""
+    evalOnRationalHornerAcc k sm = evalOnRationalHornerAcc (k - 1) $ (rational2BallP (getPrecision sm) x)*sm + terms_lookupCoeff ts k -- TODO maybe get the right precision in the beginning to avoid overhead
+
+range :: Accuracy -> Poly -> Interval MPBall -> Interval MPBall
+range ac p (Interval l r) = Interval minValue maxValue
+                            where
+                            criticalPoints = allRoots (toRationalDown l) (toRationalUp r) ac $ derivative p
+                            criticalValues = [eval p l, eval p r] ++ map (eval p) criticalPoints
+                            minValue = foldl1 (\x y -> min x y) criticalValues
+                            maxValue = foldl1 (\x y -> max x y) criticalValues
+                            
+
+{-rangeEstimate :: Poly -> Rational -> Rational -> Accuracy -> MPBall
+rangeEstimate p l r ac = result
+                      where
+                      b = ri2ball (Interval l r) ac
+                      result = (eval p b) + b_errorBall * lp
+                      (b_centre, b_errorBall) = getCentreAndErrorBall b
+                      lp = markovBound l r p
+
+markovBound :: Rational -> Rational -> Poly -> MPBall
+markovBound l r p  = (degree p')^2 * Map.foldl' (\x y -> x + abs(y)) (mpBall 0) ts
+                     where
+                     p'@(Poly ts) = translate (-l) $ scale (r - l) p -}
 
 derivative :: Poly -> Poly
 derivative (Poly ts) = Poly $ Map.filterWithKey (\k _ -> k >= 0) $ Map.mapKeys (\k -> k - 1) $ Map.mapWithKey (\p c -> c*p) ts
 
--- TODO: maybe make this more "usable" by replacing the output type with Maybe Integer in case of undecidable inequality     
-signVariations :: Poly -> Integer
+{- Root finding -}
+
+data RootInterval = RootInterval Rational Rational Poly (Maybe Bool) Bool
+
+instance Show RootInterval where
+    show (RootInterval l r p unique refinable) = "["++(show l)++", "++(show r)++"]. Unique root? "++(format unique)++" Refinable?"++(show refinable)
+                                                 where
+                                                 format x = case x of
+                                                                Just True -> "True."
+                                                                Just False -> "False."
+                                                                Nothing -> "Don't know."
+
+ri_isAccurate :: RootInterval -> Accuracy -> Bool
+ri_isAccurate (RootInterval l r _ _ _) ac = getAccuracy (ri2ball (Interval l r) (ac + 2)) >= ac
+
+ri_isRefinable :: RootInterval -> Bool
+ri_isRefinable (RootInterval _ _ _ _ b) = b 
+
+ri_hasRoot :: RootInterval -> (Maybe Bool)
+ri_hasRoot (RootInterval _ _ _ b _) = b 
+
+split :: RootInterval -> [RootInterval]
+split ri@(RootInterval l r p _ _)  = filter (\x -> ri_hasRoot x /= Just False) [left,right]
+                                     where
+                                     rootLeft  = hasSingleRoot l m p
+                                     rootRight = hasSingleRoot m r p
+                                     left  = RootInterval l m p (fst rootLeft) (snd rootLeft)
+                                     right = RootInterval m r p (fst rootRight) (snd rootRight)
+                                     m = findMidpoint l r p
+
+--TODO this is still fairly slow when there are multiple roots
+refine :: Accuracy -> RootInterval -> [RootInterval]
+refine ac ri@(RootInterval _ _ _ rootUnique refinable) = if ri_isAccurate ri ac || not refinable then
+                                                        [ri]
+                                                    else if rootUnique == Just True then 
+                                                        [approximateRootByTrisection' ac ri] 
+                                                    else 
+                                                        foldl (++) [] $ map (refine ac) $ split ri
+
+refineList :: Accuracy -> [RootInterval] -> [RootInterval]
+refineList ac = foldl (++) [] . map (refine ac)
+                                            
+roots :: Accuracy -> RootInterval -> [MPBall]
+roots ac ri = map (\(RootInterval l r _ _ _) -> (ri2ball (Interval l r) (ac + 2))) (refine ac ri)                                               
+     
+signVariations :: Poly -> Maybe Integer
 signVariations poly@(Poly ts) = 
-        snd $ Map.foldl' (\(sg,vrs) -> \sg' ->  if sg' == 0 || sg == sg' then (sg,vrs) else (sg',vrs + 1)) (sgn (snd $ Map.findMin ts),0) $ Map.map (\c -> sgn c) ts
+        snd $ Map.foldl' (\(sg,mvrs) -> \sg' -> 
+                            case mvrs of
+                                Nothing  -> (sg',Nothing)
+                                Just vrs -> if isNothing sg' || isNothing sg then
+                                                (sg',Nothing)
+                                            else if fromJust sg' == 0 || fromJust sg == fromJust sg' then
+                                                (sg,Just vrs)
+                                            else
+                                                (sg',Just $ vrs + 1)
+                                                ) 
+                         (sgn (snd $ Map.findMin ts), Just 0) $ Map.map (\c -> sgn c) ts
         where
+        isNothing Nothing = True
+        isNothing _       = False
+        fromJust (Just a) = a
+        fromJust _        = error " "
         sgn x = case x >= 0 of
                         Just True  -> case x == 0 of
-                                        Just True  -> 0
-                                        Just False -> 1
-                                        Nothing -> error $ "cannot compute sign variations: undecidable inequality " ++ (show x) ++ " >= 0, \n in the polynomial \n" ++ (show poly)
-                        Just False -> -1
-                        Nothing -> error $ "cannot compute sign variations: undecidable inequality " ++ (show x) ++ " >= 0, \n in the polynomial \n" ++ (show poly)
+                                        Just True  -> Just 0
+                                        Just False -> Just 1
+                                        Nothing -> Nothing
+                        Just False -> Just $ -1
+                        Nothing -> Nothing -- error $ "cannot compute sign variations: undecidable inequality " ++ (show x) ++ " >= 0, \n in the polynomial \n" ++ (show poly)
 
 reflect :: Poly -> Poly
 reflect poly@(Poly ts) = Poly ts'
@@ -68,25 +143,27 @@ translate t poly@(Poly ts) =
 
 scale :: Rational -> Poly -> Poly
 scale l (Poly ts) = Poly ts'
-                                    where
-                                    ts' = Map.mapWithKey (\p c -> c*l^p) ts
+                    where
+                    ts' = Map.mapWithKey (\p c -> c*l^p) ts
                                     
-
---TODO compute separable part to deal with multiple zeroes
 transform :: Rational -> Rational -> Poly -> Poly
 transform l r = (translate (-1.0)) . (reflect) . (scale (r - l)) . (translate (-l)) --do transform directly?    
 
-rootIndicator :: Rational -> Rational -> Poly -> Integer
+rootIndicator :: Rational -> Rational -> Poly -> Maybe Integer
 rootIndicator l r = signVariations . transform l r 
 
-{- returns If this functions returns "Just True", then there is a single simple root.
-           If it returns "Just False", then there is no root.
-           If it returns "Nothing" we do not know.  -}
-hasSingleRoot :: Rational -> Rational -> Poly -> Maybe Bool
+{- The first component of the return value tells us if the function has a single simple root:
+           If it is "Just True", then there is a single simple root.
+           If it is "Just False", then there is no root.
+           If it is "Nothing" we do not know. 
+   The second component of the return value tells us if we could improve the result by making the interval smaller
+            -}
+hasSingleRoot :: Rational -> Rational -> Poly -> (Maybe Bool, Bool)
 hasSingleRoot l r p = case rootIndicator l r p of
-                        0 -> Just False
-                        1 -> Just True
-                        _ -> Nothing
+                        Just 0  -> (Just False, True)
+                        Just 1  -> (Just True, True)
+                        Just _  -> (Nothing, True)
+                        Nothing -> (Nothing, False)
 
 {-hasSomeRoot :: Rational -> Rational -> Poly -> Maybe Bool
 hasSomeRoot l r p = if changesSign l r p then
@@ -102,14 +179,16 @@ changesSign l r p  = case (lPos,rPos) of
                         lPos = (evalOnRational p l) > 0
                         rPos = (evalOnRational p r) > 0-}
 
+{- precondition: poly is separable -}
 isolateRoots :: Rational -> Rational -> Poly -> [Interval Rational]
-isolateRoots l r p = refine l r
+isolateRoots l r p = ref l r
                      where
-                     refine :: Rational -> Rational -> [Interval Rational]
-                     refine l' r' = case hasSingleRoot l' r' p of
-                                                Just True  -> [Interval l' r']
-                                                Just False -> []
-                                                Nothing    -> (refine l' m) ++ (refine m r')
+                     ref:: Rational -> Rational -> [Interval Rational]
+                     ref l' r' = case hasSingleRoot l' r' p of
+                                                (_, False)     -> [Interval l' r']
+                                                (Just True,_)  -> [Interval l' r']
+                                                (Just False,_) -> []
+                                                (Nothing,_)    -> (ref l' m) ++ (ref m r')
                                                               where
                                                               m = findMidpoint l' r' p
 
@@ -123,18 +202,20 @@ findMidpoint l r p = findMidpointAcc l r p 2 1
                                                           else
                                                             findMidpointAcc l' r' p' (n + 1) 1 --TODO better strategy?
                                                               
-approximateRootNaive :: Rational -> Rational -> Accuracy -> Poly -> MPBall
-approximateRootNaive l r a p = if getAccuracy (ri2ball (Interval l r) (a + 2)) >= a then
+approximateRootNaive :: Rational -> Rational -> Accuracy -> Bool -> Poly -> MPBall
+approximateRootNaive l r a giveup p = 
+                           if giveup || getAccuracy (ri2ball (Interval l r) (a + 2)) >= a then
                                 ri2ball (Interval l r) a
                            else
-                                approximateRootNaive l' r' a p
+                                approximateRootNaive l' r' a giveup' p
                                 where
                                 ml = (9*l + 7*r)/16
                                 mr = (7*l + 9*r)/16
-                                (l',r') = case hasSingleRoot l mr p of
-                                                Just True  -> (l,mr)
-                                                Just False -> (ml,r)
-                                                Nothing -> error "Illegal use of approximateRootNaive: polynomial must have a unique simple root in the given interval"       
+                                (l',r',giveup') = case hasSingleRoot l mr p of
+                                                    (_, False)       -> (l,r, True)
+                                                    (Just True, _)   -> (l,mr,False)
+                                                    (Just False, _)  -> (ml,r,False)
+                                                    (Nothing, _)     -> (l,r, True)       
        
 approximateRootByTrisection :: Rational -> Rational -> Accuracy -> Poly -> MPBall
 approximateRootByTrisection l r a p = case evalOnRational p l > 0 of
@@ -148,6 +229,21 @@ approximateRootByTrisection l r a p = case evalOnRational p l > 0 of
                                        else case trisect l' r' posL p of
                                         Just (l'',r'',posL') -> aux l'' r'' a' p' posL'
                                         Nothing -> ri2ball (Interval l' r') a        
+                                        
+
+approximateRootByTrisection' :: Accuracy -> RootInterval -> RootInterval
+approximateRootByTrisection' ac (RootInterval l r p u _) = 
+                                                        case evalOnRational p l > 0 of
+                                                            Just False -> aux l r ac p False
+                                                            Just True  -> aux l r ac p True
+                                                            Nothing    -> RootInterval l r p u False
+                                                        where
+                                                          aux l' r' a' p' posL =
+                                                           if getAccuracy (ri2ball (Interval l' r') (ac + 2)) >= ac then
+                                                                RootInterval l' r' p' u True
+                                                           else case trisect l' r' posL p of
+                                                            Just (l'',r'',posL') -> aux l'' r'' a' p' posL'
+                                                            Nothing -> RootInterval l' r' p' u False                                         
                                         
 trisect :: Rational -> Rational -> Bool -> Poly -> Maybe (Rational,Rational, Bool) -- l', r', l' positive?
 trisect l r posL p = case (posML,posMR) of
@@ -185,33 +281,18 @@ findMidpoint' l r p = case evalOnRational p m > 0.0 of
                         Just False -> (m, Just False)
                         Nothing    -> (m, Nothing)
                       where
-                      m  = (l + r)/2               
-
-{-markovBound :: Rational -> Rational -> Poly -> MPBall
-markovBound l r p  = (degree p')^2 * Map.foldl' (\x y -> x + abs(y)) (integer2Ball 0) ts
-                     where
-                     p'@(Poly ts) = translate (-l) $ scale (r - l) p   -}                  
+                      m  = (l + r)/2                            
        
 {- -}                            
 allRoots :: Rational -> Rational -> Accuracy -> Poly -> [MPBall]
-allRoots = allRootsByTrisection   
+allRoots l r ac p = roots ac $ RootInterval l r p Nothing True
 
-allRootsNaive :: Rational -> Rational -> Accuracy -> Poly -> [MPBall] -- this function is just to test the correctness of the algorithm.. do not call it on big polynomials!
-allRootsNaive l r a p = map (\(Interval l' r') -> approximateRootNaive l' r' a p) $ isolateRoots l r p
+{-allRootsNaive :: Rational -> Rational -> Accuracy -> Poly -> [MPBall] -- this function is just to test the correctness of the algorithm.. do not call it on big polynomials!
+allRootsNaive l r a p = map (\(Interval l' r') -> approximateRootNaive l' r' a False p) $ isolateRoots l r p
 
 allRootsByTrisection :: Rational -> Rational -> Accuracy -> Poly -> [MPBall]
 allRootsByTrisection l r a p = map (\(Interval l' r') -> approximateRootByTrisection l' r' a p) $ isolateRoots l r p   
   
 allRootsByBisection :: Rational -> Rational -> Accuracy -> Poly -> [MPBall]
-allRootsByBisection l r a p = map (\(Interval l' r') -> approximateRootByBisection l' r' a p) $ isolateRoots l r p  
-
-{- auxiliary function -}
-
-{-ri2ball :: Interval Rational -> Accuracy -> MPBall
-ri2ball (Interval l r) acc =
-    endpoints2Ball lB rB
-    where
-    lB = rational2BallP p l
-    rB = rational2BallP p r
-    p = prec $ fromAccuracy acc -}            
+allRootsByBisection l r a p = map (\(Interval l' r') -> approximateRootByBisection l' r' a p) $ isolateRoots l r p  -}         
                                                                                          
