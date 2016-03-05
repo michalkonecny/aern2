@@ -1,4 +1,4 @@
-{-# LANGUAGE Arrows, ScopedTypeVariables, FlexibleContexts, TypeOperators, TemplateHaskell, OverloadedStrings #-}
+{-# LANGUAGE Arrows, ScopedTypeVariables, FlexibleContexts, TypeOperators, TemplateHaskell, OverloadedStrings, UndecidableInstances #-}
 module FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding 
 (
     evalDirectA, evalDirectOnBall, evalLipschitzOnBall 
