@@ -1,7 +1,8 @@
 {-# LANGUAGE Arrows, ScopedTypeVariables, FlexibleContexts, TypeOperators, TemplateHaskell, OverloadedStrings, UndecidableInstances #-}
 module FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding 
 (
-    evalDirectA, evalDirectOnBall, evalLipschitzOnBall 
+    evalDirectA, evalDirectOnBall, evalLipschitzOnBall,
+    range
 --   , toPowerBase
     , evalExample1, evalExample2
 )
@@ -11,6 +12,9 @@ import AERN2.Num
 import AERN2.RealFunction
 
 import FnReps.Polynomial.UnaryCheb.Poly.Basics
+import FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power
+
+import qualified FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding as Power
 
 import Control.Arrow
 
@@ -189,6 +193,15 @@ evalLipschitzOnBall p@(Poly terms) b =
     (b_centre, b_errorBall) = getCentreAndErrorBall b
     lp = sum (map abs $ terms_coeffs terms) * (terms_degree terms)^2
 
+range :: Accuracy -> Poly -> Interval MPBall -> Interval MPBall
+range ac p (Interval l r) = Interval minValue maxValue
+                            where
+                            power = cheb2Power p
+                            criticalPoints = Power.allRoots (toRationalDown l) (toRationalUp r) ac $ Power.derivative power
+                            criticalValues = [evalLipschitzOnBall p l, evalLipschitzOnBall p r] ++ map (evalLipschitzOnBall p) criticalPoints
+                            minValue = foldl1 (\x y -> min x y) criticalValues
+                            maxValue = foldl1 (\x y -> max x y) criticalValues
+
 {-|
     This function is not implemented yet.  It is not yet clear whether it will be needed. 
 
@@ -212,7 +225,6 @@ _findAllRoots = error "findAllRoots not implemented yet"
     or the given accuracy threshold is reached. 
     
 -}
-
 
 approximateRoot :: Rational -> Rational -> Accuracy -> Poly -> MPBall
 approximateRoot l r a p = case evalDirectOnRational p l > 0 of
