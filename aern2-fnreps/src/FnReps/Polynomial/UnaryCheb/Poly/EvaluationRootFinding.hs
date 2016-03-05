@@ -79,8 +79,14 @@ instance
             do
             a1 <- convertA -< 1
             returnA -< fromList [(1,a1)]
-    evalOnIntervalUnaryFnA =
-        error "UnaryCheb.Poly evalOnIntervalUnaryFnA not implemented yet"
+    evalOnIntervalUnaryFnA = arr aux
+        where
+        aux (poly@(Poly terms),Interval l r) =
+            range acc poly (Interval (rational2BallP p l) (rational2BallP p r))
+            where
+            c = terms_lookupCoeff terms 0
+            p = getPrecision c
+            acc = getFiniteAccuracy c
     evalAtInPointUnaryFnA =
         proc (f, x) ->
             do

@@ -10,9 +10,10 @@ import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication
 divideDCT_poly :: Degree -> Poly -> Poly -> Poly
 divideDCT_poly d p@(Poly pTerms) q@(Poly qTerms) = r
     where
-    r = Poly $
-            terms_updateConst pmErrorBound $ 
-                lift2_DCT (const $ const $ d) (/) pTerms qTerms
+    r = normaliseCoeffs $
+            Poly $
+                terms_updateConst pmErrorBound $ 
+                    lift2_DCT (const $ const $ d) (/) pTerms qTerms
     pmErrorBound c = endpoints2Ball (c - errorBound) (c + errorBound) 
     errorBound =
         maxDifference / minQ
