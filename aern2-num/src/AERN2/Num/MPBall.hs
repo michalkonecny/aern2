@@ -202,9 +202,12 @@ instance HasPrecision MPBall where
     (assuming the accuracy is finite).
 -}
 setPrecisionMatchAccuracy :: Accuracy -> MPBall -> MPBall
-setPrecisionMatchAccuracy acc = setPrecision p
+setPrecisionMatchAccuracy acc b 
+    | p_b < p_acc = setPrecision p_acc b
+    | otherwise = b
     where
-    p = MP.prec $ max 2 (fromAccuracy acc) 
+    p_acc = MP.prec $ max 2 (fromAccuracy acc)
+    p_b = getPrecision b 
 
 {-|
     Reduce the precision of the ball centre if the
