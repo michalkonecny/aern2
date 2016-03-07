@@ -17,34 +17,50 @@ Description:    Define and compare various representations of univariate continu
 Library
   hs-source-dirs:   src
   ghc-options:      -O2 -Wall  -fno-warn-orphans
-  Build-Depends:
+  Build-Depends:    
         base >= 4.4,
         containers >= 0.3,
         aern2-num == 0.1,
-        unordered-containers,
         arithmoi
-  extensions:       
-                    Arrows, 
-                    FlexibleContexts, 
-                    FlexibleInstances, 
-                    MultiParamTypeClasses, 
-                    RebindableSyntax, 
-                    TypeFamilies, 
+  extensions:
+                    Arrows,
+                    FlexibleContexts,
+                    FlexibleInstances,
+                    MultiParamTypeClasses,
+                    RebindableSyntax,
+                    TypeFamilies,
                     TypeOperators
   other-modules:    
                     FnReps.Polynomial.UnaryCheb.Poly,
                     FnReps.Polynomial.UnaryCheb.Poly.Basics,
+                    FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power,
                     FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication,
+                    FnReps.Polynomial.UnaryCheb.Poly.Division,
                     FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding,
                     FnReps.Polynomial.UnaryCheb.Poly.SizeReduction,
                     FnReps.Polynomial.UnaryPower.Poly.Basics,
-                    FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding,
-                    FnReps.Polynomial.UnaryCheb.Poly.Division,
-                    FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power
+                    FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding
   exposed-modules:  
                     FnReps.Polynomial.UnaryCheb.PolyBall,
                     FnReps.Polynomial.UnaryCheb.RealFn,
                     FnReps.Polynomial.UnaryPower.Poly
 
-nse
+executable aern2-fnreps
+  build-depends:   
+                   base >= 4.4,
+                   containers >= 0.3,
+                   arithmoi,
+                   aern2-num ==0.1,
+                   aern2-fnreps ==0.1
+  extensions:
+                    Arrows,
+                    FlexibleContexts,
+                    FlexibleInstances,
+                    MultiParamTypeClasses,
+                    RebindableSyntax,
+                    TypeFamilies,
+                    TypeOperators
+  hs-source-dirs:  main
+  ghc-options:     -Wall -rtsopts
+  main-is:         Main.hs
 

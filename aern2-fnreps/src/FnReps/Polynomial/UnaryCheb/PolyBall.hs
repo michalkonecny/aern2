@@ -29,6 +29,18 @@ import FnReps.Polynomial.UnaryCheb.Poly
 import qualified FnReps.Polynomial.UnaryPower.Poly as PowerBasis (translate, scale)
 import Data.Ratio
 
+import Debug.Trace (trace)
+
+
+shouldTrace :: Bool
+shouldTrace = False
+--shouldTrace = True
+
+maybeTrace :: String -> a -> a
+maybeTrace 
+    | shouldTrace = trace
+    | otherwise = const id
+
 {- examples -}
 
 _ball1 :: PolyBall
@@ -126,10 +138,10 @@ instance Show ApproxPolyBall where
 --defaultCoeffPrecision = prec 100
 
 defaultMaxDegree :: Degree
-defaultMaxDegree = 100
+defaultMaxDegree = 10
 
 defaultSweepThresholdNormLog :: NormLog
-defaultSweepThresholdNormLog = NormZero
+defaultSweepThresholdNormLog = NormBits (-100)
 
 --getCoeffPrecision :: PolyBall -> Precision
 --getCoeffPrecision = ball_coeffPrec
@@ -263,6 +275,33 @@ instance CanMulA (->) PolyBall PolyBall where
 instance CanMulBy PolyBall PolyBall
 instance CanMulSameType PolyBall
         
+instance CanDivA (->) PolyBall PolyBall where
+    type DivTypeA (->) PolyBall PolyBall = PolyBall
+    divA (b1,b2) =
+        maybeTrace ("divA: degree = " ++ show degree) $
+        ucsLift2 (divideDCT_poly degree) (b1,b2)
+        where
+        degree = (ball_maxDegree b1) `max` (ball_maxDegree b2)
+        
+instance CanDivA (->) Integer PolyBall where
+    type DivTypeA (->) Integer PolyBall = PolyBall
+    divA (n, a) = nP / a 
+        where
+        nP = constUnaryFnA (ball_domain a, mpBall n) :: PolyBall
+    
+instance CanDivA (->) Rational PolyBall where
+    type DivTypeA (->) Rational PolyBall = PolyBall
+    divA (n, a) = nP / a 
+        where
+        nP = constUnaryFnA (ball_domain a, mpBall n) :: PolyBall
+    
+instance CanDivA (->) MPBall PolyBall where
+    type DivTypeA (->) MPBall PolyBall = PolyBall
+    divA (n, a) = nP / a
+        where
+        nP = constUnaryFnA (ball_domain a, n) :: PolyBall
+    
+
 {- Mixed operations with Integer -}
     
 instance CanAddA (->) PolyBall Integer where

@@ -75,6 +75,8 @@ terms_lookupCoeffDoubleConstTerm terms deg
     | otherwise = terms_lookupCoeff terms deg
 terms_unionWith :: (MPBall -> MPBall -> MPBall) -> Terms -> Terms -> Terms
 terms_unionWith = Map.unionWith
+terms_map :: (MPBall -> MPBall) -> Terms -> Terms
+terms_map = Map.map
 terms_filter :: (Degree -> MPBall -> Bool) -> Terms -> Terms
 terms_filter = Map.filterWithKey
 terms_updateConst :: (MPBall -> MPBall) -> Terms -> Terms
@@ -186,19 +188,19 @@ instance CanSubA (->) Integer Poly where
 instance CanMulA (->) Poly Integer where
     type MulTypeA (->) Poly Integer = Poly
     mulA (Poly terms, n) =
-        Poly $ terms_updateConst (*n) terms
+        Poly $ terms_map (*n) terms
     
 instance CanMulA (->) Integer Poly where
     type MulTypeA (->) Integer Poly = Poly
     mulA (n, Poly terms) =
-        Poly $ terms_updateConst (*n) terms
+        Poly $ terms_map (*n) terms
 
 instance CanMulBy Poly Integer
 
 instance CanDivA (->) Poly Integer where
     type DivTypeA (->) Poly Integer = Poly
     divA (Poly terms, n) =
-        Poly $ terms_updateConst (/n) terms
+        Poly $ terms_map (/n) terms
     
 instance CanDivBy Poly Integer
     
@@ -226,19 +228,19 @@ instance CanSubA (->) Rational Poly where
 instance CanMulA (->) Poly Rational where
     type MulTypeA (->) Poly Rational = Poly
     mulA (Poly terms, n) =
-        Poly $ terms_updateConst (*n) terms
+        Poly $ terms_map (*n) terms
     
 instance CanMulA (->) Rational Poly where
     type MulTypeA (->) Rational Poly = Poly
     mulA (n, Poly terms) =
-        Poly $ terms_updateConst (*n) terms
+        Poly $ terms_map (*n) terms
 
 instance CanMulBy Poly Rational
 
 instance CanDivA (->) Poly Rational where
     type DivTypeA (->) Poly Rational = Poly
     divA (Poly terms, n) =
-        Poly $ terms_updateConst (/n) terms
+        Poly $ terms_map (/n) terms
     
 instance CanDivBy Poly Rational
 
@@ -266,19 +268,19 @@ instance CanSubA (->) MPBall Poly where
 instance CanMulA (->) Poly MPBall where
     type MulTypeA (->) Poly MPBall = Poly
     mulA (Poly terms, n) =
-        Poly $ terms_updateConst (*n) terms
+        Poly $ terms_map (*n) terms
     
 instance CanMulA (->) MPBall Poly where
     type MulTypeA (->) MPBall Poly = Poly
     mulA (n, Poly terms) =
-        Poly $ terms_updateConst (*n) terms
+        Poly $ terms_map (*n) terms
 
 instance CanMulBy Poly MPBall
 
 instance CanDivA (->) Poly MPBall where
     type DivTypeA (->) Poly MPBall = Poly
     divA (Poly terms, n) =
-        Poly $ terms_updateConst (/n) terms
+        Poly $ terms_map (/n) terms
     
 instance CanDivBy Poly MPBall
 
