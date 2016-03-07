@@ -23,6 +23,7 @@ import qualified Prelude as P
 
 import AERN2.Num.IntegerRational ()
 import AERN2.Num.Precision
+import AERN2.Num.Norm
 
 import qualified Data.Approximate.MPFRLowLevel as MPLow
 
@@ -31,6 +32,11 @@ type MPFloat = MPLow.Rounded
 
 instance HasPrecision MPFloat where
     getPrecision x = prec (P.toInteger $ MPLow.getPrec x)
+
+instance HasNorm MPFloat where
+    getNormLog x 
+        | x P.== zero = NormZero
+        | otherwise = NormBits (P.toInteger $ MPLow.getExp x)  
 
 setPrecisionUp :: Precision -> MPFloat -> MPFloat
 setPrecisionUp p = MPLow.set MPLow.Up (p2mpfrPrec p)

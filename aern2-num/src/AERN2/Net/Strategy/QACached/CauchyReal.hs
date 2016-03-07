@@ -57,7 +57,10 @@ instance CanCreateAsCauchyRealA QACachedA QACached_CauchyReal_ where
             return $ AsCauchyReal $ QACached_CauchyReal_ name valueId 
             where
             amend ac2b =
-                proc ac -> do b <- ac2b -< ac; returnA -< setPrecisionMatchAccuracy ac b  
+                proc ac -> 
+                    do 
+                    b <- ac2b -< ac; 
+                    returnA -< (setPrecisionMatchAccuracy ac $ reducePrecionIfInaccurate b)  
 
 instance (Arrow to) => SupportsSenderIdA to QACached_CauchyReal_ where
     type SenderId to QACached_CauchyReal_ = ValueId

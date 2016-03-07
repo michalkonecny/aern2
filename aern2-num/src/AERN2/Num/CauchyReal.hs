@@ -148,7 +148,7 @@ instance CanAsCauchyRealA (WithPrecisionPolicy (->)) CauchyReal_
 instance CanCreateAsCauchyRealA (->) CauchyReal_ where
     newCRA (_, name, ac2b) = AsCauchyReal $ cr_ name ac2b'
         where
-        ac2b' ac = setPrecisionMatchAccuracy ac $ ac2b ac
+        ac2b' ac = setPrecisionMatchAccuracy ac $ reducePrecionIfInaccurate $ ac2b ac
               
 instance CanCreateAsCauchyRealA (WithPrecisionPolicy (->)) CauchyReal_ where
     newCRA = 
@@ -157,7 +157,7 @@ instance CanCreateAsCauchyRealA (WithPrecisionPolicy (->)) CauchyReal_ where
             pp <- getPrecisionPolicy -< () 
             returnA -< AsCauchyReal $ cr_ name (amend $ runWithPrecisionPolicy ac2b pp)
         where
-        amend ac2b ac = setPrecisionMatchAccuracy ac $ ac2b ac
+        amend ac2b ac = setPrecisionMatchAccuracy ac $ reducePrecionIfInaccurate $ ac2b ac
               
 instance (ArrowChoice to) => CanReadAsCauchyRealA to CauchyReal_ where
     getNameCRA = arr $ cr_name . unAsCauchyReal 

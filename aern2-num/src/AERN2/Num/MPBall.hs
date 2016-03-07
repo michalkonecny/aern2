@@ -22,7 +22,7 @@ module AERN2.Num.MPBall
     (MPBall(..),
      HasMPBallsA, HasMPBalls,
      CanBeMPBallA, mpBallA, mpBallNamedA, mpBallsA, mpBallsNamedA, CanBeMPBall, mpBall, mpBalls,
-     setPrecisionMatchAccuracy, setPrecision, 
+     setPrecision, setPrecisionMatchAccuracy, reducePrecionIfInaccurate, 
      module AERN2.Num.Precision,
      module AERN2.Num.Accuracy,
      isNonZero,
@@ -41,7 +41,7 @@ import AERN2.Num.Norm
 --import System.IO.Unsafe
 import Control.Category
 import Control.Arrow
-import Math.NumberTheory.Logarithms (integerLog2)
+--import Math.NumberTheory.Logarithms (integerLog2)
 
 import AERN2.Num.IntegerRational ()
 import AERN2.Num.Accuracy
@@ -196,19 +196,44 @@ instance HasApproximate MPBall where
 instance HasPrecision MPBall where
     getPrecision (MPBall x _) = getPrecision x
 
+{-|
+    Change the precision of the ball centre so that
+    it is at least as high as the supplied accuracy 
+    (assuming the accuracy is finite).
+-}
 setPrecisionMatchAccuracy :: Accuracy -> MPBall -> MPBall
-setPrecisionMatchAccuracy acc b@(MPBall x e) 
-    | p < p' = (MPBall x' e)
-    | otherwise = b
+setPrecisionMatchAccuracy acc = setPrecision p
     where
-    p' = MP.prec $ max 2 (fromAccuracy acc) 
-    p = MP.getPrecision x
-    x' = MP.setPrecisionUp p' x
+    p = MP.prec $ max 2 (fromAccuracy acc) 
+
+{-|
+    Reduce the precision of the ball centre if the
+    accuracy of the ball is poor.
+    
+    More precisely, reduce the precision of the centre 
+    so that the ulp is approximately (radius / 1024), 
+    unless the ulp is already lower than this.
+-}
+reducePrecionIfInaccurate :: MPBall -> MPBall
+reducePrecionIfInaccurate b@(MPBall x _) =
+    case (acc, norm) of
+        (Exact, _) -> b
+        (_, NormZero) -> b
+        _ | p_e_nb < p_x -> setPrecision p_e_nb b
+        _ -> b
+    where  
+    acc = getAccuracy b
+    norm = getNormLog b
+    p_x = getPrecision x
+    p_e_nb = MP.prec $ max 2 (10 + nb + fromAccuracy acc)
+    (NormBits nb) = norm 
 
 setPrecision :: Precision -> MPBall -> MPBall
-setPrecision p (MPBall x e) =
-    MPBall xUp (e + (xUp `EB.subMP` xDown))
+setPrecision p (MPBall x e)
+    | p >= pPrev = MPBall xUp e
+    | otherwise  = MPBall xUp (e + (xUp `EB.subMP` xDown))
     where
+    pPrev = MP.getPrecision x
     xUp = MP.setPrecisionUp p x
     xDown = MP.setPrecisionDown p x
     
@@ -221,22 +246,9 @@ isNonZero (MPBall x e) =
 
 
 instance HasNorm MPBall where
-    getNormLog ball
-        | not (isNonZero ballR) = NormZero
-        | integerBound > 1 = 
-            NormBits $ toInteger $ integerLog2 $ integerBound
-        | integerRecipBound >= 1 = 
-            NormBits  $ 1 + (neg $ toInteger $ integerLog2 $ integerRecipBound)
-        | otherwise = error "internal error in getNormLog"
+    getNormLog ball = getNormLog boundMP
         where
-        ballR =
-            endpointsMP2Ball r r
-            where
-            r = snd $ ball2endpointsMP $ abs ball
-        integerBound = toIntegerUp ballR
-        integerRecipBound 
-            | isNonZero ballR = toIntegerUp (1 / ballR)
-            | otherwise = -1
+        (_, MPBall boundMP _) = ball2endpoints $ abs ball
 
 instance (ArrowChoice to) => HasEqA to MPBall MPBall where
     type EqCompareTypeA to MPBall MPBall = Maybe Bool
