@@ -185,7 +185,7 @@ instance HasApproximate MPBall where
         isAccurate = getAccuracy b < ac
         approx
             | closeToN = n
-            | otherwise = x
+            | otherwise = MP.setPrecisionUp (prec (fromAccuracy ac)) x
             where
             n = MP.round pp x
             eMP = EB.er2mp e
