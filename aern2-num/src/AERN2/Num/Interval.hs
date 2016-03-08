@@ -9,7 +9,9 @@ import AERN2.Num.MPBall
 import AERN2.Num.CauchyReal
 
 data Interval a = Interval { intervalL :: a, intervalR :: a }
-    deriving (Show)
+    
+instance Show a => Show (Interval a) where
+    show (Interval l r) = show [l,r]
     
 singleton :: a -> Interval a
 singleton a = Interval a a
