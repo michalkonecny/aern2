@@ -8,7 +8,7 @@ import AERN2.Num.Accuracy
 import AERN2.Num.MPBall
 import AERN2.Num.CauchyReal
 
-data Interval a = Interval a a
+data Interval a = Interval { intervalL :: a, intervalR :: a }
     deriving (Show)
     
 singleton :: a -> Interval a
