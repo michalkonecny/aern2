@@ -4,6 +4,7 @@ cheb2Power
 
 import qualified FnReps.Polynomial.UnaryPower.Poly.Basics as Power
 import qualified FnReps.Polynomial.UnaryCheb.Poly.Basics as Cheb
+import qualified Data.Map as Map (filterWithKey)
 import AERN2.Num
 import Math.NumberTheory.Logarithms (integerLog2)
 
@@ -12,9 +13,10 @@ instance Show Cheb.Poly where
 
 
 cheb2Power :: Cheb.Poly -> Power.Poly
-cheb2Power (Cheb.Poly ts) = (aux 0 0) * (PolyVec (Power.fromIntegerListP (prec 53) [(0,1)]) (Power.fromIntegerListP (prec 53) [(1,1)]))
+cheb2Power (Cheb.Poly ts) = Power.Poly $ Map.filterWithKey (\k _ -> k <= Cheb.terms_degree ts) nts
                             where
-                            d = integer (integerLog2 $ Cheb.terms_degree ts) + 1
+                            (Power.Poly nts) = (aux 0 0) * (PolyVec (Power.fromIntegerListP (prec 53) [(0,1)]) (Power.fromIntegerListP (prec 53) [(1,1)])) 
+                            d = integer (integerLog2 $ Cheb.terms_degree ts + 1)  + 1
                             dm1 = d - 1
                             aux j i = if j == dm1 then
                                         PolyCoVec (Power.fromList [(0,Cheb.terms_lookupCoeff ts $ 2*i)]) (Power.fromList [(0,Cheb.terms_lookupCoeff ts $ 2*i + 1)])
