@@ -8,6 +8,7 @@ module FnReps.Polynomial.UnaryCheb.Poly.Basics
     fromList,
     fromListRationalWithPrec,
     normaliseCoeffs,
+    setPrecision_poly,
     Degree,
     Terms,
     terms_size,
@@ -142,6 +143,9 @@ normaliseCoeffs (Poly terms) =
 instance HasPrecision Poly where
     getPrecision (Poly terms) =
         foldl1 min $ map getPrecision $ terms_coeffs terms
+
+setPrecision_poly :: Precision -> Poly -> Poly
+setPrecision_poly p (Poly terms) = Poly (terms_map (setPrecision p) terms)
 
 instance HasAccuracy Poly where
     getAccuracy (Poly terms) =

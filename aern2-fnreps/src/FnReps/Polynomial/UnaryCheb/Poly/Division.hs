@@ -49,12 +49,19 @@ divideDCT_poly d p@(Poly pTerms) q@(Poly qTerms) =
         where
         Interval _ maxDifference =
             evalOnIntervalUnaryFnA (p - r * q, polyFixedDomain)
+            -- TODO: add abs
         Interval minQ _ = 
             evalOnIntervalUnaryFnA (q, polyFixedDomain)
+            -- TODO: add abs
     {- 
-        error <= (max(p(x)- r(x)*q(x))) / (min|q(x)|)
+        error <= (max(|p(x)- r(x)*q(x))|) / (min|q(x)|)
         
         where r(x) is our approximation of p(x)/q(x). 
     -}
 
-
+x = projUnaryFnA (Interval (-1.0) 1.0) :: Poly
+q = 1 + 10*x*x
+p = constUnaryFnA (polyFixedDomain, mpBall 1) :: Poly
+r = normaliseCoeffs $ Poly $ lift2_DCT (const $ const $ 20) (/) (poly_terms p) (poly_terms q)
+e1 = p - r * q
+e1R = evalOnIntervalUnaryFnA (setPrecision_poly (prec 200) e1, polyFixedDomain)
