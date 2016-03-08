@@ -232,8 +232,14 @@ instance
             let sweepThreshold = defaultSweepThresholdNormLog
             let poly = normaliseCoeffs $ fromList [(0,a0),(1,a1)]
             returnA -< PolyBall poly dom maxDeg sweepThreshold 
-    evalOnIntervalUnaryFnA =
-        error "UnaryChebSparse.PolyBall evalOnIntervalUnaryFnA not implemented yet"
+    evalOnIntervalUnaryFnA = arr aux
+        where
+        aux (fB, Interval lDom rDom) =
+            evalOnIntervalUnaryFnA (ball_poly fB, Interval lUnit rUnit)
+            where
+            lUnit = (2 * lDom - domL - domR) / (domR - domL)
+            rUnit = (2 * rDom - domL - domR) / (domR - domL)
+            (Interval domL domR) = ball_domain fB
     evalAtInPointUnaryFnA =
         proc (f, x) ->
             do
