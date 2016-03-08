@@ -61,7 +61,7 @@ derivative (Poly ts) = Poly $ Map.filterWithKey (\k _ -> k >= 0) $ Map.mapKeys (
 data RootInterval = RootInterval Rational Rational Poly (Maybe Bool) Bool
 
 instance Show RootInterval where
-    show (RootInterval l r p unique refinable) = "["++(show l)++", "++(show r)++"]. Unique root? "++(format unique)++" Refinable?"++(show refinable)
+    show (RootInterval l r _ unique refinable) = "["++(show l)++", "++(show r)++"]. Unique root? "++(format unique)++" Refinable?"++(show refinable)
                                                  where
                                                  format x = case x of
                                                                 Just True -> "True."
@@ -78,13 +78,40 @@ ri_hasRoot :: RootInterval -> (Maybe Bool)
 ri_hasRoot (RootInterval _ _ _ b _) = b 
 
 split :: RootInterval -> [RootInterval]
-split ri@(RootInterval l r p _ _)  = filter (\x -> ri_hasRoot x /= Just False) [left,right]
+split (RootInterval l r p _ _)  = filter (\x -> ri_hasRoot x /= Just False) [left,right]
                                      where
-                                     rootLeft  = hasSingleRoot l m p
+                                     {-rootLeft  = hasSingleRoot l m p
                                      rootRight = hasSingleRoot m r p
+                                     m = findMidpoint l r p-}
                                      left  = RootInterval l m p (fst rootLeft) (snd rootLeft)
                                      right = RootInterval m r p (fst rootRight) (snd rootRight)
-                                     m = findMidpoint l r p
+                                     (m,rootLeft,rootRight) = midpointAndRootIndicators l r p
+
+
+midpointAndRootIndicators :: Rational -> Rational -> Poly -> (Rational, (Maybe Bool, Bool), (Maybe Bool, Bool))
+midpointAndRootIndicators l r p = midpointAndRootIndicatorsAcc l r p 2 1 0
+                     where
+                     midpointAndRootIndicatorsAcc l' r' p' n k its = 
+                                                    let
+                                                    m = (l' * (n - k) + k*r')/n
+                                                    rl = hasSingleRoot l' m p'
+                                                    rr = hasSingleRoot m r' p'
+                                                    in
+                                                    case evalOnRational p' m /= 0 of
+                                                        Just True ->
+                                                             if its > 3 then
+                                                               (m,rl,rr)
+                                                             else if snd rl && snd rr then
+                                                               (m,rl,rr)
+                                                             else
+                                                                  if k + 1 < n then
+                                                                    midpointAndRootIndicatorsAcc l' r' p' n (k + 1) its
+                                                                  else
+                                                                    midpointAndRootIndicatorsAcc l' r' p' (n + 1) 1 (its + 1)
+                                                        _ -> if k + 1 < n then
+                                                                    midpointAndRootIndicatorsAcc l' r' p' n (k + 1) its
+                                                                  else
+                                                                    midpointAndRootIndicatorsAcc l' r' p' (n + 1) 1 (its + 1) --TODO better strategy?             
 
 --TODO this is still fairly slow when there are multiple roots
 refine :: Accuracy -> RootInterval -> [RootInterval]
@@ -102,7 +129,7 @@ roots :: Accuracy -> RootInterval -> [MPBall]
 roots ac ri = map (\(RootInterval l r _ _ _) -> (ri2ball (Interval l r) (ac + 2))) (refine ac ri)                                               
      
 signVariations :: Poly -> Maybe Integer
-signVariations poly@(Poly ts) = 
+signVariations (Poly ts) = 
         snd $ Map.foldl' (\(sg,mvrs) -> \sg' -> 
                             case mvrs of
                                 Nothing  -> (sg',Nothing)
