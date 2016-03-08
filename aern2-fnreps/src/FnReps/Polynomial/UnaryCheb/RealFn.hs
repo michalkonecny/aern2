@@ -82,8 +82,15 @@ instance
         withAccuracy =
             seqByPrecision2CauchySeq $ \p ->
                 runWithPrecisionPolicy (proc () -> projUnaryFnA -< dom) (ppKeepExact p) ()
-    evalOnIntervalUnaryFnA =
-        error "UnaryChebSparse.RealFn evalOnIntervalUnaryFnA not implemented yet"
+    evalOnIntervalUnaryFnA (RealFn fR _f0, dom) =
+        Interval resultL resultR
+        where
+        fSeq = map (fR) [(bits 2)..]
+        rangeSeq = map rangeOfF fSeq
+            where
+            rangeOfF f = evalOnIntervalUnaryFnA (f, dom)
+        resultR = convergent2CauchyReal Nothing $ map intervalR rangeSeq
+        resultL = convergent2CauchyReal Nothing $ map intervalL rangeSeq
     evalAtInPointUnaryFnA (f, x) =
         evalAtOutPointUnaryFnA (f, convert x)
     evalAtOutPointUnaryFnA (RealFn fR f0, xR) =
