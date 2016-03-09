@@ -70,7 +70,7 @@ ball_x =
 
 eval_ball_x :: Rational -> MPBall
 eval_ball_x v =
-    evalAtInPointUnaryFnA (ball_x, v)
+    evalAtDomPointUnaryFnA (ball_x, v)
 
 _ball_DivDCT :: Degree -> PolyBall -> PolyBall -> PolyBall
 _ball_DivDCT d a b =
@@ -211,8 +211,8 @@ instance
     (ArrowReal to MPBall, ArrowReal to CauchyReal) => 
     RealUnaryFnA to PolyBall
     where
-    type UnaryFnIn PolyBall = Rational
-    type UnaryFnOut PolyBall = MPBall
+    type UnaryFnDomPoint PolyBall = Rational
+    type UnaryFnPoint PolyBall = MPBall
     getDomainUnaryFnA =
         arr ball_domain
     constUnaryFnA =
@@ -232,20 +232,20 @@ instance
             let sweepThreshold = defaultSweepThresholdNormLog
             let poly = normaliseCoeffs $ fromList [(0,a0),(1,a1)]
             returnA -< PolyBall poly dom maxDeg sweepThreshold 
-    evalOnIntervalUnaryFnA = arr aux
+    rangeOnIntervalUnaryFnA = arr aux
         where
         aux (fB, Interval lDom rDom) =
-            evalOnIntervalUnaryFnA (ball_poly fB, Interval lUnit rUnit)
+            rangeOnIntervalUnaryFnA (ball_poly fB, Interval lUnit rUnit)
             where
             lUnit = (2 * lDom - domL - domR) / (domR - domL)
             rUnit = (2 * rDom - domL - domR) / (domR - domL)
             (Interval domL domR) = ball_domain fB
-    evalAtInPointUnaryFnA =
+    evalAtDomPointUnaryFnA =
         proc (f, x) ->
             do
             xB <- convertA -< x
-            evalAtOutPointUnaryFnA -< (f,xB)
-    evalAtOutPointUnaryFnA =
+            evalAtPointUnaryFnA -< (f,xB)
+    evalAtPointUnaryFnA =
         proc (fB, x) ->
             do
             let fP = ball_poly fB

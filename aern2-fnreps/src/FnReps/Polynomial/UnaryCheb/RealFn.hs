@@ -32,13 +32,13 @@ rf_x2 :: RealFn
 rf_x2 = rf_x * rf_x
 
 rf_x_pi :: CauchyReal
-rf_x_pi = evalAtOutPointUnaryFnA (rf_x, pi/4)
+rf_x_pi = evalAtPointUnaryFnA (rf_x, pi/4)
 
 rf_2x_pi :: CauchyReal
-rf_2x_pi = evalAtOutPointUnaryFnA (rf_2x, pi/4)
+rf_2x_pi = evalAtPointUnaryFnA (rf_2x, pi/4)
 
 rf_x2_pi :: CauchyReal
-rf_x2_pi = evalAtOutPointUnaryFnA (rf_x2, pi/4)
+rf_x2_pi = evalAtPointUnaryFnA (rf_x2, pi/4)
 
 {- type definition -} 
 
@@ -68,8 +68,8 @@ instance Show ApproxRealFn where
 instance
     RealUnaryFnA (->) RealFn
     where
-    type UnaryFnIn RealFn = Rational
-    type UnaryFnOut RealFn = CauchyReal
+    type UnaryFnDomPoint RealFn = Rational
+    type UnaryFnPoint RealFn = CauchyReal
     getDomainUnaryFnA =
         arr $ ball_domain . rFn_rough
     constUnaryFnA (dom, value) =
@@ -82,22 +82,22 @@ instance
         withAccuracy =
             seqByPrecision2CauchySeq $ \p ->
                 runWithPrecisionPolicy (proc () -> projUnaryFnA -< dom) (ppKeepExact p) ()
-    evalOnIntervalUnaryFnA (RealFn fR _f0, dom) =
+    rangeOnIntervalUnaryFnA (RealFn fR _f0, dom) =
         Interval resultL resultR
         where
         fSeq = map (fR) [(bits 2)..]
         rangeSeq = map rangeOfF fSeq
             where
-            rangeOfF f = evalOnIntervalUnaryFnA (f, dom)
+            rangeOfF f = rangeOnIntervalUnaryFnA (f, dom)
         resultR = convergent2CauchyReal Nothing $ map intervalR rangeSeq
         resultL = convergent2CauchyReal Nothing $ map intervalL rangeSeq
-    evalAtInPointUnaryFnA (f, x) =
-        evalAtOutPointUnaryFnA (f, convert x)
-    evalAtOutPointUnaryFnA (RealFn fR f0, xR) =
+    evalAtDomPointUnaryFnA (f, x) =
+        evalAtPointUnaryFnA (f, convert x)
+    evalAtPointUnaryFnA (RealFn fR f0, xR) =
         newCRA ([], Nothing, resWithAcc)
         where
         resWithAcc acc =
-            keepIncreasingEffort' (evalAtOutPointUnaryFnA (f0,x0)) (zip fAccuracies fSeq0) (zip xAccuracies xSeq0)
+            keepIncreasingEffort' (evalAtPointUnaryFnA (f0,x0)) (zip fAccuracies fSeq0) (zip xAccuracies xSeq0)
             where
             fSeq0 = f0 : (map fR [(acc-1)..])
             fAccuracies = (bits 0) : [(acc-1)..]
@@ -105,7 +105,7 @@ instance
             xAccuracies = [acc..]
             keepIncreasingEffort' resCurrent fSeq@((fA,_f):_) xSeq@((xA,x):_) =
                 maybeTrace (
-                    "evalAtOutPointUnaryFnA.keepIncreasingEffort:"
+                    "evalAtPointUnaryFnA.keepIncreasingEffort:"
                     ++ "\n accuracy for f = " ++ show fA
                     ++ "\n accuracy for x = " ++ show xA
                     ++ "\n x = " ++ show x
@@ -125,13 +125,13 @@ instance
                     keepIncreasingEffort' resNextXNextF fRest xRest
                 where
                 accCurrent = getAccuracy resCurrent
-                resNextX = evalAtOutPointUnaryFnA (f,xNext)
+                resNextX = evalAtPointUnaryFnA (f,xNext)
                 accNextX = getAccuracy resNextX
-                resNextF = evalAtOutPointUnaryFnA (fNext,x)
+                resNextF = evalAtPointUnaryFnA (fNext,x)
                 accNextF = getAccuracy resNextF
-                resNextXNextF = evalAtOutPointUnaryFnA (fNext,xNext)
+                resNextXNextF = evalAtPointUnaryFnA (fNext,xNext)
             keepIncreasingEffort _ _ _ =
-                error "internal error in FnReps.Polynomial.UnaryCheb.RealFn RealUnaryFnA.evalAtOutPointUnaryFnA"
+                error "internal error in FnReps.Polynomial.UnaryCheb.RealFn RealUnaryFnA.evalAtPointUnaryFnA"
 
 {- pointwise arithmetic -} 
 

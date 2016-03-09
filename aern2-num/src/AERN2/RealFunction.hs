@@ -2,7 +2,8 @@
 
 module AERN2.RealFunction 
 (
-    RealUnaryFnA(..)
+    RealUnaryFnA(..),
+    CanIntegrateA(..)
 )
 where
 
@@ -12,18 +13,20 @@ import AERN2.Num
 --import qualified Data.Map as Map
 
 class 
-    (ArrowReal to (UnaryFnOut f)
---    , UnaryFnOut f ~ LimitTypeA to (Interval (UnaryFnIn f))
+    (ArrowReal to (UnaryFnPoint f)
+--    , UnaryFnPoint f ~ LimitTypeA to (Interval (UnaryFnDomPoint f))
     ) 
     => 
     RealUnaryFnA to f where
-    type UnaryFnIn f
-    type UnaryFnOut f
-    constUnaryFnA :: (Interval (UnaryFnIn f), UnaryFnOut f) `to` f
-    projUnaryFnA :: Interval (UnaryFnIn f) `to` f
-    getDomainUnaryFnA :: f `to` (Interval (UnaryFnIn f))
-    evalAtOutPointUnaryFnA :: (f, UnaryFnOut f) `to` (UnaryFnOut f)
-    evalAtInPointUnaryFnA :: (f, UnaryFnIn f) `to` (UnaryFnOut f)
-    evalOnIntervalUnaryFnA :: (f, Interval (UnaryFnIn f)) `to` Interval (UnaryFnOut f)
+    type UnaryFnDomPoint f
+    type UnaryFnPoint f
+    constUnaryFnA :: (Interval (UnaryFnDomPoint f), UnaryFnPoint f) `to` f
+    projUnaryFnA :: Interval (UnaryFnDomPoint f) `to` f
+    getDomainUnaryFnA :: f `to` (Interval (UnaryFnDomPoint f))
+    evalAtPointUnaryFnA :: (f, UnaryFnPoint f) `to` (UnaryFnPoint f)
+    evalAtDomPointUnaryFnA :: (f, UnaryFnDomPoint f) `to` (UnaryFnPoint f)
+    rangeOnIntervalUnaryFnA :: (f, Interval (UnaryFnDomPoint f)) `to` Interval (UnaryFnPoint f)
 
-
+class (RealUnaryFnA to f) => CanIntegrateA to f
+    where
+    integrateUnaryFnA :: (f, UnaryFnPoint f, UnaryFnPoint f) `to` UnaryFnPoint f 

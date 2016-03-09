@@ -67,8 +67,8 @@ instance
     (ArrowReal to MPBall) => 
     RealUnaryFnA to Poly
     where
-    type UnaryFnIn Poly = Rational
-    type UnaryFnOut Poly = MPBall
+    type UnaryFnDomPoint Poly = Rational
+    type UnaryFnPoint Poly = MPBall
     getDomainUnaryFnA =
         arr $ const polyFixedDomain
     constUnaryFnA =
@@ -79,7 +79,7 @@ instance
             do
             a1 <- convertA -< 1
             returnA -< fromList [(1,a1)]
-    evalOnIntervalUnaryFnA = arr aux
+    rangeOnIntervalUnaryFnA = arr aux
         where
         aux (poly@(Poly terms),Interval l r) =
             range acc poly (Interval (rational2BallP p l) (rational2BallP p r))
@@ -87,12 +87,12 @@ instance
             c = terms_lookupCoeff terms 0
             p = getPrecision c
             acc = getFiniteAccuracy c
-    evalAtInPointUnaryFnA =
+    evalAtDomPointUnaryFnA =
         proc (f, x) ->
             do
             xB <- convertA -< x
-            evalAtOutPointUnaryFnA -< (f,xB)
-    evalAtOutPointUnaryFnA =
+            evalAtPointUnaryFnA -< (f,xB)
+    evalAtPointUnaryFnA =
         proc (f, x) ->
             do
             case getAccuracy x of
