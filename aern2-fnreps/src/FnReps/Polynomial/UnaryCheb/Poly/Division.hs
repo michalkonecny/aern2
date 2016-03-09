@@ -59,9 +59,9 @@ divideDCT_poly d p@(Poly pTerms) q@(Poly qTerms) =
         where r(x) is our approximation of p(x)/q(x). 
     -}
 
-x = projUnaryFnA (Interval (-1.0) 1.0) :: Poly
-q = 1 + 100*x*x
-p = constUnaryFnA (polyFixedDomain, mpBall 1) :: Poly
-r = normaliseCoeffs $ Poly $ lift2_DCT (const $ const $ 40) (/) (poly_terms p) (poly_terms q)
-e1 = p - r * q
+_x = projUnaryFnA (Interval (-1.0) 1.0) :: Poly
+_q = 1 + 100*_x*_x
+_p = constUnaryFnA (polyFixedDomain, mpBall 1) :: Poly
+_r = normaliseCoeffs $ Poly $ lift2_DCT (const $ const $ 40) (/) (poly_terms _p) (poly_terms _q)
+e1 = _p - _r * _q
 e1R = rangeOnIntervalUnaryFnA (setPrecision_poly (prec 200) e1, polyFixedDomain)
