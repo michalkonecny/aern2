@@ -23,6 +23,7 @@ import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication (multiplyDirect_terms,
 import FnReps.Polynomial.UnaryCheb.Poly.Division
 import FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding
 import FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power
+import FnReps.Polynomial.UnaryCheb.Poly.Integration ()
 
 {- examples -}
 

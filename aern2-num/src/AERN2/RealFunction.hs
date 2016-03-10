@@ -3,7 +3,7 @@
 module AERN2.RealFunction 
 (
     RealUnaryFnA(..),
-    CanIntegrateA(..)
+    CanIntegrateUnaryFnA(..)
 )
 where
 
@@ -27,6 +27,6 @@ class
     evalAtDomPointUnaryFnA :: (f, UnaryFnDomPoint f) `to` (UnaryFnPoint f)
     rangeOnIntervalUnaryFnA :: (f, Interval (UnaryFnDomPoint f)) `to` Interval (UnaryFnPoint f)
 
-class (RealUnaryFnA to f) => CanIntegrateA to f
+class (RealUnaryFnA to f) => CanIntegrateUnaryFnA to f
     where
     integrateUnaryFnA :: (f, UnaryFnPoint f, UnaryFnPoint f) `to` UnaryFnPoint f 

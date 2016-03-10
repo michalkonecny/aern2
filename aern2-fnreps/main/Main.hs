@@ -18,6 +18,8 @@ main =
     printWithName "1/(100x^2+1) degree 30" $ divT100 30
     printWithName "1/(100x^2+1) degree 40" $ divT100 40
     printWithName "1/(100x^2+1) degree 50" $ divT100 50
+
+    printWithName "∫_(-1)^(1) 1/(10x^2+1)dx degree 18" $ integrateUnaryFnA (divT10 18, mpBall (-1), mpBall 1)
     where
     divT10 d = divT d 10
     divT100 d = divT d 100

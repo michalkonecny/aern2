@@ -23,7 +23,8 @@ module FnReps.Polynomial.UnaryCheb.Poly.Basics
     terms_lookupCoeffDoubleConstTerm,
     terms_unionWith,
     terms_filter,
-    terms_updateConst
+    terms_updateConst,
+    terms_fromListAddCoeffs
 )
 where
 
@@ -82,6 +83,13 @@ terms_filter :: (Degree -> MPBall -> Bool) -> Terms -> Terms
 terms_filter = Map.filterWithKey
 terms_updateConst :: (MPBall -> MPBall) -> Terms -> Terms
 terms_updateConst updateFn = Map.adjust updateFn 0
+terms_fromListAddCoeffs :: [(Degree, MPBall)] -> Terms
+terms_fromListAddCoeffs newTerms = 
+    foldl addTerm terms_empty newTerms
+    where
+    addTerm prevTerms (i,a) = 
+        terms_insertWith (+) i a prevTerms 
+
 
 -- alternative map implementation:
 --type Terms = HM.HashMap Integer MPBall

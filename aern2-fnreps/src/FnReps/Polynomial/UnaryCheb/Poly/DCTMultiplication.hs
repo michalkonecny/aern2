@@ -50,11 +50,7 @@ multiplyDirect_terms terms1 terms2 =
     terms
     where
     terms =
-        foldl addTerm terms_empty newTerms
-        where
-        addTerm prevTerms (i,a) = 
-            terms_insertWith (+) i a prevTerms 
-        newTerms =
+        terms_fromListAddCoeffs $ 
             concat
             [   let c = a*b/2 in [(i+j, c), (abs (i-j), c)]
                 | 

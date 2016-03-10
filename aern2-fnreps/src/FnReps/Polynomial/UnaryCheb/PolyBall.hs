@@ -237,8 +237,9 @@ instance
         aux (fB, Interval lDom rDom) =
             rangeOnIntervalUnaryFnA (ball_poly fB, Interval lUnit rUnit)
             where
-            lUnit = (2 * lDom - domL - domR) / (domR - domL)
-            rUnit = (2 * rDom - domL - domR) / (domR - domL)
+            lUnit = toUnit lDom
+            rUnit = toUnit rDom
+            toUnit x = (2 * x - domL - domR) / (domR - domL) 
             (Interval domL domR) = ball_domain fB
     evalAtDomPointUnaryFnA =
         proc (f, x) ->
@@ -256,6 +257,18 @@ instance
                     returnA -< evalDirectOnBall fP xU
                 _ ->  
                     returnA -< evalLipschitzOnBall fP xU
+
+{- integration -}
+
+instance CanIntegrateUnaryFnA (->) PolyBall where
+    integrateUnaryFnA (fB, a, b) =
+        ((domR - domL)/2) * integrateUnaryFnA (ball_poly fB, aU, bU)
+        where
+        aU = toUnit a
+        bU = toUnit b
+        toUnit x = (2 * x - domL - domR) / (domR - domL) 
+        (Interval domL domR) = ball_domain fB
+
 
 {- pointwise arithmetic -} 
 
