@@ -37,8 +37,13 @@ instance (Arrow to) => CanDivA to MPBall Poly where
             nP = constUnaryFnA (polyFixedDomain, n) :: Poly
 
 divideDCT_poly :: Degree -> Poly -> Poly -> Poly
-divideDCT_poly d _p@(Poly pTerms) q@(Poly qTerms) = 
-    r
+divideDCT_poly d _p@(Poly pTerms) q@(Poly qTerms) 
+    | (minQ > 0) == Just True = r
+    | otherwise = 
+        error "When dividing polynomials, the numerator could not be separated from 0"
+        {- TODO: Use Maybe Poly as return type?  
+            Then one can avoid checking the range of @q@ twice.
+        -} 
     where
     pCTerms = terms_updateConst ballCentre pTerms
     qCTerms = terms_updateConst ballCentre qTerms
