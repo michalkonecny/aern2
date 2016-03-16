@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP, FlexibleInstances #-}
 module AERN2.Net.Strategy.Direct 
 (
-    Interval(..), rati2MPBall, UnaryFnMPBall, UnaryFnCR
+    Interval(..), rati2MPBall, UnaryFnMPBall(..), UnaryFnCR(..)
 )
 where
 
@@ -94,36 +94,47 @@ instance RationalIntervalA (->) (Interval Rational) where
 
 {- TODO The following function types should move to aern2-function, when it is created -}
 
-type UnaryFnMPBall = (Interval Rational, MPBall -> MPBall) 
+data UnaryFnMPBall =
+    UnaryFnMPBall
+    {
+        ufnB2B_dom :: Interval Rational, 
+        ufnB2B_eval :: MPBall -> MPBall
+    } 
 
 instance RealUnaryFnA (->) UnaryFnMPBall where
     type UnaryFnDomPoint UnaryFnMPBall = Rational
     type UnaryFnPoint UnaryFnMPBall = CauchyReal
-    constUnaryFnA (dom, r) = (dom, \b -> cauchyReal2ball r (getFiniteAccuracy b))
-    projUnaryFnA dom = (dom, id)
-    getDomainUnaryFnA (dom, _) = dom
-    evalAtPointUnaryFnA ((_dom, f), r) = 
+    constUnaryFnA (dom, r) = UnaryFnMPBall dom (\b -> cauchyReal2ball r (getFiniteAccuracy b))
+    projUnaryFnA dom = UnaryFnMPBall dom id
+    getDomainUnaryFnA = ufnB2B_dom
+    evalAtPointUnaryFnA (UnaryFnMPBall _dom f, r) = 
         convergent2CauchyReal Nothing $ 
             map f $
                 map (cauchyReal2ball r) (map bits [1..])
-    evalAtDomPointUnaryFnA ((_dom, f), r) = 
+    evalAtDomPointUnaryFnA (UnaryFnMPBall _dom f, r) = 
         convergent2CauchyReal Nothing $ 
             map f $ map (flip rational2BallP r) standardPrecisions
-    rangeOnIntervalUnaryFnA ((_dom, f), ri) =  
+    rangeOnIntervalUnaryFnA (UnaryFnMPBall _dom f, ri) =  
         mpBall2cri $ f (rati2MPBall ri) -- TODO: not computing the maximum extension, should do 
 
-type UnaryFnCR = (Interval Rational, CauchyReal -> CauchyReal) 
+data UnaryFnCR =
+    UnaryFnCR
+    {
+        ufnCR2CR_dom :: Interval Rational, 
+        ufnCR2CR_eval :: CauchyReal -> CauchyReal
+    } 
+
 
 instance RealUnaryFnA (->) UnaryFnCR
     where
     type UnaryFnDomPoint UnaryFnCR = Rational
     type UnaryFnPoint UnaryFnCR = CauchyReal
-    constUnaryFnA (dom, r) = (dom, const r)
-    projUnaryFnA dom = (dom, id)
-    getDomainUnaryFnA (dom, _) = dom
-    evalAtPointUnaryFnA ((_dom, f), r) = f r 
-    evalAtDomPointUnaryFnA ((_dom, f), r) = f (cauchyReal r) 
-    rangeOnIntervalUnaryFnA ((_dom, _f), _ri) = 
+    constUnaryFnA (dom, r) = UnaryFnCR dom (const r)
+    projUnaryFnA dom = UnaryFnCR dom id
+    getDomainUnaryFnA = ufnCR2CR_dom
+    evalAtPointUnaryFnA (UnaryFnCR _dom f, r) = f r 
+    evalAtDomPointUnaryFnA (UnaryFnCR _dom f, r) = f (cauchyReal r) 
+    rangeOnIntervalUnaryFnA (UnaryFnCR _dom _f, _ri) = 
         error "rangeOnIntervalUnaryFnA not implemented for UnaryFnCR"
 
 
