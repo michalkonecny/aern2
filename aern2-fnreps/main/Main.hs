@@ -8,8 +8,8 @@ import FnReps.Polynomial.UnaryCheb.PolyBall
 main :: IO ()
 main =
     do
-    {- A plot of the following enclosures of 1/(10x^2+1) 
-        is at http://fooplot.com/plot/2yt7q2sevi
+    {- A plot of the following enclosures of 1/(10x^2+1) is at: 
+        http://fooplot.com/plot/2yt7q2sevi
     -}
     printWithName "1/(10x^2+1) degree 10" $ divT10 10
     printWithName "1/(10x^2+1) degree 14" $ divT10 14
@@ -20,6 +20,10 @@ main =
     printWithName "1/(100x^2+1) degree 50" $ divT100 50
 
     printWithName "∫_(-1)^(1) 1/(10x^2+1)dx degree 18" $ integrateUnaryFnA (divT10 18, mpBall (-1), mpBall 1)
+    
+    {- A plot of the following enclosure is at:
+        http://fooplot.com/plot/d1gdgvg3sf -}
+    printWithName "1/(1/(10x^2+1)) degree 18" $ 1 / (divT10 18)
     where
     divT10 d = divT d 10
     divT100 d = divT d 100

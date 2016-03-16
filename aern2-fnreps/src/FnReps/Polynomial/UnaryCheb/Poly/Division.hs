@@ -37,26 +37,41 @@ instance (Arrow to) => CanDivA to MPBall Poly where
             nP = constUnaryFnA (polyFixedDomain, n) :: Poly
 
 divideDCT_poly :: Degree -> Poly -> Poly -> Poly
-divideDCT_poly d p@(Poly pTerms) q@(Poly qTerms) = 
-    Poly $ terms_updateConst pmErrorBound rTerms
+divideDCT_poly d _p@(Poly pTerms) q@(Poly qTerms) = 
+    r
     where
-    r@(Poly rTerms) = 
+    pCTerms = terms_updateConst ballCentre pTerms
+    qCTerms = terms_updateConst ballCentre qTerms
+    pR = ballRadius $ terms_lookupCoeff pTerms 0
+    qR = ballRadius $ terms_lookupCoeff qTerms 0
+    pC = Poly pCTerms
+    qC = Poly qCTerms
+    rC@(Poly rCTerms) = 
         normaliseCoeffs $
-            Poly $ lift2_DCT (const $ const $ d) (/) pTerms qTerms
-    pmErrorBound c = endpoints2Ball (c - errorBound) (c + errorBound) 
+            Poly $ lift2_DCT (const $ const $ d) (/) pCTerms qCTerms
+    r = Poly $ terms_updateConst pmErrorBound rCTerms
+        where 
+        pmErrorBound c = endpoints2Ball (c - errorBound) (c + errorBound) 
     errorBound =
-        maxDifference / minQ
-        where
-        Interval _ maxDifference =
-            rangeOnIntervalUnaryFnA (p - r * q, polyFixedDomain)
-            -- TODO: add abs
-        Interval minQ _ = 
-            rangeOnIntervalUnaryFnA (q, polyFixedDomain)
-            -- TODO: add abs
+        (maxDifferenceC + pR + qR*maxRC) / minQ
+    Interval _ maxDifferenceC =
+        abs $ rangeOnIntervalUnaryFnA (pC - rC * qC, polyFixedDomain)
+    Interval _ maxRC =
+        abs $ rangeOnIntervalUnaryFnA (rC, polyFixedDomain)
+    Interval minQ _ =
+        abs $ rangeOnIntervalUnaryFnA (q, polyFixedDomain)
     {- 
-        error <= (max(|p(x)- r(x)*q(x))|) / (min|q(x)|)
+        |r(x) - p(x)/q(x)| <= max(|p(x) - r(x)*q(x)|) / min(|q(x)|)
         
-        where r(x) is our approximation of p(x)/q(x). 
+        Assuming q(x) does not change sign, min(|q(x)|) = min |range(q(x))|.
+        
+        Even if f changes sign, we have max(|f(x)|) = max |range(f(x))|.
+        
+        With f = p - rq in the above, we reduce the range to centres as follows: 
+            range(p(x) - r(x)*q(x)) 
+            = range(pC(x) ± pR - r(x)*(qC(x)±qR))
+            ⊆ range(pC(x) ± pR - r(x)*qC(x) ± r(x)*qR))
+            ⊆ range(pC(x) - r(x)*qC(x)) ± pR ± max(r(x))*qR
     -}
 
 _x = projUnaryFnA (Interval (-1.0) 1.0) :: Poly
