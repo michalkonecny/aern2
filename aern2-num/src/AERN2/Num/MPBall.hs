@@ -30,6 +30,8 @@ module AERN2.Num.MPBall
      integer2BallP, rational2BallP, rationalBall2BallP,
      ball2endpoints, endpoints2Ball,
      getCentreAndErrorBall,
+     ballCentre,
+     ballRadius,
      piBallP) 
 where
 
@@ -631,6 +633,14 @@ getCentreAndErrorBall x = (cB,eB)
     (MPBall cMP eEB) = x
     cB = MPBall cMP EB.zero
     eB = MPBall MP.zero eEB
+
+ballCentre :: MPBall -> MPBall
+ballCentre =
+    fst . getCentreAndErrorBall
+
+ballRadius :: MPBall -> MPBall
+ballRadius =
+    snd . ball2endpoints . snd . getCentreAndErrorBall
 
 {- common functions -}
 
