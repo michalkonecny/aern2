@@ -374,7 +374,19 @@ instance (Arrow to) => CanNegA to MPBall where
 instance (Arrow to) => CanNegSameTypeA to MPBall
 
 instance (Arrow to) => CanAbsA to MPBall where
-    absA = arr $ \(MPBall x1 e1) -> MPBall (MP.abs x1) e1
+    absA = arr aux
+        where
+        aux b = bA 
+            where
+            bA
+                | l P.< MP.zero && MP.zero P.< r = -- b contains zero in its interior 
+                    endpointsMP2Ball MP.zero (P.max lA rA)
+                | MP.zero P.<= l = b -- b is non-negative
+                | otherwise = -b -- b is non-positive
+                where
+                lA = MP.abs l
+                rA = MP.abs r
+                (l,r) = ball2endpointsMP b
 
 instance CanAbsSameType MPBall
 
