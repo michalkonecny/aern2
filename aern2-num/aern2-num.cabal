@@ -27,7 +27,8 @@ library
     syb,
     parsec,
     mtl,
-    stm
+    stm,
+    pqueue
   ghc-options:     -O2 -Wall  -fno-warn-orphans
   extensions:      
                    Arrows, 
