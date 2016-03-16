@@ -292,6 +292,9 @@ instance (ArrowPrecisionPolicy to) => CanMinMaxA to MPBall MPBall where
     minA = arr $ byMPendpoints P.min
     maxA = arr $ byMPendpoints P.max
 
+instance (ArrowPrecisionPolicy to) => CanMinMaxThisA to MPBall MPBall
+instance (ArrowPrecisionPolicy to) => CanMinMaxSameTypeA to MPBall
+
 byMPendpoints :: 
     (MPFloat -> MPFloat -> MPFloat) -> 
     (MPBall, MPBall) -> MPBall
