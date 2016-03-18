@@ -41,15 +41,48 @@ data Poly =
     }
 
 instance Show Poly where
-    show (Poly terms) =
-        List.intercalate " + " $
-            map showTerm $ reverse $ List.sortBy (\(a,_) (b,_) -> compare b a) $ reverse $ terms_toList terms
+    show (Poly terms) = 
+        formatTerms showCf terms
         where
-        showTerm (deg, coeff) = show coeff ++ showPower
-            where
-            showPower
-                | deg == 0 = ""
-                | otherwise = "*x^" ++ show deg  
+        showCf c =
+            (show (c::MPBall), (c == (mpBall 0)) == Just True, (c == (mpBall 1)) == Just True)
+
+formatTerms :: (MPBall -> (String, Bool, Bool)) -> Terms -> String
+formatTerms showCf terms =
+    showTerms ("", "-") $ 
+        List.sortBy (\(a,_) (b,_) -> compare a b) $
+            termsToShow
+    where
+    showTerms (connectivePos, connectiveNeg) (term : rest) =
+        termS ++ (showTerms (" + ", " - ") rest) 
+        where
+        termS =
+            case s of
+                '-':ss -> connectiveNeg ++ ss
+                _ -> connectivePos ++ s
+        s = showTerm term
+    showTerms _ [] = ""
+    termsToShow =
+        if null termsToShow_pre 
+            then [(0,mpBall 0)]
+            else termsToShow_pre
+    termsToShow_pre = 
+        filter coeffNotExactZero $ 
+            terms_toList terms
+    coeffNotExactZero (_, cf) =
+        not isZero
+        where
+        (_, isZero, _) = showCf cf
+    showTerm (deg, coeff) 
+        | isOne = showPower 
+        | otherwise = coeffS ++ showPower
+        where
+        (coeffS, _, isOne) = showCf coeff
+        showPower
+            | deg == 0 = ""
+            | deg == 1 = "*x"
+            | otherwise = "*x^" ++ show deg  
+
 
 data ApproxPoly = ApproxPoly Accuracy Poly
 
@@ -59,17 +92,13 @@ instance HasApproximate Poly where
 
 instance Show ApproxPoly where
     show (ApproxPoly ac (Poly terms)) =
-        List.intercalate " + " $
-            map showTerm $ reverse $ List.sortBy (\(a,_) (b,_) -> compare b a) $ reverse $ terms_toList terms
+        formatTerms showCf terms
         where
-        showTerm (deg, coeff) = showApproxCoeff ++ showPower
+        showCf coeff =
+            (show approxCoeff ++ (if coeffInaccurate then "!" else ""), 
+             mpFloat2Rational approxCoeff == 0.0, mpFloat2Rational approxCoeff == 1.0)
             where
-            showApproxCoeff =
-                show approxCoeff ++ (if coeffInaccurate then "!" else "")
             (approxCoeff, coeffInaccurate) = getApproximate ac coeff
-            showPower
-                | deg == 0 = ""
-                | otherwise = "*x^" ++ show deg  
 
 type Degree = Integer
 
