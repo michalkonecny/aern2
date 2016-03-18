@@ -80,7 +80,7 @@ divideDCT_poly d _p@(Poly pTerms) q@(Poly qTerms)
     -}
 
 {-
-  The following is an aad-hoc test of division.  
+  The following is an ad-hoc test of division.  
   As expected, the degree of the result polynomial affects the error bound.
   For degrees in range 33-64 the error is around 10^-2 and in the range 
   65-128 the error is around 10^-5.
@@ -98,6 +98,11 @@ e1 :: Poly
 e1 = _p - _r * _q
 e1R :: Interval MPBall
 e1R = rangeOnIntervalUnaryFnA (setPrecision_poly (prec 200) e1, polyFixedDomain)
+
+{-
+    The following is plotted for d=8, 16 and 32 at:
+    http://fooplot.com/plot/omp15b3brz
+-}
 
 _sqrtAbs :: Integer -> Poly
 _sqrtAbs d = Poly rTerms
