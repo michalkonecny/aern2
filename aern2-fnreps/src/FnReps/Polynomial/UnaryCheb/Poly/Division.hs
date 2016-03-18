@@ -79,9 +79,24 @@ divideDCT_poly d _p@(Poly pTerms) q@(Poly qTerms)
             ⊆ range(pC(x) - r(x)*qC(x)) ± pR ± max(r(x))*qR
     -}
 
-_x = projUnaryFnA (Interval (-1.0) 1.0) :: Poly
+{-
+  The following is an aad-hoc test of division.  
+  As expected, the degree of the result polynomial affects the error bound.
+  It seems that the graph of the error bound against the degree is piece-wise
+  constant with quite large segments where no improvement is apparent.
+  Eg for degrees in range 40-60 the error is around 10^-2 and in the range 
+  65-100 the error is around 10^-5.
+-}
+
+_x :: Poly
+_x = setPrecision_poly (prec 100) $ projUnaryFnA (Interval (-1.0) 1.0) :: Poly
+_q :: Poly
 _q = 1 + 100*_x*_x
-_p = constUnaryFnA (polyFixedDomain, mpBall 1) :: Poly
-_r = normaliseCoeffs $ Poly $ lift2_DCT (const $ const $ 40) (/) (poly_terms _p) (poly_terms _q)
+_p :: Poly
+_p = setPrecision_poly (prec 100) $ constUnaryFnA (polyFixedDomain, mpBall 1) :: Poly
+_r :: Poly
+_r = normaliseCoeffs $ Poly $ lift2_DCT (const $ const $ 65) (/) (poly_terms _p) (poly_terms _q)
+e1 :: Poly
 e1 = _p - _r * _q
+e1R :: Interval MPBall
 e1R = rangeOnIntervalUnaryFnA (setPrecision_poly (prec 200) e1, polyFixedDomain)
