@@ -8,7 +8,7 @@
 module FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication 
 ( 
  multiplyDirect_terms, multiplyDCT_terms,
- lift2_DCT,
+ lift2_DCT, lift1_DCT,
  tDCT_I_nlogn, tDCT_III_nlogn, tSDCT_III_nlogn,
  tDCT_I_reference, tDCT_III_reference, tSDCT_III_reference
  )
@@ -92,6 +92,33 @@ lift2_DCT getDegree op termsA termsB =
     cN = 2 ^ (1 + (integer $ integerLog2 $ max 1 (getDegree dA dB)))
     dA = terms_degree termsA
     dB = terms_degree termsB
+
+lift1_DCT :: 
+    (Degree -> Degree) ->
+    (MPBall -> MPBall) -> 
+    (Terms -> Terms)
+lift1_DCT getDegree op termsA =
+    maybeTrace
+    (
+        "lift2_DCT:"
+        ++ "\n cN = " ++ show cN
+        ++ "\n dA = " ++ show dA
+        ++ "\n aT = " ++ show aT
+        ++ "\n cT = " ++ show cT
+        ++ "\n c = " ++ show c
+    ) $
+    terms_fromList $ zip [0..] (c0Double / 2 : c)
+--    terms_fromList [(0, mpBall 1)] -- dummy for debugging exceptions
+    where
+    (c0Double : c) = map (* (2 / cN)) (tDCT_I_nlogn cT) -- interpolate the values using a polynomial 
+     
+    cT = map op aT -- multiplication of the cN+1 values of the polynomials on the grid
+    
+    aT = coeffs2gridvalues cN termsA
+    
+    cN = 2 ^ (1 + (integer $ integerLog2 $ max 1 (getDegree dA)))
+    dA = terms_degree termsA
+
 
 {-| 
     Compute the values of the polynomial termsA on a grid.

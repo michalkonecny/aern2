@@ -5,7 +5,7 @@ import Control.Arrow
 
 import FnReps.Polynomial.UnaryCheb.Poly.Basics
 import FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding ()
-import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication
+import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication (lift2_DCT, lift1_DCT)
 
 instance (Arrow to) => CanDivA to Poly Poly where
     type DivTypeA to Poly Poly = Poly
@@ -82,10 +82,8 @@ divideDCT_poly d _p@(Poly pTerms) q@(Poly qTerms)
 {-
   The following is an aad-hoc test of division.  
   As expected, the degree of the result polynomial affects the error bound.
-  It seems that the graph of the error bound against the degree is piece-wise
-  constant with quite large segments where no improvement is apparent.
-  Eg for degrees in range 40-60 the error is around 10^-2 and in the range 
-  65-100 the error is around 10^-5.
+  For degrees in range 33-64 the error is around 10^-2 and in the range 
+  65-128 the error is around 10^-5.
 -}
 
 _x :: Poly
@@ -100,3 +98,12 @@ e1 :: Poly
 e1 = _p - _r * _q
 e1R :: Interval MPBall
 e1R = rangeOnIntervalUnaryFnA (setPrecision_poly (prec 200) e1, polyFixedDomain)
+
+_sqrtAbs :: Integer -> Poly
+_sqrtAbs d = Poly rTerms
+    where
+    rTerms = lift1_DCT (const d) (\b -> sqrt (abs b)) xTerms 
+    (Poly xTerms) = _x
+    
+    
+    
