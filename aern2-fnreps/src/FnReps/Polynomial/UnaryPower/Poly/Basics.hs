@@ -73,15 +73,15 @@ formatTerms showCf terms =
         not isZero
         where
         (_, isZero, _) = showCf cf
-    showTerm (deg, coeff) 
+    showTerm (deg, coeff)
+        | deg == 0 = coeffS
         | isOne = showPower 
-        | otherwise = coeffS ++ showPower
+        | otherwise = coeffS ++ "*" ++ showPower
         where
         (coeffS, _, isOne) = showCf coeff
         showPower
-            | deg == 0 = ""
-            | deg == 1 = "*x"
-            | otherwise = "*x^" ++ show deg  
+            | deg == 1 = "x"
+            | otherwise = "x^" ++ show deg  
 
 
 data ApproxPoly = ApproxPoly Accuracy Poly

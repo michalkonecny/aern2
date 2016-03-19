@@ -138,13 +138,16 @@ fromListRationalWithPrec p termsAsList =
 -}
 normaliseCoeffs :: Poly -> Poly
 normaliseCoeffs (Poly terms) =
-    Poly (terms_insertWith (+) 0 errorBall (terms_fromList termListN))
+    Poly (terms_insertWith (+) 0 errorBall (terms_fromList $ concat termListN))
     where
     termList = terms_toList terms
     (termListN, errorBalls) = unzip $ map normaliseTerm termList
-    normaliseTerm (deg, coeff) = ((deg, centre), errorB)
+    normaliseTerm (deg, coeff) 
+        | deg > 0 && containsZero = ([], abs centre + errorB)
+        | otherwise = ([(deg, centre)], errorB)
         where
         (centre, errorB) = getCentreAndErrorBall coeff
+        containsZero = ((abs centre) <= errorB) == Just True
     errorBall = sum errorBalls
 
 
