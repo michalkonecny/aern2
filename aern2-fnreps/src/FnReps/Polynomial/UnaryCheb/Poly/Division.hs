@@ -6,6 +6,7 @@ import Control.Arrow
 import FnReps.Polynomial.UnaryCheb.Poly.Basics
 import FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding ()
 import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication (lift2_DCT, lift1_DCT)
+import FnReps.Polynomial.UnaryCheb.Poly.Bernstein
 
 instance (Arrow to) => CanDivA to Poly Poly where
     type DivTypeA to Poly Poly = Poly
@@ -104,11 +105,17 @@ e1R = rangeOnIntervalUnaryFnA (setPrecision_poly (prec 200) e1, polyFixedDomain)
     http://fooplot.com/plot/omp15b3brz
 -}
 
-_sqrtAbs :: Integer -> Poly
-_sqrtAbs d = Poly rTerms
+_sqrtAbsDCT :: Integer -> Poly
+_sqrtAbsDCT d = Poly rTerms
     where
     rTerms = lift1_DCT (const d) (\b -> sqrt (abs b)) xTerms 
     (Poly xTerms) = _x
+
+{-
+    The following is plotted for d=8, 16, 32 and 64 at:
+    http://fooplot.com/plot/demhnuwnms
+-}
     
-    
+_sqrtAbsBernstein :: Integer -> Poly
+_sqrtAbsBernstein d = bernsteinApprox (prec 200) d (\b -> sqrt(abs b))
     

@@ -33,14 +33,15 @@ Library
   other-modules:    
                     FnReps.Polynomial.UnaryCheb.Poly,
                     FnReps.Polynomial.UnaryCheb.Poly.Basics,
+                    FnReps.Polynomial.UnaryCheb.Poly.Bernstein,
                     FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power,
                     FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication,
                     FnReps.Polynomial.UnaryCheb.Poly.Division,
                     FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding,
+                    FnReps.Polynomial.UnaryCheb.Poly.Integration,
                     FnReps.Polynomial.UnaryCheb.Poly.SizeReduction,
                     FnReps.Polynomial.UnaryPower.Poly.Basics,
-                    FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding,
-                    FnReps.Polynomial.UnaryCheb.Poly.Integration
+                    FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding
   exposed-modules:  
                     FnReps.Polynomial.UnaryCheb.PolyBall,
                     FnReps.Polynomial.UnaryCheb.RealFn,
