@@ -44,25 +44,16 @@ sqrtAbs p d (Interval l r)
     where
     showB = show . getApproximate (bits 30)
     showAP = show . getApproximate (bits 30) . cheb2Power
+    
+    -- the result polynomial enclosure
     res = Poly $ terms_updateConst pmErrorBound resCTerms
         where 
         pmErrorBound c = endpoints2Ball (c - errorBound) (c + errorBound)
         errorBound = mpBall 0 -- TODO maxDifferenceNeg `max` maxDifferencePos
     resC@(Poly resCTerms) = lift1_DCT (const d) (\b -> sqrt (abs b)) x
     targetEps = ballCentre $ (evalAtDomPointUnaryFnA (resC, zeroPoint)) / 100
-    zeroPoint = -2*l/(r-l)
-    Interval _ sqrtPosSquareE =
-        abs $ 
-            rangeOnIntervalUnaryFnA (sqrtPos * sqrtPos - x, Interval zeroPoint 1.0)
-    Interval _ sqrtNegSquareE =
-        abs $ 
-            rangeOnIntervalUnaryFnA (sqrtNeg * sqrtNeg - x, Interval (-1.0) zeroPoint)
-    sqrtPos = 
-        shiftDomainBy (2*l/(r-l)) $ 
-            lift1_DCT (const d) (\b -> (sqrt(max (targetEps/16) b))) (x - l)
-    sqrtNeg = 
-        shiftDomainBy (2*r/(r-l)) $ 
-            lift1_DCT (const d) (\b -> (sqrt(max (targetEps/16) (-b)))) (x - r)
+    
+    -- x over interval [l,r] scaled to the domain [-1,1]
     x :: Poly
     x = 
         setPrecision_poly p $ 
@@ -70,6 +61,24 @@ sqrtAbs p d (Interval l r)
         where
         a1 = rational2BallP p $ (r-l)/2
         a0 = rational2BallP p $ (r+l)/2
+    -- the point in [-1,1] that maps to 0 in [l,r] 
+    zeroPoint = -2*l/(r-l)
+    
+
+    -- approximations of sqrt(x) and sqrt(-x) on the two halves around zeroPoint    
+    sqrtPos = 
+        shiftDomainBy (2*l/(r-l)) $ 
+            lift1_DCT (const d) (\b -> (sqrt(max (targetEps/16) b))) (x - l)
+    sqrtNeg = 
+        shiftDomainBy (2*r/(r-l)) $ 
+            lift1_DCT (const d) (\b -> (sqrt(max (targetEps/16) (-b)))) (x - r)
+    -- the error of the square of the above approximations    
+    Interval _ sqrtPosSquareE =
+        abs $ 
+            rangeOnIntervalUnaryFnA (sqrtPos * sqrtPos - x, Interval zeroPoint 1.0)
+    Interval _ sqrtNegSquareE =
+        abs $ 
+            rangeOnIntervalUnaryFnA (sqrtNeg * sqrtNeg + x, Interval (-1.0) zeroPoint)
 
 {-
     The following is plotted for d=8, 16 and 32 at:
