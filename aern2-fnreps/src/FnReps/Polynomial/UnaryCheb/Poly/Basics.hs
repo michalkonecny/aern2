@@ -181,6 +181,9 @@ instance CanSubSameType Poly
     
 {- Mixed operations with Integer -}
     
+instance CanAddMulScalar Poly Integer
+instance CanAddMulDivScalar Poly Integer
+    
 instance CanAddA (->) Poly Integer where
     type AddTypeA (->) Poly Integer = Poly
     addA (Poly terms, n) =
@@ -221,6 +224,9 @@ instance CanDivBy Poly Integer
     
 {- Mixed operations with Rational -}
     
+instance CanAddMulScalar Poly Rational
+instance CanAddMulDivScalar Poly Rational
+
 instance CanAddA (->) Poly Rational where
     type AddTypeA (->) Poly Rational = Poly
     addA (Poly terms, n) =
@@ -260,6 +266,9 @@ instance CanDivA (->) Poly Rational where
 instance CanDivBy Poly Rational
 
 {- Mixed operations with MPBall -}
+    
+instance CanAddMulScalar Poly MPBall
+instance CanAddMulDivScalar Poly MPBall
     
 instance CanAddA (->) Poly MPBall where
     type AddTypeA (->) Poly MPBall = Poly

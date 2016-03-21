@@ -1,7 +1,9 @@
-module FnReps.Polynomial.UnaryCheb.Poly.Bernstein where
+module FnReps.Polynomial.UnaryCheb.Poly.Bernstein 
+(bernsteinApprox, binomialcoeffs)
+where
 
 import AERN2.RealFunction
-import Control.Arrow (arr)
+--import Control.Arrow (arr)
 
 import FnReps.Polynomial.UnaryCheb.Poly.Basics
 import FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding ()

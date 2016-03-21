@@ -7,12 +7,17 @@
 -}
 module FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication 
 ( 
- multiplyDirect_terms, multiplyDCT_terms,
+ multiplyDirect, multiplyDCT,
  lift2_DCT, lift1_DCT,
  tDCT_I_nlogn, tDCT_III_nlogn, tSDCT_III_nlogn,
  tDCT_I_reference, tDCT_III_reference, tSDCT_III_reference
  )
 where
+
+import AERN2.Num
+import qualified Prelude as P
+
+import AERN2.RealFunction
 
 import FnReps.Polynomial.UnaryCheb.Poly.Basics
 
@@ -33,21 +38,39 @@ maybeTrace
     | otherwise = const id
 
 instance CanMulA (->) Poly Poly where
-    mulA (Poly termsL, Poly termsR) =
-        Poly $ multiply_terms termsL termsR
+    mulA (p1@(Poly terms1), p2@(Poly terms2)) =
+        multiply_p p1 p2
         where
-        multiply_terms
-            | ((terms_size termsL) + (terms_size termsR)) < 500 =
-                multiplyDirect_terms
-            | otherwise = multiplyDCT_terms
+        multiply_p
+            | ((terms_size terms1) + (terms_size terms2)) < 500 =
+                multiplyDirect
+            | otherwise = multiplyDCT
 
 instance CanMulBy Poly Poly
 instance CanMulSameType Poly
 
-multiplyDirect_terms
-     :: Terms -> Terms -> Terms
-multiplyDirect_terms terms1 terms2 =
-    terms
+instance CanPowA (->) Poly Integer where
+    powA (p, n) 
+        | n < 0 = error "polynomial power called with a negative exponent"
+        | n == 0 = fromList [(0,mpBall 1.0)]
+        | n == 1 = p
+        | even n =
+            pPowerN2 * pPowerN2
+        | otherwise =
+            p * pPowerN2 * pPowerN2
+        where
+        pPowerN2 = powA (p, n `P.div` 2)
+
+instance CanPowByA (->) Poly Integer
+
+instance ConvertibleA (->) Integer Poly where
+    convertA n = fromList [(0,mpBall n)]
+
+
+multiplyDirect
+     :: Poly -> Poly -> Poly
+multiplyDirect (Poly terms1) (Poly terms2) =
+    Poly terms
     where
     terms =
         terms_fromListAddCoeffs $ 
@@ -59,15 +82,15 @@ multiplyDirect_terms terms1 terms2 =
             ]
             
 
-multiplyDCT_terms :: Terms -> Terms -> Terms
-multiplyDCT_terms = lift2_DCT (+) (*)
+multiplyDCT :: Poly -> Poly -> Poly
+multiplyDCT = lift2_DCT (+) (*)
 
 
 lift2_DCT :: 
     (Degree -> Degree -> Degree) ->
     (MPBall -> MPBall -> MPBall) -> 
-    (Terms -> Terms -> Terms)
-lift2_DCT getDegree op termsA termsB =
+    (Poly -> Poly -> Poly)
+lift2_DCT getDegree op (Poly termsA) (Poly termsB) =
     maybeTrace
     (
         "lift2_DCT:"
@@ -79,7 +102,7 @@ lift2_DCT getDegree op termsA termsB =
         ++ "\n cT = " ++ show cT
         ++ "\n c = " ++ show c
     ) $
-    terms_fromList $ zip [0..] (c0Double / 2 : c)
+    Poly $ terms_fromList $ zip [0..] (c0Double / 2 : c)
 --    terms_fromList [(0, mpBall 1)] -- dummy for debugging exceptions
     where
     (c0Double : c) = map (* (2 / cN)) (tDCT_I_nlogn cT) -- interpolate the values using a polynomial 
@@ -96,8 +119,8 @@ lift2_DCT getDegree op termsA termsB =
 lift1_DCT :: 
     (Degree -> Degree) ->
     (MPBall -> MPBall) -> 
-    (Terms -> Terms)
-lift1_DCT getDegree op termsA =
+    (Poly -> Poly)
+lift1_DCT getDegree op (Poly termsA) =
     maybeTrace
     (
         "lift2_DCT:"
@@ -107,7 +130,7 @@ lift1_DCT getDegree op termsA =
         ++ "\n cT = " ++ show cT
         ++ "\n c = " ++ show c
     ) $
-    terms_fromList $ zip [0..] (c0Double / 2 : c)
+    Poly $ terms_fromList $ zip [0..] (c0Double / 2 : c)
 --    terms_fromList [(0, mpBall 1)] -- dummy for debugging exceptions
     where
     (c0Double : c) = map (* (2 / cN)) (tDCT_I_nlogn cT) -- interpolate the values using a polynomial 

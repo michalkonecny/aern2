@@ -19,7 +19,7 @@ import AERN2.Num
 
 import FnReps.Polynomial.UnaryCheb.Poly.Basics
 import FnReps.Polynomial.UnaryCheb.Poly.SizeReduction
-import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication (multiplyDirect_terms, multiplyDCT_terms)
+import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication (multiplyDirect, multiplyDCT)
 import FnReps.Polynomial.UnaryCheb.Poly.Division
 import FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding
 import FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power
@@ -40,12 +40,10 @@ _ucspoly1Reduced2 :: Poly
 _ucspoly1Reduced2 =  reduceDegreeAndSweep 2 (NormZero) _ucspoly1
 
 _ucspoly_MultiplyDCT :: Poly -> Poly -> Poly
-_ucspoly_MultiplyDCT (Poly terms1) (Poly terms2) =
-    Poly $ multiplyDCT_terms terms1 terms2 
+_ucspoly_MultiplyDCT = multiplyDCT 
 
 _ucspoly_MultiplyDirect :: Poly -> Poly -> Poly
-_ucspoly_MultiplyDirect (Poly terms1) (Poly terms2) =
-    Poly $ multiplyDirect_terms terms1 terms2 
+_ucspoly_MultiplyDirect = multiplyDirect 
 
 _ucspoly_ones :: Precision -> Degree -> Poly
 _ucspoly_ones p d = Poly $ terms_fromList [(i,integer2BallP p 1) | i <- [0..d]]

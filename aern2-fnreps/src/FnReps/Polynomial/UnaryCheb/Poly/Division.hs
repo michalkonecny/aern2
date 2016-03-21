@@ -5,8 +5,7 @@ import Control.Arrow
 
 import FnReps.Polynomial.UnaryCheb.Poly.Basics
 import FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding ()
-import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication (lift2_DCT, lift1_DCT)
-import FnReps.Polynomial.UnaryCheb.Poly.Bernstein
+import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication (lift2_DCT)
 
 instance (Arrow to) => CanDivA to Poly Poly where
     type DivTypeA to Poly Poly = Poly
@@ -54,7 +53,7 @@ divideDCT_poly d _p@(Poly pTerms) q@(Poly qTerms)
     qC = Poly qCTerms
     rC@(Poly rCTerms) = 
         normaliseCoeffs $
-            Poly $ lift2_DCT (const $ const $ d) (/) pCTerms qCTerms
+            lift2_DCT (const $ const $ d) (/) pC qC
     r = Poly $ terms_updateConst pmErrorBound rCTerms
         where 
         pmErrorBound c = endpoints2Ball (c - errorBound) (c + errorBound) 
@@ -94,28 +93,9 @@ _q = 1 + 100*_x*_x
 _p :: Poly
 _p = setPrecision_poly (prec 100) $ constUnaryFnA (polyFixedDomain, mpBall 1) :: Poly
 _r :: Poly
-_r = normaliseCoeffs $ Poly $ lift2_DCT (const $ const $ 65) (/) (poly_terms _p) (poly_terms _q)
+_r = normaliseCoeffs $ lift2_DCT (const $ const $ 65) (/) _p _q
 e1 :: Poly
 e1 = _p - _r * _q
 e1R :: Interval MPBall
 e1R = rangeOnIntervalUnaryFnA (setPrecision_poly (prec 200) e1, polyFixedDomain)
 
-{-
-    The following is plotted for d=8, 16 and 32 at:
-    http://fooplot.com/plot/omp15b3brz
--}
-
-_sqrtAbsDCT :: Integer -> Poly
-_sqrtAbsDCT d = Poly rTerms
-    where
-    rTerms = lift1_DCT (const d) (\b -> sqrt (abs b)) xTerms 
-    (Poly xTerms) = _x
-
-{-
-    The following is plotted for d=8, 16, 32 and 64 at:
-    http://fooplot.com/plot/demhnuwnms
--}
-    
-_sqrtAbsBernstein :: Integer -> Poly
-_sqrtAbsBernstein d = bernsteinApprox (prec 200) d (\b -> sqrt(abs b))
-    

@@ -1,9 +1,9 @@
 {-# LANGUAGE Arrows, ScopedTypeVariables, FlexibleContexts, TypeOperators, TemplateHaskell, OverloadedStrings, UndecidableInstances #-}
 module FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding 
 (
-    evalDirectA, evalDirectOnBall, evalLipschitzOnBall,
-    range
---   , toPowerBase
+    evalDirectA, evalDirectOnBall, evalLipschitzOnBall
+    , range
+    , shiftDomainBy
     , evalExample1, evalExample2
 )
 where
@@ -13,6 +13,7 @@ import AERN2.RealFunction
 
 import FnReps.Polynomial.UnaryCheb.Poly.Basics
 import FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power
+import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication ()
 
 import qualified FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding as Power
 
@@ -102,42 +103,42 @@ instance
                     returnA -< evalLipschitzOnBall f x
 
 
-
---{-|
---    An evaluation of the polynomial at the ball x using Clenshaw Algorithm
---    (https://en.wikipedia.org/wiki/Clenshaw_algorithm#Special_case_for_Chebyshev_series). 
----}
---toPowerBase :: Poly -> PowerBasis.Poly
---toPowerBase p = evalDirect p (PowerBasis.fromIntegerListP (getPrecision p) [(0,0),(1,1)])
-
---{-|
---    An evaluation of the polynomial at x using Clenshaw Algorithm
---    (https://en.wikipedia.org/wiki/Clenshaw_algorithm#Special_case_for_Chebyshev_series). 
----}
---evalDirect :: 
---    (Ring ra, 
---     CanAddMulDivScalar ra Integer,
---     CanAddMulScalar ra MPBall) 
---    => 
---    Poly -> ra -> ra
---evalDirect (Poly terms) (x :: ra) =
---    (b0 - b2)/2
---    where
---    n = terms_degree terms
---    (b0:_:b2:_) = bs
---    bs :: [ra]
---    bs = reverse $ aux n (convert 0) (convert 0)
---    aux k bKp2 bKp1 
---        | k == 0 = [bKp2, bKp1, bK] 
---        | otherwise = bKp2 : aux (k - 1) bKp1 bK
---        where
---        bK = (a k) + 2 * x * bKp1 - bKp2
---    a k = terms_lookupCoeffDoubleConstTerm terms k 
+shiftDomainBy :: Rational -> Poly -> Poly
+shiftDomainBy a p =
+    evalDirect p (x+a)
+    where
+    x = projUnaryFnA polyFixedDomain :: Poly
 
 
 {-|
     An evaluation of the polynomial at x using Clenshaw Algorithm
     (https://en.wikipedia.org/wiki/Clenshaw_algorithm#Special_case_for_Chebyshev_series). 
+-}
+evalDirect :: 
+    (CanAddSameType ra, CanSubSameType ra, CanMulSameType ra, 
+     Convertible Integer ra, CanAddMulDivScalar ra Integer,
+     CanAddMulScalar ra MPBall) 
+    => 
+    Poly -> ra -> ra
+evalDirect (Poly terms) (x :: ra) =
+    (b0 - b2)/2
+    where
+    n = terms_degree terms
+    (b0:_:b2:_) = bs
+    bs :: [ra]
+    bs = reverse $ aux n (convert 0) (convert 0)
+    aux k bKp2 bKp1 
+        | k == 0 = [bKp2, bKp1, bK] 
+        | otherwise = bKp2 : aux (k - 1) bKp1 bK
+        where
+        bK = (a k) + 2 * x * bKp1 - bKp2
+    a k = terms_lookupCoeffDoubleConstTerm terms k 
+
+
+{-|
+    An evaluation of the polynomial at x using Clenshaw Algorithm
+    (https://en.wikipedia.org/wiki/Clenshaw_algorithm#Special_case_for_Chebyshev_series). 
+    An arrow-generic version.
 -}
 evalDirectA :: 
     (ArrowReal to ra,
