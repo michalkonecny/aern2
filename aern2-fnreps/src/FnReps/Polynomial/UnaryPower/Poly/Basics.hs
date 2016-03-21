@@ -21,7 +21,8 @@ module FnReps.Polynomial.UnaryPower.Poly.Basics
     terms_unionWith,
     terms_filter,
     shiftLeft,
-    shiftRight
+    shiftRight,
+    normalise
 )
 where
 
@@ -37,7 +38,7 @@ import AERN2.Num
 data Poly = 
     Poly
     {
-        unaryPowerDense_terms :: Terms
+        unaryPower_terms :: Terms
     }
 
 instance Show Poly where
@@ -137,6 +138,15 @@ fromRationalListP p termsAsList =
     where
     r2b (deg, q) = (deg, rational2BallP p q)
 
+normalise :: Poly -> Poly
+normalise (Poly ts) = Poly ts'
+                      where
+                      ts' = Map.mapWithKey (\k c -> let (b_c,_) = getCentreAndErrorBall c in if k == 0 then b_c + err else b_c) $ if 0 `Map.member` ts then ts else Map.insert 0 (mpBall 0) ts
+                      err = Map.foldl (\e b -> let (_, b_e) = getCentreAndErrorBall b in e + b_e)
+                                                    (mpBall 0)
+                                                    ts
+
+
 instance CanNegA (->) Poly where
     negA (Poly terms) = 
         Poly $ fmap neg terms 
@@ -162,7 +172,7 @@ instance CanSubSameType Poly
 instance CanMulA (->) MPBall Poly where
         type MulTypeA (->) MPBall Poly = Poly
         mulA (l, Poly terms) =
-                Poly $ Map.mapWithKey (\_ c -> c*l) terms
+                Poly $ Map.map (\c -> c*l) terms
     
 instance CanMulA (->) Poly Poly where
     type MulTypeA (->) Poly Poly = Poly
@@ -170,7 +180,7 @@ instance CanMulA (->) Poly Poly where
         {-if terms_degree ts > 100 || terms_degree ts' > 100 then --TODO: best strategy?
             karatsuba p q
         else-}
-            Map.foldl' (+) (fromList [(0,integer2BallP (prec 53) 0)]) $ Map.mapWithKey (\p c -> c*(Poly $ Map.mapKeys (\p' -> p' + p) ts')) ts  
+            Map.foldl' (+) (fromList [(0, mpBall 0)]) $ Map.mapWithKey (\p c -> c*(Poly $ Map.mapKeys (\p' -> p' + p) ts')) ts  
 
 shiftRight :: Integer -> Poly -> Poly
 shiftRight n (Poly ts) = Poly $ Map.mapKeys (\p -> p + n) ts

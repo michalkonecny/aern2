@@ -8,7 +8,8 @@ module FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding
     isolateRoots,
     translate,
     scale,
-    roots
+    roots,
+    rangeEstimate
 )
 where
 
@@ -16,10 +17,13 @@ import qualified Data.Map as Map
 import AERN2.Num
 import FnReps.Polynomial.UnaryPower.Poly.Basics
 
+import qualified FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding as IntPoly
+import qualified FnReps.Polynomial.UnaryPower.IntPoly.Basics as IntPolyB
+
 --TODO: make this more generic
 eval :: Poly -> MPBall -> MPBall
 eval poly@(Poly ts) x =
-    evalHornerAcc (degree poly) $ (integer2BallP (prec 53) 0)
+    evalHornerAcc (degree poly) $ (mpBall 0)
     where
     evalHornerAcc 0 sm = x*sm + terms_lookupCoeff ts 0
     evalHornerAcc k sm = evalHornerAcc (k - 1) $ x*sm + terms_lookupCoeff ts k
@@ -32,29 +36,36 @@ evalOnRational poly@(Poly ts) x =
     evalOnRationalHornerAcc k sm = evalOnRationalHornerAcc (k - 1) $ (rational2BallP (getPrecision sm) x)*sm + terms_lookupCoeff ts k -- TODO maybe get the right precision in the beginning to avoid overhead
 
 range :: Accuracy -> Poly -> Interval MPBall -> Interval MPBall
-range ac p (Interval l r) = Interval minValue maxValue
-                            where
-                            criticalPoints = allRoots (toRationalDown l) (toRationalUp r) ac $ derivative p
-                            criticalValues = [eval p l, eval p r] ++ map (eval p) criticalPoints
-                            minValue = foldl1 (\x y -> min x y) criticalValues
-                            maxValue = foldl1 (\x y -> max x y) criticalValues
-                            
+range ac p (Interval l r) = approxRange (toRationalDown l) (toRationalUp r) ac p
 
-{-rangeEstimate :: Poly -> Rational -> Rational -> Accuracy -> MPBall
-rangeEstimate p l r ac = result
+approxRange :: Rational -> Rational -> Accuracy -> Poly -> Interval MPBall
+approxRange l r ac p = Interval (minValue - err) (maxValue + err)
+                    where
+                    (fracCoefs, err) = IntPolyB.fracListFromFPPoly $ scale (0.5*(r - l)) $ translate (0.5*(r + l)) $ p
+                    p'  = IntPolyB.fromFracList $ IntPolyB.normaliseFracList fracCoefs
+                    p'' = fromRationalListP (prec $ fromAccuracy ac) fracCoefs 
+                    dp'  = IntPolyB.derivative $ p'
+                    dp'' = IntPolyB.toFPPoly $ dp'
+                    criticalPoints = map (\(Interval a b) -> approximateRootByBisection a b ac dp'') $ IntPoly.isolateRootsI dp'
+                    criticalValues = [eval p'' (mpBall $ -1), eval p'' (mpBall 1)] ++ map (rangeEstimate p'') criticalPoints
+                    minValue = foldl1 (\x y -> min x y) criticalValues
+                    maxValue = foldl1 (\x y -> max x y) criticalValues
+
+rangeEstimate :: Poly -> MPBall -> MPBall
+rangeEstimate p b = result
                       where
-                      b = ri2ball (Interval l r) ac
-                      result = (eval p b) + b_errorBall * lp
+                      result = (eval p b_centre) + b_errorBall * lp
                       (b_centre, b_errorBall) = getCentreAndErrorBall b
-                      lp = markovBound l r p
+                      lp = markovBound (toRationalDown $ b_centre - b_errorBall) (toRationalUp $ b_centre + b_errorBall) p
 
 markovBound :: Rational -> Rational -> Poly -> MPBall
-markovBound l r p  = (degree p')^2 * Map.foldl' (\x y -> x + abs(y)) (mpBall 0) ts
+markovBound l r p  = ((degree p)^2) * Map.foldl' (\x y -> x + abs(y)) (mpBall 0) ts
                      where
-                     p'@(Poly ts) = translate (-l) $ scale (r - l) p -}
+                     (Poly ts) = translate (-0.5*(r + l)) $ scale (0.5*(r - l)) p
 
 derivative :: Poly -> Poly
 derivative (Poly ts) = Poly $ Map.filterWithKey (\k _ -> k >= 0) $ Map.mapKeys (\k -> k - 1) $ Map.mapWithKey (\p c -> c*p) ts
+
 
 {- Root finding -}
 
@@ -71,18 +82,12 @@ instance Show RootInterval where
 ri_isAccurate :: RootInterval -> Accuracy -> Bool
 ri_isAccurate (RootInterval l r _ _ _) ac = getAccuracy (ri2ball (Interval l r) (ac + 2)) >= ac
 
-ri_isRefinable :: RootInterval -> Bool
-ri_isRefinable (RootInterval _ _ _ _ b) = b 
-
 ri_hasRoot :: RootInterval -> (Maybe Bool)
 ri_hasRoot (RootInterval _ _ _ b _) = b 
 
 split :: RootInterval -> [RootInterval]
 split (RootInterval l r p _ _)  = filter (\x -> ri_hasRoot x /= Just False) [left,right]
                                      where
-                                     {-rootLeft  = hasSingleRoot l m p
-                                     rootRight = hasSingleRoot m r p
-                                     m = findMidpoint l r p-}
                                      left  = RootInterval l m p (fst rootLeft) (snd rootLeft)
                                      right = RootInterval m r p (fst rootRight) (snd rootRight)
                                      (m,rootLeft,rootRight) = midpointAndRootIndicators l r p
@@ -121,9 +126,6 @@ refine ac ri@(RootInterval _ _ _ rootUnique refinable) = if ri_isAccurate ri ac 
                                                         [approximateRootByTrisection' ac ri] 
                                                     else 
                                                         foldl (++) [] $ map (refine ac) $ split ri
-
-refineList :: Accuracy -> [RootInterval] -> [RootInterval]
-refineList ac = foldl (++) [] . map (refine ac)
                                             
 roots :: Accuracy -> RootInterval -> [MPBall]
 roots ac ri = map (\(RootInterval l r _ _ _) -> (ri2ball (Interval l r) (ac + 2))) (refine ac ri)                                               
@@ -321,5 +323,5 @@ allRootsByTrisection :: Rational -> Rational -> Accuracy -> Poly -> [MPBall]
 allRootsByTrisection l r a p = map (\(Interval l' r') -> approximateRootByTrisection l' r' a p) $ isolateRoots l r p   
   
 allRootsByBisection :: Rational -> Rational -> Accuracy -> Poly -> [MPBall]
-allRootsByBisection l r a p = map (\(Interval l' r') -> approximateRootByBisection l' r' a p) $ isolateRoots l r p  -}         
-                                                                                         
+allRootsByBisection l r a p = map (\(Interval l' r') -> approximateRootByBisection l' r' a p) $ isolateRoots l r p  -}  
+                                                                                                                                        
