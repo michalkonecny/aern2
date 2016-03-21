@@ -87,11 +87,11 @@ divideDCT_poly d _p@(Poly pTerms) q@(Poly qTerms)
 -}
 
 _x :: Poly
-_x = setPrecision_poly (prec 100) $ projUnaryFnA (Interval (-1.0) 1.0) :: Poly
+_x = setPrecision_poly (prec 200) $ projUnaryFnA (Interval (-1.0) 1.0) :: Poly
 _q :: Poly
 _q = 1 + 100*_x*_x
 _p :: Poly
-_p = setPrecision_poly (prec 100) $ constUnaryFnA (polyFixedDomain, mpBall 1) :: Poly
+_p = setPrecision_poly (prec 200) $ constUnaryFnA (polyFixedDomain, mpBall 1) :: Poly
 _r :: Poly
 _r = normaliseCoeffs $ lift2_DCT (const $ const $ 65) (/) _p _q
 e1 :: Poly
