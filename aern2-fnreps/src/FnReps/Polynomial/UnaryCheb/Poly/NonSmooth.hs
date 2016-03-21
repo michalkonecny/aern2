@@ -22,6 +22,9 @@ maybeTrace
     | otherwise = const id
 
 
+_test1 :: Poly
+_test1 = sqrtAbs (prec 100) 7 (Interval (-1.0) 2.0)
+
 sqrtAbs :: Precision -> Integer -> Interval Rational -> Poly
 sqrtAbs p d (Interval l r) 
     | 0 <= l = x
