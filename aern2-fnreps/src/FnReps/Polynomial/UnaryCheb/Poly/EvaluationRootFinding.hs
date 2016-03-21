@@ -214,7 +214,7 @@ approxRange l r ac p = Interval (minValue - err) (maxValue + err)
                     dp'  = IntPolyB.derivative $ p'
                     dp'' = IntPolyB.toFPPoly $ dp'
                     criticalPoints = map (\(Interval a b) -> Power.approximateRootByBisection a b ac dp'') $ IntPolyEV.isolateRoots l r dp'
-                    criticalValues = [evalDirectOnBall p (mpBall $ -1), evalDirectOnBall p (mpBall 1)] ++ map (evalLipschitzOnBall p) criticalPoints
+                    criticalValues = [evalDirectOnBall p (mpBall l), evalDirectOnBall p (mpBall r)] ++ map (evalLipschitzOnBall p) criticalPoints
                     minValue = foldl1 (\x y -> min x y) criticalValues
                     maxValue = foldl1 (\x y -> max x y) criticalValues
 
