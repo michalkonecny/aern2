@@ -32,10 +32,13 @@ sqrtAbs p d (Interval l r)
     | otherwise =
         maybeTrace
         (
-            "sqrtAbs:"
+            "sqrtAbs: (see http://fooplot.com/plot/4c0k1qo81k)"
+            ++ "\n zeroPoint = " ++ show zeroPoint
             ++ "\n targetEps = " ++ showB targetEps
             ++ "\n sqrtPos = " ++ showAP sqrtPos
             ++ "\n sqrtNeg = " ++ showAP sqrtNeg
+            ++ "\n sqrtPos^2 = " ++ (showAP $ sqrtPos * sqrtPos)
+            ++ "\n sqrtNeg^2 = " ++ (showAP $ sqrtNeg * sqrtNeg)
             ++ "\n sqrtPosSquareE = " ++ showB sqrtPosSquareE
             ++ "\n sqrtNegSquareE = " ++ showB sqrtNegSquareE
             ++ "\n resC = " ++ showAP resC
@@ -62,7 +65,7 @@ sqrtAbs p d (Interval l r)
         a1 = rational2BallP p $ (r-l)/2
         a0 = rational2BallP p $ (r+l)/2
     -- the point in [-1,1] that maps to 0 in [l,r] 
-    zeroPoint = -2*l/(r-l)
+    zeroPoint = -(r+l)/(r-l)
     
 
     -- approximations of sqrt(x) and sqrt(-x) on the two halves around zeroPoint    
