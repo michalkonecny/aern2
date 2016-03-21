@@ -22,8 +22,18 @@ maybeTrace
     | otherwise = const id
 
 
+{-
+    see http://fooplot.com/plot/d41cy0ouxp
+-}
 _test1 :: Poly
 _test1 = sqrtAbs (prec 100) 7 (Interval (-1.0) 2.0)
+
+_test1_16 :: Poly
+_test1_16 = sqrtAbs (prec 200) 15 (Interval (-1.0) 2.0)
+
+_test1_32 :: Poly
+_test1_32 = sqrtAbs (prec 300) 31 (Interval (-1.0) 2.0)
+    -- throws: Precision must be between 2 and Precision 1000000 (given: p=0).
 
 sqrtAbs :: Precision -> Integer -> Interval Rational -> Poly
 sqrtAbs p d (Interval l r) 
@@ -32,7 +42,7 @@ sqrtAbs p d (Interval l r)
     | otherwise =
         maybeTrace
         (
-            "sqrtAbs: (see http://fooplot.com/plot/d41cy0ouxp)"
+            "sqrtAbs:"
             ++ "\n zeroPoint = " ++ show zeroPoint
             ++ "\n targetEps = " ++ showB targetEps
             ++ "\n sqrtPos = " ++ showAP sqrtPos
