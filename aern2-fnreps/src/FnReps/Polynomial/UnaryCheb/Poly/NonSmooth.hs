@@ -32,7 +32,7 @@ sqrtAbs p d (Interval l r)
     | otherwise =
         maybeTrace
         (
-            "sqrtAbs: (see http://fooplot.com/plot/4c0k1qo81k)"
+            "sqrtAbs: (see http://fooplot.com/plot/d41cy0ouxp)"
             ++ "\n zeroPoint = " ++ show zeroPoint
             ++ "\n targetEps = " ++ showB targetEps
             ++ "\n sqrtPos = " ++ showAP sqrtPos
@@ -41,11 +41,17 @@ sqrtAbs p d (Interval l r)
             ++ "\n sqrtNeg^2 = " ++ (showAP $ sqrtNeg * sqrtNeg)
             ++ "\n sqrtPosSquareE = " ++ showB sqrtPosSquareE
             ++ "\n sqrtNegSquareE = " ++ showB sqrtNegSquareE
+            ++ "\n epsilonPos = " ++ showQ epsilonPos
+            ++ "\n epsilonPos2 = " ++ showQ epsilonPos2
+            ++ "\n sqrtPosZRangeL = " ++ showB sqrtPosZRangeL
+            ++ "\n sqrtPosZRangeR = " ++ showB sqrtPosZRangeR
+            ++ "\n sqrtPosE = " ++ showB sqrtPosE
             ++ "\n resC = " ++ showAP resC
         ) $ 
         res
     where
     showB = show . getApproximate (bits 30)
+    showQ = showB . mpBall
     showAP = show . getApproximate (bits 30) . cheb2Power
     
     -- the result polynomial enclosure
@@ -82,6 +88,18 @@ sqrtAbs p d (Interval l r)
     Interval _ sqrtNegSquareE =
         abs $ 
             rangeOnIntervalUnaryFnA (sqrtNeg * sqrtNeg + x, Interval (-1.0) zeroPoint)
+    -- sqrt of the above ranges gives an epsilon value used in computing an error bound to sqrtPos and sqrtNeg:
+    epsilonPos = toRationalUp $ sqrt sqrtPosSquareE
+    epsilonNeg = toRationalUp $ sqrt sqrtNegSquareE
+    epsilonPos2 = epsilonPos * epsilonPos
+    epsilonNeg2 = epsilonNeg * epsilonNeg
+    Interval sqrtPosZRangeL sqrtPosZRangeR =
+        rangeOnIntervalUnaryFnA (sqrtPos, Interval zeroPoint (zeroPoint + epsilonPos2))
+    Interval sqrtNegZRangeL sqrtNegZRangeR =
+        rangeOnIntervalUnaryFnA (sqrtNeg, Interval (zeroPoint - epsilonNeg2) zeroPoint)
+    sqrtPosE = foldl1 max [sqrtPosZRangeR, epsilonPos - sqrtPosZRangeL, mpBall (epsilonPos/2)]
+    sqrtNegE = foldl1 max [sqrtNegZRangeR, epsilonNeg - sqrtNegZRangeL, mpBall (epsilonNeg/2)]
+    
 
 {-
     The following is plotted for d=8, 16 and 32 at:
