@@ -9,7 +9,8 @@ module FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding
     translate,
     scale,
     roots,
-    rangeEstimate
+    rangeEstimate,
+    approximateRootByBisection
 )
 where
 
