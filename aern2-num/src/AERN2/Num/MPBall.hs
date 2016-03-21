@@ -30,7 +30,7 @@ module AERN2.Num.MPBall
      integer2BallP, rational2BallP, rationalBall2BallP,
      ball2endpoints, endpoints2Ball,
      getCentreAndErrorBall,
-     ballCentre,
+     ballCentre, ballCentreRational,
      ballRadius,
      piBallP) 
 where
@@ -649,6 +649,9 @@ getCentreAndErrorBall x = (cB,eB)
 ballCentre :: MPBall -> MPBall
 ballCentre =
     fst . getCentreAndErrorBall
+
+ballCentreRational :: MPBall -> Rational
+ballCentreRational (MPBall c _) = MP.toRational c 
 
 ballRadius :: MPBall -> MPBall
 ballRadius =
