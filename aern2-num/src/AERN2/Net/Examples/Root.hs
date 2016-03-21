@@ -45,7 +45,7 @@ rootTestDirectFnCR =
     rootByTrisection (sqr, dom)
     where
     sqr :: UnaryFnCR
-    sqr = (dom, fn)
+    sqr = UnaryFnCR dom fn
         where
         fn x 
             | shouldTrace = mapCauchyRealUnsafe tr $ x * x - 2
@@ -66,7 +66,7 @@ rootTestDirectFnMPBall =
     rootByTrisection (sqr, dom)
     where
     sqr :: UnaryFnMPBall
-    sqr = (dom, fn)
+    sqr = UnaryFnMPBall dom fn
         where
         fn x 
             | shouldTrace = tr $ x * x - 2

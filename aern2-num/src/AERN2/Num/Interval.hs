@@ -25,6 +25,40 @@ widthA = proc(Interval l r) ->
 width :: (CanSub a a) => Interval a -> SubTypeA (->) a a
 width = widthA
     
+{- Interval-Interval order operations -}
+
+instance (Arrow to, CanMinMaxSameTypeA to a) => CanMinMaxA to (Interval a) (Interval a) where
+    type MinMaxTypeA to (Interval a) (Interval a) = Interval (MinMaxTypeA to a a)
+    maxA = 
+        proc (Interval l1 r1, Interval l2 r2) ->
+            do
+            l <- maxA -< (l1,l2)
+            r <- maxA -< (r1,r2)
+            returnA -< Interval l r
+    minA = 
+        proc (Interval l1 r1, Interval l2 r2) ->
+            do
+            l <- minA -< (l1,l2)
+            r <- minA -< (r1,r2)
+            returnA -< Interval l r
+
+instance (Arrow to, CanMinMaxSameTypeA to a) => CanMinMaxThisA to (Interval a) (Interval a)
+instance (Arrow to, CanMinMaxSameTypeA to a) => CanMinMaxSameTypeA to (Interval a)
+
+instance 
+    (Arrow to, CanMinMaxSameTypeA to a, CanAbsSameTypeA to a) => 
+    CanAbsA to (Interval a) where
+    absA =
+        proc (Interval l1 r1) ->
+            do
+            l1a <- absA -< l1
+            r1a <- absA -< r1
+            l <- minA -< (l1a,r1a)
+            r <- maxA -< (l1a,r1a)
+            returnA -< Interval l r
+
+instance (Arrow to, CanMinMaxSameTypeA to a, CanAbsSameTypeA to a) => CanAbsSameTypeA to (Interval a)
+
 {- Interval-Interval arithmetic operations -}
 
 instance (CanNegA to a) =>

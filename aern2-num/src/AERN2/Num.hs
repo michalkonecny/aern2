@@ -3,6 +3,7 @@ module AERN2.Num
      module AERN2.Num.SymbolicArrow, exprAvar,
      module AERN2.Num.Norm,
      module AERN2.Num.MPBall,
+     mpFloat2Rational,
      module AERN2.Num.Accuracy,
      module AERN2.Num.IntegerRational,
      module AERN2.Num.CauchyReal,
@@ -15,10 +16,14 @@ import AERN2.Num.SymbolicArrow
 import AERN2.Num.Norm
 import AERN2.Num.Accuracy
 import AERN2.Num.IntegerRational
+import qualified AERN2.Num.MPFloat as MP (MPFloat, toRational)
 import AERN2.Num.MPBall
 import AERN2.Num.CauchyReal
 import AERN2.Num.Complex
 import AERN2.Num.Interval
+
+mpFloat2Rational :: MP.MPFloat -> Rational
+mpFloat2Rational = MP.toRational
 
 {- example arrow-generic expressions -}
 

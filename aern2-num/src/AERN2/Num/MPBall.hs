@@ -30,6 +30,8 @@ module AERN2.Num.MPBall
      integer2BallP, rational2BallP, rationalBall2BallP,
      ball2endpoints, endpoints2Ball,
      getCentreAndErrorBall,
+     ballCentre, ballCentreRational,
+     ballRadius,
      piBallP) 
 where
 
@@ -292,6 +294,9 @@ instance (ArrowPrecisionPolicy to) => CanMinMaxA to MPBall MPBall where
     minA = arr $ byMPendpoints P.min
     maxA = arr $ byMPendpoints P.max
 
+instance (ArrowPrecisionPolicy to) => CanMinMaxThisA to MPBall MPBall
+instance (ArrowPrecisionPolicy to) => CanMinMaxSameTypeA to MPBall
+
 byMPendpoints :: 
     (MPFloat -> MPFloat -> MPFloat) -> 
     (MPBall, MPBall) -> MPBall
@@ -369,7 +374,19 @@ instance (Arrow to) => CanNegA to MPBall where
 instance (Arrow to) => CanNegSameTypeA to MPBall
 
 instance (Arrow to) => CanAbsA to MPBall where
-    absA = arr $ \(MPBall x1 e1) -> MPBall (MP.abs x1) e1
+    absA = arr aux
+        where
+        aux b = bA 
+            where
+            bA
+                | l P.< MP.zero && MP.zero P.< r = -- b contains zero in its interior 
+                    endpointsMP2Ball MP.zero (P.max lA rA)
+                | MP.zero P.<= l = b -- b is non-negative
+                | otherwise = -b -- b is non-positive
+                where
+                lA = MP.abs l
+                rA = MP.abs r
+                (l,r) = ball2endpointsMP b
 
 instance CanAbsSameType MPBall
 
@@ -628,6 +645,17 @@ getCentreAndErrorBall x = (cB,eB)
     (MPBall cMP eEB) = x
     cB = MPBall cMP EB.zero
     eB = MPBall MP.zero eEB
+
+ballCentre :: MPBall -> MPBall
+ballCentre =
+    fst . getCentreAndErrorBall
+
+ballCentreRational :: MPBall -> Rational
+ballCentreRational (MPBall c _) = MP.toRational c 
+
+ballRadius :: MPBall -> MPBall
+ballRadius =
+    snd . ball2endpoints . snd . getCentreAndErrorBall
 
 {- common functions -}
 
