@@ -17,6 +17,10 @@ import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication ()
 
 import qualified FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding as Power
 
+import qualified FnReps.Polynomial.UnaryPower.IntPoly.Basics as IntPolyB
+
+import qualified FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding as IntPolyEV
+
 import Control.Arrow
 
 import Debug.Trace (trace)
@@ -201,13 +205,18 @@ evalLipschitzOnBall p@(Poly terms) b =
     lp = sum (map abs $ terms_coeffs terms) * (terms_degree terms)^2
 
 range :: Accuracy -> Poly -> Interval MPBall -> Interval MPBall
-range ac p (Interval l r) = Interval minValue maxValue
-                            where
-                            power = cheb2Power p
-                            criticalPoints = Power.allRoots (toRationalDown l) (toRationalUp r) ac $ Power.derivative power
-                            criticalValues = [evalLipschitzOnBall p l, evalLipschitzOnBall p r] ++ map (evalLipschitzOnBall p) criticalPoints
-                            minValue = foldl1 (\x y -> min x y) criticalValues
-                            maxValue = foldl1 (\x y -> max x y) criticalValues
+range ac p (Interval l r) = approxRange (toRationalDown l) (toRationalUp r) ac p
+
+approxRange :: Rational -> Rational -> Accuracy -> Poly -> Interval MPBall
+approxRange l r ac p = Interval (minValue - err) (maxValue + err)
+                    where
+                    (p', err) = cheb2IntPower $ p
+                    dp'  = IntPolyB.derivative $ p'
+                    dp'' = IntPolyB.toFPPoly $ dp'
+                    criticalPoints = map (\(Interval a b) -> Power.approximateRootByBisection a b ac dp'') $ IntPolyEV.isolateRoots l r dp'
+                    criticalValues = [evalDirectOnBall p (mpBall $ -1), evalDirectOnBall p (mpBall 1)] ++ map (evalLipschitzOnBall p) criticalPoints
+                    minValue = foldl1 (\x y -> min x y) criticalValues
+                    maxValue = foldl1 (\x y -> max x y) criticalValues
 
 {-|
     This function is not implemented yet.  It is not yet clear whether it will be needed. 
