@@ -11,7 +11,8 @@ module FnReps.Polynomial.UnaryCheb.Poly
     reduceDegreeAndSweep,
     module FnReps.Polynomial.UnaryCheb.Poly.Division,
     module FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding,
-    module FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power
+    module FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power,
+    module FnReps.Polynomial.UnaryCheb.Poly.NonSmooth
 )
 where
 
@@ -24,6 +25,7 @@ import FnReps.Polynomial.UnaryCheb.Poly.Division
 import FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding
 import FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power
 import FnReps.Polynomial.UnaryCheb.Poly.Integration ()
+import FnReps.Polynomial.UnaryCheb.Poly.NonSmooth
 
 {- examples -}
 

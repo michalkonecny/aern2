@@ -46,7 +46,7 @@ _sqrtAbsX32 :: Poly
 _sqrtAbsX32 = sqrtAbsX (prec 300) 31 (Interval (-1.0) 2.0)
 
 _sqrtAbsX64 :: Poly
-_sqrtAbsX64 = sqrtAbsX (prec 500) 63 (Interval (-1.0) 2.0)
+_sqrtAbsX64 = sqrtAbsX (prec 700) 63 (Interval (-1.0) 2.0)
     
 sqrtAbsX :: Precision -> Integer -> Interval Rational -> Poly
 sqrtAbsX p d (Interval l r) 
@@ -170,6 +170,17 @@ _sqrtAbsXBernstein :: Integer -> Poly
 _sqrtAbsXBernstein d = bernsteinApprox (prec 200) d (\b -> sqrt(abs b))
 -}
 
+{-
+    The following functions test sqrtAbsX over the domain [-1,2].
+    
+    Result accuracy and sample run-time measurements:
+    
+        * d=8, p=100: eps=0.09... computed in 0.1s
+        * d=16, p=100: eps=0.06... computed in 0.4s
+        * d=32, p=300: eps=0.04... computed in 2s
+        * d=64, p=500: eps=0.01... computed in 39s
+-}
+
 _absX8 :: Poly
 _absX8 = absX (prec 100) 7 (Interval (-1.0) 2.0)
 
@@ -177,7 +188,13 @@ _absX16 :: Poly
 _absX16 = absX (prec 100) 15 (Interval (-1.0) 2.0)
 
 _absX32 :: Poly
-_absX32 = absX (prec 300) 31 (Interval (-1.0) 2.0)
+_absX32 = absX (prec 200) 31 (Interval (-1.0) 2.0)
+
+_absX64 :: Poly
+_absX64 = absX (prec 500) 63 (Interval (-1.0) 2.0)
+
+_absX128 :: Poly
+_absX128 = absX (prec 500) 127 (Interval (-1.0) 2.0)
 
 absX :: Precision -> Integer -> Interval Rational -> Poly
 absX p d (Interval l r) 
