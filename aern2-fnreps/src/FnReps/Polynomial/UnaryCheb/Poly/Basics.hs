@@ -308,3 +308,46 @@ instance CanDivA (->) Poly MPBall where
     
 instance CanDivBy Poly MPBall
 
+{- Mixed operations with CauchyReal -}
+    
+instance CanAddMulScalar Poly CauchyReal
+instance CanAddMulDivScalar Poly CauchyReal
+    
+instance CanAddA (->) Poly CauchyReal where
+    type AddTypeA (->) Poly CauchyReal = Poly
+    addA (Poly terms, n) =
+        Poly $ terms_updateConst (+n) terms
+    
+instance CanAddA (->) CauchyReal Poly where
+    type AddTypeA (->) CauchyReal Poly = Poly
+    addA (n, Poly terms) =
+        Poly $ terms_updateConst (+n) terms
+
+instance CanAddThis Poly CauchyReal
+
+instance CanSub Poly CauchyReal
+instance CanSubThis Poly CauchyReal
+
+instance CanSubA (->) CauchyReal Poly where
+    type SubTypeA (->) CauchyReal Poly = Poly
+    subA (n, poly) = addA (n,  neg poly)
+
+instance CanMulA (->) Poly CauchyReal where
+    type MulTypeA (->) Poly CauchyReal = Poly
+    mulA (Poly terms, n) =
+        Poly $ terms_map (*n) terms
+    
+instance CanMulA (->) CauchyReal Poly where
+    type MulTypeA (->) CauchyReal Poly = Poly
+    mulA (n, Poly terms) =
+        Poly $ terms_map (*n) terms
+
+instance CanMulBy Poly CauchyReal
+
+instance CanDivA (->) Poly CauchyReal where
+    type DivTypeA (->) Poly CauchyReal = Poly
+    divA (Poly terms, n) =
+        Poly $ terms_map (/n) terms
+    
+instance CanDivBy Poly CauchyReal
+

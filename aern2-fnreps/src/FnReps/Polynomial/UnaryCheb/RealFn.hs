@@ -267,6 +267,41 @@ instance CanDivA (->) RealFn MPBall where
     
 instance CanDivBy RealFn MPBall
 
+{- Mixed operations with CauchyReal -}
+    
+instance CanAddA (->) RealFn CauchyReal where
+    type AddTypeA (->) RealFn CauchyReal = RealFn
+    addA (a, n) = lift1 (+n) a
+    
+instance CanAddA (->) CauchyReal RealFn where
+    type AddTypeA (->) CauchyReal RealFn = RealFn
+    addA (n, a) = lift1 (+n) a
+
+instance CanAddThis RealFn CauchyReal
+
+instance CanSub RealFn CauchyReal
+instance CanSubThis RealFn CauchyReal
+
+instance CanSubA (->) CauchyReal RealFn where
+    type SubTypeA (->) CauchyReal RealFn = RealFn
+    subA (n, a) = addA (n, neg a)
+
+instance CanMulA (->) RealFn CauchyReal where
+    type MulTypeA (->) RealFn CauchyReal = RealFn
+    mulA (a, n) = lift1 (*n) a
+    
+instance CanMulA (->) CauchyReal RealFn where
+    type MulTypeA (->) CauchyReal RealFn = RealFn
+    mulA (n, a) = lift1 (*n) a
+
+instance CanMulBy RealFn CauchyReal
+
+instance CanDivA (->) RealFn CauchyReal where
+    type DivTypeA (->) RealFn CauchyReal = RealFn
+    divA (a, n) = lift1 (/n) a
+    
+instance CanDivBy RealFn CauchyReal
+
 
 
 lift1 :: 
