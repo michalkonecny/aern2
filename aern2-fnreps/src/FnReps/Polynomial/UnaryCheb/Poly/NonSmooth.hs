@@ -1,7 +1,7 @@
 module FnReps.Polynomial.UnaryCheb.Poly.NonSmooth where
 
 import AERN2.RealFunction
-import Control.Arrow (arr)
+--import Control.Arrow (arr)
 
 import FnReps.Polynomial.UnaryCheb.Poly.Basics
 import FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding (shiftDomainBy)
@@ -56,13 +56,18 @@ sqrtAbs p d (Interval l r)
             ++ "\n sqrtPosZRangeL = " ++ showB sqrtPosZRangeL
             ++ "\n sqrtPosZRangeR = " ++ showB sqrtPosZRangeR
             ++ "\n sqrtPosE = " ++ showB sqrtPosE
+            ++ "\n epsilonNeg = " ++ showQ epsilonNeg
+            ++ "\n epsilonNeg2 = " ++ showQ epsilonNeg2
+            ++ "\n sqrtNegZRangeL = " ++ showB sqrtNegZRangeL
+            ++ "\n sqrtNegZRangeR = " ++ showB sqrtNegZRangeR
+            ++ "\n sqrtNegE = " ++ showB sqrtNegE
             ++ "\n resC = " ++ showAP resC
         ) $ 
         res
     where
     showB = show . getApproximate (bits 30)
     showQ = showB . mpBall
-    showAP = show . getApproximate (bits 30) . cheb2Power
+    showAP = show . getApproximate (bits 50) . cheb2Power
     
     -- the result polynomial enclosure
     res = Poly $ terms_updateConst pmErrorBound resCTerms

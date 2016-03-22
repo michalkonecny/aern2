@@ -108,10 +108,12 @@ instance
 
 
 shiftDomainBy :: Rational -> Poly -> Poly
-shiftDomainBy a p =
-    evalDirect p (x+a)
+shiftDomainBy a p1 =
+    normaliseCoeffs $
+    evalDirect p1 (x+a)
     where
-    x = projUnaryFnA polyFixedDomain :: Poly
+    x = setPrecision_poly p $ projUnaryFnA polyFixedDomain :: Poly
+    p = getPrecision p1
 
 
 {-|
