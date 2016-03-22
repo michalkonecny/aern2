@@ -41,11 +41,11 @@ Library
                     FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding,
                     FnReps.Polynomial.UnaryCheb.Poly.Integration,
                     FnReps.Polynomial.UnaryCheb.Poly.NonSmooth,
+                    FnReps.Polynomial.UnaryCheb.Poly.SineCosine,
                     FnReps.Polynomial.UnaryCheb.Poly.SizeReduction,
-                    FnReps.Polynomial.UnaryPower.Poly.Basics,
-                    FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding,
                     FnReps.Polynomial.UnaryPower.IntPoly.Basics,
                     FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding,
+                    FnReps.Polynomial.UnaryPower.Poly.Basics,
                     FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding
   exposed-modules:  
                     FnReps.Polynomial.UnaryCheb.PolyBall,
