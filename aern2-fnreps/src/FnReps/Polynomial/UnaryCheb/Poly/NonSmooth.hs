@@ -1,4 +1,8 @@
-module FnReps.Polynomial.UnaryCheb.Poly.NonSmooth where
+module FnReps.Polynomial.UnaryCheb.Poly.NonSmooth 
+(sqrtAbsX, _sqrtAbsX8, _sqrtAbsX16, _sqrtAbsX32, _sqrtAbsX64,
+ absX, _absX8, _absX16, _absX32, _absX64, _absX128
+)
+where
 
 import AERN2.RealFunction
 --import Control.Arrow (arr)

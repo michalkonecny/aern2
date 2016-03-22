@@ -46,7 +46,9 @@ Library
                     FnReps.Polynomial.UnaryPower.IntPoly.Basics,
                     FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding,
                     FnReps.Polynomial.UnaryPower.Poly.Basics,
-                    FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding
+                    FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding,
+                    FnReps.Polynomial.UnaryPower.Poly.Power2Cheb,
+                    FnReps.Polynomial.UnaryCheb.Poly.Newman
   exposed-modules:  
                     FnReps.Polynomial.UnaryCheb.PolyBall,
                     FnReps.Polynomial.UnaryCheb.RealFn,
