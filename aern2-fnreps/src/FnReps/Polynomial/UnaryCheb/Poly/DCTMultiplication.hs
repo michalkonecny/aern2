@@ -70,6 +70,7 @@ instance ConvertibleA (->) Integer Poly where
 multiplyDirect
      :: Poly -> Poly -> Poly
 multiplyDirect (Poly terms1) (Poly terms2) =
+    normaliseCoeffs $
     Poly terms
     where
     terms =
@@ -102,6 +103,7 @@ lift2_DCT getDegree op (Poly termsA) (Poly termsB) =
         ++ "\n cT = " ++ show cT
         ++ "\n c = " ++ show c
     ) $
+    normaliseCoeffs $
     Poly $ terms_fromList $ zip [0..] (c0Double / 2 : c)
 --    terms_fromList [(0, mpBall 1)] -- dummy for debugging exceptions
     where
@@ -130,6 +132,7 @@ lift1_DCT getDegree op (Poly termsA) =
         ++ "\n cT = " ++ show cT
         ++ "\n c = " ++ show c
     ) $
+    normaliseCoeffs $
     Poly $ terms_fromList $ zip [0..] (c0Double / 2 : c)
 --    terms_fromList [(0, mpBall 1)] -- dummy for debugging exceptions
     where
