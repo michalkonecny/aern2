@@ -10,6 +10,8 @@ import qualified Data.Map as Map
 import AERN2.Num
 import Math.NumberTheory.Logarithms (integerLog2)
 
+import Data.Ratio
+
 instance Show Cheb.Poly where
     show = show . cheb2Power 
 
@@ -33,10 +35,13 @@ recPowers = mat : accu mat
 
 -- this assumes that all coefficients except the constant one are exact.
 cheb2IntPower :: Cheb.Poly -> (IntPower.IntPoly, MPBall)
-cheb2IntPower (Cheb.Poly ts) = (IntPower.IntPoly $ Map.filterWithKey (\k _ -> k <= Cheb.terms_degree ts) nts, err)
+cheb2IntPower (Cheb.Poly ts) = (IntPower.IntPoly $ Map.filterWithKey (\k x -> k <= Cheb.terms_degree ts && x /= 0) nts, err)
                                where
                                (_, err) = getCentreAndErrorBall $ Cheb.terms_lookupCoeff ts 0
-                               IntPower.IntPoly tsInt = IntPower.fromFracList $ IntPower.normaliseFracList $ Map.toList $ Map.map (\x -> ballCentreRational x) ts -- type : IntPower.Terms
+                               --IntPower.IntPoly tsInt = IntPower.fromFracList $ IntPower.normaliseFracList $ Map.toList $ Map.map (\x -> ballCentreRational x) ts
+                               tsFrac = Map.map (ballCentreRational) ts
+                               lcmd = Map.foldl' (\x y -> lcm x (denominator y)) 1 tsFrac
+                               tsInt = Map.map (\x -> numerator $ lcmd*x) tsFrac
                                (IntPower.IntPoly nts) = (aux 0 0) * (IntPolyVec (IntPower.fromList [(0,1)]) (IntPower.fromList [(1,1)])) 
                                d = integer (integerLog2 $ Cheb.terms_degree ts + 1)  + 1
                                dm1 = d - 1
