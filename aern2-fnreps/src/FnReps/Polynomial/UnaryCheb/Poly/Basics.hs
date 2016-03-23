@@ -143,8 +143,8 @@ fromList termsAsList =
 constPoly :: MPBall -> Poly
 constPoly c = fromList [(0, c)]
 
-xPoly :: Poly
-xPoly = fromList [(1,mpBall 1)]
+xPoly :: Precision -> Poly
+xPoly p = fromList [(1,setPrecision p $ mpBall 1)]
 
 fromListRationalWithPrec :: Precision -> [(Degree, Rational)] -> Poly
 fromListRationalWithPrec p termsAsList =
