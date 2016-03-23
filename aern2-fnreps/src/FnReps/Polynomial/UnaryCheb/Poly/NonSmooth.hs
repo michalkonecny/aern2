@@ -1,6 +1,7 @@
 module FnReps.Polynomial.UnaryCheb.Poly.NonSmooth 
 (sqrtAbsX, _sqrtAbsX8, _sqrtAbsX16, _sqrtAbsX32, _sqrtAbsX64,
- absX, _absX8, _absX16, _absX32, _absX64, _absX128
+ absX, _absX8, _absX16, _absX32, _absX64, _absX128,
+ _absXU8, _absXU16, _absXU32, _absXU64, _absXU128
 )
 where
 
@@ -199,6 +200,22 @@ _absX64 = absX (prec 500) 63 (Interval (-1.0) 2.0)
 
 _absX128 :: Poly
 _absX128 = absX (prec 500) 127 (Interval (-1.0) 2.0)
+
+_absXU8 :: Poly
+_absXU8 = absX (prec 100) 7 (Interval (-1.0) 1.0)
+
+_absXU16 :: Poly
+_absXU16 = absX (prec 100) 15 (Interval (-1.0) 1.0)
+
+_absXU32 :: Poly
+_absXU32 = absX (prec 200) 31 (Interval (-1.0) 1.0)
+
+_absXU64 :: Poly
+_absXU64 = absX (prec 500) 63 (Interval (-1.0) 1.0)
+
+_absXU128 :: Poly
+_absXU128 = absX (prec 500) 127 (Interval (-1.0) 1.0)
+
 
 absX :: Precision -> Integer -> Interval Rational -> Poly
 absX p d (Interval l r) 
