@@ -7,6 +7,8 @@ module FnReps.Polynomial.UnaryCheb.Poly.Basics
     showRawPoly, printRawPoly,
     fromList,
     fromListRationalWithPrec,
+    constPoly,
+    xPoly,
     normaliseCoeffs,
     setPrecision_poly,
     Degree,
@@ -137,6 +139,12 @@ fromList termsAsList =
                 -- the list of coefficients is empty - use default precision:
                 Map.insert 0 (mpBall 0) terms'
     terms' = terms_fromList termsAsList
+
+constPoly :: MPBall -> Poly
+constPoly c = fromList [(0, c)]
+
+xPoly :: Poly
+xPoly = fromList [(1,mpBall 1)]
 
 fromListRationalWithPrec :: Precision -> [(Degree, Rational)] -> Poly
 fromListRationalWithPrec p termsAsList =
