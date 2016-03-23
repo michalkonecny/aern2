@@ -122,14 +122,25 @@ showRawPoly (Poly terms) =
             | deg == 0 = ""
             | otherwise = "*T_" ++ show deg  
 
-
 fromList :: [(Degree, MPBall)] -> Poly
 fromList termsAsList =
-    Poly (terms_fromList termsAsList)
+    Poly terms
+    where
+    terms =
+        -- make sure there is a constant term in the result:
+        case (Map.lookup 0 terms', termsAsList) of 
+            (Just _, _) -> terms'
+            (_, (_,anyCoeff):_) ->
+                -- add a 0 constant term with the same precision as one of the given coefficient:
+                Map.insert 0 (setPrecision (getPrecision anyCoeff) $ mpBall 0) terms'
+            _ -> 
+                -- the list of coefficients is empty - use default precision:
+                Map.insert 0 (mpBall 0) terms'
+    terms' = terms_fromList termsAsList
 
 fromListRationalWithPrec :: Precision -> [(Degree, Rational)] -> Poly
 fromListRationalWithPrec p termsAsList =
-    Poly (terms_fromList $ map r2b termsAsList)
+    fromList $ map r2b termsAsList
     where
     r2b (deg, q) = (deg, rational2BallP p q)
 
