@@ -7,8 +7,13 @@ module FnReps.Polynomial.UnaryCheb.Poly.Basics
     showRawPoly, printRawPoly,
     fromList,
     fromListRationalWithPrec,
+    constPoly,
+    xPoly,
     normaliseCoeffs,
     setPrecision_poly,
+    polyRadius,
+    polyCentre,
+    polyAddToRadius,
     Degree,
     Terms,
     terms_size,
@@ -122,14 +127,31 @@ showRawPoly (Poly terms) =
             | deg == 0 = ""
             | otherwise = "*T_" ++ show deg  
 
-
 fromList :: [(Degree, MPBall)] -> Poly
 fromList termsAsList =
-    Poly (terms_fromList termsAsList)
+    Poly terms
+    where
+    terms =
+        -- make sure there is a constant term in the result:
+        case (Map.lookup 0 terms', termsAsList) of 
+            (Just _, _) -> terms'
+            (_, (_,anyCoeff):_) ->
+                -- add a 0 constant term with the same precision as one of the given coefficient:
+                Map.insert 0 (setPrecision (getPrecision anyCoeff) $ mpBall 0) terms'
+            _ -> 
+                -- the list of coefficients is empty - use default precision:
+                Map.insert 0 (mpBall 0) terms'
+    terms' = terms_fromList termsAsList
+
+constPoly :: MPBall -> Poly
+constPoly c = fromList [(0, c)]
+
+xPoly :: Precision -> Poly
+xPoly p = fromList [(1,setPrecision p $ mpBall 1)]
 
 fromListRationalWithPrec :: Precision -> [(Degree, Rational)] -> Poly
 fromListRationalWithPrec p termsAsList =
-    Poly (terms_fromList $ map r2b termsAsList)
+    fromList $ map r2b termsAsList
     where
     r2b (deg, q) = (deg, rational2BallP p q)
 
@@ -161,6 +183,18 @@ setPrecision_poly p (Poly terms) = Poly (terms_map (setPrecision p) terms)
 instance HasAccuracy Poly where
     getAccuracy (Poly terms) =
         getAccuracy $ terms_lookupCoeff terms 0
+
+polyRadius :: Poly -> MPBall
+polyRadius (Poly terms) = ballRadius $ terms_lookupCoeff terms 0
+
+polyCentre :: Poly -> Poly
+polyCentre (Poly terms) = Poly $ terms_updateConst ballCentre terms
+
+polyAddToRadius :: Poly -> MPBall -> Poly
+polyAddToRadius (Poly terms) r =
+    Poly $ terms_updateConst addR terms
+    where 
+    addR c = endpoints2Ball (c - r) (c + r)
 
 instance CanNegA (->) Poly where
     negA (Poly terms) = 
@@ -206,11 +240,13 @@ instance CanSubA (->) Integer Poly where
 instance CanMulA (->) Poly Integer where
     type MulTypeA (->) Poly Integer = Poly
     mulA (Poly terms, n) =
+        normaliseCoeffs $
         Poly $ terms_map (*n) terms
     
 instance CanMulA (->) Integer Poly where
     type MulTypeA (->) Integer Poly = Poly
     mulA (n, Poly terms) =
+        normaliseCoeffs $
         Poly $ terms_map (*n) terms
 
 instance CanMulBy Poly Integer
@@ -218,6 +254,7 @@ instance CanMulBy Poly Integer
 instance CanDivA (->) Poly Integer where
     type DivTypeA (->) Poly Integer = Poly
     divA (Poly terms, n) =
+        normaliseCoeffs $
         Poly $ terms_map (/n) terms
     
 instance CanDivBy Poly Integer
@@ -249,11 +286,13 @@ instance CanSubA (->) Rational Poly where
 instance CanMulA (->) Poly Rational where
     type MulTypeA (->) Poly Rational = Poly
     mulA (Poly terms, n) =
+        normaliseCoeffs $
         Poly $ terms_map (*n) terms
     
 instance CanMulA (->) Rational Poly where
     type MulTypeA (->) Rational Poly = Poly
     mulA (n, Poly terms) =
+        normaliseCoeffs $
         Poly $ terms_map (*n) terms
 
 instance CanMulBy Poly Rational
@@ -261,6 +300,7 @@ instance CanMulBy Poly Rational
 instance CanDivA (->) Poly Rational where
     type DivTypeA (->) Poly Rational = Poly
     divA (Poly terms, n) =
+        normaliseCoeffs $
         Poly $ terms_map (/n) terms
     
 instance CanDivBy Poly Rational
@@ -292,11 +332,13 @@ instance CanSubA (->) MPBall Poly where
 instance CanMulA (->) Poly MPBall where
     type MulTypeA (->) Poly MPBall = Poly
     mulA (Poly terms, n) =
+        normaliseCoeffs $
         Poly $ terms_map (*n) terms
     
 instance CanMulA (->) MPBall Poly where
     type MulTypeA (->) MPBall Poly = Poly
     mulA (n, Poly terms) =
+        normaliseCoeffs $
         Poly $ terms_map (*n) terms
 
 instance CanMulBy Poly MPBall
@@ -304,7 +346,54 @@ instance CanMulBy Poly MPBall
 instance CanDivA (->) Poly MPBall where
     type DivTypeA (->) Poly MPBall = Poly
     divA (Poly terms, n) =
+        normaliseCoeffs $
         Poly $ terms_map (/n) terms
     
 instance CanDivBy Poly MPBall
+
+{- Mixed operations with CauchyReal -}
+    
+instance CanAddMulScalar Poly CauchyReal
+instance CanAddMulDivScalar Poly CauchyReal
+    
+instance CanAddA (->) Poly CauchyReal where
+    type AddTypeA (->) Poly CauchyReal = Poly
+    addA (Poly terms, n) =
+        Poly $ terms_updateConst (+n) terms
+    
+instance CanAddA (->) CauchyReal Poly where
+    type AddTypeA (->) CauchyReal Poly = Poly
+    addA (n, Poly terms) =
+        Poly $ terms_updateConst (+n) terms
+
+instance CanAddThis Poly CauchyReal
+
+instance CanSub Poly CauchyReal
+instance CanSubThis Poly CauchyReal
+
+instance CanSubA (->) CauchyReal Poly where
+    type SubTypeA (->) CauchyReal Poly = Poly
+    subA (n, poly) = addA (n,  neg poly)
+
+instance CanMulA (->) Poly CauchyReal where
+    type MulTypeA (->) Poly CauchyReal = Poly
+    mulA (Poly terms, n) =
+        normaliseCoeffs $
+        Poly $ terms_map (*n) terms
+    
+instance CanMulA (->) CauchyReal Poly where
+    type MulTypeA (->) CauchyReal Poly = Poly
+    mulA (n, Poly terms) =
+        normaliseCoeffs $
+        Poly $ terms_map (*n) terms
+
+instance CanMulBy Poly CauchyReal
+
+instance CanDivA (->) Poly CauchyReal where
+    type DivTypeA (->) Poly CauchyReal = Poly
+    divA (Poly terms, n) =
+        normaliseCoeffs $
+        Poly $ terms_map (/n) terms
+    
+instance CanDivBy Poly CauchyReal
 

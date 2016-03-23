@@ -78,12 +78,12 @@ instance
         arr $ const polyFixedDomain
     constUnaryFnA =
         proc (_dom, value) ->
-            returnA -< fromList [(0,value)]
+            returnA -< constPoly value
     projUnaryFnA =
         proc (_dom) ->
             do
             a1 <- convertA -< 1
-            returnA -< fromList [(0,mpBall 0),(1,a1)]
+            returnA -< fromList [(1,a1)]
     rangeOnIntervalUnaryFnA = arr aux
         where
         aux (poly@(Poly terms),Interval l r) =

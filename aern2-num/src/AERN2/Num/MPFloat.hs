@@ -50,7 +50,9 @@ p2mpfrPrec = P.fromInteger . prec2integer
 {- conversions -}
 
 toRational :: MPFloat -> Rational
-toRational = MPLow.toRationalA
+toRational x 
+    | x == zero = 0.0
+    | otherwise = MPLow.toRationalA x
 
 toDoubleUp :: MPFloat -> Double
 toDoubleUp = MPLow.toDoubleA MPLow.Up

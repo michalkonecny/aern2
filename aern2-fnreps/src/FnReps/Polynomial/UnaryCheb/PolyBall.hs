@@ -426,6 +426,41 @@ instance CanDivA (->) PolyBall MPBall where
     
 instance CanDivBy PolyBall MPBall
 
+{- Mixed operations with CauchyReal -}
+    
+instance CanAddA (->) PolyBall CauchyReal where
+    type AddTypeA (->) PolyBall CauchyReal = PolyBall
+    addA (a, n) = ucsLift1 (+n) a
+    
+instance CanAddA (->) CauchyReal PolyBall where
+    type AddTypeA (->) CauchyReal PolyBall = PolyBall
+    addA (n, a) = ucsLift1 (+n) a
+
+instance CanAddThis PolyBall CauchyReal
+
+instance CanSub PolyBall CauchyReal
+instance CanSubThis PolyBall CauchyReal
+
+instance CanSubA (->) CauchyReal PolyBall where
+    type SubTypeA (->) CauchyReal PolyBall = PolyBall
+    subA (n, a) = addA (n, neg a)
+
+instance CanMulA (->) PolyBall CauchyReal where
+    type MulTypeA (->) PolyBall CauchyReal = PolyBall
+    mulA (a, n) = ucsLift1 (*n) a
+    
+instance CanMulA (->) CauchyReal PolyBall where
+    type MulTypeA (->) CauchyReal PolyBall = PolyBall
+    mulA (n, a) = ucsLift1 (*n) a
+
+instance CanMulBy PolyBall CauchyReal
+
+instance CanDivA (->) PolyBall CauchyReal where
+    type DivTypeA (->) PolyBall CauchyReal = PolyBall
+    divA (a, n) = ucsLift1 (/n) a
+    
+instance CanDivBy PolyBall CauchyReal
+
 {- utilities -}
 
 ucsLift1 :: 

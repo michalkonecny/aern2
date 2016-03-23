@@ -5,13 +5,18 @@ module FnReps.Polynomial.UnaryCheb.Poly
     _ucspoly_MultiplyDCT, _ucspoly_MultiplyDirect, _ucspoly_ones,
     Poly(..), showRawPoly, printRawPoly, fromList, fromListRationalWithPrec,
     polyFixedDomain,
-    poly_degree,
     normaliseCoeffs,
+    poly_degree,
     Degree,
+    xPoly, constPoly,
+    polyRadius,
+    polyAddToRadius,
+    polyCentre,
     reduceDegreeAndSweep,
     module FnReps.Polynomial.UnaryCheb.Poly.Division,
     module FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding,
-    module FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power
+    module FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power,
+    module FnReps.Polynomial.UnaryCheb.Poly.NonSmooth
 )
 where
 
@@ -24,6 +29,7 @@ import FnReps.Polynomial.UnaryCheb.Poly.Division
 import FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding
 import FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power
 import FnReps.Polynomial.UnaryCheb.Poly.Integration ()
+import FnReps.Polynomial.UnaryCheb.Poly.NonSmooth
 
 {- examples -}
 
