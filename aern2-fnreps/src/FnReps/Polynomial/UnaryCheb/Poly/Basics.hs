@@ -13,6 +13,7 @@ module FnReps.Polynomial.UnaryCheb.Poly.Basics
     setPrecision_poly,
     polyRadius,
     polyCentre,
+    polyAddToRadius,
     Degree,
     Terms,
     terms_size,
@@ -188,6 +189,12 @@ polyRadius (Poly terms) = ballRadius $ terms_lookupCoeff terms 0
 
 polyCentre :: Poly -> Poly
 polyCentre (Poly terms) = Poly $ terms_updateConst ballCentre terms
+
+polyAddToRadius :: Poly -> MPBall -> Poly
+polyAddToRadius (Poly terms) r =
+    Poly $ terms_updateConst addR terms
+    where 
+    addR c = endpoints2Ball (c - r) (c + r)
 
 instance CanNegA (->) Poly where
     negA (Poly terms) = 
