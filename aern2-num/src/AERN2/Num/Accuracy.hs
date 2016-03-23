@@ -1,5 +1,6 @@
 module AERN2.Num.Accuracy 
     (Accuracy(NoInformation, Exact), bits, fromAccuracy,
+     normLog2Accuracy,
      HasAccuracy(..), getFiniteAccuracy, 
      iterateUntilAccurateA, iterateUntilAccurate,
      seqByPrecision2CauchySeq,
@@ -10,6 +11,7 @@ import AERN2.Num.Operations
 import Control.Arrow
 
 import AERN2.Num.Precision
+import AERN2.Num.Norm
 import AERN2.Num.IntegerRational ()
 
 {- example -}
@@ -34,6 +36,10 @@ instance Bounded Accuracy where
     
 bits :: Integer -> Accuracy
 bits i = Bits i
+
+normLog2Accuracy :: NormLog -> Accuracy
+normLog2Accuracy (NormBits b) = bits b
+normLog2Accuracy NormZero = Exact
 
 instance Show Accuracy where
     show (NoInformation) = "NoInformation"
