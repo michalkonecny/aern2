@@ -1,4 +1,10 @@
-module FnReps.Polynomial.UnaryCheb.Poly.SineCosine where
+module FnReps.Polynomial.UnaryCheb.Poly.SineCosine 
+(
+    sine_poly,
+    _testSine10X, _testSine10Xe, _testSine10X2,
+    _testSine10XSine20X2
+)
+where
 
 import AERN2.RealFunction
 --import Control.Arrow
@@ -9,6 +15,7 @@ import FnReps.Polynomial.UnaryCheb.Poly.Basics
 import FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power (cheb2Power)
 import FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding ()
 import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication ()
+import FnReps.Polynomial.UnaryCheb.Poly.SizeReduction (reduceDegreeAndSweep)
 
 import Debug.Trace (trace)
 
@@ -24,29 +31,29 @@ maybeTrace
 
 
 _testSine10X :: Poly
-_testSine10X = sine (10*x)
+_testSine10X = sine_poly 100 (10*x)
     where
     x = xPoly (prec 100)
     
 {- http://fooplot.com/plot/les2ndy4cm -}
 _testSine10Xe :: Poly
-_testSine10Xe = sine (polyAddToRadius (10*x) (mpBall 0.1))
+_testSine10Xe = sine_poly 100 (polyAddToRadius (10*x) (mpBall 0.1))
     where
     x = xPoly (prec 100)
     
 _testSine10X2 :: Poly
-_testSine10X2 = sine (10*x*x)
+_testSine10X2 = sine_poly 100 (10*x*x)
     where
     x = xPoly (prec 100)
     
-_testSineSine30X2 :: Poly
-_testSineSine30X2 =
-    sine $
-    sine $
-    sine $
-    polyAddToRadius (30*x*x) (mpBall (0.5^20))
+_testSine10XSine20X2 :: Poly
+_testSine10XSine20X2 =
+    sine_poly 150 $
+    (+ 10*x) $
+    sine_poly 150 $
+    20*x*x
     where
-    x = xPoly (prec 300)
+    x = xPoly (prec 100)
 
 {-
     To compute sin(xC+-xE):
@@ -64,11 +71,12 @@ _testSineSine30X2 =
     * add xE to the error bound of the resulting polynomial
 -}
 
-sine :: Poly -> Poly
-sine x =
+sine_poly :: Degree -> Poly -> Poly
+sine_poly maxDeg x =
     maybeTrace
     (
-        "sine:"
+        "sine_poly:"
+        ++ "\n maxDeg = " ++ show maxDeg
         ++ "\n xC = " ++ showAP xC
         ++ "\n xE = " ++ showB xE
         ++ "\n xAccuracy = " ++ show xAccuracy
@@ -106,8 +114,8 @@ sine x =
     
     -- compute sin or cos of txC = xC-k*pi/2 using Taylor series:
     taylorSums 
-        | even k = sineTaylorSeries txC
-        | otherwise = cosineTaylorSeries txC
+        | even k = sineTaylorSeries maxDeg txC
+        | otherwise = cosineTaylorSeries maxDeg txC
     (taylorSum, taylorSumE) = pickByAccuracy [] taylorSums
         where
         pickByAccuracy prevResults (_s@(p, e, n) : rest) =
@@ -122,7 +130,9 @@ sine x =
             tooAccurate = sAccuracy >= xAccuracy + 3
             (stoppedMakingProgress, pBest, sEBest) =
                 case prevResults of
-                    ((a1,p1,sE1):(a2,_,_):_) | sAccuracy <= a1 && a1 > a2 -> (True, p1, sE1) 
+                    ((a1,p1,sE1):(a2,_,_):(a3,_,_):_) 
+                        | sAccuracy < a1 && a1 > a2 -> (True, p1, sE1) 
+                        | sAccuracy == a1 && a1 == a2 && a2 == a3 -> (True, p, sE) 
                     _ -> (False, p, sE)
             sE = e*(trM^n) + (polyRadius p)
             sAccuracy = normLog2Accuracy $ getNormLog sE
@@ -155,8 +165,8 @@ _testCosineT i =
     The number @n@ can be used to obtain a better error bound on a domain @[-a,a]@
     for some @0 <= a < 1@.  The better error bound is @e*a^n@. 
 -}
-sineTaylorSeries :: Poly -> [(Poly, Rational, Integer)]
-sineTaylorSeries x =
+sineTaylorSeries :: Degree -> Poly -> [(Poly, Rational, Integer)]
+sineTaylorSeries maxDeg x =
     let
     termComponents =
         iterate addNextTerm (0,1,1,6,Map.singleton 1 (x::Poly))
@@ -167,7 +177,8 @@ sineTaylorSeries x =
             i = prevI + 1
             n = prevN + 2
             nextFact = currentFact*((n+1)*(n+2)) 
-            newPowers = Map.insert n currentPower prevPowers
+            newPowers = Map.insert n (reduce currentPower) prevPowers
+            reduce = reduceDegreeAndSweep maxDeg NormZero
             currentPower 
                 | odd i = x * (power i) * (power i)
                 | otherwise = x * (power (i-1)) * (power (i+1))
@@ -191,8 +202,8 @@ sineTaylorSeries x =
     The number @n@ can be used to obtain an error bound for @p\in[-a,a]@
     for some @0 <= a@.  The error bound is @e*a^n@. 
 -}
-cosineTaylorSeries :: Poly -> [(Poly, Rational, Integer)]
-cosineTaylorSeries x =
+cosineTaylorSeries :: Degree -> Poly -> [(Poly, Rational, Integer)]
+cosineTaylorSeries maxDeg x =
     let
     termComponents =
         iterate addNextTerm (1,2,2,24,Map.singleton 2 (x*x :: Poly))
@@ -203,7 +214,8 @@ cosineTaylorSeries x =
             i = prevI + 1
             n = prevN + 2
             nextFact = currentFact*((n+1)*(n+2)) 
-            newPowers = Map.insert n currentPower prevPowers
+            newPowers = Map.insert n (reduce currentPower) prevPowers
+            reduce = reduceDegreeAndSweep maxDeg NormZero
             currentPower 
                 | even i = (power i) * (power i)
                 | otherwise = (power (i-1)) * (power (i+1))
