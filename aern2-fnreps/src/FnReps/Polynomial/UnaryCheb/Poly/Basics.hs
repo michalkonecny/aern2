@@ -11,6 +11,7 @@ module FnReps.Polynomial.UnaryCheb.Poly.Basics
     xPoly,
     normaliseCoeffs,
     setPrecision_poly,
+    polyRadius,
     Degree,
     Terms,
     terms_size,
@@ -180,6 +181,9 @@ setPrecision_poly p (Poly terms) = Poly (terms_map (setPrecision p) terms)
 instance HasAccuracy Poly where
     getAccuracy (Poly terms) =
         getAccuracy $ terms_lookupCoeff terms 0
+
+polyRadius :: Poly -> MPBall
+polyRadius (Poly terms) = ballRadius $ terms_lookupCoeff terms 0
 
 instance CanNegA (->) Poly where
     negA (Poly terms) = 
