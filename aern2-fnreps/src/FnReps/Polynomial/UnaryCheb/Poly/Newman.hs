@@ -5,7 +5,13 @@ newmanSqrt,
 _test1,
 _test2,
 _test3,
-_test4
+_test4,
+
+--test:
+
+newmanSansError,
+_test5,
+_test6
 )
 where
 
@@ -56,6 +62,16 @@ newmanAbs n = r
             Interval _ a = abs $ Cheb.range (bits 100) (rClean - x) $ Interval (mpBall $ 0) (mpBall 1)
             Interval _ b = abs $ Cheb.range (bits 100) (rClean + x) $ Interval (mpBall $ -1) (mpBall 0)
 
+newmanSansError :: Integer -> Cheb.Poly 
+newmanSansError n = r 
+                    where
+                    p@(Cheb.Poly ts)  = Pow.power2Cheb $ newmanNumerator (n + 1)
+                    q@(Cheb.Poly ts') = Pow.power2Cheb $ newmanDenominator (n + 1)
+                    d = ChebB.terms_degree ts + ChebB.terms_degree ts'
+                    Cheb.Poly rEts = lift2_DCT (const $ const $ d) (/) p q
+                    rClean@(Cheb.Poly rCts) = Cheb.Poly $ Map.map (\x -> ballCentre x) rEts
+                    r = rClean
+                    
 newmanSqrt :: Integer -> Cheb.Poly
 newmanSqrt n = Pow.power2Cheb sqrtApprox
                where
@@ -76,5 +92,12 @@ _test3 n = (ChebB.terms_degree ts, err)
            (_,err) = getCentreAndErrorBall (Cheb.evalDirectOnBall fn (mpBall 0))  
            
 _test4 n = mapM print [(k, _test3 k) | k <- [1.. n]]      
+ 
+_test5 n = (ChebB.terms_degree ts, err)
+           where    
+           fn@(Cheb.Poly ts) = newmanSansError n
+           (_,err) = getCentreAndErrorBall (Cheb.evalDirectOnBall fn (mpBall 0))  
+           
+_test6 n = mapM print [(k, _test5 k) | k <- [1.. n]]      
  
                        
