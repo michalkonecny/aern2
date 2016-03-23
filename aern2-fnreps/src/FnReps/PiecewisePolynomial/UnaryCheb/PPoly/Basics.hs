@@ -10,12 +10,27 @@ where
 
 import AERN2.Num
 import FnReps.Polynomial.UnaryCheb.Poly as Poly
+import qualified FnReps.Polynomial.UnaryPower.Poly as PowPoly
 import Data.List as List
 
 data PPoly = PPoly 
         {
             ppoly_pieces :: [(Interval Rational, Poly)]
         }
+
+data ApproxPPoly = ApproxPPoly 
+        {
+            approx_ppoly_pieces :: [(Interval Rational, PowPoly.Poly)],
+            approx_ppoly_accuracy :: Accuracy
+        }
+        
+
+instance HasApproximate PPoly where
+    type Approximate PPoly = ApproxPPoly
+    getApproximate bts (PPoly pieces) = ApproxPPoly (map (\(i,p) -> (i, cheb2Power p)) pieces) bts
+    
+instance Show ApproxPPoly where
+    show (ApproxPPoly pcs bts) = foldl' (++) "" $ map (\(i,p) -> (show i) ++ " : " ++ (show $ getApproximate bts p) ++ "\n") pcs    
 
 instance Show PPoly where
     show (PPoly pieces) = foldl' (++) "" $ map (\(i,p) -> (show i) ++ ": " ++ show p++"\n") pieces

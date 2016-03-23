@@ -122,7 +122,7 @@ shiftLeft :: Integer -> IntPoly -> IntPoly
 shiftLeft n (IntPoly ts) = IntPoly $ Map.filterWithKey (\p _ -> p >= 0)  $ Map.mapKeys (\p -> p - n) ts
                
 remIntPoly :: IntPoly -> IntPoly -> IntPoly
-remIntPoly p q = if degree q == 0 then p else fromFracPoly $ MP.remPoly (toFracPoly p) (toFracPoly q)               
+remIntPoly p q = if degree q == 0 then p else (fromList [(0,0)]) + (fromFracPoly $ MP.remPoly (toFracPoly p) (toFracPoly q))               
                     
 derivative :: IntPoly -> IntPoly
 derivative (IntPoly ts) = if Map.null ts' then fromList [(0,0)] else IntPoly ts' 

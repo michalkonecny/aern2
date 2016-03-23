@@ -3,7 +3,8 @@ module FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Division
 linSpline,
 xInverse,
 _test1,
-_test2
+_test2,
+_testA
 )
 where
 
@@ -37,4 +38,9 @@ _test1 n k = err
              
 _test2 n k m = err
              where  
-             err = foldl' max (mpBall 0) [let x = mpBall $ 0.5^(n - 1) + (1 - 0.5^(n - 1))*i/m in abs $ (eval (xInverse (n + 1) k) x) - 1/x | i <- [0..m]]  
+             err = foldl' max (mpBall 0) [let x = mpBall $ 0.5^(n - 1) + (1 - 0.5^(n - 1))*i/m in abs $ (eval (xInverse (n + 1) k) x) - 1/x | i <- [0..m]]
+             
+_testA n k = (i, {-getApproximate (bits 53) $ -}Poly.cheb2Power p)
+             where
+             PPoly pcs = xInverse n k           
+             (i, p) = head $ drop (convert $ 2*n + 1) pcs    
