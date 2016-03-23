@@ -38,7 +38,7 @@ bits :: Integer -> Accuracy
 bits i = Bits i
 
 normLog2Accuracy :: NormLog -> Accuracy
-normLog2Accuracy (NormBits b) = bits b
+normLog2Accuracy (NormBits b) = bits (-b)
 normLog2Accuracy NormZero = Exact
 
 instance Show Accuracy where

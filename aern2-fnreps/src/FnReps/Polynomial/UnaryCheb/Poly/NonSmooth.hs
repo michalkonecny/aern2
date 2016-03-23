@@ -94,11 +94,10 @@ sqrtAbsX p d (Interval l r)
     showAP = show . getApproximate (bits 50) . cheb2Power
     
     -- the result polynomial enclosure
-    res = Poly $ terms_updateConst pmErrorBound resCTerms
+    res = polyAddToRadius resC errorBound 
         where 
-        pmErrorBound c = endpoints2Ball (c - errorBound) (c + errorBound)
         errorBound = max errorBoundPos errorBoundNeg
-    resC@(Poly resCTerms) = lift1_DCT (const d) (\b -> sqrt (abs b)) x
+    resC = lift1_DCT (const d) (\b -> sqrt (abs b)) x
     targetEps = ballCentre $ (evalAtDomPointUnaryFnA (resC, zeroPoint)) / 100
     
     -- x over interval [l,r] scaled to the domain [-1,1]
@@ -237,11 +236,10 @@ absX p d (Interval l r)
     showB = show . getApproximate (bits 30)
     showAP = show . getApproximate (bits 50) . cheb2Power
 
-    res = Poly $ terms_updateConst pmErrorBound resCTerms
+    res = polyAddToRadius resC errorBound 
         where 
-        pmErrorBound c = endpoints2Ball (c - errorBound) (c + errorBound)
         errorBound = max errorBoundPos errorBoundNeg
-    resC@(Poly resCTerms) = lift1_DCT (const d) (\b -> abs b) x
+    resC = lift1_DCT (const d) (\b -> abs b) x
     -- x over interval [l,r] scaled to the domain [-1,1]
     x :: Poly
     x = 
