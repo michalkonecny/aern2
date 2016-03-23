@@ -65,8 +65,9 @@ markovBound l r p  = ((degree p)^2) * Map.foldl' (\x y -> x + abs(y)) (mpBall 0)
                      (Poly ts) = translate (-0.5*(r + l)) $ scale (0.5*(r - l)) p
 
 derivative :: Poly -> Poly
-derivative (Poly ts) = Poly $ Map.filterWithKey (\k _ -> k >= 0) $ Map.mapKeys (\k -> k - 1) $ Map.mapWithKey (\p c -> c*p) ts
-
+derivative (Poly ts) = if Map.null ts' then fromList [(0,mpBall 0)] else Poly ts'
+                       where
+                       ts' = Map.filterWithKey (\k _ -> k >= 0) $ Map.mapKeys (\k -> k - 1) $ Map.mapWithKey (\p c -> c*p) ts
 
 {- Root finding -}
 
