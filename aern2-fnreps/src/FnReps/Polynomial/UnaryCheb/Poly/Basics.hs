@@ -203,6 +203,7 @@ instance CanNegSameType Poly
 
 instance CanAddA (->) Poly Poly where
     addA (Poly termsL, Poly termsR) =
+        normaliseCoeffs $
         Poly $ terms_unionWith (+) termsL termsR
 
 instance CanAddThis Poly Poly
