@@ -87,7 +87,7 @@ intersectionAndDifference (Interval l r, p) (Interval l' r', p') =
                                         Just $ (Interval r r', p')                              
 
 setPrecision_ppoly :: Precision -> PPoly -> PPoly
-setPrecision_ppoly p = lift2PPoly (setPrecision_poly p)
+setPrecision_ppoly p = lift2PPoly (setPrecision p)
 
 addToErrorTerm :: MPBall -> PPoly -> PPoly
 addToErrorTerm e = lift2PPoly (\p -> polyAddToRadius p e)
