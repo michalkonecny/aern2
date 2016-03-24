@@ -200,6 +200,10 @@ instance HasPrecision PolyBall
     where
     getPrecision = getPrecision . ball_poly
 
+instance CanSetPrecision PolyBall where
+    setPrecision p b =
+        b { ball_poly = setPrecision p $ ball_poly b } 
+
 instance HasAccuracy PolyBall
     where
     getAccuracy = getAccuracy . ball_poly

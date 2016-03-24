@@ -198,6 +198,15 @@ instance HasApproximate MPBall where
 instance HasPrecision MPBall where
     getPrecision (MPBall x _) = getPrecision x
 
+instance CanSetPrecision MPBall where
+    setPrecision p (MPBall x e)
+        | p >= pPrev = MPBall xUp e
+        | otherwise  = MPBall xUp (e + (xUp `EB.subMP` xDown))
+        where
+        pPrev = MP.getPrecision x
+        xUp = MP.setPrecisionUp p x
+        xDown = MP.setPrecisionDown p x
+
 {-|
     Change the precision of the ball centre so that
     it is at least as high as the supplied accuracy 
@@ -232,16 +241,6 @@ reducePrecionIfInaccurate b@(MPBall x _) =
     p_x = getPrecision x
     p_e_nb = MP.prec $ max 2 (10 + nb + fromAccuracy acc)
     (NormBits nb) = norm 
-
-setPrecision :: Precision -> MPBall -> MPBall
-setPrecision p (MPBall x e)
-    | p >= pPrev = MPBall xUp e
-    | otherwise  = MPBall xUp (e + (xUp `EB.subMP` xDown))
-    where
-    pPrev = MP.getPrecision x
-    xUp = MP.setPrecisionUp p x
-    xDown = MP.setPrecisionDown p x
-    
 
 isNonZero :: MPBall -> Bool
 isNonZero (MPBall x e) =

@@ -103,7 +103,7 @@ sqrtAbsX p d (Interval l r)
     -- x over interval [l,r] scaled to the domain [-1,1]
     x :: Poly
     x = 
-        setPrecision_poly p $ 
+        setPrecision p $ 
             normaliseCoeffs $ fromList [(0,a0),(1,a1)]
         where
         a1 = rational2BallP p $ (r-l)/2
@@ -243,7 +243,7 @@ absX p d (Interval l r)
     -- x over interval [l,r] scaled to the domain [-1,1]
     x :: Poly
     x = 
-        setPrecision_poly p $ 
+        setPrecision p $ 
             normaliseCoeffs $ fromList [(0,a0),(1,a1)]
         where
         a1 = rational2BallP p $ (r-l)/2

@@ -54,8 +54,8 @@ bernsteinApprox p d f =
     n = d
     powers1 = iterate (* ((x+1)/2)) poly1
     powers2 = iterate (* ((1-x)/2)) poly1
-    x = setPrecision_poly p $ projUnaryFnA polyFixedDomain :: Poly
-    poly1 = setPrecision_poly p $ constUnaryFnA (polyFixedDomain, mpBall 1) :: Poly
+    x = setPrecision p $ projUnaryFnA polyFixedDomain :: Poly
+    poly1 = setPrecision p $ constUnaryFnA (polyFixedDomain, mpBall 1) :: Poly
 
 binomialcoeffs :: [[Integer]]
 binomialcoeffs =

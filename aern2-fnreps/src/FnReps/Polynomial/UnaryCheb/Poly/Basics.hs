@@ -10,7 +10,6 @@ module FnReps.Polynomial.UnaryCheb.Poly.Basics
     constPoly,
     xPoly,
     normaliseCoeffs,
-    setPrecision_poly,
     polyRadius,
     polyCentre,
     polyAddToRadius,
@@ -177,8 +176,8 @@ instance HasPrecision Poly where
     getPrecision (Poly terms) =
         foldl1 min $ map getPrecision $ terms_coeffs terms
 
-setPrecision_poly :: Precision -> Poly -> Poly
-setPrecision_poly p (Poly terms) = Poly (terms_map (setPrecision p) terms)
+instance CanSetPrecision Poly where
+    setPrecision p (Poly terms) = Poly (terms_map (setPrecision p) terms)
 
 instance HasAccuracy Poly where
     getAccuracy (Poly terms) =

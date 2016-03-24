@@ -1,7 +1,8 @@
 {-# LANGUAGE FlexibleInstances, GeneralizedNewtypeDeriving #-}
 module AERN2.Num.Precision
 (
-     HasPrecision(..), Precision, prec, prec2integer, 
+     HasPrecision(..), CanSetPrecision(..),
+     Precision, prec, prec2integer, 
      defaultPrecision, maximumPrecision, standardPrecisions, precisionTimes2,
      iterateUntilOKA, iterateUntilOK,
      PrecisionPolicyMode(..), PrecisionPolicy(..), defaultPrecisionPolicy, maxPrecisionPolicy,
@@ -20,6 +21,9 @@ import Control.Arrow
 
 class HasPrecision t where
     getPrecision :: t -> Precision
+
+class CanSetPrecision t where
+    setPrecision :: Precision -> t -> t
 
 newtype Precision = Precision Integer
     deriving (P.Eq, P.Ord, P.Show, P.Enum, P.Num, P.Real, P.Integral)

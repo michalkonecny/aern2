@@ -112,7 +112,7 @@ shiftDomainBy a p1 =
     normaliseCoeffs $
     evalDirect p1 (x+a)
     where
-    x = setPrecision_poly p $ projUnaryFnA polyFixedDomain :: Poly
+    x = setPrecision p $ projUnaryFnA polyFixedDomain :: Poly
     p = getPrecision p1
 
 
