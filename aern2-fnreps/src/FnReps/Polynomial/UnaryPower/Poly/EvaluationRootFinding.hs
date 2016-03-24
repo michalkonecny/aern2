@@ -40,8 +40,10 @@ range :: Accuracy -> Poly -> Interval MPBall -> Interval MPBall
 range ac p (Interval l r) = approxRange (toRationalDown l) (toRationalUp r) ac p
 
 approxRange :: Rational -> Rational -> Accuracy -> Poly -> Interval MPBall
-approxRange l r ac p = Interval (minValue - err) (maxValue + err)
+approxRange l r ac p = Interval (endpoints2Ball minA minB) (endpoints2Ball maxA maxB)
                     where
+                    Interval minA minB = minValue +- err
+                    Interval maxA maxB = maxValue +- err
                     (fracCoefs, err) = IntPolyB.fracListFromFPPoly $ scale (0.5*(r - l)) $ translate (0.5*(r + l)) $ p
                     p'  = IntPolyB.fromFracList $ IntPolyB.normaliseFracList fracCoefs
                     p'' = fromRationalListP (prec $ fromAccuracy ac) fracCoefs 

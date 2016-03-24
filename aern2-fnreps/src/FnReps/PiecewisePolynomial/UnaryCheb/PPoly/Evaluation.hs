@@ -11,6 +11,16 @@ import qualified FnReps.Polynomial.UnaryCheb.Poly as Poly
 
 import Data.List as List
 
+import Debug.Trace (trace)
+
+shouldTrace :: Bool
+shouldTrace = True
+
+maybeTrace :: String -> a -> a
+maybeTrace 
+    | shouldTrace = trace
+    | otherwise = const id
+
 toRationalUp' :: MPBall -> Rational
 toRationalUp' x = if (x == 0) == Just True then 0.0 else toRationalUp x
 
@@ -18,14 +28,30 @@ toRationalDown' :: MPBall -> Rational
 toRationalDown' x = if (x == 0) == Just True then 0.0 else toRationalDown x
 
 eval :: PPoly -> MPBall -> MPBall
-eval (PPoly pieces) x = foldl1 union $ map (\p -> Poly.evalDirectOnBall p x) $ polys
+eval (PPoly pieces) x = 
+           maybeTrace
+           (
+           "argument: " ++ show x ++ "\n" ++
+           "pieces: " ++ show (filter (\(i,_) -> i `intersects` x) pieces) ++ "\n" ++
+           "values: " ++ show (map (\p -> Poly.evalLipschitzOnBall p x) $ polys)++"\n"++
+           "union: " ++ show (foldl1 union $ map (\p -> Poly.evalLipschitzOnBall p x) $ polys)++"\n"
+           ) $
+           foldl1 union $ map (\p -> Poly.evalLipschitzOnBall p x) $ polys
            where
            polys = map snd $ filter (\(i,_) -> i `intersects` x) pieces
            union x y = let (l,r) = ball2endpoints x; (l', r') = ball2endpoints y in
                         endpoints2Ball (min l l') (max r r')
            
 range :: Accuracy -> PPoly -> Interval MPBall -> Interval MPBall
-range ac (PPoly pieces) (Interval l r) = foldl1 union $ map (\(Just x) -> x) $ filter (not.isNothing) $ map rangePiece pieces
+range ac (PPoly pieces) (Interval l r) = 
+                                         maybeTrace
+                                         (
+                                           "argument: " ++ show (Interval l r) ++ "\n" ++
+                                           "pieces: " ++ show (map (\j -> let Just x = intersection i j in x) $ filter (\j -> not $ isNothing $ intersection i j) $ map fst pieces) ++ "\n" ++
+                                           "values: " ++ show (map (\(Just x) -> x) $ filter (not.isNothing) $ map rangePiece pieces)++"\n"++
+                                           "union: " ++ show (map (\(Just x) -> x) $ filter (not.isNothing) $ map rangePiece pieces)++"\n"
+                                         ) $
+                                         foldl1 union $ map (\(Just x) -> x) $ filter (not.isNothing) $ map rangePiece pieces
                                          where
                                          isNothing x = case x of 
                                                         Nothing -> True

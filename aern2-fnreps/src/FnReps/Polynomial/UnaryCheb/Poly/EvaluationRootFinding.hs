@@ -210,8 +210,10 @@ range :: Accuracy -> Poly -> Interval MPBall -> Interval MPBall
 range ac p (Interval l r) = approxRange (toRationalDown l) (toRationalUp r) ac p
 
 approxRange :: Rational -> Rational -> Accuracy -> Poly -> Interval MPBall
-approxRange l r ac p = Interval (minValue - err) (maxValue + err)
+approxRange l r ac p = Interval (endpoints2Ball minA minB) (endpoints2Ball maxA maxB)
                     where
+                    Interval minA minB = minValue +- err
+                    Interval maxA maxB = maxValue +- err
                     (p', err) = cheb2IntPower $ p
                     dp'  = IntPolyB.derivative $ p'
                     dp'' = IntPolyB.toFPPoly $ dp'
