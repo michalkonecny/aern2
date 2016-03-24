@@ -31,26 +31,26 @@ maybeTrace
 
 
 _testSine10X :: Poly
-_testSine10X = sine_poly 100 (10*x)
+_testSine10X = sine_poly 100 NormZero (10*x)
     where
     x = xPoly (prec 100)
     
 {- http://fooplot.com/plot/les2ndy4cm -}
 _testSine10Xe :: Poly
-_testSine10Xe = sine_poly 100 (polyAddToRadius (10*x) (mpBall 0.1))
+_testSine10Xe = sine_poly 100 NormZero (polyAddToRadius (10*x) (mpBall 0.1))
     where
     x = xPoly (prec 100)
     
 _testSine10X2 :: Poly
-_testSine10X2 = sine_poly 100 (10*x*x)
+_testSine10X2 = sine_poly 100 NormZero (10*x*x)
     where
     x = xPoly (prec 100)
     
 _testSine10XSine20X2 :: Poly
 _testSine10XSine20X2 =
-    sine_poly 150 $
+    sine_poly 150 NormZero $
     (+ 10*x) $
-    sine_poly 150 $
+    sine_poly 150 NormZero $
     20*x*x
     where
     x = xPoly (prec 100)
@@ -71,8 +71,8 @@ _testSine10XSine20X2 =
     * add xE to the error bound of the resulting polynomial
 -}
 
-sine_poly :: Degree -> Poly -> Poly
-sine_poly maxDeg x =
+sine_poly :: Degree -> NormLog -> Poly -> Poly
+sine_poly maxDeg sweepT x =
     maybeTrace
     (
         "sine_poly:"
@@ -114,8 +114,8 @@ sine_poly maxDeg x =
     
     -- compute sin or cos of txC = xC-k*pi/2 using Taylor series:
     taylorSums 
-        | even k = sineTaylorSeries maxDeg txC
-        | otherwise = cosineTaylorSeries maxDeg txC
+        | even k = sineTaylorSeries maxDeg sweepT txC
+        | otherwise = cosineTaylorSeries maxDeg sweepT txC
     (taylorSum, taylorSumE) = pickByAccuracy [] taylorSums
         where
         pickByAccuracy prevResults (_s@(p, e, n) : rest) =
@@ -165,8 +165,8 @@ _testCosineT i =
     The number @n@ can be used to obtain a better error bound on a domain @[-a,a]@
     for some @0 <= a < 1@.  The better error bound is @e*a^n@. 
 -}
-sineTaylorSeries :: Degree -> Poly -> [(Poly, Rational, Integer)]
-sineTaylorSeries maxDeg x =
+sineTaylorSeries :: Degree -> NormLog -> Poly -> [(Poly, Rational, Integer)]
+sineTaylorSeries maxDeg sweepT x =
     let
     termComponents =
         iterate addNextTerm (0,1,1,6,Map.singleton 1 (x::Poly))
@@ -202,8 +202,8 @@ sineTaylorSeries maxDeg x =
     The number @n@ can be used to obtain an error bound for @p\in[-a,a]@
     for some @0 <= a@.  The error bound is @e*a^n@. 
 -}
-cosineTaylorSeries :: Degree -> Poly -> [(Poly, Rational, Integer)]
-cosineTaylorSeries maxDeg x =
+cosineTaylorSeries :: Degree -> NormLog -> Poly -> [(Poly, Rational, Integer)]
+cosineTaylorSeries maxDeg sweepT x =
     let
     termComponents =
         iterate addNextTerm (1,2,2,24,Map.singleton 2 (x*x :: Poly))

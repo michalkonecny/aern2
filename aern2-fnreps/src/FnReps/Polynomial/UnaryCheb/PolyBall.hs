@@ -5,6 +5,7 @@ module FnReps.Polynomial.UnaryCheb.PolyBall
     ball_2,
     ball_x,
     eval_ball_x,
+    sin_ball_10x,
     -- * data type definition
     PolyBall(..),
     ApproxPolyBall(..),
@@ -72,11 +73,9 @@ eval_ball_x :: Rational -> MPBall
 eval_ball_x v =
     evalAtDomPointUnaryFnA (ball_x, v)
 
-_ball_DivDCT :: Degree -> PolyBall -> PolyBall -> PolyBall
-_ball_DivDCT d a b =
-    ucsLift2 (divideDCT_poly d) (a, b)
---    where
---    maxDeg = getDegree a `max` getDegree b
+sin_ball_10x :: PolyBall
+sin_ball_10x =
+    sin $ 10 * (setMaxDegree 100 ball_x)
 
 {- type definition -} 
 
@@ -460,6 +459,19 @@ instance CanDivA (->) PolyBall CauchyReal where
     divA (a, n) = ucsLift1 (/n) a
     
 instance CanDivBy PolyBall CauchyReal
+
+
+{- trigonometric functions -}
+
+instance CanSineCosineA (->) PolyBall where
+    sinA a = ucsLift1 (sine_poly maxDeg sweepThreshold) a
+        where
+        maxDeg = ball_maxDegree a
+        sweepThreshold = ball_sweepThresholdNormLog a 
+    cosA a = ucsLift1 (sine_poly maxDeg sweepThreshold) (a+(pi/2))
+        where
+        maxDeg = ball_maxDegree a 
+        sweepThreshold = ball_sweepThresholdNormLog a 
 
 {- utilities -}
 
