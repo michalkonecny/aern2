@@ -4,12 +4,15 @@ fromPoly,
 linearPolygon,
 lift2PPoly,
 FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Basics.normaliseCoeffs,
+setPrecision_ppoly,
+addToErrorTerm,
 PPoly(..)
 )
 where
 
 import AERN2.Num
 import FnReps.Polynomial.UnaryCheb.Poly as Poly
+import FnReps.Polynomial.UnaryCheb.Poly.Basics
 import qualified FnReps.Polynomial.UnaryPower.Poly as PowPoly
 import Data.List as List
 
@@ -43,7 +46,7 @@ linearPolygon ((x,y) : xys) = aux xys x y []
                               where
                               aux [] _ _ res = PPoly $ reverse res
                               aux ((x',y'):xys) x y res = aux xys x' y' ((Interval x x',linSpline x y x' y') : res)
-                              linSpline x y x' y' = Poly.fromList  [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))]
+                              linSpline x y x' y' = Poly.normaliseCoeffs $ Poly.fromList  [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))] -- TODO Poly.fromList should already provided normalised coeffs
 linearPolygon [] = error "linearPolygon must be provided with a list of at least 2 points"                              
 
 lift2PPoly :: (Poly -> Poly) -> (PPoly -> PPoly)
@@ -82,6 +85,12 @@ intersectionAndDifference (Interval l r, p) (Interval l' r', p') =
                                         Just $ (Interval r' r, p)
                                        else
                                         Just $ (Interval r r', p')                              
+
+setPrecision_ppoly :: Precision -> PPoly -> PPoly
+setPrecision_ppoly p = lift2PPoly (setPrecision p)
+
+addToErrorTerm :: MPBall -> PPoly -> PPoly
+addToErrorTerm e = lift2PPoly (\p -> polyAddToRadius p e)
                                 
 instance CanAddA (->) PPoly PPoly where
     type AddTypeA (->) PPoly PPoly = PPoly

@@ -11,7 +11,11 @@ _test4,
 
 newmanSansError,
 _test5,
-_test6
+_test6,
+
+-- for debugging
+newmanNumerator,
+newmanDenominator
 )
 where
 
