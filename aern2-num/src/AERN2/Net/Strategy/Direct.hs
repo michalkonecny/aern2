@@ -18,8 +18,8 @@ import qualified Data.PQueue.Max as Q -- used in a range algorithm
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
-shouldTrace = False
---shouldTrace = True
+--shouldTrace = False
+shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace 
@@ -136,6 +136,35 @@ splitInterval (Interval l r) =
     where
     m = (l + r) / 2 
     
+instance CanIntegrateUnaryFnA (->) UnaryFnMPBall where
+    integrateUnaryFnA (UnaryFnMPBall _dom f, aCR, bCR) =
+        newCRA ([], Nothing, withAccuracy a b)
+        where
+        -- TODO: remove the assumption that a,b are "small" rationals
+        a = toRationalUp $ cauchyReal2ball aCR (bits 100)
+        b = toRationalUp $ cauchyReal2ball bCR (bits 100)
+        withAccuracy l r ac 
+            | getAccuracy value >= ac =
+                maybeTrace 
+                ("integrateUnaryFnA:"
+                 ++ "\n l = " ++ show (mpBall l)
+                 ++ "\n r = " ++ show (mpBall r)
+                 ++ "\n ac = " ++ show ac
+                 ++ "\n getAccuracy value = " ++ show (getAccuracy value)
+                )  
+                value 
+            | otherwise = 
+                (withAccuracy l m (ac+1))
+                +
+                (withAccuracy m r (ac+1))
+            where
+            m = (l+r)/2
+            value = (f lr)*(r-l)
+            lr = endpoints2Ball lB rB
+            lB = z + l
+            rB = z + r
+            z = setPrecisionMatchAccuracy (ac + 100) $ mpBall 0
+
 data UnaryFnCR =
     UnaryFnCR
     {
