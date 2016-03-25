@@ -130,9 +130,9 @@ sine_poly maxDeg sweepT x =
             tooAccurate = sAccuracy >= xAccuracy + 3
             (stoppedMakingProgress, pBest, sEBest) =
                 case prevResults of
-                    ((a1,p1,sE1):(a2,_,_):(a3,_,_):_) 
+                    ((a1,p1,sE1):(a2,_,_):(a3,_,_):(a4,_,_):_) 
                         | sAccuracy < a1 && a1 > a2 -> (True, p1, sE1) 
-                        | sAccuracy == a1 && a1 == a2 && a2 == a3 -> (True, p, sE) 
+                        | sAccuracy == a1 && a1 == a2 && a2 == a3 && a3 > a4 -> (True, p, sE) 
                     _ -> (False, p, sE)
             sE = e*(trM^n) + (polyRadius p)
             sAccuracy = normLog2Accuracy $ getNormLog sE
