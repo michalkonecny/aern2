@@ -23,7 +23,7 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 ### An analytic function with a small radius of convergence
 
-![fraction](http://latex.codecogs.com/gif.latex?\frac{1}{100x^2+1})
+![steep-fraction](http://latex.codecogs.com/gif.latex?{1 \over 100x^2+1})
 
 #### Integration over [-1,1]
 
@@ -31,7 +31,7 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 ### A non-smooth function
 
-![fraction](http://latex.codecogs.com/gif.latex?|x|)
+![abs](http://latex.codecogs.com/gif.latex?|x|)
 
 #### Integration over [-1,1]
 
