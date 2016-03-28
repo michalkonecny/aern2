@@ -15,7 +15,7 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 ### A well-behaved analytic function with a number of local extrema
 
-![nested-sine](http://latex.codecogs.com/gif.latex?\sin(10x+\sin(20x^2)))
+![nested-sine](http://latex.codecogs.com/gif.latex?\\sin(10x+\\sin(20x^2)))
 
 #### Integration over [-1,1]
 
@@ -23,7 +23,7 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 ### An analytic function with a small radius of convergence
 
-![steep-fraction](http://latex.codecogs.com/gif.latex?{1 \over 100x^2+1})
+![steep-fraction](http://latex.codecogs.com/gif.latex?{\\frac{1}{100x^2+1}})
 
 #### Integration over [-1,1]
 
