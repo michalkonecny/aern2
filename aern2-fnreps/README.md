@@ -13,7 +13,9 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 ## Benchmark results
 
-### A well-behaved analytic function with many fluctuations
+### A well-behaved analytic function with a number of local extrema
+
+The function we use is: ![nested-sine](http://latex.codecogs.com/gif.latex?sin(10x+sin(20x^2)))
 
 #### Integration over [-1,1]
 
