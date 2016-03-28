@@ -35,6 +35,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     result = 
         case (representationCode, operationCode) of
             ("fun", "max") -> maxFun fnB2B accuracy 
+            ("fun", "integrate") -> integrateFun fnB2B accuracy 
             ("poly", "max") -> maxPB $ fnPB p maxDeg 
             ("poly", "integrate") -> integratePB $ fnPB p maxDeg 
     (Just (fnDescription, fnPB, fnB2B)) = Map.lookup functionCode functions
@@ -62,6 +63,13 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         where
         Interval _ m = rangeOnIntervalUnaryFnA (fn, domain) 
         domain = ufnB2B_dom fn
+
+    integrateFun :: UnaryFnMPBall -> Accuracy -> MPBall
+    integrateFun fn ac =
+        cauchyReal2ball r ac
+        where
+        r = integrateUnaryFnA (fn, cauchyReal domL, cauchyReal domR) 
+        Interval domL domR = ufnB2B_dom fn
 
 functions :: Map.Map String (String, Precision -> Degree -> PolyBall, UnaryFnMPBall)
 functions =
