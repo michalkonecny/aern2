@@ -21,7 +21,7 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 #### Maximum over [-1,1]
 
-### An analytic function with a small radius of convergence
+### An analytic function with singularities near the origin
 
 ![steep-fraction](http://latex.codecogs.com/gif.latex?{\\frac{1}{100x^2+1}})
 
