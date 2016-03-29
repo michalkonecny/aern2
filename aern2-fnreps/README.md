@@ -21,7 +21,7 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 #### Integration over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
-<iframe width="900" height="800" frameborder="0" scrolling="no" src="https://plot.ly/~mikkonecny/11.embed"></iframe>
+![sinesine-integrate.png](https://github.com/michalkonecny/aern2/blob/master/aern2-fnreps/plots/sinesine-integrate.png)
 
 #### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
