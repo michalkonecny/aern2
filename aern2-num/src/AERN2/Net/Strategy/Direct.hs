@@ -18,8 +18,8 @@ import qualified Data.PQueue.Max as Q -- used in a range algorithm
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
---shouldTrace = False
-shouldTrace = True
+shouldTrace = False
+--shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace 
@@ -90,12 +90,16 @@ instance RealUnaryFnA (->) UnaryFnMPBall where
             (
                 "rangeOnIntervalUnaryFnA: search:" 
                 ++ "\n  seg = " ++ show seg
+                ++ "\n  normLog(seg) = " ++ show (getNormLog (width seg))
                 ++ "\n  nextL = " ++ show nextL
                 ++ "\n  segValR = " ++ show segValR
+                ++ "\n  currentBall = " ++ show currentBall
+                ++ "\n  accuracy(currentBall) = " ++ show (getAccuracy currentBall)
             ) $
-            (endpoints2Ball nextL segValR) : 
+            currentBall : 
                 search fi nextL nextQueue12
             where
+            currentBall = endpoints2Ball nextL segValR
             (MaxSearchSegment seg segValL segValR, rest) = Q.deleteFindMax prevQueue
             nextL = segValL `max` prevL
             (seg1, seg2) = splitInterval seg
@@ -190,10 +194,10 @@ instance RealUnaryFnA (->) UnaryFnCR
 
 rati2MPBall :: Interval Rational -> MPBall
 rati2MPBall _il@(Interval l r) =
---    maybeTrace
---    (
---        "rati2MPBall: " ++ show _il
---    ) $
+    maybeTrace
+    (
+        "rati2MPBall: " ++ show _il ++ ": nl = " ++ show nl ++ "prec(l) = " ++ show (getPrecision lMP)
+    ) $
     endpoints2Ball lMP rMP
     where
     lMP = q2MP l
