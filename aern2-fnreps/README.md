@@ -22,7 +22,7 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 #### Integration over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
 ![sinesine-integrate.png](plots/sinesine-integrate.png?raw=true)
-[[plots/sinesine-integrate.png?raw=true|alt=sinesine-integrate]]
+__([on Plotly](https://plot.ly/~mikkonecny/11/time-s-vs-accuracy-bits/))__
 
 #### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
