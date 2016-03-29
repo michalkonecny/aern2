@@ -4,6 +4,8 @@ _This is work in progress._
 
 ## Benchmark setup
 
+Source code of the benchmark tasks: [Main.hs](https://github.com/michalkonecny/aern2/blob/master/aern2-fnreps/main/Main.hs)
+
 The benchmark timings are obtained on a Dell Inspiron 15R with 8GB RAM,
 Intel(R) Core(TM) i7-3632QM CPU @ 2.20GHz running Ubuntu 14.04.
 
@@ -17,22 +19,22 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 ![nested-sine](http://latex.codecogs.com/gif.latex?\\sin(10x+\\sin(20x^2)))
 
-#### Integration over [-1,1]
+#### Integration over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
-#### Maximum over [-1,1]
+#### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
 ### An analytic function with singularities near the origin
 
 ![steep-fraction](http://latex.codecogs.com/gif.latex?{\\frac{1}{100x^2+1}})
 
-#### Integration over [-1,1]
+#### Integration over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
-#### Maximum over [-1,1]
+#### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
 ### A non-smooth function
 
 ![abs](http://latex.codecogs.com/gif.latex?|x|)
 
-#### Integration over [-1,1]
+#### Integration over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
-#### Maximum over [-1,1]
+#### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
