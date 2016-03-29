@@ -22,6 +22,7 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 #### Integration over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
 ![sinesine-integrate.png](plots/sinesine-integrate.png?raw=true)
+[[plots/sinesine-integrate.png?raw=true|alt=sinesine-integrate]]
 
 #### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
