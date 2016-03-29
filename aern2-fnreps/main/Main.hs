@@ -75,7 +75,9 @@ functions :: Map.Map String (String, Precision -> Degree -> PolyBall, UnaryFnMPB
 functions =
     Map.fromList
     [
-        ("sinesine", (analyticFn1_Name, analyticFn1_PB, analyticFn1_B2B))
+        ("sinesine", (analyticFn1_Name, analyticFn1_PB, analyticFn1_B2B)),
+        ("sine+cos", (analyticFn2_Name, analyticFn2_PB, analyticFn2_B2B)),
+        ("fraction", (nearsingulatityFn1_Name, nearsingulatityFn1_PB, nearsingulatityFn1_B2B))
     ]
 
 analyticFn1_Name :: String
@@ -95,6 +97,41 @@ analyticFn1_B2B =
     UnaryFnMPBall (Interval (-1.0) 1.0) $
     \x -> sin(10*x + sin(20*x*x))
 
+analyticFn2_Name :: String
+analyticFn2_Name = "sin(10x)+cos(20x) over [-1,1]"
+
+analyticFn2_PB :: Precision -> Degree -> PolyBall
+analyticFn2_PB p d =
+    sin(10*x)+cos(20*x)
+    where
+    x = 
+        setMaxDegree d $
+        setPrecision p $
+        projUnaryFnA (Interval (-1.0) 1.0)
+
+analyticFn2_B2B :: UnaryFnMPBall
+analyticFn2_B2B =
+    UnaryFnMPBall (Interval (-1.0) 1.0) $
+    \x -> sin(10*x)+cos(20*x)
+
+nearsingulatityFn1_Name :: String
+nearsingulatityFn1_Name = "1/(100x^2+1) over [-1,1]"
+
+nearsingulatityFn1_PB :: Precision -> Degree -> PolyBall
+nearsingulatityFn1_PB p d =
+    1/(100*x*x+1)
+    where
+    x = 
+        setMaxDegree d $
+        setPrecision p $
+        projUnaryFnA (Interval (-1.0) 1.0)
+
+nearsingulatityFn1_B2B :: UnaryFnMPBall
+nearsingulatityFn1_B2B =
+    UnaryFnMPBall (Interval (-1.0) 1.0) $
+    \x -> 1/(100*x^2+1)
+
+{- An old main, to be removed eventually. -}
 main2 :: IO ()
 main2 =
     do
