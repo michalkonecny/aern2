@@ -21,6 +21,8 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 #### Integration over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
+<iframe width="900" height="800" frameborder="0" scrolling="no" src="https://plot.ly/~mikkonecny/11.embed"></iframe>
+
 #### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
 ### An analytic function with singularities near the origin
