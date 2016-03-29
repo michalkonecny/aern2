@@ -17,14 +17,19 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 ### A well-behaved analytic function with a number of local extrema
 
-![nested-sine](http://latex.codecogs.com/gif.latex?\\sin(10x+\\sin(20x^2)))
-
 #### Integration over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
+
+![nested-sine](http://latex.codecogs.com/gif.latex?\\sin(10x+\\sin(20x^2)))
 
 ![sinesine-integrate.png](plots/sinesine-integrate.png?raw=true)
 __([on Plotly](https://plot.ly/~mikkonecny/11/time-s-vs-accuracy-bits/))__
 
 #### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
+
+![sine+cos](http://latex.codecogs.com/gif.latex?\\sin(10x)+\\cos(20x))
+
+![sine+cos-max.png](plots/sine+cos-max.png?raw=true)
+__([on Plotly](https://plot.ly/~mikkonecny/15/fun-vs-poly/))__
 
 ### An analytic function with singularities near the origin
 
