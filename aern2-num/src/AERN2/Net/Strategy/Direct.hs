@@ -2,7 +2,9 @@
 module AERN2.Net.Strategy.Direct 
 (
     ufnB2B_x, ufnB2B_10x2p1, ufnB2B_1o10x2p1, ufnB2B_sinx,
-    Interval(..), rati2MPBall, UnaryFnMPBall(..), UnaryFnCR(..)
+    Interval(..), 
+    onRationalInterval, rati2MPBall, 
+    UnaryFnMPBall(..), UnaryFnCR(..)
 )
 where
 
@@ -79,12 +81,12 @@ instance RealUnaryFnA (->) UnaryFnMPBall where
             where
             (friL, friR) = ball2endpoints fri
             fri = fi ri
-            fi = f . rati2MPBall
+            fi = onRationalInterval f -- . rati2MPBall
         minSequence = map negate $ search fi friL $ Q.singleton $ MaxSearchSegment ri friL friR
             where
             (friL, friR) = ball2endpoints fri
             fri = fi ri
-            fi = negate . f . rati2MPBall
+            fi = negate . onRationalInterval f -- . rati2MPBall
         search fi prevL prevQueue =
             maybeTrace 
             (
@@ -191,6 +193,47 @@ instance RealUnaryFnA (->) UnaryFnCR
 
 
 {- utilities -}
+
+onRationalInterval :: (MPBall -> MPBall) -> (Interval Rational -> MPBall)
+onRationalInterval f (Interval l r) =
+    maybeTrace
+    (
+        "onRationalInterval:"
+        ++ "\n nl = " ++ show nl
+        ++ "\n precisions = " ++ show (take (int 10) precisions)
+        ++ "\n result accuracy = " ++ show (getAccuracy result)
+    ) $
+    result
+    where
+    result = untilLittleImprovement resultsWithIncreasingPrecision 
+    resultsWithIncreasingPrecision = map fp precisions
+    fp p = f b
+        where
+        b = endpoints2Ball lMP rMP
+        lMP = rational2BallP p l
+        rMP = rational2BallP p r
+    precisions = 
+        drop (int 1) $ -- ignore the initial precision
+        map prec precisions'
+    precisions' = -- Fibonacci series starting with initPrec, initPrec+10, 2*initPrec + 10, ...
+        initPrec : (initPrec+10) : zipWith (+) precisions' (drop (int 1) precisions')
+    initPrec = 
+        case nl of 
+            NormBits i -> (max 10 (-i))
+            NormZero -> error "onRationalInterval does not work for a singleton interval"
+    nl = getNormLog (r - l)
+    untilLittleImprovement results =
+        maybeTrace ("untilLittleImprovement: improvements = " ++ show (take (int 10) improvements)) $
+        pickFirstResultWithLowImprovement $ zip improvements results
+        where
+        pickFirstResultWithLowImprovement ((improvementPrec, res) : rest)
+            | improvementPrec == NormZero = res
+            | otherwise = pickFirstResultWithLowImprovement rest
+        pickFirstResultWithLowImprovement _ = error "internal error in onRationalInterval"
+        radii = map ballRadius results
+        improvements = zipWith measureImprovement radii (drop (int 1) radii)
+        measureImprovement r1 r2 =
+            getNormLog $ max (mpBall 0) $ r1 - r2
 
 rati2MPBall :: Interval Rational -> MPBall
 rati2MPBall _il@(Interval l r) =
