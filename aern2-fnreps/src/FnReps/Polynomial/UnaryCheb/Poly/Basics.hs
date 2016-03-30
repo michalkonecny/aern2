@@ -177,7 +177,7 @@ instance HasPrecision Poly where
         foldl1 max $ map getPrecision $ terms_coeffs terms
 
 instance CanSetPrecision Poly where
-    setPrecision p (Poly terms) = Poly (terms_map (setPrecision p) terms)
+    setPrecision p (Poly terms) = normaliseCoeffs $ Poly (terms_map (setPrecision p) terms)
 
 instance HasAccuracy Poly where
     getAccuracy (Poly terms) =
