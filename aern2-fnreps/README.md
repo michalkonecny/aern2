@@ -33,10 +33,16 @@ __([on Plotly](https://plot.ly/~mikkonecny/17/time-s-vs-accuracy-bits/))__
 
 ![sinesine](http://latex.codecogs.com/gif.latex?\\sin(10x+\\sin(20x^2)))
 
+#### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
+
+![sinesine-max.png](plots/sinesine-max.png?raw=true)
+__([on Plotly](https://plot.ly/~mikkonecny/20/time-s-vs-accuracy-bits/))__
+
 #### Integration over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
 ![sinesine-integrate.png](plots/sinesine-integrate.png?raw=true)
 __([on Plotly](https://plot.ly/~mikkonecny/11/time-s-vs-accuracy-bits/))__
+
 
 ### An analytic function with singularities near the origin
 
