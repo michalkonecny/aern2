@@ -26,8 +26,8 @@ import Control.Arrow
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
---shouldTrace = False
-shouldTrace = True
+shouldTrace = False
+--shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace 
@@ -210,7 +210,9 @@ evalLipschitzOnBall p@(Poly terms) b =
     lp = sum (map abs $ terms_coeffs terms) * (terms_degree terms)^2
 
 range :: Accuracy -> Poly -> Interval MPBall -> Interval MPBall
-range ac p (Interval l r) = approxRange (toRationalDown l) (toRationalUp r) ac p
+range ac p (Interval l r) =
+    maybeTrace ("range: ac = " ++ show ac) $
+    approxRange (toRationalDown l) (toRationalUp r) ac p
 
 approxRange :: Rational -> Rational -> Accuracy -> Poly -> Interval MPBall
 approxRange l r ac p = Interval (endpoints2Ball minA minB) (endpoints2Ball maxA maxB)

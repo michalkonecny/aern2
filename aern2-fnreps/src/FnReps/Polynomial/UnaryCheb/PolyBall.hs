@@ -17,7 +17,8 @@ module FnReps.Polynomial.UnaryCheb.PolyBall
     defaultSweepThresholdNormLog,
     setMaxDegreeNormLog,
     getDegree,
-    Degree
+    Degree,
+    rangePB
 )
 where
 
@@ -34,8 +35,8 @@ import Debug.Trace (trace)
 
 
 shouldTrace :: Bool
-shouldTrace = False
---shouldTrace = True
+--shouldTrace = False
+shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace 
@@ -260,6 +261,28 @@ instance
                     returnA -< evalDirectOnBall fP xU
                 _ ->  
                     returnA -< evalLipschitzOnBall fP xU
+
+rangePB acc (fB, Interval lDom rDom) =
+    maybeTrace 
+    (
+        "rangePB:"
+        ++ "\n accuracy(result) = " ++ (show (result))
+        ++ "\n acc = " ++ show acc
+        ++ "\n lDom = " ++ show lDom
+        ++ "\n rDom = " ++ show rDom
+        ++ "\n lUnit = " ++ show lUnit
+        ++ "\n rUnit = " ++ show rUnit
+    
+    ) $
+    result
+    where
+    result = range acc poly (Interval lUnit rUnit) 
+    poly = ball_poly fB
+    p = getPrecision fB
+    lUnit = rational2BallP p $ toUnit lDom
+    rUnit = rational2BallP p $ toUnit rDom
+    toUnit x = (2 * x - domL - domR) / (domR - domL) 
+    (Interval domL domR) = ball_domain fB
 
 {- integration -}
 

@@ -19,6 +19,7 @@ main =
     putStrLn $ "result = " ++ show result
     putStrLn $ "result ~ " ++ showB result
     putStrLn $ "accuracy: " ++ (show $ getAccuracy result)
+    putStrLn $ "precision = " ++ show (getPrecision result)
     where
     showB = show . getApproximate (bits 30)
 --    showAP = show . getApproximate (bits 50) . cheb2Power
@@ -41,7 +42,8 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     (Just (fnDescription, fnPB, fnB2B)) = Map.lookup functionCode functions
     maxDeg = read maxDegS
     p = prec $ read precS
-    [precS, maxDegS] = effortArgs
+    rangeBits = bits $ read rangeBitsS
+    [precS, maxDegS, rangeBitsS] = effortArgs
     accuracy = bits $ read accuracyS
     [accuracyS] = effortArgs
 
@@ -54,7 +56,8 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     maxPB b =
         m
         where
-        Interval _ m = rangeOnIntervalUnaryFnA (b, domain) 
+--        Interval _ m = rangeOnIntervalUnaryFnA (b, domain) 
+        Interval _ m = rangePB rangeBits (b, domain) 
         domain = ball_domain b
 
     maxFun :: UnaryFnMPBall -> Accuracy -> MPBall
