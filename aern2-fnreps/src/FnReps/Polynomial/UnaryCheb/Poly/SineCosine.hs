@@ -120,7 +120,7 @@ sine_poly maxDeg sweepT x =
         where
         pickByAccuracy prevResults (_s@(p, e, n) : rest) =
             maybeTrace 
-            ("pickByAccuracy: sE = " ++ showB sE ++ "; sAccuracy = " ++ show sAccuracy) $ 
+            ("pickByAccuracy: sE = " ++ showB sE ++ "; sAccuracy = " ++ show sAccuracy ++ "; prec = " ++ show (getPrecision pBest)) $ 
             pbAres
             where
             pbAres

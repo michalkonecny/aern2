@@ -174,7 +174,7 @@ normaliseCoeffs (Poly terms) =
 
 instance HasPrecision Poly where
     getPrecision (Poly terms) =
-        foldl1 min $ map getPrecision $ terms_coeffs terms
+        foldl1 max $ map getPrecision $ terms_coeffs terms
 
 instance CanSetPrecision Poly where
     setPrecision p (Poly terms) = Poly (terms_map (setPrecision p) terms)

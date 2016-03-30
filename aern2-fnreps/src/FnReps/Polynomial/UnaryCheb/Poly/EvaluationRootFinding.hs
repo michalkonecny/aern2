@@ -181,8 +181,11 @@ evalDirectA =
     (https://en.wikipedia.org/wiki/Clenshaw_algorithm#Special_case_for_Chebyshev_series). 
 -}
 evalDirectOnBall :: Poly -> MPBall -> MPBall
-evalDirectOnBall poly x =  
+evalDirectOnBall poly x =
+    setPrecision p $
     runWithPrecisionPolicy evalDirectA (ppKeepExact defaultPrecision) (poly, x)
+    where
+    p = getPrecision x `max` getPrecision poly
 
 evalDirectOnRational :: Poly -> Rational -> MPBall
 evalDirectOnRational poly@(Poly ts) x = evalDirectOnBall poly (rational2BallP (getPrecision $ head $ terms_coeffs ts) x)
