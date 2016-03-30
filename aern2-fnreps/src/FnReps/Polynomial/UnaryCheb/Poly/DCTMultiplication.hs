@@ -42,7 +42,7 @@ instance CanMulA (->) Poly Poly where
         multiply_p p1 p2
         where
         multiply_p
-            | ((terms_size terms1) + (terms_size terms2)) < 500 =
+            | ((terms_size terms1) + (terms_size terms2)) < 1000 =
                 multiplyDirect
             | otherwise = multiplyDCT
 
