@@ -17,11 +17,11 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 ### A well-behaved analytic function with a number of local extrema
 
-<img src="http://latex.codecogs.com/gif.latex?\\sin(10x)+\\cos(20x)" width="200">
+![sine+cos](http://latex.codecogs.com/gif.latex?\\sin(10x)+\\cos(20x))
 
 #### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
-![sine+cos-max.png](plots/sine+cos-max.png?raw=true)
+<img src="plots/sine+cos-max.png?raw=true" width="200" />
 __([on Plotly](https://plot.ly/~mikkonecny/18/time-s-vs-accuracy-bits/))__
 
 #### Integration over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
