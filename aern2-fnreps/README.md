@@ -21,13 +21,13 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 #### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
-<img src="plots/sine+cos-max.png?raw=true" width="100">
+<img src="plots/sine+cos-max.png?raw=true" width="200">
 _([on Plotly](https://plot.ly/~mikkonecny/18/time-s-vs-accuracy-bits/))_
 
 #### Integration over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
-![sine+cos-integrate.png](plots/sine+cos-integrate.png?raw=true)
-__([on Plotly](https://plot.ly/~mikkonecny/17/time-s-vs-accuracy-bits/))__
+<img src="plots/sine+cos-integrate.png?raw=true" width="200">
+_([on Plotly](https://plot.ly/~mikkonecny/17/time-s-vs-accuracy-bits/))_
 
 ### A nested sine function
 
@@ -35,13 +35,13 @@ __([on Plotly](https://plot.ly/~mikkonecny/17/time-s-vs-accuracy-bits/))__
 
 #### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
-![sinesine-max.png](plots/sinesine-max.png?raw=true)
-__([on Plotly](https://plot.ly/~mikkonecny/20/time-s-vs-accuracy-bits/))__
+<img src="plots/sinesine-max.png?raw=true" width="200">
+_([on Plotly](https://plot.ly/~mikkonecny/20/time-s-vs-accuracy-bits/))_
 
 #### Integration over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
-![sinesine-integrate.png](plots/sinesine-integrate.png?raw=true)
-__([on Plotly](https://plot.ly/~mikkonecny/11/time-s-vs-accuracy-bits/))__
+<img src="plots/sinesine-integrate.png?raw=true" width="200">
+_([on Plotly](https://plot.ly/~mikkonecny/11/time-s-vs-accuracy-bits/))_
 
 
 ### An analytic function with singularities near the origin
