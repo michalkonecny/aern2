@@ -17,7 +17,7 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 ### A well-behaved analytic function with a number of local extrema
 
-![sine+cos](http://latex.codecogs.com/gif.latex?\\sin(10x)+\\cos(20x))
+<img src="http://latex.codecogs.com/gif.latex?\\sin(10x)+\\cos(20x)" width="200">
 
 #### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
