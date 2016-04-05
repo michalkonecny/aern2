@@ -21,7 +21,7 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 #### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
-<img src="plots/sine+cos-max.png?raw=true" width="200" />
+<img src="plots/sine+cos-max.png?raw=true" width="200">
 __([on Plotly](https://plot.ly/~mikkonecny/18/time-s-vs-accuracy-bits/))__
 
 #### Integration over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
