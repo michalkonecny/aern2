@@ -33,12 +33,14 @@ Equivalently, the function could be given by an evaluator over dyadics and a bou
 
 ### Poly
 
+<!-- line breaks are forced by 2 trailing spaces -->
+
 A function
 ![](http://latex.codecogs.com/gif.latex?f)
 is given by a collection of polynomial approximations to the function, 
-each with an explicit error bound.
-  The error bounds are valid over a given interval domain, the same domain for all approximations.
-  The collection is parametrised by polynomial degree and coefficient precision.
+each with an explicit error bound.  
+The error bounds are valid over a given interval domain, the same domain for all approximations.  
+The collection is parametrised by polynomial degree and coefficient precision.
 When these parameters are increased arbitrarily, the error bound converges to zero.
 
 ## Benchmark setup
