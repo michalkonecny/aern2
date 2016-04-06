@@ -445,13 +445,14 @@ instance (ArrowPrecisionPolicy to) => CanDivA to MPBall MPBall where
             where
             x12Up = MP.divUp pp x1 x2 
             x12Down = MP.divDown pp x1 x2
+            x12AbsUp = (MP.abs x12Up) `P.max` (MP.abs x12Down)
             e12 = EB.mp2ErrorBound $ x12Up -^ x12Down
             err =
                 ((e12 * (EB.mp2ErrorBound (MP.abs x2))) -- e12 * |x2|
                  +
                  e1
                  +
-                 (EB.mp2ErrorBound (MP.abs x12Up) * e2) -- e2 * |x|
+                 (EB.mp2ErrorBound x12AbsUp * e2) -- e2 * |x|
                 ) 
                 * 
                 (EB.mp2ErrorBound $ MP.recipUp pp (MP.abs x2 -. (EB.er2mp e2))) 
