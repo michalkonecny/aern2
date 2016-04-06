@@ -4,6 +4,8 @@ _This is work in progress._
 
 For several representations of univariate continuous real functions, we implement several function operators and benchmark their performance.
 
+<!-- TODO: add TOC, eg using https://github.com/thlorenz/doctoc/ -->
+
 ## Representations
 
 ### Fun 
@@ -12,11 +14,11 @@ A function
 ![](http://latex.codecogs.com/gif.latex?f)
 is given by a procedure that for any dyadic interval/ball 
 ![](http://latex.codecogs.com/gif.latex?B)
-in the domain of  
+in the domain of
 ![](http://latex.codecogs.com/gif.latex?f)
 returns an interval/ball that contains the set
 ![](http://latex.codecogs.com/gif.latex?f(B)).
-Moreover, as 
+Moreover, as
 ![](http://latex.codecogs.com/gif.latex?B)
 converges to a real number
 ![](http://latex.codecogs.com/gif.latex?x), 
@@ -34,8 +36,10 @@ Equivalently, the function could be given by an evaluator over dyadics and a bou
 A function
 ![](http://latex.codecogs.com/gif.latex?f)
 is given by a collection of polynomial approximations to the function, 
-each with an explicit error bound.  
-The error bounds are valid over a given interval domain, the same domain for all approximations.  
+each with an explicit error bound.
+
+The error bounds are valid over a given interval domain, the same domain for all approximations.
+
 The collection is parametrised by polynomial degree and coefficient precision.
 When these parameters are increased arbitrarily, the error bound converges to zero.
 
