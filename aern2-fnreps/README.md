@@ -10,6 +10,8 @@ For several representations of univariate continuous real functions, we implemen
 
 ### Fun 
 
+<!-- line breaks are forced by 2 trailing spaces -->
+
 A function 
 ![](http://latex.codecogs.com/gif.latex?f)
 is given by a procedure that for any dyadic interval/ball 
@@ -23,11 +25,9 @@ Moreover, as
 converges to a real number
 ![](http://latex.codecogs.com/gif.latex?x), 
 the returned intervals converge to
-![](http://latex.codecogs.com/gif.latex?f(x)).
-
+![](http://latex.codecogs.com/gif.latex?f(x)).  
 In this representation we use the type MPBall of balls with an arbitrary-precision dyadic center
-and a double-precision radius.
-
+and a double-precision radius.  
 Equivalently, the function could be given by an evaluator over dyadics and a bound on its modulus of continuity.
 
 
