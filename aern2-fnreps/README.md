@@ -1,6 +1,43 @@
-# Comparing representations of exact unary continuous real functions
+# Comparing representations of exact univariate continuous real functions
 
 _This is work in progress._
+
+For several representations of univariate continuous real functions, we implement several function operators and benchmark their performance.
+
+## Representations
+
+### Fun 
+
+A function 
+![](http://latex.codecogs.com/gif.latex?f)
+is given by a procedure that for any dyadic interval/ball 
+![](http://latex.codecogs.com/gif.latex?B)
+in the domain of  
+![](http://latex.codecogs.com/gif.latex?f)
+returns an interval/ball that contains the set
+![](http://latex.codecogs.com/gif.latex?f(B)).
+Moreover, as 
+![](http://latex.codecogs.com/gif.latex?B)
+converges to a real number
+![](http://latex.codecogs.com/gif.latex?x), 
+the returned intervals converge to
+![](http://latex.codecogs.com/gif.latex?f(x)).
+
+In this representation we use the type MPBall of balls with an arbitrary-precision dyadic center
+and a double-precision radius.
+
+Equivalently, the function could be given by an evaluator over dyadics and a bound on its modulus of continuity.
+
+
+### Poly
+
+A function
+![](http://latex.codecogs.com/gif.latex?f)
+is given by a collection of polynomial approximations to the function, 
+each with an explicit error bound.  
+The error bounds are valid over a given interval domain, the same domain for all approximations.  
+The collection is parametrised by polynomial degree and coefficient precision.
+When these parameters are increased arbitrarily, the error bound converges to zero.
 
 ## Benchmark setup
 
