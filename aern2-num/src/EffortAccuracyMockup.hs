@@ -216,4 +216,5 @@ mulCR a b acc =
             p = max 10 acc2
     
 cr :: Double -> CR
-cr = const . mpBall
+cr d acc = 
+    MPBall d (0.35^acc)
