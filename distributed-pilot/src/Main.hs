@@ -31,33 +31,38 @@ main = do
     [host, port] <- getArgs
     backend <- initializeBackend host port initRemoteTable
     node <- newLocalNode backend
-
-    -- create shared variable to signal when initialisation is finished: 
-    nodesTV <- STM.atomically $ STM.newTVar Nothing
     
     runProcess node $ 
         do
         say $ "Initialising network " ++ show netId
-        nodeId <- getSelfNode
-        say "Registering the ERNetwork process..."
-        listenerERNetwork <- spawnLocal $ listenERNetwork nodeId nodesTV
-        register "ERNetwork" listenerERNetwork
-        
-        say "Searching for peers..."
-        peers <- liftIO $ delayAndFindPeers backend
-        -- announce peers to myself:
-        mapM_ (send listenerERNetwork . NewNode netId) peers
-        
-        say $ "Sending NewNode message to peers " ++ show peers ++ "..."
-        mapM_ (sendNewNode nodeId) peers
-        
-        nodes <- waitUntilInitialised nodesTV
-        say $ "Network initialised, found nodes:\n" ++ (List.intercalate "\n" $ map show nodes)
+        nodes <- initialiseNodes backend
+        say $ "Network initialised, found nodes:\n" ++ (unlines $ map show nodes)
         
         expect
 
+initialiseNodes :: Backend -> Process [NodeId]
+initialiseNodes backend =
+    do
+    nodeId <- getSelfNode
+    -- create shared variable to signal when initialisation is finished: 
+    nodesTV <- liftIO $ STM.atomically $ STM.newTVar Nothing
+
+    say "Registering the ERNetwork process..."
+    listenerERNetwork <- spawnLocal $ listenERNetwork nodeId nodesTV
+    register "ERNetwork" listenerERNetwork
+    
+    say "Searching for peers..."
+    peers <- liftIO delayAndFindPeers
+    -- announce peers to myself:
+    mapM_ (send listenerERNetwork . NewNode netId) peers
+    
+    say $ "Sending NewNode message to peers " ++ show peers ++ "..."
+    mapM_ (sendNewNode nodeId) peers
+    
+    nodes <- waitUntilInitialised nodesTV
+    return nodes
     where
-    delayAndFindPeers backend = 
+    delayAndFindPeers = 
         do
         -- wait a random bit to avoid many nodes broadcasting at the same time:
         randomDelay <- randomRIO (1,10000)
