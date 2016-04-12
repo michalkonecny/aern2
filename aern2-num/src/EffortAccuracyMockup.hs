@@ -190,6 +190,12 @@ sqrtBall x =
 --        (/!) :: (?effort :: Effort) => MPBall -> MPBall -> MPBall
         (/!) a = divBall a
 
+piBall :: (?effort :: Effort) => MPBall
+piBall = 
+    MPBall pi 0 
+
+piBall' :: (?effort :: Effort) => MPBall
+piBall' = piBall -- this does not work without an explicit type signature 
 
 {- effective level -}
 
