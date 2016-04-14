@@ -1,20 +1,31 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE Arrows #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveGeneric, ExistentialQuantification, TypeFamilies, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts, TypeOperators, FlexibleInstances, GeneralizedNewtypeDeriving #-} 
+{-# LANGUAGE ScopedTypeVariables, FunctionalDependencies #-}
 module Main where
+
+import Prelude hiding ((.))
 
 import System.Environment (getArgs)
 import System.Random (randomRIO)
 
-import qualified Data.List as List
+--import qualified Data.List as List
 import qualified Data.Set as Set
+import qualified Data.Map as Map
 
-import Data.Binary
+import Data.Binary (Binary)
 import Data.Typeable
 import GHC.Generics
+import Unsafe.Coerce
+
+import Control.Category
+import Control.Arrow
+import Control.Monad (forever)
+import Control.Monad.State -- mtl
 
 import Control.Concurrent (threadDelay)
-import Control.Monad (forever)
 import qualified Control.Concurrent.STM as STM
 
 --import Network.Transport.TCP (createTransport, defaultTCPParameters)
@@ -36,25 +47,212 @@ main = do
         do
         say $ "Initialising network " ++ show netId
         nodes <- initialiseNodes backend
-        say $ "Network initialised, found nodes:\n" ++ (unlines $ map show nodes)
+        say $ "Network initialised, found nodes:\n" ++ (unlines $ map show $ Set.toAscList nodes)
         
-        expect
+        channels <- initialiseChannels nodes
+        
+        expect -- TODO
 
-initialiseNodes :: Backend -> Process [NodeId]
+
+initialiseChannels :: (Set.Set NodeId) -> Process [AnyQAProtocolSendPort]
+initialiseChannels nodes =
+    do
+    
+    return [] -- TODO
+    where
+    
+erProcesses ::
+    (ArrowApply to, ArrowChoice to) => 
+    [[ValueId] -> AnyProtocolQAComputation (WithNetInfo to)]
+erProcesses = 
+    [
+        proc_pi, 
+        proc_add
+    ]
+    where
+    proc_pi [] =
+        AnyProtocolQAComputation $
+            QAComputation CauchyRealP $
+                proc accuracy ->
+                    do
+                    returnA -< MPBall pi (0.35^accuracy)
+    proc_pi _ = error $ "proc_pi should have no parameters"
+    proc_add [op1Id, op2Id] =
+        AnyProtocolQAComputation $
+            QAComputation CauchyRealP $
+                proc accuracy ->
+                    do
+                    a1 <- getAnswer CauchyRealP op1Id -< accuracy
+                    a2 <- getAnswer CauchyRealP op2Id -< accuracy
+                    returnA -< a1 + a2
+    proc_add _ = error $ "proc_add should have 2 parameters"
+
+{-------- QA PROCESS ARROW --------}
+
+type QAProcessArrow = WithNetInfo (Kleisli Process)
+
+data AnyQAProtocolSendPort =
+    forall p . (QAProtocol p) => -- existentially quantified type
+        AnyQASendPort (SendPort (p, Q p))
+
+type AnyProtocolProcessQAComputation = AnyProtocolQAComputation QAProcessArrow
+
+{-------- WithNetInfo Arrow transformer --------}
+
+type WithNetInfo to = StateA (QANetInfo to) to 
+
+data QANetInfo to =
+    QANetInfo
+    {
+        net_id2comp :: Map.Map ValueId (AnyProtocolQAComputation (WithNetInfo to))
+--        ,net_log :: QANetLog
+    }
+
+newtype ValueId = ValueId Integer
+    deriving (Show, Eq, Ord, Enum)
+
+netInfoLookupId :: QANetInfo to -> ValueId -> (AnyProtocolQAComputation (WithNetInfo to))
+netInfoLookupId (QANetInfo id2comp) vId =
+    case Map.lookup vId id2comp of
+        Just comp -> comp
+        Nothing -> error "netInfoLookupId: unknown vId"
+
+getAnswer ::
+    (QAProtocol p, ArrowApply to, ArrowChoice to) =>
+    p -> ValueId -> (WithNetInfo to) (Q p) (A p)
+getAnswer p vId =
+    proc q ->
+        case monadicPrg q of
+            (ArrowMonad arrowPrg) ->
+                app -< (arrowPrg, ())
+    where
+    monadicPrg q =
+        do
+        netInfo <- ArrowMonad getA
+        case netInfoLookupId netInfo vId of
+            (AnyProtocolQAComputation (QAComputation (p'::p') q2a)) | sameProtocol p p' ->
+                do
+                a <- ArrowMonad $ proc () -> q2a -< ((unsafeCoerce q) :: Q p')
+                return $ unsafeCoerce (a :: A p')
+            (AnyProtocolQAComputation (QAComputation (p'::p') _)) -> 
+                error $ "getAnswer protocol mismatch: " ++ show p ++ " /= " ++ show p'
+
+{- The following version does not type check with ghc 7.8.4, probably due to a compiler bug: 
+    proc q ->
+        do
+        netInfo <- getA -< ()
+        case netInfoLookupId netInfo vId of
+            (AnyProtocolQAComputation (QAComputation (p'::p') (q2a))) | sameProtocol p p' ->
+                do
+                a <- app -< (q2a, (unsafeCoerce q) :: Q p')
+                returnA -< unsafeCoerce (a :: A p')
+-}
+{-------- CAUCHY REAL PROTOCOL --------}
+
+data CauchyRealP = CauchyRealP
+    deriving (Show)
+
+instance QAProtocol CauchyRealP
+    where
+    type Q CauchyRealP = Accuracy
+    type A CauchyRealP = MPBall
+
+type Accuracy = Integer
+
+data MPBall = MPBall { centre :: MPNum, radius :: Double }
+    deriving Show
+type MPNum = Double -- MOCKUP
+
+instance Num MPBall where
+    (MPBall c1 r1) + (MPBall c2 r2) = MPBall (c1+c2) (r1+r2)
+
+{-------- GENERAL QA PROTOCOLS --------}
+
+class (Show (Q p), Show (A p), Show p) => QAProtocol p where
+    type Q p
+    type A p
+
+sameProtocol :: (QAProtocol p1, QAProtocol p2) => p1 -> p2 -> Bool
+sameProtocol p1 p2 =
+    show p1 == show p2
+
+data QAComputation to p = 
+    QAComputation
+        p 
+        (Q p `to` A p)  
+
+data AnyProtocolQAComputation to =
+    forall p . (QAProtocol p) => -- existentially quantified type
+        AnyProtocolQAComputation (QAComputation to p)
+
+{-------- AN ARROW TRANSFORMER THAT ADDS STATE --------}
+
+newtype StateA s to a b =
+    StateA { runStateA :: (a,s) `to` (b,s) }
+
+class (Arrow to) => ArrowState s to | to -> s where
+    getA :: () `to` s
+    putA :: s `to` ()
+
+instance (Arrow to) => ArrowState s (StateA s to) 
+    where
+    getA = StateA $ proc ((),s) -> returnA -< (s,s)
+    putA = StateA $ proc (s,_s) -> returnA -< ((),s)  
+
+instance (Arrow to) => Category (StateA s to)
+    where
+    id = StateA $ proc (a,s) -> returnA -< (a,s)
+    (StateA f) . (StateA g) = StateA $ f . g
+
+instance (Arrow to) => Arrow (StateA s to)
+    where
+    arr f = StateA $ proc (a,s) -> returnA -< (f a, s)
+    first (StateA f) = 
+        StateA $
+            proc ((a,b),s) ->
+                do
+                (a',s') <- f -< (a,s)
+                returnA -< ((a',b),s')
+
+instance (ArrowApply to) => ArrowApply (StateA s to)
+    where
+    app =
+        StateA $
+            proc ((StateA f,a),s) ->
+                do
+                (fa,s') <- app -< (f,(a,s))
+                returnA -< (fa,s')
+
+instance (ArrowChoice to) => ArrowChoice (StateA s to)
+    where
+    left (StateA f) =
+        StateA $
+            proc (lORr, s) ->
+                case lORr of
+                    Left l -> 
+                        do
+                        (fl,s') <- f -< (l,s)
+                        returnA -< (Left fl, s')
+                    Right r ->
+                        returnA -< (Right r, s)
+
+{-------- NODE-LEVEL INITIALISATION --------}
+
+initialiseNodes :: Backend -> Process (Set.Set NodeId)
 initialiseNodes backend =
     do
     nodeId <- getSelfNode
     -- create shared variable to signal when initialisation is finished: 
     nodesTV <- liftIO $ STM.atomically $ STM.newTVar Nothing
 
-    say "Registering the ERNetwork process..."
-    listenerERNetwork <- spawnLocal $ listenERNetwork nodeId nodesTV
-    register "ERNetwork" listenerERNetwork
+    say "Registering the ERNetNodeInit process..."
+    listenerERNetNodeInit <- spawnLocal $ listenERNetNodeInit nodeId nodesTV
+    register "ERNetNodeInit" listenerERNetNodeInit
     
     say "Searching for peers..."
     peers <- liftIO delayAndFindPeers
     -- announce peers to myself:
-    mapM_ (send listenerERNetwork . NewNode netId) peers
+    mapM_ (send listenerERNetNodeInit . NewNode netId) peers
     
     say $ "Sending NewNode message to peers " ++ show peers ++ "..."
     mapM_ (sendNewNode nodeId) peers
@@ -71,7 +269,7 @@ initialiseNodes backend =
         findPeers backend 1000000
     
     sendNewNode nodeId peer =
-        nsendRemote peer "ERNetwork" (NewNode netId nodeId)
+        nsendRemote peer "ERNetNodeInit" (NewNode netId nodeId)
     
     waitUntilInitialised nodesTV =
         do
@@ -81,7 +279,7 @@ initialiseNodes backend =
                 Just nodes -> return nodes
                 _ -> STM.retry
     
-    listenERNetwork nodeId nodesTV =
+    listenERNetNodeInit nodeId nodesTV =
         do
         announcedNodes <- waitForNewNodesUntilSilence []
         say $ "announcedNodes = " ++ show announcedNodes
@@ -104,7 +302,7 @@ initialiseNodes backend =
             then 
                 do
                 say "initMergeNodes: first node"
-                nsend "ERNetwork" (NewNodes announcedNodes)
+                nsend "ERNetNodeInit" (NewNodes announcedNodes)
             else return ()
         
     syncNodes nodeId nodesTV announcedNodes =
@@ -115,11 +313,11 @@ initialiseNodes backend =
             | nodeId == lastNode =
                 do
                 say "mergeNodes: AllNodes to first"
-                nsendRemote firstNode "ERNetwork" (AllNodes nodes)
+                nsendRemote firstNode "ERNetNodeInit" (AllNodes nodes)
             | otherwise =
                 do
                 say "mergeNodes: forwarding to next"
-                nsendRemote nextNode "ERNetwork" (NewNodes nodes)
+                nsendRemote nextNode "ERNetNodeInit" (NewNodes nodes)
             where
             nodes = announcedNodes `Set.union` nodes'
             firstNode = Set.findMin nodes
@@ -129,7 +327,7 @@ initialiseNodes backend =
             | nodeId /= lastNode = 
                 do
                 say "getAllNodes: forwarding to next"
-                nsendRemote nextNode "ERNetwork" (AllNodes nodes)
+                nsendRemote nextNode "ERNetNodeInit" (AllNodes nodes)
                 signalInitDone
             | otherwise =
                 signalInitDone
@@ -138,7 +336,7 @@ initialiseNodes backend =
             nextNode = Set.elemAt (Set.findIndex nodeId nodes + 1) nodes
             signalInitDone =
                 liftIO $ STM.atomically $ do
-                    STM.writeTVar nodesTV (Just $ Set.toAscList nodes)
+                    STM.writeTVar nodesTV (Just nodes)
             
 data NewNode = NewNode NetId NodeId
     deriving (Typeable, Generic)

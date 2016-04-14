@@ -18,8 +18,11 @@ executable distributed-pilot
     binary,
     random,
     stm,
-    containers
+    containers,
+    mtl
   hs-source-dirs:  src
   ghc-options:     -Wall -rtsopts
   main-is: Main.hs
+  default-language: Haskell2010
+  other-modules: Test
 
