@@ -56,7 +56,7 @@ testSqrt =
 
 type Accuracy = Integer
 type Precision = Integer
-type MPNum = Double -- eek
+type MPNum = Double -- MOCKUP
 type Effort = Map.Map String Effort'
 data Effort' = Effort Integer Effort
 
