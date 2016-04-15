@@ -61,32 +61,6 @@ initialiseChannels nodes =
     return [] -- TODO
     where
     
-erProcesses ::
-    (ArrowApply to, ArrowChoice to) => 
-    [[ValueId] -> AnyProtocolQAComputation (WithNetInfo to)]
-erProcesses = 
-    [
-        proc_pi, 
-        proc_add
-    ]
-    where
-    proc_pi [] =
-        AnyProtocolQAComputation $
-            QAComputation CauchyRealP $
-                proc accuracy ->
-                    do
-                    returnA -< MPBall pi (0.35^accuracy)
-    proc_pi _ = error $ "proc_pi should have no parameters"
-    proc_add [op1Id, op2Id] =
-        AnyProtocolQAComputation $
-            QAComputation CauchyRealP $
-                proc accuracy ->
-                    do
-                    a1 <- getAnswer CauchyRealP op1Id -< accuracy
-                    a2 <- getAnswer CauchyRealP op2Id -< accuracy
-                    returnA -< a1 + a2
-    proc_add _ = error $ "proc_add should have 2 parameters"
-
 {-------- QA PROCESS ARROW --------}
 
 type QAProcessArrow = WithNetInfo (Kleisli Process)
@@ -96,6 +70,9 @@ data AnyQAProtocolSendPort =
         AnyQASendPort (SendPort (p, Q p))
 
 type AnyProtocolProcessQAComputation = AnyProtocolQAComputation QAProcessArrow
+
+instance (ArrowQA QAProcessArrow) where
+    -- TODO
 
 {-------- WithNetInfo Arrow transformer --------}
 
@@ -147,6 +124,45 @@ getAnswer p vId =
                 a <- app -< (q2a, (unsafeCoerce q) :: Q p')
                 returnA -< unsafeCoerce (a :: A p')
 -}
+
+{-------- CAUCHY REAL COMPUTATION --------}
+    
+type CauchyRealA to = QAComputation to CauchyRealP
+type CauchyReal = CauchyRealA (->)
+type CauchyRealWithNI to = CauchyRealA (WithNetInfo to)
+
+{-
+    TODO: use a type class instance  
+-}
+piA :: (Arrow to) => CauchyRealA to
+piA =
+    QAComputation CauchyRealP $
+        proc accuracy ->
+            do
+            returnA -< MPBall pi (0.35^accuracy)
+
+class CanAddA to t1 t2
+    where
+    type AddTypeA to t1 t2
+    addA :: (t1,t2) `to` (AddTypeA to t1 t2)
+
+instance 
+    (ArrowQA to) => 
+    CanAddA to (CauchyRealA to) (CauchyRealA to)
+    where 
+    type AddTypeA to (CauchyRealA to) (CauchyRealA to) =
+        CauchyRealA to
+    addA =
+        proc (QAComputation _ q2a1, QAComputation _ q2a2) ->
+            newQAComputation CauchyRealP -< answerQuery q2a1 q2a2
+        where
+        answerQuery q2a1 q2a2 =
+            proc accuracy ->
+                do
+                a1 <- q2a1 -< (accuracy+1)
+                a2 <- q2a2 -< (accuracy+1) -- TODO: improve efficiency
+                returnA -< a1 + a2
+
 {-------- CAUCHY REAL PROTOCOL --------}
 
 data CauchyRealP = CauchyRealP
@@ -167,6 +183,9 @@ instance Num MPBall where
     (MPBall c1 r1) + (MPBall c2 r2) = MPBall (c1+c2) (r1+r2)
 
 {-------- GENERAL QA PROTOCOLS --------}
+
+class (Arrow to) => ArrowQA to where
+    newQAComputation :: p -> ((Q p) `to` (A p)) `to` (QAComputation to p) 
 
 class (Show (Q p), Show (A p), Show p) => QAProtocol p where
     type Q p
