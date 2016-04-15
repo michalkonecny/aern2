@@ -63,7 +63,24 @@ initialiseChannels nodes =
     
 {-------- QA PROCESS ARROW --------}
 
-type QAProcessArrow = WithNetInfo (Kleisli Process)
+type QAProcessArrow = WithNetInfo (WithNodeInfo (Kleisli Process))
+
+type WithNodeInfo to = StateA NodeInfo to
+
+data NodeInfo =
+    NodeInfo
+    {
+        nodeInfo_myIx :: Integer,
+        nodeInfo_nodes :: Set.Set NodeId,
+        nodeInfo_netInfoTV :: STM.TVar (QANetInfo (WithNodeInfo (Kleisli Process)))
+    }
+
+liftProcessQA :: 
+    (a -> Process b) -> (QAProcessArrow a b)
+liftProcessQA = liftA . liftA . Kleisli
+
+getNodeInfoA :: QAProcessArrow () NodeInfo
+getNodeInfoA = liftA getA
 
 data AnyQAProtocolSendPort =
     forall p . (QAProtocol p) => -- existentially quantified type
@@ -72,7 +89,44 @@ data AnyQAProtocolSendPort =
 type AnyProtocolProcessQAComputation = AnyProtocolQAComputation QAProcessArrow
 
 instance (ArrowQA QAProcessArrow) where
-    -- TODO
+    newQAComputation p =
+        proc q2a ->
+            do
+            -- assign the computation an id: 
+            compId <- newCompIdA -< ()
+            -- construct the computation closure:
+            nodeInfo <- getNodeInfoA -< ()
+            let comp = QAComputation p $ useCorrectNode q2a compId nodeInfo
+            -- store the computation in both QANetInfo objects:
+            () <- registerComputationA p -< (compId, comp)
+            () <- liftProcessQA (registerComputationForIncoming) -< (nodeInfo, compId, comp) -- TODO
+            -- return a "redirect to QANetInfo" computation 
+            -- (to support shared evolving computations, eg when caching):
+            returnA -< compLookupId p compId 
+        where
+        useCorrectNode q2a (CompId compId_i) nodeInfo
+            | responsibleNodeIx == nodeInfo_myIx nodeInfo = 
+                -- this node is responsible for this computation 
+                q2a
+            | otherwise = -- another node is responsible for this computation
+                proc q ->
+                    -- create a channel on which we will expect a response: TODO
+                    
+                    -- forward the query to the "QAQuery" process on the other node: TODO
+                    
+                    -- wait for response: TODO
+                     
+                    returnA -< undefined
+            where
+            responsibleNodeIx = compId_i `mod` (toInteger $ Set.size $ nodeInfo_nodes nodeInfo)
+            responsibleNode = Set.elemAt (fromInteger responsibleNodeIx) $ nodeInfo_nodes nodeInfo
+        registerComputationForIncoming (nodeInfo, compId, comp) =
+            liftIO $ STM.atomically $
+                do 
+                ni <- STM.readTVar netInfoTV
+                STM.writeTVar netInfoTV $ qaNetInfoAddComp compId comp ni
+            where
+            netInfoTV = nodeInfo_netInfoTV nodeInfo
 
 {-------- WithNetInfo Arrow transformer --------}
 
@@ -81,23 +135,54 @@ type WithNetInfo to = StateA (QANetInfo to) to
 data QANetInfo to =
     QANetInfo
     {
-        net_id2comp :: Map.Map ValueId (AnyProtocolQAComputation (WithNetInfo to))
+        net_id2comp :: Map.Map CompId (AnyProtocolQAComputation (WithNetInfo to))
 --        ,net_log :: QANetLog
     }
 
-newtype ValueId = ValueId Integer
+qaNetInfoAddComp ::
+    QAProtocol p =>
+    CompId -> 
+    QAComputation (WithNetInfo to) p -> 
+    QANetInfo to -> QANetInfo to
+qaNetInfoAddComp compId comp ni =
+    ni { net_id2comp = Map.insert compId (AnyProtocolQAComputation comp) (net_id2comp ni) }
+
+newtype CompId = CompId Integer
     deriving (Show, Eq, Ord, Enum)
 
-netInfoLookupId :: QANetInfo to -> ValueId -> (AnyProtocolQAComputation (WithNetInfo to))
-netInfoLookupId (QANetInfo id2comp) vId =
-    case Map.lookup vId id2comp of
-        Just comp -> comp
-        Nothing -> error "netInfoLookupId: unknown vId"
+newCompIdA :: (Arrow to) => WithNetInfo to () CompId
+newCompIdA =
+    proc () ->
+        do
+        ni <- getA -< ()
+        returnA -< aux ni
+    where
+    aux ni =
+        succ (fst $ Map.findMax id2comp)
+        where
+        id2comp = net_id2comp ni
 
-getAnswer ::
+registerComputationA ::
+    (QAProtocol p, Arrow to) => 
+    p -> 
+    WithNetInfo to (CompId, QAComputation (WithNetInfo to) p) ()
+registerComputationA _ =
+    proc (compId, comp) ->
+        do
+        ni <- getA -< ()
+        putA -< qaNetInfoAddComp compId comp ni
+
+compLookupId ::
     (QAProtocol p, ArrowApply to, ArrowChoice to) =>
-    p -> ValueId -> (WithNetInfo to) (Q p) (A p)
-getAnswer p vId =
+    p -> CompId -> QAComputation (WithNetInfo to) p
+compLookupId p compId =
+    QAComputation p (getAnswerA p compId)
+
+
+getAnswerA ::
+    (QAProtocol p, ArrowApply to, ArrowChoice to) =>
+    p -> CompId -> (WithNetInfo to) (Q p) (A p)
+getAnswerA p compId =
     proc q ->
         case monadicPrg q of
             (ArrowMonad arrowPrg) ->
@@ -106,7 +191,7 @@ getAnswer p vId =
     monadicPrg q =
         do
         netInfo <- ArrowMonad getA
-        case netInfoLookupId netInfo vId of
+        case netInfoLookupId netInfo compId of
             (AnyProtocolQAComputation (QAComputation (p'::p') q2a)) | sameProtocol p p' ->
                 do
                 a <- ArrowMonad $ proc () -> q2a -< ((unsafeCoerce q) :: Q p')
@@ -118,12 +203,19 @@ getAnswer p vId =
     proc q ->
         do
         netInfo <- getA -< ()
-        case netInfoLookupId netInfo vId of
+        case netInfoLookupId netInfo compId of
             (AnyProtocolQAComputation (QAComputation (p'::p') (q2a))) | sameProtocol p p' ->
                 do
                 a <- app -< (q2a, (unsafeCoerce q) :: Q p')
                 returnA -< unsafeCoerce (a :: A p')
 -}
+
+netInfoLookupId :: QANetInfo to -> CompId -> (AnyProtocolQAComputation (WithNetInfo to))
+netInfoLookupId (QANetInfo id2comp) compId =
+    case Map.lookup compId id2comp of
+        Just comp -> comp
+        Nothing -> error "netInfoLookupId: unknown compId"
+
 
 {-------- CAUCHY REAL COMPUTATION --------}
     
@@ -185,7 +277,7 @@ instance Num MPBall where
 {-------- GENERAL QA PROTOCOLS --------}
 
 class (Arrow to) => ArrowQA to where
-    newQAComputation :: p -> ((Q p) `to` (A p)) `to` (QAComputation to p) 
+    newQAComputation :: (QAProtocol p) => p -> ((Q p) `to` (A p)) `to` (QAComputation to p) 
 
 class (Show (Q p), Show (A p), Show p) => QAProtocol p where
     type Q p
@@ -217,6 +309,17 @@ instance (Arrow to) => ArrowState s (StateA s to)
     where
     getA = StateA $ proc ((),s) -> returnA -< (s,s)
     putA = StateA $ proc (s,_s) -> returnA -< ((),s)  
+
+class ArrowTrans t where
+    liftA :: Arrow to => (to a b) -> (t to a b)
+
+instance ArrowTrans (StateA s) where
+    liftA compA =
+        StateA $
+            proc (a,s) ->
+                do
+                b <- compA -< a
+                returnA -< (b,s)
 
 instance (Arrow to) => Category (StateA s to)
     where
