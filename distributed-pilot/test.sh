@@ -1,4 +1,4 @@
-./distributed-pilot localhost 10501 >& log.10501 &
-./distributed-pilot localhost 10502 >& log.10502 &
-./distributed-pilot localhost 10503 >& log.10503 &
-multitail log.10501 log.10502 log.10503
+./distributed-pilot localhost 10601 >& log.1 &
+./distributed-pilot localhost 10602 >& log.2 &
+./distributed-pilot localhost 10603 >& log.3 &
+multitail log.1 log.2 log.3
