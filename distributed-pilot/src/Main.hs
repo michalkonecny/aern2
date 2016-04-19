@@ -158,10 +158,6 @@ runQAProcessArrow nodes p (StateA (StateA (Kleisli compM))) query =
     -- construct a computation and, if we are master, execute the query:
     let isMaster = myIx == 0
 
-    -- start the "ERNetQueries" process which will deal with incoming queries using netInfoTV: 
-    erNetQueriesProcess <- spawnLocal $ forever $ answerQueryWhenItComes netInfoTV
-    register "ERNetQueries" erNetQueriesProcess
-    
     -- work out the full computation network:
     (((QAComputation _p q2aA),netInfo),_) <- compM (((),initQANetInfo), nodeInfo)
     let (StateA (StateA (Kleisli q2aM))) = q2aA
@@ -170,6 +166,12 @@ runQAProcessArrow nodes p (StateA (StateA (Kleisli compM))) query =
     netInfoTVnow <- liftIO $ STM.atomically $ STM.readTVar netInfoTV
     let netSizeTV = Map.size $ net_id2comp netInfoTVnow
     say $ "netInfoTV has " ++ show netSizeTV ++ " ER processes"
+
+    -- start the "ERNetQueries" process which will deal with incoming queries using netInfoTV: 
+    erNetQueriesProcess <- spawnLocal $ forever $ answerQueryWhenItComes netInfoTV netInfo nodeInfo
+    register "ERNetQueries" erNetQueriesProcess
+    
+
     -- TODO: test is the above is necessary to get "ERNetQueries" to be able to respond
     if True -- isMaster -- TODO 
         then
@@ -183,7 +185,7 @@ runQAProcessArrow nodes p (StateA (StateA (Kleisli compM))) query =
             say "error: a non-master received a () query"
             undefined
     where
-    answerQueryWhenItComes netInfoTV =
+    answerQueryWhenItComes netInfoTV netInfo nodeInfo =
         do
         say "ERNetQueries: waiting for a query"
         (RemoteQuery p' sendPort computId query') <- expect
@@ -193,8 +195,9 @@ runQAProcessArrow nodes p (StateA (StateA (Kleisli compM))) query =
         case anyProtocolComput of
             (AnyProtocolQAComputation (QAComputation p'' q2aA)) | sameProtocol p' p'' ->
                 do
+                -- TODO: spawn the answering in a separate process: 
                 let (StateA (StateA (Kleisli q2aM))) = q2aA
-                ((answer,_),_) <- q2aM (unsafeCoerce query')
+                ((answer,_),_) <- q2aM (((unsafeCoerce query'), netInfo), nodeInfo)
                 say $ "ERNetQueries: answering " ++ show answer
                 sendChan sendPort (unsafeCoerce answer)
             _ ->
