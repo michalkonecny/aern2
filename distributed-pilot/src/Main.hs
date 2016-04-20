@@ -1,9 +1,8 @@
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Arrows #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric, ExistentialQuantification, TypeFamilies, MultiParamTypeClasses #-}
-{-# LANGUAGE FlexibleContexts, TypeOperators, FlexibleInstances, GeneralizedNewtypeDeriving #-} 
-{-# LANGUAGE ScopedTypeVariables, FunctionalDependencies, UndecidableInstances #-}
+{-# LANGUAGE DeriveGeneric, DeriveDataTypeable, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE ExistentialQuantification, TypeFamilies, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleContexts, TypeOperators, FlexibleInstances #-} 
+{-# LANGUAGE ScopedTypeVariables, FunctionalDependencies #-}
 module Main where
 
 import Prelude hiding ((.))
@@ -88,7 +87,7 @@ comput3A =
     
 {-------- QA PROCESS ARROW --------}
 
-type QAProcessArrow = WithNetInfo (WithNodeInfo (Kleisli Process))
+type QAProcessArrow = WithNodeInfo (Kleisli Process)
 
 type WithNodeInfo to = StateA NodeInfo to
 
@@ -103,10 +102,10 @@ data NodeInfo =
 
 liftProcessQA :: 
     (a -> Process b) -> (QAProcessArrow a b)
-liftProcessQA = liftA . liftA . Kleisli
+liftProcessQA = liftA . Kleisli
 
 getNodeInfoA :: QAProcessArrow () NodeInfo
-getNodeInfoA = liftA getA
+getNodeInfoA = getA
 
 data RemoteQuery p = 
     RemoteQuery p (SendPort (A p)) ComputId (Q p)
@@ -116,23 +115,31 @@ instance (QAProtocol p) => Binary (RemoteQuery p)
 
 instance (ArrowQA QAProcessArrow) where
     newQAComputation p =
-        proc q2a ->
+        StateA $ Kleisli $ \ (q2a, nodeInfo) ->
             do
-            -- assign the computation an id: 
-            computId <- newComputIdA -< ()
-            () <- liftProcessQA say -< "newQAComputation: " ++ show computId
-            -- construct the computation closure:
-            let comp = QAComputation p $ useCorrectNode q2a computId
-            -- store the computation in both QANetInfo objects:
-            () <- registerComputationA p -< (computId, comp)
-            () <- liftProcessQA say -< "newQAComputation: registered in netInfo " ++ show computId
-            nodeInfo <- getNodeInfoA -< ()
-            () <- liftProcessQA registerComputationForIncoming -< (nodeInfo, computId, comp)
-            () <- liftProcessQA say -< "newQAComputation: registered in netInfoTV " ++ show computId
+            computId <- registerComputation (nodeInfo, q2a)
+            say $ "newQAComputation: registered in netInfoTV " ++ show computId
             -- return a "redirect to QANetInfo" computation 
             -- (to support shared evolving computations, eg when caching):
-            returnA -< computLookupId p computId 
+            return $ (computLookupId computId, nodeInfo)
         where
+        computLookupId computId =
+            QAComputation p $ StateA $ Kleisli $ \(q, nodeInfo) ->
+                do
+                netInfo <- liftAtomically $ STM.readTVar $ nodeInfo_netInfoTV nodeInfo 
+                let (StateA (Kleisli q2aM)) = getAnswerA netInfo p computId
+                (a,_) <- q2aM (q,nodeInfo)
+                return (a, nodeInfo) 
+        registerComputation (nodeInfo, q2a) =
+            liftAtomically $
+                do
+                ni <- STM.readTVar netInfoTV
+                let computId = newComputId ni
+                let q2aDistributed = useCorrectNode q2a computId
+                STM.writeTVar netInfoTV $ qaNetInfoAddComput computId (QAComputation p q2aDistributed) ni
+                return computId
+            where
+            netInfoTV = nodeInfo_netInfoTV nodeInfo
         useCorrectNode q2a computId@(ComputId computId_i) =
             proc query ->
                 do
@@ -167,13 +174,7 @@ instance (ArrowQA QAProcessArrow) where
                 "Computation " ++ show computId_i ++ " got query " ++ show query
             forwardToNode (responsibleNode, msg) = 
                 nsendRemote responsibleNode "ERNetQueries" msg 
-        registerComputationForIncoming (nodeInfo, computId, comp) =
-            liftAtomically $
-                do 
-                ni <- STM.readTVar netInfoTV
-                STM.writeTVar netInfoTV $ qaNetInfoAddComput computId comp ni
-            where
-            netInfoTV = nodeInfo_netInfoTV nodeInfo
+
 
 runQAProcessArrow ::
     (QAProtocol p) =>
@@ -181,7 +182,7 @@ runQAProcessArrow ::
     p ->
     QAProcessArrow () (QAComputation QAProcessArrow p) -> 
     (Q p) -> Process (Maybe (Q p, A p))
-runQAProcessArrow nodes p (StateA (StateA (Kleisli compM))) query =
+runQAProcessArrow nodes p (StateA (Kleisli compM)) query =
     do
     say "runQAProcessArrow: starting"
     -- create a NodeInfo record, including netInfoTV:
@@ -191,19 +192,17 @@ runQAProcessArrow nodes p (StateA (StateA (Kleisli compM))) query =
     let nodeInfo = NodeInfo False myIx nodes netInfoTV
     
     -- work out the full computation network:
-    (((QAComputation _p q2aA),netInfo1),_) <- compM (((),initQANetInfo), nodeInfo)
-    let (StateA (StateA (Kleisli q2aM))) = q2aA
+    ((QAComputation _p q2aA),_) <- compM ((), nodeInfo)
+    let (StateA (Kleisli q2aM)) = q2aA
     -- run the network in an "initialising" mode, in which no queries are answered but all computations/ERprocesses are registered 
-    ((_, netInfo), _) <- q2aM ((query, netInfo1), nodeInfo { nodeInfo_initialising = True})
+    _ <- q2aM (query, nodeInfo { nodeInfo_initialising = True})
     
+    netInfo <- liftAtomically $ STM.readTVar netInfoTV
     let netSize = Map.size $ net_id2comp netInfo
-    say $ "Initialised network with " ++ show netSize ++ " ER processes"
---    netInfoTVnow <- liftAtomically $ STM.readTVar netInfoTV
---    let netSizeTV = Map.size $ net_id2comp netInfoTVnow
---    say $ "netInfoTV has " ++ show netSizeTV ++ " ER processes"
+    say $ "netInfoTV has " ++ show netSize ++ " ER processes"
 
     -- start the "ERNetQueries" process which will deal with incoming queries using netInfoTV: 
-    erNetQueriesProcess <- spawnLocal $ forever $ answerQueryWhenItComes netInfoTV netInfo nodeInfo
+    erNetQueriesProcess <- spawnLocal $ forever $ answerQueryWhenItComes netInfoTV nodeInfo
     register "ERNetQueries" erNetQueriesProcess
     
 
@@ -213,7 +212,7 @@ runQAProcessArrow nodes p (StateA (StateA (Kleisli compM))) query =
         then
             do
             say "runQAProcessArrow: this is master, sending the initial query here"
-            ((answer, _), _) <- q2aM ((query, netInfo), nodeInfo)
+            (answer, _) <- q2aM (query, nodeInfo)
             
             -- send a signal to process "ERNetNodeStop" on each node:
             mapM_ (\n -> nsendRemote n "ERNetNodeStop" ()) $ Set.toList nodes 
@@ -237,7 +236,7 @@ runQAProcessArrow nodes p (StateA (StateA (Kleisli compM))) query =
         do
         () <- expect
         liftAtomically $ STM.writeTVar stopTV True
-    answerQueryWhenItComes netInfoTV netInfo nodeInfo =
+    answerQueryWhenItComes netInfoTV nodeInfo =
         do
         say "ERNetQueries: waiting for a query"
         (RemoteQuery p' sendPort computId query') <- expect
@@ -248,8 +247,8 @@ runQAProcessArrow nodes p (StateA (StateA (Kleisli compM))) query =
             (AnyProtocolQAComputation (QAComputation p'' q2aA)) | sameProtocol p' p'' ->
                 do
                 -- TODO: spawn the answering in a separate process: 
-                let (StateA (StateA (Kleisli q2aM))) = q2aA
-                ((answer,_),_) <- q2aM (((unsafeCoerce query'), netInfo), nodeInfo)
+                let (StateA (Kleisli q2aM)) = q2aA
+                (answer,_) <- q2aM (unsafeCoerce query', nodeInfo)
                 say $ "ERNetQueries: answering " ++ show answer
                 sendChan sendPort (unsafeCoerce answer)
             _ ->
@@ -268,12 +267,10 @@ runQAProcessArrow nodes p (StateA (StateA (Kleisli compM))) query =
 
 {-------- WithNetInfo Arrow transformer --------}
 
-type WithNetInfo to = StateA (QANetInfo to) to 
-
 data QANetInfo to =
     QANetInfo
     {
-        net_id2comp :: Map.Map ComputId (AnyProtocolQAComputation (WithNetInfo to))
+        net_id2comp :: Map.Map ComputId (AnyProtocolQAComputation to)
 --        ,net_log :: QANetLog -- MOCKUP
     }
 
@@ -283,7 +280,7 @@ initQANetInfo = QANetInfo Map.empty
 qaNetInfoAddComput ::
     QAProtocol p =>
     ComputId -> 
-    QAComputation (WithNetInfo to) p -> 
+    QAComputation to p -> 
     QANetInfo to -> QANetInfo to
 qaNetInfoAddComput computId comp ni =
     ni { net_id2comp = Map.insert computId (AnyProtocolQAComputation comp) (net_id2comp ni) }
@@ -293,40 +290,17 @@ newtype ComputId = ComputId Integer
 
 instance Binary ComputId
 
-newComputIdA :: (Arrow to) => WithNetInfo to () ComputId
-newComputIdA =
-    proc () ->
-        do
-        ni <- getA -< ()
-        let computId = aux ni
-        returnA -< computId
-    where
-    aux ni 
+newComputId :: QANetInfo to -> ComputId
+newComputId ni 
         | Map.null id2comput = ComputId 0
         | otherwise = succ (fst $ Map.findMax id2comput)
         where
         id2comput = net_id2comp ni
 
-registerComputationA ::
-    (QAProtocol p, Arrow to) => 
-    p -> 
-    WithNetInfo to (ComputId, QAComputation (WithNetInfo to) p) ()
-registerComputationA _ =
-    proc (computId, comp) ->
-        do
-        ni <- getA -< ()
-        putA -< qaNetInfoAddComput computId comp ni
-
-computLookupId ::
-    (QAProtocol p, ArrowApply to, ArrowChoice to) =>
-    p -> ComputId -> QAComputation (WithNetInfo to) p
-computLookupId p computId =
-    QAComputation p (getAnswerA p computId)
-
 getAnswerA ::
     (QAProtocol p, ArrowApply to, ArrowChoice to) =>
-    p -> ComputId -> (WithNetInfo to) (Q p) (A p)
-getAnswerA p computId =
+    QANetInfo to -> p -> ComputId -> to (Q p) (A p)
+getAnswerA netInfo p computId =
     proc q ->
         case monadicPrg q of
             (ArrowMonad arrowPrg) ->
@@ -334,7 +308,6 @@ getAnswerA p computId =
     where
     monadicPrg q =
         do
-        netInfo <- ArrowMonad getA
         case netInfoLookupId netInfo computId of
             (AnyProtocolQAComputation (QAComputation (p'::p') q2a)) | sameProtocol p p' ->
                 do
@@ -354,7 +327,7 @@ getAnswerA p computId =
                 returnA -< unsafeCoerce (a :: A p')
 -}
 
-netInfoLookupId :: QANetInfo to -> ComputId -> (AnyProtocolQAComputation (WithNetInfo to))
+netInfoLookupId :: QANetInfo to -> ComputId -> (AnyProtocolQAComputation (to))
 netInfoLookupId (QANetInfo id2comput) computId =
     case Map.lookup computId id2comput of
         Just comp -> comp
@@ -365,7 +338,6 @@ netInfoLookupId (QANetInfo id2comput) computId =
     
 type CauchyRealA to = QAComputation to CauchyRealP
 type CauchyReal = CauchyRealA (->)
-type CauchyRealWithNI to = CauchyRealA (WithNetInfo to)
 
 piA :: (ArrowQA to) => () `to` CauchyRealA to
 piA =
