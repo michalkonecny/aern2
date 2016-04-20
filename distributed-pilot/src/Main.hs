@@ -49,7 +49,7 @@ main = do
         say $ "Network initialised, found nodes:\n" ++ (unlines $ map show $ Set.toAscList nodes)
         
         let query = 30  
-        answer <- runQAProcessArrow nodes CauchyRealP comput1A query -- will wait forever if not master
+        answer <- runQAProcessArrow nodes CauchyRealP comput3A query -- will wait forever if not master
         say $ "query  = " ++ show query
         say $ "answer = " ++ show answer
         expect
@@ -58,6 +58,27 @@ comput1A ::
     (ArrowQA to) => 
     () `to` (CauchyRealA to)
 comput1A = piA
+
+comput2A :: 
+    (ArrowQA to) => 
+    () `to` (CauchyRealA to)
+comput2A =
+    proc () ->
+        do 
+        a1 <- piA -< ()
+        a2 <- piA -< ()
+        b <- addA -< (a1,a2) 
+        returnA -< b
+
+comput3A :: 
+    (ArrowQA to) => 
+    () `to` (CauchyRealA to)
+comput3A =
+    proc () ->
+        do 
+        a1 <- piA -< ()
+        b <- addA -< (a1,a1) 
+        returnA -< b
 
     
 {-------- QA PROCESS ARROW --------}
@@ -96,42 +117,51 @@ instance (ArrowQA QAProcessArrow) where
             computId <- newComputIdA -< ()
             () <- liftProcessQA say -< "newQAComputation: " ++ show computId
             -- construct the computation closure:
-            nodeInfo <- getNodeInfoA -< ()
-            let comp = QAComputation p $ useCorrectNode q2a computId nodeInfo
+            let comp = QAComputation p $ useCorrectNode q2a computId
             -- store the computation in both QANetInfo objects:
             () <- registerComputationA p -< (computId, comp)
             () <- liftProcessQA say -< "newQAComputation: registered in netInfo " ++ show computId
-            () <- liftProcessQA (registerComputationForIncoming) -< (nodeInfo, computId, comp)
+            nodeInfo <- getNodeInfoA -< ()
+            () <- liftProcessQA registerComputationForIncoming -< (nodeInfo, computId, comp)
             () <- liftProcessQA say -< "newQAComputation: registered in netInfoTV " ++ show computId
             -- return a "redirect to QANetInfo" computation 
             -- (to support shared evolving computations, eg when caching):
             returnA -< computLookupId p computId 
         where
-        useCorrectNode q2a computId@(ComputId computId_i) nodeInfo 
-             | responsibleNodeIx == nodeInfo_myIx nodeInfo = 
-                 -- this node is responsible for this computation
-                 proc query ->
-                    do
-                    () <- liftProcessQA say -< queryDescription query ++ " (local on node " ++ show responsibleNodeIx ++ ")"
-                    q2a -< query
-             | otherwise = -- another node is responsible for this computation
-                           -- delegate...
-                 proc query ->
-                    do
-                    () <- liftProcessQA say -< queryDescription query ++ " (sending to node " ++ show responsibleNodeIx ++ ")"
-                    -- create a channel on which we will expect a response:
-                    (sendPort, receivePort) <- liftProcessQA (const newChan) -< ()
-                    -- forward the query to the "QAQuery" process on the other node:
-                    liftProcessQA (nsendRemote responsibleNode "ERNetQueries") -< 
-                        RemoteQuery p sendPort computId query
-                    -- wait for a response:
-                    answer <- liftProcessQA receiveChan -< receivePort
-                    returnA -< answer
+        useCorrectNode q2a computId@(ComputId computId_i) =
+            proc query ->
+                do
+                nodeInfo <- getNodeInfoA -< ()
+                let responsibleNodeIx = computId_i `mod` (toInteger $ Set.size $ nodeInfo_nodes nodeInfo)
+                let responsibleNode = Set.elemAt (fromInteger responsibleNodeIx) $ nodeInfo_nodes nodeInfo
+                case () of
+                    _ | nodeInfo_initialising nodeInfo ->
+                     -- initialising the network, not a genuine query
+                        do
+                        () <- liftProcessQA say -< queryDescription query ++ " (initialising)"
+                        q2a -< query -- run the query in order to initialise all computations that this one depends on, ignore the answer
+                        returnA -< error "internal error: computation in the initialising mode does not return answers"
+                    _ | responsibleNodeIx == nodeInfo_myIx nodeInfo -> 
+                     -- this node is responsible for this computation
+                        do
+                        () <- liftProcessQA say -< queryDescription query ++ " (local on node " ++ show responsibleNodeIx ++ ")"
+                        q2a -< query
+                    _ -> -- another node is responsible for this computation
+                                   -- delegate...
+                        do
+                        () <- liftProcessQA say -< queryDescription query ++ " (sending to node " ++ show responsibleNodeIx ++ ")"
+                        -- create a channel on which we will expect a response:
+                        (sendPort, receivePort) <- liftProcessQA (const newChan) -< ()
+                        -- forward the query to the "QAQuery" process on the other node:
+                        liftProcessQA forwardToNode -< (responsibleNode, RemoteQuery p sendPort computId query)
+                        -- wait for a response:
+                        answer <- liftProcessQA receiveChan -< receivePort
+                        returnA -< answer
             where
             queryDescription query =
-                "Computation " ++ show computId_i ++ " got query " ++ show query 
-            responsibleNodeIx = computId_i `mod` (toInteger $ Set.size $ nodeInfo_nodes nodeInfo)
-            responsibleNode = Set.elemAt (fromInteger responsibleNodeIx) $ nodeInfo_nodes nodeInfo
+                "Computation " ++ show computId_i ++ " got query " ++ show query
+            forwardToNode (responsibleNode, msg) = 
+                nsendRemote responsibleNode "ERNetQueries" msg 
         registerComputationForIncoming (nodeInfo, computId, comp) =
             liftIO $ STM.atomically $
                 do 
@@ -159,8 +189,11 @@ runQAProcessArrow nodes p (StateA (StateA (Kleisli compM))) query =
     let isMaster = myIx == 0
 
     -- work out the full computation network:
-    (((QAComputation _p q2aA),netInfo),_) <- compM (((),initQANetInfo), nodeInfo)
+    (((QAComputation _p q2aA),netInfo1),_) <- compM (((),initQANetInfo), nodeInfo)
     let (StateA (StateA (Kleisli q2aM))) = q2aA
+    -- run the network in an "initialising" mode, in which no queries are answered but all computations/ERprocesses are registered 
+    ((_, netInfo), _) <- q2aM ((query, netInfo1), nodeInfo { nodeInfo_initialising = True})
+    
     let netSize = Map.size $ net_id2comp netInfo
     say $ "netInfo has " ++ show netSize ++ " ER processes"
     netInfoTVnow <- liftIO $ STM.atomically $ STM.readTVar netInfoTV
@@ -171,9 +204,7 @@ runQAProcessArrow nodes p (StateA (StateA (Kleisli compM))) query =
     erNetQueriesProcess <- spawnLocal $ forever $ answerQueryWhenItComes netInfoTV netInfo nodeInfo
     register "ERNetQueries" erNetQueriesProcess
     
-
-    -- TODO: test is the above is necessary to get "ERNetQueries" to be able to respond
-    if True -- isMaster -- TODO 
+    if isMaster 
         then
             do
             say "runQAProcessArrow: this is master, sending the initial query here"
