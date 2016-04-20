@@ -246,11 +246,14 @@ runQAProcessArrow nodes p (StateA (Kleisli compM)) query =
         case anyProtocolComput of
             (AnyProtocolQAComputation (QAComputation p'' q2aA)) | sameProtocol p' p'' ->
                 do
-                -- TODO: spawn the answering in a separate process: 
                 let (StateA (Kleisli q2aM)) = q2aA
-                (answer,_) <- q2aM (unsafeCoerce query', nodeInfo)
-                say $ "ERNetQueries: answering " ++ show answer
-                sendChan sendPort (unsafeCoerce answer)
+                -- spawn the computation and answering in a separate process: 
+                let computeAndRespond =
+                        do
+                        (answer,_) <- q2aM (unsafeCoerce query, nodeInfo)
+                        say $ "ERNetQueries: answering " ++ show answer
+                        sendChan sendPort (unsafeCoerce answer)
+                spawnLocal computeAndRespond
             _ ->
                 do
                 say "answerQueryWhenItComes: protocol mismatch"
@@ -334,6 +337,34 @@ netInfoLookupId (QANetInfo id2comput) computId =
 
         Nothing -> error $ "netInfoLookupId: unknown " ++ show computId
 
+{-------- FUNCTION COMPUTATION --------}
+    
+type FunctionB2BA to = QAComputation to FunctionB2BP
+type FunctionB2B = FunctionB2BA (->)
+
+class CanEvalA to f r
+    where
+    type EvalTypeA to f r
+    evalA :: (f,r) `to` (EvalTypeA to f r) 
+
+instance
+    (ArrowQA to)
+    =>
+    CanEvalA to (FunctionB2BA to) (CauchyRealA to)
+    where
+    type EvalTypeA to (FunctionB2BA to) (CauchyRealA to) = CauchyRealA to
+    evalA =
+        proc (QAComputation _ q2aF, QAComputation _ q2aX) ->
+            newQAComputation CauchyRealP -< answerQuery q2aF q2aX
+        where
+        answerQuery q2aF q2aX = 
+            q2aF . q2aX -- FIXME: try with increasing accuracy until OK 
+--            proc accuracy ->
+--                do
+--                ballX <- q2aX -< accuracy
+--                q2aF -< ballX
+                
+
 {-------- CAUCHY REAL COMPUTATION --------}
     
 type CauchyRealA to = QAComputation to CauchyRealP
@@ -370,6 +401,18 @@ instance
                 a1 <- q2a1 -< accuracy+1
                 a2 <- q2a2 -< accuracy+1 -- MOCKUP; can be more efficient
                 returnA -< a1 + a2
+
+{-------- FUNCTION BALL->BALL PROTOCOL --------}
+
+data FunctionB2BP = FunctionB2BP
+    deriving (Eq, Show, Typeable, Generic)
+
+instance Binary FunctionB2BP
+
+instance QAProtocol FunctionB2BP
+    where
+    type Q FunctionB2BP = MPBall
+    type A FunctionB2BP = MPBall
 
 {-------- CAUCHY REAL PROTOCOL --------}
 
