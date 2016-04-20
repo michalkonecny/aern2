@@ -48,11 +48,16 @@ main = do
         nodes <- initialiseNodes backend
         say $ "Network initialised, found nodes:\n" ++ (unlines $ map show $ Set.toAscList nodes)
         
-        let query = 30  
-        answer <- runQAProcessArrow nodes CauchyRealP comput3A query -- will wait forever if not master
-        say $ "query  = " ++ show query
-        say $ "answer = " ++ show answer
-        expect
+        let query = 30
+        maybeQA <- runQAProcessArrow nodes CauchyRealP comput3A query
+        case maybeQA of
+            Nothing -> 
+                return ()
+            Just (q,a) ->
+                do
+                say $ "query  = " ++ show q
+                say $ "answer = " ++ show a
+                liftIO $ threadDelay 1000000 -- wait for 1 second so that the above "say" can complete
 
 comput1A :: 
     (ArrowQA to) => 
@@ -163,7 +168,7 @@ instance (ArrowQA QAProcessArrow) where
             forwardToNode (responsibleNode, msg) = 
                 nsendRemote responsibleNode "ERNetQueries" msg 
         registerComputationForIncoming (nodeInfo, computId, comp) =
-            liftIO $ STM.atomically $
+            liftAtomically $
                 do 
                 ni <- STM.readTVar netInfoTV
                 STM.writeTVar netInfoTV $ qaNetInfoAddComput computId comp ni
@@ -175,19 +180,16 @@ runQAProcessArrow ::
     Set.Set NodeId ->
     p ->
     QAProcessArrow () (QAComputation QAProcessArrow p) -> 
-    (Q p) -> Process (A p)
+    (Q p) -> Process (Maybe (Q p, A p))
 runQAProcessArrow nodes p (StateA (StateA (Kleisli compM))) query =
     do
     say "runQAProcessArrow: starting"
     -- create a NodeInfo record, including netInfoTV:
     self <- getSelfNode
     let myIx = toInteger $ Set.findIndex self nodes
-    netInfoTV <- liftIO $ STM.atomically $ STM.newTVar initQANetInfo
+    netInfoTV <- liftAtomically $ STM.newTVar initQANetInfo
     let nodeInfo = NodeInfo False myIx nodes netInfoTV
     
-    -- construct a computation and, if we are master, execute the query:
-    let isMaster = myIx == 0
-
     -- work out the full computation network:
     (((QAComputation _p q2aA),netInfo1),_) <- compM (((),initQANetInfo), nodeInfo)
     let (StateA (StateA (Kleisli q2aM))) = q2aA
@@ -195,34 +197,53 @@ runQAProcessArrow nodes p (StateA (StateA (Kleisli compM))) query =
     ((_, netInfo), _) <- q2aM ((query, netInfo1), nodeInfo { nodeInfo_initialising = True})
     
     let netSize = Map.size $ net_id2comp netInfo
-    say $ "netInfo has " ++ show netSize ++ " ER processes"
-    netInfoTVnow <- liftIO $ STM.atomically $ STM.readTVar netInfoTV
-    let netSizeTV = Map.size $ net_id2comp netInfoTVnow
-    say $ "netInfoTV has " ++ show netSizeTV ++ " ER processes"
+    say $ "Initialised network with " ++ show netSize ++ " ER processes"
+--    netInfoTVnow <- liftAtomically $ STM.readTVar netInfoTV
+--    let netSizeTV = Map.size $ net_id2comp netInfoTVnow
+--    say $ "netInfoTV has " ++ show netSizeTV ++ " ER processes"
 
     -- start the "ERNetQueries" process which will deal with incoming queries using netInfoTV: 
     erNetQueriesProcess <- spawnLocal $ forever $ answerQueryWhenItComes netInfoTV netInfo nodeInfo
     register "ERNetQueries" erNetQueriesProcess
     
+
+    -- if we are master, execute the query:
+    let isMaster = myIx == 0
     if isMaster 
         then
             do
             say "runQAProcessArrow: this is master, sending the initial query here"
             ((answer, _), _) <- q2aM ((query, netInfo), nodeInfo)
-            return answer
+            
+            -- send a signal to process "ERNetNodeStop" on each node:
+            mapM_ (\n -> nsendRemote n "ERNetNodeStop" ()) $ Set.toList nodes 
+            say $ "runQAProcessArrow: signalled all nodes on ERNetNodeStop, done"
+            liftIO $ threadDelay 1000000 -- wait for 1 second
+            return (Just (query, answer))
         else
             do
-            () <- expect -- listen on "ERNetQueries" forever
-            say "error: a non-master received a () query"
-            undefined
+            -- listen on "ERNetNodeStop":
+            stopTV <- liftAtomically $ STM.newTVar False
+            erNetNodeStopProcess <- spawnLocal $ receiveStop stopTV
+            register "ERNetNodeStop" erNetNodeStopProcess 
+            -- wait for a message on "ERNetNodeStop":
+            say $ "runQAProcessArrow: waiting for a ERNetNodeStop signal"
+            liftAtomically $ STM.readTVar stopTV >>= (\stop -> if stop then return () else STM.retry)
+            say $ "runQAProcessArrow: got ERNetNodeStop signal, done"
+            liftIO $ threadDelay 1000000 -- wait for 1 second
+            return Nothing
     where
+    receiveStop stopTV =
+        do
+        () <- expect
+        liftAtomically $ STM.writeTVar stopTV True
     answerQueryWhenItComes netInfoTV netInfo nodeInfo =
         do
         say "ERNetQueries: waiting for a query"
         (RemoteQuery p' sendPort computId query') <- expect
         say $ "ERNetQueries: received query " ++ show query' ++ " for " ++ show computId
         let _ = [p,p'] -- TODO: support multiple protocols using receiveWait
-        anyProtocolComput <- liftIO $ waitForComputId computId
+        anyProtocolComput <- liftAtomically $ waitForComputId computId
         case anyProtocolComput of
             (AnyProtocolQAComputation (QAComputation p'' q2aA)) | sameProtocol p' p'' ->
                 do
@@ -237,15 +258,14 @@ runQAProcessArrow nodes p (StateA (StateA (Kleisli compM))) query =
                 expect
         where
         waitForComputId computId =
-            STM.atomically $
-                do
-                ni <- STM.readTVar netInfoTV
-                case Map.lookup computId (net_id2comp ni) of
-                    Nothing -> STM.retry
-                    Just comput -> return comput
+            do
+            ni <- STM.readTVar netInfoTV
+            case Map.lookup computId (net_id2comp ni) of
+                Nothing -> STM.retry
+                Just comput -> return comput
 
 
-    
+
 {-------- WithNetInfo Arrow transformer --------}
 
 type WithNetInfo to = StateA (QANetInfo to) to 
@@ -501,7 +521,7 @@ initialiseNodes backend =
     do
     self <- getSelfNode
     -- create shared variable to signal when initialisation is finished: 
-    nodesTV <- liftIO $ STM.atomically $ STM.newTVar Nothing
+    nodesTV <- liftAtomically $ STM.newTVar Nothing
 
     say "Registering the ERNetNodeInit process..."
     erNetNodeInitProcess <- spawnLocal $ listenERNetNodeInit self nodesTV
@@ -531,7 +551,7 @@ initialiseNodes backend =
     
     waitUntilInitialised nodesTV =
         do
-        liftIO $ STM.atomically $ do
+        liftAtomically $ do
             maybeNodes <- STM.readTVar nodesTV
             case maybeNodes of
                 Just nodes -> return nodes
@@ -593,8 +613,7 @@ initialiseNodes backend =
             lastNode = Set.findMax nodes
             nextNode = Set.elemAt (Set.findIndex self nodes + 1) nodes
             signalInitDone =
-                liftIO $ STM.atomically $ do
-                    STM.writeTVar nodesTV (Just nodes)
+                liftAtomically $ STM.writeTVar nodesTV (Just nodes)
             
 data NewNode = NewNode NetId NodeId
     deriving (Typeable, Generic)
@@ -613,50 +632,5 @@ type NetId = String
 netId :: NetId
 netId = "testnet1"
 
-{- OLD EXPERIMENTS BASED ON CLOUD HASKELL TUTORIALS
-
-data T = T Int String deriving (Generic, Typeable)
-
-instance Binary T
-
-sampleTask :: (Int, String) -> Process ()
-sampleTask (t, s) = liftIO (threadDelay (t * 1000000)) >> say s
-
-remotable ['sampleTask]
-
-myRemoteTable :: RemoteTable
-myRemoteTable = Main.__remoteTable initRemoteTable
-
-replyBack :: (ProcessId, T) -> Process ()
-replyBack (sender, t) = send sender t
-
-logMessage :: T -> Process ()
-logMessage (T n msg) = say $ "handling " ++ msg ++ " (" ++ show n ++ ")"
-
-main1 :: IO ()
-main1 =
-    do
-    Right t <- createTransport "127.0.0.1" "10501" defaultTCPParameters
-    node <- newLocalNode t myRemoteTable
-    runProcess node $ do
-        -- Spawn another worker on the local node
-        echoPid <- spawnLocal $ forever $ do
-          -- Test our matches in order against each message in the queue
-          receiveWait [match logMessage, match replyBack]
-    
-        -- The `say` function sends a message to a process registered as "logger".
-        -- By default, this process simply loops through its mailbox and sends
-        -- any received log message strings it finds to stderr.
-    
-        say "send some messages!"
-        send echoPid (T 1 "hello")
-        self <- getSelfPid
-        send echoPid (self, (T 2 "hello"))
-    
-        -- `expectTimeout` waits for a message or times out after "delay"
-        m <- expectTimeout 1000000 -- 1 second
-        case m of
-          -- Die immediately - throws a ProcessExitException with the given reason.
-          Nothing  -> die "nothing came back!"
-          Just (T n s) -> say $ "got " ++ s ++ " back!" ++ " (" ++ (show n) ++ ")"
--}
+liftAtomically :: (STM.STM a) -> Process a
+liftAtomically = liftIO . STM.atomically
