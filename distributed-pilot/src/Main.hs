@@ -107,7 +107,7 @@ comput4A =
 
 type QAProcessArrow = WithNodeInfo (Kleisli Process)
 
-type WithNodeInfo to = StateA NodeInfo to
+type WithNodeInfo to = ReadA NodeInfo to
 
 data NodeInfo =
     NodeInfo
@@ -132,21 +132,20 @@ instance (QAProtocol p) => Binary (RemoteQuery p)
 
 instance (ArrowQA QAProcessArrow) where
     newQAComputation p name =
-        StateA $ Kleisli $ \ (q2a, nodeInfo) ->
+        ReadA $ Kleisli $ \ (q2a, nodeInfo) ->
             do
             computId <- registerComputation (nodeInfo, q2a)
             say $ "newQAComputation: " ++ show name ++ " registered in netInfoTV " ++ show computId
             -- return a "redirect to QANetInfo" computation 
             -- (to support shared evolving computations, eg when caching):
-            return (computLookupId computId, nodeInfo)
+            return (computLookupId computId)
         where
         computLookupId computId =
-            QAComputation p $ StateA $ Kleisli $ \(q, nodeInfo) ->
+            QAComputation p $ ReadA $ Kleisli $ \(q, nodeInfo) ->
                 do
                 netInfo <- liftAtomically $ STM.readTVar $ nodeInfo_netInfoTV nodeInfo
-                let (StateA (Kleisli q2aM)) = getAnswerA netInfo p computId
-                (a,_) <- q2aM (q,nodeInfo)
-                return (a, nodeInfo) 
+                let (ReadA (Kleisli q2aM)) = getAnswerA netInfo p computId
+                q2aM (q,nodeInfo)
         registerComputation (nodeInfo, q2a) =
             liftAtomically $
                 do
@@ -194,7 +193,7 @@ runQAProcessArrow ::
     p ->
     QAProcessArrow () (QAComputation QAProcessArrow p) -> 
     (Q p) -> Process (Maybe (Q p, A p))
-runQAProcessArrow nodes _p (StateA (Kleisli compM)) query =
+runQAProcessArrow nodes _p (ReadA (Kleisli compM)) query =
     do
     say "runQAProcessArrow: starting"
     -- create a NodeInfo record, including netInfoTV:
@@ -204,8 +203,8 @@ runQAProcessArrow nodes _p (StateA (Kleisli compM)) query =
     let nodeInfo = NodeInfo myIx nodes netInfoTV
     
     -- work out the full computation network:
-    ((QAComputation _p q2aA),_) <- compM ((), nodeInfo)
-    let (StateA (Kleisli q2aM)) = q2aA
+    (QAComputation _p q2aA) <- compM ((), nodeInfo)
+    let (ReadA (Kleisli q2aM)) = q2aA
     
     netInfo <- liftAtomically $ STM.readTVar netInfoTV
     let netSize = Map.size $ net_id2comp netInfo
@@ -222,7 +221,7 @@ runQAProcessArrow nodes _p (StateA (Kleisli compM)) query =
         then
             do
             say "runQAProcessArrow: this is master, sending the initial query here"
-            (answer, _) <- q2aM (query, nodeInfo)
+            answer <- q2aM (query, nodeInfo)
             
             -- send a signal to process "ERNetNodeStop" on each node:
             mapM_ (\n -> nsendRemote n "ERNetNodeStop" ()) $ Set.toList nodes 
@@ -263,11 +262,11 @@ runQAProcessArrow nodes _p (StateA (Kleisli compM)) query =
             case anyProtocolComput of
                 (AnyProtocolQAComputation (QAComputation p'' q2aA)) | sameProtocol p' p'' ->
                     do
-                    let (StateA (Kleisli q2aM)) = q2aA
+                    let (ReadA (Kleisli q2aM)) = q2aA
                     -- spawn the computation and answering in a separate process: 
                     let computeAndRespond =
                             do
-                            (answer,_) <- q2aM (unsafeCoerce query', nodeInfo)
+                            answer <- q2aM (unsafeCoerce query', nodeInfo)
                             say $ "ERNetQueries: answering " ++ show answer
                             sendChan sendPort (unsafeCoerce answer)
                     _ <- spawnLocal computeAndRespond
@@ -486,7 +485,71 @@ data AnyProtocolQAComputation to =
     forall p . (QAProtocol p) => -- existentially quantified type
         AnyProtocolQAComputation (QAComputation to p)
 
-{-------- AN ARROW TRANSFORMER THAT ADDS STATE --------}
+{-------- AN ARROW TRANSFORMER THAT ADDS A GLOBAL CONSTANT (READ) --------}
+
+newtype ReadA s to a b =
+    ReadA { runReadA :: (a,s) `to` b }
+
+class (Arrow to) => ArrowRead s to | to -> s where
+    getA :: () `to` s
+
+instance (Arrow to) => ArrowRead s (ReadA s to) 
+    where
+    getA = ReadA $ proc ((),s) -> returnA -< s
+
+class ArrowTrans t where
+    liftA :: Arrow to => (to a b) -> (t to a b)
+
+instance ArrowTrans (ReadA s) where
+    liftA compA =
+        ReadA $
+            proc (a,s) ->
+                do
+                b <- compA -< a
+                returnA -< b
+
+instance (Arrow to) => Category (ReadA s to)
+    where
+    id = ReadA $ proc (a,s) -> returnA -< a
+    (ReadA f) . (ReadA g) = 
+        ReadA $ 
+            proc (a,s) ->
+                do
+                b <- g -< (a,s)
+                f -< (b,s) 
+
+instance (Arrow to) => Arrow (ReadA s to)
+    where
+    arr f = ReadA $ proc (a,s) -> returnA -< f a
+    first (ReadA f) = 
+        ReadA $
+            proc ((a,b),s) ->
+                do
+                a' <- f -< (a,s)
+                returnA -< (a',b)
+
+instance (ArrowApply to) => ArrowApply (ReadA s to)
+    where
+    app =
+        ReadA $
+            proc ((ReadA f,a),s) ->
+                do
+                app -< (f,(a,s))
+
+instance (ArrowChoice to) => ArrowChoice (ReadA s to)
+    where
+    left (ReadA f) =
+        ReadA $
+            proc (lORr, s) ->
+                case lORr of
+                    Left l -> 
+                        do
+                        fl <- f -< (l,s)
+                        returnA -< Left fl
+                    Right r ->
+                        returnA -< Right r
+
+{-
 
 newtype StateA s to a b =
     StateA { runStateA :: (a,s) `to` (b,s) }
@@ -547,7 +610,7 @@ instance (ArrowChoice to) => ArrowChoice (StateA s to)
                         returnA -< (Left fl, s')
                     Right r ->
                         returnA -< (Right r, s)
-
+-}
 {-------- NODE-LEVEL INITIALISATION --------}
 
 initialiseNodes :: Backend -> Int -> Process (Set.Set NodeId)
