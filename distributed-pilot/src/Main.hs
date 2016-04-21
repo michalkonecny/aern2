@@ -455,6 +455,12 @@ type MPNum = Double -- MOCKUP
 
 instance Num MPBall where
     (MPBall c1 r1) + (MPBall c2 r2) = MPBall (c1+c2) (r1+r2)
+    (*) = error "MPBall * not defined yet"
+    negate = error "MPBall negate not defined yet"
+    abs = error "MPBall abs not defined yet"
+    signum = error "MPBall signum not defined yet"
+    fromInteger = error "MPBall fromInteger not defined yet"
+    
 
 {-------- GENERAL QA PROTOCOLS --------}
 
@@ -503,14 +509,14 @@ class ArrowTrans t where
 instance ArrowTrans (ReadA s) where
     liftA compA =
         ReadA $
-            proc (a,s) ->
+            proc (a,_s) ->
                 do
                 b <- compA -< a
                 returnA -< b
 
 instance (Arrow to) => Category (ReadA s to)
     where
-    id = ReadA $ proc (a,s) -> returnA -< a
+    id = ReadA $ proc (a,_s) -> returnA -< a
     (ReadA f) . (ReadA g) = 
         ReadA $ 
             proc (a,s) ->
@@ -520,7 +526,7 @@ instance (Arrow to) => Category (ReadA s to)
 
 instance (Arrow to) => Arrow (ReadA s to)
     where
-    arr f = ReadA $ proc (a,s) -> returnA -< f a
+    arr f = ReadA $ proc (a,_s) -> returnA -< f a
     first (ReadA f) = 
         ReadA $
             proc ((a,b),s) ->
@@ -549,68 +555,6 @@ instance (ArrowChoice to) => ArrowChoice (ReadA s to)
                     Right r ->
                         returnA -< Right r
 
-{-
-
-newtype StateA s to a b =
-    StateA { runStateA :: (a,s) `to` (b,s) }
-
-class (Arrow to) => ArrowState s to | to -> s where
-    getA :: () `to` s
-    putA :: s `to` ()
-
-instance (Arrow to) => ArrowState s (StateA s to) 
-    where
-    getA = StateA $ proc ((),s) -> returnA -< (s,s)
-    putA = StateA $ proc (s,_s) -> returnA -< ((),s)  
-
-class ArrowTrans t where
-    liftA :: Arrow to => (to a b) -> (t to a b)
-
-instance ArrowTrans (StateA s) where
-    liftA compA =
-        StateA $
-            proc (a,s) ->
-                do
-                b <- compA -< a
-                returnA -< (b,s)
-
-instance (Arrow to) => Category (StateA s to)
-    where
-    id = StateA $ proc (a,s) -> returnA -< (a,s)
-    (StateA f) . (StateA g) = StateA $ f . g
-
-instance (Arrow to) => Arrow (StateA s to)
-    where
-    arr f = StateA $ proc (a,s) -> returnA -< (f a, s)
-    first (StateA f) = 
-        StateA $
-            proc ((a,b),s) ->
-                do
-                (a',s') <- f -< (a,s)
-                returnA -< ((a',b),s')
-
-instance (ArrowApply to) => ArrowApply (StateA s to)
-    where
-    app =
-        StateA $
-            proc ((StateA f,a),s) ->
-                do
-                (fa,s') <- app -< (f,(a,s))
-                returnA -< (fa,s')
-
-instance (ArrowChoice to) => ArrowChoice (StateA s to)
-    where
-    left (StateA f) =
-        StateA $
-            proc (lORr, s) ->
-                case lORr of
-                    Left l -> 
-                        do
-                        (fl,s') <- f -< (l,s)
-                        returnA -< (Left fl, s')
-                    Right r ->
-                        returnA -< (Right r, s)
--}
 {-------- NODE-LEVEL INITIALISATION --------}
 
 initialiseNodes :: Backend -> Int -> Process (Set.Set NodeId)
