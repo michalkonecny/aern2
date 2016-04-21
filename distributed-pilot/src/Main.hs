@@ -168,7 +168,9 @@ instance (ArrowQA QAProcessArrow) where
                      -- this node is responsible for this computation
                         do
                         () <- liftProcessQA say -< queryDescription query ++ " (local on node " ++ show responsibleNodeIx ++ ")"
-                        q2a -< query
+                        answer <- q2a -< query
+                        () <- liftProcessQA say -< answerDescription answer ++ " (local on node " ++ show responsibleNodeIx ++ ")"
+                        returnA -< answer
                     _ -> -- another node is responsible for this computation
                                    -- delegate...
                         do
@@ -179,10 +181,13 @@ instance (ArrowQA QAProcessArrow) where
                         liftProcessQA forwardToNode -< (responsibleNode, RemoteQuery p sendPort computId query)
                         -- wait for a response:
                         answer <- liftProcessQA receiveChan -< receivePort
+                        () <- liftProcessQA say -< answerDescription answer ++ " (received from node " ++ show responsibleNodeIx ++ ")"
                         returnA -< answer
             where
             queryDescription query =
-                "Computation " ++ show computId_i ++ " got query " ++ show query
+                "Computation " ++ show computId_i ++ ": got query " ++ show query
+            answerDescription answer =
+                "Computation " ++ show computId_i ++ ": answering " ++ show answer
             forwardToNode (responsibleNode, msg) = 
                 nsendRemote responsibleNode "ERNetQueries" msg 
 
@@ -225,7 +230,7 @@ runQAProcessArrow nodes _p (ReadA (Kleisli compM)) query =
             
             -- send a signal to process "ERNetNodeStop" on each node:
             mapM_ (\n -> nsendRemote n "ERNetNodeStop" ()) $ Set.toList nodes 
-            say $ "runQAProcessArrow: signalled all nodes on ERNetNodeStop, done"
+--            say $ "runQAProcessArrow: signalled all nodes on ERNetNodeStop, done"
             liftIO $ threadDelay 1000000 -- wait for 1 second
             return (Just (query, answer))
         else
@@ -235,9 +240,9 @@ runQAProcessArrow nodes _p (ReadA (Kleisli compM)) query =
             erNetNodeStopProcess <- spawnLocal $ receiveStop stopTV
             register "ERNetNodeStop" erNetNodeStopProcess 
             -- wait for a message on "ERNetNodeStop":
-            say $ "runQAProcessArrow: waiting for a ERNetNodeStop signal"
+--            say $ "runQAProcessArrow: waiting for a ERNetNodeStop signal"
             liftAtomically $ STM.readTVar stopTV >>= (\stop -> if stop then return () else STM.retry)
-            say $ "runQAProcessArrow: got ERNetNodeStop signal, done"
+--            say $ "runQAProcessArrow: got ERNetNodeStop signal, done"
             liftIO $ threadDelay 1000000 -- wait for 1 second
             return Nothing
     where
@@ -247,7 +252,7 @@ runQAProcessArrow nodes _p (ReadA (Kleisli compM)) query =
         liftAtomically $ STM.writeTVar stopTV True
     answerQueryWhenItComes netInfoTV nodeInfo =
         do
-        say "ERNetQueries: waiting for a query"
+--        say "ERNetQueries: waiting for a query"
         receiveWait 
             {- we need to list all protocols below 
                since we cannot serialise values of an existentially quantified type -}
@@ -273,7 +278,7 @@ runQAProcessArrow nodes _p (ReadA (Kleisli compM)) query =
                     return ()
                 _ ->
                     do
-                    say "answerQueryWhenItComes: protocol mismatch"
+                    say "ERROR: answerQueryWhenItComes: protocol mismatch"
                     expect
         waitForComputId computId =
             do
@@ -579,8 +584,8 @@ initialiseNodes backend peerTimeout =
     nodes <- waitUntilInitialised nodesTV
     return nodes
     where
---    sayL _ = return ()
-    sayL = say 
+    sayL _ = return ()
+--    sayL = say 
     delayAndFindPeers = 
         do
         -- wait a random bit to avoid many nodes broadcasting at the same time:
