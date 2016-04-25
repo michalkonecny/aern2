@@ -3,6 +3,23 @@
 {-# LANGUAGE ExistentialQuantification, TypeFamilies, MultiParamTypeClasses #-}
 {-# LANGUAGE FlexibleContexts, TypeOperators, FlexibleInstances #-} 
 {-# LANGUAGE ScopedTypeVariables, FunctionalDependencies #-}
+{-|
+
+An experiment with distributed evaluation strategy for an arrow-generic computation.
+It also contains improved definitions of arrow-generic QA protocols in general and 
+Cauchy reals in particular. 
+
+Distributed deployment uses Cloud Haskell.  Currently, the program is executed
+concurrently on multiple nodes and they discover one another via UDP multicast.
+The the ER network (ie arrow-generic program) is evaluated on all nodes. 
+Each ER process in the network is globally assigned to a specific node.
+When a query is received for some ER process on any node, it is forwarded to 
+its allocated node and this node will respond with an answer.
+
+TODO:
+* global logging
+* answer caching
+-}
 module Main where
 
 import Prelude hiding ((.))
@@ -23,7 +40,7 @@ import Control.Arrow
     (Arrow(..), returnA, 
         ArrowChoice(..),ArrowApply(..), 
         ArrowMonad(..), Kleisli(..))
-import Control.Monad (forever)
+import Control.Monad (forever, when)
 
 import Control.Concurrent (threadDelay)
 import qualified Control.Concurrent.STM as STM
@@ -113,6 +130,7 @@ data NodeInfo =
     NodeInfo
     {
         nodeInfo_myIx :: Integer,
+        nodeInfo_master :: NodeId,
         nodeInfo_nodes :: Set.Set NodeId,
         nodeInfo_netInfoTV :: STM.TVar (QANetInfo (WithNodeInfo (Kleisli Process)))
     }
@@ -205,7 +223,8 @@ runQAProcessArrow nodes _p (ReadA (Kleisli compM)) query =
     self <- getSelfNode
     let myIx = toInteger $ Set.findIndex self nodes
     netInfoTV <- liftAtomically $ STM.newTVar initQANetInfo
-    let nodeInfo = NodeInfo myIx nodes netInfoTV
+    let master = Set.findMin nodes
+    let nodeInfo = NodeInfo myIx master nodes netInfoTV
     
     -- work out the full QAProcess network:
     (QAProcess _p q2aA) <- compM ((), nodeInfo)
@@ -215,13 +234,21 @@ runQAProcessArrow nodes _p (ReadA (Kleisli compM)) query =
     let netSize = Map.size $ net_id2comp netInfo
     say $ "netInfoTV has " ++ show netSize ++ " QAProcesses"
 
+    -- if this is the master, then start logger process: TODO
+    let isMaster = myIx == 0
+    when isMaster $
+        do
+--        logTV <- liftAtomically $ STM.newTVar []
+--        erNetLoggerProcess <- spawnLocal $ forever $ dealWithLogItem logTV
+--        register "ERNetLogger" erNetLoggerProcess
+        return ()
+
     -- start the "ERNetQueries" process which will deal with incoming queries using netInfoTV: 
     erNetQueriesProcess <- spawnLocal $ forever $ answerQueryWhenItComes netInfoTV nodeInfo
     register "ERNetQueries" erNetQueriesProcess
     liftIO $ threadDelay 10000 -- 10 ms
 
-    -- if we are master, execute the query:
-    let isMaster = myIx == 0
+    -- execute the query and coordinate termination:
     if isMaster 
         then
             do
