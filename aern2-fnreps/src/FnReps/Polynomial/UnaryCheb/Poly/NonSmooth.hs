@@ -1,7 +1,8 @@
 module FnReps.Polynomial.UnaryCheb.Poly.NonSmooth 
 (sqrtAbsX, _sqrtAbsX8, _sqrtAbsX16, _sqrtAbsX32, _sqrtAbsX64,
  absX, _absX8, _absX16, _absX32, _absX64, _absX128,
- _absXU8, _absXU16, _absXU32, _absXU64, _absXU128
+ _absXU8, _absXU16, _absXU32, _absXU64, _absXU128,
+ _absXshiftedU8, _absXshiftedU16, _absXshiftedU32, _absXshiftedU64, _absXshiftedU128
 )
 where
 
@@ -225,7 +226,7 @@ absX p d (Interval l r)
     | otherwise =
         maybeTrace
         (
-            "sqrtAbsX:"
+            "absX:"
             ++ "\n zeroPoint = " ++ show zeroPoint
             ++ "\n errorBoundPos = " ++ showB errorBoundPos
             ++ "\n errorBoundNeg = " ++ showB errorBoundNeg
@@ -257,4 +258,51 @@ absX p d (Interval l r)
     Interval _ errorBoundNeg = 
         abs $
             rangeOnIntervalUnaryFnA (resC + x, Interval (-1.0) zeroPoint)
+
+_absXshiftedU8 :: Poly
+_absXshiftedU8 = absXshifted (prec 100) 7
+
+_absXshiftedU16 :: Poly
+_absXshiftedU16 = absXshifted (prec 100) 15
+
+_absXshiftedU32 :: Poly
+_absXshiftedU32 = absXshifted (prec 200) 31
+
+_absXshiftedU64 :: Poly
+_absXshiftedU64 = absXshifted (prec 500) 63
+
+_absXshiftedU128 :: Poly
+_absXshiftedU128 = absXshifted (prec 500) 127
+
+absXshifted :: Precision -> Integer -> Poly
+absXshifted p d =
+    maybeTrace
+    (
+        "absXshifted:"
+        ++ "\n zeroPoint = " ++ show zeroPoint
+        ++ "\n errorBoundPos = " ++ showB errorBoundPos
+        ++ "\n errorBoundNeg = " ++ showB errorBoundNeg
+        ++ "\n resC = " ++ showAP resC
+    ) $ 
+    res
+    where
+    showB = show . getApproximate (bits 30)
+    showAP = show . getApproximate (bits 50) . cheb2Power
+
+    res = polyAddToRadius resC errorBound 
+        where 
+        errorBound = max errorBoundPos errorBoundNeg
+    resC = lift1_DCT (const d) (\b -> abs (b+1/3)) x
+    x :: Poly
+    x = 
+        setPrecision p $ 
+            normaliseCoeffs $ fromList [(0,mpBall 0),(1, mpBall 1)]
+    zeroPoint = -1/3
+    
+    Interval _ errorBoundPos = 
+        abs $
+            rangeOnIntervalUnaryFnA (resC - (x+1/3), Interval zeroPoint (1.0))
+    Interval _ errorBoundNeg = 
+        abs $
+            rangeOnIntervalUnaryFnA (resC + (x+1/3), Interval (-1.0) zeroPoint)
 

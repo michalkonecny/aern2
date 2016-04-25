@@ -96,9 +96,17 @@ _([on Plotly](https://plot.ly/~mikkonecny/11/time-s-vs-accuracy-bits/))_
 
 #### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
-### A non-smooth function
+### A very simple non-smooth function
 
-![abs](http://latex.codecogs.com/gif.latex?|x|)
+![abs](http://latex.codecogs.com/gif.latex?|x+1/3|)
+
+#### Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
+
+#### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
+
+### A non-smooth function with multiple maxima
+
+![bumpy](http://latex.codecogs.com/gif.latex?\\max(\\sin(10x),\\cos(11x))
 
 #### Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
