@@ -287,11 +287,44 @@ infixr 2  ||
 
 {- Booleans, Kleeneans -}
 
-type HasBoolsA to = ConvertibleA to Bool
+
+class
+    (ArrowChoice to, HasBoolsA to a, CanNegSameTypeA to a, CanAndOrSameTypeA to a)
+    => 
+    BoolA to a 
+
+instance (ArrowChoice to) => BoolA to Bool
+instance (ArrowChoice to, BoolA to t) => BoolA to (Maybe t)
+
+class (ConvertibleA to Bool t) => HasBoolsA to t
+    where
+    isCertainlyTrue :: t `to` Bool
+    isCertainlyFalse :: t `to` Bool
+
 type HasBools = HasBoolsA (->)
 
+instance (ArrowChoice to) => HasBoolsA to Bool where
+    isCertainlyTrue = arr id
+    isCertainlyFalse = arr neg
+
+instance (ArrowChoice to, HasBoolsA to t) => HasBoolsA to (Maybe t) where
+    isCertainlyTrue = 
+        proc mv ->
+            case mv of
+                (Just v) -> isCertainlyTrue -< v
+                _ -> returnA -< False
+    isCertainlyFalse = 
+        proc mv ->
+            case mv of
+                (Just v) -> isCertainlyFalse -< v
+                _ -> returnA -< False
+
+instance (ArrowChoice to, ConvertibleA to Bool t) => ConvertibleA to Bool (Maybe t)
+    where
+    convertA = arr Just <<< convertA
+
 instance (ArrowChoice to) => ConvertibleA to Bool Bool where convertA = arr id; convertListA = arr id 
-instance (ArrowChoice to) => ConvertibleA to Bool (Maybe Bool) where
+instance (ArrowChoice to) => ConvertibleA to t (Maybe t) where
     convertA = arr Just
 
 notA :: (CanNegA to a) => a `to` (NegTypeA to a)
@@ -302,11 +335,19 @@ not = neg
 instance (Arrow to) => CanNegA to Bool where
     negA = arr P.not
 
-instance (Arrow to) => CanNegA to (Maybe Bool) where
-    negA = arr (fmap P.not)
+instance (ArrowChoice to, CanNegSameTypeA to t) => CanNegA to (Maybe t) where
+    negA =
+        proc mv ->
+            case mv of
+                Just v ->
+                    do
+                    nv <- negA -< v
+                    returnA -< Just nv
+                _ -> 
+                    returnA -< Nothing 
 
 instance (Arrow to) => CanNegSameTypeA to Bool
-instance (Arrow to) => CanNegSameTypeA to (Maybe Bool)
+instance (ArrowChoice to, CanNegSameTypeA to t) => CanNegSameTypeA to (Maybe t)
 
 class Arrow to => CanAndOrA to a b where
     type AndOrTypeA to a b
@@ -340,25 +381,58 @@ and = andA
 or :: (CanAndOrSameType a, HasBools a) => [a] -> a
 or = orA
 
-class
-    (ArrowChoice to, HasBoolsA to a, CanNegSameTypeA to a, CanAndOrSameTypeA to a)
-    => 
-    BoolA to a 
-
-instance (ArrowChoice to) => BoolA to Bool
-instance (ArrowChoice to) => BoolA to (Maybe Bool)
-
 instance (Arrow to) => CanAndOrA to Bool Bool where
     and2A = arr (uncurry (P.&&))
     or2A = arr (uncurry (P.||))
 
 instance (Arrow to) => CanAndOrSameTypeA to Bool
 
-instance (Arrow to) => CanAndOrA to (Maybe Bool) (Maybe Bool) where
-    and2A = arr (\(aM,bM) -> (do a <- aM; b <- bM; Just (a P.&& b)))
-    or2A = arr (\(aM,bM) -> (do a <- aM; b <- bM; Just (a P.|| b)))
+instance (ArrowChoice to, CanAndOrSameTypeA to t, HasBoolsA to t) => 
+    CanAndOrA to (Maybe t) (Maybe t) where
+    and2A =
+        proc (ma,mb) ->
+            case (ma,mb) of
+                (Just a, Just b) ->
+                    do
+                    r <- and2A -< (a,b)
+                    returnA -< Just r
+                (Just a, _) ->
+                    do
+                    aFalse <- isCertainlyFalse -< a
+                    if aFalse 
+                        then returnA -< Just a
+                        else returnA -< Nothing
+                (_, Just a) ->
+                    do
+                    aFalse <- isCertainlyFalse -< a
+                    if aFalse 
+                        then returnA -< Just a
+                        else returnA -< Nothing
+                _ ->
+                    returnA -< Nothing
+    or2A =
+        proc (ma,mb) ->
+            case (ma,mb) of
+                (Just a, Just b) ->
+                    do
+                    r <- or2A -< (a,b)
+                    returnA -< Just r
+                (Just a, _) ->
+                    do
+                    aTrue <- isCertainlyTrue -< a
+                    if aTrue 
+                        then returnA -< Just a
+                        else returnA -< Nothing
+                (_, Just a) ->
+                    do
+                    aTrue <- isCertainlyTrue -< a
+                    if aTrue 
+                        then returnA -< Just a
+                        else returnA -< Nothing
+                _ ->
+                    returnA -< Nothing
 
-instance (Arrow to) => CanAndOrSameTypeA to (Maybe Bool)
+instance (ArrowChoice to, CanAndOrSameTypeA to t, HasBoolsA to t) => CanAndOrSameTypeA to (Maybe t)
 
 instance (Arrow to) => CanAndOrA to Bool (Maybe Bool) where
     type AndOrTypeA to Bool (Maybe Bool) = Maybe Bool
@@ -369,6 +443,7 @@ instance (Arrow to) => CanAndOrA to (Maybe Bool) Bool where
     type AndOrTypeA to (Maybe Bool) Bool = Maybe Bool
     and2A = arr (\(aM,b) -> (do a <- aM; Just (a P.&& b)))
     or2A = arr (\(aM,b) -> (do a <- aM; Just (a P.|| b)))
+
 
 {- equality -}
 
