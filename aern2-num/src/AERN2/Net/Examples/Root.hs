@@ -66,7 +66,7 @@ rootTestDirectFnMPBall =
     rootByTrisection (sqr, dom)
     where
     sqr :: UnaryFnMPBall
-    sqr = UnaryFnMPBall dom fn
+    sqr = UnaryFnMPBall dom (catchingExceptions . fn)
         where
         fn x 
             | shouldTrace = tr $ x * x - 2

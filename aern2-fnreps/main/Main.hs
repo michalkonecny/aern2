@@ -98,7 +98,7 @@ analyticFn1_PB p d =
 analyticFn1_B2B :: UnaryFnMPBall
 analyticFn1_B2B =
     UnaryFnMPBall (Interval (-1.0) 1.0) $
-    \x -> sin(10*x + sin(20*x*x))
+    \x -> catchingExceptions $ sin(10*x + sin(20*x*x))
 
 analyticFn2_Name :: String
 analyticFn2_Name = "sin(10x)+cos(20x) over [-1,1]"
@@ -115,7 +115,7 @@ analyticFn2_PB p d =
 analyticFn2_B2B :: UnaryFnMPBall
 analyticFn2_B2B =
     UnaryFnMPBall (Interval (-1.0) 1.0) $
-    \x -> sin(10*x)+cos(20*x)
+    \x -> catchingExceptions $ sin(10*x)+cos(20*x)
 
 nearsingulatityFn1_Name :: String
 nearsingulatityFn1_Name = "1/(100x^2+1) over [-1,1]"
@@ -132,7 +132,7 @@ nearsingulatityFn1_PB p d =
 nearsingulatityFn1_B2B :: UnaryFnMPBall
 nearsingulatityFn1_B2B =
     UnaryFnMPBall (Interval (-1.0) 1.0) $
-    \x -> 1/(100*x^2+1)
+    \x -> 1/(catchingExceptions $ 100*x^2+1)
 
 {- An old main, to be removed eventually. -}
 main2 :: IO ()

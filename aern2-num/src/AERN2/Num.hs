@@ -8,7 +8,8 @@ module AERN2.Num
      module AERN2.Num.IntegerRational,
      module AERN2.Num.CauchyReal,
      module AERN2.Num.Complex,
-     module AERN2.Num.Interval)
+     module AERN2.Num.Interval,
+     module AERN2.Num.Exceptions)
 where
 
 import AERN2.Num.Operations
@@ -21,6 +22,7 @@ import AERN2.Num.MPBall
 import AERN2.Num.CauchyReal
 import AERN2.Num.Complex
 import AERN2.Num.Interval
+import AERN2.Num.Exceptions
 
 mpFloat2Rational :: MP.MPFloat -> Rational
 mpFloat2Rational = MP.toRational

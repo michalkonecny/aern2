@@ -228,6 +228,10 @@ instance BoolA (->) RealPred
 instance ConvertibleA (->) Bool RealPred where
     convertA = bool2pred
 
+instance HasBoolsA (->) RealPred where
+    isCertainlyTrue _ = False
+    isCertainlyFalse _ = False
+
 instance CanNegA (->) RealPred where
     negA e = RealPred (BFunct (Just "not") (unaryFn negA) [e])
 
@@ -336,7 +340,7 @@ instance CanMulSameTypeA (->) RealExpr
 
 instance CanPowA (->) RealExpr Integer where
     powA (e1,n) = RealExpr (RFunct (Just "^") (powRIR n) [e1])
-instance CanPowByA (->) RealExpr Integer
+instance CanPowSameTypeA (->) RealExpr Integer
 
 instance CanDivA (->) RealExpr RealExpr where
     divA (e1,e2) = RealExpr (RFunct (Just "/") divRIR [e1,e2])

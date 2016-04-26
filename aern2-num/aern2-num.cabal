@@ -69,5 +69,6 @@ library
                    AERN2.Num.SymbolicArrow.Expression,
                    AERN2.Num.SymbolicArrow.TH,
                    StrategyClassesMockup2,
-                   EffortAccuracyMockup
+                   EffortAccuracyMockup,
+                   AERN2.Num.Exceptions
 

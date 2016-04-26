@@ -11,6 +11,8 @@ where
 import AERN2.Num
 import qualified Prelude as P
 
+import Control.Applicative
+
 import AERN2.RealFunction
 
 import qualified Data.PQueue.Max as Q -- used in a range algorithm
@@ -36,17 +38,17 @@ ufnB2B_x = projUnaryFnA (Interval (-1.0) 2.0)
 ufnB2B_1o10x2p1 :: UnaryFnMPBall
 ufnB2B_1o10x2p1= 
     UnaryFnMPBall (Interval (-1.0) 2.0) $
-        \ b -> 1/((10*b*b)+1)
+        \ b -> catchingExceptions $ 1/((10*b*b)+1)
 
 ufnB2B_10x2p1 :: UnaryFnMPBall
 ufnB2B_10x2p1= 
     UnaryFnMPBall (Interval (-1.0) 2.0) $
-        \ b -> ((10*b*b)+1)
+        \ b -> catchingExceptions ((10*b*b)+1)
 
 ufnB2B_sinx :: UnaryFnMPBall
 ufnB2B_sinx= 
     UnaryFnMPBall (Interval (-1.0) 10.0) $
-        \ b -> (sin b)
+        \ b -> catchingExceptions (sin b)
 
 -- rangeOnIntervalUnaryFnA (ufnB2B_sinx, Interval (-1.0) 10.0)
 
@@ -56,35 +58,37 @@ data UnaryFnMPBall =
     UnaryFnMPBall
     {
         ufnB2B_dom :: Interval Rational, 
-        ufnB2B_eval :: MPBall -> MPBall
+        ufnB2B_eval :: MPBall -> CatchingExceptions MPBall
     }
 
 instance RealUnaryFnA (->) UnaryFnMPBall where
     type UnaryFnDomPoint UnaryFnMPBall = Rational
     type UnaryFnPoint UnaryFnMPBall = CauchyReal
-    constUnaryFnA (dom, r) = UnaryFnMPBall dom (\b -> cauchyReal2ball r (getFiniteAccuracy b))
-    projUnaryFnA dom = UnaryFnMPBall dom id
+    constUnaryFnA (dom, r) = UnaryFnMPBall dom (\b -> catchingExceptions $ cauchyReal2ball r (getFiniteAccuracy b))
+    projUnaryFnA dom = UnaryFnMPBall dom catchingExceptions
     getDomainUnaryFnA = ufnB2B_dom
     evalAtPointUnaryFnA (UnaryFnMPBall _dom f, r) = 
-        convergent2CauchyReal Nothing $ 
-            map f $
-                map (cauchyReal2ball r) (map bits [1..])
+        convergent2CauchyReal Nothing $
+            filterNoException 20 $
+                map f $
+                    map (cauchyReal2ball r) (map bits [1..])
     evalAtDomPointUnaryFnA (UnaryFnMPBall _dom f, r) = 
         convergent2CauchyReal Nothing $ 
-            map f $ map (flip rational2BallP r) standardPrecisions
+            filterNoException 20 $
+                map f $ map (flip rational2BallP r) standardPrecisions
     rangeOnIntervalUnaryFnA (UnaryFnMPBall _dom f, ri) =
         Interval l r
         where
-        l = convergent2CauchyReal Nothing minSequence
-        r = convergent2CauchyReal Nothing maxSequence
+        l = convergent2CauchyReal Nothing $ filterNoException 20 minSequence
+        r = convergent2CauchyReal Nothing $ filterNoException 20 maxSequence
         maxSequence = search fi friL $ Q.singleton $ MaxSearchSegment ri friL friR
             where
-            (friL, friR) = ball2endpoints fri
+            (friL, friR) = gunzip $ fmap ball2endpoints fri
             fri = fi ri
             fi = onRationalInterval f -- . rati2MPBall
         minSequence = map negate $ search fi friL $ Q.singleton $ MaxSearchSegment ri friL friR
             where
-            (friL, friR) = ball2endpoints fri
+            (friL, friR) = gunzip $ fmap ball2endpoints fri
             fri = fi ri
             fi = negate . onRationalInterval f -- . rati2MPBall
         search fi prevL prevQueue =
@@ -101,27 +105,34 @@ instance RealUnaryFnA (->) UnaryFnMPBall where
             currentBall : 
                 search fi nextL nextQueue12
             where
-            currentBall = endpoints2Ball nextL segValR
+            -- unpack the current segment and a pre-computed enclosure of the function on this segment:
             (MaxSearchSegment seg segValL segValR, rest) = Q.deleteFindMax prevQueue
-            nextL = segValL `max` prevL
+            -- get an enclosure of the function's maximum based on previous segments and the current segment:
+            nextL = liftA2 max segValL prevL
+            currentBall = liftA2 endpoints2Ball nextL segValR
+            
+            -- split the current segment and pre-compute
             (seg1, seg2) = splitInterval seg
-            (seg1ValL, seg1ValR) = ball2endpoints $ fi seg1
-            (seg2ValL, seg2ValR) = ball2endpoints $ fi seg2
-            seg1NoMax = (seg1ValR <= nextL) == Just True 
-            seg2NoMax = (seg2ValR <= nextL) == Just True
+            (seg1ValL, seg1ValR) = fiEE seg1
+            (seg2ValL, seg2ValR) = fiEE seg2
+            seg1NoMax = (seg1ValR <= nextL) == Just (Just True) 
+            seg2NoMax = (seg2ValR <= nextL) == Just (Just True)
             nextQueue1 =
                 if seg1NoMax then rest else Q.insert seg1E rest
             nextQueue12 =
                 if seg2NoMax then nextQueue1 else Q.insert seg2E nextQueue1
             seg1E = MaxSearchSegment seg1 seg1ValL seg1ValR
             seg2E = MaxSearchSegment seg2 seg2ValL seg2ValR
+            
+            fiEE s = 
+                gunzip $ fmap ball2endpoints $ fi s
 
 data MaxSearchSegment =
     MaxSearchSegment 
     {
         _maxSearchSegment_seg :: Interval Rational,
-        _maxSearchSegment_lowerBnd :: MPBall, -- should be exact
-        _maxSearchSegment_upperBnd :: MPBall -- should be exact
+        _maxSearchSegment_lowerBnd :: CatchingExceptions MPBall, -- should be exact
+        _maxSearchSegment_upperBnd :: CatchingExceptions MPBall -- should be exact
     }
 
 instance Eq MaxSearchSegment where
@@ -130,8 +141,8 @@ instance Eq MaxSearchSegment where
 instance Ord MaxSearchSegment where
     compare (MaxSearchSegment _ _ u1) (MaxSearchSegment _ _ u2) =
         case (u1 < u2, u1 > u2) of
-            (Just True, _) -> P.LT
-            (_, Just True) -> P.GT
+            (Just (Just True), _) -> P.LT
+            (_, Just (Just True)) -> P.GT
             _ -> P.EQ
 
 splitInterval ::
@@ -149,7 +160,10 @@ instance CanIntegrateUnaryFnA (->) UnaryFnMPBall where
         -- TODO: remove the assumption that a,b are "small" rationals
         a = toRationalUp $ cauchyReal2ball aCR (bits 100)
         b = toRationalUp $ cauchyReal2ball bCR (bits 100)
-        withAccuracy l r ac 
+        withAccuracy l r ac =
+            ifExceptionDie "integrateUnaryFnA for an UnaryFnMPBall" $
+                integr l r ac 
+        integr l r ac 
             | getAccuracy value >= ac =
                 maybeTrace 
                 ("integrateUnaryFnA:"
@@ -157,12 +171,12 @@ instance CanIntegrateUnaryFnA (->) UnaryFnMPBall where
                  ++ "\n r = " ++ show (mpBall r)
                  ++ "\n ac = " ++ show ac
                  ++ "\n getAccuracy value = " ++ show (getAccuracy value)
-                )  
+                )
                 value 
             | otherwise = 
-                (withAccuracy l m (ac+1))
+                (integr l m (ac+1))
                 +
-                (withAccuracy m r (ac+1))
+                (integr m r (ac+1))
             where
             m = (l+r)/2
             value = (f lr)*(r-l)
@@ -194,7 +208,7 @@ instance RealUnaryFnA (->) UnaryFnCR
 
 {- utilities -}
 
-onRationalInterval :: (MPBall -> MPBall) -> (Interval Rational -> MPBall)
+onRationalInterval :: (MPBall -> CatchingExceptions MPBall) -> (Interval Rational -> CatchingExceptions MPBall)
 onRationalInterval f (Interval l r) =
     maybeTrace
     (
@@ -230,10 +244,14 @@ onRationalInterval f (Interval l r) =
             | improvementPrec == NormZero = res
             | otherwise = pickFirstResultWithLowImprovement rest
         pickFirstResultWithLowImprovement _ = error "internal error in onRationalInterval"
-        radii = map ballRadius results
+        radii = map (fmap ballRadius) $ map catchingExceptions_maybeValue results
         improvements = zipWith measureImprovement radii (drop (int 1) radii)
-        measureImprovement r1 r2 =
+        measureImprovement (Just r1) (Just r2) =
             getNormLog $ max (mpBall 0) $ r1 - r2
+        measureImprovement Nothing _ =
+            NormBits 0
+        measureImprovement _ Nothing =
+            NormZero
 
 rati2MPBall :: Interval Rational -> MPBall
 rati2MPBall _il@(Interval l r) =

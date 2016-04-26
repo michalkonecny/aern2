@@ -283,7 +283,7 @@ instance (CanMulByA to r1 r2, ArrowReal to r1) => CanMulByA to (Complex r1) (Com
 instance (ArrowReal to r) => CanMulSameTypeA to (Complex r)
 
 instance (ArrowReal to r) => CanPowA to (Complex r) Integer 
-instance (ArrowReal to r) => CanPowByA to (Complex r) Integer 
+instance (ArrowReal to r) => CanPowSameTypeA to (Complex r) Integer 
 
 
 instance 

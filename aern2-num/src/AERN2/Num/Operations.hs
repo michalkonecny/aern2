@@ -15,13 +15,14 @@ module AERN2.Num.Operations
     CanBeIntegerA, integerA, integerNamedA, integersA, integersNamedA, CanBeInteger, integer, integerADefault, integers, 
     HasRationalsA, HasRationals, fromRationalADefault, 
     CanBeRationalA, rationalA, rationalNamedA, rationalsA, rationalsNamedA, CanBeRational, rational, rationalDefault, rationals,
-    HasBoolsA, HasBools, 
+    HasBoolsA(..), HasBools, 
     notA, not, 
     CanAndOrA(..), CanAndOrSameTypeA, andA, orA, CanAndOr, CanAndOrSameType, AndOrType, (&&), (||), and, or,
     BoolA,
     HasEqA(..), HasOrderA(..),
     HasEq, EqCompareType, HasOrder, OrderCompareType, equalTo, notEqualTo, lessThan, leq, greaterThan, geq,
-    (==), (/=), (>), (<), (<=), (>=),    
+    (==), (/=), (>), (<), (<=), (>=),
+    CanTestZero(..), CanTestPosNeg(..),    
     CanMinMaxA(..), CanMinMaxThisA, CanMinMaxSameTypeA,
     CanMinMax, CanMinMaxThis, CanMinMaxSameType, min, max,
     HasParallelComparisonsA(..), HasParallelComparisons, pickNonZero,
@@ -35,7 +36,7 @@ module AERN2.Num.Operations
     CanSub, SubType, CanSubThis, CanSubSameType, sub, (-),
     CanMulA(..), CanMulByA, CanMulSameTypeA, productA, 
     CanMul, CanMulBy, CanMulSameType, mul, (*), product,
-    CanPowA(..), CanPowByA,
+    CanPowA(..), CanPowSameTypeA,
     CanPow, CanPowBy, pow, (^),
     CanDivA(..), CanDivByA, CanDivSameTypeA,
     CanDiv, CanDivBy, CanDivSameType, div, (/),
@@ -324,8 +325,6 @@ instance (ArrowChoice to, ConvertibleA to Bool t) => ConvertibleA to Bool (Maybe
     convertA = arr Just <<< convertA
 
 instance (ArrowChoice to) => ConvertibleA to Bool Bool where convertA = arr id; convertListA = arr id 
-instance (ArrowChoice to) => ConvertibleA to t (Maybe t) where
-    convertA = arr Just
 
 notA :: (CanNegA to a) => a `to` (NegTypeA to a)
 notA = negA
@@ -497,6 +496,16 @@ instance (HasEqA to a a, BoolA to (EqCompareTypeA to a a)) => HasEqA to [a] [a] 
                     and2A -< (hEq, tEq)
                 _ -> convertA -< False 
 
+
+{- common tests -}
+
+class CanTestZero t where
+    isCertainlyZero :: t -> Bool
+    isNonZero :: t -> Bool
+
+class CanTestPosNeg t where
+    isPositive :: t -> Maybe Bool
+    isNegative :: t -> Maybe Bool
 
 {- order -}
 
@@ -821,13 +830,13 @@ pow = curry powA
 
 class
     (CanPowA to a b, PowTypeA to a b ~ a) => 
-    CanPowByA to a b
+    CanPowSameTypeA to a b
 
-type CanPowBy = CanPowByA (->)
+type CanPowBy = CanPowSameTypeA (->)
 
 class
     (CanNegSameTypeA to a, CanAddSameTypeA to a, CanSubSameTypeA to a, CanMulSameTypeA to a,
-     CanPowByA to a Integer,
+     CanPowSameTypeA to a Integer,
      HasEqA to a a, HasOrderA to a a, HasIntegersA to a)
     => 
     RingA to a

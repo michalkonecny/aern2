@@ -61,7 +61,7 @@ instance CanPowA (->) Poly Integer where
         where
         pPowerN2 = powA (p, n `P.div` 2)
 
-instance CanPowByA (->) Poly Integer
+instance CanPowSameTypeA (->) Poly Integer
 
 instance ConvertibleA (->) Integer Poly where
     convertA n = fromList [(0,mpBall n)]

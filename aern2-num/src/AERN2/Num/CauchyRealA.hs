@@ -546,7 +546,7 @@ instance
 instance 
     (CanAsCauchyRealA to r, CanCombineCRwithA to r r)
     => 
-    CanPowByA to (AsCauchyReal r) Integer
+    CanPowSameTypeA to (AsCauchyReal r) Integer
 
 instance
     (CanReadAsCauchyRealA to r1, CanReadAsCauchyRealA to r2,

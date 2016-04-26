@@ -22,10 +22,9 @@ module AERN2.Num.MPBall
     (MPBall(..),
      HasMPBallsA, HasMPBalls,
      CanBeMPBallA, mpBallA, mpBallNamedA, mpBallsA, mpBallsNamedA, CanBeMPBall, mpBall, mpBalls,
-     setPrecision, setPrecisionMatchAccuracy, reducePrecionIfInaccurate, 
+     setPrecisionMatchAccuracy, reducePrecionIfInaccurate, 
      module AERN2.Num.Precision,
      module AERN2.Num.Accuracy,
-     isNonZero,
      toIntegerUp, toIntegerDown, toRationalUp, toRationalDown,
      integer2BallP, rational2BallP, rationalBall2BallP,
      ball2endpoints, endpoints2Ball,
@@ -242,12 +241,12 @@ reducePrecionIfInaccurate b@(MPBall x _) =
     p_e_nb = MP.prec $ max 2 (10 + nb + fromAccuracy acc)
     (NormBits nb) = norm 
 
-isNonZero :: MPBall -> Bool
-isNonZero (MPBall x e) =
-    (MP.abs x) -. (EB.er2mp e) > MP.zero
-    where
-    (-.) = MP.subDown defaultPrecisionPolicy
-
+--isNonZero :: MPBall -> Bool
+--isNonZero (MPBall x e) =
+--    (MP.abs x) -. (EB.er2mp e) > MP.zero
+--    where
+--    (-.) = MP.subDown defaultPrecisionPolicy
+--
 
 instance HasNorm MPBall where
     getNormLog ball = getNormLog boundMP
@@ -304,6 +303,14 @@ byMPendpoints op (b1, b2) =
     where
     (l1,r1) = ball2endpointsMP b1
     (l2,r2) = ball2endpointsMP b2
+
+instance CanTestZero MPBall where
+    isCertainlyZero a = (a == 0) == Just True
+    isNonZero a = (a /= 0) == Just True
+
+instance CanTestPosNeg MPBall where
+    isPositive = (> 0)
+    isNegative = (< 0)
 
 instance (ArrowPrecisionPolicy to) => HasEqA to MPBall Integer where
     type EqCompareTypeA to MPBall Integer = Maybe Bool
@@ -431,7 +438,7 @@ instance (ArrowPrecisionPolicy to) => CanMulByA to MPBall MPBall
 instance (ArrowPrecisionPolicy to) => CanMulSameTypeA to MPBall
 
 instance (ArrowPrecisionPolicy to) => CanPowA to MPBall Integer
-instance (ArrowPrecisionPolicy to) => CanPowByA to MPBall Integer
+instance (ArrowPrecisionPolicy to) => CanPowSameTypeA to MPBall Integer
 
 
 instance (ArrowPrecisionPolicy to) => CanDivA to MPBall MPBall where
