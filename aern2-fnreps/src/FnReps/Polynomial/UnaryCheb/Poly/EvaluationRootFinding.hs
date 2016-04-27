@@ -187,9 +187,6 @@ evalDirectOnBall poly x =
     where
     p = getPrecision x `max` getPrecision poly
 
-evalDirectOnRational :: Poly -> Rational -> MPBall
-evalDirectOnRational poly@(Poly ts) x = evalDirectOnBall poly (rational2BallP (getPrecision $ head $ terms_coeffs ts) x)
-
 {-|
     An evaluation of the polynomial at the ball x using an estimated Lipschitz constant on x. 
 -}
@@ -215,10 +212,10 @@ range ac p (Interval l r) =
     approxRange (toRationalDown l) (toRationalUp r) ac p
 
 approxRange :: Rational -> Rational -> Accuracy -> Poly -> Interval MPBall
-approxRange l r ac p = Interval (endpoints2Ball minA minB) (endpoints2Ball maxA maxB)
+approxRange l r ac p = Interval (endpoints2Ball minL minR) (endpoints2Ball maxL maxR)
                     where
-                    Interval minA minB = minValue +- err
-                    Interval maxA maxB = maxValue +- err
+                    Interval minL minR = minValue +- err
+                    Interval maxL maxR = maxValue +- err
                     (p', err) = cheb2IntPower $ p
                     dp'  = IntPolyB.derivative $ p'
                     dp'' = IntPolyB.toFPPoly $ dp'
@@ -227,8 +224,8 @@ approxRange l r ac p = Interval (endpoints2Ball minA minB) (endpoints2Ball maxA 
                     minValue = foldl1 (\x y -> min x y) criticalValues
                     maxValue = foldl1 (\x y -> max x y) criticalValues
 
-{-|
-    This function is not implemented yet.  It is not yet clear whether it will be needed. 
+{-
+    The following function is not implemented yet.  It is not yet clear whether it will be needed. 
 
     Take a interval polynomial P that has admits(*) only polynomials 
     without non-simple roots and return a list of balls that contain all the roots
@@ -251,8 +248,10 @@ _findAllRoots = error "findAllRoots not implemented yet"
     
 -}
 
-approximateRoot :: Rational -> Rational -> Accuracy -> Poly -> MPBall
-approximateRoot l r a p = case evalDirectOnRational p l > 0 of
+{-
+
+_approximateRoot :: Rational -> Rational -> Accuracy -> Poly -> MPBall
+_approximateRoot l r a p = case evalDirectOnRational p l > 0 of
                                         Just False -> aux l r a p False
                                         Just True  -> aux l r a p True
                                         Nothing    -> ri2ball (Interval l r) a
@@ -276,3 +275,8 @@ trisect l r posL p = case (posML,posMR) of
                      mr = (7*l + 9*r)/16
                      posML = evalDirectOnRational p ml > 0
                      posMR = evalDirectOnRational p mr > 0
+
+evalDirectOnRational :: Poly -> Rational -> MPBall
+evalDirectOnRational poly@(Poly ts) x = 
+    evalDirectOnBall poly (rational2BallP (getPrecision $ head $ terms_coeffs ts) x)
+-}
