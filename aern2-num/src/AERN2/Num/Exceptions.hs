@@ -41,7 +41,7 @@ catchingExceptions val = CatchingExceptions (Just val) Set.empty Set.empty
 
 hasError :: CatchingExceptions t -> Bool
 hasError (CatchingExceptions Nothing _ _) = True
-hasError (CatchingExceptions _ pE cE) = not $ Set.null cE
+hasError (CatchingExceptions _ _pE cE) = not $ Set.null cE
 
 filterNoException :: (Show t) => Integer -> Bool -> [CatchingExceptions t] -> [t]
 filterNoException maxConsequentExceptions shouldErrorOnMaxReached maybeValues =
@@ -556,3 +556,4 @@ liftCCtoO fnA =
             _ -> 
                 returnA -< Nothing 
 
+{- TODO pi, sqrt, sine, cosine, etc -}
