@@ -39,8 +39,12 @@ data CatchingExceptions t =
 catchingExceptions :: t -> CatchingExceptions t
 catchingExceptions val = CatchingExceptions (Just val) Set.empty Set.empty
 
-filterNoException :: (Show t) => Integer -> [CatchingExceptions t] -> [t]
-filterNoException maxConsequentExceptions maybeValues =
+hasError :: CatchingExceptions t -> Bool
+hasError (CatchingExceptions Nothing _ _) = True
+hasError (CatchingExceptions _ pE cE) = not $ Set.null cE
+
+filterNoException :: (Show t) => Integer -> Bool -> [CatchingExceptions t] -> [t]
+filterNoException maxConsequentExceptions shouldErrorOnMaxReached maybeValues =
     aux maxConsequentExceptions maybeValues
     where
     aux _ ((CatchingExceptions (Just val) pE cE) : rest)
@@ -49,8 +53,10 @@ filterNoException maxConsequentExceptions maybeValues =
     aux n (c@(CatchingExceptions _ _ certainErrors) : rest)
         | Set.null certainErrors && n > 0 =
             aux (n - 1) rest
-        | otherwise =
+        | shouldErrorOnMaxReached =
             error $ "filterNoException: " ++ show c
+        | otherwise =
+            []
     aux _ [] = []
 
 ifExceptionDie :: (Show t) => String -> CatchingExceptions t -> t

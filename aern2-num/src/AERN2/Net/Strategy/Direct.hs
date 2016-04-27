@@ -69,18 +69,18 @@ instance RealUnaryFnA (->) UnaryFnMPBall where
     getDomainUnaryFnA = ufnB2B_dom
     evalAtPointUnaryFnA (UnaryFnMPBall _dom f, r) = 
         convergent2CauchyReal Nothing $
-            filterNoException 20 $
+            filterNoException 20 True $
                 map f $
                     map (cauchyReal2ball r) (map bits [1..])
     evalAtDomPointUnaryFnA (UnaryFnMPBall _dom f, r) = 
         convergent2CauchyReal Nothing $ 
-            filterNoException 20 $
+            filterNoException 20 True $
                 map f $ map (flip rational2BallP r) standardPrecisions
     rangeOnIntervalUnaryFnA (UnaryFnMPBall _dom f, ri) =
         Interval l r
         where
-        l = convergent2CauchyReal Nothing $ filterNoException 20 minSequence
-        r = convergent2CauchyReal Nothing $ filterNoException 20 maxSequence
+        l = convergent2CauchyReal Nothing $ filterNoException 100 True minSequence
+        r = convergent2CauchyReal Nothing $ filterNoException 100 True maxSequence
         maxSequence = search fi friL $ Q.singleton $ MaxSearchSegment ri friL friR
             where
             (friL, friR) = gunzip $ fmap ball2endpoints fri
@@ -108,7 +108,9 @@ instance RealUnaryFnA (->) UnaryFnMPBall where
             -- unpack the current segment and a pre-computed enclosure of the function on this segment:
             (MaxSearchSegment seg segValL segValR, rest) = Q.deleteFindMax prevQueue
             -- get an enclosure of the function's maximum based on previous segments and the current segment:
-            nextL = liftA2 max segValL prevL
+            nextL 
+                | hasError prevL = segValL
+                | otherwise = liftA2 max segValL prevL
             currentBall = liftA2 endpoints2Ball nextL segValR
             
             -- split the current segment and pre-compute
@@ -143,7 +145,11 @@ instance Ord MaxSearchSegment where
         case (u1 < u2, u1 > u2) of
             (Just (Just True), _) -> P.LT
             (_, Just (Just True)) -> P.GT
-            _ -> P.EQ
+            _ 
+                | hasError u1 && hasError u2 -> P.EQ
+                | hasError u1 -> P.GT
+                | hasError u2 -> P.LT
+                | otherwise -> P.EQ
 
 splitInterval ::
     (CanDivBy a Integer, CanAddSameTypeA (->) a) => 
@@ -236,22 +242,22 @@ onRationalInterval f (Interval l r) =
             NormBits i -> (max 10 (-i))
             NormZero -> error "onRationalInterval does not work for a singleton interval"
     nl = getNormLog (r - l)
-    untilLittleImprovement results =
-        maybeTrace ("untilLittleImprovement: improvements = " ++ show (take (int 10) improvements)) $
-        pickFirstResultWithLowImprovement $ zip improvements results
+    untilLittleImprovement resultsE =
+        case results of
+            [] -> head resultsE
+            _ -> 
+                maybeTrace ("untilLittleImprovement: improvements = " ++ show (take (int 10) improvements)) $
+                catchingExceptions $ pickFirstResultWithLowImprovement $ zip improvements results
         where
+        results = filterNoException 20 False resultsE
+        pickFirstResultWithLowImprovement [(_,res)] = res
         pickFirstResultWithLowImprovement ((improvementPrec, res) : rest)
             | improvementPrec == NormZero = res
             | otherwise = pickFirstResultWithLowImprovement rest
         pickFirstResultWithLowImprovement _ = error "internal error in onRationalInterval"
-        radii = map (fmap ballRadius) $ map catchingExceptions_maybeValue results
+        radii = map ballRadius results
         improvements = zipWith measureImprovement radii (drop (int 1) radii)
-        measureImprovement (Just r1) (Just r2) =
-            getNormLog $ max (mpBall 0) $ r1 - r2
-        measureImprovement Nothing _ =
-            NormBits 0
-        measureImprovement _ Nothing =
-            NormZero
+        measureImprovement r1 r2 = getNormLog $ max (mpBall 0) $ r1 - r2
 
 rati2MPBall :: Interval Rational -> MPBall
 rati2MPBall _il@(Interval l r) =
