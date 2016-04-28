@@ -153,7 +153,7 @@ fracListFromFPPoly (FP.Poly ts) = ([ case Map.lookup k ts of
                                          | k <- [0 .. FP.terms_degree ts] ],
                                    Map.foldl' (+) (mpBall 0) $ Map.map (\x -> abs(x - fracApprox x)) ts)
                                    where
-                                   fracApprox x = if (x == mpBall 0) == Just True then 0.0 else toRationalUp x --toRationalUp (mpBall 0.0) seems to be extremely slow                                
+                                   fracApprox = toRationalUp                                
 
 toFracList :: IntPoly -> [Rational]
 toFracList (IntPoly ts) = [ case Map.lookup k ts of

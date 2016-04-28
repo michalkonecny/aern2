@@ -45,11 +45,14 @@ recPowers p =
             (Power.fromIntegerListP p [(0,-1)]) 
             (Power.fromIntegerListP p [(1,2)])
 
--- this assumes that all coefficients except the constant one are exact.
-cheb2IntPower :: Cheb.Poly -> (IntPower.IntPoly, MPBall)
+{-| cheb2IntPower assumes that all coefficients except the constant one are exact. -}
+cheb2IntPower :: 
+    Cheb.Poly -> 
+    (IntPower.IntPoly, Integer, MPBall) -- ^ integer polynomial, denominator, error bound (radius) 
 cheb2IntPower (Cheb.Poly ts) = 
-    (IntPower.IntPoly $ Map.filterWithKey (\k x -> k <= Cheb.terms_degree ts && x /= 0) nts, errBall)
+    (intpoly, lcmd, errBall)
     where
+    intpoly = IntPower.IntPoly $ Map.filterWithKey (\k x -> k <= Cheb.terms_degree ts && x /= 0) nts
     (_, errBall) = getCentreAndErrorBall $ Cheb.terms_lookupCoeff ts 0
     --IntPower.IntPoly tsInt = IntPower.fromFracList $ IntPower.normaliseFracList $ Map.toList $ Map.map (\x -> ballCentreRational x) ts
     tsFrac = Map.map (ballCentreRational) ts
@@ -60,9 +63,11 @@ cheb2IntPower (Cheb.Poly ts) =
     dm1 = d - 1
     aux j i = 
         if j == dm1 then
-            IntPolyCoVec (IntPower.fromList [(0,IntPower.terms_lookupCoeff tsInt $ 2*i)]) (IntPower.fromList [(0,IntPower.terms_lookupCoeff tsInt $ 2*i + 1)])
+            IntPolyCoVec 
+                (IntPower.fromList [(0,IntPower.terms_lookupCoeff tsInt $ 2*i)]) 
+                (IntPower.fromList [(0,IntPower.terms_lookupCoeff tsInt $ 2*i + 1)])
         else
-            aux (j + 1) (2*i) + (aux (j + 1) (2*i + 1)) * recPowersInt !! (int $ dm1 - j)
+            aux (j + 1) (2*i) + (aux (j + 1) (2*i + 1)) * recPowersInt !!! (dm1 - j)
 
 recPowersInt :: [IntPolyMat]
 recPowersInt = 

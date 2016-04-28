@@ -40,19 +40,20 @@ range :: Accuracy -> Poly -> Interval MPBall -> Interval MPBall
 range ac p (Interval l r) = approxRange (toRationalDown l) (toRationalUp r) ac p
 
 approxRange :: Rational -> Rational -> Accuracy -> Poly -> Interval MPBall
-approxRange l r ac p = Interval (endpoints2Ball minA minB) (endpoints2Ball maxA maxB)
-                    where
-                    Interval minA minB = minValue +- err
-                    Interval maxA maxB = maxValue +- err
-                    (fracCoefs, err) = IntPolyB.fracListFromFPPoly $ scale (0.5*(r - l)) $ translate (0.5*(r + l)) $ p
-                    p'  = IntPolyB.fromFracList $ IntPolyB.normaliseFracList fracCoefs
-                    p'' = fromRationalListP (prec $ fromAccuracy ac) fracCoefs 
-                    dp'  = IntPolyB.derivative $ p'
-                    dp'' = IntPolyB.toFPPoly $ dp'
-                    criticalPoints = map (\(Interval a b) -> approximateRootByBisection a b ac dp'') $ IntPoly.isolateRootsI dp'
-                    criticalValues = [eval p'' (mpBall $ -1), eval p'' (mpBall 1)] ++ map (rangeEstimate p'') criticalPoints
-                    minValue = foldl1 (\x y -> min x y) criticalValues
-                    maxValue = foldl1 (\x y -> max x y) criticalValues
+approxRange l r ac p = 
+    Interval (endpoints2Ball minA minB) (endpoints2Ball maxA maxB)
+    where
+    Interval minA minB = minValue +- err
+    Interval maxA maxB = maxValue +- err
+    (fracCoefs, err) = IntPolyB.fracListFromFPPoly $ scale (0.5*(r - l)) $ translate (0.5*(r + l)) $ p
+    p'  = IntPolyB.fromFracList $ IntPolyB.normaliseFracList fracCoefs
+    p'' = fromRationalListP (prec $ fromAccuracy ac) fracCoefs 
+    dp'  = IntPolyB.derivative $ p'
+    dp'' = IntPolyB.toFPPoly $ dp'
+    criticalPoints = map (\(Interval a b) -> approximateRootByBisection a b ac dp'') $ IntPoly.isolateRootsI dp'
+    criticalValues = [eval p'' (mpBall $ -1), eval p'' (mpBall 1)] ++ map (rangeEstimate p'') criticalPoints
+    minValue = foldl1 min criticalValues
+    maxValue = foldl1 max criticalValues
 
 rangeEstimate :: Poly -> MPBall -> MPBall
 rangeEstimate p b = result

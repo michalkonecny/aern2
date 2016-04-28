@@ -28,8 +28,8 @@ import Control.Arrow
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
---shouldTrace = False
-shouldTrace = True
+shouldTrace = False
+--shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace 
@@ -68,6 +68,11 @@ evalExample2 =
         normaliseCoeffs $
             fromListRationalWithPrec (prec 100) [(n, (1/n))| n <- [1..1000] ]
 
+{-|
+   The function enclosures p1, p2, samples of the exact composition p1 o p2 
+   and its enclosure computed here are plotted at:
+   http://fooplot.com/plot/tutd2wzuat 
+-}
 composeExample1 :: Poly
 composeExample1 =
     compose p1 p2
@@ -133,9 +138,11 @@ compose p1 p2 =
     (
         "compose:"
         ++ "\n p2 = " ++ show p2
-        ++ "\n p2 = " ++ showRawPoly p2
-        ++ "\n p2.term0 = " ++ (show $ getCentreAndErrorBall $ terms_lookupCoeff (poly_terms p2) 0)
         ++ "\n p2Range = " ++ show p2Range
+        ++ "\n p1 = " ++ show p1
+--        ++ "\n p1IntPower = " ++ show p1IntPower
+--        ++ "\n p1DerivIntPower = " ++ show p1DerivIntPower
+--        ++ "\n denom = " ++ show denom
         ++ "\n p1DerivRange = " ++ show p1DerivRange
     ) $
     polyAddToRadius p1_o_p2C (p2R*(abs p1DerivRange)) 
@@ -145,10 +152,10 @@ compose p1 p2 =
     -- compute the range of p2:
     p2Range = rangeOnIntervalUnaryFnA (p2, polyFixedDomain)
     -- compute the range of the derivative of p1 over the range of p2:
-    p1DerivRange = endpoints2Ball l r
+    p1DerivRange = (endpoints2Ball l r) / denom
         where
         Interval l r = Power.range acc p1DerivPower p2Range
-        (p1IntPower, _err) = cheb2IntPower p1
+        (p1IntPower, denom, _err) = cheb2IntPower p1
         p1DerivIntPower = IntPolyB.derivative p1IntPower
         p1DerivPower = IntPolyB.toFPPoly p1DerivIntPower
         acc = getFiniteAccuracy $ ballCentre $ terms_lookupCoeff (poly_terms p1) 0
@@ -254,7 +261,7 @@ approxRange :: Rational -> Rational -> Accuracy -> Poly -> Interval MPBall
 approxRange l r ac p = 
     Interval minValue maxValue
     where
-    (p', _errBall) = cheb2IntPower $ p
+    (p', _denom, _errBall) = cheb2IntPower $ p
     dp'  = IntPolyB.derivative $ p'
     dp'' = IntPolyB.toFPPoly $ dp'
     criticalPoints = 
