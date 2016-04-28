@@ -10,7 +10,8 @@ module FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding
     scale,
     roots,
     rangeEstimate,
-    approximateRootByBisection
+    approximateRootByBisection,
+    bisectUntilAccurate
 )
 where
 
@@ -292,7 +293,7 @@ trisect l r posL p = case (posML,posMR) of
                      posML = evalOnRational p ml > 0
                      posMR = evalOnRational p mr > 0                                                          
 
-approximateRootByBisection :: Rational -> Rational -> Accuracy -> Poly -> MPBall
+{-approximateRootByBisection :: Rational -> Rational -> Accuracy -> Poly -> MPBall
 approximateRootByBisection l r a p = case evalOnRational p l > 0 of
                                         Just False -> aux l r a p False
                                         Just True  -> aux l r a p True
@@ -300,6 +301,26 @@ approximateRootByBisection l r a p = case evalOnRational p l > 0 of
                                       where
                                       aux l' r' a' p' posL =
                                        if getAccuracy (ri2ball (Interval l' r') (a + 2)) >= a then
+                                            ri2ball (Interval l' r') a
+                                       else let (m, posM) = (findMidpoint' l' r' p') in
+                                           case (posL, posM) of
+                                             (True, Just False)  -> aux l' m  a' p' True
+                                             (True, Just True)   -> aux m  r' a' p' True
+                                             (False, Just False) -> aux m  r' a' p' False
+                                             (False, Just True)  -> aux l' m  a' p' False
+                                             (_,_) -> ri2ball (Interval l' r') a-}
+
+approximateRootByBisection :: Rational -> Rational -> Accuracy -> Poly -> MPBall
+approximateRootByBisection l r a p = bisectUntilAccurate l r a p (\(Interval l' r') -> getAccuracy (ri2ball (Interval l' r') (a + 2)))
+
+bisectUntilAccurate :: Rational -> Rational -> Accuracy -> Poly -> (Interval Rational -> Accuracy) -> MPBall
+bisectUntilAccurate l r a p testFn  = case evalOnRational p l > 0 of
+                                        Just False -> aux l r a p False 
+                                        Just True  -> aux l r a p True 
+                                        Nothing    -> ri2ball (Interval l r) a
+                                      where
+                                      aux l' r' a' p' posL =
+                                       if testFn (Interval l' r') >= a then
                                             ri2ball (Interval l' r') a
                                        else let (m, posM) = (findMidpoint' l' r' p') in
                                            case (posL, posM) of

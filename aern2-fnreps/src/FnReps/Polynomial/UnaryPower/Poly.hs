@@ -15,7 +15,7 @@ import FnReps.Polynomial.UnaryPower.Poly.Power2Cheb
 import qualified Data.List as List
 
 truncatedSin :: Integer -> Poly
-truncatedSin n = fromList [ (2*k + 1, rational2BallP (prec 10000) $ (-1)^k/(fac (2*k + 1)))  | k <- [0..n] ]  
+truncatedSin n = fromList [ (2*k + 1, rational2BallP (prec 53) $ (-1)^k/(fac (2*k + 1)))  | k <- [0..n] ]  
                  where
                  fac k = List.foldl' (*) 1 [1..k] 
                  
