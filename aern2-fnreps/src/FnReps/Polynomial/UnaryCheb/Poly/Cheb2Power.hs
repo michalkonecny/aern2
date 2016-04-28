@@ -48,9 +48,9 @@ recPowers p =
 -- this assumes that all coefficients except the constant one are exact.
 cheb2IntPower :: Cheb.Poly -> (IntPower.IntPoly, MPBall)
 cheb2IntPower (Cheb.Poly ts) = 
-    (IntPower.IntPoly $ Map.filterWithKey (\k x -> k <= Cheb.terms_degree ts && x /= 0) nts, err)
+    (IntPower.IntPoly $ Map.filterWithKey (\k x -> k <= Cheb.terms_degree ts && x /= 0) nts, errBall)
     where
-    (_, err) = getCentreAndErrorBall $ Cheb.terms_lookupCoeff ts 0
+    (_, errBall) = getCentreAndErrorBall $ Cheb.terms_lookupCoeff ts 0
     --IntPower.IntPoly tsInt = IntPower.fromFracList $ IntPower.normaliseFracList $ Map.toList $ Map.map (\x -> ballCentreRational x) ts
     tsFrac = Map.map (ballCentreRational) ts
     lcmd = Map.foldl' (\x y -> lcm x (denominator y)) 1 tsFrac

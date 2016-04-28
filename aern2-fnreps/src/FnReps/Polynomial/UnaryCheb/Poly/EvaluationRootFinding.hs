@@ -3,8 +3,10 @@ module FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding
 (
     evalDirectA, evalDirectOnBall, evalLipschitzOnBall
     , range
+    , compose
     , shiftDomainBy
     , evalExample1, evalExample2
+    , composeExample1
 )
 where
 
@@ -26,8 +28,8 @@ import Control.Arrow
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
-shouldTrace = False
---shouldTrace = True
+--shouldTrace = False
+shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace 
@@ -66,6 +68,14 @@ evalExample2 =
         normaliseCoeffs $
             fromListRationalWithPrec (prec 100) [(n, (1/n))| n <- [1..1000] ]
 
+composeExample1 :: Poly
+composeExample1 =
+    compose p1 p2
+    where
+    p1 = polyAddToRadius (x*(1+x)) (mpBall 0)
+    p2 = polyAddToRadius (x*(1-x)/3) (mpBall 0.25)
+    x = projUnaryFnA polyFixedDomain :: Poly
+
 {- RealUnaryFnA instance -}
 
 instance
@@ -87,11 +97,10 @@ instance
     rangeOnIntervalUnaryFnA = arr aux
         where
         aux (poly@(Poly terms),Interval l r) =
-            range acc poly (Interval (rational2BallP p l) (rational2BallP p r))
+            approxRange l r acc poly
             where
             c = terms_lookupCoeff terms 0
-            p = getPrecision c
-            acc = getFiniteAccuracy c
+            acc = getFiniteAccuracy $ ballCentre c
     evalAtDomPointUnaryFnA =
         proc (f, x) ->
             do
@@ -115,6 +124,36 @@ shiftDomainBy a p1 =
     x = setPrecision p $ projUnaryFnA polyFixedDomain :: Poly
     p = getPrecision p1
 
+{-|
+    (compose f g)(x) encloses f(g(x))
+-}
+compose :: Poly -> Poly -> Poly
+compose p1 p2 =
+    maybeTrace
+    (
+        "compose:"
+        ++ "\n p2 = " ++ show p2
+        ++ "\n p2 = " ++ showRawPoly p2
+        ++ "\n p2.term0 = " ++ (show $ getCentreAndErrorBall $ terms_lookupCoeff (poly_terms p2) 0)
+        ++ "\n p2Range = " ++ show p2Range
+        ++ "\n p1DerivRange = " ++ show p1DerivRange
+    ) $
+    polyAddToRadius p1_o_p2C (p2R*(abs p1DerivRange)) 
+    where
+    -- compose centre of p2 into p1:
+    p1_o_p2C = evalDirect p1 (polyCentre p2)
+    -- compute the range of p2:
+    p2Range = rangeOnIntervalUnaryFnA (p2, polyFixedDomain)
+    -- compute the range of the derivative of p1 over the range of p2:
+    p1DerivRange = endpoints2Ball l r
+        where
+        Interval l r = Power.range acc p1DerivPower p2Range
+        (p1IntPower, _err) = cheb2IntPower p1
+        p1DerivIntPower = IntPolyB.derivative p1IntPower
+        p1DerivPower = IntPolyB.toFPPoly p1DerivIntPower
+        acc = getFiniteAccuracy $ ballCentre $ terms_lookupCoeff (poly_terms p1) 0
+    p2R = polyRadius p2
+    
 
 {-|
     An evaluation of the polynomial at x using Clenshaw Algorithm
@@ -212,17 +251,20 @@ range ac p (Interval l r) =
     approxRange (toRationalDown l) (toRationalUp r) ac p
 
 approxRange :: Rational -> Rational -> Accuracy -> Poly -> Interval MPBall
-approxRange l r ac p = Interval (endpoints2Ball minL minR) (endpoints2Ball maxL maxR)
-                    where
-                    Interval minL minR = minValue +- err
-                    Interval maxL maxR = maxValue +- err
-                    (p', err) = cheb2IntPower $ p
-                    dp'  = IntPolyB.derivative $ p'
-                    dp'' = IntPolyB.toFPPoly $ dp'
-                    criticalPoints = map (\(Interval a b) -> Power.approximateRootByBisection a b ac dp'') $ IntPolyEV.isolateRoots l r dp'
-                    criticalValues = [evalDirectOnBall p (mpBall l), evalDirectOnBall p (mpBall r)] ++ map (evalLipschitzOnBall p) criticalPoints
-                    minValue = foldl1 (\x y -> min x y) criticalValues
-                    maxValue = foldl1 (\x y -> max x y) criticalValues
+approxRange l r ac p = 
+    Interval minValue maxValue
+    where
+    (p', _errBall) = cheb2IntPower $ p
+    dp'  = IntPolyB.derivative $ p'
+    dp'' = IntPolyB.toFPPoly $ dp'
+    criticalPoints = 
+        map (\(Interval a b) -> Power.approximateRootByBisection a b ac dp'') $ 
+            IntPolyEV.isolateRoots l r dp'
+    criticalValues = 
+        [evalDirectOnBall p (mpBall l), evalDirectOnBall p (mpBall r)] 
+        ++ map (evalLipschitzOnBall p) criticalPoints
+    minValue = foldl1 min criticalValues
+    maxValue = foldl1 max criticalValues
 
 {-
     The following function is not implemented yet.  It is not yet clear whether it will be needed. 

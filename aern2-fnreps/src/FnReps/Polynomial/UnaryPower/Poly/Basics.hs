@@ -168,13 +168,15 @@ fromRationalListP p termsAsList =
     r2b (deg, q) = (deg, rational2BallP p q)
 
 normalise :: Poly -> Poly
-normalise (Poly ts) = Poly ts'
-                      where
-                      ts' = Map.mapWithKey (\k c -> let (b_c,_) = getCentreAndErrorBall c in if k == 0 then b_c + err else b_c) $ if 0 `Map.member` ts then ts else Map.insert 0 (mpBall 0) ts
-                      err = Map.foldl (\e b -> let (_, b_e) = getCentreAndErrorBall b in e + b_e)
-                                                    (mpBall 0)
-                                                    ts
-
+normalise (Poly ts) = Poly ts''
+    where
+    ts' = if 0 `Map.member` ts then ts else Map.insert 0 (mpBall 0) ts
+    ts'' = Map.adjust (+ errBall) 0 ts' 
+    errBall = 
+        Map.foldl 
+            (\e b -> let (_, b_e) = getCentreAndErrorBall b in e + b_e)
+            (mpBall 0)
+            ts
 
 instance CanNegA (->) Poly where
     negA (Poly terms) = 
