@@ -97,9 +97,9 @@ _([on Plotly](https://plot.ly/~mikkonecny/11/time-s-vs-accuracy-bits/))_
 #### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
 
-### An analytic function with singularities near the origin and multiple maxima
+### An analytic function with singularities near the origin and with multiple maxima
 
-![fraction-sine](http://latex.codecogs.com/gif.latex?{\\frac{1}{100x^2+1}})
+![fraction-sine](http://latex.codecogs.com/gif.latex?{\\frac{1}{10(\\sin 7x)^2+1}})
 
 ### A very simple non-smooth function
 
