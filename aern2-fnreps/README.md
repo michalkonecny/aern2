@@ -101,7 +101,7 @@ _(coming soon)_
 
 ### An analytic function with singularities near the origin and with multiple maxima
 
-![fraction-periodic](http://latex.codecogs.com/gif.latex?{\\frac{1}{10(\\sin 7x)^2+1}})
+![fraction-periodic](http://latex.codecogs.com/gif.latex?{\\frac{1}{10(\\sin(7x))^2+1}})
 <img src="plots/fraction-periodic.png?raw=true" width="150">
 
 ### A very simple non-smooth function
@@ -119,7 +119,7 @@ _(coming soon)_
 
 ### A non-smooth function with multiple maxima
 
-![bumpy](http://latex.codecogs.com/gif.latex?\\max(\\sin(10x),\\cos(11x))
+![bumpy](http://latex.codecogs.com/gif.latex?\\max(\\sin(10x),\\cos(11x)))
 <img src="plots/bumpy.png?raw=true" width="150">
 
 #### Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
