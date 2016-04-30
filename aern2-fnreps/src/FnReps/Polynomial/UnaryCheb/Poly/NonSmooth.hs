@@ -2,7 +2,7 @@ module FnReps.Polynomial.UnaryCheb.Poly.NonSmooth
 (sqrtAbsX, _sqrtAbsX8, _sqrtAbsX16, _sqrtAbsX32, _sqrtAbsX64,
  absX, _absX8, _absX16, _absX32, _absX64, _absX128,
  _absXU8, _absXU16, _absXU32, _absXU64, _absXU128,
- _absXshiftedU8, _absXshiftedU16, _absXshiftedU32, _absXshiftedU64, _absXshiftedU128
+ absXshifted, _absXshiftedU8, _absXshiftedU16, _absXshiftedU32, _absXshiftedU64, _absXshiftedU128
 )
 where
 
