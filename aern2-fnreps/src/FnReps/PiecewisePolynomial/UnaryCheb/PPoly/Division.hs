@@ -22,7 +22,7 @@ import qualified FnReps.Polynomial.UnaryCheb.Poly as Poly
 import Data.List as List
 
 linSpline :: Integer -> PPoly
-linSpline n = linearPolygon $ zipWith (\x y -> (x, mpBall y)) mirroredXs mirroredYs
+linSpline n = linearPolygon (zipWith (\x y -> (x, mpBall y)) mirroredXs mirroredYs) (0.25*0.5^n) 
               where
               (mirroredXs, mirroredYs) = ((map (negA) $ reverse basicXs) ++ basicXs, (reverse basicYs) ++ basicYs) 
               (basicXs,basicYs) = aux n [] []
@@ -35,41 +35,49 @@ xInverseRaw :: Integer -> Integer -> PPoly
 xInverseRaw n k = 2^n * (it spline k)
                where
                spline = setPrecision_ppoly (prec $ 200*n*k + 100*n*n + 100*k*k + 53) $ dropAllErrors $ linSpline n
-               h = PPoly [(Interval (-1.0) (-(0.5^n)),2^n*Poly.fromList [(0,mpBall 0), (1, mpBall 1)]), (Interval (-(0.5^n)) (0.5^n), Poly.fromList [(0, mpBall 1)]),  (Interval (0.5^n) 1.0, 2^n*Poly.fromList [(0,mpBall 0), (1, mpBall 1)])]   
+               h = PPoly [(Interval (-1.0) (-(0.5^n)),2^n*Poly.fromList [(0,mpBall 0), (1, mpBall 1)]), 
+                          (Interval (-(0.5^n)) (0.5^n), Poly.fromList [(0, mpBall 1)]),  
+                          (Interval (0.5^n) 1.0, 2^n*Poly.fromList [(0,mpBall 0), (1, mpBall 1)])]
+                          ((0.5)^n) --TODO good overlap?   
                --x = Poly.fromList [(0,mpBall 0), (1, mpBall 1)]
                it f 0 = f
                it f i = it ({-setPrecision_ppoly (prec q) $-} dropAllErrors (2*f - h*f*f)) (i - 1)
-               dropAllErrors (PPoly pcs) = PPoly $ map dae pcs
+               dropAllErrors (PPoly pcs ov) = PPoly (map dae pcs) ov
                dae (i, p) = (i, Poly.polyCentre p)
 
 xInverseRawP :: Integer -> Integer -> Integer -> PPoly
 xInverseRawP n k pr = 2^n * (it spline k)
                       where
                       spline = setPrecision_ppoly (prec $ pr) $ dropAllErrors $ linSpline n
-                      h = PPoly [(Interval (-1.0) (-(0.5^n)),2^n*Poly.fromList [(0,mpBall 0), (1, mpBall 1)]), (Interval (-(0.5^n)) (0.5^n), Poly.fromList [(0, mpBall 1)]),  (Interval (0.5^n) 1.0, 2^n*Poly.fromList [(0,mpBall 0), (1, mpBall 1)])]   
+                      h = PPoly [(Interval (-1.0) (-(0.5^n)),2^n*Poly.fromList [(0,mpBall 0), (1, mpBall 1)]), 
+                                 (Interval (-(0.5^n)) (0.5^n), Poly.fromList [(0, mpBall 1)]),  
+                                 (Interval (0.5^n) 1.0, 2^n*Poly.fromList [(0,mpBall 0), (1, mpBall 1)])]
+                                 ((0.5)^n)   
                       --x = Poly.fromList [(0,mpBall 0), (1, mpBall 1)]
                       it f 0 = f
                       it f i = it ({-setPrecision_ppoly (prec q) $-} dropAllErrors (2*f - h*f*f)) (i - 1)
-                      dropAllErrors (PPoly pcs) = PPoly $ map dae pcs
+                      dropAllErrors (PPoly pcs ov) = PPoly (map dae pcs) ov
                       dae (i, p) = (i, Poly.polyCentre p)
 
 xInverseRawS :: Integer -> Integer -> Integer -> PPoly
 xInverseRawS n k pr = 2^n * (it spline k)
                       where
                       spline = setPrecision_ppoly (prec $ pr) $ dropAllErrors $ linSpline n
-                      h = PPoly [(Interval (-1.0) (-(0.5^n)),2^n*Poly.fromList [(0,mpBall 0), (1, mpBall 1)]), (Interval (-(0.5^n)) (0.5^n), Poly.fromList [(0, mpBall 1)]),  (Interval (0.5^n) 1.0, 2^n*Poly.fromList [(0,mpBall 0), (1, mpBall 1)])]   
+                      {-h = PPoly [(Interval (-1.0) (-(0.5^n)),2^n*Poly.fromList [(0,mpBall 0), (1, mpBall 1)]), 
+                                 (Interval (-(0.5^n)) (0.5^n), Poly.fromList [(0, mpBall 1)]),  
+                                 (Interval (0.5^n) 1.0, 2^n*Poly.fromList [(0,mpBall 0), (1, mpBall 1)])]-}
                       --x = Poly.fromList [(0,mpBall 0), (1, mpBall 1)]
                       it f 0 = f
-                      it (PPoly xs) i = it (dropAllErrors $ PPoly $ (map (\(a,p) -> (a, itP p)) (take (int $ k - i + 1) xs)) ++ drop (int $ k - i + 1) xs) (i - 1)
+                      it (PPoly xs ov) i = it (dropAllErrors $ PPoly ((map (\(a,p) -> (a, itP p)) (take (int $ k - i + 1) xs)) ++ drop (int $ k - i + 1) xs) ov) (i - 1)
                       itP f = 2*f - 2^n*(Poly.fromList [(0,mpBall 0), (1,mpBall 1)])*f*f -- TODO use h?
-                      dropAllErrors (PPoly pcs) = PPoly $ map dae pcs
+                      dropAllErrors (PPoly pcs ov) = PPoly (map dae pcs) ov
                       dae (i, p) = (i, Poly.polyCentre p)
 
 xInverseS :: Integer -> Integer -> Integer -> (MPBall, PPoly)
 xInverseS n k pr = (err, addToErrorTerm err xInv)
                where
                xInv = xInverseRawS n k pr
-               err = let Interval _ errp = abs $ range (bits $ pr) ((xInv)*x - one) $ Interval (mpBall $ (0.5^n)) (mpBall 1) in 
+               err = let Interval _ errp = abs $ range' (bits $ pr) ((xInv)*x - one) $ Interval (mpBall $ (0.5^n)) (mpBall 1) in 
                        2^n*errp
                one = fromPoly $ Poly.fromList [(0,mpBall 1)]
                x = fromPoly $ Poly.fromList [(0,mpBall 0), (1, mpBall 1)]
@@ -78,7 +86,7 @@ xInverseP :: Integer -> Integer -> Integer -> (MPBall, PPoly)
 xInverseP n k pr = (err, addToErrorTerm err xInv)
                where
                xInv = xInverseRawP n k pr
-               err = let Interval _ errp = abs $ range (bits $ pr) ((xInv)*x - one) $ Interval (mpBall $ (0.5^n)) (mpBall 1) in 
+               err = let Interval _ errp = abs $ range' (bits $ pr) ((xInv)*x - one) $ Interval (mpBall $ 0.5^n) (mpBall 1) in 
                        2^n*errp
                one = fromPoly $ Poly.fromList [(0,mpBall 1)]
                x = fromPoly $ Poly.fromList [(0,mpBall 0), (1, mpBall 1)]
@@ -109,7 +117,7 @@ xInverse n k = (err, addToErrorTerm err xInv)
                getErrAccu 0 e = e
                getErrAccu i e = getErrAccu (i - 1) (min e $ tryPrec 100*(n + k - i + 1))
                tryPrec p = 
-                    let Interval _ errp = abs $ range (bits $ 200*n*k + 100*n*n + 100*k*k + 53) ({-setPrecision_ppoly (prec p) $-} (xInv)*x - one) $ Interval (mpBall $ (0.5^n)) (mpBall 1) in 
+                    let Interval _ errp = abs $ range' (bits $ 200*n*k + 100*n*n + 100*k*k + 53) ({-setPrecision_ppoly (prec p) $-} (xInv)*x - one) $ Interval (mpBall $ (0.5^n)) (mpBall 1) in 
                     2^n*errp
                one = fromPoly $ Poly.fromList [(0,mpBall 1)]
                x = fromPoly $ Poly.fromList [(0,mpBall 0), (1, mpBall 1)]

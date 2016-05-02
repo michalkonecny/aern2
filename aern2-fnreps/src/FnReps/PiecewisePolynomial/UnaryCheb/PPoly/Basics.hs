@@ -16,9 +16,20 @@ import FnReps.Polynomial.UnaryCheb.Poly.Basics
 import qualified FnReps.Polynomial.UnaryPower.Poly as PowPoly
 import Data.List as List
 
+{-data Overlap = Infinite | Rational
+
+instance CanMinMaxA (->) Overlap Overlap where
+    minA (Infinite, x) = x
+    minA (x, Infinite) = x
+    minA (x, y) = minA (x,y)
+    maxA (Infinite,_) = Infinite
+    maxA (_, Infinite) = Infinite
+    maxA (x,y) = maxA (x,y)-}
+
 data PPoly = PPoly 
         {
-            ppoly_pieces :: [(Interval Rational, Poly)]
+            ppoly_pieces :: [(Interval Rational, Poly)],
+            ppoly_overlap :: Rational 
         }
 
 data ApproxPPoly = ApproxPPoly 
@@ -30,33 +41,33 @@ data ApproxPPoly = ApproxPPoly
 
 instance HasApproximate PPoly where
     type Approximate PPoly = ApproxPPoly
-    getApproximate bts (PPoly pieces) = ApproxPPoly (map (\(i,p) -> (i, cheb2Power p)) pieces) bts
+    getApproximate bts (PPoly pieces _) = ApproxPPoly (map (\(i,p) -> (i, cheb2Power p)) pieces) bts
     
 instance Show ApproxPPoly where
     show (ApproxPPoly pcs bts) = foldl' (++) "" $ map (\(i,p) -> (show i) ++ " : " ++ (show $ getApproximate bts p) ++ "\n") pcs    
 
 instance Show PPoly where
-    show (PPoly pieces) = foldl' (++) "" $ map (\(i,p) -> (show i) ++ ": " ++ show p++"\n") pieces
+    show (PPoly pieces _) = foldl' (++) "" $ map (\(i,p) -> (show i) ++ ": " ++ show p++"\n") pieces
 
 fromPoly :: Poly -> PPoly
-fromPoly p = PPoly [(Interval (-1.0) 1.0, p)]
+fromPoly p = PPoly [(Interval (-1.0) 1.0, p)] 10.0
 
-linearPolygon :: [(Rational, MPBall)] -> PPoly
-linearPolygon ((x,y) : xys) = aux xys x y []
-                              where
-                              aux [] _ _ res = PPoly $ reverse res
-                              aux ((x',y'):xys) x y res = aux xys x' y' ((Interval x x',linSpline x y x' y') : res)
-                              linSpline x y x' y' = Poly.normaliseCoeffs $ Poly.fromList  [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))] -- TODO Poly.fromList should already provided normalised coeffs
-linearPolygon [] = error "linearPolygon must be provided with a list of at least 2 points"                              
+linearPolygon :: [(Rational, MPBall)] -> Rational -> PPoly
+linearPolygon ((x,y) : xys) overlap = aux xys x y []
+                                where
+                                aux [] _ _ res = PPoly (reverse res) overlap
+                                aux ((x',y'):xys) x y res = aux xys x' y' ((Interval x x',linSpline x y x' y') : res)
+                                linSpline x y x' y' = Poly.normaliseCoeffs $ Poly.fromList  [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))] -- TODO Poly.fromList should already provided normalised coeffs
+linearPolygon [] _ = error "linearPolygon must be provided with a list of at least 2 points"                            
 
 lift2PPoly :: (Poly -> Poly) -> (PPoly -> PPoly)
-lift2PPoly f (PPoly pieces) = PPoly $ map (\(i,p) -> (i, f p)) pieces
+lift2PPoly f (PPoly pieces overlap) = PPoly (map (\(i,p) -> (i, f p)) pieces) overlap
 
 normaliseCoeffs :: PPoly -> PPoly
 normaliseCoeffs = lift2PPoly Poly.normaliseCoeffs
         
 refine :: PPoly -> PPoly -> [(Interval Rational, Poly, Poly)]
-refine (PPoly ps) (PPoly qs) = 
+refine (PPoly ps _) (PPoly qs _) = 
          reverse $ aux [] ps qs
          where
          aux res (x : xs) (y : ys) = let (firstLarger, intr, diff) = intersectionAndDifference x y in
@@ -94,11 +105,11 @@ addToErrorTerm e = lift2PPoly (\p -> polyAddToRadius p e)
                                 
 instance CanAddA (->) PPoly PPoly where
     type AddTypeA (->) PPoly PPoly = PPoly
-    addA (a, b) = PPoly $ [ (i, p + q) | (i,p,q) <- refine a b]
+    addA (a, b) = PPoly ([ (i, p + q) | (i,p,q) <- refine a b]) $ min (ppoly_overlap a) (ppoly_overlap b)
     
 instance CanMulA (->) PPoly PPoly where
     type MulTypeA (->) PPoly PPoly = PPoly
-    mulA (a, b) = PPoly $ [ (i, p * q) | (i,p,q) <- refine a b]
+    mulA (a, b) = PPoly ([ (i, p * q) | (i,p,q) <- refine a b]) $ min (ppoly_overlap a) (ppoly_overlap b)
     
 instance CanMulA (->) Poly PPoly where
     type MulTypeA (->) Poly PPoly = PPoly
@@ -109,8 +120,8 @@ instance CanMulA (->) PPoly Poly where
     mulA (a,b) = a*(fromPoly b)    
 
 instance CanNegA (->) PPoly where
-    negA (PPoly pieces) = 
-        PPoly $ fmap (\(i,p) -> (i,-p)) pieces 
+    negA (PPoly pieces overlap) = 
+        PPoly (fmap (\(i,p) -> (i,-p)) pieces) overlap 
 
 instance CanNegSameType PPoly
 
