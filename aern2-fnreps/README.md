@@ -92,7 +92,12 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 ![fraction-periodic](http://latex.codecogs.com/gif.latex?{\\frac{1}{10(\\sin(7x))^2+1}})
 <img src="plots/fraction-periodic.png?raw=true" width="150">
 
-_(coming soon)_
+| Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
+| :---: | :---: |
+| <img src="plots/frac-periodic-max.png?raw=true" width="400"> | _(coming soon)_ | 
+| _([on Plotly](https://plot.ly/~mikkonecny/32/time-s-vs-accuracy-bits/))_ | _(coming soon)_ |
+
+
 
 ### A very simple non-smooth function
 
