@@ -111,24 +111,27 @@ _([on Plotly](https://plot.ly/~mikkonecny/27/time-s-vs-precision-bits/))_
 ![abs](http://latex.codecogs.com/gif.latex?1-|x+1/3|)
 <img src="plots/abs.png?raw=true" width="150">
 
-#### Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
-
-_(coming soon)_
-
 #### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
-_(coming soon)_
+<img src="plots/abs-max.png?raw=true" width="400">
+_([on Plotly](https://plot.ly/~mikkonecny/30/time-s-vs-accuracy-bits/))_
+
+#### Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
+
+<img src="plots/abs-integrate.png?raw=true" width="400">
+_([on Plotly](https://plot.ly/~mikkonecny/31/fun-vs-poly/))_
+
 
 ### A non-smooth function with multiple maxima
 
 ![bumpy](http://latex.codecogs.com/gif.latex?\\max(\\sin(10x),\\cos(11x)))
 <img src="plots/bumpy.png?raw=true" width="150">
 
-#### Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
+#### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
 _(coming soon)_
 
-#### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
+#### Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
 _(coming soon)_
 
