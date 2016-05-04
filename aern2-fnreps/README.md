@@ -91,13 +91,15 @@ _([on Plotly](https://plot.ly/~mikkonecny/11/time-s-vs-accuracy-bits/))_
 ![fraction](http://latex.codecogs.com/gif.latex?{\\frac{1}{100x^2+1}})
 <img src="plots/fraction.png?raw=true" width="150">
 
-#### Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
-
-_(coming soon)_
-
 #### Maximum over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
 
-_(coming soon)_
+<img src="plots/fraction-max.png?raw=true" width="400">
+_([on Plotly](https://plot.ly/~mikkonecny/26/fun-vs-poly/))_
+
+#### Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
+
+<img src="plots/fraction-integrate.png?raw=true" width="400">
+_([on Plotly](https://plot.ly/~mikkonecny/27/time-s-vs-precision-bits/))_
 
 ### An analytic function with singularities near the origin and with multiple maxima
 
