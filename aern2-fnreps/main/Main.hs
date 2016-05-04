@@ -158,14 +158,14 @@ nearsingulatityPerFn1_B2B =
 
 
 nonsmoothFn1_Name :: String
-nonsmoothFn1_Name = "|x+1/3| over [-1,1]"
+nonsmoothFn1_Name = "1-|x+1/3| over [-1,1]"
 
 nonsmoothFn1_PB :: Precision -> Degree -> PolyBall
 nonsmoothFn1_PB p d =
-    PolyBall (absXshifted p d) (Interval (-1.0) (1.0)) defaultMaxDegree defaultSweepThresholdNormLog   
+    1 - (PolyBall (absXshifted p d) (Interval (-1.0) (1.0)) defaultMaxDegree defaultSweepThresholdNormLog)   
 
 nonsmoothFn1_B2B :: UnaryFnMPBall
 nonsmoothFn1_B2B =
     UnaryFnMPBall (Interval (-1.0) 1.0) $
-    \x -> catchingExceptions $ abs (x+1/3)
+    \x -> catchingExceptions $ 1 - (abs (x+1/3))
 

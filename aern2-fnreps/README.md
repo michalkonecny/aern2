@@ -106,7 +106,7 @@ _(coming soon)_
 
 ### A very simple non-smooth function
 
-![abs](http://latex.codecogs.com/gif.latex?|x+1/3|)
+![abs](http://latex.codecogs.com/gif.latex?1-|x+1/3|)
 <img src="plots/abs.png?raw=true" width="150">
 
 #### Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1])
