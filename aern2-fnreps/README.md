@@ -94,9 +94,8 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="plots/frac-periodic-max.png?raw=true" width="400"> | _(coming soon)_ | 
-| _([on Plotly](https://plot.ly/~mikkonecny/32/time-s-vs-accuracy-bits/))_ | _(coming soon)_ |
-
+| <img src="plots/frac-periodic-max.png?raw=true" width="400"> | <img src="plots/frac-periodic-integrate.png?raw=true" width="400"> | 
+| _([on Plotly](https://plot.ly/~mikkonecny/32/time-s-vs-accuracy-bits/))_ | _([on Plotly](https://plot.ly/~mikkonecny/34/time-s-vs-accuracy-bits/))_ |
 
 
 ### A very simple non-smooth function
