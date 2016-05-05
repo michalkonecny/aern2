@@ -85,7 +85,8 @@ functions =
         ("sine+cos", (analyticFn2_Name, analyticFn2_PB, analyticFn2_B2B)),
         ("fraction", (nearsingulatityFn1_Name, nearsingulatityFn1_PB, nearsingulatityFn1_B2B)),
         ("fraction-periodic", (nearsingulatityPerFn1_Name, nearsingulatityPerFn1_PB, nearsingulatityPerFn1_B2B)),
-        ("abs", (nonsmoothFn1_Name, nonsmoothFn1_PB, nonsmoothFn1_B2B))
+        ("abs", (nonsmoothFn1_Name, nonsmoothFn1_PB, nonsmoothFn1_B2B)),
+        ("bumpy", (nonsmoothFn2_Name, nonsmoothFn2_PB, nonsmoothFn2_B2B))
     ]
 
 analyticFn1_Name :: String
@@ -162,10 +163,22 @@ nonsmoothFn1_Name = "1-|x+1/3| over [-1,1]"
 
 nonsmoothFn1_PB :: Precision -> Degree -> PolyBall
 nonsmoothFn1_PB p d =
-    1 - (PolyBall (absXshifted p d) (Interval (-1.0) (1.0)) defaultMaxDegree defaultSweepThresholdNormLog)   
+    1 - (PolyBall (absXshifted p d) (Interval (-1.0) (1.0)) d NormZero)   
 
 nonsmoothFn1_B2B :: UnaryFnMPBall
 nonsmoothFn1_B2B =
     UnaryFnMPBall (Interval (-1.0) 1.0) $
     \x -> catchingExceptions $ 1 - (abs (x+1/3))
+
+nonsmoothFn2_Name :: String
+nonsmoothFn2_Name = "max(sin(10x),cos(11x)) over [-1,1]"
+
+nonsmoothFn2_PB :: Precision -> Degree -> PolyBall
+nonsmoothFn2_PB p d =
+    undefined
+
+nonsmoothFn2_B2B :: UnaryFnMPBall
+nonsmoothFn2_B2B =
+    UnaryFnMPBall (Interval (-1.0) 1.0) $
+    \x -> catchingExceptions $ max (sin (10*x)) (cos (11*x))
 
