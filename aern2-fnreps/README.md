@@ -43,6 +43,11 @@ The error bounds are valid over a given interval domain, the same domain for all
 The collection is parametrised by polynomial degree and coefficient precision.
 When these parameters are increased arbitrarily, the error bound converges to zero.
 
+The polynomials used in this representation are unary polynomials in the Chebyshev basis with MPFR dyadic coefficients.
+The Chebyshev basis facilitates efficient Chebyshev truncation of terms whose degree is too high 
+or whose coefficient is of a negligible magnitude.
+
+
 ## Benchmark setup
 
 Source code of the benchmark tasks: [Main.hs](https://github.com/michalkonecny/aern2/blob/master/aern2-fnreps/main/Main.hs)
