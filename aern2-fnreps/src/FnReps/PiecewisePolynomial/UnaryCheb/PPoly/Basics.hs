@@ -6,6 +6,8 @@ lift2PPoly,
 FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Basics.normaliseCoeffs,
 setPrecision_ppoly,
 addToErrorTerm,
+breakpoints,
+dropAllErrors,
 PPoly(..)
 )
 where
@@ -15,16 +17,6 @@ import FnReps.Polynomial.UnaryCheb.Poly as Poly
 import FnReps.Polynomial.UnaryCheb.Poly.Basics
 import qualified FnReps.Polynomial.UnaryPower.Poly as PowPoly
 import Data.List as List
-
-{-data Overlap = Infinite | Rational
-
-instance CanMinMaxA (->) Overlap Overlap where
-    minA (Infinite, x) = x
-    minA (x, Infinite) = x
-    minA (x, y) = minA (x,y)
-    maxA (Infinite,_) = Infinite
-    maxA (_, Infinite) = Infinite
-    maxA (x,y) = maxA (x,y)-}
 
 data PPoly = PPoly 
         {
@@ -49,15 +41,18 @@ instance Show ApproxPPoly where
 instance Show PPoly where
     show (PPoly pieces _) = foldl' (++) "" $ map (\(i,p) -> (show i) ++ ": " ++ show p++"\n") pieces
 
+breakpoints :: PPoly -> [Rational]
+breakpoints (PPoly ps _) = map (\(Interval a _,_) -> a) ps ++ [1.0]
+
 fromPoly :: Poly -> PPoly
 fromPoly p = PPoly [(Interval (-1.0) 1.0, p)] 10.0
 
 linearPolygon :: [(Rational, MPBall)] -> Rational -> PPoly
 linearPolygon ((x,y) : xys) overlap = aux xys x y []
-                                where
-                                aux [] _ _ res = PPoly (reverse res) overlap
-                                aux ((x',y'):xys) x y res = aux xys x' y' ((Interval x x',linSpline x y x' y') : res)
-                                linSpline x y x' y' = Poly.normaliseCoeffs $ Poly.fromList  [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))] -- TODO Poly.fromList should already provided normalised coeffs
+  where
+  aux [] _ _ res = PPoly (reverse res) overlap
+  aux ((x',y'):xys) x y res = aux xys x' y' ((Interval x x',linSpline x y x' y') : res)
+  linSpline x y x' y' = Poly.normaliseCoeffs $ Poly.fromList  [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))] -- TODO Poly.fromList should already provided normalised coeffs
 linearPolygon [] _ = error "linearPolygon must be provided with a list of at least 2 points"                            
 
 lift2PPoly :: (Poly -> Poly) -> (PPoly -> PPoly)
@@ -68,17 +63,19 @@ normaliseCoeffs = lift2PPoly Poly.normaliseCoeffs
         
 refine :: PPoly -> PPoly -> [(Interval Rational, Poly, Poly)]
 refine (PPoly ps _) (PPoly qs _) = 
-         reverse $ aux [] ps qs
-         where
-         aux res (x : xs) (y : ys) = let (firstLarger, intr, diff) = intersectionAndDifference x y in
-                                     case diff of
-                                        Nothing -> aux (intr:res) xs ys
-                                        Just i  -> if firstLarger then
-                                                    aux (intr:res) (i:xs) ys
-                                                   else
-                                                    aux (intr:res) xs (i:ys)
-         aux res [] [] = res
-         aux xs ys _ = error $ "PPoly refine: Lists don't match up. Left with "++(show xs) ++ " and "++ (show ys)
+  reverse $ aux [] ps qs
+  where
+  aux res (x : xs) (y : ys) = 
+   let (firstLarger, intr, diff) = intersectionAndDifference x y 
+     in
+     case diff of
+        Nothing -> aux (intr:res) xs ys
+        Just i  -> if firstLarger then
+                    aux (intr:res) (i:xs) ys
+                   else
+                      aux (intr:res) xs (i:ys)
+  aux res [] [] = res
+  aux xs ys _ = error $ "PPoly refine: Lists don't match up. Left with "++(show xs) ++ " and "++ (show ys)
 
 --precondition: both intervals have the same left end-point
 intersectionAndDifference :: (Interval Rational, Poly) -> (Interval Rational, Poly) -> (Bool, (Interval Rational, Poly, Poly), Maybe (Interval Rational, Poly))
@@ -102,6 +99,11 @@ setPrecision_ppoly p = lift2PPoly (setPrecision p)
 
 addToErrorTerm :: MPBall -> PPoly -> PPoly
 addToErrorTerm e = lift2PPoly (\p -> polyAddToRadius p e)
+
+dropAllErrors :: PPoly -> PPoly
+dropAllErrors (PPoly pieces ov) = PPoly (map aux pieces) ov
+  where
+  aux (i,p) = (i, Poly.polyCentre p)
                                 
 instance CanAddA (->) PPoly PPoly where
     type AddTypeA (->) PPoly PPoly = PPoly
