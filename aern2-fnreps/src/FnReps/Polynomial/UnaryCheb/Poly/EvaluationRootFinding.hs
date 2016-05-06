@@ -14,6 +14,7 @@ import AERN2.Num
 import AERN2.RealFunction
 
 import FnReps.Polynomial.UnaryCheb.Poly.Basics
+import FnReps.Polynomial.UnaryCheb.Poly.SizeReduction
 import FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power
 import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication ()
 
@@ -28,8 +29,8 @@ import Control.Arrow
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
-shouldTrace = False
---shouldTrace = True
+--shouldTrace = False
+shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace 
@@ -75,7 +76,7 @@ evalExample2 =
 -}
 composeExample1 :: Poly
 composeExample1 =
-    compose p1 p2
+    compose 4 NormZero p1 p2
     where
     p1 = polyAddToRadius (x*(1+x)) (mpBall 0)
     p2 = polyAddToRadius (x*(1-x)/3) (mpBall 0.25)
@@ -132,23 +133,26 @@ shiftDomainBy a p1 =
 {-|
     (compose f g)(x) encloses f(g(x))
 -}
-compose :: Poly -> Poly -> Poly
-compose p1 p2 =
+compose :: Degree -> NormLog -> Poly -> Poly -> Poly
+compose d sw p1 p2 =
     maybeTrace
     (
         "compose:"
         ++ "\n p2 = " ++ show p2
+        ++ "\n p2 ~ " ++ showA p2
         ++ "\n p2Range = " ++ show p2Range
         ++ "\n p1 = " ++ show p1
---        ++ "\n p1IntPower = " ++ show p1IntPower
---        ++ "\n p1DerivIntPower = " ++ show p1DerivIntPower
---        ++ "\n denom = " ++ show denom
+        ++ "\n p1 ~ " ++ showA p1
         ++ "\n p1DerivRange = " ++ show p1DerivRange
+        ++ "\n result = " ++ show result
+        ++ "\n result ~ " ++ showA p1_o_p2C
     ) $
-    polyAddToRadius p1_o_p2C (p2R*(abs p1DerivRange)) 
+    result
     where
+    showA p = show $ getApproximate (bits 40) (cheb2Power p)
+    result = polyAddToRadius p1_o_p2C (p2R*(abs p1DerivRange)) 
     -- compose centre of p2 into p1:
-    p1_o_p2C = evalDirect p1 (polyCentre p2)
+    p1_o_p2C = reduceDegreeAndSweep d sw $ evalDirect p1 (polyCentre p2)
     -- compute the range of p2:
     p2Range = rangeOnIntervalUnaryFnA (p2, polyFixedDomain)
     -- compute the range of the derivative of p1 over the range of p2:

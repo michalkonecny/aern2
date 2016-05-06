@@ -9,7 +9,7 @@ import System.Environment
 import AERN2.RealFunction
 import AERN2.Net
 import FnReps.Polynomial.UnaryCheb.PolyBall
-import FnReps.Polynomial.UnaryCheb.Poly (absXshifted)
+import FnReps.Polynomial.UnaryCheb.Poly (compose,absX,absXshifted)
 --import FnReps.Polynomial.UnaryCheb.RealFn
 
 main :: IO ()
@@ -175,7 +175,18 @@ nonsmoothFn2_Name = "max(sin(10x),cos(11x)) over [-1,1]"
 
 nonsmoothFn2_PB :: Precision -> Degree -> PolyBall
 nonsmoothFn2_PB p d =
-    undefined
+    PolyBall (maxViaAbs sin10x cos11x) (Interval (-1.0) (1.0)) d NormZero
+    where
+    maxViaAbs f g = ((absViaCompose (f - g)) + f + g)/2
+    absViaCompose f = (absX p d (Interval (-1.0) 1.0)) `comp` f
+    comp = compose d NormZero
+    PolyBall sin10x _ _ _ = sin (10*x)
+    PolyBall cos11x _ _ _ = cos (11*x) 
+    x :: PolyBall
+    x = 
+        setMaxDegree d $
+        setPrecision p $
+        projUnaryFnA (Interval (-1.0) 1.0)
 
 nonsmoothFn2_B2B :: UnaryFnMPBall
 nonsmoothFn2_B2B =
