@@ -182,7 +182,10 @@ nearsingulatityPerFn1_B2B =
     \x -> 1/(catchingExceptions $ 10*(sin (7*x))^2+1)
 
 nearsingulatityPerFn1_PP :: Operator -> Degree -> Accuracy -> Integer -> Accuracy -> MPBall
-nearsingulatityPerFn1_PP = error $ "Not yet supporting PPoly for: " ++ nearsingulatityPerFn1_Name
+nearsingulatityPerFn1_PP OpMax deg divThresholdAcc divIterations rangeAcc =
+    fracSinMax deg (2.0 ^^ (- (fromAccuracy divThresholdAcc))) divIterations (fromAccuracy rangeAcc)
+nearsingulatityPerFn1_PP OpIntegrate deg divThresholdAcc divIterations _rangeAcc =
+    fracSinIntegral deg (2.0 ^^ (- (fromAccuracy divThresholdAcc))) divIterations
 
 nonsmoothFn1_Name :: String
 nonsmoothFn1_Name = "1-|x+1/3| over [-1,1]"
