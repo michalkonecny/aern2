@@ -9,7 +9,7 @@ import System.Environment
 import AERN2.RealFunction
 import AERN2.Net
 import FnReps.Polynomial.UnaryCheb.PolyBall
-import FnReps.Polynomial.UnaryCheb.Poly (compose,absX,absXshifted)
+import FnReps.Polynomial.UnaryCheb.Poly (compose,absX,absXshifted, reduceDegreeAndSweep)
 --import FnReps.Polynomial.UnaryCheb.RealFn
 
 main :: IO ()
@@ -178,7 +178,9 @@ nonsmoothFn2_PB p d =
     PolyBall (maxViaAbs sin10x cos11x) (Interval (-1.0) (1.0)) d NormZero
     where
     maxViaAbs f g = ((absViaCompose (f - g)) + f + g)/2
-    absViaCompose f = (absX p d (Interval (-1.0) 1.0)) `comp` f
+    absViaCompose f = 
+        (absX p d' (Interval (-1.0) 1.0)) `comp` (reduceDegreeAndSweep d' NormZero f)
+    d' = toIntegerUp $ sqrt (mpBall d)
     comp = compose d NormZero
     PolyBall sin10x _ _ _ = sin (10*x)
     PolyBall cos11x _ _ _ = cos (11*x) 
