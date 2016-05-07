@@ -30,7 +30,7 @@ import Debug.Trace (trace)
 
 shouldTrace :: Bool
 --shouldTrace = False
-shouldTrace = True
+shouldTrace = False
 
 maybeTrace :: String -> a -> a
 maybeTrace 

@@ -20,7 +20,7 @@ import qualified FnReps.Polynomial.UnaryCheb.Poly as Poly
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
-shouldTrace = False
+shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace 
@@ -120,10 +120,10 @@ inverseWithInit f f0 its = addToErrorTerm e $ dropAllErrors r
              "accuracy: "++ show (getAccuracy err) ++ "\n"++
              "precision: "++show pr++"\n"++
              "result precision: "++show (foldl1 min $ map (\(_,p) -> getPrecision p) $ ppoly_pieces res) ++ "\n"++
-             "target: "++ show (normLog2Accuracy $ getNormLog err)
+             "target: "++ show ((normLog2Accuracy $ getNormLog err) + 1)
              ) $
               if getNormLog err < getNormLog 1
-              && getAccuracy err > (normLog2Accuracy $ getNormLog err) then 
+              && getAccuracy err > (normLog2Accuracy $ getNormLog err) + 1 then 
                   (err, res)
               else
                   aux (2*pr) 
