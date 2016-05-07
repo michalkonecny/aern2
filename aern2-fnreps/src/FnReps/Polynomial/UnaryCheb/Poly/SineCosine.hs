@@ -10,6 +10,7 @@ import AERN2.RealFunction
 --import Control.Arrow
 
 import qualified Data.Map as Map
+import qualified Data.List as List
 
 import FnReps.Polynomial.UnaryCheb.Poly.Basics
 import FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power (cheb2Power)
@@ -126,10 +127,13 @@ sine_poly maxDeg sweepT x =
             pbAres
             where
             pbAres
-                | tooAccurate || stoppedMakingProgress = (polyCentre pBest, sEBest)
+                | tooAccurate || stoppedMakingProgress || sameAccuracyCount > 10 = (polyCentre pBest, sEBest)
                 | otherwise =
                     pickByAccuracy ((sAccuracy, p, sE) : prevResults) rest
             tooAccurate = sAccuracy >= xAccuracy + 3
+            prevAccuracies = map (\(a,_,_) -> a) prevResults
+            sameAccuracyCount = 
+                case List.findIndex (/= sAccuracy) prevAccuracies of Just i -> integer i; _ -> 0
             (stoppedMakingProgress, pBest, sEBest) =
                 case prevResults of
                     ((a1,p1,sE1):(a2,_,_):(a3,_,_):(a4,_,_):_) 
