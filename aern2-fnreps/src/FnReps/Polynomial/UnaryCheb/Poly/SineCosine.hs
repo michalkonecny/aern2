@@ -13,7 +13,7 @@ import qualified Data.Map as Map
 
 import FnReps.Polynomial.UnaryCheb.Poly.Basics
 import FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power (cheb2Power)
-import FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding ()
+import FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding (sampledRange)
 import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication ()
 import FnReps.Polynomial.UnaryCheb.Poly.SizeReduction (reduceDegreeAndSweep)
 
@@ -100,7 +100,9 @@ sine_poly maxDeg sweepT x =
     
     -- compute (rC+-rE) = range(xC):
     Interval rL rR =
-        rangeOnIntervalUnaryFnA (xC, polyFixedDomain)
+        sampledRange (-1.0) (1.0) 10 xC
+--        approxRange (-1.0) (1.0) (bits 10) xC
+--        rangeOnIntervalUnaryFnA (xC, polyFixedDomain)
     r = endpoints2Ball rL rR
     rC = ballCentre r
     

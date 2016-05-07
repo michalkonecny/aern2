@@ -2,7 +2,7 @@
 module FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding 
 (
     evalDirectA, evalDirectOnBall, evalLipschitzOnBall
-    , range
+    , range, approxRange, sampledRange
     , compose
     , shiftDomainBy
     , evalExample1, evalExample2
@@ -255,6 +255,18 @@ evalLipschitzOnBall p@(Poly terms) b =
     result = (evalDirectOnBall p b_centre) + b_errorBall * lp
     (b_centre, b_errorBall) = getCentreAndErrorBall b
     lp = sum (map abs $ terms_coeffs terms) * (terms_degree terms)^2
+
+sampledRange ::  Rational -> Rational -> Integer -> Poly -> Interval MPBall
+sampledRange l r depth p =
+    Interval minValue maxValue
+    where
+    minValue = foldl1 min samples
+    maxValue = foldl1 max samples
+    samples = map eval samplePoints
+    eval = curry evalAtDomPointUnaryFnA p
+    samplePoints :: [Rational]
+    samplePoints = [(l*i + r*(size - i))/size | i <- [0..size]]
+    size = 2^depth
 
 range :: Accuracy -> Poly -> Interval MPBall -> Interval MPBall
 range ac p (Interval l r) =
