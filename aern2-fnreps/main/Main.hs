@@ -9,8 +9,10 @@ import System.Environment
 import AERN2.RealFunction
 import AERN2.Net
 import FnReps.Polynomial.UnaryCheb.PolyBall
+import FnReps.Polynomial.UnaryCheb.Poly (compose,absX,absXshifted)
 --import FnReps.Polynomial.UnaryCheb.RealFn
 
+main :: IO ()
 main =
     do
     args <- getArgs
@@ -38,7 +40,8 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
             ("fun", "max") -> maxFun fnB2B accuracy 
             ("fun", "integrate") -> integrateFun fnB2B accuracy 
             ("poly", "max") -> maxPB $ fnPB p maxDeg 
-            ("poly", "integrate") -> integratePB $ fnPB p maxDeg 
+            ("poly", "integrate") -> integratePB $ fnPB p maxDeg
+            _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
     (Just (fnDescription, fnPB, fnB2B)) = Map.lookup functionCode functions
     maxDeg = read maxDegS
     p = prec $ read precS
@@ -80,7 +83,10 @@ functions =
     [
         ("sinesine", (analyticFn1_Name, analyticFn1_PB, analyticFn1_B2B)),
         ("sine+cos", (analyticFn2_Name, analyticFn2_PB, analyticFn2_B2B)),
-        ("fraction", (nearsingulatityFn1_Name, nearsingulatityFn1_PB, nearsingulatityFn1_B2B))
+        ("fraction", (nearsingulatityFn1_Name, nearsingulatityFn1_PB, nearsingulatityFn1_B2B)),
+        ("fraction-periodic", (nearsingulatityPerFn1_Name, nearsingulatityPerFn1_PB, nearsingulatityPerFn1_B2B)),
+        ("abs", (nonsmoothFn1_Name, nonsmoothFn1_PB, nonsmoothFn1_B2B)),
+        ("bumpy", (nonsmoothFn2_Name, nonsmoothFn2_PB, nonsmoothFn2_B2B))
     ]
 
 analyticFn1_Name :: String
@@ -134,4 +140,56 @@ nearsingulatityFn1_B2B =
     UnaryFnMPBall (Interval (-1.0) 1.0) $
     \x -> 1/(catchingExceptions $ 100*x^2+1)
 
+nearsingulatityPerFn1_Name :: String
+nearsingulatityPerFn1_Name = "1/(10(sin(7x))^2+1) over [-1,1]"
+
+nearsingulatityPerFn1_PB :: Precision -> Degree -> PolyBall
+nearsingulatityPerFn1_PB p d =
+    let sx = sin (7*x) in 1/(10*sx*sx+1)
+    where
+    x = 
+        setMaxDegree d $
+        setPrecision p $
+        projUnaryFnA (Interval (-1.0) 1.0)
+
+nearsingulatityPerFn1_B2B :: UnaryFnMPBall
+nearsingulatityPerFn1_B2B =
+    UnaryFnMPBall (Interval (-1.0) 1.0) $
+    \x -> 1/(catchingExceptions $ 10*(sin (7*x))^2+1)
+
+
+nonsmoothFn1_Name :: String
+nonsmoothFn1_Name = "1-|x+1/3| over [-1,1]"
+
+nonsmoothFn1_PB :: Precision -> Degree -> PolyBall
+nonsmoothFn1_PB p d =
+    1 - (PolyBall (absXshifted p d) (Interval (-1.0) (1.0)) d NormZero)   
+
+nonsmoothFn1_B2B :: UnaryFnMPBall
+nonsmoothFn1_B2B =
+    UnaryFnMPBall (Interval (-1.0) 1.0) $
+    \x -> catchingExceptions $ 1 - (abs (x+1/3))
+
+nonsmoothFn2_Name :: String
+nonsmoothFn2_Name = "max(sin(10x),cos(11x)) over [-1,1]"
+
+nonsmoothFn2_PB :: Precision -> Degree -> PolyBall
+nonsmoothFn2_PB p d =
+    PolyBall (maxViaAbs sin10x cos11x) (Interval (-1.0) (1.0)) d NormZero
+    where
+    maxViaAbs f g = ((absViaCompose (f - g)) + f + g)/2
+    absViaCompose f = (absX p d (Interval (-1.0) 1.0)) `comp` f
+    comp = compose d NormZero
+    PolyBall sin10x _ _ _ = sin (10*x)
+    PolyBall cos11x _ _ _ = cos (11*x) 
+    x :: PolyBall
+    x = 
+        setMaxDegree d $
+        setPrecision p $
+        projUnaryFnA (Interval (-1.0) 1.0)
+
+nonsmoothFn2_B2B :: UnaryFnMPBall
+nonsmoothFn2_B2B =
+    UnaryFnMPBall (Interval (-1.0) 1.0) $
+    \x -> catchingExceptions $ max (sin (10*x)) (cos (11*x))
 

@@ -32,7 +32,9 @@ Library
                     TypeFamilies,
                     TypeOperators
   other-modules:    
-                    FnReps.Polynomial.UnaryCheb.Poly,
+                    FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Basics,
+                    FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Division,
+                    FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Evaluation,
                     FnReps.Polynomial.UnaryCheb.Poly.Basics,
                     FnReps.Polynomial.UnaryCheb.Poly.Bernstein,
                     FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power,
@@ -40,6 +42,7 @@ Library
                     FnReps.Polynomial.UnaryCheb.Poly.Division,
                     FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding,
                     FnReps.Polynomial.UnaryCheb.Poly.Integration,
+                    FnReps.Polynomial.UnaryCheb.Poly.Newman,
                     FnReps.Polynomial.UnaryCheb.Poly.NonSmooth,
                     FnReps.Polynomial.UnaryCheb.Poly.SineCosine,
                     FnReps.Polynomial.UnaryCheb.Poly.SizeReduction,
@@ -54,6 +57,7 @@ Library
                     FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Division,
                     FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Integration
   exposed-modules:  
+                    FnReps.Polynomial.UnaryCheb.Poly,
                     FnReps.Polynomial.UnaryCheb.PolyBall,
                     FnReps.Polynomial.UnaryCheb.RealFn,
                     FnReps.Polynomial.UnaryPower.Poly

@@ -2,7 +2,7 @@ module FnReps.Polynomial.UnaryCheb.Poly.NonSmooth
 (sqrtAbsX, _sqrtAbsX8, _sqrtAbsX16, _sqrtAbsX32, _sqrtAbsX64,
  absX, _absX8, _absX16, _absX32, _absX64, _absX128,
  _absXU8, _absXU16, _absXU32, _absXU64, _absXU128,
- _absXshiftedU8, _absXshiftedU16, _absXshiftedU32, _absXshiftedU64, _absXshiftedU128
+ absXshifted, _absXshiftedU8, _absXshiftedU16, _absXshiftedU32, _absXshiftedU64, _absXshiftedU128
 )
 where
 
@@ -217,7 +217,7 @@ _absXU128 :: Poly
 _absXU128 = absX (prec 500) 127 (Interval (-1.0) 1.0)
 
 
-absX :: Precision -> Integer -> Interval Rational -> Poly
+absX :: Precision -> Degree -> Interval Rational -> Poly
 absX p d (Interval l r) 
     | 0 <= l = 
         error "absX should be called over a domain that contains 0 in its interior"
@@ -274,7 +274,7 @@ _absXshiftedU64 = absXshifted (prec 500) 63
 _absXshiftedU128 :: Poly
 _absXshiftedU128 = absXshifted (prec 500) 127
 
-absXshifted :: Precision -> Integer -> Poly
+absXshifted :: Precision -> Degree -> Poly
 absXshifted p d =
     maybeTrace
     (

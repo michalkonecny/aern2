@@ -114,7 +114,7 @@ lift2_DCT getDegree op (Poly termsA) (Poly termsB) =
     aT = coeffs2gridvalues cN termsA
     bT = coeffs2gridvalues cN termsB
     
-    cN = 2 ^ (1 + (integer $ integerLog2 $ max 1 (getDegree dA dB)))
+    cN = 2 ^ (1 + (integer $ integerLog2 $ max 1 (getDegree dA dB - 1)))
     dA = terms_degree termsA
     dB = terms_degree termsB
 
@@ -142,7 +142,7 @@ lift1_DCT getDegree op (Poly termsA) =
     
     aT = coeffs2gridvalues cN termsA
     
-    cN = 2 ^ (1 + (integer $ integerLog2 $ max 1 (getDegree dA)))
+    cN = 2 ^ (1 + (integer $ integerLog2 $ max 1 (getDegree dA - 1)))
     dA = terms_degree termsA
 
 
