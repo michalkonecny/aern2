@@ -130,7 +130,12 @@ derivative (IntPoly ts) = if Map.null ts' then fromList [(0,0)] else IntPoly ts'
                           ts' = Map.filterWithKey (\k _ -> k >= 0) $ Map.mapKeys (\k -> k - 1) $ Map.mapWithKey (\p c -> c*p) ts                
                       
 separablePart :: IntPoly -> IntPoly
-separablePart p = remIntPoly p (derivative p)
+separablePart p = 
+  fromFracPoly sepFrac
+  where
+  dpFrac = toFracPoly $ derivative p
+  pFrac = toFracPoly p
+  sepFrac = MP.quotPoly pFrac $ MP.gcdPoly pFrac dpFrac
                     
 normaliseFracList :: [(Integer,Rational)] -> [Rational]
 normaliseFracList xs = map ((lcmd*).snd) xs

@@ -8,6 +8,7 @@ setPrecision_ppoly,
 addToErrorTerm,
 breakpoints,
 dropAllErrors,
+piecesMeetingInterval,
 PPoly(..)
 )
 where
@@ -104,6 +105,19 @@ dropAllErrors :: PPoly -> PPoly
 dropAllErrors (PPoly pieces ov) = PPoly (map aux pieces) ov
   where
   aux (i,p) = (i, Poly.polyCentre p)
+  
+piecesMeetingInterval :: PPoly -> Rational -> Rational -> [(Interval Rational, Poly)]  
+piecesMeetingInterval (PPoly pieces _) l r =
+  filter (\(i,_) -> intervalsIntersect j i) pieces
+  where
+  j = Interval l r
+
+intervalsIntersect :: Interval Rational -> Interval Rational -> Bool
+intervalsIntersect (Interval l r) (Interval l' r') = 
+      (l  <= l' && r' <= r)
+   || (l  <= l' && l' <= r)
+   || (l  <= r' && r' <= r)
+   || (l' <= l  && r  <= r') 
                                 
 instance CanAddA (->) PPoly PPoly where
     type AddTypeA (->) PPoly PPoly = PPoly

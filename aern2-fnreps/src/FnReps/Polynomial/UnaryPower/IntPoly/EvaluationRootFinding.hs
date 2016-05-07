@@ -22,7 +22,7 @@ eval poly@(IntPoly ts) x = evalHornerAcc (degree poly) $ 0
 isolateRoots :: Rational -> Rational -> IntPoly -> [Interval Rational]
 isolateRoots l r p = aux l r lambda0 bs0 []
                      where
-                     separableP = remIntPoly p (derivative p)
+                     separableP = separablePart p
                      (lambda0,bs0) = initialBernsteinCoefs l r separableP
                      aux l' r' c bs zs = -- "zs" are "boundary zeroes" that would lead to issues in the root approximation phase 
                                         let vrs = signVars bs 
@@ -45,7 +45,7 @@ isolateRoots l r p = aux l r lambda0 bs0 []
 isolateRootsI :: IntPoly -> [Interval Rational]
 isolateRootsI p = aux (-1.0) 1.0 lambda0 bs0 []
                      where
-                     separableP = remIntPoly p (derivative p)
+                     separableP = separablePart p
                      (lambda0,bs0) = initialBernsteinCoefsI separableP
                      aux l' r' c bs zs = -- "zs" are "boundary zeroes" that would lead to issues in the root approximation phase 
                                         let vrs = signVars bs 

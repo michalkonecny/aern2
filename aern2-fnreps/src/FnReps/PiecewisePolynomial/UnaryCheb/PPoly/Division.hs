@@ -3,26 +3,50 @@ module FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Division
 initialApproximation,
 inverse,
 inverseWithInitP,
+inverseWithInitPP,
+inverseWithInitPP',
 inverseWithInitRawP,
 xInverse
 )
 where
+
+import qualified Prelude as Prelude
 
 import AERN2.Num
 import FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Basics
 import FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Evaluation
 import qualified FnReps.Polynomial.UnaryCheb.Poly as Poly
 
-initialApproximation :: PPoly -> PPoly
-initialApproximation f = linearPolygon ((fst $ head nodes) : (map snd nodes)) smallestOverlap
+import Debug.Trace (trace)
+
+shouldTrace :: Bool
+shouldTrace = True
+
+maybeTrace :: String -> a -> a
+maybeTrace 
+    | shouldTrace = trace
+    | otherwise = const id
+
+initialApproximation :: Rational -> PPoly -> PPoly
+initialApproximation threshold f = 
+  linearPolygon ((fst $ head nodes) : (map snd nodes)) smallestOverlap
   where
   nodes = refineUntilAccurate ((-1.0, 1/(eval f (mpBall $ -1))), (1.0, 1/(eval f (mpBall 1))))
   smallestOverlap = foldl1 min $ map (\((l,_), (r,_)) -> overlap (l,r)) nodes
-  pieceAccurate ((l,fl), (r,fr)) = 
-    let Interval _ err = abs $ range' (bits 100) (f*(lineSegment ((l,fl), (r,fr))) - 1)   -- TODO bits?
+  pieceAccurate ((l,fl), (r,fr)) =
+    maybeTrace 
+    (
+    "inspecting piece: "++show l ++ " " ++ show r++"\n" 
+    )
+    $
+    let Interval _ err = abs $ range' (bits 100) (f*(lineSegment ((l,fl), (r,fr))) - 1)   -- TODO bits? range'?
                                (Interval (mpBall l) (mpBall r))
     in
-      err < 0.5
+      maybeTrace
+    (
+    "error: "++show err
+    )
+      err < threshold
   refineUntilAccurate :: ((Rational,MPBall), (Rational,MPBall)) -> [((Rational, MPBall), (Rational, MPBall))]
   refineUntilAccurate p = 
     if pieceAccurate p == Just True then
@@ -59,20 +83,52 @@ inverseWithInitP :: PPoly -> PPoly -> Integer -> Integer -> (MPBall, PPoly)
 inverseWithInitP f f0 its pr = (err, raw)
   where
   raw = inverseWithInitRawP f f0 its pr
-  Interval _ err = abs $ range' (bits pr) (raw * f - 1) (Interval (mpBall $ -1) (mpBall 1))
+  Interval _ err = abs $ range' (bits pr) (raw * f - 1) (Interval (mpBall $ -1) (mpBall 1)) -- TODO range'?
+
+inverseWithInitPP :: PPoly -> PPoly -> Integer -> Integer -> ([MPBall], PPoly)
+inverseWithInitPP f f0 its pr = (errs, raw)
+  where
+  raw = inverseWithInitRawP f f0 its pr
+  errs = map 
+            (\(Interval l r, rf) -> 
+              let 
+              Interval _ err = abs $ range' (bits pr) (rf*f - 1) (Interval (mpBall $ l) (mpBall $ r))  
+              in err) 
+            $ ppoly_pieces raw
+
+inverseWithInitPP' :: PPoly -> PPoly -> Integer -> Integer -> ([MPBall], PPoly)
+inverseWithInitPP' f f0 its pr = (errs, raw)
+  where
+  raw = inverseWithInitRawP f f0 its pr
+  errs = map 
+            (\(Interval l r, rf) -> 
+              let 
+              Interval _ err = abs $ range' (bits pr) (rf*f - 1) (Interval (mpBall $ l) (mpBall $ r))
+              Interval minf _ = abs $ range (bits pr) f (Interval (mpBall $ l) (mpBall $ r))
+              in err/minf) 
+            $ ppoly_pieces raw
 
 inverseWithInit :: PPoly -> PPoly -> Integer -> PPoly
 inverseWithInit f f0 its = addToErrorTerm e $ dropAllErrors r
   where
   (e,r) = aux 100
-  aux pr = let (err,res) = inverseWithInitP f f0 its pr in
+  aux pr =  let (err,res) = inverseWithInitP f f0 its pr 
+            in
+            maybeTrace
+            (
+             "err: " ++ show err ++ "\n"++
+             "accuracy: "++ show (getAccuracy err) ++ "\n"++
+             "precision: "++show pr++"\n"++
+             "result precision: "++show (foldl1 min $ map (\(_,p) -> getPrecision p) $ ppoly_pieces res) ++ "\n"++
+             "target: "++ show (bits (2*its))
+             ) $
               if getAccuracy err > bits (2*its) then
                   (err, res)
               else
                   aux (2*pr) 
 
-inverse :: PPoly -> Integer -> PPoly
-inverse f = inverseWithInit f (initialApproximation f)
+inverse :: PPoly -> Rational -> Integer -> PPoly
+inverse f threshold = inverseWithInit f (initialApproximation threshold f)
 
 linSpline :: Integer -> PPoly
 linSpline n = linearPolygon (zipWith (\x y -> (x, mpBall y)) mirroredXs mirroredYs) (0.25*0.5^n) 

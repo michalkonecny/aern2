@@ -51,7 +51,8 @@ Library
                     FnReps.Polynomial.UnaryCheb.Poly.Newman,
                     FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Basics,
                     FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Evaluation,
-                    FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Division
+                    FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Division,
+                    FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Integration
   exposed-modules:  
                     FnReps.Polynomial.UnaryCheb.PolyBall,
                     FnReps.Polynomial.UnaryCheb.RealFn,
