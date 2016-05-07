@@ -34,8 +34,10 @@ eval :: PPoly -> MPBall -> MPBall
 eval (PPoly pieces _) x = 
    maybeTrace
    (
+   "eval\n"++
    "argument: " ++ show x ++ "\n" ++
    "pieces: " ++ show (filter (\(i,_) -> i `intersects` x) pieces) ++ "\n" ++
+   "pieces intervals: " ++ show (map fst (filter (\(i,_) -> i `intersects` x) pieces)) ++ "\n" ++
    "values: " ++ show (map (\p -> Poly.evalLipschitzOnBall p x) $ polys)++"\n"++
    "union: " ++ show (foldl1 union $ map (\p -> Poly.evalLipschitzOnBall p x) $ polys)++"\n"
    ) $
@@ -49,6 +51,7 @@ range :: Accuracy -> PPoly -> Interval MPBall -> Interval MPBall
 range ac (PPoly pieces _) (Interval l r) = 
      maybeTrace
      (
+       "range\n"++
        "argument: " ++ show (Interval l r) ++ "\n" ++
        "pieces: " ++ show (map (\j -> let Just x = intersection i j in x) $ filter (\j -> not $ isNothing $ intersection i j) $ map fst pieces) ++ "\n" ++
        "values: " ++ show (map (\(Just x) -> x) $ filter (not.isNothing) $ map rangePiece pieces)++"\n"++
@@ -70,8 +73,10 @@ range' :: Accuracy -> PPoly -> Interval MPBall -> Interval MPBall
 range' ac (PPoly pieces overlap) (Interval l r) = 
      maybeTrace
      (
+     "range'"++ "\n" ++
      "argument: "++ show (Interval l r) ++ "\n" ++
      "pieces: " ++ show (filter (not.isNothing) $ map ((liftM addOverlap).intersectionPiece) pieces) ++ "\n" ++
+     "pieces intervals: " ++ show (filter (not.isNothing) $ map ((liftM fst).(liftM addOverlap).intersectionPiece) pieces) ++ "\n" ++
      "values: " ++ show (map (\(Just x) -> x) $ filter (not.isNothing) $ map (liftM (\(j,p) -> (j,(rangePiece (j,p)))).(liftM addOverlap).intersectionPiece) pieces) ++ "\n"++
      "union: " ++ show (foldl1 union $ map (\(Just x) -> x) $ filter (not.isNothing) $ map ((liftM rangePiece).(liftM addOverlap).intersectionPiece) pieces) 
      )

@@ -7,7 +7,6 @@ module FnReps.Polynomial.UnaryPower.IntPoly.Basics
     normaliseFracList,
     derivative,
     remIntPoly,
-    separablePart,
     IntPoly(..),
     Degree,
     degree,
@@ -26,7 +25,9 @@ module FnReps.Polynomial.UnaryPower.IntPoly.Basics
     terms_filter,
     fromList,
     shiftRight,
-    shiftLeft
+    shiftLeft,
+    fromFracPoly,
+    toFracPoly
 )
 where
 
@@ -115,6 +116,30 @@ instance CanSub IntPoly IntPoly
 instance CanSubThis IntPoly IntPoly
 instance CanSubSameType IntPoly    
 
+{- some operator overloading for polynomials over Q -}
+
+instance CanMulA (->) (MP.Poly Rational) (MP.Poly Rational) where
+  type MulTypeA (->) (MP.Poly Rational) (MP.Poly Rational) = MP.Poly Rational
+  mulA (p,q) = MP.multPoly p q
+
+instance CanMulA (->) Rational (MP.Poly Rational) where
+  type MulTypeA (->) Rational (MP.Poly Rational) = MP.Poly Rational
+  mulA (c, p) = MP.scalePoly c p
+  
+instance CanAddA (->) (MP.Poly Rational) (MP.Poly Rational) where
+  type AddTypeA (->) (MP.Poly Rational) (MP.Poly Rational) = MP.Poly Rational
+  addA (p,q) = MP.addPoly p q
+  
+instance CanNegA (->) (MP.Poly Rational) where
+  type NegTypeA (->) (MP.Poly Rational) = MP.Poly Rational
+  negA p = MP.negatePoly p
+  
+instance HasEqA (->) (MP.Poly Rational) (MP.Poly Rational) where
+  type EqCompareTypeA (->) (MP.Poly Rational) (MP.Poly Rational) = Bool
+  equalToA (p, q) = undefined
+
+{- -}
+
 shiftRight :: Integer -> IntPoly -> IntPoly
 shiftRight n (IntPoly ts) = IntPoly $ Map.mapKeys (\p -> p + n) ts
 
@@ -128,14 +153,6 @@ derivative :: IntPoly -> IntPoly
 derivative (IntPoly ts) = if Map.null ts' then fromList [(0,0)] else IntPoly ts' 
                           where
                           ts' = Map.filterWithKey (\k _ -> k >= 0) $ Map.mapKeys (\k -> k - 1) $ Map.mapWithKey (\p c -> c*p) ts                
-                      
-separablePart :: IntPoly -> IntPoly
-separablePart p = 
-  fromFracPoly sepFrac
-  where
-  dpFrac = toFracPoly $ derivative p
-  pFrac = toFracPoly p
-  sepFrac = MP.quotPoly pFrac $ MP.gcdPoly pFrac dpFrac
                     
 normaliseFracList :: [(Integer,Rational)] -> [Rational]
 normaliseFracList xs = map ((lcmd*).snd) xs

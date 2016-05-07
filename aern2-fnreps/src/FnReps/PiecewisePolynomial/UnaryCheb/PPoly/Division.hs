@@ -20,7 +20,7 @@ import qualified FnReps.Polynomial.UnaryCheb.Poly as Poly
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
-shouldTrace = True
+shouldTrace = False
 
 maybeTrace :: String -> a -> a
 maybeTrace 
@@ -36,7 +36,7 @@ initialApproximation threshold f =
   pieceAccurate ((l,fl), (r,fr)) =
     maybeTrace 
     (
-    "inspecting piece: "++show l ++ " " ++ show r++"\n" 
+    "inspecting piece: "++show l ++ ", " ++ show r++"\n" 
     )
     $
     let Interval _ err = abs $ range' (bits 100) (f*(lineSegment ((l,fl), (r,fr))) - 1)   -- TODO bits? range'?
@@ -120,9 +120,10 @@ inverseWithInit f f0 its = addToErrorTerm e $ dropAllErrors r
              "accuracy: "++ show (getAccuracy err) ++ "\n"++
              "precision: "++show pr++"\n"++
              "result precision: "++show (foldl1 min $ map (\(_,p) -> getPrecision p) $ ppoly_pieces res) ++ "\n"++
-             "target: "++ show (bits (2*its))
+             "target: "++ show (normLog2Accuracy $ getNormLog err)
              ) $
-              if getAccuracy err > bits (2*its) then
+              if getNormLog err < getNormLog 1
+              && getAccuracy err > (normLog2Accuracy $ getNormLog err) then 
                   (err, res)
               else
                   aux (2*pr) 
