@@ -8,6 +8,7 @@ where
 
 import AERN2.Num
 import FnReps.Polynomial.UnaryPower.IntPoly.Basics
+import FnReps.Polynomial.UnaryPower.IntPoly.SignedSubresultant
 
 import qualified Data.Map as Map
 import qualified Prelude as Prelude
