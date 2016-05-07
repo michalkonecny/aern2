@@ -268,6 +268,13 @@ sampledRange l r depth p =
     samplePoints = [(l*i + r*(size - i))/size | i <- [0..size]]
     size = 2^depth
 
+
+optRange ::  Rational -> Rational -> Integer -> Accuracy -> Poly -> Interval MPBall
+optRange l r samplingDepth rootIsolationAccuracy p =
+    undefined
+    where
+    sRange = sampledRange l r samplingDepth p
+
 range :: Accuracy -> Poly -> Interval MPBall -> Interval MPBall
 range ac p (Interval l r) =
     maybeTrace ("range: ac = " ++ show ac) $
