@@ -27,7 +27,8 @@ module FnReps.Polynomial.UnaryPower.IntPoly.Basics
     shiftRight,
     shiftLeft,
     fromFracPoly,
-    toFracPoly
+    toFracPoly,
+    reduceCoefs
 )
 where
 
@@ -39,6 +40,8 @@ import qualified FnReps.Polynomial.UnaryPower.Poly.Basics as FP
 import Data.Ratio
 import Data.List
 import AERN2.Num
+
+import qualified Prelude as P
 
 data IntPoly = IntPoly Terms
 
@@ -133,10 +136,6 @@ instance CanAddA (->) (MP.Poly Rational) (MP.Poly Rational) where
 instance CanNegA (->) (MP.Poly Rational) where
   type NegTypeA (->) (MP.Poly Rational) = MP.Poly Rational
   negA p = MP.negatePoly p
-  
-instance HasEqA (->) (MP.Poly Rational) (MP.Poly Rational) where
-  type EqCompareTypeA (->) (MP.Poly Rational) (MP.Poly Rational) = Bool
-  equalToA (p, q) = undefined
 
 {- -}
 
@@ -153,6 +152,13 @@ derivative :: IntPoly -> IntPoly
 derivative (IntPoly ts) = if Map.null ts' then fromList [(0,0)] else IntPoly ts' 
                           where
                           ts' = Map.filterWithKey (\k _ -> k >= 0) $ Map.mapKeys (\k -> k - 1) $ Map.mapWithKey (\p c -> c*p) ts                
+
+reduceCoefs :: IntPoly -> IntPoly
+reduceCoefs (IntPoly ts) = 
+  IntPoly $ Map.map (\c -> c `P.div` tgcd) ts
+  where
+  cs = map snd $ terms_toList ts
+  tgcd = foldl' gcd (head cs) (tail cs)
                     
 normaliseFracList :: [(Integer,Rational)] -> [Rational]
 normaliseFracList xs = map ((lcmd*).snd) xs

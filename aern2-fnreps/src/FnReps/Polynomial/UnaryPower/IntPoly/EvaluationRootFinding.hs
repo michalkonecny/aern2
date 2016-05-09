@@ -2,7 +2,9 @@ module FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding
 (
 eval,
 isolateRoots,
-isolateRootsI
+isolateRootsSeparable,
+isolateRootsI,
+isolateRootsSeparableI
 )
 where
 
@@ -21,50 +23,59 @@ eval poly@(IntPoly ts) x = evalHornerAcc (degree poly) $ 0
                           evalHornerAcc k sm = evalHornerAcc (k - 1) $ x*sm + terms_lookupCoeff ts k
 
 isolateRoots :: Rational -> Rational -> IntPoly -> [Interval Rational]
-isolateRoots l r p = aux l r lambda0 bs0 []
-                     where
-                     separableP = separablePart p
-                     (lambda0,bs0) = initialBernsteinCoefs l r separableP
-                     aux l' r' c bs zs = -- "zs" are "boundary zeroes" that would lead to issues in the root approximation phase 
-                                        let vrs = signVars bs 
-                                            m    = 0.5*(r' + l')
-                                        in
-                                        if vrs == 0 then
-                                            []
-                                        else if vrs == 1 then
-                                            if l' `elem` zs || r' `elem` zs then -- if there's a zero on the boundary
-                                                let (c',bsL, bsR) = bernsteinCoefs l' r' m c bs in
-                                                    aux l' m c' bsL zs ++ aux m r' c' bsR zs -- subdivide until the boundary is free of zeroes
-                                            else
-                                                [Interval l' r']
-                                        else let (c',bsL, bsR) = bernsteinCoefs l' r' m c bs in
-                                            if fromJust (Map.lookup 0 bsR) == 0 then -- we have bsR_0 = b^{(p)}_0 = P(m)
-                                                [Interval m m] ++ aux l' m c' bsL (m : zs) ++ aux m r' c' bsR (m : zs)
-                                            else
-                                                aux l' m c' bsL zs ++ aux m r' c' bsR zs
+isolateRoots l r = (isolateRootsSeparable l r) . reduceCoefs . separablePart
+
+isolateRootsSeparable :: Rational -> Rational -> IntPoly -> [Interval Rational]
+isolateRootsSeparable l r p = 
+  aux l r lambda0 bs0 []
+  where
+  separableP = separablePart p
+  (lambda0,bs0) = initialBernsteinCoefs l r separableP
+  aux l' r' c bs zs = -- "zs" are "boundary zeroes" that would lead to issues in the root approximation phase 
+    let 
+      vrs = signVars bs 
+      m    = 0.5*(r' + l')
+    in
+    if vrs == 0 then
+        []
+    else if vrs == 1 then
+        if l' `elem` zs || r' `elem` zs then -- if there's a zero on the boundary
+            let (c',bsL, bsR) = bernsteinCoefs l' r' m c bs in
+                aux l' m c' bsL zs ++ aux m r' c' bsR zs -- subdivide until the boundary is free of zeroes
+        else
+            [Interval l' r']
+    else let (c',bsL, bsR) = bernsteinCoefs l' r' m c bs in
+        if fromJust (Map.lookup 0 bsR) == 0 then -- we have bsR_0 = b^{(p)}_0 = P(m)
+            [Interval m m] ++ aux l' m c' bsL (m : zs) ++ aux m r' c' bsR (m : zs)
+        else
+            aux l' m c' bsL zs ++ aux m r' c' bsR zs
 
 isolateRootsI :: IntPoly -> [Interval Rational]
-isolateRootsI p = aux (-1.0) 1.0 lambda0 bs0 []
-                     where
-                     separableP = separablePart p
-                     (lambda0,bs0) = initialBernsteinCoefsI separableP
-                     aux l' r' c bs zs = -- "zs" are "boundary zeroes" that would lead to issues in the root approximation phase 
-                                        let vrs = signVars bs 
-                                            m    = 0.5*(r' + l')
-                                        in
-                                        if vrs == 0 then
-                                            []
-                                        else if vrs == 1 then
-                                            if l' `elem` zs || r' `elem` zs then -- if there's a zero on the boundary
-                                                let (c',bsL, bsR) = bernsteinCoefs l' r' m c bs in
-                                                    aux l' m c' bsL zs ++ aux m r' c' bsR zs -- subdivide until the boundary is free of zeroes
-                                            else
-                                                [Interval l' r']
-                                        else let (c',bsL, bsR) = bernsteinCoefs l' r' m c bs in
-                                            if fromJust (Map.lookup 0 bsR) == 0 then -- we have bsR_0 = b^{(p)}_0 = P(m)
-                                                [Interval m m] ++ aux l' m c' bsL (m : zs) ++ aux m r' c' bsR (m : zs)
-                                            else
-                                                aux l' m c' bsL zs ++ aux m r' c' bsR zs
+isolateRootsI = isolateRootsSeparableI . reduceCoefs . separablePart
+
+isolateRootsSeparableI :: IntPoly -> [Interval Rational]
+isolateRootsSeparableI p = 
+  aux (-1.0) 1.0 lambda0 bs0 []
+  where
+  (lambda0,bs0) = initialBernsteinCoefsI p
+  aux l' r' c bs zs = -- "zs" are "boundary zeroes" that would lead to issues in the root approximation phase 
+    let 
+      vrs = signVars bs 
+      m   = 0.5*(r' + l')
+    in
+    if vrs == 0 then
+        []
+    else if vrs == 1 then
+      if l' `elem` zs || r' `elem` zs then -- if there's a zero on the boundary
+        let (c',bsL, bsR) = bernsteinCoefs l' r' m c bs in
+            aux l' m c' bsL zs ++ aux m r' c' bsR zs -- subdivide until the boundary is free of zeroes
+      else
+        [Interval l' r']
+    else let (c',bsL, bsR) = bernsteinCoefs l' r' m c bs in
+      if fromJust (Map.lookup 0 bsR) == 0 then -- we have bsR_0 = b^{(p)}_0 = P(m)
+          [Interval m m] ++ aux l' m c' bsL (m : zs) ++ aux m r' c' bsR (m : zs)
+      else
+          aux l' m c' bsL zs ++ aux m r' c' bsR zs
 
 signVars :: Terms -> Integer
 signVars ts = fst $ Map.foldl' (\(vrs,sg) c -> if c == 0 || sg == 0 || sgn c == sg then (vrs, if c /= 0 then sgn c else sg) else (vrs + 1, sgn c)) (0,0) ts

@@ -20,8 +20,7 @@ separablePart p =
   pFrac = toFracPoly p
   sepFrac = MP.quotPoly pFrac $ MP.gcdPoly pFrac dpFrac-}
 
-
-{- For this algoritm, compare Basu, Pollack, Roy, Prop 10.14 -}
+{- For this algorithm, compare Basu, Pollack, Roy, Prop 10.14 -}
 gcdAndgcdFreePart :: IntPoly -> IntPoly -> (IntPoly, IntPoly)
 gcdAndgcdFreePart p q = 
   (fromFracPoly $ justLookup deggcd sResP, fromFracPoly $ justLookup (deggcd - 1) sResV) 
