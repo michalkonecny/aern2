@@ -29,8 +29,7 @@ isolateRootsSeparable :: Rational -> Rational -> IntPoly -> [Interval Rational]
 isolateRootsSeparable l r p = 
   aux l r lambda0 bs0 []
   where
-  separableP = separablePart p
-  (lambda0,bs0) = initialBernsteinCoefs l r separableP
+  (lambda0,bs0) = initialBernsteinCoefs l r p
   aux l' r' c bs zs = -- "zs" are "boundary zeroes" that would lead to issues in the root approximation phase 
     let 
       vrs = signVars bs 

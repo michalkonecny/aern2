@@ -28,7 +28,8 @@ module FnReps.Polynomial.UnaryPower.IntPoly.Basics
     shiftLeft,
     fromFracPoly,
     toFracPoly,
-    reduceCoefs
+    reduceCoefs,
+    reduceTerms
 )
 where
 
@@ -154,8 +155,11 @@ derivative (IntPoly ts) = if Map.null ts' then fromList [(0,0)] else IntPoly ts'
                           ts' = Map.filterWithKey (\k _ -> k >= 0) $ Map.mapKeys (\k -> k - 1) $ Map.mapWithKey (\p c -> c*p) ts                
 
 reduceCoefs :: IntPoly -> IntPoly
-reduceCoefs (IntPoly ts) = 
-  IntPoly $ Map.map (\c -> c `P.div` tgcd) ts
+reduceCoefs (IntPoly ts) = IntPoly $ reduceTerms ts
+
+reduceTerms :: Terms -> Terms
+reduceTerms ts = 
+  Map.map (\c -> c `P.div` tgcd) ts
   where
   cs = map snd $ terms_toList ts
   tgcd = foldl' gcd (head cs) (tail cs)
