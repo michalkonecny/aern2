@@ -2,6 +2,7 @@
 module FnReps.Polynomial.UnaryPower.IntPoly.Tests where
 
 import AERN2.Num -- alternative Prelude
+import qualified Prelude as P
 
 import qualified Data.List as List
 import Data.Ratio
@@ -61,15 +62,15 @@ instance Arbitrary IntPolyWithRoots where
     arbitrary =
         do
         -- a number of rational roots:
-        rootsPre <- longerListOf 5 arbitraryRational
+        rootsPre <- sizedListOf 1 0.25 arbitraryRational
         let roots = List.nub $ List.sort rootsPre -- remove duplicate roots
         -- multiplicities for the roots:
         multiplicities <- vectorOf (length roots) arbitrary 
         -- TODO: generate binomials with no real roots
         return $ roots2poly $ zip roots multiplicities
         where
-        longerListOf offset gen = 
-            sized $ \s -> resize (int (offset+(integer s))) $ listOf (resize s gen)
+        sizedListOf offset scaling gen = 
+            sized $ \s -> resize (P.round $ offset+(integer s)*scaling) $ listOf (resize s gen)
         roots2poly roots =
             IntPolyWithRoots poly denom roots
             where
@@ -97,8 +98,8 @@ newtype RootMultiplicity = RootMultiplicity Integer
 instance Arbitrary RootMultiplicity
     where
     arbitrary = 
-        growingElements $ 
-            map RootMultiplicity [i | i <- [1..10], _repetition <- [1..(11-i)*2-1]]
+        frequency $ 
+            [(int $ (4-i)^3, elements [RootMultiplicity i]) | i <- [1..4]]
             -- 1 is more likely than 2 etc.
 
 
