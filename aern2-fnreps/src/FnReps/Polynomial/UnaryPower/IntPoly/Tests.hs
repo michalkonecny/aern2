@@ -8,6 +8,7 @@ import qualified Data.List as List
 import Data.Ratio
 
 import Test.QuickCheck
+import Test.QuickCheck.Random (mkQCGen)
 
 import FnReps.Polynomial.UnaryPower.IntPoly.Basics
 import FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding
@@ -20,6 +21,10 @@ data IntPolyWithRoots =
         intPolyWithRoots_rootsSorted :: [(Rational, RootMultiplicity)]
     }
     deriving (Show)
+
+testIsolateRootsRepeatable :: Int -> IO ()
+testIsolateRootsRepeatable seed =
+    quickCheckWith (stdArgs { replay = Just (mkQCGen seed, seed) }) (verbose isolateRootsIsCorrect)
 
 isolateRootsIsCorrect :: IntPolyWithRoots -> Property
 isolateRootsIsCorrect (IntPolyWithRoots intpoly _denom rootsMSorted) =
