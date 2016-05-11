@@ -22,6 +22,7 @@ Library
         containers >= 0.3,
         aern2-num == 0.1,
         arithmoi,
+        QuickCheck,
         polynomial
   extensions:
                     Arrows,
@@ -52,7 +53,8 @@ Library
                     FnReps.Polynomial.UnaryPower.IntPoly.SignedSubresultant,
                     FnReps.Polynomial.UnaryPower.Poly.Basics,
                     FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding,
-                    FnReps.Polynomial.UnaryPower.Poly.Power2Cheb
+                    FnReps.Polynomial.UnaryPower.Poly.Power2Cheb,
+                    FnReps.Polynomial.UnaryPower.IntPoly.Tests
   exposed-modules:  
                     FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Benchmarks,
                     FnReps.Polynomial.UnaryCheb.Poly,
@@ -65,6 +67,7 @@ executable aern2-fnreps
                    base >= 4.4,
                    containers >= 0.3,
                    arithmoi,
+                   QuickCheck,
                    aern2-num ==0.1,
                    aern2-fnreps ==0.1
   extensions:
