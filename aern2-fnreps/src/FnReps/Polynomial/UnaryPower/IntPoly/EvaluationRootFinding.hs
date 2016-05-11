@@ -39,8 +39,11 @@ isolateRootsSeparable l r p =
         []
     else if vrs == 1 then
         if l' `elem` zs || r' `elem` zs then -- if there's a zero on the boundary
-            let (c',bsL, bsR) = bernsteinCoefs l' r' m c bs in
-                aux l' m c' bsL zs ++ aux m r' c' bsR zs -- subdivide until the boundary is free of zeroes
+            let (c',bsL, bsR) = bernsteinCoefs l' r' m c bs in -- subdivide until the boundary is free of zeroes
+              if fromJust (Map.lookup 0 bsR) == 0 then -- we have bsR_0 = b^{(p)}_0 = P(m)
+                [Interval m m] ++ aux l' m c' bsL zs ++ aux m r' c' bsR zs 
+              else
+                aux l' m c' bsL zs ++ aux m r' c' bsR zs
         else
             [Interval l' r']
     else let (c',bsL, bsR) = bernsteinCoefs l' r' m c bs in
@@ -66,8 +69,11 @@ isolateRootsSeparableI p =
         []
     else if vrs == 1 then
       if l' `elem` zs || r' `elem` zs then -- if there's a zero on the boundary
-        let (c',bsL, bsR) = bernsteinCoefs l' r' m c bs in
-            aux l' m c' bsL zs ++ aux m r' c' bsR zs -- subdivide until the boundary is free of zeroes
+        let (c',bsL, bsR) = bernsteinCoefs l' r' m c bs in -- subdivide until the boundary is free of zeroes
+            if fromJust (Map.lookup 0 bsR) == 0 then  -- we have bsR_0 = b^{(p)}_0 = P(m)
+              [Interval m m] ++ aux l' m c' bsL zs ++ aux m r' c' bsR zs 
+            else
+              aux l' m c' bsL zs ++ aux m r' c' bsR zs
       else
         [Interval l' r']
     else let (c',bsL, bsR) = bernsteinCoefs l' r' m c bs in

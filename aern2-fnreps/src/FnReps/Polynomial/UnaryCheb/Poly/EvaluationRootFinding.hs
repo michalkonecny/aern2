@@ -7,6 +7,9 @@ module FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding
     , shiftDomainBy
     , evalExample1, evalExample2
     , composeExample1
+    
+    --for testing:
+    , markovBound
 )
 where
 
@@ -256,6 +259,9 @@ evalLipschitzOnBall p@(Poly terms) b =
     (b_centre, b_errorBall) = getCentreAndErrorBall b
     lp = sum (map abs $ terms_coeffs terms) * (terms_degree terms)^2
 
+markovBound :: Poly -> MPBall
+markovBound (Poly terms) = sum (map abs $ terms_coeffs terms) * (terms_degree terms)^2
+
 sampledRange ::  Rational -> Rational -> Integer -> Poly -> Interval MPBall
 sampledRange l r depth p =
     Interval minValue maxValue
@@ -267,13 +273,6 @@ sampledRange l r depth p =
     samplePoints :: [Rational]
     samplePoints = [(l*i + r*(size - i))/size | i <- [0..size]]
     size = 2^depth
-
-
-optRange ::  Rational -> Rational -> Integer -> Accuracy -> Poly -> Interval MPBall
-optRange l r samplingDepth rootIsolationAccuracy p =
-    undefined
-    where
-    sRange = sampledRange l r samplingDepth p
 
 range :: Accuracy -> Poly -> Interval MPBall -> Interval MPBall
 range ac p (Interval l r) =
@@ -295,6 +294,7 @@ approxRange l r ac p =
         ++ map (evalLipschitzOnBall p) criticalPoints
     minValue = foldl1 min criticalValues
     maxValue = foldl1 max criticalValues
+
 
 {-
     The following function is not implemented yet.  It is not yet clear whether it will be needed. 
