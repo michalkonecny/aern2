@@ -4,7 +4,11 @@ eval,
 isolateRoots,
 isolateRootsSeparable,
 isolateRootsI,
-isolateRootsSeparableI
+isolateRootsSeparableI,
+
+bernsteinCoefs,
+initialBernsteinCoefs,
+signVars
 )
 where
 
@@ -90,16 +94,18 @@ signVars ts = fst $ Map.foldl' (\(vrs,sg) c -> if c == 0 || sg == 0 || sgn c == 
 -- Input: l,m and Polynomial P.
 -- Output: some positive integer constant c and coefficients of c*P in Bernstein basis on [l,r].
 initialBernsteinCoefs :: Rational -> Rational -> IntPoly -> (Integer, Terms)
-initialBernsteinCoefs l r p = (lambda, bs)
-                         where
-                         d = degree p
-                         IntPoly csI = transform (-1) 1 p
-                         binoms = Map.fromList [(k, binom d (d - k)) | k <- [0.. d]]
-                         bsFrac = Map.mapWithKey (\k c -> (toRational c) / (toRational $ fromJust $ Map.lookup k binoms)) csI
-                         lambdaI = Map.foldl' lcm 1 (Map.map denominator bsFrac)
-                         bsI = Map.mapKeys (\k -> d - k) $ Map.mapWithKey (\k c -> lambdaI*c `Prelude.div` (fromJust $ Map.lookup k binoms)) csI
-                         (lambdaL,_,bsL) = bernsteinCoefs (-1.0) 1.0 l lambdaI bsI
-                         (lambda, bs, _) = bernsteinCoefs l 1.0 r lambdaL bsL
+initialBernsteinCoefs l r p = 
+  (lambda, bs)
+  where
+  lI = if l == 1.0 then 2 else 1
+  d = degree p
+  IntPoly csI = transform (-1) (integer lI) p
+  binoms = Map.fromList [(k, binom d (d - k)) | k <- [0.. d]]
+  bsFrac = Map.mapWithKey (\k c -> (toRational c) / (toRational $ fromJust $ Map.lookup k binoms)) csI
+  lambdaI = Map.foldl' lcm 1 (Map.map denominator bsFrac)
+  bsI = Map.mapKeys (\k -> d - k) $ Map.mapWithKey (\k c -> lambdaI*c `Prelude.div` (fromJust $ Map.lookup k binoms)) csI
+  (lambdaL,_,bsL) = bernsteinCoefs (-1.0) (rational lI) l lambdaI bsI
+  (lambda, bs, _) = bernsteinCoefs l (rational lI) r lambdaL bsL
 
 -- Input: l,m and Polynomial P.
 -- Output: some positive integer constant c and coefficients of c*P in Bernstein basis on [-1,1].
