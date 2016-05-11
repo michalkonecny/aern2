@@ -16,9 +16,34 @@ data IntPolyWithRoots =
     {
         intPolyWithRoots_poly :: IntPoly,
         intPolyWithRoots_denominator :: Integer,
-        intPolyWithRoots_roots :: [Rational]
+        intPolyWithRoots_rootsSorted :: [(Rational, RootMultiplicity)]
     }
     deriving (Show)
+
+isolateRootsIsCorrect :: IntPolyWithRoots -> Property
+isolateRootsIsCorrect (IntPolyWithRoots intpoly _denom rootsMSorted) =
+    allRootsContainedInResult 
+    .&&. 
+    eachIntervalContainsRoot
+    where
+    allRootsContainedInResult =
+        and [ inResult root | root <- rootsSorted ]
+    inResult root =
+        or [ root `containedIn` interval | interval <- isolateRootsResult ]
+    
+    eachIntervalContainsRoot =
+        and [ hasRoot interval | interval <- isolateRootsResult ]
+    hasRoot interval =
+        or [ root `containedIn` interval | root <- rootsSorted ]
+    
+    a `containedIn` (Interval l r) = l <= a && a <= r
+          
+    isolateRootsResult = isolateRoots l r intpoly
+        where
+        l = -1 + (minimum rootsSorted)
+        r = 1 + (maximum rootsSorted)
+     
+    rootsSorted = map fst rootsMSorted
 
 {-
     Selection of real polynomials + their roots.
@@ -40,21 +65,21 @@ instance Arbitrary IntPolyWithRoots where
         let roots = List.nub $ List.sort rootsPre -- remove duplicate roots
         -- multiplicities for the roots:
         multiplicities <- vectorOf (length roots) arbitrary 
-        let rootsM = applyMuliplicities multiplicities roots
         -- TODO: generate binomials with no real roots
-        return $ roots2poly rootsM
+        return $ roots2poly $ zip roots multiplicities
         where
-        applyMuliplicities (RootMultiplicity m:ms) (r:rs) =
-            (replicate (int m) r) ++ (applyMuliplicities ms rs)
-        applyMuliplicities _ _ = []
         longerListOf offset gen = 
             sized $ \s -> resize (int (offset+(integer s))) $ listOf (resize s gen)
         roots2poly roots =
             IntPolyWithRoots poly denom roots
             where
             poly = List.foldl' (*) (fromList [(0,1)]) monomials
-            monomials = map (\r -> fromList [(0, numerator $ -r*denom), (1,denom)]) roots
-            denominators = map denominator roots
+            monomials = concat $ map monoms roots
+                where
+                monoms (root, RootMultiplicity i) = 
+                    replicate (int i) $ 
+                        fromList [(1,denom), (0, numerator $ -root*denom)] -- (x - root)^i
+            denominators = map (denominator . fst) roots
             denom = foldl lcm 1 denominators 
             
 
