@@ -22,9 +22,15 @@ data IntPolyWithRoots =
     }
     deriving (Show)
 
-testIsolateRootsRepeatable :: Int -> IO ()
-testIsolateRootsRepeatable seed =
-    quickCheckWith (stdArgs { replay = Just (mkQCGen seed, seed) }) (verbose isolateRootsIsCorrect)
+testIsolateRootsRepeatable :: Integer -> Bool -> IO ()
+testIsolateRootsRepeatable seedI isVerbose 
+    | isVerbose =
+        verboseCheckWith args isolateRootsIsCorrect
+    | otherwise =
+        quickCheckWith args isolateRootsIsCorrect
+    where
+    seed = int seedI
+    args = stdArgs { replay = Just (mkQCGen seed, seed) }
 
 isolateRootsIsCorrect :: IntPolyWithRoots -> Property
 isolateRootsIsCorrect (IntPolyWithRoots intpoly _denom rootsMSorted) =
