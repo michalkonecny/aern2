@@ -13,6 +13,8 @@ import Test.QuickCheck.Random (mkQCGen)
 import FnReps.Polynomial.UnaryPower.IntPoly.Basics
 import FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding
 
+import Debug.Trace
+
 data IntPolyWithRoots =
     IntPolyWithRoots
     {
@@ -30,30 +32,44 @@ testIsolateRootsRepeatable seedI isVerbose
         quickCheckWith args isolateRootsIsCorrect
     where
     seed = int seedI
-    args = stdArgs { replay = Just (mkQCGen seed, seed) }
+    args = stdArgs { replay = Just (mkQCGen seed, int 1), maxSuccess = int 100 }
 
 isolateRootsIsCorrect :: IntPolyWithRoots -> Property
 isolateRootsIsCorrect (IntPolyWithRoots intpoly _denom rootsMSorted) =
-    allRootsContainedInResult 
-    .&&. 
-    eachIntervalContainsRoot
+--    trace ("isolateRootsIsCorrect: "
+--        ++ "\n intpoly = " ++ show intpoly
+--        ++ "\n rootsSorted = " ++ show rootsSorted
+--        ++ "\n isolateRootsResult = " ++ show isolateRootsResult
+--    ) $
+    allRootsContainedInResult
+    .&&.
+    eachIntervalContainsOneRoot
     where
     allRootsContainedInResult =
         and [ inResult root | root <- rootsSorted ]
     inResult root =
         or [ root `containedIn` interval | interval <- isolateRootsResult ]
     
-    eachIntervalContainsRoot =
-        and [ hasRoot interval | interval <- isolateRootsResult ]
-    hasRoot interval =
-        or [ root `containedIn` interval | root <- rootsSorted ]
+    eachIntervalContainsOneRoot =
+        and [ hasOneRoot interval | interval <- isolateRootsResult ]
+    hasOneRoot interval =
+        oneTrue [ root `containedIn` interval | root <- rootsSorted ]
+        where
+        oneTrue [] = False
+        oneTrue (x:xs) 
+            | x = and (map not xs)
+            | otherwise = oneTrue xs
     
+    containedIn :: Rational -> (Interval Rational) -> Bool
     a `containedIn` (Interval l r) = l <= a && a <= r
           
     isolateRootsResult = isolateRoots l r intpoly
         where
-        l = -1 + (minimum rootsSorted)
-        r = 1 + (maximum rootsSorted)
+        l = -1 + (minimum rootsSorted')
+        r = 1 + (maximum rootsSorted')
+        rootsSorted' 
+            | null rootsSorted = [0.0]
+            | otherwise = rootsSorted
      
     rootsSorted = map fst rootsMSorted
 
@@ -76,7 +92,7 @@ instance Arbitrary IntPolyWithRoots where
         rootsPre <- sizedListOf 1 0.25 arbitraryRational
         let roots = List.nub $ List.sort rootsPre -- remove duplicate roots
         -- multiplicities for the roots:
-        multiplicities <- vectorOf (length roots) arbitrary 
+        multiplicities <- vectorOf (length (0.0 : roots)) arbitrary 
         -- TODO: generate binomials with no real roots
         return $ roots2poly $ zip roots multiplicities
         where
@@ -92,7 +108,7 @@ instance Arbitrary IntPolyWithRoots where
                     replicate (int i) $ 
                         fromList [(1,denom), (0, numerator $ -root*denom)] -- (x - root)^i
             denominators = map (denominator . fst) roots
-            denom = foldl lcm 1 denominators 
+            denom = List.foldl' lcm 1 denominators 
             
 
 arbitraryRational :: Gen Rational
