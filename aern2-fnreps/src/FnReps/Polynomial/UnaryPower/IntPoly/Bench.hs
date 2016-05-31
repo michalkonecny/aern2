@@ -24,13 +24,13 @@ benchMain = defaultMain
     [
        bgroup "num of roots" 
         [
-            bench (show i) $ nfIO (benchmarkRootIsolationByRootCount i)
+            bench (show i) $ nfIO (benchmarkRootIsolationByRootMultiSetSize i)
             | i <- [1..10]
         ]
     ]
 
-benchmarkRootIsolationByRootCount :: Integer -> IO [(Rational, Rational)]
-benchmarkRootIsolationByRootCount numOfRoots =
+benchmarkRootIsolationByRootMultiSetSize :: Integer -> IO [(Rational, Rational)]
+benchmarkRootIsolationByRootMultiSetSize rootMultiSetSize =
     do
     index <- randomRIO (1,100)
     return $ runWithIndex index
@@ -40,7 +40,7 @@ benchmarkRootIsolationByRootCount numOfRoots =
 --        integer $ length isolateRootsResult
         where
         (IntPolyWithRoots intpoly _denom rootsMSorted) = 
-            (polysOfSize numOfRoots 100) !!! index 
+            (polysWithRootMultiSetSize rootMultiSetSize 100) !!! index 
         rootsSorted = map fst rootsMSorted
         isolateRootsResult = isolateRoots l r intpoly
             where
@@ -50,25 +50,23 @@ benchmarkRootIsolationByRootCount numOfRoots =
                 | null rootsSorted = [0.0]
                 | otherwise = rootsSorted
         
-    
-
-polysOfSize :: Integer -> Integer -> [IntPolyWithRoots]
-polysOfSize numOfRoots coeffSize =
+polysWithRootMultiSetSize :: Integer -> Integer -> [IntPolyWithRoots]
+polysWithRootMultiSetSize rootMultiSetSize coeffSize =
     map (roots2poly) rootsList
     where
     rootsList =
         map genOne [1..]
         where
         genOne n =
-            unGen (arbitraryRootsWith numOfRoots coeffSize) qcGen (int n)
+            unGen (arbitraryRootMultiSet rootMultiSetSize coeffSize) qcGen (int n)
     qcGen = mkQCGen (int 148548830)
     
-arbitraryRootsWith :: Integer -> Integer -> Gen [(Rational, RootMultiplicity)]
-arbitraryRootsWith numOfRoots coeffSize =
+arbitraryRootMultiSet :: Integer -> Integer -> Gen [(Rational, RootMultiplicity)]
+arbitraryRootMultiSet rootMultiSetSize coeffSize =
     do
-    roots <- vectorOf (int numOfRoots) (resize (int coeffSize) arbitraryRational) 
+    roots <- vectorOf (int rootMultiSetSize) (resize (int coeffSize) arbitraryRational) 
     multiplicities <- vectorOf (length (roots)) arbitrary
-    return $ trimToOnly numOfRoots $ zip roots multiplicities
+    return $ trimToOnly rootMultiSetSize $ zip roots multiplicities
     where
     trimToOnly _n [] = []
     trimToOnly 0 _ = []
