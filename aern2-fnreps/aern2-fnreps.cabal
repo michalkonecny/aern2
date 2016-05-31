@@ -23,7 +23,9 @@ Library
         aern2-num == 0.1,
         arithmoi,
         QuickCheck,
-        polynomial
+        polynomial,
+        random,
+        criterion
   extensions:
                     Arrows,
                     FlexibleContexts,
@@ -53,16 +55,17 @@ Library
                     FnReps.Polynomial.UnaryPower.IntPoly.SignedSubresultant,
                     FnReps.Polynomial.UnaryPower.Poly.Basics,
                     FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding,
-                    FnReps.Polynomial.UnaryPower.Poly.Power2Cheb,
-                    FnReps.Polynomial.UnaryPower.IntPoly.Tests
+                    FnReps.Polynomial.UnaryPower.Poly.Power2Cheb
   exposed-modules:  
                     FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Benchmarks,
                     FnReps.Polynomial.UnaryCheb.Poly,
                     FnReps.Polynomial.UnaryCheb.PolyBall,
                     FnReps.Polynomial.UnaryCheb.RealFn,
-                    FnReps.Polynomial.UnaryPower.Poly
+                    FnReps.Polynomial.UnaryPower.Poly,
+                    FnReps.Polynomial.UnaryPower.IntPoly.Tests,
+                    FnReps.Polynomial.UnaryPower.IntPoly.Bench
 
-executable aern2-fnreps
+executable aern2-fnreps-ops
   build-depends:   
                    base >= 4.4,
                    containers >= 0.3,
@@ -80,5 +83,21 @@ executable aern2-fnreps
                     TypeOperators
   hs-source-dirs:  main
   ghc-options:     -Wall -rtsopts
-  main-is:         Main.hs
+  main-is:         fnreps-ops.hs
+
+executable aern2-rootIsolation-bench
+  build-depends:   
+                   base >= 4.4,
+                   aern2-fnreps ==0.1
+  extensions:
+                    Arrows,
+                    FlexibleContexts,
+                    FlexibleInstances,
+                    MultiParamTypeClasses,
+                    RebindableSyntax,
+                    TypeFamilies,
+                    TypeOperators
+  hs-source-dirs:  main
+  ghc-options:     -Wall -rtsopts
+  main-is:         rootIsolation-bench.hs
 

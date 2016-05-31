@@ -98,18 +98,20 @@ instance Arbitrary IntPolyWithRoots where
         where
         sizedListOf offset scaling gen = 
             sized $ \s -> resize (P.round $ offset+(integer s)*scaling) $ listOf (resize s gen)
-        roots2poly roots =
-            IntPolyWithRoots poly denom roots
-            where
-            poly = List.foldl' (*) (fromList [(0,1)]) monomials
-            monomials = concat $ map monoms roots
-                where
-                monoms (root, RootMultiplicity i) = 
-                    replicate (int i) $ 
-                        fromList [(1,denom), (0, numerator $ -root*denom)] -- (x - root)^i
-            denominators = map (denominator . fst) roots
-            denom = List.foldl' lcm 1 denominators 
-            
+
+roots2poly :: [(Rational, RootMultiplicity)] -> IntPolyWithRoots
+roots2poly roots =
+    IntPolyWithRoots poly denom roots
+    where
+    poly = List.foldl' (*) (fromList [(0,1)]) monomials
+    monomials = concat $ map monoms roots
+        where
+        monoms (root, RootMultiplicity i) = 
+            replicate (int i) $ 
+                fromList [(1,denom), (0, numerator $ -root*denom)] -- (x - root)^i
+    denominators = map (denominator . fst) roots
+    denom = List.foldl' lcm 1 denominators 
+    
 
 arbitraryRational :: Gen Rational
 arbitraryRational =
