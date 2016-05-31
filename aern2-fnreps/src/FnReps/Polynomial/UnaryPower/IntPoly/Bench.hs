@@ -25,19 +25,25 @@ benchMain = defaultMain
        bgroup "rootMultiSetSize" 
         [
             bench (show i) $ nfIO (benchmarkRootIsolationByRootMultiSetSize i)
-            | i <- [1..10]
+            | i <- [1..6]
         ]
     ,
        bgroup "rootSetSize" 
         [
             bench (show i) $ nfIO (benchmarkRootIsolationByRootSetSize i)
-            | i <- [1..10]
+            | i <- [1..6]
+        ]
+    ,
+       bgroup "oneNRoot3OneRoots" 
+        [
+            bench (show i) $ nfIO (benchmarkRootIsolationOneNRoot3OneRoots i)
+            | i <- [1..6]
         ]
     ,
        bgroup "oneNRootNOneRoots" 
         [
             bench (show i) $ nfIO (benchmarkRootIsolationOneNRootNOneRoots i)
-            | i <- [1..10]
+            | i <- [1..6]
         ]
     ]
 
@@ -48,6 +54,10 @@ benchmarkRootIsolationByRootSetSize rootSetSize =
 benchmarkRootIsolationOneNRootNOneRoots :: Integer -> IO [(Rational, Rational)]
 benchmarkRootIsolationOneNRootNOneRoots n =
     benchmarkRootIsolationUsingPolys $ polysOneNRootNOneRoots n 100
+    
+benchmarkRootIsolationOneNRoot3OneRoots :: Integer -> IO [(Rational, Rational)]
+benchmarkRootIsolationOneNRoot3OneRoots n =
+    benchmarkRootIsolationUsingPolys $ polysOneNRoot3OneRoots n 100
     
 benchmarkRootIsolationByRootMultiSetSize :: Integer -> IO [(Rational, Rational)]
 benchmarkRootIsolationByRootMultiSetSize rootMultiSetSize =
@@ -81,6 +91,10 @@ polysWithRootSetSize rootSetSize coeffSize =
 polysOneNRootNOneRoots :: Integer -> Integer -> [IntPolyWithRoots]
 polysOneNRootNOneRoots n coeffSize =
     polysFromGen $ arbitraryOneNRootNOneRoots n coeffSize
+
+polysOneNRoot3OneRoots :: Integer -> Integer -> [IntPolyWithRoots]
+polysOneNRoot3OneRoots n coeffSize =
+    polysFromGen $ arbitraryOneNRoot3OneRoots n coeffSize
 
 polysWithRootMultiSetSize :: Integer -> Integer -> [IntPolyWithRoots]
 polysWithRootMultiSetSize rootMultiSetSize coeffSize =
@@ -116,6 +130,19 @@ arbitraryOneNRootNOneRoots n coeffSize =
         where
         rest =
             map (\r -> (r, RootMultiplicity 1)) $ take (int n) $ List.nub roots
+    
+arbitraryOneNRoot3OneRoots :: Integer -> Integer -> Gen [(Rational, RootMultiplicity)]
+arbitraryOneNRoot3OneRoots n coeffSize =
+    do
+    roots <- vectorOf (int 6) (resize (int coeffSize) arbitraryRational)
+    return $ trimAndAddMultiplicities $ List.nub roots
+    where
+    trimAndAddMultiplicities [] = error "in arbitraryOneNRootNOneRoots" -- no non-exhaustive matches warning
+    trimAndAddMultiplicities (r1 : roots) =
+        (r1, RootMultiplicity n) : rest
+        where
+        rest =
+            map (\r -> (r, RootMultiplicity 1)) $ take (int 3) $ List.nub roots
     
 arbitraryRootMultiSet :: Integer -> Integer -> Gen [(Rational, RootMultiplicity)]
 arbitraryRootMultiSet rootMultiSetSize coeffSize =
