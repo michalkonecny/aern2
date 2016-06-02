@@ -1,12 +1,14 @@
 module FnReps.Polynomial.UnaryPower.IntPoly.Bench where
 
 import AERN2.Num -- alternative Prelude
---import qualified Prelude as P
+import qualified Prelude as P
 
 import qualified Data.List as List
 --import Data.Ratio
 
 import System.Random (randomRIO)
+
+import Math.NumberTheory.Logarithms (integerLog2)
 
 import Criterion.Main
 
@@ -14,7 +16,7 @@ import Test.QuickCheck
 import Test.QuickCheck.Random (mkQCGen)
 import Test.QuickCheck.Gen (Gen(..))
 
---import FnReps.Polynomial.UnaryPower.IntPoly.Basics
+import FnReps.Polynomial.UnaryPower.IntPoly.Basics
 import FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding (isolateRoots)
 
 import FnReps.Polynomial.UnaryPower.IntPoly.Tests
@@ -49,19 +51,19 @@ benchMain = defaultMain
 
 benchmarkRootIsolationByRootSetSize :: Integer -> IO [(Rational, Rational)]
 benchmarkRootIsolationByRootSetSize rootSetSize =
-    benchmarkRootIsolationUsingPolys $ polysWithRootSetSize rootSetSize 100
+    benchmarkRootIsolationUsingPolys $ polysWithRootSetSize rootSetSize 7
     
 benchmarkRootIsolationOneNRootNOneRoots :: Integer -> IO [(Rational, Rational)]
 benchmarkRootIsolationOneNRootNOneRoots n =
-    benchmarkRootIsolationUsingPolys $ polysOneNRootNOneRoots n 100
+    benchmarkRootIsolationUsingPolys $ polysOneNRootNOneRoots n 7
     
 benchmarkRootIsolationOneNRoot3OneRoots :: Integer -> IO [(Rational, Rational)]
 benchmarkRootIsolationOneNRoot3OneRoots n =
-    benchmarkRootIsolationUsingPolys $ polysOneNRoot3OneRoots n 100
+    benchmarkRootIsolationUsingPolys $ polysOneNRoot3OneRoots n 7
     
 benchmarkRootIsolationByRootMultiSetSize :: Integer -> IO [(Rational, Rational)]
 benchmarkRootIsolationByRootMultiSetSize rootMultiSetSize =
-    benchmarkRootIsolationUsingPolys $ polysWithRootMultiSetSize rootMultiSetSize 100
+    benchmarkRootIsolationUsingPolys $ polysWithRootMultiSetSize rootMultiSetSize 7
     
 benchmarkRootIsolationUsingPolys :: 
     [IntPolyWithRoots] -> IO [(Rational, Rational)]
@@ -86,24 +88,24 @@ benchmarkRootIsolationUsingPolys polys =
         
 polysWithRootSetSize :: Integer -> Integer -> [IntPolyWithRoots]
 polysWithRootSetSize rootSetSize coeffSize =
-    polysFromGen $ arbitraryRootSet rootSetSize coeffSize
+    polysFromGen coeffSize $ arbitraryRootSet rootSetSize  (10*coeffSize)
 
 polysOneNRootNOneRoots :: Integer -> Integer -> [IntPolyWithRoots]
 polysOneNRootNOneRoots n coeffSize =
-    polysFromGen $ arbitraryOneNRootNOneRoots n coeffSize
+    polysFromGen coeffSize $ arbitraryOneNRootNOneRoots n  (10*coeffSize)
 
 polysOneNRoot3OneRoots :: Integer -> Integer -> [IntPolyWithRoots]
 polysOneNRoot3OneRoots n coeffSize =
-    polysFromGen $ arbitraryOneNRoot3OneRoots n coeffSize
+    polysFromGen coeffSize $ arbitraryOneNRoot3OneRoots n  (10*coeffSize)
 
 polysWithRootMultiSetSize :: Integer -> Integer -> [IntPolyWithRoots]
 polysWithRootMultiSetSize rootMultiSetSize coeffSize =
-    polysFromGen $ arbitraryRootMultiSet rootMultiSetSize coeffSize
+    polysFromGen coeffSize $ arbitraryRootMultiSet rootMultiSetSize (10*coeffSize)
 
 polysFromGen :: 
-    Gen [(Rational, RootMultiplicity)] -> [IntPolyWithRoots]
-polysFromGen rootGen =
-    map (roots2poly) rootsList
+    Integer -> Gen [(Rational, RootMultiplicity)] -> [IntPolyWithRoots]
+polysFromGen coeffSize rootGen =
+    map (roundCoefficients . roots2poly) rootsList
     where
     rootsList =
         map genOne [1..]
@@ -111,6 +113,24 @@ polysFromGen rootGen =
         genOne n =
             unGen rootGen qcGen (int n)
     qcGen = mkQCGen (int 148548830)
+    roundCoefficients (IntPolyWithRoots (IntPoly terms) denom roots) =
+        IntPolyWithRoots polyRounded newDenom roots
+        where
+        newDenom = 2^coeffSize
+        polyRounded = 
+            fromList $ map roundCoeff $ terms_toList terms
+            where
+            roundCoeff (d,cf) = (d, roundOffBinaryDigits $ scaleToNewDenom cf)
+            scaleToNewDenom cf = P.round (newDenom * cf/denom)
+            roundOffBinaryDigits cf 
+                -- keep up to coeffsize-many binary significant digits and set all others to 0 to simulate MPFR with precision coeffsize:
+                | digits <= coeffSize = cf
+                | otherwise =
+                    unit * ((P.round $ cf / unit) :: Integer)
+                where
+                unit = 2^(digits - coeffSize)
+                digits = 1 + (integer $ integerLog2 $ max 1 (abs cf))
+                
     
 arbitraryRootSet :: Integer -> Integer -> Gen [(Rational, RootMultiplicity)]
 arbitraryRootSet rootSetSize coeffSize =
