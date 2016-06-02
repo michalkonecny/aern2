@@ -27,25 +27,25 @@ benchMain = defaultMain
        bgroup "rootMultiSetSize" 
         [
             bench (show i) $ nfIO (benchmarkRootIsolationByRootMultiSetSize i)
-            | i <- [1..6]
+            | i <- [4,6..12]
         ]
     ,
        bgroup "rootSetSize" 
         [
             bench (show i) $ nfIO (benchmarkRootIsolationByRootSetSize i)
-            | i <- [1..6]
+            | i <- [4,6..12]
         ]
     ,
-       bgroup "oneNRoot3OneRoots" 
+       bgroup "oneNRoot2OneRoots" 
         [
-            bench (show i) $ nfIO (benchmarkRootIsolationOneNRoot3OneRoots i)
-            | i <- [1..6]
+            bench (show i) $ nfIO (benchmarkRootIsolationOneNRoot2OneRoots i)
+            | i <- [2,4..10]
         ]
     ,
        bgroup "oneNRootNOneRoots" 
         [
             bench (show i) $ nfIO (benchmarkRootIsolationOneNRootNOneRoots i)
-            | i <- [1..6]
+            | i <- [2..6]
         ]
     ]
 
@@ -57,9 +57,9 @@ benchmarkRootIsolationOneNRootNOneRoots :: Integer -> IO [(Rational, Rational)]
 benchmarkRootIsolationOneNRootNOneRoots n =
     benchmarkRootIsolationUsingPolys $ polysOneNRootNOneRoots n 7
     
-benchmarkRootIsolationOneNRoot3OneRoots :: Integer -> IO [(Rational, Rational)]
-benchmarkRootIsolationOneNRoot3OneRoots n =
-    benchmarkRootIsolationUsingPolys $ polysOneNRoot3OneRoots n 7
+benchmarkRootIsolationOneNRoot2OneRoots :: Integer -> IO [(Rational, Rational)]
+benchmarkRootIsolationOneNRoot2OneRoots n =
+    benchmarkRootIsolationUsingPolys $ polysOneNRoot2OneRoots n 7
     
 benchmarkRootIsolationByRootMultiSetSize :: Integer -> IO [(Rational, Rational)]
 benchmarkRootIsolationByRootMultiSetSize rootMultiSetSize =
@@ -94,9 +94,9 @@ polysOneNRootNOneRoots :: Integer -> Integer -> [IntPolyWithRoots]
 polysOneNRootNOneRoots n coeffSize =
     polysFromGen coeffSize $ arbitraryOneNRootNOneRoots n  (10*coeffSize)
 
-polysOneNRoot3OneRoots :: Integer -> Integer -> [IntPolyWithRoots]
-polysOneNRoot3OneRoots n coeffSize =
-    polysFromGen coeffSize $ arbitraryOneNRoot3OneRoots n  (10*coeffSize)
+polysOneNRoot2OneRoots :: Integer -> Integer -> [IntPolyWithRoots]
+polysOneNRoot2OneRoots n coeffSize =
+    polysFromGen coeffSize $ arbitraryOneNRoot2OneRoots n  (10*coeffSize)
 
 polysWithRootMultiSetSize :: Integer -> Integer -> [IntPolyWithRoots]
 polysWithRootMultiSetSize rootMultiSetSize coeffSize =
@@ -151,8 +151,8 @@ arbitraryOneNRootNOneRoots n coeffSize =
         rest =
             map (\r -> (r, RootMultiplicity 1)) $ take (int n) $ List.nub roots
     
-arbitraryOneNRoot3OneRoots :: Integer -> Integer -> Gen [(Rational, RootMultiplicity)]
-arbitraryOneNRoot3OneRoots n coeffSize =
+arbitraryOneNRoot2OneRoots :: Integer -> Integer -> Gen [(Rational, RootMultiplicity)]
+arbitraryOneNRoot2OneRoots n coeffSize =
     do
     roots <- vectorOf (int 6) (resize (int coeffSize) arbitraryRational)
     return $ trimAndAddMultiplicities $ List.nub roots
@@ -162,7 +162,7 @@ arbitraryOneNRoot3OneRoots n coeffSize =
         (r1, RootMultiplicity n) : rest
         where
         rest =
-            map (\r -> (r, RootMultiplicity 1)) $ take (int 3) $ List.nub roots
+            map (\r -> (r, RootMultiplicity 1)) $ take (int 2) $ List.nub roots
     
 arbitraryRootMultiSet :: Integer -> Integer -> Gen [(Rational, RootMultiplicity)]
 arbitraryRootMultiSet rootMultiSetSize coeffSize =
