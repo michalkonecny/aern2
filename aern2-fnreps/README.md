@@ -47,6 +47,16 @@ The polynomials used in this representation are unary polynomials in the Chebysh
 The Chebyshev basis facilitates efficient Chebyshev truncation of terms whose degree is too high 
 or whose coefficient is of a negligible magnitude.
 
+### PPoly
+
+A piece-wise version of Poly.  The domain is partitioned into rational interval segments.
+There is one Poly enclosure on each segment.  
+
+An initial partition is usually determined when performing a pointwise division of one function by another.
+When combining several functions, the partitions of the functions are unified.
+
+<!-- line breaks are forced by 2 trailing spaces -->
+
 
 ## Benchmark setup
 
@@ -60,6 +70,8 @@ The benchmarks have been compiled using ghc-7.8.4 with -O2.
 Each benchmark has been executed repeatedly until 3 consecutive times the results have fluctuated for less than 5%.
 
 ## Benchmark results
+
+_(Currently out of date, to be updated soon)_
 
 ### A well-behaved analytic function with a number of local extrema
 
