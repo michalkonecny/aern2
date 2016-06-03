@@ -1,4 +1,4 @@
-module FnReps.Polynomial.UnaryPower.IntPoly.Bench 
+module FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding.Bench 
 (benchMainTwoStages, benchMainRootIsolation)
 where
 
@@ -20,9 +20,8 @@ import Test.QuickCheck.Random (mkQCGen)
 import Test.QuickCheck.Gen (Gen(..))
 
 import FnReps.Polynomial.UnaryPower.IntPoly.Basics
-import FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding (isolateRoots)
-
-import FnReps.Polynomial.UnaryPower.IntPoly.Tests
+import FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding
+import FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding.Tests
 
 import System.IO.Unsafe (unsafePerformIO)
 

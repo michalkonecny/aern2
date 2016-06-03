@@ -1,5 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving, DeriveGeneric #-}
-module FnReps.Polynomial.UnaryPower.IntPoly.Tests where
+module FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding.Tests where
 
 import AERN2.Num -- alternative Prelude
 import qualified Prelude as P

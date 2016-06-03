@@ -63,8 +63,8 @@ Library
                     FnReps.Polynomial.UnaryCheb.PolyBall,
                     FnReps.Polynomial.UnaryCheb.RealFn,
                     FnReps.Polynomial.UnaryPower.Poly,
-                    FnReps.Polynomial.UnaryPower.IntPoly.Tests,
-                    FnReps.Polynomial.UnaryPower.IntPoly.Bench
+                    FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding.Tests,
+                    FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding.Bench
 
 executable aern2-fnreps-ops
   build-depends:   
@@ -101,4 +101,6 @@ executable aern2-rootIsolation-bench
   hs-source-dirs:  main
   ghc-options:     -Wall -rtsopts
   main-is:         rootIsolation-bench.hs
+
+otIsolation-bench.hs
 
