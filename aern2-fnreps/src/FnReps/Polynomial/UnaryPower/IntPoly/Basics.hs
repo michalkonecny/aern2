@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric #-}
 module FnReps.Polynomial.UnaryPower.IntPoly.Basics
 (
     module AERN2.Num,
@@ -33,6 +34,8 @@ module FnReps.Polynomial.UnaryPower.IntPoly.Basics
 )
 where
 
+import GHC.Generics (Generic)
+
 import qualified Data.Map as Map
 
 import qualified Math.Polynomial as MP
@@ -44,7 +47,7 @@ import AERN2.Num
 
 import qualified Prelude as P
 
-data IntPoly = IntPoly Terms
+data IntPoly = IntPoly Terms deriving Generic
 
 type Degree = Integer
 

@@ -1,5 +1,5 @@
 module Main where
 
-import FnReps.Polynomial.UnaryPower.IntPoly.Bench (benchMain)
+import FnReps.Polynomial.UnaryPower.IntPoly.Bench (benchMainRootIsolation)
 
-main = benchMain
+main = benchMainRootIsolation

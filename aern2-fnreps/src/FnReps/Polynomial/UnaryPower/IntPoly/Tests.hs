@@ -1,8 +1,11 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, DeriveGeneric #-}
 module FnReps.Polynomial.UnaryPower.IntPoly.Tests where
 
 import AERN2.Num -- alternative Prelude
 import qualified Prelude as P
+
+import GHC.Generics (Generic)
+import Control.DeepSeq (NFData)
 
 import qualified Data.List as List
 import Data.Ratio
@@ -22,7 +25,9 @@ data IntPolyWithRoots =
         intPolyWithRoots_denominator :: Integer,
         intPolyWithRoots_rootsSorted :: [(Rational, RootMultiplicity)]
     }
-    deriving (Show)
+    deriving (Show, Generic)
+
+instance NFData IntPolyWithRoots
 
 testIsolateRootsRepeatable :: Integer -> Bool -> IO ()
 testIsolateRootsRepeatable seedI isVerbose 

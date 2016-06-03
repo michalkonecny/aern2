@@ -1,4 +1,6 @@
-module FnReps.Polynomial.UnaryPower.IntPoly.Bench where
+module FnReps.Polynomial.UnaryPower.IntPoly.Bench 
+(benchMainTwoStages, benchMainRootIsolation)
+where
 
 import AERN2.Num -- alternative Prelude
 import qualified Prelude as P
@@ -7,6 +9,7 @@ import qualified Data.List as List
 --import Data.Ratio
 
 import System.Random (randomRIO)
+import Control.DeepSeq (force)
 
 import Math.NumberTheory.Logarithms (integerLog2)
 
@@ -21,98 +24,144 @@ import FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding (isolateRoots)
 
 import FnReps.Polynomial.UnaryPower.IntPoly.Tests
 
-benchMain :: IO ()
-benchMain = defaultMain 
+import System.IO.Unsafe (unsafePerformIO)
+
+benchMainTwoStages :: IO ()
+benchMainTwoStages = defaultMain
     [
+       bgroup "testTwoStages" 
+        [
+            bench (show i) $ nf (\ n -> (unsafePerformIO (factorialIO i))/n ) 3
+                -- this should measure only the time it takes to divide by 3, not the factorial
+                -- the factorials take around 1 millisecond while the divisions takes around 1 microsecond. 
+            | i <- [1000,2000,3000]
+        ]
+    ]
+
+factorialIO :: Integer -> IO Integer
+factorialIO n = 
+    do
+    index <- randomRIO (1,100)
+    return $ List.foldl' (*) (index - index +1) [1..n] -- hopefully ghc will not optimise the IO away... 
+
+
+benchMainRootIsolation :: IO ()
+benchMainRootIsolation = defaultMain
+    [ 
+--       bgroup "12RootsPolySelectionOnly"
+--        [
+--            bench (show coeffPrec) $
+--                nf 
+--                    (\p -> 
+--                        (polysWithRootMultiSetSize 12 coeffPrec)
+--                            !!! (unsafePerformIO $ randomRIO (1+p-p,maxIndex))) 
+--                    coeffPrec
+--            | coeffPrec <- [60]
+--        ]
+--      ,
+--       bgroup "12RootsPolyOnly"
+--        [
+--            bench (show coeffPrec) $
+--                nf 
+--                    (\p -> 
+--                        (polysFromGen p $ arbitraryRootMultiSet 12 coeffSize) !!! 0)
+--                    coeffPrec
+--            | coeffPrec <- [60]
+--        ]
+--      ,
        bgroup "12RootsCoeffPrec" 
         [
-            bench (show i) $ nfIO (benchmarkRootIsolationByCoeffPrec i)
-            | i <- [20,30..80]
+            bench (show coeffPrec) $
+                nf 
+                    (benchmarkRootIsolation 
+                        ((polysWithRootMultiSetSize 12 coeffPrec) 
+                            !!! (unsafePerformIO $ randomRIO (1,maxIndex)))) 
+                    coeffPrec
+            | coeffPrec <- [20,30..80]
         ]
-    ,
+      ,
        bgroup "rootMultiSetSize" 
         [
-            bench (show i) $ nfIO (benchmarkRootIsolationByRootMultiSetSize i)
+            bench (show i) $ 
+                nf 
+                    (benchmarkRootIsolation 
+                        ((polysWithRootMultiSetSize i 60) 
+                            !!! (unsafePerformIO $ randomRIO (1,maxIndex)))) 
+                    i
             | i <- [4,6..12]
         ]
     ,
        bgroup "rootSetSize" 
         [
-            bench (show i) $ nfIO (benchmarkRootIsolationByRootSetSize i)
+            bench (show i) $ 
+                nf 
+                    (benchmarkRootIsolation 
+                        ((polysWithRootSetSize i 60) 
+                            !!! (unsafePerformIO $ randomRIO (1,maxIndex)))) 
+                    i
             | i <- [4,6..12]
         ]
     ,
        bgroup "oneNRoot2OneRoots" 
         [
-            bench (show i) $ nfIO (benchmarkRootIsolationOneNRoot2OneRoots i)
+            bench (show i) $
+                nf 
+                    (benchmarkRootIsolation 
+                        ((polysOneNRoot2OneRoots i 60) 
+                            !!! (unsafePerformIO $ randomRIO (1,maxIndex)))) 
+                    i
             | i <- [2,4..10]
         ]
     ,
        bgroup "oneNRootNOneRoots" 
         [
-            bench (show i) $ nfIO (benchmarkRootIsolationOneNRootNOneRoots i)
+            bench (show i) $
+                nf 
+                    (benchmarkRootIsolation 
+                        ((polysOneNRootNOneRoots i 60) 
+                            !!! (unsafePerformIO $ randomRIO (1,maxIndex)))) 
+                    i
             | i <- [2..6]
         ]
     ]
 
-benchmarkRootIsolationByRootSetSize :: Integer -> IO [(Rational, Rational)]
-benchmarkRootIsolationByRootSetSize rootSetSize =
-    benchmarkRootIsolationUsingPolys $ polysWithRootSetSize rootSetSize 60
-    
-benchmarkRootIsolationOneNRootNOneRoots :: Integer -> IO [(Rational, Rational)]
-benchmarkRootIsolationOneNRootNOneRoots n =
-    benchmarkRootIsolationUsingPolys $ polysOneNRootNOneRoots n 60
-    
-benchmarkRootIsolationOneNRoot2OneRoots :: Integer -> IO [(Rational, Rational)]
-benchmarkRootIsolationOneNRoot2OneRoots n =
-    benchmarkRootIsolationUsingPolys $ polysOneNRoot2OneRoots n 60
-    
-benchmarkRootIsolationByRootMultiSetSize :: Integer -> IO [(Rational, Rational)]
-benchmarkRootIsolationByRootMultiSetSize rootMultiSetSize =
-    benchmarkRootIsolationUsingPolys $ polysWithRootMultiSetSize rootMultiSetSize 60
-    
-benchmarkRootIsolationByCoeffPrec :: Integer -> IO [(Rational, Rational)]
-benchmarkRootIsolationByCoeffPrec coeffPrec =
-    benchmarkRootIsolationUsingPolys $ polysWithRootMultiSetSize 12 coeffPrec
-    
-benchmarkRootIsolationUsingPolys :: 
-    [IntPolyWithRoots] -> IO [(Rational, Rational)]
-benchmarkRootIsolationUsingPolys polys =
-    do
-    index <- randomRIO (1,100)
-    return $ runWithIndex index
+maxIndex = 100
+coeffSize = 100
+
+benchmarkRootIsolation :: 
+    IntPolyWithRoots -> Integer -> [(Rational, Rational)]
+benchmarkRootIsolation poly dummy =
+    map (\(Interval l r) -> (l,r)) isolateRootsResult
     where
-    runWithIndex index =
-        map (\(Interval l r) -> (l,r)) isolateRootsResult
---        integer $ length isolateRootsResult
+    (IntPolyWithRoots intpoly _denom rootsMSorted) = poly 
+    rootsSorted = map fst rootsMSorted
+    isolateRootsResult = isolateRoots l r intpoly
         where
-        (IntPolyWithRoots intpoly _denom rootsMSorted) = polys !!! index
-        rootsSorted = map fst rootsMSorted
-        isolateRootsResult = isolateRoots l r intpoly
-            where
-            l = -1 + (minimum rootsSorted')
-            r = 1 + (maximum rootsSorted')
-            rootsSorted' 
-                | null rootsSorted = [0.0]
-                | otherwise = rootsSorted
+        l = -1 + (minimum rootsSorted')
+        r = (dummy - dummy) + 1 + (maximum rootsSorted') -- it has to depend on dummy to prevent caching
+        rootsSorted' 
+            | null rootsSorted = [0.0]
+            | otherwise = rootsSorted
         
 polysWithRootSetSize :: Integer -> Integer -> [IntPolyWithRoots]
 polysWithRootSetSize rootSetSize coeffPrec =
-    polysFromGen coeffPrec $ arbitraryRootSet rootSetSize  (10*coeffPrec)
+    force $ take (int $ maxIndex + 1) $
+    polysFromGen coeffPrec $ arbitraryRootSet rootSetSize coeffSize
 
 polysOneNRootNOneRoots :: Integer -> Integer -> [IntPolyWithRoots]
 polysOneNRootNOneRoots n coeffPrec =
-    polysFromGen coeffPrec $ arbitraryOneNRootNOneRoots n  (10*coeffPrec)
+    force $ take (int $ maxIndex + 1) $
+    polysFromGen coeffPrec $ arbitraryOneNRootNOneRoots n coeffSize
 
 polysOneNRoot2OneRoots :: Integer -> Integer -> [IntPolyWithRoots]
 polysOneNRoot2OneRoots n coeffPrec =
-    polysFromGen coeffPrec $ arbitraryOneNRoot2OneRoots n  (10*coeffPrec)
+    force $ take (int $ maxIndex + 1) $
+    polysFromGen coeffPrec $ arbitraryOneNRoot2OneRoots n coeffSize
 
 polysWithRootMultiSetSize :: Integer -> Integer -> [IntPolyWithRoots]
 polysWithRootMultiSetSize rootMultiSetSize coeffPrec =
+    force $ take (int $ maxIndex + 1) $
     polysFromGen coeffPrec $ arbitraryRootMultiSet rootMultiSetSize coeffSize
-    where
-    coeffSize = 100
 
 polysFromGen :: 
     Integer -> Gen [(Rational, RootMultiplicity)] -> [IntPolyWithRoots]

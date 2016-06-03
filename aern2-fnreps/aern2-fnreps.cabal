@@ -25,7 +25,8 @@ Library
         QuickCheck,
         polynomial,
         random,
-        criterion
+        criterion,
+        deepseq
   extensions:
                     Arrows,
                     FlexibleContexts,
