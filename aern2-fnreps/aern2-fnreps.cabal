@@ -60,6 +60,8 @@ Library
   exposed-modules:  
                     FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Benchmarks,
                     FnReps.Polynomial.UnaryCheb.Poly,
+                    FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding.Tests,
+                    FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding.Bench,
                     FnReps.Polynomial.UnaryCheb.PolyBall,
                     FnReps.Polynomial.UnaryCheb.RealFn,
                     FnReps.Polynomial.UnaryPower.Poly,
@@ -102,5 +104,19 @@ executable aern2-rootIsolation-bench
   ghc-options:     -Wall -rtsopts
   main-is:         rootIsolation-bench.hs
 
-otIsolation-bench.hs
+executable aern2-range-bench
+  build-depends:   
+                   base >= 4.4,
+                   aern2-fnreps ==0.1
+  extensions:
+                    Arrows,
+                    FlexibleContexts,
+                    FlexibleInstances,
+                    MultiParamTypeClasses,
+                    RebindableSyntax,
+                    TypeFamilies,
+                    TypeOperators
+  hs-source-dirs:  main
+  ghc-options:     -Wall -rtsopts
+  main-is:         range-bench.hs
 
