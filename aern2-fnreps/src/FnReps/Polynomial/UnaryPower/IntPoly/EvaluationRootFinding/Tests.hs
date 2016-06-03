@@ -86,8 +86,8 @@ isolateRootsIsCorrect (IntPolyWithRoots intpoly _denom rootsMSorted) =
         * a small number of rational binomials (complex root pairs) 
         * the multiplicity of these roots/root pairs
 
-    Then multiply these monomials and binomials,
-    then convert integer polynomial + denominator of the form 2^n.
+    Then multiply these monomials and binomials and
+    convert to an integer polynomial + a denominator.
 -}
 
 instance Arbitrary IntPolyWithRoots where

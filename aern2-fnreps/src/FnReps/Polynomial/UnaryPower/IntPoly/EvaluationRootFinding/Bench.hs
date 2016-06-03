@@ -63,7 +63,7 @@ benchMainRootIsolation = defaultMain
 --            bench (show coeffPrec) $
 --                nf 
 --                    (\p -> 
---                        (polysFromGen p $ arbitraryRootMultiSet 12 coeffSize) !!! 0)
+--                        (polysFromGen p $ arbitraryRootMultiSet 12 defaultRootSize) !!! 0)
 --                    coeffPrec
 --            | coeffPrec <- [60]
 --        ]
@@ -124,8 +124,10 @@ benchMainRootIsolation = defaultMain
         ]
     ]
 
+maxIndex :: Integer
 maxIndex = 100
-coeffSize = 100
+defaultRootSize :: Integer
+defaultRootSize = 100
 
 benchmarkRootIsolation :: 
     IntPolyWithRoots -> Integer -> [(Rational, Rational)]
@@ -145,22 +147,22 @@ benchmarkRootIsolation poly dummy =
 polysWithRootSetSize :: Integer -> Integer -> [IntPolyWithRoots]
 polysWithRootSetSize rootSetSize coeffPrec =
     force $ take (int $ maxIndex + 1) $
-    polysFromGen coeffPrec $ arbitraryRootSet rootSetSize coeffSize
+    polysFromGen coeffPrec $ arbitraryRootSet rootSetSize defaultRootSize
 
 polysOneNRootNOneRoots :: Integer -> Integer -> [IntPolyWithRoots]
 polysOneNRootNOneRoots n coeffPrec =
     force $ take (int $ maxIndex + 1) $
-    polysFromGen coeffPrec $ arbitraryOneNRootNOneRoots n coeffSize
+    polysFromGen coeffPrec $ arbitraryOneNRootNOneRoots n defaultRootSize
 
 polysOneNRoot2OneRoots :: Integer -> Integer -> [IntPolyWithRoots]
 polysOneNRoot2OneRoots n coeffPrec =
     force $ take (int $ maxIndex + 1) $
-    polysFromGen coeffPrec $ arbitraryOneNRoot2OneRoots n coeffSize
+    polysFromGen coeffPrec $ arbitraryOneNRoot2OneRoots n defaultRootSize
 
 polysWithRootMultiSetSize :: Integer -> Integer -> [IntPolyWithRoots]
 polysWithRootMultiSetSize rootMultiSetSize coeffPrec =
     force $ take (int $ maxIndex + 1) $
-    polysFromGen coeffPrec $ arbitraryRootMultiSet rootMultiSetSize coeffSize
+    polysFromGen coeffPrec $ arbitraryRootMultiSet rootMultiSetSize defaultRootSize
 
 polysFromGen :: 
     Integer -> Gen [(Rational, RootMultiplicity)] -> [IntPolyWithRoots]
@@ -193,15 +195,15 @@ polysFromGen coeffPrec rootGen =
                 
     
 arbitraryRootSet :: Integer -> Integer -> Gen [(Rational, RootMultiplicity)]
-arbitraryRootSet rootSetSize coeffSize =
+arbitraryRootSet rootSetSize rootSize =
     do
-    roots <- vectorOf (int $ rootSetSize * 2) (resize (int coeffSize) arbitraryRational)
+    roots <- vectorOf (int $ rootSetSize * 2) (resize (int rootSize) arbitraryRational)
     return $ map (\r -> (r, RootMultiplicity 1)) $ take (int rootSetSize) $ List.nub roots
     
 arbitraryOneNRootNOneRoots :: Integer -> Integer -> Gen [(Rational, RootMultiplicity)]
-arbitraryOneNRootNOneRoots n coeffSize =
+arbitraryOneNRootNOneRoots n rootSize =
     do
-    roots <- vectorOf (int $ n * 2) (resize (int coeffSize) arbitraryRational)
+    roots <- vectorOf (int $ n * 2) (resize (int rootSize) arbitraryRational)
     return $ trimAndAddMultiplicities $ List.nub roots
     where
     trimAndAddMultiplicities [] = error "in arbitraryOneNRootNOneRoots" -- no non-exhaustive matches warning
@@ -212,9 +214,9 @@ arbitraryOneNRootNOneRoots n coeffSize =
             map (\r -> (r, RootMultiplicity 1)) $ take (int n) $ List.nub roots
     
 arbitraryOneNRoot2OneRoots :: Integer -> Integer -> Gen [(Rational, RootMultiplicity)]
-arbitraryOneNRoot2OneRoots n coeffSize =
+arbitraryOneNRoot2OneRoots n rootSize =
     do
-    roots <- vectorOf (int 6) (resize (int coeffSize) arbitraryRational)
+    roots <- vectorOf (int 6) (resize (int rootSize) arbitraryRational)
     return $ trimAndAddMultiplicities $ List.nub roots
     where
     trimAndAddMultiplicities [] = error "in arbitraryOneNRootNOneRoots" -- no non-exhaustive matches warning
@@ -225,9 +227,9 @@ arbitraryOneNRoot2OneRoots n coeffSize =
             map (\r -> (r, RootMultiplicity 1)) $ take (int 2) $ List.nub roots
     
 arbitraryRootMultiSet :: Integer -> Integer -> Gen [(Rational, RootMultiplicity)]
-arbitraryRootMultiSet rootMultiSetSize coeffSize =
+arbitraryRootMultiSet rootMultiSetSize rootSize =
     do
-    roots <- vectorOf (int rootMultiSetSize) (resize (int coeffSize) arbitraryRational) 
+    roots <- vectorOf (int rootMultiSetSize) (resize (int rootSize) arbitraryRational) 
     multiplicities <- vectorOf (length (roots)) arbitrary
     return $ trimToOnly rootMultiSetSize $ zip roots multiplicities
     where
