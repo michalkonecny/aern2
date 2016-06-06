@@ -119,14 +119,17 @@ functions =
     Map.fromList
     [
         ("sinesine", (sinenested_Name, sinenested_PB, sinenested_B2B, sinenestedDeriv_B2B, sinenested_PP)),
+        ("sinesinecos", (sinenestedcos_Name, sinenestedcos_PB, sinenestedcos_B2B, sinenestedcosDeriv_B2B, sinenestedcos_PP)),
         ("sine+cos", (sinecos_Name, sinecos_PB, sinecos_B2B, sinecosDeriv_B2B, sinecos_PP)),
         ("runge", (runge_Name, runge_PB, runge_B2B, rungeDeriv_B2B, runge_PP)),
---        ("xrunge", (xrunge_Name, xrunge_PB, xrunge_B2B, xrungeDeriv_B2B, xrunge_PP)),
+        ("xrunge", (xrunge_Name, xrunge_PB, xrunge_B2B, xrungeDeriv_B2B, xrunge_PP)),
         ("runge-periodic", (rungePeriodic_Name, rungePeriodic_PB, rungePeriodic_B2B, rungePeriodicDeriv_B2B, rungePeriodic_PP)),
---        ("xrunge-periodic", (xrungePeriodic_Name, xrungePeriodic_PB, xrungePeriodic_B2B, xrungePeriodicDeriv_B2B, xrungePeriodic_PP)),
         ("abs", (abs13_Name, abs13_PB, abs13_B2B, abs13Deriv_B2B, abs13_PP)),
         ("bumpy", (bumpy_Name, bumpy_PB, bumpy_B2B, bumpyDeriv_B2B, bumpy_PP))
     ]
+
+data Operator = OpMax | OpIntegrate
+type FnPP = Operator -> Precision -> Degree -> Accuracy -> Integer -> Accuracy -> MPBall
 
 sinenested_Name :: String
 sinenested_Name = "sin(10x+sin(20x^2)) over [-1,1]"
@@ -150,12 +153,33 @@ sinenestedDeriv_B2B =
     UnaryFnMPBall (Interval (-1.0) 1.0) $
     \x -> catchingExceptions $ (10-40*x*cos(20*x*x))*cos(10*x + sin(20*x*x))
 
-data Operator = OpMax | OpIntegrate
-
-type FnPP = Operator -> Precision -> Degree -> Accuracy -> Integer -> Accuracy -> MPBall
-
 sinenested_PP :: FnPP
 sinenested_PP = error $ "Not supporting PPoly for: " ++ sinenested_Name
+
+sinenestedcos_Name :: String
+sinenestedcos_Name = "sin(10x+sin(20x^2)) + cos(10x) over [-1,1]"
+
+sinenestedcos_PB :: Precision -> Degree -> PolyBall
+sinenestedcos_PB p d =
+    sin(10*x + sin(20*x*x)) + cos(10*x)
+    where
+    x = 
+        setMaxDegree d $
+        setPrecision p $
+        projUnaryFnA (Interval (-1.0) 1.0)
+
+sinenestedcos_B2B :: UnaryFnMPBall
+sinenestedcos_B2B =
+    UnaryFnMPBall (Interval (-1.0) 1.0) $
+    \x -> catchingExceptions $ sin(10*x + sin(20*x*x)) + cos(10*x)
+
+sinenestedcosDeriv_B2B :: UnaryFnMPBall
+sinenestedcosDeriv_B2B =
+    UnaryFnMPBall (Interval (-1.0) 1.0) $
+    \x -> catchingExceptions $ (10-40*x*cos(20*x*x))*cos(10*x + sin(20*x*x)) - 10*sin(10*x)
+
+sinenestedcos_PP :: FnPP
+sinenestedcos_PP = error $ "Not supporting PPoly for: " ++ sinenestedcos_Name
 
 sinecos_Name :: String
 sinecos_Name = "sin(10x)+cos(20x) over [-1,1]"
@@ -209,6 +233,36 @@ runge_PP OpMax prec _deg divThresholdAcc divIterations rangeAcc =
     rungeMax (2.0 ^^ (- (fromAccuracy divThresholdAcc))) divIterations prec rangeAcc
 runge_PP OpIntegrate prec _deg divThresholdAcc divIterations rangeAcc =
     rungeIntegral (2.0 ^^ (- (fromAccuracy divThresholdAcc))) divIterations prec rangeAcc
+
+xrunge_Name :: String
+xrunge_Name = "x/(100x^2+1) over [-1,1]"
+
+xrunge_PB :: Precision -> Degree -> PolyBall
+xrunge_PB p d =
+    x/(100*x*x+1)
+    where
+    x = 
+        setMaxDegree d $
+        setPrecision p $
+        projUnaryFnA (Interval (-1.0) 1.0)
+
+xrunge_B2B :: UnaryFnMPBall
+xrunge_B2B =
+    UnaryFnMPBall (Interval (-1.0) 1.0) $
+    \x -> (catchingExceptions x)/(catchingExceptions $ 100*x^2+1)
+
+xrungeDeriv_B2B :: UnaryFnMPBall
+xrungeDeriv_B2B =
+    UnaryFnMPBall (Interval (-1.0) 1.0) $
+    \x -> (catchingExceptions $ 1-100*x^2)/(catchingExceptions $ (100*x^2+1)^2)
+
+xrunge_PP :: FnPP
+xrunge_PP OpMax prec _deg divThresholdAcc divIterations rangeAcc =
+    error "xrunge_PP OpMax not implemented yet" -- TODO
+    -- rungeMax (2.0 ^^ (- (fromAccuracy divThresholdAcc))) divIterations prec rangeAcc
+xrunge_PP OpIntegrate prec _deg divThresholdAcc divIterations rangeAcc =
+    error "xrunge_PP OpIntegrate not implemented yet" -- TODO
+--    rungeIntegral (2.0 ^^ (- (fromAccuracy divThresholdAcc))) divIterations prec rangeAcc
 
 rungePeriodic_Name :: String
 rungePeriodic_Name = "1/(10(sin(7x))^2+1) over [-1,1]"
