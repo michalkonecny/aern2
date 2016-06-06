@@ -40,12 +40,13 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         case (representationCode, operationCode) of
             ("fun", "max") -> maxFun fnB2B accuracy 
             ("fun", "integrate") -> integrateFun fnB2B accuracy 
+            ("dfun", "integrate") -> integrateDFun fnB2B dfnB2B accuracy 
             ("poly", "max") -> maxPB $ fnPB p maxDeg 
             ("poly", "integrate") -> integratePB $ fnPB p maxDeg
             ("ppoly", "max") -> fnPP OpMax pp_maxDeg pp_divThreshold pp_divIts pp_rangeAcc
             ("ppoly", "integrate") -> fnPP OpIntegrate pp_maxDeg pp_divThreshold pp_divIts pp_rangeAcc
             _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
-    (Just (fnDescription, fnPB, fnB2B, fnPP)) = Map.lookup functionCode functions
+    (Just (fnDescription, fnPB, fnB2B, dfnB2B, fnPP)) = Map.lookup functionCode functions
     maxDeg = read maxDegS
     p = prec $ read precS
     rangeBits = bits $ read rangeBitsS
@@ -85,16 +86,43 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         r = integrateUnaryFnA (fn, cauchyReal domL, cauchyReal domR) 
         Interval domL domR = ufnB2B_dom fn
 
-functions :: Map.Map String (String, Precision -> Degree -> PolyBall, UnaryFnMPBall, FnPP)
+integrateDFun :: UnaryFnMPBall -> UnaryFnMPBall -> Accuracy -> MPBall
+integrateDFun fn@(UnaryFnMPBall _dom f) _dfn@(UnaryFnMPBall _ df) acG =
+    withAccuracy lG rG acG
+    where
+    Interval lG rG = ufnB2B_dom fn
+    withAccuracy l r ac =
+        ifExceptionDie "integrateUnaryFnA for an UnaryFnMPBall" $
+            integr l r ac 
+    integr l r ac 
+        | getAccuracy value >= ac =
+            value 
+        | otherwise = 
+            (integr l m (ac+1))
+            +
+            (integr m r (ac+1))
+        where
+        m = (l+r)/2
+        mB = z + m
+        value = (f mB)*(r-l)+errB
+        errB = ((deriv - deriv)/2)*(((r-l)/2)^2)/2
+        deriv = df lr
+        lr = endpoints2Ball lB rB
+        lB = z + l
+        rB = z + r
+        z = setPrecisionMatchAccuracy (ac + 100) $ mpBall 0
+    
+
+functions :: Map.Map String (String, Precision -> Degree -> PolyBall, UnaryFnMPBall, UnaryFnMPBall, FnPP)
 functions =
     Map.fromList
     [
-        ("sinesine", (analyticFn1_Name, analyticFn1_PB, analyticFn1_B2B, analyticFn1_PP)),
-        ("sine+cos", (analyticFn2_Name, analyticFn2_PB, analyticFn2_B2B, analyticFn2_PP)),
-        ("fraction", (nearsingulatityFn1_Name, nearsingulatityFn1_PB, nearsingulatityFn1_B2B, nearsingulatityFn1_PP)),
-        ("fraction-periodic", (nearsingulatityPerFn1_Name, nearsingulatityPerFn1_PB, nearsingulatityPerFn1_B2B, nearsingulatityPerFn1_PP)),
-        ("abs", (nonsmoothFn1_Name, nonsmoothFn1_PB, nonsmoothFn1_B2B, nonsmoothFn1_PP)),
-        ("bumpy", (nonsmoothFn2_Name, nonsmoothFn2_PB, nonsmoothFn2_B2B, nonsmoothFn2_PP))
+        ("sinesine", (analyticFn1_Name, analyticFn1_PB, analyticFn1_B2B, analyticFn1Deriv_B2B, analyticFn1_PP)),
+        ("sine+cos", (analyticFn2_Name, analyticFn2_PB, analyticFn2_B2B, analyticFn2Deriv_B2B, analyticFn2_PP)),
+        ("fraction", (nearsingulatityFn1_Name, nearsingulatityFn1_PB, nearsingulatityFn1_B2B, nearsingulatityFn1Deriv_B2B, nearsingulatityFn1_PP)),
+        ("fraction-periodic", (nearsingulatityPerFn1_Name, nearsingulatityPerFn1_PB, nearsingulatityPerFn1_B2B, nearsingulatityPerFn1Deriv_B2B, nearsingulatityPerFn1_PP)),
+        ("abs", (nonsmoothFn1_Name, nonsmoothFn1_PB, nonsmoothFn1_B2B, nonsmoothFn1Deriv_B2B, nonsmoothFn1_PP)),
+        ("bumpy", (nonsmoothFn2_Name, nonsmoothFn2_PB, nonsmoothFn2_B2B, nonsmoothFn2Deriv_B2B, nonsmoothFn2_PP))
     ]
 
 analyticFn1_Name :: String
@@ -113,6 +141,11 @@ analyticFn1_B2B :: UnaryFnMPBall
 analyticFn1_B2B =
     UnaryFnMPBall (Interval (-1.0) 1.0) $
     \x -> catchingExceptions $ sin(10*x + sin(20*x*x))
+
+analyticFn1Deriv_B2B :: UnaryFnMPBall
+analyticFn1Deriv_B2B =
+    UnaryFnMPBall (Interval (-1.0) 1.0) $
+    \x -> catchingExceptions $ (10-40*x*cos(20*x*x))*cos(10*x + sin(20*x*x))
 
 data Operator = OpMax | OpIntegrate
 
@@ -138,6 +171,11 @@ analyticFn2_B2B =
     UnaryFnMPBall (Interval (-1.0) 1.0) $
     \x -> catchingExceptions $ sin(10*x)+cos(20*x)
 
+analyticFn2Deriv_B2B :: UnaryFnMPBall
+analyticFn2Deriv_B2B =
+    UnaryFnMPBall (Interval (-1.0) 1.0) $
+    \x -> catchingExceptions $ 10*cos(10*x)-20*sin(20*x)
+
 analyticFn2_PP :: Operator -> Degree -> Accuracy -> Integer -> Accuracy -> MPBall
 analyticFn2_PP = error $ "Not supporting PPoly for: " ++ analyticFn2_Name
 
@@ -157,6 +195,11 @@ nearsingulatityFn1_B2B :: UnaryFnMPBall
 nearsingulatityFn1_B2B =
     UnaryFnMPBall (Interval (-1.0) 1.0) $
     \x -> 1/(catchingExceptions $ 100*x^2+1)
+
+nearsingulatityFn1Deriv_B2B :: UnaryFnMPBall
+nearsingulatityFn1Deriv_B2B =
+    UnaryFnMPBall (Interval (-1.0) 1.0) $
+    \x -> (catchingExceptions $ -200*x)/(catchingExceptions $ (100*x^2+1)^2)
 
 nearsingulatityFn1_PP :: Operator -> Degree -> Accuracy -> Integer -> Accuracy -> MPBall
 nearsingulatityFn1_PP OpMax _deg divThresholdAcc divIterations rangeAcc =
@@ -181,6 +224,11 @@ nearsingulatityPerFn1_B2B =
     UnaryFnMPBall (Interval (-1.0) 1.0) $
     \x -> 1/(catchingExceptions $ 10*(sin (7*x))^2+1)
 
+nearsingulatityPerFn1Deriv_B2B :: UnaryFnMPBall
+nearsingulatityPerFn1Deriv_B2B =
+    UnaryFnMPBall (Interval (-1.0) 1.0) $
+    \x -> (catchingExceptions $ -140*sin(7*x)*cos(7*x))/(catchingExceptions $ (10*(sin (7*x))^2+1)^2)
+
 nearsingulatityPerFn1_PP :: Operator -> Degree -> Accuracy -> Integer -> Accuracy -> MPBall
 nearsingulatityPerFn1_PP OpMax deg divThresholdAcc divIterations rangeAcc =
     fracSinMax deg (2.0 ^^ (- (fromAccuracy divThresholdAcc))) divIterations (fromAccuracy rangeAcc)
@@ -198,6 +246,15 @@ nonsmoothFn1_B2B :: UnaryFnMPBall
 nonsmoothFn1_B2B =
     UnaryFnMPBall (Interval (-1.0) 1.0) $
     \x -> catchingExceptions $ 1 - (abs (x+1/3))
+
+nonsmoothFn1Deriv_B2B :: UnaryFnMPBall
+nonsmoothFn1Deriv_B2B =
+    UnaryFnMPBall (Interval (-1.0) 1.0) $
+    \x ->
+        case x > -1/3 of
+             Just True -> catchingExceptions $ mpBall 1
+             Just False -> catchingExceptions $ mpBall (-1)
+             _ -> catchingExceptions $ endpoints2Ball (mpBall $ -1) (mpBall 1)
 
 nonsmoothFn1_PP :: Operator -> Degree -> Accuracy -> Integer -> Accuracy -> MPBall
 nonsmoothFn1_PP = error $ "Not yet supporting PPoly for: " ++ nonsmoothFn1_Name
@@ -226,6 +283,10 @@ nonsmoothFn2_B2B :: UnaryFnMPBall
 nonsmoothFn2_B2B =
     UnaryFnMPBall (Interval (-1.0) 1.0) $
     \x -> catchingExceptions $ max (sin (10*x)) (cos (11*x))
+
+nonsmoothFn2Deriv_B2B :: UnaryFnMPBall
+nonsmoothFn2Deriv_B2B =
+    error $ "DFun currently not supported for " ++ nonsmoothFn2_Name
 
 nonsmoothFn2_PP :: Operator -> Degree -> Accuracy -> Integer -> Accuracy -> MPBall
 nonsmoothFn2_PP = error $ "Not yet supporting PPoly for: " ++ nonsmoothFn2_Name
