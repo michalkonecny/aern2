@@ -8,8 +8,12 @@ module FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding
     , evalExample1, evalExample2
     , composeExample1
     
+    , rangeEnriched
+    
     --for testing:
-    , markovBound
+    , markovBound,
+    poly_maximum,
+    oldRange
 )
 where
 
@@ -21,7 +25,10 @@ import FnReps.Polynomial.UnaryCheb.Poly.SizeReduction
 import FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power
 import FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication ()
 
-import qualified FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding as Power
+import qualified FnReps.Polynomial.UnaryPower.Poly.Basics as PowB
+import qualified FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding as Power --TODO rename
+import Data.Map (Map)
+import qualified Data.Map as Map
 
 import qualified FnReps.Polynomial.UnaryPower.IntPoly.Basics as IntPolyB
 
@@ -30,6 +37,11 @@ import qualified FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding as I
 import Control.Arrow
 
 import Debug.Trace (trace)
+
+import Data.PQueue.Max (MaxQueue)
+import qualified Data.PQueue.Max as Q
+
+import qualified Prelude as P
 
 shouldTrace :: Bool
 --shouldTrace = False
@@ -262,6 +274,117 @@ evalLipschitzOnBall p@(Poly terms) b =
 markovBound :: Poly -> MPBall
 markovBound (Poly terms) = sum (map abs $ terms_coeffs terms) * (terms_degree terms)^2
 
+data MaxInterval = 
+  MultiRootInterval
+  {
+    mi_l :: Rational,
+    mi_r :: Rational,
+    mi_bernsteinCoefs :: (Integer, Map.Map Integer Integer),
+    mi_value :: MPBall
+  } 
+  | UniqueRootInterval
+  {
+    mi_l :: Rational,
+    mi_r :: Rational,
+    mi_leftPositive :: Bool,
+    mi_value :: MPBall
+  }
+  deriving Eq
+  
+instance Show MaxInterval where
+  show (MultiRootInterval l r _ v) = "l: "++(show l)++" r: "++(show r)++" val: "++(show v)
+  show (UniqueRootInterval l r _ v) = "l: "++(show l)++" r: "++(show r)++" val: "++(show v)
+
+instance P.Ord MaxInterval where
+  (<=) mi0 mi1 = (toRationalUp $ mi_value mi0) <= (toRationalUp $ mi_value mi1)
+
+mi_evaluateOnInterval :: (MPBall -> MPBall) -> (Accuracy -> Bool) -> Rational -> Rational -> MPBall
+mi_evaluateOnInterval fn accOK l r = 
+  --evalLipschitzOnBall p $ ri2ball (Interval l r) (max (bits 2) $ normLog2Accuracy $ getNormLog $ r - l)
+  let
+    accuracy = normLog2Accuracy $ getNormLog $ r - l
+  in
+  {-if accuracy > (bits $ -(fromAccuracy $ normLog2Accuracy $ lipNorm)) then
+    (evalLipschitzOnBall p $ ri2ball (Interval l r) accuracy)-}
+  if accOK accuracy then
+    fn $ ri2ball (Interval l r) (max accuracy (bits 100))
+  else
+    ri2ball (Interval (-10.0) (10.0)) (bits 10)
+
+mi_makeMaxInterval :: Rational -> Rational -> Integer -> (Map.Map Integer Integer) -> IntPolyB.IntPoly -> (MPBall -> MPBall) -> (Accuracy -> Bool) -> MaxQueue MaxInterval
+mi_makeMaxInterval l r c bs dip fn accOK =
+  case vars of
+    0 -> Q.empty
+    1 -> Q.singleton $ UniqueRootInterval l r ((IntPolyEV.evalOnRational dip l) > 0.0) val
+    _ -> Q.singleton $ MultiRootInterval l r (c,bs) val
+  where
+  vars = IntPolyEV.signVars bs
+  val = mi_evaluateOnInterval fn accOK l r 
+
+mi_split :: Poly -> IntPolyB.IntPoly -> (MPBall -> MPBall) -> (Accuracy -> Bool) -> MaxInterval -> MaxQueue MaxInterval
+mi_split p dip fn accOK (MultiRootInterval l r (c, bs) _) = 
+  Q.union (mi_makeMaxInterval l m c' bsL dip fn accOK) (mi_makeMaxInterval m r c' bsR dip fn accOK)
+  where
+  m = (l + r)*0.5
+  (c', bsL, bsR) = IntPolyEV.bernsteinCoefs l r m c bs
+
+mi_split p dip fn accOK (UniqueRootInterval l r lp _) =
+  if mv == 0.0 then
+    Q.singleton $ UniqueRootInterval m m False (evalLipschitzOnBall p (mpBall m))
+  else
+    if mp == lp then
+      Q.singleton $ UniqueRootInterval m r mp (mi_evaluateOnInterval fn accOK m r)
+    else
+      Q.singleton $ UniqueRootInterval l m lp (mi_evaluateOnInterval fn accOK l m)
+  where
+  m = (l + r)*0.5
+  mv = IntPolyEV.evalOnRational dip m
+  mp = mv > 0.0
+  
+mi_singleton :: MaxInterval -> MaxQueue MaxInterval
+mi_singleton mi = Q.singleton mi  
+  
+mi_insert :: MaxInterval -> MaxQueue MaxInterval -> MaxQueue MaxInterval
+mi_insert mi mis = Q.insert mi mis
+  
+poly_maximum_enriched :: (MPBall -> MPBall) -> (Accuracy -> Bool) -> Accuracy -> Rational -> Rational -> Poly -> MPBall
+poly_maximum_enriched evalFn accOK acc l r p = 
+  aux $ rightEndpoint `mi_insert` (leftEndpoint `mi_insert` initialInterval)
+  where
+  rightEndpoint = UniqueRootInterval r r True (evalFn $ mpBall r)
+  leftEndpoint  = UniqueRootInterval l l True (evalFn $ mpBall l)
+  (ip, _, _) = cheb2IntPower p
+  dip = IntPolyB.derivative ip
+  (c, bs) = IntPolyEV.initialBernsteinCoefs l r dip
+  initialInterval = mi_makeMaxInterval l r c bs dip evalFn accOK
+  pAcc = getAccuracy p
+  aux is =
+    if getAccuracy best >= (min acc $ pAcc) 
+      || (getAccuracy $ 
+            endpoints2Ball 
+            (rational2BallP (prec $ fromAccuracy $ acc + 1) bestL) 
+            (rational2BallP (prec $ fromAccuracy $ acc + 1) bestR))
+         >= acc
+    then
+      best
+    else 
+      let
+        split = (mi_split p dip evalFn accOK $ first)
+      in
+        aux $ Q.foldlDesc (\mis mi -> mi_insert mi mis) rest split
+    where
+    (first, rest) = Q.deleteFindMax is
+    best = mi_value $ first
+    bestL = mi_l $ first
+    bestR = mi_r $ first -- TODO needed?     
+  
+poly_maximum :: Accuracy -> Rational -> Rational -> Poly -> MPBall
+poly_maximum acc l r p = 
+  poly_maximum_enriched (evalLipschitzOnBall p) accOK acc l r p
+  where
+  lipNorm = getNormLog $ markovBound p
+  accOK accuracy = accuracy > (bits $ -(fromAccuracy $ normLog2Accuracy $ lipNorm))
+  
 sampledRange ::  Rational -> Rational -> Integer -> Poly -> Interval MPBall
 sampledRange l r depth p =
     Interval minValue maxValue
@@ -274,81 +397,56 @@ sampledRange l r depth p =
     samplePoints = [(l*i + r*(size - i))/size | i <- [0..size]]
     size = 2^depth
 
+oldRange :: Accuracy -> Poly -> Interval MPBall -> Interval MPBall
+oldRange ac p (Interval l r) =
+  approxRange (toRationalDown l) (toRationalUp r) ac p
+
+newRange :: Accuracy -> Poly -> Interval MPBall -> Interval MPBall
+newRange ac p (Interval l r) =
+  Interval mn mx
+  where
+  l' = toRationalDown l
+  r' = toRationalUp r
+  mx = poly_maximum ac l' r' p
+  mn = -(poly_maximum ac l' r' (-p))
+
+newRangeEnriched :: Accuracy -> Poly -> (MPBall -> MPBall) -> (Accuracy -> Bool) -> Interval MPBall -> Interval MPBall
+newRangeEnriched ac p evalFn accOK (Interval l r) =
+  Interval mn mx
+  where
+  l' = toRationalDown l
+  r' = toRationalUp r
+  mx = poly_maximum_enriched evalFn accOK ac l' r' p
+  mn = -(poly_maximum_enriched evalFn accOK ac l' r' (-p))
+
 range :: Accuracy -> Poly -> Interval MPBall -> Interval MPBall
-range ac p (Interval l r) =
-    maybeTrace ("range: ac = " ++ show ac) $
-    approxRange (toRationalDown l) (toRationalUp r) ac p
+range ac p@(Poly ts) i = 
+  if terms_degree ts <= 50 then
+    oldRange ac p i
+  else
+    newRange ac p i
+
+rangeEnriched :: Accuracy -> Poly -> (MPBall -> MPBall) -> (Accuracy -> Bool) -> Interval MPBall -> Interval MPBall
+rangeEnriched ac p@(Poly ts) evalFn accOK i = 
+  if terms_degree ts <= 50 then
+    oldRange ac p i
+  else
+    newRangeEnriched ac p evalFn accOK i
 
 approxRange :: Rational -> Rational -> Accuracy -> Poly -> Interval MPBall
 approxRange l r ac p = 
     Interval minValue maxValue
     where
     (p', _denom, _errBall) = cheb2IntPower $ p
-    dp'  = IntPolyB.derivative $ p'
-    dp'' = IntPolyB.toFPPoly $ dp'
+    dp'  = IntPolyB.reduceCoefs $ IntPolyB.derivative $ p'
+    --dp'' = IntPolyB.toFPPoly $ dp'
     criticalPoints = 
-        map (\(Interval a b) -> Power.approximateRootByBisection a b ac dp'') $ 
+        {-map (\(Interval a b) -> Power.approximateRootByBisection a b ac dp'') $ -}
+          map (\(Interval a b) -> IntPolyEV.approximateRoot a b ac dp') $ 
             IntPolyEV.isolateRoots l r dp'
     criticalValues = 
         [evalDirectOnBall p (mpBall l), evalDirectOnBall p (mpBall r)] 
         ++ map (evalLipschitzOnBall p) criticalPoints
     minValue = foldl1 min criticalValues
     maxValue = foldl1 max criticalValues
-
-
-{-
-    The following function is not implemented yet.  It is not yet clear whether it will be needed. 
-
-    Take a interval polynomial P that has admits(*) only polynomials 
-    without non-simple roots and return a list of balls that contain all the roots
-    and each ball contains at least one root.
-    
-    * An interval polynomial P admits a (non-interval) polynomial p if each coefficient
-    of p is inside the corresponding interval coefficient of P.
--}
-_findAllRoots :: Accuracy -> Poly -> [MPBall]
-_findAllRoots = error "findAllRoots not implemented yet"
-{-
-    TODO:
-    
-    First segment the domain until for each segment S, 
-    either P is clearly positive on S or clearly negative on S
-    or P' (the nominal derivative of P) is clearly positive on S or clearly negative on S.
-    
-    Then apply Newton method until the improvement is negligible compared to the interval size
-    or the given accuracy threshold is reached. 
-    
--}
-
-{-
-
-_approximateRoot :: Rational -> Rational -> Accuracy -> Poly -> MPBall
-_approximateRoot l r a p = case evalDirectOnRational p l > 0 of
-                                        Just False -> aux l r a p False
-                                        Just True  -> aux l r a p True
-                                        Nothing    -> ri2ball (Interval l r) a
-                                      where
-                                      aux l' r' a' p' posL =
-                                       if getAccuracy (ri2ball (Interval l' r') (a + 2)) >= a then
-                                            ri2ball (Interval l' r') a
-                                       else case trisect l' r' posL p of
-                                        Just (l'',r'',posL') -> aux l'' r'' a' p' posL'
-                                        Nothing -> ri2ball (Interval l' r') a        
-                                        
-trisect :: Rational -> Rational -> Bool -> Poly -> Maybe (Rational,Rational, Bool) -- l', r', l' positive?
-trisect l r posL p = case (posML,posMR) of
-                        (Just True, _) -> Just $ if not posL then (l,ml,posL) else (ml,r,True)
-                        (Just False,_) -> Just $ if posL     then (l,ml,posL) else (ml,r,False)
-                        (_, Just True) -> Just $ if posL     then (mr,r,True) else (l,mr, posL)
-                        (_, Just False)-> Just $ if not posL then (mr,r, False) else (l, mr, posL)
-                        (_,_)          -> Nothing
-                     where
-                     ml = (9*l + 7*r)/16
-                     mr = (7*l + 9*r)/16
-                     posML = evalDirectOnRational p ml > 0
-                     posMR = evalDirectOnRational p mr > 0
-
-evalDirectOnRational :: Poly -> Rational -> MPBall
-evalDirectOnRational poly@(Poly ts) x = 
-    evalDirectOnBall poly (rational2BallP (getPrecision $ head $ terms_coeffs ts) x)
--}
+        

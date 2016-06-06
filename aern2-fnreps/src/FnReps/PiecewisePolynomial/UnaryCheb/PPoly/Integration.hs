@@ -11,9 +11,15 @@ import qualified FnReps.Polynomial.UnaryCheb.Poly.Integration as PI
 import qualified FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding as PE
 
 integral :: PPoly -> MPBall -> MPBall -> MPBall
-integral pp l r = 
-  sum [integrateUnaryFnA (p, max l a, min r b)  | (Interval a b, p) <- piecesMeetingInterval pp (toRationalDown l) (toRationalUp r)] 
-
+integral pp l r =
+  let
+    err = radius pp
+  in 
+  endpoints2Ball (-err) err +
+  sum [integrateUnaryFnA (p, max l a, min r b)  
+    | (Interval a b, p) <- piecesMeetingInterval (dropAllErrors pp) (toRationalDown l) (toRationalUp r)]
+     
+-- TODO get rid of loss of precision     
 primitive :: PPoly -> PPoly
 primitive (PPoly ps ov) = PPoly (reverse $ aux (mpBall 0) polyPrimitives []) ov
   where

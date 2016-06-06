@@ -8,7 +8,10 @@ isolateRootsSeparableI,
 
 bernsteinCoefs,
 initialBernsteinCoefs,
-signVars
+signVars,
+
+evalOnRational,
+approximateRoot
 )
 where
 
@@ -25,6 +28,13 @@ eval poly@(IntPoly ts) x = evalHornerAcc (degree poly) $ 0
                           where
                           evalHornerAcc 0 sm = x*sm + terms_lookupCoeff ts 0
                           evalHornerAcc k sm = evalHornerAcc (k - 1) $ x*sm + terms_lookupCoeff ts k
+                          
+evalOnRational :: IntPoly -> Rational -> Rational  --TODO needed?                          
+evalOnRational poly@(IntPoly ts) x = 
+  evalHornerAcc (degree poly) $ 0.0
+  where
+  evalHornerAcc 0 sm = x*sm + terms_lookupCoeff ts 0
+  evalHornerAcc k sm = evalHornerAcc (k - 1) $ x*sm + terms_lookupCoeff ts k
 
 isolateRoots :: Rational -> Rational -> IntPoly -> [Interval Rational]
 isolateRoots l r = (isolateRootsSeparable l r) . reduceCoefs . separablePart
@@ -55,6 +65,27 @@ isolateRootsSeparable l r p =
             [Interval m m] ++ aux l' m c' bsL (m : zs) ++ aux m r' c' bsR (m : zs)
         else
             aux l' m c' bsL zs ++ aux m r' c' bsR zs
+
+-- here we still assume that there's no zero on the boundary. This is rather silly as we could be done sooner if we were to find out
+approximateRoot :: Rational -> Rational -> Accuracy -> IntPoly -> MPBall
+approximateRoot l r a p = 
+  aux l r
+  where
+  lPositive = evalOnRational p l > 0
+  aux l r =  
+    let
+    m = (l + r)/2.0
+    val = evalOnRational p m
+    in
+      if getAccuracy (ri2ball (Interval l r) (a + 2)) >= a then
+        ri2ball (Interval l r) a
+      else if val == 0 then
+        ri2ball (Interval m m) a
+      else if (val > 0) == lPositive then
+        aux m r
+      else
+        aux l m
+        
 
 isolateRootsI :: IntPoly -> [Interval Rational]
 isolateRootsI = isolateRootsSeparableI . reduceCoefs . separablePart
