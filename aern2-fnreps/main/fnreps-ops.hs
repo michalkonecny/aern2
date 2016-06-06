@@ -119,7 +119,7 @@ functions =
     Map.fromList
     [
         ("sinesine", (sinenested_Name, sinenested_PB, sinenested_B2B, sinenestedDeriv_B2B, sinenested_PP)),
-        ("sinesinecos", (sinenestedcos_Name, sinenestedcos_PB, sinenestedcos_B2B, sinenestedcosDeriv_B2B, sinenestedcos_PP)),
+        ("sinesine+cos", (sinenestedcos_Name, sinenestedcos_PB, sinenestedcos_B2B, sinenestedcosDeriv_B2B, sinenestedcos_PP)),
         ("sine+cos", (sinecos_Name, sinecos_PB, sinecos_B2B, sinecosDeriv_B2B, sinecos_PP)),
         ("runge", (runge_Name, runge_PB, runge_B2B, rungeDeriv_B2B, runge_PP)),
         ("xrunge", (xrunge_Name, xrunge_PB, xrunge_B2B, xrungeDeriv_B2B, xrunge_PP)),
