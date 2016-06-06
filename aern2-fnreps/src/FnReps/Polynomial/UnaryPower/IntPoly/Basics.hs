@@ -7,7 +7,6 @@ module FnReps.Polynomial.UnaryPower.IntPoly.Basics
     fromFracList,
     normaliseFracList,
     derivative,
-    remIntPoly,
     IntPoly(..),
     Degree,
     degree,
@@ -27,23 +26,28 @@ module FnReps.Polynomial.UnaryPower.IntPoly.Basics
     fromList,
     shiftRight,
     shiftLeft,
-    fromFracPoly,
-    toFracPoly,
     reduceCoefs,
-    reduceTerms
+    reduceTerms,
+    
+    quo,
+    isZero,
+    zero,
+    one,
+    leadingCoefficient,
+    coeff
 )
 where
 
 import GHC.Generics (Generic)
 
 import qualified Data.Map as Map
-
-import qualified Math.Polynomial as MP
 import qualified FnReps.Polynomial.UnaryPower.Poly.Basics as FP
 
 import Data.Ratio
 import Data.List
 import AERN2.Num
+
+import Debug.Trace
 
 import qualified Prelude as P
 
@@ -95,7 +99,21 @@ fromList termsAsList =
     IntPoly (terms_fromList termsAsList)
 
 degree :: IntPoly -> Degree
-degree (IntPoly ts) = terms_degree ts
+degree (IntPoly ts) = 
+  let
+  nonZeroTs = Map.filter (/= 0) ts
+  in
+    if Map.null nonZeroTs then
+      -1
+    else
+      fst $ Map.findMax nonZeroTs
+      
+coeff :: Degree -> IntPoly -> Integer
+coeff deg (IntPoly ts) = terms_lookupCoeff ts deg      
+      
+leadingCoefficient :: IntPoly -> Integer 
+leadingCoefficient p@(IntPoly ts) = 
+  terms_lookupCoeff ts (degree p)
 
 instance CanMulA (->) Integer IntPoly where
     type MulTypeA (->) Integer IntPoly = IntPoly
@@ -123,39 +141,53 @@ instance CanSub IntPoly IntPoly
 instance CanSubThis IntPoly IntPoly
 instance CanSubSameType IntPoly    
 
-{- some operator overloading for polynomials over Q -}
+-- truncated division - only correct if exact
+instance CanDivA (->) IntPoly Integer where
+  type DivTypeA (->) IntPoly Integer = IntPoly
+  divA (IntPoly ts, c) = 
+    IntPoly $ Map.map (\x -> P.div x c) ts
 
-instance CanMulA (->) (MP.Poly Rational) (MP.Poly Rational) where
-  type MulTypeA (->) (MP.Poly Rational) (MP.Poly Rational) = MP.Poly Rational
-  mulA (p,q) = MP.multPoly p q
+isZero :: IntPoly -> Bool
+isZero (IntPoly ts) = Map.null $ Map.filter (/= 0) ts
 
-instance CanMulA (->) Rational (MP.Poly Rational) where
-  type MulTypeA (->) Rational (MP.Poly Rational) = MP.Poly Rational
-  mulA (c, p) = MP.scalePoly c p
-  
-instance CanAddA (->) (MP.Poly Rational) (MP.Poly Rational) where
-  type AddTypeA (->) (MP.Poly Rational) (MP.Poly Rational) = MP.Poly Rational
-  addA (p,q) = MP.addPoly p q
-  
-instance CanNegA (->) (MP.Poly Rational) where
-  type NegTypeA (->) (MP.Poly Rational) = MP.Poly Rational
-  negA p = MP.negatePoly p
+zero :: IntPoly
+zero = fromList [(0,0)]
 
-{- -}
+one :: IntPoly
+one = fromList [(0,1)]
+
+{-| Quotient of Euclidean division. Only valid if result is again an integer polynomial. -}
+quo :: IntPoly -> IntPoly -> IntPoly
+quo p q = 
+  aux zero p dp
+  where
+  dp = degree p
+  dq = degree q
+  xPow k = fromList [(k,1)] 
+  aux c r j = 
+    if j == dq - 1 then
+      c
+    else 
+      let
+      lt = (coeff j r `P.div` leadingCoefficient q) * (xPow (j - dq))
+      c' = c + lt
+      r' = r - lt * q
+      in
+      aux c' r' (j - 1)
 
 shiftRight :: Integer -> IntPoly -> IntPoly
 shiftRight n (IntPoly ts) = IntPoly $ Map.mapKeys (\p -> p + n) ts
 
 shiftLeft :: Integer -> IntPoly -> IntPoly
 shiftLeft n (IntPoly ts) = IntPoly $ Map.filterWithKey (\p _ -> p >= 0)  $ Map.mapKeys (\p -> p - n) ts
-               
-remIntPoly :: IntPoly -> IntPoly -> IntPoly
-remIntPoly p q = if degree q == 0 then p else (fromList [(0,0)]) + (fromFracPoly $ MP.remPoly (toFracPoly p) (toFracPoly q))               
                     
 derivative :: IntPoly -> IntPoly
-derivative (IntPoly ts) = if Map.null ts' then fromList [(0,0)] else IntPoly ts' 
-                          where
-                          ts' = Map.filterWithKey (\k _ -> k >= 0) $ Map.mapKeys (\k -> k - 1) $ Map.mapWithKey (\p c -> c*p) ts                
+derivative (IntPoly ts) = 
+  case Map.lookup 0 ts' of 
+    Just _  -> IntPoly ts'
+    Nothing -> IntPoly (Map.insert 0 0 ts') 
+  where
+  ts' = Map.filterWithKey (\k _ -> k >= 0) $ Map.mapKeys (\k -> k - 1) $ Map.mapWithKey (\p c -> c*p) ts                
 
 reduceCoefs :: IntPoly -> IntPoly
 reduceCoefs (IntPoly ts) = IntPoly $ reduceTerms ts
@@ -198,9 +230,4 @@ toFracList (IntPoly ts) = [ case Map.lookup k ts of
 
 fromFracList :: [Rational] -> IntPoly
 fromFracList xs = IntPoly $ Map.fromList $ zipWith (\x y -> (x,numerator y)) [0..] xs
-
-toFracPoly :: IntPoly -> MP.Poly Rational
-toFracPoly p = MP.poly MP.LE $ toFracList p
-
-fromFracPoly :: MP.Poly Rational -> IntPoly
-fromFracPoly p = fromFracList $ normaliseFracList' $ MP.polyCoeffs MP.LE p                                   
+                       

@@ -23,7 +23,7 @@ Library
         aern2-num == 0.1,
         arithmoi,
         QuickCheck,
-        polynomial,
+        pqueue,
         random,
         criterion,
         deepseq

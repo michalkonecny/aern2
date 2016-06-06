@@ -2,7 +2,9 @@ module FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Evaluation
 (
 eval,
 range,
-range'
+range',
+sampledRange',
+rangeEnriched
 )
 where
 
@@ -47,6 +49,25 @@ eval (PPoly pieces _) x =
    union x y = let (l,r) = ball2endpoints x; (l', r') = ball2endpoints y in
                 endpoints2Ball (min l l') (max r r')
            
+sampledRange' :: Rational -> Rational -> Integer -> PPoly -> Interval MPBall
+sampledRange' l r depth (PPoly pieces overlap)=
+  foldl1 union $ map (\(Just x) -> x) $ filter (not.isNothing) $ map ((liftM sRangePiece).(liftM addOverlap).intersectionPiece) pieces
+  where
+  isNothing x = case x of 
+                 Nothing -> True
+                 Just _  -> False
+  i = Interval l r
+  union (Interval a b) (Interval c d) = Interval (min a c) (max b d)
+  addOverlap (Interval a b, p) = (Interval (min r (max l (a - overlap))) 
+                                           (max l (min r (b + overlap))), p)
+  intersectionPiece (j, p) = case intersection i j of
+                                 Nothing -> Nothing
+                                 Just (Interval a' b') -> if a' == b' then
+                                                             Nothing
+                                                          else
+                                                             Just (Interval a' b', p)
+  sRangePiece (Interval a' b', p) = Poly.sampledRange a' b' depth p
+           
 range :: Accuracy -> PPoly -> Interval MPBall -> Interval MPBall
 range ac (PPoly pieces _) (Interval l r) = 
      maybeTrace
@@ -67,6 +88,27 @@ range ac (PPoly pieces _) (Interval l r) =
      rangePiece (j, p) = case intersection i j of
                             Nothing -> Nothing
                             Just (Interval a' b') -> Just $ Poly.range ac p $ Interval (mpBall a') (mpBall b')
+
+rangeEnriched :: Accuracy -> PPoly -> (MPBall -> MPBall) -> (Accuracy -> Bool) -> Interval MPBall -> Interval MPBall
+rangeEnriched ac (PPoly pieces _) evalFn accOK (Interval l r) = 
+     maybeTrace
+     (
+       "range\n"++
+       "argument: " ++ show (Interval l r) ++ "\n" ++
+       "pieces: " ++ show (map (\j -> let Just x = intersection i j in x) $ filter (\j -> not $ isNothing $ intersection i j) $ map fst pieces) ++ "\n" ++
+       "values: " ++ show (map (\(Just x) -> x) $ filter (not.isNothing) $ map rangePiece pieces)++"\n"++
+       "union: " ++ show (map (\(Just x) -> x) $ filter (not.isNothing) $ map rangePiece pieces)++"\n"
+     ) $
+     foldl1 union $ map (\(Just x) -> x) $ filter (not.isNothing) $ map rangePiece pieces
+     where
+     isNothing x = case x of 
+                    Nothing -> True
+                    Just _  -> False
+     i = Interval (toRationalDown' l) (toRationalUp' r)
+     union (Interval a b) (Interval c d) = Interval (min a c) (max b d)
+     rangePiece (j, p) = case intersection i j of
+                            Nothing -> Nothing
+                            Just (Interval a' b') -> Just $ Poly.rangeEnriched ac p evalFn accOK $ Interval (mpBall a') (mpBall b')
 
 -- range computation which explicitly considers the overlap. This is needed when using range computation for error estimates.
 range' :: Accuracy -> PPoly -> Interval MPBall -> Interval MPBall

@@ -4,18 +4,19 @@ fromPoly,
 linearPolygon,
 lift2PPoly,
 FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Basics.normaliseCoeffs,
-setPrecision_ppoly,
 addToErrorTerm,
 breakpoints,
 dropAllErrors,
 piecesMeetingInterval,
-PPoly(..)
+reduceDegreeAndSweep,
+radius,
+PPoly(..),
 )
 where
 
 import AERN2.Num
-import FnReps.Polynomial.UnaryCheb.Poly as Poly
-import FnReps.Polynomial.UnaryCheb.Poly.Basics
+import FnReps.Polynomial.UnaryCheb.Poly as Poly hiding (reduceDegreeAndSweep)
+import qualified FnReps.Polynomial.UnaryCheb.Poly as Poly (reduceDegreeAndSweep)
 import qualified FnReps.Polynomial.UnaryPower.Poly as PowPoly
 import Data.List as List
 
@@ -95,8 +96,22 @@ intersectionAndDifference (Interval l r, p) (Interval l' r', p') =
                                        else
                                         Just $ (Interval r r', p')                              
 
-setPrecision_ppoly :: Precision -> PPoly -> PPoly
-setPrecision_ppoly p = lift2PPoly (setPrecision p)
+reduceDegreeAndSweep :: Degree -> NormLog -> PPoly -> PPoly
+reduceDegreeAndSweep d n = lift2PPoly (Poly.reduceDegreeAndSweep d n)
+
+instance HasAccuracy PPoly where
+  getAccuracy (PPoly pieces _) = foldl1 max $ map (getAccuracy . snd) pieces 
+
+instance HasPrecision PPoly where
+  getPrecision (PPoly pieces _) =
+    foldl1 max $ map (getPrecision . snd) pieces
+
+instance CanSetPrecision PPoly where
+  setPrecision pr (PPoly pieces ov) = PPoly (map (\(i,p) -> (i, setPrecision pr p)) pieces) ov  
+
+radius :: PPoly -> MPBall
+radius (PPoly pieces _) = 
+  foldl1 max $ map (polyRadius . snd) pieces
 
 addToErrorTerm :: MPBall -> PPoly -> PPoly
 addToErrorTerm e = lift2PPoly (\p -> polyAddToRadius p e)

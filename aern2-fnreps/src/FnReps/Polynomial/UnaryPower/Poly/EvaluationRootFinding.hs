@@ -2,6 +2,7 @@
 module FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding
 (
     eval,
+    evalOnRational, -- TODO profound reason to hide this?
     range,
     derivative,
     allRoots,

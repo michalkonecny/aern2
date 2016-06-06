@@ -2,7 +2,6 @@ module FnReps.Polynomial.UnaryPower.IntPoly.SignedSubresultant where
 
 import AERN2.Num
 import FnReps.Polynomial.UnaryPower.IntPoly.Basics
-import qualified Math.Polynomial as MP
 import qualified Data.Map as Map
 import qualified Prelude as Prelude
 import Data.List as List
@@ -23,32 +22,26 @@ separablePart p =
 {- For this algorithm, compare Basu, Pollack, Roy, Prop 10.14 -}
 gcdAndgcdFreePart :: IntPoly -> IntPoly -> (IntPoly, IntPoly)
 gcdAndgcdFreePart p q = 
-  (fromFracPoly $ justLookup deggcd sResP, fromFracPoly $ justLookup (deggcd - 1) sResV) 
+  ({-fromFracPoly $-} justLookup deggcd sResP, {-fromFracPoly $-} justLookup (deggcd - 1) sResV) 
   where
   (sResP, _, sResV) = extendedSignedSubresultant p q
   deggcd = aux 0
   aux i = 
-    if not $ MP.polyIsZero $ justLookup i sResP then
+    if not $ isZero $ justLookup i sResP then
       i
     else
       aux (i + 1) 
 
-
--- signed subresultant sequence with discriminant and subdiscriminants.
--- cf. Algorithm 8.23 in Basu, Pollack, Roy
 extendedSignedSubresultant :: 
   IntPoly -> IntPoly -> 
-  (Map.Map Integer (MP.Poly Rational), Map.Map Integer (MP.Poly Rational), Map.Map Integer (MP.Poly Rational)) 
-extendedSignedSubresultant p q = 
+  (Map.Map Integer IntPoly, Map.Map Integer IntPoly, Map.Map Integer IntPoly) 
+extendedSignedSubresultant p@(IntPoly pts) q@(IntPoly qts) = 
   aux1 $ aux0 $ initialiseESS
   where
-  pFrac = toFracPoly p
-  qFrac = toFracPoly q
   
-  epsilon k = (-1.0)^(k*(k - 1) `Prelude.div` 2)
-  a k = (MP.polyCoeffs MP.LE pFrac) !!! k
-  b k = (MP.polyCoeffs MP.LE qFrac) !!! k
-  lcof = head . MP.polyCoeffs MP.BE
+  epsilon k = (-1)^(k*(k - 1) `Prelude.div` 2)
+  a k = justLookup k pts
+  b k = justLookup k qts
   
   degp = integer $ degree p
   degq = integer $ degree q
@@ -58,28 +51,28 @@ extendedSignedSubresultant p q =
     where
       sResP0 = 
         foldl'
-        (\m k -> Map.insert k (MP.poly MP.LE [0.0]) m)
-        ( Map.insert degq ((epsilon $ degp - degq) * ((b degq)^(degp - degq - 1)) * qFrac) $
-          Map.fromList [(degp - 1, qFrac), (degp, pFrac)])
+        (\m k -> Map.insert k zero m)
+        ( Map.insert degq ((epsilon $ degp - degq) * ((b degq)^(degp - degq - 1)) * q) $
+          Map.fromList [(degp - 1, q), (degp, p)])
         [degq + 1 .. degp - 2]
       sResU0 =
         foldl'
-        (\m k -> Map.insert k (MP.poly MP.LE [0.0]) m)
-        (Map.insert degq MP.zero $
-         Map.fromList [(degp - 1, (MP.poly MP.LE [0.0])), (degp, (MP.poly MP.LE [1.0]))])
+        (\m k -> Map.insert k zero m)
+        (Map.insert degq zero $
+         Map.fromList [(degp - 1, zero), (degp, zero)])
         [degq + 1 .. degp - 2]
       sResV0 = 
          foldl'
-         (\m k -> Map.insert k (MP.poly MP.LE [0.0]) m)
-         (Map.insert degq (MP.poly MP.LE [(epsilon $ degp - degq) * (b degq)^(degp - degq)]) $
-          Map.fromList [(degp - 1, MP.one), (degp, MP.zero)])
+         (\m k -> Map.insert k zero m)
+         (Map.insert degq (fromList [(0,(epsilon $ degp - degq) * (b degq)^(degp - degq))]) $
+          Map.fromList [(degp - 1, one), (degp, zero)])
          [degq + 1 .. degp - 2]
       s0 = foldl' 
-             (\m k -> Map.insert k 0.0 m) 
+             (\m k -> Map.insert k 0 m) 
              (Map.insert degq ((epsilon $ degp - degq) * ((b degq)^(degp - degq))) $
-              Map.fromList [(degp - 1, b degq) , (degp, 1.0)])
+              Map.fromList [(degp - 1, b degq) , (degp, 1)])
              [degq + 1 .. degp - 2]
-      t0 = Map.fromList [(degp,1.0), (degp - 1, b degq)]
+      t0 = Map.fromList [(degp, 1), (degp - 1, b degq)]
       i0 = degp + 1
       j0 = degp
   
@@ -87,7 +80,7 @@ extendedSignedSubresultant p q =
     (sResP', sResU, sResV)
     where
     sResP' = foldl'
-             (\m k -> Map.insert k MP.zero m)
+             (\m k -> Map.insert k zero m)
              sResP
              [0 .. j - 2]
   
@@ -103,85 +96,84 @@ extendedSignedSubresultant p q =
       "i - 1: "++ show (i - 1) ++"\n"
     )
     $-}
-    if MP.polyIsZero $ justLookup (j - 1) sResP then
+    if isZero $ justLookup (j - 1) sResP then
       (sResP, sResU, sResV, s, t, i, j)
     else
       let 
-        k = integer $ MP.polyDegree $ justLookup (j - 1) sResP
+        k = integer $ degree $ justLookup (j - 1) sResP
       in
         if k == j - 1 then
           let
             s' = Map.insert (j - 1) (justLookup (j - 1) t) s
             s2 = (justLookup (j - 1) s')^2
-            scale = 1/((justLookup j s') * (justLookup (i - 1) t))
-            ck  = MP.quotPoly (s2 * (justLookup (i - 1) sResP)) (justLookup (j - 1) sResP)
-            sResP' = Map.insert (k - 1) (scale * (-s2 * (justLookup (i - 1) sResP) + ck * (justLookup (j - 1) sResP))) sResP
-            sResU' = Map.insert (k - 1) (scale * (-s2 * (justLookup (i - 1) sResU) + ck * (justLookup (j - 1) sResU))) sResU
-            sResV' = Map.insert (k - 1) (scale * (-s2 * (justLookup (i - 1) sResV) + ck * (justLookup (j - 1) sResV))) sResV
-            t' = Map.insert (k - 1) (lcof $ justLookup (k - 1) sResP') t
+            quot = (justLookup j s') * (justLookup (i - 1) t)
+            ck  = quo (s2 * (justLookup (i - 1) sResP)) (justLookup (j - 1) sResP)
+            sResP' = Map.insert (k - 1) ((-s2 * (justLookup (i - 1) sResP) + ck * (justLookup (j - 1) sResP))/quot) sResP
+            sResU' = Map.insert (k - 1) ((-s2 * (justLookup (i - 1) sResU) + ck * (justLookup (j - 1) sResU))/quot) sResU
+            sResV' = Map.insert (k - 1) ((-s2 * (justLookup (i - 1) sResV) + ck * (justLookup (j - 1) sResV))/quot) sResV
+            t' = Map.insert (k - 1) (leadingCoefficient $ justLookup (k - 1) sResP') t
             i' = j
             j' = k
           in
             aux0 (sResP', sResU', sResV', s', t', i', j')
-      else if k < j - 1 then
-        let
-          s' = Map.insert (j - 1) 0.0 s
-          (sResP', sResU', sResV', t', s'') = aux01 sResP sResU sResV s' t j k
-          (sResP'', sResU'', sResV'', s''') = aux02 sResP' sResU' sResV' s'' t' j k
-          (sResP''', sResU''', sResV''') = aux03 sResP'' sResU'' sResV'' s''' t' i j k
-          t'' = Map.insert (k - 1) (lcof $ justLookup (k - 1) sResP) t'
-          i' = j
-          j' = k
-        in
-          aux0 (sResP''', sResU''', sResV''', s''', t'', i', j')
-      else
-        error "signed subresultants: this should never happen"
+        else  -- defective case
+          let
+            s' = Map.insert (j - 1) 0 s
+            (sResP', sResU', sResV', t', s'') = aux01 sResP sResU sResV s' t j k
+            (sResP'', sResU'', sResV'', s''') = aux02 sResP' sResU' sResV' s'' t' j k
+            (sResP''', sResU''', sResV''') = aux03 sResP'' sResU'' sResV'' s''' t' i j k
+            t'' = Map.insert (k - 1) (leadingCoefficient $ justLookup (k - 1) sResP''') t'
+            i' = j
+            j' = k
+          in
+            aux0 (sResP''', sResU''', sResV''', s''', t'', i', j')
   
   aux01 sResP sResU sResV s t j k = 
     (sResP', sResU', sResV', t', s')
     where
     t' = 
       foldl' 
-      (\m d -> Map.insert (j - d - 1) ((-1.0)^d * justLookup (j - 1) m * justLookup (j - d) m/(justLookup j s)) m) 
+      (\m d -> Map.insert (j - d - 1) (((-1)^d * justLookup (j - 1) m * justLookup (j - d) m) `Prelude.div` (justLookup j s)) m) 
       t 
       [1 .. j - k - 1]
     s' = Map.insert k (justLookup k t') s
-    scale = (justLookup k s')/(justLookup (j - 1) t')
-    sResP' = Map.insert k (scale * justLookup (j - 1) sResP) sResP
-    sResU' = Map.insert k (scale * justLookup (j - 1) sResU) sResU
-    sResV' = Map.insert k (scale * justLookup (j - 1) sResV) sResV
+    sResP' = Map.insert k (((justLookup k s') * justLookup (j - 1) sResP) / justLookup (j - 1) t') sResP
+    sResU' = Map.insert k (((justLookup k s') * justLookup (j - 1) sResU) / justLookup (j - 1) t') sResU
+    sResV' = Map.insert k (((justLookup k s') * justLookup (j - 1) sResV) / justLookup (j - 1) t') sResV
+    
   aux02 sResP sResU sResV s t j k = 
     (sResP', sResU', sResV', s')
     where
     sResP' = 
       foldl'
-      (\m l -> Map.insert l MP.zero m)
+      (\m l -> Map.insert l zero m)
       sResP
       [j - 2 .. k + 1]
     sResU' = 
       foldl'
-      (\m l -> Map.insert l MP.zero m)
+      (\m l -> Map.insert l zero m)
       sResU
       [j - 2 .. k + 1]
     sResV' = 
       foldl'
-      (\m l -> Map.insert l MP.zero m)
+      (\m l -> Map.insert l zero m)
       sResV
       [j - 2 .. k + 1]
     s' = 
       foldl'
-      (\m l -> Map.insert l 0.0 m)
+      (\m l -> Map.insert l 0 m)
       s
       [j - 2 .. k + 1]    
+
   aux03 sResP sResU sResV s t i j k = 
     (sResP', sResU', sResV') 
     where
     scale = (justLookup k s) * (justLookup (j - 1) t)
-    quo   = 1/((justLookup j s) * (justLookup (i - 1) t))
-    c = MP.quotPoly (scale * justLookup (i - 1) sResP) (justLookup (j - 1) sResP)
-    sResP' = Map.insert (k - 1) (quo*(-scale * (justLookup (i - 1) sResP) + c * (justLookup (j - 1) sResP))) sResP
-    sResU' = Map.insert (k - 1) (quo*(-scale * (justLookup (i - 1) sResU) + c * (justLookup (j - 1) sResU))) sResU
-    sResV' = Map.insert (k - 1) (quo*(-scale * (justLookup (i - 1) sResV) + c * (justLookup (j - 1) sResV))) sResV
+    quot   = ((justLookup j s) * (justLookup (i - 1) t))
+    c = quo (scale * justLookup (i - 1) sResP) (justLookup (j - 1) sResP)
+    sResP' = Map.insert (k - 1) ((-scale * (justLookup (i - 1) sResP) + c * (justLookup (j - 1) sResP))/quot) sResP
+    sResU' = Map.insert (k - 1) ((-scale * (justLookup (i - 1) sResU) + c * (justLookup (j - 1) sResU))/quot) sResU
+    sResV' = Map.insert (k - 1) ((-scale * (justLookup (i - 1) sResV) + c * (justLookup (j - 1) sResV))/quot) sResV
 
 justLookup :: (Ord k, Show k, Show a) => k -> Map.Map k a -> a
 justLookup x m = case Map.lookup x m of
