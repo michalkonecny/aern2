@@ -1,0 +1,43 @@
+Time,Op,Fn,FnRepr,Parameters,Accuracy(bits),UTime(s),STime(s),Mem(kB)
+Tue Jun  7 12:40:46 BST 2016,max,sine+cos,fun,10,10,0.25,0.01,4800
+Tue Jun  7 12:40:48 BST 2016,max,sine+cos,fun,15,15,1.50,0.01,9044
+Tue Jun  7 12:40:56 BST 2016,max,sine+cos,fun,20,20,8.55,0.05,30332
+Tue Jun  7 12:41:47 BST 2016,max,sine+cos,fun,25,25,50.27,0.13,157304
+Tue Jun  7 12:46:34 BST 2016,max,sine+cos,fun,30,30,285.45,0.83,817796
+Tue Jun  7 12:46:42 BST 2016,integrate,sine+cos,fun,10,10,8.40,0.01,44576
+Tue Jun  7 12:47:16 BST 2016,integrate,sine+cos,fun,12,12,33.72,0.08,182816
+Tue Jun  7 12:49:30 BST 2016,integrate,sine+cos,fun,14,14,133.62,0.29,689704
+Tue Jun  7 12:49:30 BST 2016,integrate,sine+cos,dfun,10,10,0.20,0.01,3664
+Tue Jun  7 12:49:31 BST 2016,integrate,sine+cos,dfun,12,12,0.37,0.01,4016
+Tue Jun  7 12:49:32 BST 2016,integrate,sine+cos,dfun,14,14,0.73,0.01,5064
+Tue Jun  7 12:49:33 BST 2016,integrate,sine+cos,dfun,16,16,1.47,0.01,6512
+Tue Jun  7 12:49:36 BST 2016,integrate,sine+cos,dfun,18,18,2.97,0.01,9772
+Tue Jun  7 12:49:42 BST 2016,integrate,sine+cos,dfun,20,20,5.78,0.01,13864
+Tue Jun  7 12:49:43 BST 2016,max,sine+cos,poly,100 34 100,13,0.68,0.01,7648
+Tue Jun  7 12:49:43 BST 2016,max,sine+cos,poly,100 36 100,17,0.74,0.01,7652
+Tue Jun  7 12:49:44 BST 2016,max,sine+cos,poly,100 38 100,21,0.80,0.01,7672
+Tue Jun  7 12:49:45 BST 2016,max,sine+cos,poly,100 40 100,26,0.91,0.01,7680
+Tue Jun  7 12:49:46 BST 2016,max,sine+cos,poly,100 42 100,30,0.97,0.01,7676
+Tue Jun  7 12:49:47 BST 2016,max,sine+cos,poly,100 44 100,34,1.06,0.01,7684
+Tue Jun  7 12:49:48 BST 2016,integrate,sine+cos,poly,100 32 100,8,0.48,0.01,7320
+Tue Jun  7 12:49:48 BST 2016,integrate,sine+cos,poly,100 34 100,12,0.50,0.01,7332
+Tue Jun  7 12:49:49 BST 2016,integrate,sine+cos,poly,100 36 100,16,0.53,0.01,7332
+Tue Jun  7 12:49:49 BST 2016,integrate,sine+cos,poly,100 38 100,20,0.56,0.01,7328
+Tue Jun  7 12:49:49 BST 2016,max,sinesine,fun,10,10,0.04,0.01,3532
+Tue Jun  7 12:49:50 BST 2016,max,sinesine,fun,20,20,0.06,0.01,3584
+Tue Jun  7 12:49:50 BST 2016,max,sinesine,fun,30,30,0.07,0.01,3632
+Tue Jun  7 12:49:50 BST 2016,max,sinesine,fun,40,40,0.08,0.01,3664
+Tue Jun  7 12:49:50 BST 2016,max,sinesine,fun,50,50,0.10,0.01,3708
+Tue Jun  7 12:49:50 BST 2016,integrate,sinesine,fun,5,5,0.24,0.01,4236
+Tue Jun  7 12:49:58 BST 2016,integrate,sinesine,fun,10,10,7.33,0.01,36388
+Tue Jun  7 12:53:54 BST 2016,integrate,sinesine,fun,15,15,235.83,0.62,1215012
+Tue Jun  7 12:53:54 BST 2016,integrate,sinesine,dfun,5,6,0.08,0.01,3412
+Tue Jun  7 12:53:55 BST 2016,integrate,sinesine,dfun,10,10,0.33,0.01,3812
+Tue Jun  7 12:53:57 BST 2016,integrate,sinesine,dfun,15,15,1.75,0.01,6792
+Tue Jun  7 12:54:06 BST 2016,integrate,sinesine,dfun,20,20,9.70,0.01,23088
+Tue Jun  7 12:55:02 BST 2016,integrate,sinesine,dfun,25,25,55.45,0.12,113200
+Tue Jun  7 13:00:22 BST 2016,integrate,sinesine,dfun,30,30,318.56,0.74,580984
+Tue Jun  7 13:00:44 BST 2016,max,sinesine,poly,100 150 100,11,21.76,0.15,54348
+Tue Jun  7 13:01:20 BST 2016,max,sinesine,poly,100 200 100,21,35.68,0.29,85424
+Tue Jun  7 16:28:48 BST 2016,max,sinesine,poly,100 300 100,44,91.97,1.04,229448
+Tue Jun  7 16:31:44 BST 2016,max,sinesine,poly,100 400 100,69,174.37,1.79,339512
