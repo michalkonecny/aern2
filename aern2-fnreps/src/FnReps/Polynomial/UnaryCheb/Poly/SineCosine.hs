@@ -108,12 +108,14 @@ sine_poly maxDeg sweepT x =
     rC = ballCentre r
     
     -- compute k = round(rC/(pi/2)):
-    k = toIntegerDown $ 0.5 + (2*rC / pi)
-    
+    k = toIntegerDown $ 0.5 + (2*rC / piP)
+    piP = piBallP p
+    p = getPrecision x
+
     -- shift xC near 0 using multiples of pi/2:
-    txC = xC - k * pi / 2
+    txC = xC - k * piP / 2
     -- work out an absolute range bound for txC:
-    (_, trM) = ball2endpoints $ abs $ r - k * pi / 2  
+    (_, trM) = ball2endpoints $ abs $ r - k * piP / 2  
     
     -- compute sin or cos of txC = xC-k*pi/2 using Taylor series:
     taylorSums 
