@@ -1,0 +1,33 @@
+absXshifted:
+ zeroPoint = (-1) % 3
+ errorBoundPos = (2.9233175766e-02,False)
+ errorBoundNeg = (2.9233175766e-02,False)
+ resC = 3.3345717108436457e-01 + 1.0287113244813995e+00*x - 1.9058923798502225e-01*x^2 - 4.4359371617989396e+00*x^3 + 2.553119119051695e+01*x^4 + 1.750092835294522e+02*x^5 - 1.0333826886165607e+03*x^6 - 2.7246357591193264e+03*x^7 + 1.8431312201282388e+04*x^8 + 2.0667112121018145e+04*x^9 - 1.7919312530189496e+05*x^10 - 9.040956525885337e+04*x^11 + 1.1071586987838019e+06*x^12 + 2.3448036731548817e+05*x^13 - 4.708782938741073e+06*x^14 - 3.0059709931115061e+05*x^15 + 1.4397396801738337e+07*x^16 - 1.5152135315315286e+05*x^17 - 3.2387676965653241e+07*x^18 + 1.4516983147435561e+06*x^19 + 5.411907245278722e+07*x^20 - 3.0658760215678327e+06*x^21 - 6.706403867172277e+07*x^22 + 3.7475636089520492e+06*x^23 + 6.0814716556522727e+07*x^24 - 2.9353790284446366e+06*x^25 - 3.9208225053699553e+07*x^26 + 1.4596627510885522e+06*x^27 + 1.7016358961878359e+07*x^28 - 4.2191990725233778e+05*x^29 - 4.4560884107276499e+06*x^30 + 5.4184187802066968e+04*x^31 + 5.3187909068790823e+05*x^32
+computing integrate  1-|x+1/3| over [-1,1]
+result = [8.8818997525395139974835900969782e-01 ± 5.8466351474857764e-02]
+result ~ (8.881899761e-01,True)
+accuracy: Bits 4
+precision = Precision 100
+	Command being timed: "./aern2-fnreps-ops integrate hat poly 100 32 0 100"
+	User time (seconds): 0.37
+	System time (seconds): 0.00
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.38
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 7628
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 2026
+	Voluntary context switches: 1
+	Involuntary context switches: 59
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
