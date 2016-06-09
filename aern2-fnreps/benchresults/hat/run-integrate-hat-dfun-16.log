@@ -1,23 +1,23 @@
 computing integrate  1-|x+1/3| over [-1,1]
-result = [8.88885e-01 ± 1.5599568684895843e-02]
-result ~ (8.8888549805e-01,True)
-accuracy: Bits 6
-precision = Precision 16
-	Command being timed: "./aern2-fnreps-ops integrate hat fun 6"
-	User time (seconds): 0.01
+result = [8.8888888930281003316243489583333333226339e-01 ± 4.6566128730774112e-10]
+result ~ (8.8888888992e-01,False)
+accuracy: Bits 31
+precision = Precision 131
+	Command being timed: "./aern2-fnreps-ops integrate hat dfun 16"
+	User time (seconds): 0.00
 	System time (seconds): 0.00
 	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.01
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.00
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 3212
+	Maximum resident set size (kbytes): 3184
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 899
+	Minor (reclaiming a frame) page faults: 891
 	Voluntary context switches: 1
-	Involuntary context switches: 2
+	Involuntary context switches: 3
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8
