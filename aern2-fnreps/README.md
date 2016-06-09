@@ -31,7 +31,23 @@ and a double-precision radius.
 Equivalently, the function could be given by an evaluator over dyadics and a bound on its modulus of continuity.
 
 
+### DFun
+
+<!-- line breaks are forced by 2 trailing spaces -->
+
+A function 
+![](http://latex.codecogs.com/gif.latex?f)
+is given by a pair of Fun representations:
+one for 
+![](http://latex.codecogs.com/gif.latex?f)
+and one for its derivative
+![](http://latex.codecogs.com/gif.latex?f').
+This representation is currently used for integration
+with an adaptive interval trapezoidal quadrature.
+
+
 ### Poly
+
 
 <!-- line breaks are forced by 2 trailing spaces -->
 
