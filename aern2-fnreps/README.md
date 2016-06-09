@@ -71,8 +71,6 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 ## Benchmark results
 
-_(Currently out of date, to be updated soon)_
-
 ### A well-behaved analytic function with a number of local extrema
 
 ![sine+cos](http://latex.codecogs.com/gif.latex?\\sin(10x)+\\cos(20x))
@@ -100,6 +98,13 @@ _(Currently out of date, to be updated soon)_
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
 | <img src="benchresults/charts/runge-max.png?raw=true" width="300"> | <img src="benchresults/charts/runge-integrate.png?raw=true" width="300"> | 
+
+![rungeX](http://latex.codecogs.com/gif.latex?{\\frac{x}{100x^2+1}})
+<img src="plots/rungeX.png?raw=true" width="150">
+
+| Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
+| :---: | :---: |
+| <img src="benchresults/charts/rungeX-max.png?raw=true" width="300"> | <img src="benchresults/charts/rungeX-integrate.png?raw=true" width="300"> | 
 
 ### An analytic function with singularities near the origin and with multiple maxima
 
