@@ -14,7 +14,6 @@
 "Wed Jun  8 15:53:31 BST 2016","integrate","fracSin","ppoly","100 20 0.1 1 100",4,13.56,0.01,12904
 "Wed Jun  8 15:53:55 BST 2016","integrate","fracSin","ppoly","100 30 0.1 2 100",13,24.46,0.07,33256
 "Wed Jun  8 15:55:24 BST 2016","integrate","fracSin","ppoly","800 40 0.1 3 200",16,87.24,0.67,88604
-"Wed Jun  8 15:57:36 BST 2016","integrate","fracSin","ppoly","800 40 0.05 3 200",16,131.29,1.02,140828
 "Wed Jun  8 09:32:47 BST 2016","max","fracSin","fun",5,5,61.83,0.29,36360
 "Wed Jun  8 09:33:50 BST 2016","max","fracSin","fun",10,10,62.21,0.33,36360
 "Wed Jun  8 09:34:52 BST 2016","max","fracSin","fun",15,15,61.6,0.32,36352
@@ -28,35 +27,6 @@
 "Wed Jun  8 15:48:57 BST 2016","max","fracSin","ppoly","100 30 0.1 2 100",13,26.21,0.12,21720
 "Wed Jun  8 15:50:39 BST 2016","max","fracSin","ppoly","800 40 0.1 3 200",25,100.42,1.32,74008
 "Wed Jun  8 15:53:11 BST 2016","max","fracSin","ppoly","800 40 0.05 3 200",30,148.99,2.12,94452
-"Wed Jun  8 10:52:55 BST 2016","integrate","hat","dfun",4,7,0.01,0.01,3116
-"Wed Jun  8 10:52:55 BST 2016","integrate","hat","dfun",5,9,0.01,0.01,3120
-"Wed Jun  8 10:52:55 BST 2016","integrate","hat","dfun",6,11,0.01,0.01,3208
-"Wed Jun  8 10:52:55 BST 2016","integrate","hat","dfun",7,13,0.01,0.01,3212
-"Wed Jun  8 10:52:55 BST 2016","integrate","hat","dfun",8,15,0.01,0.01,3204
-"Wed Jun  8 10:52:55 BST 2016","integrate","hat","dfun",9,17,0.01,0.01,3208
-"Wed Jun  8 10:52:55 BST 2016","integrate","hat","dfun",10,19,0.01,0.01,3212
-"Wed Jun  8 10:52:55 BST 2016","integrate","hat","fun",4,4,0.01,0.01,3192
-"Wed Jun  8 10:52:55 BST 2016","integrate","hat","fun",5,5,0.01,0.01,3192
-"Wed Jun  8 10:52:55 BST 2016","integrate","hat","fun",6,6,0.01,0.01,3224
-"Wed Jun  8 10:52:55 BST 2016","integrate","hat","fun",7,7,0.02,0.01,3272
-"Wed Jun  8 10:52:55 BST 2016","integrate","hat","fun",8,8,0.03,0.01,3420
-"Wed Jun  8 10:52:55 BST 2016","integrate","hat","fun",9,9,0.05,0.01,3800
-"Wed Jun  8 10:52:55 BST 2016","integrate","hat","fun",10,10,0.12,0.01,4816
-"Wed Jun  8 10:53:45 BST 2016","integrate","hat","poly","100 32 0 100",4,0.37,0.01,7628
-"Wed Jun  8 10:53:48 BST 2016","integrate","hat","poly","100 64 0 100",6,2.88,0.01,15584
-"Wed Jun  8 10:54:32 BST 2016","integrate","hat","poly","150 128 0 100",7,44.14,0.17,77896
-"Wed Jun  8 10:54:32 BST 2016","integrate","hat","ppoly","100 0 0 0 0",95,0.01,0.01,3476
-"Wed Jun  8 10:52:55 BST 2016","max","hat","fun",4,4,0.01,0.01,3184
-"Wed Jun  8 10:52:55 BST 2016","max","hat","fun",5,5,0.01,0.01,3184
-"Wed Jun  8 10:52:55 BST 2016","max","hat","fun",6,6,0.01,0.01,3204
-"Wed Jun  8 10:52:55 BST 2016","max","hat","fun",7,7,0.01,0.01,3292
-"Wed Jun  8 10:52:55 BST 2016","max","hat","fun",8,8,0.01,0.01,3296
-"Wed Jun  8 10:52:55 BST 2016","max","hat","fun",9,9,0.01,0.01,3288
-"Wed Jun  8 10:52:55 BST 2016","max","hat","fun",10,10,0.01,0.01,3292
-"Wed Jun  8 10:52:56 BST 2016","max","hat","poly","100 32 0 100",5,0.44,0.01,7696
-"Wed Jun  8 10:52:59 BST 2016","max","hat","poly","100 64 0 100",7,3.07,0.01,15652
-"Wed Jun  8 10:53:45 BST 2016","max","hat","poly","150 128 0 100",8,45.28,0.21,80280
-"Wed Jun  8 10:54:32 BST 2016","max","hat","ppoly","100 0 0 0 100",95,0.01,0.01,3564
 "Wed Jun  8 00:56:13 BST 2016","integrate","runge","dfun",5,7,0.01,0.01,3244
 "Wed Jun  8 00:56:13 BST 2016","integrate","runge","dfun",10,11,0.03,0.01,3308
 "Wed Jun  8 00:56:13 BST 2016","integrate","runge","dfun",15,15,0.16,0.01,3640
@@ -74,9 +44,7 @@
 "Wed Jun  8 02:23:19 BST 2016","integrate","runge","poly","300 256 0 200",31,1514.74,2.76,1726692
 "Wed Jun  8 15:46:47 BST 2016","integrate","runge","ppoly","100 0 0.1 1 100",6,0.1,0.01,5048
 "Wed Jun  8 15:46:47 BST 2016","integrate","runge","ppoly","100 0 0.1 2 100",13,0.12,0.01,5584
-"Wed Jun  8 15:46:47 BST 2016","integrate","runge","ppoly","150 0 0.1 3 150",26,0.23,0.01,7160
 "Wed Jun  8 15:46:48 BST 2016","integrate","runge","ppoly","150 0 0.01 3 150",27,0.73,0.01,10628
-"Wed Jun  8 15:46:50 BST 2016","integrate","runge","ppoly","150 0 0.001 3 150",26,2.16,0.01,25996
 "Wed Jun  8 15:46:52 BST 2016","integrate","runge","ppoly","300 0 0.05 4 300",69,1.92,0.02,13696
 "Wed Jun  8 15:46:56 BST 2016","integrate","runge","ppoly","300 0 0.01 4 300",74,4,0.01,23948
 "Wed Jun  8 00:50:31 BST 2016","max","runge","fun",5,5,0.02,0.01,5400
@@ -113,9 +81,7 @@
 "Wed Jun  8 08:27:53 BST 2016","integrate","rungeX","poly","200 256 0 100",38,934.06,2.21,1206088
 "Wed Jun  8 15:47:58 BST 2016","integrate","rungeX","ppoly","100 0 0.1 1 100",6,0.1,0.01,5200
 "Wed Jun  8 15:47:58 BST 2016","integrate","rungeX","ppoly","100 0 0.1 2 100",13,0.13,0.01,5668
-"Wed Jun  8 15:47:58 BST 2016","integrate","rungeX","ppoly","150 0 0.1 3 150",26,0.25,0.01,7464
 "Wed Jun  8 15:47:59 BST 2016","integrate","rungeX","ppoly","150 0 0.01 3 150",27,0.81,0.01,14724
-"Wed Jun  8 15:48:02 BST 2016","integrate","rungeX","ppoly","150 0 0.001 3 150",26,2.53,0.02,28128
 "Wed Jun  8 15:48:04 BST 2016","integrate","rungeX","ppoly","300 0 0.05 4 300",69,2.01,0.01,13520
 "Wed Jun  8 15:48:08 BST 2016","integrate","rungeX","ppoly","300 0 0.01 4 300",74,4.27,0.01,21896
 "Wed Jun  8 07:24:44 BST 2016","max","rungeX","fun",5,5,0.02,0.01,5760
@@ -131,9 +97,7 @@
 "Wed Jun  8 08:10:21 BST 2016","max","rungeX","poly","300 256 0 200",39,1530.93,3.06,1716156
 "Wed Jun  8 15:46:56 BST 2016","max","rungeX","ppoly","100 0 0.1 1 100",6,0.1,0.01,4796
 "Wed Jun  8 15:46:57 BST 2016","max","rungeX","ppoly","100 0 0.1 2 100",13,0.15,0.01,5608
-"Wed Jun  8 15:46:57 BST 2016","max","rungeX","ppoly","150 0 0.1 3 150",26,0.62,0.01,6676
 "Wed Jun  8 15:46:59 BST 2016","max","rungeX","ppoly","150 0 0.01 3 150",29,1.95,0.01,8372
-"Wed Jun  8 15:47:05 BST 2016","max","rungeX","ppoly","150 0 0.001 3 150",28,5.73,0.02,15468
 "Wed Jun  8 15:47:22 BST 2016","max","rungeX","ppoly","300 0 0.05 4 300",69,17.18,0.01,12560
 "Wed Jun  8 15:47:58 BST 2016","max","rungeX","ppoly","300 0 0.01 4 300",79,35.19,0.03,13580
 "Tue Jun  7 23:18:11 BST 2016","integrate","sine+cos","dfun",10,10,0.22,0.01,3644
@@ -215,3 +179,24 @@
 "Wed Jun  8 00:28:00 BST 2016","max","sinesine+cos","poly","200 100 400 200",69,176.48,2.05,419828
 "Wed Jun  8 00:32:20 BST 2016","max","sinesine+cos","poly","200 100 500 200",95,257.8,2.06,413376
 "Wed Jun  8 00:36:29 BST 2016","max","sinesine+cos","poly","400 150 600 400",97,246.69,1.86,529868
+Thu Jun  9 21:34:18 BST 2016,max,hat,fun,4,4,0.01,0.01,3204
+Thu Jun  9 21:34:18 BST 2016,max,hat,fun,10,10,0.01,0.01,3284
+Thu Jun  9 21:34:18 BST 2016,max,hat,fun,20,20,0.01,0.01,3284
+Thu Jun  9 21:34:18 BST 2016,max,hat,fun,30,30,0.01,0.01,3300
+Thu Jun  9 21:34:18 BST 2016,integrate,hat,fun,4,4,0.01,0.01,3176
+Thu Jun  9 21:34:18 BST 2016,integrate,hat,fun,6,6,0.01,0.01,3212
+Thu Jun  9 21:34:18 BST 2016,integrate,hat,fun,8,8,0.03,0.01,3412
+Thu Jun  9 21:34:18 BST 2016,integrate,hat,fun,10,10,0.12,0.01,4792
+Thu Jun  9 21:34:19 BST 2016,max,hat,poly,100 32 0 100,5,0.51,0.01,7724
+Thu Jun  9 21:34:23 BST 2016,max,hat,poly,100 64 0 100,7,3.88,0.02,15680
+Thu Jun  9 21:35:25 BST 2016,max,hat,poly,150 128 0 100,8,62.47,0.23,80308
+Thu Jun  9 21:35:25 BST 2016,max,hat,ppoly,5 0 0 0 10,4,0.01,0.01,3620
+Thu Jun  9 21:35:26 BST 2016,max,hat,ppoly,35 0 0 0 35,34,0.01,0.01,3620
+Thu Jun  9 21:35:26 BST 2016,integrate,hat,ppoly,5 0 0 0 0,3,0.01,0.01,3520
+Thu Jun  9 21:35:26 BST 2016,integrate,hat,ppoly,35 0 0 0 0,33,0.01,0.01,3516
+Thu Jun  9 21:36:03 BST 2016,integrate,hat,poly,100 32 0 100,4,0.44,0.01,7680
+Thu Jun  9 21:36:06 BST 2016,integrate,hat,poly,100 64 0 100,6,3.61,0.02,15648
+Thu Jun  9 21:37:07 BST 2016,integrate,hat,poly,150 128 0 100,7,60.67,0.24,81296
+Thu Jun  9 21:38:41 BST 2016,integrate,hat,dfun,4,7,0.01,0.01,3128
+Thu Jun  9 21:38:41 BST 2016,integrate,hat,dfun,10,19,0.01,0.01,3196
+Thu Jun  9 21:38:41 BST 2016,integrate,hat,dfun,16,31,0.01,0.01,3184

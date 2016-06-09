@@ -260,7 +260,7 @@ function rungePPoly
     dir=$fn
     
     op=max
-    for params in "100 0 0.1 1 100" "100 0 0.1 2 100" "150 0 0.1 3 150" "150 0 0.01 3 150" "150 0 0.001 3 150" "300 0 0.05 4 300" "300 0 0.01 4 300"
+    for params in "100 0 0.1 1 100" "100 0 0.1 2 100" "150 0 0.01 3 150" "300 0 0.05 4 300" "300 0 0.01 4 300"
     do
         runOne
     done
@@ -332,13 +332,13 @@ function rungeXPPoly
     dir=$fn
     
     op=max
-    for params in "100 0 0.1 1 100" "100 0 0.1 2 100" "150 0 0.1 3 150" "150 0 0.01 3 150" "150 0 0.001 3 150" "300 0 0.05 4 300" "300 0 0.01 4 300"
+    for params in "100 0 0.1 1 100" "100 0 0.1 2 100" "150 0 0.01 3 150" "300 0 0.05 4 300" "300 0 0.01 4 300"
     do
         runOne
     done
     
     op=integrate
-    for params in "100 0 0.1 1 100" "100 0 0.1 2 100" "150 0 0.1 3 150" "150 0 0.01 3 150" "150 0 0.001 3 150" "300 0 0.05 4 300" "300 0 0.01 4 300"
+    for params in "100 0 0.1 1 100" "100 0 0.1 2 100" "150 0 0.01 3 150" "300 0 0.05 4 300" "300 0 0.01 4 300"
     do
         runOne
     done
@@ -433,19 +433,19 @@ function hatFun
     dir=$fn
     
     op=max
-    for params in 4 5 6 7 8 9 10
+    for params in 4 10 20 30 
     do
         runOne
     done
     
     op=integrate
-    for params in 4 5 6 7 8 9 10
+    for params in 4 6 8 10
     do
         runOne
     done
     
     repr=dfun
-    for params in 4 5 6 7 8 9 10
+    for params in 4 10 16
     do
         runOne
     done
@@ -481,13 +481,13 @@ function hatPPoly
     dir=$fn
     
     op=max
-    for params in "100 0 0 0 100"
+    for params in "5 0 0 0 10" "35 0 0 0 35"
     do
         runOne
     done
     
     op=integrate
-    for params in "100 0 0 0 0"
+    for params in "5 0 0 0 0" "35 0 0 0 0"
     do
         runOne
     done
