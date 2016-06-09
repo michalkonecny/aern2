@@ -99,7 +99,7 @@ _(Currently out of date, to be updated soon)_
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="benchresults/charts/runge-max.png?raw=true" width="300"> | <img src="benchresults/charts/fraction-integrate.png?raw=true" width="300"> | 
+| <img src="benchresults/charts/runge-max.png?raw=true" width="300"> | <img src="benchresults/charts/runge-integrate.png?raw=true" width="300"> | 
 
 ### An analytic function with singularities near the origin and with multiple maxima
 
