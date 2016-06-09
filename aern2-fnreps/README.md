@@ -89,6 +89,13 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 | :---: | :---: |
 | <img src="benchresults/charts/sinesine-max.png?raw=true" width="300"> | <img src="benchresults/charts/sinesine-integrate.png?raw=true" width="300"> |  
 
+![sinesine+sin](http://latex.codecogs.com/gif.latex?\\sin(10x+\\sin(20x^2))+\\sin(10x))
+<img src="plots/sinesine+sin.png?raw=true" width="150">
+
+| Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
+| :---: | :---: |
+| <img src="benchresults/charts/sinesine+cos-max.png?raw=true" width="300"> | <img src="benchresults/charts/sinesine+cos-integrate.png?raw=true" width="300"> |  
+
 
 ### An analytic function with singularities near the origin
 
