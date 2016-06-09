@@ -80,8 +80,7 @@ _(Currently out of date, to be updated soon)_
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="plots/sine+cos-max.png?raw=true" width="400"> | <img src="plots/sine+cos-integrate.png?raw=true" width="400"> |
-| _([on Plotly](https://plot.ly/~mikkonecny/18/time-s-vs-accuracy-bits/))_ | _([on Plotly](https://plot.ly/~mikkonecny/17/time-s-vs-accuracy-bits/))_ |
+| <img src="benchresults/charts/sine+cos-max.png?raw=true" width="300"> | <img src="benchresults/charts/sine+cos-integrate.png?raw=true" width="300"> |
 
 ### A nested sine function
 
