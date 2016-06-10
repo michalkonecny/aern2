@@ -17,7 +17,7 @@ precision = Precision 119
 	Major (requiring I/O) page faults: 0
 	Minor (reclaiming a frame) page faults: 894
 	Voluntary context switches: 1
-	Involuntary context switches: 3
+	Involuntary context switches: 2
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

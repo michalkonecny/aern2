@@ -106,7 +106,7 @@ function sinesineFun
     dir=$fn
     
     op=max
-    for params in 10 20 30 40 50
+    for params in 10 30 50 70 90 95
     do
         runOne
     done
@@ -158,7 +158,7 @@ function sinesine+cosFun
     dir=$fn
     
     op=max
-    for params in 10 20 30 40
+    for params in 10 20 30 40 45
     do
         runOne
     done
@@ -211,7 +211,7 @@ function rungeFun
     dir=$fn
     
     op=max
-    for params in 05 10 15 20 25 30
+    for params in 05 35 65 100
     do
         runOne
     done
@@ -223,7 +223,7 @@ function rungeFun
     done
     
     repr=dfun
-    for params in 05 10 15 20 25 30
+    for params in 05 10 15 20 25 30 35
     do
         runOne
     done
@@ -284,7 +284,7 @@ function rungeXFun
     dir=$fn
     
     op=max
-    for params in 05 10 15 20 25 30
+    for params in 05 10 15 20 25 30 35 40
     do
         runOne
     done
@@ -296,7 +296,7 @@ function rungeXFun
     done
     
     repr=dfun
-    for params in 05 10 15 20 25 30
+    for params in 05 10 15 20 25 30 35 40
     do
         runOne
     done
@@ -439,7 +439,7 @@ function hatFun
     done
     
     op=integrate
-    for params in 4 6 8 10
+    for params in 4 6 8 10 12 14 16 18
     do
         runOne
     done

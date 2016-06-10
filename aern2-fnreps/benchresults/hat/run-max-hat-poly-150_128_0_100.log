@@ -16,10 +16,10 @@ result ~ (1e+00,True)
 accuracy: Bits 8
 precision = Precision 150
 	Command being timed: "./aern2-fnreps-ops max hat poly 150 128 0 100"
-	User time (seconds): 62.47
-	System time (seconds): 0.23
-	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:02.73
+	User time (seconds): 44.36
+	System time (seconds): 0.20
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:44.55
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
@@ -27,9 +27,9 @@ precision = Precision 150
 	Maximum resident set size (kbytes): 80308
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 153623
+	Minor (reclaiming a frame) page faults: 153876
 	Voluntary context switches: 1
-	Involuntary context switches: 7523
+	Involuntary context switches: 4804
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 16
