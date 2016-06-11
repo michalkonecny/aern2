@@ -31,7 +31,23 @@ and a double-precision radius.
 Equivalently, the function could be given by an evaluator over dyadics and a bound on its modulus of continuity.
 
 
+### DFun
+
+<!-- line breaks are forced by 2 trailing spaces -->
+
+A function 
+![](http://latex.codecogs.com/gif.latex?f)
+is given by a pair of Fun representations:
+one for 
+![](http://latex.codecogs.com/gif.latex?f)
+and one for its derivative
+![](http://latex.codecogs.com/gif.latex?f').
+This representation is currently used for integration
+with an adaptive interval trapezoidal quadrature.
+
+
 ### Poly
+
 
 <!-- line breaks are forced by 2 trailing spaces -->
 
@@ -67,21 +83,20 @@ Intel(R) Core(TM) i7-3632QM CPU @ 2.20GHz running Ubuntu 14.04.
 
 The benchmarks have been compiled using ghc-7.8.4 with -O2.
 
+<!--
 Each benchmark has been executed repeatedly until 3 consecutive times the results have fluctuated for less than 5%.
+-->
 
 ## Benchmark results
-
-_(Currently out of date, to be updated soon)_
 
 ### A well-behaved analytic function with a number of local extrema
 
 ![sine+cos](http://latex.codecogs.com/gif.latex?\\sin(10x)+\\cos(20x))
-<img src="plots/sine+cos-plot.png?raw=true" width="150">
+<img src="plots/sine+cos.png?raw=true" width="150">
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="plots/sine+cos-max.png?raw=true" width="400"> | <img src="plots/sine+cos-integrate.png?raw=true" width="400"> |
-| _([on Plotly](https://plot.ly/~mikkonecny/18/time-s-vs-accuracy-bits/))_ | _([on Plotly](https://plot.ly/~mikkonecny/17/time-s-vs-accuracy-bits/))_ |
+| <img src="benchresults/charts/sine+cos-max.png?raw=true" width="300"> | <img src="benchresults/charts/sine+cos-integrate.png?raw=true" width="300"> |
 
 ### A nested sine function
 
@@ -90,46 +105,57 @@ _(Currently out of date, to be updated soon)_
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="plots/sinesine-max.png?raw=true" width="400"> | <img src="plots/sinesine-integrate.png?raw=true" width="400"> |  
-| _([on Plotly](https://plot.ly/~mikkonecny/20/time-s-vs-accuracy-bits/))_ | _([on Plotly](https://plot.ly/~mikkonecny/11/time-s-vs-accuracy-bits/))_ | 
+| <img src="benchresults/charts/sinesine-max.png?raw=true" width="300"> | <img src="benchresults/charts/sinesine-integrate.png?raw=true" width="300"> |  
+
+![sinesine+sin](http://latex.codecogs.com/gif.latex?\\sin(10x+\\sin(20x^2))+\\sin(10x))
+<img src="plots/sinesine+sin.png?raw=true" width="150">
+
+| Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
+| :---: | :---: |
+| <img src="benchresults/charts/sinesine+cos-max.png?raw=true" width="300"> | <img src="benchresults/charts/sinesine+cos-integrate.png?raw=true" width="300"> |  
 
 
 ### An analytic function with singularities near the origin
 
-![fraction](http://latex.codecogs.com/gif.latex?{\\frac{1}{100x^2+1}})
-<img src="plots/fraction.png?raw=true" width="150">
+![runge](http://latex.codecogs.com/gif.latex?{\\frac{1}{100x^2+1}})
+<img src="plots/runge.png?raw=true" width="150">
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="plots/fraction-max.png?raw=true" width="400"> | <img src="plots/fraction-integrate.png?raw=true" width="400"> | 
-| _([on Plotly](https://plot.ly/~mikkonecny/26/fun-vs-poly/))_ | _([on Plotly](https://plot.ly/~mikkonecny/27/time-s-vs-precision-bits/))_ |
+| <img src="benchresults/charts/runge-max.png?raw=true" width="300"> | <img src="benchresults/charts/runge-integrate.png?raw=true" width="300"> | 
+
+![rungeX](http://latex.codecogs.com/gif.latex?{\\frac{x}{100x^2+1}})
+<img src="plots/rungeX.png?raw=true" width="150">
+
+| Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
+| :---: | :---: |
+| <img src="benchresults/charts/rungeX-max.png?raw=true" width="300"> | <img src="benchresults/charts/rungeX-integrate.png?raw=true" width="300"> | 
 
 ### An analytic function with singularities near the origin and with multiple maxima
 
-![fraction-periodic](http://latex.codecogs.com/gif.latex?{\\frac{1}{10(\\sin(7x))^2+1}})
-<img src="plots/fraction-periodic.png?raw=true" width="150">
+![fracSin](http://latex.codecogs.com/gif.latex?{\\frac{1}{10(\\sin(7x))^2+1}})
+<img src="plots/fracSin.png?raw=true" width="150">
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="plots/frac-periodic-max.png?raw=true" width="400"> | <img src="plots/frac-periodic-integrate.png?raw=true" width="400"> | 
-| _([on Plotly](https://plot.ly/~mikkonecny/35/time-s-vs-accuracy-bits/))_ | _([on Plotly](https://plot.ly/~mikkonecny/34/time-s-vs-accuracy-bits/))_ |
+| <img src="benchresults/charts/fracSin-max.png?raw=true" width="300"> | <img src="benchresults/charts/fracSin-integrate.png?raw=true" width="300"> | 
 
 
 ### A very simple non-smooth function
 
-![abs](http://latex.codecogs.com/gif.latex?1-|x+1/3|)
-<img src="plots/abs.png?raw=true" width="150">
+![hat](http://latex.codecogs.com/gif.latex?1-|x+1/3|)
+<img src="plots/hat.png?raw=true" width="150">
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="plots/abs-max.png?raw=true" width="400"> | <img src="plots/abs-integrate.png?raw=true" width="400"> |
-| _([on Plotly](https://plot.ly/~mikkonecny/30/time-s-vs-accuracy-bits/))_ | _([on Plotly](https://plot.ly/~mikkonecny/31/fun-vs-poly/))_ |
+| <img src="benchresults/charts/hat-max.png?raw=true" width="300"> | <img src="benchresults/charts/hat-integrate.png?raw=true" width="300"> |
 
 
+<!--
 ### A non-smooth function with multiple maxima
 
 ![bumpy](http://latex.codecogs.com/gif.latex?\\max(\\sin(10x),\\cos(11x)))
 <img src="plots/bumpy.png?raw=true" width="150">
 
 _(coming soon)_
-
+-->

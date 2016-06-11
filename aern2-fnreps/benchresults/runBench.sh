@@ -79,14 +79,14 @@ function sinecosPoly
     op=max
     for deg in 34 36 38 40 42 44 
     do
-        params="100 $deg 100"
+        params="100 $deg 0 100"
         runOne
     done
     
     op=integrate
     for deg in 32 34 36 38
     do
-        params="100 $deg 100"
+        params="100 $deg 0 100"
         runOne
     done
 
@@ -106,7 +106,7 @@ function sinesineFun
     dir=$fn
     
     op=max
-    for params in 10 20 30 40 50
+    for params in 10 30 50 70 90 95
     do
         runOne
     done
@@ -133,34 +133,13 @@ function sinesinePoly
     dir=$fn
     
     op=max
-    for params in "100 150 100" "100 200 100" "100 300 100" "100 400 100" "100 500 200" "400 600 400"
+    for params in "100 100 150 100" "100 100 200 100" "100 100 300 100" "100 100 400 100" "200 100 400 200" "200 100 500 200" "400 150 600 400"
     do
         runOne
     done
     
     op=integrate
-    for params in "100 150 100" "100 200 100" "100 300 100" "100 400 100" "100 500 200" "400 600 400"
-    do
-        runOne
-    done
-
-}
-
-function sinesinePPoly
-{
-
-    repr=ppoly
-    fn=sinesine
-    dir=$fn
-    
-    op=max
-    for params in "100 150 0 0 100" "100 200 0 0 100" "100 300 0 0 100" "100 400 0 0 100" "100 500 0 0 200" "400 600 0 0 400"
-    do
-        runOne
-    done
-    
-    op=integrate
-    for params in "100 150 0 0 100" "100 200 0 0 100" "100 300 0 0 100" "100 400 0 0 100" "100 500 0 0 200" "400 600 0 0 400"
+    for params in "100 100 150 100" "100 100 200 100" "100 100 300 100" "100 100 400 100" "200 100 400 200" "200 100 500 200" "400 150 600 400"
     do
         runOne
     done
@@ -179,7 +158,7 @@ function sinesine+cosFun
     dir=$fn
     
     op=max
-    for params in 10 20 30 40 50
+    for params in 10 20 30 40 45
     do
         runOne
     done
@@ -206,39 +185,19 @@ function sinesine+cosPoly
     dir=$fn
     
     op=max
-    for params in "100 150 100" "100 200 100" "100 300 100" "100 400 100" "100 500 200" "400 600 400"
+    for params in "100 100 150 100" "100 100 200 100" "100 100 300 100" "100 100 400 100" "200 100 400 200" "200 100 500 200" "400 150 600 400"
     do
         runOne
     done
     
     op=integrate
-    for params in "100 150 100" "100 200 100" "100 300 100" "100 400 100" "100 500 200" "400 600 400"
+    for params in "100 100 150 100" "100 100 200 100" "100 100 300 100" "100 100 400 100" "200 100 400 200" "200 100 500 200" "400 150 600 400"
     do
         runOne
     done
 
 }
 
-function sinesine+cosPPoly
-{
-
-    repr=ppoly
-    fn=sinesine+cos
-    dir=$fn
-    
-    op=max
-    for params in "100 150 0 0 100" "100 200 0 0 100" "100 300 0 0 100" "100 400 0 0 100" "100 500 0 0 200" "400 600 0 0 400"
-    do
-        runOne
-    done
-    
-    op=integrate
-    for params in "100 150 0 0 100" "100 200 0 0 100" "100 300 0 0 100" "100 400 0 0 100" "100 500 0 0 200" "400 600 0 0 400"
-    do
-        runOne
-    done
-
-}
 
 #################
 ### runge
@@ -252,7 +211,7 @@ function rungeFun
     dir=$fn
     
     op=max
-    for params in 05 10 15 20 25 30
+    for params in 05 35 65 100
     do
         runOne
     done
@@ -264,7 +223,7 @@ function rungeFun
     done
     
     repr=dfun
-    for params in 05 10 15 20 25 30
+    for params in 05 10 15 20 25 30 35
     do
         runOne
     done
@@ -279,13 +238,13 @@ function rungePoly
     dir=$fn
     
     op=max
-    for params in "100 64 100" "120 128 100" "150 128 100" "200 256 100" "300 256 200"
+    for params in "100 64 0 100" "120 128 0 100" "150 128 0 100" "200 256 0 100" "300 256 0 200"
     do
         runOne
     done
     
     op=integrate
-    for params in "100 64 100" "120 128 100" "150 128 100" "200 256 100" "300 256 100"
+    for params in "100 64 0 100" "120 128 0 100" "150 128 0 100" "200 256 0 100" "300 256 0 200"
     do
         runOne
     done
@@ -301,13 +260,13 @@ function rungePPoly
     dir=$fn
     
     op=max
-    for params in "100 0 3 1 100" "100 0 3 2 100" "150 0 3 3 150" "150 0 6 3 150" "150 0 10 3 150" "300 0 4 4 300" "300 0 6 4 300"
+    for params in "100 0 0.1 1 100" "100 0 0.1 2 100" "150 0 0.01 3 150" "300 0 0.05 4 300" "300 0 0.01 4 300"
     do
         runOne
     done
     
     op=integrate
-    for params in "100 0 3 1 100" "100 0 3 2 100" "150 0 3 3 150" "150 0 6 3 150" "150 0 10 3 150" "300 0 4 4 300" "300 0 6 4 300"
+    for params in "100 0 0.1 1 100" "100 0 0.1 2 100" "150 0 0.1 3 150" "150 0 0.01 3 150" "150 0 0.001 3 150" "300 0 0.05 4 300" "300 0 0.01 4 300"
     do
         runOne
     done
@@ -325,7 +284,7 @@ function rungeXFun
     dir=$fn
     
     op=max
-    for params in 05 10 15 20 25 30
+    for params in 05 10 15 20 25 30 35 40
     do
         runOne
     done
@@ -337,7 +296,7 @@ function rungeXFun
     done
     
     repr=dfun
-    for params in 05 10 15 20 25 30
+    for params in 05 10 15 20 25 30 35 40
     do
         runOne
     done
@@ -351,13 +310,13 @@ function rungeXPoly
     dir=$fn
     
     op=max
-    for params in "100 64 100" "120 128 100" "150 128 100" "200 256 100" "300 256 200"
+    for params in "100 64 0 100" "120 128 0 100" "150 128 0 100" "200 256 0 100"
     do
         runOne
     done
     
     op=integrate
-    for params in "100 64 100" "120 128 100" "150 128 100" "200 256 100" "300 256 100"
+    for params in "100 64 0 100" "120 128 0 100" "150 128 0 100" "200 256 0 100"
     do
         runOne
     done
@@ -373,13 +332,13 @@ function rungeXPPoly
     dir=$fn
     
     op=max
-    for params in "100 0 3 1 100" "100 0 3 2 100" "150 0 3 3 150" "150 0 6 3 150" "150 0 10 3 150" "300 0 4 4 300" "300 0 6 4 300"
+    for params in "100 0 0.1 1 100" "100 0 0.1 2 100" "150 0 0.01 3 150" "300 0 0.05 4 300" "300 0 0.01 4 300"
     do
         runOne
     done
     
     op=integrate
-    for params in "100 0 3 1 100" "100 0 3 2 100" "150 0 3 3 150" "150 0 6 3 150" "150 0 10 3 150" "300 0 4 4 300" "300 0 6 4 300"
+    for params in "100 0 0.1 1 100" "100 0 0.1 2 100" "150 0 0.01 3 150" "300 0 0.05 4 300" "300 0 0.01 4 300"
     do
         runOne
     done
@@ -405,7 +364,7 @@ function fracSinFun
     done
     
     op=integrate
-    for params in 05 10 15 20
+    for params in 05 10 15
     do
         runOne
     done
@@ -426,13 +385,15 @@ function fracSinPoly
     dir=$fn
     
     op=max
-    for params in "100 64 100" "120 128 100" "500 256 100"
+    for params in "100 64 64 100" "120 128 128 100"
+#     "500 256 256 100"
     do
         runOne
     done
     
     op=integrate
-    for params in "100 64 100" "120 128 100" "500 256 100"
+    for params in "100 64 64 100" "120 128 128 100"
+#     "500 256 256 100"
     do
         runOne
     done
@@ -447,13 +408,13 @@ function fracSinPPoly
     dir=$fn
     
     op=max
-    for params in "100 20 1 1 100" "100 20 3 1 100" "800 40 3 3 200" "800 40 4 3 200"
+    for params in "100 20 0.5 1 100" "100 20 0.1 1 100" "100 30 0.1 2 100" "800 40 0.1 3 200" "800 40 0.05 3 200"
     do
         runOne
     done
     
     op=integrate
-    for params in "100 20 1 1 100" "100 20 3 1 100" "800 40 3 3 200" "800 40 4 3 200"
+    for params in "100 20 0.5 1 100" "100 20 0.1 1 100" "100 30 0.1 2 100" "800 40 0.1 3 200" "800 40 0.05 3 200"
     do
         runOne
     done
@@ -472,19 +433,19 @@ function hatFun
     dir=$fn
     
     op=max
-    for params in 4 5 6 7 8 9 10
+    for params in 4 10 20 30 
     do
         runOne
     done
     
     op=integrate
-    for params in 4 5 6 7 8 9 10
+    for params in 4 6 8 10 12 14 16 18
     do
         runOne
     done
     
     repr=dfun
-    for params in 4 5 6 7 8 9 10
+    for params in 4 10 16
     do
         runOne
     done
@@ -499,13 +460,13 @@ function hatPoly
     dir=$fn
     
     op=max
-    for params in "100 32 100" "100 64 100" "150 128 100"
+    for params in "100 32 0 100" "100 64 0 100" "150 128 0 100"
     do
         runOne
     done
     
     op=integrate
-    for params in "100 32 100" "100 64 100" "150 128 100"
+    for params in "100 32 0 100" "100 64 0 100" "150 128 0 100"
     do
         runOne
     done
@@ -520,13 +481,13 @@ function hatPPoly
     dir=$fn
     
     op=max
-    for params in "100 0 0 0 100"
+    for params in "5 0 0 0 10" "35 0 0 0 35"
     do
         runOne
     done
     
     op=integrate
-    for params in "100 0 0 0 0"
+    for params in "5 0 0 0 0" "35 0 0 0 0"
     do
         runOne
     done
@@ -538,10 +499,8 @@ sinecosFun
 sinecosPoly
 sinesineFun
 sinesinePoly
-sinesinePPoly
 sinesine+cosFun
 sinesine+cosPoly
-sinesine+cosPPoly
 rungeFun
 rungePoly
 rungePPoly

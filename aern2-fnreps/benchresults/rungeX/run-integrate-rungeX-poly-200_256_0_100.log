@@ -1,0 +1,29 @@
+divA: degree = 256
+computing integrate  x/(100x^2+1) over [-1,1]
+result = [1.9446922743316067834825200168062888251844538027253647290940989e-62 ± 3.1651871843540768e-12]
+result ~ (0e+00,False)
+accuracy: Bits 38
+precision = Precision 200
+	Command being timed: "./aern2-fnreps-ops integrate rungeX poly 200 256 0 100"
+	User time (seconds): 934.06
+	System time (seconds): 2.21
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 15:37.67
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 1206088
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 1500057
+	Voluntary context switches: 1
+	Involuntary context switches: 90143
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 16
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

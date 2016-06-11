@@ -41,24 +41,25 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
             ("fun", "max") -> maxFun fnB2B accuracy 
             ("fun", "integrate") -> integrateFun fnB2B accuracy 
             ("dfun", "integrate") -> integrateDFun fnB2B dfnB2B accuracy 
-            ("poly", "max") -> maxPB $ fnPB p maxDeg 
-            ("poly", "integrate") -> integratePB $ fnPB p maxDeg
+            ("poly", "max") -> maxPB $ fnPB p maxDeg1 maxDeg2
+            ("poly", "integrate") -> integratePB $ fnPB p maxDeg1 maxDeg2
             ("ppoly", "max") -> fnPP OpMax pp_prec pp_maxDeg pp_divThreshold pp_divIts pp_rangeAcc
             ("ppoly", "integrate") -> fnPP OpIntegrate pp_prec pp_maxDeg pp_divThreshold pp_divIts pp_rangeAcc
             _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
     (Just (fnDescription, fnPB, fnB2B, dfnB2B, fnPP)) = Map.lookup functionCode functions
 
-    maxDeg = read maxDegS
+    maxDeg1 = read maxDeg1S
+    maxDeg2 = read maxDeg2S
     p = prec $ read precS
     rangeBits = bits $ read rangeBitsS
-    [precS, maxDegS, rangeBitsS] = effortArgs
+    [precS, maxDeg1S, maxDeg2S, rangeBitsS] = effortArgs
 
     accuracy = bits $ read accuracyS
     [accuracyS] = effortArgs
     
     pp_prec = prec $ read pp_precS
     pp_maxDeg = read pp_maxDegS
-    pp_divThreshold = bits $ read pp_divThresholdS
+    pp_divThreshold = toRational ((read pp_divThresholdS) :: Double)
     pp_divIts = read pp_divItsS
     pp_rangeAcc = bits $ read pp_rangeBitsS
     [pp_precS, pp_maxDegS, pp_divThresholdS, pp_divItsS, pp_rangeBitsS] = effortArgs
@@ -119,13 +120,13 @@ integrateDFun fn@(UnaryFnMPBall _dom f) _dfn@(UnaryFnMPBall _ df) acG =
         z = setPrecisionMatchAccuracy (ac + 100) $ mpBall 0
     
 
-functions :: Map.Map String (String, Precision -> Degree -> PolyBall, UnaryFnMPBall, UnaryFnMPBall, FnPP)
+functions :: Map.Map String (String, Precision -> Degree -> Degree -> PolyBall, UnaryFnMPBall, UnaryFnMPBall, FnPP)
 functions =
     Map.fromList
     [
         ("sine+cos", (sinecos_Name, sinecos_PB, sinecos_B2B, sinecosDeriv_B2B, sinecos_PP)),
-        ("sinesine", (sinenested_Name, sinenested_PB, sinenested_B2B, sinenestedDeriv_B2B, sinenested_PP)),
-        ("sinesine+cos", (sinenestedcos_Name, sinenestedcos_PB, sinenestedcos_B2B, sinenestedcosDeriv_B2B, sinenestedcos_PP)),
+        ("sinesine", (sinesine_Name, sinesine_PB, sinesine_B2B, sinesineDeriv_B2B, sinesine_PP)),
+        ("sinesine+cos", (sinesineCos_Name, sinesineCos_PB, sinesineCos_B2B, sinesineCosDeriv_B2B, sinesineCos_PP)),
         ("runge", (runge_Name, runge_PB, runge_B2B, rungeDeriv_B2B, runge_PP)),
         ("rungeX", (rungeX_Name, rungeX_PB, rungeX_B2B, rungeXDeriv_B2B, rungeX_PP)),
         ("fracSin", (fracSin_Name, fracSin_PB, fracSin_B2B, fracSinDeriv_B2B, fracSin_PP)),
@@ -134,13 +135,13 @@ functions =
     ]
 
 data Operator = OpMax | OpIntegrate
-type FnPP = Operator -> Precision -> Degree -> Accuracy -> Integer -> Accuracy -> MPBall
+type FnPP = Operator -> Precision -> Degree -> Rational -> Integer -> Accuracy -> MPBall
 
 sinecos_Name :: String
 sinecos_Name = "sin(10x)+cos(20x) over [-1,1]"
 
-sinecos_PB :: Precision -> Degree -> PolyBall
-sinecos_PB p d =
+sinecos_PB :: Precision -> Degree -> Degree -> PolyBall
+sinecos_PB p d _d2 =
     sin(10*x)+cos(20*x)
     where
     x = 
@@ -162,80 +163,80 @@ sinecos_PP :: FnPP
 sinecos_PP = error $ "Not supporting PPoly for: " ++ sinecos_Name
 
 
-sinenested_Name :: String
-sinenested_Name = "sin(10x+sin(20x^2)) over [-1,1]"
+sinesine_Name :: String
+sinesine_Name = "sin(10x+sin(20x^2)) over [-1,1]"
 
-sinenested_PB :: Precision -> Degree -> PolyBall
-sinenested_PB p d =
-    sin(10*x + sin(20*x*x))
+sinesine_PB :: Precision -> Degree -> Degree -> PolyBall
+sinesine_PB p d1 d2 =
+    sin(setMaxDegree d2 $ 10*x + sin(20*x*x))
     where
     x = 
-        setMaxDegree d $
+        setMaxDegree d1 $
         setPrecision p $
         projUnaryFnA (Interval (-1.0) 1.0)
 
-sinenested_B2B :: UnaryFnMPBall
-sinenested_B2B =
+sinesine_B2B :: UnaryFnMPBall
+sinesine_B2B =
     UnaryFnMPBall (Interval (-1.0) 1.0) $
     \x -> catchingExceptions $ sin(10*x + sin(20*x*x))
 
-sinenestedDeriv_B2B :: UnaryFnMPBall
-sinenestedDeriv_B2B =
+sinesineDeriv_B2B :: UnaryFnMPBall
+sinesineDeriv_B2B =
     UnaryFnMPBall (Interval (-1.0) 1.0) $
     \x -> catchingExceptions $ (10-40*x*cos(20*x*x))*cos(10*x + sin(20*x*x))
 
-sinenested_PP :: FnPP
-sinenested_PP OpMax p deg _divThresholdAcc _divIterations rangeAcc =
+sinesine_PP :: FnPP
+sinesine_PP OpMax p deg _divThresholdAcc _divIterations rangeAcc =
     PPolyBench.sinesineMax deg deg rangeAcc p
-sinenested_PP OpIntegrate p deg _divThresholdAcc _divIterations rangeAcc =
+sinesine_PP OpIntegrate p deg _divThresholdAcc _divIterations rangeAcc =
     PPolyBench.sinesineIntegral deg deg rangeAcc p
 
-sinenestedcos_Name :: String
---sinenestedcos_Name = "sin(10x+sin(20x^2)) + cos(10x) over [-1,1]"
-sinenestedcos_Name = "sin(10x+sin(20x^2)) + sin(10x) over [-1,1]"
+sinesineCos_Name :: String
+--sinesineCos_Name = "sin(10x+sin(20x^2)) + cos(10x) over [-1,1]"
+sinesineCos_Name = "sin(10x+sin(20x^2)) + sin(10x) over [-1,1]"
 
-sinenestedcos_PB :: Precision -> Degree -> PolyBall
-sinenestedcos_PB p d =
-    sin(10*x + sin(20*x*x)) 
+sinesineCos_PB :: Precision -> Degree -> Degree -> PolyBall
+sinesineCos_PB p d1 d2 =
+    sin(setMaxDegree d2 $ 10*x + sin(20*x*x)) 
 --        + cos(10*x)
         + sin(10*x)
     where
     x = 
-        setMaxDegree d $
+        setMaxDegree d1 $
         setPrecision p $
         projUnaryFnA (Interval (-1.0) 1.0)
 
-sinenestedcos_B2B :: UnaryFnMPBall
-sinenestedcos_B2B =
+sinesineCos_B2B :: UnaryFnMPBall
+sinesineCos_B2B =
     UnaryFnMPBall (Interval (-1.0) 1.0) $
     \x -> catchingExceptions $ 
             sin(10*x + sin(20*x*x)) 
 --                + cos(10*x)
                 + sin(10*x)
 
-sinenestedcosDeriv_B2B :: UnaryFnMPBall
-sinenestedcosDeriv_B2B =
+sinesineCosDeriv_B2B :: UnaryFnMPBall
+sinesineCosDeriv_B2B =
     UnaryFnMPBall (Interval (-1.0) 1.0) $
     \x -> catchingExceptions $ 
         (10-40*x*cos(20*x*x))*cos(10*x + sin(20*x*x)) 
 --            - 10*sin(10*x)
             + 10*cos(10*x)
 
-sinenestedcos_PP :: FnPP
-sinenestedcos_PP OpMax p deg _divThresholdAcc _divIterations rangeAcc =
+sinesineCos_PP :: FnPP
+sinesineCos_PP OpMax p deg _divThresholdAcc _divIterations rangeAcc =
     PPolyBench.sinesineCosMax deg deg rangeAcc p
-sinenestedcos_PP OpIntegrate p deg _divThresholdAcc _divIterations rangeAcc =
+sinesineCos_PP OpIntegrate p deg _divThresholdAcc _divIterations rangeAcc =
     PPolyBench.sinesineCosIntegral deg deg rangeAcc p
 
 runge_Name :: String
 runge_Name = "1/(100x^2+1) over [-1,1]"
 
-runge_PB :: Precision -> Degree -> PolyBall
-runge_PB p d =
+runge_PB :: Precision -> Degree -> Degree -> PolyBall
+runge_PB p d1 _d2 =
     1/(100*x*x+1)
     where
     x = 
-        setMaxDegree d $
+        setMaxDegree d1 $
         setPrecision p $
         projUnaryFnA (Interval (-1.0) 1.0)
 
@@ -251,19 +252,19 @@ rungeDeriv_B2B =
 
 runge_PP :: FnPP
 runge_PP OpMax p _deg divThresholdAcc divIterations rangeAcc =
-    PPolyBench.rungeMax (2.0 ^^ (- (fromAccuracy divThresholdAcc))) divIterations p rangeAcc
+    PPolyBench.rungeMax divThresholdAcc divIterations p rangeAcc
 runge_PP OpIntegrate p _deg divThresholdAcc divIterations rangeAcc =
-    PPolyBench.rungeIntegral (2.0 ^^ (- (fromAccuracy divThresholdAcc))) divIterations p rangeAcc
+    PPolyBench.rungeIntegral divThresholdAcc divIterations p rangeAcc
 
 rungeX_Name :: String
 rungeX_Name = "x/(100x^2+1) over [-1,1]"
 
-rungeX_PB :: Precision -> Degree -> PolyBall
-rungeX_PB p d =
+rungeX_PB :: Precision -> Degree -> Degree -> PolyBall
+rungeX_PB p d1 _d2 =
     x/(100*x*x+1)
     where
     x = 
-        setMaxDegree d $
+        setMaxDegree d1 $
         setPrecision p $
         projUnaryFnA (Interval (-1.0) 1.0)
 
@@ -279,19 +280,19 @@ rungeXDeriv_B2B =
 
 rungeX_PP :: FnPP
 rungeX_PP OpMax p _deg divThresholdAcc divIterations rangeAcc =
-    PPolyBench.rungeXMax (2.0 ^^ (- (fromAccuracy divThresholdAcc))) divIterations p rangeAcc
+    PPolyBench.rungeXMax divThresholdAcc divIterations p rangeAcc
 rungeX_PP OpIntegrate p _deg divThresholdAcc divIterations rangeAcc =
-    PPolyBench.rungeXIntegral (2.0 ^^ (- (fromAccuracy divThresholdAcc))) divIterations p rangeAcc
+    PPolyBench.rungeXIntegral divThresholdAcc divIterations p rangeAcc
 
 fracSin_Name :: String
 fracSin_Name = "1/(10(sin(7x))^2+1) over [-1,1]"
 
-fracSin_PB :: Precision -> Degree -> PolyBall
-fracSin_PB p d =
-    let sx = sin (7*x) in 1/(10*sx*sx+1)
+fracSin_PB :: Precision -> Degree -> Degree -> PolyBall
+fracSin_PB p d1 d2 =
+    let sx = setMaxDegree d2 $ sin (7*x) in 1/(10*sx*sx+1)
     where
     x = 
-        setMaxDegree d $
+        setMaxDegree d1 $
         setPrecision p $
         projUnaryFnA (Interval (-1.0) 1.0)
 
@@ -307,15 +308,15 @@ fracSinDeriv_B2B =
 
 fracSin_PP :: FnPP
 fracSin_PP OpMax p deg divThresholdAcc divIterations rangeAcc =
-    PPolyBench.fracSinMax deg (2.0 ^^ (- (fromAccuracy divThresholdAcc))) divIterations p rangeAcc
+    PPolyBench.fracSinMax deg divThresholdAcc divIterations p rangeAcc
 fracSin_PP OpIntegrate p deg divThresholdAcc divIterations rangeAcc =
-    PPolyBench.fracSinIntegral deg (2.0 ^^ (- (fromAccuracy divThresholdAcc))) divIterations p rangeAcc
+    PPolyBench.fracSinIntegral deg divThresholdAcc divIterations p rangeAcc
 
 hat_Name :: String
 hat_Name = "1-|x+1/3| over [-1,1]"
 
-hat_PB :: Precision -> Degree -> PolyBall
-hat_PB p d =
+hat_PB :: Precision -> Degree -> Degree -> PolyBall
+hat_PB p d _d2 =
     1 - (PolyBall (absXshifted p d) (Interval (-1.0) (1.0)) d NormZero)   
 
 hat_B2B :: UnaryFnMPBall
@@ -341,20 +342,20 @@ hat_PP OpIntegrate p _deg _divThresholdAcc _divIterations _rangeAcc =
 bumpy_Name :: String
 bumpy_Name = "max(sin(10x),cos(11x)) over [-1,1]"
 
-bumpy_PB :: Precision -> Degree -> PolyBall
-bumpy_PB p d =
-    PolyBall (maxViaAbs sin10x cos11x) (Interval (-1.0) (1.0)) d NormZero
+bumpy_PB :: Precision -> Degree -> Degree -> PolyBall
+bumpy_PB p d1 _d2 =
+    PolyBall (maxViaAbs sin10x cos11x) (Interval (-1.0) (1.0)) d1 NormZero
     where
     maxViaAbs f g = ((absViaCompose (f - g)) + f + g)/2
     absViaCompose f = 
         (absX p d' (Interval (-1.0) 1.0)) `comp` (reduceDegreeAndSweep d' NormZero f)
-    d' = toIntegerUp $ sqrt (mpBall d)
-    comp = compose d NormZero
+    d' = toIntegerUp $ sqrt (mpBall d1)
+    comp = compose d1 NormZero
     PolyBall sin10x _ _ _ = sin (10*x)
     PolyBall cos11x _ _ _ = cos (11*x) 
     x :: PolyBall
     x = 
-        setMaxDegree d $
+        setMaxDegree d1 $
         setPrecision p $
         projUnaryFnA (Interval (-1.0) 1.0)
 

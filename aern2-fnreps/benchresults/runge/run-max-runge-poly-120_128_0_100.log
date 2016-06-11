@@ -1,0 +1,36 @@
+divA: degree = 128
+rangePB:
+ accuracy(result) = [[9.901551306480514244678485916743964673e-03 ± 5.6681954531938728e-05],[9.9015513064805142446784859167439646847e-03 ± 5.6681954531938728e-05]]
+ acc = Bits 100
+ lDom = (-1) % 1
+ rDom = 1 % 1
+ lUnit = [-1e+00 ± 0e+00]
+ rUnit = [1e+00 ± 0e+00]
+computing max  1/(100x^2+1) over [-1,1]
+result = [9.9015513064805142446784859167439646847e-03 ± 5.6681954531938728e-05]
+result ~ (9.9015513115e-03,True)
+accuracy: Bits 14
+precision = Precision 120
+	Command being timed: "./aern2-fnreps-ops max runge poly 120 128 0 100"
+	User time (seconds): 49.93
+	System time (seconds): 0.20
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:50.21
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 95616
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 152198
+	Voluntary context switches: 1
+	Involuntary context switches: 4981
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 16
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
