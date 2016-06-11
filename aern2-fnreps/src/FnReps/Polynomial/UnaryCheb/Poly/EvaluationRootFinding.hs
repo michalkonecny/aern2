@@ -323,7 +323,9 @@ mi_makeMaxInterval l r c bs dip fn accOK =
 
 mi_split :: Poly -> IntPolyB.IntPoly -> (MPBall -> MPBall) -> (Accuracy -> Bool) -> MaxInterval -> MaxQueue MaxInterval
 mi_split p dip fn accOK (MultiRootInterval l r (c, bs) _) = 
-  Q.union (mi_makeMaxInterval l m c' bsL dip fn accOK) (mi_makeMaxInterval m r c' bsR dip fn accOK)
+  (mi_makeMaxInterval l m c' bsL dip fn accOK) 
+  `Q.union` (mi_makeMaxInterval m r c' bsR dip fn accOK) 
+  `Q.union` (Q.singleton $ (UniqueRootInterval m m True (fn (mpBall m))))
   where
   m = (l + r)*0.5
   (c', bsL, bsR) = IntPolyEV.bernsteinCoefs l r m c bs
