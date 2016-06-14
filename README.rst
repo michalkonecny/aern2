@@ -10,18 +10,12 @@ aern2
 
 *This code is experimental and often fast evolving.*
 
+`Installation instructions <docs/INSTALL.md>`_
+
 .. contents:: Table of Contents
 
-Installation instructions
-=========================
-
-`are documented here <docs/INSTALL.md>`_
-
-Main ideas
-==========
-
 Exact real number computation
------------------------------
+=============================
 
 Computing numbers with a target accuracy, the accuracy can be arbitrarily high.  
 For example:
@@ -56,7 +50,7 @@ For example:
 
 
 Exact real function computation
--------------------------------
+===============================
 
 Arbitrary continuous real functions can be treated as first-class objects
 that can be evaluated, integrated, combined etc.
@@ -70,10 +64,10 @@ and the benchmarks.
 
 
 Alternative approach to Haskell numerical types
------------------------------------------------
+===============================================
 
 Bottom-up type derivation
-^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------
 
 aern2 introduces and by default uses fixed-type numerical literals 
 and arithmetic expressions whose type is derived bottom-up:
@@ -114,7 +108,7 @@ Nevertheless, there are situations where this would be impractical, eg:
 
        
 Arrow-generic expressions
-^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------
 
 Arrow-generic expressions have an explicit DAG structure. 
 Such an expression can be evaluated in several "real number computation" arrows.
@@ -129,7 +123,7 @@ Currently, the following arrows are supported (in various degrees of completenes
 * distributed lazy evaluation
 
 Comparison with symbolic expressions
-""""""""""""""""""""""""""""""""""""
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A similar level of flexibility of evaluation methods can be achieved using symbolic expressions
 and interpreting them using the above methods.
