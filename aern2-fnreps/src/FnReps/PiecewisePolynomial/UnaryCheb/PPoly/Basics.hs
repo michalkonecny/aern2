@@ -100,7 +100,7 @@ reduceDegreeAndSweep :: Degree -> NormLog -> PPoly -> PPoly
 reduceDegreeAndSweep d n = lift2PPoly (Poly.reduceDegreeAndSweep d n)
 
 instance HasAccuracy PPoly where
-  getAccuracy (PPoly pieces _) = foldl1 max $ map (getAccuracy . snd) pieces 
+  getAccuracy (PPoly pieces _) = foldl1 min $ map (getAccuracy . snd) pieces 
 
 instance HasPrecision PPoly where
   getPrecision (PPoly pieces _) =
