@@ -130,6 +130,7 @@ functions =
         ("runge", (runge_Name, runge_PB, runge_B2B, rungeDeriv_B2B, runge_PP)),
         ("rungeX", (rungeX_Name, rungeX_PB, rungeX_B2B, rungeXDeriv_B2B, rungeX_PP)),
         ("fracSin", (fracSin_Name, fracSin_PB, fracSin_B2B, fracSinDeriv_B2B, fracSin_PP)),
+        ("fracSinX", (fracSinX_Name, fracSinX_PB, fracSinX_B2B, fracSinXDeriv_B2B, fracSinX_PP)),
         ("hat", (hat_Name, hat_PB, hat_B2B, hatDeriv_B2B, hat_PP)),
         ("bumpy", (bumpy_Name, bumpy_PB, bumpy_B2B, bumpyDeriv_B2B, bumpy_PP))
     ]
@@ -311,6 +312,37 @@ fracSin_PP OpMax p deg divThresholdAcc divIterations rangeAcc =
     PPolyBench.fracSinMax deg divThresholdAcc divIterations p rangeAcc
 fracSin_PP OpIntegrate p deg divThresholdAcc divIterations rangeAcc =
     PPolyBench.fracSinIntegral deg divThresholdAcc divIterations p rangeAcc
+
+fracSinX_Name :: String
+fracSinX_Name = "x/(10(sin(7x))^2+1) over [-1,1]"
+
+fracSinX_PB :: Precision -> Degree -> Degree -> PolyBall
+fracSinX_PB p d1 d2 =
+    let sx = setMaxDegree d2 $ sin (7*x) in x/(10*sx*sx+1)
+    where
+    x = 
+        setMaxDegree d1 $
+        setPrecision p $
+        projUnaryFnA (Interval (-1.0) 1.0)
+
+fracSinX_B2B :: UnaryFnMPBall
+fracSinX_B2B =
+    UnaryFnMPBall (Interval (-1.0) 1.0) $
+    \x -> (catchingExceptions x)/(catchingExceptions $ 10*(sin (7*x))^2+1)
+
+fracSinXDeriv_B2B :: UnaryFnMPBall
+fracSinXDeriv_B2B =
+    UnaryFnMPBall (Interval (-1.0) 1.0) $
+    \x -> 
+        (catchingExceptions $ -140*sin(7*x)*cos(7*x)*x)/(catchingExceptions $ (10*(sin (7*x))^2+1)^2)
+        +
+        (1/(catchingExceptions $ 10*(sin (7*x))^2+1))
+fracSinX_PP :: FnPP
+fracSinX_PP OpMax p deg divThresholdAcc divIterations rangeAcc =
+    PPolyBench.fracSinXMax deg divThresholdAcc divIterations p rangeAcc
+fracSinX_PP OpIntegrate p deg divThresholdAcc divIterations rangeAcc =
+    error "fracSinX_PP not implemented yet"
+--    PPolyBench.fracSinXIntegral deg divThresholdAcc divIterations p rangeAcc
 
 hat_Name :: String
 hat_Name = "1-|x+1/3| over [-1,1]"

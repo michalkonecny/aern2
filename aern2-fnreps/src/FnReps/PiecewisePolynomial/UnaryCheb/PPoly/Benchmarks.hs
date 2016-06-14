@@ -208,7 +208,7 @@ fracSinMax deg threshold its pr acc = m
   where
   Interval _ m = range acc fracSin $ Interval (mpBall $ -1) (mpBall 1)
   fracSin = inverse (setPrecision pr $ fromPoly $ 10*sinp*sinp + 1) threshold its acc
-  sinp = (setPrecision pr $ SinCos.sine_poly deg NormZero $ Cheb.fromList [(1,mpBall 7)])   
+  sinp = (setPrecision pr $ SinCos.sine_poly deg NormZero $ Cheb.fromList [(1,mpBall 7)])
   
 fracSinMaxFn :: Accuracy -> MPBall
 fracSinMaxFn acc = 
@@ -237,15 +237,16 @@ fracSinXMax :: Cheb.Degree -> Rational -> Integer -> Precision -> Accuracy -> MP
 fracSinXMax deg threshold its pr acc = m
   where
   Interval _ m = range acc fracSin $ Interval (mpBall $ -1) (mpBall 1)
-  fracSin = sinp * inverse (setPrecision pr $ fromPoly $ 10*sinp*sinp + 1) threshold its acc
+  fracSin = x * inverse (setPrecision pr $ fromPoly $ 10*sinp*sinp + 1) threshold its acc
   sinp = (setPrecision pr $ SinCos.sine_poly deg NormZero $ Cheb.fromList [(1,mpBall 7)])   
+  x = (setPrecision pr $ Cheb.fromList [(1, mpBall 1)])   
   
 fracSinXMaxFn :: Accuracy -> MPBall
 fracSinXMaxFn acc = 
   cauchyReal2ball mx acc 
   where
   Interval _ mx = 
-    rangeOnIntervalUnaryFnA ((UnaryFnMPBall (Interval (-1.0) 1.0) $ \x -> (catchingExceptions $ sin(7*x))/(catchingExceptions $ 10*(sin(7*x))^2 + 1)), Interval (-1.0) 1.0)  
+    rangeOnIntervalUnaryFnA ((UnaryFnMPBall (Interval (-1.0) 1.0) $ \x -> (catchingExceptions $ x)/(catchingExceptions $ 10*(sin(7*x))^2 + 1)), Interval (-1.0) 1.0)  
   
 hatMax :: Precision -> Accuracy -> MPBall
 hatMax pr rangeBits = m
