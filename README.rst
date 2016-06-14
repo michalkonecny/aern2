@@ -15,7 +15,7 @@ aern2
 Installation instructions
 =========================
 
-`are documented here <INSTALL.md>`_
+`are documented here <docs/INSTALL.md>`_
 
 Main ideas
 ==========
@@ -23,8 +23,8 @@ Main ideas
 Exact real number computation
 -----------------------------
 
-Computing numbers with a target accuracy,
-the accuracy can be arbitrarily high.  For example:
+Computing numbers with a target accuracy, the accuracy can be arbitrarily high.  
+For example:
 
 .. code-block:: plain
 
@@ -58,9 +58,16 @@ the accuracy can be arbitrarily high.  For example:
 Exact real function computation
 -------------------------------
 
-Ie arbitrary continuous real functions as first-class objects,
-which can be evaluated, integrated, combined etc.
-Aern2 supports several representations, including polynomial approximations.
+Arbitrary continuous real functions can be treated as first-class objects
+that can be evaluated, integrated, combined etc.
+
+aern2 supports a few representations for unary real functions
+over the interval :math:`[-1,1]`.
+These representations are in package aern2-fnreps,
+whose purpose is to benchmark the representations against each other.
+See `README in aern2-fnreps <aern2-fnreps>`_ for an overview of the representations
+and the benchmarks.
+
 
 Alternative approach to Haskell numerical types
 -----------------------------------------------
@@ -68,7 +75,7 @@ Alternative approach to Haskell numerical types
 Bottom-up type derivation
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Aern2 introduces and by default uses fixed-type numerical literals 
+aern2 introduces and by default uses fixed-type numerical literals 
 and arithmetic expressions whose type is derived bottom-up:
 
 .. code-block:: plain
@@ -88,22 +95,46 @@ and arithmetic expressions whose type is derived bottom-up:
 
 This is beneficial, for example, to avoid type signatures and conversions, such as: 
 
-.. topic:: Prelude
+========================= ===============================================================
+Prelude                   :haskell:`let n = 1 :: Integer in 1/(fromInteger n) :: Rational`.
+Bottom-up type derivation :haskell:`let n = 1 in 1/n`
+========================= ===============================================================
+       
+One may argue that this issue never arises if one consistently uses one
+and the same numerical type, such as Double or CauchyReal.
+Nevertheless, there are situations where this would be impractical, eg:
 
-    :haskell:`let n = 1 :: Integer in 1/(fromInteger n) :: Rational`.
-    
-.. topic:: Bottom-up type derivation
+* When using matrix or limit sequence indices in numerical expressions
 
-    :haskell:`let n = 1 in 1/n`
+* When working with functions as first-class objects because
+  it is inefficient to turn each scalar constant first into function object
+
+* When programming at the level of dyadic intervals or balls of various precisions 
+  because it is not clear what precision to use for integer and rational constants. 
+
        
 Arrow-generic expressions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Numerical expressions with explicit DAG structure, supporting
-different evaluation strategies, such as:
+Arrow-generic expressions have an explicit DAG structure. 
+Such an expression can be evaluated in several "real number computation" arrows.
+Currently, the following arrows are supported (in various degrees of completeness):
 
-* normal Haskell lazy evaluation
+* :haskell:`(->)`, ie normal Haskell lazy evaluation
+
 * lazy evaluation + logging of intermediate approximate values
+
 * parallel lazy evaluation
+
 * distributed lazy evaluation
 
+Comparison with symbolic expressions
+""""""""""""""""""""""""""""""""""""
+
+A similar level of flexibility of evaluation methods can be achieved using symbolic expressions
+and interpreting them using the above methods.
+Nevertheless: 
+
+* symbolic expressions are less flexible in the number of operations and operators supported
+
+* one cannot easily indicate which common sub-expressions should be shared and which not
