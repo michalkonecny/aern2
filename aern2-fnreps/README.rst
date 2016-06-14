@@ -25,7 +25,7 @@ arbitrary-precision dyadic center and a double-precision radius.
 DFun
 ~~~~
 
-A function |L_f| is given by a pair f Fun representations:
+A function |L_f| is given by a pair of Fun representations:
 one for |L_f| and one for its derivative |L_fD|
 This representation is currently used for integration
 with an adaptive interval trapezoidal quadrature.
@@ -141,11 +141,11 @@ A nested sine function
 .. |L_f(B)| image:: http://latex.codecogs.com/gif.latex?f(B)
 .. |L_x| image:: http://latex.codecogs.com/gif.latex?x
 .. |L_fx| image:: http://latex.codecogs.com/gif.latex?f(x)
-.. |L_sine+cos| image:: http://latex.codecogs.com/gif.latex?\sin(10x)+\cos(20x)
+.. |L_sine+cos| image:: http://latex.codecogs.com/gif.latex?\\sin(10x)+\\cos(20x)
 .. |L_unit-interval| image:: http://latex.codecogs.com/gif.latex?[-1,1]
-.. |L_sinesine| image:: http://latex.codecogs.com/gif.latex?\sin(10x+\sin(20x^2))
-.. |L_sinesine+sin| image:: http://latex.codecogs.com/gif.latex?\sin(10x+\sin(20x^2))+\sin(10x)
-.. |L_runge| image:: http://latex.codecogs.com/gif.latex?{\frac{1}{100x^2+1}}
-.. |L_rungeX| image:: http://latex.codecogs.com/gif.latex?{\frac{x}{100x^2+1}}
-.. |L_fracSin| image:: http://latex.codecogs.com/gif.latex?{\frac{1}{10(\sin(7x))^2+1}}
+.. |L_sinesine| image:: http://latex.codecogs.com/gif.latex?\\sin(10x+\\sin(20x^2))
+.. |L_sinesine+sin| image:: http://latex.codecogs.com/gif.latex?\\sin(10x+\\sin(20x^2))+\\sin(10x)
+.. |L_runge| image:: http://latex.codecogs.com/gif.latex?{\\frac{1}{100x^2+1}}
+.. |L_rungeX| image:: http://latex.codecogs.com/gif.latex?{\\frac{x}{100x^2+1}}
+.. |L_fracSin| image:: http://latex.codecogs.com/gif.latex?{\\frac{1}{10(\\sin(7x))^2+1}}
 .. |L_hat| image:: http://latex.codecogs.com/gif.latex?1-|x+1/3|
