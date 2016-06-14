@@ -41,6 +41,7 @@ Alternative approach to Haskell numerical types
 -----------------------------------------------
 
 Mixed-type operators
+^^^^^^^^^^^^^^^^^^^^
 
 eg :haskell:`let n = 1 :: Integer in 1/n :: Rational`
 
@@ -48,7 +49,7 @@ eg :haskell:`let n = 1 :: Integer in 1/n :: Rational`
 
        
 Arrow-generic expressions
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Numerical expressions with explicit DAG structure, supporting
 different evaluation strategies, such as:
