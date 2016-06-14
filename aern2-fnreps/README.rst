@@ -81,7 +81,8 @@ A well-behaved analytic function with a number of local extrema
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :math:`\sin(10x)+\cos(20x)`
-.. image:: ../images/wiki_logo_openalea.png
+
+.. image:: plots/sine+cos.png?raw=true
     :width: 150px
     :align: right
     :alt: sin+cos
@@ -95,8 +96,12 @@ A well-behaved analytic function with a number of local extrema
 A nested sine function
 ~~~~~~~~~~~~~~~~~~~~~~
 
-| |sinesine|
-| 
+:math:`\\sin(10x+\\sin(20x^2))`
+
+.. image:: plots/sinesine.png?raw=true
+    :width: 150px
+    :align: right
+    :alt: sin+cos
 
 +--------------------------------+---------------------------------+
 | Maximum over |unit-interval|   | Integral over |unit-interval|   |
@@ -104,10 +109,10 @@ A nested sine function
 | |chart-sin+cos-max|            | |chart-sin+cos-integral|        |
 +--------------------------------+---------------------------------+
 
-|chart-sin+cos-max| image:: benchresults/charts/sine+cos-max.png?raw=true
+.. |chart-sin+cos-max| image:: benchresults/charts/sine+cos-max.png?raw=true
     :width: 300px
 
-|chart-sin+cos-integral| image:: benchresults/charts/sine+cos-integral.png?raw=true
+.. |chart-sin+cos-integral| image:: benchresults/charts/sine+cos-integral.png?raw=true
     :width: 300px
 
 
