@@ -1,3 +1,7 @@
+.. role:: haskell(code)
+   :language: haskell
+
+
 *****
 aern2
 *****
@@ -6,12 +10,12 @@ aern2
 
 *This code is experimental and often fast evolving.*
 
-
+.. contents:: Table of Contents
 
 Installation instructions
 =========================
 
-`here <docs/INSTALL.md>`_
+`here <INSTALL.md>`_
 
 Main ideas
 ==========
@@ -38,7 +42,7 @@ Alternative approach to Haskell numerical types
 
 Mixed-type operators
 
-eg `let n = 1 :: Integer in 1/n :: Rational`
+eg :haskell:`let n = 1 :: Integer in 1/n :: Rational`
 
 .. <docs/mixedtypeops.md>
 
@@ -48,10 +52,10 @@ Arrow-generic expressions
 
 Numerical expressions with explicit DAG structure, supporting
 different evaluation strategies, such as:
-  * normal Haskell lazy evaluation
-  * lazy evaluation + logging of intermediate approximate values
-  * parallel lazy evaluation
-  * distributed lazy evaluation
+* normal Haskell lazy evaluation
+* lazy evaluation + logging of intermediate approximate values
+* parallel lazy evaluation
+* distributed lazy evaluation
 
 .. <docs/arrowgeneric.md>
 
