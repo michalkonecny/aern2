@@ -87,7 +87,7 @@ A well-behaved analytic function with a number of local extrema
   :align: center
   :figclass: align-center
   
-  |L_sin+cos|
+  |L_sine+cos|
 
 
 +--------------------------------+---------------------------------+
