@@ -109,7 +109,7 @@ A nested sine function
 
 .. figure:: plots/sinesine.png?raw=true
   :width: 200px
-  :hieght: 100px
+  :height: 100px
   :alt: sinesine
   :align: center
   :figclass: align-center
