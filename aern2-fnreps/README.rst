@@ -141,7 +141,7 @@ A nested sine function
 .. |L_f(B)| image:: http://latex.codecogs.com/gif.latex?f(B)
 .. |L_x| image:: http://latex.codecogs.com/gif.latex?x
 .. |L_fx| image:: http://latex.codecogs.com/gif.latex?f(x)
-.. |L_sine+cos| image:: http://latex.codecogs.com/gif.latex?{\\sin(10x)+\\cos(20x)}
+.. |L_sine+cos| image:: "http://latex.codecogs.com/gif.latex?{\\sin(10x)+\\cos(20x)}"
 .. |L_unit-interval| image:: http://latex.codecogs.com/gif.latex?[-1,1]
 .. |L_sinesine| image:: http://latex.codecogs.com/gif.latex?{\\sin(10x+\\sin(20x^2))}
 .. |L_sinesine+sin| image:: http://latex.codecogs.com/gif.latex?{\\sin(10x+\\sin(20x^2))+\\sin(10x)}
