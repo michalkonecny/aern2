@@ -13,11 +13,11 @@ Representations
 Fun
 ~~~
 
-A function :math:`f` is given by a procedure that for any dyadic interval/ball
-:math:`B` in the domain of :math:`f` returns an interval/ball that contains the set
-:math:`f(B)`.
-Moreover, as :math:`B` converges to a real number :math:`x`,
-the returned intervals converge to :math:`f(x)`.
+A function |L_f| is given by a procedure that for any dyadic interval/ball
+|L_B| in the domain of |L_f| returns an interval/ball that contains the set
+|L_B|.
+Moreover, as |L_B| converges to a real number |L_x|,
+the returned intervals converge to |L_fx|.
 In this representation we use the type MPBall, ie a ball with an
 arbitrary-precision dyadic center and a double-precision radius.
 
@@ -25,15 +25,15 @@ arbitrary-precision dyadic center and a double-precision radius.
 DFun
 ~~~~
 
-A function :math:`f` is given by a pair f Fun representations:
-one for :math:`f` and one for its derivative :math:`f'`
+A function |L_f| is given by a pair f Fun representations:
+one for |L_f| and one for its derivative |L_fD|
 This representation is currently used for integration
 with an adaptive interval trapezoidal quadrature.
 
 Poly
 ~~~~
 
-A function :math:`f` is given by a collection of polynomial approximations 
+A function |L_f| is given by a collection of polynomial approximations 
 to the function, each with an explicit error bound.
 The error bounds are valid over a given interval domain, the same
 domain for all approximations.
@@ -87,7 +87,7 @@ A well-behaved analytic function with a number of local extrema
   :align: center
   :figclass: align-center
   
-  :math:`\sin(10x)+\cos(20x)`
+  |L_sin+cos|
 
 
 +--------------------------------+---------------------------------+
@@ -114,7 +114,7 @@ A nested sine function
   :align: center
   :figclass: align-center
   
-  |sinesine|
+  |L_sinesine|
 
 
 +--------------------------------+---------------------------------+
@@ -135,5 +135,17 @@ A nested sine function
    -->
 
 
-.. |unit-interval| replace:: :math:`[-1,1]` 
-.. |sinesine| replace:: :math:`\sin(10x+\sin(20x^2))`
+.. |L_f| image:: http://latex.codecogs.com/gif.latex?f
+.. |L_fD| image:: http://latex.codecogs.com/gif.latex?f'
+.. |L_B| image:: http://latex.codecogs.com/gif.latex?B
+.. |L_f(B)| image:: http://latex.codecogs.com/gif.latex?f(B)
+.. |L_x| image:: http://latex.codecogs.com/gif.latex?x
+.. |L_fx| image:: http://latex.codecogs.com/gif.latex?f(x)
+.. |L_sine+cos| image:: http://latex.codecogs.com/gif.latex?\sin(10x)+\cos(20x)
+.. |L_unit-interval| image:: http://latex.codecogs.com/gif.latex?[-1,1]
+.. |L_sinesine| image:: http://latex.codecogs.com/gif.latex?\sin(10x+\sin(20x^2))
+.. |L_sinesine+sin| image:: http://latex.codecogs.com/gif.latex?\sin(10x+\sin(20x^2))+\sin(10x)
+.. |L_runge| image:: http://latex.codecogs.com/gif.latex?{\frac{1}{100x^2+1}}
+.. |L_rungeX| image:: http://latex.codecogs.com/gif.latex?{\frac{x}{100x^2+1}}
+.. |L_fracSin| image:: http://latex.codecogs.com/gif.latex?{\frac{1}{10(\sin(7x))^2+1}}
+.. |L_hat| image:: http://latex.codecogs.com/gif.latex?1-|x+1/3|
