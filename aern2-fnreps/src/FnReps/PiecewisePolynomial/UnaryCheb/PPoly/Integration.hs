@@ -7,15 +7,16 @@ import AERN2.Num
 
 import FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Basics as PPB
 import AERN2.RealFunction
+import qualified FnReps.Polynomial.UnaryCheb.Poly as PB
 import qualified FnReps.Polynomial.UnaryCheb.Poly.Integration as PI
 import qualified FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding as PE
 
 integral :: PPoly -> MPBall -> MPBall -> MPBall
 integral pp l r =
   let
-    err = radius pp
+    err = sum [(PB.polyRadius p)*(b - a) | (Interval a b, p) <- piecesMeetingInterval pp (toRationalDown l) (toRationalUp r)]
   in 
-  endpoints2Ball (-err) err +
+  endpoints2Ball (-err) (err) + 
   sum [integrateUnaryFnA (p, max l a, min r b)  
     | (Interval a b, p) <- piecesMeetingInterval (dropAllErrors pp) (toRationalDown l) (toRationalUp r)]
      
