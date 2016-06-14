@@ -65,10 +65,11 @@ Aern2 supports several representations, including polynomial approximations.
 Alternative approach to Haskell numerical types
 -----------------------------------------------
 
-Mixed-type operators
-^^^^^^^^^^^^^^^^^^^^
+Bottom-up type derivation
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-eg :haskell:`let n = 1 :: Integer in 1/n :: Rational`
+Aern2 introduces and by default uses fixed-type numerical literals 
+and arithmetic expressions whose type is derived bottom-up:
 
 .. code-block:: plain
 
@@ -84,6 +85,16 @@ eg :haskell:`let n = 1 :: Integer in 1/n :: Rational`
     *AERN2.Num> integer (length [1,2]) + 1/3
     7 % 3
 
+
+This is beneficial, for example, to avoid type signatures and conversions, such as: 
+
+.. topic:: Prelude
+
+    :haskell:`let n = 1 :: Integer in 1/(fromInteger n) :: Rational`.
+    
+.. topic:: Bottom-up type derivation:
+
+    :haskell:`let n = 1 in 1/n`.
        
 Arrow-generic expressions
 ^^^^^^^^^^^^^^^^^^^^^^^^^
