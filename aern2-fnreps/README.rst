@@ -80,11 +80,14 @@ Benchmark results
 A well-behaved analytic function with a number of local extrema
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:math:`\sin(10x)+\cos(20x)`
 
-.. image:: plots/sine+cos.png?raw=true
-  :width: 150px
+.. figure:: plots/sine+cos.png?raw=true
+  :width: 200px
   :alt: sin+cos
+  :align: center
+  :figclass: align-center
+  
+  :math:`\sin(10x)+\cos(20x)`
 
 
 +--------------------------------+---------------------------------+
@@ -103,11 +106,15 @@ A well-behaved analytic function with a number of local extrema
 A nested sine function
 ~~~~~~~~~~~~~~~~~~~~~~
 
-:math:`\\sin(10x+\\sin(20x^2))`
 
-.. image:: plots/sinesine.png?raw=true
-  :width: 150px
-  :alt: sin+cos
+.. figure:: plots/sinesine.png?raw=true
+  :width: 200px
+  :alt: sinesine
+  :align: center
+  :figclass: align-center
+  
+  :math:`\\sin(10x+\\sin(20x^2))`
+
 
 +--------------------------------+---------------------------------+
 | Maximum over |unit-interval|   | Integral over |unit-interval|   |
