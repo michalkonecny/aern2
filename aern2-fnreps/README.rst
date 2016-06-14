@@ -116,7 +116,6 @@ A nested sine function
   
   |sinesine|
 
-.. |sinesine| replace:: :math:`\\sin(10x+\\sin(20x^2))` 
 
 +--------------------------------+---------------------------------+
 | Maximum over |unit-interval|   | Integral over |unit-interval|   |
@@ -137,3 +136,4 @@ A nested sine function
 
 
 .. |unit-interval| replace:: :math:`[-1,1]` 
+.. |sinesine| replace:: :math:`\sin(10x+\sin(20x^2))`
