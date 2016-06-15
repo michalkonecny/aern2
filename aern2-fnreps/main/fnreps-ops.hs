@@ -135,7 +135,7 @@ maxDFun fn@(UnaryFnMPBall _dom f) _dfn@(UnaryFnMPBall _ df) ac =
         ri = Interval (-1.0) 1.0
         fi i@(Interval l r) =
 --            liftA2 intersectBalls resViaD resDirect
-            resDirect
+            resViaD
             where
 --            resDirect =
 --                onRationalInterval f i
