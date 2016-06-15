@@ -207,3 +207,42 @@ Wed Jun 15 04:56:53 BST 2016,max,hat,ppoly,5 0 0 0 10,4,0.01,0.01,3648
 Wed Jun 15 04:56:53 BST 2016,max,hat,ppoly,35 0 0 0 35,34,0.01,0.01,3652
 Wed Jun 15 04:56:53 BST 2016,integrate,hat,ppoly,5 0 0 0 0,3,0.01,0.01,3544
 Wed Jun 15 04:56:53 BST 2016,integrate,hat,ppoly,35 0 0 0 0,33,0.01,0.01,3556
+Wed Jun 15 18:38:55 BST 2016,max,sine+cos,dfun,10,10,0.07,0.01,3696
+Wed Jun 15 18:38:56 BST 2016,max,sine+cos,dfun,15,15,0.10,0.01,3768
+Wed Jun 15 18:38:56 BST 2016,max,sine+cos,dfun,20,20,0.12,0.01,3864
+Wed Jun 15 18:38:56 BST 2016,max,sine+cos,dfun,25,25,0.15,0.01,3932
+Wed Jun 15 18:38:56 BST 2016,max,sine+cos,dfun,30,30,0.16,0.01,4008
+Wed Jun 15 18:38:56 BST 2016,max,sine+cos,dfun,35,35,0.20,0.01,4092
+Wed Jun 15 18:38:56 BST 2016,max,sinesine,dfun,10,11,0.07,0.01,3700
+Wed Jun 15 18:38:57 BST 2016,max,sinesine,dfun,30,31,0.10,0.01,3784
+Wed Jun 15 18:38:57 BST 2016,max,sinesine,dfun,50,51,0.12,0.01,3844
+Wed Jun 15 18:38:57 BST 2016,max,sinesine,dfun,70,71,0.15,0.01,3916
+Wed Jun 15 18:38:57 BST 2016,max,sinesine,dfun,90,90,0.16,0.01,3976
+Wed Jun 15 18:38:57 BST 2016,max,sinesine,dfun,95,95,0.16,0.01,4004
+Wed Jun 15 18:38:57 BST 2016,max,sinesine+cos,dfun,10,10,0.06,0.01,3668
+Wed Jun 15 18:38:58 BST 2016,max,sinesine+cos,dfun,20,20,0.13,0.01,3848
+Wed Jun 15 18:39:00 BST 2016,max,sinesine+cos,dfun,30,30,2.24,0.01,6944
+Wed Jun 15 18:40:11 BST 2016,max,sinesine+cos,dfun,40,40,71.18,0.16,103092
+Wed Jun 15 18:46:56 BST 2016,max,sinesine+cos,dfun,45,45,403.21,0.99,554676
+Wed Jun 15 18:46:56 BST 2016,max,runge,dfun,05,5,0.05,0.01,5940
+Wed Jun 15 18:46:56 BST 2016,max,runge,dfun,35,35,0.07,0.01,5936
+Wed Jun 15 18:46:56 BST 2016,max,runge,dfun,65,65,0.08,0.01,5932
+Wed Jun 15 18:46:57 BST 2016,max,runge,dfun,100,100,0.15,0.01,6964
+Wed Jun 15 18:46:57 BST 2016,max,rungeX,dfun,05,5,0.05,0.01,6008
+Wed Jun 15 18:46:57 BST 2016,max,rungeX,dfun,10,11,0.05,0.01,6012
+Wed Jun 15 18:46:57 BST 2016,max,rungeX,dfun,20,20,0.07,0.01,6000
+Wed Jun 15 18:46:57 BST 2016,max,rungeX,dfun,30,31,0.07,0.01,6016
+Wed Jun 15 18:46:57 BST 2016,max,rungeX,dfun,40,40,0.08,0.01,6008
+Wed Jun 15 18:46:57 BST 2016,max,rungeX,dfun,50,50,0.10,0.01,6008
+Wed Jun 15 18:46:57 BST 2016,max,rungeX,dfun,60,60,0.10,0.01,6008
+Wed Jun 15 18:46:58 BST 2016,max,rungeX,dfun,80,80,0.11,0.01,6024
+Wed Jun 15 18:50:39 BST 2016,max,fracSin,dfun,10,10,107.48,0.77,35708
+Wed Jun 15 18:52:27 BST 2016,max,fracSin,dfun,15,15,107.56,0.82,35708
+Wed Jun 15 18:54:15 BST 2016,max,fracSin,dfun,20,21,106.90,0.74,35712
+Wed Jun 15 18:56:03 BST 2016,max,fracSin,dfun,25,25,107.38,0.80,35720
+Wed Jun 15 18:58:02 BST 2016,max,hat,dfun,4,4,0.01,0.01,3360
+Wed Jun 15 18:58:02 BST 2016,max,hat,dfun,10,10,0.01,0.01,3352
+Wed Jun 15 18:58:02 BST 2016,max,hat,dfun,20,20,0.01,0.01,3360
+Wed Jun 15 18:58:02 BST 2016,max,hat,dfun,30,30,0.01,0.01,3360
+Wed Jun 15 19:00:54 BST 2016,max,fracSin,dfun,05,5,107.04,0.66,35708
+Wed Jun 15 19:02:42 BST 2016,max,fracSin,dfun,30,31,106.97,0.77,35708

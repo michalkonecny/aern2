@@ -44,7 +44,6 @@ function runOne
 
 function sinecosFun
 {
-
     repr=fun
     fn=sine+cos
     dir=$fn
@@ -60,18 +59,29 @@ function sinecosFun
     do
         runOne
     done
-    
+}
+
+function sinecosDFun
+{
     repr=dfun
+    fn=sine+cos
+    dir=$fn
+    
+    op=max
+    for params in 10 15 20 25 30 35
+    do
+        runOne
+    done
+    
+    op=integrate
     for params in 10 12 14 16 18 20
     do
         runOne
     done
-
 }
 
 function sinecosPoly
 {
-
     repr=poly
     fn=sine+cos
     dir=$fn
@@ -89,10 +99,7 @@ function sinecosPoly
         params="100 $deg 0 100"
         runOne
     done
-
 }
-
-## TODO sinecosPPoly
 
 #################
 ### sinesine
@@ -100,7 +107,6 @@ function sinecosPoly
 
 function sinesineFun
 {
-
     repr=fun
     fn=sinesine
     dir=$fn
@@ -116,18 +122,29 @@ function sinesineFun
     do
         runOne
     done
-    
+}
+
+function sinesineDFun
+{
     repr=dfun
+    fn=sinesine
+    dir=$fn
+    
+    op=max
+    for params in 10 30 50 70 90 95
+    do
+        runOne
+    done
+    
+    op=integrate
     for params in 5 10 15 20 25 30
     do
         runOne
     done
-
 }
 
 function sinesinePoly
 {
-
     repr=poly
     fn=sinesine
     dir=$fn
@@ -143,7 +160,6 @@ function sinesinePoly
     do
         runOne
     done
-
 }
 
 #################
@@ -152,7 +168,6 @@ function sinesinePoly
 
 function sinesine+cosFun
 {
-
     repr=fun
     fn=sinesine+cos
     dir=$fn
@@ -168,18 +183,29 @@ function sinesine+cosFun
     do
         runOne
     done
-    
+}
+
+function sinesine+cosDFun
+{
     repr=dfun
+    fn=sinesine+cos
+    dir=$fn
+    
+    op=max
+    for params in 10 20 30 40 45
+    do
+        runOne
+    done
+    
+    op=integrate
     for params in 5 10 15 20 25 30
     do
         runOne
     done
-
 }
 
 function sinesine+cosPoly
 {
-
     repr=poly
     fn=sinesine+cos
     dir=$fn
@@ -195,7 +221,6 @@ function sinesine+cosPoly
     do
         runOne
     done
-
 }
 
 
@@ -205,7 +230,6 @@ function sinesine+cosPoly
 
 function rungeFun
 {
-
     repr=fun
     fn=runge
     dir=$fn
@@ -221,18 +245,29 @@ function rungeFun
     do
         runOne
     done
-    
+}
+
+function rungeDFun
+{
     repr=dfun
+    fn=runge
+    dir=$fn
+    
+    op=max
+    for params in 05 35 65 100
+    do
+        runOne
+    done
+    
+    op=integrate
     for params in 05 10 15 20 25 30 35
     do
         runOne
     done
-
 }
 
 function rungePoly
 {
-
     repr=poly
     fn=runge
     dir=$fn
@@ -294,8 +329,21 @@ function rungeXFun
     do
         runOne
     done
-    
+}
+
+function rungeXDFun
+{
     repr=dfun
+    fn=rungeX
+    dir=$fn
+    
+    op=max
+    for params in 05 10 20 30 40 50 60 80
+    do
+        runOne
+    done
+    
+    op=integrate
     for params in 05 10 15 20 25 30 35 40
     do
         runOne
@@ -304,7 +352,6 @@ function rungeXFun
 
 function rungeXPoly
 {
-
     repr=poly
     fn=rungeX
     dir=$fn
@@ -320,13 +367,11 @@ function rungeXPoly
     do
         runOne
     done
-
 }
 
 
 function rungeXPPoly
 {
-
     repr=ppoly
     fn=rungeX
     dir=$fn
@@ -342,7 +387,6 @@ function rungeXPPoly
     do
         runOne
     done
-
 }
 
 
@@ -352,7 +396,6 @@ function rungeXPPoly
 
 function fracSinFun
 {
-
     repr=fun
     fn=fracSin
     dir=$fn
@@ -368,18 +411,29 @@ function fracSinFun
     do
         runOne
     done
-    
+}
+
+function fracSinDFun
+{
     repr=dfun
+    fn=fracSin
+    dir=$fn
+    
+    op=max
     for params in 05 10 15 20 25 30
     do
         runOne
     done
-
+    
+    op=integrate
+    for params in 05 10 15 20 25 30
+    do
+        runOne
+    done
 }
 
 function fracSinPoly
 {
-
     repr=poly
     fn=fracSin
     dir=$fn
@@ -397,12 +451,10 @@ function fracSinPoly
     do
         runOne
     done
-
 }
 
 function fracSinPPoly
 {
-
     repr=ppoly
     fn=fracSin
     dir=$fn
@@ -418,7 +470,6 @@ function fracSinPPoly
     do
         runOne
     done
-
 }
 
 #################
@@ -427,7 +478,6 @@ function fracSinPPoly
 
 function hatFun
 {
-
     repr=fun
     fn=hat
     dir=$fn
@@ -443,18 +493,29 @@ function hatFun
     do
         runOne
     done
-    
+}
+
+function hatDFun
+{
     repr=dfun
+    fn=hat
+    dir=$fn
+    
+    op=max
+    for params in 4 10 20 30 
+    do
+        runOne
+    done
+    
+    op=integrate
     for params in 4 10 16
     do
         runOne
     done
-
 }
 
 function hatPoly
 {
-
     repr=poly
     fn=hat
     dir=$fn
@@ -470,12 +531,10 @@ function hatPoly
     do
         runOne
     done
-
 }
 
 function hatPPoly
 {
-
     repr=ppoly
     fn=hat
     dir=$fn
@@ -491,25 +550,37 @@ function hatPPoly
     do
         runOne
     done
-
 }
 
 
 sinecosFun
+sinecosDFun
 sinecosPoly
+
 sinesineFun
+sinesineDFun
 sinesinePoly
+
 sinesine+cosFun
+sinesine+cosDFun
 sinesine+cosPoly
+
 rungeFun
+rungeDFun
 rungePoly
 rungePPoly
+
 rungeXFun
+rungeXDFun
 rungeXPoly
 rungeXPPoly
+
 fracSinFun
+fracSinDFun
 fracSinPoly
 fracSinPPoly
+
 hatFun
+hatDFun
 hatPoly
 hatPPoly
