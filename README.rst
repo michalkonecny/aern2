@@ -48,6 +48,8 @@ For example:
     [1.366025403784439 ± 7.042664940643378e-36543]
     (0.67 secs, 59789960 bytes)
 
+See `benchmarks of some Haskell exact real 
+computation libraries <https://github.com/michalkonecny/haskell-reals-comparison>`_.
 
 Exact real function computation
 ===============================
