@@ -27,7 +27,8 @@ module AERN2.Num.MPBall
      module AERN2.Num.Accuracy,
      toIntegerUp, toIntegerDown, toRationalUp, toRationalDown,
      integer2BallP, rational2BallP, rationalBall2BallP,
-     ball2endpoints, endpoints2Ball,
+     ball2endpoints, endpoints2Ball, 
+     intersectBalls,
      getCentreAndErrorBall,
      ballCentre, ballCentreRational,
      ballRadius,
@@ -645,6 +646,16 @@ ball2endpoints x = (l,u)
     l = MPBall lMP EB.zero
     u = MPBall uMP EB.zero
     (lMP, uMP) = ball2endpointsMP x
+    
+intersectBalls :: MPBall -> MPBall -> MPBall
+intersectBalls a b 
+    | rL P.> rR = error $ "intersectBalls: empty intersection: " ++ show a ++ "; " ++ show b 
+    | otherwise = endpointsMP2Ball rL rR
+    where
+    rL = P.max aL bL
+    rR = P.min aR bR
+    (aL,aR) = ball2endpointsMP a
+    (bL,bR) = ball2endpointsMP b
     
 getCentreAndErrorBall :: MPBall -> (MPBall, MPBall)
 getCentreAndErrorBall x = (cB,eB)
