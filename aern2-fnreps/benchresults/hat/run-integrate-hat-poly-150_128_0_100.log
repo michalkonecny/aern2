@@ -9,20 +9,20 @@ result ~ (8.8890822977e-01,True)
 accuracy: Bits 7
 precision = Precision 150
 	Command being timed: "./aern2-fnreps-ops integrate hat poly 150 128 0 100"
-	User time (seconds): 43.08
-	System time (seconds): 0.20
-	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:43.26
+	User time (seconds): 42.99
+	System time (seconds): 0.19
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:43.25
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 78720
+	Maximum resident set size (kbytes): 78032
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 119432
+	Minor (reclaiming a frame) page faults: 119553
 	Voluntary context switches: 1
-	Involuntary context switches: 4174
+	Involuntary context switches: 4512
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 16

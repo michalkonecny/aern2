@@ -4,20 +4,20 @@ result ~ (6.4789486211e-01,True)
 accuracy: Bits 25
 precision = Precision 143
 	Command being timed: "./aern2-fnreps-ops integrate fracSin dfun 25"
-	User time (seconds): 47.51
-	System time (seconds): 0.12
+	User time (seconds): 46.85
+	System time (seconds): 0.11
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:47.71
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:47.04
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 71252
+	Maximum resident set size (kbytes): 71280
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 17929
+	Minor (reclaiming a frame) page faults: 17945
 	Voluntary context switches: 1
-	Involuntary context switches: 5985
+	Involuntary context switches: 4661
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

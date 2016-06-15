@@ -11,20 +11,20 @@ result ~ (1e+00,False)
 accuracy: Bits 44
 precision = Precision 100
 	Command being timed: "./aern2-fnreps-ops max sinesine poly 100 100 300 100"
-	User time (seconds): 93.06
-	System time (seconds): 0.99
+	User time (seconds): 91.66
+	System time (seconds): 0.94
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:34.21
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:32.78
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 227864
+	Maximum resident set size (kbytes): 228364
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 669676
+	Minor (reclaiming a frame) page faults: 666887
 	Voluntary context switches: 1
-	Involuntary context switches: 9379
+	Involuntary context switches: 11056
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

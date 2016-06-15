@@ -1,31 +1,31 @@
 divA: degree = 128
 rangePB:
- accuracy(result) = [[9.9015513064805142446784859167439606066637813603e-03 ± 5.6681954531938728e-05],[9.9015513064805142446784859167439606066637813713e-03 ± 5.6681954531938728e-05]]
+ accuracy(result) = [[9.9015513064805142446784859167439606066637813603e-03 ± 5.6681954531938728e-05],[1.0000005612074706132545794760157538615967627454e+00 ± 5.6681954531938728e-05]]
  acc = Bits 100
  lDom = (-1) % 1
  rDom = 1 % 1
  lUnit = [-1e+00 ± 0e+00]
  rUnit = [1e+00 ± 0e+00]
 computing max  1/(100x^2+1) over [-1,1]
-result = [9.9015513064805142446784859167439606066637813713e-03 ± 5.6681954531938728e-05]
-result ~ (9.9015513115e-03,True)
+result = [1.0000005612074706132545794760157538615967627454e+00 ± 5.6681954531938728e-05]
+result ~ (1e+00,True)
 accuracy: Bits 14
 precision = Precision 150
 	Command being timed: "./aern2-fnreps-ops max runge poly 150 128 0 100"
-	User time (seconds): 63.18
-	System time (seconds): 0.19
+	User time (seconds): 62.78
+	System time (seconds): 0.24
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:03.48
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:03.12
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 116136
+	Maximum resident set size (kbytes): 116180
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 150634
+	Minor (reclaiming a frame) page faults: 156804
 	Voluntary context switches: 1
-	Involuntary context switches: 6242
+	Involuntary context switches: 6437
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 16

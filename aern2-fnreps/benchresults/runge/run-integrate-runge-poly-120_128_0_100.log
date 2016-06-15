@@ -5,20 +5,20 @@ result ~ (2.9422553489e-01,True)
 accuracy: Bits 13
 precision = Precision 120
 	Command being timed: "./aern2-fnreps-ops integrate runge poly 120 128 0 100"
-	User time (seconds): 48.66
-	System time (seconds): 0.16
+	User time (seconds): 48.62
+	System time (seconds): 0.21
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:48.90
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:48.91
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 97604
+	Maximum resident set size (kbytes): 97652
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 129416
+	Minor (reclaiming a frame) page faults: 129438
 	Voluntary context switches: 1
-	Involuntary context switches: 4790
+	Involuntary context switches: 5025
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 16

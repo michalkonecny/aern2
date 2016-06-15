@@ -1,5 +1,5 @@
 computing integrate  1-|x+1/3| over [-1,1]
-result = [9.0299479166666666666666666666851e-01 ± 7.9833984375000069e-02]
+result = [9.0299479166666666666666666666851e-01 ± 7.4055989583333412e-02]
 result ~ (9.0299479198e-01,True)
 accuracy: Bits 3
 precision = Precision 100
@@ -12,14 +12,14 @@ precision = Precision 100
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 3520
+	Maximum resident set size (kbytes): 3544
 	Average resident set size (kbytes): 0
-	Major (requiring I/O) page faults: 1
-	Minor (reclaiming a frame) page faults: 978
-	Voluntary context switches: 2
-	Involuntary context switches: 2
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 988
+	Voluntary context switches: 1
+	Involuntary context switches: 3
 	Swaps: 0
-	File system inputs: 48
+	File system inputs: 0
 	File system outputs: 8
 	Socket messages sent: 0
 	Socket messages received: 0

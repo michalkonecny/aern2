@@ -1,23 +1,23 @@
 computing integrate  1/(10(sin(7x))^2+1) over [-1,1]
-result = [6.4688246652697192482231372922752e-01 ± 5.4823693534547337e-02]
+result = [6.4688246652697192482231372922752e-01 ± 3.0205549044353349e-02]
 result ~ (6.4688246697e-01,True)
-accuracy: Bits 4
+accuracy: Bits 5
 precision = Precision 100
 	Command being timed: "./aern2-fnreps-ops integrate fracSin ppoly 100 20 0.1 1 100"
-	User time (seconds): 13.56
+	User time (seconds): 12.91
 	System time (seconds): 0.01
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:13.61
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:12.95
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 12904
+	Maximum resident set size (kbytes): 12888
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 4388
+	Minor (reclaiming a frame) page faults: 4032
 	Voluntary context switches: 1
-	Involuntary context switches: 1638
+	Involuntary context switches: 1386
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

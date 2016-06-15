@@ -4,20 +4,20 @@ result ~ (8.8888889551e-01,True)
 accuracy: Bits 15
 precision = Precision 26
 	Command being timed: "./aern2-fnreps-ops integrate hat fun 16"
-	User time (seconds): 6.97
-	System time (seconds): 0.06
-	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:07.03
+	User time (seconds): 7.02
+	System time (seconds): 0.07
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:07.10
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 105844
+	Maximum resident set size (kbytes): 105868
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 26582
+	Minor (reclaiming a frame) page faults: 26595
 	Voluntary context switches: 1
-	Involuntary context switches: 765
+	Involuntary context switches: 777
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

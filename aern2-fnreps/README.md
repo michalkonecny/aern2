@@ -78,7 +78,7 @@ When combining several functions, the partitions of the functions are unified.
 
 Source code of the benchmark tasks: [fnreps-ops.hs](https://github.com/michalkonecny/aern2/blob/master/aern2-fnreps/main/fnreps-ops.hs)
 
-The benchmark timings are obtained on a Dell Inspiron 15R with 8GB RAM,
+The benchmark timings are obtained on a Dell Inspiron 15R with 16GB RAM,
 Intel(R) Core(TM) i7-3632QM CPU @ 2.20GHz running Ubuntu 14.04.
 
 The benchmarks have been compiled using ghc-7.8.4 with -O2.

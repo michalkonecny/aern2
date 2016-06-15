@@ -4,7 +4,7 @@ result ~ (2.94220665e-01,True)
 accuracy: Bits 15
 precision = Precision 126
 	Command being timed: "./aern2-fnreps-ops integrate runge dfun 15"
-	User time (seconds): 0.16
+	User time (seconds): 0.15
 	System time (seconds): 0.00
 	Percent of CPU this job got: 99%
 	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.16
@@ -12,12 +12,12 @@ precision = Precision 126
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 3640
+	Maximum resident set size (kbytes): 3656
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1008
+	Minor (reclaiming a frame) page faults: 1013
 	Voluntary context switches: 1
-	Involuntary context switches: 17
+	Involuntary context switches: 20
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

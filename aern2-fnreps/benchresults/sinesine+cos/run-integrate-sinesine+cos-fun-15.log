@@ -4,20 +4,20 @@ result ~ (-1.3081711531e-01,True)
 accuracy: Bits 15
 precision = Precision 23
 	Command being timed: "./aern2-fnreps-ops integrate sinesine+cos fun 15"
-	User time (seconds): 469.38
-	System time (seconds): 1.17
+	User time (seconds): 472.75
+	System time (seconds): 1.11
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 7:51.25
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 7:54.56
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 1487368
+	Maximum resident set size (kbytes): 1487404
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 371958
+	Minor (reclaiming a frame) page faults: 371975
 	Voluntary context switches: 1
-	Involuntary context switches: 46867
+	Involuntary context switches: 47066
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

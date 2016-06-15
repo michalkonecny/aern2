@@ -4,20 +4,20 @@ result ~ (5.0000000047e-02,False)
 accuracy: Bits 35
 precision = Precision 100
 	Command being timed: "./aern2-fnreps-ops max rungeX fun 35"
-	User time (seconds): 77.97
-	System time (seconds): 0.28
-	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:18.22
+	User time (seconds): 79.07
+	System time (seconds): 0.24
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:19.44
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 249504
+	Maximum resident set size (kbytes): 249520
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 62504
+	Minor (reclaiming a frame) page faults: 62514
 	Voluntary context switches: 1
-	Involuntary context switches: 9326
+	Involuntary context switches: 7839
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

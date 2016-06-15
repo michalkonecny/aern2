@@ -1,7 +1,7 @@
 computing integrate  x/(100x^2+1) over [-1,1]
-result = [-5.3105130063346988475560802354131e-28 ± 1.0000000000000007e-02]
+result = [-5.3105130063346988475560802354131e-28 ± 2.0000000000000014e-02]
 result ~ (-0e+00,True)
-accuracy: Bits 6
+accuracy: Bits 5
 precision = Precision 100
 	Command being timed: "./aern2-fnreps-ops integrate rungeX ppoly 100 0 0.1 1 100"
 	User time (seconds): 0.10
@@ -12,12 +12,12 @@ precision = Precision 100
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 5200
+	Maximum resident set size (kbytes): 5272
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1425
+	Minor (reclaiming a frame) page faults: 1443
 	Voluntary context switches: 1
-	Involuntary context switches: 15
+	Involuntary context switches: 12
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

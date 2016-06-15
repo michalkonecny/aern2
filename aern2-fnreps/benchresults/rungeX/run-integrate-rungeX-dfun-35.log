@@ -4,20 +4,20 @@ result ~ (0e+00,False)
 accuracy: Bits 35
 precision = Precision 154
 	Command being timed: "./aern2-fnreps-ops integrate rungeX dfun 35"
-	User time (seconds): 61.53
-	System time (seconds): 0.23
+	User time (seconds): 58.34
+	System time (seconds): 0.20
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:02.35
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:58.63
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 157116
+	Maximum resident set size (kbytes): 157148
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 39400
+	Minor (reclaiming a frame) page faults: 39416
 	Voluntary context switches: 1
-	Involuntary context switches: 8374
+	Involuntary context switches: 5717
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

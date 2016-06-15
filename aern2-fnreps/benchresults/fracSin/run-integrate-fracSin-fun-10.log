@@ -12,12 +12,12 @@ precision = Precision 20
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 12660
+	Maximum resident set size (kbytes): 12672
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 3290
+	Minor (reclaiming a frame) page faults: 3302
 	Voluntary context switches: 1
-	Involuntary context switches: 263
+	Involuntary context switches: 272
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

@@ -1,23 +1,23 @@
 computing integrate  1/(10(sin(7x))^2+1) over [-1,1]
-result = [6.4789486710400938223945813434027779315150178833725251438233042537421920175763705256889059157243709478104763508935081195546340342967518949491499431488136742915864067847416685438765991593748179314939103725557238716776958298368208528624782194711e-01 ± 8.1259340866262637e-06]
+result = [6.4789486710400938223945813434027779315150178833725251438233042537421920175763705256889059157243709478104763508935081195546340342967518949491499431488136742915864067847416685438765991593748179314939103725557238716776958298368208528624782194711e-01 ± 8.4824247872857541e-07]
 result ~ (6.478948677e-01,True)
-accuracy: Bits 16
+accuracy: Bits 20
 precision = Precision 800
 	Command being timed: "./aern2-fnreps-ops integrate fracSin ppoly 800 40 0.05 3 200"
-	User time (seconds): 131.29
-	System time (seconds): 1.02
+	User time (seconds): 122.00
+	System time (seconds): 0.95
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:12.56
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:03.15
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 140828
+	Maximum resident set size (kbytes): 140888
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 487337
+	Minor (reclaiming a frame) page faults: 481350
 	Voluntary context switches: 1
-	Involuntary context switches: 15992
+	Involuntary context switches: 12039
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

@@ -12,20 +12,20 @@ result ~ (5.0000000047e-02,False)
 accuracy: Bits 39
 precision = Precision 200
 	Command being timed: "./aern2-fnreps-ops max rungeX poly 200 256 0 100"
-	User time (seconds): 944.77
-	System time (seconds): 2.21
+	User time (seconds): 936.82
+	System time (seconds): 2.09
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 15:48.39
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 15:40.30
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 1178660
+	Maximum resident set size (kbytes): 1178360
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1632288
+	Minor (reclaiming a frame) page faults: 1584445
 	Voluntary context switches: 1
-	Involuntary context switches: 91711
+	Involuntary context switches: 92128
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 16
