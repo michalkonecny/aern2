@@ -133,9 +133,14 @@ maxDFun fn@(UnaryFnMPBall _dom f) _dfn@(UnaryFnMPBall _ df) ac =
         (friL, friR) = gunzip $ fmap ball2endpoints fri
         fri = fi ri
         ri = Interval (-1.0) 1.0
-        fi i@(Interval l r) = 
-            fm + (err * (catchingExceptions $ endpoints2Ball (-o) o))
+        fi i@(Interval l r) =
+--            liftA2 intersectBalls resViaD resDirect
+            resDirect
             where
+--            resDirect =
+--                onRationalInterval f i
+            resViaD = 
+                fm + (err * (catchingExceptions $ endpoints2Ball (-o) o))
             o = mpBall 1
             fm = case catchingExceptions_maybeValue err of
                     Just errV -> f (rational2BallP (getPrecision errV) m)
