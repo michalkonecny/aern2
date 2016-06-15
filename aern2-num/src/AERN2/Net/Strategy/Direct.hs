@@ -4,7 +4,8 @@ module AERN2.Net.Strategy.Direct
     ufnB2B_x, ufnB2B_10x2p1, ufnB2B_1o10x2p1, ufnB2B_sinx,
     Interval(..), 
     onRationalInterval, rati2MPBall, 
-    UnaryFnMPBall(..), UnaryFnCR(..)
+    UnaryFnMPBall(..), UnaryFnCR(..),
+    MaxSearchSegment(..), splitInterval
 )
 where
 
