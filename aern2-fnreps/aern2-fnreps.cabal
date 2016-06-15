@@ -75,7 +75,8 @@ executable aern2-fnreps-ops
                    arithmoi,
                    QuickCheck,
                    aern2-num ==0.1,
-                   aern2-fnreps ==0.1
+                   aern2-fnreps ==0.1,
+                   pqueue
   extensions:
                     Arrows,
                     FlexibleContexts,
