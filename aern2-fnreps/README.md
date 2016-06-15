@@ -40,10 +40,10 @@ A function
 is given by a pair of Fun representations:
 one for 
 ![](http://latex.codecogs.com/gif.latex?f)
-and one for its derivative
+and one for its weak (interval) derivative
 ![](http://latex.codecogs.com/gif.latex?f').
-This representation is currently used for integration
-with an adaptive interval trapezoidal quadrature.
+This representation facilitates a trapezoidal 
+interval quadrature. 
 
 
 ### Poly
