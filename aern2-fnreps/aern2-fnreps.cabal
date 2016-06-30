@@ -56,9 +56,9 @@ Library
                     FnReps.Polynomial.UnaryPower.IntPoly.SignedSubresultant,
                     FnReps.Polynomial.UnaryPower.Poly.Basics,
                     FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding,
-                    FnReps.Polynomial.UnaryPower.Poly.Power2Cheb,
-                    FnReps.Fun
+                    FnReps.Polynomial.UnaryPower.Poly.Power2Cheb
   exposed-modules:  
+                    FnReps.Fun,
                     FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Benchmarks,
                     FnReps.Polynomial.UnaryCheb.Poly,
                     FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding.Tests,
