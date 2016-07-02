@@ -1,7 +1,7 @@
 {-|
     Module      :  Numeric.MixedType
-    Description :
-    Copyright   :  (c) Michal Konecny
+    Description :  Mixed-type numeric expressions
+    Copyright   :  (c) Michal Konecny, Pieter Collins
     License     :  BSD3
 
     Maintainer  :  mikkonecny@gmail.com
@@ -34,8 +34,6 @@ import Prelude hiding
     negate, not, (&&), (||), and, or,
     (==),(/=),(<),(>),(<=),(>=)
   )
-
--- import qualified Prelude as P
 
 import Numeric.MixedTypes.Literals
 import Numeric.MixedTypes.Bool

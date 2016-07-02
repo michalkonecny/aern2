@@ -9,6 +9,11 @@
     Portability :  portable
 
     This module defines fixed-type integer and rational literals.
+    This is useful when deriving the type of an expression bottom-up.
+    Eg we would not be able to write @1 < x@
+    when the type of @<@ does not force the two sides to be of the
+    same type.  We would need to write eg @(1::Integer) < x@ with
+    Prelude's generic literals.
 
     Moreover, convenient conversion functions are provided for
     the most common numeric types.  Thus one can say eg @take (int 1)@
@@ -19,14 +24,15 @@ module Numeric.MixedTypes.Literals
 (
     -- * Fixed-type literals
     fromInteger, fromRational
+    , ifThenElse
+    -- * Generic list index
+    , (!!)
     -- * Convenient conversions
     , CanBeInteger, integer, integers
     , CanBeInt, int, ints
     , CanBeRational, rational, rationals
     , CanBeDouble, double, doubles
     , Convertible(..), convert
-    -- * generic list index
-    , (!!)
 )
 where
 
@@ -37,11 +43,29 @@ import qualified Data.Convertible as CVT
 
 import qualified Data.List as List
 
+{-| Replacement for 'Prelude.fromInteger' using the RebindableSyntax extension.
+    This version of fromInteger arranges that integer literals
+    are always of type 'Integer'.
+-}
 fromInteger :: Integer -> Integer
 fromInteger = id
 
+{-| Replacement for 'Prelude.fromRational' using the RebindableSyntax extension.
+    This version of fromRational arranges that rational literals are
+    always of type 'Rational'. -}
 fromRational :: Rational -> Rational
 fromRational = id
+
+{-|
+  Restore if-then-else with RebindableSyntax
+-}
+ifThenElse :: Bool -> t -> t -> t
+ifThenElse b e1 e2
+  | b = e1
+  | otherwise = e2
+
+_testIf1 :: String
+_testIf1 = if True then "yes" else "no"
 
 {---- Numeric conversions -----}
 

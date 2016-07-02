@@ -1,6 +1,6 @@
 {-|
     Module      :  Numeric.MixedType.Bool
-    Description :  Generic mixed-type boolean operations
+    Description :  Mixed-type generic Boolean operations
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -15,8 +15,6 @@ module Numeric.MixedTypes.Bool
   IsBool
   -- * Conversion to/from Bool
   , HasBools(..)
-  -- * Generic if-then-else
-  , CanBranch(..)
   -- * Negation
   , CanNeg(..), not, CanNegSameType
   -- * And and or
@@ -32,8 +30,20 @@ import qualified Data.List as List
 
 import Numeric.MixedTypes.Literals (Convertible(..), convert)
 
+{-|
+  A type constraint synonym that stipulates that the type behaves very
+  much like Bool, except it does not necessarily satisfy the law of excluded middle,
+  which means that the type can contain a "do-not-know" value.
+
+  Examples: @Bool@, @Maybe Bool@, @Maybe (Maybe Bool)@
+-}
 type IsBool t = (HasBools t, CanNegSameType t, CanAndOrSameType t)
 
+{-|
+  Tests for truth or falsity.  Beware, when @isCertainlyTrue@ returns @False@,
+  it does not mean that the proposition is false.  It usually means that
+  we failed to prove the proposition.
+-}
 class (Convertible Bool t) => HasBools t
   where
     isCertainlyTrue :: t -> Bool
@@ -57,20 +67,6 @@ instance (HasBools t) => HasBools (Maybe t) where
   isCertainlyTrue _ = False
   isCertainlyFalse (Just b) = isCertainlyFalse b
   isCertainlyFalse _ = False
-
-{---- Restore If-then-else with RebindableSyntax -----}
-
-class CanBranch b where
-  ifThenElse :: b -> t -> t -> t
-
-instance (HasBools t) => CanBranch t where
-  ifThenElse b e1 e2
-    | isCertainlyTrue b = e1
-    | isCertainlyFalse b = e2
-    | otherwise = error "failed to decide condition in if-then-else"
-
-_testIf1 :: String
-_testIf1 = if (Just True) then "yes" else "no"
 
 {---- Negation ----}
 
