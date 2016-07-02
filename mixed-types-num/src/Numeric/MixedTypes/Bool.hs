@@ -19,7 +19,6 @@ module Numeric.MixedTypes.Bool
   , CanNeg(..), not, CanNegSameType
   -- * And and or
   , CanAndOr(..), (&&), (||), CanAndOrWith, CanAndOrSameType, and, or
-  -- * All together
 )
 where
 
@@ -70,10 +69,19 @@ instance (HasBools t) => HasBools (Maybe t) where
 
 {---- Negation ----}
 
+{-|
+  This is negation is both the numeric negation as well as the Boolean negation.
+  Example of non-standard Boolean negation:
+
+  @
+  negate (Just True) = Just False
+  @
+ -}
 class CanNeg t where
   type NegType t
   negate :: t -> NegType t
 
+{-| A synonym of 'negate'. -}
 not :: (CanNeg t) => t -> NegType t
 not = negate
 
@@ -92,6 +100,14 @@ _testNeg1 = not (Just True)
 
 {---- And/Or ----}
 
+{-|
+  Binary logical `and' and `or' for generalised Booleans.  For example:
+
+  @
+  (Just True) && False = Just False
+  (Just (Just True)) || False = (Just (Just True))
+  @
+ -}
 class CanAndOr t1 t2 where
   type AndOrType t1 t2
   and2 :: t1 -> t2 -> AndOrType t1 t2
@@ -103,8 +119,10 @@ type CanAndOrSameType t = (CanAndOrWith t t)
 infixr 3  &&
 infixr 2  ||
 
+{-| A synonym of 'and2'. -}
 (&&) :: (CanAndOr a b) => a -> b -> AndOrType a b
 (&&) = and2
+{-| A synonym of 'or2'. -}
 (||) :: (CanAndOr a b) => a -> b -> AndOrType a b
 (||) = or2
 

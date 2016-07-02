@@ -16,8 +16,20 @@
     Prelude's generic literals.
 
     Moreover, convenient conversion functions are provided for
-    the most common numeric types.  Thus one can say eg @take (int 1)@
-    or @integer (length list)@.
+    the most common numeric types.  Thus one can say eg:
+
+    * @take (int 1)@
+    * @integer (length list)@.
+    * @double 0.5@
+
+    To avoid the issue of integer overflow, aritmetic operations are
+    not defined for 'Int'.
+
+    Any approximate arithmetic, ie arithmetic involving Doubles, gives
+    values of type 'Double'.
+    'Double' values cannot be normally converted to exact
+    types such as 'Rational' or 'Integer' so that all such
+    conversions are clearly visible as labelled as inexact.
 -}
 
 module Numeric.MixedTypes.Literals
