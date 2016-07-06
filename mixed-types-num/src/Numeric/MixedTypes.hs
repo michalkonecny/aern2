@@ -8,15 +8,8 @@
     Stability   :  experimental
     Portability :  portable
 
-    This module provides a version of Prelude where
-    binary and unary operations such as +, ==, not
-    with the result type being derived from the parameter
-    types, allowing eg:
-
-      * adding integer and rational, giving a rational
-
-      * comparing an integer with a real number, giving a Maybe Bool
-
+    A single-import module for the package
+    mixed-types-num.  Please see the package description.
 -}
 
 module Numeric.MixedTypes
