@@ -1,4 +1,4 @@
-name:           aern2-mpfr
+name:           aern2-mp
 version:        0.1
 cabal-version:  >= 1.9.2
 build-type:     Simple
