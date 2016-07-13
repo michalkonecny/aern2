@@ -9,7 +9,7 @@
     Stability   :  experimental
     Portability :  portable
 
-    Arbitrary precision floating point numbers with directed-rounding operations.
+    Arbitrary precision floating-point numbers with up/down-rounded operations.
 
     Currently, we use hmpfr when compiling with ghc 7.10 and higher
     and haskell-mpfr when compiling with ghc 7.8.
@@ -23,19 +23,19 @@ module AERN2.Num.MPFloat
      MPFloat, setPrecisionUp, setPrecisionDown,
      toDoubleUp, toDoubleDown,
      -- * MPFR number constructors
-     zero, one, two, fromIntegerUp, fromIntegerDown,
+     CanBeMPFloat, mpFloat,
+     fromIntegerUp, fromIntegerDown,
      fromRationalUp, fromRationalDown,
      piUp, piDown,
      -- * MPFR number basic arithmetic
      addUp, addDown, subUp, subDown,
-     distUp, distDown, avgUp, avgDown,
      mulUp, mulDown, divUp, divDown, recipUp, recipDown,
-     round,
+     distUp, distDown, avgUp, avgDown,
      -- * MPFR number selected operations
      cosUp, cosDown, sinUp, sinDown, sqrtUp, sqrtDown, expUp, expDown)
 where
 
-import Numeric.MixedTypes hiding (toRational)
+import Numeric.MixedTypes
 import qualified Prelude as P
 
 import Data.Ratio
@@ -72,7 +72,7 @@ mpToDouble = MPLow.toDouble
 
 mpToRational :: MPFloat -> Rational
 mpToRational x
-    | x == zero = 0.0
+    | x == 0 = 0.0
     | otherwise = mantissa * 2^e
     where
     (mantissa, ePre) = MPLow.decompose x
@@ -93,7 +93,7 @@ instance HasPrecision MPFloat where
 
 instance HasNorm MPFloat where
   getNormLog x
-    | x P.== zero = NormZero
+    | x == 0 = NormZero
     | otherwise = NormBits (P.toInteger $ MPLow.getExp x)
 
 setPrecisionUp :: Precision -> MPFloat -> MPFloat
@@ -116,25 +116,15 @@ toDoubleUp = mpToDouble MPLow.Up
 toDoubleDown :: MPFloat -> Double
 toDoubleDown = mpToDouble MPLow.Down
 
-instance HasEqAsymmetric MPFloat MPFloat
-instance HasOrderAsymmetric MPFloat MPFloat
-
-{- constants -}
-
-zero :: MPFloat
-zero = MPLow.zero
-
-one :: MPFloat
-one = convertExactly 1
-
-two :: MPFloat
-two = convertExactly 2
-
 fromIntegerUp :: Precision -> Integer -> MPFloat
 fromIntegerUp p i = MPLow.fromIntegerA MPLow.Up (p2mpfrPrec p) i
 
 fromIntegerDown :: Precision -> Integer -> MPFloat
 fromIntegerDown p i = MPLow.fromIntegerA MPLow.Down (p2mpfrPrec p) i
+
+type CanBeMPFloat t = ConvertibleExactly t MPFloat
+mpFloat :: (CanBeMPFloat t) => t -> MPFloat
+mpFloat = convertExactly
 
 instance ConvertibleExactly Integer MPFloat where
     safeConvertExactly n =
@@ -147,6 +137,9 @@ instance ConvertibleExactly Integer MPFloat where
             | nDown == nUp = Right nUp
             | otherwise = findExact rest
 
+instance ConvertibleExactly Int MPFloat where
+    safeConvertExactly = safeConvertExactly . integer
+
 fromRationalUp :: Precision -> Rational -> MPFloat
 fromRationalUp p x =
     mpFromRationalA MPLow.Up (p2mpfrPrec p) x
@@ -155,19 +148,42 @@ fromRationalDown :: Precision -> Rational -> MPFloat
 fromRationalDown p x =
     mpFromRationalA MPLow.Down (p2mpfrPrec p) x
 
--- | Computes an upper bound to the distance @|x - y|@ of @x@ and @y@.
-distUp :: MPFloat -> MPFloat -> MPFloat
-distUp x y = if x >= y then subUp x y else subUp y x
 
--- | Computes a lower bound to the distance @|x - y|@ of @x@ and @y@.
-distDown :: MPFloat -> MPFloat -> MPFloat
-distDown x y = if x >= y then subDown x y else subDown y x
+{- comparisons -}
 
-avgUp :: MPFloat -> MPFloat -> MPFloat
-avgUp x y = divUp (addUp x y) two
+instance HasEqAsymmetric MPFloat MPFloat
+instance HasEqAsymmetric MPFloat Integer where
+  equalTo = convertSecond equalTo
+instance HasEqAsymmetric Integer MPFloat where
+  equalTo = convertFirst equalTo
+instance HasEqAsymmetric MPFloat Int where
+  equalTo = convertSecond equalTo
+instance HasEqAsymmetric Int MPFloat where
+  equalTo = convertFirst equalTo
+instance HasEqAsymmetric MPFloat Rational where
+  equalTo = convertFirst equalTo
+instance HasEqAsymmetric Rational MPFloat where
+  equalTo = convertSecond equalTo
 
-avgDown :: MPFloat -> MPFloat -> MPFloat
-avgDown x y = divDown two (addDown x y)
+instance HasOrderAsymmetric MPFloat MPFloat
+instance HasOrderAsymmetric MPFloat Integer where
+  lessThan = convertSecond lessThan
+  leq = convertSecond leq
+instance HasOrderAsymmetric Integer MPFloat where
+  lessThan = convertFirst lessThan
+  leq = convertFirst leq
+instance HasOrderAsymmetric MPFloat Int where
+  lessThan = convertSecond lessThan
+  leq = convertSecond leq
+instance HasOrderAsymmetric Int MPFloat where
+  lessThan = convertFirst lessThan
+  leq = convertFirst leq
+instance HasOrderAsymmetric Rational MPFloat where
+  lessThan = convertSecond lessThan
+  leq = convertSecond leq
+instance HasOrderAsymmetric MPFloat Rational where
+  lessThan = convertFirst lessThan
+  leq = convertFirst leq
 
 {- common functions -}
 
@@ -196,10 +212,10 @@ divUp = binaryUp False MPLow.div
 divDown = binaryDown False MPLow.div
 
 recipUp :: MPFloat -> MPFloat
-recipUp x = divUp one x
+recipUp x = divUp (mpFloat 1) x
 
 recipDown :: MPFloat -> MPFloat
-recipDown x = divDown one x
+recipDown x = divDown (mpFloat 1) x
 
 
 {- special constants and functions -}
@@ -235,6 +251,21 @@ expUp = unaryUp MPLow.exp
 
 expDown :: MPFloat -> MPFloat
 expDown = unaryDown MPLow.exp
+
+-- | Computes an upper bound to the distance @|x - y|@ of @x@ and @y@.
+distUp :: MPFloat -> MPFloat -> MPFloat
+distUp x y = if x >= y then subUp x y else subUp y x
+
+-- | Computes a lower bound to the distance @|x - y|@ of @x@ and @y@.
+distDown :: MPFloat -> MPFloat -> MPFloat
+distDown x y = if x >= y then subDown x y else subDown y x
+
+avgUp :: MPFloat -> MPFloat -> MPFloat
+avgUp x y = divUp (addUp x y) (mpFloat 2)
+
+avgDown :: MPFloat -> MPFloat -> MPFloat
+avgDown x y = divDown (addDown x y) (mpFloat 2)
+
 
 {- auxiliary functions to automatically determine result precision from operand precisions -}
 
