@@ -38,7 +38,7 @@ resolver: lts-6.5
 packages:
 # - https://github.com/michalkonecny/mixed-types-num/archive/master.zip
 - 'mixed-types-num'
-- 'aern2-mpfr'
+- 'aern2-mp'
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
