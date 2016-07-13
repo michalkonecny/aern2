@@ -29,9 +29,10 @@ Flag HaskellMPFR
 library
   hs-source-dirs:  src
   build-depends:
-    base == 4.*,
-    arithmoi == 0.4.*,
-    mixed-types-num == 0.1.*
+    base == 4.*
+    , arithmoi == 0.4.*
+    , convertible >= 1.1.1.0 && < 1.2
+    , mixed-types-num == 0.1.*
   if flag(HaskellMPFR)
     build-depends:
       haskell-mpfr == 0.1.*,
@@ -59,8 +60,11 @@ library
   exposed-modules:
     AERN2.Norm
     AERN2.MP.Precision
-    AERN2.MP.Dyadic
     AERN2.MP.Float
+    AERN2.MP.Dyadic
+    AERN2.MP.Accuracy
+    AERN2.MP.ErrorBound
+    AERN2.MP.Ball
 
 -- test-suite spec
 --   type:

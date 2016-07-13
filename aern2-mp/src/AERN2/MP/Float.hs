@@ -105,7 +105,7 @@ setPrecisionDown :: Precision -> MPFloat -> MPFloat
 setPrecisionDown p = MPLow.set MPLow.Down (p2mpfrPrec p)
 
 p2mpfrPrec :: Precision -> MPLow.Precision
-p2mpfrPrec = P.fromInteger . prec2integer
+p2mpfrPrec = P.fromInteger . integer
 
 {- conversions -}
 

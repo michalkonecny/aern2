@@ -13,7 +13,8 @@
 module AERN2.MP.Precision
 (
      HasPrecision(..), CanSetPrecision(..),
-     Precision, prec, prec2integer,
+     Precision, prec,
+     ConvertWithPrecision(..), convertP,
      defaultPrecision, maximumPrecision, standardPrecisions, precisionTimes2
     --  iterateUntilOKA, iterateUntilOK
 )
@@ -35,18 +36,21 @@ instance HasEqAsymmetric Precision Precision
 instance HasOrderAsymmetric Precision Precision
 instance CanMinMaxAsymmetric Precision Precision
 
-prec2integer :: Precision -> Integer
-prec2integer (Precision p) = p
+instance ConvertibleExactly Precision Integer where
+  safeConvertExactly (Precision p) = Right p
 
-prec :: Integer -> Precision
-prec p
-    | p < 2 = error errmsg
-    | Precision p > maximumPrecision = error errmsg
+instance ConvertibleExactly Integer Precision where
+  safeConvertExactly p
+    | p < 2 = convError errmsg p
+    | Precision p > maximumPrecision = convError errmsg p
       -- beware: if one removes "Precision" in the line above, it will type-check but loop
-    | otherwise = Precision p
+    | otherwise = Right $ Precision p
     where
     errmsg =
         "Precision must be between 2 and " ++ show maximumPrecision ++ " (given: p=" ++ show p ++ ")."
+
+prec :: Integer -> Precision
+prec = convertExactly
 
 instance HasEqAsymmetric Precision Integer where
   equalTo p i = equalTo p (prec i)
@@ -68,6 +72,15 @@ instance HasOrderAsymmetric Precision Int where
 instance HasOrderAsymmetric Int Precision where
   lessThan i p = lessThan (prec (integer i)) p
   leq i p = leq (prec (integer i)) p
+
+class ConvertWithPrecision t1 t2 where
+  safeConvertP :: Precision -> t1 -> ConvertResult t2
+
+convertP :: (ConvertWithPrecision t1 t2) => Precision -> t1 -> t2
+convertP p a =
+  case safeConvertP p a of
+    Right v -> v
+    Left err -> error (show err)
 
 maximumPrecision :: Precision
 maximumPrecision = Precision 1000000
