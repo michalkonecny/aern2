@@ -8,7 +8,7 @@ maintainer:     Michal Konecny <mikkonecny@gmail.com>
 tested-with:    GHC==7.10.3
 license:        BSD3
 homepage:       https://github.com/michalkonecny/aern2/aern2-mpfr
-synopsis:       Dyadic and MPFloat via haskell-mpfr or hmpfr
+synopsis:       Multi-precision Dyadic and Float via haskell-mpfr or hmpfr
 category:       Math
 copyright:      (c) 2015, 2016 Michal Konecny
 license-file:   LICENSE
@@ -57,10 +57,10 @@ library
     FlexibleInstances,
     UndecidableInstances
   exposed-modules:
-    AERN2.Num.Precision
-    AERN2.Num.Norm
-    AERN2.Num.Dyadic
-    AERN2.Num.MPFloat
+    AERN2.Norm
+    AERN2.MP.Precision
+    AERN2.MP.Dyadic
+    AERN2.MP.Float
 
 -- test-suite spec
 --   type:

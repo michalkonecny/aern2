@@ -1,5 +1,5 @@
 {-|
-    Module      :  AERN2.Num.Dyadic
+    Module      :  AERN2.MP.Dyadic
     Description :  Dyadics with exact ring operations
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -14,7 +14,7 @@
     and haskell-mpfr when compiling with ghc 7.8.
 -}
 
-module AERN2.Num.Dyadic
+module AERN2.MP.Dyadic
 (
    -- * Dyadic numbers and their basic operations
    Dyadic
@@ -31,9 +31,9 @@ import Data.Ratio (denominator)
 
 import Math.NumberTheory.Logarithms (integerLog2)
 
-import AERN2.Num.Precision
-import AERN2.Num.Norm
-import AERN2.Num.MPFloat
+import AERN2.Norm
+import AERN2.MP.Precision
+import AERN2.MP.Float
 
 {-| Exact dyadic type based on MPFloat. -}
 newtype Dyadic = Dyadic { dyadicMPFloat :: MPFloat }

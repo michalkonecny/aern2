@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-|
-    Module      :  AERN2.Num.MPFloat
+    Module      :  AERN2.MP.Float
     Description :  Arbitrary precision floating point numbers
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -15,10 +15,10 @@
     and haskell-mpfr when compiling with ghc 7.8.
 -}
 
-module AERN2.Num.MPFloat
+module AERN2.MP.Float
   (
    -- * Precision operations
-   module AERN2.Num.Precision
+   module AERN2.MP.Precision
    -- * MPFloat numbers and their basic operations
    , MPFloat, setPrecisionUp, setPrecisionDown
    , toDoubleUp, toDoubleDown
@@ -42,8 +42,8 @@ import qualified Prelude as P
 
 import Data.Ratio
 
-import AERN2.Num.Precision
-import AERN2.Num.Norm
+import AERN2.Norm
+import AERN2.MP.Precision
 
 #ifdef HaskellMPFR
 import qualified Data.Approximate.MPFRLowLevel as MPLow

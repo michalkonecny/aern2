@@ -1,5 +1,5 @@
 {-|
-    Module      :  AERN2.Num.Norm
+    Module      :  AERN2.Norm
     Description :  Rough logarithmic norm
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -8,14 +8,14 @@
     Stability   :  experimental
     Portability :  portable
 -}
-module AERN2.Num.Norm
+module AERN2.Norm
 (
     HasNorm(..), NormLog(..)
 )
 where
 
 import Numeric.MixedTypes
---import qualified Prelude as P
+import qualified Prelude as P
 
 import Math.NumberTheory.Logarithms (integerLog2)
 
@@ -31,7 +31,7 @@ class HasNorm a where
 data NormLog
     = NormZero -- ^ ie NormBits (-infinity)
     | NormBits Integer
-    deriving (Eq, Ord, Show)
+    deriving (P.Eq, P.Ord, Show)
 
 instance HasEqAsymmetric NormLog NormLog
 instance HasOrderAsymmetric NormLog NormLog

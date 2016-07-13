@@ -1,5 +1,5 @@
 {-|
-    Module      :  AERN2.Num.Precision
+    Module      :  AERN2.MP.Precision
     Description :  Floating-point precision
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -10,7 +10,7 @@
 
     Floating-point precision type and its operations
 -}
-module AERN2.Num.Precision
+module AERN2.MP.Precision
 (
      HasPrecision(..), CanSetPrecision(..),
      Precision, prec, prec2integer,
