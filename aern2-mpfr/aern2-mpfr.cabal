@@ -1,0 +1,84 @@
+name:           aern2-mpfr
+version:        0.1
+cabal-version:  >= 1.9.2
+build-type:     Simple
+author:         Michal Konecny
+stability:      experimental
+maintainer:     Michal Konecny <mikkonecny@gmail.com>
+tested-with:    GHC==7.10.3
+license:        BSD3
+homepage:       https://github.com/michalkonecny/aern2/aern2-mpfr
+synopsis:       Dyadic and MPFloat via haskell-mpfr or hmpfr
+category:       Math
+copyright:      (c) 2015, 2016 Michal Konecny
+license-file:   LICENSE
+Description:
+  A wrapper around haskell-mpfr or hmpfr, providing two types:
+  .
+  * Dyadic:  exact ring operations
+  .
+  * MPFloat: approximate field + elementary operations with fixed precision
+  .
+  Currently, we use hmpfr when compiling with ghc 7.10 and higher
+  and haskell-mpfr when compiling with ghc 7.8.
+
+Flag HaskellMPFR
+  Description: Use haskell-mpfr instead of hmpfr
+  Default: False
+
+library
+  hs-source-dirs:  src
+  build-depends:
+    base == 4.*,
+    arithmoi == 0.4.*,
+    mixed-types-num == 0.1.*
+  if flag(HaskellMPFR)
+    build-depends:
+      haskell-mpfr == 0.1.*,
+      integer-gmp < 0.6
+    cpp-options: -DHaskellMPFR
+  else
+    build-depends:
+      hmpfr == 0.4.*,
+      integer-gmp >= 1.0 && < 1.1
+    cpp-options: -DHMPFR
+  ghc-options:     -Wall -fno-warn-orphans
+  extensions:
+    RebindableSyntax,
+    PostfixOperators,
+    ScopedTypeVariables,
+    GeneralizedNewtypeDeriving,
+    TypeFamilies,
+    TypeOperators,
+    ConstraintKinds,
+    DefaultSignatures,
+    MultiParamTypeClasses,
+    FlexibleContexts,
+    FlexibleInstances,
+    UndecidableInstances
+  exposed-modules:
+    AERN2.Num.Precision
+    AERN2.Num.Norm
+    AERN2.Num.Dyadic
+    AERN2.Num.MPFloat
+
+-- test-suite spec
+--   type:
+--       exitcode-stdio-1.0
+--   ghc-options:
+--       -Wall
+--   extensions:
+--     RebindableSyntax,
+--     PostfixOperators,
+--     ScopedTypeVariables,
+--     FlexibleContexts
+--   hs-source-dirs:
+--       test
+--   main-is:
+--       Spec.hs
+--   build-depends:
+--     base == 4.*
+--     , mixed-types-num
+--     , hspec >= 2.1 && < 2.3
+--     , hspec-smallcheck >= 0.3 && < 0.5
+--     , QuickCheck >= 2.7 && < 2.9
