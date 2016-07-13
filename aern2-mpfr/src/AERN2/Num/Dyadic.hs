@@ -14,7 +14,15 @@
     and haskell-mpfr when compiling with ghc 7.8.
 -}
 
-module AERN2.Num.Dyadic where
+module AERN2.Num.Dyadic
+(
+   -- * Dyadic numbers and their basic operations
+   Dyadic
+   -- * Dyadic constructors
+   , CanBeDyadic, dyadic
+  -- TODO
+)
+where
 
 import Numeric.MixedTypes
 import qualified Prelude as P

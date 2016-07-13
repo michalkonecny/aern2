@@ -22,7 +22,7 @@ import Math.NumberTheory.Logarithms (integerLog2)
 
 class HasNorm a where
     {-|
-        For a value @x@, return @NormBits j@ where $j$ is close
+        For a value @x@, return @NormBits j@ where @j@ is close
         to the smallest @i@ with @|x| <= 2^i@.
         If @x == 0@ then return @NormZero@.
     -}

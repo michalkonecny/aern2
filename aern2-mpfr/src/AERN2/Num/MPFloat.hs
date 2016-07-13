@@ -16,23 +16,25 @@
 -}
 
 module AERN2.Num.MPFloat
-    (
-     -- * Precision operations
-     module AERN2.Num.Precision,
-     -- * MPFR numbers and their basic operations
-     MPFloat, setPrecisionUp, setPrecisionDown,
-     toDoubleUp, toDoubleDown,
-     -- * MPFR number constructors
-     CanBeMPFloat, mpFloat,
-     fromIntegerUp, fromIntegerDown,
-     fromRationalUp, fromRationalDown,
-     piUp, piDown,
-     -- * MPFR number basic arithmetic
-     addUp, addDown, subUp, subDown,
-     mulUp, mulDown, divUp, divDown, recipUp, recipDown,
-     distUp, distDown, avgUp, avgDown,
-     -- * MPFR number selected operations
-     cosUp, cosDown, sinUp, sinDown, sqrtUp, sqrtDown, expUp, expDown)
+  (
+   -- * Precision operations
+   module AERN2.Num.Precision
+   -- * MPFloat numbers and their basic operations
+   , MPFloat, setPrecisionUp, setPrecisionDown
+   , toDoubleUp, toDoubleDown
+   -- * MPFloat constructors
+   , CanBeMPFloat, mpFloat
+   , fromIntegerUp, fromIntegerDown
+   , fromRationalUp, fromRationalDown
+   , piUp, piDown
+   -- * MPFloat basic arithmetic
+   , addUp, addDown, subUp, subDown
+   , mulUp, mulDown, divUp, divDown, recipUp, recipDown
+   , distUp, distDown, avgUp, avgDown
+   -- * MPFloat selected operations
+   , cosUp, cosDown, sinUp, sinDown
+   , sqrtUp, sqrtDown, expUp, expDown
+   )
 where
 
 import Numeric.MixedTypes
