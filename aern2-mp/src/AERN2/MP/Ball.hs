@@ -43,7 +43,7 @@ import AERN2.MP.Float.Operators
 import AERN2.MP.Precision
 import AERN2.MP.Accuracy
 import qualified AERN2.MP.ErrorBound as EB
-import AERN2.MP.ErrorBound (ErrorBound(..), errorBound)
+import AERN2.MP.ErrorBound (errorBound)
 
 import Debug.Trace (trace)
 
@@ -338,14 +338,14 @@ instance CanMinMaxAsymmetric Int MPBall where
 
 instance CanMinMaxAsymmetric MPBall Rational where
   type MinMaxType MPBall Rational = MPBall
-  min = convertSecondUsing (\ b q -> convertP (getPrecision b) q) min
-  max = convertSecondUsing (\ b q -> convertP (getPrecision b) q)max
+  min = convertPSecond min
+  max = convertPSecond max
 instance CanMinMaxAsymmetric Rational MPBall where
   type MinMaxType Rational MPBall = MPBall
-  min = convertFirstUsing (\ q b -> convertP (getPrecision b) q) min
-  max = convertFirstUsing (\ q b -> convertP (getPrecision b) q) max
+  min = convertPFirst min
+  max = convertPFirst max
 
-{- ball operations -}
+{- intersection -}
 
 intersect :: MPBall -> MPBall -> MPBall
 intersect a b
@@ -356,6 +356,8 @@ intersect a b
   rR = min aR bR
   (aL,aR) = endpointsMP a
   (bL,bR) = endpointsMP b
+
+{- negation & abs -}
 
 instance CanNeg MPBall where
   negate (MPBall x e) = MPBall (-x) e
@@ -368,6 +370,39 @@ instance CanAbs MPBall where
     | otherwise = -b
     where
     (l,r) = endpointsMP b
+
+{- addition -}
+
+instance CanAddAsymmetric MPBall MPBall where
+  type AddType MPBall MPBall = MPBall
+  add (MPBall x1 e1) (MPBall x2 e2) =
+    MPBall sumUp ((sumUp `EB.subMP` sumDn) + e1 + e2)
+    where
+    sumUp = x1 +^ x2
+    sumDn = x1 +. x2
+
+instance CanAddAsymmetric MPBall Int where
+  type AddType MPBall Int = MPBall
+  add = convertSecond add
+instance CanAddAsymmetric Int MPBall where
+  type AddType Int MPBall = MPBall
+  add = convertSecond add
+
+instance CanAddAsymmetric MPBall Integer where
+  type AddType MPBall Integer = MPBall
+  add = convertSecond add
+instance CanAddAsymmetric Integer MPBall where
+  type AddType Integer MPBall = MPBall
+  add = convertSecond add
+
+instance CanAddAsymmetric MPBall Rational where
+  type AddType MPBall Rational = MPBall
+  add = convertPSecond add
+instance CanAddAsymmetric Rational MPBall where
+  type AddType Rational MPBall = MPBall
+  add = convertPSecond add
+
+{- multiplication -}
 
 {- generic methods for computing real functions from MPFR-approximations -}
 

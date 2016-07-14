@@ -12,11 +12,12 @@
 -}
 module AERN2.MP.Precision
 (
-     HasPrecision(..), CanSetPrecision(..),
-     Precision, prec,
-     ConvertWithPrecision(..), convertP,
-     defaultPrecision, maximumPrecision, standardPrecisions, precisionTimes2
-    --  iterateUntilOKA, iterateUntilOK
+     HasPrecision(..), CanSetPrecision(..)
+     , Precision, prec
+     , defaultPrecision, maximumPrecision, standardPrecisions, precisionTimes2
+    --  , iterateUntilOKA, iterateUntilOK
+     , ConvertWithPrecision(..), convertP
+     , convertPFirst, convertPSecond
 )
 where
 
@@ -73,15 +74,6 @@ instance HasOrderAsymmetric Int Precision where
   lessThan i p = lessThan (prec (integer i)) p
   leq i p = leq (prec (integer i)) p
 
-class ConvertWithPrecision t1 t2 where
-  safeConvertP :: Precision -> t1 -> ConvertResult t2
-
-convertP :: (ConvertWithPrecision t1 t2) => Precision -> t1 -> t2
-convertP p a =
-  case safeConvertP p a of
-    Right v -> v
-    Left err -> error (show err)
-
 maximumPrecision :: Precision
 maximumPrecision = Precision 1000000
 
@@ -129,3 +121,22 @@ precisionTimes2 (Precision p) = Precision (2*p)
 --     (Precision -> a) ->
 --     [(Precision, a)]
 -- iterateUntilOK isOK fn = iterateUntilOKA isOK fn ()
+
+class ConvertWithPrecision t1 t2 where
+  safeConvertP :: Precision -> t1 -> ConvertResult t2
+
+convertP :: (ConvertWithPrecision t1 t2) => Precision -> t1 -> t2
+convertP p a =
+  case safeConvertP p a of
+    Right v -> v
+    Left err -> error (show err)
+
+convertPFirst ::
+  (ConvertWithPrecision t1 t2, HasPrecision t2) =>
+  (t2 -> t2 -> c) -> (t1 -> t2 -> c)
+convertPFirst = convertFirstUsing (\ q b -> convertP (getPrecision b) q)
+
+convertPSecond ::
+  (ConvertWithPrecision t2 t1, HasPrecision t1) =>
+  (t1 -> t1 -> c) -> (t1 -> t2 -> c)
+convertPSecond = convertSecondUsing (\ b q -> convertP (getPrecision b) q)
