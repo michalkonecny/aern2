@@ -250,6 +250,13 @@ instance HasEqAsymmetric Integer MPBall where
   type EqCompareType Integer MPBall = Maybe Bool
   b1 `equalTo` b2 =   b1 >= b2 && b1 <= b2
 
+instance HasEqAsymmetric MPBall Int where
+  type EqCompareType MPBall Int = Maybe Bool
+  b1 `equalTo` b2 =   b1 >= b2 && b1 <= b2
+instance HasEqAsymmetric Int MPBall where
+  type EqCompareType Int MPBall = Maybe Bool
+  b1 `equalTo` b2 =   b1 >= b2 && b1 <= b2
+
 instance HasEqAsymmetric MPBall Rational where
   type EqCompareType MPBall Rational = Maybe Bool
   b1 `equalTo` b2 =   b1 >= b2 && b1 <= b2
