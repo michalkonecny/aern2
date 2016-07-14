@@ -21,7 +21,8 @@ import qualified Prelude as P
 
 import AERN2.Norm
 import qualified AERN2.MP.Float as MPFloat
-import AERN2.MP.Float (MPFloat)
+import AERN2.MP.Float (MPFloat, mpFloat)
+import AERN2.MP.Float.Operators
 import AERN2.MP.Precision
 import AERN2.MP.Accuracy
 import qualified AERN2.MP.ErrorBound as EB
@@ -90,3 +91,22 @@ instance ConvertibleExactly Int MPBall where
   safeConvertExactly x = Right $ MPBall (convertExactly x) (errorBound 0)
 
 {-- extracting approximate information about a ball --}
+
+instance HasPrecision MPBall where
+    getPrecision  = getPrecision . ball_value
+
+instance HasAccuracy MPBall where
+    getAccuracy = getAccuracy . ball_error
+
+instance HasApproximate MPBall where
+    type Approximate MPBall = (MPFloat, Bool)
+    getApproximate ac b@(MPBall x e) =
+        (approx, isAccurate)
+        where
+        isAccurate = getAccuracy b < ac
+        approx
+            | closeToN = n
+            | otherwise = MPFloat.setPrecisionUp (prec (fromAccuracy ac)) x
+            where
+            n = mpFloat $ round $ rational x
+            closeToN = ((abs $ x -^ n) <= e)

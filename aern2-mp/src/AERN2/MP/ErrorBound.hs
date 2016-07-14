@@ -18,23 +18,28 @@ module AERN2.MP.ErrorBound
 where
 
 import Numeric.MixedTypes
--- import qualified Prelude as P
+import qualified Prelude as P
 
 import Data.Convertible
 
 import Math.NumberTheory.Logarithms (integerLog2)
 
+import AERN2.MP.Precision
 import AERN2.MP.Accuracy
 import qualified AERN2.MP.Float as MPFloat
-import AERN2.MP.Float (MPFloat, Precision, prec)
+import AERN2.MP.Float (MPFloat, mpFloat)
+import AERN2.MP.Float.Operators
 
 {- example -}
 
 _example1 :: ErrorBound
 _example1 = 2*((errorBound 0.01) + 0.1*(errorBound 0.01)/3)
 
+{- type -}
+
 {-| A non-negative Double value to serve as an error bound. Arithmetic is rounded towards +infinity. -}
 newtype ErrorBound = ErrorBound { er2mp :: MPFloat }
+  deriving (P.Eq, P.Ord)
 
 instance Show ErrorBound where
     show (ErrorBound d) = show d
@@ -42,8 +47,22 @@ instance Show ErrorBound where
 errorBoundPrecision :: Precision
 errorBoundPrecision = prec 53
 
+instance HasAccuracy ErrorBound where
+  getAccuracy (ErrorBound e)
+      | e > 0 && eRecipN > 0 =
+          bits $ integerLog2 eRecipN
+      | e == 0 = Exact
+      | otherwise = NoInformation
+      where
+      eRecipN = ceiling $ rational $ MPFloat.recipDown e
+
+{- conversions -}
+
 instance ConvertibleExactly ErrorBound MPFloat where
   safeConvertExactly = Right . er2mp
+
+instance ConvertibleExactly ErrorBound Rational where
+  safeConvertExactly = Right . convertExactly . mpFloat
 
 type CanBeErrorBound t = Convertible t ErrorBound
 errorBound :: (CanBeErrorBound t) => t -> ErrorBound
@@ -67,20 +86,33 @@ instance Convertible Integer ErrorBound where
 instance Convertible Int ErrorBound where
   safeConvert = safeConvert . integer
 
+{- comparisons -}
+
+instance HasOrderAsymmetric ErrorBound ErrorBound
+
+instance HasOrderAsymmetric ErrorBound MPFloat where
+  lessThan = convertFirst lessThan
+  leq = convertFirst leq
+instance HasOrderAsymmetric MPFloat ErrorBound where
+  lessThan = convertSecond lessThan
+  leq = convertSecond leq
+
+instance HasOrderAsymmetric ErrorBound Rational where
+  lessThan = convertFirst lessThan
+  leq = convertFirst leq
+instance HasOrderAsymmetric Rational ErrorBound where
+  lessThan = convertSecond lessThan
+  leq = convertSecond leq
+
+{- converting operations -}
+
 subMP :: MPFloat -> MPFloat -> ErrorBound
 a `subMP` b = errorBound $ a -^ b
 
 absMP :: MPFloat -> ErrorBound
 absMP = errorBound . abs
 
-instance HasAccuracy ErrorBound where
-  getAccuracy (ErrorBound e)
-      | e > 0 && eRecipN > 0 =
-          bits $ integerLog2 eRecipN
-      | e == 0 = Exact
-      | otherwise = NoInformation
-      where
-      eRecipN = ceiling $ rational $ MPFloat.recipDown e
+{- up-rounded operations -}
 
 instance CanAddAsymmetric ErrorBound ErrorBound where
     add (ErrorBound a) (ErrorBound b) = ErrorBound $ a +^ b
@@ -117,12 +149,3 @@ instance CanMulAsymmetric Rational ErrorBound where
     mul r (ErrorBound b)
         | r >= 0.0 = ErrorBound $ (MPFloat.fromRationalUp errorBoundPrecision r) *^ b
         | otherwise = error "trying to multiply ErrorBound by a negative integer"
-
-(+^) :: MPFloat -> MPFloat -> MPFloat
-(+^) = MPFloat.addUp
-(-^) :: MPFloat -> MPFloat -> MPFloat
-(-^) = MPFloat.subUp
-(*^) :: MPFloat -> MPFloat -> MPFloat
-(*^) = MPFloat.mulUp
-(/^) :: MPFloat -> MPFloat -> MPFloat
-(/^) = MPFloat.divUp

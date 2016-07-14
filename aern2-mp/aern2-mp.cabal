@@ -61,6 +61,8 @@ library
     AERN2.Norm
     AERN2.MP.Precision
     AERN2.MP.Float
+    AERN2.MP.Float.Type
+    AERN2.MP.Float.Operators
     AERN2.MP.Dyadic
     AERN2.MP.Accuracy
     AERN2.MP.ErrorBound
