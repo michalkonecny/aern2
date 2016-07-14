@@ -37,6 +37,7 @@ import Numeric.MixedTypes
 -- import qualified Prelude as P
 
 import AERN2.Norm
+import AERN2.MP.Dyadic (Dyadic)
 import qualified AERN2.MP.Float as MPFloat
 import AERN2.MP.Float (MPFloat, mpFloat)
 import AERN2.MP.Float.Operators
@@ -147,6 +148,9 @@ mpBall = convertExactly
 instance ConvertibleExactly MPBall MPBall where
   safeConvertExactly = Right
 
+instance ConvertibleExactly Dyadic MPBall where
+  safeConvertExactly x = Right $ MPBall (convertExactly x) (errorBound 0)
+
 instance ConvertibleExactly Integer MPBall where
   safeConvertExactly x = Right $ MPBall (convertExactly x) (errorBound 0)
 
@@ -247,6 +251,13 @@ instance HasEqAsymmetric Rational MPBall where
   type EqCompareType Rational MPBall = Maybe Bool
   b1 `equalTo` b2 =   b1 >= b2 && b1 <= b2
 
+instance HasEqAsymmetric MPBall Dyadic where
+  type EqCompareType MPBall Dyadic = Maybe Bool
+  b1 `equalTo` b2 =   b1 >= b2 && b1 <= b2
+instance HasEqAsymmetric Dyadic MPBall where
+  type EqCompareType Dyadic MPBall = Maybe Bool
+  b1 `equalTo` b2 =   b1 >= b2 && b1 <= b2
+
 instance HasOrderAsymmetric MPBall MPBall where
   type OrderCompareType MPBall MPBall = Maybe Bool
   lessThan b1 b2
@@ -270,6 +281,24 @@ instance HasOrderAsymmetric Integer MPBall where
   leq = convertFirst leq
 instance HasOrderAsymmetric MPBall Integer where
   type OrderCompareType MPBall Integer = Maybe Bool
+  lessThan = convertSecond lessThan
+  leq = convertSecond leq
+
+instance HasOrderAsymmetric Int MPBall where
+  type OrderCompareType Int MPBall = Maybe Bool
+  lessThan = convertFirst lessThan
+  leq = convertFirst leq
+instance HasOrderAsymmetric MPBall Int where
+  type OrderCompareType MPBall Int = Maybe Bool
+  lessThan = convertSecond lessThan
+  leq = convertSecond leq
+
+instance HasOrderAsymmetric Dyadic MPBall where
+  type OrderCompareType Dyadic MPBall = Maybe Bool
+  lessThan = convertFirst lessThan
+  leq = convertFirst leq
+instance HasOrderAsymmetric MPBall Dyadic where
+  type OrderCompareType MPBall Dyadic = Maybe Bool
   lessThan = convertSecond lessThan
   leq = convertSecond leq
 
@@ -336,6 +365,15 @@ instance CanMinMaxAsymmetric Int MPBall where
   min = convertFirst min
   max = convertFirst max
 
+instance CanMinMaxAsymmetric MPBall Dyadic where
+  type MinMaxType MPBall Dyadic = MPBall
+  min = convertSecond min
+  max = convertSecond max
+instance CanMinMaxAsymmetric Dyadic MPBall where
+  type MinMaxType Dyadic MPBall = MPBall
+  min = convertFirst min
+  max = convertFirst max
+
 instance CanMinMaxAsymmetric MPBall Rational where
   type MinMaxType MPBall Rational = MPBall
   min = convertPSecond min
@@ -395,6 +433,13 @@ instance CanAddAsymmetric Integer MPBall where
   type AddType Integer MPBall = MPBall
   add = convertFirst add
 
+instance CanAddAsymmetric MPBall Dyadic where
+  type AddType MPBall Dyadic = MPBall
+  add = convertSecond add
+instance CanAddAsymmetric Dyadic MPBall where
+  type AddType Dyadic MPBall = MPBall
+  add = convertFirst add
+
 instance CanAddAsymmetric MPBall Rational where
   type AddType MPBall Rational = MPBall
   add = convertPSecond add
@@ -426,6 +471,13 @@ instance CanMulAsymmetric MPBall Integer where
   mul = convertSecond mul
 instance CanMulAsymmetric Integer MPBall where
   type MulType Integer MPBall = MPBall
+  mul = convertFirst mul
+
+instance CanMulAsymmetric MPBall Dyadic where
+  type MulType MPBall Dyadic = MPBall
+  mul = convertSecond mul
+instance CanMulAsymmetric Dyadic MPBall where
+  type MulType Dyadic MPBall = MPBall
   mul = convertFirst mul
 
 instance CanMulAsymmetric MPBall Rational where
