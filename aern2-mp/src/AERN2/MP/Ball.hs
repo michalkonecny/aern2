@@ -487,6 +487,71 @@ instance CanMulAsymmetric Rational MPBall where
   type MulType Rational MPBall = MPBall
   mul = convertPFirst mul
 
+{- division -}
+
+instance CanDiv MPBall MPBall where
+  divide (MPBall x1 e1) b2@(MPBall x2 e2)
+    | isNonZero b2 =
+        MPBall x12Up err
+    | otherwise =
+        error $ "Division by MPBall that contains 0: " ++ show b2
+    where
+    x12Up = x1 /^ x2
+    x12Down = x1 /. x2
+    x12AbsUp = (abs x12Up) `max` (abs x12Down)
+    e12 = x12Up -^ x12Down
+    err =
+        ((e12 *^ (abs x2)) -- e12 * |x2|
+         +
+         e1
+         +
+         (e2 * x12AbsUp) -- e2 * |x|
+        )
+        *
+        ((mpFloat 1) /^ ((abs x2) -. (mpFloat e2)))
+            -- 1/(|x2| - e2) rounded upwards
+{-
+A derivation of the above formula for an upper bound on the error:
+
+    * e =
+        * = max ( (x1 ± e1) / (x2 ± e2) - x )
+        * = max ( ( x1 ± e1 - (x*(x2 ± e2) ) / (x2 ± e2) )
+        * ≤ max ( ( x1 ± e1 - ((x1/x2) ± e12)x2 ± x*e2 ) / (x2 ± e2) )
+        * = max ( ( x1 ± e1 - x1 ± e12*x2 ± x*e2 ) / (x2 ± e2) )
+        * = max ( ( ± e1 ± e12*x2 ± x*e2 ) / (x2 ± e2) )
+        * ≤ (e1 + e12*|x2| + |x|*e2 ) / (|x2| - e2)
+        * ≤ (e1 +^ e12*^|x2| +^ |x|*^e2 ) /^ (|x2| -. e2)
+-}
+
+instance CanDiv MPBall Int where
+  type DivType MPBall Int = MPBall
+  divide = convertSecond divide
+instance CanDiv Int MPBall where
+  type DivType Int MPBall = MPBall
+  divide = convertFirst divide
+
+instance CanDiv MPBall Integer where
+  type DivType MPBall Integer = MPBall
+  divide = convertSecond divide
+instance CanDiv Integer MPBall where
+  type DivType Integer MPBall = MPBall
+  divide = convertFirst divide
+
+instance CanDiv MPBall Dyadic where
+  type DivType MPBall Dyadic = MPBall
+  divide = convertSecond divide
+instance CanDiv Dyadic MPBall where
+  type DivType Dyadic MPBall = MPBall
+  divide = convertFirst divide
+
+instance CanDiv MPBall Rational where
+  type DivType MPBall Rational = MPBall
+  divide = convertPSecond divide
+instance CanDiv Rational MPBall where
+  type DivType Rational MPBall = MPBall
+  divide = convertPFirst divide
+
+
 {- generic methods for computing real functions from MPFR-approximations -}
 
 {-|
