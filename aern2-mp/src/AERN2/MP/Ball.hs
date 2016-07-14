@@ -404,6 +404,37 @@ instance CanAddAsymmetric Rational MPBall where
 
 {- multiplication -}
 
+instance CanMulAsymmetric MPBall MPBall where
+  mul (MPBall x1 e1) (MPBall x2 e2) =
+    MPBall x12Up (e12 + e1*(abs x2) + e2*(abs x1) + e1*e2)
+      -- the mixed operations above automatically convert
+      -- MPFloat to ErrorBound, checking non-negativity
+    where
+    x12Up = x1 *^ x2
+    x12Down = x1 *. x2
+    e12 = x12Up -^ x12Down
+
+instance CanMulAsymmetric MPBall Int where
+  type MulType MPBall Int = MPBall
+  mul = convertSecond mul
+instance CanMulAsymmetric Int MPBall where
+  type MulType Int MPBall = MPBall
+  mul = convertSecond mul
+
+instance CanMulAsymmetric MPBall Integer where
+  type MulType MPBall Integer = MPBall
+  mul = convertSecond mul
+instance CanMulAsymmetric Integer MPBall where
+  type MulType Integer MPBall = MPBall
+  mul = convertSecond mul
+
+instance CanMulAsymmetric MPBall Rational where
+  type MulType MPBall Rational = MPBall
+  mul = convertPSecond mul
+instance CanMulAsymmetric Rational MPBall where
+  type MulType Rational MPBall = MPBall
+  mul = convertPSecond mul
+
 {- generic methods for computing real functions from MPFR-approximations -}
 
 {-|
