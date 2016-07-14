@@ -24,8 +24,9 @@ module AERN2.MP.Ball
   , centre, radius
   , centreAndErrorBall
   , endpoints, fromEndpoints
-  -- * Ball operations
+  -- * Ball operations (see also instances)
   , intersect
+  , piBallP
   -- * Helpers for constructing ball functions
   , fromApproxWithLipschitz
   , monotoneFromApprox
@@ -114,6 +115,11 @@ radius =
 
 {--- constructing a ball with a given precision ---}
 
+type CanBeMPBallP t = (ConvertWithPrecision t MPBall)
+
+mpBallP :: (CanBeMPBallP t) => Precision -> t -> MPBall
+mpBallP = convertP
+
 instance ConvertWithPrecision Integer MPBall where
   safeConvertP p x =
     Right $ MPBall xUp (xUp `EB.subMP` xDn)
@@ -135,7 +141,7 @@ instance ConvertWithPrecision (Rational, Rational) MPBall where
   safeConvertP p (x,e) =
     Right $ MPBall xFlt (xe + eUp)
     where
-    (MPBall xFlt xe) = convertP p x
+    (MPBall xFlt xe) = mpBallP p x
     eUp = errorBound e
 
 {--- constructing an exact ball ---}
@@ -559,6 +565,61 @@ instance CanPow MPBall Integer where
 
 instance CanPow MPBall Int where
   pow = powUsingMulRecip
+
+{- trigonometrics -}
+
+piBallP :: Precision -> MPBall
+piBallP p = MPBall piUp (piUp `EB.subMP` piDown)
+  where
+  piUp = MPFloat.piUp p
+  piDown = MPFloat.piDown p
+
+instance CanSinCos MPBall where
+  sin = sinB 1
+  cos = cosB 1
+
+sinB :: Integer -> MPBall -> MPBall
+sinB i x =
+    fromApproxWithLipschitz MPFloat.sinDown MPFloat.sinUp lip x
+    where
+    lip
+        | i == 0 = mpFloat 1
+        | otherwise = snd $ endpointsMP $ abs $ cosB (i - 1) x
+
+cosB :: Integer -> MPBall -> MPBall
+cosB i x =
+    fromApproxWithLipschitz MPFloat.cosDown MPFloat.cosUp lip x
+    where
+    lip
+        | i == 0 = mpFloat 1
+        | otherwise = snd $ endpointsMP $ abs $ sinB (i - 1) x
+
+{- exp, log, power -}
+
+instance CanExp MPBall where
+  exp = monotoneFromApprox MPFloat.expDown MPFloat.expUp
+
+instance CanLog MPBall where
+  log x
+    | x !>! 0 = monotoneFromApprox MPFloat.logDown MPFloat.logUp x
+    | otherwise = error $ "MPBall log: cannot establish that the argument is positive: " ++ show x
+
+instance CanPow MPBall MPBall where
+  pow = powViaExpLog
+
+instance CanPow MPBall Dyadic where
+  pow x q = powViaExpLog x (mpBall q)
+
+instance CanPow MPBall Rational where
+  pow x q = powViaExpLog x (mpBallP (getPrecision x) q)
+
+instance CanSqrt MPBall where
+  sqrt x
+    | x !>=! 0 = aux x
+    | x ?>=? 0 = aux (max 0 x)
+    | otherwise = error $ "MPBall sqrt: cannot establish that the argument is non-negative: " ++ show x
+    where
+      aux = monotoneFromApprox MPFloat.sqrtDown MPFloat.sqrtUp
 
 
 {- generic methods for computing real functions from MPFR-approximations -}

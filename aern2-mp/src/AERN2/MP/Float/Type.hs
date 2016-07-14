@@ -31,7 +31,7 @@ module AERN2.MP.Float.Type
    , distUp, distDown, avgUp, avgDown
    -- * MPFloat selected operations
    , cosUp, cosDown, sinUp, sinDown
-   , sqrtUp, sqrtDown, expUp, expDown
+   , sqrtUp, sqrtDown, expUp, expDown, logUp, logDown
    )
 where
 
@@ -255,6 +255,12 @@ expUp = unaryUp MPLow.exp
 
 expDown :: MPFloat -> MPFloat
 expDown = unaryDown MPLow.exp
+
+logUp :: MPFloat -> MPFloat
+logUp = unaryUp MPLow.log
+
+logDown :: MPFloat -> MPFloat
+logDown = unaryDown MPLow.log
 
 -- | Computes an upper bound to the distance @|x - y|@ of @x@ and @y@.
 distUp :: MPFloat -> MPFloat -> MPFloat
