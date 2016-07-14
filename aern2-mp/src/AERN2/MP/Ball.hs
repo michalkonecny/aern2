@@ -19,7 +19,7 @@ module AERN2.MP.Ball
   -- * The Ball type
   , MPBall(..), CanBeMPBall, mpBall
   , setPrecisionAtLeastAccuracy
-  -- , reducePrecionIfInaccurate
+  , reducePrecionIfInaccurate
   -- * Ball construction/extraction functions
   , centre, radius
   , centreAndErrorBall
@@ -34,7 +34,7 @@ module AERN2.MP.Ball
 where
 
 import Numeric.MixedTypes
-import qualified Prelude as P
+-- import qualified Prelude as P
 
 import AERN2.Norm
 import qualified AERN2.MP.Float as MPFloat
@@ -155,10 +155,10 @@ instance ConvertibleExactly Int MPBall where
 
 {-- extracting approximate information about a ball --}
 
--- instance HasNorm MPBall where
---     getNormLog ball = getNormLog boundMP
---         where
---         (_, MPBall boundMP _) = endpoints $ abs ball
+instance HasNorm MPBall where
+    getNormLog ball = getNormLog boundMP
+        where
+        (_, MPBall boundMP _) = endpoints $ abs ball
 
 instance HasAccuracy MPBall where
     getAccuracy = getAccuracy . ball_error
@@ -205,27 +205,27 @@ setPrecisionAtLeastAccuracy acc b
           _ -> prec $ max 2 (fromAccuracy acc)
     p_b = getPrecision b
 
--- {-|
---     Reduce the precision of the ball centre if the
---     accuracy of the ball is poor.
---
---     More precisely, reduce the precision of the centre
---     so that the ulp is approximately (radius / 1024),
---     unless the ulp is already lower than this.
--- -}
--- reducePrecionIfInaccurate :: MPBall -> MPBall
--- reducePrecionIfInaccurate b@(MPBall x _) =
---     case (acc, norm) of
---         (Exact, _) -> b
---         (_, NormZero) -> b
---         _ | p_e_nb < p_x -> setPrecision p_e_nb b
---         _ -> b
---     where
---     acc = getAccuracy b
---     norm = getNormLog b
---     p_x = getPrecision x
---     p_e_nb = prec $ max 2 (10 + nb + fromAccuracy acc)
---     (NormBits nb) = norm
+{-|
+    Reduce the precision of the ball centre if the
+    accuracy of the ball is poor.
+
+    More precisely, reduce the precision of the centre
+    so that the ulp is approximately (radius / 1024),
+    unless the ulp is already lower than this.
+-}
+reducePrecionIfInaccurate :: MPBall -> MPBall
+reducePrecionIfInaccurate b@(MPBall x _) =
+    case (acc, norm) of
+        (Exact, _) -> b
+        (_, NormZero) -> b
+        _ | p_e_nb < p_x -> setPrecision p_e_nb b
+        _ -> b
+    where
+    acc = getAccuracy b
+    norm = getNormLog b
+    p_x = getPrecision x
+    p_e_nb = prec $ max 2 (10 + nb + fromAccuracy acc)
+    (NormBits nb) = norm
 
 {- comparisons -}
 
@@ -349,13 +349,25 @@ instance CanMinMaxAsymmetric Rational MPBall where
 
 intersect :: MPBall -> MPBall -> MPBall
 intersect a b
-    | rL > rR = error $ "intersect: empty intersection: " ++ show a ++ "; " ++ show b
-    | otherwise = fromEndpointsMP rL rR
+  | rL > rR = error $ "intersect: empty intersection: " ++ show a ++ "; " ++ show b
+  | otherwise = fromEndpointsMP rL rR
+  where
+  rL = max aL bL
+  rR = min aR bR
+  (aL,aR) = endpointsMP a
+  (bL,bR) = endpointsMP b
+
+instance CanNeg MPBall where
+  negate (MPBall x e) = MPBall (-x) e
+
+instance CanAbs MPBall where
+  abs b
+    | l < 0 && 0 < r =
+      fromEndpointsMP (mpFloat 0) (max l r)
+    | 0 <= l = b
+    | otherwise = -b
     where
-    rL = max aL bL
-    rR = min aR bR
-    (aL,aR) = endpointsMP a
-    (bL,bR) = endpointsMP b
+    (l,r) = endpointsMP b
 
 {- generic methods for computing real functions from MPFR-approximations -}
 
