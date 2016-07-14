@@ -14,7 +14,7 @@ module AERN2.MP.Accuracy
     (Accuracy(NoInformation, Exact), bits, fromAccuracy,
      normLog2Accuracy,
      HasAccuracy(..), getFiniteAccuracy,
-    --  iterateUntilAccurate,
+     iterateUntilAccurate,
      seqByPrecision2CauchySeq,
      HasApproximate(..))
 where
@@ -162,24 +162,16 @@ getFiniteAccuracy b =
         Exact -> bits $ getPrecision b
         a -> a
 
--- iterateUntilAccurateA ::
---     (ArrowChoice to, HasAccuracy t)
---     =>
---     Accuracy ->
---     (Precision `to` Maybe t) ->
---     () `to` [(Precision, Maybe t)]
--- iterateUntilAccurateA ac =
---     iterateUntilOKA $ \maybeResult ->
---         case maybeResult of
---             Just result -> getAccuracy result >= ac
---             _ -> False
---
--- iterateUntilAccurate ::
---     (HasAccuracy t) =>
---     Accuracy ->
---     (Precision -> Maybe t) ->
---     [(Precision, Maybe t)]
--- iterateUntilAccurate ac fn = iterateUntilAccurateA ac fn ()
+iterateUntilAccurate ::
+  (HasAccuracy t) =>
+  Accuracy ->
+  (Precision -> Maybe t) ->
+  [(Precision, Maybe t)]
+iterateUntilAccurate ac =
+  iterateUntilOK $ \maybeResult ->
+      case maybeResult of
+          Just result -> getAccuracy result >= ac
+          _ -> False
 
 seqByPrecision2CauchySeq ::
     (HasAccuracy t) =>

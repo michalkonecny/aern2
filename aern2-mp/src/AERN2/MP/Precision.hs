@@ -15,7 +15,7 @@ module AERN2.MP.Precision
      HasPrecision(..), CanSetPrecision(..)
      , Precision, prec
      , defaultPrecision, maximumPrecision, standardPrecisions, precisionTimes2
-    --  , iterateUntilOKA, iterateUntilOK
+     , iterateUntilOK
      , ConvertWithPrecision(..), convertP
      , convertPFirst, convertPSecond
 )
@@ -91,36 +91,24 @@ standardPrecisions =
 precisionTimes2 :: Precision -> Precision
 precisionTimes2 (Precision p) = Precision (2*p)
 
--- iterateUntilOKA ::
---     (ArrowChoice to) =>
---     (a -> Bool) ->
---     (Precision `to` a) ->
---     () `to` [(Precision, a)]
--- iterateUntilOKA isOK fnA =
---     stopWhenAccurate ps
---     where
--- --    fnWrap p =
--- --        unsafePerformIO $
--- --            catch (return $! Just $! fn p)
--- --                (\e -> let _ = e :: SomeException in return Nothing)
---     ps = standardPrecisions
---     stopWhenAccurate [] = arr $ const []
---     stopWhenAccurate (p : rest) =
---         proc () ->
---             do
---             result <- fnA -< p
---             if isOK result
---                 then returnA -< [(p, result)]
---                 else
---                     do
---                     restResults <- stopWhenAccurate rest -< ()
---                     returnA -<  (p, result) : restResults
---
--- iterateUntilOK ::
---     (a -> Bool) ->
---     (Precision -> a) ->
---     [(Precision, a)]
--- iterateUntilOK isOK fn = iterateUntilOKA isOK fn ()
+iterateUntilOK ::
+    (a -> Bool) ->
+    (Precision -> a) ->
+    [(Precision, a)]
+iterateUntilOK isOK fn =
+    stopWhenAccurate ps
+    where
+--    fnWrap p =
+--        unsafePerformIO $
+--            catch (return $! Just $! fn p)
+--                (\e -> let _ = e :: SomeException in return Nothing)
+    ps = standardPrecisions
+    stopWhenAccurate [] = []
+    stopWhenAccurate (p : rest)
+      | isOK result = [(p, result)]
+      | otherwise = (p, result) : stopWhenAccurate rest
+      where
+      result = fn p
 
 class ConvertWithPrecision t1 t2 where
   safeConvertP :: Precision -> t1 -> ConvertResult t2

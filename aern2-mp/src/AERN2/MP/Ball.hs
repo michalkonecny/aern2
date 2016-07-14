@@ -47,19 +47,19 @@ import AERN2.MP.Accuracy
 import qualified AERN2.MP.ErrorBound as EB
 import AERN2.MP.ErrorBound (ErrorBound, errorBound)
 
-import Debug.Trace (trace)
-
-shouldTrace :: Bool
-shouldTrace = False
---shouldTrace = True
-
-maybeTrace :: String -> a -> a
-maybeTrace
-    | shouldTrace = trace
-    | otherwise = const id
-
-_dummy :: ()
-_dummy = maybeTrace "dummy" ()
+-- import Debug.Trace (trace)
+--
+-- shouldTrace :: Bool
+-- shouldTrace = False
+-- --shouldTrace = True
+--
+-- maybeTrace :: String -> a -> a
+-- maybeTrace
+--     | shouldTrace = trace
+--     | otherwise = const id
+--
+-- _dummy :: ()
+-- _dummy = maybeTrace "dummy" ()
 
 data MPBall = MPBall { ball_value :: MPFloat, ball_error :: ErrorBound }
 
@@ -664,3 +664,5 @@ byEndpointsMP op b1 b2 =
     where
     (l1,r1) = endpointsMP b1
     (l2,r2) = endpointsMP b2
+
+{-  random generation -}
