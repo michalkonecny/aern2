@@ -14,6 +14,7 @@
 module AERN2.MP.Float.Operators where
 
 import AERN2.MP.Float.Type
+import AERN2.MP.Float.Arithmetic
 
 infixl 6  +^, -^, +., -.
 infixl 7  *^, *., /^, /.
