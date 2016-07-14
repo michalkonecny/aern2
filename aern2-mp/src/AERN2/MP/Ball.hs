@@ -17,7 +17,7 @@ module AERN2.MP.Ball
   , module AERN2.MP.Accuracy
   , module AERN2.Norm
   -- * The Ball type
-  , MPBall(..), CanBeMPBall, mpBall
+  , MPBall(..), CanBeMPBall, mpBall, CanBeMPBallP, mpBallP
   , setPrecisionAtLeastAccuracy
   , reducePrecionIfInaccurate
   -- * Ball construction/extraction functions
