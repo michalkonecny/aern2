@@ -185,6 +185,10 @@ instance HasOrderAsymmetric MPFloat Rational where
   lessThan = convertFirst lessThan
   leq = convertFirst leq
 
+{- min, max -}
+
+instance CanMinMaxAsymmetric MPFloat MPFloat
+
 {- common functions -}
 
 instance CanNeg MPFloat where
