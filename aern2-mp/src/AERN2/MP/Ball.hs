@@ -453,6 +453,22 @@ instance CanAddAsymmetric Rational MPBall where
   type AddType Rational MPBall = MPBall
   add = convertPFirst add
 
+{- subtraction -}
+
+instance CanSub MPBall MPBall
+
+instance CanSub MPBall Integer
+instance CanSub Integer MPBall
+
+instance CanSub MPBall Int
+instance CanSub Int MPBall
+
+instance CanSub MPBall Rational
+instance CanSub Rational MPBall
+
+instance CanSub MPBall Dyadic
+instance CanSub Dyadic MPBall
+
 {- multiplication -}
 
 instance CanMulAsymmetric MPBall MPBall where
