@@ -43,7 +43,7 @@ import AERN2.MP.Float.Operators
 import AERN2.MP.Precision
 import AERN2.MP.Accuracy
 import qualified AERN2.MP.ErrorBound as EB
-import AERN2.MP.ErrorBound (errorBound)
+import AERN2.MP.ErrorBound (ErrorBound, errorBound)
 
 import Debug.Trace (trace)
 
@@ -386,21 +386,21 @@ instance CanAddAsymmetric MPBall Int where
   add = convertSecond add
 instance CanAddAsymmetric Int MPBall where
   type AddType Int MPBall = MPBall
-  add = convertSecond add
+  add = convertFirst add
 
 instance CanAddAsymmetric MPBall Integer where
   type AddType MPBall Integer = MPBall
   add = convertSecond add
 instance CanAddAsymmetric Integer MPBall where
   type AddType Integer MPBall = MPBall
-  add = convertSecond add
+  add = convertFirst add
 
 instance CanAddAsymmetric MPBall Rational where
   type AddType MPBall Rational = MPBall
   add = convertPSecond add
 instance CanAddAsymmetric Rational MPBall where
   type AddType Rational MPBall = MPBall
-  add = convertPSecond add
+  add = convertPFirst add
 
 {- multiplication -}
 
@@ -419,21 +419,21 @@ instance CanMulAsymmetric MPBall Int where
   mul = convertSecond mul
 instance CanMulAsymmetric Int MPBall where
   type MulType Int MPBall = MPBall
-  mul = convertSecond mul
+  mul = convertFirst mul
 
 instance CanMulAsymmetric MPBall Integer where
   type MulType MPBall Integer = MPBall
   mul = convertSecond mul
 instance CanMulAsymmetric Integer MPBall where
   type MulType Integer MPBall = MPBall
-  mul = convertSecond mul
+  mul = convertFirst mul
 
 instance CanMulAsymmetric MPBall Rational where
   type MulType MPBall Rational = MPBall
   mul = convertPSecond mul
 instance CanMulAsymmetric Rational MPBall where
   type MulType Rational MPBall = MPBall
-  mul = convertPSecond mul
+  mul = convertPFirst mul
 
 {- generic methods for computing real functions from MPFR-approximations -}
 

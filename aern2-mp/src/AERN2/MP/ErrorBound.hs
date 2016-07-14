@@ -117,19 +117,43 @@ absMP = errorBound . abs
 instance CanAddAsymmetric ErrorBound ErrorBound where
     add (ErrorBound a) (ErrorBound b) = ErrorBound $ a +^ b
 
+instance CanAddAsymmetric ErrorBound MPFloat where
+  type AddType ErrorBound MPFloat = ErrorBound
+  add = convertSecondUsing (\ _ f -> convert f) add
+instance CanAddAsymmetric MPFloat ErrorBound where
+  type AddType MPFloat ErrorBound = ErrorBound
+  add = convertFirstUsing (\ f _ -> convert f) add
+
 instance CanMulAsymmetric ErrorBound ErrorBound where
     mul (ErrorBound a) (ErrorBound b) = ErrorBound $ a *^ b
+
+instance CanMulAsymmetric ErrorBound MPFloat where
+  type MulType ErrorBound MPFloat = ErrorBound
+  mul = convertSecondUsing (\ _ f -> convert f) mul
+instance CanMulAsymmetric MPFloat ErrorBound where
+  type MulType MPFloat ErrorBound = ErrorBound
+  mul = convertFirstUsing (\ f _ -> convert f) mul
 
 instance CanMulAsymmetric ErrorBound Integer where
     type MulType ErrorBound Integer = ErrorBound
     mul (ErrorBound a) i
         | i >= 0 = ErrorBound $ a *^ (MPFloat.fromIntegerUp errorBoundPrecision i)
         | otherwise = error "trying to multiply ErrorBound by a negative integer"
-
 instance CanMulAsymmetric Integer ErrorBound where
     type MulType Integer ErrorBound = ErrorBound
     mul i (ErrorBound b)
         | i >= 0 = ErrorBound $ (MPFloat.fromIntegerUp errorBoundPrecision i) *^ b
+        | otherwise = error "trying to multiply ErrorBound by a negative integer"
+
+instance CanMulAsymmetric ErrorBound Rational where
+    type MulType ErrorBound Rational = ErrorBound
+    mul (ErrorBound a) r
+        | r >= 0.0 = ErrorBound $ a *^ (MPFloat.fromRationalUp errorBoundPrecision r)
+        | otherwise = error "trying to multiply ErrorBound by a negative integer"
+instance CanMulAsymmetric Rational ErrorBound where
+    type MulType Rational ErrorBound = ErrorBound
+    mul r (ErrorBound b)
+        | r >= 0.0 = ErrorBound $ (MPFloat.fromRationalUp errorBoundPrecision r) *^ b
         | otherwise = error "trying to multiply ErrorBound by a negative integer"
 
 instance CanDiv ErrorBound Integer where
@@ -137,15 +161,3 @@ instance CanDiv ErrorBound Integer where
     divide (ErrorBound a) i
         | i > 0 = ErrorBound $ a /^ (MPFloat.fromIntegerUp errorBoundPrecision i)
         | otherwise = error "trying to multiply ErrorBound by a non-positive integer"
-
-instance CanMulAsymmetric ErrorBound Rational where
-    type MulType ErrorBound Rational = ErrorBound
-    mul (ErrorBound a) r
-        | r >= 0.0 = ErrorBound $ a *^ (MPFloat.fromRationalUp errorBoundPrecision r)
-        | otherwise = error "trying to multiply ErrorBound by a negative integer"
-
-instance CanMulAsymmetric Rational ErrorBound where
-    type MulType Rational ErrorBound = ErrorBound
-    mul r (ErrorBound b)
-        | r >= 0.0 = ErrorBound $ (MPFloat.fromRationalUp errorBoundPrecision r) *^ b
-        | otherwise = error "trying to multiply ErrorBound by a negative integer"
