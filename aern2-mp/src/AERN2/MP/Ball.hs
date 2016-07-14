@@ -552,6 +552,15 @@ instance CanDiv Rational MPBall where
   divide = convertPFirst divide
 
 
+{- integer power -}
+
+instance CanPow MPBall Integer where
+  pow = powUsingMulRecip
+
+instance CanPow MPBall Int where
+  pow = powUsingMulRecip
+
+
 {- generic methods for computing real functions from MPFR-approximations -}
 
 {-|
