@@ -69,6 +69,11 @@ library
     AERN2.MP.Accuracy
     AERN2.MP.ErrorBound
     AERN2.MP.Ball
+    AERN2.MP.Ball.Type
+    AERN2.MP.Ball.Conversions
+    AERN2.MP.Ball.Comparisons
+    AERN2.MP.Ball.Field
+    AERN2.MP.Ball.Elementary
 
 -- test-suite spec
 --   type:
