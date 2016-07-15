@@ -87,6 +87,8 @@ specMPFloat =
     specCanSetPrecision tMPFloat (=~=)
     specCanNegNum tMPFloat
     specCanAbs tMPFloat
+    specCanMinMaxNotMixed tMPFloat
+    -- specCanMinMax tMPFloat tInteger tMPFloat
     it "0 * infinity = NaN" $ do
       itisNaN (zero *^ infinity)
       &&
