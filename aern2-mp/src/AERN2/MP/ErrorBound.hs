@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 {-|
     Module      :  AERN2.MP.ErrorBound
     Description :  Fixed precision non-negative up-rounded floating-point numbers
@@ -20,6 +21,8 @@ where
 import Numeric.MixedTypes
 import qualified Prelude as P
 
+import Data.Typeable
+
 import Data.Convertible
 
 import Math.NumberTheory.Logarithms (integerLog2)
@@ -39,7 +42,7 @@ _example1 = 2*((errorBound 0.01) + 0.1*(errorBound 0.01)/3)
 
 {-| A non-negative Double value to serve as an error bound. Arithmetic is rounded towards +infinity. -}
 newtype ErrorBound = ErrorBound { er2mp :: MPFloat }
-  deriving (P.Eq, P.Ord)
+  deriving (P.Eq, P.Ord, Typeable)
 
 instance Show ErrorBound where
     show (ErrorBound d) = show d

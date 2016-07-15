@@ -31,15 +31,19 @@ import Numeric.MixedTypes
 import qualified Prelude as P
 
 import AERN2.MP.Precision
+import AERN2.MP.Float.Type
 
 #ifdef HaskellMPFR
 import qualified Data.Approximate.MPFRLowLevel as MPLow
+
+one = MPLow.fromInt MPLow.Up (P.fromInteger 10) (int 1)
+
 #endif
 #ifdef HMPFR
 import qualified Data.Number.MPFR as MPLow
-#endif
 
-import AERN2.MP.Float.Type
+one = MPLow.one
+#endif
 
 {- common functions -}
 
@@ -68,10 +72,10 @@ divUp = binaryUp False MPLow.div
 divDown = binaryDown False MPLow.div
 
 recipUp :: MPFloat -> MPFloat
-recipUp x = divUp MPLow.one x
+recipUp x = divUp one x
 
 recipDown :: MPFloat -> MPFloat
-recipDown x = divDown MPLow.one x
+recipDown x = divDown one x
 
 
 {- special constants and functions -}

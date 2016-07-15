@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE DeriveDataTypeable, StandaloneDeriving #-}
 {-|
     Module      :  AERN2.MP.Float.Type
     Description :  Arbitrary precision floating point numbers
@@ -26,6 +27,8 @@ where
 import Numeric.MixedTypes
 import qualified Prelude as P
 
+import Data.Typeable
+
 import AERN2.MP.Precision
 
 #ifdef HaskellMPFR
@@ -33,6 +36,8 @@ import qualified Data.Approximate.MPFRLowLevel as MPLow
 
 {-| Multiple-precision floating-point type based on MPFR via haskell-mpfr. -}
 type MPFloat = MPLow.Rounded
+
+deriving instance (Typeable MPFloat)
 
 #endif
 #ifdef HMPFR

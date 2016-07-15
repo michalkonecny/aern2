@@ -45,7 +45,7 @@ mpToDouble = MPLow.toDoubleA
 
 mpToRational :: MPFloat -> Rational
 mpToRational x
-    | x == zero = 0.0
+    | x == 0 = 0.0
     | otherwise = MPLow.toRationalA x
 
 mpFromRationalA :: MPLow.RoundMode -> MPLow.Precision -> Rational -> MPFloat

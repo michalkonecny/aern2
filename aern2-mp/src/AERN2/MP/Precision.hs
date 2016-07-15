@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 {-|
     Module      :  AERN2.MP.Precision
     Description :  Floating-point precision
@@ -25,11 +26,13 @@ import Numeric.MixedTypes
 import qualified Prelude as P
 import Text.Printf
 
+import Data.Typeable
+
 import Test.Hspec
 import Test.QuickCheck
 
 newtype Precision = Precision Integer
-    deriving (P.Eq, P.Ord, P.Show, P.Enum, P.Num, P.Real, P.Integral)
+    deriving (P.Eq, P.Ord, P.Show, P.Enum, P.Num, P.Real, P.Integral, Typeable)
 
 instance HasEqAsymmetric Precision Precision
 instance HasOrderAsymmetric Precision Precision

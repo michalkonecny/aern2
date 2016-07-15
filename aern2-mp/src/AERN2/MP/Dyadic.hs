@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 {-|
     Module      :  AERN2.MP.Dyadic
     Description :  Dyadics with exact ring operations
@@ -27,6 +28,8 @@ where
 import Numeric.MixedTypes
 import qualified Prelude as P
 
+import Data.Typeable
+
 import Data.Ratio (denominator)
 
 import Math.NumberTheory.Logarithms (integerLog2)
@@ -37,7 +40,7 @@ import AERN2.MP.Float
 
 {-| Exact dyadic type based on MPFloat. -}
 newtype Dyadic = Dyadic { dyadicMPFloat :: MPFloat }
-  deriving (Show, P.Eq, P.Ord, HasPrecision, HasNorm)
+  deriving (Show, P.Eq, P.Ord, HasPrecision, HasNorm, Typeable)
 
 {-- conversions --}
 
