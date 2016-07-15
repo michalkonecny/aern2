@@ -87,6 +87,18 @@ specMPFloat =
     specCanSetPrecision tMPFloat (=~=)
     specCanNegNum tMPFloat
     specCanAbs tMPFloat
+    it "0 * infinity = NaN" $ do
+      itisNaN (zero *^ infinity)
+      &&
+      itisNaN (zero *. infinity)
+    it "infinity / infinity = NaN" $ do
+      itisNaN (infinity /^ infinity)
+      &&
+      itisNaN (infinity /. infinity)
+    it "infinity - infinity = NaN" $ do
+      itisNaN (infinity -^ infinity)
+      &&
+      itisNaN (infinity -. infinity)
     it "x +. y <= x +^ y" $ do
       property $ \ (x :: MPFloat) (y :: MPFloat) ->
         not (itisNaN (x +. y))

@@ -13,7 +13,8 @@
 
 module AERN2.MP.Float.Constants
   (
-    nan, infinity, itisNaN, itisInfinite
+    zero,one
+    , nan, infinity, itisNaN, itisInfinite
   )
 where
 
@@ -25,10 +26,10 @@ import AERN2.MP.Float.Type
 import AERN2.MP.Float.Conversions
 import AERN2.MP.Float.Operators
 
-nan, infinity, z, one :: MPFloat
-nan = z /. z
-infinity = one /. z
-z = mpFloat 0
+nan, infinity, zero, one :: MPFloat
+nan = zero /. zero
+infinity = one /. zero
+zero = mpFloat 0
 one = mpFloat 1
 
 itisNaN :: MPFloat -> Bool
