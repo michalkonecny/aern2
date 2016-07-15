@@ -5,7 +5,7 @@ build-type:     Simple
 author:         Michal Konecny
 stability:      experimental
 maintainer:     Michal Konecny <mikkonecny@gmail.com>
-tested-with:    GHC==7.10.3
+tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
 license:        BSD3
 homepage:       https://github.com/michalkonecny/aern2/aern2-mpfr
 synopsis:       Multi-precision Dyadic and Float via haskell-mpfr or hmpfr
@@ -22,10 +22,6 @@ Description:
   Currently, we use hmpfr when compiling with ghc 7.10 and higher
   and haskell-mpfr when compiling with ghc 7.8.
 
-Flag HaskellMPFR
-  Description: Use haskell-mpfr instead of hmpfr
-  Default: False
-
 library
   hs-source-dirs:  src
   build-depends:
@@ -36,16 +32,16 @@ library
     -- , hspec-smallcheck >= 0.3 && < 0.5
     , QuickCheck >= 2.7 && < 2.9
     , mixed-types-num == 0.1.*
-  if flag(HaskellMPFR)
-    build-depends:
-      haskell-mpfr == 0.1.*,
-      integer-gmp < 0.6
-    cpp-options: -DHaskellMPFR
-  else
+  if impl(ghc >= 7.10)
     build-depends:
       hmpfr == 0.4.*,
       integer-gmp >= 1.0 && < 1.1
     cpp-options: -DHMPFR
+  else
+    build-depends:
+      haskell-mpfr == 0.1.*,
+      integer-gmp < 0.6
+    cpp-options: -DHaskellMPFR
   ghc-options:     -Wall -fno-warn-orphans
   extensions:
     RebindableSyntax,

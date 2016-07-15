@@ -27,11 +27,10 @@ where
 import Numeric.MixedTypes
 import qualified Prelude as P
 
-import Data.Typeable
-
 import AERN2.MP.Precision
 
 #ifdef HaskellMPFR
+import Data.Typeable
 import qualified Data.Approximate.MPFRLowLevel as MPLow
 
 {-| Multiple-precision floating-point type based on MPFR via haskell-mpfr. -}

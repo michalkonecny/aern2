@@ -14,7 +14,7 @@
 module AERN2.MP.Float.Tests
   (
     specMPFloat
-    , (=~=)
+    , (=~=), approxEqual
     -- , nan, infinity, itisNaN, itisInfinite
   )
 where
@@ -65,7 +65,17 @@ frequencyElements elems = frequency [(int n, return e) | (n,e) <- elems]
 infix 4 =~=
 
 (=~=) :: MPFloat -> MPFloat -> Bool
-x =~= y
+x =~= y =
+  approxEqual p x y
+  where
+  p = (getPrecision x) `min` (getPrecision y)
+
+approxEqual ::
+  Precision {-^ precision to guide tolerance -} ->
+  MPFloat ->
+  MPFloat ->
+  Bool
+approxEqual p x y
   | itisNaN x && itisNaN y = True
   | itisNaN x || itisNaN y = False
   | itisInfinite x || itisInfinite y = x == y
@@ -73,9 +83,9 @@ x =~= y
     case norm of
       NormZero -> x == y -- both should be zero
       NormBits b ->
-        abs (x -. y) <= 2.0^(b-p)
+        abs (x -. y) <= 2.0^(b-pI)
   where
-    p = integer $ (getPrecision x) `min` (getPrecision y)
+    pI = integer p
     norm = (getNormLog x) `max` (getNormLog y)
 
 tMPFloat :: T MPFloat
