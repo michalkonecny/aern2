@@ -53,8 +53,6 @@ instance Arbitrary MPFloat where
           (p :: Precision) <- arbitrary
           (s :: Integer) <- arbitrary
           ex <- choose (-20,10)
-          -- it is not essential to test with massive exponents
-          -- except when we test overflows
           let resultR = s * (10.0^ex)
           let result = fromRationalUp p resultR
           return result
@@ -86,6 +84,7 @@ tMPFloat = T "MPFloat"
 specMPFloat :: Spec
 specMPFloat =
   describe ("MPFloat") $ do
+    specCanSetPrecision tMPFloat (=~=)
     specCanNegNum tMPFloat
     specCanAbs tMPFloat
     it "x +. y <= x +^ y" $ do

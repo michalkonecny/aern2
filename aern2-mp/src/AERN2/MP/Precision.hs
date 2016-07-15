@@ -12,8 +12,8 @@
 -}
 module AERN2.MP.Precision
 (
-     HasPrecision(..), CanSetPrecision(..)
-     , Precision, prec
+     Precision, prec
+     , HasPrecision(..), CanSetPrecision(..), specCanSetPrecision
      , defaultPrecision, maximumPrecision, standardPrecisions, precisionTimes2
      , iterateUntilOK
      , ConvertWithPrecision(..), convertP
@@ -23,14 +23,10 @@ where
 
 import Numeric.MixedTypes
 import qualified Prelude as P
+import Text.Printf
 
+import Test.Hspec
 import Test.QuickCheck
-
-class HasPrecision t where
-    getPrecision :: t -> Precision
-
-class CanSetPrecision t where
-    setPrecision :: Precision -> t -> t
 
 newtype Precision = Precision Integer
     deriving (P.Eq, P.Ord, P.Show, P.Enum, P.Num, P.Real, P.Integral)
@@ -75,6 +71,27 @@ instance HasOrderAsymmetric Precision Int where
 instance HasOrderAsymmetric Int Precision where
   lessThan i p = lessThan (prec (integer i)) p
   leq i p = leq (prec (integer i)) p
+
+class HasPrecision t where
+    getPrecision :: t -> Precision
+
+class (HasPrecision t) => CanSetPrecision t where
+    setPrecision :: Precision -> t -> t
+
+specCanSetPrecision ::
+  (CanSetPrecision t, Arbitrary t, Show t)
+  =>
+  (T t) -> (t -> t -> Bool) -> Spec
+specCanSetPrecision (T typeName :: T t) check =
+  describe (printf "CanSetPrecision %s" typeName) $ do
+    it "set then get" $ do
+      property $ \ (x :: t) (p :: Precision) ->
+        let xP = setPrecision p x in
+          p == getPrecision xP
+    it "setPrecision x ~ x" $ do
+      property $ \ (x :: t) (p :: Precision) ->
+        let xP = setPrecision p x in
+          check x xP
 
 maximumPrecision :: Precision
 maximumPrecision = Precision 1000000

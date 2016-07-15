@@ -46,6 +46,12 @@ type MPFloat = MPLow.MPFR
 instance HasPrecision MPFloat where
   getPrecision x = prec (P.toInteger $ MPLow.getPrec x)
 
+instance CanSetPrecision MPFloat where
+  setPrecision = setPrecisionNear
+
+setPrecisionNear :: Precision -> MPFloat -> MPFloat
+setPrecisionNear p = MPLow.set MPLow.Near (p2mpfrPrec p)
+
 setPrecisionUp :: Precision -> MPFloat -> MPFloat
 setPrecisionUp p = MPLow.set MPLow.Up (p2mpfrPrec p)
 
