@@ -61,7 +61,7 @@ mpToDouble = MPLow.toDouble
 mpToRational :: MPFloat -> Rational
 mpToRational x
     | x == 0 = 0.0
-    | otherwise = mantissa * 2^e
+    | otherwise = mantissa * 2.0^e
     where
     (mantissa, ePre) = MPLow.decompose x
     e = P.toInteger ePre

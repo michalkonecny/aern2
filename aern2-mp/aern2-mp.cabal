@@ -32,6 +32,9 @@ library
     base == 4.*
     , arithmoi == 0.4.*
     , convertible >= 1.1.1.0 && < 1.2
+    , hspec >= 2.1 && < 2.3
+    -- , hspec-smallcheck >= 0.3 && < 0.5
+    , QuickCheck >= 2.7 && < 2.9
     , mixed-types-num == 0.1.*
   if flag(HaskellMPFR)
     build-depends:
@@ -65,6 +68,8 @@ library
     AERN2.MP.Float.Arithmetic
     AERN2.MP.Float.Conversions
     AERN2.MP.Float.Operators
+    AERN2.MP.Float.Constants
+    AERN2.MP.Float.Tests
     AERN2.MP.Dyadic
     AERN2.MP.Accuracy
     AERN2.MP.ErrorBound
@@ -75,23 +80,24 @@ library
     AERN2.MP.Ball.Field
     AERN2.MP.Ball.Elementary
 
--- test-suite spec
---   type:
---       exitcode-stdio-1.0
---   ghc-options:
---       -Wall
---   extensions:
---     RebindableSyntax,
---     PostfixOperators,
---     ScopedTypeVariables,
---     FlexibleContexts
---   hs-source-dirs:
---       test
---   main-is:
---       Spec.hs
---   build-depends:
---     base == 4.*
---     , mixed-types-num
---     , hspec >= 2.1 && < 2.3
---     , hspec-smallcheck >= 0.3 && < 0.5
---     , QuickCheck >= 2.7 && < 2.9
+test-suite spec
+  type:
+      exitcode-stdio-1.0
+  ghc-options:
+      -Wall
+  extensions:
+    RebindableSyntax,
+    PostfixOperators,
+    ScopedTypeVariables,
+    FlexibleContexts
+  hs-source-dirs:
+      test
+  main-is:
+      Spec.hs
+  build-depends:
+    base == 4.*
+    -- , mixed-types-num
+    , aern2-mp
+    , hspec >= 2.1 && < 2.3
+    -- , hspec-smallcheck >= 0.3 && < 0.5
+    , QuickCheck >= 2.7 && < 2.9

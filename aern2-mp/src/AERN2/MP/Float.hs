@@ -27,6 +27,10 @@ module AERN2.MP.Float
    , module AERN2.MP.Float.Conversions
    -- * Infix operators for up/down-rounded operations
    , module AERN2.MP.Float.Operators
+   -- * Constants such as NaN, infinity
+   , module AERN2.MP.Float.Constants
+   -- * Tests
+   , module AERN2.MP.Float.Tests
    )
 where
 
@@ -38,17 +42,19 @@ import AERN2.MP.Float.Type
 import AERN2.MP.Float.Arithmetic
 import AERN2.MP.Float.Conversions
 import AERN2.MP.Float.Operators
+import AERN2.MP.Float.Constants
+import AERN2.MP.Float.Tests
 
 -- | Computes an upper bound to the distance @|x - y|@ of @x@ and @y@.
 distUp :: MPFloat -> MPFloat -> MPFloat
-distUp x y = if x >= y then subUp x y else subUp y x
+distUp x y = if x >= y then x -^ y else y -^ x
 
 -- | Computes a lower bound to the distance @|x - y|@ of @x@ and @y@.
 distDown :: MPFloat -> MPFloat -> MPFloat
-distDown x y = if x >= y then subDown x y else subDown y x
+distDown x y = if x >= y then x -. y else y -. x
 
 avgUp :: MPFloat -> MPFloat -> MPFloat
-avgUp x y = divUp (addUp x y) (mpFloat 2)
+avgUp x y = (x +^ y) /^ (mpFloat 2)
 
 avgDown :: MPFloat -> MPFloat -> MPFloat
-avgDown x y = divDown (addDown x y) (mpFloat 2)
+avgDown x y = (x +. y) /. (mpFloat 2)

@@ -24,6 +24,8 @@ where
 import Numeric.MixedTypes
 import qualified Prelude as P
 
+import Test.QuickCheck
+
 class HasPrecision t where
     getPrecision :: t -> Precision
 
@@ -128,3 +130,8 @@ convertPSecond ::
   (ConvertWithPrecision t2 t1, HasPrecision t1) =>
   (t1 -> t1 -> c) -> (t1 -> t2 -> c)
 convertPSecond = convertSecondUsing (\ b q -> convertP (getPrecision b) q)
+
+
+instance Arbitrary Precision where
+  arbitrary =
+    sized $ \size -> choose (50,51+size^2) >>= return . prec
