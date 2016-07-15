@@ -141,6 +141,8 @@ instance HasEqAsymmetric MPFloat Rational where
 instance HasEqAsymmetric Rational MPFloat where
   equalTo = convertSecond equalTo
 
+instance CanTestZero MPFloat
+
 instance HasOrderAsymmetric MPFloat MPFloat
 instance HasOrderAsymmetric MPFloat Integer where
   lessThan = convertSecond lessThan
@@ -160,6 +162,8 @@ instance HasOrderAsymmetric Rational MPFloat where
 instance HasOrderAsymmetric MPFloat Rational where
   lessThan = convertFirst lessThan
   leq = convertFirst leq
+
+instance CanTestPosNeg MPFloat
 
 {- min, max -}
 

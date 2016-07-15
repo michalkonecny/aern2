@@ -80,9 +80,14 @@ x =~= y
     p = integer $ (getPrecision x) `min` (getPrecision y)
     norm = (getNormLog x) `max` (getNormLog y)
 
+tMPFloat :: T MPFloat
+tMPFloat = T "MPFloat"
+
 specMPFloat :: Spec
 specMPFloat =
   describe ("MPFloat") $ do
+    specCanNegNum tMPFloat
+    specCanAbs tMPFloat
     it "x +. y <= x +^ y" $ do
       property $ \ (x :: MPFloat) (y :: MPFloat) ->
         not (itisNaN (x +. y))
@@ -99,3 +104,19 @@ specMPFloat =
     it "x -. y =~= x -^ y" $ do
       property $ \ (x :: MPFloat) (y :: MPFloat) ->
         x -. y =~= x -^ y
+    it "x *. y <= x *^ y" $ do
+      property $ \ (x :: MPFloat) (y :: MPFloat) ->
+        not (itisNaN (x *. y))
+        ==>
+        x *. y <= x *^ y
+    it "x *. y =~= x *^ y" $ do
+      property $ \ (x :: MPFloat) (y :: MPFloat) ->
+        x *. y =~= x *^ y
+    it "x /. y <= x /^ y" $ do
+      property $ \ (x :: MPFloat) (y :: MPFloat) ->
+        not (itisNaN (x /. y))
+        ==>
+        x /. y <= x /^ y
+    it "x /. y =~= x /^ y" $ do
+      property $ \ (x :: MPFloat) (y :: MPFloat) ->
+        x /. y =~= x /^ y
