@@ -76,22 +76,22 @@ approxEqual ::
   MPFloat ->
   MPFloat ->
   Bool
-approxEqual p x y
+approxEqual e x y
   | itisNaN x && itisNaN y = True
   | itisNaN x && itisInfinite y = True
   | itisInfinite x && itisNaN y = True
   | itisNaN x || itisNaN y = False
   | itisInfinite x || itisInfinite y = x == y
   | otherwise =
-      abs (x -. y) <= 0.5^p
+      abs (x -. y) <= 0.5^e
 
 approxEqualWithArgs :: [(MPFloat, String)] -> MPFloat -> MPFloat -> Property
 approxEqualWithArgs argsPre l r =
   counterexample description $ approxEqual e l r
   where
-    args = argsPre ++ [(l, "L"), (r, "R"), (l-.r,"L-R")]
+    args = argsPre ++ [(l, "L"), (r, "R"), (abs (l-.r),"|L-R|")]
     e =
-      (foldl min 1000000000000 $ catMaybes $ map getNminusP args)
+      (foldl min 1000000 $ catMaybes $ map getNminusP args)
       - (length argsPre)
     getNminusP (x,_) =
       case norm of
@@ -322,3 +322,80 @@ specMPFloat =
           logDown (expDown x) <= x
           &&
           logUp (expUp x) >= x
+    describe "approximate sine" $ do
+      it "down <= up" $ do
+        property $ \ (x :: MPFloat) ->
+          (abs x < 1000000)
+          ==>
+          sinDown x <= sinUp x
+      it "up ~ down" $ do
+        property $ \ (x :: MPFloat) ->
+          (abs x < 1000000)
+          ==>
+          let
+            (=~~=) = approxEqualWithArgs [(x,"x")]
+            infix 4 =~~=
+          in
+          sinDown x =~~= sinUp x
+      it "sin(pi)=0" $ do
+        property $ \ (p :: Precision) ->
+          let
+            (=~~=) = approxEqualWithArgs [(piDown p,"pi")]
+            infix 4 =~~=
+          in
+          sinUp(piDown p) =~~= (fromIntegerUp p 0)
+      it "in [-1,1]" $ do
+        property $ \ (x :: MPFloat) ->
+          (abs x < 1000000)
+          ==>
+          sinDown x <= one
+          &&
+          sinUp x >= -one
+    describe "approximate cosine" $ do
+      it "down <= up" $ do
+        property $ \ (x :: MPFloat) ->
+          (abs x < 1000000)
+          ==>
+          cosDown x <= cosUp x
+      it "up ~ down" $ do
+        property $ \ (x :: MPFloat) ->
+          (abs x < 1000000)
+          ==>
+          let
+            (=~~=) = approxEqualWithArgs [(x,"x")]
+            infix 4 =~~=
+          in
+          cosDown x =~~= cosUp x
+      it "in [-1,1]" $ do
+        property $ \ (x :: MPFloat) ->
+          (abs x < 1000000)
+          ==>
+          cosDown x <= one
+          &&
+          cosUp x >= -one
+      it "cos(pi)=-1" $ do
+        property $ \ (p :: Precision) ->
+          cosUp(piDown p) =~= (fromIntegerUp p (-1))
+      it "cos(x)^2 + sin(x)^2 = 1" $ do
+        property $ \ (x :: MPFloat) ->
+          (abs x < 1000000)
+          ==>
+          let
+            cosxU = cosUp x
+            cosxD = cosDown x
+            cosx2U = (cosxU *^ cosxU) `max` (cosxD *^ cosxD)
+            cosx2D
+              | cosxD > 0 = cosxD *. cosxD
+              | cosxU < 0 = cosxU *. cosxU
+              | otherwise = mpFloat 0
+            sinxU = sinUp x
+            sinxD = sinDown x
+            sinx2U = (sinxU *^ sinxU) `max` (sinxD *^ sinxD)
+            sinx2D
+              | sinxD > 0 = sinxD *. sinxD
+              | sinxU < 0 = sinxU *. sinxU
+              | otherwise = mpFloat 0
+          in
+          (cosx2D +. sinx2D) <= one
+          &&
+          (cosx2U +^ sinx2U) >= one

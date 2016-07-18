@@ -19,7 +19,7 @@ module AERN2.MP.Float.Constants
 where
 
 import Numeric.MixedTypes
--- import qualified Prelude as P
+import qualified Prelude as P
 -- import Data.Ratio
 
 import AERN2.MP.Float.Type
@@ -36,4 +36,7 @@ itisNaN :: MPFloat -> Bool
 itisNaN x = x *^ one /= x
 
 itisInfinite :: MPFloat -> Bool
-itisInfinite x = x *^ (mpFloat 2) == x
+itisInfinite x =
+  x *^ (mpFloat 2) P.== x
+  &&
+  x P./= (mpFloat 0)
