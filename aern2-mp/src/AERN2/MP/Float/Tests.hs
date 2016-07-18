@@ -8,14 +8,17 @@
     Stability   :  experimental
     Portability :  portable
 
-    Tests for operations on arbitrary precision floats
+    Tests for operations on arbitrary precision floats.
+
+    @
+    stack test aern2-mp --test-arguments --qc-max-success=1000
+    @
 -}
 
 module AERN2.MP.Float.Tests
   (
     specMPFloat, tMPFloat
-    , (=~=), approxEqual, approxEqualWithArgs, testAndReportLR
-    -- , nan, infinity, itisNaN, itisInfinite
+    , (=~=), approxEqual, approxEqualWithArgs
   )
 where
 
@@ -83,40 +86,25 @@ approxEqual p x y
       abs (x -. y) <= 0.5^p
 
 approxEqualWithArgs :: [(MPFloat, String)] -> MPFloat -> MPFloat -> Property
-approxEqualWithArgs args l r =
+approxEqualWithArgs argsPre l r =
   counterexample description $ approxEqual e l r
   where
-    e = foldl min 0 $ catMaybes $ map getNminusP args
+    args = argsPre ++ [(l, "L"), (r, "R"), (l-.r,"L-R")]
+    e =
+      (foldl min 1000000000000 $ catMaybes $ map getNminusP args)
+      - (length argsPre)
     getNminusP (x,_) =
       case norm of
         NormZero -> Nothing -- ideally infinity
-        NormBits b -> Just (b-pI)
+        NormBits b -> Just (pI-b)
       where
       norm = getNormLog x
       pI = integer $ getPrecision x
-
     description =
-      printf "args: %s\n, L = %s (p=%s), R = %s (p=%s), L-.R = %s"
-        argsS
-        (show l) (show $ getPrecision l)
-        (show r) (show $ getPrecision r)
-        (show $ l -. r)
+      printf "args:\n%s tolerance: <= %s (e=%d)" argsS (show (double $ 0.5^e)) e
     argsS =
-      unwords
-        [printf "%s = %s (p=%s)" argS (show arg) (show $ getPrecision arg) | (arg, argS) <- args]
-
-
-testAndReportLR ::
-  (MPFloat -> MPFloat -> Bool) -> MPFloat -> MPFloat -> Property
-testAndReportLR test l r =
-  counterexample description $ test l r
-  where
-    description =
-      printf "L = %s (p=%s), R = %s (p=%s), L-.R = %s"
-        (show l) (show $ getPrecision l)
-        (show r) (show $ getPrecision r)
-        (show $ l -. r)
-
+      unlines
+        [printf "    %s = %s (p=%s)" argS (show arg) (show $ getPrecision arg) | (arg, argS) <- args]
 
 tMPFloat :: T MPFloat
 tMPFloat = T "MPFloat"
@@ -157,14 +145,16 @@ specMPFloat =
             x +. (mpFloat 0) == x
       it "approximately commutative" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
-          x +. y =~= y +. x
+          (not $ itisNaN $ x +. y) ==>
+          x +. y <= y +^ x
+          &&
+          x +^ y >= y +. x
       it "approximately associative" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) (z :: MPFloat) ->
-          let
-            (=~~=) = approxEqualWithArgs [(x,"x"),(y,"y"),(z,"z")]
-            infix 4 =~~=
-          in
-          (x +. y) +. z =~~= x +. (y +. z)
+          (not $ itisNaN $ x +. y +. z) ==>
+          (x +. y) +. z <= x +^ (y +^ z)
+          &&
+          (x +^ y) +^ z >= x +. (y +. z)
     describe "approximate subtraction" $ do
       it "down <= up" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
@@ -176,7 +166,10 @@ specMPFloat =
           x -. y =~= x -^ y
       it "same as negate and add" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
-          x -. y =~= x +. (-y)
+          (not $ itisNaN $ x -. y) ==>
+          x -. y <= x +^ (-y)
+          &&
+          x -^ y >= x +. (-y)
     describe "approximate multiplication" $ do
       it "down <= up" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
@@ -192,23 +185,24 @@ specMPFloat =
             x *. (mpFloat 1) == x
       it "approximately commutative" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
-          x *. y =~= y *. x
+          not (itisNaN (x *. y)) ==>
+          x *. y <= y *^ x
+          &&
+          x *^ y >= y *. x
       it "approximately associative" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) (z :: MPFloat) ->
-          let
-            (=~~=) = approxEqualWithArgs
-              [(x,"x"),(y,"y"),(z,"z"),(x*.y,"xy"),(y*.z,"yz")]
-            infix 4 =~~=
-          in
-          (x *. y) *. z =~~= x *. (y *. z)
+          (x >= 0 && y >= 0 && z >= 0
+           && x < infinity && y < infinity && z < infinity) ==>
+          (x *. y) *. z <= x *^ (y *^ z)
+          &&
+          (x *^ y) *^ z >= x *. (y *. z)
       it "approximately distributes over addition" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) (z :: MPFloat) ->
-          let
-            (=~~=) = approxEqualWithArgs
-              [(x,"x"),(y,"y"),(z,"z"),(x*.y,"xy"),(x*.z,"xz"),(y+.z,"y+z")]
-            infix 4 =~~=
-          in
-          x *. (y +. z) =~~= (x *. y) +. (x *. z)
+          (x >= 0 && y >= 0 && z >= 0
+           && x < infinity && y < infinity && z < infinity) ==>
+          x *. (y +. z) <= (x *^ y) +^ (x *^ z)
+          &&
+          x *^ (y +^ z) >= (x *. y) +. (x *. z)
     describe "approximate division" $ do
       it "down <= up" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
@@ -224,28 +218,26 @@ specMPFloat =
           x /. y =~~= x /^ y
       it "recip(recip x) = x" $ do
         property $ \ (x :: MPFloat) ->
-          (isNonZero x) ==>
-            let
-              (=~~=) = approxEqualWithArgs [(x,"x"), (one /. x,"1/x")]
-              infix 4 =~~=
-            in
-            one /. (one /. x) =~~= x
+          (x > 0 || x < 0) ==>
+          one /. (one /^ x) <= x
+          &&
+          one /^ (one /. x) >= x
       it "x/1 = x" $ do
         property $ \ (x :: MPFloat) ->
-          (x /. one) =~= x
+          not (itisNaN x) ==>
+          (x /. one) == x
       it "x/x = 1" $ do
         property $ \ (x :: MPFloat) ->
-          (isNonZero x && (not $ itisInfinite x) && (not $ itisNaN x)) ==>
-            let (=~~=) = approxEqualWithArgs [(x,"x")]; infix 4 =~~= in
-            (x /. x) =~~= one
+          (isNonZero x && (not $ itisNaN $ x /. x)) ==>
+            (x /. x) <= one
+            &&
+            (x /^ x) >= one
       it "x/y = x*(1/y)" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
-          (isNonZero y) ==>
-            let
-              (=~~=) = approxEqualWithArgs [(x,"x"),(y,"y"),(one /. y,"1/y")]
-              infix 4 =~~=
-            in
-            (x /. y) =~~= x *. (one /. y)
+          (y > 0 && x >= 0 && x/.y >= 0) ==>
+          (x /. y) <= x *^ (one /^ y)
+          &&
+          (x /^ y) >= x *. (one /. y)
     describe "approximate sqrt" $ do
       it "down <= up" $ do
         property $ \ (x :: MPFloat) ->
@@ -264,11 +256,33 @@ specMPFloat =
           sqrtUp x >= 0
       it "sqrt(x)^2 ~ x" $ do
         property $ \ (x :: MPFloat) ->
-            (x >= 0)
-            ==>
-            let
-              sqrtx = sqrtUp x
-              (=~~=) = approxEqualWithArgs [(x,"x"), (sqrtx,"sqrt x")]
-              infix 4 =~~=
-            in
-            sqrtx *. sqrtx =~~= x
+          (x >= 0)
+          ==>
+          (sqrtDown x) *. (sqrtDown x) <= x
+          &&
+          (sqrtUp x) *^ (sqrtUp x) >= x
+    describe "approximate log" $ do
+      it "down <= up" $ do
+        property $ \ (x :: MPFloat) ->
+          (x > 0)
+          ==>
+          logDown x <= logUp x
+      it "up ~ down" $ do
+        property $ \ (x :: MPFloat) ->
+          (x > 0)
+          ==>
+          logDown x =~= logUp x
+      it "log(1/x) == -(log x)" $ do
+        property $ \ (x :: MPFloat) ->
+          (x > 0)
+          ==>
+          logDown (one /. x) <= -(logDown x)
+          &&
+          logUp (one /^ x) >= -(logUp x)
+      it "log(x*y) = log(x)+log(y)" $ do
+        property $ \ (x :: MPFloat) (y :: MPFloat) ->
+          (x > 0 && y > 0)
+          ==>
+          logDown (x *. y) <= (logUp x) +^ (logUp y)
+          &&
+          logUp (x *^ y) >= (logDown x) +. (logDown y)
