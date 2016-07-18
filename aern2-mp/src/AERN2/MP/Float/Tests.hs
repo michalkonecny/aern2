@@ -34,7 +34,7 @@ import AERN2.Norm
 import AERN2.MP.Precision
 
 import AERN2.MP.Float.Type
--- import AERN2.MP.Float.Arithmetic
+import AERN2.MP.Float.Arithmetic
 import AERN2.MP.Float.Conversions
 import AERN2.MP.Float.Operators
 import AERN2.MP.Float.Constants
@@ -160,7 +160,10 @@ specMPFloat =
           x +. y =~= y +. x
       it "approximately associative" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) (z :: MPFloat) ->
-          let (=~~=) = approxEqualWithArgs [(x,"x"),(y,"y"),(z,"z")]; infix 4 =~~= in
+          let
+            (=~~=) = approxEqualWithArgs [(x,"x"),(y,"y"),(z,"z")]
+            infix 4 =~~=
+          in
           (x +. y) +. z =~~= x +. (y +. z)
     describe "approximate subtraction" $ do
       it "down <= up" $ do
@@ -192,13 +195,21 @@ specMPFloat =
           x *. y =~= y *. x
       it "approximately associative" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) (z :: MPFloat) ->
-          let (=~~=) = approxEqualWithArgs [(x,"x"),(y,"y"),(z,"z")]; infix 4 =~~= in
+          let
+            (=~~=) = approxEqualWithArgs
+              [(x,"x"),(y,"y"),(z,"z"),(x*.y,"xy"),(y*.z,"yz")]
+            infix 4 =~~=
+          in
           (x *. y) *. z =~~= x *. (y *. z)
       it "approximately distributes over addition" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) (z :: MPFloat) ->
-          let (=~~=) = approxEqualWithArgs [(x,"x"),(y,"y"),(z,"z")]; infix 4 =~~= in
+          let
+            (=~~=) = approxEqualWithArgs
+              [(x,"x"),(y,"y"),(z,"z"),(x*.y,"xy"),(x*.z,"xz"),(y+.z,"y+z")]
+            infix 4 =~~=
+          in
           x *. (y +. z) =~~= (x *. y) +. (x *. z)
-    describe "approximate multiplication" $ do
+    describe "approximate division" $ do
       it "down <= up" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
           not (itisNaN (x /. y))
@@ -206,20 +217,58 @@ specMPFloat =
           x /. y <= x /^ y
       it "up ~ down" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
-          x /. y =~= x /^ y
+          let
+            (=~~=) = approxEqualWithArgs [(x,"x"),(y,"y")]
+            infix 4 =~~=
+          in
+          x /. y =~~= x /^ y
       it "recip(recip x) = x" $ do
         property $ \ (x :: MPFloat) ->
           (isNonZero x) ==>
-            one /. (one /. x) =~= x
+            let
+              (=~~=) = approxEqualWithArgs [(x,"x"), (one /. x,"1/x")]
+              infix 4 =~~=
+            in
+            one /. (one /. x) =~~= x
       it "x/1 = x" $ do
         property $ \ (x :: MPFloat) ->
           (x /. one) =~= x
       it "x/x = 1" $ do
         property $ \ (x :: MPFloat) ->
           (isNonZero x && (not $ itisInfinite x) && (not $ itisNaN x)) ==>
-            (x /. x) =~= one
+            let (=~~=) = approxEqualWithArgs [(x,"x")]; infix 4 =~~= in
+            (x /. x) =~~= one
       it "x/y = x*(1/y)" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
           (isNonZero y) ==>
-            let (=~~=) = approxEqualWithArgs [(x,"x"),(y,"y")]; infix 4 =~~= in
+            let
+              (=~~=) = approxEqualWithArgs [(x,"x"),(y,"y"),(one /. y,"1/y")]
+              infix 4 =~~=
+            in
             (x /. y) =~~= x *. (one /. y)
+    describe "approximate sqrt" $ do
+      it "down <= up" $ do
+        property $ \ (x :: MPFloat) ->
+          not (itisNaN (sqrtDown x))
+          ==>
+          sqrtDown x <= sqrtUp x
+      it "up ~ down" $ do
+        property $ \ (x :: MPFloat) ->
+          (x >= 0)
+          ==>
+          sqrtDown x =~= sqrtUp x
+      it "sqrt(x) >= 0" $ do
+        property $ \ (x :: MPFloat) ->
+          (x >= 0)
+          ==>
+          sqrtUp x >= 0
+      it "sqrt(x)^2 ~ x" $ do
+        property $ \ (x :: MPFloat) ->
+            (x >= 0)
+            ==>
+            let
+              sqrtx = sqrtUp x
+              (=~~=) = approxEqualWithArgs [(x,"x"), (sqrtx,"sqrt x")]
+              infix 4 =~~=
+            in
+            sqrtx *. sqrtx =~~= x
