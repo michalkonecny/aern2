@@ -82,9 +82,9 @@ class (HasPrecision t) => CanSetPrecision t where
     setPrecision :: Precision -> t -> t
 
 specCanSetPrecision ::
-  (CanSetPrecision t, Arbitrary t, Show t)
+  (CanSetPrecision t, Arbitrary t, Show t, Testable prop)
   =>
-  (T t) -> (t -> t -> Bool) -> Spec
+  (T t) -> (t -> t -> prop) -> Spec
 specCanSetPrecision (T typeName :: T t) check =
   describe (printf "CanSetPrecision %s" typeName) $ do
     it "set then get" $ do

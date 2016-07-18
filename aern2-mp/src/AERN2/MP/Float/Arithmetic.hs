@@ -36,12 +36,14 @@ import AERN2.MP.Float.Type
 #ifdef HaskellMPFR
 import qualified Data.Approximate.MPFRLowLevel as MPLow
 
+one :: MPFloat
 one = MPLow.fromInt MPLow.Up (P.fromInteger 10) (int 1)
 
 #endif
 #ifdef HMPFR
 import qualified Data.Number.MPFR as MPLow
 
+one :: MPFloat
 one = MPLow.one
 #endif
 

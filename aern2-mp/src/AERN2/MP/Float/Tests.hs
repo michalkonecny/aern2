@@ -13,8 +13,8 @@
 
 module AERN2.MP.Float.Tests
   (
-    specMPFloat
-    , (=~=), approxEqual
+    specMPFloat, tMPFloat
+    , (=~=), approxEqual, approxEqualWithArgs, testAndReportLR
     -- , nan, infinity, itisNaN, itisInfinite
   )
 where
@@ -22,6 +22,8 @@ where
 import Numeric.MixedTypes
 -- import qualified Prelude as P
 -- import Data.Ratio
+import Text.Printf
+import Data.Maybe
 
 import Test.Hspec
 import Test.QuickCheck
@@ -40,14 +42,12 @@ import AERN2.MP.Float.Constants
 instance Arbitrary MPFloat where
   arbitrary =
     do
-    shouldNaN <- frequencyElements [(19, False),(1, True)]
-    shouldInfinity <- frequencyElements [(19, False),(1, True)]
-    aux shouldNaN shouldInfinity
+    giveSpecialValue <- frequencyElements [(9, False),(1, True)]
+    aux giveSpecialValue
     where
-      aux shouldNaN shouldInfinity
-        | shouldNaN = return nan
-        | shouldInfinity =
-            elements [infinity, -infinity]
+      aux giveSpecialValue
+        | giveSpecialValue =
+            elements [nan, infinity, -infinity, zero, one]
         | otherwise =
           do
           (p :: Precision) <- arbitrary
@@ -64,29 +64,59 @@ frequencyElements elems = frequency [(int n, return e) | (n,e) <- elems]
 
 infix 4 =~=
 
-(=~=) :: MPFloat -> MPFloat -> Bool
+(=~=) :: MPFloat -> MPFloat -> Property
 x =~= y =
-  approxEqual p x y
-  where
-  p = (getPrecision x) `min` (getPrecision y)
+  approxEqualWithArgs [(x, "L"),(y, "R")] x y
 
 approxEqual ::
-  Precision {-^ precision to guide tolerance -} ->
+  Integer {-^ precision to guide tolerance -} ->
   MPFloat ->
   MPFloat ->
   Bool
 approxEqual p x y
   | itisNaN x && itisNaN y = True
+  | itisNaN x && itisInfinite y = True
+  | itisInfinite x && itisNaN y = True
   | itisNaN x || itisNaN y = False
   | itisInfinite x || itisInfinite y = x == y
   | otherwise =
-    case norm of
-      NormZero -> x == y -- both should be zero
-      NormBits b ->
-        abs (x -. y) <= 2.0^(b-pI)
+      abs (x -. y) <= 0.5^p
+
+approxEqualWithArgs :: [(MPFloat, String)] -> MPFloat -> MPFloat -> Property
+approxEqualWithArgs args l r =
+  counterexample description $ approxEqual e l r
   where
-    pI = integer p
-    norm = (getNormLog x) `max` (getNormLog y)
+    e = foldl min 0 $ catMaybes $ map getNminusP args
+    getNminusP (x,_) =
+      case norm of
+        NormZero -> Nothing -- ideally infinity
+        NormBits b -> Just (b-pI)
+      where
+      norm = getNormLog x
+      pI = integer $ getPrecision x
+
+    description =
+      printf "args: %s\n, L = %s (p=%s), R = %s (p=%s), L-.R = %s"
+        argsS
+        (show l) (show $ getPrecision l)
+        (show r) (show $ getPrecision r)
+        (show $ l -. r)
+    argsS =
+      unwords
+        [printf "%s = %s (p=%s)" argS (show arg) (show $ getPrecision arg) | (arg, argS) <- args]
+
+
+testAndReportLR ::
+  (MPFloat -> MPFloat -> Bool) -> MPFloat -> MPFloat -> Property
+testAndReportLR test l r =
+  counterexample description $ test l r
+  where
+    description =
+      printf "L = %s (p=%s), R = %s (p=%s), L-.R = %s"
+        (show l) (show $ getPrecision l)
+        (show r) (show $ getPrecision r)
+        (show $ l -. r)
+
 
 tMPFloat :: T MPFloat
 tMPFloat = T "MPFloat"
@@ -99,47 +129,97 @@ specMPFloat =
     specCanAbs tMPFloat
     specCanMinMaxNotMixed tMPFloat
     -- specCanMinMax tMPFloat tInteger tMPFloat
-    it "0 * infinity = NaN" $ do
-      itisNaN (zero *^ infinity)
-      &&
-      itisNaN (zero *. infinity)
-    it "infinity / infinity = NaN" $ do
-      itisNaN (infinity /^ infinity)
-      &&
-      itisNaN (infinity /. infinity)
-    it "infinity - infinity = NaN" $ do
-      itisNaN (infinity -^ infinity)
-      &&
-      itisNaN (infinity -. infinity)
-    it "x +. y <= x +^ y" $ do
-      property $ \ (x :: MPFloat) (y :: MPFloat) ->
-        not (itisNaN (x +. y))
-        ==>
-        x +. y <= x +^ y
-    it "x +. y =~= x +^ y" $ do
-      property $ \ (x :: MPFloat) (y :: MPFloat) ->
-        x +. y =~= x +^ y
-    it "x -. y <= x -^ y" $ do
-      property $ \ (x :: MPFloat) (y :: MPFloat) ->
-        not (itisNaN (x -. y))
-        ==>
-        x -. y <= x -^ y
-    it "x -. y =~= x -^ y" $ do
-      property $ \ (x :: MPFloat) (y :: MPFloat) ->
-        x -. y =~= x -^ y
-    it "x *. y <= x *^ y" $ do
-      property $ \ (x :: MPFloat) (y :: MPFloat) ->
-        not (itisNaN (x *. y))
-        ==>
-        x *. y <= x *^ y
-    it "x *. y =~= x *^ y" $ do
-      property $ \ (x :: MPFloat) (y :: MPFloat) ->
-        x *. y =~= x *^ y
-    it "x /. y <= x /^ y" $ do
-      property $ \ (x :: MPFloat) (y :: MPFloat) ->
-        not (itisNaN (x /. y))
-        ==>
-        x /. y <= x /^ y
-    it "x /. y =~= x /^ y" $ do
-      property $ \ (x :: MPFloat) (y :: MPFloat) ->
-        x /. y =~= x /^ y
+    describe "special values" $ do
+      it "0 * infinity = NaN" $ do
+        itisNaN (zero *^ infinity)
+        &&
+        itisNaN (zero *. infinity)
+      it "infinity / infinity = NaN" $ do
+        itisNaN (infinity /^ infinity)
+        &&
+        itisNaN (infinity /. infinity)
+      it "infinity - infinity = NaN" $ do
+        itisNaN (infinity -^ infinity)
+        &&
+        itisNaN (infinity -. infinity)
+    describe "approximate addition" $ do
+      it "down <= up" $ do
+        property $ \ (x :: MPFloat) (y :: MPFloat) ->
+          not (itisNaN (x +. y))
+          ==>
+          x +. y <= x +^ y
+      it "up ~ down" $ do
+        property $ \ (x :: MPFloat) (y :: MPFloat) ->
+          x +. y =~= x +^ y
+      it "absorbs 0" $ do
+        property $ \ (x :: MPFloat) ->
+          (not $ itisNaN x) ==>
+            x +. (mpFloat 0) == x
+      it "approximately commutative" $ do
+        property $ \ (x :: MPFloat) (y :: MPFloat) ->
+          x +. y =~= y +. x
+      it "approximately associative" $ do
+        property $ \ (x :: MPFloat) (y :: MPFloat) (z :: MPFloat) ->
+          let (=~~=) = approxEqualWithArgs [(x,"x"),(y,"y"),(z,"z")]; infix 4 =~~= in
+          (x +. y) +. z =~~= x +. (y +. z)
+    describe "approximate subtraction" $ do
+      it "down <= up" $ do
+        property $ \ (x :: MPFloat) (y :: MPFloat) ->
+          not (itisNaN (x -. y))
+          ==>
+          x -. y <= x -^ y
+      it "up ~ down" $ do
+        property $ \ (x :: MPFloat) (y :: MPFloat) ->
+          x -. y =~= x -^ y
+      it "same as negate and add" $ do
+        property $ \ (x :: MPFloat) (y :: MPFloat) ->
+          x -. y =~= x +. (-y)
+    describe "approximate multiplication" $ do
+      it "down <= up" $ do
+        property $ \ (x :: MPFloat) (y :: MPFloat) ->
+          not (itisNaN (x *. y))
+          ==>
+          x *. y <= x *^ y
+      it "up ~ down" $ do
+        property $ \ (x :: MPFloat) (y :: MPFloat) ->
+          x *. y =~= x *^ y
+      it "absorbs 1" $ do
+        property $ \ (x :: MPFloat) ->
+          (not $ itisNaN x) ==>
+            x *. (mpFloat 1) == x
+      it "approximately commutative" $ do
+        property $ \ (x :: MPFloat) (y :: MPFloat) ->
+          x *. y =~= y *. x
+      it "approximately associative" $ do
+        property $ \ (x :: MPFloat) (y :: MPFloat) (z :: MPFloat) ->
+          let (=~~=) = approxEqualWithArgs [(x,"x"),(y,"y"),(z,"z")]; infix 4 =~~= in
+          (x *. y) *. z =~~= x *. (y *. z)
+      it "approximately distributes over addition" $ do
+        property $ \ (x :: MPFloat) (y :: MPFloat) (z :: MPFloat) ->
+          let (=~~=) = approxEqualWithArgs [(x,"x"),(y,"y"),(z,"z")]; infix 4 =~~= in
+          x *. (y +. z) =~~= (x *. y) +. (x *. z)
+    describe "approximate multiplication" $ do
+      it "down <= up" $ do
+        property $ \ (x :: MPFloat) (y :: MPFloat) ->
+          not (itisNaN (x /. y))
+          ==>
+          x /. y <= x /^ y
+      it "up ~ down" $ do
+        property $ \ (x :: MPFloat) (y :: MPFloat) ->
+          x /. y =~= x /^ y
+      it "recip(recip x) = x" $ do
+        property $ \ (x :: MPFloat) ->
+          (isNonZero x) ==>
+            one /. (one /. x) =~= x
+      it "x/1 = x" $ do
+        property $ \ (x :: MPFloat) ->
+          (x /. one) =~= x
+      it "x/x = 1" $ do
+        property $ \ (x :: MPFloat) ->
+          (isNonZero x && (not $ itisInfinite x) && (not $ itisNaN x)) ==>
+            (x /. x) =~= one
+      it "x/y = x*(1/y)" $ do
+        property $ \ (x :: MPFloat) (y :: MPFloat) ->
+          (isNonZero y) ==>
+            let (=~~=) = approxEqualWithArgs [(x,"x"),(y,"y")]; infix 4 =~~= in
+            (x /. y) =~~= x *. (one /. y)
