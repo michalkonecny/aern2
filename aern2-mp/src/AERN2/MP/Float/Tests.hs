@@ -68,8 +68,8 @@ frequencyElements elems = frequency [(int n, return e) | (n,e) <- elems]
 infix 4 =~=
 
 (=~=) :: MPFloat -> MPFloat -> Property
-x =~= y =
-  approxEqualWithArgs [(x, "L"),(y, "R")] x y
+l =~= r =
+  approxEqualWithArgs [] l r
 
 approxEqual ::
   Integer {-^ precision to guide tolerance -} ->
@@ -261,6 +261,35 @@ specMPFloat =
           (sqrtDown x) *. (sqrtDown x) <= x
           &&
           (sqrtUp x) *^ (sqrtUp x) >= x
+    describe "approximate exp" $ do
+      it "down <= up" $ do
+        property $ \ (x :: MPFloat) ->
+          (abs x < 1000000)
+          ==>
+          expDown x <= expUp x
+      it "up ~ down" $ do
+        property $ \ (x :: MPFloat) ->
+          (abs x < 1000000)
+          ==>
+          let
+            (=~~=) = approxEqualWithArgs [(x,"x")]
+            infix 4 =~~=
+          in
+          expDown x =~~= expUp x
+      it "exp(-x) == 1/(exp x)" $ do
+        property $ \ (x :: MPFloat) ->
+          (abs x < 1000000)
+          ==>
+          one /. (expUp x) <= expUp (-x)
+          &&
+          one /^ (expDown x) >= expDown (-x)
+      it "exp(x+y) = exp(x)*exp(y)" $ do
+        property $ \ (x :: MPFloat) (y :: MPFloat) ->
+          (abs x < 1000000 && abs y < 1000000)
+          ==>
+          expDown (x +. y) <= (expUp x) *^ (expUp y)
+          &&
+          expUp (x +^ y) >= (expDown x) *. (expDown y)
     describe "approximate log" $ do
       it "down <= up" $ do
         property $ \ (x :: MPFloat) ->
@@ -286,3 +315,10 @@ specMPFloat =
           logDown (x *. y) <= (logUp x) +^ (logUp y)
           &&
           logUp (x *^ y) >= (logDown x) +. (logDown y)
+      it "log(exp x) == x" $ do
+        property $ \ (x :: MPFloat) ->
+          (abs x < 1000000)
+          ==>
+          logDown (expDown x) <= x
+          &&
+          logUp (expUp x) >= x
