@@ -83,6 +83,13 @@ instance HasNorm MPFloat where
 
 {- conversions -}
 
+instance CanRound MPFloat where
+  properFraction x = (n,f)
+    where
+      r = rational x
+      n = (numerator r) `quot` (denominator r)
+      f = x `subUp` (mpFloat n)
+
 instance ConvertibleExactly MPFloat Rational where
   safeConvertExactly = Right . mpToRational
 
