@@ -71,10 +71,13 @@ infix 4 =~=
 l =~= r =
   approxEqualWithArgs [] l r
 
+{-|
+  Assert equality of two MPFloat's with tolerance @1/2^p@.
+-}
 approxEqual ::
-  Integer {-^ precision to guide tolerance -} ->
-  MPFloat ->
-  MPFloat ->
+  Integer {-^ @p@ precision to guide tolerance -} ->
+  MPFloat {-^ LHS of equation-} ->
+  MPFloat {-^ RHS of equation -}->
   Bool
 approxEqual e x y
   | itisNaN x && itisNaN y = True
@@ -85,7 +88,16 @@ approxEqual e x y
   | otherwise =
       abs (x -. y) <= 0.5^e
 
-approxEqualWithArgs :: [(MPFloat, String)] -> MPFloat -> MPFloat -> Property
+{-|
+  Assert equality of two MPFloat's with tolerance derived from the size and precision
+  of the given intermediate values.
+  When the assertion fails, report the given values using the given names.
+-}
+approxEqualWithArgs ::
+  [(MPFloat, String)] {-^ intermediate values from which to determine tolerance, their names to report when the equality fails -} ->
+  MPFloat {-^ LHS of equation-} ->
+  MPFloat {-^ RHS of equation -}->
+  Property
 approxEqualWithArgs argsPre l r =
   counterexample description $ approxEqual e l r
   where
@@ -106,6 +118,10 @@ approxEqualWithArgs argsPre l r =
       unlines
         [printf "    %s = %s (p=%s)" argS (show arg) (show $ getPrecision arg) | (arg, argS) <- args]
 
+{-|
+  A runtime representative of type @MPFloat@.
+  Used for specialising polymorphic tests to concrete types.
+-}
 tMPFloat :: T MPFloat
 tMPFloat = T "MPFloat"
 
