@@ -175,10 +175,10 @@ instance Arbitrary ErrorBound where
     where
       aux giveSpecialValue
         | giveSpecialValue =
-            elements (map convert [0.0,0.0,0.5,0.25,0.125])
+            elements (map convert [0.0,0.0,0.0,10.0,1.0,0.5,0.125])
         | otherwise =
           do
-          (s :: Integer) <- choose (0,2^35)
-          let resultR = s/2^32
+          (s :: Integer) <- arbitrary
+          let resultR = ((abs s) `mod` (2^35))/(2^32)
           let result = convert resultR
           return result
