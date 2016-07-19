@@ -8,16 +8,18 @@ maintainer:     Michal Konecny <mikkonecny@gmail.com>
 tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
 license:        BSD3
 homepage:       https://github.com/michalkonecny/aern2/aern2-mpfr
-synopsis:       Multi-precision Dyadic and Float via haskell-mpfr or hmpfr
+synopsis:       Multi-precision floats via haskell-mpfr or hmpfr
 category:       Math
 copyright:      (c) 2015, 2016 Michal Konecny
 license-file:   LICENSE
 Description:
-  A wrapper around haskell-mpfr or hmpfr, providing two types:
+  A wrapper around haskell-mpfr or hmpfr, providing the types:
   .
-  * Dyadic:  exact ring operations
+  * Dyadic:  variable-precision floats with exact ring operations
   .
-  * MPFloat: approximate field + elementary operations with fixed precision
+  * MPFloat: fixed-precision floats with approximate field + elementary operations
+  .
+  * MPBall: float + error bound with field + elementary operations (interval computation)
   .
   Currently, we use hmpfr when compiling with ghc 7.10 and higher
   and haskell-mpfr when compiling with ghc 7.8.
