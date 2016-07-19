@@ -38,7 +38,7 @@ import AERN2.MP.Precision
 import AERN2.MP.Float as MPFloat
 
 import AERN2.MP.Ball.Type
-import AERN2.MP.Ball.Conversions ()
+import AERN2.MP.Ball.Conversions
 import AERN2.MP.Ball.Comparisons ()
 import AERN2.MP.Ball.Field ()
 import AERN2.MP.Ball.Elementary ()
@@ -68,7 +68,39 @@ specMPBall :: Spec
 specMPBall =
   describe ("MPBall") $ do
     specCanSetPrecision tMPBall (?==?)
-    specCanNegNum tMPBall
-    specCanAbs tMPBall
-    specCanMinMaxNotMixed tMPBall
-    specCanMinMax tMPBall tInteger tMPBall
+    specConversion tInteger tMPBall mpBall (fst . integerBounds)
+    describe "order" $ do
+      specHasEqNotMixed tMPBall
+      specHasEq tInt tMPBall tRational
+      specCanTestZero tMPBall
+      specHasOrderNotMixed tMPBall
+      specHasOrder tInt tMPBall tRational
+    describe "min/max/abs" $ do
+      specCanNegNum tMPBall
+      specCanAbs tMPBall
+      specCanMinMaxNotMixed tMPBall
+      specCanMinMax tMPBall tInteger tMPBall
+    describe "ring" $ do
+      specCanAddNotMixed tMPBall
+      specCanAddSameType tMPBall
+      specCanAdd tInt tMPBall tRational
+      specCanAdd tInteger tMPBall tInt
+      specCanSubNotMixed tMPBall
+      specCanSub tMPBall tInteger
+      specCanSub tInteger tMPBall
+      specCanSub tMPBall tInt
+      specCanSub tInt tMPBall
+      specCanMulNotMixed tMPBall
+      specCanMulSameType tMPBall
+      specCanMul tInt tMPBall tRational
+      specCanPow tMPBall tInteger
+    describe "field" $ do
+      specCanDivNotMixed tMPBall
+      specCanDiv tInteger tMPBall
+      specCanDiv tMPBall tInt
+      specCanDiv tMPBall tRational
+    describe "elementary" $ do
+      specCanSqrtReal tMPBall
+      specCanExpReal tMPBall
+      specCanLogReal tMPBall
+      specCanSinCosReal tMPBall

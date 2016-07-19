@@ -11,7 +11,9 @@
     Conversions of arbitrary precision dyadic balls
 -}
 module AERN2.MP.Ball.Conversions
-()
+(
+  integerBounds
+)
 where
 
 import Numeric.MixedTypes
