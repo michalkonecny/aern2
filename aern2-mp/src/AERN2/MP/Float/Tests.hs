@@ -19,6 +19,7 @@ module AERN2.MP.Float.Tests
   (
     specMPFloat, tMPFloat
     , (=~=), approxEqual, approxEqualWithArgs
+    , frequencyElements
   )
 where
 

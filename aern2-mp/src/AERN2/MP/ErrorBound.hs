@@ -23,6 +23,8 @@ import qualified Prelude as P
 
 import Data.Typeable
 
+import Test.QuickCheck
+
 import Data.Convertible
 
 import Math.NumberTheory.Logarithms (integerLog2)
@@ -30,7 +32,7 @@ import Math.NumberTheory.Logarithms (integerLog2)
 import AERN2.MP.Precision
 import AERN2.MP.Accuracy
 import qualified AERN2.MP.Float as MPFloat
-import AERN2.MP.Float (MPFloat, mpFloat)
+import AERN2.MP.Float (MPFloat, mpFloat, frequencyElements)
 import AERN2.MP.Float.Operators
 
 {- example -}
@@ -164,3 +166,19 @@ instance CanDiv ErrorBound Integer where
     divide (ErrorBound a) i
         | i > 0 = ErrorBound $ a /^ (MPFloat.fromIntegerUp errorBoundPrecision i)
         | otherwise = error "trying to multiply ErrorBound by a non-positive integer"
+
+instance Arbitrary ErrorBound where
+  arbitrary =
+    do
+    giveSpecialValue <- frequencyElements [(5, False),(1, True)]
+    aux giveSpecialValue
+    where
+      aux giveSpecialValue
+        | giveSpecialValue =
+            elements (map convert [0.0,0.0,0.5,0.25,0.125])
+        | otherwise =
+          do
+          (s :: Integer) <- choose (0,2^35)
+          let resultR = s/2^32
+          let result = convert resultR
+          return result
