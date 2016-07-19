@@ -13,8 +13,8 @@
 
 module AERN2.MP.Float.Constants
   (
-    zero,one
-    , nan, infinity, itisNaN, itisInfinite
+    zero, one
+    , nan, infinity
   )
 where
 
@@ -40,3 +40,7 @@ itisInfinite x =
   x *^ (mpFloat 2) P.== x
   &&
   x P./= (mpFloat 0)
+
+instance CanTestFinite MPFloat where
+  isInfinite = itisInfinite
+  isNaN = itisNaN

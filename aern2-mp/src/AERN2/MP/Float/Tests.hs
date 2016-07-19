@@ -11,7 +11,7 @@
     Tests for operations on arbitrary precision floats.
 
     To run the tests using stack, execute:
-    
+
     @
     stack test aern2-mp --test-arguments "-a 1000 -m MPFloat"
     @
@@ -83,11 +83,11 @@ approxEqual ::
   MPFloat {-^ RHS of equation -}->
   Bool
 approxEqual e x y
-  | itisNaN x && itisNaN y = True
-  | itisNaN x && itisInfinite y = True
-  | itisInfinite x && itisNaN y = True
-  | itisNaN x || itisNaN y = False
-  | itisInfinite x || itisInfinite y = x == y
+  | isNaN x && isNaN y = True
+  | isNaN x && isInfinite y = True
+  | isInfinite x && isNaN y = True
+  | isNaN x || isNaN y = False
+  | isInfinite x || isInfinite y = x == y
   | otherwise =
       abs (x -. y) <= 0.5^e
 
@@ -132,27 +132,28 @@ specMPFloat :: Spec
 specMPFloat =
   describe ("MPFloat") $ do
     specCanSetPrecision tMPFloat (=~=)
+    specCanRound tMPFloat
     specCanNegNum tMPFloat
     specCanAbs tMPFloat
     specCanMinMaxNotMixed tMPFloat
     -- specCanMinMax tMPFloat tInteger tMPFloat
     describe "special values" $ do
       it "0 * infinity = NaN" $ do
-        itisNaN (zero *^ infinity)
+        isNaN (zero *^ infinity)
         &&
-        itisNaN (zero *. infinity)
+        isNaN (zero *. infinity)
       it "infinity / infinity = NaN" $ do
-        itisNaN (infinity /^ infinity)
+        isNaN (infinity /^ infinity)
         &&
-        itisNaN (infinity /. infinity)
+        isNaN (infinity /. infinity)
       it "infinity - infinity = NaN" $ do
-        itisNaN (infinity -^ infinity)
+        isNaN (infinity -^ infinity)
         &&
-        itisNaN (infinity -. infinity)
+        isNaN (infinity -. infinity)
     describe "approximate addition" $ do
       it "down <= up" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
-          not (itisNaN (x +. y))
+          not (isNaN (x +. y))
           ==>
           x +. y <= x +^ y
       it "up ~ down" $ do
@@ -160,24 +161,24 @@ specMPFloat =
           x +. y =~= x +^ y
       it "absorbs 0" $ do
         property $ \ (x :: MPFloat) ->
-          (not $ itisNaN x) ==>
+          (not $ isNaN x) ==>
             x +. (mpFloat 0) == x
       it "approximately commutative" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
-          (not $ itisNaN $ x +. y) ==>
+          (not $ isNaN $ x +. y) ==>
           x +. y <= y +^ x
           &&
           x +^ y >= y +. x
       it "approximately associative" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) (z :: MPFloat) ->
-          (not $ itisNaN $ x +. y +. z) ==>
+          (not $ isNaN $ x +. y +. z) ==>
           (x +. y) +. z <= x +^ (y +^ z)
           &&
           (x +^ y) +^ z >= x +. (y +. z)
     describe "approximate subtraction" $ do
       it "down <= up" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
-          not (itisNaN (x -. y))
+          not (isNaN (x -. y))
           ==>
           x -. y <= x -^ y
       it "up ~ down" $ do
@@ -185,14 +186,14 @@ specMPFloat =
           x -. y =~= x -^ y
       it "same as negate and add" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
-          (not $ itisNaN $ x -. y) ==>
+          (not $ isNaN $ x -. y) ==>
           x -. y <= x +^ (-y)
           &&
           x -^ y >= x +. (-y)
     describe "approximate multiplication" $ do
       it "down <= up" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
-          not (itisNaN (x *. y))
+          not (isNaN (x *. y))
           ==>
           x *. y <= x *^ y
       it "up ~ down" $ do
@@ -200,11 +201,11 @@ specMPFloat =
           x *. y =~= x *^ y
       it "absorbs 1" $ do
         property $ \ (x :: MPFloat) ->
-          (not $ itisNaN x) ==>
+          (not $ isNaN x) ==>
             x *. (mpFloat 1) == x
       it "approximately commutative" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
-          not (itisNaN (x *. y)) ==>
+          not (isNaN (x *. y)) ==>
           x *. y <= y *^ x
           &&
           x *^ y >= y *. x
@@ -225,7 +226,7 @@ specMPFloat =
     describe "approximate division" $ do
       it "down <= up" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
-          not (itisNaN (x /. y))
+          not (isNaN (x /. y))
           ==>
           x /. y <= x /^ y
       it "up ~ down" $ do
@@ -243,11 +244,11 @@ specMPFloat =
           one /^ (one /. x) >= x
       it "x/1 = x" $ do
         property $ \ (x :: MPFloat) ->
-          not (itisNaN x) ==>
+          not (isNaN x) ==>
           (x /. one) == x
       it "x/x = 1" $ do
         property $ \ (x :: MPFloat) ->
-          (isNonZero x && (not $ itisNaN $ x /. x)) ==>
+          (isNonZero x && (not $ isNaN $ x /. x)) ==>
             (x /. x) <= one
             &&
             (x /^ x) >= one
@@ -260,7 +261,7 @@ specMPFloat =
     describe "approximate sqrt" $ do
       it "down <= up" $ do
         property $ \ (x :: MPFloat) ->
-          not (itisNaN (sqrtDown x))
+          not (isNaN (sqrtDown x))
           ==>
           sqrtDown x <= sqrtUp x
       it "up ~ down" $ do

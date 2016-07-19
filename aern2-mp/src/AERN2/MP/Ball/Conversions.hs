@@ -26,6 +26,29 @@ import AERN2.MP.ErrorBound (errorBound)
 
 import AERN2.MP.Ball.Type
 
+{--- integer bounds of a ball ---}
+
+integerBounds :: MPBall -> (Integer, Integer)
+integerBounds b =
+  (floor l, ceiling r)
+  where
+    (l,r) = endpointsMP b
+
+{--- constructing an exact ball ---}
+
+instance ConvertibleExactly MPBall MPBall where
+  safeConvertExactly = Right
+
+instance ConvertibleExactly Dyadic MPBall where
+  safeConvertExactly x = Right $ MPBall (convertExactly x) (errorBound 0)
+
+instance ConvertibleExactly Integer MPBall where
+  safeConvertExactly x = Right $ MPBall (convertExactly x) (errorBound 0)
+
+instance ConvertibleExactly Int MPBall where
+  safeConvertExactly x = Right $ MPBall (convertExactly x) (errorBound 0)
+
+
 {--- constructing a ball with a given precision ---}
 
 instance ConvertWithPrecision Integer MPBall where
@@ -51,17 +74,3 @@ instance ConvertWithPrecision (Rational, Rational) MPBall where
     where
     (MPBall xFlt xe) = mpBallP p x
     eUp = errorBound e
-
-{--- constructing an exact ball ---}
-
-instance ConvertibleExactly MPBall MPBall where
-  safeConvertExactly = Right
-
-instance ConvertibleExactly Dyadic MPBall where
-  safeConvertExactly x = Right $ MPBall (convertExactly x) (errorBound 0)
-
-instance ConvertibleExactly Integer MPBall where
-  safeConvertExactly x = Right $ MPBall (convertExactly x) (errorBound 0)
-
-instance ConvertibleExactly Int MPBall where
-  safeConvertExactly x = Right $ MPBall (convertExactly x) (errorBound 0)
