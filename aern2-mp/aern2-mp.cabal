@@ -17,9 +17,9 @@ Description:
   .
   * Dyadic:  variable-precision floats with exact ring operations
   .
-  * MPFloat: fixed-precision floats with approximate field + elementary operations
+  * MPFloat: fixed-precision floats with approximate field & elementary operations
   .
-  * MPBall: float + error bound with field + elementary operations (interval computation)
+  * MPBall: float ± error bound with field & elementary (interval-like) operations
   .
   Currently, we use hmpfr when compiling with ghc 7.10 and higher
   and haskell-mpfr when compiling with ghc 7.8.
@@ -77,6 +77,7 @@ library
     AERN2.MP.Ball.Comparisons
     AERN2.MP.Ball.Field
     AERN2.MP.Ball.Elementary
+    AERN2.MP.Ball.Tests
 
 test-suite spec
   type:

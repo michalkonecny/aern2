@@ -10,8 +10,10 @@
 
     Tests for operations on arbitrary precision floats.
 
+    To run the tests using stack, execute:
+    
     @
-    stack test aern2-mp --test-arguments --qc-max-success=1000
+    stack test aern2-mp --test-arguments "-a 1000 -m MPFloat"
     @
 -}
 
