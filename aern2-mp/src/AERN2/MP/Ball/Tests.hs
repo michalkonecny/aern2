@@ -58,7 +58,7 @@ instance Arbitrary MPBall where
             else finiteMPFloat
 
 {-|
-  A runtime representative of type @MPFloat@.
+  A runtime representative of type @MPBall@.
   Used for specialising polymorphic tests to concrete types.
 -}
 tMPBall :: T MPBall

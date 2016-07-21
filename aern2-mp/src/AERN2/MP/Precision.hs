@@ -154,4 +154,4 @@ convertPSecond = convertSecondUsing (\ b q -> convertP (getPrecision b) q)
 
 instance Arbitrary Precision where
   arbitrary =
-    sized $ \size -> choose (50,51+size^2) >>= return . prec
+    sized $ \size -> choose (4,10+size) >>= return . prec
