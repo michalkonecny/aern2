@@ -15,6 +15,15 @@ import qualified FnReps.Polynomial.UnaryCheb.Poly as Poly
 import Data.Set (Set)
 import qualified Data.Set as Set
 
+import Debug.Trace(trace)
+
+shouldTrace = False
+
+maybeTrace :: String -> a -> a
+maybeTrace 
+    | shouldTrace = trace
+    | otherwise = const id
+
 data LineSegment = LineSegment (Rational, MPBall) (Rational, MPBall) deriving Eq
 
 lsFst :: LineSegment -> (Rational, MPBall)
@@ -25,21 +34,120 @@ lsSnd (LineSegment _ b) = b
 
 instance Prelude.Ord LineSegment where
   (<=) (LineSegment (a,_) _) (LineSegment (b,_) _) = a <= b 
-
-initialApproximation :: Rational -> Accuracy -> PPoly -> PPoly
-initialApproximation threshold acc f = 
-  linearPolygon ((lsFst $ head nodes) : (map lsSnd nodes)) smallestOverlap
+  
+inverse :: PPoly -> Rational -> Integer -> Accuracy -> PPoly
+inverse f threshold its acc = 
+  PPoly (zipWith (\ie (i,p) -> (i, Poly.polyAddToRadius p (finalErr ie))) iE ps) ov
   where
-  nodes = Set.toList $ refineUntilAccurate $ LineSegment (-1.0, 1/(eval f (mpBall $ -1))) (1.0, 1/(eval f (mpBall 1)))
-  smallestOverlap = foldl1 min $ map (\(LineSegment (l,_) (r,_)) -> overlap (l,r)) nodes
-  pieceAccurate (LineSegment (l,fl) (r,fr)) =
-    let Interval _ err = abs $ range' acc (f*(lineSegment ((l,fl), (r,fr))) - 1) (Interval (mpBall l) (mpBall r))
+  Interval _ b = abs $ range (bits 100) f (Interval (mpBall $ -1) (mpBall 1))
+  PPoly ps ov = inverseWithInit f iA b its
+  (iA, iE) = initialApproximation threshold acc f b
+  finalErr e = aux its e
+  aux k e = if k == 0 then e else aux (k - 1) (e*e)        
+        
+inverseWithInit :: PPoly -> PPoly -> MPBall -> Integer -> PPoly
+inverseWithInit f f0 bf its = 
+  aux f0 its
+  where
+  aux fn k = 
+    if k == 0 then
+      fn
+    else
+      maybeTrace (
+        "iterating...\n"++
+        "radius before iteration: "++(show $ radius fn)++"\n"++
+        "radius after: "++(show $ radius next)++"\n"
+      ) $
+      aux (reduceDegree next) (k - 1) 
+      where
+      next = 2*fn - (mwb f (mwb fn fn (mpBall 2) (mpBall 2)) bf (mpBall 4)) 
+      mwb g h bg bh = PPoly [(i, mwbPoly p q bg bh) | (i,p,q) <- refine g h] $ min (ppoly_overlap g) (ppoly_overlap h)
+      mwbPoly g h bg bh = 
+        let
+          rh = Poly.polyRadius h
+          rg = Poly.polyRadius g
+        in 
+        Poly.polyAddToRadius ((Poly.polyCentre g) * (Poly.polyCentre h)) $ (bg*rh + bh*rg + rh*rg) 
+      
+reduceDegree :: PPoly -> PPoly 
+reduceDegree f@(PPoly ps ov) = 
+  maybeTrace (
+    "reducing degree \n"++
+    "original degree: "++(show $ Poly.poly_degree $ (snd . head) ps) ++ "\n"++
+    "new degree:" ++ (show $ Poly.poly_degree $ (snd. head . ppoly_pieces) result) ++"\n"++
+    "original radius: "++(show $ radius f) ++ "\n"++
+    "new radius: "++(show $ radius result)
+  ) $
+  result
+  where
+  result = PPoly (map (aux $ (Poly.poly_degree $ (snd . head) ps) `Prelude.div` 2) ps) ov
+  aux d (i, p) = 
+    let 
+      reduced = Poly.reduceDegreeAndSweep d NormZero $ p
+      err0 = Poly.polyRadius p
+      err = Poly.polyRadius reduced
+      justTrue (Just True) = True
+      justTrue _ = False
     in
-      err < threshold
-  refineUntilAccurate :: LineSegment -> Set LineSegment
+      if justTrue (err < 100*err0) then
+        maybeTrace(
+        "reducing degree\n"++
+        "original degree: "++ (show (Poly.poly_degree p)) ++"\n"++
+        "final degree "++(show d)++ "\n"++
+        "error: "++(show err) ++"\n"++
+        "target error:" ++(show err0)
+        ) $
+        (i, reduced)
+      else
+        aux (d + 10) (i,p)    
+      
+initialApproximation :: Rational -> Accuracy -> PPoly -> MPBall -> (PPoly, [MPBall])
+initialApproximation threshold acc f bf = 
+  maybeTrace (
+  --"f: "++(show f) ++"\n"++
+  --"f reduced: "++(show fReduced) ++ "\n"++
+  "accuracy of f: "++(show $ getAccuracy f) ++"\n"++
+  "accuracy of f reduced: "++(show $ getAccuracy fReduced) ++ "\n"++
+  "number of nodes: "++(show $ length nodes) ++ "\n"++
+  "first node: " ++(show $ lsFst $ head nodes)
+  ) $
+  result
+  where
+  result = (linearPolygon ((lsFst $ head nodes) : (map lsSnd nodes)) smallestOverlap, nodeErrs) 
+  
+  fReduced = reduceF 5
+  reduceF d = 
+    let 
+      try = reduceDegreeAndSweep d NormZero f
+    in
+      if getAccuracy try > (normLog2Accuracy $ getNormLog threshold) + 1 then
+        try
+      else
+        reduceF (d + 5)
+        
+  mwb g h bg bh = PPoly [(i, mwbPoly p q bg bh) | (i,p,q) <- refine g h] $ min (ppoly_overlap g) (ppoly_overlap h)
+  mwbPoly g h bg bh = 
+    let
+      rh = Poly.polyRadius h
+      rg = Poly.polyRadius g
+    in 
+    Poly.polyAddToRadius ((Poly.polyCentre g) * (Poly.polyCentre h)) $ (bg*rh + bh*rg + rh*rg) 
+  
+  nodesNErrs = Set.toList $ refineUntilAccurate $ LineSegment (-1.0, 1/(eval f (mpBall $ -1))) (1.0, 1/(eval f (mpBall 1)))
+  nodes = map fst nodesNErrs
+  nodeErrs = map snd nodesNErrs
+  smallestOverlap = foldl1 min $ map (\(LineSegment (l,_) (r,_)) -> overlap (l,r)) nodes
+  pieceError (LineSegment (l,fl) (r,fr)) =
+    let Interval _ err = abs $ range' acc ((mwb fReduced (lineSegment ((l,fl), (r,fr))) bf (mpBall 2)) - 1) (Interval (mpBall l) (mpBall r))
+    in
+      err
+  refineUntilAccurate :: LineSegment -> Set (LineSegment, MPBall)
   refineUntilAccurate p = 
-    if pieceAccurate p == Just True then
-      Set.singleton p
+    let
+      err = pieceError p 
+    in
+    if (err < threshold) == Just True then
+      Set.singleton (p, err)
     else let refined = refinePiece p in
       (refineUntilAccurate $ Set.elemAt (int 0) refined) `Set.union` (refineUntilAccurate $ Set.elemAt (int 1) refined)
   refinePiece :: LineSegment -> Set LineSegment
@@ -57,56 +165,7 @@ initialApproximation threshold acc f =
     else if l == -1.0 && r /= 1.0 then
       linearPolygon [(l, fl), (r, fr), (1.0, fr)] $ overlap  (l,r)
     else
-      linearPolygon [(l,fl), (r,fr)] $ overlap  (l,r)  
-
-               
-inverseWithInitP :: PPoly -> PPoly -> Integer -> Precision -> PPoly
-inverseWithInitP f f0 its pr = 
-  aux (setPrecision pr f0) its
-  where
-  aux fn k = 
-    if k == 0 then
-      fn
-    else
-      aux (reduceDegree (2*fn - f*fn*fn)) (k - 1)    
-
-inverseWithInit :: PPoly -> PPoly -> Integer -> PPoly
-inverseWithInit f f0 its = 
-  aux 100
-  where
-  aux pr = 
-    let
-      try = inverseWithInitP f f0 its (prec pr) 
-      err = radius try
-    in
-      if getNormLog err < getNormLog 1
-      && getAccuracy err > (normLog2Accuracy $ getNormLog err) + 1 then
-        try
-      else
-        aux $ pr + pr `Prelude.div` 2
-
-reduceDegree :: PPoly -> PPoly 
-reduceDegree f = aux 10
-  where
-  err0 = radius f
-  aux d = 
-    let 
-      reduced = reduceDegreeAndSweep d NormZero $ f
-      err = radius reduced
-      justTrue (Just True) = True
-      justTrue _ = False
-    in
-      if justTrue (err < 1.5*err0) then
-        reduced
-      else
-        aux (d + 10)
-
-inverse :: PPoly -> Rational -> Integer -> Accuracy -> PPoly
-inverse f threshold its acc = 
-  addToErrorTerm (mpBall err) $ inverseWithInit f (initialApproximation threshold acc f) its
-  where
-  err = aux its threshold 
-  aux k e = if k == 0 then e else aux (k - 1) (e*e)  
+      linearPolygon [(l,fl), (r,fr)] $ overlap  (l,r)                 
   
 {- 1/x : -}
 
@@ -150,4 +209,3 @@ xInverse :: Integer -> Integer -> PPoly
 xInverse n k = addToErrorTerm err xInv
                where
                (err, xInv) = xInverseIRRAM n k             
-               

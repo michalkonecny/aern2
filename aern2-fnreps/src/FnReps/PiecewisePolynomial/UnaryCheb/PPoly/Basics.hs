@@ -10,6 +10,7 @@ dropAllErrors,
 piecesMeetingInterval,
 reduceDegreeAndSweep,
 radius,
+refine,
 PPoly(..),
 )
 where
