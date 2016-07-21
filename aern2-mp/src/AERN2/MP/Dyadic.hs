@@ -11,8 +11,6 @@
 
     Arbitrary precision floating-point numbers with exact ring operations.
 
-    TODO: this module is unfinished
-
     Currently, we use hmpfr when compiling with ghc 7.10 and higher
     and haskell-mpfr when compiling with ghc 7.8.
 -}
