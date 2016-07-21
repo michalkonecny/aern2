@@ -20,6 +20,7 @@ module AERN2.MP.Ball.Type
   , setPrecisionAtLeastAccuracy
   -- * Ball construction/extraction functions
   , centre, radius
+  , centreDyadic
   , centreAndErrorBall
   , endpoints, fromEndpoints
   , endpointsMP, fromEndpointsMP
@@ -29,6 +30,7 @@ where
 import Numeric.MixedTypes
 -- import qualified Prelude as P
 
+import AERN2.MP.Dyadic
 import qualified AERN2.MP.Float as MPFloat
 import AERN2.MP.Float (MPFloat, mpFloat)
 import AERN2.MP.Float.Operators
@@ -98,6 +100,10 @@ centreAndErrorBall x = (cB,eB)
 centre :: MPBall -> MPBall
 centre =
     fst . centreAndErrorBall
+
+centreDyadic :: MPBall -> Dyadic
+centreDyadic (MPBall cMP _eEB) =
+    dyadic cMP
 
 radius :: MPBall -> MPBall
 radius =

@@ -177,6 +177,9 @@ instance CanDiv MPBall Dyadic where
 instance CanDiv Dyadic MPBall where
   type DivType Dyadic MPBall = MPBall
   divide = convertFirst divide
+instance CanDiv Dyadic Dyadic where
+  type DivType Dyadic Dyadic = MPBall
+  divide a b = divide (mpBall a) (mpBall b)
 
 instance CanDiv MPBall Rational where
   type DivType MPBall Rational = MPBall

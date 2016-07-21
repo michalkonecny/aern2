@@ -7,7 +7,7 @@ stability:      experimental
 maintainer:     Michal Konecny <mikkonecny@gmail.com>
 tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
 license:        BSD3
-homepage:       https://github.com/michalkonecny/aern2/aern2-mpfr
+homepage:       https://github.com/michalkonecny/aern2/aern2-mp
 synopsis:       Multi-precision floats via haskell-mpfr or hmpfr
 category:       Math
 copyright:      (c) 2015, 2016 Michal Konecny
