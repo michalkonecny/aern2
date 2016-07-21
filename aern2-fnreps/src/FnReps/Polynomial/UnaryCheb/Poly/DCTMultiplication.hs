@@ -125,7 +125,7 @@ lift1_DCT ::
 lift1_DCT getDegree op (Poly termsA) =
     maybeTrace
     (
-        "lift2_DCT:"
+        "lift1_DCT:"
         ++ "\n cN = " ++ show cN
         ++ "\n dA = " ++ show dA
         ++ "\n aT = " ++ show aT
