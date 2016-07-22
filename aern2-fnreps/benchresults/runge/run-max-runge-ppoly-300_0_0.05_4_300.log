@@ -1,23 +1,23 @@
 computing max  1/(100x^2+1) over [-1,1]
-result = [1.0000000000000000000000000000000000002821186441973506188734453915630950987183612420153214933e+00 ± 1.5258797033078577e-21]
+result = [1.0000000000000000000000000000000000000000005380986101325077720313417868251720870661057038502e+00 ± 1.6273971321607009e-27]
 result ~ (1e+00,False)
-accuracy: Bits 69
+accuracy: Bits 88
 precision = Precision 300
 	Command being timed: "./aern2-fnreps-ops max runge ppoly 300 0 0.05 4 300"
-	User time (seconds): 14.88
+	User time (seconds): 14.15
 	System time (seconds): 0.02
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:14.93
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:14.21
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 12616
+	Maximum resident set size (kbytes): 11796
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 3885
+	Minor (reclaiming a frame) page faults: 3370
 	Voluntary context switches: 1
-	Involuntary context switches: 1546
+	Involuntary context switches: 3634
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

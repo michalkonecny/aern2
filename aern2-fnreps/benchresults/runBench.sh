@@ -235,7 +235,7 @@ function rungeFun
     dir=$fn
     
     op=max
-    for params in 05 35 65 100
+    for params in 05 35 65 100 120
     do
         runOne
     done
@@ -254,7 +254,7 @@ function rungeDFun
     dir=$fn
     
     op=max
-    for params in 05 35 65 100
+    for params in 05 35 65 100 120
     do
         runOne
     done
@@ -295,7 +295,7 @@ function rungePPoly
     dir=$fn
     
     op=max
-    for params in "100 0 0.1 1 100" "100 0 0.1 2 100" "150 0 0.1 3 150" "150 0 0.01 3 150" "300 0 0.05 4 300" "200 0 0.001 3 200" "300 0 0.01 4 300"
+    for params in "100 0 0.1 1 100" "100 0 0.1 2 100" "150 0 0.1 3 150" "150 0 0.01 3 150" "200 0 0.001 3 200" "300 0 0.01 4 300"
     do
         runOne
     done
@@ -338,7 +338,7 @@ function rungeXDFun
     dir=$fn
     
     op=max
-    for params in 05 10 20 30 40 50 60 80
+    for params in 05 10 20 30 40 50 60 80 100 130
     do
         runOne
     done
@@ -377,7 +377,7 @@ function rungeXPPoly
     dir=$fn
     
     op=max
-    for params in "100 0 0.1 1 100" "100 0 0.1 2 100" "150 0 0.1 3 150" "150 0 0.01 3 150" "300 0 0.05 4 300" "200 0 0.001 3 200" "300 0 0.01 4 300"
+    for params in "100 0 0.1 1 100" "100 0 0.1 2 100" "150 0 0.1 3 150" "150 0 0.01 3 150" "200 0 0.001 3 200" "300 0 0.01 4 300"
     do
         runOne
     done
@@ -401,7 +401,7 @@ function fracSinFun
     dir=$fn
     
     op=max
-    for params in 05 10 15 20 25 30
+    for params in 05 15 25 35 45 55
     do
         runOne
     done
@@ -420,7 +420,7 @@ function fracSinDFun
     dir=$fn
     
     op=max
-    for params in 05 10 15 20 25 30
+    for params in 05 15 25 35 45 55
     do
         runOne
     done
@@ -460,13 +460,13 @@ function fracSinPPoly
     dir=$fn
     
     op=max
-    for params in "100 20 0.5 1 100" "100 30 0.1 1 100" "100 30 0.01 1 100" "100 30 0.1 2 100" "100 40 0.01 2 100" "100 40 0.001 2 100" "800 100 0.1 3 200"
+    for params in "100 20 0.5 1 100" "100 30 0.1 2 100" "100 40 0.01 2 100" "100 40 0.001 2 100" "800 100 0.01 3 200"
     do
         runOne
     done
     
     op=integrate
-    for params in "100 20 0.5 1 100" "100 30 0.1 1 100" "100 30 0.01 1 100" "100 30 0.1 2 100" "100 40 0.01 2 100" "100 40 0.001 2 100" "800 100 0.1 3 200"
+    for params in "100 20 0.5 1 100" "100 30 0.1 1 100" "100 30 0.1 2 100" "100 40 0.01 2 100" "100 40 0.001 2 100" "800 100 0.01 3 200"
     do
         runOne
     done
