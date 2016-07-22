@@ -1,0 +1,35 @@
+rangePB:
+ accuracy(result) = [[-2.0000000001290176253110542048548e+00 ± 1.4441311679562541e-08],[1.1250000000681179379813588786479e+00 ± 1.4441311679562541e-08]]
+ acc = Bits 100
+ lDom = (-1) % 1
+ rDom = 1 % 1
+ lUnit = [-1e+00 ± 0e+00]
+ rUnit = [1e+00 ± 0e+00]
+computing max  sin(10x)+cos(20x) over [-1,1]
+result = [1.1250000000681179379813588786479e+00 ± 1.4441311679562541e-08]
+result ~ (1.1250000019e+00,True)
+accuracy: Bits 26
+precision = Precision 100
+	Command being timed: "./aern2-fnreps-ops max sine+cos poly 100 40 0 100"
+	User time (seconds): 0.69
+	System time (seconds): 0.00
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.70
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 7756
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 2063
+	Voluntary context switches: 1
+	Involuntary context switches: 106
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

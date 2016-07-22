@@ -1,0 +1,35 @@
+rangePB:
+ accuracy(result) = [[-1.0000000000000000000000000000000774997458168947187783611518247e+00 ± 2.4497526447326625e-29],[9.9999999999999999999999999999969010497357898733845604566481283e-01 ± 2.4497526447326625e-29]]
+ acc = Bits 200
+ lDom = (-1) % 1
+ rDom = 1 % 1
+ lUnit = [-1e+00 ± 0e+00]
+ rUnit = [1e+00 ± 0e+00]
+computing max  sin(10x+sin(20x^2)) over [-1,1]
+result = [9.9999999999999999999999999999969010497357898733845604566481283e-01 ± 2.4497526447326625e-29]
+result ~ (1e+00,False)
+accuracy: Bits 95
+precision = Precision 200
+	Command being timed: "./aern2-fnreps-ops max sinesine poly 200 100 500 200"
+	User time (seconds): 274.23
+	System time (seconds): 1.90
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 4:36.67
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 435216
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 1272399
+	Voluntary context switches: 1
+	Involuntary context switches: 36599
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
