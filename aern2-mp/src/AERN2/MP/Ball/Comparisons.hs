@@ -32,7 +32,7 @@ import AERN2.MP.Float (MPFloat, mpFloat)
 import AERN2.MP.Precision
 
 import AERN2.MP.Ball.Type
-import AERN2.MP.Ball.Conversions ()
+import AERN2.MP.Ball.Conversions (integerBounds)
 
 {-- extracting approximate information about a ball --}
 
@@ -181,6 +181,17 @@ instance HasOrderAsymmetric Rational MPBall where
 
 instance CanTestZero MPBall
 instance CanTestPosNeg MPBall
+
+instance CanTestInteger MPBall where
+  certainlyNotInteger b =
+    (rN - lN) == 1 && lN !<! b && b !<! rN
+    where
+      (lN, rN) = integerBounds b
+  certainlyIntegerGetIt b
+    | rN == lN = Just lN
+    | otherwise = Nothing
+    where
+      (lN, rN) = integerBounds b
 
 instance CanMinMaxAsymmetric MPBall MPBall where
   min = byEndpointsMP min

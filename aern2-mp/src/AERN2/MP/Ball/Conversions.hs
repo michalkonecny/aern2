@@ -28,7 +28,7 @@ import AERN2.MP.ErrorBound (errorBound)
 
 import AERN2.MP.Ball.Type
 
-{--- integer bounds of a ball ---}
+{--- extracting integer from a ball ---}
 
 integerBounds :: MPBall -> (Integer, Integer)
 integerBounds b =
