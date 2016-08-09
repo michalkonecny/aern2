@@ -30,6 +30,8 @@ where
 import Numeric.MixedTypes
 -- import qualified Prelude as P
 
+import Numeric.CatchingExceptions
+
 import AERN2.MP.Dyadic
 import qualified AERN2.MP.Float as MPFloat
 import AERN2.MP.Float (MPFloat, mpFloat)
@@ -58,6 +60,9 @@ data MPBall = MPBall { ball_value :: MPFloat, ball_error :: ErrorBound }
 instance Show MPBall
     where
     show (MPBall x e) = "[" ++ show x ++ " ± " ++ show e ++ "]"
+
+instance CanTestValid MPBall where
+  isValid (MPBall x e) = isFinite x && isFinite (mpFloat e)
 
 {- ball construction/extraction functions -}
 

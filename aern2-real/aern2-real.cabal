@@ -39,9 +39,12 @@ library
     MultiParamTypeClasses,
     FlexibleContexts,
     FlexibleInstances,
-    UndecidableInstances
+    UndecidableInstances,
+    Arrows
   exposed-modules:
+    -- AERN2.QA
     -- AERN2.Real
+    -- AERN2.Effort
 
 test-suite spec
   type:
