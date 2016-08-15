@@ -19,11 +19,13 @@ library
   hs-source-dirs:  src
   build-depends:
     base == 4.*
+    , containers == 0.5.*
     -- , arithmoi == 0.4.*
     -- , convertible >= 1.1.1.0 && < 1.2
     , hspec >= 2.1 && < 2.3
     -- , hspec-smallcheck >= 0.3 && < 0.5
     , QuickCheck >= 2.7 && < 2.9
+    , transformers >= 0.4 && < 0.6
     , mixed-types-num == 0.1.*
     , aern2-mp == 0.1.*
   ghc-options:     -Wall -fno-warn-orphans
@@ -43,28 +45,28 @@ library
     Arrows
   exposed-modules:
     -- AERN2.QA
-    -- AERN2.Real
     -- AERN2.Effort
+    AERN2.Real.Type
 
-test-suite spec
-  type:
-      exitcode-stdio-1.0
-  ghc-options:
-      -Wall
-  extensions:
-    RebindableSyntax,
-    PostfixOperators,
-    ScopedTypeVariables,
-    FlexibleContexts
-  hs-source-dirs:
-      test
-  main-is:
-      Spec.hs
-  build-depends:
-    base == 4.*
-    -- , mixed-types-num
-    -- , aern2-mp
-    , aern2-real
-    , hspec >= 2.1 && < 2.3
-    -- , hspec-smallcheck >= 0.3 && < 0.5
-    , QuickCheck >= 2.7 && < 2.9
+-- test-suite spec
+--   type:
+--       exitcode-stdio-1.0
+--   ghc-options:
+--       -Wall
+--   extensions:
+--     RebindableSyntax,
+--     PostfixOperators,
+--     ScopedTypeVariables,
+--     FlexibleContexts
+--   hs-source-dirs:
+--       test
+--   main-is:
+--       Spec.hs
+--   build-depends:
+--     base == 4.*
+--     -- , mixed-types-num
+--     -- , aern2-mp
+--     , aern2-real
+--     , hspec >= 2.1 && < 2.3
+--     -- , hspec-smallcheck >= 0.3 && < 0.5
+--     , QuickCheck >= 2.7 && < 2.9
