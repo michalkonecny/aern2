@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell, Rank2Types #-}
 {-|
     Module      :  AERN2.Effort
     Description :  Effort indicator to direct enclosure computation
@@ -13,14 +14,17 @@
 module AERN2.Effort
 (
   WithEffort, WithEffortP(..)
-  , Effort(..), EffortItem(..)
+  , Effort, EffortItem(..)
+  , subs, subE
+  , empty, normalise,
 )
 where
 
 import Numeric.MixedTypes
 -- import qualified Prelude as P
 
--- import Control.Arrow
+import Control.Lens
+
 -- import Data.Maybe
 import qualified Data.Map as Map
 
@@ -56,11 +60,66 @@ instance (Show t) => QAProtocolCacheable (WithEffortP t) where
   lookupQACache _ _ _ = Nothing
   updateQACache _ _ _ _ = ()
 
-newtype Effort = Effort (Map.Map String EffortItem)
-  deriving (Show)
+type Effort = Map.Map String EffortItem
 data EffortItem
-  = EffortNum { effortNum :: Integer }
+  = EffortNum { _effortNum :: Integer }
   -- | EffortFun { effortFun :: Integer -> Integer }
   -- | EffortFun { effortFunSampleArg :: Effort, effortFun :: Effort -> Integer }
-  | EffortSub { effortSub :: Effort }
+  | EffortSub { _effortSub :: Effort }
   deriving (Show)
+
+makePrisms ''EffortItem
+
+empty :: Effort
+empty = Map.empty
+
+normalise :: Effort -> Effort
+normalise e =
+  Map.filter nonEmpty $
+    e & subs %~ normalise
+  where
+  nonEmpty (EffortSub eSub) = not $ Map.null eSub
+  nonEmpty _ = True
+
+subs :: Traversal' Effort Effort
+subs = each . _EffortSub
+
+subE :: String -> Prism' Effort Effort
+subE subname = prism' makeSub extractSub
+  where
+    makeSub e =
+      -- at subname ?~ EffortSub e $ empty
+      Map.singleton subname (EffortSub e)
+    extractSub e =
+      case e ^. at subname of
+        Just (EffortSub eSub) -> Just eSub
+        _ -> Nothing
+
+{- TODO: expand and move the following to separate modules -}
+
+instance (CanAddAsymmetric t1 t2) => CanAddAsymmetric (WithEffort t1) (WithEffort t2) where
+  type AddType (WithEffort t1) (WithEffort t2) = WithEffort (AddType t1 t2)
+  add x y =
+    QA name Nothing p sampleEff makeQ
+    where
+      name = "+" -- "(" ++ (qaName x) ++ "+" ++ (qaName y) ++ ")"
+      p = WithEffortP (sampleX + sampleY)
+      WithEffortP sampleX = qaProtocol x
+      WithEffortP sampleY = qaProtocol y
+      (sampleEff, projectXEff, projectYEff) =
+        combineSampleEfforts xSampleEff ySampleEff
+      xSampleEff = qaSampleQ x
+      ySampleEff = qaSampleQ y
+      makeQ eff = xB + yB
+        where
+        xB = qaMakeQuery x $ projectXEff eff
+        yB = qaMakeQuery y $ projectYEff eff
+
+combineSampleEfforts e1 e2
+  = undefined
+  -- | bothHavePrec =
+  --     (Map.singleton "prec" prec1, id, id)
+  --     (Map.fromList [("prec", prec1)], e1WithoutPrec, e2WithoutPrec])
+  -- (e, proj1, proj2)
+  -- where
+  --   e = e1
