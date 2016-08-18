@@ -49,7 +49,7 @@ data CauchyRealP = CauchyRealP deriving (Show)
 instance QAProtocol CauchyRealP where
   type Q CauchyRealP = Accuracy
   type A CauchyRealP = MPBall
-  sampleQ _ = NoInformation
+  -- sampleQ _ = NoInformation
 
 pCR :: CauchyRealP
 pCR = CauchyRealP
@@ -68,13 +68,16 @@ type CauchyRealA to = QA to CauchyRealP
 
 type CauchyReal = CauchyRealA (->)
 
+{- TODO: expand and move the following to separate modules -}
+
 instance (QAArrow to) => CanAddAsymmetric (CauchyRealA to) (CauchyRealA to) where
   type AddType (CauchyRealA to) (CauchyRealA to) = (CauchyRealA to)
   add x y =
-    QA p Nothing name makeQ
+    QA name Nothing p sampleQ makeQ
     where
       name = "+" -- "(" ++ (qaName x) ++ "+" ++ (qaName y) ++ ")"
       p = qaProtocol x
+      sampleQ = qaSampleQ x
       makeQ =
           proc ac -> do
             xB <- qaMakeQuery x -< ac
@@ -93,13 +96,13 @@ _addA =
     returnA -< s
 
 _CRonePure :: CauchyReal
-_CRonePure = QA pCR Nothing "one" (\ _ac -> mpBall 1)
+_CRonePure = QA "one" Nothing pCR NoInformation (\ _ac -> mpBall 1)
 
 _addApure :: CauchyReal
 _addApure = _addA (_CRonePure, _CRonePure)
 
 _CRoneCached :: CauchyRealA QACachedA
-_CRoneCached = QA pCR Nothing "one" (Kleisli $ \ _ac -> return $ mpBall 1)
+_CRoneCached = QA "one" Nothing pCR NoInformation (Kleisli $ \ _ac -> return $ mpBall 1)
 
 _addAcached :: QACachedA () (CauchyRealA QACachedA)
 _addAcached =

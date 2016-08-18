@@ -49,7 +49,6 @@ _dummy = maybeTrace "dummy" ()
 class (Show p, Show (Q p), Show (A p)) => QAProtocol p where
   type Q p
   type A p
-  sampleQ :: p -> Q p
 
 class (QAProtocol p) => QAProtocolCacheable p where
   type QACache p
@@ -57,15 +56,15 @@ class (QAProtocol p) => QAProtocolCacheable p where
   lookupQACache :: p -> QACache p -> Q p -> Maybe (A p)
   updateQACache :: p -> QACache p -> Q p -> A p -> QACache p
 
-{-| An object we can ask queries about.  Queries can be asked in a some Arrow @to@. -}
+{-| An object we can ask queries about.  Queries can be asked in some Arrow @to@. -}
 data QA to p = QA
   {
-    qaProtocol :: p,
-    qaId :: Maybe (QAId to),
     qaName :: String,
+    qaId :: Maybe (QAId to),
+    qaProtocol :: p,
+    qaSampleQ :: Q p,
     qaMakeQuery :: (Q p) `to` (A p)
   }
-
 
 {-|
   A class of Arrows suitable for use in QA objects.
@@ -103,10 +102,10 @@ instance QAArrow QACachedA where
   type QAId QACachedA = ValueId
   qaRegister = Kleisli qaRegisterM
     where
-    qaRegisterM (x@(QA p _ name _), sources) =
+    qaRegisterM (x@(QA name _ p sampleQ _), sources) =
       do
       xId <- newId x sources
-      return $ QA p (Just xId) name (Kleisli $ makeQCached xId)
+      return $ QA name (Just xId) p sampleQ (Kleisli $ makeQCached xId)
       where
       makeQCached = getAnswer p
   qaMakeQueryA = Kleisli qaMakeQueryM
@@ -191,7 +190,7 @@ initQANetInfo =
     }
 
 newId :: (QAProtocolCacheable p) => (QA QACachedA p) -> [QA QACachedA p] -> QACachedM ValueId
-newId (QA p Nothing name (Kleisli q2a)) sources =
+newId (QA name Nothing p _sampleQ (Kleisli q2a)) sources =
   maybeTrace ("newId: " ++ show name) $
   do
   ni <- get
