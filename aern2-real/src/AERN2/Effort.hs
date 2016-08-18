@@ -15,8 +15,10 @@ module AERN2.Effort
 (
   WithEffort, WithEffortP(..)
   , Effort, EffortItem(..)
-  , subs, subE
-  , empty, normalise,
+  , subs, subE, precE
+  , normaliseTopLevel, unifyPrecTopLevel
+  , combineSampleEfforts
+  -- , empty
 )
 where
 
@@ -70,17 +72,6 @@ data EffortItem
 
 makePrisms ''EffortItem
 
-empty :: Effort
-empty = Map.empty
-
-normalise :: Effort -> Effort
-normalise e =
-  Map.filter nonEmpty $
-    e & subs %~ normalise
-  where
-  nonEmpty (EffortSub eSub) = not $ Map.null eSub
-  nonEmpty _ = True
-
 subs :: Traversal' Effort Effort
 subs = each . _EffortSub
 
@@ -94,6 +85,57 @@ subE subname = prism' makeSub extractSub
       case e ^. at subname of
         Just (EffortSub eSub) -> Just eSub
         _ -> Nothing
+
+precE :: Traversal' Effort Integer
+precE = at "prec" . _Just . _EffortNum
+
+empty :: Effort
+empty = Map.empty
+
+-- normalise :: Effort -> Effort
+-- normalise e =
+--   normaliseTopLevel $ e & subs %~ normalise
+
+
+{-  TODO: make normaliseTopLevel a lens -}
+normaliseTopLevel :: Effort -> Effort
+normaliseTopLevel e =
+  Map.filter nonEmpty e
+  where
+  nonEmpty (EffortSub eSub) = not $ Map.null eSub
+  nonEmpty _ = True
+
+-- unifyPrec :: Effort -> Effort
+-- unifyPrec e =
+--   unifyPrecTopLevel $
+--     e & subs %~ unifyPrec
+
+{-  TODO: make unifyPrecTopLevel a lens -}
+unifyPrecTopLevel :: Effort -> Effort
+unifyPrecTopLevel e =
+  normaliseTopLevel $
+    (e & subs %~ removePrec) & precE .~ p
+  where
+    removePrec = at "prec" .~ Nothing
+    p = maximum $ (e ^.. subs . precE) ++ (e ^.. precE)
+
+{- TODO: Make combineSampleEfforts return 2 lenses -}
+combineSampleEfforts ::
+  Effort -> Effort ->
+  (Effort, Effort -> Effort, Effort -> Effort)
+combineSampleEfforts eL eR =
+  (sampleEff, projectL, projectR)
+  where
+  sampleEff =
+    unifyPrecTopLevel $
+      empty & subE "L" .~ eL & subE "R" .~ eR
+  projectL = project "L"
+  projectR = project "R"
+  project subname eff =
+    case (eff ^? precE, eff ^? subE subname) of
+      (Just p, Just e) -> e & precE .~ p
+      (_, Just e) -> e
+      _ -> eff
 
 {- TODO: expand and move the following to separate modules -}
 
@@ -114,12 +156,3 @@ instance (CanAddAsymmetric t1 t2) => CanAddAsymmetric (WithEffort t1) (WithEffor
         where
         xB = qaMakeQuery x $ projectXEff eff
         yB = qaMakeQuery y $ projectYEff eff
-
-combineSampleEfforts e1 e2
-  = undefined
-  -- | bothHavePrec =
-  --     (Map.singleton "prec" prec1, id, id)
-  --     (Map.fromList [("prec", prec1)], e1WithoutPrec, e2WithoutPrec])
-  -- (e, proj1, proj2)
-  -- where
-  --   e = e1
