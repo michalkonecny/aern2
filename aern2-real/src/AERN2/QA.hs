@@ -14,7 +14,7 @@
 module AERN2.QA
 (
   QAProtocol(..), QAProtocolCacheable(..)
-  , QA(..)
+  , QA(..), qa
   , QAArrow(..), (-:-), (//..)
   , QACachedA, QANetInfo(..)
   , executeQACachedA, printQANetLogThenResult
@@ -61,22 +61,31 @@ data QA to p = QA
   {
     qaName :: String,
     qaId :: Maybe (QAId to),
+    qaSources :: [QAId to],
     qaProtocol :: p,
     qaSampleQ :: Q p,
     qaMakeQuery :: (Q p) `to` (A p)
   }
 
+qa :: String -> p -> Q p -> (Q p) `to` (A p) -> QA to p
+qa name = QA name Nothing []
+
 {-|
   A class of Arrows suitable for use in QA objects.
 -}
-class (Arrow to) => QAArrow to where
+class (ArrowChoice to) => QAArrow to where
   type QAId to
   {-|
     Register a QA object, which leads to a change in its
     query processing mechanism so that, eg, answers can be cached
     or computations assigned to different threads/processes.
+
+    The second parameter is a list of objects that the given
+    object directly depends on.  This is used only for logging
+    and visualisation.
   -}
-  qaRegister :: (QAProtocolCacheable p) => (QA to p, [QA to p]) `to` (QA to p)
+  qaRegister :: (QAProtocolCacheable p) =>
+    (QA to p, [QA to p]) `to` (QA to p)
   qaMakeQueryA :: (QA to p, Q p) `to` (A p)
 
 (-:-) :: (QAArrow to, QAProtocolCacheable p) => (QA to p, [QA to p]) `to` (QA to p)
@@ -102,12 +111,13 @@ instance QAArrow QACachedA where
   type QAId QACachedA = ValueId
   qaRegister = Kleisli qaRegisterM
     where
-    qaRegisterM (x@(QA name _ p sampleQ _), sources) =
+    qaRegisterM (x@(QA name _ _ p sampleQ _), sources) =
       do
       xId <- newId x sources
-      return $ QA name (Just xId) p sampleQ (Kleisli $ makeQCached xId)
+      return $ QA name (Just xId) sourceIds p sampleQ (Kleisli $ makeQCached xId)
       where
       makeQCached = getAnswer p
+      sourceIds = catMaybes $ map qaId sources
   qaMakeQueryA = Kleisli qaMakeQueryM
     where
     qaMakeQueryM (qa, q) = runKleisli (qaMakeQuery qa) q
@@ -190,7 +200,7 @@ initQANetInfo =
     }
 
 newId :: (QAProtocolCacheable p) => (QA QACachedA p) -> [QA QACachedA p] -> QACachedM ValueId
-newId (QA name Nothing p _sampleQ (Kleisli q2a)) sources =
+newId (QA name _ _ p _sampleQ (Kleisli q2a)) sources =
   maybeTrace ("newId: " ++ show name) $
   do
   ni <- get
