@@ -1,6 +1,6 @@
 {-|
     Module      :  AERN2.Real.Type
-    Description :  Cauchy real numbers
+    Description :  The type of Cauchy real numbers
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -8,7 +8,7 @@
     Stability   :  experimental
     Portability :  portable
 
-    Cauchy real numbers
+    The type of Cauchy real numbers
 -}
 module AERN2.Real.Type
 (
@@ -22,7 +22,7 @@ where
 import Numeric.MixedTypes
 -- import qualified Prelude as P
 
-import Control.Arrow
+-- import Control.Arrow
 
 import AERN2.MP.Ball
 -- import AERN2.MP.Precision
@@ -70,122 +70,3 @@ type CauchyReal = CauchyRealA (->)
 
 newCR :: String -> Accuracy `to` MPBall -> CauchyRealA to
 newCR name makeQ = newQA name pCR NoInformation makeQ
-
-{- TODO: expand and move the following to separate modules -}
-
-binaryOp ::
-  (ArrowChoice to)
-  =>
-  String ->
-  (MPBall -> MPBall -> MPBall) ->
-  (CauchyRealA to -> CauchyRealA to -> (Accuracy `to` ((Accuracy, Maybe MPBall), (Accuracy, Maybe MPBall)))) ->
-  CauchyRealA to -> CauchyRealA to -> CauchyRealA to
-binaryOp name op getInitQ1Q2 r1 r2 = newCR name makeQ
-  where
-  makeQ =
-    proc ac ->
-      do
-      (q1InitMB, q2InitMB) <- getInitQ1Q2 r1 r2 -< ac
-      ensureAccuracyA2 (qaMakeQuery r1) (qaMakeQuery r2) op -< (ac, q1InitMB, q2InitMB)
-
-ensureAccuracyA2 ::
-  (ArrowChoice to) =>
-  (Accuracy `to` MPBall) ->
-  (Accuracy `to` MPBall) ->
-  (MPBall -> MPBall -> MPBall) ->
-  ((Accuracy, (Accuracy, Maybe MPBall), (Accuracy, Maybe MPBall)) `to` MPBall)
-ensureAccuracyA2 getA1 getA2 op =
-    proc (q,(j1, mB1),(j2, mB2)) ->
-        do
-        let mResult = do b1 <- mB1; b2 <- mB2; Just $ op b1 b2
-        case mResult of
-            Just result | getAccuracy result >= q ->
-                returnA -<
-                    maybeTrace (
-                        "ensureAccuracy2: Pre-computed result sufficient. (q = " ++ show q ++
-                        "; j1 = " ++ show j1 ++
-                        "; j2 = " ++ show j2 ++
-                        "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
-                    ) $
-                result
-            _ -> aux -< (q,j1,j2)
-    where
-    aux =
-        proc (q, j1, j2) ->
-            do
-            a1 <- getA1 -< j1
-            a2 <- getA2 -< j2
-            let result = op a1 a2
-            if getAccuracy result >= q
-                then returnA -<
-                    maybeTrace (
-                        "ensureAccuracy2: Succeeded. (q = " ++ show q ++
-                        "; j1 = " ++ show j1 ++
-                        "; j2 = " ++ show j2 ++
-                        "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
-                    ) $
-                    result
-                else aux -<
-                    maybeTrace (
-                        "ensureAccuracy2: Not enough ... (q = " ++ show q ++
-                        "; a1 = " ++ show a1 ++
-                        "; getPrecision a1 = " ++ show (getPrecision a1) ++
-                        "; j1 = " ++ show j1 ++
-                        "; a2 = " ++ show a2 ++
-                        "; getPrecision a2 = " ++ show (getPrecision a2) ++
-                        "; j2 = " ++ show j2 ++
-                        "; result = " ++ (show $ result) ++
-                        "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
-                    ) $
-                    (q,j1+1,j2+1)
-
-getInitQ1Q2FromSimple ::
-  (Arrow to)
-  =>
-  Accuracy `to` (q,q) ->
-  r1 -> r2 -> Accuracy `to` ((q, Maybe MPBall), (q, Maybe MPBall))
-getInitQ1Q2FromSimple simpleA _ _ =
-  proc q ->
-    do
-    (initQ1, initQ2) <- simpleA -< q
-    returnA -< ((initQ1, Nothing), (initQ2, Nothing))
-
-instance (QAArrow to) => CanAddAsymmetric (CauchyRealA to) (CauchyRealA to) where
-  type AddType (CauchyRealA to) (CauchyRealA to) = (CauchyRealA to)
-  add = binaryOp "+" add (getInitQ1Q2FromSimple $ proc q -> returnA -< (q,q))
-
-{-|
-  Example arrow-generic real number computation
--}
-_addA :: (QAArrow to) => (CauchyRealA to, CauchyRealA to) `to` CauchyRealA to
-_addA =
-  -- using -XArrows syntax:
-  proc (x,y) -> do
-    s <-(-:-)-< x + y //.. [x,y] -- listing source values for better tracing messages
-      -- -:- and //.. are shorcuts for qaRegister and (,) respectively
-    returnA -< s
-
-_CRonePure :: CauchyReal
-_CRonePure = newCR "one" (\ _ac -> mpBall 1)
-
-_addApure :: CauchyReal
-_addApure = _addA (_CRonePure, _CRonePure)
-
-_CRoneCached :: CauchyRealA QACachedA
-_CRoneCached = newCR "one" (Kleisli $ \ _ac -> return $ mpBall 1)
-
-_addAcached :: QACachedA () (CauchyRealA QACachedA)
-_addAcached =
-  proc () ->
-    do
-    xReg <-(-:-)-< _CRoneCached //.. []
-    _addA -< (xReg,xReg)
-    -- returnA -< xR + xR
-
-_addAcachedPrint :: IO ()
-_addAcachedPrint =
-  printQANetLogThenResult $ executeQACachedA $
-    proc () ->
-      do
-      x <-_addAcached -< ()
-      qaMakeQueryA -< (x, bits 10)

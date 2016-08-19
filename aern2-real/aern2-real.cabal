@@ -48,6 +48,7 @@ library
     AERN2.QA
     AERN2.Effort
     AERN2.Real.Type
+    AERN2.Real.Aux
 
 -- test-suite spec
 --   type:
