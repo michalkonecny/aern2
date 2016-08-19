@@ -97,7 +97,6 @@ empty = Map.empty
 --   normaliseTopLevel $ e & subs %~ normalise
 
 
-{-  TODO: make normaliseTopLevel a lens -}
 normaliseTopLevel :: Effort -> Effort
 normaliseTopLevel e =
   Map.filter nonEmpty e
@@ -110,7 +109,6 @@ normaliseTopLevel e =
 --   unifyPrecTopLevel $
 --     e & subs %~ unifyPrec
 
-{-  TODO: make unifyPrecTopLevel a lens -}
 unifyPrecTopLevel :: Effort -> Effort
 unifyPrecTopLevel e =
   normaliseTopLevel $
@@ -119,7 +117,6 @@ unifyPrecTopLevel e =
     removePrec = at "prec" .~ Nothing
     p = maximum $ (e ^.. subs . precE) ++ (e ^.. precE)
 
-{- TODO: Make combineSampleEfforts return 2 lenses -}
 combineSampleEfforts ::
   Effort -> Effort ->
   (Effort, Effort -> Effort, Effort -> Effort)
