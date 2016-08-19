@@ -12,9 +12,7 @@
 -}
 module AERN2.Real.Type
 (
-  QAProtocol(..), QA(..)
-  , QAArrow(..)
-  , CauchyRealP, pCR
+  CauchyRealP, pCR
   , CauchyRealA, CauchyReal, newCR
 )
 where

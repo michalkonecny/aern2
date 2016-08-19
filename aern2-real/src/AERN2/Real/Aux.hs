@@ -12,7 +12,8 @@
 -}
 module AERN2.Real.Aux
 (
-  unaryOp, binaryOp, binaryOpWithPureArg
+  getCRFnNormLog
+  , unaryOp, binaryOp, binaryOpWithPureArg
   , getInitQ1FromSimple, getInitQ1TFromSimple, getInitQ1Q2FromSimple
 )
 where
@@ -42,6 +43,19 @@ maybeTrace
 
 _dummy :: ()
 _dummy = maybeTrace "dummy" ()
+
+getCRFnNormLog ::
+  (Arrow to)
+  =>
+  CauchyRealA to ->
+  (MPBall -> MPBall) ->
+  Accuracy `to` (NormLog, MPBall)
+getCRFnNormLog r fn =
+  proc q ->
+    do
+    b <- qaMakeQuery r -< q
+    returnA -< (getNormLog (fn b), b)
+
 
 {- generic implementations of operations of different arity -}
 

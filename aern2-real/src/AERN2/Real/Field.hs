@@ -22,63 +22,10 @@ import Control.Category (id)
 import Control.Arrow
 
 import AERN2.MP.Ball
--- import AERN2.MP.Precision
--- import AERN2.MP.Accuracy
 
 import AERN2.QA
 import AERN2.Real.Type
 import AERN2.Real.Aux
-
-import Debug.Trace (trace)
-
-shouldTrace :: Bool
-shouldTrace = False
---shouldTrace = True
-
-maybeTrace :: String -> a -> a
-maybeTrace
-    | shouldTrace = trace
-    | otherwise = const id
-
-_dummy :: ()
-_dummy = maybeTrace "dummy" ()
-
-
-{-|
-  Example arrow-generic real number computation
--}
-_addA :: (QAArrow to) => (CauchyRealA to, CauchyRealA to) `to` CauchyRealA to
-_addA =
-  -- using -XArrows syntax:
-  proc (x,y) -> do
-    s <-(-:-)-< x + y //.. [x,y] -- listing source values for better tracing messages
-      -- -:- and //.. are shorcuts for qaRegister and (,) respectively
-    returnA -< s
-
-_CRonePure :: CauchyReal
-_CRonePure = newCR "one" (\ _ac -> mpBall 1)
-
-_addApure :: CauchyReal
-_addApure = _addA (_CRonePure, _CRonePure)
-
-_CRoneCached :: CauchyRealA QACachedA
-_CRoneCached = newCR "one" (Kleisli $ \ _ac -> return $ mpBall 1)
-
-_addAcached :: QACachedA () (CauchyRealA QACachedA)
-_addAcached =
-  proc () ->
-    do
-    xReg <-(-:-)-< _CRoneCached //.. []
-    _addA -< (xReg,xReg)
-    -- returnA -< xR + xR
-
-_addAcachedPrint :: IO ()
-_addAcachedPrint =
-  printQANetLogThenResult $ executeQACachedA $
-    proc () ->
-      do
-      x <-_addAcached -< ()
-      qaMakeQueryA -< (x, bits 10)
 
 {- negation -}
 
@@ -147,3 +94,69 @@ instance (ArrowChoice to) => CanSub (CauchyRealA to) Rational
 instance (ArrowChoice to) => CanSub Rational (CauchyRealA to)
 instance CanSub CauchyReal MPBall
 instance CanSub MPBall CauchyReal
+
+{- multiplication -}
+
+instance (ArrowChoice to) => CanMulAsymmetric (CauchyRealA to) (CauchyRealA to) where
+  mul =
+    binaryOp "*" mul getInitQ1Q2
+    where
+    getInitQ1Q2 a1 a2 =
+      proc q ->
+        do
+        (a1NormLog, b1) <- getCRFnNormLog a1 id -< q
+        let jInit2 = case a1NormLog of
+                NormBits a1NL -> max (bits 0) (q + a1NL)
+                NormZero -> bits 0
+        -- favouring 2*x over x*2 in a Num instance
+        (a2NormLog, b2) <- getCRFnNormLog a2 id -< jInit2
+        let jInit1 = case a2NormLog of
+                NormBits a2NL -> max (bits 0) (q + a2NL)
+                NormZero -> bits 0
+        returnA -< ((jInit1, Just b1), (jInit2, Just b2))
+
+mulGetInitQ1T ::
+  (Arrow to, HasNorm t)
+  =>
+  r -> t -> Accuracy `to` (Accuracy, Maybe MPBall)
+mulGetInitQ1T _a1 n =
+  proc q ->
+    do
+    let jInit1 = case nNormLog of
+            NormBits nNL -> max (bits 0) (q + nNL)
+            NormZero -> bits 0
+    returnA -< (jInit1, Nothing)
+  where
+  nNormLog = getNormLog n
+
+instance (ArrowChoice to) => CanMulAsymmetric (CauchyRealA to) Integer where
+  type MulType (CauchyRealA to) Integer = CauchyRealA to
+  mul = binaryOpWithPureArg "*" mul mulGetInitQ1T
+
+instance (ArrowChoice to) => CanMulAsymmetric Integer (CauchyRealA to) where
+  type MulType Integer (CauchyRealA to) = CauchyRealA to
+  mul = flip mul
+
+instance (ArrowChoice to) => CanMulAsymmetric (CauchyRealA to) Int where
+  type MulType (CauchyRealA to) Int = CauchyRealA to
+  mul = binaryOpWithPureArg "*" mul mulGetInitQ1T
+
+instance (ArrowChoice to) => CanMulAsymmetric Int (CauchyRealA to) where
+  type MulType Int (CauchyRealA to) = CauchyRealA to
+  mul = flip mul
+
+instance (ArrowChoice to) => CanMulAsymmetric (CauchyRealA to) Rational where
+  type MulType (CauchyRealA to) Rational = CauchyRealA to
+  mul = binaryOpWithPureArg "*" mul mulGetInitQ1T
+
+instance (ArrowChoice to) => CanMulAsymmetric Rational (CauchyRealA to) where
+  type MulType Rational (CauchyRealA to) = CauchyRealA to
+  mul = flip mul
+
+instance CanMulAsymmetric CauchyReal MPBall where
+  type MulType CauchyReal MPBall = MPBall
+  mul r b = mul (mpBallSimilarTo b r) b
+
+instance CanMulAsymmetric MPBall CauchyReal where
+  type MulType MPBall CauchyReal = MPBall
+  mul = flip mul
