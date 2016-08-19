@@ -14,7 +14,7 @@
 module AERN2.QA
 (
   QAProtocol(..), QAProtocolCacheable(..)
-  , QA(..), qa
+  , QA(..), newQA
   , QAArrow(..), (-:-), (//..)
   , QACachedA, QANetInfo(..)
   , executeQACachedA, printQANetLogThenResult
@@ -67,8 +67,8 @@ data QA to p = QA
     qaMakeQuery :: (Q p) `to` (A p)
   }
 
-qa :: String -> p -> Q p -> (Q p) `to` (A p) -> QA to p
-qa name = QA name Nothing []
+newQA :: String -> p -> Q p -> (Q p) `to` (A p) -> QA to p
+newQA name = QA name Nothing []
 
 {-|
   A class of Arrows suitable for use in QA objects.
@@ -200,7 +200,7 @@ initQANetInfo =
     }
 
 newId :: (QAProtocolCacheable p) => (QA QACachedA p) -> [QA QACachedA p] -> QACachedM ValueId
-newId (QA name _ _ p _sampleQ (Kleisli q2a)) sources =
+newId (QA name Nothing _ p _sampleQ (Kleisli q2a)) sources =
   maybeTrace ("newId: " ++ show name) $
   do
   ni <- get

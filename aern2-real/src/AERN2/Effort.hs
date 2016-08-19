@@ -139,7 +139,7 @@ combineSampleEfforts eL eR =
 instance (CanAddAsymmetric t1 t2) => CanAddAsymmetric (WithEffort t1) (WithEffort t2) where
   type AddType (WithEffort t1) (WithEffort t2) = WithEffort (AddType t1 t2)
   add x y =
-    qa name p sampleEff makeQ
+    newQA name p sampleEff makeQ
     where
       name = "+" -- "(" ++ (qaName x) ++ "+" ++ (qaName y) ++ ")"
       p = WithEffortP (sampleX + sampleY)

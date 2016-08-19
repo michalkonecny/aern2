@@ -15,7 +15,7 @@ module AERN2.Real.Type
   QAProtocol(..), QA(..)
   , QAArrow(..)
   , CauchyRealP, pCR
-  , CauchyRealA, CauchyReal, cr
+  , CauchyRealA, CauchyReal, newCR
 )
 where
 
@@ -68,8 +68,8 @@ type CauchyRealA to = QA to CauchyRealP
 
 type CauchyReal = CauchyRealA (->)
 
-cr :: String -> Accuracy `to` MPBall -> CauchyRealA to
-cr name makeQ = qa name pCR NoInformation makeQ
+newCR :: String -> Accuracy `to` MPBall -> CauchyRealA to
+newCR name makeQ = newQA name pCR NoInformation makeQ
 
 {- TODO: expand and move the following to separate modules -}
 
@@ -80,7 +80,7 @@ binaryOp ::
   (MPBall -> MPBall -> MPBall) ->
   (CauchyRealA to -> CauchyRealA to -> (Accuracy `to` ((Accuracy, Maybe MPBall), (Accuracy, Maybe MPBall)))) ->
   CauchyRealA to -> CauchyRealA to -> CauchyRealA to
-binaryOp name op getInitQ1Q2 r1 r2 = cr name makeQ
+binaryOp name op getInitQ1Q2 r1 r2 = newCR name makeQ
   where
   makeQ =
     proc ac ->
@@ -166,13 +166,13 @@ _addA =
     returnA -< s
 
 _CRonePure :: CauchyReal
-_CRonePure = cr "one" (\ _ac -> mpBall 1)
+_CRonePure = newCR "one" (\ _ac -> mpBall 1)
 
 _addApure :: CauchyReal
 _addApure = _addA (_CRonePure, _CRonePure)
 
 _CRoneCached :: CauchyRealA QACachedA
-_CRoneCached = cr "one" (Kleisli $ \ _ac -> return $ mpBall 1)
+_CRoneCached = newCR "one" (Kleisli $ \ _ac -> return $ mpBall 1)
 
 _addAcached :: QACachedA () (CauchyRealA QACachedA)
 _addAcached =
