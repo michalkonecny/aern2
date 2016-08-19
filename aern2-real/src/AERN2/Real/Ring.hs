@@ -1,6 +1,6 @@
 {-|
-    Module      :  AERN2.Real.Field
-    Description :  field operations on CR
+    Module      :  AERN2.Real.Ring
+    Description :  ring operations on CR
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -8,9 +8,9 @@
     Stability   :  experimental
     Portability :  portable
 
-    Field operations on Cauchy Real numbers.
+    Ring operations on Cauchy Real numbers.
 -}
-module AERN2.Real.Field
+module AERN2.Real.Ring
 (
 )
 where

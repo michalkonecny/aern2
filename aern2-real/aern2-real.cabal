@@ -45,10 +45,12 @@ library
     UndecidableInstances,
     Arrows
   exposed-modules:
-    AERN2.QA
-    AERN2.Effort
+    AERN2.Real
     AERN2.Real.Type
     AERN2.Real.Aux
+    AERN2.Real.Ring
+    AERN2.QA
+    AERN2.Effort
 
 -- test-suite spec
 --   type:
