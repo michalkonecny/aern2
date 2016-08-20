@@ -17,6 +17,7 @@ module AERN2.MP.Ball.Type
   , module AERN2.MP.Accuracy
   -- * The Ball type
   , MPBall(..), CanBeMPBall, mpBall, CanBeMPBallP, mpBallP
+  , normalise, reducePrecionIfInaccurate
   , setPrecisionAtLeastAccuracy
   -- * Ball construction/extraction functions
   , centre, radius
@@ -31,6 +32,8 @@ import Numeric.MixedTypes
 -- import qualified Prelude as P
 
 import Numeric.CatchingExceptions
+
+import AERN2.Norm
 
 import AERN2.MP.Dyadic
 import qualified AERN2.MP.Float as MPFloat
@@ -63,6 +66,33 @@ instance Show MPBall
 
 instance CanTestValid MPBall where
   isValid (MPBall x e) = isFinite x && isFinite (mpFloat e)
+
+normalise :: MPBall -> MPBall
+normalise b
+  | isValid b = reducePrecionIfInaccurate b
+  | otherwise = error $ "invalid MPBall: " ++ show b
+
+{-|
+    Reduce the precision of the ball centre if the
+    accuracy of the ball is poor.
+
+    More precisely, reduce the precision of the centre
+    so that the ulp is approximately (radius / 1024),
+    unless the ulp is already lower than this.
+-}
+reducePrecionIfInaccurate :: MPBall -> MPBall
+reducePrecionIfInaccurate b@(MPBall x _) =
+    case (acc, norm) of
+        (Exact, _) -> b
+        (_, NormZero) -> b
+        _ | p_e_nb < p_x -> setPrecision p_e_nb b
+        _ -> b
+    where
+    acc = getAccuracy b
+    norm = getNormLog b
+    p_x = getPrecision x
+    p_e_nb = prec $ max 2 (10 + nb + fromAccuracy acc)
+    (NormBits nb) = norm
 
 {- ball construction/extraction functions -}
 
@@ -134,6 +164,12 @@ mpBall = convertExactly
 instance HasAccuracy MPBall where
     getAccuracy = getAccuracy . ball_error
 
+
+instance HasNorm MPBall where
+    getNormLog ball = getNormLog boundMP
+        where
+        (_, MPBall boundMP _) = endpoints $ abs ball
+
 instance HasApproximate MPBall where
     type Approximate MPBall = (MPFloat, Bool)
     getApproximate ac b@(MPBall x e) =
@@ -175,3 +211,17 @@ setPrecisionAtLeastAccuracy acc b
           NoInformation -> p_b
           _ -> prec $ max 2 (fromAccuracy acc)
     p_b = getPrecision b
+
+{- negation & abs -}
+
+instance CanNeg MPBall where
+  negate (MPBall x e) = MPBall (-x) e
+
+instance CanAbs MPBall where
+  abs b
+    | l < 0 && 0 < r =
+      fromEndpointsMP (mpFloat 0) (max l r)
+    | 0 <= l = b
+    | otherwise = -b
+    where
+    (l,r) = endpointsMP b

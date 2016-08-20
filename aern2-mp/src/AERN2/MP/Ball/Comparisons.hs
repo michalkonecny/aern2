@@ -27,41 +27,12 @@ import Numeric.MixedTypes
 
 import AERN2.Norm
 import AERN2.MP.Dyadic (Dyadic)
-import AERN2.MP.Float (MPFloat, mpFloat)
+import AERN2.MP.Float (MPFloat)
 -- import AERN2.MP.Float.Operators
 import AERN2.MP.Precision
 
 import AERN2.MP.Ball.Type
 import AERN2.MP.Ball.Conversions (integerBounds)
-
-{-- extracting approximate information about a ball --}
-
-instance HasNorm MPBall where
-    getNormLog ball = getNormLog boundMP
-        where
-        (_, MPBall boundMP _) = endpoints $ abs ball
-
-{-|
-    Reduce the precision of the ball centre if the
-    accuracy of the ball is poor.
-
-    More precisely, reduce the precision of the centre
-    so that the ulp is approximately (radius / 1024),
-    unless the ulp is already lower than this.
--}
-reducePrecionIfInaccurate :: MPBall -> MPBall
-reducePrecionIfInaccurate b@(MPBall x _) =
-    case (acc, norm) of
-        (Exact, _) -> b
-        (_, NormZero) -> b
-        _ | p_e_nb < p_x -> setPrecision p_e_nb b
-        _ -> b
-    where
-    acc = getAccuracy b
-    norm = getNormLog b
-    p_x = getPrecision x
-    p_e_nb = prec $ max 2 (10 + nb + fromAccuracy acc)
-    (NormBits nb) = norm
 
 {- comparisons -}
 
@@ -244,20 +215,6 @@ intersect a b
   rR = min aR bR
   (aL,aR) = endpointsMP a
   (bL,bR) = endpointsMP b
-
-{- negation & abs -}
-
-instance CanNeg MPBall where
-  negate (MPBall x e) = MPBall (-x) e
-
-instance CanAbs MPBall where
-  abs b
-    | l < 0 && 0 < r =
-      fromEndpointsMP (mpFloat 0) (max l r)
-    | 0 <= l = b
-    | otherwise = -b
-    where
-    (l,r) = endpointsMP b
 
 {-|
   Computes an *increasing* ball fucntion @f@ from *exact* MPFR operations.
