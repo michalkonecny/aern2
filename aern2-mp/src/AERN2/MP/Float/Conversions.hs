@@ -23,7 +23,6 @@ module AERN2.MP.Float.Conversions
    , CanBeMPFloat, mpFloat
    , fromIntegerUp, fromIntegerDown
    , fromRationalUp, fromRationalDown
-   , mpFromRationalA
    )
 where
 

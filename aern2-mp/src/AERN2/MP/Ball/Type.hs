@@ -235,7 +235,7 @@ instance CanNeg MPBall where
 instance CanAbs MPBall where
   abs b
     | l < 0 && 0 < r =
-      fromEndpointsMP (mpFloat 0) (max l r)
+      fromEndpointsMP (mpFloat 0) (max (-l) r)
     | 0 <= l = b
     | otherwise = -b
     where
