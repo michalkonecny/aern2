@@ -34,6 +34,7 @@ import AERN2.MP.Accuracy
 import qualified AERN2.MP.Float as MPFloat
 import AERN2.MP.Float (MPFloat, mpFloat, frequencyElements)
 import AERN2.MP.Float.Operators
+import AERN2.MP.Dyadic
 
 {- example -}
 
@@ -65,6 +66,9 @@ instance HasAccuracy ErrorBound where
 
 instance ConvertibleExactly ErrorBound MPFloat where
   safeConvertExactly = Right . er2mp
+
+instance ConvertibleExactly ErrorBound Dyadic where
+  safeConvertExactly = Right . dyadic . er2mp
 
 instance ConvertibleExactly ErrorBound Rational where
   safeConvertExactly = Right . convertExactly . mpFloat

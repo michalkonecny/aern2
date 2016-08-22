@@ -97,28 +97,34 @@ reducePrecionIfInaccurate b@(MPBall x _) =
     (NormBits nb) = bNorm
 
 contains :: MPBall -> MPBall -> Bool
-contains bLarge bSmall =
-  bLargeL <= bSmallL && bSmallR <= bLargeR
+contains (MPBall xLarge eLarge) (MPBall xSmall eSmall) =
+  xLargeDy - eLargeDy <= xSmallDy - eSmallDy
+  &&
+  xSmallDy + eSmallDy <= xLargeDy + eLargeDy
   where
-  (bLargeL, bLargeR) = endpointsMP bLarge
-  (bSmallL, bSmallR) = endpointsMP bSmall
+  xLargeDy = dyadic xLarge
+  eLargeDy = dyadic eLarge
+  xSmallDy = dyadic xSmall
+  eSmallDy = dyadic eSmall
 
 {- ball construction/extraction functions -}
 
 fromEndpointsMP :: MPFloat -> MPFloat -> MPBall
 fromEndpointsMP l u =
-    normalise $ MPBall c e
+    MPBall (mpFloat cDy) (errorBound $ mpFloat eDy)
     where
-    c = MPFloat.avgUp l u
-    e = errorBound $ max (MPFloat.distUp c l) (MPFloat.distUp c u)
+    lDy = dyadic l
+    uDy = dyadic u
+    cDy = (lDy + uDy) * 0.5
+    eDy = (uDy - cDy) `max` (cDy - lDy)
 
 endpointsMP :: MPBall -> (MPFloat, MPFloat)
-endpointsMP x = (l,u)
+endpointsMP (MPBall x e) = (mpFloat lDy, mpFloat uDy)
     where
-    c    = ball_value x
-    r    = mpFloat (ball_error x)
-    l   = c -. r
-    u   = c +^ r
+    xDy = dyadic x
+    eDy = dyadic e
+    lDy   = xDy - eDy
+    uDy   = xDy + eDy
 
 fromEndpoints :: MPBall -> MPBall -> MPBall
 fromEndpoints l u =
