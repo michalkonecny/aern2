@@ -22,8 +22,9 @@ import Control.Category (id)
 import Control.Arrow
 
 import AERN2.MP.Ball
+import AERN2.MP.Dyadic
 
-import AERN2.QA
+-- import AERN2.QA
 import AERN2.Real.Type
 import AERN2.Real.Aux
 
@@ -53,6 +54,14 @@ instance (ArrowChoice to) => CanAddAsymmetric Int (CauchyRealA to) where
   type AddType Int (CauchyRealA to) = CauchyRealA to
   add = flip add
 
+instance (ArrowChoice to) => CanAddAsymmetric (CauchyRealA to) Dyadic where
+  type AddType (CauchyRealA to) Dyadic = CauchyRealA to
+  add = binaryOpWithPureArg "+" add (getInitQ1TFromSimple id)
+
+instance (ArrowChoice to) => CanAddAsymmetric Dyadic (CauchyRealA to) where
+  type AddType Dyadic (CauchyRealA to) = CauchyRealA to
+  add = flip add
+
 instance (ArrowChoice to) => CanAddAsymmetric (CauchyRealA to) Rational where
   type AddType (CauchyRealA to) Rational = CauchyRealA to
   add = binaryOpWithPureArg "+" add (getInitQ1TFromSimple id)
@@ -61,21 +70,9 @@ instance (ArrowChoice to) => CanAddAsymmetric Rational (CauchyRealA to) where
   type AddType Rational (CauchyRealA to) = CauchyRealA to
   add = flip add
 
-{- MPBall + CauchyReal = MPBall, only allowed in the (->) arrow  -}
-
-mpBallSimilarTo :: MPBall -> CauchyReal -> MPBall
-mpBallSimilarTo b r =
-  qaMakeQuery r $ getAccuracyIfExactUsePrec b
-
-getAccuracyIfExactUsePrec :: MPBall -> Accuracy
-getAccuracyIfExactUsePrec ball =
-  case getAccuracy ball of
-    Exact -> bits (getPrecision ball)
-    result -> result
-
 instance CanAddAsymmetric CauchyReal MPBall where
   type AddType CauchyReal MPBall = MPBall
-  add r b = add (mpBallSimilarTo b r) b
+  add = binaryWithBall add
 
 instance CanAddAsymmetric MPBall CauchyReal where
   type AddType MPBall CauchyReal = MPBall
@@ -90,6 +87,8 @@ instance (ArrowChoice to) => CanSub (CauchyRealA to) Integer
 instance (ArrowChoice to) => CanSub Integer (CauchyRealA to)
 instance (ArrowChoice to) => CanSub (CauchyRealA to) Int
 instance (ArrowChoice to) => CanSub Int (CauchyRealA to)
+instance (ArrowChoice to) => CanSub (CauchyRealA to) Dyadic
+instance (ArrowChoice to) => CanSub Dyadic (CauchyRealA to)
 instance (ArrowChoice to) => CanSub (CauchyRealA to) Rational
 instance (ArrowChoice to) => CanSub Rational (CauchyRealA to)
 instance CanSub CauchyReal MPBall
@@ -145,6 +144,14 @@ instance (ArrowChoice to) => CanMulAsymmetric Int (CauchyRealA to) where
   type MulType Int (CauchyRealA to) = CauchyRealA to
   mul = flip mul
 
+instance (ArrowChoice to) => CanMulAsymmetric (CauchyRealA to) Dyadic where
+  type MulType (CauchyRealA to) Dyadic = CauchyRealA to
+  mul = binaryOpWithPureArg "*" mul mulGetInitQ1T
+
+instance (ArrowChoice to) => CanMulAsymmetric Dyadic (CauchyRealA to) where
+  type MulType Dyadic (CauchyRealA to) = CauchyRealA to
+  mul = flip mul
+
 instance (ArrowChoice to) => CanMulAsymmetric (CauchyRealA to) Rational where
   type MulType (CauchyRealA to) Rational = CauchyRealA to
   mul = binaryOpWithPureArg "*" mul mulGetInitQ1T
@@ -155,7 +162,7 @@ instance (ArrowChoice to) => CanMulAsymmetric Rational (CauchyRealA to) where
 
 instance CanMulAsymmetric CauchyReal MPBall where
   type MulType CauchyReal MPBall = MPBall
-  mul r b = mul (mpBallSimilarTo b r) b
+  mul = binaryWithBall mul
 
 instance CanMulAsymmetric MPBall CauchyReal where
   type MulType MPBall CauchyReal = MPBall

@@ -13,6 +13,7 @@
 module AERN2.Real.Aux
 (
   getCRFnNormLog
+  , binaryWithBall
   , unaryOp, binaryOp, binaryOpWithPureArg
   , getInitQ1FromSimple, getInitQ1TFromSimple, getInitQ1Q2FromSimple
 )
@@ -56,6 +57,22 @@ getCRFnNormLog r fn =
     b <- qaMakeQuery r -< q
     returnA -< (getNormLog (fn b), b)
 
+{- MPBall + CauchyReal = MPBall, only allowed in the (->) arrow  -}
+
+mpBallSimilarTo :: MPBall -> CauchyReal -> MPBall
+mpBallSimilarTo b r =
+  qaMakeQuery r $ getAccuracyIfExactUsePrec b
+
+getAccuracyIfExactUsePrec :: MPBall -> Accuracy
+getAccuracyIfExactUsePrec ball =
+  case getAccuracy ball of
+    Exact -> bits (getPrecision ball)
+    result -> result
+
+binaryWithBall :: (MPBall -> MPBall -> MPBall) -> CauchyReal -> MPBall -> MPBall
+binaryWithBall op r b =
+  lowerPrecisionIfAbove (getPrecision b) $
+    op (mpBallSimilarTo b r) b
 
 {- generic implementations of operations of different arity -}
 
