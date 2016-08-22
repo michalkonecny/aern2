@@ -94,7 +94,7 @@ specCanSetPrecision (T typeName :: T t) check =
     it "setPrecision x ~ x" $ do
       property $ \ (x :: t) (p :: Precision) ->
         let xP = setPrecision p x in
-          check x xP
+          check xP x
 
 maximumPrecision :: Precision
 maximumPrecision = Precision 1000000

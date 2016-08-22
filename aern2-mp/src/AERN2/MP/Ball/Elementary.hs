@@ -151,7 +151,7 @@ fromApproxWithLipschitz ::
     MPFloat {-^ @lip@ a Lipschitz constant for @f@, @lip > 0@ -} ->
     (MPBall -> MPBall) {-^ @f@ on MPBall rounding *outwards* -}
 fromApproxWithLipschitz fDown fUp lip _x@(MPBall xc xe) =
-    MPBall fxc err
+    normalise $ MPBall fxc err
     where
     fxl = fDown xc
     fxu = fUp xc

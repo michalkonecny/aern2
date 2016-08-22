@@ -19,6 +19,8 @@ where
 import Numeric.MixedTypes
 -- import qualified Prelude as P
 
+import Numeric.CatchingExceptions (CanTestValid(..))
+
 import AERN2.MP.Dyadic (Dyadic)
 import qualified AERN2.MP.Float as MPFloat
 -- import AERN2.MP.Float.Operators
@@ -45,7 +47,11 @@ instance ConvertibleExactly Dyadic MPBall where
   safeConvertExactly x = Right $ MPBall (convertExactly x) (errorBound 0)
 
 instance ConvertibleExactly Integer MPBall where
-  safeConvertExactly x = Right $ MPBall (convertExactly x) (errorBound 0)
+  safeConvertExactly x
+    | isValid b = Right b
+    | otherwise = convError "too large to convert to MPBall" x
+    where
+      b = MPBall (convertExactly x) (errorBound 0)
 
 instance ConvertibleExactly Int MPBall where
   safeConvertExactly x = Right $ MPBall (convertExactly x) (errorBound 0)
@@ -54,9 +60,11 @@ instance ConvertibleExactly Int MPBall where
 {--- constructing a ball with a given precision ---}
 
 instance ConvertWithPrecision Integer MPBall where
-  safeConvertP p x =
-    Right $ MPBall xUp (xUp `EB.subMP` xDn)
+  safeConvertP p x
+    | isValid b = Right b
+    | otherwise = convError ("too large to convert to MPBall with precision " ++ show p) x
     where
+    b = MPBall xUp (xUp `EB.subMP` xDn)
     xUp = MPFloat.fromIntegerUp p x
     xDn = MPFloat.fromIntegerDown p x
 
@@ -64,15 +72,19 @@ instance ConvertWithPrecision Int MPBall where
   safeConvertP p = safeConvertP p . integer
 
 instance ConvertWithPrecision Rational MPBall where
-  safeConvertP p x =
-    Right $ MPBall xUp (xUp `EB.subMP` xDn)
+  safeConvertP p x
+    | isValid b = Right b
+    | otherwise = convError ("too large to convert to MPBall with precision " ++ show p) x
     where
+    b = MPBall xUp (xUp `EB.subMP` xDn)
     xUp = MPFloat.fromRationalUp p x
     xDn = MPFloat.fromRationalDown p x
 
 instance ConvertWithPrecision (Rational, Rational) MPBall where
-  safeConvertP p (x,e) =
-    Right $ MPBall xFlt (xe + eUp)
+  safeConvertP p (x,e)
+    | isValid b = Right b
+    | otherwise = convError ("too large to convert to MPBall with precision " ++ show p) x
     where
+    b = MPBall xFlt (xe + eUp) -- beware, precision may be too high relative to accuracy
     (MPBall xFlt xe) = mpBallP p x
     eUp = errorBound e

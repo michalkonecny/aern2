@@ -67,7 +67,7 @@ tMPBall = T "MPBall"
 specMPBall :: Spec
 specMPBall =
   describe ("MPBall") $ do
-    specCanSetPrecision tMPBall (?==?)
+    specCanSetPrecision tMPBall contains
     specConversion tInteger tMPBall mpBall (fst . integerBounds)
     describe "order" $ do
       specHasEqNotMixed tMPBall

@@ -19,6 +19,7 @@ module AERN2.MP.Ball.Type
   , MPBall(..), CanBeMPBall, mpBall, CanBeMPBallP, mpBallP
   , normalise, reducePrecionIfInaccurate
   , setPrecisionAtLeastAccuracy
+  , contains
   -- * Ball construction/extraction functions
   , centre, radius
   , centreDyadic
@@ -31,7 +32,7 @@ where
 import Numeric.MixedTypes
 -- import qualified Prelude as P
 
-import Numeric.CatchingExceptions
+import Numeric.CatchingExceptions (CanTestValid(..))
 
 import AERN2.Norm
 
@@ -62,7 +63,8 @@ data MPBall = MPBall { ball_value :: MPFloat, ball_error :: ErrorBound }
 
 instance Show MPBall
     where
-    show (MPBall x e) = "[" ++ show x ++ " ± " ++ show e ++ "]"
+    show (MPBall x e) =
+      "[" ++ show x ++ " ± " ++ show e ++ "](prec=" ++ (show $ integer $ getPrecision x) ++ ")"
 
 instance CanTestValid MPBall where
   isValid (MPBall x e) = isFinite x && isFinite (mpFloat e)
@@ -82,23 +84,30 @@ normalise b
 -}
 reducePrecionIfInaccurate :: MPBall -> MPBall
 reducePrecionIfInaccurate b@(MPBall x _) =
-    case (acc, norm) of
+    case (bAcc, bNorm) of
         (Exact, _) -> b
         (_, NormZero) -> b
         _ | p_e_nb < p_x -> setPrecision p_e_nb b
         _ -> b
     where
-    acc = getAccuracy b
-    norm = getNormLog b
+    bAcc = getAccuracy b
+    bNorm = getNormLog b
     p_x = getPrecision x
-    p_e_nb = prec $ max 2 (10 + nb + fromAccuracy acc)
-    (NormBits nb) = norm
+    p_e_nb = prec $ max 2 (10 + nb + fromAccuracy bAcc)
+    (NormBits nb) = bNorm
+
+contains :: MPBall -> MPBall -> Bool
+contains bLarge bSmall =
+  bLargeL <= bSmallL && bSmallR <= bLargeR
+  where
+  (bLargeL, bLargeR) = endpointsMP bLarge
+  (bSmallL, bSmallR) = endpointsMP bSmall
 
 {- ball construction/extraction functions -}
 
 fromEndpointsMP :: MPFloat -> MPFloat -> MPBall
 fromEndpointsMP l u =
-    MPBall c e
+    normalise $ MPBall c e
     where
     c = MPFloat.avgUp l u
     e = errorBound $ max (MPFloat.distUp c l) (MPFloat.distUp c u)
