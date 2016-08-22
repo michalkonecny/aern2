@@ -14,17 +14,17 @@ module AERN2.Real.Type
 (
   CauchyRealP, pCR
   , CauchyRealA, CauchyReal, newCR
+  , real
 )
 where
 
 import Numeric.MixedTypes
 -- import qualified Prelude as P
 
--- import Control.Arrow
+import Control.Arrow
 
+import AERN2.MP.Dyadic
 import AERN2.MP.Ball
--- import AERN2.MP.Precision
--- import AERN2.MP.Accuracy
 
 import AERN2.QA
 
@@ -68,3 +68,32 @@ type CauchyReal = CauchyRealA (->)
 
 newCR :: String -> Accuracy `to` MPBall -> CauchyRealA to
 newCR name makeQ = newQA name pCR NoInformation makeQ
+
+{- conversions -}
+
+type CanBeRealA to t = ConvertibleExactly t (CauchyRealA to)
+
+real :: (CanBeRealA to t) => t -> CauchyRealA to
+real = convertExactly
+
+instance (Arrow to) => ConvertibleExactly Integer (CauchyRealA to) where
+  safeConvertExactly x =
+    Right $ newCR (show x) (arr $ const $ mpBall x)
+
+instance (Arrow to) => ConvertibleExactly Int (CauchyRealA to) where
+  safeConvertExactly x =
+    Right $ newCR (show x) (arr $ const $ mpBall x)
+
+instance (Arrow to) => ConvertibleExactly Dyadic (CauchyRealA to) where
+  safeConvertExactly x =
+    Right $ newCR (show x) (arr $ const $ mpBall x)
+
+instance (Arrow to) => ConvertibleExactly Rational (CauchyRealA to) where
+  safeConvertExactly x =
+    Right $ newCR (show x) (arr makeQ)
+    where
+    makeQ = seqByPrecision2CauchySeq (flip mpBallP x)
+
+instance ConvertibleWithPrecision CauchyReal MPBall where
+  safeConvertP p r =
+    Right $ setPrecision p $ qaMakeQuery r (bits p + 10)

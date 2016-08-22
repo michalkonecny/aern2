@@ -59,7 +59,7 @@ instance ConvertibleExactly Int MPBall where
 
 {--- constructing a ball with a given precision ---}
 
-instance ConvertWithPrecision Integer MPBall where
+instance ConvertibleWithPrecision Integer MPBall where
   safeConvertP p x
     | isValid b = Right b
     | otherwise = convError ("too large to convert to MPBall with precision " ++ show p) x
@@ -68,10 +68,10 @@ instance ConvertWithPrecision Integer MPBall where
     xUp = MPFloat.fromIntegerUp p x
     xDn = MPFloat.fromIntegerDown p x
 
-instance ConvertWithPrecision Int MPBall where
+instance ConvertibleWithPrecision Int MPBall where
   safeConvertP p = safeConvertP p . integer
 
-instance ConvertWithPrecision Rational MPBall where
+instance ConvertibleWithPrecision Rational MPBall where
   safeConvertP p x
     | isValid b = Right b
     | otherwise = convError ("too large to convert to MPBall with precision " ++ show p) x
@@ -80,7 +80,7 @@ instance ConvertWithPrecision Rational MPBall where
     xUp = MPFloat.fromRationalUp p x
     xDn = MPFloat.fromRationalDown p x
 
-instance ConvertWithPrecision (Rational, Rational) MPBall where
+instance ConvertibleWithPrecision (Rational, Rational) MPBall where
   safeConvertP p (x,e)
     | isValid b = Right b
     | otherwise = convError ("too large to convert to MPBall with precision " ++ show p) x

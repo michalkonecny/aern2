@@ -161,7 +161,7 @@ radius =
 
 {--- constructing a ball with a given precision ---}
 
-type CanBeMPBallP t = (ConvertWithPrecision t MPBall)
+type CanBeMPBallP t = (ConvertibleWithPrecision t MPBall)
 
 mpBallP :: (CanBeMPBallP t) => Precision -> t -> MPBall
 mpBallP = convertP

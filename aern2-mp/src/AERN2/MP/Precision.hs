@@ -17,7 +17,7 @@ module AERN2.MP.Precision
      , HasPrecision(..), CanSetPrecision(..), lowerPrecisionIfAbove, specCanSetPrecision
      , defaultPrecision, maximumPrecision, standardPrecisions, precisionTimes2
      , iterateUntilOK
-     , ConvertWithPrecision(..), convertP
+     , ConvertibleWithPrecision(..), convertP
      , convertPFirst, convertPSecond
 )
 where
@@ -137,22 +137,22 @@ iterateUntilOK isOK fn =
       where
       result = fn p
 
-class ConvertWithPrecision t1 t2 where
+class ConvertibleWithPrecision t1 t2 where
   safeConvertP :: Precision -> t1 -> ConvertResult t2
 
-convertP :: (ConvertWithPrecision t1 t2) => Precision -> t1 -> t2
+convertP :: (ConvertibleWithPrecision t1 t2) => Precision -> t1 -> t2
 convertP p a =
   case safeConvertP p a of
     Right v -> v
     Left err -> error (show err)
 
 convertPFirst ::
-  (ConvertWithPrecision t1 t2, HasPrecision t2) =>
+  (ConvertibleWithPrecision t1 t2, HasPrecision t2) =>
   (t2 -> t2 -> c) -> (t1 -> t2 -> c)
 convertPFirst = convertFirstUsing (\ q b -> convertP (getPrecision b) q)
 
 convertPSecond ::
-  (ConvertWithPrecision t2 t1, HasPrecision t1) =>
+  (ConvertibleWithPrecision t2 t1, HasPrecision t1) =>
   (t1 -> t1 -> c) -> (t1 -> t2 -> c)
 convertPSecond = convertSecondUsing (\ b q -> convertP (getPrecision b) q)
 
