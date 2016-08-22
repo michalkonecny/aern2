@@ -183,7 +183,7 @@ instance HasAccuracy MPBall where
 instance HasNorm MPBall where
     getNormLog ball = getNormLog boundMP
         where
-        (_, MPBall boundMP _) = endpoints $ abs ball
+        (_, MPBall boundMP _) = endpoints $ absRaw ball
 
 instance HasApproximate MPBall where
     type Approximate MPBall = (MPFloat, Bool)
@@ -233,10 +233,13 @@ instance CanNeg MPBall where
   negate (MPBall x e) = MPBall (-x) e
 
 instance CanAbs MPBall where
-  abs b
-    | l < 0 && 0 < r =
-      fromEndpointsMP (mpFloat 0) (max (-l) r)
-    | 0 <= l = b
-    | otherwise = -b
-    where
-    (l,r) = endpointsMP b
+  abs = normalise . absRaw
+
+absRaw :: MPBall -> MPBall
+absRaw b
+  | l < 0 && 0 < r =
+    fromEndpointsMP (mpFloat 0) (max (-l) r)
+  | 0 <= l = b
+  | otherwise = -b
+  where
+  (l,r) = endpointsMP b
