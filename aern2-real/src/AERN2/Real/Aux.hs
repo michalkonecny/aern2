@@ -77,7 +77,7 @@ binaryWithBall op r b =
 {- generic implementations of operations of different arity -}
 
 unaryOp ::
-  (ArrowChoice to)
+  (QAArrow to)
   =>
   String ->
   (MPBall -> MPBall) ->
@@ -92,7 +92,7 @@ unaryOp name op getInitQ1 r1 = newCR name makeQ
       ensureAccuracyA1 (qaMakeQuery r1) op -< (ac, q1InitMB)
 
 binaryOpWithPureArg ::
-  (ArrowChoice to)
+  (QAArrow to)
   =>
   String ->
   (MPBall -> t -> MPBall) ->
@@ -107,7 +107,7 @@ binaryOpWithPureArg name op getInitQ1T r1 t = newCR name makeQ
       ensureAccuracyA1 (qaMakeQuery r1) (flip op t) -< (ac, q1InitMB)
 
 binaryOp ::
-  (ArrowChoice to)
+  (QAArrow to)
   =>
   String ->
   (MPBall -> MPBall -> MPBall) ->

@@ -14,7 +14,7 @@
 module AERN2.QA
 (
   QAProtocol(..), QAProtocolCacheable(..)
-  , QA(..), newQA
+  , QA(..), addUnsafeMemoisation
   , QAArrow(..), (-:-), (//..)
   , QACachedA, QANetInfo(..)
   , executeQACachedA, printQANetLogThenResult
@@ -24,9 +24,12 @@ where
 import Numeric.MixedTypes
 import qualified Prelude as P
 
+import System.IO.Unsafe (unsafePerformIO)
 import Unsafe.Coerce
 
 import Control.Arrow
+import Control.Concurrent.MVar
+
 import Data.Maybe
 import qualified Data.Map as Map
 
@@ -57,7 +60,7 @@ class (QAProtocol p) => QAProtocolCacheable p where
   updateQACache :: p -> QACache p -> Q p -> A p -> QACache p
 
 {-| An object we can ask queries about.  Queries can be asked in some Arrow @to@. -}
-data QA to p = QA
+data QA to p = QA__
   {
     qaName :: String,
     qaId :: Maybe (QAId to),
@@ -67,8 +70,6 @@ data QA to p = QA
     qaMakeQuery :: (Q p) `to` (A p)
   }
 
-newQA :: String -> p -> Q p -> (Q p) `to` (A p) -> QA to p
-newQA name = QA name Nothing []
 
 {-|
   A class of Arrows suitable for use in QA objects.
@@ -87,6 +88,9 @@ class (ArrowChoice to) => QAArrow to where
   qaRegister :: (QAProtocolCacheable p) =>
     (QA to p, [QA to p]) `to` (QA to p)
   qaMakeQueryA :: (QA to p, Q p) `to` (A p)
+  newQA :: (QAProtocolCacheable p) =>
+    String -> p -> Q p -> (Q p) `to` (A p) -> QA to p
+  newQA name = QA__ name Nothing []
 
 (-:-) :: (QAArrow to, QAProtocolCacheable p) => (QA to p, [QA to p]) `to` (QA to p)
 (-:-) = qaRegister
@@ -104,17 +108,44 @@ a //..b = (a,b)
 -}
 instance QAArrow (->) where
   type QAId (->) = ()
-  qaRegister = fst
   qaMakeQueryA (qa, q) = qaMakeQuery qa q
+  qaRegister = fst
+  newQA name p sampleQ makeQ = addUnsafeMemoisation $ QA__ name Nothing [] p sampleQ makeQ
+
+{-|
+  Add caching to pure (->) QA objects via unsafe memoization, inspired by
+  https://hackage.haskell.org/package/ireal-0.2.3/docs/src/Data-Number-IReal-UnsafeMemo.html#unsafeMemo,
+  which, in turn, is inspired by Lennart Augustsson's uglymemo.
+-}
+addUnsafeMemoisation :: (QAProtocolCacheable p) => QA (->) p -> QA (->) p
+addUnsafeMemoisation qa = qa { qaMakeQuery = unsafeMemo }
+  where
+  unsafeMemo = unsafePerformIO . unsafePerformIO memoIO
+  p = qaProtocol qa
+  memoIO =
+    do
+    cacheVar <- newMVar $ newQACache p
+    return $ useMVar cacheVar
+    where
+    useMVar cacheVar q =
+      do
+      cache <- readMVar cacheVar
+      case lookupQACache p cache q of
+        Just a -> return a
+        _ ->
+          do
+          let a = qaMakeQuery qa q
+          modifyMVar_ cacheVar (const (return (updateQACache p cache q a)))
+          return a
 
 instance QAArrow QACachedA where
   type QAId QACachedA = ValueId
   qaRegister = Kleisli qaRegisterM
     where
-    qaRegisterM (x@(QA name _ _ p sampleQ _), sources) =
+    qaRegisterM (x@(QA__ name _ _ p sampleQ _), sources) =
       do
       xId <- newId x sources
-      return $ QA name (Just xId) sourceIds p sampleQ (Kleisli $ makeQCached xId)
+      return $ QA__ name (Just xId) sourceIds p sampleQ (Kleisli $ makeQCached xId)
       where
       makeQCached = getAnswer p
       sourceIds = catMaybes $ map qaId sources
@@ -200,7 +231,7 @@ initQANetInfo =
     }
 
 newId :: (QAProtocolCacheable p) => (QA QACachedA p) -> [QA QACachedA p] -> QACachedM ValueId
-newId (QA name Nothing _ p _sampleQ (Kleisli q2a)) sources =
+newId (QA__ name Nothing _ p _sampleQ (Kleisli q2a)) sources =
   maybeTrace ("newId: " ++ show name) $
   do
   ni <- get

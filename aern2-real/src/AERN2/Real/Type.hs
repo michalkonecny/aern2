@@ -66,8 +66,11 @@ type CauchyRealA to = QA to CauchyRealP
 
 type CauchyReal = CauchyRealA (->)
 
-newCR :: String -> Accuracy `to` MPBall -> CauchyRealA to
+newCR :: (QAArrow to) => String -> Accuracy `to` MPBall -> CauchyRealA to
 newCR name makeQ = newQA name pCR NoInformation makeQ
+
+instance Show CauchyReal where
+  show r = show $ qaMakeQuery r (bits 100)
 
 {- conversions -}
 
@@ -76,19 +79,19 @@ type CanBeRealA to t = ConvertibleExactly t (CauchyRealA to)
 real :: (CanBeRealA to t) => t -> CauchyRealA to
 real = convertExactly
 
-instance (Arrow to) => ConvertibleExactly Integer (CauchyRealA to) where
+instance (QAArrow to) => ConvertibleExactly Integer (CauchyRealA to) where
   safeConvertExactly x =
     Right $ newCR (show x) (arr $ const $ mpBall x)
 
-instance (Arrow to) => ConvertibleExactly Int (CauchyRealA to) where
+instance (QAArrow to) => ConvertibleExactly Int (CauchyRealA to) where
   safeConvertExactly x =
     Right $ newCR (show x) (arr $ const $ mpBall x)
 
-instance (Arrow to) => ConvertibleExactly Dyadic (CauchyRealA to) where
+instance (QAArrow to) => ConvertibleExactly Dyadic (CauchyRealA to) where
   safeConvertExactly x =
     Right $ newCR (show x) (arr $ const $ mpBall x)
 
-instance (Arrow to) => ConvertibleExactly Rational (CauchyRealA to) where
+instance (QAArrow to) => ConvertibleExactly Rational (CauchyRealA to) where
   safeConvertExactly x =
     Right $ newCR (show x) (arr makeQ)
     where

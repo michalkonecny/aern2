@@ -24,49 +24,49 @@ import Control.Arrow
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
--- import AERN2.QA
+import AERN2.QA
 import AERN2.Real.Type
 import AERN2.Real.Aux
 
 {- negation -}
 
-instance (ArrowChoice to) => CanNeg (CauchyRealA to) where
+instance (QAArrow to) => CanNeg (CauchyRealA to) where
   negate = unaryOp "-" negate (getInitQ1FromSimple $ proc q -> returnA -< q)
 
 {- addition -}
 
-instance (ArrowChoice to) => CanAddAsymmetric (CauchyRealA to) (CauchyRealA to) where
+instance (QAArrow to) => CanAddAsymmetric (CauchyRealA to) (CauchyRealA to) where
   add = binaryOp "+" add (getInitQ1Q2FromSimple $ proc q -> returnA -< (q,q))
 
-instance (ArrowChoice to) => CanAddAsymmetric (CauchyRealA to) Integer where
+instance (QAArrow to) => CanAddAsymmetric (CauchyRealA to) Integer where
   type AddType (CauchyRealA to) Integer = CauchyRealA to
   add = binaryOpWithPureArg "+" add (getInitQ1TFromSimple id)
 
-instance (ArrowChoice to) => CanAddAsymmetric Integer (CauchyRealA to) where
+instance (QAArrow to) => CanAddAsymmetric Integer (CauchyRealA to) where
   type AddType Integer (CauchyRealA to) = CauchyRealA to
   add = flip add
 
-instance (ArrowChoice to) => CanAddAsymmetric (CauchyRealA to) Int where
+instance (QAArrow to) => CanAddAsymmetric (CauchyRealA to) Int where
   type AddType (CauchyRealA to) Int = CauchyRealA to
   add = binaryOpWithPureArg "+" add (getInitQ1TFromSimple id)
 
-instance (ArrowChoice to) => CanAddAsymmetric Int (CauchyRealA to) where
+instance (QAArrow to) => CanAddAsymmetric Int (CauchyRealA to) where
   type AddType Int (CauchyRealA to) = CauchyRealA to
   add = flip add
 
-instance (ArrowChoice to) => CanAddAsymmetric (CauchyRealA to) Dyadic where
+instance (QAArrow to) => CanAddAsymmetric (CauchyRealA to) Dyadic where
   type AddType (CauchyRealA to) Dyadic = CauchyRealA to
   add = binaryOpWithPureArg "+" add (getInitQ1TFromSimple id)
 
-instance (ArrowChoice to) => CanAddAsymmetric Dyadic (CauchyRealA to) where
+instance (QAArrow to) => CanAddAsymmetric Dyadic (CauchyRealA to) where
   type AddType Dyadic (CauchyRealA to) = CauchyRealA to
   add = flip add
 
-instance (ArrowChoice to) => CanAddAsymmetric (CauchyRealA to) Rational where
+instance (QAArrow to) => CanAddAsymmetric (CauchyRealA to) Rational where
   type AddType (CauchyRealA to) Rational = CauchyRealA to
   add = binaryOpWithPureArg "+" add (getInitQ1TFromSimple id)
 
-instance (ArrowChoice to) => CanAddAsymmetric Rational (CauchyRealA to) where
+instance (QAArrow to) => CanAddAsymmetric Rational (CauchyRealA to) where
   type AddType Rational (CauchyRealA to) = CauchyRealA to
   add = flip add
 
@@ -80,23 +80,23 @@ instance CanAddAsymmetric MPBall CauchyReal where
 
 {- subtraction -}
 
-instance (ArrowChoice to) => CanSub (CauchyRealA to) (CauchyRealA to) where
+instance (QAArrow to) => CanSub (CauchyRealA to) (CauchyRealA to) where
   sub = binaryOp "-" sub (getInitQ1Q2FromSimple $ proc q -> returnA -< (q,q))
 
-instance (ArrowChoice to) => CanSub (CauchyRealA to) Integer
-instance (ArrowChoice to) => CanSub Integer (CauchyRealA to)
-instance (ArrowChoice to) => CanSub (CauchyRealA to) Int
-instance (ArrowChoice to) => CanSub Int (CauchyRealA to)
-instance (ArrowChoice to) => CanSub (CauchyRealA to) Dyadic
-instance (ArrowChoice to) => CanSub Dyadic (CauchyRealA to)
-instance (ArrowChoice to) => CanSub (CauchyRealA to) Rational
-instance (ArrowChoice to) => CanSub Rational (CauchyRealA to)
+instance (QAArrow to) => CanSub (CauchyRealA to) Integer
+instance (QAArrow to) => CanSub Integer (CauchyRealA to)
+instance (QAArrow to) => CanSub (CauchyRealA to) Int
+instance (QAArrow to) => CanSub Int (CauchyRealA to)
+instance (QAArrow to) => CanSub (CauchyRealA to) Dyadic
+instance (QAArrow to) => CanSub Dyadic (CauchyRealA to)
+instance (QAArrow to) => CanSub (CauchyRealA to) Rational
+instance (QAArrow to) => CanSub Rational (CauchyRealA to)
 instance CanSub CauchyReal MPBall
 instance CanSub MPBall CauchyReal
 
 {- multiplication -}
 
-instance (ArrowChoice to) => CanMulAsymmetric (CauchyRealA to) (CauchyRealA to) where
+instance (QAArrow to) => CanMulAsymmetric (CauchyRealA to) (CauchyRealA to) where
   mul =
     binaryOp "*" mul getInitQ1Q2
     where
@@ -128,35 +128,35 @@ mulGetInitQ1T _a1 n =
   where
   nNormLog = getNormLog n
 
-instance (ArrowChoice to) => CanMulAsymmetric (CauchyRealA to) Integer where
+instance (QAArrow to) => CanMulAsymmetric (CauchyRealA to) Integer where
   type MulType (CauchyRealA to) Integer = CauchyRealA to
   mul = binaryOpWithPureArg "*" mul mulGetInitQ1T
 
-instance (ArrowChoice to) => CanMulAsymmetric Integer (CauchyRealA to) where
+instance (QAArrow to) => CanMulAsymmetric Integer (CauchyRealA to) where
   type MulType Integer (CauchyRealA to) = CauchyRealA to
   mul = flip mul
 
-instance (ArrowChoice to) => CanMulAsymmetric (CauchyRealA to) Int where
+instance (QAArrow to) => CanMulAsymmetric (CauchyRealA to) Int where
   type MulType (CauchyRealA to) Int = CauchyRealA to
   mul = binaryOpWithPureArg "*" mul mulGetInitQ1T
 
-instance (ArrowChoice to) => CanMulAsymmetric Int (CauchyRealA to) where
+instance (QAArrow to) => CanMulAsymmetric Int (CauchyRealA to) where
   type MulType Int (CauchyRealA to) = CauchyRealA to
   mul = flip mul
 
-instance (ArrowChoice to) => CanMulAsymmetric (CauchyRealA to) Dyadic where
+instance (QAArrow to) => CanMulAsymmetric (CauchyRealA to) Dyadic where
   type MulType (CauchyRealA to) Dyadic = CauchyRealA to
   mul = binaryOpWithPureArg "*" mul mulGetInitQ1T
 
-instance (ArrowChoice to) => CanMulAsymmetric Dyadic (CauchyRealA to) where
+instance (QAArrow to) => CanMulAsymmetric Dyadic (CauchyRealA to) where
   type MulType Dyadic (CauchyRealA to) = CauchyRealA to
   mul = flip mul
 
-instance (ArrowChoice to) => CanMulAsymmetric (CauchyRealA to) Rational where
+instance (QAArrow to) => CanMulAsymmetric (CauchyRealA to) Rational where
   type MulType (CauchyRealA to) Rational = CauchyRealA to
   mul = binaryOpWithPureArg "*" mul mulGetInitQ1T
 
-instance (ArrowChoice to) => CanMulAsymmetric Rational (CauchyRealA to) where
+instance (QAArrow to) => CanMulAsymmetric Rational (CauchyRealA to) where
   type MulType Rational (CauchyRealA to) = CauchyRealA to
   mul = flip mul
 
@@ -170,8 +170,8 @@ instance CanMulAsymmetric MPBall CauchyReal where
 
 {- natural power -}
 
-instance (ArrowChoice to) => CanPow (CauchyRealA to) Integer where
+instance (QAArrow to) => CanPow (CauchyRealA to) Integer where
   pow = powUsingMul
 
-instance (ArrowChoice to) => CanPow (CauchyRealA to) Int where
+instance (QAArrow to) => CanPow (CauchyRealA to) Int where
   pow = powUsingMul
