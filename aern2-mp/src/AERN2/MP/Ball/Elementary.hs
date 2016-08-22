@@ -75,13 +75,13 @@ instance CanLog MPBall where
     | otherwise = error $ "MPBall log: cannot establish that the argument is positive: " ++ show x
 
 instance CanPow MPBall MPBall where
-  pow = powViaExpLog
+  pow = powUsingExpLog
 
 instance CanPow MPBall Dyadic where
-  pow x q = powViaExpLog x (mpBall q)
+  pow x q = powUsingExpLog x (mpBall q)
 
 instance CanPow MPBall Rational where
-  pow x q = powViaExpLog x (mpBallP (getPrecision x) q)
+  pow x q = powUsingExpLog x (mpBallP (getPrecision x) q)
 
 instance CanSqrt MPBall where
   sqrt x
