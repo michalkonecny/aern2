@@ -15,6 +15,7 @@ module AERN2.Real
   QA(..)
   , CauchyRealP, pCR
   , CauchyRealA, CauchyReal, newCR
+  , real
 )
 where
 

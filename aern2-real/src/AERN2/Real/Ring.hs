@@ -167,3 +167,11 @@ instance CanMulAsymmetric CauchyReal MPBall where
 instance CanMulAsymmetric MPBall CauchyReal where
   type MulType MPBall CauchyReal = MPBall
   mul = flip mul
+
+{- natural power -}
+
+instance (ArrowChoice to) => CanPow (CauchyRealA to) Integer where
+  pow = powUsingMul
+
+instance (ArrowChoice to) => CanPow (CauchyRealA to) Int where
+  pow = powUsingMul
