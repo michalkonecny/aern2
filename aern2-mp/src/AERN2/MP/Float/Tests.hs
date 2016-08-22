@@ -131,7 +131,7 @@ tMPFloat = T "MPFloat"
 specMPFloat :: Spec
 specMPFloat =
   describe ("MPFloat") $ do
-    specCanSetPrecision tMPFloat (=~=)
+    specCanSetPrecision tMPFloat (printArgsIfFails2 "=~=" (=~=))
     specCanRound tMPFloat
     specCanNegNum tMPFloat
     specCanAbs tMPFloat

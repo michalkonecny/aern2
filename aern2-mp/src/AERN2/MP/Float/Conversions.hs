@@ -23,6 +23,7 @@ module AERN2.MP.Float.Conversions
    , CanBeMPFloat, mpFloat
    , fromIntegerUp, fromIntegerDown
    , fromRationalUp, fromRationalDown
+   , mpFromRationalA
    )
 where
 
@@ -67,12 +68,17 @@ mpToRational x
     e = P.toInteger ePre
 
 mpFromRationalA :: MPLow.RoundMode -> MPLow.Precision -> Rational -> MPFloat
-mpFromRationalA MPLow.Up p q =
-  MPLow.fromIntegerA MPLow.Up p (numerator q) `divUp` MPLow.fromIntegerA MPLow.Down p (denominator q)
-mpFromRationalA MPLow.Down p q =
-  MPLow.fromIntegerA MPLow.Down p (numerator q) `divDown` MPLow.fromIntegerA MPLow.Up p (denominator q)
-mpFromRationalA _ _ _ =
-  error "in mpFromRationalA"
+mpFromRationalA dir p q
+  | q < 0 =
+    MPLow.fromIntegerA dir p (numerator q) `divDir` MPLow.fromIntegerA dir p (denominator q)
+  | otherwise =
+    MPLow.fromIntegerA dir p (numerator q) `divDir` MPLow.fromIntegerA dirOpp p (denominator q)
+  where
+  (divDir, dirOpp) =
+    case dir of
+      MPLow.Down -> (divDown, MPLow.Up)
+      MPLow.Up -> (divUp, MPLow.Down)
+      _ -> error "in mpFromRationalA"
 
 #endif
 
