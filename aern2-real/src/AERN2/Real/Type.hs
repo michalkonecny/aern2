@@ -14,7 +14,8 @@ module AERN2.Real.Type
 (
   CauchyRealP, pCR
   , CauchyRealA, CauchyReal, newCR
-  , real, pickNonZeroReal
+  , real
+  , pickNonZeroRealA
 )
 where
 
@@ -111,8 +112,8 @@ instance ConvertibleWithPrecision CauchyReal MPBall where
   If none of @a1,a2,...@ is zero, either throw an exception
   or loop forever.
  -}
-pickNonZeroReal :: (QAArrow to) => [(CauchyRealA to, s)] `to` (CauchyRealA to, s)
-pickNonZeroReal =
+pickNonZeroRealA :: (QAArrow to) => [(CauchyRealA to, s)] `to` (CauchyRealA to, s)
+pickNonZeroRealA =
   startFromAccuracy (bits 0)
   where
   startFromAccuracy ac =

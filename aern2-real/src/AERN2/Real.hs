@@ -30,6 +30,7 @@ import AERN2.QA
 import AERN2.Real.Type
 -- import AERN2.Real.Aux ()
 import AERN2.Real.Ring ()
+import AERN2.Real.Field ()
 
 {-|
   Example arrow-generic real number computation
