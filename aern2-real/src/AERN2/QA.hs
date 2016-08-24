@@ -15,7 +15,7 @@ module AERN2.QA
 (
   QAProtocol(..), QAProtocolCacheable(..)
   , QA(..), addUnsafeMemoisation
-  , QAArrow(..), (-:-), (//..)
+  , QAArrow(..), qaMakeQueryOnManyA, (-:-), (//..)
   , QACachedA, QANetInfo(..)
   , executeQACachedA, printQANetLogThenResult
 )
@@ -26,6 +26,8 @@ import qualified Prelude as P
 
 import System.IO.Unsafe (unsafePerformIO)
 import Unsafe.Coerce
+
+import Data.Functor.Identity
 
 import Control.Arrow
 import Control.Concurrent.MVar
@@ -71,11 +73,23 @@ data QA to p = QA__
   }
 
 
+{-| Apply an arrow morphism on all elements of a list -}
+mapA :: (ArrowChoice to) => (t1 `to` t2) -> ([t1] `to` [t2])
+mapA fA =
+  proc list -> do
+    case list of
+      [] -> returnA -< []
+      (x : xs) -> do
+        y <- fA -< x
+        ys <-mapA fA -< xs
+        returnA -< y : ys
+
 {-|
   A class of Arrows suitable for use in QA objects.
 -}
 class (ArrowChoice to) => QAArrow to where
   type QAId to
+  type QAPromise to :: * -> *
   {-|
     Register a QA object, which leads to a change in its
     query processing mechanism so that, eg, answers can be cached
@@ -87,10 +101,19 @@ class (ArrowChoice to) => QAArrow to where
   -}
   qaRegister :: (QAProtocolCacheable p) =>
     (QA to p, [QA to p]) `to` (QA to p)
+  qaMakeQueryGetPromiseA :: (QA to p, Q p) `to` (QAPromise to (A p))
+  qaFulfilPromiseA :: (QAPromise to a) `to` a
   qaMakeQueryA :: (QA to p, Q p) `to` (A p)
+  qaMakeQueryA = qaMakeQueryGetPromiseA >>> qaFulfilPromiseA
+  qaMakeQueriesA :: [(QA to p, Q p)] `to` [A p]
+  qaMakeQueriesA = (mapA qaMakeQueryGetPromiseA) >>> (mapA qaFulfilPromiseA)
   newQA :: (QAProtocolCacheable p) =>
     String -> p -> Q p -> (Q p) `to` (A p) -> QA to p
   newQA name = QA__ name Nothing []
+
+qaMakeQueryOnManyA :: (QAArrow to) => ([QA to p], Q p) `to` [A p]
+qaMakeQueryOnManyA =
+  proc (qas, q) -> qaMakeQueriesA -< map (flip (,) q) qas
 
 (-:-) :: (QAArrow to, QAProtocolCacheable p) => (QA to p, [QA to p]) `to` (QA to p)
 (-:-) = qaRegister
@@ -108,9 +131,14 @@ a //..b = (a,b)
 -}
 instance QAArrow (->) where
   type QAId (->) = ()
+  type QAPromise (->) = Identity
+  qaMakeQueryGetPromiseA (qa, q) = Identity $ qaMakeQuery qa q
+  qaFulfilPromiseA = runIdentity
   qaMakeQueryA (qa, q) = qaMakeQuery qa q
+  qaMakeQueriesA = map qaMakeQueryA
   qaRegister = fst
   newQA name p sampleQ makeQ = addUnsafeMemoisation $ QA__ name Nothing [] p sampleQ makeQ
+
 
 {-|
   Add caching to pure (->) QA objects via unsafe memoization, inspired by
@@ -140,6 +168,7 @@ addUnsafeMemoisation qa = qa { qaMakeQuery = unsafeMemo }
 
 instance QAArrow QACachedA where
   type QAId QACachedA = ValueId
+  type QAPromise QACachedA = Identity
   qaRegister = Kleisli qaRegisterM
     where
     qaRegisterM (x@(QA__ name _ _ p sampleQ _), sources) =
@@ -149,6 +178,8 @@ instance QAArrow QACachedA where
       where
       makeQCached = getAnswer p
       sourceIds = catMaybes $ map qaId sources
+  qaMakeQueryGetPromiseA = qaMakeQueryA >>> arr Identity
+  qaFulfilPromiseA = arr runIdentity
   qaMakeQueryA = Kleisli qaMakeQueryM
     where
     qaMakeQueryM (qa, q) = runKleisli (qaMakeQuery qa) q

@@ -14,7 +14,7 @@ module AERN2.Real.Type
 (
   CauchyRealP, pCR
   , CauchyRealA, CauchyReal, newCR
-  , real
+  , real, pickNonZeroReal
 )
 where
 
@@ -100,3 +100,31 @@ instance (QAArrow to) => ConvertibleExactly Rational (CauchyRealA to) where
 instance ConvertibleWithPrecision CauchyReal MPBall where
   safeConvertP p r =
     Right $ setPrecision p $ qaMakeQuery r (bits p + 10)
+
+{- non-zero picking -}
+
+{-|
+  Given a list @[(a1,b1),(a2,b2),...]@ and assuming that
+  at least one of @a1,a2,...@ is non-zero, pick one of them
+  and return the corresponding pair @(ai,bi)@.
+
+  If none of @a1,a2,...@ is zero, either throw an exception
+  or loop forever.
+ -}
+pickNonZeroReal :: (QAArrow to) => [(CauchyRealA to, s)] `to` (CauchyRealA to, s)
+pickNonZeroReal =
+  startFromAccuracy (bits 0)
+  where
+  startFromAccuracy ac =
+    proc realsAndS -> do
+      balls <- qaMakeQueryOnManyA -< (map fst realsAndS, ac)
+      let maybeNonZero = pickNonZeroBall $ zip balls realsAndS
+      case maybeNonZero of
+        Just result -> returnA -< result
+        _ -> startFromAccuracy (ac + 1) -< realsAndS
+    where
+    pickNonZeroBall :: [(MPBall, s)] -> Maybe s
+    pickNonZeroBall [] = Nothing
+    pickNonZeroBall ((b, r) : rest)
+      | isNonZero b = Just r
+      | otherwise = pickNonZeroBall rest
