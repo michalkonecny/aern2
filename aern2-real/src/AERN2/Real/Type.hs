@@ -85,15 +85,15 @@ realA = convertExactly
 
 instance (QAArrow to) => ConvertibleExactly Integer (CauchyRealA to) where
   safeConvertExactly x =
-    Right $ newCR (show x) (arr $ const $ mpBall x)
+    Right $ newCR (show x) (arr $ flip setPrecisionAtLeastAccuracy $ mpBall x)
 
 instance (QAArrow to) => ConvertibleExactly Int (CauchyRealA to) where
   safeConvertExactly x =
-    Right $ newCR (show x) (arr $ const $ mpBall x)
+    Right $ newCR (show x) (arr $ flip setPrecisionAtLeastAccuracy $ mpBall x)
 
 instance (QAArrow to) => ConvertibleExactly Dyadic (CauchyRealA to) where
   safeConvertExactly x =
-    Right $ newCR (show x) (arr $ const $ mpBall x)
+    Right $ newCR (show x) (arr $ flip setPrecisionAtLeastAccuracy $ mpBall x)
 
 instance (QAArrow to) => ConvertibleExactly Rational (CauchyRealA to) where
   safeConvertExactly x =
