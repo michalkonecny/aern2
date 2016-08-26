@@ -13,8 +13,8 @@
 
 module AERN2.Interval
 (
-  Interval, singletonInterval, intervalWidth, splitInterval,
-  CanBeDyadicInterval, dyadicInterval
+  Interval(..), singletonInterval, intervalWidth, splitInterval,
+  DyadicInterval, CanBeDyadicInterval, dyadicInterval
 )
 where
 

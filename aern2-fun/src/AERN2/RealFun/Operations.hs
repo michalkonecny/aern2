@@ -1,5 +1,5 @@
 {-|
-    Module      :  AERN2.RealFun.Classes
+    Module      :  AERN2.RealFun.Operations
     Description :  Classes for real number function operations
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -11,10 +11,11 @@
     Classes for real number function operations
 -}
 
-module AERN2.RealFun.Classes
+module AERN2.RealFun.Operations
 (
-  HasDomain(..), CanApply(..), HasVars(..),
-  HasConstFunctions
+  HasDomain(..), CanApply(..), HasVars(..)
+  , HasConstFunctions, constFn
+  , CanIntegrate(..)
 )
 where
 
@@ -44,9 +45,16 @@ class CanApply f x where
 class HasVars f where
   type Var f
   {-| the function @x@, ie the function that project the domain to the given variable @x@  -}
-  varF ::
+  varFn ::
     f {-^ sample function with the same domain -}->
     Var f {-^ @x@ -} ->
     f
 
-type HasConstFunctions t f = ConvertibleExactly t f
+type HasConstFunctions t f = ConvertibleExactly (Domain f, t) f
+
+constFn :: (HasConstFunctions t f) => (Domain f, t) -> f
+constFn = convertExactly
+
+class CanIntegrate f where
+  type IntegralType f
+  integrate :: f -> IntegralType f

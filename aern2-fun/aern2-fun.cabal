@@ -48,8 +48,8 @@ library
     Arrows
   exposed-modules:
     AERN2.Interval
-    AERN2.RealFun.Classes
---    AERN2.RealFun.Fun
+    AERN2.RealFun.Operations
+    AERN2.RealFun.Fun
 --    AERN2.RealFun.Fun.Type
 --    AERN2.RealFun.Fun.Evaluation
 --    AERN2.RealFun.Fun.Evaluation
