@@ -12,7 +12,7 @@
 -}
 module AERN2.Real.Elementary
 (
-  pi
+  pi, piA, sqrtA, expA, logA, sinA, cosA
 )
 where
 
@@ -31,11 +31,14 @@ import AERN2.Real.Aux
 import AERN2.Real.Ring ()
 import AERN2.Real.Field ()
 
-pi :: (QAArrow to) => CauchyRealA to
-pi =
-  newCR "pi" (arr makeQ)
-  where
-  makeQ = seqByPrecision2CauchySeq piBallP
+{-
+  To get @pi@ in an arbitrary arrow, use 'piA'.
+-}
+pi :: CauchyReal
+pi = newCR "pi" (seqByPrecision2CauchySeq piBallP)
+
+piA :: (QAArrow to) => CauchyRealA to
+piA = qaArr pi
 
 {- sqrt -}
 
@@ -45,17 +48,16 @@ instance (QAArrow to) => CanSqrt (CauchyRealA to) where
     sqrtGetInitQ1 a1 =
       proc q ->
         do
-        (a1NormLog, b) <- getCRFnNormLog a1 sqrt -< q
+        (a1NormLog, b) <- getCRFnNormLog a1 sqrtSafe -< q
         let jInit = case a1NormLog of
                 NormBits sqrtNormLog -> max 0 (q - 1 - sqrtNormLog)
                 NormZero -> q
         returnA -< (jInit, Just b)
+    sqrtSafe x =
+      case x < 0 of
+        Just True -> error "sqrt of a negative argument"
+        _ -> sqrt (max 0 x)
 
-{-
-  Could not define @SqrtType Integer = CauchyRealA to@.
-
-  To get @sqrt 2@ in an arbitrary arrow, use @qaArr (sqrt 2)@.
--}
 
 instance CanSqrt Integer where
   type SqrtType Integer = CauchyReal
@@ -72,6 +74,12 @@ instance CanSqrt Dyadic where
 instance CanSqrt Rational where
   type SqrtType Rational = CauchyReal
   sqrt = sqrt . real
+
+sqrtA ::
+  (QAArrow to, CanSqrt t, SqrtType t ~ CauchyReal)
+  =>
+  t -> CauchyRealA to
+sqrtA = qaArr . sqrt
 
 {- exp -}
 
@@ -103,6 +111,12 @@ instance CanExp Rational where
   type ExpType Rational = CauchyReal
   exp = exp . real
 
+expA ::
+  (QAArrow to, CanExp t, ExpType t ~ CauchyReal)
+  =>
+  t -> CauchyRealA to
+expA = qaArr . exp
+
 {- log -}
 
 instance (QAArrow to) => CanLog (CauchyRealA to) where
@@ -132,6 +146,12 @@ instance CanLog Dyadic where
 instance CanLog Rational where
   type LogType Rational = CauchyReal
   log = log . real
+
+logA ::
+  (QAArrow to, CanLog t, LogType t ~ CauchyReal)
+  =>
+  t -> CauchyRealA to
+logA = qaArr . log
 
 -- {- TODO CR power -}
 --
@@ -181,3 +201,15 @@ instance CanSinCos Rational where
   type SinCosType Rational = CauchyReal
   cos = cos . real
   sin = sin . real
+
+cosA ::
+  (QAArrow to, CanSinCos t, SinCosType t ~ CauchyReal)
+  =>
+  t -> CauchyRealA to
+cosA = qaArr . cos
+
+sinA ::
+  (QAArrow to, CanSinCos t, SinCosType t ~ CauchyReal)
+  =>
+  t -> CauchyRealA to
+sinA = qaArr . sin

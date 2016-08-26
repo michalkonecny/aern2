@@ -15,8 +15,8 @@ module AERN2.Real
   QA(..)
   , CauchyRealP, pCR
   , CauchyRealA, CauchyReal, newCR
-  , real
-  , pi
+  , real, realA
+  , pi, piA, sqrtA, expA, logA, sinA, cosA
 )
 where
 
@@ -46,13 +46,14 @@ _addA =
     returnA -< s
 
 _CRonePure :: CauchyReal
-_CRonePure = newCR "one" (\ _ac -> mpBall 1)
+_CRonePure = real 1
 
 _addApure :: CauchyReal
-_addApure = _addA (_CRonePure, _CRonePure)
+_addApure =
+  _addA (_CRonePure, _CRonePure) -- equivalent to @_CRonePure + _CRonePure@
 
 _CRoneCached :: CauchyRealA QACachedA
-_CRoneCached = newCR "one" (Kleisli $ \ _ac -> return $ mpBall 1)
+_CRoneCached = realA 1
 
 _addAcached :: QACachedA () (CauchyRealA QACachedA)
 _addAcached =
@@ -60,7 +61,8 @@ _addAcached =
     do
     xReg <-(-:-)-< _CRoneCached //.. []
     _addA -< (xReg,xReg)
-    -- returnA -< xR + xR
+    -- equivalent to: @(-:-)-< xReg + xReg //.. [xReg,xReg]@
+    -- not equivalent to: @returnA -< xR + xR@
 
 _addAcachedPrint :: IO ()
 _addAcachedPrint =
