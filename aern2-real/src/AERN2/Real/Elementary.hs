@@ -129,7 +129,9 @@ instance (QAArrow to) => CanLog (CauchyRealA to) where
         let jInit = case a1NormLog of
                 NormBits normLog -> q - normLog
                 NormZero -> q
-        returnA -< (jInit, Just b)
+        returnA -< (jInit, Just $ setPrecisionAtLeastAccuracy (q+5) b)
+        -- the @setPrecisionAtLeastAccuracy (q+5)@ above improves
+        -- efficiency for exact low-precision arguments
 
 instance CanLog Integer where
   type LogType Integer = CauchyReal
