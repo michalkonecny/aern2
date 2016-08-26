@@ -15,7 +15,7 @@ module AERN2.QA
 (
   QAProtocol(..), QAProtocolCacheable(..)
   , QA(..), addUnsafeMemoisation
-  , QAArrow(..), qaMakeQueryOnManyA, (-:-), (//..)
+  , QAArrow(..), qaMakeQueryOnManyA, (-:-), (//..), qaArr
   , QACachedA, QANetInfo(..)
   , executeQACachedA, printQANetLogThenResult
 )
@@ -139,6 +139,10 @@ instance QAArrow (->) where
   qaRegister = fst
   newQA name p sampleQ makeQ = addUnsafeMemoisation $ QA__ name Nothing [] p sampleQ makeQ
 
+{-| Turn a pure QA object into any QAArrow QA object. -}
+qaArr :: (QAArrow to, QAProtocolCacheable p) => (QA (->) p) -> (QA to p)
+qaArr qa =
+  newQA (qaName qa) (qaProtocol qa) (qaSampleQ qa) (arr (qaMakeQuery qa))
 
 {-|
   Add caching to pure (->) QA objects via unsafe memoization, inspired by

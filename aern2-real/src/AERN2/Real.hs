@@ -16,6 +16,7 @@ module AERN2.Real
   , CauchyRealP, pCR
   , CauchyRealA, CauchyReal, newCR
   , real
+  , pi
 )
 where
 
@@ -31,6 +32,7 @@ import AERN2.Real.Type
 -- import AERN2.Real.Aux ()
 import AERN2.Real.Ring ()
 import AERN2.Real.Field ()
+import AERN2.Real.Elementary
 
 {-|
   Example arrow-generic real number computation
