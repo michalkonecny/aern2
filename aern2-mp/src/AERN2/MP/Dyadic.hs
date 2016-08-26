@@ -39,6 +39,8 @@ import Data.Ratio (denominator, numerator)
 
 import Math.NumberTheory.Logarithms (integerLog2)
 
+import Numeric.CatchingExceptions
+
 import AERN2.Norm
 import AERN2.MP.Precision
 import AERN2.MP.Float
@@ -94,6 +96,12 @@ instance HasEqAsymmetric Dyadic Rational where
 instance HasEqAsymmetric Rational Dyadic where
   equalTo = convertSecond equalTo
 
+-- -- TODO: finish it once we have HasEq for a pair of CatchingNumExceptions
+-- instance HasEqAsymmetric t Dyadic => HasEqAsymmetric (CatchingNumExceptions t) Dyadic where
+--   type EqCompareType (CatchingNumExceptions t) Dyadic = CatchingNumExceptions (EqCompareType t Dyadic)
+--   equalTo = convertSecondUsing catchingNumExceptions equalTo
+
+
 instance CanTestZero Dyadic
 
 instance HasOrderAsymmetric Dyadic Dyadic
@@ -117,6 +125,10 @@ instance HasOrderAsymmetric Dyadic Rational where
   leq = convertFirst leq
 
 instance CanTestPosNeg Dyadic
+
+instance CanTestInteger Dyadic where
+  certainlyNotInteger = certainlyNotInteger . rational
+  certainlyIntegerGetIt = certainlyIntegerGetIt . rational
 
 {- unary functions -}
 
@@ -183,6 +195,22 @@ instance CanAddAsymmetric Dyadic Rational where
   type AddType Dyadic Rational = Dyadic
   add = convertSecond add
 
+instance
+  (CanAddAsymmetric t Dyadic,
+   Show (AddType t Dyadic), CanTestValid (AddType t Dyadic))
+  =>
+  CanAddAsymmetric (CatchingNumExceptions t) Dyadic where
+  type AddType (CatchingNumExceptions t) Dyadic = CatchingNumExceptions (AddType t Dyadic)
+  add a b = add a (catchingNumExceptions b)
+
+instance
+  (CanAddAsymmetric Dyadic t,
+   Show (AddType Dyadic t), CanTestValid (AddType Dyadic t))
+  =>
+  CanAddAsymmetric Dyadic (CatchingNumExceptions t) where
+  type AddType Dyadic (CatchingNumExceptions t) = CatchingNumExceptions (AddType Dyadic t)
+  add b a = add (catchingNumExceptions b) a
+
 {- subtraction -}
 
 instance CanSub Dyadic Dyadic where
@@ -208,6 +236,23 @@ instance CanSub Rational Dyadic where
 instance CanSub Dyadic Rational where
   type SubType Dyadic Rational = Dyadic
   sub = convertSecond sub
+
+instance
+  (CanSub t Dyadic,
+   Show (SubType t Dyadic), CanTestValid (SubType t Dyadic))
+  =>
+  CanSub (CatchingNumExceptions t) Dyadic where
+  type SubType (CatchingNumExceptions t) Dyadic = CatchingNumExceptions (SubType t Dyadic)
+  sub a b = sub a (catchingNumExceptions b)
+
+instance
+  (CanSub Dyadic t,
+   Show (SubType Dyadic t), CanTestValid (SubType Dyadic t))
+  =>
+  CanSub Dyadic (CatchingNumExceptions t) where
+  type SubType Dyadic (CatchingNumExceptions t) = CatchingNumExceptions (SubType Dyadic t)
+  sub b a = sub (catchingNumExceptions b) a
+
 
 {- multiplication -}
 
@@ -235,11 +280,58 @@ instance CanMulAsymmetric Dyadic Rational where
   type MulType Dyadic Rational = Dyadic
   mul = convertSecond mul
 
+instance
+  (CanMulAsymmetric t Dyadic,
+   Show (MulType t Dyadic), CanTestValid (MulType t Dyadic))
+  =>
+  CanMulAsymmetric (CatchingNumExceptions t) Dyadic where
+  type MulType (CatchingNumExceptions t) Dyadic = CatchingNumExceptions (MulType t Dyadic)
+  mul a b = mul a (catchingNumExceptions b)
+
+instance
+  (CanMulAsymmetric Dyadic t,
+   Show (MulType Dyadic t), CanTestValid (MulType Dyadic t))
+  =>
+  CanMulAsymmetric Dyadic (CatchingNumExceptions t) where
+  type MulType Dyadic (CatchingNumExceptions t) = CatchingNumExceptions (MulType Dyadic t)
+  mul b a = mul (catchingNumExceptions b) a
+
 instance CanPow Dyadic Integer where
   pow = powUsingMul
 instance CanPow Dyadic Int where
   pow = powUsingMul
 
+instance
+  (CanDiv t Dyadic,
+   Show (DivType t Dyadic), CanTestValid (DivType t Dyadic))
+  =>
+  CanDiv (CatchingNumExceptions t) Dyadic where
+  type DivType (CatchingNumExceptions t) Dyadic = CatchingNumExceptions (DivType t Dyadic)
+  divide a b = divide a (catchingNumExceptions b)
+
+instance
+  (CanDiv Dyadic t,  CanTestZero t,
+   Show (DivType Dyadic t), CanTestValid (DivType Dyadic t))
+  =>
+  CanDiv Dyadic (CatchingNumExceptions t) where
+  type DivType Dyadic (CatchingNumExceptions t) = CatchingNumExceptions (DivType Dyadic t)
+  divide b a = divide (catchingNumExceptions b) a
+
+instance
+  (CanPow t Dyadic, CanNegSameType t, Show t, CanTestPosNeg t,
+   Show (PowType t Dyadic), CanTestValid (PowType t Dyadic))
+  =>
+  CanPow (CatchingNumExceptions t) Dyadic where
+  type PowType (CatchingNumExceptions t) Dyadic = CatchingNumExceptions (PowType t Dyadic)
+  pow a b = pow a (catchingNumExceptions b)
+
+instance
+  (CanPow Dyadic t,  Show t,  CanTestPosNeg t, CanTestInteger t,
+   Show (PowType Dyadic t), CanTestValid (PowType Dyadic t))
+  =>
+  CanPow Dyadic (CatchingNumExceptions t) where
+  type PowType Dyadic (CatchingNumExceptions t) = CatchingNumExceptions (PowType Dyadic t)
+  pow b a = pow (catchingNumExceptions b) a
 
 lift2 ::
   (MPFloat -> MPFloat -> MPFloat) ->
