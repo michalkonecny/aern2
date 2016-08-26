@@ -21,7 +21,7 @@ module AERN2.MP.Ball
   , setPrecisionAtLeastAccuracy
   , reducePrecionIfInaccurate
   -- * Ball construction/extraction functions
-  , centre, radius
+  , centre, radius, centreDyadic
   , centreAndErrorBall
   , endpoints, fromEndpoints
   , integerBounds
