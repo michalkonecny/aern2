@@ -36,8 +36,8 @@ import AERN2.Real.Type
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
--- shouldTrace = False
-shouldTrace = True
+shouldTrace = False
+-- shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace
