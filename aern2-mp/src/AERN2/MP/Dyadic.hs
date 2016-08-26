@@ -47,7 +47,10 @@ import AERN2.MP.Float
 
 {-| Exact dyadic type based on MPFloat. -}
 newtype Dyadic = Dyadic { dyadicMPFloat :: MPFloat }
-  deriving (Show, P.Eq, P.Ord, CanRound, HasPrecision, HasNorm, Typeable)
+  deriving (P.Eq, P.Ord, CanRound, HasPrecision, HasNorm, Typeable)
+
+instance Show Dyadic where
+  show (Dyadic x) = show x
 
 {-- conversions --}
 
