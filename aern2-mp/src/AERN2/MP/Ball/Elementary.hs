@@ -86,7 +86,7 @@ instance CanPow MPBall Rational where
 instance CanSqrt MPBall where
   sqrt x
     | x !>=! 0 = aux x
-    | x ?>=? 0 = aux (max 0 x)
+    -- | x ?>=? 0 = aux (max 0 x)
     | otherwise = error $ "MPBall sqrt: cannot establish that the argument is non-negative: " ++ show x
     where
       aux = monotoneFromApprox MPFloat.sqrtDown MPFloat.sqrtUp
