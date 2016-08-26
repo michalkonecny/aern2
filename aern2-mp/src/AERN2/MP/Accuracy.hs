@@ -22,6 +22,8 @@ where
 import Numeric.MixedTypes
 import qualified Prelude as P
 
+import Numeric.CatchingExceptions
+
 import AERN2.Norm
 import AERN2.MP.Precision
 
@@ -148,7 +150,13 @@ instance CanSub Accuracy Integer where
     sub Exact _ = Exact
 
 class HasAccuracy a where
-    getAccuracy :: a -> Accuracy
+  getAccuracy :: a -> Accuracy
+
+instance HasAccuracy a => HasAccuracy (CatchingNumExceptions a) where
+  getAccuracy aCE =
+    case catchingNumExceptions_maybeValue aCE of
+      Just v -> getAccuracy v
+      _ -> NoInformation
 
 {-| Return accuracy, except when the element is Exact, return its nominal Precision dressed as Accuracy.
     This function is useful when we have a convergent sequence where all elements happen to be
