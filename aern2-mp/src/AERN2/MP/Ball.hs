@@ -24,6 +24,7 @@ module AERN2.MP.Ball
   , centre, radius
   , centreAndErrorBall
   , endpoints, fromEndpoints
+  , integerBounds
   -- , endpointsMP, fromEndpointsMP
   -- * Ball operations (see also instances)
   , intersect
@@ -43,7 +44,7 @@ import AERN2.MP.Precision
 import AERN2.MP.Accuracy
 
 import AERN2.MP.Ball.Type
-import AERN2.MP.Ball.Conversions ()
+import AERN2.MP.Ball.Conversions
 import AERN2.MP.Ball.Comparisons
 import AERN2.MP.Ball.Field ()
 import AERN2.MP.Ball.Elementary

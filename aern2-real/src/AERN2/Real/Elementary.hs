@@ -155,10 +155,25 @@ logA ::
   t -> CauchyRealA to
 logA = qaArr . log
 
--- {- TODO CR power -}
---
--- instance (QAArrow to) => CanPow (CauchyRealA to) (CauchyRealA to) where
---   pow = -- adapt algorithm for division
+{- power -}
+
+instance (QAArrow to) => CanPow (CauchyRealA to) (CauchyRealA to) where
+  pow =
+    binaryOp "^" pow getInitQ1Q2
+    where
+    getInitQ1Q2 a1 a2 =
+      proc q ->
+        do
+        (a1NormLog, b1) <- getCRFnNormLog a1 id -< q
+        -- let jPre2 = case a1NormLog of
+        --         NormZero -> bits 0 -- base == 0, it does not matter
+        --         NormBits a1NL -> max 0 (q + a1NL)
+        (_a2NormLog, b2) <- getCRFnNormLog a2 id -< q
+        let b2I = snd (integerBounds b2)
+        let (jInit1, jInit2) = case a1NormLog of
+                NormZero -> (q, q) -- base == 0, the query does not matter that much
+                NormBits a1NL -> (q + (a1NL * (b2I - 1)), q + a1NL * b2I)
+        returnA -< ((jInit1, Just b1), (jInit2, Just b2))
 
 {- sine, cosine -}
 
