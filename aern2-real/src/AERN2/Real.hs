@@ -50,7 +50,8 @@ _CRonePure = real 1
 
 _addApure :: CauchyReal
 _addApure =
-  _addA (_CRonePure, _CRonePure) -- equivalent to @_CRonePure + _CRonePure@
+  _addA (_CRonePure, _CRonePure)
+  -- equivalent to @_CRonePure + _CRonePure@ since registration does nothing
 
 _CRoneCached :: CauchyRealA QACachedA
 _CRoneCached = realA 1
@@ -61,8 +62,8 @@ _addAcached =
     do
     xReg <-(-:-)-< _CRoneCached //.. []
     _addA -< (xReg,xReg)
-    -- equivalent to: @(-:-)-< xReg + xReg //.. [xReg,xReg]@
-    -- not equivalent to: @returnA -< xR + xR@
+    -- equivalent to @(-:-)-< xReg + xReg //.. [xReg,xReg]@
+    -- not equivalent to @returnA -< xR + xR@ since there is no registration
 
 _addAcachedPrint :: IO ()
 _addAcachedPrint =
