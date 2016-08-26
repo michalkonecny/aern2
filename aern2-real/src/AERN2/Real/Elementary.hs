@@ -165,15 +165,77 @@ instance (QAArrow to) => CanPow (CauchyRealA to) (CauchyRealA to) where
       proc q ->
         do
         (a1NormLog, b1) <- getCRFnNormLog a1 id -< q
-        -- let jPre2 = case a1NormLog of
-        --         NormZero -> bits 0 -- base == 0, it does not matter
-        --         NormBits a1NL -> max 0 (q + a1NL)
         (_a2NormLog, b2) <- getCRFnNormLog a2 id -< q
-        let b2I = snd (integerBounds b2)
+        let b2I = snd (integerBounds b2) + 1
         let (jInit1, jInit2) = case a1NormLog of
                 NormZero -> (q, q) -- base == 0, the query does not matter that much
                 NormBits a1NL -> (q + (a1NL * (b2I - 1)), q + a1NL * b2I)
         returnA -< ((jInit1, Just b1), (jInit2, Just b2))
+
+instance (QAArrow to) => CanPow Integer (CauchyRealA to) where
+  type PowType Integer (CauchyRealA to) = CauchyRealA to
+  pow = convertFirst pow
+
+instance (QAArrow to) => CanPow Int (CauchyRealA to) where
+  type PowType Int (CauchyRealA to) = CauchyRealA to
+  pow = convertFirst pow
+
+instance (QAArrow to) => CanPow (CauchyRealA to) Dyadic where
+  type PowType (CauchyRealA to) Dyadic = CauchyRealA to
+  pow = convertSecond pow
+
+instance (QAArrow to) => CanPow Dyadic (CauchyRealA to) where
+  type PowType Dyadic (CauchyRealA to) = CauchyRealA to
+  pow = convertFirst pow
+
+instance (QAArrow to) => CanPow (CauchyRealA to) Rational where
+  type PowType (CauchyRealA to) Rational = CauchyRealA to
+  pow = convertSecond pow
+
+instance (QAArrow to) => CanPow Rational (CauchyRealA to) where
+  type PowType Rational (CauchyRealA to) = CauchyRealA to
+  pow = convertFirst pow
+
+instance CanPow CauchyReal MPBall where
+  type PowType CauchyReal MPBall = MPBall
+  pow = binaryWithBall pow
+
+instance CanPow MPBall CauchyReal where
+  type PowType MPBall CauchyReal = MPBall
+  pow = flip $ binaryWithBall (flip pow)
+
+instance CanPow Integer Dyadic where
+  type PowType Integer Dyadic = CauchyReal
+  pow b e = pow (real b) (real e)
+
+instance CanPow Int Dyadic where
+  type PowType Int Dyadic = CauchyReal
+  pow b e = pow (real b) (real e)
+
+instance CanPow Dyadic Dyadic where
+  type PowType Dyadic Dyadic = CauchyReal
+  pow b e = pow (real b) (real e)
+
+instance CanPow Rational Dyadic where
+  type PowType Rational Dyadic = CauchyReal
+  pow b e = pow (real b) (real e)
+
+instance CanPow Integer Rational where
+  type PowType Integer Rational = CauchyReal
+  pow b e = pow (real b) (real e)
+
+instance CanPow Int Rational where
+  type PowType Int Rational = CauchyReal
+  pow b e = pow (real b) (real e)
+
+instance CanPow Dyadic Rational where
+  type PowType Dyadic Rational = CauchyReal
+  pow b e = pow (real b) (real e)
+
+instance CanPow Rational Rational where
+  type PowType Rational Rational = CauchyReal
+  pow b e = pow (real b) (real e)
+
 
 {- sine, cosine -}
 

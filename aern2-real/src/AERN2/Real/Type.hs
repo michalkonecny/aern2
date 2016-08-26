@@ -14,7 +14,7 @@ module AERN2.Real.Type
 (
   CauchyRealP, pCR
   , CauchyRealA, CauchyReal, newCR
-  , real, realA
+  , CanBeReal, real, CanBeRealA, realA
   , pickNonZeroRealA
 )
 where
@@ -76,6 +76,7 @@ instance Show CauchyReal where
 {- conversions -}
 
 type CanBeRealA to t = ConvertibleExactly t (CauchyRealA to)
+type CanBeReal t = CanBeRealA (->) t
 
 real :: (CanBeRealA (->) t) => t -> CauchyReal
 real = convertExactly
