@@ -24,6 +24,8 @@ import Numeric.MixedTypes
 
 import Control.Arrow
 
+import Numeric.CatchingExceptions
+
 import AERN2.MP.Ball
 -- import AERN2.MP.Precision
 -- import AERN2.MP.Accuracy
@@ -34,8 +36,8 @@ import AERN2.Real.Type
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
-shouldTrace = False
---shouldTrace = True
+-- shouldTrace = False
+shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace
@@ -80,7 +82,7 @@ unaryOp ::
   (QAArrow to)
   =>
   String ->
-  (MPBall -> MPBall) ->
+  (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) ->
   (CauchyRealA to -> (Accuracy `to` (Accuracy, Maybe MPBall))) ->
   CauchyRealA to -> CauchyRealA to
 unaryOp name op getInitQ1 r1 = newCR name makeQ
@@ -95,7 +97,7 @@ binaryOpWithPureArg ::
   (QAArrow to)
   =>
   String ->
-  (MPBall -> t -> MPBall) ->
+  (CatchingNumExceptions MPBall -> t -> CatchingNumExceptions MPBall) ->
   (CauchyRealA to -> t -> (Accuracy `to` (Accuracy, Maybe MPBall))) ->
   CauchyRealA to -> t -> CauchyRealA to
 binaryOpWithPureArg name op getInitQ1T r1 t = newCR name makeQ
@@ -110,7 +112,7 @@ binaryOp ::
   (QAArrow to)
   =>
   String ->
-  (MPBall -> MPBall -> MPBall) ->
+  (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) ->
   (CauchyRealA to -> CauchyRealA to -> (Accuracy `to` ((Accuracy, Maybe MPBall), (Accuracy, Maybe MPBall)))) ->
   CauchyRealA to -> CauchyRealA to -> CauchyRealA to
 binaryOp name op getInitQ1Q2 r1 r2 = newCR name makeQ
@@ -164,14 +166,14 @@ getInitQ1Q2FromSimple simpleA _ _ =
 ensureAccuracyA1 ::
   (ArrowChoice to) =>
   (Accuracy `to` MPBall) ->
-  (MPBall -> MPBall) ->
+  (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) ->
   ((Accuracy, (Accuracy, Maybe MPBall)) `to` MPBall)
 ensureAccuracyA1 getA1 op =
     proc (q,(j1, mB)) ->
         do
-        let mResult = fmap op mB
-        case mResult of
-            Just result | getAccuracy result >= q ->
+        let mResult = fmap op (fmap catchingNumExceptions mB)
+        case fmap catchingNumExceptions_maybeValue mResult of
+            Just (Just result) | getAccuracy result >= q ->
                 returnA -<
                     maybeTrace (
                         "ensureAccuracy1: Pre-computed result sufficient. (q = " ++ show q ++
@@ -185,20 +187,24 @@ ensureAccuracyA1 getA1 op =
         proc (q,j1) ->
             do
             a1 <- getA1 -< j1
-            let result = op a1
-            if getAccuracy result >= q
-                then returnA -<
+            let resultCE = op (catchingNumExceptions a1)
+            case catchingNumExceptions_maybeValue resultCE of
+              Just result | getAccuracy result >= q ->
+                returnA -<
                     maybeTrace (
                         "ensureAccuracy1: Succeeded. (q = " ++ show q ++
                         "; j1 = " ++ show j1 ++
                         "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
                     ) $
                     result
-                else aux -<
+              _ ->
+                aux -<
                     maybeTrace (
                         "ensureAccuracy1: Not enough ... (q = " ++ show q ++
                         "; j1 = " ++ show j1 ++
-                        "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
+                        "; a1 = " ++ show a1 ++
+                        "; result = " ++ show resultCE ++
+                        "; result accuracy = " ++ (show $ getAccuracy resultCE) ++ ")"
                     ) $
                     (q, j1+1)
 
@@ -206,14 +212,16 @@ ensureAccuracyA2 ::
   (ArrowChoice to) =>
   (Accuracy `to` MPBall) ->
   (Accuracy `to` MPBall) ->
-  (MPBall -> MPBall -> MPBall) ->
+  (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) ->
   ((Accuracy, (Accuracy, Maybe MPBall), (Accuracy, Maybe MPBall)) `to` MPBall)
 ensureAccuracyA2 getA1 getA2 op =
     proc (q,(j1, mB1),(j2, mB2)) ->
         do
-        let mResult = do b1 <- mB1; b2 <- mB2; Just $ op b1 b2
-        case mResult of
-            Just result | getAccuracy result >= q ->
+        let mResult =
+              do b1 <- mB1; b2 <- mB2;
+                  Just $ op (catchingNumExceptions b1) (catchingNumExceptions b2)
+        case fmap catchingNumExceptions_maybeValue mResult of
+            Just (Just result) | getAccuracy result >= q ->
                 returnA -<
                     maybeTrace (
                         "ensureAccuracy2: Pre-computed result sufficient. (q = " ++ show q ++
@@ -229,9 +237,10 @@ ensureAccuracyA2 getA1 getA2 op =
             do
             a1 <- getA1 -< j1
             a2 <- getA2 -< j2
-            let result = op a1 a2
-            if getAccuracy result >= q
-                then returnA -<
+            let resultCE = op (catchingNumExceptions a1) (catchingNumExceptions a2)
+            case catchingNumExceptions_maybeValue resultCE of
+              Just result | getAccuracy result >= q ->
+                  returnA -<
                     maybeTrace (
                         "ensureAccuracy2: Succeeded. (q = " ++ show q ++
                         "; j1 = " ++ show j1 ++
@@ -239,7 +248,7 @@ ensureAccuracyA2 getA1 getA2 op =
                         "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
                     ) $
                     result
-                else aux -<
+              _ -> aux -<
                     maybeTrace (
                         "ensureAccuracy2: Not enough ... (q = " ++ show q ++
                         "; a1 = " ++ show a1 ++
@@ -248,7 +257,7 @@ ensureAccuracyA2 getA1 getA2 op =
                         "; a2 = " ++ show a2 ++
                         "; getPrecision a2 = " ++ show (getPrecision a2) ++
                         "; j2 = " ++ show j2 ++
-                        "; result = " ++ (show $ result) ++
-                        "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
+                        "; result = " ++ (show $ resultCE) ++
+                        "; result accuracy = " ++ (show $ getAccuracy resultCE) ++ ")"
                     ) $
                     (q,j1+1,j2+1)

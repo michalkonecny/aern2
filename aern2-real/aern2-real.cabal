@@ -27,6 +27,7 @@ library
     , QuickCheck >= 2.7 && < 2.9
     , transformers >= 0.4 && < 0.6
     , mixed-types-num == 0.1.*
+    , num-exceptions == 0.1.*
     , aern2-mp == 0.1.*
     , lens == 4.13.*
   ghc-options:     -Wall -fno-warn-orphans
