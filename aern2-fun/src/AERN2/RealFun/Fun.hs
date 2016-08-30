@@ -31,6 +31,8 @@ import Data.Typeable
 import AERN2.MP.Dyadic
 import AERN2.MP.Ball
 
+import AERN2.Real
+
 import AERN2.Interval
 import AERN2.RealFun.Operations
 
@@ -44,6 +46,10 @@ data UnaryFun =
   }
 
 instance CanApply UnaryFun MPBall where
+  type ApplyType UnaryFun MPBall = MPBall
+  apply = unaryFun_Eval
+
+instance CanApply UnaryFun Cauchy where
   type ApplyType UnaryFun MPBall = MPBall
   apply = unaryFun_Eval
 

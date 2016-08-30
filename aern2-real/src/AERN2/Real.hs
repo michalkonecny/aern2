@@ -12,11 +12,20 @@
 -}
 module AERN2.Real
 (
+  -- * the type of real numbers, a special case of type QA
   QA(..)
   , CauchyRealP, pCR
   , CauchyRealA, CauchyReal, newCR
   , real, realA
-  , pi, piA, sqrtA, expA, logA, sinA, cosA
+  -- * constants
+  , pi, piA
+  -- * arrow-generic versions of some operations
+  , sqrtA, expA, logA, sinA, cosA
+  -- * auxiliary functions for making new real operations
+  , unaryOp, binaryOp, binaryOpWithPureArg
+  , getCRFnNormLog
+  , getInitQ1FromSimple, getInitQ1TFromSimple, getInitQ1Q2FromSimple
+  , binaryWithBall
 )
 where
 
@@ -29,7 +38,7 @@ import AERN2.MP.Ball
 
 import AERN2.QA
 import AERN2.Real.Type
--- import AERN2.Real.Aux ()
+import AERN2.Real.Aux
 import AERN2.Real.Ring ()
 import AERN2.Real.Field ()
 import AERN2.Real.Elementary
