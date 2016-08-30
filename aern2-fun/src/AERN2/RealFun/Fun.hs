@@ -49,9 +49,9 @@ instance CanApply UnaryFun MPBall where
   type ApplyType UnaryFun MPBall = MPBall
   apply = unaryFun_Eval
 
-instance CanApply UnaryFun Cauchy where
-  type ApplyType UnaryFun MPBall = MPBall
-  apply = unaryFun_Eval
+-- instance CanApply UnaryFun CauchyReal where
+--   type ApplyType UnaryFun CauchyReal = CauchyReal
+--   apply x = unaryFun_Eval
 
 instance CanApply UnaryFun Integer where
   type ApplyType UnaryFun Integer = MPBall
