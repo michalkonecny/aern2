@@ -13,7 +13,7 @@
 
 module AERN2.RealFun.Fun
 (
-  UnaryFun
+  UnaryFun(..)
 )
 where
 
@@ -23,6 +23,8 @@ import Numeric.MixedTypes
 
 import Data.Typeable
 
+import Control.Arrow
+
 -- import qualified Data.List as List
 
 -- import Test.Hspec
@@ -31,6 +33,7 @@ import Data.Typeable
 import AERN2.MP.Dyadic
 import AERN2.MP.Ball
 
+import AERN2.QA
 import AERN2.Real
 
 import AERN2.Interval
@@ -49,9 +52,16 @@ instance CanApply UnaryFun MPBall where
   type ApplyType UnaryFun MPBall = MPBall
   apply = unaryFun_Eval
 
--- instance CanApply UnaryFun CauchyReal where
---   type ApplyType UnaryFun CauchyReal = CauchyReal
---   apply x = unaryFun_Eval
+instance (QAArrow to) => CanApply UnaryFun (CauchyRealA to) where
+  type ApplyType UnaryFun (CauchyRealA to) = (CauchyRealA to)
+  apply f =
+    unaryOp "apply" (fmap (unaryFun_Eval f . checkInDom (unaryFun_Domain f))) (getInitQ1FromSimple (arr id))
+    where
+    checkInDom domI b
+      | domB ?<=? b && b ?<=? domB = intersect domB b
+      | otherwise = error "apply UnaryFun CauchyReal: argument out of function domain"
+      where
+      domB = mpBall domI
 
 instance CanApply UnaryFun Integer where
   type ApplyType UnaryFun Integer = MPBall
