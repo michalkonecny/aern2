@@ -50,7 +50,7 @@ _addA :: (QAArrow to) => (CauchyRealA to, CauchyRealA to) `to` CauchyRealA to
 _addA =
   -- using -XArrows syntax:
   proc (x,y) -> do
-    s <-(-:-)-< x + y //.. [x,y] -- listing source values for better tracing messages
+    s <-(-:-)-< x + y
       -- -:- and //.. are shorcuts for qaRegister and (,) respectively
     returnA -< s
 
@@ -69,7 +69,7 @@ _addAcached :: QACachedA () (CauchyRealA QACachedA)
 _addAcached =
   proc () ->
     do
-    xReg <-(-:-)-< _CRoneCached //.. []
+    xReg <-(-:-)-< _CRoneCached
     _addA -< (xReg,piA)
     -- equivalent to @(-:-)-< xReg + piA //.. [xReg,xReg]@
     -- not equivalent to @returnA -< xR + xR@ since there is no registration

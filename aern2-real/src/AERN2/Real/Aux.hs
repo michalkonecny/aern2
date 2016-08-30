@@ -85,7 +85,8 @@ unaryOp ::
   (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) ->
   (CauchyRealA to -> (Accuracy `to` (Accuracy, Maybe MPBall))) ->
   CauchyRealA to -> CauchyRealA to
-unaryOp name op getInitQ1 r1 = newCR name makeQ
+unaryOp name op getInitQ1 r1 =
+  newCR name [AnyProtocolQA r1] makeQ
   where
   makeQ =
     proc ac ->
@@ -100,7 +101,8 @@ binaryOpWithPureArg ::
   (CatchingNumExceptions MPBall -> t -> CatchingNumExceptions MPBall) ->
   (CauchyRealA to -> t -> (Accuracy `to` (Accuracy, Maybe MPBall))) ->
   CauchyRealA to -> t -> CauchyRealA to
-binaryOpWithPureArg name op getInitQ1T r1 t = newCR name makeQ
+binaryOpWithPureArg name op getInitQ1T r1 t =
+  newCR name [AnyProtocolQA r1] makeQ
   where
   makeQ =
     proc ac ->
@@ -115,7 +117,8 @@ binaryOp ::
   (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) ->
   (CauchyRealA to -> CauchyRealA to -> (Accuracy `to` ((Accuracy, Maybe MPBall), (Accuracy, Maybe MPBall)))) ->
   CauchyRealA to -> CauchyRealA to -> CauchyRealA to
-binaryOp name op getInitQ1Q2 r1 r2 = newCR name makeQ
+binaryOp name op getInitQ1Q2 r1 r2 =
+  newCR name [AnyProtocolQA r1, AnyProtocolQA r2] makeQ
   where
   makeQ =
     proc ac ->

@@ -67,8 +67,8 @@ type CauchyRealA to = QA to CauchyRealP
 
 type CauchyReal = CauchyRealA (->)
 
-newCR :: (QAArrow to) => String -> Accuracy `to` MPBall -> CauchyRealA to
-newCR name makeQ = newQA name pCR NoInformation makeQ
+newCR :: (QAArrow to) => String -> [AnyProtocolQA to] -> Accuracy `to` MPBall -> CauchyRealA to
+newCR name sources makeQ = newQA name sources pCR NoInformation makeQ
 
 instance Show CauchyReal where
   show r = show $ qaMakeQuery r (bits 100)
@@ -86,19 +86,19 @@ realA = convertExactly
 
 instance (QAArrow to) => ConvertibleExactly Integer (CauchyRealA to) where
   safeConvertExactly x =
-    Right $ newCR (show x) (arr $ flip setPrecisionAtLeastAccuracy $ mpBall x)
+    Right $ newCR (show x) [] (arr $ flip setPrecisionAtLeastAccuracy $ mpBall x)
 
 instance (QAArrow to) => ConvertibleExactly Int (CauchyRealA to) where
   safeConvertExactly x =
-    Right $ newCR (show x) (arr $ flip setPrecisionAtLeastAccuracy $ mpBall x)
+    Right $ newCR (show x) [] (arr $ flip setPrecisionAtLeastAccuracy $ mpBall x)
 
 instance (QAArrow to) => ConvertibleExactly Dyadic (CauchyRealA to) where
   safeConvertExactly x =
-    Right $ newCR (show x) (arr $ flip setPrecisionAtLeastAccuracy $ mpBall x)
+    Right $ newCR (show x) [] (arr $ flip setPrecisionAtLeastAccuracy $ mpBall x)
 
 instance (QAArrow to) => ConvertibleExactly Rational (CauchyRealA to) where
   safeConvertExactly x =
-    Right $ newCR (show x) (arr makeQ)
+    Right $ newCR (show x) [] (arr makeQ)
     where
     makeQ = seqByPrecision2CauchySeq (flip mpBallP x)
 

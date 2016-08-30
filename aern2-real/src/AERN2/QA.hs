@@ -14,8 +14,8 @@
 module AERN2.QA
 (
   QAProtocol(..), QAProtocolCacheable(..)
-  , QA(..), addUnsafeMemoisation
-  , QAArrow(..), qaMakeQueryOnManyA, (-:-), (//..), qaArr
+  , QA(..), AnyProtocolQA(..), addUnsafeMemoisation
+  , QAArrow(..), qaMakeQueryOnManyA, (-:-), qaArr
   , QACachedA, QANetInfo(..)
   , executeQACachedA, printQANetLogThenResult
 )
@@ -32,7 +32,8 @@ import Data.Functor.Identity
 import Control.Arrow
 import Control.Concurrent.MVar
 
-import Data.Maybe
+-- import Data.Maybe
+import Data.List
 import qualified Data.Map as Map
 
 import Control.Monad.Trans.State
@@ -72,6 +73,14 @@ data QA to p = QA__
     qaMakeQuery :: (Q p) `to` (A p)
   }
 
+data AnyProtocolQA to =
+  forall p. (QAProtocolCacheable p) => AnyProtocolQA (QA to p)
+
+anyPqaId :: AnyProtocolQA to -> (Maybe (QAId to))
+anyPqaId (AnyProtocolQA qa) = qaId qa
+
+anyPqaSources :: AnyProtocolQA to -> [QAId to]
+anyPqaSources (AnyProtocolQA qa) = qaSources qa
 
 {-| Apply an arrow morphism on all elements of a list -}
 mapA :: (ArrowChoice to) => (t1 `to` t2) -> ([t1] `to` [t2])
@@ -87,7 +96,7 @@ mapA fA =
 {-|
   A class of Arrows suitable for use in QA objects.
 -}
-class (ArrowChoice to) => QAArrow to where
+class (ArrowChoice to, P.Eq (QAId to)) => QAArrow to where
   type QAId to
   type QAPromise to :: * -> *
   {-|
@@ -95,12 +104,14 @@ class (ArrowChoice to) => QAArrow to where
     query processing mechanism so that, eg, answers can be cached
     or computations assigned to different threads/processes.
 
-    The second parameter is a list of objects that the given
-    object directly depends on.  This is used only for logging
-    and visualisation.
+    The "sources" component of the incoming QA object can be
+    used to record the dependency graph among QA objects.
+    After registration, the QA object should have its list
+    of dependencies **empty**
+    as the registration has recorded them elsewhere.
   -}
   qaRegister :: (QAProtocolCacheable p) =>
-    (QA to p, [QA to p]) `to` (QA to p)
+    (QA to p) `to` (QA to p)
   qaMakeQueryGetPromiseA :: (QA to p, Q p) `to` (QAPromise to (A p))
   qaFulfilPromiseA :: (QAPromise to a) `to` a
   qaMakeQueryA :: (QA to p, Q p) `to` (A p)
@@ -108,20 +119,31 @@ class (ArrowChoice to) => QAArrow to where
   qaMakeQueriesA :: [(QA to p, Q p)] `to` [A p]
   qaMakeQueriesA = (mapA qaMakeQueryGetPromiseA) >>> (mapA qaFulfilPromiseA)
   newQA :: (QAProtocolCacheable p) =>
-    String -> p -> Q p -> (Q p) `to` (A p) -> QA to p
-  newQA name = QA__ name Nothing []
+    String -> [AnyProtocolQA to] -> p -> Q p -> (Q p) `to` (A p) -> QA to p
+  newQA = defaultNewQA
+
+defaultNewQA ::
+  (QAArrow to, QAProtocolCacheable p) =>
+  String -> [AnyProtocolQA to] -> p -> Q p -> (Q p) `to` (A p) -> QA to p
+defaultNewQA name sources =
+  QA__ name Nothing (nub $ concat $ map getSourceIds sources)
+  where
+  getSourceIds source =
+    case anyPqaId source of
+      Just id1 -> [id1]
+      Nothing -> anyPqaSources source
 
 qaMakeQueryOnManyA :: (QAArrow to) => ([QA to p], Q p) `to` [A p]
 qaMakeQueryOnManyA =
   proc (qas, q) -> qaMakeQueriesA -< map (flip (,) q) qas
 
-(-:-) :: (QAArrow to, QAProtocolCacheable p) => (QA to p, [QA to p]) `to` (QA to p)
+(-:-) :: (QAArrow to, QAProtocolCacheable p) => (QA to p) `to` (QA to p)
 (-:-) = qaRegister
 
-infix 0 //.., -:-
+infix 0 -:-
 
-(//..) :: a -> b -> (a,b)
-a //..b = (a,b)
+-- (//..) :: a -> b -> (a,b)
+-- a //..b = (a,b)
 
 {- Simple QAArrow instances -}
 
@@ -136,13 +158,14 @@ instance QAArrow (->) where
   qaFulfilPromiseA = runIdentity
   qaMakeQueryA (qa, q) = qaMakeQuery qa q
   qaMakeQueriesA = map qaMakeQueryA
-  qaRegister = fst
-  newQA name p sampleQ makeQ = addUnsafeMemoisation $ QA__ name Nothing [] p sampleQ makeQ
+  qaRegister = id
+  newQA name sources p sampleQ makeQ =
+    addUnsafeMemoisation $ defaultNewQA name sources p sampleQ makeQ
 
 {-| Turn a pure QA object into any QAArrow QA object. -}
 qaArr :: (QAArrow to, QAProtocolCacheable p) => (QA (->) p) -> (QA to p)
 qaArr qa =
-  newQA (qaName qa) (qaProtocol qa) (qaSampleQ qa) (arr (qaMakeQuery qa))
+  newQA (qaName qa) [] (qaProtocol qa) (qaSampleQ qa) (arr (qaMakeQuery qa))
 
 {-|
   Add caching to pure (->) QA objects via unsafe memoization, inspired by
@@ -175,13 +198,13 @@ instance QAArrow QACachedA where
   type QAPromise QACachedA = Identity
   qaRegister = Kleisli qaRegisterM
     where
-    qaRegisterM (x@(QA__ name _ _ p sampleQ _), sources) =
+    qaRegisterM (x@(QA__ name _ sourceIds p sampleQ _)) =
       do
-      xId <- newId x sources
-      return $ QA__ name (Just xId) sourceIds p sampleQ (Kleisli $ makeQCached xId)
+      xId <- newId x sourceIds
+      return $ QA__ name (Just xId) [] p sampleQ (Kleisli $ makeQCached xId)
       where
       makeQCached = getAnswer p
-      sourceIds = catMaybes $ map qaId sources
+      -- sourceIds = catMaybes $ map anyPqaId sources
   qaMakeQueryGetPromiseA = qaMakeQueryA >>> arr Identity
   qaFulfilPromiseA = arr runIdentity
   qaMakeQueryA = Kleisli qaMakeQueryM
@@ -265,8 +288,8 @@ initQANetInfo =
         net_log = []
     }
 
-newId :: (QAProtocolCacheable p) => (QA QACachedA p) -> [QA QACachedA p] -> QACachedM ValueId
-newId (QA__ name Nothing _ p _sampleQ (Kleisli q2a)) sources =
+newId :: (QAProtocolCacheable p) => (QA QACachedA p) -> [QAId QACachedA] -> QACachedM ValueId
+newId (QA__ name Nothing _ p _sampleQ (Kleisli q2a)) sourceIds =
   maybeTrace ("newId: " ++ show name) $
   do
   ni <- get
@@ -285,7 +308,7 @@ newId (QA__ name Nothing _ p _sampleQ (Kleisli q2a)) sources =
     net_log' = lg ++ [logItem]
     logItem =
       QANetLogCreate i sourceIds name
-    sourceIds = catMaybes $ map qaId sources
+    -- sourceIds = catMaybes $ map qaId sources
 newId _ _ =
   error "internal error in AERN2.QA: newId called with an existing id"
 

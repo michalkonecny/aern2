@@ -35,7 +35,7 @@ import AERN2.Real.Field ()
   To get @pi@ in an arbitrary arrow, use 'piA'.
 -}
 pi :: CauchyReal
-pi = newCR "pi" (seqByPrecision2CauchySeq piBallP)
+pi = newCR "pi" [] (seqByPrecision2CauchySeq piBallP)
 
 piA :: (QAArrow to) => CauchyRealA to
 piA = qaArr pi

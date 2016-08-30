@@ -142,7 +142,7 @@ instance
   CanAddAsymmetric (WithEffort t1) (WithEffort t2) where
   type AddType (WithEffort t1) (WithEffort t2) = WithEffort (AddType t1 t2)
   add x y =
-    newQA name p sampleEff makeQ
+    newQA name [] p sampleEff makeQ
     where
       name = "+" -- "(" ++ (qaName x) ++ "+" ++ (qaName y) ++ ")"
       p = WithEffortP (sampleX + sampleY)
