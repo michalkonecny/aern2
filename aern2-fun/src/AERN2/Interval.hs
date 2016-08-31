@@ -75,3 +75,14 @@ instance ConvertibleExactly MPBall DyadicInterval where
 instance ConvertibleExactly DyadicInterval MPBall where
   safeConvertExactly (Interval lD rD) =
     Right $ fromEndpoints (mpBall lD) (mpBall rD)
+
+instance
+  (HasEqAsymmetric l1 l2, HasEqAsymmetric r1 r2
+  , EqCompareType l1 l2 ~ EqCompareType r1 r2
+  , CanAndOrSameType (EqCompareType l1 l2))
+  =>
+  HasEqAsymmetric (Interval l1 r1) (Interval l2 r2)
+  where
+  type EqCompareType (Interval l1 r1) (Interval l2 r2) = EqCompareType l1 l2
+  equalTo (Interval l1 r1) (Interval l2 r2) =
+    (l1 == l2) && (r1 == r2)

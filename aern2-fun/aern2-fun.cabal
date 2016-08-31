@@ -50,13 +50,14 @@ library
     AERN2.Interval
     AERN2.RealFun.Operations
     AERN2.RealFun.UnaryFun
---    AERN2.RealFun.DFun
+    -- AERN2.RealFun.DFun
     AERN2.Poly
---    AERN2.Poly.Type
---    AERN2.Poly.Cheb.Ring
---    AERN2.Poly.Cheb.Aux
---    AERN2.Poly.Cheb.Field
---    AERN2.Poly.Cheb.Elementary
+    -- AERN2.Poly.Type
+    -- AERN2.Poly.Cheb.Ring
+    -- AERN2.Poly.Cheb.Aux
+    -- AERN2.Poly.Cheb.Field
+    -- AERN2.Poly.Cheb.Elementary
+    -- AERN2.Ball
 
 -- test-suite spec
 --   type:
