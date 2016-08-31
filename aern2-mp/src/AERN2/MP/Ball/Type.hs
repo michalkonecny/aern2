@@ -21,9 +21,7 @@ module AERN2.MP.Ball.Type
   , setPrecisionAtLeastAccuracy
   , contains
   -- * Ball construction/extraction functions
-  , centre, radius
-  , centreDyadic
-  , centreAndErrorBall
+  , IsBall(..)
   , endpoints, fromEndpoints
   , endpointsMP, fromEndpointsMP
 )
@@ -140,24 +138,24 @@ endpoints x = (l,u)
     u = MPBall uMP (errorBound 0)
     (lMP, uMP) = endpointsMP x
 
-centreAndErrorBall :: MPBall -> (MPBall, MPBall)
-centreAndErrorBall x = (cB,eB)
+class IsBall t where
+  type CentreType t
+  centre :: t -> CentreType t
+  centreAsBall :: t -> t
+  centreAsBall = fst . centreAndErrorBalls
+  centreAndErrorBalls :: t-> (t,t)
+  radius :: t -> ErrorBound
+
+instance IsBall MPBall where
+  type CentreType MPBall = Dyadic
+  centre (MPBall cMP _eEB) = dyadic cMP
+  centreAndErrorBalls x = (cB,eB)
     where
     (MPBall cMP eEB) = x
     cB = MPBall cMP (errorBound 0)
     eB = MPBall (mpFloat 0) eEB
+  radius (MPBall _ e) = e
 
-centre :: MPBall -> MPBall
-centre =
-    fst . centreAndErrorBall
-
-centreDyadic :: MPBall -> Dyadic
-centreDyadic (MPBall cMP _eEB) =
-    dyadic cMP
-
-radius :: MPBall -> MPBall
-radius =
-    snd . endpoints . snd . centreAndErrorBall
 
 {--- constructing a ball with a given precision ---}
 

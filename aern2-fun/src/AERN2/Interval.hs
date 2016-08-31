@@ -68,7 +68,7 @@ instance
 
 instance ConvertibleExactly MPBall DyadicInterval where
   safeConvertExactly ball =
-    Right $ Interval (centreDyadic l) (centreDyadic r)
+    Right $ Interval (centre l) (centre r)
     where
     (l,r) = endpoints ball
 
