@@ -1,5 +1,5 @@
 {-|
-    Module      :  AERN2.RealFun.Fun
+    Module      :  AERN2.RealFun.UnaryFun
     Description :  Real functions represented by Haskell evaluators
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -11,7 +11,7 @@
     Real functions represented by Haskell evaluators
 -}
 
-module AERN2.RealFun.Fun
+module AERN2.RealFun.UnaryFun
 (
   UnaryFun(..)
 )

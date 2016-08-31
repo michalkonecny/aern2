@@ -49,10 +49,7 @@ library
   exposed-modules:
     AERN2.Interval
     AERN2.RealFun.Operations
-    AERN2.RealFun.Fun
---    AERN2.RealFun.Fun.Type
---    AERN2.RealFun.Fun.Evaluation
---    AERN2.RealFun.Fun.Evaluation
+    AERN2.RealFun.UnaryFun
 --    AERN2.RealFun.DFun
     AERN2.Poly
 --    AERN2.Poly.Type
