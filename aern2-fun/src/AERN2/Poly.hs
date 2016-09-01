@@ -84,8 +84,8 @@ terms_coeffs = Map.elems
 {- addition -}
 
 -- PolyBall level
-instance (IsBall c, CanAddSameType c) => CanAddAsymmetric (Ball c) (Ball c) where
-  type AddType  (Ball c) (Ball c) = Ball c
+instance (IsBall t, CanAddSameType t) => CanAddAsymmetric (Ball t) (Ball t) where
+  type AddType  (Ball t) (Ball t) = Ball t
   add (Ball x1 e1) (Ball x2 e2) =
     Ball x (e1 + e2 + xe)
     where
@@ -107,13 +107,26 @@ instance (CanAddSameType c) => CanAddAsymmetric (Poly c) (Poly c) where
 
 {- multiplication -}
 
+-- PolyBall level
+instance (IsBall c, Ring c, CanDivBy c Integer)
+  =>
+  CanMulAsymmetric (Ball c) (Ball c) where
+  type MulType  (Ball c) (Ball c) = Ball c
+  mul (Ball x1 e1) (Ball x2 e2) =
+    Ball x (e1*e2 + e1*x2Norm + e2*x1Norm + xe)
+    where
+    xB = x1 * x2
+    x = centreAsBall xB
+    xe = radius xB
+    x1Norm = undefined :: ErrorBound -- TODO
+    x2Norm = undefined :: ErrorBound -- TODO
+
 -- ChPoly level
 instance (Ring c, CanDivBy c Integer) => CanMulAsymmetric (ChPoly c) (ChPoly c) where
   type MulType (ChPoly c) (ChPoly c) = ChPoly c
   mul (ChPoly d1 p1) (ChPoly d2 p2)
     | d1 == d2 = ChPoly d1 (mulCheb p1 p2)
     | otherwise = error $ "Multiplying polynomials with incompatible domains"
-
 
 -- Poly level
 mulCheb :: (Ring c, CanDivBy c Integer) => (Poly c) -> (Poly c) -> (Poly c)

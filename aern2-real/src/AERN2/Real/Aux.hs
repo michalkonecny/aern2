@@ -24,6 +24,8 @@ import Numeric.MixedTypes
 
 import Control.Arrow
 
+import Control.Lens hiding (op)
+
 import Numeric.CatchingExceptions
 
 import AERN2.MP.Ball
@@ -175,7 +177,7 @@ ensureAccuracyA1 getA1 op =
     proc (q,(j1, mB)) ->
         do
         let mResult = fmap op (fmap catchingNumExceptions mB)
-        case fmap catchingNumExceptions_maybeValue mResult of
+        case mResult ^? _Just . numEXC_maybeValue of
             Just (Just result) | getAccuracy result >= q ->
                 returnA -<
                     maybeTrace (
@@ -191,7 +193,7 @@ ensureAccuracyA1 getA1 op =
             do
             a1 <- getA1 -< j1
             let resultCE = op (catchingNumExceptions a1)
-            case catchingNumExceptions_maybeValue resultCE of
+            case resultCE ^. numEXC_maybeValue of
               Just result | getAccuracy result >= q ->
                 returnA -<
                     maybeTrace (
@@ -223,8 +225,8 @@ ensureAccuracyA2 getA1 getA2 op =
         let mResult =
               do b1 <- mB1; b2 <- mB2;
                   Just $ op (catchingNumExceptions b1) (catchingNumExceptions b2)
-        case fmap catchingNumExceptions_maybeValue mResult of
-            Just (Just result) | getAccuracy result >= q ->
+        case (mResult ^? _Just . numEXC_maybeValue) of
+            (Just (Just result)) | getAccuracy result >= q ->
                 returnA -<
                     maybeTrace (
                         "ensureAccuracy2: Pre-computed result sufficient. (q = " ++ show q ++
@@ -232,7 +234,7 @@ ensureAccuracyA2 getA1 getA2 op =
                         "; j2 = " ++ show j2 ++
                         "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
                     ) $
-                result
+                    result
             _ -> aux -< (q,j1,j2)
     where
     aux =
@@ -241,7 +243,7 @@ ensureAccuracyA2 getA1 getA2 op =
             a1 <- getA1 -< j1
             a2 <- getA2 -< j2
             let resultCE = op (catchingNumExceptions a1) (catchingNumExceptions a2)
-            case catchingNumExceptions_maybeValue resultCE of
+            case resultCE ^. numEXC_maybeValue of
               Just result | getAccuracy result >= q ->
                   returnA -<
                     maybeTrace (

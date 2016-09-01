@@ -22,6 +22,8 @@ where
 import Numeric.MixedTypes
 import qualified Prelude as P
 
+import Control.Lens
+
 import Numeric.CatchingExceptions
 
 import AERN2.Norm
@@ -154,7 +156,7 @@ class HasAccuracy a where
 
 instance HasAccuracy a => HasAccuracy (CatchingNumExceptions a) where
   getAccuracy aCE =
-    case catchingNumExceptions_maybeValue aCE of
+    case aCE ^. numEXC_maybeValue of
       Just v -> getAccuracy v
       _ -> NoInformation
 

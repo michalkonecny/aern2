@@ -33,6 +33,7 @@ library
     , hspec >= 2.1 && < 2.3
     -- , hspec-smallcheck >= 0.3 && < 0.5
     , QuickCheck >= 2.7 && < 2.9
+    , lens == 4.13.*
     , mixed-types-num == 0.1.*
     , num-exceptions == 0.1.*
   if impl(ghc >= 7.10)
