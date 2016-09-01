@@ -77,7 +77,11 @@ instance (CanAddSameType c) => CanAddAsymmetric (Poly c) (Poly c) where
 
 instance CanApply (ChPoly MPBall) DyadicInterval where
   type ApplyType (ChPoly MPBall) DyadicInterval = Interval CauchyReal CauchyReal
-  apply p = apply (unaryFun p)
+  apply = rangeViaUnaryFun
+  -- apply = rangeViaRoots
+
+rangeViaUnaryFun :: (ChPoly MPBall) -> DyadicInterval -> Interval CauchyReal CauchyReal
+rangeViaUnaryFun p = apply (unaryFun p)
 
 instance ConvertibleExactly (ChPoly MPBall) UnaryFun where
   safeConvertExactly (ChPoly dom p) = Right $ UnaryFun dom eval
