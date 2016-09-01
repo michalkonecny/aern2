@@ -13,7 +13,7 @@
 
 module AERN2.RealFun.UnaryFun
 (
-  UnaryFun(..)
+  UnaryFun(..), unaryFun
 )
 where
 
@@ -48,36 +48,13 @@ data UnaryFun =
     unaryFun_Eval :: MPBall -> MPBall
   }
 
-instance CanApply UnaryFun MPBall where
-  type ApplyType UnaryFun MPBall = MPBall
-  apply = unaryFun_Eval
-
-instance (QAArrow to) => CanApply UnaryFun (CauchyRealA to) where
-  type ApplyType UnaryFun (CauchyRealA to) = (CauchyRealA to)
-  apply f =
-    unaryOp "apply" (fmap (unaryFun_Eval f . checkInDom (unaryFun_Domain f))) (getInitQ1FromSimple (arr id))
-    where
-    checkInDom domI b
-      | domB ?<=? b && b ?<=? domB = intersect domB b
-      | otherwise = error "apply UnaryFun CauchyReal: argument out of function domain"
-      where
-      domB = mpBall domI
-
-instance CanApply UnaryFun Integer where
-  type ApplyType UnaryFun Integer = MPBall
-  apply f = unaryFun_Eval f . mpBall
-
-instance CanApply UnaryFun Int where
-  type ApplyType UnaryFun Int = MPBall
-  apply f = unaryFun_Eval f . mpBall
-
-instance CanApply UnaryFun Dyadic where
-  type ApplyType UnaryFun Dyadic = MPBall
-  apply f = unaryFun_Eval f . mpBall
-
 instance HasDomain UnaryFun where
   type Domain UnaryFun = DyadicInterval
   getDomain = unaryFun_Domain
+
+type CanBeUnaryFun t = ConvertibleExactly t UnaryFun
+unaryFun :: (CanBeUnaryFun t) => t -> UnaryFun
+unaryFun = convertExactly
 
 instance (CanBeMPBall t, Show t, Typeable t) => ConvertibleExactly (DyadicInterval, t) UnaryFun where
   safeConvertExactly (dom, x) =
@@ -91,3 +68,36 @@ instance HasVars UnaryFun where
     UnaryFun dom id
     where
     dom = getDomain sampleF
+
+instance CanApply UnaryFun MPBall where
+  type ApplyType UnaryFun MPBall = MPBall
+  apply f = unaryFun_Eval f . checkInDom f
+
+checkInDom :: UnaryFun -> MPBall -> MPBall
+checkInDom f b
+  | domB ?<=? b && b ?<=? domB = intersect domB b
+  | otherwise = error "apply UnaryFun: argument out of function domain"
+  where
+  domB = mpBall (unaryFun_Domain f)
+
+instance (QAArrow to) => CanApply UnaryFun (CauchyRealA to) where
+  type ApplyType UnaryFun (CauchyRealA to) = (CauchyRealA to)
+  apply f =
+    unaryOp "apply" (fmap (apply f)) (getInitQ1FromSimple (arr id))
+
+instance CanApply UnaryFun Integer where
+  type ApplyType UnaryFun Integer = MPBall
+  apply f = apply f . mpBall
+
+instance CanApply UnaryFun Int where
+  type ApplyType UnaryFun Int = MPBall
+  apply f = apply f . mpBall
+
+instance CanApply UnaryFun Dyadic where
+  type ApplyType UnaryFun Dyadic = MPBall
+  apply f = apply f . mpBall
+
+instance CanApply UnaryFun DyadicInterval where
+  type ApplyType UnaryFun DyadicInterval = Interval CauchyReal CauchyReal
+  apply p =
+    undefined -- TODO
