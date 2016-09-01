@@ -45,7 +45,41 @@ data ChPoly c = ChPoly { chPoly_dom :: DyadicInterval, chPoly_poly :: Poly c }
 
 data Poly c = Poly { poly_coeffs :: Terms c }
 
-type Terms c = Map.Map Integer c
+type Terms c = Map.Map Degree c
+
+type Degree = Integer
+
+terms_empty :: Terms c
+terms_empty = Map.empty
+
+terms_insertWith :: (c -> c -> c) -> Degree -> c -> Terms c -> Terms c
+terms_insertWith = Map.insertWith
+
+terms_toList :: Terms c -> [(Degree, c)]
+terms_toList = Map.toList
+
+terms_fromList :: [(Degree, c)] -> Terms c
+terms_fromList = Map.fromList
+
+terms_fromListAddCoeffs :: (CanAddSameType c) => [(Degree, c)] -> Terms c
+terms_fromListAddCoeffs newTerms =
+    foldl addTerm terms_empty newTerms
+    where
+    addTerm prevTerms (i,a) =
+        terms_insertWith (+) i a prevTerms
+
+terms_unionWith :: (c -> c -> c) -> Terms c -> Terms c -> Terms c
+terms_unionWith = Map.unionWith
+
+terms_degree :: Terms c -> Degree
+terms_degree = fst . Map.findMax
+
+terms_degrees :: Terms c -> [Degree]
+terms_degrees = Map.keys
+
+terms_coeffs :: Terms c -> [c]
+terms_coeffs = Map.elems
+
 
 {- addition -}
 
@@ -69,9 +103,34 @@ instance (CanAddSameType c) => CanAddAsymmetric (ChPoly c) (ChPoly c) where
 -- Poly level
 instance (CanAddSameType c) => CanAddAsymmetric (Poly c) (Poly c) where
   type AddType (Poly c) (Poly c) = Poly c
-  add (Poly t1) (Poly t2) = Poly $ Map.unionWith (+) t1 t2
+  add (Poly t1) (Poly t2) = Poly $ terms_unionWith (+) t1 t2
 
 {- multiplication -}
+
+-- ChPoly level
+instance (Ring c, CanDivBy c Integer) => CanMulAsymmetric (ChPoly c) (ChPoly c) where
+  type MulType (ChPoly c) (ChPoly c) = ChPoly c
+  mul (ChPoly d1 p1) (ChPoly d2 p2)
+    | d1 == d2 = ChPoly d1 (mulCheb p1 p2)
+    | otherwise = error $ "Multiplying polynomials with incompatible domains"
+
+
+-- Poly level
+mulCheb :: (Ring c, CanDivBy c Integer) => (Poly c) -> (Poly c) -> (Poly c)
+mulCheb = mulChebDirect
+
+mulChebDirect :: (Ring c, CanDivBy c Integer) => (Poly c) -> (Poly c) -> (Poly c)
+mulChebDirect (Poly terms1) (Poly terms2) =
+  Poly terms
+  where
+  terms =
+    terms_fromListAddCoeffs $
+      concat
+      [ let c = a*b/2 in [(i+j, c), (abs (i-j), c)]
+        |
+        (i,a) <- terms_toList terms1,
+        (j,b) <- terms_toList terms2
+      ]
 
 {- range -}
 
