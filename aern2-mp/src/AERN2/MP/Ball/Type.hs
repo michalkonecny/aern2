@@ -141,19 +141,19 @@ endpoints x = (l,u)
 class IsBall t where
   type CentreType t
   centre :: t -> CentreType t
+  centreAsBallAndRadius :: t-> (t,ErrorBound)
   centreAsBall :: t -> t
-  centreAsBall = fst . centreAndErrorBalls
-  centreAndErrorBalls :: t-> (t,t)
+  centreAsBall = fst . centreAsBallAndRadius
   radius :: t -> ErrorBound
+  radius = snd . centreAsBallAndRadius
 
 instance IsBall MPBall where
   type CentreType MPBall = Dyadic
-  centre (MPBall cMP _eEB) = dyadic cMP
-  centreAndErrorBalls x = (cB,eB)
+  centre (MPBall cMP _e) = dyadic cMP
+  centreAsBallAndRadius x = (cB,e)
     where
-    (MPBall cMP eEB) = x
+    (MPBall cMP e) = x
     cB = MPBall cMP (errorBound 0)
-    eB = MPBall (mpFloat 0) eEB
   radius (MPBall _ e) = e
 
 

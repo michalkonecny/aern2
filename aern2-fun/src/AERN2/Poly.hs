@@ -91,7 +91,7 @@ instance (IsBall c) => IsBall (ChPoly c) where
   centre (ChPoly dom (Poly terms)) =
     ChPoly dom (Poly (terms_map centreAsBall terms))
   centreAsBall = centre
-  -- centreAsBallAndRadius cp = (centre cp, radius cp)
+  centreAsBallAndRadius cp = (centre cp, radius cp)
 
 type CanBeChPoly c t = ConvertibleExactly (DyadicInterval, t) (ChPoly c)
 chPoly :: (CanBeChPoly c t) => (DyadicInterval, t) -> (ChPoly c)
