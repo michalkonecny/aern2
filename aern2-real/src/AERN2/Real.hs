@@ -16,6 +16,8 @@ module AERN2.Real
   QA(..)
   , CauchyRealP, pCR
   , CauchyRealA, CauchyReal, newCR
+  , convergentList2CauchyRealA
+  , seqByPrecision2CauchyRealA
   , real, realA
   -- * constants
   , pi, piA

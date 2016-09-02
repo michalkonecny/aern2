@@ -20,6 +20,7 @@ library
   build-depends:
     base == 4.*
     , containers == 0.5.*
+    , psqueues == 0.2.*
     -- , arithmoi == 0.4.*
     , convertible >= 1.1.1.0 && < 1.2
     , hspec >= 2.1 && < 2.3
@@ -47,6 +48,7 @@ library
     UndecidableInstances,
     Arrows
   exposed-modules:
+    AERN2.PQueue
     AERN2.Interval
     AERN2.RealFun.Operations
     AERN2.RealFun.UnaryFun

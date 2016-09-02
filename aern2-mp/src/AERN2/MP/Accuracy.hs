@@ -15,6 +15,7 @@ module AERN2.MP.Accuracy
      normLog2Accuracy,
      HasAccuracy(..), getFiniteAccuracy,
      iterateUntilAccurate,
+     convergentList2CauchySeq,
      seqByPrecision2CauchySeq,
      HasApproximate(..))
 where
@@ -186,18 +187,23 @@ iterateUntilAccurate ac =
 seqByPrecision2CauchySeq ::
     (HasAccuracy t) =>
     (Precision -> t) -> (Accuracy -> t)
-seqByPrecision2CauchySeq seqByPrecision i =
-    findAccurate $ map seqByPrecision $ dropWhile lowPrec standardPrecisions
+seqByPrecision2CauchySeq seqByPrecision ac =
+    convergentList2CauchySeq list ac
     where
-    lowPrec p =
-        case i of
-            Exact -> False
-            _ -> bits p < i
-    findAccurate [] =
-        error "seqByPrecision2CauchySeq: the sequence either converges too slowly or it does not converge"
-    findAccurate (b : rest)
-        | getAccuracy b >= i = b
-        | otherwise = findAccurate rest
+    list =
+      map seqByPrecision $ dropWhile (lowPrec ac) standardPrecisions
+    lowPrec Exact _ = False
+    lowPrec _ p = bits p < ac
+
+convergentList2CauchySeq :: (HasAccuracy t) => [t] -> (Accuracy -> t)
+convergentList2CauchySeq list ac = findAccurate list
+  where
+  findAccurate [] =
+    error "convergentList2CauchySeq: the sequence either converges too slowly or it does not converge"
+  findAccurate (b : rest)
+    | getAccuracy b >= ac = b
+    | otherwise = findAccurate rest
+
 
 class HasApproximate t where
     type Approximate t

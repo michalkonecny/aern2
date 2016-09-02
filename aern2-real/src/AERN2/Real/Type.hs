@@ -14,6 +14,8 @@ module AERN2.Real.Type
 (
   CauchyRealP, pCR
   , CauchyRealA, CauchyReal, newCR
+  , convergentList2CauchyRealA
+  , seqByPrecision2CauchyRealA
   , CanBeReal, real, CanBeRealA, realA
   , pickNonZeroRealA
 )
@@ -24,6 +26,7 @@ import Numeric.MixedTypes
 
 import Control.Arrow
 
+import AERN2.MP.Accuracy
 import AERN2.MP.Dyadic
 import AERN2.MP.Ball
 
@@ -67,11 +70,19 @@ type CauchyRealA to = QA to CauchyRealP
 
 type CauchyReal = CauchyRealA (->)
 
+instance Show CauchyReal where
+  show r = show $ qaMakeQuery r (bits 100)
+
 newCR :: (QAArrow to) => String -> [AnyProtocolQA to] -> Accuracy `to` MPBall -> CauchyRealA to
 newCR name sources makeQ = newQA name sources pCR NoInformation makeQ
 
-instance Show CauchyReal where
-  show r = show $ qaMakeQuery r (bits 100)
+convergentList2CauchyRealA :: (QAArrow to) => String -> [MPBall] -> (CauchyRealA to)
+convergentList2CauchyRealA name balls =
+  newCR name [] (arr $ convergentList2CauchySeq balls)
+
+seqByPrecision2CauchyRealA :: (QAArrow to) => String -> (Precision -> MPBall) -> (CauchyRealA to)
+seqByPrecision2CauchyRealA name byPrec =
+  newCR name [] (arr $ seqByPrecision2CauchySeq byPrec)
 
 {- conversions -}
 
