@@ -130,15 +130,15 @@ instance CanApply UnaryFun Dyadic where
 
 instance CanApply UnaryFun DyadicInterval where
   type ApplyType UnaryFun DyadicInterval = Interval CauchyReal CauchyReal
-  apply = rangeOnInterval
+  apply (UnaryFun _ f) = rangeOnIntervalSubdivide (evalOnIntervalGuessPrecision f)
 
-rangeOnInterval ::
+rangeOnIntervalSubdivide ::
   (QAArrow to)
   =>
-  UnaryFun ->
+  (DyadicInterval -> CatchingNumExceptions MPBall) ->
   DyadicInterval ->
   Interval (CauchyRealA to) (CauchyRealA to)
-rangeOnInterval (UnaryFun _dom f) di =
+rangeOnIntervalSubdivide evalOnInterval di =
     Interval l r
     where
     l = convergentList2CauchyRealA "range min" $ filterNoException 100 True minSequence
@@ -147,12 +147,12 @@ rangeOnInterval (UnaryFun _dom f) di =
         where
         (fdiL, fdiR) = gunzip $ fmap endpoints fdi
         fdi = fi di
-        fi = onDyadicInterval f
+        fi = evalOnInterval
     minSequence = map negate $ search fi fdiL $ Q.singleton $ MaxSearchSegment di fdiL fdiR
         where
         (fdiL, fdiR) = gunzip $ fmap endpoints fdi
         fdi = fi di
-        fi = negate . onDyadicInterval  f
+        fi = negate . evalOnInterval
     search fi prevL prevQueue =
         maybeTrace
         (
@@ -214,14 +214,14 @@ instance P.Ord MaxSearchSegment where
         | otherwise -> P.EQ
 
 
-onDyadicInterval ::
+evalOnIntervalGuessPrecision ::
   (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall)
   ->
   (DyadicInterval -> CatchingNumExceptions MPBall)
-onDyadicInterval f (Interval l r) =
+evalOnIntervalGuessPrecision f (Interval l r) =
     maybeTrace
     (
-        "onDyadicInterval:"
+        "evalOnIntervalGuessPrecision:"
         ++ "\n nl = " ++ show nl
         ++ "\n precisions = " ++ show (take (int 10) precisions)
         ++ "\n result accuracy = " ++ show (getAccuracy result)
