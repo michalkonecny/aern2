@@ -13,6 +13,8 @@
 
 module AERN2.RealFun.UnaryFun.Evaluation
 (
+  evalOnIntervalGuessPrecision
+  , rangeOnIntervalSubdivide
 )
 where
 
@@ -27,10 +29,6 @@ import Control.Lens.Operators
 import Control.Lens (_Just)
 
 import qualified AERN2.PQueue as Q
--- import qualified Data.List as List
-
--- import Test.Hspec
--- import Test.QuickCheck
 
 import Numeric.CatchingExceptions
 
@@ -108,7 +106,7 @@ instance CanApply UnaryFun Dyadic where
   apply f = apply f . real
 
 instance CanApply UnaryFun DyadicInterval where
-  type ApplyType UnaryFun DyadicInterval = Interval CauchyReal CauchyReal
+  type ApplyType UnaryFun DyadicInterval = RealInterval
   apply (UnaryFun _ f) = rangeOnIntervalSubdivide (evalOnIntervalGuessPrecision f)
 
 evalOnIntervalGuessPrecision ::
@@ -160,11 +158,9 @@ evalOnIntervalGuessPrecision f (Interval l r) =
         measureImprovement r1 r2 = getNormLog $ max (mpBall 0) $ r1 - r2
 
 rangeOnIntervalSubdivide ::
-  (QAArrow to)
-  =>
   (DyadicInterval -> CatchingNumExceptions MPBall)
   ->
-  (DyadicInterval -> Interval (CauchyRealA to) (CauchyRealA to))
+  (DyadicInterval -> RealInterval)
 rangeOnIntervalSubdivide evalOnInterval di =
   Interval l r
   where

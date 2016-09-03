@@ -18,7 +18,7 @@ module AERN2.Real
   , CauchyRealA, CauchyReal, newCR
   , convergentList2CauchyRealA
   , seqByPrecision2CauchyRealA
-  , real, realA
+  , CanBeReal, real, CanBeRealA, realA
   -- * constants
   , pi, piA
   -- * arrow-generic versions of some operations
@@ -41,6 +41,7 @@ import AERN2.MP.Ball
 import AERN2.QA
 import AERN2.Real.Type
 import AERN2.Real.Aux
+import AERN2.Real.Comparison ()
 import AERN2.Real.Ring ()
 import AERN2.Real.Field ()
 import AERN2.Real.Elementary

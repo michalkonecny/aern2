@@ -49,6 +49,7 @@ library
     AERN2.Real
     AERN2.Real.Type
     AERN2.Real.Aux
+    AERN2.Real.Comparison
     AERN2.Real.Ring
     AERN2.Real.Field
     AERN2.Real.Elementary

@@ -13,8 +13,9 @@
 
 module AERN2.Interval
 (
-  Interval(..), singletonInterval, intervalWidth, splitInterval,
-  DyadicInterval, CanBeDyadicInterval, dyadicInterval
+  Interval(..), singletonInterval, intervalWidth, splitInterval
+  , DyadicInterval, CanBeDyadicInterval, dyadicInterval
+  , RealInterval, CanBeRealInterval, realInterval
 )
 where
 
@@ -31,6 +32,8 @@ import Data.Typeable
 
 import AERN2.MP.Dyadic
 import AERN2.MP.Ball
+
+import AERN2.Real
 
 data Interval l r = Interval l r
 
@@ -86,3 +89,18 @@ instance
   type EqCompareType (Interval l1 r1) (Interval l2 r2) = EqCompareType l1 l2
   equalTo (Interval l1 r1) (Interval l2 r2) =
     (l1 == l2) && (r1 == r2)
+
+type RealInterval = Interval CauchyReal CauchyReal
+type CanBeRealInterval t = ConvertibleExactly t RealInterval
+
+realInterval :: (CanBeRealInterval t) => t -> RealInterval
+realInterval = convertExactly
+
+instance
+  (CanBeReal l, CanBeReal r, HasOrder l r, Show l, Show r,
+   Typeable l, Typeable r)
+  =>
+  ConvertibleExactly (l, r) RealInterval where
+  safeConvertExactly (l,r)
+    | l !<=! r = Right $ Interval (real l) (real r)
+    | otherwise = convError "endpoints are not in the correct order" (l,r)
