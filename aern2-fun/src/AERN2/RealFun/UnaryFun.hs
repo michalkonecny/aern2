@@ -27,6 +27,7 @@ import Control.Arrow
 import Control.Applicative
 
 import Control.Lens.Operators
+import Control.Lens (_Just)
 
 import qualified AERN2.PQueue as Q -- used in a range algorithm
 
@@ -96,20 +97,38 @@ instance HasVars UnaryFun where
 
 {- evaluation -}
 
-instance CanApply UnaryFun (CatchingNumExceptions MPBall) where
-  type ApplyType UnaryFun (CatchingNumExceptions MPBall) = CatchingNumExceptions MPBall
-  apply f = unaryFun_Eval f . checkInDom f
+instance CanApply UnaryFun MPBall where
+  type ApplyType UnaryFun MPBall = MPBall
+  apply f@(UnaryFun _ eval) =
+    ifCertainExceptionDie "UnafyFn application"
+      . eval . checkInDom f . catchingNumExceptions
 
-checkInDom :: UnaryFun -> CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall
-checkInDom f cb =
-  case cb ^. numEXC_maybeValue of
-    Just b | domB `contains` b -> cb
-    Just b | domB ?<=? b && b ?<=? domB ->
-      fmap (intersect domB) cb
-    Just _ -> addCertainException cb (OutOfRange "apply UnaryFun: argument out of function domain")
-    _ -> cb
+checkInDom ::
+  (HasOrder t Dyadic, CanMinMaxThis t Dyadic)
+  =>
+  UnaryFun -> CatchingNumExceptions t -> CatchingNumExceptions t
+checkInDom f cx =
+  case cx ^. numEXC_maybeValue of
+    Just x
+      | domL !<=! x && x !<=! domR -> cx
+      | x !<! domL || domL !<! x ->
+        addCertainException cxIntersected (OutOfRange "apply UnaryFun: argument out of function domain")
+      | otherwise ->
+        addPotentialException cx (OutOfRange "apply UnaryFun: argument out of function domain")
+      where
+      cxIntersected = cx & numEXC_maybeValue .~ (Just $ min domR $ max domL x)
+    _ -> cx
   where
-  domB = mpBall (unaryFun_Domain f)
+  Interval domL domR = unaryFun_Domain f
+
+instance
+  (CanApply UnaryFun t, HasOrder t Dyadic, CanMinMaxThis t Dyadic)
+  =>
+  CanApply UnaryFun (CatchingNumExceptions t)
+  where
+  type ApplyType UnaryFun (CatchingNumExceptions t) = CatchingNumExceptions (ApplyType UnaryFun t)
+  apply f cx =
+    (checkInDom f cx) & (numEXC_maybeValue . _Just) %~ apply f
 
 instance (QAArrow to) => CanApply UnaryFun (CauchyRealA to) where
   type ApplyType UnaryFun (CauchyRealA to) = (CauchyRealA to)
@@ -117,102 +136,20 @@ instance (QAArrow to) => CanApply UnaryFun (CauchyRealA to) where
     unaryOp "apply" (apply f) (getInitQ1FromSimple (arr id))
 
 instance CanApply UnaryFun Integer where
-  type ApplyType UnaryFun Integer = CatchingNumExceptions MPBall
-  apply f = apply f . catchingNumExceptions . mpBall
+  type ApplyType UnaryFun Integer = CauchyReal
+  apply f = apply f . real
 
 instance CanApply UnaryFun Int where
-  type ApplyType UnaryFun Int = CatchingNumExceptions MPBall
-  apply f = apply f . catchingNumExceptions . mpBall
+  type ApplyType UnaryFun Int = CauchyReal
+  apply f = apply f . real
 
 instance CanApply UnaryFun Dyadic where
-  type ApplyType UnaryFun Dyadic = CatchingNumExceptions MPBall
-  apply f = apply f . catchingNumExceptions . mpBall
+  type ApplyType UnaryFun Dyadic = CauchyReal
+  apply f = apply f . real
 
 instance CanApply UnaryFun DyadicInterval where
   type ApplyType UnaryFun DyadicInterval = Interval CauchyReal CauchyReal
   apply (UnaryFun _ f) = rangeOnIntervalSubdivide (evalOnIntervalGuessPrecision f)
-
-rangeOnIntervalSubdivide ::
-  (QAArrow to)
-  =>
-  (DyadicInterval -> CatchingNumExceptions MPBall) ->
-  DyadicInterval ->
-  Interval (CauchyRealA to) (CauchyRealA to)
-rangeOnIntervalSubdivide evalOnInterval di =
-    Interval l r
-    where
-    l = convergentList2CauchyRealA "range min" $ filterNoException 100 True minSequence
-    r = convergentList2CauchyRealA "range max" $ filterNoException 100 True maxSequence
-    maxSequence = search fi fdiL $ Q.singleton $ MaxSearchSegment di fdiL fdiR
-        where
-        (fdiL, fdiR) = gunzip $ fmap endpoints fdi
-        fdi = fi di
-        fi = evalOnInterval
-    minSequence = map negate $ search fi fdiL $ Q.singleton $ MaxSearchSegment di fdiL fdiR
-        where
-        (fdiL, fdiR) = gunzip $ fmap endpoints fdi
-        fdi = fi di
-        fi = negate . evalOnInterval
-    search fi prevL prevQueue =
-        maybeTrace
-        (
-            "UnaryFun rangeOnInterval search:"
-            ++ "\n  seg = " ++ show seg
-            ++ "\n  normLog(width(seg)) = " ++ show (getNormLog (intervalWidth seg))
-            ++ "\n  nextL = " ++ show nextL
-            ++ "\n  segValR = " ++ show segValR
-            ++ "\n  currentBall = " ++ show currentBall
-            ++ "\n  accuracy(currentBall) = " ++ show (getAccuracy currentBall)
-        ) $
-        currentBall :
-            search fi nextL nextQueue12
-        where
-        -- unpack the current segment and a pre-computed enclosure of the function on this segment:
-        Just (MaxSearchSegment seg segValL segValR, rest) = Q.minView prevQueue
-        -- get an enclosure of the function's maximum based on previous segments and the current segment:
-        nextL
-            | hasCertainException prevL = segValL
-            | otherwise = liftA2 max segValL prevL
-        currentBall = liftA2 fromEndpoints nextL segValR
-
-        -- split the current segment and pre-compute
-        (seg1, seg2) = splitInterval seg
-        (seg1ValL, seg1ValR) = fiEE seg1
-        (seg2ValL, seg2ValR) = fiEE seg2
-        seg1NoMax = (seg1ValR <= nextL) == Just (Just True)
-        seg2NoMax = (seg2ValR <= nextL) == Just (Just True)
-        nextQueue1 =
-            if seg1NoMax then rest else Q.insert seg1E rest
-        nextQueue12 =
-            if seg2NoMax then nextQueue1 else Q.insert seg2E nextQueue1
-        seg1E = MaxSearchSegment seg1 seg1ValL seg1ValR
-        seg2E = MaxSearchSegment seg2 seg2ValL seg2ValR
-
-        fiEE s =
-            gunzip $ fmap endpoints $ fi s
-
-data MaxSearchSegment =
-    MaxSearchSegment
-    {
-        _maxSearchSegment_seg :: DyadicInterval,
-        _maxSearchSegment_lowerBnd :: CatchingNumExceptions MPBall, -- should be exact
-        _maxSearchSegment_upperBnd :: CatchingNumExceptions MPBall -- should be exact
-    }
-
-instance P.Eq MaxSearchSegment where
-    (MaxSearchSegment (Interval l1 r1) _ _) == (MaxSearchSegment (Interval l2 r2) _ _) =
-        l1 == l2 && r1 == r2
-instance P.Ord MaxSearchSegment where
-  compare (MaxSearchSegment _ _ u2) (MaxSearchSegment _ _ u1) =
-    case (u1 < u2, u1 > u2) of
-      (Just (Just True), _) -> P.LT
-      (_, Just (Just True)) -> P.GT
-      _
-        | hasCertainException u1 && hasCertainException u2 -> P.EQ
-        | hasCertainException u1 -> P.GT
-        | hasCertainException u2 -> P.LT
-        | otherwise -> P.EQ
-
 
 evalOnIntervalGuessPrecision ::
   (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall)
@@ -261,3 +198,84 @@ evalOnIntervalGuessPrecision f (Interval l r) =
         radii = map (mpBall . dyadic . radius) results
         improvements = zipWith measureImprovement radii (drop (int 1) radii)
         measureImprovement r1 r2 = getNormLog $ max (mpBall 0) $ r1 - r2
+
+rangeOnIntervalSubdivide ::
+  (QAArrow to)
+  =>
+  (DyadicInterval -> CatchingNumExceptions MPBall) ->
+  DyadicInterval ->
+  Interval (CauchyRealA to) (CauchyRealA to)
+rangeOnIntervalSubdivide evalOnInterval di =
+  Interval l r
+  where
+  l = convergentList2CauchyRealA "range min" $ filterNoException 100 True minSequence
+  r = convergentList2CauchyRealA "range max" $ filterNoException 100 True maxSequence
+  maxSequence = search fi fdiL $ Q.singleton $ MaxSearchSegment di fdiL fdiR
+    where
+    (fdiL, fdiR) = gunzip $ fmap endpoints fdi
+    fdi = fi di
+    fi = evalOnInterval
+  minSequence = map negate $ search fi fdiL $ Q.singleton $ MaxSearchSegment di fdiL fdiR
+    where
+    (fdiL, fdiR) = gunzip $ fmap endpoints fdi
+    fdi = fi di
+    fi = negate . evalOnInterval
+  search fi prevL prevQueue =
+    maybeTrace
+    (
+        "UnaryFun rangeOnInterval search:"
+        ++ "\n  seg = " ++ show seg
+        ++ "\n  normLog(width(seg)) = " ++ show (getNormLog (intervalWidth seg))
+        ++ "\n  nextL = " ++ show nextL
+        ++ "\n  segValR = " ++ show segValR
+        ++ "\n  currentBall = " ++ show currentBall
+        ++ "\n  accuracy(currentBall) = " ++ show (getAccuracy currentBall)
+    ) $
+    currentBall :
+      search fi nextL nextQueue12
+    where
+    -- unpack the current segment and a pre-computed enclosure of the function on this segment:
+    Just (MaxSearchSegment seg segValL segValR, rest) = Q.minView prevQueue
+    -- get an enclosure of the function's maximum based on previous segments and the current segment:
+    nextL
+      | hasCertainException prevL = segValL
+      | otherwise = liftA2 max segValL prevL
+    currentBall = liftA2 fromEndpoints nextL segValR
+
+    -- split the current segment and pre-compute
+    (seg1, seg2) = splitInterval seg
+    (seg1ValL, seg1ValR) = fiEE seg1
+    (seg2ValL, seg2ValR) = fiEE seg2
+    seg1NoMax = (seg1ValR <= nextL) == Just (Just True)
+    seg2NoMax = (seg2ValR <= nextL) == Just (Just True)
+    nextQueue1 =
+      if seg1NoMax then rest else Q.insert seg1E rest
+    nextQueue12 =
+      if seg2NoMax then nextQueue1 else Q.insert seg2E nextQueue1
+    seg1E = MaxSearchSegment seg1 seg1ValL seg1ValR
+    seg2E = MaxSearchSegment seg2 seg2ValL seg2ValR
+
+    fiEE s =
+      gunzip $ fmap endpoints $ fi s
+
+data MaxSearchSegment =
+    MaxSearchSegment
+    {
+        _maxSearchSegment_seg :: DyadicInterval,
+        _maxSearchSegment_lowerBnd :: CatchingNumExceptions MPBall, -- should be exact
+        _maxSearchSegment_upperBnd :: CatchingNumExceptions MPBall -- should be exact
+    }
+
+instance P.Eq MaxSearchSegment where
+    (MaxSearchSegment (Interval l1 r1) _ _) == (MaxSearchSegment (Interval l2 r2) _ _) =
+        l1 == l2 && r1 == r2
+instance P.Ord MaxSearchSegment where
+  compare (MaxSearchSegment _ _ u2) (MaxSearchSegment _ _ u1) =
+    case (u1 < u2, u1 > u2) of
+      (Just (Just True), _) -> P.LT
+      (_, Just (Just True)) -> P.GT
+      _
+        | hasCertainException u1 && hasCertainException u2 -> P.EQ
+        | hasCertainException u1 -> P.GT
+        | hasCertainException u2 -> P.LT
+        | otherwise -> P.EQ
