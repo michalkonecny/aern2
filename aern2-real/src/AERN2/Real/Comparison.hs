@@ -59,15 +59,15 @@ instance (QAArrow to) => CanMinMaxAsymmetric Int (CauchyRealA to) where
   min = flip min
   max = flip max
 
--- instance (QAArrow to) => CanMinMaxAsymmetric (CauchyRealA to) Dyadic where
---   type MinMaxType (CauchyRealA to) Dyadic = CauchyRealA to
---   min = binaryOpWithPureArg "min" min (getInitQ1TFromSimple id)
---   max = binaryOpWithPureArg "max" max (getInitQ1TFromSimple id)
+instance (QAArrow to) => CanMinMaxAsymmetric (CauchyRealA to) Dyadic where
+  type MinMaxType (CauchyRealA to) Dyadic = CauchyRealA to
+  min = binaryOpWithPureArg "min" min (getInitQ1TFromSimple id)
+  max = binaryOpWithPureArg "max" max (getInitQ1TFromSimple id)
 
--- instance (QAArrow to) => CanMinMaxAsymmetric Dyadic (CauchyRealA to) where
---   type MinMaxType Dyadic (CauchyRealA to) = CauchyRealA to
---   min = flip min
---   max = flip max
+instance (QAArrow to) => CanMinMaxAsymmetric Dyadic (CauchyRealA to) where
+  type MinMaxType Dyadic (CauchyRealA to) = CauchyRealA to
+  min = flip min
+  max = flip max
 
 instance (QAArrow to) => CanMinMaxAsymmetric (CauchyRealA to) Rational where
   type MinMaxType (CauchyRealA to) Rational = CauchyRealA to

@@ -172,6 +172,24 @@ instance CanMinMaxAsymmetric Dyadic Rational where
   min = convertSecond min
   max = convertSecond max
 
+instance
+  (CanMinMaxAsymmetric t Dyadic,
+   Show (MinMaxType t Dyadic), CanTestValid (MinMaxType t Dyadic))
+  =>
+  CanMinMaxAsymmetric (CatchingNumExceptions t) Dyadic where
+  type MinMaxType (CatchingNumExceptions t) Dyadic = CatchingNumExceptions (MinMaxType t Dyadic)
+  min a b = min a (catchingNumExceptions b)
+  max a b = max a (catchingNumExceptions b)
+
+instance
+  (CanMinMaxAsymmetric Dyadic t,
+   Show (MinMaxType Dyadic t), CanTestValid (MinMaxType Dyadic t))
+  =>
+  CanMinMaxAsymmetric Dyadic (CatchingNumExceptions t) where
+  type MinMaxType Dyadic (CatchingNumExceptions t) = CatchingNumExceptions (MinMaxType Dyadic t)
+  min b a = min (catchingNumExceptions b) a
+  max b a = max (catchingNumExceptions b) a
+
 {- addition -}
 
 instance CanAddAsymmetric Dyadic Dyadic where
