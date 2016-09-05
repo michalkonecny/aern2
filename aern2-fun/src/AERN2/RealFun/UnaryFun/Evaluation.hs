@@ -137,8 +137,8 @@ evalOnIntervalGuessPrecision f (Interval l r) =
         initPrec : (initPrec+10) : zipWith (+) precisions' (drop (int 1) precisions')
     initPrec =
         case nl of
-            NormBits i -> (max 10 (-i))
-            NormZero -> error "onDyadicInterval does not work for a singleton interval"
+            NormBits i -> max 10 (-i)
+            NormZero -> integer $ getPrecision l
     nl = getNormLog (r - l)
     untilLittleImprovement resultsE =
         case results of

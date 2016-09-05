@@ -51,9 +51,9 @@ instance CanApply UnaryDFun DyadicInterval where
       | otherwise = fm + errBall
       where
       f'di = evalUseD rest f' di -- recursive call
-      fl = f (evalOnIntervalGuessPrecision f (Interval l l))
-      fr = f (evalOnIntervalGuessPrecision f (Interval r r))
-      fm = f (evalOnIntervalGuessPrecision f (Interval m m))
+      fl = evalOnIntervalGuessPrecision f (Interval l l)
+      fr = evalOnIntervalGuessPrecision f (Interval r r)
+      fm = evalOnIntervalGuessPrecision f (Interval m m)
       m = (l + r)*0.5
       errBall = f'di*((r-l)*0.5)*unitBall
       unitBall = catchingNumExceptions $ mpBall (0,1)
