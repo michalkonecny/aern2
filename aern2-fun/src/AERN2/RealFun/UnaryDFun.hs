@@ -44,13 +44,13 @@ instance CanApply UnaryDFun DyadicInterval where
   apply (UnaryDFun (UnaryFun _ f_o : derivatives_o)) di_o =
     rangeOnIntervalSubdivide (evalUseD derivatives_o f_o) di_o
     where
-    evalUseD [] f di = evalOnIntervalGuessPrecision f di
+    evalUseD [] f di = (Nothing, evalOnIntervalGuessPrecision f di)
     evalUseD (UnaryFun _ f' : rest) f di@(Interval l r)
-      | f'di !>=! 0 = liftA2 fromEndpoints fl fr -- f is increasing
-      | f'di !<=! 0 = liftA2 fromEndpoints fr fl -- f is decreasing
-      | otherwise = fm + errBall
+      | f'di !>=! 0 = (Just Increasing, liftA2 fromEndpoints fl fr)
+      | f'di !<=! 0 = (Just Decreasing, liftA2 fromEndpoints fr fl)
+      | otherwise = (Nothing, fm + errBall)
       where
-      f'di = evalUseD rest f' di -- recursive call
+      (_, f'di) = evalUseD rest f' di -- recursive call
       fl = evalOnIntervalGuessPrecision f (Interval l l)
       fr = evalOnIntervalGuessPrecision f (Interval r r)
       fm = evalOnIntervalGuessPrecision f (Interval m m)

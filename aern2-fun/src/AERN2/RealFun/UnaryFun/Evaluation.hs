@@ -15,6 +15,7 @@ module AERN2.RealFun.UnaryFun.Evaluation
 (
   evalOnIntervalGuessPrecision
   , rangeOnIntervalSubdivide
+  , MonotonicityDirection(..)
 )
 where
 
@@ -107,7 +108,7 @@ instance CanApply UnaryFun Dyadic where
 
 instance CanApply UnaryFun DyadicInterval where
   type ApplyType UnaryFun DyadicInterval = RealInterval
-  apply (UnaryFun _ f) = rangeOnIntervalSubdivide (evalOnIntervalGuessPrecision f)
+  apply (UnaryFun _ f) = rangeOnIntervalSubdivide (((,) Nothing) . evalOnIntervalGuessPrecision f)
 
 evalOnIntervalGuessPrecision ::
   (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall)
@@ -157,8 +158,14 @@ evalOnIntervalGuessPrecision f (Interval l r) =
         improvements = zipWith measureImprovement radii (drop (int 1) radii)
         measureImprovement r1 r2 = getNormLog $ max (mpBall 0) $ r1 - r2
 
+data MonotonicityDirection = Increasing | Decreasing
+
+instance CanNeg MonotonicityDirection where
+  negate Increasing = Decreasing
+  negate Decreasing = Increasing
+
 rangeOnIntervalSubdivide ::
-  (DyadicInterval -> CatchingNumExceptions MPBall)
+  (DyadicInterval -> (Maybe MonotonicityDirection, CatchingNumExceptions MPBall))
   ->
   (DyadicInterval -> RealInterval)
 rangeOnIntervalSubdivide evalOnInterval di =
@@ -169,13 +176,13 @@ rangeOnIntervalSubdivide evalOnInterval di =
   maxSequence = search fi fdiL $ Q.singleton $ MaxSearchSegment di fdiL fdiR
     where
     (fdiL, fdiR) = gunzip $ fmap endpoints fdi
-    fdi = fi di
+    (_,fdi) = fi di
     fi = evalOnInterval
   minSequence = map negate $ search fi fdiL $ Q.singleton $ MaxSearchSegment di fdiL fdiR
     where
     (fdiL, fdiR) = gunzip $ fmap endpoints fdi
-    fdi = fi di
-    fi = negate . evalOnInterval
+    (_, fdi) = fi di
+    fi = (\(a,b) -> (negate a,negate b)) . evalOnInterval
   search fi prevL prevQueue =
     maybeTrace
     (
@@ -200,19 +207,29 @@ rangeOnIntervalSubdivide evalOnInterval di =
 
     -- split the current segment and pre-compute
     (seg1, seg2) = splitInterval seg
-    (seg1ValL, seg1ValR) = fiEE seg1
-    (seg2ValL, seg2ValR) = fiEE seg2
+    ((seg1ValL, seg1ValR), seg1') = fiEE seg1
+    ((seg2ValL, seg2ValR), seg2') = fiEE seg2
     seg1NoMax = (seg1ValR <= nextL) == Just (Just True)
     seg2NoMax = (seg2ValR <= nextL) == Just (Just True)
     nextQueue1 =
       if seg1NoMax then rest else Q.insert seg1E rest
     nextQueue12 =
       if seg2NoMax then nextQueue1 else Q.insert seg2E nextQueue1
-    seg1E = MaxSearchSegment seg1 seg1ValL seg1ValR
-    seg2E = MaxSearchSegment seg2 seg2ValL seg2ValR
+    seg1E = MaxSearchSegment seg1' seg1ValL seg1ValR
+    seg2E = MaxSearchSegment seg2' seg2ValL seg2ValR
 
     fiEE s =
-      gunzip $ fmap endpoints $ fi s
+      case maybeMonotone of
+        Nothing -> (gunzip $ fmap endpoints fis, s)
+        Just Increasing -> (gunzip $ fmap endpoints fir, rI)
+        Just Decreasing -> (gunzip $ fmap endpoints fil, lI)
+      where
+      (maybeMonotone, fis) = fi s
+      (_, fil) = fi lI
+      (_, fir) = fi rI
+      lI = Interval lE lE
+      rI = Interval rE rE
+      (Interval lE rE) = s
 
 data MaxSearchSegment =
     MaxSearchSegment
