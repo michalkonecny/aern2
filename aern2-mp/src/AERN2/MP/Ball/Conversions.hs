@@ -23,6 +23,7 @@ import Numeric.CatchingExceptions (CanTestValid(..))
 
 import AERN2.MP.Dyadic (Dyadic)
 import qualified AERN2.MP.Float as MPFloat
+import AERN2.MP.Float (mpFloat)
 -- import AERN2.MP.Float.Operators
 import AERN2.MP.Precision
 import qualified AERN2.MP.ErrorBound as EB
@@ -44,18 +45,27 @@ instance ConvertibleExactly MPBall MPBall where
   safeConvertExactly = Right
 
 instance ConvertibleExactly Dyadic MPBall where
-  safeConvertExactly x = Right $ MPBall (convertExactly x) (errorBound 0)
+  safeConvertExactly x = Right $ MPBall (mpFloat x) (errorBound 0)
 
 instance ConvertibleExactly Integer MPBall where
   safeConvertExactly x
     | isValid b = Right b
     | otherwise = convError "too large to convert to MPBall" x
     where
-      b = MPBall (convertExactly x) (errorBound 0)
+      b = MPBall (mpFloat x) (errorBound 0)
+
+instance ConvertibleExactly (Integer, Integer) MPBall where
+  safeConvertExactly (x,e)
+    | isValid b = Right b
+    | otherwise = convError "too large to convert to MPBall" x
+    where
+      b = MPBall (mpFloat x) (errorBound $ mpFloat e)
 
 instance ConvertibleExactly Int MPBall where
-  safeConvertExactly x = Right $ MPBall (convertExactly x) (errorBound 0)
+  safeConvertExactly x = Right $ MPBall (mpFloat x) (errorBound 0)
 
+instance ConvertibleExactly (Int, Int) MPBall where
+  safeConvertExactly (x,e) = Right $ MPBall (mpFloat x) (errorBound $ mpFloat e)
 
 {--- constructing a ball with a given precision ---}
 
