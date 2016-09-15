@@ -113,6 +113,8 @@ instance HasOrderAsymmetric Rational ErrorBound where
   lessThan = convertSecond lessThan
   leq = convertSecond leq
 
+instance CanMinMaxAsymmetric ErrorBound ErrorBound
+
 {- converting operations -}
 
 subMP :: MPFloat -> MPFloat -> ErrorBound
