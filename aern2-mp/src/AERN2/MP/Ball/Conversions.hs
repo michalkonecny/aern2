@@ -21,6 +21,8 @@ import Numeric.MixedTypes
 
 import Numeric.CatchingExceptions (CanTestValid(..))
 
+import Data.Convertible
+
 import AERN2.MP.Dyadic (Dyadic)
 import qualified AERN2.MP.Float as MPFloat
 import AERN2.MP.Float (mpFloat)
@@ -31,12 +33,18 @@ import AERN2.MP.ErrorBound (errorBound)
 
 import AERN2.MP.Ball.Type
 
-{--- extracting integer from a ball ---}
+{--- extracting from a ball ---}
 
 integerBounds :: MPBall -> (Integer, Integer)
 integerBounds b =
   (floor l, ceiling r)
   where
+    (l,r) = endpointsMP b
+
+instance Convertible MPBall EB.ErrorBound where
+  safeConvert b =
+    Right (errorBound (max (abs l) (abs r)))
+    where
     (l,r) = endpointsMP b
 
 {--- constructing an exact ball ---}
