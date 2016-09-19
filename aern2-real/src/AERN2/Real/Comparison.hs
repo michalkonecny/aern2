@@ -30,27 +30,59 @@ import AERN2.Real.Aux
 
 -- import AERN2.Tolerant
 
-{-
+{- "Cauchy" Boolean -}
 
-{- tolerant comparisons -}
+data CauchyBoolP = CauchyBoolP deriving Show
 
-instance (CanNegSameType b, Arrow to) => CanNeg (() `to` b) where
-  negate tob = arr negate <<< tob
+pCB :: CauchyBoolP
+pCB = CauchyBoolP
 
-instance (QAArrow to) => HasTolerantEqAsymmetric (CauchyRealA to) (CauchyRealA to) where
-  type TolerantEqCompareType (CauchyRealA to) (CauchyRealA to) = () `to` (Tolerant Bool)
-  tolerantEqualTo a (e,b) =
-    proc () ->
-      do
-      aB <- qaMakeQueryA -< (a, ac)
-      bB <- qaMakeQueryA -< (b, ac)
-      returnA -< tolerantEqualTo aB (e,bB)
-    where
-    ac =
-      case getNormLog (dyadic e) of
-        NormBits n -> bits (max 0 (1 - n))
-        NormZero -> Exact
--}
+instance QAProtocol CauchyBoolP where
+  type Q CauchyBoolP = Accuracy
+  type A CauchyBoolP = Maybe Bool
+
+instance QAProtocolCacheable CauchyBoolP where
+  type QACache CauchyBoolP = Maybe Bool
+  newQACache _ = Nothing
+  lookupQACache _ cache _ac = Just cache
+  updateQACache _ Nothing _ mb = mb
+  updateQACache _ (Just b) _ _mb = Just b
+
+type CauchyBoolA to = QA to CauchyBoolP
+
+instance (QAArrow to) => ConvertibleExactly Bool (CauchyBoolA to) where
+  safeConvertExactly b = Right $
+    newQA (show b) [] pCB (bits 0) $
+      proc _ -> returnA -< Just b
+
+instance (QAArrow to) => CanNeg (CauchyBoolA to) where
+  type NegType (CauchyBoolA to) = CauchyBoolA to
+  negate qa =
+    newQA "neg" [AnyProtocolQA qa] pCB (bits 0) (qaMakeQuery qa >>> arr negate)
+
+instance (QAArrow to) => CanAndOrAsymmetric (CauchyBoolA to) (CauchyBoolA to) where
+  type AndOrType (CauchyBoolA to) (CauchyBoolA to) = CauchyBoolA to
+  and2 qa1 qa2 =
+    newQA "and" [AnyProtocolQA qa1, AnyProtocolQA qa2] pCB (bits 0) $
+      proc ac ->
+        do
+        b1 <- qaMakeQuery qa1 -< ac
+        b2 <- qaMakeQuery qa2 -< ac
+        returnA -< b1 `and2` b2
+  or2 qa1 qa2 =
+    newQA "or" [AnyProtocolQA qa1, AnyProtocolQA qa2] pCB (bits 0) $
+      proc ac ->
+        do
+        b1 <- qaMakeQuery qa1 -< ac
+        b2 <- qaMakeQuery qa2 -< ac
+        returnA -< b1 `or2` b2
+
+
+{- equality -}
+
+-- instance HasEqAsymmetric (CauchyRealA to) (CauchyRealA to) where
+--   type EqCompareType (CauchyRealA to) (CauchyRealA to) = CauchyBoolA to
+--   equalTo = undefined
 
 {- abs -}
 
@@ -112,3 +144,25 @@ instance CanMinMaxAsymmetric MPBall CauchyReal where
   type MinMaxType MPBall CauchyReal = MPBall
   min = flip min
   max = flip max
+
+{-
+
+{- tolerant comparisons -}
+
+instance (CanNegSameType b, Arrow to) => CanNeg (() `to` b) where
+  negate tob = arr negate <<< tob
+
+instance (QAArrow to) => HasTolerantEqAsymmetric (CauchyRealA to) (CauchyRealA to) where
+  type TolerantEqCompareType (CauchyRealA to) (CauchyRealA to) = () `to` (Tolerant Bool)
+  tolerantEqualTo a (e,b) =
+    proc () ->
+      do
+      aB <- qaMakeQueryA -< (a, ac)
+      bB <- qaMakeQueryA -< (b, ac)
+      returnA -< tolerantEqualTo aB (e,bB)
+    where
+    ac =
+      case getNormLog (dyadic e) of
+        NormBits n -> bits (max 0 (1 - n))
+        NormZero -> Exact
+-}
