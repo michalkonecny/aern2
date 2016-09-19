@@ -28,6 +28,30 @@ import AERN2.QA
 import AERN2.Real.Type
 import AERN2.Real.Aux
 
+-- import AERN2.Tolerant
+
+{-
+
+{- tolerant comparisons -}
+
+instance (CanNegSameType b, Arrow to) => CanNeg (() `to` b) where
+  negate tob = arr negate <<< tob
+
+instance (QAArrow to) => HasTolerantEqAsymmetric (CauchyRealA to) (CauchyRealA to) where
+  type TolerantEqCompareType (CauchyRealA to) (CauchyRealA to) = () `to` (Tolerant Bool)
+  tolerantEqualTo a (e,b) =
+    proc () ->
+      do
+      aB <- qaMakeQueryA -< (a, ac)
+      bB <- qaMakeQueryA -< (b, ac)
+      returnA -< tolerantEqualTo aB (e,bB)
+    where
+    ac =
+      case getNormLog (dyadic e) of
+        NormBits n -> bits (max 0 (1 - n))
+        NormZero -> Exact
+-}
+
 {- abs -}
 
 instance (QAArrow to) => CanAbs (CauchyRealA to) where
