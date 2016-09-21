@@ -80,9 +80,32 @@ instance (QAArrow to) => CanAndOrAsymmetric (CauchyBoolA to) (CauchyBoolA to) wh
 
 {- equality -}
 
--- instance HasEqAsymmetric (CauchyRealA to) (CauchyRealA to) where
---   type EqCompareType (CauchyRealA to) (CauchyRealA to) = CauchyBoolA to
---   equalTo = undefined
+instance (QAArrow to) => HasEqAsymmetric (CauchyRealA to) (CauchyRealA to) where
+  type EqCompareType (CauchyRealA to) (CauchyRealA to) = CauchyBoolA to
+  equalTo = liftRel "==" (==)
+  notEqualTo = liftRel "/=" (/=)
+
+instance (QAArrow to) => HasOrderAsymmetric (CauchyRealA to) (CauchyRealA to) where
+  type OrderCompareType (CauchyRealA to) (CauchyRealA to) = CauchyBoolA to
+  lessThan = liftRel "<" (<)
+  leq = liftRel "<=" (<=)
+  greaterThan = liftRel ">" (>)
+  geq = liftRel ">=" (>=)
+
+liftRel ::
+  (QAArrow to, QAProtocolCacheable p1, QAProtocolCacheable p2,
+   Q p1 ~ Accuracy, Q p2 ~ Accuracy)
+  =>
+  String ->
+  (A p1 -> A p2 -> Maybe Bool) ->
+  QA to p1 -> QA to p2 -> CauchyBoolA to
+liftRel relName rel a b =
+  newQA relName [AnyProtocolQA a, AnyProtocolQA b] pCB (bits 0) $
+    proc ac ->
+      do
+      b1 <- qaMakeQuery a -< ac
+      b2 <- qaMakeQuery b -< ac
+      returnA -< rel b1 b2
 
 {- abs -}
 
