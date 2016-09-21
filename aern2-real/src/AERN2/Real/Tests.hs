@@ -19,7 +19,7 @@
 
 module AERN2.Real.Tests
   (
-    specCauchyReal, tCauchyReal
+    specCauchyReal, tCauchyReal, tCauchyRealAtAccuracy
   )
 where
 
@@ -33,30 +33,56 @@ import Test.QuickCheck
 -- import qualified Test.Hspec.SmallCheck as SC
 
 -- import AERN2.Norm
--- import AERN2.MP.Accuracy
+import AERN2.MP.Accuracy
 --
--- import AERN2.MP.Float as MPFloat
+import qualified AERN2.MP.Ball.Type as MB
+import AERN2.MP.Dyadic
+import AERN2.MP.Float
 
 import AERN2.Real.Type
-import AERN2.Real.Comparison ()
+import AERN2.Real.Comparison (CauchyRealAtAccuracy(..))
 import AERN2.Real.Ring ()
 import AERN2.Real.Field ()
 import AERN2.Real.Elementary ()
 
+instance Arbitrary CauchyRealAtAccuracy where
+  arbitrary =
+    CauchyRealAtAccuracy <$>
+      arbitrary <*>
+      ((\x -> bits (1 + (abs (3 * x)))) <$> (arbitrary :: Gen Integer))
+
 instance Arbitrary CauchyReal where
   arbitrary =
-    do
-      undefined -- TODO
-    --   c <- finiteMPFloat
-    --   e <- arbitrary
-    --   return (MPBall c e)
-    -- where
-    --   finiteMPFloat =
-    --     do
-    --       x <- arbitrary
-    --       if (-MPFloat.infinity) < x && x < MPFloat.infinity
-    --         then return x
-    --         else finiteMPFloat
+    frequency
+      [(int 1, real <$> (arbitrary :: Gen Integer)),
+       (int 1, real <$> (arbitrary :: Gen Rational)),
+       (int 2, (*) <$> (arbitrary :: Gen Integer) <*> arbitrarySignedBinary)
+      ]
+      where
+      arbitrarySignedBinary =
+        signedBinary2Real <$> infiniteListOf (elements [-1,0,1])
+      signedBinary2Real sbits =
+        newCR "random" [] $ \ ac ->
+          balls !! ((fromAccuracy ac) + 1)
+        where
+        balls = nextBit (MB.mpBall (0,1)) sbits
+        nextBit ball (sbit:rest) =
+          ball : nextBit newBall rest
+          where
+          newBall =
+            case sbit of
+              (-1) -> MB.fromEndpointsMP l m
+              0 -> MB.fromEndpointsMP l2 r2
+              1 -> MB.fromEndpointsMP m r
+              _ -> error "in Arbitrary CauchyReal"
+          (l,r) = MB.endpointsMP ball
+          m = mpFloat mDy
+          l2 = mpFloat l2Dy
+          r2 = mpFloat r2Dy
+          mDy = ((dyadic l) + (dyadic r)) * 0.5
+          l2Dy = ((dyadic l) + mDy) * 0.5
+          r2Dy = ((dyadic r) + mDy) * 0.5
+        nextBit _ _ = error "in Arbitrary CauchyReal"
 
 {-|
   A runtime representative of type @CauchyReal@.
@@ -65,17 +91,20 @@ instance Arbitrary CauchyReal where
 tCauchyReal :: T CauchyReal
 tCauchyReal = T "CauchyReal"
 
+tCauchyRealAtAccuracy :: T CauchyRealAtAccuracy
+tCauchyRealAtAccuracy = T "CauchyReal(ac)"
+
 specCauchyReal :: Spec
 specCauchyReal =
   describe ("CauchyReal") $ do
     undefined
     -- specConversion tInteger tCauchyReal real (fst . integerBounds)
     -- describe "order" $ do
-    --   specHasTolerantEqNotMixed tCauchyReal
-    --   specHasTolerantEq tInt tCauchyReal tRational
+    --   specHasEqNotMixed tCauchyReal
+    --   specHasEq tInt tCauchyReal tRational
     --   specCanPickZero tCauchyReal
-    --   specHasTolerantOrderNotMixed tCauchyReal
-    --   specHasTolerantOrder tInt tCauchyReal tRational
+    --   specHasOrderNotMixed tCauchyReal
+    --   specHasOrder tInt tCauchyReal tRational
     -- describe "min/max/abs" $ do
     --   specCRFastConvergent1 abs
     --   specCRFastConvergent2 max

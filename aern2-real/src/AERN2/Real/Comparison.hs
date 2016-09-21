@@ -12,6 +12,8 @@
 -}
 module AERN2.Real.Comparison
 (
+  CauchyBoolP(..), CauchyBoolA, CauchyBool
+  , CauchyRealAtAccuracy(..)
 )
 where
 
@@ -27,8 +29,6 @@ import AERN2.MP.Dyadic
 import AERN2.QA
 import AERN2.Real.Type
 import AERN2.Real.Aux
-
--- import AERN2.Tolerant
 
 {- "Cauchy" Boolean -}
 
@@ -49,6 +49,7 @@ instance QAProtocolCacheable CauchyBoolP where
   updateQACache _ (Just b) _ _mb = Just b
 
 type CauchyBoolA to = QA to CauchyBoolP
+type CauchyBool = CauchyBoolA (->)
 
 instance (QAArrow to) => ConvertibleExactly Bool (CauchyBoolA to) where
   safeConvertExactly b = Right $
@@ -93,12 +94,10 @@ instance (QAArrow to) => HasOrderAsymmetric (CauchyRealA to) (CauchyRealA to) wh
   geq = liftRel ">=" (>=)
 
 liftRel ::
-  (QAArrow to, QAProtocolCacheable p1, QAProtocolCacheable p2,
-   Q p1 ~ Accuracy, Q p2 ~ Accuracy)
-  =>
+  (QAArrow to) =>
   String ->
-  (A p1 -> A p2 -> Maybe Bool) ->
-  QA to p1 -> QA to p2 -> CauchyBoolA to
+  (MPBall -> MPBall -> Maybe Bool) ->
+  (CauchyRealA to -> CauchyRealA to -> CauchyBoolA to)
 liftRel relName rel a b =
   newQA relName [AnyProtocolQA a, AnyProtocolQA b] pCB (bits 0) $
     proc ac ->
@@ -106,6 +105,28 @@ liftRel relName rel a b =
       b1 <- qaMakeQuery a -< ac
       b2 <- qaMakeQuery b -< ac
       returnA -< rel b1 b2
+
+{-| CauchyRealAtAccuracy exists only so that we can QuickCheck that
+   CauchyReal satisfies properties whose statement relies on an instance of HasEqCertainly.
+   CauchyReal is not an instance but CauchyRealAtAccuracy is.
+-}
+data CauchyRealAtAccuracy = CauchyRealAtAccuracy CauchyReal Accuracy
+  deriving (Show)
+
+instance HasEqAsymmetric CauchyRealAtAccuracy CauchyRealAtAccuracy where
+  type EqCompareType CauchyRealAtAccuracy CauchyRealAtAccuracy = Maybe Bool
+  equalTo = deliftRel (==)
+
+instance HasOrderAsymmetric CauchyRealAtAccuracy CauchyRealAtAccuracy where
+  type OrderCompareType CauchyRealAtAccuracy CauchyRealAtAccuracy = Maybe Bool
+  lessThan = deliftRel (<)
+  leq = deliftRel (<=)
+
+deliftRel ::
+  (CauchyReal -> CauchyReal -> CauchyBool) ->
+  CauchyRealAtAccuracy -> CauchyRealAtAccuracy -> Maybe Bool
+deliftRel rel (CauchyRealAtAccuracy x1 ac1) (CauchyRealAtAccuracy x2 ac2) =
+  qaMakeQuery (rel x1 x2) (max ac1 ac2)
 
 {- abs -}
 

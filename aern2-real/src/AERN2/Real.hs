@@ -45,6 +45,7 @@ import AERN2.Real.Comparison ()
 import AERN2.Real.Ring ()
 import AERN2.Real.Field ()
 import AERN2.Real.Elementary
+import AERN2.Real.Tests
 
 {-|
   Example arrow-generic real number computation

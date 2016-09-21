@@ -25,6 +25,8 @@ import qualified Prelude as P
 
 import Control.Lens
 
+import Test.QuickCheck
+
 import Numeric.CatchingExceptions
 
 import AERN2.Norm
@@ -37,7 +39,14 @@ _example1 = 1 + 2*(bits 100)
 
 {-| A non-negative Double value to serve as an error bound. Arithmetic is rounded towards +infinity. -}
 data Accuracy = NoInformation | Bits { fromAccuracy :: Integer } | Exact
-    deriving (P.Eq, P.Ord)
+  deriving (P.Eq, P.Ord)
+
+instance Arbitrary Accuracy where
+  arbitrary =
+    frequency
+      [(int 1, pure Exact),
+       (int 1, pure NoInformation),
+       (int 8, Bits <$> arbitrary)]
 
 instance Enum Accuracy where
     fromEnum NoInformation = minBound
