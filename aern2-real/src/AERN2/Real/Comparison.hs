@@ -78,7 +78,7 @@ instance (QAArrow to) => CanAndOrAsymmetric (CauchyBoolA to) (CauchyBoolA to) wh
         returnA -< b1 `or2` b2
 
 
-{- equality -}
+{- equality & order -}
 
 instance (QAArrow to) => HasEqAsymmetric (CauchyRealA to) (CauchyRealA to) where
   type EqCompareType (CauchyRealA to) (CauchyRealA to) = CauchyBoolA to
