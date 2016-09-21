@@ -63,7 +63,7 @@ instance CanApply UnaryFun MPBall where
       . eval . checkInDom f . catchingNumExceptions
 
 checkInDom ::
-  (HasOrder t Dyadic, CanMinMaxThis t Dyadic)
+  (HasOrderCertainly t Dyadic, CanMinMaxThis t Dyadic)
   =>
   UnaryFun -> CatchingNumExceptions t -> CatchingNumExceptions t
 checkInDom f cx =
@@ -81,7 +81,7 @@ checkInDom f cx =
   Interval domL domR = unaryFun_Domain f
 
 instance
-  (CanApply UnaryFun t, HasOrder t Dyadic, CanMinMaxThis t Dyadic)
+  (CanApply UnaryFun t, HasOrderCertainly t Dyadic, CanMinMaxThis t Dyadic)
   =>
   CanApply UnaryFun (CatchingNumExceptions t)
   where

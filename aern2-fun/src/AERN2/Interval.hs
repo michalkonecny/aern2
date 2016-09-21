@@ -61,7 +61,7 @@ dyadicInterval :: (CanBeDyadicInterval t) => t -> DyadicInterval
 dyadicInterval = convertExactly
 
 instance
-  (CanBeDyadic l, CanBeDyadic r, HasOrder l r, Show l, Show r,
+  (CanBeDyadic l, CanBeDyadic r, HasOrderCertainly l r, Show l, Show r,
    Typeable l, Typeable r)
   =>
   ConvertibleExactly (l, r) DyadicInterval where
@@ -97,7 +97,7 @@ realInterval :: (CanBeRealInterval t) => t -> RealInterval
 realInterval = convertExactly
 
 instance
-  (CanBeReal l, CanBeReal r, HasOrder l r, Show l, Show r,
+  (CanBeReal l, CanBeReal r, HasOrderCertainly l r, Show l, Show r,
    Typeable l, Typeable r)
   =>
   ConvertibleExactly (l, r) RealInterval where
