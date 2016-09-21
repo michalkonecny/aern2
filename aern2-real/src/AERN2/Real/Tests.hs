@@ -97,14 +97,13 @@ tCauchyRealAtAccuracy = T "CauchyReal(ac)"
 specCauchyReal :: Spec
 specCauchyReal =
   describe ("CauchyReal") $ do
-    undefined
     -- specConversion tInteger tCauchyReal real (fst . integerBounds)
-    -- describe "order" $ do
-    --   specHasEqNotMixed tCauchyReal
-    --   specHasEq tInt tCauchyReal tRational
-    --   specCanPickZero tCauchyReal
-    --   specHasOrderNotMixed tCauchyReal
-    --   specHasOrder tInt tCauchyReal tRational
+    describe "order" $ do
+      specHasEqNotMixed tCauchyRealAtAccuracy
+      -- specHasEq tInt tCauchyReal tRational
+      -- specCanPickZero tCauchyReal
+      specHasOrderNotMixed tCauchyRealAtAccuracy
+      -- specHasOrder tInt tCauchyReal tRational
     -- describe "min/max/abs" $ do
     --   specCRFastConvergent1 abs
     --   specCRFastConvergent2 max
