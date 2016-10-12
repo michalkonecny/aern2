@@ -57,12 +57,15 @@ library
     AERN2.RealFun.UnaryDFun
     -- AERN2.RealFun.DFun
     AERN2.Poly
-    -- AERN2.Poly.Type
+    -- AERN2.Ball
+    AERN2.Poly.Basics
+    AERN2.Poly.Cheb
+    AERN2.Poly.Cheb.Type
+    -- AERN2.Poly.Cheb.Eval
     -- AERN2.Poly.Cheb.Ring
     -- AERN2.Poly.Cheb.Aux
     -- AERN2.Poly.Cheb.Field
     -- AERN2.Poly.Cheb.Elementary
-    -- AERN2.Ball
 
 -- test-suite spec
 --   type:
