@@ -195,6 +195,10 @@ mulChebDirect (Poly terms1) (Poly terms2) =
 
 {- evaluation -}
 
+instance CanApply PolyBall MPBall where
+  type ApplyType PolyBall MPBall = MPBall
+  apply (Ball x e) y = updateRadius (+e) (apply x y)
+
 instance CanApply (ChPoly MPBall) MPBall where
   type ApplyType (ChPoly MPBall) MPBall = MPBall
   apply = chPolyEvalDirect
