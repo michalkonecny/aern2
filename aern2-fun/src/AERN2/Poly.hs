@@ -28,6 +28,7 @@ import qualified Data.Map as Map
 
 import AERN2.MP.ErrorBound
 import AERN2.MP.Ball
+import AERN2.MP.Dyadic
 
 import AERN2.Real
 
@@ -85,6 +86,23 @@ terms_map = Map.map
 
 terms_updateConst :: (c -> c) -> Terms c -> Terms c
 terms_updateConst updateFn = Map.adjust updateFn 0
+
+terms_lookupCoeffDoubleConstTerm ::
+  (HasIntegers c, CanAddSameType c) =>
+  (Terms c) -> Degree -> c
+terms_lookupCoeffDoubleConstTerm t i
+  | i == 0 = c+c
+  | otherwise = c
+  where
+  c = terms_lookupCoeff t i
+
+terms_lookupCoeff ::
+  (HasIntegers c) =>
+  (Terms c) -> Degree -> c
+terms_lookupCoeff t i =
+  case Map.lookup i t of
+    Just c -> c
+    _ -> convertExactly 0
 
 
 instance (IsBall c) => IsBall (ChPoly c) where
@@ -148,7 +166,7 @@ instance (IsBall c, Ring c, CanDivBy c Integer)
     xe = radius xB
     x1e1 = updateRadius (+ e1) x1
     x2e2 = updateRadius (+ e2) x2
-    -- TODO: consider using a norm computed using root finding
+    -- TODO: use norm computed using root finding?
     --  is it too expensive?  check once we have benchmarking
 
 -- ChPoly level
@@ -174,6 +192,41 @@ mulChebDirect (Poly terms1) (Poly terms2) =
         (i,a) <- terms_toList terms1,
         (j,b) <- terms_toList terms2
       ]
+
+{- evaluation -}
+
+instance CanApply (ChPoly MPBall) MPBall where
+  type ApplyType (ChPoly MPBall) MPBall = MPBall
+  apply = chPolyEvalDirect
+
+chPolyEvalDirect ::
+  (Ring t, CanAddSubMulDivBy t Dyadic, CanDivBy t Integer,
+   CanAddSubMulBy t c, Ring c)
+  =>
+  (ChPoly c) -> t -> t
+chPolyEvalDirect (ChPoly dom (Poly terms)) (xInDom :: t) =
+    (b0 - b2)/2
+    where
+    x = fromDomToUnitInterval dom xInDom
+    n = terms_degree terms
+    (b0:_:b2:_) = bs
+    bs :: [t]
+    bs = reverse $ aux n z z
+    z = convertExactly 0
+    aux k bKp2 bKp1
+        | k == 0 = [bKp2, bKp1, bK]
+        | otherwise = bKp2 : aux (k - 1) bKp1 bK
+        where
+        bK = (a k) + 2 * x * bKp1 - bKp2
+    a k = terms_lookupCoeffDoubleConstTerm terms k
+
+fromDomToUnitInterval ::
+  (CanAddSubMulDivBy t Dyadic) =>
+  DyadicInterval -> t -> t
+fromDomToUnitInterval (Interval l r) xInDom =
+  (xInDom - m)/(0.5*(r-l))
+  where
+  m = (r+l)*0.5
 
 {- range -}
 
