@@ -146,6 +146,7 @@ class IsBall t where
   centreAsBall = fst . centreAsBallAndRadius
   radius :: t -> ErrorBound
   radius = snd . centreAsBallAndRadius
+  updateRadius :: (ErrorBound -> ErrorBound) -> (t -> t)
 
 instance IsBall MPBall where
   type CentreType MPBall = Dyadic
@@ -155,7 +156,7 @@ instance IsBall MPBall where
     (MPBall cMP e) = x
     cB = MPBall cMP (errorBound 0)
   radius (MPBall _ e) = e
-
+  updateRadius updateFn (MPBall c e) = MPBall c (updateFn e)
 
 {--- constructing a ball with a given precision ---}
 

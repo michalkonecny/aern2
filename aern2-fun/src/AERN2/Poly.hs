@@ -83,6 +83,9 @@ terms_coeffs = Map.elems
 terms_map :: (c1 -> c2) -> Terms c1 -> Terms c2
 terms_map = Map.map
 
+terms_updateConst :: (c -> c) -> Terms c -> Terms c
+terms_updateConst updateFn = Map.adjust updateFn 0
+
 
 instance (IsBall c) => IsBall (ChPoly c) where
   type CentreType (ChPoly c) = ChPoly c
@@ -92,6 +95,8 @@ instance (IsBall c) => IsBall (ChPoly c) where
     ChPoly dom (Poly (terms_map centreAsBall terms))
   centreAsBall = centre
   centreAsBallAndRadius cp = (centre cp, radius cp)
+  updateRadius updateFn (ChPoly dom (Poly terms)) =
+    ChPoly dom (Poly $ terms_updateConst (updateRadius updateFn) terms)
 
 type CanBeChPoly c t = ConvertibleExactly (DyadicInterval, t) (ChPoly c)
 chPoly :: (CanBeChPoly c t) => (DyadicInterval, t) -> (ChPoly c)
@@ -136,13 +141,15 @@ instance (IsBall c, Ring c, CanDivBy c Integer)
   CanMulAsymmetric (Ball c) (Ball c) where
   type MulType  (Ball c) (Ball c) = Ball c
   mul (Ball x1 e1) (Ball x2 e2) =
-    Ball x (e1*e2 + e1*x2Norm + e2*x1Norm + xe)
+    Ball x xe
     where
-    xB = x1 * x2
+    xB = x1e1 * x2e2
     x = centreAsBall xB
     xe = radius xB
-    x1Norm = undefined :: ErrorBound -- TODO
-    x2Norm = undefined :: ErrorBound -- TODO
+    x1e1 = updateRadius (+ e1) x1
+    x2e2 = updateRadius (+ e2) x2
+    -- TODO: consider using a norm computed using root finding
+    --  is it too expensive?  check once we have benchmarking
 
 -- ChPoly level
 instance (Ring c, CanDivBy c Integer) => CanMulAsymmetric (ChPoly c) (ChPoly c) where
