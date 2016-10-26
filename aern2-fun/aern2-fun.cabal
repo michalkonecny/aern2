@@ -62,7 +62,7 @@ library
     AERN2.Poly.Cheb
     AERN2.Poly.Cheb.Type
     -- AERN2.Poly.Cheb.Eval
-    -- AERN2.Poly.Cheb.Ring
+    AERN2.Poly.Cheb.Ring
     -- AERN2.Poly.Cheb.Aux
     -- AERN2.Poly.Cheb.Field
     -- AERN2.Poly.Cheb.Elementary
