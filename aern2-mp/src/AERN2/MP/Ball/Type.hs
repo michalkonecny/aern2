@@ -30,6 +30,8 @@ where
 import Numeric.MixedTypes
 -- import qualified Prelude as P
 
+import GHC.Generics (Generic)
+
 import Numeric.CatchingExceptions (CanTestValid(..))
 
 import AERN2.Norm
@@ -58,6 +60,7 @@ import AERN2.MP.ErrorBound (ErrorBound, errorBound)
 -- _dummy = maybeTrace "dummy" ()
 
 data MPBall = MPBall { ball_value :: MPFloat, ball_error :: ErrorBound }
+  deriving (Generic)
 
 instance Show MPBall
     where

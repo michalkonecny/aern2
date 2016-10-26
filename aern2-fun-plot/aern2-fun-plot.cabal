@@ -1,4 +1,4 @@
-name:           aern2-fun
+name:           aern2-fun-plot
 version:        0.1
 cabal-version:  >= 1.9.2
 build-type:     Simple
@@ -16,9 +16,10 @@ Description:
   TODO
 
 library
-  hs-source-dirs:  src
+  hs-source-dirs:  server/src
   build-depends:
     base == 4.*
+    , arithmoi == 0.4.*
     , containers == 0.5.*
     , psqueues == 0.2.*
     -- , arithmoi == 0.4.*
@@ -28,12 +29,22 @@ library
     , QuickCheck >= 2.7 && < 2.9
     , transformers >= 0.4 && < 0.6
     , lens == 4.13.*
+    , servant >= 0.7.1
+    , servant-server >= 0.7.1
+    , servant-elm
+    , elm-export
+    , warp
+    , aeson
+    , wai
+    , wai-make-assets
     , mixed-types-num == 0.1.*
     , num-exceptions == 0.1.*
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
+    , aern2-fun == 0.1.*
   ghc-options:     -Wall -fno-warn-orphans
   extensions:
+    DataKinds,
     RebindableSyntax,
     PostfixOperators,
     ScopedTypeVariables,
@@ -49,24 +60,7 @@ library
     UndecidableInstances,
     Arrows
   exposed-modules:
-    AERN2.PQueue
-    AERN2.Interval
-    AERN2.RealFun.Operations
-    AERN2.RealFun.UnaryFun
-    AERN2.RealFun.UnaryFun.Type
-    AERN2.RealFun.UnaryFun.Evaluation
-    AERN2.RealFun.UnaryDFun
-    -- AERN2.RealFun.DFun
-    AERN2.Poly
-    -- AERN2.Ball
-    AERN2.Poly.Basics
-    AERN2.Poly.Cheb
-    AERN2.Poly.Cheb.Type
-    -- AERN2.Poly.Cheb.Eval
-    AERN2.Poly.Cheb.Ring
-    -- AERN2.Poly.Cheb.Aux
-    -- AERN2.Poly.Cheb.Field
-    -- AERN2.Poly.Cheb.Elementary
+    AERN2.RealFun.PlotService
 
 -- test-suite spec
 --   type:

@@ -51,6 +51,7 @@ library
     RebindableSyntax,
     PostfixOperators,
     ScopedTypeVariables,
+    DeriveGeneric,
     GeneralizedNewtypeDeriving,
     TypeFamilies,
     TypeOperators,

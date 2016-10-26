@@ -20,9 +20,10 @@ module AERN2.Interval
 where
 
 import Numeric.MixedTypes
--- import qualified Prelude as P
+import qualified Prelude as P
 import Text.Printf
 
+import GHC.Generics
 import Data.Typeable
 
 -- import qualified Data.List as List
@@ -36,6 +37,7 @@ import AERN2.MP.Ball
 import AERN2.Real
 
 data Interval l r = Interval l r
+  deriving (P.Eq, Generic)
 
 instance (Show l, Show r) => Show (Interval l r) where
     show (Interval l r) = printf "[%s,%s]" (show l) (show r)
