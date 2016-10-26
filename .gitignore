@@ -2,3 +2,4 @@
 dist
 .dist*
 mixed-types-num
+docs/Makefile
