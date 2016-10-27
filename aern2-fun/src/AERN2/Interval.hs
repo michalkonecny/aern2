@@ -13,7 +13,7 @@
 
 module AERN2.Interval
 (
-  Interval(..), singletonInterval, intervalWidth, splitInterval
+  Interval(..), singleton, width, split, contains
   , DyadicInterval, CanBeDyadicInterval, dyadicInterval
   , RealInterval, CanBeRealInterval, realInterval
 )
@@ -32,7 +32,7 @@ import Data.Typeable
 -- import Test.QuickCheck
 
 import AERN2.MP.Dyadic
-import AERN2.MP.Ball
+import AERN2.MP.Ball hiding (contains)
 
 import AERN2.Real
 
@@ -42,19 +42,27 @@ data Interval l r = Interval l r
 instance (Show l, Show r) => Show (Interval l r) where
     show (Interval l r) = printf "[%s,%s]" (show l) (show r)
 
-singletonInterval :: a -> Interval a a
-singletonInterval a = Interval a a
+singleton :: a -> Interval a a
+singleton a = Interval a a
 
-intervalWidth :: (CanSub r l) => Interval l r -> SubType r l
-intervalWidth (Interval l r) = r - l
+width :: (CanSub r l) => Interval l r -> SubType r l
+width (Interval l r) = r - l
 
-splitInterval ::
+split ::
   (CanAddSameType t, CanMulBy t Dyadic)
   =>
   (Interval t t) -> (Interval t t, Interval t t)
-splitInterval (Interval l r) = (Interval l m, Interval m r)
+split (Interval l r) = (Interval l m, Interval m r)
   where
   m = (l + r)*(dyadic 0.5)
+
+contains ::
+  (HasOrderAsymmetric l l',  OrderCompareType l l' ~ Bool,
+  HasOrderAsymmetric r' r,  OrderCompareType r' r ~ Bool)
+  =>
+  Interval l r -> Interval l' r' -> Bool
+contains (Interval l r) (Interval l' r') =
+  l <= l' && r' <= r
 
 type DyadicInterval = Interval Dyadic Dyadic
 type CanBeDyadicInterval t = ConvertibleExactly t DyadicInterval

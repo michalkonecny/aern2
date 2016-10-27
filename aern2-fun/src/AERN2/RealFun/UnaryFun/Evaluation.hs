@@ -39,7 +39,7 @@ import AERN2.MP.Ball
 import AERN2.QA
 import AERN2.Real
 
-import AERN2.Interval
+import AERN2.Interval as Interval
 import AERN2.RealFun.Operations
 
 import AERN2.RealFun.UnaryFun.Type
@@ -188,7 +188,7 @@ rangeOnIntervalSubdivide evalOnInterval di =
     (
         "UnaryFun rangeOnInterval search:"
         ++ "\n  seg = " ++ show seg
-        ++ "\n  normLog(width(seg)) = " ++ show (getNormLog (intervalWidth seg))
+        ++ "\n  normLog(width(seg)) = " ++ show (getNormLog (Interval.width seg))
         ++ "\n  nextL = " ++ show nextL
         ++ "\n  segValR = " ++ show segValR
         ++ "\n  currentBall = " ++ show currentBall
@@ -206,7 +206,7 @@ rangeOnIntervalSubdivide evalOnInterval di =
     currentBall = liftA2 fromEndpoints nextL segValR
 
     -- split the current segment and pre-compute
-    (seg1, seg2) = splitInterval seg
+    (seg1, seg2) = Interval.split seg
     ((seg1ValL, seg1ValR), seg1') = fiEE seg1
     ((seg2ValL, seg2ValR), seg2') = fiEE seg2
     seg1NoMax = (seg1ValR <= nextL) == Just (Just True)

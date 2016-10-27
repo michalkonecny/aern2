@@ -61,6 +61,8 @@ library
     Arrows
   exposed-modules:
     AERN2.RealFun.PlotService
+    AERN2.RealFun.PlotService.API
+    AERN2.RealFun.PlotService.App
 
 -- test-suite spec
 --   type:
