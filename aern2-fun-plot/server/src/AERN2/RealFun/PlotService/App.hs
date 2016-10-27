@@ -60,7 +60,7 @@ apiServer fns samplingsStore =
   listFunctionIds fns :<|>
   getFunctionDomain fns :<|>
   getFunctionValues fns samplingsStore :<|>
-  undefined
+  getFunctionName fns
 
 {- Functions processing -}
 
@@ -83,6 +83,13 @@ getFunctionDomain fns fnId =
   maybe (throwE err404) return =<< (return $ fmap (getDom . snd) maybeFn)
   where
   getDom = functions_getDom fns
+  maybeFn = lookupFunction fns fnId
+
+getFunctionName ::
+  Functions fn -> FunctionId -> Handler FunctionName
+getFunctionName fns fnId =
+  maybe (throwE err404) return =<< (return $ fmap fst maybeFn)
+  where
   maybeFn = lookupFunction fns fnId
 
 lookupFunction :: Functions fn -> FunctionId -> Maybe (FunctionName, fn)
