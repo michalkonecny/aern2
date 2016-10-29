@@ -33,13 +33,18 @@ import qualified AERN2.PQueue as Q
 
 import Numeric.CatchingExceptions
 
+import AERN2.Norm
+import AERN2.MP.Accuracy
+import AERN2.MP.Precision
 import AERN2.MP.Dyadic
-import AERN2.MP.Ball
+import AERN2.MP.Ball (MPBall, mpBall, IsBall(..))
+import qualified AERN2.MP.Ball as MPBall
 
 import AERN2.QA
 import AERN2.Real
 
-import AERN2.Interval as Interval
+import AERN2.Interval (Interval(..), DyadicInterval, RealInterval)
+import qualified AERN2.Interval as Interval
 import AERN2.RealFun.Operations
 
 import AERN2.RealFun.UnaryFun.Type
@@ -120,7 +125,7 @@ evalOnIntervalGuessPrecision f (Interval l r) =
         "evalOnIntervalGuessPrecision:"
         ++ "\n nl = " ++ show nl
         ++ "\n precisions = " ++ show (take (int 10) precisions)
-        ++ "\n result accuracy = " ++ show (getAccuracy result)
+        ++ "\n result accuracy = " ++ show (MPBall.getAccuracy result)
     ) $
     result
     where
@@ -128,7 +133,7 @@ evalOnIntervalGuessPrecision f (Interval l r) =
     resultsWithIncreasingPrecision = map fp precisions
     fp p = f b
         where
-        b = catchingNumExceptions $ fromEndpoints lMP rMP
+        b = catchingNumExceptions $ MPBall.fromEndpoints lMP rMP
         lMP = setPrecision p $ mpBall l
         rMP = setPrecision p $ mpBall r
     precisions =
@@ -175,12 +180,12 @@ rangeOnIntervalSubdivide evalOnInterval di =
   r = convergentList2CauchyRealA "range max" $ filterNoException 100 True maxSequence
   maxSequence = search fi fdiL $ Q.singleton $ MaxSearchSegment di fdiL fdiR
     where
-    (fdiL, fdiR) = gunzip $ fmap endpoints fdi
+    (fdiL, fdiR) = gunzip $ fmap MPBall.endpoints fdi
     (_,fdi) = fi di
     fi = evalOnInterval
   minSequence = map negate $ search fi fdiL $ Q.singleton $ MaxSearchSegment di fdiL fdiR
     where
-    (fdiL, fdiR) = gunzip $ fmap endpoints fdi
+    (fdiL, fdiR) = gunzip $ fmap MPBall.endpoints fdi
     (_, fdi) = fi di
     fi = (\(a,b) -> (negate a,negate b)) . evalOnInterval
   search fi prevL prevQueue =
@@ -203,7 +208,7 @@ rangeOnIntervalSubdivide evalOnInterval di =
     nextL
       | hasCertainException prevL = segValL
       | otherwise = liftA2 max segValL prevL
-    currentBall = liftA2 fromEndpoints nextL segValR
+    currentBall = liftA2 MPBall.fromEndpoints nextL segValR
 
     -- split the current segment and pre-compute
     (seg1, seg2) = Interval.split seg
@@ -220,9 +225,9 @@ rangeOnIntervalSubdivide evalOnInterval di =
 
     fiEE s =
       case maybeMonotone of
-        Nothing -> (gunzip $ fmap endpoints fis, s)
-        Just Increasing -> (gunzip $ fmap endpoints fir, rI)
-        Just Decreasing -> (gunzip $ fmap endpoints fil, lI)
+        Nothing -> (gunzip $ fmap MPBall.endpoints fis, s)
+        Just Increasing -> (gunzip $ fmap MPBall.endpoints fir, rI)
+        Just Decreasing -> (gunzip $ fmap MPBall.endpoints fil, lI)
       where
       (maybeMonotone, fis) = fi s
       (_, fil) = fi lI

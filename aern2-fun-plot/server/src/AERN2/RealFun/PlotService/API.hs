@@ -14,7 +14,7 @@
 module AERN2.RealFun.PlotService.API
 (
   Api, api
-  , Sampling(..), SamplingId
+  , Sampling(..), SamplingId, sampling_dom
   , FunctionName, FunctionDomain, FunctionPoint, FunctionId
 )
 where
@@ -56,7 +56,7 @@ type Api =
      "function" :> Get '[JSON] [FunctionId] :<|>
      "function" :> Capture "functionId" FunctionId :> "domain" :> Get '[JSON] FunctionDomain :<|>
      "function" :> Capture "functionId" FunctionId :>
-        "sampling" :> Capture "samplingId" SamplingId :> Get '[JSON] [FunctionPoint] :<|>
+        "valuesForSampling" :> Capture "samplingId" SamplingId :> Get '[JSON] [FunctionPoint] :<|>
      "function" :> Capture "functionId" FunctionId :> "name" :> Get '[JSON] FunctionName
     )
 
@@ -66,16 +66,22 @@ api = Proxy
 type SamplingId = Int
 type FunctionId = Int
 type FunctionName = String
-type FunctionDomain = DyadicInterval
-type FunctionPoint = (DyadicInterval, Interval MPBall MPBall)
+type FunctionDomain = DyadicInterval'
+type FunctionPoint = (DyadicInterval', MPBallInterval')
+
+type DyadicInterval' = (Dyadic, Dyadic)
+type MPBallInterval' = (MPBall, MPBall)
 
 data Sampling =
   Sampling
   {
-    sampling_dom :: DyadicInterval
+    sampling_dom' :: DyadicInterval'
     , sampling_maxStep :: ErrorBound
   }
   deriving (Show, P.Eq, Generic)
+
+sampling_dom :: Sampling -> DyadicInterval
+sampling_dom (Sampling (domL, domR) _) = Interval domL domR
 
 instance (ElmType l, ElmType r) => ElmType (Interval l r)
 instance (ToJSON l, ToJSON r) => ToJSON (Interval l r)

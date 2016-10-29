@@ -78,11 +78,11 @@ listFunctionIds fns = return $ map int [0..n - 1]
   n = integer $ length $ functions_fns fns
 
 getFunctionDomain ::
-  Functions fn -> FunctionId -> Handler DyadicInterval
+  Functions fn -> FunctionId -> Handler FunctionDomain
 getFunctionDomain fns fnId =
   maybe (throwE err404) return =<< (return $ fmap (getDom . snd) maybeFn)
   where
-  getDom = functions_getDom fns
+  getDom = Interval.endpoints . functions_getDom fns
   maybeFn = lookupFunction fns fnId
 
 getFunctionName ::
@@ -102,7 +102,7 @@ getFunctionValues ::
   SamplingsStore ->
   FunctionId ->
   SamplingId ->
-  Handler [(DyadicInterval, Interval MPBall MPBall)]
+  Handler [FunctionPoint]
 getFunctionValues fns samplingsStore fnId samplingId =
   do
   maybeSampling <- liftIO $ lookupSampling samplingsStore samplingId
@@ -120,7 +120,7 @@ getFunctionValues fns samplingsStore fnId samplingId =
     getBounds = functions_getBounds fns
     maxDepth = 20
     recursiveEval maxD di
-      | boundsGoodEnough || maxD == 0 = [(di, bounds)]
+      | boundsGoodEnough || maxD == 0 = [(Interval.endpoints di, Interval.endpoints bounds)]
       | otherwise = (recursiveEval maxD' diL) ++ (recursiveEval maxD' diR)
       where
       maxD' = maxD - 1

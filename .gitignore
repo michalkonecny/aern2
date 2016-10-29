@@ -3,3 +3,4 @@ dist
 .dist*
 mixed-types-num
 docs/Makefile
+aern2-fun-plot/client/elm-stuff

@@ -26,10 +26,12 @@ import Control.Applicative
 import Numeric.CatchingExceptions
 
 -- import AERN2.MP.Dyadic
-import AERN2.MP.Ball
+import AERN2.MP.Ball (mpBall)
+import qualified AERN2.MP.Ball as MPBall
 
 -- import AERN2.Real
-import AERN2.Interval
+import AERN2.Interval (Interval(..), DyadicInterval, RealInterval)
+-- import qualified AERN2.Interval as Interval
 
 import AERN2.RealFun.Operations
 
@@ -46,8 +48,8 @@ instance CanApply UnaryDFun DyadicInterval where
     where
     evalUseD [] f di = (Nothing, evalOnIntervalGuessPrecision f di)
     evalUseD (UnaryFun _ f' : rest) f di@(Interval l r)
-      | f'di !>=! 0 = (Just Increasing, liftA2 fromEndpoints fl fr)
-      | f'di !<=! 0 = (Just Decreasing, liftA2 fromEndpoints fr fl)
+      | f'di !>=! 0 = (Just Increasing, liftA2 MPBall.fromEndpoints fl fr)
+      | f'di !<=! 0 = (Just Decreasing, liftA2 MPBall.fromEndpoints fr fl)
       | otherwise = (Nothing, fm + errBall)
       where
       (_, f'di) = evalUseD rest f' di -- recursive call
