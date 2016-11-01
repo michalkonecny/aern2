@@ -18,7 +18,7 @@
 module AERN2.MP.Dyadic
 (
    -- * Dyadic numbers and their basic operations
-   Dyadic
+   Dyadic, HasDyadics
    -- * Dyadic constructors
    , CanBeDyadic, dyadic
    -- * tests
@@ -53,6 +53,8 @@ instance Show Dyadic where
   show (Dyadic x) = show x
 
 {-- conversions --}
+
+type HasDyadics t = ConvertibleExactly Dyadic t
 
 instance ConvertibleExactly Dyadic MPFloat where
   safeConvertExactly = Right . dyadicMPFloat

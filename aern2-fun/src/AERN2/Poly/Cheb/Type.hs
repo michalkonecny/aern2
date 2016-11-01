@@ -26,26 +26,35 @@ import qualified Data.List as List
 -- import Test.QuickCheck
 
 import AERN2.MP.ErrorBound
-import AERN2.MP.Ball
--- import AERN2.MP.Dyadic
+import AERN2.MP.Ball (IsBall(..), MPBall)
+import AERN2.MP.Dyadic
 
 -- import AERN2.Real
 
 import AERN2.Interval
--- import AERN2.RealFun.Operations
+import AERN2.RealFun.Operations
 -- import AERN2.RealFun.UnaryFun
 
 import AERN2.Poly.Basics
 
-{- types -}
-
-type PolyBall = Ball (ChPoly MPBall)
-
-data Ball c = Ball { ball_value :: c, ball_radius :: ErrorBound }
+{- Chebyshev polynomials with domain translation -}
 
 data ChPoly c = ChPoly { chPoly_dom :: DyadicInterval, chPoly_poly :: Poly c }
 
+instance HasDomain (ChPoly c) where
+  type Domain (ChPoly c) = DyadicInterval
+  getDomain = chPoly_dom
 
+instance (HasDyadics c) => HasVars (ChPoly c) where
+  type Var (ChPoly c) = ()
+  varFn sampleFn () =
+    ChPoly dom (Poly terms)
+    where
+    dom@(Interval l r) = getDomain sampleFn
+    terms = terms_fromList [(0, c0), (1, c1)]
+    c0 = coeff $ (r + l) * 0.5
+    c1 = coeff $ (r - l) * 0.5
+    coeff = convertExactly
 
 instance (IsBall c) => IsBall (ChPoly c) where
   type CentreType (ChPoly c) = ChPoly c
@@ -68,3 +77,28 @@ instance (ConvertibleExactly t c) => ConvertibleExactly (DyadicInterval, t) (ChP
     case safeConvertExactly x of
       Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)])
       Left e -> Left e
+
+{- Polynomial balls -}
+
+type PolyBall = Ball (ChPoly MPBall)
+
+polyBall :: (ConvertibleExactly t PolyBall) => t -> PolyBall
+polyBall = convertExactly
+
+data Ball c = Ball { ball_value :: c, ball_radius :: ErrorBound }
+
+instance (ConvertibleExactly (DyadicInterval, t) c) => ConvertibleExactly (DyadicInterval, t) (Ball c)
+  where
+  safeConvertExactly (dom, x) =
+    case safeConvertExactly (dom, x) of
+      Right c -> Right $ Ball c (errorBound 0)
+      Left e -> Left e
+
+instance (HasDomain c) => HasDomain (Ball c)
+  where
+  type Domain (Ball c) = Domain c
+  getDomain = getDomain . ball_value
+
+instance (HasVars c) => HasVars (Ball c) where
+  type Var (Ball c) = Var c
+  varFn (Ball c _) var = Ball (varFn c var) (errorBound 0)
