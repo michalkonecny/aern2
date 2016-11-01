@@ -56,10 +56,14 @@ instance (CanAddSameType c) => CanAddAsymmetric (ChPoly c) (ChPoly c) where
     | d1 == d2 = ChPoly d1 (p1 + p2)
     | otherwise = error $ "Adding polynomials with incompatible domains"
 
+instance (CanAddThis c Integer) => CanAddAsymmetric Integer (ChPoly c) where
+  type AddType Integer (ChPoly c) = ChPoly c
+  add n (ChPoly d2 p2) = ChPoly d2 (n + p2)
+
 {- multiplication -}
 
 -- PolyBall level
-instance (IsBall c, Ring c, CanDivBy c Integer)
+instance (IsBall c, Ring c)
   =>
   CanMulAsymmetric (Ball c) (Ball c) where
   type MulType  (Ball c) (Ball c) = Ball c

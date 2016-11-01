@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-|
     Module      :  AERN2.Poly.Basics
     Description :  Basics of unary sparse polynomials
@@ -25,9 +26,11 @@ import qualified Data.Map as Map
 -- import Test.Hspec
 -- import Test.QuickCheck
 
+import AERN2.TH
+
 -- import AERN2.MP.ErrorBound
--- import AERN2.MP.Ball
--- import AERN2.MP.Dyadic
+import AERN2.MP.Ball
+import AERN2.MP.Dyadic
 
 -- import AERN2.Real
 
@@ -97,9 +100,52 @@ terms_lookupCoeff t i =
     Just c -> c
     _ -> convertExactly 0
 
+{- negation -}
+
+instance (CanNegSameType c) => CanNeg (Poly c) where
+  type NegType (Poly c) = Poly c
+  negate (Poly t1) = Poly $ terms_map negate t1
 
 {- addition -}
 
 instance (CanAddSameType c) => CanAddAsymmetric (Poly c) (Poly c) where
   type AddType (Poly c) (Poly c) = Poly c
   add (Poly t1) (Poly t2) = Poly $ terms_unionWith (+) t1 t2
+
+
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |]]
+  (\ t -> [d|
+    instance (CanAddThis c $t) => CanAddAsymmetric $t (Poly c) where
+      type AddType $t (Poly c) = Poly c
+      add n (Poly t2) = Poly $ terms_updateConst (+ n) t2
+
+    instance (CanAddThis c $t) => CanAddAsymmetric (Poly c) $t where
+      type AddType (Poly c) $t = Poly c
+      add (Poly t1) n = Poly $ terms_updateConst (+ n) t1
+  |]))
+
+{- subtraction -}
+
+instance (CanNegSameType c, CanAddSameType c) => CanSub (Poly c) (Poly c)
+
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |]]
+  (\ t -> [d|
+    instance (CanNegSameType c, CanAddThis c $t) => CanSub $t (Poly c)
+    instance (CanAddThis c $t) => CanSub (Poly c) $t
+  |]))
+
+{- scaling -}
+
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |]]
+  (\ t -> [d|
+    instance (CanMulBy c $t) => CanMulAsymmetric $t (Poly c) where
+      type MulType $t (Poly c) = Poly c
+      mul n (Poly t2) = Poly $ terms_map (* n) t2
+
+    instance (CanMulBy c $t) => CanMulAsymmetric (Poly c) $t where
+      type MulType (Poly c) $t = Poly c
+      mul (Poly t1) n = Poly $ terms_map (* n) t1
+  |]))
