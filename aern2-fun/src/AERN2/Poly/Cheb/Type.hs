@@ -87,6 +87,9 @@ polyBall = convertExactly
 
 data Ball c = Ball { ball_value :: c, ball_radius :: ErrorBound }
 
+normaliseBall :: (IsBall c) => Ball c -> Ball c
+normaliseBall (Ball x e) = Ball (centreAsBall x) (radius x + e)
+
 instance (ConvertibleExactly (DyadicInterval, t) c) => ConvertibleExactly (DyadicInterval, t) (Ball c)
   where
   safeConvertExactly (dom, x) =

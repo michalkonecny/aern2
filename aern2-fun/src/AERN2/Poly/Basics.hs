@@ -149,3 +149,12 @@ $(declForTypes
       type MulType (Poly c) $t = Poly c
       mul (Poly t1) n = Poly $ terms_map (* n) t1
   |]))
+
+
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |]]
+  (\ t -> [d|
+    instance (CanDivBy c $t) => CanDiv (Poly c) $t where
+      type DivType (Poly c) $t = Poly c
+      divide (Poly t1) n = Poly $ terms_map (/ n) t1
+  |]))
