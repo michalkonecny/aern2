@@ -28,13 +28,13 @@ getApiSampling =
       (Http.send Http.defaultSettings request)
 
 type alias Sampling =
-  { sampling_dom' : Interval
+  { sampling_dom' : DyadicIntervalAPI
   , sampling_maxStep : DyadicS
   }
 
-type alias Interval =
-  { endpointL : DyadicS
-  , endpointR : DyadicS
+type alias DyadicIntervalAPI =
+  { dyadic_endpointL : DyadicS
+  , dyadic_endpointR : DyadicS
   }
 
 type alias DyadicS =
@@ -45,15 +45,15 @@ type alias DyadicS =
 encodeSampling : Sampling -> Json.Encode.Value
 encodeSampling x =
   Json.Encode.object
-    [ ( "sampling_dom'", encodeInterval x.sampling_dom' )
+    [ ( "sampling_dom'", encodeDyadicIntervalAPI x.sampling_dom' )
     , ( "sampling_maxStep", encodeDyadicS x.sampling_maxStep )
     ]
 
-encodeInterval : Interval -> Json.Encode.Value
-encodeInterval x =
+encodeDyadicIntervalAPI : DyadicIntervalAPI -> Json.Encode.Value
+encodeDyadicIntervalAPI x =
   Json.Encode.object
-    [ ( "endpointL", encodeDyadicS x.endpointL )
-    , ( "endpointR", encodeDyadicS x.endpointR )
+    [ ( "dyadic_endpointL", encodeDyadicS x.dyadic_endpointL )
+    , ( "dyadic_endpointR", encodeDyadicS x.dyadic_endpointR )
     ]
 
 encodeDyadicS : DyadicS -> Json.Encode.Value
@@ -85,14 +85,14 @@ postApiSampling body =
 decodeSampling : Json.Decode.Decoder Sampling
 decodeSampling =
   Json.Decode.succeed Sampling
-    |: ("sampling_dom'" := decodeInterval)
+    |: ("sampling_dom'" := decodeDyadicIntervalAPI)
     |: ("sampling_maxStep" := decodeDyadicS)
 
-decodeInterval : Json.Decode.Decoder Interval
-decodeInterval =
-  Json.Decode.succeed Interval
-    |: ("endpointL" := decodeDyadicS)
-    |: ("endpointR" := decodeDyadicS)
+decodeDyadicIntervalAPI : Json.Decode.Decoder DyadicIntervalAPI
+decodeDyadicIntervalAPI =
+  Json.Decode.succeed DyadicIntervalAPI
+    |: ("dyadic_endpointL" := decodeDyadicS)
+    |: ("dyadic_endpointR" := decodeDyadicS)
 
 decodeDyadicS : Json.Decode.Decoder DyadicS
 decodeDyadicS =
@@ -138,17 +138,6 @@ getApiFunction =
     Http.fromJson
       (Json.Decode.list Json.Decode.int)
       (Http.send Http.defaultSettings request)
-
-type alias DyadicIntervalAPI =
-  { dyadic_endpointL : DyadicS
-  , dyadic_endpointR : DyadicS
-  }
-
-decodeDyadicIntervalAPI : Json.Decode.Decoder DyadicIntervalAPI
-decodeDyadicIntervalAPI =
-  Json.Decode.succeed DyadicIntervalAPI
-    |: ("dyadic_endpointL" := decodeDyadicS)
-    |: ("dyadic_endpointR" := decodeDyadicS)
 
 getApiFunctionByFunctionIdDomain : Int -> Task.Task Http.Error (DyadicIntervalAPI)
 getApiFunctionByFunctionIdDomain functionId =

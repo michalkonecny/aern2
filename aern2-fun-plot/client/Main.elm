@@ -13,6 +13,7 @@ import Http
 import Task exposing (Task, andThen)
 
 import Api exposing (..)
+import DInterval
 
 main : Program Never
 main =
@@ -37,7 +38,10 @@ getFunctionsDetails fnIds =
 
 getFunctionDetails : FunctionId -> Task Http.Error (FunctionId, FunctionDetails)
 getFunctionDetails fnId =
-  Task.map (\name -> (fnId, name)) (getApiFunctionByFunctionIdName fnId)
+  Task.map2
+    (\ name domain -> (fnId, { name = name, domain = domain }))
+      (getApiFunctionByFunctionIdName fnId)
+      (getApiFunctionByFunctionIdDomain fnId)
 
 toServer : (a -> FromServer) -> Task Http.Error a -> Cmd Msg
 toServer tag task =
@@ -47,11 +51,15 @@ toServer tag task =
 
 type alias FunctionId = Int
 type alias FunctionName = String
-type alias FunctionDetails = FunctionName
+type alias FunctionDetails =
+  { name : FunctionName
+  , domain : DyadicIntervalAPI
+  }
 
 type alias State =
     { functionIds : List FunctionId
     , functionDetails : Dict FunctionId FunctionDetails
+    , plotDomain : Maybe DyadicIntervalAPI
     , error : Maybe String
     }
 
@@ -59,6 +67,7 @@ initState : State
 initState =
   { functionIds = []
   , functionDetails = Dict.empty
+  , plotDomain = Nothing
   , error = Nothing
   }
 
@@ -83,13 +92,19 @@ update msg s =
     FromServer fromServer ->
       case fromServer of
         Functions (fnIds, functionDetails) ->
-          { s | functionIds = fnIds, functionDetails = functionDetails } ! []
+          functionsInitState s fnIds functionDetails ! []
     FromUI fromUI ->
       case fromUI of
         NoAction -> s ! []
     Error msg ->
         { s | error = Just msg } ! []
 
+functionsInitState s fnIds functionDetails =
+  let
+    domains = List.map (.domain) (Dict.values functionDetails)
+    plotDomain = DInterval.unions domains
+  in
+  { s | functionIds = fnIds, functionDetails = functionDetails, plotDomain = Just plotDomain }
 
 -- VIEW
 

@@ -116,13 +116,13 @@ instance FromJSON MPBallIntervalAPI
 data Sampling =
   Sampling
   {
-    sampling_dom' :: DyadicInterval
+    sampling_dom' :: DyadicIntervalAPI
     , sampling_maxStep :: ErrorBound
   }
   deriving (Show, P.Eq, Generic)
 
 sampling_dom :: Sampling -> DyadicInterval
-sampling_dom (Sampling (Interval domL domR) _) = Interval domL domR
+sampling_dom (Sampling (DyadicIntervalAPI domL domR) _) = Interval domL domR
 
 instance ElmType Sampling
 instance ToJSON Sampling
