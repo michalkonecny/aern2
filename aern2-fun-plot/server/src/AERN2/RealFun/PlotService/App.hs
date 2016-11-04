@@ -13,7 +13,8 @@
 
 module AERN2.RealFun.PlotService.App
 (
-  app, Functions(..)
+  startServer, app,
+  Functions(..), functionsUsingEval, intervalFunctionsUsingEval
 )
 where
 
@@ -21,18 +22,31 @@ import Numeric.MixedTypes
 -- import qualified Prelude as P
 -- import Text.Printf
 
+-- import           System.IO
+
 import           Control.Concurrent
 import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Except
 import qualified Data.Map as Map
 import           Network.Wai
 import           Network.Wai.MakeAssets
+import           Network.Wai.Handler.Warp
 import           Servant
 
 import AERN2.MP.Ball
 import AERN2.Interval as Interval
--- import AERN2.RealFun.Operations
+import AERN2.RealFun.Operations
 import AERN2.RealFun.PlotService.API
+
+startServer :: Functions fn -> Port -> IO ()
+startServer fns port = do
+  runSettings settings =<< app fns
+  where
+  settings =
+    setPort port $
+    -- setBeforeMainLoop (hPutStrLn stderr
+    --   ("listening on port " ++ show port ++ "...")) $
+    defaultSettings
 
 type WithAssets = Api :<|> Raw
 
@@ -72,6 +86,32 @@ data Functions fn =
     , functions_getBounds :: fn -> DyadicInterval -> Interval MPBall MPBall
   }
 
+functionsUsingEval ::
+  (HasDomain fn, Domain fn ~ DyadicInterval,
+  CanApply fn DyadicInterval, ApplyType fn DyadicInterval ~ MPBall)
+  =>
+  [(FunctionName, fn)] -> Functions fn
+functionsUsingEval fns =
+  Functions
+  {
+    functions_fns = fns
+    , functions_getDom = getDomain
+    , functions_getBounds = \ fn di -> let val = apply fn di in Interval val val
+  }
+
+intervalFunctionsUsingEval ::
+  (HasDomain fn, Domain fn ~ DyadicInterval,
+  CanApply fn DyadicInterval, ApplyType fn DyadicInterval ~ Interval MPBall MPBall)
+  =>
+  [(FunctionName, fn)] -> Functions fn
+intervalFunctionsUsingEval fns =
+  Functions
+  {
+    functions_fns = fns
+    , functions_getDom = getDomain
+    , functions_getBounds = apply
+  }
+
 listFunctionIds :: Functions fn -> Handler [FunctionId]
 listFunctionIds fns = return $ map int [0..n - 1]
   where
@@ -82,7 +122,7 @@ getFunctionDomain ::
 getFunctionDomain fns fnId =
   maybe (throwE err404) return =<< (return $ fmap (getDom . snd) maybeFn)
   where
-  getDom = Interval.endpoints . functions_getDom fns
+  getDom = dyadicIntervalAPI . functions_getDom fns
   maybeFn = lookupFunction fns fnId
 
 getFunctionName ::
@@ -120,7 +160,8 @@ getFunctionValues fns samplingsStore fnId samplingId =
     getBounds = functions_getBounds fns
     maxDepth = 20
     recursiveEval maxD di
-      | boundsGoodEnough || maxD == 0 = [(Interval.endpoints di, Interval.endpoints bounds)]
+      | boundsGoodEnough || maxD == 0 =
+        [FunctionPoint (dyadicIntervalAPI di) (mpBallIntervalAPI bounds)]
       | otherwise = (recursiveEval maxD' diL) ++ (recursiveEval maxD' diR)
       where
       maxD' = maxD - 1

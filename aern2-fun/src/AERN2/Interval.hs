@@ -38,7 +38,7 @@ import qualified AERN2.MP.Ball as MPBall
 
 import AERN2.Real
 
-data Interval l r = Interval l r
+data Interval l r = Interval { endpointL :: l, endpointR :: r }
   deriving (P.Eq, Generic)
 
 instance (Show l, Show r) => Show (Interval l r) where
@@ -72,6 +72,18 @@ contains ::
 contains (Interval l r) (Interval l' r') =
   l <= l' && r' <= r
 
+instance
+  (HasEqAsymmetric l1 l2, HasEqAsymmetric r1 r2
+  , EqCompareType l1 l2 ~ EqCompareType r1 r2
+  , CanAndOrSameType (EqCompareType l1 l2))
+  =>
+  HasEqAsymmetric (Interval l1 r1) (Interval l2 r2)
+  where
+  type EqCompareType (Interval l1 r1) (Interval l2 r2) = EqCompareType l1 l2
+  equalTo (Interval l1 r1) (Interval l2 r2) =
+    (l1 == l2) && (r1 == r2)
+
+
 type DyadicInterval = Interval Dyadic Dyadic
 type CanBeDyadicInterval t = ConvertibleExactly t DyadicInterval
 
@@ -96,17 +108,6 @@ instance ConvertibleExactly MPBall DyadicInterval where
 instance ConvertibleExactly DyadicInterval MPBall where
   safeConvertExactly (Interval lD rD) =
     Right $ MPBall.fromEndpoints (mpBall lD) (mpBall rD)
-
-instance
-  (HasEqAsymmetric l1 l2, HasEqAsymmetric r1 r2
-  , EqCompareType l1 l2 ~ EqCompareType r1 r2
-  , CanAndOrSameType (EqCompareType l1 l2))
-  =>
-  HasEqAsymmetric (Interval l1 r1) (Interval l2 r2)
-  where
-  type EqCompareType (Interval l1 r1) (Interval l2 r2) = EqCompareType l1 l2
-  equalTo (Interval l1 r1) (Interval l2 r2) =
-    (l1 == l2) && (r1 == r2)
 
 type RealInterval = Interval CauchyReal CauchyReal
 type CanBeRealInterval t = ConvertibleExactly t RealInterval

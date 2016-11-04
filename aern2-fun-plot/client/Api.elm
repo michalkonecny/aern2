@@ -28,27 +28,39 @@ getApiSampling =
       (Http.send Http.defaultSettings request)
 
 type alias Sampling =
-  { sampling_dom : ( DyadicS, DyadicS )
+  { sampling_dom' : Interval
   , sampling_maxStep : DyadicS
   }
 
+type alias Interval =
+  { endpointL : DyadicS
+  , endpointR : DyadicS
+  }
+
 type alias DyadicS =
-  { _dyadic_value : Int
-  , _dyadic_exp : Int
+  { dyadic_value : Int
+  , dyadic_exp : Int
   }
 
 encodeSampling : Sampling -> Json.Encode.Value
 encodeSampling x =
   Json.Encode.object
-    [ ( "sampling_dom", Exts.Json.Encode.tuple2 encodeDyadicS encodeDyadicS x.sampling_dom )
+    [ ( "sampling_dom'", encodeInterval x.sampling_dom' )
     , ( "sampling_maxStep", encodeDyadicS x.sampling_maxStep )
+    ]
+
+encodeInterval : Interval -> Json.Encode.Value
+encodeInterval x =
+  Json.Encode.object
+    [ ( "endpointL", encodeDyadicS x.endpointL )
+    , ( "endpointR", encodeDyadicS x.endpointR )
     ]
 
 encodeDyadicS : DyadicS -> Json.Encode.Value
 encodeDyadicS x =
   Json.Encode.object
-    [ ( "_dyadic_value", Json.Encode.int x._dyadic_value )
-    , ( "_dyadic_exp", Json.Encode.int x._dyadic_exp )
+    [ ( "dyadic_value", Json.Encode.int x.dyadic_value )
+    , ( "dyadic_exp", Json.Encode.int x.dyadic_exp )
     ]
 
 postApiSampling : Sampling -> Task.Task Http.Error (Int)
@@ -73,14 +85,20 @@ postApiSampling body =
 decodeSampling : Json.Decode.Decoder Sampling
 decodeSampling =
   Json.Decode.succeed Sampling
-    |: ("sampling_dom" := Json.Decode.tuple2 (,) decodeDyadicS decodeDyadicS)
+    |: ("sampling_dom'" := decodeInterval)
     |: ("sampling_maxStep" := decodeDyadicS)
+
+decodeInterval : Json.Decode.Decoder Interval
+decodeInterval =
+  Json.Decode.succeed Interval
+    |: ("endpointL" := decodeDyadicS)
+    |: ("endpointR" := decodeDyadicS)
 
 decodeDyadicS : Json.Decode.Decoder DyadicS
 decodeDyadicS =
   Json.Decode.succeed DyadicS
-    |: ("_dyadic_value" := Json.Decode.int)
-    |: ("_dyadic_exp" := Json.Decode.int)
+    |: ("dyadic_value" := Json.Decode.int)
+    |: ("dyadic_exp" := Json.Decode.int)
 
 getApiSamplingBySamplingId : Int -> Task.Task Http.Error (Sampling)
 getApiSamplingBySamplingId samplingId =
@@ -121,7 +139,18 @@ getApiFunction =
       (Json.Decode.list Json.Decode.int)
       (Http.send Http.defaultSettings request)
 
-getApiFunctionByFunctionIdDomain : Int -> Task.Task Http.Error (<Tuple2 (DataType "DyadicS" (Record "DyadicS" (Product (Selector "_dyadic_value" (Field (Primitive "Int"))) (Selector "_dyadic_exp" (Field (Primitive "Int")))))) (DataType "DyadicS" (Record "DyadicS" (Product (Selector "_dyadic_value" (Field (Primitive "Int"))) (Selector "_dyadic_exp" (Field (Primitive "Int"))))))>)
+type alias DyadicIntervalAPI =
+  { dyadic_endpointL : DyadicS
+  , dyadic_endpointR : DyadicS
+  }
+
+decodeDyadicIntervalAPI : Json.Decode.Decoder DyadicIntervalAPI
+decodeDyadicIntervalAPI =
+  Json.Decode.succeed DyadicIntervalAPI
+    |: ("dyadic_endpointL" := decodeDyadicS)
+    |: ("dyadic_endpointR" := decodeDyadicS)
+
+getApiFunctionByFunctionIdDomain : Int -> Task.Task Http.Error (DyadicIntervalAPI)
 getApiFunctionByFunctionIdDomain functionId =
   let
     request =
@@ -139,10 +168,43 @@ getApiFunctionByFunctionIdDomain functionId =
       }
   in
     Http.fromJson
-      <Tuple2 (DataType "DyadicS" (Record "DyadicS" (Product (Selector "_dyadic_value" (Field (Primitive "Int"))) (Selector "_dyadic_exp" (Field (Primitive "Int")))))) (DataType "DyadicS" (Record "DyadicS" (Product (Selector "_dyadic_value" (Field (Primitive "Int"))) (Selector "_dyadic_exp" (Field (Primitive "Int"))))))>
+      decodeDyadicIntervalAPI
       (Http.send Http.defaultSettings request)
 
-getApiFunctionByFunctionIdValuesForSamplingBySamplingId : Int -> Int -> Task.Task Http.Error (List (<Tuple2 (Tuple2 (DataType "DyadicS" (Record "DyadicS" (Product (Selector "_dyadic_value" (Field (Primitive "Int"))) (Selector "_dyadic_exp" (Field (Primitive "Int")))))) (DataType "DyadicS" (Record "DyadicS" (Product (Selector "_dyadic_value" (Field (Primitive "Int"))) (Selector "_dyadic_exp" (Field (Primitive "Int"))))))) (Tuple2 (DataType "MPBall" (Record "MPBall" (Product (Selector "ball_value" (Field (DataType "DyadicS" (Record "DyadicS" (Product (Selector "_dyadic_value" (Field (Primitive "Int"))) (Selector "_dyadic_exp" (Field (Primitive "Int")))))))) (Selector "ball_error" (Field (DataType "DyadicS" (Record "DyadicS" (Product (Selector "_dyadic_value" (Field (Primitive "Int"))) (Selector "_dyadic_exp" (Field (Primitive "Int"))))))))))) (DataType "MPBall" (Record "MPBall" (Product (Selector "ball_value" (Field (DataType "DyadicS" (Record "DyadicS" (Product (Selector "_dyadic_value" (Field (Primitive "Int"))) (Selector "_dyadic_exp" (Field (Primitive "Int")))))))) (Selector "ball_error" (Field (DataType "DyadicS" (Record "DyadicS" (Product (Selector "_dyadic_value" (Field (Primitive "Int"))) (Selector "_dyadic_exp" (Field (Primitive "Int"))))))))))))>))
+type alias FunctionPoint =
+  { functionPointDom : DyadicIntervalAPI
+  , functionPointValue : MPBallIntervalAPI
+  }
+
+type alias MPBallIntervalAPI =
+  { mpBall_endpointL : MPBall
+  , mpBall_endpointR : MPBall
+  }
+
+type alias MPBall =
+  { ball_value : DyadicS
+  , ball_error : DyadicS
+  }
+
+decodeFunctionPoint : Json.Decode.Decoder FunctionPoint
+decodeFunctionPoint =
+  Json.Decode.succeed FunctionPoint
+    |: ("functionPointDom" := decodeDyadicIntervalAPI)
+    |: ("functionPointValue" := decodeMPBallIntervalAPI)
+
+decodeMPBallIntervalAPI : Json.Decode.Decoder MPBallIntervalAPI
+decodeMPBallIntervalAPI =
+  Json.Decode.succeed MPBallIntervalAPI
+    |: ("mpBall_endpointL" := decodeMPBall)
+    |: ("mpBall_endpointR" := decodeMPBall)
+
+decodeMPBall : Json.Decode.Decoder MPBall
+decodeMPBall =
+  Json.Decode.succeed MPBall
+    |: ("ball_value" := decodeDyadicS)
+    |: ("ball_error" := decodeDyadicS)
+
+getApiFunctionByFunctionIdValuesForSamplingBySamplingId : Int -> Int -> Task.Task Http.Error (List (FunctionPoint))
 getApiFunctionByFunctionIdValuesForSamplingBySamplingId functionId samplingId =
   let
     request =
@@ -161,7 +223,7 @@ getApiFunctionByFunctionIdValuesForSamplingBySamplingId functionId samplingId =
       }
   in
     Http.fromJson
-      (Json.Decode.list <Tuple2 (Tuple2 (DataType "DyadicS" (Record "DyadicS" (Product (Selector "_dyadic_value" (Field (Primitive "Int"))) (Selector "_dyadic_exp" (Field (Primitive "Int")))))) (DataType "DyadicS" (Record "DyadicS" (Product (Selector "_dyadic_value" (Field (Primitive "Int"))) (Selector "_dyadic_exp" (Field (Primitive "Int"))))))) (Tuple2 (DataType "MPBall" (Record "MPBall" (Product (Selector "ball_value" (Field (DataType "DyadicS" (Record "DyadicS" (Product (Selector "_dyadic_value" (Field (Primitive "Int"))) (Selector "_dyadic_exp" (Field (Primitive "Int")))))))) (Selector "ball_error" (Field (DataType "DyadicS" (Record "DyadicS" (Product (Selector "_dyadic_value" (Field (Primitive "Int"))) (Selector "_dyadic_exp" (Field (Primitive "Int"))))))))))) (DataType "MPBall" (Record "MPBall" (Product (Selector "ball_value" (Field (DataType "DyadicS" (Record "DyadicS" (Product (Selector "_dyadic_value" (Field (Primitive "Int"))) (Selector "_dyadic_exp" (Field (Primitive "Int")))))))) (Selector "ball_error" (Field (DataType "DyadicS" (Record "DyadicS" (Product (Selector "_dyadic_value" (Field (Primitive "Int"))) (Selector "_dyadic_exp" (Field (Primitive "Int"))))))))))))>)
+      (Json.Decode.list decodeFunctionPoint)
       (Http.send Http.defaultSettings request)
 
 getApiFunctionByFunctionIdName : Int -> Task.Task Http.Error (String)

@@ -15,7 +15,8 @@ module AERN2.RealFun.PlotService.API
 (
   Api, api
   , Sampling(..), SamplingId, sampling_dom
-  , FunctionName, FunctionDomain, FunctionPoint, FunctionId
+  , FunctionName, FunctionDomain, FunctionPoint(..), FunctionId,
+  mpBallIntervalAPI, dyadicIntervalAPI
 )
 where
 
@@ -66,46 +67,84 @@ api = Proxy
 type SamplingId = Int
 type FunctionId = Int
 type FunctionName = String
-type FunctionDomain = DyadicInterval'
-type FunctionPoint = (DyadicInterval', MPBallInterval')
-
-type DyadicInterval' = (Dyadic, Dyadic)
-type MPBallInterval' = (MPBall, MPBall)
-
-data Sampling =
-  Sampling
-  {
-    sampling_dom' :: DyadicInterval'
-    , sampling_maxStep :: ErrorBound
+type FunctionDomain = DyadicIntervalAPI
+data FunctionPoint =
+  FunctionPoint
+  { functionPointDom :: DyadicIntervalAPI
+  , functionPointValue :: MPBallIntervalAPI
   }
   deriving (Show, P.Eq, Generic)
 
-sampling_dom :: Sampling -> DyadicInterval
-sampling_dom (Sampling (domL, domR) _) = Interval domL domR
+instance ElmType FunctionPoint
+instance ToJSON FunctionPoint
+instance FromJSON FunctionPoint
 
 instance (ElmType l, ElmType r) => ElmType (Interval l r)
 instance (ToJSON l, ToJSON r) => ToJSON (Interval l r)
 instance (FromJSON l, FromJSON r) => FromJSON (Interval l r)
 
+data DyadicIntervalAPI =
+  DyadicIntervalAPI
+  { dyadic_endpointL :: Dyadic
+  , dyadic_endpointR :: Dyadic }
+  deriving (Show, P.Eq, Generic)
+
+dyadicIntervalAPI :: DyadicInterval -> DyadicIntervalAPI
+dyadicIntervalAPI (Interval l r) = (DyadicIntervalAPI l r)
+
+instance ElmType DyadicIntervalAPI
+instance ToJSON DyadicIntervalAPI
+instance FromJSON DyadicIntervalAPI
+--
+data MPBallIntervalAPI =
+  MPBallIntervalAPI
+  { mpBall_endpointL :: MPBall
+  , mpBall_endpointR :: MPBall }
+  deriving (Show, P.Eq, Generic)
+
+mpBallIntervalAPI :: Interval MPBall MPBall -> MPBallIntervalAPI
+mpBallIntervalAPI (Interval l r) = (MPBallIntervalAPI l r)
+
 instance ElmType MPBall
 instance ToJSON MPBall
 instance FromJSON MPBall
+
+instance ElmType MPBallIntervalAPI
+instance ToJSON MPBallIntervalAPI
+instance FromJSON MPBallIntervalAPI
+
+data Sampling =
+  Sampling
+  {
+    sampling_dom' :: DyadicInterval
+    , sampling_maxStep :: ErrorBound
+  }
+  deriving (Show, P.Eq, Generic)
+
+sampling_dom :: Sampling -> DyadicInterval
+sampling_dom (Sampling (Interval domL domR) _) = Interval domL domR
 
 instance ElmType Sampling
 instance ToJSON Sampling
 instance FromJSON Sampling
 
+data DyadicS =
+  DyadicS
+  {
+    dyadic_value :: Integer,
+    dyadic_exp :: Int
+  }
+  deriving (Show, P.Eq, Generic)
+
 instance ElmType DyadicS
 instance ToJSON DyadicS
 instance FromJSON DyadicS
 
-data DyadicS =
-  DyadicS
-  {
-    _dyadic_value :: Integer,
-    _dyadic_exp :: Int
-  }
-  deriving (Show, P.Eq, Generic)
+-- the following definitions exist only to stop unused warnings:
+_use_dyadic_value :: Integer
+_use_dyadic_value = dyadic_value undefined
+_use_dyadic_exp :: Int
+_use_dyadic_exp = dyadic_exp undefined
 
 instance FromJSON Dyadic where
   parseJSON jd = dyadicS2dyadic <$> parseJSON jd

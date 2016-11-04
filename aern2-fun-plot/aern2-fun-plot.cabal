@@ -8,12 +8,12 @@ maintainer:     Michal Konecny <mikkonecny@gmail.com>
 tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
 license:        BSD3
 homepage:       https://github.com/michalkonecny/aern2/aern2-fun
-synopsis:       Exact real functions
+synopsis:       Backend for plotting real functions
 category:       Math
 copyright:      (c) 2016 Michal Konecny, Eike Neumann
 license-file:   LICENSE
 Description:
-  TODO
+  Backend for plotting real functions
 
 library
   hs-source-dirs:  server/src
@@ -24,9 +24,6 @@ library
     , psqueues == 0.2.*
     -- , arithmoi == 0.4.*
     , convertible >= 1.1.1.0 && < 1.2
-    , hspec >= 2.1 && < 2.3
-    -- , hspec-smallcheck >= 0.3 && < 0.5
-    , QuickCheck >= 2.7 && < 2.9
     , transformers >= 0.4 && < 0.6
     , lens == 4.13.*
     , servant >= 0.7.1
@@ -63,6 +60,54 @@ library
     AERN2.RealFun.PlotService
     AERN2.RealFun.PlotService.API
     AERN2.RealFun.PlotService.App
+
+executable aern2-fun-plot-example
+  build-depends:
+    base == 4.*
+    -- , arithmoi == 0.4.*
+    -- , containers == 0.5.*
+    -- , psqueues == 0.2.*
+    -- -- , arithmoi == 0.4.*
+    -- , convertible >= 1.1.1.0 && < 1.2
+    -- , hspec >= 2.1 && < 2.3
+    -- -- , hspec-smallcheck >= 0.3 && < 0.5
+    -- , QuickCheck >= 2.7 && < 2.9
+    -- , transformers >= 0.4 && < 0.6
+    -- , lens == 4.13.*
+    -- , servant >= 0.7.1
+    -- , servant-server >= 0.7.1
+    -- , servant-elm
+    -- , elm-export
+    -- , warp
+    -- , aeson
+    -- , wai
+    -- , wai-make-assets
+    , mixed-types-num == 0.1.*
+    -- , num-exceptions == 0.1.*
+    , aern2-mp == 0.1.*
+    , aern2-real == 0.1.*
+    , aern2-fun == 0.1.*
+    , aern2-fun-plot == 0.1.*
+  hs-source-dirs:  example
+  ghc-options:     -O2 -Wall -rtsopts
+  extensions:
+  extensions:
+    DataKinds,
+    RebindableSyntax,
+    PostfixOperators,
+    ScopedTypeVariables,
+    DeriveGeneric,
+    GeneralizedNewtypeDeriving,
+    TypeFamilies,
+    TypeOperators,
+    ConstraintKinds,
+    DefaultSignatures,
+    MultiParamTypeClasses,
+    FlexibleContexts,
+    FlexibleInstances,
+    UndecidableInstances,
+    Arrows
+  main-is: Main.hs
 
 -- test-suite spec
 --   type:
