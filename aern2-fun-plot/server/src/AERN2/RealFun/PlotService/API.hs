@@ -157,13 +157,15 @@ instance ElmType Dyadic where
   toElmType = toElmType . dyadic2dyadicS
 
 dyadicS2dyadic :: DyadicS -> Dyadic
-dyadicS2dyadic (DyadicS v e) = (dyadic v) * ((dyadic 0.5)^e)
+dyadicS2dyadic (DyadicS v e)
+  | e < 0 = (dyadic v) * ((dyadic 0.5)^(-e))
+  | otherwise = (dyadic v) * ((dyadic 2)^e)
 
 dyadic2dyadicS :: Dyadic -> DyadicS
 dyadic2dyadicS d = DyadicS v e
   where
   v = numerator r
-  e = integerLog2 $ denominator r
+  e = negate $ integerLog2 $ denominator r
   r = rational d
 
 instance FromJSON MPFloat where

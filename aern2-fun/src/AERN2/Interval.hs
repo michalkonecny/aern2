@@ -14,7 +14,7 @@
 module AERN2.Interval
 (
   Interval(..), singleton, endpoints, fromEndpoints
-  , width, split, contains
+  , width, split, contains, intersect
   , DyadicInterval, CanBeDyadicInterval, dyadicInterval
   , RealInterval, CanBeRealInterval, realInterval
 )
@@ -33,7 +33,7 @@ import Data.Typeable
 -- import Test.QuickCheck
 
 import AERN2.MP.Dyadic
-import AERN2.MP.Ball hiding (contains, endpoints, fromEndpoints)
+import AERN2.MP.Ball hiding (contains, intersect, endpoints, fromEndpoints)
 import qualified AERN2.MP.Ball as MPBall
 
 import AERN2.Real
@@ -71,6 +71,17 @@ contains ::
   Interval l r -> Interval l' r' -> Bool
 contains (Interval l r) (Interval l' r') =
   l <= l' && r' <= r
+
+intersect ::
+  (CanMinMaxSameType l, CanMinMaxSameType r, HasOrderCertainly l r)
+  =>
+  Interval l r -> Interval l r -> Maybe (Interval l r)
+intersect (Interval l1 r1) (Interval l2 r2)
+  | l !<=! r = Just (Interval l r)
+  | otherwise = Nothing
+  where
+  l = l1 `max` l2
+  r = r1 `min` r2
 
 instance
   (HasEqAsymmetric l1 l2, HasEqAsymmetric r1 r2

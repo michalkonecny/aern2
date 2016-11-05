@@ -33,6 +33,7 @@ library
     , warp
     , aeson
     , wai
+    , wai-extra
     , wai-make-assets
     , mixed-types-num == 0.1.*
     , num-exceptions == 0.1.*

@@ -9268,26 +9268,117 @@ var _user$project$Api$getApiFunctionByFunctionIdValuesForSamplingBySamplingId = 
 			_elm_lang$core$Json_Decode$list(_user$project$Api$decodeFunctionPoint),
 			A2(_evancz$elm_http$Http$send, _evancz$elm_http$Http$defaultSettings, request));
 	});
+var _user$project$DInterval$dToFloat = function (d) {
+	var e = _elm_lang$core$Basics$toFloat(d.dyadic_exp);
+	var v = _elm_lang$core$Basics$toFloat(d.dyadic_value);
+	return v * Math.pow(2.0, e);
+};
+var _user$project$DInterval$dUnifyExp = F2(
+	function (d1, d2) {
+		var e2 = d2.dyadic_exp;
+		var v2 = d2.dyadic_value;
+		var e1 = d1.dyadic_exp;
+		var e = A2(_elm_lang$core$Basics$min, e1, e2);
+		var v2$ = v2 * Math.pow(2, e2 - e);
+		var v1 = d1.dyadic_value;
+		var v1$ = v1 * Math.pow(2, e1 - e);
+		return {
+			ctor: '_Tuple2',
+			_0: A2(_user$project$Api$DyadicS, v1$, e),
+			_1: A2(_user$project$Api$DyadicS, v2$, e)
+		};
+	});
+var _user$project$DInterval$divDi = F2(
+	function (d, n) {
+		var aux = F3(
+			function (v, e, n) {
+				aux:
+				while (true) {
+					if (_elm_lang$core$Native_Utils.eq(
+						A2(_elm_lang$core$Basics_ops['%'], n, 2),
+						0)) {
+						var _v0 = v,
+							_v1 = e - 1,
+							_v2 = (n / 2) | 0;
+						v = _v0;
+						e = _v1;
+						n = _v2;
+						continue aux;
+					} else {
+						var nE = _elm_lang$core$Basics$round(
+							A2(
+								_elm_lang$core$Basics$logBase,
+								2,
+								_elm_lang$core$Basics$toFloat(
+									_elm_lang$core$Basics$abs(n))));
+						return A2(
+							_user$project$Api$DyadicS,
+							((Math.pow(2, nE) * v) / n) | 0,
+							e - nE);
+					}
+				}
+			});
+		var e = d.dyadic_exp;
+		var v = d.dyadic_value;
+		return _elm_lang$core$Native_Utils.eq(n, 0) ? _elm_lang$core$Native_Utils.crash(
+			'DInterval',
+			{
+				start: {line: 103, column: 10},
+				end: {line: 103, column: 21}
+			})('division by 0') : A3(aux, v, e, n);
+	});
+var _user$project$DInterval$mulDi = F2(
+	function (d, n) {
+		var aux = F3(
+			function (v, e, n) {
+				aux:
+				while (true) {
+					if (_elm_lang$core$Native_Utils.eq(
+						A2(_elm_lang$core$Basics_ops['%'], n, 2),
+						0)) {
+						var _v3 = v,
+							_v4 = e + 1,
+							_v5 = (n / 2) | 0;
+						v = _v3;
+						e = _v4;
+						n = _v5;
+						continue aux;
+					} else {
+						return A2(_user$project$Api$DyadicS, n * v, e);
+					}
+				}
+			});
+		var e = d.dyadic_exp;
+		var v = d.dyadic_value;
+		return _elm_lang$core$Native_Utils.eq(n, 0) ? A2(_user$project$Api$DyadicS, 0, 0) : A3(aux, v, e, n);
+	});
+var _user$project$DInterval$subD = F2(
+	function (d1, d2) {
+		var _p0 = A2(_user$project$DInterval$dUnifyExp, d1, d2);
+		var d1$ = _p0._0;
+		var d2$ = _p0._1;
+		var e = d1$.dyadic_exp;
+		var v1 = d1$.dyadic_value;
+		var v2 = d2$.dyadic_value;
+		return A2(_user$project$Api$DyadicS, v1 - v2, e);
+	});
 var _user$project$DInterval$maxD = F2(
 	function (d1, d2) {
-		var e2 = _elm_lang$core$Basics$toFloat(d2.dyadic_exp);
-		var v2 = _elm_lang$core$Basics$toFloat(d2.dyadic_value);
-		var x2 = v2 * Math.pow(2.0, e2);
-		var e1 = _elm_lang$core$Basics$toFloat(d1.dyadic_exp);
-		var v1 = _elm_lang$core$Basics$toFloat(d1.dyadic_value);
-		var x1 = v1 * Math.pow(2.0, e1);
+		var x2 = _user$project$DInterval$dToFloat(d2);
+		var x1 = _user$project$DInterval$dToFloat(d1);
 		return (_elm_lang$core$Native_Utils.cmp(x1, x2) < 0) ? d2 : d1;
 	});
 var _user$project$DInterval$minD = F2(
 	function (d1, d2) {
-		var e2 = _elm_lang$core$Basics$toFloat(d2.dyadic_exp);
-		var v2 = _elm_lang$core$Basics$toFloat(d2.dyadic_value);
-		var x2 = v2 * Math.pow(2.0, e2);
-		var e1 = _elm_lang$core$Basics$toFloat(d1.dyadic_exp);
-		var v1 = _elm_lang$core$Basics$toFloat(d1.dyadic_value);
-		var x1 = v1 * Math.pow(2.0, e1);
+		var x2 = _user$project$DInterval$dToFloat(d2);
+		var x1 = _user$project$DInterval$dToFloat(d1);
 		return (_elm_lang$core$Native_Utils.cmp(x1, x2) < 0) ? d1 : d2;
 	});
+var _user$project$DInterval$width = function (di) {
+	var r = di.dyadic_endpointR;
+	var l = di.dyadic_endpointL;
+	return A2(_user$project$DInterval$subD, r, l);
+};
 var _user$project$DInterval$unit = A2(
 	_user$project$Api$DyadicIntervalAPI,
 	A2(_user$project$Api$DyadicS, -1, 0),
@@ -9304,13 +9395,26 @@ var _user$project$DInterval$union = F2(
 			A2(_user$project$DInterval$maxD, r1, r2));
 	});
 var _user$project$DInterval$unions = function (list) {
-	var _p0 = list;
-	if (_p0.ctor === '[]') {
+	var _p1 = list;
+	if (_p1.ctor === '[]') {
 		return _user$project$DInterval$unit;
 	} else {
-		return A3(_elm_lang$core$List$foldl, _user$project$DInterval$union, _p0._0, _p0._1);
+		return A3(_elm_lang$core$List$foldl, _user$project$DInterval$union, _p1._0, _p1._1);
 	}
 };
+var _user$project$DInterval$intersect = F2(
+	function (di1, di2) {
+		var r2 = di2.dyadic_endpointR;
+		var l2 = di2.dyadic_endpointL;
+		var r1 = di1.dyadic_endpointR;
+		var r = A2(_user$project$DInterval$minD, r1, r2);
+		var rF = _user$project$DInterval$dToFloat(r);
+		var l1 = di1.dyadic_endpointL;
+		var l = A2(_user$project$DInterval$maxD, l1, l2);
+		var lF = _user$project$DInterval$dToFloat(l);
+		return (_elm_lang$core$Native_Utils.cmp(lF, rF) < 1) ? _elm_lang$core$Maybe$Just(
+			A2(_user$project$Api$DyadicIntervalAPI, l, r)) : _elm_lang$core$Maybe$Nothing;
+	});
 var _user$project$Main$view = function (s) {
 	return A2(
 		_elm_lang$html$Html$div,
@@ -9322,23 +9426,6 @@ var _user$project$Main$view = function (s) {
 				_elm_lang$core$Basics$toString(s))
 			]));
 };
-var _user$project$Main$functionsInitState = F3(
-	function (s, fnIds, functionDetails) {
-		var domains = A2(
-			_elm_lang$core$List$map,
-			function (_) {
-				return _.domain;
-			},
-			_elm_lang$core$Dict$values(functionDetails));
-		var plotDomain = _user$project$DInterval$unions(domains);
-		return _elm_lang$core$Native_Utils.update(
-			s,
-			{
-				functionIds: fnIds,
-				functionDetails: functionDetails,
-				plotDomain: _elm_lang$core$Maybe$Just(plotDomain)
-			});
-	});
 var _user$project$Main$update = F2(
 	function (msg, s) {
 		var _p0 = msg;
@@ -9347,7 +9434,7 @@ var _user$project$Main$update = F2(
 				var _p1 = _p0._0;
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
-					A3(_user$project$Main$functionsInitState, s, _p1._0._0, _p1._0._1),
+					_p1._0,
 					_elm_lang$core$Native_List.fromArray(
 						[]));
 			case 'FromUI':
@@ -9369,26 +9456,41 @@ var _user$project$Main$update = F2(
 						[]));
 		}
 	});
-var _user$project$Main$initState = {
-	functionIds: _elm_lang$core$Native_List.fromArray(
-		[]),
-	functionDetails: _elm_lang$core$Dict$empty,
-	plotDomain: _elm_lang$core$Maybe$Nothing,
-	error: _elm_lang$core$Maybe$Nothing
-};
+var _user$project$Main$getFunctionsPointsUsingSampling = F2(
+	function (fnIds, samplingId) {
+		var getFunctionPoints = function (fnId) {
+			return A2(
+				_elm_lang$core$Task$map,
+				function (pts) {
+					return {ctor: '_Tuple2', _0: fnId, _1: pts};
+				},
+				A2(_user$project$Api$getApiFunctionByFunctionIdValuesForSamplingBySamplingId, fnId, samplingId));
+		};
+		return A2(
+			_elm_lang$core$Task$map,
+			_elm_lang$core$Dict$fromList,
+			_elm_lang$core$Task$sequence(
+				A2(_elm_lang$core$List$map, getFunctionPoints, fnIds)));
+	});
 var _user$project$Main$getFunctionDetails = function (fnId) {
-	return A3(
-		_elm_lang$core$Task$map2,
-		F2(
-			function (name, domain) {
-				return {
-					ctor: '_Tuple2',
-					_0: fnId,
-					_1: {name: name, domain: domain}
-				};
-			}),
-		_user$project$Api$getApiFunctionByFunctionIdName(fnId),
-		_user$project$Api$getApiFunctionByFunctionIdDomain(fnId));
+	return A2(
+		_elm_lang$core$Task$map,
+		function (fnDetails) {
+			return {ctor: '_Tuple2', _0: fnId, _1: fnDetails};
+		},
+		A3(
+			_elm_lang$core$Task$map2,
+			F2(
+				function (name, domain) {
+					return {
+						name: name,
+						domain: domain,
+						points: _elm_lang$core$Native_List.fromArray(
+							[])
+					};
+				}),
+			_user$project$Api$getApiFunctionByFunctionIdName(fnId),
+			_user$project$Api$getApiFunctionByFunctionIdDomain(fnId)));
 };
 var _user$project$Main$getFunctionsDetails = function (fnIds) {
 	return A2(
@@ -9397,24 +9499,77 @@ var _user$project$Main$getFunctionsDetails = function (fnIds) {
 		_elm_lang$core$Task$sequence(
 			A2(_elm_lang$core$List$map, _user$project$Main$getFunctionDetails, fnIds)));
 };
-var _user$project$Main$getFunctions = A2(
-	_elm_lang$core$Task$andThen,
-	_user$project$Api$getApiFunction,
-	function (fnIds) {
+var _user$project$Main$initState = {
+	functionIds: _elm_lang$core$Native_List.fromArray(
+		[]),
+	functionDetails: _elm_lang$core$Dict$empty,
+	functionPoints: _elm_lang$core$Dict$empty,
+	plotDomain: _elm_lang$core$Maybe$Nothing,
+	plotArea: {w: 800, h: 800},
+	plotResolution: 100,
+	error: _elm_lang$core$Maybe$Nothing
+};
+var _user$project$Main$getFunctionsPoints = F2(
+	function (s, _p3) {
+		var _p4 = _p3;
+		var _p6 = _p4._0;
+		var _p5 = _p4._1;
+		var domains = A2(
+			_elm_lang$core$List$map,
+			function (_) {
+				return _.domain;
+			},
+			_elm_lang$core$Dict$values(_p5));
+		var plotDomain = _user$project$DInterval$unions(domains);
+		var maxStep = A2(
+			_user$project$DInterval$divDi,
+			A2(
+				_user$project$DInterval$mulDi,
+				_user$project$DInterval$width(plotDomain),
+				s.plotResolution),
+			s.plotArea.w);
+		var sampling = {sampling_dom$: plotDomain, sampling_maxStep: maxStep};
+		var makeState = function (fnPoints) {
+			return _elm_lang$core$Native_Utils.update(
+				_user$project$Main$initState,
+				{
+					functionIds: _p6,
+					functionDetails: _p5,
+					functionPoints: fnPoints,
+					plotDomain: _elm_lang$core$Maybe$Just(plotDomain)
+				});
+		};
 		return A2(
 			_elm_lang$core$Task$map,
-			function (dict) {
-				return {ctor: '_Tuple2', _0: fnIds, _1: dict};
-			},
-			_user$project$Main$getFunctionsDetails(fnIds));
+			makeState,
+			A2(
+				_elm_lang$core$Task$andThen,
+				_user$project$Api$postApiSampling(sampling),
+				_user$project$Main$getFunctionsPointsUsingSampling(_p6)));
 	});
-var _user$project$Main$FunctionDetails = F2(
-	function (a, b) {
-		return {name: a, domain: b};
+var _user$project$Main$getFunctions = function (s) {
+	return A2(
+		_elm_lang$core$Task$andThen,
+		A2(
+			_elm_lang$core$Task$andThen,
+			_user$project$Api$getApiFunction,
+			function (fnIds) {
+				return A2(
+					_elm_lang$core$Task$map,
+					function (fnDetails) {
+						return {ctor: '_Tuple2', _0: fnIds, _1: fnDetails};
+					},
+					_user$project$Main$getFunctionsDetails(fnIds));
+			}),
+		_user$project$Main$getFunctionsPoints(s));
+};
+var _user$project$Main$FunctionDetails = F3(
+	function (a, b, c) {
+		return {name: a, domain: b, points: c};
 	});
-var _user$project$Main$State = F4(
-	function (a, b, c, d) {
-		return {functionIds: a, functionDetails: b, plotDomain: c, error: d};
+var _user$project$Main$State = F7(
+	function (a, b, c, d, e, f, g) {
+		return {functionIds: a, functionDetails: b, functionPoints: c, plotDomain: d, plotArea: e, plotResolution: f, error: g};
 	});
 var _user$project$Main$Error = function (a) {
 	return {ctor: 'Error', _0: a};
@@ -9429,26 +9584,35 @@ var _user$project$Main$toServer = F2(
 	function (tag, task) {
 		return A3(
 			_elm_lang$core$Task$perform,
-			function (_p3) {
+			function (_p7) {
 				return _user$project$Main$Error(
-					_elm_lang$core$Basics$toString(_p3));
+					_elm_lang$core$Basics$toString(_p7));
 			},
-			function (_p4) {
+			function (_p8) {
 				return _user$project$Main$FromServer(
-					tag(_p4));
+					tag(_p8));
 			},
 			task);
 	});
 var _user$project$Main$Functions = function (a) {
 	return {ctor: 'Functions', _0: a};
 };
-var _user$project$Main$fetchFunctionIds = A2(_user$project$Main$toServer, _user$project$Main$Functions, _user$project$Main$getFunctions);
+var _user$project$Main$fetchFunctions = function (s) {
+	return A2(
+		_user$project$Main$toServer,
+		_user$project$Main$Functions,
+		_user$project$Main$getFunctions(s));
+};
 var _user$project$Main$main = {
 	main: _elm_lang$html$Html_App$program(
 		{
-			init: {ctor: '_Tuple2', _0: _user$project$Main$initState, _1: _user$project$Main$fetchFunctionIds},
+			init: {
+				ctor: '_Tuple2',
+				_0: _user$project$Main$initState,
+				_1: _user$project$Main$fetchFunctions(_user$project$Main$initState)
+			},
 			update: _user$project$Main$update,
-			subscriptions: function (_p5) {
+			subscriptions: function (_p9) {
 				return _elm_lang$core$Platform_Sub$none;
 			},
 			view: _user$project$Main$view

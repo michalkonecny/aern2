@@ -11,7 +11,9 @@ import AERN2.Poly.Cheb
 import qualified AERN2.RealFun.PlotService as Plot
 
 main :: IO ()
-main = Plot.startServer fns (int 3000)
+main = Plot.startServer fns shouldLog (int 3000)
+  where
+  shouldLog = True
 
 fns :: Plot.Functions PolyBall
 fns = Plot.Functions [("x^2", x*x), ("x-x", xP - xP)] getDomain applyViaMPBall

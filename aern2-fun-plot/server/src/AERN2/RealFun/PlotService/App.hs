@@ -31,6 +31,7 @@ import qualified Data.Map as Map
 import           Network.Wai
 import           Network.Wai.MakeAssets
 import           Network.Wai.Handler.Warp
+import           Network.Wai.Middleware.RequestLogger
 import           Servant
 
 import AERN2.MP.Ball
@@ -38,10 +39,13 @@ import AERN2.Interval as Interval
 import AERN2.RealFun.Operations
 import AERN2.RealFun.PlotService.API
 
-startServer :: Functions fn -> Port -> IO ()
-startServer fns port = do
-  runSettings settings =<< app fns
+startServer :: Functions fn -> Bool -> Port -> IO ()
+startServer fns shouldLog port = do
+  runSettings settings =<< (fmap logger (app fns))
   where
+  logger
+    | shouldLog = logStdoutDev
+    | otherwise = id
   settings =
     setPort port $
     -- setBeforeMainLoop (hPutStrLn stderr
@@ -150,10 +154,12 @@ getFunctionValues fns samplingsStore fnId samplingId =
   where
   useSamplingAndFn Nothing _ = throwE err404
   useSamplingAndFn _ Nothing = throwE err404
-  useSamplingAndFn (Just sampling) (Just (_fnName, fn))
-    | not (dom `Interval.contains` samplingDom) = throwE err404
-    | otherwise = return $ recursiveEval maxDepth samplingDom
+  useSamplingAndFn (Just sampling) (Just (_fnName, fn)) =
+    case maybeIntersectedDom of
+      Just intersectedDom -> return $ recursiveEval maxDepth intersectedDom
+      _ -> return []
     where
+    maybeIntersectedDom = dom `Interval.intersect` samplingDom
     dom = functions_getDom fns fn
     samplingDom = sampling_dom sampling
     maxStep = sampling_maxStep sampling
