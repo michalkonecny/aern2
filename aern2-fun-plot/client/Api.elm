@@ -160,9 +160,10 @@ getApiFunctionByFunctionIdDomain functionId =
       decodeDyadicIntervalAPI
       (Http.send Http.defaultSettings request)
 
-type alias FunctionPoint =
-  { functionPointDom : DyadicIntervalAPI
-  , functionPointValue : MPBallIntervalAPI
+type alias FunctionSegment =
+  { functionSegmentDom : DyadicIntervalAPI
+  , functionSegmentValueL : MPBallIntervalAPI
+  , functionSegmentValueR : MPBallIntervalAPI
   }
 
 type alias MPBallIntervalAPI =
@@ -175,11 +176,12 @@ type alias MPBall =
   , ball_error : DyadicS
   }
 
-decodeFunctionPoint : Json.Decode.Decoder FunctionPoint
-decodeFunctionPoint =
-  Json.Decode.succeed FunctionPoint
-    |: ("functionPointDom" := decodeDyadicIntervalAPI)
-    |: ("functionPointValue" := decodeMPBallIntervalAPI)
+decodeFunctionSegment : Json.Decode.Decoder FunctionSegment
+decodeFunctionSegment =
+  Json.Decode.succeed FunctionSegment
+    |: ("functionSegmentDom" := decodeDyadicIntervalAPI)
+    |: ("functionSegmentValueL" := decodeMPBallIntervalAPI)
+    |: ("functionSegmentValueR" := decodeMPBallIntervalAPI)
 
 decodeMPBallIntervalAPI : Json.Decode.Decoder MPBallIntervalAPI
 decodeMPBallIntervalAPI =
@@ -193,7 +195,7 @@ decodeMPBall =
     |: ("ball_value" := decodeDyadicS)
     |: ("ball_error" := decodeDyadicS)
 
-getApiFunctionByFunctionIdValuesForSamplingBySamplingId : Int -> Int -> Task.Task Http.Error (List (FunctionPoint))
+getApiFunctionByFunctionIdValuesForSamplingBySamplingId : Int -> Int -> Task.Task Http.Error (List (FunctionSegment))
 getApiFunctionByFunctionIdValuesForSamplingBySamplingId functionId samplingId =
   let
     request =
@@ -212,7 +214,7 @@ getApiFunctionByFunctionIdValuesForSamplingBySamplingId functionId samplingId =
       }
   in
     Http.fromJson
-      (Json.Decode.list decodeFunctionPoint)
+      (Json.Decode.list decodeFunctionSegment)
       (Http.send Http.defaultSettings request)
 
 getApiFunctionByFunctionIdName : Int -> Task.Task Http.Error (String)

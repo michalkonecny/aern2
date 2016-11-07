@@ -39,13 +39,13 @@ type alias FunctionName = String
 type alias FunctionDetails =
   { name : FunctionName
   , domain : DyadicIntervalAPI
-  , points : List FunctionPoint
+  , points : List FunctionSegment
   }
 
 type alias State =
     { functionIds : List FunctionId
     , functionDetails : Dict FunctionId FunctionDetails
-    , functionPoints : Dict FunctionId (List FunctionPointF)
+    , functionSegments : Dict FunctionId (List FunctionSegmentF)
     , plotArea : Maybe PlotArea
     , plotCanvasSize : { w : Pixels, h : Pixels }
     , plotResolution : Pixels
@@ -57,27 +57,31 @@ initState : State
 initState =
   { functionIds = []
   , functionDetails = Dict.empty
-  , functionPoints = Dict.empty
+  , functionSegments = Dict.empty
   , plotArea = Nothing
   , plotCanvasSize = { w = 800, h = 800 }
-  , plotResolution = 1
+  , plotResolution = 2
   , zoomLevel = 100
   , error = Nothing
   }
 
-type alias FunctionPointF =
+type alias FunctionSegmentF =
   { domL : Float
   , domR : Float
-  , valL : (Float, Float)
-  , valR : (Float, Float)
+  , enclL : ((Float, Float), (Float, Float))
+  , enclR : ((Float, Float), (Float, Float))
   }
 
-functionPointF : FunctionPoint -> FunctionPointF
-functionPointF pt =
-  { domL = dToFloat pt.functionPointDom.dyadic_endpointL
-  , domR = dToFloat pt.functionPointDom.dyadic_endpointR
-  , valL = mpBallToFloatFloat pt.functionPointValue.mpBall_endpointL
-  , valR = mpBallToFloatFloat pt.functionPointValue.mpBall_endpointR
+functionSegmentF : FunctionSegment -> FunctionSegmentF
+functionSegmentF pt =
+  { domL = dToFloat pt.functionSegmentDom.dyadic_endpointL
+  , domR = dToFloat pt.functionSegmentDom.dyadic_endpointR
+  , enclL =
+    (mpBallToFloatFloat pt.functionSegmentValueL.mpBall_endpointL,
+     mpBallToFloatFloat pt.functionSegmentValueL.mpBall_endpointR)
+  , enclR =
+    (mpBallToFloatFloat pt.functionSegmentValueR.mpBall_endpointL,
+     mpBallToFloatFloat pt.functionSegmentValueR.mpBall_endpointR)
   }
 
 mpBallToFloatFloat : MPBall -> (Float, Float)
@@ -142,7 +146,7 @@ getFunctionsPoints s (fnIds, fnDetails) =
       { initState |
         functionIds = fnIds
       , functionDetails = fnDetails
-      , functionPoints = Dict.map (\ _ -> List.map functionPointF) fnPoints
+      , functionSegments = Dict.map (\ _ -> List.map functionSegmentF) fnPoints
       , plotArea = Just plotArea }
   in
   Task.map makeState <|
@@ -150,14 +154,14 @@ getFunctionsPoints s (fnIds, fnDetails) =
     `andThen`
     getFunctionsPointsUsingSampling fnIds
 
-getFunctionsPointsUsingSampling : (List FunctionId) -> SamplingId -> Task Http.Error (Dict FunctionId (List FunctionPoint))
+getFunctionsPointsUsingSampling : (List FunctionId) -> SamplingId -> Task Http.Error (Dict FunctionId (List FunctionSegment))
 getFunctionsPointsUsingSampling fnIds samplingId =
   let
-    getFunctionPoints fnId =
+    getFunctionSegments fnId =
       Task.map (\pts -> (fnId, pts)) <|
         getApiFunctionByFunctionIdValuesForSamplingBySamplingId fnId samplingId
   in
-  Task.map Dict.fromList (Task.sequence (List.map getFunctionPoints fnIds))
+  Task.map Dict.fromList (Task.sequence (List.map getFunctionSegments fnIds))
 
 toServer : (a -> FromServer) -> Task Http.Error a -> Cmd Msg
 toServer tag task =
@@ -202,7 +206,7 @@ view s =
   in
     div [] <|
     [
-    --   Html.text (toString s.functionPoints)
+    --   Html.text (toString s.functionSegments)
     -- ,
       slider { makeMsg = FromUI << ZoomLevel, minValue = 50, maxValue = 150, state = s }
       ,
@@ -212,7 +216,7 @@ view s =
         [ rect (toFloat width) (toFloat height)
             |> filled bgrColour
         ] ++
-        (List.concat <| List.map (drawFn s) <| Dict.toList s.functionPoints)
+        (List.concat <| List.map (drawFn s) <| Dict.toList s.functionSegments)
     ]
 
 slider { makeMsg, minValue, maxValue, state } =
@@ -228,10 +232,10 @@ slider { makeMsg, minValue, maxValue, state } =
     , Html.text <| toString maxValue
     ]
 
-drawFn s (fnId, points) =
-  List.concat <| List.map (drawPoint s) points
+drawFn s (fnId, segments) =
+  List.concat <| List.map (drawSegment s) segments
 
-drawPoint s point =
+drawSegment s segm =
   case s.plotArea of
     Nothing -> []
     Just plotArea ->
@@ -245,24 +249,29 @@ drawPoint s point =
         zoomRatio = 100 / (toFloat s.zoomLevel)
         toCoordX x = zoomRatio * (w/2) * (2*x - pAdL - pAdR) / (pAdR - pAdL)
         toCoordY y = zoomRatio * (h/2) * (2*y - pArL - pArR) / (pArR - pArL)
-        domL = toCoordX point.domL
-        domR = toCoordX point.domR
+        domL = toCoordX segm.domL
+        domR = toCoordX segm.domR
         domM = (domL + domR) / 2
         domW = domR - domL
-        vLL = toCoordY <| fst point.valL
-        vLR = toCoordY <| snd point.valL
-        vLc = (vLL + vLR)/2
-        vLd = vLR - vLL
-        vRL = toCoordY <| fst point.valR
-        vRR = toCoordY <| snd point.valR
-        vRc = (vRL + vRR)/2
-        vRd = vRR - vRL
+        eLDD = toCoordY <| fst <| fst segm.enclL
+        eLDU = toCoordY <| snd <| fst segm.enclL
+        eLUD = toCoordY <| fst <| snd segm.enclL
+        eLUU = toCoordY <| snd <| snd segm.enclL
+        eRDD = toCoordY <| fst <| fst segm.enclR
+        eRDU = toCoordY <| snd <| fst segm.enclR
+        eRUD = toCoordY <| fst <| snd segm.enclR
+        eRUU = toCoordY <| snd <| snd segm.enclR
+        parallelogramU =
+          polygon [(domL, eLUD), (domL,eLUU), (domR,eRUU), (domR,eRUD)]
+        parallelogramUD =
+          polygon [(domL, eLUU), (domL,eLDD), (domR,eRDD), (domR,eRUU)]
+        parallelogramD =
+          polygon [(domL, eLDD), (domL,eLDU), (domR,eRDU), (domR,eRDD)]
       in
       [
-        rect domW vLd |> filled enclosureFillColour |> move (domM, vLc)
-      , rect domW vLd |> outlined enclosureOutlineStyle |> move (domM, vLc)
-      , rect domW vRd |> filled enclosureFillColour |> move (domM, vRc)
-      , rect domW vRd |> outlined enclosureOutlineStyle |> move (domM, vRc)
+        parallelogramUD |> filled enclosureFillColour
+      , parallelogramD |> outlined enclosureOutlineStyle
+      , parallelogramD |> outlined enclosureOutlineStyle
       ]
 
 bgrColour =

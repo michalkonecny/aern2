@@ -11876,9 +11876,9 @@ var _user$project$Api$getApiFunctionByFunctionIdDomain = function (functionId) {
 		_user$project$Api$decodeDyadicIntervalAPI,
 		A2(_evancz$elm_http$Http$send, _evancz$elm_http$Http$defaultSettings, request));
 };
-var _user$project$Api$FunctionPoint = F2(
-	function (a, b) {
-		return {functionPointDom: a, functionPointValue: b};
+var _user$project$Api$FunctionSegment = F3(
+	function (a, b, c) {
+		return {functionSegmentDom: a, functionSegmentValueL: b, functionSegmentValueR: c};
 	});
 var _user$project$Api$MPBallIntervalAPI = F2(
 	function (a, b) {
@@ -11902,13 +11902,16 @@ var _user$project$Api$decodeMPBallIntervalAPI = A2(
 		_elm_lang$core$Json_Decode$succeed(_user$project$Api$MPBallIntervalAPI),
 		A2(_elm_lang$core$Json_Decode_ops[':='], 'mpBall_endpointL', _user$project$Api$decodeMPBall)),
 	A2(_elm_lang$core$Json_Decode_ops[':='], 'mpBall_endpointR', _user$project$Api$decodeMPBall));
-var _user$project$Api$decodeFunctionPoint = A2(
+var _user$project$Api$decodeFunctionSegment = A2(
 	_elm_community$elm_json_extra$Json_Decode_Extra_ops['|:'],
 	A2(
 		_elm_community$elm_json_extra$Json_Decode_Extra_ops['|:'],
-		_elm_lang$core$Json_Decode$succeed(_user$project$Api$FunctionPoint),
-		A2(_elm_lang$core$Json_Decode_ops[':='], 'functionPointDom', _user$project$Api$decodeDyadicIntervalAPI)),
-	A2(_elm_lang$core$Json_Decode_ops[':='], 'functionPointValue', _user$project$Api$decodeMPBallIntervalAPI));
+		A2(
+			_elm_community$elm_json_extra$Json_Decode_Extra_ops['|:'],
+			_elm_lang$core$Json_Decode$succeed(_user$project$Api$FunctionSegment),
+			A2(_elm_lang$core$Json_Decode_ops[':='], 'functionSegmentDom', _user$project$Api$decodeDyadicIntervalAPI)),
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'functionSegmentValueL', _user$project$Api$decodeMPBallIntervalAPI)),
+	A2(_elm_lang$core$Json_Decode_ops[':='], 'functionSegmentValueR', _user$project$Api$decodeMPBallIntervalAPI));
 var _user$project$Api$getApiFunctionByFunctionIdValuesForSamplingBySamplingId = F2(
 	function (functionId, samplingId) {
 		var request = {
@@ -11951,7 +11954,7 @@ var _user$project$Api$getApiFunctionByFunctionIdValuesForSamplingBySamplingId = 
 		};
 		return A2(
 			_evancz$elm_http$Http$fromJson,
-			_elm_lang$core$Json_Decode$list(_user$project$Api$decodeFunctionPoint),
+			_elm_lang$core$Json_Decode$list(_user$project$Api$decodeFunctionSegment),
 			A2(_evancz$elm_http$Http$send, _evancz$elm_http$Http$defaultSettings, request));
 	});
 var _user$project$DInterval$dToFloat = function (d) {
@@ -12108,8 +12111,8 @@ var _user$project$Main$enclosureOutlineStyle = _elm_lang$core$Native_Utils.updat
 	});
 var _user$project$Main$enclosureFillColour = A3(_elm_lang$core$Color$rgb, 200, 200, 255);
 var _user$project$Main$bgrColour = A3(_elm_lang$core$Color$rgb, 200, 255, 200);
-var _user$project$Main$drawPoint = F2(
-	function (s, point) {
+var _user$project$Main$drawSegment = F2(
+	function (s, segm) {
 		var _p0 = s.plotArea;
 		if (_p0.ctor === 'Nothing') {
 			return _elm_lang$core$Native_List.fromArray(
@@ -12125,56 +12128,67 @@ var _user$project$Main$drawPoint = F2(
 			var toCoordY = function (y) {
 				return ((zoomRatio * (h / 2)) * (((2 * y) - pArL) - pArR)) / (pArR - pArL);
 			};
-			var vLL = toCoordY(
-				_elm_lang$core$Basics$fst(point.valL));
-			var vLR = toCoordY(
-				_elm_lang$core$Basics$snd(point.valL));
-			var vLc = (vLL + vLR) / 2;
-			var vLd = vLR - vLL;
-			var vRL = toCoordY(
-				_elm_lang$core$Basics$fst(point.valR));
-			var vRR = toCoordY(
-				_elm_lang$core$Basics$snd(point.valR));
-			var vRc = (vRL + vRR) / 2;
-			var vRd = vRR - vRL;
+			var eLDD = toCoordY(
+				_elm_lang$core$Basics$fst(
+					_elm_lang$core$Basics$fst(segm.enclL)));
+			var eLDU = toCoordY(
+				_elm_lang$core$Basics$snd(
+					_elm_lang$core$Basics$fst(segm.enclL)));
+			var eLUD = toCoordY(
+				_elm_lang$core$Basics$fst(
+					_elm_lang$core$Basics$snd(segm.enclL)));
+			var eLUU = toCoordY(
+				_elm_lang$core$Basics$snd(
+					_elm_lang$core$Basics$snd(segm.enclL)));
+			var eRDD = toCoordY(
+				_elm_lang$core$Basics$fst(
+					_elm_lang$core$Basics$fst(segm.enclR)));
+			var eRDU = toCoordY(
+				_elm_lang$core$Basics$snd(
+					_elm_lang$core$Basics$fst(segm.enclR)));
+			var eRUD = toCoordY(
+				_elm_lang$core$Basics$fst(
+					_elm_lang$core$Basics$snd(segm.enclR)));
+			var eRUU = toCoordY(
+				_elm_lang$core$Basics$snd(
+					_elm_lang$core$Basics$snd(segm.enclR)));
 			var w = _elm_lang$core$Basics$toFloat(s.plotCanvasSize.w);
 			var toCoordX = function (x) {
 				return ((zoomRatio * (w / 2)) * (((2 * x) - pAdL) - pAdR)) / (pAdR - pAdL);
 			};
-			var domL = toCoordX(point.domL);
-			var domR = toCoordX(point.domR);
+			var domL = toCoordX(segm.domL);
+			var domR = toCoordX(segm.domR);
 			var domM = (domL + domR) / 2;
 			var domW = domR - domL;
+			var parallelogramU = _evancz$elm_graphics$Collage$polygon(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{ctor: '_Tuple2', _0: domL, _1: eLUD},
+						{ctor: '_Tuple2', _0: domL, _1: eLUU},
+						{ctor: '_Tuple2', _0: domR, _1: eRUU},
+						{ctor: '_Tuple2', _0: domR, _1: eRUD}
+					]));
+			var parallelogramUD = _evancz$elm_graphics$Collage$polygon(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{ctor: '_Tuple2', _0: domL, _1: eLUU},
+						{ctor: '_Tuple2', _0: domL, _1: eLDD},
+						{ctor: '_Tuple2', _0: domR, _1: eRDD},
+						{ctor: '_Tuple2', _0: domR, _1: eRUU}
+					]));
+			var parallelogramD = _evancz$elm_graphics$Collage$polygon(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{ctor: '_Tuple2', _0: domL, _1: eLDD},
+						{ctor: '_Tuple2', _0: domL, _1: eLDU},
+						{ctor: '_Tuple2', _0: domR, _1: eRDU},
+						{ctor: '_Tuple2', _0: domR, _1: eRDD}
+					]));
 			return _elm_lang$core$Native_List.fromArray(
 				[
-					A2(
-					_evancz$elm_graphics$Collage$move,
-					{ctor: '_Tuple2', _0: domM, _1: vLc},
-					A2(
-						_evancz$elm_graphics$Collage$filled,
-						_user$project$Main$enclosureFillColour,
-						A2(_evancz$elm_graphics$Collage$rect, domW, vLd))),
-					A2(
-					_evancz$elm_graphics$Collage$move,
-					{ctor: '_Tuple2', _0: domM, _1: vLc},
-					A2(
-						_evancz$elm_graphics$Collage$outlined,
-						_user$project$Main$enclosureOutlineStyle,
-						A2(_evancz$elm_graphics$Collage$rect, domW, vLd))),
-					A2(
-					_evancz$elm_graphics$Collage$move,
-					{ctor: '_Tuple2', _0: domM, _1: vRc},
-					A2(
-						_evancz$elm_graphics$Collage$filled,
-						_user$project$Main$enclosureFillColour,
-						A2(_evancz$elm_graphics$Collage$rect, domW, vRd))),
-					A2(
-					_evancz$elm_graphics$Collage$move,
-					{ctor: '_Tuple2', _0: domM, _1: vRc},
-					A2(
-						_evancz$elm_graphics$Collage$outlined,
-						_user$project$Main$enclosureOutlineStyle,
-						A2(_evancz$elm_graphics$Collage$rect, domW, vRd)))
+					A2(_evancz$elm_graphics$Collage$filled, _user$project$Main$enclosureFillColour, parallelogramUD),
+					A2(_evancz$elm_graphics$Collage$outlined, _user$project$Main$enclosureOutlineStyle, parallelogramD),
+					A2(_evancz$elm_graphics$Collage$outlined, _user$project$Main$enclosureOutlineStyle, parallelogramD)
 				]);
 		}
 	});
@@ -12184,7 +12198,7 @@ var _user$project$Main$drawFn = F2(
 		return _elm_lang$core$List$concat(
 			A2(
 				_elm_lang$core$List$map,
-				_user$project$Main$drawPoint(s),
+				_user$project$Main$drawSegment(s),
 				_p3._1));
 	});
 var _user$project$Main$slider = function (_p4) {
@@ -12267,7 +12281,7 @@ var _user$project$Main$update = F2(
 	});
 var _user$project$Main$getFunctionsPointsUsingSampling = F2(
 	function (fnIds, samplingId) {
-		var getFunctionPoints = function (fnId) {
+		var getFunctionSegments = function (fnId) {
 			return A2(
 				_elm_lang$core$Task$map,
 				function (pts) {
@@ -12279,7 +12293,7 @@ var _user$project$Main$getFunctionsPointsUsingSampling = F2(
 			_elm_lang$core$Task$map,
 			_elm_lang$core$Dict$fromList,
 			_elm_lang$core$Task$sequence(
-				A2(_elm_lang$core$List$map, getFunctionPoints, fnIds)));
+				A2(_elm_lang$core$List$map, getFunctionSegments, fnIds)));
 	});
 var _user$project$Main$getFunctionDetails = function (fnId) {
 	return A2(
@@ -12313,22 +12327,30 @@ var _user$project$Main$mpBallToFloatFloat = function (b) {
 	var c = _user$project$DInterval$dToFloat(b.ball_value);
 	return {ctor: '_Tuple2', _0: c - e, _1: c + e};
 };
-var _user$project$Main$functionPointF = function (pt) {
+var _user$project$Main$functionSegmentF = function (pt) {
 	return {
-		domL: _user$project$DInterval$dToFloat(pt.functionPointDom.dyadic_endpointL),
-		domR: _user$project$DInterval$dToFloat(pt.functionPointDom.dyadic_endpointR),
-		valL: _user$project$Main$mpBallToFloatFloat(pt.functionPointValue.mpBall_endpointL),
-		valR: _user$project$Main$mpBallToFloatFloat(pt.functionPointValue.mpBall_endpointR)
+		domL: _user$project$DInterval$dToFloat(pt.functionSegmentDom.dyadic_endpointL),
+		domR: _user$project$DInterval$dToFloat(pt.functionSegmentDom.dyadic_endpointR),
+		enclL: {
+			ctor: '_Tuple2',
+			_0: _user$project$Main$mpBallToFloatFloat(pt.functionSegmentValueL.mpBall_endpointL),
+			_1: _user$project$Main$mpBallToFloatFloat(pt.functionSegmentValueL.mpBall_endpointR)
+		},
+		enclR: {
+			ctor: '_Tuple2',
+			_0: _user$project$Main$mpBallToFloatFloat(pt.functionSegmentValueR.mpBall_endpointL),
+			_1: _user$project$Main$mpBallToFloatFloat(pt.functionSegmentValueR.mpBall_endpointR)
+		}
 	};
 };
 var _user$project$Main$initState = {
 	functionIds: _elm_lang$core$Native_List.fromArray(
 		[]),
 	functionDetails: _elm_lang$core$Dict$empty,
-	functionPoints: _elm_lang$core$Dict$empty,
+	functionSegments: _elm_lang$core$Dict$empty,
 	plotArea: _elm_lang$core$Maybe$Nothing,
 	plotCanvasSize: {w: 800, h: 800},
-	plotResolution: 1,
+	plotResolution: 2,
 	zoomLevel: 100,
 	error: _elm_lang$core$Maybe$Nothing
 };
@@ -12365,10 +12387,10 @@ var _user$project$Main$getFunctionsPoints = F2(
 				{
 					functionIds: _p16,
 					functionDetails: _p15,
-					functionPoints: A2(
+					functionSegments: A2(
 						_elm_lang$core$Dict$map,
 						function (_p14) {
-							return _elm_lang$core$List$map(_user$project$Main$functionPointF);
+							return _elm_lang$core$List$map(_user$project$Main$functionSegmentF);
 						},
 						fnPoints),
 					plotArea: _elm_lang$core$Maybe$Just(plotArea)
@@ -12404,11 +12426,11 @@ var _user$project$Main$FunctionDetails = F3(
 	});
 var _user$project$Main$State = F8(
 	function (a, b, c, d, e, f, g, h) {
-		return {functionIds: a, functionDetails: b, functionPoints: c, plotArea: d, plotCanvasSize: e, plotResolution: f, zoomLevel: g, error: h};
+		return {functionIds: a, functionDetails: b, functionSegments: c, plotArea: d, plotCanvasSize: e, plotResolution: f, zoomLevel: g, error: h};
 	});
-var _user$project$Main$FunctionPointF = F4(
+var _user$project$Main$FunctionSegmentF = F4(
 	function (a, b, c, d) {
-		return {domL: a, domR: b, valL: c, valR: d};
+		return {domL: a, domR: b, enclL: c, enclR: d};
 	});
 var _user$project$Main$PlotArea = F5(
 	function (a, b, c, d, e) {
@@ -12495,7 +12517,7 @@ var _user$project$Main$view = function (s) {
 								A2(
 									_elm_lang$core$List$map,
 									_user$project$Main$drawFn(s),
-									_elm_lang$core$Dict$toList(s.functionPoints)))))))
+									_elm_lang$core$Dict$toList(s.functionSegments)))))))
 			]));
 };
 var _user$project$Main$main = {

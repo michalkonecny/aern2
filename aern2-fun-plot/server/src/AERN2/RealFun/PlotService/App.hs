@@ -34,7 +34,8 @@ import           Network.Wai.Handler.Warp
 import           Network.Wai.Middleware.RequestLogger
 import           Servant
 
-import AERN2.MP.Ball
+import AERN2.MP.Dyadic (dyadic)
+import AERN2.MP.Ball as MPBall
 import AERN2.Interval as Interval
 import AERN2.RealFun.Operations
 import AERN2.RealFun.PlotService.API
@@ -145,7 +146,7 @@ getFunctionValues ::
   SamplingsStore ->
   FunctionId ->
   SamplingId ->
-  Handler [FunctionPoint]
+  Handler [FunctionSegment]
 getFunctionValues fns samplingsStore fnId samplingId =
   do
   maybeSampling <- liftIO $ lookupSampling samplingsStore samplingId
@@ -161,19 +162,25 @@ getFunctionValues fns samplingsStore fnId samplingId =
     maybeIntersectedDom = dom `Interval.intersect` samplingDom
     dom = function_dom fn
     samplingDom = sampling_dom sampling
-    maxStep = sampling_maxStep sampling
+    maxStep = dyadic $ sampling_maxStep sampling
     getBounds = function_getBounds fn
     maxDepth = 20
     recursiveEval maxD di
       | boundsGoodEnough || maxD == 0 =
-        [FunctionPoint (dyadicIntervalAPI di) (mpBallIntervalAPI bounds)]
-      | otherwise = (recursiveEval maxD' diL) ++ (recursiveEval maxD' diR)
+        [FunctionSegment
+          (dyadicIntervalAPI di)
+          (mpBallIntervalAPI boundsL)
+          (mpBallIntervalAPI boundsR)]
+      | otherwise = (recursiveEval maxD' di1) ++ (recursiveEval maxD' di2)
       where
       maxD' = maxD - 1
-      (diL, diR) = Interval.split di
-      bounds@(Interval l r) = getBounds di
+      (di1, di2) = Interval.split di
+
+      (Interval diL diR) = di
+      boundsL@(Interval lL rL) = getBounds (Interval diL diL)
+      boundsR@(Interval lR rR) = getBounds (Interval diR diR)
       boundsGoodEnough =
-        (radius l <= maxStep) && (radius r <= maxStep)
+        (diR-diL <= maxStep && abs (lL-lR) !<=! maxStep) && (abs (rL-rR) !<=! maxStep)
 
 {- Samplings storage -}
 

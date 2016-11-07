@@ -15,7 +15,7 @@ module AERN2.RealFun.PlotService.API
 (
   Api, api
   , Sampling(..), SamplingId, sampling_dom
-  , FunctionName, FunctionDomain, FunctionPoint(..), FunctionId,
+  , FunctionName, FunctionDomain, FunctionSegment(..), FunctionId,
   mpBallIntervalAPI, dyadicIntervalAPI
 )
 where
@@ -57,7 +57,7 @@ type Api =
      "function" :> Get '[JSON] [FunctionId] :<|>
      "function" :> Capture "functionId" FunctionId :> "domain" :> Get '[JSON] FunctionDomain :<|>
      "function" :> Capture "functionId" FunctionId :>
-        "valuesForSampling" :> Capture "samplingId" SamplingId :> Get '[JSON] [FunctionPoint] :<|>
+        "valuesForSampling" :> Capture "samplingId" SamplingId :> Get '[JSON] [FunctionSegment] :<|>
      "function" :> Capture "functionId" FunctionId :> "name" :> Get '[JSON] FunctionName
     )
 
@@ -68,16 +68,17 @@ type SamplingId = Int
 type FunctionId = Int
 type FunctionName = String
 type FunctionDomain = DyadicIntervalAPI
-data FunctionPoint =
-  FunctionPoint
-  { functionPointDom :: DyadicIntervalAPI
-  , functionPointValue :: MPBallIntervalAPI
+data FunctionSegment =
+  FunctionSegment
+  { functionSegmentDom :: DyadicIntervalAPI
+  , functionSegmentValueL :: MPBallIntervalAPI
+  , functionSegmentValueR :: MPBallIntervalAPI
   }
   deriving (Show, P.Eq, Generic)
 
-instance ElmType FunctionPoint
-instance ToJSON FunctionPoint
-instance FromJSON FunctionPoint
+instance ElmType FunctionSegment
+instance ToJSON FunctionSegment
+instance FromJSON FunctionSegment
 
 instance (ElmType l, ElmType r) => ElmType (Interval l r)
 instance (ToJSON l, ToJSON r) => ToJSON (Interval l r)
