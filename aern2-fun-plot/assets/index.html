@@ -11839,16 +11839,6 @@ var _user$project$Main$getFunctionsDetails = function (fnIds) {
 		_elm_lang$core$Task$sequence(
 			A2(_elm_lang$core$List$map, _user$project$Main$getFunctionDetails, fnIds)));
 };
-var _user$project$Main$initState = {
-	functionIds: _elm_lang$core$Native_List.fromArray(
-		[]),
-	functionDetails: _elm_lang$core$Dict$empty,
-	functionPoints: _elm_lang$core$Dict$empty,
-	plotArea: _elm_lang$core$Maybe$Nothing,
-	plotCanvasSize: {w: 800, h: 800},
-	plotResolution: 100,
-	error: _elm_lang$core$Maybe$Nothing
-};
 var _user$project$Main$mpBallToFloatFloat = function (b) {
 	var e = _user$project$DInterval$dToFloat(b.ball_error);
 	var c = _user$project$DInterval$dToFloat(b.ball_value);
@@ -11861,6 +11851,16 @@ var _user$project$Main$functionPointF = function (pt) {
 		valL: _user$project$Main$mpBallToFloatFloat(pt.functionPointValue.mpBall_endpointL),
 		valR: _user$project$Main$mpBallToFloatFloat(pt.functionPointValue.mpBall_endpointR)
 	};
+};
+var _user$project$Main$initState = {
+	functionIds: _elm_lang$core$Native_List.fromArray(
+		[]),
+	functionDetails: _elm_lang$core$Dict$empty,
+	functionPoints: _elm_lang$core$Dict$empty,
+	plotArea: _elm_lang$core$Maybe$Nothing,
+	plotCanvasSize: {w: 800, h: 800},
+	plotResolution: 1,
+	error: _elm_lang$core$Maybe$Nothing
 };
 var _user$project$Main$getFunctionsPoints = F2(
 	function (s, _p7) {
@@ -11886,7 +11886,7 @@ var _user$project$Main$getFunctionsPoints = F2(
 			domain: plotDomain,
 			domL: _user$project$DInterval$dToFloat(plotDomain.dyadic_endpointL),
 			domR: _user$project$DInterval$dToFloat(plotDomain.dyadic_endpointR),
-			rangeL: -1.0,
+			rangeL: -0.0,
 			rangeR: 1.0
 		};
 		var makeState = function (fnPoints) {

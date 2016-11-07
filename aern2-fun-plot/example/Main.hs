@@ -2,22 +2,28 @@ import Numeric.MixedTypes
 -- import qualified Prelude as P
 
 import AERN2.MP.Dyadic
-import AERN2.MP.Ball
+import AERN2.MP.Ball as MPBall
 
 import AERN2.Interval
 import AERN2.RealFun.Operations
 import AERN2.Poly.Cheb
 
-import qualified AERN2.RealFun.PlotService as Plot
+import AERN2.RealFun.PlotService as Plot
 
 main :: IO ()
 main = Plot.startServer fns shouldLog (int 3000)
   where
   shouldLog = True
 
-fns :: Plot.Functions PolyBall
-fns = Plot.Functions [("x^2", x*x), ("x-x", xP - xP)] getDomain applyViaMPBall
+fns :: Plot.Functions
+fns = map polyBallFn [("x^2", x*x), ("x-x", xP - xP)]
   where
+  polyBallFn (name, pb) =
+    Plot.Function
+    { function_name = name
+    , function_dom = getDomain pb
+    , function_getBounds = applyViaMPBall pb
+    }
   x :: PolyBall
   x = varFn sampleFn ()
   xP :: PolyBall

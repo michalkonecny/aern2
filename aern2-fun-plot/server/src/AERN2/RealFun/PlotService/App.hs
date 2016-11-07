@@ -14,7 +14,7 @@
 module AERN2.RealFun.PlotService.App
 (
   startServer, app,
-  Functions(..), functionsUsingEval, intervalFunctionsUsingEval
+  Functions, Function(..), functionUsingEval, intervalFunctionUsingEval
 )
 where
 
@@ -39,7 +39,7 @@ import AERN2.Interval as Interval
 import AERN2.RealFun.Operations
 import AERN2.RealFun.PlotService.API
 
-startServer :: Functions fn -> Bool -> Port -> IO ()
+startServer :: Functions -> Bool -> Port -> IO ()
 startServer fns shouldLog port = do
   runSettings settings =<< (fmap logger (app fns))
   where
@@ -58,19 +58,19 @@ withAssets :: Proxy WithAssets
 withAssets = Proxy
 
 app ::
-  Functions fn -> IO Application
+  Functions -> IO Application
 app fns =
   serve withAssets <$> server fns
 
 server ::
-  Functions fn -> IO (Server WithAssets)
+  Functions -> IO (Server WithAssets)
 server fns = do
   assets <- serveAssets
   samplingsStore <- mkSamplingsStore
   return $ apiServer fns samplingsStore :<|> assets
 
 apiServer ::
-  Functions fn -> SamplingsStore -> Server Api
+  Functions -> SamplingsStore -> Server Api
 apiServer fns samplingsStore =
   listSamplings samplingsStore :<|>
   postSampling samplingsStore :<|>
@@ -82,67 +82,66 @@ apiServer fns samplingsStore =
 
 {- Functions processing -}
 
-data Functions fn =
-  Functions
-  {
-    functions_fns :: [(FunctionName, fn)]
-    , functions_getDom :: fn -> DyadicInterval
-    , functions_getBounds :: fn -> DyadicInterval -> Interval MPBall MPBall
+type Functions = [Function]
+
+data Function =
+  Function
+  { function_name :: FunctionName
+  , function_dom :: DyadicInterval
+  , function_getBounds :: DyadicInterval -> Interval MPBall MPBall
   }
 
-functionsUsingEval ::
+functionUsingEval ::
   (HasDomain fn, Domain fn ~ DyadicInterval,
   CanApply fn DyadicInterval, ApplyType fn DyadicInterval ~ MPBall)
   =>
-  [(FunctionName, fn)] -> Functions fn
-functionsUsingEval fns =
-  Functions
-  {
-    functions_fns = fns
-    , functions_getDom = getDomain
-    , functions_getBounds = \ fn di -> let val = apply fn di in Interval val val
+  (FunctionName, fn) -> Function
+functionUsingEval (name, fn) =
+  Function
+  { function_name = name
+  , function_dom = getDomain fn
+  , function_getBounds = \ di -> let val = apply fn di in Interval val val
   }
 
-intervalFunctionsUsingEval ::
+intervalFunctionUsingEval ::
   (HasDomain fn, Domain fn ~ DyadicInterval,
   CanApply fn DyadicInterval, ApplyType fn DyadicInterval ~ Interval MPBall MPBall)
   =>
-  [(FunctionName, fn)] -> Functions fn
-intervalFunctionsUsingEval fns =
-  Functions
-  {
-    functions_fns = fns
-    , functions_getDom = getDomain
-    , functions_getBounds = apply
+  (FunctionName, fn) -> Function
+intervalFunctionUsingEval (name, fn) =
+  Function
+  { function_name = name
+  , function_dom = getDomain fn
+  , function_getBounds = apply fn
   }
 
-listFunctionIds :: Functions fn -> Handler [FunctionId]
+listFunctionIds :: Functions -> Handler [FunctionId]
 listFunctionIds fns = return $ map int [0..n - 1]
   where
-  n = integer $ length $ functions_fns fns
+  n = integer $ length fns
 
 getFunctionDomain ::
-  Functions fn -> FunctionId -> Handler FunctionDomain
+  Functions -> FunctionId -> Handler FunctionDomain
 getFunctionDomain fns fnId =
-  maybe (throwE err404) return =<< (return $ fmap (getDom . snd) maybeFn)
+  maybe (throwE err404) return =<< (return $ fmap getDom maybeFn)
   where
-  getDom = dyadicIntervalAPI . functions_getDom fns
+  getDom = dyadicIntervalAPI . function_dom
   maybeFn = lookupFunction fns fnId
 
 getFunctionName ::
-  Functions fn -> FunctionId -> Handler FunctionName
+  Functions -> FunctionId -> Handler FunctionName
 getFunctionName fns fnId =
-  maybe (throwE err404) return =<< (return $ fmap fst maybeFn)
+  maybe (throwE err404) return =<< (return $ fmap function_name maybeFn)
   where
   maybeFn = lookupFunction fns fnId
 
-lookupFunction :: Functions fn -> FunctionId -> Maybe (FunctionName, fn)
+lookupFunction :: Functions -> FunctionId -> Maybe Function
 lookupFunction fns fnId
-  | 0 <= fnId && fnId < length (functions_fns fns) = Just ((functions_fns fns) !! fnId)
+  | 0 <= fnId && fnId < length fns = Just (fns !! fnId)
   | otherwise = Nothing
 
 getFunctionValues ::
-  Functions fn ->
+  Functions ->
   SamplingsStore ->
   FunctionId ->
   SamplingId ->
@@ -154,16 +153,16 @@ getFunctionValues fns samplingsStore fnId samplingId =
   where
   useSamplingAndFn Nothing _ = throwE err404
   useSamplingAndFn _ Nothing = throwE err404
-  useSamplingAndFn (Just sampling) (Just (_fnName, fn)) =
+  useSamplingAndFn (Just sampling) (Just fn) =
     case maybeIntersectedDom of
       Just intersectedDom -> return $ recursiveEval maxDepth intersectedDom
       _ -> return []
     where
     maybeIntersectedDom = dom `Interval.intersect` samplingDom
-    dom = functions_getDom fns fn
+    dom = function_dom fn
     samplingDom = sampling_dom sampling
     maxStep = sampling_maxStep sampling
-    getBounds = functions_getBounds fns
+    getBounds = function_getBounds fn
     maxDepth = 20
     recursiveEval maxD di
       | boundsGoodEnough || maxD == 0 =
@@ -172,7 +171,7 @@ getFunctionValues fns samplingsStore fnId samplingId =
       where
       maxD' = maxD - 1
       (diL, diR) = Interval.split di
-      bounds@(Interval l r) = getBounds fn di
+      bounds@(Interval l r) = getBounds di
       boundsGoodEnough =
         (radius l <= maxStep) && (radius r <= maxStep)
 

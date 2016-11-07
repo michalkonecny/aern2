@@ -50,6 +50,17 @@ type alias State =
     , error : Maybe String
     }
 
+initState : State
+initState =
+  { functionIds = []
+  , functionDetails = Dict.empty
+  , functionPoints = Dict.empty
+  , plotArea = Nothing
+  , plotCanvasSize = { w = 800, h = 800 }
+  , plotResolution = 1
+  , error = Nothing
+  }
+
 type alias FunctionPointF =
   { domL : Float
   , domR : Float
@@ -82,17 +93,6 @@ type alias PlotArea =
 
 type alias Pixels = Int
 
-
-initState : State
-initState =
-  { functionIds = []
-  , functionDetails = Dict.empty
-  , functionPoints = Dict.empty
-  , plotArea = Nothing
-  , plotCanvasSize = { w = 800, h = 800 }
-  , plotResolution = 100 -- TODO: change to 2 pixels
-  , error = Nothing
-  }
 
 -- INITIALISATION
 
@@ -130,7 +130,7 @@ getFunctionsPoints s (fnIds, fnDetails) =
       { domain = plotDomain
       , domL = dToFloat plotDomain.dyadic_endpointL
       , domR = dToFloat plotDomain.dyadic_endpointR
-      , rangeL = -1.0 -- TODO
+      , rangeL = -0.0 -- TODO
       , rangeR = 1.0
       }
     makeState fnPoints =
