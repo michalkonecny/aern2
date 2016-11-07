@@ -3,11 +3,12 @@ module Main exposing (..)
 import Set exposing (Set)
 import Dict exposing (Dict)
 import List
+import String
 
 import Html exposing (..)
 import Html.App exposing (program)
--- import Html.Attributes exposing (..)
--- import Html.Events exposing (..)
+import Html.Attributes as A exposing (..)
+import Html.Events exposing (..)
 
 import Color exposing (..)
 import Collage exposing (..)
@@ -16,6 +17,7 @@ import Text
 
 import Http
 import Task exposing (Task, andThen)
+-- import AnimationFrame
 
 import Api exposing (..)
 import DInterval exposing (divDi, mulDi, dToFloat)
@@ -47,6 +49,7 @@ type alias State =
     , plotArea : Maybe PlotArea
     , plotCanvasSize : { w : Pixels, h : Pixels }
     , plotResolution : Pixels
+    , zoomLevel : Percent
     , error : Maybe String
     }
 
@@ -58,6 +61,7 @@ initState =
   , plotArea = Nothing
   , plotCanvasSize = { w = 800, h = 800 }
   , plotResolution = 1
+  , zoomLevel = 100
   , error = Nothing
   }
 
@@ -92,6 +96,7 @@ type alias PlotArea =
   }
 
 type alias Pixels = Int
+type alias Percent = Int
 
 
 -- INITIALISATION
@@ -171,7 +176,8 @@ type FromServer
     -- | Delete ItemId
 
 type FromUI
-    = NoAction
+  = ZoomLevel Percent
+  | NoAction
 
 update : Msg -> State -> ( State, Cmd Msg )
 update msg s =
@@ -181,6 +187,7 @@ update msg s =
         Functions s' -> s' ! []
     FromUI fromUI ->
       case fromUI of
+        ZoomLevel percent -> { s | zoomLevel = percent } ! []
         NoAction -> s ! []
     Error msg ->
         { s | error = Just msg } ! []
@@ -193,13 +200,33 @@ view s =
     width = s.plotCanvasSize.w
     height = s.plotCanvasSize.h
   in
-    toHtml <|
-    container width height middle <|
-    collage width height <|
-      [ rect (toFloat width) (toFloat height)
-          |> filled bgrColour
-      ] ++
-      (List.concat <| List.map (drawFn s) <| Dict.toList s.functionPoints)
+    div [] <|
+    [
+    --   Html.text (toString s.functionPoints)
+    -- ,
+      slider { makeMsg = FromUI << ZoomLevel, minValue = 50, maxValue = 150, state = s }
+      ,
+      toHtml <|
+      container width height middle <|
+      collage width height <|
+        [ rect (toFloat width) (toFloat height)
+            |> filled bgrColour
+        ] ++
+        (List.concat <| List.map (drawFn s) <| Dict.toList s.functionPoints)
+    ]
+
+slider { makeMsg, minValue, maxValue, state } =
+  div []
+    [ Html.text <| toString minValue
+    , input
+      [ type' "range"
+      , A.min <| toString minValue
+      , A.max <| toString maxValue
+      , value <| toString state.zoomLevel
+      , onInput (makeMsg << Result.withDefault 0 << String.toInt)
+      ] []
+    , Html.text <| toString maxValue
+    ]
 
 drawFn s (fnId, points) =
   List.concat <| List.map (drawPoint s) points
@@ -215,8 +242,9 @@ drawPoint s point =
         pAdR = plotArea.domR
         pArL = plotArea.rangeL
         pArR = plotArea.rangeR
-        toCoordX x = (w/2) * (2*x - pAdL - pAdR) / (pAdR - pAdL)
-        toCoordY y = (h/2) * (2*y - pArL - pArR) / (pArR - pArL)
+        zoomRatio = 100 / (toFloat s.zoomLevel)
+        toCoordX x = zoomRatio * (w/2) * (2*x - pAdL - pAdR) / (pAdR - pAdL)
+        toCoordY y = zoomRatio * (h/2) * (2*y - pArL - pArR) / (pArR - pArL)
         domL = toCoordX point.domL
         domR = toCoordX point.domR
         domM = (domL + domR) / 2
