@@ -49,6 +49,7 @@ type alias State =
     , plotArea : Maybe PlotArea
     , plotCanvasSize : { w : Pixels, h : Pixels }
     , plotResolution : Pixels
+    , samplingId : Maybe SamplingId -- derived from the 3 above
     , zoomLevel : Percent
     , error : Maybe String
     }
@@ -61,6 +62,7 @@ initState =
   , plotArea = Nothing
   , plotCanvasSize = { w = 800, h = 800 }
   , plotResolution = 2
+  , samplingId = Nothing
   , zoomLevel = 100
   , error = Nothing
   }
@@ -111,9 +113,12 @@ fetchFunctions s =
 getFunctions s =
   getApiFunction
   `andThen`
-  (\fnIds -> Task.map (\fnDetails -> (fnIds, fnDetails)) (getFunctionsDetails fnIds))
-  `andThen`
-  getFunctionsPoints s
+  (\fnIds ->
+    getFunctionsDetails fnIds
+    `andThen`
+    (\fnDetails ->
+      getFunctionsSegmentsWholeDomain
+        { s | functionIds = fnIds, functionDetails = fnDetails }))
 
 getFunctionsDetails : List FunctionId -> Task Http.Error (Dict FunctionId FunctionDetails)
 getFunctionsDetails fnIds =
@@ -127,13 +132,21 @@ getFunctionDetails fnId =
         (getApiFunctionByFunctionIdName fnId)
         (getApiFunctionByFunctionIdDomain fnId)
 
-getFunctionsPoints : State -> (List FunctionId, Dict FunctionId FunctionDetails)
-  -> Task Http.Error State
-getFunctionsPoints s (fnIds, fnDetails) =
+getFunctionsSegmentsWholeDomain : State -> Task Http.Error State
+getFunctionsSegmentsWholeDomain s =
   let
+    fnDetails = s.functionDetails
     domains = List.map (.domain) (Dict.values fnDetails)
     plotDomain = DInterval.unions domains
-    maxStep = ((DInterval.width plotDomain) `mulDi` s.plotResolution) `divDi` s.plotCanvasSize.w
+  in
+  getFunctionsSegmentsNewPlotArea s plotDomain
+
+getFunctionsSegmentsNewPlotArea : State -> DyadicIntervalAPI -> Task Http.Error State
+getFunctionsSegmentsNewPlotArea s plotDomain =
+  let
+    maxStep =
+      ((DInterval.width plotDomain) `mulDi` (s.plotResolution * s.zoomLevel))
+        `divDi` ((s.plotCanvasSize.w * 100) )
     sampling = { sampling_dom' = plotDomain, sampling_maxStep = maxStep }
     plotArea =
       { domain = plotDomain
@@ -142,26 +155,26 @@ getFunctionsPoints s (fnIds, fnDetails) =
       , rangeL = -0.0 -- TODO
       , rangeR = 1.0
       }
-    makeState fnPoints =
-      { initState |
-        functionIds = fnIds
-      , functionDetails = fnDetails
-      , functionSegments = Dict.map (\ _ -> List.map functionSegmentF) fnPoints
-      , plotArea = Just plotArea }
+    sWithPlotArea = { s | plotArea = Just plotArea }
+    fnIds = s.functionIds
   in
-  Task.map makeState <|
-    postApiSampling sampling
-    `andThen`
-    getFunctionsPointsUsingSampling fnIds
+  postApiSampling sampling
+  `andThen`
+  (\ samplingId ->
+    getFunctionsSegmentsUsingSampling { sWithPlotArea | samplingId = Just samplingId } fnIds)
 
-getFunctionsPointsUsingSampling : (List FunctionId) -> SamplingId -> Task Http.Error (Dict FunctionId (List FunctionSegment))
-getFunctionsPointsUsingSampling fnIds samplingId =
-  let
-    getFunctionSegments fnId =
-      Task.map (\pts -> (fnId, pts)) <|
-        getApiFunctionByFunctionIdValuesForSamplingBySamplingId fnId samplingId
-  in
-  Task.map Dict.fromList (Task.sequence (List.map getFunctionSegments fnIds))
+getFunctionsSegmentsUsingSampling : State -> (List FunctionId) -> Task Http.Error State
+getFunctionsSegmentsUsingSampling s fnIds =
+  case s.samplingId of
+    Nothing -> Task.succeed s
+    Just samplingId ->
+      let
+        getFunctionSegments fnId =
+          Task.map (\segs -> (fnId, List.map functionSegmentF segs)) <|
+            getApiFunctionByFunctionIdValuesForSamplingBySamplingId fnId samplingId
+      in
+      Task.map (\list -> { s | functionSegments = Dict.fromList list } ) <|
+        Task.sequence <| List.map getFunctionSegments fnIds
 
 toServer : (a -> FromServer) -> Task Http.Error a -> Cmd Msg
 toServer tag task =
@@ -191,7 +204,12 @@ update msg s =
         Functions s' -> s' ! []
     FromUI fromUI ->
       case fromUI of
-        ZoomLevel percent -> { s | zoomLevel = percent } ! []
+        ZoomLevel percent ->
+          let s' = { s | zoomLevel = percent } in
+          case s.plotArea of
+            Just plotArea ->
+              s' ! [toServer Functions (getFunctionsSegmentsNewPlotArea s' plotArea.domain)]
+            Nothing -> s' ! []
         NoAction -> s ! []
     Error msg ->
         { s | error = Just msg } ! []

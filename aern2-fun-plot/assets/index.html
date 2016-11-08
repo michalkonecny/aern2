@@ -12239,62 +12239,6 @@ var _user$project$Main$slider = function (_p4) {
 				_elm_lang$core$Basics$toString(_p7))
 			]));
 };
-var _user$project$Main$update = F2(
-	function (msg, s) {
-		var _p9 = msg;
-		switch (_p9.ctor) {
-			case 'FromServer':
-				var _p10 = _p9._0;
-				return A2(
-					_elm_lang$core$Platform_Cmd_ops['!'],
-					_p10._0,
-					_elm_lang$core$Native_List.fromArray(
-						[]));
-			case 'FromUI':
-				var _p11 = _p9._0;
-				if (_p11.ctor === 'ZoomLevel') {
-					return A2(
-						_elm_lang$core$Platform_Cmd_ops['!'],
-						_elm_lang$core$Native_Utils.update(
-							s,
-							{zoomLevel: _p11._0}),
-						_elm_lang$core$Native_List.fromArray(
-							[]));
-				} else {
-					return A2(
-						_elm_lang$core$Platform_Cmd_ops['!'],
-						s,
-						_elm_lang$core$Native_List.fromArray(
-							[]));
-				}
-			default:
-				return A2(
-					_elm_lang$core$Platform_Cmd_ops['!'],
-					_elm_lang$core$Native_Utils.update(
-						s,
-						{
-							error: _elm_lang$core$Maybe$Just(_p9._0)
-						}),
-					_elm_lang$core$Native_List.fromArray(
-						[]));
-		}
-	});
-var _user$project$Main$getFunctionsPointsUsingSampling = F2(
-	function (fnIds, samplingId) {
-		var getFunctionSegments = function (fnId) {
-			return A2(
-				_elm_lang$core$Task$map,
-				function (pts) {
-					return {ctor: '_Tuple2', _0: fnId, _1: pts};
-				},
-				A2(_user$project$Api$getApiFunctionByFunctionIdValuesForSamplingBySamplingId, fnId, samplingId));
-		};
-		return A2(
-			_elm_lang$core$Task$map,
-			_elm_lang$core$Dict$fromList,
-			_elm_lang$core$Task$sequence(
-				A2(_elm_lang$core$List$map, getFunctionSegments, fnIds)));
-	});
 var _user$project$Main$getFunctionDetails = function (fnId) {
 	return A2(
 		_elm_lang$core$Task$map,
@@ -12343,6 +12287,101 @@ var _user$project$Main$functionSegmentF = function (pt) {
 		}
 	};
 };
+var _user$project$Main$getFunctionsSegmentsUsingSampling = F2(
+	function (s, fnIds) {
+		var _p9 = s.samplingId;
+		if (_p9.ctor === 'Nothing') {
+			return _elm_lang$core$Task$succeed(s);
+		} else {
+			var getFunctionSegments = function (fnId) {
+				return A2(
+					_elm_lang$core$Task$map,
+					function (segs) {
+						return {
+							ctor: '_Tuple2',
+							_0: fnId,
+							_1: A2(_elm_lang$core$List$map, _user$project$Main$functionSegmentF, segs)
+						};
+					},
+					A2(_user$project$Api$getApiFunctionByFunctionIdValuesForSamplingBySamplingId, fnId, _p9._0));
+			};
+			return A2(
+				_elm_lang$core$Task$map,
+				function (list) {
+					return _elm_lang$core$Native_Utils.update(
+						s,
+						{
+							functionSegments: _elm_lang$core$Dict$fromList(list)
+						});
+				},
+				_elm_lang$core$Task$sequence(
+					A2(_elm_lang$core$List$map, getFunctionSegments, fnIds)));
+		}
+	});
+var _user$project$Main$getFunctionsSegmentsNewPlotArea = F2(
+	function (s, plotDomain) {
+		var fnIds = s.functionIds;
+		var plotArea = {
+			domain: plotDomain,
+			domL: _user$project$DInterval$dToFloat(plotDomain.dyadic_endpointL),
+			domR: _user$project$DInterval$dToFloat(plotDomain.dyadic_endpointR),
+			rangeL: -0.0,
+			rangeR: 1.0
+		};
+		var sWithPlotArea = _elm_lang$core$Native_Utils.update(
+			s,
+			{
+				plotArea: _elm_lang$core$Maybe$Just(plotArea)
+			});
+		var maxStep = A2(
+			_user$project$DInterval$divDi,
+			A2(
+				_user$project$DInterval$mulDi,
+				_user$project$DInterval$width(plotDomain),
+				s.plotResolution * s.zoomLevel),
+			s.plotCanvasSize.w * 100);
+		var sampling = {sampling_dom$: plotDomain, sampling_maxStep: maxStep};
+		return A2(
+			_elm_lang$core$Task$andThen,
+			_user$project$Api$postApiSampling(sampling),
+			function (samplingId) {
+				return A2(
+					_user$project$Main$getFunctionsSegmentsUsingSampling,
+					_elm_lang$core$Native_Utils.update(
+						sWithPlotArea,
+						{
+							samplingId: _elm_lang$core$Maybe$Just(samplingId)
+						}),
+					fnIds);
+			});
+	});
+var _user$project$Main$getFunctionsSegmentsWholeDomain = function (s) {
+	var fnDetails = s.functionDetails;
+	var domains = A2(
+		_elm_lang$core$List$map,
+		function (_) {
+			return _.domain;
+		},
+		_elm_lang$core$Dict$values(fnDetails));
+	var plotDomain = _user$project$DInterval$unions(domains);
+	return A2(_user$project$Main$getFunctionsSegmentsNewPlotArea, s, plotDomain);
+};
+var _user$project$Main$getFunctions = function (s) {
+	return A2(
+		_elm_lang$core$Task$andThen,
+		_user$project$Api$getApiFunction,
+		function (fnIds) {
+			return A2(
+				_elm_lang$core$Task$andThen,
+				_user$project$Main$getFunctionsDetails(fnIds),
+				function (fnDetails) {
+					return _user$project$Main$getFunctionsSegmentsWholeDomain(
+						_elm_lang$core$Native_Utils.update(
+							s,
+							{functionIds: fnIds, functionDetails: fnDetails}));
+				});
+		});
+};
 var _user$project$Main$initState = {
 	functionIds: _elm_lang$core$Native_List.fromArray(
 		[]),
@@ -12351,82 +12390,17 @@ var _user$project$Main$initState = {
 	plotArea: _elm_lang$core$Maybe$Nothing,
 	plotCanvasSize: {w: 800, h: 800},
 	plotResolution: 2,
+	samplingId: _elm_lang$core$Maybe$Nothing,
 	zoomLevel: 100,
 	error: _elm_lang$core$Maybe$Nothing
-};
-var _user$project$Main$getFunctionsPoints = F2(
-	function (s, _p12) {
-		var _p13 = _p12;
-		var _p16 = _p13._0;
-		var _p15 = _p13._1;
-		var domains = A2(
-			_elm_lang$core$List$map,
-			function (_) {
-				return _.domain;
-			},
-			_elm_lang$core$Dict$values(_p15));
-		var plotDomain = _user$project$DInterval$unions(domains);
-		var maxStep = A2(
-			_user$project$DInterval$divDi,
-			A2(
-				_user$project$DInterval$mulDi,
-				_user$project$DInterval$width(plotDomain),
-				s.plotResolution),
-			s.plotCanvasSize.w);
-		var sampling = {sampling_dom$: plotDomain, sampling_maxStep: maxStep};
-		var plotArea = {
-			domain: plotDomain,
-			domL: _user$project$DInterval$dToFloat(plotDomain.dyadic_endpointL),
-			domR: _user$project$DInterval$dToFloat(plotDomain.dyadic_endpointR),
-			rangeL: -0.0,
-			rangeR: 1.0
-		};
-		var makeState = function (fnPoints) {
-			return _elm_lang$core$Native_Utils.update(
-				_user$project$Main$initState,
-				{
-					functionIds: _p16,
-					functionDetails: _p15,
-					functionSegments: A2(
-						_elm_lang$core$Dict$map,
-						function (_p14) {
-							return _elm_lang$core$List$map(_user$project$Main$functionSegmentF);
-						},
-						fnPoints),
-					plotArea: _elm_lang$core$Maybe$Just(plotArea)
-				});
-		};
-		return A2(
-			_elm_lang$core$Task$map,
-			makeState,
-			A2(
-				_elm_lang$core$Task$andThen,
-				_user$project$Api$postApiSampling(sampling),
-				_user$project$Main$getFunctionsPointsUsingSampling(_p16)));
-	});
-var _user$project$Main$getFunctions = function (s) {
-	return A2(
-		_elm_lang$core$Task$andThen,
-		A2(
-			_elm_lang$core$Task$andThen,
-			_user$project$Api$getApiFunction,
-			function (fnIds) {
-				return A2(
-					_elm_lang$core$Task$map,
-					function (fnDetails) {
-						return {ctor: '_Tuple2', _0: fnIds, _1: fnDetails};
-					},
-					_user$project$Main$getFunctionsDetails(fnIds));
-			}),
-		_user$project$Main$getFunctionsPoints(s));
 };
 var _user$project$Main$FunctionDetails = F3(
 	function (a, b, c) {
 		return {name: a, domain: b, points: c};
 	});
-var _user$project$Main$State = F8(
-	function (a, b, c, d, e, f, g, h) {
-		return {functionIds: a, functionDetails: b, functionSegments: c, plotArea: d, plotCanvasSize: e, plotResolution: f, zoomLevel: g, error: h};
+var _user$project$Main$State = F9(
+	function (a, b, c, d, e, f, g, h, i) {
+		return {functionIds: a, functionDetails: b, functionSegments: c, plotArea: d, plotCanvasSize: e, plotResolution: f, samplingId: g, zoomLevel: h, error: i};
 	});
 var _user$project$Main$FunctionSegmentF = F4(
 	function (a, b, c, d) {
@@ -12449,13 +12423,13 @@ var _user$project$Main$toServer = F2(
 	function (tag, task) {
 		return A3(
 			_elm_lang$core$Task$perform,
-			function (_p17) {
+			function (_p10) {
 				return _user$project$Main$Error(
-					_elm_lang$core$Basics$toString(_p17));
+					_elm_lang$core$Basics$toString(_p10));
 			},
-			function (_p18) {
+			function (_p11) {
 				return _user$project$Main$FromServer(
-					tag(_p18));
+					tag(_p11));
 			},
 			task);
 	});
@@ -12468,6 +12442,61 @@ var _user$project$Main$fetchFunctions = function (s) {
 		_user$project$Main$Functions,
 		_user$project$Main$getFunctions(s));
 };
+var _user$project$Main$update = F2(
+	function (msg, s) {
+		var _p12 = msg;
+		switch (_p12.ctor) {
+			case 'FromServer':
+				var _p13 = _p12._0;
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_p13._0,
+					_elm_lang$core$Native_List.fromArray(
+						[]));
+			case 'FromUI':
+				var _p14 = _p12._0;
+				if (_p14.ctor === 'ZoomLevel') {
+					var s$ = _elm_lang$core$Native_Utils.update(
+						s,
+						{zoomLevel: _p14._0});
+					var _p15 = s.plotArea;
+					if (_p15.ctor === 'Just') {
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							s$,
+							_elm_lang$core$Native_List.fromArray(
+								[
+									A2(
+									_user$project$Main$toServer,
+									_user$project$Main$Functions,
+									A2(_user$project$Main$getFunctionsSegmentsNewPlotArea, s$, _p15._0.domain))
+								]));
+					} else {
+						return A2(
+							_elm_lang$core$Platform_Cmd_ops['!'],
+							s$,
+							_elm_lang$core$Native_List.fromArray(
+								[]));
+					}
+				} else {
+					return A2(
+						_elm_lang$core$Platform_Cmd_ops['!'],
+						s,
+						_elm_lang$core$Native_List.fromArray(
+							[]));
+				}
+			default:
+				return A2(
+					_elm_lang$core$Platform_Cmd_ops['!'],
+					_elm_lang$core$Native_Utils.update(
+						s,
+						{
+							error: _elm_lang$core$Maybe$Just(_p12._0)
+						}),
+					_elm_lang$core$Native_List.fromArray(
+						[]));
+		}
+	});
 var _user$project$Main$NoAction = {ctor: 'NoAction'};
 var _user$project$Main$ZoomLevel = function (a) {
 	return {ctor: 'ZoomLevel', _0: a};
@@ -12483,9 +12512,9 @@ var _user$project$Main$view = function (s) {
 			[
 				_user$project$Main$slider(
 				{
-					makeMsg: function (_p19) {
+					makeMsg: function (_p16) {
 						return _user$project$Main$FromUI(
-							_user$project$Main$ZoomLevel(_p19));
+							_user$project$Main$ZoomLevel(_p16));
 					},
 					minValue: 50,
 					maxValue: 150,
@@ -12529,7 +12558,7 @@ var _user$project$Main$main = {
 				_1: _user$project$Main$fetchFunctions(_user$project$Main$initState)
 			},
 			update: _user$project$Main$update,
-			subscriptions: function (_p20) {
+			subscriptions: function (_p17) {
 				return _elm_lang$core$Platform_Sub$none;
 			},
 			view: _user$project$Main$view
