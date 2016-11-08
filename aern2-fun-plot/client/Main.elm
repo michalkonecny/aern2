@@ -17,6 +17,8 @@ import Text
 
 import Http
 import Task exposing (Task, andThen)
+import Process exposing (sleep)
+import Time
 -- import AnimationFrame
 
 import Api exposing (..)
@@ -176,10 +178,6 @@ getFunctionsSegmentsUsingSampling s fnIds =
       Task.map (\list -> { s | functionSegments = Dict.fromList list } ) <|
         Task.sequence <| List.map getFunctionSegments fnIds
 
-toServer : (a -> FromServer) -> Task Http.Error a -> Cmd Msg
-toServer tag task =
-  Task.perform (Error << toString) (FromServer << tag) task
-
 -- UPDATE
 
 type Msg
@@ -192,24 +190,36 @@ type FromServer
     -- | NewItem Item
     -- | Delete ItemId
 
+toServer : (a -> FromServer) -> Task Http.Error a -> Cmd Msg
+toServer tag task =
+  Task.perform (Error << toString) (FromServer << tag) task
+
 type FromUI
   = ZoomLevel Percent
+  | ZoomLevelResampleIfNoChange Percent
   | NoAction
+
+viaUI tag task =
+  Task.perform (\ _ -> FromUI NoAction) (FromUI << tag) task
 
 update : Msg -> State -> ( State, Cmd Msg )
 update msg s =
   case msg of
     FromServer fromServer ->
       case fromServer of
-        Functions s' -> s' ! []
+        Functions s' -> { s' | zoomLevel = s.zoomLevel } ! []
     FromUI fromUI ->
       case fromUI of
         ZoomLevel percent ->
           let s' = { s | zoomLevel = percent } in
-          case s.plotArea of
-            Just plotArea ->
-              s' ! [toServer Functions (getFunctionsSegmentsNewPlotArea s' plotArea.domain)]
-            Nothing -> s' ! []
+          s' ! [viaUI ZoomLevelResampleIfNoChange (sleep Time.second `andThen` (\() -> Task.succeed percent))]
+        ZoomLevelResampleIfNoChange percent ->
+          if s.zoomLevel /= percent then s ! []
+          else
+            case s.plotArea of
+              Just plotArea ->
+                s ! [toServer Functions (getFunctionsSegmentsNewPlotArea s plotArea.domain)]
+              Nothing -> s ! []
         NoAction -> s ! []
     Error msg ->
         { s | error = Just msg } ! []

@@ -8136,6 +8136,9 @@ var _elm_lang$html$Html_App$beginnerProgram = function (_p1) {
 		});
 };
 var _elm_lang$html$Html_App$map = _elm_lang$virtual_dom$VirtualDom$map;
+var _elm_lang$core$Process$kill = _elm_lang$core$Native_Scheduler.kill;
+var _elm_lang$core$Process$sleep = _elm_lang$core$Native_Scheduler.sleep;
+var _elm_lang$core$Process$spawn = _elm_lang$core$Native_Scheduler.spawn;
 var _elm_lang$core$Color$fmod = F2(
 	function (f, n) {
 		var integer = _elm_lang$core$Basics$floor(f);
@@ -12442,48 +12445,94 @@ var _user$project$Main$fetchFunctions = function (s) {
 		_user$project$Main$Functions,
 		_user$project$Main$getFunctions(s));
 };
+var _user$project$Main$NoAction = {ctor: 'NoAction'};
+var _user$project$Main$viaUI = F2(
+	function (tag, task) {
+		return A3(
+			_elm_lang$core$Task$perform,
+			function (_p12) {
+				return _user$project$Main$FromUI(_user$project$Main$NoAction);
+			},
+			function (_p13) {
+				return _user$project$Main$FromUI(
+					tag(_p13));
+			},
+			task);
+	});
+var _user$project$Main$ZoomLevelResampleIfNoChange = function (a) {
+	return {ctor: 'ZoomLevelResampleIfNoChange', _0: a};
+};
 var _user$project$Main$update = F2(
 	function (msg, s) {
-		var _p12 = msg;
-		switch (_p12.ctor) {
+		var _p14 = msg;
+		switch (_p14.ctor) {
 			case 'FromServer':
-				var _p13 = _p12._0;
+				var _p15 = _p14._0;
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
-					_p13._0,
+					_elm_lang$core$Native_Utils.update(
+						_p15._0,
+						{zoomLevel: s.zoomLevel}),
 					_elm_lang$core$Native_List.fromArray(
 						[]));
 			case 'FromUI':
-				var _p14 = _p12._0;
-				if (_p14.ctor === 'ZoomLevel') {
-					var s$ = _elm_lang$core$Native_Utils.update(
-						s,
-						{zoomLevel: _p14._0});
-					var _p15 = s.plotArea;
-					if (_p15.ctor === 'Just') {
+				var _p16 = _p14._0;
+				switch (_p16.ctor) {
+					case 'ZoomLevel':
+						var _p19 = _p16._0;
+						var s$ = _elm_lang$core$Native_Utils.update(
+							s,
+							{zoomLevel: _p19});
 						return A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
 							s$,
 							_elm_lang$core$Native_List.fromArray(
 								[
 									A2(
-									_user$project$Main$toServer,
-									_user$project$Main$Functions,
-									A2(_user$project$Main$getFunctionsSegmentsNewPlotArea, s$, _p15._0.domain))
+									_user$project$Main$viaUI,
+									_user$project$Main$ZoomLevelResampleIfNoChange,
+									A2(
+										_elm_lang$core$Task$andThen,
+										_elm_lang$core$Process$sleep(_elm_lang$core$Time$second),
+										function (_p17) {
+											var _p18 = _p17;
+											return _elm_lang$core$Task$succeed(_p19);
+										}))
 								]));
-					} else {
+					case 'ZoomLevelResampleIfNoChange':
+						if (!_elm_lang$core$Native_Utils.eq(s.zoomLevel, _p16._0)) {
+							return A2(
+								_elm_lang$core$Platform_Cmd_ops['!'],
+								s,
+								_elm_lang$core$Native_List.fromArray(
+									[]));
+						} else {
+							var _p20 = s.plotArea;
+							if (_p20.ctor === 'Just') {
+								return A2(
+									_elm_lang$core$Platform_Cmd_ops['!'],
+									s,
+									_elm_lang$core$Native_List.fromArray(
+										[
+											A2(
+											_user$project$Main$toServer,
+											_user$project$Main$Functions,
+											A2(_user$project$Main$getFunctionsSegmentsNewPlotArea, s, _p20._0.domain))
+										]));
+							} else {
+								return A2(
+									_elm_lang$core$Platform_Cmd_ops['!'],
+									s,
+									_elm_lang$core$Native_List.fromArray(
+										[]));
+							}
+						}
+					default:
 						return A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
-							s$,
+							s,
 							_elm_lang$core$Native_List.fromArray(
 								[]));
-					}
-				} else {
-					return A2(
-						_elm_lang$core$Platform_Cmd_ops['!'],
-						s,
-						_elm_lang$core$Native_List.fromArray(
-							[]));
 				}
 			default:
 				return A2(
@@ -12491,13 +12540,12 @@ var _user$project$Main$update = F2(
 					_elm_lang$core$Native_Utils.update(
 						s,
 						{
-							error: _elm_lang$core$Maybe$Just(_p12._0)
+							error: _elm_lang$core$Maybe$Just(_p14._0)
 						}),
 					_elm_lang$core$Native_List.fromArray(
 						[]));
 		}
 	});
-var _user$project$Main$NoAction = {ctor: 'NoAction'};
 var _user$project$Main$ZoomLevel = function (a) {
 	return {ctor: 'ZoomLevel', _0: a};
 };
@@ -12512,9 +12560,9 @@ var _user$project$Main$view = function (s) {
 			[
 				_user$project$Main$slider(
 				{
-					makeMsg: function (_p16) {
+					makeMsg: function (_p21) {
 						return _user$project$Main$FromUI(
-							_user$project$Main$ZoomLevel(_p16));
+							_user$project$Main$ZoomLevel(_p21));
 					},
 					minValue: 50,
 					maxValue: 150,
@@ -12558,7 +12606,7 @@ var _user$project$Main$main = {
 				_1: _user$project$Main$fetchFunctions(_user$project$Main$initState)
 			},
 			update: _user$project$Main$update,
-			subscriptions: function (_p17) {
+			subscriptions: function (_p22) {
 				return _elm_lang$core$Platform_Sub$none;
 			},
 			view: _user$project$Main$view
