@@ -113,7 +113,7 @@ fetchFunctions s =
   toServer Functions (getFunctions s)
 
 getFunctions s =
-  getApiFunction
+  getAern2PlotFunction
   `andThen`
   (\fnIds ->
     getFunctionsDetails fnIds
@@ -131,8 +131,8 @@ getFunctionDetails fnId =
   Task.map (\fnDetails -> (fnId, fnDetails)) <|
     Task.map2
       (\ name domain -> { name = name, domain = domain, points = [] })
-        (getApiFunctionByFunctionIdName fnId)
-        (getApiFunctionByFunctionIdDomain fnId)
+        (getAern2PlotFunctionByFunctionIdName fnId)
+        (getAern2PlotFunctionByFunctionIdDomain fnId)
 
 getFunctionsSegmentsWholeDomain : State -> Task Http.Error State
 getFunctionsSegmentsWholeDomain s =
@@ -160,7 +160,7 @@ getFunctionsSegmentsNewPlotArea s plotDomain =
     sWithPlotArea = { s | plotArea = Just plotArea }
     fnIds = s.functionIds
   in
-  postApiSampling sampling
+  postAern2PlotSampling sampling
   `andThen`
   (\ samplingId ->
     getFunctionsSegmentsUsingSampling { sWithPlotArea | samplingId = Just samplingId } fnIds)
@@ -173,7 +173,7 @@ getFunctionsSegmentsUsingSampling s fnIds =
       let
         getFunctionSegments fnId =
           Task.map (\segs -> (fnId, List.map functionSegmentF segs)) <|
-            getApiFunctionByFunctionIdValuesForSamplingBySamplingId fnId samplingId
+            getAern2PlotFunctionByFunctionIdValuesForSamplingBySamplingId fnId samplingId
       in
       Task.map (\list -> { s | functionSegments = Dict.fromList list } ) <|
         Task.sequence <| List.map getFunctionSegments fnIds

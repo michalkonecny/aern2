@@ -11632,7 +11632,7 @@ var _evancz$elm_http$Http$post = F3(
 			decoder,
 			A2(_evancz$elm_http$Http$send, _evancz$elm_http$Http$defaultSettings, request));
 	});
-var _user$project$Api$getApiFunctionByFunctionIdName = function (functionId) {
+var _user$project$Api$getAern2PlotFunctionByFunctionIdName = function (functionId) {
 	var request = {
 		verb: 'GET',
 		headers: _elm_lang$core$Native_List.fromArray(
@@ -11641,24 +11641,21 @@ var _user$project$Api$getApiFunctionByFunctionIdName = function (functionId) {
 			]),
 		url: A2(
 			_elm_lang$core$Basics_ops['++'],
-			'/',
+			'aern2Plot',
 			A2(
 				_elm_lang$core$Basics_ops['++'],
-				'api',
+				'/',
 				A2(
 					_elm_lang$core$Basics_ops['++'],
-					'/',
+					'function',
 					A2(
 						_elm_lang$core$Basics_ops['++'],
-						'function',
+						'/',
 						A2(
 							_elm_lang$core$Basics_ops['++'],
-							'/',
-							A2(
-								_elm_lang$core$Basics_ops['++'],
-								_evancz$elm_http$Http$uriEncode(
-									_elm_lang$core$Basics$toString(functionId)),
-								A2(_elm_lang$core$Basics_ops['++'], '/', 'name'))))))),
+							_evancz$elm_http$Http$uriEncode(
+								_elm_lang$core$Basics$toString(functionId)),
+							A2(_elm_lang$core$Basics_ops['++'], '/', 'name')))))),
 		body: _evancz$elm_http$Http$empty
 	};
 	return A2(
@@ -11666,7 +11663,7 @@ var _user$project$Api$getApiFunctionByFunctionIdName = function (functionId) {
 		_elm_lang$core$Json_Decode$string,
 		A2(_evancz$elm_http$Http$send, _evancz$elm_http$Http$defaultSettings, request));
 };
-var _user$project$Api$getApiFunction = function () {
+var _user$project$Api$getAern2PlotFunction = function () {
 	var request = {
 		verb: 'GET',
 		headers: _elm_lang$core$Native_List.fromArray(
@@ -11675,11 +11672,8 @@ var _user$project$Api$getApiFunction = function () {
 			]),
 		url: A2(
 			_elm_lang$core$Basics_ops['++'],
-			'/',
-			A2(
-				_elm_lang$core$Basics_ops['++'],
-				'api',
-				A2(_elm_lang$core$Basics_ops['++'], '/', 'function'))),
+			'aern2Plot',
+			A2(_elm_lang$core$Basics_ops['++'], '/', 'function')),
 		body: _evancz$elm_http$Http$empty
 	};
 	return A2(
@@ -11735,7 +11729,7 @@ var _user$project$Api$encodeSampling = function (x) {
 			}
 			]));
 };
-var _user$project$Api$postApiSampling = function (body) {
+var _user$project$Api$postAern2PlotSampling = function (body) {
 	var request = {
 		verb: 'POST',
 		headers: _elm_lang$core$Native_List.fromArray(
@@ -11744,11 +11738,8 @@ var _user$project$Api$postApiSampling = function (body) {
 			]),
 		url: A2(
 			_elm_lang$core$Basics_ops['++'],
-			'/',
-			A2(
-				_elm_lang$core$Basics_ops['++'],
-				'api',
-				A2(_elm_lang$core$Basics_ops['++'], '/', 'sampling'))),
+			'aern2Plot',
+			A2(_elm_lang$core$Basics_ops['++'], '/', 'sampling')),
 		body: _evancz$elm_http$Http$string(
 			A2(
 				_elm_lang$core$Json_Encode$encode,
@@ -11760,7 +11751,7 @@ var _user$project$Api$postApiSampling = function (body) {
 		_elm_lang$core$Json_Decode$int,
 		A2(_evancz$elm_http$Http$send, _evancz$elm_http$Http$defaultSettings, request));
 };
-var _user$project$Api$getApiSampling = function () {
+var _user$project$Api$getAern2PlotSampling = function () {
 	var request = {
 		verb: 'GET',
 		headers: _elm_lang$core$Native_List.fromArray(
@@ -11769,11 +11760,8 @@ var _user$project$Api$getApiSampling = function () {
 			]),
 		url: A2(
 			_elm_lang$core$Basics_ops['++'],
-			'/',
-			A2(
-				_elm_lang$core$Basics_ops['++'],
-				'api',
-				A2(_elm_lang$core$Basics_ops['++'], '/', 'sampling'))),
+			'aern2Plot',
+			A2(_elm_lang$core$Basics_ops['++'], '/', 'sampling')),
 		body: _evancz$elm_http$Http$empty
 	};
 	return A2(
@@ -11814,7 +11802,7 @@ var _user$project$Api$decodeSampling = A2(
 		_elm_lang$core$Json_Decode$succeed(_user$project$Api$Sampling),
 		A2(_elm_lang$core$Json_Decode_ops[':='], 'sampling_dom\'', _user$project$Api$decodeDyadicIntervalAPI)),
 	A2(_elm_lang$core$Json_Decode_ops[':='], 'sampling_maxStep', _user$project$Api$decodeDyadicS));
-var _user$project$Api$getApiSamplingBySamplingId = function (samplingId) {
+var _user$project$Api$getAern2PlotSamplingBySamplingId = function (samplingId) {
 	var request = {
 		verb: 'GET',
 		headers: _elm_lang$core$Native_List.fromArray(
@@ -11823,21 +11811,18 @@ var _user$project$Api$getApiSamplingBySamplingId = function (samplingId) {
 			]),
 		url: A2(
 			_elm_lang$core$Basics_ops['++'],
-			'/',
+			'aern2Plot',
 			A2(
 				_elm_lang$core$Basics_ops['++'],
-				'api',
+				'/',
 				A2(
 					_elm_lang$core$Basics_ops['++'],
-					'/',
+					'sampling',
 					A2(
 						_elm_lang$core$Basics_ops['++'],
-						'sampling',
-						A2(
-							_elm_lang$core$Basics_ops['++'],
-							'/',
-							_evancz$elm_http$Http$uriEncode(
-								_elm_lang$core$Basics$toString(samplingId))))))),
+						'/',
+						_evancz$elm_http$Http$uriEncode(
+							_elm_lang$core$Basics$toString(samplingId)))))),
 		body: _evancz$elm_http$Http$empty
 	};
 	return A2(
@@ -11845,7 +11830,7 @@ var _user$project$Api$getApiSamplingBySamplingId = function (samplingId) {
 		_user$project$Api$decodeSampling,
 		A2(_evancz$elm_http$Http$send, _evancz$elm_http$Http$defaultSettings, request));
 };
-var _user$project$Api$getApiFunctionByFunctionIdDomain = function (functionId) {
+var _user$project$Api$getAern2PlotFunctionByFunctionIdDomain = function (functionId) {
 	var request = {
 		verb: 'GET',
 		headers: _elm_lang$core$Native_List.fromArray(
@@ -11854,24 +11839,21 @@ var _user$project$Api$getApiFunctionByFunctionIdDomain = function (functionId) {
 			]),
 		url: A2(
 			_elm_lang$core$Basics_ops['++'],
-			'/',
+			'aern2Plot',
 			A2(
 				_elm_lang$core$Basics_ops['++'],
-				'api',
+				'/',
 				A2(
 					_elm_lang$core$Basics_ops['++'],
-					'/',
+					'function',
 					A2(
 						_elm_lang$core$Basics_ops['++'],
-						'function',
+						'/',
 						A2(
 							_elm_lang$core$Basics_ops['++'],
-							'/',
-							A2(
-								_elm_lang$core$Basics_ops['++'],
-								_evancz$elm_http$Http$uriEncode(
-									_elm_lang$core$Basics$toString(functionId)),
-								A2(_elm_lang$core$Basics_ops['++'], '/', 'domain'))))))),
+							_evancz$elm_http$Http$uriEncode(
+								_elm_lang$core$Basics$toString(functionId)),
+							A2(_elm_lang$core$Basics_ops['++'], '/', 'domain')))))),
 		body: _evancz$elm_http$Http$empty
 	};
 	return A2(
@@ -11915,7 +11897,7 @@ var _user$project$Api$decodeFunctionSegment = A2(
 			A2(_elm_lang$core$Json_Decode_ops[':='], 'functionSegmentDom', _user$project$Api$decodeDyadicIntervalAPI)),
 		A2(_elm_lang$core$Json_Decode_ops[':='], 'functionSegmentValueL', _user$project$Api$decodeMPBallIntervalAPI)),
 	A2(_elm_lang$core$Json_Decode_ops[':='], 'functionSegmentValueR', _user$project$Api$decodeMPBallIntervalAPI));
-var _user$project$Api$getApiFunctionByFunctionIdValuesForSamplingBySamplingId = F2(
+var _user$project$Api$getAern2PlotFunctionByFunctionIdValuesForSamplingBySamplingId = F2(
 	function (functionId, samplingId) {
 		var request = {
 			verb: 'GET',
@@ -11925,34 +11907,31 @@ var _user$project$Api$getApiFunctionByFunctionIdValuesForSamplingBySamplingId = 
 				]),
 			url: A2(
 				_elm_lang$core$Basics_ops['++'],
-				'/',
+				'aern2Plot',
 				A2(
 					_elm_lang$core$Basics_ops['++'],
-					'api',
+					'/',
 					A2(
 						_elm_lang$core$Basics_ops['++'],
-						'/',
+						'function',
 						A2(
 							_elm_lang$core$Basics_ops['++'],
-							'function',
+							'/',
 							A2(
 								_elm_lang$core$Basics_ops['++'],
-								'/',
+								_evancz$elm_http$Http$uriEncode(
+									_elm_lang$core$Basics$toString(functionId)),
 								A2(
 									_elm_lang$core$Basics_ops['++'],
-									_evancz$elm_http$Http$uriEncode(
-										_elm_lang$core$Basics$toString(functionId)),
+									'/',
 									A2(
 										_elm_lang$core$Basics_ops['++'],
-										'/',
+										'valuesForSampling',
 										A2(
 											_elm_lang$core$Basics_ops['++'],
-											'valuesForSampling',
-											A2(
-												_elm_lang$core$Basics_ops['++'],
-												'/',
-												_evancz$elm_http$Http$uriEncode(
-													_elm_lang$core$Basics$toString(samplingId))))))))))),
+											'/',
+											_evancz$elm_http$Http$uriEncode(
+												_elm_lang$core$Basics$toString(samplingId)))))))))),
 			body: _evancz$elm_http$Http$empty
 		};
 		return A2(
@@ -12259,8 +12238,8 @@ var _user$project$Main$getFunctionDetails = function (fnId) {
 							[])
 					};
 				}),
-			_user$project$Api$getApiFunctionByFunctionIdName(fnId),
-			_user$project$Api$getApiFunctionByFunctionIdDomain(fnId)));
+			_user$project$Api$getAern2PlotFunctionByFunctionIdName(fnId),
+			_user$project$Api$getAern2PlotFunctionByFunctionIdDomain(fnId)));
 };
 var _user$project$Main$getFunctionsDetails = function (fnIds) {
 	return A2(
@@ -12306,7 +12285,7 @@ var _user$project$Main$getFunctionsSegmentsUsingSampling = F2(
 							_1: A2(_elm_lang$core$List$map, _user$project$Main$functionSegmentF, segs)
 						};
 					},
-					A2(_user$project$Api$getApiFunctionByFunctionIdValuesForSamplingBySamplingId, fnId, _p9._0));
+					A2(_user$project$Api$getAern2PlotFunctionByFunctionIdValuesForSamplingBySamplingId, fnId, _p9._0));
 			};
 			return A2(
 				_elm_lang$core$Task$map,
@@ -12346,7 +12325,7 @@ var _user$project$Main$getFunctionsSegmentsNewPlotArea = F2(
 		var sampling = {sampling_dom$: plotDomain, sampling_maxStep: maxStep};
 		return A2(
 			_elm_lang$core$Task$andThen,
-			_user$project$Api$postApiSampling(sampling),
+			_user$project$Api$postAern2PlotSampling(sampling),
 			function (samplingId) {
 				return A2(
 					_user$project$Main$getFunctionsSegmentsUsingSampling,
@@ -12372,7 +12351,7 @@ var _user$project$Main$getFunctionsSegmentsWholeDomain = function (s) {
 var _user$project$Main$getFunctions = function (s) {
 	return A2(
 		_elm_lang$core$Task$andThen,
-		_user$project$Api$getApiFunction,
+		_user$project$Api$getAern2PlotFunction,
 		function (fnIds) {
 			return A2(
 				_elm_lang$core$Task$andThen,

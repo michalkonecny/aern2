@@ -7,3 +7,5 @@ ghcextensions=-XRebindableSyntax -XDataKinds -XTypeOperators -XTypeSynonymInstan
 
 Api.elm: GenerateElm.hs $(apihs)
 	(cd ../ ; stack exec -- runhaskell $(ghcextensions) -iserver/src client/GenerateElm.hs)
+	sed 's:"/" ++ "aern2:"aern2:' $@ > $@-
+	mv $@- $@

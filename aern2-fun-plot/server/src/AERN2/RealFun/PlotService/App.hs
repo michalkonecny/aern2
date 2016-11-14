@@ -22,7 +22,7 @@ import Numeric.MixedTypes
 -- import qualified Prelude as P
 -- import Text.Printf
 
--- import           System.IO
+import           System.IO
 
 import           Control.Concurrent
 import           Control.Monad.IO.Class
@@ -49,8 +49,8 @@ startServer fns shouldLog port = do
     | otherwise = id
   settings =
     setPort port $
-    -- setBeforeMainLoop (hPutStrLn stderr
-    --   ("listening on port " ++ show port ++ "...")) $
+    setBeforeMainLoop (hPutStrLn stderr
+      ("listening on port " ++ show port ++ "...")) $
     defaultSettings
 
 type WithAssets = Api :<|> Raw

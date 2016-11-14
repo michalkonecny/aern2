@@ -50,7 +50,7 @@ import AERN2.Interval
 
 
 type Api =
-  "api" :>
+  "aern2Plot" :>
     ("sampling" :> Get '[JSON] [SamplingId] :<|>
      "sampling" :> ReqBody '[JSON] Sampling :> Post '[JSON] SamplingId :<|>
      "sampling" :> Capture "samplingId" SamplingId :> Get '[JSON] Sampling :<|>

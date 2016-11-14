@@ -8,8 +8,8 @@ import String
 import Task
 
 
-getApiSampling : Task.Task Http.Error (List Int)
-getApiSampling =
+getAern2PlotSampling : Task.Task Http.Error (List Int)
+getAern2PlotSampling =
   let
     request =
       { verb =
@@ -17,7 +17,7 @@ getApiSampling =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "/" ++ "api"
+          "aern2Plot"
           ++ "/" ++ "sampling"
       , body =
           Http.empty
@@ -63,8 +63,8 @@ encodeDyadicS x =
     , ( "dyadic_exp", Json.Encode.int x.dyadic_exp )
     ]
 
-postApiSampling : Sampling -> Task.Task Http.Error (Int)
-postApiSampling body =
+postAern2PlotSampling : Sampling -> Task.Task Http.Error (Int)
+postAern2PlotSampling body =
   let
     request =
       { verb =
@@ -72,7 +72,7 @@ postApiSampling body =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "/" ++ "api"
+          "aern2Plot"
           ++ "/" ++ "sampling"
       , body =
           Http.string (Json.Encode.encode 0 (encodeSampling body))
@@ -100,8 +100,8 @@ decodeDyadicS =
     |: ("dyadic_value" := Json.Decode.int)
     |: ("dyadic_exp" := Json.Decode.int)
 
-getApiSamplingBySamplingId : Int -> Task.Task Http.Error (Sampling)
-getApiSamplingBySamplingId samplingId =
+getAern2PlotSamplingBySamplingId : Int -> Task.Task Http.Error (Sampling)
+getAern2PlotSamplingBySamplingId samplingId =
   let
     request =
       { verb =
@@ -109,7 +109,7 @@ getApiSamplingBySamplingId samplingId =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "/" ++ "api"
+          "aern2Plot"
           ++ "/" ++ "sampling"
           ++ "/" ++ (samplingId |> toString |> Http.uriEncode)
       , body =
@@ -120,8 +120,8 @@ getApiSamplingBySamplingId samplingId =
       decodeSampling
       (Http.send Http.defaultSettings request)
 
-getApiFunction : Task.Task Http.Error (List Int)
-getApiFunction =
+getAern2PlotFunction : Task.Task Http.Error (List Int)
+getAern2PlotFunction =
   let
     request =
       { verb =
@@ -129,7 +129,7 @@ getApiFunction =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "/" ++ "api"
+          "aern2Plot"
           ++ "/" ++ "function"
       , body =
           Http.empty
@@ -139,8 +139,8 @@ getApiFunction =
       (Json.Decode.list Json.Decode.int)
       (Http.send Http.defaultSettings request)
 
-getApiFunctionByFunctionIdDomain : Int -> Task.Task Http.Error (DyadicIntervalAPI)
-getApiFunctionByFunctionIdDomain functionId =
+getAern2PlotFunctionByFunctionIdDomain : Int -> Task.Task Http.Error (DyadicIntervalAPI)
+getAern2PlotFunctionByFunctionIdDomain functionId =
   let
     request =
       { verb =
@@ -148,7 +148,7 @@ getApiFunctionByFunctionIdDomain functionId =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "/" ++ "api"
+          "aern2Plot"
           ++ "/" ++ "function"
           ++ "/" ++ (functionId |> toString |> Http.uriEncode)
           ++ "/" ++ "domain"
@@ -195,8 +195,8 @@ decodeMPBall =
     |: ("ball_value" := decodeDyadicS)
     |: ("ball_error" := decodeDyadicS)
 
-getApiFunctionByFunctionIdValuesForSamplingBySamplingId : Int -> Int -> Task.Task Http.Error (List (FunctionSegment))
-getApiFunctionByFunctionIdValuesForSamplingBySamplingId functionId samplingId =
+getAern2PlotFunctionByFunctionIdValuesForSamplingBySamplingId : Int -> Int -> Task.Task Http.Error (List (FunctionSegment))
+getAern2PlotFunctionByFunctionIdValuesForSamplingBySamplingId functionId samplingId =
   let
     request =
       { verb =
@@ -204,7 +204,7 @@ getApiFunctionByFunctionIdValuesForSamplingBySamplingId functionId samplingId =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "/" ++ "api"
+          "aern2Plot"
           ++ "/" ++ "function"
           ++ "/" ++ (functionId |> toString |> Http.uriEncode)
           ++ "/" ++ "valuesForSampling"
@@ -217,8 +217,8 @@ getApiFunctionByFunctionIdValuesForSamplingBySamplingId functionId samplingId =
       (Json.Decode.list decodeFunctionSegment)
       (Http.send Http.defaultSettings request)
 
-getApiFunctionByFunctionIdName : Int -> Task.Task Http.Error (String)
-getApiFunctionByFunctionIdName functionId =
+getAern2PlotFunctionByFunctionIdName : Int -> Task.Task Http.Error (String)
+getAern2PlotFunctionByFunctionIdName functionId =
   let
     request =
       { verb =
@@ -226,7 +226,7 @@ getApiFunctionByFunctionIdName functionId =
       , headers =
           [("Content-Type", "application/json")]
       , url =
-          "/" ++ "api"
+          "aern2Plot"
           ++ "/" ++ "function"
           ++ "/" ++ (functionId |> toString |> Http.uriEncode)
           ++ "/" ++ "name"

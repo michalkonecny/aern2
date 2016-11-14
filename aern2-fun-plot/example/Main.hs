@@ -11,7 +11,7 @@ import AERN2.Poly.Cheb
 import AERN2.RealFun.PlotService as Plot
 
 main :: IO ()
-main = Plot.startServer fns shouldLog (int 3000)
+main = Plot.startServer fns shouldLog (int 4000)
   where
   shouldLog = True
 
