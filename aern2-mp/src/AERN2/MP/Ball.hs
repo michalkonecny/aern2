@@ -22,7 +22,7 @@ module AERN2.MP.Ball
   , reducePrecionIfInaccurate
   -- * Ball construction/extraction functions
   , IsBall(..)
-  , endpoints, fromEndpoints
+  , IsInterval(..)
   , integerBounds
   -- , endpointsMP, fromEndpointsMP
   -- * Ball operations (see also instances)

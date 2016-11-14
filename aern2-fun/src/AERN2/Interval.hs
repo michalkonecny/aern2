@@ -13,7 +13,7 @@
 
 module AERN2.Interval
 (
-  Interval(..), singleton, endpoints, fromEndpoints
+  Interval(..), singleton
   , width, split, contains, intersect
   , DyadicInterval, CanBeDyadicInterval, dyadicInterval
   , RealInterval, CanBeRealInterval, realInterval
@@ -33,7 +33,7 @@ import Data.Typeable
 -- import Test.QuickCheck
 
 import AERN2.MP.Dyadic
-import AERN2.MP.Ball hiding (contains, intersect, endpoints, fromEndpoints)
+import AERN2.MP.Ball hiding (contains, intersect)
 import qualified AERN2.MP.Ball as MPBall
 
 import AERN2.Real
@@ -47,11 +47,9 @@ instance (Show l, Show r) => Show (Interval l r) where
 singleton :: a -> Interval a a
 singleton a = Interval a a
 
-endpoints :: Interval l r -> (l,r)
-endpoints (Interval l r) = (l,r)
-
-fromEndpoints :: (l,r) -> Interval l r
-fromEndpoints (l,r) = Interval l r
+instance IsInterval (Interval e e) e where
+  fromEndpoints l r = Interval l r
+  endpoints (Interval l r) = (l,r)
 
 width :: (CanSub r l) => Interval l r -> SubType r l
 width (Interval l r) = r - l
@@ -114,7 +112,8 @@ instance ConvertibleExactly MPBall DyadicInterval where
   safeConvertExactly ball =
     Right $ Interval (centre l) (centre r)
     where
-    (l,r) = MPBall.endpoints ball
+    l,r :: MPBall
+    (l,r) = endpoints ball
 
 instance ConvertibleExactly DyadicInterval MPBall where
   safeConvertExactly (Interval lD rD) =

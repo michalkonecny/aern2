@@ -22,7 +22,7 @@ module AERN2.MP.Ball.Type
   , contains
   -- * Ball construction/extraction functions
   , IsBall(..)
-  , endpoints, fromEndpoints
+  , IsInterval(..)
   , endpointsMP, fromEndpointsMP
 )
 where
@@ -111,35 +111,41 @@ contains (MPBall xLarge eLarge) (MPBall xSmall eSmall) =
 {- ball construction/extraction functions -}
 
 fromEndpointsMP :: MPFloat -> MPFloat -> MPBall
-fromEndpointsMP l u =
-    MPBall (mpFloat cDy) (errorBound $ mpFloat eDy)
-    where
-    lDy = dyadic l
-    uDy = dyadic u
-    cDy = (lDy + uDy) * 0.5
-    eDy = (uDy - cDy) `max` (cDy - lDy)
+fromEndpointsMP = fromEndpoints
 
 endpointsMP :: MPBall -> (MPFloat, MPFloat)
-endpointsMP (MPBall x e) = (mpFloat lDy, mpFloat uDy)
-    where
-    xDy = dyadic x
-    eDy = dyadic e
-    lDy   = xDy - eDy
-    uDy   = xDy + eDy
+endpointsMP = endpoints
 
-fromEndpoints :: MPBall -> MPBall -> MPBall
-fromEndpoints l u =
-    fromEndpointsMP lMP uMP
-    where
-    (lMP, _) = endpointsMP l
-    (_, uMP) = endpointsMP u
+class IsInterval i e where
+  fromEndpoints :: e -> e -> i
+  endpoints :: i -> (e,e)
 
-endpoints :: MPBall -> (MPBall, MPBall)
-endpoints x = (l,u)
-    where
-    l = MPBall lMP (errorBound 0)
-    u = MPBall uMP (errorBound 0)
-    (lMP, uMP) = endpointsMP x
+instance IsInterval MPBall MPFloat where
+  fromEndpoints l u =
+      MPBall (mpFloat cDy) (errorBound $ mpFloat eDy)
+      where
+      lDy = dyadic l
+      uDy = dyadic u
+      cDy = (lDy + uDy) * 0.5
+      eDy = (uDy - cDy) `max` (cDy - lDy)
+  endpoints (MPBall x e) = (mpFloat lDy, mpFloat uDy)
+      where
+      xDy = dyadic x
+      eDy = dyadic e
+      lDy   = xDy - eDy
+      uDy   = xDy + eDy
+
+instance IsInterval MPBall MPBall where
+  fromEndpoints l u =
+      fromEndpointsMP lMP uMP
+      where
+      (lMP, _) = endpointsMP l
+      (_, uMP) = endpointsMP u
+  endpoints x = (l,u)
+      where
+      l = MPBall lMP (errorBound 0)
+      u = MPBall uMP (errorBound 0)
+      (lMP, uMP) = endpointsMP x
 
 class IsBall t where
   type CentreType t

@@ -49,6 +49,9 @@ type Degree = Integer
 terms_empty :: Terms c
 terms_empty = Map.empty
 
+terms_size :: Terms c -> Integer
+terms_size = integer . Map.size
+
 terms_insertWith :: (c -> c -> c) -> Degree -> c -> Terms c -> Terms c
 terms_insertWith = Map.insertWith
 
@@ -67,6 +70,9 @@ terms_fromListAddCoeffs newTerms =
 
 terms_unionWith :: (c -> c -> c) -> Terms c -> Terms c -> Terms c
 terms_unionWith = Map.unionWith
+
+terms_filter :: (k -> a -> Bool) -> Map.Map k a -> Map.Map k a
+terms_filter = Map.filterWithKey
 
 terms_degree :: Terms c -> Degree
 terms_degree = fst . Map.findMax

@@ -25,8 +25,10 @@ import qualified Data.List as List
 -- import Test.Hspec
 -- import Test.QuickCheck
 
+import AERN2.Norm
+
 import AERN2.MP.ErrorBound
-import AERN2.MP.Ball (IsBall(..), MPBall)
+import AERN2.MP.Ball (IsBall(..), IsInterval(..), MPBall)
 import AERN2.MP.Dyadic
 
 -- import AERN2.Real
@@ -67,8 +69,8 @@ instance (IsBall c) => IsBall (ChPoly c) where
   updateRadius updateFn (ChPoly dom (Poly terms)) =
     ChPoly dom (Poly $ terms_updateConst (updateRadius updateFn) terms)
 
-type CanBeChPoly c t = ConvertibleExactly (DyadicInterval, t) (ChPoly c)
-chPoly :: (CanBeChPoly c t) => (DyadicInterval, t) -> (ChPoly c)
+type CanBeChPoly c t = ConvertibleExactly t (ChPoly c)
+chPoly :: (CanBeChPoly c t) => t -> (ChPoly c)
 chPoly = convertExactly
 
 instance (ConvertibleExactly t c) => ConvertibleExactly (DyadicInterval, t) (ChPoly c)
@@ -77,6 +79,51 @@ instance (ConvertibleExactly t c) => ConvertibleExactly (DyadicInterval, t) (ChP
     case safeConvertExactly x of
       Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)])
       Left e -> Left e
+
+instance (ConvertibleExactly t c) => ConvertibleExactly (ChPoly c, t) (ChPoly c)
+  where
+  safeConvertExactly (ChPoly dom _, x) =
+    case safeConvertExactly x of
+      Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)])
+      Left e -> Left e
+
+
+{-|
+    Drop all terms that whose degree is above the given limit or whose norm is at or below the threshold.
+    Compensate for the drops in the constant term.
+-}
+reduceDegreeAndSweep ::
+  (Ring c, IsInterval c c, HasNorm c) =>
+  Degree -> NormLog -> ChPoly c -> ChPoly c
+reduceDegreeAndSweep maxDegree thresholdNormLog p =
+    p { chPoly_poly = Poly terms' }
+    where
+    (Poly terms) = chPoly_poly p
+    terms' =
+      reduceDegreeAndSweepTerms maxDegree thresholdNormLog terms
+
+{-|
+    Drop all terms that whose degree is above the given limit or whose norm is at or below the threshold.
+    Compensate for the drops in the constant term.
+-}
+reduceDegreeAndSweepTerms ::
+  (Ring c, IsInterval c c, HasNorm c) =>
+  Degree -> NormLog -> Terms c -> Terms c
+reduceDegreeAndSweepTerms maxDegree thresholdNormLog terms
+    | terms_size koTerms == 0 = terms
+    | otherwise =
+        terms_insertWith (+) 0 errorBall (terms_filter isOK terms)
+    where
+    errorBall =
+        sum $ map plusMinus $ terms_coeffs koTerms
+        where
+        plusMinus c = fromEndpoints (-c) c
+    koTerms = terms_filter isNotOK terms
+    isOK deg coeff =
+        deg <= maxDegree && (deg == 0 || getNormLog coeff > thresholdNormLog)
+    isNotOK deg coeff =
+        not $ isOK deg coeff
+
 
 {- Polynomial balls -}
 
@@ -90,11 +137,20 @@ data Ball c = Ball { ball_value :: c, ball_radius :: ErrorBound }
 normaliseBall :: (IsBall c) => Ball c -> Ball c
 normaliseBall (Ball x e) = Ball (centreAsBall x) (radius x + e)
 
-instance (ConvertibleExactly (DyadicInterval, t) c) => ConvertibleExactly (DyadicInterval, t) (Ball c)
+instance (ConvertibleExactly (DyadicInterval, t) c) =>
+  ConvertibleExactly (DyadicInterval, t) (Ball c)
   where
   safeConvertExactly (dom, x) =
     case safeConvertExactly (dom, x) of
       Right c -> Right $ Ball c (errorBound 0)
+      Left e -> Left e
+
+instance (ConvertibleExactly (c, t) c) =>
+  ConvertibleExactly (Ball c, t) (Ball c)
+  where
+  safeConvertExactly (Ball sample eb, x) =
+    case safeConvertExactly (sample, x) of
+      Right c -> Right $ Ball c eb
       Left e -> Left e
 
 instance (HasDomain c) => HasDomain (Ball c)

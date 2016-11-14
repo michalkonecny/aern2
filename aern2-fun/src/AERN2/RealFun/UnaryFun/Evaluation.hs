@@ -37,7 +37,7 @@ import AERN2.Norm
 import AERN2.MP.Accuracy
 import AERN2.MP.Precision
 import AERN2.MP.Dyadic
-import AERN2.MP.Ball (MPBall, mpBall, IsBall(..))
+import AERN2.MP.Ball (MPBall, mpBall, IsBall(..), IsInterval(..))
 import qualified AERN2.MP.Ball as MPBall
 
 import AERN2.QA
@@ -185,7 +185,7 @@ rangeOnIntervalSubdivide evalOnInterval di =
     fi = evalOnInterval
   minSequence = map negate $ search fi fdiL $ Q.singleton $ MaxSearchSegment di fdiL fdiR
     where
-    (fdiL, fdiR) = gunzip $ fmap MPBall.endpoints fdi
+    (fdiL, fdiR) = gunzip $ fmap endpoints fdi
     (_, fdi) = fi di
     fi = (\(a,b) -> (negate a,negate b)) . evalOnInterval
   search fi prevL prevQueue =
@@ -208,7 +208,8 @@ rangeOnIntervalSubdivide evalOnInterval di =
     nextL
       | hasCertainException prevL = segValL
       | otherwise = liftA2 max segValL prevL
-    currentBall = liftA2 MPBall.fromEndpoints nextL segValR
+    currentBall :: CatchingNumExceptions MPBall
+    currentBall = liftA2 fromEndpoints nextL segValR
 
     -- split the current segment and pre-compute
     (seg1, seg2) = Interval.split seg
