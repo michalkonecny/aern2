@@ -21,7 +21,7 @@ library
     base == 4.*
     , containers == 0.5.*
     , psqueues == 0.2.*
-    -- , arithmoi == 0.4.*
+    , arithmoi == 0.4.*
     , convertible >= 1.1.1.0 && < 1.2
     , hspec >= 2.1 && < 2.3
     -- , hspec-smallcheck >= 0.3 && < 0.5
@@ -66,6 +66,8 @@ library
     AERN2.Poly.Cheb.Type
     AERN2.Poly.Cheb.Eval
     AERN2.Poly.Cheb.Ring
+    AERN2.Poly.Cheb.DCT
+    AERN2.Poly.Cheb.Sinecosine
     -- AERN2.Poly.Cheb.Aux
     -- AERN2.Poly.Cheb.Field
     -- AERN2.Poly.Cheb.Elementary
