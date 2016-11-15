@@ -80,11 +80,11 @@ instance (CanAddSameType c) => CanAddAsymmetric (ChPoly c) (ChPoly c) where
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |]]
   (\ t -> [d|
-    instance (CanAddThis c $t) => CanAddAsymmetric $t (ChPoly c) where
+    instance (CanAddThis c $t, HasIntegers c) => CanAddAsymmetric $t (ChPoly c) where
       type AddType $t (ChPoly c) = ChPoly c
       add n (ChPoly d2 p2) = ChPoly d2 (n + p2)
 
-    instance (CanAddThis c $t) => CanAddAsymmetric (ChPoly c) $t where
+    instance (CanAddThis c $t, HasIntegers c) => CanAddAsymmetric (ChPoly c) $t where
       type AddType (ChPoly c) $t = ChPoly c
       add (ChPoly d1 p1) n = ChPoly d1 (n + p1)
   |]))
@@ -108,8 +108,8 @@ instance (CanAddSameType c, CanNegSameType c) => CanSub (ChPoly c) (ChPoly c)
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |]]
   (\ t -> [d|
-    instance (CanAddThis c $t, CanNegSameType c) => CanSub $t (ChPoly c)
-    instance (CanAddThis c $t) => CanSub (ChPoly c) $t
+    instance (CanAddThis c $t, CanNegSameType c, HasIntegers c) => CanSub $t (ChPoly c)
+    instance (CanAddThis c $t, HasIntegers c) => CanSub (ChPoly c) $t
   |]))
 
 

@@ -66,6 +66,10 @@ library
     AERN2.Poly.Cheb.Type
     AERN2.Poly.Cheb.Eval
     AERN2.Poly.Cheb.Ring
+    AERN2.Poly.Power.Type
+    AERN2.Poly.Power.Eval
+    AERN2.Poly.Power.Roots
+    AERN2.Poly.Power.Maximum
     -- AERN2.Poly.Cheb.Aux
     -- AERN2.Poly.Cheb.Field
     -- AERN2.Poly.Cheb.Elementary
