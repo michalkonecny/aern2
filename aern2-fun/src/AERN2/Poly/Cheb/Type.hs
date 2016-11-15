@@ -58,7 +58,7 @@ instance (HasDyadics c) => HasVars (ChPoly c) where
     c1 = coeff $ (r - l) * 0.5
     coeff = convertExactly
 
-instance (IsBall c) => IsBall (ChPoly c) where
+instance (IsBall c, HasIntegers c) => IsBall (ChPoly c) where
   type CentreType (ChPoly c) = ChPoly c
   radius (ChPoly _dom (Poly terms)) =
     List.foldl' (+) (errorBound 0) $ map radius $ terms_coeffs terms

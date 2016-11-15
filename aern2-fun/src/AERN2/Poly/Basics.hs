@@ -18,10 +18,11 @@ module AERN2.Poly.Basics
 where
 
 import Numeric.MixedTypes
--- import qualified Prelude as P
+import qualified Prelude as P
 -- import Text.Printf
 
 import qualified Data.Map as Map
+import qualified Data.List as List
 
 -- import Test.Hspec
 -- import Test.QuickCheck
@@ -86,8 +87,11 @@ terms_coeffs = Map.elems
 terms_map :: (c1 -> c2) -> Terms c1 -> Terms c2
 terms_map = Map.map
 
-terms_updateConst :: (c -> c) -> Terms c -> Terms c
-terms_updateConst updateFn = Map.adjust updateFn 0
+terms_updateConst :: (HasIntegers c) => (c -> c) -> Terms c -> Terms c
+terms_updateConst updateFn ts =
+  case Map.lookup 0 ts of
+    Nothing -> Map.insert 0 (updateFn $ convertExactly 0) ts
+    Just _  -> Map.adjust updateFn 0 ts
 
 terms_lookupCoeffDoubleConstTerm ::
   (HasIntegers c, CanAddSameType c) =>
@@ -122,11 +126,11 @@ instance (CanAddSameType c) => CanAddAsymmetric (Poly c) (Poly c) where
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |]]
   (\ t -> [d|
-    instance (CanAddThis c $t) => CanAddAsymmetric $t (Poly c) where
+    instance (CanAddThis c $t, HasIntegers c) => CanAddAsymmetric $t (Poly c) where
       type AddType $t (Poly c) = Poly c
       add n (Poly t2) = Poly $ terms_updateConst (+ n) t2
 
-    instance (CanAddThis c $t) => CanAddAsymmetric (Poly c) $t where
+    instance (CanAddThis c $t, HasIntegers c) => CanAddAsymmetric (Poly c) $t where
       type AddType (Poly c) $t = Poly c
       add (Poly t1) n = Poly $ terms_updateConst (+ n) t1
   |]))
@@ -138,8 +142,8 @@ instance (CanNegSameType c, CanAddSameType c) => CanSub (Poly c) (Poly c)
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |]]
   (\ t -> [d|
-    instance (CanNegSameType c, CanAddThis c $t) => CanSub $t (Poly c)
-    instance (CanAddThis c $t) => CanSub (Poly c) $t
+    instance (CanNegSameType c, CanAddThis c $t, HasIntegers c) => CanSub $t (Poly c)
+    instance (CanAddThis c $t, HasIntegers c) => CanSub (Poly c) $t
   |]))
 
 {- scaling -}
@@ -164,3 +168,50 @@ $(declForTypes
       type DivType (Poly c) $t = Poly c
       divide (Poly t1) n = Poly $ terms_map (/ n) t1
   |]))
+
+
+
+  {- show -}
+
+instance (Show c, HasIntegers c) => Show (Poly c) where
+    show (Poly terms) =
+        formatTerms showCf terms
+        where
+        showCf c =
+            --(show (c::MPBall), (c == (convertExactly 0)) == Just True, (c == (convertExactly 1)) == Just True)
+            (show c, False, False)
+        formatTerms :: (c -> (String, Bool, Bool)) -> Terms c -> String
+        formatTerms showCf terms =
+            showTerms ("", "-") $
+              List.sortBy (\(a,_) (b,_) -> P.compare a b) $ --TODO how to sort?
+                    termsToShow
+            where
+            showTerms (connectivePos, connectiveNeg) (term : rest) =
+                termS ++ (showTerms (" + ", " - ") rest)
+                where
+                termS =
+                    case s of
+                        '-':ss -> connectiveNeg ++ ss
+                        _ -> connectivePos ++ s
+                s = showTerm term
+            showTerms _ [] = ""
+            termsToShow =
+                if null termsToShow_pre
+                    then [(0, convertExactly 0)]
+                    else termsToShow_pre
+            termsToShow_pre =
+                filter coeffNotExactZero $
+                    terms_toList terms
+            coeffNotExactZero (_, cf) =
+                not isZero
+                where
+                (_, isZero, _) = showCf cf
+            showTerm (deg, coeff)
+                | deg == 0 = coeffS
+                | isOne = showPower
+                | otherwise = coeffS ++ "*" ++ showPower
+                where
+                (coeffS, _, isOne) = showCf coeff
+                showPower
+                    | deg == 1 = "x"
+                    | otherwise = "x^" ++ show deg
