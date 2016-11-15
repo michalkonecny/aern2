@@ -42,16 +42,24 @@ instance CanApply PolyBall MPBall where
   type ApplyType PolyBall MPBall = MPBall
   apply (Ball x e) y = updateRadius (+e) (apply x y)
 
-instance CanApply (ChPoly MPBall) MPBall where
-  type ApplyType (ChPoly MPBall) MPBall = MPBall
-  apply = chPolyEvalDirect
+instance
+  (CanAddSubMulBy MPBall c, Ring c) =>
+  CanApply (ChPoly c) MPBall where
+  type ApplyType (ChPoly c) MPBall = MPBall
+  apply = evalDirect
 
-chPolyEvalDirect ::
+instance
+  (CanAddSubMulBy MPBall c, Ring c) =>
+  CanApply (ChPoly c) Dyadic where
+  type ApplyType (ChPoly c) Dyadic = MPBall
+  apply p = apply p . mpBall
+
+evalDirect ::
   (Ring t, CanAddSubMulDivBy t Dyadic, CanDivBy t Integer,
    CanAddSubMulBy t c, Ring c)
   =>
   (ChPoly c) -> t -> t
-chPolyEvalDirect (ChPoly dom (Poly terms)) (xInDom :: t) =
+evalDirect (ChPoly dom (Poly terms)) (xInDom :: t) =
     (b0 - b2)/2
     where
     x = fromDomToUnitInterval dom xInDom
@@ -77,6 +85,20 @@ fromDomToUnitInterval (Interval l r) xInDom =
 
 {- range -}
 
+sampledRange ::
+  (CanAddSubMulBy MPBall c, Ring c) =>
+  DyadicInterval -> Integer -> ChPoly c -> Interval MPBall MPBall
+sampledRange (Interval l r) depth p =
+    Interval minValue maxValue
+    where
+    minValue = foldl1 min samples
+    maxValue = foldl1 max samples
+    samples = map eval samplePoints
+    eval = apply p
+    samplePoints :: [Dyadic]
+    samplePoints = [(l*i + r*(size - i))*(1/size) | i <- [0..size]]
+    size = 2^depth
+
 instance CanApply (ChPoly MPBall) DyadicInterval where
   type ApplyType (ChPoly MPBall) DyadicInterval = (Interval CauchyReal CauchyReal, ErrorBound)
   apply = rangeViaUnaryFun
@@ -89,7 +111,8 @@ rangeViaUnaryFun p di = (apply f di, e)
   (f, e) = convertExactly p
 
 instance ConvertibleExactly (ChPoly MPBall) (UnaryFun, ErrorBound) where
-  safeConvertExactly cp@(ChPoly dom p) = Right (UnaryFun dom eval, e)
+  safeConvertExactly cp@(ChPoly dom _p) = Right (UnaryFun dom eval, e)
     where
     e = radius cp
-    eval x = x -- TODO
+    cpExact = centreAsBall cp
+    eval = fmap $ evalDirect cpExact
