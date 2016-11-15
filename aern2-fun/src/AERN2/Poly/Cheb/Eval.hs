@@ -48,11 +48,13 @@ instance
   type ApplyType (ChPoly c) MPBall = MPBall
   apply = evalDirect
 
-instance
-  (CanAddSubMulBy MPBall c, Ring c) =>
-  CanApply (ChPoly c) Dyadic where
-  type ApplyType (ChPoly c) Dyadic = MPBall
-  apply p = apply p . mpBall
+-- instance
+--   (CanAddSubMulBy MPBall c, Ring c) =>
+--   CanApply (ChPoly c) Dyadic where
+--   type ApplyType (ChPoly c) Dyadic = (CauchyReal, ErrorBound)
+--   apply cp x =
+--     seqByPrecision2CauchyRealA "apply" $ \ pr ->
+--       apply cp $ setPrecision pr $ mpBall x
 
 evalDirect ::
   (Ring t, CanAddSubMulDivBy t Dyadic, CanDivBy t Integer,
@@ -85,16 +87,20 @@ fromDomToUnitInterval (Interval l r) xInDom =
 
 {- range -}
 
+-- TODO: move sampledRange to a module not specific to ChPoly
 sampledRange ::
-  (CanAddSubMulBy MPBall c, Ring c) =>
-  DyadicInterval -> Integer -> ChPoly c -> Interval MPBall MPBall
-sampledRange (Interval l r) depth p =
+  (CanApply f t, ApplyType f t ~ t,
+   CanMinMaxSameType t, ConvertibleExactly Dyadic t)
+  =>
+  DyadicInterval -> Integer -> f -> Interval t t
+sampledRange (Interval l r) depth f =
     Interval minValue maxValue
     where
     minValue = foldl1 min samples
     maxValue = foldl1 max samples
-    samples = map eval samplePoints
-    eval = apply p
+    samples = map (apply f) samplePointsT
+    samplePointsT = map convertExactly samplePoints
+    _ = minValue : samplePointsT
     samplePoints :: [Dyadic]
     samplePoints = [(l*i + r*(size - i))*(1/size) | i <- [0..size]]
     size = 2^depth

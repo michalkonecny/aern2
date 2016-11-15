@@ -14,6 +14,7 @@
 module AERN2.Poly.Cheb
 (
   module AERN2.Poly.Cheb.Type,
+  module AERN2.Poly.Cheb.SineCosine,
   module AERN2.Poly.Cheb
 )
 where
@@ -22,15 +23,16 @@ import Numeric.MixedTypes
 -- import qualified Prelude as P
 -- import Text.Printf
 
+import AERN2.Interval
+-- import AERN2.MP.Ball
+-- import AERN2.MP.ErrorBound
+
 import AERN2.RealFun.Operations
 
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Ring ()
 import AERN2.Poly.Cheb.Eval ()
--- import AERN2.Poly.Cheb.SineCosine
-
--- import AERN2.MP.Dyadic
-import AERN2.Interval
+import AERN2.Poly.Cheb.SineCosine
 
 {- examples -}
 

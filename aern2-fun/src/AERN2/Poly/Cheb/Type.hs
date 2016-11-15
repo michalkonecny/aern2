@@ -28,7 +28,7 @@ import qualified Data.List as List
 import AERN2.Norm
 
 import AERN2.MP.ErrorBound
-import AERN2.MP.Ball (IsBall(..), IsInterval(..), MPBall)
+import AERN2.MP.Ball hiding (ball_value)
 import AERN2.MP.Dyadic
 
 -- import AERN2.Real
@@ -68,6 +68,19 @@ instance (IsBall c, HasIntegers c) => IsBall (ChPoly c) where
   centreAsBallAndRadius cp = (centre cp, radius cp)
   updateRadius updateFn (ChPoly dom (Poly terms)) =
     ChPoly dom (Poly $ terms_updateConst (updateRadius updateFn) terms)
+
+{- precision -}
+
+instance (HasPrecision c) => HasPrecision (ChPoly c) where
+  getPrecision (ChPoly _ poly) = getPrecision poly
+
+instance (CanSetPrecision c) => CanSetPrecision (ChPoly c) where
+  setPrecision p (ChPoly dom poly) = ChPoly dom $ setPrecision p poly
+
+{- accuracy -}
+
+instance (HasAccuracy c, HasIntegers c, IsBall c) => HasAccuracy (ChPoly c) where
+  getAccuracy = getAccuracy . radius
 
 type CanBeChPoly c t = ConvertibleExactly t (ChPoly c)
 chPoly :: (CanBeChPoly c t) => t -> (ChPoly c)

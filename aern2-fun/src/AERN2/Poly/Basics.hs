@@ -33,7 +33,7 @@ import AERN2.TH
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
--- import AERN2.Real
+import AERN2.Real
 
 -- import AERN2.Interval
 -- import AERN2.RealFun.Operations
@@ -110,6 +110,14 @@ terms_lookupCoeff t i =
     Just c -> c
     _ -> convertExactly 0
 
+{- precision -}
+
+instance (HasPrecision c) => HasPrecision (Poly c) where
+  getPrecision (Poly ts) = foldl1 max $ map getPrecision $ terms_coeffs ts
+
+instance (CanSetPrecision c) => CanSetPrecision (Poly c) where
+  setPrecision p (Poly ts) = Poly $ terms_map (setPrecision p) ts
+
 {- negation -}
 
 instance (CanNegSameType c) => CanNeg (Poly c) where
@@ -124,7 +132,7 @@ instance (CanAddSameType c) => CanAddAsymmetric (Poly c) (Poly c) where
 
 
 $(declForTypes
-  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |]]
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
   (\ t -> [d|
     instance (CanAddThis c $t, HasIntegers c) => CanAddAsymmetric $t (Poly c) where
       type AddType $t (Poly c) = Poly c
@@ -140,7 +148,7 @@ $(declForTypes
 instance (CanNegSameType c, CanAddSameType c) => CanSub (Poly c) (Poly c)
 
 $(declForTypes
-  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |]]
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
   (\ t -> [d|
     instance (CanNegSameType c, CanAddThis c $t, HasIntegers c) => CanSub $t (Poly c)
     instance (CanAddThis c $t, HasIntegers c) => CanSub (Poly c) $t
@@ -149,7 +157,7 @@ $(declForTypes
 {- scaling -}
 
 $(declForTypes
-  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |]]
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
   (\ t -> [d|
     instance (CanMulBy c $t) => CanMulAsymmetric $t (Poly c) where
       type MulType $t (Poly c) = Poly c
@@ -162,13 +170,12 @@ $(declForTypes
 
 
 $(declForTypes
-  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |]]
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
   (\ t -> [d|
     instance (CanDivBy c $t) => CanDiv (Poly c) $t where
       type DivType (Poly c) $t = Poly c
       divide (Poly t1) n = Poly $ terms_map (/ n) t1
   |]))
-
 
 
   {- show -}
@@ -180,38 +187,41 @@ instance (Show c, HasIntegers c) => Show (Poly c) where
         showCf c =
             --(show (c::MPBall), (c == (convertExactly 0)) == Just True, (c == (convertExactly 1)) == Just True)
             (show c, False, False)
-        formatTerms :: (c -> (String, Bool, Bool)) -> Terms c -> String
-        formatTerms showCf terms =
-            showTerms ("", "-") $
-              List.sortBy (\(a,_) (b,_) -> P.compare a b) $ --TODO how to sort?
-                    termsToShow
-            where
-            showTerms (connectivePos, connectiveNeg) (term : rest) =
-                termS ++ (showTerms (" + ", " - ") rest)
-                where
-                termS =
-                    case s of
-                        '-':ss -> connectiveNeg ++ ss
-                        _ -> connectivePos ++ s
-                s = showTerm term
-            showTerms _ [] = ""
-            termsToShow =
-                if null termsToShow_pre
-                    then [(0, convertExactly 0)]
-                    else termsToShow_pre
-            termsToShow_pre =
-                filter coeffNotExactZero $
-                    terms_toList terms
-            coeffNotExactZero (_, cf) =
-                not isZero
-                where
-                (_, isZero, _) = showCf cf
-            showTerm (deg, coeff)
-                | deg == 0 = coeffS
-                | isOne = showPower
-                | otherwise = coeffS ++ "*" ++ showPower
-                where
-                (coeffS, _, isOne) = showCf coeff
-                showPower
-                    | deg == 1 = "x"
-                    | otherwise = "x^" ++ show deg
+
+formatTerms ::
+  (HasIntegers c) =>
+  (c -> (String, Bool, Bool)) -> Terms c -> String
+formatTerms showCf terms =
+    showTerms ("", "-") $
+      List.sortBy (\(a,_) (b,_) -> P.compare a b) $
+            termsToShow
+    where
+    showTerms (connectivePos, connectiveNeg) (term : rest) =
+        termS ++ (showTerms (" + ", " - ") rest)
+        where
+        termS =
+            case s of
+                '-':ss -> connectiveNeg ++ ss
+                _ -> connectivePos ++ s
+        s = showTerm term
+    showTerms _ [] = ""
+    termsToShow =
+        if null termsToShow_pre
+            then [(0, convertExactly 0)]
+            else termsToShow_pre
+    termsToShow_pre =
+        filter coeffNotExactZero $
+            terms_toList terms
+    coeffNotExactZero (_, cf) =
+        not isZero
+        where
+        (_, isZero, _) = showCf cf
+    showTerm (deg, coeff)
+        | deg == 0 = coeffS
+        | isOne = showPower
+        | otherwise = coeffS ++ "*" ++ showPower
+        where
+        (coeffS, _, isOne) = showCf coeff
+        showPower
+            | deg == 1 = "x"
+            | otherwise = "x^" ++ show deg

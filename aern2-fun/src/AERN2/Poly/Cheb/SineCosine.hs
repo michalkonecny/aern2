@@ -21,24 +21,161 @@ import qualified Prelude as P
 -- import Text.Printf
 
 import qualified Data.Map as Map
+import qualified Data.List as List
 
 -- import Test.Hspec
 -- import Test.QuickCheck
 
--- import AERN2.MP.ErrorBound
+import AERN2.MP.ErrorBound
+import AERN2.MP.Float
 import AERN2.MP.Ball
--- import AERN2.MP.Dyadic
+import AERN2.MP.Dyadic
 
--- import AERN2.Real
+import AERN2.Real
 
--- import AERN2.Interval
--- import AERN2.RealFun.Operations
+import AERN2.Interval
+import AERN2.RealFun.Operations
 -- import AERN2.RealFun.UnaryFun
 
 import AERN2.Poly.Basics
 
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Ring ()
+import AERN2.Poly.Cheb.Eval
+
+
+_test10Xe :: ChPoly MPBall
+_test10Xe =
+    10*x
+    where
+    x :: ChPoly MPBall
+    x = setPrecision (prec 100) $ varFn sampleFn ()
+    sampleFn = constFn (dom, 1)
+    dom = dyadicInterval (0.0,1.0)
+
+_testSine10X :: ChPoly MPBall
+_testSine10X =
+    sine_chpoly 100 NormZero (10*x)
+    where
+    x :: ChPoly MPBall
+    x = setPrecision (prec 100) $ varFn sampleFn ()
+    sampleFn = constFn (dom, 1)
+    dom = dyadicInterval (0.0,1.0)
+
+_testSine10Xe :: ChPoly MPBall
+_testSine10Xe =
+    sine_chpoly 100 NormZero (updateRadius (+ (errorBound 0.1)) (10*x))
+    where
+    x :: ChPoly MPBall
+    x = setPrecision (prec 100) $ varFn sampleFn ()
+    sampleFn = constFn (dom, 1)
+    dom = dyadicInterval (0.0,1.0)
+
+{-
+    To compute sin(xC+-xE):
+
+    * compute (rC+-rE) = range(xC)
+    * compute k = round(rC/(pi/2))
+    * compute sin or cos of txC = xC-k*pi/2 using Taylor series
+      * use sin for even k and cos for odd k
+      * which degree to use?
+        * keep trying higher and higher degrees until
+            * the accuracy of the result worsens
+            * OR the accuracy of the result is 8x higher than xE
+    * if k mod 4 = 2 then negate result
+    * if k mod 4 = 3 then negate result
+    * add xE to the error bound of the resulting polynomial
+-}
+
+sine_chpoly ::
+  -- (Field c, CanMinMaxSameType c,
+  --  CanAbsSameType c,
+  --  CanAddSubMulDivBy c CauchyReal,
+  --  ConvertibleExactly Dyadic c,
+  --  HasNorm c,  CanRound c,
+  --  IsBall c, IsInterval c c,
+  --  CanApply (ChPoly c) c, ApplyType (ChPoly c) c ~ c)
+  -- =>
+  Degree -> NormLog -> ChPoly MPBall -> ChPoly MPBall
+sine_chpoly maxDeg sweepT x =
+    -- maybeTrace
+    -- (
+    --     "sine_poly:"
+    --     ++ "\n maxDeg = " ++ show maxDeg
+    --     ++ "\n xC = " ++ showAP xC
+    --     ++ "\n xE = " ++ showB xE
+    --     ++ "\n xAccuracy = " ++ show xAccuracy
+    --     ++ "\n r = " ++ showB r
+    --     ++ "\n k = " ++ show k
+    --     ++ "\n txC = " ++ showAP txC
+    --     ++ "\n trM = " ++ showB trM
+    --     ++ "\n taylorSumE = " ++ showB taylorSumE
+    --     ++ "\n resC = " ++ showAP resC
+    -- ) $
+--    xPoly (prec 100) -- dummy
+    res
+    where
+    -- showB = show . getApproximate (bits 30)
+    -- showAP = show . getApproximate (bits 50) . cheb2Power
+
+    -- first separate the centre of the polynomial x from its radius:
+    xC = centre x
+    xE = radius x
+    xAccuracy = getAccuracy x
+
+    -- compute (rC+-rE) = range(xC):
+    Interval rL rR =
+      sampledRange (dyadicInterval (-1.0,1.0)) 5 xC
+    r = fromEndpoints rL rR
+    _ = [r,rL,rR] :: [MPBall]
+    rC = centreAsBall r
+
+    -- compute k = round(rC/(pi/2)):
+    k = floor $ (fst $ endpoints $ 0.5 + (2*rC / pi) :: MPFloat)
+
+    -- shift xC near 0 using multiples of pi/2:
+    txC = xC - k * pi / 2
+    -- work out an absolute range bound for txC:
+    (_, trM) = endpoints $ abs $ r - k * pi / 2
+    _ = [trM, r]
+
+    -- compute sin or cos of txC = xC-k*pi/2 using Taylor series:
+    taylorSums
+        | even k = sineTaylorSeries maxDeg sweepT txC
+        | otherwise = cosineTaylorSeries maxDeg sweepT txC
+    (taylorSum, taylorSumE) = pickByAccuracy [] taylorSums
+        where
+        pickByAccuracy prevResults (_s@(p, e, n) : rest) =
+            -- maybeTrace
+            -- ("pickByAccuracy: sE = " ++ showB sE ++ "; sAccuracy = " ++ show sAccuracy ++ "; prec = " ++ show (getPrecision pBest)) $
+            pbAres
+            where
+            pbAres
+              | tooAccurate || stoppedMakingProgress || sameAccuracyCount > 10 =
+                (centre pBest, sEBest)
+              | otherwise =
+                pickByAccuracy ((sAccuracy, p, sE) : prevResults) rest
+            tooAccurate = sAccuracy >= xAccuracy + 3
+            prevAccuracies = map (\(a,_,_) -> a) prevResults
+            sameAccuracyCount =
+                case List.findIndex (/= sAccuracy) prevAccuracies of Just i -> integer i; _ -> 0
+            (stoppedMakingProgress, pBest, sEBest) =
+                case prevResults of
+                    ((a1,p1,sE1):(a2,_,_):(a3,_,_):(a4,_,_):_)
+                        | sAccuracy < a1 && a1 > a2 -> (True, p1, sE1)
+                        | sAccuracy == a1 && a1 == a2 && a2 == a3 && a3 == a4 -> (True, p, sE)
+                    _ -> (False, p, sE)
+            sE = (errorBound $ e*(trM^n)) + (radius p)
+            sAccuracy = normLog2Accuracy $ getNormLog $ dyadic sE
+        pickByAccuracy _ _ = error "internal error in SineCosine"
+    -- if k mod 4 = 2 then negate result,
+    -- if k mod 4 = 3 then negate result:
+    resC
+        | k `mod` 4 == 2 = -taylorSum
+        | k `mod` 4 == 3 = -taylorSum
+        | otherwise = taylorSum
+    -- add xE to the error bound of the resulting polynomial:
+    res = updateRadius (+ (taylorSumE + xE)) resC
 
 {-|
     For a given polynomial @p@, compute all partial Taylor sums of @sin(p)@ and return
