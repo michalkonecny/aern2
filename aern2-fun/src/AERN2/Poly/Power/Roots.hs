@@ -1,14 +1,13 @@
 module AERN2.Poly.Power.Roots
 (
 initialBernsteinCoefs,
-initialBernsteinCoefsI,
 bernsteinCoefs,
 signVars,
 reflect,
 contract,
 translate,
 transform,
-findRootsI,
+findRoots,
 Terms
 )
 where
@@ -23,7 +22,6 @@ import Data.Maybe
 import AERN2.Poly.Power.Type
 import AERN2.Poly.Basics hiding (Terms)
 import AERN2.Poly.Power.Eval
-import AERN2.MP.Dyadic
 
 import Debug.Trace
 
@@ -60,10 +58,10 @@ signVars ts =
         else
           aux (vrs + 1) sgnx (d - 1)
 
--- Input: l,m and Polynomial P.
--- Output: the coefficients of P in Bernstein basis on [-1,1].
-initialBernsteinCoefs :: MPBall -> MPBall -> PowPoly MPBall -> Terms MPBall
-initialBernsteinCoefs l r p =
+-- Input: Polynomial P and numbers l, r.
+-- Output: the coefficients of P in Bernstein basis on [l,r].
+initialBernsteinCoefs :: PowPoly MPBall -> MPBall -> MPBall -> Terms MPBall
+initialBernsteinCoefs p l r =
   bs
   where
   d = degree p
@@ -73,34 +71,20 @@ initialBernsteinCoefs l r p =
     Map.mapKeys (\k -> d - k) $
     Map.mapWithKey (\k c -> c / (fromJust $ Map.lookup k binoms)) cs
 
--- Input: Polynomial P.
--- Output: the coefficients of P in Bernstein basis on [-1,1].
-initialBernsteinCoefsI :: PowPoly MPBall -> Terms MPBall
-initialBernsteinCoefsI p =
-  bsI
-  where
-  d = degree p
-  PowPoly (Poly csI) = transform (mpBall $ -1) (mpBall 1) p
-  binoms = Map.fromList [(k, binom d (d - k)) | k <- [0.. d]]
-  bsI =
-    Map.mapKeys (\k -> d - k) $
-    Map.mapWithKey (\k c -> c / (fromJust $ Map.lookup k binoms)) csI
-
-
 -- Input: (l,r,m, List of coefficients of P in Bernstein basis on [l,r])
 -- Output: Lists of coefficients of P in Bernstein basis on [l,m] and [m,r].
 -- Note that m does not have to lie between l and r.
 -- This is Algorithm 10.2 [Bernstein Coefficients] in
 -- Basu, Pollack, Roy: Algorithms in Real Algebraic Geometry
 bernsteinCoefs ::
-  Dyadic -> Dyadic -> Dyadic -> Terms MPBall -> (Terms MPBall, Terms MPBall)
-bernsteinCoefs l r m bs =
+  MPBall -> MPBall -> MPBall -> Terms MPBall -> (Terms MPBall, Terms MPBall)
+bernsteinCoefs l r m bsI =
   (buildLeft p Map.empty, buildRight p Map.empty)
   where
   alpha = (r - m)/(r - l)
   beta  = (m - l)/(r - l)
   bijs = buildBijs 0 0 Map.empty
-  p = ts_deg bs
+  p = ts_deg bsI
   buildLeft j bs =
     if j < 0 then
       bs
@@ -117,7 +101,7 @@ bernsteinCoefs l r m bs =
     else if j > p - i then
       buildBijs (i + 1) 0 tri
     else if i == 0 then
-      buildBijs i (j + 1) (Map.insert (i,j) (fromJust $ Map.lookup j bs) tri)
+      buildBijs i (j + 1) (Map.insert (i,j) (fromJust $ Map.lookup j bsI) tri)
     else
       let
         b0 = fromJust $ Map.lookup (i - 1, j) tri
@@ -165,75 +149,75 @@ data HasRoot =
 instance HasEqAsymmetric HasRoot HasRoot where
   type EqCompareType HasRoot HasRoot = Bool
 
-findRootsI :: PowPoly MPBall -> ((Dyadic, Dyadic) -> Bool) -> [(Dyadic, Dyadic)] -- TODO: if signVars == Nothing - recompute or give up? (currently giving up)
-findRootsI p intervalOK =
-  splitUntilAccurate [(dyadic $ -1, dyadic 1, DontKnow, bsI)] []
+findRoots :: PowPoly MPBall -> MPBall -> MPBall -> ((MPBall, MPBall) -> Bool) -> [(MPBall, MPBall)] -- TODO: if signVars == Nothing - recompute or give up? (currently giving up)
+findRoots p l r intervalOK =      -- TODO: remove intervalOK and iterate until nix mehr geht
+  splitUntilAccurate [(l, r, DontKnow, bsI)] []
   where
-  bsI = initialBernsteinCoefsI p
+  bsI = initialBernsteinCoefs p l r
   sgn x =
     case x > 0 of
       Just True  -> Just 1
       Just False ->
         if (x == 0) == Just True then Just 0 else Just (-1)
       Nothing -> Nothing
-  splitUntilAccurate :: [(Dyadic, Dyadic, HasRoot, Terms MPBall)]
-    -> [(Dyadic, Dyadic)]
-    -> [(Dyadic, Dyadic)]
+  splitUntilAccurate :: [(MPBall, MPBall, HasRoot, Terms MPBall)]
+    -> [(MPBall, MPBall)]
+    -> [(MPBall, MPBall)]
   splitUntilAccurate [] res = res
-  splitUntilAccurate ((l, r, hasRoot, ts) : is) res =
+  splitUntilAccurate ((a, b, hasRoot, ts) : is) res =
     let
       vars = signVars ts
     in
       maybeTrace (
-      "interval " ++ (show (mpBall l, mpBall r)) ++ "\n" ++
+      "interval " ++ (show (a, b)) ++ "\n" ++
        "coefs: " ++(show ts)++"\n"++
        "vars: "++(show vars)
       ) $
       if vars == Just 0 then
         splitUntilAccurate is res
-      else if intervalOK (l,r) then
-        splitUntilAccurate is ((l,r):res)
+      else if intervalOK (a, b) then
+        splitUntilAccurate is ((a, b):res)
       else if isNothing vars then
         error "findRootsI (line 196): Nothing." --[(l,r)]
       else if hasRoot == Yes || vars == Just 1 then
         let
-          m = 0.5*(l + r)
-          sgnM     = sgn $ evalDirect p (mpBall m)  -- TODO: improve data structure to avoid redundant computations
-          sgnLeft  = sgn $ evalDirect p (mpBall l)
-          sgnRight = sgn $ evalDirect p (mpBall r)
+          m = 0.5*(a + b)
+          sgnM     = sgn $ evalDirect p m  -- TODO: improve data structure to avoid redundant computations
+          sgnLeft  = sgn $ evalDirect p a
+          sgnRight = sgn $ evalDirect p b
         in
           maybeTrace (
-           "m: "++(show m)++"\n"++
-           "sgnM: "++(show sgnM)++"\n"++
-           "value: "++(show $ (evalDirect p (mpBall m)))++"\n"++
-           "comparison: "++ (show $ (evalDirect p (mpBall m) == 0))
+           "m: "++ show m++"\n"++
+           "sgnM: "++ show sgnM ++"\n"++
+           "value: "++ show (evalDirect p m) ++"\n"++
+           "comparison: "++ show (evalDirect p m == 0)
           ) $
-          if (evalDirect p (mpBall m) == 0) == Just True then
+          if (evalDirect p m == 0) == Just True then
             splitUntilAccurate is ((m,m):res)
           else if isJust sgnM && isJust sgnLeft && isJust sgnRight then
             if sgnLeft /= sgnM then
-              splitUntilAccurate ((l, m, Yes, ts):is) res
+              splitUntilAccurate ((a, m, Yes, ts):is) res
             else
-              splitUntilAccurate ((m, r, Yes, ts):is) res
+              splitUntilAccurate ((m, b, Yes, ts):is) res
           else
-            splitUntilAccurate is ((l,r):res)
+            splitUntilAccurate is ((a,b):res)
       else
         let
           findM cm =
             let
-              sgnM = sgn $ evalDirect p (mpBall cm)
+              sgnM = sgn $ evalDirect p cm
             in
               if isJust sgnM
                 && fromJust sgnM /= 0
               then
                 cm
               else
-                findM $ 0.5*(cm + r) -- TODO: find a better perturbation function
-          m = findM $ 0.5*(l + r)
-          (bsL, bsR)  = bernsteinCoefs l r m ts
+                findM $ 0.5*(cm + b) -- TODO: find a better perturbation function
+          m = findM $ 0.5*(a + b)
+          (bsL, bsR)  = bernsteinCoefs a b m ts
         in
           splitUntilAccurate
-            ((l,m, DontKnow, bsL) : (m,r, DontKnow, bsR) : is) res
+            ((a,m, DontKnow, bsL) : (m,b, DontKnow, bsR) : is) res
 
 {- auxiliary functions -}
 

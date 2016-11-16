@@ -60,11 +60,13 @@ library
     AERN2.RealFun.UnaryDFun
     -- AERN2.RealFun.DFun
     AERN2.Poly
+    AERN2.Poly.Conversion
     -- AERN2.Ball
     AERN2.Poly.Basics
     AERN2.Poly.Cheb
     AERN2.Poly.Cheb.Type
     AERN2.Poly.Cheb.Eval
+    AERN2.Poly.Cheb.Maximum
     AERN2.Poly.Cheb.Ring
     AERN2.Poly.Cheb.DCT
     AERN2.Poly.Cheb.SineCosine
