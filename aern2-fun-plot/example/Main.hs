@@ -16,7 +16,36 @@ main = Plot.startServer fns shouldLog (int 4000)
   shouldLog = True
 
 fns :: Plot.Functions
-fns = map polyBallFn [("x^2", x*x), ("x-x", xP - xP)]
+fns = fnsCP ++ fnsPB
+
+fnsCP :: Plot.Functions
+fnsCP = map chPolyFn [("sin(6x)", sine (6*x))]
+  where
+  sine = sine_chpoly 10 NormZero
+  chPolyFn (name, cp) =
+    Plot.Function
+    { function_name = name
+    , function_dom = getDomain cp
+    , function_getBounds = applyViaMPBall cp
+    }
+  x :: ChPoly MPBall
+  x = varFn sampleFn ()
+  sampleFn = constFn (dom, 1)
+  dom = dyadicInterval (-1.0,1.0)
+  -- xP :: ChPoly MPBall
+  -- xP = varFn sampleFnP ()
+  -- sampleFnP = constFn (domP, 1)
+  -- domP = dyadicInterval (0.0,1.0)
+  applyViaMPBall cp di =
+    Interval (v-(mpBall (dyadic e))) (v+(mpBall (dyadic e)))
+    where
+    cpC = centreAsBall cp
+    e = radius cp
+    v :: MPBall
+    v = apply cpC (mpBall di)
+
+fnsPB :: Plot.Functions
+fnsPB = map polyBallFn [("x^2", x*x), ("x-x", xP - xP)]
   where
   polyBallFn (name, pb) =
     Plot.Function

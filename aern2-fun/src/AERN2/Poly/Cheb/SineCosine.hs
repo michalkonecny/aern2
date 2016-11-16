@@ -43,6 +43,18 @@ import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Ring ()
 import AERN2.Poly.Cheb.Eval
 
+import Debug.Trace (trace)
+
+
+shouldTrace :: Bool
+shouldTrace = False
+--shouldTrace = True
+
+maybeTrace :: String -> a -> a
+maybeTrace
+    | shouldTrace = trace
+    | otherwise = const id
+
 
 _test10Xe :: ChPoly MPBall
 _test10Xe =
