@@ -10,6 +10,7 @@ import Html exposing (..)
 import Html.App exposing (program)
 import Html.Attributes as A exposing (..)
 import Html.Events exposing (..)
+import Window
 
 import Color exposing (..)
 import Collage exposing (..)
@@ -20,6 +21,7 @@ import Http
 import Task exposing (Task, andThen)
 import Process exposing (sleep)
 import Time
+import Platform.Cmd as Cmd
 -- import AnimationFrame
 
 import Api exposing (..)
@@ -28,9 +30,10 @@ import DInterval exposing (divDi, mulDi, dToFloat)
 main : Program Never
 main =
     program
-        { init = (initState, fetchFunctions initState)
+        { init = initState ! initCmds
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions =
+              (\_ -> Window.resizes (FromUI << Resize))
         , view = view
         }
 
@@ -50,10 +53,11 @@ type alias State =
     , functionDetails : Dict FunctionId FunctionDetails
     , functionSegments : Dict FunctionId (List FunctionSegmentF)
     , plotArea : Maybe PlotArea
-    , plotCanvasSize : { w : Pixels, h : Pixels }
+    , plotCanvasSize : { width : Pixels, height : Pixels }
     , plotResolution : Pixels
     , samplingId : Maybe SamplingId -- derived from the 3 above
     , zoomLevel : Percent
+    , windowSize : Maybe Window.Size
     , error : Maybe String
     }
 
@@ -63,10 +67,11 @@ initState =
   , functionDetails = Dict.empty
   , functionSegments = Dict.empty
   , plotArea = Nothing
-  , plotCanvasSize = { w = 800, h = 800 }
+  , plotCanvasSize = { width = 800, height = 800 }
   , plotResolution = 5
   , samplingId = Nothing
   , zoomLevel = 100
+  , windowSize = Nothing
   , error = Nothing
   }
 
@@ -107,6 +112,11 @@ type alias PlotArea =
 type alias Pixels = Int
 type alias Percent = Int
 
+initCmds =
+  [simulateResize]
+
+simulateResize =
+  Task.perform (\_ -> FromUI NoAction) (FromUI << Resize) Window.size
 
 -- FETCHING FUNCTION DATA FROM SERVER
 
@@ -149,7 +159,7 @@ getFunctionsSegmentsNewPlotArea s plotDomain =
   let
     maxStep =
       ((DInterval.width plotDomain) `mulDi` (s.plotResolution * s.zoomLevel))
-        `divDi` ((s.plotCanvasSize.w * 100) )
+        `divDi` ((s.plotCanvasSize.width * 100) )
     sampling = { sampling_dom' = plotDomain, sampling_maxStep = maxStep }
     plotArea =
       { domain = plotDomain
@@ -196,9 +206,11 @@ toServer tag task =
   Task.perform (Error << toString) (FromServer << tag) task
 
 type FromUI
-  = ZoomLevel Percent
-  | ZoomLevelResampleIfNoChange Percent
-  | NoAction
+  = NoAction
+  | Resize Window.Size
+  | ResizeResampleIfNoChange Window.Size
+  -- | ZoomLevel Percent
+  -- | ZoomLevelResampleIfNoChange Percent
 
 viaUI tag task =
   Task.perform (\ _ -> FromUI NoAction) (FromUI << tag) task
@@ -211,34 +223,49 @@ update msg s =
         Functions s' -> { s' | zoomLevel = s.zoomLevel } ! []
     FromUI fromUI ->
       case fromUI of
-        ZoomLevel percent ->
-          let s' = { s | zoomLevel = percent } in
-          s' ! [viaUI ZoomLevelResampleIfNoChange (sleep Time.second `andThen` (\() -> Task.succeed percent))]
-        ZoomLevelResampleIfNoChange percent ->
-          if s.zoomLevel /= percent then s ! []
+        Resize size ->
+          case s.windowSize of
+            Nothing -> -- initial simulated resize
+              s ! [fetchFunctions { initState | windowSize = Just size,  plotCanvasSize = size  }]
+            Just _ ->
+              let
+                s2 = { s | windowSize = Just size,  plotCanvasSize = size }
+              in
+              s2 ! [viaUI ResizeResampleIfNoChange (sleep Time.second `andThen` (\() -> Task.succeed size))]
+        ResizeResampleIfNoChange size ->
+          if s.windowSize /= Just size then s ! []
           else
             case s.plotArea of
               Just plotArea ->
                 s ! [toServer Functions (getFunctionsSegmentsNewPlotArea s plotArea.domain)]
               Nothing -> s ! []
+        -- ZoomLevel percent ->
+        --   let s' = { s | zoomLevel = percent } in
+        --   s' ! [viaUI ZoomLevelResampleIfNoChange (sleep Time.second `andThen` (\() -> Task.succeed percent))]
+        -- ZoomLevelResampleIfNoChange percent ->
+        --   if s.zoomLevel /= percent then s ! []
+        --   else
+        --     case s.plotArea of
+        --       Just plotArea ->
+        --         s ! [toServer Functions (getFunctionsSegmentsNewPlotArea s plotArea.domain)]
+        --       Nothing -> s ! []
         NoAction -> s ! []
     Error msg ->
-        { s | error = Just msg } ! []
+      { s | error = Just msg } ! []
 
 -- VIEW
 
 view : State -> Html Msg
 view s =
   let
-    width = s.plotCanvasSize.w
-    height = s.plotCanvasSize.h
+    { width, height } = s.plotCanvasSize
   in
     div [] <|
     [
     --   Html.text (toString s.functionSegments)
     -- ,
-      slider { makeMsg = FromUI << ZoomLevel, minValue = 50, maxValue = 150, state = s }
-      ,
+      -- slider { makeMsg = FromUI << ZoomLevel, minValue = 50, maxValue = 150, state = s }
+      -- ,
       toHtml <|
       container width height middle <|
       collage width height <|
@@ -269,8 +296,8 @@ drawSegment s segm =
     Nothing -> []
     Just plotArea ->
       let
-        w = toFloat s.plotCanvasSize.w
-        h = toFloat s.plotCanvasSize.h
+        w = toFloat s.plotCanvasSize.width
+        h = toFloat s.plotCanvasSize.height
         pAdL = plotArea.domL
         pAdR = plotArea.domR
         pArL = plotArea.rangeL

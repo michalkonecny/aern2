@@ -8515,6 +8515,182 @@ var _elm_lang$core$Regex$AtMost = function (a) {
 	return {ctor: 'AtMost', _0: a};
 };
 var _elm_lang$core$Regex$All = {ctor: 'All'};
+var _elm_lang$dom$Native_Dom = function() {
+
+function on(node)
+{
+	return function(eventName, decoder, toTask)
+	{
+		return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback) {
+
+			function performTask(event)
+			{
+				var result = A2(_elm_lang$core$Json_Decode$decodeValue, decoder, event);
+				if (result.ctor === 'Ok')
+				{
+					_elm_lang$core$Native_Scheduler.rawSpawn(toTask(result._0));
+				}
+			}
+
+			node.addEventListener(eventName, performTask);
+
+			return function()
+			{
+				node.removeEventListener(eventName, performTask);
+			};
+		});
+	};
+}
+
+var rAF = typeof requestAnimationFrame !== 'undefined'
+	? requestAnimationFrame
+	: function(callback) { callback(); };
+
+function withNode(id, doStuff)
+{
+	return _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)
+	{
+		rAF(function()
+		{
+			var node = document.getElementById(id);
+			if (node === null)
+			{
+				callback(_elm_lang$core$Native_Scheduler.fail({ ctor: 'NotFound', _0: id }));
+				return;
+			}
+			callback(_elm_lang$core$Native_Scheduler.succeed(doStuff(node)));
+		});
+	});
+}
+
+
+// FOCUS
+
+function focus(id)
+{
+	return withNode(id, function(node) {
+		node.focus();
+		return _elm_lang$core$Native_Utils.Tuple0;
+	});
+}
+
+function blur(id)
+{
+	return withNode(id, function(node) {
+		node.blur();
+		return _elm_lang$core$Native_Utils.Tuple0;
+	});
+}
+
+
+// SCROLLING
+
+function getScrollTop(id)
+{
+	return withNode(id, function(node) {
+		return node.scrollTop;
+	});
+}
+
+function setScrollTop(id, desiredScrollTop)
+{
+	return withNode(id, function(node) {
+		node.scrollTop = desiredScrollTop;
+		return _elm_lang$core$Native_Utils.Tuple0;
+	});
+}
+
+function toBottom(id)
+{
+	return withNode(id, function(node) {
+		node.scrollTop = node.scrollHeight;
+		return _elm_lang$core$Native_Utils.Tuple0;
+	});
+}
+
+function getScrollLeft(id)
+{
+	return withNode(id, function(node) {
+		return node.scrollLeft;
+	});
+}
+
+function setScrollLeft(id, desiredScrollLeft)
+{
+	return withNode(id, function(node) {
+		node.scrollLeft = desiredScrollLeft;
+		return _elm_lang$core$Native_Utils.Tuple0;
+	});
+}
+
+function toRight(id)
+{
+	return withNode(id, function(node) {
+		node.scrollLeft = node.scrollWidth;
+		return _elm_lang$core$Native_Utils.Tuple0;
+	});
+}
+
+
+// SIZE
+
+function width(options, id)
+{
+	return withNode(id, function(node) {
+		switch (options.ctor)
+		{
+			case 'Content':
+				return node.scrollWidth;
+			case 'VisibleContent':
+				return node.clientWidth;
+			case 'VisibleContentWithBorders':
+				return node.offsetWidth;
+			case 'VisibleContentWithBordersAndMargins':
+				var rect = node.getBoundingClientRect();
+				return rect.right - rect.left;
+		}
+	});
+}
+
+function height(options, id)
+{
+	return withNode(id, function(node) {
+		switch (options.ctor)
+		{
+			case 'Content':
+				return node.scrollHeight;
+			case 'VisibleContent':
+				return node.clientHeight;
+			case 'VisibleContentWithBorders':
+				return node.offsetHeight;
+			case 'VisibleContentWithBordersAndMargins':
+				var rect = node.getBoundingClientRect();
+				return rect.bottom - rect.top;
+		}
+	});
+}
+
+return {
+	onDocument: F3(on(document)),
+	onWindow: F3(on(window)),
+
+	focus: focus,
+	blur: blur,
+
+	getScrollTop: getScrollTop,
+	setScrollTop: F2(setScrollTop),
+	getScrollLeft: getScrollLeft,
+	setScrollLeft: F2(setScrollLeft),
+	toBottom: toBottom,
+	toRight: toRight,
+
+	height: F2(height),
+	width: F2(width)
+};
+
+}();
+var _elm_lang$dom$Dom_LowLevel$onWindow = _elm_lang$dom$Native_Dom.onWindow;
+var _elm_lang$dom$Dom_LowLevel$onDocument = _elm_lang$dom$Native_Dom.onDocument;
 var _elm_lang$html$Html_Attributes$attribute = _elm_lang$virtual_dom$VirtualDom$attribute;
 var _elm_lang$html$Html_Attributes$contextmenu = function (value) {
 	return A2(_elm_lang$html$Html_Attributes$attribute, 'contextmenu', value);
@@ -8966,6 +9142,126 @@ var _elm_lang$html$Html_Events$Options = F2(
 	function (a, b) {
 		return {stopPropagation: a, preventDefault: b};
 	});
+var _elm_lang$window$Native_Window = function()
+{
+
+var size = _elm_lang$core$Native_Scheduler.nativeBinding(function(callback)	{
+	callback(_elm_lang$core$Native_Scheduler.succeed({
+		width: window.innerWidth,
+		height: window.innerHeight
+	}));
+});
+
+return {
+	size: size
+};
+
+}();var _elm_lang$window$Window_ops = _elm_lang$window$Window_ops || {};
+_elm_lang$window$Window_ops['&>'] = F2(
+	function (t1, t2) {
+		return A2(
+			_elm_lang$core$Task$andThen,
+			t1,
+			function (_p0) {
+				return t2;
+			});
+	});
+var _elm_lang$window$Window$onSelfMsg = F3(
+	function (router, dimensions, state) {
+		var _p1 = state;
+		if (_p1.ctor === 'Nothing') {
+			return _elm_lang$core$Task$succeed(state);
+		} else {
+			var send = function (_p2) {
+				var _p3 = _p2;
+				return A2(
+					_elm_lang$core$Platform$sendToApp,
+					router,
+					_p3._0(dimensions));
+			};
+			return A2(
+				_elm_lang$window$Window_ops['&>'],
+				_elm_lang$core$Task$sequence(
+					A2(_elm_lang$core$List$map, send, _p1._0.subs)),
+				_elm_lang$core$Task$succeed(state));
+		}
+	});
+var _elm_lang$window$Window$init = _elm_lang$core$Task$succeed(_elm_lang$core$Maybe$Nothing);
+var _elm_lang$window$Window$size = _elm_lang$window$Native_Window.size;
+var _elm_lang$window$Window$width = A2(
+	_elm_lang$core$Task$map,
+	function (_) {
+		return _.width;
+	},
+	_elm_lang$window$Window$size);
+var _elm_lang$window$Window$height = A2(
+	_elm_lang$core$Task$map,
+	function (_) {
+		return _.height;
+	},
+	_elm_lang$window$Window$size);
+var _elm_lang$window$Window$onEffects = F3(
+	function (router, newSubs, oldState) {
+		var _p4 = {ctor: '_Tuple2', _0: oldState, _1: newSubs};
+		if (_p4._0.ctor === 'Nothing') {
+			if (_p4._1.ctor === '[]') {
+				return _elm_lang$core$Task$succeed(_elm_lang$core$Maybe$Nothing);
+			} else {
+				return A2(
+					_elm_lang$core$Task$andThen,
+					_elm_lang$core$Process$spawn(
+						A3(
+							_elm_lang$dom$Dom_LowLevel$onWindow,
+							'resize',
+							_elm_lang$core$Json_Decode$succeed(
+								{ctor: '_Tuple0'}),
+							function (_p5) {
+								return A2(
+									_elm_lang$core$Task$andThen,
+									_elm_lang$window$Window$size,
+									_elm_lang$core$Platform$sendToSelf(router));
+							})),
+					function (pid) {
+						return _elm_lang$core$Task$succeed(
+							_elm_lang$core$Maybe$Just(
+								{subs: newSubs, pid: pid}));
+					});
+			}
+		} else {
+			if (_p4._1.ctor === '[]') {
+				return A2(
+					_elm_lang$window$Window_ops['&>'],
+					_elm_lang$core$Process$kill(_p4._0._0.pid),
+					_elm_lang$core$Task$succeed(_elm_lang$core$Maybe$Nothing));
+			} else {
+				return _elm_lang$core$Task$succeed(
+					_elm_lang$core$Maybe$Just(
+						{subs: newSubs, pid: _p4._0._0.pid}));
+			}
+		}
+	});
+var _elm_lang$window$Window$subscription = _elm_lang$core$Native_Platform.leaf('Window');
+var _elm_lang$window$Window$Size = F2(
+	function (a, b) {
+		return {width: a, height: b};
+	});
+var _elm_lang$window$Window$MySub = function (a) {
+	return {ctor: 'MySub', _0: a};
+};
+var _elm_lang$window$Window$resizes = function (tagger) {
+	return _elm_lang$window$Window$subscription(
+		_elm_lang$window$Window$MySub(tagger));
+};
+var _elm_lang$window$Window$subMap = F2(
+	function (func, _p6) {
+		var _p7 = _p6;
+		return _elm_lang$window$Window$MySub(
+			function (_p8) {
+				return func(
+					_p7._0(_p8));
+			});
+	});
+_elm_lang$core$Native_Platform.effectManagers['Window'] = {pkg: 'elm-lang/window', init: _elm_lang$window$Window$init, onEffects: _elm_lang$window$Window$onEffects, onSelfMsg: _elm_lang$window$Window$onSelfMsg, tag: 'sub', subMap: _elm_lang$window$Window$subMap};
 var _evancz$elm_graphics$Native_Element = function()
 {
 
@@ -12184,7 +12480,7 @@ var _user$project$Main$drawSegment = F2(
 			var pArL = _p3.rangeL;
 			var pAdR = _p3.domR;
 			var pAdL = _p3.domL;
-			var h = _elm_lang$core$Basics$toFloat(s.plotCanvasSize.h);
+			var h = _elm_lang$core$Basics$toFloat(s.plotCanvasSize.height);
 			var toCoordY = function (y) {
 				return ((zoomRatio * (h / 2)) * (((2 * y) - pArL) - pArR)) / (pArR - pArL);
 			};
@@ -12204,7 +12500,7 @@ var _user$project$Main$drawSegment = F2(
 			var eRDU = _p2._0._1;
 			var eRUD = _p2._1._0;
 			var eRUU = _p2._1._1;
-			var w = _elm_lang$core$Basics$toFloat(s.plotCanvasSize.w);
+			var w = _elm_lang$core$Basics$toFloat(s.plotCanvasSize.width);
 			var toCoordX = function (x) {
 				return ((zoomRatio * (w / 2)) * (((2 * x) - pAdL) - pAdR)) / (pAdR - pAdL);
 			};
@@ -12291,6 +12587,45 @@ var _user$project$Main$slider = function (_p6) {
 				_elm_lang$core$Basics$toString(_p9))
 			]));
 };
+var _user$project$Main$view = function (s) {
+	var _p11 = s.plotCanvasSize;
+	var width = _p11.width;
+	var height = _p11.height;
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[]),
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_evancz$elm_graphics$Element$toHtml(
+				A4(
+					_evancz$elm_graphics$Element$container,
+					width,
+					height,
+					_evancz$elm_graphics$Element$middle,
+					A3(
+						_evancz$elm_graphics$Collage$collage,
+						width,
+						height,
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							_elm_lang$core$Native_List.fromArray(
+								[
+									A2(
+									_evancz$elm_graphics$Collage$filled,
+									_user$project$Main$bgrColour,
+									A2(
+										_evancz$elm_graphics$Collage$rect,
+										_elm_lang$core$Basics$toFloat(width),
+										_elm_lang$core$Basics$toFloat(height)))
+								]),
+							_elm_lang$core$List$concat(
+								A2(
+									_elm_lang$core$List$map,
+									_user$project$Main$drawFn(s),
+									_elm_lang$core$Dict$toList(s.functionSegments)))))))
+			]));
+};
 var _user$project$Main$getFunctionDetails = function (fnId) {
 	return A2(
 		_elm_lang$core$Task$map,
@@ -12341,8 +12676,8 @@ var _user$project$Main$functionSegmentF = function (pt) {
 };
 var _user$project$Main$getFunctionsSegmentsUsingSampling = F2(
 	function (s, fnIds) {
-		var _p11 = s.samplingId;
-		if (_p11.ctor === 'Nothing') {
+		var _p12 = s.samplingId;
+		if (_p12.ctor === 'Nothing') {
 			return _elm_lang$core$Task$succeed(s);
 		} else {
 			var getFunctionSegments = function (fnId) {
@@ -12355,7 +12690,7 @@ var _user$project$Main$getFunctionsSegmentsUsingSampling = F2(
 							_1: A2(_elm_lang$core$List$map, _user$project$Main$functionSegmentF, segs)
 						};
 					},
-					A2(_user$project$Api$getAern2PlotFunctionByFunctionIdValuesForSamplingBySamplingId, fnId, _p11._0));
+					A2(_user$project$Api$getAern2PlotFunctionByFunctionIdValuesForSamplingBySamplingId, fnId, _p12._0));
 			};
 			return A2(
 				_elm_lang$core$Task$map,
@@ -12391,7 +12726,7 @@ var _user$project$Main$getFunctionsSegmentsNewPlotArea = F2(
 				_user$project$DInterval$mulDi,
 				_user$project$DInterval$width(plotDomain),
 				s.plotResolution * s.zoomLevel),
-			s.plotCanvasSize.w * 100);
+			s.plotCanvasSize.width * 100);
 		var sampling = {sampling_dom$: plotDomain, sampling_maxStep: maxStep};
 		return A2(
 			_elm_lang$core$Task$andThen,
@@ -12440,20 +12775,38 @@ var _user$project$Main$initState = {
 	functionDetails: _elm_lang$core$Dict$empty,
 	functionSegments: _elm_lang$core$Dict$empty,
 	plotArea: _elm_lang$core$Maybe$Nothing,
-	plotCanvasSize: {w: 800, h: 800},
+	plotCanvasSize: {width: 800, height: 800},
 	plotResolution: 5,
 	samplingId: _elm_lang$core$Maybe$Nothing,
 	zoomLevel: 100,
+	windowSize: _elm_lang$core$Maybe$Nothing,
 	error: _elm_lang$core$Maybe$Nothing
 };
 var _user$project$Main$FunctionDetails = F3(
 	function (a, b, c) {
 		return {name: a, domain: b, points: c};
 	});
-var _user$project$Main$State = F9(
-	function (a, b, c, d, e, f, g, h, i) {
-		return {functionIds: a, functionDetails: b, functionSegments: c, plotArea: d, plotCanvasSize: e, plotResolution: f, samplingId: g, zoomLevel: h, error: i};
-	});
+var _user$project$Main$State = function (a) {
+	return function (b) {
+		return function (c) {
+			return function (d) {
+				return function (e) {
+					return function (f) {
+						return function (g) {
+							return function (h) {
+								return function (i) {
+									return function (j) {
+										return {functionIds: a, functionDetails: b, functionSegments: c, plotArea: d, plotCanvasSize: e, plotResolution: f, samplingId: g, zoomLevel: h, windowSize: i, error: j};
+									};
+								};
+							};
+						};
+					};
+				};
+			};
+		};
+	};
+};
 var _user$project$Main$FunctionSegmentF = F4(
 	function (a, b, c, d) {
 		return {domL: a, domR: b, enclL: c, enclR: d};
@@ -12475,13 +12828,13 @@ var _user$project$Main$toServer = F2(
 	function (tag, task) {
 		return A3(
 			_elm_lang$core$Task$perform,
-			function (_p12) {
-				return _user$project$Main$Error(
-					_elm_lang$core$Basics$toString(_p12));
-			},
 			function (_p13) {
+				return _user$project$Main$Error(
+					_elm_lang$core$Basics$toString(_p13));
+			},
+			function (_p14) {
 				return _user$project$Main$FromServer(
-					tag(_p13));
+					tag(_p14));
 			},
 			task);
 	});
@@ -12494,70 +12847,107 @@ var _user$project$Main$fetchFunctions = function (s) {
 		_user$project$Main$Functions,
 		_user$project$Main$getFunctions(s));
 };
+var _user$project$Main$ResizeResampleIfNoChange = function (a) {
+	return {ctor: 'ResizeResampleIfNoChange', _0: a};
+};
+var _user$project$Main$Resize = function (a) {
+	return {ctor: 'Resize', _0: a};
+};
 var _user$project$Main$NoAction = {ctor: 'NoAction'};
+var _user$project$Main$simulateResize = A3(
+	_elm_lang$core$Task$perform,
+	function (_p15) {
+		return _user$project$Main$FromUI(_user$project$Main$NoAction);
+	},
+	function (_p16) {
+		return _user$project$Main$FromUI(
+			_user$project$Main$Resize(_p16));
+	},
+	_elm_lang$window$Window$size);
+var _user$project$Main$initCmds = _elm_lang$core$Native_List.fromArray(
+	[_user$project$Main$simulateResize]);
 var _user$project$Main$viaUI = F2(
 	function (tag, task) {
 		return A3(
 			_elm_lang$core$Task$perform,
-			function (_p14) {
+			function (_p17) {
 				return _user$project$Main$FromUI(_user$project$Main$NoAction);
 			},
-			function (_p15) {
+			function (_p18) {
 				return _user$project$Main$FromUI(
-					tag(_p15));
+					tag(_p18));
 			},
 			task);
 	});
-var _user$project$Main$ZoomLevelResampleIfNoChange = function (a) {
-	return {ctor: 'ZoomLevelResampleIfNoChange', _0: a};
-};
 var _user$project$Main$update = F2(
 	function (msg, s) {
-		var _p16 = msg;
-		switch (_p16.ctor) {
+		var _p19 = msg;
+		switch (_p19.ctor) {
 			case 'FromServer':
-				var _p17 = _p16._0;
+				var _p20 = _p19._0;
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
 					_elm_lang$core$Native_Utils.update(
-						_p17._0,
+						_p20._0,
 						{zoomLevel: s.zoomLevel}),
 					_elm_lang$core$Native_List.fromArray(
 						[]));
 			case 'FromUI':
-				var _p18 = _p16._0;
-				switch (_p18.ctor) {
-					case 'ZoomLevel':
-						var _p21 = _p18._0;
-						var s$ = _elm_lang$core$Native_Utils.update(
-							s,
-							{zoomLevel: _p21});
-						return A2(
-							_elm_lang$core$Platform_Cmd_ops['!'],
-							s$,
-							_elm_lang$core$Native_List.fromArray(
-								[
-									A2(
-									_user$project$Main$viaUI,
-									_user$project$Main$ZoomLevelResampleIfNoChange,
-									A2(
-										_elm_lang$core$Task$andThen,
-										_elm_lang$core$Process$sleep(_elm_lang$core$Time$second),
-										function (_p19) {
-											var _p20 = _p19;
-											return _elm_lang$core$Task$succeed(_p21);
-										}))
-								]));
-					case 'ZoomLevelResampleIfNoChange':
-						if (!_elm_lang$core$Native_Utils.eq(s.zoomLevel, _p18._0)) {
+				var _p21 = _p19._0;
+				switch (_p21.ctor) {
+					case 'Resize':
+						var _p25 = _p21._0;
+						var _p22 = s.windowSize;
+						if (_p22.ctor === 'Nothing') {
+							return A2(
+								_elm_lang$core$Platform_Cmd_ops['!'],
+								s,
+								_elm_lang$core$Native_List.fromArray(
+									[
+										_user$project$Main$fetchFunctions(
+										_elm_lang$core$Native_Utils.update(
+											_user$project$Main$initState,
+											{
+												windowSize: _elm_lang$core$Maybe$Just(_p25),
+												plotCanvasSize: _p25
+											}))
+									]));
+						} else {
+							var s2 = _elm_lang$core$Native_Utils.update(
+								s,
+								{
+									windowSize: _elm_lang$core$Maybe$Just(_p25),
+									plotCanvasSize: _p25
+								});
+							return A2(
+								_elm_lang$core$Platform_Cmd_ops['!'],
+								s2,
+								_elm_lang$core$Native_List.fromArray(
+									[
+										A2(
+										_user$project$Main$viaUI,
+										_user$project$Main$ResizeResampleIfNoChange,
+										A2(
+											_elm_lang$core$Task$andThen,
+											_elm_lang$core$Process$sleep(_elm_lang$core$Time$second),
+											function (_p23) {
+												var _p24 = _p23;
+												return _elm_lang$core$Task$succeed(_p25);
+											}))
+									]));
+						}
+					case 'ResizeResampleIfNoChange':
+						if (!_elm_lang$core$Native_Utils.eq(
+							s.windowSize,
+							_elm_lang$core$Maybe$Just(_p21._0))) {
 							return A2(
 								_elm_lang$core$Platform_Cmd_ops['!'],
 								s,
 								_elm_lang$core$Native_List.fromArray(
 									[]));
 						} else {
-							var _p22 = s.plotArea;
-							if (_p22.ctor === 'Just') {
+							var _p26 = s.plotArea;
+							if (_p26.ctor === 'Just') {
 								return A2(
 									_elm_lang$core$Platform_Cmd_ops['!'],
 									s,
@@ -12566,7 +12956,7 @@ var _user$project$Main$update = F2(
 											A2(
 											_user$project$Main$toServer,
 											_user$project$Main$Functions,
-											A2(_user$project$Main$getFunctionsSegmentsNewPlotArea, s, _p22._0.domain))
+											A2(_user$project$Main$getFunctionsSegmentsNewPlotArea, s, _p26._0.domain))
 										]));
 							} else {
 								return A2(
@@ -12589,74 +12979,23 @@ var _user$project$Main$update = F2(
 					_elm_lang$core$Native_Utils.update(
 						s,
 						{
-							error: _elm_lang$core$Maybe$Just(_p16._0)
+							error: _elm_lang$core$Maybe$Just(_p19._0)
 						}),
 					_elm_lang$core$Native_List.fromArray(
 						[]));
 		}
 	});
-var _user$project$Main$ZoomLevel = function (a) {
-	return {ctor: 'ZoomLevel', _0: a};
-};
-var _user$project$Main$view = function (s) {
-	var height = s.plotCanvasSize.h;
-	var width = s.plotCanvasSize.w;
-	return A2(
-		_elm_lang$html$Html$div,
-		_elm_lang$core$Native_List.fromArray(
-			[]),
-		_elm_lang$core$Native_List.fromArray(
-			[
-				_user$project$Main$slider(
-				{
-					makeMsg: function (_p23) {
-						return _user$project$Main$FromUI(
-							_user$project$Main$ZoomLevel(_p23));
-					},
-					minValue: 50,
-					maxValue: 150,
-					state: s
-				}),
-				_evancz$elm_graphics$Element$toHtml(
-				A4(
-					_evancz$elm_graphics$Element$container,
-					width,
-					height,
-					_evancz$elm_graphics$Element$middle,
-					A3(
-						_evancz$elm_graphics$Collage$collage,
-						width,
-						height,
-						A2(
-							_elm_lang$core$Basics_ops['++'],
-							_elm_lang$core$Native_List.fromArray(
-								[
-									A2(
-									_evancz$elm_graphics$Collage$filled,
-									_user$project$Main$bgrColour,
-									A2(
-										_evancz$elm_graphics$Collage$rect,
-										_elm_lang$core$Basics$toFloat(width),
-										_elm_lang$core$Basics$toFloat(height)))
-								]),
-							_elm_lang$core$List$concat(
-								A2(
-									_elm_lang$core$List$map,
-									_user$project$Main$drawFn(s),
-									_elm_lang$core$Dict$toList(s.functionSegments)))))))
-			]));
-};
 var _user$project$Main$main = {
 	main: _elm_lang$html$Html_App$program(
 		{
-			init: {
-				ctor: '_Tuple2',
-				_0: _user$project$Main$initState,
-				_1: _user$project$Main$fetchFunctions(_user$project$Main$initState)
-			},
+			init: A2(_elm_lang$core$Platform_Cmd_ops['!'], _user$project$Main$initState, _user$project$Main$initCmds),
 			update: _user$project$Main$update,
-			subscriptions: function (_p24) {
-				return _elm_lang$core$Platform_Sub$none;
+			subscriptions: function (_p27) {
+				return _elm_lang$window$Window$resizes(
+					function (_p28) {
+						return _user$project$Main$FromUI(
+							_user$project$Main$Resize(_p28));
+					});
 			},
 			view: _user$project$Main$view
 		})
