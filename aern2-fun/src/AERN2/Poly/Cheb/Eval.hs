@@ -35,6 +35,8 @@ import AERN2.RealFun.UnaryFun
 
 import AERN2.Poly.Basics
 import AERN2.Poly.Cheb.Type
+import AERN2.Poly.Power.Type
+import qualified AERN2.Poly.Power.Eval as PE
 
 {- evaluation -}
 
@@ -84,6 +86,16 @@ fromDomToUnitInterval (Interval l r) xInDom =
   (xInDom - m)/(0.5*(r-l))
   where
   m = (r+l)*0.5
+
+evalLip :: ChPoly MPBall -> MPBall -> MPBall -> MPBall
+evalLip f l x =
+  evalDirect f (centreAsBall x) + (fromEndpoints (-err) err :: MPBall)
+  where
+  err = l* dyadic (ball_error x)*0.5
+
+evalDf :: ChPoly MPBall -> PowPoly MPBall -> MPBall -> MPBall
+evalDf f f' x =
+  evalLip f (abs $ PE.evalDirect f' x) x
 
 {- range -}
 

@@ -14,7 +14,7 @@
 module AERN2.Interval
 (
   Interval(..), singleton
-  , width, split, contains, intersect
+  , width, split, contains, intersect, intersects
   , DyadicInterval, CanBeDyadicInterval, dyadicInterval
   , RealInterval, CanBeRealInterval, realInterval
 )
@@ -22,6 +22,7 @@ where
 
 import Numeric.MixedTypes
 import qualified Prelude as P
+import Data.Maybe
 import Text.Printf
 
 import GHC.Generics
@@ -80,6 +81,12 @@ intersect (Interval l1 r1) (Interval l2 r2)
   where
   l = l1 `max` l2
   r = r1 `min` r2
+
+intersects ::
+  (CanMinMaxSameType l, CanMinMaxSameType r, HasOrderCertainly l r)
+  =>
+  Interval l r -> Interval l r -> Bool
+intersects i1 i2 = isJust $ intersect i1 i2
 
 instance
   (HasEqAsymmetric l1 l2, HasEqAsymmetric r1 r2
