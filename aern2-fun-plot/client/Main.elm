@@ -246,8 +246,10 @@ update msg s =
       case s.windowSize of
         Nothing -> -- initial simulated resize
           { s2 | serialCommandActive = True } ! [toServer Functions getFunctions]
-        Just _ ->
-          s2 ! [viaUI ResampleIfNoChange (sleep Time.second `andThen` (\() -> Task.succeed s2))]
+        Just oldSize ->
+          if size == oldSize then s ! []
+          else
+            s2 ! [viaUI ResampleIfNoChange (sleep Time.second `andThen` (\() -> Task.succeed s2))]
     ResampleIfNoChange s2 ->
       let
         plotChanged =
