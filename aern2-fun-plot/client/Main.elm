@@ -33,7 +33,7 @@ main =
         { init = initState ! initCmds
         , update = update
         , subscriptions =
-              (\_ -> Window.resizes (FromUI << Resize))
+              (\_ -> Window.resizes Resize)
         , view = view
         }
 
@@ -52,11 +52,12 @@ type alias State =
     { functionIds : List FunctionId
     , functionDetails : Dict FunctionId FunctionDetails
     , functionSegments : Dict FunctionId (List FunctionSegmentF)
+    , serialCommandQueue : List (Cmd Msg)
+    , serialCommandActive : Bool
     , plotArea : Maybe PlotArea
     , plotCanvasSize : { width : Pixels, height : Pixels }
     , plotResolution : Pixels
     , samplingId : Maybe SamplingId -- derived from the 3 above
-    -- , zoomLevel : Percent
     , windowSize : Maybe Window.Size
     , error : Maybe String
     }
@@ -66,6 +67,8 @@ initState =
   { functionIds = []
   , functionDetails = Dict.empty
   , functionSegments = Dict.empty
+  , serialCommandQueue = []
+  , serialCommandActive = False
   , plotArea = Nothing
   , plotCanvasSize = { width = 800, height = 800 }
   , plotResolution = 5
@@ -110,13 +113,12 @@ type alias PlotArea =
   }
 
 type alias Pixels = Int
-type alias Percent = Int
 
 initCmds =
   [simulateResize]
 
 simulateResize =
-  Task.perform (\_ -> FromUI NoAction) (FromUI << Resize) Window.size
+  Task.perform (\_ -> NoAction) Resize Window.size
 
 -- FETCHING FUNCTION DATA FROM SERVER
 
@@ -192,64 +194,41 @@ getFunctionsSegmentsUsingSampling s fnIds =
 -- UPDATE
 
 type Msg
-    = FromServer FromServer
-    | FromUI FromUI
+    = NoAction
+    | Functions State
+    | Resize Window.Size
+    | ResizeResampleIfNoChange Window.Size
     | Error String
 
-type FromServer
-    = Functions State
-    -- | NewItem Item
-    -- | Delete ItemId
 
-toServer : (a -> FromServer) -> Task Http.Error a -> Cmd Msg
+toServer : (a -> Msg) -> Task Http.Error a -> Cmd Msg
 toServer tag task =
-  Task.perform (Error << toString) (FromServer << tag) task
-
-type FromUI
-  = NoAction
-  | Resize Window.Size
-  | ResizeResampleIfNoChange Window.Size
-  -- | ZoomLevel Percent
-  -- | ZoomLevelResampleIfNoChange Percent
+  Task.perform (Error << toString) (tag) task
 
 viaUI tag task =
-  Task.perform (\ _ -> FromUI NoAction) (FromUI << tag) task
+  Task.perform (\ _ -> NoAction) (tag) task
 
 update : Msg -> State -> ( State, Cmd Msg )
 update msg s =
   case msg of
-    FromServer fromServer ->
-      case fromServer of
-        Functions s2 -> s2 ! []
-    FromUI fromUI ->
-      case fromUI of
-        Resize size ->
-          case s.windowSize of
-            Nothing -> -- initial simulated resize
-              s ! [fetchFunctions { initState | windowSize = Just size,  plotCanvasSize = size  }]
-            Just _ ->
-              let
-                s2 = { s | windowSize = Just size,  plotCanvasSize = size }
-              in
-              s2 ! [viaUI ResizeResampleIfNoChange (sleep Time.second `andThen` (\() -> Task.succeed size))]
-        ResizeResampleIfNoChange size ->
-          if s.windowSize /= Just size then s ! []
-          else
-            case s.plotArea of
-              Just plotArea ->
-                s ! [toServer Functions (getFunctionsSegmentsNewPlotArea s plotArea.domain)]
-              Nothing -> s ! []
-        -- ZoomLevel percent ->
-        --   let s' = { s | zoomLevel = percent } in
-        --   s' ! [viaUI ZoomLevelResampleIfNoChange (sleep Time.second `andThen` (\() -> Task.succeed percent))]
-        -- ZoomLevelResampleIfNoChange percent ->
-        --   if s.zoomLevel /= percent then s ! []
-        --   else
-        --     case s.plotArea of
-        --       Just plotArea ->
-        --         s ! [toServer Functions (getFunctionsSegmentsNewPlotArea s plotArea.domain)]
-        --       Nothing -> s ! []
-        NoAction -> s ! []
+    NoAction -> s ! []
+    Functions s2 -> s2 ! []
+    Resize size ->
+      case s.windowSize of
+        Nothing -> -- initial simulated resize
+          s ! [fetchFunctions { initState | windowSize = Just size,  plotCanvasSize = size  }]
+        Just _ ->
+          let
+            s2 = { s | windowSize = Just size,  plotCanvasSize = size }
+          in
+          s2 ! [viaUI ResizeResampleIfNoChange (sleep Time.second `andThen` (\() -> Task.succeed size))]
+    ResizeResampleIfNoChange size ->
+      if s.windowSize /= Just size then s ! []
+      else
+        case s.plotArea of
+          Just plotArea ->
+            s ! [toServer Functions (getFunctionsSegmentsNewPlotArea s plotArea.domain)]
+          Nothing -> s ! []
     Error msg ->
       { s | error = Just msg } ! []
 
