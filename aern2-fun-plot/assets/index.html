@@ -2716,6 +2716,84 @@ var _elm_lang$core$Platform_Sub$none = _elm_lang$core$Platform_Sub$batch(
 		[]));
 var _elm_lang$core$Platform_Sub$map = _elm_lang$core$Native_Platform.map;
 var _elm_lang$core$Platform_Sub$Sub = {ctor: 'Sub'};
+var _Fresheyeball$elm_tuple_extra$Tuple2$toList = function (_p0) {
+	var _p1 = _p0;
+	return _elm_lang$core$Native_List.fromArray(
+		[_p1._0, _p1._1]);
+};
+var _Fresheyeball$elm_tuple_extra$Tuple2$sortWith = F2(
+	function (cmp, _p2) {
+		var _p3 = _p2;
+		var _p6 = _p3._1;
+		var _p5 = _p3._0;
+		var _p4 = A2(cmp, _p5, _p6);
+		if (_p4.ctor === 'GT') {
+			return {ctor: '_Tuple2', _0: _p6, _1: _p5};
+		} else {
+			return {ctor: '_Tuple2', _0: _p5, _1: _p6};
+		}
+	});
+var _Fresheyeball$elm_tuple_extra$Tuple2$sortBy = F2(
+	function (f, _p7) {
+		var _p8 = _p7;
+		var _p10 = _p8._1;
+		var _p9 = _p8._0;
+		return (_elm_lang$core$Native_Utils.cmp(
+			f(_p9),
+			f(_p10)) > 0) ? {ctor: '_Tuple2', _0: _p10, _1: _p9} : {ctor: '_Tuple2', _0: _p9, _1: _p10};
+	});
+var _Fresheyeball$elm_tuple_extra$Tuple2$sort = function (_p11) {
+	var _p12 = _p11;
+	var _p14 = _p12._1;
+	var _p13 = _p12._0;
+	return (_elm_lang$core$Native_Utils.cmp(_p13, _p14) > 0) ? {ctor: '_Tuple2', _0: _p14, _1: _p13} : {ctor: '_Tuple2', _0: _p13, _1: _p14};
+};
+var _Fresheyeball$elm_tuple_extra$Tuple2$swap = function (_p15) {
+	var _p16 = _p15;
+	return {ctor: '_Tuple2', _0: _p16._1, _1: _p16._0};
+};
+var _Fresheyeball$elm_tuple_extra$Tuple2$mapBoth = F2(
+	function (f, _p17) {
+		var _p18 = _p17;
+		return {
+			ctor: '_Tuple2',
+			_0: f(_p18._0),
+			_1: f(_p18._1)
+		};
+	});
+var _Fresheyeball$elm_tuple_extra$Tuple2$mapEach = F3(
+	function (f, f$, _p19) {
+		var _p20 = _p19;
+		return {
+			ctor: '_Tuple2',
+			_0: f(_p20._0),
+			_1: f$(_p20._1)
+		};
+	});
+var _Fresheyeball$elm_tuple_extra$Tuple2$mapSnd = F2(
+	function (f, _p21) {
+		var _p22 = _p21;
+		return {
+			ctor: '_Tuple2',
+			_0: _p22._0,
+			_1: f(_p22._1)
+		};
+	});
+var _Fresheyeball$elm_tuple_extra$Tuple2$map = _Fresheyeball$elm_tuple_extra$Tuple2$mapSnd;
+var _Fresheyeball$elm_tuple_extra$Tuple2$mapFst = F2(
+	function (f, _p23) {
+		var _p24 = _p23;
+		return {
+			ctor: '_Tuple2',
+			_0: f(_p24._0),
+			_1: _p24._1
+		};
+	});
+var _Fresheyeball$elm_tuple_extra$Tuple2_ops = _Fresheyeball$elm_tuple_extra$Tuple2_ops || {};
+_Fresheyeball$elm_tuple_extra$Tuple2_ops['=>'] = F2(
+	function (a, b) {
+		return {ctor: '_Tuple2', _0: a, _1: b};
+	});
 //import Native.List //
 
 var _elm_lang$core$Native_Array = function() {
@@ -12100,40 +12178,32 @@ var _user$project$Main$drawSegment = F2(
 			return _elm_lang$core$Native_List.fromArray(
 				[]);
 		} else {
-			var _p1 = _p0._0;
+			var _p3 = _p0._0;
 			var zoomRatio = 100 / _elm_lang$core$Basics$toFloat(s.zoomLevel);
-			var pArR = _p1.rangeR;
-			var pArL = _p1.rangeL;
-			var pAdR = _p1.domR;
-			var pAdL = _p1.domL;
+			var pArR = _p3.rangeR;
+			var pArL = _p3.rangeL;
+			var pAdR = _p3.domR;
+			var pAdL = _p3.domL;
 			var h = _elm_lang$core$Basics$toFloat(s.plotCanvasSize.h);
 			var toCoordY = function (y) {
 				return ((zoomRatio * (h / 2)) * (((2 * y) - pArL) - pArR)) / (pArR - pArL);
 			};
-			var eLDD = toCoordY(
-				_elm_lang$core$Basics$fst(
-					_elm_lang$core$Basics$fst(segm.enclL)));
-			var eLDU = toCoordY(
-				_elm_lang$core$Basics$snd(
-					_elm_lang$core$Basics$fst(segm.enclL)));
-			var eLUD = toCoordY(
-				_elm_lang$core$Basics$fst(
-					_elm_lang$core$Basics$snd(segm.enclL)));
-			var eLUU = toCoordY(
-				_elm_lang$core$Basics$snd(
-					_elm_lang$core$Basics$snd(segm.enclL)));
-			var eRDD = toCoordY(
-				_elm_lang$core$Basics$fst(
-					_elm_lang$core$Basics$fst(segm.enclR)));
-			var eRDU = toCoordY(
-				_elm_lang$core$Basics$snd(
-					_elm_lang$core$Basics$fst(segm.enclR)));
-			var eRUD = toCoordY(
-				_elm_lang$core$Basics$fst(
-					_elm_lang$core$Basics$snd(segm.enclR)));
-			var eRUU = toCoordY(
-				_elm_lang$core$Basics$snd(
-					_elm_lang$core$Basics$snd(segm.enclR)));
+			var _p1 = A2(
+				_Fresheyeball$elm_tuple_extra$Tuple2$mapBoth,
+				_Fresheyeball$elm_tuple_extra$Tuple2$mapBoth(toCoordY),
+				segm.enclL);
+			var eLDD = _p1._0._0;
+			var eLDU = _p1._0._1;
+			var eLUD = _p1._1._0;
+			var eLUU = _p1._1._1;
+			var _p2 = A2(
+				_Fresheyeball$elm_tuple_extra$Tuple2$mapBoth,
+				_Fresheyeball$elm_tuple_extra$Tuple2$mapBoth(toCoordY),
+				segm.enclR);
+			var eRDD = _p2._0._0;
+			var eRDU = _p2._0._1;
+			var eRUD = _p2._1._0;
+			var eRUU = _p2._1._1;
 			var w = _elm_lang$core$Basics$toFloat(s.plotCanvasSize.w);
 			var toCoordX = function (x) {
 				return ((zoomRatio * (w / 2)) * (((2 * x) - pAdL) - pAdR)) / (pAdR - pAdL);
@@ -12175,18 +12245,18 @@ var _user$project$Main$drawSegment = F2(
 		}
 	});
 var _user$project$Main$drawFn = F2(
-	function (s, _p2) {
-		var _p3 = _p2;
+	function (s, _p4) {
+		var _p5 = _p4;
 		return _elm_lang$core$List$concat(
 			A2(
 				_elm_lang$core$List$map,
 				_user$project$Main$drawSegment(s),
-				_p3._1));
+				_p5._1));
 	});
-var _user$project$Main$slider = function (_p4) {
-	var _p5 = _p4;
-	var _p8 = _p5.minValue;
-	var _p7 = _p5.maxValue;
+var _user$project$Main$slider = function (_p6) {
+	var _p7 = _p6;
+	var _p10 = _p7.minValue;
+	var _p9 = _p7.maxValue;
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
@@ -12194,31 +12264,31 @@ var _user$project$Main$slider = function (_p4) {
 		_elm_lang$core$Native_List.fromArray(
 			[
 				_elm_lang$html$Html$text(
-				_elm_lang$core$Basics$toString(_p8)),
+				_elm_lang$core$Basics$toString(_p10)),
 				A2(
 				_elm_lang$html$Html$input,
 				_elm_lang$core$Native_List.fromArray(
 					[
 						_elm_lang$html$Html_Attributes$type$('range'),
 						_elm_lang$html$Html_Attributes$min(
-						_elm_lang$core$Basics$toString(_p8)),
+						_elm_lang$core$Basics$toString(_p10)),
 						_elm_lang$html$Html_Attributes$max(
-						_elm_lang$core$Basics$toString(_p7)),
+						_elm_lang$core$Basics$toString(_p9)),
 						_elm_lang$html$Html_Attributes$value(
-						_elm_lang$core$Basics$toString(_p5.state.zoomLevel)),
+						_elm_lang$core$Basics$toString(_p7.state.zoomLevel)),
 						_elm_lang$html$Html_Events$onInput(
-						function (_p6) {
-							return _p5.makeMsg(
+						function (_p8) {
+							return _p7.makeMsg(
 								A2(
 									_elm_lang$core$Result$withDefault,
 									0,
-									_elm_lang$core$String$toInt(_p6)));
+									_elm_lang$core$String$toInt(_p8)));
 						})
 					]),
 				_elm_lang$core$Native_List.fromArray(
 					[])),
 				_elm_lang$html$Html$text(
-				_elm_lang$core$Basics$toString(_p7))
+				_elm_lang$core$Basics$toString(_p9))
 			]));
 };
 var _user$project$Main$getFunctionDetails = function (fnId) {
@@ -12271,8 +12341,8 @@ var _user$project$Main$functionSegmentF = function (pt) {
 };
 var _user$project$Main$getFunctionsSegmentsUsingSampling = F2(
 	function (s, fnIds) {
-		var _p9 = s.samplingId;
-		if (_p9.ctor === 'Nothing') {
+		var _p11 = s.samplingId;
+		if (_p11.ctor === 'Nothing') {
 			return _elm_lang$core$Task$succeed(s);
 		} else {
 			var getFunctionSegments = function (fnId) {
@@ -12285,7 +12355,7 @@ var _user$project$Main$getFunctionsSegmentsUsingSampling = F2(
 							_1: A2(_elm_lang$core$List$map, _user$project$Main$functionSegmentF, segs)
 						};
 					},
-					A2(_user$project$Api$getAern2PlotFunctionByFunctionIdValuesForSamplingBySamplingId, fnId, _p9._0));
+					A2(_user$project$Api$getAern2PlotFunctionByFunctionIdValuesForSamplingBySamplingId, fnId, _p11._0));
 			};
 			return A2(
 				_elm_lang$core$Task$map,
@@ -12371,7 +12441,7 @@ var _user$project$Main$initState = {
 	functionSegments: _elm_lang$core$Dict$empty,
 	plotArea: _elm_lang$core$Maybe$Nothing,
 	plotCanvasSize: {w: 800, h: 800},
-	plotResolution: 2,
+	plotResolution: 5,
 	samplingId: _elm_lang$core$Maybe$Nothing,
 	zoomLevel: 100,
 	error: _elm_lang$core$Maybe$Nothing
@@ -12405,13 +12475,13 @@ var _user$project$Main$toServer = F2(
 	function (tag, task) {
 		return A3(
 			_elm_lang$core$Task$perform,
-			function (_p10) {
+			function (_p12) {
 				return _user$project$Main$Error(
-					_elm_lang$core$Basics$toString(_p10));
+					_elm_lang$core$Basics$toString(_p12));
 			},
-			function (_p11) {
+			function (_p13) {
 				return _user$project$Main$FromServer(
-					tag(_p11));
+					tag(_p13));
 			},
 			task);
 	});
@@ -12429,12 +12499,12 @@ var _user$project$Main$viaUI = F2(
 	function (tag, task) {
 		return A3(
 			_elm_lang$core$Task$perform,
-			function (_p12) {
+			function (_p14) {
 				return _user$project$Main$FromUI(_user$project$Main$NoAction);
 			},
-			function (_p13) {
+			function (_p15) {
 				return _user$project$Main$FromUI(
-					tag(_p13));
+					tag(_p15));
 			},
 			task);
 	});
@@ -12443,25 +12513,25 @@ var _user$project$Main$ZoomLevelResampleIfNoChange = function (a) {
 };
 var _user$project$Main$update = F2(
 	function (msg, s) {
-		var _p14 = msg;
-		switch (_p14.ctor) {
+		var _p16 = msg;
+		switch (_p16.ctor) {
 			case 'FromServer':
-				var _p15 = _p14._0;
+				var _p17 = _p16._0;
 				return A2(
 					_elm_lang$core$Platform_Cmd_ops['!'],
 					_elm_lang$core$Native_Utils.update(
-						_p15._0,
+						_p17._0,
 						{zoomLevel: s.zoomLevel}),
 					_elm_lang$core$Native_List.fromArray(
 						[]));
 			case 'FromUI':
-				var _p16 = _p14._0;
-				switch (_p16.ctor) {
+				var _p18 = _p16._0;
+				switch (_p18.ctor) {
 					case 'ZoomLevel':
-						var _p19 = _p16._0;
+						var _p21 = _p18._0;
 						var s$ = _elm_lang$core$Native_Utils.update(
 							s,
-							{zoomLevel: _p19});
+							{zoomLevel: _p21});
 						return A2(
 							_elm_lang$core$Platform_Cmd_ops['!'],
 							s$,
@@ -12473,21 +12543,21 @@ var _user$project$Main$update = F2(
 									A2(
 										_elm_lang$core$Task$andThen,
 										_elm_lang$core$Process$sleep(_elm_lang$core$Time$second),
-										function (_p17) {
-											var _p18 = _p17;
-											return _elm_lang$core$Task$succeed(_p19);
+										function (_p19) {
+											var _p20 = _p19;
+											return _elm_lang$core$Task$succeed(_p21);
 										}))
 								]));
 					case 'ZoomLevelResampleIfNoChange':
-						if (!_elm_lang$core$Native_Utils.eq(s.zoomLevel, _p16._0)) {
+						if (!_elm_lang$core$Native_Utils.eq(s.zoomLevel, _p18._0)) {
 							return A2(
 								_elm_lang$core$Platform_Cmd_ops['!'],
 								s,
 								_elm_lang$core$Native_List.fromArray(
 									[]));
 						} else {
-							var _p20 = s.plotArea;
-							if (_p20.ctor === 'Just') {
+							var _p22 = s.plotArea;
+							if (_p22.ctor === 'Just') {
 								return A2(
 									_elm_lang$core$Platform_Cmd_ops['!'],
 									s,
@@ -12496,7 +12566,7 @@ var _user$project$Main$update = F2(
 											A2(
 											_user$project$Main$toServer,
 											_user$project$Main$Functions,
-											A2(_user$project$Main$getFunctionsSegmentsNewPlotArea, s, _p20._0.domain))
+											A2(_user$project$Main$getFunctionsSegmentsNewPlotArea, s, _p22._0.domain))
 										]));
 							} else {
 								return A2(
@@ -12519,7 +12589,7 @@ var _user$project$Main$update = F2(
 					_elm_lang$core$Native_Utils.update(
 						s,
 						{
-							error: _elm_lang$core$Maybe$Just(_p14._0)
+							error: _elm_lang$core$Maybe$Just(_p16._0)
 						}),
 					_elm_lang$core$Native_List.fromArray(
 						[]));
@@ -12539,9 +12609,9 @@ var _user$project$Main$view = function (s) {
 			[
 				_user$project$Main$slider(
 				{
-					makeMsg: function (_p21) {
+					makeMsg: function (_p23) {
 						return _user$project$Main$FromUI(
-							_user$project$Main$ZoomLevel(_p21));
+							_user$project$Main$ZoomLevel(_p23));
 					},
 					minValue: 50,
 					maxValue: 150,
@@ -12585,7 +12655,7 @@ var _user$project$Main$main = {
 				_1: _user$project$Main$fetchFunctions(_user$project$Main$initState)
 			},
 			update: _user$project$Main$update,
-			subscriptions: function (_p22) {
+			subscriptions: function (_p24) {
 				return _elm_lang$core$Platform_Sub$none;
 			},
 			view: _user$project$Main$view

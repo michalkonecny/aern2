@@ -4,6 +4,7 @@ import Set exposing (Set)
 import Dict exposing (Dict)
 import List
 import String
+import Tuple2
 
 import Html exposing (..)
 import Html.App exposing (program)
@@ -63,7 +64,7 @@ initState =
   , functionSegments = Dict.empty
   , plotArea = Nothing
   , plotCanvasSize = { w = 800, h = 800 }
-  , plotResolution = 2
+  , plotResolution = 5
   , samplingId = Nothing
   , zoomLevel = 100
   , error = Nothing
@@ -281,14 +282,8 @@ drawSegment s segm =
         domR = toCoordX segm.domR
         domM = (domL + domR) / 2
         domW = domR - domL
-        eLDD = toCoordY <| fst <| fst segm.enclL
-        eLDU = toCoordY <| snd <| fst segm.enclL
-        eLUD = toCoordY <| fst <| snd segm.enclL
-        eLUU = toCoordY <| snd <| snd segm.enclL
-        eRDD = toCoordY <| fst <| fst segm.enclR
-        eRDU = toCoordY <| snd <| fst segm.enclR
-        eRUD = toCoordY <| fst <| snd segm.enclR
-        eRUU = toCoordY <| snd <| snd segm.enclR
+        ((eLDD, eLDU), (eLUD, eLUU)) = Tuple2.mapBoth (Tuple2.mapBoth toCoordY) segm.enclL
+        ((eRDD, eRDU), (eRUD, eRUU)) = Tuple2.mapBoth (Tuple2.mapBoth toCoordY) segm.enclR
         parallelogramU =
           polygon [(domL, eLUD), (domL,eLUU), (domR,eRUU), (domR,eRUD)]
         parallelogramUD =
