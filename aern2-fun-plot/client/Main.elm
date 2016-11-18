@@ -56,7 +56,7 @@ type alias State =
     , plotCanvasSize : { width : Pixels, height : Pixels }
     , plotResolution : Pixels
     , samplingId : Maybe SamplingId -- derived from the 3 above
-    , zoomLevel : Percent
+    -- , zoomLevel : Percent
     , windowSize : Maybe Window.Size
     , error : Maybe String
     }
@@ -70,7 +70,7 @@ initState =
   , plotCanvasSize = { width = 800, height = 800 }
   , plotResolution = 5
   , samplingId = Nothing
-  , zoomLevel = 100
+  -- , zoomLevel = 100
   , windowSize = Nothing
   , error = Nothing
   }
@@ -158,8 +158,8 @@ getFunctionsSegmentsNewPlotArea : State -> DyadicIntervalAPI -> Task Http.Error 
 getFunctionsSegmentsNewPlotArea s plotDomain =
   let
     maxStep =
-      ((DInterval.width plotDomain) `mulDi` (s.plotResolution * s.zoomLevel))
-        `divDi` ((s.plotCanvasSize.width * 100) )
+      ((DInterval.width plotDomain) `mulDi` s.plotResolution)
+        `divDi` (s.plotCanvasSize.width)
     sampling = { sampling_dom' = plotDomain, sampling_maxStep = maxStep }
     plotArea =
       { domain = plotDomain
@@ -220,7 +220,7 @@ update msg s =
   case msg of
     FromServer fromServer ->
       case fromServer of
-        Functions s' -> { s' | zoomLevel = s.zoomLevel } ! []
+        Functions s2 -> s2 ! []
     FromUI fromUI ->
       case fromUI of
         Resize size ->
@@ -275,18 +275,18 @@ view s =
         (List.concat <| List.map (drawFn s) <| Dict.toList s.functionSegments)
     ]
 
-slider { makeMsg, minValue, maxValue, state } =
-  div []
-    [ Html.text <| toString minValue
-    , input
-      [ type' "range"
-      , A.min <| toString minValue
-      , A.max <| toString maxValue
-      , value <| toString state.zoomLevel
-      , onInput (makeMsg << Result.withDefault 0 << String.toInt)
-      ] []
-    , Html.text <| toString maxValue
-    ]
+-- slider { makeMsg, minValue, maxValue, state } =
+--   div []
+--     [ Html.text <| toString minValue
+--     , input
+--       [ type' "range"
+--       , A.min <| toString minValue
+--       , A.max <| toString maxValue
+--       , value <| toString state.zoomLevel
+--       , onInput (makeMsg << Result.withDefault 0 << String.toInt)
+--       ] []
+--     , Html.text <| toString maxValue
+--     ]
 
 drawFn s (fnId, segments) =
   List.concat <| List.map (drawSegment s) segments
@@ -302,9 +302,9 @@ drawSegment s segm =
         pAdR = plotArea.domR
         pArL = plotArea.rangeL
         pArR = plotArea.rangeR
-        zoomRatio = 100 / (toFloat s.zoomLevel)
-        toCoordX x = zoomRatio * (w/2) * (2*x - pAdL - pAdR) / (pAdR - pAdL)
-        toCoordY y = zoomRatio * (h/2) * (2*y - pArL - pArR) / (pArR - pArL)
+        -- zoomRatio = 100 / (toFloat s.zoomLevel)
+        toCoordX x = (w/2) * (2*x - pAdL - pAdR) / (pAdR - pAdL)
+        toCoordY y = (h/2) * (2*y - pArL - pArR) / (pArR - pArL)
         domL = toCoordX segm.domL
         domR = toCoordX segm.domR
         domM = (domL + domR) / 2
