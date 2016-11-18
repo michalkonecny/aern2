@@ -107,7 +107,7 @@ type alias Pixels = Int
 type alias Percent = Int
 
 
--- INITIALISATION
+-- FETCHING FUNCTION DATA FROM SERVER
 
 fetchFunctions s =
   toServer Functions (getFunctions s)
@@ -299,7 +299,7 @@ drawSegment s segm =
       [
         parallelogramUD |> filled enclosureFillColour
       , parallelogramD |> outlined enclosureOutlineStyle
-      , parallelogramD |> outlined enclosureOutlineStyle
+      , parallelogramU |> outlined enclosureOutlineStyle
       ]
 
 bgrColour =
