@@ -37,46 +37,56 @@ main =
         , view = view
         }
 
+initCmds =
+  [simulateResize]
+
+simulateResize =
+  Task.perform (\_ -> NoAction) Resize Window.size
+
+
 -- MODEL
 
-type alias SamplingId = Int
-type alias FunctionId = Int
-type alias FunctionName = String
-type alias FunctionDetails =
-  { name : FunctionName
-  , domain : DyadicIntervalAPI
-  , points : List FunctionSegment
-  }
-
 type alias State =
-    { functionIds : List FunctionId
-    , functionDetails : Dict FunctionId FunctionDetails
-    , functionSegments : Dict FunctionId (List FunctionSegmentF)
-    , serialCommandQueue : List (Cmd Msg)
+    { functionsIds : List FunctionId
+    , functionsDetails : FunctionsDetails
+    , functionsSegments : FunctionsSegments
+    , serialCommandNext : Maybe (Cmd Msg) -- server commands to be sent serially
     , serialCommandActive : Bool
+      -- invariant: serialCommandActive == False ==> serialCommandNext == Nothing
     , plotArea : Maybe PlotArea
     , plotCanvasSize : { width : Pixels, height : Pixels }
     , plotResolution : Pixels
-    , samplingId : Maybe SamplingId -- derived from the 3 above
     , windowSize : Maybe Window.Size
     , error : Maybe String
     }
 
 initState : State
 initState =
-  { functionIds = []
-  , functionDetails = Dict.empty
-  , functionSegments = Dict.empty
-  , serialCommandQueue = []
+  { functionsIds = []
+  , functionsDetails = Dict.empty
+  , functionsSegments = Dict.empty
+  , serialCommandNext = Nothing
   , serialCommandActive = False
   , plotArea = Nothing
   , plotCanvasSize = { width = 800, height = 800 }
   , plotResolution = 5
-  , samplingId = Nothing
-  -- , zoomLevel = 100
   , windowSize = Nothing
   , error = Nothing
   }
+
+type alias Pixels = Int
+
+type alias SamplingId = Int
+type alias FunctionId = Int
+type alias FunctionsIds = List FunctionId
+type alias FunctionName = String
+type alias FunctionDomain = DyadicIntervalAPI
+type alias FunctionDetails =
+  { name : FunctionName
+  , domain : FunctionDomain
+  }
+type alias FunctionsDetails = Dict FunctionId FunctionDetails
+type alias FunctionsSegments = Dict FunctionId (List FunctionSegmentF)
 
 type alias FunctionSegmentF =
   { domL : Float
@@ -105,101 +115,92 @@ mpBallToFloatFloat b =
   in (c - e, c + e)
 
 type alias PlotArea =
-  { domain : DyadicIntervalAPI
+  { domain : FunctionDomain
   , domL : Float
   , domR : Float
   , rangeL : Float
   , rangeR : Float
   }
 
-type alias Pixels = Int
+initPlotArea : State -> FunctionDomain -> PlotArea
+initPlotArea s plotDomain =
+  { domain = plotDomain
+  , domL = dToFloat plotDomain.dyadic_endpointL
+  , domR = dToFloat plotDomain.dyadic_endpointR
+  , rangeL = -0.0 -- TODO: derive from canvas ratio and plotDomain, centre on 0
+  , rangeR = 1.0
+  }
 
-initCmds =
-  [simulateResize]
-
-simulateResize =
-  Task.perform (\_ -> NoAction) Resize Window.size
+unionOfFunctionsDomains : State -> FunctionDomain
+unionOfFunctionsDomains s =
+  let
+    fnDetails = s.functionsDetails
+    domains = List.map (.domain) (Dict.values fnDetails)
+    in
+    DInterval.unions domains
 
 -- FETCHING FUNCTION DATA FROM SERVER
 
-fetchFunctions s =
-  toServer Functions (getFunctions s)
-
-getFunctions s =
+-- request metadate about the list of functions to be plotted:
+getFunctions =
   getAern2PlotFunction
   `andThen`
   (\fnIds ->
-    getFunctionsDetails fnIds
-    `andThen`
-    (\fnDetails ->
-      getFunctionsSegmentsWholeDomain
-        { s | functionIds = fnIds, functionDetails = fnDetails }))
+    getFunctionsDetails fnIds)
 
-getFunctionsDetails : List FunctionId -> Task Http.Error (Dict FunctionId FunctionDetails)
+getFunctionsDetails : List FunctionId -> Task Http.Error (FunctionsIds, FunctionsDetails)
 getFunctionsDetails fnIds =
-  Task.map Dict.fromList (Task.sequence (List.map getFunctionDetails fnIds))
+  Task.map (\ l -> (fnIds, Dict.fromList l)) <|
+    Task.sequence <| List.map getFunctionDetails fnIds
 
 getFunctionDetails : FunctionId -> Task Http.Error (FunctionId, FunctionDetails)
 getFunctionDetails fnId =
   Task.map (\fnDetails -> (fnId, fnDetails)) <|
     Task.map2
-      (\ name domain -> { name = name, domain = domain, points = [] })
+      (\ name domain -> { name = name, domain = domain })
         (getAern2PlotFunctionByFunctionIdName fnId)
         (getAern2PlotFunctionByFunctionIdDomain fnId)
 
-getFunctionsSegmentsWholeDomain : State -> Task Http.Error State
-getFunctionsSegmentsWholeDomain s =
-  let
-    fnDetails = s.functionDetails
-    domains = List.map (.domain) (Dict.values fnDetails)
-    plotDomain = DInterval.unions domains
-  in
-  getFunctionsSegmentsNewPlotArea s plotDomain
+-- request segments to plot:
 
-getFunctionsSegmentsNewPlotArea : State -> DyadicIntervalAPI -> Task Http.Error State
-getFunctionsSegmentsNewPlotArea s plotDomain =
+createNewSampling : State -> FunctionDomain -> Task Http.Error SamplingId
+createNewSampling s plotDomain =
   let
     maxStep =
       ((DInterval.width plotDomain) `mulDi` s.plotResolution)
         `divDi` (s.plotCanvasSize.width)
     sampling = { sampling_dom' = plotDomain, sampling_maxStep = maxStep }
-    plotArea =
-      { domain = plotDomain
-      , domL = dToFloat plotDomain.dyadic_endpointL
-      , domR = dToFloat plotDomain.dyadic_endpointR
-      , rangeL = -0.0 -- TODO
-      , rangeR = 1.0
-      }
-    sWithPlotArea = { s | plotArea = Just plotArea }
-    fnIds = s.functionIds
   in
   postAern2PlotSampling sampling
+
+getFunctionsSegments : State -> FunctionDomain -> Task Http.Error (FunctionDomain, FunctionsSegments)
+getFunctionsSegments s plotDomain =
+  createNewSampling s plotDomain
   `andThen`
   (\ samplingId ->
-    getFunctionsSegmentsUsingSampling { sWithPlotArea | samplingId = Just samplingId } fnIds)
+    Task.map (\segs -> (plotDomain, segs)) <| getFunctionsSegmentsUsingSampling s samplingId)
 
-getFunctionsSegmentsUsingSampling : State -> (List FunctionId) -> Task Http.Error State
-getFunctionsSegmentsUsingSampling s fnIds =
-  case s.samplingId of
-    Nothing -> Task.succeed s
-    Just samplingId ->
-      let
-        getFunctionSegments fnId =
-          Task.map (\segs -> (fnId, List.map functionSegmentF segs)) <|
-            getAern2PlotFunctionByFunctionIdValuesForSamplingBySamplingId fnId samplingId
-      in
-      Task.map (\list -> { s | functionSegments = Dict.fromList list } ) <|
-        Task.sequence <| List.map getFunctionSegments fnIds
+getFunctionsSegmentsUsingSampling : State -> SamplingId -> Task Http.Error FunctionsSegments
+getFunctionsSegmentsUsingSampling s samplingId =
+  let
+    fnIds = s.functionsIds
+    getSegs fnId =
+      Task.map (\segs -> (fnId, List.map functionSegmentF segs)) <|
+        getAern2PlotFunctionByFunctionIdValuesForSamplingBySamplingId fnId samplingId
+  in
+  Task.map Dict.fromList <|
+    Task.sequence <| List.map getSegs fnIds
+    -- TODO: send the above list of requests in parallel
 
 -- UPDATE
 
 type Msg
     = NoAction
-    | Functions State
+    | Functions (FunctionsIds, FunctionsDetails)
+    | FunctionsSegments (FunctionDomain, FunctionsSegments)
     | Resize Window.Size
-    | ResizeResampleIfNoChange Window.Size
+    | ResampleIfNoChange State
     | Error String
-
 
 toServer : (a -> Msg) -> Task Http.Error a -> Cmd Msg
 toServer tag task =
@@ -212,23 +213,62 @@ update : Msg -> State -> ( State, Cmd Msg )
 update msg s =
   case msg of
     NoAction -> s ! []
-    Functions s2 -> s2 ! []
+    Functions (fnIds, fnDetails) ->
+      let
+        plotDomain =
+          case s.plotArea of
+            Just plotArea -> plotArea.domain
+            _ -> unionOfFunctionsDomains s
+        sWithFns =
+          {s |
+            functionsIds = fnIds
+          , functionsDetails = fnDetails
+          , plotArea = Just (initPlotArea s plotDomain)}
+        cmdGetSegments =
+          getFunctionsSegments sWithFns plotDomain |> toServer FunctionsSegments
+      in
+      { sWithFns | serialCommandNext = Nothing } ! [cmdGetSegments]
+        -- serialCommandActive already True due to "Functions"
+    FunctionsSegments (plotDomain, fnSegments) ->
+      let
+        s2 = { s | functionsSegments = fnSegments }
+      in
+      case s.serialCommandNext of
+        Just cmd ->
+          { s2 | serialCommandNext = Nothing } ! [cmd]
+        -- serialCommandActive already True due to "FunctionsSegments"
+        _ ->
+          { s2 | serialCommandActive = False } ! []
     Resize size ->
+      let
+        s2 = { s | windowSize = Just size,  plotCanvasSize = size }
+      in
       case s.windowSize of
         Nothing -> -- initial simulated resize
-          s ! [fetchFunctions { initState | windowSize = Just size,  plotCanvasSize = size  }]
+          { s2 | serialCommandActive = True } ! [toServer Functions getFunctions]
         Just _ ->
-          let
-            s2 = { s | windowSize = Just size,  plotCanvasSize = size }
-          in
-          s2 ! [viaUI ResizeResampleIfNoChange (sleep Time.second `andThen` (\() -> Task.succeed size))]
-    ResizeResampleIfNoChange size ->
-      if s.windowSize /= Just size then s ! []
+          s2 ! [viaUI ResampleIfNoChange (sleep Time.second `andThen` (\() -> Task.succeed s2))]
+    ResampleIfNoChange s2 ->
+      let
+        plotChanged =
+          s.plotArea /= s2.plotArea
+          || s.plotCanvasSize /= s2.plotCanvasSize
+          || s.plotResolution /= s2.plotResolution
+          || s.functionsDetails /= s2.functionsDetails
+      in
+      if plotChanged then s ! []
       else
         case s.plotArea of
-          Just plotArea ->
-            s ! [toServer Functions (getFunctionsSegmentsNewPlotArea s plotArea.domain)]
           Nothing -> s ! []
+          Just plotArea ->
+            let
+              cmdGetSegments =
+                getFunctionsSegments s plotArea.domain |> toServer FunctionsSegments
+            in
+            if s.serialCommandActive then
+              { s | serialCommandNext = Just cmdGetSegments } ! []
+            else
+              { s | serialCommandActive = True } ! [ cmdGetSegments ]
     Error msg ->
       { s | error = Just msg } ! []
 
@@ -251,7 +291,7 @@ view s =
         [ rect (toFloat width) (toFloat height)
             |> filled bgrColour
         ] ++
-        (List.concat <| List.map (drawFn s) <| Dict.toList s.functionSegments)
+        (List.concat <| List.map (drawFn s) <| Dict.toList s.functionsSegments)
     ]
 
 -- slider { makeMsg, minValue, maxValue, state } =
