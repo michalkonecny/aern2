@@ -26,17 +26,18 @@ import Control.Applicative
 import Numeric.CatchingExceptions
 
 -- import AERN2.MP.Dyadic
-import AERN2.MP.Ball (mpBall)
-import qualified AERN2.MP.Ball as MPBall
+import AERN2.MP.Ball (mpBall, IsInterval(..), IsBall(..), setPrecisionAtLeastAccuracy)
+-- import qualified AERN2.MP.Ball as MPBall
 
--- import AERN2.Real
+import AERN2.Real
 import AERN2.Interval (Interval(..), DyadicInterval, RealInterval)
--- import qualified AERN2.Interval as Interval
+import qualified AERN2.Interval as Interval
 
 import AERN2.RealFun.Operations
 
 import AERN2.RealFun.UnaryFun.Type
 import AERN2.RealFun.UnaryFun.Evaluation
+import AERN2.RealFun.UnaryFun.Integration
 
 data UnaryDFun = UnaryDFun { _dfun_derivatives :: [UnaryFun] }
 
@@ -48,8 +49,8 @@ instance CanApply UnaryDFun DyadicInterval where
     where
     evalUseD [] f di = (Nothing, evalOnIntervalGuessPrecision f di)
     evalUseD (UnaryFun _ f' : rest) f di@(Interval l r)
-      | f'di !>=! 0 = (Just Increasing, liftA2 MPBall.fromEndpoints fl fr)
-      | f'di !<=! 0 = (Just Decreasing, liftA2 MPBall.fromEndpoints fr fl)
+      | f'di !>=! 0 = (Just Increasing, liftA2 fromEndpoints fl fr)
+      | f'di !<=! 0 = (Just Decreasing, liftA2 fromEndpoints fr fl)
       | otherwise = (Nothing, fm + errBall)
       where
       (_, f'di) = evalUseD rest f' di -- recursive call
@@ -58,4 +59,22 @@ instance CanApply UnaryDFun DyadicInterval where
       fm = evalOnIntervalGuessPrecision f (Interval m m)
       m = (l + r)*0.5
       errBall = f'di*((r-l)*0.5)*unitBall
-      unitBall = catchingNumExceptions $ mpBall (0,1)
+      unitBall = catchingNumExceptions $ mpBall (-1,1)
+
+instance CanIntegrate UnaryDFun DyadicInterval where
+  type IntegralType UnaryDFun DyadicInterval = CauchyReal
+  integrate (UnaryDFun []) = error "integrating a UnaryDFun that has no data"
+  integrate (UnaryDFun [f]) = integrate f
+  integrate (UnaryDFun (f : f' : _)) =
+    integralOnIntervalSubdivide integralOnInterval
+    where
+    integralOnInterval di ac =
+      (apply f diM)*diW+errB
+      where
+      diW = Interval.width di
+      errB = ((deriv - deriv)/2)*((diW*0.5)^2)*0.5
+      deriv = apply f' (catchingNumExceptions $ mpBall di)
+      diM =
+        catchingNumExceptions $
+          setPrecisionAtLeastAccuracy (ac + 100) $
+            centreAsBall $ mpBall di

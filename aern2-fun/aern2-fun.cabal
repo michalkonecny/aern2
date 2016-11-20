@@ -57,6 +57,7 @@ library
     AERN2.RealFun.UnaryFun
     AERN2.RealFun.UnaryFun.Type
     AERN2.RealFun.UnaryFun.Evaluation
+    AERN2.RealFun.UnaryFun.Integration
     AERN2.RealFun.UnaryDFun
     -- AERN2.RealFun.DFun
     AERN2.Poly

@@ -23,3 +23,4 @@ where
 
 import AERN2.RealFun.UnaryFun.Type
 import AERN2.RealFun.UnaryFun.Evaluation ()
+import AERN2.RealFun.UnaryFun.Integration ()

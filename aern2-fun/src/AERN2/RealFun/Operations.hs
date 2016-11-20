@@ -55,6 +55,6 @@ type HasConstFunctions t f = ConvertibleExactly (Domain f, t) f
 constFn :: (HasConstFunctions t f) => (Domain f, t) -> f
 constFn = convertExactly
 
-class CanIntegrate f where
-  type IntegralType f
-  integrate :: f -> IntegralType f
+class CanIntegrate f bounds where
+  type IntegralType f bounds
+  integrate :: f -> bounds -> IntegralType f bounds
