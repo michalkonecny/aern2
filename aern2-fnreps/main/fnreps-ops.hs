@@ -23,7 +23,7 @@ import AERN2.Interval
 
 import AERN2.RealFun.Operations
 import AERN2.RealFun.UnaryFun
--- import AERN2.RealFun.UnaryDFun
+import AERN2.RealFun.UnaryDFun
 import AERN2.Poly.Cheb
 import AERN2.Poly.Basics
 
@@ -56,9 +56,9 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     result =
         case (representationCode, operationCode) of
             ("fun", "max") -> maxFun fnB2B accuracy
-            -- ("dfun", "max") -> maxDFun fnB2B dfnB2B accuracy
+            ("dfun", "max") -> maxDFun fnB2B dfnB2B accuracy
             ("fun", "integrate") -> integrateFun fnB2B accuracy
-            -- ("dfun", "integrate") -> integrateDFun fnB2B dfnB2B accuracy
+            ("dfun", "integrate") -> integrateDFun fnB2B dfnB2B accuracy
             -- ("poly", "max") -> maxPB $ fnPB p maxDeg1 maxDeg2
             -- ("poly", "integrate") -> integratePB $ fnPB p maxDeg1 maxDeg2
             -- ("ppoly", "max") -> fnPP OpMax pp_prec pp_maxDeg pp_divThreshold pp_divIts pp_rangeAcc
@@ -105,12 +105,28 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         Interval _ m = fn `apply` domain
         domain = getDomain fn
 
+    maxDFun :: UnaryFun -> UnaryFun -> Accuracy -> MPBall
+    maxDFun f f' ac =
+        qaMakeQuery m ac
+        where
+        Interval _ m = fn `apply` domain
+        domain = getDomain f
+        fn = UnaryDFun [f,f']
+
     integrateFun :: UnaryFun -> Accuracy -> MPBall
     integrateFun fn ac =
         qaMakeQuery r ac
         where
         r = integrate fn dom
         dom = getDomain fn
+
+    integrateDFun :: UnaryFun -> UnaryFun -> Accuracy -> MPBall
+    integrateDFun f f' ac =
+        qaMakeQuery r ac
+        where
+        r = integrate fn dom
+        dom = getDomain f
+        fn = UnaryDFun [f,f']
 processArgs _ =
     error "expecting arguments: <operationCode> <functionCode> <representationCode> <effort parameters...>"
 
