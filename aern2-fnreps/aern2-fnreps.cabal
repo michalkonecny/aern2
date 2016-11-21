@@ -14,70 +14,19 @@ Synopsis:       compare real function representations
 Tested-with:    GHC==7.8.4
 Description:    Define and compare various representations of univariate continuous real functions.
 
-Library
-  hs-source-dirs:   src
-  ghc-options:      -O2 -Wall  -fno-warn-orphans
-  Build-Depends:    
-        base >= 4.4,
-        containers >= 0.3,
-        aern2-num == 0.1,
-        arithmoi,
-        QuickCheck,
-        pqueue,
-        random,
-        criterion,
-        deepseq
-  extensions:
-                    Arrows,
-                    FlexibleContexts,
-                    FlexibleInstances,
-                    MultiParamTypeClasses,
-                    RebindableSyntax,
-                    TypeFamilies,
-                    TypeOperators
-  other-modules:    
-                    FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Basics,
-                    FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Division,
-                    FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Evaluation,
-                    FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Integration,
-                    FnReps.Polynomial.UnaryCheb.Poly.Basics,
-                    FnReps.Polynomial.UnaryCheb.Poly.Bernstein,
-                    FnReps.Polynomial.UnaryCheb.Poly.Cheb2Power,
-                    FnReps.Polynomial.UnaryCheb.Poly.DCTMultiplication,
-                    FnReps.Polynomial.UnaryCheb.Poly.Division,
-                    FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding,
-                    FnReps.Polynomial.UnaryCheb.Poly.Integration,
-                    FnReps.Polynomial.UnaryCheb.Poly.Newman,
-                    FnReps.Polynomial.UnaryCheb.Poly.NonSmooth,
-                    FnReps.Polynomial.UnaryCheb.Poly.SineCosine,
-                    FnReps.Polynomial.UnaryCheb.Poly.SizeReduction,
-                    FnReps.Polynomial.UnaryPower.IntPoly.Basics,
-                    FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding,
-                    FnReps.Polynomial.UnaryPower.IntPoly.SignedSubresultant,
-                    FnReps.Polynomial.UnaryPower.Poly.Basics,
-                    FnReps.Polynomial.UnaryPower.Poly.EvaluationRootFinding,
-                    FnReps.Polynomial.UnaryPower.Poly.Power2Cheb
-  exposed-modules:  
-                    FnReps.Fun,
-                    FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Benchmarks,
-                    FnReps.Polynomial.UnaryCheb.Poly,
-                    FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding.Tests,
-                    FnReps.Polynomial.UnaryCheb.Poly.EvaluationRootFinding.Bench,
-                    FnReps.Polynomial.UnaryCheb.PolyBall,
-                    FnReps.Polynomial.UnaryCheb.RealFn,
-                    FnReps.Polynomial.UnaryPower.Poly,
-                    FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding.Tests,
-                    FnReps.Polynomial.UnaryPower.IntPoly.EvaluationRootFinding.Bench
-
 executable aern2-fnreps-ops
-  build-depends:   
-                   base >= 4.4,
-                   containers >= 0.3,
-                   arithmoi,
-                   QuickCheck,
-                   aern2-num ==0.1,
-                   aern2-fnreps ==0.1,
-                   pqueue
+  build-depends:
+    base == 4.*
+    -- , arithmoi == 0.4.*
+    -- , convertible >= 1.1.1.0 && < 1.2
+    -- , lens == 4.13.*
+    , psqueues == 0.2.*
+    , containers == 0.5.*
+    , mixed-types-num == 0.1.*
+    , num-exceptions == 0.1.*
+    , aern2-mp == 0.1.*
+    , aern2-real == 0.1.*
+    , aern2-fun == 0.1.*
   extensions:
                     Arrows,
                     FlexibleContexts,
@@ -90,35 +39,34 @@ executable aern2-fnreps-ops
   ghc-options:     -Wall -rtsopts
   main-is:         fnreps-ops.hs
 
-executable aern2-rootIsolation-bench
-  build-depends:   
-                   base >= 4.4,
-                   aern2-fnreps ==0.1
-  extensions:
-                    Arrows,
-                    FlexibleContexts,
-                    FlexibleInstances,
-                    MultiParamTypeClasses,
-                    RebindableSyntax,
-                    TypeFamilies,
-                    TypeOperators
-  hs-source-dirs:  main
-  ghc-options:     -Wall -rtsopts
-  main-is:         rootIsolation-bench.hs
-
-executable aern2-range-bench
-  build-depends:   
-                   base >= 4.4,
-                   aern2-fnreps ==0.1
-  extensions:
-                    Arrows,
-                    FlexibleContexts,
-                    FlexibleInstances,
-                    MultiParamTypeClasses,
-                    RebindableSyntax,
-                    TypeFamilies,
-                    TypeOperators
-  hs-source-dirs:  main
-  ghc-options:     -Wall -rtsopts
-  main-is:         range-bench.hs
-
+-- executable aern2-rootIsolation-bench
+--   build-depends:
+--                    base >= 4.4,
+--                    aern2-fnreps ==0.1
+--   extensions:
+--                     Arrows,
+--                     FlexibleContexts,
+--                     FlexibleInstances,
+--                     MultiParamTypeClasses,
+--                     RebindableSyntax,
+--                     TypeFamilies,
+--                     TypeOperators
+--   hs-source-dirs:  main
+--   ghc-options:     -Wall -rtsopts
+--   main-is:         rootIsolation-bench.hs
+--
+-- executable aern2-range-bench
+--   build-depends:
+--                    base >= 4.4,
+--                    aern2-fnreps ==0.1
+--   extensions:
+--                     Arrows,
+--                     FlexibleContexts,
+--                     FlexibleInstances,
+--                     MultiParamTypeClasses,
+--                     RebindableSyntax,
+--                     TypeFamilies,
+--                     TypeOperators
+--   hs-source-dirs:  main
+--   ghc-options:     -Wall -rtsopts
+--   main-is:         range-bench.hs
