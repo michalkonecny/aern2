@@ -25,6 +25,10 @@ import Control.Applicative
 
 import Numeric.CatchingExceptions
 
+import AERN2.Norm
+-- import AERN2.MP.Accuracy
+import AERN2.MP.Precision
+
 -- import AERN2.MP.Dyadic
 import AERN2.MP.Ball (mpBall, IsInterval(..), IsBall(..), setPrecisionAtLeastAccuracy)
 -- import qualified AERN2.MP.Ball as MPBall
@@ -49,17 +53,24 @@ instance CanApply UnaryDFun DyadicInterval where
     where
     evalUseD [] f di = (Nothing, evalOnIntervalGuessPrecision f di)
     evalUseD (UnaryFun _ f' : rest) f di@(Interval l r)
-      | f'di !>=! 0 = (Just Increasing, liftA2 fromEndpoints fl fr)
-      | f'di !<=! 0 = (Just Decreasing, liftA2 fromEndpoints fr fl)
+      | f'di !>=! 0 = (Just (fl,fr), liftA2 fromEndpoints fl fr)
+      | f'di !<=! 0 = (Just (fr,fl), liftA2 fromEndpoints fr fl)
       | otherwise = (Nothing, fm + errBall)
       where
       (_, f'di) = evalUseD rest f' di -- recursive call
-      fl = evalOnIntervalGuessPrecision f (Interval l l)
-      fr = evalOnIntervalGuessPrecision f (Interval r r)
-      fm = evalOnIntervalGuessPrecision f (Interval m m)
+      fl = f $ catchingNumExceptions $ raisePrecisionIfBelow p $ mpBall l
+      fr = f $ catchingNumExceptions $ raisePrecisionIfBelow p $ mpBall r
+      fm = f $ catchingNumExceptions $ raisePrecisionIfBelow p $ mpBall m
       m = (l + r)*0.5
       errBall = f'di*((r-l)*0.5)*unitBall
       unitBall = catchingNumExceptions $ mpBall (-1,1)
+
+      p = 
+          case nl of
+              NormBits i -> prec $ max 10 (-i)
+              NormZero -> getPrecision l
+      nl = getNormLog (r - l)
+
 
 instance CanIntegrate UnaryDFun DyadicInterval where
   type IntegralType UnaryDFun DyadicInterval = CauchyReal

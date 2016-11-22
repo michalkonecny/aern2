@@ -14,7 +14,7 @@
 module AERN2.MP.Precision
 (
      Precision, prec
-     , HasPrecision(..), CanSetPrecision(..), lowerPrecisionIfAbove, specCanSetPrecision
+     , HasPrecision(..), CanSetPrecision(..), lowerPrecisionIfAbove, raisePrecisionIfBelow, specCanSetPrecision
      , defaultPrecision, maximumPrecision, standardPrecisions, precisionTimes2
      , iterateUntilOK
      , ConvertibleWithPrecision(..), convertP
@@ -84,6 +84,11 @@ class (HasPrecision t) => CanSetPrecision t where
 lowerPrecisionIfAbove :: (CanSetPrecision t) => Precision -> t -> t
 lowerPrecisionIfAbove p x
   | getPrecision x > p = setPrecision p x
+  | otherwise = x
+
+raisePrecisionIfBelow :: (CanSetPrecision t) => Precision -> t -> t
+raisePrecisionIfBelow p x
+  | getPrecision x < p = setPrecision p x
   | otherwise = x
 
 specCanSetPrecision ::

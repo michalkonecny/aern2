@@ -15,7 +15,6 @@ module AERN2.RealFun.UnaryFun.Evaluation
 (
   evalOnIntervalGuessPrecision
   , rangeOnIntervalSubdivide
-  , MonotonicityDirection(..)
 )
 where
 
@@ -123,9 +122,11 @@ evalOnIntervalGuessPrecision f (Interval l r) =
     maybeTrace
     (
         "evalOnIntervalGuessPrecision:"
+        ++ "\n (l,r) = " ++ show (l,r)
         ++ "\n nl = " ++ show nl
         ++ "\n precisions = " ++ show (take (int 10) precisions)
-        ++ "\n result accuracy = " ++ show (MPBall.getAccuracy result)
+        ++ "\n result accuracy = " ++ show (getAccuracy result)
+        ++ "\n result = " ++ show (result)
     ) $
     result
     where
@@ -133,7 +134,7 @@ evalOnIntervalGuessPrecision f (Interval l r) =
     resultsWithIncreasingPrecision = map fp precisions
     fp p = f b
         where
-        b = catchingNumExceptions $ MPBall.fromEndpoints lMP rMP
+        b = catchingNumExceptions $ fromEndpoints lMP rMP
         lMP = setPrecision p $ mpBall l
         rMP = setPrecision p $ mpBall r
     precisions =
@@ -163,14 +164,14 @@ evalOnIntervalGuessPrecision f (Interval l r) =
         improvements = zipWith measureImprovement radii (drop (int 1) radii)
         measureImprovement r1 r2 = getNormLog $ max (mpBall 0) $ r1 - r2
 
-data MonotonicityDirection = Increasing | Decreasing
-
-instance CanNeg MonotonicityDirection where
-  negate Increasing = Decreasing
-  negate Decreasing = Increasing
+-- data MonotonicityDirection = Increasing | Decreasing
+--
+-- instance CanNeg MonotonicityDirection where
+--   negate Increasing = Decreasing
+--   negate Decreasing = Increasing
 
 rangeOnIntervalSubdivide ::
-  (DyadicInterval -> (Maybe MonotonicityDirection, CatchingNumExceptions MPBall))
+  (DyadicInterval -> (Maybe (CatchingNumExceptions MPBall, CatchingNumExceptions MPBall), CatchingNumExceptions MPBall))
   ->
   (DyadicInterval -> RealInterval)
 rangeOnIntervalSubdivide evalOnInterval di =
@@ -187,7 +188,9 @@ rangeOnIntervalSubdivide evalOnInterval di =
     where
     (fdiL, fdiR) = gunzip $ fmap endpoints fdi
     (_, fdi) = fi di
-    fi = (\(a,b) -> (negate a,negate b)) . evalOnInterval
+    fi = negateRes . evalOnInterval
+    negateRes (Nothing, c) = (Nothing, -c)
+    negateRes (Just (a,b), c) = (Just (-b,-a), -c)
   search fi prevL prevQueue =
     maybeTrace
     (
@@ -226,16 +229,13 @@ rangeOnIntervalSubdivide evalOnInterval di =
 
     fiEE s =
       case maybeMonotone of
-        Nothing -> (gunzip $ fmap MPBall.endpoints fis, s)
-        Just Increasing -> (gunzip $ fmap MPBall.endpoints fir, rI)
-        Just Decreasing -> (gunzip $ fmap MPBall.endpoints fil, lI)
+        Nothing -> (gunzip $ fmap endpoints fis, s)
+        Just (minB, maxB) -> ((minB, maxB), s)
       where
       (maybeMonotone, fis) = fi s
-      (_, fil) = fi lI
-      (_, fir) = fi rI
-      lI = Interval lE lE
-      rI = Interval rE rE
-      (Interval lE rE) = s
+      -- lI = Interval lE lE
+      -- rI = Interval rE rE
+      -- (Interval lE rE) = s
 
 data MaxSearchSegment =
     MaxSearchSegment
