@@ -12,6 +12,7 @@ import qualified Data.Map as Map
 
 import System.Environment
 
+import AERN2.Norm
 import AERN2.MP.Accuracy
 import AERN2.MP.Precision
 import AERN2.MP.Ball (MPBall, mpBall, IsInterval(..))
@@ -24,7 +25,7 @@ import AERN2.Interval
 import AERN2.RealFun.Operations
 import AERN2.RealFun.UnaryFun
 import AERN2.RealFun.UnaryDFun
-import AERN2.Poly.Cheb (PolyBall)
+import AERN2.Poly.Cheb (PolyBall, polyBall)
 import qualified AERN2.Poly.Cheb as ChPoly
 import AERN2.Poly.Basics
 
@@ -60,7 +61,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
             ("dfun", "max") -> maxDFun fnB2B dfnB2B accuracy
             ("fun", "integrate") -> integrateFun fnB2B accuracy
             ("dfun", "integrate") -> integrateDFun fnB2B dfnB2B accuracy
-            -- ("poly", "max") -> maxPB $ fnPB p maxDeg1 maxDeg2
+            ("poly", "max") -> maxPB $ fnPB p maxDeg1 maxDeg2
             -- ("poly", "integrate") -> integratePB $ fnPB p maxDeg1 maxDeg2
             -- ("ppoly", "max") -> fnPP OpMax pp_prec pp_maxDeg pp_divThreshold pp_divIts pp_rangeAcc
             -- ("ppoly", "integrate") -> fnPP OpIntegrate pp_prec pp_maxDeg pp_divThreshold pp_divIts pp_rangeAcc
@@ -157,13 +158,11 @@ sinecos_Name = "sin(10x)+cos(20x) over [-1,1]"
 
 sinecos_PB :: Precision -> Degree -> Degree -> PolyBall
 sinecos_PB p d _d2 =
-  error $ "Not (yet) supporting PolyBall for: " ++ sinecos_Name
-    -- sin(10*x)+cos(20*x)
-    -- where
-    -- x =
-    --     setMaxDegree d $
-    --     setPrecision p $
-    --     projUnaryFnA (unaryIntervalDom
+  sine(10*x)+cosine(20*x)
+  where
+  sine = ChPoly.sineWithPrecDegSweep p d NormZero
+  cosine = ChPoly.cosineWithPrecDegSweep p d NormZero
+  x = varFn (polyBall (unaryIntervalDom, 0)) ()
 
 sinecos_B2B :: UnaryFun
 sinecos_B2B =
@@ -184,13 +183,11 @@ sinesine_Name = "sin(10x+sin(20x^2)) over [-1,1]"
 
 sinesine_PB :: Precision -> Degree -> Degree -> PolyBall
 sinesine_PB p d1 d2 =
-  error $ "Not (yet) supporting PolyBall for: " ++ sinesine_Name
-    -- sin(setMaxDegree d2 $ 10*x + sin(20*x*x))
-    -- where
-    -- x =
-    --     setMaxDegree d1 $
-    --     setPrecision p $
-    --     projUnaryFnA (unaryIntervalDom
+  sine2(10*x + sine1(20*x*x))
+  where
+  sine1 = ChPoly.sineWithPrecDegSweep p d1 NormZero
+  sine2 = ChPoly.sineWithPrecDegSweep p d2 NormZero
+  x = varFn (polyBall (unaryIntervalDom, 0)) ()
 
 sinesine_B2B :: UnaryFun
 sinesine_B2B =
@@ -211,34 +208,33 @@ sinesine_PP OpIntegrate p deg _divThresholdAcc _divIterations rangeAcc =
     -- PPolyBench.sinesineIntegral deg deg rangeAcc p
 
 sinesineCos_Name :: String
---sinesineCos_Name = "sin(10x+sin(20x^2)) + cos(10x) over [-1,1]"
-sinesineCos_Name = "sin(10x+sin(20x^2)) + sin(10x) over [-1,1]"
+sinesineCos_Name = "sin(10x+sin(20x^2)) + cos(10x) over [-1,1]"
+-- sinesineCos_Name = "sin(10x+sin(20x^2)) + sin(10x) over [-1,1]"
 
 sinesineCos_PB :: Precision -> Degree -> Degree -> PolyBall
 sinesineCos_PB p d1 d2 =
-  error $ "Not (yet) supporting PolyBall for: " ++ sinesineCos_Name
---     sin(setMaxDegree d2 $ 10*x + sin(20*x*x))
--- --        + cos(10*x)
---         + sin(10*x)
---     where
---     x =
---         setMaxDegree d1 $
---         setPrecision p $
---         projUnaryFnA (unaryIntervalDom
+  sine2(10*x + sine1(20*x*x))
+    + cosine2(10*x)
+    -- + sine2(10*x)
+  where
+  sine1 = ChPoly.sineWithPrecDegSweep p d1 NormZero
+  sine2 = ChPoly.sineWithPrecDegSweep p d2 NormZero
+  cosine2 = ChPoly.cosineWithPrecDegSweep p d2 NormZero
+  x = varFn (polyBall (unaryIntervalDom, 0)) ()
 
 sinesineCos_B2B :: UnaryFun
 sinesineCos_B2B =
     UnaryFun unaryIntervalDom $ \x ->
         sin(10*x + sin(20*x*x))
---            + cos(10*x)
-            + sin(10*x)
+           + cos(10*x)
+            -- + sin(10*x)
 
 sinesineCosDeriv_B2B :: UnaryFun
 sinesineCosDeriv_B2B =
     UnaryFun unaryIntervalDom $ \x ->
       (10-40*x*cos(20*x*x))*cos(10*x + sin(20*x*x))
---          - 10*sin(10*x)
-          + 10*cos(10*x)
+         - 10*sin(10*x)
+          -- + 10*cos(10*x)
 
 sinesineCos_PP :: FnPP
 sinesineCos_PP OpMax p deg _divThresholdAcc _divIterations rangeAcc =
