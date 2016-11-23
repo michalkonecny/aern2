@@ -24,7 +24,8 @@ import AERN2.Interval
 import AERN2.RealFun.Operations
 import AERN2.RealFun.UnaryFun
 import AERN2.RealFun.UnaryDFun
-import AERN2.Poly.Cheb
+import AERN2.Poly.Cheb (PolyBall)
+import qualified AERN2.Poly.Cheb as ChPoly
 import AERN2.Poly.Basics
 
 -- import FnReps.Polynomial.UnaryCheb.Poly (compose,absX,absXshifted, reduceDegreeAndSweep)

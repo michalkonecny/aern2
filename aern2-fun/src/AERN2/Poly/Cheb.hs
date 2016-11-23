@@ -13,8 +13,10 @@
 
 module AERN2.Poly.Cheb
 (
-  module AERN2.Poly.Cheb.Type,
-  module AERN2.Poly.Cheb.SineCosine
+  module AERN2.Poly.Cheb.Type
+, module AERN2.Poly.Cheb.Eval
+, module AERN2.Poly.Cheb.Maximum
+, module AERN2.Poly.Cheb.SineCosine
 )
 where
 
@@ -30,5 +32,6 @@ where
 
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Ring ()
-import AERN2.Poly.Cheb.Eval ()
+import AERN2.Poly.Cheb.Eval
+import AERN2.Poly.Cheb.Maximum
 import AERN2.Poly.Cheb.SineCosine

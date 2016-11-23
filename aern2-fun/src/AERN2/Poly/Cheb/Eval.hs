@@ -124,6 +124,8 @@ rangeViaUnaryFun p di = (apply f di, e)
   f :: UnaryFun
   (f, e) = convertExactly p
 
+-- rangeViaRoots :: (ChPoly MPBall) -> DyadicInterval -> (Interval CauchyReal CauchyReal, ErrorBound)
+
 instance ConvertibleExactly (ChPoly MPBall) (UnaryFun, ErrorBound) where
   safeConvertExactly cp@(ChPoly dom _p) = Right (UnaryFun dom eval, e)
     where

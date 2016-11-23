@@ -6,7 +6,7 @@ import AERN2.MP.Ball as MPBall
 
 import AERN2.Interval
 import AERN2.RealFun.Operations
-import AERN2.Poly.Cheb
+import qualified AERN2.Poly.Cheb as ChPoly
 
 import AERN2.RealFun.PlotService as Plot
 
@@ -21,18 +21,18 @@ fns = fnsCP
 fnsCP :: Plot.Functions
 fnsCP = map chPolyFn [("sin(6x)", sine (6*x)), ("x^2", x*x), ("x-x", xP - xP)]
   where
-  sine = sine_chpoly 10 NormZero
+  sine = ChPoly.sineWithDegSweep 10 NormZero
   chPolyFn (name, cp) =
     Plot.Function
     { function_name = name
     , function_dom = getDomain cp
     , function_getBounds = applyViaMPBall cp
     }
-  x :: PolyBall
+  x :: ChPoly.PolyBall
   x = varFn sampleFn ()
   sampleFn = constFn (dom, 1)
   dom = dyadicInterval (-1.0,1.0)
-  xP :: PolyBall
+  xP :: ChPoly.PolyBall
   xP = varFn sampleFnP ()
   sampleFnP = constFn (domP, 1)
   domP = dyadicInterval (0.0,1.0)

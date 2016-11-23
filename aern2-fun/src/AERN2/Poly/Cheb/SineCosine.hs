@@ -67,7 +67,7 @@ _test10Xe =
 
 _testSine10X :: ChPoly MPBall
 _testSine10X =
-    sine_chpoly 100 NormZero (10*x)
+    sineWithDegSweep 100 NormZero (10*x)
     where
     x :: ChPoly MPBall
     x = setPrecision (prec 100) $ varFn sampleFn ()
@@ -76,7 +76,7 @@ _testSine10X =
 
 _testSine10Xe :: ChPoly MPBall
 _testSine10Xe =
-    sine_chpoly 100 NormZero (updateRadius (+ (errorBound 0.1)) (10*x))
+    sineWithDegSweep 100 NormZero (updateRadius (+ (errorBound 0.1)) (10*x))
     where
     x :: ChPoly MPBall
     x = setPrecision (prec 100) $ varFn sampleFn ()
@@ -99,7 +99,7 @@ _testSine10Xe =
     * add xE to the error bound of the resulting polynomial
 -}
 
-sine_chpoly ::
+sineWithDegSweep ::
   -- (Field c, CanMinMaxSameType c,
   --  CanAbsSameType c,
   --  CanAddSubMulDivBy c CauchyReal,
@@ -109,7 +109,7 @@ sine_chpoly ::
   --  CanApply (ChPoly c) c, ApplyType (ChPoly c) c ~ c)
   -- =>
   Degree -> NormLog -> ChPoly MPBall -> ChPoly MPBall
-sine_chpoly maxDeg sweepT x =
+sineWithDegSweep maxDeg sweepT x =
     -- maybeTrace
     -- (
     --     "sine_poly:"
