@@ -40,10 +40,6 @@ import qualified AERN2.Poly.Power.Eval as PE
 
 {- evaluation -}
 
-instance CanApply PolyBall MPBall where
-  type ApplyType PolyBall MPBall = MPBall
-  apply (Ball x e) y = updateRadius (+e) (apply x y)
-
 instance
   (CanAddSubMulBy MPBall c, Ring c) =>
   CanApply (ChPoly c) MPBall where

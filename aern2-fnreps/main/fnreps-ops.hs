@@ -24,7 +24,8 @@ import AERN2.Interval
 import AERN2.RealFun.Operations
 import AERN2.RealFun.UnaryFun
 import AERN2.RealFun.UnaryDFun
-import AERN2.Poly.Cheb
+import AERN2.Poly.Ball
+-- import AERN2.Poly.Cheb
 import AERN2.Poly.Basics
 
 -- import FnReps.Polynomial.UnaryCheb.Poly (compose,absX,absXshifted, reduceDegreeAndSweep)
@@ -70,8 +71,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     maxDeg1 = read maxDeg1S
     maxDeg2 = read maxDeg2S
     p = prec $ read precS
-    rangeBits = bits $ (read rangeBitsS :: Int)
-    [precS, maxDeg1S, maxDeg2S, rangeBitsS] = effortArgs
+    [precS, maxDeg1S, maxDeg2S] = effortArgs
 
     accuracy = bits $ (read accuracyS :: Int)
     [accuracyS] = effortArgs
@@ -85,18 +85,18 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     pp_rangeAcc = bits $ (read pp_rangeBitsS :: Int)
     [pp_precS, pp_maxDegS, pp_divThresholdS, pp_divItsS, pp_rangeBitsS] = effortArgs
 
---     integratePB :: PolyBall -> MPBall
---     integratePB b =
---         integrateUnaryFnA (b, mpBall domL, mpBall domR)
---         where
---         Interval domL domR = ball_domain b
---     maxPB :: PolyBall -> MPBall
---     maxPB b =
---         m
---         where
--- --        Interval _ m = rangeOnIntervalUnaryFnA (b, domain)
---         Interval _ m = rangePB rangeBits (b, domain)
---         domain = ball_domain b
+    -- integratePB :: PolyBall -> MPBall
+    -- integratePB b =
+    --     integrateUnaryFnA (b, mpBall domL, mpBall domR)
+    --     where
+    --     Interval domL domR = ball_domain b
+
+    -- maxPB :: PolyBall -> MPBall
+    -- maxPB pb =
+    --     m
+    --     where
+    --     Interval _ m = pb `apply` domain
+    --     domain = getDomain pb
 
     maxFun :: UnaryFun -> Accuracy -> MPBall
     maxFun fn ac =

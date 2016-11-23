@@ -7,6 +7,7 @@ import AERN2.MP.Ball as MPBall
 import AERN2.Interval
 import AERN2.RealFun.Operations
 import AERN2.Poly.Cheb
+import AERN2.Poly.Ball
 
 import AERN2.RealFun.PlotService as Plot
 

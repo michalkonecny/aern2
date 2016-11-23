@@ -61,7 +61,7 @@ library
     AERN2.RealFun.UnaryDFun
     AERN2.Poly
     AERN2.Poly.Conversion
-    -- AERN2.Ball
+    AERN2.Poly.Ball
     AERN2.Poly.Basics
     AERN2.Poly.Cheb
     AERN2.Poly.Cheb.Type
