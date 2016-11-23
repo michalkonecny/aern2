@@ -100,6 +100,14 @@ _testSine10Xe =
 -}
 
 sineWithPrecDegSweep ::
+  Precision -> Degree -> NormLog -> ChPoly MPBall -> ChPoly MPBall
+sineWithPrecDegSweep = sineCosineWithPrecDegSweep True
+
+cosineWithPrecDegSweep ::
+  Precision -> Degree -> NormLog -> ChPoly MPBall -> ChPoly MPBall
+cosineWithPrecDegSweep = sineCosineWithPrecDegSweep False
+
+sineCosineWithPrecDegSweep ::
   -- (Field c, CanMinMaxSameType c,
   --  CanAbsSameType c,
   --  CanAddSubMulDivBy c CauchyReal,
@@ -108,11 +116,12 @@ sineWithPrecDegSweep ::
   --  IsBall c, IsInterval c c,
   --  CanApply (ChPoly c) c, ApplyType (ChPoly c) c ~ c)
   -- =>
-  Precision -> Degree -> NormLog -> ChPoly MPBall -> ChPoly MPBall
-sineWithPrecDegSweep prc maxDeg sweepT xPre =
+  Bool -> Precision -> Degree -> NormLog -> ChPoly MPBall -> ChPoly MPBall
+sineCosineWithPrecDegSweep isSine prc maxDeg sweepT xPre =
     maybeTrace
     (
         "ChPoly.sineWithDegSweep:"
+        ++ "\n isSine = " ++ show isSine
         ++ "\n maxDeg = " ++ show maxDeg
         -- ++ "\n xC = " ++ showAP xC
         -- ++ "\n xE = " ++ showB xE
@@ -131,8 +140,10 @@ sineWithPrecDegSweep prc maxDeg sweepT xPre =
     -- showB = show . getApproximate (bits 30)
     -- showAP = show . getApproximate (bits 50) . cheb2Power
 
-    -- first separate the centre of the polynomial x from its radius:
+    isCosine = not isSine
     x = setPrecision prc xPre
+
+    -- first separate the centre of the polynomial x from its radius:
     xC = centre x
     xE = radius x
     xAccuracy = getAccuracy x
@@ -155,7 +166,8 @@ sineWithPrecDegSweep prc maxDeg sweepT xPre =
 
     -- compute sin or cos of txC = xC-k*pi/2 using Taylor series:
     taylorSums
-        | even k = sineTaylorSeries maxDeg sweepT txC
+        | isSine && even k = sineTaylorSeries maxDeg sweepT txC
+        | isCosine && odd k = sineTaylorSeries maxDeg sweepT txC
         | otherwise = cosineTaylorSeries maxDeg sweepT txC
     (taylorSum, taylorSumE) = pickByAccuracy [] taylorSums
         where
@@ -184,9 +196,10 @@ sineWithPrecDegSweep prc maxDeg sweepT xPre =
         pickByAccuracy _ _ = error "internal error in SineCosine"
     -- if k mod 4 = 2 then negate result,
     -- if k mod 4 = 3 then negate result:
+    km4 = k `mod` 4
     resC
-        | k `mod` 4 == 2 = -taylorSum
-        | k `mod` 4 == 3 = -taylorSum
+        | isSine && 2 <= km4 && km4 <= 3 = -taylorSum
+        | isCosine && 1 <= km4 && km4 <= 2 = -taylorSum
         | otherwise = taylorSum
     -- add xE to the error bound of the resulting polynomial:
     res = updateRadius (+ (taylorSumE + xE)) resC

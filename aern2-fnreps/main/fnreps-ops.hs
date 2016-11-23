@@ -91,12 +91,16 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     --     where
     --     Interval domL domR = ball_domain b
 
-    -- maxPB :: PolyBall -> MPBall
-    -- maxPB pb =
-    --     m
-    --     where
-    --     (Interval _ m, eb) = pb `apply` domain
-    --     domain = getDomain pb
+    maxPB :: PolyBall -> MPBall
+    maxPB f =
+      ChPoly.maximumOptimised f lB rB 5 5
+      where
+      -- (Interval _ m, eb) = pb `apply` domain
+      (Interval l r) = getDomain f
+      prc = getPrecision f
+      lB = raisePrecisionIfBelow prc $ mpBall l
+      rB = raisePrecisionIfBelow prc $ mpBall r
+
 
     maxFun :: UnaryFun -> Accuracy -> MPBall
     maxFun fn ac =

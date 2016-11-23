@@ -19,9 +19,16 @@ fns :: Plot.Functions
 fns = fnsCP
 
 fnsCP :: Plot.Functions
-fnsCP = map chPolyFn [("sin(6x)", sine (6*x)), ("x^2", x*x), ("x-x", xP - xP)]
+fnsCP = map chPolyFn
+  [
+    ("sin(6x)", sine (6*x))
+  , ("cos(6x)", cosine (6*x))
+  , ("x^2", x*x)
+  , ("x-x", xP - xP)
+  ]
   where
-  sine = ChPoly.sineWithDegSweep 10 NormZero
+  sine = ChPoly.sineWithPrecDegSweep (prec 100) 10 NormZero
+  cosine = ChPoly.cosineWithPrecDegSweep (prec 100) 10 NormZero
   chPolyFn (name, cp) =
     Plot.Function
     { function_name = name
