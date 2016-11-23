@@ -48,7 +48,7 @@ import Debug.Trace (trace)
 
 shouldTrace :: Bool
 shouldTrace = False
---shouldTrace = True
+-- shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace
@@ -67,19 +67,19 @@ _test10Xe =
 
 _testSine10X :: ChPoly MPBall
 _testSine10X =
-    sineWithDegSweep 100 NormZero (10*x)
+    sineWithPrecDegSweep (prec 100) 100 NormZero (10*x)
     where
     x :: ChPoly MPBall
-    x = setPrecision (prec 100) $ varFn sampleFn ()
+    x = varFn sampleFn ()
     sampleFn = constFn (dom, 1)
     dom = dyadicInterval (0.0,1.0)
 
 _testSine10Xe :: ChPoly MPBall
 _testSine10Xe =
-    sineWithDegSweep 100 NormZero (updateRadius (+ (errorBound 0.1)) (10*x))
+    sineWithPrecDegSweep (prec 100) 100 NormZero (updateRadius (+ (errorBound 0.1)) (10*x))
     where
     x :: ChPoly MPBall
-    x = setPrecision (prec 100) $ varFn sampleFn ()
+    x = varFn sampleFn ()
     sampleFn = constFn (dom, 1)
     dom = dyadicInterval (0.0,1.0)
 
@@ -99,7 +99,7 @@ _testSine10Xe =
     * add xE to the error bound of the resulting polynomial
 -}
 
-sineWithDegSweep ::
+sineWithPrecDegSweep ::
   -- (Field c, CanMinMaxSameType c,
   --  CanAbsSameType c,
   --  CanAddSubMulDivBy c CauchyReal,
@@ -108,22 +108,23 @@ sineWithDegSweep ::
   --  IsBall c, IsInterval c c,
   --  CanApply (ChPoly c) c, ApplyType (ChPoly c) c ~ c)
   -- =>
-  Degree -> NormLog -> ChPoly MPBall -> ChPoly MPBall
-sineWithDegSweep maxDeg sweepT x =
-    -- maybeTrace
-    -- (
-    --     "sine_poly:"
-    --     ++ "\n maxDeg = " ++ show maxDeg
-    --     ++ "\n xC = " ++ showAP xC
-    --     ++ "\n xE = " ++ showB xE
-    --     ++ "\n xAccuracy = " ++ show xAccuracy
-    --     ++ "\n r = " ++ showB r
-    --     ++ "\n k = " ++ show k
-    --     ++ "\n txC = " ++ showAP txC
-    --     ++ "\n trM = " ++ showB trM
-    --     ++ "\n taylorSumE = " ++ showB taylorSumE
-    --     ++ "\n resC = " ++ showAP resC
-    -- ) $
+  Precision -> Degree -> NormLog -> ChPoly MPBall -> ChPoly MPBall
+sineWithPrecDegSweep prc maxDeg sweepT xPre =
+    maybeTrace
+    (
+        "ChPoly.sineWithDegSweep:"
+        ++ "\n maxDeg = " ++ show maxDeg
+        -- ++ "\n xC = " ++ showAP xC
+        -- ++ "\n xE = " ++ showB xE
+        ++ "\n xAccuracy = " ++ show xAccuracy
+        ++ "\n r = " ++ show r
+        -- ++ "\n r = " ++ showB r
+        ++ "\n k = " ++ show k
+        -- ++ "\n txC = " ++ showAP txC
+        -- ++ "\n trM = " ++ showB trM
+        -- ++ "\n taylorSumE = " ++ showB taylorSumE
+        -- ++ "\n resC = " ++ showAP resC
+    ) $
 --    xPoly (prec 100) -- dummy
     res
     where
@@ -131,6 +132,7 @@ sineWithDegSweep maxDeg sweepT x =
     -- showAP = show . getApproximate (bits 50) . cheb2Power
 
     -- first separate the centre of the polynomial x from its radius:
+    x = setPrecision prc xPre
     xC = centre x
     xE = radius x
     xAccuracy = getAccuracy x
@@ -158,8 +160,8 @@ sineWithDegSweep maxDeg sweepT x =
     (taylorSum, taylorSumE) = pickByAccuracy [] taylorSums
         where
         pickByAccuracy prevResults (_s@(p, e, n) : rest) =
-            -- maybeTrace
-            -- ("pickByAccuracy: sE = " ++ showB sE ++ "; sAccuracy = " ++ show sAccuracy ++ "; prec = " ++ show (getPrecision pBest)) $
+            maybeTrace
+            ("pickByAccuracy: sE = " ++ show sE ++ "; sAccuracy = " ++ show sAccuracy ++ "; prec = " ++ show (getPrecision pBest)) $
             pbAres
             where
             pbAres
