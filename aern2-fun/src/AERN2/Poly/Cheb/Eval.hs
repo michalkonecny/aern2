@@ -32,11 +32,13 @@ import AERN2.Real
 import AERN2.Interval
 import AERN2.RealFun.Operations
 import AERN2.RealFun.UnaryFun
+import AERN2.RealFun.UnaryDFun
 
 import AERN2.Poly.Basics
 import AERN2.Poly.Cheb.Type
-import AERN2.Poly.Power.Type
-import qualified AERN2.Poly.Power.Eval as PE
+import AERN2.Poly.Conversion
+import AERN2.Poly.Power (PowPoly)
+import qualified AERN2.Poly.Power as Pow
 
 {- evaluation -}
 
@@ -91,7 +93,7 @@ evalLip f l x =
 
 evalDf :: ChPoly MPBall -> PowPoly MPBall -> MPBall -> MPBall
 evalDf f f' x =
-  evalLip f (abs $ PE.evalDirect f' x) x
+  evalLip f (abs $ Pow.evalDirect f' x) x
 
 {- range -}
 
@@ -123,6 +125,18 @@ rangeViaUnaryFun p di = (apply f di, e)
   where
   f :: UnaryFun
   (f, e) = convertExactly p
+
+-- rangeViaUnaryDFun :: (ChPoly MPBall) -> DyadicInterval -> (Interval CauchyReal CauchyReal, ErrorBound)
+-- rangeViaUnaryDFun p@(ChPoly dom poly) (Interval l r) =
+--   (apply ff (Interval lU rU), e)
+--   where
+--   lU = fromDomToUnitInterval dom (real l)
+--   rU = fromDomToUnitInterval dom (real r)
+--   ff = UnaryDFun [f,f']
+--   pU' = Pow.derivative $ cheb2Power poly
+--   f' = UnaryFun dom  (fmap (Pow.evalMBI pU' . fromDomToUnitInterval dom))
+--   (f, e) = convertExactly p
+
 
 -- rangeViaRoots :: (ChPoly MPBall) -> DyadicInterval -> (Interval CauchyReal CauchyReal, ErrorBound)
 

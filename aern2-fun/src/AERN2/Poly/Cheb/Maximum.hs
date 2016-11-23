@@ -18,7 +18,7 @@ maximum (ChPoly dom poly) l r  =
    PMax.genericMaximum (evalDf f f') (Map.fromList [(0, f')])
     (fromDomToUnitInterval dom l) (fromDomToUnitInterval dom r)
    where
-   f  = ChPoly (Interval (dyadic $ -1) (dyadic 1)) poly
+   f  = ChPoly (dyadicInterval (-1,1)) poly
    f' = (Pow.derivative . cheb2Power . chPoly_poly) f
 
 maximumOptimised :: ChPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall

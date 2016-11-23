@@ -71,6 +71,7 @@ library
     AERN2.Poly.Cheb.SineCosine
     -- AERN2.Poly.Cheb.Aux
     -- AERN2.Poly.Cheb.Field
+    AERN2.Poly.Power
     AERN2.Poly.Power.Type
     AERN2.Poly.Power.SizeReduction
     AERN2.Poly.Power.Eval
