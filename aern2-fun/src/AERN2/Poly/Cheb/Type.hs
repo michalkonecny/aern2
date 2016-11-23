@@ -39,6 +39,11 @@ import AERN2.RealFun.Operations
 
 import AERN2.Poly.Basics
 
+type PolyBall = ChPoly MPBall
+
+polyBall :: (ConvertibleExactly t PolyBall) => t -> PolyBall
+polyBall = convertExactly
+
 {- Chebyshev polynomials with domain translation -}
 
 data ChPoly c = ChPoly { chPoly_dom :: DyadicInterval, chPoly_poly :: Poly c }
@@ -46,17 +51,6 @@ data ChPoly c = ChPoly { chPoly_dom :: DyadicInterval, chPoly_poly :: Poly c }
 instance HasDomain (ChPoly c) where
   type Domain (ChPoly c) = DyadicInterval
   getDomain = chPoly_dom
-
-instance (HasDyadics c) => HasVars (ChPoly c) where
-  type Var (ChPoly c) = ()
-  varFn sampleFn () =
-    ChPoly dom (Poly terms)
-    where
-    dom@(Interval l r) = getDomain sampleFn
-    terms = terms_fromList [(0, c0), (1, c1)]
-    c0 = coeff $ (r + l) * 0.5
-    c1 = coeff $ (r - l) * 0.5
-    coeff = convertExactly
 
 instance (IsBall c, HasIntegers c) => IsBall (ChPoly c) where
   type CentreType (ChPoly c) = ChPoly c
@@ -69,18 +63,18 @@ instance (IsBall c, HasIntegers c) => IsBall (ChPoly c) where
   updateRadius updateFn (ChPoly dom (Poly terms)) =
     ChPoly dom (Poly $ terms_updateConst (updateRadius updateFn) terms)
 
-{- precision -}
+{- constructors -}
 
-instance (HasPrecision c) => HasPrecision (ChPoly c) where
-  getPrecision (ChPoly _ poly) = getPrecision poly
-
-instance (CanSetPrecision c) => CanSetPrecision (ChPoly c) where
-  setPrecision p (ChPoly dom poly) = ChPoly dom $ setPrecision p poly
-
-{- accuracy -}
-
-instance (HasAccuracy c, HasIntegers c, IsBall c) => HasAccuracy (ChPoly c) where
-  getAccuracy = getAccuracy . radius
+instance (HasDyadics c) => HasVars (ChPoly c) where
+  type Var (ChPoly c) = ()
+  varFn sampleFn () =
+    ChPoly dom (Poly terms)
+    where
+    dom@(Interval l r) = getDomain sampleFn
+    terms = terms_fromList [(0, c0), (1, c1)]
+    c0 = coeff $ (r + l) * 0.5
+    c1 = coeff $ (r - l) * 0.5
+    coeff = convertExactly
 
 type CanBeChPoly c t = ConvertibleExactly t (ChPoly c)
 chPoly :: (CanBeChPoly c t) => t -> (ChPoly c)
@@ -100,6 +94,19 @@ instance (ConvertibleExactly t c) => ConvertibleExactly (ChPoly c, t) (ChPoly c)
       Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)])
       Left e -> Left e
 
+
+{- precision -}
+
+instance (HasPrecision c) => HasPrecision (ChPoly c) where
+  getPrecision (ChPoly _ poly) = getPrecision poly
+
+instance (CanSetPrecision c) => CanSetPrecision (ChPoly c) where
+  setPrecision p (ChPoly dom poly) = ChPoly dom $ setPrecision p poly
+
+{- accuracy -}
+
+instance (HasAccuracy c, HasIntegers c, IsBall c) => HasAccuracy (ChPoly c) where
+  getAccuracy = getAccuracy . radius
 
 {-|
     Drop all terms that whose degree is above the given limit or whose norm is at or below the threshold.

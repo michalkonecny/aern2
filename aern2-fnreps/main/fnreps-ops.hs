@@ -24,8 +24,7 @@ import AERN2.Interval
 import AERN2.RealFun.Operations
 import AERN2.RealFun.UnaryFun
 import AERN2.RealFun.UnaryDFun
-import AERN2.Poly.Ball
--- import AERN2.Poly.Cheb
+import AERN2.Poly.Cheb
 import AERN2.Poly.Basics
 
 -- import FnReps.Polynomial.UnaryCheb.Poly (compose,absX,absXshifted, reduceDegreeAndSweep)
@@ -95,7 +94,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     -- maxPB pb =
     --     m
     --     where
-    --     Interval _ m = pb `apply` domain
+    --     (Interval _ m, eb) = pb `apply` domain
     --     domain = getDomain pb
 
     maxFun :: UnaryFun -> Accuracy -> MPBall
