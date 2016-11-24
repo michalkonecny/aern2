@@ -121,7 +121,9 @@ class IsInterval i e where
   endpoints :: i -> (e,e)
 
 instance IsInterval MPBall MPFloat where
-  fromEndpoints l u =
+  fromEndpoints l u
+    | u < l = fromEndpoints u l
+    | otherwise =
       MPBall (mpFloat cDy) (errorBound $ mpFloat eDy)
       where
       lDy = dyadic l
@@ -136,11 +138,13 @@ instance IsInterval MPBall MPFloat where
       uDy   = xDy + eDy
 
 instance IsInterval MPBall MPBall where
-  fromEndpoints l u =
+  fromEndpoints l r = -- works as union even when r < l
       fromEndpointsMP lMP uMP
       where
-      (lMP, _) = endpointsMP l
-      (_, uMP) = endpointsMP u
+      lMP = min llMP rlMP
+      uMP = max luMP ruMP
+      (llMP, luMP) = endpointsMP l
+      (rlMP, ruMP) = endpointsMP r
   endpoints x = (l,u)
       where
       l = MPBall lMP (errorBound 0)
