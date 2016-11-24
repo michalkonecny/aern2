@@ -33,7 +33,7 @@ import Numeric.CatchingExceptions
 import AERN2.MP.Accuracy
 -- import AERN2.MP.Precision
 -- import AERN2.MP.Dyadic
-import AERN2.MP.Ball (MPBall, mpBall, setPrecisionAtLeastAccuracy)
+import AERN2.MP.Ball (MPBall, mpBall)
 -- import AERN2.MP.Ball (MPBall, mpBall, IsBall(..), IsInterval(..), setPrecisionAtLeastAccuracy)
 -- import qualified AERN2.MP.Ball as MPBall
 

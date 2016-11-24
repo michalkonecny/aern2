@@ -17,6 +17,7 @@ module AERN2.MP.Accuracy
      iterateUntilAccurate,
      convergentList2CauchySeq,
      seqByPrecision2CauchySeq,
+     setPrecisionAtLeastAccuracy,
      HasApproximate(..))
 where
 
@@ -212,6 +213,23 @@ convergentList2CauchySeq list ac = findAccurate list
   findAccurate (b : rest)
     | getAccuracy b >= ac = b
     | otherwise = findAccurate rest
+
+{-|
+    Change the precision so that
+    it is at least as high as the supplied accuracy
+    (assuming the accuracy is finite).
+-}
+setPrecisionAtLeastAccuracy :: (CanSetPrecision t) => Accuracy -> t -> t
+setPrecisionAtLeastAccuracy acc b
+    | p_b < p_acc = setPrecision p_acc b
+    | otherwise = b
+    where
+    p_acc =
+        case acc of
+          Exact -> error $ "setPrecisionAtLeastAccuracy: cannot match Exact accuracy"
+          NoInformation -> p_b
+          _ -> prec $ max 2 (fromAccuracy acc)
+    p_b = getPrecision b
 
 
 class HasApproximate t where

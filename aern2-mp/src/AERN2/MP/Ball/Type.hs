@@ -233,23 +233,6 @@ instance CanSetPrecision MPBall where
         xUp = MPFloat.setPrecisionUp p x
         xDown = MPFloat.setPrecisionDown p x
 
-{-|
-    Change the precision of the ball centre so that
-    it is at least as high as the supplied accuracy
-    (assuming the accuracy is finite).
--}
-setPrecisionAtLeastAccuracy :: Accuracy -> MPBall -> MPBall
-setPrecisionAtLeastAccuracy acc b
-    | p_b < p_acc = setPrecision p_acc b
-    | otherwise = b
-    where
-    p_acc =
-        case acc of
-          Exact -> error $ "setPrecisionAtLeastAccuracy: cannot match Exact accuracy"
-          NoInformation -> p_b
-          _ -> prec $ max 2 (fromAccuracy acc)
-    p_b = getPrecision b
-
 {- negation & abs -}
 
 instance CanNeg MPBall where

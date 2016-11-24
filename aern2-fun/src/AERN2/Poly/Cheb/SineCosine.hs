@@ -218,43 +218,10 @@ sineCosineWithPrecDegSweep isSine prc maxDeg sweepT xPre =
     for some @0 <= a@.  The error bound is @e*a^n@.
 -}
 sineTaylorSeries ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, HasAccuracy c)
+  (Ring c, CanDivBy c Integer, IsInterval c c, HasAccuracy c, CanSetPrecision c)
   =>
   ChPoly c -> [(ChPoly c, Rational, Integer)]
-sineTaylorSeries x =
-    let
-    termComponents =
-      iterate addNextTerm (0,1,1,6,Map.singleton 1 xA)
-      where
-      xA acLimit = reduceDegreeWithLostAccuracyLimit acLimit x
-      addNextTerm (prevI, prevN, _prevFact, currentFact, prevPowers) =
-        (i, n, currentFact, nextFact, newPowers)
-        where
-        i = prevI + 1
-        n = prevN + 2
-        nextFact = currentFact*((n+1)*(n+2))
-        newPowers = Map.insert n currentPower prevPowers
-        currentPower acLimit
-          | odd i = reduce $ x * (power i) * (power i)
-          | otherwise = reduce $ x * (power (i-1)) * (power (i+1))
-          where
-          power j = lookupForce j prevPowers (acLimit+1)
-          reduce = reduceDegreeWithLostAccuracyLimit acLimit
-    sumsAndErrors =
-        makeSums (const $ chPoly (x,0), 1) termComponents
-        where
-        makeSums (prevSum, sign) ((_i, n, nFact, nextFact, xPowers) : rest) =
-          (newSum, 1/nextFact, n+2) : makeSums (newSum, -sign) rest
-          where
-          newSum acLimit = prevSum acLimit + sign*(xPowN acLimit)/nFact
-          xPowN = lookupForce n xPowers
-        makeSums _ _ = error "internal error in SineCosine.sineTaylorSeries"
-    in
-    map fixAccuracyLimit sumsAndErrors
-    where
-    fixAccuracyLimit (pA, e, n) = (pA acLimit,e,n)
-      where
-      acLimit = 4 + (normLog2Accuracy $ getNormLog e)
+sineTaylorSeries = sineCosineTaylorSeries True
 
 {-|
     For a given polynomial @p@, compute all partial Taylor sums of @cos(p)@ and return
@@ -263,18 +230,30 @@ sineTaylorSeries x =
     for some @0 <= a@.  The error bound is @e*a^n@.
 -}
 cosineTaylorSeries ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, HasAccuracy c)
+  (Ring c, CanDivBy c Integer, IsInterval c c, HasAccuracy c, CanSetPrecision c)
   =>
   ChPoly c -> [(ChPoly c, Rational, Integer)]
-cosineTaylorSeries x =
+cosineTaylorSeries = sineCosineTaylorSeries False
+
+sineCosineTaylorSeries ::
+  (Ring c, CanDivBy c Integer, IsInterval c c, HasAccuracy c, CanSetPrecision c)
+  =>
+  Bool -> ChPoly c -> [(ChPoly c, Rational, Integer)]
+sineCosineTaylorSeries isSine x =
     let
-    termComponents =
-      iterate addNextTerm (1,2,2,24,Map.singleton 2 xxA)
+    _isCosine = not isSine
+    termComponents
+      | isSine = iterate addNextTerm (0,1,1,6,Map.singleton 1 xA)
+      | otherwise = iterate addNextTerm (1,2,2,24,Map.singleton 2 xxA)
       where
+      xA acLimit =
+        reduceSetPrec acLimit x
       xxA acLimit =
         reduceDegreeWithLostAccuracyLimit acLimit $ xR*xR
         where
-        xR = reduceDegreeWithLostAccuracyLimit (acLimit + 1) x
+        xR = reduceSetPrec (acLimit + 1) x
+      reduceSetPrec acLimit p =
+        reduceDegreeWithLostAccuracyLimit acLimit $ setPrecisionAtLeastAccuracy acLimit p
       addNextTerm (prevI, prevN, _prevFact, currentFact, prevPowers) =
         (i, n, currentFact, nextFact, newPowers)
         where
@@ -283,20 +262,23 @@ cosineTaylorSeries x =
         nextFact = currentFact*((n+1)*(n+2))
         newPowers = Map.insert n currentPower prevPowers
         currentPower acLimit
+          | isSine && odd i = reduce $ x * (power i) * (power i)
+          | isSine = reduce $ x * (power (i-1)) * (power (i+1))
           | even i = reduce $ (power i) * (power i)
           | otherwise = reduce $ (power (i-1)) * (power (i+1))
           where
           power j = lookupForce j prevPowers (acLimit+1)
           reduce = reduceDegreeWithLostAccuracyLimit acLimit
-    sumsAndErrors =
-        makeSums (const $ chPoly (x,1), -1) termComponents
+    sumsAndErrors
+      | isSine = makeSums (const $ chPoly (x,0), 1) termComponents
+      | otherwise = makeSums (const $ chPoly (x,1), -1) termComponents
         where
         makeSums (prevSum, sign) ((_i, n, nFact, nextFact, xPowers) : rest) =
           (newSum, 1/nextFact, n+2) : makeSums (newSum, -sign) rest
           where
           newSum acLimit = prevSum acLimit + sign*(xPowN acLimit)/nFact
           xPowN = lookupForce n xPowers
-        makeSums _ _ = error "internal error in SineCosine.sineTaylorSeries"
+        makeSums _ _ = error "internal error in Poly.Cheb.SineCosine.sineCosineTaylorSeries"
     in
     map fixAccuracyLimit sumsAndErrors
     where
