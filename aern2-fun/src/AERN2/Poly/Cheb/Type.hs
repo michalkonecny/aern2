@@ -41,16 +41,14 @@ import AERN2.Poly.Basics
 import AERN2.Poly.Conversion
 import qualified AERN2.Poly.Power as Pow
 
-type PolyBall = ChPoly MPBall
-
-polyBall :: (ConvertibleExactly t PolyBall) => t -> PolyBall
-polyBall = convertExactly
+chPolyMPBall :: (ConvertibleExactly t (ChPoly MPBall)) => t -> ChPoly MPBall
+chPolyMPBall = convertExactly
 
 {- Chebyshev polynomials with domain translation -}
 
 data ChPoly c = ChPoly { chPoly_dom :: DyadicInterval, chPoly_poly :: Poly c }
 
-instance Show PolyBall where
+instance Show (ChPoly MPBall) where
   show (ChPoly dom poly) = show ppDom
     where
     pp = cheb2Power poly

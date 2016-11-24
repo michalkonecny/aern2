@@ -25,7 +25,7 @@ import AERN2.Interval
 import AERN2.RealFun.Operations
 import AERN2.RealFun.UnaryFun
 import AERN2.RealFun.UnaryDFun
-import AERN2.Poly.Cheb (PolyBall, polyBall)
+import AERN2.Poly.Cheb (ChPoly, chPolyMPBall)
 import qualified AERN2.Poly.Cheb as ChPoly
 import AERN2.Poly.Basics
 
@@ -86,13 +86,13 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     pp_rangeAcc = bits $ (read pp_rangeBitsS :: Int)
     [pp_precS, pp_maxDegS, pp_divThresholdS, pp_divItsS, pp_rangeBitsS] = effortArgs
 
-    -- integratePB :: PolyBall -> MPBall
+    -- integratePB :: (ChPoly MPBall) -> MPBall
     -- integratePB b =
     --     integrateUnaryFnA (b, mpBall domL, mpBall domR)
     --     where
     --     Interval domL domR = ball_domain b
 
-    maxPB :: PolyBall -> MPBall
+    maxPB :: (ChPoly MPBall) -> MPBall
     maxPB f =
       -- ChPoly.maximum fEC lB rB
       updateRadius (+fR) $ ChPoly.maximumOptimised fC lB rB 5 5
@@ -135,7 +135,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 processArgs _ =
     error "expecting arguments: <operationCode> <functionCode> <representationCode> <effort parameters...>"
 
-functions :: Map.Map String (String, Precision -> Degree -> Degree -> PolyBall, UnaryFun, UnaryFun, FnPP)
+functions :: Map.Map String (String, Precision -> Degree -> Degree -> ChPoly MPBall, UnaryFun, UnaryFun, FnPP)
 functions =
     Map.fromList
     [
@@ -156,13 +156,13 @@ type FnPP = Operator -> Precision -> Degree -> Rational -> Integer -> Accuracy -
 sinecos_Name :: String
 sinecos_Name = "sin(10x)+cos(20x) over [-1,1]"
 
-sinecos_PB :: Precision -> Degree -> Degree -> PolyBall
+sinecos_PB :: Precision -> Degree -> Degree -> ChPoly MPBall
 sinecos_PB p d _d2 =
   sine(10*x)+cosine(20*x)
   where
   sine = ChPoly.sineWithPrecDegSweep p d NormZero
   cosine = ChPoly.cosineWithPrecDegSweep p d NormZero
-  x = varFn (polyBall (unaryIntervalDom, 0)) ()
+  x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 sinecos_B2B :: UnaryFun
 sinecos_B2B =
@@ -181,13 +181,13 @@ sinecos_PP =
 sinesine_Name :: String
 sinesine_Name = "sin(10x+sin(20x^2)) over [-1,1]"
 
-sinesine_PB :: Precision -> Degree -> Degree -> PolyBall
+sinesine_PB :: Precision -> Degree -> Degree -> ChPoly MPBall
 sinesine_PB p d1 d2 =
   sine2(10*x + sine1(20*x*x))
   where
   sine1 = ChPoly.sineWithPrecDegSweep p d1 NormZero
   sine2 = ChPoly.sineWithPrecDegSweep p d2 NormZero
-  x = varFn (polyBall (unaryIntervalDom, 0)) ()
+  x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 sinesine_B2B :: UnaryFun
 sinesine_B2B =
@@ -211,7 +211,7 @@ sinesineCos_Name :: String
 sinesineCos_Name = "sin(10x+sin(20x^2)) + cos(10x) over [-1,1]"
 -- sinesineCos_Name = "sin(10x+sin(20x^2)) + sin(10x) over [-1,1]"
 
-sinesineCos_PB :: Precision -> Degree -> Degree -> PolyBall
+sinesineCos_PB :: Precision -> Degree -> Degree -> ChPoly MPBall
 sinesineCos_PB p d1 d2 =
   sine2(10*x + sine1(20*x*x))
     + cosine2(10*x)
@@ -220,7 +220,7 @@ sinesineCos_PB p d1 d2 =
   sine1 = ChPoly.sineWithPrecDegSweep p d1 NormZero
   sine2 = ChPoly.sineWithPrecDegSweep p d2 NormZero
   cosine2 = ChPoly.cosineWithPrecDegSweep p d2 NormZero
-  x = varFn (polyBall (unaryIntervalDom, 0)) ()
+  x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 sinesineCos_B2B :: UnaryFun
 sinesineCos_B2B =
@@ -247,9 +247,9 @@ sinesineCos_PP OpIntegrate p deg _divThresholdAcc _divIterations rangeAcc =
 runge_Name :: String
 runge_Name = "1/(100x^2+1) over [-1,1]"
 
-runge_PB :: Precision -> Degree -> Degree -> PolyBall
+runge_PB :: Precision -> Degree -> Degree -> ChPoly MPBall
 runge_PB p d1 _d2 =
-  error $ "Not (yet) supporting PolyBall for: " ++ runge_Name
+  error $ "Not (yet) supporting Poly for: " ++ runge_Name
     -- 1/(100*x*x+1)
     -- where
     -- x =
@@ -278,9 +278,9 @@ runge_PP OpIntegrate p _deg divThresholdAcc divIterations rangeAcc =
 rungeX_Name :: String
 rungeX_Name = "x/(100x^2+1) over [-1,1]"
 
-rungeX_PB :: Precision -> Degree -> Degree -> PolyBall
+rungeX_PB :: Precision -> Degree -> Degree -> ChPoly MPBall
 rungeX_PB p d1 _d2 =
-  error $ "Not (yet) supporting PolyBall for: " ++ rungeX_Name
+  error $ "Not (yet) supporting Poly for: " ++ rungeX_Name
     -- x/(100*x*x+1)
     -- where
     -- x =
@@ -309,9 +309,9 @@ rungeX_PP OpIntegrate p _deg divThresholdAcc divIterations rangeAcc =
 fracSin_Name :: String
 fracSin_Name = "1/(10(sin(7x))^2+1) over [-1,1]"
 
-fracSin_PB :: Precision -> Degree -> Degree -> PolyBall
+fracSin_PB :: Precision -> Degree -> Degree -> ChPoly MPBall
 fracSin_PB p d1 d2 =
-  error $ "Not (yet) supporting PolyBall for: " ++ fracSin_Name
+  error $ "Not (yet) supporting Poly for: " ++ fracSin_Name
     -- let sx = setMaxDegree d2 $ sin (7*x) in 1/(10*sx*sx+1)
     -- where
     -- x =
@@ -340,9 +340,9 @@ fracSin_PP OpIntegrate p deg divThresholdAcc divIterations rangeAcc =
 fracSinX_Name :: String
 fracSinX_Name = "x/(10(sin(7x))^2+1) over [-1,1]"
 
-fracSinX_PB :: Precision -> Degree -> Degree -> PolyBall
+fracSinX_PB :: Precision -> Degree -> Degree -> ChPoly MPBall
 fracSinX_PB p d1 d2 =
-  error $ "Not (yet) supporting PolyBall for: " ++ fracSinX_Name
+  error $ "Not (yet) supporting Poly for: " ++ fracSinX_Name
     -- let sx = setMaxDegree d2 $ sin (7*x) in x/(10*sx*sx+1)
     -- where
     -- x =
@@ -372,10 +372,10 @@ fracSinX_PP OpIntegrate p deg divThresholdAcc divIterations rangeAcc =
 hat_Name :: String
 hat_Name = "1-|x+1/3| over [-1,1]"
 
-hat_PB :: Precision -> Degree -> Degree -> PolyBall
+hat_PB :: Precision -> Degree -> Degree -> ChPoly MPBall
 hat_PB p d _d2 =
-  error $ "Not (yet) supporting PolyBall for: " ++ hat_Name
-  -- 1 - (PolyBall (absXshifted p d) (Interval (-1.0) (1.0)) d NormZero)
+  error $ "Not (yet) supporting Poly for: " ++ hat_Name
+  -- 1 - (ChPoly MPBall (absXshifted p d) (Interval (-1.0) (1.0)) d NormZero)
 
 hat_B2B :: UnaryFun
 hat_B2B =
@@ -402,19 +402,19 @@ hat_PP OpIntegrate p _deg _divThresholdAcc _divIterations _rangeAcc =
 bumpy_Name :: String
 bumpy_Name = "max(sin(10x),cos(11x)) over [-1,1]"
 
-bumpy_PB :: Precision -> Degree -> Degree -> PolyBall
+bumpy_PB :: Precision -> Degree -> Degree -> ChPoly MPBall
 bumpy_PB p d1 _d2 =
-  error $ "Not (yet) supporting PolyBall for: " ++ bumpy_Name
-    -- PolyBall (maxViaAbs sin10x cos11x) (Interval (-1.0) (1.0)) d1 NormZero
+  error $ "Not (yet) supporting Poly for: " ++ bumpy_Name
+    -- ChPoly MPBall (maxViaAbs sin10x cos11x) (Interval (-1.0) (1.0)) d1 NormZero
     -- where
     -- maxViaAbs f g = ((absViaCompose (f - g)) + f + g)/2
     -- absViaCompose f =
     --     (absX p d' (unaryIntervalDom) `comp` (reduceDegreeAndSweep d' NormZero f)
     -- d' = toIntegerUp $ sqrt (mpBall d1)
     -- comp = compose d1 NormZero
-    -- PolyBall sin10x _ _ _ = sin (10*x)
-    -- PolyBall cos11x _ _ _ = cos (11*x)
-    -- x :: PolyBall
+    -- ChPoly sin10x _ _ _ = sin (10*x)
+    -- ChPoly cos11x _ _ _ = cos (11*x)
+    -- x :: ChPoly MPBall
     -- x =
     --     setMaxDegree d1 $
     --     setPrecision p $

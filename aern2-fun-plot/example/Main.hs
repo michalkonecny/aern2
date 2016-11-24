@@ -6,6 +6,7 @@ import AERN2.MP.Ball as MPBall
 
 import AERN2.Interval
 import AERN2.RealFun.Operations
+import AERN2.Poly.Cheb (ChPoly)
 import qualified AERN2.Poly.Cheb as ChPoly
 
 import AERN2.RealFun.PlotService as Plot
@@ -35,11 +36,11 @@ fnsCP = map chPolyFn
     , function_dom = getDomain cp
     , function_getBounds = applyViaMPBall cp
     }
-  x :: ChPoly.PolyBall
+  x :: ChPoly MPBall
   x = varFn sampleFn ()
   sampleFn = constFn (dom, 1)
   dom = dyadicInterval (-1.0,1.0)
-  xP :: ChPoly.PolyBall
+  xP :: ChPoly MPBall
   xP = varFn sampleFnP ()
   sampleFnP = constFn (domP, 1)
   domP = dyadicInterval (0.0,1.0)
