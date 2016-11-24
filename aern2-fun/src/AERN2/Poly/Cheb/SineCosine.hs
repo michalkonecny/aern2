@@ -30,7 +30,7 @@ import AERN2.Norm
 import AERN2.MP.Accuracy
 import AERN2.MP.ErrorBound
 import AERN2.MP.Float
-import AERN2.MP.Ball (MPBall, IsBall(..), IsInterval(..))
+import AERN2.MP.Ball (MPBall, mpBall, IsBall(..), IsInterval(..))
 import qualified AERN2.MP.Ball as MPBall
 import AERN2.MP.Dyadic
 
@@ -167,9 +167,9 @@ sineCosineWithPrecDegSweep isSine prc maxDeg sweepT xPre =
 
     -- compute sin or cos of txC = xC-k*pi/2 using Taylor series:
     taylorSums
-        | isSine && even k = sineTaylorSeries maxDeg sweepT txC
-        | isCosine && odd k = sineTaylorSeries maxDeg sweepT txC
-        | otherwise = cosineTaylorSeries maxDeg sweepT txC
+        | isSine && even k = sineTaylorSeriesWithDegree maxDeg sweepT txC
+        | isCosine && odd k = sineTaylorSeriesWithDegree maxDeg sweepT txC
+        | otherwise = cosineTaylorSeriesWithDegree maxDeg sweepT txC
     (taylorSum, taylorSumE) = pickByAccuracy [] taylorSums
         where
         pickByAccuracy prevResults (_s@(p, e, n) : rest) =
@@ -218,10 +218,104 @@ sineCosineWithPrecDegSweep isSine prc maxDeg sweepT xPre =
     for some @0 <= a < 1@.  The better error bound is @e*a^n@.
 -}
 sineTaylorSeries ::
+  (Ring c, CanDivBy c Integer, IsInterval c c, HasAccuracy c)
+  =>
+  ChPoly c -> [(ChPoly c, Rational, Integer)]
+sineTaylorSeries x =
+    let
+    termComponents =
+      iterate addNextTerm (0,1,1,6,Map.singleton 1 xA)
+      where
+      xA acLimit = reduceDegreeWithLostAccuracyLimit acLimit x
+      addNextTerm (prevI, prevN, _prevFact, currentFact, prevPowers) =
+        (i, n, currentFact, nextFact, newPowers)
+        where
+        i = prevI + 1
+        n = prevN + 2
+        nextFact = currentFact*((n+1)*(n+2))
+        newPowers = Map.insert n currentPower prevPowers
+        currentPower acLimit
+          | odd i = reduce $ x * (power i) * (power i)
+          | otherwise = reduce $ x * (power (i-1)) * (power (i+1))
+          where
+          power j = lookupForce j prevPowers (acLimit+1)
+          reduce = reduceDegreeWithLostAccuracyLimit acLimit
+    sumsAndErrors =
+        makeSums (const $ chPoly (x,0), 1) termComponents
+        where
+        makeSums (prevSum, sign) ((_i, n, nFact, nextFact, xPowers) : rest) =
+          (newSum, 1/nextFact, n+2) : makeSums (newSum, -sign) rest
+          where
+          newSum acLimit = prevSum acLimit + sign*(xPowN acLimit)/nFact
+          xPowN = lookupForce n xPowers
+        makeSums _ _ = error "internal error in SineCosine.sineTaylorSeries"
+    in
+    map fixAccuracyLimit sumsAndErrors
+    where
+    fixAccuracyLimit (pA, e, n) = (pA acLimit,e,n)
+      where
+      acLimit = 4 + (normLog2Accuracy $ getNormLog e)
+
+{-|
+    For a given polynomial @p@, compute all partial Taylor sums of @cos(p)@ and return
+    them together with @e@, an error bound on @[-1,1]@, and a number @n@.
+    The number @n@ can be used to obtain a better error bound on a domain @[-a,a]@
+    for some @0 <= a < 1@.  The better error bound is @e*a^n@.
+-}
+cosineTaylorSeries ::
+  (Ring c, CanDivBy c Integer, IsInterval c c, HasAccuracy c)
+  =>
+  ChPoly c -> [(ChPoly c, Rational, Integer)]
+cosineTaylorSeries x =
+    let
+    termComponents =
+      iterate addNextTerm (1,2,2,24,Map.singleton 2 xxA)
+      where
+      xxA acLimit =
+        reduceDegreeWithLostAccuracyLimit acLimit $ xR*xR
+        where
+        xR = reduceDegreeWithLostAccuracyLimit (acLimit + 1) x
+      addNextTerm (prevI, prevN, _prevFact, currentFact, prevPowers) =
+        (i, n, currentFact, nextFact, newPowers)
+        where
+        i = prevI + 1
+        n = prevN + 2
+        nextFact = currentFact*((n+1)*(n+2))
+        newPowers = Map.insert n currentPower prevPowers
+        currentPower acLimit
+          | even i = reduce $ (power i) * (power i)
+          | otherwise = reduce $ (power (i-1)) * (power (i+1))
+          where
+          power j = lookupForce j prevPowers (acLimit+1)
+          reduce = reduceDegreeWithLostAccuracyLimit acLimit
+    sumsAndErrors =
+        makeSums (const $ chPoly (x,1), -1) termComponents
+        where
+        makeSums (prevSum, sign) ((_i, n, nFact, nextFact, xPowers) : rest) =
+          (newSum, 1/nextFact, n+2) : makeSums (newSum, -sign) rest
+          where
+          newSum acLimit = prevSum acLimit + sign*(xPowN acLimit)/nFact
+          xPowN = lookupForce n xPowers
+        makeSums _ _ = error "internal error in SineCosine.sineTaylorSeries"
+    in
+    map fixAccuracyLimit sumsAndErrors
+    where
+    fixAccuracyLimit (pA, e, n) = (pA acLimit,e,n)
+      where
+      acLimit = 4 + (normLog2Accuracy $ getNormLog e)
+
+
+{-|
+    For a given polynomial @p@, compute all partial Taylor sums of @sin(p)@ and return
+    them together with @e@, an error bound on @[-1,1]@, and a number @n@.
+    The number @n@ can be used to obtain a better error bound on a domain @[-a,a]@
+    for some @0 <= a < 1@.  The better error bound is @e*a^n@.
+-}
+sineTaylorSeriesWithDegree ::
   (Ring c, CanDivBy c Integer, IsInterval c c, HasNorm c)
   =>
   Degree -> NormLog -> ChPoly c -> [(ChPoly c, Rational, Integer)]
-sineTaylorSeries maxDeg sweepT x =
+sineTaylorSeriesWithDegree maxDeg sweepT x =
     let
     termComponents =
         iterate addNextTerm (0,1,1,6,Map.singleton 1 x)
@@ -257,11 +351,11 @@ sineTaylorSeries maxDeg sweepT x =
     The number @n@ can be used to obtain an error bound for @p\in[-a,a]@
     for some @0 <= a@.  The error bound is @e*a^n@.
 -}
-cosineTaylorSeries ::
+cosineTaylorSeriesWithDegree ::
   (Ring c, CanDivBy c Integer, IsInterval c c, HasNorm c, IsBall c)
   =>
   Degree -> NormLog -> ChPoly c -> [(ChPoly c, Rational, Integer)]
-cosineTaylorSeries maxDeg sweepT x =
+cosineTaylorSeriesWithDegree maxDeg sweepT x =
     let
     termComponents =
         iterate addNextTerm (1,2,2,24,Map.singleton 2 (x*x))

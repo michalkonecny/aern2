@@ -156,3 +156,32 @@ reduceDegreeAndSweepTerms maxDegree thresholdNormLog terms
         deg <= maxDegree && (deg == 0 || getNormLog coeff > thresholdNormLog)
     isNotOK deg coeff =
         not $ isOK deg coeff
+
+reduceDegreeWithLostAccuracyLimit ::
+  (Ring c, IsInterval c c, HasAccuracy c) =>
+  Accuracy -> ChPoly c -> ChPoly c
+reduceDegreeWithLostAccuracyLimit accuracyLossLimit p =
+    p { chPoly_poly = Poly terms' }
+    where
+    (Poly terms) = chPoly_poly p
+    terms' =
+      reduceDegreeWithLostAccuracyLimitTerms accuracyLossLimit terms
+
+reduceDegreeWithLostAccuracyLimitTerms ::
+  (Ring c, IsInterval c c, HasAccuracy c) =>
+  Accuracy -> Terms c -> Terms c
+reduceDegreeWithLostAccuracyLimitTerms accuracyLossLimit (termsMap :: Terms c) =
+  terms_updateConst (+ err) (terms_fromList termsToKeep)
+  where
+  termsDescList = terms_toDescList termsMap
+  (err, termsToKeep) = dropTermsUntilLimit (convertExactly 0 :: c) termsDescList
+  dropTermsUntilLimit _errSoFar _remaingTerms@[] =
+    error "reduceDegreeWithLostAccuracyLimitTerms: missing constant term"
+  dropTermsUntilLimit errSoFar remaingTerms@[_constTerm] = (errSoFar, remaingTerms)
+  dropTermsUntilLimit errSoFar remaingTerms@((_d,cf):rest)
+    | getAccuracy errNew >= accuracyLossLimit = dropTermsUntilLimit errNew rest
+    | otherwise = (errSoFar, remaingTerms)
+    where
+    errNew = errSoFar + (plusMinus cf)
+    plusMinus :: (Ring c, IsInterval c c) => c -> c
+    plusMinus c = fromEndpoints (-c) c

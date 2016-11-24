@@ -59,6 +59,9 @@ terms_insertWith = Map.insertWith
 terms_toList :: Terms c -> [(Degree, c)]
 terms_toList = Map.toList
 
+terms_toDescList :: Terms c -> [(Degree, c)]
+terms_toDescList = Map.toDescList
+
 terms_fromList :: [(Degree, c)] -> Terms c
 terms_fromList = Map.fromList
 
