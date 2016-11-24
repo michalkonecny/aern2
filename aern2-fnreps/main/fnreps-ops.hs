@@ -15,7 +15,7 @@ import System.Environment
 import AERN2.Norm
 import AERN2.MP.Accuracy
 import AERN2.MP.Precision
-import AERN2.MP.Ball (MPBall, mpBall, IsInterval(..), makeExactCentre)
+import AERN2.MP.Ball (MPBall, mpBall, IsBall(..),IsInterval(..))
 -- import qualified AERN2.MP.Ball as MPBall
 
 import AERN2.Real
@@ -95,9 +95,9 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     maxPB :: PolyBall -> MPBall
     maxPB f =
       -- ChPoly.maximum fEC lB rB
-      ChPoly.maximumOptimised fEC lB rB 5 5
+      updateRadius (+fR) $ ChPoly.maximumOptimised fC lB rB 5 5
       where
-      fEC = makeExactCentre f
+      (fC, fR) = centreAsBallAndRadius f
       (Interval l r) = getDomain f
       prc = getPrecision f
       lB = raisePrecisionIfBelow prc $ mpBall l

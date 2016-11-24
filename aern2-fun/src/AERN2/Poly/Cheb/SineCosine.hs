@@ -18,7 +18,7 @@ where
 
 import Numeric.MixedTypes
 import qualified Prelude as P
-import Text.Printf
+-- import Text.Printf
 
 import qualified Data.Map as Map
 import qualified Data.List as List
@@ -30,7 +30,7 @@ import AERN2.Norm
 import AERN2.MP.Accuracy
 import AERN2.MP.ErrorBound
 import AERN2.MP.Float
-import AERN2.MP.Ball (MPBall, mpBall, IsBall(..), IsInterval(..))
+import AERN2.MP.Ball (MPBall, IsBall(..), IsInterval(..))
 import qualified AERN2.MP.Ball as MPBall
 import AERN2.MP.Dyadic
 
@@ -214,8 +214,8 @@ sineCosineWithPrecDegSweep isSine prc maxDeg sweepT xPre =
 {-|
     For a given polynomial @p@, compute all partial Taylor sums of @sin(p)@ and return
     them together with @e@, an error bound on @[-1,1]@, and a number @n@.
-    The number @n@ can be used to obtain a better error bound on a domain @[-a,a]@
-    for some @0 <= a < 1@.  The better error bound is @e*a^n@.
+    The number @n@ can be used to obtain an error bound on a domain @[-a,a]@
+    for some @0 <= a@.  The error bound is @e*a^n@.
 -}
 sineTaylorSeries ::
   (Ring c, CanDivBy c Integer, IsInterval c c, HasAccuracy c)
@@ -259,8 +259,8 @@ sineTaylorSeries x =
 {-|
     For a given polynomial @p@, compute all partial Taylor sums of @cos(p)@ and return
     them together with @e@, an error bound on @[-1,1]@, and a number @n@.
-    The number @n@ can be used to obtain a better error bound on a domain @[-a,a]@
-    for some @0 <= a < 1@.  The better error bound is @e*a^n@.
+    The number @n@ can be used to obtain an error bound on a domain @[-a,a]@
+    for some @0 <= a@.  The error bound is @e*a^n@.
 -}
 cosineTaylorSeries ::
   (Ring c, CanDivBy c Integer, IsInterval c c, HasAccuracy c)
@@ -308,8 +308,8 @@ cosineTaylorSeries x =
 {-|
     For a given polynomial @p@, compute all partial Taylor sums of @sin(p)@ and return
     them together with @e@, an error bound on @[-1,1]@, and a number @n@.
-    The number @n@ can be used to obtain a better error bound on a domain @[-a,a]@
-    for some @0 <= a < 1@.  The better error bound is @e*a^n@.
+    The number @n@ can be used to obtain an error bound on a domain @[-a,a]@
+    for some @0 <= a@.  The error bound is @e*a^n@.
 -}
 sineTaylorSeriesWithDegree ::
   (Ring c, CanDivBy c Integer, IsInterval c c, HasNorm c)
@@ -348,7 +348,7 @@ sineTaylorSeriesWithDegree maxDeg sweepT x =
 {-|
     For a given polynomial @p@, compute all partial Taylor sums of @cos(p)@ and return
     them together with @e@, an error bound on @p\in[-1,1]@, and a number @n@.
-    The number @n@ can be used to obtain an error bound for @p\in[-a,a]@
+    The number @n@ can be used to obtain an error bound on a domain @[-a,a]@
     for some @0 <= a@.  The error bound is @e*a^n@.
 -}
 cosineTaylorSeriesWithDegree ::

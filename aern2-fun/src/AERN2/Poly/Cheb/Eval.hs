@@ -32,11 +32,11 @@ import AERN2.Real
 import AERN2.Interval
 import AERN2.RealFun.Operations
 import AERN2.RealFun.UnaryFun
-import AERN2.RealFun.UnaryDFun
+-- import AERN2.RealFun.UnaryDFun
 
 import AERN2.Poly.Basics
 import AERN2.Poly.Cheb.Type
-import AERN2.Poly.Conversion
+-- import AERN2.Poly.Conversion
 import AERN2.Poly.Power (PowPoly)
 import qualified AERN2.Poly.Power as Pow
 
