@@ -21,7 +21,7 @@ module AERN2.MP.Ball.Type
   , setPrecisionAtLeastAccuracy
   , contains
   -- * Ball construction/extraction functions
-  , IsBall(..)
+  , IsBall(..), makeExactCentre
   , IsInterval(..)
   , endpointsMP, fromEndpointsMP
 )
@@ -160,6 +160,17 @@ class IsBall t where
   radius :: t -> ErrorBound
   radius = snd . centreAsBallAndRadius
   updateRadius :: (ErrorBound -> ErrorBound) -> (t -> t)
+
+{-|  When the radius of the ball is implicitly contributed to by imprecision in the centre
+   (eg if the centre is a polynomial with inexact coefficients), move all that imprecision
+   to the explicit radius, making the centre exact.  This may lose some information,
+   but as a ball is equivalent to the original.
+   For MPBall this function is pointless because it is equivalent to the identity.  -}
+makeExactCentre :: (IsBall t) => t -> t
+makeExactCentre v =
+  updateRadius (+r) c
+  where
+  (c, r) = centreAsBallAndRadius v
 
 instance IsBall MPBall where
   type CentreType MPBall = Dyadic

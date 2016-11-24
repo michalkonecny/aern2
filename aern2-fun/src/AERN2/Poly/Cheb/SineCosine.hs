@@ -18,7 +18,7 @@ where
 
 import Numeric.MixedTypes
 import qualified Prelude as P
--- import Text.Printf
+import Text.Printf
 
 import qualified Data.Map as Map
 import qualified Data.List as List
@@ -26,9 +26,12 @@ import qualified Data.List as List
 -- import Test.Hspec
 -- import Test.QuickCheck
 
+import AERN2.Norm
+import AERN2.MP.Accuracy
 import AERN2.MP.ErrorBound
 import AERN2.MP.Float
-import AERN2.MP.Ball
+import AERN2.MP.Ball (MPBall, IsBall(..), IsInterval(..))
+import qualified AERN2.MP.Ball as MPBall
 import AERN2.MP.Dyadic
 
 import AERN2.Real
@@ -47,8 +50,8 @@ import Debug.Trace (trace)
 
 
 shouldTrace :: Bool
-shouldTrace = False
--- shouldTrace = True
+-- shouldTrace = False
+shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace
@@ -151,18 +154,16 @@ sineCosineWithPrecDegSweep isSine prc maxDeg sweepT xPre =
     -- compute (rC+-rE) = range(xC):
     Interval rL rR =
       sampledRange (dyadicInterval (-1.0,1.0)) 5 xC
-    r = fromEndpoints rL rR
-    _ = [r,rL,rR] :: [MPBall]
-    rC = centreAsBall r
+    r = fromEndpoints rL (rR :: MPBall)
+    rC = centreAsBall r :: MPBall
 
     -- compute k = round(rC/(pi/2)):
-    k = floor $ (fst $ endpoints $ 0.5 + (2*rC / pi) :: MPFloat)
+    k = fst $ MPBall.integerBounds $ 0.5 + (2*rC / pi)
 
     -- shift xC near 0 using multiples of pi/2:
     txC = xC - k * pi / 2
     -- work out an absolute range bound for txC:
-    (_, trM) = endpoints $ abs $ r - k * pi / 2
-    _ = [trM, r]
+    (_, trM :: MPBall) = endpoints $ abs $ r - k * pi / 2
 
     -- compute sin or cos of txC = xC-k*pi/2 using Taylor series:
     taylorSums
@@ -191,7 +192,13 @@ sineCosineWithPrecDegSweep isSine prc maxDeg sweepT xPre =
                         | sAccuracy < a1 && a1 > a2 -> (True, p1, sE1)
                         | sAccuracy == a1 && a1 == a2 && a2 == a3 && a3 == a4 -> (True, p, sE)
                     _ -> (False, p, sE)
-            sE = (errorBound $ e*(trM^n)) + (radius p)
+            sE =
+              -- maybeTrace
+              -- (printf "pickByAccuracy: computing sE: trM=%s, n=%d, e*(trM^n)=%s, errorBound $ e*(trM^n) = %s, p = %s"
+              --   (show trM) n (show $ e*(trM^n)) (show $ errorBound $ e*(trM^n))
+              --   (show $ p)
+              -- ) $
+              (errorBound $ e*(trM^n)) + (radius p)
             sAccuracy = normLog2Accuracy $ getNormLog $ dyadic sE
         pickByAccuracy _ _ = error "internal error in SineCosine"
     -- if k mod 4 = 2 then negate result,
@@ -236,10 +243,10 @@ sineTaylorSeries maxDeg sweepT x =
         makeSums (chPoly (x,0), 1) termComponents
         where
         makeSums (prevSum, sign) ((_i, n, nFact, nextFact, xPowers) : rest) =
-            (newSum, 1/nextFact, n+2) : makeSums (newSum, -sign) rest
-            where
-            newSum = prevSum + sign*xPowN/nFact
-            xPowN = lookupForce n xPowers
+          (newSum, 1/nextFact, n+2) : makeSums (newSum, -sign) rest
+          where
+          newSum = prevSum + sign*xPowN/nFact
+          xPowN = lookupForce n xPowers
         makeSums _ _ = error "internal error in SineCosine.sineTaylorSeries"
     in
     sumsAndErrors
@@ -251,7 +258,7 @@ sineTaylorSeries maxDeg sweepT x =
     for some @0 <= a@.  The error bound is @e*a^n@.
 -}
 cosineTaylorSeries ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, HasNorm c)
+  (Ring c, CanDivBy c Integer, IsInterval c c, HasNorm c, IsBall c)
   =>
   Degree -> NormLog -> ChPoly c -> [(ChPoly c, Rational, Integer)]
 cosineTaylorSeries maxDeg sweepT x =
@@ -260,6 +267,10 @@ cosineTaylorSeries maxDeg sweepT x =
         iterate addNextTerm (1,2,2,24,Map.singleton 2 (x*x))
         where
         addNextTerm (prevI, prevN, _prevFact, currentFact, prevPowers) =
+            -- maybeTrace
+            -- (printf "cosineTaylorSeries: addNextTerm: n = %d, |reduce currentPower| = %s"
+            --  n (show $ radius $ reduce currentPower)
+            -- ) $
             (i, n, currentFact, nextFact, newPowers)
             where
             i = prevI + 1
@@ -276,10 +287,10 @@ cosineTaylorSeries maxDeg sweepT x =
         makeSums (chPoly (x, 1), -1) termComponents
         where
         makeSums (prevSum, sign) ((_i, n, nFact, nextFact, xPowers) : rest) =
-            (newSum, 1/nextFact, n+2) : makeSums (newSum, -sign) rest
-            where
-            newSum = prevSum + sign*xPowN/nFact
-            xPowN = lookupForce n xPowers
+          (newSum, 1/nextFact, n+2) : makeSums (newSum, -sign) rest
+          where
+          newSum = prevSum + sign*xPowN/nFact
+          xPowN = lookupForce n xPowers
         makeSums _ _ = error "internal error in SineCosine.cosineTaylorSeries"
     in
     sumsAndErrors
