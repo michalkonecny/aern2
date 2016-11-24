@@ -38,6 +38,8 @@ import AERN2.RealFun.Operations
 -- import AERN2.RealFun.UnaryFun
 
 import AERN2.Poly.Basics
+import AERN2.Poly.Conversion
+import qualified AERN2.Poly.Power as Pow
 
 type PolyBall = ChPoly MPBall
 
@@ -47,6 +49,17 @@ polyBall = convertExactly
 {- Chebyshev polynomials with domain translation -}
 
 data ChPoly c = ChPoly { chPoly_dom :: DyadicInterval, chPoly_poly :: Poly c }
+
+instance Show PolyBall where
+  show (ChPoly dom poly) = show ppDom
+    where
+    pp = cheb2Power poly
+    ppDom =
+      Pow.translate ((rB+lB)/2) $
+        Pow.contract (2/(rB-lB)) pp
+    lB = mpBall l
+    rB = mpBall r
+    Interval l r = dom
 
 instance HasDomain (ChPoly c) where
   type Domain (ChPoly c) = DyadicInterval
