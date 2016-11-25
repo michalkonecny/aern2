@@ -70,7 +70,7 @@ _test10Xe =
 
 _testSine10X :: Accuracy -> ChPoly MPBall
 _testSine10X ac =
-    sineGuideAccuracy ac (10*x)
+    sineWithAccuracyGuide ac (10*x)
     where
     x :: ChPoly MPBall
     x = varFn sampleFn ()
@@ -116,15 +116,15 @@ _testSine10Xe =
     * add xE to the error bound of the resulting polynomial
 -}
 
-sineGuideAccuracy ::
+sineWithAccuracyGuide ::
   Accuracy -> ChPoly MPBall -> ChPoly MPBall
-sineGuideAccuracy = sineCosineGuideAccuracy True
+sineWithAccuracyGuide = sineCosineWithAccuracyGuide True
 
-cosineGuideAccuracy ::
+cosineWithAccuracyGuide ::
   Accuracy -> ChPoly MPBall -> ChPoly MPBall
-cosineGuideAccuracy = sineCosineGuideAccuracy False
+cosineWithAccuracyGuide = sineCosineWithAccuracyGuide False
 
-sineCosineGuideAccuracy ::
+sineCosineWithAccuracyGuide ::
   -- (Field c, CanMinMaxSameType c,
   --  CanAbsSameType c,
   --  CanAddSubMulDivBy c CauchyReal,
@@ -134,7 +134,7 @@ sineCosineGuideAccuracy ::
   --  CanApply (ChPoly c) c, ApplyType (ChPoly c) c ~ c)
   -- =>
   Bool -> Accuracy -> ChPoly MPBall -> ChPoly MPBall
-sineCosineGuideAccuracy isSine acGuide x =
+sineCosineWithAccuracyGuide isSine acGuide x =
     maybeTrace
     (
         "ChPoly.sineCosine:"

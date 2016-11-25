@@ -94,11 +94,12 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 
     maxPB :: (ChPoly MPBall) -> MPBall
     maxPB f =
-      -- ChPoly.maximum f lB rB
-      ChPoly.maximumOptimised (setPrecision (3*prc) f) lB rB 5 5
+      updateRadius (+ (radius f)) resC
       where
+      resC = ChPoly.maximumOptimised (setPrecision prc fC) lB rB 5 5
+      fC = centreAsBall f
       (Interval l r) = getDomain f
-      prc = getPrecision f
+      prc = 2 * (getPrecision f)
       lB = raisePrecisionIfBelow prc $ mpBall l
       rB = raisePrecisionIfBelow prc $ mpBall r
 
@@ -159,8 +160,8 @@ sinecos_PB :: Accuracy -> ChPoly MPBall
 sinecos_PB acGuide =
   sine(10*x)+cosine(20*x)
   where
-  sine = ChPoly.sineGuideAccuracy acGuide
-  cosine = ChPoly.cosineGuideAccuracy acGuide
+  sine = ChPoly.sineWithAccuracyGuide acGuide
+  cosine = ChPoly.cosineWithAccuracyGuide acGuide
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 sinecos_B2B :: UnaryFun
@@ -184,8 +185,8 @@ sinesine_PB :: Accuracy -> ChPoly MPBall
 sinesine_PB acGuide =
   sine2(10*x + sine1(20*x*x))
   where
-  sine1 = ChPoly.sineGuideAccuracy (acGuide+2)
-  sine2 = ChPoly.sineGuideAccuracy acGuide
+  sine1 = ChPoly.sineWithAccuracyGuide (acGuide+2)
+  sine2 = ChPoly.sineWithAccuracyGuide acGuide
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 sinesine_B2B :: UnaryFun
@@ -216,9 +217,9 @@ sinesineCos_PB acGuide =
     + cosine2(10*x)
     -- + sine2(10*x)
   where
-  sine1 = ChPoly.sineGuideAccuracy (acGuide+2)
-  sine2 = ChPoly.sineGuideAccuracy acGuide
-  cosine2 = ChPoly.cosineGuideAccuracy acGuide
+  sine1 = ChPoly.sineWithAccuracyGuide (acGuide+2)
+  sine2 = ChPoly.sineWithAccuracyGuide acGuide
+  cosine2 = ChPoly.cosineWithAccuracyGuide acGuide
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 sinesineCos_B2B :: UnaryFun
