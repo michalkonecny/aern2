@@ -34,6 +34,7 @@ library
     -- , hspec-smallcheck >= 0.3 && < 0.5
     , QuickCheck >= 2.7 && < 2.9
     , lens == 4.13.*
+    , template-haskell
     , mixed-types-num == 0.1.*
     , num-exceptions == 0.1.*
   if impl(ghc >= 7.10)
@@ -62,6 +63,7 @@ library
     FlexibleInstances,
     UndecidableInstances
   exposed-modules:
+    AERN2.TH
     AERN2.Norm
     AERN2.MP.Precision
     AERN2.MP.Float

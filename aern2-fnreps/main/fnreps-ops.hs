@@ -95,7 +95,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     maxPB :: (ChPoly MPBall) -> MPBall
     maxPB f =
       -- ChPoly.maximum f lB rB
-      ChPoly.maximumOptimised f lB rB 5 5
+      ChPoly.maximumOptimised (setPrecision (3*prc) f) lB rB 5 5
       where
       (Interval l r) = getDomain f
       prc = getPrecision f
