@@ -61,7 +61,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
             ("dfun", "max") -> maxDFun fnB2B dfnB2B accuracy
             ("fun", "integrate") -> integrateFun fnB2B accuracy
             ("dfun", "integrate") -> integrateDFun fnB2B dfnB2B accuracy
-            ("poly", "max") -> maxPB $ fnPB p maxDeg1 maxDeg2
+            ("poly", "max") -> maxPB $ fnPB accuracy
             -- ("poly", "integrate") -> integratePB $ fnPB p maxDeg1 maxDeg2
             -- ("ppoly", "max") -> fnPP OpMax pp_prec pp_maxDeg pp_divThreshold pp_divIts pp_rangeAcc
             -- ("ppoly", "integrate") -> fnPP OpIntegrate pp_prec pp_maxDeg pp_divThreshold pp_divIts pp_rangeAcc
@@ -94,10 +94,9 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 
     maxPB :: (ChPoly MPBall) -> MPBall
     maxPB f =
-      -- ChPoly.maximum fEC lB rB
-      updateRadius (+fR) $ ChPoly.maximumOptimised fC lB rB 5 5
+      -- ChPoly.maximum f lB rB
+      ChPoly.maximumOptimised f lB rB 5 5
       where
-      (fC, fR) = centreAsBallAndRadius f
       (Interval l r) = getDomain f
       prc = getPrecision f
       lB = raisePrecisionIfBelow prc $ mpBall l
@@ -135,7 +134,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 processArgs _ =
     error "expecting arguments: <operationCode> <functionCode> <representationCode> <effort parameters...>"
 
-functions :: Map.Map String (String, Precision -> Degree -> Degree -> ChPoly MPBall, UnaryFun, UnaryFun, FnPP)
+functions :: Map.Map String (String, Accuracy -> ChPoly MPBall, UnaryFun, UnaryFun, FnPP)
 functions =
     Map.fromList
     [
@@ -156,12 +155,12 @@ type FnPP = Operator -> Precision -> Degree -> Rational -> Integer -> Accuracy -
 sinecos_Name :: String
 sinecos_Name = "sin(10x)+cos(20x) over [-1,1]"
 
-sinecos_PB :: Precision -> Degree -> Degree -> ChPoly MPBall
-sinecos_PB p d _d2 =
+sinecos_PB :: Accuracy -> ChPoly MPBall
+sinecos_PB acGuide =
   sine(10*x)+cosine(20*x)
   where
-  sine = ChPoly.sineWithPrecDegSweep p d NormZero
-  cosine = ChPoly.cosineWithPrecDegSweep p d NormZero
+  sine = ChPoly.sineGuideAccuracy acGuide
+  cosine = ChPoly.cosineGuideAccuracy acGuide
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 sinecos_B2B :: UnaryFun
@@ -181,12 +180,12 @@ sinecos_PP =
 sinesine_Name :: String
 sinesine_Name = "sin(10x+sin(20x^2)) over [-1,1]"
 
-sinesine_PB :: Precision -> Degree -> Degree -> ChPoly MPBall
-sinesine_PB p d1 d2 =
+sinesine_PB :: Accuracy -> ChPoly MPBall
+sinesine_PB acGuide =
   sine2(10*x + sine1(20*x*x))
   where
-  sine1 = ChPoly.sineWithPrecDegSweep p d1 NormZero
-  sine2 = ChPoly.sineWithPrecDegSweep p d2 NormZero
+  sine1 = ChPoly.sineGuideAccuracy (acGuide+2)
+  sine2 = ChPoly.sineGuideAccuracy acGuide
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 sinesine_B2B :: UnaryFun
@@ -211,15 +210,15 @@ sinesineCos_Name :: String
 sinesineCos_Name = "sin(10x+sin(20x^2)) + cos(10x) over [-1,1]"
 -- sinesineCos_Name = "sin(10x+sin(20x^2)) + sin(10x) over [-1,1]"
 
-sinesineCos_PB :: Precision -> Degree -> Degree -> ChPoly MPBall
-sinesineCos_PB p d1 d2 =
+sinesineCos_PB :: Accuracy -> ChPoly MPBall
+sinesineCos_PB acGuide =
   sine2(10*x + sine1(20*x*x))
     + cosine2(10*x)
     -- + sine2(10*x)
   where
-  sine1 = ChPoly.sineWithPrecDegSweep p d1 NormZero
-  sine2 = ChPoly.sineWithPrecDegSweep p d2 NormZero
-  cosine2 = ChPoly.cosineWithPrecDegSweep p d2 NormZero
+  sine1 = ChPoly.sineGuideAccuracy (acGuide+2)
+  sine2 = ChPoly.sineGuideAccuracy acGuide
+  cosine2 = ChPoly.cosineGuideAccuracy acGuide
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 sinesineCos_B2B :: UnaryFun
@@ -247,8 +246,8 @@ sinesineCos_PP OpIntegrate p deg _divThresholdAcc _divIterations rangeAcc =
 runge_Name :: String
 runge_Name = "1/(100x^2+1) over [-1,1]"
 
-runge_PB :: Precision -> Degree -> Degree -> ChPoly MPBall
-runge_PB p d1 _d2 =
+runge_PB :: Accuracy -> ChPoly MPBall
+runge_PB acGuide =
   error $ "Not (yet) supporting Poly for: " ++ runge_Name
     -- 1/(100*x*x+1)
     -- where
@@ -278,8 +277,8 @@ runge_PP OpIntegrate p _deg divThresholdAcc divIterations rangeAcc =
 rungeX_Name :: String
 rungeX_Name = "x/(100x^2+1) over [-1,1]"
 
-rungeX_PB :: Precision -> Degree -> Degree -> ChPoly MPBall
-rungeX_PB p d1 _d2 =
+rungeX_PB :: Accuracy -> ChPoly MPBall
+rungeX_PB acGuide =
   error $ "Not (yet) supporting Poly for: " ++ rungeX_Name
     -- x/(100*x*x+1)
     -- where
@@ -309,8 +308,8 @@ rungeX_PP OpIntegrate p _deg divThresholdAcc divIterations rangeAcc =
 fracSin_Name :: String
 fracSin_Name = "1/(10(sin(7x))^2+1) over [-1,1]"
 
-fracSin_PB :: Precision -> Degree -> Degree -> ChPoly MPBall
-fracSin_PB p d1 d2 =
+fracSin_PB :: Accuracy -> ChPoly MPBall
+fracSin_PB acGuide =
   error $ "Not (yet) supporting Poly for: " ++ fracSin_Name
     -- let sx = setMaxDegree d2 $ sin (7*x) in 1/(10*sx*sx+1)
     -- where
@@ -340,8 +339,8 @@ fracSin_PP OpIntegrate p deg divThresholdAcc divIterations rangeAcc =
 fracSinX_Name :: String
 fracSinX_Name = "x/(10(sin(7x))^2+1) over [-1,1]"
 
-fracSinX_PB :: Precision -> Degree -> Degree -> ChPoly MPBall
-fracSinX_PB p d1 d2 =
+fracSinX_PB :: Accuracy -> ChPoly MPBall
+fracSinX_PB acGuide =
   error $ "Not (yet) supporting Poly for: " ++ fracSinX_Name
     -- let sx = setMaxDegree d2 $ sin (7*x) in x/(10*sx*sx+1)
     -- where
@@ -372,8 +371,8 @@ fracSinX_PP OpIntegrate p deg divThresholdAcc divIterations rangeAcc =
 hat_Name :: String
 hat_Name = "1-|x+1/3| over [-1,1]"
 
-hat_PB :: Precision -> Degree -> Degree -> ChPoly MPBall
-hat_PB p d _d2 =
+hat_PB :: Accuracy -> ChPoly MPBall
+hat_PB acGuide =
   error $ "Not (yet) supporting Poly for: " ++ hat_Name
   -- 1 - (ChPoly MPBall (absXshifted p d) (Interval (-1.0) (1.0)) d NormZero)
 
@@ -402,8 +401,8 @@ hat_PP OpIntegrate p _deg _divThresholdAcc _divIterations _rangeAcc =
 bumpy_Name :: String
 bumpy_Name = "max(sin(10x),cos(11x)) over [-1,1]"
 
-bumpy_PB :: Precision -> Degree -> Degree -> ChPoly MPBall
-bumpy_PB p d1 _d2 =
+bumpy_PB :: Accuracy -> ChPoly MPBall
+bumpy_PB acGuide =
   error $ "Not (yet) supporting Poly for: " ++ bumpy_Name
     -- ChPoly MPBall (maxViaAbs sin10x cos11x) (Interval (-1.0) (1.0)) d1 NormZero
     -- where

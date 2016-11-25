@@ -172,13 +172,16 @@ reduceDegreeWithLostAccuracyLimitTerms accuracyLossLimit (termsMap :: Terms c) =
   terms_updateConst (+ err) (terms_fromList termsToKeep)
   where
   termsDescList = terms_toDescList termsMap
-  (err, termsToKeep) = dropTermsUntilLimit (convertExactly 0 :: c) termsDescList
-  dropTermsUntilLimit _errSoFar _remaingTerms@[] =
+  (err, termsToKeep) = dropTermsUntilLimit (convertExactly 0 :: c) [] termsDescList
+  dropTermsUntilLimit _errSoFar _termsSoFar _remaingTerms@[] =
     error "reduceDegreeWithLostAccuracyLimitTerms: missing constant term"
-  dropTermsUntilLimit errSoFar remaingTerms@[_constTerm] = (errSoFar, remaingTerms)
-  dropTermsUntilLimit errSoFar remaingTerms@((_d,cf):rest)
-    | getAccuracy errNew >= accuracyLossLimit = dropTermsUntilLimit errNew rest
-    | otherwise = (errSoFar, remaingTerms)
+  dropTermsUntilLimit errSoFar termsSoFar remaingTerms@[_constTerm] =
+    (errSoFar, termsSoFar ++ remaingTerms)
+  dropTermsUntilLimit errSoFar termsSoFar _remaingTerms@(term@(_d,cf):rest)
+    | getAccuracy errNew >= accuracyLossLimit =
+      dropTermsUntilLimit errNew termsSoFar rest
+    | otherwise =
+      dropTermsUntilLimit errSoFar (term : termsSoFar) rest
     where
     errNew = errSoFar + (plusMinus cf)
     plusMinus :: (Ring c, IsInterval c c) => c -> c

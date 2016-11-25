@@ -21,18 +21,18 @@ import qualified Prelude as P
 -- import Text.Printf
 
 import qualified Data.Map as Map
-import qualified Data.List as List
+-- import qualified Data.List as List
 
 -- import Test.Hspec
 -- import Test.QuickCheck
 
-import AERN2.Norm
+-- import AERN2.Norm
 import AERN2.MP.Accuracy
 import AERN2.MP.ErrorBound
 import AERN2.MP.Float
 import AERN2.MP.Ball (MPBall, IsBall(..), IsInterval(..))
 import qualified AERN2.MP.Ball as MPBall
-import AERN2.MP.Dyadic
+-- import AERN2.MP.Dyadic
 
 import AERN2.Real
 
@@ -40,7 +40,7 @@ import AERN2.Interval
 import AERN2.RealFun.Operations
 -- import AERN2.RealFun.UnaryFun
 
-import AERN2.Poly.Basics
+-- import AERN2.Poly.Basics
 
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Ring ()
@@ -68,6 +68,18 @@ _test10Xe =
     sampleFn = constFn (dom, 1)
     dom = dyadicInterval (0.0,1.0)
 
+_testSine10X :: Accuracy -> ChPoly MPBall
+_testSine10X ac =
+    sineGuideAccuracy ac (10*x)
+    where
+    x :: ChPoly MPBall
+    x = varFn sampleFn ()
+    sampleFn = constFn (dom, 1)
+    dom = dyadicInterval (0.0,1.0)
+
+
+{-
+
 _testSine10X :: ChPoly MPBall
 _testSine10X =
     sineWithPrecDegSweep (prec 100) 100 NormZero (10*x)
@@ -86,6 +98,8 @@ _testSine10Xe =
     sampleFn = constFn (dom, 1)
     dom = dyadicInterval (0.0,1.0)
 
+-}
+
 {-
     To compute sin(xC+-xE):
 
@@ -102,15 +116,15 @@ _testSine10Xe =
     * add xE to the error bound of the resulting polynomial
 -}
 
-sineWithPrecDegSweep ::
-  Precision -> Degree -> NormLog -> ChPoly MPBall -> ChPoly MPBall
-sineWithPrecDegSweep = sineCosineWithPrecDegSweep True
+sineGuideAccuracy ::
+  Accuracy -> ChPoly MPBall -> ChPoly MPBall
+sineGuideAccuracy = sineCosineGuideAccuracy True
 
-cosineWithPrecDegSweep ::
-  Precision -> Degree -> NormLog -> ChPoly MPBall -> ChPoly MPBall
-cosineWithPrecDegSweep = sineCosineWithPrecDegSweep False
+cosineGuideAccuracy ::
+  Accuracy -> ChPoly MPBall -> ChPoly MPBall
+cosineGuideAccuracy = sineCosineGuideAccuracy False
 
-sineCosineWithPrecDegSweep ::
+sineCosineGuideAccuracy ::
   -- (Field c, CanMinMaxSameType c,
   --  CanAbsSameType c,
   --  CanAddSubMulDivBy c CauchyReal,
@@ -119,13 +133,12 @@ sineCosineWithPrecDegSweep ::
   --  IsBall c, IsInterval c c,
   --  CanApply (ChPoly c) c, ApplyType (ChPoly c) c ~ c)
   -- =>
-  Bool -> Precision -> Degree -> NormLog -> ChPoly MPBall -> ChPoly MPBall
-sineCosineWithPrecDegSweep isSine prc maxDeg sweepT xPre =
+  Bool -> Accuracy -> ChPoly MPBall -> ChPoly MPBall
+sineCosineGuideAccuracy isSine acGuide x =
     maybeTrace
     (
-        "ChPoly.sineWithDegSweep:"
+        "ChPoly.sineCosine:"
         ++ "\n isSine = " ++ show isSine
-        ++ "\n maxDeg = " ++ show maxDeg
         -- ++ "\n xC = " ++ showAP xC
         -- ++ "\n xE = " ++ showB xE
         ++ "\n xAccuracy = " ++ show xAccuracy
@@ -133,8 +146,11 @@ sineCosineWithPrecDegSweep isSine prc maxDeg sweepT xPre =
         -- ++ "\n r = " ++ showB r
         ++ "\n k = " ++ show k
         -- ++ "\n txC = " ++ showAP txC
-        -- ++ "\n trM = " ++ showB trM
-        -- ++ "\n taylorSumE = " ++ showB taylorSumE
+        ++ "\n trM = " ++ show trM
+        ++ "\n degree = " ++ show n
+        -- ++ "\n getAccuracy taylorSum = " ++ show (getAccuracy taylorSum)
+        -- ++ "\n taylorSumE = " ++ show taylorSumE
+        ++ "\n getAccuracy result = " ++ show (getAccuracy res)
         -- ++ "\n resC = " ++ showAP resC
     ) $
 --    xPoly (prec 100) -- dummy
@@ -144,7 +160,6 @@ sineCosineWithPrecDegSweep isSine prc maxDeg sweepT xPre =
     -- showAP = show . getApproximate (bits 50) . cheb2Power
 
     isCosine = not isSine
-    x = setPrecision prc xPre
 
     -- first separate the centre of the polynomial x from its radius:
     xC = centre x
@@ -166,41 +181,10 @@ sineCosineWithPrecDegSweep isSine prc maxDeg sweepT xPre =
     (_, trM :: MPBall) = endpoints $ abs $ r - k * pi / 2
 
     -- compute sin or cos of txC = xC-k*pi/2 using Taylor series:
-    taylorSums
-        | isSine && even k = sineTaylorSeriesWithDegree maxDeg sweepT txC
-        | isCosine && odd k = sineTaylorSeriesWithDegree maxDeg sweepT txC
-        | otherwise = cosineTaylorSeriesWithDegree maxDeg sweepT txC
-    (taylorSum, taylorSumE) = pickByAccuracy [] taylorSums
-        where
-        pickByAccuracy prevResults (_s@(p, e, n) : rest) =
-            maybeTrace
-            ("pickByAccuracy: sE = " ++ show sE ++ "; sAccuracy = " ++ show sAccuracy ++ "; prec = " ++ show (getPrecision pBest)) $
-            pbAres
-            where
-            pbAres
-              | tooAccurate || stoppedMakingProgress || sameAccuracyCount > 10 =
-                (centre pBest, sEBest)
-              | otherwise =
-                pickByAccuracy ((sAccuracy, p, sE) : prevResults) rest
-            tooAccurate = sAccuracy >= xAccuracy + 3
-            prevAccuracies = map (\(a,_,_) -> a) prevResults
-            sameAccuracyCount =
-                case List.findIndex (/= sAccuracy) prevAccuracies of Just i -> integer i; _ -> 0
-            (stoppedMakingProgress, pBest, sEBest) =
-                case prevResults of
-                    ((a1,p1,sE1):(a2,_,_):(a3,_,_):(a4,_,_):_)
-                        | sAccuracy < a1 && a1 > a2 -> (True, p1, sE1)
-                        | sAccuracy == a1 && a1 == a2 && a2 == a3 && a3 == a4 -> (True, p, sE)
-                    _ -> (False, p, sE)
-            sE =
-              -- maybeTrace
-              -- (printf "pickByAccuracy: computing sE: trM=%s, n=%d, e*(trM^n)=%s, errorBound $ e*(trM^n) = %s, p = %s"
-              --   (show trM) n (show $ e*(trM^n)) (show $ errorBound $ e*(trM^n))
-              --   (show $ p)
-              -- ) $
-              (errorBound $ e*(trM^n)) + (radius p)
-            sAccuracy = normLog2Accuracy $ getNormLog $ dyadic sE
-        pickByAccuracy _ _ = error "internal error in SineCosine"
+    (taylorSum, taylorSumE, n)
+        | isSine && even k = sineTaylorSum acGuide trM txC
+        | isCosine && odd k = sineTaylorSum acGuide trM txC
+        | otherwise = cosineTaylorSum acGuide trM txC
     -- if k mod 4 = 2 then negate result,
     -- if k mod 4 = 3 then negate result:
     km4 = k `mod` 4
@@ -211,35 +195,32 @@ sineCosineWithPrecDegSweep isSine prc maxDeg sweepT xPre =
     -- add xE to the error bound of the resulting polynomial:
     res = updateRadius (+ (taylorSumE + xE)) resC
 
-{-|
-    For a given polynomial @p@, compute all partial Taylor sums of @sin(p)@ and return
-    them together with @e@, an error bound on @[-1,1]@, and a number @n@.
-    The number @n@ can be used to obtain an error bound on a domain @[-a,a]@
-    for some @0 <= a@.  The error bound is @e*a^n@.
--}
-sineTaylorSeries ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, HasAccuracy c, CanSetPrecision c)
-  =>
-  ChPoly c -> [(ChPoly c, Rational, Integer)]
-sineTaylorSeries = sineCosineTaylorSeries True
 
 {-|
-    For a given polynomial @p@, compute all partial Taylor sums of @cos(p)@ and return
-    them together with @e@, an error bound on @[-1,1]@, and a number @n@.
-    The number @n@ can be used to obtain an error bound on a domain @[-a,a]@
-    for some @0 <= a@.  The error bound is @e*a^n@.
+    For a given polynomial @p@, compute a partial Taylor sum of @cos(p)@ and return
+    it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
-cosineTaylorSeries ::
+sineTaylorSum ::
   (Ring c, CanDivBy c Integer, IsInterval c c, HasAccuracy c, CanSetPrecision c)
   =>
-  ChPoly c -> [(ChPoly c, Rational, Integer)]
-cosineTaylorSeries = sineCosineTaylorSeries False
+  Accuracy -> MPBall -> ChPoly c -> (ChPoly c, ErrorBound, Integer)
+sineTaylorSum = sineCosineTaylorSum True
 
-sineCosineTaylorSeries ::
+{-|
+    For a given polynomial @p@, compute a partial Taylor sum of @cos(p)@ and return
+    it together with its error bound @e@ and the degree of the polynomial @n@.
+-}
+cosineTaylorSum ::
   (Ring c, CanDivBy c Integer, IsInterval c c, HasAccuracy c, CanSetPrecision c)
   =>
-  Bool -> ChPoly c -> [(ChPoly c, Rational, Integer)]
-sineCosineTaylorSeries isSine x =
+  Accuracy -> MPBall -> ChPoly c -> (ChPoly c, ErrorBound, Integer)
+cosineTaylorSum = sineCosineTaylorSum False
+
+sineCosineTaylorSum ::
+  (Ring c, CanDivBy c Integer, IsInterval c c, HasAccuracy c, CanSetPrecision c)
+  =>
+  Bool -> Accuracy -> MPBall -> ChPoly c -> (ChPoly c, ErrorBound, Integer)
+sineCosineTaylorSum isSine acGuide trM x =
     let
     _isCosine = not isSine
     termComponents
@@ -269,107 +250,26 @@ sineCosineTaylorSeries isSine x =
           where
           power j = lookupForce j prevPowers (acLimit+1)
           reduce = reduceDegreeWithLostAccuracyLimit acLimit
-    sumsAndErrors
-      | isSine = makeSums (const $ chPoly (x,0), 1) termComponents
-      | otherwise = makeSums (const $ chPoly (x,1), -1) termComponents
+    sumAndError
+      | isSine = makeSum (const $ chPoly (x,0), 1) termComponents
+      | otherwise = makeSum (const $ chPoly (x,1), -1) termComponents
         where
-        makeSums (prevSum, sign) ((_i, n, nFact, nextFact, xPowers) : rest) =
-          (newSum, 1/nextFact, n+2) : makeSums (newSum, -sign) rest
+        makeSum (prevSum, sign) ((_i, n, nFact, nextFact, xPowers) : rest)
+          | accurateEnough = (newSum acGuide, e, n+2)
+          | otherwise = makeSum (newSum, -sign) rest
           where
+          accurateEnough = getAccuracy e >= acGuide
+          e = errorBound $ (trM^n)/nextFact
           newSum acLimit = prevSum acLimit + sign*(xPowN acLimit)/nFact
           xPowN = lookupForce n xPowers
-        makeSums _ _ = error "internal error in Poly.Cheb.SineCosine.sineCosineTaylorSeries"
+        makeSum _ _ = error "internal error in Poly.Cheb.SineCosine.sineCosineTaylorSeries"
     in
-    map fixAccuracyLimit sumsAndErrors
-    where
-    fixAccuracyLimit (pA, e, n) = (pA acLimit,e,n)
-      where
-      acLimit = 4 + (normLog2Accuracy $ getNormLog e)
+    sumAndError
+    -- where
+    -- fixAccuracyLimit (pA, e, n) = (pA acLimit,e,n)
+    --   where
+    --   acLimit = 4 + (normLog2Accuracy $ getNormLog e)
 
-
-{-|
-    For a given polynomial @p@, compute all partial Taylor sums of @sin(p)@ and return
-    them together with @e@, an error bound on @[-1,1]@, and a number @n@.
-    The number @n@ can be used to obtain an error bound on a domain @[-a,a]@
-    for some @0 <= a@.  The error bound is @e*a^n@.
--}
-sineTaylorSeriesWithDegree ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, HasNorm c)
-  =>
-  Degree -> NormLog -> ChPoly c -> [(ChPoly c, Rational, Integer)]
-sineTaylorSeriesWithDegree maxDeg sweepT x =
-    let
-    termComponents =
-        iterate addNextTerm (0,1,1,6,Map.singleton 1 x)
-        where
-        addNextTerm (prevI, prevN, _prevFact, currentFact, prevPowers) =
-            (i, n, currentFact, nextFact, newPowers)
-            where
-            i = prevI + 1
-            n = prevN + 2
-            nextFact = currentFact*((n+1)*(n+2))
-            newPowers = Map.insert n (reduce currentPower) prevPowers
-            reduce = reduceDegreeAndSweep maxDeg sweepT
-            currentPower
-                | odd i = x * (power i) * (power i)
-                | otherwise = x * (power (i-1)) * (power (i+1))
-                where
-                power j = lookupForce j prevPowers
-    sumsAndErrors =
-        makeSums (chPoly (x,0), 1) termComponents
-        where
-        makeSums (prevSum, sign) ((_i, n, nFact, nextFact, xPowers) : rest) =
-          (newSum, 1/nextFact, n+2) : makeSums (newSum, -sign) rest
-          where
-          newSum = prevSum + sign*xPowN/nFact
-          xPowN = lookupForce n xPowers
-        makeSums _ _ = error "internal error in SineCosine.sineTaylorSeries"
-    in
-    sumsAndErrors
-
-{-|
-    For a given polynomial @p@, compute all partial Taylor sums of @cos(p)@ and return
-    them together with @e@, an error bound on @p\in[-1,1]@, and a number @n@.
-    The number @n@ can be used to obtain an error bound on a domain @[-a,a]@
-    for some @0 <= a@.  The error bound is @e*a^n@.
--}
-cosineTaylorSeriesWithDegree ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, HasNorm c, IsBall c)
-  =>
-  Degree -> NormLog -> ChPoly c -> [(ChPoly c, Rational, Integer)]
-cosineTaylorSeriesWithDegree maxDeg sweepT x =
-    let
-    termComponents =
-        iterate addNextTerm (1,2,2,24,Map.singleton 2 (x*x))
-        where
-        addNextTerm (prevI, prevN, _prevFact, currentFact, prevPowers) =
-            -- maybeTrace
-            -- (printf "cosineTaylorSeries: addNextTerm: n = %d, |reduce currentPower| = %s"
-            --  n (show $ radius $ reduce currentPower)
-            -- ) $
-            (i, n, currentFact, nextFact, newPowers)
-            where
-            i = prevI + 1
-            n = prevN + 2
-            nextFact = currentFact*((n+1)*(n+2))
-            newPowers = Map.insert n (reduce currentPower) prevPowers
-            reduce = reduceDegreeAndSweep maxDeg sweepT
-            currentPower
-                | even i = (power i) * (power i)
-                | otherwise = (power (i-1)) * (power (i+1))
-                where
-                power j = lookupForce j prevPowers
-    sumsAndErrors =
-        makeSums (chPoly (x, 1), -1) termComponents
-        where
-        makeSums (prevSum, sign) ((_i, n, nFact, nextFact, xPowers) : rest) =
-          (newSum, 1/nextFact, n+2) : makeSums (newSum, -sign) rest
-          where
-          newSum = prevSum + sign*xPowN/nFact
-          xPowN = lookupForce n xPowers
-        makeSums _ _ = error "internal error in SineCosine.cosineTaylorSeries"
-    in
-    sumsAndErrors
 
 lookupForce :: P.Ord k => k -> Map.Map k a -> a
 lookupForce j amap =
