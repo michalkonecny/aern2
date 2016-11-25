@@ -30,7 +30,7 @@ import qualified Data.Map as Map
 import AERN2.MP.Accuracy
 import AERN2.MP.ErrorBound
 import AERN2.MP.Float
-import AERN2.MP.Ball (MPBall, IsBall(..), IsInterval(..))
+import AERN2.MP.Ball (MPBall, mpBall, IsBall(..), IsInterval(..))
 import qualified AERN2.MP.Ball as MPBall
 -- import AERN2.MP.Dyadic
 
@@ -44,7 +44,7 @@ import AERN2.RealFun.Operations
 
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Ring ()
-import AERN2.Poly.Cheb.Eval
+import AERN2.Poly.Cheb.Eval ()
 
 import Debug.Trace (trace)
 
@@ -167,9 +167,7 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     xAccuracy = getAccuracy x
 
     -- compute (rC+-rE) = range(xC):
-    Interval rL rR =
-      sampledRange (dyadicInterval (-1.0,1.0)) 5 xC
-    r = fromEndpoints rL (rR :: MPBall)
+    r = mpBall $ applyApprox xC (dyadicInterval (-1.0,1.0))
     rC = centreAsBall r :: MPBall
 
     -- compute k = round(rC/(pi/2)):
