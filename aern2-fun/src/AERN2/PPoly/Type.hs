@@ -2,6 +2,9 @@ module AERN2.PPoly.Type
 where
 
 import Numeric.MixedTypes
+
+import Data.List
+
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 import AERN2.MP.ErrorBound
@@ -10,6 +13,9 @@ import AERN2.Interval
 import AERN2.Poly.Basics
 import AERN2.Poly.Cheb
 import AERN2.Poly.Cheb.Ring
+
+
+import Control.Arrow (second)
 
 type Cheb = ChPoly MPBall
 
@@ -31,6 +37,13 @@ linearPolygon ((x,y) : xys) overlap = aux xys x y []
  aux ((x',y'):xys) x y res = aux xys x' y' ((Interval x x',linSpline x y x' y') : res)
  linSpline x y x' y' = Poly.normaliseCoeffs $ Poly.fromList  [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))] -- TODO Poly.fromList should already provided normalised coeffs
 linearPolygon [] _ = error "linearPolygon must be provided with a list of at least 2 points"-}
+
+liftCheb2PPoly :: (Cheb -> Cheb) -> (PPoly -> PPoly)
+liftCheb2PPoly f (PPoly ps ov dom)  =
+  PPoly (map (second $ domify f) ps) ov dom
+  where
+  domify :: (Cheb -> Cheb) -> (Poly MPBall -> Poly MPBall)
+  domify g p = (chPoly_poly . g) (ChPoly dom p)
 
 lift2PPoly :: (Poly MPBall -> Poly MPBall) -> (PPoly -> PPoly)
 lift2PPoly f (PPoly pieces overlap dom) = PPoly (map (\(i,p) -> (i, f p)) pieces) overlap dom
@@ -72,6 +85,17 @@ intersectionAndDifference (Interval l r, p) (Interval l' r', p') =
       Just $ (Interval r r', p')
 
 {- instances -}
+
+instance IsBall PPoly where
+  type CentreType PPoly = PPoly
+  radius (PPoly ps _ dom) =
+    foldl' (+) (errorBound 0) $ map (\(_,p) -> radius (ChPoly dom p)) ps
+  centre = liftCheb2PPoly centre
+  centreAsBall = centre
+  centreAsBallAndRadius cp = (centre cp, radius cp)
+  updateRadius updateFn = liftCheb2PPoly (updateRadius updateFn)
+
+{- arithmetic -}
 
 instance CanAddAsymmetric PPoly PPoly where
   type AddType PPoly PPoly = PPoly

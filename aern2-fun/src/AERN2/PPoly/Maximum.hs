@@ -24,16 +24,16 @@ import AERN2.Interval
 
 maximum :: PPoly -> MPBall -> MPBall -> MPBall
 maximum (PPoly ps ov dom) l r =
-  undefined
-  --genericMaximum (PPE.evalDf f dfsL) dfs maxKeys nodes
+  genericMaximum (PPE.evalDf f dfsCheb) dfsMap maxKeys nodes
   where
   lI      = fromDomToUnitInterval dom l
   rI      = fromDomToUnitInterval dom r
   unit    = Interval (dyadic $ -1) (dyadic 1)
   f       = PPoly ps ov unit
-  fs      = Map.fromList $ (map (\k -> (k,0)) [0..]) `zip` (map snd ps)
-  dfs     = Map.map (\p -> Cheb.derivative $ ChPoly dom p) fs
-  dfsL    = map snd $ Map.toList dfs  -- TODO: it is somewhat silly to first translate a list to a map and then back to a list
+  fs      = map snd ps
+  dfsCheb = map (\p -> Cheb.derivative $ ChPoly unit p) fs
+  dfsPow  = map (cheb2Power . chPoly_poly . centre) dfsCheb
+  dfsMap  = Map.fromList $ zip (map (\k -> (k,0)) [0..]) $ zip (map Cheb.evalDirect dfsCheb) dfsPow
   maxKeys = Map.fromList [(k,0) | k <- [0 .. integer $ length ps]]
   nodes   =
     lI : [mpBall n | n <- nodesI, (lI < n) == Just True, (n < rI) == Just True] ++ [rI]   -- note that the elements of nodesI are balls of radius 0,
@@ -47,11 +47,12 @@ maximum (PPoly ps ov dom) l r =
    the nodes partition a subinterval of [-1,1]
  -}
 genericMaximum
-  :: (MPBall -> MPBall) -> Map (Integer, Integer) (PowPoly MPBall)
+  :: (MPBall -> MPBall)
+    -> Map (Integer, Integer) (MPBall -> MPBall, PowPoly MPBall)
     -> Map Integer Integer -> [MPBall]
     -> MPBall
 genericMaximum f dfs maxKeys nodes =
-  splitUntilAccurate initialQueue -- TODO: update so we can use evaluation of the derivative in Chebyshev basis
+  splitUntilAccurate initialQueue
   where
   initialQueue =
     let
@@ -70,7 +71,7 @@ genericMaximum f dfs maxKeys nodes =
   makeSearchInterval l r k =
     let
       df0 = fromJust $ Map.lookup (k,0) dfs
-      bsI = initialBernsteinCoefs df0 l r
+      bsI = initialBernsteinCoefs (snd df0) l r
       (d0 , Just sgnL) = tryFindSign l k 0 -- TODO: Just sgnL assumes exact poly
     in
       case signVars bsI of
@@ -95,7 +96,7 @@ genericMaximum f dfs maxKeys nodes =
   tryFindSign :: MPBall -> Integer -> Integer -> (Integer, Maybe Integer)
   tryFindSign x k n =
     let
-      sg = sgn $ PE.evalDirect (fromJust $ Map.lookup (k,n) dfs) x
+      sg = sgn $ (fst $ fromJust $ Map.lookup (k,n) dfs) x
     in
       if isJust sg || n == maxKey k then
         (n, sg)
@@ -118,7 +119,7 @@ genericMaximum f dfs maxKeys nodes =
                 splitUntilAccurate $
                   Q.insert
                     (SearchInterval a b v ov (k, n + 1)
-                    (initialBernsteinCoefs (fromJust $ Map.lookup (k, n + 1) dfs) -- TODO: alternatively keep track of Bernstein coefs on [-1,1] for all degrees
+                    (initialBernsteinCoefs (snd $ fromJust $ Map.lookup (k, n + 1) dfs) -- TODO: alternatively keep track of Bernstein coefs on [-1,1] for all degrees
                     a b))                                                      --       and compute Bernstein coefs on [l,r] from them. Then we only compute
                     q' -- Recompute with higher degree derivative              --       the initial coefs once per degree.
             else
