@@ -111,6 +111,13 @@ evalDfAccurately f f' x = (aux 100 50) + (fromEndpoints (-err) err :: MPBall)
 
 {- range -}
 
+instance CanApplyApprox (ChPoly MPBall) DyadicInterval where
+  type ApplyApproxType (ChPoly MPBall) DyadicInterval = DyadicInterval
+  applyApprox p di =
+    dyadicInterval (fromEndpoints lB uB :: MPBall)
+    where
+    (Interval lB uB) = sampledRange di 5 p :: Interval MPBall MPBall
+
 -- TODO: move sampledRange to a module not specific to ChPoly
 sampledRange ::
   (CanApply f t, ApplyType f t ~ t,

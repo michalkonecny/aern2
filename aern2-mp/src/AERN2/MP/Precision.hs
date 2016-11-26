@@ -64,6 +64,7 @@ instance HasOrderAsymmetric Precision Integer where
 instance HasOrderAsymmetric Integer Precision where
   lessThan i p = lessThan (prec i) p
   leq i p = leq (prec i) p
+
 instance HasEqAsymmetric Precision Int where
   equalTo p i = equalTo p (prec (integer i))
 instance HasEqAsymmetric Int Precision where
@@ -74,6 +75,22 @@ instance HasOrderAsymmetric Precision Int where
 instance HasOrderAsymmetric Int Precision where
   lessThan i p = lessThan (prec (integer i)) p
   leq i p = leq (prec (integer i)) p
+
+instance CanAddAsymmetric Precision Precision
+instance CanAddAsymmetric Integer Precision where
+  type AddType Integer Precision = Precision
+  add n (Precision p) = prec (n + p)
+instance CanAddAsymmetric Precision Integer where
+  type AddType Precision Integer = Precision
+  add (Precision p) n = prec (n + p)
+
+instance CanMulAsymmetric Precision Precision
+instance CanMulAsymmetric Integer Precision where
+  type MulType Integer Precision = Precision
+  mul n (Precision p) = prec (n * p)
+instance CanMulAsymmetric Precision Integer where
+  type MulType Precision Integer = Precision
+  mul (Precision p) n = prec (n * p)
 
 class HasPrecision t where
     getPrecision :: t -> Precision

@@ -26,11 +26,11 @@ import qualified Data.Map as Map
 -- import Test.Hspec
 -- import Test.QuickCheck
 
--- import AERN2.Norm
+import AERN2.Norm
 import AERN2.MP.Accuracy
 import AERN2.MP.ErrorBound
 import AERN2.MP.Float
-import AERN2.MP.Ball (MPBall, IsBall(..), IsInterval(..))
+import AERN2.MP.Ball (MPBall, mpBall, IsBall(..), IsInterval(..))
 import qualified AERN2.MP.Ball as MPBall
 -- import AERN2.MP.Dyadic
 
@@ -44,7 +44,7 @@ import AERN2.RealFun.Operations
 
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Ring ()
-import AERN2.Poly.Cheb.Eval
+import AERN2.Poly.Cheb.Eval ()
 
 import Debug.Trace (trace)
 
@@ -70,7 +70,7 @@ _test10Xe =
 
 _testSine10X :: Accuracy -> ChPoly MPBall
 _testSine10X ac =
-    sineGuideAccuracy ac (10*x)
+    sineWithAccuracyGuide ac (10*x)
     where
     x :: ChPoly MPBall
     x = varFn sampleFn ()
@@ -116,15 +116,15 @@ _testSine10Xe =
     * add xE to the error bound of the resulting polynomial
 -}
 
-sineGuideAccuracy ::
+sineWithAccuracyGuide ::
   Accuracy -> ChPoly MPBall -> ChPoly MPBall
-sineGuideAccuracy = sineCosineGuideAccuracy True
+sineWithAccuracyGuide = sineCosineWithAccuracyGuide True
 
-cosineGuideAccuracy ::
+cosineWithAccuracyGuide ::
   Accuracy -> ChPoly MPBall -> ChPoly MPBall
-cosineGuideAccuracy = sineCosineGuideAccuracy False
+cosineWithAccuracyGuide = sineCosineWithAccuracyGuide False
 
-sineCosineGuideAccuracy ::
+sineCosineWithAccuracyGuide ::
   -- (Field c, CanMinMaxSameType c,
   --  CanAbsSameType c,
   --  CanAddSubMulDivBy c CauchyReal,
@@ -134,24 +134,19 @@ sineCosineGuideAccuracy ::
   --  CanApply (ChPoly c) c, ApplyType (ChPoly c) c ~ c)
   -- =>
   Bool -> Accuracy -> ChPoly MPBall -> ChPoly MPBall
-sineCosineGuideAccuracy isSine acGuide x =
+sineCosineWithAccuracyGuide isSine acGuide x =
     maybeTrace
     (
         "ChPoly.sineCosine:"
         ++ "\n isSine = " ++ show isSine
-        -- ++ "\n xC = " ++ showAP xC
-        -- ++ "\n xE = " ++ showB xE
         ++ "\n xAccuracy = " ++ show xAccuracy
         ++ "\n r = " ++ show r
-        -- ++ "\n r = " ++ showB r
         ++ "\n k = " ++ show k
-        -- ++ "\n txC = " ++ showAP txC
         ++ "\n trM = " ++ show trM
         ++ "\n degree = " ++ show n
-        -- ++ "\n getAccuracy taylorSum = " ++ show (getAccuracy taylorSum)
-        -- ++ "\n taylorSumE = " ++ show taylorSumE
+        ++ "\n getAccuracy taylorSum = " ++ show (getAccuracy taylorSum)
+        ++ "\n taylorSumE = " ++ show taylorSumE
         ++ "\n getAccuracy result = " ++ show (getAccuracy res)
-        -- ++ "\n resC = " ++ showAP resC
     ) $
 --    xPoly (prec 100) -- dummy
     res
@@ -167,9 +162,7 @@ sineCosineGuideAccuracy isSine acGuide x =
     xAccuracy = getAccuracy x
 
     -- compute (rC+-rE) = range(xC):
-    Interval rL rR =
-      sampledRange (dyadicInterval (-1.0,1.0)) 5 xC
-    r = fromEndpoints rL (rR :: MPBall)
+    r = mpBall $ applyApprox xC (dyadicInterval (-1.0,1.0))
     rC = centreAsBall r :: MPBall
 
     -- compute k = round(rC/(pi/2)):
@@ -201,7 +194,7 @@ sineCosineGuideAccuracy isSine acGuide x =
     it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
 sineTaylorSum ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, HasAccuracy c, CanSetPrecision c)
+  (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c, HasAccuracy c, CanSetPrecision c)
   =>
   Accuracy -> MPBall -> ChPoly c -> (ChPoly c, ErrorBound, Integer)
 sineTaylorSum = sineCosineTaylorSum True
@@ -211,18 +204,150 @@ sineTaylorSum = sineCosineTaylorSum True
     it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
 cosineTaylorSum ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, HasAccuracy c, CanSetPrecision c)
+  (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c, HasAccuracy c, CanSetPrecision c)
   =>
   Accuracy -> MPBall -> ChPoly c -> (ChPoly c, ErrorBound, Integer)
 cosineTaylorSum = sineCosineTaylorSum False
 
 sineCosineTaylorSum ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, HasAccuracy c, CanSetPrecision c)
+  (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c
+  , HasAccuracy c, CanSetPrecision c)
   =>
   Bool -> Accuracy -> MPBall -> ChPoly c -> (ChPoly c, ErrorBound, Integer)
-sineCosineTaylorSum isSine acGuide trM x =
+sineCosineTaylorSum isSine acGuide xM x =
     let
     _isCosine = not isSine
+
+    -- Work out the degree of the highest term we need to get the
+    -- Lagrange error bound acGuide-accurate:
+    n = Map.size factorialsE - 1 -- the last one is used only for the error term
+    (_, (_,_,termSumEB)) = Map.findMax factorialsE -- the Lagrange error bound for T_n
+    -- At the same time, compute the factorials and keep the Lagrange error bounds:
+    factorialsE =
+      maybeTrace ("sineCosineTaylorSum: n = " ++ show (Map.size res - 1) ++ "; factorialsE = " ++ (show res)) res
+      where
+      res = Map.fromAscList $ takeUntilAccurate $ map addE factorials
+      factorials = aux 0 1
+        where aux i fc_i = (i,fc_i) : aux (i+1) (fc_i*(i+1))
+      addE (i, fc_i) = (i, (fc_i, xM_i, e_i))
+        where
+        e_i = errorBound $ xM_i/fc_i
+        xM_i = xM^i
+      takeUntilAccurate (t_i@(i,(_fc_i, _xM_i,e_i)):rest)
+        | getAccuracy e_i > acGuide && (even i == isSine) = [t_i]
+        | otherwise = t_i : takeUntilAccurate rest
+      takeUntilAccurate [] = error "sineCosineTaylorSum: internal error"
+
+    -- Work out accuracy needed for each power x^n, given that x^n/n! should have
+    -- accuracy around acGuide + 1:
+    --    -log_2 (\eps/n!) ~ acGuide + 1
+    --    -log_2 (\eps) ~ acGuide + 1 - (-log_2(1/n!))
+    powerAccuracies0 =
+      maybeTrace ("sineCosineTaylorSum: powerAccuracies0 = " ++ show res) res
+      where
+      res = Map.map aux factorialsE
+      aux (fc_i,_xM_i,_e_i) =
+        -- the accuracy needed of the power to give a sufficiently accurate term:
+        acGuide + 1 + (normLog2Accuracy $ getNormLog fc_i)
+    -- Ensure the accuracies in powers are sufficient
+    -- to compute accurate higher powers by their multiplications:
+    powerAccuracies =
+      maybeTrace ("sineCosineTaylorSum: powerAccuracies = " ++ show res) res
+      where
+      res =
+        foldl updateAccuracies powerAccuracies0 $
+          drop (int 1) $ reverse $ -- from second-highest down to the lowest
+            drop (int 2) $ Map.toAscList powerAccuracies0 -- the 2 lowest are computed directly
+      updateAccuracies powerACs (i, ac_i)
+        | odd i && odd j =  -- pw_(2j+1) = x * pw_j * pw_j
+            updateAC j (ac_i + log_pw_j + log_x) $
+            updateAC 1 (ac_i + log_pw_j + log_pw_j) $
+            powerACs
+            -- pw_(2j+1) + e_pw2j1 =  (x+e_x) * (pw_j + e_pwj) * (pw_j + e_pwj)
+            -- = e_x * e_pwj * e_pwj
+            -- ...
+            -- + x * e_pwj * pw_j -- assume this term puts most constraint on the size of e_pwj
+            -- + e_x * pw_j * pw_j -- assume this term puts most constraint on the size of e_x
+            -- ...
+            -- + x*pw_j*pw_j
+        | odd i  = -- pw_(2j+1) = x * pw_(j-1) * pw_(j+1)
+            updateAC (j-1) (ac_i + log_pw_jU + log_x) $
+            updateAC (j+1) (ac_i + log_pw_jD + log_x) $
+            updateAC 1 (ac_i + log_pw_jU + log_pw_jD) $
+            powerACs
+        | even j = -- pw_(2j) = (power j) * (power j)
+            updateAC j (ac_i + log_pw_j) $
+            powerACs
+        | otherwise = -- pw_(2j) = (power (j-1)) * (power (j+1))
+            updateAC (j-1) (ac_i + log_pw_jU) $
+            updateAC (j+1) (ac_i + log_pw_jD) $
+            powerACs
+        where
+        updateAC k ac_k = Map.adjust (max ac_k) k
+        j = i `div` 2
+        log_x = getLogXM 1
+        log_pw_j = getLogXM j
+        log_pw_jU = getLogXM (j+1)
+        log_pw_jD = getLogXM (j-1)
+        getLogXM k =
+          case (Map.lookup k factorialsE) of
+            Just (_fc_k,xM_k,_e_k) -> normLog2Accuracy $ getNormLog xM_k
+            _ -> error "sineCosineTaylorSum: internal error"
+
+    -- Compute the powers needed for the terms, reducing their size while
+    -- respecting the required accuracy:
+    powers
+      | isSine = powersSine
+      | otherwise = powersCosine
+      where
+      powersSine =
+        maybeTrace ("sineCosineTaylorSum: powerSine accuracies = "
+          ++ (show (Map.toAscList (Map.map getAccuracy res)))) res
+        where
+        res = foldl addPower initPowers $ zip [1..] [3,5..n]
+        initPowers = Map.fromAscList [(1, xR)]
+        xR = reduce 1 x
+        addPower prevPowers (j,i) =
+          Map.insert i (reduce i pw_i) prevPowers
+          where
+          pw_i
+            | odd j = xR * pwr j * pwr j
+            | otherwise = xR * pwr (j-1) * pwr (j+1)
+          pwr k = case Map.lookup k prevPowers of
+            Just r -> r
+            _ -> error "sineCosineTaylorSum: internal error (powersSine: pwr k)"
+      powersCosine = foldl addPower initPowers $ zip [2..] [4,6..n]
+        where
+        initPowers = Map.fromAscList [(2, xxR)]
+        xxR = reduce 2 $ x*x
+        addPower prevPowers (j,i) =
+          Map.insert i (reduce i pw_i) prevPowers
+          where
+          pw_i
+            | even j = pwr j * pwr j
+            | otherwise = pwr (j-1) * pwr (j+1)
+          pwr k = case Map.lookup k prevPowers of
+            Just r -> r
+            _ -> error "sineCosineTaylorSum: internal error (powersCosine: pwr k)"
+      reduce i = reduceDegreeWithLostAccuracyLimit ac_i . setPrecisionAtLeastAccuracy ac_i
+        where
+        ac_i = case Map.lookup i powerAccuracies of
+          Just ac -> ac
+          _ -> error "sineCosineTaylorSum: internal error"
+    termSum =
+      initNum +
+      (foldl1 (+) $ Map.elems $ Map.intersectionWithKey makeTerm powers factorialsE)
+      where
+      initNum | isSine = 0
+              | otherwise = 1
+    makeTerm i pwr (fact,_,_e) =
+      sign * pwr/fact -- alternate signs
+      where
+      sign = if (even $ i `div` 2) then 1 else -1
+    in
+    (termSum, termSumEB, n)
+
+    {-
     termComponents
       | isSine = iterate addNextTerm (0,1,1,6,Map.singleton 1 xA)
       | otherwise = iterate addNextTerm (1,2,2,24,Map.singleton 2 xxA)
@@ -248,7 +373,7 @@ sineCosineTaylorSum isSine acGuide trM x =
           | even i = reduce $ (power i) * (power i)
           | otherwise = reduce $ (power (i-1)) * (power (i+1))
           where
-          power j = lookupForce j prevPowers (acLimit+1)
+          power j = lookupForce j prevPowers (acLimit+2)
           reduce = reduceDegreeWithLostAccuracyLimit acLimit
     sumAndError
       | isSine = makeSum (const $ chPoly (x,0), 1) termComponents
@@ -258,9 +383,21 @@ sineCosineTaylorSum isSine acGuide trM x =
           | accurateEnough = (newSum acGuide, e, n+2)
           | otherwise = makeSum (newSum, -sign) rest
           where
-          accurateEnough = getAccuracy e >= acGuide
-          e = errorBound $ (trM^n)/nextFact
-          newSum acLimit = prevSum acLimit + sign*(xPowN acLimit)/nFact
+          accurateEnough = getAccuracy e >= acGuide + 1
+          e = errorBound $ (xM^n)/nextFact
+          newSum acLimit =
+            maybeTrace
+            ("sineCosineTaylorSum: newSum:"
+              ++"\n acLimit = " ++ show acLimit
+              ++", getAccuracy res = " ++ show (getAccuracy res)
+              ++", getAccuracy prevSumAC = " ++ show (getAccuracy prevSumAC)
+              ++", getAccuracy xPowNAC = " ++ show (getAccuracy xPowNAC)
+              ++", getAccuracy xPowNAC/nFact = " ++ show (getAccuracy $ xPowNAC/nFact)
+            ) res
+            where
+            res = prevSumAC + sign*xPowNAC/nFact
+            prevSumAC = prevSum acLimit
+            xPowNAC = xPowN acLimit
           xPowN = lookupForce n xPowers
         makeSum _ _ = error "internal error in Poly.Cheb.SineCosine.sineCosineTaylorSeries"
     in
@@ -269,7 +406,7 @@ sineCosineTaylorSum isSine acGuide trM x =
     -- fixAccuracyLimit (pA, e, n) = (pA acLimit,e,n)
     --   where
     --   acLimit = 4 + (normLog2Accuracy $ getNormLog e)
-
+    -}
 
 lookupForce :: P.Ord k => k -> Map.Map k a -> a
 lookupForce j amap =

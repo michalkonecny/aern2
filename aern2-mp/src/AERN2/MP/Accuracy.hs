@@ -121,20 +121,26 @@ instance CanMinMaxAsymmetric Int Accuracy where
     min = convertFirst min
     max = convertFirst max
 
---instance CanAdd Accuracy Accuracy where
---    add NoInformation _ = NoInformation
---    add _ NoInformation = NoInformation
---    add (Bits a) (Bits b) = Bits $ a + b
---    add Exact _ = Exact
---    add _ Exact = Exact
---
---instance CanMul Accuracy Accuracy where
+instance CanNeg Accuracy where
+  negate NoInformation = Exact
+  negate Exact = NoInformation
+  negate (Bits a) = Bits (-a)
+
+instance CanAddAsymmetric Accuracy Accuracy where
+   add NoInformation _ = NoInformation
+   add _ NoInformation = NoInformation
+   add (Bits a) (Bits b) = Bits $ a + b
+   add Exact _ = Exact
+   add _ Exact = Exact
+
+instance CanSub Accuracy Accuracy
+
+--instance CanMulAsymmetric Accuracy Accuracy where
 --    mulA NoInformation _ = NoInformation
 --    mulA _ NoInformation = NoInformation
 --    mulA (Bits a) (Bits b) = Bits $ a * b
 --    mulA Exact _ = Exact
 --    mulA _ Exact = Exact
-
 
 instance CanMulAsymmetric Accuracy Integer where
     type MulType Accuracy Integer = Accuracy

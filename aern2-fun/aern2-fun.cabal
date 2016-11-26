@@ -28,7 +28,6 @@ library
     , QuickCheck >= 2.7 && < 2.9
     , transformers >= 0.4 && < 0.6
     , lens == 4.13.*
-    , template-haskell
     , mixed-types-num == 0.1.*
     , num-exceptions == 0.1.*
     , aern2-mp == 0.1.*
@@ -50,7 +49,6 @@ library
     UndecidableInstances,
     Arrows
   exposed-modules:
-    AERN2.TH
     AERN2.PQueue
     AERN2.Interval
     AERN2.RealFun.Operations

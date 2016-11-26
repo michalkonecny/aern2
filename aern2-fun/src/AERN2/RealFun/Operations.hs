@@ -13,7 +13,10 @@
 
 module AERN2.RealFun.Operations
 (
-  HasDomain(..), CanApply(..), HasVars(..)
+  HasDomain(..)
+  , CanApply(..)
+  , CanApplyApprox(..)
+  , HasVars(..)
   , HasConstFunctions, constFn
   , CanIntegrate(..)
 )
@@ -41,6 +44,11 @@ class CanApply f x where
   type ApplyType f x
   {-| compute @f(x)@  -}
   apply :: f {-^ @f@ -} -> x {-^ @x@ -} -> ApplyType f x
+
+class CanApplyApprox f x where
+  type ApplyApproxType f x
+  {-| compute @f(x)@  -}
+  applyApprox :: f {-^ @f@ -} -> x {-^ @x@ -} -> ApplyApproxType f x
 
 class HasVars f where
   type Var f

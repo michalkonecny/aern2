@@ -48,10 +48,14 @@ instance CanNegSameType c => CanNeg (ChPoly c) where
 
 {- addition -}
 
-instance (CanAddSameType c) => CanAddAsymmetric (ChPoly c) (ChPoly c) where
+instance
+  (CanAddSameType c, IsBall c, HasIntegers c)
+  =>
+  CanAddAsymmetric (ChPoly c) (ChPoly c)
+  where
   type AddType (ChPoly c) (ChPoly c) = ChPoly c
   add (ChPoly d1 p1) (ChPoly d2 p2)
-    | d1 == d2 = ChPoly d1 (p1 + p2)
+    | d1 == d2 = makeExactCentre $ ChPoly d1 (p1 + p2)
     | otherwise = error $ "Adding polynomials with incompatible domains"
 
 $(declForTypes
@@ -69,7 +73,10 @@ $(declForTypes
 
 {- subtraction -}
 
-instance (CanAddSameType c, CanNegSameType c) => CanSub (ChPoly c) (ChPoly c)
+instance
+  (CanAddSameType c, CanNegSameType c, IsBall c, HasIntegers c)
+  =>
+  CanSub (ChPoly c) (ChPoly c)
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
@@ -81,10 +88,14 @@ $(declForTypes
 
 {- multiplication -}
 
-instance (Ring c, CanDivBy c Integer) => CanMulAsymmetric (ChPoly c) (ChPoly c) where
+instance
+  (Ring c, CanDivBy c Integer, IsBall c)
+  =>
+  CanMulAsymmetric (ChPoly c) (ChPoly c)
+  where
   type MulType (ChPoly c) (ChPoly c) = ChPoly c
   mul (ChPoly d1 p1) (ChPoly d2 p2)
-    | d1 == d2 = ChPoly d1 (mulCheb p1 p2)
+    | d1 == d2 = makeExactCentre $ ChPoly d1 (mulCheb p1 p2)
     | otherwise = error $ "Multiplying polynomials with incompatible domains"
 
 -- Poly level
@@ -107,20 +118,20 @@ mulChebDirect (Poly terms1) (Poly terms2) =
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
   (\ t -> [d|
-    instance (CanMulBy c $t) => CanMulAsymmetric $t (ChPoly c) where
+    instance (CanMulBy c $t, IsBall c, HasIntegers c) => CanMulAsymmetric $t (ChPoly c) where
       type MulType $t (ChPoly c) = ChPoly c
-      mul n (ChPoly d2 p2) = ChPoly d2 (n * p2)
+      mul n (ChPoly d2 p2) = makeExactCentre $ ChPoly d2 (n * p2)
 
-    instance (CanMulBy c $t) => CanMulAsymmetric (ChPoly c) $t where
+    instance (CanMulBy c $t, IsBall c, HasIntegers c) => CanMulAsymmetric (ChPoly c) $t where
       type MulType (ChPoly c) $t = ChPoly c
-      mul (ChPoly d1 p1) n = ChPoly d1 (n * p1)
+      mul (ChPoly d1 p1) n = makeExactCentre $ ChPoly d1 (n * p1)
   |]))
 
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
   (\ t -> [d|
-    instance (CanDivBy c $t) => CanDiv (ChPoly c) $t where
+    instance (CanDivBy c $t, IsBall c, HasIntegers c) => CanDiv (ChPoly c) $t where
       type DivType (ChPoly c) $t = ChPoly c
-      divide (ChPoly d1 p1) n = ChPoly d1 (p1/n)
+      divide (ChPoly d1 p1) n = makeExactCentre $ ChPoly d1 (p1/n)
   |]))
