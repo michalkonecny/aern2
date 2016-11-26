@@ -21,7 +21,7 @@ import AERN2.Interval
 import Debug.Trace
 
 shouldTrace :: Bool
-shouldTrace = False
+shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace
@@ -63,26 +63,8 @@ maximumOptimised (ChPoly dom poly) l r initialDegree steps =
   f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly
   f' = makeExactCentre $ derivative f
   maxKey = ceiling $ (degree f - initialDegree) / steps
-  dfsWithEval = Map.fromList [(k,(evalDirect df, powDerivative 100 50)) | (k,df) <- dfs] -- TODO maybe reduce initial precision
+  dfsWithEval = Map.fromList [(k,(evalDirect df, (cheb2Power . chPoly_poly . centre) df)) | (k,df) <- dfs] -- TODO maybe reduce initial precision
   dfs = [(k, reduceDegreeAndSweep (initialDegree + steps*k) NormZero f') | k <- [0..maxKey]]
-  fAccuracy = getAccuracy f
-  fc = centre f
-  powDerivative n m =
-    maybeTrace (
-     "fAccuracy "++(show fAccuracy)
-    ) $
-    let
-       tryF' = (Pow.derivative . cheb2Power . chPoly_poly)
-               (setPrecision (prec n) fc)
-    in
-    maybeTrace (
-     "getAccuracy "++(show $ getAccuracy tryF')++"\n"++
-     "tryF':" ++(show tryF')
-    ) $
-    if getAccuracy tryF' >= fAccuracy - 1 then
-      tryF'
-    else
-      powDerivative (n + m) n
 
 {-minimumI :: ChPoly MPBall -> MPBall
 minimumI f = -maximumI (-f)-}
