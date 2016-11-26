@@ -55,11 +55,14 @@ errorBoundPrecision = prec 53
 
 instance HasAccuracy ErrorBound where
   getAccuracy (ErrorBound e)
+      | eN > 0 =
+          bits $ negate $ integerLog2 eN
       | e > 0 && eRecipN > 0 =
           bits $ integerLog2 eRecipN
       | e == 0 = Exact
       | otherwise = NoInformation
       where
+      eN = floor $ rational e
       eRecipN = ceiling $ rational $ MPFloat.recipDown e
 
 {- conversions -}
