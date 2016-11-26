@@ -28,7 +28,7 @@ import AERN2.MP.ErrorBound
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
-import AERN2.Real
+-- import AERN2.Real
 
 import AERN2.Interval
 import AERN2.RealFun.Operations
@@ -38,8 +38,8 @@ import AERN2.RealFun.UnaryFun
 import AERN2.Poly.Basics
 import AERN2.Poly.Cheb.Type
 -- import AERN2.Poly.Conversion
-import AERN2.Poly.Power (PowPoly)
-import qualified AERN2.Poly.Power as Pow
+-- import AERN2.Poly.Power (PowPoly)
+-- import qualified AERN2.Poly.Power as Pow
 
 
 import Debug.Trace (trace)
@@ -125,8 +125,8 @@ instance CanApplyApprox (ChPoly MPBall) DyadicInterval where
 
 -- TODO: move sampledRange to a module not specific to ChPoly
 sampledRange ::
-  (CanApply f t, ApplyType f t ~ t, Show t,
-   CanMinMaxSameType t, ConvertibleExactly Dyadic t)
+  (CanApply f t, ApplyType f t ~ t,
+   CanMinMaxSameType t, ConvertibleExactly Dyadic t, Show t)
   =>
   DyadicInterval -> Integer -> f -> Interval t t
 sampledRange (Interval l r) depth f =
@@ -151,12 +151,12 @@ sampledRange (Interval l r) depth f =
 --   apply = rangeViaUnaryFun
 --   -- apply = rangeViaRoots
 
-rangeViaUnaryFun :: (ChPoly MPBall) -> DyadicInterval -> (Interval CauchyReal CauchyReal, ErrorBound)
-rangeViaUnaryFun p di = (apply f di, e)
-  where
-  f :: UnaryFun
-  (f, e) = convertExactly p
-
+-- rangeViaUnaryFun :: (ChPoly MPBall) -> DyadicInterval -> (Interval CauchyReal CauchyReal, ErrorBound)
+-- rangeViaUnaryFun p di = (apply f di, e)
+--   where
+--   f :: UnaryFun
+--   (f, e) = convertExactly p
+--
 -- rangeViaUnaryDFun :: (ChPoly MPBall) -> DyadicInterval -> (Interval CauchyReal CauchyReal, ErrorBound)
 -- rangeViaUnaryDFun p@(ChPoly dom poly) (Interval l r) =
 --   (apply ff (Interval lU rU), e)

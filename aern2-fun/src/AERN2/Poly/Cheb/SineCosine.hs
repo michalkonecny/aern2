@@ -67,6 +67,15 @@ _chPoly10Xe =
     sampleFn = constFn (dom, 1)
     dom = dyadicInterval (0.0,1.0)
 
+_chPolySineX :: Accuracy -> ChPoly MPBall
+_chPolySineX ac =
+    sineWithAccuracyGuide ac x
+    where
+    x :: ChPoly MPBall
+    x = varFn sampleFn ()
+    sampleFn = constFn (dom, 1)
+    dom = dyadicInterval (-1.0,1.0)
+
 _chPolySine10X :: Accuracy -> ChPoly MPBall
 _chPolySine10X ac =
     sineWithAccuracyGuide ac (10*x)
@@ -178,7 +187,7 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     xAccuracy = getAccuracy x
 
     -- compute (rC+-rE) = range(xC):
-    r = mpBall $ applyApprox xC (dyadicInterval (-1.0,1.0))
+    r = mpBall $ applyApprox xC (getDomain xC)
     rC = centreAsBall r :: MPBall
 
     -- compute k = round(rC/(pi/2)):
@@ -210,7 +219,8 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
 sineTaylorSum ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c, HasAccuracy c, CanSetPrecision c)
+  (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c, HasAccuracy c, CanSetPrecision c,
+   Show (ChPoly c))
   =>
   Accuracy -> MPBall -> ChPoly c -> (ChPoly c, ErrorBound, Integer)
 sineTaylorSum = sineCosineTaylorSum True
@@ -220,14 +230,16 @@ sineTaylorSum = sineCosineTaylorSum True
     it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
 cosineTaylorSum ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c, HasAccuracy c, CanSetPrecision c)
+  (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c, HasAccuracy c, CanSetPrecision c,
+   Show (ChPoly c))
   =>
   Accuracy -> MPBall -> ChPoly c -> (ChPoly c, ErrorBound, Integer)
 cosineTaylorSum = sineCosineTaylorSum False
 
 sineCosineTaylorSum ::
   (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c
-  , HasAccuracy c, CanSetPrecision c)
+  , HasAccuracy c, CanSetPrecision c,
+   Show (ChPoly c))
   =>
   Bool -> Accuracy -> MPBall -> ChPoly c -> (ChPoly c, ErrorBound, Integer)
 sineCosineTaylorSum isSine acGuide xM x =
@@ -332,8 +344,11 @@ sineCosineTaylorSum isSine acGuide xM x =
           pwr k = case Map.lookup k prevPowers of
             Just r -> r
             _ -> error "sineCosineTaylorSum: internal error (powersSine: pwr k)"
-      powersCosine = foldl addPower initPowers $ zip [2..] [4,6..n]
+      powersCosine =
+        maybeTrace ("sineCosineTaylorSum: powerCosine accuracies = "
+          ++ (show (Map.toAscList (Map.map getAccuracy res)))) res
         where
+        res = foldl addPower initPowers $ zip [2..] [4,6..n]
         initPowers = Map.fromAscList [(2, xxR)]
         xxR = reduce 2 $ x*x
         addPower prevPowers (j,i) =
@@ -351,9 +366,12 @@ sineCosineTaylorSum isSine acGuide xM x =
           Just ac -> ac
           _ -> error "sineCosineTaylorSum: internal error"
     termSum =
-      initNum +
-      (foldl1 (+) $ Map.elems $ Map.intersectionWithKey makeTerm powers factorialsE)
+      maybeTrace ("sineCosineTaylorSum: term accuracies = "
+        ++ (show (map (\(i,t) -> (i,getAccuracy t)) terms))) $
+      foldl1 (+) (map snd terms) + initNum
       where
+      terms =
+        Map.toAscList $ Map.intersectionWithKey makeTerm powers factorialsE
       initNum | isSine = 0
               | otherwise = 1
     makeTerm i pwr (fact,_,_e) =
