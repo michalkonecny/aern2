@@ -28,8 +28,8 @@ fnsCP = map chPolyFn
   , ("x-x", xP - xP)
   ]
   where
-  sine = ChPoly.sineWithAccuracyGuide (bits 1)
-  cosine = ChPoly.cosineWithAccuracyGuide (bits 1)
+  sine = ChPoly.sineWithAccuracyGuide (bits 5)
+  cosine = ChPoly.cosineWithAccuracyGuide (bits 5)
   chPolyFn (name, cp) =
     Plot.Function
     { function_name = name

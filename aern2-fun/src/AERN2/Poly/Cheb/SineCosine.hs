@@ -18,7 +18,7 @@ where
 
 import Numeric.MixedTypes
 import qualified Prelude as P
--- import Text.Printf
+import Text.Printf
 
 import qualified Data.Map as Map
 -- import qualified Data.List as List
@@ -58,15 +58,6 @@ maybeTrace
     | otherwise = const id
 
 
-_chPoly10Xe :: ChPoly MPBall
-_chPoly10Xe =
-    10*x
-    where
-    x :: ChPoly MPBall
-    x = setPrecision (prec 100) $ varFn sampleFn ()
-    sampleFn = constFn (dom, 1)
-    dom = dyadicInterval (0.0,1.0)
-
 _chPolySineX :: Accuracy -> ChPoly MPBall
 _chPolySineX ac =
     sineWithAccuracyGuide ac x
@@ -83,8 +74,25 @@ _chPolySine10X ac =
     x :: ChPoly MPBall
     x = varFn sampleFn ()
     sampleFn = constFn (dom, 1)
-    dom = dyadicInterval (0.0,1.0)
+    dom = dyadicInterval (-1.0,1.0)
 
+_chPolyCosine10X :: Accuracy -> ChPoly MPBall
+_chPolyCosine10X ac =
+    cosineWithAccuracyGuide ac (10*x)
+    where
+    x :: ChPoly MPBall
+    x = varFn sampleFn ()
+    sampleFn = constFn (dom, 1)
+    dom = dyadicInterval (-1.0,1.0)
+
+_chPoly10X :: ChPoly MPBall
+_chPoly10X =
+    10*x
+    where
+    x :: ChPoly MPBall
+    x = varFn sampleFn ()
+    sampleFn = constFn (dom, 1)
+    dom = dyadicInterval (0,1.0)
 
 _chPolySine10XSine20XX :: Accuracy -> ChPoly MPBall
 _chPolySine10XSine20XX ac =
@@ -158,7 +166,7 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     (
         "ChPoly.sineCosine: input:"
         ++ "\n isSine = " ++ show isSine
-        ++ "\n xC = " ++ show xC
+        -- ++ "\n xC = " ++ show xC
         ++ "\n xE = " ++ show xE
         ++ "\n xAccuracy = " ++ show xAccuracy
         ++ "\n r = " ++ show r
@@ -194,15 +202,15 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     k = fst $ MPBall.integerBounds $ 0.5 + (2*rC / pi)
 
     -- shift xC near 0 using multiples of pi/2:
-    txC = xC - k * pi / 2
+    txC ac = (setPrecisionAtLeastAccuracy ac xC) - k * pi / 2
     -- work out an absolute range bound for txC:
     (_, trM :: MPBall) = endpoints $ abs $ r - k * pi / 2
 
     -- compute sin or cos of txC = xC-k*pi/2 using Taylor series:
     (taylorSum, taylorSumE, n)
-        | isSine && even k = sineTaylorSum acGuide trM txC
-        | isCosine && odd k = sineTaylorSum acGuide trM txC
-        | otherwise = cosineTaylorSum acGuide trM txC
+        | isSine && even k = sineTaylorSum txC trM acGuide
+        | isCosine && odd k = sineTaylorSum txC trM acGuide
+        | otherwise = cosineTaylorSum txC trM acGuide
     -- if k mod 4 = 2 then negate result,
     -- if k mod 4 = 3 then negate result:
     km4 = k `mod` 4
@@ -222,7 +230,7 @@ sineTaylorSum ::
   (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c, HasAccuracy c, CanSetPrecision c,
    Show (ChPoly c))
   =>
-  Accuracy -> MPBall -> ChPoly c -> (ChPoly c, ErrorBound, Integer)
+  (Accuracy -> ChPoly c) -> MPBall -> Accuracy -> (ChPoly c, ErrorBound, Integer)
 sineTaylorSum = sineCosineTaylorSum True
 
 {-|
@@ -233,7 +241,7 @@ cosineTaylorSum ::
   (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c, HasAccuracy c, CanSetPrecision c,
    Show (ChPoly c))
   =>
-  Accuracy -> MPBall -> ChPoly c -> (ChPoly c, ErrorBound, Integer)
+  (Accuracy -> ChPoly c) -> MPBall -> Accuracy -> (ChPoly c, ErrorBound, Integer)
 cosineTaylorSum = sineCosineTaylorSum False
 
 sineCosineTaylorSum ::
@@ -241,9 +249,11 @@ sineCosineTaylorSum ::
   , HasAccuracy c, CanSetPrecision c,
    Show (ChPoly c))
   =>
-  Bool -> Accuracy -> MPBall -> ChPoly c -> (ChPoly c, ErrorBound, Integer)
-sineCosineTaylorSum isSine acGuide xM x =
+  Bool ->
+  (Accuracy -> ChPoly c) -> MPBall -> Accuracy -> (ChPoly c, ErrorBound, Integer)
+sineCosineTaylorSum isSine xAC xM acGuidePre =
     let
+    acGuide = acGuidePre + 4
     _isCosine = not isSine
 
     -- Work out the degree of the highest term we need to get the
@@ -252,7 +262,7 @@ sineCosineTaylorSum isSine acGuide xM x =
     (_, (_,_,termSumEB)) = Map.findMax factorialsE -- the Lagrange error bound for T_n
     -- At the same time, compute the factorials and keep the Lagrange error bounds:
     factorialsE =
-      maybeTrace ("sineCosineTaylorSum: n = " ++ show (Map.size res - 1) ++ "; factorialsE = " ++ (show res)) res
+      maybeTrace ("sineCosineTaylorSum: n = " ++ show (Map.size res - 1)) res
       where
       res = Map.fromAscList $ takeUntilAccurate $ map addE factorials
       factorials = aux 0 1
@@ -271,7 +281,8 @@ sineCosineTaylorSum isSine acGuide xM x =
     --    -log_2 (\eps/n!) ~ acGuide + 1
     --    -log_2 (\eps) ~ acGuide + 1 - (-log_2(1/n!))
     powerAccuracies0 =
-      maybeTrace ("sineCosineTaylorSum: powerAccuracies0 = " ++ show res) res
+      -- maybeTrace ("sineCosineTaylorSum: powerAccuracies0 = " ++ show res)
+      res
       where
       res = Map.map aux factorialsE
       aux (fc_i,_xM_i,_e_i) =
@@ -280,7 +291,8 @@ sineCosineTaylorSum isSine acGuide xM x =
     -- Ensure the accuracies in powers are sufficient
     -- to compute accurate higher powers by their multiplications:
     powerAccuracies =
-      maybeTrace ("sineCosineTaylorSum: powerAccuracies = " ++ show res) res
+      -- maybeTrace ("sineCosineTaylorSum: powerAccuracies = " ++ show res)
+      res
       where
       res =
         foldl updateAccuracies powerAccuracies0 $
@@ -322,6 +334,9 @@ sineCosineTaylorSum isSine acGuide xM x =
             Just (_fc_k,xM_k,_e_k) -> normLog2Accuracy $ getNormLog xM_k
             _ -> error "sineCosineTaylorSum: internal error"
 
+    x = case Map.lookup 1 powerAccuracies of
+      Just ac1 -> xAC ac1
+
     -- Compute the powers needed for the terms, reducing their size while
     -- respecting the required accuracy:
     powers
@@ -329,24 +344,23 @@ sineCosineTaylorSum isSine acGuide xM x =
       | otherwise = powersCosine
       where
       powersSine =
-        maybeTrace ("sineCosineTaylorSum: powerSine accuracies = "
-          ++ (show (Map.toAscList (Map.map getAccuracy res)))) res
+        maybeTrace ("sineCosineTaylorSum: powerSine accuracies:\n"
+          ++ (showPowerAccuracies res)) res
         where
         res = foldl addPower initPowers $ zip [1..] [3,5..n]
-        initPowers = Map.fromAscList [(1, xR)]
-        xR = reduce 1 x
+        initPowers = Map.fromAscList [(1, x)]
         addPower prevPowers (j,i) =
           Map.insert i (reduce i pw_i) prevPowers
           where
           pw_i
-            | odd j = xR * pwr j * pwr j
-            | otherwise = xR * pwr (j-1) * pwr (j+1)
+            | odd j = x * pwr j * pwr j
+            | otherwise = x * pwr (j-1) * pwr (j+1)
           pwr k = case Map.lookup k prevPowers of
             Just r -> r
             _ -> error "sineCosineTaylorSum: internal error (powersSine: pwr k)"
       powersCosine =
-        maybeTrace ("sineCosineTaylorSum: powerCosine accuracies = "
-          ++ (show (Map.toAscList (Map.map getAccuracy res)))) res
+        maybeTrace ("sineCosineTaylorSum: powerCosine accuracies:\n"
+          ++ (showPowerAccuracies res)) res
         where
         res = foldl addPower initPowers $ zip [2..] [4,6..n]
         initPowers = Map.fromAscList [(2, xxR)]
@@ -360,6 +374,14 @@ sineCosineTaylorSum isSine acGuide xM x =
           pwr k = case Map.lookup k prevPowers of
             Just r -> r
             _ -> error "sineCosineTaylorSum: internal error (powersCosine: pwr k)"
+      showPowerAccuracies pwrs =
+        unlines $ map showAAA $ Map.toAscList $
+          Map.intersectionWith (\p (pa0, pa) -> (pa0,pa, getAccuracy p)) pwrs $
+            Map.intersectionWith (,) powerAccuracies0 powerAccuracies
+        where
+        showAAA (i,(pa0,pa,ap)) =
+          printf "power %d: accuracy req 0: %s, accuracy req: %s, actual accuracy: %s"
+            i (show pa0) (show pa) (show ap)
       reduce i = reduceDegreeWithLostAccuracyLimit ac_i . setPrecisionAtLeastAccuracy (ac_i + 10)
         where
         ac_i = case Map.lookup i powerAccuracies of
