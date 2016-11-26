@@ -12,8 +12,9 @@
 -}
 
 module AERN2.Poly.Cheb.Eval
--- (
--- )
+(
+  evalDirect, evalLip, evalDf
+)
 where
 
 import Numeric.MixedTypes
@@ -39,6 +40,18 @@ import AERN2.Poly.Cheb.Type
 -- import AERN2.Poly.Conversion
 import AERN2.Poly.Power (PowPoly)
 import qualified AERN2.Poly.Power as Pow
+
+
+import Debug.Trace (trace)
+
+shouldTrace :: Bool
+-- shouldTrace = False
+shouldTrace = True
+
+maybeTrace :: String -> a -> a
+maybeTrace
+    | shouldTrace = trace
+    | otherwise = const id
 
 {- evaluation -}
 
@@ -77,14 +90,6 @@ evalDirect (ChPoly dom (Poly terms)) (xInDom :: t) =
         bK = (a k) + 2 * x * bKp1 - bKp2
     a k = terms_lookupCoeffDoubleConstTerm terms k
 
-fromDomToUnitInterval ::
-  (CanAddSubMulDivBy t Dyadic) =>
-  DyadicInterval -> t -> t
-fromDomToUnitInterval (Interval l r) xInDom =
-  (xInDom - m)/(0.5*(r-l))
-  where
-  m = (r+l)*0.5
-
 evalLip :: ChPoly MPBall -> MPBall -> MPBall -> MPBall
 evalLip f l x =
   evalDirect f (centreAsBall x) + (fromEndpoints (-err) err :: MPBall)
@@ -120,11 +125,16 @@ instance CanApplyApprox (ChPoly MPBall) DyadicInterval where
 
 -- TODO: move sampledRange to a module not specific to ChPoly
 sampledRange ::
-  (CanApply f t, ApplyType f t ~ t,
+  (CanApply f t, ApplyType f t ~ t, Show t,
    CanMinMaxSameType t, ConvertibleExactly Dyadic t)
   =>
   DyadicInterval -> Integer -> f -> Interval t t
 sampledRange (Interval l r) depth f =
+    maybeTrace
+    ( "sampledRange:"
+    ++ "\n samplePointsT = " ++ (show samplePointsT)
+    ++ "\n samples = " ++ show samples
+    ) $
     Interval minValue maxValue
     where
     minValue = foldl1 min samples
@@ -136,10 +146,10 @@ sampledRange (Interval l r) depth f =
     samplePoints = [(l*i + r*(size - i))*(1/size) | i <- [0..size]]
     size = 2^depth
 
-instance CanApply (ChPoly MPBall) DyadicInterval where
-  type ApplyType (ChPoly MPBall) DyadicInterval = (Interval CauchyReal CauchyReal, ErrorBound)
-  apply = rangeViaUnaryFun
-  -- apply = rangeViaRoots
+-- instance CanApply (ChPoly MPBall) DyadicInterval where
+--   type ApplyType (ChPoly MPBall) DyadicInterval = (Interval CauchyReal CauchyReal, ErrorBound)
+--   apply = rangeViaUnaryFun
+--   -- apply = rangeViaRoots
 
 rangeViaUnaryFun :: (ChPoly MPBall) -> DyadicInterval -> (Interval CauchyReal CauchyReal, ErrorBound)
 rangeViaUnaryFun p di = (apply f di, e)

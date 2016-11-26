@@ -48,7 +48,6 @@ import AERN2.Poly.Cheb.Eval ()
 
 import Debug.Trace (trace)
 
-
 shouldTrace :: Bool
 -- shouldTrace = False
 shouldTrace = True
@@ -59,8 +58,8 @@ maybeTrace
     | otherwise = const id
 
 
-_test10Xe :: ChPoly MPBall
-_test10Xe =
+_chPoly10Xe :: ChPoly MPBall
+_chPoly10Xe =
     10*x
     where
     x :: ChPoly MPBall
@@ -68,10 +67,21 @@ _test10Xe =
     sampleFn = constFn (dom, 1)
     dom = dyadicInterval (0.0,1.0)
 
-_testSine10X :: Accuracy -> ChPoly MPBall
-_testSine10X ac =
+_chPolySine10X :: Accuracy -> ChPoly MPBall
+_chPolySine10X ac =
     sineWithAccuracyGuide ac (10*x)
     where
+    x :: ChPoly MPBall
+    x = varFn sampleFn ()
+    sampleFn = constFn (dom, 1)
+    dom = dyadicInterval (0.0,1.0)
+
+
+_chPolySine10XSine20XX :: Accuracy -> ChPoly MPBall
+_chPolySine10XSine20XX ac =
+    sine(10*x + sine(20*x*x))
+    where
+    sine = sineWithAccuracyGuide ac
     x :: ChPoly MPBall
     x = varFn sampleFn ()
     sampleFn = constFn (dom, 1)
@@ -137,13 +147,19 @@ sineCosineWithAccuracyGuide ::
 sineCosineWithAccuracyGuide isSine acGuide x =
     maybeTrace
     (
-        "ChPoly.sineCosine:"
+        "ChPoly.sineCosine: input:"
         ++ "\n isSine = " ++ show isSine
+        ++ "\n xC = " ++ show xC
+        ++ "\n xE = " ++ show xE
         ++ "\n xAccuracy = " ++ show xAccuracy
         ++ "\n r = " ++ show r
         ++ "\n k = " ++ show k
         ++ "\n trM = " ++ show trM
-        ++ "\n degree = " ++ show n
+    ) $
+    maybeTrace
+    (
+        "ChPoly.sineCosine: output:"
+        ++ "\n Taylor series degree = " ++ show n
         ++ "\n getAccuracy taylorSum = " ++ show (getAccuracy taylorSum)
         ++ "\n taylorSumE = " ++ show taylorSumE
         ++ "\n getAccuracy result = " ++ show (getAccuracy res)
@@ -329,7 +345,7 @@ sineCosineTaylorSum isSine acGuide xM x =
           pwr k = case Map.lookup k prevPowers of
             Just r -> r
             _ -> error "sineCosineTaylorSum: internal error (powersCosine: pwr k)"
-      reduce i = reduceDegreeWithLostAccuracyLimit ac_i . setPrecisionAtLeastAccuracy ac_i
+      reduce i = reduceDegreeWithLostAccuracyLimit ac_i . setPrecisionAtLeastAccuracy (ac_i + 10)
         where
         ac_i = case Map.lookup i powerAccuracies of
           Just ac -> ac
