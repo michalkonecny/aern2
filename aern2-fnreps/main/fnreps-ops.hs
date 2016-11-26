@@ -99,7 +99,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
       resC = ChPoly.maximumOptimised (setPrecision prc fC) lB rB 5 5
       fC = centreAsBall f
       (Interval l r) = getDomain f
-      prc = 2 * (getPrecision f)
+      prc = (getPrecision f)
       lB = raisePrecisionIfBelow prc $ mpBall l
       rB = raisePrecisionIfBelow prc $ mpBall r
 
