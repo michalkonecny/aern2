@@ -4,6 +4,7 @@ where
 import Numeric.MixedTypes
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
+import AERN2.MP.ErrorBound
 import AERN2.Interval
 
 import AERN2.Poly.Basics
@@ -16,6 +17,9 @@ data PPoly =
   PPoly {ppoly_pieces  :: [(DyadicInterval, Poly MPBall)],
          ppoly_overlap :: Dyadic,
          ppoly_dom     :: DyadicInterval}
+
+data PPolyBall =
+  PPolyBall {ppolyball_centre :: PPoly, ppolyball_radius :: ErrorBound}
 
 fromPoly :: Cheb -> PPoly
 fromPoly p = PPoly [(Interval (dyadic $ -1) (dyadic 1), chPoly_poly p)] (dyadic 10) (chPoly_dom p)

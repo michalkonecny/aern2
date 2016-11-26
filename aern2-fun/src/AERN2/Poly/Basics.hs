@@ -121,6 +121,11 @@ instance (HasPrecision c) => HasPrecision (Poly c) where
 instance (CanSetPrecision c) => CanSetPrecision (Poly c) where
   setPrecision p (Poly ts) = Poly $ terms_map (setPrecision p) ts
 
+{- accuracy -}
+
+instance (HasAccuracy c) => HasAccuracy (Poly c) where
+  getAccuracy (Poly ts) = foldl1 min $ map getAccuracy $ terms_coeffs ts
+
 {- negation -}
 
 instance (CanNegSameType c) => CanNeg (Poly c) where

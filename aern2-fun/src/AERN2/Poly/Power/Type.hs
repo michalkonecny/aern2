@@ -118,6 +118,9 @@ instance (CanSetPrecision c) => CanSetPrecision (PowPoly c) where
   setPrecision p (PowPoly (Poly ts)) =
     PowPoly $ Poly $ Map.map (setPrecision p) ts
 
+instance (HasAccuracy c) => HasAccuracy (PowPoly c) where
+  getAccuracy (PowPoly p) = getAccuracy p
+
 instance (Show (Poly c)) => Show (PowPoly c) where
   show (PowPoly p) = show p
 

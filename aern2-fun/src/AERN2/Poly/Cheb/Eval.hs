@@ -91,9 +91,23 @@ evalLip f l x =
   where
   err = l* dyadic (ball_error x)*0.5
 
-evalDf :: ChPoly MPBall -> PowPoly MPBall -> MPBall -> MPBall
+evalDf :: ChPoly MPBall -> ChPoly MPBall -> MPBall -> MPBall
 evalDf f f' x =
-  evalLip f (abs $ Pow.evalDirect f' x) x
+  evalLip f (abs $ evalDirect f' x) x
+
+{-evalDfAccurately :: ChPoly MPBall -> ChPoly MPBall -> MPBall -> MPBall
+evalDfAccurately f f' x = (aux 100 50) + (fromEndpoints (-err) err :: MPBall)
+  where
+  l = abs $ evalDirect f' x
+  err = l* dyadic (ball_error x)*0.5
+  aux n m =
+    let
+      fcx = evalDirect (setPrecision (prec n) f) (setPrecision (prec n) $ centreAsBall x)
+    in
+      if getAccuracy fcx >= getAccuracy f - 1 then
+        fcx
+      else
+        aux (n + m) n-}
 
 {- range -}
 

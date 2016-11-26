@@ -5,9 +5,8 @@ import AERN2.Poly.Power.Type
 import Numeric.MixedTypes
 import qualified Data.Map as Map
 import AERN2.MP.Ball hiding (iterateUntilAccurate)
-import AERN2.MP.Dyadic
 
-reduceDegree :: PowPoly MPBall -> Dyadic -> Dyadic -> Integer -> PowPoly MPBall
+reduceDegree :: PowPoly MPBall -> MPBall -> MPBall -> Integer -> PowPoly MPBall
 reduceDegree (PowPoly (Poly ts)) l r n =
   PowPoly $ Poly $
     Map.updateMin (\a -> Just $ a + errBall) $
@@ -20,4 +19,4 @@ reduceDegree (PowPoly (Poly ts)) l r n =
 
 reduceDegreeI :: PowPoly MPBall -> Integer -> PowPoly MPBall
 reduceDegreeI p =
-  reduceDegree p (dyadic $ -1) (dyadic 1)
+  reduceDegree p (mpBall $ -1) (mpBall 1)

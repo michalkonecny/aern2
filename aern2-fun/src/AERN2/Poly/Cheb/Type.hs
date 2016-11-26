@@ -105,6 +105,8 @@ instance (ConvertibleExactly t c) => ConvertibleExactly (ChPoly c, t) (ChPoly c)
       Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)])
       Left e -> Left e
 
+degree :: ChPoly c -> Integer
+degree (ChPoly _ (Poly ts)) = terms_degree ts
 
 {- precision -}
 
