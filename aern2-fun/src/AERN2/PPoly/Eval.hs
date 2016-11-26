@@ -25,7 +25,7 @@ evalDirect (PPoly ps _ dom) x =
   intersectingPieces =
     filter (\p -> (fst p) `intersects` xAsInterval) ps
 
-evalDf :: PPoly -> [PowPoly MPBall] -> MPBall -> MPBall
+evalDf :: PPoly -> [ChPoly MPBall] -> MPBall -> MPBall
 evalDf (PPoly ps _ dom) fs' x =
   foldl1' meet $ map (\((_, f), f') -> ChE.evalDf (ChPoly dom f) f' x) intersectingPieces
   where

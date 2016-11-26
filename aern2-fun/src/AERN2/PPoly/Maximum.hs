@@ -10,7 +10,9 @@ import Data.Maybe
 import Data.Map (Map)
 import qualified Data.Map as Map
 import AERN2.Poly.Power.Type
-import AERN2.Poly.Cheb.Type
+{-import AERN2.Poly.Cheb.Type
+import AERN2.Poly.Cheb.Derivative-}
+import AERN2.Poly.Cheb as Cheb
 import AERN2.PPoly.Type
 import qualified AERN2.PPoly.Eval as PPE
 import AERN2.PQueue (PQueue)
@@ -21,14 +23,15 @@ import AERN2.Interval
 
 maximum :: PPoly -> MPBall -> MPBall -> MPBall
 maximum (PPoly ps ov dom) l r =
-  genericMaximum (PPE.evalDf f dfsL) dfs maxKeys nodes
+  undefined
+  --genericMaximum (PPE.evalDf f dfsL) dfs maxKeys nodes
   where
   lI      = fromDomToUnitInterval dom l
   rI      = fromDomToUnitInterval dom r
   unit    = Interval (dyadic $ -1) (dyadic 1)
   f       = PPoly ps ov unit
   fs      = Map.fromList $ (map (\k -> (k,0)) [0..]) `zip` (map snd ps)
-  dfs     = Map.map (derivative . cheb2Power) fs
+  dfs     = Map.map (\p -> Cheb.derivative $ ChPoly dom p) fs
   dfsL    = map snd $ Map.toList dfs  -- TODO: it is somewhat silly to first translate a list to a map and then back to a list
   maxKeys = Map.fromList [(k,0) | k <- [0 .. integer $ length ps]]
   nodes   =
@@ -47,7 +50,7 @@ genericMaximum
     -> Map Integer Integer -> [MPBall]
     -> MPBall
 genericMaximum f dfs maxKeys nodes =
-  splitUntilAccurate initialQueue
+  splitUntilAccurate initialQueue -- TODO: update so we can use evaluation of the derivative in Chebyshev basis
   where
   initialQueue =
     let

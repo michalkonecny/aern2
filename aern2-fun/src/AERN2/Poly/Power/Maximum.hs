@@ -29,7 +29,7 @@ import qualified AERN2.PQueue as Q
 import Debug.Trace
 
 shouldTrace :: Bool
-shouldTrace = True
+shouldTrace = False
 
 maybeTrace :: String -> a -> a
 maybeTrace
@@ -38,7 +38,7 @@ maybeTrace
 
 maximum :: PowPoly MPBall -> MPBall -> MPBall -> MPBall
 maximum f =
-  genericMaximum (evalDf f f') (Map.singleton 0 f')
+  genericMaximum (evalDf f f') (Map.singleton 0 (evalDirect f', f'))
   where
   f' = derivative f
 
@@ -47,11 +47,12 @@ minimum f l r = -(maximum (-f) l r)
 
 maximumOptimised :: PowPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall
 maximumOptimised f l r initialDegree steps =
-  genericMaximum (evalDf f f') dfs l r
+  genericMaximum (evalDf f f') dfsWithEval l r
   where
   f' = derivative f
   maxKey = ceiling $ (degree f - initialDegree) / steps
-  dfs = Map.fromList [(k, reduceDegreeI f' (initialDegree + steps*k)) | k <- [0..maxKey]]
+  dfsWithEval = Map.fromList [(k,(evalDirect df, df)) | (k,df) <- dfs]
+  dfs = [(k, reduceDegree f' l r (initialDegree + steps*k)) | k <- [0..maxKey]]
 
 minimumOptimised :: PowPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall
 minimumOptimised f l r initialDegree steps =
@@ -78,12 +79,15 @@ minimumNaive :: PowPoly MPBall -> MPBall -> MPBall -> Rational -> MPBall
 minimumNaive f l r eps = -(maximumNaive (-f) l r eps)
 
 genericMaximum
-  :: (MPBall -> MPBall) -> Map Integer (PowPoly MPBall) -> MPBall -> MPBall
-     -> MPBall
+  :: (MPBall -> MPBall)
+      -> Map Integer (MPBall -> MPBall, PowPoly MPBall)
+      -> MPBall -> MPBall
+      -> MPBall
 genericMaximum f dfs l r =
   let
     df0 = fromJust $ Map.lookup 0 dfs
-    bsI = initialBernsteinCoefs df0 l r
+    --bsI = initialBernsteinCoefsAccurate df0 l r 100 50
+    bsI = initialBernsteinCoefs (snd df0) l r
     (d0 , Just sgnL) = tryFindSign l 0 -- TODO: Just sgnL assumes exact poly
   in
     case signVars bsI of
@@ -92,7 +96,8 @@ genericMaximum f dfs l r =
             (let fx = evalfOnInterval l l in Q.insert (FinalInterval l l fx)) $
             (let fx = evalfOnInterval r r in Q.insert (FinalInterval r r fx)) $
             Q.singleton $
-            let fx = evalfOnInterval l r in CriticalInterval l r fx Nothing d0 sgnL
+            let fx = evalfOnInterval l r in
+              CriticalInterval l r fx Nothing d0 sgnL
       Just 0
         -> splitUntilAccurate $
             (let fx = evalfOnInterval l l in Q.insert (FinalInterval l l fx)) $
@@ -105,6 +110,20 @@ genericMaximum f dfs l r =
             Q.singleton $
             let fx = evalfOnInterval l r in SearchInterval l r fx Nothing d0 bsI
   where
+  {-initialBernsteinCoefsAccurate p l r n m =
+    let
+      bs = (initialBernsteinCoefs (setPrecision (prec n) p)) l r
+    in
+    maybeTrace (
+     "bernstein coefs: "++(show bs)++"\n"++
+     "precision: "++(show n)
+    ) $
+    if (isJust $ signVars bs)
+    || (getAccuracy bs  >= getAccuracy p - 1) then
+      bs
+    else
+      initialBernsteinCoefsAccurate p l r (n + m) n -}
+
   maxKey = fst $ Map.findMax dfs
   evalfOnInterval a b =
     f (fromEndpoints a b)
@@ -117,7 +136,7 @@ genericMaximum f dfs l r =
   tryFindSign :: MPBall -> Integer -> (Integer, Maybe Integer)
   tryFindSign x n =
     let
-      sg = sgn $ evalDirect (fromJust $ Map.lookup n dfs) x
+      sg = sgn $ (fst $ fromJust $ Map.lookup n dfs) x
     in
       if isJust sg || n == maxKey then
         (n, sg)
@@ -128,6 +147,9 @@ genericMaximum f dfs l r =
     let
       Just (mi, q') = Q.minView q
     in
+      maybeTrace (
+      "minimal interval " ++ (show mi)
+      ) $
       if mi_isAccurate mi maxKey then
         mi_value mi
       else
@@ -140,7 +162,7 @@ genericMaximum f dfs l r =
                 splitUntilAccurate $
                   Q.insert
                     (SearchInterval a b v ov (k + 1)
-                    (initialBernsteinCoefs (fromJust $ Map.lookup (k + 1) dfs) -- TODO: alternatively keep track of Bernstein coefs on [-1,1] for all degrees
+                    (initialBernsteinCoefs (snd $ fromJust $ Map.lookup (k + 1) dfs) -- TODO: alternatively keep track of Bernstein coefs on [-1,1] for all degrees
                     a b))                                                      --       and compute Bernstein coefs on [l,r] from them. Then we only compute
                     q' -- Recompute with higher degree derivative              --       the initial coefs once per degree.
             else

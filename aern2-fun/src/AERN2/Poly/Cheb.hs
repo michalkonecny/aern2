@@ -17,6 +17,7 @@ module AERN2.Poly.Cheb
 , module AERN2.Poly.Cheb.Eval
 , module AERN2.Poly.Cheb.Maximum
 , module AERN2.Poly.Cheb.SineCosine
+, module AERN2.Poly.Cheb.Derivative
 )
 where
 
@@ -35,3 +36,4 @@ import AERN2.Poly.Cheb.Ring ()
 import AERN2.Poly.Cheb.Eval
 import AERN2.Poly.Cheb.Maximum
 import AERN2.Poly.Cheb.SineCosine
+import AERN2.Poly.Cheb.Derivative
