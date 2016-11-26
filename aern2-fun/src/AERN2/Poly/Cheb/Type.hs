@@ -59,6 +59,14 @@ instance Show (ChPoly MPBall) where
     rB = mpBall r
     Interval l r = dom
 
+fromDomToUnitInterval ::
+  (CanAddSubMulDivBy t Dyadic) =>
+  DyadicInterval -> t -> t
+fromDomToUnitInterval (Interval l r) xInDom =
+  (xInDom - m)/(0.5*(r-l))
+  where
+  m = (r+l)*0.5
+
 instance HasDomain (ChPoly c) where
   type Domain (ChPoly c) = DyadicInterval
   getDomain = chPoly_dom

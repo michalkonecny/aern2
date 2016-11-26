@@ -8,7 +8,6 @@ import qualified AERN2.Poly.Power.Eval as PE
 import AERN2.Poly.Power.Roots
 import Data.Maybe
 import Data.Map (Map)
-import AERN2.Poly.Cheb.Eval (fromDomToUnitInterval)
 import qualified Data.Map as Map
 import AERN2.Poly.Power.Type
 import AERN2.Poly.Cheb.Type
