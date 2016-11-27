@@ -40,7 +40,7 @@ import AERN2.Interval
 import AERN2.RealFun.Operations
 -- import AERN2.RealFun.UnaryFun
 
--- import AERN2.Poly.Basics
+import AERN2.Poly.Basics
 
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Ring ()
@@ -336,6 +336,7 @@ sineCosineTaylorSum isSine xAC xM acGuidePre =
 
     x = case Map.lookup 1 powerAccuracies of
       Just ac1 -> xAC ac1
+      _ -> error "sineCosineTaylorSum: internal error"
 
     -- Compute the powers needed for the terms, reducing their size while
     -- respecting the required accuracy:
@@ -376,12 +377,12 @@ sineCosineTaylorSum isSine xAC xM acGuidePre =
             _ -> error "sineCosineTaylorSum: internal error (powersCosine: pwr k)"
       showPowerAccuracies pwrs =
         unlines $ map showAAA $ Map.toAscList $
-          Map.intersectionWith (\p (pa0, pa) -> (pa0,pa, getAccuracy p)) pwrs $
+          Map.intersectionWith (\p (pa0, pa) -> (pa0,pa, p)) pwrs $
             Map.intersectionWith (,) powerAccuracies0 powerAccuracies
         where
-        showAAA (i,(pa0,pa,ap)) =
-          printf "power %d: accuracy req 0: %s, accuracy req: %s, actual accuracy: %s"
-            i (show pa0) (show pa) (show ap)
+        showAAA (i,(pa0,pa,p)) =
+          printf "power %d: accuracy req 0: %s, accuracy req: %s, actual accuracy: %s, degree: %d"
+            i (show pa0) (show pa) (show $ getAccuracy p) (terms_degree $  poly_coeffs $ chPoly_poly p)
       reduce i = reduceDegreeWithLostAccuracyLimit ac_i . setPrecisionAtLeastAccuracy (ac_i + 10)
         where
         ac_i = case Map.lookup i powerAccuracies of
@@ -402,67 +403,6 @@ sineCosineTaylorSum isSine xAC xM acGuidePre =
       sign = if (even $ i `div` 2) then 1 else -1
     in
     (termSum, termSumEB, n)
-
-    {-
-    termComponents
-      | isSine = iterate addNextTerm (0,1,1,6,Map.singleton 1 xA)
-      | otherwise = iterate addNextTerm (1,2,2,24,Map.singleton 2 xxA)
-      where
-      xA acLimit =
-        reduceSetPrec acLimit x
-      xxA acLimit =
-        reduceDegreeWithLostAccuracyLimit acLimit $ xR*xR
-        where
-        xR = reduceSetPrec (acLimit + 1) x
-      reduceSetPrec acLimit p =
-        reduceDegreeWithLostAccuracyLimit acLimit $ setPrecisionAtLeastAccuracy acLimit p
-      addNextTerm (prevI, prevN, _prevFact, currentFact, prevPowers) =
-        (i, n, currentFact, nextFact, newPowers)
-        where
-        i = prevI + 1
-        n = prevN + 2
-        nextFact = currentFact*((n+1)*(n+2))
-        newPowers = Map.insert n currentPower prevPowers
-        currentPower acLimit
-          | isSine && odd i = reduce $ x * (power i) * (power i)
-          | isSine = reduce $ x * (power (i-1)) * (power (i+1))
-          | even i = reduce $ (power i) * (power i)
-          | otherwise = reduce $ (power (i-1)) * (power (i+1))
-          where
-          power j = lookupForce j prevPowers (acLimit+2)
-          reduce = reduceDegreeWithLostAccuracyLimit acLimit
-    sumAndError
-      | isSine = makeSum (const $ chPoly (x,0), 1) termComponents
-      | otherwise = makeSum (const $ chPoly (x,1), -1) termComponents
-        where
-        makeSum (prevSum, sign) ((_i, n, nFact, nextFact, xPowers) : rest)
-          | accurateEnough = (newSum acGuide, e, n+2)
-          | otherwise = makeSum (newSum, -sign) rest
-          where
-          accurateEnough = getAccuracy e >= acGuide + 1
-          e = errorBound $ (xM^n)/nextFact
-          newSum acLimit =
-            maybeTrace
-            ("sineCosineTaylorSum: newSum:"
-              ++"\n acLimit = " ++ show acLimit
-              ++", getAccuracy res = " ++ show (getAccuracy res)
-              ++", getAccuracy prevSumAC = " ++ show (getAccuracy prevSumAC)
-              ++", getAccuracy xPowNAC = " ++ show (getAccuracy xPowNAC)
-              ++", getAccuracy xPowNAC/nFact = " ++ show (getAccuracy $ xPowNAC/nFact)
-            ) res
-            where
-            res = prevSumAC + sign*xPowNAC/nFact
-            prevSumAC = prevSum acLimit
-            xPowNAC = xPowN acLimit
-          xPowN = lookupForce n xPowers
-        makeSum _ _ = error "internal error in Poly.Cheb.SineCosine.sineCosineTaylorSeries"
-    in
-    sumAndError
-    -- where
-    -- fixAccuracyLimit (pA, e, n) = (pA acLimit,e,n)
-    --   where
-    --   acLimit = 4 + (normLog2Accuracy $ getNormLog e)
-    -}
 
 lookupForce :: P.Ord k => k -> Map.Map k a -> a
 lookupForce j amap =
