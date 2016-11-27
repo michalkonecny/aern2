@@ -32,6 +32,7 @@ maximum :: ChPoly MPBall -> MPBall -> MPBall -> MPBall
 maximum (ChPoly dom poly) l r  =
    Pow.genericMaximum (evalDf f f')
     (Map.fromList [(0, (evalDirect f', powDerivative 100 50))]) -- TODO maybe reduce initial precision
+    (getAccuracy f)
     (fromDomToUnitInterval dom l) (fromDomToUnitInterval dom r)
    where
    f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly
@@ -58,13 +59,15 @@ maximum (ChPoly dom poly) l r  =
 maximumOptimised :: ChPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall
 maximumOptimised (ChPoly dom poly) l r initialDegree steps =
   Pow.genericMaximum (evalDf f f') dfsWithEval
+    (getAccuracy f)
     (fromDomToUnitInterval dom l) (fromDomToUnitInterval dom r)
   where
   f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly
   f' = makeExactCentre $ derivative f
+  fc' = makeExactCentre $ derivative $ centre f
   maxKey = ceiling $ (degree f - initialDegree) / steps
   dfsWithEval = Map.fromList [(k,(evalDirect df, (cheb2Power . chPoly_poly . centre) df)) | (k,df) <- dfs] -- TODO maybe reduce initial precision
-  dfs = [(k, reduceDegreeAndSweep (initialDegree + steps*k) NormZero f') | k <- [0..maxKey]]
+  dfs = [(k, reduceDegreeAndSweep (initialDegree + steps*k) NormZero fc') | k <- [0..maxKey]]
 
 {-minimumI :: ChPoly MPBall -> MPBall
 minimumI f = -maximumI (-f)-}

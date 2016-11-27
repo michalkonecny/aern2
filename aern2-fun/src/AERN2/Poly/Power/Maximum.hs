@@ -38,7 +38,7 @@ maybeTrace
 
 maximum :: PowPoly MPBall -> MPBall -> MPBall -> MPBall
 maximum f =
-  genericMaximum (evalDf f f') (Map.singleton 0 (evalDirect f', f'))
+  genericMaximum (evalDf f f') (Map.singleton 0 (evalDirect f', f')) (getAccuracy f)
   where
   f' = derivative f
 
@@ -47,7 +47,7 @@ minimum f l r = -(maximum (-f) l r)
 
 maximumOptimised :: PowPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall
 maximumOptimised f l r initialDegree steps =
-  genericMaximum (evalDf f f') dfsWithEval l r
+  genericMaximum (evalDf f f') dfsWithEval (getAccuracy f) l r
   where
   f' = derivative f
   maxKey = ceiling $ (degree f - initialDegree) / steps
@@ -81,9 +81,10 @@ minimumNaive f l r eps = -(maximumNaive (-f) l r eps)
 genericMaximum
   :: (MPBall -> MPBall)
       -> Map Integer (MPBall -> MPBall, PowPoly MPBall)
+      -> Accuracy
       -> MPBall -> MPBall
       -> MPBall
-genericMaximum f dfs l r =
+genericMaximum f dfs bts l r =
   let
     df0 = fromJust $ Map.lookup 0 dfs
     --bsI = initialBernsteinCoefsAccurate df0 l r 100 50
@@ -150,7 +151,7 @@ genericMaximum f dfs l r =
       maybeTrace (
       "minimal interval " ++ (show mi)
       ) $
-      if mi_isAccurate mi maxKey then
+      if mi_isAccurate mi maxKey bts then
         mi_value mi
       else
         case mi of
@@ -239,10 +240,10 @@ mi_derivative (SearchInterval   _ _ _ _ d _) = d
 mi_derivative (CriticalInterval _ _ _ _ d _) = d
 mi_derivative FinalInterval{} = error "trying to get derivative of final interval"
 
-mi_isAccurate :: MaximisationInterval -> Integer -> Bool
-mi_isAccurate FinalInterval{} _ = True
-mi_isAccurate mi maxKey =
-  getAccuracy (mi_value mi) == Exact
+mi_isAccurate :: MaximisationInterval -> Integer -> Accuracy -> Bool
+mi_isAccurate FinalInterval{} _ _ = True
+mi_isAccurate mi maxKey bts =
+  getAccuracy (mi_value mi) >= bts
   || (mi_derivative mi == maxKey
   && not (isMoreAccurate (mi_value mi) (mi_oldValue mi)))
 
