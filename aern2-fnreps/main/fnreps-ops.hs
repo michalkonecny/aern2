@@ -94,12 +94,10 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 
     maxPB :: (ChPoly MPBall) -> MPBall
     maxPB f =
-      updateRadius (+ (radius f)) resC
+      ChPoly.maximumOptimised (setPrecision prc f) lB rB 5 5
       where
-      resC = ChPoly.maximumOptimised (setPrecision prc fC) lB rB 5 5
-      fC = centreAsBall f
       (Interval l r) = getDomain f
-      prc = (getPrecision f)
+      prc = 3*(getPrecision f)
       lB = raisePrecisionIfBelow prc $ mpBall l
       rB = raisePrecisionIfBelow prc $ mpBall r
 
