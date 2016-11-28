@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-|
     Module      :  AERN2.Poly.Ball
-    Description :  Polynomial unary function enclosures
+    Description :  Polynomial enclosures with large radii
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -9,7 +9,7 @@
     Stability   :  experimental
     Portability :  portable
 
-    Polynomial unary function enclosures
+    Polynomial enclosures with large radii
 -}
 
 module AERN2.Poly.Ball
