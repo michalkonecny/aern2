@@ -12,10 +12,10 @@ import qualified Data.Map as Map
 
 import System.Environment
 
-import AERN2.Norm
+-- import AERN2.Norm
 import AERN2.MP.Accuracy
 import AERN2.MP.Precision
-import AERN2.MP.Ball (MPBall, mpBall, IsBall(..),IsInterval(..))
+import AERN2.MP.Ball (MPBall, mpBall, IsInterval(..))
 -- import qualified AERN2.MP.Ball as MPBall
 
 import AERN2.Real
@@ -62,7 +62,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
             ("fun", "integrate") -> integrateFun fnB2B accuracy
             ("dfun", "integrate") -> integrateDFun fnB2B dfnB2B accuracy
             ("poly", "max") -> maxPB $ fnPB accuracy
-            -- ("poly", "integrate") -> integratePB $ fnPB p maxDeg1 maxDeg2
+            ("poly", "integrate") -> integratePB accuracy $ fnPB accuracy
             -- ("ppoly", "max") -> fnPP OpMax pp_prec pp_maxDeg pp_divThreshold pp_divIts pp_rangeAcc
             -- ("ppoly", "integrate") -> fnPP OpIntegrate pp_prec pp_maxDeg pp_divThreshold pp_divIts pp_rangeAcc
             _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
@@ -86,11 +86,11 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     pp_rangeAcc = bits $ (read pp_rangeBitsS :: Int)
     [pp_precS, pp_maxDegS, pp_divThresholdS, pp_divItsS, pp_rangeBitsS] = effortArgs
 
-    -- integratePB :: (ChPoly MPBall) -> MPBall
-    -- integratePB b =
-    --     integrateUnaryFnA (b, mpBall domL, mpBall domR)
-    --     where
-    --     Interval domL domR = ball_domain b
+    integratePB :: Accuracy -> (ChPoly MPBall) -> MPBall
+    integratePB ac cb =
+      integrate cb dom ac
+      where
+      dom = getDomain cb
 
     maxPB :: (ChPoly MPBall) -> MPBall
     maxPB f =

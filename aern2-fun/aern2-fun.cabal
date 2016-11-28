@@ -64,6 +64,7 @@ library
     AERN2.Poly.Cheb.Type
     AERN2.Poly.Cheb.Eval
     AERN2.Poly.Cheb.Derivative
+    AERN2.Poly.Cheb.Integration
     AERN2.Poly.Cheb.Maximum
     AERN2.Poly.Cheb.Ring
     AERN2.Poly.Cheb.DCT
