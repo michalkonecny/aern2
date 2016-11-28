@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-|
     Module      :  AERN2.Poly.Cheb.Ring
-    Description :  Chebyshev basis unary sparse polynomials
+    Description :  Chebyshev basis ring operations
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -9,7 +9,7 @@
     Stability   :  experimental
     Portability :  portable
 
-    Chebyshev basis unary sparse polynomials
+    Chebyshev basis ring operations
 -}
 
 module AERN2.Poly.Cheb.Ring
@@ -25,6 +25,8 @@ import Numeric.MixedTypes
 -- import Test.QuickCheck
 
 import AERN2.TH
+
+import AERN2.Normalize
 
 -- import AERN2.MP.ErrorBound
 import AERN2.MP.Ball
@@ -55,7 +57,7 @@ instance
   where
   type AddType (ChPoly c) (ChPoly c) = ChPoly c
   add (ChPoly d1 p1) (ChPoly d2 p2)
-    | d1 == d2 = makeExactCentre $ ChPoly d1 (p1 + p2)
+    | d1 == d2 = normalize $ ChPoly d1 (p1 + p2)
     | otherwise = error $ "Adding polynomials with incompatible domains"
 
 $(declForTypes
@@ -95,7 +97,7 @@ instance
   where
   type MulType (ChPoly c) (ChPoly c) = ChPoly c
   mul (ChPoly d1 p1) (ChPoly d2 p2)
-    | d1 == d2 = makeExactCentre $ ChPoly d1 (mulCheb p1 p2)
+    | d1 == d2 = normalize $ ChPoly d1 (mulCheb p1 p2)
     | otherwise = error $ "Multiplying polynomials with incompatible domains"
 
 -- Poly level
@@ -120,11 +122,11 @@ $(declForTypes
   (\ t -> [d|
     instance (CanMulBy c $t, IsBall c, HasIntegers c) => CanMulAsymmetric $t (ChPoly c) where
       type MulType $t (ChPoly c) = ChPoly c
-      mul n (ChPoly d2 p2) = makeExactCentre $ ChPoly d2 (n * p2)
+      mul n (ChPoly d2 p2) = normalize $ ChPoly d2 (n * p2)
 
     instance (CanMulBy c $t, IsBall c, HasIntegers c) => CanMulAsymmetric (ChPoly c) $t where
       type MulType (ChPoly c) $t = ChPoly c
-      mul (ChPoly d1 p1) n = makeExactCentre $ ChPoly d1 (n * p1)
+      mul (ChPoly d1 p1) n = normalize $ ChPoly d1 (n * p1)
   |]))
 
 
@@ -133,5 +135,5 @@ $(declForTypes
   (\ t -> [d|
     instance (CanDivBy c $t, IsBall c, HasIntegers c) => CanDiv (ChPoly c) $t where
       type DivType (ChPoly c) $t = ChPoly c
-      divide (ChPoly d1 p1) n = makeExactCentre $ ChPoly d1 (p1/n)
+      divide (ChPoly d1 p1) n = normalize $ ChPoly d1 (p1/n)
   |]))

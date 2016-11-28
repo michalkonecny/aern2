@@ -25,6 +25,8 @@ import qualified Data.List as List
 -- import Test.Hspec
 -- import Test.QuickCheck
 
+import AERN2.Normalize
+
 import AERN2.Norm
 
 import AERN2.MP.ErrorBound
@@ -81,6 +83,9 @@ instance (IsBall c, HasIntegers c) => IsBall (ChPoly c) where
   centreAsBallAndRadius cp = (centre cp, radius cp)
   updateRadius updateFn (ChPoly dom (Poly terms)) =
     ChPoly dom (Poly $ terms_updateConst (updateRadius updateFn) terms)
+
+instance (IsBall c, HasIntegers c) => CanNormalize (ChPoly c) where
+  normalize = makeExactCentre
 
 {- constructors -}
 
