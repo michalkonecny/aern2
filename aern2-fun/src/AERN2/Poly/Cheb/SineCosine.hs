@@ -227,7 +227,8 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
 sineTaylorSum ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c, HasAccuracy c, CanSetPrecision c,
+  (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c
+  , HasAccuracy c, CanSetPrecision c, HasNorm c,
    Show (ChPoly c))
   =>
   (Accuracy -> ChPoly c) -> MPBall -> Accuracy -> (ChPoly c, ErrorBound, Integer)
@@ -238,7 +239,8 @@ sineTaylorSum = sineCosineTaylorSum True
     it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
 cosineTaylorSum ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c, HasAccuracy c, CanSetPrecision c,
+  (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c
+  , HasAccuracy c, CanSetPrecision c, HasNorm c,
    Show (ChPoly c))
   =>
   (Accuracy -> ChPoly c) -> MPBall -> Accuracy -> (ChPoly c, ErrorBound, Integer)
@@ -246,7 +248,7 @@ cosineTaylorSum = sineCosineTaylorSum False
 
 sineCosineTaylorSum ::
   (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c
-  , HasAccuracy c, CanSetPrecision c,
+  , HasAccuracy c, CanSetPrecision c,  HasNorm c,
    Show (ChPoly c))
   =>
   Bool ->

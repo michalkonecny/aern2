@@ -29,6 +29,8 @@ import AERN2.Normalize
 
 import AERN2.Norm
 
+import AERN2.MP.Accuracy
+import AERN2.MP.Precision
 import AERN2.MP.ErrorBound
 import AERN2.MP.Ball hiding (ball_value)
 import AERN2.MP.Dyadic
@@ -84,8 +86,21 @@ instance (IsBall c, HasIntegers c) => IsBall (ChPoly c) where
   updateRadius updateFn (ChPoly dom (Poly terms)) =
     ChPoly dom (Poly $ terms_updateConst (updateRadius updateFn) terms)
 
-instance (IsBall c, HasIntegers c) => CanNormalize (ChPoly c) where
-  normalize = makeExactCentre
+instance
+  (HasNorm c, Ring c, HasPrecision c, IsInterval c c, IsBall c) =>
+  CanNormalize (ChPoly c) where
+  normalize = sweepUsingPrecision . makeExactCentre
+
+sweepUsingPrecision ::
+  (HasNorm c, Ring c, HasPrecision c, IsInterval c c) =>
+  ChPoly c -> ChPoly c
+sweepUsingPrecision (ChPoly dom poly@(Poly ts)) =
+  ChPoly dom (Poly ts')
+  where
+  ts' = reduceTerms isOK ts
+  isOK _deg coeff =
+    normLog2Accuracy (getNormLog coeff) < prcAccuracy
+  prcAccuracy = bits $ (integer $ getPrecision poly) + 2
 
 {- constructors -}
 
@@ -155,7 +170,16 @@ reduceDegreeAndSweep maxDegree thresholdNormLog p =
 reduceDegreeAndSweepTerms ::
   (Ring c, IsInterval c c, HasNorm c) =>
   Degree -> NormLog -> Terms c -> Terms c
-reduceDegreeAndSweepTerms maxDegree thresholdNormLog terms
+reduceDegreeAndSweepTerms maxDegree thresholdNormLog =
+  reduceTerms isOK
+  where
+  isOK deg coeff =
+      deg <= maxDegree && (deg == 0 || getNormLog coeff > thresholdNormLog)
+
+reduceTerms ::
+  (Ring c, IsInterval c c) =>
+  (Degree -> c -> Bool) -> Terms c -> Terms c
+reduceTerms isOK terms
     | terms_size koTerms == 0 = terms
     | otherwise =
         terms_insertWith (+) 0 errorBall (terms_filter isOK terms)
@@ -165,8 +189,6 @@ reduceDegreeAndSweepTerms maxDegree thresholdNormLog terms
         where
         plusMinus c = fromEndpoints (-c) c
     koTerms = terms_filter isNotOK terms
-    isOK deg coeff =
-        deg <= maxDegree && (deg == 0 || getNormLog coeff > thresholdNormLog)
     isNotOK deg coeff =
         not $ isOK deg coeff
 

@@ -51,7 +51,7 @@ instance CanNegSameType c => CanNeg (ChPoly c) where
 {- addition -}
 
 instance
-  (CanAddSameType c, IsBall c, HasIntegers c)
+  (CanAddSameType c, HasIntegers c, CanNormalize (ChPoly c))
   =>
   CanAddAsymmetric (ChPoly c) (ChPoly c)
   where
@@ -76,7 +76,7 @@ $(declForTypes
 {- subtraction -}
 
 instance
-  (CanAddSameType c, CanNegSameType c, IsBall c, HasIntegers c)
+  (CanAddSameType c, CanNegSameType c, HasIntegers c, CanNormalize (ChPoly c))
   =>
   CanSub (ChPoly c) (ChPoly c)
 
@@ -91,7 +91,7 @@ $(declForTypes
 {- multiplication -}
 
 instance
-  (Ring c, CanDivBy c Integer, IsBall c)
+  (Ring c, CanDivBy c Integer, CanNormalize (ChPoly c))
   =>
   CanMulAsymmetric (ChPoly c) (ChPoly c)
   where
@@ -120,11 +120,11 @@ mulChebDirect (Poly terms1) (Poly terms2) =
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
   (\ t -> [d|
-    instance (CanMulBy c $t, IsBall c, HasIntegers c) => CanMulAsymmetric $t (ChPoly c) where
+    instance (CanMulBy c $t, HasIntegers c, CanNormalize (ChPoly c)) => CanMulAsymmetric $t (ChPoly c) where
       type MulType $t (ChPoly c) = ChPoly c
       mul n (ChPoly d2 p2) = normalize $ ChPoly d2 (n * p2)
 
-    instance (CanMulBy c $t, IsBall c, HasIntegers c) => CanMulAsymmetric (ChPoly c) $t where
+    instance (CanMulBy c $t, HasIntegers c, CanNormalize (ChPoly c)) => CanMulAsymmetric (ChPoly c) $t where
       type MulType (ChPoly c) $t = ChPoly c
       mul (ChPoly d1 p1) n = normalize $ ChPoly d1 (n * p1)
   |]))
@@ -133,7 +133,7 @@ $(declForTypes
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
   (\ t -> [d|
-    instance (CanDivBy c $t, IsBall c, HasIntegers c) => CanDiv (ChPoly c) $t where
+    instance (CanDivBy c $t, HasIntegers c, CanNormalize (ChPoly c)) => CanDiv (ChPoly c) $t where
       type DivType (ChPoly c) $t = ChPoly c
       divide (ChPoly d1 p1) n = normalize $ ChPoly d1 (p1/n)
   |]))
