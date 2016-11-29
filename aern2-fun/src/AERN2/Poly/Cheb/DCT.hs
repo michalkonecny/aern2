@@ -27,6 +27,8 @@ import qualified Data.List as List
 
 import Math.NumberTheory.Logarithms (integerLog2)
 
+import AERN2.Normalize
+
 -- import AERN2.MP.ErrorBound
 -- import AERN2.MP.Ball
 -- import AERN2.MP.Dyadic
@@ -40,19 +42,32 @@ import AERN2.Real
 import AERN2.Poly.Basics
 
 import AERN2.Poly.Cheb.Type
-import AERN2.Poly.Cheb.Ring ()
+
+
+import Debug.Trace (trace)
+
+shouldTrace :: Bool
+-- shouldTrace = False
+shouldTrace = True
+
+maybeTrace :: String -> a -> a
+maybeTrace
+    | shouldTrace = trace
+    | otherwise = const id
 
 {-|
   DCT-approximate the result of applying the given binary function @f@
   pointwise to the given polynomials @p1@ and @p2@.
 -}
 lift2_DCT ::
-  (Field c, CanMulBy c CauchyReal) =>
+  (Field c, CanMulBy c CauchyReal, CanNormalize (ChPoly c), Show c) =>
   (Degree -> Degree -> Degree)
     {-^ detemining a degree bound for the result from the degrees of @p1@ and @p2@ -} ->
   (c -> c -> c) {-^ the function @f@ to apply pointwise to @p1@ and @p2@ -} ->
   ChPoly c {-^ @p1@ -} -> ChPoly c {-^ @p2@ -} -> ChPoly c
-lift2_DCT getDegree op (ChPoly domA (Poly termsA)) (ChPoly _domB (Poly termsB)) =
+lift2_DCT getDegree op (ChPoly domA (Poly termsA)) (ChPoly domB (Poly termsB))
+  | domA /= domB = error "lift2_DCT: combining functions with incompatible domains"
+  | otherwise =
     -- maybeTrace
     -- (
     --     "lift2_DCT:"
@@ -64,7 +79,7 @@ lift2_DCT getDegree op (ChPoly domA (Poly termsA)) (ChPoly _domB (Poly termsB)) 
     --     ++ "\n cT = " ++ show cT
     --     ++ "\n c = " ++ show c
     -- ) $
-    -- normaliseCoeffs $
+    normalize $
     ChPoly domA $ Poly $ terms_fromList $ zip [0..] (c0Double / 2 : c)
 --    terms_fromList [(0, mpBall 1)] -- dummy for debugging exceptions
     where
@@ -75,7 +90,7 @@ lift2_DCT getDegree op (ChPoly domA (Poly termsA)) (ChPoly _domB (Poly termsB)) 
     aT = coeffs2gridvalues cN termsA
     bT = coeffs2gridvalues cN termsB
 
-    cN = 2 ^ (1 + (integer $ integerLog2 $ max 1 (getDegree dA dB - 1)))
+    cN = 2 ^ (1 + (integer $ integerLog2 $ max 1 (getDegree dA dB + 1)))
     dA = terms_degree termsA
     dB = terms_degree termsB
 
@@ -84,25 +99,26 @@ lift2_DCT getDegree op (ChPoly domA (Poly termsA)) (ChPoly _domB (Poly termsB)) 
   pointwise to the given polynomial @p@.
 -}
 lift1_DCT ::
-  (Field c, CanMulBy c CauchyReal) =>
+  (Field c, CanMulBy c CauchyReal, CanNormalize (ChPoly c), Show c) =>
   (Degree -> Degree) {-^ detemining a degree bound for the result from the degree of @p@ -} ->
   (c -> c) {-^ the function @f@ to apply pointwise to @p@ -} ->
   ChPoly c {-^ @p@ -} ->
   ChPoly c
 lift1_DCT getDegree op (ChPoly dom (Poly termsA)) =
-    -- maybeTrace
-    -- (
-    --     "lift1_DCT:"
-    --     ++ "\n cN = " ++ show cN
-    --     ++ "\n dA = " ++ show dA
-    --     ++ "\n aT = " ++ show aT
-    --     ++ "\n cT = " ++ show cT
-    --     ++ "\n c = " ++ show c
-    -- ) $
+    maybeTrace
+    (
+        "lift1_DCT:"
+        ++ "\n cN = " ++ show cN
+        ++ "\n dA = " ++ show dA
+        ++ "\n aT = " ++ show aT
+        ++ "\n cT = " ++ show cT
+        ++ "\n c0Double = " ++ show c0Double
+        ++ "\n c = " ++ show c
+    ) $
+    normalize $
     ChPoly dom (Poly terms)
     where
     terms =
-      -- normaliseCoeffs
       terms_fromList $ zip [0..] (c0Double / 2 : c)
 --    terms_fromList [(0, mpBall 1)] -- dummy for debugging exceptions
     (c0Double : c) = map (* (2 / cN)) (tDCT_I_nlogn cT) -- interpolate the values using a polynomial
@@ -112,7 +128,7 @@ lift1_DCT getDegree op (ChPoly dom (Poly termsA)) =
 
     aT = coeffs2gridvalues cN termsA
 
-    cN = 2 ^ (1 + (integer $ integerLog2 $ max 1 (getDegree dA - 1)))
+    cN = 2 ^ (1 + (integer $ integerLog2 $ max 1 (getDegree dA + 1)))
     dA = terms_degree termsA
 
 
