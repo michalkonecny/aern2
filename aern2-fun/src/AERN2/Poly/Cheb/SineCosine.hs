@@ -26,6 +26,8 @@ import qualified Data.Map as Map
 -- import Test.Hspec
 -- import Test.QuickCheck
 
+import AERN2.Normalize
+
 import AERN2.Norm
 import AERN2.MP.Accuracy
 import AERN2.MP.ErrorBound
@@ -92,7 +94,7 @@ _chPoly10X =
     x :: ChPoly MPBall
     x = varFn sampleFn ()
     sampleFn = constFn (dom, 1)
-    dom = dyadicInterval (0,1.0)
+    dom = dyadicInterval (-1.0,1.0)
 
 _chPolySine10XSine20XX :: Accuracy -> ChPoly MPBall
 _chPolySine10XSine20XX ac =
@@ -102,7 +104,7 @@ _chPolySine10XSine20XX ac =
     x :: ChPoly MPBall
     x = varFn sampleFn ()
     sampleFn = constFn (dom, 1)
-    dom = dyadicInterval (0.0,1.0)
+    dom = dyadicInterval (-1.0,1.0)
 
 
 {-
@@ -227,9 +229,10 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
 sineTaylorSum ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c
-  , HasAccuracy c, CanSetPrecision c, HasNorm c,
-   Show (ChPoly c))
+  (Field c, CanMulBy c CauchyReal
+  , IsBall c, IsInterval c c
+  , HasAccuracy c, CanSetPrecision c
+  , CanNormalize (ChPoly c), Show (ChPoly c), Show c)
   =>
   (Accuracy -> ChPoly c) -> MPBall -> Accuracy -> (ChPoly c, ErrorBound, Integer)
 sineTaylorSum = sineCosineTaylorSum True
@@ -239,17 +242,19 @@ sineTaylorSum = sineCosineTaylorSum True
     it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
 cosineTaylorSum ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c
-  , HasAccuracy c, CanSetPrecision c, HasNorm c,
-   Show (ChPoly c))
+  (Field c, CanMulBy c CauchyReal
+  , IsBall c, IsInterval c c
+  , HasAccuracy c, CanSetPrecision c
+  , CanNormalize (ChPoly c), Show (ChPoly c), Show c)
   =>
   (Accuracy -> ChPoly c) -> MPBall -> Accuracy -> (ChPoly c, ErrorBound, Integer)
 cosineTaylorSum = sineCosineTaylorSum False
 
 sineCosineTaylorSum ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c
-  , HasAccuracy c, CanSetPrecision c,  HasNorm c,
-   Show (ChPoly c))
+  (Field c, CanMulBy c CauchyReal
+  , IsBall c, IsInterval c c
+  , HasAccuracy c, CanSetPrecision c
+  , CanNormalize (ChPoly c), Show (ChPoly c), Show c)
   =>
   Bool ->
   (Accuracy -> ChPoly c) -> MPBall -> Accuracy -> (ChPoly c, ErrorBound, Integer)

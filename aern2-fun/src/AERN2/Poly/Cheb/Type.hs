@@ -52,6 +52,9 @@ chPolyMPBall = convertExactly
 
 data ChPoly c = ChPoly { chPoly_dom :: DyadicInterval, chPoly_poly :: Poly c }
 
+chPoly_terms :: ChPoly c -> Terms c
+chPoly_terms (ChPoly _ (Poly terms)) = terms
+
 instance Show (ChPoly MPBall) where
   show (ChPoly dom poly) = show ppDom
     where
