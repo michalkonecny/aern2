@@ -12,8 +12,9 @@
 -}
 
 module AERN2.Poly.Cheb.DCT
--- (
--- )
+(
+  lift1_DCT, lift2_DCT
+)
 where
 
 import Numeric.MixedTypes
@@ -47,8 +48,8 @@ import AERN2.Poly.Cheb.Type
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
--- shouldTrace = False
-shouldTrace = True
+shouldTrace = False
+-- shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace
@@ -203,11 +204,11 @@ tDCT_I_nlogn a
 
     This is quite inefficient.  It is to be used only as a reference in tests.
 -}
-tDCT_III_reference ::
+_tDCT_III_reference ::
   (Field c, CanMulBy c CauchyReal) =>
   [c] {-^ g a vector of validated real numbers -} ->
   [c] {-^ g~ a vector of validated real numbers -}
-tDCT_III_reference g =
+_tDCT_III_reference g =
     [sum [ (eps cN1 k) * (g !! k) * cos ( (((2*j+1)*k) * pi) / cN)
             | k <- [0..(cN1-1)]
          ]
@@ -243,11 +244,11 @@ tDCT_III_nlogn g =
 
     This is quite inefficient.  It is to be used only as a reference in tests.
 -}
-tSDCT_III_reference ::
+_tSDCT_III_reference ::
   (Field c, CanMulBy c CauchyReal) =>
   [c] {-^ h a vector of validated real numbers -} ->
   [c] {-^ h~ a vector of validated real numbers -}
-tSDCT_III_reference h =
+_tSDCT_III_reference h =
     [sum [ (h !! ell) * cos ( (((4*j+1)*ell) * pi) / cN)
             | ell <- [0..(cN1-1)]
          ]

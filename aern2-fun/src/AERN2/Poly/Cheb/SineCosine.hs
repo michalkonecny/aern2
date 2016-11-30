@@ -51,8 +51,8 @@ import AERN2.Poly.Cheb.Eval ()
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
--- shouldTrace = False
-shouldTrace = True
+shouldTrace = False
+-- shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace
@@ -204,7 +204,7 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     k = fst $ MPBall.integerBounds $ 0.5 + (2*rC / pi)
 
     -- shift xC near 0 using multiples of pi/2:
-    txC ac = (setPrecisionAtLeastAccuracy ac xC) - k * pi / 2
+    txC ac = (setPrecisionAtLeastAccuracy (ac) xC) - k * pi / 2
     -- work out an absolute range bound for txC:
     (_, trM :: MPBall) = endpoints $ abs $ r - k * pi / 2
 

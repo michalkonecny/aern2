@@ -13,13 +13,14 @@
 -}
 
 module AERN2.Poly.Cheb.Ring
--- (
--- )
+(
+  mulCheb, mulChebDirect, mulChebDCT
+)
 where
 
 import Numeric.MixedTypes
 -- import qualified Prelude as P
--- import Text.Printf
+import Text.Printf
 
 -- import Test.Hspec
 -- import Test.QuickCheck
@@ -42,6 +43,18 @@ import AERN2.Poly.Basics
 
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.DCT
+
+
+import Debug.Trace (trace)
+
+shouldTrace :: Bool
+-- shouldTrace = False
+shouldTrace = True
+
+maybeTrace :: String -> a -> a
+maybeTrace
+    | shouldTrace = trace
+    | otherwise = const id
 
 {- negation -}
 
@@ -92,7 +105,7 @@ $(declForTypes
 {- multiplication -}
 
 instance
-  (Field c, CanMulBy c CauchyReal, CanNormalize (ChPoly c), Show c)
+  (Field c, CanMulBy c CauchyReal, IsInterval c c, CanNormalize (ChPoly c), Show c)
   =>
   CanMulAsymmetric (ChPoly c) (ChPoly c)
   where
@@ -100,14 +113,18 @@ instance
   mul = mulCheb
 
 mulCheb ::
-  (Field c, CanMulBy c CauchyReal, CanNormalize (ChPoly c), Show c)
+  (Field c, CanMulBy c CauchyReal, IsInterval c c, CanNormalize (ChPoly c), Show c)
   =>
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
 mulCheb p1@(ChPoly _ (Poly terms1)) p2@(ChPoly _ (Poly terms2))
-  -- | size1 + size2 < 1000
+  -- | size1 + size2 < 200
   | size1 + size2 > 0 -- i.e. always
-    = mulChebDirect p1 p2
-  | otherwise = mulChebDCT p1 p2
+    =
+      maybeTrace (printf "size1+size2 = %d, using mulChebDirect" (size1 + size2)) $
+      mulChebDirect p1 p2
+  | otherwise =
+      maybeTrace (printf "size1+size2 = %d, using mulChebDCT" (size1 + size2)) $
+      mulChebDCT p1 p2
   where
   size1 = terms_size terms1
   size2 = terms_size terms2
@@ -131,10 +148,14 @@ mulChebDirect (ChPoly d1 (Poly terms1)) (ChPoly d2 (Poly terms2))
       ]
 
 mulChebDCT ::
-  (Field c, CanMulBy c CauchyReal, CanNormalize (ChPoly c), Show c)
+  (Field c, CanMulBy c CauchyReal, IsInterval c c, CanNormalize (ChPoly c), Show c)
   =>
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
-mulChebDCT = lift2_DCT (+) (*)
+mulChebDCT p1 p2 =
+  reduceDegree (deg1 + deg2) $ lift2_DCT (+) (*) p1 p2
+  where
+  deg1 = terms_degree $ chPoly_terms p1
+  deg2 = terms_degree $ chPoly_terms p2
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
