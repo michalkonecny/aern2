@@ -390,7 +390,7 @@ sineCosineTaylorSum isSine xAC xM acGuidePre =
         showAAA (i,(pa0,pa,p)) =
           printf "power %d: accuracy req 0: %s, accuracy req: %s, actual accuracy: %s, degree: %d"
             i (show pa0) (show pa) (show $ getAccuracy p) (terms_degree $  poly_coeffs $ chPoly_poly p)
-      reduce i = reduceDegreeWithLostAccuracyLimit ac_i . setPrecisionAtLeastAccuracy (ac_i + 10)
+      reduce i = reduceSizeUsingAccuracyGuide ac_i . setPrecisionAtLeastAccuracy (ac_i + 10)
         where
         ac_i = case Map.lookup i powerAccuracies of
           Just ac -> ac

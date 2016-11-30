@@ -195,6 +195,12 @@ reduceTerms isOK terms
     isNotOK deg coeff =
         not $ isOK deg coeff
 
+instance
+  (Ring c, IsInterval c c, HasAccuracy c) =>
+  CanReduceSizeUsingAccuracyGuide (ChPoly c)
+  where
+  reduceSizeUsingAccuracyGuide = reduceDegreeWithLostAccuracyLimit
+
 reduceDegreeWithLostAccuracyLimit ::
   (Ring c, IsInterval c c, HasAccuracy c) =>
   Accuracy -> ChPoly c -> ChPoly c

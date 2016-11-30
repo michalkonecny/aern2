@@ -16,9 +16,9 @@ module AERN2.MP.Ball
   module AERN2.Norm
   , module AERN2.MP.Precision
   , module AERN2.MP.Accuracy
+  , module AERN2.MP.ErrorBound
   -- * The Ball type
   , MPBall(..), CanBeMPBall, mpBall, CanBeMPBallP, mpBallP
-  , setPrecisionAtLeastAccuracy
   , reducePrecionIfInaccurate
   -- * Ball construction/extraction functions
   , IsBall(..), makeExactCentre
@@ -42,6 +42,7 @@ where
 import AERN2.Norm
 import AERN2.MP.Precision
 import AERN2.MP.Accuracy
+import AERN2.MP.ErrorBound (ErrorBound, CanBeErrorBound, errorBound)
 
 import AERN2.MP.Ball.Type
 import AERN2.MP.Ball.Conversions
