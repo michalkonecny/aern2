@@ -61,7 +61,8 @@ instance QAProtocolCacheable CauchyRealP where
   newQACache _ = Nothing
   lookupQACache _ cache ac =
     case cache of
-      Just b | getAccuracy b >= ac -> Just (setPrecisionAtLeastAccuracy ac b)
+      Just b | getAccuracy b >= ac ->
+        Just (setPrecisionAtLeastAccuracy ac $ reduceSizeUsingAccuracyGuide ac b)
       _ -> Nothing
   updateQACache _ Nothing _ b = Just b
   updateQACache _ (Just b1) _ b2 = Just (b1 `intersect` b2)
