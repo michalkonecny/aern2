@@ -49,7 +49,7 @@ import AERN2.Poly.Cheb.Eval ()
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
--- shouldTrace = False
+--shouldTrace = False
 shouldTrace = True
 
 maybeTrace :: String -> a -> a
