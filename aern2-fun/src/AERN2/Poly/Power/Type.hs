@@ -5,7 +5,6 @@ import AERN2.Poly.Basics
 import Numeric.MixedTypes
 import qualified Data.Map as Map
 import AERN2.MP.Ball hiding (iterateUntilAccurate)
-import AERN2.MP.ErrorBound
 import AERN2.MP.Dyadic
 import Data.List
 import Data.Maybe

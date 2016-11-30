@@ -69,6 +69,19 @@ polyBall = convertExactly
 
 data Ball c = Ball { ball_value :: c, ball_radius :: ErrorBound }
 
+lift1PolyBall :: (ChPoly MPBall -> c) -> (PolyBall -> c)
+lift1PolyBall f (Ball c e) = f (updateRadius (+ e) c)
+
+lift2PolyBall :: (ChPoly MPBall -> c -> c) -> (PolyBall -> c -> c)
+lift2PolyBall f (Ball c e) = f (updateRadius (+ e) c)
+
+instance (IsBall c) => IsBall (Ball c) where
+  type CentreType (Ball c) = c
+  centre = ball_value
+  radius = ball_radius
+  updateRadius updateFn (Ball c r) = Ball c (updateFn r)
+  centreAsBallAndRadius (Ball c r) = (Ball c (errorBound 0), r)
+
 instance (IsBall c) => CanNormalize (Ball c) where
   normalize (Ball x e) = Ball (centreAsBall x) (radius x + e)
 

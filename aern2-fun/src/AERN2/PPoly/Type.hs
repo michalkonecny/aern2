@@ -5,30 +5,29 @@ import Numeric.MixedTypes
 
 import Data.List
 
-import AERN2.MP.Ball
+import AERN2.Normalize
+
+import AERN2.MP.Ball (IsBall(..), MPBall)
 import AERN2.MP.Dyadic
 import AERN2.MP.ErrorBound
 import AERN2.Interval
 
-import AERN2.Poly.Basics
+import AERN2.Poly.Ball
 import AERN2.Poly.Cheb
-import AERN2.Poly.Cheb.Ring
-
-
-import Control.Arrow (second)
 
 type Cheb = ChPoly MPBall
 
 data PPoly =
-  PPoly {ppoly_pieces  :: [(DyadicInterval, Poly MPBall)],
+  PPoly {ppoly_pieces  :: [(DyadicInterval, PolyBall)],
          ppoly_overlap :: Dyadic,
          ppoly_dom     :: DyadicInterval}
 
-data PPolyBall =
-  PPolyBall {ppolyball_centre :: PPoly, ppolyball_radius :: ErrorBound}
-
 fromPoly :: Cheb -> PPoly
-fromPoly p = PPoly [(Interval (dyadic $ -1) (dyadic 1), chPoly_poly p)] (dyadic 10) (chPoly_dom p)
+fromPoly p = fromPolyBall (Ball p (errorBound 0))
+
+fromPolyBall :: PolyBall -> PPoly
+fromPolyBall f@(Ball p _) =
+  PPoly [(Interval (dyadic $ -1) (dyadic 1), f)] (dyadic 10) (chPoly_dom p)
 
 {-linearPolygon :: [(Rational, MPBall)] -> Rational -> PPoly
 linearPolygon ((x,y) : xys) overlap = aux xys x y []
@@ -38,17 +37,28 @@ linearPolygon ((x,y) : xys) overlap = aux xys x y []
  linSpline x y x' y' = Poly.normaliseCoeffs $ Poly.fromList  [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))] -- TODO Poly.fromList should already provided normalised coeffs
 linearPolygon [] _ = error "linearPolygon must be provided with a list of at least 2 points"-}
 
-liftCheb2PPoly :: (Cheb -> Cheb) -> (PPoly -> PPoly)
-liftCheb2PPoly f (PPoly ps ov dom)  =
-  PPoly (map (second $ domify f) ps) ov dom
+liftBall2PPoly :: (PolyBall -> PolyBall) -> (PPoly -> PPoly)
+liftBall2PPoly f (PPoly ps ov dom)  =
+  PPoly (map (domify f) ps) ov dom
   where
-  domify :: (Cheb -> Cheb) -> (Poly MPBall -> Poly MPBall)
-  domify g p = (chPoly_poly . g) (ChPoly dom p)
+  domify :: (PolyBall -> PolyBall)
+    -> (DyadicInterval, PolyBall)
+    -> (DyadicInterval, PolyBall)
+  domify g (i, p) = (i, g p)
 
-lift2PPoly :: (Poly MPBall -> Poly MPBall) -> (PPoly -> PPoly)
-lift2PPoly f (PPoly pieces overlap dom) = PPoly (map (\(i,p) -> (i, f p)) pieces) overlap dom
+liftCheb2PPoly :: (Cheb -> Cheb) -> (PPoly -> PPoly)
+liftCheb2PPoly f =
+  liftBall2PPoly (ballify f)
+  where
+  ballify g (Ball c r) =
+    normalize $ Ball (g $ updateRadius (+r) c) (errorBound 0)
 
-refine :: PPoly -> PPoly -> [(DyadicInterval, Poly MPBall, Poly MPBall)]
+{-lift2PPoly :: (Poly MPBall -> Poly MPBall) -> (PPoly -> PPoly)
+lift2PPoly f (PPoly pieces overlap dom) =
+  PPoly (map (\(i,p) -> (i, f p)) pieces) overlap dom-}
+
+refine :: PPoly -> PPoly
+  -> [(DyadicInterval, PolyBall, PolyBall)]
 refine (PPoly ps _ _) (PPoly qs _ _) =
    reverse $ aux [] ps qs
    where
@@ -66,8 +76,9 @@ refine (PPoly ps _ _) (PPoly qs _ _) =
 
 --precondition: both intervals have the same left end-point
 intersectionAndDifference ::
-  (DyadicInterval, Poly MPBall) -> (DyadicInterval, Poly MPBall)
-  -> (Bool, (DyadicInterval, Poly MPBall, Poly MPBall), Maybe (DyadicInterval, Poly MPBall))
+  (DyadicInterval, PolyBall) -> (DyadicInterval, PolyBall)
+  -> (Bool, (DyadicInterval, PolyBall, PolyBall),
+      Maybe (DyadicInterval, PolyBall))
 intersectionAndDifference (Interval l r, p) (Interval l' r', p') =
    if l /= l' then
        error $ "PPoly intersectionAndDifference: precondition violated. Intervals are [" ++ (show l) ++ "," ++(show r)++"] and ["++(show l')++ ","++(show r')++"]."
@@ -80,16 +91,16 @@ intersectionAndDifference (Interval l r, p) (Interval l' r', p') =
     if r == r' then
       Nothing
     else if r > r' then
-      Just $ (Interval r' r, p)
+      Just (Interval r' r, p)
     else
-      Just $ (Interval r r', p')
+      Just (Interval r r', p')
 
 {- instances -}
 
 instance IsBall PPoly where
   type CentreType PPoly = PPoly
-  radius (PPoly ps _ dom) =
-    foldl' (+) (errorBound 0) $ map (\(_,p) -> radius (ChPoly dom p)) ps
+  radius (PPoly ps _ _) =
+    foldl' (+) (errorBound 0) $ map (\(_, p) -> radius p) ps
   centre = liftCheb2PPoly centre
   centreAsBall = centre
   centreAsBallAndRadius cp = (centre cp, radius cp)
@@ -106,12 +117,8 @@ instance CanAddAsymmetric PPoly PPoly where
 instance CanMulAsymmetric PPoly PPoly where
   type MulType PPoly PPoly = PPoly
   mul a b =
-    PPoly [(i, mulPoly i p q) | (i,p,q) <- refine a b]
+    PPoly [(i, p * q) | (i,p,q) <- refine a b]
           (min (ppoly_overlap a) (ppoly_overlap b)) (ppoly_dom a) -- TODO: how to handle polys with different domains?
-    where
-    mulPoly i p q = pq
-      where
-      ChPoly _ pq = mulCheb (ChPoly i p) (ChPoly i q)
 
 instance CanMulAsymmetric Cheb PPoly where
   type MulType Cheb PPoly = PPoly
@@ -130,42 +137,42 @@ instance CanNeg PPoly where
 
 instance CanAddAsymmetric PPoly Integer where
     type AddType PPoly Integer = PPoly
-    add p n = lift2PPoly (+n) $ p
+    add p n = liftBall2PPoly (+n) $ p
 
 instance CanAddAsymmetric Integer PPoly where
     type AddType Integer PPoly = PPoly
-    add n p = lift2PPoly (n+) $ p
+    add n p = liftBall2PPoly (n+) $ p
 
 instance CanMulAsymmetric PPoly Integer where
     type MulType PPoly Integer = PPoly
-    mul p n = lift2PPoly (*n) $ p
+    mul p n = liftBall2PPoly (*n) $ p
 
 instance CanMulAsymmetric Integer PPoly where
     type MulType Integer PPoly = PPoly
-    mul n p = lift2PPoly (n*) $ p
+    mul n p = liftBall2PPoly (n*) $ p
 
 instance CanDiv PPoly Integer where
     type DivType PPoly Integer = PPoly
-    divide p n = lift2PPoly (/n) $ p
+    divide p n = liftBall2PPoly (/n) $ p
 
 {- Mixed operations with MPBall -}
 
 instance CanAddAsymmetric PPoly MPBall where
     type AddType PPoly MPBall = PPoly
-    add p n = lift2PPoly (+n) p
+    add p n = liftBall2PPoly (+n) p
 
 instance CanAddAsymmetric MPBall PPoly where
     type AddType MPBall PPoly = PPoly
-    add n p = lift2PPoly (n+) p
+    add n p = liftBall2PPoly (n+) p
 
 instance CanMulAsymmetric PPoly MPBall where
     type MulType PPoly MPBall = PPoly
-    mul p n = lift2PPoly (*n) p
+    mul p n = liftBall2PPoly (*n) p
 
 instance CanMulAsymmetric MPBall PPoly where
     type MulType MPBall PPoly = PPoly
-    mul n p = lift2PPoly (*n) p
+    mul n p = liftBall2PPoly (*n) p
 
 instance CanDiv PPoly MPBall where
     type DivType PPoly MPBall = PPoly
-    divide p n = lift2PPoly (/ n) p
+    divide p n = liftBall2PPoly (/ n) p

@@ -4,7 +4,6 @@ import Numeric.MixedTypes
 import qualified Prelude
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
-import qualified AERN2.Poly.Power.Eval as PE
 import AERN2.Poly.Power.Roots
 import Data.Maybe
 import Data.Map (Map)
@@ -13,6 +12,7 @@ import AERN2.Poly.Power.Type
 {-import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Derivative-}
 import AERN2.Poly.Cheb as Cheb
+import AERN2.Poly.Ball
 import AERN2.PPoly.Type
 import qualified AERN2.PPoly.Eval as PPE
 import AERN2.PQueue (PQueue)
@@ -30,7 +30,7 @@ maximum (PPoly ps ov dom) l r =
   unit    = Interval (dyadic $ -1) (dyadic 1)
   f       = PPoly ps ov unit
   fs      = map snd ps
-  dfsCheb = map (\p -> Cheb.derivative $ ChPoly unit p) fs
+  dfsCheb = map (centre . lift1PolyBall (Cheb.derivative . makeExactCentre)) fs
   dfsPow  = map (cheb2Power . chPoly_poly . centre) dfsCheb
   dfsMap  = Map.fromList $ zip (map (\k -> (k,0)) [0..]) $ zip (map Cheb.evalDirect dfsCheb) dfsPow
   maxKeys = Map.fromList [(k,0) | k <- [0 .. integer $ length ps]]
