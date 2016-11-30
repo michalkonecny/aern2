@@ -106,8 +106,12 @@ instance CanAddAsymmetric PPoly PPoly where
 instance CanMulAsymmetric PPoly PPoly where
   type MulType PPoly PPoly = PPoly
   mul a b =
-    PPoly [(i, mulCheb p q) | (i,p,q) <- refine a b]
+    PPoly [(i, mulPoly i p q) | (i,p,q) <- refine a b]
           (min (ppoly_overlap a) (ppoly_overlap b)) (ppoly_dom a) -- TODO: how to handle polys with different domains?
+    where
+    mulPoly i p q = pq
+      where
+      ChPoly _ pq = mulCheb (ChPoly i p) (ChPoly i q)
 
 instance CanMulAsymmetric Cheb PPoly where
   type MulType Cheb PPoly = PPoly

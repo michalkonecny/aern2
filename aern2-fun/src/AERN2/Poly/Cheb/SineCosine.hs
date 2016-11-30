@@ -26,6 +26,8 @@ import qualified Data.Map as Map
 -- import Test.Hspec
 -- import Test.QuickCheck
 
+import AERN2.Normalize
+
 import AERN2.Norm
 import AERN2.MP.Accuracy
 import AERN2.MP.ErrorBound
@@ -92,7 +94,7 @@ _chPoly10X =
     x :: ChPoly MPBall
     x = varFn sampleFn ()
     sampleFn = constFn (dom, 1)
-    dom = dyadicInterval (0,1.0)
+    dom = dyadicInterval (-1.0,1.0)
 
 _chPolySine10XSine20XX :: Accuracy -> ChPoly MPBall
 _chPolySine10XSine20XX ac =
@@ -102,7 +104,7 @@ _chPolySine10XSine20XX ac =
     x :: ChPoly MPBall
     x = varFn sampleFn ()
     sampleFn = constFn (dom, 1)
-    dom = dyadicInterval (0.0,1.0)
+    dom = dyadicInterval (-1.0,1.0)
 
 
 {-
@@ -202,7 +204,7 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     k = fst $ MPBall.integerBounds $ 0.5 + (2*rC / pi)
 
     -- shift xC near 0 using multiples of pi/2:
-    txC ac = (setPrecisionAtLeastAccuracy ac xC) - k * pi / 2
+    txC ac = (setPrecisionAtLeastAccuracy (ac) xC) - k * pi / 2
     -- work out an absolute range bound for txC:
     (_, trM :: MPBall) = endpoints $ abs $ r - k * pi / 2
 
@@ -227,9 +229,10 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
 sineTaylorSum ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c
-  , HasAccuracy c, CanSetPrecision c, HasNorm c,
-   Show (ChPoly c))
+  (Field c, CanMulBy c CauchyReal
+  , IsBall c, IsInterval c c
+  , HasAccuracy c, CanSetPrecision c
+  , CanNormalize (ChPoly c), Show (ChPoly c), Show c)
   =>
   (Accuracy -> ChPoly c) -> MPBall -> Accuracy -> (ChPoly c, ErrorBound, Integer)
 sineTaylorSum = sineCosineTaylorSum True
@@ -239,17 +242,19 @@ sineTaylorSum = sineCosineTaylorSum True
     it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
 cosineTaylorSum ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c
-  , HasAccuracy c, CanSetPrecision c, HasNorm c,
-   Show (ChPoly c))
+  (Field c, CanMulBy c CauchyReal
+  , IsBall c, IsInterval c c
+  , HasAccuracy c, CanSetPrecision c
+  , CanNormalize (ChPoly c), Show (ChPoly c), Show c)
   =>
   (Accuracy -> ChPoly c) -> MPBall -> Accuracy -> (ChPoly c, ErrorBound, Integer)
 cosineTaylorSum = sineCosineTaylorSum False
 
 sineCosineTaylorSum ::
-  (Ring c, CanDivBy c Integer, IsInterval c c, IsBall c
-  , HasAccuracy c, CanSetPrecision c,  HasNorm c,
-   Show (ChPoly c))
+  (Field c, CanMulBy c CauchyReal
+  , IsBall c, IsInterval c c
+  , HasAccuracy c, CanSetPrecision c
+  , CanNormalize (ChPoly c), Show (ChPoly c), Show c)
   =>
   Bool ->
   (Accuracy -> ChPoly c) -> MPBall -> Accuracy -> (ChPoly c, ErrorBound, Integer)
@@ -385,7 +390,7 @@ sineCosineTaylorSum isSine xAC xM acGuidePre =
         showAAA (i,(pa0,pa,p)) =
           printf "power %d: accuracy req 0: %s, accuracy req: %s, actual accuracy: %s, degree: %d"
             i (show pa0) (show pa) (show $ getAccuracy p) (terms_degree $  poly_coeffs $ chPoly_poly p)
-      reduce i = reduceDegreeWithLostAccuracyLimit ac_i . setPrecisionAtLeastAccuracy (ac_i + 10)
+      reduce i = reduceSizeUsingAccuracyGuide ac_i . setPrecisionAtLeastAccuracy (ac_i + 10)
         where
         ac_i = case Map.lookup i powerAccuracies of
           Just ac -> ac

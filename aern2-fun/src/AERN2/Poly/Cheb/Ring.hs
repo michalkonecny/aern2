@@ -13,13 +13,14 @@
 -}
 
 module AERN2.Poly.Cheb.Ring
--- (
--- )
+(
+  mulCheb, mulChebDirect, mulChebDCT
+)
 where
 
 import Numeric.MixedTypes
 -- import qualified Prelude as P
--- import Text.Printf
+import Text.Printf
 
 -- import Test.Hspec
 -- import Test.QuickCheck
@@ -41,6 +42,19 @@ import AERN2.Real
 import AERN2.Poly.Basics
 
 import AERN2.Poly.Cheb.Type
+import AERN2.Poly.Cheb.DCT
+
+
+import Debug.Trace (trace)
+
+shouldTrace :: Bool
+-- shouldTrace = False
+shouldTrace = True
+
+maybeTrace :: String -> a -> a
+maybeTrace
+    | shouldTrace = trace
+    | otherwise = const id
 
 {- negation -}
 
@@ -91,22 +105,38 @@ $(declForTypes
 {- multiplication -}
 
 instance
-  (Ring c, CanDivBy c Integer, CanNormalize (ChPoly c))
+  (Field c, CanMulBy c CauchyReal, IsInterval c c, CanNormalize (ChPoly c), Show c)
   =>
   CanMulAsymmetric (ChPoly c) (ChPoly c)
   where
   type MulType (ChPoly c) (ChPoly c) = ChPoly c
-  mul (ChPoly d1 p1) (ChPoly d2 p2)
-    | d1 == d2 = normalize $ ChPoly d1 (mulCheb p1 p2)
-    | otherwise = error $ "Multiplying polynomials with incompatible domains"
+  mul = mulCheb
 
--- Poly level
-mulCheb :: (Ring c, CanDivBy c Integer) => (Poly c) -> (Poly c) -> (Poly c)
-mulCheb = mulChebDirect
+mulCheb ::
+  (Field c, CanMulBy c CauchyReal, IsInterval c c, CanNormalize (ChPoly c), Show c)
+  =>
+  (ChPoly c) -> (ChPoly c) -> (ChPoly c)
+mulCheb p1@(ChPoly _ (Poly terms1)) p2@(ChPoly _ (Poly terms2))
+  -- | size1 + size2 < 200
+  | size1 + size2 > 0 -- i.e. always
+    =
+      maybeTrace (printf "size1+size2 = %d, using mulChebDirect" (size1 + size2)) $
+      mulChebDirect p1 p2
+  | otherwise =
+      maybeTrace (printf "size1+size2 = %d, using mulChebDCT" (size1 + size2)) $
+      mulChebDCT p1 p2
+  where
+  size1 = terms_size terms1
+  size2 = terms_size terms2
 
-mulChebDirect :: (Ring c, CanDivBy c Integer) => (Poly c) -> (Poly c) -> (Poly c)
-mulChebDirect (Poly terms1) (Poly terms2) =
-  Poly terms
+mulChebDirect ::
+  (Ring c, CanDivBy c Integer, CanNormalize (ChPoly c))
+  =>
+  (ChPoly c) -> (ChPoly c) -> (ChPoly c)
+mulChebDirect (ChPoly d1 (Poly terms1)) (ChPoly d2 (Poly terms2))
+  | d1 /= d2 = error $ "Multiplying ChPoly's with incompatible domains"
+  | otherwise =
+    normalize $ ChPoly d1 (Poly terms)
   where
   terms =
     terms_fromListAddCoeffs $
@@ -116,6 +146,16 @@ mulChebDirect (Poly terms1) (Poly terms2) =
         (i,a) <- terms_toList terms1,
         (j,b) <- terms_toList terms2
       ]
+
+mulChebDCT ::
+  (Field c, CanMulBy c CauchyReal, IsInterval c c, CanNormalize (ChPoly c), Show c)
+  =>
+  (ChPoly c) -> (ChPoly c) -> (ChPoly c)
+mulChebDCT p1 p2 =
+  reduceDegree (deg1 + deg2) $ lift2_DCT (+) (*) p1 p2
+  where
+  deg1 = terms_degree $ chPoly_terms p1
+  deg2 = terms_degree $ chPoly_terms p2
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]

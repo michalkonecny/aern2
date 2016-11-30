@@ -23,6 +23,8 @@ where
 import Numeric.MixedTypes
 import qualified Prelude as P
 
+import AERN2.Normalize
+
 import AERN2.MP.Dyadic (Dyadic, dyadic)
 import qualified AERN2.MP.Float as MPFloat
 import AERN2.MP.Float (MPFloat, mpFloat)
@@ -151,7 +153,7 @@ fromApproxWithLipschitz ::
     MPFloat {-^ @lip@ a Lipschitz constant for @f@, @lip > 0@ -} ->
     (MPBall -> MPBall) {-^ @f@ on MPBall rounding *outwards* -}
 fromApproxWithLipschitz fDown fUp lip _x@(MPBall xc xe) =
-    normalise $ MPBall fxc err
+    normalize $ MPBall fxc err
     where
     fxl = fDown xc
     fxu = fUp xc

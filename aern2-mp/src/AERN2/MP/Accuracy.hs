@@ -14,6 +14,7 @@ module AERN2.MP.Accuracy
     (Accuracy(NoInformation, Exact), bits, fromAccuracy,
      normLog2Accuracy,
      HasAccuracy(..), getFiniteAccuracy,
+     CanReduceSizeUsingAccuracyGuide(..),
      iterateUntilAccurate,
      convergentList2CauchySeq,
      seqByPrecision2CauchySeq,
@@ -188,6 +189,9 @@ getFiniteAccuracy b =
     case getAccuracy b of
         Exact -> bits $ getPrecision b
         a -> a
+
+class CanReduceSizeUsingAccuracyGuide a where
+  reduceSizeUsingAccuracyGuide :: Accuracy -> a -> a
 
 iterateUntilAccurate ::
   (HasAccuracy t) =>

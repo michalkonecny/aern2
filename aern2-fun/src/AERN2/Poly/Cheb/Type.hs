@@ -52,6 +52,9 @@ chPolyMPBall = convertExactly
 
 data ChPoly c = ChPoly { chPoly_dom :: DyadicInterval, chPoly_poly :: Poly c }
 
+chPoly_terms :: ChPoly c -> Terms c
+chPoly_terms (ChPoly _ (Poly terms)) = terms
+
 instance Show (ChPoly MPBall) where
   show (ChPoly dom poly) = show ppDom
     where
@@ -153,6 +156,33 @@ instance (HasAccuracy c, HasIntegers c, IsBall c) => HasAccuracy (ChPoly c) wher
     Drop all terms that whose degree is above the given limit or whose norm is at or below the threshold.
     Compensate for the drops in the constant term.
 -}
+reduceDegree ::
+  (Ring c, IsInterval c c) =>
+  Degree -> ChPoly c -> ChPoly c
+reduceDegree maxDegree p =
+    p { chPoly_poly = Poly terms' }
+    where
+    (Poly terms) = chPoly_poly p
+    terms' =
+      reduceDegreeTerms maxDegree terms
+
+{-|
+    Drop all terms that whose degree is above the given limit or whose norm is at or below the threshold.
+    Compensate for the drops in the constant term.
+-}
+reduceDegreeTerms ::
+  (Ring c, IsInterval c c) =>
+  Degree -> Terms c -> Terms c
+reduceDegreeTerms maxDegree =
+  reduceTerms isOK
+  where
+  isOK deg _coeff =
+      deg <= maxDegree
+
+{-|
+    Drop all terms that whose degree is above the given limit or whose norm is at or below the threshold.
+    Compensate for the drops in the constant term.
+-}
 reduceDegreeAndSweep ::
   (Ring c, IsInterval c c, HasNorm c) =>
   Degree -> NormLog -> ChPoly c -> ChPoly c
@@ -191,6 +221,12 @@ reduceTerms isOK terms
     koTerms = terms_filter isNotOK terms
     isNotOK deg coeff =
         not $ isOK deg coeff
+
+instance
+  (Ring c, IsInterval c c, HasAccuracy c) =>
+  CanReduceSizeUsingAccuracyGuide (ChPoly c)
+  where
+  reduceSizeUsingAccuracyGuide = reduceDegreeWithLostAccuracyLimit
 
 reduceDegreeWithLostAccuracyLimit ::
   (Ring c, IsInterval c c, HasAccuracy c) =>

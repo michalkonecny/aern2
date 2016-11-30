@@ -17,6 +17,8 @@ where
 import Numeric.MixedTypes
 -- import qualified Prelude as P
 
+import AERN2.Normalize
+
 import AERN2.MP.Dyadic (Dyadic)
 import AERN2.MP.Float (mpFloat)
 import AERN2.MP.Float.Operators
@@ -32,7 +34,7 @@ import AERN2.MP.Ball.Comparisons ()
 instance CanAddAsymmetric MPBall MPBall where
   type AddType MPBall MPBall = MPBall
   add (MPBall x1 e1) (MPBall x2 e2) =
-    normalise $ MPBall sumUp ((sumUp `EB.subMP` sumDn) + e1 + e2)
+    normalize $ MPBall sumUp ((sumUp `EB.subMP` sumDn) + e1 + e2)
     where
     sumUp = x1 +^ x2
     sumDn = x1 +. x2
@@ -85,7 +87,7 @@ instance CanSub Dyadic MPBall
 
 instance CanMulAsymmetric MPBall MPBall where
   mul (MPBall x1 e1) (MPBall x2 e2) =
-    normalise $ MPBall x12Up (e12 + e1*(abs x2) + e2*(abs x1) + e1*e2)
+    normalize $ MPBall x12Up (e12 + e1*(abs x2) + e2*(abs x1) + e1*e2)
       -- the mixed operations above automatically convert
       -- MPFloat to ErrorBound, checking non-negativity
     where
@@ -126,7 +128,7 @@ instance CanMulAsymmetric Rational MPBall where
 instance CanDiv MPBall MPBall where
   divide (MPBall x1 e1) b2@(MPBall x2 e2)
     | isNonZero b2 =
-        normalise $ MPBall x12Up err
+        normalize $ MPBall x12Up err
     | otherwise =
         error $ "Division by MPBall that contains 0: " ++ show b2
     where

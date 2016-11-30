@@ -17,8 +17,7 @@ module AERN2.MP.Ball.Type
   , module AERN2.MP.Accuracy
   -- * The Ball type
   , MPBall(..), CanBeMPBall, mpBall, CanBeMPBallP, mpBallP
-  , normalise, reducePrecionIfInaccurate
-  , setPrecisionAtLeastAccuracy
+  , reducePrecionIfInaccurate
   , contains
   -- * Ball construction/extraction functions
   , IsBall(..), makeExactCentre
@@ -33,6 +32,8 @@ import Numeric.MixedTypes
 import GHC.Generics (Generic)
 
 import Numeric.CatchingExceptions (CanTestValid(..))
+
+import AERN2.Normalize
 
 import AERN2.Norm
 
@@ -70,10 +71,10 @@ instance Show MPBall
 instance CanTestValid MPBall where
   isValid (MPBall x e) = isFinite x && isFinite (mpFloat e)
 
-normalise :: MPBall -> MPBall
-normalise b
-  | isValid b = reducePrecionIfInaccurate b
-  | otherwise = error $ "invalid MPBall: " ++ show b
+instance CanNormalize MPBall where
+  normalize b
+    | isValid b = reducePrecionIfInaccurate b
+    | otherwise = error $ "invalid MPBall: " ++ show b
 
 {-|
     Reduce the precision of the ball centre if the
@@ -202,6 +203,12 @@ mpBall = convertExactly
 instance HasAccuracy MPBall where
     getAccuracy = getAccuracy . ball_error
 
+instance CanReduceSizeUsingAccuracyGuide MPBall where
+  reduceSizeUsingAccuracyGuide acGuide b@(MPBall x _e) =
+    lowerPrecisionIfAbove (getPrecision bWithLowAC) b
+    where
+    bWithLowAC = normalize $
+          MPBall x (errorBound $ 0.5^(fromAccuracy acGuide))
 
 instance HasNorm MPBall where
     getNormLog ball = getNormLog boundMP
@@ -239,7 +246,7 @@ instance CanNeg MPBall where
   negate (MPBall x e) = MPBall (-x) e
 
 instance CanAbs MPBall where
-  abs = normalise . absRaw
+  abs = normalize . absRaw
 
 absRaw :: MPBall -> MPBall
 absRaw b
