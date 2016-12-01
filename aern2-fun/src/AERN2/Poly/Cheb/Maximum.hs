@@ -67,7 +67,7 @@ maximumOptimised (ChPoly dom poly) l r initialDegree steps =
   fc' = makeExactCentre $ derivative $ centre f
   maxKey = ceiling $ (degree f - initialDegree) / steps
   dfsWithEval = Map.fromList [(k,(evalDirect df, (cheb2Power . chPoly_poly . centre) df)) | (k,df) <- dfs] -- TODO maybe reduce initial precision
-  dfs = [(k, reduceDegreeAndSweep (initialDegree + steps*k) NormZero fc') | k <- [0..maxKey]]
+  dfs = [(k, reduceDegree (initialDegree + steps*k) fc') | k <- [0..maxKey]]
 
 {-minimumI :: ChPoly MPBall -> MPBall
 minimumI f = -maximumI (-f)-}

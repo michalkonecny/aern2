@@ -26,12 +26,9 @@ import qualified Data.Map as Map
 -- import Test.Hspec
 -- import Test.QuickCheck
 
-import AERN2.Normalize
-
 import AERN2.Norm
 import AERN2.MP.Accuracy
 import AERN2.MP.ErrorBound
-import AERN2.MP.Float
 import AERN2.MP.Ball (MPBall, mpBall, IsBall(..), IsInterval(..))
 import qualified AERN2.MP.Ball as MPBall
 -- import AERN2.MP.Dyadic
@@ -51,8 +48,8 @@ import AERN2.Poly.Cheb.Eval ()
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
-shouldTrace = False
--- shouldTrace = True
+-- shouldTrace = False
+shouldTrace = True
 
 maybeTrace :: String -> a -> a
 maybeTrace
@@ -229,10 +226,7 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
 sineTaylorSum ::
-  (Field c, CanMulBy c CauchyReal
-  , IsBall c, IsInterval c c
-  , HasAccuracy c, CanSetPrecision c
-  , CanNormalize (ChPoly c), Show (ChPoly c), Show c)
+  (PolyCoeff c, Show (ChPoly c))
   =>
   (Accuracy -> ChPoly c) -> MPBall -> Accuracy -> (ChPoly c, ErrorBound, Integer)
 sineTaylorSum = sineCosineTaylorSum True
@@ -242,19 +236,13 @@ sineTaylorSum = sineCosineTaylorSum True
     it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
 cosineTaylorSum ::
-  (Field c, CanMulBy c CauchyReal
-  , IsBall c, IsInterval c c
-  , HasAccuracy c, CanSetPrecision c
-  , CanNormalize (ChPoly c), Show (ChPoly c), Show c)
+  (PolyCoeff c, Show (ChPoly c))
   =>
   (Accuracy -> ChPoly c) -> MPBall -> Accuracy -> (ChPoly c, ErrorBound, Integer)
 cosineTaylorSum = sineCosineTaylorSum False
 
 sineCosineTaylorSum ::
-  (Field c, CanMulBy c CauchyReal
-  , IsBall c, IsInterval c c
-  , HasAccuracy c, CanSetPrecision c
-  , CanNormalize (ChPoly c), Show (ChPoly c), Show c)
+  (PolyCoeff c, Show (ChPoly c))
   =>
   Bool ->
   (Accuracy -> ChPoly c) -> MPBall -> Accuracy -> (ChPoly c, ErrorBound, Integer)

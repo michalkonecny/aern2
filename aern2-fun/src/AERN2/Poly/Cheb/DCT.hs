@@ -30,8 +30,9 @@ import Math.NumberTheory.Logarithms (integerLog2)
 
 import AERN2.Normalize
 
+import AERN2.MP.Precision
 -- import AERN2.MP.ErrorBound
--- import AERN2.MP.Ball
+import AERN2.MP.Ball
 -- import AERN2.MP.Dyadic
 
 import AERN2.Real
@@ -61,39 +62,54 @@ maybeTrace
   pointwise to the given polynomials @p1@ and @p2@.
 -}
 lift2_DCT ::
-  (Field c, CanMulBy c CauchyReal, CanNormalize (ChPoly c), Show c) =>
+  (PolyCoeff c)
+  =>
   (Degree -> Degree -> Degree)
     {-^ detemining a degree bound for the result from the degrees of @p1@ and @p2@ -} ->
   (c -> c -> c) {-^ the function @f@ to apply pointwise to @p1@ and @p2@ -} ->
   ChPoly c {-^ @p1@ -} -> ChPoly c {-^ @p2@ -} -> ChPoly c
-lift2_DCT getDegree op (ChPoly domA (Poly termsA)) (ChPoly domB (Poly termsB))
+lift2_DCT getDegree op pA pB
   | domA /= domB = error "lift2_DCT: combining functions with incompatible domains"
   | otherwise =
     -- maybeTrace
     -- (
     --     "lift2_DCT:"
     --     ++ "\n cN = " ++ show cN
-    --     ++ "\n dA = " ++ show dA
-    --     ++ "\n dB = " ++ show dB
-    --     ++ "\n aT = " ++ show aT
-    --     ++ "\n bT = " ++ show bT
-    --     ++ "\n cT = " ++ show cT
-    --     ++ "\n c = " ++ show c
+    --     ++ "\n prc = " ++ show prc
+    --     ++ "\n workingPrec = " ++ show workingPrec
+    --     -- ++ "\n dA = " ++ show dA
+    --     -- ++ "\n dB = " ++ show dB
+    --     -- ++ "\n aT = " ++ show aT
+    --     -- ++ "\n bT = " ++ show bT
+    --     -- ++ "\n cT = " ++ show cT
+    --     -- ++ "\n c = " ++ show c
     -- ) $
+    result
+  where
+  dA = terms_degree $ chPoly_terms pA
+  dB = terms_degree $ chPoly_terms pB
+  resultDegree = getDegree dA dB
+  cNexponent = 1 + (integer $ integerLog2 $ max 1 (resultDegree + 1))
+  cN = 2 ^ cNexponent
+
+  -- prc = (getPrecision pA) `max` (getPrecision pB)
+  -- workingPrec = prc
+  (ChPoly domA (Poly termsA)) = pA -- setPrecision workingPrec pA
+  (ChPoly domB (Poly termsB)) = pB -- setPrecision workingPrec pB
+
+  aT = coeffs2gridvalues cN termsA
+  bT = coeffs2gridvalues cN termsB
+
+  cT = zipWith op aT bT -- multiplication of the cN+1 values of the polynomials on the grid
+
+  (c0Double : c) = map (* (2 / cN)) (tDCT_I_nlogn cT) -- interpolate the values using a polynomial
+
+  result =
     normalize $
-    ChPoly domA $ Poly $ terms_fromList $ zip [0..] (c0Double / 2 : c)
+    -- setPrecision prc $ 
+    reduceDegree resultDegree $
+      ChPoly domA $ Poly $ terms_fromList $ zip [0..] (c0Double / 2 : c)
 --    terms_fromList [(0, mpBall 1)] -- dummy for debugging exceptions
-    where
-    (c0Double : c) = map (* (2 / cN)) (tDCT_I_nlogn cT) -- interpolate the values using a polynomial
-
-    cT = zipWith op aT bT -- multiplication of the cN+1 values of the polynomials on the grid
-
-    aT = coeffs2gridvalues cN termsA
-    bT = coeffs2gridvalues cN termsB
-
-    cN = 2 ^ (1 + (integer $ integerLog2 $ max 1 (getDegree dA dB + 1)))
-    dA = terms_degree termsA
-    dB = terms_degree termsB
 
 {-|
   DCT-approximate the result of applying the given function @f@

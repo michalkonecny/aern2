@@ -66,6 +66,13 @@ instance Show (ChPoly MPBall) where
     rB = mpBall r
     Interval l r = dom
 
+
+
+showInternals :: (Show c) => ChPoly c -> String
+showInternals (ChPoly dom (Poly terms)) =
+  "ChPoly: dom = " ++ show dom ++
+  ", terms = " ++ show terms
+
 fromDomToUnitInterval ::
   (CanAddSubMulDivBy t Dyadic) =>
   DyadicInterval -> t -> t
@@ -90,20 +97,21 @@ instance (IsBall c, HasIntegers c) => IsBall (ChPoly c) where
     ChPoly dom (Poly $ terms_updateConst (updateRadius updateFn) terms)
 
 instance
-  (HasNorm c, Ring c, HasPrecision c, IsInterval c c, IsBall c) =>
+  (PolyCoeff c) =>
   CanNormalize (ChPoly c) where
-  normalize = sweepUsingPrecision . makeExactCentre
+  normalize = makeExactCentre . sweepUsingAccuracy
 
-sweepUsingPrecision ::
-  (HasNorm c, Ring c, HasPrecision c, IsInterval c c) =>
+sweepUsingAccuracy ::
+  (PolyCoeff c) =>
   ChPoly c -> ChPoly c
-sweepUsingPrecision (ChPoly dom poly@(Poly ts)) =
+sweepUsingAccuracy (ChPoly dom poly@(Poly ts)) =
   ChPoly dom (Poly ts')
   where
-  ts' = reduceTerms isOK ts
-  isOK _deg coeff =
-    normLog2Accuracy (getNormLog coeff) < prcAccuracy
-  prcAccuracy = bits $ (integer $ getPrecision poly) + 2
+  ts' = reduceTerms shouldKeep ts
+  shouldKeep deg coeff =
+    normLog2Accuracy (getNormLog coeff) <= deg + thresholdAcc
+      -- prefer to remove terms with higher degree
+  thresholdAcc = getFiniteAccuracy poly
 
 {- constructors -}
 
@@ -144,8 +152,8 @@ degree (ChPoly _ (Poly ts)) = terms_degree ts
 instance (HasPrecision c) => HasPrecision (ChPoly c) where
   getPrecision (ChPoly _ poly) = getPrecision poly
 
-instance (CanSetPrecision c) => CanSetPrecision (ChPoly c) where
-  setPrecision p (ChPoly dom poly) = ChPoly dom $ setPrecision p poly
+instance (PolyCoeff c) => CanSetPrecision (ChPoly c) where
+  setPrecision p (ChPoly dom poly) = normalize $ ChPoly dom $ setPrecision p poly
 
 {- accuracy -}
 
@@ -157,7 +165,7 @@ instance (HasAccuracy c, HasIntegers c, IsBall c) => HasAccuracy (ChPoly c) wher
     Compensate for the drops in the constant term.
 -}
 reduceDegree ::
-  (Ring c, IsInterval c c) =>
+  (PolyCoeff c) =>
   Degree -> ChPoly c -> ChPoly c
 reduceDegree maxDegree p =
     p { chPoly_poly = Poly terms' }
@@ -171,65 +179,39 @@ reduceDegree maxDegree p =
     Compensate for the drops in the constant term.
 -}
 reduceDegreeTerms ::
-  (Ring c, IsInterval c c) =>
+  (PolyCoeff c) =>
   Degree -> Terms c -> Terms c
 reduceDegreeTerms maxDegree =
-  reduceTerms isOK
+  reduceTerms shouldKeep
   where
-  isOK deg _coeff =
+  shouldKeep deg _coeff =
       deg <= maxDegree
 
-{-|
-    Drop all terms that whose degree is above the given limit or whose norm is at or below the threshold.
-    Compensate for the drops in the constant term.
--}
-reduceDegreeAndSweep ::
-  (Ring c, IsInterval c c, HasNorm c) =>
-  Degree -> NormLog -> ChPoly c -> ChPoly c
-reduceDegreeAndSweep maxDegree thresholdNormLog p =
-    p { chPoly_poly = Poly terms' }
-    where
-    (Poly terms) = chPoly_poly p
-    terms' =
-      reduceDegreeAndSweepTerms maxDegree thresholdNormLog terms
-
-{-|
-    Drop all terms that whose degree is above the given limit or whose norm is at or below the threshold.
-    Compensate for the drops in the constant term.
--}
-reduceDegreeAndSweepTerms ::
-  (Ring c, IsInterval c c, HasNorm c) =>
-  Degree -> NormLog -> Terms c -> Terms c
-reduceDegreeAndSweepTerms maxDegree thresholdNormLog =
-  reduceTerms isOK
-  where
-  isOK deg coeff =
-      deg <= maxDegree && (deg == 0 || getNormLog coeff > thresholdNormLog)
-
 reduceTerms ::
-  (Ring c, IsInterval c c) =>
+  (PolyCoeff c) =>
   (Degree -> c -> Bool) -> Terms c -> Terms c
-reduceTerms isOK terms
-    | terms_size koTerms == 0 = terms
+reduceTerms shouldKeepPre terms
+    | terms_size termsToRemove == 0 = terms
     | otherwise =
-        terms_insertWith (+) 0 errorBall (terms_filter isOK terms)
+        terms_insertWith (+) 0 errorBall (terms_filter shouldKeep terms)
     where
+    shouldKeep deg coeff = deg == 0 || shouldKeepPre deg coeff
     errorBall =
-        sum $ map plusMinus $ terms_coeffs koTerms
+        sum $ map plusMinus $ terms_coeffs termsToRemove
         where
         plusMinus c = fromEndpoints (-c) c
-    koTerms = terms_filter isNotOK terms
-    isNotOK deg coeff =
-        not $ isOK deg coeff
+    termsToRemove = terms_filter shouldRemove terms
+    shouldRemove deg coeff =
+        not $ shouldKeep deg coeff
 
 instance
-  (Ring c, IsInterval c c, HasAccuracy c) =>
+  (PolyCoeff c) =>
   CanReduceSizeUsingAccuracyGuide (ChPoly c)
   where
   reduceSizeUsingAccuracyGuide = reduceDegreeWithLostAccuracyLimit
 
 reduceDegreeWithLostAccuracyLimit ::
-  (Ring c, IsInterval c c, HasAccuracy c) =>
+  (PolyCoeff c) =>
   Accuracy -> ChPoly c -> ChPoly c
 reduceDegreeWithLostAccuracyLimit accuracyLossLimit p =
     p { chPoly_poly = Poly terms' }
@@ -239,7 +221,7 @@ reduceDegreeWithLostAccuracyLimit accuracyLossLimit p =
       reduceDegreeWithLostAccuracyLimitTerms accuracyLossLimit terms
 
 reduceDegreeWithLostAccuracyLimitTerms ::
-  (Ring c, IsInterval c c, HasAccuracy c) =>
+  (PolyCoeff c) =>
   Accuracy -> Terms c -> Terms c
 reduceDegreeWithLostAccuracyLimitTerms accuracyLossLimit (termsMap :: Terms c) =
   terms_updateConst (+ err) (terms_fromList termsToKeep)

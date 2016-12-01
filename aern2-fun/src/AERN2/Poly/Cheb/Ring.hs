@@ -65,7 +65,7 @@ instance CanNegSameType c => CanNeg (ChPoly c) where
 {- addition -}
 
 instance
-  (CanAddSameType c, HasIntegers c, CanNormalize (ChPoly c))
+  (PolyCoeff c)
   =>
   CanAddAsymmetric (ChPoly c) (ChPoly c)
   where
@@ -90,7 +90,7 @@ $(declForTypes
 {- subtraction -}
 
 instance
-  (CanAddSameType c, CanNegSameType c, HasIntegers c, CanNormalize (ChPoly c))
+  (PolyCoeff c)
   =>
   CanSub (ChPoly c) (ChPoly c)
 
@@ -105,7 +105,7 @@ $(declForTypes
 {- multiplication -}
 
 instance
-  (Field c, CanMulBy c CauchyReal, IsInterval c c, CanNormalize (ChPoly c), Show c)
+  (PolyCoeff c)
   =>
   CanMulAsymmetric (ChPoly c) (ChPoly c)
   where
@@ -113,12 +113,13 @@ instance
   mul = mulCheb
 
 mulCheb ::
-  (Field c, CanMulBy c CauchyReal, IsInterval c c, CanNormalize (ChPoly c), Show c)
+  (PolyCoeff c)
   =>
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
 mulCheb p1@(ChPoly _ (Poly terms1)) p2@(ChPoly _ (Poly terms2))
+  | size1 + size2 < 1000
   -- | size1 + size2 < 200
-  | size1 + size2 > 0 -- i.e. always
+  -- | size1 + size2 > 0 -- i.e. always
     =
       maybeTrace (printf "size1+size2 = %d, using mulChebDirect" (size1 + size2)) $
       mulChebDirect p1 p2
@@ -130,7 +131,7 @@ mulCheb p1@(ChPoly _ (Poly terms1)) p2@(ChPoly _ (Poly terms2))
   size2 = terms_size terms2
 
 mulChebDirect ::
-  (Ring c, CanDivBy c Integer, CanNormalize (ChPoly c))
+  (PolyCoeff c)
   =>
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
 mulChebDirect (ChPoly d1 (Poly terms1)) (ChPoly d2 (Poly terms2))
@@ -148,14 +149,16 @@ mulChebDirect (ChPoly d1 (Poly terms1)) (ChPoly d2 (Poly terms2))
       ]
 
 mulChebDCT ::
-  (Field c, CanMulBy c CauchyReal, IsInterval c c, CanNormalize (ChPoly c), Show c)
+  (PolyCoeff c)
   =>
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
-mulChebDCT p1 p2 =
-  reduceDegree (deg1 + deg2) $ lift2_DCT (+) (*) p1 p2
+mulChebDCT p1 p2 = lift2_DCT (+) (*) p1WithPrec p2WithPrec
   where
-  deg1 = terms_degree $ chPoly_terms p1
-  deg2 = terms_degree $ chPoly_terms p2
+  p1WithPrec = raisePrecisionIfBelow minPrec p1
+  p2WithPrec = raisePrecisionIfBelow minPrec p2
+  minPrec = prec (100 + 2*(size1 + size2)) -- TODO: improve this heuristic
+  size1 = terms_size $ chPoly_terms p1
+  size2 = terms_size $ chPoly_terms p2
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]

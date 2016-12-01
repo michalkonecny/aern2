@@ -41,6 +41,16 @@ import AERN2.Real
 
 {- types -}
 
+{-|
+  a shortcut type constraint for
+  types suitable as coefficients of our polynomials
+-}
+type PolyCoeff c =
+  (Field c, CanMulBy c CauchyReal
+  , IsInterval c c, IsBall c
+  , HasAccuracy c, HasNorm c, CanSetPrecision c
+  , Show c)
+
 data Poly c = Poly { poly_coeffs :: Terms c }
 
 type Terms c = Map.Map Degree c
