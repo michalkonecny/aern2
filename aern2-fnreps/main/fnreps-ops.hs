@@ -23,6 +23,7 @@ import AERN2.Real
 import AERN2.Interval
 
 import AERN2.RealFun.Operations
+import AERN2.RealFun.SineCosine
 import AERN2.RealFun.UnaryFun
 import AERN2.RealFun.UnaryDFun
 import AERN2.Poly.Cheb (ChPoly, chPolyMPBall)
@@ -158,8 +159,8 @@ sinecos_PB :: Accuracy -> ChPoly MPBall
 sinecos_PB acGuide =
   sine(10*x)+cosine(20*x)
   where
-  sine = ChPoly.sineWithAccuracyGuide acGuide
-  cosine = ChPoly.cosineWithAccuracyGuide acGuide
+  sine = sineWithAccuracyGuide acGuide
+  cosine = cosineWithAccuracyGuide acGuide
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 sinecos_B2B :: UnaryFun
@@ -183,8 +184,8 @@ sinesine_PB :: Accuracy -> ChPoly MPBall
 sinesine_PB acGuide =
   sine2(10*x + sine1(20*x*x))
   where
-  sine1 = ChPoly.sineWithAccuracyGuide (acGuide+2)
-  sine2 = ChPoly.sineWithAccuracyGuide acGuide
+  sine1 = sineWithAccuracyGuide (acGuide+2)
+  sine2 = sineWithAccuracyGuide acGuide
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 sinesine_B2B :: UnaryFun
@@ -215,9 +216,9 @@ sinesineCos_PB acGuide =
     + cosine2(10*x)
     -- + sine2(10*x)
   where
-  sine1 = ChPoly.sineWithAccuracyGuide (acGuide+2)
-  sine2 = ChPoly.sineWithAccuracyGuide acGuide
-  cosine2 = ChPoly.cosineWithAccuracyGuide acGuide
+  sine1 = sineWithAccuracyGuide (acGuide+2)
+  sine2 = sineWithAccuracyGuide acGuide
+  cosine2 = cosineWithAccuracyGuide acGuide
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 sinesineCos_B2B :: UnaryFun

@@ -1,6 +1,6 @@
 {-|
-    Module      :  AERN2.Poly.Cheb.SineCosine
-    Description :  Sine and cosine for polynomials
+    Module      :  AERN2.RealFun.SineCosine
+    Description :  Pointwise sine and cosine for functions
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -8,16 +8,16 @@
     Stability   :  experimental
     Portability :  portable
 
-    Sine and cosine for polynomials
+    Pointwise sine and cosine for functions
 -}
 
-module AERN2.Poly.Cheb.SineCosine
+module AERN2.RealFun.SineCosine
 -- (
 -- )
 where
 
 import Numeric.MixedTypes
-import qualified Prelude as P
+-- import qualified Prelude as P
 import Text.Printf
 
 import qualified Data.Map as Map
@@ -26,24 +26,15 @@ import qualified Data.Map as Map
 -- import Test.Hspec
 -- import Test.QuickCheck
 
-import AERN2.Norm
-import AERN2.MP.Accuracy
-import AERN2.MP.ErrorBound
-import AERN2.MP.Ball (MPBall, mpBall, IsBall(..), IsInterval(..))
+import AERN2.MP
 import qualified AERN2.MP.Ball as MPBall
 -- import AERN2.MP.Dyadic
 
 import AERN2.Real
 
-import AERN2.Interval
+-- import AERN2.Interval
 import AERN2.RealFun.Operations
--- import AERN2.RealFun.UnaryFun
 
-import AERN2.Poly.Basics
-
-import AERN2.Poly.Cheb.Type
-import AERN2.Poly.Cheb.Ring ()
-import AERN2.Poly.Cheb.Eval ()
 
 import Debug.Trace (trace)
 
@@ -55,76 +46,6 @@ maybeTrace :: String -> a -> a
 maybeTrace
     | shouldTrace = trace
     | otherwise = const id
-
-
-_chPolySineX :: Accuracy -> ChPoly MPBall
-_chPolySineX ac =
-    sineWithAccuracyGuide ac x
-    where
-    x :: ChPoly MPBall
-    x = varFn sampleFn ()
-    sampleFn = constFn (dom, 1)
-    dom = dyadicInterval (-1.0,1.0)
-
-_chPolySine10X :: Accuracy -> ChPoly MPBall
-_chPolySine10X ac =
-    sineWithAccuracyGuide ac (10*x)
-    where
-    x :: ChPoly MPBall
-    x = varFn sampleFn ()
-    sampleFn = constFn (dom, 1)
-    dom = dyadicInterval (-1.0,1.0)
-
-_chPolyCosine10X :: Accuracy -> ChPoly MPBall
-_chPolyCosine10X ac =
-    cosineWithAccuracyGuide ac (10*x)
-    where
-    x :: ChPoly MPBall
-    x = varFn sampleFn ()
-    sampleFn = constFn (dom, 1)
-    dom = dyadicInterval (-1.0,1.0)
-
-_chPoly10X :: ChPoly MPBall
-_chPoly10X =
-    10*x
-    where
-    x :: ChPoly MPBall
-    x = varFn sampleFn ()
-    sampleFn = constFn (dom, 1)
-    dom = dyadicInterval (-1.0,1.0)
-
-_chPolySine10XSine20XX :: Accuracy -> ChPoly MPBall
-_chPolySine10XSine20XX ac =
-    sine(10*x + sine(20*x*x))
-    where
-    sine = sineWithAccuracyGuide ac
-    x :: ChPoly MPBall
-    x = varFn sampleFn ()
-    sampleFn = constFn (dom, 1)
-    dom = dyadicInterval (-1.0,1.0)
-
-
-{-
-
-_testSine10X :: ChPoly MPBall
-_testSine10X =
-    sineWithPrecDegSweep (prec 100) 100 NormZero (10*x)
-    where
-    x :: ChPoly MPBall
-    x = varFn sampleFn ()
-    sampleFn = constFn (dom, 1)
-    dom = dyadicInterval (0.0,1.0)
-
-_testSine10Xe :: ChPoly MPBall
-_testSine10Xe =
-    sineWithPrecDegSweep (prec 100) 100 NormZero (updateRadius (+ (errorBound 0.1)) (10*x))
-    where
-    x :: ChPoly MPBall
-    x = varFn sampleFn ()
-    sampleFn = constFn (dom, 1)
-    dom = dyadicInterval (0.0,1.0)
-
--}
 
 {-
     To compute sin(xC+-xE):
@@ -143,23 +64,39 @@ _testSine10Xe =
 -}
 
 sineWithAccuracyGuide ::
-  Accuracy -> ChPoly MPBall -> ChPoly MPBall
+  (HasDomain f, CanApplyApprox f (Domain f)
+  , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
+  , CanNegSameType f, CanAddSameType f, CanMulSameType f
+  , CanAddSubMulDivBy f Integer, CanAddSubMulDivBy f CauchyReal
+  , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
+  , IsBall f
+  , Show f)
+  =>
+  Accuracy -> f -> f
 sineWithAccuracyGuide = sineCosineWithAccuracyGuide True
 
 cosineWithAccuracyGuide ::
-  Accuracy -> ChPoly MPBall -> ChPoly MPBall
+  (HasDomain f, CanApplyApprox f (Domain f)
+  , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
+  , CanNegSameType f, CanAddSameType f, CanMulSameType f
+  , CanAddSubMulDivBy f Integer, CanAddSubMulDivBy f CauchyReal
+  , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
+  , IsBall f
+  , Show f)
+  =>
+  Accuracy -> f -> f
 cosineWithAccuracyGuide = sineCosineWithAccuracyGuide False
 
 sineCosineWithAccuracyGuide ::
-  -- (Field c, CanMinMaxSameType c,
-  --  CanAbsSameType c,
-  --  CanAddSubMulDivBy c CauchyReal,
-  --  ConvertibleExactly Dyadic c,
-  --  HasNorm c,  CanRound c,
-  --  IsBall c, IsInterval c c,
-  --  CanApply (ChPoly c) c, ApplyType (ChPoly c) c ~ c)
-  -- =>
-  Bool -> Accuracy -> ChPoly MPBall -> ChPoly MPBall
+  (HasDomain f, CanApplyApprox f (Domain f)
+  , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
+  , CanNegSameType f, CanAddSameType f, CanMulSameType f
+  , CanAddSubMulDivBy f Integer, CanAddSubMulDivBy f CauchyReal
+  , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
+  , IsBall f
+  , Show f)
+  =>
+  Bool -> Accuracy -> f -> f
 sineCosineWithAccuracyGuide isSine acGuide x =
     maybeTrace
     (
@@ -189,7 +126,7 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     isCosine = not isSine
 
     -- first separate the centre of the polynomial x from its radius:
-    xC = centre x
+    xC = centreAsBall x
     xE = radius x
     xAccuracy = getAccuracy x
 
@@ -226,9 +163,11 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
 sineTaylorSum ::
-  (PolyCoeff c, Show (ChPoly c))
+  (CanAddSameType f, CanMulSameType f, CanAddSubMulDivBy f Integer
+  , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
+  , Show f)
   =>
-  (Accuracy -> ChPoly c) -> MPBall -> Accuracy -> (ChPoly c, ErrorBound, Integer)
+  (Accuracy -> f) -> MPBall -> Accuracy -> (f, ErrorBound, Integer)
 sineTaylorSum = sineCosineTaylorSum True
 
 {-|
@@ -236,16 +175,20 @@ sineTaylorSum = sineCosineTaylorSum True
     it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
 cosineTaylorSum ::
-  (PolyCoeff c, Show (ChPoly c))
+  (CanAddSameType f, CanMulSameType f, CanAddSubMulDivBy f Integer
+  , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
+  , Show f)
   =>
-  (Accuracy -> ChPoly c) -> MPBall -> Accuracy -> (ChPoly c, ErrorBound, Integer)
+  (Accuracy -> f) -> MPBall -> Accuracy -> (f, ErrorBound, Integer)
 cosineTaylorSum = sineCosineTaylorSum False
 
 sineCosineTaylorSum ::
-  (PolyCoeff c, Show (ChPoly c))
+  (CanAddSameType f, CanMulSameType f, CanAddSubMulDivBy f Integer
+  , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
+  , Show f)
   =>
   Bool ->
-  (Accuracy -> ChPoly c) -> MPBall -> Accuracy -> (ChPoly c, ErrorBound, Integer)
+  (Accuracy -> f) -> MPBall -> Accuracy -> (f, ErrorBound, Integer)
 sineCosineTaylorSum isSine xAC xM acGuidePre =
     let
     acGuide = acGuidePre + 4
@@ -376,8 +319,8 @@ sineCosineTaylorSum isSine xAC xM acGuidePre =
             Map.intersectionWith (,) powerAccuracies0 powerAccuracies
         where
         showAAA (i,(pa0,pa,p)) =
-          printf "power %d: accuracy req 0: %s, accuracy req: %s, actual accuracy: %s, degree: %d"
-            i (show pa0) (show pa) (show $ getAccuracy p) (terms_degree $  poly_coeffs $ chPoly_poly p)
+          printf "power %d: accuracy req 0: %s, accuracy req: %s, actual accuracy: %s" -- , degree: %d"
+            i (show pa0) (show pa) (show $ getAccuracy p) -- (terms_degree $  poly_coeffs $ chPoly_poly p)
       reduce i = reduceSizeUsingAccuracyGuide ac_i . setPrecisionAtLeastAccuracy (ac_i + 10)
         where
         ac_i = case Map.lookup i powerAccuracies of
@@ -398,9 +341,9 @@ sineCosineTaylorSum isSine xAC xM acGuidePre =
       sign = if (even $ i `div` 2) then 1 else -1
     in
     (termSum, termSumEB, n)
-
-lookupForce :: P.Ord k => k -> Map.Map k a -> a
-lookupForce j amap =
-    case Map.lookup j amap of
-        Just t -> t
-        Nothing -> error "internal error in SineCosine.lookupForce"
+--
+-- lookupForce :: P.Ord k => k -> Map.Map k a -> a
+-- lookupForce j amap =
+--     case Map.lookup j amap of
+--         Just t -> t
+--         Nothing -> error "internal error in SineCosine.lookupForce"

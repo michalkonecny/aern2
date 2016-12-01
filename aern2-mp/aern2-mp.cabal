@@ -66,6 +66,7 @@ library
     AERN2.TH
     AERN2.Normalize
     AERN2.Norm
+    AERN2.MP
     AERN2.MP.Precision
     AERN2.MP.Float
     AERN2.MP.Float.Type

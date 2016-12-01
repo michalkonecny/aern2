@@ -2,12 +2,12 @@ import Numeric.MixedTypes
 -- import qualified Prelude as P
 
 import AERN2.MP.Dyadic
-import AERN2.MP.Ball as MPBall
+import AERN2.MP
 
 import AERN2.Interval
 import AERN2.RealFun.Operations
+import AERN2.RealFun.SineCosine
 import AERN2.Poly.Cheb (ChPoly)
-import qualified AERN2.Poly.Cheb as ChPoly
 
 import AERN2.RealFun.PlotService as Plot
 
@@ -28,8 +28,8 @@ fnsCP = map chPolyFn
   , ("x-x", xP - xP)
   ]
   where
-  sine = ChPoly.sineWithAccuracyGuide (bits 5)
-  cosine = ChPoly.cosineWithAccuracyGuide (bits 5)
+  sine = sineWithAccuracyGuide (bits 5)
+  cosine = cosineWithAccuracyGuide (bits 5)
   chPolyFn (name, cp) =
     Plot.Function
     { function_name = name
@@ -45,9 +45,9 @@ fnsCP = map chPolyFn
   sampleFnP = constFn (domP, 1)
   domP = dyadicInterval (0.0,1.0)
   applyViaMPBall cp di =
-    Interval (v-(mpBall (dyadic e))) (v+(mpBall (dyadic e)))
+    Interval (v-e) (v+e)
     where
     cpC = centreAsBall cp
-    e = radius cp
+    e = mpBall $ dyadic $ radius cp
     v :: MPBall
     v = apply cpC (mpBall di)

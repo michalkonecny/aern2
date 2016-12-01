@@ -196,3 +196,12 @@ $(declForTypes
       type DivType (ChPoly c) $t = ChPoly c
       divide (ChPoly d1 p1) n = normalize $ ChPoly d1 (p1/n)
   |]))
+
+
+{- integer power -}
+
+instance (PolyCoeff c) => CanPow (ChPoly c) Integer where
+  pow = undefined -- powUsingMul
+
+instance (PolyCoeff c) => CanPow (ChPoly c) Int where
+  pow = undefined -- powUsingMul

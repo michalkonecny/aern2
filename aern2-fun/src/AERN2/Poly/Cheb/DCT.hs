@@ -30,9 +30,9 @@ import Math.NumberTheory.Logarithms (integerLog2)
 
 import AERN2.Normalize
 
-import AERN2.MP.Precision
+-- import AERN2.MP.Precision
 -- import AERN2.MP.ErrorBound
-import AERN2.MP.Ball
+-- import AERN2.MP.Ball
 -- import AERN2.MP.Dyadic
 
 import AERN2.Real
@@ -106,7 +106,7 @@ lift2_DCT getDegree op pA pB
 
   result =
     normalize $
-    -- setPrecision prc $ 
+    -- setPrecision prc $
     reduceDegree resultDegree $
       ChPoly domA $ Poly $ terms_fromList $ zip [0..] (c0Double / 2 : c)
 --    terms_fromList [(0, mpBall 1)] -- dummy for debugging exceptions

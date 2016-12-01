@@ -41,8 +41,7 @@ import Elm
 
 import AERN2.MP.Float
 import AERN2.MP.Dyadic
-import AERN2.MP.Ball
-import AERN2.MP.ErrorBound
+import AERN2.MP
 
 import AERN2.Interval
 
