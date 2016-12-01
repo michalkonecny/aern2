@@ -1,11 +1,15 @@
 module AERN2.Poly.Cheb.Maximum
 (
 maximum,
-maximumOptimised
+maximumOptimised,
+maximumOptimisedWithAccuracy,
+minimum,
+minimumOptimised,
+minimumOptimisedWithAccuracy
 ) where
 
 
-import Numeric.MixedTypes hiding (maximum)
+import Numeric.MixedTypes hiding (maximum, minimum)
 import AERN2.MP.Ball
 -- import AERN2.MP.Dyadic
 import qualified Data.Map as Map
@@ -56,10 +60,11 @@ maximum (ChPoly dom poly) l r  =
      else
        powDerivative (n + m) n
 
-maximumOptimised :: ChPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall
-maximumOptimised (ChPoly dom poly) l r initialDegree steps =
+maximumOptimisedWithAccuracy
+  :: Accuracy -> ChPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall
+maximumOptimisedWithAccuracy acc (ChPoly dom poly) l r initialDegree steps =
   Pow.genericMaximum (evalDf f f') dfsWithEval
-    (getAccuracy f)
+    acc
     (fromDomToUnitInterval dom l) (fromDomToUnitInterval dom r)
   where
   f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly
@@ -69,5 +74,15 @@ maximumOptimised (ChPoly dom poly) l r initialDegree steps =
   dfsWithEval = Map.fromList [(k,(evalDirect df, (cheb2Power . chPoly_poly . centre) df)) | (k,df) <- dfs] -- TODO maybe reduce initial precision
   dfs = [(k, reduceDegree (initialDegree + steps*k) fc') | k <- [0..maxKey]]
 
-{-minimumI :: ChPoly MPBall -> MPBall
-minimumI f = -maximumI (-f)-}
+maximumOptimised :: ChPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall
+maximumOptimised f =
+  maximumOptimisedWithAccuracy (getAccuracy f) f
+
+minimum :: ChPoly MPBall -> MPBall -> MPBall -> MPBall
+minimum f l r = -(maximum (-f) l r)
+
+minimumOptimisedWithAccuracy :: Accuracy -> ChPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall
+minimumOptimisedWithAccuracy acc f l r iDeg steps = -(maximumOptimisedWithAccuracy acc (-f) l r iDeg steps)
+
+minimumOptimised :: ChPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall
+minimumOptimised f = minimumOptimisedWithAccuracy (getAccuracy f) f

@@ -32,9 +32,11 @@ import AERN2.TH
 import AERN2.Normalize
 
 import AERN2.MP.ErrorBound
-import AERN2.MP.Ball (MPBall, IsBall(..))
+import AERN2.MP.Ball (MPBall, IsBall(..), mpBall, getPrecision, setPrecision)
 -- import qualified AERN2.MP.Ball as MPBall
 import AERN2.MP.Dyadic
+import AERN2.MP.Accuracy
+
 
 import AERN2.Real
 
@@ -67,6 +69,19 @@ polyBall = convertExactly
 
 data Ball c = Ball { ball_value :: c, ball_radius :: ErrorBound }
 
+lift1PolyBall :: (ChPoly MPBall -> c) -> (PolyBall -> c)
+lift1PolyBall f (Ball c e) = f (updateRadius (+ e) c)
+
+lift2PolyBall :: (ChPoly MPBall -> c -> c) -> (PolyBall -> c -> c)
+lift2PolyBall f (Ball c e) = f (updateRadius (+ e) c)
+
+instance (IsBall c) => IsBall (Ball c) where
+  type CentreType (Ball c) = c
+  centre = ball_value
+  radius = ball_radius
+  updateRadius updateFn (Ball c r) = Ball c (updateFn r)
+  centreAsBallAndRadius (Ball c r) = (Ball c (errorBound 0), r)
+
 instance (IsBall c) => CanNormalize (Ball c) where
   normalize (Ball x e) = Ball (centreAsBall x) (radius x + e)
 
@@ -94,6 +109,13 @@ instance (HasDomain c) => HasDomain (Ball c)
 instance (HasVars c) => HasVars (Ball c) where
   type Var (Ball c) = Var c
   varFn (Ball c _) var = Ball (varFn c var) (errorBound 0)
+
+{- accuracy -}
+
+instance (HasAccuracy c, IsBall c) => HasAccuracy (Ball c) where
+  getAccuracy (Ball p e) =
+    getAccuracy (updateRadius (+ e) p)
+
 
 {- negation -}
 
@@ -133,6 +155,29 @@ $(declForTypes
 
 {- multiplication -}
 
+multiplyWithBounds :: PolyBall -> MPBall -> PolyBall -> MPBall -> PolyBall
+multiplyWithBounds (Ball p ep) bp (Ball q eq) bq =
+  Ball (p * q) $
+    ep*(errorBound bq) + (errorBound bp)*eq + ep*eq
+
+multiplyAccurate :: PolyBall -> PolyBall -> PolyBall
+multiplyAccurate f g =
+  multiplyWithAccuracy (min ((getAccuracy f) + 1) ((getAccuracy g) + 1)) f g
+
+multiplyWithAccuracy :: Accuracy -> PolyBall -> PolyBall -> PolyBall
+multiplyWithAccuracy ac f@(Ball p _) g@(Ball q _) =
+  multiplyWithBounds f (rangeWithAccuracy p) g (rangeWithAccuracy q)
+  where
+  rangeWithAccuracy h =
+    let
+    Interval a' b' = chPoly_dom h
+    pr = getPrecision h
+    a = setPrecision pr $ mpBall a'
+    b = setPrecision pr $ mpBall b'
+    in
+    max (abs $ maximumOptimisedWithAccuracy ac h a b 5 5)
+        (abs $ minimumOptimisedWithAccuracy ac h a b 5 5)
+
 instance (IsBall c, CanMulSameType c)
   =>
   CanMulAsymmetric (Ball c) (Ball c) where
@@ -170,3 +215,8 @@ $(declForTypes
 instance CanApply PolyBall MPBall where
   type ApplyType PolyBall MPBall = MPBall
   apply (Ball x e) y = updateRadius (+e) (apply x y)
+
+{- -}
+
+instance (Show c) => Show (Ball c) where
+  show (Ball c e) = "Ball " ++ (show c) ++ "+-" ++ (show e)

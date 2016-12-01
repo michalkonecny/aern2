@@ -3,16 +3,16 @@ module AERN2.PPoly.Eval where
 import Numeric.MixedTypes
 import AERN2.Poly.Cheb.Type
 import qualified AERN2.Poly.Cheb.Eval as ChE (evalDirect, evalDf)
-import qualified AERN2.Poly.Power.Eval as PowE (evalDirect, evalDf)
 import AERN2.PPoly.Type
 import AERN2.MP.Ball
-import AERN2.Poly.Power.Type
+import AERN2.Poly.Ball
 import AERN2.Interval
 import Data.List
 
 evalDirect :: PPoly -> MPBall -> MPBall
-evalDirect (PPoly ps _ dom) x =
-  foldl1' meet $ map (\(_,f) -> ChE.evalDirect (ChPoly dom f) x) intersectingPieces
+evalDirect (PPoly ps _ _) x =
+  foldl1' meet $
+  map (\(_,f) -> (lift2PolyBall ChE.evalDirect) f x) intersectingPieces
   where
   meet :: MPBall -> MPBall -> MPBall
   meet a b =
@@ -26,8 +26,9 @@ evalDirect (PPoly ps _ dom) x =
     filter (\p -> (fst p) `intersects` xAsInterval) ps
 
 evalDf :: PPoly -> [ChPoly MPBall] -> MPBall -> MPBall
-evalDf (PPoly ps _ dom) fs' x =
-  foldl1' meet $ map (\((_, f), f') -> ChE.evalDf (ChPoly dom f) f' x) intersectingPieces
+evalDf (PPoly ps _ _) fs' x =
+  foldl1' meet $
+  map (\((_, f), f') -> (lift2PolyBall (\g -> ChE.evalDf g f')) f x) intersectingPieces
   where
   meet :: MPBall -> MPBall -> MPBall
   meet a b =

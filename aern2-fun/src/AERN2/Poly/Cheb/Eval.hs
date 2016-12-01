@@ -13,7 +13,7 @@
 
 module AERN2.Poly.Cheb.Eval
 (
-  evalDirect, evalLip, evalDf
+  evalDirect, evalLip, evalDf, evalDI
 )
 where
 
@@ -37,6 +37,7 @@ import AERN2.RealFun.UnaryFun
 
 import AERN2.Poly.Basics
 import AERN2.Poly.Cheb.Type
+import AERN2.Poly.Cheb.Derivative
 -- import AERN2.Poly.Conversion
 -- import AERN2.Poly.Power (PowPoly)
 -- import qualified AERN2.Poly.Power as Pow
@@ -99,6 +100,9 @@ evalLip f l x =
 evalDf :: ChPoly MPBall -> ChPoly MPBall -> MPBall -> MPBall
 evalDf f f' x =
   evalLip f (abs $ evalDirect f' x) x
+
+evalDI :: ChPoly MPBall -> MPBall -> MPBall
+evalDI f = evalDf f (derivative f)
 
 {-evalDfAccurately :: ChPoly MPBall -> ChPoly MPBall -> MPBall -> MPBall
 evalDfAccurately f f' x = (aux 100 50) + (fromEndpoints (-err) err :: MPBall)
