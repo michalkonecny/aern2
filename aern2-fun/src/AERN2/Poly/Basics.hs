@@ -46,7 +46,7 @@ import AERN2.Real
   types suitable as coefficients of our polynomials
 -}
 type PolyCoeff c =
-  (Field c, CanMulBy c CauchyReal
+  (Field c, CanMulBy c CauchyReal, HasDyadics c
   , IsInterval c c, IsBall c
   , HasAccuracy c, HasNorm c, CanSetPrecision c
   , Show c)

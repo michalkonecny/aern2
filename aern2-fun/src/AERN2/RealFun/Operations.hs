@@ -18,7 +18,8 @@ module AERN2.RealFun.Operations
   , CanApplyApprox(..)
   , HasVars(..)
   , HasConstFunctions, constFn
-  , CanIntegrate(..)
+  , CanMaximiseOverDom(..), CanMinimiseOverDom(..)
+  , CanIntegrateOverDom(..)
 )
 where
 
@@ -63,6 +64,14 @@ type HasConstFunctions t f = ConvertibleExactly (Domain f, t) f
 constFn :: (HasConstFunctions t f) => (Domain f, t) -> f
 constFn = convertExactly
 
-class CanIntegrate f bounds where
-  type IntegralType f bounds
-  integrate :: f -> bounds -> IntegralType f bounds
+class CanMaximiseOverDom f d where
+  type MaximumOverDomType f d
+  maximumOverDom :: f -> d -> MaximumOverDomType f d
+
+class CanMinimiseOverDom f d where
+  type MinimumOverDomType f d
+  minimumOverDom :: f -> d -> MinimumOverDomType f d
+
+class CanIntegrateOverDom f bounds where
+  type IntegralOverDomType f bounds
+  integrateOverDom :: f -> bounds -> IntegralOverDomType f bounds

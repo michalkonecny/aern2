@@ -14,6 +14,8 @@
 module AERN2.RealFun.UnaryFun.Evaluation
 (
   evalOnIntervalGuessPrecision
+  , minimumOnIntervalSubdivide
+  , maximumOnIntervalSubdivide
   , rangeOnIntervalSubdivide
 )
 where
@@ -112,7 +114,18 @@ instance CanApply UnaryFun Dyadic where
 
 instance CanApply UnaryFun DyadicInterval where
   type ApplyType UnaryFun DyadicInterval = RealInterval
-  apply (UnaryFun _ f) = rangeOnIntervalSubdivide (((,) Nothing) . evalOnIntervalGuessPrecision f)
+  apply f di =
+    Interval (minimumOverDom f di) (maximumOverDom f di)
+
+instance CanMaximiseOverDom UnaryFun DyadicInterval where
+  type MaximumOverDomType UnaryFun DyadicInterval = CauchyReal
+  maximumOverDom (UnaryFun _ f) =
+    maximumOnIntervalSubdivide (((,) Nothing) . evalOnIntervalGuessPrecision f)
+
+instance CanMinimiseOverDom UnaryFun DyadicInterval where
+  type MinimumOverDomType UnaryFun DyadicInterval = CauchyReal
+  minimumOverDom (UnaryFun _ f) =
+    minimumOnIntervalSubdivide (((,) Nothing) . evalOnIntervalGuessPrecision f)
 
 evalOnIntervalGuessPrecision ::
   (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall)
@@ -175,26 +188,39 @@ rangeOnIntervalSubdivide ::
   ->
   (DyadicInterval -> RealInterval)
 rangeOnIntervalSubdivide evalOnInterval di =
-  Interval l r
+  Interval
+    (minimumOnIntervalSubdivide evalOnInterval di)
+    (maximumOnIntervalSubdivide evalOnInterval di)
+
+minimumOnIntervalSubdivide ::
+  (DyadicInterval -> (Maybe (CatchingNumExceptions MPBall, CatchingNumExceptions MPBall), CatchingNumExceptions MPBall))
+  ->
+  (DyadicInterval -> CauchyReal)
+minimumOnIntervalSubdivide evalOnInterval =
+  negate . maximumOnIntervalSubdivide negEvalOnInterval
   where
-  l = convergentList2CauchyRealA "range min" $ filterNoException 100 True minSequence
-  r = convergentList2CauchyRealA "range max" $ filterNoException 100 True maxSequence
+  negEvalOnInterval di =
+    case evalOnInterval di of
+      (Just (minB, maxB), v) -> (Just (-maxB,-minB), -v)
+      (_, v) -> (Nothing, -v)
+
+maximumOnIntervalSubdivide ::
+  (DyadicInterval -> (Maybe (CatchingNumExceptions MPBall, CatchingNumExceptions MPBall), CatchingNumExceptions MPBall))
+  ->
+  (DyadicInterval -> CauchyReal)
+maximumOnIntervalSubdivide evalOnInterval di =
+  res
+  where
+  res = convergentList2CauchyRealA "range max" $ filterNoException 100 True maxSequence
   maxSequence = search fi fdiL $ Q.singleton $ MaxSearchSegment di fdiL fdiR
     where
     (fdiL, fdiR) = gunzip $ fmap MPBall.endpoints fdi
     (_,fdi) = fi di
     fi = evalOnInterval
-  minSequence = map negate $ search fi fdiL $ Q.singleton $ MaxSearchSegment di fdiL fdiR
-    where
-    (fdiL, fdiR) = gunzip $ fmap endpoints fdi
-    (_, fdi) = fi di
-    fi = negateRes . evalOnInterval
-    negateRes (Nothing, c) = (Nothing, -c)
-    negateRes (Just (a,b), c) = (Just (-b,-a), -c)
   search fi prevL prevQueue =
     maybeTrace
     (
-        "UnaryFun rangeOnInterval search:"
+        "UnaryFun maximumOnIntervalSubdivide search:"
         ++ "\n  seg = " ++ show seg
         ++ "\n  normLog(width(seg)) = " ++ show (getNormLog (Interval.width seg))
         ++ "\n  nextL = " ++ show nextL

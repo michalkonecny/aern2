@@ -59,9 +59,9 @@ maybeTrace = if shouldTrace then trace else const id
 _dummy :: ()
 _dummy = maybeTrace "dummy" ()
 
-instance CanIntegrate UnaryFun DyadicInterval where
-  type IntegralType UnaryFun DyadicInterval = CauchyReal
-  integrate f =
+instance CanIntegrateOverDom UnaryFun DyadicInterval where
+  type IntegralOverDomType UnaryFun DyadicInterval = CauchyReal
+  integrateOverDom f =
     integralOnIntervalSubdivide integralOnInterval
     where
     integralOnInterval di ac = (apply f diB)*(Interval.width di)

@@ -26,12 +26,9 @@ import Control.Applicative
 import Numeric.CatchingExceptions
 
 import AERN2.Norm
--- import AERN2.MP.Accuracy
-import AERN2.MP.Precision
-
--- import AERN2.MP.Dyadic
-import AERN2.MP.Ball (mpBall, IsInterval(..), IsBall(..), setPrecisionAtLeastAccuracy)
+import AERN2.MP
 -- import qualified AERN2.MP.Ball as MPBall
+-- import AERN2.MP.Dyadic
 
 import AERN2.Real
 import AERN2.Interval (Interval(..), DyadicInterval, RealInterval)
@@ -45,38 +42,55 @@ import AERN2.RealFun.UnaryFun.Integration
 
 data UnaryDFun = UnaryDFun { _dfun_derivatives :: [UnaryFun] }
 
+
 instance CanApply UnaryDFun DyadicInterval where
   type ApplyType UnaryDFun DyadicInterval = RealInterval
-  apply (UnaryDFun []) _ = error "UnaryDFun "
-  apply (UnaryDFun (UnaryFun _ f_o : derivatives_o)) di_o =
-    rangeOnIntervalSubdivide (evalUseD derivatives_o f_o) di_o
-    where
-    evalUseD [] f di = (Nothing, evalOnIntervalGuessPrecision f di)
-    evalUseD (UnaryFun _ f' : rest) f di@(Interval l r)
-      | f'di !>=! 0 = (Just (fl,fr), liftA2 fromEndpoints fl fr)
-      | f'di !<=! 0 = (Just (fr,fl), liftA2 fromEndpoints fr fl)
-      | otherwise = (Nothing, fm + errBall)
-      where
-      (_, f'di) = evalUseD rest f' di -- recursive call
-      fl = f $ catchingNumExceptions $ raisePrecisionIfBelow p $ mpBall l
-      fr = f $ catchingNumExceptions $ raisePrecisionIfBelow p $ mpBall r
-      fm = f $ catchingNumExceptions $ raisePrecisionIfBelow p $ mpBall m
-      m = (l + r)*0.5
-      errBall = f'di*((r-l)*0.5)*unitBall
-      unitBall = catchingNumExceptions $ mpBall (-1,1)
+  apply f di =
+    Interval (minimumOverDom f di) (maximumOverDom f di)
 
-      p = 
-          case nl of
-              NormBits i -> prec $ max 10 (-i)
-              NormZero -> getPrecision l
-      nl = getNormLog (r - l)
+instance CanMaximiseOverDom UnaryDFun DyadicInterval where
+  type MaximumOverDomType UnaryDFun DyadicInterval = CauchyReal
+  maximumOverDom (UnaryDFun []) _ = error "maximumOverDom UnaryDFun []"
+  maximumOverDom (UnaryDFun (UnaryFun _ f_o : derivatives_o)) di_o =
+    maximumOnIntervalSubdivide (evalUseD derivatives_o f_o) di_o
+
+instance CanMinimiseOverDom UnaryDFun DyadicInterval where
+  type MinimumOverDomType UnaryDFun DyadicInterval = CauchyReal
+  minimumOverDom (UnaryDFun []) _ = error "minimumOverDom UnaryDFun []"
+  minimumOverDom (UnaryDFun (UnaryFun _ f_o : derivatives_o)) di_o =
+    minimumOnIntervalSubdivide (evalUseD derivatives_o f_o) di_o
+
+evalUseD ::
+  [UnaryFun] ->
+  (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) ->
+  DyadicInterval ->
+  (Maybe (CatchingNumExceptions MPBall, CatchingNumExceptions MPBall), CatchingNumExceptions MPBall)
+evalUseD [] f di = (Nothing, evalOnIntervalGuessPrecision f di)
+evalUseD (UnaryFun _ f' : rest) f di@(Interval l r)
+  | f'di !>=! 0 = (Just (fl,fr), liftA2 fromEndpoints fl fr)
+  | f'di !<=! 0 = (Just (fr,fl), liftA2 fromEndpoints fr fl)
+  | otherwise = (Nothing, fm + errBall)
+  where
+  (_, f'di) = evalUseD rest f' di -- recursive call
+  fl = f $ catchingNumExceptions $ raisePrecisionIfBelow p $ mpBall l
+  fr = f $ catchingNumExceptions $ raisePrecisionIfBelow p $ mpBall r
+  fm = f $ catchingNumExceptions $ raisePrecisionIfBelow p $ mpBall m
+  m = (l + r)*0.5
+  errBall = f'di*((r-l)*0.5)*unitBall
+  unitBall = catchingNumExceptions $ mpBall (-1,1)
+
+  p =
+      case nl of
+          NormBits i -> prec $ max 10 (-i)
+          NormZero -> getPrecision l
+  nl = getNormLog (r - l)
 
 
-instance CanIntegrate UnaryDFun DyadicInterval where
-  type IntegralType UnaryDFun DyadicInterval = CauchyReal
-  integrate (UnaryDFun []) = error "integrating a UnaryDFun that has no data"
-  integrate (UnaryDFun [f]) = integrate f
-  integrate (UnaryDFun (f : f' : _)) =
+instance CanIntegrateOverDom UnaryDFun DyadicInterval where
+  type IntegralOverDomType UnaryDFun DyadicInterval = CauchyReal
+  integrateOverDom (UnaryDFun []) = error "integrating UnaryDFun []"
+  integrateOverDom (UnaryDFun [f]) = integrateOverDom f
+  integrateOverDom (UnaryDFun (f : f' : _)) =
     integralOnIntervalSubdivide integralOnInterval
     where
     integralOnInterval di ac =

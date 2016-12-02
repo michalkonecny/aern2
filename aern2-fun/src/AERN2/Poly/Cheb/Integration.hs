@@ -16,11 +16,7 @@ import Numeric.MixedTypes
 
 import AERN2.Normalize
 
-import AERN2.MP.Precision
-import AERN2.MP.Accuracy
-import AERN2.MP.Dyadic
--- import AERN2.MP.ErrorBound
--- import AERN2.MP.Ball (MPBall, mpBall)
+import AERN2.MP
 
 import AERN2.Interval
 
@@ -31,18 +27,16 @@ import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Ring ()
 
 instance
-  (Ring c, CanDivBy c Integer, HasDyadics c
-  , CanNormalize (ChPoly c), CanSetPrecision c
-  , CanApply (ChPoly c) c, ApplyType (ChPoly c) c ~ c
-  )
+  (PolyCoeff c, CanApply (ChPoly c) c, ApplyType (ChPoly c) c ~ c)
   =>
-  CanIntegrate (ChPoly c) DyadicInterval
+  CanIntegrateOverDom (ChPoly c) DyadicInterval
   where
-  type IntegralType (ChPoly c) DyadicInterval = Accuracy -> c
+  type IntegralOverDomType (ChPoly c) DyadicInterval = c
     -- no necessarily convergent, the accuracy is only a guide
-  integrate (cp :: ChPoly c) (Interval l r) acGuide =
+  integrateOverDom (cp :: ChPoly c) (Interval l r) =
     (primit `apply` rB) - (primit `apply` lB)
     where
+    acGuide = getFiniteAccuracy cp
     primit = primitive_function cp
     lB = setPrecisionAtLeastAccuracy acGuideEval (convertExactly l :: c)
     rB = setPrecisionAtLeastAccuracy acGuideEval (convertExactly r :: c)

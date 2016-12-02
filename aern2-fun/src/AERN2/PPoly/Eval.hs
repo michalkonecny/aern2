@@ -12,7 +12,7 @@ import Data.List
 evalDirect :: PPoly -> MPBall -> MPBall
 evalDirect (PPoly ps _ _) x =
   foldl1' meet $
-  map (\(_,f) -> (lift2PolyBall ChE.evalDirect) f x) intersectingPieces
+  map (\(_,f) -> (ballLift1TR ChE.evalDirect) f x) intersectingPieces
   where
   meet :: MPBall -> MPBall -> MPBall
   meet a b =
@@ -28,7 +28,7 @@ evalDirect (PPoly ps _ _) x =
 evalDf :: PPoly -> [ChPoly MPBall] -> MPBall -> MPBall
 evalDf (PPoly ps _ _) fs' x =
   foldl1' meet $
-  map (\((_, f), f') -> (lift2PolyBall (\g -> ChE.evalDf g f')) f x) intersectingPieces
+  map (\((_, f), f') -> (ballLift1TR (\g -> ChE.evalDf g f')) f x) intersectingPieces
   where
   meet :: MPBall -> MPBall -> MPBall
   meet a b =
