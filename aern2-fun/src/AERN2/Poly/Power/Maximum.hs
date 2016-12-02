@@ -127,7 +127,25 @@ genericMaximum f dfs bts l r =
 
   maxKey = fst $ Map.findMax dfs
   evalfOnInterval a b =
-    f (fromEndpoints a b)
+    --f (fromEndpoints a b)
+    let
+      aux p q ac =
+        let
+          try = f (fromEndpoints (setPrecision p a) (setPrecision p b))
+        in
+          maybeTrace (
+          "evaluating on interval "++(show a)++ ", "++(show b)++"\n"++
+          "trying precision "++(show p)++"\n"++
+          "new accuracy: "++(show $ getAccuracy try)++"\n"++
+          "old accuracy: "++(show ac)
+          ) $
+          if getAccuracy try <= ac then
+            try
+          else
+            aux (p + q) p (getAccuracy try)
+    in
+      aux (max (getPrecision a) (getPrecision b))
+          (max (getPrecision a) (getPrecision b))  NoInformation
   sgn x =
     case x > 0 of
       Just True  -> Just 1
@@ -137,7 +155,8 @@ genericMaximum f dfs bts l r =
   tryFindSign :: MPBall -> Integer -> (Integer, Maybe Integer)
   tryFindSign x n =
     let
-      sg = sgn $ (fst $ fromJust $ Map.lookup n dfs) x
+      val = iterateUntilFixed (fst $ fromJust $ Map.lookup n dfs) x
+      sg  = sgn val
     in
       if isJust sg || n == maxKey then
         (n, sg)
@@ -152,11 +171,20 @@ genericMaximum f dfs bts l r =
       "minimal interval " ++ (show mi)
       ) $
       if mi_isAccurate mi maxKey bts then
+        maybeTrace (
+         "mi accurate."
+        ) $
         mi_value mi
       else
+        maybeTrace (
+         "mi not accurate."
+        ) $
         case mi of
           SearchInterval a b v ov k ts ->
             if isNothing $ signVars ts then -- TODO avoid recomputation of sign variations
+              maybeTrace (
+               "signVars are undefined."
+              ) $
               if mi_derivative mi == maxKey then
                 v
               else
@@ -177,8 +205,8 @@ genericMaximum f dfs bts l r =
                     then
                       (deg,cm)
                     else
-                      findM $ 0.5*(cm + b) -- TODO: find a better perturbation function
-                (dm, m) = findM $ 0.5*(a + b) -- TODO: findM assumes that the polynomial is exact.
+                      findM $ computeMidpoint cm b -- TODO: find a better perturbation function
+                (dm, m) = findM $ computeMidpoint a b -- TODO: findM assumes that the polynomial is exact.
                 (dl, sgnL) = tryFindSign a k -- sgn $ evalDirect f' (mpBall l)
                 (dm', sgnM) = tryFindSign m k -- sgn $ evalDirect f' (mpBall m)
                 (bsL, bsR)  = bernsteinCoefs a b m ts
@@ -203,7 +231,7 @@ genericMaximum f dfs bts l r =
                                       $ Q.insert miR q'
           CriticalInterval a b v _ k sgnL ->
             let
-              m = 0.5*(a + b)
+              m = computeMidpoint a b --0.5*(a + b)
               fm = f m
               (dm, sgnM)  = tryFindSign m k
               (dl, nSgnL) = tryFindSign a dm
@@ -216,6 +244,9 @@ genericMaximum f dfs bts l r =
                 else
                   splitUntilAccurate $ Q.insert (CriticalInterval m b (evalfOnInterval m b) (Just v) dl $ fromJust sgnM) q'
               else
+                maybeTrace (
+                 "sgnM could not be determined."
+                ) $
                 v
           FinalInterval {} -> error "generic maximum: this point should never be reached"
 
@@ -258,4 +289,45 @@ instance Prelude.Ord MaximisationInterval where
 
 isMoreAccurate :: MPBall -> Maybe MPBall -> Bool
 isMoreAccurate _ Nothing  = True
-isMoreAccurate x (Just y) = ball_error x < ball_error y
+isMoreAccurate x (Just y) =
+  radius x < radius y
+
+computeMidpoint :: MPBall -> MPBall -> MPBall
+computeMidpoint l r =
+  let
+    ip = (max (getPrecision l) (getPrecision r))
+  in
+  aux (ip + ip)
+      ip
+      ((l + r)/2)
+  where
+  aux p q prevM =
+    let
+      tryM = ((setPrecision p l) + (setPrecision p r))/2
+    in
+      if getAccuracy tryM <= getAccuracy prevM then
+        prevM
+      else
+        aux (p + q) p tryM
+
+{-evalDirectAccurately ::
+ (Ring t, CanAddSubMulDivBy t Dyadic, CanDivBy t Integer,
+  CanAddSubMulBy t c, Ring c, HasAccuracy t,
+  HasPrecision t, CanSetPrecision t) =>
+    ChPoly c -> t -> t
+evalDirectAccurately f =
+  iterateUntilFixed (evalDirect f)-}
+
+iterateUntilFixed :: (HasAccuracy t, HasPrecision t, CanSetPrecision t)
+  => (t -> t) -> t -> t
+iterateUntilFixed f x =
+  aux (f x) (getPrecision x + getPrecision x) (getPrecision x)
+  where
+  aux prevfx p q =
+    let
+      fx = (f . setPrecision p) x
+    in
+      if getAccuracy fx <= getAccuracy prevfx then
+        prevfx
+      else
+        aux fx (p + q) p

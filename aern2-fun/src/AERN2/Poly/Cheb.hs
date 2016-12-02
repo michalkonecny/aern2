@@ -18,6 +18,11 @@ module AERN2.Poly.Cheb
 , module AERN2.Poly.Cheb.Maximum
 , module AERN2.Poly.Cheb.Derivative
 , module AERN2.Poly.Cheb.Integration
+, _chPolySineX
+, _chPolySine10X
+, _chPolyCosine10X
+, _chPoly10X
+, _chPolySine10XSine20XX
 )
 where
 
