@@ -93,6 +93,13 @@ ballLift1T f (Ball c e) t = Ball fceC fceE
   fceE = radius fce
   fce = f (updateRadius (+e) c) t
 
+ballLift2 :: (IsBall t) => (t -> t -> t) -> (Ball t -> Ball t -> Ball t)
+ballLift2 f (Ball c1 e1) (Ball c2 e2) = Ball fceC fceE
+  where
+  fceC = centreAsBall fce
+  fceE = radius fce
+  fce = f (updateRadius (+e1) c1) (updateRadius (+e2) c2)
+
 instance (IsBall t) => IsBall (Ball t) where
   type CentreType (Ball t) = t
   centre = ball_value
@@ -221,7 +228,8 @@ instance
   -- type MulType  (Ball t) (Ball t) = Ball t
   CanMulAsymmetric PolyBall PolyBall where
   type MulType PolyBall PolyBall = PolyBall
-  mul = multiplyAccurate
+  mul = ballLift2 mul
+  -- mul = multiplyWithAccuracy (bits 0)
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
