@@ -101,7 +101,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     integratePB f = f `integrateOverDom` (getDomain f)
 
     maxPB :: PolyEncl -> MPBall
-    maxPB f = f `minimumOverDom` (getDomain f)
+    maxPB f = f `maximumOverDom` (getDomain f)
 
     maxFun :: UnaryFun -> Accuracy -> MPBall
     maxFun fn ac =
