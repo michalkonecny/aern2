@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+#define DEBUG
 {-|
     Module      :  AERN2.RealFun.SineCosine
     Description :  Pointwise sine and cosine for functions
@@ -15,6 +17,13 @@ module AERN2.RealFun.SineCosine
 -- (
 -- )
 where
+
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#else
+#define maybeTrace (flip const)
+#endif
 
 import Numeric.MixedTypes
 -- import qualified Prelude as P
@@ -34,18 +43,6 @@ import AERN2.Real
 
 -- import AERN2.Interval
 import AERN2.RealFun.Operations
-
-
-import Debug.Trace (trace)
-
-shouldTrace :: Bool
--- shouldTrace = False
-shouldTrace = True
-
-maybeTrace :: String -> a -> a
-maybeTrace
-    | shouldTrace = trace
-    | otherwise = const id
 
 {-
     To compute sin(xC+-xE):
@@ -283,14 +280,17 @@ sineCosineTaylorSum isSine xAC xM acGuidePre =
       | otherwise = powersCosine
       where
       powersSine =
-        maybeTrace ("sineCosineTaylorSum: powerSine accuracies:\n"
-          ++ (showPowerAccuracies res)) res
+        -- maybeTrace ("sineCosineTaylorSum: powerSine accuracies:\n"
+        --   ++ (showPowerAccuracies res))
+        res
         where
         res = foldl addPower initPowers $ zip [1..] [3,5..n]
         initPowers = Map.fromAscList [(1, x)]
         addPower prevPowers (j,i) =
-          Map.insert i (reduce i pw_i) prevPowers
+          maybeTrace (showPowerDebug i rpw_i) $
+          Map.insert i rpw_i prevPowers
           where
+          rpw_i = reduce i pw_i
           pw_i
             | odd j = x * pwr j * pwr j
             | otherwise = x * pwr (j-1) * pwr (j+1)
@@ -298,29 +298,37 @@ sineCosineTaylorSum isSine xAC xM acGuidePre =
             Just r -> r
             _ -> error "sineCosineTaylorSum: internal error (powersSine: pwr k)"
       powersCosine =
-        maybeTrace ("sineCosineTaylorSum: powerCosine accuracies:\n"
-          ++ (showPowerAccuracies res)) res
+        -- maybeTrace ("sineCosineTaylorSum: powerCosine accuracies:\n"
+        --   ++ (showPowerAccuracies res))
+        res
         where
         res = foldl addPower initPowers $ zip [2..] [4,6..n]
         initPowers = Map.fromAscList [(2, xxR)]
         xxR = reduce 2 $ x*x
         addPower prevPowers (j,i) =
-          Map.insert i (reduce i pw_i) prevPowers
+          maybeTrace (showPowerDebug i rpw_i) $
+          Map.insert i rpw_i prevPowers
           where
+          rpw_i = reduce i pw_i
           pw_i
             | even j = pwr j * pwr j
             | otherwise = pwr (j-1) * pwr (j+1)
           pwr k = case Map.lookup k prevPowers of
             Just r -> r
             _ -> error "sineCosineTaylorSum: internal error (powersCosine: pwr k)"
-      showPowerAccuracies pwrs =
-        unlines $ map showAAA $ Map.toAscList $
-          Map.intersectionWith (\p (pa0, pa) -> (pa0,pa, p)) pwrs $
-            Map.intersectionWith (,) powerAccuracies0 powerAccuracies
-        where
-        showAAA (i,(pa0,pa,p)) =
-          printf "power %d: accuracy req 0: %s, accuracy req: %s, actual accuracy: %s" -- , degree: %d"
-            i (show pa0) (show pa) (show $ getAccuracy p) -- (terms_degree $  poly_coeffs $ chPoly_poly p)
+      showPowerDebug i rpw_i =
+        printf "power %d: accuracy req: %s, actual accuracy: %s" -- , degree: %d"
+          i (show pa) (show $ getAccuracy rpw_i) -- (terms_degree $  poly_coeffs $ chPoly_poly p)
+          where
+          Just pa = Map.lookup i powerAccuracies
+      -- showPowerAccuracies pwrs =
+      --   unlines $ map showAAA $ Map.toAscList $
+      --     Map.intersectionWith (\p (pa0, pa) -> (pa0,pa, p)) pwrs $
+      --       Map.intersectionWith (,) powerAccuracies0 powerAccuracies
+      --   where
+      --   showAAA (i,(pa0,pa,p)) =
+      --     printf "power %d: accuracy req 0: %s, accuracy req: %s, actual accuracy: %s" -- , degree: %d"
+      --       i (show pa0) (show pa) (show $ getAccuracy p) -- (terms_degree $  poly_coeffs $ chPoly_poly p)
       reduce i = reduceSizeUsingAccuracyGuide ac_i . setPrecisionAtLeastAccuracy (ac_i + 10)
         where
         ac_i = case Map.lookup i powerAccuracies of

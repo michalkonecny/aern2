@@ -1,4 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE CPP #-}
+-- #define DEBUG
 {-|
     Module      :  AERN2.Poly.Ball
     Description :  Polynomial enclosures with large radii
@@ -16,6 +18,13 @@ module AERN2.Poly.Ball
 -- (
 -- )
 where
+
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#else
+#define maybeTrace (flip const)
+#endif
 
 import Numeric.MixedTypes
 -- import qualified Prelude as P
@@ -42,6 +51,7 @@ import AERN2.Interval
 import AERN2.RealFun.Operations
 
 import AERN2.Poly.Cheb
+
 
 {- examples -}
 
@@ -83,6 +93,13 @@ ballLift1T f (Ball c e) t = Ball fceC fceE
   fceE = radius fce
   fce = f (updateRadius (+e) c) t
 
+ballLift2 :: (IsBall t) => (t -> t -> t) -> (Ball t -> Ball t -> Ball t)
+ballLift2 f (Ball c1 e1) (Ball c2 e2) = Ball fceC fceE
+  where
+  fceC = centreAsBall fce
+  fceE = radius fce
+  fce = f (updateRadius (+e1) c1) (updateRadius (+e2) c2)
+
 instance (IsBall t) => IsBall (Ball t) where
   type CentreType (Ball t) = t
   centre = ball_value
@@ -91,7 +108,9 @@ instance (IsBall t) => IsBall (Ball t) where
   centreAsBallAndRadius (Ball c r) = (Ball c (errorBound 0), r)
 
 instance (IsBall t, CanNormalize t) => CanNormalize (Ball t) where
-  normalize (Ball x e) = Ball (normalize $ centreAsBall x) (radius x + e)
+  normalize (Ball x e) = Ball (centreAsBall xN) (radius xN + e)
+    where
+    xN = normalize x
 
 instance (ConvertibleExactly (DyadicInterval, t2) t) =>
   ConvertibleExactly (DyadicInterval, t2) (Ball t)
@@ -132,11 +151,12 @@ instance (HasAccuracy t, IsBall t) => HasAccuracy (Ball t) where
   getAccuracy= ballLift1R getAccuracy
 
 instance
-  CanReduceSizeUsingAccuracyGuide t =>
+  (IsBall t, CanNormalize t, CanReduceSizeUsingAccuracyGuide t)
+  =>
   CanReduceSizeUsingAccuracyGuide (Ball t)
   where
   reduceSizeUsingAccuracyGuide ac (Ball c e) =
-    Ball (reduceSizeUsingAccuracyGuide ac c) e
+    normalize $ Ball (reduceSizeUsingAccuracyGuide ac c) e
 
 {- negation -}
 
@@ -178,12 +198,14 @@ $(declForTypes
 
 multiplyWithBounds :: PolyBall -> MPBall -> PolyBall -> MPBall -> PolyBall
 multiplyWithBounds (Ball p ep) bp (Ball q eq) bq =
-  Ball (p * q) $
-    ep*(errorBound bq) + (errorBound bp)*eq + ep*eq
+  normalize res
+  where
+  res = Ball (p * q) e
+  e = ep*(errorBound bq) + (errorBound bp)*eq + ep*eq
 
 multiplyAccurate :: PolyBall -> PolyBall -> PolyBall
 multiplyAccurate f g =
-  multiplyWithAccuracy (min ((getAccuracy f) + 1) ((getAccuracy g) + 1)) f g
+  multiplyWithAccuracy (min ((getFiniteAccuracy f) + 1) ((getFiniteAccuracy g) + 1)) f g
 
 multiplyWithAccuracy :: Accuracy -> PolyBall -> PolyBall -> PolyBall
 multiplyWithAccuracy ac f@(Ball p _) g@(Ball q _) =
@@ -199,17 +221,15 @@ multiplyWithAccuracy ac f@(Ball p _) g@(Ball q _) =
     max (abs $ maximumOptimisedWithAccuracy ac h a b 5 5)
         (abs $ minimumOptimisedWithAccuracy ac h a b 5 5)
 
-instance (IsBall t, CanNormalize t, CanMulSameType t)
-  =>
-  CanMulAsymmetric (Ball t) (Ball t) where
-  type MulType  (Ball t) (Ball t) = Ball t
-  mul (Ball x1 e1) (Ball x2 e2) =
-    normalize $ Ball (x1e1 * x2e2) (errorBound 0)
-    where
-    x1e1 = updateRadius (+ e1) x1
-    x2e2 = updateRadius (+ e2) x2
-    -- TODO: use norm computed using root finding?
-    --  is it too expensive?  check once we have benchmarking
+instance
+  -- (IsBall t, CanNormalize t, CanMulSameType t)
+  -- =>
+  -- CanMulAsymmetric (Ball t) (Ball t) where
+  -- type MulType  (Ball t) (Ball t) = Ball t
+  CanMulAsymmetric PolyBall PolyBall where
+  type MulType PolyBall PolyBall = PolyBall
+  mul = ballLift2 mul
+  -- mul = multiplyWithAccuracy (bits 0)
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]

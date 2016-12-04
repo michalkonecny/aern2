@@ -116,17 +116,18 @@ mulCheb ::
   (PolyCoeff c)
   =>
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
-mulCheb p1@(ChPoly _ (Poly terms1)) p2@(ChPoly _ (Poly terms2))
-  -- | size1 + size2 < 1000
-  | getAccuracy p1 /= Exact || getAccuracy p2 /= Exact || size1 + size2 < 200
-  -- | size1 + size2 > 0 -- i.e. always
-    =
-      maybeTrace (printf "size1+size2 = %d, using mulChebDirect" (size1 + size2)) $
-      mulChebDirect p1 p2
-  | otherwise =
-      maybeTrace (printf "size1+size2 = %d, using mulChebDCT" (size1 + size2)) $
-      mulChebDCT p1 p2
+mulCheb p1@(ChPoly _ (Poly terms1)) p2@(ChPoly _ (Poly terms2)) =
+  maybeTrace
+    (printf "mulCheb: getAccuracy p1 = %s, getAccuracy p2 = %s, size1+size2 = %d, using %s, getAccuracy result = %s"
+      (show $ getAccuracy p1) (show $ getAccuracy p2) (size1 + size2) methodS (show $ getAccuracy result)
+    ) $
+  result
   where
+  (result, methodS)
+    | getAccuracy p1 /= Exact || getAccuracy p2 /= Exact || size1 + size2 < 200 -- 1000
+      = (mulChebDirect p1 p2, "mulChebDirect")
+    | otherwise
+      = (mulChebDCT p1 p2, "mulChebDCT")
   size1 = terms_size terms1
   size2 = terms_size terms2
 
