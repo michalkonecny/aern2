@@ -81,6 +81,7 @@ library
     AERN2.PPoly.Type
     AERN2.PPoly.Eval
     AERN2.PPoly.Maximum
+    AERN2.PPoly.Division
 
 -- test-suite spec
 --   type:

@@ -8,18 +8,25 @@ import Data.List
 import AERN2.Normalize
 
 import AERN2.MP.Ball (IsBall(..), MPBall)
+import AERN2.MP.Precision
+import AERN2.MP.Accuracy
 import AERN2.MP.Dyadic
 import AERN2.MP.ErrorBound
 import AERN2.Interval
 
-import AERN2.Poly.Ball
+import AERN2.Poly.Ball (PolyBall, Ball(..))
+import qualified AERN2.Poly.Ball as PolyBall
 import AERN2.Poly.Cheb
+import AERN2.Poly.Basics (terms_fromList, Poly(..))
+
+import Control.Arrow (second)
+
+import Debug.Trace
 
 type Cheb = ChPoly MPBall
 
 data PPoly =
   PPoly {ppoly_pieces  :: [(DyadicInterval, PolyBall)],
-         ppoly_overlap :: Dyadic,
          ppoly_dom     :: DyadicInterval}
 
 fromPoly :: Cheb -> PPoly
@@ -27,19 +34,27 @@ fromPoly p = fromPolyBall (Ball p (errorBound 0))
 
 fromPolyBall :: PolyBall -> PPoly
 fromPolyBall f@(Ball p _) =
-  PPoly [(Interval (dyadic $ -1) (dyadic 1), f)] (dyadic 10) (chPoly_dom p)
+  PPoly [(Interval (dyadic $ -1) (dyadic 1), f)] (chPoly_dom p)
 
-{-linearPolygon :: [(Rational, MPBall)] -> Rational -> PPoly
-linearPolygon ((x,y) : xys) overlap = aux xys x y []
- where
- aux [] _ _ res = PPoly (reverse res) overlap
- aux ((x',y'):xys) x y res = aux xys x' y' ((Interval x x',linSpline x y x' y') : res)
- linSpline x y x' y' = Poly.normaliseCoeffs $ Poly.fromList  [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))] -- TODO Poly.fromList should already provided normalised coeffs
-linearPolygon [] _ = error "linearPolygon must be provided with a list of at least 2 points"-}
+linearPolygon :: [(Dyadic, MPBall)] -> DyadicInterval -> PPoly
+linearPolygon ((x,y) : xys) dom =
+  aux xys x y []
+  where
+  aux [] _ _ res = PPoly (reverse res) dom
+  aux ((x',y'):xys) x y res =
+    aux xys x' y' ((Interval x x', linSpline x y x' y') : res)
+  linSpline x y x' y' =
+    Ball
+      (ChPoly
+        dom
+        (Poly $ terms_fromList [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))]))
+      (errorBound 0)
+linearPolygon [] _ =
+  error "linearPolygon must be provided with a list of at least 2 points"
 
 liftBall2PPoly :: (PolyBall -> PolyBall) -> (PPoly -> PPoly)
-liftBall2PPoly f (PPoly ps ov dom)  =
-  PPoly (map (domify f) ps) ov dom
+liftBall2PPoly f (PPoly ps dom)  =
+  PPoly (map (domify f) ps) dom
   where
   domify :: (PolyBall -> PolyBall)
     -> (DyadicInterval, PolyBall)
@@ -59,7 +74,7 @@ lift2PPoly f (PPoly pieces overlap dom) =
 
 refine :: PPoly -> PPoly
   -> [(DyadicInterval, PolyBall, PolyBall)]
-refine (PPoly ps _ _) (PPoly qs _ _) =
+refine f@(PPoly ps _) g@(PPoly qs _) =
    reverse $ aux [] ps qs
    where
    aux res (x : xs) (y : ys) =
@@ -72,7 +87,9 @@ refine (PPoly ps _ _) (PPoly qs _ _) =
                     else
                        aux (intr:res) xs (i:ys)
    aux res [] [] = res
-   aux _ _ _ = error $ "PPoly refine: Lists don't match up."
+   aux _ _ _ =
+     error $
+      "PPoly refine: Lists don't match up between \n"++(show f)++ " and \n"++(show g)
 
 --precondition: both intervals have the same left end-point
 intersectionAndDifference ::
@@ -99,12 +116,37 @@ intersectionAndDifference (Interval l r, p) (Interval l' r', p') =
 
 instance IsBall PPoly where
   type CentreType PPoly = PPoly
-  radius (PPoly ps _ _) =
+  radius (PPoly ps _) =
     foldl' (+) (errorBound 0) $ map (\(_, p) -> radius p) ps
   centre = liftCheb2PPoly centre
   centreAsBall = centre
   centreAsBallAndRadius cp = (centre cp, radius cp)
   updateRadius updateFn = liftCheb2PPoly (updateRadius updateFn)
+
+instance HasAccuracy PPoly where
+  getAccuracy (PPoly ps _) =
+    foldl' min Exact [getAccuracy p | (_,p) <- ps]
+
+instance HasPrecision PPoly where
+  getPrecision (PPoly ps _) =
+    foldl' max (prec 2) [getPrecision p | (_,p) <- ps]
+
+instance CanSetPrecision PPoly where
+  setPrecision pr (PPoly ps dom) =
+    PPoly
+      (map (second (setPrecision pr)) ps)
+      dom
+
+instance Show PPoly where
+  show (PPoly ps _) =
+    concatMap (\(i,p) -> show (i,p) ++ "\n") ps
+
+{- -}
+
+multiplyWithBounds :: PPoly -> MPBall -> PPoly -> MPBall -> PPoly
+multiplyWithBounds a ba b bb =
+  PPoly [(i, PolyBall.multiplyWithBounds p ba q bb) | (i,p,q) <- refine a b]
+        (ppoly_dom a)
 
 {- arithmetic -}
 
@@ -112,13 +154,13 @@ instance CanAddAsymmetric PPoly PPoly where
   type AddType PPoly PPoly = PPoly
   add a b =
     PPoly [(i, p + q) | (i,p,q) <- refine a b]
-          (min (ppoly_overlap a) (ppoly_overlap b)) (ppoly_dom a) -- TODO: how to handle polys with different domains?
+          (ppoly_dom a) -- TODO: how to handle polys with different domains?
 
 instance CanMulAsymmetric PPoly PPoly where
   type MulType PPoly PPoly = PPoly
   mul a b =
     PPoly [(i, p * q) | (i,p,q) <- refine a b]
-          (min (ppoly_overlap a) (ppoly_overlap b)) (ppoly_dom a) -- TODO: how to handle polys with different domains?
+          (ppoly_dom a) -- TODO: how to handle polys with different domains?
 
 instance CanMulAsymmetric Cheb PPoly where
   type MulType Cheb PPoly = PPoly
@@ -130,14 +172,24 @@ instance CanMulAsymmetric PPoly Cheb where
 
 instance CanNeg PPoly where
   type NegType PPoly = PPoly
-  negate (PPoly pieces overlap dom) =
-      PPoly (fmap (\(i,p) -> (i,-p)) pieces) overlap dom
+  negate (PPoly pieces dom) =
+      PPoly (fmap (\(i,p) -> (i,-p)) pieces) dom
+
+instance CanSub PPoly PPoly where
+  type SubType PPoly PPoly = PPoly
+  sub a b =
+    PPoly [(i, p - q) | (i,p,q) <- refine a b]
+          (ppoly_dom a) -- TODO: how to handle polys with different domains?
 
 {- Mixed operations with Integer -}
 
 instance CanAddAsymmetric PPoly Integer where
     type AddType PPoly Integer = PPoly
     add p n = liftBall2PPoly (+n) $ p
+
+instance CanSub PPoly Integer where
+    type SubType PPoly Integer = PPoly
+    sub p n = liftBall2PPoly (\x -> x - n) $ p
 
 instance CanAddAsymmetric Integer PPoly where
     type AddType Integer PPoly = PPoly

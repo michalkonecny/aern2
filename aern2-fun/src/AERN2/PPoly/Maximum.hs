@@ -1,6 +1,6 @@
 module AERN2.PPoly.Maximum where
 
-import Numeric.MixedTypes
+import Numeric.MixedTypes hiding (maximum, minimum)
 import qualified Prelude
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
@@ -11,24 +11,27 @@ import qualified Data.Map as Map
 import AERN2.Poly.Power.Type
 {-import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Derivative-}
-import AERN2.Poly.Cheb as Cheb
+import AERN2.Poly.Cheb as Cheb hiding (maximum, minimum)
 import AERN2.Poly.Ball
 import AERN2.PPoly.Type
 import qualified AERN2.PPoly.Eval as PPE
 import AERN2.PQueue (PQueue)
 import qualified AERN2.PQueue as Q
-import Data.List
+import Data.List hiding (maximum, minimum)
 import AERN2.Poly.Conversion
 import AERN2.Interval
 
+minimum :: PPoly -> MPBall -> MPBall -> MPBall
+minimum f l r = -(maximum (-f) l r)
+
 maximum :: PPoly -> MPBall -> MPBall -> MPBall
-maximum (PPoly ps ov dom) l r =
+maximum (PPoly ps dom) l r =
   genericMaximum (PPE.evalDf f dfsCheb) dfsMap maxKeys nodes
   where
-  lI      = fromDomToUnitInterval dom l
-  rI      = fromDomToUnitInterval dom r
+  lI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) l)
+  rI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) r) -- TODO: properly work out required endpoint precision
   unit    = Interval (dyadic $ -1) (dyadic 1)
-  f       = PPoly ps ov unit
+  f       = PPoly ps unit
   fs      = map snd ps
   dfsCheb = map (centre . ballLift1R (Cheb.derivative . makeExactCentre)) fs
   dfsPow  = map (cheb2Power . chPoly_poly . centre) dfsCheb

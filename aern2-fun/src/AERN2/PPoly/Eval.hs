@@ -9,8 +9,15 @@ import AERN2.Poly.Ball
 import AERN2.Interval
 import Data.List
 
+import Debug.Trace
+
 evalDirect :: PPoly -> MPBall -> MPBall
-evalDirect (PPoly ps _ _) x =
+evalDirect (PPoly ps _) x =
+  trace (
+   "eval direct: "
+   ++(show $ foldl1' meet $
+            map (\(_,f) -> (ballLift1TR ChE.evalDirect) f x) intersectingPieces)
+  ) $
   foldl1' meet $
   map (\(_,f) -> (ballLift1TR ChE.evalDirect) f x) intersectingPieces
   where
@@ -26,7 +33,7 @@ evalDirect (PPoly ps _ _) x =
     filter (\p -> (fst p) `intersects` xAsInterval) ps
 
 evalDf :: PPoly -> [ChPoly MPBall] -> MPBall -> MPBall
-evalDf (PPoly ps _ _) fs' x =
+evalDf (PPoly ps _) fs' x =
   foldl1' meet $
   map (\((_, f), f') -> (ballLift1TR (\g -> ChE.evalDf g f')) f x) intersectingPieces
   where
