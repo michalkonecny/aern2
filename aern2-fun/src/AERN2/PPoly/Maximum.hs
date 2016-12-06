@@ -21,6 +21,10 @@ import Data.List hiding (maximum, minimum)
 import AERN2.Poly.Conversion
 import AERN2.Interval
 
+-- instance CanMaximiseOverDom PPoly DyadicInterval where
+--   type MaximumOverDomType PPoly DyadicInterval = MPBall
+--   maximumOverDom f (Interval l r) = maximum f (mpBall l) (mpBall r)
+
 minimum :: PPoly -> MPBall -> MPBall -> MPBall
 minimum f l r = -(maximum (-f) l r)
 

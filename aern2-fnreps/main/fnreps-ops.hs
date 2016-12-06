@@ -27,19 +27,28 @@ import AERN2.RealFun.UnaryFun
 import AERN2.RealFun.UnaryDFun
 -- import AERN2.Poly.Basics
 
--- import AERN2.PPoly.Type
+import qualified AERN2.PPoly as PPoly
+import AERN2.PPoly (PPoly)
+
+import Debug.Trace
 
 #ifdef POLYBALL
 import AERN2.Poly.Ball (PolyBall, polyBall)
 type PolyEncl = PolyBall
 polyEncl = polyBall
+liftEncl2PPoly = PPoly.liftBall2PPoly
+encl2PPoly = PPoly.fromPolyBall
 #else
 import AERN2.Poly.Cheb (ChPoly, chPolyMPBall, Degree)
 -- import qualified AERN2.Poly.Cheb as ChPoly
 type PolyEncl = ChPoly MPBall
 polyEncl = chPolyMPBall
+liftEncl2PPoly = PPoly.liftCheb2PPoly
+encl2PPoly = PPoly.fromPoly
 #endif
 polyEncl :: (DyadicInterval, Integer) -> PolyEncl
+liftEncl2PPoly :: (PolyEncl -> PolyEncl) -> (PPoly -> PPoly)
+encl2PPoly :: PolyEncl -> PPoly
 
 
 -- import FnReps.Polynomial.UnaryCheb.Poly (compose,absX,absXshifted, reduceDegreeAndSweep)
@@ -76,7 +85,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
             ("dfun", "integrate") -> integrateDFun fnB2B dfnB2B accuracy
             ("poly", "max") -> maxPB $ fnPB accuracy
             ("poly", "integrate") -> integratePB $ fnPB accuracy
-            -- ("ppoly", "max") -> fnPP OpMax pp_prec pp_maxDeg pp_divThreshold pp_divIts pp_rangeAcc
+            ("ppoly", "max") -> maxPP $ fnPP accuracy -- OpMax pp_prec pp_maxDeg pp_divThreshold pp_divIts pp_rangeAcc
             -- ("ppoly", "integrate") -> fnPP OpIntegrate pp_prec pp_maxDeg pp_divThreshold pp_divIts pp_rangeAcc
             _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
     (Just (fnDescription, fnPB, fnB2B, dfnB2B, fnPP)) = Map.lookup functionCode functions
@@ -104,6 +113,22 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 
     maxPB :: PolyEncl -> MPBall
     maxPB f = f `maximumOverDom` (getDomain f)
+
+    maxPP :: PPoly -> MPBall
+    maxPP f = f `maximumOverDomPP` (getDomain f)
+      where
+      maximumOverDomPP f2 (Interval l r) =
+        PPoly.maximum f2 lB rB
+        where
+        lB = setPrecision prc $ mpBall l
+        rB = setPrecision prc $ mpBall r
+        prc = getPrecision f2
+
+    -- integratePP :: PPoly -> MPBall
+    -- integratePP f = f `integrateOverDomPP` (getDomain f)
+    --   where
+    --   integrateOverDomPP f (Interval l r) =
+    --     PPoly.integerate f (mpBall l) (mpBall r)
 
     maxFun :: UnaryFun -> Accuracy -> MPBall
     maxFun fn ac =
@@ -134,7 +159,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 processArgs _ =
     error "expecting arguments: <operationCode> <functionCode> <representationCode> <effort parameters...>"
 
-functions :: Map.Map String (String, Accuracy -> PolyEncl, UnaryFun, UnaryFun, FnPP)
+functions :: Map.Map String (String, Accuracy -> PolyEncl, UnaryFun, UnaryFun, Accuracy -> PPoly)
 functions =
     Map.fromList
     [
@@ -149,8 +174,8 @@ functions =
         ("bumpy", (bumpy_Name, bumpy_PB, bumpy_B2B, bumpyDeriv_B2B, bumpy_PP))
     ]
 
-data Operator = OpMax | OpIntegrate
-type FnPP = Operator -> Precision -> Degree -> Rational -> Integer -> Accuracy -> MPBall
+-- data Operator = OpMax | OpIntegrate
+-- type FnPP = Operator -> Precision -> Degree -> Rational -> Integer -> Accuracy -> MPBall
 
 sinecos_Name :: String
 sinecos_Name = "sin(10x)+cos(20x) over [-1,1]"
@@ -173,7 +198,7 @@ sinecosDeriv_B2B =
   UnaryFun unaryIntervalDom $ \x ->
     10*cos(10*x)-20*sin(20*x)
 
-sinecos_PP :: FnPP
+sinecos_PP :: Accuracy -> PPoly
 sinecos_PP =
   error $ "Not (yet) supporting PPoly for: " ++ sinecos_Name
 
@@ -198,13 +223,10 @@ sinesineDeriv_B2B =
   UnaryFun unaryIntervalDom $ \x ->
     (10-40*x*cos(20*x*x))*cos(10*x + sin(20*x*x))
 
-sinesine_PP :: FnPP
-sinesine_PP OpMax p deg _divThresholdAcc _divIterations rangeAcc =
+sinesine_PP :: Accuracy -> PPoly
+sinesine_PP acGuide =
   error $ "Not (yet) supporting PPoly for: " ++ sinesine_Name
     -- PPolyBench.sinesineMax deg deg rangeAcc p
-sinesine_PP OpIntegrate p deg _divThresholdAcc _divIterations rangeAcc =
-  error $ "Not (yet) supporting PPoly for: " ++ sinesine_Name
-    -- PPolyBench.sinesineIntegral deg deg rangeAcc p
 
 sinesineCos_Name :: String
 sinesineCos_Name = "sin(10x+sin(20x^2)) + cos(10x) over [-1,1]"
@@ -235,13 +257,10 @@ sinesineCosDeriv_B2B =
          - 10*sin(10*x)
           -- + 10*cos(10*x)
 
-sinesineCos_PP :: FnPP
-sinesineCos_PP OpMax p deg _divThresholdAcc _divIterations rangeAcc =
+sinesineCos_PP :: Accuracy -> PPoly
+sinesineCos_PP acGuide =
   error $ "Not (yet) supporting PPoly for: " ++ sinesineCos_Name
   -- PPolyBench.sinesineCosMax deg deg rangeAcc p
-sinesineCos_PP OpIntegrate p deg _divThresholdAcc _divIterations rangeAcc =
-  error $ "Not (yet) supporting PPoly for: " ++ sinesineCos_Name
-  -- PPolyBench.sinesineCosIntegral deg deg rangeAcc p
 
 runge_Name :: String
 runge_Name = "1/(100x^2+1) over [-1,1]"
@@ -266,13 +285,18 @@ rungeDeriv_B2B =
   UnaryFun unaryIntervalDom $ \x ->
     (-200*x)/((100*x^2+1)^2)
 
-runge_PP :: FnPP
-runge_PP OpMax p _deg divThresholdAcc divIterations rangeAcc =
-  error $ "Not (yet) supporting PPoly for: " ++ runge_Name
-    -- PPolyBench.rungeMax divThresholdAcc divIterations p rangeAcc
-runge_PP OpIntegrate p _deg divThresholdAcc divIterations rangeAcc =
-  error $ "Not (yet) supporting PPoly for: " ++ runge_Name
-    -- PPolyBench.rungeIntegral divThresholdAcc divIterations p rangeAcc
+runge_PP :: Accuracy -> PPoly
+runge_PP acGuide =
+  trace ("runge_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
+  inv
+  where
+  inv = setPrc2 $ PPoly.inverse $ encl2PPoly $ 100*x*x+1
+  x = setPrc1 xPre
+  xPre = varFn (polyEncl (unaryIntervalDom, 0)) ()
+  setPrc2 :: (CanSetPrecision t) => t -> t
+  setPrc2 = setPrecisionAtLeastAccuracy (10*acGuide)
+  setPrc1 :: (CanSetPrecision t) => t -> t
+  setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
 
 rungeX_Name :: String
 rungeX_Name = "x/(100x^2+1) over [-1,1]"
@@ -297,13 +321,18 @@ rungeXDeriv_B2B =
   UnaryFun unaryIntervalDom $ \x ->
     (1-100*x^2)/((100*x^2+1)^2)
 
-rungeX_PP :: FnPP
-rungeX_PP OpMax p _deg divThresholdAcc divIterations rangeAcc =
-  error $ "Not (yet) supporting PPoly for: " ++ rungeX_Name
-  -- PPolyBench.rungeXMax divThresholdAcc divIterations p rangeAcc
-rungeX_PP OpIntegrate p _deg divThresholdAcc divIterations rangeAcc =
-  error $ "Not (yet) supporting PPoly for: " ++ rungeX_Name
-  -- PPolyBench.rungeXIntegral divThresholdAcc divIterations p rangeAcc
+rungeX_PP :: Accuracy -> PPoly
+rungeX_PP acGuide =
+  trace ("rungeX_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
+  x * inv
+  where
+  inv = setPrc2 $ PPoly.inverse $ encl2PPoly $ 100*x*x+1
+  x = setPrc1 xPre
+  xPre = varFn (polyEncl (unaryIntervalDom, 0)) ()
+  setPrc2 :: (CanSetPrecision t) => t -> t
+  setPrc2 = setPrecisionAtLeastAccuracy (10*acGuide)
+  setPrc1 :: (CanSetPrecision t) => t -> t
+  setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
 
 fracSin_Name :: String
 fracSin_Name = "1/(10(sin(7x))^2+1) over [-1,1]"
@@ -328,13 +357,21 @@ fracSinDeriv_B2B =
   UnaryFun unaryIntervalDom $ \x ->
     (-140*sin(7*x)*cos(7*x))/((10*(sin (7*x))^2+1)^2)
 
-fracSin_PP :: FnPP
-fracSin_PP OpMax p deg divThresholdAcc divIterations rangeAcc =
-  error $ "Not (yet) supporting PPoly for: " ++ fracSin_Name
-  -- PPolyBench.fracSinMax deg divThresholdAcc divIterations p rangeAcc
-fracSin_PP OpIntegrate p deg divThresholdAcc divIterations rangeAcc =
-  error $ "Not (yet) supporting PPoly for: " ++ fracSin_Name
-  -- PPolyBench.fracSinIntegral deg divThresholdAcc divIterations p rangeAcc
+fracSin_PP :: Accuracy -> PPoly
+fracSin_PP acGuide =
+  trace ("fracSin_PP: getAccuracy sine7x = " ++ show (getAccuracy sine7x)) $
+  trace ("fracSin_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
+  inv
+  where
+  inv = setPrc2 $ PPoly.inverse $ encl2PPoly $ (10*(sine7x*sine7x)+1)
+  sine7x = sine1 (7*x)
+  sine1 = sineWithAccuracyGuide (acGuide + 10)
+  x = setPrc1 xPre
+  xPre = varFn (polyEncl (unaryIntervalDom, 0)) ()
+  setPrc2 :: (CanSetPrecision t) => t -> t
+  setPrc2 = setPrecisionAtLeastAccuracy (10*acGuide)
+  setPrc1 :: (CanSetPrecision t) => t -> t
+  setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
 
 fracSinX_Name :: String
 fracSinX_Name = "x/(10(sin(7x))^2+1) over [-1,1]"
@@ -360,13 +397,21 @@ fracSinXDeriv_B2B =
     (-140*sin(7*x)*cos(7*x)*x)/((10*(sin (7*x))^2+1)^2)
     +
     (1/(10*(sin (7*x))^2+1))
-fracSinX_PP :: FnPP
-fracSinX_PP OpMax p deg divThresholdAcc divIterations rangeAcc =
-  error $ "Not (yet) supporting PPoly for: " ++ fracSinX_Name
-  -- PPolyBench.fracSinXMax deg divThresholdAcc divIterations p rangeAcc
-fracSinX_PP OpIntegrate p deg divThresholdAcc divIterations rangeAcc =
-  error $ "Not (yet) supporting PPoly for: " ++ fracSinX_Name
---    PPolyBench.fracSinXIntegral deg divThresholdAcc divIterations p rangeAcc
+fracSinX_PP :: Accuracy -> PPoly
+fracSinX_PP acGuide =
+  trace ("fracSinX_PP: getAccuracy sine7x = " ++ show (getAccuracy sine7x)) $
+  trace ("fracSinX_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
+  x * inv
+  where
+  inv = setPrc2 $ PPoly.inverse $ encl2PPoly $ (10*(sine7x*sine7x)+1)
+  sine7x = sine1 (7*x)
+  sine1 = sineWithAccuracyGuide (acGuide + 10)
+  x = setPrc1 xPre
+  xPre = varFn (polyEncl (unaryIntervalDom, 0)) ()
+  setPrc2 :: (CanSetPrecision t) => t -> t
+  setPrc2 = setPrecisionAtLeastAccuracy (10*acGuide)
+  setPrc1 :: (CanSetPrecision t) => t -> t
+  setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
 
 hat_Name :: String
 hat_Name = "1-|x+1/3| over [-1,1]"
@@ -390,13 +435,10 @@ hatDeriv_B2B =
          Just (Just False) -> mpBall (-1)
          _ -> fromEndpoints (mpBall $ -1) (mpBall 1)
 
-hat_PP :: FnPP
-hat_PP OpMax p _deg _divThresholdAcc _divIterations rangeAcc =
+hat_PP :: Accuracy -> PPoly
+hat_PP acGuide =
   error $ "Not (yet) supporting PPoly for: " ++ hat_Name
   -- PPolyBench.hatMax p rangeAcc
-hat_PP OpIntegrate p _deg _divThresholdAcc _divIterations _rangeAcc =
-  error $ "Not (yet) supporting PPoly for: " ++ hat_Name
-  -- PPolyBench.hatIntegral p
 
 bumpy_Name :: String
 bumpy_Name = "max(sin(10x),cos(11x)) over [-1,1]"
@@ -428,8 +470,8 @@ bumpyDeriv_B2B :: UnaryFun
 bumpyDeriv_B2B =
   error $ "DFun currently not supported for " ++ bumpy_Name
 
-bumpy_PP :: FnPP
-bumpy_PP =
+bumpy_PP :: Accuracy -> PPoly
+bumpy_PP acGuide =
   error $ "Not yet supporting PPoly for: " ++ bumpy_Name
 
 unaryIntervalDom :: DyadicInterval

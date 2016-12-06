@@ -14,6 +14,8 @@ import AERN2.MP.Dyadic
 import AERN2.MP.ErrorBound
 import AERN2.Interval
 
+import AERN2.RealFun.Operations
+
 import AERN2.Poly.Ball (PolyBall, Ball(..))
 import qualified AERN2.Poly.Ball as PolyBall
 import AERN2.Poly.Cheb
@@ -28,6 +30,10 @@ type Cheb = ChPoly MPBall
 data PPoly =
   PPoly {ppoly_pieces  :: [(DyadicInterval, PolyBall)],
          ppoly_dom     :: DyadicInterval}
+
+instance HasDomain PPoly where
+  type Domain PPoly = DyadicInterval
+  getDomain = ppoly_dom
 
 fromPoly :: Cheb -> PPoly
 fromPoly p = fromPolyBall (Ball p (errorBound 0))
