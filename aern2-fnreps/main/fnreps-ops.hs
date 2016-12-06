@@ -25,14 +25,16 @@ import AERN2.RealFun.Operations
 import AERN2.RealFun.SineCosine
 import AERN2.RealFun.UnaryFun
 import AERN2.RealFun.UnaryDFun
-import AERN2.Poly.Basics
+-- import AERN2.Poly.Basics
+
+-- import AERN2.PPoly.Type
 
 #ifdef POLYBALL
 import AERN2.Poly.Ball (PolyBall, polyBall)
 type PolyEncl = PolyBall
 polyEncl = polyBall
 #else
-import AERN2.Poly.Cheb (ChPoly, chPolyMPBall)
+import AERN2.Poly.Cheb (ChPoly, chPolyMPBall, Degree)
 -- import qualified AERN2.Poly.Cheb as ChPoly
 type PolyEncl = ChPoly MPBall
 polyEncl = chPolyMPBall

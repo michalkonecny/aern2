@@ -12,8 +12,11 @@
 -}
 
 module AERN2.Poly.Cheb.Type
--- (
--- )
+(
+  ChPoly(..), chPoly_terms, CanBeChPoly, chPoly, chPolyMPBall
+, showInternals, fromDomToUnitInterval
+, Degree, degree, reduceDegree, reduceDegreeWithLostAccuracyLimit
+)
 where
 
 import Numeric.MixedTypes
