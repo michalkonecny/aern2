@@ -11,15 +11,18 @@ import qualified Data.Map as Map
 import AERN2.Poly.Power.Type
 {-import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Derivative-}
-import AERN2.Poly.Cheb as Cheb hiding (maximum, minimum)
+import AERN2.Poly.Cheb as Cheb hiding (maximum, minimum, maximumOptimised)
+import qualified AERN2.Poly.Cheb as Cheb (maximum, minimum, maximumOptimised)
 import AERN2.Poly.Ball
 import AERN2.PPoly.Type
 import qualified AERN2.PPoly.Eval as PPE
 import AERN2.PQueue (PQueue)
 import qualified AERN2.PQueue as Q
-import Data.List hiding (maximum, minimum)
+import Data.List hiding (maximum, minimum, (!!))
 import AERN2.Poly.Conversion
 import AERN2.Interval
+
+import Debug.Trace
 
 -- instance CanMaximiseOverDom PPoly DyadicInterval where
 --   type MaximumOverDomType PPoly DyadicInterval = MPBall
@@ -27,6 +30,61 @@ import AERN2.Interval
 
 minimum :: PPoly -> MPBall -> MPBall -> MPBall
 minimum f l r = -(maximum (-f) l r)
+
+minimumOptimised :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> MPBall
+minimumOptimised f l r initialDegree steps =
+  -(maximumOptimised (-f) l r initialDegree steps)
+
+maximumOptimisedI' :: PPoly -> Integer -> Integer -> MPBall
+maximumOptimisedI' (PPoly ps _) initialDegree steps =
+  foldl1 max
+    [Cheb.maximumOptimised
+      (updateRadius (+ (radius p)) $ centre p)
+      (setPrecision (getPrecision p) $ mpBall a)
+      (setPrecision (getPrecision p) $ mpBall b)
+      initialDegree steps
+      | (Interval a b,p) <- ps]
+
+maximumOptimised :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> MPBall
+maximumOptimised (PPoly ps dom) l r initialDegree steps =
+  genericMaximum (PPE.evalDf f dfsCheb) dfsMap maxKeys nodes
+  where
+  lI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) l)
+  rI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) r) -- TODO: properly work out required endpoint precision
+  unit    = Interval (dyadic $ -1) (dyadic 1)
+  f       = PPoly ps unit
+  fs      = map snd ps
+  dfsCheb = map (ballLift1R (Cheb.derivative . makeExactCentre)) fs
+  dfcsCheb = map (ballLift1R (Cheb.derivative . centre . makeExactCentre)) fs
+  dfcsChebReduced =
+    map
+    (\df ->
+      let
+        maxKey = ceiling $ (Cheb.degree df - initialDegree) / steps
+      in
+      [reduceDegree (initialDegree + k*steps) df
+        | k <- [0 .. maxKey]])
+    dfcsCheb
+  --dfsPow  = map (cheb2Power . chPoly_poly . centre) dfsCheb
+  dfsPow  = map (map (cheb2Power . chPoly_poly)) dfcsChebReduced
+  dfsZipped =
+    concatMap
+        (\(k, (cdfs, pdfs)) ->
+          zip [(k,i) | i <-  [0..]]
+              $ zip (map Cheb.evalDirect cdfs) pdfs)
+        (zip [0..] $ zip dfcsChebReduced dfsPow)
+  dfsMap  = Map.fromList dfsZipped
+  maxKeys =
+    Map.fromList
+      [(k, ceiling $ (Cheb.degree (dfsCheb !! k) - initialDegree) / steps) -- TODO: avoid slow list index lookup
+        | k <- [0 .. integer $ length ps - 1]]
+  nodes   =
+    lI : [setPrecision (getPrecision f) $ mpBall n | n <- nodesI, (lI < n) == Just True, (n < rI) == Just True] ++ [rI]   -- note that the elements of nodesI are balls of radius 0,
+  nodesI  =                                                                                                  -- so that if they overlap with lI or rI, then they are contained in it
+    let
+      ns = map fst ps
+    in
+      (endpointL $ head ns) : (endpointR $ head ns) : (map endpointR (tail ns))
 
 maximum :: PPoly -> MPBall -> MPBall -> MPBall
 maximum (PPoly ps dom) l r =
@@ -37,13 +95,14 @@ maximum (PPoly ps dom) l r =
   unit    = Interval (dyadic $ -1) (dyadic 1)
   f       = PPoly ps unit
   fs      = map snd ps
-  dfsCheb = map (centre . ballLift1R (Cheb.derivative . makeExactCentre)) fs
-  dfsPow  = map (cheb2Power . chPoly_poly . centre) dfsCheb
-  dfsMap  = Map.fromList $ zip (map (\k -> (k,0)) [0..]) $ zip (map Cheb.evalDirect dfsCheb) dfsPow
-  maxKeys = Map.fromList [(k,0) | k <- [0 .. integer $ length ps]]
+  dfsCheb  = map (ballLift1R (Cheb.derivative . makeExactCentre)) fs
+  dfcsCheb = map (ballLift1R (Cheb.derivative . centre . makeExactCentre)) fs
+  dfsPow  = map (cheb2Power . chPoly_poly) dfcsCheb
+  dfsMap  = Map.fromList $ zip (map (\k -> (k,0)) [0..]) $ zip (map Cheb.evalDirect dfcsCheb) dfsPow
+  maxKeys = Map.fromList [(k,0) | k <- [0 .. integer $ length ps - 1]]
   nodes   =
-    lI : [mpBall n | n <- nodesI, (lI < n) == Just True, (n < rI) == Just True] ++ [rI]   -- note that the elements of nodesI are balls of radius 0,
-  nodesI  =                                                                               -- so that if they overlap with lI or rI, then they are contained in it
+    lI : [setPrecision (getPrecision f) $ mpBall n | n <- nodesI, (lI < n) == Just True, (n < rI) == Just True] ++ [rI]   -- note that the elements of nodesI are balls of radius 0,
+  nodesI  =                                                                                                  -- so that if they overlap with lI or rI, then they are contained in it
     let
       ns = map fst ps
     in
@@ -113,6 +172,9 @@ genericMaximum f dfs maxKeys nodes =
     let
       Just (mi, q') = Q.minView q
     in
+      {-trace (
+      "minimum interval "++(show mi)
+      ) $-}
       if mi_isAccurate mi (maxKey $ fst $ mi_derivative mi) then
         mi_value mi
       else
@@ -204,6 +266,9 @@ mi_derivative FinalInterval{} = error "trying to get derivative of final interva
 
 mi_isAccurate :: MaximisationInterval -> Integer -> Bool
 mi_isAccurate FinalInterval{} _ = True
+mi_isAccurate mi@(CriticalInterval {}) _ =
+  getAccuracy (mi_value mi) == Exact
+  || (not (isMoreAccurate (mi_value mi) (mi_oldValue mi)))
 mi_isAccurate mi maxKey =
   getAccuracy (mi_value mi) == Exact
   || (snd (mi_derivative mi) == maxKey

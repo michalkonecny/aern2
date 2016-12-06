@@ -1,7 +1,7 @@
 module AERN2.PPoly.Eval where
 
 import Numeric.MixedTypes
-import AERN2.Poly.Cheb.Type
+import AERN2.Poly.Cheb as Cheb hiding (evalDf)
 import qualified AERN2.Poly.Cheb.Eval as ChE (evalDirect, evalDf)
 import AERN2.PPoly.Type
 import AERN2.MP.Ball
@@ -9,15 +9,8 @@ import AERN2.Poly.Ball
 import AERN2.Interval
 import Data.List
 
-import Debug.Trace
-
 evalDirect :: PPoly -> MPBall -> MPBall
 evalDirect (PPoly ps _) x =
-  trace (
-   "eval direct: "
-   ++(show $ foldl1' meet $
-            map (\(_,f) -> (ballLift1TR ChE.evalDirect) f x) intersectingPieces)
-  ) $
   foldl1' meet $
   map (\(_,f) -> (ballLift1TR ChE.evalDirect) f x) intersectingPieces
   where
@@ -47,3 +40,9 @@ evalDf (PPoly ps _) fs' x =
   xAsInterval = dyadicInterval x
   intersectingPieces =
     filter (\p -> fst (fst p) `intersects` xAsInterval) $ zip ps fs'
+
+evalDI :: PPoly -> MPBall -> MPBall
+evalDI f@(PPoly ps _) x =
+  evalDf f dfs x
+  where
+  dfs = map ((ballLift1R Cheb.derivative) . snd) ps
