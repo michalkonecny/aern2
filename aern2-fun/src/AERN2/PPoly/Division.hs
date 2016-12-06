@@ -4,10 +4,14 @@ where
 
 import Numeric.MixedTypes hiding (maximum, minimum)
 import qualified Prelude
+import Data.List
+
+import AERN2.Poly.Cheb (reduceDegree)
 
 import AERN2.MP.Dyadic
 import AERN2.Poly.Ball as PolyBall
 import AERN2.MP.Ball
+import AERN2.Normalize
 
 import AERN2.PPoly.Type as PPoly
 import AERN2.PPoly.Eval
@@ -20,9 +24,9 @@ import qualified Data.Set as Set
 
 import Debug.Trace
 
-inverse :: PPoly -> PPoly -- TODO: allow negative f; maximum optimised for PPoly
+inverse :: PPoly -> PPoly -- TODO: allow negative f
 inverse f@(PPoly _ (Interval l r)) =
-  iterateInverse f if0 bf
+  iterateInverse f (setPrecision (getPrecision f) if0) bf
   where
   bf = abs $ AERN2.PPoly.Maximum.maximum f (mpBall l) (mpBall r)
   if0 = initialApproximation f (1/(1 + 2*bf)) bf
@@ -39,7 +43,25 @@ iterateInverse f if0 bf =
         ifn
       else
         aux next
-
+  reduce :: PolyBall -> PolyBall
+  reduce p =
+    aux' 10
+    where
+    aux' d =
+      let
+        red = setPrecision (getPrecision p) $ normalize $ Ball ((ballLift1R $ reduceDegree d) p) (errorBound 0)
+      in
+        if getAccuracy p < (bits 0)
+        || 3*getAccuracy red >= 2*getAccuracy p
+        then
+          red
+        else
+          {-trace (
+          "reducing..."++(show d)++"\n"++
+          "reduced accuracy: "++(show $ getAccuracy red)++"\n"++
+          "original accuracy: "++(show $ getAccuracy p)
+          )-}
+          aux' (d + 10)
   newtonPiece :: PolyBall -> PolyBall -> PolyBall
   newtonPiece pg pf =
     let
@@ -53,7 +75,7 @@ iterateInverse f if0 bf =
   newton :: PPoly -> PPoly
   newton g =
     PPoly
-      [(i, newtonPiece pg pf) | (i,pg,pf) <- refine g f]
+      [(i, {-reduce $-} newtonPiece pg pf) | (i,pg,pf) <- refine g f]
       (ppoly_dom f)
 
 {- -}
@@ -91,33 +113,47 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) threshold bf =
                 (r, 1/(evalDirect f (mpBall r)))
   nodes = map fst nodesNErrs
   errs = map snd nodesNErrs
+  minf   = minimumOptimised f (mpBall l) (mpBall r) 5 5 -- TODO requires f > 0
+  sampledError (LineSegment (a,fa) (b,fb)) =
+    let
+      p      = lineSegment ((a,fa), (b,fb))
+      pf     = PPoly.multiplyWithBounds p (mpBall 2) f bf
+      errs   =
+        [evalDI (pf - 1)
+          (a + k*(setPrecision (getPrecision f) $ mpBall b - a)/16)
+          | k <- [1..15] ]
+      absErr = foldl' (max . abs) (mpBall 0) errs
+      --minf   = minimumOptimised f (mpBall a) (mpBall b) 5 5 -- TODO requires f > 0
+    in
+      absErr/minf
   pieceError (LineSegment (a, fa) (b, fb)) =
     let
       p      = lineSegment ((a,fa), (b,fb))
       pf     = PPoly.multiplyWithBounds p (mpBall 2) f bf
-      maxErr = maximum (pf - 1) (mpBall a) (mpBall b)
-      minErr = minimum (pf - 1) (mpBall a) (mpBall b)
+      maxErr = maximumOptimised (pf - 1) (mpBall a) (mpBall b) 5 5
+      minErr = minimumOptimised (pf - 1) (mpBall a) (mpBall b) 5 5
       absErr = max (abs maxErr) (abs minErr)
-      minf   = minimum f (mpBall a) (mpBall b) -- TODO requires f > 0
+      --minf   = minimumOptimised f (mpBall a) (mpBall b) 5 5 -- TODO requires f > 0
+      {-maxErr = maximumOptimised (pf - 1) (mpBall a) (mpBall b) 5 5
+      minErr = minimumOptimised (pf - 1) (mpBall a) (mpBall b) 5 5
+      absErr = max (abs maxErr) (abs minErr)
+      minf   = minimumOptimised f (mpBall a) (mpBall b) 5 5-}
     in
-      trace (
+      {-trace (
       "multiplication result: "++(show pf)++"\n"++
       "abs error: "++(show absErr)++"\n"++
       "target error: "++(show threshold) ++ "\n"++
       "minf: "++(show minf)
-      )
+      )-}
       absErr/minf
-    {-let
-      Interval _ err  = abs $ range' acc ((mwb fReduced (lineSegment ((l,fl), (r,fr))) bf (mpBall 2)) - 1) (Interval (mpBall l) (mpBall r))
-      Interval minf _ = abs $ range' acc fReduced (Interval (mpBall l) (mpBall r))
-    in
-      err/minf-}
   refineUntilAccurate :: LineSegment -> Set (LineSegment, MPBall)
   refineUntilAccurate p =
     let
-      err = pieceError p
+      serr = sampledError p
+      err  = pieceError p
     in
-    if (err < threshold) == Just True then
+    if (serr < threshold) == Just True
+    && (err < threshold) == Just True then
       Set.singleton (p, err)
     else let refined = refinePiece p in
       (refineUntilAccurate $ Set.elemAt (int 0) refined) `Set.union` (refineUntilAccurate $ Set.elemAt (int 1) refined)
