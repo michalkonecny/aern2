@@ -55,6 +55,9 @@ instance ConvertibleExactly MPBall MPBall where
 instance ConvertibleExactly Dyadic MPBall where
   safeConvertExactly x = Right $ MPBall (mpFloat x) (errorBound 0)
 
+instance ConvertibleExactly EB.ErrorBound MPBall where
+  safeConvertExactly eb = Right $ MPBall (mpFloat eb) (errorBound 0)
+
 instance ConvertibleExactly Integer MPBall where
   safeConvertExactly x
     | isValid b = Right b
