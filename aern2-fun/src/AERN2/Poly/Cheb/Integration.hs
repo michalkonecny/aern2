@@ -1,6 +1,6 @@
 {-|
     Module      :  AERN2.Poly.Cheb.Integration
-    Description :  Chebyshev basis derivative
+    Description :  Chebyshev basis integration
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -8,7 +8,7 @@
     Stability   :  experimental
     Portability :  portable
 
-    Chebyshev basis derivative
+    Chebyshev basis integration
 -}
 module AERN2.Poly.Cheb.Integration where
 
