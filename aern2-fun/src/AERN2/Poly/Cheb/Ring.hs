@@ -153,29 +153,7 @@ mulChebDCT ::
   (PolyCoeff c)
   =>
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
-mulChebDCT p1 p2 =
-  lift2_DCT (+) (*) p1WithPrec p2WithPrec
-  where
-  size1 = terms_size $ chPoly_terms p1
-  size2 = terms_size $ chPoly_terms p2
-  minPrec = prec (100 + 2*(size1 + size2)) -- TODO: improve this heuristic
-
-  p1WithPrec = raisePrecisionIfBelow minPrec p1
-  p2WithPrec = raisePrecisionIfBelow minPrec p2
-
--- -- an unfinished attempt to replicate PolyBall multiplication:
--- updateRadius (+ eb) p1Cp2C
---   where
---   p1C = centreAsBall p1 -- $ raisePrecisionIfBelow minPrec p1
---   p2C = centreAsBall p2 -- $ raisePrecisionIfBelow minPrec p2
---   p1Cp2C = lift2_DCT (+) (*) p1C p2C
---
---   r1 = radius p1
---   r2 = radius p2
---   ac = min ((getAccuracy r1) + 1) ((getAccuracy r2) + 1)
---
---   Interval l r = getDomain p1C
-
+mulChebDCT = lift2_DCT (+) (*)
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]

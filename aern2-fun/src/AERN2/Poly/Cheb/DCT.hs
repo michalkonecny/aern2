@@ -30,10 +30,7 @@ import Math.NumberTheory.Logarithms (integerLog2)
 
 import AERN2.Normalize
 
--- import AERN2.MP.Precision
--- import AERN2.MP.ErrorBound
--- import AERN2.MP.Ball
--- import AERN2.MP.Dyadic
+import AERN2.MP
 
 import AERN2.Real
 
@@ -93,9 +90,9 @@ lift2_DCT getDegree op pA pB
   cN = 2 ^ cNexponent
 
   -- prc = (getPrecision pA) `max` (getPrecision pB)
-  -- workingPrec = prc
-  (ChPoly domA (Poly termsA)) = pA -- setPrecision workingPrec pA
-  (ChPoly domB (Poly termsB)) = pB -- setPrecision workingPrec pB
+  workingPrec = prec $ 100 + cN
+  (ChPoly domA (Poly termsA)) = raisePrecisionIfBelow workingPrec pA
+  (ChPoly domB (Poly termsB)) = raisePrecisionIfBelow workingPrec pB
 
   aT = coeffs2gridvalues cN termsA
   bT = coeffs2gridvalues cN termsB
