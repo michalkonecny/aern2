@@ -1,4 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE CPP #-}
+#define DEBUG
 {-|
     Module      :  AERN2.Poly.Cheb.Field
     Description :  Poly division and integer power
@@ -13,7 +15,15 @@
 -}
 module AERN2.Poly.Cheb.Field where
 
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#else
+#define maybeTrace (flip const)
+#endif
+
 import Numeric.MixedTypes
+import Text.Printf
 
 -- import AERN2.Normalize
 
@@ -22,11 +32,11 @@ import AERN2.TH
 import AERN2.MP
 import AERN2.MP.Dyadic
 
-import AERN2.Real
+-- import AERN2.Real
 
 import AERN2.RealFun.Operations
 
-import AERN2.Poly.Basics
+-- import AERN2.Poly.Basics
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.DCT
 import AERN2.Poly.Cheb.Maximum ()
@@ -36,8 +46,8 @@ import AERN2.Poly.Cheb.Ring ()
 
 chebDivideDCT ::
   (c ~ MPBall) =>
-  ChPoly c -> ChPoly c -> ChPoly c
-chebDivideDCT p q
+  Accuracy -> ChPoly c -> ChPoly c -> ChPoly c
+chebDivideDCT acGuide p q
     | (minQ > 0) == Just True = r
     | otherwise =
         error "When dividing polynomials, the numerator could not be separated from 0"
@@ -47,28 +57,38 @@ chebDivideDCT p q
     where
     minQ = sepFromZero q
 
-    pSize = terms_size $ chPoly_terms p
-    qSize = terms_size $ chPoly_terms q
-    minPrec = prec (100 + 2*(pSize + qSize)) -- TODO: improve this heuristic
-    pWithPrec = raisePrecisionIfBelow minPrec p
-    qWithPrec = raisePrecisionIfBelow minPrec q
-
-    pC = centre pWithPrec
-    qC = centre qWithPrec
+    pC = centreAsBall p
+    qC = centreAsBall q
 
     pR = mpBall $ radius p
     qR = mpBall $ radius q
 
-    d = degree p + degree q
-    rC = lift2_DCT (const $ const $ d) (/) pC qC
+    initD = degree p + degree q
 
-    divErrorBound = errorBound $
-      (maxDifferenceC + pR + qR*maxRC) / minQ
+    (rC, rE) = tryWithDegree initD
+    r = updateRadius (+rE) rC
+
+    tryWithDegree d =
+      maybeTrace
+      (printf "chebDivideDCT: tryWithDegree: acGuide = %s, d = %d"
+        (show acGuide) d
+      ) $
+      maybeTrace
+      (printf "chebDivideDCT: tryWithDegree: acGuide = %s, d = %d, dctAccuracy = %s"
+        (show acGuide) d (show dctAccuracy)
+      ) $
+      res
       where
-      maxDifferenceC = maxNorm $ pC - rC * qC
-      maxRC = maxNorm rC
-
-    r = updateRadius (+divErrorBound) rC
+      res
+        | accurateEnough = (rCd, rEd)
+        | otherwise = tryWithDegree (2*d)
+      rCd = lift2_DCT (const $ const $ d) (/) pC qC
+      rEd = errorBound $
+        (maxDifferenceC + pR + qR * rCMaxNorm) / minQ
+      maxDifferenceC = maxNorm $ pC - rCd * qC
+      rCMaxNorm = maxNorm rCd
+      accurateEnough = dctAccuracy > acGuide
+      dctAccuracy = getAccuracy (errorBound $ maxDifferenceC/minQ)
 
     {-
         |r(x) - p(x)/q(x)| <= max(|p(x) - r(x)*q(x)|) / min(|q(x)|)
@@ -120,7 +140,9 @@ sepFromZero f =
   dom = getDomain f
 
 instance CanDiv (ChPoly MPBall) (ChPoly MPBall) where
-  divide = chebDivideDCT
+  divide p q = chebDivideDCT acGuide p q
+    where
+    acGuide = getFiniteAccuracy p `min` getFiniteAccuracy q
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Dyadic |], [t| MPBall |]]
