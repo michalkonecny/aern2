@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+#define DEBUG
 module AERN2.Poly.Cheb.Maximum
 (
 maximum,
@@ -8,8 +10,17 @@ minimumOptimised,
 minimumOptimisedWithAccuracy
 ) where
 
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#else
+#define maybeTrace (flip const)
+#endif
 
 import Numeric.MixedTypes hiding (maximum, minimum)
+
+import Text.Printf
+
 import AERN2.MP.Ball
 -- import AERN2.MP.Dyadic
 import qualified Data.Map as Map
@@ -23,16 +34,6 @@ import AERN2.Poly.Cheb.Eval
 import AERN2.Poly.Cheb.Derivative
 import AERN2.Poly.Conversion
 import AERN2.Interval
-
-import Debug.Trace
-
-{-shouldTrace :: Bool
-shouldTrace = True
-
-maybeTrace :: String -> a -> a
-maybeTrace
-    | shouldTrace = trace
-    | otherwise = const id-}
 
 maximum :: ChPoly MPBall -> MPBall -> MPBall -> MPBall
 maximum (ChPoly dom poly) l r  =
@@ -77,19 +78,27 @@ minimumOptimised f = minimumOptimisedWithAccuracy (getFiniteAccuracy f) f
 instance CanMinimiseOverDom (ChPoly MPBall) DyadicInterval where
   type MinimumOverDomType (ChPoly MPBall) DyadicInterval = MPBall
   minimumOverDom f (Interval l r) =
-    minimumOptimised f (mpBall l) (mpBall r) 5 5
-    -- minimumOptimised (setPrecision prc f) lB rB 5 5
-    -- where
-    -- prc = 20*(getPrecision f)
-    -- lB = raisePrecisionIfBelow prc $ mpBall l
-    -- rB = raisePrecisionIfBelow prc $ mpBall r
+    res
+    where
+    (_, Just res) = last $ iterateUntilAccurate ac withPrec
+    ac = getFiniteAccuracy f
+    withPrec p =
+      maybeTrace (printf "ChPoly: MinimumOverDomType: withPrec: p = %s; ac = %s"
+        (show p) (show $ getAccuracy resP)) $
+      Just resP
+      where
+      resP = minimumOptimised (setPrecision p f) (mpBall l) (mpBall r) 5 5
 
 instance CanMaximiseOverDom (ChPoly MPBall) DyadicInterval where
   type MaximumOverDomType (ChPoly MPBall) DyadicInterval = MPBall
   maximumOverDom f (Interval l r) =
-    maximumOptimised f (mpBall l) (mpBall r) 5 5
-    -- maximumOptimised (setPrecision prc f) lB rB 5 5
-    -- where
-    -- prc = 20*(getPrecision f)
-    -- lB = raisePrecisionIfBelow prc $ mpBall l
-    -- rB = raisePrecisionIfBelow prc $ mpBall r
+    res
+    where
+    (_, Just res) = last $ iterateUntilAccurate ac withPrec
+    ac = getFiniteAccuracy f
+    withPrec p =
+      maybeTrace (printf "ChPoly: MaximumOverDomType: withPrec: p = %s; ac = %s"
+        (show p) (show $ getAccuracy resP)) $
+      Just resP
+      where
+      resP = maximumOptimised (setPrecision p f) (mpBall l) (mpBall r) 5 5
