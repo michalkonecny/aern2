@@ -37,7 +37,7 @@ maybeTrace
 maximum :: ChPoly MPBall -> MPBall -> MPBall -> MPBall
 maximum (ChPoly dom poly) l r  =
    Pow.genericMaximum (evalDf f df)
-    (Map.fromList [(0, (evalDirect dfc, cheb2Power $ chPoly_poly dfc))]) 
+    (Map.fromList [(0, (evalDirect dfc, cheb2Power $ chPoly_poly dfc))])
     (getAccuracy f)
     (fromDomToUnitInterval dom l) (fromDomToUnitInterval dom r)
    where
@@ -77,17 +77,19 @@ minimumOptimised f = minimumOptimisedWithAccuracy (getFiniteAccuracy f) f
 instance CanMinimiseOverDom (ChPoly MPBall) DyadicInterval where
   type MinimumOverDomType (ChPoly MPBall) DyadicInterval = MPBall
   minimumOverDom f (Interval l r) =
-    minimumOptimised (setPrecision prc f) lB rB 5 5
-    where
-    prc = 3*(getPrecision f)
-    lB = raisePrecisionIfBelow prc $ mpBall l
-    rB = raisePrecisionIfBelow prc $ mpBall r
+    minimumOptimised f (mpBall l) (mpBall r) 5 5
+    -- minimumOptimised (setPrecision prc f) lB rB 5 5
+    -- where
+    -- prc = 20*(getPrecision f)
+    -- lB = raisePrecisionIfBelow prc $ mpBall l
+    -- rB = raisePrecisionIfBelow prc $ mpBall r
 
 instance CanMaximiseOverDom (ChPoly MPBall) DyadicInterval where
   type MaximumOverDomType (ChPoly MPBall) DyadicInterval = MPBall
   maximumOverDom f (Interval l r) =
-    maximumOptimised (setPrecision prc f) lB rB 5 5
-    where
-    prc = 3*(getPrecision f)
-    lB = raisePrecisionIfBelow prc $ mpBall l
-    rB = raisePrecisionIfBelow prc $ mpBall r
+    maximumOptimised f (mpBall l) (mpBall r) 5 5
+    -- maximumOptimised (setPrecision prc f) lB rB 5 5
+    -- where
+    -- prc = 20*(getPrecision f)
+    -- lB = raisePrecisionIfBelow prc $ mpBall l
+    -- rB = raisePrecisionIfBelow prc $ mpBall r
