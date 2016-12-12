@@ -23,7 +23,7 @@ fns = fnsPoly ++ fnsFun
 fnsFun :: Plot.Functions
 fnsFun = map funFn
   [
-    ("Fun x^2", unitDom, \x -> x^2)
+    ("Fun 0", unitDom, \x -> x-x)
   , ("Fun 1/(10*x^2+1)", unitDom, \x -> 1/(10*x^2+1))
   -- , ("Fun (1+sin(6x))/2", unitDom, \x -> (1+sin (6*x))/2)
   -- , ("Fun (1+cos(6x))/2", unitDom, \x -> (1+cos (6*x))/2)
@@ -37,8 +37,10 @@ unitDomP = dyadicInterval (0.0,1.0)
 fnsPoly :: Plot.Functions
 fnsPoly = map chPolyFn
   [
-    ("Poly x^2", ChPoly.reduceDegree 1 $ xP*xP)
-  -- , ("Poly 1/(10*x^2+1)", 1/(10*x*x+1))
+    ("Poly 0", x - x)
+  , ("Poly 1/(10*x^2+1)", ChPoly.reduceDegree 8 $ ChPoly.chebDivideDCT (bits 4) (x-x+1) (10*x*x+1))
+  , ("Poly 1/(10*x^2+1)", ChPoly.reduceDegree 12 $ ChPoly.chebDivideDCT (bits 4) (x-x+1) (10*x*x+1))
+  , ("Poly 1/(10*x^2+1)", ChPoly.reduceDegree 16 $ ChPoly.chebDivideDCT (bits 4) (x-x+1) (10*x*x+1))
   -- , ("Poly (1+sin[ac=3](6x))/2", (1+sine (6*x))/2)
   -- , ("Poly (1+cos[ac=3](6x))/2", (1+cosine (6*x))/2)
   ]
