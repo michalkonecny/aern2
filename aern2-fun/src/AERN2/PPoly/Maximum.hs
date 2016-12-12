@@ -100,15 +100,31 @@ maximumOptimisedWithAccuracy (PPoly ps dom) l r initialDegree steps cutoffAccura
    " \n dfs map: "++(show $ dfsZippedDebug)
    ++"\n maxKeys: "++(show maxKeys)
   ) $-}
-  genericMaximum (PPE.evalDf f dfsCheb) dfsMap maxKeys nodes (min (getAccuracy f) cutoffAccuracy)
+  genericMaximum
+    (PPE.evalDf f
+      (map
+        (\dfc -> reduceToEvalDirectAccuracy dfc (bits $ -4))
+        dfcsCheb))
+    dfsMap
+    maxKeys
+    nodes
+    (min (getAccuracy f) cutoffAccuracy)
   where
+  reduceDegreeToAccuracy d g =
+    let
+      try = reduceDegree d g
+    in
+      if getAccuracy try >= cutoffAccuracy then
+        try
+      else
+        reduceDegreeToAccuracy (d + 5) g
   lI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) l)
   rI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) r) -- TODO: properly work out required endpoint precision
   unit    = Interval (dyadic $ -1) (dyadic 1)
   f       = PPoly ps unit
-  fs      = map snd ps
-  dfsCheb = map (ballLift1R (Cheb.derivative . makeExactCentre)) fs
-  dfcsCheb = map (ballLift1R (Cheb.derivative . centre . makeExactCentre)) fs
+  fs      = map (reduceDegreeToAccuracy 5 . ballLift1R makeExactCentre . snd) ps
+  --dfsCheb = map (ballLift1R (Cheb.derivative . makeExactCentre)) fs
+  dfcsCheb = map (Cheb.derivative . centre) fs
   dfcsChebReduced =
     map
     (\df ->
@@ -132,7 +148,7 @@ maximumOptimisedWithAccuracy (PPoly ps dom) l r initialDegree steps cutoffAccura
   dfsMap  = Map.fromList dfsZipped
   maxKeys =
     Map.fromList
-      [(k, ceiling $ (Cheb.degree (dfsCheb !! k) - initialDegree) / steps) -- TODO: avoid slow list index lookup
+      [(k, ceiling $ (Cheb.degree (dfcsCheb !! k) - initialDegree) / steps) -- TODO: avoid slow list index lookup
         | k <- [0 .. integer $ length ps - 1]]
   nodes   =
     lI : [setPrecision (getPrecision f) $ mpBall n | n <- nodesI, (lI < n) == Just True, (n < rI) == Just True] ++ [rI]   -- note that the elements of nodesI are balls of radius 0,

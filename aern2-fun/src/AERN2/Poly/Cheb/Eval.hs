@@ -119,7 +119,7 @@ reduceToEvalDirectAccuracy :: ChPoly MPBall -> Accuracy -> ChPoly MPBall
 reduceToEvalDirectAccuracy f ac =
   aux 5 NoInformation Nothing
   where
-  domBall = mpBall $ chPoly_dom f
+  domBall = setPrecision (getPrecision f) $ mpBall $ chPoly_dom f
   aux d oldAccuracy oldTry =
     let
       tryDegree   = reduceDegree d f

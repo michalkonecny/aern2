@@ -28,8 +28,17 @@ inverse :: PPoly -> PPoly -- TODO: allow negative f
 inverse f@(PPoly _ (Interval l r)) =
   iterateInverse f (setPrecision (getPrecision f) if0) bf
   where
-  bf = abs $ AERN2.PPoly.Maximum.maximum f (mpBall l) (mpBall r)
-  if0 = initialApproximation f (1/(1 + 2*bf)) bf
+  reduceDegreeToAccuracy d g =
+    let
+      try = (liftCheb2PPoly $ reduceDegree d) g
+    in
+      if getAccuracy try >= getAccuracy threshold + 1 then
+        try
+      else
+        reduceDegreeToAccuracy (d + 5) g
+  bf        = abs $ AERN2.PPoly.Maximum.maximum f (mpBall l) (mpBall r)
+  threshold = (1/(1 + 4*bf))
+  if0 = initialApproximation (reduceDegreeToAccuracy 5 f) (1/(1 + 2*bf)) bf
 
 iterateInverse :: PPoly -> PPoly -> MPBall -> PPoly
 iterateInverse f if0 bf =

@@ -87,7 +87,6 @@ genericMaximum
 genericMaximum f dfs bts l r =
   let
     df0 = fromJust $ Map.lookup 0 dfs
-    --bsI = initialBernsteinCoefsAccurate (snd df0) l r (getPrecision l) (getPrecision l)
     bsI = initialBernsteinCoefs (snd df0) l r
     (d0 , Just sgnL) = tryFindSign l 0 -- TODO: Just sgnL assumes exact poly
   in
@@ -152,11 +151,9 @@ genericMaximum f dfs bts l r =
     let
       Just (mi, q') = Q.minView q
     in
-      maybeTrace (
-      "minimal interval " ++ (show mi)
-      ) $
       trace (
-       "minimal interval value: "++(show $ mi_value mi)
+      "minimal interval " ++ (show mi)++
+      "\nminimal interval value: "++(show $ mi_value mi)
       ) $
       if mi_isAccurate mi maxKey bts then
         maybeTrace (
@@ -169,6 +166,7 @@ genericMaximum f dfs bts l r =
         ) $
         case mi of
           SearchInterval a b v ov k ts ->
+            trace("sign variations: "++(show $ signVars ts)) $
             if isNothing $ signVars ts then -- TODO avoid recomputation of sign variations
               maybeTrace (
                "signVars are undefined."
@@ -295,6 +293,7 @@ isMoreAccurate x (Just y) =
 
 computeMidpoint :: MPBall -> MPBall -> MPBall
 computeMidpoint l r =
+  trace ("interval ["++(show l)++" , "++(show r)++"]") $
   let
     ip = (max (getPrecision l) (getPrecision r))
   in
