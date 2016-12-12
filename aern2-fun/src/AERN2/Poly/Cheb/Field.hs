@@ -65,22 +65,26 @@ chebDivideDCT acGuide p q
 
     initD = degree p + degree q
 
-    (rC, rE) = tryWithDegree initD
-    r = updateRadius (+rE) rC
+
+    r =
+      maybeTrace
+      (printf "chebDivideDCT: acGuide = %s, minQ = %s" (show acGuide) (show minQ)) $
+      tryWithDegree initD
 
     tryWithDegree d =
       maybeTrace
-      (printf "chebDivideDCT: tryWithDegree: acGuide = %s, d = %d"
-        (show acGuide) d
-      ) $
+      (printf "chebDivideDCT: tryWithDegree: d = %d" d) $
       maybeTrace
-      (printf "chebDivideDCT: tryWithDegree: acGuide = %s, d = %d, dctAccuracy = %s"
-        (show acGuide) d (show dctAccuracy)
-      ) $
+      (printf "chebDivideDCT: tryWithDegree: d = %d; getAccuracy rCd = %s" d (show $ getAccuracy rCd)) $
+      maybeTrace
+      (printf "chebDivideDCT: tryWithDegree: d = %d; rCMaxNorm = %s" d (show rCMaxNorm)) $
+      maybeTrace
+      (printf "chebDivideDCT: tryWithDegree: d = %d; maxDifferenceC = %s; dctAccuracy = %s; getAccuracy rEd = %s"
+        d (show maxDifferenceC) (show dctAccuracy) (show $ getAccuracy rEd)) $
       res
       where
       res
-        | accurateEnough = (rCd, rEd)
+        | accurateEnough = updateRadius (+rEd) rCd
         | otherwise = tryWithDegree (2*d)
       rCd = lift2_DCT (const $ const $ d) (/) pC qC
       rEd = errorBound $
