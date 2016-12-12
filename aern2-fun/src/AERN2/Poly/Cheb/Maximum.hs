@@ -19,7 +19,7 @@ import Debug.Trace (trace)
 
 import Numeric.MixedTypes hiding (maximum, minimum)
 
-import Text.Printf
+--import Text.Printf
 
 import AERN2.MP.Ball
 -- import AERN2.MP.Dyadic
@@ -49,14 +49,23 @@ maximum (ChPoly dom poly) l r  =
 maximumOptimisedWithAccuracy
   :: Accuracy -> ChPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall
 maximumOptimisedWithAccuracy acc (ChPoly dom poly) l r initialDegree steps =
-  Pow.genericMaximum (evalDf f f') dfsWithEval
-    acc
-    (fromDomToUnitInterval dom l) (fromDomToUnitInterval dom r)
+    Pow.genericMaximum
+      (evalDf f (reduceToEvalDirectAccuracy fc' (bits $ -4))) dfsWithEval
+      (min (getAccuracy f) acc)
+      (fromDomToUnitInterval dom (setPrecision (getPrecision f) l))
+      (fromDomToUnitInterval dom (setPrecision (getPrecision f) r))
   where
-  f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly
-  f' = makeExactCentre $ derivative f
-  fc' = makeExactCentre $ derivative $ centre f
-  maxKey = ceiling $ (degree f - initialDegree) / steps
+  reduceDegreeToAccuracy d g =
+    let
+      try = reduceDegree d g
+    in
+      if getAccuracy try >= acc then
+        try
+      else
+        reduceDegreeToAccuracy (d + 5) g
+  f  = reduceDegreeToAccuracy 5 $ makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly
+  fc' = (derivative . centre) f
+  maxKey = max 0 (ceiling $ (degree f - initialDegree) / steps)
   dfsWithEval =
     Map.fromList
     [(k,(evalDirect df, (cheb2Power . chPoly_poly) df)) | (k,df) <- dfs]
@@ -64,7 +73,7 @@ maximumOptimisedWithAccuracy acc (ChPoly dom poly) l r initialDegree steps =
 
 maximumOptimised :: ChPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall
 maximumOptimised f =
-  maximumOptimisedWithAccuracy (getFiniteAccuracy f) f
+  maximumOptimisedWithAccuracy (getFiniteAccuracy f - 1) f
 
 minimum :: ChPoly MPBall -> MPBall -> MPBall -> MPBall
 minimum f l r = -(maximum (-f) l r)
@@ -78,7 +87,8 @@ minimumOptimised f = minimumOptimisedWithAccuracy (getFiniteAccuracy f) f
 instance CanMinimiseOverDom (ChPoly MPBall) DyadicInterval where
   type MinimumOverDomType (ChPoly MPBall) DyadicInterval = MPBall
   minimumOverDom f (Interval l r) =
-    res
+    minimumOptimised f (mpBall l) (mpBall r) 5 5
+    {-res
     where
     (_, Just res) = last $ iterateUntilAccurate ac withPrec
     ac = getFiniteAccuracy f
@@ -87,12 +97,13 @@ instance CanMinimiseOverDom (ChPoly MPBall) DyadicInterval where
         (show p) (show $ getAccuracy resP)) $
       Just resP
       where
-      resP = minimumOptimised (setPrecision p f) (mpBall l) (mpBall r) 5 5
+      resP = minimumOptimised (setPrecision p f) (mpBall l) (mpBall r) 5 5-}
 
 instance CanMaximiseOverDom (ChPoly MPBall) DyadicInterval where
   type MaximumOverDomType (ChPoly MPBall) DyadicInterval = MPBall
   maximumOverDom f (Interval l r) =
-    res
+    maximumOptimised f (mpBall l) (mpBall r) 5 5
+    {-res
     where
     (_, Just res) = last $ iterateUntilAccurate ac withPrec
     ac = getFiniteAccuracy f
@@ -101,4 +112,4 @@ instance CanMaximiseOverDom (ChPoly MPBall) DyadicInterval where
         (show p) (show $ getAccuracy resP)) $
       Just resP
       where
-      resP = maximumOptimised (setPrecision p f) (mpBall l) (mpBall r) 5 5
+      resP = maximumOptimised (setPrecision p f) (mpBall l) (mpBall r) 5 5-}

@@ -13,7 +13,7 @@
 
 module AERN2.Poly.Cheb.Eval
 (
-  evalDirect, evalLip, evalDf, evalDI
+  evalDirect, evalLip, evalDf, evalDI, reduceToEvalDirectAccuracy
 )
 where
 
@@ -23,6 +23,8 @@ import Numeric.MixedTypes
 
 -- import Test.Hspec
 -- import Test.QuickCheck
+
+import Data.Maybe
 
 import AERN2.MP.ErrorBound
 import AERN2.MP.Ball
@@ -93,13 +95,42 @@ evalDirect (ChPoly dom (Poly terms)) (xInDom :: t) =
 
 evalLip :: ChPoly MPBall -> MPBall -> MPBall -> MPBall
 evalLip f l x =
-  evalDirect f (centreAsBall x) + (fromEndpoints (-err) err :: MPBall)
+  {-trace ("centre: "++ (show $ evalDirect f (centreAsBall x))) $
+  trace ("lipschitz: "++ (show $ l)) $
+  trace ("error: "++ (show $ err)) $-}
+  (evalDirect f (centreAsBall x)) + (fromEndpoints (-err) err :: MPBall)
   where
   err = l* dyadic (ball_error x)*0.5
 
 evalDf :: ChPoly MPBall -> ChPoly MPBall -> MPBall -> MPBall
 evalDf f f' x =
+  {-let
+    ChPoly _ ts = f'
+  in
+  trace ("evaluating on "++(show x)) $
+  trace ("derivative accuracy: "++(show $ getAccuracy $ f')) $
+  trace ("derivative precision: "++(show $ getPrecision $ f')) $
+  trace ("derivative terms: "++(show $ ts)) $
+  trace ("x accuracy: "++(show $ getAccuracy x)) $
+  trace ("x precision: "++(show $ getPrecision x))-}
   evalLip f (abs $ evalDirect f' x) x
+
+reduceToEvalDirectAccuracy :: ChPoly MPBall -> Accuracy -> ChPoly MPBall
+reduceToEvalDirectAccuracy f ac =
+  aux 5 NoInformation Nothing
+  where
+  domBall = mpBall $ chPoly_dom f
+  aux d oldAccuracy oldTry =
+    let
+      tryDegree   = reduceDegree d f
+      tryAccuracy = getAccuracy (evalDirect tryDegree domBall)
+    in
+      if tryAccuracy >= ac then
+        tryDegree
+      else if tryAccuracy <= oldAccuracy then
+        fromJust oldTry
+      else
+        aux (d + 5) tryAccuracy (Just tryDegree)
 
 evalDI :: ChPoly MPBall -> MPBall -> MPBall
 evalDI f = evalDf f (derivative f)

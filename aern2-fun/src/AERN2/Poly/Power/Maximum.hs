@@ -87,47 +87,32 @@ genericMaximum
 genericMaximum f dfs bts l r =
   let
     df0 = fromJust $ Map.lookup 0 dfs
-    --bsI = initialBernsteinCoefsAccurate df0 l r 100 50
+    --bsI = initialBernsteinCoefsAccurate (snd df0) l r (getPrecision l) (getPrecision l)
     bsI = initialBernsteinCoefs (snd df0) l r
     (d0 , Just sgnL) = tryFindSign l 0 -- TODO: Just sgnL assumes exact poly
   in
     case signVars bsI of
       Just 1
-        -> splitUntilAccurate $
+        ->  splitUntilAccurate $
             (let fx = evalfOnInterval l l in Q.insert (FinalInterval l l fx)) $
             (let fx = evalfOnInterval r r in Q.insert (FinalInterval r r fx)) $
             Q.singleton $
             let fx = evalfOnInterval l r in
               CriticalInterval l r fx Nothing d0 sgnL
       Just 0
-        -> splitUntilAccurate $
+        ->  splitUntilAccurate $
             (let fx = evalfOnInterval l l in Q.insert (FinalInterval l l fx)) $
             Q.singleton $
             let fx = evalfOnInterval r r in FinalInterval r r fx
       _
-        -> splitUntilAccurate $
+        ->  splitUntilAccurate $
             (let fx = evalfOnInterval l l in Q.insert (FinalInterval l l fx)) $
             (let fx = evalfOnInterval r r in Q.insert (FinalInterval r r fx)) $
             Q.singleton $
-            let fx = evalfOnInterval l r in SearchInterval l r fx Nothing d0 bsI
+            let fx = evalfOnInterval l r in SearchInterval l r fx Nothing 0 {-d0-} bsI
   where
-  {-initialBernsteinCoefsAccurate p l r n m =
-    let
-      bs = (initialBernsteinCoefs (setPrecision (prec n) p)) l r
-    in
-    maybeTrace (
-     "bernstein coefs: "++(show bs)++"\n"++
-     "precision: "++(show n)
-    ) $
-    if (isJust $ signVars bs)
-    || (getAccuracy bs  >= getAccuracy p - 1) then
-      bs
-    else
-      initialBernsteinCoefsAccurate p l r (n + m) n -}
-
   maxKey = fst $ Map.findMax dfs
   evalfOnInterval a b =
-    --f (fromEndpoints a b)
     let
       aux p q ac =
         let
@@ -144,8 +129,8 @@ genericMaximum f dfs bts l r =
           else
             aux (p + q) p (getAccuracy try)
     in
-      aux (max (getPrecision a) (getPrecision b))
-          (max (getPrecision a) (getPrecision b))  NoInformation
+      aux (max (getPrecision l) $ max (getPrecision a) (getPrecision b))
+          (max (getPrecision l) $ max (getPrecision a) (getPrecision b))  NoInformation
   sgn x =
     case x > 0 of
       Just True  -> Just 1
@@ -170,6 +155,9 @@ genericMaximum f dfs bts l r =
       maybeTrace (
       "minimal interval " ++ (show mi)
       ) $
+      trace (
+       "minimal interval value: "++(show $ mi_value mi)
+      ) $
       if mi_isAccurate mi maxKey bts then
         maybeTrace (
          "mi accurate."
@@ -186,7 +174,20 @@ genericMaximum f dfs bts l r =
                "signVars are undefined."
               ) $
               if mi_derivative mi == maxKey then
-                v
+                --v
+                let
+                 m = computeMidpoint a b
+                 (bsL, bsR)  = bernsteinCoefs a b m ts
+                 --sgnM = tryFindSign m k
+                 --bsL = initialBernsteinCoefs (snd $ fromJust $ Map.lookup k dfs) a m
+                 --bsR = initialBernsteinCoefs (snd $ fromJust $ Map.lookup k dfs) m b
+                in
+                splitUntilAccurate $
+                  Q.insert
+                    (SearchInterval a m (evalfOnInterval a m) (Just v) k bsL) $
+                  Q.insert
+                    (SearchInterval m b (evalfOnInterval m b) (Just v) k bsR)
+                    q'
               else
                 splitUntilAccurate $
                   Q.insert
@@ -297,7 +298,7 @@ computeMidpoint l r =
   let
     ip = (max (getPrecision l) (getPrecision r))
   in
-  aux (ip + ip)
+  aux ip
       ip
       ((l + r)/2)
   where

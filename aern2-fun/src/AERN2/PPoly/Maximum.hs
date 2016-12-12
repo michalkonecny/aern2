@@ -11,7 +11,7 @@ import qualified Data.Map as Map
 import AERN2.Poly.Power.Type
 {-import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Derivative-}
-import AERN2.Poly.Cheb as Cheb hiding (maximum, minimum, maximumOptimised)
+import AERN2.Poly.Cheb as Cheb hiding (maximum, minimum, maximumOptimised, maximumOptimisedWithAccuracy)
 import qualified AERN2.Poly.Cheb as Cheb (maximum, minimum, maximumOptimised)
 import AERN2.Poly.Ball
 import AERN2.PPoly.Type
@@ -35,6 +35,10 @@ minimumOptimised :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> MPBall
 minimumOptimised f l r initialDegree steps =
   -(maximumOptimised (-f) l r initialDegree steps)
 
+minimumOptimisedWithAccuracy :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> Accuracy -> MPBall
+minimumOptimisedWithAccuracy f l r initialDegree steps cutoff =
+  -(maximumOptimisedWithAccuracy (-f) l r initialDegree steps cutoff)
+
 maximumOptimisedI' :: PPoly -> Integer -> Integer -> MPBall
 maximumOptimisedI' (PPoly ps _) initialDegree steps =
   foldl1 max
@@ -45,9 +49,9 @@ maximumOptimisedI' (PPoly ps _) initialDegree steps =
       initialDegree steps
       | (Interval a b,p) <- ps]
 
-maximumOptimised :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> MPBall
-maximumOptimised (PPoly ps dom) l r initialDegree steps =
-  genericMaximum (PPE.evalDf f dfsCheb) dfsMap maxKeys nodes
+dfsZipped :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> [((Integer, Integer),  PowPoly MPBall)]
+dfsZipped (PPoly ps dom) l r initialDegree steps =
+  dfsZippedDebug
   where
   lI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) l)
   rI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) r) -- TODO: properly work out required endpoint precision
@@ -67,6 +71,58 @@ maximumOptimised (PPoly ps dom) l r initialDegree steps =
     dfcsCheb
   --dfsPow  = map (cheb2Power . chPoly_poly . centre) dfsCheb
   dfsPow  = map (map (cheb2Power . chPoly_poly)) dfcsChebReduced
+
+  dfsZippedDebug = map (\(k,(f,p)) -> (k,p)) dfsZipped
+
+  dfsZipped =
+    concatMap
+        (\(k, (cdfs, pdfs)) ->
+          zip [(k,i) | i <-  [0..]]
+              $ zip (map (Cheb.evalDirect :: ChPoly MPBall -> MPBall -> MPBall) cdfs) pdfs)
+        (zip [0..] $ zip dfcsChebReduced dfsPow)
+  dfsMap  = Map.fromList dfsZipped
+  maxKeys =
+    Map.fromList
+      [(k, ceiling $ (Cheb.degree (dfsCheb !! k) - initialDegree) / steps) -- TODO: avoid slow list index lookup
+        | k <- [0 .. integer $ length ps - 1]]
+  nodes   =
+    lI : [setPrecision (getPrecision f) $ mpBall n | n <- nodesI, (lI < n) == Just True, (n < rI) == Just True] ++ [rI]   -- note that the elements of nodesI are balls of radius 0,
+  nodesI  =                                                                                                  -- so that if they overlap with lI or rI, then they are contained in it
+    let
+      ns = map fst ps
+    in
+      (endpointL $ head ns) : (endpointR $ head ns) : (map endpointR (tail ns))
+
+maximumOptimisedWithAccuracy :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> Accuracy -> MPBall
+maximumOptimisedWithAccuracy (PPoly ps dom) l r initialDegree steps cutoffAccuracy =
+  {-trace (
+   "maximum optimised.. \n length ps: "++(show $ length ps)++
+   " \n dfs map: "++(show $ dfsZippedDebug)
+   ++"\n maxKeys: "++(show maxKeys)
+  ) $-}
+  genericMaximum (PPE.evalDf f dfsCheb) dfsMap maxKeys nodes (min (getAccuracy f) cutoffAccuracy)
+  where
+  lI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) l)
+  rI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) r) -- TODO: properly work out required endpoint precision
+  unit    = Interval (dyadic $ -1) (dyadic 1)
+  f       = PPoly ps unit
+  fs      = map snd ps
+  dfsCheb = map (ballLift1R (Cheb.derivative . makeExactCentre)) fs
+  dfcsCheb = map (ballLift1R (Cheb.derivative . centre . makeExactCentre)) fs
+  dfcsChebReduced =
+    map
+    (\df ->
+      let
+        maxKey = ceiling $ (Cheb.degree df - initialDegree) / steps
+      in
+      [reduceDegree (initialDegree + k*steps) df
+        | k <- [0 .. maxKey]])
+    dfcsCheb
+  --dfsPow  = map (cheb2Power . chPoly_poly . centre) dfsCheb
+  dfsPow  = map (map (cheb2Power . chPoly_poly)) dfcsChebReduced
+
+  --dfsZippedDebug = map (\(k,(f,p)) -> (k,p)) dfsZipped
+
   dfsZipped =
     concatMap
         (\(k, (cdfs, pdfs)) ->
@@ -86,9 +142,14 @@ maximumOptimised (PPoly ps dom) l r initialDegree steps =
     in
       (endpointL $ head ns) : (endpointR $ head ns) : (map endpointR (tail ns))
 
+maximumOptimised :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> MPBall
+maximumOptimised p l r initialDegree steps =
+  maximumOptimisedWithAccuracy p l r initialDegree steps (getAccuracy p)
+
+
 maximum :: PPoly -> MPBall -> MPBall -> MPBall
 maximum (PPoly ps dom) l r =
-  genericMaximum (PPE.evalDf f dfsCheb) dfsMap maxKeys nodes
+  genericMaximum (PPE.evalDf f dfsCheb) dfsMap maxKeys nodes (getAccuracy f)
   where
   lI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) l)
   rI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) r) -- TODO: properly work out required endpoint precision
@@ -108,15 +169,20 @@ maximum (PPoly ps dom) l r =
     in
       (endpointL $ head ns) : (endpointR $ head ns) : (map endpointR (tail ns))
 
+
+
 {- We assume that the function is defined on the interval [-1,1] and that
    the nodes partition a subinterval of [-1,1]
  -}
 genericMaximum
   :: (MPBall -> MPBall)
     -> Map (Integer, Integer) (MPBall -> MPBall, PowPoly MPBall)
-    -> Map Integer Integer -> [MPBall]
+    -> Map Integer Integer -> [MPBall] -> Accuracy
     -> MPBall
-genericMaximum f dfs maxKeys nodes =
+genericMaximum f dfs maxKeys nodes cutoffAccuracy =
+  trace (
+  "generic maximum"
+  ) $
   splitUntilAccurate initialQueue
   where
   initialQueue =
@@ -134,6 +200,9 @@ genericMaximum f dfs maxKeys nodes =
     aux (r : xs) l n res = aux xs r (n + 1) ((makeSearchInterval l r n):res)
   makeSearchInterval :: MPBall -> MPBall -> Integer -> Maybe MaximisationInterval
   makeSearchInterval l r k =
+    {-trace (
+    "make search interval "++(show l)++" "++(show r)++" "++(show k)
+    ) $-}
     let
       df0 = fromJust $ Map.lookup (k,0) dfs
       bsI = initialBernsteinCoefs (snd df0) l r
@@ -145,7 +214,7 @@ genericMaximum f dfs maxKeys nodes =
         Just 0
           -> Nothing
         _
-          -> let fx = evalfOnInterval l r in Just $ SearchInterval l r fx Nothing (k,d0) bsI
+          -> let fx = evalfOnInterval l r in Just $ SearchInterval l r fx Nothing (k,0) bsI
   singletonInterval :: MPBall -> MaximisationInterval
   singletonInterval x =
     FinalInterval x x (f x)
@@ -163,6 +232,12 @@ genericMaximum f dfs maxKeys nodes =
     let
       sg = sgn $ (fst $ fromJust $ Map.lookup (k,n) dfs) x
     in
+      {-trace (
+      "tryFindSign "++(show x)++" "++(show k)++" "++(show n)++"\n"++
+      "df is "++(show $ snd $ fromJust $ Map.lookup (k,n) dfs)++"\n"++
+      "dfx is "++(show $ (fst $ fromJust $ Map.lookup (k,n) dfs) x)++"\n"++
+      "sign is: "++(show sg)
+      ) $-}
       if isJust sg || n == maxKey k then
         (n, sg)
       else
@@ -175,7 +250,7 @@ genericMaximum f dfs maxKeys nodes =
       {-trace (
       "minimum interval "++(show mi)
       ) $-}
-      if mi_isAccurate mi (maxKey $ fst $ mi_derivative mi) then
+      if mi_isAccurate mi cutoffAccuracy (maxKey $ fst $ mi_derivative mi) then
         mi_value mi
       else
         case mi of
@@ -264,13 +339,13 @@ mi_derivative (SearchInterval   _ _ _ _ d _) = d
 mi_derivative (CriticalInterval _ _ _ _ d _) = d
 mi_derivative FinalInterval{} = error "trying to get derivative of final interval"
 
-mi_isAccurate :: MaximisationInterval -> Integer -> Bool
-mi_isAccurate FinalInterval{} _ = True
-mi_isAccurate mi@(CriticalInterval {}) _ =
-  getAccuracy (mi_value mi) == Exact
+mi_isAccurate :: MaximisationInterval -> Accuracy -> Integer -> Bool
+mi_isAccurate FinalInterval{} _ _ = True
+mi_isAccurate mi@(CriticalInterval {}) bts _ =
+  getAccuracy (mi_value mi) >= bts
   || (not (isMoreAccurate (mi_value mi) (mi_oldValue mi)))
-mi_isAccurate mi maxKey =
-  getAccuracy (mi_value mi) == Exact
+mi_isAccurate mi bts maxKey =
+  getAccuracy (mi_value mi) >= bts
   || (snd (mi_derivative mi) == maxKey
   && not (isMoreAccurate (mi_value mi) (mi_oldValue mi)))
 
