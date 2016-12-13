@@ -39,7 +39,7 @@ polyEncl = polyBall
 liftEncl2PPoly = PPoly.liftBall2PPoly
 encl2PPoly = PPoly.fromPolyBall
 #else
-import AERN2.Poly.Cheb (ChPoly, chPolyMPBall, Degree)
+import AERN2.Poly.Cheb (ChPoly, chPolyMPBall)
 -- import qualified AERN2.Poly.Cheb as ChPoly
 type PolyEncl = ChPoly MPBall
 polyEncl = chPolyMPBall
@@ -90,23 +90,8 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
             _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
     (Just (fnDescription, fnPB, fnB2B, dfnB2B, fnPP)) = Map.lookup functionCode functions
 
-    maxDeg1, maxDeg2 :: Degree
-    maxDeg1 = read maxDeg1S
-    maxDeg2 = read maxDeg2S
-    p = prec $ read precS
-    [precS, maxDeg1S, maxDeg2S] = effortArgs
-
     accuracy = bits $ (read accuracyS :: Int)
     [accuracyS] = effortArgs
-
-    pp_prec = prec $ read pp_precS
-    pp_maxDeg :: Degree
-    pp_maxDeg = read pp_maxDegS
-    pp_divThreshold = toRational ((read pp_divThresholdS) :: Double)
-    pp_divIts :: Integer
-    pp_divIts = read pp_divItsS
-    pp_rangeAcc = bits $ (read pp_rangeBitsS :: Int)
-    [pp_precS, pp_maxDegS, pp_divThresholdS, pp_divItsS, pp_rangeBitsS] = effortArgs
 
     integratePB :: PolyEncl -> MPBall
     integratePB f = f `integrateOverDom` (getDomain f)
