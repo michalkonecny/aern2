@@ -16,6 +16,8 @@ module AERN2.Poly.Cheb
   module AERN2.Poly.Cheb.Type
 , module AERN2.Poly.Cheb.Eval
 , module AERN2.Poly.Cheb.Maximum
+, module AERN2.Poly.Cheb.Ring
+, module AERN2.Poly.Cheb.Field
 , module AERN2.Poly.Cheb.Derivative
 , module AERN2.Poly.Cheb.Integration
 , _chPolyX
@@ -37,8 +39,8 @@ import AERN2.RealFun.Operations
 import AERN2.RealFun.SineCosine
 
 import AERN2.Poly.Cheb.Type
-import AERN2.Poly.Cheb.Ring ()
-import AERN2.Poly.Cheb.Field ()
+import AERN2.Poly.Cheb.Ring
+import AERN2.Poly.Cheb.Field
 import AERN2.Poly.Cheb.Eval
 import AERN2.Poly.Cheb.Maximum
 import AERN2.Poly.Cheb.Derivative
