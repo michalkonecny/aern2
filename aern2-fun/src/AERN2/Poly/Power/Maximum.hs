@@ -85,6 +85,7 @@ genericMaximum
       -> MPBall -> MPBall
       -> MPBall
 genericMaximum f dfs bts l r =
+  trace ("generic maximum") $
   let
     df0 = fromJust $ Map.lookup 0 dfs
     bsI = initialBernsteinCoefs (snd df0) l r
@@ -293,7 +294,6 @@ isMoreAccurate x (Just y) =
 
 computeMidpoint :: MPBall -> MPBall -> MPBall
 computeMidpoint l r =
-  trace ("interval ["++(show l)++" , "++(show r)++"]") $
   let
     ip = (max (getPrecision l) (getPrecision r))
   in

@@ -4,10 +4,11 @@ where
 import Numeric.MixedTypes
 
 import Data.List
+import Data.Maybe
 
 import AERN2.Normalize
 
-import AERN2.MP.Ball (IsBall(..), MPBall)
+import AERN2.MP.Ball (IsBall(..), MPBall, mpBall)
 import AERN2.MP.Precision
 import AERN2.MP.Accuracy
 import AERN2.MP.Dyadic
@@ -49,12 +50,43 @@ linearPolygon ((x,y) : xys) dom =
   aux [] _ _ res = PPoly (reverse res) dom
   aux ((x',y'):xys) x y res =
     aux xys x' y' ((Interval x x', linSpline x y x' y') : res)
-  linSpline x y x' y' =
+  linSpline a fa b fb =
     Ball
       (ChPoly
         dom
-        (Poly $ terms_fromList [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))]))
+        --(Poly $ terms_fromList [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))]))
+        (Poly $ terms_fromList
+                [(0, constantTerm a fa b fb (getPrecision fa) (getPrecision fb) Nothing),
+                 (1, linearTerm a fa b fb (getPrecision fa) (getPrecision fb)  Nothing)]))
       (errorBound 0)
+  linearTerm a fa b fb p q prev =
+    let
+    a' = setPrecision p (mpBall a)
+    b' = setPrecision p (mpBall b)
+    fa' = setPrecision p fa
+    fb' = setPrecision p fb
+    try =
+      (fb' - fa')/(b' - a')
+    in
+      if isJust prev
+      && getAccuracy try <= getAccuracy (fromJust prev) then
+        try
+      else
+        linearTerm a fa b fb (p + q) p (Just try)
+  constantTerm a fa b fb p q prev =
+    let
+    a' = setPrecision p (mpBall a)
+    b' = setPrecision p (mpBall b)
+    fa' = setPrecision p fa
+    fb' = setPrecision p fb
+    try =
+      fa'- (a'*(fb' - fa'))/(b' - a')
+    in
+      if isJust prev
+      && getAccuracy try <= getAccuracy (fromJust prev) then
+        try
+      else
+        constantTerm a fa b fb (p + q) p (Just try)
 linearPolygon [] _ =
   error "linearPolygon must be provided with a list of at least 2 points"
 

@@ -28,30 +28,34 @@ inverse :: PPoly -> PPoly -- TODO: allow negative f
 inverse f@(PPoly _ (Interval l r)) =
   iterateInverse f (setPrecision (getPrecision f) if0) bf
   where
-  reduceDegreeToAccuracy d g =
-    let
-      try = (liftCheb2PPoly $ reduceDegree d) g
-    in
-      if getAccuracy try >= getAccuracy threshold + 1 then
-        try
-      else
-        reduceDegreeToAccuracy (d + 5) g
-  bf        = abs $ AERN2.PPoly.Maximum.maximum f (mpBall l) (mpBall r)
+  bf        = abs $ AERN2.PPoly.Maximum.maximumOptimised f (mpBall l) (mpBall r) 5 5
   threshold = (1/(1 + 4*bf))
-  if0 = initialApproximation (reduceDegreeToAccuracy 5 f) (1/(1 + 2*bf)) bf
+  if0 = initialApproximation f threshold bf
 
 iterateInverse :: PPoly -> PPoly -> MPBall -> PPoly
 iterateInverse f if0 bf =
-  aux (newton if0)
+  trace ("iterating") $
+  --aux (newton if0)
+  PPoly
+    [(i, reduce $ aux' pg pf) | (i,pg,pf) <- refine if0 f]
+    (ppoly_dom f)
   where
+  aux' ipn pf =
+    let
+      next = newtonPiece ipn pf
+    in
+      if getAccuracy next <= getAccuracy ipn then
+        ipn
+      else
+        aux' next pf
   aux ifn =
     let
       next = newton ifn
     in
-      trace (
+      {-trace (
       "next iterate degree "++(show $ (degree . centre . snd . head . ppoly_pieces) next)++"\n"++
       "accuracy: "++(show $ getAccuracy next)
-      ) $
+      ) $-}
       if getAccuracy next <= getAccuracy ifn then
         ifn
       else
@@ -61,6 +65,7 @@ iterateInverse f if0 bf =
     aux' 10
     where
     aux' d =
+      trace ("reducing with degree "++(show d)) $
       let
         red = setPrecision (getPrecision p) $ normalize $ Ball ((ballLift1R $ reduceDegree d) p) (errorBound 0)
       in
@@ -69,7 +74,8 @@ iterateInverse f if0 bf =
         "reduced accuracy: "++(show $ getAccuracy red)++"\n"++
         "original accuracy: "++(show $ getAccuracy p)
         ) $-}
-        if getAccuracy red >= max (bits 3) (getAccuracy p - (bits 7))
+        if d >= (ballLift1R degree) p
+        || getAccuracy red >= max (bits 3) (getAccuracy p - (bits 4))
         then
           red
         else
@@ -87,7 +93,7 @@ iterateInverse f if0 bf =
   newton :: PPoly -> PPoly
   newton g =
     PPoly
-      [(i, reduce $ newtonPiece pg pf) | (i,pg,pf) <- refine g f]
+      [(i, {-reduce $-} newtonPiece pg pf) | (i,pg,pf) <- refine g f]
       (ppoly_dom f)
 
 {- -}
@@ -109,7 +115,7 @@ initialApproximation :: PPoly -> MPBall -> MPBall -> PPoly
 initialApproximation f@(PPoly _ dom@(Interval l r)) threshold bf =
   result
   where
-  thresholdAccuracy = getAccuracy threshold
+  thresholdAccuracy = 1 + getAccuracy ((fromEndpoints (mpBall 0) threshold) :: MPBall)
   PPoly linps _ = linearPolygon ((lsFst $ head nodes) : (map lsSnd nodes)) dom
   result =
     PPoly
@@ -122,8 +128,8 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) threshold bf =
   nodesNErrs =
     Set.toList $
     refineUntilAccurate $
-    LineSegment (l, 1/(evalDirect f $ setPrecision (getPrecision f) $ (mpBall l)))
-                (r, 1/(evalDirect f $ setPrecision (getPrecision f) $ (mpBall r)))
+    LineSegment (l, 1/(evalDirectWithAccuracy thresholdAccuracy f (mpBall l)))
+                (r, 1/(evalDirectWithAccuracy thresholdAccuracy f (mpBall r)))
   nodes = map fst nodesNErrs
   errs = map snd nodesNErrs
   minf =
@@ -142,7 +148,7 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) threshold bf =
       absErr/minf
   pieceError (LineSegment (a, fa) (b, fb)) =
     let
-      p      = lineSegment ((a,fa), (b,fb))
+      p      = lineSegment ((a, fa), (b,fb))
       pf     = PPoly.multiplyWithBounds p (mpBall 2) f bf
       maxErr = maximumOptimisedWithAccuracy (pf - 1) (mpBall a) (mpBall b) 5 5 thresholdAccuracy
       minErr = minimumOptimisedWithAccuracy (pf - 1) (mpBall a) (mpBall b) 5 5 thresholdAccuracy
@@ -153,13 +159,27 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) threshold bf =
       absErr = max (abs maxErr) (abs minErr)
       minf   = minimumOptimised f (mpBall a) (mpBall b) 5 5-}
     in
+      {-trace(
+      "a: "++(show a) ++"\n"++
+      "fa: "++(show fa) ++"\n"++
+      "b: "++(show b) ++"\n"++
+      "fb: "++(show fb) ++"\n"++
+      "p: "++(show p) ++"\n"++
+      "pf - 1: "++(show $ pf - 1) ++"\n"++
+      "p precision "++(show $ getPrecision p)++"\n"++
+      "f precision "++(show $ getPrecision f)++"\n"++
+      "pf precision "++(show $ getPrecision pf)
+      ) $-}
       {-trace (
       "multiplication result: "++(show pf)++"\n"++
       "abs error: "++(show absErr)++"\n"++
       "target error: "++(show threshold) ++ "\n"++
       "minf: "++(show minf)
       )-}
-      absErr/minf
+      if b - a < 0.0001 then
+        error "giving up"
+      else
+        absErr/minf
 
   refineUntilAccurate :: LineSegment -> Set (LineSegment, MPBall)
   refineUntilAccurate p =
@@ -167,8 +187,11 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) threshold bf =
       serr = sampledError p
       err  = pieceError p
     in
-    if {-(serr < threshold) == Just True
-    &&-} (err < threshold) == Just True then
+    {-trace("error: "++(show err)) $
+    trace("sampled error: "++(show serr)) $
+    trace("threshold: "++(show threshold)) $-}
+    if {-}(serr < threshold) == Just True
+    && -}(err < threshold) == Just True then
       Set.singleton (p, err)
     else let refined = refinePiece p in
       {-trace (
@@ -180,7 +203,7 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) threshold bf =
   refinePiece (LineSegment (a,fa) (b,fb)) =
     let
       m  = 0.5*(a + b)
-      fm = 1/(evalDirect f (setPrecision (getPrecision f) $ mpBall m))
+      fm = 1/(evalDirectWithAccuracy thresholdAccuracy f (mpBall m))
     in
       trace (
       "refining "++(show a) ++ " " ++(show b) ++"\n"++

@@ -198,7 +198,7 @@ $(declForTypes
 
 multiplyWithBounds :: PolyBall -> MPBall -> PolyBall -> MPBall -> PolyBall
 multiplyWithBounds (Ball p ep) bp (Ball q eq) bq =
-  normalize res
+  makeExactCentre res
   where
   res = Ball (p * q) e
   e = ep*(errorBound bq) + (errorBound bp)*eq + ep*eq
