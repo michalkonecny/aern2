@@ -53,13 +53,20 @@ chPolyMPBall = convertExactly
 
 {- Chebyshev polynomials with domain translation -}
 
-data ChPoly c = ChPoly { chPoly_dom :: DyadicInterval, chPoly_poly :: Poly c }
+data ChPoly c =
+  ChPoly
+  { chPoly_dom :: DyadicInterval
+  , chPoly_poly :: Poly c
+  , chPoly_lip :: c
+  , chPoly_lowerBnd :: c
+  , chPoly_upperBnd :: c
+  }
 
 chPoly_terms :: ChPoly c -> Terms c
-chPoly_terms (ChPoly _ (Poly terms)) = terms
+chPoly_terms = poly_terms . chPoly_poly
 
 instance Show (ChPoly MPBall) where
-  show (ChPoly dom poly) = show ppDom
+  show (ChPoly dom poly _ _ _) = show ppDom
     where
     pp = cheb2Power poly
     ppDom =
@@ -72,8 +79,11 @@ instance Show (ChPoly MPBall) where
 
 
 showInternals :: (Show c) => ChPoly c -> String
-showInternals (ChPoly dom (Poly terms)) =
+showInternals (ChPoly dom (Poly terms) lip lb ub) =
   "ChPoly: dom = " ++ show dom ++
+  ", lip = " ++ show lip ++
+  ", lowerBbd = " ++ show lb ++
+  ", upperBbd = " ++ show ub ++
   ", terms = " ++ show terms
 
 fromDomToUnitInterval ::
@@ -90,10 +100,12 @@ instance HasDomain (ChPoly c) where
 
 instance (IsBall c, HasIntegers c) => IsBall (ChPoly c) where
   type CentreType (ChPoly c) = ChPoly c
-  radius (ChPoly _dom (Poly terms)) =
+  radius (ChPoly _dom (Poly terms) _ _ _) =
     List.foldl' (+) (errorBound 0) $ map radius $ terms_coeffs terms
-  centre (ChPoly dom (Poly terms)) =
-    ChPoly dom (Poly (terms_map centreAsBall terms))
+  centre cp@(ChPoly dom (Poly terms) lip lb ub) =
+    ChPoly dom (Poly (terms_map centreAsBall terms)) (updateRadius (+r) lip) lb ub
+    where
+    r = radius cp
   centreAsBall = centre
   centreAsBallAndRadius cp = (centre cp, radius cp)
   updateRadius updateFn (ChPoly dom (Poly terms)) =
