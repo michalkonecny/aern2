@@ -237,3 +237,37 @@ getAern2PlotFunctionByFunctionIdName functionId =
     Http.fromJson
       Json.Decode.string
       (Http.send Http.defaultSettings request)
+
+type alias FunctionColour =
+  { functionColourR : Int
+  , functionColourG : Int
+  , functionColourB : Int
+  }
+
+decodeFunctionColour : Json.Decode.Decoder FunctionColour
+decodeFunctionColour =
+  Json.Decode.succeed FunctionColour
+    |: ("functionColourR" := Json.Decode.int)
+    |: ("functionColourG" := Json.Decode.int)
+    |: ("functionColourB" := Json.Decode.int)
+
+getAern2PlotFunctionByFunctionIdColour : Int -> Task.Task Http.Error (FunctionColour)
+getAern2PlotFunctionByFunctionIdColour functionId =
+  let
+    request =
+      { verb =
+          "GET"
+      , headers =
+          [("Content-Type", "application/json")]
+      , url =
+          "aern2Plot"
+          ++ "/" ++ "function"
+          ++ "/" ++ (functionId |> toString |> Http.uriEncode)
+          ++ "/" ++ "colour"
+      , body =
+          Http.empty
+      }
+  in
+    Http.fromJson
+      decodeFunctionColour
+      (Http.send Http.defaultSettings request)

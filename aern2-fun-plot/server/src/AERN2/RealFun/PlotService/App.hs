@@ -79,7 +79,8 @@ apiServer fns samplingsStore =
   listFunctionIds fns :<|>
   getFunctionDomain fns :<|>
   getFunctionValues fns samplingsStore :<|>
-  getFunctionName fns
+  getFunctionName fns :<|>
+  getFunctionColour fns
 
 {- Functions processing -}
 
@@ -88,6 +89,7 @@ type Functions = [Function]
 data Function =
   Function
   { function_name :: FunctionName
+  , function_colour :: FunctionColour
   , function_dom :: DyadicInterval
   , function_getBounds :: DyadicInterval -> Interval MPBall MPBall
   }
@@ -133,6 +135,13 @@ getFunctionName ::
   Functions -> FunctionId -> Handler FunctionName
 getFunctionName fns fnId =
   maybe (throwE err404) return =<< (return $ fmap function_name maybeFn)
+  where
+  maybeFn = lookupFunction fns fnId
+
+getFunctionColour ::
+  Functions -> FunctionId -> Handler FunctionColour
+getFunctionColour fns fnId =
+  maybe (throwE err404) return =<< (return $ fmap function_colour maybeFn)
   where
   maybeFn = lookupFunction fns fnId
 
