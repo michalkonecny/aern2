@@ -1,5 +1,5 @@
 module AERN2.PPoly.Division
-(inverse, initialApproximation)
+(inverse, inverseWithAccuracy, initialApproximation)
 where
 
 import Numeric.MixedTypes hiding (maximum, minimum)
@@ -24,9 +24,9 @@ import qualified Data.Set as Set
 
 import Debug.Trace
 
-inverse :: PPoly -> PPoly -- TODO: allow negative f
-inverse f@(PPoly _ (Interval l r)) =
-  iterateInverse f (setPrecision (getPrecision f) if0)
+inverseWithAccuracy :: Accuracy -> PPoly -> PPoly
+inverseWithAccuracy cutoff f@(PPoly _ (Interval l r)) =
+  iterateInverse cutoff f (setPrecision (getPrecision f) if0)
   where
   fRed0 = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 (bits 4)) f
   fRed1 = f--(liftCheb2PPoly $ reduceDegreeToAccuracy 5 thresholdAccuracy) f
@@ -35,8 +35,20 @@ inverse f@(PPoly _ (Interval l r)) =
   if0 = initialApproximation fRed1 thresholdAccuracy
   thresholdAccuracy = 2 + getAccuracy ((fromEndpoints (mpBall 0) (threshold)) :: MPBall)
 
-iterateInverse :: PPoly -> PPoly -> PPoly
-iterateInverse f if0 =
+inverse :: PPoly -> PPoly -- TODO: allow negative f
+inverse f@(PPoly _ (Interval l r)) =
+  inverseWithAccuracy Exact f
+  {-iterateInverse f (setPrecision (getPrecision f) if0)
+  where
+  fRed0 = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 (bits 4)) f
+  fRed1 = f--(liftCheb2PPoly $ reduceDegreeToAccuracy 5 thresholdAccuracy) f
+  bf   = abs $ AERN2.PPoly.Maximum.maximumOptimisedWithAccuracy fRed0 (mpBall l) (mpBall r) 5 5 (bits 4)
+  threshold = 1/(1 + 4*bf)
+  if0 = initialApproximation fRed1 thresholdAccuracy
+  thresholdAccuracy = 2 + getAccuracy ((fromEndpoints (mpBall 0) (threshold)) :: MPBall)-}
+
+iterateInverse :: Accuracy -> PPoly -> PPoly -> PPoly
+iterateInverse cutoff f if0 =
   --aux (newton if0)
   PPoly
     [let
@@ -51,7 +63,9 @@ iterateInverse f if0 =
       next = reduce $ newtonPiece ipn pf bfp
       nextAccuracy = getAccuracy next
     in
-      if nextAccuracy <= getAccuracy ipn then
+      if nextAccuracy >= cutoff then
+        next
+      else if nextAccuracy <= getAccuracy ipn then
         ipn
       else
         aux' next pf bfp
