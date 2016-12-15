@@ -65,6 +65,10 @@ signVars ts =
 -- Output: the coefficients of P in Bernstein basis on [l,r].
 initialBernsteinCoefs :: PowPoly MPBall -> MPBall -> MPBall -> Terms MPBall
 initialBernsteinCoefs p l r =
+  {-trace("computing initial bs coefs of "++(show p)) $
+  trace("radius p "++(show $ radius p)) $
+  trace("accuracy p "++(show $ getAccuracy p)) $
+  trace("coefs: "++(show $ bs)) $-}
   bs
   where
   d = degree p

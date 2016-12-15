@@ -56,6 +56,17 @@ powPoly_radius :: PowPoly MPBall -> ErrorBound
 powPoly_radius (PowPoly (Poly ts)) =
   Map.foldl' (+) (errorBound 0) (Map.map ball_error ts)
 
+instance IsBall (PowPoly MPBall) where
+  type CentreType (PowPoly MPBall) = PowPoly MPBall
+  centre = powPoly_centre
+  radius = powPoly_radius
+  centreAsBallAndRadius p = (centre p, radius p)
+  updateRadius updateFn p =
+     let
+     nr = mpBall $ dyadic $ updateFn (radius p)
+     in
+     (fromEndpoints (-nr) nr :: MPBall) + (powPoly_centre p)
+
 instance (CanAddSameType c) => CanAddAsymmetric (PowPoly c) (PowPoly c) where
   type AddType (PowPoly c) (PowPoly c) = PowPoly c
   add (PowPoly p0) (PowPoly p1) = PowPoly (p0 + p1)
