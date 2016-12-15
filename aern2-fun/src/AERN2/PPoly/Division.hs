@@ -31,7 +31,7 @@ inverseWithAccuracy cutoff f@(PPoly _ (Interval l r)) =
   fRed0 = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 (bits 4)) f
   fRed1 = f--(liftCheb2PPoly $ reduceDegreeToAccuracy 5 thresholdAccuracy) f
   bf   = abs $ AERN2.PPoly.Maximum.maximumOptimisedWithAccuracy fRed0 (mpBall l) (mpBall r) 5 5 (bits 4)
-  threshold = 1/(1 + 4*bf)
+  threshold = 1/(1 + 2*bf)
   if0 = initialApproximation fRed1 thresholdAccuracy
   thresholdAccuracy = 2 + getAccuracy ((fromEndpoints (mpBall 0) (threshold)) :: MPBall)
 
@@ -105,14 +105,32 @@ iterateInverse cutoff f if0 =
     let
     rg = radius pg
     in
+    trace("bfp: "++(show bfp))$
+    trace("rg: "++(show rg))$
+    trace(
+    "newton error: "++(show $(errorBound bfp)*(rg)*(rg))
+    )$
     (errorBound bfp)*(rg)*(rg)
   newtonPiece :: PolyBall -> PolyBall -> MPBall -> PolyBall
   newtonPiece pg pf bfp =
     let
-    cg = centreAsBall pg
+    ne = newtonError pg bfp
+    newtonAux p q =
+      let
+        cg   = setPrecision p $ centreAsBall pg
+        pf'  = setPrecision p pf
+        ni = (2 - cg*pf')*cg
+      in
+      if getAccuracy ni < getAccuracy ne then
+        ni
+      else if p > 10*getPrecision f then
+        ni
+      else
+        newtonAux (p + getPrecision f) p
     in
-    updateRadius (+ newtonError pg bfp) $
-      (2 - cg*pf)*cg
+    newtonAux (getPrecision pf) (getPrecision pf)
+    --updateRadius (+ newtonError pg bfp) $
+    --  (2 - cg*pf)*cg
     {-2*cg
     - PolyBall.multiplyWithBounds pf bf
       (PolyBall.multiplyWithBounds cg (mpBall 2) cg (mpBall 2)) (mpBall 4)-}
@@ -177,7 +195,7 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) thresholdAccuracy {-bf-} =
     let
     bfp = maximumOptimisedWithAccuracy fRed (mpBall a) (mpBall b) 5 5 (bits 4)
     in
-    1/(1 + 4*bfp)
+    1/(1 + 2*bfp)
   pieceError (LineSegment (a, fa) (b, fb)) =
     let
       p      = lineSegment ((a, fa), (b,fb))
