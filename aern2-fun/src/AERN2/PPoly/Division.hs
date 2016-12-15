@@ -121,10 +121,10 @@ iterateInverse cutoff f if0 =
         pf'  = setPrecision p pf
         ni = (2 - cg*pf')*cg
       in
-      if getAccuracy ni < getAccuracy ne then
-        ni
+      if getAccuracy ni > getAccuracy ne then
+        updateRadius (+ne) ni
       else if p > 10*getPrecision f then
-        ni
+        updateRadius (+ne) ni
       else
         newtonAux (p + getPrecision f) p
     in
