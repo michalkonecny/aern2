@@ -40,7 +40,7 @@ liftEncl2PPoly = PPoly.liftBall2PPoly
 encl2PPoly = PPoly.fromPolyBall
 #else
 import AERN2.Poly.Cheb (ChPoly, chPolyMPBall)
--- import qualified AERN2.Poly.Cheb as ChPoly
+import qualified AERN2.Poly.Cheb as ChPoly
 type PolyEncl = ChPoly MPBall
 polyEncl = chPolyMPBall
 liftEncl2PPoly = PPoly.liftCheb2PPoly
@@ -252,13 +252,13 @@ runge_Name = "1/(100x^2+1) over [-1,1]"
 
 runge_PB :: Accuracy -> PolyEncl
 runge_PB acGuide =
-  error $ "Not (yet) supporting Poly for: " ++ runge_Name
-    -- 1/(100*x*x+1)
-    -- where
-    -- x =
-    --     setMaxDegree d1 $
-    --     setPrecision p $
-    --     projUnaryFnA (unaryIntervalDom
+  ChPoly.chebDivideDCT acGuide (x-x+1) denom
+  where
+  denom = 100*(x*x)+1
+  x = setPrc1 xPre
+  xPre = varFn (polyEncl (unaryIntervalDom, 0)) ()
+  setPrc1 :: (CanSetPrecision t) => t -> t
+  setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
 
 runge_B2B :: UnaryFun
 runge_B2B =
@@ -288,13 +288,13 @@ rungeX_Name = "x/(100x^2+1) over [-1,1]"
 
 rungeX_PB :: Accuracy -> PolyEncl
 rungeX_PB acGuide =
-  error $ "Not (yet) supporting Poly for: " ++ rungeX_Name
-    -- x/(100*x*x+1)
-    -- where
-    -- x =
-    --     setMaxDegree d1 $
-    --     setPrecision p $
-    --     projUnaryFnA (unaryIntervalDom
+  ChPoly.chebDivideDCT acGuide x denom
+  where
+  denom = 100*(x*x)+1
+  x = setPrc1 xPre
+  xPre = varFn (polyEncl (unaryIntervalDom, 0)) ()
+  setPrc1 :: (CanSetPrecision t) => t -> t
+  setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
 
 rungeX_B2B :: UnaryFun
 rungeX_B2B =
@@ -324,13 +324,15 @@ fracSin_Name = "1/(10(sin(7x))^2+1) over [-1,1]"
 
 fracSin_PB :: Accuracy -> PolyEncl
 fracSin_PB acGuide =
-  error $ "Not (yet) supporting Poly for: " ++ fracSin_Name
-    -- let sx = setMaxDegree d2 $ sin (7*x) in 1/(10*sx*sx+1)
-    -- where
-    -- x =
-    --     setMaxDegree d1 $
-    --     setPrecision p $
-    --     projUnaryFnA (unaryIntervalDom
+  ChPoly.chebDivideDCT acGuide (x-x+1) denom
+  where
+  denom = (10*(sine7x*sine7x)+1)
+  sine7x = sine1 (7*x)
+  sine1 = sineWithAccuracyGuide (acGuide + 10)
+  x = setPrc1 xPre
+  xPre = varFn (polyEncl (unaryIntervalDom, 0)) ()
+  setPrc1 :: (CanSetPrecision t) => t -> t
+  setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
 
 fracSin_B2B :: UnaryFun
 fracSin_B2B =
