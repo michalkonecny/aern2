@@ -84,14 +84,14 @@ fnsRungePoly =
 fnsRungePPoly :: Plot.Functions
 fnsRungePPoly =
   map ppolyFn
-  [ ("PPoly 1/(10*x^2+1)", runge_bits 10)
+  [ ("PPoly 1/(10*x^2+1)", runge_bits 1)
   ]
   ++
   (map funFn
   [ ("Fun 1/(10*x^2+1)", unitDom, \x -> 1/(10*x^2+1))])
   where
   runge_bits b =
-    PPoly.inverse (PPoly.fromPoly $ setPrecision (prec (10*b)) $ 10*xU*xU+1)
+    PPoly.inverseWithAccuracy (bits b) (PPoly.fromPoly $ setPrecision (prec (12)) $ 10*xU*xU+1)
   xU :: ChPoly MPBall
   xU = varFn sampleFn ()
   sampleFn = constFn (unitDom, 1)

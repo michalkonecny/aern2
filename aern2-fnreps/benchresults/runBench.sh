@@ -196,7 +196,7 @@ function sinesine+cosDFun
     done
 
     op=integrate
-    for params in 10 15 20 25 30 35
+    for params in 10 15 20 25 30
     do
         runOne
     done
@@ -215,7 +215,7 @@ function sinesine+cosPoly
     done
 
     # op=integrate
-    # for params in 10 15 20 25 30 35
+    # for params in 10 15 20 25 30
     # do
     #     runOne
     # done
