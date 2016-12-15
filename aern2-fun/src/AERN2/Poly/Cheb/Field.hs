@@ -63,7 +63,7 @@ chebDivideDCT acGuide p q
     pR = mpBall $ radius p
     qR = mpBall $ radius q
 
-    initD = degree p + degree q
+    initD = 16 -- degree p + degree q
 
 
     r =
