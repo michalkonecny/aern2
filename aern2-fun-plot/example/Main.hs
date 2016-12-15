@@ -84,7 +84,7 @@ fnsRungePoly =
 fnsRungePPoly :: Plot.Functions
 fnsRungePPoly =
   map ppolyFn
-  [ ("PPoly 1/(10*x^2+1)", runge_bits 4)
+  [ ("PPoly 1/(10*x^2+1)", runge_bits 10)
   ]
   ++
   (map funFn
@@ -187,10 +187,7 @@ ppolyFn :: (String, PPoly) -> Plot.Function
 ppolyFn (name, pp) =
   Plot.Function
   { function_name = name
-  , function_dom =
-      maybeTrace ("ppolyFn: dom ...") $
-      maybeTrace ("ppolyFn: dom = " ++ show (getDomain pp)) $
-        getDomain pp
+  , function_dom = getDomain pp
   , function_getBounds = applyViaMPBall
   }
   where
@@ -199,5 +196,5 @@ ppolyFn (name, pp) =
     Interval l r
     where
     v :: MPBall
-    v = PPoly.evalDI pp (mpBall di)
+    v = PPoly.evalDirect pp (mpBall di)
     (l,r) = endpoints v
