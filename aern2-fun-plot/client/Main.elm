@@ -129,7 +129,7 @@ initPlotArea s plotDomain =
   , domL = dToFloat plotDomain.dyadic_endpointL
   , domR = dToFloat plotDomain.dyadic_endpointR
   , rangeL = -0.0 -- TODO: derive from canvas ratio and plotDomain, centre on 0
-  , rangeR = 1.0
+  , rangeR = 1.1
   }
 
 unionOfFunctionsDomains : State -> FunctionDomain

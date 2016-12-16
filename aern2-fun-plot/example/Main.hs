@@ -70,7 +70,7 @@ fnsRungePoly =
   map chPolyFn
   [ ("Poly(8) 1/(10*x^2+1)", fnBlue, ChPoly.reduceDegree 8 runge_4bits)
   , ("Poly(12) 1/(10*x^2+1)", fnGreen, ChPoly.reduceDegree 12 runge_4bits)
-  , ("Poly(16) 1/(10*x^2+1)", fnBlue, ChPoly.reduceDegree 16 runge_4bits)
+  -- , ("Poly(16) 1/(10*x^2+1)", fnBlue, ChPoly.reduceDegree 16 runge_4bits)
   ]
   ++
   (map funFn
@@ -85,13 +85,14 @@ fnsRungePPoly :: Plot.Functions
 fnsRungePPoly =
   map ppolyFn
   [ ("PPoly 1/(10*x^2+1)", fnBlue, runge_bits 1)
+  , ("PPoly 1/(10*x^2+1)", fnGreen, runge_bits 6)
   ]
   ++
   (map funFn
   [ ("Fun 1/(10*x^2+1)", fnBlack, unitDom, \x -> 1/(10*x^2+1))])
   where
   runge_bits b =
-    PPoly.inverseWithAccuracy (bits b) (PPoly.fromPoly $ setPrecision (prec (12)) $ 10*xU*xU+1)
+    PPoly.inverseWithAccuracy (bits b) (PPoly.fromPoly $ setPrecision (prec (2+b*10)) $ 10*xU*xU+1)
   xU :: ChPoly MPBall
   xU = varFn sampleFn ()
   sampleFn = constFn (unitDom, 1)
@@ -209,8 +210,8 @@ fnBlue = functionColour (0,0,255)
 fnGreen :: FunctionColour
 fnGreen = functionColour (0,150,0)
 
-fnRed :: FunctionColour
-fnRed = functionColour (150,0,0)
+-- fnRed :: FunctionColour
+-- fnRed = functionColour (150,0,0)
 
 fnBlack :: FunctionColour
 fnBlack = functionColour (0,0,0)
