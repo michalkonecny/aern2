@@ -14,6 +14,7 @@
 module AERN2.RealFun.UnaryFun.Integration
 (
   integralOnIntervalSubdivide
+, integralOnIntervalIncreasePrecision
 )
 where
 
@@ -29,12 +30,8 @@ import Numeric.MixedTypes
 
 import Numeric.CatchingExceptions
 
--- import AERN2.Norm
-import AERN2.MP.Accuracy
--- import AERN2.MP.Precision
 -- import AERN2.MP.Dyadic
-import AERN2.MP.Ball (MPBall, mpBall)
--- import AERN2.MP.Ball (MPBall, mpBall, IsBall(..), IsInterval(..), setPrecisionAtLeastAccuracy)
+import AERN2.MP
 -- import qualified AERN2.MP.Ball as MPBall
 
 -- import AERN2.QA
@@ -62,26 +59,44 @@ _dummy = maybeTrace "dummy" ()
 instance CanIntegrateOverDom UnaryFun DyadicInterval where
   type IntegralOverDomType UnaryFun DyadicInterval = CauchyReal
   integrateOverDom f =
-    integralOnIntervalSubdivide integralOnInterval
+    integralOnIntervalSubdivide (integralOnIntervalIncreasePrecision getArea) standardPrecisions
     where
-    integralOnInterval di ac = (apply f diB)*(Interval.width di)
+    getArea di p =
+      (apply f diB)*(Interval.width di)
       where
       diB =
-        catchingNumExceptions $
-          setPrecisionAtLeastAccuracy (ac + 100) $
-            mpBall di
+        catchingNumExceptions $ setPrecision p $ mpBall di
+
+integralOnIntervalIncreasePrecision ::
+  (DyadicInterval -> Precision -> CatchingNumExceptions MPBall) ->
+  [Precision] -> DyadicInterval -> Accuracy ->
+  ([Precision], CatchingNumExceptions MPBall)
+integralOnIntervalIncreasePrecision _getArea [] _di _ac =
+  error "AERN2.RealFun.UnaryFun: internal error in integrateOverDom"
+integralOnIntervalIncreasePrecision getArea ps@(p1:_) di _ac =
+  aux (getArea di p1) ps
+  where
+  aux diArea1 (_p1:p2:p3rest)
+    | getAccuracy diArea1 < getAccuracy diArea2 =
+        (p2:p3rest, diArea2)
+        -- aux diArea2 (p2:p3rest)
+    | otherwise =
+        (ps, diArea2)
+    where
+    diArea2 = getArea di p2
+  aux diArea1 ps2 = (ps2, diArea1)
 
 integralOnIntervalSubdivide ::
-  (DyadicInterval -> Accuracy -> CatchingNumExceptions MPBall)
+  (s -> DyadicInterval -> Accuracy -> (s,CatchingNumExceptions MPBall))
   ->
-  (DyadicInterval -> CauchyReal)
-integralOnIntervalSubdivide integralOnInterval diO =
+  s -> (DyadicInterval -> CauchyReal)
+integralOnIntervalSubdivide integralOnInterval initS diO =
     newCR "integral" [] makeQ
     where
     makeQ ac =
       ifCertainExceptionDie "integrate by subdivide" $
-          integr diO ac
-    integr di ac
+          integr initS diO ac
+    integr s di ac
         | getAccuracy value >= ac =
             maybeTrace
             ("integrate by subdivide:"
@@ -91,9 +106,9 @@ integralOnIntervalSubdivide integralOnInterval diO =
             )
             value
         | otherwise =
-            (integr diL (ac+1))
+            (integr s' diL (ac+1))
             +
-            (integr diR (ac+1))
+            (integr s' diR (ac+1))
         where
         (diL, diR) = Interval.split di
-        value = integralOnInterval di ac
+        (s', value) = integralOnInterval s di ac
