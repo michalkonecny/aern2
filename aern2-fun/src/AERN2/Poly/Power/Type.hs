@@ -1,8 +1,10 @@
+{-# LANGUAGE TemplateHaskell #-}
 module AERN2.Poly.Power.Type
 where
 
-import AERN2.Poly.Basics
 import Numeric.MixedTypes
+import AERN2.Poly.Basics
+import AERN2.TH
 import qualified Data.Map as Map
 import AERN2.MP.Ball hiding (iterateUntilAccurate)
 import AERN2.MP.Dyadic
@@ -71,9 +73,13 @@ instance (CanAddSameType c) => CanAddAsymmetric (PowPoly c) (PowPoly c) where
   type AddType (PowPoly c) (PowPoly c) = PowPoly c
   add (PowPoly p0) (PowPoly p1) = PowPoly (p0 + p1)
 
-instance CanAddAsymmetric MPBall (PowPoly MPBall) where
-  type AddType MPBall (PowPoly MPBall) = PowPoly MPBall
-  add c (PowPoly p) = PowPoly $ add c p
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |]]
+  (\ t -> [d|
+    instance (CanAddThis c $t, HasIntegers c) => CanAddAsymmetric $t (PowPoly c) where
+      type AddType $t (PowPoly c) = PowPoly c
+      add c (PowPoly p) = PowPoly $ add c p
+  |]))
 
 instance (CanSubSameType c, CanNegSameType c, CanAddSameType c)
   => CanSub (PowPoly c) (PowPoly c) where
@@ -86,12 +92,20 @@ instance (CanNegSameType c) => CanNeg (PowPoly c) where
 
 {- multiplication -}
 
-instance CanMulAsymmetric MPBall (PowPoly MPBall) where
-  type MulType MPBall (PowPoly MPBall) = PowPoly MPBall
-  mul c (PowPoly (Poly ts)) = PowPoly (Poly $ terms_map (c*) ts)
+$(declForTypes
+  [[t| Integer |], [t| Rational |], [t| Dyadic |], [t| MPBall |]]
+  (\ t -> [d|
+      instance CanMulAsymmetric $t (PowPoly $t) where
+        type MulType $t (PowPoly $t) = PowPoly $t
+        mul c (PowPoly (Poly ts)) = PowPoly (Poly $ terms_map (c*) ts)
+    |]))
 
-instance CanMulAsymmetric (PowPoly MPBall) (PowPoly MPBall) where
-  type MulType (PowPoly MPBall) (PowPoly MPBall) = PowPoly MPBall
+instance
+  (CanMulSameType c, CanAddSameType c, HasIntegers c,
+   CanMulAsymmetric c (Poly c),
+   MulType c (Poly c) ~ Poly c) =>
+  CanMulAsymmetric (PowPoly c) (PowPoly c) where
+  type MulType (PowPoly c) (PowPoly c) = PowPoly c
   mul (PowPoly (Poly ts0)) (PowPoly (Poly ts1)) =
     PowPoly $
     Map.foldl' (+)

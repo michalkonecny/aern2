@@ -1,21 +1,33 @@
 module AERN2.Poly.Conversion
 where
 
-import AERN2.Poly.Basics
-import qualified AERN2.Poly.Power.Type as Power
---import qualified AERN2.Poly.Cheb.Type  as Cheb
 import Numeric.MixedTypes
+import AERN2.Poly.Basics
+import AERN2.Poly.Power.Type
+import AERN2.Poly.Power (PowPoly)
+import qualified AERN2.Poly.Power as Power hiding (PowPoly)
+--import qualified AERN2.Poly.Cheb.Type  as Cheb
 import qualified Data.Map as Map
 import Math.NumberTheory.Logarithms (integerLog2)
 import AERN2.MP.Ball
+import AERN2.MP.Dyadic
 
-cheb2Power :: Poly MPBall -> Power.PowPoly MPBall -- Poly encodes polynomial in Chebyshev basis on [-1,1]
-cheb2Power (Poly ts) =
-    Power.PowPoly $ Poly $ Map.filterWithKey (\k _ -> k <= terms_degree ts) nts
+cheb2PowerExact :: Poly MPBall -> PowPoly MPBall
+cheb2PowerExact f@(Poly ts) =
+  PowPoly $ Poly $ terms_map (setPrecision p . mpBall) powTs
+  where
+  p  = getPrecision f
+  fc = Poly $ terms_map (centre) ts
+  PowPoly (Poly powTs) = cheb2PowerDyadic fc
+
+
+cheb2PowerDyadic :: Poly Dyadic -> PowPoly Dyadic -- Poly encodes polynomial in Chebyshev basis on [-1,1]
+cheb2PowerDyadic (Poly ts) =
+    PowPoly $ Poly $ Map.filterWithKey (\k _ -> k <= terms_degree ts) nts
     where
-    (Power.PowPoly (Poly nts)) =
+    (PowPoly (Poly nts)) =
       (aux 0 0)
-        * (PolyVec (Power.fromIntegerList [(0,1)]) (Power.fromIntegerList [(1,1)] :: Power.PowPoly MPBall))
+        * (PolyVec (Power.fromIntegerList [(0,1)]) (Power.fromIntegerList [(1,1)] :: PowPoly Dyadic))
     d = integer (integerLog2 $ terms_degree ts + 1)  + 1
     dm1 = d - 1
     aux j i =
@@ -24,9 +36,28 @@ cheb2Power (Poly ts) =
             (Power.fromList [(0, terms_lookupCoeff ts $ 2*i)])
             (Power.fromList [(0, terms_lookupCoeff ts $ 2*i + 1)])
         else
-          aux (j + 1) (2*i) + (aux (j + 1) (2*i + 1)) * (recPowers !! (dm1 - j))
+          aux (j + 1) (2*i) + (aux (j + 1) (2*i + 1)) * (recPowers !! (dm1 - j) :: PolyMat Dyadic)
 
-recPowers :: [PolyMat] -- TODO: slow?
+cheb2Power :: Poly MPBall -> PowPoly MPBall -- Poly encodes polynomial in Chebyshev basis on [-1,1]
+cheb2Power (Poly ts) =
+    PowPoly $ Poly $ Map.filterWithKey (\k _ -> k <= terms_degree ts) nts
+    where
+    (PowPoly (Poly nts)) =
+      (aux 0 0)
+        * (PolyVec (Power.fromIntegerList [(0,1)]) (Power.fromIntegerList [(1,1)] :: PowPoly MPBall))
+    d = integer (integerLog2 $ terms_degree ts + 1)  + 1
+    dm1 = d - 1
+    aux j i =
+        if j == dm1 then
+          PolyCoVec
+            (Power.fromList [(0, terms_lookupCoeff ts $ 2*i)])
+            (Power.fromList [(0, terms_lookupCoeff ts $ 2*i + 1)])
+        else
+          aux (j + 1) (2*i) + (aux (j + 1) (2*i + 1)) * (recPowers !! (dm1 - j) :: PolyMat MPBall)
+
+recPowers ::
+  (CanMulSameType (PowPoly a), HasIntegers a, CanAddSameType a)
+  => [(PolyMat a)] -- TODO: slow?
 recPowers =
     mat : accu mat
     where
@@ -38,28 +69,36 @@ recPowers =
             (Power.fromIntegerList [(0,-1)])
             (Power.fromIntegerList [(1,2)])
 
-data PolyMat =
-  PolyMat (Power.PowPoly MPBall) (Power.PowPoly MPBall)
-          (Power.PowPoly MPBall) (Power.PowPoly MPBall)
+data PolyMat a =
+  PolyMat (PowPoly a) (PowPoly a)
+          (PowPoly a) (PowPoly a)
 
-data PolyCoVec = PolyCoVec (Power.PowPoly MPBall) (Power.PowPoly MPBall)
+data PolyCoVec a = PolyCoVec (PowPoly a) (PowPoly a)
 
-data PolyVec = PolyVec (Power.PowPoly MPBall) (Power.PowPoly MPBall)
+data PolyVec a = PolyVec (PowPoly a) (PowPoly a)
 
-instance CanMulAsymmetric PolyMat PolyMat where
-    type MulType PolyMat PolyMat = PolyMat
+instance
+    (CanMulSameType (PowPoly a), CanAddSameType a) =>
+    CanMulAsymmetric (PolyMat a) (PolyMat a) where
+    type MulType (PolyMat a) (PolyMat a) = (PolyMat a)
     mul (PolyMat a b c d) (PolyMat a' b' c' d') =
       PolyMat (a*a' + b*c') (a*b' + b*d') (c*a' + d*c') (c*b' + d*d')
 
-instance CanMulAsymmetric PolyCoVec PolyMat where
-    type MulType PolyCoVec PolyMat = PolyCoVec
+instance
+    (CanMulSameType (PowPoly a), CanAddSameType a) =>
+    CanMulAsymmetric (PolyCoVec a) (PolyMat a) where
+    type MulType (PolyCoVec a) (PolyMat a) = (PolyCoVec a)
     mul (PolyCoVec x y) (PolyMat a b c d) =
        PolyCoVec (x*a + y*c) (x*b + y*d)
 
-instance CanMulAsymmetric PolyCoVec PolyVec where
-    type MulType PolyCoVec PolyVec = Power.PowPoly MPBall
+instance
+    (CanMulSameType (PowPoly a), CanAddSameType a) =>
+    CanMulAsymmetric (PolyCoVec a) (PolyVec a) where
+    type MulType (PolyCoVec a) (PolyVec a) = PowPoly a
     mul (PolyCoVec x y) (PolyVec a b) = x*a + y*b
 
-instance CanAddAsymmetric PolyCoVec PolyCoVec where
-    type AddType PolyCoVec PolyCoVec = PolyCoVec
+instance
+    (CanAddSameType a) =>
+    CanAddAsymmetric (PolyCoVec a) (PolyCoVec a) where
+    type AddType (PolyCoVec a) (PolyCoVec a) = (PolyCoVec a)
     add (PolyCoVec a b) (PolyCoVec c d) = PolyCoVec (a + c) (b + d)

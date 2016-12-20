@@ -54,7 +54,7 @@ signVars ts =
   aux vrs _ (-1) = Just vrs
   aux vrs sg d    =
     case sgn (fromJust $ Map.lookup d ts) of
-      Nothing   -> Nothing
+      Nothing   -> maybeTrace("sign of coefficient "++(show d)++" undefined.\ncoefficient is: "++(show $ fromJust $ Map.lookup d ts)) Nothing
       Just sgnx ->
         if sgnx == 0 || sg == 0 || sgnx == sg then
           aux vrs (if sgnx /= 0 then sgnx else sg) (d - 1)

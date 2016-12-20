@@ -22,7 +22,7 @@ import Data.List hiding (maximum, minimum, (!!))
 import AERN2.Poly.Conversion
 import AERN2.Interval
 
-import Debug.Trace
+--import Debug.Trace
 
 -- instance CanMaximiseOverDom PPoly DyadicInterval where
 --   type MaximumOverDomType PPoly DyadicInterval = MPBall
@@ -48,50 +48,6 @@ maximumOptimisedI' (PPoly ps _) initialDegree steps =
       (setPrecision (getPrecision p) $ mpBall b)
       initialDegree steps
       | (Interval a b,p) <- ps]
-
-dfsZipped :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> [((Integer, Integer),  PowPoly MPBall)]
-dfsZipped (PPoly ps dom) l r initialDegree steps =
-  dfsZippedDebug
-  where
-  lI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) l)
-  rI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) r) -- TODO: properly work out required endpoint precision
-  unit    = Interval (dyadic $ -1) (dyadic 1)
-  f       = PPoly ps unit
-  fs      = map snd ps
-  dfsCheb = map (ballLift1R (Cheb.derivative . makeExactCentre)) fs
-  dfcsCheb = map (ballLift1R (Cheb.derivative . centre . makeExactCentre)) fs
-  dfcsChebReduced =
-    map
-    (\df ->
-      let
-        maxKey = ceiling $ (Cheb.degree df - initialDegree) / steps
-      in
-      [reduceDegree (initialDegree + k*steps) df
-        | k <- [0 .. maxKey]])
-    dfcsCheb
-  --dfsPow  = map (cheb2Power . chPoly_poly . centre) dfsCheb
-  dfsPow  = map (map (cheb2Power . chPoly_poly)) dfcsChebReduced
-
-  dfsZippedDebug = map (\(k,(f,p)) -> (k,p)) dfsZipped
-
-  dfsZipped =
-    concatMap
-        (\(k, (cdfs, pdfs)) ->
-          zip [(k,i) | i <-  [0..]]
-              $ zip (map (Cheb.evalDirect :: ChPoly MPBall -> MPBall -> MPBall) cdfs) pdfs)
-        (zip [0..] $ zip dfcsChebReduced dfsPow)
-  dfsMap  = Map.fromList dfsZipped
-  maxKeys =
-    Map.fromList
-      [(k, ceiling $ (Cheb.degree (dfsCheb !! k) - initialDegree) / steps) -- TODO: avoid slow list index lookup
-        | k <- [0 .. integer $ length ps - 1]]
-  nodes   =
-    lI : [setPrecision (getPrecision f) $ mpBall n | n <- nodesI, (lI < n) == Just True, (n < rI) == Just True] ++ [rI]   -- note that the elements of nodesI are balls of radius 0,
-  nodesI  =                                                                                                  -- so that if they overlap with lI or rI, then they are contained in it
-    let
-      ns = map fst ps
-    in
-      (endpointL $ head ns) : (endpointR $ head ns) : (map endpointR (tail ns))
 
 maximumOptimisedWithAccuracy :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> Accuracy -> MPBall
 maximumOptimisedWithAccuracy (PPoly ps dom) l r initialDegree steps cutoffAccuracy =
@@ -147,7 +103,7 @@ maximumOptimisedWithAccuracy (PPoly ps dom) l r initialDegree steps cutoffAccura
   fps = [(i, (reduceDegreeToAccuracy 5 . ballLift1R makeExactCentre) p) | (i,p) <- ps]
   fs  = [p | (_,p) <- fps]
   dfpsCheb =
-    map (\(i,p) -> (i,(makeExactCentre . Cheb.derivative . centre) p)) fps
+    map (\(i,p) -> (i,(makeExactCentre . Cheb.derivativeExact . centre) p)) fps
   dfsCheb = map snd dfpsCheb
   dfcsCheb = map snd $ filter (intersectsLR . fst) dfpsCheb
   dfcsChebReduced =
@@ -162,14 +118,11 @@ maximumOptimisedWithAccuracy (PPoly ps dom) l r initialDegree steps cutoffAccura
       [reduceDegree (initialDegree + k*steps) df
         | k <- [0 .. maxKey]])
     dfcsCheb
-  --dfsPow = map (map (cheb2Power . chPoly_poly)) dfcsChebReduced
+  --dfsPow = map (map (cheb2Power . setPrecision (3*getPrecision f) . chPoly_poly)) dfcsChebReduced
   --dfsPow  = map (map $ cheb2Power . chPoly_poly . centre) dfcsChebReduced
   dfsPow  = map (map accurateTranslation) dfcsChebReduced
   accurateTranslation p =
-    {-trace("derivative degree: "++(show $ Cheb.degree p)) $
-    trace("radius: "++(show $ radius p)) $
-    trace("result radius: "++(show $ radius $ (updateRadius (+ radius p) . cheb2Power . chPoly_poly . centre) p)) $-}
-    (updateRadius (+ radius p) . cheb2Power {-. setPrecision (3*getPrecision p)-} . chPoly_poly . centre) p
+    (updateRadius (+ radius p) . cheb2PowerExact . chPoly_poly . centre) p
   --dfsZippedDebug = map (\(k,(f,p)) -> (k,p)) dfsZipped
 
   dfsZipped =
@@ -194,7 +147,6 @@ maximumOptimisedWithAccuracy (PPoly ps dom) l r initialDegree steps cutoffAccura
 maximumOptimised :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> MPBall
 maximumOptimised p l r initialDegree steps =
   maximumOptimisedWithAccuracy p l r initialDegree steps Exact
-
 
 maximum :: PPoly -> MPBall -> MPBall -> MPBall
 maximum (PPoly ps dom) l r =
@@ -328,8 +280,11 @@ genericMaximum f dfs maxKeys nodes cutoffAccuracies =
             ) $-}
             if isNothing $ signVars ts then -- TODO avoid recomputation of sign variations
               if snd (mi_derivative mi) == maxKey (fst (mi_derivative mi)) then
-                --v
-                let
+                {-trace( "warning: giving up..." ) $
+                trace( "polynomial: "++(show $ snd $ fromJust $ Map.lookup (k, n) dfs) ) $
+                trace( "terms: "++(show $ ts) ) $-}
+                v
+                {-let
                  m = computeMidpoint a b
                  (bsL, bsR)  = bernsteinCoefs a b m ts
                  --sgnM = tryFindSign m k
@@ -341,7 +296,7 @@ genericMaximum f dfs maxKeys nodes cutoffAccuracies =
                     (SearchInterval a m (evalfOnInterval a m) (Just v) (k,n) bsL) $
                   Q.insert
                     (SearchInterval m b (evalfOnInterval m b) (Just v) (k,n) bsR)
-                    q'
+                    q'-}
               else
                 splitUntilAccurate $
                   Q.insert
