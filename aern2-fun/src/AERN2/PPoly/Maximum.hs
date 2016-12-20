@@ -78,14 +78,14 @@ maximumOptimisedWithAccuracy (PPoly ps dom) l r initialDegree steps cutoffAccura
     nodes
     cutoffAccuracies
   where
-  reduceDegreeToAccuracy d g =
+  {-reduceDegreeToAccuracy d g =
     let
       try = reduceDegree d g
     in
       if getAccuracy try >= min (getAccuracy g) cutoffAccuracy then
         try
       else
-        reduceDegreeToAccuracy (d + 5) g
+        reduceDegreeToAccuracy (d + 5) g-}
   cutoffAccuracies =
     Map.fromList $ zip [0..]
                   [min cutoffAccuracy (getAccuracy p) | p <- fs]
@@ -100,7 +100,7 @@ maximumOptimisedWithAccuracy (PPoly ps dom) l r initialDegree steps cutoffAccura
     && (a == rI) /= Just True
   {-fs = map ({-reduceDegreeToAccuracy 5 .-} ballLift1R makeExactCentre . snd)
         $ filter (intersectsLR . fst) ps-}
-  fps = [(i, (reduceDegreeToAccuracy 5 . ballLift1R makeExactCentre) p) | (i,p) <- ps]
+  fps = [(i, ({-reduceDegreeToAccuracy 5 .-} ballLift1R makeExactCentre) p) | (i,p) <- ps]
   fs  = [p | (_,p) <- fps]
   dfpsCheb =
     map (\(i,p) -> (i,(makeExactCentre . Cheb.derivativeExact . centre) p)) fps
@@ -122,7 +122,8 @@ maximumOptimisedWithAccuracy (PPoly ps dom) l r initialDegree steps cutoffAccura
   --dfsPow  = map (map $ cheb2Power . chPoly_poly . centre) dfcsChebReduced
   dfsPow  = map (map accurateTranslation) dfcsChebReduced
   accurateTranslation p =
-    (updateRadius (+ radius p) . cheb2PowerExact . chPoly_poly . centre) p
+    --(updateRadius (+ radius p) . cheb2PowerExact . chPoly_poly . centre) p
+    (cheb2PowerExact . chPoly_poly) p
   --dfsZippedDebug = map (\(k,(f,p)) -> (k,p)) dfsZipped
 
   dfsZipped =
@@ -354,11 +355,11 @@ genericMaximum f dfs maxKeys nodes cutoffAccuracies =
                 else
                   splitUntilAccurate $ Q.insert (CriticalInterval m b (evalfOnInterval m b) (Just v) (k, dl) $ fromJust sgnM) q'
               else
-                v
-                {-if n /= maxKey k then
-                splitUntilAccurate $ Q.insert (CriticalInterval a b v ov (k, max dl (n + 1)) sgnL) q'
-              else
-                v-}
+              --  v
+                if n /= maxKey k then
+                  splitUntilAccurate $ Q.insert (CriticalInterval a b v ov (k, max dl (n + 1)) sgnL) q'
+                else
+                  v
           FinalInterval {} -> error "generic maximum: this point should never be reached"
 
 data MaximisationInterval =

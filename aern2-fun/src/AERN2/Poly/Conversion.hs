@@ -14,10 +14,12 @@ import AERN2.MP.Dyadic
 
 cheb2PowerExact :: Poly MPBall -> PowPoly MPBall
 cheb2PowerExact f@(Poly ts) =
-  PowPoly $ Poly $ terms_map (setPrecision p . mpBall) powTs
+  updateRadius (+ r) $
+  PowPoly $ Poly $ terms_map mpBall powTs
   where
-  p  = getPrecision f
+  --p  = getPrecision f
   fc = Poly $ terms_map (centre) ts
+  r  = Map.foldl' (+) (errorBound 0) $ Map.map radius ts
   PowPoly (Poly powTs) = cheb2PowerDyadic fc
 
 
