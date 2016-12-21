@@ -60,7 +60,7 @@ maybeTrace
 
 instance CanNegSameType c => CanNeg (ChPoly c) where
   type NegType (ChPoly c) = ChPoly c
-  negate (ChPoly d x) = ChPoly d (negate x)
+  negate (ChPoly d x _) = ChPoly d (negate x) Nothing
 
 {- addition -}
 
@@ -70,8 +70,8 @@ instance
   CanAddAsymmetric (ChPoly c) (ChPoly c)
   where
   type AddType (ChPoly c) (ChPoly c) = ChPoly c
-  add (ChPoly d1 p1) (ChPoly d2 p2)
-    | d1 == d2 = normalize $ ChPoly d1 (p1 + p2)
+  add (ChPoly d1 p1 _) (ChPoly d2 p2 _)
+    | d1 == d2 = normalize $ ChPoly d1 (p1 + p2) Nothing
     | otherwise = error $ "Adding polynomials with incompatible domains"
 
 $(declForTypes
@@ -79,11 +79,11 @@ $(declForTypes
   (\ t -> [d|
     instance (CanAddThis c $t, HasIntegers c) => CanAddAsymmetric $t (ChPoly c) where
       type AddType $t (ChPoly c) = ChPoly c
-      add n (ChPoly d2 p2) = ChPoly d2 (n + p2)
+      add n (ChPoly d2 p2 _) = ChPoly d2 (n + p2) Nothing
 
     instance (CanAddThis c $t, HasIntegers c) => CanAddAsymmetric (ChPoly c) $t where
       type AddType (ChPoly c) $t = ChPoly c
-      add (ChPoly d1 p1) n = ChPoly d1 (n + p1)
+      add (ChPoly d1 p1 _) n = ChPoly d1 (n + p1) Nothing
   |]))
 
 
@@ -116,7 +116,7 @@ mulCheb ::
   (PolyCoeff c)
   =>
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
-mulCheb p1@(ChPoly _ (Poly terms1)) p2@(ChPoly _ (Poly terms2)) =
+mulCheb p1@(ChPoly _ (Poly terms1) _) p2@(ChPoly _ (Poly terms2) _) =
   maybeTrace
     (printf "mulCheb: getAccuracy p1 = %s, getAccuracy p2 = %s, size1+size2 = %d, using %s, getAccuracy result = %s"
       (show $ getAccuracy p1) (show $ getAccuracy p2) (size1 + size2) methodS (show $ getAccuracy result)
@@ -135,10 +135,10 @@ mulChebDirect ::
   (PolyCoeff c)
   =>
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
-mulChebDirect (ChPoly d1 (Poly terms1)) (ChPoly d2 (Poly terms2))
+mulChebDirect (ChPoly d1 (Poly terms1) _) (ChPoly d2 (Poly terms2) _)
   | d1 /= d2 = error $ "Multiplying ChPoly's with incompatible domains"
   | otherwise =
-    normalize $ ChPoly d1 (Poly terms)
+    normalize $ ChPoly d1 (Poly terms) Nothing
   where
   terms =
     terms_fromListAddCoeffs $
@@ -160,11 +160,11 @@ $(declForTypes
   (\ t -> [d|
     instance (CanMulBy c $t, HasIntegers c, CanNormalize (ChPoly c)) => CanMulAsymmetric $t (ChPoly c) where
       type MulType $t (ChPoly c) = ChPoly c
-      mul n (ChPoly d2 p2) = normalize $ ChPoly d2 (n * p2)
+      mul n (ChPoly d2 p2 _) = normalize $ ChPoly d2 (n * p2) Nothing
 
     instance (CanMulBy c $t, HasIntegers c, CanNormalize (ChPoly c)) => CanMulAsymmetric (ChPoly c) $t where
       type MulType (ChPoly c) $t = ChPoly c
-      mul (ChPoly d1 p1) n = normalize $ ChPoly d1 (n * p1)
+      mul (ChPoly d1 p1 _) n = normalize $ ChPoly d1 (n * p1) Nothing
   |]))
 
 
@@ -173,7 +173,7 @@ $(declForTypes
   (\ t -> [d|
     instance (CanDivBy c $t, HasIntegers c, CanNormalize (ChPoly c)) => CanDiv (ChPoly c) $t where
       type DivType (ChPoly c) $t = ChPoly c
-      divide (ChPoly d1 p1) n = normalize $ ChPoly d1 (p1/n)
+      divide (ChPoly d1 p1 _) n = normalize $ ChPoly d1 (p1/n) Nothing
   |]))
 
 

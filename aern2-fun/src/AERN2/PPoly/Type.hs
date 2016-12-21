@@ -53,7 +53,8 @@ linearPolygon ((x,y) : xys) dom =
     Ball
       (ChPoly
         dom
-        (Poly $ terms_fromList [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))]))
+        (Poly $ terms_fromList [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))])
+        Nothing)
       (errorBound 0)
 linearPolygon [] _ =
   error "linearPolygon must be provided with a list of at least 2 points"

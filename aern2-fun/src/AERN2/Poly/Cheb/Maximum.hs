@@ -25,7 +25,7 @@ import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 import qualified Data.Map as Map
 
-import AERN2.Poly.Basics (terms_updateConst)
+-- import AERN2.Poly.Basics (terms_updateConst)
 
 import qualified AERN2.Poly.Power as Pow
 
@@ -39,19 +39,19 @@ import AERN2.Interval
 
 
 maximum :: ChPoly MPBall -> MPBall -> MPBall -> MPBall
-maximum (ChPoly dom poly) l r  =
+maximum (ChPoly dom poly _) l r  =
    Pow.genericMaximum (evalDf f df)
     (Map.fromList [(0, (evalDirect dfc, cheb2Power $ chPoly_poly dfc))])
     (getAccuracy f)
     (fromDomToUnitInterval dom l) (fromDomToUnitInterval dom r)
    where
-   f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly
+   f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly Nothing
    df = makeExactCentre $ derivative f
    dfc = derivative $ centre f
 
 maximumOptimisedWithAccuracy
   :: Accuracy -> ChPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall
-maximumOptimisedWithAccuracy acc (ChPoly dom poly) l r initialDegree steps =
+maximumOptimisedWithAccuracy acc (ChPoly dom poly _) l r initialDegree steps =
     trace("maximum optimised... ")$
     trace("f: "++(show f))$
     trace("df: "++(show fc'))$
@@ -69,7 +69,7 @@ maximumOptimisedWithAccuracy acc (ChPoly dom poly) l r initialDegree steps =
         try
       else
         reduceDegreeToAccuracy (d + 5) g
-  f   = reduceDegreeToAccuracy 5 $ makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly
+  f   = reduceDegreeToAccuracy 5 $ makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly Nothing
   fc' = (makeExactCentre . derivative . centre) f
   maxKey = max 0 (ceiling $ (degree f - initialDegree) / steps)
   ch2Power :: ChPoly MPBall -> Pow.PowPoly MPBall

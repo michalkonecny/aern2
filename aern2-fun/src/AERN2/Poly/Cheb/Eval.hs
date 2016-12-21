@@ -77,7 +77,7 @@ evalDirect ::
    CanAddSubMulBy t c, Ring c)
   =>
   (ChPoly c) -> t -> t
-evalDirect (ChPoly dom (Poly terms)) (xInDom :: t) =
+evalDirect (ChPoly dom (Poly terms) _) (xInDom :: t) =
     (b0 - b2)/2
     where
     x = fromDomToUnitInterval dom xInDom
@@ -207,7 +207,7 @@ sampledRange (Interval l r) depth f =
 -- rangeViaRoots :: (ChPoly MPBall) -> DyadicInterval -> (Interval CauchyReal CauchyReal, ErrorBound)
 
 instance ConvertibleExactly (ChPoly MPBall) (UnaryFun, ErrorBound) where
-  safeConvertExactly cp@(ChPoly dom _p) = Right (UnaryFun dom eval, e)
+  safeConvertExactly cp@(ChPoly dom _p _) = Right (UnaryFun dom eval, e)
     where
     e = radius cp
     cpExact = centreAsBall cp
