@@ -73,7 +73,9 @@ instance CanTestValid MPBall where
 
 instance CanNormalize MPBall where
   normalize b
-    | isValid b = reducePrecionIfInaccurate b
+    | isValid b =
+        b
+        -- reducePrecionIfInaccurate b
     | otherwise = error $ "invalid MPBall: " ++ show b
 
 {-|
