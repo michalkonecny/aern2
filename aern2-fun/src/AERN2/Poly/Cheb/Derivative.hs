@@ -23,9 +23,29 @@ import AERN2.Interval
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Ring ()
 
+import Debug.Trace
+
+derivativeExact :: ChPoly MPBall -> ChPoly MPBall
+derivativeExact f =
+  {-trace("derivative exact of "++(show f)) $
+  trace("accuracy of f: "++(show $ getAccuracy f)) $
+  trace("deriavtive of f: "++(show $ aux (getPrecision f) (getPrecision f))) $
+  trace("accuracy of derivative: "++(show $ getAccuracy $ aux (getPrecision f) (getPrecision f))) $-}
+  aux (getPrecision f) (getPrecision f)
+  where
+  aux p q =
+    let
+    try = (derivative . setPrecision p) f
+    in
+      if getAccuracy try == Exact then
+        try
+      else
+        aux (p + q) p
+
 derivative :: ChPoly MPBall -> ChPoly MPBall
-derivative (ChPoly dom@(Interval a b) (Poly ts) _) =
-  normalize $
+derivative {-(ChPoly dom@(Interval a b) (Poly ts) _)-} =
+  derivative'
+  {-normalize $
   2/(mpBall (b - a)) * (aux (terms_degree ts) terms_empty)
   where
   aux r dts =
@@ -35,7 +55,7 @@ derivative (ChPoly dom@(Interval a b) (Poly ts) _) =
       aux (r - 1)
           (terms_insertWith (+) (r - 1)
            ((terms_lookupCoeff dts (r + 1)) + (2*r*terms_lookupCoeff ts r))
-           dts)
+           dts)-}
 
 derivative' :: ChPoly MPBall -> ChPoly MPBall
 derivative' (ChPoly dom@(Interval l r) (Poly ts) _)  =

@@ -15,8 +15,9 @@ module AERN2.RealFun.PlotService.API
 (
   Api, api
   , Sampling(..), SamplingId, sampling_dom
-  , FunctionName, FunctionDomain, FunctionSegment(..), FunctionId,
-  mpBallIntervalAPI, dyadicIntervalAPI
+  , FunctionId, FunctionName, FunctionDomain, FunctionSegment(..)
+  , FunctionColour(..), functionColour
+  , mpBallIntervalAPI, dyadicIntervalAPI
 )
 where
 
@@ -57,7 +58,8 @@ type Api =
      "function" :> Capture "functionId" FunctionId :> "domain" :> Get '[JSON] FunctionDomain :<|>
      "function" :> Capture "functionId" FunctionId :>
         "valuesForSampling" :> Capture "samplingId" SamplingId :> Get '[JSON] [FunctionSegment] :<|>
-     "function" :> Capture "functionId" FunctionId :> "name" :> Get '[JSON] FunctionName
+     "function" :> Capture "functionId" FunctionId :> "name" :> Get '[JSON] FunctionName :<|>
+     "function" :> Capture "functionId" FunctionId :> "colour" :> Get '[JSON] FunctionColour
     )
 
 api :: Proxy Api
@@ -79,6 +81,26 @@ instance ElmType FunctionSegment
 instance ToJSON FunctionSegment
 instance FromJSON FunctionSegment
 
+data FunctionColour =
+  FunctionColour
+  { functionColourR :: Integer
+  , functionColourG :: Integer
+  , functionColourB :: Integer
+  }
+  deriving (Show, P.Eq, Generic)
+
+instance ElmType FunctionColour
+instance ToJSON FunctionColour
+instance FromJSON FunctionColour
+
+functionColour :: (Integer, Integer, Integer) -> FunctionColour
+functionColour (r,g,b) =
+  FunctionColour
+  { functionColourR = r
+  , functionColourG = g
+  , functionColourB = b
+  }
+
 instance (ElmType l, ElmType r) => ElmType (Interval l r)
 instance (ToJSON l, ToJSON r) => ToJSON (Interval l r)
 instance (FromJSON l, FromJSON r) => FromJSON (Interval l r)
@@ -90,7 +112,8 @@ data DyadicIntervalAPI =
   deriving (Show, P.Eq, Generic)
 
 dyadicIntervalAPI :: DyadicInterval -> DyadicIntervalAPI
-dyadicIntervalAPI (Interval l r) = (DyadicIntervalAPI l r)
+dyadicIntervalAPI (Interval l r) =
+  DyadicIntervalAPI { dyadic_endpointL = l,  dyadic_endpointR = r }
 
 instance ElmType DyadicIntervalAPI
 instance ToJSON DyadicIntervalAPI
@@ -103,7 +126,8 @@ data MPBallIntervalAPI =
   deriving (Show, P.Eq, Generic)
 
 mpBallIntervalAPI :: Interval MPBall MPBall -> MPBallIntervalAPI
-mpBallIntervalAPI (Interval l r) = (MPBallIntervalAPI l r)
+mpBallIntervalAPI (Interval l r) =
+  MPBallIntervalAPI { mpBall_endpointL = l,  mpBall_endpointR = r }
 
 instance ElmType MPBall
 instance ToJSON MPBall

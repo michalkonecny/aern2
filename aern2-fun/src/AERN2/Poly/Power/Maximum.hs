@@ -151,7 +151,7 @@ genericMaximum f dfs bts l r =
     let
       Just (mi, q') = Q.minView q
     in
-      trace (
+      maybeTrace (
       "minimal interval " ++ (show mi)++
       "\nminimal interval value: "++(show $ mi_value mi)
       ) $
@@ -166,7 +166,7 @@ genericMaximum f dfs bts l r =
         ) $
         case mi of
           SearchInterval a b v ov k ts ->
-            trace("sign variations: "++(show $ signVars ts)) $
+            maybeTrace("sign variations: "++(show $ signVars ts)) $
             if isNothing $ signVars ts then -- TODO avoid recomputation of sign variations
               maybeTrace (
                "signVars are undefined."
@@ -293,7 +293,6 @@ isMoreAccurate x (Just y) =
 
 computeMidpoint :: MPBall -> MPBall -> MPBall
 computeMidpoint l r =
-  trace ("interval ["++(show l)++" , "++(show r)++"]") $
   let
     ip = (max (getPrecision l) (getPrecision r))
   in

@@ -51,16 +51,16 @@ unitDomP = dyadicInterval (0.0,1.0)
 fnsRungeFun :: Plot.Functions
 fnsRungeFun =
   (map (funRoughFn 3)
-  [ ("Fun 1/(10*x^2+1)", unitDom, runge10)])
+  [ ("Fun 1/(10*x^2+1)", fnBlue, unitDom, runge10)])
   ++
   (map (funRoughFn 5)
-  [ ("Fun 1/(10*x^2+1)", unitDom, runge10)])
+  [ ("Fun 1/(10*x^2+1)", fnGreen, unitDom, runge10)])
   ++
   (map (funRoughFn 7)
-  [ ("Fun 1/(10*x^2+1)", unitDom, runge10)])
+  [ ("Fun 1/(10*x^2+1)", fnBlue, unitDom, runge10)])
   ++
   (map funFn
-  [ ("Fun 1/(10*x^2+1)", unitDom, runge10)])
+  [ ("Fun 1/(10*x^2+1)", fnBlack, unitDom, runge10)])
   where
   runge10 :: MPBall -> MPBall
   runge10 x = 1/(max 1 (10*x^2+1))
@@ -68,13 +68,13 @@ fnsRungeFun =
 fnsRungePoly :: Plot.Functions
 fnsRungePoly =
   map chPolyFn
-  [ ("Poly(8) 1/(10*x^2+1)", ChPoly.reduceDegree 8 runge_4bits)
-  , ("Poly(12) 1/(10*x^2+1)", ChPoly.reduceDegree 12 runge_4bits)
-  , ("Poly(16) 1/(10*x^2+1)", ChPoly.reduceDegree 16 runge_4bits)
+  [ ("Poly(8) 1/(10*x^2+1)", fnBlue, ChPoly.reduceDegree 8 runge_4bits)
+  , ("Poly(12) 1/(10*x^2+1)", fnGreen, ChPoly.reduceDegree 12 runge_4bits)
+  -- , ("Poly(16) 1/(10*x^2+1)", fnBlue, ChPoly.reduceDegree 16 runge_4bits)
   ]
   ++
   (map funFn
-  [ ("Fun 1/(10*x^2+1)", unitDom, \x -> 1/(10*x^2+1))])
+  [ ("Fun 1/(10*x^2+1)", fnBlack, unitDom, \x -> 1/(10*x^2+1))])
   where
   runge_4bits = ChPoly.chebDivideDCT (bits 4) (xU-xU+1) (10*xU*xU+1)
   xU :: ChPoly MPBall
@@ -84,14 +84,15 @@ fnsRungePoly =
 fnsRungePPoly :: Plot.Functions
 fnsRungePPoly =
   map ppolyFn
-  [ ("PPoly 1/(10*x^2+1)", runge_bits 4)
+  [ ("PPoly 1/(10*x^2+1)", fnBlue, runge_bits 1)
+  , ("PPoly 1/(10*x^2+1)", fnGreen, runge_bits 6)
   ]
   ++
   (map funFn
-  [ ("Fun 1/(10*x^2+1)", unitDom, \x -> 1/(10*x^2+1))])
+  [ ("Fun 1/(10*x^2+1)", fnBlack, unitDom, \x -> 1/(10*x^2+1))])
   where
   runge_bits b =
-    PPoly.inverse (PPoly.fromPoly $ setPrecision (prec (10*b)) $ 10*xU*xU+1)
+    PPoly.inverseWithAccuracy (bits b) (PPoly.fromPoly $ setPrecision (prec (2+b*10)) $ 10*xU*xU+1)
   xU :: ChPoly MPBall
   xU = varFn sampleFn ()
   sampleFn = constFn (unitDom, 1)
@@ -99,13 +100,13 @@ fnsRungePPoly =
 fnsSine :: Plot.Functions
 fnsSine =
   map chPolyFn
-  [ ("Poly (1+sin[ac=3](6x))/2", (1+sine (6*xU))/2)
-  , ("Poly (1+cos[ac=3](6x))/2", (1+cosine (6*xU))/2)
+  [ ("Poly (1+sin[ac=3](6x))/2", fnBlue, (1+sine (6*xU))/2)
+  , ("Poly (1+cos[ac=3](6x))/2", fnGreen, (1+cosine (6*xU))/2)
   ]
   ++
   (map funFn
-  [ ("Fun (1+sin(6x))/2", unitDom, \x -> (1+sin (6*x))/2)
-  , ("Fun (1+cos(6x))/2", unitDom, \x -> (1+cos (6*x))/2)
+  [ ("Fun (1+sin(6x))/2", fnBlack, unitDom, \x -> (1+sin (6*x))/2)
+  , ("Fun (1+cos(6x))/2", fnBlack, unitDom, \x -> (1+cos (6*x))/2)
   ])
   where
   sine = sineWithAccuracyGuide (bits 3)
@@ -117,31 +118,33 @@ fnsSine =
 fnsSquare :: Plot.Functions
 fnsSquare =
   map chPolyFn
-  [ ("Poly x^2", ChPoly.reduceDegree 1 $ xP*xP) ]
+  [ ("Poly x^2", fnBlue, ChPoly.reduceDegree 1 $ xP*xP) ]
   ++
   (map funFn
   [
-    ("Fun x^2", unitDom, \x -> x^2)
+    ("Fun x^2", fnBlack, unitDom, \x -> x^2)
   ])
   where
   xP :: ChPoly MPBall
   xP = varFn sampleFnP ()
   sampleFnP = constFn (unitDomP, 1)
 
-funFn :: (String, DyadicInterval, MPBall -> MPBall) -> Plot.Function
-funFn (name, dom, b2b) =
+funFn :: (String, FunctionColour, DyadicInterval, MPBall -> MPBall) -> Plot.Function
+funFn (name, colour, dom, b2b) =
   Plot.Function
   { function_name = name
+  , function_colour = colour
   , function_dom = dom
   , function_getBounds = \x -> let r = b2b (mpBall x) in Interval r r
   }
 
-funRoughFn :: Integer -> (String, DyadicInterval, MPBall -> MPBall) -> Plot.Function
-funRoughFn depth (name, dom, b2b) =
+funRoughFn :: Integer -> (String, FunctionColour, DyadicInterval, MPBall -> MPBall) -> Plot.Function
+funRoughFn depth (name, colour, dom, b2b) =
   -- maybeTrace
   -- ("funRoughFn: partitionValues = " ++ show partitionValues) $
   Plot.Function
   { function_name = name
+  , function_colour = colour
   , function_dom = dom
   , function_getBounds = getBounds
   }
@@ -166,10 +169,11 @@ bisectDepth d ival
   where
   (l,r) = Interval.split ival
 
-chPolyFn :: (String, ChPoly MPBall) -> Plot.Function
-chPolyFn (name, cp) =
+chPolyFn :: (String, FunctionColour, ChPoly MPBall) -> Plot.Function
+chPolyFn (name, colour, cp) =
   Plot.Function
   { function_name = name
+  , function_colour = colour
   , function_dom = getDomain cp
   , function_getBounds = applyViaMPBall
   }
@@ -183,21 +187,31 @@ chPolyFn (name, cp) =
     v = apply cpC (mpBall di)
 
 
-ppolyFn :: (String, PPoly) -> Plot.Function
-ppolyFn (name, pp) =
+ppolyFn :: (String, FunctionColour, PPoly) -> Plot.Function
+ppolyFn (name, colour, pp) =
   Plot.Function
   { function_name = name
-  , function_dom =
-      maybeTrace ("ppolyFn: dom ...") $
-      maybeTrace ("ppolyFn: dom = " ++ show (getDomain pp)) $
-        getDomain pp
+  , function_colour = colour
+  , function_dom = getDomain pp
   , function_getBounds = applyViaMPBall
   }
   where
   applyViaMPBall di =
-    maybeTrace ("ppolyFn: applyViaMPBall: di = " ++ show di ++ "; v = " ++ show v) $
+    -- maybeTrace ("ppolyFn: applyViaMPBall: di = " ++ show di ++ "; v = " ++ show v) $
     Interval l r
     where
     v :: MPBall
-    v = PPoly.evalDI pp (mpBall di)
+    v = PPoly.evalDirect pp (mpBall di)
     (l,r) = endpoints v
+
+fnBlue :: FunctionColour
+fnBlue = functionColour (0,0,255)
+
+fnGreen :: FunctionColour
+fnGreen = functionColour (0,150,0)
+
+-- fnRed :: FunctionColour
+-- fnRed = functionColour (150,0,0)
+
+fnBlack :: FunctionColour
+fnBlack = functionColour (0,0,0)

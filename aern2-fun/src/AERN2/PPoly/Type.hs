@@ -4,10 +4,11 @@ where
 import Numeric.MixedTypes
 
 import Data.List
+import Data.Maybe
 
 import AERN2.Normalize
 
-import AERN2.MP.Ball (IsBall(..), MPBall)
+import AERN2.MP.Ball (IsBall(..), MPBall, mpBall)
 import AERN2.MP.Precision
 import AERN2.MP.Accuracy
 import AERN2.MP.Dyadic
@@ -49,13 +50,44 @@ linearPolygon ((x,y) : xys) dom =
   aux [] _ _ res = PPoly (reverse res) dom
   aux ((x',y'):xys) x y res =
     aux xys x' y' ((Interval x x', linSpline x y x' y') : res)
-  linSpline x y x' y' =
+  linSpline a fa b fb =
     Ball
       (ChPoly
         dom
-        (Poly $ terms_fromList [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))])
+        --(Poly $ terms_fromList [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))]))
+        (Poly $ terms_fromList
+                [(0, constantTerm a fa b fb (getPrecision fa) (getPrecision fb) Nothing),
+                 (1, linearTerm a fa b fb (getPrecision fa) (getPrecision fb)  Nothing)])
         Nothing)
       (errorBound 0)
+  linearTerm a fa b fb p q prev =
+    let
+    a' = setPrecision p (mpBall a)
+    b' = setPrecision p (mpBall b)
+    fa' = setPrecision p fa
+    fb' = setPrecision p fb
+    try =
+      (fb' - fa')/(b' - a')
+    in
+      if isJust prev
+      && getAccuracy try <= getAccuracy (fromJust prev) then
+        try
+      else
+        linearTerm a fa b fb (p + q) p (Just try)
+  constantTerm a fa b fb p q prev =
+    let
+    a' = setPrecision p (mpBall a)
+    b' = setPrecision p (mpBall b)
+    fa' = setPrecision p fa
+    fb' = setPrecision p fb
+    try =
+      fa'- (a'*(fb' - fa'))/(b' - a')
+    in
+      if isJust prev
+      && getAccuracy try <= getAccuracy (fromJust prev) then
+        try
+      else
+        constantTerm a fa b fb (p + q) p (Just try)
 linearPolygon [] _ =
   error "linearPolygon must be provided with a list of at least 2 points"
 
@@ -198,6 +230,10 @@ instance CanSub PPoly Integer where
     type SubType PPoly Integer = PPoly
     sub p n = liftBall2PPoly (\x -> x - n) $ p
 
+instance CanSub Integer PPoly where
+    type SubType Integer PPoly = PPoly
+    sub n p = liftBall2PPoly (\x -> n - x) $ p
+
 instance CanAddAsymmetric Integer PPoly where
     type AddType Integer PPoly = PPoly
     add n p = liftBall2PPoly (n+) $ p
@@ -219,6 +255,11 @@ instance CanDiv PPoly Integer where
 instance CanAddAsymmetric PPoly MPBall where
     type AddType PPoly MPBall = PPoly
     add p n = liftBall2PPoly (+n) p
+
+
+instance CanSub MPBall PPoly where
+    type SubType MPBall PPoly = PPoly
+    sub n p = liftBall2PPoly (\x -> n - x) $ p
 
 instance CanAddAsymmetric MPBall PPoly where
     type AddType MPBall PPoly = PPoly

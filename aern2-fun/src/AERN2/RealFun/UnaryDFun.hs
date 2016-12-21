@@ -91,15 +91,13 @@ instance CanIntegrateOverDom UnaryDFun DyadicInterval where
   integrateOverDom (UnaryDFun []) = error "integrating UnaryDFun []"
   integrateOverDom (UnaryDFun [f]) = integrateOverDom f
   integrateOverDom (UnaryDFun (f : f' : _)) =
-    integralOnIntervalSubdivide integralOnInterval
+    integralOnIntervalSubdivide (integralOnIntervalIncreasePrecision getArea) standardPrecisions
     where
-    integralOnInterval di ac =
+    getArea di p =
       (apply f diM)*diW+errB
       where
       diW = Interval.width di
       errB = ((deriv - deriv)/2)*((diW*0.5)^2)*0.5
-      deriv = apply f' (catchingNumExceptions $ mpBall di)
-      diM =
-        catchingNumExceptions $
-          setPrecisionAtLeastAccuracy (ac + 100) $
-            centreAsBall $ mpBall di
+      deriv = apply f' (catchingNumExceptions diB)
+      diM = catchingNumExceptions $ centreAsBall diB
+      diB = setPrecision p $ mpBall di

@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+-- #define DEBUG
 {-# LANGUAGE TemplateHaskell #-}
 {-|
     Module      :  AERN2.Poly.Cheb.Ring
@@ -17,6 +19,13 @@ module AERN2.Poly.Cheb.Ring
   mulCheb, mulChebDirect, mulChebDCT
 )
 where
+
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#else
+#define maybeTrace ((flip const :: (String -> a -> a)))
+#endif
 
 import Numeric.MixedTypes
 -- import qualified Prelude as P
@@ -43,18 +52,6 @@ import AERN2.Poly.Basics
 
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.DCT
-
-
-import Debug.Trace (trace)
-
-shouldTrace :: Bool
--- shouldTrace = False
-shouldTrace = True
-
-maybeTrace :: String -> a -> a
-maybeTrace
-    | shouldTrace = trace
-    | otherwise = const id
 
 {- negation -}
 

@@ -13,7 +13,7 @@
 
 module AERN2.Poly.Cheb.Eval
 (
-  evalDirect, evalLip, evalDf, evalDI, reduceToEvalDirectAccuracy
+  evalDirect, evalLip, evalDf, evalDI, reduceToEvalDirectAccuracy, evalDirectWithAccuracy
 )
 where
 
@@ -42,8 +42,10 @@ import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Derivative
 -- import AERN2.Poly.Conversion
 -- import AERN2.Poly.Power (PowPoly)
--- import qualified AERN2.Poly.Power as Pow
+import qualified AERN2.Poly.Power as Pow
 
+
+import AERN2.Poly.Conversion -- TODO remove
 
 import Debug.Trace (trace)
 
@@ -93,26 +95,46 @@ evalDirect (ChPoly dom (Poly terms) _) (xInDom :: t) =
         bK = (a k) + 2 * x * bKp1 - bKp2
     a k = terms_lookupCoeffDoubleConstTerm terms k
 
+evalDirectWithAccuracy :: Accuracy -> ChPoly MPBall -> MPBall -> MPBall
+evalDirectWithAccuracy bts f x =
+  if getAccuracy x < Exact then
+    error $ "evalDirectWithAccuracy: trying to evaluate on non-exact argument."
+             ++ "\n f: "++(show f)++"\nx: "++(show x)
+  else
+    aux (getPrecision f) (getPrecision x)
+  where
+  aux p q =
+    let
+      try = evalDirect (setPrecision p f) (setPrecision p x)
+    in
+      if getAccuracy try >= min bts (getAccuracy f) then
+        try
+      else
+        aux (p + q) p
+
 evalLip :: ChPoly MPBall -> MPBall -> MPBall -> MPBall
 evalLip f l x =
-  {-trace ("centre: "++ (show $ evalDirect f (centreAsBall x))) $
-  trace ("lipschitz: "++ (show $ l)) $
-  trace ("error: "++ (show $ err)) $-}
+  --trace ("centre: "++ (show $ evalDirect f (centreAsBall x))) $
+  --trace ("lipschitz: "++ (show $ l)) $
+  --trace ("error: "++ (show $ err)) $
   (evalDirect f (centreAsBall x)) + (fromEndpoints (-err) err :: MPBall)
   where
   err = l* dyadic (ball_error x)*0.5
 
 evalDf :: ChPoly MPBall -> ChPoly MPBall -> MPBall -> MPBall
 evalDf f f' x =
-  {-let
+  let
     ChPoly _ ts = f'
   in
-  trace ("evaluating on "++(show x)) $
+  {-trace ("evaluating on "++(show x)) $
   trace ("derivative accuracy: "++(show $ getAccuracy $ f')) $
   trace ("derivative precision: "++(show $ getPrecision $ f')) $
   trace ("derivative terms: "++(show $ ts)) $
   trace ("x accuracy: "++(show $ getAccuracy x)) $
-  trace ("x precision: "++(show $ getPrecision x))-}
+  trace ("x precision: "++(show $ getPrecision x)) $
+  trace ("terms: "++(show $ chPoly_terms f')) $
+  trace ("terms sum: "++(show $ foldl (+) (mpBall 0) (map snd $ (terms_toList . chPoly_terms $ f'))))
+  trace ("eval in power basis: "++(show $ Pow.evalDirect (cheb2Power $ chPoly_poly f') x))-}
   evalLip f (abs $ evalDirect f' x) x
 
 reduceToEvalDirectAccuracy :: ChPoly MPBall -> Accuracy -> ChPoly MPBall
@@ -133,7 +155,7 @@ reduceToEvalDirectAccuracy f ac =
         aux (d + 5) tryAccuracy (Just tryDegree)
 
 evalDI :: ChPoly MPBall -> MPBall -> MPBall
-evalDI f = evalDf f (derivative f)
+evalDI f = evalDf f ((derivative . centre) f)
 
 {-evalDfAccurately :: ChPoly MPBall -> ChPoly MPBall -> MPBall -> MPBall
 evalDfAccurately f f' x = (aux 100 50) + (fromEndpoints (-err) err :: MPBall)

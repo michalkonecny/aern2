@@ -28,7 +28,7 @@ import Control.Arrow
 import Control.Applicative
 
 import Control.Lens.Operators
-import Control.Lens (_Just)
+-- import Control.Lens (_Just)
 
 import qualified AERN2.PQueue as Q
 
@@ -87,13 +87,13 @@ checkInDom f cx =
   Interval domL domR = unaryFun_Domain f
 
 instance
-  (CanApply UnaryFun t, HasOrderCertainly t Dyadic, CanMinMaxThis t Dyadic)
-  =>
-  CanApply UnaryFun (CatchingNumExceptions t)
+  -- (CanApply UnaryFun t, HasOrderCertainly t Dyadic, CanMinMaxThis t Dyadic)
+  -- =>
+  CanApply UnaryFun (CatchingNumExceptions MPBall)
   where
-  type ApplyType UnaryFun (CatchingNumExceptions t) = CatchingNumExceptions (ApplyType UnaryFun t)
-  apply f cx =
-    (checkInDom f cx) & (numEXC_maybeValue . _Just) %~ apply f
+  type ApplyType UnaryFun (CatchingNumExceptions MPBall) = CatchingNumExceptions MPBall
+  apply f@(UnaryFun _ eval) cx =
+     eval (checkInDom f cx)
 
 instance (QAArrow to) => CanApply UnaryFun (CauchyRealA to) where
   type ApplyType UnaryFun (CauchyRealA to) = (CauchyRealA to)

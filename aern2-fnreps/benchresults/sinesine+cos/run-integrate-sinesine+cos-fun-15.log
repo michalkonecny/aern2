@@ -1,23 +1,22 @@
-computing integrate  sin(10x+sin(20x^2)) + sin(10x) over [-1,1]
-result = [-1.3081712e-01 ± 2.1552934113089715e-05]
-result ~ (-1.3081711531e-01,True)
+computing integrate  sin(10x+sin(20x^2)) + cos(10x) over [-1,1]
+result = [-2.396213547838776e-1 ± 2.193884885941595e-5](prec=220)
 accuracy: Bits 15
-precision = Precision 23
-	Command being timed: "./aern2-fnreps-ops integrate sinesine+cos fun 15"
-	User time (seconds): 472.75
-	System time (seconds): 1.11
+precision = Precision 220
+	Command being timed: "aern2-fnreps-ops integrate sinesine+cos fun 15"
+	User time (seconds): 1979.62
+	System time (seconds): 6.15
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 7:54.56
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 33:08.02
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 1487404
+	Maximum resident set size (kbytes): 766756
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 371975
+	Minor (reclaiming a frame) page faults: 190231
 	Voluntary context switches: 1
-	Involuntary context switches: 47066
+	Involuntary context switches: 2448
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

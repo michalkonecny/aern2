@@ -54,7 +54,7 @@ signVars ts =
   aux vrs _ (-1) = Just vrs
   aux vrs sg d    =
     case sgn (fromJust $ Map.lookup d ts) of
-      Nothing   -> Nothing
+      Nothing   -> maybeTrace("sign of coefficient "++(show d)++" undefined.\ncoefficient is: "++(show $ fromJust $ Map.lookup d ts)) Nothing
       Just sgnx ->
         if sgnx == 0 || sg == 0 || sgnx == sg then
           aux vrs (if sgnx /= 0 then sgnx else sg) (d - 1)
@@ -65,6 +65,10 @@ signVars ts =
 -- Output: the coefficients of P in Bernstein basis on [l,r].
 initialBernsteinCoefs :: PowPoly MPBall -> MPBall -> MPBall -> Terms MPBall
 initialBernsteinCoefs p l r =
+  {-trace("computing initial bs coefs of "++(show p)) $
+  trace("radius p "++(show $ radius p)) $
+  trace("accuracy p "++(show $ getAccuracy p)) $
+  trace("coefs: "++(show $ bs)) $-}
   bs
   where
   d = degree p

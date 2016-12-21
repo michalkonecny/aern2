@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+-- #define DEBUG
 {-|
     Module      :  AERN2.RealFun.UnaryFun.Integration
     Description :  unary function integration
@@ -14,8 +16,16 @@
 module AERN2.RealFun.UnaryFun.Integration
 (
   integralOnIntervalSubdivide
+, integralOnIntervalIncreasePrecision
 )
 where
+
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#else
+#define maybeTrace (flip const)
+#endif
 
 import Numeric.MixedTypes
 -- import qualified Prelude as P
@@ -29,12 +39,8 @@ import Numeric.MixedTypes
 
 import Numeric.CatchingExceptions
 
--- import AERN2.Norm
-import AERN2.MP.Accuracy
--- import AERN2.MP.Precision
 -- import AERN2.MP.Dyadic
-import AERN2.MP.Ball (MPBall, mpBall)
--- import AERN2.MP.Ball (MPBall, mpBall, IsBall(..), IsInterval(..), setPrecisionAtLeastAccuracy)
+import AERN2.MP
 -- import qualified AERN2.MP.Ball as MPBall
 
 -- import AERN2.QA
@@ -48,52 +54,82 @@ import AERN2.RealFun.Operations
 import AERN2.RealFun.UnaryFun.Type
 import AERN2.RealFun.UnaryFun.Evaluation ()
 
-import Debug.Trace (trace)
-
-shouldTrace :: Bool
-shouldTrace = False
--- shouldTrace = True
-
-maybeTrace :: String -> a -> a
-maybeTrace = if shouldTrace then trace else const id
-_dummy :: ()
-_dummy = maybeTrace "dummy" ()
-
 instance CanIntegrateOverDom UnaryFun DyadicInterval where
   type IntegralOverDomType UnaryFun DyadicInterval = CauchyReal
   integrateOverDom f =
-    integralOnIntervalSubdivide integralOnInterval
+    integralOnIntervalSubdivide (integralOnIntervalIncreasePrecision getArea) standardPrecisions
+    -- integralOnIntervalSubdivide (\s di _ac -> (s, getArea di)) standardPrecisions
     where
-    integralOnInterval di ac = (apply f diB)*(Interval.width di)
+    getArea di p =
+      (apply f diB)*(Interval.width di)
       where
       diB =
-        catchingNumExceptions $
-          setPrecisionAtLeastAccuracy (ac + 100) $
-            mpBall di
+        catchingNumExceptions $ setPrecision p $ mpBall di
+
+integralOnIntervalIncreasePrecision ::
+  (DyadicInterval -> Precision -> CatchingNumExceptions MPBall) ->
+  [Precision] -> DyadicInterval -> Accuracy ->
+  ([Precision], CatchingNumExceptions MPBall)
+integralOnIntervalIncreasePrecision _getArea [] _di _ac =
+  error "AERN2.RealFun.UnaryFun: internal error in integrateOverDom"
+integralOnIntervalIncreasePrecision getArea ps@(p1_O:_) di ac =
+  aux (getArea di p1_O) ps
+  where
+  aux diArea1 ps2@(p1:p2:p3rest) =
+    maybeTrace
+    (
+      "integralOnIntervalIncreasePrecision: "
+      ++ "\n di = " ++ show di
+      ++ "\n ac = " ++ show ac
+      ++ "\n p1 = " ++ show p1
+      ++ "\n getAccuracy diArea1 = " ++ show (getAccuracy diArea1)
+      ++ "\n p2 = " ++ show p2
+      ++ "\n getAccuracy diArea2 = " ++ show (getAccuracy diArea2)
+    )
+    res
+    where
+    res
+      | getAccuracy diArea1 >= ac
+          = (ps2, diArea1)
+      | getAccuracy diArea1 < getAccuracy diArea2
+          = (p2:p3rest, diArea2)
+          -- aux diArea2 (p2:p3rest)
+      | otherwise
+          = (ps2, diArea2)
+    diArea2 = getArea di p2
+  aux diArea1 ps2 = (ps2, diArea1)
 
 integralOnIntervalSubdivide ::
-  (DyadicInterval -> Accuracy -> CatchingNumExceptions MPBall)
+  (s -> DyadicInterval -> Accuracy -> (s,CatchingNumExceptions MPBall))
   ->
-  (DyadicInterval -> CauchyReal)
-integralOnIntervalSubdivide integralOnInterval diO =
+  s -> (DyadicInterval -> CauchyReal)
+integralOnIntervalSubdivide integralOnInterval initS diO =
     newCR "integral" [] makeQ
     where
     makeQ ac =
       ifCertainExceptionDie "integrate by subdivide" $
-          integr diO ac
-    integr di ac
+          integr initS diO ac
+    integr s di ac
         | getAccuracy value >= ac =
             maybeTrace
             ("integrate by subdivide:"
              ++ "\n di = " ++ show di
              ++ "\n ac = " ++ show ac
              ++ "\n getAccuracy value = " ++ show (getAccuracy value)
+             ++ "\n getPrecision value = " ++ show (fmap getPrecision value)
             )
             value
         | otherwise =
-            (integr diL (ac+1))
+            maybeTrace
+            ("integrate by subdivide:"
+             ++ "\n di = " ++ show di
+             ++ "\n ac = " ++ show ac
+             ++ "\n getAccuracy value = " ++ show (getAccuracy value)
+             ++ "\n getPrecision value = " ++ show (fmap getPrecision value)
+            ) $
+            (integr s' diL (ac+1))
             +
-            (integr diR (ac+1))
+            (integr s' diR (ac+1))
         where
         (diL, diR) = Interval.split di
-        value = integralOnInterval di ac
+        (s', value) = integralOnInterval s di ac

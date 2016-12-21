@@ -83,6 +83,7 @@ type alias FunctionName = String
 type alias FunctionDomain = DyadicIntervalAPI
 type alias FunctionDetails =
   { name : FunctionName
+  , colour : FunctionColour
   , domain : FunctionDomain
   }
 type alias FunctionsDetails = Dict FunctionId FunctionDetails
@@ -128,7 +129,7 @@ initPlotArea s plotDomain =
   , domL = dToFloat plotDomain.dyadic_endpointL
   , domR = dToFloat plotDomain.dyadic_endpointR
   , rangeL = -0.0 -- TODO: derive from canvas ratio and plotDomain, centre on 0
-  , rangeR = 1.0
+  , rangeR = 1.1
   }
 
 unionOfFunctionsDomains : State -> FunctionDomain
@@ -156,9 +157,10 @@ getFunctionsDetails fnIds =
 getFunctionDetails : FunctionId -> Task Http.Error (FunctionId, FunctionDetails)
 getFunctionDetails fnId =
   Task.map (\fnDetails -> (fnId, fnDetails)) <|
-    Task.map2
-      (\ name domain -> { name = name, domain = domain })
+    Task.map3
+      (\ name colour domain -> { name = name, colour = colour, domain = domain })
         (getAern2PlotFunctionByFunctionIdName fnId)
+        (getAern2PlotFunctionByFunctionIdColour fnId)
         (getAern2PlotFunctionByFunctionIdDomain fnId)
 
 -- request segments to plot:
@@ -310,9 +312,15 @@ view s =
 --     ]
 
 drawFn s (fnId, segments) =
-  List.concat <| List.map (drawSegment s) segments
+  let
+    colour =
+      case Dict.get fnId s.functionsDetails of
+        Just d -> d.colour
+        _ -> defaultPlotColour
+  in
+  List.concat <| List.map (drawSegment s colour) segments
 
-drawSegment s segm =
+drawSegment s colour segm =
   case s.plotArea of
     Nothing -> []
     Just plotArea ->
@@ -340,20 +348,33 @@ drawSegment s segm =
           polygon [(domL, eLDD), (domL,eLDU), (domR,eRDU), (domR,eRDD)]
       in
       [
-        parallelogramUD |> filled enclosureFillColour
-      , parallelogramD |> outlined enclosureOutlineStyle
-      , parallelogramU |> outlined enclosureOutlineStyle
+        parallelogramUD |> filled (enclosureFillColour colour)
+      , parallelogramD |> outlined (enclosureOutlineStyle colour)
+      , parallelogramU |> outlined (enclosureOutlineStyle colour)
       ]
 
 bgrColour =
   -- white
-  rgb 200 255 200
+  rgb 200 255 220
 
-enclosureFillColour =
-  rgb 200 200 255
+enclosureFillColour colour =
+  let
+    r = tr colour.functionColourR
+    g = tr colour.functionColourG
+    b = tr colour.functionColourB
+    tr c = (3*255 + c) // 4
+  in
+  rgb r g b
 
-enclosureOutlineStyle : LineStyle
-enclosureOutlineStyle =
+enclosureOutlineStyle : FunctionColour -> LineStyle
+enclosureOutlineStyle colour =
+  let
+    r = colour.functionColourR
+    g = colour.functionColourG
+    b = colour.functionColourB
+  in
   { defaultLine |
-    color = rgb 10 10 255
+    color = rgb r g b
   }
+
+defaultPlotColour = FunctionColour 10 10 255

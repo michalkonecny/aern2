@@ -25,6 +25,22 @@ evalDirect (PPoly ps _) x =
   intersectingPieces =
     filter (\p -> (fst p) `intersects` xAsInterval) ps
 
+evalDirectWithAccuracy :: Accuracy -> PPoly -> MPBall -> MPBall
+evalDirectWithAccuracy bts (PPoly ps _) x =
+  foldl1' meet $
+  map (\(_,f) -> (ballLift1TR $ Cheb.evalDirectWithAccuracy bts) f x) intersectingPieces
+  where
+  meet :: MPBall -> MPBall -> MPBall
+  meet a b =
+    let
+    (la, ra :: MPBall) = endpoints a
+    (lb, rb :: MPBall) = endpoints b
+    in
+    fromEndpoints (min la lb) (max ra rb)
+  xAsInterval = dyadicInterval x
+  intersectingPieces =
+    filter (\p -> (fst p) `intersects` xAsInterval) ps
+
 evalDf :: PPoly -> [ChPoly MPBall] -> MPBall -> MPBall
 evalDf (PPoly ps _) fs' x =
   foldl1' meet $
