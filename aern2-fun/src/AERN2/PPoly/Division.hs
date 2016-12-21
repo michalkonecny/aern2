@@ -22,7 +22,7 @@ import AERN2.Interval
 import Data.Set (Set)
 import qualified Data.Set as Set
 
-import Debug.Trace
+--import Debug.Trace
 
 inverseWithAccuracy :: Accuracy -> PPoly -> PPoly
 inverseWithAccuracy cutoff f@(PPoly _ (Interval l r)) =
@@ -118,7 +118,6 @@ iterateInverse cutoff f if0 =
               (errorBound 0)
       ne = newtonError pg bfp
     in
-      trace("new degree: "++(show $ (ballLift1R degree) ni)) $
       updateRadius (+ne) ni
     {-let
     ne = newtonError pg bfp
@@ -228,23 +227,6 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) thresholdAccuracy {-bf-} =
       absErr = max (abs maxErr) (abs minErr)-}
       minf   = minimumOptimisedWithAccuracy fRed (mpBall a) (mpBall b) 5 5 thresholdAccuracy
     in
-      {-trace(
-      "a: "++(show a) ++"\n"++
-      "fa: "++(show fa) ++"\n"++
-      "b: "++(show b) ++"\n"++
-      "fb: "++(show fb) ++"\n"++
-      "p: "++(show p) ++"\n"++
-      "pf - 1: "++(show $ pf - 1) ++"\n"++
-      "p precision "++(show $ getPrecision p)++"\n"++
-      "f precision "++(show $ getPrecision f)++"\n"++
-      "pf precision "++(show $ getPrecision pf)
-      ) $-}
-      trace (
-      --"multiplicationc result: "++(show pf)++"\n"++
-      "abs error: "++(show absErr)++"\n"++
-      --"target error: "++(show threshold) ++ "\n"++
-      "minf: "++(show minf)
-      )
       absErr/minf
 
   refineUntilAccurate :: LineSegment -> Set (LineSegment, MPBall)
@@ -254,7 +236,7 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) thresholdAccuracy {-bf-} =
       err  = pieceError p
       threshold = pieceThreshold p
     in
-    trace("piece: "++(show a) ++ " " ++ (show b)) $
+    --trace("piece: "++(show a) ++ " " ++ (show b)) $
     --trace("error: "++(show err)) $
     --trace("sampled error: "++(show serr)) $
     --trace("threshold: "++(show threshold)) $
