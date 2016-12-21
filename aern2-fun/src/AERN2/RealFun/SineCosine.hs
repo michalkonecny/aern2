@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#define DEBUG
+-- #define DEBUG
 {-|
     Module      :  AERN2.RealFun.SineCosine
     Description :  Pointwise sine and cosine for functions
@@ -186,7 +186,7 @@ sineCosineTaylorSum ::
   =>
   Bool ->
   (Accuracy -> f) -> MPBall -> Accuracy -> (f, ErrorBound, Integer)
-sineCosineTaylorSum isSine xAC xM acGuidePre =
+sineCosineTaylorSum isSine (xAC :: Accuracy -> f) xM acGuidePre =
     let
     acGuide = acGuidePre + 4
     _isCosine = not isSine
@@ -316,6 +316,7 @@ sineCosineTaylorSum isSine xAC xM acGuidePre =
           pwr k = case Map.lookup k prevPowers of
             Just r -> r
             _ -> error "sineCosineTaylorSum: internal error (powersCosine: pwr k)"
+      showPowerDebug :: Integer -> f -> String
       showPowerDebug i rpw_i =
         printf "power %d: accuracy req: %s, actual accuracy: %s" -- , degree: %d"
           i (show pa) (show $ getAccuracy rpw_i) -- (terms_degree $  poly_coeffs $ chPoly_poly p)
