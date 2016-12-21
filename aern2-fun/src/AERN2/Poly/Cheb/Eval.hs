@@ -13,7 +13,7 @@
 
 module AERN2.Poly.Cheb.Eval
 (
-  evalDirect, evalLip, evalDf, evalDI, reduceToEvalDirectAccuracy, evalDirectWithAccuracy
+  evalDirect, evalLip, evalDf, evalLDf, evalDI, reduceToEvalDirectAccuracy, evalDirectWithAccuracy
 )
 where
 
@@ -137,6 +137,14 @@ evalDf f f' x =
   trace ("eval in power basis: "++(show $ Pow.evalDirect (cheb2Power $ chPoly_poly f') x))-}
   evalLip f (abs $ evalDirect f' x) x
 
+evalLDf :: ChPoly MPBall -> ChPoly MPBall -> MPBall -> MPBall
+evalLDf f f' x =
+  case chPoly_maybeLip f of
+    Nothing ->
+      evalLip f (abs $ evalDirect f' x) x
+    Just lip ->
+      evalLip f lip x
+
 reduceToEvalDirectAccuracy :: ChPoly MPBall -> Accuracy -> ChPoly MPBall
 reduceToEvalDirectAccuracy f ac =
   aux 5 NoInformation Nothing
@@ -155,7 +163,7 @@ reduceToEvalDirectAccuracy f ac =
         aux (d + 5) tryAccuracy (Just tryDegree)
 
 evalDI :: ChPoly MPBall -> MPBall -> MPBall
-evalDI f = evalDf f ((derivative . centre) f)
+evalDI f = evalLDf f ((derivative . centre) f)
 
 {-evalDfAccurately :: ChPoly MPBall -> ChPoly MPBall -> MPBall -> MPBall
 evalDfAccurately f f' x = (aux 100 50) + (fromEndpoints (-err) err :: MPBall)

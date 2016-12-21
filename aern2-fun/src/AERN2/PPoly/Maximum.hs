@@ -68,7 +68,7 @@ maximumOptimisedWithAccuracy (PPoly ps dom) l r initialDegree steps cutoffAccura
           dfcsCheb))
   ) $-}
   genericMaximum
-    (PPE.evalDf f
+    (PPE.evalLDf f
       --dfsCheb
       (map
         (\dfc -> reduceToEvalDirectAccuracy dfc (bits $ -4))
