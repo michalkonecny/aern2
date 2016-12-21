@@ -4,7 +4,7 @@ ChPoly.sineCosine: input:
  xAccuracy = Exact
  r = [0 ± 10](prec=55)
  k = 0
- trM = [10 ± 0](prec=53)
+ trM = [10 ± 0](prec=55)
 sineCosineTaylorSum: n = 40
 mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Exact, size1+size2 = 4, using mulChebDirect, getAccuracy result = Exact
 mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Exact, size1+size2 = 4, using mulChebDirect, getAccuracy result = Exact
@@ -75,7 +75,7 @@ ChPoly.sineCosine: input:
  xAccuracy = Exact
  r = [0 ± 20](prec=55)
  k = 0
- trM = [20 ± 0](prec=53)
+ trM = [20 ± 0](prec=55)
 sineCosineTaylorSum: n = 67
 mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Exact, size1+size2 = 4, using mulChebDirect, getAccuracy result = Exact
 mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Exact, size1+size2 = 4, using mulChebDirect, getAccuracy result = Exact
@@ -146,27 +146,27 @@ sineCosineTaylorSum: term accuracies = [(2,Exact),(4,Bits 42),(6,Bits 37),(8,Bit
 ChPoly.sineCosine: output:
  Taylor series degree = 67
  getAccuracy taylorSum = Bits 19
- taylorSumE = 4.046324580589598e-8
+ taylorSumE = 4.046324580589596e-8
  getAccuracy result = Bits 19
 computing integrate  sin(10x)+cos(20x) over [-1,1]
-result = [9.129451215267181e-2 ± 3.549599956632325e-6](prec=25)
+result = [9.129450380961805e-2 ± 3.505014501429904e-6](prec=377)
 accuracy: Bits 18
-precision = Precision 25
+precision = Precision 377
 	Command being timed: "aern2-fnreps-ops integrate sine+cos poly 18"
-	User time (seconds): 0.72
-	System time (seconds): 0.01
+	User time (seconds): 0.43
+	System time (seconds): 0.00
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.74
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.43
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 17568
+	Maximum resident set size (kbytes): 17488
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 2619
+	Minor (reclaiming a frame) page faults: 2629
 	Voluntary context switches: 1
-	Involuntary context switches: 4
+	Involuntary context switches: 2
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 32

@@ -1,0 +1,27 @@
+computing integrate  1/(100x^2+1) over [-1,1]
+result = [2.942255072617386e-1 ± 7.457941760445292e-7](prec=55)
+accuracy: Bits 20
+precision = Precision 55
+	Command being timed: "aern2-fnreps-ops integrate runge fun 20"
+	User time (seconds): 1462.74
+	System time (seconds): 5.05
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 24:29.50
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 1089316
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 270874
+	Voluntary context switches: 5
+	Involuntary context switches: 2200
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

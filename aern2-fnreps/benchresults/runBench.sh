@@ -54,11 +54,11 @@ function sinecosFun
         runOne
     done
 
-    # op=integrate
-    # for params in 10 12 14
-    # do
-    #     runOne
-    # done
+    op=integrate
+    for params in 10 12 14
+    do
+        runOne
+    done
 }
 
 function sinecosDFun
@@ -115,11 +115,11 @@ function sinesineFun
         runOne
     done
 
-    # op=integrate
-    # for params in 5 10 15
-    # do
-    #     runOne
-    # done
+    op=integrate
+    for params in 5 10 15
+    do
+        runOne
+    done
 }
 
 function sinesineDFun
@@ -176,11 +176,11 @@ function sinesine+cosFun
         runOne
     done
 
-    # op=integrate
-    # for params in 5 10 15
-    # do
-    #     runOne
-    # done
+    op=integrate
+    for params in 5 10 15
+    do
+        runOne
+    done
 }
 
 function sinesine+cosDFun
@@ -238,11 +238,11 @@ function rungeFun
         runOne
     done
 
-    # op=integrate
-    # for params in 05 10 15 20
-    # do
-    #     runOne
-    # done
+    op=integrate
+    for params in 05 10 15 20
+    do
+        runOne
+    done
 }
 
 function rungeDFun
@@ -321,11 +321,11 @@ function rungeXFun
         runOne
     done
 
-    # op=integrate
-    # for params in 05 10 15 20
-    # do
-    #     runOne
-    # done
+    op=integrate
+    for params in 05 10 15 20
+    do
+        runOne
+    done
 }
 
 function rungeXDFun
@@ -403,11 +403,11 @@ function fracSinFun
         runOne
     done
 
-    # op=integrate
-    # for params in 05 10 15
-    # do
-    #     runOne
-    # done
+    op=integrate
+    for params in 05 10 15
+    do
+        runOne
+    done
 }
 
 function fracSinDFun

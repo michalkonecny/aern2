@@ -5,7 +5,7 @@ ChPoly.sineCosine: input:
  xAccuracy = Exact
  r = [10 ± 10](prec=55)
  k = 6
- trM = [10.579345703125 ± 0](prec=106)
+ trM = [10.57522203923062 ± 0](prec=110)
 sineCosineTaylorSum: n = 48
 mulCheb: getAccuracy p1 = Bits 54, getAccuracy p2 = Bits 54, size1+size2 = 4, using mulChebDirect, getAccuracy result = Bits 48
 mulCheb: getAccuracy p1 = Bits 48, getAccuracy p2 = Bits 54, size1+size2 = 5, using mulChebDirect, getAccuracy result = Bits 43
@@ -80,113 +80,113 @@ sineCosineTaylorSum: term accuracies = [(1,Bits 54),(3,Bits 45),(5,Bits 41),(7,B
 ChPoly.sineCosine: output:
  Taylor series degree = 48
  getAccuracy taylorSum = Bits 33
- taylorSumE = 1.202580169643516e-12
+ taylorSumE = 1.180285185033368e-12
  getAccuracy result = Bits 33
 ChPoly.sineCosine: input:
  isSine = True
- xE = 7.30596648383546e-11
+ xE = 7.217239890376457e-11
  xAccuracy = Bits 33
- r = [2.912107091974466e-1 ± 10.62173454152964](prec=238)
+ r = [2.912107091978447e-1 ± 10.62173454152964](prec=233)
  k = 0
- trM = [10.91560359888982 ± 0](prec=53)
+ trM = [10.91294525072748 ± 0](prec=233)
 sineCosineTaylorSum: n = 48
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Exact, size1+size2 = 62, using mulChebDirect, getAccuracy result = Bits 48
-mulCheb: getAccuracy p1 = Bits 48, getAccuracy p2 = Exact, size1+size2 = 120, using mulChebDirect, getAccuracy result = Bits 45
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Exact, size1+size2 = 62, using mulChebDirect, getAccuracy result = Bits 141
+mulCheb: getAccuracy p1 = Bits 141, getAccuracy p2 = Exact, size1+size2 = 120, using mulChebDirect, getAccuracy result = Bits 137
 power 3: accuracy req: Bits 33, actual accuracy: Bits 33
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Exact, size1+size2 = 62, using mulChebDirect, getAccuracy result = Bits 48
-mulCheb: getAccuracy p1 = Bits 48, getAccuracy p2 = Bits 33, size1+size2 = 189, using mulChebDirect, getAccuracy result = Bits 25
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Exact, size1+size2 = 62, using mulChebDirect, getAccuracy result = Bits 141
+mulCheb: getAccuracy p1 = Bits 141, getAccuracy p2 = Bits 33, size1+size2 = 189, using mulChebDirect, getAccuracy result = Bits 25
 power 5: accuracy req: Bits 29, actual accuracy: Bits 25
 mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits 33, size1+size2 = 131, using mulChebDirect, getAccuracy result = Bits 29
 mulCheb: getAccuracy p1 = Bits 29, getAccuracy p2 = Bits 33, size1+size2 = 258, using mulChebDirect, getAccuracy result = Bits 17
 power 7: accuracy req: Bits 23, actual accuracy: Bits 17
 mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits 33, size1+size2 = 131, using mulChebDirect, getAccuracy result = Bits 29
-mulCheb: getAccuracy p1 = Bits 29, getAccuracy p2 = Bits 25, size1+size2 = 299, using mulChebDirect, getAccuracy result = Bits 9
-power 9: accuracy req: Bits 17, actual accuracy: Bits 9
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits 25, size1+size2 = 172, using mulChebDirect, getAccuracy result = Bits 21
-mulCheb: getAccuracy p1 = Bits 21, getAccuracy p2 = Bits 25, size1+size2 = 340, using mulChebDirect, getAccuracy result = Bits 2
-power 11: accuracy req: Bits 10, actual accuracy: Bits 2
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits 25, size1+size2 = 172, using mulChebDirect, getAccuracy result = Bits 21
-mulCheb: getAccuracy p1 = Bits 21, getAccuracy p2 = Bits 17, size1+size2 = 376, using mulChebDirect, getAccuracy result = Bits -4
-power 13: accuracy req: Bits 3, actual accuracy: Bits -4
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits 17, size1+size2 = 208, using mulChebDirect, getAccuracy result = Bits 13
-mulCheb: getAccuracy p1 = Bits 13, getAccuracy p2 = Bits 17, size1+size2 = 412, using mulChebDirect, getAccuracy result = Bits -12
-power 15: accuracy req: Bits -5, actual accuracy: Bits -12
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits 17, size1+size2 = 208, using mulChebDirect, getAccuracy result = Bits 13
-mulCheb: getAccuracy p1 = Bits 13, getAccuracy p2 = Bits 9, size1+size2 = 440, using mulChebDirect, getAccuracy result = Bits -19
-power 17: accuracy req: Bits -13, actual accuracy: Bits -19
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits 9, size1+size2 = 236, using mulChebDirect, getAccuracy result = Bits 6
-mulCheb: getAccuracy p1 = Bits 6, getAccuracy p2 = Bits 9, size1+size2 = 468, using mulChebDirect, getAccuracy result = Bits -26
-power 19: accuracy req: Bits -21, actual accuracy: Bits -26
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits 9, size1+size2 = 236, using mulChebDirect, getAccuracy result = Bits 6
-mulCheb: getAccuracy p1 = Bits 6, getAccuracy p2 = Bits 2, size1+size2 = 484, using mulChebDirect, getAccuracy result = Bits -33
-power 21: accuracy req: Bits -30, actual accuracy: Bits -33
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits 2, size1+size2 = 252, using mulChebDirect, getAccuracy result = Bits 0
-mulCheb: getAccuracy p1 = Bits 0, getAccuracy p2 = Bits 2, size1+size2 = 501, using mulChebDirect, getAccuracy result = Bits -40
-power 23: accuracy req: Bits -39, actual accuracy: Bits -41
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits 2, size1+size2 = 252, using mulChebDirect, getAccuracy result = Bits 0
-mulCheb: getAccuracy p1 = Bits 0, getAccuracy p2 = Bits -4, size1+size2 = 516, using mulChebDirect, getAccuracy result = Bits -47
+mulCheb: getAccuracy p1 = Bits 29, getAccuracy p2 = Bits 25, size1+size2 = 299, using mulChebDirect, getAccuracy result = Bits 10
+power 9: accuracy req: Bits 17, actual accuracy: Bits 10
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits 25, size1+size2 = 172, using mulChebDirect, getAccuracy result = Bits 22
+mulCheb: getAccuracy p1 = Bits 22, getAccuracy p2 = Bits 25, size1+size2 = 340, using mulChebDirect, getAccuracy result = Bits 3
+power 11: accuracy req: Bits 10, actual accuracy: Bits 3
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits 25, size1+size2 = 172, using mulChebDirect, getAccuracy result = Bits 22
+mulCheb: getAccuracy p1 = Bits 22, getAccuracy p2 = Bits 17, size1+size2 = 376, using mulChebDirect, getAccuracy result = Bits -3
+power 13: accuracy req: Bits 3, actual accuracy: Bits -3
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits 17, size1+size2 = 208, using mulChebDirect, getAccuracy result = Bits 14
+mulCheb: getAccuracy p1 = Bits 14, getAccuracy p2 = Bits 17, size1+size2 = 412, using mulChebDirect, getAccuracy result = Bits -11
+power 15: accuracy req: Bits -5, actual accuracy: Bits -11
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits 17, size1+size2 = 208, using mulChebDirect, getAccuracy result = Bits 14
+mulCheb: getAccuracy p1 = Bits 14, getAccuracy p2 = Bits 10, size1+size2 = 440, using mulChebDirect, getAccuracy result = Bits -18
+power 17: accuracy req: Bits -13, actual accuracy: Bits -18
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits 10, size1+size2 = 236, using mulChebDirect, getAccuracy result = Bits 6
+mulCheb: getAccuracy p1 = Bits 6, getAccuracy p2 = Bits 10, size1+size2 = 468, using mulChebDirect, getAccuracy result = Bits -25
+power 19: accuracy req: Bits -21, actual accuracy: Bits -25
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits 10, size1+size2 = 236, using mulChebDirect, getAccuracy result = Bits 6
+mulCheb: getAccuracy p1 = Bits 6, getAccuracy p2 = Bits 3, size1+size2 = 484, using mulChebDirect, getAccuracy result = Bits -32
+power 21: accuracy req: Bits -30, actual accuracy: Bits -32
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits 3, size1+size2 = 252, using mulChebDirect, getAccuracy result = Bits 0
+mulCheb: getAccuracy p1 = Bits 0, getAccuracy p2 = Bits 3, size1+size2 = 501, using mulChebDirect, getAccuracy result = Bits -39
+power 23: accuracy req: Bits -39, actual accuracy: Bits -40
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits 3, size1+size2 = 252, using mulChebDirect, getAccuracy result = Bits 0
+mulCheb: getAccuracy p1 = Bits 0, getAccuracy p2 = Bits -3, size1+size2 = 516, using mulChebDirect, getAccuracy result = Bits -46
 power 25: accuracy req: Bits -48, actual accuracy: Bits -49
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -4, size1+size2 = 267, using mulChebDirect, getAccuracy result = Bits -8
-mulCheb: getAccuracy p1 = Bits -8, getAccuracy p2 = Bits -4, size1+size2 = 531, using mulChebDirect, getAccuracy result = Bits -54
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -3, size1+size2 = 267, using mulChebDirect, getAccuracy result = Bits -7
+mulCheb: getAccuracy p1 = Bits -7, getAccuracy p2 = Bits -3, size1+size2 = 531, using mulChebDirect, getAccuracy result = Bits -53
 power 27: accuracy req: Bits -58, actual accuracy: Bits -58
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -4, size1+size2 = 267, using mulChebDirect, getAccuracy result = Bits -8
-mulCheb: getAccuracy p1 = Bits -8, getAccuracy p2 = Bits -12, size1+size2 = 536, using mulChebDirect, getAccuracy result = Bits -62
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -3, size1+size2 = 267, using mulChebDirect, getAccuracy result = Bits -7
+mulCheb: getAccuracy p1 = Bits -7, getAccuracy p2 = Bits -11, size1+size2 = 536, using mulChebDirect, getAccuracy result = Bits -60
 power 29: accuracy req: Bits -67, actual accuracy: Bits -67
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -12, size1+size2 = 272, using mulChebDirect, getAccuracy result = Bits -15
-mulCheb: getAccuracy p1 = Bits -15, getAccuracy p2 = Bits -12, size1+size2 = 541, using mulChebDirect, getAccuracy result = Bits -69
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -11, size1+size2 = 272, using mulChebDirect, getAccuracy result = Bits -15
+mulCheb: getAccuracy p1 = Bits -15, getAccuracy p2 = Bits -11, size1+size2 = 541, using mulChebDirect, getAccuracy result = Bits -67
 power 31: accuracy req: Bits -77, actual accuracy: Bits -78
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -12, size1+size2 = 272, using mulChebDirect, getAccuracy result = Bits -15
-mulCheb: getAccuracy p1 = Bits -15, getAccuracy p2 = Bits -19, size1+size2 = 546, using mulChebDirect, getAccuracy result = Bits -76
-power 33: accuracy req: Bits -87, actual accuracy: Bits -88
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -19, size1+size2 = 277, using mulChebDirect, getAccuracy result = Bits -23
-mulCheb: getAccuracy p1 = Bits -23, getAccuracy p2 = Bits -19, size1+size2 = 551, using mulChebDirect, getAccuracy result = Bits -83
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -11, size1+size2 = 272, using mulChebDirect, getAccuracy result = Bits -15
+mulCheb: getAccuracy p1 = Bits -15, getAccuracy p2 = Bits -18, size1+size2 = 546, using mulChebDirect, getAccuracy result = Bits -74
+power 33: accuracy req: Bits -87, actual accuracy: Bits -87
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -18, size1+size2 = 277, using mulChebDirect, getAccuracy result = Bits -22
+mulCheb: getAccuracy p1 = Bits -22, getAccuracy p2 = Bits -18, size1+size2 = 551, using mulChebDirect, getAccuracy result = Bits -81
 power 35: accuracy req: Bits -97, actual accuracy: Bits -97
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -19, size1+size2 = 277, using mulChebDirect, getAccuracy result = Bits -23
-mulCheb: getAccuracy p1 = Bits -23, getAccuracy p2 = Bits -26, size1+size2 = 554, using mulChebDirect, getAccuracy result = Bits -90
-power 37: accuracy req: Bits -108, actual accuracy: Bits -109
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -26, size1+size2 = 280, using mulChebDirect, getAccuracy result = Bits -30
-mulCheb: getAccuracy p1 = Bits -30, getAccuracy p2 = Bits -26, size1+size2 = 557, using mulChebDirect, getAccuracy result = Bits -97
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -18, size1+size2 = 277, using mulChebDirect, getAccuracy result = Bits -22
+mulCheb: getAccuracy p1 = Bits -22, getAccuracy p2 = Bits -25, size1+size2 = 554, using mulChebDirect, getAccuracy result = Bits -88
+power 37: accuracy req: Bits -108, actual accuracy: Bits -108
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -25, size1+size2 = 280, using mulChebDirect, getAccuracy result = Bits -29
+mulCheb: getAccuracy p1 = Bits -29, getAccuracy p2 = Bits -25, size1+size2 = 557, using mulChebDirect, getAccuracy result = Bits -95
 power 39: accuracy req: Bits -118, actual accuracy: Bits -118
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -26, size1+size2 = 280, using mulChebDirect, getAccuracy result = Bits -30
-mulCheb: getAccuracy p1 = Bits -30, getAccuracy p2 = Bits -33, size1+size2 = 556, using mulChebDirect, getAccuracy result = Bits -104
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -25, size1+size2 = 280, using mulChebDirect, getAccuracy result = Bits -29
+mulCheb: getAccuracy p1 = Bits -29, getAccuracy p2 = Bits -32, size1+size2 = 556, using mulChebDirect, getAccuracy result = Bits -102
 power 41: accuracy req: Bits -129, actual accuracy: Bits -129
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -33, size1+size2 = 279, using mulChebDirect, getAccuracy result = Bits -37
-mulCheb: getAccuracy p1 = Bits -37, getAccuracy p2 = Bits -33, size1+size2 = 554, using mulChebDirect, getAccuracy result = Bits -111
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -32, size1+size2 = 279, using mulChebDirect, getAccuracy result = Bits -36
+mulCheb: getAccuracy p1 = Bits -36, getAccuracy p2 = Bits -32, size1+size2 = 554, using mulChebDirect, getAccuracy result = Bits -109
 power 43: accuracy req: Bits -140, actual accuracy: Bits -140
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -33, size1+size2 = 279, using mulChebDirect, getAccuracy result = Bits -37
-mulCheb: getAccuracy p1 = Bits -37, getAccuracy p2 = Bits -41, size1+size2 = 550, using mulChebDirect, getAccuracy result = Bits -118
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -32, size1+size2 = 279, using mulChebDirect, getAccuracy result = Bits -36
+mulCheb: getAccuracy p1 = Bits -36, getAccuracy p2 = Bits -40, size1+size2 = 550, using mulChebDirect, getAccuracy result = Bits -117
 power 45: accuracy req: Bits -151, actual accuracy: Bits -151
-mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -41, size1+size2 = 275, using mulChebDirect, getAccuracy result = Bits -45
-mulCheb: getAccuracy p1 = Bits -45, getAccuracy p2 = Bits -41, size1+size2 = 546, using mulChebDirect, getAccuracy result = Bits -125
+mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Bits -40, size1+size2 = 275, using mulChebDirect, getAccuracy result = Bits -44
+mulCheb: getAccuracy p1 = Bits -44, getAccuracy p2 = Bits -40, size1+size2 = 546, using mulChebDirect, getAccuracy result = Bits -124
 power 47: accuracy req: Bits -162, actual accuracy: Bits -162
-sineCosineTaylorSum: term accuracies = [(1,Exact),(3,Bits 35),(5,Bits 32),(7,Bits 29),(9,Bits 28),(11,Bits 28),(13,Bits 27),(15,Bits 28),(17,Bits 28),(19,Bits 30),(21,Bits 31),(23,Bits 33),(25,Bits 34),(27,Bits 34),(29,Bits 34),(31,Bits 34),(33,Bits 34),(35,Bits 34),(37,Bits 34),(39,Bits 34),(41,Bits 34),(43,Bits 34),(45,Bits 34),(47,Bits 35)]
+sineCosineTaylorSum: term accuracies = [(1,Exact),(3,Bits 35),(5,Bits 32),(7,Bits 30),(9,Bits 29),(11,Bits 28),(13,Bits 28),(15,Bits 28),(17,Bits 29),(19,Bits 31),(21,Bits 32),(23,Bits 33),(25,Bits 34),(27,Bits 34),(29,Bits 34),(31,Bits 34),(33,Bits 34),(35,Bits 34),(37,Bits 34),(39,Bits 34),(41,Bits 34),(43,Bits 34),(45,Bits 34),(47,Bits 35)]
 ChPoly.sineCosine: output:
  Taylor series degree = 48
- getAccuracy taylorSum = Bits 25
- taylorSumE = 5.399872335470348e-12
- getAccuracy result = Bits 25
+ getAccuracy taylorSum = Bits 26
+ taylorSumE = 5.337109076134872e-12
+ getAccuracy result = Bits 26
 computing max  sin(10x+sin(20x^2)) over [-1,1]
-result = [1.00000001193257 ± 5.942894907838043e-8](prec=35)
-accuracy: Bits 24
-precision = Precision 35
+result = [1.000000000644104 ± 2.912477858845365e-8](prec=1398)
+accuracy: Bits 25
+precision = Precision 1398
 	Command being timed: "aern2-fnreps-ops max sinesine poly 30"
-	User time (seconds): 249.62
-	System time (seconds): 1.48
+	User time (seconds): 95.10
+	System time (seconds): 0.87
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 4:11.39
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:36.08
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 757072
+	Maximum resident set size (kbytes): 787988
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 691242
+	Minor (reclaiming a frame) page faults: 471864
 	Voluntary context switches: 1
-	Involuntary context switches: 267
+	Involuntary context switches: 145
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 96
+	File system outputs: 80
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

@@ -4,7 +4,7 @@ ChPoly.sineCosine: input:
  xAccuracy = Exact
  r = [0 ± 10](prec=55)
  k = 0
- trM = [10 ± 0](prec=53)
+ trM = [10 ± 0](prec=55)
 sineCosineTaylorSum: n = 36
 mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Exact, size1+size2 = 4, using mulChebDirect, getAccuracy result = Exact
 mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Exact, size1+size2 = 4, using mulChebDirect, getAccuracy result = Exact
@@ -69,7 +69,7 @@ ChPoly.sineCosine: input:
  xAccuracy = Exact
  r = [0 ± 20](prec=55)
  k = 0
- trM = [20 ± 0](prec=53)
+ trM = [20 ± 0](prec=55)
 sineCosineTaylorSum: n = 63
 mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Exact, size1+size2 = 4, using mulChebDirect, getAccuracy result = Exact
 mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Exact, size1+size2 = 4, using mulChebDirect, getAccuracy result = Exact
@@ -136,29 +136,29 @@ sineCosineTaylorSum: term accuracies = [(2,Exact),(4,Bits 42),(6,Bits 37),(8,Bit
 ChPoly.sineCosine: output:
  Taylor series degree = 63
  getAccuracy taylorSum = Bits 11
- taylorSumE = 4.652140296795474e-6
+ taylorSumE = 4.65214029679547e-6
  getAccuracy result = Bits 11
 computing max  sin(10x)+cos(20x) over [-1,1]
-result = [1.125064849853516 ± 7.786275176275509e-4](prec=21)
+result = [1.125062967603721 ± 7.729479890376302e-4](prec=1398)
 accuracy: Bits 10
-precision = Precision 21
+precision = Precision 1398
 	Command being timed: "aern2-fnreps-ops max sine+cos poly 10"
-	User time (seconds): 2.56
+	User time (seconds): 1.27
 	System time (seconds): 0.01
-	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.58
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.28
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 19464
+	Maximum resident set size (kbytes): 18680
 	Average resident set size (kbytes): 0
-	Major (requiring I/O) page faults: 9
-	Minor (reclaiming a frame) page faults: 3090
-	Voluntary context switches: 10
-	Involuntary context switches: 4
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 3153
+	Voluntary context switches: 2
+	Involuntary context switches: 3
 	Swaps: 0
-	File system inputs: 1952
+	File system inputs: 0
 	File system outputs: 32
 	Socket messages sent: 0
 	Socket messages received: 0

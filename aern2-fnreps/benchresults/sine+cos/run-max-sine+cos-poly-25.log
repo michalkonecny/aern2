@@ -4,7 +4,7 @@ ChPoly.sineCosine: input:
  xAccuracy = Exact
  r = [0 ± 10](prec=55)
  k = 0
- trM = [10 ± 0](prec=53)
+ trM = [10 ± 0](prec=55)
 sineCosineTaylorSum: n = 42
 mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Exact, size1+size2 = 4, using mulChebDirect, getAccuracy result = Exact
 mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Exact, size1+size2 = 4, using mulChebDirect, getAccuracy result = Exact
@@ -70,7 +70,7 @@ sineCosineTaylorSum: term accuracies = [(1,Exact),(3,Bits 49),(5,Bits 44),(7,Bit
 ChPoly.sineCosine: output:
  Taylor series degree = 42
  getAccuracy taylorSum = Bits 27
- taylorSumE = 7.117406731291441e-10
+ taylorSumE = 7.11740673129144e-10
  getAccuracy result = Bits 27
 ChPoly.sineCosine: input:
  isSine = False
@@ -78,7 +78,7 @@ ChPoly.sineCosine: input:
  xAccuracy = Exact
  r = [0 ± 20](prec=55)
  k = 0
- trM = [20 ± 0](prec=53)
+ trM = [20 ± 0](prec=55)
 sineCosineTaylorSum: n = 71
 mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Exact, size1+size2 = 4, using mulChebDirect, getAccuracy result = Exact
 mulCheb: getAccuracy p1 = Exact, getAccuracy p2 = Exact, size1+size2 = 4, using mulChebDirect, getAccuracy result = Exact
@@ -153,27 +153,27 @@ sineCosineTaylorSum: term accuracies = [(2,Exact),(4,Bits 42),(6,Bits 37),(8,Bit
 ChPoly.sineCosine: output:
  Taylor series degree = 71
  getAccuracy taylorSum = Bits 23
- taylorSumE = 2.776299454417622e-10
+ taylorSumE = 2.77629945441762e-10
  getAccuracy result = Bits 23
 computing max  sin(10x)+cos(20x) over [-1,1]
-result = [1.124999999767169 ± 1.981700845455539e-7](prec=33)
+result = [1.124999998590673 ± 1.958330854417287e-7](prec=2262)
 accuracy: Bits 22
-precision = Precision 33
+precision = Precision 2262
 	Command being timed: "aern2-fnreps-ops max sine+cos poly 25"
-	User time (seconds): 3.94
+	User time (seconds): 2.04
 	System time (seconds): 0.01
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:03.96
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.05
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 19608
+	Maximum resident set size (kbytes): 20392
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 3088
+	Minor (reclaiming a frame) page faults: 3319
 	Voluntary context switches: 1
-	Involuntary context switches: 6
+	Involuntary context switches: 3
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 32
