@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+-- #define DEBUG
 {-|
     Module      :  AERN2.RealFun.UnaryFun.Integration
     Description :  unary function integration
@@ -17,6 +19,13 @@ module AERN2.RealFun.UnaryFun.Integration
 , integralOnIntervalIncreasePrecision
 )
 where
+
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#else
+#define maybeTrace (flip const)
+#endif
 
 import Numeric.MixedTypes
 -- import qualified Prelude as P
@@ -45,21 +54,11 @@ import AERN2.RealFun.Operations
 import AERN2.RealFun.UnaryFun.Type
 import AERN2.RealFun.UnaryFun.Evaluation ()
 
-import Debug.Trace (trace)
-
-shouldTrace :: Bool
-shouldTrace = False
--- shouldTrace = True
-
-maybeTrace :: String -> a -> a
-maybeTrace = if shouldTrace then trace else const id
-_dummy :: ()
-_dummy = maybeTrace "dummy" ()
-
 instance CanIntegrateOverDom UnaryFun DyadicInterval where
   type IntegralOverDomType UnaryFun DyadicInterval = CauchyReal
   integrateOverDom f =
     integralOnIntervalSubdivide (integralOnIntervalIncreasePrecision getArea) standardPrecisions
+    -- integralOnIntervalSubdivide (\s di _ac -> (s, getArea di)) standardPrecisions
     where
     getArea di p =
       (apply f diB)*(Interval.width di)
@@ -73,16 +72,30 @@ integralOnIntervalIncreasePrecision ::
   ([Precision], CatchingNumExceptions MPBall)
 integralOnIntervalIncreasePrecision _getArea [] _di _ac =
   error "AERN2.RealFun.UnaryFun: internal error in integrateOverDom"
-integralOnIntervalIncreasePrecision getArea ps@(p1:_) di _ac =
-  aux (getArea di p1) ps
+integralOnIntervalIncreasePrecision getArea ps@(p1_O:_) di ac =
+  aux (getArea di p1_O) ps
   where
-  aux diArea1 (_p1:p2:p3rest)
-    | getAccuracy diArea1 < getAccuracy diArea2 =
-        (p2:p3rest, diArea2)
-        -- aux diArea2 (p2:p3rest)
-    | otherwise =
-        (ps, diArea2)
+  aux diArea1 ps2@(p1:p2:p3rest) =
+    maybeTrace
+    (
+      "integralOnIntervalIncreasePrecision: "
+      ++ "\n di = " ++ show di
+      ++ "\n ac = " ++ show ac
+      ++ "\n p1 = " ++ show p1
+      ++ "\n getAccuracy diArea1 = " ++ show (getAccuracy diArea1)
+      ++ "\n p2 = " ++ show p2
+      ++ "\n getAccuracy diArea2 = " ++ show (getAccuracy diArea2)
+    )
+    res
     where
+    res
+      | getAccuracy diArea1 >= ac
+          = (ps2, diArea1)
+      | getAccuracy diArea1 < getAccuracy diArea2
+          = (p2:p3rest, diArea2)
+          -- aux diArea2 (p2:p3rest)
+      | otherwise
+          = (ps2, diArea2)
     diArea2 = getArea di p2
   aux diArea1 ps2 = (ps2, diArea1)
 
@@ -103,9 +116,17 @@ integralOnIntervalSubdivide integralOnInterval initS diO =
              ++ "\n di = " ++ show di
              ++ "\n ac = " ++ show ac
              ++ "\n getAccuracy value = " ++ show (getAccuracy value)
+             ++ "\n getPrecision value = " ++ show (fmap getPrecision value)
             )
             value
         | otherwise =
+            maybeTrace
+            ("integrate by subdivide:"
+             ++ "\n di = " ++ show di
+             ++ "\n ac = " ++ show ac
+             ++ "\n getAccuracy value = " ++ show (getAccuracy value)
+             ++ "\n getPrecision value = " ++ show (fmap getPrecision value)
+            ) $
             (integr s' diL (ac+1))
             +
             (integr s' diR (ac+1))
