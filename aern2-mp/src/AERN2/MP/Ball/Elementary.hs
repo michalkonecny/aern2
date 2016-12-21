@@ -52,7 +52,8 @@ instance CanSinCos MPBall where
 
 sinB :: Integer -> MPBall -> MPBall
 sinB i x =
-    increasingPrecisionUntilNotImproving (fromApproxWithLipschitz MPFloat.sinDown MPFloat.sinUp lip) x
+    -- increasingPrecisionUntilNotImproving (fromApproxWithLipschitz MPFloat.sinDown MPFloat.sinUp lip) x
+    fromApproxWithLipschitz MPFloat.sinDown MPFloat.sinUp lip x
     where
     lip
         | i == 0 = mpFloat 1
@@ -60,27 +61,28 @@ sinB i x =
 
 cosB :: Integer -> MPBall -> MPBall
 cosB i x =
-    increasingPrecisionUntilNotImproving (fromApproxWithLipschitz MPFloat.cosDown MPFloat.cosUp lip) x
+    -- increasingPrecisionUntilNotImproving (fromApproxWithLipschitz MPFloat.cosDown MPFloat.cosUp lip) x
+    fromApproxWithLipschitz MPFloat.cosDown MPFloat.cosUp lip x
     where
     lip
         | i == 0 = mpFloat 1
         | otherwise = snd $ endpointsMP $ abs $ sinB (i - 1) x
 
-increasingPrecisionUntilNotImproving :: (MPBall -> MPBall) -> (MPBall -> MPBall)
-increasingPrecisionUntilNotImproving f x =
-  waitUntilNotImproving $ map aux (precisions xPrec (xPrec*2))
-  where
-  xPrec = getPrecision x
-  precisions p1 p2 = p1 : (precisions p2 (p1 + p2))
-  aux p = f $ setPrecision p x
-  waitUntilNotImproving xx@(x1:_) = aux2 (getAccuracy x1) xx
-  waitUntilNotImproving _ = error "AERN2.MP.Ball.Elementary: internal error in increasingPrecisionUntilNotImproving"
-  aux2 x1AC (x1:x2:rest)
-    | x1AC < x2AC = aux2 x2AC (x2:rest)
-    | otherwise = x1
-    where
-    x2AC = getAccuracy x2
-  aux2 _ _ = error "AERN2.MP.Ball.Elementary: internal error in increasingPrecisionUntilNotImproving"
+-- increasingPrecisionUntilNotImproving :: (MPBall -> MPBall) -> (MPBall -> MPBall)
+-- increasingPrecisionUntilNotImproving f x =
+--   waitUntilNotImproving $ map aux (precisions xPrec (xPrec*2))
+--   where
+--   xPrec = getPrecision x
+--   precisions p1 p2 = p1 : (precisions p2 (p1 + p2))
+--   aux p = f $ setPrecision p x
+--   waitUntilNotImproving xx@(x1:_) = aux2 (getAccuracy x1) xx
+--   waitUntilNotImproving _ = error "AERN2.MP.Ball.Elementary: internal error in increasingPrecisionUntilNotImproving"
+--   aux2 x1AC (x1:x2:rest)
+--     | x1AC < x2AC = aux2 x2AC (x2:rest)
+--     | otherwise = x1
+--     where
+--     x2AC = getAccuracy x2
+--   aux2 _ _ = error "AERN2.MP.Ball.Elementary: internal error in increasingPrecisionUntilNotImproving"
 
 {- exp, log, power -}
 
