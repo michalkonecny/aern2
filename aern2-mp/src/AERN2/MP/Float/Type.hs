@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE DeriveDataTypeable, StandaloneDeriving #-}
+{-# LANGUAGE DeriveGeneric, DeriveDataTypeable, StandaloneDeriving #-}
 {-|
     Module      :  AERN2.MP.Float.Type
     Description :  Arbitrary precision floating point numbers
@@ -26,6 +26,8 @@ where
 
 import Numeric.MixedTypes
 import qualified Prelude as P
+
+import GHC.Generics (Generic)
 
 import AERN2.MP.Precision
 
