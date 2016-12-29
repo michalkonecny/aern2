@@ -109,54 +109,54 @@ test-suite spec
     -- , hspec-smallcheck >= 0.3 && < 0.5
     , QuickCheck >= 2.7 && < 2.9
 
-executable aern2-mp-bench-ballOps
-  -- type:
-  --     exitcode-stdio-1.0
-  ghc-options:
-      -Wall
-  extensions:
-    RebindableSyntax,
-    PostfixOperators,
-    ScopedTypeVariables,
-    FlexibleContexts,
-    TypeSynonymInstances
-  hs-source-dirs:
-      bench
-  main-is:
-      BallOps.hs
-  other-modules:
-    Values
-  build-depends:
-    base == 4.*
-    , mixed-types-num
-    , aern2-mp
-    , criterion
-    , deepseq
-    , random
-    , QuickCheck >= 2.7 && < 2.9
-
-executable aern2-mp-bench-ballOpsSpace
-  -- type:
-  --     exitcode-stdio-1.0
-  ghc-options:
-      -Wall
-  extensions:
-    RebindableSyntax,
-    PostfixOperators,
-    ScopedTypeVariables,
-    FlexibleContexts,
-    TypeSynonymInstances
-  hs-source-dirs:
-      bench
-  main-is:
-      BallOpsSpace.hs
-  other-modules:
-    Values
-  build-depends:
-    base == 4.*
-    , mixed-types-num
-    , aern2-mp
-    , weigh
-    , deepseq
-    , random
-    , QuickCheck >= 2.7 && < 2.9
+-- executable aern2-mp-bench-ballOps
+--   -- type:
+--   --     exitcode-stdio-1.0
+--   ghc-options:
+--       -Wall
+--   extensions:
+--     RebindableSyntax,
+--     PostfixOperators,
+--     ScopedTypeVariables,
+--     FlexibleContexts,
+--     TypeSynonymInstances
+--   hs-source-dirs:
+--       bench
+--   main-is:
+--       BallOps.hs
+--   other-modules:
+--     Values
+--   build-depends:
+--     base == 4.*
+--     , mixed-types-num
+--     , aern2-mp
+--     , criterion
+--     , deepseq
+--     , random
+--     , QuickCheck >= 2.7 && < 2.9
+--
+-- executable aern2-mp-bench-ballOpsSpace
+--   -- type:
+--   --     exitcode-stdio-1.0
+--   ghc-options:
+--       -Wall
+--   extensions:
+--     RebindableSyntax,
+--     PostfixOperators,
+--     ScopedTypeVariables,
+--     FlexibleContexts,
+--     TypeSynonymInstances
+--   hs-source-dirs:
+--       bench
+--   main-is:
+--       BallOpsSpace.hs
+--   other-modules:
+--     Values
+--   build-depends:
+--     base == 4.*
+--     , mixed-types-num
+--     , aern2-mp
+--     , weigh
+--     , deepseq
+--     , random
+--     , QuickCheck >= 2.7 && < 2.9
