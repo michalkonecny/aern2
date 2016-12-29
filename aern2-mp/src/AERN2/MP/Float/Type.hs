@@ -27,8 +27,6 @@ where
 import Numeric.MixedTypes
 import qualified Prelude as P
 
-import GHC.Generics (Generic)
-
 import AERN2.MP.Precision
 
 #ifdef HaskellMPFR

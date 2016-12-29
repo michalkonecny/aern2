@@ -79,3 +79,24 @@ test-suite spec
     , hspec >= 2.1 && < 2.3
     -- , hspec-smallcheck >= 0.3 && < 0.5
     , QuickCheck >= 2.7 && < 2.9
+
+executable aern2-real-benchOp
+  ghc-options:
+      -Wall
+  extensions:
+    RebindableSyntax,
+    PostfixOperators,
+    ScopedTypeVariables,
+    FlexibleContexts,
+    TypeSynonymInstances
+  hs-source-dirs:
+      bench
+  main-is:
+      aern2-real-benchOp.hs
+  build-depends:
+    base == 4.*
+    , mixed-types-num
+    , aern2-mp
+    , aern2-real
+    , random
+    , QuickCheck >= 2.7 && < 2.9

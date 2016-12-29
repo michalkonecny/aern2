@@ -109,6 +109,26 @@ test-suite spec
     -- , hspec-smallcheck >= 0.3 && < 0.5
     , QuickCheck >= 2.7 && < 2.9
 
+-- executable aern2-mp-benchOp
+--   ghc-options:
+--       -Wall
+--   extensions:
+--     RebindableSyntax,
+--     PostfixOperators,
+--     ScopedTypeVariables,
+--     FlexibleContexts,
+--     TypeSynonymInstances
+--   hs-source-dirs:
+--       bench
+--   main-is:
+--       aern2-mp-benchOp.hs
+--   build-depends:
+--     base == 4.*
+--     , mixed-types-num
+--     , aern2-mp
+--     , random
+--     , QuickCheck >= 2.7 && < 2.9
+--
 -- executable aern2-mp-bench-ballOps
 --   -- type:
 --   --     exitcode-stdio-1.0
