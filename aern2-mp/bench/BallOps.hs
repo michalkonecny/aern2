@@ -16,15 +16,11 @@ import System.Random (randomRIO)
 
 import Criterion.Main
 
-import Test.QuickCheck
-
-import Control.DeepSeq
-
-import AERN2.Utils.Bench
-
 import AERN2.MP.Float
 import AERN2.MP.Ball
 import AERN2.MP.Ball.Tests () -- instance Arbitrary MPBall
+
+import Values
 
 main :: IO ()
 main = defaultMain
@@ -68,19 +64,3 @@ benchmarkOp op x p = op $ setPrecision p x
 
 benchmarkOp2 :: (MPBall -> MPBall -> MPBall) -> MPBall -> MPBall -> Precision -> MPBall
 benchmarkOp2 op x y p = op (setPrecision p x) (setPrecision p y)
-
-ballsExactPositive :: [MPBall]
-ballsExactPositive = filter (!>! 0) ballsExact
-
-ballsExact :: [MPBall]
-ballsExact = map centreAsBall balls
-
-ballsPositive :: [MPBall]
-ballsPositive = filter (!>! 0) balls
-
-balls :: [MPBall]
-balls = listFromGen arbitrary
-
-instance NFData MPFloat where rnf x = rnf $ x > 0
-instance NFData ErrorBound where rnf = rnf . mpFloat
-instance NFData MPBall
