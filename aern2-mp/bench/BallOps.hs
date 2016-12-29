@@ -17,10 +17,10 @@ import System.Random (randomRIO)
 import Criterion.Main
 
 import Test.QuickCheck
-import Test.QuickCheck.Random (mkQCGen)
-import Test.QuickCheck.Gen (Gen(..))
 
 import Control.DeepSeq
+
+import AERN2.Utils.Bench
 
 import AERN2.MP.Float
 import AERN2.MP.Ball
@@ -80,17 +80,6 @@ ballsPositive = filter (!>! 0) balls
 
 balls :: [MPBall]
 balls = listFromGen arbitrary
-
-listFromGen :: Gen a -> [a]
-listFromGen gen =
-    list
-    where
-    list =
-        concat $ map genSome [1..]
-        where
-        genSome size =
-            unGen (sequence $ replicate (int 10) gen) qcGen (int size)
-    qcGen = mkQCGen (int 148548830)
 
 instance NFData MPFloat where rnf x = rnf $ x > 0
 instance NFData ErrorBound where rnf = rnf . mpFloat

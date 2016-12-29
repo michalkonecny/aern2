@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-|
-    Module      :  AERN2.TH
+    Module      :  AERN2.Utils.TH
     Description :  Template Haskell utilities
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -12,7 +12,7 @@
     Template Haskell utilities
 -}
 
-module AERN2.TH
+module AERN2.Utils.TH
 (
   declForTypes
 )

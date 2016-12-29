@@ -4,7 +4,7 @@ where
 
 import Numeric.MixedTypes
 import AERN2.Poly.Basics
-import AERN2.TH
+import AERN2.Utils.TH
 import qualified Data.Map as Map
 import AERN2.MP.Ball hiding (iterateUntilAccurate)
 import AERN2.MP.Dyadic
