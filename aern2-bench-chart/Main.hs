@@ -22,7 +22,8 @@ main =
     let (mode, inFileName, outFolder) = checkArgs args
     contents <- readFile inFileName
     let chartsData = parseBenchResults mode contents
-    void $ mapM (renderChart mode outFolder) chartsData
+    void $ mapM (renderChart mode False outFolder) chartsData
+    void $ mapM (renderChart mode True outFolder) chartsData
 
 data Mode = FnOpReprs | Ops
   deriving (Show, Read)
@@ -44,7 +45,7 @@ checkArgs _ = error "usage: aern2-bench-chart <mode(Ops|FnOpReps)> <csvFileName>
     ]
 @
 -}
-parseBenchResults :: Mode -> String -> [(String, [(String, [(Int, Double)])])]
+parseBenchResults :: Mode -> String -> [(String, [(String, [(Int, Double, Double)])])]
 parseBenchResults FnOpReprs csvContent =
     over (mapped._2.mapped._2) Set.toAscList $ -- convert the inner Sets to ascending lists (using Lens)
         over (mapped._2) Map.toList $ -- convert the inner Maps to lists
@@ -61,60 +62,68 @@ parseBenchResults Ops csvContent =
     records = indexRecordsByKeysAndHeader ["Op"] $ parseCSV csvContent
 
 mergeByOp ::
-    [([String], Map.Map String String)] -> Map.Map String (Set.Set (Int,Double))
+    [([String], Map.Map String String)] -> Map.Map String (Set.Set (Int,Double,Double))
 mergeByOp records =
     foldl insertRecord Map.empty records
     where
     insertRecord preMap ([opName], fields) =
         Map.insertWith Set.union
-            opName (Set.singleton point)
+            opName (Set.singleton $ getPoint fields)
             preMap
-        where
-        point = (bits,utime+stime)
-        bits = read (lookupValue fields "Accuracy(bits)")
-        utime = read (lookupValue fields "UTime(s)") :: Double
-        stime = read (lookupValue fields "STime(s)") :: Double
-    insertRecord _ _ = error "internal error in mergeByOp"
+rtRecord _ _ = error "internal error in mergeByOp"
+
+getPoint fields = (bits,utime+stime,maxram)
+  where
+  bits = read (lookupValue fields "Accuracy(bits)") :: Int
+  utime = read (lookupValue fields "UTime(s)") :: Double
+  stime = read (lookupValue fields "STime(s)") :: Double
+  maxram = read (lookupValue fields "Mem(kB)") :: Double
 
 mergeByFnOp_FnRepr ::
-    [([String], Map.Map String String)] -> Map.Map String (Map.Map String (Set.Set (Int,Double)))
+    [([String], Map.Map String String)] -> Map.Map String (Map.Map String (Set.Set (Int,Double,Double)))
 mergeByFnOp_FnRepr records =
     foldl insertRecord Map.empty records
     where
     insertRecord preMap ([fnName,opName,reprName], fields) =
         Map.insertWith
             (Map.unionWith Set.union)
-            chartTitle (Map.singleton reprName (Set.singleton point))
+            chartTitle (Map.singleton reprName (Set.singleton $ getPoint fields))
             preMap
         where
         chartTitle = fnName ++ "-" ++ opName
-        point = (bits,utime+stime)
-        bits = read (lookupValue fields "Accuracy(bits)")
-        utime = read (lookupValue fields "UTime(s)") :: Double
-        stime = read (lookupValue fields "STime(s)") :: Double
     insertRecord _ _ = error "internal error in mergeByFnOp_FnRepr"
 
 renderChart ::
     (PlotValue y, PlotValue x, Show y, RealFloat y)
     =>
-    Mode -> String -> (String, [(String, [(x, y)])]) -> IO ()
-renderChart mode outFolder (title, plotData) =
+    Mode -> Bool -> String -> (String, [(String, [(x, y, y)])]) -> IO ()
+renderChart mode isMem outFolder (title, plotData) =
     void $
-        renderableToFile fileOpts filePath $
+        renderableToFile fileOpts filePathTime $
             fillBackground def $
-                gridToRenderable $ layoutToGrid chartLayout
+                gridToRenderable $ layoutToGrid (chartLayout mode)
     where
-    filePath = outFolder ++ "/" ++ title ++ ".svg"
-    chartLayout =
+    filePathTime
+      | isMem = outFolder ++ "/" ++ title ++ "-space.svg"
+      | otherwise = outFolder ++ "/" ++ title ++ "-time.svg"
+    chartLayout FnOpReprs =
         execEC $
         do
-        -- layout_y_axis . laxis_generate .= autoScaledLogAxis def
-        layout_y_axis . laxis_title .= "Time (s)"
+        layout_y_axis . laxis_generate .= autoScaledLogAxis def
+        layout_y_axis . laxis_title .= if isMem then "Space (kB)" else "Time (s)"
         layout_x_axis . laxis_title .= "Accuracy (bits)"
-        layout_x_axis . laxis_style . axis_label_gap .= 5
+        layout_x_axis . laxis_style . axis_label_gap .= 1
+        mapM layoutPlotData $ zip [0..] plotData
+    chartLayout Ops =
+        execEC $
+        do
+        layout_y_axis . laxis_title .= if isMem then "Space (kB)" else "Time (s)"
+        layout_x_axis . laxis_title .= "Requested Accuracy (bits)"
+        layout_x_axis . laxis_style . axis_label_gap .= 1
         mapM layoutPlotData $ zip [0..] plotData
     layoutPlotData (benchNum, (benchName, benchPoints)) =
-        plotPoints name [(ac, time) | (ac,time) <- benchPoints]
+        plotPoints name
+          [(ac, if isMem then maxmem else time) | (ac,time,maxmem) <- benchPoints]
         where
         (name, colour, shape) =
           case mode of
@@ -147,7 +156,7 @@ renderChart mode outFolder (title, plotData) =
         isFilled _ = False
 
 fileOpts :: FileOptions
-fileOpts = def { _fo_size = (300,200) }
+fileOpts = def { _fo_size = (300,300) }
 
 reprShow :: String -> String
 reprShow "dfun" = "DFun"
