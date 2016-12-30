@@ -115,4 +115,4 @@ valuesPositive = filter ((!>! 0) . getBall) values
     getBall x = qaMakeQuery x (bits 53)
 
 values :: [CauchyReal]
-values = listFromGen arbitrary
+values = listFromGen (real <$> (arbitrary :: Gen Rational))

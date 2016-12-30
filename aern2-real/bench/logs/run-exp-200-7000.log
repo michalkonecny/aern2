@@ -1,0 +1,25 @@
+computing exp (200 times) using accuracy 7000
+accuracies = [Bits 10999,Bits 10879,Bits 10968,Bits 10868,Bits 11006,Bits 10956,Bits 10958,Bits 10972,Bits 11103,Bits 10882,Bits 11035,Bits 11123,Bits 10853,Bits 10943,Bits 10875,Bits 10792,Bits 10921,Bits 10946,Bits 10958,Bits 10770,Bits 10999,Bits 10929,Bits 10990,Bits 10937,Bits 10873,Bits 10964,Bits 11053,Bits 10453,Bits 10608,Bits 11270,Bits 11141,Bits 11055,Bits 11025,Bits 11092,Bits 11270,Bits 10975,Bits 10880,Bits 10955,Bits 10622,Bits 10825,Bits 10885,Bits 10964,Bits 10518,Bits 10946,Bits 10771,Bits 10975,Bits 11032,Bits 11053,Bits 11246,Bits 10954,Bits 10945,Bits 10948,Bits 10914,Bits 10905,Bits 10875,Bits 10992,Bits 11060,Bits 10831,Bits 11011,Bits 10953,Bits 10605,Bits 10952,Bits 10992,Bits 10936,Bits 10858,Bits 10964,Bits 10992,Bits 10975,Bits 10784,Bits 10849,Bits 10802,Bits 10921,Bits 10936,Bits 10940,Bits 10911,Bits 10954,Bits 10875,Bits 10920,Bits 10946,Bits 10944,Bits 10981,Bits 10964,Bits 11038,Bits 10939,Bits 10932,Bits 10997,Bits 10939,Bits 10948,Bits 10873,Bits 10890,Bits 10884,Bits 11355,Bits 10911,Bits 10844,Bits 10990,Bits 10826,Bits 10983,Bits 10947,Bits 10911,Bits 10932,Bits 10938,Bits 11244,Bits 10975,Bits 10940,Bits 10962,Bits 10953,Bits 10949,Bits 11024,Bits 10835,Bits 10975,Bits 10947,Bits 11013,Bits 10886,Bits 10930,Bits 10974,Bits 10752,Bits 10980,Bits 10898,Bits 11006,Bits 10973,Bits 10875,Bits 10962,Bits 10804,Bits 10883,Bits 10946,Bits 10936,Bits 10926,Bits 10958,Bits 10992,Bits 10892,Bits 11007,Bits 10843,Bits 11089,Bits 10890,Bits 10956,Bits 10929,Bits 10964,Bits 11149,Bits 10949,Bits 10961,Bits 11025,Bits 10843,Bits 10956,Bits 10937,Bits 11287,Bits 10901,Bits 10674,Bits 10948,Bits 11013,Bits 10899,Bits 10950,Bits 10942,Bits 10944,Bits 10934,Bits 10963,Bits 10959,Bits 10691,Bits 10916,Bits 10947,Bits 10941,Bits 11049,Bits 11061,Bits 11018,Bits 10953,Bits 10831,Bits 10903,Bits 10937,Bits 11032,Bits 10948,Bits 10883,Bits 10989,Bits 10904,Bits 11111,Bits 10903,Bits 10936,Bits 10963,Bits 11092,Bits 10932,Bits 10951,Bits 10804,Bits 10581,Bits 11124,Bits 10963,Bits 10819,Bits 11006,Bits 10987,Bits 10994,Bits 10553,Bits 10605,Bits 10975,Bits 10888,Bits 10919,Bits 10815,Bits 11041,Bits 10932,Bits 10981,Bits 11148,Bits 10986,Bits 11074,Bits 10810]
+	Command being timed: "aern2-real-benchOp exp 200 7000"
+	User time (seconds): 0.50
+	System time (seconds): 0.00
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.50
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 10404
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 1148
+	Voluntary context switches: 1
+	Involuntary context switches: 1
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
