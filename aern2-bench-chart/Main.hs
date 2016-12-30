@@ -4,9 +4,9 @@ import Control.Monad(void,when)
 import Control.Lens
 
 import System.Environment
-import qualified Data.Map as Map 
-import qualified Data.Set as Set 
-import qualified Data.List as List 
+import qualified Data.Map as Map
+import qualified Data.Set as Set
+import qualified Data.List as List
 
 import Graphics.Rendering.Chart
 import Graphics.Rendering.Chart.Easy
@@ -16,24 +16,27 @@ import Graphics.Rendering.Chart.Backend.Diagrams(renderableToFile, FileOptions(.
 --import Debug.Trace (trace)
 
 main :: IO ()
-main = 
+main =
     do
     args <- getArgs
-    let (inFileName, outFolder) = checkArgs args
+    let (mode, inFileName, outFolder) = checkArgs args
     contents <- readFile inFileName
-    let chartsData = parseFnOpReprBitsTime contents
-    void $ mapM (renderChart outFolder) chartsData
-    
-checkArgs :: [String] -> (String, String)
-checkArgs [inFileName, outFolder] = (inFileName, outFolder)
-checkArgs _ = error "usage: <program name> <inFileName> <outFolder>"
+    let chartsData = parseBenchResults mode contents
+    void $ mapM (renderChart mode outFolder) chartsData
+
+data Mode = FnOpReprs | Ops
+  deriving (Show, Read)
+
+checkArgs :: [String] -> (Mode, String, String)
+checkArgs [modeS, inFileName, outFolder] = (read modeS, inFileName, outFolder)
+checkArgs _ = error "usage: aern2-bench-chart <mode(Ops|FnOpReps)> <csvFileName> <outFolder>"
 
 {-|
     A dummy sample result:
 @
     [
         ("sinesine+cos-Integrate-Dummy",
-            [ ("Fun", [(10::Int,0.1::Double),(20,1.5),(30,100.5)]), 
+            [ ("Fun", [(10::Int,0.1::Double),(20,1.5),(30,100.5)]),
              ("Poly", [(10,0.1),(20,2.5),(30,10.5)])]),
         ("fracSin-Max-Dummy",
             [ ("Fun", [(10,0.1),(20,1.5),(30,100.5)]),
@@ -41,24 +44,47 @@ checkArgs _ = error "usage: <program name> <inFileName> <outFolder>"
     ]
 @
 -}
-parseFnOpReprBitsTime :: String -> [(String, [(String, [(Int, Double)])])]
-parseFnOpReprBitsTime csvContent =
+parseBenchResults :: Mode -> String -> [(String, [(String, [(Int, Double)])])]
+parseBenchResults FnOpReprs csvContent =
     over (mapped._2.mapped._2) Set.toAscList $ -- convert the inner Sets to ascending lists (using Lens)
         over (mapped._2) Map.toList $ -- convert the inner Maps to lists
             Map.toList fnOp_To_Repr_To_Points -- convert the outer Map to list
     where
     fnOp_To_Repr_To_Points = mergeByFnOp_FnRepr records
     records = indexRecordsByKeysAndHeader ["Fn","Op","FnRepr"] $ parseCSV csvContent
+parseBenchResults Ops csvContent =
+    over (mapped._2.mapped._2) Set.toAscList $ -- convert the inner Sets to ascending lists (using Lens)
+        over (mapped._2) Map.toList $ -- convert the inner Maps to lists
+            Map.toList fnOp_To_Repr_To_Points -- convert the outer Map to list
+    where
+    fnOp_To_Repr_To_Points = Map.singleton "ops" $ mergeByOp records
+    records = indexRecordsByKeysAndHeader ["Op"] $ parseCSV csvContent
 
-mergeByFnOp_FnRepr :: 
+mergeByOp ::
+    [([String], Map.Map String String)] -> Map.Map String (Set.Set (Int,Double))
+mergeByOp records =
+    foldl insertRecord Map.empty records
+    where
+    insertRecord preMap ([opName], fields) =
+        Map.insertWith Set.union
+            opName (Set.singleton point)
+            preMap
+        where
+        point = (bits,utime+stime)
+        bits = read (lookupValue fields "Accuracy(bits)")
+        utime = read (lookupValue fields "UTime(s)") :: Double
+        stime = read (lookupValue fields "STime(s)") :: Double
+    insertRecord _ _ = error "internal error in mergeByOp"
+
+mergeByFnOp_FnRepr ::
     [([String], Map.Map String String)] -> Map.Map String (Map.Map String (Set.Set (Int,Double)))
 mergeByFnOp_FnRepr records =
     foldl insertRecord Map.empty records
     where
-    insertRecord preMap ([fnName,opName,reprName], fields) = 
-        Map.insertWith 
-            (Map.unionWith Set.union) 
-            chartTitle (Map.singleton reprName (Set.singleton point)) 
+    insertRecord preMap ([fnName,opName,reprName], fields) =
+        Map.insertWith
+            (Map.unionWith Set.union)
+            chartTitle (Map.singleton reprName (Set.singleton point))
             preMap
         where
         chartTitle = fnName ++ "-" ++ opName
@@ -68,31 +94,33 @@ mergeByFnOp_FnRepr records =
         stime = read (lookupValue fields "STime(s)") :: Double
     insertRecord _ _ = error "internal error in mergeByFnOp_FnRepr"
 
-renderChart :: 
-    (PlotValue y, PlotValue x, Show y, RealFloat y) 
+renderChart ::
+    (PlotValue y, PlotValue x, Show y, RealFloat y)
     =>
-    String
-    -> (String, [(String, [(x, y)])]) -> 
-    IO ()
-renderChart outFolder (title, reprsData) =
+    Mode -> String -> (String, [(String, [(x, y)])]) -> IO ()
+renderChart mode outFolder (title, plotData) =
     void $
-        renderableToFile fileOpts filePath $ 
-            fillBackground def $ 
+        renderableToFile fileOpts filePath $
+            fillBackground def $
                 gridToRenderable $ layoutToGrid chartLayout
     where
     filePath = outFolder ++ "/" ++ title ++ ".svg"
     chartLayout =
-        execEC $ 
+        execEC $
         do
-        layout_y_axis . laxis_generate .= autoScaledLogAxis def
+        -- layout_y_axis . laxis_generate .= autoScaledLogAxis def
         layout_y_axis . laxis_title .= "Time (s)"
         layout_x_axis . laxis_title .= "Accuracy (bits)"
-        layout_x_axis . laxis_style . axis_label_gap .= 1
-        mapM layoutReprData reprsData
-    layoutReprData (reprName, reprData) =
-        plotPointsLine (reprShow reprName) [(ac, time) | (ac,time) <- reprData]
+        layout_x_axis . laxis_style . axis_label_gap .= 5
+        mapM layoutPlotData $ zip [0..] plotData
+    layoutPlotData (benchNum, (benchName, benchPoints)) =
+        plotPoints name [(ac, time) | (ac,time) <- benchPoints]
         where
-        plotPointsLine ltitle values =
+        (name, colour, shape) =
+          case mode of
+            FnOpReprs -> (reprShow benchName, reprColor benchName, reprShape benchName)
+            Ops -> (benchName, stdColors !! benchNum, stdShapes !! benchNum)
+        plotPoints ltitle values =
             do
             plot $ pointsLayout ltitle values
             plot $ linesLayout values
@@ -100,33 +128,26 @@ renderChart outFolder (title, reprsData) =
             liftEC $
                 do
                 plot_lines_values .= [values]
-                plot_lines_style . line_color .= opaque (reprColor reprName)
+                plot_lines_style . line_color .= opaque colour
         pointsLayout ltitle values =
-            liftEC $ 
+            liftEC $
                 do
                 plot_points_values .= values
                 plot_points_title .= ltitle
-                plot_points_style . point_color .= opaque (reprColor reprName)
-                plot_points_style . point_shape .= (reprShape reprName)
+                plot_points_style . point_color .= opaque colour
+                plot_points_style . point_shape .= shape
                 plot_points_style . point_radius .= 3
                 -- Show borders for unfilled shapes:
-                when (not (isFilled (reprShape reprName))) $ do
-                    plot_points_style . point_border_color .= opaque (reprColor reprName)
+                when (not (isFilled shape)) $ do
+                    plot_points_style . point_border_color .= opaque colour
                     plot_points_style . point_border_width .= 1
         isFilled :: PointShape -> Bool
         isFilled PointShapeCircle = True
         isFilled PointShapePolygon{} = True
         isFilled _ = False
-        
+
 fileOpts :: FileOptions
 fileOpts = def { _fo_size = (300,200) }
- 
-reprColor :: String -> Colour Double
-reprColor "dfun" = powderblue
-reprColor "fun" = darkblue
-reprColor "poly" = orangered
-reprColor "ppoly" = mediumvioletred
-reprColor reprName = error $ "unknown representation " ++ reprName
 
 reprShow :: String -> String
 reprShow "dfun" = "DFun"
@@ -135,12 +156,33 @@ reprShow "poly" = "Poly"
 reprShow "ppoly" = "PPoly"
 reprShow reprName = error $ "unknown representation " ++ reprName
 
+reprColor :: String -> Colour Double
+reprColor "dfun" = powderblue
+reprColor "fun" = darkblue
+reprColor "poly" = orangered
+reprColor "ppoly" = mediumvioletred
+reprColor reprName = error $ "unknown representation " ++ reprName
+
 reprShape :: String -> PointShape
 reprShape "dfun" = PointShapeEllipse 0.7 1.0
 reprShape "fun" = PointShapeCircle
 reprShape "poly" = PointShapeCross
 reprShape "ppoly" = PointShapeStar
 reprShape reprName = error $ "unknown representation " ++ reprName
+
+opShow :: String -> String
+opShow s = s
+-- opShow opName = error $ "unknown operation " ++ opName
+
+stdShapes :: [PointShape]
+stdShapes =
+  cycle
+  [
+    PointShapeEllipse 0.7 1.0,
+    PointShapeCircle,
+    PointShapeCross,
+    PointShapeStar
+  ]
 
 lookupValue ::
     Map.Map String String ->
@@ -149,12 +191,12 @@ lookupValue ::
 lookupValue nameToValueMap name =
     case Map.lookup name nameToValueMap of
         Nothing -> error $ "field " ++ show name ++ " missing in record: " ++ show nameToValueMap
-        Just value -> value 
+        Just value -> value
 
 indexRecordsByKeysAndHeader ::
     [String] ->
     [[String]] ->
-    [([String], Map.Map String String)] 
+    [([String], Map.Map String String)]
 indexRecordsByKeysAndHeader keys (header : records) =
     map getKeysAndMap records
     where
@@ -229,3 +271,154 @@ parseCSV contents =
                 "parse error in CVS file at pos:\n"
                 ++ take pos line_ ++ "\n"
                 ++ replicate pos ' ' ++ drop pos line_
+
+stdColors :: [Colour Double]
+stdColors =
+  [
+    -- aliceblue,
+    -- -- antiquewhite,
+    -- aqua,
+    -- aquamarine,
+    -- -- azure,
+    -- beige,
+    -- bisque,
+    -- -- black,
+    -- blanchedalmond,
+    -- blue,
+    -- -- blueviolet,
+    -- brown,
+    -- burlywood,
+    -- cadetblue,
+    -- chartreuse,
+    -- -- chocolate,
+    -- coral,
+    -- -- cornflowerblue,
+    -- -- cornsilk,
+    -- crimson,
+    -- cyan,
+    darkblue,
+    darkcyan,
+    darkgoldenrod,
+    darkgray,
+    darkgreen,
+    darkgrey,
+    darkkhaki,
+    darkmagenta,
+    darkolivegreen,
+    darkorange,
+    darkorchid,
+    darkred,
+    darksalmon,
+    darkseagreen,
+    darkslateblue,
+    darkslategray,
+    darkslategrey,
+    darkturquoise,
+    darkviolet,
+    deeppink,
+    deepskyblue,
+    dimgray,
+    dimgrey,
+    dodgerblue,
+    firebrick,
+    floralwhite,
+    forestgreen,
+    fuchsia,
+    gainsboro,
+    ghostwhite,
+    gold,
+    goldenrod,
+    gray,
+    grey,
+    green,
+    greenyellow,
+    honeydew,
+    hotpink,
+    indianred,
+    indigo,
+    ivory,
+    khaki,
+    lavender,
+    lavenderblush,
+    lawngreen,
+    lemonchiffon,
+    -- lightblue,
+    -- lightcoral,
+    -- lightcyan,
+    -- lightgoldenrodyellow,
+    -- lightgray,
+    -- lightgreen,
+    -- lightgrey,
+    -- lightpink,
+    -- lightsalmon,
+    -- lightseagreen,
+    -- lightskyblue,
+    -- lightslategray,
+    -- lightslategrey,
+    -- lightsteelblue,
+    -- lightyellow,
+    lime,
+    limegreen,
+    linen,
+    magenta,
+    maroon,
+    mediumaquamarine,
+    mediumblue,
+    mediumorchid,
+    mediumpurple,
+    mediumseagreen,
+    mediumslateblue,
+    mediumspringgreen,
+    mediumturquoise,
+    mediumvioletred,
+    midnightblue,
+    mintcream,
+    mistyrose,
+    moccasin,
+    navajowhite,
+    navy,
+    oldlace,
+    olive,
+    olivedrab,
+    orange,
+    orangered,
+    orchid,
+    palegoldenrod,
+    palegreen,
+    paleturquoise,
+    palevioletred,
+    papayawhip,
+    peachpuff,
+    peru,
+    pink,
+    plum,
+    powderblue,
+    purple,
+    red,
+    rosybrown,
+    royalblue,
+    saddlebrown,
+    salmon,
+    sandybrown,
+    seagreen,
+    seashell,
+    sienna,
+    -- silver,
+    skyblue,
+    slateblue,
+    slategray,
+    slategrey,
+    snow,
+    springgreen,
+    steelblue,
+    teal,
+    thistle,
+    tomato,
+    turquoise,
+    violet,
+    wheat,
+    -- white,
+    -- whitesmoke,
+    -- yellow,
+    yellowgreen
+  ]
