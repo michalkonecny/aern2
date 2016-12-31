@@ -72,9 +72,17 @@ processArgs [op, countS, accuracyS] =
         "div" ->
           map (flip qaMakeQuery (bits ac) . (uncurry (/))) $
             unsafePerformIO $ pickValues2 values valuesPositive count
+        "logistic" ->
+          map (flip qaMakeQuery (bits ac) . (logistic 3.82 count)) $
+            [real 0.125]
         _ -> error $ "unknown op " ++ op
 processArgs _ =
     error "expecting arguments: <operation> <count> <precision>"
+
+logistic :: Rational -> Integer -> CauchyReal -> CauchyReal
+logistic c n x
+  | n == 0 = x
+  | otherwise = logistic c (n-1) $ c * x * (1-x)
 
 pickValues2 :: [CauchyReal] -> [CauchyReal] -> Integer -> IO [(CauchyReal, CauchyReal)]
 pickValues2 vals1 vals2 count =

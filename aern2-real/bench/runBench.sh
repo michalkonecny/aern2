@@ -1,7 +1,12 @@
 #!/bin/bash
 
-resultscsv=$1
-if [ "$resultscsv" == "" ]; then echo "usage: $0 <results csv file name>"; exit 1; fi
+benchset=$1
+if [ "$benchset" != "ops" -a "$benchset" != "logistic" ]; then
+  echo "usage: $0 <benchset>"
+  echo "  benchset = ops | logistic"; exit 1;
+fi
+
+resultscsv=$benchset.csv
 
 benchmain=aern2-real-benchOp
 gnutime=/usr/bin/time
@@ -122,6 +127,19 @@ function b_div
     done
 }
 
+function b_logistic
+# parameters:
+#  $count
+{
+    op=logistic
+    for ac in 1000 2000 3000 4000 5000 6000 7000 8000 9000 10000
+    do
+        runOne
+    done
+}
+
+
+if [ "$benchset" == "ops" ]; then
 b_exp
 b_log
 b_sqrt
@@ -129,3 +147,11 @@ b_cos
 b_add
 b_mul
 b_div
+fi
+
+if [ "$benchset" == "logistic" ]; then
+count=1000
+b_logistic
+count=2000
+b_logistic
+fi

@@ -21,7 +21,7 @@ main =
     args <- getArgs
     let (mode, inFileName, outFolder) = checkArgs args
     contents <- readFile inFileName
-    let chartsData = parseBenchResults mode contents
+    let chartsData = parseBenchResults mode inFileName contents
     void $ mapM (renderChart mode False outFolder) chartsData
     void $ mapM (renderChart mode True outFolder) chartsData
 
@@ -45,33 +45,35 @@ checkArgs _ = error "usage: aern2-bench-chart <mode(Ops|FnOpReps)> <csvFileName>
     ]
 @
 -}
-parseBenchResults :: Mode -> String -> [(String, [(String, [(Int, Double, Double)])])]
-parseBenchResults FnOpReprs csvContent =
+parseBenchResults :: Mode -> String -> String -> [(String, [(String, [(Int, Double, Double)])])]
+parseBenchResults FnOpReprs _inFileName csvContent =
     over (mapped._2.mapped._2) Set.toAscList $ -- convert the inner Sets to ascending lists (using Lens)
         over (mapped._2) Map.toList $ -- convert the inner Maps to lists
             Map.toList fnOp_To_Repr_To_Points -- convert the outer Map to list
     where
     fnOp_To_Repr_To_Points = mergeByFnOp_FnRepr records
     records = indexRecordsByKeysAndHeader ["Fn","Op","FnRepr"] $ parseCSV csvContent
-parseBenchResults Ops csvContent =
+parseBenchResults Ops inFileName csvContent =
     over (mapped._2.mapped._2) Set.toAscList $ -- convert the inner Sets to ascending lists (using Lens)
         over (mapped._2) Map.toList $ -- convert the inner Maps to lists
             Map.toList fnOp_To_Repr_To_Points -- convert the outer Map to list
     where
-    fnOp_To_Repr_To_Points = Map.singleton "ops" $ mergeByOp records
-    records = indexRecordsByKeysAndHeader ["Op"] $ parseCSV csvContent
+    fnOp_To_Repr_To_Points = Map.singleton inFileNameNoCSV $ mergeByOp records
+    inFileNameNoCSV = take (length inFileName-4) inFileName
+    records = indexRecordsByKeysAndHeader ["Op", "Count"] $ parseCSV csvContent
 
 mergeByOp ::
     [([String], Map.Map String String)] -> Map.Map String (Set.Set (Int,Double,Double))
 mergeByOp records =
     foldl insertRecord Map.empty records
     where
-    insertRecord preMap ([opName], fields) =
+    insertRecord preMap ([opName, countS], fields) =
         Map.insertWith Set.union
-            opName (Set.singleton $ getPoint fields)
+            (opName ++ countS) (Set.singleton $ getPoint fields)
             preMap
-rtRecord _ _ = error "internal error in mergeByOp"
+    insertRecord _ _ = error "internal error in mergeByOp"
 
+getPoint :: Map.Map String String -> (Int,Double,Double)
 getPoint fields = (bits,utime+stime,maxram)
   where
   bits = read (lookupValue fields "Accuracy(bits)") :: Int
