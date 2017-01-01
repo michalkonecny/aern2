@@ -24,6 +24,10 @@ Description:
   Currently, we use hmpfr when compiling with ghc 7.10 and higher
   and haskell-mpfr when compiling with ghc 7.8.
 
+flag MPFR
+  Description: Use an MPFR backend
+  Default:     False
+
 library
   hs-source-dirs:  src
   build-depends:
@@ -37,16 +41,20 @@ library
     , template-haskell
     , mixed-types-num == 0.1.*
     , num-exceptions == 0.1.*
-  if impl(ghc >= 7.10)
-    build-depends:
-      hmpfr == 0.4.*,
-      integer-gmp >= 1.0 && < 1.1
-    cpp-options: -DHMPFR
+  if flag(MPFR)
+    cpp-options: -DMPFRBackend
+    if impl(ghc >= 7.10)
+      build-depends:
+        hmpfr == 0.4.*,
+        integer-gmp >= 1.0 && < 1.1
+      cpp-options: -DHMPFR
+    else
+      build-depends:
+        haskell-mpfr == 0.1.*,
+        integer-gmp < 0.6
+      cpp-options: -DHaskellMPFR
   else
-    build-depends:
-      haskell-mpfr == 0.1.*,
-      integer-gmp < 0.6
-    cpp-options: -DHaskellMPFR
+    cpp-options: -DIntegerBackend
   ghc-options:     -Wall -fno-warn-orphans
   extensions:
     RebindableSyntax,
@@ -70,6 +78,7 @@ library
     AERN2.MP
     AERN2.MP.Precision
     AERN2.MP.Float
+    AERN2.MP.Float.Native
     AERN2.MP.Float.Type
     AERN2.MP.Float.Arithmetic
     AERN2.MP.Float.Conversions
@@ -108,6 +117,41 @@ test-suite spec
     , hspec >= 2.1 && < 2.3
     -- , hspec-smallcheck >= 0.3 && < 0.5
     , QuickCheck >= 2.7 && < 2.9
+
+executable testNative
+  ghc-options:
+      -Wall
+  extensions:
+    RebindableSyntax,
+    PostfixOperators,
+    ScopedTypeVariables,
+    DeriveGeneric,
+    GeneralizedNewtypeDeriving,
+    TypeFamilies,
+    TypeOperators,
+    ConstraintKinds,
+    DefaultSignatures,
+    MultiParamTypeClasses,
+    FlexibleContexts,
+    FlexibleInstances,
+    UndecidableInstances
+  hs-source-dirs:
+      test, src
+  main-is:
+      DummyMain.hs
+  other-modules:
+      AERN2.MP.Float.Native
+  build-depends:
+    base == 4.*
+    , arithmoi == 0.4.*
+    , convertible >= 1.1.1.0 && < 1.2
+    , hspec >= 2.1 && < 2.3
+    -- , hspec-smallcheck >= 0.3 && < 0.5
+    , QuickCheck >= 2.7 && < 2.9
+    , lens == 4.13.*
+    , template-haskell
+    , mixed-types-num == 0.1.*
+    , num-exceptions == 0.1.*
 
 -- executable aern2-mp-benchOp
 --   ghc-options:

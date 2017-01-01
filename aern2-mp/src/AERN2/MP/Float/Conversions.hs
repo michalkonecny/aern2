@@ -37,6 +37,20 @@ import AERN2.MP.Precision
 import AERN2.MP.Float.Type
 import AERN2.MP.Float.Arithmetic
 
+#ifdef IntegerBackend
+import qualified AERN2.MP.Float.Native as MPLow
+
+mpToDouble :: MPLow.RoundMode -> MPFloat -> Double
+mpToDouble = MPLow.toDouble
+
+mpToRational :: MPFloat -> Rational
+mpToRational = MPLow.toRational
+
+mpFromRationalA :: MPLow.RoundMode -> MPLow.Precision -> Rational -> MPFloat
+mpFromRationalA = MPLow.fromRationalA
+
+#endif
+
 #ifdef HaskellMPFR
 import qualified Data.Approximate.MPFRLowLevel as MPLow
 

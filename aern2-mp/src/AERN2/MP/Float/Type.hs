@@ -29,21 +29,38 @@ import qualified Prelude as P
 
 import AERN2.MP.Precision
 
+#ifdef IntegerBackend
+import qualified AERN2.MP.Float.Native as MPLow
+
+type MPFloat = MPLow.MPFloat
+
+p2mpfrPrec :: Precision -> Precision
+p2mpfrPrec = id
+
+#endif
+
 #ifdef HaskellMPFR
-import Data.Typeable
 import qualified Data.Approximate.MPFRLowLevel as MPLow
+import Data.Typeable
 
 {-| Multiple-precision floating-point type based on MPFR via haskell-mpfr. -}
 type MPFloat = MPLow.Rounded
 
 deriving instance (Typeable MPFloat)
 
+p2mpfrPrec :: Precision -> MPLow.Precision
+p2mpfrPrec = P.fromInteger . integer
+
 #endif
+
 #ifdef HMPFR
 import qualified Data.Number.MPFR as MPLow
 
 {-| Multiple-precision floating-point type based on MPFR via hmpfr. -}
 type MPFloat = MPLow.MPFR
+
+p2mpfrPrec :: Precision -> MPLow.Precision
+p2mpfrPrec = P.fromInteger . integer
 
 #endif
 
@@ -51,16 +68,10 @@ instance HasPrecision MPFloat where
   getPrecision x = prec (P.toInteger $ MPLow.getPrec x)
 
 instance CanSetPrecision MPFloat where
-  setPrecision = setPrecisionNear
-
-setPrecisionNear :: Precision -> MPFloat -> MPFloat
-setPrecisionNear p = MPLow.set MPLow.Near (p2mpfrPrec p)
+  setPrecision = setPrecisionUp
 
 setPrecisionUp :: Precision -> MPFloat -> MPFloat
 setPrecisionUp p = MPLow.set MPLow.Up (p2mpfrPrec p)
 
 setPrecisionDown :: Precision -> MPFloat -> MPFloat
 setPrecisionDown p = MPLow.set MPLow.Down (p2mpfrPrec p)
-
-p2mpfrPrec :: Precision -> MPLow.Precision
-p2mpfrPrec = P.fromInteger . integer

@@ -17,13 +17,15 @@
 
 module AERN2.MP.Float.Arithmetic
   (
-   piUp, piDown
    -- * MPFloat basic arithmetic
-   , addUp, addDown, subUp, subDown
+     addUp, addDown, subUp, subDown
    , mulUp, mulDown, divUp, divDown, recipUp, recipDown
-   -- * MPFloat selected operations
+#ifdef MPFRBackend
+   -- * MPFloat selected constants and operations
+   , piUp, piDown
    , cosUp, cosDown, sinUp, sinDown
    , sqrtUp, sqrtDown, expUp, expDown, logUp, logDown
+#endif
    )
 where
 
@@ -33,6 +35,13 @@ import qualified Prelude as P
 import AERN2.MP.Precision
 import AERN2.MP.Float.Type
 
+#ifdef IntegerBackend
+import qualified AERN2.MP.Float.Native as MPLow
+
+one :: MPFloat
+one = MPLow.one
+#endif
+
 #ifdef HaskellMPFR
 import qualified Data.Approximate.MPFRLowLevel as MPLow
 
@@ -40,6 +49,7 @@ one :: MPFloat
 one = MPLow.fromInt MPLow.Up (P.fromInteger 10) (int 1)
 
 #endif
+
 #ifdef HMPFR
 import qualified Data.Number.MPFR as MPLow
 
@@ -79,6 +89,8 @@ recipUp x = divUp one x
 recipDown :: MPFloat -> MPFloat
 recipDown x = divDown one x
 
+
+#ifdef MPFRBackend
 
 {- special constants and functions -}
 
@@ -120,6 +132,7 @@ logUp = unaryUp MPLow.log
 logDown :: MPFloat -> MPFloat
 logDown = unaryDown MPLow.log
 
+#endif
 
 {- auxiliary functions to automatically determine result precision from operand precisions -}
 
