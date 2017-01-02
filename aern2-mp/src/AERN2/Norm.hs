@@ -10,7 +10,7 @@
 -}
 module AERN2.Norm
 (
-    HasNorm(..), NormLog(..)
+    HasNorm(..), NormLog(..), invertNormLog
 )
 where
 
@@ -37,10 +37,15 @@ instance HasEqAsymmetric NormLog NormLog
 instance HasOrderAsymmetric NormLog NormLog
 instance CanMinMaxAsymmetric NormLog NormLog
 
+invertNormLog :: NormLog -> NormLog
+invertNormLog NormZero = error "cannot invert NormZero"
+invertNormLog (NormBits b) = NormBits (-b)
+
 instance HasNorm Integer where
     getNormLog n
         | n == 0 = NormZero
-        | otherwise = NormBits $ integer $ integerLog2 $ abs n
+        | abs n == 1 = NormBits 0
+        | otherwise = NormBits $ 1 + (integer $ integerLog2 $ abs n - 1)
 
 instance HasNorm Int where
     getNormLog = getNormLog . integer
@@ -48,5 +53,5 @@ instance HasNorm Int where
 instance HasNorm Rational where
     getNormLog x
         | x == 0.0 = NormZero
-        | abs x >= 1.0 = NormBits $ integer $ integerLog2 $ ceiling $ abs x
-        | otherwise = NormBits $ negate $ integer $ integerLog2 $ ceiling (1 / (abs x))
+        | abs x >= 1.0 = getNormLog $ ceiling $ abs x
+        | otherwise = NormBits $ negate $ integer $ integerLog2 $ floor (1 / (abs x))
