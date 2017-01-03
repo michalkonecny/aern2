@@ -1,10 +1,10 @@
 #!/bin/bash
 
 benchset=$1
-if [ "$benchset" != "ops" -a "$benchset" != "logistic" ]; then
-  echo "usage: $0 <benchset>"
-  echo "  benchset = ops | logistic"; exit 1;
-fi
+# if [ "$benchset" != "ops" -a "$benchset" != "logistic" ]; then
+#   echo "usage: $0 <benchset>"
+#   echo "  benchset = ops | logistic"; exit 1;
+# fi
 
 resultscsv=$benchset.csv
 
@@ -138,6 +138,16 @@ function b_logistic
     done
 }
 
+
+if [ "$benchset" == "fieldops" ]; then
+b_add
+b_mul
+b_div
+fi
+
+if [ "$benchset" == "exp" ]; then
+b_exp
+fi
 
 if [ "$benchset" == "ops" ]; then
 b_exp
