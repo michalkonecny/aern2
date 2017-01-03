@@ -20,7 +20,6 @@ module AERN2.MP.Ball.Elementary
 #endif
   -- * Helpers for constructing ball functions
     fromApproxWithLipschitz
-  , intervalFunctionByEndpoints
 )
 where
 
@@ -97,11 +96,11 @@ cosB i x =
 {- exp, log, power -}
 
 instance CanExp MPBall where
-  exp = monotoneFromApprox MPFloat.expDown MPFloat.expUp
+  exp = intervalFunctionByEndpointsUpDown MPFloat.expDown MPFloat.expUp
 
 instance CanLog MPBall where
   log x
-    | x !>! 0 = monotoneFromApprox MPFloat.logDown MPFloat.logUp x
+    | x !>! 0 = intervalFunctionByEndpointsUpDown MPFloat.logDown MPFloat.logUp x
     | otherwise = error $ "MPBall log: cannot establish that the argument is positive: " ++ show x
 
 instance CanPow MPBall MPBall where
@@ -119,7 +118,7 @@ instance CanSqrt MPBall where
     -- | x ?>=? 0 = aux (max 0 x)
     | otherwise = error $ "MPBall sqrt: cannot establish that the argument is non-negative: " ++ show x
     where
-      aux = monotoneFromApprox MPFloat.sqrtDown MPFloat.sqrtUp
+      aux = intervalFunctionByEndpointsUpDown MPFloat.sqrtDown MPFloat.sqrtUp
 
 {- Instances of Prelude numerical classes provided for convenient use outside AERN2
    and also because Template Haskell translates (-x) to (Prelude.negate x) -}

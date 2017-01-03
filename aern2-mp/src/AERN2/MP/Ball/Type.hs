@@ -21,7 +21,7 @@ module AERN2.MP.Ball.Type
   , contains
   -- * Ball construction/extraction functions
   , IsBall(..), makeExactCentre
-  , IsInterval(..), intervalFunctionByEndpoints
+  , IsInterval(..), intervalFunctionByEndpoints, intervalFunctionByEndpointsUpDown
   , endpointsMP, fromEndpointsMP
 )
 where
@@ -134,10 +134,24 @@ intervalFunctionByEndpoints ::
   (IsInterval t t, HasEqCertainly t t)
   =>
   (t -> t) {-^ @fThin@: a version of @f@ that works well on thin intervals -} ->
-  (t -> t) {-^ @f@ on large intervals rounding *outwards* -}
+  (t -> t) {-^ @f@ on *large* intervals -}
 intervalFunctionByEndpoints fThin x
   | l !==! u = fThin l
   | otherwise = fromEndpoints (fThin l) (fThin u)
+  where
+  (l,u) = endpoints x
+
+{-|
+    Computes a *monotone* ball function @f@ on intervals using the interval endpoints.
+-}
+intervalFunctionByEndpointsUpDown ::
+  (IsInterval t e)
+  =>
+  (e -> e) {-^ @fDown@: a version of @f@ working on endpoints, rounded down -} ->
+  (e -> e) {-^ @fUp@: a version of @f@ working on endpoints, rounded up -} ->
+  (t -> t) {-^ @f@ on intervals rounding *outwards* -}
+intervalFunctionByEndpointsUpDown fDown fUp x =
+  fromEndpoints (fDown l) (fUp u)
   where
   (l,u) = endpoints x
 

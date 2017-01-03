@@ -26,7 +26,7 @@ Description:
 
 flag MPFR
   Description: Use an MPFR backend
-  Default:     False
+  Default:     True
 
 library
   hs-source-dirs:  src
