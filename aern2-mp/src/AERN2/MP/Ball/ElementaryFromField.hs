@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+-- #define DEBUG
 {-|
     Module      :  AERN2.MP.Ball.ElementaryFromField
     Description :  Elementary operations on arbitrary precision dyadic balls
@@ -18,12 +20,22 @@ module AERN2.MP.Ball.ElementaryFromField
 --   piBallP
 --   -- * Helpers for constructing ball functions
 --   , fromApproxWithLipschitz
---   , monotoneFromApprox
 -- )
 where
 
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#else
+#define maybeTrace ((flip const :: (String -> a -> a)))
+#endif
+
 import Numeric.MixedTypes
 import qualified Prelude as P
+
+import Text.Printf
+
+import Math.NumberTheory.Logarithms (integerLog2)
 
 import AERN2.Normalize
 
@@ -42,7 +54,112 @@ import AERN2.MP.Ball.Field ()
 
 {- trigonometrics -}
 
+-- {- exp, log, power -}
+
+instance CanExp MPBall where
+  exp x = expWithAccuracyGuide acGuide x
+    where
+    acGuide = 4 + getFiniteAccuracy x
+
+expWithAccuracyGuide ::
+  (Ring t, CanDivBy t Integer, ConvertibleWithPrecision Rational t
+  , CanAbsSameType t
+  , HasIntegerBounds t
+  , HasOrderCertainly Integer t
+  , HasEqCertainly Integer t
+  , HasEqCertainly t t
+  , CanTestFinite t
+  , IsInterval t t
+  , CanSetPrecision t, HasAccuracy t)
+  =>
+  Accuracy ->
+  t {-^ @x@ -} ->
+  t {-^ @exp(x)@ -}
+expWithAccuracyGuide acGuide =
+  intervalFunctionByEndpoints (expThinArg acGuide)
+
+expThinArg ::
+  (Ring t, CanDivBy t Integer, ConvertibleWithPrecision Rational t
+  , CanAbsSameType t
+  , HasIntegerBounds t
+  , HasOrderCertainly Integer t
+  , HasEqCertainly Integer t
+  , CanTestFinite t
+  , IsInterval t t
+  , CanSetPrecision t, HasAccuracy t)
+  =>
+    Accuracy ->
+    t {-^ @x@ assumed to be a thin approximation -} ->
+    t {-^ @exp(x)@ -}
+expThinArg acGuide x
+    -- infinities not handled well by the Taylor formula,
+    -- treat them as special cases, adding also 0 for efficiency:
+  | isInfinite x =
+      if x !>! 0 then x else convertExactly 0
+  | x !==! 0 = convertExactly 1
+  | otherwise = (expTaylorHorner (acGuide + 2*n) (x / n))^n
+  where
+  (_,n) = integerBounds $ abs x
+
+expTaylorHorner ::
+  (Ring t, CanDivBy t Integer, ConvertibleWithPrecision Rational t
+  , HasOrderCertainly Integer t
+  , IsInterval t t
+  , CanSetPrecision t, HasAccuracy t)
+  =>
+  Accuracy ->  t -> t
+expTaylorHorner acGuide xPre = -- assuming x inside [-1,1]
+  1 + (te 1)
+  where
+  workingPrecision = prec $ max 2 $ fromAccuracy (3 * acGuide)
+  x = raisePrecisionIfBelow workingPrecision xPre
+  te i
+    | approxAccuracy > acGuide + 10 =
+        eN
+    | otherwise =
+        maybeTrace (printf "expTaylorHorner: acGuide = %s, i = %d, approxAccuracy = %s" (show acGuide) i (show approxAccuracy)) $
+        xOverI * (1 + (te (i + 1)))
+    where
+    approxAccuracy =
+      bits $
+      (i*(integer $ integerLog2 i)*2) `P.div` 3
+    xOverI = x / i
+    eN = xOverI * ithDerivBound
+    ithDerivBound
+      | x !>=! 0 = fromEndpoints one eUp
+      | x !<=! 0 = fromEndpoints recipEDn one
+      | otherwise = fromEndpoints recipEDn eUp
+    _ = [x,ithDerivBound]
+  one = convertP workingPrecision 1.0
+  eUp = convertP workingPrecision 2.718281829
+  recipEDn = convertP workingPrecision 0.367879440
+  _ = [x,one,eUp,recipEDn]
+
+
 -- TODO
+--
+-- instance CanLog MPBall where
+--   log x
+--     | x !>! 0 = monotoneFromApprox MPFloat.logDown MPFloat.logUp x
+--     | otherwise = error $ "MPBall log: cannot establish that the argument is positive: " ++ show x
+--
+-- instance CanPow MPBall MPBall where
+--   pow = powUsingExpLog
+--
+-- instance CanPow MPBall Dyadic where
+--   pow x q = powUsingExpLog x (mpBall q)
+--
+-- instance CanPow MPBall Rational where
+--   pow x q = powUsingExpLog x (mpBallP (getPrecision x) q)
+--
+-- instance CanSqrt MPBall where
+--   sqrt x
+--     | x !>=! 0 = aux x
+--     -- | x ?>=? 0 = aux (max 0 x)
+--     | otherwise = error $ "MPBall sqrt: cannot establish that the argument is non-negative: " ++ show x
+--     where
+--       aux = monotoneFromApprox MPFloat.sqrtDown MPFloat.sqrtUp
+--
 
 -- piBallP :: Precision -> MPBall
 -- piBallP p = MPBall piUp (piUp `EB.subMP` piDown)
@@ -87,33 +204,6 @@ import AERN2.MP.Ball.Field ()
 -- --     where
 -- --     x2AC = getAccuracy x2
 -- --   aux2 _ _ = error "AERN2.MP.Ball.Elementary: internal error in increasingPrecisionUntilNotImproving"
---
--- {- exp, log, power -}
---
--- instance CanExp MPBall where
---   exp = monotoneFromApprox MPFloat.expDown MPFloat.expUp
---
--- instance CanLog MPBall where
---   log x
---     | x !>! 0 = monotoneFromApprox MPFloat.logDown MPFloat.logUp x
---     | otherwise = error $ "MPBall log: cannot establish that the argument is positive: " ++ show x
---
--- instance CanPow MPBall MPBall where
---   pow = powUsingExpLog
---
--- instance CanPow MPBall Dyadic where
---   pow x q = powUsingExpLog x (mpBall q)
---
--- instance CanPow MPBall Rational where
---   pow x q = powUsingExpLog x (mpBallP (getPrecision x) q)
---
--- instance CanSqrt MPBall where
---   sqrt x
---     | x !>=! 0 = aux x
---     -- | x ?>=? 0 = aux (max 0 x)
---     | otherwise = error $ "MPBall sqrt: cannot establish that the argument is non-negative: " ++ show x
---     where
---       aux = monotoneFromApprox MPFloat.sqrtDown MPFloat.sqrtUp
 --
 --
 -- {- Instances of Prelude numerical classes provided for convenient use outside AERN2
@@ -182,16 +272,3 @@ import AERN2.MP.Ball.Field ()
 --     (MPBall fxc fxe) = fromEndpointsMP fxl fxu
 --     err = (errorBound lip) * xe  +  fxe
 --
--- {-|
---     Computes a *monotone* ball function @f@ from correctly rounded MPFR-approximations.
--- -}
--- monotoneFromApprox ::
---     (MPFloat -> MPFloat) {-^ @fDown@: a version of @f@ on MPFloat rounding *downwards* -} ->
---     (MPFloat -> MPFloat) {-^ @fUp@: a version of @f@ on MPFloat rounding *upwards* -} ->
---     (MPBall -> MPBall) {-^ @f@ on MPBall rounding *outwards* -}
--- monotoneFromApprox fDown fUp x =
---     fromEndpointsMP (fDown l) (fUp u)
---     where
---     (l,u) = endpointsMP x
---
--- {-  random generation -}

@@ -83,10 +83,12 @@ instance HasNorm MPFloat where
 
 data RoundMode = Up | Down deriving (Show, P.Eq)
 
+-- {-# INLINE reverseRoundMode #-}
 reverseRoundMode :: RoundMode -> RoundMode
 reverseRoundMode Up = Down
 reverseRoundMode Down = Up
 
+-- {-# INLINE set #-}
 set :: RoundMode -> Precision -> MPFloat -> MPFloat
 set r p mpf
   | (abs n0) < limit = MPFloat n0 e0 p

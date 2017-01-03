@@ -31,7 +31,7 @@ module AERN2.MP.Ball
   -- , piBallP
   -- * Helpers for constructing ball functions
   , byEndpointsMP
-  , monotoneFromApprox
+  , intervalFunctionByEndpoints
   , fromApproxWithLipschitz
 )
 where

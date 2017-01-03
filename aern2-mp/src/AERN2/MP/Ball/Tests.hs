@@ -46,15 +46,27 @@ instance Arbitrary MPBall where
   arbitrary =
     do
       c <- finiteMPFloat
-      e <- arbitrary
-      return (MPBall c e)
+      e <- smallEB
+      return (reducePrecionIfInaccurate $ MPBall c e)
     where
+      smallEB =
+        do
+          e <- arbitrary
+          if (mpBall e) !<! 10
+            then return e
+            else smallEB
       finiteMPFloat =
         do
           x <- arbitrary
+#ifdef MPFRBackend
           if isInfinite x
             then finiteMPFloat
             else return x
+#else
+          if abs x !<! 1000
+            then return $ lowerPrecisionIfAbove (prec 1000) x
+            else finiteMPFloat
+#endif
 
 {-|
   A runtime representative of type @MPBall@.
@@ -98,10 +110,10 @@ specMPBall =
       specCanDiv tInteger tMPBall
       specCanDiv tMPBall tInt
       specCanDiv tMPBall tRational
-#ifdef MPFRBackend
     describe "elementary" $ do
-      specCanSqrtReal tMPBall
       specCanExpReal tMPBall
+#ifdef MPFRBackend
       specCanLogReal tMPBall
+      specCanSqrtReal tMPBall
       specCanSinCosReal tMPBall
 #endif

@@ -35,11 +35,11 @@ import AERN2.MP.Ball.Type
 
 {--- extracting from a ball ---}
 
-integerBounds :: MPBall -> (Integer, Integer)
-integerBounds b =
-  (floor l, ceiling r)
-  where
-    (l,r) = endpointsMP b
+instance HasIntegerBounds MPBall where
+  integerBounds b =
+    (floor l, ceiling r)
+    where
+      (l,r) = endpointsMP b
 
 instance Convertible MPBall EB.ErrorBound where
   safeConvert b =

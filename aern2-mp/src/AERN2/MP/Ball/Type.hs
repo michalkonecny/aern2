@@ -21,7 +21,7 @@ module AERN2.MP.Ball.Type
   , contains
   -- * Ball construction/extraction functions
   , IsBall(..), makeExactCentre
-  , IsInterval(..)
+  , IsInterval(..), intervalFunctionByEndpoints
   , endpointsMP, fromEndpointsMP
 )
 where
@@ -70,6 +70,10 @@ instance Show MPBall
 
 instance CanTestValid MPBall where
   isValid (MPBall x e) = isFinite x && isFinite (mpFloat e)
+
+instance CanTestFinite MPBall where
+  isNaN = not . isValid
+  isInfinite = const False
 
 instance CanNormalize MPBall where
   normalize b
@@ -122,6 +126,20 @@ endpointsMP = endpoints
 class IsInterval i e where
   fromEndpoints :: e -> e -> i
   endpoints :: i -> (e,e)
+
+{-|
+    Computes a *monotone* ball function @f@ on intervals using the interval endpoints.
+-}
+intervalFunctionByEndpoints ::
+  (IsInterval t t, HasEqCertainly t t)
+  =>
+  (t -> t) {-^ @fThin@: a version of @f@ that works well on thin intervals -} ->
+  (t -> t) {-^ @f@ on large intervals rounding *outwards* -}
+intervalFunctionByEndpoints fThin x
+  | l !==! u = fThin l
+  | otherwise = fromEndpoints (fThin l) (fThin u)
+  where
+  (l,u) = endpoints x
 
 instance IsInterval MPBall MPFloat where
   fromEndpoints l u

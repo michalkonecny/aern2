@@ -20,7 +20,7 @@ module AERN2.MP.Ball.Elementary
 #endif
   -- * Helpers for constructing ball functions
     fromApproxWithLipschitz
-  , monotoneFromApprox
+  , intervalFunctionByEndpoints
 )
 where
 
@@ -188,17 +188,3 @@ fromApproxWithLipschitz fDown fUp lip _x@(MPBall xc xe) =
     fxu = fUp xc
     (MPBall fxc fxe) = fromEndpointsMP fxl fxu
     err = (errorBound lip) * xe  +  fxe
-
-{-|
-    Computes a *monotone* ball function @f@ from correctly rounded MPFR-approximations.
--}
-monotoneFromApprox ::
-    (MPFloat -> MPFloat) {-^ @fDown@: a version of @f@ on MPFloat rounding *downwards* -} ->
-    (MPFloat -> MPFloat) {-^ @fUp@: a version of @f@ on MPFloat rounding *upwards* -} ->
-    (MPBall -> MPBall) {-^ @f@ on MPBall rounding *outwards* -}
-monotoneFromApprox fDown fUp x =
-    fromEndpointsMP (fDown l) (fUp u)
-    where
-    (l,u) = endpointsMP x
-
-{-  random generation -}
