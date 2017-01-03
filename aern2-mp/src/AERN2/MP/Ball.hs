@@ -28,7 +28,7 @@ module AERN2.MP.Ball
   -- * Ball operations (see also instances)
   , contains
   , intersect
-  , piBallP
+  -- , piBallP
   -- * Helpers for constructing ball functions
   , byEndpointsMP
   , monotoneFromApprox

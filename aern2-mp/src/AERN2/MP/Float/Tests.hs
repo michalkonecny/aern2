@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-|
     Module      :  AERN2.MP.Float.Tests
     Description :  Tests for operations on arbitrary precision floats
@@ -40,7 +41,9 @@ import AERN2.Norm
 import AERN2.MP.Precision
 
 import AERN2.MP.Float.Type
+#ifdef MPFRBackend
 import AERN2.MP.Float.Arithmetic
+#endif
 import AERN2.MP.Float.Conversions
 import AERN2.MP.Float.Operators
 import AERN2.MP.Float.Constants
@@ -53,7 +56,11 @@ instance Arbitrary MPFloat where
     where
       aux giveSpecialValue
         | giveSpecialValue =
-            elements [nan, infinity, -infinity, zero, one]
+#ifdef IntegerBackend
+            elements [zero, one, -one]
+#else
+            elements [nan, infinity, -infinity, zero, one, -one]
+#endif
         | otherwise =
           do
           (p :: Precision) <- arbitrary
@@ -111,7 +118,7 @@ approxEqualWithArgs argsPre l r =
     getNminusP (x,_) =
       case norm of
         NormZero -> Nothing -- ideally infinity
-        NormBits b -> Just (pI-b)
+        NormBits b -> Just (pI-b-1)
       where
       norm = getNormLog x
       pI = integer $ getPrecision x
@@ -131,12 +138,17 @@ tMPFloat = T "MPFloat"
 specMPFloat :: Spec
 specMPFloat =
   describe ("MPFloat") $ do
+    describe "order" $ do
+      specHasEqNotMixed tMPFloat
+      specCanTestZero tMPFloat
+      specHasOrderNotMixed tMPFloat
     specCanSetPrecision tMPFloat (printArgsIfFails2 "=~=" (=~=))
     specCanRound tMPFloat
     specCanNegNum tMPFloat
     specCanAbs tMPFloat
     specCanMinMaxNotMixed tMPFloat
     -- specCanMinMax tMPFloat tInteger tMPFloat
+#ifdef MPFRBackend
     describe "special values" $ do
       it "0 * infinity = NaN" $ do
         isNaN (zero *^ infinity)
@@ -150,6 +162,7 @@ specMPFloat =
         isNaN (infinity -^ infinity)
         &&
         isNaN (infinity -. infinity)
+#endif
     describe "approximate addition" $ do
       it "down <= up" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
@@ -212,29 +225,39 @@ specMPFloat =
       it "approximately associative" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) (z :: MPFloat) ->
           (x >= 0 && y >= 0 && z >= 0
-           && x < infinity && y < infinity && z < infinity) ==>
+           && not (isInfinite x) && not (isInfinite y) && not (isInfinite z)) ==>
           (x *. y) *. z <= x *^ (y *^ z)
           &&
           (x *^ y) *^ z >= x *. (y *. z)
       it "approximately distributes over addition" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) (z :: MPFloat) ->
           (x >= 0 && y >= 0 && z >= 0
-           && x < infinity && y < infinity && z < infinity) ==>
+           && not (isInfinite x) && not (isInfinite y) && not (isInfinite z)) ==>
           x *. (y +. z) <= (x *^ y) +^ (x *^ z)
           &&
           x *^ (y +^ z) >= (x *. y) +. (x *. z)
     describe "approximate division" $ do
       it "down <= up" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
+#ifdef MPFRBackend
           not (isNaN (x /. y))
+#else
+          (y > 0 || y < 0) -- no NaN and Infinity in Integer (native) backend
+#endif
           ==>
           x /. y <= x /^ y
       it "up ~ down" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
           let
-            (=~~=) = approxEqualWithArgs [(x,"x"),(y,"y")]
+            (=~~=) = approxEqualWithArgs [(x /. y,"x/.y")]
             infix 4 =~~=
           in
+#ifdef MPFRBackend
+          not (isNaN (x /. y))
+#else
+          (y > 0 || y < 0) -- no NaN and Infinity in Integer (native) backend
+#endif
+          ==>
           x /. y =~~= x /^ y
       it "recip(recip x) = x" $ do
         property $ \ (x :: MPFloat) ->
@@ -258,6 +281,7 @@ specMPFloat =
           (x /. y) <= x *^ (one /^ y)
           &&
           (x /^ y) >= x *. (one /. y)
+#ifdef MPFRBackend
     describe "approximate sqrt" $ do
       it "down <= up" $ do
         property $ \ (x :: MPFloat) ->
@@ -419,3 +443,4 @@ specMPFloat =
           (cosx2D +. sinx2D) <= one
           &&
           (cosx2U +^ sinx2U) >= one
+#endif

@@ -143,12 +143,14 @@ unaryUp opRP x = opRP MPLow.Up p x
     where
     p = MPLow.getPrec x
 
+#ifdef MPFRBackend
 unaryDown ::
     (MPLow.RoundMode -> MPLow.Precision -> MPFloat -> MPFloat) ->
     (MPFloat -> MPFloat)
 unaryDown opRP x = opRP MPLow.Down p x
     where
     p = MPLow.getPrec x
+#endif
 
 binaryUp ::
     Bool ->

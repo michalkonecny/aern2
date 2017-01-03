@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-|
     Module      :  AERN2.MP.Ball.Elementary
     Description :  Elementary operations on arbitrary precision dyadic balls
@@ -12,10 +13,13 @@
 -}
 module AERN2.MP.Ball.Elementary
 (
+#ifdef MPFRBackend
   -- * Ball operations (see also instances)
   piBallP
+  ,
+#endif
   -- * Helpers for constructing ball functions
-  , fromApproxWithLipschitz
+    fromApproxWithLipschitz
   , monotoneFromApprox
 )
 where
@@ -37,6 +41,12 @@ import AERN2.MP.Ball.Type
 import AERN2.MP.Ball.Conversions ()
 import AERN2.MP.Ball.Comparisons ()
 import AERN2.MP.Ball.Field ()
+
+#ifdef IntegerBackend
+import AERN2.MP.Ball.ElementaryFromField
+#endif
+
+#ifdef MPFRBackend
 
 {- trigonometrics -}
 
@@ -111,7 +121,6 @@ instance CanSqrt MPBall where
     where
       aux = monotoneFromApprox MPFloat.sqrtDown MPFloat.sqrtUp
 
-
 {- Instances of Prelude numerical classes provided for convenient use outside AERN2
    and also because Template Haskell translates (-x) to (Prelude.negate x) -}
 
@@ -158,6 +167,8 @@ instance P.Floating MPBall where
     cosh = error "MPBall: cosh not implemented yet"
     asinh = error "MPBall: asinh not implemented yet"
     acosh = error "MPBall: acosh not implemented yet"
+
+#endif
 
 {- generic methods for computing real functions from MPFR-approximations -}
 

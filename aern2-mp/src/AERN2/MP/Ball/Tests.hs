@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-|
     Module      :  AERN2.MP.Ball.Tests
     Description :  Tests for operations on arbitrary precision balls
@@ -35,8 +36,6 @@ import Test.QuickCheck
 -- import AERN2.Norm
 import AERN2.MP.Precision
 
-import AERN2.MP.Float as MPFloat
-
 import AERN2.MP.Ball.Type
 import AERN2.MP.Ball.Conversions
 import AERN2.MP.Ball.Comparisons ()
@@ -53,9 +52,9 @@ instance Arbitrary MPBall where
       finiteMPFloat =
         do
           x <- arbitrary
-          if (-MPFloat.infinity) < x && x < MPFloat.infinity
-            then return x
-            else finiteMPFloat
+          if isInfinite x
+            then finiteMPFloat
+            else return x
 
 {-|
   A runtime representative of type @MPBall@.
@@ -99,8 +98,10 @@ specMPBall =
       specCanDiv tInteger tMPBall
       specCanDiv tMPBall tInt
       specCanDiv tMPBall tRational
+#ifdef MPFRBackend
     describe "elementary" $ do
       specCanSqrtReal tMPBall
       specCanExpReal tMPBall
       specCanLogReal tMPBall
       specCanSinCosReal tMPBall
+#endif

@@ -27,11 +27,15 @@ module AERN2.MP.Float.Conversions
 where
 
 import Numeric.MixedTypes
+#ifdef MPFRBackend
 import qualified Prelude as P
+#endif
 
 import Data.Ratio
 
+#ifdef MPFRBackend
 import AERN2.Norm
+#endif
 import AERN2.MP.Precision
 
 import AERN2.MP.Float.Type
@@ -95,10 +99,12 @@ mpFromRationalA dir p q
 
 #endif
 
+#ifdef MPFRBackend
 instance HasNorm MPFloat where
   getNormLog x
     | x == 0 = NormZero
     | otherwise = NormBits (P.toInteger $ MPLow.getExp x)
+#endif
 
 {- conversions -}
 
