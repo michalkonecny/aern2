@@ -138,10 +138,12 @@ tMPFloat = T "MPFloat"
 specMPFloat :: Spec
 specMPFloat =
   describe ("MPFloat") $ do
+#ifdef IntegerBackend
     describe "order" $ do
       specHasEqNotMixed tMPFloat
       specCanTestZero tMPFloat
       specHasOrderNotMixed tMPFloat
+#endif
     specCanSetPrecision tMPFloat (printArgsIfFails2 "=~=" (=~=))
     specCanRound tMPFloat
     specCanNegNum tMPFloat

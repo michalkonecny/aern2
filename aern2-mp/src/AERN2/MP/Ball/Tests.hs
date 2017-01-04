@@ -59,9 +59,9 @@ instance Arbitrary MPBall where
         do
           x <- arbitrary
 #ifdef MPFRBackend
-          if isInfinite x
-            then finiteMPFloat
-            else return x
+          if isFinite x
+            then return x
+            else finiteMPFloat
 #else
           if abs x !<! 1000
             then return $ lowerPrecisionIfAbove (prec 1000) x
