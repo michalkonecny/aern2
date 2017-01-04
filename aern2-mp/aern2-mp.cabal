@@ -13,7 +13,7 @@ category:       Math
 copyright:      (c) 2015, 2016 Michal Konecny
 license-file:   LICENSE
 Description:
-  A wrapper around haskell-mpfr or hmpfr, providing the types:
+  A wrapper around MPFR (and in future alternative to MPFR), providing the types:
   .
   * Dyadic:  variable-precision floats with exact ring operations
   .
@@ -21,12 +21,16 @@ Description:
   .
   * MPBall: float ± error bound with field & elementary (interval-like) operations
   .
-  Currently, we use hmpfr when compiling with ghc 7.10 and higher
+  By default, we use hmpfr when compiling with ghc 7.10 and higher
   and haskell-mpfr when compiling with ghc 7.8.
+  .
+  There is also an Integer backend which does not need MPFR, but
+  it is not yet complete.
 
 flag MPFR
-  Description: Use an MPFR backend
-  Default:     False
+  Description: Use MPFR backend (default); Integer backend is incomplete
+  Default:     True
+  -- WARNING:
 
 library
   hs-source-dirs:  src

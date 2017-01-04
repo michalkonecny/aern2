@@ -60,7 +60,13 @@ import AERN2.MP.ErrorBound (ErrorBound, errorBound)
 -- _dummy :: ()
 -- _dummy = maybeTrace "dummy" ()
 
-data MPBall = MPBall { ball_value :: MPFloat, ball_error :: ErrorBound }
+data MPBall = MPBall
+  -- { ball_value :: MPFloat
+  -- , ball_error :: ErrorBound
+  -- }
+  { ball_value :: {-# UNPACK #-} ! MPFloat
+  , ball_error :: {-# UNPACK #-} ! ErrorBound
+  }
   deriving (Generic)
 
 instance Show MPBall
