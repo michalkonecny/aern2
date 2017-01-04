@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-|
     Module      :  AERN2.MP.Ball
     Description :  Arbitrary precision ball arithmetic
@@ -28,7 +29,9 @@ module AERN2.MP.Ball
   -- * Ball operations (see also instances)
   , contains
   , intersect
-  -- , piBallP
+#ifdef MPFRBackend
+  , piBallP
+#endif
   -- * Helpers for constructing ball functions
   , byEndpointsMP
   , intervalFunctionByEndpoints

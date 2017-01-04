@@ -22,7 +22,7 @@ module AERN2.Real
   -- * constants
   , pi, piA
   -- * arrow-generic versions of some operations
-  , sqrtA, expA, logA, sinA, cosA
+  , expA, logA, sqrtA, sinA, cosA
   -- * auxiliary functions for making new real operations
   , unaryOp, binaryOp, binaryOpWithPureArg
   , getCRFnNormLog
