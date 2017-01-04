@@ -32,7 +32,7 @@ library
     , num-exceptions == 0.1.*
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
-  ghc-options:     -Wall -fno-warn-orphans
+  ghc-options:     -Wall -O2 -fno-warn-orphans
   extensions:
     RebindableSyntax,
     PostfixOperators,

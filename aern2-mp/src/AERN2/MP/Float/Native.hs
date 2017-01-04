@@ -32,11 +32,17 @@ import AERN2.MP.Precision
 
 {-| @MPFloat n e p@ represents the number @n*2^e@.
     Moreover, @|n| < 2^p@ and either $n=0$ or @n@ is odd.  -}
+-- data MPFloat =
+--   MPFloat
+--   { mpFloat_integer :: Integer
+--   , mpFloat_exponent :: Integer
+--   , mpFloat_precision :: Precision
+--   }
 data MPFloat =
   MPFloat
-  { mpFloat_integer :: Integer
-  , mpFloat_exponent :: Integer
-  , mpFloat_precision :: Precision
+  { mpFloat_integer :: {-# UNPACK #-} ! Integer
+  , mpFloat_exponent :: {-# UNPACK #-} ! Integer
+  , mpFloat_precision :: {-# UNPACK #-} ! Precision
   }
 
 makeNOdd :: MPFloat -> MPFloat
@@ -130,6 +136,7 @@ neg :: UnaryOp
 neg r p (MPFloat n e p1) =
   set r p $ MPFloat (-n) e p1
 
+-- {-# INLINE add #-}
 add :: BinaryOp
 add r p (MPFloat n1 e1 p1) (MPFloat n2 e2 _p2) =
   set r p $ MPFloat n e p1

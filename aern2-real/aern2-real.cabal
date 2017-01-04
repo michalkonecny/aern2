@@ -30,7 +30,7 @@ library
     , num-exceptions == 0.1.*
     , aern2-mp == 0.1.*
     , lens == 4.13.*
-  ghc-options:     -Wall -fno-warn-orphans
+  ghc-options:     -Wall -O2 -fno-warn-orphans
   extensions:
     RebindableSyntax,
     PostfixOperators,
@@ -61,7 +61,7 @@ test-suite spec
   type:
       exitcode-stdio-1.0
   ghc-options:
-      -Wall
+      -Wall -O2
   extensions:
     RebindableSyntax,
     PostfixOperators,
@@ -82,7 +82,7 @@ test-suite spec
 
 executable aern2-real-benchOp
   ghc-options:
-      -Wall
+      -Wall -O2
   extensions:
     RebindableSyntax,
     PostfixOperators,

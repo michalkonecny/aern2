@@ -55,7 +55,7 @@ library
       cpp-options: -DHaskellMPFR
   else
     cpp-options: -DIntegerBackend
-  ghc-options:     -Wall -fno-warn-orphans
+  ghc-options:     -Wall -O2 -fno-warn-orphans
   extensions:
     RebindableSyntax,
     PostfixOperators,
@@ -101,7 +101,7 @@ test-suite spec
   type:
       exitcode-stdio-1.0
   ghc-options:
-      -Wall
+      -Wall -O2
   extensions:
     RebindableSyntax,
     PostfixOperators,
