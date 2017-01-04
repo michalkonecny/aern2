@@ -15,12 +15,12 @@
     This is useful in the absence of MPFR float-level elementary operations.
 -}
 module AERN2.MP.Ball.ElementaryFromField
--- (
---   -- * Ball operations (see also instances)
---   piBallP
+(
+  -- * Ball operations (see also instances)
+  piBallP
 --   -- * Helpers for constructing ball functions
 --   , fromApproxWithLipschitz
--- )
+)
 where
 
 #ifdef DEBUG
@@ -37,15 +37,13 @@ import Text.Printf
 
 import Math.NumberTheory.Logarithms (integerLog2)
 
-import AERN2.Normalize
+-- import AERN2.Normalize
 
 import AERN2.MP.Dyadic (Dyadic, dyadic)
-import qualified AERN2.MP.Float as MPFloat
-import AERN2.MP.Float (MPFloat, mpFloat)
 -- import AERN2.MP.Float.Operators
 import AERN2.MP.Precision
-import qualified AERN2.MP.ErrorBound as EB
-import AERN2.MP.ErrorBound (errorBound)
+-- import qualified AERN2.MP.ErrorBound as EB
+-- import AERN2.MP.ErrorBound (errorBound)
 
 import AERN2.MP.Ball.Type
 import AERN2.MP.Ball.Conversions ()
@@ -136,37 +134,40 @@ expTaylorHorner acGuide xPre = -- assuming x inside [-1,1]
   _ = [x,one,eUp,recipEDn]
 
 
+instance CanLog MPBall where
+  log = error "instance CanLog MPBall incomplete"
 -- TODO
---
--- instance CanLog MPBall where
---   log x
---     | x !>! 0 = monotoneFromApprox MPFloat.logDown MPFloat.logUp x
---     | otherwise = error $ "MPBall log: cannot establish that the argument is positive: " ++ show x
---
--- instance CanPow MPBall MPBall where
---   pow = powUsingExpLog
---
--- instance CanPow MPBall Dyadic where
---   pow x q = powUsingExpLog x (mpBall q)
---
--- instance CanPow MPBall Rational where
---   pow x q = powUsingExpLog x (mpBallP (getPrecision x) q)
---
--- instance CanSqrt MPBall where
+
+instance CanPow MPBall MPBall where
+  pow = error "instance CanPow MPBall MPBall incomplete"
+-- TODO
+
+instance CanPow MPBall Dyadic where
+  pow = error "instance CanPow MPBall Dyadic incomplete"
+-- TODO
+
+instance CanPow MPBall Rational where
+  pow = error "instance CanPow MPBall Rational incomplete"
+-- TODO
+
+instance CanSqrt MPBall where
+  sqrt = error "instance CanSqrt MPBall incomplete"
+-- TODO
 --   sqrt x
 --     | x !>=! 0 = aux x
---     -- | x ?>=? 0 = aux (max 0 x)
 --     | otherwise = error $ "MPBall sqrt: cannot establish that the argument is non-negative: " ++ show x
 --     where
 --       aux = monotoneFromApprox MPFloat.sqrtDown MPFloat.sqrtUp
---
 
--- piBallP :: Precision -> MPBall
--- piBallP p = MPBall piUp (piUp `EB.subMP` piDown)
---   where
---   piUp = MPFloat.piUp p
---   piDown = MPFloat.piDown p
---
+piBallP :: Precision -> MPBall
+piBallP = error "piBallP incomplete"
+-- TODO
+
+instance CanSinCos MPBall where
+  sin = error "instance CanSinCos MPBall incomplete"
+  cos = error "instance CanSinCos MPBall incomplete"
+-- TODO
+
 -- instance CanSinCos MPBall where
 --   sin = sinB 1
 --   cos = cosB 1
@@ -204,55 +205,55 @@ expTaylorHorner acGuide xPre = -- assuming x inside [-1,1]
 -- --     where
 -- --     x2AC = getAccuracy x2
 -- --   aux2 _ _ = error "AERN2.MP.Ball.Elementary: internal error in increasingPrecisionUntilNotImproving"
---
---
--- {- Instances of Prelude numerical classes provided for convenient use outside AERN2
---    and also because Template Haskell translates (-x) to (Prelude.negate x) -}
---
--- instance P.Num MPBall where
---     fromInteger = convertExactly
---     negate = negate
---     (+) = (+)
---     (*) = (*)
---     abs = abs
---     signum = error "Prelude.signum not implemented for MPBall"
---
--- instance P.Eq MPBall where
---     a == b = (a == b) == Just True
---     a /= b = (a /= b) == Just True
---
--- instance P.Ord MPBall where
---     a < b =  (a < b) == Just True
---     a <= b =  (a <= b) == Just True
---     a > b =  (a > b) == Just True
---     a >= b =  (a >= b) == Just True
---     compare r1 r2
---         | (r1 < r2) == Just True = LT
---         | (r1 > r2) == Just True = GT
---         | (r1 == r2) == Just True = EQ
---         | otherwise = error "AERN2.Num.MPBall: compare: cannot decide"
---
--- instance P.Fractional MPBall where
---     fromRational = convertExactly . dyadic -- will work only for dyadic rationals
---     recip = recip
---     (/) = (/)
---
--- instance P.Floating MPBall where
---     pi = error "MPBall: pi not implemented" -- no global precision to pick
---     sqrt = sqrt
---     exp = exp
---     sin = sin
---     cos = cos
---     log = log
---     atan = error "MPBall: atan not implemented yet"
---     atanh = error "MPBall: atanh not implemented yet"
---     asin = error "MPBall: asin not implemented yet"
---     acos = error "MPBall: acos not implemented yet"
---     sinh = error "MPBall: sinh not implemented yet"
---     cosh = error "MPBall: cosh not implemented yet"
---     asinh = error "MPBall: asinh not implemented yet"
---     acosh = error "MPBall: acosh not implemented yet"
---
+
+
+{- Instances of Prelude numerical classes provided for convenient use outside AERN2
+   and also because Template Haskell translates (-x) to (Prelude.negate x) -}
+
+instance P.Num MPBall where
+    fromInteger = convertExactly
+    negate = negate
+    (+) = (+)
+    (*) = (*)
+    abs = abs
+    signum = error "Prelude.signum not implemented for MPBall"
+
+instance P.Eq MPBall where
+    a == b = (a == b) == Just True
+    a /= b = (a /= b) == Just True
+
+instance P.Ord MPBall where
+    a < b =  (a < b) == Just True
+    a <= b =  (a <= b) == Just True
+    a > b =  (a > b) == Just True
+    a >= b =  (a >= b) == Just True
+    compare r1 r2
+        | (r1 < r2) == Just True = LT
+        | (r1 > r2) == Just True = GT
+        | (r1 == r2) == Just True = EQ
+        | otherwise = error "AERN2.Num.MPBall: compare: cannot decide"
+
+instance P.Fractional MPBall where
+    fromRational = convertExactly . dyadic -- will work only for dyadic rationals
+    recip = recip
+    (/) = (/)
+
+instance P.Floating MPBall where
+    pi = error "MPBall: pi not implemented" -- no global precision to pick
+    sqrt = sqrt
+    exp = exp
+    sin = sin
+    cos = cos
+    log = log
+    atan = error "MPBall: atan not implemented yet"
+    atanh = error "MPBall: atanh not implemented yet"
+    asin = error "MPBall: asin not implemented yet"
+    acos = error "MPBall: acos not implemented yet"
+    sinh = error "MPBall: sinh not implemented yet"
+    cosh = error "MPBall: cosh not implemented yet"
+    asinh = error "MPBall: asinh not implemented yet"
+    acosh = error "MPBall: acosh not implemented yet"
+
 -- {- generic methods for computing real functions from MPFR-approximations -}
 --
 -- {-|

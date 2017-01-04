@@ -13,13 +13,10 @@
 -}
 module AERN2.MP.Ball.Elementary
 (
-#ifdef MPFRBackend
   -- * Ball operations (see also instances)
   piBallP
-  ,
-#endif
   -- * Helpers for constructing ball functions
-    fromApproxWithLipschitz
+  , fromApproxWithLipschitz
 )
 where
 
