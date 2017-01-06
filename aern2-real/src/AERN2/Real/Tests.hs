@@ -110,7 +110,7 @@ specCRrespectsAccuracy1 opName op precond =
   it (opName ++ " respects accuracy requests") $ do
     property $
       \ (x :: CauchyReal) (ac :: Accuracy) ->
-        ac < Exact && precond x ac ==>
+        ac < (bits 10000) && precond x ac ==>
         getAccuracy (qaMakeQuery (op x) ac) >= ac
 
 precondAnyReal :: CauchyReal -> Accuracy -> Bool
@@ -122,6 +122,13 @@ precondPositiveReal x ac = qaMakeQuery x ac !>! 0
 precondNonZeroReal :: CauchyReal -> Accuracy -> Bool
 precondNonZeroReal x ac = qaMakeQuery x ac !/=! 0
 
+precondSmallReal :: CauchyReal -> Accuracy -> Bool
+precondSmallReal x ac = abs (qaMakeQuery x ac) !<! 1000
+
+precondPositiveSmallReal :: CauchyReal -> Accuracy -> Bool
+precondPositiveSmallReal x ac = 0 !<! b && b !<! 1000
+  where b = qaMakeQuery x ac
+
 specCRrespectsAccuracy2 ::
   String ->
   (CauchyReal -> CauchyReal -> CauchyReal) ->
@@ -132,7 +139,7 @@ specCRrespectsAccuracy2 opName op precond1 precond2 =
   it (opName ++ " respects accuracy requests") $ do
     property $
       \ (x :: CauchyReal) (y :: CauchyReal) (ac :: Accuracy) ->
-        ac < Exact && precond1 x ac && precond2 y ac  ==>
+        ac < (bits 10000) && precond1 x ac && precond2 y ac  ==>
         getAccuracy (qaMakeQuery (op x y) ac) >= ac
 
 specCRrespectsAccuracy2T ::
@@ -147,7 +154,7 @@ specCRrespectsAccuracy2T (T tName :: T t) opName op precond1 precond2 =
   it (opName ++ " with " ++ tName ++ " respects accuracy requests") $ do
     property $
       \ (x :: CauchyReal) (t :: t) (ac :: Accuracy) ->
-        ac < Exact && precond1 x ac && precond2 t  ==>
+        ac < (bits 10000) && precond1 x ac && precond2 t  ==>
         getAccuracy (qaMakeQuery (op x t) ac) >= ac
 
 precondAnyT :: t -> Bool
@@ -191,11 +198,11 @@ specCauchyReal =
       specCRrespectsAccuracy2T tDyadic "/" divide precondAnyReal precondNonZeroT
     describe "elementary" $ do
       specCRrespectsAccuracy1 "sqrt" sqrt precondPositiveReal
-      specCRrespectsAccuracy1 "exp" exp precondAnyReal
-      specCRrespectsAccuracy1 "log" log precondPositiveReal
-      specCRrespectsAccuracy2 "pow" pow precondPositiveReal precondAnyReal
+      specCRrespectsAccuracy1 "exp" exp precondSmallReal
+      specCRrespectsAccuracy1 "log" log precondPositiveSmallReal
+      specCRrespectsAccuracy2 "pow" pow precondPositiveSmallReal precondSmallReal
       specCRrespectsAccuracy2T tInteger "pow" pow precondNonZeroReal precondAnyT
-      specCRrespectsAccuracy2T tRational "pow" pow precondPositiveReal precondAnyT
-      specCRrespectsAccuracy2T tDyadic "pow" pow precondPositiveReal precondAnyT
+      specCRrespectsAccuracy2T tRational "pow" pow precondPositiveSmallReal precondAnyT
+      specCRrespectsAccuracy2T tDyadic "pow" pow precondPositiveSmallReal precondAnyT
       specCRrespectsAccuracy1 "cos" cos precondAnyReal
       specCRrespectsAccuracy1 "sine" sin precondAnyReal
