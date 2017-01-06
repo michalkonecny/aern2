@@ -1,25 +1,27 @@
 #!/bin/bash
 
 benchset=$1
-# if [ "$benchset" != "ops" -a "$benchset" != "logistic" ]; then
-#   echo "usage: $0 <benchset>"
-#   echo "  benchset = ops | logistic"; exit 1;
-# fi
+benchmain=aern2-real-benchOp
+# benchmain=ireal-benchOp
+gnutime=/usr/bin/time
+logsdir=logs
+useoldlogs=true
 
 resultscsv=$benchset.csv
 
-benchmain=aern2-real-benchOp
-gnutime=/usr/bin/time
-logsdir=logs
+if [ "$useoldlogs" == "true" -a -e "$resultscsv" ]; then
+  echo "The result file $resultscsv already exists. I will not overwrite it."
+  exit 1;
+fi
+
+# put headers in the results csv file:
+if [ ! -f $resultscsv ]; then
+  echo "Time,Op,Count,Accuracy(bits),UTime(s),STime(s),Mem(kB)" > $resultscsv
+  if [ $? != 0 ]; then exit 1; fi
+fi
 
 if [ ! -e $logsdir ]; then
     mkdir $logsdir
-    if [ $? != 0 ]; then exit 1; fi
-fi
-
-# put headers in the results csv file if it is new:
-if [ ! -f $resultscsv ]; then
-    echo "Time,Op,Count,Accuracy(bits),UTime(s),STime(s),Mem(kB)" > $resultscsv
     if [ $? != 0 ]; then exit 1; fi
 fi
 
@@ -37,16 +39,20 @@ function runOne
             echo " (running and logging in $runlog)"
             $command >& $runlog
             if [ $? != 0 ]; then rm $runlog; exit 1; fi
-            utime=`grep "User time (seconds)" $runlog | sed 's/^.*: //'`
-            stime=`grep "System time (seconds)" $runlog | sed 's/^.*: //'`
-            mem=`grep "Maximum resident set size (kbytes)" $runlog | sed 's/^.*: //'`
-            # bits=`grep "accuracy: Bits " $runlog | sed 's/accuracy: Bits //'`
-            now=`date`
-            csvline="$now,$op,$count,$ac,${utime/0.00/0.01},${stime/0.00/0.01},$mem"
-            echo "recording in $resultscsv: $csvline"
-            echo $csvline >> $resultscsv
+            newrun=true
         else
-            echo " (skipping due to existing log $runlog)"
+            echo " (using existing log $runlog)"
+            newrun=false
+    fi
+    if [ "$useoldlogs" == "true" -o "$newrun" == "true" ]; then
+      utime=`grep "User time (seconds)" $runlog | sed 's/^.*: //'`
+      stime=`grep "System time (seconds)" $runlog | sed 's/^.*: //'`
+      mem=`grep "Maximum resident set size (kbytes)" $runlog | sed 's/^.*: //'`
+      # bits=`grep "accuracy: Bits " $runlog | sed 's/accuracy: Bits //'`
+      now=`date`
+      csvline="$now,$op,$count,$ac,${utime/0.00/0.01},${stime/0.00/0.01},$mem"
+      echo "recording in $resultscsv: $csvline"
+      echo $csvline >> $resultscsv
     fi
 }
 
