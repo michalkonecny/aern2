@@ -247,8 +247,12 @@ instance CanReduceSizeUsingAccuracyGuide MPBall where
   reduceSizeUsingAccuracyGuide acGuide b@(MPBall x _e) =
     lowerPrecisionIfAbove (getPrecision bWithLowAC) b
     where
-    bWithLowAC = normalize $
-          MPBall x (errorBound $ 0.5^(fromAccuracy acGuide))
+    bWithLowAC =
+      case acGuide of
+        Exact -> b
+        NoInformation -> b
+        _ -> normalize $
+              MPBall x (errorBound $ 0.5^(fromAccuracy acGuide))
 
 instance HasNorm MPBall where
     getNormLog ball = getNormLog boundMP

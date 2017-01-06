@@ -67,7 +67,10 @@ instance Arbitrary CauchyReal where
         signedBinary2Real <$> infiniteListOf (elements [-1,0,1])
       signedBinary2Real sbits =
         newCR "random" [] $ \ ac ->
-          balls !! ((fromAccuracy ac) + 1)
+          case ac of
+            NoInformation -> balls !! 0
+            Exact -> error "signedBinary2Real: cannot request the number Exactly"
+            _ -> balls !! (fromAccuracy ac + 1)
         where
         balls = nextBit (MB.mpBall (0,1)) sbits
         nextBit ball (sbit:rest) =
