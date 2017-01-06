@@ -382,9 +382,9 @@ instance Arbitrary Dyadic where
       finiteMPFloat =
         do
           x <- arbitrary
-          if isInfinite x
-            then finiteMPFloat
-            else return x
+          if isFinite x
+            then return x
+            else finiteMPFloat
 
 {-|
   A runtime representative of type @Dyadic@.
