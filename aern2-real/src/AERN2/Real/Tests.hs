@@ -53,14 +53,14 @@ instance Arbitrary CauchyRealAtAccuracy where
   arbitrary =
     CauchyRealAtAccuracy <$>
       arbitrary <*>
-      ((\x -> bits (1 + (abs (3 * x)))) <$> (arbitrary :: Gen Integer))
+      (bits <$> (arbitrarySmall 1000 :: Gen Integer))
 
 instance Arbitrary CauchyReal where
   arbitrary =
     frequency
-      [(int 1, real <$> (arbitrary :: Gen Integer)),
-       (int 1, real <$> (arbitrary :: Gen Rational)),
-       (int 2, (*) <$> (arbitrary :: Gen Integer) <*> arbitrarySignedBinary)
+      [(int 1, real <$> (arbitrarySmall 1000000 :: Gen Integer)),
+       (int 1, real <$> (arbitrarySmall 1000000 :: Gen Rational)),
+       (int 2, (*) <$> (arbitrarySmall 1000000 :: Gen Integer) <*> arbitrarySignedBinary)
       ]
       where
       arbitrarySignedBinary =
@@ -91,6 +91,17 @@ instance Arbitrary CauchyReal where
           r2Dy = ((dyadic r) + mDy) * 0.5
         nextBit _ _ = error "in Arbitrary CauchyReal"
 
+arbitrarySmall :: (Arbitrary a, HasOrderCertainly a Integer) => Integer -> Gen a
+arbitrarySmall limit = aux
+  where
+  aux =
+    do
+    x <- arbitrary
+    if -limit !<=! x && x !<=! limit
+      then return x
+      else aux
+
+
 {-|
   A runtime representative of type @CauchyReal@.
   Used for specialising polymorphic tests to concrete types.
@@ -110,7 +121,7 @@ specCRrespectsAccuracy1 opName op precond =
   it (opName ++ " respects accuracy requests") $ do
     property $
       \ (x :: CauchyReal) (ac :: Accuracy) ->
-        ac < (bits 10000) && precond x ac ==>
+        ac < (bits 1000) && precond x ac ==>
         getAccuracy (qaMakeQuery (op x) ac) >= ac
 
 precondAnyReal :: CauchyReal -> Accuracy -> Bool
@@ -139,7 +150,7 @@ specCRrespectsAccuracy2 opName op precond1 precond2 =
   it (opName ++ " respects accuracy requests") $ do
     property $
       \ (x :: CauchyReal) (y :: CauchyReal) (ac :: Accuracy) ->
-        ac < (bits 10000) && precond1 x ac && precond2 y ac  ==>
+        ac < (bits 1000) && precond1 x ac && precond2 y ac  ==>
         getAccuracy (qaMakeQuery (op x y) ac) >= ac
 
 specCRrespectsAccuracy2T ::
@@ -154,7 +165,7 @@ specCRrespectsAccuracy2T (T tName :: T t) opName op precond1 precond2 =
   it (opName ++ " with " ++ tName ++ " respects accuracy requests") $ do
     property $
       \ (x :: CauchyReal) (t :: t) (ac :: Accuracy) ->
-        ac < (bits 10000) && precond1 x ac && precond2 t  ==>
+        ac < (bits 1000) && precond1 x ac && precond2 t  ==>
         getAccuracy (qaMakeQuery (op x t) ac) >= ac
 
 precondAnyT :: t -> Bool
@@ -162,6 +173,9 @@ precondAnyT _t = True
 
 precondNonZeroT :: (HasEqCertainly t Integer) => t -> Bool
 precondNonZeroT t = t !/=! 0
+
+precondSmallT :: (HasOrderCertainly t Integer) => t -> Bool
+precondSmallT t = -1000 !<=! t && t !<=! 1000
 
 specCauchyReal :: Spec
 specCauchyReal =
@@ -201,8 +215,8 @@ specCauchyReal =
       specCRrespectsAccuracy1 "exp" exp precondSmallReal
       specCRrespectsAccuracy1 "log" log precondPositiveSmallReal
       specCRrespectsAccuracy2 "pow" pow precondPositiveSmallReal precondSmallReal
-      specCRrespectsAccuracy2T tInteger "pow" pow precondNonZeroReal precondAnyT
-      specCRrespectsAccuracy2T tRational "pow" pow precondPositiveSmallReal precondAnyT
-      specCRrespectsAccuracy2T tDyadic "pow" pow precondPositiveSmallReal precondAnyT
+      specCRrespectsAccuracy2T tInteger "pow" pow precondNonZeroReal precondSmallT
+      specCRrespectsAccuracy2T tRational "pow" pow precondPositiveSmallReal precondSmallT
+      specCRrespectsAccuracy2T tDyadic "pow" pow precondPositiveSmallReal precondSmallT
       specCRrespectsAccuracy1 "cos" cos precondAnyReal
       specCRrespectsAccuracy1 "sine" sin precondAnyReal
