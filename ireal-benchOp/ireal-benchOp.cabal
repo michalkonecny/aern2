@@ -1,0 +1,23 @@
+name:                ireal-benchOp
+version:             0.1.0.0
+synopsis:            Execute simple ireal's IReal operation benchmarks
+license:             BSD3
+license-file:        LICENSE
+author:              Michal Konecny
+maintainer:          example@example.com
+maintainer:     Michal Konecny <mikkonecny@gmail.com>
+category:            Math
+build-type:          Simple
+cabal-version:       >=1.10
+
+executable ireal-benchOp
+  hs-source-dirs:      src
+  main-is:             Main.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+    base
+    , ireal
+    , random
+    , QuickCheck >= 2.7 && < 2.9
+    , aern2-mp == 0.1.*
+  default-language:    Haskell2010
