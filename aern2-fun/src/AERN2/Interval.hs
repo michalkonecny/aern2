@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-|
     Module      :  AERN2.Interval
     Description :  Intervals for use as function domains
@@ -14,7 +15,7 @@
 module AERN2.Interval
 (
   Interval(..), singleton
-  , width, split, contains, intersect, intersects
+  , width, split, intersect, intersects
   , DyadicInterval, CanBeDyadicInterval, dyadicInterval
   , RealInterval, CanBeRealInterval, realInterval
 )
@@ -33,8 +34,10 @@ import Data.Typeable
 -- import Test.Hspec
 -- import Test.QuickCheck
 
+import AERN2.Utils.TH
+
 import AERN2.MP.Dyadic
-import AERN2.MP.Ball hiding (contains, intersect)
+import AERN2.MP.Ball hiding (intersect)
 import qualified AERN2.MP.Ball as MPBall
 
 import AERN2.Real
@@ -63,13 +66,26 @@ split (Interval l r) = (Interval l m, Interval m r)
   where
   m = (l + r)*(dyadic 0.5)
 
-contains ::
+instance
   (HasOrderAsymmetric l l',  OrderCompareType l l' ~ Bool,
   HasOrderAsymmetric r' r,  OrderCompareType r' r ~ Bool)
   =>
-  Interval l r -> Interval l' r' -> Bool
-contains (Interval l r) (Interval l' r') =
-  l <= l' && r' <= r
+  CanTestContains (Interval l r) (Interval l' r')
+  where
+  contains (Interval l r) (Interval l' r') =
+    l <= l' && r' <= r
+
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
+  (\ t -> [d|
+    instance
+      (HasOrderAsymmetric l $t,  OrderCompareType l $t ~ Bool,
+      HasOrderAsymmetric $t r,  OrderCompareType $t r ~ Bool)
+      =>
+      CanTestContains $t (Interval l r)
+      where
+      contains e (Interval l r) = l <= e && e <= r
+  |]))
 
 intersect ::
   (CanMinMaxSameType l, CanMinMaxSameType r, HasOrderCertainly l r)

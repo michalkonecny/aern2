@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-|
     Module      :  AERN2.MP.Ball.Type
     Description :  Arbitrary precision dyadic balls
@@ -18,7 +19,7 @@ module AERN2.MP.Ball.Type
   -- * The Ball type
   , MPBall(..), CanBeMPBall, mpBall, CanBeMPBallP, mpBallP
   , reducePrecionIfInaccurate
-  , contains
+  , CanTestContains(..)
   -- * Ball construction/extraction functions
   , IsBall(..), makeExactCentre
   , IsInterval(..), intervalFunctionByEndpoints, intervalFunctionByEndpointsUpDown
@@ -32,6 +33,8 @@ import Numeric.MixedTypes
 import GHC.Generics (Generic)
 
 import Numeric.CatchingExceptions (CanTestValid(..))
+
+import AERN2.Utils.TH
 
 import AERN2.Normalize
 
@@ -110,16 +113,32 @@ reducePrecionIfInaccurate b@(MPBall x _) =
     p_e_nb = prec $ max 2 (10 + nb + fromAccuracy bAcc)
     (NormBits nb) = bNorm
 
-contains :: MPBall -> MPBall -> Bool
-contains (MPBall xLarge eLarge) (MPBall xSmall eSmall) =
-  xLargeDy - eLargeDy <= xSmallDy - eSmallDy
-  &&
-  xSmallDy + eSmallDy <= xLargeDy + eLargeDy
-  where
-  xLargeDy = dyadic xLarge
-  eLargeDy = dyadic eLarge
-  xSmallDy = dyadic xSmall
-  eSmallDy = dyadic eSmall
+class CanTestContains e d where
+  contains :: e -> d -> Bool
+
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
+  (\ t -> [d|
+    instance CanTestContains $t MPBall where
+      contains d (MPBall c e) =
+        l <= d && d <= r
+        where
+        l = cDy - eDy
+        r = cDy + eDy
+        cDy = dyadic c
+        eDy = dyadic e
+  |]))
+
+instance CanTestContains MPBall MPBall where
+  contains (MPBall xLarge eLarge) (MPBall xSmall eSmall) =
+    xLargeDy - eLargeDy <= xSmallDy - eSmallDy
+    &&
+    xSmallDy + eSmallDy <= xLargeDy + eLargeDy
+    where
+    xLargeDy = dyadic xLarge
+    eLargeDy = dyadic eLarge
+    xSmallDy = dyadic xSmall
+    eSmallDy = dyadic eSmall
 
 {- ball construction/extraction functions -}
 

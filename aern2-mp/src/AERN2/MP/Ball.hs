@@ -27,7 +27,7 @@ module AERN2.MP.Ball
   , integerBounds
   -- , endpointsMP, fromEndpointsMP
   -- * Ball operations (see also instances)
-  , contains
+  , CanTestContains(..)
   , intersect
   , piBallP
   -- * Helpers for constructing ball functions

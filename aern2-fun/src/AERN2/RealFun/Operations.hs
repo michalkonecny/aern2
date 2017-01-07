@@ -48,7 +48,7 @@ class CanApply f x where
 
 class CanApplyApprox f x where
   type ApplyApproxType f x
-  {-| compute @f(x)@  -}
+  {-| compute a cheap and unsafe approximation of @f(x)@  -}
   applyApprox :: f {-^ @f@ -} -> x {-^ @x@ -} -> ApplyApproxType f x
 
 class HasVars f where
