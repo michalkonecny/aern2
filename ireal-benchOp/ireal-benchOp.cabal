@@ -1,14 +1,18 @@
-name:                ireal-benchOp
-version:             0.1.0.0
-synopsis:            Execute simple ireal's IReal operation benchmarks
-license:             BSD3
-license-file:        LICENSE
-author:              Michal Konecny
-maintainer:          example@example.com
+ame:            ireal-benchOp
+version:        0.1.0.0
+cabal-version:  >=1.10
+build-type:     Simple
+homepage:       https://github.com/michalkonecny/aern2/ireal-benchOp
+author:         Michal Konecny
 maintainer:     Michal Konecny <mikkonecny@gmail.com>
-category:            Math
-build-type:          Simple
-cabal-version:       >=1.10
+copyright:      (c) 2017 Michal Konecny
+license:        BSD3
+license-file:   LICENSE
+stability:      experimental
+tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
+category:       Math
+synopsis:       Execute simple ireal's IReal operation benchmarks
+description:    Execute simple ireal's IReal operation benchmarks
 
 executable ireal-benchOp
   hs-source-dirs:      src

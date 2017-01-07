@@ -1,17 +1,17 @@
 name:           aern2-mp
-version:        0.1
+version:        0.1.0.0
 cabal-version:  >= 1.9.2
 build-type:     Simple
-author:         Michal Konecny
-stability:      experimental
-maintainer:     Michal Konecny <mikkonecny@gmail.com>
-tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
-license:        BSD3
 homepage:       https://github.com/michalkonecny/aern2/aern2-mp
-synopsis:       Multi-precision floats via haskell-mpfr or hmpfr
-category:       Math
-copyright:      (c) 2015, 2016 Michal Konecny
+author:         Michal Konecny
+maintainer:     Michal Konecny <mikkonecny@gmail.com>
+copyright:      (c) 2015-2017 Michal Konecny
+license:        BSD3
 license-file:   LICENSE
+stability:      experimental
+tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
+category:       Math
+synopsis:       Multi-precision floats via haskell-mpfr or hmpfr
 Description:
   A wrapper around MPFR (and in future alternative to MPFR), providing the types:
   .
@@ -26,6 +26,11 @@ Description:
   .
   There is also an Integer backend which does not need MPFR, but
   it is not yet complete.
+
+source-repository head
+  type:     git
+  location: https://github.com/mikkonecny/aern2.git
+  subdir: aern2-mp
 
 flag MPFR
   Description: Use MPFR backend (default); Integer backend is incomplete

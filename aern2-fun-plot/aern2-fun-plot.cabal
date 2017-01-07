@@ -1,19 +1,24 @@
 name:           aern2-fun-plot
-version:        0.1
+version:        0.1.0.0
 cabal-version:  >= 1.9.2
 build-type:     Simple
+homepage:       https://github.com/michalkonecny/aern2/aern2-fun-plot
 author:         Michal Konecny
-stability:      experimental
 maintainer:     Michal Konecny <mikkonecny@gmail.com>
-tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
+copyright:      (c) 2015-2017 Michal Konecny
 license:        BSD3
-homepage:       https://github.com/michalkonecny/aern2/aern2-fun
-synopsis:       Backend for plotting real functions
-category:       Math
-copyright:      (c) 2016 Michal Konecny, Eike Neumann
 license-file:   LICENSE
+stability:      experimental
+tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
+category:       Math
+synopsis:       Backend for plotting real functions
 Description:
-  Backend for plotting real functions
+  Backend for plotting real functions in a browser-based UI.
+
+source-repository head
+  type:     git
+  location: https://github.com/mikkonecny/aern2.git
+  subdir: aern2-fun-plot
 
 library
   hs-source-dirs:  server/src

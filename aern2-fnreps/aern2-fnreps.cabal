@@ -1,18 +1,23 @@
 Name:           aern2-fnreps
-Version:        0.1
-Cabal-Version:  >= 1.8
-Build-Type:     Simple
-License:        BSD3
-License-File:   LICENCE
-Author:         Michal Konecny, Eike Neumann (Aston University)
-Copyright:      (c) 2015, 2016 Michal Konecny, Eike Neumann
-Maintainer:     mikkonecny@gmail.com
-Homepage:       https://github.com/michalkonecny/aern2
-Stability:      experimental
-Category:       Data, Math
+version:        0.1.0.0
+cabal-version:  >= 1.9.2
+build-type:     Simple
+homepage:       https://github.com/michalkonecny/aern2/aern2-fnreps
+author:         Michal Konecny, Eike Neumann
+maintainer:     Michal Konecny <mikkonecny@gmail.com>
+copyright:      (c) 2015-2017 Michal Konecny, Eike Neumann
+license:        BSD3
+license-file:   LICENSE
+stability:      experimental
+tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
+category:       Math
 Synopsis:       compare real function representations
-Tested-with:    GHC==7.8.4
 Description:    Define and compare various representations of univariate continuous real functions.
+
+source-repository head
+  type:     git
+  location: https://github.com/mikkonecny/aern2.git
+  subdir: aern2-fnreps
 
 executable aern2-fnreps-ops
   build-depends:

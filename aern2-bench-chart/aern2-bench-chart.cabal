@@ -1,18 +1,23 @@
 Name:           aern2-bench-chart
-Version:        0.1
+Version:        0.1.0.0
 Cabal-Version:  >= 1.8
 Build-Type:     Simple
+Homepage:       https://github.com/michalkonecny/aern2/aern2-bench-chart
+Author:         Michal Konecny (Aston University)
+Maintainer:     mikkonecny@gmail.com
+Copyright:      (c) 2016-2017 Michal Konecny
 License:        BSD3
 License-File:   LICENCE
-Author:         Michal Konecny (Aston University)
-Copyright:      (c) 2016 Michal Konecny
-Maintainer:     mikkonecny@gmail.com
-Homepage:       https://github.com/michalkonecny/aern2
 Stability:      experimental
+tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
 Category:       Data, Math
 Synopsis:       render data from aern2 benchmarks as charts
-Tested-with:    GHC==7.8.4
 Description:    render data from aern2 benchmarks as charts
+
+source-repository head
+  type:     git
+  location: https://github.com/mikkonecny/aern2.git
+  subdir: aern2-bench-chart
 
 executable aern2-bench-chart
   build-depends:
