@@ -97,6 +97,7 @@ library
     AERN2.MP.Dyadic
     AERN2.MP.Accuracy
     AERN2.MP.ErrorBound
+    AERN2.MP.Enclosure
     AERN2.MP.Ball
     AERN2.MP.Ball.Type
     AERN2.MP.Ball.Conversions

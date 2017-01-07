@@ -16,13 +16,11 @@ module AERN2.MP.Ball.Type
   -- * Auxiliary types
   module AERN2.MP.Precision
   , module AERN2.MP.Accuracy
+  , module AERN2.MP.Enclosure
   -- * The Ball type
   , MPBall(..), CanBeMPBall, mpBall, CanBeMPBallP, mpBallP
   , reducePrecionIfInaccurate
-  , CanTestContains(..)
   -- * Ball construction/extraction functions
-  , IsBall(..), makeExactCentre
-  , IsInterval(..), intervalFunctionByEndpoints, intervalFunctionByEndpointsUpDown
   , endpointsMP, fromEndpointsMP
 )
 where
@@ -48,20 +46,7 @@ import AERN2.MP.Precision
 import AERN2.MP.Accuracy
 import qualified AERN2.MP.ErrorBound as EB
 import AERN2.MP.ErrorBound (ErrorBound, errorBound)
-
--- import Debug.Trace (trace)
---
--- shouldTrace :: Bool
--- shouldTrace = False
--- --shouldTrace = True
---
--- maybeTrace :: String -> a -> a
--- maybeTrace
---     | shouldTrace = trace
---     | otherwise = const id
---
--- _dummy :: ()
--- _dummy = maybeTrace "dummy" ()
+import AERN2.MP.Enclosure
 
 data MPBall = MPBall
   -- { ball_value :: MPFloat
@@ -113,22 +98,6 @@ reducePrecionIfInaccurate b@(MPBall x _) =
     p_e_nb = prec $ max 2 (10 + nb + fromAccuracy bAcc)
     (NormBits nb) = bNorm
 
-class CanTestContains e d where
-  contains :: e -> d -> Bool
-
-$(declForTypes
-  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
-  (\ t -> [d|
-    instance CanTestContains $t MPBall where
-      contains d (MPBall c e) =
-        l <= d && d <= r
-        where
-        l = cDy - eDy
-        r = cDy + eDy
-        cDy = dyadic c
-        eDy = dyadic e
-  |]))
-
 instance CanTestContains MPBall MPBall where
   contains (MPBall xLarge eLarge) (MPBall xSmall eSmall) =
     xLargeDy - eLargeDy <= xSmallDy - eSmallDy
@@ -140,45 +109,20 @@ instance CanTestContains MPBall MPBall where
     xSmallDy = dyadic xSmall
     eSmallDy = dyadic eSmall
 
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
+  (\ t -> [d|
+    instance CanTestContains MPBall $t where
+      contains (MPBall c e) x =
+        l <= x && x <= r
+        where
+        l = cDy - eDy
+        r = cDy + eDy
+        cDy = dyadic c
+        eDy = dyadic e
+  |]))
+
 {- ball construction/extraction functions -}
-
-fromEndpointsMP :: MPFloat -> MPFloat -> MPBall
-fromEndpointsMP = fromEndpoints
-
-endpointsMP :: MPBall -> (MPFloat, MPFloat)
-endpointsMP = endpoints
-
-class IsInterval i e where
-  fromEndpoints :: e -> e -> i
-  endpoints :: i -> (e,e)
-
-{-|
-    Computes a *monotone* ball function @f@ on intervals using the interval endpoints.
--}
-intervalFunctionByEndpoints ::
-  (IsInterval t t, HasEqCertainly t t)
-  =>
-  (t -> t) {-^ @fThin@: a version of @f@ that works well on thin intervals -} ->
-  (t -> t) {-^ @f@ on *large* intervals -}
-intervalFunctionByEndpoints fThin x
-  | l !==! u = fThin l
-  | otherwise = fromEndpoints (fThin l) (fThin u)
-  where
-  (l,u) = endpoints x
-
-{-|
-    Computes a *monotone* ball function @f@ on intervals using the interval endpoints.
--}
-intervalFunctionByEndpointsUpDown ::
-  (IsInterval t e)
-  =>
-  (e -> e) {-^ @fDown@: a version of @f@ working on endpoints, rounded down -} ->
-  (e -> e) {-^ @fUp@: a version of @f@ working on endpoints, rounded up -} ->
-  (t -> t) {-^ @f@ on intervals rounding *outwards* -}
-intervalFunctionByEndpointsUpDown fDown fUp x =
-  fromEndpoints (fDown l) (fUp u)
-  where
-  (l,u) = endpoints x
 
 instance IsInterval MPBall MPFloat where
   fromEndpoints l u
@@ -197,6 +141,12 @@ instance IsInterval MPBall MPFloat where
       lDy   = xDy - eDy
       uDy   = xDy + eDy
 
+fromEndpointsMP :: MPFloat -> MPFloat -> MPBall
+fromEndpointsMP = fromEndpoints
+
+endpointsMP :: MPBall -> (MPFloat, MPFloat)
+endpointsMP = endpoints
+
 instance IsInterval MPBall MPBall where
   fromEndpoints l r = -- works as union even when r < l
       fromEndpointsMP lMP uMP
@@ -210,27 +160,6 @@ instance IsInterval MPBall MPBall where
       l = MPBall lMP (errorBound 0)
       u = MPBall uMP (errorBound 0)
       (lMP, uMP) = endpointsMP x
-
-class IsBall t where
-  type CentreType t
-  centre :: t -> CentreType t
-  centreAsBallAndRadius :: t-> (t,ErrorBound)
-  centreAsBall :: t -> t
-  centreAsBall = fst . centreAsBallAndRadius
-  radius :: t -> ErrorBound
-  radius = snd . centreAsBallAndRadius
-  updateRadius :: (ErrorBound -> ErrorBound) -> (t -> t)
-
-{-|  When the radius of the ball is implicitly contributed to by imprecision in the centre
-   (eg if the centre is a polynomial with inexact coefficients), move all that imprecision
-   to the explicit radius, making the centre exact.  This may lose some information,
-   but as a ball is equivalent to the original.
-   For MPBall this function is pointless because it is equivalent to the identity.  -}
-makeExactCentre :: (IsBall t) => t -> t
-makeExactCentre v =
-  updateRadius (+r) c
-  where
-  (c, r) = centreAsBallAndRadius v
 
 instance IsBall MPBall where
   type CentreType MPBall = Dyadic

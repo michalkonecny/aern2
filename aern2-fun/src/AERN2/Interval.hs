@@ -82,10 +82,21 @@ $(declForTypes
       (HasOrderAsymmetric l $t,  OrderCompareType l $t ~ Bool,
       HasOrderAsymmetric $t r,  OrderCompareType $t r ~ Bool)
       =>
-      CanTestContains $t (Interval l r)
+      CanTestContains (Interval l r) $t
       where
-      contains e (Interval l r) = l <= e && e <= r
+      contains (Interval l r) e = l <= e && e <= r
   |]))
+
+instance
+  (CanSubSameType e, CanAddSubMulBy t e
+  , CanRound t, CanSubThis t Integer)
+  =>
+  CanMapInside (Interval e e) t
+  where
+  mapInside (Interval l r) x =
+    l + xU * (r - l)
+    where
+    xU = x - (floor x)
 
 intersect ::
   (CanMinMaxSameType l, CanMinMaxSameType r, HasOrderCertainly l r)
