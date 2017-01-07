@@ -13,7 +13,7 @@ tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
 category:       Math
 synopsis:       Multi-precision floats via haskell-mpfr or hmpfr
 Description:
-  A wrapper around MPFR (and in future alternative to MPFR), providing the types:
+  A wrapper around MPFR (and, in future, an alternative to MPFR), providing the types:
   .
   * Dyadic:  variable-precision floats with exact ring operations
   .
