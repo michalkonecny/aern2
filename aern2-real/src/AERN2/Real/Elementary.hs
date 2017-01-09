@@ -12,7 +12,7 @@
 -}
 module AERN2.Real.Elementary
 (
-  pi, piA, sqrtA, expA, logA, sinA, cosA
+  expA, logA, pi, piA, sqrtA, sinA, cosA
 )
 where
 
@@ -30,56 +30,6 @@ import AERN2.Real.Type
 import AERN2.Real.Aux
 import AERN2.Real.Ring ()
 import AERN2.Real.Field ()
-
-{-
-  To get @pi@ in an arbitrary arrow, use 'piA'.
--}
-pi :: CauchyReal
-pi = newCR "pi" [] (seqByPrecision2CauchySeq piBallP)
-
-piA :: (QAArrow to) => CauchyRealA to
-piA = qaArr pi
-
-{- sqrt -}
-
-instance (QAArrow to) => CanSqrt (CauchyRealA to) where
-  sqrt = unaryOp "sqrt" sqrt sqrtGetInitQ1
-    where
-    sqrtGetInitQ1 a1 =
-      proc q ->
-        do
-        (a1NormLog, b) <- getCRFnNormLog a1 sqrtSafe -< q
-        let jInit = case a1NormLog of
-                NormBits sqrtNormLog -> max 0 (q - 1 - sqrtNormLog)
-                NormZero -> q
-        returnA -< (jInit, Just b)
-    sqrtSafe x =
-      case x < 0 of
-        Just True -> error "sqrt of a negative argument"
-        _ -> sqrt (max 0 x)
-
-
-instance CanSqrt Integer where
-  type SqrtType Integer = CauchyReal
-  sqrt = sqrt . real
-
-instance CanSqrt Int where
-  type SqrtType Int = CauchyReal
-  sqrt = sqrt . real
-
-instance CanSqrt Dyadic where
-  type SqrtType Dyadic = CauchyReal
-  sqrt = sqrt . real
-
-instance CanSqrt Rational where
-  type SqrtType Rational = CauchyReal
-  sqrt = sqrt . real
-
-sqrtA ::
-  (QAArrow to, CanSqrt t, SqrtType t ~ CauchyReal)
-  =>
-  t -> CauchyRealA to
-sqrtA = qaArr . sqrt
 
 {- exp -}
 
@@ -236,6 +186,56 @@ instance CanPow Rational Rational where
   type PowType Rational Rational = CauchyReal
   pow b e = pow (real b) (real e)
 
+
+{-
+  To get @pi@ in an arbitrary arrow, use 'piA'.
+-}
+pi :: CauchyReal
+pi = newCR "pi" [] (seqByPrecision2CauchySeq piBallP)
+
+piA :: (QAArrow to) => CauchyRealA to
+piA = qaArr pi
+
+{- sqrt -}
+
+instance (QAArrow to) => CanSqrt (CauchyRealA to) where
+  sqrt = unaryOp "sqrt" sqrt sqrtGetInitQ1
+    where
+    sqrtGetInitQ1 a1 =
+      proc q ->
+        do
+        (a1NormLog, b) <- getCRFnNormLog a1 sqrtSafe -< q
+        let jInit = case a1NormLog of
+                NormBits sqrtNormLog -> max 0 (q - 1 - sqrtNormLog)
+                NormZero -> q
+        returnA -< (jInit, Just b)
+    sqrtSafe x =
+      case x < 0 of
+        Just True -> error "sqrt of a negative argument"
+        _ -> sqrt (max 0 x)
+
+
+instance CanSqrt Integer where
+  type SqrtType Integer = CauchyReal
+  sqrt = sqrt . real
+
+instance CanSqrt Int where
+  type SqrtType Int = CauchyReal
+  sqrt = sqrt . real
+
+instance CanSqrt Dyadic where
+  type SqrtType Dyadic = CauchyReal
+  sqrt = sqrt . real
+
+instance CanSqrt Rational where
+  type SqrtType Rational = CauchyReal
+  sqrt = sqrt . real
+
+sqrtA ::
+  (QAArrow to, CanSqrt t, SqrtType t ~ CauchyReal)
+  =>
+  t -> CauchyRealA to
+sqrtA = qaArr . sqrt
 
 {- sine, cosine -}
 

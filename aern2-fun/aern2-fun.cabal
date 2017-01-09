@@ -1,19 +1,24 @@
 name:           aern2-fun
-version:        0.1
+version:        0.1.0.0
 cabal-version:  >= 1.9.2
 build-type:     Simple
-author:         Michal Konecny
-stability:      experimental
-maintainer:     Michal Konecny <mikkonecny@gmail.com>
-tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
-license:        BSD3
 homepage:       https://github.com/michalkonecny/aern2/aern2-fun
-synopsis:       Exact real functions
-category:       Math
-copyright:      (c) 2016 Michal Konecny, Eike Neumann
+author:         Michal Konecny, Eike Neumann
+maintainer:     Michal Konecny <mikkonecny@gmail.com>
+copyright:      (c) 2015-2017 Michal Konecny, Eike Neumann
+license:        BSD3
 license-file:   LICENSE
+stability:      experimental
+tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
+category:       Math
+synopsis:       Exact real functions
 Description:
   TODO
+
+source-repository head
+  type:     git
+  location: https://github.com/mikkonecny/aern2.git
+  subdir: aern2-fun
 
 library
   hs-source-dirs:  src
@@ -32,7 +37,7 @@ library
     , num-exceptions == 0.1.*
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
-  ghc-options:     -Wall -fno-warn-orphans
+  ghc-options:     -Wall -O2 -fno-warn-orphans
   extensions:
     RebindableSyntax,
     PostfixOperators,
@@ -70,6 +75,7 @@ library
     AERN2.Poly.Cheb.DCT
     AERN2.Poly.Cheb.Ring
     AERN2.Poly.Cheb.Field
+    AERN2.Poly.Cheb.Tests
     AERN2.Poly.Ball
     AERN2.Poly.Power
     AERN2.Poly.Power.Type
@@ -83,25 +89,26 @@ library
     AERN2.PPoly.Maximum
     AERN2.PPoly.Division
 
--- test-suite spec
---   type:
---       exitcode-stdio-1.0
---   ghc-options:
---       -Wall
---   extensions:
---     RebindableSyntax,
---     PostfixOperators,
---     ScopedTypeVariables,
---     FlexibleContexts
---   hs-source-dirs:
---       test
---   main-is:
---       Spec.hs
---   build-depends:
---     base == 4.*
---     -- , mixed-types-num
---     -- , aern2-mp
---     , aern2-real
---     , hspec >= 2.1 && < 2.3
---     -- , hspec-smallcheck >= 0.3 && < 0.5
---     , QuickCheck >= 2.7 && < 2.9
+test-suite spec
+  type:
+      exitcode-stdio-1.0
+  ghc-options:
+      -Wall
+  extensions:
+    RebindableSyntax,
+    PostfixOperators,
+    ScopedTypeVariables,
+    FlexibleContexts
+  hs-source-dirs:
+      test
+  main-is:
+      Spec.hs
+  build-depends:
+    base == 4.*
+    -- , mixed-types-num
+    -- , aern2-mp
+    -- , aern2-real
+    , aern2-fun
+    , hspec >= 2.1 && < 2.3
+    -- , hspec-smallcheck >= 0.3 && < 0.5
+    , QuickCheck >= 2.7 && < 2.9

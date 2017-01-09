@@ -1,0 +1,25 @@
+computing logistic (2000 times) using accuracy 8000
+accuracies = [Bits 8000]
+	Command being timed: "ireal-benchOp logistic 2000 8000"
+	User time (seconds): 416.97
+	System time (seconds): 190.40
+	Percent of CPU this job got: 311%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:14.90
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 142176
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 50063
+	Voluntary context switches: 1652524
+	Involuntary context switches: 31831646
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

@@ -32,12 +32,16 @@ import Test.Hspec
 import Test.QuickCheck
 -- import qualified Test.Hspec.SmallCheck as SC
 
+-- import Numeric.CatchingExceptions
+
 -- import AERN2.Norm
 import AERN2.MP.Accuracy
 --
 import qualified AERN2.MP.Ball.Type as MB
 import AERN2.MP.Dyadic
 import AERN2.MP.Float
+
+import AERN2.QA
 
 import AERN2.Real.Type
 import AERN2.Real.Comparison (CauchyRealAtAccuracy(..))
@@ -49,21 +53,24 @@ instance Arbitrary CauchyRealAtAccuracy where
   arbitrary =
     CauchyRealAtAccuracy <$>
       arbitrary <*>
-      ((\x -> bits (1 + (abs (3 * x)))) <$> (arbitrary :: Gen Integer))
+      (bits <$> (arbitrarySmall 1000 :: Gen Integer))
 
 instance Arbitrary CauchyReal where
   arbitrary =
     frequency
-      [(int 1, real <$> (arbitrary :: Gen Integer)),
-       (int 1, real <$> (arbitrary :: Gen Rational)),
-       (int 2, (*) <$> (arbitrary :: Gen Integer) <*> arbitrarySignedBinary)
+      [(int 1, real <$> (arbitrarySmall 1000000 :: Gen Integer)),
+       (int 1, real <$> (arbitrarySmall 1000000 :: Gen Rational)),
+       (int 2, (*) <$> (arbitrarySmall 1000000 :: Gen Integer) <*> arbitrarySignedBinary)
       ]
       where
       arbitrarySignedBinary =
         signedBinary2Real <$> infiniteListOf (elements [-1,0,1])
       signedBinary2Real sbits =
         newCR "random" [] $ \ ac ->
-          balls !! ((fromAccuracy ac) + 1)
+          case ac of
+            NoInformation -> balls !! 0
+            Exact -> error "signedBinary2Real: cannot request the number Exactly"
+            _ -> balls !! (fromAccuracy ac + 1)
         where
         balls = nextBit (MB.mpBall (0,1)) sbits
         nextBit ball (sbit:rest) =
@@ -84,6 +91,17 @@ instance Arbitrary CauchyReal where
           r2Dy = ((dyadic r) + mDy) * 0.5
         nextBit _ _ = error "in Arbitrary CauchyReal"
 
+arbitrarySmall :: (Arbitrary a, HasOrderCertainly a Integer) => Integer -> Gen a
+arbitrarySmall limit = aux
+  where
+  aux =
+    do
+    x <- arbitrary
+    if -limit !<=! x && x !<=! limit
+      then return x
+      else aux
+
+
 {-|
   A runtime representative of type @CauchyReal@.
   Used for specialising polymorphic tests to concrete types.
@@ -94,46 +112,111 @@ tCauchyReal = T "CauchyReal"
 tCauchyRealAtAccuracy :: T CauchyRealAtAccuracy
 tCauchyRealAtAccuracy = T "CauchyReal(ac)"
 
+specCRrespectsAccuracy1 ::
+  String ->
+  (CauchyReal -> CauchyReal) ->
+  (CauchyReal -> Accuracy -> Bool) ->
+  Spec
+specCRrespectsAccuracy1 opName op precond =
+  it (opName ++ " respects accuracy requests") $ do
+    property $
+      \ (x :: CauchyReal) (ac :: Accuracy) ->
+        ac < (bits 1000) && precond x ac ==>
+        getAccuracy (qaMakeQuery (op x) ac) >= ac
+
+precondAnyReal :: CauchyReal -> Accuracy -> Bool
+precondAnyReal _x _ac = True
+
+precondPositiveReal :: CauchyReal -> Accuracy -> Bool
+precondPositiveReal x ac = qaMakeQuery x ac !>! 0
+
+precondNonZeroReal :: CauchyReal -> Accuracy -> Bool
+precondNonZeroReal x ac = qaMakeQuery x ac !/=! 0
+
+precondSmallReal :: CauchyReal -> Accuracy -> Bool
+precondSmallReal x ac = abs (qaMakeQuery x ac) !<! 1000
+
+precondPositiveSmallReal :: CauchyReal -> Accuracy -> Bool
+precondPositiveSmallReal x ac = 0 !<! b && b !<! 1000
+  where b = qaMakeQuery x ac
+
+specCRrespectsAccuracy2 ::
+  String ->
+  (CauchyReal -> CauchyReal -> CauchyReal) ->
+  (CauchyReal -> Accuracy -> Bool) ->
+  (CauchyReal -> Accuracy -> Bool) ->
+  Spec
+specCRrespectsAccuracy2 opName op precond1 precond2 =
+  it (opName ++ " respects accuracy requests") $ do
+    property $
+      \ (x :: CauchyReal) (y :: CauchyReal) (ac :: Accuracy) ->
+        ac < (bits 1000) && precond1 x ac && precond2 y ac  ==>
+        getAccuracy (qaMakeQuery (op x y) ac) >= ac
+
+specCRrespectsAccuracy2T ::
+  (Arbitrary t, Show t) =>
+  T t ->
+  String ->
+  (CauchyReal -> t -> CauchyReal) ->
+  (CauchyReal -> Accuracy -> Bool) ->
+  (t -> Bool) ->
+  Spec
+specCRrespectsAccuracy2T (T tName :: T t) opName op precond1 precond2 =
+  it (opName ++ " with " ++ tName ++ " respects accuracy requests") $ do
+    property $
+      \ (x :: CauchyReal) (t :: t) (ac :: Accuracy) ->
+        ac < (bits 1000) && precond1 x ac && precond2 t  ==>
+        getAccuracy (qaMakeQuery (op x t) ac) >= ac
+
+precondAnyT :: t -> Bool
+precondAnyT _t = True
+
+precondNonZeroT :: (HasEqCertainly t Integer) => t -> Bool
+precondNonZeroT t = t !/=! 0
+
+precondSmallT :: (HasOrderCertainly t Integer) => t -> Bool
+precondSmallT t = -1000 !<=! t && t !<=! 1000
+
 specCauchyReal :: Spec
 specCauchyReal =
   describe ("CauchyReal") $ do
     -- specConversion tInteger tCauchyReal real (fst . integerBounds)
     describe "order" $ do
       specHasEqNotMixed tCauchyRealAtAccuracy
-      -- specHasEq tInt tCauchyReal tRational
-      -- specCanPickZero tCauchyReal
+      -- specHasEq tInt tCauchyRealAtAccuracy tRational
+      -- specCanPickNonZero tCauchyRealAtAccuracy
       specHasOrderNotMixed tCauchyRealAtAccuracy
-      -- specHasOrder tInt tCauchyReal tRational
-    -- describe "min/max/abs" $ do
-    --   specCRFastConvergent1 abs
-    --   specCRFastConvergent2 max
-    --   specCRFastConvergent2 min
-    -- describe "ring" $ do
-    --   specCRFastConvergent1 negate
-    --   specCRFastConvergent2 add
-    --   specCRFastConvergent2T tInteger add
-    --   specCRFastConvergent2T tRational add
-    --   specCRFastConvergent2T tDyadic add
-    --   specCRFastConvergent2 sub
-    --   specCRFastConvergent2T tInteger sub
-    --   specCRFastConvergent2T tRational sub
-    --   specCRFastConvergent2T tDyadic sub
-    --   specCRFastConvergent2 mul
-    --   specCRFastConvergent2T tInteger mul
-    --   specCRFastConvergent2T tRational mul
-    --   specCRFastConvergent2T tDyadic mul
-    -- describe "field" $ do
-    --   specCRFastConvergent2 div -- TODO: specCRFastConvergentN should use CatchingNumExceptions
-    --   specCRFastConvergent2T tInteger div
-    --   specCRFastConvergent2T tRational div
-    --   specCRFastConvergent2T tDyadic div
-    -- describe "elementary" $ do
-    --   specCRFastConvergent1 sqrt
-    --   specCRFastConvergent1 exp
-    --   specCRFastConvergent1 log
-    --   specCRFastConvergent2 pow
-    --   specCRFastConvergent2T tInteger pow
-    --   specCRFastConvergent2T tRational pow
-    --   specCRFastConvergent2T tDyadic pow
-    --   specCRFastConvergent1 cos
-    --   specCRFastConvergent1 sin
+      -- specHasOrder tInt tCauchyRealAtAccuracy tRational
+    describe "min/max/abs" $ do
+      specCRrespectsAccuracy1 "abs" abs precondAnyReal
+      specCRrespectsAccuracy2 "max" max precondAnyReal precondAnyReal
+      specCRrespectsAccuracy2 "min" min precondAnyReal precondAnyReal
+    describe "ring" $ do
+      specCRrespectsAccuracy1 "negate" negate precondAnyReal
+      specCRrespectsAccuracy2 "+" add precondAnyReal precondAnyReal
+      specCRrespectsAccuracy2T tInteger "+" add precondAnyReal precondAnyT
+      specCRrespectsAccuracy2T tRational "+" add precondAnyReal precondAnyT
+      specCRrespectsAccuracy2T tDyadic "+" add precondAnyReal precondAnyT
+      specCRrespectsAccuracy2 "a-b" sub precondAnyReal precondAnyReal
+      specCRrespectsAccuracy2T tInteger "a-b" sub precondAnyReal precondAnyT
+      specCRrespectsAccuracy2T tRational "a-b" sub precondAnyReal precondAnyT
+      specCRrespectsAccuracy2T tDyadic "a-b" sub precondAnyReal precondAnyT
+      specCRrespectsAccuracy2 "*" mul precondAnyReal precondAnyReal
+      specCRrespectsAccuracy2T tInteger "*" mul precondAnyReal precondAnyT
+      specCRrespectsAccuracy2T tRational "*" mul precondAnyReal precondAnyT
+      specCRrespectsAccuracy2T tDyadic "*" mul precondAnyReal precondAnyT
+    describe "field" $ do
+      specCRrespectsAccuracy2 "/" divide precondAnyReal precondNonZeroReal
+      specCRrespectsAccuracy2T tInteger "/" divide precondAnyReal precondNonZeroT
+      specCRrespectsAccuracy2T tRational "/" divide precondAnyReal precondNonZeroT
+      specCRrespectsAccuracy2T tDyadic "/" divide precondAnyReal precondNonZeroT
+    describe "elementary" $ do
+      specCRrespectsAccuracy1 "sqrt" sqrt precondPositiveReal
+      specCRrespectsAccuracy1 "exp" exp precondSmallReal
+      specCRrespectsAccuracy1 "log" log precondPositiveSmallReal
+      specCRrespectsAccuracy2 "pow" pow precondPositiveSmallReal precondSmallReal
+      specCRrespectsAccuracy2T tInteger "pow" pow precondNonZeroReal precondSmallT
+      specCRrespectsAccuracy2T tRational "pow" pow precondPositiveSmallReal precondSmallT
+      specCRrespectsAccuracy2T tDyadic "pow" pow precondPositiveSmallReal precondSmallT
+      specCRrespectsAccuracy1 "cos" cos precondAnyReal
+      specCRrespectsAccuracy1 "sine" sin precondAnyReal

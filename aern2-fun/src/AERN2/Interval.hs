@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-|
     Module      :  AERN2.Interval
     Description :  Intervals for use as function domains
@@ -14,7 +15,9 @@
 module AERN2.Interval
 (
   Interval(..), singleton
-  , width, split, contains, intersect, intersects
+  , width, split
+  , arbitraryNonEmptyInterval
+  , intersect, intersects
   , DyadicInterval, CanBeDyadicInterval, dyadicInterval
   , RealInterval, CanBeRealInterval, realInterval
 )
@@ -31,13 +34,17 @@ import Data.Typeable
 -- import qualified Data.List as List
 
 -- import Test.Hspec
--- import Test.QuickCheck
+import Test.QuickCheck
+
+import AERN2.Utils.TH
 
 import AERN2.MP.Dyadic
-import AERN2.MP.Ball hiding (contains, intersect)
+import AERN2.MP.Ball hiding (intersect)
 import qualified AERN2.MP.Ball as MPBall
 
 import AERN2.Real
+
+{- type -}
 
 data Interval l r = Interval { endpointL :: l, endpointR :: r }
   deriving (P.Eq, Generic)
@@ -63,13 +70,63 @@ split (Interval l r) = (Interval l m, Interval m r)
   where
   m = (l + r)*(dyadic 0.5)
 
-contains ::
+instance
+  (Arbitrary l, Arbitrary r, HasOrderCertainlyAsymmetric l r)
+  =>
+  Arbitrary (Interval l r)
+  where
+  arbitrary =
+    do
+    l <- arbitrary
+    r <- arbitrary
+    if l !<=! r then return (Interval l r) else arbitrary
+
+arbitraryNonEmptyInterval ::
+  (Arbitrary l, Arbitrary r, HasOrderCertainlyAsymmetric l r)
+  =>
+  Gen (Interval l r)
+arbitraryNonEmptyInterval =
+    do
+    l <- arbitrary
+    r <- arbitrary
+    if l !<! r then return (Interval l r) else arbitraryNonEmptyInterval
+
+{- containment -}
+
+instance
   (HasOrderAsymmetric l l',  OrderCompareType l l' ~ Bool,
   HasOrderAsymmetric r' r,  OrderCompareType r' r ~ Bool)
   =>
-  Interval l r -> Interval l' r' -> Bool
-contains (Interval l r) (Interval l' r') =
-  l <= l' && r' <= r
+  CanTestContains (Interval l r) (Interval l' r')
+  where
+  contains (Interval l r) (Interval l' r') =
+    l <= l' && r' <= r
+
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
+  (\ t -> [d|
+    instance
+      (HasOrderAsymmetric l $t,  OrderCompareType l $t ~ Bool,
+      HasOrderAsymmetric $t r,  OrderCompareType $t r ~ Bool)
+      =>
+      CanTestContains (Interval l r) $t
+      where
+      contains (Interval l r) e = l <= e && e <= r
+  |]))
+
+instance
+  (CanSubSameType e, CanAddSubMulBy t e
+  , HasIntegerBounds t, CanSubThis t Integer, CanDivBy t Integer)
+  =>
+  CanMapInside (Interval e e) t
+  where
+  mapInside (Interval l r) x =
+    l + xUnit * (r - l)
+    where
+    xUnit = (x - xL) / (max 1 $ xU - xL)
+    (xL,xU) = integerBounds x
+
+{- intersection -}
 
 intersect ::
   (CanMinMaxSameType l, CanMinMaxSameType r, HasOrderCertainly l r)
@@ -88,6 +145,8 @@ intersects ::
   Interval l r -> Interval l r -> Bool
 intersects i1 i2 = isJust $ intersect i1 i2
 
+{- comparison -}
+
 instance
   (HasEqAsymmetric l1 l2, HasEqAsymmetric r1 r2
   , EqCompareType l1 l2 ~ EqCompareType r1 r2
@@ -99,6 +158,7 @@ instance
   equalTo (Interval l1 r1) (Interval l2 r2) =
     (l1 == l2) && (r1 == r2)
 
+{- Dyadic intervals -}
 
 type DyadicInterval = Interval Dyadic Dyadic
 type CanBeDyadicInterval t = ConvertibleExactly t DyadicInterval
@@ -125,6 +185,8 @@ instance ConvertibleExactly MPBall DyadicInterval where
 instance ConvertibleExactly DyadicInterval MPBall where
   safeConvertExactly (Interval lD rD) =
     Right $ MPBall.fromEndpoints (mpBall lD) (mpBall rD)
+
+{- CauchyReal intervals -}
 
 type RealInterval = Interval CauchyReal CauchyReal
 type CanBeRealInterval t = ConvertibleExactly t RealInterval
