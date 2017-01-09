@@ -17,7 +17,7 @@ module AERN2.RealFun.Operations
   , CanApply(..)
   , CanApplyApprox(..)
   , HasVars(..)
-  , HasConstFunctions, constFn
+  , HasConstFunctions, constFn, specEvalConstFn
   , CanMaximiseOverDom(..), CanMinimiseOverDom(..)
   , CanIntegrateOverDom(..)
 )
@@ -25,16 +25,17 @@ where
 
 import Numeric.MixedTypes
 -- import qualified Prelude as P
--- import Text.Printf
+import Text.Printf
 
 -- import Data.Typeable
 
 -- import qualified Data.List as List
 
--- import Test.Hspec
--- import Test.QuickCheck
+import Test.Hspec
+import Test.QuickCheck
 
 -- import AERN2.MP.Dyadic
+import AERN2.MP.Enclosure
 -- import AERN2.MP.Ball
 
 class HasDomain f where
@@ -59,10 +60,26 @@ class HasVars f where
     Var f {-^ @x@ -} ->
     f
 
-type HasConstFunctions t f = ConvertibleExactly (Domain f, t) f
+type HasConstFunctions t f = (HasDomain f, ConvertibleExactly (Domain f, t) f)
 
 constFn :: (HasConstFunctions t f) => (Domain f, t) -> f
 constFn = convertExactly
+
+specEvalConstFn ::
+  (HasConstFunctions c f
+  , CanMapInside (Domain f) x
+  , CanApply f x
+  , HasEqCertainly c (ApplyType f x)
+  , Arbitrary c, Arbitrary f, Arbitrary x
+  , Show c, Show f, Show x)
+  =>
+  T c-> T f -> T x -> Spec
+specEvalConstFn (T cName :: T c) (T fName :: T f) (T xName :: T x) =
+  it (printf "Evaluating constant (%s) functions %s on %s" cName fName xName) $ do
+    property $
+      \ (c :: c) (sampleF :: f) (x :: x) ->
+        let dom = getDomain sampleF in
+        apply (constFn (dom, c) :: f) (mapInside dom x) ?==? c
 
 class CanMaximiseOverDom f d where
   type MaximumOverDomType f d

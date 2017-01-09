@@ -75,6 +75,7 @@ library
     AERN2.Poly.Cheb.DCT
     AERN2.Poly.Cheb.Ring
     AERN2.Poly.Cheb.Field
+    AERN2.Poly.Cheb.Tests
     AERN2.Poly.Ball
     AERN2.Poly.Power
     AERN2.Poly.Power.Type
@@ -88,25 +89,26 @@ library
     AERN2.PPoly.Maximum
     AERN2.PPoly.Division
 
--- test-suite spec
---   type:
---       exitcode-stdio-1.0
---   ghc-options:
---       -Wall
---   extensions:
---     RebindableSyntax,
---     PostfixOperators,
---     ScopedTypeVariables,
---     FlexibleContexts
---   hs-source-dirs:
---       test
---   main-is:
---       Spec.hs
---   build-depends:
---     base == 4.*
---     -- , mixed-types-num
---     -- , aern2-mp
---     , aern2-real
---     , hspec >= 2.1 && < 2.3
---     -- , hspec-smallcheck >= 0.3 && < 0.5
---     , QuickCheck >= 2.7 && < 2.9
+test-suite spec
+  type:
+      exitcode-stdio-1.0
+  ghc-options:
+      -Wall
+  extensions:
+    RebindableSyntax,
+    PostfixOperators,
+    ScopedTypeVariables,
+    FlexibleContexts
+  hs-source-dirs:
+      test
+  main-is:
+      Spec.hs
+  build-depends:
+    base == 4.*
+    -- , mixed-types-num
+    -- , aern2-mp
+    -- , aern2-real
+    , aern2-fun
+    , hspec >= 2.1 && < 2.3
+    -- , hspec-smallcheck >= 0.3 && < 0.5
+    , QuickCheck >= 2.7 && < 2.9

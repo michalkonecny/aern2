@@ -85,11 +85,21 @@ intervalFunctionByEndpointsUpDown fDown fUp x =
 
 {- containment -}
 
-class CanTestContains d e where
-  contains :: d -> e -> Bool
+class CanTestContains dom e where
+  {-| Test if @e@ is inside @dom@. -}
+  contains :: dom {-^ @dom@ -} -> e  {-^ @e@ -} -> Bool
 
-class CanMapInside d e where
-  mapInside :: d -> e -> e
+class CanMapInside dom e where
+  {-| Return some value contained in @dom@.
+      The returned value does not have to equal the given @e@
+      even if @e@ is already inside @dom@.
+      All elements of @dom@ should be covered with roughly the same probability
+      when calling this function for evenly distributed @e@'s.
+
+      This function is intended mainly for generating values inside @dom@
+      for randomised tests.
+  -}
+  mapInside :: dom {-^ @dom@ -} -> e  {-^ @e@ -} -> e
 
 specCanMapInside ::
   (CanMapInside d e, CanTestContains d e
