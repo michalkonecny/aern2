@@ -89,10 +89,10 @@ specEvalConstFn ::
 specEvalConstFn (T cName :: T c) (T fName :: T f) (T xName :: T x) =
   it (printf "Evaluating constant (%s) functions %s on %s" cName fName xName) $ do
     property $
-      \ (c :: c) (sampleFn :: f) (x :: x) ->
+      \ (c :: c) (sampleFn :: f) (xPres :: [x]) ->
         let dom = getDomain sampleFn in
-        apply (constFn (dom, c) :: f) (mapInside dom x) ?==? c
-
+        and $ flip map xPres $ \xPre ->
+          apply (constFn (dom, c) :: f) (mapInside dom xPre) ?==? c
 
 class HasVars f where
   type Var f
@@ -114,9 +114,10 @@ specEvalUnaryVarFn ::
 specEvalUnaryVarFn (T fName :: T f) (T xName :: T x) =
   it (printf "Evaluating variable functions %s on %s" fName xName) $ do
     property $
-      \ (sampleFn :: f) (xPre :: x) ->
-        let x = mapInside (getDomain sampleFn) xPre in
-        apply (varFn sampleFn () :: f) x ?==? x
+      \ (sampleFn :: f) (xPres :: [x]) ->
+        and $ flip map xPres $ \xPre ->
+          let x = mapInside (getDomain sampleFn) xPre in
+          apply (varFn sampleFn () :: f) x ?==? x
 
 {- pointwise operations -}
 
@@ -137,11 +138,12 @@ specFnPointwiseOp2 ::
 specFnPointwiseOp2 (T fName :: T f) (T _xName :: T x) (T vName :: T v) opName opFn opVal = -- filter1 filter2 =
   it ("pointwise " ++ opName ++ " on " ++ fName ++ " corresponds to " ++ opName ++ " on " ++ vName) $ do
     property $
-      \ (SameDomFnPair (f1,f2) :: SameDomFnPair f) (xPre :: x) ->
-        let x = mapInside (getDomain f1) xPre in
-        let v1 = apply f1 x in
-        let v2 = apply f2 x in
-        apply (opFn f1 f2) x ?==? opVal v1 v2
+      \ (SameDomFnPair (f1,f2) :: SameDomFnPair f) (xPres :: [x]) ->
+        and $ flip map xPres $ \xPre ->
+          let x = mapInside (getDomain f1) xPre in
+          let v1 = apply f1 x in
+          let v2 = apply f2 x in
+          apply (opFn f1 f2) x ?==? opVal v1 v2
 
 {- range computation -}
 

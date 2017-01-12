@@ -125,7 +125,10 @@ specChPoly =
   describe ("ChPoly") $ do
     specEvalConstFn tMPBall tChPolyMPBall tMPBall
     specEvalUnaryVarFn tChPolyMPBall tMPBall
+    -- specCanReduceSizeUsingAccuracyGuide tChPolyMPBall
     specFnPointwiseOp2 tChPolyMPBall tMPBall tMPBall "+" (+) (+)
+    specFnPointwiseOp2 tChPolyMPBall tMPBall tMPBall "-" (-) (-)
+    specFnPointwiseOp2 tChPolyMPBall tMPBall tMPBall "*" (*) (*)
     return ()
     -- specConversion tInteger tCauchyReal real (fst . integerBounds)
     -- describe "order" $ do
