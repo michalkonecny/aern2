@@ -51,8 +51,8 @@ import AERN2.Poly.Basics
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Eval ()
 import AERN2.Poly.Cheb.Ring ()
--- import AERN2.Poly.Cheb.Field ()
--- import AERN2.Poly.Cheb.Maximum ()
+import AERN2.Poly.Cheb.Field ()
+import AERN2.Poly.Cheb.Maximum ()
 -- import AERN2.Poly.Cheb.Integration ()
 
 instance (Arbitrary c, IsBall c, Show c) => Arbitrary (ChPoly c) where
@@ -95,22 +95,15 @@ instance (Arbitrary c, IsBall c, Show c) => ArbitraryWithDom (ChPoly c) where
 tChPolyMPBall :: T (ChPoly MPBall)
 tChPolyMPBall = T "ChPolyMPBall"
 
--- precondAnyReal :: CauchyReal -> Accuracy -> Bool
--- precondAnyReal _x _ac = True
---
--- precondPositiveReal :: CauchyReal -> Accuracy -> Bool
--- precondPositiveReal x ac = qaMakeQuery x ac !>! 0
---
--- precondNonZeroReal :: CauchyReal -> Accuracy -> Bool
--- precondNonZeroReal x ac = qaMakeQuery x ac !/=! 0
---
--- precondSmallReal :: CauchyReal -> Accuracy -> Bool
--- precondSmallReal x ac = abs (qaMakeQuery x ac) !<! 1000
---
--- precondPositiveSmallReal :: CauchyReal -> Accuracy -> Bool
--- precondPositiveSmallReal x ac = 0 !<! b && b !<! 1000
---   where b = qaMakeQuery x ac
---
+anyFn :: ChPoly MPBall -> ChPoly MPBall
+anyFn = id
+
+makeFnPositive :: ChPoly MPBall -> ChPoly MPBall
+makeFnPositive p = p + lb + 1
+  where
+  lb :: MPBall
+  (lb, _) = endpoints $ minimumOverDom p (getDomain p)
+
 -- precondAnyT :: t -> Bool
 -- precondAnyT _t = True
 --
@@ -123,13 +116,14 @@ tChPolyMPBall = T "ChPolyMPBall"
 specChPoly :: Spec
 specChPoly =
   describe ("ChPoly") $ do
-    specEvalConstFn tMPBall tChPolyMPBall tMPBall
-    specEvalUnaryVarFn tChPolyMPBall tMPBall
+    describe "evaluation" $ do
+      specEvalConstFn tMPBall tChPolyMPBall tMPBall
+      specEvalUnaryVarFn tChPolyMPBall tMPBall
     -- specCanReduceSizeUsingAccuracyGuide tChPolyMPBall
-    specFnPointwiseOp2 tChPolyMPBall tMPBall tMPBall "+" (+) (+)
-    specFnPointwiseOp2 tChPolyMPBall tMPBall tMPBall "-" (-) (-)
-    specFnPointwiseOp2 tChPolyMPBall tMPBall tMPBall "*" (*) (*)
-    return ()
+    describe "ring" $ do
+      specFnPointwiseOp2 tChPolyMPBall tMPBall tMPBall "+" (+) (+) anyFn anyFn
+      specFnPointwiseOp2 tChPolyMPBall tMPBall tMPBall "-" (-) (-) anyFn anyFn
+      specFnPointwiseOp2 tChPolyMPBall tMPBall tMPBall "*" (*) (*) anyFn anyFn
     -- specConversion tInteger tCauchyReal real (fst . integerBounds)
     -- describe "order" $ do
     --   specHasEqNotMixed tCauchyRealAtAccuracy

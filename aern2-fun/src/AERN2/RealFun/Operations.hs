@@ -87,7 +87,7 @@ specEvalConstFn ::
   =>
   T c-> T f -> T x -> Spec
 specEvalConstFn (T cName :: T c) (T fName :: T f) (T xName :: T x) =
-  it (printf "Evaluating constant (%s) functions %s on %s" cName fName xName) $ do
+  it (printf "Evaluating %s-constant functions %s on %s" cName fName xName) $ do
     property $
       \ (c :: c) (sampleFn :: f) (xPres :: [x]) ->
         let dom = getDomain sampleFn in
@@ -132,18 +132,20 @@ specFnPointwiseOp2 ::
   String ->
   (f -> f -> f) ->
   (v -> v -> v) ->
-  -- (f -> f) ->
-  -- (f -> f) ->
+  (f -> f) ->
+  (f -> f) ->
   Spec
-specFnPointwiseOp2 (T fName :: T f) (T _xName :: T x) (T vName :: T v) opName opFn opVal = -- filter1 filter2 =
+specFnPointwiseOp2 (T fName :: T f) (T _xName :: T x) (T vName :: T v) opName opFn opVal reshapeFn1 reshapeFn2 =
   it ("pointwise " ++ opName ++ " on " ++ fName ++ " corresponds to " ++ opName ++ " on " ++ vName) $ do
     property $
-      \ (SameDomFnPair (f1,f2) :: SameDomFnPair f) (xPres :: [x]) ->
-        and $ flip map xPres $ \xPre ->
-          let x = mapInside (getDomain f1) xPre in
-          let v1 = apply f1 x in
-          let v2 = apply f2 x in
-          apply (opFn f1 f2) x ?==? opVal v1 v2
+      \ (SameDomFnPair (f1Pre,f2Pre) :: SameDomFnPair f) (xPres :: [x]) ->
+          let f1 = reshapeFn1 f1Pre in
+          let f2 = reshapeFn2 f2Pre in
+          and $ flip map xPres $ \xPre ->
+            let x = mapInside (getDomain f1) xPre in
+            let v1 = apply f1 x in
+            let v2 = apply f2 x in
+            apply (opFn f1 f2) x ?==? opVal v1 v2
 
 {- range computation -}
 
