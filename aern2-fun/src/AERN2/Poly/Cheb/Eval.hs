@@ -40,23 +40,6 @@ import AERN2.RealFun.UnaryFun
 import AERN2.Poly.Basics
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Derivative
--- import AERN2.Poly.Conversion
--- import AERN2.Poly.Power (PowPoly)
-import qualified AERN2.Poly.Power as Pow
-
-
-import AERN2.Poly.Conversion -- TODO remove
-
-import Debug.Trace (trace)
-
-shouldTrace :: Bool
-shouldTrace = False
--- shouldTrace = True
-
-maybeTrace :: String -> a -> a
-maybeTrace
-    | shouldTrace = trace
-    | otherwise = const id
 
 {- evaluation -}
 
@@ -73,6 +56,13 @@ instance
 --   apply cp x =
 --     seqByPrecision2CauchyRealA "apply" $ \ pr ->
 --       apply cp $ setPrecision pr $ mpBall x
+
+instance ConvertibleExactly (ChPoly MPBall) (UnaryFun, ErrorBound) where
+  safeConvertExactly cp@(ChPoly dom _p) = Right (UnaryFun dom eval, e)
+    where
+    e = radius cp
+    cpExact = centreAsBall cp
+    eval = fmap $ evalDirect cpExact
 
 evalDirect ::
   (Ring t, CanAddSubMulDivBy t Dyadic, CanDivBy t Integer,
@@ -179,58 +169,3 @@ instance CanApplyApprox (ChPoly MPBall) DyadicInterval where
     dyadicInterval (fromEndpoints lB uB :: MPBall)
     where
     (Interval lB uB) = sampledRange di 5 p :: Interval MPBall MPBall
-
--- TODO: move sampledRange to a module not specific to ChPoly
-sampledRange ::
-  (CanApply f t, ApplyType f t ~ t,
-   CanMinMaxSameType t, ConvertibleExactly Dyadic t, Show t)
-  =>
-  DyadicInterval -> Integer -> f -> Interval t t
-sampledRange (Interval l r) depth f =
-    maybeTrace
-    ( "sampledRange:"
-    ++ "\n samplePointsT = " ++ (show samplePointsT)
-    ++ "\n samples = " ++ show samples
-    ) $
-    Interval minValue maxValue
-    where
-    minValue = foldl1 min samples
-    maxValue = foldl1 max samples
-    samples = map (apply f) samplePointsT
-    samplePointsT = map convertExactly samplePoints
-    _ = minValue : samplePointsT
-    samplePoints :: [Dyadic]
-    samplePoints = [(l*i + r*(size - i))*(1/size) | i <- [0..size]]
-    size = 2^depth
-
--- instance CanApply (ChPoly MPBall) DyadicInterval where
---   type ApplyType (ChPoly MPBall) DyadicInterval = (Interval CauchyReal CauchyReal, ErrorBound)
---   apply = rangeViaUnaryFun
---   -- apply = rangeViaRoots
-
--- rangeViaUnaryFun :: (ChPoly MPBall) -> DyadicInterval -> (Interval CauchyReal CauchyReal, ErrorBound)
--- rangeViaUnaryFun p di = (apply f di, e)
---   where
---   f :: UnaryFun
---   (f, e) = convertExactly p
---
--- rangeViaUnaryDFun :: (ChPoly MPBall) -> DyadicInterval -> (Interval CauchyReal CauchyReal, ErrorBound)
--- rangeViaUnaryDFun p@(ChPoly dom poly) (Interval l r) =
---   (apply ff (Interval lU rU), e)
---   where
---   lU = fromDomToUnitInterval dom (real l)
---   rU = fromDomToUnitInterval dom (real r)
---   ff = UnaryDFun [f,f']
---   pU' = Pow.derivative $ cheb2Power poly
---   f' = UnaryFun dom  (fmap (Pow.evalMBI pU' . fromDomToUnitInterval dom))
---   (f, e) = convertExactly p
-
-
--- rangeViaRoots :: (ChPoly MPBall) -> DyadicInterval -> (Interval CauchyReal CauchyReal, ErrorBound)
-
-instance ConvertibleExactly (ChPoly MPBall) (UnaryFun, ErrorBound) where
-  safeConvertExactly cp@(ChPoly dom _p) = Right (UnaryFun dom eval, e)
-    where
-    e = radius cp
-    cpExact = centreAsBall cp
-    eval = fmap $ evalDirect cpExact

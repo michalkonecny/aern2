@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+-- #define DEBUG
 {-|
     Module      :  AERN2.RealFun.Operations
     Description :  Classes for real number function operations
@@ -16,7 +18,7 @@ module AERN2.RealFun.Operations
   HasDomain(..)
   , SameDomFnPair(..), ArbitraryWithDom(..)
   , CanApply(..)
-  , CanApplyApprox(..)
+  , CanApplyApprox(..), sampledRange
   , HasVars(..), specEvalUnaryVarFn
   , HasConstFunctions, constFn, specEvalConstFn
   , specFnPointwiseOp1, specFnPointwiseOp2
@@ -24,6 +26,13 @@ module AERN2.RealFun.Operations
   , CanIntegrateOverDom(..)
 )
 where
+
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#else
+#define maybeTrace (flip const)
+#endif
 
 import Numeric.MixedTypes
 -- import qualified Prelude as P
@@ -36,9 +45,10 @@ import Text.Printf
 import Test.Hspec
 import Test.QuickCheck
 
--- import AERN2.MP.Dyadic
+import AERN2.Interval
+
+import AERN2.MP.Dyadic
 import AERN2.MP.Enclosure
--- import AERN2.MP.Ball
 
 {- domain -}
 
@@ -65,10 +75,42 @@ class CanApply f x where
   {-| compute @f(x)@  -}
   apply :: f {-^ @f@ -} -> x {-^ @x@ -} -> ApplyType f x
 
+{-|
+  Give an unsafe etimate of the function's range which is fast to compute.
+  Intended to be used in optimisation heuristics.
+-}
 class CanApplyApprox f x where
   type ApplyApproxType f x
   {-| compute a cheap and unsafe approximation of @f(x)@  -}
   applyApprox :: f {-^ @f@ -} -> x {-^ @x@ -} -> ApplyApproxType f x
+
+{-|
+  Evaluate a function on a regular grid of the given size and return
+  the largerst and smallest values found.  Useful for making instances
+  of class 'CanApplyApprox'.
+-}
+sampledRange ::
+  (CanApply f t, ApplyType f t ~ t,
+   CanMinMaxSameType t, ConvertibleExactly Dyadic t, Show t)
+  =>
+  DyadicInterval -> Integer -> f -> Interval t t
+sampledRange (Interval l r) depth f =
+    maybeTrace
+    ( "sampledRange:"
+    ++ "\n samplePointsT = " ++ (show samplePointsT)
+    ++ "\n samples = " ++ show samples
+    ) $
+    Interval minValue maxValue
+    where
+    minValue = foldl1 min samples
+    maxValue = foldl1 max samples
+    samples = map (apply f) samplePointsT
+    samplePointsT = map convertExactly samplePoints
+    _ = minValue : samplePointsT
+    samplePoints :: [Dyadic]
+    samplePoints = [(l*i + r*(size - i))*(1/size) | i <- [0..size]]
+    size = 2^depth
+
 
 {- constructing basic functions -}
 
