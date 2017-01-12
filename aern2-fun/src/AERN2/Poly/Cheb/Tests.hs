@@ -119,11 +119,18 @@ specChPoly =
     describe "evaluation" $ do
       specEvalConstFn tMPBall tChPolyMPBall tMPBall
       specEvalUnaryVarFn tChPolyMPBall tMPBall
-    -- specCanReduceSizeUsingAccuracyGuide tChPolyMPBall
     describe "ring" $ do
       specFnPointwiseOp2 tChPolyMPBall tMPBall tMPBall "+" (+) (+) anyFn anyFn
       specFnPointwiseOp2 tChPolyMPBall tMPBall tMPBall "-" (-) (-) anyFn anyFn
       specFnPointwiseOp2 tChPolyMPBall tMPBall tMPBall "*" (*) (*) anyFn anyFn
+    describe "size reduction" $ do
+      specFnPointwiseOp1 tChPolyMPBall tMPBall tMPBall "reduce size (bits=10)" (reduceSizeUsingAccuracyGuide (bits 10)) id anyFn
+      specFnPointwiseOp1 tChPolyMPBall tMPBall tMPBall "reduce size (bits=0)" (reduceSizeUsingAccuracyGuide (bits 0)) id anyFn
+      -- specCanReduceSizeUsingAccuracyGuide tChPolyMPBall
+    -- describe "field" $ do
+    --   specFnPointwiseOp2 tChPolyMPBall tMPBall tMPBall "/" (/) (/) anyFn makeFnPositive
+
+-- CauchyReal tests temporarily copied here for reference:
     -- specConversion tInteger tCauchyReal real (fst . integerBounds)
     -- describe "order" $ do
     --   specHasEqNotMixed tCauchyRealAtAccuracy

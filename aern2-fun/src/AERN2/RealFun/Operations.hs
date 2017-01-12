@@ -19,7 +19,7 @@ module AERN2.RealFun.Operations
   , CanApplyApprox(..)
   , HasVars(..), specEvalUnaryVarFn
   , HasConstFunctions, constFn, specEvalConstFn
-  , specFnPointwiseOp2
+  , specFnPointwiseOp1, specFnPointwiseOp2
   , CanMaximiseOverDom(..), CanMinimiseOverDom(..)
   , CanIntegrateOverDom(..)
 )
@@ -146,6 +146,29 @@ specFnPointwiseOp2 (T fName :: T f) (T _xName :: T x) (T vName :: T v) opName op
             let v1 = apply f1 x in
             let v2 = apply f2 x in
             apply (opFn f1 f2) x ?==? opVal v1 v2
+
+specFnPointwiseOp1 ::
+  ( HasDomain f, CanMapInside (Domain f) x
+  , CanApply f x, ApplyType f x ~ v
+  , HasEqCertainly v v
+  , Arbitrary f, ArbitraryWithDom f, Show f
+  , Arbitrary x, Show x
+  ) =>
+  (T f) -> (T x) -> (T c) ->
+  String ->
+  (f -> f) ->
+  (v -> v) ->
+  (f -> f) ->
+  Spec
+specFnPointwiseOp1 (T fName :: T f) (T _xName :: T x) (T vName :: T v) opName opFn opVal reshapeFn1 =
+  it ("pointwise " ++ opName ++ " on " ++ fName ++ " corresponds to " ++ opName ++ " on " ++ vName) $ do
+    property $
+      \ (f1Pre :: f) (xPres :: [x]) ->
+          let f1 = reshapeFn1 f1Pre in
+          and $ flip map xPres $ \xPre ->
+            let x = mapInside (getDomain f1) xPre in
+            let v1 = apply f1 x in
+            apply (opFn f1) x ?==? opVal v1
 
 {- range computation -}
 
