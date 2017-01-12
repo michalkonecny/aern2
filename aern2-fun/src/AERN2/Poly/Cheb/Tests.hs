@@ -59,6 +59,11 @@ instance (Arbitrary c, IsBall c, Show c) => Arbitrary (ChPoly c) where
   arbitrary =
     do
     dom <- arbitraryNonEmptyInterval
+    arbitraryWithDom dom
+
+instance (Arbitrary c, IsBall c, Show c) => ArbitraryWithDom (ChPoly c) where
+  arbitraryWithDom dom =
+    do
     deg <- growingElements [0..200]
     termSize <- growingElements [0..deg]
     coeffs <- (map centreAsBall) <$> vector (int $ 1 + termSize)
@@ -83,36 +88,13 @@ instance (Arbitrary c, IsBall c, Show c) => Arbitrary (ChPoly c) where
             aux (Set.deleteAt (int i) prev) (s-1)
 
 
--- arbitrarySmall :: (Arbitrary a, HasOrderCertainly a Integer) => Integer -> Gen a
--- arbitrarySmall limit = aux
---   where
---   aux =
---     do
---     x <- arbitrary
---     if -limit !<=! x && x !<=! limit
---       then return x
---       else aux
-
-
 {-|
-  A runtime representative of type @CauchyReal@.
+  A runtime representative of type @ChPoly MPBall@.
   Used for specialising polymorphic tests to concrete types.
 -}
 tChPolyMPBall :: T (ChPoly MPBall)
 tChPolyMPBall = T "ChPolyMPBall"
 
--- specCRrespectsAccuracy1 ::
---   String ->
---   (CauchyReal -> CauchyReal) ->
---   (CauchyReal -> Accuracy -> Bool) ->
---   Spec
--- specCRrespectsAccuracy1 opName op precond =
---   it (opName ++ " respects accuracy requests") $ do
---     property $
---       \ (x :: CauchyReal) (ac :: Accuracy) ->
---         ac < (bits 1000) && precond x ac ==>
---         getAccuracy (qaMakeQuery (op x) ac) >= ac
---
 -- precondAnyReal :: CauchyReal -> Accuracy -> Bool
 -- precondAnyReal _x _ac = True
 --
@@ -129,34 +111,6 @@ tChPolyMPBall = T "ChPolyMPBall"
 -- precondPositiveSmallReal x ac = 0 !<! b && b !<! 1000
 --   where b = qaMakeQuery x ac
 --
--- specCRrespectsAccuracy2 ::
---   String ->
---   (CauchyReal -> CauchyReal -> CauchyReal) ->
---   (CauchyReal -> Accuracy -> Bool) ->
---   (CauchyReal -> Accuracy -> Bool) ->
---   Spec
--- specCRrespectsAccuracy2 opName op precond1 precond2 =
---   it (opName ++ " respects accuracy requests") $ do
---     property $
---       \ (x :: CauchyReal) (y :: CauchyReal) (ac :: Accuracy) ->
---         ac < (bits 1000) && precond1 x ac && precond2 y ac  ==>
---         getAccuracy (qaMakeQuery (op x y) ac) >= ac
---
--- specCRrespectsAccuracy2T ::
---   (Arbitrary t, Show t) =>
---   T t ->
---   String ->
---   (CauchyReal -> t -> CauchyReal) ->
---   (CauchyReal -> Accuracy -> Bool) ->
---   (t -> Bool) ->
---   Spec
--- specCRrespectsAccuracy2T (T tName :: T t) opName op precond1 precond2 =
---   it (opName ++ " with " ++ tName ++ " respects accuracy requests") $ do
---     property $
---       \ (x :: CauchyReal) (t :: t) (ac :: Accuracy) ->
---         ac < (bits 1000) && precond1 x ac && precond2 t  ==>
---         getAccuracy (qaMakeQuery (op x t) ac) >= ac
---
 -- precondAnyT :: t -> Bool
 -- precondAnyT _t = True
 --
@@ -171,6 +125,7 @@ specChPoly =
   describe ("ChPoly") $ do
     specEvalConstFn tMPBall tChPolyMPBall tMPBall
     specEvalUnaryVarFn tChPolyMPBall tMPBall
+    specFnPointwiseOp2 tChPolyMPBall tMPBall tMPBall "+" (+) (+)
     return ()
     -- specConversion tInteger tCauchyReal real (fst . integerBounds)
     -- describe "order" $ do
