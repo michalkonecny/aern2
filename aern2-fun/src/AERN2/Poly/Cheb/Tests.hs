@@ -170,6 +170,7 @@ specChPoly :: Spec
 specChPoly =
   describe ("ChPoly") $ do
     specEvalConstFn tMPBall tChPolyMPBall tMPBall
+    specEvalUnaryVarFn tChPolyMPBall tMPBall
     return ()
     -- specConversion tInteger tCauchyReal real (fst . integerBounds)
     -- describe "order" $ do
