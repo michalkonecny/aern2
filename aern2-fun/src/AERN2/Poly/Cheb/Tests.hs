@@ -64,7 +64,7 @@ instance (Arbitrary c, IsBall c, Show c) => Arbitrary (ChPoly c) where
 instance (Arbitrary c, IsBall c, Show c) => ArbitraryWithDom (ChPoly c) where
   arbitraryWithDom dom =
     do
-    deg <- growingElements [0..200]
+    deg <- growingElements [0..100]
     termSize <- growingElements [0..deg]
     coeffs <- (map centreAsBall) <$> vector (int $ 1 + termSize)
     terms <-
@@ -120,13 +120,15 @@ specChPoly =
       specEvalConstFn tMPBall tChPolyMPBall tMPBall
       specEvalUnaryVarFn tChPolyMPBall tMPBall
     describe "ring" $ do
-      specFnPointwiseOp2 tChPolyMPBall tMPBall tMPBall "+" (+) (+) anyFn anyFn
-      specFnPointwiseOp2 tChPolyMPBall tMPBall tMPBall "-" (-) (-) anyFn anyFn
-      specFnPointwiseOp2 tChPolyMPBall tMPBall tMPBall "*" (*) (*) anyFn anyFn
+      specFnPointwiseOp2 tChPolyMPBall tMPBall "+" (+) (+) anyFn anyFn
+      specFnPointwiseOp2 tChPolyMPBall tMPBall "-" (-) (-) anyFn anyFn
+      specFnPointwiseOp2 tChPolyMPBall tMPBall "*" (*) (*) anyFn anyFn
     describe "size reduction" $ do
-      specFnPointwiseOp1 tChPolyMPBall tMPBall tMPBall "reduce size (bits=10)" (reduceSizeUsingAccuracyGuide (bits 10)) id anyFn
-      specFnPointwiseOp1 tChPolyMPBall tMPBall tMPBall "reduce size (bits=0)" (reduceSizeUsingAccuracyGuide (bits 0)) id anyFn
+      specFnPointwiseOp1 tChPolyMPBall tMPBall "reduce size (bits=10)" (reduceSizeUsingAccuracyGuide (bits 10)) id anyFn
+      specFnPointwiseOp1 tChPolyMPBall tMPBall "reduce size (bits=0)" (reduceSizeUsingAccuracyGuide (bits 0)) id anyFn
       -- specCanReduceSizeUsingAccuracyGuide tChPolyMPBall
+    -- describe "range" $ do
+    --   specCanMaximiseOverDom tChPolyMPBall tMPBall -- too slow, too much RAM
     -- describe "field" $ do
     --   specFnPointwiseOp2 tChPolyMPBall tMPBall tMPBall "/" (/) (/) anyFn makeFnPositive
 

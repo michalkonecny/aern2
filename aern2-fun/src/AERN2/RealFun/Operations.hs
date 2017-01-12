@@ -23,6 +23,7 @@ module AERN2.RealFun.Operations
   , HasConstFunctions, constFn, specEvalConstFn
   , specFnPointwiseOp1, specFnPointwiseOp2
   , CanMaximiseOverDom(..), CanMinimiseOverDom(..)
+  , specCanMaximiseOverDom
   , CanIntegrateOverDom(..)
 )
 where
@@ -129,7 +130,7 @@ specEvalConstFn ::
   =>
   T c-> T f -> T x -> Spec
 specEvalConstFn (T cName :: T c) (T fName :: T f) (T xName :: T x) =
-  it (printf "Evaluating %s-constant functions %s on %s" cName fName xName) $ do
+  it (printf "Evaluating %s-constant functions %s on %s" cName fName xName) $
     property $
       \ (c :: c) (sampleFn :: f) (xPres :: [x]) ->
         let dom = getDomain sampleFn in
@@ -154,12 +155,11 @@ specEvalUnaryVarFn ::
   =>
   T f -> T x -> Spec
 specEvalUnaryVarFn (T fName :: T f) (T xName :: T x) =
-  it (printf "Evaluating variable functions %s on %s" fName xName) $ do
-    property $
-      \ (sampleFn :: f) (xPres :: [x]) ->
-        and $ flip map xPres $ \xPre ->
-          let x = mapInside (getDomain sampleFn) xPre in
-          apply (varFn sampleFn () :: f) x ?==? x
+  it (printf "Evaluating variable functions %s on %s" fName xName) $ property $
+    \ (sampleFn :: f) (xPres :: [x]) ->
+      and $ flip map xPres $ \xPre ->
+        let x = mapInside (getDomain sampleFn) xPre in
+        apply (varFn sampleFn () :: f) x ?==? x
 
 {- pointwise operations -}
 
@@ -170,16 +170,19 @@ specFnPointwiseOp2 ::
   , Arbitrary f, ArbitraryWithDom f, Show f
   , Arbitrary x, Show x
   ) =>
-  (T f) -> (T x) -> (T c) ->
+  (T f) -> (T x) ->
   String ->
   (f -> f -> f) ->
   (v -> v -> v) ->
   (f -> f) ->
   (f -> f) ->
   Spec
-specFnPointwiseOp2 (T fName :: T f) (T _xName :: T x) (T vName :: T v) opName opFn opVal reshapeFn1 reshapeFn2 =
-  it ("pointwise " ++ opName ++ " on " ++ fName ++ " corresponds to " ++ opName ++ " on " ++ vName) $ do
-    property $
+specFnPointwiseOp2
+    (T fName :: T f) (T _xName :: T x)
+    opName opFn opVal reshapeFn1 reshapeFn2
+  =
+  it ("pointwise " ++ opName ++ " on " ++ fName ++
+      " corresponds to " ++ opName ++ " on values") $ property $
       \ (SameDomFnPair (f1Pre,f2Pre) :: SameDomFnPair f) (xPres :: [x]) ->
           let f1 = reshapeFn1 f1Pre in
           let f2 = reshapeFn2 f2Pre in
@@ -196,15 +199,18 @@ specFnPointwiseOp1 ::
   , Arbitrary f, ArbitraryWithDom f, Show f
   , Arbitrary x, Show x
   ) =>
-  (T f) -> (T x) -> (T c) ->
+  (T f) -> (T x) ->
   String ->
   (f -> f) ->
   (v -> v) ->
   (f -> f) ->
   Spec
-specFnPointwiseOp1 (T fName :: T f) (T _xName :: T x) (T vName :: T v) opName opFn opVal reshapeFn1 =
-  it ("pointwise " ++ opName ++ " on " ++ fName ++ " corresponds to " ++ opName ++ " on " ++ vName) $ do
-    property $
+specFnPointwiseOp1
+    (T fName :: T f) (T _xName :: T x)
+    opName opFn opVal reshapeFn1
+  =
+  it ("pointwise " ++ opName ++ " on " ++ fName ++
+      " corresponds to " ++ opName ++ " on values") $ property $
       \ (f1Pre :: f) (xPres :: [x]) ->
           let f1 = reshapeFn1 f1Pre in
           and $ flip map xPres $ \xPre ->
@@ -221,6 +227,47 @@ class CanMaximiseOverDom f d where
 class CanMinimiseOverDom f d where
   type MinimumOverDomType f d
   minimumOverDom :: f -> d -> MinimumOverDomType f d
+
+-- specCanMaximiseOverDom ::
+--   (HasDomain f, Domain f ~ Interval e e
+--   , CanAddSameType e, CanMulBy e Dyadic -- for splitting the domain
+--   , CanMaximiseOverDom f (Domain f)
+--   , HasOrderCertainly (MaximumOverDomType f (Domain f)) (MaximumOverDomType f (Domain f))
+--   , Arbitrary f, Show f)
+--   =>
+--   (T f) -> Spec
+-- specCanMaximiseOverDom (T fName :: T f) =
+--   describe ("CanMaximiseOverDom " ++ fName) $ do
+--     it "is consistent over a split domain" $ property $
+--         \ (f :: f) ->
+--           let dom = getDomain f in
+--           let (dom1, dom2) = split dom in
+--           let maxOnDom = maximumOverDom f dom in
+--           let maxOnDom1 = maximumOverDom f dom1 in
+--           let maxOnDom2 = maximumOverDom f dom2 in
+--           maxOnDom ?>=? maxOnDom1
+--           &&
+--           maxOnDom ?>=? maxOnDom2
+
+specCanMaximiseOverDom ::
+  (HasDomain f, CanMapInside (Domain f) x
+  , CanApply f x, ApplyType f x ~ v
+  , CanMaximiseOverDom f (Domain f)
+  , HasOrderCertainly v (MaximumOverDomType f (Domain f))
+  , Arbitrary f, Show f, Arbitrary x, Show x)
+  =>
+  (T f) -> (T x) -> Spec
+specCanMaximiseOverDom (T fName :: T f) (T _xName :: T x) =
+  describe ("CanMaximiseOverDom " ++ fName) $ do
+    it "is consistent with evaluation" $ property $
+      \ (f :: f) (xPres :: [x]) ->
+        let dom = getDomain f in
+        let maxOnDom = maximumOverDom f dom in
+        and $ flip map xPres $ \xPre ->
+          let x = mapInside dom xPre in
+          let v1 = apply f x in
+          maxOnDom ?>=? v1
+
 
 {- integration -}
 
