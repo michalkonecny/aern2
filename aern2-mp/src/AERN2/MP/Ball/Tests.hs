@@ -79,6 +79,7 @@ specMPBall :: Spec
 specMPBall =
   describe ("MPBall") $ do
     specCanSetPrecision tMPBall (printArgsIfFails2 "`contains`" contains)
+    specCanReduceSizeUsingAccuracyGuide tMPBall
     specConversion tInteger tMPBall mpBall (fst . integerBounds)
     describe "order" $ do
       specHasEqNotMixed tMPBall
