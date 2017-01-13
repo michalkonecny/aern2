@@ -46,46 +46,112 @@ import AERN2.Interval
 
 import AERN2.RealFun.Operations
 
+import AERN2.RealFun.SineCosine
+
 import AERN2.Poly.Basics
 
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Eval ()
 import AERN2.Poly.Cheb.Ring ()
-import AERN2.Poly.Cheb.Field ()
-import AERN2.Poly.Cheb.Maximum ()
+import AERN2.Poly.Cheb.Field (chebDivideDCT)
+import AERN2.Poly.Cheb.Maximum (minimumOptimisedWithAccuracy)
 -- import AERN2.Poly.Cheb.Integration ()
 
-instance (Arbitrary c, IsBall c, Show c) => Arbitrary (ChPoly c) where
+instance
+  -- (Arbitrary c, IsBall c, Show c) => Arbitrary (ChPoly c)
+  Arbitrary (ChPoly MPBall)
+  where
   arbitrary =
     do
     dom <- arbitraryNonEmptyInterval
     arbitraryWithDom dom
 
-instance (Arbitrary c, IsBall c, Show c) => ArbitraryWithDom (ChPoly c) where
-  arbitraryWithDom dom =
+instance
+  -- (Arbitrary c, IsBall c, Show c) => ArbitraryWithDom (ChPoly c)
+  ArbitraryWithDom (ChPoly MPBall)
+  where
+  arbitraryWithDom
+    | True = arbitraryWithDomUsingOps
+    | False = arbitraryWithDomByCoeffs
+
+arbitraryWithDomUsingOps ::
+  -- (Field c, IsBall c, Arbitrary c
+  -- , ConvertibleExactly Dyadic c)
+  -- =>
+  -- DyadicInterval -> Gen (ChPoly c)
+  DyadicInterval -> Gen (ChPoly MPBall)
+arbitraryWithDomUsingOps dom =
+  sized withSize
+  where
+  withSize size =
     do
-    deg <- growingElements [0..100]
-    termSize <- growingElements [0..deg]
-    coeffs <- (map centreAsBall) <$> vector (int $ 1 + termSize)
-    terms <-
-      -- trace ("coeffs=" ++ show coeffs) $
-      makeTerms coeffs termSize deg
-    return $ ChPoly dom (Poly terms)
+    numOfOps <- growingElements [0..(10+2*size)]
+    ops <- vectorOf (int numOfOps) (growingElements operations)
+    fn <- elementsWeighted basicFunctions
+    applyOps ops fn basicFunctions
     where
-    makeTerms coeffs termSize deg =
-      withTermDegrees <$> pickDegrees
+    operations :: [(Integer, [ChPoly MPBall] -> ChPoly MPBall)]
+    operations =
+      [op2 (+), op2 (-), op2 (*), op2 (*)]
+      -- , op1 (sineWithAccuracyGuide acGuide), op1 (cosineWithAccuracyGuide acGuide)]
+      -- , op1 recipShift]
+    -- op1 op = (1, \[e] -> op e)
+    op2 op = (2, \[e1,e2] -> op e1 e2)
+    -- recipShift p = chebDivideDCT acGuide (c 1) (p + lb + 1)
+    --   where
+    --   lb :: MPBall
+    --   (lb, _) =
+    --       endpoints $
+    --         -- minimumOverDom p (getDomain p)
+    --         minimumOptimisedWithAccuracy acGuide p (mpBall l) (mpBall r) 5 5
+    --         where
+    --         (Interval l r) = getDomain p
+    acGuide = bits size
+
+    basicFunctions = [(10,x), (1, c 0.5), (1, c 2), (1, c 1000000), (1, c (0.5^20))]
+    x = varFn (constFn (dom, 0)) ()
+    c :: (CanBeDyadic t, ConvertibleExactly Dyadic c) => t -> ChPoly c
+    c n = constFn (dom, dyadic n)
+
+    elementsWeighted es = frequency $ map (\(n,e) -> (int n, return e)) es
+
+    applyOps [] fn _fns = return fn
+    applyOps ((arity, opList):rest) fn fns =
+      do
+      operands <- mapM getOperand [2..arity]
+      let newFn = centreAsBall $ reduceSizeUsingAccuracyGuide acGuide $ opList (fn : operands)
+      applyOps rest newFn fns
       where
-      withTermDegrees termDegrees =
-        terms_fromList $ zip (0 : Set.toList termDegrees) coeffs
-      pickDegrees = aux (Set.fromAscList [1..deg]) (deg - termSize)
-        where
-        aux prev 0 = return prev
-        aux prev s
-          | s < 0 = error ""
-          | otherwise =
-            do
-            i <- choose (0,Set.size prev - 1)
-            aux (Set.deleteAt (int i) prev) (s-1)
+      getOperand _ = elementsWeighted fns
+
+
+arbitraryWithDomByCoeffs ::
+  (IsBall c, Arbitrary c) =>
+  DyadicInterval -> Gen (ChPoly c)
+arbitraryWithDomByCoeffs dom =
+  do
+  deg <- growingElements [0..100]
+  termSize <- growingElements [0..deg]
+  coeffs <- (map centreAsBall) <$> vector (int $ 1 + termSize)
+  terms <-
+    -- trace ("coeffs=" ++ show coeffs) $
+    makeTerms coeffs termSize deg
+  return $ ChPoly dom (Poly terms)
+  where
+  makeTerms coeffs termSize deg =
+    withTermDegrees <$> pickDegrees
+    where
+    withTermDegrees termDegrees =
+      terms_fromList $ zip (0 : Set.toList termDegrees) coeffs
+    pickDegrees = aux (Set.fromAscList [1..deg]) (deg - termSize)
+      where
+      aux prev 0 = return prev
+      aux prev s
+        | s < 0 = error ""
+        | otherwise =
+          do
+          i <- choose (0,Set.size prev - 1)
+          aux (Set.deleteAt (int i) prev) (s-1)
 
 
 {-|
