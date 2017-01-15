@@ -51,7 +51,9 @@ data Interval l r = Interval { endpointL :: l, endpointR :: r }
   deriving (P.Eq, Generic)
 
 instance (Show l, Show r) => Show (Interval l r) where
-    show (Interval l r) = printf "[%s,%s]" (show l) (show r)
+    show (Interval l r) =
+      printf "Interval (%s) (%s)" (show l) (show r)
+      -- printf "[%s,%s]" (show l) (show r)
 
 singleton :: a -> Interval a a
 singleton a = Interval a a

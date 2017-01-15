@@ -28,6 +28,7 @@ where
 
 import Numeric.MixedTypes
 import qualified Prelude as P
+import Text.Printf
 
 import Data.Typeable
 
@@ -50,7 +51,14 @@ newtype Dyadic = Dyadic { dyadicMPFloat :: MPFloat }
   deriving (P.Eq, P.Ord, CanRound, HasPrecision, HasNorm, Typeable)
 
 instance Show Dyadic where
-  show (Dyadic x) = show x
+  show (Dyadic x)
+    | e == 0 = "dyadic " ++ show (round x)
+    | e > 0 = printf "dyadic (%s*0.5^(%s))" (show n) (show e)
+    | otherwise = error "in show Dyadic"
+    where
+    xR = rational x
+    NormBits e = getNormLog (denominator xR)
+    n = numerator xR
 
 {-- conversions --}
 

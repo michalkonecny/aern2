@@ -22,7 +22,7 @@
 module AERN2.Poly.Cheb.Tests
   (
     specChPoly, tChPolyMPBall
-  , chPolyFromOps
+  , chPolyFromOps, ChPolyConstruction(..)
   )
 where
 
@@ -38,7 +38,7 @@ import Numeric.MixedTypes
 -- import Data.Ratio
 import Text.Printf
 
-import qualified Data.Set as Set
+-- import qualified Data.Set as Set
 
 import Test.Hspec
 import Test.QuickCheck
@@ -249,45 +249,3 @@ specChPoly =
       specFnPointwiseOp1 tChPolyMPBall tMPBall "sine" (sineWithAccuracyGuide (bits 10)) (sin) (makeFnSmallRange 10)
     describe "field" $ do
       specFnPointwiseOp2 tChPolyMPBall tMPBall "/" (chebDivideDCT (bits 0)) (/) anyFn makeFnPositive
-
--- CauchyReal tests temporarily copied here for reference:
-    -- specConversion tInteger tCauchyReal real (fst . integerBounds)
-    -- describe "order" $ do
-    --   specHasEqNotMixed tCauchyRealAtAccuracy
-    --   -- specHasEq tInt tCauchyRealAtAccuracy tRational
-    --   -- specCanPickNonZero tCauchyRealAtAccuracy
-    --   specHasOrderNotMixed tCauchyRealAtAccuracy
-    --   -- specHasOrder tInt tCauchyRealAtAccuracy tRational
-    -- describe "min/max/abs" $ do
-    --   specCRrespectsAccuracy1 "abs" abs precondAnyReal
-    --   specCRrespectsAccuracy2 "max" max precondAnyReal precondAnyReal
-    --   specCRrespectsAccuracy2 "min" min precondAnyReal precondAnyReal
-    -- describe "ring" $ do
-    --   specCRrespectsAccuracy1 "negate" negate precondAnyReal
-    --   specCRrespectsAccuracy2 "+" add precondAnyReal precondAnyReal
-    --   specCRrespectsAccuracy2T tInteger "+" add precondAnyReal precondAnyT
-    --   specCRrespectsAccuracy2T tRational "+" add precondAnyReal precondAnyT
-    --   specCRrespectsAccuracy2T tDyadic "+" add precondAnyReal precondAnyT
-    --   specCRrespectsAccuracy2 "a-b" sub precondAnyReal precondAnyReal
-    --   specCRrespectsAccuracy2T tInteger "a-b" sub precondAnyReal precondAnyT
-    --   specCRrespectsAccuracy2T tRational "a-b" sub precondAnyReal precondAnyT
-    --   specCRrespectsAccuracy2T tDyadic "a-b" sub precondAnyReal precondAnyT
-    --   specCRrespectsAccuracy2 "*" mul precondAnyReal precondAnyReal
-    --   specCRrespectsAccuracy2T tInteger "*" mul precondAnyReal precondAnyT
-    --   specCRrespectsAccuracy2T tRational "*" mul precondAnyReal precondAnyT
-    --   specCRrespectsAccuracy2T tDyadic "*" mul precondAnyReal precondAnyT
-    -- describe "field" $ do
-    --   specCRrespectsAccuracy2 "/" divide precondAnyReal precondNonZeroReal
-    --   specCRrespectsAccuracy2T tInteger "/" divide precondAnyReal precondNonZeroT
-    --   specCRrespectsAccuracy2T tRational "/" divide precondAnyReal precondNonZeroT
-    --   specCRrespectsAccuracy2T tDyadic "/" divide precondAnyReal precondNonZeroT
-    -- describe "elementary" $ do
-    --   specCRrespectsAccuracy1 "sqrt" sqrt precondPositiveReal
-    --   specCRrespectsAccuracy1 "exp" exp precondSmallReal
-    --   specCRrespectsAccuracy1 "log" log precondPositiveSmallReal
-    --   specCRrespectsAccuracy2 "pow" pow precondPositiveSmallReal precondSmallReal
-    --   specCRrespectsAccuracy2T tInteger "pow" pow precondNonZeroReal precondSmallT
-    --   specCRrespectsAccuracy2T tRational "pow" pow precondPositiveSmallReal precondSmallT
-    --   specCRrespectsAccuracy2T tDyadic "pow" pow precondPositiveSmallReal precondSmallT
-    --   specCRrespectsAccuracy1 "cos" cos precondAnyReal
-    --   specCRrespectsAccuracy1 "sine" sin precondAnyReal

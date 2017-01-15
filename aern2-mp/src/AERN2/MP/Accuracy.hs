@@ -78,7 +78,7 @@ normLog2Accuracy NormZero = Exact
 
 instance Show Accuracy where
     show (NoInformation) = "NoInformation"
-    show (Bits a) = "Bits " ++ show a
+    show (Bits a) = "bits " ++ show a
     show (Exact) = "Exact"
 
 instance HasEqAsymmetric Accuracy Accuracy
