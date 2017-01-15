@@ -17,6 +17,7 @@ module AERN2.Interval
   Interval(..), singleton
   , width, split
   , arbitraryNonEmptyInterval
+  , arbitraryNonEmptySmallInterval
   , intersect, intersects
   , DyadicInterval, CanBeDyadicInterval, dyadicInterval
   , RealInterval, CanBeRealInterval, realInterval
@@ -86,10 +87,20 @@ arbitraryNonEmptyInterval ::
   =>
   Gen (Interval l r)
 arbitraryNonEmptyInterval =
-    do
-    l <- arbitrary
-    r <- arbitrary
-    if l !<! r then return (Interval l r) else arbitraryNonEmptyInterval
+  do
+  l <- arbitrary
+  r <- arbitrary
+  if l !<! r then return (Interval l r) else arbitraryNonEmptyInterval
+
+arbitraryNonEmptySmallInterval ::
+  (Arbitrary e, CanAddThis e Integer)
+  =>
+  Gen (Interval e e)
+arbitraryNonEmptySmallInterval =
+  do
+  l <- arbitrary
+  w <- growingElements [1..10]
+  return (Interval l (l+w))
 
 {- containment -}
 
