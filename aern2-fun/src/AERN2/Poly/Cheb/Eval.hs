@@ -26,6 +26,8 @@ import Numeric.MixedTypes
 
 import Data.Maybe
 
+import Numeric.CatchingExceptions
+
 import AERN2.MP.ErrorBound
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
@@ -44,10 +46,20 @@ import AERN2.Poly.Cheb.Derivative
 {- evaluation -}
 
 instance
-  (CanAddSubMulBy MPBall c, Ring c) =>
+  (CanAddSubMulBy MPBall c, Ring c, c~MPBall) =>
   CanApply (ChPoly c) MPBall where
   type ApplyType (ChPoly c) MPBall = MPBall
-  apply = evalDirect
+  apply p x =
+    case getAccuracy x of
+      Exact -> evalDirect p x
+      _ -> evalDI p x
+
+instance
+  CanApply (ChPoly MPBall) (CatchingNumExceptions MPBall) where
+  type ApplyType (ChPoly MPBall) (CatchingNumExceptions MPBall) = CatchingNumExceptions MPBall
+  apply p x =
+    -- TODO: check x is in the domain
+    apply p <$> x
 
 -- instance
 --   (CanAddSubMulBy MPBall c, Ring c) =>
