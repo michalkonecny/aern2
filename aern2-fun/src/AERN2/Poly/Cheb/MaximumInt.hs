@@ -81,7 +81,7 @@ maximumOptimisedWithAccuracy acc (ChPoly dom poly _) l r initialDegree steps =
       (fromDomToUnitInterval dom (setPrecision (getPrecision f) r))
   where
   f   = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly Nothing
-  fc' = (makeExactCentre . derivative . centre) f
+  fc' = ({-makeExactCentre .-} derivativeExact . centre) f
   maxKey = max 0 (ceiling ((degree f - initialDegree) / steps))
   ch2Power :: (ErrorBound, Poly Integer) -> (ErrorBound, Pow.PowPoly Integer)
   ch2Power (e, p) = (e, cheb2Power p)

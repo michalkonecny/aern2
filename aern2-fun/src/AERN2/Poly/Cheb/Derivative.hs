@@ -16,17 +16,18 @@ import Numeric.MixedTypes
 
 import AERN2.Normalize
 
+import Data.List
+
 import AERN2.MP.Ball
+import AERN2.MP.Dyadic
 
 import AERN2.Poly.Basics
 import AERN2.Interval
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Ring ()
 
-import Debug.Trace
-
 derivativeExact :: ChPoly MPBall -> ChPoly MPBall
-derivativeExact f =
+derivativeExact f@(ChPoly dom (Poly ts) l) =
   {-trace("derivative exact of "++(show f)) $
   trace("accuracy of f: "++(show $ getAccuracy f)) $
   trace("deriavtive of f: "++(show $ aux (getPrecision f) (getPrecision f))) $
@@ -42,7 +43,12 @@ derivativeExact f =
       else
         aux (p + q) p
 
-derivative :: ChPoly MPBall -> ChPoly MPBall
+derivative ::
+  (PolyCoeff c,
+   CanMulAsymmetric c (ChPoly c),
+   MulType c (ChPoly c) ~ ChPoly c,
+   CanDivBy c Dyadic)
+   => ChPoly c -> ChPoly c
 derivative {-(ChPoly dom@(Interval a b) (Poly ts) _)-} =
   derivative'
   {-normalize $
@@ -57,14 +63,23 @@ derivative {-(ChPoly dom@(Interval a b) (Poly ts) _)-} =
            ((terms_lookupCoeff dts (r + 1)) + (2*r*terms_lookupCoeff ts r))
            dts)-}
 
-derivative' :: ChPoly MPBall -> ChPoly MPBall
-derivative' (ChPoly dom@(Interval l r) (Poly ts) _)  =
+derivative' ::
+  (PolyCoeff c,
+  CanMulAsymmetric c (ChPoly c),
+  MulType c (ChPoly c) ~ ChPoly c,
+  CanDivBy c Dyadic)
+  => ChPoly c -> ChPoly c
+derivative' (ChPoly dom@(Interval l r) (Poly ts :: Poly c) _)  =
   normalize $
-  2/(mpBall (r - l)) * (foldl1 (+) [a*(deriv n) | (n,a) <- terms_toList ts])
+  (((convertExactly 2 :: c) / (r - l)) *
+   (foldl' (+)
+    zero
+    [a*(deriv n) | (n,a) <- terms_toList ts]))
   where
+  zero = ChPoly dom (Poly (terms_fromList [(0,convertExactly 0 :: c)])) Nothing
   deriv n =
     ChPoly dom
       (Poly $
         terms_updateConst (/2) $
-          terms_fromList [(i, mpBall $ 2*n) | i <- [0 .. n - 1], odd (n - i)])
+          terms_fromList [(i, convertExactly (2*n) :: c) | i <- [0 .. n - 1], odd (n - i)])
       Nothing

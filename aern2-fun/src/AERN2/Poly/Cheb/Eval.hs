@@ -183,29 +183,6 @@ instance CanApplyApprox (ChPoly MPBall) DyadicInterval where
     where
     (Interval lB uB) = sampledRange di 5 p :: Interval MPBall MPBall
 
-{--- TODO: move sampledRange to a module not specific to ChPoly
-sampledRange ::
-  (CanApply f t, ApplyType f t ~ t,
-   CanMinMaxSameType t, ConvertibleExactly Dyadic t, Show t)
-  =>
-  DyadicInterval -> Integer -> f -> Interval t t
-sampledRange (Interval l r) depth f =
-    maybeTrace
-    ( "sampledRange:"
-    ++ "\n samplePointsT = " ++ (show samplePointsT)
-    ++ "\n samples = " ++ show samples
-    ) $
-    Interval minValue maxValue
-    where
-    minValue = foldl1 min samples
-    maxValue = foldl1 max samples
-    samples = map (apply f) samplePointsT
-    samplePointsT = map convertExactly samplePoints
-    _ = minValue : samplePointsT
-    samplePoints :: [Dyadic]
-    samplePoints = [(l*i + r*(size - i))*(1/size) | i <- [0..size]]
-    size = 2^depth-}
-
 -- instance CanApply (ChPoly MPBall) DyadicInterval where
 --   type ApplyType (ChPoly MPBall) DyadicInterval = (Interval CauchyReal CauchyReal, ErrorBound)
 --   apply = rangeViaUnaryFun
