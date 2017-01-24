@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#define DEBUG
+-- #define DEBUG
 {-|
     Module      :  AERN2.Poly.Cheb.Tests
     Description :  Tests for Chebyshev-basis polynomials
@@ -23,6 +23,9 @@ module AERN2.Poly.Cheb.Tests
   (
     specChPoly, tChPolyMPBall
   , chPolyFromOps, ChPolyConstruction(..)
+  , makeFnPositive
+  , makeFnSmallRange
+  , makeFnPositiveSmallRange
   )
 where
 
@@ -219,6 +222,22 @@ makeFnSmallRange limit (FnAndDescr p pDescr) =
   (_, ub) = endpoints $ maximumOptimisedWithAccuracy (bits 0) p (mpBall l) (mpBall r) 5 5
   Interval l r = getDomain p
 
+makeFnPositiveSmallRange :: Integer -> FnAndDescr (ChPoly MPBall) -> FnAndDescr (ChPoly MPBall)
+makeFnPositiveSmallRange limit (FnAndDescr p pDescr) =
+  FnAndDescr res $ "makeFnPositiveSmallRange " ++ show limit ++  " (" ++ pDescr ++ ")"
+  where
+  res
+    | 1 !<=! lb && ub !<! limit = p
+    | b !<! limit = p - lb + 1
+    | otherwise = centreAsBall $ (1 - lb + (limit * p / b))
+  b = ub `max` (-lb)
+  lb, ub :: MPBall
+  -- (lb, _) = endpoints $ minimumOverDom p (getDomain p)
+  -- (_, ub) = endpoints $ maximumOverDom p (getDomain p)
+  (lb, _) = endpoints $ minimumOptimisedWithAccuracy (bits 0) p (mpBall l) (mpBall r) 5 5
+  (_, ub) = endpoints $ maximumOptimisedWithAccuracy (bits 0) p (mpBall l) (mpBall r) 5 5
+  Interval l r = getDomain p
+
 
 -- precondAnyT :: t -> Bool
 -- precondAnyT _t = True
@@ -248,4 +267,34 @@ specChPoly =
     describe "trigonometric" $ do
       specFnPointwiseOp1 tChPolyMPBall tMPBall "sine" (sineWithAccuracyGuide (bits 10)) (sin) (makeFnSmallRange 10)
     describe "field" $ do
-      specFnPointwiseOp2 tChPolyMPBall tMPBall "/" (chebDivideDCT (bits 0)) (/) anyFn makeFnPositive
+      specFnPointwiseOp2 tChPolyMPBall tMPBall "/" (chebDivideDCT (bits 0)) (/) anyFn (makeFnPositiveSmallRange 100)
+
+{- a template for probing bugs:
+
+dom12 = Interval (dyadic (14073749*0.5^(46))) (dyadic (422212479139733*0.5^(46)))
+
+
+p1D =
+  ChPolyConstruction {cpConstr_acGuide = bits 30, cpConstr_dom = dom12,
+    cpConstr_i0 = 0,
+    cpConstr_opIndices = [(2,[1]),(2,[0]),(1,[0]),(1,[0]),(1,[0]),(0,[4]),(1,[0]),(2,[0]),(2,[0]),(0,[1]),(2,[3]),(2,[0]),(0,[3]),(0,[0])]}
+
+p1 = chPolyFromOps p1D
+p1FD = FnAndDescr p1 (show p1D)
+
+
+p2D =
+  ChPolyConstruction {cpConstr_acGuide = bits 30, cpConstr_dom = dom12,
+    cpConstr_i0 = 4,
+    cpConstr_opIndices = [(2,[0]),(0,[0]),(0,[0]),(0,[0]),(0,[0]),(2,[0]),(2,[0]),(2,[0]),(0,[0]),(0,[0]),(2,[0]),(1,[0]),(1,[0]),(2,[1]),(0,[0]),(1,[0]),(0,[0]),(2,[4]),(0,[0]),(2,[0]),(2,[0])]}
+
+p2 = chPolyFromOps p2D
+p2FD = FnAndDescr p2 (show p2D)
+
+FnAndDescr p2sm _ = makeFnPositiveSmallRange 100 p2FD
+
+p1Divp2sm = chebDivideDCT (bits 0) p1 p2sm
+
+-- pt = (mpBall 1104) + (mpBall )
+
+-}
