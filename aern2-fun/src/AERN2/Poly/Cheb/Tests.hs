@@ -131,17 +131,6 @@ instance
   Arbitrary ChPolyConstruction
   where
   arbitrary =
-<<<<<<< HEAD
-    do
-    dom <- arbitraryNonEmptyInterval
-    deg <- growingElements [0..200]
-    termSize <- growingElements [0..deg]
-    coeffs <- (map centreAsBall) <$> vector (int $ 1 + termSize)
-    terms <-
-      -- trace ("coeffs=" ++ show coeffs) $
-      makeTerms coeffs termSize deg
-    return $ ChPoly dom (Poly terms) Nothing
-=======
     arbitraryWithDom =<< arbitraryNonEmptySmallInterval
 
 instance
@@ -150,7 +139,6 @@ instance
   where
   arbitraryWithDom dom =
     sized withSize
->>>>>>> july2016
     where
     withSize size =
       do

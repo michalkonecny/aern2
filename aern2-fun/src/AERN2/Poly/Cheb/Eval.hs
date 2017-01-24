@@ -69,13 +69,6 @@ instance
 --     seqByPrecision2CauchyRealA "apply" $ \ pr ->
 --       apply cp $ setPrecision pr $ mpBall x
 
-instance ConvertibleExactly (ChPoly MPBall) (UnaryFun, ErrorBound) where
-  safeConvertExactly cp@(ChPoly dom _p) = Right (UnaryFun dom eval, e)
-    where
-    e = radius cp
-    cpExact = centreAsBall cp
-    eval = fmap $ evalDirect cpExact
-
 evalDirect ::
   (Ring t, CanAddSubMulDivBy t Dyadic, CanDivBy t Integer,
    CanAddSubMulBy t c, Ring c)
@@ -190,7 +183,7 @@ instance CanApplyApprox (ChPoly MPBall) DyadicInterval where
     where
     (Interval lB uB) = sampledRange di 5 p :: Interval MPBall MPBall
 
--- TODO: move sampledRange to a module not specific to ChPoly
+{--- TODO: move sampledRange to a module not specific to ChPoly
 sampledRange ::
   (CanApply f t, ApplyType f t ~ t,
    CanMinMaxSameType t, ConvertibleExactly Dyadic t, Show t)
@@ -211,7 +204,7 @@ sampledRange (Interval l r) depth f =
     _ = minValue : samplePointsT
     samplePoints :: [Dyadic]
     samplePoints = [(l*i + r*(size - i))*(1/size) | i <- [0..size]]
-    size = 2^depth
+    size = 2^depth-}
 
 -- instance CanApply (ChPoly MPBall) DyadicInterval where
 --   type ApplyType (ChPoly MPBall) DyadicInterval = (Interval CauchyReal CauchyReal, ErrorBound)
