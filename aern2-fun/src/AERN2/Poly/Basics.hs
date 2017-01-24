@@ -51,7 +51,7 @@ type PolyCoeff c =
   , HasAccuracy c, HasNorm c, CanSetPrecision c
   , Show c)
 
-data Poly c = Poly { poly_coeffs :: Terms c }
+data Poly c = Poly { poly_terms :: Terms c }
 
 type Terms c = Map.Map Degree c
 

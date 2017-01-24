@@ -91,8 +91,8 @@ lift2_DCT getDegree op pA pB
 
   -- prc = (getPrecision pA) `max` (getPrecision pB)
   workingPrec = prec $ 100 + cN
-  (ChPoly domA (Poly termsA)) = raisePrecisionIfBelow workingPrec pA
-  (ChPoly domB (Poly termsB)) = raisePrecisionIfBelow workingPrec pB
+  (ChPoly domA (Poly termsA) _) = raisePrecisionIfBelow workingPrec pA
+  (ChPoly domB (Poly termsB) _) = raisePrecisionIfBelow workingPrec pB
 
   aT = coeffs2gridvalues cN termsA
   bT = coeffs2gridvalues cN termsB
@@ -105,7 +105,7 @@ lift2_DCT getDegree op pA pB
     normalize $
     -- setPrecision prc $
     reduceDegree resultDegree $
-      ChPoly domA $ Poly $ terms_fromList $ zip [0..] (c0Double / 2 : c)
+      ChPoly domA (Poly $ terms_fromList $ zip [0..] (c0Double / 2 : c)) Nothing
 --    terms_fromList [(0, mpBall 1)] -- dummy for debugging exceptions
 
 {-|
@@ -118,7 +118,7 @@ lift1_DCT ::
   (c -> c) {-^ the function @f@ to apply pointwise to @p@ -} ->
   ChPoly c {-^ @p@ -} ->
   ChPoly c
-lift1_DCT getDegree op (ChPoly dom (Poly termsA)) =
+lift1_DCT getDegree op (ChPoly dom (Poly termsA) _) =
     maybeTrace
     (
         "lift1_DCT:"
@@ -130,7 +130,7 @@ lift1_DCT getDegree op (ChPoly dom (Poly termsA)) =
         ++ "\n c = " ++ show c
     ) $
     normalize $
-    ChPoly dom (Poly terms)
+    ChPoly dom (Poly terms) Nothing
     where
     terms =
       terms_fromList $ zip [0..] (c0Double / 2 : c)

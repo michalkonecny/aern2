@@ -13,7 +13,9 @@
 
 module AERN2.Poly.Cheb.Type
 (
-  ChPoly(..), chPoly_terms, CanBeChPoly, chPoly, chPolyMPBall
+  ChPoly(..), chPoly_terms
+, ChPolyBounds(..), chPoly_maybeLip, chPoly_setLip
+, CanBeChPoly, chPoly, chPolyMPBall
 , showInternals, fromDomToUnitInterval
 , Degree, degree, reduceDegree, reduceDegreeWithLostAccuracyLimit
 )
@@ -53,13 +55,30 @@ chPolyMPBall = convertExactly
 
 {- Chebyshev polynomials with domain translation -}
 
-data ChPoly c = ChPoly { chPoly_dom :: DyadicInterval, chPoly_poly :: Poly c }
+data ChPoly c =
+  ChPoly
+  { chPoly_dom :: DyadicInterval
+  , chPoly_poly :: Poly c
+  , chPoly_maybeBounds :: Maybe (ChPolyBounds c)
+  }
+
+data ChPolyBounds c =
+  ChPolyBounds
+  { chPolyBounds_lip :: c
+  }
+  deriving (Show)
+
+chPoly_maybeLip :: ChPoly c -> Maybe c
+chPoly_maybeLip = fmap chPolyBounds_lip . chPoly_maybeBounds
+
+chPoly_setLip :: c -> ChPoly c -> ChPoly c -- TODO: use Maybe c instead?
+chPoly_setLip lip (ChPoly dom poly _) =  ChPoly dom poly (Just $ ChPolyBounds lip)
 
 chPoly_terms :: ChPoly c -> Terms c
-chPoly_terms (ChPoly _ (Poly terms)) = terms
+chPoly_terms = poly_terms . chPoly_poly
 
 instance Show (ChPoly MPBall) where
-  show (ChPoly dom poly) = show ppDom
+  show (ChPoly dom poly _) = show ppDom
     where
     pp = cheb2Power poly
     ppDom =
@@ -70,10 +89,10 @@ instance Show (ChPoly MPBall) where
     Interval l r = dom
 
 
-
 showInternals :: (Show c) => ChPoly c -> String
-showInternals (ChPoly dom (Poly terms)) =
+showInternals (ChPoly dom (Poly terms) bnd) =
   "ChPoly: dom = " ++ show dom ++
+  ", bounds = " ++ show bnd ++
   ", terms = " ++ show terms
 
 fromDomToUnitInterval ::
@@ -90,25 +109,28 @@ instance HasDomain (ChPoly c) where
 
 instance (IsBall c, HasIntegers c) => IsBall (ChPoly c) where
   type CentreType (ChPoly c) = ChPoly c
-  radius (ChPoly _dom (Poly terms)) =
+  radius (ChPoly _dom (Poly terms) _) =
     List.foldl' (+) (errorBound 0) $ map radius $ terms_coeffs terms
-  centre (ChPoly dom (Poly terms)) =
-    ChPoly dom (Poly (terms_map centreAsBall terms))
+  centre (ChPoly dom (Poly terms) _bnd) =
+    ChPoly dom (Poly (terms_map centreAsBall terms)) Nothing
   centreAsBall = centre
   centreAsBallAndRadius cp = (centre cp, radius cp)
-  updateRadius updateFn (ChPoly dom (Poly terms)) =
-    ChPoly dom (Poly $ terms_updateConst (updateRadius updateFn) terms)
+  updateRadius updateFn (ChPoly dom (Poly terms) _) =
+    ChPoly dom (Poly $ terms_updateConst (updateRadius updateFn) terms) Nothing
 
 instance
   (PolyCoeff c) =>
   CanNormalize (ChPoly c) where
-  normalize = makeExactCentre . sweepUsingAccuracy
+  normalize p =
+    case chPoly_maybeLip p of
+      Nothing  -> (makeExactCentre . sweepUsingAccuracy) p
+      Just lip -> (chPoly_setLip lip . makeExactCentre . sweepUsingAccuracy) p
 
 sweepUsingAccuracy ::
   (PolyCoeff c) =>
   ChPoly c -> ChPoly c
-sweepUsingAccuracy (ChPoly dom poly@(Poly ts)) =
-  ChPoly dom (Poly ts')
+sweepUsingAccuracy (ChPoly dom poly@(Poly ts) bnd) =
+  ChPoly dom (Poly ts') bnd
   where
   ts' = reduceTerms shouldKeep ts
   shouldKeep deg coeff =
@@ -121,7 +143,7 @@ sweepUsingAccuracy (ChPoly dom poly@(Poly ts)) =
 instance (HasDyadics c) => HasVars (ChPoly c) where
   type Var (ChPoly c) = ()
   varFn sampleFn () =
-    ChPoly dom (Poly terms)
+    ChPoly dom (Poly terms) Nothing
     where
     dom@(Interval l r) = getDomain sampleFn
     terms = terms_fromList [(0, c0), (1, c1)]
@@ -137,26 +159,26 @@ instance (ConvertibleExactly t c) => ConvertibleExactly (DyadicInterval, t) (ChP
   where
   safeConvertExactly (dom, x) =
     case safeConvertExactly x of
-      Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)])
+      Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)]) Nothing
       Left e -> Left e
 
 instance (ConvertibleExactly t c) => ConvertibleExactly (ChPoly c, t) (ChPoly c)
   where
-  safeConvertExactly (ChPoly dom _, x) =
+  safeConvertExactly (ChPoly dom _ _, x) =
     case safeConvertExactly x of
-      Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)])
+      Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)]) Nothing
       Left e -> Left e
 
 degree :: ChPoly c -> Integer
-degree (ChPoly _ (Poly ts)) = terms_degree ts
+degree (ChPoly _ (Poly ts) _) = terms_degree ts
 
 {- precision -}
 
 instance (HasPrecision c) => HasPrecision (ChPoly c) where
-  getPrecision (ChPoly _ poly) = getPrecision poly
+  getPrecision (ChPoly _ poly _) = getPrecision poly
 
 instance (PolyCoeff c) => CanSetPrecision (ChPoly c) where
-  setPrecision p (ChPoly dom poly) = normalize $ ChPoly dom $ setPrecision p poly
+  setPrecision p (ChPoly dom poly bnd) = normalize $ ChPoly dom (setPrecision p poly) bnd
 
 {- accuracy -}
 

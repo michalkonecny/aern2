@@ -47,9 +47,11 @@ primitive_function ::
   (Ring c, CanDivBy c Integer, CanNormalize (ChPoly c))
   =>
   ChPoly c -> ChPoly c
-primitive_function (ChPoly dom (Poly terms)) =
-  normalize $ ChPoly dom $ Poly $ terms_fromListAddCoeffs $
-    concat $ map oneTerm $ terms_toList terms
+primitive_function (ChPoly dom (Poly terms) _) =
+  normalize $ ChPoly dom
+    (Poly $ terms_fromListAddCoeffs $
+      concat $ map oneTerm $ terms_toList terms)
+    Nothing
   where
   oneTerm (n,a)
     | n == 0 = [(1,a)]

@@ -57,7 +57,8 @@ linearPolygon ((x,y) : xys) dom =
         --(Poly $ terms_fromList [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))]))
         (Poly $ terms_fromList
                 [(0, constantTerm a fa b fb (getPrecision fa) (getPrecision fb) Nothing),
-                 (1, linearTerm a fa b fb (getPrecision fa) (getPrecision fb)  Nothing)]))
+                 (1, linearTerm a fa b fb (getPrecision fa) (getPrecision fb)  Nothing)])
+        Nothing)
       (errorBound 0)
   linearTerm a fa b fb p q prev =
     let
@@ -104,7 +105,13 @@ liftCheb2PPoly f =
   liftBall2PPoly (ballify f)
   where
   ballify g (Ball c r) =
-    normalize $ Ball (g $ updateRadius (+r) c) (errorBound 0)
+    let
+      ballAsCheb =
+        case chPoly_maybeLip c of
+          Nothing  -> updateRadius (+r) c
+          Just lip -> chPoly_setLip lip $ updateRadius (+r) c
+    in
+    normalize $ Ball (g ballAsCheb) (errorBound 0)
 
 {-lift2PPoly :: (Poly MPBall -> Poly MPBall) -> (PPoly -> PPoly)
 lift2PPoly f (PPoly pieces overlap dom) =
