@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-|
     Module      :  AERN2.MP.Ball.Elementary
     Description :  Elementary operations on arbitrary precision dyadic balls
@@ -16,7 +17,6 @@ module AERN2.MP.Ball.Elementary
   piBallP
   -- * Helpers for constructing ball functions
   , fromApproxWithLipschitz
-  , monotoneFromApprox
 )
 where
 
@@ -37,6 +37,12 @@ import AERN2.MP.Ball.Type
 import AERN2.MP.Ball.Conversions ()
 import AERN2.MP.Ball.Comparisons ()
 import AERN2.MP.Ball.Field ()
+
+#ifdef IntegerBackend
+import AERN2.MP.Ball.ElementaryFromField
+#endif
+
+#ifdef MPFRBackend
 
 {- trigonometrics -}
 
@@ -87,11 +93,11 @@ cosB i x =
 {- exp, log, power -}
 
 instance CanExp MPBall where
-  exp = monotoneFromApprox MPFloat.expDown MPFloat.expUp
+  exp = intervalFunctionByEndpointsUpDown MPFloat.expDown MPFloat.expUp
 
 instance CanLog MPBall where
   log x
-    | x !>! 0 = monotoneFromApprox MPFloat.logDown MPFloat.logUp x
+    | x !>! 0 = intervalFunctionByEndpointsUpDown MPFloat.logDown MPFloat.logUp x
     | otherwise = error $ "MPBall log: cannot establish that the argument is positive: " ++ show x
 
 instance CanPow MPBall MPBall where
@@ -106,11 +112,10 @@ instance CanPow MPBall Rational where
 instance CanSqrt MPBall where
   sqrt x
     | x !>=! 0 = aux x
-    -- | x ?>=? 0 = aux (max 0 x)
+    --- | x ?>=? 0 = aux (max 0 x)
     | otherwise = error $ "MPBall sqrt: cannot establish that the argument is non-negative: " ++ show x
     where
-      aux = monotoneFromApprox MPFloat.sqrtDown MPFloat.sqrtUp
-
+      aux = intervalFunctionByEndpointsUpDown MPFloat.sqrtDown MPFloat.sqrtUp
 
 {- Instances of Prelude numerical classes provided for convenient use outside AERN2
    and also because Template Haskell translates (-x) to (Prelude.negate x) -}
@@ -159,6 +164,8 @@ instance P.Floating MPBall where
     asinh = error "MPBall: asinh not implemented yet"
     acosh = error "MPBall: acosh not implemented yet"
 
+#endif
+
 {- generic methods for computing real functions from MPFR-approximations -}
 
 {-|
@@ -177,17 +184,3 @@ fromApproxWithLipschitz fDown fUp lip _x@(MPBall xc xe) =
     fxu = fUp xc
     (MPBall fxc fxe) = fromEndpointsMP fxl fxu
     err = (errorBound lip) * xe  +  fxe
-
-{-|
-    Computes a *monotone* ball function @f@ from correctly rounded MPFR-approximations.
--}
-monotoneFromApprox ::
-    (MPFloat -> MPFloat) {-^ @fDown@: a version of @f@ on MPFloat rounding *downwards* -} ->
-    (MPFloat -> MPFloat) {-^ @fUp@: a version of @f@ on MPFloat rounding *upwards* -} ->
-    (MPBall -> MPBall) {-^ @f@ on MPBall rounding *outwards* -}
-monotoneFromApprox fDown fUp x =
-    fromEndpointsMP (fDown l) (fUp u)
-    where
-    (l,u) = endpointsMP x
-
-{-  random generation -}

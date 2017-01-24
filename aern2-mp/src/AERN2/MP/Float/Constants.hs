@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-|
     Module      :  AERN2.MP.Float.Constants
     Description :  Special constants NaN, infinity etc
@@ -14,7 +15,9 @@
 module AERN2.MP.Float.Constants
   (
     zero, one
+#ifdef MPFRBackend
     , nan, infinity
+#endif
   )
 where
 
@@ -26,11 +29,15 @@ import AERN2.MP.Float.Type
 import AERN2.MP.Float.Conversions
 import AERN2.MP.Float.Operators
 
-nan, infinity, zero, one :: MPFloat
-nan = zero /. zero
-infinity = one /. zero
+zero, one :: MPFloat
 zero = mpFloat 0
 one = mpFloat 1
+
+#ifdef MPFRBackend
+nan, infinity :: MPFloat
+nan = zero /. zero
+infinity = one /. zero
+#endif
 
 itisNaN :: MPFloat -> Bool
 itisNaN x = x *^ one /= x

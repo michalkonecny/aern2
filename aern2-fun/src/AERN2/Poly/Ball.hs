@@ -36,7 +36,7 @@ import Numeric.MixedTypes
 -- import Test.Hspec
 -- import Test.QuickCheck
 
-import AERN2.TH
+import AERN2.Utils.TH
 
 import AERN2.Normalize
 

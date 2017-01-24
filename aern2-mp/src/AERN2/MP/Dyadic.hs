@@ -382,7 +382,7 @@ instance Arbitrary Dyadic where
       finiteMPFloat =
         do
           x <- arbitrary
-          if (-infinity) < x && x < infinity
+          if isFinite x
             then return x
             else finiteMPFloat
 

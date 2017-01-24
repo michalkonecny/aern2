@@ -74,6 +74,8 @@ type CauchyReal = CauchyRealA (->)
 instance Show CauchyReal where
   show r = show $ qaMakeQuery r (bits 100)
 
+{- constructions -}
+
 newCR :: (QAArrow to) => String -> [AnyProtocolQA to] -> Accuracy `to` MPBall -> CauchyRealA to
 newCR name sources makeQ = newQA name sources pCR NoInformation makeQ
 
@@ -145,3 +147,6 @@ pickNonZeroRealA =
     pickNonZeroBall ((b, r) : rest)
       | isNonZero b = Just r
       | otherwise = pickNonZeroBall rest
+
+instance CanPickNonZero CauchyReal where
+  pickNonZero = pickNonZeroRealA

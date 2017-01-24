@@ -132,7 +132,7 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     rC = centreAsBall r :: MPBall
 
     -- compute k = round(rC/(pi/2)):
-    k = fst $ MPBall.integerBounds $ 0.5 + (2*rC / pi)
+    k = fst $ integerBounds $ 0.5 + (2*rC / pi)
 
     -- shift xC near 0 using multiples of pi/2:
     txC ac = (setPrecisionAtLeastAccuracy (ac) xC) - k * pi / 2

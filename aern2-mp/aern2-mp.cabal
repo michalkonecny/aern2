@@ -1,19 +1,19 @@
 name:           aern2-mp
-version:        0.1
+version:        0.1.0.0
 cabal-version:  >= 1.9.2
 build-type:     Simple
-author:         Michal Konecny
-stability:      experimental
-maintainer:     Michal Konecny <mikkonecny@gmail.com>
-tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
-license:        BSD3
 homepage:       https://github.com/michalkonecny/aern2/aern2-mp
-synopsis:       Multi-precision floats via haskell-mpfr or hmpfr
-category:       Math
-copyright:      (c) 2015, 2016 Michal Konecny
+author:         Michal Konecny
+maintainer:     Michal Konecny <mikkonecny@gmail.com>
+copyright:      (c) 2015-2017 Michal Konecny
+license:        BSD3
 license-file:   LICENSE
+stability:      experimental
+tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
+category:       Math
+synopsis:       Multi-precision floats via haskell-mpfr or hmpfr
 Description:
-  A wrapper around haskell-mpfr or hmpfr, providing the types:
+  A wrapper around MPFR (and, in future, an alternative to MPFR), providing the types:
   .
   * Dyadic:  variable-precision floats with exact ring operations
   .
@@ -21,8 +21,21 @@ Description:
   .
   * MPBall: float ± error bound with field & elementary (interval-like) operations
   .
-  Currently, we use hmpfr when compiling with ghc 7.10 and higher
+  By default, we use hmpfr when compiling with ghc 7.10 and higher
   and haskell-mpfr when compiling with ghc 7.8.
+  .
+  There is also an Integer backend which does not need MPFR, but
+  it is not yet complete.
+
+source-repository head
+  type:     git
+  location: https://github.com/mikkonecny/aern2.git
+  subdir: aern2-mp
+
+flag MPFR
+  Description: Use MPFR backend (default); Integer backend is incomplete
+  Default:     True
+  -- WARNING:
 
 library
   hs-source-dirs:  src
@@ -37,17 +50,21 @@ library
     , template-haskell
     , mixed-types-num == 0.1.*
     , num-exceptions == 0.1.*
-  if impl(ghc >= 7.10)
-    build-depends:
-      hmpfr == 0.4.*,
-      integer-gmp >= 1.0 && < 1.1
-    cpp-options: -DHMPFR
+  if flag(MPFR)
+    cpp-options: -DMPFRBackend
+    if impl(ghc >= 7.10)
+      build-depends:
+        hmpfr == 0.4.*,
+        integer-gmp >= 1.0 && < 1.1
+      cpp-options: -DHMPFR
+    else
+      build-depends:
+        haskell-mpfr == 0.1.*,
+        integer-gmp < 0.6
+      cpp-options: -DHaskellMPFR
   else
-    build-depends:
-      haskell-mpfr == 0.1.*,
-      integer-gmp < 0.6
-    cpp-options: -DHaskellMPFR
-  ghc-options:     -Wall -fno-warn-orphans
+    cpp-options: -DIntegerBackend
+  ghc-options:     -Wall -O2 -fno-warn-orphans
   extensions:
     RebindableSyntax,
     PostfixOperators,
@@ -63,12 +80,14 @@ library
     FlexibleInstances,
     UndecidableInstances
   exposed-modules:
-    AERN2.TH
+    AERN2.Utils.TH
+    AERN2.Utils.Bench
     AERN2.Normalize
     AERN2.Norm
     AERN2.MP
     AERN2.MP.Precision
     AERN2.MP.Float
+    AERN2.MP.Float.Native
     AERN2.MP.Float.Type
     AERN2.MP.Float.Arithmetic
     AERN2.MP.Float.Conversions
@@ -78,11 +97,13 @@ library
     AERN2.MP.Dyadic
     AERN2.MP.Accuracy
     AERN2.MP.ErrorBound
+    AERN2.MP.Enclosure
     AERN2.MP.Ball
     AERN2.MP.Ball.Type
     AERN2.MP.Ball.Conversions
     AERN2.MP.Ball.Comparisons
     AERN2.MP.Ball.Field
+    AERN2.MP.Ball.ElementaryFromField
     AERN2.MP.Ball.Elementary
     AERN2.MP.Ball.Tests
 
@@ -90,7 +111,7 @@ test-suite spec
   type:
       exitcode-stdio-1.0
   ghc-options:
-      -Wall
+      -Wall -O2
   extensions:
     RebindableSyntax,
     PostfixOperators,
@@ -107,3 +128,110 @@ test-suite spec
     , hspec >= 2.1 && < 2.3
     -- , hspec-smallcheck >= 0.3 && < 0.5
     , QuickCheck >= 2.7 && < 2.9
+
+executable testNative
+  ghc-options:
+      -Wall
+  extensions:
+    RebindableSyntax,
+    PostfixOperators,
+    ScopedTypeVariables,
+    DeriveGeneric,
+    GeneralizedNewtypeDeriving,
+    TypeFamilies,
+    TypeOperators,
+    ConstraintKinds,
+    DefaultSignatures,
+    MultiParamTypeClasses,
+    FlexibleContexts,
+    FlexibleInstances,
+    UndecidableInstances
+  hs-source-dirs:
+      test, src
+  main-is:
+      DummyMain.hs
+  other-modules:
+      AERN2.MP.Float.Native
+  build-depends:
+    base == 4.*
+    , arithmoi == 0.4.*
+    , convertible >= 1.1.1.0 && < 1.2
+    , hspec >= 2.1 && < 2.3
+    -- , hspec-smallcheck >= 0.3 && < 0.5
+    , QuickCheck >= 2.7 && < 2.9
+    , lens == 4.13.*
+    , template-haskell
+    , mixed-types-num == 0.1.*
+    , num-exceptions == 0.1.*
+
+-- executable aern2-mp-benchOp
+--   ghc-options:
+--       -Wall
+--   extensions:
+--     RebindableSyntax,
+--     PostfixOperators,
+--     ScopedTypeVariables,
+--     FlexibleContexts,
+--     TypeSynonymInstances
+--   hs-source-dirs:
+--       bench
+--   main-is:
+--       aern2-mp-benchOp.hs
+--   build-depends:
+--     base == 4.*
+--     , mixed-types-num
+--     , aern2-mp
+--     , random
+--     , QuickCheck >= 2.7 && < 2.9
+--
+-- executable aern2-mp-bench-ballOps
+--   -- type:
+--   --     exitcode-stdio-1.0
+--   ghc-options:
+--       -Wall
+--   extensions:
+--     RebindableSyntax,
+--     PostfixOperators,
+--     ScopedTypeVariables,
+--     FlexibleContexts,
+--     TypeSynonymInstances
+--   hs-source-dirs:
+--       bench
+--   main-is:
+--       BallOps.hs
+--   other-modules:
+--     Values
+--   build-depends:
+--     base == 4.*
+--     , mixed-types-num
+--     , aern2-mp
+--     , criterion
+--     , deepseq
+--     , random
+--     , QuickCheck >= 2.7 && < 2.9
+--
+-- executable aern2-mp-bench-ballOpsSpace
+--   -- type:
+--   --     exitcode-stdio-1.0
+--   ghc-options:
+--       -Wall
+--   extensions:
+--     RebindableSyntax,
+--     PostfixOperators,
+--     ScopedTypeVariables,
+--     FlexibleContexts,
+--     TypeSynonymInstances
+--   hs-source-dirs:
+--       bench
+--   main-is:
+--       BallOpsSpace.hs
+--   other-modules:
+--     Values
+--   build-depends:
+--     base == 4.*
+--     , mixed-types-num
+--     , aern2-mp
+--     , weigh
+--     , deepseq
+--     , random
+--     , QuickCheck >= 2.7 && < 2.9
