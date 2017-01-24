@@ -121,7 +121,8 @@ mulCheb p1@(ChPoly _ (Poly terms1)) p2@(ChPoly _ (Poly terms2)) =
   result
   where
   (result, methodS)
-    | getAccuracy p1 /= Exact || getAccuracy p2 /= Exact || size1 + size2 < 200 -- 1000
+    | getAccuracy p1 /= Exact || getAccuracy p2 /= Exact || size1 + size2 < 1000
+      -- TODO: improve the condition based on benchmarks
       = (mulChebDirect p1 p2, "mulChebDirect")
     | otherwise
       = (mulChebDCT p1 p2, "mulChebDCT")
