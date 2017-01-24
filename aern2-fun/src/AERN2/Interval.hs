@@ -17,6 +17,7 @@ module AERN2.Interval
   Interval(..), singleton
   , width, split
   , arbitraryNonEmptyInterval
+  , arbitraryNonEmptySmallInterval
   , intersect, intersects
   , DyadicInterval, CanBeDyadicInterval, dyadicInterval
   , RealInterval, CanBeRealInterval, realInterval
@@ -50,7 +51,9 @@ data Interval l r = Interval { endpointL :: l, endpointR :: r }
   deriving (P.Eq, Generic)
 
 instance (Show l, Show r) => Show (Interval l r) where
-    show (Interval l r) = printf "[%s,%s]" (show l) (show r)
+    show (Interval l r) =
+      printf "Interval (%s) (%s)" (show l) (show r)
+      -- printf "[%s,%s]" (show l) (show r)
 
 singleton :: a -> Interval a a
 singleton a = Interval a a
@@ -86,10 +89,20 @@ arbitraryNonEmptyInterval ::
   =>
   Gen (Interval l r)
 arbitraryNonEmptyInterval =
-    do
-    l <- arbitrary
-    r <- arbitrary
-    if l !<! r then return (Interval l r) else arbitraryNonEmptyInterval
+  do
+  l <- arbitrary
+  r <- arbitrary
+  if l !<! r then return (Interval l r) else arbitraryNonEmptyInterval
+
+arbitraryNonEmptySmallInterval ::
+  (Arbitrary e, CanAddThis e Integer)
+  =>
+  Gen (Interval e e)
+arbitraryNonEmptySmallInterval =
+  do
+  l <- arbitrary
+  w <- growingElements [1..10]
+  return (Interval l (l+w))
 
 {- containment -}
 

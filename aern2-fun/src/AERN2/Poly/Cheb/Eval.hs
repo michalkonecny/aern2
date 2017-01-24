@@ -26,6 +26,8 @@ import Numeric.MixedTypes
 
 import Data.Maybe
 
+import Numeric.CatchingExceptions
+
 import AERN2.MP.ErrorBound
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
@@ -40,31 +42,24 @@ import AERN2.RealFun.UnaryFun
 import AERN2.Poly.Basics
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Derivative
--- import AERN2.Poly.Conversion
--- import AERN2.Poly.Power (PowPoly)
-import qualified AERN2.Poly.Power as Pow
-
-
-import AERN2.Poly.Conversion -- TODO remove
-
-import Debug.Trace (trace)
-
-shouldTrace :: Bool
-shouldTrace = False
--- shouldTrace = True
-
-maybeTrace :: String -> a -> a
-maybeTrace
-    | shouldTrace = trace
-    | otherwise = const id
 
 {- evaluation -}
 
 instance
-  (CanAddSubMulBy MPBall c, Ring c) =>
+  (CanAddSubMulBy MPBall c, Ring c, c~MPBall) =>
   CanApply (ChPoly c) MPBall where
   type ApplyType (ChPoly c) MPBall = MPBall
-  apply = evalDirect
+  apply p x =
+    case getAccuracy x of
+      Exact -> evalDirect p x
+      _ -> evalDI p x
+
+instance
+  CanApply (ChPoly MPBall) (CatchingNumExceptions MPBall) where
+  type ApplyType (ChPoly MPBall) (CatchingNumExceptions MPBall) = CatchingNumExceptions MPBall
+  apply p x =
+    -- TODO: check x is in the domain
+    apply p <$> x
 
 -- instance
 --   (CanAddSubMulBy MPBall c, Ring c) =>
@@ -73,6 +68,13 @@ instance
 --   apply cp x =
 --     seqByPrecision2CauchyRealA "apply" $ \ pr ->
 --       apply cp $ setPrecision pr $ mpBall x
+
+instance ConvertibleExactly (ChPoly MPBall) (UnaryFun, ErrorBound) where
+  safeConvertExactly cp@(ChPoly dom _p) = Right (UnaryFun dom eval, e)
+    where
+    e = radius cp
+    cpExact = centreAsBall cp
+    eval = fmap $ evalDirect cpExact
 
 evalDirect ::
   (Ring t, CanAddSubMulDivBy t Dyadic, CanDivBy t Integer,

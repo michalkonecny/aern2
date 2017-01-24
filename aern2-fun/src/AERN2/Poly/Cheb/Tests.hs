@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+-- #define DEBUG
 {-|
     Module      :  AERN2.Poly.Cheb.Tests
     Description :  Tests for Chebyshev-basis polynomials
@@ -20,17 +22,26 @@
 module AERN2.Poly.Cheb.Tests
   (
     specChPoly, tChPolyMPBall
+  , chPolyFromOps, ChPolyConstruction(..)
+  , makeFnPositive
+  , makeFnSmallRange
+  , makeFnPositiveSmallRange
   )
 where
 
-import Debug.Trace
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#else
+#define maybeTrace (\ (_ :: String) t -> t)
+#endif
 
 import Numeric.MixedTypes
 -- import qualified Prelude as P
 -- import Data.Ratio
--- import Text.Printf
+import Text.Printf
 
-import qualified Data.Set as Set
+-- import qualified Data.Set as Set
 
 import Test.Hspec
 import Test.QuickCheck
@@ -46,17 +57,81 @@ import AERN2.Interval
 
 import AERN2.RealFun.Operations
 
+import AERN2.RealFun.SineCosine (sineWithAccuracyGuide)
+
 import AERN2.Poly.Basics
 
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Eval ()
 import AERN2.Poly.Cheb.Ring ()
--- import AERN2.Poly.Cheb.Field ()
--- import AERN2.Poly.Cheb.Maximum ()
+import AERN2.Poly.Cheb.Field (chebDivideDCT)
+import AERN2.Poly.Cheb.Maximum (minimumOptimisedWithAccuracy, maximumOptimisedWithAccuracy)
 -- import AERN2.Poly.Cheb.Integration ()
 
-instance (Arbitrary c, IsBall c, Show c) => Arbitrary (ChPoly c) where
+data ChPolyConstruction =
+  ChPolyConstruction
+  { cpConstr_acGuide :: Accuracy
+  , cpConstr_dom :: DyadicInterval
+  , cpConstr_i0 :: FnIndex
+  , cpConstr_opIndices :: [(OpIndex, [FnIndex])]
+  }
+  deriving (Show)
+
+
+chPolyFromOps :: ChPolyConstruction -> ChPoly MPBall
+chPolyFromOps (ChPolyConstruction acGuide dom i0 opIndices) =
+  applyOps opIndices (fns !! i0)
+  where
+  fns = map snd $ basicFunctions dom
+  applyOps [] fn = centreAsBall fn
+  applyOps ((opIndex, operandIndices):rest) fn =
+    applyOps rest newFn
+    where
+    (_arity, opList) = operations !! opIndex
+    operands = map (fns !!) operandIndices
+    newFn = centreAsBall $ reduceSizeUsingAccuracyGuide acGuide $ opList (fn : operands)
+
+type OpIndex = Integer
+type Arity = Integer
+
+operations :: [(Arity, [ChPoly MPBall] -> ChPoly MPBall)]
+operations =
+  [op2 (+), op2 (-), op2 (*), op2 (*)]
+    -- , op1 (sineWithAccuracyGuide acGuide), op1 (cosineWithAccuracyGuide acGuide)]
+    -- , op1 recipShift]
+  where
+  -- op1 op = (1, \[e] -> op e)
+  op2 op = (2, \[e1,e2] -> op e1 e2)
+  -- recipShift p = chebDivideDCT acGuide (c 1) (p + lb + 1)
+  --   where
+  --   lb :: MPBall
+  --   (lb, _) =
+  --       endpoints $
+  --         -- minimumOverDom p (getDomain p)
+  --         minimumOptimisedWithAccuracy acGuide p (mpBall l) (mpBall r) 5 5
+  --         where
+  --         (Interval l r) = getDomain p
+
+type FnIndex = Integer
+type Frequency = Integer
+
+basicFunctions :: DyadicInterval -> [(Frequency, ChPoly MPBall)]
+basicFunctions dom = [(10,x), (1, c 0.5), (1, c 2), (1, c 100), (1, c (0.5^20))]
+  where
+  x = varFn (constFn (dom, 0)) ()
+  c :: (CanBeDyadic t, ConvertibleExactly Dyadic c) => t -> ChPoly c
+  c n = constFn (dom, dyadic n)
+
+instance HasDomain ChPolyConstruction where
+  type Domain ChPolyConstruction = DyadicInterval
+  getDomain = cpConstr_dom
+
+instance
+  -- (Arbitrary c, IsBall c, Show c) => Arbitrary (ChPolyConstruction c)
+  Arbitrary ChPolyConstruction
+  where
   arbitrary =
+<<<<<<< HEAD
     do
     dom <- arbitraryNonEmptyInterval
     deg <- growingElements [0..200]
@@ -66,97 +141,116 @@ instance (Arbitrary c, IsBall c, Show c) => Arbitrary (ChPoly c) where
       -- trace ("coeffs=" ++ show coeffs) $
       makeTerms coeffs termSize deg
     return $ ChPoly dom (Poly terms) Nothing
+=======
+    arbitraryWithDom =<< arbitraryNonEmptySmallInterval
+
+instance
+  -- (Arbitrary c, IsBall c, Show c) => ArbitraryWithDom (ChPolyConstruction c)
+  ArbitraryWithDom (ChPolyConstruction)
+  where
+  arbitraryWithDom dom =
+    sized withSize
+>>>>>>> july2016
     where
-    makeTerms coeffs termSize deg =
-      withTermDegrees <$> pickDegrees
+    withSize size =
+      do
+      numOfOps <- growingElements [0..(10+size)]
+      ops <- vectorOf (int numOfOps) (growingElements opIndicesArities)
+      fn0 <- elementsWeighted fnIndices
+      opIndices <- mapM addOperands ops
+      return $ ChPolyConstruction acGuide dom fn0 opIndices
       where
-      withTermDegrees termDegrees =
-        terms_fromList $ zip (0 : Set.toList termDegrees) coeffs
-      pickDegrees = aux (Set.fromAscList [1..deg]) (deg - termSize)
+      opIndicesArities = zip [0..] $ map fst operations
+      fnIndices = map (\(i,(n,_)) -> (n,i)) $ zip [0..] $ basicFunctions dom
+      elementsWeighted es = frequency $ map (\(n,e) -> (int n, return e)) es
+      acGuide = bits $ 10 + size
+      addOperands (i, arity) =
+        do
+        operandIndices <- mapM getOperandIndex [2..arity]
+        return (i, operandIndices)
         where
-        aux prev 0 = return prev
-        aux prev s
-          | s < 0 = error ""
-          | otherwise =
-            do
-            i <- choose (0,Set.size prev - 1)
-            aux (Set.deleteAt (int i) prev) (s-1)
+        getOperandIndex _ = elementsWeighted fnIndices
 
+instance
+  Arbitrary (FnAndDescr (ChPoly MPBall))
+  where
+  arbitrary =
+    do
+    constr <- arbitrary
+    return $ FnAndDescr (chPolyFromOps constr) (show constr)
 
--- arbitrarySmall :: (Arbitrary a, HasOrderCertainly a Integer) => Integer -> Gen a
--- arbitrarySmall limit = aux
---   where
---   aux =
---     do
---     x <- arbitrary
---     if -limit !<=! x && x !<=! limit
---       then return x
---       else aux
+instance
+  ArbitraryWithDom (FnAndDescr (ChPoly MPBall))
+  where
+  arbitraryWithDom dom =
+    do
+    constr <- arbitraryWithDom dom
+    return $ FnAndDescr (chPolyFromOps constr) (show constr)
 
+instance Arbitrary (ChPoly MPBall) where
+  arbitrary =
+    do
+    (FnAndDescr f _) <- arbitrary
+    return f
 
 {-|
-  A runtime representative of type @CauchyReal@.
+  A runtime representative of type @ChPoly MPBall@.
   Used for specialising polymorphic tests to concrete types.
 -}
 tChPolyMPBall :: T (ChPoly MPBall)
 tChPolyMPBall = T "ChPolyMPBall"
 
--- specCRrespectsAccuracy1 ::
---   String ->
---   (CauchyReal -> CauchyReal) ->
---   (CauchyReal -> Accuracy -> Bool) ->
---   Spec
--- specCRrespectsAccuracy1 opName op precond =
---   it (opName ++ " respects accuracy requests") $ do
---     property $
---       \ (x :: CauchyReal) (ac :: Accuracy) ->
---         ac < (bits 1000) && precond x ac ==>
---         getAccuracy (qaMakeQuery (op x) ac) >= ac
---
--- precondAnyReal :: CauchyReal -> Accuracy -> Bool
--- precondAnyReal _x _ac = True
---
--- precondPositiveReal :: CauchyReal -> Accuracy -> Bool
--- precondPositiveReal x ac = qaMakeQuery x ac !>! 0
---
--- precondNonZeroReal :: CauchyReal -> Accuracy -> Bool
--- precondNonZeroReal x ac = qaMakeQuery x ac !/=! 0
---
--- precondSmallReal :: CauchyReal -> Accuracy -> Bool
--- precondSmallReal x ac = abs (qaMakeQuery x ac) !<! 1000
---
--- precondPositiveSmallReal :: CauchyReal -> Accuracy -> Bool
--- precondPositiveSmallReal x ac = 0 !<! b && b !<! 1000
---   where b = qaMakeQuery x ac
---
--- specCRrespectsAccuracy2 ::
---   String ->
---   (CauchyReal -> CauchyReal -> CauchyReal) ->
---   (CauchyReal -> Accuracy -> Bool) ->
---   (CauchyReal -> Accuracy -> Bool) ->
---   Spec
--- specCRrespectsAccuracy2 opName op precond1 precond2 =
---   it (opName ++ " respects accuracy requests") $ do
---     property $
---       \ (x :: CauchyReal) (y :: CauchyReal) (ac :: Accuracy) ->
---         ac < (bits 1000) && precond1 x ac && precond2 y ac  ==>
---         getAccuracy (qaMakeQuery (op x y) ac) >= ac
---
--- specCRrespectsAccuracy2T ::
---   (Arbitrary t, Show t) =>
---   T t ->
---   String ->
---   (CauchyReal -> t -> CauchyReal) ->
---   (CauchyReal -> Accuracy -> Bool) ->
---   (t -> Bool) ->
---   Spec
--- specCRrespectsAccuracy2T (T tName :: T t) opName op precond1 precond2 =
---   it (opName ++ " with " ++ tName ++ " respects accuracy requests") $ do
---     property $
---       \ (x :: CauchyReal) (t :: t) (ac :: Accuracy) ->
---         ac < (bits 1000) && precond1 x ac && precond2 t  ==>
---         getAccuracy (qaMakeQuery (op x t) ac) >= ac
---
+anyFn :: FnAndDescr (ChPoly MPBall) -> FnAndDescr (ChPoly MPBall)
+anyFn = id
+
+makeFnPositive :: FnAndDescr (ChPoly MPBall) -> FnAndDescr (ChPoly MPBall)
+makeFnPositive (FnAndDescr p pDescr) =
+  FnAndDescr res $ "makeFnPositive (" ++ pDescr ++ ")"
+  where
+  res
+    | lb !>! 0 = p
+    | otherwise = centreAsBall $ p - lb + 1
+  Interval l r = getDomain p
+  lb :: MPBall
+  (lb, _) = endpoints $ minimumOptimisedWithAccuracy (bits 0) p (mpBall l) (mpBall r) 5 5
+
+makeFnSmallRange :: Integer -> FnAndDescr (ChPoly MPBall) -> FnAndDescr (ChPoly MPBall)
+makeFnSmallRange limit (FnAndDescr p pDescr) =
+  maybeTrace (printf "makeFnSmallRange: p = %s" (show p)) $
+  maybeTrace (printf "makeFnSmallRange: p construction = %s" pDescr) $
+  maybeTrace (printf "makeFnSmallRange: radius p = %s" (show (radius p))) $
+  maybeTrace (printf "makeFnSmallRange: lb = %s" (show lb)) $
+  maybeTrace (printf "makeFnSmallRange: ub = %s" (show ub)) $
+  FnAndDescr res $ "makeFnSmallRange " ++ show limit ++  " (" ++ pDescr ++ ")"
+  where
+  res
+    | b !<! limit = p
+    | otherwise = centreAsBall $ (limit * p / b)
+  b = ub `max` (-lb)
+  lb, ub :: MPBall
+  -- (lb, _) = endpoints $ minimumOverDom p (getDomain p)
+  -- (_, ub) = endpoints $ maximumOverDom p (getDomain p)
+  (lb, _) = endpoints $ minimumOptimisedWithAccuracy (bits 0) p (mpBall l) (mpBall r) 5 5
+  (_, ub) = endpoints $ maximumOptimisedWithAccuracy (bits 0) p (mpBall l) (mpBall r) 5 5
+  Interval l r = getDomain p
+
+makeFnPositiveSmallRange :: Integer -> FnAndDescr (ChPoly MPBall) -> FnAndDescr (ChPoly MPBall)
+makeFnPositiveSmallRange limit (FnAndDescr p pDescr) =
+  FnAndDescr res $ "makeFnPositiveSmallRange " ++ show limit ++  " (" ++ pDescr ++ ")"
+  where
+  res
+    | 1 !<=! lb && ub !<! limit = p
+    | b !<! limit = p - lb + 1
+    | otherwise = centreAsBall $ (1 - lb + (limit * p / b))
+  b = ub `max` (-lb)
+  lb, ub :: MPBall
+  -- (lb, _) = endpoints $ minimumOverDom p (getDomain p)
+  -- (_, ub) = endpoints $ maximumOverDom p (getDomain p)
+  (lb, _) = endpoints $ minimumOptimisedWithAccuracy (bits 0) p (mpBall l) (mpBall r) 5 5
+  (_, ub) = endpoints $ maximumOptimisedWithAccuracy (bits 0) p (mpBall l) (mpBall r) 5 5
+  Interval l r = getDomain p
+
+
 -- precondAnyT :: t -> Bool
 -- precondAnyT _t = True
 --
@@ -169,45 +263,50 @@ tChPolyMPBall = T "ChPolyMPBall"
 specChPoly :: Spec
 specChPoly =
   describe ("ChPoly") $ do
-    specEvalConstFn tMPBall tChPolyMPBall tMPBall
-    return ()
-    -- specConversion tInteger tCauchyReal real (fst . integerBounds)
-    -- describe "order" $ do
-    --   specHasEqNotMixed tCauchyRealAtAccuracy
-    --   -- specHasEq tInt tCauchyRealAtAccuracy tRational
-    --   -- specCanPickNonZero tCauchyRealAtAccuracy
-    --   specHasOrderNotMixed tCauchyRealAtAccuracy
-    --   -- specHasOrder tInt tCauchyRealAtAccuracy tRational
-    -- describe "min/max/abs" $ do
-    --   specCRrespectsAccuracy1 "abs" abs precondAnyReal
-    --   specCRrespectsAccuracy2 "max" max precondAnyReal precondAnyReal
-    --   specCRrespectsAccuracy2 "min" min precondAnyReal precondAnyReal
-    -- describe "ring" $ do
-    --   specCRrespectsAccuracy1 "negate" negate precondAnyReal
-    --   specCRrespectsAccuracy2 "+" add precondAnyReal precondAnyReal
-    --   specCRrespectsAccuracy2T tInteger "+" add precondAnyReal precondAnyT
-    --   specCRrespectsAccuracy2T tRational "+" add precondAnyReal precondAnyT
-    --   specCRrespectsAccuracy2T tDyadic "+" add precondAnyReal precondAnyT
-    --   specCRrespectsAccuracy2 "a-b" sub precondAnyReal precondAnyReal
-    --   specCRrespectsAccuracy2T tInteger "a-b" sub precondAnyReal precondAnyT
-    --   specCRrespectsAccuracy2T tRational "a-b" sub precondAnyReal precondAnyT
-    --   specCRrespectsAccuracy2T tDyadic "a-b" sub precondAnyReal precondAnyT
-    --   specCRrespectsAccuracy2 "*" mul precondAnyReal precondAnyReal
-    --   specCRrespectsAccuracy2T tInteger "*" mul precondAnyReal precondAnyT
-    --   specCRrespectsAccuracy2T tRational "*" mul precondAnyReal precondAnyT
-    --   specCRrespectsAccuracy2T tDyadic "*" mul precondAnyReal precondAnyT
-    -- describe "field" $ do
-    --   specCRrespectsAccuracy2 "/" divide precondAnyReal precondNonZeroReal
-    --   specCRrespectsAccuracy2T tInteger "/" divide precondAnyReal precondNonZeroT
-    --   specCRrespectsAccuracy2T tRational "/" divide precondAnyReal precondNonZeroT
-    --   specCRrespectsAccuracy2T tDyadic "/" divide precondAnyReal precondNonZeroT
-    -- describe "elementary" $ do
-    --   specCRrespectsAccuracy1 "sqrt" sqrt precondPositiveReal
-    --   specCRrespectsAccuracy1 "exp" exp precondSmallReal
-    --   specCRrespectsAccuracy1 "log" log precondPositiveSmallReal
-    --   specCRrespectsAccuracy2 "pow" pow precondPositiveSmallReal precondSmallReal
-    --   specCRrespectsAccuracy2T tInteger "pow" pow precondNonZeroReal precondSmallT
-    --   specCRrespectsAccuracy2T tRational "pow" pow precondPositiveSmallReal precondSmallT
-    --   specCRrespectsAccuracy2T tDyadic "pow" pow precondPositiveSmallReal precondSmallT
-    --   specCRrespectsAccuracy1 "cos" cos precondAnyReal
-    --   specCRrespectsAccuracy1 "sine" sin precondAnyReal
+    describe "evaluation" $ do
+      specEvalConstFn tMPBall tChPolyMPBall tMPBall
+      specEvalUnaryVarFn tChPolyMPBall tMPBall
+    describe "ring" $ do
+      specFnPointwiseOp2 tChPolyMPBall tMPBall "+" (+) (+) anyFn anyFn
+      specFnPointwiseOp2 tChPolyMPBall tMPBall "-" (-) (-) anyFn anyFn
+      specFnPointwiseOp2 tChPolyMPBall tMPBall "*" (*) (*) anyFn anyFn
+    describe "size reduction" $ do
+      specFnPointwiseOp1 tChPolyMPBall tMPBall "reduce size (bits=10)" (reduceSizeUsingAccuracyGuide (bits 10)) id anyFn
+      specFnPointwiseOp1 tChPolyMPBall tMPBall "reduce size (bits=0)" (reduceSizeUsingAccuracyGuide (bits 0)) id anyFn
+      -- specCanReduceSizeUsingAccuracyGuide tChPolyMPBall
+    describe "range" $ do
+      specCanMaximiseOverDom tChPolyMPBall tMPBall
+    describe "trigonometric" $ do
+      specFnPointwiseOp1 tChPolyMPBall tMPBall "sine" (sineWithAccuracyGuide (bits 10)) (sin) (makeFnSmallRange 10)
+    describe "field" $ do
+      specFnPointwiseOp2 tChPolyMPBall tMPBall "/" (chebDivideDCT (bits 0)) (/) anyFn (makeFnPositiveSmallRange 100)
+
+{- a template for probing bugs:
+
+dom12 = Interval (dyadic (14073749*0.5^(46))) (dyadic (422212479139733*0.5^(46)))
+
+
+p1D =
+  ChPolyConstruction {cpConstr_acGuide = bits 30, cpConstr_dom = dom12,
+    cpConstr_i0 = 0,
+    cpConstr_opIndices = [(2,[1]),(2,[0]),(1,[0]),(1,[0]),(1,[0]),(0,[4]),(1,[0]),(2,[0]),(2,[0]),(0,[1]),(2,[3]),(2,[0]),(0,[3]),(0,[0])]}
+
+p1 = chPolyFromOps p1D
+p1FD = FnAndDescr p1 (show p1D)
+
+
+p2D =
+  ChPolyConstruction {cpConstr_acGuide = bits 30, cpConstr_dom = dom12,
+    cpConstr_i0 = 4,
+    cpConstr_opIndices = [(2,[0]),(0,[0]),(0,[0]),(0,[0]),(0,[0]),(2,[0]),(2,[0]),(2,[0]),(0,[0]),(0,[0]),(2,[0]),(1,[0]),(1,[0]),(2,[1]),(0,[0]),(1,[0]),(0,[0]),(2,[4]),(0,[0]),(2,[0]),(2,[0])]}
+
+p2 = chPolyFromOps p2D
+p2FD = FnAndDescr p2 (show p2D)
+
+FnAndDescr p2sm _ = makeFnPositiveSmallRange 100 p2FD
+
+p1Divp2sm = chebDivideDCT (bits 0) p1 p2sm
+
+-- pt = (mpBall 1104) + (mpBall )
+
+-}

@@ -15,6 +15,7 @@ module AERN2.MP.Accuracy
      normLog2Accuracy,
      HasAccuracy(..), getFiniteAccuracy,
      CanReduceSizeUsingAccuracyGuide(..),
+      specCanReduceSizeUsingAccuracyGuide,
      iterateUntilAccurate,
      convergentList2CauchySeq,
      seqByPrecision2CauchySeq,
@@ -27,6 +28,7 @@ import qualified Prelude as P
 
 import Control.Lens
 
+import Test.Hspec
 import Test.QuickCheck
 
 import Numeric.CatchingExceptions
@@ -76,7 +78,7 @@ normLog2Accuracy NormZero = Exact
 
 instance Show Accuracy where
     show (NoInformation) = "NoInformation"
-    show (Bits a) = "Bits " ++ show a
+    show (Bits a) = "bits " ++ show a
     show (Exact) = "Exact"
 
 instance HasEqAsymmetric Accuracy Accuracy
@@ -190,9 +192,6 @@ getFiniteAccuracy b =
         Exact -> bits $ getPrecision b
         a -> a
 
-class CanReduceSizeUsingAccuracyGuide a where
-  reduceSizeUsingAccuracyGuide :: Accuracy -> a -> a
-
 iterateUntilAccurate ::
   (HasAccuracy t) =>
   Accuracy ->
@@ -242,6 +241,25 @@ setPrecisionAtLeastAccuracy acc b
     p_b = getPrecision b
 
 
+class CanReduceSizeUsingAccuracyGuide t where
+  reduceSizeUsingAccuracyGuide :: Accuracy -> t -> t
+
+specCanReduceSizeUsingAccuracyGuide ::
+  ( CanReduceSizeUsingAccuracyGuide t
+  , HasEqCertainly t t
+  , Arbitrary t, Show t)
+  =>
+  (T t) -> Spec
+specCanReduceSizeUsingAccuracyGuide (T tName :: T t) =
+  describe ("CanReduceSizeUsingAccuracyGuide " ++ tName) $ do
+    it "is safe" $
+      property $
+        \ (t :: t) (ac :: Accuracy) ->
+          reduceSizeUsingAccuracyGuide ac t ?==? t
+
+{-| An unsafe approximation of an enclosure or exact value,
+    useful mainly for showing something brief and readable to humans.
+-}
 class HasApproximate t where
     type Approximate t
     getApproximate :: Accuracy -> t -> (Approximate t)

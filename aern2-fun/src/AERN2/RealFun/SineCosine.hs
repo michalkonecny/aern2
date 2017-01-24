@@ -36,7 +36,7 @@ import qualified Data.Map as Map
 -- import Test.QuickCheck
 
 import AERN2.MP
-import qualified AERN2.MP.Ball as MPBall
+-- import qualified AERN2.MP.Ball as MPBall
 -- import AERN2.MP.Dyadic
 
 import AERN2.Real

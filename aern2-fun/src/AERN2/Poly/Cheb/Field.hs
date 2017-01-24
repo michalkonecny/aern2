@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE CPP #-}
-#define DEBUG
+-- #define DEBUG
 {-|
     Module      :  AERN2.Poly.Cheb.Field
     Description :  Poly division and integer power
@@ -19,7 +19,7 @@ module AERN2.Poly.Cheb.Field where
 import Debug.Trace (trace)
 #define maybeTrace trace
 #else
-#define maybeTrace (flip const)
+#define maybeTrace (\ (_ :: String) t -> t)
 #endif
 
 import Numeric.MixedTypes
