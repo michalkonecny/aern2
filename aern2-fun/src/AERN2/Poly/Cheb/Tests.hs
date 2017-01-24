@@ -23,6 +23,7 @@ module AERN2.Poly.Cheb.Tests
   (
     specChPoly, tChPolyMPBall
   , chPolyFromOps, ChPolyConstruction(..)
+  , arbitraryWithMinOpsDom
   , makeFnPositive
   , makeFnSmallRange
   , makeFnPositiveSmallRange
@@ -137,27 +138,30 @@ instance
   -- (Arbitrary c, IsBall c, Show c) => ArbitraryWithDom (ChPolyConstruction c)
   ArbitraryWithDom (ChPolyConstruction)
   where
-  arbitraryWithDom dom =
-    sized withSize
+  arbitraryWithDom = arbitraryWithMinOpsDom 0
+
+arbitraryWithMinOpsDom :: Integer -> DyadicInterval -> Gen ChPolyConstruction
+arbitraryWithMinOpsDom minOps dom =
+  sized withSize
+  where
+  withSize size =
+    do
+    numOfOps <- growingElements [minOps..(10+size)]
+    ops <- vectorOf (int numOfOps) (growingElements opIndicesArities)
+    fn0 <- elementsWeighted fnIndices
+    opIndices <- mapM addOperands ops
+    return $ ChPolyConstruction acGuide dom fn0 opIndices
     where
-    withSize size =
+    opIndicesArities = zip [0..] $ map fst operations
+    fnIndices = map (\(i,(n,_)) -> (n,i)) $ zip [0..] $ basicFunctions dom
+    elementsWeighted es = frequency $ map (\(n,e) -> (int n, return e)) es
+    acGuide = bits $ 10 + size
+    addOperands (i, arity) =
       do
-      numOfOps <- growingElements [0..(10+size)]
-      ops <- vectorOf (int numOfOps) (growingElements opIndicesArities)
-      fn0 <- elementsWeighted fnIndices
-      opIndices <- mapM addOperands ops
-      return $ ChPolyConstruction acGuide dom fn0 opIndices
+      operandIndices <- mapM getOperandIndex [2..arity]
+      return (i, operandIndices)
       where
-      opIndicesArities = zip [0..] $ map fst operations
-      fnIndices = map (\(i,(n,_)) -> (n,i)) $ zip [0..] $ basicFunctions dom
-      elementsWeighted es = frequency $ map (\(n,e) -> (int n, return e)) es
-      acGuide = bits $ 10 + size
-      addOperands (i, arity) =
-        do
-        operandIndices <- mapM getOperandIndex [2..arity]
-        return (i, operandIndices)
-        where
-        getOperandIndex _ = elementsWeighted fnIndices
+      getOperandIndex _ = elementsWeighted fnIndices
 
 instance
   Arbitrary (FnAndDescr (ChPoly MPBall))
