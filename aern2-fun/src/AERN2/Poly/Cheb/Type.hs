@@ -71,7 +71,7 @@ data ChPolyBounds c =
 chPoly_maybeLip :: ChPoly c -> Maybe c
 chPoly_maybeLip = fmap chPolyBounds_lip . chPoly_maybeBounds
 
-chPoly_setLip :: c -> ChPoly c -> ChPoly c
+chPoly_setLip :: c -> ChPoly c -> ChPoly c -- TODO: use Maybe c instead?
 chPoly_setLip lip (ChPoly dom poly _) =  ChPoly dom poly (Just $ ChPolyBounds lip)
 
 chPoly_terms :: ChPoly c -> Terms c
@@ -121,7 +121,10 @@ instance (IsBall c, HasIntegers c) => IsBall (ChPoly c) where
 instance
   (PolyCoeff c) =>
   CanNormalize (ChPoly c) where
-  normalize = makeExactCentre . sweepUsingAccuracy
+  normalize p =
+    case chPoly_maybeLip p of
+      Nothing  -> (makeExactCentre . sweepUsingAccuracy) p
+      Just lip -> (chPoly_setLip lip . makeExactCentre . sweepUsingAccuracy) p
 
 sweepUsingAccuracy ::
   (PolyCoeff c) =>

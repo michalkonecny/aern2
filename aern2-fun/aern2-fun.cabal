@@ -32,6 +32,7 @@ library
     , num-exceptions == 0.1.*
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
+    , vector
   ghc-options:     -Wall -fno-warn-orphans
   extensions:
     RebindableSyntax,
@@ -66,6 +67,8 @@ library
     AERN2.Poly.Cheb.Eval
     AERN2.Poly.Cheb.Derivative
     AERN2.Poly.Cheb.Integration
+    AERN2.Poly.Cheb.MaximumMP
+    AERN2.Poly.Cheb.MaximumInt
     AERN2.Poly.Cheb.Maximum
     AERN2.Poly.Cheb.DCT
     AERN2.Poly.Cheb.Ring
@@ -77,6 +80,8 @@ library
     AERN2.Poly.Power.Eval
     AERN2.Poly.Power.Roots
     AERN2.Poly.Power.Maximum
+    AERN2.Poly.Power.RootsInt
+    AERN2.Poly.Power.MaximumInt
     AERN2.PPoly
     AERN2.PPoly.Type
     AERN2.PPoly.Eval

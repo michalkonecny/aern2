@@ -33,7 +33,7 @@ inverseWithAccuracy cutoff f@(PPoly _ (Interval l r)) =
   fRed0 = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 (bits 4)) fc
   fRed1 = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 thresholdAccuracy) fc
   bf   = abs $ AERN2.PPoly.Maximum.maximumOptimisedWithAccuracy fRed0 (mpBall l) (mpBall r) 5 5 (bits 4)
-  threshold = 1/(1 + 2*bf)
+  threshold = 1/(1 + 4*bf)
   if0 = initialApproximation fRed1 thresholdAccuracy
   thresholdAccuracy = 4 + getAccuracy ((fromEndpoints (mpBall 0) (threshold)) :: MPBall)
 
@@ -62,7 +62,7 @@ iterateInverse cutoff f if0 =
   fRed = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 (bits 4)) f
   aux' ipn pf bfp =
     let
-      next = {-reduce $-} newtonPiece ipn pf bfp
+      next = reduce $ newtonPiece ipn pf bfp
       nextAccuracy = getAccuracy next
     in
       if nextAccuracy >= cutoff then
@@ -85,11 +85,13 @@ iterateInverse cutoff f if0 =
         aux next-}
   reduce :: PolyBall -> PolyBall
   reduce p =
-    aux' 10
+    aux' (((ballLift1R degree) p) `Prelude.div` 2)
     where
     aux' d =
       let
         red = setPrecision (getPrecision p) $ normalize $ Ball ((ballLift1R $ reduceDegree d) p) (errorBound 0)
+        redRad = radius red
+        pRad   = radius p
       in
         {-trace (
         "reducing..."++(show d)++"\n"++
@@ -97,7 +99,8 @@ iterateInverse cutoff f if0 =
         "original accuracy: "++(show $ getAccuracy p)
         ) $-}
         if d >= (ballLift1R degree) p
-        || getAccuracy red >= max (bits 3) (getAccuracy p - (bits 4))
+        {-|| getAccuracy red >= max (bits 5) (getAccuracy p - (bits 2))-}
+          || redRad <= 4*pRad
         then
           red
         else
@@ -174,7 +177,7 @@ initialApproximation :: PPoly -> Accuracy -> PPoly
 initialApproximation f@(PPoly _ dom@(Interval l r)) thresholdAccuracy {-bf-} =
   result
   where
-  fRed = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 (bits 4)) f
+  fRed = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 thresholdAccuracy) f
   --thresholdAccuracy = 2 + getAccuracy ((fromEndpoints (mpBall 0) threshold) :: MPBall)
   PPoly linps _ = linearPolygon ((lsFst $ head nodes) : (map lsSnd nodes)) dom
   result =
@@ -199,7 +202,7 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) thresholdAccuracy {-bf-} =
       p      = lineSegment ((a,fa), (b,fb))
       errs   =
         [let
-          x = (a + k*(setPrecision (getPrecision f) $ mpBall b - a)/16)
+          x = (a + k*(setPrecision (getPrecision f) $ mpBall b - a)/4)
          in
           abs $ 1/(evalDirect f x) - evalDirect p x
           | k <- [1..4] ]
@@ -225,7 +228,7 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) thresholdAccuracy {-bf-} =
       {-maxErr = maximumOptimised (pf - 1) (mpBall a) (mpBall b) 5 5
       minErr = minimumOptimised (pf - 1) (mpBall a) (mpBall b) 5 5
       absErr = max (abs maxErr) (abs minErr)-}
-      minf   = minimumOptimisedWithAccuracy fRed (mpBall a) (mpBall b) 5 5 thresholdAccuracy
+      minf   = minimumOptimisedWithAccuracy f (mpBall a) (mpBall b) 5 5 thresholdAccuracy
     in
       absErr/minf
 

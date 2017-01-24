@@ -9,6 +9,8 @@ import AERN2.Poly.Ball
 import AERN2.Interval
 import Data.List
 
+import Debug.Trace
+
 evalDirect :: PPoly -> MPBall -> MPBall
 evalDirect (PPoly ps _) x =
   foldl1' meet $
@@ -60,7 +62,7 @@ evalDf (PPoly ps _) fs' x =
 evalLDf :: PPoly -> [ChPoly MPBall] -> MPBall -> MPBall
 evalLDf (PPoly ps _) fs' x =
   foldl1' meet $
-  map (\((_, f), f') -> (ballLift1TR (\g -> ChE.evalLDf g f')) f x) intersectingPieces
+  map (\((_, f), f') -> (ballLift1TR (\g -> {-trace("g's Lipschitz: "++ (show $ Cheb.chPoly_maybeLip g)) $-} ChE.evalLDf g f')) f x) intersectingPieces
   where
   meet :: MPBall -> MPBall -> MPBall
   meet a b =

@@ -20,16 +20,17 @@ cheb2PowerExact f@(Poly ts) =
   --p  = getPrecision f
   fc = Poly $ terms_map (centre) ts
   r  = Map.foldl' (+) (errorBound 0) $ Map.map radius ts
-  PowPoly (Poly powTs) = cheb2PowerDyadic fc
+  PowPoly (Poly powTs) = cheb2Power fc
 
-
-cheb2PowerDyadic :: Poly Dyadic -> PowPoly Dyadic -- Poly encodes polynomial in Chebyshev basis on [-1,1]
-cheb2PowerDyadic (Poly ts) =
+cheb2Power ::
+  (CanMulSameType (PowPoly a), HasIntegers a, CanAddSameType a)
+  => Poly a -> PowPoly a -- Poly encodes polynomial in Chebyshev basis on [-1,1]
+cheb2Power (Poly ts :: Poly a) =
     PowPoly $ Poly $ Map.filterWithKey (\k _ -> k <= terms_degree ts) nts
     where
     (PowPoly (Poly nts)) =
       (aux 0 0)
-        * (PolyVec (Power.fromIntegerList [(0,1)]) (Power.fromIntegerList [(1,1)] :: PowPoly Dyadic))
+        * (PolyVec (Power.fromIntegerList [(0,1)]) (Power.fromIntegerList [(1,1)] :: PowPoly a))
     d = integer (integerLog2 $ terms_degree ts + 1)  + 1
     dm1 = d - 1
     aux j i =
@@ -38,24 +39,7 @@ cheb2PowerDyadic (Poly ts) =
             (Power.fromList [(0, terms_lookupCoeff ts $ 2*i)])
             (Power.fromList [(0, terms_lookupCoeff ts $ 2*i + 1)])
         else
-          aux (j + 1) (2*i) + (aux (j + 1) (2*i + 1)) * (recPowers !! (dm1 - j) :: PolyMat Dyadic)
-
-cheb2Power :: Poly MPBall -> PowPoly MPBall -- Poly encodes polynomial in Chebyshev basis on [-1,1]
-cheb2Power (Poly ts) =
-    PowPoly $ Poly $ Map.filterWithKey (\k _ -> k <= terms_degree ts) nts
-    where
-    (PowPoly (Poly nts)) =
-      (aux 0 0)
-        * (PolyVec (Power.fromIntegerList [(0,1)]) (Power.fromIntegerList [(1,1)] :: PowPoly MPBall))
-    d = integer (integerLog2 $ terms_degree ts + 1)  + 1
-    dm1 = d - 1
-    aux j i =
-        if j == dm1 then
-          PolyCoVec
-            (Power.fromList [(0, terms_lookupCoeff ts $ 2*i)])
-            (Power.fromList [(0, terms_lookupCoeff ts $ 2*i + 1)])
-        else
-          aux (j + 1) (2*i) + (aux (j + 1) (2*i + 1)) * (recPowers !! (dm1 - j) :: PolyMat MPBall)
+          aux (j + 1) (2*i) + (aux (j + 1) (2*i + 1)) * (recPowers !! (dm1 - j) :: PolyMat a)
 
 recPowers ::
   (CanMulSameType (PowPoly a), HasIntegers a, CanAddSameType a)

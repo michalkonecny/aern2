@@ -8,12 +8,13 @@ import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 import qualified Data.Map as Map
 
-evalDirect :: PowPoly MPBall -> MPBall -> MPBall
-evalDirect (PowPoly (Poly ts)) x =
-    evalHornerAcc (terms_degree ts) (mpBall 0)
-    where
-    evalHornerAcc 0 sm = x*sm + terms_lookupCoeff ts 0
-    evalHornerAcc k sm = evalHornerAcc (k - 1) $ x*sm + terms_lookupCoeff ts k
+evalDirect :: (Ring c, HasIntegers c) => PowPoly c -> c -> c
+evalDirect (PowPoly (Poly ts)) (x :: c) =
+  evalHornerAcc (terms_degree ts) (convertExactly 0)
+  where
+  evalHornerAcc :: Integer -> c -> c
+  evalHornerAcc 0 sm = x*sm + terms_lookupCoeff ts 0
+  evalHornerAcc k sm = evalHornerAcc (k - 1) $ x*sm + terms_lookupCoeff ts k
 
 evalMBI :: PowPoly MPBall -> MPBall -> MPBall
 evalMBI f =

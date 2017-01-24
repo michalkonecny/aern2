@@ -123,10 +123,10 @@ evalLip f l x =
 
 evalDf :: ChPoly MPBall -> ChPoly MPBall -> MPBall -> MPBall
 evalDf f f' x =
-  let
+  {-let
     ChPoly _ ts _ = f'
   in
-  {-trace ("evaluating on "++(show x)) $
+  trace ("evaluating on "++(show x)) $
   trace ("derivative accuracy: "++(show $ getAccuracy $ f')) $
   trace ("derivative precision: "++(show $ getPrecision $ f')) $
   trace ("derivative terms: "++(show $ ts)) $
