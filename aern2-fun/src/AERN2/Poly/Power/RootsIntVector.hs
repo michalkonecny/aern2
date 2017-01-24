@@ -26,6 +26,8 @@ import AERN2.Poly.Basics hiding (Terms)
 import Data.Vector (Vector, (!))
 import qualified Data.Vector as V
 
+import AERN2.Poly.Power.SignedSubresultant
+
 import Debug.Trace
 
 shouldTrace :: Bool
@@ -89,7 +91,7 @@ initialBernsteinCoefs p e l r =
   where
   lI = if l == 1.0 then 2 else 1
   d = degree p
-  PowPoly (Poly csI) = transform (-1) (integer lI) p
+  PowPoly (Poly csI) = transform (-1) (integer lI) $ separablePart p
   binoms = V.generate (int $ d + 1) (\k -> binom d (d - k))
   csVect = V.generate (int $ d + 1) (\i -> terms_lookupCoeff csI (integer i))
   bsFrac =

@@ -86,11 +86,12 @@ library
     AERN2.Poly.Power.SizeReduction
     AERN2.Poly.Power.Eval
     AERN2.Poly.Power.Roots
-    AERN2.Poly.Power.Maximum
+    AERN2.Poly.Power.SignedSubresultant
     AERN2.Poly.Power.RootsIntMap
     AERN2.Poly.Power.RootsIntVector
     AERN2.Poly.Power.RootsInt
     AERN2.Poly.Power.MaximumInt
+    AERN2.Poly.Power.Maximum
     AERN2.PPoly
     AERN2.PPoly.Type
     AERN2.PPoly.Eval

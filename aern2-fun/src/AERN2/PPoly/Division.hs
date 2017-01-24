@@ -22,7 +22,7 @@ import AERN2.Interval
 import Data.Set (Set)
 import qualified Data.Set as Set
 
---import Debug.Trace
+import Debug.Trace
 
 inverseWithAccuracy :: Accuracy -> PPoly -> PPoly
 inverseWithAccuracy cutoff f@(PPoly _ (Interval l r)) =
@@ -30,12 +30,12 @@ inverseWithAccuracy cutoff f@(PPoly _ (Interval l r)) =
   iterateInverse (min (getAccuracy f) cutoff) fc (setPrecision (getPrecision f) if0)
   where
   fc = centre f
-  fRed0 = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 (bits 4)) fc
+  fRed0 = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 (bits 1)) fc
   fRed1 = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 thresholdAccuracy) fc
   bf   = abs $ AERN2.PPoly.Maximum.maximumOptimisedWithAccuracy fRed0 (mpBall l) (mpBall r) 5 5 (bits 4)
-  threshold = 1/(1 + 4*bf)
+  threshold = 1/(1 + 2*bf)
   if0 = initialApproximation fRed1 thresholdAccuracy
-  thresholdAccuracy = 4 + getAccuracy ((fromEndpoints (mpBall 0) (threshold)) :: MPBall)
+  thresholdAccuracy = 4 + 2*getAccuracy ((fromEndpoints (mpBall 0) (threshold)) :: MPBall)
 
 inverse :: PPoly -> PPoly -- TODO: allow negative f
 inverse f =
@@ -175,6 +175,7 @@ instance Prelude.Ord LineSegment where
 
 initialApproximation :: PPoly -> Accuracy -> PPoly
 initialApproximation f@(PPoly _ dom@(Interval l r)) thresholdAccuracy {-bf-} =
+  trace("bf is "++(show bf)) $
   result
   where
   fRed = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 thresholdAccuracy) f
@@ -210,9 +211,9 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) thresholdAccuracy {-bf-} =
       --minf   = minimumOptimised f (mpBall a) (mpBall b) 5 5 -- TODO requires f > 0
     in
       absErr
-  bf = maximumOptimisedWithAccuracy fRed (mpBall l) (mpBall r) 5 5 (bits 4)
+  bf = maximumOptimisedWithAccuracy fRed (mpBall l) (mpBall r) 5 5 (bits 1)
   pieceThreshold (LineSegment (a, fa) (b,fb)) =
-    1/(1 + 4*bf)
+    1/(1 + 2*bf)
     {-let
     bfp = maximumOptimisedWithAccuracy fRed (mpBall a) (mpBall b) 5 5 (bits 4)
     in
@@ -239,10 +240,10 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) thresholdAccuracy {-bf-} =
       err  = pieceError p
       threshold = pieceThreshold p
     in
-    --trace("piece: "++(show a) ++ " " ++ (show b)) $
-    --trace("error: "++(show err)) $
-    --trace("sampled error: "++(show serr)) $
-    --trace("threshold: "++(show threshold)) $
+    {-trace("piece: "++(show a) ++ " " ++ (show b)) $
+    trace("error: "++(show err)) $
+    trace("sampled error: "++(show serr)) $
+    trace("threshold: "++(show threshold)) $-}
     if (serr < threshold) == Just True
     && (err < threshold)  == Just True then
       Set.singleton (p, err)
