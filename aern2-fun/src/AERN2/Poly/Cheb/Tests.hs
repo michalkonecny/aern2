@@ -57,10 +57,11 @@ import AERN2.MP.Ball.Tests
 import AERN2.Interval
 
 import AERN2.RealFun.Operations
+import AERN2.RealFun.Tests
 
 import AERN2.RealFun.SineCosine (sineWithAccuracyGuide)
 
-import AERN2.Poly.Basics
+-- import AERN2.Poly.Basics
 
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Eval ()
