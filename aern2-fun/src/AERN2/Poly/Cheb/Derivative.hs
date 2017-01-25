@@ -43,12 +43,17 @@ derivativeExact f@(ChPoly dom (Poly ts) l) =
       else
         aux (p + q) p
 
+-- | the following definition is here only to check this typechecks
+derivativeRational :: ChPoly Rational -> ChPoly Rational
+derivativeRational = derivative
+
 derivative ::
-  (PolyCoeff c,
-   CanMulAsymmetric c (ChPoly c),
-   MulType c (ChPoly c) ~ ChPoly c,
-   CanDivBy c Dyadic)
-   => ChPoly c -> ChPoly c
+  (PolyCoeffRing c
+  , CanMulBy (ChPoly c) c
+  , CanDivBy c Dyadic
+  , CanNormalize (ChPoly c))
+   =>
+   ChPoly c -> ChPoly c
 derivative {-(ChPoly dom@(Interval a b) (Poly ts) _)-} =
   derivative'
   {-normalize $
@@ -64,11 +69,12 @@ derivative {-(ChPoly dom@(Interval a b) (Poly ts) _)-} =
            dts)-}
 
 derivative' ::
-  (PolyCoeff c,
-  CanMulAsymmetric c (ChPoly c),
-  MulType c (ChPoly c) ~ ChPoly c,
-  CanDivBy c Dyadic)
-  => ChPoly c -> ChPoly c
+  (PolyCoeffRing c
+  , CanMulBy (ChPoly c) c
+  , CanDivBy c Dyadic
+  , CanNormalize (ChPoly c))
+  =>
+  ChPoly c -> ChPoly c
 derivative' (ChPoly dom@(Interval l r) (Poly ts :: Poly c) _)  =
   normalize $
   (((convertExactly 2 :: c) / (r - l)) *
@@ -76,10 +82,11 @@ derivative' (ChPoly dom@(Interval l r) (Poly ts :: Poly c) _)  =
     zero
     [a*(deriv n) | (n,a) <- terms_toList ts]))
   where
-  zero = ChPoly dom (Poly (terms_fromList [(0,convertExactly 0 :: c)])) Nothing
+  zero = chPoly (dom, 0) :: ChPoly c
+  deriv :: Integer -> ChPoly c
   deriv n =
     ChPoly dom
       (Poly $
-        terms_updateConst (/2) $
-          terms_fromList [(i, convertExactly (2*n) :: c) | i <- [0 .. n - 1], odd (n - i)])
+        terms_updateConst (/(dyadic 2)) $
+          terms_fromList [(i, convertExactly (2*n)) | i <- [0 .. n - 1], odd (n - i)])
       Nothing

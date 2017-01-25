@@ -28,7 +28,7 @@ import Numeric.CatchingExceptions
 import AERN2.Norm
 import AERN2.MP
 -- import qualified AERN2.MP.Ball as MPBall
--- import AERN2.MP.Dyadic
+import AERN2.MP.Dyadic
 
 import AERN2.Real
 import AERN2.Interval (Interval(..), DyadicInterval, RealInterval)
@@ -75,9 +75,10 @@ evalUseD (UnaryFun _ f' : rest) f di@(Interval l r)
   fl = f $ catchingNumExceptions $ raisePrecisionIfBelow p $ mpBall l
   fr = f $ catchingNumExceptions $ raisePrecisionIfBelow p $ mpBall r
   fm = f $ catchingNumExceptions $ raisePrecisionIfBelow p $ mpBall m
-  m = (l + r)*0.5
-  errBall = f'di*((r-l)*0.5)*unitBall
+  m = (l + r)*half
+  errBall = f'di*((r-l)*half)*unitBall
   unitBall = catchingNumExceptions $ mpBall (-1,1)
+  half = dyadic 0.5
 
   p =
       case nl of

@@ -77,6 +77,10 @@ chPoly_setLip lip (ChPoly dom poly _) =  ChPoly dom poly (Just $ ChPolyBounds li
 chPoly_terms :: ChPoly c -> Terms c
 chPoly_terms = poly_terms . chPoly_poly
 
+chPoly_map_terms :: (Terms c -> Terms c) -> ChPoly c -> ChPoly c
+chPoly_map_terms f cp =
+  cp { chPoly_poly = (chPoly_poly cp) { poly_terms = f (chPoly_terms cp)} }
+
 instance Show (ChPoly MPBall) where
   show (ChPoly dom poly _) = show ppDom
     where
@@ -99,9 +103,10 @@ fromDomToUnitInterval ::
   (CanAddSubMulDivBy t Dyadic) =>
   DyadicInterval -> t -> t
 fromDomToUnitInterval (Interval l r) xInDom =
-  (xInDom - m)/(0.5*(r-l))
+  (xInDom - m)/(half*(r-l))
   where
-  m = (r+l)*0.5
+  m = (r+l)*half
+  half = dyadic 0.5
 
 instance HasDomain (ChPoly c) where
   type Domain (ChPoly c) = DyadicInterval
@@ -118,16 +123,23 @@ instance (IsBall c, HasIntegers c) => IsBall (ChPoly c) where
   updateRadius updateFn (ChPoly dom (Poly terms) _) =
     ChPoly dom (Poly $ terms_updateConst (updateRadius updateFn) terms) Nothing
 
-instance
-  (PolyCoeff c) =>
-  CanNormalize (ChPoly c) where
+instance CanNormalize (ChPoly MPBall) where
   normalize p =
     case chPoly_maybeLip p of
       Nothing  -> (makeExactCentre . sweepUsingAccuracy) p
       Just lip -> (chPoly_setLip lip . makeExactCentre . sweepUsingAccuracy) p
 
+instance CanNormalize (ChPoly Integer) where
+  normalize = chPoly_map_terms (terms_filter (\_d c -> c /= 0))
+
+instance CanNormalize (ChPoly Rational) where
+  normalize = chPoly_map_terms (terms_filter (\_d c -> c /= 0))
+
+instance CanNormalize (ChPoly Dyadic) where
+  normalize = chPoly_map_terms (terms_filter (\_d c -> c /= 0))
+
 sweepUsingAccuracy ::
-  (PolyCoeff c) =>
+  (PolyCoeffBall c) =>
   ChPoly c -> ChPoly c
 sweepUsingAccuracy (ChPoly dom poly@(Poly ts) bnd) =
   ChPoly dom (Poly ts') bnd
@@ -147,8 +159,9 @@ instance (HasDyadics c) => HasVars (ChPoly c) where
     where
     dom@(Interval l r) = getDomain sampleFn
     terms = terms_fromList [(0, c0), (1, c1)]
-    c0 = coeff $ (r + l) * 0.5
-    c1 = coeff $ (r - l) * 0.5
+    c0 = coeff $ (r + l) * half
+    c1 = coeff $ (r - l) * half
+    half = dyadic 0.5
     coeff = convertExactly
 
 type CanBeChPoly c t = ConvertibleExactly t (ChPoly c)
@@ -177,7 +190,7 @@ degree (ChPoly _ (Poly ts) _) = terms_degree ts
 instance (HasPrecision c) => HasPrecision (ChPoly c) where
   getPrecision (ChPoly _ poly _) = getPrecision poly
 
-instance (PolyCoeff c) => CanSetPrecision (ChPoly c) where
+instance (CanSetPrecision c, CanNormalize (ChPoly c)) => CanSetPrecision (ChPoly c) where
   setPrecision p (ChPoly dom poly bnd) = normalize $ ChPoly dom (setPrecision p poly) bnd
 
 {- accuracy -}
@@ -190,7 +203,7 @@ instance (HasAccuracy c, HasIntegers c, IsBall c) => HasAccuracy (ChPoly c) wher
     Compensate for the drops in the constant term.
 -}
 reduceDegree ::
-  (PolyCoeff c) =>
+  (PolyCoeffBall c) =>
   Degree -> ChPoly c -> ChPoly c
 reduceDegree maxDegree p =
     p { chPoly_poly = Poly terms' }
@@ -204,7 +217,7 @@ reduceDegree maxDegree p =
     Compensate for the drops in the constant term.
 -}
 reduceDegreeTerms ::
-  (PolyCoeff c) =>
+  (PolyCoeffBall c) =>
   Degree -> Terms c -> Terms c
 reduceDegreeTerms maxDegree =
   reduceTerms shouldKeep
@@ -213,7 +226,7 @@ reduceDegreeTerms maxDegree =
       deg <= maxDegree
 
 reduceTerms ::
-  (PolyCoeff c) =>
+  (PolyCoeffBall c) =>
   (Degree -> c -> Bool) -> Terms c -> Terms c
 reduceTerms shouldKeepPre terms
     | terms_size termsToRemove == 0 = terms
@@ -230,13 +243,13 @@ reduceTerms shouldKeepPre terms
         not $ shouldKeep deg coeff
 
 instance
-  (PolyCoeff c) =>
+  (PolyCoeffBall c) =>
   CanReduceSizeUsingAccuracyGuide (ChPoly c)
   where
   reduceSizeUsingAccuracyGuide = reduceDegreeWithLostAccuracyLimit
 
 reduceDegreeWithLostAccuracyLimit ::
-  (PolyCoeff c) =>
+  (PolyCoeffBall c) =>
   Accuracy -> ChPoly c -> ChPoly c
 reduceDegreeWithLostAccuracyLimit accuracyLossLimit p =
     p { chPoly_poly = Poly terms' }
@@ -246,7 +259,7 @@ reduceDegreeWithLostAccuracyLimit accuracyLossLimit p =
       reduceDegreeWithLostAccuracyLimitTerms accuracyLossLimit terms
 
 reduceDegreeWithLostAccuracyLimitTerms ::
-  (PolyCoeff c) =>
+  (PolyCoeffBall c) =>
   Accuracy -> Terms c -> Terms c
 reduceDegreeWithLostAccuracyLimitTerms accuracyLossLimit (termsMap :: Terms c) =
   terms_updateConst (+ err) (terms_fromList termsToKeep)

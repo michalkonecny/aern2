@@ -177,13 +177,13 @@ instance CanMinMaxAsymmetric Dyadic Int where
   min = convertSecond min
   max = convertSecond max
 instance CanMinMaxAsymmetric Rational Dyadic where
-  type MinMaxType Rational Dyadic = Dyadic
-  min = convertFirst min
-  max = convertFirst max
-instance CanMinMaxAsymmetric Dyadic Rational where
-  type MinMaxType Dyadic Rational = Dyadic
+  type MinMaxType Rational Dyadic = Rational
   min = convertSecond min
   max = convertSecond max
+instance CanMinMaxAsymmetric Dyadic Rational where
+  type MinMaxType Dyadic Rational = Rational
+  min = convertFirst min
+  max = convertFirst max
 
 instance
   (CanMinMaxAsymmetric t Dyadic,
@@ -223,11 +223,11 @@ instance CanAddAsymmetric Dyadic Int where
   add = convertSecond add
 
 instance CanAddAsymmetric Rational Dyadic where
-  type AddType Rational Dyadic = Dyadic
-  add = convertFirst add
-instance CanAddAsymmetric Dyadic Rational where
-  type AddType Dyadic Rational = Dyadic
+  type AddType Rational Dyadic = Rational
   add = convertSecond add
+instance CanAddAsymmetric Dyadic Rational where
+  type AddType Dyadic Rational = Rational
+  add = convertFirst add
 
 instance
   (CanAddAsymmetric t Dyadic,
@@ -265,11 +265,11 @@ instance CanSub Dyadic Int where
   sub = convertSecond sub
 
 instance CanSub Rational Dyadic where
-  type SubType Rational Dyadic = Dyadic
-  sub = convertFirst sub
-instance CanSub Dyadic Rational where
-  type SubType Dyadic Rational = Dyadic
+  type SubType Rational Dyadic = Rational
   sub = convertSecond sub
+instance CanSub Dyadic Rational where
+  type SubType Dyadic Rational = Rational
+  sub = convertFirst sub
 
 instance
   (CanSub t Dyadic,
@@ -308,11 +308,11 @@ instance CanMulAsymmetric Dyadic Int where
   mul = convertSecond mul
 
 instance CanMulAsymmetric Rational Dyadic where
-  type MulType Rational Dyadic = Dyadic
-  mul = convertFirst mul
-instance CanMulAsymmetric Dyadic Rational where
-  type MulType Dyadic Rational = Dyadic
+  type MulType Rational Dyadic = Rational
   mul = convertSecond mul
+instance CanMulAsymmetric Dyadic Rational where
+  type MulType Dyadic Rational = Rational
+  mul = convertFirst mul
 
 instance
   (CanMulAsymmetric t Dyadic,
@@ -342,6 +342,27 @@ instance
   CanDiv (CatchingNumExceptions t) Dyadic where
   type DivType (CatchingNumExceptions t) Dyadic = CatchingNumExceptions (DivType t Dyadic)
   divide a b = divide a (catchingNumExceptions b)
+
+instance CanDiv Integer Dyadic where
+  type DivType Integer Dyadic = Rational
+  divide a b = divide a (rational b)
+instance CanDiv Dyadic Integer where
+  type DivType Dyadic Integer = Rational
+  divide a b = divide (rational a) b
+
+instance CanDiv Int Dyadic where
+  type DivType Int Dyadic = Rational
+  divide a b = divide a (rational b)
+instance CanDiv Dyadic Int where
+  type DivType Dyadic Int = Rational
+  divide a b = divide (rational a) b
+
+instance CanDiv Rational Dyadic where
+  type DivType Rational Dyadic = Rational
+  divide = convertSecond divide
+instance CanDiv Dyadic Rational where
+  type DivType Dyadic Rational = Rational
+  divide = convertFirst divide
 
 instance
   (CanDiv Dyadic t,  CanTestZero t,
