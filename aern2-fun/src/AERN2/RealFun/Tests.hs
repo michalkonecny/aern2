@@ -38,6 +38,8 @@ import Numeric.MixedTypes
 import Test.Hspec
 import Test.QuickCheck
 
+import Numeric.CatchingExceptions
+
 -- import AERN2.Interval
 
 -- import AERN2.MP.Dyadic
@@ -65,7 +67,7 @@ specFnPointwiseOp2 ::
   (T f) -> (T x) ->
   String ->
   (f -> f -> f) ->
-  (v -> v -> v) ->
+  (CatchingNumExceptions v -> CatchingNumExceptions v -> CatchingNumExceptions v) ->
   (FnAndDescr f -> FnAndDescr f) ->
   (FnAndDescr f -> FnAndDescr f) ->
   Spec
@@ -82,7 +84,11 @@ specFnPointwiseOp2
             let x = mapInside (getDomain f1) xPre in
             let v1 = apply f1 x in
             let v2 = apply f2 x in
-            apply (opFn f1 f2) x ?==? opVal v1 v2
+            let vrE = opVal (catchingNumExceptions v1) (catchingNumExceptions v2) in
+            case _numEXC_maybeValue vrE of
+              Just vr | not (hasCertainException vrE) -> apply (opFn f1 f2) x ?==? vr
+              _ -> True
+
 
 specFnPointwiseOp1 ::
   ( HasDomain f, CanMapInside (Domain f) x
@@ -94,7 +100,7 @@ specFnPointwiseOp1 ::
   (T f) -> (T x) ->
   String ->
   (f -> f) ->
-  (v -> v) ->
+  (CatchingNumExceptions v -> CatchingNumExceptions v) ->
   (FnAndDescr f -> FnAndDescr f) ->
   Spec
 specFnPointwiseOp1
@@ -108,4 +114,7 @@ specFnPointwiseOp1
           and $ flip map xPres $ \xPre ->
             let x = mapInside (getDomain f1) xPre in
             let v1 = apply f1 x in
-            apply (opFn f1) x ?==? opVal v1
+            let vrE = opVal (catchingNumExceptions v1)
+            case _numEXC_maybeValue vrE of
+              Just vr | not (hasCertainException vrE) -> apply (opFn f1) x ?==? vr
+              _ -> True
