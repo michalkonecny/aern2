@@ -26,7 +26,7 @@ import AERN2.Poly.Basics hiding (Terms)
 import Data.Vector (Vector, (!))
 import qualified Data.Vector as V
 
-import AERN2.Poly.Power.SignedSubresultant
+--import AERN2.Poly.Power.SignedSubresultant
 
 import Debug.Trace
 
@@ -47,7 +47,7 @@ type Terms = (ErrorBound, Integer, Vector Integer)
 ts_deg :: Terms -> Integer
 ts_deg (_, _, ts) = fromIntegral $ V.length ts - 1
 
-signVars :: Terms -> Maybe Integer
+{-signVars :: Terms -> Maybe Integer
 signVars ts@(e, c, cfs) =
   aux 0 0 0
   where
@@ -81,7 +81,28 @@ signVars ts@(e, c, cfs) =
       if sgnx == 0 || sg == 0 || sgnx == sg then
         aux vrs (if sgnx /= 0 then sgnx else sg) (d + 1)
       else
-        aux (vrs + 1) sgnx (d + 1)
+        aux (vrs + 1) sgnx (d + 1)-}
+
+signVars :: Terms -> Maybe Integer
+signVars ts@(e, c, cfs) =
+  aux 0 0 (ts_deg ts)
+  where
+  ce = c * rational e
+  eZero = ce == 0
+  sgn x
+   | x == 0 && eZero  = Just 0
+   | x >  ce          = Just 1
+   | x < -ce          = Just (-1)
+   | otherwise        = Nothing
+  aux vrs _ (-1) = Just vrs
+  aux vrs sg d =
+    case sgn (cfs ! int d) of
+      Nothing   -> Nothing
+      Just sgnx ->
+        if sgnx == 0 || sg == 0 || sgnx == sg then
+          aux vrs (if sgnx /= 0 then sgnx else sg) (d - 1)
+        else
+          aux (vrs + 1) sgnx (d - 1)
 
 -- Input: l,m and Polynomial P.
 -- Output: some positive integer constant c and coefficients of c*P in Bernstein basis on [l,r].
@@ -91,7 +112,7 @@ initialBernsteinCoefs p e l r =
   where
   lI = if l == 1.0 then 2 else 1
   d = degree p
-  PowPoly (Poly csI) = transform (-1) (integer lI) $ separablePart p
+  PowPoly (Poly csI) = transform (-1) (integer lI) $ p
   binoms = V.generate (int $ d + 1) (\k -> binom d (d - k))
   csVect = V.generate (int $ d + 1) (\i -> terms_lookupCoeff csI (integer i))
   bsFrac =
