@@ -114,7 +114,7 @@ specFnPointwiseOp1
           and $ flip map xPres $ \xPre ->
             let x = mapInside (getDomain f1) xPre in
             let v1 = apply f1 x in
-            let vrE = opVal (catchingNumExceptions v1)
+            let vrE = opVal (catchingNumExceptions v1) in
             case _numEXC_maybeValue vrE of
               Just vr | not (hasCertainException vrE) -> apply (opFn f1) x ?==? vr
               _ -> True
