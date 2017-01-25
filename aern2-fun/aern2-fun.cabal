@@ -86,6 +86,8 @@ library
     AERN2.Poly.Power.SizeReduction
     AERN2.Poly.Power.Eval
     AERN2.Poly.Power.Roots
+    AERN2.Poly.Power.SignedSubresultantMap
+    AERN2.Poly.Power.SignedSubresultantVector
     AERN2.Poly.Power.SignedSubresultant
     AERN2.Poly.Power.RootsIntMap
     AERN2.Poly.Power.RootsIntVector
