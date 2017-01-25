@@ -86,9 +86,9 @@ instance Arbitrary CauchyReal where
           m = mpFloat mDy
           l2 = mpFloat l2Dy
           r2 = mpFloat r2Dy
-          mDy = ((dyadic l) + (dyadic r)) * 0.5
-          l2Dy = ((dyadic l) + mDy) * 0.5
-          r2Dy = ((dyadic r) + mDy) * 0.5
+          mDy = ((dyadic l) + (dyadic r)) * (dyadic 0.5)
+          l2Dy = ((dyadic l) + mDy) * (dyadic 0.5)
+          r2Dy = ((dyadic r) + mDy) * (dyadic 0.5)
         nextBit _ _ = error "in Arbitrary CauchyReal"
 
 arbitrarySmall :: (Arbitrary a, HasOrderCertainly a Integer) => Integer -> Gen a

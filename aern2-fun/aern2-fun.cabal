@@ -59,6 +59,7 @@ library
     AERN2.PQueue
     AERN2.Interval
     AERN2.RealFun.Operations
+    AERN2.RealFun.Tests
     AERN2.RealFun.UnaryFun
     AERN2.RealFun.UnaryFun.Type
     AERN2.RealFun.UnaryFun.Evaluation

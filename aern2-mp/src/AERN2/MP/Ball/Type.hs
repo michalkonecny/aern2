@@ -132,7 +132,7 @@ instance IsInterval MPBall MPFloat where
       where
       lDy = dyadic l
       uDy = dyadic u
-      cDy = (lDy + uDy) * 0.5
+      cDy = (lDy + uDy) * (dyadic 0.5)
       eDy = (uDy - cDy) `max` (cDy - lDy)
   endpoints (MPBall x e) = (mpFloat lDy, mpFloat uDy)
       where

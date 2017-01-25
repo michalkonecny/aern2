@@ -59,7 +59,7 @@ maybeTrace
   pointwise to the given polynomials @p1@ and @p2@.
 -}
 lift2_DCT ::
-  (PolyCoeff c)
+  (PolyCoeffBall c, CanNormalize (ChPoly c))
   =>
   (Degree -> Degree -> Degree)
     {-^ detemining a degree bound for the result from the degrees of @p1@ and @p2@ -} ->

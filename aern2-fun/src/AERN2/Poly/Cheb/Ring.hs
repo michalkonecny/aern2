@@ -62,7 +62,7 @@ instance CanNegSameType c => CanNeg (ChPoly c) where
 {- addition -}
 
 instance
-  (PolyCoeff c)
+  (PolyCoeffRing c, CanNormalize (ChPoly c))
   =>
   CanAddAsymmetric (ChPoly c) (ChPoly c)
   where
@@ -87,7 +87,7 @@ $(declForTypes
 {- subtraction -}
 
 instance
-  (PolyCoeff c)
+  (PolyCoeffRing c, CanNormalize (ChPoly c))
   =>
   CanSub (ChPoly c) (ChPoly c)
 
@@ -102,15 +102,27 @@ $(declForTypes
 {- multiplication -}
 
 instance
-  (PolyCoeff c)
+  (c~MPBall)
   =>
   CanMulAsymmetric (ChPoly c) (ChPoly c)
   where
   type MulType (ChPoly c) (ChPoly c) = ChPoly c
   mul = mulCheb
 
+instance
+  CanMulAsymmetric (ChPoly Rational) (ChPoly Rational)
+  where
+  type MulType (ChPoly Rational) (ChPoly Rational) = ChPoly Rational
+  mul = mulChebDirect
+
+instance
+  CanMulAsymmetric (ChPoly Dyadic) (ChPoly Dyadic)
+  where
+  type MulType (ChPoly Dyadic) (ChPoly Dyadic) = ChPoly Dyadic
+  mul = mulChebDirect
+
 mulCheb ::
-  (PolyCoeff c)
+  (PolyCoeffBall c, CanNormalize (ChPoly c))
   =>
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
 mulCheb p1@(ChPoly _ (Poly terms1) _) p2@(ChPoly _ (Poly terms2) _) =
@@ -130,7 +142,7 @@ mulCheb p1@(ChPoly _ (Poly terms1) _) p2@(ChPoly _ (Poly terms2) _) =
   size2 = terms_size terms2
 
 mulChebDirect ::
-  (PolyCoeff c)
+  (PolyCoeffRing c, CanMulBy c Dyadic, CanNormalize (ChPoly c))
   =>
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
 mulChebDirect (ChPoly d1 (Poly terms1) _) (ChPoly d2 (Poly terms2) _)
@@ -141,14 +153,14 @@ mulChebDirect (ChPoly d1 (Poly terms1) _) (ChPoly d2 (Poly terms2) _)
   terms =
     terms_fromListAddCoeffs $
       concat
-      [ let c = a*b/2 in [(i+j, c), (abs (i-j), c)]
+      [ let c = a*b*(dyadic 0.5) in [(i+j, c), (abs (i-j), c)]
         |
         (i,a) <- terms_toList terms1,
         (j,b) <- terms_toList terms2
       ]
 
 mulChebDCT ::
-  (PolyCoeff c)
+  (PolyCoeffBall c, CanNormalize (ChPoly c))
   =>
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
 mulChebDCT = lift2_DCT (+) (*)
@@ -174,11 +186,19 @@ $(declForTypes
       divide (ChPoly d1 p1 _) n = normalize $ ChPoly d1 (p1/n) Nothing
   |]))
 
-
 {- integer power -}
 
-instance (PolyCoeff c) => CanPow (ChPoly c) Integer where
-  pow = undefined -- powUsingMul
+{-TODO: Enable as soon as we have HasIntegers (ChPoly MPBall)
+  which will need convertExactlyFromSample.
 
-instance (PolyCoeff c) => CanPow (ChPoly c) Int where
-  pow = undefined -- powUsingMul
+instance
+  (c ~ MPBall) =>
+  CanPow (ChPoly c) Integer where
+  pow = powUsingMul
+
+instance
+  (c ~ MPBall) =>
+  CanPow (ChPoly c) Int where
+  pow = powUsingMul
+
+-}

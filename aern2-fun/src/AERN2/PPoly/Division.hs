@@ -252,7 +252,7 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) thresholdAccuracy {-bf-} =
   refinePiece :: LineSegment -> Set LineSegment
   refinePiece (LineSegment (a,fa) (b,fb)) =
     let
-      m  = 0.5*(a + b)
+      m  = (dyadic 0.5)*(a + b)
       fm = 1/(mpBall $ centre $ evalDirect f (mpBall m))
     in
       {-trace (

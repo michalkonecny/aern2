@@ -27,7 +27,9 @@ import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Ring ()
 
 instance
-  (PolyCoeff c, CanApply (ChPoly c) c, ApplyType (ChPoly c) c ~ c)
+  (Ring c, CanDivBy c Integer, CanNormalize (ChPoly c)
+  , PolyCoeffBall c
+  , CanApply (ChPoly c) c, ApplyType (ChPoly c) c ~ c)
   =>
   CanIntegrateOverDom (ChPoly c) DyadicInterval
   where

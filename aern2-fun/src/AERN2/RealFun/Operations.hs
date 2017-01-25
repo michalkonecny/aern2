@@ -21,8 +21,6 @@ module AERN2.RealFun.Operations
   , CanApplyApprox(..), sampledRange
   , HasVars(..), specEvalUnaryVarFn
   , HasConstFunctions, constFn, specEvalConstFn
-  , FnAndDescr(..)
-  , specFnPointwiseOp1, specFnPointwiseOp2
   , CanMaximiseOverDom(..), CanMinimiseOverDom(..)
   , specCanMaximiseOverDom
   , CanIntegrateOverDom(..)
@@ -110,7 +108,7 @@ sampledRange (Interval l r) depth f =
     samplePointsT = map convertExactly samplePoints
     _ = minValue : samplePointsT
     samplePoints :: [Dyadic]
-    samplePoints = [(l*i + r*(size - i))*(1/size) | i <- [0..size]]
+    samplePoints = [(l*i + r*(size - i))*(dyadic (1/size)) | i <- [0..size]]
     size = 2^depth
 
 
@@ -162,72 +160,6 @@ specEvalUnaryVarFn (T fName :: T f) (T xName :: T x) =
         let x = mapInside (getDomain sampleFn) xPre in
         apply (varFn sampleFn () :: f) x ?==? x
 
-{- pointwise operations -}
-
-data FnAndDescr f = FnAndDescr f String
-
-instance Show f => Show (FnAndDescr f) where
-  show (FnAndDescr f descr) =
-    show f ++ "[" ++ descr ++ "]"
-
-instance (HasDomain f) => HasDomain (FnAndDescr f) where
-  type Domain (FnAndDescr f) = Domain f
-  getDomain (FnAndDescr f _) = getDomain f
-
-specFnPointwiseOp2 ::
-  ( HasDomain f, CanMapInside (Domain f) x
-  , CanApply f x, ApplyType f x ~ v
-  , HasEqCertainly v v
-  , Arbitrary (FnAndDescr f), ArbitraryWithDom (FnAndDescr f), Show f
-  , Arbitrary x, Show x
-  ) =>
-  (T f) -> (T x) ->
-  String ->
-  (f -> f -> f) ->
-  (v -> v -> v) ->
-  (FnAndDescr f -> FnAndDescr f) ->
-  (FnAndDescr f -> FnAndDescr f) ->
-  Spec
-specFnPointwiseOp2
-    (T fName :: T f) (T _xName :: T x)
-    opName opFn opVal reshapeFn1 reshapeFn2
-  =
-  it ("pointwise " ++ opName ++ " on " ++ fName ++
-      " corresponds to " ++ opName ++ " on values") $ property $
-      \ (SameDomFnPair (f1Pre,f2Pre) :: SameDomFnPair (FnAndDescr f)) (xPres :: [x]) ->
-          let FnAndDescr f1 _d1 = reshapeFn1 f1Pre in
-          let FnAndDescr f2 _d2 = reshapeFn2 f2Pre in
-          and $ flip map xPres $ \xPre ->
-            let x = mapInside (getDomain f1) xPre in
-            let v1 = apply f1 x in
-            let v2 = apply f2 x in
-            apply (opFn f1 f2) x ?==? opVal v1 v2
-
-specFnPointwiseOp1 ::
-  ( HasDomain f, CanMapInside (Domain f) x
-  , CanApply f x, ApplyType f x ~ v
-  , HasEqCertainly v v
-  , Arbitrary (FnAndDescr f), ArbitraryWithDom (FnAndDescr f), Show f
-  , Arbitrary x, Show x
-  ) =>
-  (T f) -> (T x) ->
-  String ->
-  (f -> f) ->
-  (v -> v) ->
-  (FnAndDescr f -> FnAndDescr f) ->
-  Spec
-specFnPointwiseOp1
-    (T fName :: T f) (T _xName :: T x)
-    opName opFn opVal reshapeFn1
-  =
-  it ("pointwise " ++ opName ++ " on " ++ fName ++
-      " corresponds to " ++ opName ++ " on values") $ property $
-      \ (f1Pre :: FnAndDescr f) (xPres :: [x]) ->
-          let FnAndDescr f1 _d1 = reshapeFn1 f1Pre in
-          and $ flip map xPres $ \xPre ->
-            let x = mapInside (getDomain f1) xPre in
-            let v1 = apply f1 x in
-            apply (opFn f1) x ?==? opVal v1
 
 {- range computation -}
 

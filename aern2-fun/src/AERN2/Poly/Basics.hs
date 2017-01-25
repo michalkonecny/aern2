@@ -13,8 +13,23 @@
 -}
 
 module AERN2.Poly.Basics
--- (
--- )
+(
+  PolyCoeffRing, PolyCoeffField, PolyCoeffBall
+  , Poly(..), Degree, Terms
+  , terms_empty
+  , terms_size
+  , terms_insertWith
+  , terms_toList, terms_toDescList
+  , terms_fromList, terms_fromListAddCoeffs
+  , terms_unionWith
+  , terms_map
+  , terms_filter
+  , terms_degree, terms_degrees
+  , terms_coeffs
+  , terms_updateConst
+  , terms_lookupCoeff, terms_lookupCoeffDoubleConstTerm
+  , formatTerms
+)
 where
 
 import Numeric.MixedTypes
@@ -42,14 +57,28 @@ import AERN2.Real
 {- types -}
 
 {-|
+  A shortcut type constraint for
+  types suitable as coefficients of our polynomials,
+  loose enough to permit Integer coefficients.
+-}
+type PolyCoeffRing c =
+  (Ring c, HasIntegers c, HasAccuracy c, HasNorm c, Show c)
+
+{-|
+  A shortcut type constraint for
+  types suitable as coefficients of our polynomials,
+  loose enough to permit Rational coefficients.
+-}
+type PolyCoeffField c =
+  (PolyCoeffRing c, Field c, HasDyadics c, CanAddSubMulDivBy c Dyadic)
+
+{-|
   a shortcut type constraint for
   types suitable as coefficients of our polynomials
 -}
-type PolyCoeff c =
-  (Field c, CanAddSubMulDivBy c CauchyReal, HasDyadics c
-  , IsInterval c c, IsBall c
-  , HasAccuracy c, HasNorm c, CanSetPrecision c
-  , Show c)
+type PolyCoeffBall c =
+  (PolyCoeffField c, CanAddSubMulDivBy c CauchyReal
+  , IsInterval c c, IsBall c, CanSetPrecision c)
 
 data Poly c = Poly { poly_terms :: Terms c }
 
