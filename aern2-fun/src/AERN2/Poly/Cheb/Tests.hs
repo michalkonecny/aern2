@@ -20,14 +20,14 @@
 -}
 
 module AERN2.Poly.Cheb.Tests
-  -- (
-  --   specChPoly, tChPolyMPBall
-  -- , chPolyFromOps, ChPolyConstruction(..)
-  -- , arbitraryWithMinOpsDom
-  -- , makeFnPositive
-  -- , makeFnSmallRange
-  -- , makeFnPositiveSmallRange
-  -- )
+  (
+    specChPoly, tChPolyMPBall
+  , chPolyFromOps, ChPolyConstruction(..)
+  , arbitraryWithMinOpsDom
+  , makeFnPositive
+  , makeFnSmallRange
+  , makeFnPositiveSmallRange
+  )
 where
 
 #ifdef DEBUG
@@ -275,38 +275,7 @@ specChPoly =
       specFnPointwiseOp2 tChPolyMPBall tMPBall "/" (chebDivideDCT (bits 0)) (/) anyFn (makeFnPositiveSmallRange 100)
 
 
--- a bug reproduction:
-
-dom1 = Interval (dyadic 100663296) (dyadic 100663299)
-
-p1D =
-  ChPolyConstruction {cpConstr_acGuide = bits 12, cpConstr_dom = dom1,
-    cpConstr_i0 = 0, cpConstr_opIndices = [(0,[3]),(0,[0])]}
-
-p1 = chPolyFromOps p1D
-p1FD = FnAndDescr p1 (show p1D)
-
-bug1 = minimumOverDom p1 dom1
-
 {- recent bugs:
-  src/AERN2/RealFun/Operations.hs:273:
-  1) AERN2.Poly.ChPoly.range, CanMaximiseOverDom ChPolyMPBall, is consistent with evaluation
-       uncaught exception: ErrorCall (Map.findMax: empty map has no maximal element) (after 3 tests and 1 shrink)
-       [-5.684341886080801e-14 ± 1.257119408570873e-13](prec=55) + [1 ± 9.714451465470121e-17](prec=55)*x
-       [[200704 ± 2.328306436538696e-10](prec=8)]
-
-  src/AERN2/RealFun/Operations.hs:223:
-  2) AERN2.Poly.ChPoly.trigonometric pointwise sine on ChPolyMPBall corresponds to sine on values
-       uncaught exception: ErrorCall (Map.findMax: empty map has no maximal element) (after 3 tests and 1 shrink)
-       [99.99999998509884 ± 2.700835495528242e-8](prec=55) + [2 ± 1.942890293094024e-16](prec=55)*x[ChPolyConstruction {cpConstr_acGuide = bits 12, cpConstr_dom = Interval (dyadic 100663296) (dyadic 100663299), cpConstr_i0 = 0, cpConstr_opIndices = [(0,[3]),(0,[0])]}]
-       [[200704 ± 2.328306436538696e-10](prec=8)]
-
-  src/AERN2/RealFun/Operations.hs:195:
-  3) AERN2.Poly.ChPoly.field pointwise / on ChPolyMPBall corresponds to / on values
-       uncaught exception: ErrorCall (Map.findMax: empty map has no maximal element) (after 3 tests and 1 shrink)
-       SameDomFnPair ([-5.684341886080801e-14 ± 1.257119408570873e-13](prec=55) + [1 ± 9.714451465470121e-17](prec=55)*x[ChPolyConstruction {cpConstr_acGuide = bits 12, cpConstr_dom = Interval (dyadic 1000) (dyadic 1003), cpConstr_i0 = 0, cpConstr_opIndices = []}],[99.99999999999989 ± 2.514238817141746e-13](prec=55) + [2 ± 1.942890293094024e-16](prec=55)*x[ChPolyConstruction {cpConstr_acGuide = bits 12, cpConstr_dom = Interval (dyadic 1000) (dyadic 1003), cpConstr_i0 = 3, cpConstr_opIndices = [(0,[0]),(0,[0])]}])
-       [[200704 ± 2.328306436538696e-10](prec=8)]
-
 -}
 
 
