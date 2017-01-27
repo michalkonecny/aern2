@@ -82,10 +82,10 @@ data ChPolyConstruction =
 
 chPolyFromOps :: ChPolyConstruction -> ChPoly MPBall
 chPolyFromOps (ChPolyConstruction acGuide dom i0 opIndices) =
-  applyOps opIndices (fns !! i0)
+  applyOps opIndices (centreAsBall $ fns !! i0)
   where
   fns = map snd $ basicFunctions dom
-  applyOps [] fn = centreAsBall fn
+  applyOps [] fn = fn
   applyOps ((opIndex, operandIndices):rest) fn =
     applyOps rest newFn
     where
@@ -147,8 +147,8 @@ arbitraryWithMinOpsDom minOps dom =
   where
   withSize size =
     do
-    numOfOps <- growingElements [minOps..(10+size)]
-    ops <- vectorOf (int numOfOps) (growingElements opIndicesArities)
+    numOfOps <- growingElements [minOps..(minOps+10+size)]
+    ops <- vectorOf (int numOfOps) (elements opIndicesArities)
     fn0 <- elementsWeighted fnIndices
     opIndices <- mapM addOperands ops
     return $ ChPolyConstruction acGuide dom fn0 opIndices

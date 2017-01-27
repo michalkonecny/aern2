@@ -11,7 +11,7 @@
 module Main where
 
 import Numeric.MixedTypes
--- import Prelude
+import qualified Prelude as P
 
 import Text.Printf
 
@@ -19,6 +19,7 @@ import System.Environment
 
 import System.IO.Unsafe (unsafePerformIO)
 import System.Random (randomRIO)
+import System.Clock
 
 import Test.QuickCheck
 
@@ -27,8 +28,10 @@ import AERN2.Utils.Bench
 import AERN2.MP
 -- import AERN2.Real
 
+import AERN2.Interval
+
 import AERN2.Poly.Cheb
-import AERN2.Poly.Cheb.Tests () -- instance Arbitrary ChPolyMB
+import AERN2.Poly.Cheb.Tests
 
 type ChPolyMB = ChPoly MPBall
 
@@ -36,73 +39,78 @@ main :: IO ()
 main =
     do
     args <- getArgs
-    (computationDescription, results) <- processArgs args
-    putStrLn $ computationDescription
-    putStrLn $ "accuracies = " ++ show (map getAccuracy results)
-
-processArgs ::
-    [String] ->
-    IO (String, [ChPolyMB])
-processArgs [op, countS] =
-    return (computationDescription, results)
+    let (op, deg, p, count) = processArgs args
+    putStrLn $ computationDescription op deg p count
+    runBenchmark op deg p count
     where
-    computationDescription =
-        printf "computing %s (%d times) using parameters: " op count
-    -- ac :: Integer
-    -- ac = read accuracyS
-    count :: Integer
-    count = read countS
+    computationDescription op deg p count =
+        printf "computing %s on ChPoly(s) (deg = %d, p = %s, count = %d samples)" op deg (show p) count
+    runBenchmark op deg p count =
+      do
+      reportProgress "computing arguments"
+      paramPairsPre <- pick (valuePairsWithDeg deg) count
+      let paramPairs = map (mapBoth (setPrecision p)) paramPairsPre
+      print $ map (mapBoth getAccuracy) paramPairs
+      reportProgress $ "computing operation " ++ op
+      let results = computeResults paramPairs
+      -- reportProgress $ "evaluating results"
+      putStrLn $ "result accuracies = " ++ show (map getAccuracy results)
+      reportProgress $ "done"
+      where
+      computeResults paramPairs =
+        case op of
+          "mul" -> map (uncurry (*)) paramPairs
+          _ -> error $ "unknown op " ++ op
+      reportProgress msg =
+        do
+        now <- getTime ProcessCPUTime
+        printf "[%06d.%03d] ChPoly benchmark: %s\n" (sec now) ((nsec now) `div` (P.fromInteger 1000000)) msg
 
-    results =
-      case op of
-        "mul" ->
-          map (uncurry (*)) $
-            unsafePerformIO $ pickValues2 values values count
-        _ -> error $ "unknown op " ++ op
+mapBoth :: (t1 -> t2) -> (t1,t1) -> (t2,t2)
+mapBoth f (a,b) = (f a, f b)
+
+processArgs :: [String] -> (String, Integer, Precision, Integer)
+processArgs [op, countS, degS, precS] =
+  (op, read degS, prec (read precS :: Integer), read countS)
 processArgs _ =
-    error "expecting arguments: <operation> <count> <precision>"
+  error "expecting arguments: <operation> <count> <degree> <precision>"
 
-pickValues2 :: [ChPolyMB] -> [ChPolyMB] -> Integer -> IO [(ChPolyMB, ChPolyMB)]
-pickValues2 vals1 vals2 count =
-  do
-  p1 <- pickValues vals1 count
-  p2 <- pickValues vals2 count
-  return $ zip p1 p2
-
-pickValues :: [ChPolyMB] -> Integer -> IO [ChPolyMB]
-pickValues vals count =
+pick :: [t] -> Integer -> IO [t]
+pick ts count =
   sequence $
   [
     do
     i1 <- randomRIO (1,maxIndex)
-    let x = vals !! i1
-    return x
+    let t = ts !! i1
+    return t
   | _j <- [1..count]
   ]
 
 maxIndex :: Integer
-maxIndex = 1000
-
--- valuesSmall :: [ChPolyMB]
--- valuesSmall = map makeSmall values
---   where
---   makeSmall :: ChPolyMB -> ChPolyMB
---   makeSmall x
---     | abs (getBall x) !<! 1000000 = x
---     | otherwise = 1000000 * (x/(1000000+(abs x)))
---     where
---     getBall :: ChPolyMB -> MPBall
---     getBall xx = qaMakeQuery xx (bits 53)
---
--- valuesPositive :: [ChPolyMB]
--- valuesPositive = filter ((!>! 0) . getBall) values
---     where
---     getBall :: ChPolyMB -> MPBall
---     getBall x = qaMakeQuery x (bits 53)
+maxIndex = 200
 
 valuesWithDeg :: Integer -> [ChPolyMB]
 valuesWithDeg deg =
-  filter ((>= deg) . degree) values
+  map (reduceDegree deg) $
+    filter degreeLargeEnough $
+      map fst $ valuePairsWithMinOps (3*deg)
+  where
+  degreeLargeEnough p1 = degree p1 >= deg
 
-values :: [ChPolyMB]
-values = listFromGen arbitrary -- (real <$> (arbitrary :: Gen Rational))
+valuePairsWithDeg :: Integer -> [(ChPolyMB, ChPolyMB)]
+valuePairsWithDeg deg =
+  map reduceDegrees $
+    filter degreesLargeEnough $
+      valuePairsWithMinOps (3*deg)
+  where
+  degreesLargeEnough (p1,p2) = degree p1 >= deg && degree p2 >= deg
+  reduceDegrees = mapBoth (centreAsBall . reduceDegree deg)
+
+valuePairsWithMinOps :: Integer -> [(ChPolyMB, ChPolyMB)]
+valuePairsWithMinOps minOps =
+  listFromGen $
+    do
+    dom <- arbitraryNonEmptySmallInterval
+    p1C <- arbitraryWithMinOpsDom minOps dom
+    p2C <- arbitraryWithMinOpsDom minOps dom
+    return (chPolyFromOps p1C, chPolyFromOps p2C)

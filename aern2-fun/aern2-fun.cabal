@@ -130,6 +130,7 @@ executable aern2-fun-chPoly-benchOp
       -Wall -O2
   extensions:
     RebindableSyntax,
+    TypeFamilies,
     PostfixOperators,
     ScopedTypeVariables,
     FlexibleContexts,
@@ -147,3 +148,4 @@ executable aern2-fun-chPoly-benchOp
     , aern2-fun == 0.1.*
     , random
     , QuickCheck >= 2.7 && < 2.9
+    , clock
