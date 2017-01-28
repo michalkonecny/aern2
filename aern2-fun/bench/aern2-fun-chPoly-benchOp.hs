@@ -17,11 +17,11 @@ import Text.Printf
 
 import System.Environment
 
-import System.IO.Unsafe (unsafePerformIO)
+-- import System.IO.Unsafe (unsafePerformIO)
 import System.Random (randomRIO)
 import System.Clock
 
-import Test.QuickCheck
+-- import Test.QuickCheck
 
 import AERN2.Utils.Bench
 
@@ -32,8 +32,6 @@ import AERN2.Interval
 
 import AERN2.Poly.Cheb
 import AERN2.Poly.Cheb.Tests
-
-type ChPolyMB = ChPoly MPBall
 
 main :: IO ()
 main =
@@ -64,7 +62,8 @@ main =
       reportProgress msg =
         do
         now <- getTime ProcessCPUTime
-        printf "[%06d.%03d] ChPoly benchmark: %s\n" (sec now) ((nsec now) `div` (P.fromInteger 1000000)) msg
+        printf "[%06d.%06d] ChPoly benchmark: %s\n" (sec now) (msec now) msg
+      msec time = nsec time `div` (P.fromInteger 1000)
 
 mapBoth :: (t1 -> t2) -> (t1,t1) -> (t2,t2)
 mapBoth f (a,b) = (f a, f b)
@@ -92,25 +91,21 @@ maxIndex = 200
 valuesWithDeg :: Integer -> [ChPolyMB]
 valuesWithDeg deg =
   map (reduceDegree deg) $
-    filter degreeLargeEnough $
-      map fst $ valuePairsWithMinOps (3*deg)
-  where
-  degreeLargeEnough p1 = degree p1 >= deg
+    map fst $ valuePairsWithMinDeg deg
 
 valuePairsWithDeg :: Integer -> [(ChPolyMB, ChPolyMB)]
 valuePairsWithDeg deg =
   map reduceDegrees $
-    filter degreesLargeEnough $
-      valuePairsWithMinOps (3*deg)
+    valuePairsWithMinDeg deg
   where
-  degreesLargeEnough (p1,p2) = degree p1 >= deg && degree p2 >= deg
   reduceDegrees = mapBoth (centreAsBall . reduceDegree deg)
 
-valuePairsWithMinOps :: Integer -> [(ChPolyMB, ChPolyMB)]
-valuePairsWithMinOps minOps =
+valuePairsWithMinDeg :: Integer -> [(ChPolyMB, ChPolyMB)]
+valuePairsWithMinDeg deg =
   listFromGen $
     do
-    dom <- arbitraryNonEmptySmallInterval
-    p1C <- arbitraryWithMinOpsDom minOps dom
-    p2C <- arbitraryWithMinOpsDom minOps dom
-    return (chPolyFromOps p1C, chPolyFromOps p2C)
+    (p1,_) <- arbitraryWithDegDom deg dom
+    (p2,_) <- arbitraryWithDegDom deg dom
+    return (p1, p2)
+  where
+  dom = dyadicInterval (0.0,1.0)
