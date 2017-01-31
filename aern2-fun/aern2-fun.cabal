@@ -102,6 +102,7 @@ library
     AERN2.PPoly.Eval
     AERN2.PPoly.Maximum
     AERN2.PPoly.Division
+    AERN2.PPoly.Tests
     AERN2.Frac.Type
     AERN2.Frac.Ring
     AERN2.Frac.Field

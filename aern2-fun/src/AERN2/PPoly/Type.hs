@@ -271,6 +271,10 @@ instance CanSub MPBall PPoly where
     type SubType MPBall PPoly = PPoly
     sub n p = liftBall2PPoly (\x -> n - x) $ p
 
+instance CanSub PPoly MPBall where
+    type SubType PPoly MPBall = PPoly
+    sub p n = liftBall2PPoly (\x -> x - n) $ p
+
 instance CanAddAsymmetric MPBall PPoly where
     type AddType MPBall PPoly = PPoly
     add n p = liftBall2PPoly (n+) p
