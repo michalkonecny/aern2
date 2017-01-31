@@ -22,8 +22,11 @@
 module AERN2.Poly.Cheb.Tests
   (
     specChPoly, tChPolyMPBall
-  , chPolyFromOps, ChPolyConstruction(..)
+  , ChPolyConstruction(..)
+  , chPolyFromOps
+  , chPolyFromOpsWithDeg
   , arbitraryWithMinOpsDom
+  , arbitraryWithDegDom
   , makeFnPositive
   , makeFnSmallRange
   , makeFnPositiveSmallRange
@@ -80,14 +83,31 @@ data ChPolyConstruction =
   deriving (Show)
 
 
-chPolyFromOps :: ChPolyConstruction -> ChPoly MPBall
+chPolyFromOps :: ChPolyConstruction -> ChPolyMB
 chPolyFromOps (ChPolyConstruction acGuide dom i0 opIndices) =
-  applyOps opIndices (fns !! i0)
+  applyOps opIndices (centreAsBall $ fns !! i0)
   where
   fns = map snd $ basicFunctions dom
-  applyOps [] fn = centreAsBall fn
+  applyOps [] fn = fn
   applyOps ((opIndex, operandIndices):rest) fn =
     applyOps rest newFn
+    where
+    (_arity, opList) = operations !! opIndex
+    operands = map (fns !!) operandIndices
+    newFn = centreAsBall $ reduceSizeUsingAccuracyGuide acGuide $ opList (fn : operands)
+
+chPolyFromOpsWithDeg :: Integer -> ChPolyConstruction -> (ChPolyMB, ChPolyConstruction)
+chPolyFromOpsWithDeg deg (ChPolyConstruction acGuide dom i0 opIndices) =
+  applyOps [] opIndices (centreAsBall $ fns !! i0)
+  where
+  fns = map snd $ basicFunctions dom
+  applyOps usedOpIndices [] fn =
+    (fn, ChPolyConstruction acGuide dom i0 (reverse usedOpIndices))
+  applyOps usedOpIndices ((opIndex, operandIndices):rest) fn
+    | degree fn >= deg =
+      (fn, ChPolyConstruction acGuide dom i0 (reverse usedOpIndices))
+    | otherwise =
+      applyOps ((opIndex, operandIndices):usedOpIndices) rest newFn
     where
     (_arity, opList) = operations !! opIndex
     operands = map (fns !!) operandIndices
@@ -147,8 +167,8 @@ arbitraryWithMinOpsDom minOps dom =
   where
   withSize size =
     do
-    numOfOps <- growingElements [minOps..(10+size)]
-    ops <- vectorOf (int numOfOps) (growingElements opIndicesArities)
+    numOfOps <- growingElements [minOps..(minOps+10+size)]
+    ops <- vectorOf (int numOfOps) (elements opIndicesArities)
     fn0 <- elementsWeighted fnIndices
     opIndices <- mapM addOperands ops
     return $ ChPolyConstruction acGuide dom fn0 opIndices
@@ -157,6 +177,29 @@ arbitraryWithMinOpsDom minOps dom =
     fnIndices = map (\(i,(n,_)) -> (n,i)) $ zip [0..] $ basicFunctions dom
     elementsWeighted es = frequency $ map (\(n,e) -> (int n, return e)) es
     acGuide = bits $ 10 + size
+    addOperands (i, arity) =
+      do
+      operandIndices <- mapM getOperandIndex [2..arity]
+      return (i, operandIndices)
+      where
+      getOperandIndex _ = elementsWeighted fnIndices
+
+
+arbitraryWithDegDom :: Integer -> DyadicInterval -> Gen (ChPolyMB, ChPolyConstruction)
+arbitraryWithDegDom deg dom =
+  sized withSize
+  where
+  withSize size =
+    do
+    ops <- infiniteListOf (elements opIndicesArities)
+    fn0 <- elementsWeighted fnIndices
+    opIndices <- mapM addOperands ops
+    return $ chPolyFromOpsWithDeg deg $ ChPolyConstruction acGuide dom fn0 opIndices
+    where
+    opIndicesArities = zip [0..] $ map fst operations
+    fnIndices = map (\(i,(n,_)) -> (n,i)) $ zip [0..] $ basicFunctions dom
+    elementsWeighted es = frequency $ map (\(n,e) -> (int n, return e)) es
+    acGuide = bits $ 100 + size
     addOperands (i, arity) =
       do
       operandIndices <- mapM getOperandIndex [2..arity]

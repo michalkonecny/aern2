@@ -13,7 +13,7 @@
 
 module AERN2.Poly.Cheb.Type
 (
-  ChPoly(..), chPoly_terms
+  ChPolyMB, ChPoly(..), chPoly_terms
 , ChPolyBounds(..), chPoly_maybeLip, chPoly_setLip
 , CanBeChPoly, chPoly, chPolyMPBall
 , showInternals, fromDomToUnitInterval
@@ -54,6 +54,8 @@ chPolyMPBall :: (ConvertibleExactly t (ChPoly MPBall)) => t -> ChPoly MPBall
 chPolyMPBall = convertExactly
 
 {- Chebyshev polynomials with domain translation -}
+
+type ChPolyMB = ChPoly MPBall
 
 data ChPoly c =
   ChPoly
