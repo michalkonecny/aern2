@@ -109,7 +109,7 @@ maximumOptimisedWithAccuracyAndBounds (PPoly ps dom) l r initialDegree steps cut
     && (a == rI) /= Just True
 
 maximumOptimisedWithAccuracy :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> Accuracy -> MPBall
-maximumOptimisedWithAccuracy = maximumOptimisedWithAccuracyAndDerivedBounds
+maximumOptimisedWithAccuracy = maximumOptimisedWithAccuracy'
 
 maximumOptimisedWithAccuracy' :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> Accuracy -> MPBall
 maximumOptimisedWithAccuracy' (PPoly ps dom) l r initialDegree steps cutoffAccuracy =
