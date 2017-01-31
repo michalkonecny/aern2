@@ -109,6 +109,8 @@ library
     AERN2.Frac.Field
     AERN2.Frac.Eval
     AERN2.Frac.Maximum
+    AERN2.Frac.Conversion
+    AERN2.Frac.Integration
     AERN2.Frac
 
 
