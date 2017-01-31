@@ -30,49 +30,91 @@ import AERN2.MP
 
 import AERN2.Interval
 
-import AERN2.Poly.Cheb
+import AERN2.Poly.Cheb hiding (minimum)
 import AERN2.Poly.Cheb.Tests
 
 main :: IO ()
 main =
     do
     args <- getArgs
-    let (op, deg, p, count) = processArgs args
-    putStrLn $ computationDescription op deg p count
-    runBenchmark op deg p count
+    let (mode, op, deg, p, count) = processArgs args
+    runBenchmark mode op deg p count
     where
-    computationDescription op deg p count =
-        printf "computing %s on ChPoly(s) (deg = %d, p = %s, count = %d samples)" op deg (show p) count
-    runBenchmark op deg p count =
+    runBenchmark mode op deg p count =
       do
-      reportProgress "computing arguments"
+      tStart <- getTime ProcessCPUTime
+      reportProgress tStart computationDescription
+      reportProgress tStart "computing arguments"
       paramPairsPre <- pick (valuePairsWithDeg deg) count
       let paramPairs = map (mapBoth (setPrecision p)) paramPairsPre
-      print $ map (mapBoth getAccuracy) paramPairs
-      reportProgress $ "computing operation " ++ op
+      let paramAccuracies = concat $ map (\(a,b) -> [getAccuracy a, getAccuracy b]) paramPairs
+      case minimum paramAccuracies of
+        Exact -> pure ()
+        ac -> putStrLn $ printf "A parameter is not exact! (ac = %s)" (show ac)
+      tGotParams <- getTime ProcessCPUTime
+      reportProgress tGotParams $ "computing operation " ++ op
       let results = computeResults paramPairs
-      -- reportProgress $ "evaluating results"
-      putStrLn $ "result accuracies = " ++ show (map getAccuracy results)
-      reportProgress $ "done"
+      tsResults <- mapM reportResult $ zip [1..] results
+      tDone <- getTime ProcessCPUTime
+      reportProgress tDone $ "done"
+      csvLine tStart tGotParams tsResults tDone
       where
+      computationDescription =
+          printf "computing %s on ChPoly(s) (deg = %d, p = %s, count = %d samples)" op deg (show p) count
       computeResults paramPairs =
         case op of
           "mul" -> map (uncurry (*)) paramPairs
           _ -> error $ "unknown op " ++ op
-      reportProgress msg =
+      reportResult (i,result) =
         do
-        now <- getTime ProcessCPUTime
-        printf "[%06d.%06d] ChPoly benchmark: %s\n" (sec now) (msec now) msg
-      msec time = nsec time `div` (P.fromInteger 1000)
+        tiRes <- getTime ProcessCPUTime
+        let ac = getAccuracy result
+        case ac of
+          Exact -> reportProgress tiRes $ printf "result %d accuracy = %s" i (show ac)
+          _ -> putStrLn $ printf "Result %d is not exact! (ac = %s)" i (show ac)
+        return tiRes
+      reportProgress now msg =
+        case mode of
+          Verbose ->
+            printf "[%06d.%06d] ChPoly benchmark: %s\n" (sec now) (msec now) msg
+          _ -> pure ()
+        where
+        msec time = nsec time `div` (P.fromInteger 1000)
+      csvLine tStart tGotParams tsResults tDone =
+        case mode of
+          CSV ->
+            putStrLn $ printf "%s,%3d,%4d,%4d,%16.9f,%13.9f,%13.9f,%13.9f"
+                        op deg (integer p) count
+                        (toSec dPrepParams)
+                        (toSec dGetResMean)
+                        (toSec dGetResWorst)
+                        (toSec dGetResStDev)
+            where
+            toSec ns = (double ns) / (10^9)
+            a .-. b = toNanoSecs $ diffTimeSpec a b
+            dPrepParams = tGotParams .-. tStart
+            dsResults = zipWith (.-.) ((tail tsResults) ++ [tDone]) tsResults
+            n = length tsResults
+            dGetResMean = round $ (sum dsResults) / n
+            dGetResWorst = foldl1 max dsResults
+            dGetResStDev =
+              round $ sqrt $ double $
+                (sum $ map (^2) $ (map (\x -> x-dGetResMean) dsResults))
+                  / (n - 1)
+          _ -> pure ()
+
 
 mapBoth :: (t1 -> t2) -> (t1,t1) -> (t2,t2)
 mapBoth f (a,b) = (f a, f b)
 
-processArgs :: [String] -> (String, Integer, Precision, Integer)
-processArgs [op, countS, degS, precS] =
-  (op, read degS, prec (read precS :: Integer), read countS)
+data Mode = CSV | Verbose
+  deriving (Show, Read)
+
+processArgs :: [String] -> (Mode, String, Integer, Precision, Integer)
+processArgs [modeS, op, degS, precS, countS] =
+  (read modeS, op, read degS, prec (read precS :: Integer), read countS)
 processArgs _ =
-  error "expecting arguments: <operation> <count> <degree> <precision>"
+  error "expecting arguments: <mode> <operation> <degree> <precision> <count>"
 
 pick :: [t] -> Integer -> IO [t]
 pick ts count =
