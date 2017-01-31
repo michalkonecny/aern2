@@ -76,6 +76,7 @@ library
     AERN2.Poly.Cheb.Integration
     AERN2.Poly.Cheb.MaximumMP
     AERN2.Poly.Cheb.MaximumInt
+    AERN2.Poly.Cheb.MaximumPrime
     AERN2.Poly.Cheb.Maximum
     AERN2.Poly.Cheb.DCT
     AERN2.Poly.Cheb.Ring
@@ -94,12 +95,20 @@ library
     AERN2.Poly.Power.RootsIntVector
     AERN2.Poly.Power.RootsInt
     AERN2.Poly.Power.MaximumInt
+    AERN2.Poly.Power.MaximumIntAlt
     AERN2.Poly.Power.Maximum
     AERN2.PPoly
     AERN2.PPoly.Type
     AERN2.PPoly.Eval
     AERN2.PPoly.Maximum
     AERN2.PPoly.Division
+    AERN2.Frac.Type
+    AERN2.Frac.Ring
+    AERN2.Frac.Field
+    AERN2.Frac.Eval
+    AERN2.Frac.Maximum
+    AERN2.Frac
+
 
 test-suite spec
   type:

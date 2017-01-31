@@ -26,13 +26,17 @@ import AERN2.Interval
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Ring ()
 
-derivativeExact :: ChPoly MPBall -> ChPoly MPBall
-derivativeExact f@(ChPoly dom (Poly ts) l) =
+derivativeExact :: ChPoly MPBall -> ChPoly MPBall -- TODO: add check for domain
+derivativeExact f@(ChPoly dom (Poly ts) _) =
+  ChPoly dom (Poly $ terms_map mpBall dts) Nothing
+  where
+  fDy = ChPoly dom (Poly $ terms_map centre ts) Nothing
+  ChPoly _ (Poly dts) _ = derivativeI fDy
   {-trace("derivative exact of "++(show f)) $
   trace("accuracy of f: "++(show $ getAccuracy f)) $
   trace("deriavtive of f: "++(show $ aux (getPrecision f) (getPrecision f))) $
   trace("accuracy of derivative: "++(show $ getAccuracy $ aux (getPrecision f) (getPrecision f))) $-}
-  aux (getPrecision f) (getPrecision f)
+  {-aux (getPrecision f) (getPrecision f)
   where
   aux p q =
     let
@@ -41,7 +45,7 @@ derivativeExact f@(ChPoly dom (Poly ts) l) =
       if getAccuracy try == Exact then
         try
       else
-        aux (p + q) p
+        aux (p + q) p-}
 
 -- | the following definition is here only to check this typechecks
 derivativeRational :: ChPoly Rational -> ChPoly Rational
@@ -67,6 +71,29 @@ derivative {-(ChPoly dom@(Interval a b) (Poly ts) _)-} =
           (terms_insertWith (+) (r - 1)
            ((terms_lookupCoeff dts (r + 1)) + (2*r*terms_lookupCoeff ts r))
            dts)-}
+
+derivativeI ::
+  (PolyCoeffRing c
+  , CanMulBy (ChPoly c) c
+  , CanMulBy c Dyadic
+  --, HasDyadics c
+  , CanNormalize (ChPoly c))
+  =>
+  ChPoly c -> ChPoly c
+derivativeI (ChPoly dom (Poly ts :: Poly c) _) =
+  normalize $
+  ((foldl' (+)
+    zero
+    [a*(deriv n) | (n,a) <- terms_toList ts]))
+  where
+  zero = chPoly (dom, 0) :: ChPoly c
+  deriv :: Integer -> ChPoly c
+  deriv n =
+    ChPoly dom
+      (Poly $
+        terms_updateConst (*(dyadic 0.5)) $
+          terms_fromList [(i, convertExactly (2*n)) | i <- [0 .. n - 1], odd (n - i)])
+      Nothing
 
 derivative' ::
   (PolyCoeffRing c

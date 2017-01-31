@@ -3,11 +3,13 @@
 module AERN2.Poly.Cheb.MaximumInt
 (
 maximum,
+maximumWithAccuracy,
 maximumOptimised,
 maximumOptimisedWithAccuracy,
 minimum,
 minimumOptimised,
 minimumOptimisedWithAccuracy
+, maximumOptimisedWithAccuracyAndBounds
 ) where
 
 #ifdef DEBUG
@@ -29,7 +31,7 @@ import qualified Data.Map as Map
 -- import AERN2.Poly.Basics (terms_updateConst)
 
 import qualified AERN2.Poly.Power as Pow hiding (genericMaximum)
-import qualified AERN2.Poly.Power.MaximumInt as Pow
+import qualified AERN2.Poly.Power.MaximumIntAlt as Pow
 
 import AERN2.RealFun.Operations
 
@@ -52,19 +54,34 @@ intify (ChPoly _ p _) =
 
 maximum :: ChPoly MPBall -> MPBall -> MPBall -> MPBall
 maximum (ChPoly dom poly _) l r  =
-   Pow.genericMaximum (evalDf f df)
-    (Map.fromList [(0, (evalDirect dfc, (err , cheb2Power dfInt)))])
+   Pow.genericMaximum (evalDf f $ reduceToEvalDirectAccuracy df (bits 0))
+    (Map.fromList [(0, (evalDirect df, (err , cheb2Power dfInt)))])
     (getFiniteAccuracy f)
     (fromDomToUnitInterval dom l) (fromDomToUnitInterval dom r)
    where
    f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly Nothing
-   df@(ChPoly _ dfp _) = makeExactCentre $ derivative f
+   df@(ChPoly _ dfp _) = derivativeExact (centre f) --makeExactCentre $ derivative f
    termsRational = terms_map (rational . ball_value) (poly_terms dfp)
    err = termsError * termsDenominator
    termsError = ball_error $ terms_lookupCoeff (poly_terms dfp) 0
    termsDenominator = Map.foldl' lcm 1 $ terms_map denominator termsRational
    dfInt = Poly $ terms_map (numerator . (* termsDenominator)) termsRational
-   dfc = derivative $ centre f
+
+maximumWithAccuracy :: Accuracy -> ChPoly MPBall -> MPBall -> MPBall -> MPBall
+maximumWithAccuracy acc (ChPoly dom poly _) l r  =
+  Pow.genericMaximum (evalDf f $ reduceToEvalDirectAccuracy df (bits 0))
+   (Map.fromList [(0, (evalDirect df, (err , cheb2Power dfInt)))])
+   (min (getFiniteAccuracy f) acc)
+   (fromDomToUnitInterval dom l) (fromDomToUnitInterval dom r)
+  where
+  f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly Nothing
+  df@(ChPoly _ dfp _) = derivativeExact (centre f) --makeExactCentre $ derivative f
+  termsRational = terms_map (rational . ball_value) (poly_terms dfp)
+  err = termsError * termsDenominator
+  termsError = ball_error $ terms_lookupCoeff (poly_terms dfp) 0
+  termsDenominator = Map.foldl' lcm 1 $ terms_map denominator termsRational
+  dfInt = Poly $ terms_map (numerator . (* termsDenominator)) termsRational
+
 
 maximumOptimisedWithAccuracy
   :: Accuracy -> ChPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall
@@ -82,6 +99,32 @@ maximumOptimisedWithAccuracy acc (ChPoly dom poly _) l r initialDegree steps =
   where
   f   = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly Nothing
   fc' = ({-makeExactCentre .-} derivativeExact . centre) f
+  maxKey = max 0 (ceiling ((degree f - initialDegree) / steps))
+  ch2Power :: (ErrorBound, Poly Integer) -> (ErrorBound, Pow.PowPoly Integer)
+  ch2Power (e, p) = (e, cheb2Power p)
+  dfsWithEval =
+    Map.fromList
+    [(k,(evalDirect df, ch2Power $ intify df)) | (k,df) <- dfs]
+  dfs = [(k, reduceDegree (initialDegree + steps*k) fc') | k <- [0..maxKey + 1]]
+
+maximumOptimisedWithAccuracyAndBounds
+  :: Accuracy -> ChPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall -> MPBall -> MPBall
+maximumOptimisedWithAccuracyAndBounds acc (ChPoly dom poly _) l r initialDegree steps lower upper =
+  --trace("f = "++(show f)) $
+    {-trace("maximum optimised... ")$
+    trace("f: "++(show f))$
+    trace("df: "++(show fc'))$
+    trace("dfs: "++(show dfs))$-}
+    Pow.genericMaximumWithBounds
+      (evalDf f (reduceToEvalDirectAccuracy fc' (bits 0))) dfsWithEval
+      (min (getFiniteAccuracy f) acc)
+      (fromDomToUnitInterval dom (setPrecision (getPrecision f) l))
+      (fromDomToUnitInterval dom (setPrecision (getPrecision f) r))
+      lower
+      upper
+  where
+  f   = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly Nothing
+  fc' = (derivativeExact . centre) f
   maxKey = max 0 (ceiling ((degree f - initialDegree) / steps))
   ch2Power :: (ErrorBound, Poly Integer) -> (ErrorBound, Pow.PowPoly Integer)
   ch2Power (e, p) = (e, cheb2Power p)

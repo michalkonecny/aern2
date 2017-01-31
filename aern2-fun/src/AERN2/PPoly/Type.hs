@@ -32,12 +32,16 @@ data PPoly =
   PPoly {ppoly_pieces  :: [(DyadicInterval, PolyBall)],
          ppoly_dom     :: DyadicInterval}
 
+ppoly_degree :: PPoly -> Integer
+ppoly_degree (PPoly ps _) =
+  foldl' (\d p -> max d $ ((PolyBall.ballLift1R degree) . snd) p) 1 ps
+
 instance HasDomain PPoly where
   type Domain PPoly = DyadicInterval
   getDomain = ppoly_dom
 
 fromPoly :: Cheb -> PPoly
-fromPoly p = fromPolyBall (Ball p (errorBound 0))
+fromPoly p = fromPolyBall $ normalize (Ball p (errorBound 0))
 
 fromPolyBall :: PolyBall -> PPoly
 fromPolyBall f@(Ball p _) =
@@ -162,7 +166,7 @@ intersectionAndDifference (Interval l r, p) (Interval l' r', p') =
 instance IsBall PPoly where
   type CentreType PPoly = PPoly
   radius (PPoly ps _) =
-    foldl' (+) (errorBound 0) $ map (\(_, p) -> radius p) ps
+    foldl' max (errorBound 0) $ map (\(_, p) -> radius p) ps
   centre = liftCheb2PPoly centre
   centreAsBall = centre
   centreAsBallAndRadius cp = (centre cp, radius cp)

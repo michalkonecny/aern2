@@ -22,20 +22,28 @@ import AERN2.Interval
 import Data.Set (Set)
 import qualified Data.Set as Set
 
+import Math.NumberTheory.Logarithms (integerLog2)
+
 import Debug.Trace
 
 inverseWithAccuracy :: Accuracy -> PPoly -> PPoly
-inverseWithAccuracy cutoff f@(PPoly _ (Interval l r)) =
-  updateRadius (+ radius f) $
-  iterateInverse (min (getAccuracy f) cutoff) fc (setPrecision (getPrecision f) if0)
+inverseWithAccuracy cutoff' f@(PPoly _ (Interval l r)) =
+  trace("num its: "++(show numIts)) $
+  trace("initial bits: "++(show bts)) $
+  trace("cutoff: "++(show bts)) $
+  updateRadius (+ radius f) fcInv
   where
-  fc = centre f
+  cutoff = min (getFiniteAccuracy f) cutoff'
+  numIts = (integer . integerLog2 . (`max` 1) . ceiling . (/ 10) . fromAccuracy) cutoff
+  fcInv = iterateInverse cutoff numIts fc (setPrecision (getPrecision f) if0)
+  bts   = max (2 + (integer . integerLog2 . snd . integerBounds) bf) $ (fromAccuracy cutoff) `Prelude.div` (2^numIts)
+  fc    = centre f
   fRed0 = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 (bits 1)) fc
-  fRed1 = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 thresholdAccuracy) fc
-  bf   = abs $ AERN2.PPoly.Maximum.maximumOptimisedWithAccuracy fRed0 (mpBall l) (mpBall r) 5 5 (bits 4)
-  threshold = 1/(1 + 2*bf)
-  if0 = initialApproximation fRed1 thresholdAccuracy
-  thresholdAccuracy = 4 + 2*getAccuracy ((fromEndpoints (mpBall 0) (threshold)) :: MPBall)
+  fRed1 = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 (2*thresholdAccuracy)) fc
+  bf    = abs $ AERN2.PPoly.Maximum.maximumOptimisedWithAccuracy fRed0 (mpBall l) (mpBall r) 5 5 (bits 4)
+  threshold = (mpBall $ (dyadic 0.5)^bts)/(centreAsBall bf) --1/((2^bts)*(1 + (centreAsBall bf)))
+  if0 = initialApproximation fRed1 bts thresholdAccuracy
+  thresholdAccuracy = 2 + getAccuracy ((fromEndpoints (-threshold) (threshold)) :: MPBall)
 
 inverse :: PPoly -> PPoly -- TODO: allow negative f
 inverse f =
@@ -49,20 +57,25 @@ inverse f =
   if0 = initialApproximation fRed1 thresholdAccuracy
   thresholdAccuracy = 2 + getAccuracy ((fromEndpoints (mpBall 0) (threshold)) :: MPBall)-}
 
-iterateInverse :: Accuracy -> PPoly -> PPoly -> PPoly
-iterateInverse cutoff f if0 =
+iterateInverse :: Accuracy -> Integer -> PPoly -> PPoly -> PPoly
+iterateInverse cutoff n f if0 =
   --aux (newton if0)
   PPoly
     [let
      bfp = maximumOptimisedWithAccuracy fRed (mpBall l) (mpBall r) 5 5 (bits 4)
      in
-     (i, aux' pg pf bfp) | (i@(Interval l r),pg,pf) <- refine if0 f]
+     (i, aux'' pg pf bfp n) | (i@(Interval l r),pg,pf) <- refine if0 f]
     (ppoly_dom f)
   where
   fRed = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 (bits 4)) f
+  aux'' ipn pf bfp k =
+    if k == 0 || getAccuracy ipn >= cutoff then
+      ipn
+    else
+      aux'' (newtonPiece ipn pf bfp) pf bfp (k - 1)
   aux' ipn pf bfp =
     let
-      next = reduce $ newtonPiece ipn pf bfp
+      next = {-reduce $-} newtonPiece ipn pf bfp
       nextAccuracy = getAccuracy next
     in
       if nextAccuracy >= cutoff then
@@ -173,9 +186,8 @@ instance Prelude.Ord LineSegment where
 
 {- -}
 
-initialApproximation :: PPoly -> Accuracy -> PPoly
-initialApproximation f@(PPoly _ dom@(Interval l r)) thresholdAccuracy {-bf-} =
-  trace("bf is "++(show bf)) $
+initialApproximation :: PPoly -> Integer -> Accuracy -> PPoly
+initialApproximation f@(PPoly _ dom@(Interval l r)) bts thresholdAccuracy {-bf-} =
   result
   where
   fRed = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 thresholdAccuracy) f
@@ -203,17 +215,17 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) thresholdAccuracy {-bf-} =
       p      = lineSegment ((a,fa), (b,fb))
       errs   =
         [let
-          x = (a + k*(setPrecision (getPrecision f) $ mpBall b - a)/4)
+          x = (a + k*(setPrecision (getPrecision f) $ mpBall b - a)/16)
          in
           abs $ 1/(evalDirect f x) - evalDirect p x
-          | k <- [1..4] ]
+          | k <- [1..16] ]
       absErr = foldl' max (mpBall 0) errs
       --minf   = minimumOptimised f (mpBall a) (mpBall b) 5 5 -- TODO requires f > 0
     in
       absErr
   bf = maximumOptimisedWithAccuracy fRed (mpBall l) (mpBall r) 5 5 (bits 1)
   pieceThreshold (LineSegment (a, fa) (b,fb)) =
-    1/(1 + 2*bf)
+    mpBall $ (dyadic 0.5)^bts--1/((2^bts)*(1 + bf))
     {-let
     bfp = maximumOptimisedWithAccuracy fRed (mpBall a) (mpBall b) 5 5 (bits 4)
     in

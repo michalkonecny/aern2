@@ -14,6 +14,7 @@ import AERN2.Poly.Power.Type
 import AERN2.Poly.Cheb.Derivative-}
 import AERN2.Poly.Cheb as Cheb hiding (maximum, minimum, maximumOptimised, maximumOptimisedWithAccuracy)
 import qualified AERN2.Poly.Cheb as Cheb (maximumOptimised, maximumOptimisedWithAccuracy)
+import qualified AERN2.Poly.Cheb.MaximumInt as Cheb (maximumOptimisedWithAccuracyAndBounds)
 import AERN2.Poly.Ball hiding (ball_value)
 import AERN2.PPoly.Type
 import qualified AERN2.PPoly.Eval as PPE
@@ -63,8 +64,52 @@ maximumOptimisedWithAccuracySimple (PPoly ps dom) l r initialDegree steps cutoff
     && (b == lI) /= Just True
     && (a == rI) /= Just True
 
+maximumOptimisedWithAccuracyAndDerivedBounds :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> Accuracy -> MPBall
+maximumOptimisedWithAccuracyAndDerivedBounds f l r iDeg steps acc =
+  maximumOptimisedWithAccuracyAndBounds f l r iDeg steps acc lower upper
+  where
+  rangeBall = PPE.evalDI f (fromEndpoints l r)
+  (c,rad) = centreAsBallAndRadius rangeBall
+  lower = c - mpBall rad
+  upper = c + mpBall rad
+
+maximumOptimisedWithAccuracyAndBounds :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> Accuracy -> MPBall -> MPBall -> MPBall
+maximumOptimisedWithAccuracyAndBounds (PPoly ps dom) l r initialDegree steps cutoffAccuracy lower upper =
+  ffst $
+  foldl'
+    (
+    \(m, lw, up) ((Interval a b), p) ->
+      let
+        mu = (fromEndpoints m upper :: MPBall)
+        m' = Cheb.maximumOptimisedWithAccuracyAndBounds
+              (min cutoffAccuracy (getFiniteAccuracy p))
+              (updateRadius (+ (radius p)) $ centre p)
+              (setPrecision (getPrecision p) $ max lI (mpBall a))
+              (setPrecision (getPrecision p) $ min rI (mpBall b))
+              initialDegree steps
+              lw up
+      in
+        if getAccuracy mu >= cutoffAccuracy then
+          (mu, lw, up)
+        else
+          (max m m', max lw m', up)
+    )
+    (lower, lower, upper)
+    [p | p@(i,_) <- ppoly_pieces f, intersectsLR i]
+  where
+  ffst (a,_,_) = a
+  lI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) l)
+  rI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) r) -- TODO: properly work out required endpoint precision
+  unit    = Interval (dyadic $ -1) (dyadic 1)
+  f       = PPoly ps unit
+  lrInterval = Interval (mpBall lI) (mpBall rI)
+  intersectsLR (Interval a b) =
+    lrInterval `intersects` Interval (mpBall a) (mpBall b)
+    && (b == lI) /= Just True
+    && (a == rI) /= Just True
+
 maximumOptimisedWithAccuracy :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> Accuracy -> MPBall
-maximumOptimisedWithAccuracy = maximumOptimisedWithAccuracySimple
+maximumOptimisedWithAccuracy = maximumOptimisedWithAccuracyAndDerivedBounds
 
 maximumOptimisedWithAccuracy' :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> Accuracy -> MPBall
 maximumOptimisedWithAccuracy' (PPoly ps dom) l r initialDegree steps cutoffAccuracy =
@@ -105,7 +150,7 @@ maximumOptimisedWithAccuracy' (PPoly ps dom) l r initialDegree steps cutoffAccur
   fs  = [p | (_,p) <- fps]
   fps = [(i, ({-reduceDegreeToAccuracy 5 .-} ballLift1R makeExactCentre) p) | (i,p) <- ps]
   dfpsCheb =
-    map (\(i,p) -> (i,(makeExactCentre . Cheb.derivative{-Exact-} . centre) p)) fps
+    map (\(i,p) -> (i,(makeExactCentre . Cheb.derivativeExact . centre) p)) fps
   dfsCheb = map snd dfpsCheb
   dfcsCheb = map snd $ filter (intersectsLR . fst) dfpsCheb
   dfcsChebReduced =
@@ -157,7 +202,7 @@ maximum (PPoly ps dom) l r =
   f       = makeExactCentre $ PPoly ps unit
   fs      = map snd ps
   --dfsCheb  = map (ballLift1R (Cheb.derivative . makeExactCentre)) fs
-  dfcsCheb = map (ballLift1R (makeExactCentre . Cheb.derivative . centre)) fs
+  dfcsCheb = map (ballLift1R (Cheb.derivativeExact . centre)) fs
   ch2Power (e, p) = (e, cheb2Power p)
   dfsPow  = map (ch2Power . intify) dfcsCheb
   dfsMap  = Map.fromList $ zip (map (\k -> (k,0)) [0..]) $ zip (map Cheb.evalDirect dfcsCheb) dfsPow
