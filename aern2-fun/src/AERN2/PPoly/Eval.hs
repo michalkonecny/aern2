@@ -99,3 +99,10 @@ instance
   apply p x =
     -- TODO: check x is in the domain
     apply p <$> x
+
+instance CanApplyApprox PPoly DyadicInterval where
+  type ApplyApproxType PPoly DyadicInterval = DyadicInterval
+  applyApprox p di =
+    dyadicInterval (fromEndpoints lB uB :: MPBall)
+    where
+    (Interval lB uB) = sampledRange di 5 p :: Interval MPBall MPBall

@@ -124,15 +124,6 @@ operations =
   where
   -- op1 op = (1, \[e] -> op e)
   op2 op = (2, \[e1,e2] -> op e1 e2)
-  -- recipShift p = chebDivideDCT acGuide (c 1) (p + lb + 1)
-  --   where
-  --   lb :: MPBall
-  --   (lb, _) =
-  --       endpoints $
-  --         -- minimumOverDom p (getDomain p)
-  --         minimumOptimisedWithAccuracy acGuide p (mpBall l) (mpBall r) 5 5
-  --         where
-  --         (Interval l r) = getDomain p
 
 type FnIndex = Integer
 type Frequency = Integer

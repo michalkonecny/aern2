@@ -118,12 +118,12 @@ type Arity = Integer
 
 operations :: [(Arity, [PPoly] -> PPoly)]
 operations =
-  [op2 (+), op2 (-), op2 (*), op1 recipShift]
+  [op2 (+), op2 (-), op2 (*), op1 recipShift, (1, addBreak)]
   where
   op1 op = (1, \[e] -> op e)
   op2 op = (2, \[e1,e2] -> op e1 e2)
   acGuide = bits 10
-  recipShift p = inverseWithAccuracy acGuide (p + lb + 1)
+  recipShift p = inverseWithAccuracy acGuide (p - lb + 1)
     where
     lb :: MPBall
     (lb, _) =
@@ -132,6 +132,18 @@ operations =
           minimumOptimisedWithAccuracy p (mpBall l) (mpBall r) 5 5 acGuide
           where
           (Interval l r) = getDomain p
+  addBreak [p] =
+    -- Force a break point in the partition by adding a piecewise constant 0:
+    p + (linearPolygon [(dl,mpBall 0),(x,mpBall 0),(dr,mpBall 0)] dom)
+    where
+    dom@(Interval dl dr) = getDomain p
+    Interval rl ru = applyApprox p dom
+    rlA = abs rl
+    ruA = abs ru
+    x = centre $ (rlA*dl + ruA*dr) / (mpBall $ rlA + ruA)
+    -- x is an approximate average of dom endpoints, weighted by the range endpoints.
+    -- This definitoin is deliberately rather arbitrary to achieve a high variation.
+  addBreak _ = error "addBreak used with wrong arity"
 
 type FnIndex = Integer
 type Frequency = Integer
@@ -317,23 +329,52 @@ specChPoly =
     --   specFnPointwiseOp1 tPPoly tMPBall "sine" (sineWithAccuracyGuide (bits 10)) (sin) (makeFnSmallRange 10)
 
 
-{- recent bugs:
+test1 =
+  pPolyFromOps $
+    PPolyConstruction {ppConstr_acGuide = bits 10,
+      ppConstr_dom = Interval (dyadic 0) (dyadic 1),
+      ppConstr_i0 = 0, ppConstr_opIndices = [(3,[])]}
+      -- 1 / (2+x) over [-1,1]
+
+test2 =
+  pPolyFromOps $
+    PPolyConstruction {ppConstr_acGuide = bits 10,
+      ppConstr_dom = Interval (dyadic 0) (dyadic 1),
+      ppConstr_i0 = 0, ppConstr_opIndices = [(4,[])]}
+      -- x with 2 segments
+
+{- recent issues:
+
+> test1
+(takes too long)
+
+> test2
+*** Exception: PPoly intersectionAndDifference: precondition violated. Intervals are [dyadic -1,dyadic 1] and [dyadic 0,dyadic 1].
+
+
 -}
 
 
 {- a template for probing bugs:
 
+test1 :: IO ()
+test1 =
+  do
+  fns <- (sample' arbitrary :: IO [PPolyConstruction])
+  mapM_ putStrLn $ concat $ map (\fnC -> [show fnC, show (pPolyFromOps fnC)]) fns
+
+
 dom1 = Interval (dyadic 100663296) (dyadic 100663299)
 
 p1D =
-  ChPolyConstruction {ppConstr_acGuide = bits 12, ppConstr_dom = dom1,
+  PPolyConstruction {ppConstr_acGuide = bits 12, ppConstr_dom = dom1,
     ppConstr_i0 = 0, ppConstr_opIndices = [(0,[3]),(0,[0])]}
 
 p1 = chPolyFromOps p1D
 p1FD = FnAndDescr p1 (show p1D)
 
 p2D =
-  ChPolyConstruction {ppConstr_acGuide = bits 30, ppConstr_dom = dom12,
+  PPolyConstruction {ppConstr_acGuide = bits 30, ppConstr_dom = dom12,
     ppConstr_i0 = 4,
     ppConstr_opIndices = [(2,[0]),(0,[0]),(0,[0]),(0,[0]),(0,[0]),(2,[0]),(2,[0]),(2,[0]),(0,[0]),(0,[0]),(2,[0]),(1,[0]),(1,[0]),(2,[1]),(0,[0]),(1,[0]),(0,[0]),(2,[4]),(0,[0]),(2,[0]),(2,[0])]}
 
