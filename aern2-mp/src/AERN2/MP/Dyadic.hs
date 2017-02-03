@@ -29,6 +29,7 @@ where
 import Numeric.MixedTypes
 import qualified Prelude as P
 import Text.Printf
+import Text.Regex.TDFA
 
 import Data.Typeable
 
@@ -55,13 +56,41 @@ instance HasAccuracy Dyadic where getAccuracy _ = Exact
 
 instance Show Dyadic where
   show (Dyadic x)
-    | e == 0 = "dyadic " ++ show (round x)
-    | e > 0 = printf "dyadic (%s*0.5^(%s))" (show n) (show e)
+    | e == 0 = printf "dyadic (%d)" n
+    | e > 0 = printf "dyadic (%d*0.5^%d)" n e
     | otherwise = error "in show Dyadic"
     where
     xR = rational x
     NormBits e = getNormLog (denominator xR)
     n = numerator xR
+
+instance Read Dyadic where
+  readsPrec _pr dyadicS =
+    tryInt $ tryWithExp []
+    where
+    tryInt tryNext =
+      case groups of
+        [nS] ->
+          case reads nS of
+            [(n,"")] -> [(dyadic (n :: Integer), afterS)]
+            _ -> tryNext
+        _ -> tryNext
+      where
+      (_,_,afterS,groups) =
+        dyadicS =~ "\\`dyadic \\(([0-9]*)\\)"
+          :: (String, String, String, [String])
+    tryWithExp tryNext =
+      case groups of
+        [nS,eS] ->
+          case (reads nS, reads eS) of
+            ([(n,"")],[(e,"")]) ->
+              [(dyadic $ (n :: Integer)*0.5^(e :: Integer), afterS)]
+            _ -> tryNext
+        _ -> tryNext
+      where
+      (_,_,afterS,groups) =
+        dyadicS =~ "\\`dyadic \\(([0-9]*)\\*0.5\\^([0-9]*)\\)"
+          :: (String, String, String, [String])
 
 {-- conversions --}
 
