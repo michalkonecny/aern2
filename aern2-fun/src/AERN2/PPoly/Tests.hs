@@ -140,7 +140,9 @@ operations =
     Interval rl ru = applyApprox p dom
     rlA = abs rl
     ruA = abs ru
-    x = centre $ (rlA*dl + ruA*dr) / (mpBall $ rlA + ruA)
+    x
+      | rlA == 0 || ruA == 0 = (dl + dr) * (dyadic 0.5)
+      | otherwise = centre $ (rlA*dl + ruA*dr) / (mpBall $ rlA + ruA)
     -- x is an approximate average of dom endpoints, weighted by the range endpoints.
     -- This definitoin is deliberately rather arbitrary to achieve a high variation.
   addBreak _ = error "addBreak used with wrong arity"
@@ -164,7 +166,8 @@ instance
   Arbitrary PPolyConstruction
   where
   arbitrary =
-    arbitraryWithDom =<< arbitraryNonEmptySmallInterval
+    -- arbitraryWithDom =<< arbitraryNonEmptySmallInterval
+    arbitraryWithDom =<< return (dyadicInterval (-1.0,1.0))
 
 instance
   -- (Arbitrary c, IsBall c, Show c) => ArbitraryWithDom (ChPolyConstruction c)
@@ -328,37 +331,26 @@ specChPoly =
     -- describe "trigonometric" $ do
     --   specFnPointwiseOp1 tPPoly tMPBall "sine" (sineWithAccuracyGuide (bits 10)) (sin) (makeFnSmallRange 10)
 
+generate :: IO ()
+generate =
+  do
+  fns <- (sample' arbitrary :: IO [PPolyConstruction])
+  mapM_ putStrLn $ concat $ map (\fnC -> [show fnC, show (pPolyFromOps fnC)]) fns
 
 test1 =
   pPolyFromOps $
-    PPolyConstruction {ppConstr_acGuide = bits 10,
-      ppConstr_dom = Interval (dyadic 0) (dyadic 1),
-      ppConstr_i0 = 0, ppConstr_opIndices = [(3,[])]}
-      -- 1 / (2+x) over [-1,1]
-
-test2 =
-  pPolyFromOps $
-    PPolyConstruction {ppConstr_acGuide = bits 10,
-      ppConstr_dom = Interval (dyadic 0) (dyadic 1),
-      ppConstr_i0 = 0, ppConstr_opIndices = [(4,[])]}
-      -- x with 2 segments
+  PPolyConstruction
+    {ppConstr_acGuide = bits 18, ppConstr_dom = Interval (dyadic (-1)) (dyadic 1),
+     ppConstr_i0 = 0, -- x
+     ppConstr_opIndices = [(2,[0]),(4,[])]} -- addBreak(x^2)
 
 {- recent issues:
-
-> test1
-(takes too long)
-
-> test2
-*** Exception: PPoly intersectionAndDifference: precondition violated. Intervals are [dyadic -1,dyadic 1] and [dyadic 0,dyadic 1].
-
-
 -}
-
 
 {- a template for probing bugs:
 
-test1 :: IO ()
-test1 =
+generate :: IO ()
+generate =
   do
   fns <- (sample' arbitrary :: IO [PPolyConstruction])
   mapM_ putStrLn $ concat $ map (\fnC -> [show fnC, show (pPolyFromOps fnC)]) fns
