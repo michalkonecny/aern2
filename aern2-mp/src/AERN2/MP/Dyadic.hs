@@ -77,7 +77,7 @@ instance Read Dyadic where
         _ -> tryNext
       where
       (_,_,afterS,groups) =
-        dyadicS =~ "\\`dyadic \\(([0-9]*)\\)"
+        dyadicS =~ "\\`dyadic \\(([-0-9]*)\\)"
           :: (String, String, String, [String])
     tryWithExp tryNext =
       case groups of
@@ -89,7 +89,7 @@ instance Read Dyadic where
         _ -> tryNext
       where
       (_,_,afterS,groups) =
-        dyadicS =~ "\\`dyadic \\(([0-9]*)\\*0.5\\^([0-9]*)\\)"
+        dyadicS =~ "\\`dyadic \\(([-0-9]*)\\*0.5\\^([0-9]*)\\)"
           :: (String, String, String, [String])
 
 {-- conversions --}

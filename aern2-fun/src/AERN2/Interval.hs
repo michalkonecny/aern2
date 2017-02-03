@@ -26,8 +26,10 @@ where
 
 import Numeric.MixedTypes
 import qualified Prelude as P
-import Data.Maybe
 import Text.Printf
+-- import Text.Regex.TDFA
+
+import Data.Maybe
 
 import GHC.Generics
 import Data.Typeable
@@ -54,6 +56,24 @@ instance (Show l, Show r) => Show (Interval l r) where
     show (Interval l r) =
       printf "Interval (%s) (%s)" (show l) (show r)
       -- printf "[%s,%s]" (show l) (show r)
+
+instance (Read l, Read r) => Read (Interval l r) where
+  readsPrec _pr intervalS
+    | prefix1 == "Interval (" =
+      case reads afterP1 of
+        [(l,afterL)] ->
+          if prefix2 == ") ("
+            then
+              case reads afterP2 of
+                [(r,')':rest)] -> [(Interval l r, rest)]
+                _ -> []
+            else []
+            where
+            (prefix2, afterP2) = splitAt (length ") (") afterL
+        _ -> []
+    | otherwise = []
+    where
+    (prefix1, afterP1) = splitAt (length "Interval (") intervalS
 
 singleton :: a -> Interval a a
 singleton a = Interval a a
