@@ -118,11 +118,11 @@ type Arity = Integer
 
 operations :: [(Arity, [ChPoly MPBall] -> ChPoly MPBall)]
 operations =
-  [op2 (+), op2 (-), op2 (*), op2 (*)]
+  [op2 (+), op2 (-), op2 (*), op2 (*), op1 (\x -> x*x)]
     -- , op1 (sineWithAccuracyGuide acGuide), op1 (cosineWithAccuracyGuide acGuide)]
     -- , op1 recipShift]
   where
-  -- op1 op = (1, \[e] -> op e)
+  op1 op = (1, \[e] -> op e)
   op2 op = (2, \[e1,e2] -> op e1 e2)
 
 type FnIndex = Integer
