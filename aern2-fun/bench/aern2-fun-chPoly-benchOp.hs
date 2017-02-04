@@ -21,6 +21,11 @@ import System.Environment
 import System.Random (randomRIO)
 import System.Clock
 
+-- import Data.String (fromString)
+import qualified Data.ByteString.Lazy as ByteString
+import Data.ByteString.Lazy.Char8 (unpack)
+import qualified Codec.Compression.GZip as GZip
+
 -- import Test.QuickCheck
 
 import AERN2.Utils.Bench
@@ -66,7 +71,9 @@ processArgs _ =
 
 serialisePolys :: Integer -> Integer -> IO ()
 serialisePolys deg count =
-  writeFile fileName (unlines $ map ChPoly.serialiseChPoly polys)
+  writeFile fileName $
+    --  unpack $ GZip.compressWith GZip.defaultCompressParams { GZip.compressLevel = GZip.bestCompression } $ fromString $
+      unlines $ map ChPoly.serialiseChPoly polys
   where
   fileName = serialiseFileName deg count
   polys = concat $ map (\(a,b) -> [a,b]) $ take (int count) $ valuePairsWithDeg deg
@@ -77,15 +84,17 @@ serialiseFileName deg count =
 
 loadSerialised :: Integer -> Integer -> IO [(ChPolyMB, ChPolyMB)]
 loadSerialised deg count =
-  (makePairs . map deserialiseChPolyOrError . lines) <$> readFile fileName
+  (makePairs . map deserialiseChPolyOrError . lines . decompress) <$> ByteString.readFile fileName
   where
-  fileName = serialiseFileName deg count
+  fileName = serialiseFileName deg count ++ ".gz"
   makePairs (a:b:rest) = (a,b):makePairs rest
   makePairs _ = []
   deserialiseChPolyOrError s =
     case ChPoly.deserialiseChPoly s of
       Just p -> p
       _ -> error $ "failed to deserialise: " ++ s
+  decompress = unpack . GZip.decompress
+
 
 runBenchmark :: Mode -> String -> Integer -> Precision -> Accuracy -> Integer -> IO ()
 runBenchmark mode op deg p acGuide count =
@@ -93,12 +102,12 @@ runBenchmark mode op deg p acGuide count =
   tStart <- getTime ProcessCPUTime
   reportProgress tStart computationDescription
 
-  reportProgress tStart "computing arguments"
+  reportProgress tStart "preparing arguments"
   valuePairs <- loadSerialised deg maxIndex
   paramPairsPre <- pick valuePairs count
 
   let paramPairs =
-        map (mapBoth (setPrecision p)) $
+        map (mapBoth (centreAsBall . setPrecision p)) $
         map makeFn2PositiveSmallRange $ paramPairsPre
   let paramAccuracies = concat $ map (\(a,b) -> [getAccuracy a, getAccuracy b]) paramPairs
   case minimum paramAccuracies of

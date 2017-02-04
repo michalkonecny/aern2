@@ -155,6 +155,8 @@ executable aern2-fun-chPoly-benchOp
       aern2-fun-chPoly-benchOp.hs
   build-depends:
     base == 4.*
+    , bytestring >= 0.10 && < 0.11
+    , zlib >= 0.6 && < 0.7
     , mixed-types-num == 0.1.*
     , num-exceptions == 0.1.*
     , aern2-mp == 0.1.*
