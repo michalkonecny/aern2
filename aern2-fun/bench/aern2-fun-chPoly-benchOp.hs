@@ -41,12 +41,18 @@ main =
   do
   args <- getArgs
   let (mode, op, deg, p, ac, count) = processArgs args
-  runBenchmark mode op deg p ac count
+  case mode of
+    Serialise ->
+      serialisePolys deg count
+    _ ->
+      runBenchmark mode op deg p ac count
 
-data Mode = SummaryCSV | CSV | Verbose
+data Mode = SummaryCSV | CSV | Verbose | Serialise
   deriving (Show, Read)
 
 processArgs :: [String] -> (Mode, String, Integer, Precision, Accuracy, Integer)
+processArgs ["Serialise", degS] =
+  (Serialise, "noop", read degS, prec 2, NoInformation, maxIndex)
 processArgs [modeS, op, degS, precS, acS, countS] =
   (read modeS, op, read degS, readPrec precS, readAc acS, read countS)
   where
@@ -55,8 +61,31 @@ processArgs [modeS, op, degS, precS, acS, countS] =
   readAc "any" = NoInformation
   readAc s = bits (read s :: Integer)
 processArgs _ =
-  error "expecting arguments: <mode> <operation> <degree> <precision> <count>"
+  error "expecting arguments: <mode> <operation> <degree> <precision> <accuracy> <count>"
 
+
+serialisePolys :: Integer -> Integer -> IO ()
+serialisePolys deg count =
+  writeFile fileName (unlines $ map ChPoly.serialiseChPoly polys)
+  where
+  fileName = serialiseFileName deg count
+  polys = concat $ map (\(a,b) -> [a,b]) $ take (int count) $ valuePairsWithDeg deg
+
+serialiseFileName :: Integer -> Integer -> String
+serialiseFileName deg count =
+  printf "bench-ChPolys-%d-%d.hss" deg count
+
+loadSerialised :: Integer -> Integer -> IO [(ChPolyMB, ChPolyMB)]
+loadSerialised deg count =
+  (makePairs . map deserialiseChPolyOrError . lines) <$> readFile fileName
+  where
+  fileName = serialiseFileName deg count
+  makePairs (a:b:rest) = (a,b):makePairs rest
+  makePairs _ = []
+  deserialiseChPolyOrError s =
+    case ChPoly.deserialiseChPoly s of
+      Just p -> p
+      _ -> error $ "failed to deserialise: " ++ s
 
 runBenchmark :: Mode -> String -> Integer -> Precision -> Accuracy -> Integer -> IO ()
 runBenchmark mode op deg p acGuide count =
@@ -65,7 +94,8 @@ runBenchmark mode op deg p acGuide count =
   reportProgress tStart computationDescription
 
   reportProgress tStart "computing arguments"
-  paramPairsPre <- pick (valuePairsWithDeg deg) count
+  valuePairs <- loadSerialised deg maxIndex
+  paramPairsPre <- pick valuePairs count
 
   let paramPairs =
         map (mapBoth (setPrecision p)) $
@@ -162,7 +192,7 @@ pick ts count =
   ]
 
 maxIndex :: Integer
-maxIndex = 200
+maxIndex = 1000
 
 valuesWithDeg :: Integer -> [ChPolyMB]
 valuesWithDeg deg =
@@ -192,6 +222,7 @@ makeFn2Positive = mapSecondFD makeFnPositive
 makeFn2PositiveSmallRange :: (ChPolyMB, ChPolyMB) -> (ChPolyMB, ChPolyMB)
 makeFn2PositiveSmallRange = mapSecondFD (makeFnPositiveSmallRange 10)
 
+mapSecondFD :: (FnAndDescr f1 -> FnAndDescr f2) -> (t, f1) -> (t, f2)
 mapSecondFD f (a,b) = (a, fb)
   where
   FnAndDescr fb _ = f (FnAndDescr b "")
