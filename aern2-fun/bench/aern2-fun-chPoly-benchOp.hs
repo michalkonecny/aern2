@@ -14,12 +14,15 @@ import Numeric.MixedTypes
 import qualified Prelude as P
 
 import Text.Printf
+import Text.Regex.TDFA
 
 import System.Environment
 
 -- import System.IO.Unsafe (unsafePerformIO)
-import System.Random (randomRIO)
+-- import System.Random (randomRIO)
 import System.Clock
+
+import Data.List (isSuffixOf)
 
 -- import Data.String (fromString)
 import qualified Data.ByteString.Lazy as ByteString
@@ -45,66 +48,48 @@ main :: IO ()
 main =
   do
   args <- getArgs
-  let (mode, op, deg, p, ac, count) = processArgs args
-  case mode of
-    Serialise ->
-      serialisePolys deg count
-    _ ->
-      runBenchmark mode op deg p ac count
+  let (mode, op, serialisedFile, p, ac, count) = processArgs args
+  runBenchmark mode op serialisedFile p ac count
 
-data Mode = SummaryCSV | CSV | Verbose | Serialise
+data Mode = SummaryCSV | CSV | Verbose
   deriving (Show, Read)
 
-processArgs :: [String] -> (Mode, String, Integer, Precision, Accuracy, Integer)
-processArgs ["Serialise", degS] =
-  (Serialise, "noop", read degS, prec 2, NoInformation, maxIndex)
-processArgs [modeS, op, degS, precS, acS, countS] =
-  (read modeS, op, read degS, readPrec precS, readAc acS, read countS)
+processArgs :: [String] -> (Mode, String, String, Precision, Accuracy, Integer)
+processArgs [modeS, op, serialisedFile, precS, acS, countS] =
+  (read modeS, op, serialisedFile, readPrec precS, readAc acS, read countS)
   where
   readPrec = prec . read
   readAc "exact" = Exact
   readAc "any" = NoInformation
   readAc s = bits (read s :: Integer)
 processArgs _ =
-  error "expecting arguments: <mode> <operation> <degree> <precision> <accuracy> <count>"
+  error "expecting arguments: <mode> <operation> <serialisedFile> <precision> <accuracy> <count>"
 
-
-serialisePolys :: Integer -> Integer -> IO ()
-serialisePolys deg count =
-  writeFile fileName $
-    --  unpack $ GZip.compressWith GZip.defaultCompressParams { GZip.compressLevel = GZip.bestCompression } $ fromString $
-      unlines $ map ChPoly.serialiseChPoly polys
+loadSerialised :: String -> IO [(ChPolyMB, ChPolyMB)]
+loadSerialised serialisedFile =
+  (makePairs . map deserialiseChPolyOrError . lines . decompress) <$> ByteString.readFile serialisedFile
   where
-  fileName = serialiseFileName deg count
-  polys = concat $ map (\(a,b) -> [a,b]) $ take (int count) $ valuePairsWithDeg deg
-
-serialiseFileName :: Integer -> Integer -> String
-serialiseFileName deg count =
-  printf "bench-ChPolys-%d-%d.hss" deg count
-
-loadSerialised :: Integer -> Integer -> IO [(ChPolyMB, ChPolyMB)]
-loadSerialised deg count =
-  (makePairs . map deserialiseChPolyOrError . lines . decompress) <$> ByteString.readFile fileName
-  where
-  fileName = serialiseFileName deg count ++ ".gz"
   makePairs (a:b:rest) = (a,b):makePairs rest
   makePairs _ = []
   deserialiseChPolyOrError s =
     case ChPoly.deserialiseChPoly s of
       Just p -> p
       _ -> error $ "failed to deserialise: " ++ s
-  decompress = unpack . GZip.decompress
+  decompress
+    | ".gz" `isSuffixOf` serialisedFile = unpack . GZip.decompress
+    | otherwise = unpack
 
 
-runBenchmark :: Mode -> String -> Integer -> Precision -> Accuracy -> Integer -> IO ()
-runBenchmark mode op deg p acGuide count =
+runBenchmark :: Mode -> String -> String -> Precision -> Accuracy -> Integer -> IO ()
+runBenchmark mode op serialisedFile p acGuide count =
   do
   tStart <- getTime ProcessCPUTime
   reportProgress tStart computationDescription
 
   reportProgress tStart "preparing arguments"
-  valuePairs <- loadSerialised deg maxIndex
-  paramPairsPre <- pick valuePairs count
+  valuePairs <- loadSerialised serialisedFile
+  -- paramPairsPre <- pick valuePairs count
+  let paramPairsPre = take (int count) valuePairs
 
   let paramPairs =
         map (mapBoth (centreAsBall . setPrecision p)) $
@@ -124,6 +109,9 @@ runBenchmark mode op deg p acGuide count =
   csvSummaryLine mode tStart tGotParams tasResults tDone
 
   where
+  deg :: Integer
+  deg = read degS
+  (_,_,_,[degS]) = serialisedFile =~ "ChPolyPair-deg([0-9]*)-" :: (String, String, String, [String])
   computationDescription =
       printf "computing %s on ChPoly(s) (deg = %d, p = %s, count = %d samples)" op deg (show p) count
   computeResults paramPairs =
@@ -189,20 +177,17 @@ runBenchmark mode op deg p acGuide count =
 mapBoth :: (t1 -> t2) -> (t1,t1) -> (t2,t2)
 mapBoth f (a,b) = (f a, f b)
 
-pick :: [t] -> Integer -> IO [t]
-pick ts count =
-  sequence $
-  [
-    do
-    i1 <- randomRIO (1,maxIndex)
-    let t = ts !! i1
-    return t
-  | _j <- [1..count]
-  ]
-
-maxIndex :: Integer
-maxIndex = 1000
-
+-- pick :: [t] -> Integer -> IO [t]
+-- pick ts count =
+--   sequence $
+--   [
+--     do
+--     i1 <- randomRIO (0, (length ts)-1)
+--     let t = ts !! i1
+--     return t
+--   | _j <- [1..count]
+--   ]
+--
 valuesWithDeg :: Integer -> [ChPolyMB]
 valuesWithDeg deg =
   map (ChPoly.reduceDegree deg) $
