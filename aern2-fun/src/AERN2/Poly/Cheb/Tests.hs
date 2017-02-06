@@ -267,7 +267,7 @@ makeFnPositiveSmallRange limit (FnAndDescr p pDescr) =
   where
   res
     | 1 !<=! lb && ub !<! limit = p
-    | b !<! limit = p - lb + 1
+    | b !<! limit = centreAsBall $ p - lb + 1
     | otherwise = centreAsBall $ (1 - lb + (limit * p / b))
   b = ub `max` (-lb)
   lb, ub :: MPBall

@@ -17,7 +17,7 @@ module AERN2.Poly.Cheb.Type
 , ChPolyBounds(..), chPoly_maybeLip, chPoly_setLip
 , CanBeChPoly, chPoly, chPolyMPBall
 , showInternals, fromDomToUnitInterval
-, serialiseChPoly, deserialiseChPoly
+, serialise, deserialise
 , Degree, degree, reduceDegree, reduceDegreeWithLostAccuracyLimit
 )
 where
@@ -27,6 +27,8 @@ import Numeric.MixedTypes
 import Text.Printf
 
 import Text.Regex.TDFA
+
+import qualified Data.ByteString.Lazy.Char8 as BS
 
 import qualified Data.List as List
 
@@ -103,23 +105,25 @@ showInternals (ChPoly dom (Poly terms) bnd) =
   ", bounds = " ++ show bnd ++
   ", terms = " ++ show terms
 
-serialiseChPoly :: ChPolyMB -> String
-serialiseChPoly (ChPoly dom (Poly terms) _) =
-  printf "(ChPoly (%s) (Poly (terms_fromList %s)) Nothing)"
+serialise :: ChPolyMB -> String
+serialise (ChPoly dom (Poly terms) _) =
+  printf "(ChPoly (%s{--}) (Poly (terms_fromList %s{--})) Nothing)"
     (show dom) (show $ terms_toList $ terms_map dyadicInterval terms)
 
-deserialiseChPoly :: String -> Maybe ChPolyMB
-deserialiseChPoly polyS =
+deserialise :: BS.ByteString -> Maybe ChPolyMB
+deserialise polyS =
   case groups of
     [domS,termsS] ->
-      case (reads domS, reads termsS) of
+      case (reads (BS.unpack domS), reads (BS.unpack termsS)) of
         ([(dom,"")],[(terms,"")]) ->
           Just $ ChPoly dom (Poly $ terms_map mpBall $ terms_fromList (terms :: [(Integer, DyadicInterval)])) Nothing
         _ -> Nothing
     _ -> Nothing
   where
-  pat = "\\(ChPoly \\((.*)\\) \\(Poly \\(terms_fromList (.*)\\)\\) Nothing\\)"
-  (_before,_whole,_after,groups) = polyS =~ pat :: (String,String,String,[String])
+  pat = "\\(ChPoly \\(([^{]*){--}\\) \\(Poly \\(terms_fromList ([^{]*){--}\\)\\) Nothing\\)"
+  (_before,_whole,_after,groups) = polyS =~ pat
+    :: (BS.ByteString,BS.ByteString,BS.ByteString,[BS.ByteString])
+    -- :: (String,String,String,[String])
 
 fromDomToUnitInterval ::
   (CanAddSubMulDivBy t Dyadic) =>

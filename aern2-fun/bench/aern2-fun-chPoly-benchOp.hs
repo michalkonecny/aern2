@@ -25,24 +25,21 @@ import System.Clock
 import Data.List (isSuffixOf)
 
 -- import Data.String (fromString)
-import qualified Data.ByteString.Lazy as ByteString
-import Data.ByteString.Lazy.Char8 (unpack)
+-- import qualified Data.ByteString.Lazy as BS
+import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Codec.Compression.GZip as GZip
 
 -- import Test.QuickCheck
 
-import AERN2.Utils.Bench
+-- import AERN2.Utils.Bench
 
 import AERN2.MP
 -- import AERN2.Real
 
-import AERN2.Interval
-
-import AERN2.RealFun.Tests (FnAndDescr(..))
+-- import AERN2.Interval
 
 import qualified AERN2.Poly.Cheb as ChPoly
 import AERN2.Poly.Cheb (ChPolyMB)
-import AERN2.Poly.Cheb.Tests
 
 main :: IO ()
 main =
@@ -67,17 +64,23 @@ processArgs _ =
 
 loadSerialised :: String -> IO [(ChPolyMB, ChPolyMB)]
 loadSerialised serialisedFile =
-  (makePairs . map deserialiseChPolyOrError . lines . decompress) <$> ByteString.readFile serialisedFile
+  do
+  contentPre <- BS.readFile serialisedFile
+  let content = BS.lines $ decompress contentPre
+  -- print $ length content
+  let fns = map deserialiseChPolyOrError content
+  -- mapM_ print $ map getAccuracy fns
+  return $ makePairs fns
   where
   makePairs (a:b:rest) = (a,b):makePairs rest
   makePairs _ = []
   deserialiseChPolyOrError s =
-    case ChPoly.deserialiseChPoly s of
+    case ChPoly.deserialise s of
       Just p -> p
-      _ -> error $ "failed to deserialise: " ++ s
+      _ -> error $ "failed to deserialise: " ++ (BS.unpack s)
   decompress
-    | ".gz" `isSuffixOf` serialisedFile = unpack . GZip.decompress
-    | otherwise = unpack
+    | ".gz" `isSuffixOf` serialisedFile = GZip.decompress
+    | otherwise = id
 
 
 runBenchmark :: Mode -> String -> String -> Precision -> Accuracy -> Integer -> IO ()
@@ -92,8 +95,7 @@ runBenchmark mode op serialisedFile p acGuide count =
   let paramPairsPre = take (int count) valuePairs
 
   let paramPairs =
-        map (mapBoth (centreAsBall . setPrecision p)) $
-        map makeFn2PositiveSmallRange $ paramPairsPre
+        map (mapBoth (centreAsBall . setPrecision p)) paramPairsPre
   let paramAccuracies = concat $ map (\(a,b) -> [getAccuracy a, getAccuracy b]) paramPairs
   case minimum paramAccuracies of
     Exact -> pure ()
@@ -176,47 +178,3 @@ runBenchmark mode op serialisedFile p acGuide count =
 
 mapBoth :: (t1 -> t2) -> (t1,t1) -> (t2,t2)
 mapBoth f (a,b) = (f a, f b)
-
--- pick :: [t] -> Integer -> IO [t]
--- pick ts count =
---   sequence $
---   [
---     do
---     i1 <- randomRIO (0, (length ts)-1)
---     let t = ts !! i1
---     return t
---   | _j <- [1..count]
---   ]
---
-valuesWithDeg :: Integer -> [ChPolyMB]
-valuesWithDeg deg =
-  map (ChPoly.reduceDegree deg) $
-    map fst $ valuePairsWithMinDeg deg
-
-valuePairsWithDeg :: Integer -> [(ChPolyMB, ChPolyMB)]
-valuePairsWithDeg deg =
-  map reduceDegrees $
-    valuePairsWithMinDeg deg
-  where
-  reduceDegrees = mapBoth (centreAsBall . ChPoly.reduceDegree deg)
-
-valuePairsWithMinDeg :: Integer -> [(ChPolyMB, ChPolyMB)]
-valuePairsWithMinDeg deg =
-  listFromGen $
-    do
-    (p1,_) <- arbitraryWithDegDom deg dom
-    (p2,_) <- arbitraryWithDegDom deg dom
-    return (p1, p2)
-  where
-  dom = dyadicInterval (0.0,1.0)
-
-makeFn2Positive :: (ChPolyMB, ChPolyMB) -> (ChPolyMB, ChPolyMB)
-makeFn2Positive = mapSecondFD makeFnPositive
-
-makeFn2PositiveSmallRange :: (ChPolyMB, ChPolyMB) -> (ChPolyMB, ChPolyMB)
-makeFn2PositiveSmallRange = mapSecondFD (makeFnPositiveSmallRange 10)
-
-mapSecondFD :: (FnAndDescr f1 -> FnAndDescr f2) -> (t, f1) -> (t, f2)
-mapSecondFD f (a,b) = (a, fb)
-  where
-  FnAndDescr fb _ = f (FnAndDescr b "")
