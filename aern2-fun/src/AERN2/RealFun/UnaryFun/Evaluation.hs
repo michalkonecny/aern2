@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+#define DEBUG
 {-|
     Module      :  AERN2.RealFun.UnaryFun.Evaluation
     Description :  evaluation and range
@@ -19,6 +21,13 @@ module AERN2.RealFun.UnaryFun.Evaluation
   , rangeOnIntervalSubdivide
 )
 where
+
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#else
+#define maybeTrace (\ (_ :: String) t -> t)
+#endif
 
 import Numeric.MixedTypes
 import qualified Prelude as P
@@ -49,18 +58,6 @@ import qualified AERN2.Interval as Interval
 import AERN2.RealFun.Operations
 
 import AERN2.RealFun.UnaryFun.Type
-
-import Debug.Trace (trace)
-
-shouldTrace :: Bool
-shouldTrace = False
--- shouldTrace = True
-
-maybeTrace :: String -> a -> a
-maybeTrace = if shouldTrace then trace else const id
-_dummy :: ()
-_dummy = maybeTrace "dummy" ()
-
 
 instance CanApply UnaryFun MPBall where
   type ApplyType UnaryFun MPBall = MPBall
@@ -218,11 +215,12 @@ maximumOnIntervalSubdivide evalOnInterval di =
     (_,fdi) = fi di
     fi = evalOnInterval
   search fi prevL prevQueue =
-    maybeTrace
-    (
+    maybeTrace (
         "UnaryFun maximumOnIntervalSubdivide search:"
         ++ "\n  seg = " ++ show seg
         ++ "\n  normLog(width(seg)) = " ++ show (getNormLog (Interval.width seg))
+    -- ) $ maybeTrace (
+    --     "UnaryFun maximumOnIntervalSubdivide search:"
         ++ "\n  nextL = " ++ show nextL
         ++ "\n  segValR = " ++ show segValR
         ++ "\n  currentBall = " ++ show currentBall
