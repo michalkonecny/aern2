@@ -30,7 +30,7 @@ data Mode = FnOpReprs | Ops
 
 checkArgs :: [String] -> (Mode, String, String)
 checkArgs [modeS, inFileName, outFolder] = (read modeS, inFileName, outFolder)
-checkArgs _ = error "usage: aern2-bench-chart <mode(Ops|FnOpReps)> <csvFileName> <outFolder>"
+checkArgs _ = error "usage: aern2-bench-chart <mode(Ops|FnOpReprs)> <csvFileName> <outFolder>"
 
 {-|
     A dummy sample result:

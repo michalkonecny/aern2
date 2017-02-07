@@ -1,0 +1,31 @@
+num its: 3
+initial bits: 11
+cutoff: 11
+rungeX_PP: getAccuracy inv = bits 15
+computing integrate  x/(100x^2+1) over [-1,1]
+result = [4.895684668906422e-10 ± 2.195631211059486e-6](prec=300)
+accuracy: bits 18
+precision = Precision 300
+	Command being timed: "aern2-fnreps-ops integrate rungeX ppoly 30"
+	User time (seconds): 9.71
+	System time (seconds): 0.07
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:09.77
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 33028
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 6332
+	Voluntary context switches: 1
+	Involuntary context switches: 16
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

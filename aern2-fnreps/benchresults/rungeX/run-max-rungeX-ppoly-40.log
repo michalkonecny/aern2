@@ -1,0 +1,31 @@
+num its: 3
+initial bits: 15
+cutoff: 15
+rungeX_PP: getAccuracy inv = bits 45
+computing max  x/(100x^2+1) over [-1,1]
+result = [4.999999999999999e-2 ± 2.357536065313372e-14](prec=800)
+accuracy: bits 45
+precision = Precision 800
+	Command being timed: "aern2-fnreps-ops max rungeX ppoly 40"
+	User time (seconds): 28.59
+	System time (seconds): 0.19
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:28.76
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 150324
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 35959
+	Voluntary context switches: 1
+	Involuntary context switches: 40
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

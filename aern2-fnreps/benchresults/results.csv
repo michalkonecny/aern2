@@ -1,1061 +1,185 @@
 Time,Op,Fn,FnRepr,Parameters,Accuracy(bits),UTime(s),STime(s),Mem(kB)
-Wed Dec 21 02:00:04 GMT 2016,max,sine+cos,fun,10,10,0.99,0.02,24176
-Wed Dec 21 02:00:09 GMT 2016,max,sine+cos,fun,15,15,5.05,0.03,101236
-Wed Dec 21 02:00:42 GMT 2016,max,sine+cos,fun,20,20,32.56,0.24,483200
-Wed Dec 21 02:05:02 GMT 2016,max,sine+cos,fun,25,25,257.23,1.94,2938584
-Wed Dec 21 02:05:36 GMT 2016,integrate,sine+cos,fun,10,10,34.01,0.08,27364
-Wed Dec 21 02:07:52 GMT 2016,integrate,sine+cos,fun,12,12,136.01,0.41,86768
-Wed Dec 21 02:16:46 GMT 2016,integrate,sine+cos,fun,14,14,530.81,1.66,326436
-Wed Dec 21 02:16:46 GMT 2016,max,sine+cos,dfun,10,10,0.14,0.01,9548
-Wed Dec 21 02:16:46 GMT 2016,max,sine+cos,dfun,15,15,0.18,0.01,9836
-Wed Dec 21 02:16:46 GMT 2016,max,sine+cos,dfun,20,20,0.18,0.01,9992
-Wed Dec 21 02:16:46 GMT 2016,max,sine+cos,dfun,25,26,0.22,0.01,10336
-Wed Dec 21 02:16:47 GMT 2016,max,sine+cos,dfun,30,30,0.25,0.01,10516
-Wed Dec 21 02:16:48 GMT 2016,integrate,sine+cos,dfun,10,10,0.88,0.01,9008
-Wed Dec 21 02:16:49 GMT 2016,integrate,sine+cos,dfun,12,12,1.47,0.01,9080
-Wed Dec 21 02:16:52 GMT 2016,integrate,sine+cos,dfun,14,14,2.94,0.02,10364
-Wed Dec 21 02:16:58 GMT 2016,integrate,sine+cos,dfun,16,16,5.52,0.01,12060
-Wed Dec 21 02:17:08 GMT 2016,integrate,sine+cos,dfun,18,18,10.62,0.02,15096
-Wed Dec 21 02:17:33 GMT 2016,integrate,sine+cos,dfun,20,20,24.54,0.06,22492
-Wed Dec 21 02:17:34 GMT 2016,max,sine+cos,poly,10,power 19: accuracy req: Bits -41, actual -11
-power 21: accuracy req: Bits -50, actual -49
-power 23: accuracy req: Bits -59, actual -58
-power 25: accuracy req: Bits -68, actual -67
-power 27: accuracy req: Bits -78, actual -78
-power 29: accuracy req: Bits -87, actual -87
-power 31: accuracy req: Bits -97, actual -97
-power 33: accuracy req: Bits -107, actual -107
-power 35: accuracy req: Bits -117, actual -116
-power 18: accuracy req: Bits -37, actual -24
-power 20: accuracy req: Bits -46, actual -34
-power 22: accuracy req: Bits -54, actual -43
-power 24: accuracy req: Bits -64, actual -52
-power 26: accuracy req: Bits -73, actual -61
-power 28: accuracy req: Bits -82, actual -70
-power 30: accuracy req: Bits -92, actual -78
-power 32: accuracy req: Bits -102, actual -87
-power 34: accuracy req: Bits -112, actual -96
-power 36: accuracy req: Bits -123, actual -120
-power 38: accuracy req: Bits -133, actual -132
-power 40: accuracy req: Bits -144, actual -143
-power 42: accuracy req: Bits -154, actual -154
-power 44: accuracy req: Bits -165, actual -164
-power 46: accuracy req: Bits -176, actual -174
-power 48: accuracy req: Bits -187, actual -186
-power 50: accuracy req: Bits -199, actual -198
-power 52: accuracy req: Bits -210, actual -209
-power 54: accuracy req: Bits -222, actual -222
-power 56: accuracy req: Bits -233, actual -232
-power 58: accuracy req: Bits -245, actual -245
-power 60: accuracy req: Bits -257, actual -257
-power 62: accuracy req: Bits -269, actual -267
-10,1.27,0.01,18680
-Wed Dec 21 02:17:36 GMT 2016,max,sine+cos,poly,15,power 19: accuracy req: Bits -36, actual -11
-power 21: accuracy req: Bits -45, actual -18
-power 23: accuracy req: Bits -54, actual -54
-power 25: accuracy req: Bits -63, actual -63
-power 27: accuracy req: Bits -73, actual -72
-power 29: accuracy req: Bits -82, actual -80
-power 31: accuracy req: Bits -92, actual -92
-power 33: accuracy req: Bits -102, actual -101
-power 35: accuracy req: Bits -112, actual -112
-power 37: accuracy req: Bits -123, actual -122
-power 18: accuracy req: Bits -32, actual -24
-power 20: accuracy req: Bits -41, actual -34
-power 22: accuracy req: Bits -49, actual -43
-power 24: accuracy req: Bits -59, actual -52
-power 26: accuracy req: Bits -68, actual -61
-power 28: accuracy req: Bits -77, actual -70
-power 30: accuracy req: Bits -87, actual -78
-power 32: accuracy req: Bits -97, actual -87
-power 34: accuracy req: Bits -107, actual -96
-power 36: accuracy req: Bits -118, actual -105
-power 38: accuracy req: Bits -128, actual -127
-power 40: accuracy req: Bits -139, actual -139
-power 42: accuracy req: Bits -149, actual -145
-power 44: accuracy req: Bits -160, actual -160
-power 46: accuracy req: Bits -171, actual -171
-power 48: accuracy req: Bits -182, actual -181
-power 50: accuracy req: Bits -194, actual -193
-power 52: accuracy req: Bits -205, actual -205
-power 54: accuracy req: Bits -217, actual -217
-power 56: accuracy req: Bits -228, actual -228
-power 58: accuracy req: Bits -240, actual -240
-power 60: accuracy req: Bits -252, actual -251
-power 62: accuracy req: Bits -264, actual -264
-power 64: accuracy req: Bits -275, actual -275
-14,1.42,0.01,19036
-Wed Dec 21 02:17:37 GMT 2016,max,sine+cos,poly,20,power 19: accuracy req: Bits -31, actual -11
-power 21: accuracy req: Bits -40, actual -18
-power 23: accuracy req: Bits -49, actual -25
-power 25: accuracy req: Bits -58, actual -31
-power 27: accuracy req: Bits -68, actual -68
-power 29: accuracy req: Bits -77, actual -77
-power 31: accuracy req: Bits -87, actual -85
-power 33: accuracy req: Bits -97, actual -95
-power 35: accuracy req: Bits -107, actual -107
-power 37: accuracy req: Bits -118, actual -118
-power 39: accuracy req: Bits -128, actual -128
-power 18: accuracy req: Bits -27, actual -24
-power 20: accuracy req: Bits -36, actual -34
-power 22: accuracy req: Bits -44, actual -43
-power 24: accuracy req: Bits -54, actual -52
-power 26: accuracy req: Bits -63, actual -61
-power 28: accuracy req: Bits -72, actual -70
-power 30: accuracy req: Bits -82, actual -78
-power 32: accuracy req: Bits -92, actual -87
-power 34: accuracy req: Bits -102, actual -96
-power 36: accuracy req: Bits -113, actual -105
-power 38: accuracy req: Bits -123, actual -114
-power 40: accuracy req: Bits -134, actual -133
-power 42: accuracy req: Bits -144, actual -140
-power 44: accuracy req: Bits -155, actual -152
-power 46: accuracy req: Bits -166, actual -163
-power 48: accuracy req: Bits -177, actual -174
-power 50: accuracy req: Bits -189, actual -188
-power 52: accuracy req: Bits -200, actual -200
-power 54: accuracy req: Bits -212, actual -212
-power 56: accuracy req: Bits -223, actual -222
-power 58: accuracy req: Bits -235, actual -235
-power 60: accuracy req: Bits -247, actual -246
-power 62: accuracy req: Bits -259, actual -259
-power 64: accuracy req: Bits -270, actual -270
-power 66: accuracy req: Bits -283, actual -283
-power 68: accuracy req: Bits -295, actual -293
-19,1.80,0.01,19636
-Wed Dec 21 02:17:40 GMT 2016,max,sine+cos,poly,25,power 19: accuracy req: Bits -26, actual -11
-power 21: accuracy req: Bits -35, actual -18
-power 23: accuracy req: Bits -44, actual -25
-power 25: accuracy req: Bits -53, actual -31
-power 27: accuracy req: Bits -63, actual -63
-power 29: accuracy req: Bits -72, actual -68
-power 31: accuracy req: Bits -82, actual -81
-power 33: accuracy req: Bits -92, actual -90
-power 35: accuracy req: Bits -102, actual -100
-power 37: accuracy req: Bits -113, actual -112
-power 39: accuracy req: Bits -123, actual -122
-power 41: accuracy req: Bits -134, actual -134
-power 18: accuracy req: Bits -22, actual -24
-power 20: accuracy req: Bits -31, actual -34
-power 22: accuracy req: Bits -39, actual -43
-power 24: accuracy req: Bits -49, actual -52
-power 26: accuracy req: Bits -58, actual -61
-power 28: accuracy req: Bits -67, actual -70
-power 30: accuracy req: Bits -77, actual -78
-power 32: accuracy req: Bits -87, actual -87
-power 34: accuracy req: Bits -97, actual -96
-power 36: accuracy req: Bits -108, actual -105
-power 38: accuracy req: Bits -118, actual -114
-power 40: accuracy req: Bits -129, actual -123
-power 42: accuracy req: Bits -139, actual -132
-power 44: accuracy req: Bits -150, actual -147
-power 46: accuracy req: Bits -161, actual -159
-power 48: accuracy req: Bits -172, actual -170
-power 50: accuracy req: Bits -184, actual -181
-power 52: accuracy req: Bits -195, actual -195
-power 54: accuracy req: Bits -207, actual -205
-power 56: accuracy req: Bits -218, actual -217
-power 58: accuracy req: Bits -230, actual -229
-power 60: accuracy req: Bits -242, actual -242
-power 62: accuracy req: Bits -254, actual -253
-power 64: accuracy req: Bits -265, actual -265
-power 66: accuracy req: Bits -278, actual -278
-power 68: accuracy req: Bits -290, actual -290
-power 70: accuracy req: Bits -302, actual -302
-22,2.04,0.01,20392
-Wed Dec 21 02:17:42 GMT 2016,max,sine+cos,poly,30,power 19: accuracy req: Bits -21, actual -11
-power 21: accuracy req: Bits -30, actual -18
-power 23: accuracy req: Bits -39, actual -25
-power 25: accuracy req: Bits -48, actual -31
-power 27: accuracy req: Bits -58, actual -38
-power 29: accuracy req: Bits -67, actual -45
-power 31: accuracy req: Bits -77, actual -77
-power 33: accuracy req: Bits -87, actual -86
-power 35: accuracy req: Bits -97, actual -95
-power 37: accuracy req: Bits -108, actual -108
-power 39: accuracy req: Bits -118, actual -117
-power 41: accuracy req: Bits -129, actual -129
-power 43: accuracy req: Bits -140, actual -140
-power 45: accuracy req: Bits -151, actual -149
-power 18: accuracy req: Bits -17, actual -24
-power 20: accuracy req: Bits -26, actual -34
-power 22: accuracy req: Bits -34, actual -43
-power 24: accuracy req: Bits -44, actual -52
-power 26: accuracy req: Bits -53, actual -61
-power 28: accuracy req: Bits -62, actual -70
-power 30: accuracy req: Bits -72, actual -78
-power 32: accuracy req: Bits -82, actual -87
-power 34: accuracy req: Bits -92, actual -96
-power 36: accuracy req: Bits -103, actual -105
-power 38: accuracy req: Bits -113, actual -114
-power 40: accuracy req: Bits -124, actual -123
-power 42: accuracy req: Bits -134, actual -132
-power 44: accuracy req: Bits -145, actual -140
-power 46: accuracy req: Bits -156, actual -153
-power 48: accuracy req: Bits -167, actual -166
-power 50: accuracy req: Bits -179, actual -177
-power 52: accuracy req: Bits -190, actual -188
-power 54: accuracy req: Bits -202, actual -202
-power 56: accuracy req: Bits -213, actual -212
-power 58: accuracy req: Bits -225, actual -224
-power 60: accuracy req: Bits -237, actual -236
-power 62: accuracy req: Bits -249, actual -248
-power 64: accuracy req: Bits -260, actual -259
-power 66: accuracy req: Bits -273, actual -273
-power 68: accuracy req: Bits -285, actual -285
-power 70: accuracy req: Bits -297, actual -297
-power 72: accuracy req: Bits -309, actual -309
-23,2.16,0.01,19568
-Wed Dec 21 02:17:42 GMT 2016,integrate,sine+cos,poly,10,power 19: accuracy req: Bits -41, actual -11
-power 21: accuracy req: Bits -50, actual -49
-power 23: accuracy req: Bits -59, actual -58
-power 25: accuracy req: Bits -68, actual -67
-power 27: accuracy req: Bits -78, actual -78
-power 29: accuracy req: Bits -87, actual -87
-power 31: accuracy req: Bits -97, actual -97
-power 33: accuracy req: Bits -107, actual -107
-power 35: accuracy req: Bits -117, actual -116
-power 18: accuracy req: Bits -37, actual -24
-power 20: accuracy req: Bits -46, actual -34
-power 22: accuracy req: Bits -54, actual -43
-power 24: accuracy req: Bits -64, actual -52
-power 26: accuracy req: Bits -73, actual -61
-power 28: accuracy req: Bits -82, actual -70
-power 30: accuracy req: Bits -92, actual -78
-power 32: accuracy req: Bits -102, actual -87
-power 34: accuracy req: Bits -112, actual -96
-power 36: accuracy req: Bits -123, actual -120
-power 38: accuracy req: Bits -133, actual -132
-power 40: accuracy req: Bits -144, actual -143
-power 42: accuracy req: Bits -154, actual -154
-power 44: accuracy req: Bits -165, actual -164
-power 46: accuracy req: Bits -176, actual -174
-power 48: accuracy req: Bits -187, actual -186
-power 50: accuracy req: Bits -199, actual -198
-power 52: accuracy req: Bits -210, actual -209
-power 54: accuracy req: Bits -222, actual -222
-power 56: accuracy req: Bits -233, actual -232
-power 58: accuracy req: Bits -245, actual -245
-power 60: accuracy req: Bits -257, actual -257
-power 62: accuracy req: Bits -269, actual -267
-10,0.34,0.01,16536
-Wed Dec 21 02:17:42 GMT 2016,integrate,sine+cos,poly,12,power 19: accuracy req: Bits -39, actual -11
-power 21: accuracy req: Bits -48, actual -18
-power 23: accuracy req: Bits -57, actual -54
-power 25: accuracy req: Bits -66, actual -63
-power 27: accuracy req: Bits -76, actual -75
-power 29: accuracy req: Bits -85, actual -85
-power 31: accuracy req: Bits -95, actual -94
-power 33: accuracy req: Bits -105, actual -105
-power 35: accuracy req: Bits -115, actual -115
-power 18: accuracy req: Bits -35, actual -24
-power 20: accuracy req: Bits -44, actual -34
-power 22: accuracy req: Bits -52, actual -43
-power 24: accuracy req: Bits -62, actual -52
-power 26: accuracy req: Bits -71, actual -61
-power 28: accuracy req: Bits -80, actual -70
-power 30: accuracy req: Bits -90, actual -78
-power 32: accuracy req: Bits -100, actual -87
-power 34: accuracy req: Bits -110, actual -96
-power 36: accuracy req: Bits -121, actual -120
-power 38: accuracy req: Bits -131, actual -127
-power 40: accuracy req: Bits -142, actual -139
-power 42: accuracy req: Bits -152, actual -150
-power 44: accuracy req: Bits -163, actual -160
-power 46: accuracy req: Bits -174, actual -174
-power 48: accuracy req: Bits -185, actual -184
-power 50: accuracy req: Bits -197, actual -196
-power 52: accuracy req: Bits -208, actual -207
-power 54: accuracy req: Bits -220, actual -220
-power 56: accuracy req: Bits -231, actual -231
-power 58: accuracy req: Bits -243, actual -243
-power 60: accuracy req: Bits -255, actual -255
-power 62: accuracy req: Bits -267, actual -267
-12,0.36,0.01,16488
-Wed Dec 21 02:17:43 GMT 2016,integrate,sine+cos,poly,14,power 19: accuracy req: Bits -37, actual -11
-power 21: accuracy req: Bits -46, actual -18
-power 23: accuracy req: Bits -55, actual -54
-power 25: accuracy req: Bits -64, actual -63
-power 27: accuracy req: Bits -74, actual -72
-power 29: accuracy req: Bits -83, actual -83
-power 31: accuracy req: Bits -93, actual -92
-power 33: accuracy req: Bits -103, actual -103
-power 35: accuracy req: Bits -113, actual -113
-power 37: accuracy req: Bits -124, actual -122
-power 18: accuracy req: Bits -33, actual -24
-power 20: accuracy req: Bits -42, actual -34
-power 22: accuracy req: Bits -50, actual -43
-power 24: accuracy req: Bits -60, actual -52
-power 26: accuracy req: Bits -69, actual -61
-power 28: accuracy req: Bits -78, actual -70
-power 30: accuracy req: Bits -88, actual -78
-power 32: accuracy req: Bits -98, actual -87
-power 34: accuracy req: Bits -108, actual -96
-power 36: accuracy req: Bits -119, actual -105
-power 38: accuracy req: Bits -129, actual -127
-power 40: accuracy req: Bits -140, actual -139
-power 42: accuracy req: Bits -150, actual -150
-power 44: accuracy req: Bits -161, actual -160
-power 46: accuracy req: Bits -172, actual -171
-power 48: accuracy req: Bits -183, actual -181
-power 50: accuracy req: Bits -195, actual -193
-power 52: accuracy req: Bits -206, actual -205
-power 54: accuracy req: Bits -218, actual -217
-power 56: accuracy req: Bits -229, actual -229
-power 58: accuracy req: Bits -241, actual -241
-power 60: accuracy req: Bits -253, actual -253
-power 62: accuracy req: Bits -265, actual -265
-power 64: accuracy req: Bits -276, actual -276
-14,0.38,0.01,16856
-Wed Dec 21 02:17:43 GMT 2016,integrate,sine+cos,poly,16,power 19: accuracy req: Bits -35, actual -11
-power 21: accuracy req: Bits -44, actual -18
-power 23: accuracy req: Bits -53, actual -25
-power 25: accuracy req: Bits -62, actual -59
-power 27: accuracy req: Bits -72, actual -72
-power 29: accuracy req: Bits -81, actual -80
-power 31: accuracy req: Bits -91, actual -90
-power 33: accuracy req: Bits -101, actual -101
-power 35: accuracy req: Bits -111, actual -111
-power 37: accuracy req: Bits -122, actual -122
-power 18: accuracy req: Bits -31, actual -24
-power 20: accuracy req: Bits -40, actual -34
-power 22: accuracy req: Bits -48, actual -43
-power 24: accuracy req: Bits -58, actual -52
-power 26: accuracy req: Bits -67, actual -61
-power 28: accuracy req: Bits -76, actual -70
-power 30: accuracy req: Bits -86, actual -78
-power 32: accuracy req: Bits -96, actual -87
-power 34: accuracy req: Bits -106, actual -96
-power 36: accuracy req: Bits -117, actual -105
-power 38: accuracy req: Bits -127, actual -127
-power 40: accuracy req: Bits -138, actual -133
-power 42: accuracy req: Bits -148, actual -145
-power 44: accuracy req: Bits -159, actual -157
-power 46: accuracy req: Bits -170, actual -167
-power 48: accuracy req: Bits -181, actual -181
-power 50: accuracy req: Bits -193, actual -193
-power 52: accuracy req: Bits -204, actual -203
-power 54: accuracy req: Bits -216, actual -215
-power 56: accuracy req: Bits -227, actual -226
-power 58: accuracy req: Bits -239, actual -239
-power 60: accuracy req: Bits -251, actual -251
-power 62: accuracy req: Bits -263, actual -263
-power 64: accuracy req: Bits -274, actual -274
-15,0.38,0.01,16880
-Wed Dec 21 02:17:44 GMT 2016,integrate,sine+cos,poly,18,power 19: accuracy req: Bits -33, actual -11
-power 21: accuracy req: Bits -42, actual -18
-power 23: accuracy req: Bits -51, actual -25
-power 25: accuracy req: Bits -60, actual -59
-power 27: accuracy req: Bits -70, actual -68
-power 29: accuracy req: Bits -79, actual -77
-power 31: accuracy req: Bits -89, actual -88
-power 33: accuracy req: Bits -99, actual -98
-power 35: accuracy req: Bits -109, actual -108
-power 37: accuracy req: Bits -120, actual -120
-power 39: accuracy req: Bits -130, actual -129
-power 18: accuracy req: Bits -29, actual -24
-power 20: accuracy req: Bits -38, actual -34
-power 22: accuracy req: Bits -46, actual -43
-power 24: accuracy req: Bits -56, actual -52
-power 26: accuracy req: Bits -65, actual -61
-power 28: accuracy req: Bits -74, actual -70
-power 30: accuracy req: Bits -84, actual -78
-power 32: accuracy req: Bits -94, actual -87
-power 34: accuracy req: Bits -104, actual -96
-power 36: accuracy req: Bits -115, actual -105
-power 38: accuracy req: Bits -125, actual -114
-power 40: accuracy req: Bits -136, actual -133
-power 42: accuracy req: Bits -146, actual -145
-power 44: accuracy req: Bits -157, actual -157
-power 46: accuracy req: Bits -168, actual -167
-power 48: accuracy req: Bits -179, actual -178
-power 50: accuracy req: Bits -191, actual -191
-power 52: accuracy req: Bits -202, actual -200
-power 54: accuracy req: Bits -214, actual -212
-power 56: accuracy req: Bits -225, actual -224
-power 58: accuracy req: Bits -237, actual -237
-power 60: accuracy req: Bits -249, actual -249
-power 62: accuracy req: Bits -261, actual -261
-power 64: accuracy req: Bits -272, actual -272
-power 66: accuracy req: Bits -285, actual -285
-18,0.43,0.01,17488
-Wed Dec 21 02:17:44 GMT 2016,integrate,sine+cos,poly,20,power 19: accuracy req: Bits -31, actual -11
-power 21: accuracy req: Bits -40, actual -18
-power 23: accuracy req: Bits -49, actual -25
-power 25: accuracy req: Bits -58, actual -31
-power 27: accuracy req: Bits -68, actual -68
-power 29: accuracy req: Bits -77, actual -77
-power 31: accuracy req: Bits -87, actual -85
-power 33: accuracy req: Bits -97, actual -95
-power 35: accuracy req: Bits -107, actual -107
-power 37: accuracy req: Bits -118, actual -118
-power 39: accuracy req: Bits -128, actual -128
-power 18: accuracy req: Bits -27, actual -24
-power 20: accuracy req: Bits -36, actual -34
-power 22: accuracy req: Bits -44, actual -43
-power 24: accuracy req: Bits -54, actual -52
-power 26: accuracy req: Bits -63, actual -61
-power 28: accuracy req: Bits -72, actual -70
-power 30: accuracy req: Bits -82, actual -78
-power 32: accuracy req: Bits -92, actual -87
-power 34: accuracy req: Bits -102, actual -96
-power 36: accuracy req: Bits -113, actual -105
-power 38: accuracy req: Bits -123, actual -114
-power 40: accuracy req: Bits -134, actual -133
-power 42: accuracy req: Bits -144, actual -140
-power 44: accuracy req: Bits -155, actual -152
-power 46: accuracy req: Bits -166, actual -163
-power 48: accuracy req: Bits -177, actual -174
-power 50: accuracy req: Bits -189, actual -188
-power 52: accuracy req: Bits -200, actual -200
-power 54: accuracy req: Bits -212, actual -212
-power 56: accuracy req: Bits -223, actual -222
-power 58: accuracy req: Bits -235, actual -235
-power 60: accuracy req: Bits -247, actual -246
-power 62: accuracy req: Bits -259, actual -259
-power 64: accuracy req: Bits -270, actual -270
-power 66: accuracy req: Bits -283, actual -283
-power 68: accuracy req: Bits -295, actual -293
-19,0.44,0.01,16476
-Wed Dec 21 02:17:44 GMT 2016,max,sinesine,fun,10,10,0.14,0.01,10536
-Wed Dec 21 02:17:45 GMT 2016,max,sinesine,fun,15,15,0.17,0.01,10772
-Wed Dec 21 02:17:45 GMT 2016,max,sinesine,fun,20,20,0.24,0.01,10996
-Wed Dec 21 02:17:45 GMT 2016,max,sinesine,fun,25,25,0.24,0.01,11320
-Wed Dec 21 02:17:45 GMT 2016,max,sinesine,fun,30,30,0.28,0.01,11692
-Wed Dec 21 02:17:46 GMT 2016,max,sinesine,fun,35,35,0.30,0.01,11956
-Wed Dec 21 02:17:47 GMT 2016,integrate,sinesine,fun,5,5,1.08,0.01,9064
-Wed Dec 21 02:18:19 GMT 2016,integrate,sinesine,fun,10,10,31.66,0.09,24504
-Wed Dec 21 02:36:02 GMT 2016,integrate,sinesine,fun,15,15,1058.69,3.54,543500
-Wed Dec 21 02:36:02 GMT 2016,max,sinesine,dfun,10,10,0.26,0.01,10176
-Wed Dec 21 02:36:03 GMT 2016,max,sinesine,dfun,15,15,0.26,0.01,10208
-Wed Dec 21 02:36:03 GMT 2016,max,sinesine,dfun,20,20,0.30,0.01,10492
-Wed Dec 21 02:36:03 GMT 2016,max,sinesine,dfun,25,25,0.28,0.01,10464
-Wed Dec 21 02:36:04 GMT 2016,max,sinesine,dfun,30,30,0.32,0.01,10280
-Wed Dec 21 02:36:04 GMT 2016,max,sinesine,dfun,35,35,0.32,0.01,10404
-Wed Dec 21 02:36:04 GMT 2016,integrate,sinesine,dfun,5,6,0.30,0.01,8924
-Wed Dec 21 02:36:06 GMT 2016,integrate,sinesine,dfun,10,10,1.27,0.01,9256
-Wed Dec 21 02:36:12 GMT 2016,integrate,sinesine,dfun,15,15,6.86,0.02,11660
-Wed Dec 21 02:36:53 GMT 2016,integrate,sinesine,dfun,20,20,39.98,0.10,28392
-Wed Dec 21 02:40:31 GMT 2016,integrate,sinesine,dfun,25,25,216.99,0.73,120572
-Wed Dec 21 03:00:21 GMT 2016,integrate,sinesine,dfun,30,30,1185.35,3.85,656164
-Wed Dec 21 03:00:50 GMT 2016,max,sinesine,poly,10,power 3: accuracy req: Bits 15, actual 43
-power 5: accuracy req: Bits 11, actual 35
-power 7: accuracy req: Bits 5, actual 27
-power 9: accuracy req: Bits -1, actual 20
-power 11: accuracy req: Bits -8, actual 12
-power 13: accuracy req: Bits -15, actual 5
-power 15: accuracy req: Bits -23, actual -1
-power 17: accuracy req: Bits -31, actual -8
-power 19: accuracy req: Bits -39, actual -15
-power 21: accuracy req: Bits -48, actual -22
-power 23: accuracy req: Bits -57, actual -56
-power 25: accuracy req: Bits -66, actual -65
-power 27: accuracy req: Bits -76, actual -76
-power 29: accuracy req: Bits -85, actual -85
-power 31: accuracy req: Bits -95, actual -95
-power 33: accuracy req: Bits -105, actual -105
-power 35: accuracy req: Bits -115, actual -115
-power 37: accuracy req: Bits -126, actual -125
-power 3: accuracy req: Bits 13, actual 13
-power 5: accuracy req: Bits 9, actual 5
-power 7: accuracy req: Bits 3, actual -2
-power 9: accuracy req: Bits -3, actual -9
-power 11: accuracy req: Bits -10, actual -16
-power 13: accuracy req: Bits -17, actual -24
-power 15: accuracy req: Bits -25, actual -31
-power 17: accuracy req: Bits -33, actual -38
-power 19: accuracy req: Bits -41, actual -45
-power 21: accuracy req: Bits -50, actual -52
-power 23: accuracy req: Bits -59, actual -60
-power 25: accuracy req: Bits -68, actual -69
-power 27: accuracy req: Bits -78, actual -79
-power 29: accuracy req: Bits -87, actual -88
-power 31: accuracy req: Bits -97, actual -97
-power 33: accuracy req: Bits -107, actual -107
-power 35: accuracy req: Bits -117, actual -117
-power 37: accuracy req: Bits -128, actual -127
-5,28.46,0.28,312268
-Wed Dec 21 03:01:34 GMT 2016,max,sinesine,poly,15,power 3: accuracy req: Bits 20, actual 43
-power 5: accuracy req: Bits 16, actual 35
-power 7: accuracy req: Bits 10, actual 27
-power 9: accuracy req: Bits 4, actual 20
-power 11: accuracy req: Bits -3, actual 12
-power 13: accuracy req: Bits -10, actual 5
-power 15: accuracy req: Bits -18, actual -1
-power 17: accuracy req: Bits -26, actual -8
-power 19: accuracy req: Bits -34, actual -15
-power 21: accuracy req: Bits -43, actual -22
-power 23: accuracy req: Bits -52, actual -29
-power 25: accuracy req: Bits -61, actual -61
-power 27: accuracy req: Bits -71, actual -70
-power 29: accuracy req: Bits -80, actual -79
-power 31: accuracy req: Bits -90, actual -90
-power 33: accuracy req: Bits -100, actual -100
-power 35: accuracy req: Bits -110, actual -110
-power 37: accuracy req: Bits -121, actual -121
-power 39: accuracy req: Bits -131, actual -131
-power 3: accuracy req: Bits 18, actual 18
-power 5: accuracy req: Bits 14, actual 10
-power 7: accuracy req: Bits 8, actual 2
-power 9: accuracy req: Bits 2, actual -4
-power 11: accuracy req: Bits -5, actual -11
-power 13: accuracy req: Bits -12, actual -18
-power 15: accuracy req: Bits -20, actual -26
-power 17: accuracy req: Bits -28, actual -33
-power 19: accuracy req: Bits -36, actual -40
-power 21: accuracy req: Bits -45, actual -47
-power 23: accuracy req: Bits -54, actual -55
-power 25: accuracy req: Bits -63, actual -64
-power 27: accuracy req: Bits -73, actual -74
-power 29: accuracy req: Bits -82, actual -82
-power 31: accuracy req: Bits -92, actual -92
-power 33: accuracy req: Bits -102, actual -102
-power 35: accuracy req: Bits -112, actual -112
-power 37: accuracy req: Bits -123, actual -123
-power 39: accuracy req: Bits -133, actual -133
-10,43.90,0.46,416912
-Wed Dec 21 03:02:37 GMT 2016,max,sinesine,poly,20,power 3: accuracy req: Bits 25, actual 43
-power 5: accuracy req: Bits 21, actual 35
-power 7: accuracy req: Bits 15, actual 27
-power 9: accuracy req: Bits 9, actual 20
-power 11: accuracy req: Bits 2, actual 12
-power 13: accuracy req: Bits -5, actual 5
-power 15: accuracy req: Bits -13, actual -1
-power 17: accuracy req: Bits -21, actual -8
-power 19: accuracy req: Bits -29, actual -15
-power 21: accuracy req: Bits -38, actual -22
-power 23: accuracy req: Bits -47, actual -29
-power 25: accuracy req: Bits -56, actual -36
-power 27: accuracy req: Bits -66, actual -65
-power 29: accuracy req: Bits -75, actual -75
-power 31: accuracy req: Bits -85, actual -84
-power 33: accuracy req: Bits -95, actual -95
-power 35: accuracy req: Bits -105, actual -104
-power 37: accuracy req: Bits -116, actual -116
-power 39: accuracy req: Bits -126, actual -126
-power 41: accuracy req: Bits -137, actual -137
-power 43: accuracy req: Bits -148, actual -146
-power 3: accuracy req: Bits 23, actual 23
-power 5: accuracy req: Bits 19, actual 15
-power 7: accuracy req: Bits 13, actual 7
-power 9: accuracy req: Bits 7, actual 1
-power 11: accuracy req: Bits 0, actual -6
-power 13: accuracy req: Bits -7, actual -13
-power 15: accuracy req: Bits -15, actual -21
-power 17: accuracy req: Bits -23, actual -28
-power 19: accuracy req: Bits -31, actual -35
-power 21: accuracy req: Bits -40, actual -42
-power 23: accuracy req: Bits -49, actual -50
-power 25: accuracy req: Bits -58, actual -59
-power 27: accuracy req: Bits -68, actual -68
-power 29: accuracy req: Bits -77, actual -77
-power 31: accuracy req: Bits -87, actual -87
-power 33: accuracy req: Bits -97, actual -97
-power 35: accuracy req: Bits -107, actual -107
-power 37: accuracy req: Bits -118, actual -118
-power 39: accuracy req: Bits -128, actual -128
-power 41: accuracy req: Bits -139, actual -139
-15,62.00,0.56,487980
-Wed Dec 21 03:03:56 GMT 2016,max,sinesine,poly,25,power 3: accuracy req: Bits 30, actual 43
-power 5: accuracy req: Bits 26, actual 35
-power 7: accuracy req: Bits 20, actual 27
-power 9: accuracy req: Bits 14, actual 20
-power 11: accuracy req: Bits 7, actual 12
-power 13: accuracy req: Bits 0, actual 5
-power 15: accuracy req: Bits -8, actual -1
-power 17: accuracy req: Bits -16, actual -8
-power 19: accuracy req: Bits -24, actual -15
-power 21: accuracy req: Bits -33, actual -22
-power 23: accuracy req: Bits -42, actual -29
-power 25: accuracy req: Bits -51, actual -36
-power 27: accuracy req: Bits -61, actual -43
-power 29: accuracy req: Bits -70, actual -70
-power 31: accuracy req: Bits -80, actual -80
-power 33: accuracy req: Bits -90, actual -89
-power 35: accuracy req: Bits -100, actual -100
-power 37: accuracy req: Bits -111, actual -111
-power 39: accuracy req: Bits -121, actual -121
-power 41: accuracy req: Bits -132, actual -132
-power 43: accuracy req: Bits -143, actual -143
-power 45: accuracy req: Bits -154, actual -153
-power 3: accuracy req: Bits 28, actual 28
-power 5: accuracy req: Bits 24, actual 21
-power 7: accuracy req: Bits 18, actual 13
-power 9: accuracy req: Bits 12, actual 6
-power 11: accuracy req: Bits 5, actual 0
-power 13: accuracy req: Bits -2, actual -8
-power 15: accuracy req: Bits -10, actual -15
-power 17: accuracy req: Bits -18, actual -22
-power 19: accuracy req: Bits -26, actual -29
-power 21: accuracy req: Bits -35, actual -37
-power 23: accuracy req: Bits -44, actual -45
-power 25: accuracy req: Bits -53, actual -54
-power 27: accuracy req: Bits -63, actual -64
-power 29: accuracy req: Bits -72, actual -72
-power 31: accuracy req: Bits -82, actual -82
-power 33: accuracy req: Bits -92, actual -92
-power 35: accuracy req: Bits -102, actual -102
-power 37: accuracy req: Bits -113, actual -113
-power 39: accuracy req: Bits -123, actual -123
-power 41: accuracy req: Bits -134, actual -134
-power 43: accuracy req: Bits -145, actual -145
-power 45: accuracy req: Bits -156, actual -155
-20,77.79,0.86,630684
-Wed Dec 21 03:05:32 GMT 2016,max,sinesine,poly,30,power 3: accuracy req: Bits 35, actual 43
-power 5: accuracy req: Bits 31, actual 35
-power 7: accuracy req: Bits 25, actual 27
-power 9: accuracy req: Bits 19, actual 20
-power 11: accuracy req: Bits 12, actual 12
-power 13: accuracy req: Bits 5, actual 5
-power 15: accuracy req: Bits -3, actual -1
-power 17: accuracy req: Bits -11, actual -8
-power 19: accuracy req: Bits -19, actual -15
-power 21: accuracy req: Bits -28, actual -22
-power 23: accuracy req: Bits -37, actual -29
-power 25: accuracy req: Bits -46, actual -36
-power 27: accuracy req: Bits -56, actual -43
-power 29: accuracy req: Bits -65, actual -50
-power 31: accuracy req: Bits -75, actual -75
-power 33: accuracy req: Bits -85, actual -85
-power 35: accuracy req: Bits -95, actual -94
-power 37: accuracy req: Bits -106, actual -105
-power 39: accuracy req: Bits -116, actual -116
-power 41: accuracy req: Bits -127, actual -127
-power 43: accuracy req: Bits -138, actual -138
-power 45: accuracy req: Bits -149, actual -149
-power 47: accuracy req: Bits -160, actual -159
-power 3: accuracy req: Bits 33, actual 33
-power 5: accuracy req: Bits 29, actual 25
-power 7: accuracy req: Bits 23, actual 17
-power 9: accuracy req: Bits 17, actual 10
-power 11: accuracy req: Bits 10, actual 3
-power 13: accuracy req: Bits 3, actual -3
-power 15: accuracy req: Bits -5, actual -11
-power 17: accuracy req: Bits -13, actual -18
-power 19: accuracy req: Bits -21, actual -25
-power 21: accuracy req: Bits -30, actual -32
-power 23: accuracy req: Bits -39, actual -40
-power 25: accuracy req: Bits -48, actual -49
-power 27: accuracy req: Bits -58, actual -58
-power 29: accuracy req: Bits -67, actual -67
-power 31: accuracy req: Bits -77, actual -78
-power 33: accuracy req: Bits -87, actual -87
-power 35: accuracy req: Bits -97, actual -97
-power 37: accuracy req: Bits -108, actual -108
-power 39: accuracy req: Bits -118, actual -118
-power 41: accuracy req: Bits -129, actual -129
-power 43: accuracy req: Bits -140, actual -140
-power 45: accuracy req: Bits -151, actual -151
-power 47: accuracy req: Bits -162, actual -162
-25,95.10,0.87,787988
-Wed Dec 21 03:07:24 GMT 2016,max,sinesine,poly,35,power 3: accuracy req: Bits 40, actual 43
-power 5: accuracy req: Bits 36, actual 35
-power 7: accuracy req: Bits 30, actual 27
-power 9: accuracy req: Bits 24, actual 20
-power 11: accuracy req: Bits 17, actual 12
-power 13: accuracy req: Bits 10, actual 5
-power 15: accuracy req: Bits 2, actual -1
-power 17: accuracy req: Bits -6, actual -8
-power 19: accuracy req: Bits -14, actual -15
-power 21: accuracy req: Bits -23, actual -22
-power 23: accuracy req: Bits -32, actual -29
-power 25: accuracy req: Bits -41, actual -36
-power 27: accuracy req: Bits -51, actual -43
-power 29: accuracy req: Bits -60, actual -50
-power 31: accuracy req: Bits -70, actual -57
-power 33: accuracy req: Bits -80, actual -79
-power 35: accuracy req: Bits -90, actual -89
-power 37: accuracy req: Bits -101, actual -101
-power 39: accuracy req: Bits -111, actual -110
-power 41: accuracy req: Bits -122, actual -122
-power 43: accuracy req: Bits -133, actual -133
-power 45: accuracy req: Bits -144, actual -144
-power 47: accuracy req: Bits -155, actual -155
-power 49: accuracy req: Bits -166, actual -166
-power 3: accuracy req: Bits 38, actual 38
-power 5: accuracy req: Bits 34, actual 31
-power 7: accuracy req: Bits 28, actual 23
-power 9: accuracy req: Bits 22, actual 16
-power 11: accuracy req: Bits 15, actual 8
-power 13: accuracy req: Bits 8, actual 1
-power 15: accuracy req: Bits 0, actual -5
-power 17: accuracy req: Bits -8, actual -12
-power 19: accuracy req: Bits -16, actual -20
-power 21: accuracy req: Bits -25, actual -27
-power 23: accuracy req: Bits -34, actual -35
-power 25: accuracy req: Bits -43, actual -44
-power 27: accuracy req: Bits -53, actual -53
-power 29: accuracy req: Bits -62, actual -62
-power 31: accuracy req: Bits -72, actual -72
-power 33: accuracy req: Bits -82, actual -82
-power 35: accuracy req: Bits -92, actual -92
-power 37: accuracy req: Bits -103, actual -103
-power 39: accuracy req: Bits -113, actual -113
-power 41: accuracy req: Bits -124, actual -124
-power 43: accuracy req: Bits -135, actual -135
-power 45: accuracy req: Bits -146, actual -146
-power 47: accuracy req: Bits -157, actual -157
-power 49: accuracy req: Bits -168, actual -168
-30,111.16,1.12,904336
-Wed Dec 21 03:07:25 GMT 2016,max,sinesine+cos,fun,10,10,0.21,0.01,10656
-Wed Dec 21 03:07:28 GMT 2016,max,sinesine+cos,fun,20,20,3.00,0.02,40560
-Wed Dec 21 03:10:11 GMT 2016,max,sinesine+cos,fun,30,30,162.68,0.90,1186232
-Wed Dec 21 03:10:13 GMT 2016,integrate,sinesine+cos,fun,5,5,1.93,0.01,9188
-Wed Dec 21 03:11:13 GMT 2016,integrate,sinesine+cos,fun,10,10,59.41,0.15,31728
-Wed Dec 21 03:44:21 GMT 2016,integrate,sinesine+cos,fun,15,15,1979.62,6.15,766756
-Wed Dec 21 03:44:21 GMT 2016,max,sinesine+cos,dfun,10,10,0.25,0.01,9920
-Wed Dec 21 03:44:22 GMT 2016,max,sinesine+cos,dfun,15,15,0.26,0.01,9940
-Wed Dec 21 03:44:22 GMT 2016,max,sinesine+cos,dfun,20,20,0.26,0.01,9940
-Wed Dec 21 03:44:22 GMT 2016,max,sinesine+cos,dfun,25,25,0.29,0.01,9992
-Wed Dec 21 03:44:23 GMT 2016,max,sinesine+cos,dfun,30,30,0.31,0.01,9984
-Wed Dec 21 03:44:23 GMT 2016,max,sinesine+cos,dfun,35,35,0.35,0.01,9956
-Wed Dec 21 03:44:25 GMT 2016,integrate,sinesine+cos,dfun,10,10,1.74,0.01,9232
-Wed Dec 21 03:44:34 GMT 2016,integrate,sinesine+cos,dfun,15,15,9.64,0.04,12028
-Wed Dec 21 03:45:29 GMT 2016,integrate,sinesine+cos,dfun,20,20,54.28,0.21,30456
-Wed Dec 21 03:50:27 GMT 2016,integrate,sinesine+cos,dfun,25,25,296.84,0.94,130740
-Wed Dec 21 04:18:57 GMT 2016,integrate,sinesine+cos,dfun,30,30,1702.51,5.36,726732
-Wed Dec 21 04:19:25 GMT 2016,max,sinesine+cos,poly,10,power 3: accuracy req: Bits 15, actual 43
-power 5: accuracy req: Bits 11, actual 35
-power 7: accuracy req: Bits 5, actual 27
-power 9: accuracy req: Bits -1, actual 20
-power 11: accuracy req: Bits -8, actual 12
-power 13: accuracy req: Bits -15, actual 5
-power 15: accuracy req: Bits -23, actual -1
-power 17: accuracy req: Bits -31, actual -8
-power 19: accuracy req: Bits -39, actual -15
-power 21: accuracy req: Bits -48, actual -22
-power 23: accuracy req: Bits -57, actual -56
-power 25: accuracy req: Bits -66, actual -65
-power 27: accuracy req: Bits -76, actual -76
-power 29: accuracy req: Bits -85, actual -85
-power 31: accuracy req: Bits -95, actual -95
-power 33: accuracy req: Bits -105, actual -105
-power 35: accuracy req: Bits -115, actual -115
-power 37: accuracy req: Bits -126, actual -125
-power 3: accuracy req: Bits 13, actual 13
-power 5: accuracy req: Bits 9, actual 5
-power 7: accuracy req: Bits 3, actual -2
-power 9: accuracy req: Bits -3, actual -9
-power 11: accuracy req: Bits -10, actual -16
-power 13: accuracy req: Bits -17, actual -24
-power 15: accuracy req: Bits -25, actual -31
-power 17: accuracy req: Bits -33, actual -38
-power 19: accuracy req: Bits -41, actual -45
-power 21: accuracy req: Bits -50, actual -52
-power 23: accuracy req: Bits -59, actual -60
-power 25: accuracy req: Bits -68, actual -69
-power 27: accuracy req: Bits -78, actual -79
-power 29: accuracy req: Bits -87, actual -88
-power 31: accuracy req: Bits -97, actual -97
-power 33: accuracy req: Bits -107, actual -107
-power 35: accuracy req: Bits -117, actual -117
-power 37: accuracy req: Bits -128, actual -127
-power 18: accuracy req: Bits -37, actual -6
-power 20: accuracy req: Bits -46, actual -14
-power 22: accuracy req: Bits -54, actual -52
-power 24: accuracy req: Bits -64, actual -64
-power 26: accuracy req: Bits -73, actual -72
-power 28: accuracy req: Bits -82, actual -82
-power 30: accuracy req: Bits -92, actual -92
-power 32: accuracy req: Bits -102, actual -101
-power 34: accuracy req: Bits -112, actual -112
-5,27.58,0.29,317840
-Wed Dec 21 04:20:07 GMT 2016,max,sinesine+cos,poly,15,power 3: accuracy req: Bits 20, actual 43
-power 5: accuracy req: Bits 16, actual 35
-power 7: accuracy req: Bits 10, actual 27
-power 9: accuracy req: Bits 4, actual 20
-power 11: accuracy req: Bits -3, actual 12
-power 13: accuracy req: Bits -10, actual 5
-power 15: accuracy req: Bits -18, actual -1
-power 17: accuracy req: Bits -26, actual -8
-power 19: accuracy req: Bits -34, actual -15
-power 21: accuracy req: Bits -43, actual -22
-power 23: accuracy req: Bits -52, actual -29
-power 25: accuracy req: Bits -61, actual -61
-power 27: accuracy req: Bits -71, actual -70
-power 29: accuracy req: Bits -80, actual -79
-power 31: accuracy req: Bits -90, actual -90
-power 33: accuracy req: Bits -100, actual -100
-power 35: accuracy req: Bits -110, actual -110
-power 37: accuracy req: Bits -121, actual -121
-power 39: accuracy req: Bits -131, actual -131
-power 3: accuracy req: Bits 18, actual 18
-power 5: accuracy req: Bits 14, actual 10
-power 7: accuracy req: Bits 8, actual 2
-power 9: accuracy req: Bits 2, actual -4
-power 11: accuracy req: Bits -5, actual -11
-power 13: accuracy req: Bits -12, actual -18
-power 15: accuracy req: Bits -20, actual -26
-power 17: accuracy req: Bits -28, actual -33
-power 19: accuracy req: Bits -36, actual -40
-power 21: accuracy req: Bits -45, actual -47
-power 23: accuracy req: Bits -54, actual -55
-power 25: accuracy req: Bits -63, actual -64
-power 27: accuracy req: Bits -73, actual -74
-power 29: accuracy req: Bits -82, actual -82
-power 31: accuracy req: Bits -92, actual -92
-power 33: accuracy req: Bits -102, actual -102
-power 35: accuracy req: Bits -112, actual -112
-power 37: accuracy req: Bits -123, actual -123
-power 39: accuracy req: Bits -133, actual -133
-power 18: accuracy req: Bits -32, actual -6
-power 20: accuracy req: Bits -41, actual -14
-power 22: accuracy req: Bits -49, actual -21
-power 24: accuracy req: Bits -59, actual -56
-power 26: accuracy req: Bits -68, actual -66
-power 28: accuracy req: Bits -77, actual -77
-power 30: accuracy req: Bits -87, actual -85
-power 32: accuracy req: Bits -97, actual -97
-power 34: accuracy req: Bits -107, actual -107
-power 36: accuracy req: Bits -118, actual -118
-10,41.99,0.50,409360
-Wed Dec 21 04:21:06 GMT 2016,max,sinesine+cos,poly,20,power 3: accuracy req: Bits 25, actual 43
-power 5: accuracy req: Bits 21, actual 35
-power 7: accuracy req: Bits 15, actual 27
-power 9: accuracy req: Bits 9, actual 20
-power 11: accuracy req: Bits 2, actual 12
-power 13: accuracy req: Bits -5, actual 5
-power 15: accuracy req: Bits -13, actual -1
-power 17: accuracy req: Bits -21, actual -8
-power 19: accuracy req: Bits -29, actual -15
-power 21: accuracy req: Bits -38, actual -22
-power 23: accuracy req: Bits -47, actual -29
-power 25: accuracy req: Bits -56, actual -36
-power 27: accuracy req: Bits -66, actual -65
-power 29: accuracy req: Bits -75, actual -75
-power 31: accuracy req: Bits -85, actual -84
-power 33: accuracy req: Bits -95, actual -95
-power 35: accuracy req: Bits -105, actual -104
-power 37: accuracy req: Bits -116, actual -116
-power 39: accuracy req: Bits -126, actual -126
-power 41: accuracy req: Bits -137, actual -137
-power 43: accuracy req: Bits -148, actual -146
-power 3: accuracy req: Bits 23, actual 23
-power 5: accuracy req: Bits 19, actual 15
-power 7: accuracy req: Bits 13, actual 7
-power 9: accuracy req: Bits 7, actual 1
-power 11: accuracy req: Bits 0, actual -6
-power 13: accuracy req: Bits -7, actual -13
-power 15: accuracy req: Bits -15, actual -21
-power 17: accuracy req: Bits -23, actual -28
-power 19: accuracy req: Bits -31, actual -35
-power 21: accuracy req: Bits -40, actual -42
-power 23: accuracy req: Bits -49, actual -50
-power 25: accuracy req: Bits -58, actual -59
-power 27: accuracy req: Bits -68, actual -68
-power 29: accuracy req: Bits -77, actual -77
-power 31: accuracy req: Bits -87, actual -87
-power 33: accuracy req: Bits -97, actual -97
-power 35: accuracy req: Bits -107, actual -107
-power 37: accuracy req: Bits -118, actual -118
-power 39: accuracy req: Bits -128, actual -128
-power 41: accuracy req: Bits -139, actual -139
-power 18: accuracy req: Bits -27, actual -6
-power 20: accuracy req: Bits -36, actual -14
-power 22: accuracy req: Bits -44, actual -21
-power 24: accuracy req: Bits -54, actual -28
-power 26: accuracy req: Bits -63, actual -61
-power 28: accuracy req: Bits -72, actual -70
-power 30: accuracy req: Bits -82, actual -82
-power 32: accuracy req: Bits -92, actual -90
-power 34: accuracy req: Bits -102, actual -102
-power 36: accuracy req: Bits -113, actual -113
-power 38: accuracy req: Bits -123, actual -123
-power 40: accuracy req: Bits -134, actual -132
-15,57.70,0.63,534348
-Wed Dec 21 04:22:17 GMT 2016,max,sinesine+cos,poly,25,power 3: accuracy req: Bits 30, actual 43
-power 5: accuracy req: Bits 26, actual 35
-power 7: accuracy req: Bits 20, actual 27
-power 9: accuracy req: Bits 14, actual 20
-power 11: accuracy req: Bits 7, actual 12
-power 13: accuracy req: Bits 0, actual 5
-power 15: accuracy req: Bits -8, actual -1
-power 17: accuracy req: Bits -16, actual -8
-power 19: accuracy req: Bits -24, actual -15
-power 21: accuracy req: Bits -33, actual -22
-power 23: accuracy req: Bits -42, actual -29
-power 25: accuracy req: Bits -51, actual -36
-power 27: accuracy req: Bits -61, actual -43
-power 29: accuracy req: Bits -70, actual -70
-power 31: accuracy req: Bits -80, actual -80
-power 33: accuracy req: Bits -90, actual -89
-power 35: accuracy req: Bits -100, actual -100
-power 37: accuracy req: Bits -111, actual -111
-power 39: accuracy req: Bits -121, actual -121
-power 41: accuracy req: Bits -132, actual -132
-power 43: accuracy req: Bits -143, actual -143
-power 45: accuracy req: Bits -154, actual -153
-power 3: accuracy req: Bits 28, actual 28
-power 5: accuracy req: Bits 24, actual 21
-power 7: accuracy req: Bits 18, actual 13
-power 9: accuracy req: Bits 12, actual 6
-power 11: accuracy req: Bits 5, actual 0
-power 13: accuracy req: Bits -2, actual -8
-power 15: accuracy req: Bits -10, actual -15
-power 17: accuracy req: Bits -18, actual -22
-power 19: accuracy req: Bits -26, actual -29
-power 21: accuracy req: Bits -35, actual -37
-power 23: accuracy req: Bits -44, actual -45
-power 25: accuracy req: Bits -53, actual -54
-power 27: accuracy req: Bits -63, actual -64
-power 29: accuracy req: Bits -72, actual -72
-power 31: accuracy req: Bits -82, actual -82
-power 33: accuracy req: Bits -92, actual -92
-power 35: accuracy req: Bits -102, actual -102
-power 37: accuracy req: Bits -113, actual -113
-power 39: accuracy req: Bits -123, actual -123
-power 41: accuracy req: Bits -134, actual -134
-power 43: accuracy req: Bits -145, actual -145
-power 45: accuracy req: Bits -156, actual -155
-power 18: accuracy req: Bits -22, actual -6
-power 20: accuracy req: Bits -31, actual -14
-power 22: accuracy req: Bits -39, actual -21
-power 24: accuracy req: Bits -49, actual -28
-power 26: accuracy req: Bits -58, actual -35
-power 28: accuracy req: Bits -67, actual -66
-power 30: accuracy req: Bits -77, actual -75
-power 32: accuracy req: Bits -87, actual -87
-power 34: accuracy req: Bits -97, actual -95
-power 36: accuracy req: Bits -108, actual -107
-power 38: accuracy req: Bits -118, actual -118
-power 40: accuracy req: Bits -129, actual -129
-power 42: accuracy req: Bits -139, actual -139
-20,70.12,1.00,649620
-Wed Dec 21 04:23:42 GMT 2016,max,sinesine+cos,poly,30,power 3: accuracy req: Bits 35, actual 43
-power 5: accuracy req: Bits 31, actual 35
-power 7: accuracy req: Bits 25, actual 27
-power 9: accuracy req: Bits 19, actual 20
-power 11: accuracy req: Bits 12, actual 12
-power 13: accuracy req: Bits 5, actual 5
-power 15: accuracy req: Bits -3, actual -1
-power 17: accuracy req: Bits -11, actual -8
-power 19: accuracy req: Bits -19, actual -15
-power 21: accuracy req: Bits -28, actual -22
-power 23: accuracy req: Bits -37, actual -29
-power 25: accuracy req: Bits -46, actual -36
-power 27: accuracy req: Bits -56, actual -43
-power 29: accuracy req: Bits -65, actual -50
-power 31: accuracy req: Bits -75, actual -75
-power 33: accuracy req: Bits -85, actual -85
-power 35: accuracy req: Bits -95, actual -94
-power 37: accuracy req: Bits -106, actual -105
-power 39: accuracy req: Bits -116, actual -116
-power 41: accuracy req: Bits -127, actual -127
-power 43: accuracy req: Bits -138, actual -138
-power 45: accuracy req: Bits -149, actual -149
-power 47: accuracy req: Bits -160, actual -159
-power 3: accuracy req: Bits 33, actual 33
-power 5: accuracy req: Bits 29, actual 25
-power 7: accuracy req: Bits 23, actual 17
-power 9: accuracy req: Bits 17, actual 10
-power 11: accuracy req: Bits 10, actual 3
-power 13: accuracy req: Bits 3, actual -3
-power 15: accuracy req: Bits -5, actual -11
-power 17: accuracy req: Bits -13, actual -18
-power 19: accuracy req: Bits -21, actual -25
-power 21: accuracy req: Bits -30, actual -32
-power 23: accuracy req: Bits -39, actual -40
-power 25: accuracy req: Bits -48, actual -49
-power 27: accuracy req: Bits -58, actual -58
-power 29: accuracy req: Bits -67, actual -67
-power 31: accuracy req: Bits -77, actual -78
-power 33: accuracy req: Bits -87, actual -87
-power 35: accuracy req: Bits -97, actual -97
-power 37: accuracy req: Bits -108, actual -108
-power 39: accuracy req: Bits -118, actual -118
-power 41: accuracy req: Bits -129, actual -129
-power 43: accuracy req: Bits -140, actual -140
-power 45: accuracy req: Bits -151, actual -151
-power 47: accuracy req: Bits -162, actual -162
-power 18: accuracy req: Bits -17, actual -6
-power 20: accuracy req: Bits -26, actual -14
-power 22: accuracy req: Bits -34, actual -21
-power 24: accuracy req: Bits -44, actual -28
-power 26: accuracy req: Bits -53, actual -35
-power 28: accuracy req: Bits -62, actual -42
-power 30: accuracy req: Bits -72, actual -70
-power 32: accuracy req: Bits -82, actual -80
-power 34: accuracy req: Bits -92, actual -92
-power 36: accuracy req: Bits -103, actual -103
-power 38: accuracy req: Bits -113, actual -113
-power 40: accuracy req: Bits -124, actual -124
-power 42: accuracy req: Bits -134, actual -133
-power 44: accuracy req: Bits -145, actual -145
-25,84.00,0.91,781744
-Wed Dec 21 04:25:25 GMT 2016,max,sinesine+cos,poly,35,power 3: accuracy req: Bits 40, actual 43
-power 5: accuracy req: Bits 36, actual 35
-power 7: accuracy req: Bits 30, actual 27
-power 9: accuracy req: Bits 24, actual 20
-power 11: accuracy req: Bits 17, actual 12
-power 13: accuracy req: Bits 10, actual 5
-power 15: accuracy req: Bits 2, actual -1
-power 17: accuracy req: Bits -6, actual -8
-power 19: accuracy req: Bits -14, actual -15
-power 21: accuracy req: Bits -23, actual -22
-power 23: accuracy req: Bits -32, actual -29
-power 25: accuracy req: Bits -41, actual -36
-power 27: accuracy req: Bits -51, actual -43
-power 29: accuracy req: Bits -60, actual -50
-power 31: accuracy req: Bits -70, actual -57
-power 33: accuracy req: Bits -80, actual -79
-power 35: accuracy req: Bits -90, actual -89
-power 37: accuracy req: Bits -101, actual -101
-power 39: accuracy req: Bits -111, actual -110
-power 41: accuracy req: Bits -122, actual -122
-power 43: accuracy req: Bits -133, actual -133
-power 45: accuracy req: Bits -144, actual -144
-power 47: accuracy req: Bits -155, actual -155
-power 49: accuracy req: Bits -166, actual -166
-power 3: accuracy req: Bits 38, actual 38
-power 5: accuracy req: Bits 34, actual 31
-power 7: accuracy req: Bits 28, actual 23
-power 9: accuracy req: Bits 22, actual 16
-power 11: accuracy req: Bits 15, actual 8
-power 13: accuracy req: Bits 8, actual 1
-power 15: accuracy req: Bits 0, actual -5
-power 17: accuracy req: Bits -8, actual -12
-power 19: accuracy req: Bits -16, actual -20
-power 21: accuracy req: Bits -25, actual -27
-power 23: accuracy req: Bits -34, actual -35
-power 25: accuracy req: Bits -43, actual -44
-power 27: accuracy req: Bits -53, actual -53
-power 29: accuracy req: Bits -62, actual -62
-power 31: accuracy req: Bits -72, actual -72
-power 33: accuracy req: Bits -82, actual -82
-power 35: accuracy req: Bits -92, actual -92
-power 37: accuracy req: Bits -103, actual -103
-power 39: accuracy req: Bits -113, actual -113
-power 41: accuracy req: Bits -124, actual -124
-power 43: accuracy req: Bits -135, actual -135
-power 45: accuracy req: Bits -146, actual -146
-power 47: accuracy req: Bits -157, actual -157
-power 49: accuracy req: Bits -168, actual -168
-power 18: accuracy req: Bits -12, actual -6
-power 20: accuracy req: Bits -21, actual -14
-power 22: accuracy req: Bits -29, actual -21
-power 24: accuracy req: Bits -39, actual -28
-power 26: accuracy req: Bits -48, actual -35
-power 28: accuracy req: Bits -57, actual -42
-power 30: accuracy req: Bits -67, actual -48
-power 32: accuracy req: Bits -77, actual -75
-power 34: accuracy req: Bits -87, actual -85
-power 36: accuracy req: Bits -98, actual -97
-power 38: accuracy req: Bits -108, actual -108
-power 40: accuracy req: Bits -119, actual -118
-power 42: accuracy req: Bits -129, actual -129
-power 44: accuracy req: Bits -140, actual -140
-power 46: accuracy req: Bits -151, actual -151
-30,101.95,1.21,903804
-Wed Dec 21 04:25:25 GMT 2016,max,runge,fun,05,5,0.02,0.01,9344
-Wed Dec 21 04:25:25 GMT 2016,max,runge,fun,35,35,0.05,0.01,9252
-Wed Dec 21 04:25:26 GMT 2016,max,runge,fun,65,65,0.12,0.01,10360
-Wed Dec 21 04:25:26 GMT 2016,max,runge,fun,100,101,0.14,0.01,10832
-Wed Dec 21 04:25:26 GMT 2016,max,runge,fun,120,121,0.15,0.01,11444
-Wed Dec 21 09:01:02 GMT 2016,integrate,runge,fun,05,5,0.05,0.01,8312
-Wed Dec 21 09:01:03 GMT 2016,integrate,runge,fun,10,10,1.30,0.01,9216
-Wed Dec 21 09:01:44 GMT 2016,integrate,runge,fun,15,15,40.11,0.09,41660
-Wed Dec 21 10:21:10 GMT 2016,integrate,runge,fun,20,20,1462.74,5.05,1089316
-Wed Dec 21 10:21:10 GMT 2016,max,runge,dfun,05,5,0.10,0.01,10476
-Wed Dec 21 10:21:11 GMT 2016,max,runge,dfun,35,35,0.14,0.01,10472
-Wed Dec 21 10:21:11 GMT 2016,max,runge,dfun,65,65,0.25,0.01,10736
-Wed Dec 21 10:21:11 GMT 2016,max,runge,dfun,100,100,0.29,0.01,11096
+Tue Feb  7 14:39:18 GMT 2017,max,sine+cos,fun,10,10,0.99,0.02,24176
+Tue Feb  7 14:39:18 GMT 2017,max,sine+cos,fun,15,15,5.05,0.03,101236
+Tue Feb  7 14:39:18 GMT 2017,max,sine+cos,fun,20,20,32.56,0.24,483200
+Tue Feb  7 14:39:18 GMT 2017,max,sine+cos,fun,25,25,257.23,1.94,2938584
+Tue Feb  7 14:39:18 GMT 2017,integrate,sine+cos,fun,10,10,34.01,0.08,27364
+Tue Feb  7 14:39:18 GMT 2017,integrate,sine+cos,fun,12,12,136.01,0.41,86768
+Tue Feb  7 14:39:18 GMT 2017,integrate,sine+cos,fun,14,14,530.81,1.66,326436
+Tue Feb  7 14:39:18 GMT 2017,max,sine+cos,dfun,10,10,0.14,0.01,9548
+Tue Feb  7 14:39:18 GMT 2017,max,sine+cos,dfun,15,15,0.18,0.01,9836
+Tue Feb  7 14:39:18 GMT 2017,max,sine+cos,dfun,20,20,0.18,0.01,9992
+Tue Feb  7 14:39:18 GMT 2017,max,sine+cos,dfun,25,26,0.22,0.01,10336
+Tue Feb  7 14:39:18 GMT 2017,max,sine+cos,dfun,30,30,0.25,0.01,10516
+Tue Feb  7 14:39:18 GMT 2017,integrate,sine+cos,dfun,10,10,0.88,0.01,9008
+Tue Feb  7 14:39:18 GMT 2017,integrate,sine+cos,dfun,12,12,1.47,0.01,9080
+Tue Feb  7 14:39:18 GMT 2017,integrate,sine+cos,dfun,14,14,2.94,0.02,10364
+Tue Feb  7 14:39:18 GMT 2017,integrate,sine+cos,dfun,16,16,5.52,0.01,12060
+Tue Feb  7 14:39:18 GMT 2017,integrate,sine+cos,dfun,18,18,10.62,0.02,15096
+Tue Feb  7 14:39:18 GMT 2017,integrate,sine+cos,dfun,20,20,24.54,0.06,22492
+Tue Feb  7 14:39:18 GMT 2017,max,sine+cos,poly,10,10,1.20,0.02,19652
+Tue Feb  7 14:39:18 GMT 2017,max,sine+cos,poly,15,15,1.64,0.01,21232
+Tue Feb  7 14:39:18 GMT 2017,max,sine+cos,poly,20,19,1.83,0.01,22764
+Tue Feb  7 14:39:18 GMT 2017,max,sine+cos,poly,25,23,2.16,0.01,22616
+Tue Feb  7 14:39:18 GMT 2017,max,sine+cos,poly,30,24,2.68,0.01,24340
+Tue Feb  7 14:39:18 GMT 2017,integrate,sine+cos,poly,10,9,0.25,0.01,19484
+Tue Feb  7 14:39:18 GMT 2017,integrate,sine+cos,poly,12,10,0.25,0.01,19368
+Tue Feb  7 14:39:18 GMT 2017,integrate,sine+cos,poly,14,12,0.28,0.01,20640
+Tue Feb  7 14:39:18 GMT 2017,integrate,sine+cos,poly,16,14,0.29,0.01,20776
+Tue Feb  7 14:39:18 GMT 2017,integrate,sine+cos,poly,18,17,0.35,0.01,20664
+Tue Feb  7 14:39:18 GMT 2017,integrate,sine+cos,poly,20,18,0.33,0.01,22268
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine,fun,10,10,0.14,0.01,10536
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine,fun,15,15,0.17,0.01,10772
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine,fun,20,20,0.24,0.01,10996
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine,fun,25,25,0.24,0.01,11320
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine,fun,30,30,0.28,0.01,11692
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine,fun,35,35,0.30,0.01,11956
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine,fun,5,5,1.08,0.01,9064
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine,fun,10,10,31.66,0.09,24504
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine,fun,15,15,1058.69,3.54,543500
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine,dfun,10,10,0.26,0.01,10176
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine,dfun,15,15,0.26,0.01,10208
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine,dfun,20,20,0.30,0.01,10492
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine,dfun,25,25,0.28,0.01,10464
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine,dfun,30,30,0.32,0.01,10280
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine,dfun,35,35,0.32,0.01,10404
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine,dfun,5,6,0.30,0.01,8924
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine,dfun,10,10,1.27,0.01,9256
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine,dfun,15,15,6.86,0.02,11660
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine,dfun,20,20,39.98,0.10,28392
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine,dfun,25,25,216.99,0.73,120572
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine,dfun,30,30,1185.35,3.85,656164
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine,poly,10,5,20.42,0.14,312996
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine,poly,15,10,27.58,0.21,418960
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine,poly,20,15,34.77,0.33,528028
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine,poly,25,20,46.02,0.47,656544
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine,poly,30,25,57.22,0.59,781384
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine,poly,35,30,70.47,0.59,916844
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine,poly,5,0,10.25,0.17,230156
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine,poly,10,-25,16.64,0.14,311336
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine,poly,15,-50,22.32,0.29,418372
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine,poly,20,-75,30.69,0.36,521388
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine,poly,25,-13,40.82,0.43,647860
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine,poly,30,-36,51.84,0.41,770964
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine+cos,fun,10,10,0.21,0.01,10656
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine+cos,fun,20,20,3.00,0.02,40560
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine+cos,fun,30,30,162.68,0.90,1186232
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine+cos,fun,5,5,1.93,0.01,9188
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine+cos,fun,10,10,59.41,0.15,31728
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine+cos,fun,15,15,1979.62,6.15,766756
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine+cos,dfun,10,10,0.25,0.01,9920
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine+cos,dfun,15,15,0.26,0.01,9940
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine+cos,dfun,20,20,0.26,0.01,9940
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine+cos,dfun,25,25,0.29,0.01,9992
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine+cos,dfun,30,30,0.31,0.01,9984
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine+cos,dfun,35,35,0.35,0.01,9956
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine+cos,dfun,10,10,1.74,0.01,9232
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine+cos,dfun,15,15,9.64,0.04,12028
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine+cos,dfun,20,20,54.28,0.21,30456
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine+cos,dfun,25,25,296.84,0.94,130740
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine+cos,dfun,30,30,1702.51,5.36,726732
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine+cos,poly,10,5,19.44,0.16,314964
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine+cos,poly,15,10,25.04,0.22,420908
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine+cos,poly,20,15,31.68,0.35,529424
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine+cos,poly,25,20,43.37,0.48,636240
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine+cos,poly,30,25,53.84,0.46,757348
+Tue Feb  7 14:39:18 GMT 2017,max,sinesine+cos,poly,35,30,67.94,0.73,919968
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine+cos,poly,10,-25,15.48,0.13,310480
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine+cos,poly,15,-50,22.28,0.23,420896
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine+cos,poly,20,-75,30.94,0.35,527592
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine+cos,poly,25,-13,42.92,0.33,635276
+Tue Feb  7 14:39:18 GMT 2017,integrate,sinesine+cos,poly,30,-36,50.56,0.41,770324
+Tue Feb  7 14:39:18 GMT 2017,max,runge,fun,05,5,0.02,0.01,9344
+Tue Feb  7 14:39:18 GMT 2017,max,runge,fun,35,35,0.05,0.01,9252
+Tue Feb  7 14:39:18 GMT 2017,max,runge,fun,65,65,0.12,0.01,10360
+Tue Feb  7 14:39:18 GMT 2017,max,runge,fun,100,101,0.14,0.01,10832
+Tue Feb  7 14:39:18 GMT 2017,max,runge,fun,120,121,0.15,0.01,11444
+Tue Feb  7 14:39:18 GMT 2017,integrate,runge,fun,05,5,0.05,0.01,8312
+Tue Feb  7 14:39:18 GMT 2017,integrate,runge,fun,10,10,1.30,0.01,9216
+Tue Feb  7 14:39:18 GMT 2017,integrate,runge,fun,15,15,40.11,0.09,41660
+Tue Feb  7 14:39:18 GMT 2017,integrate,runge,fun,20,20,1462.74,5.05,1089316
+Tue Feb  7 14:39:18 GMT 2017,max,runge,dfun,05,5,0.10,0.01,10476
+Tue Feb  7 14:39:18 GMT 2017,max,runge,dfun,35,35,0.14,0.01,10472
+Tue Feb  7 14:39:18 GMT 2017,max,runge,dfun,65,65,0.25,0.01,10736
+Tue Feb  7 14:39:18 GMT 2017,max,runge,dfun,100,100,0.29,0.01,11096
+Tue Feb  7 14:39:18 GMT 2017,integrate,runge,dfun,05,7,0.03,0.01,8192
+Tue Feb  7 14:39:18 GMT 2017,integrate,runge,dfun,10,10,0.12,0.01,8920
+Tue Feb  7 14:39:18 GMT 2017,integrate,runge,dfun,15,15,0.63,0.01,9060
+Tue Feb  7 14:39:18 GMT 2017,integrate,runge,dfun,20,20,3.78,0.02,11308
+Tue Feb  7 14:39:18 GMT 2017,integrate,runge,dfun,25,25,19.82,0.05,24880
+Tue Feb  7 14:39:19 GMT 2017,integrate,runge,dfun,30,30,123.24,0.46,115380
+Tue Feb  7 14:39:19 GMT 2017,max,runge,poly,00,1,9.87,0.03,18364
+Tue Feb  7 14:39:19 GMT 2017,max,runge,poly,01,10,41.78,0.11,45456
+Tue Feb  7 14:39:19 GMT 2017,max,runge,poly,10,29,294.90,2.22,156116
+Tue Feb  7 14:39:19 GMT 2017,integrate,runge,poly,00,0,9.65,0.04,18944
+Tue Feb  7 14:39:19 GMT 2017,integrate,runge,poly,01,9,41.70,0.14,45500
+Tue Feb  7 14:39:19 GMT 2017,integrate,runge,poly,10,28,315.73,2.20,156104
+Tue Feb  7 14:39:19 GMT 2017,max,runge,ppoly,05,19,10.23,0.05,41796
+Tue Feb  7 14:39:19 GMT 2017,max,runge,ppoly,35,30,13.26,0.05,53360
+Tue Feb  7 14:39:19 GMT 2017,max,runge,ppoly,65,42,18.68,0.08,75676
+Tue Feb  7 14:39:19 GMT 2017,max,runge,ppoly,80,87,47.84,0.18,180432
+Tue Feb  7 14:39:19 GMT 2017,integrate,runge,ppoly,05,18,11.68,0.04,32212
+Tue Feb  7 14:39:19 GMT 2017,integrate,runge,ppoly,15,22,11.97,0.04,32116
+Tue Feb  7 14:39:19 GMT 2017,integrate,runge,ppoly,25,3,4.86,0.03,20944
+Tue Feb  7 14:39:19 GMT 2017,integrate,runge,ppoly,30,18,12.38,0.04,31456
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,fun,05,5,0.03,0.01,10328
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,fun,10,10,0.05,0.01,10344
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,fun,15,15,0.20,0.01,13660
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,fun,20,20,1.07,0.03,37952
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,fun,25,25,6.24,0.09,172592
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,fun,30,30,47.80,0.48,1025880
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,fun,35,35,291.11,2.86,5711472
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,fun,05,5,0.01,0.01,7948
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,fun,10,10,0.49,0.01,8976
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,fun,15,15,14.69,0.07,24408
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,fun,20,20,403.35,1.46,520996
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,dfun,05,5,0.11,0.01,10328
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,dfun,10,10,0.10,0.01,10448
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,dfun,20,20,0.12,0.01,10548
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,dfun,30,30,0.15,0.01,10524
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,dfun,40,40,0.13,0.01,10456
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,dfun,50,50,0.14,0.01,10460
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,dfun,60,111,0.21,0.01,10712
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,dfun,80,111,0.21,0.01,10680
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,dfun,100,111,0.19,0.01,10804
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,dfun,05,7,0.02,0.01,8052
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,dfun,10,11,0.04,0.01,8288
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,dfun,15,15,0.23,0.01,8972
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,dfun,20,20,1.21,0.01,9460
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,dfun,25,25,8.14,0.04,14928
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,dfun,30,30,39.26,0.18,46848
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,dfun,35,35,224.26,0.85,226140
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,poly,-01,0,1.30,0.01,14188
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,poly,01,4,7.51,0.04,18416
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,poly,04,14,76.71,0.26,45520
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,poly,-01,-1,1.24,0.01,14140
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,poly,01,3,6.80,0.03,18384
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,poly,04,13,68.40,0.27,45580
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,ppoly,10,19,11.23,0.04,47380
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,ppoly,20,24,21.09,0.08,85348
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,ppoly,30,15,8.46,0.05,47736
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,ppoly,40,45,28.59,0.19,150324
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,ppoly,50,75,83.93,0.55,456328
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,ppoly,60,27,14.59,0.10,78532
+Tue Feb  7 14:39:19 GMT 2017,max,rungeX,ppoly,80,87,49.28,0.28,279232
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,ppoly,05,18,13.41,0.04,34828
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,ppoly,10,22,13.28,0.10,34744
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,ppoly,20,27,27.81,0.13,59088
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,ppoly,30,18,9.71,0.07,33028
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,ppoly,40,48,36.91,0.13,100040
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,ppoly,50,78,112.96,0.43,288544
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,ppoly,60,31,22.22,0.06,55224
+Tue Feb  7 14:39:19 GMT 2017,integrate,rungeX,ppoly,80,91,87.58,0.34,183068
+Tue Feb  7 14:39:19 GMT 2017,max,fracSin,poly,01,3,30.13,0.19,80456
+Tue Feb  7 14:39:19 GMT 2017,integrate,fracSin,poly,01,2,27.45,0.24,80480
+Tue Feb  7 14:39:19 GMT 2017,max,fracSin,ppoly,05,7,25.34,0.09,38876
+Tue Feb  7 14:39:19 GMT 2017,max,fracSin,ppoly,15,18,151.77,0.64,145216
+Tue Feb  7 14:39:19 GMT 2017,max,fracSin,ppoly,25,17,73.50,0.32,108812
+Tue Feb  7 14:39:19 GMT 2017,max,fracSin,ppoly,35,31,198.15,0.83,283692
+Tue Feb  7 14:39:19 GMT 2017,max,fracSin,ppoly,45,38,435.82,1.64,563044
+Tue Feb  7 14:39:44 GMT 2017,integrate,fracSin,ppoly,05,8,25.08,0.08,28680
+Tue Feb  7 14:40:50 GMT 2017,integrate,fracSin,ppoly,10,14,66.15,0.18,60812
+Tue Feb  7 14:43:36 GMT 2017,integrate,fracSin,ppoly,15,19,165.63,0.52,142640
+Tue Feb  7 14:49:24 GMT 2017,integrate,fracSin,ppoly,20,23,346.99,1.26,269636
+Tue Feb  7 14:50:56 GMT 2017,integrate,fracSin,ppoly,25,19,91.66,0.33,108908
+Tue Feb  7 14:53:58 GMT 2017,integrate,fracSin,ppoly,30,28,181.52,0.72,185748

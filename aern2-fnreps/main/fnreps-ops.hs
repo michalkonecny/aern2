@@ -85,8 +85,8 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
             ("dfun", "integrate") -> integrateDFun fnB2B dfnB2B accuracy
             ("poly", "max") -> maxPB $ fnPB accuracy
             ("poly", "integrate") -> integratePB $ fnPB accuracy
-            ("ppoly", "max") -> maxPP $ fnPP accuracy -- OpMax pp_prec pp_maxDeg pp_divThreshold pp_divIts pp_rangeAcc
-            -- ("ppoly", "integrate") -> fnPP OpIntegrate pp_prec pp_maxDeg pp_divThreshold pp_divIts pp_rangeAcc
+            ("ppoly", "max") -> maxPP $ fnPP accuracy
+            ("ppoly", "integrate") -> integratePP $ fnPP accuracy
             _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
     (Just (fnDescription, fnPB, fnB2B, dfnB2B, fnPP)) = Map.lookup functionCode functions
 
@@ -109,11 +109,11 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         rB = setPrecision prc $ mpBall r
         prc = getPrecision f2
 
-    -- integratePP :: PPoly -> MPBall
-    -- integratePP f = f `integrateOverDomPP` (getDomain f)
-    --   where
-    --   integrateOverDomPP f (Interval l r) =
-    --     PPoly.integerate f (mpBall l) (mpBall r)
+    integratePP :: PPoly -> MPBall
+    integratePP f = f `integrateOverDomPP` (getDomain f)
+      where
+      integrateOverDomPP ff (Interval l r) =
+        PPoly.integral ff (mpBall l) (mpBall r)
 
     maxFun :: UnaryFun -> Accuracy -> MPBall
     maxFun fn ac =

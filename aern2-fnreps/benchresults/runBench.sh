@@ -5,6 +5,8 @@ if [ "$resultscsv" == "" ]; then echo "usage: $0 <results csv file name>"; exit 
 
 fnrepsmain=aern2-fnreps-ops
 
+reuselogs="true"
+
 # put headers in the results csv file if it is new:
 if [ ! -f $resultscsv ]
     then echo "Time,Op,Fn,FnRepr,Parameters,Accuracy(bits),UTime(s),STime(s),Mem(kB)" > $resultscsv
@@ -26,16 +28,26 @@ function runOne
             echo " (running and logging in $runlog)"
             /usr/bin/time -v $fnrepsmain $op $fn $repr $params >& $runlog
             if [ $? != 0 ]; then rm $runlog; exit 1; fi
-            utime=`grep "User time (seconds)" $runlog | sed 's/^.*: //'`
-            stime=`grep "System time (seconds)" $runlog | sed 's/^.*: //'`
-            mem=`grep "Maximum resident set size (kbytes)" $runlog | sed 's/^.*: //'`
-            bits=`grep "accuracy: Bits " $runlog | sed 's/accuracy: Bits //'`
-            now=`date`
-            echo "$now,$op,$fn,$repr,$params,$bits,${utime/0.00/0.01},${stime/0.00/0.01},$mem" >> $resultscsv
-                                                           # avoid 0 in log-scale charts
+            getDataFromRunlog
         else
-            echo " (skipping due to existing log $runlog)"
+          if [ "$reuselogs" = "" ]
+            then
+              echo " (skipping due to existing log $runlog)"
+            else
+              echo " (reusing existing log $runlog)"
+              getDataFromRunlog
+          fi
     fi
+}
+
+function getDataFromRunlog
+{
+  utime=`grep "User time (seconds)" $runlog | sed 's/^.*: //'`
+  stime=`grep "System time (seconds)" $runlog | sed 's/^.*: //'`
+  mem=`grep "Maximum resident set size (kbytes)" $runlog | sed 's/^.*: //'`
+  bits=`grep -i "accuracy: bits " $runlog | sed 's/accuracy: [bB]its //'`
+  now=`date`
+  echo "$now,$op,$fn,$repr,$params,$bits,${utime/0.00/0.01},${stime/0.00/0.01},$mem" >> $resultscsv
 }
 
 #################
@@ -153,11 +165,11 @@ function sinesinePoly
         runOne
     done
 
-    # op=integrate
-    # for params in 5 10 15 20 25 30
-    # do
-    #     runOne
-    # done
+    op=integrate
+    for params in 5 10 15 20 25 30
+    do
+        runOne
+    done
 }
 
 #################
@@ -214,11 +226,11 @@ function sinesine+cosPoly
         runOne
     done
 
-    # op=integrate
-    # for params in 10 15 20 25 30
-    # do
-    #     runOne
-    # done
+    op=integrate
+    for params in 10 15 20 25 30
+    do
+        runOne
+    done
 }
 
 
@@ -252,13 +264,13 @@ function rungeDFun
     dir=$fn
 
     op=max
-    for params in 05 35 65 100 120
+    for params in 05 35 65 100
     do
         runOne
     done
 
     op=integrate
-    for params in 05 10 15 20 25 30 35
+    for params in 05 10 15 20 25 30
     do
         runOne
     done
@@ -271,13 +283,13 @@ function rungePoly
     dir=$fn
 
     op=max
-    for params in 01 10 29
+    for params in 00 01 10
     do
         runOne
     done
 
     op=integrate
-    for params in 01 10 29
+    for params in 00 01 10
     do
         runOne
     done
@@ -292,13 +304,13 @@ function rungePPoly
     dir=$fn
 
     op=max
-    for params in 05 35 65 100 120
+    for params in 10 20 40 80
     do
         runOne
     done
 
     op=integrate
-    for params in 05 10 15 20 25 30 35
+    for params in 10 20 40
     do
         runOne
     done
@@ -316,7 +328,7 @@ function rungeXFun
     dir=$fn
 
     op=max
-    for params in 05 10 15 20 25 30 35 40
+    for params in 05 10 15 20 25 30 35
     do
         runOne
     done
@@ -335,13 +347,13 @@ function rungeXDFun
     dir=$fn
 
     op=max
-    for params in 05 10 20 30 40 50 60 80 100 130
+    for params in 05 10 20 30 40 50 60 80 100
     do
         runOne
     done
 
     op=integrate
-    for params in 05 10 15 20 25 30 35 40
+    for params in 05 10 15 20 25 30 35
     do
         runOne
     done
@@ -354,13 +366,13 @@ function rungeXPoly
     dir=$fn
 
     op=max
-    for params in 01 04
+    for params in -01 01 04
     do
         runOne
     done
 
     op=integrate
-    for params in 01 04
+    for params in -01 01 04
     do
         runOne
     done
@@ -374,13 +386,13 @@ function rungeXPPoly
     dir=$fn
 
     op=max
-    for params in 05 10 20 30 40 50 60 80 100 130
+    for params in 10 20 30 40 50 60 80
     do
         runOne
     done
 
     op=integrate
-    for params in 05 10 20 30 40 50 60 80 100 130
+    for params in 05 10 20 30 40 50 60 80
     do
         runOne
     done
@@ -455,7 +467,7 @@ function fracSinPPoly
     dir=$fn
 
     op=max
-    for params in 05 15 25 35 45 55
+    for params in 05 15 25 35 45
     do
         runOne
     done
@@ -563,17 +575,17 @@ sinesine+cosPoly
 rungeFun
 rungeDFun
 rungePoly
-# rungePPoly
+rungePPoly
 
 rungeXFun
 rungeXDFun
 rungeXPoly
-# rungeXPPoly
+rungeXPPoly
 
-fracSinFun
-fracSinDFun
+# fracSinFun
+# fracSinDFun
 fracSinPoly
-# fracSinPPoly
+fracSinPPoly
 
 # hatFun
 # hatDFun
