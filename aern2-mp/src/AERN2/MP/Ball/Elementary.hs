@@ -182,5 +182,7 @@ fromApproxWithLipschitz fDown fUp lip _x@(MPBall xc xe) =
     where
     fxl = fDown xc
     fxu = fUp xc
-    (MPBall fxc fxe) = fromEndpointsMP fxl fxu
+    (MPBall fxc fxe) =
+      setPrecision (getPrecision xc) $ -- beware, some MPFR functions increase precision, eg sine and cosine
+        fromEndpointsMP fxl fxu
     err = (errorBound lip) * xe  +  fxe
