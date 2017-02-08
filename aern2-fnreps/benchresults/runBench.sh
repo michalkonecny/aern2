@@ -386,13 +386,13 @@ function rungeXPPoly
     dir=$fn
 
     op=max
-    for params in 10 20 30 40 50 60 80
+    for params in 10 20 40 80
     do
         runOne
     done
 
     op=integrate
-    for params in 05 10 20 30 40 50 60 80
+    for params in 10 20 40 80
     do
         runOne
     done
@@ -448,13 +448,13 @@ function fracSinPoly
     dir=$fn
 
     op=max
-    for params in 01
+    for params in 01 03
     do
         runOne
     done
 
     op=integrate
-    for params in 01
+    for params in 01 03
     do
         runOne
     done
@@ -467,13 +467,13 @@ function fracSinPPoly
     dir=$fn
 
     op=max
-    for params in 05 15 25 35 45
+    for params in 10 20 40
     do
         runOne
     done
 
     op=integrate
-    for params in 05 10 15 20 25 30
+    for params in 10 20 40
     do
         runOne
     done
@@ -582,8 +582,8 @@ rungeXDFun
 rungeXPoly
 rungeXPPoly
 
-# fracSinFun
-# fracSinDFun
+fracSinFun
+fracSinDFun
 fracSinPoly
 fracSinPPoly
 
