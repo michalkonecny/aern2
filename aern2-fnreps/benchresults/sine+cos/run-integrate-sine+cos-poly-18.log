@@ -1,7 +1,7 @@
 computing integrate  sin(10x)+cos(20x) over [-1,1]
-result = [9.129450411718619e-2 ± 7.213261514968609e-6](prec=377)
+result = [9.129450411718619e-2 ± 7.213261514968607e-6](prec=754)
 accuracy: bits 17
-precision = Precision 377
+precision = Precision 754
 	Command being timed: "aern2-fnreps-ops integrate sine+cos poly 18"
 	User time (seconds): 0.35
 	System time (seconds): 0.00
@@ -11,12 +11,12 @@ precision = Precision 377
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 20664
+	Maximum resident set size (kbytes): 20812
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 3443
+	Minor (reclaiming a frame) page faults: 3449
 	Voluntary context switches: 1
-	Involuntary context switches: 3
+	Involuntary context switches: 13
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

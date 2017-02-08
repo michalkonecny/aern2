@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+-- #define DEBUG
 {-|
     Module      :  AERN2.Poly.Cheb.Integration
     Description :  Chebyshev basis integration
@@ -11,6 +13,13 @@
     Chebyshev basis integration
 -}
 module AERN2.Poly.Cheb.Integration where
+
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#else
+#define maybeTrace (\ (_ :: String) t -> t)
+#endif
 
 import Numeric.MixedTypes
 
@@ -36,13 +45,22 @@ instance
   type IntegralOverDomType (ChPoly c) DyadicInterval = c
     -- no necessarily convergent, the accuracy is only a guide
   integrateOverDom (cp :: ChPoly c) (Interval l r) =
+    maybeTrace (
+      "ChPoly integrateOverDom:"
+      ++ "\n  (l,r) = " ++ show (l,r)
+      ++ "\n  getPrecision cp = " ++ show (getPrecision cp)
+      ++ "\n  getAccuracy cp = " ++ show (getAccuracy cp)
+      ++ "\n  getAccuracy primit = " ++ show (getAccuracy primit)
+      ++ "\n  getAccuracy (primit `apply` lB) = " ++ show (getAccuracy (primit `apply` lB))
+      ++ "\n  getAccuracy (primit `apply` rB) = " ++ show (getAccuracy (primit `apply` rB))
+    ) $
     (primit `apply` rB) - (primit `apply` lB)
     where
-    acGuide = getFiniteAccuracy cp
+    p = getPrecision cp
     primit = primitive_function cp
-    lB = setPrecisionAtLeastAccuracy acGuideEval (convertExactly l :: c)
-    rB = setPrecisionAtLeastAccuracy acGuideEval (convertExactly r :: c)
-    acGuideEval = acGuide + 10
+    lB = toB l :: c
+    rB = toB r :: c
+    toB = setPrecision (2*p) . convertExactly
     -- prc = getPrecision cp
 
 primitive_function ::

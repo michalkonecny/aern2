@@ -1,7 +1,15 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-unused-matches #-}
 {-# LANGUAGE CPP #-}
 -- #define POLYBALL
+-- #define DEBUG
 module Main where
+
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#else
+#define maybeTrace (\ (_ :: String) t -> t)
+#endif
 
 import Numeric.MixedTypes
 import Numeric.CatchingExceptions
@@ -29,8 +37,6 @@ import AERN2.RealFun.UnaryDFun
 
 import qualified AERN2.PPoly as PPoly
 import AERN2.PPoly (PPoly)
-
-import Debug.Trace
 
 #ifdef POLYBALL
 import AERN2.Poly.Ball (PolyBall, polyBall)
@@ -94,7 +100,9 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     [accuracyS] = effortArgs
 
     integratePB :: PolyEncl -> MPBall
-    integratePB f = f `integrateOverDom` (getDomain f)
+    integratePB f =
+      maybeTrace ("integratePB: accuracy f = " ++ show (getAccuracy f)) $
+      f `integrateOverDom` (getDomain f)
 
     maxPB :: PolyEncl -> MPBall
     maxPB f = f `maximumOverDom` (getDomain f)
@@ -272,7 +280,7 @@ rungeDeriv_B2B =
 
 runge_PP :: Accuracy -> PPoly
 runge_PP acGuide =
-  trace ("runge_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
+  maybeTrace ("runge_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
   inv
   where
   inv = setPrc2 $ PPoly.inverse $ encl2PPoly $ 100*x*x+1
@@ -308,7 +316,7 @@ rungeXDeriv_B2B =
 
 rungeX_PP :: Accuracy -> PPoly
 rungeX_PP acGuide =
-  trace ("rungeX_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
+  maybeTrace ("rungeX_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
   x * inv
   where
   inv = setPrc2 $ PPoly.inverse $ encl2PPoly $ 100*x*x+1
@@ -346,8 +354,8 @@ fracSinDeriv_B2B =
 
 fracSin_PP :: Accuracy -> PPoly
 fracSin_PP acGuide =
-  trace ("fracSin_PP: getAccuracy sine7x = " ++ show (getAccuracy sine7x)) $
-  trace ("fracSin_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
+  maybeTrace ("fracSin_PP: getAccuracy sine7x = " ++ show (getAccuracy sine7x)) $
+  maybeTrace ("fracSin_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
   inv
   where
   inv = setPrc2 $ PPoly.inverse $ encl2PPoly $ (10*(sine7x*sine7x)+1)
@@ -386,8 +394,8 @@ fracSinXDeriv_B2B =
     (1/(10*(sin (7*x))^2+1))
 fracSinX_PP :: Accuracy -> PPoly
 fracSinX_PP acGuide =
-  trace ("fracSinX_PP: getAccuracy sine7x = " ++ show (getAccuracy sine7x)) $
-  trace ("fracSinX_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
+  maybeTrace ("fracSinX_PP: getAccuracy sine7x = " ++ show (getAccuracy sine7x)) $
+  maybeTrace ("fracSinX_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
   x * inv
   where
   inv = setPrc2 $ PPoly.inverse $ encl2PPoly $ (10*(sine7x*sine7x)+1)

@@ -39,7 +39,8 @@ executable aern2-fnreps-ops
                     MultiParamTypeClasses,
                     RebindableSyntax,
                     TypeFamilies,
-                    TypeOperators
+                    TypeOperators,
+                    ScopedTypeVariables
   hs-source-dirs:  main
   ghc-options:     -O2 -Wall -rtsopts
   main-is:         fnreps-ops.hs

@@ -1,22 +1,22 @@
 computing integrate  x/(100x^2+1) over [-1,1]
-result = [1.296731855459439e-70 ± 8.923369343770192e-2](prec=456)
+result = [1.143917271004238e-70 ± 8.923369343770192e-2](prec=912)
 accuracy: bits 3
-precision = Precision 456
+precision = Precision 912
 	Command being timed: "aern2-fnreps-ops integrate rungeX poly 01"
-	User time (seconds): 6.80
+	User time (seconds): 6.60
 	System time (seconds): 0.03
 	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:06.83
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:06.62
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 18384
+	Maximum resident set size (kbytes): 17880
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 3756
+	Minor (reclaiming a frame) page faults: 2633
 	Voluntary context switches: 1
-	Involuntary context switches: 22
+	Involuntary context switches: 8
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8
