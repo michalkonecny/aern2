@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#define DEBUG
+-- #define DEBUG
 {-|
     Module      :  AERN2.RealFun.UnaryFun.Evaluation
     Description :  evaluation and range
@@ -129,12 +129,16 @@ evalOnIntervalGuessPrecision ::
   ->
   (DyadicInterval -> CatchingNumExceptions MPBall)
 evalOnIntervalGuessPrecision f (Interval l r) =
-    maybeTrace
-    (
-        "evalOnIntervalGuessPrecision:"
+    maybeTrace (
+        "evalOnIntervalGuessPrecision (1):"
         ++ "\n (l,r) = " ++ show (l,r)
         ++ "\n nl = " ++ show nl
-        ++ "\n precisions = " ++ show (take (int 10) precisions)
+        ++ "\n precisions = " ++ show (take (int 21) precisions)
+    ) $ maybeTrace (
+        "evalOnIntervalGuessPrecision (2):"
+        ++ "\n resultsWithIncreasingPrecision = " ++ show (take (int 21) resultsWithIncreasingPrecision)
+    ) $ maybeTrace (
+        "evalOnIntervalGuessPrecision (3):"
         ++ "\n result accuracy = " ++ show (getAccuracy result)
         ++ "\n result = " ++ show (result)
     ) $
@@ -220,7 +224,7 @@ maximumOnIntervalSubdivide evalOnInterval di =
         ++ "\n  seg = " ++ show seg
         ++ "\n  normLog(width(seg)) = " ++ show (getNormLog (Interval.width seg))
     -- ) $ maybeTrace (
-    --     "UnaryFun maximumOnIntervalSubdivide search:"
+    --     "UnaryFun maximumOnIntervalSubdivide search (2):"
         ++ "\n  nextL = " ++ show nextL
         ++ "\n  segValR = " ++ show segValR
         ++ "\n  currentBall = " ++ show currentBall
@@ -252,6 +256,16 @@ maximumOnIntervalSubdivide evalOnInterval di =
     seg2E = MaxSearchSegment seg2' seg2ValL seg2ValR
 
     fiEE s =
+      maybeTrace (
+          "UnaryFun maximumOnIntervalSubdivide search: fiEE:"
+          ++ "\n  s = " ++ show s
+      ) $ maybeTrace (
+          "UnaryFun maximumOnIntervalSubdivide search: fiEE:"
+          ++ "\n  maybeMonotone = " ++ show maybeMonotone
+      ) $ maybeTrace (
+          "UnaryFun maximumOnIntervalSubdivide search: fiEE:"
+          ++ "\n  fis = " ++ show fis
+      ) $
       case maybeMonotone of
         Nothing -> (gunzip $ fmap endpoints fis, s)
         Just (minB, maxB) -> ((minB, maxB), s)
@@ -268,6 +282,7 @@ data MaxSearchSegment =
         _maxSearchSegment_lowerBnd :: CatchingNumExceptions MPBall, -- should be exact
         _maxSearchSegment_upperBnd :: CatchingNumExceptions MPBall -- should be exact
     }
+    deriving (Show)
 
 instance P.Eq MaxSearchSegment where
     (MaxSearchSegment (Interval l1 r1) _ _) == (MaxSearchSegment (Interval l2 r2) _ _) =
