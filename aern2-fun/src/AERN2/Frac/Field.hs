@@ -26,7 +26,7 @@ instance CanDiv (Frac MPBall) (Frac MPBall) where
     (Interval l r) = chPoly_dom p0
     q0p1 = q0*p1
     m =
-      Cheb.minimumOptimisedWithAccuracy (bits 1) q0p1 (mpBall l) (mpBall r) 5 5
+      Cheb.minimumOptimisedWithAccuracy (bits 4) q0p1 (mpBall l) (mpBall r) 5 5
 
 instance CanDiv Integer (Frac MPBall) where
   type DivType Integer (Frac MPBall) = Frac MPBall

@@ -117,7 +117,8 @@ genericMaximum f dfs bts lBall rBall =
         let
           try  = f (setPrecision p x)
         in
-          if getAccuracy try <= ac then
+          if getAccuracy try >= bts
+          || getAccuracy try <= ac then
             try
           else
             aux (p + q) p (getAccuracy try)
@@ -138,7 +139,8 @@ genericMaximum f dfs bts lBall rBall =
           "new accuracy: "++(show $ getAccuracy try)++"\n"++
           "old accuracy: "++(show ac)
           ) $
-          if getAccuracy try <= ac then
+          if getAccuracy try >= bts
+          || getAccuracy try <= ac then
             try
           else
             aux (p + q) p (getAccuracy try)
