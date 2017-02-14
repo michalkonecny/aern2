@@ -1,12 +1,12 @@
 module AERN2.Frac.Type where
 
 import Numeric.MixedTypes
-import AERN2.MP.Precision
-import AERN2.MP.Accuracy
-import AERN2.MP.Ball
+import AERN2.MP
 import AERN2.Normalize
 import AERN2.Poly.Cheb as Cheb
-import AERN2.Poly.Basics as Poly
+
+import AERN2.Interval
+import AERN2.RealFun.Operations
 
 data Frac a =
   Frac {
@@ -36,6 +36,10 @@ instance (CanSetPrecision a, CanNormalize (ChPoly a)) => CanSetPrecision (Frac a
   setPrecision prc (Frac p q m) =
     Frac (setPrecision prc p) (setPrecision prc q) (setPrecision prc m)
 
+instance (HasDomain (Frac a)) where
+  type Domain (Frac a) = DyadicInterval
+  getDomain (Frac p _ _) = getDomain p
+
 fracLift1 :: (HasIntegers a) => (Frac a -> b) -> ChPoly a -> b
 fracLift1 f = f . fromPoly
 
@@ -47,4 +51,4 @@ fromPoly :: (HasIntegers a) => ChPoly a -> Frac a
 fromPoly chp@(ChPoly dom _ _) =
   Frac chp one (convertExactly 1)
   where
-  one = ChPoly dom (Poly $ Poly.terms_fromList [(0, convertExactly 1)]) Nothing
+  one = chPoly (dom, 1)
