@@ -7,15 +7,16 @@ import AERN2.MP.Ball
 import AERN2.Interval
 import AERN2.Frac.Type
 import AERN2.Poly.Cheb as Cheb
-import AERN2.Poly.Basics as Poly
+
+import AERN2.RealFun.Operations
 
 inverseWithLowerBound ::
   (Field a) => (ChPoly a) -> a -> Frac a
 inverseWithLowerBound p m =
   Frac one p (1/m)
   where
-  dom = chPoly_dom p
-  one = ChPoly dom (Poly $ Poly.terms_fromList [(0, convertExactly 1)]) Nothing
+  dom = getDomain p
+  one = chPoly (dom,1)
 
 instance CanDiv (Frac MPBall) (Frac MPBall) where
   type DivType (Frac MPBall) (Frac MPBall) = Frac MPBall
@@ -26,3 +27,10 @@ instance CanDiv (Frac MPBall) (Frac MPBall) where
     q0p1 = q0*p1
     m =
       Cheb.minimumOptimisedWithAccuracy (bits 1) q0p1 (mpBall l) (mpBall r) 5 5
+
+instance CanDiv Integer (Frac MPBall) where
+  type DivType Integer (Frac MPBall) = Frac MPBall
+  divide n f = divide nFR f
+    where
+    nFR = fromPoly $ chPoly (dom,n) :: Frac MPBall
+    dom = getDomain f
