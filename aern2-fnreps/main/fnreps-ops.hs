@@ -1,6 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-unused-matches #-}
 {-# LANGUAGE CPP #-}
--- #define POLYBALL
 -- #define DEBUG
 module Main where
 
@@ -38,27 +37,11 @@ import AERN2.RealFun.UnaryDFun
 import qualified AERN2.PPoly as PPoly
 import AERN2.PPoly (PPoly)
 
-#ifdef POLYBALL
-import AERN2.Poly.Ball (PolyBall, polyBall)
-type PolyEncl = PolyBall
-polyEncl = polyBall
-liftEncl2PPoly = PPoly.liftBall2PPoly
-encl2PPoly = PPoly.fromPolyBall
-#else
+import qualified AERN2.Frac as Frac
+import AERN2.Frac (Frac)
+
 import AERN2.Poly.Cheb (ChPoly, chPolyMPBall)
 import qualified AERN2.Poly.Cheb as ChPoly
-type PolyEncl = ChPoly MPBall
-polyEncl = chPolyMPBall
-liftEncl2PPoly = PPoly.liftCheb2PPoly
-encl2PPoly = PPoly.fromPoly
-#endif
-polyEncl :: (DyadicInterval, Integer) -> PolyEncl
-liftEncl2PPoly :: (PolyEncl -> PolyEncl) -> (PPoly -> PPoly)
-encl2PPoly :: PolyEncl -> PPoly
-
-
--- import FnReps.Polynomial.UnaryCheb.Poly (compose,absX,absXshifted, reduceDegreeAndSweep)
--- import qualified FnReps.PiecewisePolynomial.UnaryCheb.PPoly.Benchmarks as PPolyBench
 
 main :: IO ()
 main =
@@ -99,12 +82,12 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     accuracy = bits $ (read accuracyS :: Int)
     [accuracyS] = effortArgs
 
-    integratePB :: PolyEncl -> MPBall
+    integratePB :: ChPoly MPBall -> MPBall
     integratePB f =
       maybeTrace ("integratePB: accuracy f = " ++ show (getAccuracy f)) $
       f `integrateOverDom` (getDomain f)
 
-    maxPB :: PolyEncl -> MPBall
+    maxPB :: ChPoly MPBall -> MPBall
     maxPB f = f `maximumOverDom` (getDomain f)
 
     maxPP :: PPoly -> MPBall
@@ -152,7 +135,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 processArgs _ =
     error "expecting arguments: <operationCode> <functionCode> <representationCode> <effort parameters...>"
 
-functions :: Map.Map String (String, Accuracy -> PolyEncl, UnaryFun, UnaryFun, Accuracy -> PPoly)
+functions :: Map.Map String (String, Accuracy -> ChPoly MPBall, UnaryFun, UnaryFun, Accuracy -> PPoly)
 functions =
     Map.fromList
     [
@@ -173,13 +156,13 @@ functions =
 sinecos_Name :: String
 sinecos_Name = "sin(10x)+cos(20x) over [-1,1]"
 
-sinecos_PB :: Accuracy -> PolyEncl
+sinecos_PB :: Accuracy -> ChPoly MPBall
 sinecos_PB acGuide =
   sine(10*x)+cosine(20*x)
   where
   sine = sineWithAccuracyGuide acGuide
   cosine = cosineWithAccuracyGuide acGuide
-  x = varFn (polyEncl (unaryIntervalDom, 0)) ()
+  x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 sinecos_B2B :: UnaryFun
 sinecos_B2B =
@@ -198,13 +181,13 @@ sinecos_PP =
 sinesine_Name :: String
 sinesine_Name = "sin(10x+sin(20x^2)) over [-1,1]"
 
-sinesine_PB :: Accuracy -> PolyEncl
+sinesine_PB :: Accuracy -> ChPoly MPBall
 sinesine_PB acGuide =
   sine2(10*x + sine1(20*x*x))
   where
   sine1 = sineWithAccuracyGuide (acGuide+2)
   sine2 = sineWithAccuracyGuide acGuide
-  x = varFn (polyEncl (unaryIntervalDom, 0)) ()
+  x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 sinesine_B2B :: UnaryFun
 sinesine_B2B =
@@ -225,7 +208,7 @@ sinesineCos_Name :: String
 sinesineCos_Name = "sin(10x+sin(20x^2)) + cos(10x) over [-1,1]"
 -- sinesineCos_Name = "sin(10x+sin(20x^2)) + sin(10x) over [-1,1]"
 
-sinesineCos_PB :: Accuracy -> PolyEncl
+sinesineCos_PB :: Accuracy -> ChPoly MPBall
 sinesineCos_PB acGuide =
   sine2(10*x + sine1(20*x*x))
     + cosine2(10*x)
@@ -234,7 +217,7 @@ sinesineCos_PB acGuide =
   sine1 = sineWithAccuracyGuide (acGuide+2)
   sine2 = sineWithAccuracyGuide acGuide
   cosine2 = cosineWithAccuracyGuide acGuide
-  x = varFn (polyEncl (unaryIntervalDom, 0)) ()
+  x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 sinesineCos_B2B :: UnaryFun
 sinesineCos_B2B =
@@ -258,13 +241,13 @@ sinesineCos_PP acGuide =
 runge_Name :: String
 runge_Name = "1/(100x^2+1) over [-1,1]"
 
-runge_PB :: Accuracy -> PolyEncl
+runge_PB :: Accuracy -> ChPoly MPBall
 runge_PB acGuide =
   ChPoly.chebDivideDCT acGuide (x-x+1) denom
   where
   denom = 100*(x*x)+1
   x = setPrc1 xPre
-  xPre = varFn (polyEncl (unaryIntervalDom, 0)) ()
+  xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   setPrc1 :: (CanSetPrecision t) => t -> t
   setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
 
@@ -283,9 +266,9 @@ runge_PP acGuide =
   maybeTrace ("runge_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
   inv
   where
-  inv = setPrc2 $ PPoly.inverse $ encl2PPoly $ 100*x*x+1
+  inv = setPrc2 $ PPoly.inverse $ PPoly.fromPoly $ 100*x*x+1
   x = setPrc1 xPre
-  xPre = varFn (polyEncl (unaryIntervalDom, 0)) ()
+  xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   setPrc2 :: (CanSetPrecision t) => t -> t
   setPrc2 = setPrecisionAtLeastAccuracy (10*acGuide)
   setPrc1 :: (CanSetPrecision t) => t -> t
@@ -294,13 +277,13 @@ runge_PP acGuide =
 rungeX_Name :: String
 rungeX_Name = "x/(100x^2+1) over [-1,1]"
 
-rungeX_PB :: Accuracy -> PolyEncl
+rungeX_PB :: Accuracy -> ChPoly MPBall
 rungeX_PB acGuide =
   ChPoly.chebDivideDCT acGuide x denom
   where
   denom = 100*(x*x)+1
   x = setPrc1 xPre
-  xPre = varFn (polyEncl (unaryIntervalDom, 0)) ()
+  xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   setPrc1 :: (CanSetPrecision t) => t -> t
   setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
 
@@ -319,9 +302,9 @@ rungeX_PP acGuide =
   maybeTrace ("rungeX_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
   x * inv
   where
-  inv = setPrc2 $ PPoly.inverse $ encl2PPoly $ 100*x*x+1
+  inv = setPrc2 $ PPoly.inverse $ PPoly.fromPoly $ 100*x*x+1
   x = setPrc1 xPre
-  xPre = varFn (polyEncl (unaryIntervalDom, 0)) ()
+  xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   setPrc2 :: (CanSetPrecision t) => t -> t
   setPrc2 = setPrecisionAtLeastAccuracy (10*acGuide)
   setPrc1 :: (CanSetPrecision t) => t -> t
@@ -330,7 +313,7 @@ rungeX_PP acGuide =
 fracSin_Name :: String
 fracSin_Name = "1/(10(sin(7x))^2+1) over [-1,1]"
 
-fracSin_PB :: Accuracy -> PolyEncl
+fracSin_PB :: Accuracy -> ChPoly MPBall
 fracSin_PB acGuide =
   ChPoly.chebDivideDCT acGuide (x-x+1) denom
   where
@@ -338,7 +321,7 @@ fracSin_PB acGuide =
   sine7x = sine1 (7*x)
   sine1 = sineWithAccuracyGuide (acGuide + 10)
   x = setPrc1 xPre
-  xPre = varFn (polyEncl (unaryIntervalDom, 0)) ()
+  xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   setPrc1 :: (CanSetPrecision t) => t -> t
   setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
 
@@ -358,11 +341,11 @@ fracSin_PP acGuide =
   maybeTrace ("fracSin_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
   inv
   where
-  inv = setPrc2 $ PPoly.inverse $ encl2PPoly $ (10*(sine7x*sine7x)+1)
+  inv = setPrc2 $ PPoly.inverse $ PPoly.fromPoly $ (10*(sine7x*sine7x)+1)
   sine7x = sine1 (7*x)
   sine1 = sineWithAccuracyGuide (acGuide + 10)
   x = setPrc1 xPre
-  xPre = varFn (polyEncl (unaryIntervalDom, 0)) ()
+  xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   setPrc2 :: (CanSetPrecision t) => t -> t
   setPrc2 = setPrecisionAtLeastAccuracy (10*acGuide)
   setPrc1 :: (CanSetPrecision t) => t -> t
@@ -371,7 +354,7 @@ fracSin_PP acGuide =
 fracSinX_Name :: String
 fracSinX_Name = "x/(10(sin(7x))^2+1) over [-1,1]"
 
-fracSinX_PB :: Accuracy -> PolyEncl
+fracSinX_PB :: Accuracy -> ChPoly MPBall
 fracSinX_PB acGuide =
   error $ "Not (yet) supporting Poly for: " ++ fracSinX_Name
     -- let sx = setMaxDegree d2 $ sin (7*x) in x/(10*sx*sx+1)
@@ -398,11 +381,11 @@ fracSinX_PP acGuide =
   maybeTrace ("fracSinX_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
   x * inv
   where
-  inv = setPrc2 $ PPoly.inverse $ encl2PPoly $ (10*(sine7x*sine7x)+1)
+  inv = setPrc2 $ PPoly.inverse $ PPoly.fromPoly $ (10*(sine7x*sine7x)+1)
   sine7x = sine1 (7*x)
   sine1 = sineWithAccuracyGuide (acGuide + 10)
   x = setPrc1 xPre
-  xPre = varFn (polyEncl (unaryIntervalDom, 0)) ()
+  xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   setPrc2 :: (CanSetPrecision t) => t -> t
   setPrc2 = setPrecisionAtLeastAccuracy (10*acGuide)
   setPrc1 :: (CanSetPrecision t) => t -> t
@@ -411,7 +394,7 @@ fracSinX_PP acGuide =
 hat_Name :: String
 hat_Name = "1-|x+1/3| over [-1,1]"
 
-hat_PB :: Accuracy -> PolyEncl
+hat_PB :: Accuracy -> ChPoly MPBall
 hat_PB acGuide =
   error $ "Not (yet) supporting Poly for: " ++ hat_Name
   -- 1 - (PolyBall (absXshifted p d) (Interval (-1.0) (1.0)) d NormZero)
@@ -438,7 +421,7 @@ hat_PP acGuide =
 bumpy_Name :: String
 bumpy_Name = "max(sin(10x),cos(11x)) over [-1,1]"
 
-bumpy_PB :: Accuracy -> PolyEncl
+bumpy_PB :: Accuracy -> ChPoly MPBall
 bumpy_PB acGuide =
   error $ "Not (yet) supporting Poly for: " ++ bumpy_Name
     -- PolyBall (maxViaAbs sin10x cos11x) (Interval (-1.0) (1.0)) d1 NormZero
