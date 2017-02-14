@@ -37,11 +37,13 @@ import AERN2.RealFun.UnaryDFun
 import qualified AERN2.PPoly as PPoly
 import AERN2.PPoly (PPoly)
 
+import AERN2.Poly.Cheb (ChPoly, chPolyMPBall)
+import qualified AERN2.Poly.Cheb as ChPoly
+
 import qualified AERN2.Frac as Frac
 import AERN2.Frac (Frac)
 
-import AERN2.Poly.Cheb (ChPoly, chPolyMPBall)
-import qualified AERN2.Poly.Cheb as ChPoly
+type FracMB = Frac MPBall
 
 main :: IO ()
 main =
@@ -51,7 +53,7 @@ main =
     putStrLn $ computationDescription
     putStrLn $ "result = " ++ show result
     -- putStrLn $ "result ~ " ++ showB result
-    putStrLn $ "accuracy: " ++ (show $ getAccuracy result)
+    putStrLn $ "accuracy: " ++ show (getAccuracy result)
     putStrLn $ "precision = " ++ show (getPrecision result)
     where
     -- showB = show . getApproximate (bits 30)
@@ -76,19 +78,22 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
             ("poly", "integrate") -> integratePB $ fnPB accuracy
             ("ppoly", "max") -> maxPP $ fnPP accuracy
             ("ppoly", "integrate") -> integratePP $ fnPP accuracy
+            ("frac", "max") -> maxFR $ fnFR accuracy
+            ("frac", "integrate") -> integrateFR $ fnFR accuracy
             _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
-    (Just (fnDescription, fnPB, fnB2B, dfnB2B, fnPP)) = Map.lookup functionCode functions
+    (Just (fnDescription, fnPB, fnB2B, dfnB2B, fnPP, fnFR)) = Map.lookup functionCode functions
 
     accuracy = bits $ (read accuracyS :: Int)
     [accuracyS] = effortArgs
+
+
+    maxPB :: ChPoly MPBall -> MPBall
+    maxPB f = f `maximumOverDom` (getDomain f)
 
     integratePB :: ChPoly MPBall -> MPBall
     integratePB f =
       maybeTrace ("integratePB: accuracy f = " ++ show (getAccuracy f)) $
       f `integrateOverDom` (getDomain f)
-
-    maxPB :: ChPoly MPBall -> MPBall
-    maxPB f = f `maximumOverDom` (getDomain f)
 
     maxPP :: PPoly -> MPBall
     maxPP f = f `maximumOverDomPP` (getDomain f)
@@ -105,6 +110,22 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
       where
       integrateOverDomPP ff (Interval l r) =
         PPoly.integral ff (mpBall l) (mpBall r)
+
+    maxFR :: FracMB -> MPBall
+    maxFR f = f `maximumOverDomFR` (getDomain f)
+      where
+      maximumOverDomFR f2 (Interval l r) =
+        Frac.maximum f2 lB rB
+        where
+        lB = setPrecision prc $ mpBall l
+        rB = setPrecision prc $ mpBall r
+        prc = getPrecision f2
+
+    integrateFR :: FracMB -> MPBall
+    integrateFR f = f `integrateOverDomFR` (getDomain f)
+      where
+      integrateOverDomFR ff (Interval l r) =
+        Frac.integral ff (mpBall l) (mpBall r)
 
     maxFun :: UnaryFun -> Accuracy -> MPBall
     maxFun fn ac =
@@ -135,19 +156,19 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 processArgs _ =
     error "expecting arguments: <operationCode> <functionCode> <representationCode> <effort parameters...>"
 
-functions :: Map.Map String (String, Accuracy -> ChPoly MPBall, UnaryFun, UnaryFun, Accuracy -> PPoly)
+functions :: Map.Map String (String, Accuracy -> ChPoly MPBall, UnaryFun, UnaryFun, Accuracy -> PPoly, Accuracy -> FracMB)
 functions =
     Map.fromList
     [
-        ("sine+cos", (sinecos_Name, sinecos_PB, sinecos_B2B, sinecosDeriv_B2B, sinecos_PP)),
-        ("sinesine", (sinesine_Name, sinesine_PB, sinesine_B2B, sinesineDeriv_B2B, sinesine_PP)),
-        ("sinesine+cos", (sinesineCos_Name, sinesineCos_PB, sinesineCos_B2B, sinesineCosDeriv_B2B, sinesineCos_PP)),
-        ("runge", (runge_Name, runge_PB, runge_B2B, rungeDeriv_B2B, runge_PP)),
-        ("rungeX", (rungeX_Name, rungeX_PB, rungeX_B2B, rungeXDeriv_B2B, rungeX_PP)),
-        ("fracSin", (fracSin_Name, fracSin_PB, fracSin_B2B, fracSinDeriv_B2B, fracSin_PP)),
-        ("fracSinX", (fracSinX_Name, fracSinX_PB, fracSinX_B2B, fracSinXDeriv_B2B, fracSinX_PP)),
-        ("hat", (hat_Name, hat_PB, hat_B2B, hatDeriv_B2B, hat_PP)),
-        ("bumpy", (bumpy_Name, bumpy_PB, bumpy_B2B, bumpyDeriv_B2B, bumpy_PP))
+        ("sine+cos", (sinecos_Name, sinecos_PB, sinecos_B2B, sinecosDeriv_B2B, sinecos_PP, sinecos_FR)),
+        ("sinesine", (sinesine_Name, sinesine_PB, sinesine_B2B, sinesineDeriv_B2B, sinesine_PP, sinesine_FR)),
+        ("sinesine+cos", (sinesineCos_Name, sinesineCos_PB, sinesineCos_B2B, sinesineCosDeriv_B2B, sinesineCos_PP, sinesineCos_FR)),
+        ("runge", (runge_Name, runge_PB, runge_B2B, rungeDeriv_B2B, runge_PP, runge_FR)),
+        ("rungeX", (rungeX_Name, rungeX_PB, rungeX_B2B, rungeXDeriv_B2B, rungeX_PP, rungeX_FR)),
+        ("fracSin", (fracSin_Name, fracSin_PB, fracSin_B2B, fracSinDeriv_B2B, fracSin_PP, fracSin_FR)),
+        ("fracSinX", (fracSinX_Name, fracSinX_PB, fracSinX_B2B, fracSinXDeriv_B2B, fracSinX_PP, fracSinX_FR)),
+        ("hat", (hat_Name, hat_PB, hat_B2B, hatDeriv_B2B, hat_PP, hat_FR)),
+        ("bumpy", (bumpy_Name, bumpy_PB, bumpy_B2B, bumpyDeriv_B2B, bumpy_PP, bumpy_FR))
     ]
 
 -- data Operator = OpMax | OpIntegrate
@@ -178,6 +199,10 @@ sinecos_PP :: Accuracy -> PPoly
 sinecos_PP =
   error $ "Not (yet) supporting PPoly for: " ++ sinecos_Name
 
+sinecos_FR :: Accuracy -> FracMB
+sinecos_FR =
+  error $ "Not (yet) supporting Frac for: " ++ sinecos_Name
+
 sinesine_Name :: String
 sinesine_Name = "sin(10x+sin(20x^2)) over [-1,1]"
 
@@ -203,6 +228,10 @@ sinesine_PP :: Accuracy -> PPoly
 sinesine_PP acGuide =
   error $ "Not (yet) supporting PPoly for: " ++ sinesine_Name
     -- PPolyBench.sinesineMax deg deg rangeAcc p
+
+sinesine_FR :: Accuracy -> FracMB
+sinesine_FR acGuide =
+  error $ "Not (yet) supporting Frac for: " ++ sinesine_Name
 
 sinesineCos_Name :: String
 sinesineCos_Name = "sin(10x+sin(20x^2)) + cos(10x) over [-1,1]"
@@ -236,7 +265,10 @@ sinesineCosDeriv_B2B =
 sinesineCos_PP :: Accuracy -> PPoly
 sinesineCos_PP acGuide =
   error $ "Not (yet) supporting PPoly for: " ++ sinesineCos_Name
-  -- PPolyBench.sinesineCosMax deg deg rangeAcc p
+
+sinesineCos_FR :: Accuracy -> FracMB
+sinesineCos_FR acGuide =
+  error $ "Not (yet) supporting Frac for: " ++ sinesineCos_Name
 
 runge_Name :: String
 runge_Name = "1/(100x^2+1) over [-1,1]"
@@ -253,8 +285,7 @@ runge_PB acGuide =
 
 runge_B2B :: UnaryFun
 runge_B2B =
-  UnaryFun unaryIntervalDom $ \x ->
-    1/(100*x^2+1)
+  UnaryFun unaryIntervalDom $ \x ->    1/(100*x^2+1)
 
 rungeDeriv_B2B :: UnaryFun
 rungeDeriv_B2B =
@@ -273,6 +304,13 @@ runge_PP acGuide =
   setPrc2 = setPrecisionAtLeastAccuracy (10*acGuide)
   setPrc1 :: (CanSetPrecision t) => t -> t
   setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
+
+runge_FR :: Accuracy -> FracMB
+runge_FR acGuide =
+  inv
+  where
+  inv = 1 / (Frac.fromPoly $ 100*x*x+1)
+  x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 rungeX_Name :: String
 rungeX_Name = "x/(100x^2+1) over [-1,1]"
@@ -309,6 +347,13 @@ rungeX_PP acGuide =
   setPrc2 = setPrecisionAtLeastAccuracy (10*acGuide)
   setPrc1 :: (CanSetPrecision t) => t -> t
   setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
+
+rungeX_FR :: Accuracy -> FracMB
+rungeX_FR acGuide =
+  inv
+  where
+  inv = (Frac.fromPoly x) / (Frac.fromPoly $ 100*x*x+1)
+  x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 fracSin_Name :: String
 fracSin_Name = "1/(10(sin(7x))^2+1) over [-1,1]"
@@ -351,6 +396,15 @@ fracSin_PP acGuide =
   setPrc1 :: (CanSetPrecision t) => t -> t
   setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
 
+fracSin_FR :: Accuracy -> FracMB
+fracSin_FR acGuide =
+  inv
+  where
+  inv = 1 / (Frac.fromPoly $ (10*(sine7x*sine7x)+1))
+  sine7x = sine1 (7*x)
+  sine1 = sineWithAccuracyGuide (acGuide + 10)
+  x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+
 fracSinX_Name :: String
 fracSinX_Name = "x/(10(sin(7x))^2+1) over [-1,1]"
 
@@ -391,6 +445,15 @@ fracSinX_PP acGuide =
   setPrc1 :: (CanSetPrecision t) => t -> t
   setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
 
+fracSinX_FR :: Accuracy -> FracMB
+fracSinX_FR acGuide =
+  inv
+  where
+  inv = (Frac.fromPoly x) / (Frac.fromPoly $ (10*(sine7x*sine7x)+1))
+  sine7x = sine1 (7*x)
+  sine1 = sineWithAccuracyGuide (acGuide + 10)
+  x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+
 hat_Name :: String
 hat_Name = "1-|x+1/3| over [-1,1]"
 
@@ -416,7 +479,10 @@ hatDeriv_B2B =
 hat_PP :: Accuracy -> PPoly
 hat_PP acGuide =
   error $ "Not (yet) supporting PPoly for: " ++ hat_Name
-  -- PPolyBench.hatMax p rangeAcc
+
+hat_FR :: Accuracy -> FracMB
+hat_FR acGuide =
+  error $ "Not (yet) supporting Frac for: " ++ hat_Name
 
 bumpy_Name :: String
 bumpy_Name = "max(sin(10x),cos(11x)) over [-1,1]"
@@ -451,6 +517,10 @@ bumpyDeriv_B2B =
 bumpy_PP :: Accuracy -> PPoly
 bumpy_PP acGuide =
   error $ "Not yet supporting PPoly for: " ++ bumpy_Name
+
+bumpy_FR :: Accuracy -> FracMB
+bumpy_FR acGuide =
+  error $ "Not yet supporting Frac for: " ++ bumpy_Name
 
 unaryIntervalDom :: DyadicInterval
 unaryIntervalDom = dyadicInterval (-1,1)
