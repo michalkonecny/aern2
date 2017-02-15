@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 -- #define DEBUG
 {-|
-    Module      :  AERN2.RealFun.UnaryFun.Evaluation
+    Module      :  AERN2.RealFun.UnaryBallFun.Evaluation
     Description :  evaluation and range
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -13,7 +13,7 @@
     Evaluation and range computation
 -}
 
-module AERN2.RealFun.UnaryFun.Evaluation
+module AERN2.RealFun.UnaryBallFun.Evaluation
 (
   evalOnIntervalGuessPrecision
   , minimumOnIntervalSubdivide
@@ -57,26 +57,26 @@ import AERN2.Interval (Interval(..), DyadicInterval, RealInterval)
 import qualified AERN2.Interval as Interval
 import AERN2.RealFun.Operations
 
-import AERN2.RealFun.UnaryFun.Type
+import AERN2.RealFun.UnaryBallFun.Type
 
-instance CanApply UnaryFun MPBall where
-  type ApplyType UnaryFun MPBall = MPBall
-  apply f@(UnaryFun _ eval) =
+instance CanApply UnaryBallFun MPBall where
+  type ApplyType UnaryBallFun MPBall = MPBall
+  apply f@(UnaryBallFun _ eval) =
     ifCertainExceptionDie "UnafyFn application"
       . eval . checkInDom f . catchingNumExceptions
 
 checkInDom ::
   (HasOrderCertainly t Dyadic, CanMinMaxThis t Dyadic)
   =>
-  UnaryFun -> CatchingNumExceptions t -> CatchingNumExceptions t
+  UnaryBallFun -> CatchingNumExceptions t -> CatchingNumExceptions t
 checkInDom f cx =
   case cx ^. numEXC_maybeValue of
     Just x
       | domL !<=! x && x !<=! domR -> cx
       | x !<! domL || domL !<! x ->
-        addCertainException cxIntersected (OutOfRange "apply UnaryFun: argument out of function domain")
+        addCertainException cxIntersected (OutOfRange "apply UnaryBallFun: argument out of function domain")
       | otherwise ->
-        addPotentialException cx (OutOfRange "apply UnaryFun: argument out of function domain")
+        addPotentialException cx (OutOfRange "apply UnaryBallFun: argument out of function domain")
       where
       cxIntersected = cx & numEXC_maybeValue .~ (Just $ min domR $ max domL x)
     _ -> cx
@@ -84,44 +84,44 @@ checkInDom f cx =
   Interval domL domR = unaryFun_Domain f
 
 instance
-  -- (CanApply UnaryFun t, HasOrderCertainly t Dyadic, CanMinMaxThis t Dyadic)
+  -- (CanApply UnaryBallFun t, HasOrderCertainly t Dyadic, CanMinMaxThis t Dyadic)
   -- =>
-  CanApply UnaryFun (CatchingNumExceptions MPBall)
+  CanApply UnaryBallFun (CatchingNumExceptions MPBall)
   where
-  type ApplyType UnaryFun (CatchingNumExceptions MPBall) = CatchingNumExceptions MPBall
-  apply f@(UnaryFun _ eval) cx =
+  type ApplyType UnaryBallFun (CatchingNumExceptions MPBall) = CatchingNumExceptions MPBall
+  apply f@(UnaryBallFun _ eval) cx =
      eval (checkInDom f cx)
 
-instance (QAArrow to) => CanApply UnaryFun (CauchyRealA to) where
-  type ApplyType UnaryFun (CauchyRealA to) = (CauchyRealA to)
+instance (QAArrow to) => CanApply UnaryBallFun (CauchyRealA to) where
+  type ApplyType UnaryBallFun (CauchyRealA to) = (CauchyRealA to)
   apply f =
     unaryOp "apply" (apply f) (getInitQ1FromSimple (arr id))
 
-instance CanApply UnaryFun Integer where
-  type ApplyType UnaryFun Integer = CauchyReal
+instance CanApply UnaryBallFun Integer where
+  type ApplyType UnaryBallFun Integer = CauchyReal
   apply f = apply f . real
 
-instance CanApply UnaryFun Int where
-  type ApplyType UnaryFun Int = CauchyReal
+instance CanApply UnaryBallFun Int where
+  type ApplyType UnaryBallFun Int = CauchyReal
   apply f = apply f . real
 
-instance CanApply UnaryFun Dyadic where
-  type ApplyType UnaryFun Dyadic = CauchyReal
+instance CanApply UnaryBallFun Dyadic where
+  type ApplyType UnaryBallFun Dyadic = CauchyReal
   apply f = apply f . real
 
-instance CanApply UnaryFun DyadicInterval where
-  type ApplyType UnaryFun DyadicInterval = RealInterval
+instance CanApply UnaryBallFun DyadicInterval where
+  type ApplyType UnaryBallFun DyadicInterval = RealInterval
   apply f di =
     Interval (minimumOverDom f di) (maximumOverDom f di)
 
-instance CanMaximiseOverDom UnaryFun DyadicInterval where
-  type MaximumOverDomType UnaryFun DyadicInterval = CauchyReal
-  maximumOverDom (UnaryFun _ f) =
+instance CanMaximiseOverDom UnaryBallFun DyadicInterval where
+  type MaximumOverDomType UnaryBallFun DyadicInterval = CauchyReal
+  maximumOverDom (UnaryBallFun _ f) =
     maximumOnIntervalSubdivide (((,) Nothing) . evalOnIntervalGuessPrecision f)
 
-instance CanMinimiseOverDom UnaryFun DyadicInterval where
-  type MinimumOverDomType UnaryFun DyadicInterval = CauchyReal
-  minimumOverDom (UnaryFun _ f) =
+instance CanMinimiseOverDom UnaryBallFun DyadicInterval where
+  type MinimumOverDomType UnaryBallFun DyadicInterval = CauchyReal
+  minimumOverDom (UnaryBallFun _ f) =
     minimumOnIntervalSubdivide (((,) Nothing) . evalOnIntervalGuessPrecision f)
 
 evalOnIntervalGuessPrecision ::
@@ -220,11 +220,11 @@ maximumOnIntervalSubdivide evalOnInterval di =
     fi = evalOnInterval
   search fi prevL prevQueue =
     maybeTrace (
-        "UnaryFun maximumOnIntervalSubdivide search:"
+        "UnaryBallFun maximumOnIntervalSubdivide search:"
         ++ "\n  seg = " ++ show seg
         ++ "\n  normLog(width(seg)) = " ++ show (getNormLog (Interval.width seg))
     -- ) $ maybeTrace (
-    --     "UnaryFun maximumOnIntervalSubdivide search (2):"
+    --     "UnaryBallFun maximumOnIntervalSubdivide search (2):"
         ++ "\n  nextL = " ++ show nextL
         ++ "\n  segValR = " ++ show segValR
         ++ "\n  currentBall = " ++ show currentBall
@@ -257,13 +257,13 @@ maximumOnIntervalSubdivide evalOnInterval di =
 
     fiEE s =
       maybeTrace (
-          "UnaryFun maximumOnIntervalSubdivide search: fiEE:"
+          "UnaryBallFun maximumOnIntervalSubdivide search: fiEE:"
           ++ "\n  s = " ++ show s
       ) $ maybeTrace (
-          "UnaryFun maximumOnIntervalSubdivide search: fiEE:"
+          "UnaryBallFun maximumOnIntervalSubdivide search: fiEE:"
           ++ "\n  maybeMonotone = " ++ show maybeMonotone
       ) $ maybeTrace (
-          "UnaryFun maximumOnIntervalSubdivide search: fiEE:"
+          "UnaryBallFun maximumOnIntervalSubdivide search: fiEE:"
           ++ "\n  fis = " ++ show fis
       ) $
       case maybeMonotone of

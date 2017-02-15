@@ -34,4 +34,4 @@ where
 --
 -- import AERN2.Interval
 -- import AERN2.RealFun.Operations
--- import AERN2.RealFun.UnaryFun
+-- import AERN2.RealFun.UnaryBallFun

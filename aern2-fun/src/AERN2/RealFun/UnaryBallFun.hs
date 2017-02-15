@@ -1,5 +1,5 @@
 {-|
-    Module      :  AERN2.RealFun.UnaryFun
+    Module      :  AERN2.RealFun.UnaryBallFun
     Description :  Real functions represented by MPBall evaluators
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -11,9 +11,9 @@
     Real functions represented by MPBall evaluators
 -}
 
-module AERN2.RealFun.UnaryFun
+module AERN2.RealFun.UnaryBallFun
 (
-  UnaryFun(..), unaryFun
+  UnaryBallFun(..), unaryFun
 )
 where
 
@@ -21,6 +21,6 @@ where
 -- import qualified Prelude as P
 -- import Text.Printf
 
-import AERN2.RealFun.UnaryFun.Type
-import AERN2.RealFun.UnaryFun.Evaluation ()
-import AERN2.RealFun.UnaryFun.Integration ()
+import AERN2.RealFun.UnaryBallFun.Type
+import AERN2.RealFun.UnaryBallFun.Evaluation ()
+import AERN2.RealFun.UnaryBallFun.Integration ()

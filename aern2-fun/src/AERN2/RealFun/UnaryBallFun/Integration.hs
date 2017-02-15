@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 -- #define DEBUG
 {-|
-    Module      :  AERN2.RealFun.UnaryFun.Integration
+    Module      :  AERN2.RealFun.UnaryBallFun.Integration
     Description :  unary function integration
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -13,7 +13,7 @@
     Unary function integration
 -}
 
-module AERN2.RealFun.UnaryFun.Integration
+module AERN2.RealFun.UnaryBallFun.Integration
 (
   integralOnIntervalSubdivide
 , integralOnIntervalIncreasePrecision
@@ -51,11 +51,11 @@ import AERN2.Interval (DyadicInterval)
 import qualified AERN2.Interval as Interval
 import AERN2.RealFun.Operations
 
-import AERN2.RealFun.UnaryFun.Type
-import AERN2.RealFun.UnaryFun.Evaluation ()
+import AERN2.RealFun.UnaryBallFun.Type
+import AERN2.RealFun.UnaryBallFun.Evaluation ()
 
-instance CanIntegrateOverDom UnaryFun DyadicInterval where
-  type IntegralOverDomType UnaryFun DyadicInterval = CauchyReal
+instance CanIntegrateOverDom UnaryBallFun DyadicInterval where
+  type IntegralOverDomType UnaryBallFun DyadicInterval = CauchyReal
   integrateOverDom f =
     integralOnIntervalSubdivide (integralOnIntervalIncreasePrecision getArea) standardPrecisions
     -- integralOnIntervalSubdivide (\s di _ac -> (s, getArea di)) standardPrecisions
@@ -71,7 +71,7 @@ integralOnIntervalIncreasePrecision ::
   [Precision] -> DyadicInterval -> Accuracy ->
   ([Precision], CatchingNumExceptions MPBall)
 integralOnIntervalIncreasePrecision _getArea [] _di _ac =
-  error "AERN2.RealFun.UnaryFun: internal error in integrateOverDom"
+  error "AERN2.RealFun.UnaryBallFun: internal error in integrateOverDom"
 integralOnIntervalIncreasePrecision getArea ps@(p1_O:_) di ac =
   aux (getArea di p1_O) ps
   where

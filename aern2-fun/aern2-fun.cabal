@@ -62,11 +62,11 @@ library
     AERN2.Interval
     AERN2.RealFun.Operations
     AERN2.RealFun.Tests
-    AERN2.RealFun.UnaryFun
-    AERN2.RealFun.UnaryFun.Type
-    AERN2.RealFun.UnaryFun.Evaluation
-    AERN2.RealFun.UnaryFun.Integration
-    AERN2.RealFun.UnaryDFun
+    AERN2.RealFun.UnaryBallFun
+    AERN2.RealFun.UnaryBallFun.Type
+    AERN2.RealFun.UnaryBallFun.Evaluation
+    AERN2.RealFun.UnaryBallFun.Integration
+    AERN2.RealFun.UnaryBallDFun
     AERN2.RealFun.SineCosine
     AERN2.Poly
     AERN2.Poly.Conversion

@@ -36,8 +36,8 @@ import AERN2.MP.Dyadic
 
 import AERN2.Interval
 import AERN2.RealFun.Operations
-import AERN2.RealFun.UnaryFun
--- import AERN2.RealFun.UnaryDFun
+import AERN2.RealFun.UnaryBallFun
+-- import AERN2.RealFun.UnaryBallDFun
 
 import AERN2.Poly.Basics
 import AERN2.Poly.Cheb.Type
@@ -185,31 +185,31 @@ instance CanApplyApprox (ChPoly MPBall) DyadicInterval where
 
 -- instance CanApply (ChPoly MPBall) DyadicInterval where
 --   type ApplyType (ChPoly MPBall) DyadicInterval = (Interval CauchyReal CauchyReal, ErrorBound)
---   apply = rangeViaUnaryFun
+--   apply = rangeViaUnaryBallFun
 --   -- apply = rangeViaRoots
 
--- rangeViaUnaryFun :: (ChPoly MPBall) -> DyadicInterval -> (Interval CauchyReal CauchyReal, ErrorBound)
--- rangeViaUnaryFun p di = (apply f di, e)
+-- rangeViaUnaryBallFun :: (ChPoly MPBall) -> DyadicInterval -> (Interval CauchyReal CauchyReal, ErrorBound)
+-- rangeViaUnaryBallFun p di = (apply f di, e)
 --   where
---   f :: UnaryFun
+--   f :: UnaryBallFun
 --   (f, e) = convertExactly p
 --
--- rangeViaUnaryDFun :: (ChPoly MPBall) -> DyadicInterval -> (Interval CauchyReal CauchyReal, ErrorBound)
--- rangeViaUnaryDFun p@(ChPoly dom poly) (Interval l r) =
+-- rangeViaUnaryBallDFun :: (ChPoly MPBall) -> DyadicInterval -> (Interval CauchyReal CauchyReal, ErrorBound)
+-- rangeViaUnaryBallDFun p@(ChPoly dom poly) (Interval l r) =
 --   (apply ff (Interval lU rU), e)
 --   where
 --   lU = fromDomToUnitInterval dom (real l)
 --   rU = fromDomToUnitInterval dom (real r)
---   ff = UnaryDFun [f,f']
+--   ff = UnaryBallDFun [f,f']
 --   pU' = Pow.derivative $ cheb2Power poly
---   f' = UnaryFun dom  (fmap (Pow.evalMBI pU' . fromDomToUnitInterval dom))
+--   f' = UnaryBallFun dom  (fmap (Pow.evalMBI pU' . fromDomToUnitInterval dom))
 --   (f, e) = convertExactly p
 
 
 -- rangeViaRoots :: (ChPoly MPBall) -> DyadicInterval -> (Interval CauchyReal CauchyReal, ErrorBound)
 
-instance ConvertibleExactly (ChPoly MPBall) (UnaryFun, ErrorBound) where
-  safeConvertExactly cp@(ChPoly dom _p _) = Right (UnaryFun dom eval, e)
+instance ConvertibleExactly (ChPoly MPBall) (UnaryBallFun, ErrorBound) where
+  safeConvertExactly cp@(ChPoly dom _p _) = Right (UnaryBallFun dom eval, e)
     where
     e = radius cp
     cpExact = centreAsBall cp

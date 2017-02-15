@@ -1,5 +1,5 @@
 {-|
-    Module      :  AERN2.RealFun.UnaryDFun
+    Module      :  AERN2.RealFun.UnaryBallDFun
     Description :  Real functions by MPBall evaluators, including derivatives
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -11,9 +11,9 @@
     Real functions by MPBall evaluators, including derivatives
 -}
 
-module AERN2.RealFun.UnaryDFun
+module AERN2.RealFun.UnaryBallDFun
 (
-  UnaryDFun(..)
+  UnaryBallDFun(..)
 )
 where
 
@@ -36,37 +36,37 @@ import qualified AERN2.Interval as Interval
 
 import AERN2.RealFun.Operations
 
-import AERN2.RealFun.UnaryFun.Type
-import AERN2.RealFun.UnaryFun.Evaluation
-import AERN2.RealFun.UnaryFun.Integration
+import AERN2.RealFun.UnaryBallFun.Type
+import AERN2.RealFun.UnaryBallFun.Evaluation
+import AERN2.RealFun.UnaryBallFun.Integration
 
-data UnaryDFun = UnaryDFun { _dfun_derivatives :: [UnaryFun] }
+data UnaryBallDFun = UnaryBallDFun { _dfun_derivatives :: [UnaryBallFun] }
 
 
-instance CanApply UnaryDFun DyadicInterval where
-  type ApplyType UnaryDFun DyadicInterval = RealInterval
+instance CanApply UnaryBallDFun DyadicInterval where
+  type ApplyType UnaryBallDFun DyadicInterval = RealInterval
   apply f di =
     Interval (minimumOverDom f di) (maximumOverDom f di)
 
-instance CanMaximiseOverDom UnaryDFun DyadicInterval where
-  type MaximumOverDomType UnaryDFun DyadicInterval = CauchyReal
-  maximumOverDom (UnaryDFun []) _ = error "maximumOverDom UnaryDFun []"
-  maximumOverDom (UnaryDFun (UnaryFun _ f_o : derivatives_o)) di_o =
+instance CanMaximiseOverDom UnaryBallDFun DyadicInterval where
+  type MaximumOverDomType UnaryBallDFun DyadicInterval = CauchyReal
+  maximumOverDom (UnaryBallDFun []) _ = error "maximumOverDom UnaryBallDFun []"
+  maximumOverDom (UnaryBallDFun (UnaryBallFun _ f_o : derivatives_o)) di_o =
     maximumOnIntervalSubdivide (evalUseD derivatives_o f_o) di_o
 
-instance CanMinimiseOverDom UnaryDFun DyadicInterval where
-  type MinimumOverDomType UnaryDFun DyadicInterval = CauchyReal
-  minimumOverDom (UnaryDFun []) _ = error "minimumOverDom UnaryDFun []"
-  minimumOverDom (UnaryDFun (UnaryFun _ f_o : derivatives_o)) di_o =
+instance CanMinimiseOverDom UnaryBallDFun DyadicInterval where
+  type MinimumOverDomType UnaryBallDFun DyadicInterval = CauchyReal
+  minimumOverDom (UnaryBallDFun []) _ = error "minimumOverDom UnaryBallDFun []"
+  minimumOverDom (UnaryBallDFun (UnaryBallFun _ f_o : derivatives_o)) di_o =
     minimumOnIntervalSubdivide (evalUseD derivatives_o f_o) di_o
 
 evalUseD ::
-  [UnaryFun] ->
+  [UnaryBallFun] ->
   (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) ->
   DyadicInterval ->
   (Maybe (CatchingNumExceptions MPBall, CatchingNumExceptions MPBall), CatchingNumExceptions MPBall)
 evalUseD [] f di = (Nothing, evalOnIntervalGuessPrecision f di)
-evalUseD (UnaryFun _ f' : rest) f di@(Interval l r)
+evalUseD (UnaryBallFun _ f' : rest) f di@(Interval l r)
   | f'di !>=! 0 = (Just (fl,fr), liftA2 fromEndpoints fl fr)
   | f'di !<=! 0 = (Just (fr,fl), liftA2 fromEndpoints fr fl)
   | otherwise = (Nothing, fm + errBall)
@@ -87,11 +87,11 @@ evalUseD (UnaryFun _ f' : rest) f di@(Interval l r)
   nl = getNormLog (r - l)
 
 
-instance CanIntegrateOverDom UnaryDFun DyadicInterval where
-  type IntegralOverDomType UnaryDFun DyadicInterval = CauchyReal
-  integrateOverDom (UnaryDFun []) = error "integrating UnaryDFun []"
-  integrateOverDom (UnaryDFun [f]) = integrateOverDom f
-  integrateOverDom (UnaryDFun (f : f' : _)) =
+instance CanIntegrateOverDom UnaryBallDFun DyadicInterval where
+  type IntegralOverDomType UnaryBallDFun DyadicInterval = CauchyReal
+  integrateOverDom (UnaryBallDFun []) = error "integrating UnaryBallDFun []"
+  integrateOverDom (UnaryBallDFun [f]) = integrateOverDom f
+  integrateOverDom (UnaryBallDFun (f : f' : _)) =
     integralOnIntervalSubdivide (integralOnIntervalIncreasePrecision getArea) standardPrecisions
     where
     getArea di p =
