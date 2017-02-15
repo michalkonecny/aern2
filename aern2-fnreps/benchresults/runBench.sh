@@ -45,9 +45,10 @@ function getDataFromRunlog
   utime=`grep "User time (seconds)" $runlog | sed 's/^.*: //'`
   stime=`grep "System time (seconds)" $runlog | sed 's/^.*: //'`
   mem=`grep "Maximum resident set size (kbytes)" $runlog | sed 's/^.*: //'`
+  exact=`grep -i "accuracy: Exact" $runlog | sed 's/accuracy: Exact/exact/'`
   bits=`grep -i "accuracy: bits " $runlog | sed 's/accuracy: [bB]its //'`
   now=`date`
-  echo "$now,$op,$fn,$repr,$params,$bits,${utime/0.00/0.01},${stime/0.00/0.01},$mem" >> $resultscsv
+  echo "$now,$op,$fn,$repr,$params,$exact$bits,${utime/0.00/0.01},${stime/0.00/0.01},$mem" >> $resultscsv
 }
 
 #################
@@ -296,7 +297,6 @@ function rungePoly
 
 }
 
-
 function rungePPoly
 {
     repr=ppoly
@@ -314,7 +314,19 @@ function rungePPoly
     do
         runOne
     done
+}
 
+function rungeFrac
+{
+    repr=frac
+    fn=runge
+    dir=$fn
+
+    op=max
+    for params in 10 20 40 80 120
+    do
+        runOne
+    done
 }
 
 #################
@@ -398,6 +410,19 @@ function rungeXPPoly
     done
 }
 
+function rungeXFrac
+{
+    repr=frac
+    fn=rungeX
+    dir=$fn
+
+    op=max
+    for params in 10 20 40 80 120
+    do
+        runOne
+    done
+}
+
 
 #################
 ### fracSin
@@ -429,7 +454,7 @@ function fracSinDFun
     dir=$fn
 
     op=max
-    for params in 05 15 25 35 45 55
+    for params in 05 15 25 35 45 50
     do
         runOne
     done
@@ -474,6 +499,19 @@ function fracSinPPoly
 
     op=integrate
     for params in 10 20 40
+    do
+        runOne
+    done
+}
+
+function fracSinFrac
+{
+    repr=frac
+    fn=fracSin
+    dir=$fn
+
+    op=max
+    for params in 10 20 40 60
     do
         runOne
     done
@@ -576,16 +614,19 @@ rungeFun
 rungeDFun
 rungePoly
 rungePPoly
+rungeFrac
 
 rungeXFun
 rungeXDFun
 rungeXPoly
 rungeXPPoly
+rungeXFrac
 
 fracSinFun
 fracSinDFun
 fracSinPoly
 fracSinPPoly
+fracSinFrac
 
 # hatFun
 # hatDFun

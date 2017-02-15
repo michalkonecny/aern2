@@ -76,10 +76,16 @@ mergeByOp records =
 getPoint :: Map.Map String String -> (Int,Double,Double)
 getPoint fields = (bits,utime+stime,maxram)
   where
-  bits = read (lookupValue fields "Accuracy(bits)") :: Int
   utime = read (lookupValue fields "UTime(s)") :: Double
   stime = read (lookupValue fields "STime(s)") :: Double
   maxram = read (lookupValue fields "Mem(kB)") :: Double
+  bits :: Int
+  bits
+    | accS == "exact" = read (lookupValue fields "Parameters")
+    | otherwise = read accS
+    where
+    accS = lookupValue fields "Accuracy(bits)"
+
 
 mergeByFnOp_FnRepr ::
     [([String], Map.Map String String)] -> Map.Map String (Map.Map String (Set.Set (Int,Double,Double)))
@@ -165,6 +171,7 @@ reprShow "dfun" = "DFun"
 reprShow "fun" = "Fun"
 reprShow "poly" = "Poly"
 reprShow "ppoly" = "PPoly"
+reprShow "frac" = "Frac"
 reprShow reprName = error $ "unknown representation " ++ reprName
 
 reprColor :: String -> Colour Double
@@ -172,6 +179,7 @@ reprColor "dfun" = powderblue
 reprColor "fun" = darkblue
 reprColor "poly" = orangered
 reprColor "ppoly" = mediumvioletred
+reprColor "frac" = darkgreen
 reprColor reprName = error $ "unknown representation " ++ reprName
 
 reprShape :: String -> PointShape
@@ -179,6 +187,7 @@ reprShape "dfun" = PointShapeEllipse 0.7 1.0
 reprShape "fun" = PointShapeCircle
 reprShape "poly" = PointShapeCross
 reprShape "ppoly" = PointShapeStar
+reprShape "frac" = PointShapeCross
 reprShape reprName = error $ "unknown representation " ++ reprName
 
 opShow :: String -> String
