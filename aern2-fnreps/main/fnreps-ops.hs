@@ -115,10 +115,13 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     maxFR f = f `maximumOverDomFR` (getDomain f)
       where
       maximumOverDomFR f2 (Interval l r) =
-        Frac.maximum f2 lB rB
+        Frac.maximumOptimisedWithAccuracy accuracy (setPrc f2) lB rB 5 5
         where
-        lB = setPrecision prc $ mpBall l
-        rB = setPrecision prc $ mpBall r
+        lB = setPrc $ mpBall l
+        rB = setPrc $ mpBall r
+        setPrc :: (CanSetPrecision a) => a -> a
+        setPrc =
+          setPrecisionAtLeastAccuracy (accuracy) . setPrecision prc
         prc = getPrecision f2
 
     integrateFR :: FracMB -> MPBall
