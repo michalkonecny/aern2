@@ -24,6 +24,8 @@ where
 import Numeric.MixedTypes
 -- import qualified Prelude as P
 
+import Numeric.CatchingExceptions
+
 import Control.Arrow
 
 import AERN2.MP.Accuracy
@@ -73,6 +75,9 @@ type CauchyReal = CauchyRealA (->)
 
 instance Show CauchyReal where
   show r = show $ qaMakeQuery r (bits 100)
+
+instance CanTestValid CauchyReal where
+  isValid _ = True
 
 {- constructions -}
 
