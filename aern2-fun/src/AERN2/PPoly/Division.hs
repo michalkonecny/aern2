@@ -112,7 +112,7 @@ iterateInverse cutoff n f if0 =
         "original accuracy: "++(show $ getAccuracy p)
         ) $-}
         if d >= (ballLift1R degree) p
-        {-|| getAccuracy red >= max (bits 5) (getAccuracy p - (bits 2))-}
+        {-- || getAccuracy red >= max (bits 5) (getAccuracy p - (bits 2))-}
           || redRad <= 4*pRad
         then
           red
