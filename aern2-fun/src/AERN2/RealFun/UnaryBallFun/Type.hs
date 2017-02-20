@@ -13,7 +13,7 @@
 
 module AERN2.RealFun.UnaryBallFun.Type
 (
-  UnaryBallFun(..), unaryFun
+  UnaryBallFun(..), unaryBallFun
 )
 where
 
@@ -61,8 +61,8 @@ instance HasDomain UnaryBallFun where
   getDomain = unaryBallFun_Domain
 
 type CanBeUnaryBallFun t = ConvertibleExactly t UnaryBallFun
-unaryFun :: (CanBeUnaryBallFun t) => t -> UnaryBallFun
-unaryFun = convertExactly
+unaryBallFun :: (CanBeUnaryBallFun t) => t -> UnaryBallFun
+unaryBallFun = convertExactly
 
 instance (CanBeMPBall t, Show t, Typeable t)
   =>

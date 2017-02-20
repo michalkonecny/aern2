@@ -13,7 +13,7 @@
 
 module AERN2.RealFun.UnaryBallFun
 (
-  UnaryBallFun(..), unaryFun
+  UnaryBallFun(..), unaryBallFun
 )
 where
 
