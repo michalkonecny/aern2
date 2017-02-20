@@ -167,24 +167,24 @@ fileOpts :: FileOptions
 fileOpts = def { _fo_size = (300,300) }
 
 reprShow :: String -> String
-reprShow "dfun" = "DFun"
-reprShow "fun" = "Fun"
+reprShow "dball" = "DBall"
+reprShow "ball" = "Ball"
 reprShow "poly" = "Poly"
 reprShow "ppoly" = "PPoly"
 reprShow "frac" = "Frac"
 reprShow reprName = error $ "unknown representation " ++ reprName
 
 reprColor :: String -> Colour Double
-reprColor "dfun" = powderblue
-reprColor "fun" = darkblue
+reprColor "dball" = powderblue
+reprColor "ball" = darkblue
 reprColor "poly" = orangered
 reprColor "ppoly" = mediumvioletred
 reprColor "frac" = darkgreen
 reprColor reprName = error $ "unknown representation " ++ reprName
 
 reprShape :: String -> PointShape
-reprShape "dfun" = PointShapeEllipse 0.7 1.0
-reprShape "fun" = PointShapeCircle
+reprShape "dball" = PointShapeEllipse 0.7 1.0
+reprShape "ball" = PointShapeCircle
 reprShape "poly" = PointShapeCross
 reprShape "ppoly" = PointShapeStar
 reprShape "frac" = PointShapeCross

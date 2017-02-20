@@ -55,9 +55,9 @@ function getDataFromRunlog
 ### sine+cos
 #################
 
-function sinecosFun
+function sinecosBallFun
 {
-    repr=fun
+    repr=ball
     fn=sine+cos
     dir=$fn
 
@@ -74,9 +74,9 @@ function sinecosFun
     done
 }
 
-function sinecosDFun
+function sinecosDBallFun
 {
-    repr=dfun
+    repr=dball
     fn=sine+cos
     dir=$fn
 
@@ -116,9 +116,9 @@ function sinecosPoly
 ### sinesine
 #################
 
-function sinesineFun
+function sinesineBallFun
 {
-    repr=fun
+    repr=ball
     fn=sinesine
     dir=$fn
 
@@ -135,9 +135,9 @@ function sinesineFun
     done
 }
 
-function sinesineDFun
+function sinesineDBallFun
 {
-    repr=dfun
+    repr=dball
     fn=sinesine
     dir=$fn
 
@@ -177,9 +177,9 @@ function sinesinePoly
 ### sinesine+cos
 #################
 
-function sinesine+cosFun
+function sinesine+cosBallFun
 {
-    repr=fun
+    repr=ball
     fn=sinesine+cos
     dir=$fn
 
@@ -196,9 +196,9 @@ function sinesine+cosFun
     done
 }
 
-function sinesine+cosDFun
+function sinesine+cosDBallFun
 {
-    repr=dfun
+    repr=dball
     fn=sinesine+cos
     dir=$fn
 
@@ -239,9 +239,9 @@ function sinesine+cosPoly
 ### runge
 #################
 
-function rungeFun
+function rungeBallFun
 {
-    repr=fun
+    repr=ball
     fn=runge
     dir=$fn
 
@@ -258,9 +258,9 @@ function rungeFun
     done
 }
 
-function rungeDFun
+function rungeDBallFun
 {
-    repr=dfun
+    repr=dball
     fn=runge
     dir=$fn
 
@@ -333,9 +333,9 @@ function rungeFrac
 ### rungeX
 #################
 
-function rungeXFun
+function rungeXBallFun
 {
-    repr=fun
+    repr=ball
     fn=rungeX
     dir=$fn
 
@@ -352,9 +352,9 @@ function rungeXFun
     done
 }
 
-function rungeXDFun
+function rungeXDBallFun
 {
-    repr=dfun
+    repr=dball
     fn=rungeX
     dir=$fn
 
@@ -428,9 +428,9 @@ function rungeXFrac
 ### fracSin
 #################
 
-function fracSinFun
+function fracSinBallFun
 {
-    repr=fun
+    repr=ball
     fn=fracSin
     dir=$fn
 
@@ -447,9 +447,9 @@ function fracSinFun
     done
 }
 
-function fracSinDFun
+function fracSinDBallFun
 {
-    repr=dfun
+    repr=dball
     fn=fracSin
     dir=$fn
 
@@ -521,9 +521,9 @@ function fracSinFrac
 ### hat
 #################
 
-# function hatFun
+# function hatBallFun
 # {
-#     repr=fun
+#     repr=ball
 #     fn=hat
 #     dir=$fn
 #
@@ -540,9 +540,9 @@ function fracSinFrac
 #     done
 # }
 #
-# function hatDFun
+# function hatDBallFun
 # {
-#     repr=dfun
+#     repr=dball
 #     fn=hat
 #     dir=$fn
 #
@@ -598,37 +598,37 @@ function fracSinFrac
 # }
 
 
-sinecosFun
-sinecosDFun
+sinecosBallFun
+sinecosDBallFun
 sinecosPoly
 
-sinesineFun
-sinesineDFun
+sinesineBallFun
+sinesineDBallFun
 sinesinePoly
 
-sinesine+cosFun
-sinesine+cosDFun
+sinesine+cosBallFun
+sinesine+cosDBallFun
 sinesine+cosPoly
 
-rungeFun
-rungeDFun
+rungeBallFun
+rungeDBallFun
 rungePoly
 rungePPoly
 rungeFrac
 
-rungeXFun
-rungeXDFun
+rungeXBallFun
+rungeXDBallFun
 rungeXPoly
 rungeXPPoly
 rungeXFrac
 
-fracSinFun
-fracSinDFun
+fracSinBallFun
+fracSinDBallFun
 fracSinPoly
 fracSinPPoly
 fracSinFrac
 
-# hatFun
-# hatDFun
+# hatBallFun
+# hatDBallFun
 # hatPoly
 # hatPPoly

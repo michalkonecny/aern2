@@ -70,10 +70,10 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 
     result =
         case (representationCode, operationCode) of
-            ("fun", "max") -> maxFun fnB2B accuracy
-            ("dfun", "max") -> maxDFun fnB2B dfnB2B accuracy
-            ("fun", "integrate") -> integrateFun fnB2B accuracy
-            ("dfun", "integrate") -> integrateDFun fnB2B dfnB2B accuracy
+            ("ball", "max") -> maxBallFun fnB2B accuracy
+            ("dball", "max") -> maxDBallFun fnB2B dfnB2B accuracy
+            ("ball", "integrate") -> integrateBallFun fnB2B accuracy
+            ("dball", "integrate") -> integrateDBallFun fnB2B dfnB2B accuracy
             ("poly", "max") -> maxPB $ fnPB accuracy
             ("poly", "integrate") -> integratePB $ fnPB accuracy
             ("ppoly", "max") -> maxPP $ fnPP accuracy
@@ -130,27 +130,27 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
       integrateOverDomFR ff (Interval l r) =
         Frac.integral ff (mpBall l) (mpBall r)
 
-    maxFun :: UnaryBallFun -> Accuracy -> MPBall
-    maxFun fn ac =
+    maxBallFun :: UnaryBallFun -> Accuracy -> MPBall
+    maxBallFun fn ac =
         qaMakeQuery m ac
         where
         m = fn `maximumOverDom` getDomain fn
 
-    maxDFun :: UnaryBallFun -> UnaryBallFun -> Accuracy -> MPBall
-    maxDFun f f' ac =
+    maxDBallFun :: UnaryBallFun -> UnaryBallFun -> Accuracy -> MPBall
+    maxDBallFun f f' ac =
         qaMakeQuery m ac
         where
         m = fn `maximumOverDom` getDomain f
         fn = UnaryBallDFun [f,f']
 
-    integrateFun :: UnaryBallFun -> Accuracy -> MPBall
-    integrateFun fn ac =
+    integrateBallFun :: UnaryBallFun -> Accuracy -> MPBall
+    integrateBallFun fn ac =
         qaMakeQuery r ac
         where
         r = fn `integrateOverDom` (getDomain fn)
 
-    integrateDFun :: UnaryBallFun -> UnaryBallFun -> Accuracy -> MPBall
-    integrateDFun f f' ac =
+    integrateDBallFun :: UnaryBallFun -> UnaryBallFun -> Accuracy -> MPBall
+    integrateDBallFun f f' ac =
         qaMakeQuery r ac
         where
         r = fn `integrateOverDom` (getDomain f)
