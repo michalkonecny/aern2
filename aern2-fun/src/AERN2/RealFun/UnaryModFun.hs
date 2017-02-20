@@ -155,13 +155,17 @@ instance CanIntegrateOverDom UnaryModFun DyadicInterval where
 example_ModFun :: UnaryModFun
 example_ModFun =
   -- sin(10*x)+cos(20*x)
-  10*x+100
+  x*(x+1)
   where
   x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
 
-mtest1 :: MPBall
-mtest1 =
-  apply example_ModFun (mpBallP (prec 100) (0.0,1.0))
+mtest1 :: Integer -> MPBall
+mtest1 b =
+  qaMakeQuery m (bits b)
+  where
+  m =
+    minimumOverDom example_ModFun $
+      dyadicInterval (-1.0,1.0)
 
 unaryIntervalDom :: DyadicInterval
 unaryIntervalDom = dyadicInterval (-1,1)
@@ -183,6 +187,27 @@ instance CanAddAsymmetric Integer UnaryModFun where
 instance CanAddAsymmetric UnaryModFun Integer where
   type AddType UnaryModFun Integer = UnaryModFun
   add f n = add n f
+
+instance CanMulAsymmetric UnaryModFun UnaryModFun where
+  mul f1@(UnaryModFun dom1 eval1 modulus1) f2@(UnaryModFun dom2 eval2 modulus2)
+    | dom1 == dom2 =
+      UnaryModFun dom1 (\d -> eval1 d * eval2 d) modulus'
+    | otherwise =
+      error "UnaryModFun: add: incompatible domains"
+    where
+    modulus' b i = max m1 m2
+      where
+      m1 =
+        case getNormLog f2b of
+          NormZero -> constFnModulus
+          NormBits nf2b -> modulus1 b j + nf2b
+      m2 =
+        case getNormLog f1b of
+          NormZero -> constFnModulus
+          NormBits nf1b -> modulus2 b j + nf1b
+      f1b = apply (unaryBallFun f1) b
+      f2b = apply (unaryBallFun f2) b
+      j = max 0 $ i+2
 
 instance CanMulAsymmetric Integer UnaryModFun where
   type MulType Integer UnaryModFun = UnaryModFun
