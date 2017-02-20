@@ -152,12 +152,16 @@ instance CanIntegrateOverDom UnaryModFun DyadicInterval where
 
 {- selected field ops -}
 
-sinecos_ModFun :: UnaryModFun
-sinecos_ModFun =
+example_ModFun :: UnaryModFun
+example_ModFun =
   -- sin(10*x)+cos(20*x)
-  10*x+20*x
+  10*x+100
   where
   x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
+
+mtest1 :: MPBall
+mtest1 =
+  apply example_ModFun (mpBallP (prec 100) (0.0,1.0))
 
 unaryIntervalDom :: DyadicInterval
 unaryIntervalDom = dyadicInterval (-1,1)
@@ -171,10 +175,19 @@ instance CanAddAsymmetric UnaryModFun UnaryModFun where
     where
     modulus' b i = max (modulus1 b (i+1)) (modulus2 b (i+1))
 
+instance CanAddAsymmetric Integer UnaryModFun where
+  type AddType Integer UnaryModFun = UnaryModFun
+  add n (UnaryModFun dom eval modulus) =
+    UnaryModFun dom (\d -> n + (eval d)) modulus
+
+instance CanAddAsymmetric UnaryModFun Integer where
+  type AddType UnaryModFun Integer = UnaryModFun
+  add f n = add n f
+
 instance CanMulAsymmetric Integer UnaryModFun where
   type MulType Integer UnaryModFun = UnaryModFun
   mul n (UnaryModFun dom eval modulus) =
-    UnaryModFun dom (\d -> fmap (n *) (eval d)) modulus'
+    UnaryModFun dom (\d -> n * (eval d)) modulus'
     where
     modulus' b =
       case (getNormLog (abs n)) of
