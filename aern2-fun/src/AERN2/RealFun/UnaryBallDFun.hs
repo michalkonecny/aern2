@@ -40,7 +40,7 @@ import AERN2.RealFun.UnaryBallFun.Type
 import AERN2.RealFun.UnaryBallFun.Evaluation
 import AERN2.RealFun.UnaryBallFun.Integration
 
-data UnaryBallDFun = UnaryBallDFun { _dfun_derivatives :: [UnaryBallFun] }
+data UnaryBallDFun = UnaryBallDFun { _dballfun_derivatives :: [UnaryBallFun] }
 
 
 instance CanApply UnaryBallDFun DyadicInterval where

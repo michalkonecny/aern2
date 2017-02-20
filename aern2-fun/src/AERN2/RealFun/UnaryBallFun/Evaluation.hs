@@ -81,7 +81,7 @@ checkInDom f cx =
       cxIntersected = cx & numEXC_maybeValue .~ (Just $ min domR $ max domL x)
     _ -> cx
   where
-  Interval domL domR = unaryFun_Domain f
+  Interval domL domR = unaryBallFun_Domain f
 
 instance
   -- (CanApply UnaryBallFun t, HasOrderCertainly t Dyadic, CanMinMaxThis t Dyadic)

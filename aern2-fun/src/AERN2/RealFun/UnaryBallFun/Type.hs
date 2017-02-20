@@ -50,15 +50,15 @@ _dummy = maybeTrace "dummy" ()
 data UnaryBallFun =
   UnaryBallFun
   {
-    unaryFun_Domain :: DyadicInterval
+    unaryBallFun_Domain :: DyadicInterval
     ,
     {-| For convergent sequence of *open* balls the resulting sequence should also converge. -}
-    unaryFun_Eval :: CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall
+    unaryBallFun_Eval :: CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall
   }
 
 instance HasDomain UnaryBallFun where
   type Domain UnaryBallFun = DyadicInterval
-  getDomain = unaryFun_Domain
+  getDomain = unaryBallFun_Domain
 
 type CanBeUnaryBallFun t = ConvertibleExactly t UnaryBallFun
 unaryFun :: (CanBeUnaryBallFun t) => t -> UnaryBallFun

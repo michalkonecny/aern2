@@ -67,6 +67,7 @@ library
     AERN2.RealFun.UnaryBallFun.Evaluation
     AERN2.RealFun.UnaryBallFun.Integration
     AERN2.RealFun.UnaryBallDFun
+    AERN2.RealFun.UnaryModFun
     AERN2.RealFun.SineCosine
     AERN2.Poly
     AERN2.Poly.Conversion
