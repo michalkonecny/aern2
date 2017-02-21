@@ -517,6 +517,100 @@ function fracSinFrac
     done
 }
 
+
+#################
+### fracSinCos
+#################
+
+function fracSinCosBallFun
+{
+    repr=ball
+    fn=fracSinCos
+    dir=$fn
+
+    op=max
+    for params in 05 10 15
+    do
+        runOne
+    done
+
+    op=integrate
+    for params in 05 10 15
+    do
+        runOne
+    done
+}
+
+function fracSinCosDBallFun
+{
+    repr=dball
+    fn=fracSinCos
+    dir=$fn
+
+    op=max
+    for params in 05 10 15 20 25 30
+    do
+        runOne
+    done
+
+    op=integrate
+    for params in 05 10 15 20 25 30
+    do
+        runOne
+    done
+}
+
+function fracSinCosPoly
+{
+    repr=poly
+    fn=fracSinCos
+    dir=$fn
+
+    op=max
+    for params in 01 03
+    do
+        runOne
+    done
+
+    op=integrate
+    for params in 01 03
+    do
+        runOne
+    done
+}
+
+function fracSinCosPPoly
+{
+    repr=ppoly
+    fn=fracSinCos
+    dir=$fn
+
+    op=max
+    for params in 10 20 40
+    do
+        runOne
+    done
+
+    op=integrate
+    for params in 10 20 40
+    do
+        runOne
+    done
+}
+
+function fracSinCosFrac
+{
+    repr=frac
+    fn=fracSinCos
+    dir=$fn
+
+    op=max
+    for params in 10 20 40 60
+    do
+        runOne
+    done
+}
+
 #################
 ### hat
 #################
@@ -627,6 +721,12 @@ fracSinDBallFun
 fracSinPoly
 fracSinPPoly
 fracSinFrac
+
+# fracSinCosBallFun
+# fracSinCosDBallFun
+# fracSinCosPoly
+# fracSinCosPPoly
+# fracSinCosFrac
 
 # hatBallFun
 # hatDBallFun
