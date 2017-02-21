@@ -14,9 +14,9 @@
 -}
 
 module AERN2.RealFun.UnaryModFun
--- (
---   UnaryModFun(..), unaryModFun
--- )
+(
+  UnaryModFun(..), unaryModFun
+)
 where
 
 #ifdef DEBUG
@@ -245,10 +245,15 @@ instance CanDiv Integer UnaryModFun where
   type DivType Integer UnaryModFun = UnaryModFun
   divide n f = divide (unaryModFun (getDomain f, n)) f
 
+instance CanSinCos UnaryModFun where
+  sin (UnaryModFun dom eval modulus) = UnaryModFun dom (sin . eval) modulus
+  cos (UnaryModFun dom eval modulus) = UnaryModFun dom (cos . eval) modulus
+
+{-
 example_ModFun :: UnaryModFun
 example_ModFun =
-  -- sin(10*x)+cos(20*x)
-  1/((10*x*x)+1)
+  sin(10*x)+cos(20*x)
+  -- 1/((10*x*x)+1)
   -- 1/(x+2)
   where
   x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
@@ -265,3 +270,4 @@ mtest1 b =
 
 unaryIntervalDom :: DyadicInterval
 unaryIntervalDom = dyadicInterval (-1,1)
+-}
