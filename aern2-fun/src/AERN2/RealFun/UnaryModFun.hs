@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#define DEBUG
+-- #define DEBUG
 {-|
     Module      :  AERN2.RealFun.UnaryModFun
     Description :  Real functions by evaluator on dyadic points and a modulus of continuity

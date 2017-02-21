@@ -55,6 +55,25 @@ function getDataFromRunlog
 ### sine+cos
 #################
 
+function sinecosModFun
+{
+    repr=fun
+    fn=sine+cos
+    dir=$fn
+
+    op=max
+    for params in 10 15 20
+    do
+        runOne
+    done
+
+    op=integrate
+    for params in 6 8
+    do
+        runOne
+    done
+}
+
 function sinecosBallFun
 {
     repr=ball
@@ -238,6 +257,25 @@ function sinesine+cosPoly
 #################
 ### runge
 #################
+
+function rungeModFun
+{
+    repr=fun
+    fn=runge
+    dir=$fn
+
+    op=max
+    for params in 05 15 25 35
+    do
+        runOne
+    done
+
+    op=integrate
+    for params in 05 10
+    do
+        runOne
+    done
+}
 
 function rungeBallFun
 {
@@ -692,6 +730,7 @@ function fracSinCosFrac
 # }
 
 
+sinecosModFun
 sinecosBallFun
 sinecosDBallFun
 sinecosPoly
@@ -704,6 +743,7 @@ sinesine+cosBallFun
 sinesine+cosDBallFun
 sinesine+cosPoly
 
+# rungeModFun
 rungeBallFun
 rungeDBallFun
 rungePoly

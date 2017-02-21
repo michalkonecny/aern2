@@ -71,10 +71,10 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 
     result =
       case (representationCode, operationCode) of
-        -- ("fun", "max") -> maxModFun fnModFun accuracy
+        ("fun", "max") -> maxModFun fnModFun accuracy
         ("ball", "max") -> maxBallFun fnB2B accuracy
         ("dball", "max") -> maxDBallFun fnB2B dfnB2B accuracy
-        -- ("fun", "integrate") -> integrateModFun fnModFun accuracy
+        ("fun", "integrate") -> integrateModFun fnModFun accuracy
         ("ball", "integrate") -> integrateBallFun fnB2B accuracy
         ("dball", "integrate") -> integrateDBallFun fnB2B dfnB2B accuracy
         ("poly", "max") -> maxPB $ fnPB accuracy
@@ -84,8 +84,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         ("frac", "max") -> maxFR $ fnFR accuracy
         ("frac", "integrate") -> integrateFR $ fnFR accuracy
         _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
-    (Just (fnDescription, fnPB, fnB2B, dfnB2B, fnPP, fnFR)) = Map.lookup functionCode functions
-    -- (Just (fnDescription, fnPB, fnModFun, fnB2B, dfnB2B, fnPP, fnFR)) = Map.lookup functionCode functions
+    (Just (fnDescription, fnPB, fnModFun, fnB2B, dfnB2B, fnPP, fnFR)) = Map.lookup functionCode functions
 
     accuracy = bits $ (read accuracyS :: Int)
     [accuracyS] = effortArgs
@@ -174,21 +173,20 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 processArgs _ =
     error "expecting arguments: <operationCode> <functionCode> <representationCode> <effort parameters...>"
 
-functions :: Map.Map String (String, Accuracy -> ChPoly MPBall, UnaryBallFun, UnaryBallFun, Accuracy -> PPoly, Accuracy -> FracMB)
--- functions :: Map.Map String (String, Accuracy -> ChPoly MPBall, UnaryModFun, UnaryBallFun, UnaryBallFun, Accuracy -> PPoly, Accuracy -> FracMB)
+functions :: Map.Map String (String, Accuracy -> ChPoly MPBall, UnaryModFun, UnaryBallFun, UnaryBallFun, Accuracy -> PPoly, Accuracy -> FracMB)
 functions =
     Map.fromList
     [
-      ("sine+cos", (sinecos_Name, sinecos_PB, sinecos_B2B, sinecosDeriv_B2B, sinecos_PP, sinecos_FR))
-    , ("sinesine", (sinesine_Name, sinesine_PB, sinesine_B2B, sinesineDeriv_B2B, sinesine_PP, sinesine_FR))
-    , ("sinesine+cos", (sinesineCos_Name, sinesineCos_PB, sinesineCos_B2B, sinesineCosDeriv_B2B, sinesineCos_PP, sinesineCos_FR))
-    , ("runge", (runge_Name, runge_PB, runge_B2B, rungeDeriv_B2B, runge_PP, runge_FR))
-    , ("rungeX", (rungeX_Name, rungeX_PB, rungeX_B2B, rungeXDeriv_B2B, rungeX_PP, rungeX_FR))
-    , ("fracSin", (fracSin_Name, fracSin_PB, fracSin_B2B, fracSinDeriv_B2B, fracSin_PP, fracSin_FR))
-    , ("fracSinCos", (fracSinCos_Name, fracSinCos_PB, fracSinCos_B2B, fracSinCosDeriv_B2B, fracSinCos_PP, fracSinCos_FR))
-    , ("fracSinX", (fracSinX_Name, fracSinX_PB, fracSinX_B2B, fracSinXDeriv_B2B, fracSinX_PP, fracSinX_FR))
-    , ("hat", (hat_Name, hat_PB, hat_B2B, hatDeriv_B2B, hat_PP, hat_FR))
-    , ("bumpy", (bumpy_Name, bumpy_PB, bumpy_B2B, bumpyDeriv_B2B, bumpy_PP, bumpy_FR))
+      ("sine+cos", (sinecos_Name, sinecos_PB, sinecos_ModFun, sinecos_B2B, sinecosDeriv_B2B, sinecos_PP, sinecos_FR))
+    , ("sinesine", (sinesine_Name, sinesine_PB, sinesine_ModFun, sinesine_B2B, sinesineDeriv_B2B, sinesine_PP, sinesine_FR))
+    , ("sinesine+cos", (sinesineCos_Name, sinesineCos_PB, sinesineCos_ModFun, sinesineCos_B2B, sinesineCosDeriv_B2B, sinesineCos_PP, sinesineCos_FR))
+    , ("runge", (runge_Name, runge_PB, runge_ModFun, runge_B2B, rungeDeriv_B2B, runge_PP, runge_FR))
+    , ("rungeX", (rungeX_Name, rungeX_PB, rungeX_ModFun, rungeX_B2B, rungeXDeriv_B2B, rungeX_PP, rungeX_FR))
+    , ("fracSin", (fracSin_Name, fracSin_PB, fracSin_ModFun, fracSin_B2B, fracSinDeriv_B2B, fracSin_PP, fracSin_FR))
+    , ("fracSinCos", (fracSinCos_Name, fracSinCos_PB, fracSinCos_ModFun, fracSinCos_B2B, fracSinCosDeriv_B2B, fracSinCos_PP, fracSinCos_FR))
+    , ("fracSinX", (fracSinX_Name, fracSinX_PB, fracSinX_ModFun, fracSinX_B2B, fracSinXDeriv_B2B, fracSinX_PP, fracSinX_FR))
+    -- , ("hat", (hat_Name, hat_PB, hat_B2B, hatDeriv_B2B, hat_PP, hat_FR))
+    -- , ("bumpy", (bumpy_Name, bumpy_PB, bumpy_B2B, bumpyDeriv_B2B, bumpy_PP, bumpy_FR))
     ]
 
 -- data Operator = OpMax | OpIntegrate
@@ -207,8 +205,7 @@ sinecos_PB acGuide =
 
 sinecos_ModFun :: UnaryModFun
 sinecos_ModFun =
-  -- sin(10*x)+cos(20*x)
-  10*x+20*x
+  sin(10*x)+cos(20*x)
   where
   x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
 
@@ -240,6 +237,12 @@ sinesine_PB acGuide =
   sine1 = sineWithAccuracyGuide (acGuide+2)
   sine2 = sineWithAccuracyGuide acGuide
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+
+sinesine_ModFun :: UnaryModFun
+sinesine_ModFun =
+  sin(10*x + sin(20*x*x))
+  where
+  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
 
 sinesine_B2B :: UnaryBallFun
 sinesine_B2B =
@@ -275,6 +278,12 @@ sinesineCos_PB acGuide =
   cosine2 = cosineWithAccuracyGuide acGuide
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
+sinesineCos_ModFun :: UnaryModFun
+sinesineCos_ModFun =
+  sin(10*x + sin(20*x*x)) + cos(10*x)
+  where
+  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
+
 sinesineCos_B2B :: UnaryBallFun
 sinesineCos_B2B =
     UnaryBallFun unaryIntervalDom $ \x ->
@@ -309,6 +318,12 @@ runge_PB acGuide =
   xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   setPrc1 :: (CanSetPrecision t) => t -> t
   setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
+
+runge_ModFun :: UnaryModFun
+runge_ModFun =
+  1/(100*x*x+1)
+  where
+  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
 
 runge_B2B :: UnaryBallFun
 runge_B2B =
@@ -351,6 +366,12 @@ rungeX_PB acGuide =
   xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   setPrc1 :: (CanSetPrecision t) => t -> t
   setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
+
+rungeX_ModFun :: UnaryModFun
+rungeX_ModFun =
+  x/(100*x*x+1)
+  where
+  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
 
 rungeX_B2B :: UnaryBallFun
 rungeX_B2B =
@@ -396,6 +417,13 @@ fracSin_PB acGuide =
   xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   setPrc1 :: (CanSetPrecision t) => t -> t
   setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
+
+fracSin_ModFun :: UnaryModFun
+fracSin_ModFun =
+  1/(10*(sin7x*sin7x)+1)
+  where
+  sin7x = sin (7*x)
+  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
 
 fracSin_B2B :: UnaryBallFun
 fracSin_B2B =
@@ -444,6 +472,13 @@ fracSinX_PB acGuide =
     --     setMaxDegree d1 $
     --     setPrecision p $
     --     projUnaryFnA (unaryIntervalDom
+
+fracSinX_ModFun :: UnaryModFun
+fracSinX_ModFun =
+  x/(10*(sin7x*sin7x)+1)
+  where
+  sin7x = sin (7*x)
+  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
 
 fracSinX_B2B :: UnaryBallFun
 fracSinX_B2B =
@@ -499,6 +534,13 @@ fracSinCos_PB acGuide =
   xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   setPrc1 :: (CanSetPrecision t) => t -> t
   setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
+
+fracSinCos_ModFun :: UnaryModFun
+fracSinCos_ModFun =
+  1/(10*(sincos*sincos)+1)
+  where
+  sincos = sin(7*x) + cos(5*x)
+  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
 
 fracSinCos_B2B :: UnaryBallFun
 fracSinCos_B2B =
