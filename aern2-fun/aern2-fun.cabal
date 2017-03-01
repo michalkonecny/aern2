@@ -9,7 +9,7 @@ copyright:      (c) 2015-2017 Michal Konecny, Eike Neumann
 license:        BSD3
 license-file:   LICENSE
 stability:      experimental
-tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
+tested-with:    GHC==7.10.3, GHC==8.0.2
 category:       Math
 synopsis:       Exact real functions
 Description:
@@ -26,15 +26,15 @@ library
     base == 4.*
     , containers == 0.5.*
     , psqueues == 0.2.*
-    , arithmoi == 0.4.*
+    , integer-logarithms >= 1.0 && < 1.1
     , convertible >= 1.1.1.0 && < 1.2
     , regex-tdfa >= 1.2.1 && < 1.3
     , bytestring >= 0.10 && < 0.11
-    , hspec >= 2.1 && < 2.3
+    , hspec >= 2.1 && < 2.5
     -- , hspec-smallcheck >= 0.3 && < 0.5
-    , QuickCheck >= 2.7 && < 2.9
+    , QuickCheck >= 2.7 && < 2.10
     , transformers >= 0.4 && < 0.6
-    , lens == 4.13.*
+    , lens >= 4.13 && < 4.16
     , mixed-types-num == 0.1.*
     , num-exceptions == 0.1.*
     , aern2-mp == 0.1.*
@@ -136,10 +136,10 @@ test-suite spec
     -- , mixed-types-num
     -- , aern2-mp
     -- , aern2-real
-    , aern2-fun
-    , hspec >= 2.1 && < 2.3
+    , aern2-fun == 0.1.*
+    , hspec >= 2.1 && < 2.5
     -- , hspec-smallcheck >= 0.3 && < 0.5
-    , QuickCheck >= 2.7 && < 2.9
+    , QuickCheck >= 2.7 && < 2.10
 
 executable aern2-fun-ChPoly-benchOp
   ghc-options:
@@ -165,12 +165,13 @@ executable aern2-fun-ChPoly-benchOp
     , aern2-mp == 0.1.*
     -- , aern2-real == 0.1.*
     , aern2-fun == 0.1.*
-    , QuickCheck >= 2.7 && < 2.9
+    , QuickCheck >= 2.7 && < 2.10
     , clock
 
 executable aern2-fun-ChPoly-serialise
   ghc-options:
-      -Wall -O2 -DCHPOLY
+      -Wall -O2
+  cpp-options: -DCHPOLY
   extensions:
     RebindableSyntax,
     TypeFamilies,
@@ -190,7 +191,7 @@ executable aern2-fun-ChPoly-serialise
     , aern2-mp == 0.1.*
     -- , aern2-real == 0.1.*
     , aern2-fun == 0.1.*
-    , QuickCheck >= 2.7 && < 2.9
+    , QuickCheck >= 2.7 && < 2.10
 
 -- executable aern2-fun-PPoly-serialise
 --   ghc-options:
@@ -214,4 +215,4 @@ executable aern2-fun-ChPoly-serialise
 --     , aern2-mp == 0.1.*
 --     -- , aern2-real == 0.1.*
 --     , aern2-fun == 0.1.*
---     , QuickCheck >= 2.7 && < 2.9
+--     , QuickCheck >= 2.7 && < 2.10

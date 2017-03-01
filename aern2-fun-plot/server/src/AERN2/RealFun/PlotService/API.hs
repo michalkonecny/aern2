@@ -83,9 +83,9 @@ instance FromJSON FunctionSegment
 
 data FunctionColour =
   FunctionColour
-  { functionColourR :: Integer
-  , functionColourG :: Integer
-  , functionColourB :: Integer
+  { functionColourR :: Int
+  , functionColourG :: Int
+  , functionColourB :: Int
   }
   deriving (Show, P.Eq, Generic)
 
@@ -96,9 +96,9 @@ instance FromJSON FunctionColour
 functionColour :: (Integer, Integer, Integer) -> FunctionColour
 functionColour (r,g,b) =
   FunctionColour
-  { functionColourR = r
-  , functionColourG = g
-  , functionColourB = b
+  { functionColourR = int r
+  , functionColourG = int g
+  , functionColourB = int b
   }
 
 instance (ElmType l, ElmType r) => ElmType (Interval l r)
@@ -155,7 +155,7 @@ instance FromJSON Sampling
 data DyadicS =
   DyadicS
   {
-    dyadic_value :: Integer,
+    dyadic_value :: Int,
     dyadic_exp :: Int
   }
   deriving (Show, P.Eq, Generic)
@@ -166,7 +166,7 @@ instance FromJSON DyadicS
 
 -- the following definitions exist only to stop unused warnings:
 _use_dyadic_value :: Integer
-_use_dyadic_value = dyadic_value undefined
+_use_dyadic_value = integer $ dyadic_value undefined
 _use_dyadic_exp :: Int
 _use_dyadic_exp = dyadic_exp undefined
 
@@ -188,7 +188,7 @@ dyadicS2dyadic (DyadicS v e)
 dyadic2dyadicS :: Dyadic -> DyadicS
 dyadic2dyadicS d = DyadicS v e
   where
-  v = numerator r
+  v = int $ numerator r
   e = negate $ integerLog2 $ denominator r
   r = rational d
 

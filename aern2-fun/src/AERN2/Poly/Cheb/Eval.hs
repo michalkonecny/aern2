@@ -213,4 +213,4 @@ instance ConvertibleExactly (ChPoly MPBall) (UnaryBallFun, ErrorBound) where
     where
     e = radius cp
     cpExact = centreAsBall cp
-    eval = fmap $ evalDirect cpExact
+    eval bE = fmap (evalDirect cpExact) bE

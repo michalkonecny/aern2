@@ -80,7 +80,7 @@ maximumOptimisedWithAccuracy acc (ChPoly dom poly _) l r initialDegree steps =
     (fromEndpoints (-err) err :: MPBall) + (cheb2Power . chPoly_poly . centre) p
   dfsWithEval =
     Map.fromList
-    [(k,(evalDirect df, ch2Power df)) | (k,df) <- dfs]
+    [(k,(evalDirect df :: MPBall -> MPBall, ch2Power df)) | (k,df) <- dfs]
   dfs = [(k, reduceDegree (initialDegree + steps*k) fc') | k <- [0..maxKey + 1]]
 
 maximumOptimised :: ChPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall

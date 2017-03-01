@@ -9,7 +9,7 @@ Copyright:      (c) 2016-2017 Michal Konecny
 License:        BSD3
 License-File:   LICENCE
 Stability:      experimental
-tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
+tested-with:    GHC==7.10.3, GHC==8.0.2
 Category:       Data, Math
 Synopsis:       render data from aern2 benchmarks as charts
 Description:    render data from aern2 benchmarks as charts

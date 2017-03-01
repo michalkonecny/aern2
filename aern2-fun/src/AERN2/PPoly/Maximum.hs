@@ -172,7 +172,7 @@ maximumOptimisedWithAccuracy' (PPoly ps dom) l r initialDegree steps cutoffAccur
     concatMap
         (\(k, (cdfs, pdfs)) ->
           zip [(k,i) | i <-  [0..]]
-              $ zip (map Cheb.evalDirect cdfs) pdfs)
+              $ zip (map (Cheb.evalDirect :: ChPolyMB -> MPBall -> MPBall) cdfs) pdfs)
         (zip [0..] $ zip dfcsChebReduced dfsPow)
   dfsMap  = Map.fromList dfsZipped
   maxKeys =
@@ -205,7 +205,8 @@ maximum (PPoly ps dom) l r =
   dfcsCheb = map (ballLift1R (Cheb.derivativeExact . centre)) fs
   ch2Power (e, p) = (e, cheb2Power p)
   dfsPow  = map (ch2Power . intify) dfcsCheb
-  dfsMap  = Map.fromList $ zip (map (\k -> (k,0)) [0..]) $ zip (map Cheb.evalDirect dfcsCheb) dfsPow
+  dfsMap  = Map.fromList $ zip (map (\k -> (k,0)) [0..]) $
+              zip (map (Cheb.evalDirect :: ChPolyMB -> MPBall -> MPBall) dfcsCheb) dfsPow
   maxKeys = Map.fromList [(k,0) | k <- [0 .. integer $ length ps - 1]]
   nodes   =
     lI : [setPrecision (getPrecision f) $ mpBall n | n <- nodesI, (lI < n) == Just True, (n < rI) == Just True] ++ [rI]   -- note that the elements of nodesI are balls of radius 0,
