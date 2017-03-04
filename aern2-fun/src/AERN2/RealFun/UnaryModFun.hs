@@ -15,7 +15,8 @@
 
 module AERN2.RealFun.UnaryModFun
 (
-  UnaryModFun(..), unaryModFun
+  UnaryModFun(..), unaryModFun,
+  inverseMonotoneFnMaxBelow
 )
 where
 
@@ -83,8 +84,71 @@ instance HasVars UnaryModFun where
     dom = getDomain sampleFn
 
 instance ConvertibleExactly UnaryModFun UnaryBallFun where
-  safeConvertExactly (UnaryModFun dom eval modulus) =
-    Right $ UnaryBallFun dom (b2bE =<<)
+  safeConvertExactly = Right . modFun2BallFun
+
+modFun2BallFun :: UnaryModFun -> UnaryBallFun
+modFun2BallFun (UnaryModFun dom eval modulus) =
+    UnaryBallFun dom (b2bE =<<)
+    where
+    b2bE b =
+      maybeTrace ("UnaryModFun b2bE: "
+        ++ "b = "  ++ show b
+        ++ ", domAC = "  ++ show domAC
+        ++ ", rangeAC = "  ++ show rangeAC
+        ++ ", tolerance = "  ++ show tolerance
+      ) $
+      do
+      fbC <- fbCE
+      pure $ updateRadius (+ tolerance) $ qaMakeQuery fbC (bits $ rangeAC + 2)
+      where
+      fbCE = eval (catchingNumExceptions (centre b))
+
+      domAC = 1 + (fromAccuracy $ getFiniteAccuracy b)
+      rangeAC = inverseMonotoneFnMaxBelow (modulus b) domAC
+      tolerance = errorBound $ 0.5^(rangeAC + 1)
+
+{-|
+  For a monotone integer function \(f\), and an integer \(n\) which is neither
+  below or above the range of \(f\), return the largest \(i\) such that
+  \(f(i) \leq n\).
+-}
+inverseMonotoneFnMaxBelow ::
+  (Integer -> Integer)  {-^ \(f\) -} ->
+  (Integer -> Integer)
+inverseMonotoneFnMaxBelow f n
+  | fn <= n = searchMax $ boundsUp (n, fn)
+  | otherwise = searchMax $ boundsDown (n, fn)
+  where
+  fn = f n
+  boundsUp (i, fi)
+    | n < fii = ((i,fi), (ii, fii))
+    | otherwise = boundsUp (ii, fii)
+    where
+    ii = increase i
+    fii = f ii
+  boundsDown (ii, fii)
+    | fi <= n = ((i,fi), (ii, fii))
+    | otherwise = boundsDown (i, fi)
+    where
+    i = decrease ii
+    fi = f i
+  decrease = negate . increase . negate
+  increase i
+    | i == 0 = 1
+    | i < 0 = -((-i) `div` 2)
+    | otherwise = i * 2
+  searchMax ((i,fi),(j,fj))
+    | m == i || m == j = i
+    | fm <= n = searchMax ((m,fm), (j,fj))
+    | otherwise = searchMax ((i,fi), (m,fm))
+    where
+    m = (i + j) `div` 2
+    fm = f m
+
+
+_modFun2BallFun_split :: UnaryModFun -> UnaryBallFun
+_modFun2BallFun_split (UnaryModFun dom eval modulus) =
+    UnaryBallFun dom (b2bE =<<)
     where
     b2bE b =
       maybeTrace ("UnaryModFun b2bE: "
