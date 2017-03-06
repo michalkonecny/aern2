@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#define DEBUG
+-- #define DEBUG
 {-|
     Module      :  AERN2.RealFun.UnaryModFun
     Description :  Real functions by evaluator on dyadic points and a modulus of continuity
@@ -14,10 +14,10 @@
 -}
 
 module AERN2.RealFun.UnaryModFun
--- (
---   UnaryModFun(..), unaryModFun,
---   inverseNonDecreasingFnMaxBelow
--- )
+(
+  UnaryModFun(..), unaryModFun,
+  inverseNonDecreasingFnMaxBelow
+)
 where
 
 #ifdef DEBUG
@@ -391,6 +391,7 @@ instance CanSinCos UnaryModFun where
   sin (UnaryModFun dom eval modulus) = UnaryModFun dom (sin . eval) modulus
   cos (UnaryModFun dom eval modulus) = UnaryModFun dom (cos . eval) modulus
 
+{-
 example_ModFun :: UnaryModFun
 example_ModFun =
   x*x
@@ -415,3 +416,4 @@ mtest1 b =
 
 unaryIntervalDom :: DyadicInterval
 unaryIntervalDom = dyadicInterval (-1,1)
+-}
