@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
--- #define DEBUG
+#define DEBUG
 {-|
     Module      :  AERN2.RealFun.UnaryModFun
     Description :  Real functions by evaluator on dyadic points and a modulus of continuity
@@ -14,10 +14,10 @@
 -}
 
 module AERN2.RealFun.UnaryModFun
-(
-  UnaryModFun(..), unaryModFun,
-  inverseMonotoneFnMaxBelow
-)
+-- (
+--   UnaryModFun(..), unaryModFun,
+--   inverseNonDecreasingFnMaxBelow
+-- )
 where
 
 #ifdef DEBUG
@@ -49,10 +49,14 @@ import AERN2.RealFun.UnaryBallFun
 {-|
 
   Here we represent a continuous function \(f\) using its evaluation function on dyadics
-  and a "local" modulus of continuity in the following sense:
+  and a "local" modulus of continuity \(\omega\) in the following sense:
   .
-  For any dyadic \(d_1,d_2\in b\) with \(|d_1-d_2|\leq 2^{ -\omega(b)}\) we have
-  \(|f(d_1)-f(d_2)| \leq \mathrm{diameter}(b)\).
+  For any dyadic \(d_1,d_2\in b\) with \(|d_1-d_2|\leq 2^{ -\omega(b)(i)}\) we have
+  \(|f(d_1)-f(d_2)| \leq 2^{ -i }\).
+
+  For any \(b\), the modulus of continuity has to be a non-decreasing function:
+  \[ i\leq j \implies \omega(b)(i)\leq\omega(b)(j) \]
+  and \(omega(b)(i)\) has to converge to \(\infty\) with increasing \(i\).
 -}
 data UnaryModFun =
   UnaryModFun
@@ -68,10 +72,10 @@ instance HasDomain UnaryModFun where
 
 instance ConvertibleExactly (DyadicInterval, Integer) UnaryModFun where
   safeConvertExactly (dom,n) =
-    Right $ UnaryModFun dom  (const $ pure (real n)) (const $ const constFnModulus)
+    Right $ UnaryModFun dom  (const $ pure (real n)) (constFnModulus)
 
-constFnModulus :: Integer
-constFnModulus = -30 -- arbitrary, ideally -infinity...
+constFnModulus :: MPBall -> Integer -> Integer
+constFnModulus _b i = i
 
 unaryModFun :: (ConvertibleExactly t UnaryModFun) => t -> UnaryModFun
 unaryModFun = convertExactly
@@ -96,6 +100,7 @@ modFun2BallFun (UnaryModFun dom eval modulus) =
         ++ ", domAC = "  ++ show domAC
         ++ ", rangeAC = "  ++ show rangeAC
         ++ ", tolerance = "  ++ show tolerance
+        ++ ", fbCE = "  ++ show fbCE
       ) $
       do
       fbC <- fbCE
@@ -103,19 +108,19 @@ modFun2BallFun (UnaryModFun dom eval modulus) =
       where
       fbCE = eval (catchingNumExceptions (centre b))
 
-      domAC = 1 + (fromAccuracy $ getFiniteAccuracy b)
-      rangeAC = inverseMonotoneFnMaxBelow (modulus b) domAC
-      tolerance = errorBound $ 0.5^(rangeAC + 1)
+      domAC = fromAccuracy $ getFiniteAccuracy b
+      rangeAC = inverseNonDecreasingFnMaxBelow (modulus b) domAC
+      tolerance = errorBound $ 0.5^(rangeAC)
 
 {-|
   For a monotone integer function \(f\), and an integer \(n\) which is neither
   below or above the range of \(f\), return the largest \(i\) such that
   \(f(i) \leq n\).
 -}
-inverseMonotoneFnMaxBelow ::
+inverseNonDecreasingFnMaxBelow ::
   (Integer -> Integer)  {-^ \(f\) -} ->
   (Integer -> Integer)
-inverseMonotoneFnMaxBelow f n
+inverseNonDecreasingFnMaxBelow f n
   | fn <= n = searchMax $ boundsUp (n, fn)
   | otherwise = searchMax $ boundsDown (n, fn)
   where
@@ -241,19 +246,42 @@ instance CanMulAsymmetric UnaryModFun UnaryModFun where
     | otherwise =
       error "UnaryModFun: mul: incompatible domains"
     where
-    modulus' b i = max m1 m2
+    modulus' b i =
+      {-
+        (x1+e1)*(x2+e2) = x1*x2 + (x1*e2+x2*e1+e1*e2)
+
+        We need i1 and i2 such that whenever |e1|<=0.5^i1 and |e2|<=0.5^i2
+        then (x1*e2+x2*e1+e1*e2) <= 0.5^i.
+
+        First we strengthen this to:
+        |x1*e2| <= 0.5^(i+2)
+        |x2*e1| <= 0.5^(i+2)
+        |e1*e2| <= 0.5^(i+2)
+
+        Then we translate & strengthen this to:
+        |e2| <= 0.5^(i+(lognorm x1)+2)
+        |e1| <= 0.5^(i+(lognorm x2)+2)
+        |e1| <= 0.5^((i+2)/2)
+        |e2| <= 0.5^((i+2)/2)
+
+        which is equivalent to:
+        |e1| <= 0.5^(max (i+(lognorm x2)+2) ((i+2)/2))
+        |e2| <= 0.5^(max (i+(lognorm x1)+2) ((i+2)/2))
+
+      -}
+      max m1 m2
       where
+      i22 = (i+2) `div` 2
+      x1 = apply (unaryBallFun f1) b
+      x2 = apply (unaryBallFun f2) b
       m1 =
-        case getNormLog f2b of
-          NormZero -> constFnModulus
-          NormBits nf2b -> modulus1 b j + nf2b
+        case getNormLog x2 of
+          NormZero -> modulus1 b i22
+          NormBits nx2 -> modulus1 b (max (i + nx2 + 2) i22)
       m2 =
-        case getNormLog f1b of
-          NormZero -> constFnModulus
-          NormBits nf1b -> modulus2 b j + nf1b
-      f1b = apply (unaryBallFun f1) b
-      f2b = apply (unaryBallFun f2) b
-      j = max 0 $ i+2
+        case getNormLog x1 of
+          NormZero -> modulus2 b i22
+          NormBits nx1 -> modulus2 b (max (i + nx1 + 2) i22)
 
 instance CanMulAsymmetric Integer UnaryModFun where
   type MulType Integer UnaryModFun = UnaryModFun
@@ -262,8 +290,8 @@ instance CanMulAsymmetric Integer UnaryModFun where
     where
     modulus' b =
       case (getNormLog (abs n)) of
-        NormZero -> const constFnModulus
-        NormBits nn -> \ i -> modulus b i + nn
+        NormZero -> constFnModulus b
+        NormBits nn -> \ i -> modulus b (i + nn)
 
 instance CanMulAsymmetric UnaryModFun Integer where
   type MulType UnaryModFun Integer = UnaryModFun
@@ -279,31 +307,75 @@ instance CanDiv UnaryModFun UnaryModFun where
         do
         fd <- eval d
         pure $ 1 / fd -- cannot detect div by 0 for CauchyReals...
-      modulus' b i =
-        max (-m) ((modulus b i) + 1 - 2*m)
+      modulus' b0 i =
+        {-
+          To compute the modulus, we need to know the size of (f b)
+          and (f b) has to be zero-free.
+
+          When x = f b contains 0 due to dependency errors, we split b and compute
+          the modulus as the maximum of moduli over a partition of b.
+        -}
+        splitting maxDepth b0
         where
-        m = splitting maxDepth b
         maxDepth = 20
-        splitting md b0
-          | md == 0 = error "UnaryModFun: division modulus: division by zero"
+        splitting md b
+          | md == 0 =
+              error "UnaryModFun: division modulus: division by zero"
+          | abs fb !>! 0 =
+              modulus b $ j fb
           | otherwise =
-            case mOnB b0 of
-              Nothing ->
-                max (splitting (md-1) b1) (splitting (md-1) b2)
-              Just m0 -> m0
-            where
-            b1 = mpBall b1I
-            b2 = mpBall b2I
-            (b1I,b2I) = split $ dyadicInterval b
-      mOnB b
-        | fb !>! 0 = Just m
-        | otherwise = Nothing
-        where
-        fb = abs $ apply (unaryBallFun f) b
-        m =
-          case getNormLog (1/fb) of
-            NormZero -> constFnModulus
-            NormBits nfb -> -nfb
+              max (splitting (md-1) b1) (splitting (md-1) b2)
+          where
+          fb = apply f b
+          (b1I,b2I) = split $ dyadicInterval b
+          b1 = mpBall b1I
+          b2 = mpBall b2I
+        j x =
+          {-
+            Assume |x| > 0.
+
+            We study the propagation of error during division:
+
+            1/(x+e) - 1/x = -e/(x*(x+e))
+
+            We need j such that whenever |e|<=0.5^j
+            then |e/(x*(x+e))| <= 0.5^i and x+e /= 0.
+
+            Assuming x /= 0, this is equivalent to:
+            |e| < |x|
+            AND
+            |e| <= (0.5^i)*|x(x+e)|
+
+            The latter is equivalent to:
+
+            |e| <= (0.5^i)*(x^2+xe)
+
+            thanks to |e| < |x|.
+
+            We stengthen it to:
+
+            |e| <= (0.5^i)*(x^2-x|e|)
+
+            which is equivalent to:
+
+            |e| <= ((0.5^i)*x^2)/(0.5^i|x|+1)
+
+            which we strengthen to:
+
+            |e| <= 0.5^(i-2*((lognorm x) - 1) - max(0,(i-(lognorm x))))
+
+            using the inequality x>0 => log(1+x) >= max(0,log(x)).
+
+            We have proved that
+            j = max (1-(lognorm x)) (i-2*((lognorm x) - 1) - max(0,(i-(lognorm x))))
+            has the desired property.
+          -}
+          case getNormLog x of
+            NormZero -> error "UnaryModFun: division modulus: internal error"
+            NormBits nx ->
+              max (1-nx) -- |e| < |x|
+                (i-2*(nx - 1) - (max 0 (i-nx)))
+
 
 instance CanDiv Integer UnaryModFun where
   type DivType Integer UnaryModFun = UnaryModFun
@@ -313,14 +385,17 @@ instance CanSinCos UnaryModFun where
   sin (UnaryModFun dom eval modulus) = UnaryModFun dom (sin . eval) modulus
   cos (UnaryModFun dom eval modulus) = UnaryModFun dom (cos . eval) modulus
 
-{-
 example_ModFun :: UnaryModFun
 example_ModFun =
-  sin(10*x)+cos(20*x)
+  x*x
+  -- sin(10*x)+cos(20*x)
   -- 1/((10*x*x)+1)
   -- 1/(x+2)
   where
-  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
+  x = x_modfun
+
+x_modfun :: UnaryModFun
+x_modfun = varFn (unaryModFun (unaryIntervalDom, 0)) ()
 
 mtest1 :: Integer -> MPBall
 mtest1 b =
@@ -334,4 +409,3 @@ mtest1 b =
 
 unaryIntervalDom :: DyadicInterval
 unaryIntervalDom = dyadicInterval (-1,1)
--}
