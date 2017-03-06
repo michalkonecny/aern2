@@ -299,82 +299,88 @@ instance CanMulAsymmetric UnaryModFun Integer where
 
 instance CanDiv UnaryModFun UnaryModFun where
   divide f1 f2 = f1 * recipF f2
+
+recipF :: UnaryModFun -> UnaryModFun
+recipF f@(UnaryModFun dom eval modulus) =
+  UnaryModFun dom eval' modulus'
+  where
+  eval' d =
+    do
+    fd <- eval d
+    pure $ 1 / fd -- cannot detect div by 0 for CauchyReals...
+  modulus' b0 i =
+    {-
+      To compute the modulus, we need to know the size of (f b)
+      and (f b) has to be zero-free.
+
+      When x = f b contains 0 due to dependency errors, we split b and compute
+      the modulus as the maximum of moduli over a partition of b.
+    -}
+    splitting maxDepth b0
     where
-    recipF f@(UnaryModFun dom eval modulus) =
-      UnaryModFun dom eval' modulus'
+    maxDepth = 20
+    splitting md b
+      | md == 0 =
+          error "UnaryModFun: division modulus: division by zero"
+      | abs fb !>! 0 =
+          modulus b $ j fb
+      | otherwise =
+          max (splitting (md-1) b1) (splitting (md-1) b2)
       where
-      eval' d =
-        do
-        fd <- eval d
-        pure $ 1 / fd -- cannot detect div by 0 for CauchyReals...
-      modulus' b0 i =
-        {-
-          To compute the modulus, we need to know the size of (f b)
-          and (f b) has to be zero-free.
+      fb = apply f b
+      (b1I,b2I) = split $ dyadicInterval b
+      b1 = mpBall b1I
+      b2 = mpBall b2I
+    j x =
+      {-
+        Assume |x| > 0.
 
-          When x = f b contains 0 due to dependency errors, we split b and compute
-          the modulus as the maximum of moduli over a partition of b.
-        -}
-        splitting maxDepth b0
-        where
-        maxDepth = 20
-        splitting md b
-          | md == 0 =
-              error "UnaryModFun: division modulus: division by zero"
-          | abs fb !>! 0 =
-              modulus b $ j fb
-          | otherwise =
-              max (splitting (md-1) b1) (splitting (md-1) b2)
-          where
-          fb = apply f b
-          (b1I,b2I) = split $ dyadicInterval b
-          b1 = mpBall b1I
-          b2 = mpBall b2I
-        j x =
-          {-
-            Assume |x| > 0.
+        We study the propagation of error during division:
 
-            We study the propagation of error during division:
+        1/(x+e) - 1/x = -e/(x*(x+e))
 
-            1/(x+e) - 1/x = -e/(x*(x+e))
+        We need j such that whenever |e|<=0.5^j
+        then |e/(x*(x+e))| <= 0.5^i and x+e /= 0.
 
-            We need j such that whenever |e|<=0.5^j
-            then |e/(x*(x+e))| <= 0.5^i and x+e /= 0.
+        Assuming x /= 0, this is equivalent to:
+        |e| < |x|
+        AND
+        |e| <= (0.5^i)*|x(x+e)|
 
-            Assuming x /= 0, this is equivalent to:
-            |e| < |x|
-            AND
-            |e| <= (0.5^i)*|x(x+e)|
+        The latter is equivalent to:
 
-            The latter is equivalent to:
+        |e| <= (0.5^i)*(x^2+xe)
 
-            |e| <= (0.5^i)*(x^2+xe)
+        thanks to |e| < |x|.
 
-            thanks to |e| < |x|.
+        We stengthen it to:
 
-            We stengthen it to:
+        |e| <= (0.5^i)*(x^2-x|e|)
 
-            |e| <= (0.5^i)*(x^2-x|e|)
+        which is equivalent to:
 
-            which is equivalent to:
+        |e| <= ((0.5^i)*x^2)/(1+0.5^i|x|)
 
-            |e| <= ((0.5^i)*x^2)/(0.5^i|x|+1)
+        which we strengthen to:
 
-            which we strengthen to:
+        |e| <= 0.5^(i-2*((lognorm x) - 1) + 1 + max(0,(-i+(lognorm x))))
 
-            |e| <= 0.5^(i-2*((lognorm x) - 1) - max(0,(i-(lognorm x))))
+        using the inequality x>0 => log2(1+x) <= 1+max(0,log2(x)).
 
-            using the inequality x>0 => log(1+x) >= max(0,log(x)).
-
-            We have proved that
-            j = max (1-(lognorm x)) (i-2*((lognorm x) - 1) - max(0,(i-(lognorm x))))
-            has the desired property.
+        We have proved that
+        j = max (1-(lognorm x)) (i-2*((lognorm x) - 1)+ 1 + max(0,(-i+(lognorm x))))
+        has the desired property.
+      -}
+      case getNormLog x of
+        NormZero -> error "UnaryModFun: division modulus: internal error"
+        NormBits nx ->
+          -- max (1-nx) -- |e| < |x|
+          {- the above is redundant in the modulus
+            as the condition |e| < |x| follows from the fact that samples are drawn
+            from x and x does not contain 0.
           -}
-          case getNormLog x of
-            NormZero -> error "UnaryModFun: division modulus: internal error"
-            NormBits nx ->
-              max (1-nx) -- |e| < |x|
-                (i-2*(nx - 1) - (max 0 (i-nx)))
+            (i-2*(nx - 1) + 10)
+            --  + (max 0 (nx-i))) -- this is redundant for the same reason
 
 
 instance CanDiv Integer UnaryModFun where
