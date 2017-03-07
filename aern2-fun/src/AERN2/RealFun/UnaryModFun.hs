@@ -15,8 +15,9 @@
 
 module AERN2.RealFun.UnaryModFun
 (
-  UnaryModFun(..), unaryModFun,
-  inverseNonDecreasingFnMaxBelow
+  UnaryModFun(..), unaryModFun
+  , inverseNonDecreasingFnAnyBelow
+  , inverseNonDecreasingFnMaxBelow
 )
 where
 
@@ -110,7 +111,32 @@ modFun2BallFun (UnaryModFun dom eval modulus) =
 
       domAC = fromAccuracy $ getFiniteAccuracy b
       rangeAC = inverseNonDecreasingFnMaxBelow (modulus b) domAC
+      -- rangeAC = inverseNonDecreasingFnAnyBelow (modulus b) domAC
       tolerance = errorBound $ 0.5^(rangeAC)
+
+{-|
+  For a monotone integer function \(f\), and an integer \(n\) which is neither
+  below or above the range of \(f\), return the largest \(i\) such that
+  \(f(i) \leq n\).
+-}
+inverseNonDecreasingFnAnyBelow ::
+  (Integer -> Integer)  {-^ \(f\) -} ->
+  (Integer -> Integer)
+inverseNonDecreasingFnAnyBelow f n =
+  searchDown (n, fn)
+  where
+  fn = f n
+  searchDown (ii, fii)
+    | fii <= n = ii
+    | otherwise = searchDown (i, fi)
+    where
+    i = decrease ii
+    fi = f i
+  decrease = negate . increase . negate
+  increase i
+    | i == 0 = 1
+    | i < 0 = -((-i) `div` 2)
+    | otherwise = i * 2
 
 {-|
   For a monotone integer function \(f\), and an integer \(n\) which is neither
@@ -308,32 +334,17 @@ recipF f@(UnaryModFun dom eval modulus) =
     do
     fd <- eval d
     pure $ 1 / fd -- cannot detect div by 0 for CauchyReals...
-  modulus' b0 i =
+  modulus' b i =
     {-
-      To compute the modulus, we need to know the size of (f b)
-      and (f b) has to be zero-free.
-
-      When x = f b contains 0 due to dependency errors, we split b and compute
-      the modulus as the maximum of moduli over a partition of b.
+      To compute the modulus, we need to know the size of (f b).
     -}
-    splitting maxDepth b0
+    modulus b $ j (apply f b)
     where
-    maxDepth = 20
-    splitting md b
-      | md == 0 =
-          error "UnaryModFun: division modulus: division by zero"
-      | abs fb !>! 0 =
-          modulus b $ j fb
-      | otherwise =
-          max (splitting (md-1) b1) (splitting (md-1) b2)
-      where
-      fb = apply f b
-      (b1I,b2I) = split $ dyadicInterval b
-      b1 = mpBall b1I
-      b2 = mpBall b2I
     j x =
       {-
         Assume |x| > 0.
+        (When x admits zero, the modulus is still OK to use
+        as it remains valid for any refinement of x that excludes zero.)
 
         We study the propagation of error during division:
 

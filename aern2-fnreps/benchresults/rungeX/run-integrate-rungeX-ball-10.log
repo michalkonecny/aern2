@@ -2,7 +2,7 @@ computing integrate  x/(100x^2+1) over [-1,1]
 result = [5.204170427930421e-18 ± 7.452944093134656e-4](prec=55)
 accuracy: bits 10
 precision = Precision 55
-	Command being timed: "aern2-fnreps-ops integrate rungeX fun 10"
+	Command being timed: "aern2-fnreps-ops integrate rungeX ball 10"
 	User time (seconds): 0.49
 	System time (seconds): 0.00
 	Percent of CPU this job got: 99%
@@ -11,12 +11,12 @@ precision = Precision 55
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 8976
+	Maximum resident set size (kbytes): 8512
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 724
+	Minor (reclaiming a frame) page faults: 726
 	Voluntary context switches: 1
-	Involuntary context switches: 2
+	Involuntary context switches: 3
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

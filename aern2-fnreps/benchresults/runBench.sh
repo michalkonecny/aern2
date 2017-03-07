@@ -62,13 +62,13 @@ function sinecosModFun
     dir=$fn
 
     op=max
-    for params in 10 15 20
+    for params in 10 15 20 25
     do
         runOne
     done
 
     op=integrate
-    for params in 6 8
+    for params in 10 12 14
     do
         runOne
     done
@@ -135,6 +135,25 @@ function sinecosPoly
 ### sinesine
 #################
 
+function sinesineModFun
+{
+    repr=fun
+    fn=sinesine
+    dir=$fn
+
+    op=max
+    for params in 10 15 20
+    do
+        runOne
+    done
+
+    op=integrate
+    for params in 5 7
+    do
+        runOne
+    done
+}
+
 function sinesineBallFun
 {
     repr=ball
@@ -195,6 +214,25 @@ function sinesinePoly
 #################
 ### sinesine+cos
 #################
+
+function sinesine+cosModFun
+{
+    repr=fun
+    fn=sinesine+cos
+    dir=$fn
+
+    op=max
+    for params in 10 15 20
+    do
+        runOne
+    done
+
+    op=integrate
+    for params in 5 7
+    do
+        runOne
+    done
+}
 
 function sinesine+cosBallFun
 {
@@ -265,13 +303,13 @@ function rungeModFun
     dir=$fn
 
     op=max
-    for params in 05 15 25 35
+    for params in 05 35 65 100 120
     do
         runOne
     done
 
     op=integrate
-    for params in 05 10
+    for params in 05 10 15 20
     do
         runOne
     done
@@ -371,6 +409,25 @@ function rungeFrac
 ### rungeX
 #################
 
+function rungeXModFun
+{
+    repr=fun
+    fn=rungeX
+    dir=$fn
+
+    op=max
+    for params in 05 10 15 20 25 30 35
+    do
+        runOne
+    done
+
+    op=integrate
+    for params in 05 10 15 20
+    do
+        runOne
+    done
+}
+
 function rungeXBallFun
 {
     repr=ball
@@ -465,6 +522,25 @@ function rungeXFrac
 #################
 ### fracSin
 #################
+
+function fracSinModFun
+{
+    repr=fun
+    fn=fracSin
+    dir=$fn
+
+    op=max
+    for params in 05 15 25 35 45 55
+    do
+        runOne
+    done
+
+    op=integrate
+    for params in 05 10 15
+    do
+        runOne
+    done
+}
 
 function fracSinBallFun
 {
@@ -735,10 +811,12 @@ sinecosBallFun
 sinecosDBallFun
 sinecosPoly
 
+sinesineModFun
 sinesineBallFun
 sinesineDBallFun
 sinesinePoly
 
+sinesine+cosModFun
 sinesine+cosBallFun
 sinesine+cosDBallFun
 sinesine+cosPoly
@@ -750,12 +828,14 @@ rungePoly
 rungePPoly
 rungeFrac
 
+# rungeXModFun
 rungeXBallFun
 rungeXDBallFun
 rungeXPoly
 rungeXPPoly
 rungeXFrac
 
+# fracSinModFun
 fracSinBallFun
 fracSinDBallFun
 fracSinPoly

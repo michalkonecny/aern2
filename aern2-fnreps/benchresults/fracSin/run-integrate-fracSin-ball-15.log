@@ -2,21 +2,21 @@ computing integrate  1/(10(sin(7x))^2+1) over [-1,1]
 result = [6.478948493905847e-1 ± 2.229394247053624e-5](prec=55)
 accuracy: bits 15
 precision = Precision 55
-	Command being timed: "aern2-fnreps-ops integrate fracSin fun 15"
-	User time (seconds): 275.39
-	System time (seconds): 0.94
+	Command being timed: "aern2-fnreps-ops integrate fracSin ball 15"
+	User time (seconds): 298.40
+	System time (seconds): 1.01
 	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 4:36.06
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 4:59.15
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 156816
+	Maximum resident set size (kbytes): 156220
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 37663
+	Minor (reclaiming a frame) page faults: 37666
 	Voluntary context switches: 1
-	Involuntary context switches: 525
+	Involuntary context switches: 2275
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8
