@@ -184,6 +184,7 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 | <img src="benchresults/charts/fracSin-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/fracSin-integrate-time.png?raw=true" width="300"> |
 
 
+<!--
 ### A very simple non-smooth function
 
 ![hat](http://latex.codecogs.com/gif.latex?1-|x+1/3|)
@@ -194,7 +195,6 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 | <img src="benchresults/charts/hat-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/hat-integrate-time.png?raw=true" width="300"> |
 
 
-<!--
 ### A non-smooth function with multiple maxima
 
 ![bumpy](http://latex.codecogs.com/gif.latex?\\max(\\sin(10x),\\cos(11x)))
