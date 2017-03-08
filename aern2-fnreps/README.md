@@ -11,7 +11,7 @@ on a set of tasks.
 
 Each task has 2 phases:
 
-  1. Constructing a function on the domain  
+  1. Constructing a function on the domain
   ![](http://latex.codecogs.com/gif.latex?[-1,1])
   from a variable
   ![](http://latex.codecogs.com/gif.latex?x)
@@ -36,12 +36,12 @@ For any dyadic
 ![](http://latex.codecogs.com/gif.latex?x)
 in the domain of
 ![](http://latex.codecogs.com/gif.latex?f)
-the evaluation procedure returns the real number
+the Fun evaluation procedure returns the real number
 ![](http://latex.codecogs.com/gif.latex?f(x)).
-The modulus of continuity has 2 parameters:
+A modulus of continuity has 2 parameters:
 a ball ![](http://latex.codecogs.com/gif.latex?B)
 and an integer ![](http://latex.codecogs.com/gif.latex?i).
-The modulus of continuity returns an integer
+A modulus of continuity returns an integer
 ![](http://latex.codecogs.com/gif.latex?j)
 such that for any
 ![](http://latex.codecogs.com/gif.latex?x,y\\in [-1,1])
@@ -139,7 +139,7 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="benchresults/charts/sine+cos-max.png?raw=true" width="300"> | <img src="benchresults/charts/sine+cos-integrate.png?raw=true" width="300"> |
+| <img src="benchresults/charts/sine+cos-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/sine+cos-integrate-time.png?raw=true" width="300"> |
 
 ### A nested sine function
 
@@ -148,14 +148,14 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="benchresults/charts/sinesine-max.png?raw=true" width="300"> | <img src="benchresults/charts/sinesine-integrate.png?raw=true" width="300"> |  
+| <img src="benchresults/charts/sinesine-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/sinesine-integrate-time.png?raw=true" width="300"> |  
 
 ![sinesine+sin](http://latex.codecogs.com/gif.latex?\\sin(10x+\\sin(20x^2))+\\sin(10x))
 <img src="plots/sinesine+sin.png?raw=true" width="150">
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="benchresults/charts/sinesine+cos-max.png?raw=true" width="300"> | <img src="benchresults/charts/sinesine+cos-integrate.png?raw=true" width="300"> |  
+| <img src="benchresults/charts/sinesine+cos-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/sinesine+cos-integrate-time.png?raw=true" width="300"> |  
 
 
 ### An analytic function with singularities near the origin
@@ -165,14 +165,14 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="benchresults/charts/runge-max.png?raw=true" width="300"> | <img src="benchresults/charts/runge-integrate.png?raw=true" width="300"> |
+| <img src="benchresults/charts/runge-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/runge-integrate-time.png?raw=true" width="300"> |
 
 ![rungeX](http://latex.codecogs.com/gif.latex?{\\frac{x}{100x^2+1}})
 <img src="plots/rungeX.png?raw=true" width="150">
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="benchresults/charts/rungeX-max.png?raw=true" width="300"> | <img src="benchresults/charts/rungeX-integrate.png?raw=true" width="300"> |
+| <img src="benchresults/charts/rungeX-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/rungeX-integrate-time.png?raw=true" width="300"> |
 
 ### An analytic function with singularities near the origin and with multiple maxima
 
@@ -181,7 +181,7 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="benchresults/charts/fracSin-max.png?raw=true" width="300"> | <img src="benchresults/charts/fracSin-integrate.png?raw=true" width="300"> |
+| <img src="benchresults/charts/fracSin-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/fracSin-integrate-time.png?raw=true" width="300"> |
 
 
 ### A very simple non-smooth function
@@ -191,7 +191,7 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="benchresults/charts/hat-max.png?raw=true" width="300"> | <img src="benchresults/charts/hat-integrate.png?raw=true" width="300"> |
+| <img src="benchresults/charts/hat-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/hat-integrate-time.png?raw=true" width="300"> |
 
 
 <!--
