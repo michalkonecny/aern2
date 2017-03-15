@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-unused-matches #-}
 {-# LANGUAGE CPP #-}
--- #define DEBUG
+#define DEBUG
 module Main where
 
 #ifdef DEBUG
@@ -182,9 +182,10 @@ functions =
     , ("sinesine+cos", (sinesineCos_Name, sinesineCos_PB, sinesineCos_ModFun, sinesineCos_B2B, sinesineCosDeriv_B2B, sinesineCos_PP, sinesineCos_FR))
     , ("runge", (runge_Name, runge_PB, runge_ModFun, runge_B2B, rungeDeriv_B2B, runge_PP, runge_FR))
     , ("rungeX", (rungeX_Name, rungeX_PB, rungeX_ModFun, rungeX_B2B, rungeXDeriv_B2B, rungeX_PP, rungeX_FR))
+    , ("rungeSC", (rungeSC_Name, rungeSC_PB, rungeSC_ModFun, rungeSC_B2B, rungeSCDeriv_B2B, rungeSC_PP, rungeSC_FR))
     , ("fracSin", (fracSin_Name, fracSin_PB, fracSin_ModFun, fracSin_B2B, fracSinDeriv_B2B, fracSin_PP, fracSin_FR))
-    , ("fracSinCos", (fracSinCos_Name, fracSinCos_PB, fracSinCos_ModFun, fracSinCos_B2B, fracSinCosDeriv_B2B, fracSinCos_PP, fracSinCos_FR))
     , ("fracSinX", (fracSinX_Name, fracSinX_PB, fracSinX_ModFun, fracSinX_B2B, fracSinXDeriv_B2B, fracSinX_PP, fracSinX_FR))
+    , ("fracSinSC", (fracSinSC_Name, fracSinSC_PB, fracSinSC_ModFun, fracSinSC_B2B, fracSinSCDeriv_B2B, fracSinSC_PP, fracSinSC_FR))
     -- , ("hat", (hat_Name, hat_PB, hat_B2B, hatDeriv_B2B, hat_PP, hat_FR))
     -- , ("bumpy", (bumpy_Name, bumpy_PB, bumpy_B2B, bumpyDeriv_B2B, bumpy_PP, bumpy_FR))
     ]
@@ -403,6 +404,68 @@ rungeX_FR acGuide =
   inv = (Frac.fromPoly x) / (Frac.fromPoly $ 100*x*x+1)
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
+rungeSC_Name :: String
+rungeSC_Name = "(sin(10x)+cos(20x))/(100x^2+1) over [-1,1]"
+
+rungeSC_PB :: Accuracy -> ChPoly MPBall
+rungeSC_PB acGuide =
+  ChPoly.chebDivideDCT acGuide num denom
+  where
+  num = sine (10*x) + cosine (20*x)
+  denom = 100*(x*x)+1
+  x = setPrc1 xPre
+  xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+  setPrc1 :: (CanSetPrecision t) => t -> t
+  setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
+  sine = sineWithAccuracyGuide acGuide
+  cosine = cosineWithAccuracyGuide acGuide
+
+rungeSC_ModFun :: UnaryModFun
+rungeSC_ModFun =
+  (sin (10*x) + cos(20*x))/(100*x*x+1)
+  where
+  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
+
+rungeSC_B2B :: UnaryBallFun
+rungeSC_B2B =
+  UnaryBallFun unaryIntervalDom $ \x ->
+    (sin (10*x) + cos(20*x))/(100*x^2+1)
+
+rungeSCDeriv_B2B :: UnaryBallFun
+rungeSCDeriv_B2B =
+  UnaryBallFun unaryIntervalDom $ \x ->
+    ((10*cos(10*x) - 20*sin(20*x))*(100*x^2+1) - (sin (10*x) + cos(20*x))*(200*x))
+    /
+    ((100*x^2+1)^2)
+
+rungeSC_PP :: Accuracy -> PPoly
+rungeSC_PP acGuide =
+  maybeTrace ("rungeSC_PP: getAccuracy num = " ++ show (getAccuracy num)) $
+  maybeTrace ("rungeSC_PP: getPrecision num = " ++ show (getPrecision num)) $
+  maybeTrace ("rungeSC_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
+  maybeTrace ("rungeSC_PP: getPrecision inv = " ++ show (getPrecision inv)) $
+  num * inv
+  where
+  num = PPoly.fromPoly $ sine (10*x) + cosine (20*x)
+  inv = setPrc2 $ PPoly.inverse $ PPoly.fromPoly $ 100*x*x+1
+  x = setPrc1 xPre
+  xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+  setPrc2 :: (CanSetPrecision t) => t -> t
+  setPrc2 = setPrecisionAtLeastAccuracy (64*acGuide)
+  setPrc1 :: (CanSetPrecision t) => t -> t
+  setPrc1 = setPrecisionAtLeastAccuracy (8*acGuide)
+  sine = sineWithAccuracyGuide ((fromAccuracy acGuide `div` 4 + 1)*(acGuide) + 25)
+  cosine = cosineWithAccuracyGuide ((fromAccuracy acGuide `div` 4 + 1)*(acGuide) + 25)
+
+rungeSC_FR :: Accuracy -> FracMB
+rungeSC_FR acGuide =
+  inv
+  where
+  inv = (Frac.fromPoly $ sine (10*x) + cosine (20*x)) / (Frac.fromPoly $ 100*x*x+1)
+  x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+  sine = sineWithAccuracyGuide acGuide
+  cosine = cosineWithAccuracyGuide acGuide
+
 fracSin_Name :: String
 fracSin_Name = "1/(10(sin(7x))^2+1) over [-1,1]"
 
@@ -517,73 +580,72 @@ fracSinX_FR acGuide =
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 
-fracSinCos_Name :: String
-fracSinCos_Name = "1/(10(sin(7x)+cos(5x))^2+1) over [-1,1]"
+fracSinSC_Name :: String
+fracSinSC_Name = "(sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]"
 
-fracSinCos_PB :: Accuracy -> ChPoly MPBall
-fracSinCos_PB acGuide =
-  ChPoly.chebDivideDCT acGuide (x-x+1) denom
+fracSinSC_PB :: Accuracy -> ChPoly MPBall
+fracSinSC_PB acGuide =
+  ChPoly.chebDivideDCT acGuide num denom
   where
-  denom = (10*(sinecos*sinecos)+1)
-  sinecos = sine7x + cos5x
+  num = sine2(10*x) + cosine(20*x)
+  denom = (10*(sine7x*sine7x)+1)
   sine7x = sine1 (7*x)
-  cos5x = cos1 (5*x)
   sine1 = sineWithAccuracyGuide (acGuide + 10)
-  cos1 = cosineWithAccuracyGuide (acGuide + 10)
   x = setPrc1 xPre
   xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   setPrc1 :: (CanSetPrecision t) => t -> t
   setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
+  sine2 = sineWithAccuracyGuide (acGuide)
+  cosine = cosineWithAccuracyGuide (acGuide)
 
-fracSinCos_ModFun :: UnaryModFun
-fracSinCos_ModFun =
-  1/(10*(sincos*sincos)+1)
+fracSinSC_ModFun :: UnaryModFun
+fracSinSC_ModFun =
+  (sin(10*x)+cos(20*x))/(10*(sin7x*sin7x)+1)
   where
-  sincos = sin(7*x) + cos(5*x)
+  sin7x = sin (7*x)
   x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
 
-fracSinCos_B2B :: UnaryBallFun
-fracSinCos_B2B =
+fracSinSC_B2B :: UnaryBallFun
+fracSinSC_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    1/(10*(sin (7*x) + cos(5*x))^2+1)
+    (sin(10*x)+cos(20*x))/(10*(sin (7*x))^2+1)
 
-fracSinCosDeriv_B2B :: UnaryBallFun
-fracSinCosDeriv_B2B =
+fracSinSCDeriv_B2B :: UnaryBallFun
+fracSinSCDeriv_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    (-20*(sin(7*x)+cos(5*x))*(7*cos(7*x)-5*sin(5*x)))
-    /((10*(sin (7*x)+cos(5*x))^2+1)^2)
+    ((10*cos(10*x)-20*sin(20*x))*(10*(sin (7*x))^2+1) - (sin(10*x)+cos(20*x))*(140*sin(7*x)*cos(7*x)))
+    /
+    ((10*(sin (7*x))^2+1)^2)
 
-fracSinCos_PP :: Accuracy -> PPoly
-fracSinCos_PP acGuide =
-  maybeTrace ("fracSin_PP: getAccuracy sine7x = " ++ show (getAccuracy sine7x)) $
-  maybeTrace ("fracSin_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
-  inv
+fracSinSC_PP :: Accuracy -> PPoly
+fracSinSC_PP acGuide =
+  maybeTrace ("fracSinSC_PP: getAccuracy sine7x = " ++ show (getAccuracy sine7x)) $
+  maybeTrace ("fracSinSC_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
+  num * inv
   where
-  inv = setPrc2 $ PPoly.inverse $ PPoly.fromPoly $ (10*(sinecos*sinecos)+1)
-  sinecos = sine7x + cos5x
+  num = PPoly.fromPoly $ sine2(10*x) + cosine(20*x)
+  inv = setPrc2 $ PPoly.inverse $ PPoly.fromPoly $ (10*(sine7x*sine7x)+1)
   sine7x = sine1 (7*x)
-  cos5x = cos1 (5*x)
   sine1 = sineWithAccuracyGuide (acGuide + 10)
-  cos1 = cosineWithAccuracyGuide (acGuide + 10)
   x = setPrc1 xPre
   xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   setPrc2 :: (CanSetPrecision t) => t -> t
   setPrc2 = setPrecisionAtLeastAccuracy (10*acGuide)
   setPrc1 :: (CanSetPrecision t) => t -> t
   setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
+  sine2 = sineWithAccuracyGuide (acGuide)
+  cosine = cosineWithAccuracyGuide (acGuide)
 
-fracSinCos_FR :: Accuracy -> FracMB
-fracSinCos_FR acGuide =
+fracSinSC_FR :: Accuracy -> FracMB
+fracSinSC_FR acGuide =
   inv
   where
-  inv = 1 / (Frac.fromPoly $ (10*(sinecos*sinecos)+1))
-  sinecos = sine7x + cos5x
+  inv = (Frac.fromPoly $ sine2(10*x) + cosine(20*x)) / (Frac.fromPoly $ (10*(sine7x*sine7x)+1))
   sine7x = sine1 (7*x)
-  cos5x = cos1 (5*x)
   sine1 = sineWithAccuracyGuide (acGuide + 10)
-  cos1 = cosineWithAccuracyGuide (acGuide + 10)
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
-
+  sine2 = sineWithAccuracyGuide (acGuide + 10)
+  cosine = cosineWithAccuracyGuide (acGuide + 10)
 
 
 hat_Name :: String

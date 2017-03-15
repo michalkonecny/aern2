@@ -403,6 +403,12 @@ function rungeFrac
     do
         runOne
     done
+
+    op=integrate
+    for params in 8 16 32
+    do
+        runOne
+    done
 }
 
 #################
@@ -513,6 +519,131 @@ function rungeXFrac
 
     op=max
     for params in 10 20 40 80 120
+    do
+        runOne
+    done
+
+    op=integrate
+    for params in 8 16 32 64
+    do
+        runOne
+    done
+}
+
+#################
+### rungeSC
+#################
+
+function rungeSCModFun
+{
+    repr=fun
+    fn=rungeSC
+    dir=$fn
+
+    op=max
+    for params in 05 10 15 20 25 30
+    do
+        runOne
+    done
+
+    op=integrate
+    for params in 05 10 15
+    do
+        runOne
+    done
+}
+
+function rungeSCBallFun
+{
+    repr=ball
+    fn=rungeSC
+    dir=$fn
+
+    op=max
+    for params in 05 10 15 20 25 30
+    do
+        runOne
+    done
+
+    op=integrate
+    for params in 05 10 15
+    do
+        runOne
+    done
+}
+
+function rungeSCDBallFun
+{
+    repr=dball
+    fn=rungeSC
+    dir=$fn
+
+    op=max
+    for params in 05 10 20 30 40 50 52
+    do
+        runOne
+    done
+
+    op=integrate
+    for params in 05 10 15 20 25 30
+    do
+        runOne
+    done
+}
+
+function rungeSCPoly
+{
+    repr=poly
+    fn=rungeSC
+    dir=$fn
+
+    op=max
+    for params in -01 01 04
+    do
+        runOne
+    done
+
+    op=integrate
+    for params in -01 01 04
+    do
+        runOne
+    done
+}
+
+
+function rungeSCPPoly
+{
+    repr=ppoly
+    fn=rungeSC
+    dir=$fn
+
+    op=max
+    for params in 8 16 32
+    do
+        runOne
+    done
+
+    op=integrate
+    for params in 8 16 32
+    do
+        runOne
+    done
+}
+
+function rungeSCFrac
+{
+    repr=frac
+    fn=rungeSC
+    dir=$fn
+
+    op=max
+    for params in 10 20 40 80 120
+    do
+        runOne
+    done
+
+    op=integrate
+    for params in 10 20 40 80
     do
         runOne
     done
@@ -629,17 +760,23 @@ function fracSinFrac
     do
         runOne
     done
+
+    op=integrate
+    for params in 10 20 40
+    do
+        runOne
+    done
 }
 
 
 #################
-### fracSinCos
+### fracSinSC
 #################
 
-function fracSinCosBallFun
+function fracSinSCBallFun
 {
     repr=ball
-    fn=fracSinCos
+    fn=fracSinSC
     dir=$fn
 
     op=max
@@ -655,10 +792,10 @@ function fracSinCosBallFun
     done
 }
 
-function fracSinCosDBallFun
+function fracSinSCDBallFun
 {
     repr=dball
-    fn=fracSinCos
+    fn=fracSinSC
     dir=$fn
 
     op=max
@@ -674,10 +811,10 @@ function fracSinCosDBallFun
     done
 }
 
-function fracSinCosPoly
+function fracSinSCPoly
 {
     repr=poly
-    fn=fracSinCos
+    fn=fracSinSC
     dir=$fn
 
     op=max
@@ -693,10 +830,10 @@ function fracSinCosPoly
     done
 }
 
-function fracSinCosPPoly
+function fracSinSCPPoly
 {
     repr=ppoly
-    fn=fracSinCos
+    fn=fracSinSC
     dir=$fn
 
     op=max
@@ -712,14 +849,20 @@ function fracSinCosPPoly
     done
 }
 
-function fracSinCosFrac
+function fracSinSCFrac
 {
     repr=frac
-    fn=fracSinCos
+    fn=fracSinSC
     dir=$fn
 
     op=max
     for params in 10 20 40 60
+    do
+        runOne
+    done
+
+    op=integrate
+    for params in 10 20 40
     do
         runOne
     done
@@ -835,6 +978,13 @@ rungeXPoly
 rungeXPPoly
 rungeXFrac
 
+# rungeSCModFun
+rungeSCBallFun
+rungeSCDBallFun
+rungeSCPoly
+rungeSCPPoly
+rungeSCFrac
+
 # fracSinModFun
 fracSinBallFun
 fracSinDBallFun
@@ -842,11 +992,11 @@ fracSinPoly
 fracSinPPoly
 fracSinFrac
 
-# fracSinCosBallFun
-# fracSinCosDBallFun
-# fracSinCosPoly
-# fracSinCosPPoly
-# fracSinCosFrac
+fracSinSCBallFun
+fracSinSCDBallFun
+fracSinSCPoly
+fracSinSCPPoly
+fracSinSCFrac
 
 # hatBallFun
 # hatDBallFun
