@@ -114,6 +114,14 @@ library
     AERN2.Frac.Conversion
     AERN2.Frac.Integration
     AERN2.Frac
+    AERN2.Local.Basics
+    AERN2.Local.Ring
+    AERN2.Local.Field
+    AERN2.Local.Poly
+    AERN2.Local.Maximum
+    AERN2.Local.Integration
+    AERN2.Local.Frac
+    AERN2.Local.SineCosine
 
 
 test-suite spec

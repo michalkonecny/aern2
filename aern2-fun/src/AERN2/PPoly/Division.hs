@@ -39,7 +39,7 @@ inverseWithAccuracy cutoff' f@(PPoly _ (Interval l r)) =
   bts   = max (2 + (integer . integerLog2 . snd . integerBounds) bf) $ (fromAccuracy cutoff) `Prelude.div` (2^numIts)
   fc    = centre f
   fRed0 = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 (bits 1)) fc
-  fRed1 = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 (2*thresholdAccuracy)) fc
+  fRed1 = fc--(liftCheb2PPoly $ reduceDegreeToAccuracy 5 (2*thresholdAccuracy)) fc
   bf    = abs $ AERN2.PPoly.Maximum.maximumOptimisedWithAccuracy fRed0 (mpBall l) (mpBall r) 5 5 (bits 4)
   threshold = (mpBall $ (dyadic 0.5)^bts)/(centreAsBall bf) --1/((2^bts)*(1 + (centreAsBall bf)))
   if0 = initialApproximation fRed1 bts thresholdAccuracy
@@ -272,6 +272,25 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) bts thresholdAccuracy {-bf-}
       "with value "++(show fm)
       )-}
       Set.fromList [LineSegment (a,fa) (m, fm), LineSegment (m, fm) (b, fb)]
+  lineSegment ((a,fa), (b, fb)) =
+    if a /=  l && b /= r then
+      linearPolygon [(l, fa), (a, fa), (b, fb), (r, fb)] dom
+    else if a /= l && b == r then
+      linearPolygon [(l, fa), (a, fa), (b, fb)] dom
+    else if a == l && b /= r then
+      linearPolygon [(a, fa), (b, fb), (r, fb)] dom
+    else
+      linearPolygon [(a,fa), (b,fb)] dom
+
+{- -}
+initialApproximation' :: PPoly -> PPoly -- for now approximation up to error 1/(2|P(x)|)
+initialApproximation' f@(PPoly _ dom@(Interval l r)) =
+  undefined
+  where
+  bf = maximumOptimisedWithAccuracy f (mpBall l) (mpBall r) 5 5 (bits 3) -- TODO: reduce f?
+  lip = 10000 -- TODO: compute real lipschitz constant
+  logbf = integer $ integerLog2 $ snd $ integerBounds bf
+
   lineSegment ((a,fa), (b, fb)) =
     if a /=  l && b /= r then
       linearPolygon [(l, fa), (a, fa), (b, fb), (r, fb)] dom

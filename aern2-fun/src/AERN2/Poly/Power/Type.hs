@@ -81,6 +81,14 @@ $(declForTypes
       add c (PowPoly p) = PowPoly $ add c p
   |]))
 
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |]]
+  (\ t -> [d|
+    instance (CanAddThis c $t, HasIntegers c) => CanAddAsymmetric (PowPoly c) $t where
+      type AddType (PowPoly c) $t = PowPoly c
+      add (PowPoly p) c = PowPoly $ add c p
+  |]))
+
 instance (CanSubSameType c, CanNegSameType c, CanAddSameType c)
   => CanSub (PowPoly c) (PowPoly c) where
   type SubType (PowPoly c) (PowPoly c) = PowPoly c

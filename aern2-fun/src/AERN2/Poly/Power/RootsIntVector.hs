@@ -7,6 +7,7 @@ module AERN2.Poly.Power.RootsIntVector
   , contract
   , translate
   , transform
+  , findRootsWithAccuracy
 --  , findRoots
   --, reduce
   , Terms
@@ -16,12 +17,15 @@ where
 import Numeric.MixedTypes
 import qualified Data.Map as Map
 import qualified Prelude
+import AERN2.Interval
 import AERN2.MP.Ball hiding (iterateUntilAccurate)
+import AERN2.MP.Dyadic
 import Data.Maybe
 import Data.Ratio
 
 import AERN2.Poly.Power.Type
 import AERN2.Poly.Basics hiding (Terms)
+import AERN2.Poly.Power.Eval
 
 import Data.Vector (Vector, (!))
 import qualified Data.Vector as V
@@ -209,6 +213,51 @@ instance HasEqAsymmetric HasRoot HasRoot where
   type EqCompareType HasRoot HasRoot = Bool
 
 {-
+  Upper bound on the roots of poly in the open interval (l,r),
+  i.e. an ordered list of intervals whose union
+  contains all roots. There is no guarantee that every interval in the
+  list contains a root.
+-}
+findRootsWithAccuracy :: PowPoly Integer -> Accuracy -> Rational -> Rational -> [Interval Rational Rational]
+findRootsWithAccuracy poly acc l r =
+  splitUntilAccurate (Interval l r, bsI, DontKnow)
+  where
+  bsI = initialBernsteinCoefs poly (errorBound 0) l r -- TODO: allow non-zero error?
+  splitUntilAccurate :: (Interval Rational Rational, Terms, HasRoot) -> [Interval Rational Rational]
+  splitUntilAccurate (i@(Interval a b), bs, hasRoot) =
+    if intervalAccurate i then
+      [i]
+    else
+      case hasRoot of
+        Yes      ->
+          let
+          m  = (a + b)/2
+          fa = evalDirect poly a
+          fm = evalDirect poly m
+          in
+          if fa*fm < 0 then
+            splitUntilAccurate (Interval a m, bs, Yes)
+          else
+            splitUntilAccurate (Interval m b, bs, Yes)
+        DontKnow ->
+          let
+            Just vars = signVars bs
+            m    = (a + b)/2
+            (bsL, bsR) = bernsteinCoefs a b m bs
+            pm = (thd bsR) ! (int 0)
+          in
+            case vars of
+              0 -> []
+              1 -> splitUntilAccurate (i, (errorBound 0, 0, V.empty), Yes)
+              _ ->
+                if (pm :: Integer) == 0 then [Interval m m] else []
+                ++ splitUntilAccurate (Interval a m, bsL, DontKnow)
+                ++ splitUntilAccurate (Interval m b, bsR, DontKnow)
+  intervalAccurate (Interval a b) =
+    b - a < 0.5^(fromAccuracy $ acc)
+
+
+{-
 findRoots :: PowPoly Integer -> MPBall -> MPBall -> ((MPBall, MPBall) -> Bool) -> [(MPBall, MPBall)] -- TODO: if signVars == Nothing - recompute or give up? (currently giving up)
 findRoots p l r intervalOK =      -- TODO: remove intervalOK and iterate until nix mehr geht
   splitUntilAccurate [(l, r, DontKnow, bsI)] []
@@ -283,3 +332,6 @@ findRoots p l r intervalOK =      -- TODO: remove intervalOK and iterate until n
 binom :: Integer -> Integer -> Integer
 binom _ 0 = 1
 binom n k =  binom n (k - 1) * (n - k + 1) `Prelude.div` k
+
+thd :: (a,b,c) -> c
+thd (_,_,x) = x
