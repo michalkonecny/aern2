@@ -9,6 +9,7 @@
     Portability :  portable
 
     Integer-based arbitrary precision floating point numbers.
+    Currently not used.  It is much slower than to MPFR.
 -}
 
 module AERN2.MP.Float.Native
@@ -40,9 +41,9 @@ import AERN2.MP.Precision
 --   }
 data MPFloat =
   MPFloat
-  { mpFloat_integer :: {-# UNPACK #-} ! Integer
-  , mpFloat_exponent :: {-# UNPACK #-} ! Integer
-  , mpFloat_precision :: {-# UNPACK #-} ! Precision
+  { mpFloat_integer :: ! Integer
+  , mpFloat_exponent :: ! Integer
+  , mpFloat_precision :: ! Precision
   }
 
 makeNOdd :: MPFloat -> MPFloat

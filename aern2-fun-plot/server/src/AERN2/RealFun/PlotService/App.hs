@@ -66,7 +66,7 @@ app fns =
 server ::
   Functions -> IO (Server WithAssets)
 server fns = do
-  assets <- serveAssets
+  assets <- serveAssets def
   samplingsStore <- mkSamplingsStore
   return $ apiServer fns samplingsStore :<|> assets
 
@@ -103,6 +103,7 @@ functionUsingEval (name, fn) =
   Function
   { function_name = name
   , function_dom = getDomain fn
+  , function_colour = functionColour (0,0,0)
   , function_getBounds = \ di -> let val = apply fn di in Interval val val
   }
 
@@ -115,6 +116,7 @@ intervalFunctionUsingEval (name, fn) =
   Function
   { function_name = name
   , function_dom = getDomain fn
+  , function_colour = functionColour (0,0,0)
   , function_getBounds = apply fn
   }
 

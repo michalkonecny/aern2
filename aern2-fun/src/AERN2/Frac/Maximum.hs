@@ -71,7 +71,7 @@ maximumOptimisedWithAccuracy acc f@(Frac p q _) l r iDeg steps =
   dfs = [(k, reduceDegree (iDeg + steps*k) df) | k <- [0..maxKey + 1]]
   dfsWithEval =
     Map.fromList
-    [(k,(Cheb.evalDirect dfk, (ch2Power . intify) dfk)) | (k, dfk) <- dfs]
+    [(k,(Cheb.evalDirect dfk :: MPBall -> MPBall, (ch2Power . intify) dfk)) | (k, dfk) <- dfs]
 
 intify :: ChPoly MPBall -> (ErrorBound, Poly Integer)
 intify (ChPoly _ p _) =

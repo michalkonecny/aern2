@@ -307,7 +307,7 @@ mi_isAccurate :: Accuracy -> Integer -> MaximisationInterval -> Bool
 mi_isAccurate _ _ FinalInterval{} = True
 mi_isAccurate cutoff maxKey mi =
   getAccuracy (mi_value mi) >= cutoff
-  {-|| (mi_deg maxKey mi == maxKey
+  {-- || (mi_deg maxKey mi == maxKey
   && not (isMoreAccurate (mi_value mi) (mi_oldValue mi)))-}
 
 

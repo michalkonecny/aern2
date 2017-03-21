@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-unused-matches #-}
 {-# LANGUAGE CPP #-}
--- #define DEBUG
+#define DEBUG
 module Main where
 
 #ifdef DEBUG
@@ -30,8 +30,9 @@ import AERN2.Interval
 
 import AERN2.RealFun.Operations
 import AERN2.RealFun.SineCosine
-import AERN2.RealFun.UnaryFun
-import AERN2.RealFun.UnaryDFun
+import AERN2.RealFun.UnaryBallFun
+import AERN2.RealFun.UnaryBallDFun
+import AERN2.RealFun.UnaryModFun
 -- import AERN2.Poly.Basics
 
 import qualified AERN2.PPoly as PPoly
@@ -69,23 +70,24 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         "computing " ++ operationCode ++ "  " ++ fnDescription
 
     result =
-        case (representationCode, operationCode) of
-            ("fun", "max") -> maxFun fnB2B accuracy
-            ("dfun", "max") -> maxDFun fnB2B dfnB2B accuracy
-            ("fun", "integrate") -> integrateFun fnB2B accuracy
-            ("dfun", "integrate") -> integrateDFun fnB2B dfnB2B accuracy
-            ("poly", "max") -> maxPB $ fnPB accuracy
-            ("poly", "integrate") -> integratePB $ fnPB accuracy
-            ("ppoly", "max") -> maxPP $ fnPP accuracy
-            ("ppoly", "integrate") -> integratePP $ fnPP accuracy
-            ("frac", "max") -> maxFR $ fnFR accuracy
-            ("frac", "integrate") -> integrateFR $ fnFR accuracy
-            _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
-    (Just (fnDescription, fnPB, fnB2B, dfnB2B, fnPP, fnFR)) = Map.lookup functionCode functions
+      case (representationCode, operationCode) of
+        ("fun", "max") -> maxModFun fnModFun accuracy
+        ("ball", "max") -> maxBallFun fnB2B accuracy
+        ("dball", "max") -> maxDBallFun fnB2B dfnB2B accuracy
+        ("fun", "integrate") -> integrateModFun fnModFun accuracy
+        ("ball", "integrate") -> integrateBallFun fnB2B accuracy
+        ("dball", "integrate") -> integrateDBallFun fnB2B dfnB2B accuracy
+        ("poly", "max") -> maxPB $ fnPB accuracy
+        ("poly", "integrate") -> integratePB $ fnPB accuracy
+        ("ppoly", "max") -> maxPP $ fnPP accuracy
+        ("ppoly", "integrate") -> integratePP $ fnPP accuracy
+        ("frac", "max") -> maxFR $ fnFR accuracy
+        ("frac", "integrate") -> integrateFR $ fnFR accuracy
+        _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
+    (Just (fnDescription, fnPB, fnModFun, fnB2B, dfnB2B, fnPP, fnFR)) = Map.lookup functionCode functions
 
     accuracy = bits $ (read accuracyS :: Int)
     [accuracyS] = effortArgs
-
 
     maxPB :: ChPoly MPBall -> MPBall
     maxPB f = f `maximumOverDom` (getDomain f)
@@ -115,10 +117,13 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     maxFR f = f `maximumOverDomFR` (getDomain f)
       where
       maximumOverDomFR f2 (Interval l r) =
-        Frac.maximum f2 lB rB
+        Frac.maximumOptimisedWithAccuracy accuracy (setPrc f2) lB rB 5 5
         where
-        lB = setPrecision prc $ mpBall l
-        rB = setPrecision prc $ mpBall r
+        lB = setPrc $ mpBall l
+        rB = setPrc $ mpBall r
+        setPrc :: (CanSetPrecision a) => a -> a
+        setPrc =
+          setPrecisionAtLeastAccuracy (accuracy) . setPrecision prc
         prc = getPrecision f2
 
     integrateFR :: FracMB -> MPBall
@@ -127,48 +132,62 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
       integrateOverDomFR ff (Interval l r) =
         Frac.integral ff (mpBall l) (mpBall r)
 
-    maxFun :: UnaryFun -> Accuracy -> MPBall
-    maxFun fn ac =
+    maxBallFun :: UnaryBallFun -> Accuracy -> MPBall
+    maxBallFun fn ac =
         qaMakeQuery m ac
         where
         m = fn `maximumOverDom` getDomain fn
 
-    maxDFun :: UnaryFun -> UnaryFun -> Accuracy -> MPBall
-    maxDFun f f' ac =
+    maxModFun :: UnaryModFun -> Accuracy -> MPBall
+    maxModFun fn ac =
+        qaMakeQuery m ac
+        where
+        m = fn `maximumOverDom` getDomain fn
+
+    maxDBallFun :: UnaryBallFun -> UnaryBallFun -> Accuracy -> MPBall
+    maxDBallFun f f' ac =
         qaMakeQuery m ac
         where
         m = fn `maximumOverDom` getDomain f
-        fn = UnaryDFun [f,f']
+        fn = UnaryBallDFun [f,f']
 
-    integrateFun :: UnaryFun -> Accuracy -> MPBall
-    integrateFun fn ac =
+    integrateBallFun :: UnaryBallFun -> Accuracy -> MPBall
+    integrateBallFun fn ac =
         qaMakeQuery r ac
         where
         r = fn `integrateOverDom` (getDomain fn)
 
-    integrateDFun :: UnaryFun -> UnaryFun -> Accuracy -> MPBall
-    integrateDFun f f' ac =
+    integrateModFun :: UnaryModFun -> Accuracy -> MPBall
+    integrateModFun fn ac =
+        qaMakeQuery r ac
+        where
+        r = fn `integrateOverDom` (getDomain fn)
+
+    integrateDBallFun :: UnaryBallFun -> UnaryBallFun -> Accuracy -> MPBall
+    integrateDBallFun f f' ac =
         qaMakeQuery r ac
         where
         r = fn `integrateOverDom` (getDomain f)
         dom = getDomain f
-        fn = UnaryDFun [f,f']
+        fn = UnaryBallDFun [f,f']
 processArgs _ =
     error "expecting arguments: <operationCode> <functionCode> <representationCode> <effort parameters...>"
 
-functions :: Map.Map String (String, Accuracy -> ChPoly MPBall, UnaryFun, UnaryFun, Accuracy -> PPoly, Accuracy -> FracMB)
+functions :: Map.Map String (String, Accuracy -> ChPoly MPBall, UnaryModFun, UnaryBallFun, UnaryBallFun, Accuracy -> PPoly, Accuracy -> FracMB)
 functions =
     Map.fromList
     [
-        ("sine+cos", (sinecos_Name, sinecos_PB, sinecos_B2B, sinecosDeriv_B2B, sinecos_PP, sinecos_FR)),
-        ("sinesine", (sinesine_Name, sinesine_PB, sinesine_B2B, sinesineDeriv_B2B, sinesine_PP, sinesine_FR)),
-        ("sinesine+cos", (sinesineCos_Name, sinesineCos_PB, sinesineCos_B2B, sinesineCosDeriv_B2B, sinesineCos_PP, sinesineCos_FR)),
-        ("runge", (runge_Name, runge_PB, runge_B2B, rungeDeriv_B2B, runge_PP, runge_FR)),
-        ("rungeX", (rungeX_Name, rungeX_PB, rungeX_B2B, rungeXDeriv_B2B, rungeX_PP, rungeX_FR)),
-        ("fracSin", (fracSin_Name, fracSin_PB, fracSin_B2B, fracSinDeriv_B2B, fracSin_PP, fracSin_FR)),
-        ("fracSinX", (fracSinX_Name, fracSinX_PB, fracSinX_B2B, fracSinXDeriv_B2B, fracSinX_PP, fracSinX_FR)),
-        ("hat", (hat_Name, hat_PB, hat_B2B, hatDeriv_B2B, hat_PP, hat_FR)),
-        ("bumpy", (bumpy_Name, bumpy_PB, bumpy_B2B, bumpyDeriv_B2B, bumpy_PP, bumpy_FR))
+      ("sine+cos", (sinecos_Name, sinecos_PB, sinecos_ModFun, sinecos_B2B, sinecosDeriv_B2B, sinecos_PP, sinecos_FR))
+    , ("sinesine", (sinesine_Name, sinesine_PB, sinesine_ModFun, sinesine_B2B, sinesineDeriv_B2B, sinesine_PP, sinesine_FR))
+    , ("sinesine+cos", (sinesineCos_Name, sinesineCos_PB, sinesineCos_ModFun, sinesineCos_B2B, sinesineCosDeriv_B2B, sinesineCos_PP, sinesineCos_FR))
+    , ("runge", (runge_Name, runge_PB, runge_ModFun, runge_B2B, rungeDeriv_B2B, runge_PP, runge_FR))
+    , ("rungeX", (rungeX_Name, rungeX_PB, rungeX_ModFun, rungeX_B2B, rungeXDeriv_B2B, rungeX_PP, rungeX_FR))
+    , ("rungeSC", (rungeSC_Name, rungeSC_PB, rungeSC_ModFun, rungeSC_B2B, rungeSCDeriv_B2B, rungeSC_PP, rungeSC_FR))
+    , ("fracSin", (fracSin_Name, fracSin_PB, fracSin_ModFun, fracSin_B2B, fracSinDeriv_B2B, fracSin_PP, fracSin_FR))
+    , ("fracSinX", (fracSinX_Name, fracSinX_PB, fracSinX_ModFun, fracSinX_B2B, fracSinXDeriv_B2B, fracSinX_PP, fracSinX_FR))
+    , ("fracSinSC", (fracSinSC_Name, fracSinSC_PB, fracSinSC_ModFun, fracSinSC_B2B, fracSinSCDeriv_B2B, fracSinSC_PP, fracSinSC_FR))
+    -- , ("hat", (hat_Name, hat_PB, hat_B2B, hatDeriv_B2B, hat_PP, hat_FR))
+    -- , ("bumpy", (bumpy_Name, bumpy_PB, bumpy_B2B, bumpyDeriv_B2B, bumpy_PP, bumpy_FR))
     ]
 
 -- data Operator = OpMax | OpIntegrate
@@ -185,14 +204,20 @@ sinecos_PB acGuide =
   cosine = cosineWithAccuracyGuide acGuide
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
-sinecos_B2B :: UnaryFun
+sinecos_ModFun :: UnaryModFun
+sinecos_ModFun =
+  sin(10*x)+cos(20*x)
+  where
+  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
+
+sinecos_B2B :: UnaryBallFun
 sinecos_B2B =
-  UnaryFun unaryIntervalDom $ \x ->
+  UnaryBallFun unaryIntervalDom $ \x ->
     sin(10*x)+cos(20*x)
 
-sinecosDeriv_B2B :: UnaryFun
+sinecosDeriv_B2B :: UnaryBallFun
 sinecosDeriv_B2B =
-  UnaryFun unaryIntervalDom $ \x ->
+  UnaryBallFun unaryIntervalDom $ \x ->
     10*cos(10*x)-20*sin(20*x)
 
 sinecos_PP :: Accuracy -> PPoly
@@ -214,14 +239,20 @@ sinesine_PB acGuide =
   sine2 = sineWithAccuracyGuide acGuide
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
-sinesine_B2B :: UnaryFun
+sinesine_ModFun :: UnaryModFun
+sinesine_ModFun =
+  sin(10*x + sin(20*x*x))
+  where
+  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
+
+sinesine_B2B :: UnaryBallFun
 sinesine_B2B =
-  UnaryFun unaryIntervalDom $ \x ->
+  UnaryBallFun unaryIntervalDom $ \x ->
     sin(10*x + sin(20*x*x))
 
-sinesineDeriv_B2B :: UnaryFun
+sinesineDeriv_B2B :: UnaryBallFun
 sinesineDeriv_B2B =
-  UnaryFun unaryIntervalDom $ \x ->
+  UnaryBallFun unaryIntervalDom $ \x ->
     (10-40*x*cos(20*x*x))*cos(10*x + sin(20*x*x))
 
 sinesine_PP :: Accuracy -> PPoly
@@ -248,16 +279,22 @@ sinesineCos_PB acGuide =
   cosine2 = cosineWithAccuracyGuide acGuide
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
-sinesineCos_B2B :: UnaryFun
+sinesineCos_ModFun :: UnaryModFun
+sinesineCos_ModFun =
+  sin(10*x + sin(20*x*x)) + cos(10*x)
+  where
+  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
+
+sinesineCos_B2B :: UnaryBallFun
 sinesineCos_B2B =
-    UnaryFun unaryIntervalDom $ \x ->
+    UnaryBallFun unaryIntervalDom $ \x ->
         sin(10*x + sin(20*x*x))
            + cos(10*x)
             -- + sin(10*x)
 
-sinesineCosDeriv_B2B :: UnaryFun
+sinesineCosDeriv_B2B :: UnaryBallFun
 sinesineCosDeriv_B2B =
-    UnaryFun unaryIntervalDom $ \x ->
+    UnaryBallFun unaryIntervalDom $ \x ->
       (10-40*x*cos(20*x*x))*cos(10*x + sin(20*x*x))
          - 10*sin(10*x)
           -- + 10*cos(10*x)
@@ -283,13 +320,19 @@ runge_PB acGuide =
   setPrc1 :: (CanSetPrecision t) => t -> t
   setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
 
-runge_B2B :: UnaryFun
-runge_B2B =
-  UnaryFun unaryIntervalDom $ \x ->    1/(100*x^2+1)
+runge_ModFun :: UnaryModFun
+runge_ModFun =
+  1/(100*x*x+1)
+  where
+  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
 
-rungeDeriv_B2B :: UnaryFun
+runge_B2B :: UnaryBallFun
+runge_B2B =
+  UnaryBallFun unaryIntervalDom $ \x ->    1/(100*x^2+1)
+
+rungeDeriv_B2B :: UnaryBallFun
 rungeDeriv_B2B =
-  UnaryFun unaryIntervalDom $ \x ->
+  UnaryBallFun unaryIntervalDom $ \x ->
     (-200*x)/((100*x^2+1)^2)
 
 runge_PP :: Accuracy -> PPoly
@@ -325,14 +368,20 @@ rungeX_PB acGuide =
   setPrc1 :: (CanSetPrecision t) => t -> t
   setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
 
-rungeX_B2B :: UnaryFun
+rungeX_ModFun :: UnaryModFun
+rungeX_ModFun =
+  x/(100*x*x+1)
+  where
+  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
+
+rungeX_B2B :: UnaryBallFun
 rungeX_B2B =
-  UnaryFun unaryIntervalDom $ \x ->
+  UnaryBallFun unaryIntervalDom $ \x ->
     x/(100*x^2+1)
 
-rungeXDeriv_B2B :: UnaryFun
+rungeXDeriv_B2B :: UnaryBallFun
 rungeXDeriv_B2B =
-  UnaryFun unaryIntervalDom $ \x ->
+  UnaryBallFun unaryIntervalDom $ \x ->
     (1-100*x^2)/((100*x^2+1)^2)
 
 rungeX_PP :: Accuracy -> PPoly
@@ -355,6 +404,68 @@ rungeX_FR acGuide =
   inv = (Frac.fromPoly x) / (Frac.fromPoly $ 100*x*x+1)
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
+rungeSC_Name :: String
+rungeSC_Name = "(sin(10x)+cos(20x))/(100x^2+1) over [-1,1]"
+
+rungeSC_PB :: Accuracy -> ChPoly MPBall
+rungeSC_PB acGuide =
+  ChPoly.chebDivideDCT acGuide num denom
+  where
+  num = sine (10*x) + cosine (20*x)
+  denom = 100*(x*x)+1
+  x = setPrc1 xPre
+  xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+  setPrc1 :: (CanSetPrecision t) => t -> t
+  setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
+  sine = sineWithAccuracyGuide acGuide
+  cosine = cosineWithAccuracyGuide acGuide
+
+rungeSC_ModFun :: UnaryModFun
+rungeSC_ModFun =
+  (sin (10*x) + cos(20*x))/(100*x*x+1)
+  where
+  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
+
+rungeSC_B2B :: UnaryBallFun
+rungeSC_B2B =
+  UnaryBallFun unaryIntervalDom $ \x ->
+    (sin (10*x) + cos(20*x))/(100*x^2+1)
+
+rungeSCDeriv_B2B :: UnaryBallFun
+rungeSCDeriv_B2B =
+  UnaryBallFun unaryIntervalDom $ \x ->
+    ((10*cos(10*x) - 20*sin(20*x))*(100*x^2+1) - (sin (10*x) + cos(20*x))*(200*x))
+    /
+    ((100*x^2+1)^2)
+
+rungeSC_PP :: Accuracy -> PPoly
+rungeSC_PP acGuide =
+  maybeTrace ("rungeSC_PP: getAccuracy num = " ++ show (getAccuracy num)) $
+  maybeTrace ("rungeSC_PP: getPrecision num = " ++ show (getPrecision num)) $
+  maybeTrace ("rungeSC_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
+  maybeTrace ("rungeSC_PP: getPrecision inv = " ++ show (getPrecision inv)) $
+  num * inv
+  where
+  num = PPoly.fromPoly $ sine (10*x) + cosine (20*x)
+  inv = setPrc2 $ PPoly.inverse $ PPoly.fromPoly $ 100*x*x+1
+  x = setPrc1 xPre
+  xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+  setPrc2 :: (CanSetPrecision t) => t -> t
+  setPrc2 = setPrecisionAtLeastAccuracy (64*acGuide)
+  setPrc1 :: (CanSetPrecision t) => t -> t
+  setPrc1 = setPrecisionAtLeastAccuracy (8*acGuide)
+  sine = sineWithAccuracyGuide ((fromAccuracy acGuide `div` 4 + 1)*(acGuide) + 25)
+  cosine = cosineWithAccuracyGuide ((fromAccuracy acGuide `div` 4 + 1)*(acGuide) + 25)
+
+rungeSC_FR :: Accuracy -> FracMB
+rungeSC_FR acGuide =
+  inv
+  where
+  inv = (Frac.fromPoly $ sine (10*x) + cosine (20*x)) / (Frac.fromPoly $ 100*x*x+1)
+  x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+  sine = sineWithAccuracyGuide acGuide
+  cosine = cosineWithAccuracyGuide acGuide
+
 fracSin_Name :: String
 fracSin_Name = "1/(10(sin(7x))^2+1) over [-1,1]"
 
@@ -370,14 +481,21 @@ fracSin_PB acGuide =
   setPrc1 :: (CanSetPrecision t) => t -> t
   setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
 
-fracSin_B2B :: UnaryFun
+fracSin_ModFun :: UnaryModFun
+fracSin_ModFun =
+  1/(10*(sin7x*sin7x)+1)
+  where
+  sin7x = sin (7*x)
+  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
+
+fracSin_B2B :: UnaryBallFun
 fracSin_B2B =
-  UnaryFun unaryIntervalDom $ \x ->
+  UnaryBallFun unaryIntervalDom $ \x ->
     1/(10*(sin (7*x))^2+1)
 
-fracSinDeriv_B2B :: UnaryFun
+fracSinDeriv_B2B :: UnaryBallFun
 fracSinDeriv_B2B =
-  UnaryFun unaryIntervalDom $ \x ->
+  UnaryBallFun unaryIntervalDom $ \x ->
     (-140*sin(7*x)*cos(7*x))/((10*(sin (7*x))^2+1)^2)
 
 fracSin_PP :: Accuracy -> PPoly
@@ -418,14 +536,21 @@ fracSinX_PB acGuide =
     --     setPrecision p $
     --     projUnaryFnA (unaryIntervalDom
 
-fracSinX_B2B :: UnaryFun
+fracSinX_ModFun :: UnaryModFun
+fracSinX_ModFun =
+  x/(10*(sin7x*sin7x)+1)
+  where
+  sin7x = sin (7*x)
+  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
+
+fracSinX_B2B :: UnaryBallFun
 fracSinX_B2B =
-  UnaryFun unaryIntervalDom $ \x ->
+  UnaryBallFun unaryIntervalDom $ \x ->
     x/(10*(sin (7*x))^2+1)
 
-fracSinXDeriv_B2B :: UnaryFun
+fracSinXDeriv_B2B :: UnaryBallFun
 fracSinXDeriv_B2B =
-  UnaryFun unaryIntervalDom $ \x ->
+  UnaryBallFun unaryIntervalDom $ \x ->
     (-140*sin(7*x)*cos(7*x)*x)/((10*(sin (7*x))^2+1)^2)
     +
     (1/(10*(sin (7*x))^2+1))
@@ -454,6 +579,75 @@ fracSinX_FR acGuide =
   sine1 = sineWithAccuracyGuide (acGuide + 10)
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
+
+fracSinSC_Name :: String
+fracSinSC_Name = "(sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]"
+
+fracSinSC_PB :: Accuracy -> ChPoly MPBall
+fracSinSC_PB acGuide =
+  ChPoly.chebDivideDCT acGuide num denom
+  where
+  num = sine2(10*x) + cosine(20*x)
+  denom = (10*(sine7x*sine7x)+1)
+  sine7x = sine1 (7*x)
+  sine1 = sineWithAccuracyGuide (acGuide + 10)
+  x = setPrc1 xPre
+  xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+  setPrc1 :: (CanSetPrecision t) => t -> t
+  setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
+  sine2 = sineWithAccuracyGuide (acGuide)
+  cosine = cosineWithAccuracyGuide (acGuide)
+
+fracSinSC_ModFun :: UnaryModFun
+fracSinSC_ModFun =
+  (sin(10*x)+cos(20*x))/(10*(sin7x*sin7x)+1)
+  where
+  sin7x = sin (7*x)
+  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
+
+fracSinSC_B2B :: UnaryBallFun
+fracSinSC_B2B =
+  UnaryBallFun unaryIntervalDom $ \x ->
+    (sin(10*x)+cos(20*x))/(10*(sin (7*x))^2+1)
+
+fracSinSCDeriv_B2B :: UnaryBallFun
+fracSinSCDeriv_B2B =
+  UnaryBallFun unaryIntervalDom $ \x ->
+    ((10*cos(10*x)-20*sin(20*x))*(10*(sin (7*x))^2+1) - (sin(10*x)+cos(20*x))*(140*sin(7*x)*cos(7*x)))
+    /
+    ((10*(sin (7*x))^2+1)^2)
+
+fracSinSC_PP :: Accuracy -> PPoly
+fracSinSC_PP acGuide =
+  maybeTrace ("fracSinSC_PP: getAccuracy sine7x = " ++ show (getAccuracy sine7x)) $
+  maybeTrace ("fracSinSC_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
+  num * inv
+  where
+  num = PPoly.fromPoly $ sine2(10*x) + cosine(20*x)
+  inv = setPrc2 $ PPoly.inverse $ PPoly.fromPoly $ (10*(sine7x*sine7x)+1)
+  sine7x = sine1 (7*x)
+  sine1 = sineWithAccuracyGuide (acGuide + 10)
+  x = setPrc1 xPre
+  xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+  setPrc2 :: (CanSetPrecision t) => t -> t
+  setPrc2 = setPrecisionAtLeastAccuracy (10*acGuide)
+  setPrc1 :: (CanSetPrecision t) => t -> t
+  setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
+  sine2 = sineWithAccuracyGuide (acGuide)
+  cosine = cosineWithAccuracyGuide (acGuide)
+
+fracSinSC_FR :: Accuracy -> FracMB
+fracSinSC_FR acGuide =
+  inv
+  where
+  inv = (Frac.fromPoly $ sine2(10*x) + cosine(20*x)) / (Frac.fromPoly $ (10*(sine7x*sine7x)+1))
+  sine7x = sine1 (7*x)
+  sine1 = sineWithAccuracyGuide (acGuide + 10)
+  x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+  sine2 = sineWithAccuracyGuide (acGuide + 10)
+  cosine = cosineWithAccuracyGuide (acGuide + 10)
+
+
 hat_Name :: String
 hat_Name = "1-|x+1/3| over [-1,1]"
 
@@ -462,14 +656,14 @@ hat_PB acGuide =
   error $ "Not (yet) supporting Poly for: " ++ hat_Name
   -- 1 - (PolyBall (absXshifted p d) (Interval (-1.0) (1.0)) d NormZero)
 
-hat_B2B :: UnaryFun
+hat_B2B :: UnaryBallFun
 hat_B2B =
-  UnaryFun unaryIntervalDom $ \x ->
+  UnaryBallFun unaryIntervalDom $ \x ->
     1 - (abs (x+1/3))
 
-hatDeriv_B2B :: UnaryFun
+hatDeriv_B2B :: UnaryBallFun
 hatDeriv_B2B =
-  UnaryFun unaryIntervalDom $ \x ->
+  UnaryBallFun unaryIntervalDom $ \x ->
     catchingNumExceptions $
       case x > -1/3 of
          Just (Just True) -> mpBall 1
@@ -505,12 +699,12 @@ bumpy_PB acGuide =
     --     setPrecision p $
     --     projUnaryFnA (unaryIntervalDom
 
-bumpy_B2B :: UnaryFun
+bumpy_B2B :: UnaryBallFun
 bumpy_B2B =
-  UnaryFun unaryIntervalDom $ \x ->
+  UnaryBallFun unaryIntervalDom $ \x ->
     max (sin (10*x)) (cos (11*x))
 
-bumpyDeriv_B2B :: UnaryFun
+bumpyDeriv_B2B :: UnaryBallFun
 bumpyDeriv_B2B =
   error $ "DFun currently not supported for " ++ bumpy_Name
 

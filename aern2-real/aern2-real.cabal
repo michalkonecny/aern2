@@ -9,7 +9,7 @@ copyright:      (c) 2015-2017 Michal Konecny
 license:        BSD3
 license-file:   LICENSE
 stability:      experimental
-tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
+tested-with:    GHC==7.10.3, GHC==8.0.2
 category:       Math
 synopsis:       Exact real numbers via Cauchy sequences and MPFR
 Description:
@@ -25,16 +25,15 @@ library
   build-depends:
     base == 4.*
     , containers == 0.5.*
-    -- , arithmoi == 0.4.*
     -- , convertible >= 1.1.1.0 && < 1.2
-    , hspec >= 2.1 && < 2.3
+    , hspec >= 2.1 && < 2.5
     -- , hspec-smallcheck >= 0.3 && < 0.5
-    , QuickCheck >= 2.7 && < 2.9
+    , QuickCheck >= 2.7 && < 2.10
     , transformers >= 0.4 && < 0.6
     , mixed-types-num == 0.1.*
     , num-exceptions == 0.1.*
     , aern2-mp == 0.1.*
-    , lens == 4.13.*
+    , lens >= 4.13 && < 4.16
   ghc-options:     -Wall -O2 -fno-warn-orphans
   extensions:
     RebindableSyntax,
@@ -80,10 +79,10 @@ test-suite spec
     base == 4.*
     -- , mixed-types-num
     -- , aern2-mp
-    , aern2-real
-    , hspec >= 2.1 && < 2.3
+    , aern2-real == 0.1.*
+    , hspec >= 2.1 && < 2.5
     -- , hspec-smallcheck >= 0.3 && < 0.5
-    , QuickCheck >= 2.7 && < 2.9
+    , QuickCheck >= 2.7 && < 2.10
 
 executable aern2-real-benchOp
   ghc-options:
@@ -100,8 +99,8 @@ executable aern2-real-benchOp
       aern2-real-benchOp.hs
   build-depends:
     base == 4.*
-    , mixed-types-num
-    , aern2-mp
-    , aern2-real
+    , mixed-types-num == 0.1.*
+    , aern2-mp == 0.1.*
+    , aern2-real == 0.1.*
     , random
-    , QuickCheck >= 2.7 && < 2.9
+    , QuickCheck >= 2.7 && < 2.10

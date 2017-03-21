@@ -37,7 +37,7 @@ import Test.QuickCheck
 import AERN2.MP.Precision
 
 import AERN2.MP.Ball.Type
-import AERN2.MP.Ball.Conversions
+-- import AERN2.MP.Ball.Conversions ()
 import AERN2.MP.Ball.Comparisons ()
 import AERN2.MP.Ball.Field ()
 import AERN2.MP.Ball.Elementary ()

@@ -9,7 +9,7 @@ copyright:      (c) 2017 Michal Konecny
 license:        BSD3
 license-file:   LICENSE
 stability:      experimental
-tested-with:    GHC==7.8.4, GHC==7.10.3, GHC==8.0.1
+tested-with:    GHC==7.10.3, GHC==8.0.2
 category:       Math
 synopsis:       Execute simple ireal's IReal operation benchmarks
 description:    Execute simple ireal's IReal operation benchmarks
@@ -22,6 +22,6 @@ executable ireal-benchOp
     base
     , ireal
     , random
-    , QuickCheck >= 2.7 && < 2.9
+    , QuickCheck >= 2.7 && < 2.10
     , aern2-mp == 0.1.*
   default-language:    Haskell2010
