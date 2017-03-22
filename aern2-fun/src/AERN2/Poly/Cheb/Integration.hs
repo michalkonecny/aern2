@@ -26,6 +26,7 @@ import Numeric.MixedTypes
 import AERN2.Normalize
 
 import AERN2.MP
+import AERN2.MP.Dyadic
 
 import AERN2.Interval
 
@@ -64,13 +65,16 @@ instance
     -- prc = getPrecision cp
 
 primitive_function ::
-  (Ring c, CanDivBy c Integer, CanNormalize (ChPoly c))
+  (Ring c, CanDivBy c Integer, CanNormalize (ChPoly c),
+   CanMulBy c Dyadic)
   =>
   ChPoly c -> ChPoly c
-primitive_function (ChPoly dom (Poly terms) _) =
-  normalize $ ChPoly dom
-    (Poly $ terms_fromListAddCoeffs $
-      concat $ map oneTerm $ terms_toList terms)
+primitive_function (ChPoly dom@(Interval l r) (Poly terms) _) =
+  normalize $
+    (dyadic 0.5)*(r - l) *
+      ChPoly dom
+      (Poly $ terms_fromListAddCoeffs $
+        concat $ map oneTerm $ terms_toList terms)
     Nothing
   where
   oneTerm (n,a)

@@ -44,11 +44,13 @@ fromPoly :: Cheb -> PPoly
 fromPoly p = fromPolyBall $ normalize (Ball p (errorBound 0))
 
 fromPolyBall :: PolyBall -> PPoly
-fromPolyBall f@(Ball p _) =
-  PPoly [(Interval (dyadic $ -1) (dyadic 1), f)] (chPoly_dom p)
+fromPolyBall (Ball (ChPoly dom p bnds) err) =
+  PPoly [(uInt, Ball (ChPoly uInt p bnds) err)] dom
+  where
+  uInt = Interval (dyadic $ -1) (dyadic 1)
 
-linearPolygon :: [(Dyadic, MPBall)] -> DyadicInterval -> PPoly
-linearPolygon ((x,y) : xys) dom =
+linearPolygonI :: [(Dyadic, MPBall)] -> DyadicInterval -> PPoly
+linearPolygonI ((x,y) : xys) dom =
   aux xys x y []
   where
   aux [] _ _ res = PPoly (reverse res) dom
@@ -57,7 +59,7 @@ linearPolygon ((x,y) : xys) dom =
   linSpline a fa b fb =
     Ball
       (ChPoly
-        dom
+        (dyadicInterval (-1,1))
         --(Poly $ terms_fromList [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))]))
         (Poly $ terms_fromList
                 [(0, constantTerm a fa b fb (getPrecision fa) (getPrecision fb) Nothing),
@@ -66,34 +68,36 @@ linearPolygon ((x,y) : xys) dom =
       (errorBound 0)
   linearTerm a fa b fb p q prev =
     let
-    a' = setPrecision p (mpBall a)
-    b' = setPrecision p (mpBall b)
-    fa' = setPrecision p fa
-    fb' = setPrecision p fb
+    a' = setPrecision (max (getPrecision a) p) (mpBall a)
+    b' = setPrecision (max (getPrecision b) p) (mpBall b)
+    fa' = setPrecision (max (getPrecision fa) p) fa
+    fb' = setPrecision (max (getPrecision fb) p) fb
     try =
       (fb' - fa')/(b' - a')
     in
-      if isJust prev
-      && getAccuracy try <= getAccuracy (fromJust prev) then
+      if getAccuracy try >= min (getFiniteAccuracy fa) (getFiniteAccuracy fb)
+      || (isJust prev
+      && getAccuracy try <= getAccuracy (fromJust prev)) then
         try
       else
         linearTerm a fa b fb (p + q) p (Just try)
   constantTerm a fa b fb p q prev =
     let
-    a' = setPrecision p (mpBall a)
-    b' = setPrecision p (mpBall b)
-    fa' = setPrecision p fa
-    fb' = setPrecision p fb
+    a' = setPrecision (max (getPrecision a) p) (mpBall a)
+    b' = setPrecision (max (getPrecision b) p) (mpBall b)
+    fa' = setPrecision (max (getPrecision fa) p) fa
+    fb' = setPrecision (max (getPrecision fb) p) fb
     try =
       fa'- (a'*(fb' - fa'))/(b' - a')
     in
-      if isJust prev
-      && getAccuracy try <= getAccuracy (fromJust prev) then
+      if getAccuracy try >= min (getFiniteAccuracy fa) (getFiniteAccuracy fb)
+      || (isJust prev
+      && getAccuracy try <= getAccuracy (fromJust prev)) then
         try
       else
         constantTerm a fa b fb (p + q) p (Just try)
-linearPolygon [] _ =
-  error "linearPolygon must be provided with a list of at least 2 points"
+linearPolygonI [] _ =
+  error "linearPolygonI must be provided with a list of at least 2 points"
 
 liftBall2PPoly :: (PolyBall -> PolyBall) -> (PPoly -> PPoly)
 liftBall2PPoly f (PPoly ps dom)  =

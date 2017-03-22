@@ -31,4 +31,4 @@ instance (CanIntegrateOverDom f DyadicInterval,
       ps = [l + k*(r - l)/n | k <- [0 .. n]]
       dyPs = map (centre . mpBallP (prec $ fromAccuracy ac)) ps
       dyIntervals = zip dyPs (tail dyPs)
-      integrals = [(dyadic 0.5)*(b - a) * integrateOverDom (f a b ac') (Interval a b) | (a,b) <- dyIntervals] -- TODO: remove workaround for bug in poly integration
+      integrals = [integrateOverDom (f a b ac') (Interval a b) | (a,b) <- dyIntervals]

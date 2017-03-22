@@ -85,18 +85,19 @@ maximumWithAccuracy acc (ChPoly dom poly _) l r  =
 
 maximumOptimisedWithAccuracy
   :: Accuracy -> ChPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall
-maximumOptimisedWithAccuracy acc (ChPoly dom poly _) l r initialDegree steps =
+maximumOptimisedWithAccuracy acc (ChPoly dom@(Interval dR dL) poly _) l r initialDegree steps =
   --trace("f = "++(show f)) $
     {-trace("maximum optimised... ")$
     trace("f: "++(show f))$
     trace("df: "++(show fc'))$
     trace("dfs: "++(show dfs))$-}
     Pow.genericMaximum
-      (evalDf f (reduceToEvalDirectAccuracy fc' (bits 0))) dfsWithEval
+      (evalDf f (c*reduceToEvalDirectAccuracy fc' (bits 0))) dfsWithEval
       (min (getFiniteAccuracy f) acc)
       (fromDomToUnitInterval dom (setPrecision (getPrecision f) l))
       (fromDomToUnitInterval dom (setPrecision (getPrecision f) r))
   where
+  c = 1/(0.5*(dR - dL))
   f   = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly Nothing
   fc' = ({-makeExactCentre .-} derivativeExact . centre) f
   maxKey = max 0 (ceiling ((degree f - initialDegree) / steps))

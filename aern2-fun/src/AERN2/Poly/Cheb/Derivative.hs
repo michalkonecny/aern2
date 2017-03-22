@@ -26,8 +26,8 @@ import AERN2.Interval
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Ring ()
 
-derivativeExact :: ChPoly MPBall -> ChPoly MPBall -- TODO: add check for domain
-derivativeExact f@(ChPoly dom (Poly ts) _) =
+derivativeExact :: ChPoly MPBall -> ChPoly MPBall -- TODO: add check for domain?
+derivativeExact f@(ChPoly dom@(Interval l r) (Poly ts) _) =
   ChPoly dom (Poly $ terms_map mpBall dts) Nothing
   where
   fDy = ChPoly dom (Poly $ terms_map centre ts) Nothing

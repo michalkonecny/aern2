@@ -134,15 +134,15 @@ operations =
           (Interval l r) = getDomain p
   addBreak [p] =
     -- Force a break point in the partition by adding a piecewise constant 0:
-    p + (linearPolygon [(dl,mpBall 0),(x,mpBall 0),(dr,mpBall 0)] dom)
+    p + (linearPolygonI [(dyadic $ -1,mpBall 0),(x,mpBall 0),(dyadic 1,mpBall 0)] dom)
     where
-    dom@(Interval dl dr) = getDomain p
+    dom = getDomain p
     Interval rl ru = applyApprox p dom
     rlA = abs rl
     ruA = abs ru
     x
-      | rlA == 0 || ruA == 0 = (dl + dr) * (dyadic 0.5)
-      | otherwise = centre $ (rlA*dl + ruA*dr) / (mpBall $ rlA + ruA)
+      | rlA == 0 || ruA == 0 = dyadic 0
+      | otherwise = centre $ (ruA - rlA) / (mpBall $ rlA + ruA)
     -- x is an approximate average of dom endpoints, weighted by the range endpoints.
     -- This definitoin is deliberately rather arbitrary to achieve a high variation.
   addBreak _ = error "addBreak used with wrong arity"
@@ -166,8 +166,8 @@ instance
   Arbitrary PPolyConstruction
   where
   arbitrary =
-    -- arbitraryWithDom =<< arbitraryNonEmptySmallInterval
-    arbitraryWithDom =<< return (dyadicInterval (-1.0,1.0))
+    arbitraryWithDom =<< arbitraryNonEmptySmallInterval
+    --arbitraryWithDom =<< return (dyadicInterval (-1.0,1.0))
 
 instance
   -- (Arbitrary c, IsBall c, Show c) => ArbitraryWithDom (ChPolyConstruction c)

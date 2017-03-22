@@ -43,6 +43,8 @@ import AERN2.Poly.Basics
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Derivative
 
+import Debug.Trace
+
 {- evaluation -}
 
 instance
@@ -114,7 +116,7 @@ evalLip f l x =
   --trace ("error: "++ (show $ err)) $
   (evalDirect f (centreAsBall x)) + (fromEndpoints (-err) err :: MPBall)
   where
-  err = l* dyadic (ball_error x)*0.5
+  err = l* dyadic (ball_error x)
 
 evalDf :: ChPoly MPBall -> ChPoly MPBall -> MPBall -> MPBall
 evalDf f f' x =

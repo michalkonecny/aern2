@@ -36,13 +36,13 @@ class GenericMaximum a where
 
 
 debug_useSeparablePart :: Bool
-debug_useSeparablePart = True
+debug_useSeparablePart = False
 
 instance GenericMaximum (LocalPoly MPBall) where
   genericise f l r ac =
     (evalF, fAcc, evalDF, dom, bsI)
     where
-    evalF = evalDf fI (2/(r - l) * dfI) -- TODO: remove workaround for bug in poly derivative
+    evalF = evalDf fI (2/(r - l) * dfI)
     fAcc = getAccuracy fI
     evalDF = evalDirect dfRat
     fI = f l r ac

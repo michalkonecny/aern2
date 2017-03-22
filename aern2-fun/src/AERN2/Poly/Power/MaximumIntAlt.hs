@@ -15,6 +15,7 @@ import Data.List hiding (maximum, minimum)
 import qualified Prelude
 import Data.Maybe
 import AERN2.Poly.Power.SizeReduction
+import AERN2.Interval
 
 import AERN2.PQueue (PQueue)
 import Data.Map (Map)
@@ -41,9 +42,9 @@ genericMaximum f df bts lBall rBall =
   genericMaximumWithBounds f df bts lBall rBall lower upper
   where
   rangeBall = f (fromEndpoints lBall rBall)
-  (c,r) = centreAsBallAndRadius rangeBall
-  lower = c - mpBall r
-  upper = c + mpBall r
+  Interval lower' upper' = dyadicInterval rangeBall
+  lower = mpBall lower'
+  upper = mpBall upper'
 
 genericMaximumWithBounds
   :: (MPBall -> MPBall)

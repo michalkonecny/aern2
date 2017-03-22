@@ -44,16 +44,17 @@ minimumOptimisedWithAccuracy f l r initialDegree steps cutoff =
   -(maximumOptimisedWithAccuracy (-f) l r initialDegree steps cutoff)
 
 maximumOptimisedWithAccuracySimple :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> Accuracy -> MPBall
-maximumOptimisedWithAccuracySimple (PPoly ps dom) l r initialDegree steps cutoffAccuracy =
+maximumOptimisedWithAccuracySimple (PPoly ps dom@(Interval dL dR)) l r initialDegree steps cutoffAccuracy =
   foldl1 max
     [Cheb.maximumOptimisedWithAccuracy
       (min cutoffAccuracy (getFiniteAccuracy p))
-      (updateRadius (+ (radius p)) $ centre p)
-      (setPrecision (getPrecision p) $ max lI (mpBall a))
-      (setPrecision (getPrecision p) $ min rI (mpBall b))
+      (updateRadius (+ err) $ ChPoly dom p bnds)
+      (setPrecision (getPrecision p) $ max l (mpBall $ fromUnitIntervalToDom a))
+      (setPrecision (getPrecision p) $ min r (mpBall $ fromUnitIntervalToDom b))
       initialDegree steps
-      | (i@(Interval a b),p) <- ppoly_pieces f, intersectsLR i]
+      | (i@(Interval a b),(Ball (ChPoly _ p bnds) err)) <- ppoly_pieces f, intersectsLR i]
   where
+  fromUnitIntervalToDom x = (dyadic 0.5)*((dR - dL)*x + (dR + dL))
   lI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) l)
   rI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) r) -- TODO: properly work out required endpoint precision
   unit    = Interval (dyadic $ -1) (dyadic 1)
@@ -109,15 +110,15 @@ maximumOptimisedWithAccuracyAndBounds (PPoly ps dom) l r initialDegree steps cut
     && (a == rI) /= Just True
 
 maximumOptimisedWithAccuracy :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> Accuracy -> MPBall
-maximumOptimisedWithAccuracy = maximumOptimisedWithAccuracy'
+maximumOptimisedWithAccuracy = maximumOptimisedWithAccuracySimple
 
 maximumOptimisedWithAccuracy' :: PPoly -> MPBall -> MPBall -> Integer -> Integer -> Accuracy -> MPBall
-maximumOptimisedWithAccuracy' (PPoly ps dom) l r initialDegree steps cutoffAccuracy =
+maximumOptimisedWithAccuracy' (PPoly ps dom@(Interval dl dr)) l r initialDegree steps cutoffAccuracy =
   genericMaximum
     (PPE.evalLDf f
       --dfsCheb
       (map
-        (\dfc -> reduceToEvalDirectAccuracy dfc (bits $ 0))
+        (\dfc -> (2/(dr - dl)) * reduceToEvalDirectAccuracy dfc (bits $ 0))
         dfsCheb))
     dfsMap
     maxKeys
@@ -130,7 +131,7 @@ maximumOptimisedWithAccuracy' (PPoly ps dom) l r initialDegree steps cutoffAccur
   lI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) l)
   rI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) r) -- TODO: properly work out required endpoint precision
   unit    = Interval (dyadic $ -1) (dyadic 1)
-  f       = PPoly ps unit
+  f = PPoly ps unit
   lrInterval = Interval (mpBall lI) (mpBall rI)
   intersectsLR (Interval a b) =
     lrInterval `intersects` Interval (mpBall a) (mpBall b)

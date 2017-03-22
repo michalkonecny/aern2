@@ -10,10 +10,12 @@ import AERN2.PPoly.Type
 
 integral :: PPoly -> MPBall -> MPBall -> MPBall
 integral (PPoly ps dom) l r =
+  0.5*(domR - domL) *
   foldl' (+)
     (mpBall 0)
     [pieceIntegral i p | (i,p) <- ppoly_pieces f, intersectsLR i]
   where
+  (Interval domL domR) = dom
   lI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) l)
   rI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) r) -- TODO: properly work out required endpoint precision
   unit    = Interval (dyadic $ -1) (dyadic 1)
@@ -25,10 +27,11 @@ integral (PPoly ps dom) l r =
     && (a == rI) /= Just True
   pieceIntegral (Interval a b) p =
     let
-    q  = primitive_function $ centre p
+    cp = centre p
+    q  = primitive_function cp
     a' = max a lI
     b' = min b rI
     eps = (mpBall $ radius p)*(b' - a')
     err = fromEndpoints (-eps) eps :: MPBall
     in
-    (evalDI q b' - evalDI q a') + err -- TODO: eval direct?
+    (evalDf q cp b' - evalDf q cp a') + err -- TODO: eval direct?
