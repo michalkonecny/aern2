@@ -44,7 +44,14 @@ import qualified AERN2.Poly.Cheb as ChPoly
 import qualified AERN2.Frac as Frac
 import AERN2.Frac (Frac)
 
+import qualified AERN2.Local as Local
+import qualified AERN2.Local.Poly as LPoly
+import qualified AERN2.Local.Frac as LFrac
+
 type FracMB = Frac MPBall
+
+type LPolyMB = LPoly.LocalPoly MPBall
+type LFracMB = LFrac.LocalFrac MPBall
 
 main :: IO ()
 main =
@@ -83,8 +90,10 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         ("ppoly", "integrate") -> integratePP $ fnPP accuracy
         ("frac", "max") -> maxFR $ fnFR accuracy
         ("frac", "integrate") -> integrateFR $ fnFR accuracy
+        ("lpoly", "max") -> maxLP fnLP accuracy
+        ("lpoly", "integrate") -> integrateLP fnLP accuracy
         _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
-    (Just (fnDescription, fnPB, fnModFun, fnB2B, dfnB2B, fnPP, fnFR)) = Map.lookup functionCode functions
+    (Just (fnDescription, fnPB, fnModFun, fnB2B, dfnB2B, fnPP, fnFR, fnLP)) = Map.lookup functionCode functions
 
     accuracy = bits $ (read accuracyS :: Int)
     [accuracyS] = effortArgs
@@ -96,6 +105,11 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     integratePB f =
       maybeTrace ("integratePB: accuracy f = " ++ show (getAccuracy f)) $
       f `integrateOverDom` (getDomain f)
+
+    maxLP :: LPolyMB -> Accuracy -> MPBall
+    maxLP lf ac = Local.maximum lf (mpBall (-1)) (mpBall 1) ac
+
+    integrateLP lf = lf `integrateOverDom` unaryIntervalDom
 
     maxPP :: PPoly -> MPBall
     maxPP f = f `maximumOverDomPP` (getDomain f)
@@ -173,19 +187,19 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 processArgs _ =
     error "expecting arguments: <operationCode> <functionCode> <representationCode> <effort parameters...>"
 
-functions :: Map.Map String (String, Accuracy -> ChPoly MPBall, UnaryModFun, UnaryBallFun, UnaryBallFun, Accuracy -> PPoly, Accuracy -> FracMB)
+functions :: Map.Map String (String, Accuracy -> ChPoly MPBall, UnaryModFun, UnaryBallFun, UnaryBallFun, Accuracy -> PPoly, Accuracy -> FracMB, LPolyMB)
 functions =
     Map.fromList
     [
-      ("sine+cos", (sinecos_Name, sinecos_PB, sinecos_ModFun, sinecos_B2B, sinecosDeriv_B2B, sinecos_PP, sinecos_FR))
-    , ("sinesine", (sinesine_Name, sinesine_PB, sinesine_ModFun, sinesine_B2B, sinesineDeriv_B2B, sinesine_PP, sinesine_FR))
-    , ("sinesine+cos", (sinesineCos_Name, sinesineCos_PB, sinesineCos_ModFun, sinesineCos_B2B, sinesineCosDeriv_B2B, sinesineCos_PP, sinesineCos_FR))
-    , ("runge", (runge_Name, runge_PB, runge_ModFun, runge_B2B, rungeDeriv_B2B, runge_PP, runge_FR))
-    , ("rungeX", (rungeX_Name, rungeX_PB, rungeX_ModFun, rungeX_B2B, rungeXDeriv_B2B, rungeX_PP, rungeX_FR))
-    , ("rungeSC", (rungeSC_Name, rungeSC_PB, rungeSC_ModFun, rungeSC_B2B, rungeSCDeriv_B2B, rungeSC_PP, rungeSC_FR))
-    , ("fracSin", (fracSin_Name, fracSin_PB, fracSin_ModFun, fracSin_B2B, fracSinDeriv_B2B, fracSin_PP, fracSin_FR))
-    , ("fracSinX", (fracSinX_Name, fracSinX_PB, fracSinX_ModFun, fracSinX_B2B, fracSinXDeriv_B2B, fracSinX_PP, fracSinX_FR))
-    , ("fracSinSC", (fracSinSC_Name, fracSinSC_PB, fracSinSC_ModFun, fracSinSC_B2B, fracSinSCDeriv_B2B, fracSinSC_PP, fracSinSC_FR))
+      ("sine+cos", (sinecos_Name, sinecos_PB, sinecos_ModFun, sinecos_B2B, sinecosDeriv_B2B, sinecos_PP, sinecos_FR, sinecos_LP))
+    , ("sinesine", (sinesine_Name, sinesine_PB, sinesine_ModFun, sinesine_B2B, sinesineDeriv_B2B, sinesine_PP, sinesine_FR, sinesine_LP))
+    , ("sinesine+cos", (sinesineCos_Name, sinesineCos_PB, sinesineCos_ModFun, sinesineCos_B2B, sinesineCosDeriv_B2B, sinesineCos_PP, sinesineCos_FR, sinesineCos_LP))
+    , ("runge", (runge_Name, runge_PB, runge_ModFun, runge_B2B, rungeDeriv_B2B, runge_PP, runge_FR, runge_LP))
+    , ("rungeX", (rungeX_Name, rungeX_PB, rungeX_ModFun, rungeX_B2B, rungeXDeriv_B2B, rungeX_PP, rungeX_FR, rungeX_LP))
+    , ("rungeSC", (rungeSC_Name, rungeSC_PB, rungeSC_ModFun, rungeSC_B2B, rungeSCDeriv_B2B, rungeSC_PP, rungeSC_FR, rungeSC_LP))
+    , ("fracSin", (fracSin_Name, fracSin_PB, fracSin_ModFun, fracSin_B2B, fracSinDeriv_B2B, fracSin_PP, fracSin_FR, fracSin_LP))
+    , ("fracSinX", (fracSinX_Name, fracSinX_PB, fracSinX_ModFun, fracSinX_B2B, fracSinXDeriv_B2B, fracSinX_PP, fracSinX_FR, fracSinX_LP))
+    , ("fracSinSC", (fracSinSC_Name, fracSinSC_PB, fracSinSC_ModFun, fracSinSC_B2B, fracSinSCDeriv_B2B, fracSinSC_PP, fracSinSC_FR, fracSinSC_LP))
     -- , ("hat", (hat_Name, hat_PB, hat_B2B, hatDeriv_B2B, hat_PP, hat_FR))
     -- , ("bumpy", (bumpy_Name, bumpy_PB, bumpy_B2B, bumpyDeriv_B2B, bumpy_PP, bumpy_FR))
     ]
@@ -228,6 +242,14 @@ sinecos_FR :: Accuracy -> FracMB
 sinecos_FR =
   error $ "Not (yet) supporting Frac for: " ++ sinecos_Name
 
+sinecos_LP :: LPolyMB
+sinecos_LP =
+  sine(10*x)+cosine(20*x)
+  where
+  x = LPoly.variable
+  sine = Local.sineLocal
+  cosine = Local.cosineLocal
+
 sinesine_Name :: String
 sinesine_Name = "sin(10x+sin(20x^2)) over [-1,1]"
 
@@ -263,6 +285,13 @@ sinesine_PP acGuide =
 sinesine_FR :: Accuracy -> FracMB
 sinesine_FR acGuide =
   error $ "Not (yet) supporting Frac for: " ++ sinesine_Name
+
+sinesine_LP :: LPolyMB
+sinesine_LP =
+  sine(10*x + sine(20*x*x))
+  where
+  x = LPoly.variable
+  sine = Local.sineLocal
 
 sinesineCos_Name :: String
 sinesineCos_Name = "sin(10x+sin(20x^2)) + cos(10x) over [-1,1]"
@@ -306,6 +335,14 @@ sinesineCos_PP acGuide =
 sinesineCos_FR :: Accuracy -> FracMB
 sinesineCos_FR acGuide =
   error $ "Not (yet) supporting Frac for: " ++ sinesineCos_Name
+
+sinesineCos_LP :: LPolyMB
+sinesineCos_LP =
+  sine(10*x + sine(20*x*x)) + cosine(10*x)
+  where
+  x = LPoly.variable
+  sine = Local.sineLocal
+  cosine = Local.cosineLocal
 
 runge_Name :: String
 runge_Name = "1/(100x^2+1) over [-1,1]"
@@ -352,8 +389,15 @@ runge_FR :: Accuracy -> FracMB
 runge_FR acGuide =
   inv
   where
-  inv = 1 / (Frac.fromPoly $ 100*x*x+1)
+  inv = setPrec (1 / (Frac.fromPoly $ 100*x*x+1))
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+  setPrec = setPrecisionAtLeastAccuracy (4*acGuide)
+
+runge_LP :: LPolyMB
+runge_LP =
+  1/(100*x*x+1)
+  where
+  x = LPoly.variable
 
 rungeX_Name :: String
 rungeX_Name = "x/(100x^2+1) over [-1,1]"
@@ -401,8 +445,15 @@ rungeX_FR :: Accuracy -> FracMB
 rungeX_FR acGuide =
   inv
   where
-  inv = (Frac.fromPoly x) / (Frac.fromPoly $ 100*x*x+1)
+  inv = setPrec $ (Frac.fromPoly x) / (Frac.fromPoly $ 100*x*x+1)
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+  setPrec = setPrecisionAtLeastAccuracy (4*acGuide)
+
+rungeX_LP :: LPolyMB
+rungeX_LP =
+  x/(100*x*x+1)
+  where
+  x = LPoly.variable
 
 rungeSC_Name :: String
 rungeSC_Name = "(sin(10x)+cos(20x))/(100x^2+1) over [-1,1]"
@@ -461,10 +512,19 @@ rungeSC_FR :: Accuracy -> FracMB
 rungeSC_FR acGuide =
   inv
   where
-  inv = (Frac.fromPoly $ sine (10*x) + cosine (20*x)) / (Frac.fromPoly $ 100*x*x+1)
+  inv = setPrec $ (Frac.fromPoly $ sine (10*x) + cosine (20*x)) / (Frac.fromPoly $ 100*x*x+1)
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   sine = sineWithAccuracyGuide acGuide
   cosine = cosineWithAccuracyGuide acGuide
+  setPrec = setPrecisionAtLeastAccuracy (4*acGuide)
+
+rungeSC_LP :: LPolyMB
+rungeSC_LP =
+  (sine(10*x)+cosine(20*x))/(100*x*x+1)
+  where
+  x = LPoly.variable
+  sine = Local.sineLocal
+  cosine = Local.cosineLocal
 
 fracSin_Name :: String
 fracSin_Name = "1/(10(sin(7x))^2+1) over [-1,1]"
@@ -523,6 +583,13 @@ fracSin_FR acGuide =
   sine1 = sineWithAccuracyGuide (acGuide + 10)
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
+fracSin_LP :: LPolyMB
+fracSin_LP =
+  1/(10*(sine (7*x))*(sine (7*x))+1)
+  where
+  x = LPoly.variable
+  sine = Local.sineLocal
+
 fracSinX_Name :: String
 fracSinX_Name = "x/(10(sin(7x))^2+1) over [-1,1]"
 
@@ -579,6 +646,12 @@ fracSinX_FR acGuide =
   sine1 = sineWithAccuracyGuide (acGuide + 10)
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
+fracSinX_LP :: LPolyMB
+fracSinX_LP =
+  x/(10*(sine (7*x))*(sine (7*x))+1)
+  where
+  x = LPoly.variable
+  sine = Local.sineLocal
 
 fracSinSC_Name :: String
 fracSinSC_Name = "(sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]"
@@ -620,33 +693,50 @@ fracSinSCDeriv_B2B =
 fracSinSC_PP :: Accuracy -> PPoly
 fracSinSC_PP acGuide =
   maybeTrace ("fracSinSC_PP: getAccuracy sine7x = " ++ show (getAccuracy sine7x)) $
+  maybeTrace ("fracSinSC_PP: getAccuracy num = " ++ show (getAccuracy num)) $
   maybeTrace ("fracSinSC_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
-  num * inv
+  fracSinPP
   where
+  fracSinPP = num * inv
+  inv = PPoly.inverse denom
   num = PPoly.fromPoly $ sine2(10*x) + cosine(20*x)
-  inv = setPrc2 $ PPoly.inverse $ PPoly.fromPoly $ (10*(sine7x*sine7x)+1)
+  denom = PPoly.fromPoly $ (10*(sine7x*sine7x)+1)
   sine7x = sine1 (7*x)
-  sine1 = sineWithAccuracyGuide (acGuide + 10)
-  x = setPrc1 xPre
-  xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
-  setPrc2 :: (CanSetPrecision t) => t -> t
-  setPrc2 = setPrecisionAtLeastAccuracy (10*acGuide)
-  setPrc1 :: (CanSetPrecision t) => t -> t
-  setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
-  sine2 = sineWithAccuracyGuide (acGuide)
-  cosine = cosineWithAccuracyGuide (acGuide)
+  sine1 = sineWithAccuracyGuide (2*acGuide + 10)
+  sine2 = sineWithAccuracyGuide ((fromAccuracy acGuide `div` 4 + 1)*(acGuide) + 25)
+  cosine = cosineWithAccuracyGuide ((fromAccuracy acGuide `div` 4 + 1)*(acGuide) + 25)
+  x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+  -- x = setPrc1 xPre
+  -- setPrc2 :: (CanSetPrecision t) => t -> t
+  -- setPrc2 = setPrecisionAtLeastAccuracy (10*acGuide)
+  -- setPrc1 :: (CanSetPrecision t) => t -> t
+  -- setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
 
 fracSinSC_FR :: Accuracy -> FracMB
 fracSinSC_FR acGuide =
-  inv
+  maybeTrace ("fracSinSC_FR: getAccuracy sine7x = " ++ show (getAccuracy sine7x)) $
+  maybeTrace ("fracSinSC_FR: getAccuracy num = " ++ show (getAccuracy num)) $
+  maybeTrace ("fracSinSC_FR: getAccuracy denom = " ++ show (getAccuracy denom)) $
+  maybeTrace ("fracSinSC_FR: getAccuracy fracSinSC = " ++ show (getAccuracy fracSinSC)) $
+  maybeTrace ("fracSinSC_FR: getPrecision fracSinSC = " ++ show (getPrecision fracSinSC)) $
+  fracSinSC
   where
-  inv = (Frac.fromPoly $ sine2(10*x) + cosine(20*x)) / (Frac.fromPoly $ (10*(sine7x*sine7x)+1))
+  fracSinSC = num / denom
+  num = Frac.fromPoly $ sine2(10*x) + cosine(20*x)
+  denom = Frac.fromPoly $ (10*(sine7x*sine7x)+1)
   sine7x = sine1 (7*x)
-  sine1 = sineWithAccuracyGuide (acGuide + 10)
+  sine1 = sineWithAccuracyGuide (2*acGuide + 10)
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
-  sine2 = sineWithAccuracyGuide (acGuide + 10)
-  cosine = cosineWithAccuracyGuide (acGuide + 10)
+  sine2 = sineWithAccuracyGuide ((fromAccuracy acGuide `div` 4 + 1)*(acGuide) + 25)
+  cosine = cosineWithAccuracyGuide ((fromAccuracy acGuide `div` 4 + 1)*(acGuide) + 25)
 
+fracSinSC_LP :: LPolyMB
+fracSinSC_LP =
+  (sine(10*x)+cosine(20*x))/(10*(sine (7*x))*(sine (7*x))+1)
+  where
+  x = LPoly.variable
+  sine = Local.sineLocal
+  cosine = Local.cosineLocal
 
 hat_Name :: String
 hat_Name = "1-|x+1/3| over [-1,1]"

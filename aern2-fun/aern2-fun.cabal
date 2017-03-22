@@ -123,6 +123,7 @@ library
     AERN2.Local.Integration
     AERN2.Local.Frac
     AERN2.Local.SineCosine
+    AERN2.Local
 
 
 test-suite spec

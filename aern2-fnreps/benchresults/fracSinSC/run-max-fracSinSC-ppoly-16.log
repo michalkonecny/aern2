@@ -1,0 +1,33 @@
+fracSinSC_PP: getAccuracy sine7x = bits 43
+fracSinSC_PP: getAccuracy num = bits 90
+num its: 2
+initial bits: 9
+cutoff: 9
+fracSinSC_PP: getAccuracy inv = bits 25
+computing max  (sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]
+result = [1.073602548175528 ± 8.736527502644733e-8](prec=1220)
+accuracy: bits 23
+precision = Precision 1220
+	Command being timed: "aern2-fnreps-ops max fracSinSC ppoly 16"
+	User time (seconds): 230.20
+	System time (seconds): 0.98
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:50.95
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 483892
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 120113
+	Voluntary context switches: 1
+	Involuntary context switches: 337
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 24
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

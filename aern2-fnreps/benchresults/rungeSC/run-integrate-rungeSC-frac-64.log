@@ -1,25 +1,25 @@
-num its: 1
+num its: 2
 initial bits: 13
 cutoff: 13
-computing integrate  (sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]
-result = [3.428442629333209e-2 ± 2.261811920649898e-3](prec=377)
-accuracy: bits 8
+computing integrate  (sin(10x)+cos(20x))/(100x^2+1) over [-1,1]
+result = [4.336916086835299e-2 ± 1.899624395574121e-6](prec=377)
+accuracy: bits 19
 precision = Precision 377
-	Command being timed: "aern2-fnreps-ops integrate fracSinSC ppoly 20"
-	User time (seconds): 517.52
-	System time (seconds): 1.98
+	Command being timed: "aern2-fnreps-ops integrate rungeSC frac 64"
+	User time (seconds): 61.92
+	System time (seconds): 0.22
 	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 8:38.98
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:02.09
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 559480
+	Maximum resident set size (kbytes): 135816
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 137843
+	Minor (reclaiming a frame) page faults: 33537
 	Voluntary context switches: 1
-	Involuntary context switches: 564
+	Involuntary context switches: 46
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 16
