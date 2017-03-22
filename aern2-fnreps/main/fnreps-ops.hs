@@ -352,8 +352,9 @@ runge_FR :: Accuracy -> FracMB
 runge_FR acGuide =
   inv
   where
-  inv = 1 / (Frac.fromPoly $ 100*x*x+1)
+  inv = setPrec (1 / (Frac.fromPoly $ 100*x*x+1))
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+  setPrec = setPrecisionAtLeastAccuracy (4*acGuide)
 
 rungeX_Name :: String
 rungeX_Name = "x/(100x^2+1) over [-1,1]"
@@ -401,8 +402,9 @@ rungeX_FR :: Accuracy -> FracMB
 rungeX_FR acGuide =
   inv
   where
-  inv = (Frac.fromPoly x) / (Frac.fromPoly $ 100*x*x+1)
+  inv = setPrec $ (Frac.fromPoly x) / (Frac.fromPoly $ 100*x*x+1)
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+  setPrec = setPrecisionAtLeastAccuracy (4*acGuide)
 
 rungeSC_Name :: String
 rungeSC_Name = "(sin(10x)+cos(20x))/(100x^2+1) over [-1,1]"
@@ -461,10 +463,11 @@ rungeSC_FR :: Accuracy -> FracMB
 rungeSC_FR acGuide =
   inv
   where
-  inv = (Frac.fromPoly $ sine (10*x) + cosine (20*x)) / (Frac.fromPoly $ 100*x*x+1)
+  inv = setPrec $ (Frac.fromPoly $ sine (10*x) + cosine (20*x)) / (Frac.fromPoly $ 100*x*x+1)
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   sine = sineWithAccuracyGuide acGuide
   cosine = cosineWithAccuracyGuide acGuide
+  setPrec = setPrecisionAtLeastAccuracy (4*acGuide)
 
 fracSin_Name :: String
 fracSin_Name = "1/(10(sin(7x))^2+1) over [-1,1]"
@@ -620,32 +623,42 @@ fracSinSCDeriv_B2B =
 fracSinSC_PP :: Accuracy -> PPoly
 fracSinSC_PP acGuide =
   maybeTrace ("fracSinSC_PP: getAccuracy sine7x = " ++ show (getAccuracy sine7x)) $
+  maybeTrace ("fracSinSC_PP: getAccuracy num = " ++ show (getAccuracy num)) $
   maybeTrace ("fracSinSC_PP: getAccuracy inv = " ++ show (getAccuracy inv)) $
-  num * inv
+  fracSinPP
   where
+  fracSinPP = num * inv
+  inv = PPoly.inverse denom
   num = PPoly.fromPoly $ sine2(10*x) + cosine(20*x)
-  inv = setPrc2 $ PPoly.inverse $ PPoly.fromPoly $ (10*(sine7x*sine7x)+1)
+  denom = PPoly.fromPoly $ (10*(sine7x*sine7x)+1)
   sine7x = sine1 (7*x)
-  sine1 = sineWithAccuracyGuide (acGuide + 10)
-  x = setPrc1 xPre
-  xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
-  setPrc2 :: (CanSetPrecision t) => t -> t
-  setPrc2 = setPrecisionAtLeastAccuracy (10*acGuide)
-  setPrc1 :: (CanSetPrecision t) => t -> t
-  setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
-  sine2 = sineWithAccuracyGuide (acGuide)
-  cosine = cosineWithAccuracyGuide (acGuide)
+  sine1 = sineWithAccuracyGuide (2*acGuide + 10)
+  sine2 = sineWithAccuracyGuide ((fromAccuracy acGuide `div` 4 + 1)*(acGuide) + 25)
+  cosine = cosineWithAccuracyGuide ((fromAccuracy acGuide `div` 4 + 1)*(acGuide) + 25)
+  x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+  -- x = setPrc1 xPre
+  -- setPrc2 :: (CanSetPrecision t) => t -> t
+  -- setPrc2 = setPrecisionAtLeastAccuracy (10*acGuide)
+  -- setPrc1 :: (CanSetPrecision t) => t -> t
+  -- setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
 
 fracSinSC_FR :: Accuracy -> FracMB
 fracSinSC_FR acGuide =
-  inv
+  maybeTrace ("fracSinSC_FR: getAccuracy sine7x = " ++ show (getAccuracy sine7x)) $
+  maybeTrace ("fracSinSC_FR: getAccuracy num = " ++ show (getAccuracy num)) $
+  maybeTrace ("fracSinSC_FR: getAccuracy denom = " ++ show (getAccuracy denom)) $
+  maybeTrace ("fracSinSC_FR: getAccuracy fracSinSC = " ++ show (getAccuracy fracSinSC)) $
+  maybeTrace ("fracSinSC_FR: getPrecision fracSinSC = " ++ show (getPrecision fracSinSC)) $
+  fracSinSC
   where
-  inv = (Frac.fromPoly $ sine2(10*x) + cosine(20*x)) / (Frac.fromPoly $ (10*(sine7x*sine7x)+1))
+  fracSinSC = num / denom
+  num = Frac.fromPoly $ sine2(10*x) + cosine(20*x)
+  denom = Frac.fromPoly $ (10*(sine7x*sine7x)+1)
   sine7x = sine1 (7*x)
-  sine1 = sineWithAccuracyGuide (acGuide + 10)
+  sine1 = sineWithAccuracyGuide (2*acGuide + 10)
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
-  sine2 = sineWithAccuracyGuide (acGuide + 10)
-  cosine = cosineWithAccuracyGuide (acGuide + 10)
+  sine2 = sineWithAccuracyGuide ((fromAccuracy acGuide `div` 4 + 1)*(acGuide) + 25)
+  cosine = cosineWithAccuracyGuide ((fromAccuracy acGuide `div` 4 + 1)*(acGuide) + 25)
 
 
 hat_Name :: String

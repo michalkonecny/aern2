@@ -405,7 +405,7 @@ function rungeFrac
     done
 
     op=integrate
-    for params in 8 16 32
+    for params in 8 16 32 64
     do
         runOne
     done
@@ -643,7 +643,7 @@ function rungeSCFrac
     done
 
     op=integrate
-    for params in 10 20 40 80
+    for params in 8 16 32 64
     do
         runOne
     done
@@ -837,13 +837,13 @@ function fracSinSCPPoly
     dir=$fn
 
     op=max
-    for params in 10 20 40
+    for params in 8 16 24
     do
         runOne
     done
 
     op=integrate
-    for params in 10 20 40
+    for params in 8 16 24
     do
         runOne
     done
@@ -856,13 +856,13 @@ function fracSinSCFrac
     dir=$fn
 
     op=max
-    for params in 10 20 40 60
+    for params in 8 16 24
     do
         runOne
     done
 
     op=integrate
-    for params in 10 20 40
+    for params in 8 16 24
     do
         runOne
     done

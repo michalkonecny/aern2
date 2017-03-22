@@ -190,7 +190,7 @@ reprShape "ball" = PointShapeCircle
 reprShape "fun" = PointShapeCross
 reprShape "poly" = PointShapeCross
 reprShape "ppoly" = PointShapeStar
-reprShape "frac" = PointShapeCross
+reprShape "frac" = PointShapeCircle
 reprShape reprName = error $ "unknown representation " ++ reprName
 
 opShow :: String -> String
