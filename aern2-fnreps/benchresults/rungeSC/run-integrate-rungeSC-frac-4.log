@@ -1,26 +1,26 @@
-rungeSC_FR: getAccuracy num = bits 96
-rungeSC_FR: getPrecision num = Precision 610
+rungeSC_FR: getAccuracy num = bits 33
+rungeSC_FR: getPrecision num = Precision 377
 rungeSC_FR: getAccuracy denom = Exact
-rungeSC_FR: getPrecision denom = Precision 128
+rungeSC_FR: getPrecision denom = Precision 64
 computing integrate  (sin(10x)+cos(20x))/(100x^2+1) over [-1,1]
-result = [4.336916185540269e-2 ± 9.771119862915476e-10](prec=610)
-accuracy: bits 29
-precision = Precision 610
-	Command being timed: "aern2-fnreps-ops integrate rungeSC frac 8"
-	User time (seconds): 128.05
-	System time (seconds): 0.73
+result = [4.336916185219329e-2 ± 3.712793298968367e-2](prec=377)
+accuracy: bits 4
+precision = Precision 377
+	Command being timed: "aern2-fnreps-ops integrate rungeSC frac 4"
+	User time (seconds): 93.46
+	System time (seconds): 0.49
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:08.93
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:34.05
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 517716
+	Maximum resident set size (kbytes): 343632
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 128742
+	Minor (reclaiming a frame) page faults: 84351
 	Voluntary context switches: 1
-	Involuntary context switches: 322
+	Involuntary context switches: 94
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 16

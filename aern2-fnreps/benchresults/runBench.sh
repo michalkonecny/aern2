@@ -269,8 +269,8 @@ function rungeLPoly
   repr=lpoly; fn=runge
   dir=$fn
 
-  op=max; paramss="10 20 40 80"; runForParamss
-  op=integrate; paramss="10 20 40"; runForParamss
+  op=max; paramss="10 80"; runForParamss
+  op=integrate; paramss="10 80 160"; runForParamss
 }
 
 #################
@@ -336,7 +336,7 @@ function rungeXLPoly
   repr=lpoly; fn=rungeX
   dir=$fn
 
-  op=max; paramss="10 20 40 80"; runForParamss
+  op=max; paramss="10 80"; runForParamss
   op=integrate; paramss="10 20 40"; runForParamss
 }
 
@@ -395,7 +395,7 @@ function rungeSCFrac
   dir=$fn
 
   op=max; paramss="10 20 40 80 120"; runForParamss
-  op=integrate; paramss="8 16 32 64"; runForParamss
+  op=integrate; paramss="4 8 12 16"; runForParamss
 }
 
 function rungeSCLPoly
@@ -403,7 +403,7 @@ function rungeSCLPoly
   repr=lpoly; fn=rungeSC
   dir=$fn
 
-  op=max; paramss="10 20 40 80"; runForParamss
+  op=max; paramss="10 40"; runForParamss
   op=integrate; paramss="10 20 40"; runForParamss
 }
 
@@ -610,7 +610,7 @@ rungeXDBallFun
 rungeXPoly
 rungeXPPoly
 rungeXFrac
-rungeLPoly
+rungeXLPoly
 
 # rungeSCModFun
 rungeSCBallFun
