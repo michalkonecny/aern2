@@ -132,7 +132,7 @@ basicFunctions :: DyadicInterval -> [(Frequency, ChPoly MPBall)]
 basicFunctions dom = [(10,x), (1, c 0.5), (1, c 2), (1, c 100), (1, c (0.5^20))]
   where
   x = varFn (constFn (dom, 0)) ()
-  c :: (CanBeDyadic t, ConvertibleExactly Dyadic c) => t -> ChPoly c
+  c :: (CanBeDyadic t, HasIntegers c, HasDyadics c) => t -> ChPoly c
   c n = constFn (dom, dyadic n)
 
 instance HasDomain ChPolyConstruction where

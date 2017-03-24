@@ -101,12 +101,17 @@ terms_toList = Map.toList
 terms_toDescList :: Terms c -> [(Degree, c)]
 terms_toDescList = Map.toDescList
 
-terms_fromList :: [(Degree, c)] -> Terms c
-terms_fromList = Map.fromList
+terms_fromList :: (HasIntegers c) => [(Degree, c)] -> Terms c
+terms_fromList coeffs =
+  case Map.lookup 0 ts of
+    Nothing -> Map.insert 0 (convertExactly 0) ts
+    _ -> ts
+  where
+  ts = Map.fromList coeffs
 
-terms_fromListAddCoeffs :: (CanAddSameType c) => [(Degree, c)] -> Terms c
+terms_fromListAddCoeffs :: (CanAddSameType c, HasIntegers c) => [(Degree, c)] -> Terms c
 terms_fromListAddCoeffs newTerms =
-    foldl addTerm terms_empty newTerms
+    foldl addTerm terms_empty ((0, convertExactly 0) : newTerms)
     where
     addTerm prevTerms (i,a) =
         terms_insertWith (+) i a prevTerms
@@ -118,7 +123,9 @@ terms_filter :: (k -> a -> Bool) -> Map.Map k a -> Map.Map k a
 terms_filter = Map.filterWithKey
 
 terms_degree :: Terms c -> Degree
-terms_degree = fst . Map.findMax
+terms_degree ts
+  | null ts = error "terms_degree called with empty terms"
+  | otherwise = fst $ Map.findMax ts
 
 terms_degrees :: Terms c -> [Degree]
 terms_degrees = Map.keys

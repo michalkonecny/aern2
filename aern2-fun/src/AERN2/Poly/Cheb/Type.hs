@@ -178,7 +178,7 @@ sweepUsingAccuracy (ChPoly dom poly@(Poly ts) bnd) =
 
 {- constructors -}
 
-instance (HasDyadics c) => HasVars (ChPoly c) where
+instance (HasDyadics c, HasIntegers c) => HasVars (ChPoly c) where
   type Var (ChPoly c) = ()
   varFn sampleFn () =
     ChPoly dom (Poly terms) Nothing
@@ -194,14 +194,14 @@ type CanBeChPoly c t = ConvertibleExactly t (ChPoly c)
 chPoly :: (CanBeChPoly c t) => t -> (ChPoly c)
 chPoly = convertExactly
 
-instance (ConvertibleExactly t c) => ConvertibleExactly (DyadicInterval, t) (ChPoly c)
+instance (ConvertibleExactly t c, HasIntegers c) => ConvertibleExactly (DyadicInterval, t) (ChPoly c)
   where
   safeConvertExactly (dom, x) =
     case safeConvertExactly x of
       Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)]) Nothing
       Left e -> Left e
 
-instance (ConvertibleExactly t c) => ConvertibleExactly (ChPoly c, t) (ChPoly c)
+instance (ConvertibleExactly t c, HasIntegers c) => ConvertibleExactly (ChPoly c, t) (ChPoly c)
   where
   safeConvertExactly (ChPoly dom _ _, x) =
     case safeConvertExactly x of
