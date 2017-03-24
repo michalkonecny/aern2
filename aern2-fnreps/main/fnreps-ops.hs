@@ -92,8 +92,10 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         ("frac", "integrate") -> integrateFR $ fnFR accuracy
         ("lpoly", "max") -> maxLP fnLP accuracy
         ("lpoly", "integrate") -> integrateLP fnLP accuracy
+        ("lfrac", "max") -> maxLF fnLF accuracy
+        ("lfrac", "integrate") -> integrateLF fnLF accuracy
         _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
-    (Just (fnDescription, fnPB, fnModFun, fnB2B, dfnB2B, fnPP, fnFR, fnLP)) = Map.lookup functionCode functions
+    (Just (fnDescription, fnPB, fnModFun, fnB2B, dfnB2B, fnPP, fnFR, fnLP, fnLF)) = Map.lookup functionCode functions
 
     accuracy = bits $ (read accuracyS :: Int)
     [accuracyS] = effortArgs
@@ -109,7 +111,12 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     maxLP :: LPolyMB -> Accuracy -> MPBall
     maxLP lf ac = Local.maximum lf (mpBall (-1)) (mpBall 1) ac
 
+    maxLF :: LFracMB -> Accuracy -> MPBall
+    maxLF lf ac = Local.maximum lf (mpBall (-1)) (mpBall 1) ac
+
     integrateLP lf = lf `integrateOverDom` unaryIntervalDom
+
+    integrateLF lf = lf `integrateOverDom` unaryIntervalDom
 
     maxPP :: PPoly -> MPBall
     maxPP f = f `maximumOverDomPP` (getDomain f)
@@ -187,19 +194,19 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 processArgs _ =
     error "expecting arguments: <operationCode> <functionCode> <representationCode> <effort parameters...>"
 
-functions :: Map.Map String (String, Accuracy -> ChPoly MPBall, UnaryModFun, UnaryBallFun, UnaryBallFun, Accuracy -> PPoly, Accuracy -> FracMB, LPolyMB)
+functions :: Map.Map String (String, Accuracy -> ChPoly MPBall, UnaryModFun, UnaryBallFun, UnaryBallFun, Accuracy -> PPoly, Accuracy -> FracMB, LPolyMB, LFracMB)
 functions =
     Map.fromList
     [
-      ("sine+cos", (sinecos_Name, sinecos_PB, sinecos_ModFun, sinecos_B2B, sinecosDeriv_B2B, sinecos_PP, sinecos_FR, sinecos_LP))
-    , ("sinesine", (sinesine_Name, sinesine_PB, sinesine_ModFun, sinesine_B2B, sinesineDeriv_B2B, sinesine_PP, sinesine_FR, sinesine_LP))
-    , ("sinesine+cos", (sinesineCos_Name, sinesineCos_PB, sinesineCos_ModFun, sinesineCos_B2B, sinesineCosDeriv_B2B, sinesineCos_PP, sinesineCos_FR, sinesineCos_LP))
-    , ("runge", (runge_Name, runge_PB, runge_ModFun, runge_B2B, rungeDeriv_B2B, runge_PP, runge_FR, runge_LP))
-    , ("rungeX", (rungeX_Name, rungeX_PB, rungeX_ModFun, rungeX_B2B, rungeXDeriv_B2B, rungeX_PP, rungeX_FR, rungeX_LP))
-    , ("rungeSC", (rungeSC_Name, rungeSC_PB, rungeSC_ModFun, rungeSC_B2B, rungeSCDeriv_B2B, rungeSC_PP, rungeSC_FR, rungeSC_LP))
-    , ("fracSin", (fracSin_Name, fracSin_PB, fracSin_ModFun, fracSin_B2B, fracSinDeriv_B2B, fracSin_PP, fracSin_FR, fracSin_LP))
-    , ("fracSinX", (fracSinX_Name, fracSinX_PB, fracSinX_ModFun, fracSinX_B2B, fracSinXDeriv_B2B, fracSinX_PP, fracSinX_FR, fracSinX_LP))
-    , ("fracSinSC", (fracSinSC_Name, fracSinSC_PB, fracSinSC_ModFun, fracSinSC_B2B, fracSinSCDeriv_B2B, fracSinSC_PP, fracSinSC_FR, fracSinSC_LP))
+      ("sine+cos", (sinecos_Name, sinecos_PB, sinecos_ModFun, sinecos_B2B, sinecosDeriv_B2B, sinecos_PP, sinecos_FR, sinecos_LP, sinecos_LF))
+    , ("sinesine", (sinesine_Name, sinesine_PB, sinesine_ModFun, sinesine_B2B, sinesineDeriv_B2B, sinesine_PP, sinesine_FR, sinesine_LP, sinesine_LF))
+    , ("sinesine+cos", (sinesineCos_Name, sinesineCos_PB, sinesineCos_ModFun, sinesineCos_B2B, sinesineCosDeriv_B2B, sinesineCos_PP, sinesineCos_FR, sinesineCos_LP, sinesineCos_LF))
+    , ("runge", (runge_Name, runge_PB, runge_ModFun, runge_B2B, rungeDeriv_B2B, runge_PP, runge_FR, runge_LP, runge_LF))
+    , ("rungeX", (rungeX_Name, rungeX_PB, rungeX_ModFun, rungeX_B2B, rungeXDeriv_B2B, rungeX_PP, rungeX_FR, rungeX_LP, rungeX_LF))
+    , ("rungeSC", (rungeSC_Name, rungeSC_PB, rungeSC_ModFun, rungeSC_B2B, rungeSCDeriv_B2B, rungeSC_PP, rungeSC_FR, rungeSC_LP, rungeSC_LF))
+    , ("fracSin", (fracSin_Name, fracSin_PB, fracSin_ModFun, fracSin_B2B, fracSinDeriv_B2B, fracSin_PP, fracSin_FR, fracSin_LP, fracSin_LF))
+    , ("fracSinX", (fracSinX_Name, fracSinX_PB, fracSinX_ModFun, fracSinX_B2B, fracSinXDeriv_B2B, fracSinX_PP, fracSinX_FR, fracSinX_LP, fracSinX_LF))
+    , ("fracSinSC", (fracSinSC_Name, fracSinSC_PB, fracSinSC_ModFun, fracSinSC_B2B, fracSinSCDeriv_B2B, fracSinSC_PP, fracSinSC_FR, fracSinSC_LP, fracSinSC_LF))
     -- , ("hat", (hat_Name, hat_PB, hat_B2B, hatDeriv_B2B, hat_PP, hat_FR))
     -- , ("bumpy", (bumpy_Name, bumpy_PB, bumpy_B2B, bumpyDeriv_B2B, bumpy_PP, bumpy_FR))
     ]
@@ -250,6 +257,17 @@ sinecos_LP =
   sine = Local.sineLocal
   cosine = Local.cosineLocal
 
+sinecos_LF :: LFracMB
+sinecos_LF =
+  sine(10*x)+cosine(20*x)
+  where
+  x = LFrac.fromPoly LPoly.variable
+  sine = Local.sineLocal
+  cosine = Local.cosineLocal
+
+-----------------------------------
+-----------------------------------
+
 sinesine_Name :: String
 sinesine_Name = "sin(10x+sin(20x^2)) over [-1,1]"
 
@@ -292,6 +310,16 @@ sinesine_LP =
   where
   x = LPoly.variable
   sine = Local.sineLocal
+
+sinesine_LF :: LFracMB
+sinesine_LF =
+  sine(10*x + sine(20*x*x))
+  where
+  x = LFrac.fromPoly $ LPoly.variable
+  sine = Local.sineLocal
+
+-----------------------------------
+-----------------------------------
 
 sinesineCos_Name :: String
 sinesineCos_Name = "sin(10x+sin(20x^2)) + cos(10x) over [-1,1]"
@@ -343,6 +371,17 @@ sinesineCos_LP =
   x = LPoly.variable
   sine = Local.sineLocal
   cosine = Local.cosineLocal
+
+sinesineCos_LF :: LFracMB
+sinesineCos_LF =
+  sine(10*x + sine(20*x*x)) + cosine(10*x)
+  where
+  x = LFrac.fromPoly $ LPoly.variable
+  sine = Local.sineLocal
+  cosine = Local.cosineLocal
+
+-----------------------------------
+-----------------------------------
 
 runge_Name :: String
 runge_Name = "1/(100x^2+1) over [-1,1]"
@@ -399,6 +438,15 @@ runge_LP =
   where
   x = LPoly.variable
 
+runge_LF :: LFracMB
+runge_LF =
+  1/(100*x*x+1)
+  where
+  x = LFrac.fromPoly $ LPoly.variable
+
+-----------------------------------
+-----------------------------------
+
 rungeX_Name :: String
 rungeX_Name = "x/(100x^2+1) over [-1,1]"
 
@@ -454,6 +502,15 @@ rungeX_LP =
   x/(100*x*x+1)
   where
   x = LPoly.variable
+
+rungeX_LF :: LFracMB
+rungeX_LF =
+  x/(100*x*x+1)
+  where
+  x = LFrac.fromPoly $ LPoly.variable
+
+-----------------------------------
+-----------------------------------
 
 rungeSC_Name :: String
 rungeSC_Name = "(sin(10x)+cos(20x))/(100x^2+1) over [-1,1]"
@@ -527,11 +584,23 @@ rungeSC_FR acGuide =
 
 rungeSC_LP :: LPolyMB
 rungeSC_LP =
+
   (sine(10*x)+cosine(20*x))/(100*x*x+1)
   where
-  x = LPoly.variable
+    x = LPoly.variable
+    sine = Local.sineLocal
+    cosine = Local.cosineLocal
+
+rungeSC_LF :: LFracMB
+rungeSC_LF =
+  (sine(10*x)+cosine(20*x))/(100*x*x+1)
+  where
+  x = LFrac.fromPoly $ LPoly.variable
   sine = Local.sineLocal
   cosine = Local.cosineLocal
+
+-----------------------------------
+-----------------------------------
 
 fracSin_Name :: String
 fracSin_Name = "1/(10(sin(7x))^2+1) over [-1,1]"
@@ -597,6 +666,16 @@ fracSin_LP =
   x = LPoly.variable
   sine = Local.sineLocal
 
+fracSin_LF :: LFracMB
+fracSin_LF =
+  1/(10*(sine (7*x))*(sine (7*x))+1)
+  where
+  x = LFrac.fromPoly $ LPoly.variable
+  sine = Local.sineLocal
+
+-----------------------------------
+-----------------------------------
+
 fracSinX_Name :: String
 fracSinX_Name = "x/(10(sin(7x))^2+1) over [-1,1]"
 
@@ -659,6 +738,16 @@ fracSinX_LP =
   where
   x = LPoly.variable
   sine = Local.sineLocal
+
+fracSinX_LF :: LFracMB
+fracSinX_LF =
+  x/(10*(sine (7*x))*(sine (7*x))+1)
+  where
+  x = LFrac.fromPoly $ LPoly.variable
+  sine = Local.sineLocal
+
+-----------------------------------
+-----------------------------------
 
 fracSinSC_Name :: String
 fracSinSC_Name = "(sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]"
@@ -744,6 +833,17 @@ fracSinSC_LP =
   x = LPoly.variable
   sine = Local.sineLocal
   cosine = Local.cosineLocal
+
+fracSinSC_LF :: LFracMB
+fracSinSC_LF =
+  (sine(10*x)+cosine(20*x))/(10*(sine (7*x))*(sine (7*x))+1)
+  where
+  x = LFrac.fromPoly $ LPoly.variable
+  sine = Local.sineLocal
+  cosine = Local.cosineLocal
+
+-----------------------------------
+-----------------------------------
 
 hat_Name :: String
 hat_Name = "1-|x+1/3| over [-1,1]"

@@ -40,6 +40,40 @@ instance (HasDomain (Frac a)) where
   type Domain (Frac a) = DyadicInterval
   getDomain (Frac p _ _) = getDomain p
 
+instance
+  -- (IsBall a, ConvertibleExactly Integer a)
+  -- =>
+  IsBall (Frac MPBall)
+  where
+  type CentreType (Frac MPBall) = Frac MPBall
+  centre (Frac p q m) = Frac (centreAsBall p) (centreAsBall q) m
+  centreAsBallAndRadius f@(Frac p q _) = (centre f, r)
+    where
+    (pC,pE) = centreAsBallAndRadius p
+    (qC,qE) = centreAsBallAndRadius q
+    pCmax = maximumOverDom pC (getDomain p)
+    pCmin = minimumOverDom pC (getDomain p)
+    pCnorm = max (-pCmin) pCmax
+    qCmax = maximumOverDom qC (getDomain q)
+    qCmin = minimumOverDom qC (getDomain q)
+    qCnorm = qCmax
+    pEB = mpBall pE
+    qEB = mpBall qE
+    r = errorBound $ (qCnorm*pEB + pCnorm*qEB) / (qCmin*(qCmin-qEB))
+  updateRadius f (Frac p q m) = Frac (updateRadius fp p) q m
+    where
+    fp e =
+      errorBound $ qmax * ((mpBall (f e)) - eB)
+      where
+      eB = mpBall e
+      qmax = maximumOverDom q (getDomain q)
+
+instance CanReduceSizeUsingAccuracyGuide (Frac MPBall) where
+  reduceSizeUsingAccuracyGuide acGuide (Frac p q m) =
+    Frac (reduceSizeUsingAccuracyGuide ac_p p) q m -- TODO: reduce also q
+      where
+      ac_p = acGuide - (normLog2Accuracy $ getNormLog m)
+
 fracLift1 :: (HasIntegers a) => (Frac a -> b) -> ChPoly a -> b
 fracLift1 f = f . fromPoly
 
