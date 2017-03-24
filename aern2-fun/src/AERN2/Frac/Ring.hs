@@ -52,25 +52,31 @@ $(declForTypes
       divide (Frac p q dIM) n = Frac p (q*n) dIM
   |]))
 
-instance CanAddAsymmetric MPBall (Frac MPBall) where
-    type AddType MPBall (Frac MPBall) = Frac MPBall
-    add n (Frac p q dIM) = Frac (n*q + p) q dIM
-
-instance CanAddAsymmetric Integer (Frac MPBall) where
-    type AddType Integer (Frac MPBall) = Frac MPBall
-    add n (Frac p q dIM) = Frac (n*q + p) q dIM
-
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
   (\ t -> [d|
-    instance (CanAddThis (ChPoly c) $t) => CanAddAsymmetric $t (Frac c) where
+    instance
+      (CanMulBy (ChPoly c) $t, CanAddSameType (ChPoly c))
+      =>
+      CanAddAsymmetric $t (Frac c)
+      where
       type AddType $t (Frac c) = Frac c
-      add n (Frac p q dIM) = Frac (n+p) q dIM
+      add n (Frac p q dIM) = Frac (n*q+p) q dIM
 
-    instance (CanAddThis (ChPoly c) $t) => CanAddAsymmetric (Frac c) $t where
+    instance
+      (CanMulBy (ChPoly c) $t, CanAddSameType (ChPoly c))
+      =>
+      CanAddAsymmetric (Frac c) $t
+      where
       type AddType (Frac c) $t = Frac c
-      add (Frac p q dIM) n = Frac (p+n) q dIM
+      add f n = add n f
 
-    instance (CanAddThis (ChPoly c) $t) => CanSub (Frac c) $t where
-    instance (CanAddThis (ChPoly c) $t, CanNegSameType (ChPoly c)) => CanSub $t (Frac c) where
+    instance
+      (CanMulBy (ChPoly c) $t, CanAddSameType (ChPoly c))
+      =>
+      CanSub (Frac c) $t
+    instance
+      (CanMulBy (ChPoly c) $t, CanAddSameType (ChPoly c), CanNegSameType (ChPoly c))
+      => 
+      CanSub $t (Frac c)
   |]))
