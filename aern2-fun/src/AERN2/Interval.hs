@@ -208,6 +208,22 @@ instance
     | l !<=! r = Right $ Interval (dyadic l) (dyadic r)
     | otherwise = convError "endpoints are not in the correct order" (l,r)
 
+instance ConvertibleExactly Dyadic DyadicInterval where
+  safeConvertExactly d =
+    Right $ Interval d d
+
+instance ConvertibleExactly Integer DyadicInterval where
+  safeConvertExactly n =
+    do
+    nD <- safeConvertExactly n
+    Right $ Interval nD nD
+
+instance ConvertibleExactly Rational DyadicInterval where
+  safeConvertExactly r =
+    do
+    rD <- safeConvertExactly r
+    Right $ Interval rD rD
+
 instance ConvertibleExactly MPBall DyadicInterval where
   safeConvertExactly ball =
     Right $ Interval (centre l) (centre r)
