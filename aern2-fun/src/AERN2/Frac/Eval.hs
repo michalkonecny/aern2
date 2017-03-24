@@ -10,9 +10,30 @@ where
 import Numeric.MixedTypes
 import AERN2.MP.Dyadic
 import AERN2.MP.Ball
-import AERN2.Frac.Type
+
+import AERN2.RealFun.Operations
+
 import AERN2.Poly.Cheb (ChPoly)
 import qualified AERN2.Poly.Cheb as Cheb
+
+import AERN2.Frac.Type
+
+instance
+  (CanApply (ChPoly c) t, CanDivSameType (ApplyType (ChPoly c) t))
+  =>
+  CanApply (Frac c) t
+  where
+  type ApplyType (Frac c) t = ApplyType (ChPoly c) t
+  apply (Frac p q _) t = (apply p t) / (apply q t)
+    -- TODO: replace with a specific instance with c~MPBall using evalDI?
+
+instance
+  (CanApplyApprox (ChPoly c) t, CanDivSameType (ApplyApproxType (ChPoly c) t))
+  =>
+  CanApplyApprox (Frac c) t
+  where
+  type ApplyApproxType (Frac c) t = ApplyApproxType (ChPoly c) t
+  applyApprox (Frac p q _) t = (applyApprox p t) / (applyApprox q t)
 
 evalDirect ::
   (Field t, CanAddSubMulDivBy t Dyadic, CanDivBy t Integer,
