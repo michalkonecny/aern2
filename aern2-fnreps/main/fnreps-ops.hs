@@ -259,11 +259,14 @@ sinecos_LP =
 
 sinecos_LF :: LFracMB
 sinecos_LF =
-  sine(10*x)+cosine(20*x)
-  where
-  x = LFrac.fromPoly LPoly.variable
-  sine = Local.sineLocal
-  cosine = Local.cosineLocal
+  error $ "Not (yet) supporting LFrac for: " ++ sinecos_Name
+  -- -- sine(10*x)+cosine(20*x)
+  -- LFrac.fromPoly $ sine(10*x)+cosine(20*x)
+  -- where
+  -- -- x = LFrac.fromPoly $ LPoly.variable
+  -- x = LPoly.variable
+  -- sine = Local.sineLocal
+  -- cosine = Local.cosineLocal
 
 -----------------------------------
 -----------------------------------
@@ -313,10 +316,11 @@ sinesine_LP =
 
 sinesine_LF :: LFracMB
 sinesine_LF =
-  sine(10*x + sine(20*x*x))
-  where
-  x = LFrac.fromPoly $ LPoly.variable
-  sine = Local.sineLocal
+  error $ "Not (yet) supporting LFrac for: " ++ sinesine_Name
+  -- sine(10*x + sine(20*x*x))
+  -- where
+  -- x = LFrac.fromPoly $ LPoly.variable
+  -- sine = Local.sineLocal
 
 -----------------------------------
 -----------------------------------
@@ -374,11 +378,12 @@ sinesineCos_LP =
 
 sinesineCos_LF :: LFracMB
 sinesineCos_LF =
-  sine(10*x + sine(20*x*x)) + cosine(10*x)
-  where
-  x = LFrac.fromPoly $ LPoly.variable
-  sine = Local.sineLocal
-  cosine = Local.cosineLocal
+  error $ "Not (yet) supporting LFrac for: " ++ sinesineCos_Name
+  -- sine(10*x + sine(20*x*x)) + cosine(10*x)
+  -- where
+  -- x = LFrac.fromPoly $ LPoly.variable
+  -- sine = Local.sineLocal
+  -- cosine = Local.cosineLocal
 
 -----------------------------------
 -----------------------------------
@@ -593,9 +598,9 @@ rungeSC_LP =
 
 rungeSC_LF :: LFracMB
 rungeSC_LF =
-  (sine(10*x)+cosine(20*x))/(100*x*x+1)
+  (LFrac.fromPoly $ sine(10*x)+cosine(20*x))/(LFrac.fromPoly $ 100*x*x+1)
   where
-  x = LFrac.fromPoly $ LPoly.variable
+  x = LPoly.variable
   sine = Local.sineLocal
   cosine = Local.cosineLocal
 
@@ -668,9 +673,9 @@ fracSin_LP =
 
 fracSin_LF :: LFracMB
 fracSin_LF =
-  1/(10*(sine (7*x))*(sine (7*x))+1)
+  1/(LFrac.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
   where
-  x = LFrac.fromPoly $ LPoly.variable
+  x = LPoly.variable
   sine = Local.sineLocal
 
 -----------------------------------
@@ -741,9 +746,9 @@ fracSinX_LP =
 
 fracSinX_LF :: LFracMB
 fracSinX_LF =
-  x/(10*(sine (7*x))*(sine (7*x))+1)
+  (LFrac.fromPoly $ x)/(LFrac.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
   where
-  x = LFrac.fromPoly $ LPoly.variable
+  x = LPoly.variable
   sine = Local.sineLocal
 
 -----------------------------------
@@ -836,9 +841,9 @@ fracSinSC_LP =
 
 fracSinSC_LF :: LFracMB
 fracSinSC_LF =
-  (sine(10*x)+cosine(20*x))/(10*(sine (7*x))*(sine (7*x))+1)
+  (LFrac.fromPoly $ sine(10*x)+cosine(20*x))/(LFrac.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
   where
-  x = LFrac.fromPoly $ LPoly.variable
+  x = LPoly.variable
   sine = Local.sineLocal
   cosine = Local.cosineLocal
 
