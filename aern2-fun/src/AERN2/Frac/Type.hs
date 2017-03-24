@@ -25,8 +25,8 @@ degree (Frac p q _) = Cheb.degree p + Cheb.degree q
 instance (CanNormalize (ChPoly a)) => CanNormalize (Frac a) where
   normalize (Frac p q m) = Frac (normalize p) (normalize q) m
 
-instance (HasAccuracy a,  HasIntegers a, IsBall a) => HasAccuracy (Frac a) where
-  getAccuracy (Frac p q _) = min (getAccuracy p) (getAccuracy q)
+instance (IsBall (Frac a)) => HasAccuracy (Frac a) where
+  getAccuracy f = getAccuracy $ radius f
 
 instance (HasPrecision a) => HasPrecision (Frac a) where
   getPrecision (Frac p q m) =
@@ -59,7 +59,15 @@ instance
     qCnorm = qCmax
     pEB = mpBall pE
     qEB = mpBall qE
-    r = errorBound $ (qCnorm*pEB + pCnorm*qEB) / (qCmin*(qCmin-qEB))
+    r
+      | pE == 0 && qE == 0 =
+          errorBound $ 0
+      | pE == 0 =
+          errorBound $ (pCnorm*qEB) / (qCmin*(qCmin-qEB))
+      | qE == 0 =
+          errorBound $ (qCnorm*pEB) / (qCmin*qCmin)
+      | otherwise =
+          errorBound $ (qCnorm*pEB + pCnorm*qEB) / (qCmin*(qCmin-qEB))
   updateRadius f (Frac p q m) = Frac (updateRadius fp p) q m
     where
     fp e =
