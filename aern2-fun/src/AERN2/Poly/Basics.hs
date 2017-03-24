@@ -23,7 +23,8 @@ module AERN2.Poly.Basics
   , terms_fromList, terms_fromListAddCoeffs
   , terms_unionWith
   , terms_map
-  , terms_filter
+  , terms_filterKeepConst
+  , terms_filterMayLoseConst
   , terms_degree, terms_degrees
   , terms_coeffs
   , terms_updateConst
@@ -119,8 +120,11 @@ terms_fromListAddCoeffs newTerms =
 terms_unionWith :: (c -> c -> c) -> Terms c -> Terms c -> Terms c
 terms_unionWith = Map.unionWith
 
-terms_filter :: (Degree -> c -> Bool) -> Terms c -> Terms c
-terms_filter cond = Map.filterWithKey cond_leaveConst
+terms_filterMayLoseConst :: (Degree -> c -> Bool) -> Terms c -> Terms c
+terms_filterMayLoseConst = Map.filterWithKey
+
+terms_filterKeepConst :: (Degree -> c -> Bool) -> Terms c -> Terms c
+terms_filterKeepConst cond = Map.filterWithKey cond_leaveConst
   where
   cond_leaveConst k a
     | k == 0 = True

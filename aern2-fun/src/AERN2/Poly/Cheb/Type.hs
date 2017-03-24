@@ -156,13 +156,13 @@ instance CanNormalize (ChPoly MPBall) where
       Just lip -> (chPoly_setLip lip . makeExactCentre . sweepUsingAccuracy) p
 
 instance CanNormalize (ChPoly Integer) where
-  normalize = chPoly_map_terms (terms_filter (\_d c -> c /= 0))
+  normalize = chPoly_map_terms (terms_filterKeepConst (\_d c -> c /= 0))
 
 instance CanNormalize (ChPoly Rational) where
-  normalize = chPoly_map_terms (terms_filter (\_d c -> c /= 0))
+  normalize = chPoly_map_terms (terms_filterKeepConst (\_d c -> c /= 0))
 
 instance CanNormalize (ChPoly Dyadic) where
-  normalize = chPoly_map_terms (terms_filter (\_d c -> c /= 0))
+  normalize = chPoly_map_terms (terms_filterKeepConst (\_d c -> c /= 0))
 
 sweepUsingAccuracy ::
   (PolyCoeffBall c) =>
@@ -254,19 +254,18 @@ reduceDegreeTerms maxDegree =
 reduceTerms ::
   (PolyCoeffBall c) =>
   (Degree -> c -> Bool) -> Terms c -> Terms c
-reduceTerms shouldKeepPre terms
+reduceTerms shouldKeep terms
     | terms_size termsToRemove == 0 = terms
     | otherwise =
-        terms_insertWith (+) 0 errorBall (terms_filter shouldKeep terms)
+        terms_insertWith (+) 0 errorBall (terms_filterKeepConst shouldKeep terms)
     where
-    shouldKeep deg coeff = deg == 0 || shouldKeepPre deg coeff
     errorBall =
         sum $ map plusMinus $ terms_coeffs termsToRemove
         where
         plusMinus c = fromEndpoints (-c) c
-    termsToRemove = terms_filter shouldRemove terms
+    termsToRemove = terms_filterMayLoseConst shouldRemove terms
     shouldRemove deg coeff =
-        not $ shouldKeep deg coeff
+        deg /= 0 && (not $ shouldKeep deg coeff)
 
 instance
   (PolyCoeffBall c) =>

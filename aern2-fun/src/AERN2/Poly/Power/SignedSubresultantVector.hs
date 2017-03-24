@@ -215,7 +215,7 @@ leadingCoefficient (PowPoly (Poly ts)) =
 
 sweepLeadingZeroes :: IntPoly -> IntPoly
 sweepLeadingZeroes (PowPoly (Poly ts)) =
-  PowPoly $ Poly $ terms_filter (\k c -> k == 0 || c /= 0) ts
+  PowPoly $ Poly $ terms_filterKeepConst (\_k c -> c /= 0) ts
 
 
 {-| Quotient of Euclidean division. Only valid if result is again an integer polynomial. -}

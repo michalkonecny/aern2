@@ -86,3 +86,10 @@ fromPoly chp@(ChPoly dom _ _) =
   Frac chp one (convertExactly 1)
   where
   one = chPoly (dom, 1)
+
+_fracX :: Frac MPBall
+_fracX = fromPoly chpolyX
+  where
+  chpolyX :: ChPoly MPBall
+  chpolyX = varFn (constFn (dom, 0)) ()
+  dom = dyadicInterval (-1,1)
