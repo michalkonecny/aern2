@@ -174,6 +174,7 @@ reprShow "poly" = "Poly"
 reprShow "ppoly" = "PPoly"
 reprShow "frac" = "Frac"
 reprShow "lpoly" = "LPoly"
+reprShow "lfrac" = "LFrac"
 reprShow reprName = error $ "unknown representation " ++ reprName
 
 reprColor :: String -> Colour Double
@@ -183,7 +184,8 @@ reprColor "fun" = grey
 reprColor "poly" = orangered
 reprColor "ppoly" = mediumvioletred
 reprColor "frac" = darkgreen
-reprColor "lpoly" = black
+reprColor "lpoly" = orangered
+reprColor "lfrac" = darkgreen
 reprColor reprName = error $ "unknown representation " ++ reprName
 
 reprShape :: String -> PointShape
@@ -194,6 +196,7 @@ reprShape "poly" = PointShapeCross
 reprShape "ppoly" = PointShapeStar
 reprShape "frac" = PointShapeCircle
 reprShape "lpoly" = PointShapeStar
+reprShape "lfrac" = PointShapeStar
 reprShape reprName = error $ "unknown representation " ++ reprName
 
 opShow :: String -> String

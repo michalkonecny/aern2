@@ -273,6 +273,15 @@ function rungeLPoly
   op=integrate; paramss="10 80 160"; runForParamss
 }
 
+function rungeLFrac
+{
+  repr=lfrac; fn=runge
+  dir=$fn
+
+  op=max; paramss="10 20 40 80"; runForParamss
+  op=integrate; paramss="2 10 80"; runForParamss
+}
+
 #################
 ### rungeX
 #################
@@ -337,6 +346,15 @@ function rungeXLPoly
   dir=$fn
 
   op=max; paramss="10 80"; runForParamss
+  op=integrate; paramss="10 20 40"; runForParamss
+}
+
+function rungeXLFrac
+{
+  repr=lfrac; fn=rungeX
+  dir=$fn
+
+  op=max; paramss="10 20 40"; runForParamss
   op=integrate; paramss="10 20 40"; runForParamss
 }
 
@@ -407,6 +425,15 @@ function rungeSCLPoly
   op=integrate; paramss="10 20 40"; runForParamss
 }
 
+function rungeSCLFrac
+{
+  repr=lfrac; fn=rungeSC
+  dir=$fn
+
+  op=max; paramss="10 20 40"; runForParamss
+  op=integrate; paramss="10 20 40"; runForParamss
+}
+
 #################
 ### fracSin
 #################
@@ -468,6 +495,15 @@ function fracSinFrac
 function fracSinLPoly
 {
   repr=lpoly; fn=fracSin
+  dir=$fn
+
+  op=max; paramss="10 20 40"; runForParamss
+  op=integrate; paramss="10 20 40"; runForParamss
+}
+
+function fracSinLFrac
+{
+  repr=lfrac; fn=fracSin
   dir=$fn
 
   op=max; paramss="10 20 40"; runForParamss
@@ -543,6 +579,16 @@ function fracSinSCLPoly
   op=integrate; paramss="8 16 24 32 40"; runForParamss
 }
 
+function fracSinSCLFrac
+{
+  repr=lfrac; fn=fracSinSC
+  dir=$fn
+
+  op=max; paramss="8 16 24 32 40"; runForParamss
+  op=integrate; paramss="16 24 32 40 48"; runForParamss
+}
+
+
 #################
 ### hat
 #################
@@ -603,6 +649,7 @@ rungePoly
 rungePPoly
 rungeFrac
 rungeLPoly
+rungeLFrac
 
 # rungeXModFun
 rungeXBallFun
@@ -611,6 +658,7 @@ rungeXPoly
 rungeXPPoly
 rungeXFrac
 rungeXLPoly
+rungeXLFrac
 
 # rungeSCModFun
 rungeSCBallFun
@@ -619,6 +667,7 @@ rungeSCPPoly
 rungeSCPoly
 rungeSCFrac
 rungeSCLPoly
+rungeSCLFrac
 
 # fracSinModFun
 fracSinBallFun
@@ -627,6 +676,7 @@ fracSinPPoly
 fracSinPoly
 fracSinFrac
 fracSinLPoly
+fracSinLFrac
 
 fracSinSCBallFun
 fracSinSCDBallFun
@@ -634,6 +684,7 @@ fracSinSCPoly
 fracSinSCPPoly
 fracSinSCFrac
 fracSinSCLPoly
+fracSinSCLFrac
 
 # hatBallFun
 # hatDBallFun
