@@ -119,8 +119,12 @@ terms_fromListAddCoeffs newTerms =
 terms_unionWith :: (c -> c -> c) -> Terms c -> Terms c -> Terms c
 terms_unionWith = Map.unionWith
 
-terms_filter :: (k -> a -> Bool) -> Map.Map k a -> Map.Map k a
-terms_filter = Map.filterWithKey
+terms_filter :: (Degree -> c -> Bool) -> Terms c -> Terms c
+terms_filter cond = Map.filterWithKey cond_leaveConst
+  where
+  cond_leaveConst k a
+    | k == 0 = True
+    | otherwise = cond k a
 
 terms_degree :: Terms c -> Degree
 terms_degree ts
