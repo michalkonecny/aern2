@@ -4,9 +4,8 @@ where
 
 import Numeric.MixedTypes hiding (maximum, minimum)
 import qualified Prelude
-import Data.List
 
-import AERN2.Poly.Cheb (reduceDegree, degree, fromDomToUnitInterval)
+import AERN2.Poly.Cheb (reduceDegree, degree)
 
 import AERN2.MP.Dyadic
 import AERN2.Poly.Ball as PolyBall
@@ -24,13 +23,18 @@ import qualified Data.Set as Set
 
 import Math.NumberTheory.Logarithms (integerLog2)
 
-import Debug.Trace
-import Data.Maybe
+-- import Debug.Trace
+-- import Data.Maybe
 
 instance CanDiv PPoly PPoly where -- TODO: support negative denominator
   type DivType PPoly PPoly = PPoly
   divide p q =
     p * inverse q
+
+instance CanDiv Integer PPoly where -- TODO: support negative denominator
+  type DivType Integer PPoly = PPoly
+  divide n q =
+    n * inverse q
 
 inverseWithAccuracy :: Accuracy -> PPoly -> PPoly
 inverseWithAccuracy cutoff' f@(PPoly _ (Interval l r)) =
