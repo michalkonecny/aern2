@@ -8,6 +8,8 @@ import AERN2.Interval
 import AERN2.Poly.Cheb
 import AERN2.PPoly.Type
 
+import AERN2.RealFun.Operations
+
 integral :: PPoly -> MPBall -> MPBall -> MPBall
 integral (PPoly ps dom) l r =
   0.5*(domR - domL) *
@@ -35,3 +37,8 @@ integral (PPoly ps dom) l r =
     err = fromEndpoints (-eps) eps :: MPBall
     in
     (evalDf q cp b' - evalDf q cp a') + err -- TODO: eval direct?
+
+instance CanIntegrateOverDom PPoly DyadicInterval where
+    type IntegralOverDomType PPoly DyadicInterval = MPBall
+    integrateOverDom f (Interval l r) =
+      integral f (mpBall l) (mpBall r)
