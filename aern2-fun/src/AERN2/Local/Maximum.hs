@@ -11,57 +11,24 @@ import Numeric.MixedTypes hiding (maximum , minimum)
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 import AERN2.Poly.Cheb hiding (maximum, minimum, degree)
-import AERN2.Local.Poly
-import AERN2.Poly.Basics hiding (Terms)
-import AERN2.Poly.Power (degree)
+--import AERN2.Local.Poly
 import AERN2.Poly.Power.RootsInt
-import AERN2.Poly.Power.SignedSubresultant
-import Data.Ratio
 import AERN2.Interval
-import AERN2.Poly.Conversion
 import AERN2.PQueue (PQueue)
 import qualified AERN2.PQueue as Q
 
-import qualified Data.Map as Map
 import Data.Maybe
 
 import qualified Prelude
 
+--import Debug.Trace
+
 type GenFun =
   Dyadic -> Dyadic -> Accuracy ->
-    (MPBall -> MPBall, Accuracy, Rational -> Rational, DyadicInterval, Terms) -- TODO: enforce constraint that domain is [l, r]?
+    [(Dyadic, Dyadic, MPBall -> MPBall, Accuracy, Rational -> Rational, DyadicInterval, Terms)] -- TODO: enforce constraint that domain is [l, r]?
 
 class GenericMaximum a where
   genericise :: a -> GenFun
-
-
-debug_useSeparablePart :: Bool
-debug_useSeparablePart = False
-
-instance GenericMaximum (LocalPoly MPBall) where
-  genericise f l r ac =
-    (evalF, fAcc, evalDF, dom, bsI)
-    where
-    evalF = evalDf fI (2/(r - l) * dfI)
-    fAcc = getAccuracy fI
-    evalDF = evalDirect dfRat
-    fI = f l r ac
-    ch2Power (e, p) = (e, cheb2Power p)
-    dfI    = (derivativeExact . centre) fI -- TODO: derivativeExact?
-    dfRat = makeRational dfI
-    (eI, dfIPow) = (ch2Power . intify) dfI
-    dom = chPoly_dom fI
-    lI = fromDomToUnitInterval dom (rational l)
-    rI = fromDomToUnitInterval dom (rational r)
-    dfIPow' =
-      if debug_useSeparablePart
-        && dyadic eI == 0
-        && degree dfIPow < 50
-      then
-        separablePart dfIPow
-      else
-        dfIPow
-    bsI = initialBernsteinCoefs dfIPow' eI lI rI
 
 minimum :: (GenericMaximum a, CanNegSameType a) => a -> MPBall -> MPBall -> Accuracy -> MPBall
 minimum f lBall rBall targetAcc = -(maximum (-f) lBall rBall targetAcc)
@@ -73,24 +40,17 @@ maximum f = genericMaximum (genericise f)
 
 genericMaximum :: GenFun -> MPBall -> MPBall -> (Accuracy -> MPBall )
 genericMaximum f lBall rBall targetAcc =
-  case signVars bsI of
-    Just 1 -> splitUntilAccurate $
-         Q.singleton $
-           mi_criticalInterval l r evalf0 evaldf0 ac0 f0Acc
-    Just 0 -> splitUntilAccurate $
-         Q.singleton $
-          mi_monotoneInterval l r evalf0 ac0 f0Acc
-    _ -> splitUntilAccurate $
-         Q.singleton $
-         let fx = evalOnInterval evalf0 l r ac0 in
-          SearchInterval l r lI rI fx  ac0 f0Acc evalf0 evaldf0 bsI
+  splitUntilAccurate $
+    insertAll initialIntervals Q.empty
   where
   l   = dyadic (ball_value lBall) - dyadic (ball_error lBall)
   r   = dyadic (ball_value rBall) + dyadic (ball_error rBall)
-  lI = fromDomToUnitInterval dom (rational l)
-  rI = fromDomToUnitInterval dom (rational r)
+  n = min 16 (fromAccuracy targetAcc) -- TODO there is a bug where the computation seems to diverge for some subdivisions
+  ps = [l + k*(r - l)/n | k <- [0 .. n]]
+  dyPs = map (centre . mpBallP (prec $ fromAccuracy targetAcc)) ps
+  dyIntervals = zip dyPs (tail dyPs)
+  initialIntervals = concat [mi_searchIntervals f a b ac0 | (a,b) <- dyIntervals]
   ac0 = bits 5
-  (evalf0, f0Acc, evaldf0, dom, bsI) = f l r ac0
   updateAccuracy ac =
     if ac >= targetAcc
     || ac < bits 20 then
@@ -103,7 +63,7 @@ genericMaximum f lBall rBall targetAcc =
     let
       Just (mi, q') = Q.minView q
     in
-    {-trace("mi: "++(show $ mpBallP (prec 100) $ mi_left mi)++ " " ++ (show $ mpBallP (prec 100) $ mi_right mi)) $
+    {-trace("mi: "++(show $ mpBall $ mi_left mi)++ " " ++ (show $ mpBall $ mi_right mi)) $
     trace("mi value: "++ (show $ mi_value mi)) $
     trace("mi accuracy: "++ (show $ getAccuracy $ mi_value mi)) $-}
     if mi_isAccurate mi targetAcc then
@@ -113,13 +73,13 @@ genericMaximum f lBall rBall targetAcc =
         SearchInterval a b uA uB v tac aac g dg bs ->
           if getAccuracy v >= aac then -- TODO: maybe also if accuracy doesn't change over 2-3 iterations
             splitUntilAccurate $
-              Q.insert (mi_searchInterval f a b (updateAccuracy tac))
+              insertAll (mi_searchIntervals f a b (updateAccuracy tac))
               q'
           else
             case signVars bs of
               Nothing ->
                 splitUntilAccurate $
-                  Q.insert (mi_searchInterval f a b (updateAccuracy tac))
+                  insertAll (mi_searchIntervals f a b (updateAccuracy tac))
                   q'
               Just 0 ->
                 splitUntilAccurate $
@@ -145,7 +105,7 @@ genericMaximum f lBall rBall targetAcc =
                   nq
         CriticalInterval a b _v tac _aac ->
           splitUntilAccurate $
-            Q.insert (mi_searchInterval f a b (updateAccuracy tac))
+            insertAll (mi_searchIntervals f a b (updateAccuracy tac))
             q'
 
 {- maximisation interval -}
@@ -217,14 +177,20 @@ mi_monotoneInterval l r f tac aac =
     where
     mv = mi_mononoteValue l r f (min tac aac)
 
-mi_searchInterval :: GenFun -> Dyadic -> Dyadic -> Accuracy -> MaximisationInterval
-mi_searchInterval f l r ac =
-  SearchInterval l r lI rI v ac aac evalF evalDF bsI
+mi_searchIntervals :: GenFun -> Dyadic -> Dyadic -> Accuracy ->  [MaximisationInterval]
+mi_searchIntervals f l r ac =
+  [
+    let
+    v = evalOnInterval evalF a b ac
+    aI = fromDomToUnitInterval dom (rational a)
+    bI = fromDomToUnitInterval dom (rational b)
+    in
+    SearchInterval a b aI bI v ac aac evalF evalDF bsI
+    |
+    (a, b, evalF, aac ,evalDF, dom, bsI) <- sis
+  ]
   where
-  v = evalOnInterval evalF l r ac
-  lI = fromDomToUnitInterval dom (rational l)
-  rI = fromDomToUnitInterval dom (rational r)
-  (evalF, aac ,evalDF, dom, bsI) = f l r ac
+  sis = f l r ac
 
 mi_isAccurate :: MaximisationInterval -> Accuracy -> Bool
 mi_isAccurate mi ac =
@@ -245,6 +211,10 @@ instance Prelude.Ord MaximisationInterval where
 
 {- auxiliary functions -}
 
+insertAll :: (Prelude.Ord a) => [a] -> PQueue a -> PQueue a
+insertAll [] q = q
+insertAll (x:xs) q = insertAll xs (Q.insert x q)
+
 evalOnDyadic :: (MPBall -> MPBall) -> Dyadic -> Accuracy -> MPBall
 evalOnDyadic f x bts =
   let
@@ -262,10 +232,6 @@ evalOnDyadic f x bts =
     aux (prec 100)
          (prec 50) NoInformation
 
-makeRational :: ChPoly MPBall -> ChPoly Rational
-makeRational (ChPoly dom (Poly ts) _) =
-  ChPoly dom (Poly $ terms_map (rational . centre) ts) Nothing
-
 evalOnInterval :: (MPBall -> MPBall) -> Dyadic -> Dyadic -> Accuracy -> MPBall
 evalOnInterval f a b bts =
   let
@@ -282,13 +248,3 @@ evalOnInterval f a b bts =
           aux (p + q) p (getAccuracy try)
   in
     result
-
-intify :: ChPoly MPBall -> (ErrorBound, Poly Integer)
-intify (ChPoly _ p _) =
-  (err, pInt)
-  where
-  termsRational = terms_map (rational . ball_value) (poly_terms p)
-  err = termsError * termsDenominator
-  termsError = ball_error $ terms_lookupCoeff (poly_terms p) 0
-  termsDenominator = Map.foldl' lcm 1 $ terms_map denominator termsRational
-  pInt = Poly $ terms_map (numerator . (* termsDenominator)) termsRational

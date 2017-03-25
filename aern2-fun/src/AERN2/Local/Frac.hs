@@ -22,6 +22,8 @@ import AERN2.Frac.Field
 
 import qualified Data.Map as Map
 
+import Debug.Trace
+
 type LocalFrac a = Local (Frac a)
 
 fromPoly :: (ConvertibleExactly Integer a) => LocalPoly a -> LocalFrac a
@@ -29,23 +31,35 @@ fromPoly = liftLocal1 Frac.fromPoly
 
 instance GenericMaximum (LocalFrac MPBall) where
   genericise f l r ac =
-    (evalF, fAcc, evalDF, dom, bsI)
+    [(l, r, evalF, fAcc, evalDF, dom, bsI)]
     where
     evalF = Frac.evalDf fI (2/(r - l) * dNum) (2/(r - l) * dDenom)
     fAcc = getAccuracy fI
     evalDF = Cheb.evalDirect dfRat
-    fI@(Frac num denom dIM) = f l r ac
+    fI@(Frac num denom _dIM) = f l r ac
     ch2Power (e, p) = (e, cheb2Power p)
-    dNum     = (derivativeExact . centre) num
-    dDenom   = (derivativeExact . centre) denom
-    dfINum = num*dDenom - dNum*denom
-    dfI = dfINum * (inverseWithLowerBound (denom*denom) (dIM*dIM))
-    dfRat = makeRational dfINum -- TODO: make sure this is exact
+    dNum     = derivativeExact cNum
+    dDenom   = derivativeExact cDenom
+    cNum   = centre num
+    cDenom = centre denom
+    dfINum = computeNum (prec 100) (prec 50) --num*dDenom - dNum*denom
+    --dfI = dfINum * (inverseWithLowerBound (denom*denom) (dIM*dIM))
+    dfRat = makeRational dfINum
     (eI, dfIPow) = (ch2Power . intify) dfINum
     dom = chPoly_dom num
     lI = fromDomToUnitInterval dom (rational l)
     rI = fromDomToUnitInterval dom (rational r)
     bsI = initialBernsteinCoefs dfIPow eI lI rI
+    computeNum p q =
+      let
+        try =
+          (setPrecision p cNum)*(setPrecision p dDenom)
+          - (setPrecision p dNum)*(setPrecision p cDenom)
+      in
+        if getAccuracy try == Exact then
+          try
+        else
+          computeNum (p + q) p
 
 {- auxiliary functions -}
 

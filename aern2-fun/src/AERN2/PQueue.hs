@@ -20,6 +20,7 @@ module AERN2.PQueue
   , size
   -- * Construction
   , singleton
+  , empty
   -- * Insertion
   , insert
   -- * Deletion
@@ -42,6 +43,9 @@ size = Q.size . pq_queue
 
 singleton :: (Ord p) => p -> PQueue p
 singleton p = PQueue (Q.singleton 0 p ()) 1
+
+empty :: (Ord p) => PQueue p
+empty = PQueue Q.empty 0
 
 insert :: (Ord p) => p -> PQueue p -> PQueue p
 insert p q

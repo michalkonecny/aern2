@@ -27,6 +27,11 @@ import Math.NumberTheory.Logarithms (integerLog2)
 import Debug.Trace
 import Data.Maybe
 
+instance CanDiv PPoly PPoly where -- TODO: support negative denominator
+  type DivType PPoly PPoly = PPoly
+  divide p q =
+    p * inverse q
+
 inverseWithAccuracy :: Accuracy -> PPoly -> PPoly
 inverseWithAccuracy cutoff' f@(PPoly _ (Interval l r)) =
   --trace("num its: "++(show numIts)) $
