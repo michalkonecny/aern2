@@ -25,8 +25,8 @@ degree (Frac p q _) = Cheb.degree p + Cheb.degree q
 instance (CanNormalize (ChPoly a)) => CanNormalize (Frac a) where
   normalize (Frac p q m) = Frac (normalize p) (normalize q) m
 
-instance (HasAccuracy a,  HasIntegers a, IsBall a) => HasAccuracy (Frac a) where
-  getAccuracy (Frac p q _) = min (getAccuracy p) (getAccuracy q)
+instance (IsBall (Frac a)) => HasAccuracy (Frac a) where
+  getAccuracy f = getAccuracy $ radius f
 
 instance (HasPrecision a) => HasPrecision (Frac a) where
   getPrecision (Frac p q m) =
@@ -40,6 +40,48 @@ instance (HasDomain (Frac a)) where
   type Domain (Frac a) = DyadicInterval
   getDomain (Frac p _ _) = getDomain p
 
+instance
+  -- (IsBall a, ConvertibleExactly Integer a)
+  -- =>
+  IsBall (Frac MPBall)
+  where
+  type CentreType (Frac MPBall) = Frac MPBall
+  centre (Frac p q m) = Frac (centreAsBall p) (centreAsBall q) m
+  centreAsBallAndRadius f@(Frac p q _) = (centre f, r)
+    where
+    (pC,pE) = centreAsBallAndRadius p
+    (qC,qE) = centreAsBallAndRadius q
+    pCmax = maximumOverDom pC (getDomain p)
+    pCmin = minimumOverDom pC (getDomain p)
+    pCnorm = max (-pCmin) pCmax
+    qCmax = maximumOverDom qC (getDomain q)
+    qCmin = minimumOverDom qC (getDomain q)
+    qCnorm = qCmax
+    pEB = mpBall pE
+    qEB = mpBall qE
+    r
+      | pE == 0 && qE == 0 =
+          errorBound $ 0
+      | pE == 0 =
+          errorBound $ (pCnorm*qEB) / (qCmin*(qCmin-qEB))
+      | qE == 0 =
+          errorBound $ (qCnorm*pEB) / (qCmin*qCmin)
+      | otherwise =
+          errorBound $ (qCnorm*pEB + pCnorm*qEB) / (qCmin*(qCmin-qEB))
+  updateRadius f (Frac p q m) = Frac (updateRadius fp p) q m
+    where
+    fp e =
+      errorBound $ qmax * ((mpBall (f e)) - eB)
+      where
+      eB = mpBall e
+      qmax = maximumOverDom q (getDomain q)
+
+instance CanReduceSizeUsingAccuracyGuide (Frac MPBall) where
+  reduceSizeUsingAccuracyGuide acGuide (Frac p q m) =
+    Frac (reduceSizeUsingAccuracyGuide ac_p p) q m -- TODO: reduce also q
+      where
+      ac_p = acGuide - (normLog2Accuracy $ getNormLog m)
+
 fracLift1 :: (HasIntegers a) => (Frac a -> b) -> ChPoly a -> b
 fracLift1 f = f . fromPoly
 
@@ -52,3 +94,10 @@ fromPoly chp@(ChPoly dom _ _) =
   Frac chp one (convertExactly 1)
   where
   one = chPoly (dom, 1)
+
+_fracX :: Frac MPBall
+_fracX = fromPoly chpolyX
+  where
+  chpolyX :: ChPoly MPBall
+  chpolyX = varFn (constFn (dom, 0)) ()
+  dom = dyadicInterval (-1,1)

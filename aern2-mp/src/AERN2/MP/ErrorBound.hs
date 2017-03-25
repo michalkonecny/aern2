@@ -109,12 +109,38 @@ instance HasOrderAsymmetric MPFloat ErrorBound where
   lessThan = convertSecond lessThan
   leq = convertSecond leq
 
+instance HasEqAsymmetric ErrorBound Rational where
+  equalTo = convertFirst equalTo
+instance HasEqAsymmetric Rational ErrorBound where
+  equalTo = convertSecond equalTo
 instance HasOrderAsymmetric ErrorBound Rational where
   lessThan = convertFirst lessThan
   leq = convertFirst leq
 instance HasOrderAsymmetric Rational ErrorBound where
   lessThan = convertSecond lessThan
   leq = convertSecond leq
+
+instance HasEqAsymmetric ErrorBound Integer where
+  equalTo a b = equalTo (dyadic a) (dyadic b)
+instance HasEqAsymmetric Integer ErrorBound where
+  equalTo a b = equalTo (dyadic a) (dyadic b)
+instance HasOrderAsymmetric ErrorBound Integer where
+  lessThan a b = lessThan (dyadic a) (dyadic b)
+  leq a b = leq (dyadic a) (dyadic b)
+instance HasOrderAsymmetric Integer ErrorBound where
+  lessThan a b = lessThan (dyadic a) (dyadic b)
+  leq a b = leq (dyadic a) (dyadic b)
+
+instance HasEqAsymmetric ErrorBound Int where
+  equalTo a b = equalTo (dyadic a) (dyadic b)
+instance HasEqAsymmetric Int ErrorBound where
+  equalTo a b = equalTo (dyadic a) (dyadic b)
+instance HasOrderAsymmetric ErrorBound Int where
+  lessThan a b = lessThan (dyadic a) (dyadic b)
+  leq a b = leq (dyadic a) (dyadic b)
+instance HasOrderAsymmetric Int ErrorBound where
+  lessThan a b = lessThan (dyadic a) (dyadic b)
+  leq a b = leq (dyadic a) (dyadic b)
 
 instance CanMinMaxAsymmetric ErrorBound ErrorBound
 

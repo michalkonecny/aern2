@@ -160,7 +160,7 @@ fromIntegerList :: (HasIntegers c) => [(Integer, Integer)] -> PowPoly c
 fromIntegerList ts =
   PowPoly $ Poly $ terms_fromList $ map (\(i,c) -> (i, convertExactly c)) ts
 
-fromList :: [(Integer, c)] -> PowPoly c
+fromList :: (HasIntegers c) => [(Integer, c)] -> PowPoly c
 fromList ts = PowPoly $ Poly $ terms_fromList ts
 
 degree :: PowPoly c -> Integer

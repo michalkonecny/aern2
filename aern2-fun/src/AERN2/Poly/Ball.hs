@@ -258,11 +258,9 @@ instance CanApply PolyBall MPBall where
   apply (Ball c e) y = updateRadius (+e) (apply c y)
 
 instance CanApplyApprox PolyBall DyadicInterval where
-  type ApplyApproxType PolyBall DyadicInterval = DyadicInterval
-  applyApprox (Ball c e) y = Interval (l - eD) (r + eD)
-    where
-    Interval l r = applyApprox c y
-    eD = dyadic e
+  type ApplyApproxType PolyBall DyadicInterval = MPBall
+  applyApprox (Ball c e) y =
+    updateRadius (+e) (applyApprox c y)
 
 {- maximisation -}
 

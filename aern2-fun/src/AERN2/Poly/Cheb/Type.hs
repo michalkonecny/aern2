@@ -156,13 +156,13 @@ instance CanNormalize (ChPoly MPBall) where
       Just lip -> (chPoly_setLip lip . makeExactCentre . sweepUsingAccuracy) p
 
 instance CanNormalize (ChPoly Integer) where
-  normalize = chPoly_map_terms (terms_filter (\_d c -> c /= 0))
+  normalize = chPoly_map_terms (terms_filterKeepConst (\_d c -> c /= 0))
 
 instance CanNormalize (ChPoly Rational) where
-  normalize = chPoly_map_terms (terms_filter (\_d c -> c /= 0))
+  normalize = chPoly_map_terms (terms_filterKeepConst (\_d c -> c /= 0))
 
 instance CanNormalize (ChPoly Dyadic) where
-  normalize = chPoly_map_terms (terms_filter (\_d c -> c /= 0))
+  normalize = chPoly_map_terms (terms_filterKeepConst (\_d c -> c /= 0))
 
 sweepUsingAccuracy ::
   (PolyCoeffBall c) =>
@@ -178,7 +178,7 @@ sweepUsingAccuracy (ChPoly dom poly@(Poly ts) bnd) =
 
 {- constructors -}
 
-instance (HasDyadics c) => HasVars (ChPoly c) where
+instance (HasDyadics c, HasIntegers c) => HasVars (ChPoly c) where
   type Var (ChPoly c) = ()
   varFn sampleFn () =
     ChPoly dom (Poly terms) Nothing
@@ -194,14 +194,14 @@ type CanBeChPoly c t = ConvertibleExactly t (ChPoly c)
 chPoly :: (CanBeChPoly c t) => t -> (ChPoly c)
 chPoly = convertExactly
 
-instance (ConvertibleExactly t c) => ConvertibleExactly (DyadicInterval, t) (ChPoly c)
+instance (ConvertibleExactly t c, HasIntegers c) => ConvertibleExactly (DyadicInterval, t) (ChPoly c)
   where
   safeConvertExactly (dom, x) =
     case safeConvertExactly x of
       Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)]) Nothing
       Left e -> Left e
 
-instance (ConvertibleExactly t c) => ConvertibleExactly (ChPoly c, t) (ChPoly c)
+instance (ConvertibleExactly t c, HasIntegers c) => ConvertibleExactly (ChPoly c, t) (ChPoly c)
   where
   safeConvertExactly (ChPoly dom _ _, x) =
     case safeConvertExactly x of
@@ -254,19 +254,18 @@ reduceDegreeTerms maxDegree =
 reduceTerms ::
   (PolyCoeffBall c) =>
   (Degree -> c -> Bool) -> Terms c -> Terms c
-reduceTerms shouldKeepPre terms
+reduceTerms shouldKeep terms
     | terms_size termsToRemove == 0 = terms
     | otherwise =
-        terms_insertWith (+) 0 errorBall (terms_filter shouldKeep terms)
+        terms_insertWith (+) 0 errorBall (terms_filterKeepConst shouldKeep terms)
     where
-    shouldKeep deg coeff = deg == 0 || shouldKeepPre deg coeff
     errorBall =
         sum $ map plusMinus $ terms_coeffs termsToRemove
         where
         plusMinus c = fromEndpoints (-c) c
-    termsToRemove = terms_filter shouldRemove terms
+    termsToRemove = terms_filterMayLoseConst shouldRemove terms
     shouldRemove deg coeff =
-        not $ shouldKeep deg coeff
+        deg /= 0 && (not $ shouldKeep deg coeff)
 
 instance
   (PolyCoeffBall c) =>

@@ -23,7 +23,8 @@ module AERN2.Poly.Basics
   , terms_fromList, terms_fromListAddCoeffs
   , terms_unionWith
   , terms_map
-  , terms_filter
+  , terms_filterKeepConst
+  , terms_filterMayLoseConst
   , terms_degree, terms_degrees
   , terms_coeffs
   , terms_updateConst
@@ -101,12 +102,17 @@ terms_toList = Map.toList
 terms_toDescList :: Terms c -> [(Degree, c)]
 terms_toDescList = Map.toDescList
 
-terms_fromList :: [(Degree, c)] -> Terms c
-terms_fromList = Map.fromList
+terms_fromList :: (HasIntegers c) => [(Degree, c)] -> Terms c
+terms_fromList coeffs =
+  case Map.lookup 0 ts of
+    Nothing -> Map.insert 0 (convertExactly 0) ts
+    _ -> ts
+  where
+  ts = Map.fromList coeffs
 
-terms_fromListAddCoeffs :: (CanAddSameType c) => [(Degree, c)] -> Terms c
+terms_fromListAddCoeffs :: (CanAddSameType c, HasIntegers c) => [(Degree, c)] -> Terms c
 terms_fromListAddCoeffs newTerms =
-    foldl addTerm terms_empty newTerms
+    foldl addTerm terms_empty ((0, convertExactly 0) : newTerms)
     where
     addTerm prevTerms (i,a) =
         terms_insertWith (+) i a prevTerms
@@ -114,11 +120,20 @@ terms_fromListAddCoeffs newTerms =
 terms_unionWith :: (c -> c -> c) -> Terms c -> Terms c -> Terms c
 terms_unionWith = Map.unionWith
 
-terms_filter :: (k -> a -> Bool) -> Map.Map k a -> Map.Map k a
-terms_filter = Map.filterWithKey
+terms_filterMayLoseConst :: (Degree -> c -> Bool) -> Terms c -> Terms c
+terms_filterMayLoseConst = Map.filterWithKey
+
+terms_filterKeepConst :: (Degree -> c -> Bool) -> Terms c -> Terms c
+terms_filterKeepConst cond = Map.filterWithKey cond_leaveConst
+  where
+  cond_leaveConst k a
+    | k == 0 = True
+    | otherwise = cond k a
 
 terms_degree :: Terms c -> Degree
-terms_degree = fst . Map.findMax
+terms_degree ts
+  | null ts = error "terms_degree called with empty terms"
+  | otherwise = fst $ Map.findMax ts
 
 terms_degrees :: Terms c -> [Degree]
 terms_degrees = Map.keys

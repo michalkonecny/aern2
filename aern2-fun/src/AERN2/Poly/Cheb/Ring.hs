@@ -174,7 +174,7 @@ $(declForTypes
 
     instance (CanMulBy c $t, HasIntegers c, CanNormalize (ChPoly c)) => CanMulAsymmetric (ChPoly c) $t where
       type MulType (ChPoly c) $t = ChPoly c
-      mul (ChPoly d1 p1 _) n = normalize $ ChPoly d1 (n * p1) Nothing
+      mul = flip mul
   |]))
 
 
