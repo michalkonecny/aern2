@@ -174,6 +174,7 @@ reprShow "poly" = "Poly"
 reprShow "ppoly" = "PPoly"
 reprShow "frac" = "Frac"
 reprShow "lpoly" = "LPoly"
+reprShow "lppoly" = "LPPoly"
 reprShow "lfrac" = "LFrac"
 reprShow reprName = error $ "unknown representation " ++ reprName
 
@@ -185,6 +186,7 @@ reprColor "poly" = orangered
 reprColor "ppoly" = mediumvioletred
 reprColor "frac" = darkgreen
 reprColor "lpoly" = orangered
+reprColor "lppoly" = mediumvioletred
 reprColor "lfrac" = darkgreen
 reprColor reprName = error $ "unknown representation " ++ reprName
 
@@ -193,9 +195,10 @@ reprShape "dball" = PointShapeEllipse 0.7 1.0
 reprShape "ball" = PointShapeCircle
 reprShape "fun" = PointShapeCross
 reprShape "poly" = PointShapeCross
-reprShape "ppoly" = PointShapeStar
+reprShape "ppoly" = PointShapeCircle
 reprShape "frac" = PointShapeCircle
 reprShape "lpoly" = PointShapeStar
+reprShape "lppoly" = PointShapeStar
 reprShape "lfrac" = PointShapeStar
 reprShape reprName = error $ "unknown representation " ++ reprName
 

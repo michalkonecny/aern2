@@ -3,20 +3,20 @@ result = [1.080894896927534 ± 6.436587510666901e-13](prec=110)
 accuracy: bits 40
 precision = Precision 110
 	Command being timed: "aern2-fnreps-ops max rungeSC lfrac 40"
-	User time (seconds): 1.54
+	User time (seconds): 0.95
 	System time (seconds): 0.00
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.55
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.96
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 19388
+	Maximum resident set size (kbytes): 17600
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 2849
+	Minor (reclaiming a frame) page faults: 2288
 	Voluntary context switches: 1
-	Involuntary context switches: 6
+	Involuntary context switches: 2
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8
