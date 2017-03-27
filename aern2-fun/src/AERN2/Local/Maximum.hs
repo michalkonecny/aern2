@@ -50,7 +50,7 @@ genericMaximum f lBall rBall targetAcc =
   dyPs = map (centre . mpBallP (prec $ fromAccuracy targetAcc)) ps
   dyIntervals = zip dyPs (tail dyPs)
   initialIntervals = concat [mi_searchIntervals f a b ac0 | (a,b) <- dyIntervals]
-  ac0 = bits 5
+  ac0 = bits 10
   updateAccuracy ac =
     if ac >= targetAcc
     || ac < bits 20 then
