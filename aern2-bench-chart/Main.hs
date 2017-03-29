@@ -19,18 +19,22 @@ main :: IO ()
 main =
     do
     args <- getArgs
-    let (mode, inFileName, outFolder) = checkArgs args
+    let (mode, plotQuantity, inFileName, outFolder) = checkArgs args
     contents <- readFile inFileName
     let chartsData = parseBenchResults mode inFileName contents
-    void $ mapM (renderChart mode False outFolder) chartsData
-    void $ mapM (renderChart mode True outFolder) chartsData
+    void $ mapM (renderChart mode plotQuantity outFolder) chartsData
 
 data Mode = FnOpReprs | Ops
   deriving (Show, Read)
 
-checkArgs :: [String] -> (Mode, String, String)
-checkArgs [modeS, inFileName, outFolder] = (read modeS, inFileName, outFolder)
-checkArgs _ = error "usage: aern2-bench-chart <mode(Ops|FnOpReprs)> <csvFileName> <outFolder>"
+data PlotQuantity = MaxMem | ExecTime
+  deriving (Show, Read)
+
+checkArgs :: [String] -> (Mode, PlotQuantity, String, String)
+checkArgs [modeS, plotQuantityS, inFileName, outFolder] =
+  (read modeS, read plotQuantityS, inFileName, outFolder)
+checkArgs _ =
+  error "usage: aern2-bench-chart <mode(Ops|FnOpReprs)> <plotQuantity(MaxMem|ExecTime)> <csvFileName> <outFolder>"
 
 {-|
     A dummy sample result:
@@ -104,34 +108,38 @@ mergeByFnOp_FnRepr records =
 renderChart ::
     (PlotValue y, PlotValue x, Show y, RealFloat y)
     =>
-    Mode -> Bool -> String -> (String, [(String, [(x, y, y)])]) -> IO ()
-renderChart mode isMem outFolder (title, plotData) =
+    Mode -> PlotQuantity -> String -> (String, [(String, [(x, y, y)])]) -> IO ()
+renderChart mode plotQuantity outFolder (title, plotData) =
     void $
         renderableToFile fileOpts filePathTime $
             fillBackground def $
                 gridToRenderable $ layoutToGrid (chartLayout mode)
     where
-    filePathTime
-      | isMem = outFolder ++ "/" ++ title ++ "-space.svg"
-      | otherwise = outFolder ++ "/" ++ title ++ "-time.svg"
+    filePathTime =
+      case plotQuantity of
+        MaxMem -> outFolder ++ "/" ++ title ++ "-space.svg"
+        ExecTime -> outFolder ++ "/" ++ title ++ "-time.svg"
     chartLayout FnOpReprs =
         execEC $
         do
         layout_y_axis . laxis_generate .= autoScaledLogAxis def
-        layout_y_axis . laxis_title .= if isMem then "Space (kB)" else "Time (s)"
+        layout_y_axis . laxis_title .= plotQuantityTitle
         layout_x_axis . laxis_title .= "Accuracy (bits)"
         layout_x_axis . laxis_style . axis_label_gap .= 1
         mapM layoutPlotData $ zip [0..] plotData
     chartLayout Ops =
         execEC $
         do
-        layout_y_axis . laxis_title .= if isMem then "Space (kB)" else "Time (s)"
+        layout_y_axis . laxis_title .= plotQuantityTitle
         layout_x_axis . laxis_title .= "Requested Accuracy (bits)"
         layout_x_axis . laxis_style . axis_label_gap .= 1
         mapM layoutPlotData $ zip [0..] plotData
+    plotQuantityTitle =
+      case plotQuantity of MaxMem -> "Space (kB)"; ExecTime -> "Time (s)"
     layoutPlotData (benchNum, (benchName, benchPoints)) =
         plotPoints name
-          [(ac, if isMem then maxmem else time) | (ac,time,maxmem) <- benchPoints]
+          [(ac, case plotQuantity of MaxMem -> maxmem; ExecTime -> time)
+            | (ac,time,maxmem) <- benchPoints]
         where
         (name, colour, shape) =
           case mode of

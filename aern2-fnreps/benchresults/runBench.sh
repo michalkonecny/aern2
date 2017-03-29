@@ -292,91 +292,6 @@ function rungeLFrac
 }
 
 #################
-### rungeX
-#################
-
-function rungeXModFun
-{
-  repr=fun; fn=rungeX
-  dir=$fn
-
-  op=max; paramss="05 10 15 20 25 30 35"; runForParamss
-  op=integrate; paramss="05 10 15 20"; runForParamss
-}
-
-function rungeXBallFun
-{
-  repr=ball; fn=rungeX
-  dir=$fn
-
-  op=max; paramss="05 10 15 20 25 30 35"; runForParamss
-  op=integrate; paramss="05 10 15 20"; runForParamss
-}
-
-function rungeXDBallFun
-{
-  repr=dball; fn=rungeX
-  dir=$fn
-
-  op=max; paramss="05 10 20 30 40 50 60 80 100"; runForParamss
-  op=integrate; paramss="05 10 15 20 25 30 35"; runForParamss
-}
-
-function rungeXPoly
-{
-  repr=poly; fn=rungeX
-  dir=$fn
-
-  op=max; paramss="-01 01 04"; runForParamss
-  op=integrate; paramss="-01 01 04"; runForParamss
-}
-
-function rungeXPPoly
-{
-  repr=ppoly; fn=rungeX
-  dir=$fn
-
-  op=max; paramss="10 20 40 80"; runForParamss
-  op=integrate; paramss="10 20 40 80"; runForParamss
-}
-
-function rungeXFrac
-{
-  repr=frac; fn=rungeX
-  dir=$fn
-
-  op=max; paramss="10 20 40 80 120"; runForParamss
-  op=integrate; paramss="8 16 32 64"; runForParamss
-}
-
-function rungeXLPoly
-{
-  repr=lpoly; fn=rungeX
-  dir=$fn
-
-  op=max; paramss="10 80"; runForParamss
-  op=integrate; paramss="10 20 40"; runForParamss
-}
-
-function rungeXLPPoly
-{
-  repr=lppoly; fn=rungeX
-  dir=$fn
-
-  op=max; paramss="10 20 40"; runForParamss
-  op=integrate; paramss="10 20 40"; runForParamss
-}
-
-function rungeXLFrac
-{
-  repr=lfrac; fn=rungeX
-  dir=$fn
-
-  op=max; paramss="10 20 40"; runForParamss
-  op=integrate; paramss="10 20 40"; runForParamss
-}
-
-#################
 ### rungeSC
 #################
 
@@ -634,41 +549,6 @@ function fracSinSCLFrac
 }
 
 
-#################
-### hat
-#################
-
-# function hatBallFun
-# {
-#     op=max
-#     for params in 4 10 20 30
-#     op=integrate
-#     for params in 4 6 8 10 12 14 16 18
-# }
-#
-# function hatDBallFun
-# {
-#     op=max
-#     for params in 4 10 20 30
-#     op=integrate
-#     for params in 4 10 16
-# }
-#
-# function hatPoly
-# {
-#     op=max
-#     for params in "100 32 0 100" "100 64 0 100" "150 128 0 100"
-#     op=integrate
-#     for params in "100 32 0 100" "100 64 0 100" "150 128 0 100"
-# }
-#
-# function hatPPoly
-# {
-#     op=max
-#     for params in "5 0 0 0 10" "35 0 0 0 35"
-#     for params in "5 0 0 0 0" "35 0 0 0 0"
-# }
-
 sinecosModFun
 sinecosBallFun
 sinecosDBallFun
@@ -696,16 +576,6 @@ rungeFrac
 rungeLPoly
 rungeLPPoly
 rungeLFrac
-
-# rungeXModFun
-rungeXBallFun
-rungeXDBallFun
-rungeXPoly
-rungeXPPoly
-rungeXFrac
-rungeXLPoly
-rungeXLPPoly
-rungeXLFrac
 
 # rungeSCModFun
 rungeSCBallFun
@@ -735,8 +605,3 @@ fracSinSCFrac
 fracSinSCLPoly
 fracSinSCLPPoly
 fracSinSCLFrac
-
-# hatBallFun
-# hatDBallFun
-# hatPoly
-# hatPPoly
