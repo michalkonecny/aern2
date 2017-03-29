@@ -29,3 +29,4 @@ executable aern2-bench-chart
   hs-source-dirs:  .
   ghc-options:     -Wall -rtsopts
   main-is:         Main.hs
+  other-modules: ChartScaledLogAxis

@@ -13,6 +13,8 @@ import Graphics.Rendering.Chart.Easy
 import Graphics.Rendering.Chart.Grid
 import Graphics.Rendering.Chart.Backend.Diagrams(renderableToFile, FileOptions(..))
 
+import ChartScaledLogAxis (scaledLogAxis)
+
 --import Debug.Trace (trace)
 
 main :: IO ()
@@ -49,7 +51,7 @@ checkArgs _ =
     ]
 @
 -}
-parseBenchResults :: Mode -> String -> String -> [(String, [(String, [(Int, Double, Double)])])]
+parseBenchResults :: Mode -> String -> String -> [(String, [(String, [(Double, Double, Double)])])]
 parseBenchResults FnOpReprs _inFileName csvContent =
     over (mapped._2.mapped._2) Set.toAscList $ -- convert the inner Sets to ascending lists (using Lens)
         over (mapped._2) Map.toList $ -- convert the inner Maps to lists
@@ -67,7 +69,7 @@ parseBenchResults Ops inFileName csvContent =
     records = indexRecordsByKeysAndHeader ["Op", "Count"] $ parseCSV csvContent
 
 mergeByOp ::
-    [([String], Map.Map String String)] -> Map.Map String (Set.Set (Int,Double,Double))
+    [([String], Map.Map String String)] -> Map.Map String (Set.Set (Double,Double,Double))
 mergeByOp records =
     foldl insertRecord Map.empty records
     where
@@ -77,8 +79,8 @@ mergeByOp records =
             preMap
     insertRecord _ _ = error "internal error in mergeByOp"
 
-getPoint :: Map.Map String String -> (Int,Double,Double)
-getPoint fields = (bits,utime+stime,maxram)
+getPoint :: Map.Map String String -> (Double,Double,Double)
+getPoint fields = (realToFrac (min 100 bits),utime+stime,maxram)
   where
   utime = read (lookupValue fields "UTime(s)") :: Double
   stime = read (lookupValue fields "STime(s)") :: Double
@@ -92,7 +94,7 @@ getPoint fields = (bits,utime+stime,maxram)
 
 
 mergeByFnOp_FnRepr ::
-    [([String], Map.Map String String)] -> Map.Map String (Map.Map String (Set.Set (Int,Double,Double)))
+    [([String], Map.Map String String)] -> Map.Map String (Map.Map String (Set.Set (Double,Double,Double)))
 mergeByFnOp_FnRepr records =
     foldl insertRecord Map.empty records
     where
@@ -106,9 +108,7 @@ mergeByFnOp_FnRepr records =
     insertRecord _ _ = error "internal error in mergeByFnOp_FnRepr"
 
 renderChart ::
-    (PlotValue y, PlotValue x, Show y, RealFloat y)
-    =>
-    Mode -> PlotQuantity -> String -> (String, [(String, [(x, y, y)])]) -> IO ()
+    Mode -> PlotQuantity -> String -> (String, [(String, [(Double, Double, Double)])]) -> IO ()
 renderChart mode plotQuantity outFolder (title, plotData) =
     void $
         renderableToFile fileOpts filePathTime $
@@ -122,8 +122,10 @@ renderChart mode plotQuantity outFolder (title, plotData) =
     chartLayout FnOpReprs =
         execEC $
         do
-        layout_y_axis . laxis_generate .= autoScaledLogAxis def
+        layout_y_axis . laxis_generate .= scaledLogAxis def (minV,maxV)
+        -- layout_y_axis . laxis_generate .= scaledAxis def (minV,maxV)
         layout_y_axis . laxis_title .= plotQuantityTitle
+        layout_x_axis . laxis_generate .= scaledAxis def (minAC, maxAC)
         layout_x_axis . laxis_title .= "Accuracy (bits)"
         layout_x_axis . laxis_style . axis_label_gap .= 1
         mapM layoutPlotData $ zip [0..] plotData
@@ -134,6 +136,11 @@ renderChart mode plotQuantity outFolder (title, plotData) =
         layout_x_axis . laxis_title .= "Requested Accuracy (bits)"
         layout_x_axis . laxis_style . axis_label_gap .= 1
         mapM layoutPlotData $ zip [0..] plotData
+    (minAC, maxAC) = (0,100) :: (Double, Double)
+    (minV,maxV) =
+      case plotQuantity of
+        MaxMem -> (1,1000000)
+        ExecTime -> (0.01,1000)
     plotQuantityTitle =
       case plotQuantity of MaxMem -> "Space (kB)"; ExecTime -> "Time (s)"
     layoutPlotData (benchNum, (benchName, benchPoints)) =
