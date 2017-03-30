@@ -2,6 +2,7 @@ module AERN2.Frac.Type where
 
 import Numeric.MixedTypes
 import AERN2.MP
+import AERN2.MP.Dyadic
 import AERN2.Normalize
 import AERN2.Poly.Cheb as Cheb
 
@@ -47,27 +48,36 @@ instance
   where
   type CentreType (Frac MPBall) = Frac MPBall
   centre (Frac p q m) = Frac (centreAsBall p) (centreAsBall q) m
-  centreAsBallAndRadius f@(Frac p q _) = (centre f, r)
+  centreAsBallAndRadius f@(Frac p q _) = (centre f, err)
     where
-    (pC,pE) = centreAsBallAndRadius p
-    (qC,qE) = centreAsBallAndRadius q
-    pCmax = maximumOverDom pC (getDomain p)
-    pCmin = minimumOverDom pC (getDomain p)
-    pCnorm = max (-pCmin) pCmax
-    qCmax = maximumOverDom qC (getDomain q)
-    qCmin = minimumOverDom qC (getDomain q)
-    qCnorm = qCmax
-    pEB = mpBall pE
-    qEB = mpBall qE
-    r
-      | pE == 0 && qE == 0 =
-          errorBound $ 0
-      | pE == 0 =
-          errorBound $ (pCnorm*qEB) / (qCmin*(qCmin-qEB))
-      | qE == 0 =
-          errorBound $ (qCnorm*pEB) / (qCmin*qCmin)
-      | otherwise =
-          errorBound $ (qCnorm*pEB + pCnorm*qEB) / (qCmin*(qCmin-qEB))
+    err = errorBound $ (abs(rng*delta) + eps) / (qMin - delta)
+    qMin =
+      if (Cheb.evalDirect q m > mpBall 0) == Just True then
+        Cheb.minimumOptimisedWithAccuracy (bits 2) q (mpBall l) (mpBall r) 5 5
+      else
+        -Cheb.maximumOptimisedWithAccuracy (bits 2) q (mpBall l) (mpBall r) 5 5
+    pMx  = Cheb.maximumOptimisedWithAccuracy (bits 2) p (mpBall l) (mpBall r) 5 5
+    pMin = Cheb.minimumOptimisedWithAccuracy (bits 2) p (mpBall l) (mpBall r) 5 5
+    pRng = max (abs pMx) (abs pMin)
+    m = mpBall $ (dyadic 0.5)*(l + r)
+    Interval l r = getDomain p
+    rng = pRng / qMin
+    delta =
+      let
+      acc = getAccuracy q
+      in
+      if acc == Exact then
+        0.0
+      else
+        0.5^(fromAccuracy acc)
+    eps =
+      let
+      acc = getAccuracy p
+      in
+      if acc == Exact then
+        0.0
+      else
+        0.5^(fromAccuracy acc)
   updateRadius f (Frac p q m) = Frac (updateRadius fp p) q m
     where
     fp e =
