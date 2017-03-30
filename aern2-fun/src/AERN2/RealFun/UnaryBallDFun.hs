@@ -82,7 +82,7 @@ evalUseD (UnaryBallFun _ f' : rest) f di@(Interval l r)
 
   p =
       case nl of
-          NormBits i -> prec $ max 10 (-i)
+          NormBits i -> prec $ max 10 (-5*i)
           NormZero -> getPrecision l
   nl = getNormLog (r - l)
 

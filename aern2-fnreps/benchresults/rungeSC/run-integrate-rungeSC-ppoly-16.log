@@ -1,8 +1,5 @@
 rungeSC_PP: getAccuracy num = bits 99
 rungeSC_PP: getPrecision num = Precision 610
-num its: 3
-initial bits: 16
-cutoff: 16
 rungeSC_PP: getAccuracy inv = bits 53
 rungeSC_PP: getPrecision inv = Precision 1024
 computing integrate  (sin(10x)+cos(20x))/(100x^2+1) over [-1,1]
@@ -10,20 +7,20 @@ result = [4.336916185540269e-2 ± 1.219240722237332e-10](prec=1024)
 accuracy: bits 32
 precision = Precision 1024
 	Command being timed: "aern2-fnreps-ops integrate rungeSC ppoly 16"
-	User time (seconds): 358.02
-	System time (seconds): 1.38
-	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 5:59.02
+	User time (seconds): 123.41
+	System time (seconds): 0.64
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:04.20
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 527852
+	Maximum resident set size (kbytes): 531216
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 132179
+	Minor (reclaiming a frame) page faults: 133550
 	Voluntary context switches: 1
-	Involuntary context switches: 394
+	Involuntary context switches: 115
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 24

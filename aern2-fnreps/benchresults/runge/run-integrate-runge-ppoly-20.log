@@ -1,26 +1,23 @@
-num its: 2
-initial bits: 15
-cutoff: 15
 runge_PP: getAccuracy inv = bits 24
 computing integrate  1/(100x^2+1) over [-1,1]
-result = [2.942255346686595e-1 ± 4.80935343801417e-9](prec=200)
+result = [2.942255346686595e-1 ± 4.80935343213673e-9](prec=200)
 accuracy: bits 27
 precision = Precision 200
 	Command being timed: "aern2-fnreps-ops integrate runge ppoly 20"
-	User time (seconds): 26.16
-	System time (seconds): 0.16
-	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:26.31
+	User time (seconds): 48.19
+	System time (seconds): 0.17
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:48.42
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 53020
+	Maximum resident set size (kbytes): 54156
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 11357
+	Minor (reclaiming a frame) page faults: 11557
 	Voluntary context switches: 1
-	Involuntary context switches: 129
+	Involuntary context switches: 91
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

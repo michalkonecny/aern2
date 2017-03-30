@@ -13,7 +13,7 @@ import Graphics.Rendering.Chart.Easy
 import Graphics.Rendering.Chart.Grid
 import Graphics.Rendering.Chart.Backend.Diagrams(renderableToFile, FileOptions(..))
 
-import ChartScaledLogAxis (scaledLogAxis)
+import ChartTweaks (scaledLogAxis, scaledAxisExtraXSteps)
 
 --import Debug.Trace (trace)
 
@@ -125,7 +125,7 @@ renderChart mode plotQuantity outFolder (title, plotData) =
         layout_y_axis . laxis_generate .= scaledLogAxis def (minV,maxV)
         -- layout_y_axis . laxis_generate .= scaledAxis def (minV,maxV)
         layout_y_axis . laxis_title .= plotQuantityTitle
-        layout_x_axis . laxis_generate .= scaledAxis def (minAC, maxAC)
+        layout_x_axis . laxis_generate .= scaledAxisExtraXSteps def (minAC, maxAC) [24,53]
         layout_x_axis . laxis_title .= "Accuracy (bits)"
         layout_x_axis . laxis_style . axis_label_gap .= 1
         mapM layoutPlotData $ zip [0..] plotData
