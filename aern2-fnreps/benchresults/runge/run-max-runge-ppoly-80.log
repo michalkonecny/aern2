@@ -1,29 +1,26 @@
-num its: 4
-initial bits: 15
-cutoff: 15
 runge_PP: getAccuracy inv = bits 87
 computing max  1/(100x^2+1) over [-1,1]
 result = [1 ± 4.416721680444866e-27](prec=1600)
 accuracy: bits 87
 precision = Precision 1600
 	Command being timed: "aern2-fnreps-ops max runge ppoly 80"
-	User time (seconds): 47.84
-	System time (seconds): 0.18
-	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:47.97
+	User time (seconds): 74.88
+	System time (seconds): 0.28
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:15.25
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 180432
+	Maximum resident set size (kbytes): 182920
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 43227
+	Minor (reclaiming a frame) page faults: 43665
 	Voluntary context switches: 1
-	Involuntary context switches: 93
+	Involuntary context switches: 107
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 16
+	File system outputs: 8
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

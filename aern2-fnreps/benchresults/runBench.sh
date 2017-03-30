@@ -86,8 +86,8 @@ function sinecosDBallFun
   repr=dball;fn=sine+cos
   dir=$fn
 
-  op=max; paramss="10 15 20 25 30"; runForParamss
-  op=integrate; paramss="10 12 14 16 18 20"; runForParamss
+  op=max; paramss="10 30 50 70 90"; runForParamss
+  op=integrate; paramss="10 15 20 25 30"; runForParamss
 }
 
 function sinecosPoly
@@ -95,8 +95,8 @@ function sinecosPoly
   repr=poly; fn=sine+cos
   dir=$fn
 
-  op=max; paramss="10 15 20 25 30"; runForParamss
-  op=integrate; paramss="10 12 14 16 18 20"; runForParamss
+  op=max; paramss="10 30 50 70 90 110"; runForParamss
+  op=integrate; paramss="10 30 50 70 90 110"; runForParamss
 }
 
 function sinecosLPoly
@@ -104,8 +104,8 @@ function sinecosLPoly
   repr=lpoly; fn=sine+cos
   dir=$fn
 
-  op=max; paramss="10 15 20 25 30"; runForParamss
-  op=integrate; paramss="10 12 14 16 18 20"; runForParamss
+  op=max; paramss="10 30 50 70 90"; runForParamss
+  op=integrate; paramss="10 30 50 70 90"; runForParamss
 }
 
 #################
@@ -126,7 +126,7 @@ function sinesineBallFun
   repr=ball; fn=sinesine
   dir=$fn
 
-  op=max; paramss="10 15 20 25 30 35"; runForParamss
+  op=max; paramss="10 30 50 70 90"; runForParamss
   op=integrate; paramss="05 10 15"; runForParamss
 }
 
@@ -135,7 +135,7 @@ function sinesineDBallFun
   repr=dball; fn=sinesine
   dir=$fn
 
-  op=max; paramss="10 15 20 25 30 35"; runForParamss
+  op=max; paramss="10 30 50 70 90"; runForParamss
   op=integrate; paramss="05 10 15 20 25 30"; runForParamss
 }
 
@@ -144,8 +144,8 @@ function sinesinePoly
   repr=poly; fn=sinesine
   dir=$fn
 
-  op=max; paramss="10 15 20 25 30 35"; runForParamss
-  op=integrate; paramss="05 10 15 20 25 30"; runForParamss
+  op=max; paramss="10 30 50 70 90 110"; runForParamss
+  op=integrate; paramss="05 10 15 20 25 30 50 70 90"; runForParamss
 }
 
 function sinesineLPoly
@@ -153,8 +153,8 @@ function sinesineLPoly
   repr=lpoly; fn=sinesine
   dir=$fn
 
-  op=max; paramss="10 15 20 25 30 35"; runForParamss
-  op=integrate; paramss="05 10 15 20 25 30"; runForParamss
+  op=max; paramss="10 30 50 70 90"; runForParamss
+  op=integrate; paramss="10 30 50 70 90"; runForParamss
 }
 
 #################
@@ -176,7 +176,7 @@ function sinesine+cosBallFun
   dir=$fn
 
   op=max; paramss="10 20 30"; runForParamss
-  op=integrate; paramss="05 10 15"; runForParamss
+  op=integrate; paramss="05 10 13"; runForParamss
 }
 
 function sinesine+cosDBallFun
@@ -184,8 +184,8 @@ function sinesine+cosDBallFun
   repr=dball; fn=sinesine+cos
   dir=$fn
 
-  op=max; paramss="10 15 20 25 30 35"; runForParamss
-  op=integrate; paramss="05 10 15 20 25 30"; runForParamss
+  op=max; paramss="10 30 50 70 90"; runForParamss
+  op=integrate; paramss="05 10 15 20 25 28"; runForParamss
 }
 
 function sinesine+cosPoly
@@ -193,8 +193,8 @@ function sinesine+cosPoly
   repr=poly; fn=sinesine+cos
   dir=$fn
 
-  op=max; paramss="10 15 20 25 30 35"; runForParamss
-  op=integrate; paramss="05 10 15 20 25 30"; runForParamss
+  op=max; paramss="10 15 20 25 30 35 50 70 90"; runForParamss
+  op=integrate; paramss="05 10 15 20 25 30 50 70 90"; runForParamss
 }
 
 function sinesine+cosLPoly
@@ -202,8 +202,8 @@ function sinesine+cosLPoly
   repr=lpoly; fn=sinesine+cos
   dir=$fn
 
-  op=max; paramss="10 15 20 25 30 35"; runForParamss
-  op=integrate; paramss="05 10 15 20 25 30"; runForParamss
+  op=max; paramss="05 10 15 20 25 30 35 50 70 90"; runForParamss
+  op=integrate; paramss="05 10 15 20 25 30 35 50 70 90"; runForParamss
 }
 
 #################
@@ -215,8 +215,8 @@ function rungeModFun
   repr=fun; fn=runge
   dir=$fn
 
-  op=max; paramss="05 35 65 100 120"; runForParamss
-  op=integrate; paramss="05 10 15 20"; runForParamss
+  op=max; paramss="05 10"; runForParamss
+  op=integrate; paramss="05 10"; runForParamss
 }
 
 function rungeBallFun
@@ -224,7 +224,7 @@ function rungeBallFun
   repr=ball; fn=runge
   dir=$fn
 
-  op=max; paramss="05 35 65 100 120"; runForParamss
+  op=max; paramss="05 35 65 100"; runForParamss
   op=integrate; paramss="05 10 15 20"; runForParamss
 }
 
@@ -234,7 +234,7 @@ function rungeDBallFun
   dir=$fn
 
   op=max; paramss="05 35 65 100"; runForParamss
-  op=integrate; paramss="05 10 15 20 25 30"; runForParamss
+  op=integrate; paramss="05 10 15 20 25 30 35"; runForParamss
 }
 
 function rungePoly
@@ -251,8 +251,8 @@ function rungePPoly
   repr=ppoly; fn=runge
   dir=$fn
 
-  op=max; paramss="10 20 40 80"; runForParamss
-  op=integrate; paramss="10 20 40"; runForParamss
+  op=max; paramss="10 20 40 60 80"; runForParamss
+  op=integrate; paramss="10 20 40 60 80"; runForParamss
 }
 
 function rungeFrac
@@ -260,7 +260,7 @@ function rungeFrac
   repr=frac; fn=runge
   dir=$fn
 
-  op=max; paramss="10 20 40 80 120"; runForParamss
+  op=max; paramss="10 20 40 60 80 100"; runForParamss
   op=integrate; paramss="8 16 32 64"; runForParamss
 }
 
@@ -279,7 +279,7 @@ function rungeLPPoly
   dir=$fn
 
   op=max; paramss="10 20 40 80"; runForParamss
-  op=integrate; paramss="2 10 80"; runForParamss
+  op=integrate; paramss="2 10 80 120"; runForParamss
 }
 
 function rungeLFrac
@@ -288,7 +288,7 @@ function rungeLFrac
   dir=$fn
 
   op=max; paramss="10 20 40 80"; runForParamss
-  op=integrate; paramss="2 10 80"; runForParamss
+  op=integrate; paramss="2 10 80 120"; runForParamss
 }
 
 #################
@@ -300,8 +300,8 @@ function rungeSCModFun
   repr=fun; fn=rungeSC
   dir=$fn
 
-  op=max; paramss="05 10 15 20 25 30"; runForParamss
-  op=integrate; paramss="05 10 15"; runForParamss
+  op=max; paramss="05 10"; runForParamss
+  op=integrate; paramss="05 10"; runForParamss
 }
 
 function rungeSCBallFun
@@ -318,7 +318,7 @@ function rungeSCDBallFun
   repr=dball; fn=rungeSC
   dir=$fn
 
-  op=max; paramss="05 10 20 30 40 50 52"; runForParamss
+  op=max; paramss="10 30 50 70 90"; runForParamss
   op=integrate; paramss="05 10 15 20 25 30"; runForParamss
 }
 
@@ -345,7 +345,7 @@ function rungeSCFrac
   repr=frac; fn=rungeSC
   dir=$fn
 
-  op=max; paramss="10 20 40 80 120"; runForParamss
+  op=max; paramss="10 20 30 40 50"; runForParamss
   op=integrate; paramss="4 8 12 16"; runForParamss
 }
 
@@ -354,8 +354,8 @@ function rungeSCLPoly
   repr=lpoly; fn=rungeSC
   dir=$fn
 
-  op=max; paramss="10 40"; runForParamss
-  op=integrate; paramss="10 20 40"; runForParamss
+  op=max; paramss="10 30 50 70 90"; runForParamss
+  op=integrate; paramss="10 20 40 60 80"; runForParamss
 }
 
 function rungeSCLPPoly
@@ -363,8 +363,8 @@ function rungeSCLPPoly
   repr=lppoly; fn=rungeSC
   dir=$fn
 
-  op=max; paramss="10 20 40"; runForParamss
-  op=integrate; paramss="10 20 40"; runForParamss
+  op=max; paramss="10 30 50 70 90"; runForParamss
+  op=integrate; paramss="10 20 40 60 80"; runForParamss
 }
 
 function rungeSCLFrac
@@ -372,8 +372,8 @@ function rungeSCLFrac
   repr=lfrac; fn=rungeSC
   dir=$fn
 
-  op=max; paramss="10 20 40"; runForParamss
-  op=integrate; paramss="10 20 40"; runForParamss
+  op=max; paramss="10 30 50 70 90"; runForParamss
+  op=integrate; paramss="10 30 50 70 90"; runForParamss
 }
 
 #################
@@ -385,8 +385,8 @@ function fracSinModFun
   repr=fun; fn=fracSin
   dir=$fn
 
-  op=max; paramss="05 15 25 35 45 55"; runForParamss
-  op=integrate; paramss="05 10 15"; runForParamss
+  op=max; paramss="05 10"; runForParamss
+  op=integrate; paramss="05 10"; runForParamss
 }
 
 function fracSinBallFun
@@ -394,7 +394,7 @@ function fracSinBallFun
   repr=ball; fn=fracSin
   dir=$fn
 
-  op=max; paramss="05 15 25 35 45 55"; runForParamss
+  op=max; paramss="05 15 25 35 45 55 70 90"; runForParamss
   op=integrate; paramss="05 10 15"; runForParamss
 }
 
@@ -403,7 +403,7 @@ function fracSinDBallFun
   repr=dball; fn=fracSin
   dir=$fn
 
-  op=max; paramss="05 15 25 35 45 50"; runForParamss
+  op=max; paramss="10 30 50 70 90"; runForParamss
   op=integrate; paramss="05 10 15 20 25 30"; runForParamss
 }
 
@@ -421,8 +421,8 @@ function fracSinPPoly
   repr=ppoly; fn=fracSin
   dir=$fn
 
-  op=max; paramss="10 20 40"; runForParamss
-  op=integrate; paramss="10 20 40"; runForParamss
+  op=max; paramss="10 15 20"; runForParamss
+  op=integrate; paramss="10 15 20"; runForParamss
 }
 
 function fracSinFrac
@@ -430,8 +430,8 @@ function fracSinFrac
   repr=frac; fn=fracSin
   dir=$fn
 
-  op=max; paramss="10 20 40 60"; runForParamss
-  op=integrate; paramss="10 20 40"; runForParamss
+  op=max; paramss="10 20 40 60 80 100"; runForParamss
+  op=integrate; paramss="10 15 20"; runForParamss
 }
 
 function fracSinLPoly
@@ -439,8 +439,8 @@ function fracSinLPoly
   repr=lpoly; fn=fracSin
   dir=$fn
 
-  op=max; paramss="10 20 40"; runForParamss
-  op=integrate; paramss="10 20 40"; runForParamss
+  op=max; paramss="10 20 40 50"; runForParamss
+  op=integrate; paramss="10 20 40 50"; runForParamss
 }
 
 function fracSinLPPoly
@@ -448,8 +448,8 @@ function fracSinLPPoly
   repr=lppoly; fn=fracSin
   dir=$fn
 
-  op=max; paramss="10 20 40"; runForParamss
-  op=integrate; paramss="10 20 40"; runForParamss
+  op=max; paramss="10 20 40 60"; runForParamss
+  op=integrate; paramss="10 20 40 60"; runForParamss
 }
 
 function fracSinLFrac
@@ -457,8 +457,8 @@ function fracSinLFrac
   repr=lfrac; fn=fracSin
   dir=$fn
 
-  op=max; paramss="10 20 40"; runForParamss
-  op=integrate; paramss="10 20 40"; runForParamss
+  op=max; paramss="10 20 40 60 80"; runForParamss
+  op=integrate; paramss="10 20 40 60"; runForParamss
 }
 
 
@@ -480,7 +480,7 @@ function fracSinSCBallFun
   repr=ball; fn=fracSinSC
   dir=$fn
 
-  op=max; paramss="05 10 15"; runForParamss
+  op=max; paramss="10 20 25 30"; runForParamss
   op=integrate; paramss="05 10 15"; runForParamss
 }
 
@@ -489,8 +489,8 @@ function fracSinSCDBallFun
   repr=dball; fn=fracSinSC
   dir=$fn
 
-  op=max; paramss="05 10 15 20 25 30"; runForParamss
-  op=integrate; paramss="05 10 15 20 25 30"; runForParamss
+  op=max; paramss="10 30 50 70 90"; runForParamss
+  op=integrate; paramss="05 10 15 20 25"; runForParamss
 }
 
 function fracSinSCPoly
@@ -507,8 +507,8 @@ function fracSinSCPPoly
   repr=ppoly; fn=fracSinSC
   dir=$fn
 
-  op=max; paramss="8 16 24"; runForParamss
-  op=integrate; paramss="8 16 24"; runForParamss
+  op=max; paramss="8 16 20"; runForParamss
+  op=integrate; paramss="8 16 20"; runForParamss
 }
 
 function fracSinSCFrac
@@ -516,8 +516,8 @@ function fracSinSCFrac
   repr=frac; fn=fracSinSC
   dir=$fn
 
-  op=max; paramss="8 16 24"; runForParamss
-  op=integrate; paramss="8 16 24"; runForParamss
+  op=max; paramss="8 16 20"; runForParamss
+  op=integrate; paramss="8 16 20"; runForParamss
 }
 
 
@@ -526,8 +526,8 @@ function fracSinSCLPoly
   repr=lpoly; fn=fracSinSC
   dir=$fn
 
-  op=max; paramss="8 16 24 32 40"; runForParamss
-  op=integrate; paramss="8 16 24 32 40"; runForParamss
+  op=max; paramss="8 16 24 32 40 60 80"; runForParamss
+  op=integrate; paramss="8 16 24 32 40 60"; runForParamss
 }
 
 function fracSinSCLPPoly
@@ -535,8 +535,8 @@ function fracSinSCLPPoly
   repr=lppoly; fn=fracSinSC
   dir=$fn
 
-  op=max; paramss="8 16 24 32 40"; runForParamss
-  op=integrate; paramss="8 16 24 32 40"; runForParamss
+  op=max; paramss="8 16 24 32 40 60 80"; runForParamss
+  op=integrate; paramss="8 16 24 32 40 60"; runForParamss
 }
 
 function fracSinSCLFrac
@@ -544,8 +544,8 @@ function fracSinSCLFrac
   repr=lfrac; fn=fracSinSC
   dir=$fn
 
-  op=max; paramss="8 16 24 32 40"; runForParamss
-  op=integrate; paramss="16 24 32 40 48"; runForParamss
+  op=max; paramss="8 16 24 32 40 60 80"; runForParamss
+  op=integrate; paramss="16 24 32 40 48 56"; runForParamss
 }
 
 
