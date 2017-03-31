@@ -1,22 +1,22 @@
 computing integrate  (sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]
-result = [3.428442599651094e-2 ± 6.978135195565952e-12](prec=320)
+result = [3.428442599651094e-2 ± 6.979153375270552e-12](prec=240)
 accuracy: bits 37
-precision = Precision 320
+precision = Precision 240
 	Command being timed: "aern2-fnreps-ops integrate fracSinSC lfrac 40"
-	User time (seconds): 117.40
-	System time (seconds): 0.43
+	User time (seconds): 117.82
+	System time (seconds): 0.41
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:57.97
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:58.36
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 20296
+	Maximum resident set size (kbytes): 20312
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 8231
+	Minor (reclaiming a frame) page faults: 11070
 	Voluntary context switches: 1
-	Involuntary context switches: 112
+	Involuntary context switches: 139
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

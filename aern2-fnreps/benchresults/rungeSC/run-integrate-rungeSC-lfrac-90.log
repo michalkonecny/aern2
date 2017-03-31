@@ -3,20 +3,20 @@ result = [4.336916185540269e-2 ± 1.281715761411146e-21](prec=226)
 accuracy: bits 69
 precision = Precision 226
 	Command being timed: "aern2-fnreps-ops integrate rungeSC lfrac 90"
-	User time (seconds): 28.95
-	System time (seconds): 0.09
+	User time (seconds): 30.12
+	System time (seconds): 0.10
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:29.08
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:30.26
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 17696
+	Maximum resident set size (kbytes): 17908
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 12125
+	Minor (reclaiming a frame) page faults: 12195
 	Voluntary context switches: 1
-	Involuntary context switches: 45
+	Involuntary context switches: 108
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

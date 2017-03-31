@@ -3,20 +3,20 @@ result = [2.942254969359689e-1 ± 2.631123413237352e-6](prec=55)
 accuracy: bits 18
 precision = Precision 55
 	Command being timed: "aern2-fnreps-ops integrate runge frac 8"
-	User time (seconds): 22.92
+	User time (seconds): 23.52
 	System time (seconds): 0.09
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:23.04
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:23.64
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 32776
+	Maximum resident set size (kbytes): 32756
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 6197
+	Minor (reclaiming a frame) page faults: 6194
 	Voluntary context switches: 1
-	Involuntary context switches: 35
+	Involuntary context switches: 41
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8
