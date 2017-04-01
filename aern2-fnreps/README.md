@@ -20,7 +20,7 @@ Each task has 2 phases:
   2. Computing a real number from the function either by
   integrating or maximising the function over its domain.
 
-Thus the tasks are formulated without reference to the implementation of the data type
+Note that the tasks are formulated without reference to the implementation of the data type
 of continuous functions, facilitating a reasonably fair comparison.
 
 <!-- TODO: add TOC, eg using https://github.com/thlorenz/doctoc/ -->
@@ -117,6 +117,22 @@ When combining several functions, the partitions of the functions are unified.
 <!-- line breaks are forced by 2 trailing spaces -->
 
 
+### Frac
+
+Frac is analogous to Poly except rational functions are used instead of polynomials.
+The denominator polynomial has to be larger or equal 1 over the function's domain.
+
+Integration is performed by translating the rational function to a piecewise polynomial.
+
+### LPoly, LPPoly, LFrac
+
+There are "local" versions of Poly, PPoly and Frac, respectively.
+A function is represented in LPoly by a family of Poly representations, one for each
+open interval within the function's domain.  LPPoly and LFrac are defined analogously.
+
+<!-- line breaks are forced by 2 trailing spaces -->
+
+
 ## Benchmark setup
 
 Source code of the benchmark tasks: [fnreps-ops.hs](https://github.com/michalkonecny/aern2/blob/master/aern2-fnreps/main/fnreps-ops.hs)
@@ -167,12 +183,12 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 | :---: | :---: |
 | <img src="benchresults/charts/runge-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/runge-integrate-time.png?raw=true" width="300"> |
 
-![rungeX](http://latex.codecogs.com/gif.latex?{\\frac{x}{100x^2+1}})
-<img src="plots/rungeX.png?raw=true" width="150">
+![rungeSC](http://latex.codecogs.com/gif.latex?{\\frac{\\sin(10x)+\\cos(20x)}{100x^2+1}})
+<img src="plots/rungeSC.png?raw=true" width="150">
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="benchresults/charts/rungeX-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/rungeX-integrate-time.png?raw=true" width="300"> |
+| <img src="benchresults/charts/rungeSC-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/rungeSC-integrate-time.png?raw=true" width="300"> |
 
 ### An analytic function with singularities near the origin and with multiple maxima
 
@@ -182,6 +198,13 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
 | <img src="benchresults/charts/fracSin-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/fracSin-integrate-time.png?raw=true" width="300"> |
+
+![fracSinSC](http://latex.codecogs.com/gif.latex?{\\frac{\\sin(10x)+\\cos(20x)}{10(\\sin(7x))^2+1}})
+<img src="plots/fracSinSC.png?raw=true" width="150">
+
+| Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
+| :---: | :---: |
+| <img src="benchresults/charts/fracSinSC-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/fracSinSC-integrate-time.png?raw=true" width="300"> |
 
 
 <!--
