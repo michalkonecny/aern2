@@ -166,8 +166,8 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 | :---: | :---: |
 | <img src="benchresults/charts/sinesine-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/sinesine-integrate-time.png?raw=true" width="300"> |  
 
-![sinesine+sin](http://latex.codecogs.com/gif.latex?\\sin(10x+\\sin(20x^2))+\\sin(10x))
-<img src="plots/sinesine+sin.png?raw=true" width="150">
+![sinesine+cos](http://latex.codecogs.com/gif.latex?\\sin(10x+\\sin(20x^2))+\\cos(10x))
+<img src="plots/sinesine+cos.png?raw=true" width="150">
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
