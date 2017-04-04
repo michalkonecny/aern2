@@ -1,0 +1,159 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE TemplateHaskell, Rank2Types #-}</span><span>
+</span><a name="line-2"></a><span class="hs-comment">{-|
+    Module      :  AERN2.Effort
+    Description :  Effort indicator to direct enclosure computation
+    Copyright   :  (c) Michal Konecny
+    License     :  BSD3
+
+    Maintainer  :  mikkonecny@gmail.com
+    Stability   :  experimental
+    Portability :  portable
+
+    Effort indicator to direct enclosure computation
+-}</span><span>
+</span><a name="line-14"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Effort</span><span>
+</span><a name="line-15"></a><span class="hs-special">(</span><span>
+</span><a name="line-16"></a><span>  </span><a href="AERN2.Effort.html#WithEffort"><span class="hs-identifier hs-type">WithEffort</span></a><span class="hs-special">,</span><span> </span><a href="AERN2.Effort.html#WithEffortP"><span class="hs-identifier hs-type">WithEffortP</span></a><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><a name="line-17"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="AERN2.Effort.html#Effort"><span class="hs-identifier hs-type">Effort</span></a><span class="hs-special">,</span><span> </span><a href="AERN2.Effort.html#EffortItem"><span class="hs-identifier hs-type">EffortItem</span></a><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><a name="line-18"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="AERN2.Effort.html#subs"><span class="hs-identifier hs-var">subs</span></a><span class="hs-special">,</span><span> </span><a href="AERN2.Effort.html#subE"><span class="hs-identifier hs-var">subE</span></a><span class="hs-special">,</span><span> </span><a href="AERN2.Effort.html#precE"><span class="hs-identifier hs-var">precE</span></a><span>
+</span><a name="line-19"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="AERN2.Effort.html#normaliseTopLevel"><span class="hs-identifier hs-var">normaliseTopLevel</span></a><span class="hs-special">,</span><span> </span><a href="AERN2.Effort.html#unifyPrecTopLevel"><span class="hs-identifier hs-var">unifyPrecTopLevel</span></a><span>
+</span><a name="line-20"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="AERN2.Effort.html#combineSampleEfforts"><span class="hs-identifier hs-var">combineSampleEfforts</span></a><span>
+</span><a name="line-21"></a><span>  </span><span class="hs-comment">-- , empty</span><span>
+</span><a name="line-22"></a><span class="hs-special">)</span><span>
+</span><a name="line-23"></a><span class="hs-keyword">where</span><span>
+</span><a name="line-24"></a><span>
+</span><a name="line-25"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Numeric</span><span class="hs-operator">.</span><span class="hs-identifier">MixedTypes</span><span>
+</span><a name="line-26"></a><span class="hs-comment">-- import qualified Prelude as P</span><span>
+</span><a name="line-27"></a><span>
+</span><a name="line-28"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Control</span><span class="hs-operator">.</span><span class="hs-identifier">Lens</span><span>
+</span><a name="line-29"></a><span>
+</span><a name="line-30"></a><span class="hs-comment">-- import Data.Maybe</span><span>
+</span><a name="line-31"></a><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">Map</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="hs-identifier">Map</span><span>
+</span><a name="line-32"></a><span>
+</span><a name="line-33"></a><span class="hs-comment">-- import Control.Monad.Trans.State</span><span>
+</span><a name="line-34"></a><span>
+</span><a name="line-35"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.QA.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">QA</span></a><span>
+</span><a name="line-36"></a><span>
+</span><a name="line-37"></a><span class="hs-comment">-- import Debug.Trace (trace)</span><span>
+</span><a name="line-38"></a><span class="hs-comment">--</span><span>
+</span><a name="line-39"></a><span class="hs-comment">-- shouldTrace :: Bool</span><span>
+</span><a name="line-40"></a><span class="hs-comment">-- shouldTrace = False</span><span>
+</span><a name="line-41"></a><span class="hs-comment">-- -- shouldTrace = True</span><span>
+</span><a name="line-42"></a><span class="hs-comment">--</span><span>
+</span><a name="line-43"></a><span class="hs-comment">-- maybeTrace :: String -&gt; a -&gt; a</span><span>
+</span><a name="line-44"></a><span class="hs-comment">-- maybeTrace</span><span>
+</span><a name="line-45"></a><span class="hs-comment">--     | shouldTrace = trace</span><span>
+</span><a name="line-46"></a><span class="hs-comment">--     | otherwise = const id</span><span>
+</span><a name="line-47"></a><span class="hs-comment">--</span><span>
+</span><a name="line-48"></a><span class="hs-comment">-- _dummy :: ()</span><span>
+</span><a name="line-49"></a><span class="hs-comment">-- _dummy = maybeTrace &quot;dummy&quot; ()</span><span>
+</span><a name="line-50"></a><span>
+</span><a name="line-51"></a><span class="hs-keyword">type</span><span> </span><a name="WithEffort"><a href="AERN2.Effort.html#WithEffort"><span class="hs-identifier">WithEffort</span></a></a><span> </span><a name="local-6989586621679293564"><a href="#local-6989586621679293564"><span class="hs-identifier">t</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><a href="AERN2.QA.html#QA"><span class="hs-identifier hs-type">QA</span></a><span> </span><span class="hs-special">(</span><span class="hs-glyph">-&gt;</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><a href="AERN2.Effort.html#WithEffortP"><span class="hs-identifier hs-type">WithEffortP</span></a><span> </span><a href="#local-6989586621679293564"><span class="hs-identifier hs-type">t</span></a><span class="hs-special">)</span><span>
+</span><a name="line-52"></a><span>
+</span><a name="line-53"></a><span class="hs-keyword">newtype</span><span> </span><a name="WithEffortP"><a href="AERN2.Effort.html#WithEffortP"><span class="hs-identifier">WithEffortP</span></a></a><span> </span><a name="local-6989586621679293563"><a href="#local-6989586621679293563"><span class="hs-identifier">t</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><a name="WithEffortP"><a href="AERN2.Effort.html#WithEffortP"><span class="hs-identifier">WithEffortP</span></a></a><span> </span><a href="#local-6989586621679293563"><span class="hs-identifier hs-type">t</span></a><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Show</span><span class="hs-special">)</span><span>
+</span><a name="line-54"></a><span>
+</span><a name="line-55"></a><span class="hs-keyword">instance</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Show</span><span> </span><a href="#local-6989586621679293566"><span class="hs-identifier hs-type">t</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><a href="AERN2.QA.html#QAProtocol"><span class="hs-identifier hs-type">QAProtocol</span></a><span> </span><span class="hs-special">(</span><a href="AERN2.Effort.html#WithEffortP"><span class="hs-identifier hs-type">WithEffortP</span></a><span> </span><a href="#local-6989586621679293566"><span class="hs-identifier hs-type">t</span></a><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-56"></a><span>  </span><span class="hs-keyword">type</span><span> </span><span class="hs-identifier">Q</span><span> </span><span class="hs-special">(</span><a href="AERN2.Effort.html#WithEffortP"><span class="hs-identifier hs-type">WithEffortP</span></a><span> </span><a href="#local-6989586621679293566"><span class="hs-identifier hs-type">t</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><a href="AERN2.Effort.html#Effort"><span class="hs-identifier hs-type">Effort</span></a><span>
+</span><a name="line-57"></a><span>  </span><span class="hs-keyword">type</span><span> </span><span class="hs-identifier">A</span><span> </span><span class="hs-special">(</span><a href="AERN2.Effort.html#WithEffortP"><span class="hs-identifier hs-type">WithEffortP</span></a><span> </span><a href="#local-6989586621679293566"><span class="hs-identifier hs-type">t</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><a href="#local-6989586621679293566"><span class="hs-identifier hs-type">t</span></a><span>
+</span><a name="line-58"></a><span>
+</span><a name="line-59"></a><span class="hs-keyword">instance</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Show</span><span> </span><a href="#local-6989586621679293565"><span class="hs-identifier hs-type">t</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><a href="AERN2.QA.html#QAProtocolCacheable"><span class="hs-identifier hs-type">QAProtocolCacheable</span></a><span> </span><span class="hs-special">(</span><a href="AERN2.Effort.html#WithEffortP"><span class="hs-identifier hs-type">WithEffortP</span></a><span> </span><a href="#local-6989586621679293565"><span class="hs-identifier hs-type">t</span></a><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-60"></a><span>  </span><span class="hs-keyword">type</span><span> </span><span class="hs-identifier">QACache</span><span> </span><span class="hs-special">(</span><a href="AERN2.Effort.html#WithEffortP"><span class="hs-identifier hs-type">WithEffortP</span></a><span> </span><a href="#local-6989586621679293565"><span class="hs-identifier hs-type">t</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span> </span><span class="hs-comment">-- dummy cache</span><span>
+</span><a name="line-61"></a><span>  </span><a name="local-8214565720323823487"><a href="AERN2.QA.html#newQACache"><span class="hs-identifier">newQACache</span></a></a><span> </span><span class="hs-identifier">_</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><a name="line-62"></a><span>  </span><a name="local-8214565720323823488"><a href="AERN2.QA.html#lookupQACache"><span class="hs-identifier">lookupQACache</span></a></a><span> </span><span class="hs-identifier">_</span><span> </span><span class="hs-identifier">_</span><span> </span><span class="hs-identifier">_</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">Nothing</span><span>
+</span><a name="line-63"></a><span>  </span><a name="local-8214565720323823489"><a href="AERN2.QA.html#updateQACache"><span class="hs-identifier">updateQACache</span></a></a><span> </span><span class="hs-identifier">_</span><span> </span><span class="hs-identifier">_</span><span> </span><span class="hs-identifier">_</span><span> </span><span class="hs-identifier">_</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><a name="line-64"></a><span>
+</span><a name="line-65"></a><span class="hs-keyword">type</span><span> </span><a name="Effort"><a href="AERN2.Effort.html#Effort"><span class="hs-identifier">Effort</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-type">Map</span><span class="hs-operator hs-type">.</span><span class="hs-identifier hs-type">Map</span><span> </span><span class="hs-identifier hs-type">String</span><span> </span><a href="AERN2.Effort.html#EffortItem"><span class="hs-identifier hs-type">EffortItem</span></a><span>
+</span><a name="line-66"></a><span class="hs-keyword">data</span><span> </span><a name="EffortItem"><a href="AERN2.Effort.html#EffortItem"><span class="hs-identifier">EffortItem</span></a></a><span>
+</span><a name="line-67"></a><span>  </span><span class="hs-glyph">=</span><span> </span><a name="EffortNum"><a href="AERN2.Effort.html#EffortNum"><span class="hs-identifier">EffortNum</span></a></a><span> </span><span class="hs-special">{</span><span> </span><a name="_effortNum"><a href="AERN2.Effort.html#_effortNum"><span class="hs-identifier">_effortNum</span></a></a><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier hs-type">Integer</span><span> </span><span class="hs-special">}</span><span>
+</span><a name="line-68"></a><span>  </span><span class="hs-comment">-- | EffortFun { effortFun :: Integer -&gt; Integer }</span><span>
+</span><a name="line-69"></a><span>  </span><span class="hs-comment">-- | EffortFun { effortFunSampleArg :: Effort, effortFun :: Effort -&gt; Integer }</span><span>
+</span><a name="line-70"></a><span>  </span><span class="hs-glyph">|</span><span> </span><a name="EffortSub"><a href="AERN2.Effort.html#EffortSub"><span class="hs-identifier">EffortSub</span></a></a><span> </span><span class="hs-special">{</span><span> </span><a name="_effortSub"><a href="AERN2.Effort.html#_effortSub"><span class="hs-identifier">_effortSub</span></a></a><span> </span><span class="hs-glyph">::</span><span> </span><a href="AERN2.Effort.html#Effort"><span class="hs-identifier hs-type">Effort</span></a><span> </span><span class="hs-special">}</span><span>
+</span><a name="line-71"></a><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Show</span><span class="hs-special">)</span><span>
+</span><a name="line-72"></a><span>
+</span><a name="line-73"></a><span class="hs-identifier hs-var">makePrisms</span><span> </span><span class="hs-char">''EffortItem
+
+subs :: Traversal' Effort Effort
+subs = each . _EffortSub
+
+subE :: String -&gt; Prism' Effort Effort
+subE subname = prism' makeSub extractSub
+  where
+    makeSub e =
+      -- at subname ?~ EffortSub e $ empty
+      Map.singleton subname (EffortSub e)
+    extractSub e =
+      case e ^. at subname of
+        Just (EffortSub eSub) -&gt; Just eSub
+        _ -&gt; Nothing
+
+precE :: Traversal' Effort Integer
+precE = at &quot;prec&quot; . _Just . _EffortNum
+
+empty :: Effort
+empty = Map.empty
+
+-- normalise :: Effort -&gt; Effort
+-- normalise e =
+--   normaliseTopLevel $ e &amp; subs %~ normalise
+
+
+normaliseTopLevel :: Effort -&gt; Effort
+normaliseTopLevel e =
+  Map.filter nonEmpty e
+  where
+  nonEmpty (EffortSub eSub) = not $ Map.null eSub
+  nonEmpty _ = True
+
+-- unifyPrec :: Effort -&gt; Effort
+-- unifyPrec e =
+--   unifyPrecTopLevel $
+--     e &amp; subs %~ unifyPrec
+
+unifyPrecTopLevel :: Effort -&gt; Effort
+unifyPrecTopLevel e =
+  normaliseTopLevel $
+    (e &amp; subs %~ removePrec) &amp; precE .~ p
+  where
+    removePrec = at &quot;prec&quot; .~ Nothing
+    p = maximum $ (e ^.. subs . precE) ++ (e ^.. precE)
+
+combineSampleEfforts ::
+  Effort -&gt; Effort -&gt;
+  (Effort, Effort -&gt; Effort, Effort -&gt; Effort)
+combineSampleEfforts eL eR =
+  (sampleEff, projectL, projectR)
+  where
+  sampleEff =
+    unifyPrecTopLevel $
+      empty &amp; subE &quot;L&quot; .~ eL &amp; subE &quot;R&quot; .~ eR
+  projectL = project &quot;L&quot;
+  projectR = project &quot;R&quot;
+  project subname eff =
+    case (eff ^? precE, eff ^? subE subname) of
+      (Just p, Just e) -&gt; e &amp; precE .~ p
+      (_, Just e) -&gt; e
+      _ -&gt; eff
+
+{- TODO: expand and move the following to separate modules -}
+
+instance
+  (CanAddAsymmetric t1 t2, Show (AddType t1 t2))
+  =&gt;
+  CanAddAsymmetric (WithEffort t1) (WithEffort t2) where
+  type AddType (WithEffort t1) (WithEffort t2) = WithEffort (AddType t1 t2)
+  add x y =
+    newQA name [] p sampleEff makeQ
+    where
+      name = &quot;+&quot; -- &quot;(&quot; ++ (qaName x) ++ &quot;+&quot; ++ (qaName y) ++ &quot;)&quot;
+      p = WithEffortP (sampleX + sampleY)
+      WithEffortP sampleX = qaProtocol x
+      WithEffortP sampleY = qaProtocol y
+      (sampleEff, projectXEff, projectYEff) =
+        combineSampleEfforts xSampleEff ySampleEff
+      xSampleEff = qaSampleQ x
+      ySampleEff = qaSampleQ y
+      makeQ eff = xB + yB
+        where
+        xB = qaMakeQuery x $ projectXEff eff
+        yB = qaMakeQuery y $ projectYEff eff
+</span></pre></body></html>

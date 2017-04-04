@@ -35,7 +35,7 @@ instance GenericMaximum (LocalFrac MPBall) where
     where
     evalF = Frac.evalDf fI (2/(r - l) * dNum) (2/(r - l) * dDenom)
     fAcc = getAccuracy fI
-    evalDF = Cheb.evalDirect dfRat
+    evalDF = Cheb.evalDirect dfRat :: Rational -> Rational
     fI@(Frac num denom _dIM) = f l r ac
     ch2Power (e, p) = (e, cheb2Power p)
     dNum     = derivativeExact cNum

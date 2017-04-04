@@ -1,0 +1,52 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><a name="line-2"></a><span class="hs-comment">{-|
+    Module      :  AERN2.Utils.TH
+    Description :  Template Haskell utilities
+    Copyright   :  (c) Michal Konecny
+    License     :  BSD3
+
+    Maintainer  :  mikkonecny@gmail.com
+    Stability   :  experimental
+    Portability :  portable
+
+    Template Haskell utilities
+-}</span><span>
+</span><a name="line-14"></a><span>
+</span><a name="line-15"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Utils</span><span class="hs-operator">.</span><span class="hs-identifier">TH</span><span>
+</span><a name="line-16"></a><span class="hs-special">(</span><span>
+</span><a name="line-17"></a><span>  </span><a href="AERN2.Utils.TH.html#declForTypes"><span class="hs-identifier hs-var">declForTypes</span></a><span>
+</span><a name="line-18"></a><span class="hs-special">)</span><span>
+</span><a name="line-19"></a><span class="hs-keyword">where</span><span>
+</span><a name="line-20"></a><span>
+</span><a name="line-21"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Numeric</span><span class="hs-operator">.</span><span class="hs-identifier">MixedTypes</span><span>
+</span><a name="line-22"></a><span class="hs-comment">-- import qualified Prelude as P</span><span>
+</span><a name="line-23"></a><span>
+</span><a name="line-24"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Language</span><span class="hs-operator">.</span><span class="hs-identifier">Haskell</span><span class="hs-operator">.</span><span class="hs-identifier">TH</span><span>
+</span><a name="line-25"></a><span>
+</span><a name="line-26"></a><span class="hs-comment">{- template haskell to generate repetitive instances -}</span><span>
+</span><a name="line-27"></a><span>
+</span><a name="line-28"></a><span class="hs-comment">{-|
+
+A toy example of use:
+
+@
+class HasTT t where
+  type TT t
+  getTT :: t -&gt; TT t
+
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |]]
+  (\ t -&gt; [d|
+    instance HasTT $t where
+      type TT $t = ()
+      getTT _ = ()
+  |]))
+@
+
+-}</span><span>
+</span><a name="line-47"></a><span class="hs-identifier">declForTypes</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="hs-identifier hs-type">Q</span><span> </span><span class="hs-identifier hs-type">Type</span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Q</span><span> </span><span class="hs-identifier hs-type">Type</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-type">Q</span><span> </span><span class="hs-special">[</span><span class="hs-identifier hs-type">Dec</span><span class="hs-special">]</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-type">Q</span><span> </span><span class="hs-special">[</span><span class="hs-identifier hs-type">Dec</span><span class="hs-special">]</span><span>
+</span><a name="line-48"></a><a name="declForTypes"><a href="AERN2.Utils.TH.html#declForTypes"><span class="hs-identifier">declForTypes</span></a></a><span> </span><a name="local-6989586621679055782"><a href="#local-6989586621679055782"><span class="hs-identifier">types</span></a></a><span> </span><a name="local-6989586621679055783"><a href="#local-6989586621679055783"><span class="hs-identifier">makeDecl</span></a></a><span> </span><span class="hs-glyph">=</span><span>
+</span><a name="line-49"></a><span>  </span><span class="hs-keyword">do</span><span>
+</span><a name="line-50"></a><span>  </span><a name="local-6989586621679056272"><a href="#local-6989586621679056272"><span class="hs-identifier">decsList</span></a></a><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="hs-identifier hs-var">sequence</span><span> </span><span class="hs-operator hs-var">$</span><span> </span><span class="hs-identifier hs-var">map</span><span> </span><a href="#local-6989586621679055783"><span class="hs-identifier hs-var">makeDecl</span></a><span> </span><a href="#local-6989586621679055782"><span class="hs-identifier hs-var">types</span></a><span>
+</span><a name="line-51"></a><span>  </span><span class="hs-identifier hs-var">return</span><span> </span><span class="hs-operator hs-var">$</span><span> </span><span class="hs-identifier hs-var">concat</span><span> </span><a href="#local-6989586621679056272"><span class="hs-identifier hs-var">decsList</span></a><span>
+</span><a name="line-52"></a></pre></body></html>

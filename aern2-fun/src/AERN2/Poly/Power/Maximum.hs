@@ -51,7 +51,7 @@ maximumOptimised f l r initialDegree steps =
   where
   f' = derivative f
   maxKey = ceiling $ (degree f - initialDegree) / steps
-  dfsWithEval = Map.fromList [(k,(evalDirect df, df)) | (k,df) <- dfs]
+  dfsWithEval = Map.fromList [(k,(evalDirect df :: MPBall -> MPBall, df)) | (k,df) <- dfs]
   dfs = [(k, reduceDegree f' l r (initialDegree + steps*k)) | k <- [0..maxKey]]
 
 minimumOptimised :: PowPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall
