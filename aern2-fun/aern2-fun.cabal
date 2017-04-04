@@ -1,0 +1,228 @@
+name:           aern2-fun
+version:        0.1.0.0
+cabal-version:  >= 1.9.2
+build-type:     Simple
+homepage:       https://github.com/michalkonecny/aern2/aern2-fun
+author:         Michal Konecny, Eike Neumann
+maintainer:     Michal Konecny <mikkonecny@gmail.com>
+copyright:      (c) 2015-2017 Michal Konecny, Eike Neumann
+license:        BSD3
+license-file:   LICENSE
+stability:      experimental
+tested-with:    GHC==7.10.3, GHC==8.0.2
+category:       Math
+synopsis:       Exact real functions
+Description:
+  TODO
+
+source-repository head
+  type:     git
+  location: https://github.com/mikkonecny/aern2.git
+  subdir: aern2-fun
+
+library
+  hs-source-dirs:  src
+  build-depends:
+    base == 4.*
+    , containers == 0.5.*
+    , psqueues == 0.2.*
+    , integer-logarithms >= 1.0 && < 1.1
+    , convertible >= 1.1.1.0 && < 1.2
+    , regex-tdfa >= 1.2.1 && < 1.3
+    , bytestring >= 0.10 && < 0.11
+    , hspec >= 2.1 && < 2.5
+    -- , hspec-smallcheck >= 0.3 && < 0.5
+    , QuickCheck >= 2.7 && < 2.10
+    , transformers >= 0.4 && < 0.6
+    , lens >= 4.13 && < 4.16
+    , mixed-types-num == 0.1.*
+    , num-exceptions == 0.1.*
+    , aern2-mp == 0.1.*
+    , aern2-real == 0.1.*
+    , vector
+
+  ghc-options:     -Wall -O2 -fno-warn-orphans
+  extensions:
+    RebindableSyntax,
+    PostfixOperators,
+    ScopedTypeVariables,
+    DeriveGeneric,
+    GeneralizedNewtypeDeriving,
+    TypeFamilies,
+    TypeOperators,
+    ConstraintKinds,
+    DefaultSignatures,
+    MultiParamTypeClasses,
+    FlexibleContexts,
+    FlexibleInstances,
+    UndecidableInstances,
+    Arrows
+  exposed-modules:
+    AERN2.PQueue
+    AERN2.Interval
+    AERN2.RealFun.Operations
+    AERN2.RealFun.Tests
+    AERN2.RealFun.UnaryBallFun
+    AERN2.RealFun.UnaryBallFun.Type
+    AERN2.RealFun.UnaryBallFun.Evaluation
+    AERN2.RealFun.UnaryBallFun.Integration
+    AERN2.RealFun.UnaryBallDFun
+    AERN2.RealFun.UnaryModFun
+    AERN2.RealFun.SineCosine
+    AERN2.Poly
+    AERN2.Poly.Conversion
+    AERN2.Poly.Basics
+    AERN2.Poly.Cheb
+    AERN2.Poly.Cheb.Type
+    AERN2.Poly.Cheb.Eval
+    AERN2.Poly.Cheb.Derivative
+    AERN2.Poly.Cheb.Integration
+    AERN2.Poly.Cheb.MaximumMP
+    AERN2.Poly.Cheb.MaximumInt
+    AERN2.Poly.Cheb.MaximumPrime
+    AERN2.Poly.Cheb.Maximum
+    AERN2.Poly.Cheb.DCT
+    AERN2.Poly.Cheb.Ring
+    AERN2.Poly.Cheb.Field
+    AERN2.Poly.Cheb.Tests
+    AERN2.Poly.Ball
+    AERN2.Poly.Power
+    AERN2.Poly.Power.Type
+    AERN2.Poly.Power.SizeReduction
+    AERN2.Poly.Power.Eval
+    AERN2.Poly.Power.Roots
+    AERN2.Poly.Power.SignedSubresultantMap
+    AERN2.Poly.Power.SignedSubresultantVector
+    AERN2.Poly.Power.SignedSubresultant
+    AERN2.Poly.Power.RootsIntMap
+    AERN2.Poly.Power.RootsIntVector
+    AERN2.Poly.Power.RootsInt
+    AERN2.Poly.Power.MaximumInt
+    AERN2.Poly.Power.MaximumIntAlt
+    AERN2.Poly.Power.Maximum
+    AERN2.PPoly
+    AERN2.PPoly.Type
+    AERN2.PPoly.Eval
+    AERN2.PPoly.Integration
+    AERN2.PPoly.Maximum
+    AERN2.PPoly.Division
+    AERN2.PPoly.Tests
+    AERN2.Frac.Type
+    AERN2.Frac.Ring
+    AERN2.Frac.Field
+    AERN2.Frac.Eval
+    AERN2.Frac.Maximum
+    AERN2.Frac.Conversion
+    AERN2.Frac.Integration
+    AERN2.Frac
+    AERN2.Local.Basics
+    AERN2.Local.Ring
+    AERN2.Local.Field
+    AERN2.Local.Poly
+    AERN2.Local.Maximum
+    AERN2.Local.Integration
+    AERN2.Local.Frac
+    AERN2.Local.SineCosine
+    AERN2.Local.PPoly
+    AERN2.Local
+
+
+test-suite spec
+  type:
+      exitcode-stdio-1.0
+  ghc-options:
+      -Wall
+  extensions:
+    RebindableSyntax,
+    PostfixOperators,
+    ScopedTypeVariables,
+    FlexibleContexts
+  hs-source-dirs:
+      test
+  main-is:
+      Spec.hs
+  build-depends:
+    base == 4.*
+    -- , mixed-types-num
+    -- , aern2-mp
+    -- , aern2-real
+    , aern2-fun == 0.1.*
+    , hspec >= 2.1 && < 2.5
+    -- , hspec-smallcheck >= 0.3 && < 0.5
+    , QuickCheck >= 2.7 && < 2.10
+
+executable aern2-fun-ChPoly-benchOp
+  ghc-options:
+      -Wall -O2
+  extensions:
+    RebindableSyntax,
+    TypeFamilies,
+    PostfixOperators,
+    ScopedTypeVariables,
+    FlexibleContexts,
+    TypeSynonymInstances
+  hs-source-dirs:
+      bench
+  main-is:
+      aern2-fun-chPoly-benchOp.hs
+  build-depends:
+    base == 4.*
+    , bytestring >= 0.10 && < 0.11
+    , regex-tdfa >= 1.2.1 && < 1.3
+    , zlib >= 0.6 && < 0.7
+    , mixed-types-num == 0.1.*
+    , num-exceptions == 0.1.*
+    , aern2-mp == 0.1.*
+    -- , aern2-real == 0.1.*
+    , aern2-fun == 0.1.*
+    , QuickCheck >= 2.7 && < 2.10
+    , clock
+
+executable aern2-fun-ChPoly-serialise
+  ghc-options:
+      -Wall -O2
+  cpp-options: -DCHPOLY
+  extensions:
+    RebindableSyntax,
+    TypeFamilies,
+    PostfixOperators,
+    ScopedTypeVariables,
+    FlexibleContexts,
+    TypeSynonymInstances
+  hs-source-dirs:
+      data
+  main-is:
+      aern2-fun-serialise.hs
+  build-depends:
+    base == 4.*
+    , bytestring >= 0.10 && < 0.11
+    , mixed-types-num == 0.1.*
+    , num-exceptions == 0.1.*
+    , aern2-mp == 0.1.*
+    -- , aern2-real == 0.1.*
+    , aern2-fun == 0.1.*
+    , QuickCheck >= 2.7 && < 2.10
+
+-- executable aern2-fun-PPoly-serialise
+--   ghc-options:
+--       -Wall -O2 -DPPOLY
+--   extensions:
+--     RebindableSyntax,
+--     TypeFamilies,
+--     PostfixOperators,
+--     ScopedTypeVariables,
+--     FlexibleContexts,
+--     TypeSynonymInstances
+--   hs-source-dirs:
+--       data
+--   main-is:
+--       aern2-fun-serialise.hs
+--   build-depends:
+--     base == 4.*
+--     , bytestring >= 0.10 && < 0.11
+--     , mixed-types-num == 0.1.*
+--     , num-exceptions == 0.1.*
+--     , aern2-mp == 0.1.*
+--     -- , aern2-real == 0.1.*
+--     , aern2-fun == 0.1.*
+--     , QuickCheck >= 2.7 && < 2.10

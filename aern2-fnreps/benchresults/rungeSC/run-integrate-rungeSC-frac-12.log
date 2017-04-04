@@ -1,0 +1,31 @@
+rungeSC_FR: getAccuracy num = bits 166
+rungeSC_FR: getPrecision num = Precision 987
+rungeSC_FR: getAccuracy denom = Exact
+rungeSC_FR: getPrecision denom = Precision 192
+computing integrate  (sin(10x)+cos(20x))/(100x^2+1) over [-1,1]
+result = [4.336916185540224e-2 ± 6.987250905661576e-8](prec=987)
+accuracy: bits 23
+precision = Precision 987
+	Command being timed: "aern2-fnreps-ops integrate rungeSC frac 12"
+	User time (seconds): 55.87
+	System time (seconds): 0.28
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:56.22
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 235708
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 60941
+	Voluntary context switches: 1
+	Involuntary context switches: 88
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 16
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

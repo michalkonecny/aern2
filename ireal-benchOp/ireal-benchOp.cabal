@@ -1,0 +1,27 @@
+name:            ireal-benchOp
+version:        0.1.0.0
+cabal-version:  >=1.10
+build-type:     Simple
+homepage:       https://github.com/michalkonecny/aern2/ireal-benchOp
+author:         Michal Konecny
+maintainer:     Michal Konecny <mikkonecny@gmail.com>
+copyright:      (c) 2017 Michal Konecny
+license:        BSD3
+license-file:   LICENSE
+stability:      experimental
+tested-with:    GHC==7.10.3, GHC==8.0.2
+category:       Math
+synopsis:       Execute simple ireal's IReal operation benchmarks
+description:    Execute simple ireal's IReal operation benchmarks
+
+executable ireal-benchOp
+  hs-source-dirs:      src
+  main-is:             Main.hs
+  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+    base
+    , ireal
+    , random
+    , QuickCheck >= 2.7 && < 2.10
+    , aern2-mp == 0.1.*
+  default-language:    Haskell2010

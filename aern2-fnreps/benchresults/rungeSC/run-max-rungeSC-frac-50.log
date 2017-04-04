@@ -1,0 +1,31 @@
+rungeSC_FR: getAccuracy num = bits 2560
+rungeSC_FR: getPrecision num = Precision 6765
+rungeSC_FR: getAccuracy denom = Exact
+rungeSC_FR: getPrecision denom = Precision 800
+computing max  (sin(10x)+cos(20x))/(100x^2+1) over [-1,1]
+result = [1.08089489692758 ± 5.536558059998478e-16](prec=13530)
+accuracy: bits 50
+precision = Precision 13530
+	Command being timed: "aern2-fnreps-ops max rungeSC frac 50"
+	User time (seconds): 373.52
+	System time (seconds): 1.70
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 6:15.65
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 1179968
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 292962
+	Voluntary context switches: 1
+	Involuntary context switches: 474
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

@@ -1,265 +1,431 @@
 Time,Op,Fn,FnRepr,Parameters,Accuracy(bits),UTime(s),STime(s),Mem(kB)
-Wed Jun 15 00:15:31 BST 2016,max,sine+cos,fun,10,10,0.28,0.01,4860
-Wed Jun 15 00:15:33 BST 2016,max,sine+cos,fun,15,15,1.57,0.01,9072
-Wed Jun 15 00:15:42 BST 2016,max,sine+cos,fun,20,20,8.91,0.01,30356
-Wed Jun 15 00:16:33 BST 2016,max,sine+cos,fun,25,25,51.38,0.15,157328
-Wed Jun 15 00:21:25 BST 2016,max,sine+cos,fun,30,30,289.85,0.91,817820
-Wed Jun 15 00:21:33 BST 2016,integrate,sine+cos,fun,10,10,8.89,0.01,44592
-Wed Jun 15 00:22:09 BST 2016,integrate,sine+cos,fun,12,12,35.42,0.14,182836
-Wed Jun 15 00:24:29 BST 2016,integrate,sine+cos,fun,14,14,139.36,0.39,689712
-Wed Jun 15 00:24:29 BST 2016,integrate,sine+cos,dfun,10,10,0.21,0.01,3704
-Wed Jun 15 00:24:30 BST 2016,integrate,sine+cos,dfun,12,12,0.40,0.01,4060
-Wed Jun 15 00:24:31 BST 2016,integrate,sine+cos,dfun,14,14,0.78,0.01,5112
-Wed Jun 15 00:24:32 BST 2016,integrate,sine+cos,dfun,16,16,1.58,0.01,6552
-Wed Jun 15 00:24:35 BST 2016,integrate,sine+cos,dfun,18,18,3.07,0.01,9788
-Wed Jun 15 00:24:41 BST 2016,integrate,sine+cos,dfun,20,20,6.05,0.02,13888
-Wed Jun 15 00:24:42 BST 2016,max,sine+cos,poly,100 34 0 100,13,0.54,0.01,7740
-Wed Jun 15 00:24:43 BST 2016,max,sine+cos,poly,100 36 0 100,17,0.58,0.01,7748
-Wed Jun 15 00:24:43 BST 2016,max,sine+cos,poly,100 38 0 100,21,0.63,0.01,7752
-Wed Jun 15 00:24:44 BST 2016,max,sine+cos,poly,100 40 0 100,26,0.69,0.01,7756
-Wed Jun 15 00:24:45 BST 2016,max,sine+cos,poly,100 42 0 100,30,0.76,0.01,7760
-Wed Jun 15 00:24:46 BST 2016,max,sine+cos,poly,100 44 0 100,34,0.82,0.01,7764
-Wed Jun 15 00:24:46 BST 2016,integrate,sine+cos,poly,100 32 0 100,8,0.36,0.01,7396
-Wed Jun 15 00:24:46 BST 2016,integrate,sine+cos,poly,100 34 0 100,12,0.36,0.01,7392
-Wed Jun 15 00:24:47 BST 2016,integrate,sine+cos,poly,100 36 0 100,16,0.38,0.01,7400
-Wed Jun 15 00:24:47 BST 2016,integrate,sine+cos,poly,100 38 0 100,20,0.38,0.01,7400
-Wed Jun 15 00:24:47 BST 2016,max,sinesine,fun,10,10,0.04,0.01,3576
-Wed Jun 15 00:24:47 BST 2016,max,sinesine,fun,30,30,0.08,0.01,3680
-Wed Jun 15 00:24:47 BST 2016,max,sinesine,fun,50,50,0.09,0.01,3764
-Wed Jun 15 00:24:48 BST 2016,max,sinesine,fun,70,70,0.14,0.01,3876
-Wed Jun 15 00:24:48 BST 2016,max,sinesine,fun,90,90,0.18,0.01,3992
-Wed Jun 15 00:24:48 BST 2016,max,sinesine,fun,95,95,0.22,0.01,4028
-Wed Jun 15 00:24:48 BST 2016,integrate,sinesine,fun,5,5,0.26,0.01,4272
-Wed Jun 15 00:24:56 BST 2016,integrate,sinesine,fun,10,10,7.67,0.03,36392
-Wed Jun 15 00:29:00 BST 2016,integrate,sinesine,fun,15,15,242.86,0.63,1215028
-Wed Jun 15 00:29:00 BST 2016,integrate,sinesine,dfun,5,6,0.07,0.01,3452
-Wed Jun 15 00:29:00 BST 2016,integrate,sinesine,dfun,10,10,0.38,0.01,3860
-Wed Jun 15 00:29:02 BST 2016,integrate,sinesine,dfun,15,15,1.84,0.01,6844
-Wed Jun 15 00:29:13 BST 2016,integrate,sinesine,dfun,20,20,10.66,0.01,23160
-Wed Jun 15 00:30:11 BST 2016,integrate,sinesine,dfun,25,25,57.97,0.12,113224
-Wed Jun 15 00:35:43 BST 2016,integrate,sinesine,dfun,30,30,330.68,0.88,581032
-Wed Jun 15 00:36:07 BST 2016,max,sinesine,poly,100 100 150 100,11,23.68,0.12,52448
-Wed Jun 15 00:36:48 BST 2016,max,sinesine,poly,100 100 200 100,21,40.29,0.35,77140
-Wed Jun 15 00:38:21 BST 2016,max,sinesine,poly,100 100 300 100,44,91.66,0.94,228364
-Wed Jun 15 00:41:18 BST 2016,max,sinesine,poly,100 100 400 100,69,175.02,2.06,354388
-Wed Jun 15 00:44:22 BST 2016,max,sinesine,poly,200 100 400 200,69,181.49,2.02,418140
-Wed Jun 15 00:48:59 BST 2016,max,sinesine,poly,200 100 500 200,95,274.23,1.90,435216
-Wed Jun 15 00:53:23 BST 2016,max,sinesine,poly,400 150 600 400,97,262.37,1.83,575272
-Wed Jun 15 00:53:44 BST 2016,integrate,sinesine,poly,100 100 150 100,10,20.30,0.13,25436
-Wed Jun 15 00:54:17 BST 2016,integrate,sinesine,poly,100 100 200 100,20,32.70,0.21,36704
-Wed Jun 15 00:55:32 BST 2016,integrate,sinesine,poly,100 100 300 100,43,74.09,0.52,67408
-Wed Jun 15 00:57:52 BST 2016,integrate,sinesine,poly,100 100 400 100,68,138.51,1.14,106324
-Wed Jun 15 01:00:18 BST 2016,integrate,sinesine,poly,200 100 400 200,68,145.12,1.14,113508
-Wed Jun 15 01:03:55 BST 2016,integrate,sinesine,poly,200 100 500 200,94,215.57,0.58,80740
-Wed Jun 15 01:07:18 BST 2016,integrate,sinesine,poly,400 150 600 400,96,202.90,0.55,87916
-Wed Jun 15 01:07:18 BST 2016,max,sinesine+cos,fun,10,10,0.04,0.01,3552
-Wed Jun 15 01:07:19 BST 2016,max,sinesine+cos,fun,20,20,0.08,0.01,3648
-Wed Jun 15 01:07:20 BST 2016,max,sinesine+cos,fun,30,30,1.56,0.01,6496
-Wed Jun 15 01:08:11 BST 2016,max,sinesine+cos,fun,40,40,50.21,0.13,114328
-Wed Jun 15 01:12:50 BST 2016,max,sinesine+cos,fun,45,45,278.34,0.65,629396
-Wed Jun 15 01:12:51 BST 2016,integrate,sinesine+cos,fun,5,5,0.52,0.01,5036
-Wed Jun 15 01:13:07 BST 2016,integrate,sinesine+cos,fun,10,10,15.90,0.02,49696
-Wed Jun 15 01:21:01 BST 2016,integrate,sinesine+cos,fun,15,15,472.75,1.11,1487404
-Wed Jun 15 01:21:01 BST 2016,integrate,sinesine+cos,dfun,5,6,0.10,0.01,3496
-Wed Jun 15 01:21:02 BST 2016,integrate,sinesine+cos,dfun,10,10,0.47,0.01,3932
-Wed Jun 15 01:21:04 BST 2016,integrate,sinesine+cos,dfun,15,15,2.59,0.01,6608
-Wed Jun 15 01:21:19 BST 2016,integrate,sinesine+cos,dfun,20,20,14.38,0.03,20048
-Wed Jun 15 01:22:41 BST 2016,integrate,sinesine+cos,dfun,25,25,81.53,0.16,101968
-Wed Jun 15 01:30:42 BST 2016,integrate,sinesine+cos,dfun,30,30,479.30,1.01,582216
-Wed Jun 15 01:31:06 BST 2016,max,sinesine+cos,poly,100 100 150 100,11,23.90,0.21,55008
-Wed Jun 15 01:31:45 BST 2016,max,sinesine+cos,poly,100 100 200 100,21,38.50,0.45,77568
-Wed Jun 15 01:33:16 BST 2016,max,sinesine+cos,poly,100 100 300 100,44,89.98,1.03,226920
-Wed Jun 15 01:36:07 BST 2016,max,sinesine+cos,poly,100 100 400 100,69,168.39,1.78,430936
-Wed Jun 15 01:39:04 BST 2016,max,sinesine+cos,poly,200 100 400 200,69,174.74,1.80,418384
-Wed Jun 15 01:43:25 BST 2016,max,sinesine+cos,poly,200 100 500 200,95,259.45,1.93,413456
-Wed Jun 15 01:47:38 BST 2016,max,sinesine+cos,poly,400 150 600 400,97,250.27,2.01,529980
-Wed Jun 15 01:47:59 BST 2016,integrate,sinesine+cos,poly,100 100 150 100,10,20.38,0.12,25440
-Wed Jun 15 01:48:31 BST 2016,integrate,sinesine+cos,poly,100 100 200 100,20,32.44,0.22,36708
-Wed Jun 15 01:49:47 BST 2016,integrate,sinesine+cos,poly,100 100 300 100,43,74.64,0.56,67416
-Wed Jun 15 01:52:07 BST 2016,integrate,sinesine+cos,poly,100 100 400 100,68,138.38,1.17,106336
-Wed Jun 15 01:54:38 BST 2016,integrate,sinesine+cos,poly,200 100 400 200,68,149.85,1.20,113516
-Wed Jun 15 01:58:15 BST 2016,integrate,sinesine+cos,poly,200 100 500 200,94,216.40,0.57,80748
-Wed Jun 15 02:01:41 BST 2016,integrate,sinesine+cos,poly,400 150 600 400,96,204.47,0.55,86880
-Wed Jun 15 02:01:41 BST 2016,max,runge,fun,05,5,0.01,0.01,5316
-Wed Jun 15 02:01:41 BST 2016,max,runge,fun,35,35,0.03,0.01,5316
-Wed Jun 15 02:01:41 BST 2016,max,runge,fun,65,65,0.03,0.01,5316
-Wed Jun 15 02:01:41 BST 2016,max,runge,fun,100,101,0.05,0.01,5316
-Wed Jun 15 02:01:41 BST 2016,integrate,runge,fun,05,5,0.02,0.01,3352
-Wed Jun 15 02:01:41 BST 2016,integrate,runge,fun,10,10,0.33,0.01,5460
-Wed Jun 15 02:01:52 BST 2016,integrate,runge,fun,15,15,10.39,0.05,74228
-Wed Jun 15 02:07:22 BST 2016,integrate,runge,fun,20,20,328.95,1.31,2490876
-Wed Jun 15 02:07:23 BST 2016,integrate,runge,dfun,05,7,0.01,0.01,3284
-Wed Jun 15 02:07:23 BST 2016,integrate,runge,dfun,10,11,0.04,0.01,3332
-Wed Jun 15 02:07:23 BST 2016,integrate,runge,dfun,15,15,0.15,0.01,3656
-Wed Jun 15 02:07:24 BST 2016,integrate,runge,dfun,20,20,1.02,0.01,6452
-Wed Jun 15 02:07:29 BST 2016,integrate,runge,dfun,25,25,4.95,0.02,18208
-Wed Jun 15 02:08:01 BST 2016,integrate,runge,dfun,30,30,31.85,0.14,98616
-Wed Jun 15 02:10:40 BST 2016,integrate,runge,dfun,35,35,157.87,0.57,427464
-Wed Jun 15 02:10:45 BST 2016,max,runge,poly,100 64 0 100,4,5.40,0.01,18756
-Wed Jun 15 02:11:35 BST 2016,max,runge,poly,120 128 0 100,14,49.44,0.22,95680
-Wed Jun 15 02:12:38 BST 2016,max,runge,poly,150 128 0 100,14,62.78,0.24,116180
-Wed Jun 15 02:28:18 BST 2016,max,runge,poly,200 256 0 100,32,936.00,2.16,1203624
-Wed Jun 15 02:53:35 BST 2016,max,runge,poly,300 256 0 200,32,1511.47,3.07,1722672
-Wed Jun 15 02:53:39 BST 2016,integrate,runge,poly,100 64 0 100,3,4.51,0.03,18712
-Wed Jun 15 02:54:28 BST 2016,integrate,runge,poly,120 128 0 100,13,48.62,0.21,97652
-Wed Jun 15 02:55:31 BST 2016,integrate,runge,poly,150 128 0 100,13,62.11,0.17,111508
-Wed Jun 15 03:11:05 BST 2016,integrate,runge,poly,200 256 0 100,31,931.06,2.01,1213224
-Wed Jun 15 03:36:14 BST 2016,integrate,runge,poly,300 256 0 200,31,1503.72,2.66,1719876
-Wed Jun 15 03:37:11 BST 2016,max,rungeX,fun,05,5,0.02,0.01,5788
-Wed Jun 15 03:37:11 BST 2016,max,rungeX,fun,10,10,0.03,0.01,5800
-Wed Jun 15 03:37:11 BST 2016,max,rungeX,fun,15,15,0.09,0.01,5792
-Wed Jun 15 03:37:12 BST 2016,max,rungeX,fun,20,20,0.42,0.01,5796
-Wed Jun 15 03:37:14 BST 2016,max,rungeX,fun,25,25,2.33,0.01,11940
-Wed Jun 15 03:37:27 BST 2016,max,rungeX,fun,30,30,13.09,0.06,57504
-Wed Jun 15 03:38:47 BST 2016,max,rungeX,fun,35,35,79.07,0.24,249520
-Wed Jun 15 03:46:04 BST 2016,max,rungeX,fun,40,40,434.94,1.65,1539764
-Wed Jun 15 03:46:04 BST 2016,integrate,rungeX,fun,05,5,0.01,0.01,3324
-Wed Jun 15 03:46:04 BST 2016,integrate,rungeX,fun,10,10,0.10,0.01,3844
-Wed Jun 15 03:46:07 BST 2016,integrate,rungeX,fun,15,15,3.28,0.03,28148
-Wed Jun 15 03:47:51 BST 2016,integrate,rungeX,fun,20,20,102.45,0.41,682480
-Wed Jun 15 03:47:51 BST 2016,integrate,rungeX,dfun,05,7,0.01,0.01,3284
-Wed Jun 15 03:47:51 BST 2016,integrate,rungeX,dfun,10,11,0.02,0.01,3300
-Wed Jun 15 03:47:51 BST 2016,integrate,rungeX,dfun,15,15,0.06,0.01,3388
-Wed Jun 15 03:47:51 BST 2016,integrate,rungeX,dfun,20,20,0.36,0.01,4092
-Wed Jun 15 03:47:53 BST 2016,integrate,rungeX,dfun,25,25,1.87,0.01,8632
-Wed Jun 15 03:48:04 BST 2016,integrate,rungeX,dfun,30,30,10.53,0.05,35284
-Wed Jun 15 03:49:02 BST 2016,integrate,rungeX,dfun,35,35,58.34,0.20,157148
-Wed Jun 15 03:54:39 BST 2016,integrate,rungeX,dfun,40,40,334.66,1.15,869848
-Wed Jun 15 03:54:43 BST 2016,max,rungeX,poly,100 64 0 100,11,4.03,0.01,18752
-Wed Jun 15 03:55:32 BST 2016,max,rungeX,poly,120 128 0 100,20,48.92,0.20,94864
-Wed Jun 15 03:56:34 BST 2016,max,rungeX,poly,150 128 0 100,20,61.90,0.20,108508
-Wed Jun 15 04:12:14 BST 2016,max,rungeX,poly,200 256 0 100,39,936.82,2.09,1178360
-Wed Jun 15 04:12:18 BST 2016,integrate,rungeX,poly,100 64 0 100,10,3.83,0.01,18708
-Wed Jun 15 04:13:06 BST 2016,integrate,rungeX,poly,120 128 0 100,19,47.89,0.17,95620
-Wed Jun 15 04:14:08 BST 2016,integrate,rungeX,poly,150 128 0 100,19,60.97,0.45,102284
-Wed Jun 15 04:29:40 BST 2016,integrate,rungeX,poly,200 256 0 100,38,929.01,2.01,1204984
-Wed Jun 15 04:31:43 BST 2016,max,fracSin,fun,05,5,61.46,0.25,36404
-Wed Jun 15 04:32:45 BST 2016,max,fracSin,fun,10,10,61.38,0.32,36396
-Wed Jun 15 04:33:46 BST 2016,max,fracSin,fun,15,15,61.45,0.27,36404
-Wed Jun 15 04:34:48 BST 2016,max,fracSin,fun,20,20,61.36,0.29,36396
-Wed Jun 15 04:35:50 BST 2016,max,fracSin,fun,25,25,61.37,0.26,36408
-Wed Jun 15 04:36:52 BST 2016,max,fracSin,fun,30,31,61.62,0.29,36404
-Wed Jun 15 04:36:52 BST 2016,integrate,fracSin,fun,05,5,0.07,0.01,3660
-Wed Jun 15 04:36:54 BST 2016,integrate,fracSin,fun,10,10,2.18,0.01,12672
-Wed Jun 15 04:38:05 BST 2016,integrate,fracSin,fun,15,15,69.99,0.23,340616
-Wed Jun 15 04:38:05 BST 2016,integrate,fracSin,dfun,05,6,0.06,0.01,3460
-Wed Jun 15 04:38:05 BST 2016,integrate,fracSin,dfun,10,11,0.26,0.01,3720
-Wed Jun 15 04:38:06 BST 2016,integrate,fracSin,dfun,15,15,1.46,0.01,5844
-Wed Jun 15 04:38:15 BST 2016,integrate,fracSin,dfun,20,21,8.18,0.02,14952
-Wed Jun 15 04:39:02 BST 2016,integrate,fracSin,dfun,25,25,46.85,0.11,71280
-Wed Jun 15 04:43:27 BST 2016,integrate,fracSin,dfun,30,31,264.46,0.65,327148
-Wed Jun 15 04:43:38 BST 2016,max,fracSin,poly,100 64 64 100,2,10.98,0.07,56820
-Wed Jun 15 04:44:35 BST 2016,max,fracSin,poly,120 128 128 100,5,55.82,0.32,172648
-Wed Jun 15 04:44:45 BST 2016,integrate,fracSin,poly,100 64 64 100,1,10.06,0.03,56788
-Wed Jun 15 04:45:39 BST 2016,integrate,fracSin,poly,120 128 128 100,4,54.07,0.28,192076
-Wed Jun 15 04:54:40 BST 2016,max,hat,fun,4,4,0.01,0.01,3228
-Wed Jun 15 04:54:40 BST 2016,max,hat,fun,10,10,0.01,0.01,3336
-Wed Jun 15 04:54:40 BST 2016,max,hat,fun,20,20,0.01,0.01,3336
-Wed Jun 15 04:54:40 BST 2016,max,hat,fun,30,30,0.01,0.01,3344
-Wed Jun 15 04:54:40 BST 2016,integrate,hat,fun,4,4,0.01,0.01,3220
-Wed Jun 15 04:54:40 BST 2016,integrate,hat,fun,6,6,0.01,0.01,3260
-Wed Jun 15 04:54:40 BST 2016,integrate,hat,fun,8,8,0.03,0.01,3456
-Wed Jun 15 04:54:40 BST 2016,integrate,hat,fun,10,10,0.11,0.01,4856
-Wed Jun 15 04:54:41 BST 2016,integrate,hat,fun,12,11,0.47,0.01,9820
-Wed Jun 15 04:54:43 BST 2016,integrate,hat,fun,14,13,1.78,0.01,31120
-Wed Jun 15 04:54:50 BST 2016,integrate,hat,fun,16,15,7.02,0.07,105868
-Wed Jun 15 04:55:18 BST 2016,integrate,hat,fun,18,17,27.90,0.17,391568
-Wed Jun 15 04:55:18 BST 2016,integrate,hat,dfun,4,7,0.01,0.01,3160
-Wed Jun 15 04:55:18 BST 2016,integrate,hat,dfun,10,19,0.01,0.01,3252
-Wed Jun 15 04:55:18 BST 2016,integrate,hat,dfun,16,31,0.01,0.01,3236
-Wed Jun 15 04:55:18 BST 2016,max,hat,poly,100 32 0 100,5,0.44,0.01,7804
-Wed Jun 15 04:55:21 BST 2016,max,hat,poly,100 64 0 100,7,3.03,0.02,15756
-Wed Jun 15 04:56:06 BST 2016,max,hat,poly,150 128 0 100,8,44.32,0.18,80380
-Wed Jun 15 04:56:06 BST 2016,integrate,hat,poly,100 32 0 100,4,0.38,0.01,7764
-Wed Jun 15 04:56:09 BST 2016,integrate,hat,poly,100 64 0 100,6,2.76,0.03,15712
-Wed Jun 15 04:56:53 BST 2016,integrate,hat,poly,150 128 0 100,7,42.99,0.19,78032
-Wed Jun 15 04:56:53 BST 2016,max,hat,ppoly,5 0 0 0 10,4,0.01,0.01,3648
-Wed Jun 15 04:56:53 BST 2016,max,hat,ppoly,35 0 0 0 35,34,0.01,0.01,3652
-Wed Jun 15 04:56:53 BST 2016,integrate,hat,ppoly,5 0 0 0 0,3,0.01,0.01,3544
-Wed Jun 15 04:56:53 BST 2016,integrate,hat,ppoly,35 0 0 0 0,33,0.01,0.01,3556
-Wed Jun 15 18:38:55 BST 2016,max,sine+cos,dfun,10,10,0.07,0.01,3696
-Wed Jun 15 18:38:56 BST 2016,max,sine+cos,dfun,15,15,0.10,0.01,3768
-Wed Jun 15 18:38:56 BST 2016,max,sine+cos,dfun,20,20,0.12,0.01,3864
-Wed Jun 15 18:38:56 BST 2016,max,sine+cos,dfun,25,25,0.15,0.01,3932
-Wed Jun 15 18:38:56 BST 2016,max,sine+cos,dfun,30,30,0.16,0.01,4008
-Wed Jun 15 18:38:56 BST 2016,max,sine+cos,dfun,35,35,0.20,0.01,4092
-Wed Jun 15 18:38:56 BST 2016,max,sinesine,dfun,10,11,0.07,0.01,3700
-Wed Jun 15 18:38:57 BST 2016,max,sinesine,dfun,30,31,0.10,0.01,3784
-Wed Jun 15 18:38:57 BST 2016,max,sinesine,dfun,50,51,0.12,0.01,3844
-Wed Jun 15 18:38:57 BST 2016,max,sinesine,dfun,70,71,0.15,0.01,3916
-Wed Jun 15 18:38:57 BST 2016,max,sinesine,dfun,90,90,0.16,0.01,3976
-Wed Jun 15 18:38:57 BST 2016,max,sinesine,dfun,95,95,0.16,0.01,4004
-Wed Jun 15 18:38:57 BST 2016,max,sinesine+cos,dfun,10,10,0.06,0.01,3668
-Wed Jun 15 18:38:58 BST 2016,max,sinesine+cos,dfun,20,20,0.13,0.01,3848
-Wed Jun 15 18:39:00 BST 2016,max,sinesine+cos,dfun,30,30,2.24,0.01,6944
-Wed Jun 15 18:40:11 BST 2016,max,sinesine+cos,dfun,40,40,71.18,0.16,103092
-Wed Jun 15 18:46:56 BST 2016,max,sinesine+cos,dfun,45,45,403.21,0.99,554676
-Wed Jun 15 18:46:56 BST 2016,max,runge,dfun,05,5,0.05,0.01,5940
-Wed Jun 15 18:46:56 BST 2016,max,runge,dfun,35,35,0.07,0.01,5936
-Wed Jun 15 18:46:56 BST 2016,max,runge,dfun,65,65,0.08,0.01,5932
-Wed Jun 15 18:46:57 BST 2016,max,runge,dfun,100,100,0.15,0.01,6964
-Wed Jun 15 18:46:57 BST 2016,max,rungeX,dfun,05,5,0.05,0.01,6008
-Wed Jun 15 18:46:57 BST 2016,max,rungeX,dfun,10,11,0.05,0.01,6012
-Wed Jun 15 18:46:57 BST 2016,max,rungeX,dfun,20,20,0.07,0.01,6000
-Wed Jun 15 18:46:57 BST 2016,max,rungeX,dfun,30,31,0.07,0.01,6016
-Wed Jun 15 18:46:57 BST 2016,max,rungeX,dfun,40,40,0.08,0.01,6008
-Wed Jun 15 18:46:57 BST 2016,max,rungeX,dfun,50,50,0.10,0.01,6008
-Wed Jun 15 18:46:57 BST 2016,max,rungeX,dfun,60,60,0.10,0.01,6008
-Wed Jun 15 18:46:58 BST 2016,max,rungeX,dfun,80,80,0.11,0.01,6024
-Wed Jun 15 18:50:39 BST 2016,max,fracSin,dfun,10,10,107.48,0.77,35708
-Wed Jun 15 18:52:27 BST 2016,max,fracSin,dfun,15,15,107.56,0.82,35708
-Wed Jun 15 18:54:15 BST 2016,max,fracSin,dfun,20,21,106.90,0.74,35712
-Wed Jun 15 18:56:03 BST 2016,max,fracSin,dfun,25,25,107.38,0.80,35720
-Wed Jun 15 18:58:02 BST 2016,max,hat,dfun,4,4,0.01,0.01,3360
-Wed Jun 15 18:58:02 BST 2016,max,hat,dfun,10,10,0.01,0.01,3352
-Wed Jun 15 18:58:02 BST 2016,max,hat,dfun,20,20,0.01,0.01,3360
-Wed Jun 15 18:58:02 BST 2016,max,hat,dfun,30,30,0.01,0.01,3360
-Wed Jun 15 19:00:54 BST 2016,max,fracSin,dfun,05,5,107.04,0.66,35708
-Wed Jun 15 19:02:42 BST 2016,max,fracSin,dfun,30,31,106.97,0.77,35708
-Fri Jul 22 11:59:25 BST 2016,max,runge,ppoly,100 0 0.1 1 100,7,0.09,0.01,4768
-Fri Jul 22 11:59:25 BST 2016,max,runge,ppoly,100 0 0.1 2 100,15,0.14,0.01,5372
-Fri Jul 22 11:59:26 BST 2016,max,runge,ppoly,150 0 0.1 3 150,30,0.52,0.01,6700
-Fri Jul 22 11:59:28 BST 2016,max,runge,ppoly,150 0 0.01 3 150,59,1.69,0.01,7740
-Fri Jul 22 11:59:48 BST 2016,max,runge,ppoly,200 0 0.001 3 200,90,6.33,0.01,9432
-Fri Jul 22 12:00:18 BST 2016,max,runge,ppoly,300 0 0.01 4 300,118,29.17,0.07,13076
-Fri Jul 22 12:00:18 BST 2016,integrate,runge,ppoly,100 0 0.1 1 100,7,0.10,0.01,5088
-Fri Jul 22 12:00:18 BST 2016,integrate,runge,ppoly,100 0 0.1 2 100,15,0.12,0.01,5724
-Fri Jul 22 12:00:18 BST 2016,integrate,runge,ppoly,150 0 0.1 3 150,31,0.24,0.01,7624
-Fri Jul 22 12:00:19 BST 2016,integrate,runge,ppoly,150 0 0.01 3 150,55,0.73,0.01,13732
-Fri Jul 22 12:00:20 BST 2016,integrate,runge,ppoly,300 0 0.05 4 300,74,0.90,0.01,17832
-Fri Jul 22 12:00:22 BST 2016,integrate,runge,ppoly,200 0 0.001 3 200,81,2.36,0.02,32172
-Fri Jul 22 12:00:24 BST 2016,integrate,runge,ppoly,300 0 0.01 4 300,109,1.85,0.02,27920
-Fri Jul 22 12:00:24 BST 2016,max,rungeX,ppoly,100 0 0.1 1 100,7,0.10,0.01,4840
-Fri Jul 22 12:00:25 BST 2016,max,rungeX,ppoly,100 0 0.1 2 100,15,0.15,0.01,5648
-Fri Jul 22 12:00:25 BST 2016,max,rungeX,ppoly,150 0 0.1 3 150,30,0.60,0.01,7024
-Fri Jul 22 12:00:27 BST 2016,max,rungeX,ppoly,150 0 0.01 3 150,66,1.89,0.01,8396
-Fri Jul 22 12:00:50 BST 2016,max,rungeX,ppoly,200 0 0.001 3 200,83,7.32,0.01,11480
-Fri Jul 22 12:01:23 BST 2016,max,rungeX,ppoly,300 0 0.01 4 300,133,32.54,0.03,13612
-Fri Jul 22 12:01:23 BST 2016,integrate,rungeX,ppoly,100 0 0.1 1 100,7,0.10,0.01,5288
-Fri Jul 22 12:01:23 BST 2016,integrate,rungeX,ppoly,100 0 0.1 2 100,15,0.13,0.01,5764
-Fri Jul 22 12:01:24 BST 2016,integrate,rungeX,ppoly,150 0 0.1 3 150,31,0.25,0.01,7656
-Fri Jul 22 12:01:24 BST 2016,integrate,rungeX,ppoly,150 0 0.01 3 150,55,0.80,0.01,12784
-Fri Jul 22 12:01:25 BST 2016,integrate,rungeX,ppoly,300 0 0.05 4 300,74,0.95,0.02,15788
-Fri Jul 22 12:01:28 BST 2016,integrate,rungeX,ppoly,200 0 0.001 3 200,81,2.54,0.01,32180
-Fri Jul 22 12:01:30 BST 2016,integrate,rungeX,ppoly,300 0 0.01 4 300,109,1.94,0.01,24844
-Fri Jul 22 12:01:32 BST 2016,max,fracSin,ppoly,100 20 0.5 1 100,6,2.20,0.01,8516
-Fri Jul 22 12:02:27 BST 2016,max,fracSin,ppoly,100 30 0.1 2 100,16,10.01,0.10,21836
-Fri Jul 22 12:03:15 BST 2016,max,fracSin,ppoly,100 40 0.01 2 100,28,48.23,0.43,36680
-Fri Jul 22 12:05:38 BST 2016,max,fracSin,ppoly,100 40 0.001 2 100,43,141.47,0.76,62812
-Fri Jul 22 12:31:00 BST 2016,max,fracSin,ppoly,800 100 0.01 3 200,56,334.83,3.93,114368
-Fri Jul 22 12:07:11 BST 2016,integrate,fracSin,ppoly,100 20 0.5 1 100,2,1.27,0.01,8788
-Fri Jul 22 12:07:14 BST 2016,integrate,fracSin,ppoly,100 30 0.1 1 100,7,3.14,0.01,18008
-Fri Jul 22 12:07:34 BST 2016,integrate,fracSin,ppoly,100 30 0.1 2 100,14,7.46,0.03,42588
-Fri Jul 22 12:08:11 BST 2016,integrate,fracSin,ppoly,100 40 0.01 2 100,28,37.01,0.14,167532
-Fri Jul 22 12:10:02 BST 2016,integrate,fracSin,ppoly,100 40 0.001 2 100,40,109.77,0.47,501356
-Fri Jul 22 12:35:43 BST 2016,integrate,fracSin,ppoly,800 100 0.01 3 200,56,281.65,0.81,602864
-Fri Jul 22 12:47:36 BST 2016,max,runge,fun,120,121,0.06,0.01,5332
-Fri Jul 22 12:47:37 BST 2016,max,runge,dfun,120,120,0.17,0.01,6008
-Fri Jul 22 12:47:37 BST 2016,max,rungeX,dfun,100,100,0.13,0.01,6964
-Fri Jul 22 12:47:37 BST 2016,max,rungeX,dfun,130,130,0.16,0.01,6976
-Fri Jul 22 12:48:40 BST 2016,max,fracSin,fun,35,35,62.23,0.30,36392
-Fri Jul 22 12:49:43 BST 2016,max,fracSin,fun,45,45,62.34,0.29,36388
-Fri Jul 22 12:50:45 BST 2016,max,fracSin,fun,55,55,62.16,0.28,36384
-Fri Jul 22 12:52:35 BST 2016,max,fracSin,dfun,35,35,108.55,0.92,35688
-Fri Jul 22 12:54:25 BST 2016,max,fracSin,dfun,45,45,108.54,0.80,35696
-Fri Jul 22 12:56:15 BST 2016,max,fracSin,dfun,55,55,108.67,0.92,35688
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,fun,10,10,0.86,0.01,22664
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,fun,15,15,4.77,0.05,85912
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,fun,20,20,28.53,0.20,473572
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,fun,25,25,281.50,1.65,2793936
+Fri Mar 31 10:05:40 BST 2017,integrate,sine+cos,fun,10,10,42.26,0.12,38360
+Fri Mar 31 10:05:40 BST 2017,integrate,sine+cos,fun,12,12,152.08,0.37,124180
+Fri Mar 31 10:05:40 BST 2017,integrate,sine+cos,fun,14,14,628.31,1.86,473220
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,ball,10,10,1.11,0.01,25596
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,ball,15,15,5.97,0.06,98372
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,ball,20,20,40.13,0.26,538744
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,ball,25,25,324.26,2.08,3038336
+Fri Mar 31 10:05:40 BST 2017,integrate,sine+cos,ball,10,10,39.36,0.15,36028
+Fri Mar 31 10:05:40 BST 2017,integrate,sine+cos,ball,12,12,154.76,0.45,125292
+Fri Mar 31 10:05:40 BST 2017,integrate,sine+cos,ball,14,14,623.05,1.93,466288
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,dball,10,10,0.14,0.01,9868
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,dball,30,30,0.26,0.01,10748
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,dball,50,50,0.46,0.01,12164
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,dball,70,70,0.64,0.01,13400
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,dball,90,90,0.78,0.01,14308
+Fri Mar 31 10:05:40 BST 2017,integrate,sine+cos,dball,10,10,0.88,0.01,9008
+Fri Mar 31 10:05:40 BST 2017,integrate,sine+cos,dball,15,16,5.36,0.01,12012
+Fri Mar 31 10:05:40 BST 2017,integrate,sine+cos,dball,20,20,24.54,0.06,22492
+Fri Mar 31 10:05:40 BST 2017,integrate,sine+cos,dball,25,26,169.39,0.60,132128
+Fri Mar 31 10:05:40 BST 2017,integrate,sine+cos,dball,30,30,752.17,2.55,561068
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,poly,10,10,1.20,0.02,19652
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,poly,30,24,2.68,0.01,24340
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,poly,50,33,3.72,0.01,28412
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,poly,70,55,7.25,0.02,32092
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,poly,90,75,9.19,0.03,38080
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,poly,110,95,11.70,0.03,42172
+Fri Mar 31 10:05:40 BST 2017,integrate,sine+cos,poly,10,9,0.27,0.01,19408
+Fri Mar 31 10:05:40 BST 2017,integrate,sine+cos,poly,30,23,0.40,0.01,23596
+Fri Mar 31 10:05:40 BST 2017,integrate,sine+cos,poly,50,32,0.58,0.02,27752
+Fri Mar 31 10:05:40 BST 2017,integrate,sine+cos,poly,70,54,0.82,0.01,32312
+Fri Mar 31 10:05:40 BST 2017,integrate,sine+cos,poly,90,74,1.04,0.02,37336
+Fri Mar 31 10:05:40 BST 2017,integrate,sine+cos,poly,110,94,1.28,0.01,41540
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,lpoly,10,10,0.76,0.01,14140
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,lpoly,30,30,1.90,0.01,14704
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,lpoly,50,50,2.56,0.01,14996
+Fri Mar 31 10:05:40 BST 2017,max,sine+cos,lpoly,70,70,3.00,0.01,16836
+Fri Mar 31 10:05:41 BST 2017,max,sine+cos,lpoly,90,90,3.86,0.02,19032
+Fri Mar 31 10:05:41 BST 2017,integrate,sine+cos,lpoly,10,14,0.43,0.01,11940
+Fri Mar 31 10:05:41 BST 2017,integrate,sine+cos,lpoly,30,36,1.67,0.01,12928
+Fri Mar 31 10:05:41 BST 2017,integrate,sine+cos,lpoly,50,56,3.83,0.02,13932
+Fri Mar 31 10:05:41 BST 2017,integrate,sine+cos,lpoly,70,78,7.34,0.04,15324
+Fri Mar 31 10:05:41 BST 2017,integrate,sine+cos,lpoly,90,97,12.56,0.04,16612
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,fun,10,10,7.18,0.05,55492
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,fun,15,15,37.27,0.15,245512
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,fun,20,20,346.16,1.31,1398952
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,fun,5,5,43.93,0.10,21740
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,fun,7,7,142.92,0.36,58616
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,ball,10,10,0.16,0.01,10644
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,ball,30,30,0.30,0.01,11692
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,ball,50,50,0.51,0.01,13228
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,ball,70,70,0.76,0.01,15008
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,ball,90,90,0.85,0.01,16040
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,ball,05,5,1.20,0.01,9704
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,ball,10,10,35.58,0.08,41284
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,ball,15,15,1174.83,3.66,1059968
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,dball,10,10,0.25,0.01,10244
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,dball,30,30,0.34,0.01,10436
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,dball,50,50,0.45,0.01,10952
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,dball,70,70,0.56,0.01,11312
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,dball,90,90,0.69,0.01,11592
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,dball,05,6,0.51,0.01,9388
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,dball,10,10,1.27,0.01,9256
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,dball,15,15,6.86,0.02,11660
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,dball,20,20,39.98,0.10,28392
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,dball,25,25,216.99,0.73,120572
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,dball,30,30,1185.35,3.85,656164
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,poly,10,5,20.42,0.14,312996
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,poly,30,25,57.22,0.59,781384
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,poly,50,39,114.81,0.94,1381216
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,poly,70,59,192.16,1.82,2082564
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,poly,90,79,303.20,2.69,2918392
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,poly,110,99,442.61,4.00,3879348
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,poly,05,0,10.51,0.12,213076
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,poly,10,4,16.62,0.19,311700
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,poly,15,9,23.03,0.22,418540
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,poly,20,14,30.50,0.26,521536
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,poly,25,19,40.17,0.41,647964
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,poly,30,24,51.11,0.48,771112
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,poly,50,38,104.86,1.10,1401052
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,poly,70,58,187.10,1.76,2068020
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,poly,90,78,285.90,2.75,2944180
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,lpoly,10,11,1.56,0.02,18452
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,lpoly,30,30,2.94,0.01,17608
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,lpoly,50,50,3.61,0.02,21452
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,lpoly,70,70,5.97,0.03,29912
+Fri Mar 31 10:05:41 BST 2017,max,sinesine,lpoly,90,90,8.26,0.06,39720
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,lpoly,10,14,1.64,0.01,19980
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,lpoly,30,35,5.80,0.02,18196
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,lpoly,50,50,13.86,0.06,21832
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,lpoly,70,71,29.38,0.15,22252
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine,lpoly,90,91,52.40,0.24,24772
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,fun,10,10,15.58,0.10,95616
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,fun,15,15,74.46,0.35,429092
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,fun,20,20,751.32,2.78,2436948
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,fun,05,5,82.19,0.24,38200
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,fun,07,7,323.01,0.80,126312
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,ball,10,10,0.24,0.01,11032
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,ball,20,20,3.42,0.02,41260
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,ball,30,30,183.52,0.90,1152136
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,ball,05,5,2.40,0.01,10292
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,ball,10,10,69.03,0.22,64520
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,ball,13,13,490.62,1.62,475992
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,dball,10,10,0.25,0.01,10124
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,dball,30,30,0.32,0.01,10112
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,dball,50,50,0.45,0.01,10808
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,dball,70,70,0.54,0.01,11156
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,dball,90,90,0.70,0.01,11544
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,dball,05,6,0.42,0.01,9440
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,dball,10,10,1.74,0.01,9232
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,dball,15,15,9.64,0.04,12028
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,dball,20,20,54.28,0.21,30456
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,dball,25,25,296.84,0.94,130740
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,dball,28,28,928.03,3.32,926616
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,poly,10,5,19.44,0.16,314964
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,poly,15,10,25.04,0.22,420908
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,poly,20,15,31.68,0.35,529424
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,poly,25,20,43.37,0.48,636240
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,poly,30,25,53.84,0.46,757348
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,poly,35,30,67.94,0.73,919968
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,poly,50,39,110.98,1.13,1366476
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,poly,70,59,187.59,1.90,2069044
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,poly,90,79,286.34,2.43,2919420
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,poly,05,0,11.27,0.08,219428
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,poly,10,4,15.93,0.17,310620
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,poly,15,9,22.76,0.29,420952
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,poly,20,14,30.25,0.29,527688
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,poly,25,19,41.28,0.40,635432
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,poly,30,24,55.18,0.55,770396
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,poly,50,38,101.32,0.91,1355208
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,poly,70,58,170.16,1.64,2082340
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,poly,90,78,265.71,2.36,2960772
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,lpoly,05,9,2.22,0.01,26368
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,lpoly,10,15,1.90,0.01,18648
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,lpoly,15,20,1.88,0.01,16704
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,lpoly,20,20,1.86,0.01,17544
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,lpoly,25,26,2.21,0.01,18684
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,lpoly,30,30,2.92,0.01,19712
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,lpoly,35,35,2.27,0.01,21092
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,lpoly,50,50,2.54,0.01,27480
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,lpoly,70,70,3.47,0.01,38068
+Fri Mar 31 10:05:41 BST 2017,max,sinesine+cos,lpoly,90,94,7.56,0.08,53228
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,lpoly,05,7,1.25,0.01,22524
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,lpoly,10,13,1.86,0.01,19952
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,lpoly,15,19,2.42,0.02,17944
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,lpoly,20,25,3.48,0.02,18016
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,lpoly,25,30,4.82,0.02,17540
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,lpoly,30,35,6.55,0.03,18952
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,lpoly,35,41,7.81,0.05,19200
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,lpoly,50,50,15.60,0.09,21468
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,lpoly,70,71,31.87,0.15,22396
+Fri Mar 31 10:05:41 BST 2017,integrate,sinesine+cos,lpoly,90,91,55.69,0.22,24744
+Fri Mar 31 10:05:41 BST 2017,max,runge,ball,05,5,0.02,0.01,9516
+Fri Mar 31 10:05:41 BST 2017,max,runge,ball,35,35,0.05,0.01,9520
+Fri Mar 31 10:05:41 BST 2017,max,runge,ball,65,65,0.10,0.01,10488
+Fri Mar 31 10:05:41 BST 2017,max,runge,ball,100,101,0.13,0.01,11128
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,ball,05,5,0.04,0.01,8360
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,ball,10,10,1.34,0.01,9312
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,ball,15,15,41.15,0.14,42524
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,ball,20,20,1474.30,5.07,1101564
+Fri Mar 31 10:05:42 BST 2017,max,runge,dball,05,5,0.09,0.01,10840
+Fri Mar 31 10:05:42 BST 2017,max,runge,dball,35,35,0.12,0.01,10844
+Fri Mar 31 10:05:42 BST 2017,max,runge,dball,65,65,0.15,0.01,11004
+Fri Mar 31 10:05:42 BST 2017,max,runge,dball,100,100,0.20,0.01,11020
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,dball,05,7,0.03,0.01,8192
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,dball,10,10,0.12,0.01,8920
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,dball,15,15,0.63,0.01,9060
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,dball,20,20,3.78,0.02,11308
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,dball,25,25,19.82,0.05,24880
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,dball,30,30,123.24,0.46,115380
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,dball,35,35,650.21,2.57,543780
+Fri Mar 31 10:05:42 BST 2017,max,runge,poly,00,1,9.87,0.03,18364
+Fri Mar 31 10:05:42 BST 2017,max,runge,poly,01,10,41.78,0.11,45456
+Fri Mar 31 10:05:42 BST 2017,max,runge,poly,10,29,294.90,2.22,156116
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,poly,00,0,10.50,0.07,18596
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,poly,01,9,43.85,0.18,45556
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,poly,10,28,308.81,2.32,156476
+Fri Mar 31 10:05:42 BST 2017,max,runge,ppoly,10,19,23.22,0.10,33864
+Fri Mar 31 10:05:42 BST 2017,max,runge,ppoly,20,24,49.10,0.19,61864
+Fri Mar 31 10:05:42 BST 2017,max,runge,ppoly,40,45,56.06,0.24,95680
+Fri Mar 31 10:05:42 BST 2017,max,runge,ppoly,60,27,19.30,0.09,54096
+Fri Mar 31 10:05:42 BST 2017,max,runge,ppoly,80,87,74.88,0.28,182920
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,ppoly,10,22,23.18,0.07,32488
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,ppoly,20,27,48.19,0.17,54156
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,ppoly,40,48,52.10,0.20,93424
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,ppoly,60,31,16.24,0.08,54520
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,ppoly,80,91,66.34,0.29,181932
+Fri Mar 31 10:05:42 BST 2017,max,runge,frac,10,exact,0.01,0.01,11000
+Fri Mar 31 10:05:42 BST 2017,max,runge,frac,20,exact,0.01,0.01,10808
+Fri Mar 31 10:05:42 BST 2017,max,runge,frac,40,exact,0.01,0.01,11152
+Fri Mar 31 10:05:42 BST 2017,max,runge,frac,60,exact,0.01,0.01,11012
+Fri Mar 31 10:05:42 BST 2017,max,runge,frac,80,exact,0.01,0.01,11016
+Fri Mar 31 10:05:42 BST 2017,max,runge,frac,100,exact,0.01,0.01,10864
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,frac,8,18,23.52,0.09,32756
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,frac,16,18,23.55,0.07,32920
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,frac,32,52,83.17,0.36,145404
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,frac,64,104,104.47,0.40,277148
+Fri Mar 31 10:05:42 BST 2017,max,runge,lpoly,2,11,164.42,0.61,49464
+Fri Mar 31 10:05:42 BST 2017,max,runge,lpoly,10,96,70.39,0.27,22148
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,lpoly,10,57,79.89,0.31,19148
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,lpoly,80,69,125.95,0.40,13692
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,lpoly,160,86,377.42,1.44,13756
+Fri Mar 31 10:05:42 BST 2017,max,runge,lppoly,10,46,17.98,0.06,42212
+Fri Mar 31 10:05:42 BST 2017,max,runge,lppoly,20,49,21.16,0.10,47940
+Fri Mar 31 10:05:42 BST 2017,max,runge,lppoly,40,49,21.36,0.05,47896
+Fri Mar 31 10:05:42 BST 2017,max,runge,lppoly,80,81,22.65,0.08,59740
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,lppoly,2,19,25.57,0.12,21752
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,lppoly,10,35,24.07,0.07,18416
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,lppoly,80,63,9.97,0.03,12952
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,lppoly,120,90,49.51,0.16,15396
+Fri Mar 31 10:05:42 BST 2017,max,runge,lfrac,10,exact,0.05,0.01,11768
+Fri Mar 31 10:05:42 BST 2017,max,runge,lfrac,20,exact,0.07,0.01,12220
+Fri Mar 31 10:05:42 BST 2017,max,runge,lfrac,40,exact,0.07,0.01,12196
+Fri Mar 31 10:05:42 BST 2017,max,runge,lfrac,80,exact,0.07,0.01,12304
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,lfrac,2,19,25.75,0.15,22296
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,lfrac,10,35,24.00,0.07,18464
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,lfrac,80,63,10.10,0.06,13076
+Fri Mar 31 10:05:42 BST 2017,integrate,runge,lfrac,120,90,51.50,0.17,15544
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,ball,05,5,25.12,0.03,13756
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,ball,10,10,25.46,0.02,13724
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,ball,15,15,26.01,0.03,20424
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,ball,20,20,30.30,0.07,74932
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,ball,25,25,66.17,0.28,385316
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,ball,30,30,267.54,1.73,2186436
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,ball,05,5,0.38,0.01,8848
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,ball,10,10,9.90,0.04,15812
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,ball,15,15,312.16,1.12,260852
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,dball,10,11,125.66,0.11,13640
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,dball,30,31,125.32,0.16,13728
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,dball,50,51,124.84,0.10,13724
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,dball,70,71,122.91,0.10,13660
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,dball,90,91,123.40,0.11,13652
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,dball,05,6,0.19,0.01,9124
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,dball,10,10,0.85,0.01,9456
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,dball,15,15,4.39,0.01,11476
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,dball,20,20,25.18,0.12,28660
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,dball,25,25,137.32,0.49,113648
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,dball,30,30,782.42,2.88,647236
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,ppoly,8,2,114.90,0.55,538284
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,ppoly,16,29,166.44,0.74,796392
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,ppoly,32,101,448.32,2.12,1601520
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,ppoly,8,4,90.63,0.48,351288
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,ppoly,16,32,123.41,0.64,531216
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,ppoly,32,105,255.46,1.25,1020336
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,poly,-01,-1,9.34,0.04,19428
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,poly,01,1,52.26,0.25,53808
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,poly,04,4,54.58,0.26,47720
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,poly,-01,-2,8.87,0.01,18928
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,poly,01,0,50.50,0.24,53876
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,poly,04,3,59.08,0.19,47752
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,frac,10,10,4.38,0.01,48044
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,frac,20,20,14.37,0.10,137540
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,frac,30,30,47.20,0.27,327464
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,frac,40,40,141.72,0.63,673612
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,frac,50,50,373.52,1.70,1179968
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,frac,4,4,91.20,0.40,342744
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,frac,8,29,125.05,0.65,518328
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,frac,12,23,55.87,0.28,235708
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,frac,16,105,255.61,1.06,996072
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,lpoly,10,10,18.41,0.06,16232
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,lpoly,30,31,38.31,0.13,20196
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,lpoly,50,50,38.90,0.13,19428
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,lpoly,70,70,58.33,0.19,25080
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,lpoly,90,90,58.70,0.22,25400
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,lpoly,10,16,18.00,0.08,13748
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,lpoly,20,28,40.60,0.14,13284
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,lpoly,40,49,100.66,0.38,15004
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,lpoly,60,65,157.50,0.61,15268
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,lpoly,80,86,258.61,0.96,16568
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,lppoly,10,10,20.01,0.11,71672
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,lppoly,30,30,22.22,0.11,72132
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,lppoly,50,50,22.30,0.11,71900
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,lppoly,70,72,23.26,0.08,72108
+Fri Mar 31 10:05:42 BST 2017,max,rungeSC,lppoly,90,90,22.98,0.14,72896
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,lppoly,10,15,25.74,0.06,23572
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,lppoly,20,28,26.46,0.08,18796
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,lppoly,40,35,23.82,0.10,16800
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,lppoly,60,42,60.11,0.24,23260
+Fri Mar 31 10:05:42 BST 2017,integrate,rungeSC,lppoly,80,63,20.77,0.07,17900
+Fri Mar 31 10:05:43 BST 2017,max,rungeSC,lfrac,10,10,1.26,0.01,15044
+Fri Mar 31 10:05:43 BST 2017,max,rungeSC,lfrac,30,30,1.07,0.01,17416
+Fri Mar 31 10:05:43 BST 2017,max,rungeSC,lfrac,50,50,1.15,0.01,18424
+Fri Mar 31 10:05:43 BST 2017,max,rungeSC,lfrac,70,70,1.35,0.01,20196
+Fri Mar 31 10:05:43 BST 2017,max,rungeSC,lfrac,90,90,1.52,0.01,22200
+Fri Mar 31 10:05:43 BST 2017,integrate,rungeSC,lfrac,10,15,25.50,0.08,23840
+Fri Mar 31 10:05:43 BST 2017,integrate,rungeSC,lfrac,30,32,20.34,0.05,15512
+Fri Mar 31 10:05:43 BST 2017,integrate,rungeSC,lfrac,50,37,27.36,0.08,15928
+Fri Mar 31 10:05:43 BST 2017,integrate,rungeSC,lfrac,70,51,32.46,0.10,16692
+Fri Mar 31 10:05:43 BST 2017,integrate,rungeSC,lfrac,90,69,30.12,0.10,17908
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,ball,05,5,64.24,0.06,13004
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,ball,15,15,63.91,0.09,13112
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,ball,25,25,64.76,0.09,13080
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,ball,35,35,64.30,0.08,13788
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,ball,45,45,64.42,0.04,15160
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,ball,55,55,64.39,0.05,16576
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,ball,70,70,63.88,0.04,19036
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,ball,90,91,64.37,0.02,22132
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,ball,05,5,0.35,0.01,8748
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,ball,10,10,10.13,0.03,12352
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,ball,15,15,298.40,1.01,156220
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,dball,10,10,330.68,0.28,13664
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,dball,30,30,337.84,0.37,13672
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,dball,50,50,332.74,0.40,13996
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,dball,70,70,332.60,0.35,15800
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,dball,90,90,339.29,0.41,16380
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,dball,05,6,0.23,0.01,9504
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,dball,10,10,1.14,0.01,9596
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,dball,15,15,5.79,0.02,11816
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,dball,20,20,34.14,0.09,25800
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,dball,25,25,181.49,0.59,106816
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,dball,30,31,1009.75,3.62,556236
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,ppoly,10,13,162.90,0.62,65096
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,ppoly,15,18,423.74,1.65,138248
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,ppoly,20,22,920.48,3.36,284088
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,ppoly,10,14,173.71,0.72,63716
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,ppoly,15,19,421.32,1.56,136648
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,ppoly,20,23,925.66,3.45,278380
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,poly,01,3,30.13,0.19,80456
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,poly,03,9,242.36,2.41,1166344
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,poly,01,2,27.32,0.18,81736
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,poly,03,8,221.52,2.01,1150732
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,frac,10,10,1.13,0.01,13360
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,frac,20,20,1.44,0.01,14088
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,frac,40,40,2.23,0.01,15424
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,frac,60,60,3.21,0.01,16896
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,frac,80,80,3.98,0.01,17684
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,frac,100,100,5.04,0.03,18216
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,frac,10,14,173.22,0.72,63312
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,frac,15,19,427.35,1.64,139532
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,frac,20,23,959.15,3.78,276040
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,lpoly,10,10,48.58,0.17,18552
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,lpoly,20,20,58.40,0.15,18832
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,lpoly,40,40,112.83,0.39,18884
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,lpoly,50,50,154.78,0.52,25224
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,lpoly,10,12,51.92,0.18,15004
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,lpoly,20,26,100.28,0.34,14736
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,lpoly,40,48,251.16,0.86,15036
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,lpoly,50,57,272.36,1.05,15124
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,lppoly,10,10,34.06,0.18,23108
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,lppoly,20,21,44.19,0.21,34744
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,lppoly,40,41,44.69,0.21,34684
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,lppoly,60,61,42.91,0.21,34952
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,lppoly,10,8,22.95,0.06,13472
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,lppoly,20,21,175.16,0.63,20120
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,lppoly,40,37,114.74,0.39,19336
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,lppoly,60,57,677.02,2.69,46432
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,lfrac,10,12,1.32,0.01,13684
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,lfrac,20,20,2.14,0.01,15120
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,lfrac,40,40,3.47,0.01,15588
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,lfrac,60,62,5.03,0.01,17856
+Fri Mar 31 10:05:43 BST 2017,max,fracSin,lfrac,80,83,5.90,0.01,18548
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,lfrac,10,8,21.63,0.06,13616
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,lfrac,20,21,170.09,0.72,20252
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,lfrac,40,37,111.12,0.35,19416
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSin,lfrac,60,57,683.30,2.72,46836
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,ball,10,10,189.89,0.20,13664
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,ball,20,20,198.90,0.26,70492
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,ball,25,25,243.62,0.52,344332
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,ball,30,30,494.32,1.83,1875036
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSinSC,ball,05,5,1.16,0.01,9636
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSinSC,ball,10,10,34.15,0.13,29288
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSinSC,ball,15,15,1078.74,3.38,669912
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,dball,10,10,908.59,0.96,14332
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,dball,30,30,909.31,0.94,14284
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,dball,50,50,903.70,0.98,14376
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,dball,70,70,923.06,1.02,14472
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,dball,90,90,914.89,0.78,14484
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSinSC,dball,05,6,0.63,0.01,9476
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSinSC,dball,10,10,2.88,0.01,10468
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSinSC,dball,15,15,16.17,0.04,17796
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSinSC,dball,20,20,86.58,0.34,59748
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSinSC,dball,25,25,508.10,1.50,303436
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,poly,01,1,45.34,0.18,72892
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,poly,03,3,187.89,1.80,677040
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSinSC,poly,01,0,43.44,0.22,72820
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSinSC,poly,03,2,173.39,1.40,699604
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,ppoly,8,16,465.60,1.71,477308
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,ppoly,16,23,402.06,1.49,479192
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,ppoly,20,32,812.96,3.03,948076
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSinSC,ppoly,8,17,439.97,1.65,328620
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSinSC,ppoly,16,25,336.41,1.23,354720
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSinSC,ppoly,20,34,678.74,2.72,674872
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,frac,8,8,6.30,0.03,29540
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,frac,16,16,7.43,0.03,40440
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,frac,20,20,10.91,0.08,48408
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSinSC,frac,8,17,457.24,1.95,328432
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSinSC,frac,16,25,360.54,1.36,351344
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSinSC,frac,20,34,710.48,2.86,658248
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,lpoly,8,9,37.40,0.10,18348
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,lpoly,16,20,36.27,0.15,18676
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,lpoly,24,26,46.40,0.14,18620
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,lpoly,32,32,45.72,0.20,18688
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,lpoly,40,40,47.14,0.11,18596
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,lpoly,60,60,68.16,0.28,27180
+Fri Mar 31 10:05:43 BST 2017,max,fracSinSC,lpoly,80,80,69.66,0.24,27172
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSinSC,lpoly,8,9,92.97,0.28,20608
+Fri Mar 31 10:05:43 BST 2017,integrate,fracSinSC,lpoly,16,20,75.28,0.25,14888
+Fri Mar 31 10:05:44 BST 2017,integrate,fracSinSC,lpoly,24,29,121.92,0.45,14952
+Fri Mar 31 10:05:44 BST 2017,integrate,fracSinSC,lpoly,32,38,165.43,0.59,15304
+Fri Mar 31 10:05:44 BST 2017,integrate,fracSinSC,lpoly,40,47,239.83,0.91,15916
+Fri Mar 31 10:05:44 BST 2017,integrate,fracSinSC,lpoly,60,66,381.22,1.32,18820
+Fri Mar 31 10:05:44 BST 2017,max,fracSinSC,lppoly,8,8,64.09,0.26,68296
+Fri Mar 31 10:05:44 BST 2017,max,fracSinSC,lppoly,16,16,39.65,0.13,59108
+Fri Mar 31 10:05:44 BST 2017,max,fracSinSC,lppoly,24,29,38.17,0.17,59136
+Fri Mar 31 10:05:44 BST 2017,max,fracSinSC,lppoly,32,35,38.14,0.14,59024
+Fri Mar 31 10:05:44 BST 2017,max,fracSinSC,lppoly,40,42,38.28,0.12,59084
+Fri Mar 31 10:05:44 BST 2017,max,fracSinSC,lppoly,60,62,40.34,0.18,61140
+Fri Mar 31 10:05:44 BST 2017,max,fracSinSC,lppoly,80,82,37.81,0.17,59152
+Fri Mar 31 10:05:44 BST 2017,integrate,fracSinSC,lppoly,8,6,57.74,0.23,16792
+Fri Mar 31 10:05:44 BST 2017,integrate,fracSinSC,lppoly,16,16,71.84,0.26,18680
+Fri Mar 31 10:05:44 BST 2017,integrate,fracSinSC,lppoly,24,25,191.40,0.65,23784
+Fri Mar 31 10:05:44 BST 2017,integrate,fracSinSC,lppoly,32,28,50.15,0.17,17680
+Fri Mar 31 10:05:44 BST 2017,integrate,fracSinSC,lppoly,40,37,122.83,0.38,20172
+Fri Mar 31 10:05:44 BST 2017,integrate,fracSinSC,lppoly,60,57,764.82,2.52,51220
+Fri Mar 31 10:05:44 BST 2017,max,fracSinSC,lfrac,8,13,1.91,0.01,16612
+Fri Mar 31 10:05:44 BST 2017,max,fracSinSC,lfrac,16,17,2.10,0.01,17520
+Fri Mar 31 10:05:44 BST 2017,max,fracSinSC,lfrac,24,28,2.88,0.01,17436
+Fri Mar 31 10:05:44 BST 2017,max,fracSinSC,lfrac,32,33,2.81,0.01,17324
+Fri Mar 31 10:05:44 BST 2017,max,fracSinSC,lfrac,40,41,2.97,0.01,18104
+Fri Mar 31 10:05:44 BST 2017,max,fracSinSC,lfrac,60,61,3.54,0.01,20396
+Fri Mar 31 10:05:44 BST 2017,max,fracSinSC,lfrac,80,81,4.17,0.01,22804
+Fri Mar 31 10:05:44 BST 2017,integrate,fracSinSC,lfrac,16,16,73.04,0.30,18864
+Fri Mar 31 10:05:44 BST 2017,integrate,fracSinSC,lfrac,24,25,193.71,0.85,23984
+Fri Mar 31 10:05:44 BST 2017,integrate,fracSinSC,lfrac,32,28,48.56,0.23,17688
+Fri Mar 31 10:05:44 BST 2017,integrate,fracSinSC,lfrac,40,37,117.82,0.41,20312
+Fri Mar 31 10:05:44 BST 2017,integrate,fracSinSC,lfrac,48,43,243.64,0.88,26416
+Fri Mar 31 10:05:44 BST 2017,integrate,fracSinSC,lfrac,56,52,483.82,1.96,40744
