@@ -1,10 +1,8 @@
 # AERN2
 
-_This repository comprises experimental code._
-
 A set of Haskell packages for exact real number computation.
 
-Library packages:
+Provided library packages:
 
   * [aern2-mp](http://michalkonecny.github.io/aern2/aern2-mp/): Multiple-precision ball arithmetic based on MPFR
 
@@ -14,13 +12,13 @@ Library packages:
 
   * [aern2-fun-plot](http://michalkonecny.github.io/aern2/aern2-fun-plot/): Plotting of real functions in browser (work in progress)
 
-Conceptually significant dependencies:
-
-  * [mixed-types-num](https://michalkonecny.github.io/mixed-types-num/Numeric-MixedTypes.html):
-    Bottom-up typing of numerical expressions
-
-Supporting executables:
+Provided executables:
 
   * [aern2-fnreps](https://github.com/michalkonecny/aern2/tree/master/aern2-fnreps): Benchmark comparison of representations of continuous functions
 
   * aern2-bench-chart: Produce performance charts using data from a csv file.  Used within aern2-fnreps and aern2-fun.
+
+Significant dependency:
+
+  * [mixed-types-num](https://michalkonecny.github.io/mixed-types-num/Numeric-MixedTypes.html):
+    Bottom-up-typed numerical expressions
