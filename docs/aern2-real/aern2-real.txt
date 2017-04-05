@@ -4,7 +4,9 @@
 
 -- | Exact real numbers via Cauchy sequences and MPFR
 --   
---   TODO
+--   Exact real numbers as Cauchy sequences of MPFR approximations.
+--   
+--   See module <a>AERN2.Real</a> for further documentation.
 @package aern2-real
 @version 0.1.0.0
 
@@ -32,6 +34,10 @@ QA__ :: String -> Maybe (QAId to) -> [QAId to] -> p -> Q p -> (Q p) `to` (A p) -
 [qaProtocol] :: QA to p -> p
 [qaSampleQ] :: QA to p -> Q p
 [qaMakeQuery] :: QA to p -> (Q p) `to` (A p)
+
+-- | An infix synonym of <a>qaMakeQuery</a>.
+(?) :: QA to p -> (Q p) `to` (A p)
+infix 1 ?
 data AnyProtocolQA to
 AnyProtocolQA :: (QA to p) -> AnyProtocolQA to
 
@@ -87,6 +93,17 @@ instance AERN2.QA.QAArrow AERN2.QA.QACachedA
 module AERN2.Real.Type
 data CauchyRealP
 pCR :: CauchyRealP
+realName :: CauchyRealA to -> String
+realId :: CauchyRealA to -> Maybe (QAId to)
+realSources :: CauchyRealA to -> [QAId to]
+realRename :: (String -> String) -> CauchyRealA to -> CauchyRealA to
+
+-- | Get a ball approximation of the real number with at least the
+--   specified accuracy. (A specialisation of <a>qaMakeQuery</a> for Cauchy
+--   reals.)
+realWithAccuracy :: CauchyRealA to -> Accuracy `to` MPBall
+realWithAccuracyA :: (QAArrow to) => (CauchyRealA to, Accuracy) `to` MPBall
+realsWithAccuracyA :: (QAArrow to) => ([CauchyRealA to], Accuracy) `to` [MPBall]
 type CauchyRealA to = QA to CauchyRealP
 type CauchyReal = CauchyRealA (->)
 newCR :: (QAArrow to) => String -> [AnyProtocolQA to] -> Accuracy `to` MPBall -> CauchyRealA to
@@ -226,6 +243,8 @@ instance AERN2.QA.QAArrow to => Numeric.MixedTypes.Ring.CanPow (AERN2.Real.Type.
 module AERN2.Real.Elementary
 expA :: (QAArrow to, CanExp t, ExpType t ~ CauchyReal) => t -> CauchyRealA to
 logA :: (QAArrow to, CanLog t, LogType t ~ CauchyReal) => t -> CauchyRealA to
+
+-- | To get <tt>pi</tt> in an arbitrary arrow, use <a>piA</a>.
 pi :: CauchyReal
 piA :: (QAArrow to) => CauchyRealA to
 sqrtA :: (QAArrow to, CanSqrt t, SqrtType t ~ CauchyReal) => t -> CauchyRealA to
@@ -291,19 +310,22 @@ instance Test.QuickCheck.Arbitrary.Arbitrary AERN2.Real.Type.CauchyReal
 
 -- | Cauchy reals
 module AERN2.Real
-
--- | An object we can ask queries about. Queries can be asked in some Arrow
---   <tt>to</tt>.
-data QA to p
-QA__ :: String -> Maybe (QAId to) -> [QAId to] -> p -> Q p -> (Q p) `to` (A p) -> QA to p
-[qaName] :: QA to p -> String
-[qaId] :: QA to p -> Maybe (QAId to)
-[qaSources] :: QA to p -> [QAId to]
-[qaProtocol] :: QA to p -> p
-[qaSampleQ] :: QA to p -> Q p
-[qaMakeQuery] :: QA to p -> (Q p) `to` (A p)
 data CauchyRealP
 pCR :: CauchyRealP
+realName :: CauchyRealA to -> String
+realId :: CauchyRealA to -> Maybe (QAId to)
+realSources :: CauchyRealA to -> [QAId to]
+realRename :: (String -> String) -> CauchyRealA to -> CauchyRealA to
+
+-- | Get a ball approximation of the real number with at least the
+--   specified accuracy. (A specialisation of <a>qaMakeQuery</a> for Cauchy
+--   reals.)
+realWithAccuracy :: CauchyRealA to -> Accuracy `to` MPBall
+
+-- | An infix synonym of <a>qaMakeQuery</a>.
+(?) :: QA to p -> (Q p) `to` (A p)
+infix 1 ?
+realWithAccuracyA :: (QAArrow to) => (CauchyRealA to, Accuracy) `to` MPBall
 type CauchyRealA to = QA to CauchyRealP
 type CauchyReal = CauchyRealA (->)
 newCR :: (QAArrow to) => String -> [AnyProtocolQA to] -> Accuracy `to` MPBall -> CauchyRealA to
@@ -313,6 +335,8 @@ type CanBeReal t = CanBeRealA (->) t
 real :: (CanBeRealA (->) t) => t -> CauchyReal
 type CanBeRealA to t = ConvertibleExactly t (CauchyRealA to)
 realA :: (CanBeRealA to t) => t -> CauchyRealA to
+
+-- | To get <tt>pi</tt> in an arbitrary arrow, use <a>piA</a>.
 pi :: CauchyReal
 piA :: (QAArrow to) => CauchyRealA to
 expA :: (QAArrow to, CanExp t, ExpType t ~ CauchyReal) => t -> CauchyRealA to

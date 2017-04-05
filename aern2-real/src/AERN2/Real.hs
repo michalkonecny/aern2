@@ -12,9 +12,10 @@
 -}
 module AERN2.Real
 (
-  -- * the type of real numbers, a special case of type QA
-  QA(..)
-  , CauchyRealP, pCR
+  -- * The type of real numbers
+  CauchyRealP, pCR
+  , realName, realId, realSources, realRename
+  , realWithAccuracy, (?), realWithAccuracyA
   , CauchyRealA, CauchyReal, newCR
   , convergentList2CauchyRealA
   , seqByPrecision2CauchyRealA
@@ -84,4 +85,4 @@ _addAcachedPrint =
     proc () ->
       do
       x <-_addAcached -< ()
-      qaMakeQueryA -< (x, bits 10)
+      realWithAccuracyA -< (x, bits 10)

@@ -13,6 +13,8 @@
 module AERN2.Real.Type
 (
   CauchyRealP, pCR
+  , realName, realId, realSources, realRename
+  , realWithAccuracy, realWithAccuracyA, realsWithAccuracyA
   , CauchyRealA, CauchyReal, newCR
   , convergentList2CauchyRealA
   , seqByPrecision2CauchyRealA
@@ -71,10 +73,33 @@ instance QAProtocolCacheable CauchyRealP where
 
 type CauchyRealA to = QA to CauchyRealP
 
+realName :: CauchyRealA to -> String
+realName = qaName
+
+realRename :: (String -> String) -> CauchyRealA to -> CauchyRealA to
+realRename f r = r {  qaName = f (qaName r)  }
+
+realId :: CauchyRealA to -> Maybe (QAId to)
+realId = qaId
+
+realSources :: CauchyRealA to -> [QAId to]
+realSources = qaSources
+
+{-| Get a ball approximation of the real number with at least the specified accuracy.
+   (A specialisation of 'qaMakeQuery' for Cauchy reals.) -}
+realWithAccuracy :: CauchyRealA to -> Accuracy `to` MPBall
+realWithAccuracy = (?)
+
+realWithAccuracyA :: (QAArrow to) => (CauchyRealA to, Accuracy) `to` MPBall
+realWithAccuracyA = qaMakeQueryA
+
+realsWithAccuracyA :: (QAArrow to) => ([CauchyRealA to], Accuracy) `to` [MPBall]
+realsWithAccuracyA = qaMakeQueryOnManyA
+
 type CauchyReal = CauchyRealA (->)
 
 instance Show CauchyReal where
-  show r = show $ qaMakeQuery r (bits 100)
+  show r = show $ r ? (bits 100)
 
 instance CanTestValid CauchyReal where
   isValid _ = True
@@ -123,7 +148,7 @@ instance (QAArrow to) => ConvertibleExactly Rational (CauchyRealA to) where
 
 instance ConvertibleWithPrecision CauchyReal MPBall where
   safeConvertP p r =
-    Right $ setPrecision p $ qaMakeQuery r (bits p + 10)
+    Right $ setPrecision p $ r ? (bits p + 10)
 
 {- non-zero picking -}
 
@@ -141,7 +166,7 @@ pickNonZeroRealA =
   where
   startFromAccuracy ac =
     proc realsAndS -> do
-      balls <- qaMakeQueryOnManyA -< (map fst realsAndS, ac)
+      balls <- realsWithAccuracyA -< (map fst realsAndS, ac)
       let maybeNonZero = pickNonZeroBall $ zip balls realsAndS
       case maybeNonZero of
         Just result -> returnA -< result

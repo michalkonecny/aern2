@@ -105,7 +105,7 @@ modFun2BallFun (UnaryModFun dom eval modulus) =
       ) $
       do
       fbC <- fbCE
-      pure $ updateRadius (+ tolerance) $ qaMakeQuery fbC (bits $ rangeAC + 2)
+      pure $ updateRadius (+ tolerance) $ fbC ? (bits $ rangeAC + 2)
       where
       fbCE = eval (catchingNumExceptions (centre b))
 
@@ -223,7 +223,7 @@ _modFun2BallFun_split (UnaryModFun dom eval modulus) =
       withExtremesOnPoints minVal maxVal =
         updateRadius (+ (errorBound $ 0.5^(fromAccuracy ac))) rangeOnPoints
         where
-        rangeOnPoints = fromEndpoints (qaMakeQuery minVal ac) (qaMakeQuery maxVal ac)
+        rangeOnPoints = fromEndpoints (minVal ? ac) (maxVal ? ac)
 
 instance CanApply UnaryModFun MPBall where
   type ApplyType UnaryModFun MPBall = MPBall
@@ -417,7 +417,7 @@ x_modfun = varFn (unaryModFun (unaryIntervalDom, 0)) ()
 
 mtest1 :: Integer -> MPBall
 mtest1 b =
-  qaMakeQuery m (bits b)
+  m ? (bits b)
   where
   m =
     -- integrateOverDom example_ModFun $

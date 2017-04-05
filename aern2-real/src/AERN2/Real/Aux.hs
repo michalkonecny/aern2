@@ -58,20 +58,14 @@ getCRFnNormLog ::
 getCRFnNormLog r fn =
   proc q ->
     do
-    b <- qaMakeQuery r -< q
+    b <- realWithAccuracy r -< q
     returnA -< (getNormLog (fn b), b)
 
 {- MPBall + CauchyReal = MPBall, only allowed in the (->) arrow  -}
 
 mpBallSimilarTo :: MPBall -> CauchyReal -> MPBall
 mpBallSimilarTo b r =
-  qaMakeQuery r $ getAccuracyIfExactUsePrec b
-
-getAccuracyIfExactUsePrec :: MPBall -> Accuracy
-getAccuracyIfExactUsePrec ball =
-  case getAccuracy ball of
-    Exact -> bits (getPrecision ball)
-    result -> result
+  r ? (getFiniteAccuracy b)
 
 binaryWithBall :: (MPBall -> MPBall -> MPBall) -> CauchyReal -> MPBall -> MPBall
 binaryWithBall op r b =
@@ -94,7 +88,7 @@ unaryOp name op getInitQ1 r1 =
     proc ac ->
       do
       q1InitMB <- getInitQ1 r1 -< ac
-      ensureAccuracyA1 (qaMakeQuery r1) op -< (ac, q1InitMB)
+      ensureAccuracyA1 (r1 ?) op -< (ac, q1InitMB)
 
 binaryOpWithPureArg ::
   (QAArrow to)
@@ -110,7 +104,7 @@ binaryOpWithPureArg name op getInitQ1T r1 t =
     proc ac ->
       do
       q1InitMB <- getInitQ1T r1 t -< ac
-      ensureAccuracyA1 (qaMakeQuery r1) (flip op t) -< (ac, q1InitMB)
+      ensureAccuracyA1 (r1 ?) (flip op t) -< (ac, q1InitMB)
 
 binaryOp ::
   (QAArrow to)
@@ -126,7 +120,7 @@ binaryOp name op getInitQ1Q2 r1 r2 =
     proc ac ->
       do
       (q1InitMB, q2InitMB) <- getInitQ1Q2 r1 r2 -< ac
-      ensureAccuracyA2 (qaMakeQuery r1) (qaMakeQuery r2) op -< (ac, q1InitMB, q2InitMB)
+      ensureAccuracyA2 (r1 ?) (r2 ?) op -< (ac, q1InitMB, q2InitMB)
 
 {- functions to help determine initial queries -}
 

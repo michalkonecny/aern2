@@ -52,28 +52,28 @@ processArgs [op, countS, accuracyS] =
     results =
       case op of
         "exp" ->
-          map (flip qaMakeQuery (bits ac) . exp) $
+          map ((? (bits ac)) . exp) $
             unsafePerformIO $ pickValues valuesSmall count
         "log" ->
-          map (flip qaMakeQuery (bits ac) . log) $
+          map ((? (bits ac)) . log) $
             unsafePerformIO $ pickValues valuesPositive count
         "sqrt" ->
-          map (flip qaMakeQuery (bits ac) . sqrt) $
+          map ((? (bits ac)) . sqrt) $
             unsafePerformIO $ pickValues valuesPositive count
         "cos" ->
-          map (flip qaMakeQuery (bits ac) . cos) $
+          map ((? (bits ac)) . cos) $
             unsafePerformIO $ pickValues values count
         "add" ->
-          map (flip qaMakeQuery (bits ac) . (uncurry (+))) $
+          map ((? (bits ac)) . (uncurry (+))) $
             unsafePerformIO $ pickValues2 values values count
         "mul" ->
-          map (flip qaMakeQuery (bits ac) . (uncurry (*))) $
+          map ((? (bits ac)) . (uncurry (*))) $
             unsafePerformIO $ pickValues2 values values count
         "div" ->
-          map (flip qaMakeQuery (bits ac) . (uncurry (/))) $
+          map ((? (bits ac)) . (uncurry (/))) $
             unsafePerformIO $ pickValues2 values valuesPositive count
         "logistic" ->
-          map (flip qaMakeQuery (bits ac) . (logistic 3.82 count)) $
+          map ((? (bits ac)) . (logistic 3.82 count)) $
             [real 0.125]
         _ -> error $ "unknown op " ++ op
 processArgs _ =
@@ -114,13 +114,13 @@ valuesSmall = map makeSmall values
     | otherwise = 1000000 * (x/(1000000+(abs x)))
     where
     getBall :: CauchyReal -> MPBall
-    getBall xx = qaMakeQuery xx (bits 53)
+    getBall xx = xx ? (bits 53)
 
 valuesPositive :: [CauchyReal]
 valuesPositive = filter ((!>! 0) . getBall) values
     where
     getBall :: CauchyReal -> MPBall
-    getBall x = qaMakeQuery x (bits 53)
+    getBall x = x ? (bits 53)
 
 values :: [CauchyReal]
 values = listFromGen (real <$> (arbitrary :: Gen Rational))

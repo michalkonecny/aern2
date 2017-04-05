@@ -33,8 +33,8 @@ instance HasAccuracy MPBall where
   getAccuracy (I (l,u), b) =
      bits (b - lg2 (u-l) + 1)
 
-qaMakeQuery :: IReal -> Accuracy -> MPBall
-qaMakeQuery x ac =
+realWithAccuracy :: IReal -> Accuracy -> MPBall
+realWithAccuracy x ac =
   (appr x b, b)
   where
   b = fromInteger $ fromAccuracy ac
@@ -56,28 +56,28 @@ processArgs [op, countS, accuracyS] =
     results =
       case op of
         "exp" ->
-          map (flip qaMakeQuery (bits ac) . exp) $
+          map (flip realWithAccuracy (bits ac) . exp) $
             unsafePerformIO $ pickValues valuesSmall count
         "log" ->
-          map (flip qaMakeQuery (bits ac) . log) $
+          map (flip realWithAccuracy (bits ac) . log) $
             unsafePerformIO $ pickValues valuesPositive count
         "sqrt" ->
-          map (flip qaMakeQuery (bits ac) . sqrt) $
+          map (flip realWithAccuracy (bits ac) . sqrt) $
             unsafePerformIO $ pickValues valuesPositive count
         "cos" ->
-          map (flip qaMakeQuery (bits ac) . cos) $
+          map (flip realWithAccuracy (bits ac) . cos) $
             unsafePerformIO $ pickValues values count
         "add" ->
-          map (flip qaMakeQuery (bits ac) . (uncurry (+))) $
+          map (flip realWithAccuracy (bits ac) . (uncurry (+))) $
             unsafePerformIO $ pickValues2 values values count
         "mul" ->
-          map (flip qaMakeQuery (bits ac) . (uncurry (*))) $
+          map (flip realWithAccuracy (bits ac) . (uncurry (*))) $
             unsafePerformIO $ pickValues2 values values count
         "div" ->
-          map (flip qaMakeQuery (bits ac) . (uncurry (/))) $
+          map (flip realWithAccuracy (bits ac) . (uncurry (/))) $
             unsafePerformIO $ pickValues2 values valuesPositive count
         "logistic" ->
-          map (flip qaMakeQuery (bits ac) . (logistic 3.82 count)) $
+          map (flip realWithAccuracy (bits ac) . (logistic 3.82 count)) $
             [0.125]
         _ -> error $ "unknown op " ++ op
 processArgs _ =

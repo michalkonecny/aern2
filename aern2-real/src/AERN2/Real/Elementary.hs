@@ -187,7 +187,7 @@ instance CanPow Rational Rational where
   pow b e = pow (real b) (real e)
 
 
-{-
+{-|
   To get @pi@ in an arbitrary arrow, use 'piA'.
 -}
 pi :: CauchyReal

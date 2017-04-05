@@ -122,23 +122,23 @@ specCRrespectsAccuracy1 opName op precond =
     property $
       \ (x :: CauchyReal) (ac :: Accuracy) ->
         ac < (bits 1000) && precond x ac ==>
-        getAccuracy (qaMakeQuery (op x) ac) >= ac
+        getAccuracy ((op x) ? ac) >= ac
 
 precondAnyReal :: CauchyReal -> Accuracy -> Bool
 precondAnyReal _x _ac = True
 
 precondPositiveReal :: CauchyReal -> Accuracy -> Bool
-precondPositiveReal x ac = qaMakeQuery x ac !>! 0
+precondPositiveReal x ac = (x ? ac) !>! 0
 
 precondNonZeroReal :: CauchyReal -> Accuracy -> Bool
-precondNonZeroReal x ac = qaMakeQuery x ac !/=! 0
+precondNonZeroReal x ac = (x ? ac) !/=! 0
 
 precondSmallReal :: CauchyReal -> Accuracy -> Bool
-precondSmallReal x ac = abs (qaMakeQuery x ac) !<! 1000
+precondSmallReal x ac = abs (x ? ac) !<! 1000
 
 precondPositiveSmallReal :: CauchyReal -> Accuracy -> Bool
 precondPositiveSmallReal x ac = 0 !<! b && b !<! 1000
-  where b = qaMakeQuery x ac
+  where b = x ? ac
 
 specCRrespectsAccuracy2 ::
   String ->
@@ -151,7 +151,7 @@ specCRrespectsAccuracy2 opName op precond1 precond2 =
     property $
       \ (x :: CauchyReal) (y :: CauchyReal) (ac :: Accuracy) ->
         ac < (bits 1000) && precond1 x ac && precond2 y ac  ==>
-        getAccuracy (qaMakeQuery (op x y) ac) >= ac
+        getAccuracy ((op x y) ? ac) >= ac
 
 specCRrespectsAccuracy2T ::
   (Arbitrary t, Show t) =>
@@ -166,7 +166,7 @@ specCRrespectsAccuracy2T (T tName :: T t) opName op precond1 precond2 =
     property $
       \ (x :: CauchyReal) (t :: t) (ac :: Accuracy) ->
         ac < (bits 1000) && precond1 x ac && precond2 t  ==>
-        getAccuracy (qaMakeQuery (op x t) ac) >= ac
+        getAccuracy ((op x t) ? ac) >= ac
 
 precondAnyT :: t -> Bool
 precondAnyT _t = True

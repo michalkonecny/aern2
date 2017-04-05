@@ -102,8 +102,8 @@ liftRel relName rel a b =
   newQA relName [AnyProtocolQA a, AnyProtocolQA b] pCB (bits 0) $
     proc ac ->
       do
-      b1 <- qaMakeQuery a -< ac
-      b2 <- qaMakeQuery b -< ac
+      b1 <- realWithAccuracy a -< ac
+      b2 <- realWithAccuracy b -< ac
       returnA -< rel b1 b2
 
 {-| CauchyRealAtAccuracy exists only so that we can QuickCheck that

@@ -14,7 +14,8 @@
 module AERN2.QA
 (
   QAProtocol(..), QAProtocolCacheable(..)
-  , QA(..), AnyProtocolQA(..), addUnsafeMemoisation
+  , QA(..), (?), AnyProtocolQA(..)
+  , addUnsafeMemoisation
   , QAArrow(..), qaMakeQueryOnManyA, (-:-), qaArr
   , QACachedA, QANetInfo(..)
   , executeQACachedA, printQANetLogThenResult
@@ -72,6 +73,12 @@ data QA to p = QA__
     qaSampleQ :: Q p,
     qaMakeQuery :: (Q p) `to` (A p)
   }
+
+{-| An infix synonym of 'qaMakeQuery'. -}
+(?) :: QA to p -> (Q p) `to` (A p)
+(?) = qaMakeQuery
+
+infix 1 ?
 
 data AnyProtocolQA to =
   forall p. (QAProtocolCacheable p) => AnyProtocolQA (QA to p)

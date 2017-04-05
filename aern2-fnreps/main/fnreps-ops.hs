@@ -162,38 +162,38 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 
     maxBallFun :: UnaryBallFun -> Accuracy -> MPBall
     maxBallFun fn ac =
-        qaMakeQuery m ac
+        m ? ac
         where
         m = fn `maximumOverDom` getDomain fn
 
     maxModFun :: UnaryModFun -> Accuracy -> MPBall
     maxModFun fn ac =
-        qaMakeQuery m ac
+        m ? ac
         where
         m = fn `maximumOverDom` getDomain fn
 
     maxDBallFun :: UnaryBallFun -> UnaryBallFun -> Accuracy -> MPBall
     maxDBallFun f f' ac =
-        qaMakeQuery m ac
+        m ? ac
         where
         m = fn `maximumOverDom` getDomain f
         fn = UnaryBallDFun [f,f']
 
     integrateBallFun :: UnaryBallFun -> Accuracy -> MPBall
     integrateBallFun fn ac =
-        qaMakeQuery r ac
+        r ? ac
         where
         r = fn `integrateOverDom` (getDomain fn)
 
     integrateModFun :: UnaryModFun -> Accuracy -> MPBall
     integrateModFun fn ac =
-        qaMakeQuery r ac
+        r ? ac
         where
         r = fn `integrateOverDom` (getDomain fn)
 
     integrateDBallFun :: UnaryBallFun -> UnaryBallFun -> Accuracy -> MPBall
     integrateDBallFun f f' ac =
-        qaMakeQuery r ac
+        r ? ac
         where
         r = fn `integrateOverDom` (getDomain f)
         dom = getDomain f
