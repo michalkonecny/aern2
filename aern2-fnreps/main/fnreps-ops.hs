@@ -211,6 +211,7 @@ functions =
     [
       ("sine+cos", (sinecos_Name, sinecos_PB, sinecos_ModFun, sinecos_B2B, sinecosDeriv_B2B, sinecos_PP, sinecos_FR, sinecos_LP, sinecos_LPP, sinecos_LF))
     , ("sinesine", (sinesine_Name, sinesine_PB, sinesine_ModFun, sinesine_B2B, sinesineDeriv_B2B, sinesine_PP, sinesine_FR, sinesine_LP, sinesine_LPP, sinesine_LF))
+    , ("sinesine+sin", (sinesineSin_Name, sinesineSin_PB, sinesineSin_ModFun, sinesineSin_B2B, sinesineSinDeriv_B2B, sinesineSin_PP, sinesineSin_FR, sinesineSin_LP, sinesineSin_LPP, sinesineSin_LF))
     , ("sinesine+cos", (sinesineCos_Name, sinesineCos_PB, sinesineCos_ModFun, sinesineCos_B2B, sinesineCosDeriv_B2B, sinesineCos_PP, sinesineCos_FR, sinesineCos_LP, sinesineCos_LPP, sinesineCos_LF))
     , ("runge", (runge_Name, runge_PB, runge_ModFun, runge_B2B, rungeDeriv_B2B, runge_PP, runge_FR, runge_LP, runge_LPP, runge_LF))
     , ("rungeX", (rungeX_Name, rungeX_PB, rungeX_ModFun, rungeX_B2B, rungeXDeriv_B2B, rungeX_PP, rungeX_FR, rungeX_LP, rungeX_LPP, rungeX_LF))
@@ -402,6 +403,68 @@ sinesineCos_LPP =
 sinesineCos_LF :: LFracMB
 sinesineCos_LF =
   error $ "Not (yet) supporting LFrac for: " ++ sinesineCos_Name
+  -- sine(10*x + sine(20*x*x)) + cosine(10*x)
+  -- where
+  -- x = LFrac.fromPoly $ LPoly.variable
+  -- sine = Local.sineLocal
+  -- cosine = Local.cosineLocal
+
+-----------------------------------
+-----------------------------------
+
+sinesineSin_Name :: String
+sinesineSin_Name = "sin(10x+sin(20x^2)) + sin(10x) over [-1,1]"
+
+sinesineSin_PB :: Accuracy -> ChPoly MPBall
+sinesineSin_PB acGuide =
+  sine2(10*x + sine1(20*x*x))
+    + sine2(10*x)
+  where
+  sine1 = sineWithAccuracyGuide (acGuide+2)
+  sine2 = sineWithAccuracyGuide acGuide
+  -- cosine2 = cosineWithAccuracyGuide acGuide
+  x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
+
+sinesineSin_ModFun :: UnaryModFun
+sinesineSin_ModFun =
+  sin(10*x + sin(20*x*x)) + sin(10*x)
+  where
+  x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
+
+sinesineSin_B2B :: UnaryBallFun
+sinesineSin_B2B =
+    UnaryBallFun unaryIntervalDom $ \x ->
+        sin(10*x + sin(20*x*x))
+            + sin(10*x)
+
+sinesineSinDeriv_B2B :: UnaryBallFun
+sinesineSinDeriv_B2B =
+    UnaryBallFun unaryIntervalDom $ \x ->
+      (10-40*x*cos(20*x*x))*cos(10*x + sin(20*x*x))
+          + 10*cos(10*x)
+
+sinesineSin_PP :: Accuracy -> PPoly
+sinesineSin_PP acGuide =
+  error $ "Not (yet) supporting PPoly for: " ++ sinesineSin_Name
+
+sinesineSin_FR :: Accuracy -> FracMB
+sinesineSin_FR acGuide =
+  error $ "Not (yet) supporting Frac for: " ++ sinesineSin_Name
+
+sinesineSin_LP :: LPolyMB
+sinesineSin_LP =
+  sine(10*x + sine(20*x*x)) + sine(10*x)
+  where
+  x = LPoly.variable
+  sine = Local.sineLocal
+
+sinesineSin_LPP :: LPPolyMB
+sinesineSin_LPP =
+  error $ "Not (yet) supporting LPPoly for: " ++ sinesineSin_Name
+
+sinesineSin_LF :: LFracMB
+sinesineSin_LF =
+  error $ "Not (yet) supporting LFrac for: " ++ sinesineSin_Name
   -- sine(10*x + sine(20*x*x)) + cosine(10*x)
   -- where
   -- x = LFrac.fromPoly $ LPoly.variable

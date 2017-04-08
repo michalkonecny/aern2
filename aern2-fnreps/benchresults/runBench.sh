@@ -207,6 +207,55 @@ function sinesine+cosLPoly
 }
 
 #################
+### sinesine+sin
+#################
+
+function sinesine+sinModFun
+{
+  repr=fun; fn=sinesine+sin
+  dir=$fn
+
+  op=max; paramss="10 15 20"; runForParamss
+  op=integrate; paramss="05 07"; runForParamss
+}
+
+function sinesine+sinBallFun
+{
+  repr=ball; fn=sinesine+sin
+  dir=$fn
+
+  op=max; paramss="10 20 30"; runForParamss
+  op=integrate; paramss="05 10 13"; runForParamss
+}
+
+function sinesine+sinDBallFun
+{
+  repr=dball; fn=sinesine+sin
+  dir=$fn
+
+  op=max; paramss="10 30 50 70 90"; runForParamss
+  op=integrate; paramss="05 10 15 20 25 28"; runForParamss
+}
+
+function sinesine+sinPoly
+{
+  repr=poly; fn=sinesine+sin
+  dir=$fn
+
+  op=max; paramss="10 15 20 25 30 35 50 70 90"; runForParamss
+  op=integrate; paramss="05 10 15 20 25 30 50 70 90"; runForParamss
+}
+
+function sinesine+sinLPoly
+{
+  repr=lpoly; fn=sinesine+sin
+  dir=$fn
+
+  op=max; paramss="05 10 15 20 25 30 35 50 70 90"; runForParamss
+  op=integrate; paramss="05 10 15 20 25 30 35 50 70 90"; runForParamss
+}
+
+#################
 ### runge
 #################
 
@@ -566,6 +615,12 @@ sinesine+cosBallFun
 sinesine+cosDBallFun
 sinesine+cosPoly
 sinesine+cosLPoly
+
+sinesine+sinModFun
+sinesine+sinBallFun
+sinesine+sinDBallFun
+sinesine+sinPoly
+sinesine+sinLPoly
 
 # rungeModFun
 rungeBallFun
