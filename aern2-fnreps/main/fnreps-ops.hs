@@ -312,7 +312,7 @@ sinesine_B2B =
 sinesineDeriv_B2B :: UnaryBallFun
 sinesineDeriv_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    (10-40*x*cos(20*x*x))*cos(10*x + sin(20*x*x))
+    (10+40*x*cos(20*x*x))*cos(10*x + sin(20*x*x))
 
 sinesine_PP :: Accuracy -> PPoly
 sinesine_PP acGuide =
@@ -376,7 +376,7 @@ sinesineCos_B2B =
 sinesineCosDeriv_B2B :: UnaryBallFun
 sinesineCosDeriv_B2B =
     UnaryBallFun unaryIntervalDom $ \x ->
-      (10-40*x*cos(20*x*x))*cos(10*x + sin(20*x*x))
+      (10+40*x*cos(20*x*x))*cos(10*x + sin(20*x*x))
          - 10*sin(10*x)
           -- + 10*cos(10*x)
 
@@ -440,7 +440,7 @@ sinesineSin_B2B =
 sinesineSinDeriv_B2B :: UnaryBallFun
 sinesineSinDeriv_B2B =
     UnaryBallFun unaryIntervalDom $ \x ->
-      (10-40*x*cos(20*x*x))*cos(10*x + sin(20*x*x))
+      (10+40*x*cos(20*x*x))*cos(10*x + sin(20*x*x))
           + 10*cos(10*x)
 
 sinesineSin_PP :: Accuracy -> PPoly
@@ -645,9 +645,13 @@ rungeSC_B2B =
 rungeSCDeriv_B2B :: UnaryBallFun
 rungeSCDeriv_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    ((10*cos(10*x) - 20*sin(20*x))*(100*x^2+1) - (sin (10*x) + cos(20*x))*(200*x))
-    /
-    ((100*x^2+1)^2)
+    ((10*cos(10*x) - 20*sin(20*x))
+     /
+     (100*x^2+1))
+    -
+    ((sin (10*x) + cos(20*x))*(200*x)
+     /
+     ((100*x^2+1)^2))
 
 rungeSC_PP :: Accuracy -> PPoly
 rungeSC_PP acGuide =
@@ -906,9 +910,13 @@ fracSinSC_B2B =
 fracSinSCDeriv_B2B :: UnaryBallFun
 fracSinSCDeriv_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    ((10*cos(10*x)-20*sin(20*x))*(10*(sin (7*x))^2+1) - (sin(10*x)+cos(20*x))*(140*sin(7*x)*cos(7*x)))
-    /
-    ((10*(sin (7*x))^2+1)^2)
+    ((10*cos(10*x)-20*sin(20*x))
+     /
+     (10*(sin (7*x))^2+1))
+    -
+    ((sin(10*x)+cos(20*x))*(140*sin(7*x)*cos(7*x))
+     /
+     ((10*(sin (7*x))^2+1)^2))
 
 fracSinSC_PP :: Accuracy -> PPoly
 fracSinSC_PP acGuide =
