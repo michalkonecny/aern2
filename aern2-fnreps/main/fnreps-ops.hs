@@ -678,16 +678,20 @@ rungeSC_FR acGuide =
   maybeTrace ("rungeSC_FR: getPrecision num = " ++ show (getPrecision num)) $
   maybeTrace ("rungeSC_FR: getAccuracy denom = " ++ show (getAccuracy denom)) $
   maybeTrace ("rungeSC_FR: getPrecision denom = " ++ show (getPrecision denom)) $
-  num / denom
+  (setPrc2 num) / denom
   where
   num = Frac.fromPoly $ sine (10*x) + cosine (20*x)
   denom = (Frac.fromPoly $ 100*x*x+1)
   xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   x = setPrc1 xPre
-  sine = sineWithAccuracyGuide ((fromAccuracy acGuide + 1)*(acGuide) + 25)
-  cosine = cosineWithAccuracyGuide ((fromAccuracy acGuide + 1)*(acGuide) + 25)
+  sine = sineWithAccuracyGuide ((fromAccuracy acGuide `div` 4 + 1)*(acGuide) + 25)
+  cosine = cosineWithAccuracyGuide ((fromAccuracy acGuide `div` 4 + 1)*(acGuide) + 25)
+  -- sine = sineWithAccuracyGuide ((fromAccuracy acGuide + 1)*(acGuide) + 25)
+  -- cosine = cosineWithAccuracyGuide ((fromAccuracy acGuide + 1)*(acGuide) + 25)
+  setPrc2 :: (CanSetPrecision t) => t -> t
+  setPrc2 = setPrecisionAtLeastAccuracy (64*acGuide)
   setPrc1 :: (CanSetPrecision t) => t -> t
-  setPrc1 = setPrecisionAtLeastAccuracy (16*acGuide)
+  setPrc1 = setPrecisionAtLeastAccuracy (8*acGuide)
 
 rungeSC_LP :: LPolyMB
 rungeSC_LP =

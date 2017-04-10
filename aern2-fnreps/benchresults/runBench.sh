@@ -394,7 +394,7 @@ function rungeSCFrac
   repr=frac; fn=rungeSC
   dir=$fn
 
-  op=max; paramss="10 20 30 40 50"; runForParamss
+  op=max; paramss="10 30 50 70 90"; runForParamss
   op=integrate; paramss="4 8 12 16"; runForParamss
 }
 
