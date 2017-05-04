@@ -51,26 +51,26 @@ bench benchArg implArg =
                     "MP_preludeOps" -> show (logistic_MP_preludeOps n)
                     "MP" -> show (logistic_MP n)
                     -- "CR_AC_plain" -> show (logistic_CR_AC_plain n)
-                    "CR_AC_cachedUnsafe" -> show (logistic_CR_AC_cachedUnsafe n)
-                    "CR_AC_cachedArrow" -> show (logistic_CR_AC_cachedArrow n)
+                    "CR_AC_cachedUnsafe" -> show (logistic_CR_cachedUnsafe n (bitsSG 100 100))
+                    "CR_AC_cachedArrow" -> show (logistic_CR_cachedArrow n (bitsSG 100 100))
 --                     "CR_AG_plain" -> show (logistic_CR_AG_plain n)
---                     "CR_AG_cachedUnsafe" -> show (logistic_CR_AG_cachedUnsafe n)
---                     "CR_AG_cachedArrow" -> show (logistic_CR_AG_cachedArrow n)
+                    "CR_AG_cachedUnsafe" -> show (logistic_CR_cachedUnsafe n (bitsSG 10 100))
+                    "CR_AG_cachedArrow" -> show (logistic_CR_cachedArrow n (bitsSG 100 100))
                     _ -> error $ "unknown implementation: " ++ implArg
             _ -> error ""
 
-logistic_CR_AC_cachedUnsafe :: Integer -> CauchyReal
-logistic_CR_AC_cachedUnsafe n =
-  TM.taskLogistic n $ real (TP.taskLogistic_x0 :: Rational)
+logistic_CR_cachedUnsafe :: Integer -> AccuracySG -> MPBall
+logistic_CR_cachedUnsafe n acSG =
+  TM.taskLogistic n $ real (TP.taskLogistic_x0 :: Rational) ? acSG
 
-logistic_CR_AC_cachedArrow :: Integer -> MPBall
-logistic_CR_AC_cachedArrow n =
+logistic_CR_cachedArrow ::  Integer -> AccuracySG -> MPBall
+logistic_CR_cachedArrow n acSG =
   snd $ executeQACachedA $
     proc () ->
       do
       x0R <- (-:-)-< realA x0
       (Just x) <-TM.taskLogisticWithHookA n hookA -< x0R
-      realWithAccuracyA -< (x, bitsSG 100)
+      realWithAccuracyA -< (x, acSG)
   where
   x0 = TP.taskLogistic_x0 :: Rational
   hookA i =

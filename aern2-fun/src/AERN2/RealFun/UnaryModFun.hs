@@ -105,7 +105,7 @@ modFun2BallFun (UnaryModFun dom eval modulus) =
       ) $
       do
       fbC <- fbCE
-      pure $ updateRadius (+ tolerance) $ fbC ? (bitsSG $ rangeAC + 2)
+      pure $ updateRadius (+ tolerance) $ fbC ? (bitsS $ rangeAC + 2)
       where
       fbCE = eval (catchingNumExceptions (centre b))
 

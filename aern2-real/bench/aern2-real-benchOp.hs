@@ -52,28 +52,28 @@ processArgs [op, countS, accuracyS] =
     results =
       case op of
         "exp" ->
-          map ((? (bitsSG ac)) . exp) $
+          map ((? (bitsS ac)) . exp) $
             unsafePerformIO $ pickValues valuesSmall count
         "log" ->
-          map ((? (bitsSG ac)) . log) $
+          map ((? (bitsS ac)) . log) $
             unsafePerformIO $ pickValues valuesPositive count
         "sqrt" ->
-          map ((? (bitsSG ac)) . sqrt) $
+          map ((? (bitsS ac)) . sqrt) $
             unsafePerformIO $ pickValues valuesPositive count
         "cos" ->
-          map ((? (bitsSG ac)) . cos) $
+          map ((? (bitsS ac)) . cos) $
             unsafePerformIO $ pickValues values count
         "add" ->
-          map ((? (bitsSG ac)) . (uncurry (+))) $
+          map ((? (bitsS ac)) . (uncurry (+))) $
             unsafePerformIO $ pickValues2 values values count
         "mul" ->
-          map ((? (bitsSG ac)) . (uncurry (*))) $
+          map ((? (bitsS ac)) . (uncurry (*))) $
             unsafePerformIO $ pickValues2 values values count
         "div" ->
-          map ((? (bitsSG ac)) . (uncurry (/))) $
+          map ((? (bitsS ac)) . (uncurry (/))) $
             unsafePerformIO $ pickValues2 values valuesPositive count
         "logistic" ->
-          map ((? (bitsSG ac)) . (logistic 3.82 count)) $
+          map ((? (bitsS ac)) . (logistic 3.82 count)) $
             [real 0.125]
         _ -> error $ "unknown op " ++ op
 processArgs _ =
@@ -114,13 +114,13 @@ valuesSmall = map makeSmall values
     | otherwise = 1000000 * (x/(1000000+(abs x)))
     where
     getBall :: CauchyReal -> MPBall
-    getBall xx = xx ? (bitsSG 53)
+    getBall xx = xx ? (bitsS 53)
 
 valuesPositive :: [CauchyReal]
 valuesPositive = filter ((!>! 0) . getBall) values
     where
     getBall :: CauchyReal -> MPBall
-    getBall x = x ? (bitsSG 53)
+    getBall x = x ? (bitsS 53)
 
 values :: [CauchyReal]
 values = listFromGen (real <$> (arbitrary :: Gen Rational))

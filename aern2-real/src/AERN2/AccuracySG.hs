@@ -12,7 +12,7 @@
 -}
 module AERN2.AccuracySG
 (
-  AccuracySG(..), acSG0, accuracySG, bitsSG
+  AccuracySG(..), acSG0, accuracySG, bitsS, bitsSG
 )
 where
 
@@ -33,11 +33,14 @@ accuracySGdefaultTolerance = 2
 accuracySG :: Accuracy -> AccuracySG
 accuracySG ac = AccuracySG ac (ac + accuracySGdefaultTolerance)
 
-bitsSG :: Integer -> AccuracySG
-bitsSG = accuracySG . bits
+bitsSG :: Integer -> Integer -> AccuracySG
+bitsSG acS acG = AccuracySG (bits acS) (bits acG)
+
+bitsS :: Integer -> AccuracySG
+bitsS = accuracySG . bits
 
 acSG0 :: AccuracySG
-acSG0 = bitsSG 0
+acSG0 = bitsS 0
 
 instance HasOrderAsymmetric Accuracy AccuracySG where
   greaterThan ac (AccuracySG acS acG) =

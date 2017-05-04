@@ -127,7 +127,8 @@ AccuracySG :: Accuracy -> Accuracy -> AccuracySG
 [_acGuide] :: AccuracySG -> Accuracy
 acSG0 :: AccuracySG
 accuracySG :: Accuracy -> AccuracySG
-bitsSG :: Integer -> AccuracySG
+bitsS :: Integer -> AccuracySG
+bitsSG :: Integer -> Integer -> AccuracySG
 instance GHC.Show.Show AERN2.AccuracySG.AccuracySG
 instance Numeric.MixedTypes.Ord.HasOrderAsymmetric AERN2.MP.Accuracy.Accuracy AERN2.AccuracySG.AccuracySG
 instance Numeric.MixedTypes.Ord.HasOrderAsymmetric AERN2.AccuracySG.AccuracySG AERN2.MP.Accuracy.Accuracy
