@@ -27,6 +27,7 @@ import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
 import AERN2.QA
+import AERN2.AccuracySG
 import AERN2.Real.Type
 import AERN2.Real.Aux
 
@@ -38,7 +39,7 @@ pCB :: CauchyBoolP
 pCB = CauchyBoolP
 
 instance QAProtocol CauchyBoolP where
-  type Q CauchyBoolP = Accuracy
+  type Q CauchyBoolP = AccuracySG
   type A CauchyBoolP = Maybe Bool
 
 instance QAProtocolCacheable CauchyBoolP where
@@ -53,25 +54,25 @@ type CauchyBool = CauchyBoolA (->)
 
 instance (QAArrow to) => ConvertibleExactly Bool (CauchyBoolA to) where
   safeConvertExactly b = Right $
-    newQA (show b) [] pCB (bits 0) $
+    newQA (show b) [] pCB (accuracySG $ bits 0) $
       proc _ -> returnA -< Just b
 
 instance (QAArrow to) => CanNeg (CauchyBoolA to) where
   type NegType (CauchyBoolA to) = CauchyBoolA to
   negate qa =
-    newQA "neg" [AnyProtocolQA qa] pCB (bits 0) (qaMakeQuery qa >>> arr negate)
+    newQA "neg" [AnyProtocolQA qa] pCB (accuracySG $ bits 0) (qaMakeQuery qa >>> arr negate)
 
 instance (QAArrow to) => CanAndOrAsymmetric (CauchyBoolA to) (CauchyBoolA to) where
   type AndOrType (CauchyBoolA to) (CauchyBoolA to) = CauchyBoolA to
   and2 qa1 qa2 =
-    newQA "and" [AnyProtocolQA qa1, AnyProtocolQA qa2] pCB (bits 0) $
+    newQA "and" [AnyProtocolQA qa1, AnyProtocolQA qa2] pCB (accuracySG $ bits 0) $
       proc ac ->
         do
         b1 <- qaMakeQuery qa1 -< ac
         b2 <- qaMakeQuery qa2 -< ac
         returnA -< b1 `and2` b2
   or2 qa1 qa2 =
-    newQA "or" [AnyProtocolQA qa1, AnyProtocolQA qa2] pCB (bits 0) $
+    newQA "or" [AnyProtocolQA qa1, AnyProtocolQA qa2] pCB (accuracySG $ bits 0) $
       proc ac ->
         do
         b1 <- qaMakeQuery qa1 -< ac
@@ -99,7 +100,7 @@ liftRel ::
   (MPBall -> MPBall -> Maybe Bool) ->
   (CauchyRealA to -> CauchyRealA to -> CauchyBoolA to)
 liftRel relName rel a b =
-  newQA relName [AnyProtocolQA a, AnyProtocolQA b] pCB (bits 0) $
+  newQA relName [AnyProtocolQA a, AnyProtocolQA b] pCB (accuracySG $ bits 0) $
     proc ac ->
       do
       b1 <- realWithAccuracy a -< ac
@@ -110,7 +111,7 @@ liftRel relName rel a b =
    CauchyReal satisfies properties whose statement relies on an instance of HasEqCertainly.
    CauchyReal is not an instance but CauchyRealAtAccuracy is.
 -}
-data CauchyRealAtAccuracy = CauchyRealAtAccuracy CauchyReal Accuracy
+data CauchyRealAtAccuracy = CauchyRealAtAccuracy CauchyReal AccuracySG
   deriving (Show)
 
 instance HasEqAsymmetric CauchyRealAtAccuracy CauchyRealAtAccuracy where

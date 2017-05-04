@@ -33,6 +33,7 @@ import AERN2.MP.Ball
 -- import AERN2.MP.Accuracy
 
 import AERN2.QA
+import AERN2.AccuracySG
 import AERN2.Real.Type
 
 import Debug.Trace (trace)
@@ -54,7 +55,7 @@ getCRFnNormLog ::
   =>
   CauchyRealA to ->
   (MPBall -> MPBall) ->
-  Accuracy `to` (NormLog, MPBall)
+  AccuracySG `to` (NormLog, MPBall)
 getCRFnNormLog r fn =
   proc q ->
     do
@@ -65,7 +66,7 @@ getCRFnNormLog r fn =
 
 mpBallSimilarTo :: MPBall -> CauchyReal -> MPBall
 mpBallSimilarTo b r =
-  r ? (getFiniteAccuracy b)
+  r ? (accuracySG $ getFiniteAccuracy b)
 
 binaryWithBall :: (MPBall -> MPBall -> MPBall) -> CauchyReal -> MPBall -> MPBall
 binaryWithBall op r b =
@@ -79,7 +80,7 @@ unaryOp ::
   =>
   String ->
   (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) ->
-  (CauchyRealA to -> (Accuracy `to` (Accuracy, Maybe MPBall))) ->
+  (CauchyRealA to -> (AccuracySG `to` (AccuracySG, Maybe MPBall))) ->
   CauchyRealA to -> CauchyRealA to
 unaryOp name op getInitQ1 r1 =
   newCR name [AnyProtocolQA r1] makeQ
@@ -95,7 +96,7 @@ binaryOpWithPureArg ::
   =>
   String ->
   (CatchingNumExceptions MPBall -> t -> CatchingNumExceptions MPBall) ->
-  (CauchyRealA to -> t -> (Accuracy `to` (Accuracy, Maybe MPBall))) ->
+  (CauchyRealA to -> t -> (AccuracySG `to` (AccuracySG, Maybe MPBall))) ->
   CauchyRealA to -> t -> CauchyRealA to
 binaryOpWithPureArg name op getInitQ1T r1 t =
   newCR name [AnyProtocolQA r1] makeQ
@@ -111,7 +112,7 @@ binaryOp ::
   =>
   String ->
   (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) ->
-  (CauchyRealA to -> CauchyRealA to -> (Accuracy `to` ((Accuracy, Maybe MPBall), (Accuracy, Maybe MPBall)))) ->
+  (CauchyRealA to -> CauchyRealA to -> (AccuracySG `to` ((AccuracySG, Maybe MPBall), (AccuracySG, Maybe MPBall)))) ->
   CauchyRealA to -> CauchyRealA to -> CauchyRealA to
 binaryOp name op getInitQ1Q2 r1 r2 =
   newCR name [AnyProtocolQA r1, AnyProtocolQA r2] makeQ
@@ -127,8 +128,8 @@ binaryOp name op getInitQ1Q2 r1 r2 =
 getInitQ1FromSimple ::
   (Arrow to)
   =>
-  Accuracy `to` q ->
-  r1 -> Accuracy `to` (q, Maybe MPBall)
+  AccuracySG `to` q ->
+  r1 -> AccuracySG `to` (q, Maybe MPBall)
 getInitQ1FromSimple simpleA _ =
   proc q ->
     do
@@ -138,8 +139,8 @@ getInitQ1FromSimple simpleA _ =
 getInitQ1TFromSimple ::
   (Arrow to)
   =>
-  Accuracy `to` q ->
-  r1 -> t -> Accuracy `to` (q, Maybe MPBall)
+  AccuracySG `to` q ->
+  r1 -> t -> AccuracySG `to` (q, Maybe MPBall)
 getInitQ1TFromSimple simpleA _ _ =
   proc q ->
     do
@@ -149,8 +150,8 @@ getInitQ1TFromSimple simpleA _ _ =
 getInitQ1Q2FromSimple ::
   (Arrow to)
   =>
-  Accuracy `to` (q,q) ->
-  r1 -> r2 -> Accuracy `to` ((q, Maybe MPBall), (q, Maybe MPBall))
+  AccuracySG `to` (q,q) ->
+  r1 -> r2 -> AccuracySG `to` ((q, Maybe MPBall), (q, Maybe MPBall))
 getInitQ1Q2FromSimple simpleA _ _ =
   proc q ->
     do
@@ -164,9 +165,9 @@ getInitQ1Q2FromSimple simpleA _ _ =
 
 ensureAccuracyA1 ::
   (ArrowChoice to) =>
-  (Accuracy `to` MPBall) ->
+  (AccuracySG `to` MPBall) ->
   (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) ->
-  ((Accuracy, (Accuracy, Maybe MPBall)) `to` MPBall)
+  ((AccuracySG, (AccuracySG, Maybe MPBall)) `to` MPBall)
 ensureAccuracyA1 getA1 op =
     proc (q,(j1, mB)) ->
         do
@@ -188,7 +189,7 @@ ensureAccuracyA1 getA1 op =
             a1 <- getA1 -< j1
             let resultCE = op (catchingNumExceptions a1)
             case resultCE ^. numEXC_maybeValue of
-              Just result | getAccuracy result >= q ->
+              Just result | getAccuracy result >= _acStrict q ->
                 returnA -<
                     maybeTrace (
                         "ensureAccuracy1: Succeeded. (q = " ++ show q ++
@@ -209,10 +210,10 @@ ensureAccuracyA1 getA1 op =
 
 ensureAccuracyA2 ::
   (ArrowChoice to) =>
-  (Accuracy `to` MPBall) ->
-  (Accuracy `to` MPBall) ->
+  (AccuracySG `to` MPBall) ->
+  (AccuracySG `to` MPBall) ->
   (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) ->
-  ((Accuracy, (Accuracy, Maybe MPBall), (Accuracy, Maybe MPBall)) `to` MPBall)
+  ((AccuracySG, (AccuracySG, Maybe MPBall), (AccuracySG, Maybe MPBall)) `to` MPBall)
 ensureAccuracyA2 getA1 getA2 op =
     proc (q,(j1, mB1),(j2, mB2)) ->
         do
@@ -238,7 +239,7 @@ ensureAccuracyA2 getA1 getA2 op =
             a2 <- getA2 -< j2
             let resultCE = op (catchingNumExceptions a1) (catchingNumExceptions a2)
             case resultCE ^. numEXC_maybeValue of
-              Just result | getAccuracy result >= q ->
+              Just result | getAccuracy result >= _acStrict q ->
                   returnA -<
                     maybeTrace (
                         "ensureAccuracy2: Succeeded. (q = " ++ show q ++

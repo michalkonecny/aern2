@@ -26,6 +26,7 @@ import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
 import AERN2.QA
+import AERN2.AccuracySG
 import AERN2.Real.Type
 import AERN2.Real.Aux
 import AERN2.Real.Ring ()
@@ -79,7 +80,7 @@ instance (QAArrow to) => CanLog (CauchyRealA to) where
         let jInit = case a1NormLog of
                 NormBits normLog -> q - normLog
                 NormZero -> q
-        returnA -< (jInit, Just $ setPrecisionAtLeastAccuracy (q+5) b)
+        returnA -< (jInit, Just $ setPrecisionAtLeastAccuracy ((_acGuide q)+5) b)
         -- the @setPrecisionAtLeastAccuracy (q+5)@ above improves
         -- efficiency for exact low-precision arguments
 
@@ -191,7 +192,7 @@ instance CanPow Rational Rational where
   To get @pi@ in an arbitrary arrow, use 'piA'.
 -}
 pi :: CauchyReal
-pi = newCR "pi" [] (seqByPrecision2CauchySeq piBallP)
+pi = newCR "pi" [] (seqByPrecision2CauchySeq piBallP . _acGuide)
 
 piA :: (QAArrow to) => CauchyRealA to
 piA = qaArr pi
@@ -206,7 +207,7 @@ instance (QAArrow to) => CanSqrt (CauchyRealA to) where
         do
         (a1NormLog, b) <- getCRFnNormLog a1 sqrtSafe -< q
         let jInit = case a1NormLog of
-                NormBits sqrtNormLog -> max 0 (q - 1 - sqrtNormLog)
+                NormBits sqrtNormLog -> max acSG0 (q - 1 - sqrtNormLog)
                 NormZero -> q
         returnA -< (jInit, Just b)
     sqrtSafe x =

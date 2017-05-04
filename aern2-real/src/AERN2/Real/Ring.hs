@@ -25,6 +25,7 @@ import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
 import AERN2.QA
+import AERN2.AccuracySG
 import AERN2.Real.Type
 import AERN2.Real.Aux
 
@@ -105,25 +106,25 @@ instance (QAArrow to) => CanMulAsymmetric (CauchyRealA to) (CauchyRealA to) wher
         do
         (a1NormLog, b1) <- getCRFnNormLog a1 id -< q
         let jInit2 = case a1NormLog of
-                NormBits a1NL -> max (bits 0) (q + a1NL)
-                NormZero -> bits 0
+                NormBits a1NL -> max acSG0 (q + a1NL)
+                NormZero -> acSG0
         -- favouring 2*x over x*2 in a Num instance
         (a2NormLog, b2) <- getCRFnNormLog a2 id -< jInit2
         let jInit1 = case a2NormLog of
-                NormBits a2NL -> max (bits 0) (q + a2NL)
-                NormZero -> bits 0
+                NormBits a2NL -> max acSG0 (q + a2NL)
+                NormZero -> acSG0
         returnA -< ((jInit1, Just b1), (jInit2, Just b2))
 
 mulGetInitQ1T ::
   (Arrow to, HasNorm t)
   =>
-  r -> t -> Accuracy `to` (Accuracy, Maybe MPBall)
+  r -> t -> AccuracySG `to` (AccuracySG, Maybe MPBall)
 mulGetInitQ1T _a1 n =
   proc q ->
     do
     let jInit1 = case nNormLog of
-            NormBits nNL -> max (bits 0) (q + nNL)
-            NormZero -> bits 0
+            NormBits nNL -> max acSG0 (q + nNL)
+            NormZero -> acSG0
     returnA -< (jInit1, Nothing)
   where
   nNormLog = getNormLog n

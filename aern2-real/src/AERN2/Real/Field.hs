@@ -25,6 +25,7 @@ import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
 import AERN2.QA
+import AERN2.AccuracySG
 import AERN2.Real.Type
 import AERN2.Real.Aux
 import AERN2.Real.Ring ()
@@ -42,29 +43,29 @@ instance (QAArrow to) => CanDiv (CauchyRealA to) (CauchyRealA to) where
         -- In a Fractional instance, x/3 should be replaced by (1/3)*x etc.
         (a1NormLog, b1) <- getCRFnNormLog a1 id -< q
         let jPre2 = case a1NormLog of
-                NormZero -> bits 0 -- numerator == 0, it does not matter
-                NormBits a1NL -> max 0 (q + a1NL)
+                NormZero -> acSG0 -- numerator == 0, it does not matter
+                NormBits a1NL -> max acSG0 (q + a1NL)
         (a2NormLog, b2) <- getCRFnNormLog a2 id -< jPre2
         let jInit1 = case a2NormLog of
-                NormBits a2NL -> max 0 (q - a2NL)
-                NormZero -> bits 0 -- denominator == 0, we have no chance...
+                NormBits a2NL -> max acSG0 (q - a2NL)
+                NormZero -> acSG0 -- denominator == 0, we have no chance...
         let jInit2 = case (a1NormLog, a2NormLog) of
-                (_, NormZero) -> bits 0 -- denominator == 0, we have no chance...
-                (NormZero, _) -> bits 0 -- numerator == 0, it does not matter
-                (NormBits a1NL, NormBits a2NL) -> max 0 (q + a1NL - 2 * a2NL)
+                (_, NormZero) -> acSG0 -- denominator == 0, we have no chance...
+                (NormZero, _) -> acSG0 -- numerator == 0, it does not matter
+                (NormBits a1NL, NormBits a2NL) -> max acSG0 (q + a1NL - 2 * a2NL)
         returnA -< ((jInit1, Just b1), (jInit2, Just b2))
 
 
 divGetInitQ1T ::
   (Arrow to, HasNorm t)
   =>
-  r -> t -> Accuracy `to` (Accuracy, Maybe MPBall)
+  r -> t -> AccuracySG `to` (AccuracySG, Maybe MPBall)
 divGetInitQ1T _a1 n =
   proc q ->
     do
     let jInit1 = case nNormLog of
-            NormBits nNL -> max (bits 0) (q - nNL)
-            NormZero -> bits 0 -- denominator == 0, we have no chance...
+            NormBits nNL -> max acSG0 (q - nNL)
+            NormZero -> acSG0 -- denominator == 0, we have no chance...
     returnA -< (jInit1, Nothing)
   where
   nNormLog = getNormLog n
@@ -73,15 +74,15 @@ divGetInitQ1T _a1 n =
 divGetInitQ1TL ::
   (Arrow to, HasNorm t)
   =>
-  (CauchyRealA to) -> t -> Accuracy `to` (Accuracy, Maybe MPBall)
+  (CauchyRealA to) -> t -> AccuracySG `to` (AccuracySG, Maybe MPBall)
 divGetInitQ1TL a2 n =
   proc q ->
     do
     (a2NormLog, b2) <- getCRFnNormLog a2 id -< q
     let jInit2 = case (nNormLog, a2NormLog) of
-            (_, NormZero) -> bits 0 -- denominator == 0, we have no chance...
-            (NormZero, _) -> bits 0 -- numerator == 0, it does not matter
-            (NormBits nNL, NormBits a2NL) -> max 0 (q + nNL - 2 * a2NL)
+            (_, NormZero) -> acSG0 -- denominator == 0, we have no chance...
+            (NormZero, _) -> acSG0 -- numerator == 0, it does not matter
+            (NormBits nNL, NormBits a2NL) -> max acSG0 (q + nNL - 2 * a2NL)
     returnA -< ((jInit2, Just b2))
   where
   nNormLog = getNormLog n

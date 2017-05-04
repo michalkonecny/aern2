@@ -89,6 +89,54 @@ instance AERN2.QA.QAArrow (->)
 instance AERN2.QA.QAArrow AERN2.QA.QACachedA
 
 
+-- | Effort indicator to direct enclosure computation
+module AERN2.Effort
+type WithEffort t = QA (->) (WithEffortP t)
+newtype WithEffortP t
+WithEffortP :: t -> WithEffortP t
+type Effort = Map String EffortItem
+data EffortItem
+EffortNum :: Integer -> EffortItem
+[_effortNum] :: EffortItem -> Integer
+
+-- | EffortFun { effortFun :: Integer -&gt; Integer } | EffortFun {
+--   effortFunSampleArg :: Effort, effortFun :: Effort -&gt; Integer }
+EffortSub :: Effort -> EffortItem
+[_effortSub] :: EffortItem -> Effort
+subs :: Traversal' Effort Effort
+subE :: String -> Prism' Effort Effort
+precE :: Traversal' Effort Integer
+normaliseTopLevel :: Effort -> Effort
+unifyPrecTopLevel :: Effort -> Effort
+combineSampleEfforts :: Effort -> Effort -> (Effort, Effort -> Effort, Effort -> Effort)
+instance (Numeric.MixedTypes.AddSub.CanAddAsymmetric t1 t2, GHC.Show.Show (Numeric.MixedTypes.AddSub.AddType t1 t2)) => Numeric.MixedTypes.AddSub.CanAddAsymmetric (AERN2.Effort.WithEffort t1) (AERN2.Effort.WithEffort t2)
+instance GHC.Show.Show AERN2.Effort.EffortItem
+instance GHC.Show.Show t => GHC.Show.Show (AERN2.Effort.WithEffortP t)
+instance GHC.Show.Show t => AERN2.QA.QAProtocol (AERN2.Effort.WithEffortP t)
+instance GHC.Show.Show t => AERN2.QA.QAProtocolCacheable (AERN2.Effort.WithEffortP t)
+
+
+-- | The type of Cauchy real numbers
+module AERN2.AccuracySG
+
+-- | An accuracy specification which includes a soft target "guide"
+--   accuracy in addition to the usual string accuracy requirement.
+data AccuracySG
+AccuracySG :: Accuracy -> Accuracy -> AccuracySG
+[_acStrict] :: AccuracySG -> Accuracy
+[_acGuide] :: AccuracySG -> Accuracy
+acSG0 :: AccuracySG
+accuracySG :: Accuracy -> AccuracySG
+bitsSG :: Integer -> AccuracySG
+instance GHC.Show.Show AERN2.AccuracySG.AccuracySG
+instance Numeric.MixedTypes.Ord.HasOrderAsymmetric AERN2.MP.Accuracy.Accuracy AERN2.AccuracySG.AccuracySG
+instance Numeric.MixedTypes.Ord.HasOrderAsymmetric AERN2.AccuracySG.AccuracySG AERN2.MP.Accuracy.Accuracy
+instance Numeric.MixedTypes.MinMaxAbs.CanMinMaxAsymmetric AERN2.AccuracySG.AccuracySG AERN2.AccuracySG.AccuracySG
+instance Numeric.MixedTypes.AddSub.CanAddAsymmetric AERN2.AccuracySG.AccuracySG GHC.Integer.Type.Integer
+instance Numeric.MixedTypes.AddSub.CanAddAsymmetric GHC.Integer.Type.Integer AERN2.AccuracySG.AccuracySG
+instance Numeric.MixedTypes.AddSub.CanSub AERN2.AccuracySG.AccuracySG GHC.Integer.Type.Integer
+
+
 -- | The type of Cauchy real numbers
 module AERN2.Real.Type
 data CauchyRealP
@@ -101,12 +149,12 @@ realRename :: (String -> String) -> CauchyRealA to -> CauchyRealA to
 -- | Get a ball approximation of the real number with at least the
 --   specified accuracy. (A specialisation of <a>qaMakeQuery</a> for Cauchy
 --   reals.)
-realWithAccuracy :: CauchyRealA to -> Accuracy `to` MPBall
-realWithAccuracyA :: (QAArrow to) => (CauchyRealA to, Accuracy) `to` MPBall
-realsWithAccuracyA :: (QAArrow to) => ([CauchyRealA to], Accuracy) `to` [MPBall]
+realWithAccuracy :: CauchyRealA to -> AccuracySG `to` MPBall
+realWithAccuracyA :: (QAArrow to) => (CauchyRealA to, AccuracySG) `to` MPBall
+realsWithAccuracyA :: (QAArrow to) => ([CauchyRealA to], AccuracySG) `to` [MPBall]
 type CauchyRealA to = QA to CauchyRealP
 type CauchyReal = CauchyRealA (->)
-newCR :: (QAArrow to) => String -> [AnyProtocolQA to] -> Accuracy `to` MPBall -> CauchyRealA to
+newCR :: (QAArrow to) => String -> [AnyProtocolQA to] -> AccuracySG `to` MPBall -> CauchyRealA to
 convergentList2CauchyRealA :: (QAArrow to) => String -> [MPBall] -> (CauchyRealA to)
 seqByPrecision2CauchyRealA :: (QAArrow to) => String -> (Precision -> MPBall) -> (CauchyRealA to)
 type CanBeReal t = CanBeRealA (->) t
@@ -136,14 +184,14 @@ instance Numeric.MixedTypes.Eq.CanPickNonZero AERN2.Real.Type.CauchyReal
 
 -- | Auxiliary functions for CR operations
 module AERN2.Real.Aux
-getCRFnNormLog :: (Arrow to) => CauchyRealA to -> (MPBall -> MPBall) -> Accuracy `to` (NormLog, MPBall)
+getCRFnNormLog :: (Arrow to) => CauchyRealA to -> (MPBall -> MPBall) -> AccuracySG `to` (NormLog, MPBall)
 binaryWithBall :: (MPBall -> MPBall -> MPBall) -> CauchyReal -> MPBall -> MPBall
-unaryOp :: (QAArrow to) => String -> (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) -> (CauchyRealA to -> (Accuracy `to` (Accuracy, Maybe MPBall))) -> CauchyRealA to -> CauchyRealA to
-binaryOp :: (QAArrow to) => String -> (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) -> (CauchyRealA to -> CauchyRealA to -> (Accuracy `to` ((Accuracy, Maybe MPBall), (Accuracy, Maybe MPBall)))) -> CauchyRealA to -> CauchyRealA to -> CauchyRealA to
-binaryOpWithPureArg :: (QAArrow to) => String -> (CatchingNumExceptions MPBall -> t -> CatchingNumExceptions MPBall) -> (CauchyRealA to -> t -> (Accuracy `to` (Accuracy, Maybe MPBall))) -> CauchyRealA to -> t -> CauchyRealA to
-getInitQ1FromSimple :: (Arrow to) => Accuracy `to` q -> r1 -> Accuracy `to` (q, Maybe MPBall)
-getInitQ1TFromSimple :: (Arrow to) => Accuracy `to` q -> r1 -> t -> Accuracy `to` (q, Maybe MPBall)
-getInitQ1Q2FromSimple :: (Arrow to) => Accuracy `to` (q, q) -> r1 -> r2 -> Accuracy `to` ((q, Maybe MPBall), (q, Maybe MPBall))
+unaryOp :: (QAArrow to) => String -> (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) -> (CauchyRealA to -> (AccuracySG `to` (AccuracySG, Maybe MPBall))) -> CauchyRealA to -> CauchyRealA to
+binaryOp :: (QAArrow to) => String -> (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) -> (CauchyRealA to -> CauchyRealA to -> (AccuracySG `to` ((AccuracySG, Maybe MPBall), (AccuracySG, Maybe MPBall)))) -> CauchyRealA to -> CauchyRealA to -> CauchyRealA to
+binaryOpWithPureArg :: (QAArrow to) => String -> (CatchingNumExceptions MPBall -> t -> CatchingNumExceptions MPBall) -> (CauchyRealA to -> t -> (AccuracySG `to` (AccuracySG, Maybe MPBall))) -> CauchyRealA to -> t -> CauchyRealA to
+getInitQ1FromSimple :: (Arrow to) => AccuracySG `to` q -> r1 -> AccuracySG `to` (q, Maybe MPBall)
+getInitQ1TFromSimple :: (Arrow to) => AccuracySG `to` q -> r1 -> t -> AccuracySG `to` (q, Maybe MPBall)
+getInitQ1Q2FromSimple :: (Arrow to) => AccuracySG `to` (q, q) -> r1 -> r2 -> AccuracySG `to` ((q, Maybe MPBall), (q, Maybe MPBall))
 
 
 -- | Comparison operations on Cauchy Real numbers.
@@ -158,7 +206,7 @@ type CauchyBool = CauchyBoolA (->)
 --   of HasEqCertainly. CauchyReal is not an instance but
 --   CauchyRealAtAccuracy is.
 data CauchyRealAtAccuracy
-CauchyRealAtAccuracy :: CauchyReal -> Accuracy -> CauchyRealAtAccuracy
+CauchyRealAtAccuracy :: CauchyReal -> AccuracySG -> CauchyRealAtAccuracy
 instance GHC.Show.Show AERN2.Real.Comparison.CauchyRealAtAccuracy
 instance GHC.Show.Show AERN2.Real.Comparison.CauchyBoolP
 instance AERN2.QA.QAProtocol AERN2.Real.Comparison.CauchyBoolP
@@ -320,15 +368,15 @@ realRename :: (String -> String) -> CauchyRealA to -> CauchyRealA to
 -- | Get a ball approximation of the real number with at least the
 --   specified accuracy. (A specialisation of <a>qaMakeQuery</a> for Cauchy
 --   reals.)
-realWithAccuracy :: CauchyRealA to -> Accuracy `to` MPBall
+realWithAccuracy :: CauchyRealA to -> AccuracySG `to` MPBall
 
 -- | An infix synonym of <a>qaMakeQuery</a>.
 (?) :: QA to p -> (Q p) `to` (A p)
 infix 1 ?
-realWithAccuracyA :: (QAArrow to) => (CauchyRealA to, Accuracy) `to` MPBall
+realWithAccuracyA :: (QAArrow to) => (CauchyRealA to, AccuracySG) `to` MPBall
 type CauchyRealA to = QA to CauchyRealP
 type CauchyReal = CauchyRealA (->)
-newCR :: (QAArrow to) => String -> [AnyProtocolQA to] -> Accuracy `to` MPBall -> CauchyRealA to
+newCR :: (QAArrow to) => String -> [AnyProtocolQA to] -> AccuracySG `to` MPBall -> CauchyRealA to
 convergentList2CauchyRealA :: (QAArrow to) => String -> [MPBall] -> (CauchyRealA to)
 seqByPrecision2CauchyRealA :: (QAArrow to) => String -> (Precision -> MPBall) -> (CauchyRealA to)
 type CanBeReal t = CanBeRealA (->) t
@@ -344,38 +392,11 @@ logA :: (QAArrow to, CanLog t, LogType t ~ CauchyReal) => t -> CauchyRealA to
 sqrtA :: (QAArrow to, CanSqrt t, SqrtType t ~ CauchyReal) => t -> CauchyRealA to
 sinA :: (QAArrow to, CanSinCos t, SinCosType t ~ CauchyReal) => t -> CauchyRealA to
 cosA :: (QAArrow to, CanSinCos t, SinCosType t ~ CauchyReal) => t -> CauchyRealA to
-unaryOp :: (QAArrow to) => String -> (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) -> (CauchyRealA to -> (Accuracy `to` (Accuracy, Maybe MPBall))) -> CauchyRealA to -> CauchyRealA to
-binaryOp :: (QAArrow to) => String -> (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) -> (CauchyRealA to -> CauchyRealA to -> (Accuracy `to` ((Accuracy, Maybe MPBall), (Accuracy, Maybe MPBall)))) -> CauchyRealA to -> CauchyRealA to -> CauchyRealA to
-binaryOpWithPureArg :: (QAArrow to) => String -> (CatchingNumExceptions MPBall -> t -> CatchingNumExceptions MPBall) -> (CauchyRealA to -> t -> (Accuracy `to` (Accuracy, Maybe MPBall))) -> CauchyRealA to -> t -> CauchyRealA to
-getCRFnNormLog :: (Arrow to) => CauchyRealA to -> (MPBall -> MPBall) -> Accuracy `to` (NormLog, MPBall)
-getInitQ1FromSimple :: (Arrow to) => Accuracy `to` q -> r1 -> Accuracy `to` (q, Maybe MPBall)
-getInitQ1TFromSimple :: (Arrow to) => Accuracy `to` q -> r1 -> t -> Accuracy `to` (q, Maybe MPBall)
-getInitQ1Q2FromSimple :: (Arrow to) => Accuracy `to` (q, q) -> r1 -> r2 -> Accuracy `to` ((q, Maybe MPBall), (q, Maybe MPBall))
+unaryOp :: (QAArrow to) => String -> (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) -> (CauchyRealA to -> (AccuracySG `to` (AccuracySG, Maybe MPBall))) -> CauchyRealA to -> CauchyRealA to
+binaryOp :: (QAArrow to) => String -> (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) -> (CauchyRealA to -> CauchyRealA to -> (AccuracySG `to` ((AccuracySG, Maybe MPBall), (AccuracySG, Maybe MPBall)))) -> CauchyRealA to -> CauchyRealA to -> CauchyRealA to
+binaryOpWithPureArg :: (QAArrow to) => String -> (CatchingNumExceptions MPBall -> t -> CatchingNumExceptions MPBall) -> (CauchyRealA to -> t -> (AccuracySG `to` (AccuracySG, Maybe MPBall))) -> CauchyRealA to -> t -> CauchyRealA to
+getCRFnNormLog :: (Arrow to) => CauchyRealA to -> (MPBall -> MPBall) -> AccuracySG `to` (NormLog, MPBall)
+getInitQ1FromSimple :: (Arrow to) => AccuracySG `to` q -> r1 -> AccuracySG `to` (q, Maybe MPBall)
+getInitQ1TFromSimple :: (Arrow to) => AccuracySG `to` q -> r1 -> t -> AccuracySG `to` (q, Maybe MPBall)
+getInitQ1Q2FromSimple :: (Arrow to) => AccuracySG `to` (q, q) -> r1 -> r2 -> AccuracySG `to` ((q, Maybe MPBall), (q, Maybe MPBall))
 binaryWithBall :: (MPBall -> MPBall -> MPBall) -> CauchyReal -> MPBall -> MPBall
-
-
--- | Effort indicator to direct enclosure computation
-module AERN2.Effort
-type WithEffort t = QA (->) (WithEffortP t)
-newtype WithEffortP t
-WithEffortP :: t -> WithEffortP t
-type Effort = Map String EffortItem
-data EffortItem
-EffortNum :: Integer -> EffortItem
-[_effortNum] :: EffortItem -> Integer
-
--- | EffortFun { effortFun :: Integer -&gt; Integer } | EffortFun {
---   effortFunSampleArg :: Effort, effortFun :: Effort -&gt; Integer }
-EffortSub :: Effort -> EffortItem
-[_effortSub] :: EffortItem -> Effort
-subs :: Traversal' Effort Effort
-subE :: String -> Prism' Effort Effort
-precE :: Traversal' Effort Integer
-normaliseTopLevel :: Effort -> Effort
-unifyPrecTopLevel :: Effort -> Effort
-combineSampleEfforts :: Effort -> Effort -> (Effort, Effort -> Effort, Effort -> Effort)
-instance (Numeric.MixedTypes.AddSub.CanAddAsymmetric t1 t2, GHC.Show.Show (Numeric.MixedTypes.AddSub.AddType t1 t2)) => Numeric.MixedTypes.AddSub.CanAddAsymmetric (AERN2.Effort.WithEffort t1) (AERN2.Effort.WithEffort t2)
-instance GHC.Show.Show AERN2.Effort.EffortItem
-instance GHC.Show.Show t => GHC.Show.Show (AERN2.Effort.WithEffortP t)
-instance GHC.Show.Show t => AERN2.QA.QAProtocol (AERN2.Effort.WithEffortP t)
-instance GHC.Show.Show t => AERN2.QA.QAProtocolCacheable (AERN2.Effort.WithEffortP t)

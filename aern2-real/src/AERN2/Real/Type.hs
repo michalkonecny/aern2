@@ -36,6 +36,8 @@ import AERN2.MP.Ball
 
 import AERN2.QA
 
+import AERN2.AccuracySG
+
 import Debug.Trace (trace)
 
 shouldTrace :: Bool
@@ -50,10 +52,12 @@ maybeTrace
 _dummy :: ()
 _dummy = maybeTrace "dummy" ()
 
+{- Cauchy real numbers -}
+
 data CauchyRealP = CauchyRealP deriving (Show)
 
 instance QAProtocol CauchyRealP where
-  type Q CauchyRealP = Accuracy
+  type Q CauchyRealP = AccuracySG
   type A CauchyRealP = MPBall
   -- sampleQ _ = NoInformation
 
@@ -63,10 +67,10 @@ pCR = CauchyRealP
 instance QAProtocolCacheable CauchyRealP where
   type QACache CauchyRealP = Maybe MPBall
   newQACache _ = Nothing
-  lookupQACache _ cache ac =
+  lookupQACache _ cache acSG@(AccuracySG acS acG) =
     case cache of
-      Just b | getAccuracy b >= ac ->
-        Just (setPrecisionAtLeastAccuracy ac $ reduceSizeUsingAccuracyGuide ac b)
+      Just b | getAccuracy b >= acSG ->
+        Just (setPrecisionAtLeastAccuracy acS $ reduceSizeUsingAccuracyGuide acG b)
       _ -> Nothing
   updateQACache _ Nothing _ b = Just b
   updateQACache _ (Just b1) _ b2 = Just (b1 `intersect` b2)
@@ -87,35 +91,35 @@ realSources = qaSources
 
 {-| Get a ball approximation of the real number with at least the specified accuracy.
    (A specialisation of 'qaMakeQuery' for Cauchy reals.) -}
-realWithAccuracy :: CauchyRealA to -> Accuracy `to` MPBall
+realWithAccuracy :: CauchyRealA to -> AccuracySG `to` MPBall
 realWithAccuracy = (?)
 
-realWithAccuracyA :: (QAArrow to) => (CauchyRealA to, Accuracy) `to` MPBall
+realWithAccuracyA :: (QAArrow to) => (CauchyRealA to, AccuracySG) `to` MPBall
 realWithAccuracyA = qaMakeQueryA
 
-realsWithAccuracyA :: (QAArrow to) => ([CauchyRealA to], Accuracy) `to` [MPBall]
+realsWithAccuracyA :: (QAArrow to) => ([CauchyRealA to], AccuracySG) `to` [MPBall]
 realsWithAccuracyA = qaMakeQueryOnManyA
 
 type CauchyReal = CauchyRealA (->)
 
 instance Show CauchyReal where
-  show r = show $ r ? (bits 100)
+  show r = show $ r ? (accuracySG (bits 100))
 
 instance CanTestValid CauchyReal where
   isValid _ = True
 
 {- constructions -}
 
-newCR :: (QAArrow to) => String -> [AnyProtocolQA to] -> Accuracy `to` MPBall -> CauchyRealA to
-newCR name sources makeQ = newQA name sources pCR NoInformation makeQ
+newCR :: (QAArrow to) => String -> [AnyProtocolQA to] -> AccuracySG `to` MPBall -> CauchyRealA to
+newCR name sources makeQ = newQA name sources pCR (AccuracySG NoInformation NoInformation) makeQ
 
 convergentList2CauchyRealA :: (QAArrow to) => String -> [MPBall] -> (CauchyRealA to)
 convergentList2CauchyRealA name balls =
-  newCR name [] (arr $ convergentList2CauchySeq balls)
+  newCR name [] (arr $ convergentList2CauchySeq balls . _acStrict)
 
 seqByPrecision2CauchyRealA :: (QAArrow to) => String -> (Precision -> MPBall) -> (CauchyRealA to)
 seqByPrecision2CauchyRealA name byPrec =
-  newCR name [] (arr $ seqByPrecision2CauchySeq byPrec)
+  newCR name [] (arr $ seqByPrecision2CauchySeq byPrec . _acStrict)
 
 {- conversions -}
 
@@ -130,25 +134,25 @@ realA = convertExactly
 
 instance (QAArrow to) => ConvertibleExactly Integer (CauchyRealA to) where
   safeConvertExactly x =
-    Right $ newCR (show x) [] (arr $ flip setPrecisionAtLeastAccuracy $ mpBall x)
+    Right $ newCR (show x) [] (arr $ flip setPrecisionAtLeastAccuracy (mpBall x) . _acStrict)
 
 instance (QAArrow to) => ConvertibleExactly Int (CauchyRealA to) where
   safeConvertExactly x =
-    Right $ newCR (show x) [] (arr $ flip setPrecisionAtLeastAccuracy $ mpBall x)
+    Right $ newCR (show x) [] (arr $ flip setPrecisionAtLeastAccuracy (mpBall x) . _acStrict)
 
 instance (QAArrow to) => ConvertibleExactly Dyadic (CauchyRealA to) where
   safeConvertExactly x =
-    Right $ newCR (show x) [] (arr $ flip setPrecisionAtLeastAccuracy $ mpBall x)
+    Right $ newCR (show x) [] (arr $ flip setPrecisionAtLeastAccuracy (mpBall x) . _acStrict)
 
 instance (QAArrow to) => ConvertibleExactly Rational (CauchyRealA to) where
   safeConvertExactly x =
     Right $ newCR (show x) [] (arr makeQ)
     where
-    makeQ = seqByPrecision2CauchySeq (flip mpBallP x)
+    makeQ = seqByPrecision2CauchySeq (flip mpBallP x) . _acStrict
 
 instance ConvertibleWithPrecision CauchyReal MPBall where
   safeConvertP p r =
-    Right $ setPrecision p $ r ? (bits p + 10)
+    Right $ setPrecision p $ r ? (accuracySG $ bits p + 10)
 
 {- non-zero picking -}
 
@@ -166,7 +170,7 @@ pickNonZeroRealA =
   where
   startFromAccuracy ac =
     proc realsAndS -> do
-      balls <- realsWithAccuracyA -< (map fst realsAndS, ac)
+      balls <- realsWithAccuracyA -< (map fst realsAndS, accuracySG ac)
       let maybeNonZero = pickNonZeroBall $ zip balls realsAndS
       case maybeNonZero of
         Just result -> returnA -< result

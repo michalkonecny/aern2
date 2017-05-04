@@ -12,8 +12,9 @@
 -}
 module AERN2.Real
 (
+  module AERN2.AccuracySG
   -- * The type of real numbers
-  CauchyRealP, pCR
+  , CauchyRealP, pCR
   , realName, realId, realSources, realRename
   , realWithAccuracy, (?), realWithAccuracyA
   , CauchyRealA, CauchyReal, newCR
@@ -40,6 +41,7 @@ import Control.Arrow
 import AERN2.MP.Ball
 
 import AERN2.QA
+import AERN2.AccuracySG
 import AERN2.Real.Type
 import AERN2.Real.Aux
 import AERN2.Real.Comparison ()
@@ -85,4 +87,4 @@ _addAcachedPrint =
     proc () ->
       do
       x <-_addAcached -< ()
-      realWithAccuracyA -< (x, bits 10)
+      realWithAccuracyA -< (x, accuracySG $ bits 10)

@@ -42,6 +42,7 @@ import AERN2.MP.Dyadic
 import AERN2.MP.Float
 
 import AERN2.QA
+import AERN2.AccuracySG
 
 import AERN2.Real.Type
 import AERN2.Real.Comparison (CauchyRealAtAccuracy(..))
@@ -53,7 +54,7 @@ instance Arbitrary CauchyRealAtAccuracy where
   arbitrary =
     CauchyRealAtAccuracy <$>
       arbitrary <*>
-      (bits <$> (arbitrarySmall 1000 :: Gen Integer))
+      ((accuracySG . bits) <$> (arbitrarySmall 1000 :: Gen Integer))
 
 instance Arbitrary CauchyReal where
   arbitrary =
@@ -66,11 +67,11 @@ instance Arbitrary CauchyReal where
       arbitrarySignedBinary =
         signedBinary2Real <$> infiniteListOf (elements [-1,0,1])
       signedBinary2Real sbits =
-        newCR "random" [] $ \ ac ->
-          case ac of
+        newCR "random" [] $ \ (AccuracySG _ acG) ->
+          case acG of
             NoInformation -> balls !! 0
             Exact -> error "signedBinary2Real: cannot request the number Exactly"
-            _ -> balls !! (fromAccuracy ac + 1)
+            _ -> balls !! (fromAccuracy acG + 1)
         where
         balls = nextBit (MB.mpBall (0,1)) sbits
         nextBit ball (sbit:rest) =
@@ -115,58 +116,61 @@ tCauchyRealAtAccuracy = T "CauchyReal(ac)"
 specCRrespectsAccuracy1 ::
   String ->
   (CauchyReal -> CauchyReal) ->
-  (CauchyReal -> Accuracy -> Bool) ->
+  (CauchyReal -> AccuracySG -> Bool) ->
   Spec
 specCRrespectsAccuracy1 opName op precond =
   it (opName ++ " respects accuracy requests") $ do
     property $
       \ (x :: CauchyReal) (ac :: Accuracy) ->
-        ac < (bits 1000) && precond x ac ==>
-        getAccuracy ((op x) ? ac) >= ac
+        let acSG = accuracySG ac in
+        ac < (bits 1000) && precond x acSG ==>
+        getAccuracy ((op x) ? acSG) >= ac
 
-precondAnyReal :: CauchyReal -> Accuracy -> Bool
+precondAnyReal :: CauchyReal -> AccuracySG -> Bool
 precondAnyReal _x _ac = True
 
-precondPositiveReal :: CauchyReal -> Accuracy -> Bool
+precondPositiveReal :: CauchyReal -> AccuracySG -> Bool
 precondPositiveReal x ac = (x ? ac) !>! 0
 
-precondNonZeroReal :: CauchyReal -> Accuracy -> Bool
+precondNonZeroReal :: CauchyReal -> AccuracySG -> Bool
 precondNonZeroReal x ac = (x ? ac) !/=! 0
 
-precondSmallReal :: CauchyReal -> Accuracy -> Bool
+precondSmallReal :: CauchyReal -> AccuracySG -> Bool
 precondSmallReal x ac = abs (x ? ac) !<! 1000
 
-precondPositiveSmallReal :: CauchyReal -> Accuracy -> Bool
+precondPositiveSmallReal :: CauchyReal -> AccuracySG -> Bool
 precondPositiveSmallReal x ac = 0 !<! b && b !<! 1000
   where b = x ? ac
 
 specCRrespectsAccuracy2 ::
   String ->
   (CauchyReal -> CauchyReal -> CauchyReal) ->
-  (CauchyReal -> Accuracy -> Bool) ->
-  (CauchyReal -> Accuracy -> Bool) ->
+  (CauchyReal -> AccuracySG -> Bool) ->
+  (CauchyReal -> AccuracySG -> Bool) ->
   Spec
 specCRrespectsAccuracy2 opName op precond1 precond2 =
   it (opName ++ " respects accuracy requests") $ do
     property $
       \ (x :: CauchyReal) (y :: CauchyReal) (ac :: Accuracy) ->
-        ac < (bits 1000) && precond1 x ac && precond2 y ac  ==>
-        getAccuracy ((op x y) ? ac) >= ac
+        let acSG = accuracySG ac in
+        ac < (bits 1000) && precond1 x acSG && precond2 y acSG  ==>
+        getAccuracy ((op x y) ? acSG) >= ac
 
 specCRrespectsAccuracy2T ::
   (Arbitrary t, Show t) =>
   T t ->
   String ->
   (CauchyReal -> t -> CauchyReal) ->
-  (CauchyReal -> Accuracy -> Bool) ->
+  (CauchyReal -> AccuracySG -> Bool) ->
   (t -> Bool) ->
   Spec
 specCRrespectsAccuracy2T (T tName :: T t) opName op precond1 precond2 =
   it (opName ++ " with " ++ tName ++ " respects accuracy requests") $ do
     property $
       \ (x :: CauchyReal) (t :: t) (ac :: Accuracy) ->
-        ac < (bits 1000) && precond1 x ac && precond2 t  ==>
-        getAccuracy ((op x t) ? ac) >= ac
+        let acSG = accuracySG ac in
+        ac < (bits 1000) && precond1 x acSG && precond2 t  ==>
+        getAccuracy ((op x t) ? acSG) >= ac
 
 precondAnyT :: t -> Bool
 precondAnyT _t = True
