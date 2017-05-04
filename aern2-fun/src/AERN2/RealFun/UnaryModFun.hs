@@ -105,7 +105,7 @@ modFun2BallFun (UnaryModFun dom eval modulus) =
       ) $
       do
       fbC <- fbCE
-      pure $ updateRadius (+ tolerance) $ fbC ? (bits $ rangeAC + 2)
+      pure $ updateRadius (+ tolerance) $ fbC ? (bitsSG $ rangeAC + 2)
       where
       fbCE = eval (catchingNumExceptions (centre b))
 
@@ -223,7 +223,7 @@ _modFun2BallFun_split (UnaryModFun dom eval modulus) =
       withExtremesOnPoints minVal maxVal =
         updateRadius (+ (errorBound $ 0.5^(fromAccuracy ac))) rangeOnPoints
         where
-        rangeOnPoints = fromEndpoints (minVal ? ac) (maxVal ? ac)
+        rangeOnPoints = fromEndpoints (minVal ? (accuracySG ac)) (maxVal ? (accuracySG ac))
 
 instance CanApply UnaryModFun MPBall where
   type ApplyType UnaryModFun MPBall = MPBall

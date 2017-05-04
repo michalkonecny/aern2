@@ -70,7 +70,7 @@ logistic_CR_AC_cachedArrow n =
       do
       x0R <- (-:-)-< realA x0
       (Just x) <-TM.taskLogisticWithHookA n hookA -< x0R
-      realWithAccuracyA -< (x, MPBall.bits 100)
+      realWithAccuracyA -< (x, bitsSG 100)
   where
   x0 = TP.taskLogistic_x0 :: Rational
   hookA i =

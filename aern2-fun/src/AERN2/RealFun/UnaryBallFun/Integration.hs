@@ -108,7 +108,7 @@ integralOnIntervalSubdivide integralOnInterval initS diO =
     where
     makeQ ac =
       ifCertainExceptionDie "integrate by subdivide" $
-          integr initS diO ac
+          integr initS diO (_acStrict ac)
     integr s di ac
         | getAccuracy value >= ac =
             maybeTrace
