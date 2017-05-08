@@ -30,6 +30,8 @@ import Numeric.CatchingExceptions
 
 import Control.Arrow
 
+import Text.Printf
+
 import AERN2.MP.Accuracy
 import AERN2.MP.Dyadic
 import AERN2.MP.Ball
@@ -65,15 +67,20 @@ pCR :: CauchyRealP
 pCR = CauchyRealP
 
 instance QAProtocolCacheable CauchyRealP where
-  type QACache CauchyRealP = Maybe MPBall
+  type QACache CauchyRealP = (Maybe (MPBall, AccuracySG))
   newQACache _ = Nothing
   lookupQACache _ cache acSG@(AccuracySG acS acG) =
     case cache of
-      Just b | getAccuracy b >= acSG ->
-        Just (setPrecisionAtLeastAccuracy acS $ reduceSizeUsingAccuracyGuide acG b)
-      _ -> Nothing
-  updateQACache _ Nothing _ b = Just b
-  updateQACache _ (Just b1) _ b2 = Just (b1 `intersect` b2)
+      Just (b, AccuracySG _ bAG) | getAccuracy b >= acS && (getAccuracy b >= acG || bAG >= acG - tol) ->
+        (Just (setPrecisionAtLeastAccuracy acS $ reduceSizeUsingAccuracyGuide acG b),
+         Just (logMsg b))
+      Just (b, _) -> (Nothing, Just (logMsg b))
+      Nothing -> (Nothing, Just ("cache empty"))
+    where
+    tol = accuracySGdefaultTolerance
+    logMsg b = printf "query: %s; cache: (ac=%s) %s" (show acSG) (show (getAccuracy b))  (show cache)
+  updateQACache _ Nothing q b = Just (b,q)
+  updateQACache _ (Just (b1,q1)) q2 b2 = Just (b1 `intersect` b2, q1 `max` q2)
 
 type CauchyRealA to = QA to CauchyRealP
 
@@ -115,11 +122,11 @@ newCR name sources makeQ = newQA name sources pCR (AccuracySG NoInformation NoIn
 
 convergentList2CauchyRealA :: (QAArrow to) => String -> [MPBall] -> (CauchyRealA to)
 convergentList2CauchyRealA name balls =
-  newCR name [] (arr $ convergentList2CauchySeq balls . _acStrict)
+  newCR name [] (arr $ convergentList2CauchySeq balls . bits)
 
 seqByPrecision2CauchyRealA :: (QAArrow to) => String -> (Precision -> MPBall) -> (CauchyRealA to)
 seqByPrecision2CauchyRealA name byPrec =
-  newCR name [] (arr $ seqByPrecision2CauchySeq byPrec . _acStrict)
+  newCR name [] (arr $ seqByPrecision2CauchySeq byPrec . bits)
 
 {- conversions -}
 
@@ -134,21 +141,21 @@ realA = convertExactly
 
 instance (QAArrow to) => ConvertibleExactly Integer (CauchyRealA to) where
   safeConvertExactly x =
-    Right $ newCR (show x) [] (arr $ flip setPrecisionAtLeastAccuracy (mpBall x) . _acStrict)
+    Right $ newCR (show x) [] (arr $ flip setPrecisionAtLeastAccuracy (mpBall x) . bits)
 
 instance (QAArrow to) => ConvertibleExactly Int (CauchyRealA to) where
   safeConvertExactly x =
-    Right $ newCR (show x) [] (arr $ flip setPrecisionAtLeastAccuracy (mpBall x) . _acStrict)
+    Right $ newCR (show x) [] (arr $ flip setPrecisionAtLeastAccuracy (mpBall x) . bits)
 
 instance (QAArrow to) => ConvertibleExactly Dyadic (CauchyRealA to) where
   safeConvertExactly x =
-    Right $ newCR (show x) [] (arr $ flip setPrecisionAtLeastAccuracy (mpBall x) . _acStrict)
+    Right $ newCR (show x) [] (arr $ flip setPrecisionAtLeastAccuracy (mpBall x) . bits)
 
 instance (QAArrow to) => ConvertibleExactly Rational (CauchyRealA to) where
   safeConvertExactly x =
     Right $ newCR (show x) [] (arr makeQ)
     where
-    makeQ = seqByPrecision2CauchySeq (flip mpBallP x) . _acStrict
+    makeQ = seqByPrecision2CauchySeq (flip mpBallP x) . bits
 
 instance ConvertibleWithPrecision CauchyReal MPBall where
   safeConvertP p r =

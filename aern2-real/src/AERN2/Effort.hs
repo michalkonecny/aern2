@@ -59,7 +59,7 @@ instance (Show t) => QAProtocol (WithEffortP t) where
 instance (Show t) => QAProtocolCacheable (WithEffortP t) where
   type QACache (WithEffortP t) = () -- dummy cache
   newQACache _ = ()
-  lookupQACache _ _ _ = Nothing
+  lookupQACache _ _ _ = (Nothing, Nothing)
   updateQACache _ _ _ _ = ()
 
 type Effort = Map.Map String EffortItem

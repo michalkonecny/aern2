@@ -1,5 +1,14 @@
 {-# LANGUAGE DataKinds, Arrows #-}
+{-# LANGUAGE CPP #-}
+#define DEBUG
 module Main where
+
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#else
+#define maybeTrace (\ (_ :: String) t -> t)
+#endif
 
 import Numeric.MixedTypes
 -- import Data.String (fromString)
@@ -36,6 +45,7 @@ bench benchArg implArg =
     where
     (benchName, benchParams, benchDecription) =
         case benchArg of
+            "logisticT" -> logisticAux 2
             "logistic0" -> logisticAux 100
             "logistic1" -> logisticAux 1000
             "logistic2" -> logisticAux 10000
@@ -55,7 +65,7 @@ bench benchArg implArg =
                     "CR_AC_cachedArrow" -> show (logistic_CR_cachedArrow n (bitsSG 100 100))
 --                     "CR_AG_plain" -> show (logistic_CR_AG_plain n)
                     "CR_AG_cachedUnsafe" -> show (logistic_CR_cachedUnsafe n (bitsSG 10 100))
-                    "CR_AG_cachedArrow" -> show (logistic_CR_cachedArrow n (bitsSG 100 100))
+                    "CR_AG_cachedArrow" -> show (logistic_CR_cachedArrow n (bitsSG 10 100))
                     _ -> error $ "unknown implementation: " ++ implArg
             _ -> error ""
 
@@ -65,13 +75,16 @@ logistic_CR_cachedUnsafe n acSG =
 
 logistic_CR_cachedArrow ::  Integer -> AccuracySG -> MPBall
 logistic_CR_cachedArrow n acSG =
-  snd $ executeQACachedA $
-    proc () ->
-      do
-      x0R <- (-:-)-< realA x0
-      (Just x) <-TM.taskLogisticWithHookA n hookA -< x0R
-      realWithAccuracyA -< (x, acSG)
+  -- maybeTrace (formatQALog 0 netlog) $
+  result
   where
+  (netlog, result) =
+    executeQACachedA $
+      proc () ->
+        do
+        x0R <- (-:-)-< realA x0
+        (Just x) <-TM.taskLogisticWithHookA n hookA -< x0R
+        realWithAccuracyA -< (x, acSG)
   x0 = TP.taskLogistic_x0 :: Rational
   hookA i =
     proc r ->

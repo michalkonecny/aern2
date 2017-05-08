@@ -19,6 +19,7 @@ module AERN2.QA
   , QAArrow(..), qaMakeQueryOnManyA, (-:-), qaArr
   , QACachedA, QANetInfo(..)
   , executeQACachedA, printQANetLogThenResult
+  , formatQALog, printQALog
 )
 where
 
@@ -53,14 +54,16 @@ maybeTrace
 _dummy :: ()
 _dummy = maybeTrace "dummy" ()
 
+{-| A QA protocol at this level is simply a pair of types. -}
 class (Show p, Show (Q p), Show (A p)) => QAProtocol p where
-  type Q p
-  type A p
+  type Q p -- ^ a type of queries
+  type A p -- ^ a type of answers
 
+{-| A QA protocol with a caching method. -}
 class (QAProtocol p) => QAProtocolCacheable p where
   type QACache p
   newQACache :: p -> QACache p
-  lookupQACache :: p -> QACache p -> Q p -> Maybe (A p)
+  lookupQACache :: p -> QACache p -> Q p -> (Maybe (A p), Maybe String) -- ^ the String is a log message
   updateQACache :: p -> QACache p -> Q p -> A p -> QACache p
 
 {-| An object we can ask queries about.  Queries can be asked in some Arrow @to@. -}
@@ -193,7 +196,7 @@ addUnsafeMemoisation qa = qa { qaMakeQuery = unsafeMemo }
       do
       cache <- readMVar cacheVar
       case lookupQACache p cache q of
-        Just a -> return a
+        (Just a, _logMsg) -> return a
         _ ->
           do
           let a = qaMakeQuery qa q
@@ -228,22 +231,24 @@ executeQACachedA code =
 printQANetLogThenResult :: (Show a) =>(QANetLog, a) -> IO ()
 printQANetLogThenResult (lg, result) =
     do
-    printLog lg
+    printQALog lg
     putStrLn $ show result
 
-printLog :: QANetLog -> IO ()
-printLog = aux 0
+printQALog :: QANetLog -> IO ()
+printQALog = putStrLn . formatQALog 0
+
+formatQALog :: Integer -> QANetLog -> String
+formatQALog = aux
     where
-    aux _ [] = return ()
+    aux _ [] = ""
     aux level (item : rest) =
-        do
-        putStrLn $ indent ++ show item
-        aux level' rest
+        (indent ++ show item ++ "\n") ++
+        (aux level' rest)
         where
         indent = replicate (int levelNow) ' '
         (levelNow, level') =
             case item of
-                QANetLog_Query _ _ -> (level + 1, level + 1)
+                QANetLogQuery _ _ -> (level + 1, level + 1)
                 QANetLogAnswer _ _ _ -> (level, level - 1)
                 _ -> (level, level)
 
@@ -272,14 +277,21 @@ data QANetLogItem
         ValueId -- new value
         [ValueId] -- dependent values
         String -- name
-    | QANetLog_Query
+    | QANetLogQuery
         ValueId -- the value being queried
         String -- description of query
     | QANetLogAnswer
         ValueId -- the value being described
         String -- information about the use of cache
         String -- description of answer
-    deriving Show
+
+instance Show QANetLogItem where
+  show (QANetLogCreate valId sources name) =
+    "new (" ++ (show valId) ++ ") " ++ name ++ " <- " ++ show sources
+  show (QANetLogQuery valId queryS) =
+    "(" ++ (show valId) ++ "): ? " ++ queryS
+  show (QANetLogAnswer valId cacheInfoS answerS) =
+    "(" ++ (show valId) ++ "): ! " ++ answerS ++ " (" ++ cacheInfoS ++ ")"
 
 data QAComputation p =
     QAComputation
@@ -331,15 +343,18 @@ getAnswer (p :: p) valueId q =
     logQuery ni =
         ni { net_log = (net_log ni) ++ [logItem] }
         where
-        logItem = QANetLog_Query valueId (show q)
+        logItem = QANetLogQuery valueId (show q)
     aux ni1 =
       do
       (a, usedCache, cache') <-case lookupQACache p cache q of
-        Just a -> return (a, "used cache", cache)
-        _ ->
+        (Just a, mLogMsg) ->
+          return (a, logMsg, cache)
+            where logMsg = "used cache" ++ case mLogMsg of Nothing -> ""; (Just m) -> " (" ++ m ++ ")"
+        (_, mLogMsg) ->
           do
           a <- q2a q
-          return (a, "not used cache", updateQACache p cache q a)
+          return (a, logMsg, updateQACache p cache q a)
+            where logMsg = "not used cache" ++ case mLogMsg of Nothing -> ""; (Just m) -> " (" ++ m ++ ")"
       ni2 <- get
       put $ ni2
           {

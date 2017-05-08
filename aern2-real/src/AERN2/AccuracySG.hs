@@ -13,6 +13,7 @@
 module AERN2.AccuracySG
 (
   AccuracySG(..), acSG0, accuracySG, bitsS, bitsSG
+, accuracySGdefaultTolerance
 )
 where
 
@@ -25,7 +26,13 @@ import AERN2.MP.Accuracy
     in addition to the usual string accuracy requirement. -}
 data AccuracySG =
   AccuracySG { _acStrict :: Accuracy, _acGuide :: Accuracy }
-  deriving (Show)
+
+instance Show AccuracySG where
+  show (AccuracySG acS acG) =
+    "bitsSG " ++ (show $ fromAccuracy acS) ++ " " ++ (show $ fromAccuracy acG)
+
+instance ConvertibleExactly AccuracySG Accuracy where
+  safeConvertExactly (AccuracySG acS acG) = Right $ acS `max` acG
 
 accuracySGdefaultTolerance :: Integer
 accuracySGdefaultTolerance = 2
