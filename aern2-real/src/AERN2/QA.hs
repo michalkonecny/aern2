@@ -13,13 +13,18 @@
 -}
 module AERN2.QA
 (
+  -- * QA protocols and objects
   QAProtocol(..), QAProtocolCacheable(..)
   , QA(..), (?), AnyProtocolQA(..)
   , addUnsafeMemoisation
+  -- * QAArrows
   , QAArrow(..), qaMakeQueryOnManyA, (-:-), qaArr
+  -- * A specific QAArrow that caches answers
   , QACachedA, QANetInfo(..)
   , executeQACachedA, printQANetLogThenResult
   , formatQALog, printQALog
+  -- * arrow utilities
+  , mapA
 )
 where
 
