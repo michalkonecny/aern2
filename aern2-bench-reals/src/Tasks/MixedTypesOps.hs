@@ -114,3 +114,17 @@ ditfft2 (hookA :: c `to` c) xI nI sI = aux xI nI sI
     twInternal :: Rational -> Complex CauchyReal
     twInternal r =
       exp (-2*r*pi*(0 :+ 1))
+
+_testFFT :: Integer -> IO ()
+_testFFT k =
+  do
+  putStrLn "x = "
+  sequence_ $ map print x
+  putStrLn "z = "
+  sequence_ $ map print z
+  where
+  n = 2^k
+  x = [complex i | i <- [1..n]]
+  y = ditfft2 id x n 1 ()
+  y' = map (/n) $ head y : (reverse $ tail y)
+  z = ditfft2 id y' n 1 ()
