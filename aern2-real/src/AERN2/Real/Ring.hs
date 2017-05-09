@@ -21,6 +21,8 @@ import Numeric.MixedTypes hiding (id)
 import Control.Category (id)
 import Control.Arrow
 
+import Data.Complex
+
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
@@ -79,6 +81,28 @@ instance CanAddAsymmetric MPBall CauchyReal where
   type AddType MPBall CauchyReal = MPBall
   add = flip add
 
+instance
+  (QAArrow to, CanAddAsymmetric (CauchyRealA to) t)
+  =>
+  CanAddAsymmetric (CauchyRealA to) (Complex t)
+  where
+  type AddType (CauchyRealA to) (Complex t) = Complex (AddType (CauchyRealA to) t)
+  add r (a :+ i) = (r + a) :+ (z + i)
+    where
+    z = realA 0
+    _ = [z,r]
+
+instance
+  (QAArrow to, CanAddAsymmetric t (CauchyRealA to))
+  =>
+  CanAddAsymmetric (Complex t) (CauchyRealA to)
+  where
+  type AddType (Complex t) (CauchyRealA to) = Complex (AddType t (CauchyRealA to))
+  add (a :+ i) r = (a + r) :+ (i + z)
+    where
+    z = realA 0
+    _ = [z,r]
+
 {- subtraction -}
 
 instance (QAArrow to) => CanSub (CauchyRealA to) (CauchyRealA to) where
@@ -94,6 +118,16 @@ instance (QAArrow to) => CanSub (CauchyRealA to) Rational
 instance (QAArrow to) => CanSub Rational (CauchyRealA to)
 instance CanSub CauchyReal MPBall
 instance CanSub MPBall CauchyReal
+
+instance
+  (QAArrow to, CanAdd (CauchyRealA to) t, CanNegSameType t)
+  =>
+  CanSub (CauchyRealA to) (Complex t)
+
+instance
+  (QAArrow to, CanAdd t (CauchyRealA to))
+  =>
+  CanSub (Complex t) (CauchyRealA to)
 
 {- multiplication -}
 
@@ -168,3 +202,19 @@ instance CanMulAsymmetric CauchyReal MPBall where
 instance CanMulAsymmetric MPBall CauchyReal where
   type MulType MPBall CauchyReal = MPBall
   mul = flip mul
+
+instance
+  (CanMulAsymmetric (CauchyRealA to) t)
+  =>
+  CanMulAsymmetric (CauchyRealA to) (Complex t)
+  where
+  type MulType (CauchyRealA to) (Complex t) = Complex (MulType (CauchyRealA to) t)
+  mul r (a :+ i) = (r * a) :+ (r * i)
+
+instance
+  (CanMulAsymmetric t (CauchyRealA to))
+  =>
+  CanMulAsymmetric (Complex t) (CauchyRealA to)
+  where
+  type MulType (Complex t) (CauchyRealA to) = Complex (MulType t (CauchyRealA to))
+  mul (a :+ i) r = (a * r) :+ (i * r)
