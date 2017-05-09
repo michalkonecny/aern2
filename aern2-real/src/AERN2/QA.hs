@@ -61,8 +61,8 @@ _dummy = maybeTrace "dummy" ()
 
 {-| A QA protocol at this level is simply a pair of types. -}
 class (Show p, Show (Q p), Show (A p)) => QAProtocol p where
-  type Q p -- ^ a type of queries
-  type A p -- ^ a type of answers
+  type Q p -- a type of queries
+  type A p -- a type of answers
 
 {-| A QA protocol with a caching method. -}
 class (QAProtocol p) => QAProtocolCacheable p where
@@ -147,6 +147,10 @@ defaultNewQA name sources =
     case anyPqaId source of
       Just id1 -> [id1]
       Nothing -> anyPqaSources source
+
+instance (QAArrow to, QAProtocolCacheable p) => ConvertibleExactly (QA (->) p) (QA to p) where
+  safeConvertExactly qa =
+    Right $ defaultNewQA (qaName qa) [] (qaProtocol qa) (qaSampleQ qa) (arr $ qaMakeQuery qa)
 
 qaMakeQueryOnManyA :: (QAArrow to) => ([QA to p], Q p) `to` [A p]
 qaMakeQueryOnManyA =

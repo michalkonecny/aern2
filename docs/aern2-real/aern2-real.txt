@@ -13,15 +13,19 @@
 
 -- | Cacheable question-answer protocols
 module AERN2.QA
+
+-- | A QA protocol at this level is simply a pair of types.
 class (Show p, Show (Q p), Show (A p)) => QAProtocol p where type Q p type A p where {
     type family Q p;
     type family A p;
 }
+
+-- | A QA protocol with a caching method.
 class (QAProtocol p) => QAProtocolCacheable p where type QACache p where {
     type family QACache p;
 }
 newQACache :: QAProtocolCacheable p => p -> QACache p
-lookupQACache :: QAProtocolCacheable p => p -> QACache p -> Q p -> Maybe (A p)
+lookupQACache :: QAProtocolCacheable p => p -> QACache p -> Q p -> (Maybe (A p), Maybe String)
 updateQACache :: QAProtocolCacheable p => p -> QACache p -> Q p -> A p -> QACache p
 
 -- | An object we can ask queries about. Queries can be asked in some Arrow
@@ -80,13 +84,19 @@ QANetInfo :: Map ValueId AnyQAComputation -> QANetLog -> QANetInfo
 [net_log] :: QANetInfo -> QANetLog
 executeQACachedA :: (() `QACachedA` a) -> (QANetLog, a)
 printQANetLogThenResult :: (Show a) => (QANetLog, a) -> IO ()
-instance GHC.Show.Show AERN2.QA.QANetLogItem
+formatQALog :: Integer -> QANetLog -> String
+printQALog :: QANetLog -> IO ()
+
+-- | Apply an arrow morphism on all elements of a list
+mapA :: (ArrowChoice to) => (t1 `to` t2) -> ([t1] `to` [t2])
 instance GHC.Enum.Enum AERN2.QA.ValueId
 instance GHC.Classes.Ord AERN2.QA.ValueId
 instance GHC.Classes.Eq AERN2.QA.ValueId
 instance GHC.Show.Show AERN2.QA.ValueId
+instance (AERN2.QA.QAArrow to, AERN2.QA.QAProtocolCacheable p) => Numeric.MixedTypes.Literals.ConvertibleExactly (AERN2.QA.QA (->) p) (AERN2.QA.QA to p)
 instance AERN2.QA.QAArrow (->)
 instance AERN2.QA.QAArrow AERN2.QA.QACachedA
+instance GHC.Show.Show AERN2.QA.QANetLogItem
 
 
 -- | Effort indicator to direct enclosure computation
@@ -129,7 +139,9 @@ acSG0 :: AccuracySG
 accuracySG :: Accuracy -> AccuracySG
 bitsS :: Integer -> AccuracySG
 bitsSG :: Integer -> Integer -> AccuracySG
+accuracySGdefaultTolerance :: Integer
 instance GHC.Show.Show AERN2.AccuracySG.AccuracySG
+instance Numeric.MixedTypes.Literals.ConvertibleExactly AERN2.AccuracySG.AccuracySG AERN2.MP.Accuracy.Accuracy
 instance Numeric.MixedTypes.Ord.HasOrderAsymmetric AERN2.MP.Accuracy.Accuracy AERN2.AccuracySG.AccuracySG
 instance Numeric.MixedTypes.Ord.HasOrderAsymmetric AERN2.AccuracySG.AccuracySG AERN2.MP.Accuracy.Accuracy
 instance Numeric.MixedTypes.MinMaxAbs.CanMinMaxAsymmetric AERN2.AccuracySG.AccuracySG AERN2.AccuracySG.AccuracySG
@@ -247,6 +259,8 @@ instance AERN2.QA.QAArrow to => Numeric.MixedTypes.AddSub.CanAddAsymmetric (AERN
 instance AERN2.QA.QAArrow to => Numeric.MixedTypes.AddSub.CanAddAsymmetric GHC.Real.Rational (AERN2.Real.Type.CauchyRealA to)
 instance Numeric.MixedTypes.AddSub.CanAddAsymmetric AERN2.Real.Type.CauchyReal AERN2.MP.Ball.Type.MPBall
 instance Numeric.MixedTypes.AddSub.CanAddAsymmetric AERN2.MP.Ball.Type.MPBall AERN2.Real.Type.CauchyReal
+instance (AERN2.QA.QAArrow to, Numeric.MixedTypes.AddSub.CanAddAsymmetric (AERN2.Real.Type.CauchyRealA to) t) => Numeric.MixedTypes.AddSub.CanAddAsymmetric (AERN2.Real.Type.CauchyRealA to) (Data.Complex.Complex t)
+instance (AERN2.QA.QAArrow to, Numeric.MixedTypes.AddSub.CanAddAsymmetric t (AERN2.Real.Type.CauchyRealA to)) => Numeric.MixedTypes.AddSub.CanAddAsymmetric (Data.Complex.Complex t) (AERN2.Real.Type.CauchyRealA to)
 instance AERN2.QA.QAArrow to => Numeric.MixedTypes.AddSub.CanSub (AERN2.Real.Type.CauchyRealA to) (AERN2.Real.Type.CauchyRealA to)
 instance AERN2.QA.QAArrow to => Numeric.MixedTypes.AddSub.CanSub (AERN2.Real.Type.CauchyRealA to) GHC.Integer.Type.Integer
 instance AERN2.QA.QAArrow to => Numeric.MixedTypes.AddSub.CanSub GHC.Integer.Type.Integer (AERN2.Real.Type.CauchyRealA to)
@@ -258,6 +272,8 @@ instance AERN2.QA.QAArrow to => Numeric.MixedTypes.AddSub.CanSub (AERN2.Real.Typ
 instance AERN2.QA.QAArrow to => Numeric.MixedTypes.AddSub.CanSub GHC.Real.Rational (AERN2.Real.Type.CauchyRealA to)
 instance Numeric.MixedTypes.AddSub.CanSub AERN2.Real.Type.CauchyReal AERN2.MP.Ball.Type.MPBall
 instance Numeric.MixedTypes.AddSub.CanSub AERN2.MP.Ball.Type.MPBall AERN2.Real.Type.CauchyReal
+instance (AERN2.QA.QAArrow to, Numeric.MixedTypes.AddSub.CanAdd (AERN2.Real.Type.CauchyRealA to) t, Numeric.MixedTypes.Bool.CanNegSameType t) => Numeric.MixedTypes.AddSub.CanSub (AERN2.Real.Type.CauchyRealA to) (Data.Complex.Complex t)
+instance (AERN2.QA.QAArrow to, Numeric.MixedTypes.AddSub.CanAdd t (AERN2.Real.Type.CauchyRealA to)) => Numeric.MixedTypes.AddSub.CanSub (Data.Complex.Complex t) (AERN2.Real.Type.CauchyRealA to)
 instance AERN2.QA.QAArrow to => Numeric.MixedTypes.Ring.CanMulAsymmetric (AERN2.Real.Type.CauchyRealA to) (AERN2.Real.Type.CauchyRealA to)
 instance AERN2.QA.QAArrow to => Numeric.MixedTypes.Ring.CanMulAsymmetric (AERN2.Real.Type.CauchyRealA to) GHC.Integer.Type.Integer
 instance AERN2.QA.QAArrow to => Numeric.MixedTypes.Ring.CanMulAsymmetric GHC.Integer.Type.Integer (AERN2.Real.Type.CauchyRealA to)
@@ -269,6 +285,8 @@ instance AERN2.QA.QAArrow to => Numeric.MixedTypes.Ring.CanMulAsymmetric (AERN2.
 instance AERN2.QA.QAArrow to => Numeric.MixedTypes.Ring.CanMulAsymmetric GHC.Real.Rational (AERN2.Real.Type.CauchyRealA to)
 instance Numeric.MixedTypes.Ring.CanMulAsymmetric AERN2.Real.Type.CauchyReal AERN2.MP.Ball.Type.MPBall
 instance Numeric.MixedTypes.Ring.CanMulAsymmetric AERN2.MP.Ball.Type.MPBall AERN2.Real.Type.CauchyReal
+instance Numeric.MixedTypes.Ring.CanMulAsymmetric (AERN2.Real.Type.CauchyRealA to) t => Numeric.MixedTypes.Ring.CanMulAsymmetric (AERN2.Real.Type.CauchyRealA to) (Data.Complex.Complex t)
+instance Numeric.MixedTypes.Ring.CanMulAsymmetric t (AERN2.Real.Type.CauchyRealA to) => Numeric.MixedTypes.Ring.CanMulAsymmetric (Data.Complex.Complex t) (AERN2.Real.Type.CauchyRealA to)
 
 
 -- | Field operations on Cauchy Real numbers.

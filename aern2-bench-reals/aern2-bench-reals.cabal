@@ -17,6 +17,7 @@ Description:    Comparison of difference exact real computation strategies
 executable aern2-bench-reals
   build-depends:
     base >= 4
+    , containers
     , mixed-types-num == 0.1.*
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*

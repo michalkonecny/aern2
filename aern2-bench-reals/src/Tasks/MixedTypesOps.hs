@@ -1,9 +1,16 @@
-{-# LANGUAGE Arrows, FlexibleContexts, TypeOperators, TypeFamilies, ConstraintKinds #-}
+{-# LANGUAGE Arrows, FlexibleContexts, TypeOperators, TypeFamilies, ConstraintKinds, ScopedTypeVariables #-}
 module Tasks.MixedTypesOps where
 
 import Numeric.MixedTypes
 
 import Control.Arrow
+
+import qualified Data.Map as Map
+
+import Data.Complex
+
+import AERN2.QA
+import AERN2.Real
 
 import Tasks.PreludeOps (taskLogistic_c)
 
@@ -49,3 +56,61 @@ logisticWithHookA hookA c n =
       case mx of
         Just x -> hookA i -< c * x * (1 - x)
         Nothing -> returnA -< Nothing
+
+taskFFTWithHookA ::
+  (ConvertibleExactly (Complex CauchyReal) c, CanAddSubMulBy c c
+  , QAArrow to, HasIntegers c)
+  =>
+  Integer -> (c `to` c) -> () `to` [c]
+taskFFTWithHookA k hookA =
+  ditfft2 hookA x n 1
+  where
+  x = [ convertExactly i | i <- [0..n-1]]
+  n = 2^k
+
+ditfft2 ::
+  (ConvertibleExactly (Complex CauchyReal) c, CanAddSubMulBy c c
+  , QAArrow to)
+  =>
+  (c `to` c) -> [c] -> Integer -> Integer -> () `to` [c]
+ditfft2 (hookA :: c `to` c) xI nI sI = aux xI nI sI
+  where
+  aux x n s
+    | n == 1 =
+        proc () ->
+          do
+          x0 <- hookA -< head x
+          returnA -< [x0]
+    | otherwise = convLR
+    where
+    nHalf = n `div` 2
+    convLR =
+      proc () ->
+        do
+        yEven <- aux x nHalf (2*s) -< ()
+        yOdd <- aux (drop (int s) x) nHalf (2*s) -< ()
+        yOddTw <- mapA twiddleA -< zip yOdd [0..]
+        yL <- mapA (binReg (+)) -< zip yEven yOddTw
+        yR <- mapA (binReg (-)) -< zip yEven yOddTw
+        returnA -< yL ++ yR
+    binReg :: (t1 -> t2 -> c) -> ((t1,t2) `to` c)
+    binReg op =
+      proc (a,b) -> hookA -< op a b
+    twiddleA =
+      proc (a,k) ->
+        binReg (*) -< (a, tw k n)
+  tw :: Integer -> Integer -> c
+  tw k n =
+    case Map.lookup (k/n) tws of -- memoisation
+      Just v -> convertExactly v
+      _ -> error "ditfft2: tw: internal error"
+  tws :: Map.Map Rational (Complex CauchyReal)
+  tws = foldl insertTw Map.empty [k/nI | k <- [0..nI-1]]
+    where
+    insertTw twsPrev r =
+      case Map.lookup r twsPrev of
+        Nothing -> Map.insert r (twInternal r) twsPrev
+        _ -> twsPrev
+    twInternal :: Rational -> Complex CauchyReal
+    twInternal r =
+      exp (-2*r*pi*(0 :+ 1))
