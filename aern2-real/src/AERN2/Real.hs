@@ -58,7 +58,7 @@ _addA =
   -- using -XArrows syntax:
   proc (x,y) -> do
     s <-(-:-)-< x + y
-      -- -:- and //.. are shorcuts for qaRegister and (,) respectively
+      -- -:- is a shorcut for qaRegister
     returnA -< s
 
 _CRonePure :: CauchyReal
