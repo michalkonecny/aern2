@@ -21,6 +21,7 @@ module AERN2.Real
   , convergentList2CauchyRealA
   , seqByPrecision2CauchyRealA
   , CanBeReal, real, CanBeRealA, realA
+  , CanBeComplex, complex, CanBeComplexA, complexA
   -- * constants
   , pi, piA
   -- * arrow-generic versions of some operations

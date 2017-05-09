@@ -19,6 +19,7 @@ module AERN2.Real.Type
   , convergentList2CauchyRealA
   , seqByPrecision2CauchyRealA
   , CanBeReal, real, CanBeRealA, realA
+  , CanBeComplex, complex, CanBeComplexA, complexA
   , pickNonZeroRealA
 )
 where
@@ -31,6 +32,8 @@ import Numeric.CatchingExceptions
 import Control.Arrow
 
 import Text.Printf
+
+import Data.Complex
 
 import AERN2.MP.Accuracy
 import AERN2.MP.Dyadic
@@ -138,6 +141,16 @@ real = convertExactly
 
 realA :: (CanBeRealA to t) => t -> CauchyRealA to
 realA = convertExactly
+
+type CanBeComplexA to t = ConvertibleExactly t (Complex (CauchyRealA to))
+type CanBeComplex t = CanBeComplexA (->) t
+
+complex :: (CanBeComplexA (->) t) => t -> Complex CauchyReal
+complex = convertExactly
+
+complexA :: (CanBeComplexA to t) => t -> Complex (CauchyRealA to)
+complexA = convertExactly
+
 
 instance (QAArrow to) => ConvertibleExactly Integer (CauchyRealA to) where
   safeConvertExactly x =
