@@ -61,7 +61,7 @@ taskFFTWithHookA ::
   (ConvertibleExactly (Complex CauchyReal) c, CanAddSubMulBy c c
   , QAArrow to, HasIntegers c)
   =>
-  Integer -> (c `to` c) -> () `to` [c]
+  Integer -> (c `to` Maybe c) -> () `to` Maybe [c]
 taskFFTWithHookA k hookA =
   ditfft2 hookA x n 1
   where
@@ -72,28 +72,37 @@ ditfft2 ::
   (ConvertibleExactly (Complex CauchyReal) c, CanAddSubMulBy c c
   , QAArrow to)
   =>
-  (c `to` c) -> [c] -> Integer -> Integer -> () `to` [c]
-ditfft2 (hookA :: c `to` c) xI nI sI = aux xI nI sI
+  (c `to` Maybe c) -> [c] -> Integer -> Integer -> () `to` Maybe [c]
+ditfft2 (hookA :: c `to` Maybe c) xI nI sI = aux xI nI sI
   where
   aux x n s
     | n == 1 =
         proc () ->
           do
-          x0 <- hookA -< head x
-          returnA -< [x0]
+          x0m <- hookA -< head x
+          returnA -< do { x0 <- x0m; return [x0] }
     | otherwise = convLR
     where
     nHalf = n `div` 2
+    convLR :: () `to` Maybe [c]
     convLR =
       proc () ->
         do
-        yEven <- aux x nHalf (2*s) -< ()
-        yOdd <- aux (drop (int s) x) nHalf (2*s) -< ()
-        yOddTw <- mapA twiddleA -< zip yOdd [0..]
-        yL <- mapA (binReg (+)) -< zip yEven yOddTw
-        yR <- mapA (binReg (-)) -< zip yEven yOddTw
-        returnA -< yL ++ yR
-    binReg :: (t1 -> t2 -> c) -> ((t1,t2) `to` c)
+        yEven_m <- aux x nHalf (2*s) -< ()
+        yOdd_m <- aux (drop (int s) x) nHalf (2*s) -< ()
+        case (yEven_m, yOdd_m) of
+          (Just yEven, Just yOdd) ->
+            do
+            yOddTw_ms <- mapA twiddleA -< zip yOdd [0..]
+            case sequence yOddTw_ms of
+              Just yOddTw ->
+                do
+                yLm <- mapA (binReg (+)) -< zip yEven yOddTw
+                yRm <- mapA (binReg (-)) -< zip yEven yOddTw
+                returnA -< do { yL <- sequence yLm; yR <- sequence yRm; return (yL ++ yR) }
+              _ -> returnA -< Nothing
+          _ -> returnA -< Nothing
+    binReg :: (t1 -> t2 -> c) -> ((t1,t2) `to` Maybe c)
     binReg op =
       proc (a,b) -> hookA -< op a b
     twiddleA =
@@ -125,6 +134,6 @@ _testFFT k =
   where
   n = 2^k
   x = [complex i | i <- [1..n]]
-  y = ditfft2 id x n 1 ()
+  Just y = ditfft2 Just x n 1 ()
   y' = map (/n) $ head y : (reverse $ tail y)
-  z = ditfft2 id y' n 1 ()
+  Just z = ditfft2 Just y' n 1 ()
