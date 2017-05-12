@@ -62,15 +62,15 @@ realLim :: (Integer -> CauchyReal) -> (Integer -> CauchyReal) -> CauchyReal
 realLim xe_n err_n =
   newCR "" [] (\acc -> h acc 0)
   where
-  h acc k =
+  h acc@(AccuracySG s _) k =
     if kthOk acc k then
       centreAsBall (realWithAccuracy (xe_n k) (acc + 1))
-      + (fromEndpoints (mpBall $ -(dyadic 0.5)^(fromAccuracy acc))
-                       (mpBall $  (dyadic 0.5)^(fromAccuracy acc)) :: MPBall)
+      + (fromEndpoints (mpBall $ -(dyadic 0.5)^(fromAccuracy s))
+                       (mpBall $  (dyadic 0.5)^(fromAccuracy s)) :: MPBall)
     else
       h acc (k + 1)
-  kthError :: Accuracy -> Integer -> MPBall
+  kthError :: AccuracySG -> Integer -> MPBall
   kthError acc k = realWithAccuracy (err_n k) (acc + 2)
-  kthOk :: Accuracy -> Integer -> Bool
-  kthOk acc k =
-    ((kthError acc k) <= 0.5^((fromAccuracy acc) + 1)) == Just True
+  kthOk :: AccuracySG -> Integer -> Bool
+  kthOk acc@(AccuracySG s _) k =
+    ((kthError acc k) <= 0.5^((fromAccuracy s) + 1)) == Just True
