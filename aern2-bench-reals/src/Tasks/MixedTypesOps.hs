@@ -5,6 +5,8 @@ import Numeric.MixedTypes
 
 import Control.Arrow
 
+import Text.Printf
+
 import qualified Data.Map as Map
 
 import Data.Complex
@@ -54,14 +56,67 @@ logisticWithHookA hookA c n =
     step i = proc mx ->
       do
       case mx of
-        Just x -> hookA i -< c * x * (1 - x)
-        Nothing -> returnA -< Nothing
+        Just x ->
+          do
+          mr <- hookA i -< c * x * (1 - x)
+          returnA -< mr
+        Nothing ->
+          returnA -< Nothing
+
+
+{-
+logisticA ::
+  (ArrowChoice to, HasLogisticOps r)
+  =>
+  Rational -> Integer -> (r `to` r)
+logisticA c n =
+    foldl1 (<<<) (take (int n) (repeat l))
+    where
+    l = arr (\x -> (c * x * (1 - x)))
+
+executeLogistic c n =
+  irramEval (logistic c n)
+
+irramEval :: (MPBall -> MPBall) -> (CR -> CR)
+irramEval f rIn = rOut
+  where
+  rOut = newCR ... getAnswer
+  getAnswer ac =
+    ...
+    where
+
+logistic :: (HasLogisticOps t) => Rational -> Integer -> t -> t
+logistic c n x0 =
+  foldl1 (.) (take (int n) (repeat l)) x0
+  where
+  l x = c * x * (1-x)
+-}
+{- FFT -}
+
+taskFFTDescription :: Integer -> Integer -> String
+taskFFTDescription k ac = "taskFFT: FFT on a vector of size " ++ show (2^k) ++ " to accuracy " ++ show ac
+
+taskFFT ::
+  (ConvertibleExactly (Complex CauchyReal) c, CanAddSubMulBy c c
+  , HasIntegers c)
+  =>
+  Integer -> [c]
+taskFFT k = r
+  where
+  (Just r) = taskFFTWithHook k (\ _s l -> Just l)
+
+taskFFTWithHook ::
+  (ConvertibleExactly (Complex CauchyReal) c, CanAddSubMulBy c c
+  , HasIntegers c)
+  =>
+  Integer -> (String -> c -> Maybe c) -> Maybe [c]
+taskFFTWithHook k hook = taskFFTWithHookA k hook ()
 
 taskFFTWithHookA ::
   (ConvertibleExactly (Complex CauchyReal) c, CanAddSubMulBy c c
   , QAArrow to, HasIntegers c)
   =>
-  Integer -> (c `to` Maybe c) -> () `to` Maybe [c]
+  Integer -> (String -> c `to` Maybe c) -> () `to` Maybe [c]
 taskFFTWithHookA k hookA =
   ditfft2 hookA x n 1
   where
@@ -72,24 +127,25 @@ ditfft2 ::
   (ConvertibleExactly (Complex CauchyReal) c, CanAddSubMulBy c c
   , QAArrow to)
   =>
-  (c `to` Maybe c) -> [c] -> Integer -> Integer -> () `to` Maybe [c]
-ditfft2 (hookA :: c `to` Maybe c) xI nI sI = aux xI nI sI
+  (String -> c `to` Maybe c) -> [c] -> Integer -> Integer -> () `to` Maybe [c]
+ditfft2 (hookA :: String -> c `to` Maybe c) x nI sI = aux 0 nI sI
   where
-  aux x n s
+  aux i n s
     | n == 1 =
         proc () ->
           do
-          x0m <- hookA -< head x
+          x0m <- hookA (nodeName i n s) -< x !! i
           returnA -< do { x0 <- x0m; return [x0] }
     | otherwise = convLR
     where
     nHalf = n `div` 2
+    nodeName i n s = printf "node(%d,%d,%d)" i n s
     convLR :: () `to` Maybe [c]
     convLR =
       proc () ->
         do
-        yEven_m <- aux x nHalf (2*s) -< ()
-        yOdd_m <- aux (drop (int s) x) nHalf (2*s) -< ()
+        yEven_m <- aux i nHalf (2*s) -< ()
+        yOdd_m <- aux (i+s) nHalf (2*s) -< ()
         case (yEven_m, yOdd_m) of
           (Just yEven, Just yOdd) ->
             do
@@ -104,7 +160,7 @@ ditfft2 (hookA :: c `to` Maybe c) xI nI sI = aux xI nI sI
           _ -> returnA -< Nothing
     binReg :: (t1 -> t2 -> c) -> ((t1,t2) `to` Maybe c)
     binReg op =
-      proc (a,b) -> hookA -< op a b
+      proc (a,b) -> hookA "node?" -< op a b
     twiddleA =
       proc (a,k) ->
         binReg (*) -< (a, tw k n)
@@ -122,7 +178,9 @@ ditfft2 (hookA :: c `to` Maybe c) xI nI sI = aux xI nI sI
         _ -> twsPrev
     twInternal :: Rational -> Complex CauchyReal
     twInternal r =
-      exp (-2*r*pi*(0 :+ 1))
+      exp (-2*r*pi*complex_i)
+      where
+      complex_i = 0 :+ 1
 
 _testFFT :: Integer -> IO ()
 _testFFT k =
@@ -134,6 +192,6 @@ _testFFT k =
   where
   n = 2^k
   x = [complex i | i <- [1..n]]
-  Just y = ditfft2 Just x n 1 ()
+  Just y = ditfft2 (\s l -> Just l) x n 1 ()
   y' = map (/n) $ head y : (reverse $ tail y)
-  Just z = ditfft2 Just y' n 1 ()
+  Just z = ditfft2 (\s l -> Just l) y' n 1 ()

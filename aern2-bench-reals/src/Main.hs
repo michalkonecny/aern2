@@ -17,6 +17,8 @@ import System.Environment (getArgs)
 
 import Control.Arrow
 
+import Data.Complex
+
 import qualified AERN2.MP as MPBall
     (
       -- CauchyReal, cauchyReal,
@@ -33,31 +35,33 @@ import qualified Tasks.MixedTypesOps as TM
 main :: IO ()
 main =
     do
-    [benchArg, implArg] <- getArgs
-    let (resultDecription, benchDecription) = bench benchArg implArg
+    (implName : benchName : benchParamsS) <- getArgs
+    let (benchDecription, resultDecription) = bench implName benchName benchParamsS
     putStrLn benchDecription
     putStrLn resultDecription
 
 
-bench :: String -> String -> (String, String)
-bench benchArg implArg =
-    (implArg ++ ": " ++ resultDecription, benchDecription)
+bench :: String -> String -> [String] -> (String, String)
+bench implName benchName benchParamsS =
+    (benchDecription, implName ++ ": " ++ resultDecription)
     where
-    (benchName, benchParams, benchDecription) =
-        case benchArg of
-            "logisticT" -> logisticAux 2
-            "logistic0" -> logisticAux 100
-            "logistic1" -> logisticAux 1000
-            "logistic2" -> logisticAux 10000
-            "logistic3" -> logisticAux 100000
+    benchParams :: [Integer]
+    benchParams = map read benchParamsS
+    benchDecription =
+        case benchName of
+            "logistic" -> logisticAux benchParams
+            "fft" -> fftAux benchParams
             _ ->
-                error $ "unknown benchmark: " ++ benchArg
+                error $ "unknown benchmark: " ++ benchName
         where
-        logisticAux n = ("logistic"  :: String, [n],  TP.taskLogisticDescription n)
+        logisticAux [n] = TP.taskLogisticDescription n
+        logisticAux _ = error "logistic requires 1 integer parameter \"n\""
+        fftAux [k,ac] = TM.taskFFTDescription k ac
+        fftAux _ = error "fft requires 2 integer parameters \"k\" and \"ac\""
     resultDecription =
         case (benchName, benchParams) of
             ("logistic", [n]) ->
-                case implArg of
+                case implName of
                     "MP_preludeOps" -> show (logistic_MP_preludeOps n)
                     "MP" -> show (logistic_MP n)
                     -- "CR_AC_plain" -> show (logistic_CR_AC_plain n)
@@ -66,7 +70,17 @@ bench benchArg implArg =
 --                     "CR_AG_plain" -> show (logistic_CR_AG_plain n)
                     "CR_AG_cachedUnsafe" -> show (logistic_CR_cachedUnsafe n (bitsSG 10 100))
                     "CR_AG_cachedArrow" -> show (logistic_CR_cachedArrow n (bitsSG 10 100))
-                    _ -> error $ "unknown implementation: " ++ implArg
+                    _ -> error $ "unknown implementation: " ++ implName
+            ("fft", [k,ac]) ->
+                case implName of
+                    "CR_AC_cachedUnsafe" -> unlines $ map show (fft_CR_cachedUnsafe k (bitsSG ac ac))
+                    -- "CR_AC_cachedArrow" -> show (fft_CR_cachedArrow n (bitsSG ac ac))
+                    "CR_AG_cachedUnsafe" -> unlines $ map show (fft_CR_cachedUnsafe k (bitsSG acHalf ac))
+                    -- "CR_AG_cachedArrow" -> show (fft_CR_cachedArrow n (bitsSG acHalf ac))
+                    _ -> error $ "unknown implementation: " ++ implName
+                where
+                -- n = 2^k
+                acHalf = ac `div` 2
             _ -> error ""
 
 logistic_CR_cachedUnsafe :: Integer -> AccuracySG -> MPBall
@@ -75,7 +89,7 @@ logistic_CR_cachedUnsafe n acSG =
 
 logistic_CR_cachedArrow ::  Integer -> AccuracySG -> MPBall
 logistic_CR_cachedArrow n acSG =
-  -- maybeTrace (formatQALog 0 netlog) $
+  maybeTrace (formatQALog 0 netlog) $
   result
   where
   (netlog, result) =
@@ -118,3 +132,36 @@ checkAccuracy :: MPBall -> Maybe MPBall
 checkAccuracy ball
     | MPBall.getAccuracy ball < (MPBall.bits 50) = Nothing
     | otherwise = Just ball
+
+
+fft_CR_cachedUnsafe :: Integer -> AccuracySG -> [Complex MPBall]
+fft_CR_cachedUnsafe k acSG =
+  map approx $ TM.taskFFT k
+  where
+  approx :: Complex CauchyReal -> Complex MPBall
+  approx (a :+ i) = (a ? acSG) :+ (i ? acSG)
+
+-- fft_CR_cachedArrow :: Integer -> AccuracySG -> [Complex MPBall]
+-- fft_CR_cachedArrow k acSG =
+--   map approx $ TM.taskFFT k
+--   where
+--   approx :: Complex CauchyReal -> Complex MPBall
+--   approx (a :+ i) = (a ? acSG) :+ (i ? acSG)
+--
+--   -- maybeTrace (formatQALog 0 netlog) $
+--   result
+--   where
+--   (netlog, results) =
+--     executeQACachedA $
+--       proc () ->
+--         do
+--         (Just x) <-TM.taskFFTWithHookA k hookA -< ()
+--         return x
+--   x0 = TP.taskLogistic_x0 :: Rational
+--   hookA =
+--     proc (a :+ i) ->
+--       do
+--       rNext <- (-:-)-< (rename r)
+--       returnA -< Just rNext
+--     where
+--     rename = realRename (\_ -> "x_" ++ show i)
