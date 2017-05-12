@@ -125,6 +125,9 @@ library
     AERN2.Local.SineCosine
     AERN2.Local.PPoly
     AERN2.Local
+    AERN2.Analytic.Type
+    AERN2.Analytic.Field
+    AERN2.Analytic
 
 
 test-suite spec
