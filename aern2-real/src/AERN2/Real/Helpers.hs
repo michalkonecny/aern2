@@ -1,6 +1,6 @@
 {-|
-    Module      :  AERN2.Real.Aux
-    Description :  auxiliary functions for CR operations
+    Module      :  AERN2.Real.Helpers
+    Description :  helper functions for CR operations
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -10,7 +10,7 @@
 
     Auxiliary functions for CR operations
 -}
-module AERN2.Real.Aux
+module AERN2.Real.Helpers
 (
   getCRFnNormLog
   , binaryWithBall

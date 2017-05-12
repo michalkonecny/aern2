@@ -28,7 +28,7 @@ import AERN2.MP.Dyadic
 import AERN2.QA
 import AERN2.AccuracySG
 import AERN2.Real.Type
-import AERN2.Real.Aux
+import AERN2.Real.Helpers
 import AERN2.Real.Ring ()
 import AERN2.Real.Field ()
 
