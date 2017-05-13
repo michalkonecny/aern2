@@ -26,6 +26,8 @@ where
 import Numeric.MixedTypes
 import qualified Prelude as P
 
+import Data.Complex
+
 import Control.Lens
 
 import Test.Hspec
@@ -183,6 +185,13 @@ instance HasAccuracy a => HasAccuracy (CatchingNumExceptions a) where
 instance HasAccuracy Int where getAccuracy _ = Exact
 instance HasAccuracy Integer where getAccuracy _ = Exact
 instance HasAccuracy Rational where getAccuracy _ = Exact
+
+instance HasAccuracy t => HasAccuracy (Complex t) where
+  getAccuracy (a :+ i) =
+    (getAccuracy a) `min` (getAccuracy i)
+
+instance HasAccuracy t => HasAccuracy [t] where
+  getAccuracy xs = foldl min Exact $ map getAccuracy xs
 
 {-| Return accuracy, except when the element is Exact, return its nominal Precision dressed as Accuracy.
     This function is useful when we have a convergent sequence where all elements happen to be

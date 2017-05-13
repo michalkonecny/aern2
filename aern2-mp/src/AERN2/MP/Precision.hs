@@ -26,6 +26,8 @@ import Numeric.MixedTypes
 import qualified Prelude as P
 import Text.Printf
 
+import Data.Complex
+
 import Data.Typeable
 
 import Test.Hspec
@@ -97,6 +99,14 @@ class HasPrecision t where
 
 class (HasPrecision t) => CanSetPrecision t where
     setPrecision :: Precision -> t -> t
+
+instance HasPrecision t => HasPrecision (Complex t) where
+  getPrecision (a :+ i) =
+    (getPrecision a) `min` (getPrecision i)
+
+instance CanSetPrecision t => CanSetPrecision (Complex t) where
+  setPrecision p (a :+ i) =
+    (setPrecision p a) :+ (setPrecision p i)
 
 lowerPrecisionIfAbove :: (CanSetPrecision t) => Precision -> t -> t
 lowerPrecisionIfAbove p x

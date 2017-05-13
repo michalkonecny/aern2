@@ -17,6 +17,8 @@ where
 import Numeric.MixedTypes
 import qualified Prelude as P
 
+import Data.Complex
+
 import Math.NumberTheory.Logarithms (integerLog2)
 
 
@@ -55,3 +57,11 @@ instance HasNorm Rational where
         | x == 0.0 = NormZero
         | abs x >= 1.0 = getNormLog $ ceiling $ abs x
         | otherwise = NormBits $ negate $ integer $ integerLog2 $ floor (1 / (abs x))
+
+instance
+  (HasNorm t)
+  =>
+  HasNorm (Complex t)
+  where
+  getNormLog (a :+ i) =
+    (getNormLog a) `max` (getNormLog i)
