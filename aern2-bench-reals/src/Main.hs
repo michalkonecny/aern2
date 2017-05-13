@@ -1,6 +1,6 @@
-{-# LANGUAGE DataKinds, Arrows #-}
+{-# LANGUAGE DataKinds, Arrows, ScopedTypeVariables #-}
 {-# LANGUAGE CPP #-}
-#define DEBUG
+-- #define DEBUG
 module Main where
 
 #ifdef DEBUG
@@ -19,12 +19,7 @@ import Control.Arrow
 
 import Data.Complex
 
-import qualified AERN2.MP as MPBall
-    (
-      -- CauchyReal, cauchyReal,
-     bits, getAccuracy,
-     iterateUntilAccurate)
-import AERN2.MP (MPBall, mpBallP)
+import AERN2.MP
 
 import AERN2.Real
 import AERN2.QA
@@ -73,14 +68,16 @@ bench implName benchName benchParamsS =
                     _ -> error $ "unknown implementation: " ++ implName
             ("fft", [k,ac]) ->
                 case implName of
-                    "CR_AC_cachedUnsafe" -> unlines $ map show (fft_CR_cachedUnsafe k (bitsSG ac ac))
-                    -- "CR_AC_cachedArrow" -> show (fft_CR_cachedArrow n (bitsSG ac ac))
-                    "CR_AG_cachedUnsafe" -> unlines $ map show (fft_CR_cachedUnsafe k (bitsSG acHalf ac))
-                    -- "CR_AG_cachedArrow" -> show (fft_CR_cachedArrow n (bitsSG acHalf ac))
+                    "MP" -> showL (case fft_MP k (bitsSG ac ac) of Just rs -> rs; _ -> error "no result")
+                    "CR_AC_cachedUnsafe" -> showL (fft_CR_cachedUnsafe k (bitsSG ac ac))
+                    "CR_AC_cachedArrow" -> showL (fft_CR_cachedArrow k (bitsSG ac ac))
+                    "CR_AG_cachedUnsafe" -> showL (fft_CR_cachedUnsafe k (bitsSG acHalf ac))
+                    "CR_AG_cachedArrow" -> showL (fft_CR_cachedArrow k (bitsSG acHalf ac))
                     _ -> error $ "unknown implementation: " ++ implName
                 where
                 -- n = 2^k
                 acHalf = ac `div` 2
+                showL xs = "\n" ++ (unlines $ map show xs)
             _ -> error ""
 
 logistic_CR_cachedUnsafe :: Integer -> AccuracySG -> MPBall
@@ -110,7 +107,7 @@ logistic_CR_cachedArrow n acSG =
 
 logistic_MP_preludeOps :: Integer -> Maybe MPBall
 logistic_MP_preludeOps n =
-    snd $ last $ MPBall.iterateUntilAccurate (MPBall.bits (50 :: Integer)) $ withP
+    snd $ last $ iterateUntilAccurate (bits (50 :: Integer)) $ withP
     where
     withP p =
         TP.taskLogisticWithHook n checkAccuracy c x0
@@ -120,7 +117,7 @@ logistic_MP_preludeOps n =
 
 logistic_MP :: Integer -> Maybe MPBall
 logistic_MP n =
-    snd $ last $ MPBall.iterateUntilAccurate (MPBall.bits (50 :: Integer)) $ withP
+    snd $ last $ iterateUntilAccurate (bits (50 :: Integer)) $ withP
     where
     withP p =
         (TM.taskLogisticWithHook n (const checkAccuracy)) x0
@@ -130,7 +127,7 @@ logistic_MP n =
 
 checkAccuracy :: MPBall -> Maybe MPBall
 checkAccuracy ball
-    | MPBall.getAccuracy ball < (MPBall.bits 50) = Nothing
+    | getAccuracy ball < (bits 50) = Nothing
     | otherwise = Just ball
 
 
@@ -141,27 +138,41 @@ fft_CR_cachedUnsafe k acSG =
   approx :: Complex CauchyReal -> Complex MPBall
   approx (a :+ i) = (a ? acSG) :+ (i ? acSG)
 
--- fft_CR_cachedArrow :: Integer -> AccuracySG -> [Complex MPBall]
--- fft_CR_cachedArrow k acSG =
---   map approx $ TM.taskFFT k
---   where
---   approx :: Complex CauchyReal -> Complex MPBall
---   approx (a :+ i) = (a ? acSG) :+ (i ? acSG)
---
---   -- maybeTrace (formatQALog 0 netlog) $
---   result
---   where
---   (netlog, results) =
---     executeQACachedA $
---       proc () ->
---         do
---         (Just x) <-TM.taskFFTWithHookA k hookA -< ()
---         return x
---   x0 = TP.taskLogistic_x0 :: Rational
---   hookA =
---     proc (a :+ i) ->
---       do
---       rNext <- (-:-)-< (rename r)
---       returnA -< Just rNext
---     where
---     rename = realRename (\_ -> "x_" ++ show i)
+fft_CR_cachedArrow :: Integer -> AccuracySG -> [Complex MPBall]
+fft_CR_cachedArrow k acSG =
+  maybeTrace (formatQALog 0 netlog) $
+  results
+  where
+  approxA =
+    proc (aR :+ iR) ->
+      do
+      a <- qaMakeQueryA -< (aR, acSG)
+      i <- qaMakeQueryA -< (iR, acSG)
+      returnA -< a :+ i
+  (netlog, results) =
+    executeQACachedA $
+      proc () ->
+        do
+        (Just resultRs) <-TM.taskFFTWithHookA k hookA -< ()
+        mapA approxA -< resultRs
+  hookA name =
+    proc (a :+ i) ->
+      do
+      aNext <- (-:-)-< (rename a)
+      iNext <- (-:-)-< (rename i)
+      returnA -< Just (aNext :+ iNext)
+    where
+    rename = realRename (\_ -> name)
+
+fft_MP :: Integer -> AccuracySG -> Maybe [Complex MPBall]
+fft_MP k _acSG@(AccuracySG acS _) =
+    snd $ last $ iterateUntilAccurate acS $ withP
+    where
+    withP p =
+        (TM.taskFFTWithHookA k (const checkCAccuracy)) ()
+        where
+        checkCAccuracy (a :+ i) =
+          do
+          a2 <- checkAccuracy a
+          i2 <- checkAccuracy i
+          return $ setPrecision p (a2 :+ i2)

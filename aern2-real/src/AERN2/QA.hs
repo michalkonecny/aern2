@@ -24,7 +24,7 @@ module AERN2.QA
   , executeQACachedA, printQANetLogThenResult
   , formatQALog, printQALog
   -- * arrow utilities
-  , mapA
+  , mapA, CanSwitchArrow(..)
 )
 where
 
@@ -149,9 +149,19 @@ defaultNewQA name sources =
       Just id1 -> [id1]
       Nothing -> anyPqaSources source
 
-instance (QAArrow to, QAProtocolCacheable p) => ConvertibleExactly (QA (->) p) (QA to p) where
+class CanSwitchArrow to1 to2 where
+  switchArrow :: (a `to1` b) -> (a `to2` b)
+
+instance (Arrow to) => CanSwitchArrow (->) to where
+  switchArrow = arr
+
+instance
+  (CanSwitchArrow to1 to2, QAArrow to2, QAProtocolCacheable p)
+  =>
+  ConvertibleExactly (QA to1 p) (QA to2 p)
+  where
   safeConvertExactly qa =
-    Right $ defaultNewQA (qaName qa) [] (qaProtocol qa) (qaSampleQ qa) (arr $ qaMakeQuery qa)
+    Right $ defaultNewQA (qaName qa) [] (qaProtocol qa) (qaSampleQ qa) (switchArrow $ qaMakeQuery qa)
 
 qaMakeQueryOnManyA :: (QAArrow to) => ([QA to p], Q p) `to` [A p]
 qaMakeQueryOnManyA =

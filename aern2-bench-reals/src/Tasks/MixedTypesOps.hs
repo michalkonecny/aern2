@@ -95,8 +95,7 @@ taskFFTDescription :: Integer -> Integer -> String
 taskFFTDescription k ac = "taskFFT: FFT on a vector of size " ++ show (2^k) ++ " to accuracy " ++ show ac
 
 taskFFT ::
-  (ConvertibleExactly (Complex CauchyReal) c, CanAddSubMulBy c c
-  , HasIntegers c)
+  (FFTOpsA (->) c, HasIntegers c)
   =>
   Integer -> [c]
 taskFFT k = r
@@ -104,15 +103,13 @@ taskFFT k = r
   (Just r) = taskFFTWithHook k (\ _s l -> Just l)
 
 taskFFTWithHook ::
-  (ConvertibleExactly (Complex CauchyReal) c, CanAddSubMulBy c c
-  , HasIntegers c)
+  (FFTOpsA (->) c, HasIntegers c)
   =>
   Integer -> (String -> c -> Maybe c) -> Maybe [c]
 taskFFTWithHook k hook = taskFFTWithHookA k hook ()
 
 taskFFTWithHookA ::
-  (ConvertibleExactly (Complex CauchyReal) c, CanAddSubMulBy c c
-  , QAArrow to, HasIntegers c)
+  (FFTOpsA to c, QAArrow to, HasIntegers c)
   =>
   Integer -> (String -> c `to` Maybe c) -> () `to` Maybe [c]
 taskFFTWithHookA k hookA =
@@ -121,9 +118,10 @@ taskFFTWithHookA k hookA =
   x = [ convertExactly i | i <- [0..n-1]]
   n = 2^k
 
+type FFTOpsA to c = (CanAddSubMulBy c c, CanMulBy c (Complex (CauchyRealA to)))
+
 ditfft2 ::
-  (ConvertibleExactly (Complex CauchyReal) c, CanAddSubMulBy c c
-  , QAArrow to)
+  (FFTOpsA to c, QAArrow to)
   =>
   (String -> c `to` Maybe c) -> [c] -> Integer -> Integer -> () `to` Maybe [c]
 ditfft2 (hookA :: String -> c `to` Maybe c) x nI sI = aux 0 nI sI
@@ -162,7 +160,7 @@ ditfft2 (hookA :: String -> c `to` Maybe c) x nI sI = aux 0 nI sI
     twiddleA =
       proc (a,k) ->
         binReg (*) -< (a, tw k n)
-  tw :: Integer -> Integer -> c
+  tw :: Integer -> Integer -> (Complex (CauchyRealA to))
   tw k n =
     case Map.lookup (k/n) tws of -- memoisation
       Just v -> convertExactly v
