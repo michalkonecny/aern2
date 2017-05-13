@@ -85,7 +85,7 @@ bench implName benchName benchParamsS =
 
 logistic_CR_cachedUnsafe :: Integer -> AccuracySG -> MPBall
 logistic_CR_cachedUnsafe n acSG =
-  TM.taskLogistic n $ real (TP.taskLogistic_x0 :: Rational) ? acSG
+  (TM.taskLogistic n $ real (TP.taskLogistic_x0 :: Rational)) ? acSG
 
 logistic_CR_cachedArrow ::  Integer -> AccuracySG -> MPBall
 logistic_CR_cachedArrow n acSG =

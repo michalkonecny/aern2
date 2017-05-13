@@ -57,9 +57,7 @@ logisticWithHookA hookA c n =
       do
       case mx of
         Just x ->
-          do
-          mr <- hookA i -< c * x * (1 - x)
-          returnA -< mr
+          hookA i -< c*x*(1-x)
         Nothing ->
           returnA -< Nothing
 
@@ -134,12 +132,12 @@ ditfft2 (hookA :: String -> c `to` Maybe c) x nI sI = aux 0 nI sI
     | n == 1 =
         proc () ->
           do
-          x0m <- hookA (nodeName i n s) -< x !! i
+          x0m <- hookA nodeName -< x !! i
           returnA -< do { x0 <- x0m; return [x0] }
     | otherwise = convLR
     where
     nHalf = n `div` 2
-    nodeName i n s = printf "node(%d,%d,%d)" i n s
+    nodeName = printf "node(%d,%d,%d)" i n s
     convLR :: () `to` Maybe [c]
     convLR =
       proc () ->
@@ -192,6 +190,6 @@ _testFFT k =
   where
   n = 2^k
   x = [complex i | i <- [1..n]]
-  Just y = ditfft2 (\s l -> Just l) x n 1 ()
+  Just y = ditfft2 (\_ l -> Just l) x n 1 ()
   y' = map (/n) $ head y : (reverse $ tail y)
-  Just z = ditfft2 (\s l -> Just l) y' n 1 ()
+  Just z = ditfft2 (\_ l -> Just l) y' n 1 ()

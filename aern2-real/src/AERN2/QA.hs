@@ -30,6 +30,7 @@ where
 
 import Numeric.MixedTypes
 import qualified Prelude as P
+import Text.Printf
 
 import System.IO.Unsafe (unsafePerformIO)
 import Unsafe.Coerce
@@ -196,20 +197,28 @@ addUnsafeMemoisation qa = qa { qaMakeQuery = unsafeMemo }
   where
   unsafeMemo = unsafePerformIO . unsafePerformIO memoIO
   p = qaProtocol qa
+  -- name = qaName qa
   memoIO =
     do
+    -- putStrLn $ "memoIO starting for " ++ name
     cacheVar <- newMVar $ newQACache p
     return $ useMVar cacheVar
     where
     useMVar cacheVar q =
       do
+      -- putStrLn $ "memoIO: q = " ++ (show q)
       cache <- readMVar cacheVar
+      -- putStrLn $ "memoIO: got cache"
       case lookupQACache p cache q of
-        (Just a, _logMsg) -> return a
+        (Just a, _logMsg) ->
+          do
+          -- putStrLn $ printf "memoIO %s: using cache: ? %s -> ! %s" name (show q) (show a)
+          return a
         _ ->
           do
           let a = qaMakeQuery qa q
           modifyMVar_ cacheVar (const (return (updateQACache p cache q a)))
+          -- putStrLn $ printf "memoIO  %s: updated cache: ? %s -> ! %s" name (show q) (show a)
           return a
 
 instance QAArrow QACachedA where
