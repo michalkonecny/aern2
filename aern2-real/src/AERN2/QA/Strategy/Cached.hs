@@ -1,4 +1,6 @@
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE CPP #-}
+-- #define DEBUG
 {-|
     Module      :  AERN2.QA.Strategy.Cached
     Description :  QA net evaluation with answer caching
@@ -13,11 +15,21 @@
 -}
 module AERN2.QA.Strategy.Cached
 (
-  QACachedA, QANetInfo(..)
+  QACachedA, QANetInfo(..), initQANetInfo
+  , ValueId(..)
+  , QANetLog, QANetLogItem(..)
+  , QAComputation(..), AnyQAComputation(..)
   , executeQACachedA, printQANetLogThenResult
   , formatQALog, printQALog
 )
 where
+
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#else
+#define maybeTrace (\ (_ :: String) t -> t)
+#endif
 
 import Numeric.MixedTypes
 import qualified Prelude as P
@@ -36,20 +48,6 @@ import qualified Data.Map as Map
 import Control.Monad.Trans.State
 
 import AERN2.QA.Protocol
-
-import Debug.Trace (trace)
-
-shouldTrace :: Bool
-shouldTrace = False
--- shouldTrace = True
-
-maybeTrace :: String -> a -> a
-maybeTrace
-    | shouldTrace = trace
-    | otherwise = const id
-
-_dummy :: ()
-_dummy = maybeTrace "dummy" ()
 
 instance QAArrow QACachedA where
   type QAId QACachedA = ValueId
