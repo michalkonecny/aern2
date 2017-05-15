@@ -53,7 +53,8 @@ library
     UndecidableInstances,
     Arrows
   exposed-modules:
-    AERN2.QA
+    AERN2.QA.Protocol
+    AERN2.QA.Strategy.Cached
     AERN2.AccuracySG
     AERN2.Real
     AERN2.Real.Type
@@ -63,7 +64,6 @@ library
     AERN2.Real.Field
     AERN2.Real.Elementary
     AERN2.Real.Tests
-    AERN2.Effort
 
 test-suite spec
   type:

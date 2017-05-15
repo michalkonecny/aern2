@@ -32,7 +32,7 @@ import qualified Data.Map as Map
 
 -- import Control.Monad.Trans.State
 
-import AERN2.QA
+import AERN2.QA.Protocol
 
 -- import Debug.Trace (trace)
 --

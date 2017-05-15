@@ -41,7 +41,7 @@ import qualified AERN2.MP.Ball.Type as MB
 import AERN2.MP.Dyadic
 import AERN2.MP.Float
 
-import AERN2.QA
+import AERN2.QA.Protocol
 import AERN2.AccuracySG
 
 import AERN2.Real.Type

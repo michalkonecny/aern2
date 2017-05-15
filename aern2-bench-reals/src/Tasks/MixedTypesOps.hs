@@ -11,7 +11,7 @@ import qualified Data.Map as Map
 
 import Data.Complex
 
-import AERN2.QA
+import AERN2.QA.Protocol
 import AERN2.Real
 
 import Tasks.PreludeOps (taskLogistic_c)

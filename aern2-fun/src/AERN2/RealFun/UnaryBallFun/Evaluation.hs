@@ -50,7 +50,7 @@ import AERN2.MP.Dyadic
 import AERN2.MP.Ball (MPBall, mpBall, IsBall(..), IsInterval(..))
 import qualified AERN2.MP.Ball as MPBall
 
-import AERN2.QA
+import AERN2.QA.Protocol
 import AERN2.Real
 
 import AERN2.Interval (Interval(..), DyadicInterval, RealInterval)

@@ -21,8 +21,9 @@ import Data.Complex
 
 import AERN2.MP
 
+import AERN2.QA.Protocol
+import AERN2.QA.Strategy.Cached
 import AERN2.Real
-import AERN2.QA
 
 import qualified Tasks.PreludeOps as TP
 import qualified Tasks.MixedTypesOps as TM

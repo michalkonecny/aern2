@@ -18,6 +18,7 @@ module AERN2.Real
   , realName, realId, realSources, realRename
   , realWithAccuracy, (?), realWithAccuracyA
   , CauchyRealA, CauchyReal, newCR
+  , (-:-)
   , convergentList2CauchyRealA
   , seqByPrecision2CauchyRealA
   , CanBeReal, real, CanBeRealA, realA
@@ -41,7 +42,7 @@ import Control.Arrow
 
 import AERN2.MP.Ball
 
-import AERN2.QA
+import AERN2.QA.Protocol
 import AERN2.AccuracySG
 import AERN2.Real.Type
 import AERN2.Real.Helpers
@@ -50,6 +51,8 @@ import AERN2.Real.Ring ()
 import AERN2.Real.Field ()
 import AERN2.Real.Elementary
 import AERN2.Real.Tests ()
+
+import AERN2.QA.Strategy.Cached
 
 {-|
   Example arrow-generic real number computation

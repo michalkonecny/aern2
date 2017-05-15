@@ -26,7 +26,7 @@ import Control.Arrow
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
-import AERN2.QA
+import AERN2.QA.Protocol
 import AERN2.AccuracySG
 import AERN2.Real.Type
 import AERN2.Real.Helpers

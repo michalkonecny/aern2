@@ -39,7 +39,7 @@ import AERN2.MP.Accuracy
 import AERN2.MP.Dyadic
 import AERN2.MP.Ball
 
-import AERN2.QA
+import AERN2.QA.Protocol
 
 import AERN2.AccuracySG
 
