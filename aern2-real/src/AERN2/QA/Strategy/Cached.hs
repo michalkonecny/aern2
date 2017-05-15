@@ -15,10 +15,11 @@
 -}
 module AERN2.QA.Strategy.Cached
 (
-  QACachedAId, executeQACachedAId
+  QACachedAId, executeQACachedAId, executeQAUncachedAId
   , QACachedA, QANetInfo(..), initQANetInfo
   , QAComputation(..), AnyQAComputation(..)
-  , executeQACachedA, printQANetLogThenResult
+  , executeQACachedA, executeQAUncachedA
+  , printQANetLogThenResult
   , formatQALog, printQALog
 )
 where
@@ -76,22 +77,29 @@ instance QAArrow QACachedAId where
 executeQACachedA :: (Monad m) => (QACachedA m () a) -> m (QANetLog, a)
 executeQACachedA code =
   do
-  (result, ni) <- (runStateT $ runKleisli code ()) initQANetInfo
-  let lg = net_log ni
-  return (lg, result)
+  (result, ni) <- (runStateT $ runKleisli code ()) (initQANetInfo True)
+  return (net_log ni, result)
+
+executeQAUncachedA :: (Monad m) => (QACachedA m () a) -> m (QANetLog, a)
+executeQAUncachedA code =
+  do
+  (result, ni) <- (runStateT $ runKleisli code ()) (initQANetInfo False)
+  return (net_log ni, result)
 
 executeQACachedAId :: (QACachedAId () a) -> (QANetLog, a)
-executeQACachedAId code = res
-  where
-  Identity res = executeQACachedA code
+executeQACachedAId code = runIdentity $ executeQACachedA code
+
+executeQAUncachedAId :: (QACachedAId () a) -> (QANetLog, a)
+executeQAUncachedAId code = runIdentity $ executeQAUncachedA code
 
 type QACachedM m = StateT (QANetInfo m) m
 
 data QANetInfo m =
   QANetInfo
   {
-    net_id2value :: Map.Map ValueId (AnyQAComputation m),
-    net_log :: QANetLog
+    net_id2value :: Map.Map ValueId (AnyQAComputation m)
+    , net_log :: QANetLog
+    , net_should_cache :: Bool
   }
 
 data AnyQAComputation m =
@@ -104,12 +112,13 @@ data QAComputation m p =
         (QACache p)
         (Q p -> QACachedM m (A p)) -- ^ used only if a suitable answer is not in the above cache
 
-initQANetInfo :: QANetInfo m
-initQANetInfo =
+initQANetInfo :: Bool -> QANetInfo m
+initQANetInfo should_cache =
     QANetInfo
     {
-        net_id2value = Map.empty,
-        net_log = []
+        net_id2value = Map.empty
+        , net_log = []
+        , net_should_cache = should_cache
     }
 
 newId :: (QAProtocolCacheable p, Monad m) => (QA (QACachedA m) p) -> [QAId (QACachedA m)] -> QACachedM m ValueId
@@ -154,12 +163,14 @@ getAnswer (p :: p) valueId q =
       (a, usedCache, cache') <-case lookupQACache p cache q of
         (Just a, mLogMsg) ->
           return (a, logMsg, cache)
-            where logMsg = "used cache" ++ case mLogMsg of Nothing -> ""; (Just m) -> " (" ++ m ++ ")"
+          where logMsg = "used cache" ++ case mLogMsg of Nothing -> ""; (Just m) -> " (" ++ m ++ ")"
         (_, mLogMsg) ->
           do
           a <- q2a q
-          return (a, logMsg, updateQACache p cache q a)
-            where logMsg = "not used cache" ++ case mLogMsg of Nothing -> ""; (Just m) -> " (" ++ m ++ ")"
+          if should_cache
+            then return (a, logMsg, updateQACache p cache q a)
+            else return (a, logMsg, cache)
+          where logMsg = "not used cache" ++ case mLogMsg of Nothing -> ""; (Just m) -> " (" ++ m ++ ")"
       ni2 <- get
       put $ ni2
           {
@@ -171,6 +182,7 @@ getAnswer (p :: p) valueId q =
               a
       where
       id2value = net_id2value ni1
+      should_cache = net_should_cache ni1
       qaComputation :: (QAComputation m p)
       qaComputation = case Map.lookup valueId id2value of
           Just (AnyQAComputation comp) -> unsafeCoerce comp
