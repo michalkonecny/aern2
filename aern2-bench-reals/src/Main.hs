@@ -22,6 +22,7 @@ import Data.Complex
 import AERN2.MP
 
 import AERN2.QA.Protocol
+import AERN2.QA.NetLog
 import AERN2.QA.Strategy.Cached
 import AERN2.Real
 
@@ -91,7 +92,7 @@ logistic_CR_cachedArrow n acSG =
   result
   where
   (netlog, result) =
-    executeQACachedA $
+    executeQACachedAId $
       proc () ->
         do
         x0R <- (-:-)-< realA x0
@@ -151,7 +152,7 @@ fft_CR_cachedArrow k acSG =
       i <- qaMakeQueryA -< (iR, acSG)
       returnA -< a :+ i
   (netlog, results) =
-    executeQACachedA $
+    executeQACachedAId $
       proc () ->
         do
         (Just resultRs) <-TM.taskFFTWithHookA k hookA -< ()

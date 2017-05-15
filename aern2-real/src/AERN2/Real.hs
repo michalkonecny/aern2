@@ -73,10 +73,10 @@ _addApure =
   _addA (_CRonePure, pi)
   -- equivalent to @_CRonePure + _CRonePure@ since registration does nothing
 
-_CRoneCached :: CauchyRealA QACachedA
+_CRoneCached :: CauchyRealA QACachedAId
 _CRoneCached = realA 1
 
-_addAcached :: QACachedA () (CauchyRealA QACachedA)
+_addAcached :: QACachedAId () (CauchyRealA QACachedAId)
 _addAcached =
   proc () ->
     do
@@ -87,7 +87,7 @@ _addAcached =
 
 _addAcachedPrint :: IO ()
 _addAcachedPrint =
-  printQANetLogThenResult $ executeQACachedA $
+  printQANetLogThenResult $ executeQACachedAId $
     proc () ->
       do
       x <-_addAcached -< ()

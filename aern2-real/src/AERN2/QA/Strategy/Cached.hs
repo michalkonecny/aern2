@@ -15,9 +15,8 @@
 -}
 module AERN2.QA.Strategy.Cached
 (
-  QACachedA, QANetInfo(..), initQANetInfo
-  , ValueId(..)
-  , QANetLog, QANetLogItem(..)
+  QACachedAId, executeQACachedAId
+  , QACachedA, QANetInfo(..), initQANetInfo
   , QAComputation(..), AnyQAComputation(..)
   , executeQACachedA, printQANetLogThenResult
   , formatQALog, printQALog
@@ -32,14 +31,14 @@ import Debug.Trace (trace)
 #endif
 
 import Numeric.MixedTypes
-import qualified Prelude as P
+-- import qualified Prelude as P
 -- import Text.Printf
 
 import Unsafe.Coerce
 
-import Data.Functor.Identity
-
 import Control.Arrow
+
+import Data.Functor.Identity
 
 -- import Data.Maybe
 -- import Data.List
@@ -48,10 +47,14 @@ import qualified Data.Map as Map
 import Control.Monad.Trans.State
 
 import AERN2.QA.Protocol
+import AERN2.QA.NetLog
 
-instance QAArrow QACachedA where
-  type QAId QACachedA = ValueId
-  type QAPromise QACachedA = Identity
+type QACachedAId = QACachedA Identity
+
+type QACachedA m = Kleisli (QACachedM m)
+
+instance (Monad m) => QARegArrow (QACachedA m) where
+  type QAId (QACachedA m) = ValueId
   qaRegister = Kleisli qaRegisterM
     where
     qaRegisterM (x@(QA__ name _ sourceIds p sampleQ _)) =
@@ -61,91 +64,47 @@ instance QAArrow QACachedA where
       where
       makeQCached = getAnswer p
       -- sourceIds = catMaybes $ map anyPqaId sources
+
+instance QAArrow QACachedAId where
+  type QAPromise QACachedAId = Identity
   qaMakeQueryGetPromiseA = qaMakeQueryA >>> arr Identity
   qaFulfilPromiseA = arr runIdentity
   qaMakeQueryA = Kleisli qaMakeQueryM
     where
     qaMakeQueryM (qa, q) = runKleisli (qaMakeQuery qa) q
 
-executeQACachedA :: (() `QACachedA` a) -> (QANetLog, a)
+executeQACachedA :: (Monad m) => (QACachedA m () a) -> m (QANetLog, a)
 executeQACachedA code =
-    (lg, result)
-    where
-    (result, ni) = (runState $ runKleisli code ()) initQANetInfo
-    lg = net_log ni
+  do
+  (result, ni) <- (runStateT $ runKleisli code ()) initQANetInfo
+  let lg = net_log ni
+  return (lg, result)
 
-printQANetLogThenResult :: (Show a) =>(QANetLog, a) -> IO ()
-printQANetLogThenResult (lg, result) =
-    do
-    printQALog lg
-    putStrLn $ show result
+executeQACachedAId :: (QACachedAId () a) -> (QANetLog, a)
+executeQACachedAId code = res
+  where
+  Identity res = executeQACachedA code
 
-printQALog :: QANetLog -> IO ()
-printQALog = putStrLn . formatQALog 0
+type QACachedM m = StateT (QANetInfo m) m
 
-formatQALog :: Integer -> QANetLog -> String
-formatQALog = aux
-    where
-    aux _ [] = ""
-    aux level (item : rest) =
-        (indent ++ show item ++ "\n") ++
-        (aux level' rest)
-        where
-        indent = replicate (int levelNow) ' '
-        (levelNow, level') =
-            case item of
-                QANetLogQuery _ _ -> (level + 1, level + 1)
-                QANetLogAnswer _ _ _ -> (level, level - 1)
-                _ -> (level, level)
-
-
-type QACachedA = Kleisli QACachedM
-type QACachedM = State QANetInfo
-
-data QANetInfo =
+data QANetInfo m =
   QANetInfo
   {
-    net_id2value :: Map.Map ValueId AnyQAComputation,
+    net_id2value :: Map.Map ValueId (AnyQAComputation m),
     net_log :: QANetLog
   }
 
-newtype ValueId = ValueId Integer
-    deriving (Show, P.Eq, P.Ord, Enum)
-
-data AnyQAComputation =
+data AnyQAComputation m =
     forall p . (QAProtocolCacheable p) => -- existentially quantified type
-        AnyQAComputation (QAComputation p)
+        AnyQAComputation (QAComputation m p)
 
-type QANetLog = [QANetLogItem]
-
-data QANetLogItem
-    = QANetLogCreate
-        ValueId -- new value
-        [ValueId] -- dependent values
-        String -- name
-    | QANetLogQuery
-        ValueId -- the value being queried
-        String -- description of query
-    | QANetLogAnswer
-        ValueId -- the value being described
-        String -- information about the use of cache
-        String -- description of answer
-
-instance Show QANetLogItem where
-  show (QANetLogCreate valId sources name) =
-    "new (" ++ (show valId) ++ ") " ++ name ++ " <- " ++ show sources
-  show (QANetLogQuery valId queryS) =
-    "(" ++ (show valId) ++ "): ? " ++ queryS
-  show (QANetLogAnswer valId cacheInfoS answerS) =
-    "(" ++ (show valId) ++ "): ! " ++ answerS ++ " (" ++ cacheInfoS ++ ")"
-
-data QAComputation p =
+data QAComputation m p =
     QAComputation
         p
         (QACache p)
-        (Q p -> QACachedM (A p)) -- ^ used only if a suitable answer is not in the above cache
+        (Q p -> QACachedM m (A p)) -- ^ used only if a suitable answer is not in the above cache
 
-initQANetInfo :: QANetInfo
+initQANetInfo :: QANetInfo m
 initQANetInfo =
     QANetInfo
     {
@@ -153,7 +112,7 @@ initQANetInfo =
         net_log = []
     }
 
-newId :: (QAProtocolCacheable p) => (QA QACachedA p) -> [QAId QACachedA] -> QACachedM ValueId
+newId :: (QAProtocolCacheable p, Monad m) => (QA (QACachedA m) p) -> [QAId (QACachedA m)] -> QACachedM m ValueId
 newId (QA__ name Nothing _ p _sampleQ (Kleisli q2a)) sourceIds =
   maybeTrace ("newId: " ++ show name) $
   do
@@ -177,7 +136,7 @@ newId (QA__ name Nothing _ p _sampleQ (Kleisli q2a)) sourceIds =
 newId _ _ =
   error "internal error in AERN2.QA: newId called with an existing id"
 
-getAnswer :: (QAProtocolCacheable p) => p -> ValueId -> Q p -> QACachedM (A p)
+getAnswer :: (QAProtocolCacheable p, Monad m) => p -> ValueId -> Q p -> QACachedM m (A p)
 getAnswer (p :: p) valueId q =
     maybeTrace ("getAnswer: q = " ++ show q) $
     do
@@ -212,7 +171,7 @@ getAnswer (p :: p) valueId q =
               a
       where
       id2value = net_id2value ni1
-      qaComputation :: (QAComputation p)
+      qaComputation :: (QAComputation m p)
       qaComputation = case Map.lookup valueId id2value of
           Just (AnyQAComputation comp) -> unsafeCoerce comp
           Nothing -> error $ "unknown valueId " ++ show valueId
