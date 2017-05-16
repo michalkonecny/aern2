@@ -52,6 +52,7 @@ import AERN2.Real.Field ()
 import AERN2.Real.Elementary
 import AERN2.Real.Tests ()
 
+import AERN2.QA.NetLog
 import AERN2.QA.Strategy.Cached
 
 {-|
@@ -73,10 +74,10 @@ _addApure =
   _addA (_CRonePure, pi)
   -- equivalent to @_CRonePure + _CRonePure@ since registration does nothing
 
-_CRoneCached :: CauchyRealA QACachedAId
+_CRoneCached :: CauchyRealA QACachedA
 _CRoneCached = realA 1
 
-_addAcached :: QACachedAId () (CauchyRealA QACachedAId)
+_addAcached :: QACachedA () (CauchyRealA QACachedA)
 _addAcached =
   proc () ->
     do
@@ -87,7 +88,7 @@ _addAcached =
 
 _addAcachedPrint :: IO ()
 _addAcachedPrint =
-  printQANetLogThenResult $ executeQACachedAId $
+  printQANetLogThenResult $ executeQACachedA $
     proc () ->
       do
       x <-_addAcached -< ()

@@ -18,7 +18,7 @@ module AERN2.QA.Protocol
   , QA(..), (?), AnyProtocolQA(..)
   , addUnsafeMemoisation
   -- * QAArrows
-  , QAArrow(..), QARegArrow(..), qaMakeQueryOnManyA, (-:-), qaArr
+  , QAArrow(..), qaMakeQueryOnManyA, (-:-), qaArr
   -- * arrow utilities
   , mapA, CanSwitchArrow(..)
 )
@@ -90,19 +90,7 @@ mapA fA =
 {-|
   A class of Arrows suitable for use in QA objects.
 -}
-class (QARegArrow to) => QAArrow to where
-  type QAPromise to :: * -> *
-  qaMakeQueryGetPromiseA :: (QA to p, Q p) `to` (QAPromise to (A p))
-  qaFulfilPromiseA :: (QAPromise to a) `to` a
-  qaMakeQueryA :: (QA to p, Q p) `to` (A p)
-  qaMakeQueryA = qaMakeQueryGetPromiseA >>> qaFulfilPromiseA
-  qaMakeQueriesA :: [(QA to p, Q p)] `to` [A p]
-  qaMakeQueriesA = (mapA qaMakeQueryGetPromiseA) >>> (mapA qaFulfilPromiseA)
-
-{-|
-  A class of Arrows where QA objects can be registered.
--}
-class (ArrowChoice to, P.Eq (QAId to)) => QARegArrow to where
+class (ArrowChoice to, P.Eq (QAId to)) => QAArrow to where
   type QAId to
   {-|
     Register a QA object, which leads to a change in its
@@ -119,9 +107,16 @@ class (ArrowChoice to, P.Eq (QAId to)) => QARegArrow to where
   newQA :: (QAProtocolCacheable p) =>
     String -> [AnyProtocolQA to] -> p -> Q p -> (Q p) `to` (A p) -> QA to p
   newQA = defaultNewQA
+  type QAPromise to :: * -> *
+  qaMakeQueryGetPromiseA :: (QA to p, Q p) `to` (QAPromise to (A p))
+  qaFulfilPromiseA :: (QAPromise to a) `to` a
+  qaMakeQueryA :: (QA to p, Q p) `to` (A p)
+  qaMakeQueryA = qaMakeQueryGetPromiseA >>> qaFulfilPromiseA
+  qaMakeQueriesA :: [(QA to p, Q p)] `to` [A p]
+  qaMakeQueriesA = (mapA qaMakeQueryGetPromiseA) >>> (mapA qaFulfilPromiseA)
 
 defaultNewQA ::
-  (QARegArrow to, QAProtocolCacheable p) =>
+  (QAArrow to, QAProtocolCacheable p) =>
   String -> [AnyProtocolQA to] -> p -> Q p -> (Q p) `to` (A p) -> QA to p
 defaultNewQA name sources =
   QA__ name Nothing (nub $ concat $ map getSourceIds sources)
@@ -130,6 +125,20 @@ defaultNewQA name sources =
     case anyPqaId source of
       Just id1 -> [id1]
       Nothing -> anyPqaSources source
+
+qaMakeQueryOnManyA :: (QAArrow to) => ([QA to p], Q p) `to` [A p]
+qaMakeQueryOnManyA =
+  proc (qas, q) -> qaMakeQueriesA -< map (flip (,) q) qas
+
+(-:-) :: (QAArrow to, QAProtocolCacheable p) => (QA to p) `to` (QA to p)
+(-:-) = qaRegister
+
+infix 0 -:-
+
+-- (//..) :: a -> b -> (a,b)
+-- a //..b = (a,b)
+
+{- Arrow swiching mechanism and application to QA arrow conversion -}
 
 class CanSwitchArrow to1 to2 where
   switchArrow :: (a `to1` b) -> (a `to2` b)
@@ -145,18 +154,6 @@ instance
   safeConvertExactly qa =
     Right $ defaultNewQA (qaName qa) [] (qaProtocol qa) (qaSampleQ qa) (switchArrow $ qaMakeQuery qa)
 
-qaMakeQueryOnManyA :: (QAArrow to) => ([QA to p], Q p) `to` [A p]
-qaMakeQueryOnManyA =
-  proc (qas, q) -> qaMakeQueriesA -< map (flip (,) q) qas
-
-(-:-) :: (QAArrow to, QAProtocolCacheable p) => (QA to p) `to` (QA to p)
-(-:-) = qaRegister
-
-infix 0 -:-
-
--- (//..) :: a -> b -> (a,b)
--- a //..b = (a,b)
-
 {- Trivial QAArrow instance -}
 
 {-|
@@ -164,17 +161,15 @@ infix 0 -:-
   where registration has no effect.
 -}
 instance QAArrow (->) where
+  type QAId (->) = ()
+  qaRegister = id
+  newQA name sources p sampleQ makeQ =
+    addUnsafeMemoisation $ defaultNewQA name sources p sampleQ makeQ
   type QAPromise (->) = Identity
   qaMakeQueryGetPromiseA (qa, q) = Identity $ qaMakeQuery qa q
   qaFulfilPromiseA = runIdentity
   qaMakeQueryA (qa, q) = qaMakeQuery qa q
   qaMakeQueriesA = map qaMakeQueryA
-
-instance QARegArrow (->) where
-  type QAId (->) = ()
-  qaRegister = id
-  newQA name sources p sampleQ makeQ =
-    addUnsafeMemoisation $ defaultNewQA name sources p sampleQ makeQ
 
 {-| Turn a pure QA object into any QAArrow QA object. -}
 qaArr :: (QAArrow to, QAProtocolCacheable p) => (QA (->) p) -> (QA to p)

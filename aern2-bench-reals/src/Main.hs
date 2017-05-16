@@ -92,7 +92,7 @@ logistic_CR_cachedArrow n acSG =
   result
   where
   (netlog, result) =
-    executeQACachedAId $
+    executeQACachedA $
       proc () ->
         do
         x0R <- (-:-)-< realA x0
@@ -152,7 +152,7 @@ fft_CR_cachedArrow k acSG =
       i <- qaMakeQueryA -< (iR, acSG)
       returnA -< a :+ i
   (netlog, results) =
-    executeQACachedAId $
+    executeQACachedA $
       proc () ->
         do
         (Just resultRs) <-TM.taskFFTWithHookA k hookA -< ()

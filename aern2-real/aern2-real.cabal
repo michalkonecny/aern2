@@ -33,10 +33,12 @@ library
     -- , hspec-smallcheck >= 0.3 && < 0.5
     , QuickCheck >= 2.7 && < 2.10
     , transformers >= 0.4 && < 0.6
+    , lens >= 4.13 && < 4.16
+    , stm >= 2.4 && < 2.5
+    , data-fix >= 0 && < 0.1
     , mixed-types-num == 0.1.*
     , num-exceptions == 0.1.*
     , aern2-mp == 0.1.*
-    , lens >= 4.13 && < 4.16
   ghc-options:     -Wall -O2 -fno-warn-orphans
   extensions:
     RebindableSyntax,
@@ -55,6 +57,7 @@ library
   exposed-modules:
     AERN2.QA.Protocol
     AERN2.QA.NetLog
+    AERN2.QA.NetState
     AERN2.QA.Strategy.Cached
     AERN2.QA.Strategy.Parallel
     AERN2.AccuracySG
