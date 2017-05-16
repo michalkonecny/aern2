@@ -1,6 +1,6 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE CPP #-}
-#define DEBUG
+-- #define DEBUG
 {-|
     Module      :  AERN2.QA.Strategy.Parallel
     Description :  QA net parallel evaluation

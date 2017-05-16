@@ -24,7 +24,7 @@ import Numeric.MixedTypes
 
 import Control.Arrow
 
-import Control.Lens hiding (op)
+import Control.Lens hiding (op, (??))
 
 import Numeric.CatchingExceptions
 
@@ -121,7 +121,7 @@ binaryOp name op getInitQ1Q2 r1 r2 =
     proc ac ->
       do
       (q1InitMB, q2InitMB) <- getInitQ1Q2 r1 r2 -< ac
-      ensureAccuracyA2 (r1 ?) (r2 ?) op -< (ac, q1InitMB, q2InitMB)
+      ensureAccuracyA2 ((r1,r2) ??) op -< (ac, q1InitMB, q2InitMB)
 
 {- functions to help determine initial queries -}
 
@@ -210,11 +210,10 @@ ensureAccuracyA1 getA1 op =
 
 ensureAccuracyA2 ::
   (ArrowChoice to) =>
-  (AccuracySG `to` MPBall) ->
-  (AccuracySG `to` MPBall) ->
+  ((AccuracySG, AccuracySG) `to` (MPBall, MPBall)) ->
   (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) ->
   ((AccuracySG, (AccuracySG, Maybe MPBall), (AccuracySG, Maybe MPBall)) `to` MPBall)
-ensureAccuracyA2 getA1 getA2 op =
+ensureAccuracyA2 getA12 op =
     proc (q,(j1, mB1),(j2, mB2)) ->
         do
         let mResult =
@@ -235,8 +234,7 @@ ensureAccuracyA2 getA1 getA2 op =
     aux =
         proc (q, j1, j2) ->
             do
-            a1 <- getA1 -< j1
-            a2 <- getA2 -< j2
+            (a1,a2) <- getA12 -< (j1, j2)
             let resultCE = op (catchingNumExceptions a1) (catchingNumExceptions a2)
             case resultCE ^. numEXC_maybeValue of
               Just result | getAccuracy result >= _acStrict q ->

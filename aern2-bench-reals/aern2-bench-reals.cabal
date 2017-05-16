@@ -22,7 +22,7 @@ executable aern2-bench-reals
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
   hs-source-dirs:  src
-  ghc-options:     -O2 -Wall -rtsopts
+  ghc-options:     -O2 -Wall -rtsopts -threaded
   extensions:
         RebindableSyntax
   main-is: Main.hs

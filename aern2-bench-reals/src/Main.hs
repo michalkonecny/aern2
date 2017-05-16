@@ -6,14 +6,17 @@ module Main where
 #ifdef DEBUG
 import Debug.Trace (trace)
 #define maybeTrace trace
+#define maybeTraceIO putStrLn
 #else
 #define maybeTrace (\ (_ :: String) t -> t)
+#define maybeTraceIO (\ (_ :: String) -> return ())
 #endif
 
 import Numeric.MixedTypes
 -- import Data.String (fromString)
 
 import System.Environment (getArgs)
+import System.IO.Unsafe (unsafePerformIO)
 
 import Control.Arrow
 
@@ -24,6 +27,8 @@ import AERN2.MP
 import AERN2.QA.Protocol
 import AERN2.QA.NetLog
 import AERN2.QA.Strategy.Cached
+import AERN2.QA.Strategy.Parallel
+
 import AERN2.Real
 
 import qualified Tasks.PreludeOps as TP
@@ -73,8 +78,10 @@ bench implName benchName benchParamsS =
                     "MP" -> showL (case fft_MP k (bitsSG ac ac) of Just rs -> rs; _ -> error "no result")
                     "CR_AC_cachedUnsafe" -> showL (fft_CR_cachedUnsafe k (bitsSG ac ac))
                     "CR_AC_cachedArrow" -> showL (fft_CR_cachedArrow k (bitsSG ac ac))
+                    "CR_AC_parArrow" -> showL (fft_CR_parArrow k (bitsSG ac ac))
                     "CR_AG_cachedUnsafe" -> showL (fft_CR_cachedUnsafe k (bitsSG acHalf ac))
                     "CR_AG_cachedArrow" -> showL (fft_CR_cachedArrow k (bitsSG acHalf ac))
+                    "CR_AG_parArrow" -> showL (fft_CR_parArrow k (bitsSG acHalf ac))
                     _ -> error $ "unknown implementation: " ++ implName
                 where
                 -- n = 2^k
@@ -165,6 +172,35 @@ fft_CR_cachedArrow k acSG =
       returnA -< Just (aNext :+ iNext)
     where
     rename = realRename (\_ -> name)
+
+fft_CR_parArrow :: Integer -> AccuracySG -> [Complex MPBall]
+fft_CR_parArrow k acSG =
+  unsafePerformIO $
+    do
+    (netlog, results) <-
+      executeQAParA $
+        proc () ->
+          do
+          (Just resultRs) <-TM.taskFFTWithHookA k hookA -< ()
+          mapA approxA -< resultRs
+    maybeTraceIO $ formatQALog 0 netlog
+    return results
+  where
+  approxA =
+    proc (aR :+ iR) ->
+      do
+      a <- qaMakeQueryA -< (aR, acSG)
+      i <- qaMakeQueryA -< (iR, acSG)
+      returnA -< a :+ i
+  hookA name =
+    proc (a :+ i) ->
+      do
+      aNext <- (-:-)-< (rename a)
+      iNext <- (-:-)-< (rename i)
+      returnA -< Just (aNext :+ iNext)
+    where
+    rename = realRename (\_ -> name)
+
 
 fft_MP :: Integer -> AccuracySG -> Maybe [Complex MPBall]
 fft_MP k _acSG@(AccuracySG acS _) =

@@ -18,7 +18,9 @@ module AERN2.QA.Protocol
   , QA(..), (?), AnyProtocolQA(..)
   , addUnsafeMemoisation
   -- * QAArrows
-  , QAArrow(..), qaMakeQueryOnManyA, (-:-), qaArr
+  , QAArrow(..), qaMakeQueryOnManyA
+  , (-:-), qaArr, (-?-), (-???-), (-<?>-)
+  , qaMake2Queries, (??)
   -- * arrow utilities
   , mapA, CanSwitchArrow(..)
 )
@@ -119,10 +121,41 @@ qaMakeQueryOnManyA :: (QAArrow to) => ([QA to p], Q p) `to` [A p]
 qaMakeQueryOnManyA =
   proc (qas, q) -> qaMakeQueriesA -< map (flip (,) q) qas
 
+{-| An infix synonym of 'qaRegister'. -}
 (-:-) :: (QAArrow to, QAProtocolCacheable p) => (QA to p) `to` (QA to p)
 (-:-) = qaRegister
 
+{-| An infix synonym of 'qaMakeQueryA'. -}
+(-?-) :: (QAArrow to) => (QA to p, Q p) `to` (A p)
+(-?-) = qaMakeQueryA
+
+{-| An infix synonym of 'qaMakeQueryOnManyA'. -}
+(-<?>-) :: (QAArrow to) => ([QA to p], Q p) `to` [A p]
+(-<?>-) = qaMakeQueryOnManyA
+
+{-| An infix synonym of 'qaMakeQueriesA'. -}
+(-???-) :: (QAArrow to) => [(QA to p, Q p)] `to` [A p]
+(-???-) = qaMakeQueriesA
+
+infix 0 -?-, -???-, -<?>-
 infix 0 -:-
+
+{-| An infix synonym of 'qaMake2Queries'. -}
+(??) :: (QAArrow to) => (QA to p1, QA to p2) -> (Q p1, Q p2) `to` (A p1, A p2)
+(??) = qaMake2Queries
+
+infix 1 ??
+
+{-| Run two queries in an interleaving manner, enabling parallelism. -}
+qaMake2Queries :: (QAArrow to) => (QA to p1, QA to p2) -> (Q p1, Q p2) `to` (A p1, A p2)
+qaMake2Queries (qa1, qa2) =
+  proc (q1,q2) ->
+    do
+    ap1 <- qaMakeQueryGetPromiseA -< (qa1, q1)
+    ap2 <- qaMakeQueryGetPromiseA -< (qa2, q2)
+    a1 <- qaFulfilPromiseA -< ap1
+    a2 <- qaFulfilPromiseA -< ap2
+    returnA -< (a1,a2)
 
 -- (//..) :: a -> b -> (a,b)
 -- a //..b = (a,b)
