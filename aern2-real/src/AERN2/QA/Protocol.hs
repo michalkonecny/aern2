@@ -76,17 +76,6 @@ anyPqaId (AnyProtocolQA qa) = qaId qa
 anyPqaSources :: AnyProtocolQA to -> [QAId to]
 anyPqaSources (AnyProtocolQA qa) = qaSources qa
 
-{-| Apply an arrow morphism on all elements of a list -}
-mapA :: (ArrowChoice to) => (t1 `to` t2) -> ([t1] `to` [t2])
-mapA fA =
-  proc list -> do
-    case list of
-      [] -> returnA -< []
-      (x : xs) -> do
-        y <- fA -< x
-        ys <-mapA fA -< xs
-        returnA -< y : ys
-
 {-|
   A class of Arrows suitable for use in QA objects.
 -}
@@ -153,6 +142,18 @@ instance
   where
   safeConvertExactly qa =
     Right $ defaultNewQA (qaName qa) [] (qaProtocol qa) (qaSampleQ qa) (switchArrow $ qaMakeQuery qa)
+
+
+{-| Apply an arrow morphism on all elements of a list -}
+mapA :: (ArrowChoice to) => (t1 `to` t2) -> ([t1] `to` [t2])
+mapA fA =
+  proc list -> do
+    case list of
+      [] -> returnA -< []
+      (x : xs) -> do
+        y <- fA -< x
+        ys <-mapA fA -< xs
+        returnA -< y : ys
 
 {- Trivial QAArrow instance -}
 

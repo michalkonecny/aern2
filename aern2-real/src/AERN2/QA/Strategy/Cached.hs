@@ -13,14 +13,12 @@
     QA net evaluation with answer caching
 -}
 module AERN2.QA.Strategy.Cached
--- (
---   QACachedAId, executeQACachedAId, executeQAUncachedAId
---   , QACachedA, QANetState(..), initQANetState
---   , QAComputation(..), AnyQAComputation(..)
---   , executeQACachedA, executeQAUncachedA
---   , printQANetLogThenResult
---   , formatQALog, printQALog
--- )
+(
+  module AERN2.QA.NetLog
+  , module AERN2.QA.NetState
+  , QACachedA
+  , executeQACachedA, executeQAUncachedA
+)
 where
 
 #ifdef DEBUG
@@ -37,10 +35,6 @@ import Numeric.MixedTypes
 import Control.Arrow
 
 import Data.Functor.Identity
-
--- import Data.Maybe
--- import Data.List
--- import qualified Data.Map as Map
 
 import Control.Monad.Trans.State
 
