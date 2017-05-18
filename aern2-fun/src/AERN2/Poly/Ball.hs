@@ -45,7 +45,7 @@ import AERN2.MP hiding (ball_value, ball_error)
 import AERN2.MP.Dyadic
 
 
-import AERN2.Real
+import AERN2.Real hiding (ball_value)
 
 import AERN2.Interval
 import AERN2.RealFun.Operations
