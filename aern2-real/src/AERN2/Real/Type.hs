@@ -101,7 +101,7 @@ realSources = qaSources
 
 {-| Get a ball approximation of the real number with at least the specified accuracy.
    (A specialisation of 'qaMakeQuery' for Cauchy reals.) -}
-realWithAccuracy :: CauchyRealA to -> AccuracySG `to` MPBall
+realWithAccuracy :: (QAArrow to) => CauchyRealA to -> AccuracySG `to` MPBall
 realWithAccuracy = (?)
 
 realWithAccuracyA :: (QAArrow to) => (CauchyRealA to, AccuracySG) `to` MPBall

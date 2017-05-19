@@ -60,7 +60,7 @@ instance (QAArrow to) => ConvertibleExactly Bool (CauchyBoolA to) where
 instance (QAArrow to) => CanNeg (CauchyBoolA to) where
   type NegType (CauchyBoolA to) = CauchyBoolA to
   negate qa =
-    newQA "neg" [AnyProtocolQA qa] pCB (accuracySG $ bits 0) (qaMakeQuery qa >>> arr negate)
+    newQA "neg" [AnyProtocolQA qa] pCB (accuracySG $ bits 0) ((qa ?) >>> arr negate)
 
 instance (QAArrow to) => CanAndOrAsymmetric (CauchyBoolA to) (CauchyBoolA to) where
   type AndOrType (CauchyBoolA to) (CauchyBoolA to) = CauchyBoolA to
@@ -68,15 +68,15 @@ instance (QAArrow to) => CanAndOrAsymmetric (CauchyBoolA to) (CauchyBoolA to) wh
     newQA "and" [AnyProtocolQA qa1, AnyProtocolQA qa2] pCB (accuracySG $ bits 0) $
       proc ac ->
         do
-        b1 <- qaMakeQuery qa1 -< ac
-        b2 <- qaMakeQuery qa2 -< ac
+        b1 <- (qa1 ?) -< ac
+        b2 <- (qa2 ?) -< ac
         returnA -< b1 `and2` b2
   or2 qa1 qa2 =
     newQA "or" [AnyProtocolQA qa1, AnyProtocolQA qa2] pCB (accuracySG $ bits 0) $
       proc ac ->
         do
-        b1 <- qaMakeQuery qa1 -< ac
-        b2 <- qaMakeQuery qa2 -< ac
+        b1 <- (qa1 ?) -< ac
+        b2 <- (qa2 ?) -< ac
         returnA -< b1 `or2` b2
 
 
@@ -127,7 +127,7 @@ deliftRel ::
   (CauchyReal -> CauchyReal -> CauchyBool) ->
   CauchyRealAtAccuracy -> CauchyRealAtAccuracy -> Maybe Bool
 deliftRel rel (CauchyRealAtAccuracy x1 ac1) (CauchyRealAtAccuracy x2 ac2) =
-  qaMakeQuery (rel x1 x2) (max ac1 ac2)
+  (rel x1 x2) ? (max ac1 ac2)
 
 {- abs -}
 

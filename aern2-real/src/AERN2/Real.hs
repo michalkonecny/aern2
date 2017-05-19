@@ -111,12 +111,12 @@ _addslACachedPrint =
       x <-_addslA -< realA 2
       (-?-) -< (x, bitsS 100)
 
-_addslAParPrint :: IO ()
-_addslAParPrint =
-  do
-  r <- executeQAParA $
-    proc () ->
-      do
-      x <-_addslA -< realA 2
-      (-?-) -< (x, bitsS 100)
-  printQANetLogThenResult r
+-- _addslAParPrint :: IO ()
+-- _addslAParPrint =
+--   do
+--   r <- executeQAParA $
+--     proc () ->
+--       do
+--       x <-_addslA -< realA 2
+--       (-?-) -< (x, bitsS 100)
+--   printQANetLogThenResult r

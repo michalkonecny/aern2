@@ -72,7 +72,7 @@ divGetInitQ1T _a1 n =
 
 
 divGetInitQ1TL ::
-  (Arrow to, HasNorm t)
+  (QAArrow to, HasNorm t)
   =>
   (CauchyRealA to) -> t -> AccuracySG `to` (AccuracySG, Maybe MPBall)
 divGetInitQ1TL a2 n =

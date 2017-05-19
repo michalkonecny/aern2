@@ -15,11 +15,12 @@ module AERN2.QA.Protocol
 (
   -- * QA protocols and objects
   QAProtocol(..), QAProtocolCacheable(..)
-  , QA(..), (?), AnyProtocolQA(..)
+  , QA(..), QAPromiseA, (?..), AnyProtocolQA(..)
   , addUnsafeMemoisation
   -- * QAArrows
-  , QAArrow(..), qaMakeQueryOnManyA
-  , (-:-), qaArr, (-?-), (-???-), (-<?>-)
+  , QAArrow(..), qaMakeQuery, qaMakeQueryA, qaMakeQueriesA, qaMakeQueryOnManyA
+  , (?)
+  , (-:-), (-?-), (-???-), (-<?>-)
   , qaMake2Queries, (??)
   -- * arrow utilities
   , mapA, CanSwitchArrow(..)
@@ -31,8 +32,6 @@ import qualified Prelude as P
 -- import Text.Printf
 
 import System.IO.Unsafe (unsafePerformIO)
-
-import Data.Functor.Identity
 
 import Control.Arrow
 import Control.Concurrent.MVar
@@ -60,14 +59,16 @@ data QA to p = QA__
     qaSources :: [QAId to],
     qaProtocol :: p,
     qaSampleQ :: Q p,
-    qaMakeQuery :: (Q p) `to` (A p)
+    qaMakeQueryGetPromise :: (Q p) `to` (QAPromiseA to (A p))
   }
 
-{-| An infix synonym of 'qaMakeQuery'. -}
-(?) :: QA to p -> (Q p) `to` (A p)
-(?) = qaMakeQuery
+type QAPromiseA to a = () `to` a
 
-infix 1 ?
+{-| An infix synonym of 'qaMakeQuery'. -}
+(?..) :: QA to p -> (Q p) `to` (QAPromiseA to (A p))
+(?..) = qaMakeQueryGetPromise
+
+infix 1 ?..
 
 data AnyProtocolQA to =
   forall p. (QAProtocolCacheable p) => AnyProtocolQA (QA to p)
@@ -95,31 +96,58 @@ class (ArrowChoice to, P.Eq (QAId to)) => QAArrow to where
     as the registration has recorded them elsewhere.
   -}
   qaRegister :: (QAProtocolCacheable p) => (QA to p) `to` (QA to p)
+  {-|
+    Create a qa object.  The object is not "registered" automatically.
+    Invoking this function does not lead to any `to'-arrow computation.
+    The function is an operation of 'QAArrow' so that for some arrows,
+    the question-answer mechanism can be automatically altered.
+    In particular, this is used to make all objects in the (->) arrow
+    automatically (unsafely) caching their answers.
+    For most arrows, the default implementation is sufficient.
+  -}
   newQA :: (QAProtocolCacheable p) =>
     String -> [AnyProtocolQA to] -> p -> Q p -> (Q p) `to` (A p) -> QA to p
   newQA = defaultNewQA
-  type QAPromise to :: * -> *
-  qaMakeQueryGetPromiseA :: (QA to p, Q p) `to` (QAPromise to (A p))
-  qaFulfilPromiseA :: (QAPromise to a) `to` a
-  qaMakeQueryA :: (QA to p, Q p) `to` (A p)
-  qaMakeQueryA = qaMakeQueryGetPromiseA >>> qaFulfilPromiseA
-  qaMakeQueriesA :: [(QA to p, Q p)] `to` [A p]
-  qaMakeQueriesA = (mapA qaMakeQueryGetPromiseA) >>> (mapA qaFulfilPromiseA)
+  qaFulfilPromise :: (QAPromiseA to a) `to` a
+  qaMakeQueryGetPromiseA :: (QA to p, Q p) `to` (QAPromiseA to (A p))
 
 defaultNewQA ::
   (QAArrow to, QAProtocolCacheable p) =>
   String -> [AnyProtocolQA to] -> p -> Q p -> (Q p) `to` (A p) -> QA to p
-defaultNewQA name sources =
-  QA__ name Nothing (nub $ concat $ map getSourceIds sources)
+defaultNewQA name sources p sampleQ makeQ =
+  QA__ name Nothing (nub $ concat $ map getSourceIds sources) p sampleQ makeQPromise
   where
   getSourceIds source =
     case anyPqaId source of
       Just id1 -> [id1]
       Nothing -> anyPqaSources source
+  makeQPromise =
+    proc acSG ->
+      returnA -< promise acSG
+  promise acSG =
+    proc () ->
+      do
+      a <- makeQ -< acSG
+      returnA -< a
+
+qaMakeQuery :: (QAArrow to) => (QA to p) -> (Q p) `to` (A p) -- ^ composition of qaMakeQueryGetPromise and the execution of the promise
+qaMakeQuery qa = (qaMakeQueryGetPromise qa) >>> qaFulfilPromise
+
+qaMakeQueryA :: (QAArrow to) => (QA to p, Q p) `to` (A p)
+qaMakeQueryA = qaMakeQueryGetPromiseA >>> qaFulfilPromise
+
+qaMakeQueriesA :: (QAArrow to) => [(QA to p, Q p)] `to` [A p]
+qaMakeQueriesA = (mapA qaMakeQueryGetPromiseA) >>> (mapA qaFulfilPromise)
 
 qaMakeQueryOnManyA :: (QAArrow to) => ([QA to p], Q p) `to` [A p]
 qaMakeQueryOnManyA =
   proc (qas, q) -> qaMakeQueriesA -< map (flip (,) q) qas
+
+{-| An infix synonym of 'qaMakeQuery'. -}
+(?) :: (QAArrow to) => QA to p -> (Q p) `to` (A p)
+(?) = qaMakeQuery
+
+infix 1 ?
 
 {-| An infix synonym of 'qaRegister'. -}
 (-:-) :: (QAArrow to, QAProtocolCacheable p) => (QA to p) `to` (QA to p)
@@ -153,8 +181,8 @@ qaMake2Queries (qa1, qa2) =
     do
     ap1 <- qaMakeQueryGetPromiseA -< (qa1, q1)
     ap2 <- qaMakeQueryGetPromiseA -< (qa2, q2)
-    a1 <- qaFulfilPromiseA -< ap1
-    a2 <- qaFulfilPromiseA -< ap2
+    a1 <- qaFulfilPromise -< ap1
+    a2 <- qaFulfilPromise -< ap2
     returnA -< (a1,a2)
 
 -- (//..) :: a -> b -> (a,b)
@@ -164,12 +192,14 @@ qaMake2Queries (qa1, qa2) =
 
 class CanSwitchArrow to1 to2 where
   switchArrow :: (a `to1` b) -> (a `to2` b)
+  -- switchArrow2 :: (a `to1` (b `to1` c)) -> (a `to2` (b `to2` c))
 
 instance (Arrow to) => CanSwitchArrow (->) to where
   switchArrow = arr
+  -- switchArrow2 = arr . (arr .)
 
 instance
-  (CanSwitchArrow to1 to2, QAArrow to2, QAProtocolCacheable p)
+  (CanSwitchArrow to1 to2, QAArrow to1, QAArrow to2, QAProtocolCacheable p)
   =>
   ConvertibleExactly (QA to1 p) (QA to2 p)
   where
@@ -198,17 +228,10 @@ instance QAArrow (->) where
   type QAId (->) = ()
   qaRegister = id
   newQA name sources p sampleQ makeQ =
-    addUnsafeMemoisation $ defaultNewQA name sources p sampleQ makeQ
-  type QAPromise (->) = Identity
-  qaMakeQueryGetPromiseA (qa, q) = Identity $ qaMakeQuery qa q
-  qaFulfilPromiseA = runIdentity
-  qaMakeQueryA (qa, q) = qaMakeQuery qa q
-  qaMakeQueriesA = map qaMakeQueryA
-
-{-| Turn a pure QA object into any QAArrow QA object. -}
-qaArr :: (QAArrow to, QAProtocolCacheable p) => (QA (->) p) -> (QA to p)
-qaArr qa =
-  newQA (qaName qa) [] (qaProtocol qa) (qaSampleQ qa) (arr (qaMakeQuery qa))
+    addUnsafeMemoisation $
+      defaultNewQA name sources p sampleQ makeQ
+  qaMakeQueryGetPromiseA = uncurry qaMakeQueryGetPromise
+  qaFulfilPromise promise = promise ()
 
 {-|
   Add caching to pure (->) QA objects via unsafe memoization, inspired by
@@ -216,9 +239,9 @@ qaArr qa =
   which, in turn, is inspired by Lennart Augustsson's uglymemo.
 -}
 addUnsafeMemoisation :: (QAProtocolCacheable p) => QA (->) p -> QA (->) p
-addUnsafeMemoisation qa = qa { qaMakeQuery = unsafeMemo }
+addUnsafeMemoisation qa = qa { qaMakeQueryGetPromise = unsafeMemo }
   where
-  unsafeMemo = unsafePerformIO . unsafePerformIO memoIO
+  unsafeMemo = (unsafePerformIO .) . unsafePerformIO memoIO
   p = qaProtocol qa
   -- name = qaName qa
   memoIO =
@@ -227,7 +250,7 @@ addUnsafeMemoisation qa = qa { qaMakeQuery = unsafeMemo }
     cacheVar <- newMVar $ newQACache p
     return $ useMVar cacheVar
     where
-    useMVar cacheVar q =
+    useMVar cacheVar q () =
       do
       -- putStrLn $ "memoIO: q = " ++ (show q)
       cache <- readMVar cacheVar
@@ -239,7 +262,7 @@ addUnsafeMemoisation qa = qa { qaMakeQuery = unsafeMemo }
           return a
         _ ->
           do
-          let a = qaMakeQuery qa q
+          let a = qaMakeQueryGetPromise qa q ()
           modifyMVar_ cacheVar (const (return (updateQACache p cache q a)))
           -- putStrLn $ printf "memoIO  %s: updated cache: ? %s -> ! %s" name (show q) (show a)
           return a

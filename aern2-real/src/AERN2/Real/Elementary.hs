@@ -66,7 +66,7 @@ expA ::
   (QAArrow to, CanExp t, ExpType t ~ CauchyReal)
   =>
   t -> CauchyRealA to
-expA = qaArr . exp
+expA = realA . exp
 
 {- log -}
 
@@ -104,7 +104,7 @@ logA ::
   (QAArrow to, CanLog t, LogType t ~ CauchyReal)
   =>
   t -> CauchyRealA to
-logA = qaArr . log
+logA = realA . log
 
 {- power -}
 
@@ -195,7 +195,7 @@ pi :: CauchyReal
 pi = newCR "pi" [] (seqByPrecision2CauchySeq piBallP . _acGuide)
 
 piA :: (QAArrow to) => CauchyRealA to
-piA = qaArr pi
+piA = realA pi
 
 {- sqrt -}
 
@@ -236,7 +236,7 @@ sqrtA ::
   (QAArrow to, CanSqrt t, SqrtType t ~ CauchyReal)
   =>
   t -> CauchyRealA to
-sqrtA = qaArr . sqrt
+sqrtA = realA . sqrt
 
 {- sine, cosine -}
 
@@ -286,10 +286,10 @@ cosA ::
   (QAArrow to, CanSinCos t, SinCosType t ~ CauchyReal)
   =>
   t -> CauchyRealA to
-cosA = qaArr . cos
+cosA = realA . cos
 
 sinA ::
   (QAArrow to, CanSinCos t, SinCosType t ~ CauchyReal)
   =>
   t -> CauchyRealA to
-sinA = qaArr . sin
+sinA = realA . sin

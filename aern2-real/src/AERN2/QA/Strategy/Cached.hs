@@ -34,8 +34,6 @@ import Numeric.MixedTypes
 
 import Control.Arrow
 
-import Data.Functor.Identity
-
 import Control.Monad.Trans.State
 
 import AERN2.QA.Protocol
@@ -60,7 +58,7 @@ instance QAArrow QACachedA where
   type QAId QACachedA = ValueId
   qaRegister = Kleisli qaRegisterM
     where
-    qaRegisterM (QA__ name Nothing sourceIds p sampleQ (Kleisli q2a)) =
+    qaRegisterM (QA__ name Nothing sourceIds p sampleQ (Kleisli q2pa)) =
       do
       valueId <- newId
       return $ QA__ name (Just valueId) [] p sampleQ (Kleisli $ makeQCached valueId)
@@ -70,7 +68,7 @@ instance QAArrow QACachedA where
         QACachedM $
           do
           ns <- get
-          let (i, ns') = insertNode p name sourceIds q2a ns
+          let (i, ns') = insertNode p name sourceIds q2pa ns
           put ns'
           return i
       makeQCached valueId q =
@@ -80,22 +78,30 @@ instance QAArrow QACachedA where
           ns <- get
           let ns' = logQuery ns valueId (show q)
           put ns'
-          (a, usedCache, cache') <- unQACachedM $ getAnswer ns' p valueId q
-          ns2 <- get
-          let ns2' = logAnswerUpdateCache ns2 p valueId (show a, usedCache, cache')
-          put ns2'
-          return $
-              maybeTrace ("getAnswer: a = " ++ show a)
-                  a
+          aAndCachePromise <- unQACachedM $ getAnswerPromise ns' p valueId q
+          return $ Kleisli (aPromise aAndCachePromise)
+        where
+        aPromise aAndCachePromise () =
+          QACachedM $
+            do
+            (a, usedCache, cache') <- unQACachedM $ aAndCachePromise ()
+            ns2 <- get
+            let ns2' = logAnswerUpdateCache ns2 p valueId (show a, usedCache, cache')
+            put ns2'
+            return $
+                maybeTrace ("getAnswer: a = " ++ show a)
+                    a
     qaRegisterM _ =
       error "internal error in AERN2.QA.Strategy.Cached: qaRegister called with an existing id"
 
-  type QAPromise QACachedA = Identity
-  qaMakeQueryGetPromiseA = qaMakeQueryA >>> arr Identity
-  qaFulfilPromiseA = arr runIdentity
-  qaMakeQueryA = Kleisli qaMakeQueryM
+  qaFulfilPromise = Kleisli qaFulfilPromiseM
     where
-    qaMakeQueryM (qa, q) = runKleisli (qaMakeQuery qa) q
+    qaFulfilPromiseM promiseA =
+      runKleisli promiseA ()
+  qaMakeQueryGetPromiseA = Kleisli qaMakeQueryGetPromiseM
+    where
+    qaMakeQueryGetPromiseM (qa, q) =
+      runKleisli (qaMakeQueryGetPromise qa) q
 
 executeQACachedA :: (QACachedA () a) -> (QANetLog, a)
 executeQACachedA code =

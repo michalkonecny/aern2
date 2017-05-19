@@ -51,7 +51,7 @@ _dummy :: ()
 _dummy = maybeTrace "dummy" ()
 
 getCRFnNormLog ::
-  (Arrow to)
+  (QAArrow to)
   =>
   CauchyRealA to ->
   (MPBall -> MPBall) ->
