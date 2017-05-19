@@ -177,13 +177,12 @@ fft_CR_parArrow :: Integer -> AccuracySG -> [Complex MPBall]
 fft_CR_parArrow k acSG =
   unsafePerformIO $
     do
-    (netlog, results) <-
+    results <-
       executeQAParA $
         proc () ->
           do
           (Just resultRs) <-TM.taskFFTWithHookA k hookA -< ()
           mapA approxA -< resultRs
-    maybeTraceIO $ formatQALog 0 netlog
     return results
   where
   approxA =

@@ -18,7 +18,7 @@ module AERN2.AccuracySG
 where
 
 import Numeric.MixedTypes
--- import qualified Prelude as P
+import qualified Prelude as P
 
 import AERN2.MP.Accuracy
 
@@ -26,6 +26,7 @@ import AERN2.MP.Accuracy
     in addition to the usual string accuracy requirement. -}
 data AccuracySG =
   AccuracySG { _acStrict :: Accuracy, _acGuide :: Accuracy }
+  deriving (P.Eq)
 
 instance Show AccuracySG where
   show (AccuracySG acS acG) =
@@ -48,6 +49,15 @@ bitsS = accuracySG . bits
 
 acSG0 :: AccuracySG
 acSG0 = bitsS 0
+
+instance HasEqAsymmetric AccuracySG AccuracySG
+instance HasOrderAsymmetric AccuracySG AccuracySG where
+  geq (AccuracySG acS1 acG1) (AccuracySG acS2 acG2) =
+    acS1 >= acS2 && acG1 >= acG2
+  greaterThan acSG1 acSG2 =
+    acSG1 >= acSG2 && acSG1 /= acSG2
+  leq = flip geq
+  lessThan = flip greaterThan
 
 instance HasOrderAsymmetric Accuracy AccuracySG where
   greaterThan ac (AccuracySG acS acG) =

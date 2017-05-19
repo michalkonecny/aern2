@@ -45,11 +45,11 @@ class (Show p, Show (Q p), Show (A p)) => QAProtocol p where
   type A p -- a type of answers
 
 {-| A QA protocol with a caching method. -}
-class (QAProtocol p) => QAProtocolCacheable p where
+class (QAProtocol p, HasOrderCertainly (Q p) (Q p)) => QAProtocolCacheable p where
   type QACache p
   newQACache :: p -> QACache p
   lookupQACache :: p -> QACache p -> Q p -> (Maybe (A p), Maybe String) -- ^ the String is a log message
-  updateQACache :: p -> QACache p -> Q p -> A p -> QACache p
+  updateQACache :: p -> Q p -> A p -> QACache p -> QACache p
 
 {-| An object we can ask queries about.  Queries can be asked in some Arrow @to@. -}
 data QA to p = QA__
@@ -108,7 +108,7 @@ class (ArrowChoice to, P.Eq (QAId to)) => QAArrow to where
   newQA :: (QAProtocolCacheable p) =>
     String -> [AnyProtocolQA to] -> p -> Q p -> (Q p) `to` (A p) -> QA to p
   newQA = defaultNewQA
-  qaFulfilPromise :: (QAPromiseA to a) `to` a
+  qaFulfilPromiseA :: (QAPromiseA to a) `to` a
   qaMakeQueryGetPromiseA :: (QA to p, Q p) `to` (QAPromiseA to (A p))
 
 defaultNewQA ::
@@ -131,13 +131,13 @@ defaultNewQA name sources p sampleQ makeQ =
       returnA -< a
 
 qaMakeQuery :: (QAArrow to) => (QA to p) -> (Q p) `to` (A p) -- ^ composition of qaMakeQueryGetPromise and the execution of the promise
-qaMakeQuery qa = (qaMakeQueryGetPromise qa) >>> qaFulfilPromise
+qaMakeQuery qa = (qaMakeQueryGetPromise qa) >>> qaFulfilPromiseA
 
 qaMakeQueryA :: (QAArrow to) => (QA to p, Q p) `to` (A p)
-qaMakeQueryA = qaMakeQueryGetPromiseA >>> qaFulfilPromise
+qaMakeQueryA = qaMakeQueryGetPromiseA >>> qaFulfilPromiseA
 
 qaMakeQueriesA :: (QAArrow to) => [(QA to p, Q p)] `to` [A p]
-qaMakeQueriesA = (mapA qaMakeQueryGetPromiseA) >>> (mapA qaFulfilPromise)
+qaMakeQueriesA = (mapA qaMakeQueryGetPromiseA) >>> (mapA qaFulfilPromiseA)
 
 qaMakeQueryOnManyA :: (QAArrow to) => ([QA to p], Q p) `to` [A p]
 qaMakeQueryOnManyA =
@@ -181,8 +181,8 @@ qaMake2Queries (qa1, qa2) =
     do
     ap1 <- qaMakeQueryGetPromiseA -< (qa1, q1)
     ap2 <- qaMakeQueryGetPromiseA -< (qa2, q2)
-    a1 <- qaFulfilPromise -< ap1
-    a2 <- qaFulfilPromise -< ap2
+    a1 <- qaFulfilPromiseA -< ap1
+    a2 <- qaFulfilPromiseA -< ap2
     returnA -< (a1,a2)
 
 -- (//..) :: a -> b -> (a,b)
@@ -231,7 +231,7 @@ instance QAArrow (->) where
     addUnsafeMemoisation $
       defaultNewQA name sources p sampleQ makeQ
   qaMakeQueryGetPromiseA = uncurry qaMakeQueryGetPromise
-  qaFulfilPromise promise = promise ()
+  qaFulfilPromiseA promise = promise ()
 
 {-|
   Add caching to pure (->) QA objects via unsafe memoization, inspired by
@@ -263,6 +263,6 @@ addUnsafeMemoisation qa = qa { qaMakeQueryGetPromise = unsafeMemo }
         _ ->
           do
           let a = qaMakeQueryGetPromise qa q ()
-          modifyMVar_ cacheVar (const (return (updateQACache p cache q a)))
+          modifyMVar_ cacheVar (const (return (updateQACache p q a cache)))
           -- putStrLn $ printf "memoIO  %s: updated cache: ? %s -> ! %s" name (show q) (show a)
           return a

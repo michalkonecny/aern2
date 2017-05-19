@@ -82,8 +82,8 @@ instance QAProtocolCacheable CauchyRealP where
     where
     tol = accuracySGdefaultTolerance
     logMsg b = printf "query: %s; cache: (ac=%s) %s" (show acSG) (show (getAccuracy b))  (show cache)
-  updateQACache _ Nothing q b = Just (b,q)
-  updateQACache _ (Just (b1,q1)) q2 b2 = Just (b1 `intersect` b2, q1 `max` q2)
+  updateQACache _ q b Nothing = Just (b,q)
+  updateQACache _ q2 b2 (Just (b1,q1)) = Just (b1 `intersect` b2, q1 `max` q2)
 
 type CauchyRealA to = QA to CauchyRealP
 

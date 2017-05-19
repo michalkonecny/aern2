@@ -94,7 +94,7 @@ instance QAArrow QACachedA where
     qaRegisterM _ =
       error "internal error in AERN2.QA.Strategy.Cached: qaRegister called with an existing id"
 
-  qaFulfilPromise = Kleisli qaFulfilPromiseM
+  qaFulfilPromiseA = Kleisli qaFulfilPromiseM
     where
     qaFulfilPromiseM promiseA =
       runKleisli promiseA ()

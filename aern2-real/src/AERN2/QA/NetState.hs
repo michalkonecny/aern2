@@ -127,7 +127,7 @@ getAnswerPromise ns (p :: p) valueId q =
       pa <- q2pa q
       a <- runKleisli pa ()
       if should_cache
-        then return $ \() -> return (a, logMsg, updateQACache p cache q a)
+        then return $ \() -> return (a, logMsg, updateQACache p q a cache)
         else return $ \() -> return (a, logMsg, cache)
       where logMsg = "not used cache" ++ case mLogMsg of Nothing -> ""; (Just m) -> " (" ++ m ++ ")"
   where

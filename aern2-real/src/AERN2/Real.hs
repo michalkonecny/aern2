@@ -33,6 +33,9 @@ module AERN2.Real
   , getCRFnNormLog
   , getInitQ1FromSimple, getInitQ1TFromSimple, getInitQ1Q2FromSimple
   , binaryWithBall
+  -- * mini tests
+  , _addslACachedPrint
+  , _addslAParPrint
 )
 where
 
@@ -111,12 +114,12 @@ _addslACachedPrint =
       x <-_addslA -< realA 2
       (-?-) -< (x, bitsS 100)
 
--- _addslAParPrint :: IO ()
--- _addslAParPrint =
---   do
---   r <- executeQAParA $
---     proc () ->
---       do
---       x <-_addslA -< realA 2
---       (-?-) -< (x, bitsS 100)
---   printQANetLogThenResult r
+_addslAParPrint :: IO ()
+_addslAParPrint =
+  do
+  r <- executeQAParA $
+    proc () ->
+      do
+      x <-_addslA -< realA 2
+      (-?-) -< (x, bitsS 100)
+  print r

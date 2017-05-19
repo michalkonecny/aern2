@@ -46,8 +46,8 @@ instance QAProtocolCacheable CauchyBoolP where
   type QACache CauchyBoolP = Maybe Bool
   newQACache _ = Nothing
   lookupQACache _ cache _ac = (Just cache, Nothing)
-  updateQACache _ Nothing _ mb = mb
-  updateQACache _ (Just b) _ _mb = Just b
+  updateQACache _ _ mb Nothing = mb
+  updateQACache _ _ _mb (Just b) = Just b
 
 type CauchyBoolA to = QA to CauchyBoolP
 type CauchyBool = CauchyBoolA (->)
