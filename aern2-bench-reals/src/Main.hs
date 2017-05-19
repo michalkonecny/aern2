@@ -75,6 +75,7 @@ bench implName benchName benchParamsS =
                     _ -> error $ "unknown implementation: " ++ implName
             ("fft", [k,ac]) ->
                 case implName of
+                    "Double" -> showL (fft_FP k)
                     "MP" -> showL (case fft_MP k (bitsSG ac ac) of Just rs -> rs; _ -> error "no result")
                     "CR_AC_cachedUnsafe" -> showL (fft_CR_cachedUnsafe k (bitsSG ac ac))
                     "CR_AC_cachedArrow" -> showL (fft_CR_cachedArrow k (bitsSG ac ac))
@@ -155,8 +156,8 @@ fft_CR_cachedArrow k acSG =
   approxA =
     proc (aR :+ iR) ->
       do
-      a <- qaMakeQueryA -< (aR, acSG)
-      i <- qaMakeQueryA -< (iR, acSG)
+      a <- (-?-) -< (aR, acSG)
+      i <- (-?-) -< (iR, acSG)
       returnA -< a :+ i
   (netlog, results) =
     executeQACachedA $
@@ -182,14 +183,21 @@ fft_CR_parArrow k acSG =
         proc () ->
           do
           (Just resultRs) <-TM.taskFFTWithHookA k hookA -< ()
-          mapA approxA -< resultRs
+          promises <- mapA getPromiseComplexA -< resultRs
+          mapA fulfilPromiseComplex -< promises
     return results
   where
-  approxA =
+  getPromiseComplexA =
     proc (aR :+ iR) ->
       do
-      a <- qaMakeQueryA -< (aR, acSG)
-      i <- qaMakeQueryA -< (iR, acSG)
+      aProm <- (-?..-) -< (aR, acSG)
+      iProm <- (-?..-) -< (iR, acSG)
+      returnA -< aProm :+ iProm
+  fulfilPromiseComplex =
+    proc (aProm :+ iProm) ->
+      do
+      a <- qaFulfilPromiseA -< aProm
+      i <- qaFulfilPromiseA -< iProm
       returnA -< a :+ i
   hookA name =
     proc (a :+ i) ->
@@ -213,3 +221,6 @@ fft_MP k _acSG@(AccuracySG acS _) =
           a2 <- checkAccuracy a
           i2 <- checkAccuracy i
           return $ setPrecision p (a2 :+ i2)
+
+fft_FP :: Integer -> [Complex Double]
+fft_FP k = TM.taskFFT k
