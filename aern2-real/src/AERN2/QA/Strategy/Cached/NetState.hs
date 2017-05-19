@@ -1,6 +1,6 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-|
-    Module      :  AERN2.QA.NetState
+    Module      :  AERN2.QA.Strategy.Cached.NetState
     Description :  state of a QA net
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -11,7 +11,7 @@
 
     A monad-generic state of a QA net.
 -}
-module AERN2.QA.NetState
+module AERN2.QA.Strategy.Cached.NetState
 (
   QANetState(..), initQANetState
   , AnyQAComputation(..), QAComputation(..)

@@ -1,4 +1,3 @@
-{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE CPP #-}
 -- #define DEBUG
 {-|
@@ -42,8 +41,6 @@ import Control.Concurrent.STM
 import Control.Monad.IO.Class
 
 import AERN2.QA.Protocol
--- import AERN2.QA.NetLog
--- import AERN2.QA.NetState
 
 type QAParA = Kleisli QAParM
 
