@@ -14,6 +14,7 @@
 -}
 module AERN2.QA.Strategy.CachedUnsafe
 (
+  qaUnsafeCachingMV
 )
 where
 
@@ -49,6 +50,10 @@ instance QAArrow (->) where
   qaMakeQueryGetPromiseA = uncurry qaMakeQueryGetPromise
   qaFulfilPromiseA promise = promise ()
 
+{-| A global variable controlling whether unsafe caching is used in QA objects in the (->) arrow -}
+qaUnsafeCachingMV :: MVar Bool
+qaUnsafeCachingMV = unsafePerformIO (newMVar True)
+
 {-|
   Add caching to pure (->) QA objects via unsafe memoization, inspired by
   https://hackage.haskell.org/package/ireal-0.2.3/docs/src/Data-Number-IReal-UnsafeMemo.html#unsafeMemo,
@@ -68,17 +73,21 @@ addUnsafeMemoisation qa = qa { qaMakeQueryGetPromise = unsafeMemo }
     where
     useMVar cacheVar q () =
       do
-      -- putStrLn $ "memoIO: q = " ++ (show q)
-      cache <- readMVar cacheVar
-      -- putStrLn $ "memoIO: got cache"
-      case lookupQACache p cache q of
-        (Just a, _logMsg) ->
+      shouldCache <- readMVar qaUnsafeCachingMV
+      if not shouldCache then return $ qaMakeQueryGetPromise qa q ()
+        else
           do
-          -- putStrLn $ printf "memoIO %s: using cache: ? %s -> ! %s" name (show q) (show a)
-          return a
-        _ ->
-          do
-          let a = qaMakeQueryGetPromise qa q ()
-          modifyMVar_ cacheVar (const (return (updateQACache p q a cache)))
-          -- putStrLn $ printf "memoIO  %s: updated cache: ? %s -> ! %s" name (show q) (show a)
-          return a
+          -- putStrLn $ "memoIO: q = " ++ (show q)
+          cache <- readMVar cacheVar
+          -- putStrLn $ "memoIO: got cache"
+          case lookupQACache p cache q of
+            (Just a, _logMsg) ->
+              do
+              -- putStrLn $ printf "memoIO %s: using cache: ? %s -> ! %s" name (show q) (show a)
+              return a
+            _ ->
+              do
+              let a = qaMakeQueryGetPromise qa q ()
+              modifyMVar_ cacheVar (const (return (updateQACache p q a cache)))
+              -- putStrLn $ printf "memoIO  %s: updated cache: ? %s -> ! %s" name (show q) (show a)
+              return a

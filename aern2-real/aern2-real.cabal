@@ -57,6 +57,7 @@ library
   exposed-modules:
     AERN2.QA.Protocol
     AERN2.QA.NetLog
+    AERN2.QA.Strategy.CachedUnsafe
     AERN2.QA.Strategy.Cached.NetState
     AERN2.QA.Strategy.Cached.Arrow
     AERN2.QA.Strategy.Cached
