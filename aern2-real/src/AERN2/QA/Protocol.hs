@@ -20,7 +20,8 @@ module AERN2.QA.Protocol
   , QAArrow(..), defaultNewQA
   , qaMakeQuery, qaMakeQueryA, qaMakeQueriesA, qaMakeQueryOnManyA
   , (?)
-  , (-:-), (-?-), (-???-), (-<?>-)
+  , (-:-)
+  , (-?-), (-?..-), (-???-), (-<?>-)
   , qaMake2Queries, (??)
   -- * arrow utilities
   , mapA, CanSwitchArrow(..)
@@ -150,6 +151,10 @@ infix 1 ?
 (-:-) :: (QAArrow to, QAProtocolCacheable p) => (QA to p) `to` (QA to p)
 (-:-) = qaRegister
 
+{-| An infix synonym of 'qaMakeQueryGetPromiseA'. -}
+(-?..-) :: (QAArrow to) => (QA to p, Q p) `to` (QAPromiseA to (A p))
+(-?..-) = qaMakeQueryGetPromiseA
+
 {-| An infix synonym of 'qaMakeQueryA'. -}
 (-?-) :: (QAArrow to) => (QA to p, Q p) `to` (A p)
 (-?-) = qaMakeQueryA
@@ -162,7 +167,7 @@ infix 1 ?
 (-???-) :: (QAArrow to) => [(QA to p, Q p)] `to` [A p]
 (-???-) = qaMakeQueriesA
 
-infix 0 -?-, -???-, -<?>-
+infix 0 -?-, -?..-, -???-, -<?>-
 infix 0 -:-
 
 {-| An infix synonym of 'qaMake2Queries'. -}

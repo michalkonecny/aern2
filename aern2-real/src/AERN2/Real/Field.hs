@@ -127,6 +127,13 @@ instance CanDiv MPBall CauchyReal where
   type DivType MPBall CauchyReal = MPBall
   divide = flip $ binaryWithBall (flip divide)
 
+instance CanDiv CauchyReal Double where
+  type DivType CauchyReal Double = Double
+  divide = binaryWithDouble divide
+
+instance CanDiv Double CauchyReal where
+  type DivType Double CauchyReal = Double
+  divide = flip $ binaryWithDouble (flip divide)
 
 {- integer power -}
 

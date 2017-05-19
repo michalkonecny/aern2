@@ -32,6 +32,7 @@ import qualified Prelude as P
 #endif
 
 import Data.Ratio
+import Data.Convertible
 
 #ifdef MPFRBackend
 import AERN2.Norm
@@ -156,6 +157,12 @@ fromRationalDown :: Precision -> Rational -> MPFloat
 fromRationalDown p x =
     mpFromRationalA MPLow.Down (p2mpfrPrec p) x
 
+instance Convertible MPFloat Double where
+  safeConvert x
+    | isFinite dbl = Right dbl
+    | otherwise = convError "conversion to double: out of bounds" x
+    where
+    dbl = toDoubleUp x
 
 {- comparisons -}
 

@@ -14,6 +14,7 @@ module AERN2.Real.Helpers
 (
   getCRFnNormLog
   , binaryWithBall
+  , binaryWithDouble
   , unaryOp, binaryOp, binaryOpWithPureArg
   , getInitQ1FromSimple, getInitQ1TFromSimple, getInitQ1Q2FromSimple
 )
@@ -21,6 +22,8 @@ where
 
 import Numeric.MixedTypes
 -- import qualified Prelude as P
+
+import Data.Convertible
 
 import Control.Arrow
 
@@ -72,6 +75,13 @@ binaryWithBall :: (MPBall -> MPBall -> MPBall) -> CauchyReal -> MPBall -> MPBall
 binaryWithBall op r b =
   lowerPrecisionIfAbove (getPrecision b) $
     op (mpBallSimilarTo b r) b
+
+instance Convertible CauchyReal Double where
+  safeConvert = safeConvert . centre . (? (bitsS 53))
+
+binaryWithDouble :: (Double -> Double -> Double) -> CauchyReal -> Double -> Double
+binaryWithDouble op r d =
+  op (convert r) d
 
 {- generic implementations of operations of different arity -}
 

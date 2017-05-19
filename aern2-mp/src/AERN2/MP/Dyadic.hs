@@ -32,6 +32,7 @@ import Text.Printf
 import Text.Regex.TDFA
 
 import Data.Typeable
+import Data.Convertible
 
 import Test.Hspec
 import Test.QuickCheck
@@ -124,6 +125,9 @@ instance ConvertibleExactly Rational Dyadic where
     dp = integerLog2 d
     d = denominator q
     np = integerLog2 (max 1 $ abs $ numerator q)
+
+instance Convertible Dyadic Double where
+  safeConvert = safeConvert . dyadicMPFloat
 
 {-- comparisons --}
 

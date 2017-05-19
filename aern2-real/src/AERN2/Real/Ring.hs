@@ -81,6 +81,14 @@ instance CanAddAsymmetric MPBall CauchyReal where
   type AddType MPBall CauchyReal = MPBall
   add = flip add
 
+instance CanAddAsymmetric CauchyReal Double where
+  type AddType CauchyReal Double = Double
+  add = binaryWithDouble add
+
+instance CanAddAsymmetric Double CauchyReal where
+  type AddType Double CauchyReal = Double
+  add = flip add
+
 instance
   (QAArrow to, CanAddAsymmetric (CauchyRealA to) t)
   =>
@@ -118,6 +126,8 @@ instance (QAArrow to) => CanSub (CauchyRealA to) Rational
 instance (QAArrow to) => CanSub Rational (CauchyRealA to)
 instance CanSub CauchyReal MPBall
 instance CanSub MPBall CauchyReal
+instance CanSub CauchyReal Double
+instance CanSub Double CauchyReal
 
 instance
   (QAArrow to, CanAdd (CauchyRealA to) t, CanNegSameType t)
@@ -201,6 +211,14 @@ instance CanMulAsymmetric CauchyReal MPBall where
 
 instance CanMulAsymmetric MPBall CauchyReal where
   type MulType MPBall CauchyReal = MPBall
+  mul = flip mul
+
+instance CanMulAsymmetric CauchyReal Double where
+  type MulType CauchyReal Double = Double
+  mul = binaryWithDouble mul
+
+instance CanMulAsymmetric Double CauchyReal where
+  type MulType Double CauchyReal = Double
   mul = flip mul
 
 instance
