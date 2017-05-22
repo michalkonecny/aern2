@@ -33,7 +33,7 @@ import AERN2.Real
 
 import qualified Tasks.LogisticPreludeOps as TP
 import Tasks.Logistic
-import Tasks.Furier
+import Tasks.Fourier
 
 main :: IO ()
 main =

@@ -1,5 +1,5 @@
 {-# LANGUAGE Arrows, FlexibleContexts, TypeOperators, TypeFamilies, ConstraintKinds, ScopedTypeVariables #-}
-module Tasks.Furier where
+module Tasks.Fourier where
 
 import Numeric.MixedTypes
 import Text.Printf

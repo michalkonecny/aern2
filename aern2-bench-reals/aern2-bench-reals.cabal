@@ -30,4 +30,4 @@ executable aern2-bench-reals
   other-modules:
     Tasks.LogisticPreludeOps
     Tasks.Logistic
-    Tasks.Furier
+    Tasks.Fourier
