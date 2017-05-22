@@ -645,7 +645,7 @@ rangeOnIntervalSubdivide :: (DyadicInterval -> (Maybe (CatchingNumExceptions MPB
 instance GHC.Show.Show AERN2.RealFun.UnaryBallFun.Evaluation.MaxSearchSegment
 instance AERN2.RealFun.Operations.CanApply AERN2.RealFun.UnaryBallFun.Type.UnaryBallFun AERN2.MP.Ball.Type.MPBall
 instance AERN2.RealFun.Operations.CanApply AERN2.RealFun.UnaryBallFun.Type.UnaryBallFun (Numeric.CatchingExceptions.Type.CatchingNumExceptions AERN2.MP.Ball.Type.MPBall)
-instance AERN2.QA.QAArrow to => AERN2.RealFun.Operations.CanApply AERN2.RealFun.UnaryBallFun.Type.UnaryBallFun (AERN2.Real.Type.CauchyRealA to)
+instance AERN2.QA.Protocol.QAArrow to => AERN2.RealFun.Operations.CanApply AERN2.RealFun.UnaryBallFun.Type.UnaryBallFun (AERN2.Real.Type.CauchyRealA to)
 instance AERN2.RealFun.Operations.CanApply AERN2.RealFun.UnaryBallFun.Type.UnaryBallFun GHC.Integer.Type.Integer
 instance AERN2.RealFun.Operations.CanApply AERN2.RealFun.UnaryBallFun.Type.UnaryBallFun GHC.Types.Int
 instance AERN2.RealFun.Operations.CanApply AERN2.RealFun.UnaryBallFun.Type.UnaryBallFun AERN2.MP.Dyadic.Dyadic
@@ -1203,3 +1203,23 @@ module AERN2.Local.Frac
 type LocalFrac a = Local (Frac a)
 fromPoly :: (ConvertibleExactly Integer a) => LocalPoly a -> LocalFrac a
 instance AERN2.Local.Maximum.GenericMaximum (AERN2.Local.Frac.LocalFrac AERN2.MP.Ball.Type.MPBall)
+
+module AERN2.Analytic.Type
+data Analytic
+Analytic :: Integer -> Integer -> (Integer -> CauchyReal) -> Analytic
+data UnitInterval
+UI :: CauchyReal -> UnitInterval
+toUnitInterval :: CauchyReal -> UnitInterval
+fromUnitInterval :: UnitInterval -> CauchyReal
+lift1UI :: (CauchyReal -> a) -> UnitInterval -> a
+ana_derivative :: Analytic -> Analytic
+instance AERN2.RealFun.Operations.CanApply AERN2.Analytic.Type.Analytic AERN2.Real.Type.CauchyReal
+instance AERN2.RealFun.Operations.CanApply AERN2.Analytic.Type.Analytic AERN2.Analytic.Type.UnitInterval
+
+module AERN2.Analytic.Field
+instance Numeric.MixedTypes.AddSub.CanAddAsymmetric AERN2.Analytic.Type.Analytic AERN2.Analytic.Type.Analytic
+instance Numeric.MixedTypes.Ring.CanMulAsymmetric AERN2.Analytic.Type.Analytic AERN2.Analytic.Type.Analytic
+
+module AERN2.Analytic
+anaSin :: Analytic
+anaGeom :: Analytic

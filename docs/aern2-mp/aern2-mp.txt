@@ -76,6 +76,7 @@ instance Numeric.MixedTypes.MinMaxAbs.CanMinMaxAsymmetric AERN2.Norm.NormLog AER
 instance AERN2.Norm.HasNorm GHC.Integer.Type.Integer
 instance AERN2.Norm.HasNorm GHC.Types.Int
 instance AERN2.Norm.HasNorm GHC.Real.Rational
+instance AERN2.Norm.HasNorm t => AERN2.Norm.HasNorm (Data.Complex.Complex t)
 
 
 -- | Floating-point precision type and its operations
@@ -125,6 +126,8 @@ instance Numeric.MixedTypes.AddSub.CanAddAsymmetric AERN2.MP.Precision.Precision
 instance Numeric.MixedTypes.Ring.CanMulAsymmetric AERN2.MP.Precision.Precision AERN2.MP.Precision.Precision
 instance Numeric.MixedTypes.Ring.CanMulAsymmetric GHC.Integer.Type.Integer AERN2.MP.Precision.Precision
 instance Numeric.MixedTypes.Ring.CanMulAsymmetric AERN2.MP.Precision.Precision GHC.Integer.Type.Integer
+instance AERN2.MP.Precision.HasPrecision t => AERN2.MP.Precision.HasPrecision (Data.Complex.Complex t)
+instance AERN2.MP.Precision.CanSetPrecision t => AERN2.MP.Precision.CanSetPrecision (Data.Complex.Complex t)
 instance Test.QuickCheck.Arbitrary.Arbitrary AERN2.MP.Precision.Precision
 
 
@@ -236,6 +239,7 @@ instance Numeric.MixedTypes.Round.CanRound AERN2.MP.Float.Type.MPFloat
 instance Numeric.MixedTypes.Literals.ConvertibleExactly AERN2.MP.Float.Type.MPFloat GHC.Real.Rational
 instance Numeric.MixedTypes.Literals.ConvertibleExactly GHC.Integer.Type.Integer AERN2.MP.Float.Type.MPFloat
 instance Numeric.MixedTypes.Literals.ConvertibleExactly GHC.Types.Int AERN2.MP.Float.Type.MPFloat
+instance Data.Convertible.Base.Convertible AERN2.MP.Float.Type.MPFloat GHC.Types.Double
 instance Numeric.MixedTypes.Eq.HasEqAsymmetric AERN2.MP.Float.Type.MPFloat AERN2.MP.Float.Type.MPFloat
 instance Numeric.MixedTypes.Eq.HasEqAsymmetric AERN2.MP.Float.Type.MPFloat GHC.Integer.Type.Integer
 instance Numeric.MixedTypes.Eq.HasEqAsymmetric GHC.Integer.Type.Integer AERN2.MP.Float.Type.MPFloat
@@ -403,6 +407,8 @@ instance AERN2.MP.Accuracy.HasAccuracy a => AERN2.MP.Accuracy.HasAccuracy (Numer
 instance AERN2.MP.Accuracy.HasAccuracy GHC.Types.Int
 instance AERN2.MP.Accuracy.HasAccuracy GHC.Integer.Type.Integer
 instance AERN2.MP.Accuracy.HasAccuracy GHC.Real.Rational
+instance AERN2.MP.Accuracy.HasAccuracy t => AERN2.MP.Accuracy.HasAccuracy (Data.Complex.Complex t)
+instance AERN2.MP.Accuracy.HasAccuracy t => AERN2.MP.Accuracy.HasAccuracy [t]
 
 
 -- | Arbitrary precision floating-point numbers with exact ring operations.
@@ -435,6 +441,7 @@ instance Numeric.MixedTypes.Literals.ConvertibleExactly AERN2.MP.Float.Type.MPFl
 instance Numeric.MixedTypes.Literals.ConvertibleExactly GHC.Integer.Type.Integer AERN2.MP.Dyadic.Dyadic
 instance Numeric.MixedTypes.Literals.ConvertibleExactly GHC.Types.Int AERN2.MP.Dyadic.Dyadic
 instance Numeric.MixedTypes.Literals.ConvertibleExactly GHC.Real.Rational AERN2.MP.Dyadic.Dyadic
+instance Data.Convertible.Base.Convertible AERN2.MP.Dyadic.Dyadic GHC.Types.Double
 instance Numeric.MixedTypes.Eq.HasEqAsymmetric AERN2.MP.Dyadic.Dyadic AERN2.MP.Dyadic.Dyadic
 instance Numeric.MixedTypes.Eq.HasEqAsymmetric AERN2.MP.Dyadic.Dyadic GHC.Integer.Type.Integer
 instance Numeric.MixedTypes.Eq.HasEqAsymmetric GHC.Integer.Type.Integer AERN2.MP.Dyadic.Dyadic
