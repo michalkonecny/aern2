@@ -23,8 +23,6 @@ module AERN2.QA.Protocol
   , (-:-)
   , (-?-), (-?..-), (-???-), (-<?>-)
   , qaMake2Queries, (??)
-  -- * arrow utilities
-  , mapA, CanSwitchArrow(..)
 )
 where
 
@@ -33,6 +31,7 @@ import qualified Prelude as P
 -- import Text.Printf
 
 import Control.Arrow
+import AERN2.Utils.Arrows
 
 -- import Data.Maybe
 import Data.List
@@ -190,16 +189,6 @@ qaMake2Queries (qa1, qa2) =
 -- (//..) :: a -> b -> (a,b)
 -- a //..b = (a,b)
 
-{- Arrow swiching mechanism and application to QA arrow conversion -}
-
-class CanSwitchArrow to1 to2 where
-  switchArrow :: (a `to1` b) -> (a `to2` b)
-  -- switchArrow2 :: (a `to1` (b `to1` c)) -> (a `to2` (b `to2` c))
-
-instance (Arrow to) => CanSwitchArrow (->) to where
-  switchArrow = arr
-  -- switchArrow2 = arr . (arr .)
-
 instance
   (CanSwitchArrow to1 to2, QAArrow to1, QAArrow to2, QAProtocolCacheable p)
   =>
@@ -207,15 +196,3 @@ instance
   where
   safeConvertExactly qa =
     Right $ defaultNewQA (qaName qa) [] (qaProtocol qa) (qaSampleQ qa) (switchArrow $ qaMakeQuery qa)
-
-
-{-| Apply an arrow morphism on all elements of a list -}
-mapA :: (ArrowChoice to) => (t1 `to` t2) -> ([t1] `to` [t2])
-mapA fA =
-  proc list -> do
-    case list of
-      [] -> returnA -< []
-      (x : xs) -> do
-        y <- fA -< x
-        ys <-mapA fA -< xs
-        returnA -< y : ys

@@ -54,6 +54,7 @@ library
     UndecidableInstances,
     Arrows
   exposed-modules:
+    AERN2.Utils.Arrows
     AERN2.QA.Protocol
     AERN2.QA.NetLog
     AERN2.QA.Strategy.CachedUnsafe
