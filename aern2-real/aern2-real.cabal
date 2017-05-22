@@ -35,7 +35,6 @@ library
     , transformers >= 0.4 && < 0.6
     , lens >= 4.13 && < 4.16
     , stm >= 2.4 && < 2.5
-    , data-fix >= 0 && < 0.1
     , mixed-types-num == 0.1.*
     , num-exceptions == 0.1.*
     , aern2-mp == 0.1.*
