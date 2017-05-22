@@ -18,8 +18,8 @@ import AERN2.Real
 
 data Analytic =
   Analytic Integer Integer (Integer -> CauchyReal) -- TODO: replace integer with something more fine-grained
-  -- (A, k, (a_n)_n)
-  -- |a_n| \leq A * (2^{1/k})^{-n}
+  --- (A, k, (a_n)_n)
+  --- |a_n| \leq A * (2^{1/k})^{-n}
 
 data UnitInterval =
   UI CauchyReal
