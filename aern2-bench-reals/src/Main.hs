@@ -19,6 +19,7 @@ import System.Environment (getArgs)
 import System.IO.Unsafe (unsafePerformIO)
 
 import Control.Arrow
+import AERN2.Utils.Arrows
 
 import Data.Complex
 
