@@ -31,8 +31,9 @@ import AERN2.QA.Strategy.Parallel
 
 import AERN2.Real
 
-import qualified Tasks.PreludeOps as TP
-import qualified Tasks.MixedTypesOps as TM
+import qualified Tasks.LogisticPreludeOps as TP
+import Tasks.Logistic
+import Tasks.Furier
 
 main :: IO ()
 main =
@@ -58,7 +59,7 @@ bench implName benchName benchParamsS =
         where
         logisticAux [n] = TP.taskLogisticDescription n
         logisticAux _ = error "logistic requires 1 integer parameter \"n\""
-        fftAux [k,ac] = TM.taskFFTDescription k ac
+        fftAux [k,ac] = taskFFTDescription k ac
         fftAux _ = error "fft requires 2 integer parameters \"k\" and \"ac\""
     resultDecription =
         case (benchName, benchParams) of
@@ -92,7 +93,7 @@ bench implName benchName benchParamsS =
 
 logistic_CR_cachedUnsafe :: Integer -> AccuracySG -> MPBall
 logistic_CR_cachedUnsafe n acSG =
-  (TM.taskLogistic n $ real (TP.taskLogistic_x0 :: Rational)) ? acSG
+  (taskLogistic n $ real (TP.taskLogistic_x0 :: Rational)) ? acSG
 
 logistic_CR_cachedArrow ::  Integer -> AccuracySG -> MPBall
 logistic_CR_cachedArrow n acSG =
@@ -104,7 +105,7 @@ logistic_CR_cachedArrow n acSG =
       proc () ->
         do
         x0R <- (-:-)-< realA x0
-        (Just x) <-TM.taskLogisticWithHookA n hookA -< x0R
+        (Just x) <-taskLogisticWithHookA n hookA -< x0R
         realWithAccuracyA -< (x, acSG)
   x0 = TP.taskLogistic_x0 :: Rational
   hookA i =
@@ -130,7 +131,7 @@ logistic_MP n =
     snd $ last $ iterateUntilAccurate (bits (50 :: Integer)) $ withP
     where
     withP p =
-        (TM.taskLogisticWithHook n (const checkAccuracy)) x0
+        (taskLogisticWithHook n (const checkAccuracy)) x0
         where
         x0 = mpBallP p (TP.taskLogistic_x0 :: Rational)
 
@@ -143,7 +144,7 @@ checkAccuracy ball
 
 fft_CR_cachedUnsafe :: Integer -> AccuracySG -> [Complex MPBall]
 fft_CR_cachedUnsafe k acSG =
-  map approx $ TM.taskFFT k
+  map approx $ taskFFT k
   where
   approx :: Complex CauchyReal -> Complex MPBall
   approx (a :+ i) = (a ? acSG) :+ (i ? acSG)
@@ -163,7 +164,7 @@ fft_CR_cachedArrow k acSG =
     executeQACachedA $
       proc () ->
         do
-        (Just resultRs) <-TM.taskFFTWithHookA k hookA -< ()
+        (Just resultRs) <-taskFFTWithHookA k hookA -< ()
         mapA approxA -< resultRs
   hookA name =
     proc (a :+ i) ->
@@ -182,7 +183,7 @@ fft_CR_parArrow k acSG =
       executeQAParA $
         proc () ->
           do
-          (Just resultRs) <-TM.taskFFTWithHookA k hookA -< ()
+          (Just resultRs) <-taskFFTWithHookA k hookA -< ()
           promises <- mapA getPromiseComplexA -< resultRs
           mapA fulfilPromiseComplex -< promises
     return results
@@ -214,7 +215,7 @@ fft_MP k _acSG@(AccuracySG acS _) =
     snd $ last $ iterateUntilAccurate acS $ withP
     where
     withP p =
-        (TM.taskFFTWithHookA k (const checkCAccuracy)) ()
+        (taskFFTWithHookA k (const checkCAccuracy)) ()
         where
         checkCAccuracy (a :+ i) =
           do
@@ -223,4 +224,4 @@ fft_MP k _acSG@(AccuracySG acS _) =
           return $ setPrecision p (a2 :+ i2)
 
 fft_FP :: Integer -> [Complex Double]
-fft_FP k = TM.taskFFT k
+fft_FP k = taskFFT k

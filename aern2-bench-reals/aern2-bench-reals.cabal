@@ -24,8 +24,10 @@ executable aern2-bench-reals
   hs-source-dirs:  src
   ghc-options:     -O2 -Wall -rtsopts -threaded
   extensions:
-        RebindableSyntax
+        RebindableSyntax,
+        Arrows, FlexibleContexts, TypeOperators, TypeFamilies, ConstraintKinds, ScopedTypeVariables
   main-is: Main.hs
   other-modules:
-        Tasks.MixedTypesOps,
-        Tasks.PreludeOps
+    Tasks.LogisticPreludeOps
+    Tasks.Logistic
+    Tasks.Furier

@@ -1,4 +1,4 @@
-module Tasks.PreludeOps where
+module Tasks.LogisticPreludeOps where
 
 import Prelude
 -- import Data.String (fromString)
