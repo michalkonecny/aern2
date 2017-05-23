@@ -55,6 +55,7 @@ bench implName benchName benchParamsS =
         case benchName of
             "logistic" -> logisticAux benchParams
             "fft" -> fftAux benchParams
+            "dft" -> dftAux benchParams
             _ ->
                 error $ "unknown benchmark: " ++ benchName
         where
@@ -62,6 +63,8 @@ bench implName benchName benchParamsS =
         logisticAux _ = error "logistic requires 1 integer parameter \"n\""
         fftAux [k,ac] = taskFFTDescription k ac
         fftAux _ = error "fft requires 2 integer parameters \"k\" and \"ac\""
+        dftAux [k,ac] = taskDFTDescription k ac
+        dftAux _ = error "dft requires 2 integer parameters \"k\" and \"ac\""
     resultDecription =
         case (benchName, benchParams) of
             ("logistic", [n]) ->
@@ -75,22 +78,25 @@ bench implName benchName benchParamsS =
                     "CR_AG_cachedUnsafe" -> show (logistic_CR_cachedUnsafe n (bitsSG 10 100))
                     "CR_AG_cachedArrow" -> show (logistic_CR_cachedArrow n (bitsSG 10 100))
                     _ -> error $ "unknown implementation: " ++ implName
-            ("fft", [k,ac]) ->
-                case implName of
-                    "Double" -> showL (fft_FP k)
-                    "MP" -> showL (case fft_MP k (bitsSG ac ac) of Just rs -> rs; _ -> error "no result")
-                    "CR_AC_cachedUnsafe" -> showL (fft_CR_cachedUnsafe k (bitsSG ac ac))
-                    "CR_AC_cachedArrow" -> showL (fft_CR_cachedArrow k (bitsSG ac ac))
-                    "CR_AC_parArrow" -> showL (fft_CR_parArrow k (bitsSG ac ac))
-                    "CR_AG_cachedUnsafe" -> showL (fft_CR_cachedUnsafe k (bitsSG acHalf ac))
-                    "CR_AG_cachedArrow" -> showL (fft_CR_cachedArrow k (bitsSG acHalf ac))
-                    "CR_AG_parArrow" -> showL (fft_CR_parArrow k (bitsSG acHalf ac))
-                    _ -> error $ "unknown implementation: " ++ implName
-                where
-                -- n = 2^k
-                acHalf = ac `div` 2
-                showL xs = "\n" ++ (unlines $ map show xs)
+            ("fft", [k,ac]) -> fourier True k ac
+            ("dft", [k,ac]) -> fourier False k ac
             _ -> error ""
+        where
+        fourier isFFT k ac =
+          case implName of
+              "Double" -> showL (fft_FP isFFT k)
+              "MP" -> showL (case fft_MP isFFT k (bitsSG ac ac) of Just rs -> rs; _ -> error "no result")
+              "CR_AC_cachedUnsafe" -> showL (fft_CR_cachedUnsafe isFFT k (bitsSG ac ac))
+              "CR_AC_cachedArrow" -> showL (fft_CR_cachedArrow isFFT k (bitsSG ac ac))
+              "CR_AC_parArrow" -> showL (fft_CR_parArrow isFFT k (bitsSG ac ac))
+              "CR_AG_cachedUnsafe" -> showL (fft_CR_cachedUnsafe isFFT k (bitsSG acHalf ac))
+              "CR_AG_cachedArrow" -> showL (fft_CR_cachedArrow isFFT k (bitsSG acHalf ac))
+              "CR_AG_parArrow" -> showL (fft_CR_parArrow isFFT k (bitsSG acHalf ac))
+              _ -> error $ "unknown implementation: " ++ implName
+          where
+          -- n = 2^k
+          acHalf = ac `div` 2
+          showL xs = "\n" ++ (unlines $ map show xs)
 
 logistic_CR_cachedUnsafe :: Integer -> AccuracySG -> MPBall
 logistic_CR_cachedUnsafe n acSG =
@@ -143,15 +149,18 @@ checkAccuracy ball
     | otherwise = Just ball
 
 
-fft_CR_cachedUnsafe :: Integer -> AccuracySG -> [Complex MPBall]
-fft_CR_cachedUnsafe k acSG =
-  map approx $ taskFFT k
+fft_CR_cachedUnsafe :: Bool -> Integer -> AccuracySG -> [Complex MPBall]
+fft_CR_cachedUnsafe isFFT k acSG =
+  map approx $ task
   where
+  task
+    | isFFT = taskFFT k
+    | otherwise = taskDFT k
   approx :: Complex CauchyReal -> Complex MPBall
   approx (a :+ i) = (a ? acSG) :+ (i ? acSG)
 
-fft_CR_cachedArrow :: Integer -> AccuracySG -> [Complex MPBall]
-fft_CR_cachedArrow k acSG =
+fft_CR_cachedArrow :: Bool -> Integer -> AccuracySG -> [Complex MPBall]
+fft_CR_cachedArrow isFFT k acSG =
   maybeTrace (formatQALog 0 netlog) $
   results
   where
@@ -165,8 +174,11 @@ fft_CR_cachedArrow k acSG =
     executeQACachedA $
       proc () ->
         do
-        (Just resultRs) <-taskFFTWithHookA k hookA -< ()
+        (Just resultRs) <- task -< ()
         mapA approxA -< resultRs
+  task
+    | isFFT = taskFFTWithHookA k hookA
+    | otherwise = taskDFTWithHookA k hookA
   hookA name =
     proc (a :+ i) ->
       do
@@ -176,15 +188,15 @@ fft_CR_cachedArrow k acSG =
     where
     rename = realRename (\_ -> name)
 
-fft_CR_parArrow :: Integer -> AccuracySG -> [Complex MPBall]
-fft_CR_parArrow k acSG =
+fft_CR_parArrow :: Bool -> Integer -> AccuracySG -> [Complex MPBall]
+fft_CR_parArrow isFFT k acSG =
   unsafePerformIO $
     do
     results <-
       executeQAParA $
         proc () ->
           do
-          (Just resultRs) <-taskFFTWithHookA k hookA -< ()
+          (Just resultRs) <- task -< ()
           promises <- mapA getPromiseComplexA -< resultRs
           mapA fulfilPromiseComplex -< promises
     return results
@@ -201,6 +213,9 @@ fft_CR_parArrow k acSG =
       a <- qaFulfilPromiseA -< aProm
       i <- qaFulfilPromiseA -< iProm
       returnA -< a :+ i
+  task
+    | isFFT = taskFFTWithHookA k hookA
+    | otherwise = taskDFTWithHookA k hookA
   hookA name =
     proc (a :+ i) ->
       do
@@ -211,18 +226,22 @@ fft_CR_parArrow k acSG =
     rename = realRename (\_ -> name)
 
 
-fft_MP :: Integer -> AccuracySG -> Maybe [Complex MPBall]
-fft_MP k _acSG@(AccuracySG acS _) =
+fft_MP :: Bool -> Integer -> AccuracySG -> Maybe [Complex MPBall]
+fft_MP isFFT k _acSG@(AccuracySG acS _) =
     snd $ last $ iterateUntilAccurate acS $ withP
     where
     withP p =
-        (taskFFTWithHookA k (const checkCAccuracy)) ()
+        task ()
         where
+        task
+          | isFFT = taskFFTWithHookA k (const checkCAccuracy)
+          | otherwise = taskDFTWithHookA k (const checkCAccuracy)
         checkCAccuracy (a :+ i) =
           do
           a2 <- checkAccuracy a
           i2 <- checkAccuracy i
           return $ setPrecision p (a2 :+ i2)
 
-fft_FP :: Integer -> [Complex Double]
-fft_FP k = taskFFT k
+fft_FP :: Bool -> Integer -> [Complex Double]
+fft_FP True k = taskFFT k
+fft_FP False k = taskDFT k

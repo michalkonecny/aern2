@@ -123,6 +123,38 @@ _testFFT k =
   Just z = ditfft2 (\_ l -> Just l) n 1 y'
 
 
+taskDFTDescription :: Integer -> Integer -> String
+taskDFTDescription k ac = "taskDFT: DFT on a vector of size " ++ show (2^k) ++ " to accuracy " ++ show ac
+
+taskDFT ::
+  (FFTOpsA (->) c, HasIntegers c)
+  =>
+  Integer -> [c]
+taskDFT k = r
+  where
+  (Just r) = taskFFTWithHook k (\ _s l -> Just l)
+
+taskDFTWithHook ::
+  (FFTOpsA (->) c, HasIntegers c)
+  =>
+  Integer -> (String -> c -> Maybe c) -> Maybe [c]
+taskDFTWithHook k hook = taskDFTWithHookA k hook ()
+
+taskDFTWithHookA ::
+  (FFTOpsA to c, QAArrow to, HasIntegers c)
+  =>
+  Integer -> (String -> c `to` Maybe c) -> () `to` Maybe [c]
+taskDFTWithHookA k hookA =
+  proc () ->
+    do
+    mxR <- mapWithIndexA reg -< x
+    let Just xR = sequence mxR
+    dft hookA -< xR
+  where
+  reg i = hookA $ "x" ++ show i
+  x = [ convertExactly i | i <- [1..n]]
+  n = 2^k
+
 dft ::
   (FFTOpsA to c, QAArrow to, HasIntegers c)
   =>
@@ -143,4 +175,4 @@ dft (hookA :: String -> c `to` Maybe c) =
       case Map.lookup (n*k/nN) twsNN of -- memoisation
         Just v -> (convertExactly v :: Complex (CauchyRealA to)) * xn
         _ -> error "dft: tw: internal error"
-    twsNN = tws nN ((nN-1)*(nN-1))
+    twsNN = tws ((nN-1)*(nN-1)) nN
