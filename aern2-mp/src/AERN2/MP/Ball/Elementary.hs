@@ -96,17 +96,24 @@ instance CanExp MPBall where
   exp = intervalFunctionByEndpointsUpDown MPFloat.expDown MPFloat.expUp
 
 instance CanLog MPBall where
+  type LogType MPBall = CollectNumErrors MPBall
   log x
-    | x !>! 0 = intervalFunctionByEndpointsUpDown MPFloat.logDown MPFloat.logUp x
-    | otherwise = error $ "MPBall log: cannot establish that the argument is positive: " ++ show x
+    | x !>! 0 =
+        noNumErrors $ intervalFunctionByEndpointsUpDown MPFloat.logDown MPFloat.logUp x
+    | otherwise =
+        noValueNumErrorPotential $ NumError $
+          "MPBall log: cannot establish that the argument is positive: " ++ show x
 
 instance CanPow MPBall MPBall where
+  type PowType MPBall MPBall = CollectNumErrors MPBall
   pow = powUsingExpLog
 
 instance CanPow MPBall Dyadic where
+  type PowType MPBall Dyadic = CollectNumErrors MPBall
   pow x q = powUsingExpLog x (mpBall q)
 
 instance CanPow MPBall Rational where
+  type PowType MPBall Rational = CollectNumErrors MPBall
   pow x q = powUsingExpLog x (mpBallP (getPrecision x) q)
 
 instance CanSqrt MPBall where
@@ -145,8 +152,8 @@ instance P.Ord MPBall where
 
 instance P.Fractional MPBall where
     fromRational = convertExactly . dyadic -- will work only for dyadic rationals
-    recip = recip
-    (/) = (/)
+    recip = (⚡) . recip
+    a / b = ((a / b) ⚡)
 
 instance P.Floating MPBall where
     pi = error "MPBall: pi not implemented" -- no global precision to pick
@@ -154,7 +161,7 @@ instance P.Floating MPBall where
     exp = exp
     sin = sin
     cos = cos
-    log = log
+    log = (⚡) . log
     atan = error "MPBall: atan not implemented yet"
     atanh = error "MPBall: atanh not implemented yet"
     asin = error "MPBall: asin not implemented yet"

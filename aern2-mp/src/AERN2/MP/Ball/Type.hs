@@ -28,9 +28,10 @@ where
 import Numeric.MixedTypes
 -- import qualified Prelude as P
 
-import GHC.Generics (Generic)
+import Control.EnsureTypeOp
+import qualified Control.CollectErrors as CE
 
-import Numeric.CatchingExceptions (CanTestValid(..))
+import GHC.Generics (Generic)
 
 import AERN2.Utils.TH
 
@@ -62,16 +63,22 @@ instance Show MPBall
     show (MPBall x e) =
       "[" ++ show x ++ " ± " ++ show e ++ "](prec=" ++ (show $ integer $ getPrecision x) ++ ")"
 
-instance CanTestValid MPBall where
-  isValid (MPBall x e) = isFinite x && isFinite (mpFloat e)
 
+instance (Monoid es) => CanEnsureTypeOp (CE.CollectErrors es) MPBall where
+  ensureTypeOp = CE.noErrors
+
+-- instance CanTestValid MPBall where
+--   isValid = isFinite
+
+instance CanTestNaN MPBall where
+  isNaN = not . isFinite
 instance CanTestFinite MPBall where
-  isNaN = not . isValid
   isInfinite = const False
+  isFinite (MPBall x e) = isFinite x && isFinite (mpFloat e)
 
 instance CanNormalize MPBall where
   normalize b
-    | isValid b =
+    | isFinite b =
         b
         -- reducePrecionIfInaccurate b
     | otherwise = error $ "invalid MPBall: " ++ show b
@@ -200,7 +207,7 @@ instance CanReduceSizeUsingAccuracyGuide MPBall where
         Exact -> b
         NoInformation -> b
         _ -> normalize $
-              MPBall x (errorBound $ 0.5^(fromAccuracy acGuide))
+              MPBall x (errorBound ((0.5^(fromAccuracy acGuide))⚡))
 
 instance HasNorm MPBall where
     getNormLog ball = getNormLog boundMP

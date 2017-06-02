@@ -49,8 +49,7 @@ library
     , QuickCheck >= 2.7 && < 2.10
     , lens >= 4.13 && < 4.16
     , template-haskell
-    , mixed-types-num == 0.1.*
-    , num-exceptions == 0.1.*
+    , mixed-types-num == 0.2.*
   if flag(MPFR)
     cpp-options: -DMPFRBackend
     if impl(ghc >= 7.10)
@@ -88,7 +87,6 @@ library
     AERN2.MP
     AERN2.MP.Precision
     AERN2.MP.Float
-    AERN2.MP.Float.Native
     AERN2.MP.Float.Type
     AERN2.MP.Float.Arithmetic
     AERN2.MP.Float.Conversions
@@ -104,7 +102,6 @@ library
     AERN2.MP.Ball.Conversions
     AERN2.MP.Ball.Comparisons
     AERN2.MP.Ball.Field
-    AERN2.MP.Ball.ElementaryFromField
     AERN2.MP.Ball.Elementary
     AERN2.MP.Ball.Tests
 

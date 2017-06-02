@@ -173,7 +173,7 @@ div r p (MPFloat n1Pre e1 _p1) (MPFloat n2Pre e2 p2)
   pI = integer p
   p2I = integer p2
   b = pI+p2I
-  limit2 = 2 ^ b
+  limit2 = unCN $ 2 ^ b
 
   e = e1 - b - e2
   n =
@@ -203,7 +203,7 @@ toDoubleNear (MPFloat n e _p) = encodeFloat n (int e)
 toRational :: MPFloat -> Rational
 toRational (MPFloat n e _)
   | e >= 0 = rational $ n * 2^e
-  | otherwise = n / (2^(-e))
+  | otherwise = unCN $ n / (2^(-e))
 
 fromIntegerA :: RoundMode -> Precision -> Integer -> MPFloat
 fromIntegerA r p x =

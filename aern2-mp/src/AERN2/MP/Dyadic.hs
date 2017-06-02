@@ -28,6 +28,10 @@ where
 
 import Numeric.MixedTypes
 import qualified Prelude as P
+
+import qualified Control.CollectErrors as CE
+import Control.CollectErrors (CollectErrors, EnsureCE, CanEnsureCE)
+
 import Text.Printf
 import Text.Regex.TDFA
 
@@ -41,8 +45,6 @@ import Test.QuickCheck
 import Data.Ratio (denominator, numerator)
 
 import Math.NumberTheory.Logarithms (integerLog2)
-
-import Numeric.CatchingExceptions
 
 import AERN2.Norm
 import AERN2.MP.Precision
@@ -85,7 +87,7 @@ instance Read Dyadic where
         [nS,eS] ->
           case (reads nS, reads eS) of
             ([(n,"")],[(e,"")]) ->
-              [(dyadic $ (n :: Integer)*0.5^(e :: Integer), afterS)]
+              [(dyadic (((n :: Integer)*0.5^(e :: Integer))⚡), afterS)]
             _ -> tryNext
         _ -> tryNext
       where
@@ -121,7 +123,7 @@ instance ConvertibleExactly Rational Dyadic where
     | isDyadic = Right $ Dyadic (fromRationalUp (prec $ max 2 (dp + np + 1)) q)
     | otherwise = convError "this number is not dyadic" q
     where
-    isDyadic = d == 2^dp
+    isDyadic = d == ((2^dp)⚡)
     dp = integerLog2 d
     d = denominator q
     np = integerLog2 (max 1 $ abs $ numerator q)
@@ -150,6 +152,29 @@ instance HasEqAsymmetric Rational Dyadic where
 --   type EqCompareType (CatchingNumExceptions t) Dyadic = CatchingNumExceptions (EqCompareType t Dyadic)
 --   equalTo = convertSecondUsing catchingNumExceptions equalTo
 
+instance
+  (HasEqAsymmetric Dyadic b
+  , CanEnsureCE es (EqCompareType Dyadic b)
+  , IsBool (EnsureCE es (EqCompareType Dyadic b))
+  , Monoid es)
+  =>
+  HasEqAsymmetric Dyadic (CollectErrors es  b)
+  where
+  type EqCompareType Dyadic (CollectErrors es  b) =
+    EnsureCE es (EqCompareType Dyadic b)
+  equalTo = CE.unlift2first equalTo
+
+instance
+  (HasEqAsymmetric a Dyadic
+  , CanEnsureCE es (EqCompareType a Dyadic)
+  , IsBool (EnsureCE es (EqCompareType a Dyadic))
+  , Monoid es)
+  =>
+  HasEqAsymmetric (CollectErrors es a) Dyadic
+  where
+  type EqCompareType (CollectErrors es  a) Dyadic =
+    EnsureCE es (EqCompareType a Dyadic)
+  equalTo = CE.unlift2second equalTo
 
 instance CanTestZero Dyadic
 
@@ -219,22 +244,28 @@ instance CanMinMaxAsymmetric Dyadic Rational where
   max = convertFirst max
 
 instance
-  (CanMinMaxAsymmetric t Dyadic,
-   Show (MinMaxType t Dyadic), CanTestValid (MinMaxType t Dyadic))
+  (CanMinMaxAsymmetric Dyadic b
+  , CanEnsureCE es (MinMaxType Dyadic b)
+  , Monoid es)
   =>
-  CanMinMaxAsymmetric (CatchingNumExceptions t) Dyadic where
-  type MinMaxType (CatchingNumExceptions t) Dyadic = CatchingNumExceptions (MinMaxType t Dyadic)
-  min a b = min a (catchingNumExceptions b)
-  max a b = max a (catchingNumExceptions b)
+  CanMinMaxAsymmetric Dyadic (CollectErrors es  b)
+  where
+  type MinMaxType Dyadic (CollectErrors es  b) =
+    EnsureCE es (MinMaxType Dyadic b)
+  min = CE.unlift2first min
+  max = CE.unlift2first max
 
 instance
-  (CanMinMaxAsymmetric Dyadic t,
-   Show (MinMaxType Dyadic t), CanTestValid (MinMaxType Dyadic t))
+  (CanMinMaxAsymmetric a Dyadic
+  , CanEnsureCE es (MinMaxType a Dyadic)
+  , Monoid es)
   =>
-  CanMinMaxAsymmetric Dyadic (CatchingNumExceptions t) where
-  type MinMaxType Dyadic (CatchingNumExceptions t) = CatchingNumExceptions (MinMaxType Dyadic t)
-  min b a = min (catchingNumExceptions b) a
-  max b a = max (catchingNumExceptions b) a
+  CanMinMaxAsymmetric (CollectErrors es a) Dyadic
+  where
+  type MinMaxType (CollectErrors es  a) Dyadic =
+    EnsureCE es (MinMaxType a Dyadic)
+  min = CE.unlift2second min
+  max = CE.unlift2second max
 
 {- addition -}
 
@@ -263,20 +294,26 @@ instance CanAddAsymmetric Dyadic Rational where
   add = convertFirst add
 
 instance
-  (CanAddAsymmetric t Dyadic,
-   Show (AddType t Dyadic), CanTestValid (AddType t Dyadic))
+  (CanAddAsymmetric Dyadic b
+  , CanEnsureCE es (AddType Dyadic b)
+  , Monoid es)
   =>
-  CanAddAsymmetric (CatchingNumExceptions t) Dyadic where
-  type AddType (CatchingNumExceptions t) Dyadic = CatchingNumExceptions (AddType t Dyadic)
-  add a b = add a (catchingNumExceptions b)
+  CanAddAsymmetric Dyadic (CollectErrors es  b)
+  where
+  type AddType Dyadic (CollectErrors es  b) =
+    EnsureCE es (AddType Dyadic b)
+  add = CE.unlift2first add
 
 instance
-  (CanAddAsymmetric Dyadic t,
-   Show (AddType Dyadic t), CanTestValid (AddType Dyadic t))
+  (CanAddAsymmetric a Dyadic
+  , CanEnsureCE es (AddType a Dyadic)
+  , Monoid es)
   =>
-  CanAddAsymmetric Dyadic (CatchingNumExceptions t) where
-  type AddType Dyadic (CatchingNumExceptions t) = CatchingNumExceptions (AddType Dyadic t)
-  add b a = add (catchingNumExceptions b) a
+  CanAddAsymmetric (CollectErrors es a) Dyadic
+  where
+  type AddType (CollectErrors es  a) Dyadic =
+    EnsureCE es (AddType a Dyadic)
+  add = CE.unlift2second add
 
 {- subtraction -}
 
@@ -305,20 +342,26 @@ instance CanSub Dyadic Rational where
   sub = convertFirst sub
 
 instance
-  (CanSub t Dyadic,
-   Show (SubType t Dyadic), CanTestValid (SubType t Dyadic))
+  (CanSub Dyadic b
+  , CanEnsureCE es (SubType Dyadic b)
+  , Monoid es)
   =>
-  CanSub (CatchingNumExceptions t) Dyadic where
-  type SubType (CatchingNumExceptions t) Dyadic = CatchingNumExceptions (SubType t Dyadic)
-  sub a b = sub a (catchingNumExceptions b)
+  CanSub Dyadic (CollectErrors es  b)
+  where
+  type SubType Dyadic (CollectErrors es  b) =
+    EnsureCE es (SubType Dyadic b)
+  sub = CE.unlift2first sub
 
 instance
-  (CanSub Dyadic t,
-   Show (SubType Dyadic t), CanTestValid (SubType Dyadic t))
+  (CanSub a Dyadic
+  , CanEnsureCE es (SubType a Dyadic)
+  , Monoid es)
   =>
-  CanSub Dyadic (CatchingNumExceptions t) where
-  type SubType Dyadic (CatchingNumExceptions t) = CatchingNumExceptions (SubType Dyadic t)
-  sub b a = sub (catchingNumExceptions b) a
+  CanSub (CollectErrors es a) Dyadic
+  where
+  type SubType (CollectErrors es  a) Dyadic =
+    EnsureCE es (SubType a Dyadic)
+  sub = CE.unlift2second sub
 
 
 {- multiplication -}
@@ -348,20 +391,26 @@ instance CanMulAsymmetric Dyadic Rational where
   mul = convertFirst mul
 
 instance
-  (CanMulAsymmetric t Dyadic,
-   Show (MulType t Dyadic), CanTestValid (MulType t Dyadic))
+  (CanMulAsymmetric Dyadic b
+  , CanEnsureCE es (MulType Dyadic b)
+  , Monoid es)
   =>
-  CanMulAsymmetric (CatchingNumExceptions t) Dyadic where
-  type MulType (CatchingNumExceptions t) Dyadic = CatchingNumExceptions (MulType t Dyadic)
-  mul a b = mul a (catchingNumExceptions b)
+  CanMulAsymmetric Dyadic (CollectErrors es  b)
+  where
+  type MulType Dyadic (CollectErrors es  b) =
+    EnsureCE es (MulType Dyadic b)
+  mul = CE.unlift2first mul
 
 instance
-  (CanMulAsymmetric Dyadic t,
-   Show (MulType Dyadic t), CanTestValid (MulType Dyadic t))
+  (CanMulAsymmetric a Dyadic
+  , CanEnsureCE es (MulType a Dyadic)
+  , Monoid es)
   =>
-  CanMulAsymmetric Dyadic (CatchingNumExceptions t) where
-  type MulType Dyadic (CatchingNumExceptions t) = CatchingNumExceptions (MulType Dyadic t)
-  mul b a = mul (catchingNumExceptions b) a
+  CanMulAsymmetric (CollectErrors es a) Dyadic
+  where
+  type MulType (CollectErrors es  a) Dyadic =
+    EnsureCE es (MulType a Dyadic)
+  mul = CE.unlift2second mul
 
 instance CanPow Dyadic Integer where
   pow = powUsingMul
@@ -369,57 +418,69 @@ instance CanPow Dyadic Int where
   pow = powUsingMul
 
 instance
-  (CanDiv t Dyadic,
-   Show (DivType t Dyadic), CanTestValid (DivType t Dyadic))
+  (CanDiv a Dyadic
+  , CanEnsureCE es (DivType a Dyadic)
+  , Monoid es)
   =>
-  CanDiv (CatchingNumExceptions t) Dyadic where
-  type DivType (CatchingNumExceptions t) Dyadic = CatchingNumExceptions (DivType t Dyadic)
-  divide a b = divide a (catchingNumExceptions b)
+  CanDiv (CollectErrors es a) Dyadic
+  where
+  type DivType (CollectErrors es  a) Dyadic =
+    EnsureCE es (DivType a Dyadic)
+  divide = CE.unlift2second divide
 
 instance CanDiv Integer Dyadic where
-  type DivType Integer Dyadic = Rational
+  type DivType Integer Dyadic = CollectNumErrors Rational
   divide a b = divide a (rational b)
 instance CanDiv Dyadic Integer where
-  type DivType Dyadic Integer = Rational
+  type DivType Dyadic Integer = CollectNumErrors Rational
   divide a b = divide (rational a) b
 
 instance CanDiv Int Dyadic where
-  type DivType Int Dyadic = Rational
+  type DivType Int Dyadic = CollectNumErrors Rational
   divide a b = divide a (rational b)
 instance CanDiv Dyadic Int where
-  type DivType Dyadic Int = Rational
+  type DivType Dyadic Int = CollectNumErrors Rational
   divide a b = divide (rational a) b
 
 instance CanDiv Rational Dyadic where
-  type DivType Rational Dyadic = Rational
+  type DivType Rational Dyadic = CollectNumErrors Rational
   divide = convertSecond divide
 instance CanDiv Dyadic Rational where
-  type DivType Dyadic Rational = Rational
+  type DivType Dyadic Rational = CollectNumErrors Rational
   divide = convertFirst divide
 
 instance
-  (CanDiv Dyadic t,  CanTestZero t,
-   Show (DivType Dyadic t), CanTestValid (DivType Dyadic t))
+  (CanDiv Dyadic b
+  , CanEnsureCE es (DivType Dyadic b)
+  , Monoid es)
   =>
-  CanDiv Dyadic (CatchingNumExceptions t) where
-  type DivType Dyadic (CatchingNumExceptions t) = CatchingNumExceptions (DivType Dyadic t)
-  divide b a = divide (catchingNumExceptions b) a
+  CanDiv Dyadic (CollectErrors es  b)
+  where
+  type DivType Dyadic (CollectErrors es  b) =
+    EnsureCE es (DivType Dyadic b)
+  divide = CE.unlift2first divide
 
 instance
-  (CanPow t Dyadic, CanNegSameType t, Show t, CanTestPosNeg t,
-   Show (PowType t Dyadic), CanTestValid (PowType t Dyadic))
+  (CanPow Dyadic b
+  , CanEnsureCE es (PowType Dyadic b)
+  , Monoid es)
   =>
-  CanPow (CatchingNumExceptions t) Dyadic where
-  type PowType (CatchingNumExceptions t) Dyadic = CatchingNumExceptions (PowType t Dyadic)
-  pow a b = pow a (catchingNumExceptions b)
+  CanPow Dyadic (CollectErrors es  b)
+  where
+  type PowType Dyadic (CollectErrors es  b) =
+    EnsureCE es (PowType Dyadic b)
+  pow = CE.unlift2first pow
 
 instance
-  (CanPow Dyadic t,  Show t,  CanTestPosNeg t, CanTestInteger t,
-   Show (PowType Dyadic t), CanTestValid (PowType Dyadic t))
+  (CanPow a Dyadic
+  , CanEnsureCE es (PowType a Dyadic)
+  , Monoid es)
   =>
-  CanPow Dyadic (CatchingNumExceptions t) where
-  type PowType Dyadic (CatchingNumExceptions t) = CatchingNumExceptions (PowType Dyadic t)
-  pow b a = pow (catchingNumExceptions b) a
+  CanPow (CollectErrors es a) Dyadic
+  where
+  type PowType (CollectErrors es  a) Dyadic =
+    EnsureCE es (PowType a Dyadic)
+  pow = CE.unlift2second pow
 
 lift2 ::
   (MPFloat -> MPFloat -> MPFloat) ->

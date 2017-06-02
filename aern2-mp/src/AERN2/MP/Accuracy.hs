@@ -26,14 +26,12 @@ where
 import Numeric.MixedTypes
 import qualified Prelude as P
 
-import Data.Complex
+import qualified Numeric.CollectErrors as CN
 
-import Control.Lens
+import Data.Complex
 
 import Test.Hspec
 import Test.QuickCheck
-
-import Numeric.CatchingExceptions
 
 import AERN2.Norm
 import AERN2.MP.Precision
@@ -176,11 +174,9 @@ instance CanSub Accuracy Integer where
 class HasAccuracy a where
   getAccuracy :: a -> Accuracy
 
-instance HasAccuracy a => HasAccuracy (CatchingNumExceptions a) where
-  getAccuracy aCE =
-    case aCE ^. numEXC_maybeValue of
-      Just v -> getAccuracy v
-      _ -> NoInformation
+instance (HasAccuracy a, Monoid es, P.Eq es) => HasAccuracy (CN.CollectErrors es a) where
+  getAccuracy aCN =
+    CN.getValueIfNoError aCN getAccuracy (const NoInformation)
 
 instance HasAccuracy Int where getAccuracy _ = Exact
 instance HasAccuracy Integer where getAccuracy _ = Exact

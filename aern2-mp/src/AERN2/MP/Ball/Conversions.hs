@@ -19,8 +19,6 @@ where
 import Numeric.MixedTypes
 -- import qualified Prelude as P
 
-import Numeric.CatchingExceptions (CanTestValid(..))
-
 import Data.Convertible
 
 import AERN2.MP.Dyadic (Dyadic)
@@ -60,14 +58,14 @@ instance ConvertibleExactly EB.ErrorBound MPBall where
 
 instance ConvertibleExactly Integer MPBall where
   safeConvertExactly x
-    | isValid b = Right b
+    | isFinite b = Right b
     | otherwise = convError "too large to convert to MPBall" x
     where
       b = MPBall (mpFloat x) (errorBound 0)
 
 instance ConvertibleExactly (Integer, Integer) MPBall where
   safeConvertExactly (x,e)
-    | isValid b = Right b
+    | isFinite b = Right b
     | otherwise = convError "too large to convert to MPBall" x
     where
       b = MPBall (mpFloat x) (errorBound $ mpFloat e)
@@ -82,7 +80,7 @@ instance ConvertibleExactly (Int, Int) MPBall where
 
 instance ConvertibleWithPrecision Integer MPBall where
   safeConvertP p x
-    | isValid b = Right b
+    | isFinite b = Right b
     | otherwise = convError ("too large to convert to MPBall with precision " ++ show p) x
     where
     b = MPBall xUp (xUp `EB.subMP` xDn)
@@ -94,7 +92,7 @@ instance ConvertibleWithPrecision Int MPBall where
 
 instance ConvertibleWithPrecision Rational MPBall where
   safeConvertP p x
-    | isValid b = Right b
+    | isFinite b = Right b
     | otherwise = convError ("too large to convert to MPBall with precision " ++ show p) x
     where
     b = MPBall xUp (xUp `EB.subMP` xDn)
@@ -103,7 +101,7 @@ instance ConvertibleWithPrecision Rational MPBall where
 
 instance ConvertibleWithPrecision (Rational, Rational) MPBall where
   safeConvertP p (x,e)
-    | isValid b = Right b
+    | isFinite b = Right b
     | otherwise = convError ("too large to convert to MPBall with precision " ++ show p) x
     where
     b = MPBall xFlt (xe + eUp) -- beware, precision may be too high relative to accuracy

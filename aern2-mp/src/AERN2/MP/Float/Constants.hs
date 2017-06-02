@@ -50,4 +50,7 @@ itisInfinite x =
 
 instance CanTestFinite MPFloat where
   isInfinite = itisInfinite
+  isFinite x = not (itisInfinite x || itisNaN x)
+
+instance CanTestNaN MPFloat where
   isNaN = itisNaN

@@ -105,7 +105,7 @@ specMPBall =
       specCanMulNotMixed tMPBall
       specCanMulSameType tMPBall
       specCanMul tInt tMPBall tRational
-      specCanPow tMPBall tInteger
+      -- specCanPow tMPBall tInteger
     describe "field" $ do
       specCanDivNotMixed tMPBall
       specCanDiv tInteger tMPBall
