@@ -87,10 +87,12 @@ bench implName benchName benchParamsS =
               "Double" -> showL (fft_FP isFFT k)
               "MP" -> showL (case fft_MP isFFT k (bitsSG ac ac) of Just rs -> rs; _ -> error "no result")
               "CR_AC_cachedUnsafe" -> showL (fft_CR_cachedUnsafe isFFT k (bitsSG ac ac))
-              "CR_AC_cachedArrow" -> showL (fft_CR_cachedArrow isFFT k (bitsSG ac ac))
+              "CR_AC_cachedArrow" -> showL (fft_CR_cachedArrow True isFFT k (bitsSG ac ac))
+              "CR_AC_noncachedArrow" -> showL (fft_CR_cachedArrow False isFFT k (bitsSG ac ac))
               "CR_AC_parArrow" -> showL (fft_CR_parArrow isFFT k (bitsSG ac ac))
               "CR_AG_cachedUnsafe" -> showL (fft_CR_cachedUnsafe isFFT k (bitsSG acHalf ac))
-              "CR_AG_cachedArrow" -> showL (fft_CR_cachedArrow isFFT k (bitsSG acHalf ac))
+              "CR_AG_cachedArrow" -> showL (fft_CR_cachedArrow True isFFT k (bitsSG acHalf ac))
+              "CR_AG_noncachedArrow" -> showL (fft_CR_cachedArrow False isFFT k (bitsSG acHalf ac))
               "CR_AG_parArrow" -> showL (fft_CR_parArrow isFFT k (bitsSG acHalf ac))
               _ -> error $ "unknown implementation: " ++ implName
           where
@@ -159,8 +161,8 @@ fft_CR_cachedUnsafe isFFT k acSG =
   approx :: Complex CauchyReal -> Complex MPBall
   approx (a :+ i) = (a ? acSG) :+ (i ? acSG)
 
-fft_CR_cachedArrow :: Bool -> Integer -> AccuracySG -> [Complex MPBall]
-fft_CR_cachedArrow isFFT k acSG =
+fft_CR_cachedArrow :: Bool -> Bool -> Integer -> AccuracySG -> [Complex MPBall]
+fft_CR_cachedArrow shouldCache isFFT k acSG =
   maybeTrace (formatQALog 0 netlog) $
   results
   where
@@ -171,11 +173,14 @@ fft_CR_cachedArrow isFFT k acSG =
       i <- (-?-) -< (iR, acSG)
       returnA -< a :+ i
   (netlog, results) =
-    executeQACachedA $
+    executeA $
       proc () ->
         do
         (Just resultRs) <- task -< ()
         mapA approxA -< resultRs
+  executeA
+    | shouldCache = executeQACachedA
+    | otherwise = executeQAUncachedA
   task
     | isFFT = taskFFTWithHookA k hookA
     | otherwise = taskDFTWithHookA k hookA
