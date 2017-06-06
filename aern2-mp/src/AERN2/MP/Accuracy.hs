@@ -189,6 +189,10 @@ instance HasAccuracy t => HasAccuracy (Complex t) where
 instance HasAccuracy t => HasAccuracy [t] where
   getAccuracy xs = foldl min Exact $ map getAccuracy xs
 
+instance HasAccuracy t => HasAccuracy (Maybe t) where
+  getAccuracy (Just x) = getAccuracy x
+  getAccuracy _ = NoInformation
+
 {-| Return accuracy, except when the element is Exact, return its nominal Precision dressed as Accuracy.
     This function is useful when we have a convergent sequence where all elements happen to be
     actually equal to the limit and we need the property that the sequence elements keep improving.
