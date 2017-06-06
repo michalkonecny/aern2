@@ -288,11 +288,21 @@ instance
 
 instance CanIntersectAssymetric MPBall MPBall where
   intersect a b
-    | rL > rR = error $ "intersect: empty intersection: " ++ show a ++ "; " ++ show b
-    | otherwise = fromEndpointsMP rL rR
+    | rL > rR = noValueNumErrorCertain $ NumError $ "intersect: empty intersection: " ++ show a ++ "; " ++ show b
+    | otherwise = cn $ fromEndpointsMP rL rR
     where
     rL = max aL bL
     rR = min aR bR
+    (aL,aR) = endpointsMP a
+    (bL,bR) = endpointsMP b
+
+{- union -}
+
+instance CanUnionAssymetric MPBall MPBall where
+  union a b = fromEndpointsMP rL rR
+    where
+    rL = min aL bL
+    rR = max aR bR
     (aL,aR) = endpointsMP a
     (bL,bR) = endpointsMP b
 

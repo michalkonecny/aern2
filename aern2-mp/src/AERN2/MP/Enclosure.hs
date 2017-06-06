@@ -16,6 +16,7 @@ module AERN2.MP.Enclosure
   , IsInterval(..), intervalFunctionByEndpoints, intervalFunctionByEndpointsUpDown
   , CanTestContains(..), CanMapInside(..), specCanMapInside
   , CanIntersectAssymetric(..), CanIntersect, CanIntersectBy, CanIntersectSameType
+  , CanUnionAssymetric(..), CanUnion, CanUnionBy, CanUnionSameType
   )
 where
 
@@ -25,7 +26,7 @@ import Numeric.MixedTypes
 import Test.Hspec
 import Test.QuickCheck
 
-import qualified Control.CollectErrors as CE
+-- import qualified Control.CollectErrors as CE
 import Control.CollectErrors (CollectErrors, EnsureCE, CanEnsureCE, ensureCE)
 
 import AERN2.MP.ErrorBound
@@ -122,7 +123,7 @@ type CanIntersect e1 e2 = (CanIntersectAssymetric e1 e2, CanIntersectAssymetric 
 
 class CanIntersectAssymetric e1 e2 where
   type IntersectionType e1 e2
-  type IntersectionType e1 e2 = e1
+  type IntersectionType e1 e2 = EnsureCN e1
   intersect :: e1 -> e2 -> IntersectionType e1 e2
 
 type CanIntersectBy e1 e2 = (CanIntersect e1 e2, IntersectionType e1 e2 ~ e1)
@@ -130,7 +131,7 @@ type CanIntersectBy e1 e2 = (CanIntersect e1 e2, IntersectionType e1 e2 ~ e1)
 type CanIntersectSameType e1 = CanIntersectBy e1 e1
 
 instance
-  (CanIntersectAssymetric e1 e2, Monoid es, CanEnsureCE es (IntersectionType e1 e2)) 
+  (CanIntersectAssymetric e1 e2, Monoid es, CanEnsureCE es (IntersectionType e1 e2))
   =>
   CanIntersectAssymetric (CollectErrors es e1) (CollectErrors es e2)
   where
@@ -141,3 +142,33 @@ instance
     a <- aCE
     b <- bCE
     ensureCE $ intersect a b
+
+{- union -}
+
+type CanUnion e1 e2 = (CanUnionAssymetric e1 e2, CanUnionAssymetric e1 e2)
+
+class CanUnionAssymetric e1 e2 where
+  type UnionionType e1 e2
+  type UnionionType e1 e2 = e1
+  union :: e1 -> e2 -> UnionionType e1 e2
+
+type CanUnionBy e1 e2 = (CanUnion e1 e2, UnionionType e1 e2 ~ e1)
+
+type CanUnionSameType e1 = CanUnionBy e1 e1
+
+instance
+  (CanUnionAssymetric e1 e2, Monoid es, CanEnsureCE es (UnionionType e1 e2))
+  =>
+  CanUnionAssymetric (CollectErrors es e1) (CollectErrors es e2)
+  where
+  type UnionionType (CollectErrors es e1) (CollectErrors es e2) =
+    EnsureCE es (UnionionType e1 e2)
+  union aCE bCE =
+    do
+    a <- aCE
+    b <- bCE
+    ensureCE $ union a b
+
+instance (CanUnionSameType t) => HasIfThenElse (Maybe Bool) t where
+  ifThenElse (Just b) e1 e2 = if b then e1 else e2
+  ifThenElse Nothing e1 e2 = e1 `union` e2
