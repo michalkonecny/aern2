@@ -15,7 +15,8 @@ module AERN2.MP.Enclosure
   IsBall(..)
   , IsInterval(..), intervalFunctionByEndpoints, intervalFunctionByEndpointsUpDown
   , CanTestContains(..), CanMapInside(..), specCanMapInside
-)
+  , CanIntersectAssymetric(..), CanIntersect, CanIntersectBy, CanIntersectSameType
+  )
 where
 
 import Numeric.MixedTypes
@@ -23,6 +24,9 @@ import Numeric.MixedTypes
 
 import Test.Hspec
 import Test.QuickCheck
+
+import qualified Control.CollectErrors as CE
+import Control.CollectErrors (CollectErrors, EnsureCE, CanEnsureCE, ensureCE)
 
 import AERN2.MP.ErrorBound
 
@@ -111,3 +115,29 @@ specCanMapInside (T dName :: T d) (T eName :: T e) =
     property $
       \ (d :: d) (e :: e) ->
         contains d $ mapInside d e
+
+{- intersection -}
+
+type CanIntersect e1 e2 = (CanIntersectAssymetric e1 e2, CanIntersectAssymetric e1 e2)
+
+class CanIntersectAssymetric e1 e2 where
+  type IntersectionType e1 e2
+  type IntersectionType e1 e2 = e1
+  intersect :: e1 -> e2 -> IntersectionType e1 e2
+
+type CanIntersectBy e1 e2 = (CanIntersect e1 e2, IntersectionType e1 e2 ~ e1)
+
+type CanIntersectSameType e1 = CanIntersectBy e1 e1
+
+instance
+  (CanIntersectAssymetric e1 e2, Monoid es, CanEnsureCE es (IntersectionType e1 e2)) 
+  =>
+  CanIntersectAssymetric (CollectErrors es e1) (CollectErrors es e2)
+  where
+  type IntersectionType (CollectErrors es e1) (CollectErrors es e2) =
+    EnsureCE es (IntersectionType e1 e2)
+  intersect aCE bCE =
+    do
+    a <- aCE
+    b <- bCE
+    ensureCE $ intersect a b

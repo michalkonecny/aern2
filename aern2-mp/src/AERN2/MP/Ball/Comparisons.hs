@@ -16,7 +16,6 @@ module AERN2.MP.Ball.Comparisons
   module AERN2.Norm
   -- * Ball operations (see also instances)
   , reducePrecionIfInaccurate
-  , intersect
   -- * Helpers for constructing ball functions
   , byEndpointsMP
 )
@@ -287,15 +286,15 @@ instance
 
 {- intersection -}
 
-intersect :: MPBall -> MPBall -> MPBall
-intersect a b
-  | rL > rR = error $ "intersect: empty intersection: " ++ show a ++ "; " ++ show b
-  | otherwise = fromEndpointsMP rL rR
-  where
-  rL = max aL bL
-  rR = min aR bR
-  (aL,aR) = endpointsMP a
-  (bL,bR) = endpointsMP b
+instance CanIntersectAssymetric MPBall MPBall where
+  intersect a b
+    | rL > rR = error $ "intersect: empty intersection: " ++ show a ++ "; " ++ show b
+    | otherwise = fromEndpointsMP rL rR
+    where
+    rL = max aL bL
+    rR = min aR bR
+    (aL,aR) = endpointsMP a
+    (bL,bR) = endpointsMP b
 
 {-|
   Computes an *increasing* ball fucntion @f@ from *exact* MPFR operations.
