@@ -1,6 +1,8 @@
+{-# LANGUAGE CPP #-}
+-- #define DEBUG
 {-|
-    Module      :  AERN2.Real.Helpers
-    Description :  helper functions for CR operations
+    Module      :  AERN2.CauchySeq.Helpers
+    Description :  helper functions for Cauchy sequence operations
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -8,17 +10,26 @@
     Stability   :  experimental
     Portability :  portable
 
-    Auxiliary functions for CR operations
+    Auxiliary functions for Cauchy sequence operations
 -}
-module AERN2.Real.Helpers
-(
-  getCRFnNormLog
-  , binaryWithBall
-  , binaryWithDouble
-  , unaryOp, binaryOp, binaryOpWithPureArg
-  , getInitQ1FromSimple, getInitQ1TFromSimple, getInitQ1Q2FromSimple
-)
+module AERN2.CauchySeq.Helpers
+-- (
+--   getCRFnNormLog
+--   , binaryWithBall
+--   , binaryWithDouble
+--   , unaryOp, binaryOp, binaryOpWithPureArg
+--   , getInitQ1FromSimple, getInitQ1TFromSimple, getInitQ1Q2FromSimple
+-- )
 where
+
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#define maybeTraceIO putStrLn
+#else
+#define maybeTrace (\ (_ :: String) t -> t)
+#define maybeTraceIO (\ (_ :: String) -> return ())
+#endif
 
 import Numeric.MixedTypes
 -- import qualified Prelude as P
@@ -37,75 +48,55 @@ import AERN2.MP.Ball
 
 import AERN2.QA.Protocol
 import AERN2.AccuracySG
-import AERN2.Real.Type
-
-import Debug.Trace (trace)
-
-shouldTrace :: Bool
-shouldTrace = False
--- shouldTrace = True
-
-maybeTrace :: String -> a -> a
-maybeTrace
-    | shouldTrace = trace
-    | otherwise = const id
-
-_dummy :: ()
-_dummy = maybeTrace "dummy" ()
+import AERN2.CauchySeq.Type
 
 getCRFnNormLog ::
-  (QAArrow to)
+  (QAArrow to, HasNorm (WithoutCN a), CanEnsureCN a)
   =>
-  CauchyRealA to ->
-  (MPBall -> CollectNumErrors MPBall) ->
-  AccuracySG `to` CollectNumErrors (NormLog, MPBall)
+  CauchySeqA to a ->
+  (a -> a) ->
+  AccuracySG `to` (CollectNumErrors NormLog, a)
 getCRFnNormLog r fn =
   proc q ->
     do
-    bCN <- realWithAccuracy r -< q
-    returnA -< withBallCN bCN
-  where
-  withBallCN bCN =
-    do
-    b <- bCN
-    fb <- fn b
-    return (getNormLog fb, b)
+    b <- seqWithAccuracy r -< q
+    returnA -< (fmap getNormLog (ensureCN $ fn b), b)
 
 {- MPBall + CauchyReal = MPBall, only allowed in the (->) arrow  -}
 
-mpBallSimilarTo :: MPBall -> CauchyReal -> CollectNumErrors MPBall
-mpBallSimilarTo b r =
-  r ? (accuracySG $ getFiniteAccuracy b)
-
-binaryWithBall ::
-  (CanEnsureCN t, CanSetPrecision (EnsureCN t))
-  =>
-  (MPBall -> MPBall -> t) -> CauchyReal -> MPBall -> EnsureCN t
-binaryWithBall op r b =
-  lowerPrecisionIfAbove (getPrecision b) res
-  where
-  res =
-    CE.lift2ensureCE op (mpBallSimilarTo b r) (cn b)
-
-instance Convertible CauchyReal Double where
-  safeConvert r =
-    do
-    b <- CE.getConvertResult (r ? (bitsS 53))
-    safeConvert (centre b)
-
-binaryWithDouble :: (Double -> Double -> Double) -> CauchyReal -> Double -> Double
-binaryWithDouble op r d =
-  op (convert r) d
-
-{- generic implementations of operations of different arity -}
-
+-- mpBallSimilarTo :: MPBall -> CauchyReal -> CollectNumErrors MPBall
+-- mpBallSimilarTo b r =
+--   r ? (accuracySG $ getFiniteAccuracy b)
+--
+-- binaryWithBall ::
+--   (CanEnsureCN t, CanSetPrecision (EnsureCN t))
+--   =>
+--   (MPBall -> MPBall -> t) -> CauchyReal -> MPBall -> EnsureCN t
+-- binaryWithBall op r b =
+--   lowerPrecisionIfAbove (getPrecision b) res
+--   where
+--   res =
+--     CE.lift2ensureCE op (mpBallSimilarTo b r) (cn b)
+--
+-- instance Convertible CauchyReal Double where
+--   safeConvert r =
+--     do
+--     b <- CE.getConvertResult (r ? (bitsS 53))
+--     safeConvert (centre b)
+--
+-- binaryWithDouble :: (Double -> Double -> Double) -> CauchyReal -> Double -> Double
+-- binaryWithDouble op r d =
+--   op (convert r) d
+--
+-- {- generic implementations of operations of different arity -}
+--
 -- unaryOp ::
 --   (QAArrow to)
 --   =>
 --   String ->
 --   (CollectNumErrors MPBall -> CollectNumErrors MPBall) ->
---   (CauchyRealA to -> (AccuracySG `to` (AccuracySG, Maybe MPBall))) ->
---   CauchyRealA to -> CauchyRealA to
+--   (CauchySeqA to a -> (AccuracySG `to` (AccuracySG, Maybe MPBall))) ->
+--   CauchySeqA to a -> CauchySeqA to a
 -- unaryOp name op getInitQ1 r1 =
 --   newCR name [AnyProtocolQA r1] makeQ
 --   where
@@ -120,8 +111,8 @@ binaryWithDouble op r d =
 --   =>
 --   String ->
 --   (CollectNumErrors MPBall -> t -> CollectNumErrors MPBall) ->
---   (CauchyRealA to -> t -> (AccuracySG `to` (AccuracySG, Maybe MPBall))) ->
---   CauchyRealA to -> t -> CauchyRealA to
+--   (CauchySeqA to a -> t -> (AccuracySG `to` (AccuracySG, Maybe MPBall))) ->
+--   CauchySeqA to a -> t -> CauchySeqA to a
 -- binaryOpWithPureArg name op getInitQ1T r1 t =
 --   newCR name [AnyProtocolQA r1] makeQ
 --   where
@@ -136,8 +127,8 @@ binaryWithDouble op r d =
 --   =>
 --   String ->
 --   (CollectNumErrors MPBall -> CollectNumErrors MPBall -> CollectNumErrors MPBall) ->
---   (CauchyRealA to -> CauchyRealA to -> (AccuracySG `to` ((AccuracySG, Maybe MPBall), (AccuracySG, Maybe MPBall)))) ->
---   CauchyRealA to -> CauchyRealA to -> CauchyRealA to
+--   (CauchySeqA to a -> CauchySeqA to a -> (AccuracySG `to` ((AccuracySG, Maybe MPBall), (AccuracySG, Maybe MPBall)))) ->
+--   CauchySeqA to a -> CauchySeqA to a -> CauchySeqA to a
 -- binaryOp name op getInitQ1Q2 r1 r2 =
 --   newCR name [AnyProtocolQA r1, AnyProtocolQA r2] makeQ
 --   where

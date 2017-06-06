@@ -35,8 +35,7 @@ library
     , transformers >= 0.4 && < 0.6
     , lens >= 4.13 && < 4.16
     , stm >= 2.4 && < 2.5
-    , mixed-types-num == 0.1.*
-    , num-exceptions == 0.1.*
+    , mixed-types-num == 0.2.*
     , aern2-mp == 0.1.*
   ghc-options:     -Wall -O2 -fno-warn-orphans
   extensions:
@@ -63,6 +62,8 @@ library
     AERN2.QA.Strategy.Cached
     AERN2.QA.Strategy.Parallel
     AERN2.AccuracySG
+    AERN2.CauchySeq.Type
+    AERN2.CauchySeq.Helpers
     AERN2.Real
     AERN2.Real.Type
     AERN2.Real.Helpers
@@ -110,7 +111,7 @@ executable aern2-real-benchOp
       aern2-real-benchOp.hs
   build-depends:
     base == 4.*
-    , mixed-types-num == 0.1.*
+    , mixed-types-num == 0.2.*
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
     , random
