@@ -108,6 +108,17 @@ instance CanSetPrecision t => CanSetPrecision (Complex t) where
   setPrecision p (a :+ i) =
     (setPrecision p a) :+ (setPrecision p i)
 
+instance HasPrecision t => HasPrecision (Maybe t) where
+  getPrecision (Just v) = getPrecision v
+  getPrecision Nothing = defaultPrecision
+instance CanSetPrecision t => CanSetPrecision (Maybe t) where
+  setPrecision p = fmap (setPrecision p)
+
+instance HasPrecision Bool where
+  getPrecision _ = defaultPrecision
+instance CanSetPrecision Bool where
+  setPrecision _ = id
+
 lowerPrecisionIfAbove :: (CanSetPrecision t) => Precision -> t -> t
 lowerPrecisionIfAbove p x
   | getPrecision x > p = setPrecision p x

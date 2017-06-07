@@ -181,6 +181,7 @@ instance (HasAccuracy a, Monoid es, P.Eq es) => HasAccuracy (CN.CollectErrors es
 instance HasAccuracy Int where getAccuracy _ = Exact
 instance HasAccuracy Integer where getAccuracy _ = Exact
 instance HasAccuracy Rational where getAccuracy _ = Exact
+instance HasAccuracy Bool where getAccuracy _ = Exact
 
 instance HasAccuracy t => HasAccuracy (Complex t) where
   getAccuracy (a :+ i) =
