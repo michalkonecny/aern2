@@ -64,8 +64,9 @@ instance Show MPBall
       "[" ++ show x ++ " ± " ++ show e ++ "](prec=" ++ (show $ integer $ getPrecision x) ++ ")"
 
 
-instance (Monoid es) => CanEnsureTypeOp (CE.CollectErrors es) MPBall where
+instance (CE.SuitableForCE es) => CanEnsureTypeOp (CE.CollectErrors es) MPBall where
   ensureTypeOp = CE.noErrors
+  deEnsureTypeOp = CE.defaultDeEnsureTypeOp
 
 -- instance CanTestValid MPBall where
 --   isValid = isFinite
