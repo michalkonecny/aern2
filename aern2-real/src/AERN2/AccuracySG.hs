@@ -21,6 +21,9 @@ where
 import Numeric.MixedTypes
 import qualified Prelude as P
 
+-- import qualified Control.CollectErrors as CE
+import Control.CollectErrors (CollectErrors) --, EnsureCE, CanEnsureCE, ensureCE)
+
 import AERN2.MP.Accuracy
 import AERN2.MP.Ball
 
@@ -98,12 +101,15 @@ instance CanSub AccuracySG Integer where
 class CanAdjustToAccuracySG t where
   adjustToAccuracySG :: AccuracySG -> t -> t
 
-instance CanAdjustToAccuracySG t => CanAdjustToAccuracySG (Maybe t) where
-  adjustToAccuracySG acSG = fmap (adjustToAccuracySG acSG)
+instance CanAdjustToAccuracySG MPBall where
+  adjustToAccuracySG (AccuracySG acS acG) =
+    setPrecisionAtLeastAccuracy acS . reduceSizeUsingAccuracyGuide acG
 
 instance CanAdjustToAccuracySG Bool where
   adjustToAccuracySG _ = id
 
-instance CanAdjustToAccuracySG MPBall where
-  adjustToAccuracySG (AccuracySG acS acG) =
-    setPrecisionAtLeastAccuracy acS . reduceSizeUsingAccuracyGuide acG
+instance CanAdjustToAccuracySG t => CanAdjustToAccuracySG (Maybe t) where
+  adjustToAccuracySG acSG = fmap (adjustToAccuracySG acSG)
+
+instance CanAdjustToAccuracySG t => CanAdjustToAccuracySG (CollectErrors es t) where
+  adjustToAccuracySG acSG = fmap (adjustToAccuracySG acSG)

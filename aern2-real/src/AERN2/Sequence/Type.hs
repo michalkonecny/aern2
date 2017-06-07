@@ -21,7 +21,6 @@ module AERN2.Sequence.Type
   , SequenceA, Sequence, newSeq, newSeqSimple
   , convergentList2SequenceA
   , seqByPrecision2SequenceA
-  , pickNonZeroSeqA
 )
 where
 
@@ -40,8 +39,6 @@ import Numeric.MixedTypes
 import Control.Arrow
 
 import Text.Printf
-
--- import Data.Maybe (catMaybes)
 
 import AERN2.MP
 
@@ -87,7 +84,11 @@ instance
   updateQACache _ q2 b2 (Just (b1,q1)) =
     Just (b, q1 `max` q2)
     where
-    b = deEnsureCN $ b1 `intersect` b2 -- throws exception if the intersection is empty and b is not of CollectNumErrors type
+    b12 = b1 `intersect` b2
+    b =
+      case deEnsureCN b12 of
+        Just b' -> b'
+        _ -> error $ printf "Sequence: updateQACache: problem computing intersection: %s /\\ %s" (show b1) (show b2)
 
 type SequenceA to a = QA to (SequenceP a)
 
@@ -141,84 +142,3 @@ seqByPrecision2SequenceA name byPrec =
   newSeq sampleA name [] (arr $ seqByPrecision2CauchySeq byPrec . bits)
     where
     sampleA = byPrec (prec 0)
-
-{- non-zero picking -}
-
-{-|
-  Given a list @[(a1,b1),(a2,b2),...]@ and assuming that
-  at least one of @a1,a2,...@ is non-zero, pick one of them
-  and return the corresponding pair @(ai,bi)@.
-
-  If none of @a1,a2,...@ is zero, either throw an exception
-  or loop forever.
- -}
-pickNonZeroSeqA ::
-  (QAArrow to, CanPickNonZero a)
-  =>
-  [(SequenceA to a, s)] `to` Maybe (SequenceA to a, s)
-pickNonZeroSeqA =
-  startFromAccuracy (bits 0)
-  where
-  startFromAccuracy ac =
-    proc seqsAndS -> do
-      balls <- seqsWithAccuracyA -< (map fst seqsAndS, accuracySG ac)
-      let maybeNonZero = pickNonZero $ zip balls seqsAndS
-      case maybeNonZero of
-        Just (_,result) -> returnA -< Just result
-        _ -> startFromAccuracy (ac + 1) -< seqsAndS
-
-instance (CanPickNonZero a) => CanPickNonZero (Sequence a) where
-  pickNonZero = pickNonZeroSeqA
-
-{- TODO: move the following to Comparison
-
-{-| "parallel if" -}
-instance
-  (CanUnionSameType t, SuitableForSeq t)
-  =>
-  HasIfThenElse (Sequence (Maybe Bool)) (Sequence t)
-  where
-  ifThenElse b e1 e2 =
-    newSeq (e1 ? (bitsS 0)) "pif" [AnyProtocolQA e1, AnyProtocolQA e2] makeQ
-    where
-    makeQ ac =
-      if (b ? ac) then (e1 ? ac) else (e2 ? ac)
-
--- trisection ::
---   (q -> r) ->
---   (q,q) ->
---   Sequence (Maybe (q,q))
--- trisection f (l,r) =
---   if (f l) * (f r) >= 0 -- for r ~ Cauchy real this is "parallel if"
---     then newSeqSimple Nothing (const Nothing)
---     else aux l r
---   where
---   aux a b =
---     | b - a < eps = Just (a,b)
---     | otherwise = pick [tryM m1, tryM m2]
---     where
---     tryM m = newSeqSimple sampleResult withAC
---       where
---       withAC ac =
---         if (f m) * (f a) < 0 then
---
---     m1 = (2*a + b)/3
---     m2 = (a + 2*b)/3
-
-{-|
-  Parallel picking.
--}
-pick ::
-  (QAArrow to)
-  =>
-  [(SequenceA to (Maybe a))] `to` a
-pick = aux (bitsS 0)
-  where
-  aux ac =
-    proc options ->
-      do
-      mas <- qaMakeQueryOnManyA -< (options, ac)
-      case catMaybes mas of
-        [] -> aux (ac + 1) -< options
-        (a : _) -> returnA -< a
--}

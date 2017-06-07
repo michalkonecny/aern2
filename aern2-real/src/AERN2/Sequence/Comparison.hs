@@ -2,7 +2,7 @@
 {-|
     Module      :  AERN2.Sequence.Comparison
     Description :  comparison operations on sequences
-    Copyright   :  (c) Michal Konecny, Eike Neumann
+    Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
     Maintainer  :  mikkonecny@gmail.com
@@ -12,10 +12,10 @@
     Comparison operations on convergent sequences.
 -}
 module AERN2.Sequence.Comparison
--- (
---   SeqBoolP(..), SeqBoolA, SeqBool
---   , CauchyRealAtAccuracy(..)
--- )
+(
+  SeqBoolP, SeqBoolA, SeqBool, pBool
+  , SequenceAtAccuracy(..)
+)
 where
 
 import Numeric.MixedTypes hiding (id)
@@ -43,6 +43,8 @@ pBool = SequenceP Nothing
 
 type SeqBoolA to = SequenceA to (Maybe Bool)
 type SeqBool = SeqBoolA (->)
+
+{- Boolean ops on sequences -}
 
 instance (QAArrow to, HasBools b, SuitableForSeq b) => ConvertibleExactly Bool (SequenceA to b) where
   safeConvertExactly bool =
@@ -96,7 +98,41 @@ lift2 ::
   (QAArrow to, SuitableForSeq a, SuitableForSeq b, SuitableForSeq c)
   =>
   String -> (a -> b -> c) -> SequenceA to a -> SequenceA to b -> SequenceA to c
-lift2 name rel = binaryOp name rel (getInitQ1Q2FromSimple $ arr $ \q -> (q,q))
+lift2 name op = binaryOp name op (getInitQ1Q2FromSimple $ arr $ \q -> (q,q))
+
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
+  (\ t -> [d|
+
+    instance
+      (QAArrow to, HasEqAsymmetric a $t
+      , SuitableForSeq a, SuitableForSeq (EqCompareType a $t))
+      =>
+      HasEqAsymmetric (SequenceA to a) $t
+      where
+      type EqCompareType (SequenceA to a) $t = SequenceA to (EqCompareType a $t)
+      equalTo = lift2T "==" (==)
+      notEqualTo = lift2T "/=" (/=)
+
+    instance
+      (QAArrow to, HasOrderAsymmetric a $t
+      , SuitableForSeq a, SuitableForSeq (OrderCompareType a $t))
+      =>
+      HasOrderAsymmetric (SequenceA to a) $t
+      where
+      type OrderCompareType (SequenceA to a) $t = SequenceA to (OrderCompareType a $t)
+      lessThan = lift2T "<" (<)
+      leq = lift2T "<=" (<=)
+      greaterThan = lift2T ">" (>)
+      geq = lift2T ">=" (>=)
+
+  |]))
+
+lift2T ::
+  (QAArrow to, SuitableForSeq a, SuitableForSeq c)
+  =>
+  String -> (a -> t -> c) -> SequenceA to a -> t -> SequenceA to c
+lift2T name op = binaryOpWithPureArg name op (getInitQ1TFromSimple $ arr $ \q -> q)
 
 {-| SequenceAtAccuracy exists only so that we can QuickCheck that
    Sequence satisfies properties whose statement relies on an instance of HasEqCertainly.
@@ -197,25 +233,3 @@ instance
   type MinMaxType MPBall (Sequence b) = MinMaxType MPBall b
   min = flip $ binaryWithEncl (flip min)
   max = flip $ binaryWithEncl (flip max)
-
-{-
-
-{- tolerant comparisons -}
-
-instance (CanNegSameType b, Arrow to) => CanNeg (() `to` b) where
-  negate tob = arr negate <<< tob
-
-instance (QAArrow to) => HasTolerantEqAsymmetric (CauchyRealA to) (CauchyRealA to) where
-  type TolerantEqCompareType (CauchyRealA to) (CauchyRealA to) = () `to` (Tolerant Bool)
-  tolerantEqualTo a (e,b) =
-    proc () ->
-      do
-      aB <- qaMakeQueryA -< (a, ac)
-      bB <- qaMakeQueryA -< (b, ac)
-      returnA -< tolerantEqualTo aB (e,bB)
-    where
-    ac =
-      case getNormLog (dyadic e) of
-        NormBits n -> bits (max 0 (1 - n))
-        NormZero -> Exact
--}
