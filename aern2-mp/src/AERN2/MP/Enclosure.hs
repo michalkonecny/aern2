@@ -15,7 +15,9 @@ module AERN2.MP.Enclosure
   IsBall(..)
   , IsInterval(..), intervalFunctionByEndpoints, intervalFunctionByEndpointsUpDown
   , CanTestContains(..), CanMapInside(..), specCanMapInside
-  , CanIntersectAssymetric(..), CanIntersect, CanIntersectBy, CanIntersectSameType
+  , CanIntersectAssymetric(..), CanIntersect
+  , CanIntersectBy, CanIntersectSameType
+  , CanIntersectCNBy, CanIntersectCNSameType
   , CanUnionAssymetric(..), CanUnion, CanUnionBy, CanUnionSameType
   )
 where
@@ -127,8 +129,26 @@ class CanIntersectAssymetric e1 e2 where
   intersect :: e1 -> e2 -> IntersectionType e1 e2
 
 type CanIntersectBy e1 e2 = (CanIntersect e1 e2, IntersectionType e1 e2 ~ e1)
+type CanIntersectCNBy e1 e2 = (CanIntersect e1 e2, IntersectionType e1 e2 ~ EnsureCN e1)
 
 type CanIntersectSameType e1 = CanIntersectBy e1 e1
+type CanIntersectCNSameType e1 = CanIntersectCNBy e1 e1
+
+instance CanIntersectAssymetric Bool Bool where
+  intersect b1 b2
+    | b1 == b2 = noNumErrors b1
+    | otherwise = noValueNumErrorCertain $ NumError "empty Boolean intersection"
+
+instance
+  (CanIntersectCNSameType a, CanEnsureCN a)
+  =>
+  CanIntersectAssymetric (Maybe a) (Maybe a)
+  where
+  type IntersectionType (Maybe a) (Maybe a) = CollectNumErrors (Maybe (WithoutCN (IntersectionType a a)))
+  intersect (Just a) (Just b) = fmap Just (intersect a b)
+  intersect (Just a) Nothing = fmap Just (ensureCN a)
+  intersect Nothing (Just b) = fmap Just (ensureCN b)
+  intersect Nothing Nothing = noNumErrors Nothing
 
 instance
   (CanIntersectAssymetric e1 e2, Monoid es, CanEnsureCE es (IntersectionType e1 e2))
