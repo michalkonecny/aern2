@@ -28,7 +28,7 @@ import Numeric.MixedTypes
 import Test.Hspec
 import Test.QuickCheck
 
--- import qualified Control.CollectErrors as CE
+import qualified Control.CollectErrors as CE
 import Control.CollectErrors (CollectErrors, EnsureCE, CanEnsureCE, ensureCE)
 
 import AERN2.MP.ErrorBound
@@ -144,12 +144,33 @@ instance
   =>
   CanIntersectAssymetric (Maybe a) (Maybe a)
   where
-  type IntersectionType (Maybe a) (Maybe a) = CollectNumErrors (Maybe (WithoutCN (IntersectionType a a)))
-  intersect (Just a) (Just b) = fmap Just (intersect a b)
-  intersect (Just a) Nothing = fmap Just (ensureCN a)
-  intersect Nothing (Just b) = fmap Just (ensureCN b)
-  intersect Nothing Nothing = noNumErrors Nothing
+  type IntersectionType (Maybe a) (Maybe a) = CollectNumErrors (Maybe a)
+  intersect ma mb =
+    case (ma, mb) of
+     (Just a, Just b) -> justCN (intersect a b)
+     (Just a, Nothing) -> justCN (ensureCN a)
+     (Nothing, Just b) -> justCN (ensureCN b)
+     _ -> noNumErrors Nothing
 
+justCN :: (CanEnsureCN a) => EnsureCN a -> CN (Maybe a)
+justCN aCN =
+  case deEnsureCN aCN of
+    Just a -> noNumErrors (Just a)
+    _ -> fmap (const Nothing) aCN
+
+
+-- --- Version that removes inner CN:
+-- instance
+--   (CanIntersectCNSameType a, CanEnsureCN a)
+--   =>
+--   CanIntersectAssymetric (Maybe a) (Maybe a)
+--   where
+--   type IntersectionType (Maybe a) (Maybe a) = CollectNumErrors (Maybe (WithoutCN (IntersectionType a a)))
+--   intersect (Just a) (Just b) = fmap Just (intersect a b)
+--   intersect (Just a) Nothing = fmap Just (ensureCN a)
+--   intersect Nothing (Just b) = fmap Just (ensureCN b)
+--   intersect Nothing Nothing = noNumErrors Nothing
+--
 instance
   (CanIntersectAssymetric e1 e2, Monoid es, CanEnsureCE es (IntersectionType e1 e2))
   =>
