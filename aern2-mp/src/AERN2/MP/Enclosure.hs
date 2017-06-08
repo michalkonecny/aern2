@@ -28,7 +28,7 @@ import Numeric.MixedTypes
 import Test.Hspec
 import Test.QuickCheck
 
-import qualified Control.CollectErrors as CE
+-- import qualified Control.CollectErrors as CE
 import Control.CollectErrors (CollectErrors, EnsureCE, CanEnsureCE, ensureCE)
 
 import AERN2.MP.ErrorBound

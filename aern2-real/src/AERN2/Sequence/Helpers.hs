@@ -14,9 +14,9 @@
 -}
 module AERN2.Sequence.Helpers
 (
-  getCRFnNormLog
-  , binaryWithEncl, seqElementSimilarToEncl
-  -- , binaryWithDouble
+  getSeqFnNormLog
+  , seqElementSimilarToEncl
+  , binaryWithEncl, binaryWithEnclTranslateAC
   , unaryOp, binaryOp, binaryOpWithPureArg
   , getInitQ1FromSimple, getInitQ1TFromSimple, getInitQ1Q2FromSimple
 )
@@ -50,13 +50,13 @@ import AERN2.QA.Protocol
 import AERN2.AccuracySG
 import AERN2.Sequence.Type
 
-getCRFnNormLog ::
-  (QAArrow to, HasNorm (WithoutCN a), CanEnsureCN a)
+getSeqFnNormLog ::
+  (QAArrow to, HasNorm (WithoutCN b), CanEnsureCN b)
   =>
   SequenceA to a ->
-  (a -> a) ->
+  (a -> b) ->
   AccuracySG `to` (CollectNumErrors NormLog, a)
-getCRFnNormLog r fn =
+getSeqFnNormLog r fn =
   proc q ->
     do
     b <- seqWithAccuracy r -< q
@@ -64,26 +64,27 @@ getCRFnNormLog r fn =
 
 {- MPBall + CauchyReal = MPBall, only allowed in the (->) arrow  -}
 
-seqElementSimilarToEncl :: (HasAccuracy b, HasPrecision b) => b -> Sequence a -> a
-seqElementSimilarToEncl b sa =
-  sa ? (accuracySG $ getFiniteAccuracy b)
+seqElementSimilarToEncl ::
+  (HasAccuracy b, HasPrecision b) =>
+  (AccuracySG -> AccuracySG) ->
+  b -> Sequence a -> a
+seqElementSimilarToEncl accuracyTranslation b sa =
+  sa ? (accuracyTranslation $ accuracySG $ getFiniteAccuracy b)
 
 binaryWithEncl ::
   (HasAccuracy b, HasPrecision b, CanSetPrecision t)
   =>
   (a -> b -> t) -> Sequence a -> b -> t
-binaryWithEncl op sa b =
-  lowerPrecisionIfAbove (getPrecision b) $ op (seqElementSimilarToEncl b sa) b
+binaryWithEncl = binaryWithEnclTranslateAC (const id)
 
--- instance Convertible CauchyReal Double where
---   safeConvert r =
---     do
---     b <- CE.getConvertResult (r ? (bitsS 53))
---     safeConvert (centre b)
---
--- binaryWithDouble :: (Double -> Double -> Double) -> CauchyReal -> Double -> Double
--- binaryWithDouble op r d =
---   op (convert r) d
+binaryWithEnclTranslateAC ::
+  (HasAccuracy b, HasPrecision b, CanSetPrecision t)
+  =>
+  (b -> AccuracySG -> AccuracySG) ->
+  (a -> b -> t) -> Sequence a -> b -> t
+binaryWithEnclTranslateAC accuracyTranslationForB op sa b =
+  lowerPrecisionIfAbove (getPrecision b) $
+    op (seqElementSimilarToEncl (accuracyTranslationForB b) b sa) b
 
 {- generic implementations of operations of different arity -}
 

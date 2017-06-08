@@ -57,22 +57,21 @@ library
     AERN2.QA.Protocol
     AERN2.QA.NetLog
     AERN2.QA.Strategy.CachedUnsafe
-    -- AERN2.QA.Strategy.Cached.NetState
-    -- AERN2.QA.Strategy.Cached.Arrow
-    -- AERN2.QA.Strategy.Cached
-    -- AERN2.QA.Strategy.Parallel
+    AERN2.QA.Strategy.Cached.NetState
+    AERN2.QA.Strategy.Cached.Arrow
+    AERN2.QA.Strategy.Cached
+    AERN2.QA.Strategy.Parallel
     AERN2.AccuracySG
+    -- AERN2.Sequence
     AERN2.Sequence.Type
     AERN2.Sequence.Helpers
     AERN2.Sequence.Comparison
     AERN2.Sequence.Branching
+    AERN2.Sequence.Ring
+    AERN2.Sequence.Field
     -- AERN2.Real
     AERN2.Real.Type
-    -- AERN2.Real.Helpers
-    -- AERN2.Real.Comparison
-    -- AERN2.Real.Ring
-    -- AERN2.Real.Field
-    -- AERN2.Real.Elementary
+    AERN2.Real.Arithmetic
     -- AERN2.Real.Tests
 
 test-suite spec

@@ -29,6 +29,7 @@ where
 import Numeric.MixedTypes
 import qualified Prelude as P
 
+import Control.EnsureTypeOp
 import qualified Control.CollectErrors as CE
 import Control.CollectErrors (CollectErrors, EnsureCE, CanEnsureCE)
 
@@ -94,6 +95,10 @@ instance Read Dyadic where
       (_,_,afterS,groups) =
         dyadicS =~ "\\`dyadic \\(([-0-9]*)\\*0.5\\^([0-9]*)\\)"
           :: (String, String, String, [String])
+
+instance (CE.SuitableForCE es) => CanEnsureTypeOp (CE.CollectErrors es) Dyadic where
+  ensureTypeOp = CE.noErrors
+  deEnsureTypeOp = CE.defaultDeEnsureTypeOp
 
 {-- conversions --}
 

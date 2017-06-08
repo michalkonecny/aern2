@@ -28,10 +28,8 @@ import Numeric.MixedTypes
 -- import qualified Prelude as P
 
 -- import qualified Control.CollectErrors as CE
--- import Control.Arrow
+import Control.Arrow
 import Text.Printf
-
-import Data.Convertible
 
 import Data.Complex
 
@@ -118,15 +116,27 @@ complex = convertExactly
 complexA :: (CanBeComplexA to t) => t -> Complex (CauchyRealA to)
 complexA = convertExactly
 
-instance Convertible CauchyReal Double where
-  safeConvert r =
-    safeConvert (centre (r ? (bitsS 53)))
+instance (QAArrow to) => ConvertibleExactly Integer (CauchyRealA to) where
+  safeConvertExactly x =
+    Right $ newCR (show x) [] (arr $ flip setPrecisionAtLeastAccuracy (mpBall x) . bits)
 
-{- reals mixed with Double -}
+instance (QAArrow to) => ConvertibleExactly Int (CauchyRealA to) where
+  safeConvertExactly x =
+    Right $ newCR (show x) [] (arr $ flip setPrecisionAtLeastAccuracy (mpBall x) . bits)
 
-binaryWithDouble :: (Double -> Double -> Double) -> CauchyReal -> Double -> Double
-binaryWithDouble op r d =
-  op (convert r) d
+instance (QAArrow to) => ConvertibleExactly Dyadic (CauchyRealA to) where
+  safeConvertExactly x =
+    Right $ newCR (show x) [] (arr $ flip setPrecisionAtLeastAccuracy (mpBall x) . bits)
+
+instance (QAArrow to) => ConvertibleExactly Rational (CauchyRealA to) where
+  safeConvertExactly x =
+    Right $ newCR (show x) [] (arr makeQ)
+    where
+    makeQ = seqByPrecision2CauchySeq (flip mpBallP x) . bits
+
+instance ConvertibleWithPrecision CauchyReal MPBall where
+  safeConvertP p r =
+    Right $ setPrecision p $ r ? (accuracySG $ bits p + 10)
 
 {- examples -}
 

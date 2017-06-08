@@ -94,46 +94,6 @@ instance
   greaterThan = lift2 ">" (>)
   geq = lift2 ">=" (>=)
 
-lift2 ::
-  (QAArrow to, SuitableForSeq a, SuitableForSeq b, SuitableForSeq c)
-  =>
-  String -> (a -> b -> c) -> SequenceA to a -> SequenceA to b -> SequenceA to c
-lift2 name op = binaryOp name op (getInitQ1Q2FromSimple $ arr $ \q -> (q,q))
-
-$(declForTypes
-  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
-  (\ t -> [d|
-
-    instance
-      (QAArrow to, HasEqAsymmetric a $t
-      , SuitableForSeq a, SuitableForSeq (EqCompareType a $t))
-      =>
-      HasEqAsymmetric (SequenceA to a) $t
-      where
-      type EqCompareType (SequenceA to a) $t = SequenceA to (EqCompareType a $t)
-      equalTo = lift2T "==" (==)
-      notEqualTo = lift2T "/=" (/=)
-
-    instance
-      (QAArrow to, HasOrderAsymmetric a $t
-      , SuitableForSeq a, SuitableForSeq (OrderCompareType a $t))
-      =>
-      HasOrderAsymmetric (SequenceA to a) $t
-      where
-      type OrderCompareType (SequenceA to a) $t = SequenceA to (OrderCompareType a $t)
-      lessThan = lift2T "<" (<)
-      leq = lift2T "<=" (<=)
-      greaterThan = lift2T ">" (>)
-      geq = lift2T ">=" (>=)
-
-  |]))
-
-lift2T ::
-  (QAArrow to, SuitableForSeq a, SuitableForSeq c)
-  =>
-  String -> (a -> t -> c) -> SequenceA to a -> t -> SequenceA to c
-lift2T name op = binaryOpWithPureArg name op (getInitQ1TFromSimple $ arr $ \q -> q)
-
 {-| SequenceAtAccuracy exists only so that we can QuickCheck that
    Sequence satisfies properties whose statement relies on an instance of HasEqCertainly.
    Sequence is not an instance but SequenceAtAccuracy is.
@@ -188,6 +148,40 @@ instance
   min = lift2 "min" min
   max = lift2 "max" max
 
+
+instance
+  (CanMinMaxAsymmetric a MPBall, SuitableForSeq a
+  , CanSetPrecision (MinMaxType a MPBall))
+  =>
+  CanMinMaxAsymmetric (Sequence a) MPBall
+  where
+  type MinMaxType (Sequence a) MPBall = MinMaxType a MPBall
+  min = binaryWithEncl min
+  max = binaryWithEncl max
+--
+instance
+  (CanMinMaxAsymmetric MPBall b, SuitableForSeq b
+  , CanSetPrecision (MinMaxType MPBall b))
+  =>
+  CanMinMaxAsymmetric MPBall (Sequence b)
+  where
+  type MinMaxType MPBall (Sequence b) = MinMaxType MPBall b
+  min = flip $ binaryWithEncl (flip min)
+  max = flip $ binaryWithEncl (flip max)
+
+lift2 ::
+  (QAArrow to, SuitableForSeq a, SuitableForSeq b, SuitableForSeq c)
+  =>
+  String -> (a -> b -> c) -> SequenceA to a -> SequenceA to b -> SequenceA to c
+lift2 name op = binaryOp name op (getInitQ1Q2FromSimple $ arr $ \q -> (q,q))
+
+lift2T ::
+  (QAArrow to, SuitableForSeq a, SuitableForSeq c)
+  =>
+  String -> (a -> t -> c) -> SequenceA to a -> t -> SequenceA to c
+lift2T name op = binaryOpWithPureArg name op (getInitQ1TFromSimple $ arr $ \q -> q)
+
+
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
   (\ t -> [d|
@@ -212,24 +206,26 @@ $(declForTypes
       min = flip $ binaryOpWithPureArg "min" (flip min) (getInitQ1TFromSimple id)
       max = flip $ binaryOpWithPureArg "max" (flip max) (getInitQ1TFromSimple id)
 
-  |]))
+    instance
+      (QAArrow to, HasEqAsymmetric a $t
+      , SuitableForSeq a, SuitableForSeq (EqCompareType a $t))
+      =>
+      HasEqAsymmetric (SequenceA to a) $t
+      where
+      type EqCompareType (SequenceA to a) $t = SequenceA to (EqCompareType a $t)
+      equalTo = lift2T "==" (==)
+      notEqualTo = lift2T "/=" (/=)
 
-instance
-  (CanMinMaxAsymmetric a MPBall, SuitableForSeq a
-  , CanSetPrecision (MinMaxType a MPBall))
-  =>
-  CanMinMaxAsymmetric (Sequence a) MPBall
-  where
-  type MinMaxType (Sequence a) MPBall = MinMaxType a MPBall
-  min = binaryWithEncl min
-  max = binaryWithEncl max
---
-instance
-  (CanMinMaxAsymmetric MPBall b, SuitableForSeq b
-  , CanSetPrecision (MinMaxType MPBall b))
-  =>
-  CanMinMaxAsymmetric MPBall (Sequence b)
-  where
-  type MinMaxType MPBall (Sequence b) = MinMaxType MPBall b
-  min = flip $ binaryWithEncl (flip min)
-  max = flip $ binaryWithEncl (flip max)
+    instance
+      (QAArrow to, HasOrderAsymmetric a $t
+      , SuitableForSeq a, SuitableForSeq (OrderCompareType a $t))
+      =>
+      HasOrderAsymmetric (SequenceA to a) $t
+      where
+      type OrderCompareType (SequenceA to a) $t = SequenceA to (OrderCompareType a $t)
+      lessThan = lift2T "<" (<)
+      leq = lift2T "<=" (<=)
+      greaterThan = lift2T ">" (>)
+      geq = lift2T ">=" (>=)
+
+  |]))
