@@ -84,26 +84,26 @@ library
     AERN2.Utils.Bench
     AERN2.Normalize
     AERN2.Norm
-    AERN2.MP
     AERN2.MP.Precision
-    AERN2.MP.Float
+    AERN2.MP.Accuracy
     AERN2.MP.Float.Type
     AERN2.MP.Float.Arithmetic
     AERN2.MP.Float.Conversions
     AERN2.MP.Float.Operators
     AERN2.MP.Float.Constants
     AERN2.MP.Float.Tests
+    AERN2.MP.Float
     AERN2.MP.Dyadic
-    AERN2.MP.Accuracy
     AERN2.MP.ErrorBound
     AERN2.MP.Enclosure
-    AERN2.MP.Ball
     AERN2.MP.Ball.Type
     AERN2.MP.Ball.Conversions
     AERN2.MP.Ball.Comparisons
     AERN2.MP.Ball.Field
     AERN2.MP.Ball.Elementary
     AERN2.MP.Ball.Tests
+    AERN2.MP.Ball
+    AERN2.MP
 
 test-suite spec
   type:
@@ -119,6 +119,10 @@ test-suite spec
       test
   main-is:
       Spec.hs
+  other-modules:
+    AERN2.MP.BallSpec
+    AERN2.MP.DyadicSpec
+    AERN2.MP.FloatSpec
   build-depends:
     base == 4.*
     -- , mixed-types-num

@@ -96,24 +96,24 @@ instance CanExp MPBall where
   exp = intervalFunctionByEndpointsUpDown MPFloat.expDown MPFloat.expUp
 
 instance CanLog MPBall where
-  type LogType MPBall = CollectNumErrors MPBall
+  type LogType MPBall = CN MPBall
   log x
     | x !>! 0 =
-        noNumErrors $ intervalFunctionByEndpointsUpDown MPFloat.logDown MPFloat.logUp x
+        cn $ intervalFunctionByEndpointsUpDown MPFloat.logDown MPFloat.logUp x
     | otherwise =
-        noValueNumErrorPotential $ NumError $
+        noValueNumErrorPotentialCN $ NumError $
           "MPBall log: cannot establish that the argument is positive: " ++ show x
 
 instance CanPow MPBall MPBall where
-  type PowType MPBall MPBall = CollectNumErrors MPBall
+  type PowType MPBall MPBall = CN MPBall
   pow = powUsingExpLog
 
 instance CanPow MPBall Dyadic where
-  type PowType MPBall Dyadic = CollectNumErrors MPBall
+  type PowType MPBall Dyadic = CN MPBall
   pow x q = powUsingExpLog x (mpBall q)
 
 instance CanPow MPBall Rational where
-  type PowType MPBall Rational = CollectNumErrors MPBall
+  type PowType MPBall Rational = CN MPBall
   pow x q = powUsingExpLog x (mpBallP (getPrecision x) q)
 
 instance CanSqrt MPBall where

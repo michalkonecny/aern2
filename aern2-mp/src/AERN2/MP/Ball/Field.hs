@@ -17,8 +17,7 @@ where
 import Numeric.MixedTypes
 -- import qualified Prelude as P
 
-import qualified Control.CollectErrors as CE
-import Control.CollectErrors (CollectErrors, EnsureCE, CanEnsureCE)
+import Control.CollectErrors
 
 import AERN2.Normalize
 
@@ -73,24 +72,24 @@ instance CanAddAsymmetric Rational MPBall where
 instance
   (CanAddAsymmetric MPBall b
   , CanEnsureCE es (AddType MPBall b)
-  , Monoid es)
+  , SuitableForCE es)
   =>
   CanAddAsymmetric MPBall (CollectErrors es  b)
   where
   type AddType MPBall (CollectErrors es  b) =
     EnsureCE es (AddType MPBall b)
-  add = CE.unlift2first add
+  add = lift2TLCE add
 
 instance
   (CanAddAsymmetric a MPBall
   , CanEnsureCE es (AddType a MPBall)
-  , Monoid es)
+  , SuitableForCE es)
   =>
   CanAddAsymmetric (CollectErrors es a) MPBall
   where
   type AddType (CollectErrors es  a) MPBall =
     EnsureCE es (AddType a MPBall)
-  add = CE.unlift2second add
+  add = lift2TCE add
 
 {- subtraction -}
 
@@ -111,24 +110,24 @@ instance CanSub Dyadic MPBall
 instance
   (CanSub MPBall b
   , CanEnsureCE es (SubType MPBall b)
-  , Monoid es)
+  , SuitableForCE es)
   =>
   CanSub MPBall (CollectErrors es  b)
   where
   type SubType MPBall (CollectErrors es  b) =
     EnsureCE es (SubType MPBall b)
-  sub = CE.unlift2first sub
+  sub = lift2TLCE sub
 
 instance
   (CanSub a MPBall
   , CanEnsureCE es (SubType a MPBall)
-  , Monoid es)
+  , SuitableForCE es)
   =>
   CanSub (CollectErrors es a) MPBall
   where
   type SubType (CollectErrors es  a) MPBall =
     EnsureCE es (SubType a MPBall)
-  sub = CE.unlift2second sub
+  sub = lift2TCE sub
 
 {- multiplication -}
 
@@ -173,35 +172,35 @@ instance CanMulAsymmetric Rational MPBall where
 instance
   (CanMulAsymmetric MPBall b
   , CanEnsureCE es (MulType MPBall b)
-  , Monoid es)
+  , SuitableForCE es)
   =>
   CanMulAsymmetric MPBall (CollectErrors es  b)
   where
   type MulType MPBall (CollectErrors es  b) =
     EnsureCE es (MulType MPBall b)
-  mul = CE.unlift2first mul
+  mul = lift2TLCE mul
 
 instance
   (CanMulAsymmetric a MPBall
   , CanEnsureCE es (MulType a MPBall)
-  , Monoid es)
+  , SuitableForCE es)
   =>
   CanMulAsymmetric (CollectErrors es a) MPBall
   where
   type MulType (CollectErrors es  a) MPBall =
     EnsureCE es (MulType a MPBall)
-  mul = CE.unlift2second mul
+  mul = lift2TCE mul
 
 
 {- division -}
 
 instance CanDiv MPBall MPBall where
-  type DivType MPBall MPBall = CollectNumErrors MPBall
+  type DivType MPBall MPBall = CN MPBall
   divide (MPBall x1 e1) b2@(MPBall x2 e2)
     | isCertainlyNonZero b2 =
         cn $ normalize $ MPBall x12Up err
     | otherwise =
-        noValueNumErrorPotential DivByZero
+        noValueNumErrorPotentialCN DivByZero
     where
     x12Up = x1 /^ x2
     x12Down = x1 /. x2
@@ -231,86 +230,86 @@ A derivation of the above formula for an upper bound on the error:
 -}
 
 instance CanDiv MPBall Int where
-  type DivType MPBall Int = CollectNumErrors MPBall
+  type DivType MPBall Int = CN MPBall
   divide = convertSecond divide
 instance CanDiv Int MPBall where
-  type DivType Int MPBall = CollectNumErrors MPBall
+  type DivType Int MPBall = CN MPBall
   divide = convertFirst divide
 
 instance CanDiv MPBall Integer where
-  type DivType MPBall Integer = CollectNumErrors MPBall
+  type DivType MPBall Integer = CN MPBall
   divide = convertSecond divide
 instance CanDiv Integer MPBall where
-  type DivType Integer MPBall = CollectNumErrors MPBall
+  type DivType Integer MPBall = CN MPBall
   divide = convertFirst divide
 
 instance CanDiv MPBall Dyadic where
-  type DivType MPBall Dyadic = CollectNumErrors MPBall
+  type DivType MPBall Dyadic = CN MPBall
   divide = convertSecond divide
 instance CanDiv Dyadic MPBall where
-  type DivType Dyadic MPBall = CollectNumErrors MPBall
+  type DivType Dyadic MPBall = CN MPBall
   divide = convertFirst divide
 instance CanDiv Dyadic Dyadic where
-  type DivType Dyadic Dyadic = CollectNumErrors MPBall
+  type DivType Dyadic Dyadic = CN MPBall
   divide a b = divide (mpBall a) (mpBall b)
 
 instance CanDiv MPBall Rational where
-  type DivType MPBall Rational = CollectNumErrors MPBall
+  type DivType MPBall Rational = CN MPBall
   divide = convertPSecond divide
 instance CanDiv Rational MPBall where
-  type DivType Rational MPBall = CollectNumErrors MPBall
+  type DivType Rational MPBall = CN MPBall
   divide = convertPFirst divide
 
 instance
   (CanDiv MPBall b
   , CanEnsureCE es (DivType MPBall b)
-  , Monoid es)
+  , SuitableForCE es)
   =>
   CanDiv MPBall (CollectErrors es  b)
   where
   type DivType MPBall (CollectErrors es  b) =
     EnsureCE es (DivType MPBall b)
-  divide = CE.unlift2first divide
+  divide = lift2TLCE divide
 
 instance
   (CanDiv a MPBall
   , CanEnsureCE es (DivType a MPBall)
-  , Monoid es)
+  , SuitableForCE es)
   =>
   CanDiv (CollectErrors es a) MPBall
   where
   type DivType (CollectErrors es  a) MPBall =
     EnsureCE es (DivType a MPBall)
-  divide = CE.unlift2second divide
+  divide = lift2TCE divide
 
 {- integer power -}
 
 instance CanPow MPBall Integer where
-  type PowType MPBall Integer = CollectNumErrors MPBall
+  type PowType MPBall Integer = CN MPBall
   pow = powUsingMulRecip
 
 instance CanPow MPBall Int where
-  type PowType MPBall Int = CollectNumErrors MPBall
+  type PowType MPBall Int = CN MPBall
   pow = powUsingMulRecip
 
 instance
   (CanPow MPBall b
   , CanEnsureCE es (PowType MPBall b)
-  , Monoid es)
+  , SuitableForCE es)
   =>
   CanPow MPBall (CollectErrors es  b)
   where
   type PowType MPBall (CollectErrors es  b) =
     EnsureCE es (PowType MPBall b)
-  pow = CE.unlift2first pow
+  pow = lift2TLCE pow
 
 instance
   (CanPow a MPBall
   , CanEnsureCE es (PowType a MPBall)
-  , Monoid es)
+  , SuitableForCE es)
   =>
   CanPow (CollectErrors es a) MPBall
   where
   type PowType (CollectErrors es  a) MPBall =
     EnsureCE es (PowType a MPBall)
-  pow = CE.unlift2second pow
+  pow = lift2TCE pow

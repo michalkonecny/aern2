@@ -28,8 +28,7 @@ where
 import Numeric.MixedTypes
 -- import qualified Prelude as P
 
-import Control.EnsureTypeOp
-import qualified Control.CollectErrors as CE
+import Control.CollectErrors
 
 import GHC.Generics (Generic)
 
@@ -64,9 +63,7 @@ instance Show MPBall
       "[" ++ show x ++ " ± " ++ show e ++ "](prec=" ++ (show $ integer $ getPrecision x) ++ ")"
 
 
-instance (CE.SuitableForCE es) => CanEnsureTypeOp (CE.CollectErrors es) MPBall where
-  ensureTypeOp = CE.noErrors
-  deEnsureTypeOp = CE.defaultDeEnsureTypeOp
+instance (SuitableForCE es) => CanEnsureCE es MPBall where
 
 -- instance CanTestValid MPBall where
 --   isValid = isFinite

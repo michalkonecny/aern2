@@ -26,7 +26,7 @@ where
 import Numeric.MixedTypes
 import qualified Prelude as P
 
-import qualified Numeric.CollectErrors as CN
+import Control.CollectErrors
 
 import Data.Complex
 
@@ -174,9 +174,9 @@ instance CanSub Accuracy Integer where
 class HasAccuracy a where
   getAccuracy :: a -> Accuracy
 
-instance (HasAccuracy a, Monoid es, P.Eq es) => HasAccuracy (CN.CollectErrors es a) where
-  getAccuracy aCN =
-    CN.getValueIfNoError aCN getAccuracy (const NoInformation)
+instance (HasAccuracy a, SuitableForCE es) => HasAccuracy (CollectErrors es a) where
+  getAccuracy aCE =
+    getValueIfNoErrorCE aCE getAccuracy (const NoInformation)
 
 instance HasAccuracy Int where getAccuracy _ = Exact
 instance HasAccuracy Integer where getAccuracy _ = Exact

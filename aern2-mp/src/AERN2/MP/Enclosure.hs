@@ -28,8 +28,7 @@ import Numeric.MixedTypes
 import Test.Hspec
 import Test.QuickCheck
 
--- import qualified Control.CollectErrors as CE
-import Control.CollectErrors (CollectErrors, EnsureCE, CanEnsureCE, ensureCE)
+import Control.CollectErrors
 
 import AERN2.MP.ErrorBound
 
@@ -136,27 +135,30 @@ type CanIntersectCNSameType e1 = CanIntersectCNBy e1 e1
 
 instance CanIntersectAssymetric Bool Bool where
   intersect b1 b2
-    | b1 == b2 = noNumErrors b1
-    | otherwise = noValueNumErrorCertain $ NumError "empty Boolean intersection"
+    | b1 == b2 = cn b1
+    | otherwise =
+      noValueNumErrorCertainCN $ NumError "empty Boolean intersection"
 
 instance
   (CanIntersectCNSameType a, CanEnsureCN a)
   =>
   CanIntersectAssymetric (Maybe a) (Maybe a)
   where
-  type IntersectionType (Maybe a) (Maybe a) = CollectNumErrors (Maybe a)
-  intersect ma mb =
+  type IntersectionType (Maybe a) (Maybe a) = EnsureCN (Maybe a)
+  intersect (ma :: Maybe a) mb =
     case (ma, mb) of
-     (Just a, Just b) -> justCN (intersect a b)
-     (Just a, Nothing) -> justCN (ensureCN a)
-     (Nothing, Just b) -> justCN (ensureCN b)
-     _ -> noNumErrors Nothing
+      (Just a, Just b) -> justCN sample_a (intersect a b)
+      (Just a, Nothing) -> justCN sample_a (ensureCN a)
+      (Nothing, Just b) -> justCN sample_a (ensureCN b)
+      _ -> cn (Nothing :: Maybe a)
+    where
+    sample_a = Nothing :: Maybe a
 
-justCN :: (CanEnsureCN a) => EnsureCN a -> CN (Maybe a)
-justCN aCN =
+justCN :: (CanEnsureCN a) => Maybe a -> EnsureCN a -> EnsureCN (Maybe a)
+justCN (_sample_a :: Maybe a) aCN =
   case deEnsureCN aCN of
-    Just a -> noNumErrors (Just a)
-    _ -> fmap (const Nothing) aCN
+    Just a -> cn (Just (a :: a))
+    _ -> cn (Nothing :: Maybe a)
 
 
 -- --- Version that removes inner CN:
@@ -165,24 +167,20 @@ justCN aCN =
 --   =>
 --   CanIntersectAssymetric (Maybe a) (Maybe a)
 --   where
---   type IntersectionType (Maybe a) (Maybe a) = CollectNumErrors (Maybe (WithoutCN (IntersectionType a a)))
+--   type IntersectionType (Maybe a) (Maybe a) = CN (Maybe (WithoutCN (IntersectionType a a)))
 --   intersect (Just a) (Just b) = fmap Just (intersect a b)
 --   intersect (Just a) Nothing = fmap Just (ensureCN a)
 --   intersect Nothing (Just b) = fmap Just (ensureCN b)
---   intersect Nothing Nothing = noNumErrors Nothing
+--   intersect Nothing Nothing = cn Nothing
 --
 instance
-  (CanIntersectAssymetric e1 e2, Monoid es, CanEnsureCE es (IntersectionType e1 e2))
+  (CanIntersectAssymetric e1 e2, SuitableForCE es, CanEnsureCE es (IntersectionType e1 e2))
   =>
   CanIntersectAssymetric (CollectErrors es e1) (CollectErrors es e2)
   where
   type IntersectionType (CollectErrors es e1) (CollectErrors es e2) =
     EnsureCE es (IntersectionType e1 e2)
-  intersect aCE bCE =
-    do
-    a <- aCE
-    b <- bCE
-    ensureCE $ intersect a b
+  intersect = lift2CE intersect
 
 {- union -}
 
@@ -198,17 +196,13 @@ type CanUnionBy e1 e2 = (CanUnion e1 e2, UnionionType e1 e2 ~ e1)
 type CanUnionSameType e1 = CanUnionBy e1 e1
 
 instance
-  (CanUnionAssymetric e1 e2, Monoid es, CanEnsureCE es (UnionionType e1 e2))
+  (CanUnionAssymetric e1 e2, SuitableForCE es, CanEnsureCE es (UnionionType e1 e2))
   =>
   CanUnionAssymetric (CollectErrors es e1) (CollectErrors es e2)
   where
   type UnionionType (CollectErrors es e1) (CollectErrors es e2) =
     EnsureCE es (UnionionType e1 e2)
-  union aCE bCE =
-    do
-    a <- aCE
-    b <- bCE
-    ensureCE $ union a b
+  union = lift2CE union
 
 instance (CanUnionSameType t) => HasIfThenElse (Maybe Bool) t where
   ifThenElse (Just b) e1 e2 = if b then e1 else e2

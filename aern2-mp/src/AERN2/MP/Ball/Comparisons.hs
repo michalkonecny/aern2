@@ -24,8 +24,7 @@ where
 import Numeric.MixedTypes
 -- import qualified Prelude as P
 
-import qualified Control.CollectErrors as CE
-import Control.CollectErrors (CollectErrors, EnsureCE, CanEnsureCE)
+import Control.CollectErrors
 
 import AERN2.Norm
 import AERN2.MP.Dyadic (Dyadic)
@@ -34,7 +33,7 @@ import AERN2.MP.Float (MPFloat)
 import AERN2.MP.Precision
 
 import AERN2.MP.Ball.Type
-import AERN2.MP.Ball.Conversions (integerBounds)
+import AERN2.MP.Ball.Conversions ()
 
 {- comparisons -}
 
@@ -74,25 +73,25 @@ instance
   (HasEqAsymmetric MPBall b
   , CanEnsureCE es (EqCompareType MPBall b)
   , IsBool (EnsureCE es (EqCompareType MPBall b))
-  , Monoid es)
+  , SuitableForCE es)
   =>
   HasEqAsymmetric MPBall (CollectErrors es  b)
   where
   type EqCompareType MPBall (CollectErrors es  b) =
     EnsureCE es (EqCompareType MPBall b)
-  equalTo = CE.unlift2first equalTo
+  equalTo = lift2TLCE equalTo
 
 instance
   (HasEqAsymmetric a MPBall
   , CanEnsureCE es (EqCompareType a MPBall)
   , IsBool (EnsureCE es (EqCompareType a MPBall))
-  , Monoid es)
+  , SuitableForCE es)
   =>
   HasEqAsymmetric (CollectErrors es a) MPBall
   where
   type EqCompareType (CollectErrors es  a) MPBall =
     EnsureCE es (EqCompareType a MPBall)
-  equalTo = CE.unlift2second equalTo
+  equalTo = lift2TCE equalTo
 
 instance HasOrderAsymmetric MPBall MPBall where
   type OrderCompareType MPBall MPBall = Maybe Bool
@@ -180,31 +179,31 @@ instance
   (HasOrderAsymmetric MPBall b
   , CanEnsureCE es (OrderCompareType MPBall b)
   , IsBool (EnsureCE es (OrderCompareType MPBall b))
-  , Monoid es)
+  , SuitableForCE es)
   =>
   HasOrderAsymmetric MPBall (CollectErrors es  b)
   where
   type OrderCompareType MPBall (CollectErrors es  b) =
     EnsureCE es (OrderCompareType MPBall b)
-  lessThan = CE.unlift2first lessThan
-  leq = CE.unlift2first leq
-  greaterThan = CE.unlift2first greaterThan
-  geq = CE.unlift2first geq
+  lessThan = lift2TLCE lessThan
+  leq = lift2TLCE leq
+  greaterThan = lift2TLCE greaterThan
+  geq = lift2TLCE geq
 
 instance
   (HasOrderAsymmetric a MPBall
   , CanEnsureCE es (OrderCompareType a MPBall)
   , IsBool (EnsureCE es (OrderCompareType a MPBall))
-  , Monoid es)
+  , SuitableForCE es)
   =>
   HasOrderAsymmetric (CollectErrors es a) MPBall
   where
   type OrderCompareType (CollectErrors es  a) MPBall =
     EnsureCE es (OrderCompareType a MPBall)
-  lessThan = CE.unlift2second lessThan
-  leq = CE.unlift2second leq
-  greaterThan = CE.unlift2second greaterThan
-  geq = CE.unlift2second geq
+  lessThan = lift2TCE lessThan
+  leq = lift2TCE leq
+  greaterThan = lift2TCE greaterThan
+  geq = lift2TCE geq
 
 instance CanTestZero MPBall
 instance CanTestPosNeg MPBall
@@ -263,32 +262,33 @@ instance CanMinMaxAsymmetric Rational MPBall where
 instance
   (CanMinMaxAsymmetric MPBall b
   , CanEnsureCE es (MinMaxType MPBall b)
-  , Monoid es)
+  , SuitableForCE es)
   =>
   CanMinMaxAsymmetric MPBall (CollectErrors es  b)
   where
   type MinMaxType MPBall (CollectErrors es  b) =
     EnsureCE es (MinMaxType MPBall b)
-  min = CE.unlift2first min
-  max = CE.unlift2first max
+  min = lift2TLCE min
+  max = lift2TLCE max
 
 instance
   (CanMinMaxAsymmetric a MPBall
   , CanEnsureCE es (MinMaxType a MPBall)
-  , Monoid es)
+  , SuitableForCE es)
   =>
   CanMinMaxAsymmetric (CollectErrors es a) MPBall
   where
   type MinMaxType (CollectErrors es  a) MPBall =
     EnsureCE es (MinMaxType a MPBall)
-  min = CE.unlift2second min
-  max = CE.unlift2second max
+  min = lift2TCE min
+  max = lift2TCE max
 
 {- intersection -}
 
 instance CanIntersectAssymetric MPBall MPBall where
   intersect a b
-    | rL > rR = noValueNumErrorCertain $ NumError $ "intersect: empty intersection: " ++ show a ++ "; " ++ show b
+    | rL > rR =
+        noValueNumErrorCertainCN $ NumError $ "intersect: empty intersection: " ++ show a ++ "; " ++ show b
     | otherwise = cn $ fromEndpointsMP rL rR
     where
     rL = max aL bL
