@@ -89,13 +89,13 @@ bench implName benchName benchParamsS =
               "CR_AC_cachedUnsafe" -> showL (fft_CR_cachedUnsafe isFFT k (bitsSG ac ac))
               "CR_AC_cachedArrow" -> showL (fft_CR_cachedArrow isFFT k (bitsSG ac ac))
               "CR_AC_parArrow" -> showL (fft_CR_parArrow isFFT k (bitsSG ac ac))
-              "CR_AG_cachedUnsafe" -> showL (fft_CR_cachedUnsafe isFFT k (bitsSG acHalf ac))
-              "CR_AG_cachedArrow" -> showL (fft_CR_cachedArrow isFFT k (bitsSG acHalf ac))
-              "CR_AG_parArrow" -> showL (fft_CR_parArrow isFFT k (bitsSG acHalf ac))
+              "CR_AG_cachedUnsafe" -> showL (fft_CR_cachedUnsafe isFFT k (bitsSG ac (ac + 100)))
+              "CR_AG_cachedArrow" -> showL (fft_CR_cachedArrow isFFT k (bitsSG ac (ac + 100)))
+              "CR_AG_parArrow" -> showL (fft_CR_parArrow isFFT k (bitsSG ac (ac + 100)))
               _ -> error $ "unknown implementation: " ++ implName
           where
           -- n = 2^k
-          acHalf = ac `div` 2
+          -- acHalf = ac `div` 2
           showL xs = "\n" ++ (unlines $ map show xs)
 
 logistic_CR_cachedUnsafe :: Integer -> AccuracySG -> MPBall

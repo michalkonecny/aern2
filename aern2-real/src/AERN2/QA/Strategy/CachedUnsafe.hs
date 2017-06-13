@@ -90,4 +90,8 @@ addUnsafeMemoisation qa = qa { qaMakeQueryGetPromise = unsafeMemo }
               let a = qaMakeQueryGetPromise qa q ()
               modifyMVar_ cacheVar (const (return (updateQACache p q a cache)))
               -- putStrLn $ printf "memoIO  %s: updated cache: ? %s -> ! %s" name (show q) (show a)
-              return a
+              cache' <- readMVar cacheVar
+              case lookupQACache p cache' q of
+                (Just a', _) -> return a'
+                -- this arranges that any size reductions specified in lookupQACache are applied even when the cache was not used
+                _ -> return a

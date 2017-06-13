@@ -214,7 +214,7 @@ instance CanReduceSizeUsingAccuracyGuide MPBall where
     newPrec =
       case (getNormLog x) of
         NormBits xNormBits ->
-          prec (max 2 (queryBits + xNormBits + 1))
+          prec (max 2 (queryBits + xNormBits + 2))
         NormZero ->
           prec $ max 2 queryBits
     -- bWithLowAC =

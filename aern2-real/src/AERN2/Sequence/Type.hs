@@ -142,9 +142,18 @@ seqsWithAccuracyA = qaMakeQueryOnManyA
 
 {- constructions -}
 
-newSeq :: (QAArrow to, SuitableForSeq a) => a -> String -> [AnyProtocolQA to] -> AccuracySG `to` a -> SequenceA to a
+newSeq ::
+  (QAArrow to, SuitableForSeq a)
+  =>
+  a -> String -> [AnyProtocolQA to] -> AccuracySG `to` a -> SequenceA to a
 newSeq sampleA name sources makeQ =
   newQA name sources (pSeq sampleA) (AccuracySG NoInformation NoInformation) makeQ
+  -- where
+  -- makeQ' =
+  --   proc q ->
+  --     do
+  --     a <- makeQ -< q
+  --     returnA -< adjustToAccuracySG q a
 
 newSeqSimple :: (QAArrow to, SuitableForSeq a) => a -> AccuracySG `to` a -> SequenceA to a
 newSeqSimple sampleA = newSeq sampleA "simple" []
