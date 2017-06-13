@@ -91,184 +91,161 @@ instance
   pow =
     binaryOp "^" pow getInitQ1Q2
     where
-    getInitQ1Q2 a1 a2 =
+    getInitQ1Q2 base e =
       proc q ->
         do
-        (m_a1NormLog, b1) <- getSeqFnNormLog a1 id -< q
-        b2 <- seqWithAccuracy a2 -< q
-        let b2I = snd (integerBounds b2) + 1
-        let (jInit1, jInit2) =
-              case m_a1NormLog of
-                Just a1NL -> (q + (a1NL * (b2I - 1)), q + a1NL * b2I)
-                _ -> (q, q) -- base == 0, the query does not matter that much
-        returnA -< ((jInit1, Just b1), (jInit2, Just b2))
+        baseB <- seqWithAccuracy base -< q
+        eB <- seqWithAccuracy e -< q
+        let jInit1 = powGetInitAC1 baseB eB q
+        let jInit2 = powGetInitAC2 baseB eB q
+        returnA -< ((jInit1, Just baseB), (jInit2, Just eB))
+
+powGetInitAC1 ::
+  (HasNorm (EnsureNoCN base), CanEnsureCN base, HasIntegerBounds e)
+  =>
+  base -> e -> AccuracySG -> AccuracySG
+powGetInitAC1 base e acSG =
+  let eI = snd (integerBounds e) + 1 in
+  case ensureNoCN base of
+    Nothing -> acSG0
+    Just baseNoCN ->
+      case getNormLog baseNoCN of
+        NormBits baseNL -> acSG + (baseNL * (eI - 1))
+        NormZero -> acSG0  -- base == 0, the query does not matter
+
+powGetInitAC2 ::
+  (HasNorm (EnsureNoCN base), CanEnsureCN base, HasIntegerBounds e)
+  =>
+  base -> e -> AccuracySG -> AccuracySG
+powGetInitAC2 base e acSG =
+  let eI = snd (integerBounds e) + 1 in
+  case ensureNoCN base of
+    Nothing -> acSG0
+    Just baseNoCN ->
+      case getNormLog baseNoCN of
+        NormBits baseNL -> acSG + baseNL * eI
+        NormZero -> acSG0  -- base == 0, the query does not matter
+
+
+powGetInitQ1T ::
+  (QAArrow to, HasNorm (EnsureNoCN base), CanEnsureCN base, HasIntegerBounds e)
+  =>
+  SequenceA to base -> e -> AccuracySG `to` (AccuracySG, Maybe base)
+powGetInitQ1T baseSeq e =
+  proc q ->
+    do
+    base <- seqWithAccuracy baseSeq -< q
+    returnA -< (powGetInitAC1 base e q, Just base)
+
+powGetInitQ2T ::
+  (QAArrow to, HasNorm (EnsureNoCN base), CanEnsureCN base, HasIntegerBounds e)
+  =>
+  base -> SequenceA to e -> AccuracySG `to` (AccuracySG, Maybe e)
+powGetInitQ2T base eSeq =
+  proc q ->
+    do
+    e <- seqWithAccuracy eSeq -< q
+    returnA -< (powGetInitAC1 base e q, Just e)
+
+instance
+  (CanPow a MPBall, SuitableForSeq a
+  , HasNorm (EnsureNoCN a), CanEnsureCN a
+  , CanSetPrecision (PowType a MPBall))
+  =>
+  CanPow (Sequence a) MPBall
+  where
+  type PowType (Sequence a) MPBall = PowType a MPBall
+  pow base e = binaryWithEnclTranslateAC powGetInitAC1 pow base e
+
+instance
+  (CanPow MPBall e, SuitableForSeq e
+  , HasIntegerBounds e
+  , CanSetPrecision (PowType MPBall e))
+  =>
+  CanPow MPBall (Sequence e)
+  where
+  type PowType MPBall (Sequence e) = PowType MPBall e
+  pow =
+    flip (binaryWithEnclTranslateAC (flip powGetInitAC2) (flip pow))
 
 $(declForTypes
-  [[t| Integer |], [t| Int |], [t| Dyadic |]]
+  [[t| Integer |], [t| Int |], [t| Dyadic |], [t| Rational |]]
   (\ t -> [d|
 
     instance
-      (QAArrow to, CanPow a a
-      , ConvertibleExactly $t a
+      (QAArrow to, CanPow a $t
       , CanSetPrecision a
       , CanEnsureCN a, HasNorm (EnsureNoCN a)
+      , SuitableForSeq a
+      , SuitableForSeq (PowType a $t))
+      =>
+      CanPow (SequenceA to a) $t where
+      type PowType (SequenceA to a) $t = SequenceA to (PowType a $t)
+      pow = binaryOpWithPureArg "^" pow powGetInitQ1T
+
+    instance
+      (QAArrow to, CanPow $t a
+      , CanSetPrecision a
       , HasIntegerBounds a
       , SuitableForSeq a
-      , SuitableForSeq (PowType a a))
+      , SuitableForSeq (PowType $t a))
       =>
       CanPow $t (SequenceA to a) where
-      type PowType $t (SequenceA to a) = SequenceA to (PowType a a)
-      pow = convertFirst pow
+      type PowType $t (SequenceA to a) = SequenceA to (PowType $t a)
+      pow = flip $ binaryOpWithPureArg "^" (flip pow) (flip powGetInitQ2T)
 
   |]))
 
--- instance (QAArrow to) => CanPow Int (SequenceA to a) where
---   type PowType Int (SequenceA to a) = SequenceA to a
---   pow = convertFirst pow
---
--- instance CanPow CauchyReal MPBall where
---   type PowType CauchyReal MPBall = MPBall
---   pow = binaryWithBall pow
---
--- instance CanPow MPBall CauchyReal where
---   type PowType MPBall CauchyReal = MPBall
---   pow = flip $ binaryWithBall (flip pow)
---
--- instance CanPow Integer Dyadic where
---   type PowType Integer Dyadic = CauchyReal
---   pow b e = pow (real b) (real e)
---
--- instance CanPow Int Dyadic where
---   type PowType Int Dyadic = CauchyReal
---   pow b e = pow (real b) (real e)
---
--- instance CanPow Dyadic Dyadic where
---   type PowType Dyadic Dyadic = CauchyReal
---   pow b e = pow (real b) (real e)
---
--- instance CanPow Rational Dyadic where
---   type PowType Rational Dyadic = CauchyReal
---   pow b e = pow (real b) (real e)
---
--- instance CanPow Integer Rational where
---   type PowType Integer Rational = CauchyReal
---   pow b e = pow (real b) (real e)
---
--- instance CanPow Int Rational where
---   type PowType Int Rational = CauchyReal
---   pow b e = pow (real b) (real e)
---
--- instance CanPow Dyadic Rational where
---   type PowType Dyadic Rational = CauchyReal
---   pow b e = pow (real b) (real e)
---
--- instance CanPow Rational Rational where
---   type PowType Rational Rational = CauchyReal
---   pow b e = pow (real b) (real e)
---
---
--- {-|
---   To get @pi@ in an arbitrary arrow, use 'piA'.
--- -}
--- pi :: CauchyReal
--- pi = newCR "pi" [] (seqByPrecision2CauchySeq piBallP . _acGuide)
---
--- piA :: (QAArrow to) => SequenceA to a
--- piA = realA pi
---
--- {- sqrt -}
---
--- instance (QAArrow to) => CanSqrt (SequenceA to a) where
---   sqrt = unaryOp "sqrt" sqrt sqrtGetInitQ1
---     where
---     sqrtGetInitQ1 a1 =
---       proc q ->
---         do
---         (a1NormLog, b) <- getCRFnNormLog a1 sqrtSafe -< q
---         let jInit = case a1NormLog of
---                 NormBits sqrtNormLog -> max acSG0 (q - 1 - sqrtNormLog)
---                 NormZero -> q
---         returnA -< (jInit, Just b)
---     sqrtSafe x =
---       case x < 0 of
---         Just True -> error "sqrt of a negative argument"
---         _ -> sqrt (max 0 x)
---
---
--- instance CanSqrt Integer where
---   type SqrtType Integer = CauchyReal
---   sqrt = sqrt . real
---
--- instance CanSqrt Int where
---   type SqrtType Int = CauchyReal
---   sqrt = sqrt . real
---
--- instance CanSqrt Dyadic where
---   type SqrtType Dyadic = CauchyReal
---   sqrt = sqrt . real
---
--- instance CanSqrt Rational where
---   type SqrtType Rational = CauchyReal
---   sqrt = sqrt . real
---
--- sqrtA ::
---   (QAArrow to, CanSqrt t, SqrtType t ~ CauchyReal)
---   =>
---   t -> SequenceA to a
--- sqrtA = realA . sqrt
---
--- {- sine, cosine -}
---
--- instance (QAArrow to) => CanSinCos (SequenceA to a) where
---   cos = unaryOp "cos" cos cosGetInitQ1
---     where
---     cosGetInitQ1 a1 =
---       proc q ->
---         do
---         (a1NormLog, b) <- getCRFnNormLog a1 sin -< q
---         let jInit = case a1NormLog of
---                 NormBits sinNormLog -> q + sinNormLog
---                 NormZero -> q -- this should never happen
---         returnA -< (jInit, Just b)
---   sin = unaryOp "sin" sin sinGetInitQ1
---     where
---     sinGetInitQ1 a1 =
---       proc q ->
---         do
---         (a1NormLog, b) <- getCRFnNormLog a1 cos -< q
---         let jInit = case a1NormLog of
---                 NormBits cosNormLog -> q + cosNormLog
---                 NormZero -> q -- this should never happen
---         returnA -< (jInit, Just b)
---
--- instance CanSinCos Integer where
---   type SinCosType Integer = CauchyReal
---   cos = cos . real
---   sin = sin . real
---
--- instance CanSinCos Int where
---   type SinCosType Int = CauchyReal
---   cos = cos . real
---   sin = sin . real
---
--- instance CanSinCos Dyadic where
---   type SinCosType Dyadic = CauchyReal
---   cos = cos . real
---   sin = sin . real
---
--- instance CanSinCos Rational where
---   type SinCosType Rational = CauchyReal
---   cos = cos . real
---   sin = sin . real
---
--- cosA ::
---   (QAArrow to, CanSinCos t, SinCosType t ~ CauchyReal)
---   =>
---   t -> SequenceA to a
--- cosA = realA . cos
---
--- sinA ::
---   (QAArrow to, CanSinCos t, SinCosType t ~ CauchyReal)
---   =>
---   t -> SequenceA to a
--- sinA = realA . sin
+{- sqrt -}
+
+instance
+  (QAArrow to, CanSqrt a
+  , CanMinMaxThis a Integer
+  , CanEnsureCN (SqrtType a), HasNorm (EnsureNoCN (SqrtType a))
+  , SuitableForSeq a, SuitableForSeq (SqrtType a))
+  =>
+  CanSqrt (SequenceA to a)
+  where
+  type SqrtType (SequenceA to a) = SequenceA to (SqrtType a)
+  sqrt = unaryOp "sqrt" sqrt sqrtGetInitQ1
+    where
+    sqrtGetInitQ1 a1 =
+      proc q ->
+        do
+        (m_a1NormLog, b) <- getSeqFnNormLog a1 sqrtSafe -< q
+        let jInit = case m_a1NormLog of
+                Just sqrtNormLog -> max acSG0 (q - 1 - sqrtNormLog)
+                _ -> acSG0
+        returnA -< (jInit, Just b)
+    sqrtSafe x = sqrt (max 0 x)
+
+{- sine, cosine -}
+
+instance
+  (QAArrow to, CanSinCos a
+  , CanEnsureCN (SinCosType a), HasNorm (EnsureNoCN (SinCosType a))
+  , SuitableForSeq a, SuitableForSeq (SinCosType a))
+  =>
+  CanSinCos (SequenceA to a)
+  where
+  type SinCosType (SequenceA to a) = SequenceA to (SinCosType a)
+  cos = unaryOp "cos" cos cosGetInitQ1
+    where
+    cosGetInitQ1 a1 =
+      proc q ->
+        do
+        (m_a1NormLog, b) <- getSeqFnNormLog a1 sin -< q
+        let jInit = case m_a1NormLog of
+                Just sinNormLog -> q + sinNormLog
+                _ -> acSG0 -- this should never happen
+        returnA -< (jInit, Just b)
+  sin = unaryOp "sin" sin sinGetInitQ1
+    where
+    sinGetInitQ1 a1 =
+      proc q ->
+        do
+        (m_a1NormLog, b) <- getSeqFnNormLog a1 cos -< q
+        let jInit = case m_a1NormLog of
+                Just cosNormLog -> q + cosNormLog
+                _ -> acSG0 -- this should never happen
+        returnA -< (jInit, Just b)

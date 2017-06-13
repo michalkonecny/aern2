@@ -114,6 +114,9 @@ dyadic = convertExactly
 instance ConvertibleExactly MPFloat Dyadic where
   safeConvertExactly = Right . Dyadic
 
+instance HasIntegerBounds Dyadic where
+  integerBounds d = (floor d, ceiling d)
+
 instance ConvertibleExactly Integer Dyadic where
   safeConvertExactly = fmap Dyadic . safeConvertExactly
 

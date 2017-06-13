@@ -171,7 +171,7 @@ instance
   CanMulAsymmetric (Sequence a) MPBall
   where
   type MulType (Sequence a) MPBall = MulType a MPBall
-  mul = binaryWithEnclTranslateAC mulGetInitAC mul
+  mul = binaryWithEnclTranslateAC (\_ -> mulGetInitAC) mul
 
 instance
   (CanMulAsymmetric MPBall b, SuitableForSeq b
@@ -180,7 +180,7 @@ instance
   CanMulAsymmetric MPBall (Sequence b)
   where
   type MulType MPBall (Sequence b) = MulType MPBall b
-  mul = flip $ binaryWithEnclTranslateAC mulGetInitAC (flip mul)
+  mul = flip $ binaryWithEnclTranslateAC (\ _ -> mulGetInitAC) (flip mul)
 
 
 mulGetInitQ1T ::

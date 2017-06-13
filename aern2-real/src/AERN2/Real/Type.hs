@@ -15,6 +15,7 @@ module AERN2.Real.Type
   CauchyRealP, pCR, CauchyRealCNP, pCRCN
   , CauchyRealA, CauchyReal, newCR
   , CauchyRealCNA, CauchyRealCN --, newCRCN
+  , CauchyRealAtAccuracy, cauchyRealAtAccuracy
   , realName, realId, realSources, realRename
   , realWithAccuracy, realWithAccuracyA, realsWithAccuracyA
   , convergentList2CauchyRealA
@@ -29,26 +30,23 @@ import Numeric.MixedTypes
 
 -- import qualified Control.CollectErrors as CE
 import Control.Arrow
-import Text.Printf
+-- import Text.Printf
 
 import Data.Complex
 
 import AERN2.MP
-import AERN2.MP.Dyadic
 
 import AERN2.QA.Protocol
 import AERN2.QA.Strategy.CachedUnsafe ()
 
 import AERN2.AccuracySG
 
-import AERN2.Sequence.Type
-import AERN2.Sequence.Comparison ()
-import AERN2.Sequence.Branching
+import AERN2.Sequence
 
 {- Cauchy real numbers -}
 
 type CauchyRealP = SequenceP MPBall
-type CauchyRealCNP = SequenceP (CollectNumErrors MPBall)
+type CauchyRealCNP = SequenceP (CN MPBall)
 
 pCR :: CauchyRealP
 pCR = SequenceP (mpBall 0)
@@ -59,8 +57,12 @@ pCRCN = SequenceP (cn $ mpBall 0)
 type CauchyRealA to = SequenceA to MPBall
 type CauchyReal = CauchyRealA (->)
 
-type CauchyRealCNA to = SequenceA to (CollectNumErrors MPBall)
+type CauchyRealCNA to = SequenceA to (CN MPBall)
 type CauchyRealCN = CauchyRealCNA (->)
+
+type CauchyRealAtAccuracy = SequenceAtAccuracy MPBall
+cauchyRealAtAccuracy :: CauchyReal -> AccuracySG -> CauchyRealAtAccuracy
+cauchyRealAtAccuracy = SequenceAtAccuracy
 
 realName :: SequenceA to a -> String
 realName = seqName
@@ -125,43 +127,3 @@ instance (QAArrow to) => ConvertibleExactly Rational (CauchyRealA to) where
 instance ConvertibleWithPrecision CauchyReal MPBall where
   safeConvertP p r =
     Right $ setPrecision p $ r ? (accuracySG $ bits p + 10)
-
-{- examples -}
-
-_example_pif :: CauchyReal -> CauchyReal
-_example_pif r =
-  if r < 0 then -r else r -- abs via parallel if
-
-_trisection ::
-  (Dyadic -> CauchyReal) ->
-  (Dyadic,Dyadic) ->
-  CauchyRealCN
-_trisection f (l,r) =
-  newSeqSimple (cn $ mpBall 0) $ fromSegment l r
-  where
-  fromSegment :: Dyadic -> Dyadic -> AccuracySG -> CN MPBall
-  fromSegment a b ac
-    | getAccuracy ab >= ac  = cn ab
-    | otherwise             = pick [tryM m1, tryM m2]
-    where
-    ab = fromEndpoints (mpBall a) (mpBall b)
-    m1 = (5*a + 3*b)*(dyadic ((1/8)⚡))
-    m2 = (3*a + 5*b)*(dyadic ((1/8)⚡))
-    tryM :: Dyadic -> Sequence (Maybe (CN MPBall))
-    tryM m = newSeqSimple Nothing withAC
-      where
-      withAC :: AccuracySG -> Maybe (CN MPBall)
-      withAC acF
-        | fa * fm !<! 0 = Just $ fromSegment a m ac
-        | fm * fb !<! 0 = Just $ fromSegment m b ac
-        | fa * fb !>=! 0 = Just $ err
-        | otherwise = Nothing
-        where
-        fa = (f a) ? acF
-        fm = (f m) ? acF
-        fb = (f b) ? acF
-    err :: CN MPBall
-    err =
-      noValueNumErrorCertain $
-        NumError $
-          printf "trisection: function does not have opposite signs on points %s %s" (show a) (show b)

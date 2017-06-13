@@ -73,25 +73,27 @@ getSeqFnNormLog a f =
 
 seqElementSimilarToEncl ::
   (HasAccuracy b, HasPrecision b) =>
-  (AccuracySG -> AccuracySG) ->
+  (a -> AccuracySG -> AccuracySG) ->
   b -> Sequence a -> a
 seqElementSimilarToEncl accuracyTranslation b sa =
-  sa ? (accuracyTranslation $ accuracySG $ getFiniteAccuracy b)
+  sa ? (accuracyTranslation a $ accuracySG $ getFiniteAccuracy b)
+  where
+  a = sa ? acSG0
 
 binaryWithEncl ::
   (HasAccuracy b, HasPrecision b, CanSetPrecision t)
   =>
   (a -> b -> t) -> Sequence a -> b -> t
-binaryWithEncl = binaryWithEnclTranslateAC (const id)
+binaryWithEncl = binaryWithEnclTranslateAC (\ _ _ -> id)
 
 binaryWithEnclTranslateAC ::
   (HasAccuracy b, HasPrecision b, CanSetPrecision t)
   =>
-  (b -> AccuracySG -> AccuracySG) ->
+  (a -> b -> AccuracySG -> AccuracySG) ->
   (a -> b -> t) -> Sequence a -> b -> t
 binaryWithEnclTranslateAC accuracyTranslationForB op sa b =
   lowerPrecisionIfAbove (getPrecision b) $
-    op (seqElementSimilarToEncl (accuracyTranslationForB b) b sa) b
+    op (seqElementSimilarToEncl (flip accuracyTranslationForB b) b sa) b
 
 {- generic implementations of operations of different arity -}
 

@@ -55,10 +55,10 @@ processArgs [op, countS, accuracyS] =
           map ((? (bitsS ac)) . exp) $
             unsafePerformIO $ pickValues valuesSmall count
         "log" ->
-          map ((? (bitsS ac)) . log) $
+          map ((~!) . (? (bitsS ac)) . log) $
             unsafePerformIO $ pickValues valuesPositive count
         "sqrt" ->
-          map ((? (bitsS ac)) . sqrt) $
+          map ((~!) . (? (bitsS ac)) . sqrt) $
             unsafePerformIO $ pickValues valuesPositive count
         "cos" ->
           map ((? (bitsS ac)) . cos) $
@@ -70,7 +70,7 @@ processArgs [op, countS, accuracyS] =
           map ((? (bitsS ac)) . (uncurry (*))) $
             unsafePerformIO $ pickValues2 values values count
         "div" ->
-          map ((? (bitsS ac)) . (uncurry (/))) $
+          map ((~!) . (? (bitsS ac)) . (uncurry (/))) $
             unsafePerformIO $ pickValues2 values valuesPositive count
         "logistic" ->
           map ((? (bitsS ac)) . (logistic 3.82 count)) $
@@ -111,7 +111,7 @@ valuesSmall = map makeSmall values
   makeSmall :: CauchyReal -> CauchyReal
   makeSmall x
     | abs (getBall x) !<! 1000000 = x
-    | otherwise = 1000000 * (x/(1000000+(abs x)))
+    | otherwise = (~!) (1000000 * (x/(1000000+(abs x))))
     where
     getBall :: CauchyReal -> MPBall
     getBall xx = xx ? (bitsS 53)

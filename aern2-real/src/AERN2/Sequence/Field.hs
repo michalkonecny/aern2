@@ -88,17 +88,17 @@ instance
   CanDiv (Sequence a) MPBall
   where
   type DivType (Sequence a) MPBall = DivType a MPBall
-  divide = binaryWithEnclTranslateAC divGetInitAC1 divide
+  divide = binaryWithEnclTranslateAC (\ _ -> divGetInitAC1) divide
 
 instance
   (CanDiv MPBall b, SuitableForSeq b
+  , HasNorm (EnsureNoCN b), CanEnsureCN b
   , CanSetPrecision (DivType MPBall b))
   =>
   CanDiv MPBall (Sequence b)
   where
   type DivType MPBall (Sequence b) = DivType MPBall b
-  divide numer =
-    flip (binaryWithEnclTranslateAC (divGetInitAC2 numer) (flip divide)) numer
+  divide = flip (binaryWithEnclTranslateAC (flip divGetInitAC2) (flip divide))
 
 divGetInitQ1T ::
   (Arrow to, HasNorm (EnsureNoCN denom), CanEnsureCN denom)
@@ -141,21 +141,21 @@ $(declForTypes
 
   |]))
 
-{- integer power -}
-
-instance
-  (QAArrow to
-  , CanEnsureCN a, CanEnsureCN (EnsureCN a)
-  , Field a
-  , CanIntersectCNSameType a, CanIntersectCNSameType (EnsureCN a)
-  , CanSetPrecision a
-  , HasAccuracy a, HasAccuracy (EnsureCN a)
-  , CanAdjustToAccuracySG a, CanAdjustToAccuracySG (EnsureCN a)
-  , HasNorm (EnsureNoCN a)
-  , Show a, Show (EnsureCN a)
-  )
-  =>
-  CanPow (SequenceA to a) Integer
-  where
-  type PowType (SequenceA to a) Integer = SequenceA to (EnsureCN a)
-  pow = powUsingMulRecip
+-- {- integer power -}
+-- A BETTER INSTANCE IS IN Sequence.Elementary
+-- instance
+--   (QAArrow to
+--   , CanEnsureCN a, CanEnsureCN (EnsureCN a)
+--   , Field a
+--   , CanIntersectCNSameType a, CanIntersectCNSameType (EnsureCN a)
+--   , CanSetPrecision a
+--   , HasAccuracy a, HasAccuracy (EnsureCN a)
+--   , CanAdjustToAccuracySG a, CanAdjustToAccuracySG (EnsureCN a)
+--   , HasNorm (EnsureNoCN a)
+--   , Show a, Show (EnsureCN a)
+--   )
+--   =>
+--   CanPow (SequenceA to a) Integer
+--   where
+--   type PowType (SequenceA to a) Integer = SequenceA to (EnsureCN a)
+--   pow = powUsingMulRecip
