@@ -10,15 +10,19 @@
     Stability   :  experimental
     Portability :  portable
 
-    Helper functions for sequence operations
+    Helper functions for sequence operations.
 -}
 module AERN2.Sequence.Helpers
 (
-  getSeqFnNormLog
-  , seqElementSimilarToEncl
-  , binaryWithEncl, binaryWithEnclTranslateAC
-  , unaryOp, binaryOp, binaryOpWithPureArg
+  -- Operations returning Seq
+  unaryOp, binaryOp, binaryOpWithPureArg
+  -- Construction of initial queries
   , getInitQ1FromSimple, getInitQ1TFromSimple, getInitQ1Q2FromSimple
+  -- Operations returning an enclosure (eg MPBall)
+  , binaryWithEncl, binaryWithEnclTranslateAC
+  , seqElementSimilarToEncl
+  -- misc
+  ,getSeqFnNormLog
 )
 where
 
@@ -34,66 +38,13 @@ import Debug.Trace (trace)
 import Numeric.MixedTypes
 -- import qualified Prelude as P
 
--- import Data.Convertible
-
 import Control.Arrow
 
--- import Control.Lens hiding (op, (??))
-
--- import Control.CollectErrors
-
-import AERN2.MP.Ball
--- import AERN2.MP.Precision
--- import AERN2.MP.Accuracy
+import AERN2.MP
 
 import AERN2.QA.Protocol
 import AERN2.AccuracySG
 import AERN2.Sequence.Type
-
-
-getSeqFnNormLog ::
-  (QAArrow to, CanEnsureCN v, HasNorm (EnsureNoCN v))
-  =>
-  SequenceA to a -> (a -> v) -> AccuracySG `to` (Maybe Integer, a)
-getSeqFnNormLog a f =
-  proc q ->
-    do
-    aq <- seqWithAccuracy a -< q
-    returnA -< (aux aq, aq)
-  where
-  aux aq =
-    case ensureNoCN (f aq) of
-      Nothing -> Nothing
-      Just faqNoCN ->
-        case getNormLog faqNoCN of
-          NormBits faqNL -> Just faqNL
-          NormZero -> Nothing
-
-{- MPBall + CauchyReal = MPBall, only allowed in the (->) arrow  -}
-
-seqElementSimilarToEncl ::
-  (HasAccuracy b, HasPrecision b) =>
-  (a -> AccuracySG -> AccuracySG) ->
-  b -> Sequence a -> a
-seqElementSimilarToEncl accuracyTranslation b sa =
-  sa ? (accuracyTranslation a $ accuracySG $ getFiniteAccuracy b)
-  where
-  a = sa ? acSG0
-
-binaryWithEncl ::
-  (HasAccuracy b, HasPrecision b, CanSetPrecision t)
-  =>
-  (a -> b -> t) -> Sequence a -> b -> t
-binaryWithEncl = binaryWithEnclTranslateAC (\ _ _ -> id)
-
-binaryWithEnclTranslateAC ::
-  (HasAccuracy b, HasPrecision b, CanSetPrecision t)
-  =>
-  (a -> b -> AccuracySG -> AccuracySG) ->
-  (a -> b -> t) -> Sequence a -> b -> t
-binaryWithEnclTranslateAC accuracyTranslationForB op sa b =
-  lowerPrecisionIfAbove (getPrecision b) $
-    op (seqElementSimilarToEncl (flip accuracyTranslationForB b) b sa) b
 
 {- generic implementations of operations of different arity -}
 
@@ -190,7 +141,9 @@ getInitQ1Q2FromSimple simpleA _ _ =
 -}
 
 ensureAccuracyA1 ::
-  (ArrowChoice to, HasAccuracy b, Show a1, Show b)
+  (ArrowChoice to, Show a1, Show b
+  , HasAccuracy b
+  , CanEnsureCN b, HasAccuracy (EnsureNoCN b))
   =>
   (AccuracySG `to` a1) ->
   (a1 -> b) ->
@@ -214,28 +167,33 @@ ensureAccuracyA1 getA1 op =
             do
             a1 <- getA1 -< j1
             let result = op a1
-            if getAccuracy result >= _acStrict q
-              then
-                returnA -<
-                    maybeTrace (
-                        "ensureAccuracy1: Succeeded. (q = " ++ show q ++
-                        "; j1 = " ++ show j1 ++
-                        "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
-                    ) $
-                    result
-              else
-                aux -<
-                    maybeTrace (
-                        "ensureAccuracy1: Not enough ... (q = " ++ show q ++
-                        "; j1 = " ++ show j1 ++
-                        "; a1 = " ++ show a1 ++
-                        "; result = " ++ show result ++
-                        "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
-                    ) $
-                    (q, j1+1)
+            case ensureNoCN result of
+              Nothing -> returnA -< result -- errors, give up improving
+              Just resultNoCN ->
+                if getAccuracy resultNoCN >= _acStrict q
+                  then
+                  returnA -<
+                      maybeTrace (
+                          "ensureAccuracy1: Succeeded. (q = " ++ show q ++
+                          "; j1 = " ++ show j1 ++
+                          "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
+                      ) $
+                      result
+                  else
+                  aux -<
+                      maybeTrace (
+                          "ensureAccuracy1: Not enough ... (q = " ++ show q ++
+                          "; j1 = " ++ show j1 ++
+                          "; a1 = " ++ show a1 ++
+                          "; result = " ++ show result ++
+                          "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
+                      ) $
+                      (q, j1+1)
 
 ensureAccuracyA2 ::
-  (ArrowChoice to, HasAccuracy b, Show a1, Show a2, Show b)
+  (ArrowChoice to, Show a1, Show a2, Show b
+  , HasAccuracy b
+  , CanEnsureCN b, HasAccuracy (EnsureNoCN b))
   =>
   ((AccuracySG, AccuracySG) `to` (a1,a2)) ->
   (a1 -> a2 -> b) ->
@@ -260,25 +218,74 @@ ensureAccuracyA2 getA12 op =
             do
             (a1, a2) <- getA12 -< (j1, j2)
             let result = op a1 a2
-            if getAccuracy result >= _acStrict q
-              then
-                returnA -<
-                    maybeTrace (
-                        "ensureAccuracy2: Succeeded. (q = " ++ show q ++
-                        "; j1 = " ++ show j1 ++
-                        "; j2 = " ++ show j2 ++
-                        "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
-                    ) $
-                    result
-              else
-                aux -<
-                    maybeTrace (
-                        "ensureAccuracy2: Not enough ... (q = " ++ show q ++
-                        "; j1 = " ++ show j1 ++
-                        "; a1 = " ++ show a1 ++
-                        "; j2 = " ++ show j2 ++
-                        "; a2 = " ++ show a2 ++
-                        "; result = " ++ show result ++
-                        "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
-                    ) $
-                    (q, j1+1, j2+1)
+            case ensureNoCN result of
+              Nothing -> returnA -< result -- errors, give up improving
+              Just resultNoCN ->
+                if getAccuracy resultNoCN >= _acStrict q
+                  then
+                    returnA -<
+                        maybeTrace (
+                            "ensureAccuracy2: Succeeded. (q = " ++ show q ++
+                            "; j1 = " ++ show j1 ++
+                            "; j2 = " ++ show j2 ++
+                            "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
+                        ) $
+                        result
+                  else
+                    aux -<
+                        maybeTrace (
+                            "ensureAccuracy2: Not enough ... (q = " ++ show q ++
+                            "; j1 = " ++ show j1 ++
+                            "; a1 = " ++ show a1 ++
+                            "; j2 = " ++ show j2 ++
+                            "; a2 = " ++ show a2 ++
+                            "; result = " ++ show result ++
+                            "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
+                        ) $
+                        (q, j1+1, j2+1)
+
+{- MPBall + CauchyReal = MPBall, only allowed in the (->) arrow  -}
+
+binaryWithEncl ::
+  (HasAccuracy b, HasPrecision b, CanSetPrecision t)
+  =>
+  (a -> b -> t) -> Sequence a -> b -> t
+binaryWithEncl = binaryWithEnclTranslateAC (\ _ _ -> id)
+
+binaryWithEnclTranslateAC ::
+  (HasAccuracy b, HasPrecision b, CanSetPrecision t)
+  =>
+  (a -> b -> AccuracySG -> AccuracySG) ->
+  (a -> b -> t) -> Sequence a -> b -> t
+binaryWithEnclTranslateAC accuracyTranslationForB op sa b =
+  lowerPrecisionIfAbove (getPrecision b) $
+    op (seqElementSimilarToEncl (flip accuracyTranslationForB b) b sa) b
+
+seqElementSimilarToEncl ::
+  (HasAccuracy b, HasPrecision b) =>
+  (a -> AccuracySG -> AccuracySG) ->
+  b -> Sequence a -> a
+seqElementSimilarToEncl accuracyTranslation b sa =
+  sa ? (accuracyTranslation a $ accuracySG $ getFiniteAccuracy b)
+  where
+  a = sa ? acSG0
+
+{- miscellaneous -}
+
+getSeqFnNormLog ::
+  (QAArrow to, CanEnsureCN v, HasNorm (EnsureNoCN v))
+  =>
+  SequenceA to a -> (a -> v) -> AccuracySG `to` (Maybe Integer, a)
+getSeqFnNormLog a f =
+  proc q ->
+    do
+    aq <- seqWithAccuracy a -< q
+    returnA -< (aux aq, aq)
+  where
+  aux aq =
+    case ensureNoCN (f aq) of
+      Nothing -> Nothing
+      Just faqNoCN ->
+        case getNormLog faqNoCN of
+          NormBits faqNL -> Just faqNL
+          NormZero -> Nothing

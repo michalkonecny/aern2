@@ -67,7 +67,7 @@ instance (Show a) => QAProtocol (SequenceP a) where
 
 type SuitableForSeq a =
   (Show a, HasAccuracy a, CanAdjustToAccuracySG a
-  , CanIntersectCNSameType a, CanEnsureCN a)
+  , CanEnsureCN a, HasAccuracy (EnsureNoCN a), CanIntersectCNSameType a)
 
 instance
   SuitableForSeq a

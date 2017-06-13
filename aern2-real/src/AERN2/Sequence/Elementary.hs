@@ -12,9 +12,7 @@
     Elementary functions on fast converging sequences.
 -}
 module AERN2.Sequence.Elementary
-(
-  -- expA, logA, pi, piA, sqrtA, sinA, cosA
-)
+()
 where
 
 import Numeric.MixedTypes
