@@ -100,9 +100,10 @@ instance CanLog MPBall where
   log x
     | x !>! 0 =
         cn $ intervalFunctionByEndpointsUpDown MPFloat.logDown MPFloat.logUp x
-    | otherwise =
-        noValueNumErrorPotentialCN $ NumError $
-          "MPBall log: cannot establish that the argument is positive: " ++ show x
+    | x !<=! 0 = noValueNumErrorCertainCN err
+    | otherwise = noValueNumErrorPotentialCN err
+    where
+    err = OutOfRange $ "log: argument must be > 0: " ++ show x
 
 instance CanPow MPBall MPBall where
   type PowType MPBall MPBall = CN MPBall
@@ -124,7 +125,7 @@ instance CanSqrt MPBall where
     | otherwise = prependErrorsCN [(ErrorPotential, err)] $ cn $ aux (max 0 x)
     where
     aux = intervalFunctionByEndpointsUpDown MPFloat.sqrtDown MPFloat.sqrtUp
-    err = OutOfRange $ "MPBall sqrt: the argument is negative: " ++ show x
+    err = OutOfRange $ "sqrt: argument must be >= 0: " ++ show x
 
 {- Instances of Prelude numerical classes provided for convenient use outside AERN2
    and also because Template Haskell translates (-x) to (Prelude.negate x) -}
@@ -150,7 +151,7 @@ instance P.Ord MPBall where
         | (r1 < r2) == Just True = LT
         | (r1 > r2) == Just True = GT
         | (r1 == r2) == Just True = EQ
-        | otherwise = error "AERN2.Num.MPBall: compare: cannot decide"
+        | otherwise = error "MPBall: compare: cannot decide"
 
 instance P.Fractional MPBall where
     fromRational = convertExactly . dyadic -- will work only for dyadic rationals
@@ -158,7 +159,7 @@ instance P.Fractional MPBall where
     a / b = ((a / b) ⚡)
 
 instance P.Floating MPBall where
-    pi = error "MPBall: pi not implemented" -- no global precision to pick
+    pi = error "MPBall: no pi :: MPBall, use pi ? (bitsS n) instead"
     sqrt = (⚡) . sqrt
     exp = exp
     sin = sin

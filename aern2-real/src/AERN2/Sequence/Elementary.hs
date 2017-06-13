@@ -105,8 +105,8 @@ powGetInitAC1 ::
 powGetInitAC1 base e acSG =
   let eI = snd (integerBounds e) + 1 in
   case ensureNoCN base of
-    Nothing -> acSG0
-    Just baseNoCN ->
+    Left _ -> acSG0
+    Right baseNoCN ->
       case getNormLog baseNoCN of
         NormBits baseNL -> acSG + (baseNL * (eI - 1))
         NormZero -> acSG0  -- base == 0, the query does not matter
@@ -118,8 +118,8 @@ powGetInitAC2 ::
 powGetInitAC2 base e acSG =
   let eI = snd (integerBounds e) + 1 in
   case ensureNoCN base of
-    Nothing -> acSG0
-    Just baseNoCN ->
+    Left _ -> acSG0
+    Right baseNoCN ->
       case getNormLog baseNoCN of
         NormBits baseNL -> acSG + baseNL * eI
         NormZero -> acSG0  -- base == 0, the query does not matter

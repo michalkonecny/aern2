@@ -60,8 +60,8 @@ divGetInitAC1 ::
   denom -> AccuracySG -> AccuracySG
 divGetInitAC1 denom acSG =
   case ensureNoCN denom of
-    Nothing -> acSG0
-    Just denomNoCN ->
+    Left _ -> acSG0
+    Right denomNoCN ->
       case getNormLog denomNoCN of
         NormBits denomNL -> max acSG0 (acSG - denomNL)
         NormZero -> acSG0 -- denominator == 0, we have no chance...
@@ -73,7 +73,7 @@ divGetInitAC2 ::
   numer -> denom -> AccuracySG -> AccuracySG
 divGetInitAC2 numer denom acSG =
   case (ensureNoCN numer, ensureNoCN denom) of
-    (Just numerNoCN, Just denomNoCN) ->
+    (Right numerNoCN, Right denomNoCN) ->
       case (getNormLog numerNoCN, getNormLog denomNoCN) of
         (_, NormZero) -> acSG0 -- denominator == 0, we have no chance...
         (NormZero, _) -> acSG0 -- numerator == 0, it does not matter

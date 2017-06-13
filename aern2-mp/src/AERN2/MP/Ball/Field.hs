@@ -199,6 +199,8 @@ instance CanDiv MPBall MPBall where
   divide (MPBall x1 e1) b2@(MPBall x2 e2)
     | isCertainlyNonZero b2 =
         cn $ normalize $ MPBall x12Up err
+    | isCertainlyZero b2 =
+        noValueNumErrorCertainCN DivByZero
     | otherwise =
         noValueNumErrorPotentialCN DivByZero
     where

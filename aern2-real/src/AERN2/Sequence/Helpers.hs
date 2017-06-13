@@ -168,8 +168,8 @@ ensureAccuracyA1 getA1 op =
             a1 <- getA1 -< j1
             let result = op a1
             case ensureNoCN result of
-              Nothing -> returnA -< result -- errors, give up improving
-              Just resultNoCN ->
+              Left _ -> returnA -< result -- errors, give up improving
+              Right resultNoCN ->
                 if getAccuracy resultNoCN >= _acStrict q
                   then
                   returnA -<
@@ -219,8 +219,8 @@ ensureAccuracyA2 getA12 op =
             (a1, a2) <- getA12 -< (j1, j2)
             let result = op a1 a2
             case ensureNoCN result of
-              Nothing -> returnA -< result -- errors, give up improving
-              Just resultNoCN ->
+              Left _ -> returnA -< result -- errors, give up improving
+              Right resultNoCN ->
                 if getAccuracy resultNoCN >= _acStrict q
                   then
                     returnA -<
@@ -284,8 +284,8 @@ getSeqFnNormLog a f =
   where
   aux aq =
     case ensureNoCN (f aq) of
-      Nothing -> Nothing
-      Just faqNoCN ->
+      Left _ -> Nothing
+      Right faqNoCN ->
         case getNormLog faqNoCN of
           NormBits faqNL -> Just faqNL
           NormZero -> Nothing

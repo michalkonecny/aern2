@@ -158,8 +158,8 @@ mulGetInitAC ::
   other -> AccuracySG -> AccuracySG
 mulGetInitAC other acSG =
   case ensureNoCN other of
-    Nothing -> acSG0
-    Just otherNoCN ->
+    Left _ -> acSG0
+    Right otherNoCN ->
       case getNormLog otherNoCN of
         NormBits otherNL -> max acSG0 (acSG + otherNL)
         NormZero -> acSG0

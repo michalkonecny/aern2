@@ -93,8 +93,11 @@ instance
     b12 = b1 `intersect` b2
     b =
       case deEnsureCN b12 of
-        Just b' -> b'
-        _ -> error $ printf "Sequence: updateQACache: problem computing intersection: %s /\\ %s" (show b1) (show b2)
+        Right b' -> b'
+        Left es ->
+          error $
+            printf "Sequence: updateQACache: problem computing intersection: %s /\\ %s: %s"
+              (show b1) (show b2) (show es)
 
 instance Functor SequenceP where
   fmap f (SequenceP a) = SequenceP (f a)
@@ -175,9 +178,9 @@ instance
 
   noValueECE sample_vCE es = SequenceP (noValueECE (fmap unSequenceP sample_vCE) es)
 
-  getMaybeValueECE sample_es (SequenceP a) = fmap SequenceP (getMaybeValueECE sample_es a)
-  getErrorsECE sample_vCE (SequenceP a) = getErrorsECE (fmap unSequenceP sample_vCE) a
-  prependErrorsECE sample_vCE es1 = fmap (prependErrorsECE (fmap unSequenceP sample_vCE) es1)
+  -- getMaybeValueECE sample_es (SequenceP a) = fmap SequenceP (getMaybeValueECE sample_es a)
+  -- getErrorsECE sample_vCE (SequenceP a) = getErrorsECE (fmap unSequenceP sample_vCE) a
+  -- prependErrorsECE sample_vCE es1 = fmap (prependErrorsECE (fmap unSequenceP sample_vCE) es1)
 
 instance
   (Arrow to, SuitableForCE es, CanEnsureCE es a)
@@ -188,26 +191,26 @@ instance
   type EnsureNoCE es (SequenceA to a) = SequenceA to (EnsureNoCE es a)
 
   ensureCE sample_es = fmapSeq (ensureCE sample_es)
-  deEnsureCE sample_es = Just . fmapSeq (removeJust . deEnsureCE sample_es)
+  deEnsureCE sample_es = Right . fmapSeq (removeEither . deEnsureCE sample_es)
     where
-    removeJust (Just a) = a
-    removeJust _ = error "deEnsureCE failed for a Sequence"
-  ensureNoCE sample_es = Just . fmapSeq (removeJust . ensureNoCE sample_es)
+    removeEither (Right a) = a
+    removeEither (Left es) = error $ "Sequence deEnsureCE: " ++ show es
+  ensureNoCE sample_es = Right . fmapSeq (removeEither . ensureNoCE sample_es)
     where
-    removeJust (Just a) = a
-    removeJust _ = error "ensureNoCE failed for a Sequence"
+    removeEither (Right a) = a
+    removeEither (Left es) = error $ "Sequence ensureNoCE: " ++ show es
 
   noValueECE _sample_vCE _es =
     error "noValueECE not implemented for Sequence yet"
 
-  getMaybeValueECE sample_es = Just . fmapSeq (removeJust . getMaybeValueECE sample_es)
-    where
-    removeJust (Just a) = a
-    removeJust _ = error "getMaybeValueECE failed for a Sequence"
-  getErrorsECE _sample_mv _s =
-    error "getErrorsECE not implemented for Sequence yet"
-  prependErrorsECE (_sample_vCE :: Maybe (SequenceA to a)) es1 =
-    fmapSeq (prependErrorsECE (Nothing :: Maybe a) es1)
+  -- getMaybeValueECE sample_es = Just . fmapSeq (removeJust . getMaybeValueECE sample_es)
+  --   where
+  --   removeJust (Just a) = a
+  --   removeJust _ = error "getMaybeValueECE failed for a Sequence"
+  -- getErrorsECE _sample_mv _s =
+  --   error "getErrorsECE not implemented for Sequence yet"
+  -- prependErrorsECE (_sample_vCE :: Maybe (SequenceA to a)) es1 =
+  --   fmapSeq (prependErrorsECE (Nothing :: Maybe a) es1)
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Dyadic |]]

@@ -157,7 +157,7 @@ instance
 justCN :: (CanEnsureCN a) => Maybe a -> EnsureCN a -> EnsureCN (Maybe a)
 justCN (_sample_a :: Maybe a) aCN =
   case deEnsureCN aCN of
-    Just a -> cn (Just (a :: a))
+    Right a -> cn (Just (a :: a))
     _ -> cn (Nothing :: Maybe a)
 
 
