@@ -75,8 +75,8 @@ instance CanTestFinite MPBall where
 instance CanNormalize MPBall where
   normalize b
     | isFinite b =
-        -- b
-        reducePrecionIfInaccurate b
+        b
+        -- reducePrecionIfInaccurate b
     | otherwise = error $ "invalid MPBall: " ++ show b
 
 {-|
@@ -196,14 +196,26 @@ instance HasAccuracy MPBall where
 
 instance CanReduceSizeUsingAccuracyGuide MPBall where
   reduceSizeUsingAccuracyGuide acGuide b@(MPBall x _e) =
-    lowerPrecisionIfAbove (getPrecision bWithLowAC) b
+    case acGuide of
+      Exact -> b
+      NoInformation ->
+        lowerPrecisionIfAbove (prec 2) b
+      _ ->
+        lowerPrecisionIfAbove newPrec b
     where
-    bWithLowAC =
-      case acGuide of
-        Exact -> b
-        NoInformation -> b
-        _ -> normalize $
-              MPBall x (errorBound ((0.5^(fromAccuracy acGuide))⚡))
+    queryBits = fromAccuracy acGuide
+    newPrec =
+      case (getNormLog x) of
+        NormBits xNormBits ->
+          prec (max 2 (queryBits + xNormBits + 10))
+        NormZero ->
+          prec $ max 2 queryBits
+    -- bWithLowAC =
+    --   case acGuide of
+    --     Exact -> b
+    --     NoInformation -> b
+    --     _ -> normalize $
+    --           MPBall x (errorBound ((0.5^(fromAccuracy acGuide))⚡))
 
 instance HasNorm MPBall where
     getNormLog ball = getNormLog boundMP
