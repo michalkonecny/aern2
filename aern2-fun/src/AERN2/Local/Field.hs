@@ -9,7 +9,7 @@ import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 import AERN2.Real
 
-import AERN2.Utils.TH
+
 
 instance (CanDiv a b) => (CanDiv (Local a) (Local b)) where
   type DivType (Local a) (Local b) = Local (DivType a b)

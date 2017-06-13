@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-|
     Module      :  AERN2.Sequence.Field
     Description :  field operations on sequences
@@ -15,13 +16,10 @@ module AERN2.Sequence.Field
 )
 where
 
-import Numeric.MixedTypes hiding (id)
+import Numeric.MixedTypes
 -- import qualified Prelude as P
 
-import Control.Category (id)
 import Control.Arrow
-
-import qualified Control.CollectErrors as CE
 
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
@@ -35,7 +33,7 @@ import AERN2.Sequence.Ring (mulGetInitAC)
 {- division -}
 
 instance
-  (QAArrow to, CanDiv a b, HasNorm (WithoutCN a), HasNorm (WithoutCN b)
+  (QAArrow to, CanDiv a b, HasNorm (EnsureNoCN a), HasNorm (EnsureNoCN b)
   , SuitableForSeq a, SuitableForSeq b, SuitableForSeq (DivType a b))
   =>
   CanDiv (SequenceA to a) (SequenceA to b)
@@ -57,11 +55,11 @@ instance
         returnA -< ((jInit1, Just b1), (jInit2, Just b2))
 
 divGetInitAC1 ::
-  (HasNorm (WithoutCN denom), CanEnsureCN denom)
+  (HasNorm (EnsureNoCN denom), CanEnsureCN denom)
   =>
   denom -> AccuracySG -> AccuracySG
 divGetInitAC1 denom acSG =
-  case CE.getMaybeValue (ensureCN denom) of
+  case ensureNoCN denom of
     Nothing -> acSG0
     Just denomNoCN ->
       case getNormLog denomNoCN of
@@ -69,12 +67,12 @@ divGetInitAC1 denom acSG =
         NormZero -> acSG0 -- denominator == 0, we have no chance...
 
 divGetInitAC2 ::
-  (HasNorm (WithoutCN numer), CanEnsureCN numer
-  , HasNorm (WithoutCN denom), CanEnsureCN denom)
+  (HasNorm (EnsureNoCN numer), CanEnsureCN numer
+  , HasNorm (EnsureNoCN denom), CanEnsureCN denom)
   =>
   numer -> denom -> AccuracySG -> AccuracySG
 divGetInitAC2 numer denom acSG =
-  case (CE.getMaybeValue (ensureCN numer), CE.getMaybeValue (ensureCN denom)) of
+  case (ensureNoCN numer, ensureNoCN denom) of
     (Just numerNoCN, Just denomNoCN) ->
       case (getNormLog numerNoCN, getNormLog denomNoCN) of
         (_, NormZero) -> acSG0 -- denominator == 0, we have no chance...
@@ -103,7 +101,7 @@ instance
     flip (binaryWithEnclTranslateAC (divGetInitAC2 numer) (flip divide)) numer
 
 divGetInitQ1T ::
-  (Arrow to, HasNorm (WithoutCN denom), CanEnsureCN denom)
+  (Arrow to, HasNorm (EnsureNoCN denom), CanEnsureCN denom)
   =>
   SequenceA to numer -> denom -> AccuracySG `to` (AccuracySG, Maybe numer)
 divGetInitQ1T _numerSeq denom =
@@ -111,8 +109,8 @@ divGetInitQ1T _numerSeq denom =
 
 divGetInitQ2T ::
   (QAArrow to
-  , HasNorm (WithoutCN numer), CanEnsureCN numer
-  , HasNorm (WithoutCN denom), CanEnsureCN denom)
+  , HasNorm (EnsureNoCN numer), CanEnsureCN numer
+  , HasNorm (EnsureNoCN denom), CanEnsureCN denom)
   =>
   numer -> SequenceA to denom -> AccuracySG `to` (AccuracySG, Maybe denom)
 divGetInitQ2T numer denomSeq =
@@ -121,47 +119,43 @@ divGetInitQ2T numer denomSeq =
     denom <- seqWithAccuracy denomSeq -< q
     returnA -< (divGetInitAC2 numer denom q, Just denom)
 
--- instance (QAArrow to) => CanDiv (CauchyRealA to) Integer where
---   type DivType (CauchyRealA to) Integer = CauchyRealA to
---   divide = binaryOpWithPureArg "/" divide divGetInitQ1T
---
--- instance (QAArrow to) => CanDiv Integer (CauchyRealA to) where
---   type DivType Integer (CauchyRealA to) = CauchyRealA to
---   divide = flip $ binaryOpWithPureArg "/" (flip divide) divGetInitQ1TL
---
--- instance (QAArrow to) => CanDiv (CauchyRealA to) Int where
---   type DivType (CauchyRealA to) Int = CauchyRealA to
---   divide = binaryOpWithPureArg "/" divide divGetInitQ1T
---
--- instance (QAArrow to) => CanDiv Int (CauchyRealA to) where
---   type DivType Int (CauchyRealA to) = CauchyRealA to
---   divide = flip $ binaryOpWithPureArg "/" (flip divide) divGetInitQ1TL
---
--- instance (QAArrow to) => CanDiv (CauchyRealA to) Dyadic where
---   type DivType (CauchyRealA to) Dyadic = CauchyRealA to
---   divide = binaryOpWithPureArg "/" divide divGetInitQ1T
---
--- instance (QAArrow to) => CanDiv Dyadic (CauchyRealA to) where
---   type DivType Dyadic (CauchyRealA to) = CauchyRealA to
---   divide = flip $ binaryOpWithPureArg "/" (flip divide) divGetInitQ1TL
---
--- instance (QAArrow to) => CanDiv (CauchyRealA to) Rational where
---   type DivType (CauchyRealA to) Rational = CauchyRealA to
---   divide = binaryOpWithPureArg "/" divide divGetInitQ1T
---
--- instance (QAArrow to) => CanDiv Rational (CauchyRealA to) where
---   type DivType Rational (CauchyRealA to) = CauchyRealA to
---   divide = flip $ binaryOpWithPureArg "/" (flip divide) divGetInitQ1TL
---
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
+  (\ t -> [d|
+
+  instance
+    (QAArrow to, CanDiv a $t, SuitableForSeq a, SuitableForSeq (DivType a $t))
+    =>
+    CanDiv (SequenceA to a) $t
+    where
+    type DivType (SequenceA to a) $t = SequenceA to (DivType a $t)
+    divide = binaryOpWithPureArg "/" divide divGetInitQ1T
+
+  instance
+    (QAArrow to, CanDiv $t b, SuitableForSeq b, SuitableForSeq (DivType $t b), HasNorm (EnsureNoCN b))
+    =>
+    CanDiv $t (SequenceA to b)
+    where
+    type DivType $t (SequenceA to b) = SequenceA to (DivType $t b)
+    divide = flip $ binaryOpWithPureArg "/" (flip divide) (flip divGetInitQ2T)
+
+  |]))
+
 {- integer power -}
 
 instance
   (QAArrow to
-  , CanEnsureCN a
-  , Field (WithoutCN a)
+  , CanEnsureCN a, CanEnsureCN (EnsureCN a)
+  , Field a
+  , CanIntersectCNSameType a, CanIntersectCNSameType (EnsureCN a)
+  , CanSetPrecision a
+  , HasAccuracy a, HasAccuracy (EnsureCN a)
+  , CanAdjustToAccuracySG a, CanAdjustToAccuracySG (EnsureCN a)
+  , HasNorm (EnsureNoCN a)
+  , Show a, Show (EnsureCN a)
   )
   =>
   CanPow (SequenceA to a) Integer
   where
   type PowType (SequenceA to a) Integer = SequenceA to (EnsureCN a)
-  -- pow = powUsingMulRecip
+  pow = powUsingMulRecip

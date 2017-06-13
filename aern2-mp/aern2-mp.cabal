@@ -80,7 +80,6 @@ library
     FlexibleInstances,
     UndecidableInstances
   exposed-modules:
-    AERN2.Utils.TH
     AERN2.Utils.Bench
     AERN2.Normalize
     AERN2.Norm

@@ -24,8 +24,6 @@ import Numeric.MixedTypes hiding (id)
 import Control.Category (id)
 import Control.Arrow
 
-import AERN2.Utils.TH
-
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 

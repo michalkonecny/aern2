@@ -69,9 +69,10 @@ library
     AERN2.Sequence.Branching
     AERN2.Sequence.Ring
     AERN2.Sequence.Field
+    AERN2.Sequence.Elementary
     -- AERN2.Real
-    AERN2.Real.Type
-    AERN2.Real.Arithmetic
+    -- AERN2.Real.Type
+    -- AERN2.Real.Arithmetic
     -- AERN2.Real.Tests
 
 test-suite spec

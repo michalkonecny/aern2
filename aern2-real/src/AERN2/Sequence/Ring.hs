@@ -23,10 +23,6 @@ import Numeric.MixedTypes hiding (id)
 import Control.Category (id)
 import Control.Arrow
 
-import qualified Control.CollectErrors as CE
-
-import AERN2.Utils.TH
-
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
@@ -137,7 +133,7 @@ instance
 {- multiplication -}
 
 instance
-  (QAArrow to, CanMulAsymmetric a b, HasNorm (WithoutCN a), HasNorm (WithoutCN b)
+  (QAArrow to, CanMulAsymmetric a b, HasNorm (EnsureNoCN a), HasNorm (EnsureNoCN b)
   , SuitableForSeq a, SuitableForSeq b, SuitableForSeq (MulType a b))
   =>
   CanMulAsymmetric (SequenceA to a) (SequenceA to b)
@@ -157,11 +153,11 @@ instance
         returnA -< ((jInit1, Just b1), (jInit2, Just b2))
 
 mulGetInitAC ::
-  (HasNorm (WithoutCN other), CanEnsureCN other)
+  (HasNorm (EnsureNoCN other), CanEnsureCN other)
   =>
   other -> AccuracySG -> AccuracySG
 mulGetInitAC other acSG =
-  case CE.getMaybeValue (ensureCN other) of
+  case ensureNoCN other of
     Nothing -> acSG0
     Just otherNoCN ->
       case getNormLog otherNoCN of
@@ -188,7 +184,7 @@ instance
 
 
 mulGetInitQ1T ::
-  (Arrow to, HasNorm (WithoutCN other), CanEnsureCN other)
+  (Arrow to, HasNorm (EnsureNoCN other), CanEnsureCN other)
   =>
   SequenceA to t -> other -> AccuracySG `to` (AccuracySG, Maybe t)
 mulGetInitQ1T _seq other =

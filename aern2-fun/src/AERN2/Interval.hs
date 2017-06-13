@@ -39,7 +39,7 @@ import Data.Typeable
 -- import Test.Hspec
 import Test.QuickCheck
 
-import AERN2.Utils.TH
+
 
 import AERN2.MP.Dyadic
 import AERN2.MP.Ball hiding (intersect)

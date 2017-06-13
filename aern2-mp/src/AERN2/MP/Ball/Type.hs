@@ -32,8 +32,6 @@ import Control.CollectErrors
 
 import GHC.Generics (Generic)
 
-import AERN2.Utils.TH
-
 import AERN2.Normalize
 
 import AERN2.Norm

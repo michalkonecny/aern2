@@ -10,7 +10,7 @@ import AERN2.Frac.Type
 import AERN2.MP.Dyadic
 import AERN2.Real
 
-import AERN2.Utils.TH
+
 
 instance (PolyCoeffRing a, a ~ MPBall)
   => CanMulAsymmetric (Frac a) (Frac a)

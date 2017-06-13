@@ -33,6 +33,53 @@ import AERN2.QA.Protocol
 import AERN2.AccuracySG
 import AERN2.Real.Type
 
+{- elementary -}
+
+instance CanExp Integer where
+  type ExpType Integer = CauchyReal
+  exp = exp . real
+
+instance CanExp Int where
+  type ExpType Int = CauchyReal
+  exp = exp . real
+
+instance CanExp Dyadic where
+  type ExpType Dyadic = CauchyReal
+  exp = exp . real
+
+instance CanExp Rational where
+  type ExpType Rational = CauchyReal
+  exp = exp . real
+
+expA ::
+  (QAArrow to, CanExp t, ExpType t ~ CauchyReal)
+  =>
+  t -> CauchyRealA to
+expA = realA . exp
+
+instance CanLog Integer where
+  type LogType Integer = CauchyReal
+  log = log . real
+
+instance CanLog Int where
+  type LogType Int = CauchyReal
+  log = log . real
+
+instance CanLog Dyadic where
+  type LogType Dyadic = CauchyReal
+  log = log . real
+
+instance CanLog Rational where
+  type LogType Rational = CauchyReal
+  log = log . real
+
+logA ::
+  (QAArrow to, CanLog t, LogType t ~ CauchyReal)
+  =>
+  t -> CauchyRealA to
+logA = realA . log
+
+
 {- reals mixed with Double -}
 
 instance Convertible CauchyReal Double where

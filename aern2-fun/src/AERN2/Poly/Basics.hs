@@ -43,7 +43,7 @@ import qualified Data.List as List
 -- import Test.Hspec
 -- import Test.QuickCheck
 
-import AERN2.Utils.TH
+
 
 -- import AERN2.MP.ErrorBound
 import AERN2.MP.Ball

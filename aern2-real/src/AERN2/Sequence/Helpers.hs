@@ -40,7 +40,7 @@ import Control.Arrow
 
 -- import Control.Lens hiding (op, (??))
 
--- import qualified Control.CollectErrors as CE
+-- import Control.CollectErrors
 
 import AERN2.MP.Ball
 -- import AERN2.MP.Precision
@@ -50,17 +50,24 @@ import AERN2.QA.Protocol
 import AERN2.AccuracySG
 import AERN2.Sequence.Type
 
+
 getSeqFnNormLog ::
-  (QAArrow to, HasNorm (WithoutCN b), CanEnsureCN b)
+  (QAArrow to, CanEnsureCN v, HasNorm (EnsureNoCN v))
   =>
-  SequenceA to a ->
-  (a -> b) ->
-  AccuracySG `to` (CollectNumErrors NormLog, a)
-getSeqFnNormLog r fn =
+  SequenceA to a -> (a -> v) -> AccuracySG `to` (Maybe Integer, a)
+getSeqFnNormLog a f =
   proc q ->
     do
-    b <- seqWithAccuracy r -< q
-    returnA -< (fmap getNormLog (ensureCN $ fn b), b)
+    aq <- seqWithAccuracy a -< q
+    returnA -< (aux aq, aq)
+  where
+  aux aq =
+    case ensureNoCN (f aq) of
+      Nothing -> Nothing
+      Just faqNoCN ->
+        case getNormLog faqNoCN of
+          NormBits faqNL -> Just faqNL
+          NormZero -> Nothing
 
 {- MPBall + CauchyReal = MPBall, only allowed in the (->) arrow  -}
 

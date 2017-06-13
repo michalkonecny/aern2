@@ -7,7 +7,7 @@ import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 import AERN2.Real
 
-import AERN2.Utils.TH
+
 
 instance (CanAddAsymmetric a b) =>
   (CanAddAsymmetric (Local a) (Local b))

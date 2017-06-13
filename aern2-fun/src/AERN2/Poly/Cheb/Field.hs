@@ -27,7 +27,7 @@ import Text.Printf
 
 -- import AERN2.Normalize
 
-import AERN2.Utils.TH
+
 
 import AERN2.MP
 import AERN2.MP.Dyadic

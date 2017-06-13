@@ -1,8 +1,9 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE TemplateHaskell #-}
 -- #define DEBUG
 {-|
     Module      :  AERN2.Sequence.Type
-    Description :  The type of convergent sequences
+    Description :  The type of fast convergent sequences
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -10,7 +11,7 @@
     Stability   :  experimental
     Portability :  portable
 
-    The type of convergent sequences
+    The type of fast convergent sequences
 -}
 module AERN2.Sequence.Type
 (
@@ -18,9 +19,11 @@ module AERN2.Sequence.Type
   , SuitableForSeq
   , seqName, seqId, seqSources, seqRename
   , seqWithAccuracy, seqWithAccuracyA, seqsWithAccuracyA
-  , SequenceA, Sequence, newSeq, newSeqSimple
+  , SequenceA, Sequence
+  , newSeq, newSeqSimple
   , convergentList2SequenceA
   , seqByPrecision2SequenceA
+  , fmapSeq
 )
 where
 
@@ -40,16 +43,19 @@ import Control.Arrow
 
 import Text.Printf
 
+import Control.CollectErrors
+
 import AERN2.MP
+import AERN2.MP.Dyadic
 
 import AERN2.QA.Protocol
 import AERN2.QA.Strategy.CachedUnsafe ()
 
 import AERN2.AccuracySG
 
-{- Cauchy sequences -}
+{- QA protocol -}
 
-data SequenceP a = SequenceP a deriving (Show)
+data SequenceP a = SequenceP { unSequenceP :: a} deriving (Show)
 
 pSeq :: a -> SequenceP a
 pSeq a = SequenceP a
@@ -90,7 +96,22 @@ instance
         Just b' -> b'
         _ -> error $ printf "Sequence: updateQACache: problem computing intersection: %s /\\ %s" (show b1) (show b2)
 
+instance Functor SequenceP where
+  fmap f (SequenceP a) = SequenceP (f a)
+
+{- Seqeuences -}
+
 type SequenceA to a = QA to (SequenceP a)
+
+type Sequence a = SequenceA (->) a
+
+instance (Show a) => Show (Sequence a) where
+  show r = show $ r ? (accuracySG (bits 100))
+
+fmapSeq ::
+  (Arrow to) =>
+  (a -> b) -> (SequenceA to a) -> (SequenceA to b)
+fmapSeq f = mapQAsameQ (fmap f) f
 
 seqName :: SequenceA to a -> String
 seqName = qaName
@@ -115,11 +136,6 @@ seqWithAccuracyA = qaMakeQueryA
 seqsWithAccuracyA :: (QAArrow to) => ([SequenceA to a], AccuracySG) `to` [a]
 seqsWithAccuracyA = qaMakeQueryOnManyA
 
-type Sequence a = SequenceA (->) a
-
-instance (Show a) => Show (Sequence a) where
-  show r = show $ r ? (accuracySG (bits 100))
-
 {- constructions -}
 
 newSeq :: (QAArrow to, SuitableForSeq a) => a -> String -> [AnyProtocolQA to] -> AccuracySG `to` a -> SequenceA to a
@@ -142,3 +158,69 @@ seqByPrecision2SequenceA name byPrec =
   newSeq sampleA name [] (arr $ seqByPrecision2CauchySeq byPrec . bits)
     where
     sampleA = byPrec (prec 0)
+
+{- CollectErrors instances -}
+
+instance
+  (SuitableForCE es, CanEnsureCE es a)
+  =>
+  CanEnsureCE es (SequenceP a)
+  where
+  type EnsureCE es (SequenceP a) = SequenceP (EnsureCE es a)
+  type EnsureNoCE es (SequenceP a) = SequenceP (EnsureNoCE es a)
+
+  ensureCE sample_es = fmap (ensureCE sample_es)
+  deEnsureCE sample_es (SequenceP a) = fmap SequenceP (deEnsureCE sample_es a)
+  ensureNoCE sample_es (SequenceP a) =  fmap SequenceP (ensureNoCE sample_es a)
+
+  noValueECE sample_vCE es = SequenceP (noValueECE (fmap unSequenceP sample_vCE) es)
+
+  getMaybeValueECE sample_es (SequenceP a) = fmap SequenceP (getMaybeValueECE sample_es a)
+  getErrorsECE sample_vCE (SequenceP a) = getErrorsECE (fmap unSequenceP sample_vCE) a
+  prependErrorsECE sample_vCE es1 = fmap (prependErrorsECE (fmap unSequenceP sample_vCE) es1)
+
+instance
+  (Arrow to, SuitableForCE es, CanEnsureCE es a)
+  =>
+  CanEnsureCE es (SequenceA to a)
+  where
+  type EnsureCE es (SequenceA to a) = SequenceA to (EnsureCE es a)
+  type EnsureNoCE es (SequenceA to a) = SequenceA to (EnsureNoCE es a)
+
+  ensureCE sample_es = fmapSeq (ensureCE sample_es)
+  deEnsureCE sample_es = Just . fmapSeq (removeJust . deEnsureCE sample_es)
+    where
+    removeJust (Just a) = a
+    removeJust _ = error "deEnsureCE failed for a Sequence"
+  ensureNoCE sample_es = Just . fmapSeq (removeJust . ensureNoCE sample_es)
+    where
+    removeJust (Just a) = a
+    removeJust _ = error "ensureNoCE failed for a Sequence"
+
+  noValueECE _sample_vCE _es =
+    error "noValueECE not implemented for Sequence yet"
+
+  getMaybeValueECE sample_es = Just . fmapSeq (removeJust . getMaybeValueECE sample_es)
+    where
+    removeJust (Just a) = a
+    removeJust _ = error "getMaybeValueECE failed for a Sequence"
+  getErrorsECE _sample_mv _s =
+    error "getErrorsECE not implemented for Sequence yet"
+  prependErrorsECE (_sample_vCE :: Maybe (SequenceA to a)) es1 =
+    fmapSeq (prependErrorsECE (Nothing :: Maybe a) es1)
+
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Dyadic |]]
+  (\ t -> [d|
+
+    instance
+      (QAArrow to, ConvertibleExactly $t a, CanSetPrecision a, SuitableForSeq a)
+      =>
+      ConvertibleExactly $t (SequenceA to a)
+      where
+      safeConvertExactly x =
+        Right $ newSeq a (show x) [] (arr $ flip setPrecisionAtLeastAccuracy a . bits)
+        where
+        a = convertExactly x
+
+  |]))
