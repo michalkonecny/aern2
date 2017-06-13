@@ -32,6 +32,8 @@ import Control.CollectErrors
 
 import GHC.Generics (Generic)
 
+import Text.Printf
+
 import AERN2.Normalize
 
 import AERN2.Norm
@@ -47,18 +49,23 @@ import AERN2.MP.ErrorBound (ErrorBound, errorBound)
 import AERN2.MP.Enclosure
 
 data MPBall = MPBall
-  -- { ball_value :: MPFloat
-  -- , ball_error :: ErrorBound
-  -- }
-  { ball_value :: {-# UNPACK #-} ! MPFloat
-  , ball_error :: {-# UNPACK #-} ! ErrorBound
+  { ball_value :: MPFloat
+  , ball_error :: ErrorBound
   }
+  -- { ball_value :: {-# UNPACK #-} ! MPFloat
+  -- , ball_error :: {-# UNPACK #-} ! ErrorBound
+  -- }
   deriving (Generic)
 
 instance Show MPBall
     where
-    show (MPBall x e) =
-      "[" ++ show x ++ " ± " ++ show e ++ "](prec=" ++ (show $ integer $ getPrecision x) ++ ")"
+    show b@(MPBall x _e) =
+      printf "[%s ± %s]" (show x) (showAC $ getAccuracy b)
+      -- "[" ++ show x ++ " ± " ++ show e ++ "](prec=" ++ (show $ integer $ getPrecision x) ++ ")"
+      where
+      showAC Exact = "0"
+      showAC NoInformation = "oo"
+      showAC ac = "<2^(" ++ show (negate $ fromAccuracy ac) ++ ")"
 
 
 instance (SuitableForCE es) => CanEnsureCE es MPBall where
@@ -207,7 +214,7 @@ instance CanReduceSizeUsingAccuracyGuide MPBall where
     newPrec =
       case (getNormLog x) of
         NormBits xNormBits ->
-          prec (max 2 (queryBits + xNormBits + 10))
+          prec (max 2 (queryBits + xNormBits + 1))
         NormZero ->
           prec $ max 2 queryBits
     -- bWithLowAC =
