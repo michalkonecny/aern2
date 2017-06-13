@@ -75,8 +75,8 @@ instance CanTestFinite MPBall where
 instance CanNormalize MPBall where
   normalize b
     | isFinite b =
-        b
-        -- reducePrecionIfInaccurate b
+        -- b
+        reducePrecionIfInaccurate b
     | otherwise = error $ "invalid MPBall: " ++ show b
 
 {-|

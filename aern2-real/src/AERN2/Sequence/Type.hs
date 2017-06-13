@@ -78,9 +78,10 @@ instance
   newQACache _ = Nothing
   lookupQACache _ cache acSG@(AccuracySG acS acG) =
     case cache of
-      Just (b, AccuracySG _ bAG) | getAccuracy b >= acS && (getAccuracy b >= acG || bAG >= acG - tol) ->
-        (Just (adjustToAccuracySG acSG b),
-         Just (logMsg b))
+      Just (b, AccuracySG _ bAG)
+        | getAccuracy b >= acS && (getAccuracy b >= acG || bAG >= acG - tol) ->
+          (Just (adjustToAccuracySG acSG b),
+           Just (logMsg b))
       Just (b, _) -> (Nothing, Just (logMsg b))
       Nothing -> (Nothing, Just ("cache empty"))
     where
