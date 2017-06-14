@@ -171,14 +171,31 @@ lift2 ::
   (QAArrow to, SuitableForSeq a, SuitableForSeq b, SuitableForSeq c)
   =>
   String -> (a -> b -> c) -> SequenceA to a -> SequenceA to b -> SequenceA to c
-lift2 name op = binaryOp name op (getInitQ1Q2FromSimple $ arr $ \q -> (q,q))
+lift2 name op aSeq bSeq =
+  newSeq (op sampleA sampleB) name [AnyProtocolQA aSeq, AnyProtocolQA bSeq] makeQ
+  where
+  SequenceP sampleA = qaProtocol aSeq
+  SequenceP sampleB = qaProtocol bSeq
+  makeQ =
+    proc ac ->
+      do
+      a <- seqWithAccuracy aSeq -< ac
+      b <- seqWithAccuracy bSeq -< ac
+      returnA -< op a b
 
 lift2T ::
   (QAArrow to, SuitableForSeq a, SuitableForSeq c)
   =>
   String -> (a -> t -> c) -> SequenceA to a -> t -> SequenceA to c
-lift2T name op = binaryOpWithPureArg name op (getInitQ1TFromSimple $ arr $ \q -> q)
-
+lift2T name op aSeq b =
+  newSeq (op sampleA b) name [AnyProtocolQA aSeq] makeQ
+  where
+  SequenceP sampleA = qaProtocol aSeq
+  makeQ =
+    proc ac ->
+      do
+      a <- seqWithAccuracy aSeq -< ac
+      returnA -< op a b
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
