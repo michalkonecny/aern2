@@ -210,14 +210,18 @@ fft_CR_parArrow isFFT k acSG =
   task
     | isFFT = taskFFTWithHookA hookA k
     | otherwise = taskDFTWithHookA (hookA 0) k
-  hookA n name =
+  n = (~!) (2^k)
+  hookA nH name =
     proc (a :+ i) ->
       do
-      aNext <- (-:-)-< (rename a)
-      iNext <- (-:-)-< (rename i)
+      aNext <- reg -< (rename a)
+      iNext <- reg -< (rename i)
       returnA -< Just (aNext :+ iNext)
     where
     rename = realRename (\_ -> name)
+    reg
+      | nH < n = (-:-|)
+      | otherwise = (-:-||)
 
 
 fft_MP :: Bool -> Integer -> AccuracySG -> Maybe [Complex MPBall]
