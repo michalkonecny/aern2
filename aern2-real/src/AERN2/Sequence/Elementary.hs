@@ -15,7 +15,7 @@ module AERN2.Sequence.Elementary
 ()
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 import Control.Arrow

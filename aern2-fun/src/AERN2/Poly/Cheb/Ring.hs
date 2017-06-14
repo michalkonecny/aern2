@@ -27,7 +27,7 @@ import Debug.Trace (trace)
 #define maybeTrace ((flip const :: (String -> a -> a)))
 #endif
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 import Text.Printf
 

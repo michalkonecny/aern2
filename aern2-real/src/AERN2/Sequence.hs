@@ -33,7 +33,7 @@ module AERN2.Sequence
 )
 where
 
--- import Numeric.MixedTypes
+-- import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 -- import Control.Arrow

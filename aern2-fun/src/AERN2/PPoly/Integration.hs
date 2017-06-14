@@ -1,6 +1,6 @@
 module AERN2.PPoly.Integration where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import Data.List
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic

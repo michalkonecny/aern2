@@ -20,7 +20,7 @@ module AERN2.MP.Ball.Elementary
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import AERN2.Normalize

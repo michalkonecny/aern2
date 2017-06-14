@@ -18,7 +18,7 @@ module AERN2.AccuracySG
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 
 -- import qualified Control.CollectErrors as CE

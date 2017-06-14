@@ -7,7 +7,7 @@ GenericMaximum
 )
 where
 
-import Numeric.MixedTypes hiding (maximum , minimum)
+import MixedTypesNumPrelude hiding (maximum , minimum)
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 import AERN2.Poly.Cheb hiding (maximum, minimum, degree)

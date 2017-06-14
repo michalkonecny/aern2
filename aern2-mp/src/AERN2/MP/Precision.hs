@@ -22,7 +22,7 @@ module AERN2.MP.Precision
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 import Text.Printf
 

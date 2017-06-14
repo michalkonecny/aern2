@@ -10,7 +10,7 @@ minimumNaive,
 )
 where
 
-import Numeric.MixedTypes hiding (maximum, minimum)
+import MixedTypesNumPrelude hiding (maximum, minimum)
 import AERN2.Poly.Power.Type
 import AERN2.Poly.Power.Eval
 import AERN2.Poly.Power.Roots

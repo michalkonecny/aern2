@@ -10,7 +10,7 @@ import Debug.Trace (trace)
 #define maybeTrace (\ (_ :: String) t -> t)
 #endif
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import Numeric.CatchingExceptions
 -- import qualified Prelude as P
 -- import Text.Printf

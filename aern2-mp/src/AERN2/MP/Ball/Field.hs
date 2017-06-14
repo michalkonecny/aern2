@@ -14,7 +14,7 @@ module AERN2.MP.Ball.Field
 ()
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 import Control.CollectErrors

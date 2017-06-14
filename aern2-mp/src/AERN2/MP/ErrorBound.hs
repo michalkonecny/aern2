@@ -18,7 +18,7 @@ module AERN2.MP.ErrorBound
      absMP, subMP)
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import Data.Typeable

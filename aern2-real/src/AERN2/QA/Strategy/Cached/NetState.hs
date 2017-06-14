@@ -19,7 +19,7 @@ module AERN2.QA.Strategy.Cached.NetState
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 -- import Text.Printf
 

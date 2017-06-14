@@ -28,7 +28,7 @@ import Debug.Trace (trace)
 #define maybeTraceIO  (\ (_ :: String)-> return ())
 #endif
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 import Text.Printf
 

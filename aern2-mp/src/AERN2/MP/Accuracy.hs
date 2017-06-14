@@ -23,7 +23,7 @@ module AERN2.MP.Accuracy
      HasApproximate(..))
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import Control.CollectErrors

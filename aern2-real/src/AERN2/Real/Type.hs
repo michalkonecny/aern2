@@ -25,7 +25,7 @@ module AERN2.Real.Type
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 -- import qualified Control.CollectErrors as CE

@@ -17,7 +17,7 @@ module AERN2.RealFun.UnaryBallFun
 )
 where
 
--- import Numeric.MixedTypes
+-- import MixedTypesNumPrelude
 -- import qualified Prelude as P
 -- import Text.Printf
 

@@ -14,7 +14,7 @@ module AERN2.Poly.Power.RootsIntVector
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Data.Map as Map
 import qualified Prelude
 import AERN2.Interval

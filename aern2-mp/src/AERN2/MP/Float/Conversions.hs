@@ -26,7 +26,7 @@ module AERN2.MP.Float.Conversions
    )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 #ifdef MPFRBackend
 import qualified Prelude as P
 #endif

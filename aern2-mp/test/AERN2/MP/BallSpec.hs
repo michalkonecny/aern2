@@ -11,7 +11,7 @@
 
 module AERN2.MP.BallSpec (spec) where
 
--- import Numeric.MixedTypes
+-- import MixedTypesNumPrelude
 import AERN2.MP.Ball.Tests
 
 import Test.Hspec

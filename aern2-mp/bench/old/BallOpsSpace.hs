@@ -8,7 +8,7 @@
     Stability   :  experimental
     Portability :  portable
 -}
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import Prelude
 
 import Text.Printf

@@ -1,7 +1,7 @@
 {-# LANGUAGE Arrows, FlexibleContexts, TypeOperators, TypeFamilies, ConstraintKinds, ScopedTypeVariables #-}
 module Tasks.Fourier where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import Text.Printf
 
 import Control.Arrow

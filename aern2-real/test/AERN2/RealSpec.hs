@@ -11,7 +11,7 @@
 
 module AERN2.RealSpec (spec) where
 
--- import Numeric.MixedTypes
+-- import MixedTypesNumPrelude
 import AERN2.Real.Tests
 
 import Test.Hspec

@@ -22,7 +22,7 @@ module AERN2.MP.Enclosure
   )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 import Test.Hspec

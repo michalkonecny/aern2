@@ -17,7 +17,7 @@ module AERN2.Poly.Cheb.DCT
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 -- import Text.Printf
 

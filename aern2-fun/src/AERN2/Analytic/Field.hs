@@ -1,7 +1,7 @@
 module AERN2.Analytic.Field
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 
 import AERN2.Analytic.Type
 

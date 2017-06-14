@@ -10,7 +10,7 @@
 -}
 module Main where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import Prelude
 
 import Text.Printf

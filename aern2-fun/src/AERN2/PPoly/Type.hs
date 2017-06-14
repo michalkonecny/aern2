@@ -1,7 +1,7 @@
 module AERN2.PPoly.Type
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 
 import Data.List
 import Data.Maybe

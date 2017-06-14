@@ -8,7 +8,7 @@ import Debug.Trace (trace)
 #define maybeTrace (flip const)
 #endif
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 import System.Environment

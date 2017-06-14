@@ -26,7 +26,7 @@ module AERN2.MP.Float.Tests
   )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 -- import Data.Ratio
 import Text.Printf

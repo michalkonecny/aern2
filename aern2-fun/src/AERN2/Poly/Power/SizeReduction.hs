@@ -2,7 +2,7 @@ module AERN2.Poly.Power.SizeReduction where
 
 import AERN2.Poly.Basics
 import AERN2.Poly.Power.Type
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Data.Map as Map
 import AERN2.MP.Ball hiding (iterateUntilAccurate)
 

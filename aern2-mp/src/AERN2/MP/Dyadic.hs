@@ -26,7 +26,7 @@ module AERN2.MP.Dyadic
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import Control.CollectErrors

@@ -1,4 +1,4 @@
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 
 main :: IO ()
 main = return ()

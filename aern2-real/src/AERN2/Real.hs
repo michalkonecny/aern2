@@ -44,7 +44,7 @@ import AERN2.Real.Tests ()
 
 -- imports used in examples below:
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 import Control.Arrow

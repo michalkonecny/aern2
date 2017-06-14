@@ -1,6 +1,6 @@
 module AERN2.Local.Integration where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import AERN2.RealFun.Operations
 import AERN2.Interval
 import AERN2.MP.Ball

@@ -14,7 +14,7 @@ module AERN2.Norm
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import Data.Complex

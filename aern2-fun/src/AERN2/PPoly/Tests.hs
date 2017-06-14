@@ -40,7 +40,7 @@ import Debug.Trace (trace)
 #define maybeTrace (\ (_ :: String) t -> t)
 #endif
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 -- import Data.Ratio
 import Text.Printf

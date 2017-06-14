@@ -24,7 +24,7 @@ module AERN2.MP.Ball.Tests
   )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 -- import Data.Ratio
 -- import Text.Printf

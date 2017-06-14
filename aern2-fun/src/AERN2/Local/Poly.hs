@@ -6,7 +6,7 @@ module AERN2.Local.Poly
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import AERN2.Interval
 import AERN2.MP.Ball
 import AERN2.Poly.Cheb

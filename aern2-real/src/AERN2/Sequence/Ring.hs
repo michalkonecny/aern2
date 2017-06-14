@@ -17,7 +17,7 @@ module AERN2.Sequence.Ring
 )
 where
 
-import Numeric.MixedTypes hiding (id)
+import MixedTypesNumPrelude hiding (id)
 -- import qualified Prelude as P
 
 import Control.Category (id)

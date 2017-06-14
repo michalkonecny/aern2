@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module AERN2.Local.Field where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 
 import AERN2.Local.Basics
 

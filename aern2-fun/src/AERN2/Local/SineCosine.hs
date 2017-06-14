@@ -1,6 +1,6 @@
 module AERN2.Local.SineCosine where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import AERN2.RealFun.SineCosine
 import AERN2.MP
 import AERN2.Real

@@ -18,7 +18,7 @@ module AERN2.Sequence.Comparison
 )
 where
 
-import Numeric.MixedTypes hiding (id)
+import MixedTypesNumPrelude hiding (id)
 -- import qualified Prelude as P
 
 import Control.Category (id)

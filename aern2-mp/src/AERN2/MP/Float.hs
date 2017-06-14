@@ -34,7 +34,7 @@ module AERN2.MP.Float
    )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 import AERN2.MP.Precision

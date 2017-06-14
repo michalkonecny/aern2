@@ -24,7 +24,7 @@ module AERN2.Interval
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 import Text.Printf
 -- import Text.Regex.TDFA

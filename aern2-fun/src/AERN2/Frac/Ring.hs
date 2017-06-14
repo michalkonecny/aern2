@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module AERN2.Frac.Ring where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import AERN2.MP.Ball
 import AERN2.Poly.Basics
 import AERN2.Poly.Cheb

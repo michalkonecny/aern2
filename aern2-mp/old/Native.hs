@@ -18,7 +18,7 @@ module AERN2.MP.Float.Native
 )
 where
 
-import Numeric.MixedTypes hiding (div)
+import MixedTypesNumPrelude hiding (div)
 import qualified Prelude as P
 
 import Text.Printf

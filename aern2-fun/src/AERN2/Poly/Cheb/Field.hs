@@ -22,7 +22,7 @@ import Debug.Trace (trace)
 #define maybeTrace (\ (_ :: String) t -> t)
 #endif
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import Text.Printf
 
 -- import AERN2.Normalize

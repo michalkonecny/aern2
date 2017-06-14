@@ -2,7 +2,7 @@
 module AERN2.Poly.Power.Type
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import AERN2.Poly.Basics
 
 import qualified Data.Map as Map
