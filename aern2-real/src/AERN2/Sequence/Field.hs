@@ -21,6 +21,8 @@ import Numeric.MixedTypes
 
 import Control.Arrow
 
+import Control.CollectErrors
+
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
@@ -99,6 +101,28 @@ instance
   where
   type DivType MPBall (Sequence b) = DivType MPBall b
   divide = flip (binaryWithEnclTranslateAC (flip divGetInitAC2) (flip divide))
+
+instance
+  (CanDiv (SequenceA to a) b
+  , CanEnsureCE es (DivType (SequenceA to a) b)
+  , SuitableForCE es)
+  =>
+  CanDiv (SequenceA to a) (CollectErrors es  b)
+  where
+  type DivType (SequenceA to a) (CollectErrors es  b) =
+    EnsureCE es (DivType (SequenceA to a) b)
+  divide = lift2TLCE divide
+
+instance
+  (CanDiv a (SequenceA to b)
+  , CanEnsureCE es (DivType a (SequenceA to b))
+  , SuitableForCE es)
+  =>
+  CanDiv (CollectErrors es a) (SequenceA to b)
+  where
+  type DivType (CollectErrors es  a) (SequenceA to b) =
+    EnsureCE es (DivType a (SequenceA to b))
+  divide = lift2TCE divide
 
 divGetInitQ1T ::
   (Arrow to, HasNorm (EnsureNoCN denom), CanEnsureCN denom)

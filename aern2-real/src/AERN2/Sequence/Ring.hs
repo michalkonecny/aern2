@@ -23,6 +23,8 @@ import Numeric.MixedTypes hiding (id)
 import Control.Category (id)
 import Control.Arrow
 
+import Control.CollectErrors
+
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
@@ -81,6 +83,29 @@ instance
   type AddType MPBall (Sequence b) = AddType MPBall b
   add = flip $ binaryWithEncl (flip add)
 
+instance
+  (CanAddAsymmetric (SequenceA to a) b
+  , CanEnsureCE es (AddType (SequenceA to a) b)
+  , SuitableForCE es)
+  =>
+  CanAddAsymmetric (SequenceA to a) (CollectErrors es  b)
+  where
+  type AddType (SequenceA to a) (CollectErrors es  b) =
+    EnsureCE es (AddType (SequenceA to a) b)
+  add = lift2TLCE add
+
+instance
+  (CanAddAsymmetric a (SequenceA to b)
+  , CanEnsureCE es (AddType a (SequenceA to b))
+  , SuitableForCE es)
+  =>
+  CanAddAsymmetric (CollectErrors es a) (SequenceA to b)
+  where
+  type AddType (CollectErrors es  a) (SequenceA to b) =
+    EnsureCE es (AddType a (SequenceA to b))
+  add = lift2TCE add
+
+
 {- subtraction -}
 
 instance
@@ -129,6 +154,29 @@ instance
   where
   type SubType MPBall (Sequence b) = SubType MPBall b
   sub = flip $ binaryWithEncl (flip sub)
+
+instance
+  (CanSub (SequenceA to a) b
+  , CanEnsureCE es (SubType (SequenceA to a) b)
+  , SuitableForCE es)
+  =>
+  CanSub (SequenceA to a) (CollectErrors es  b)
+  where
+  type SubType (SequenceA to a) (CollectErrors es  b) =
+    EnsureCE es (SubType (SequenceA to a) b)
+  sub = lift2TLCE sub
+
+instance
+  (CanSub a (SequenceA to b)
+  , CanEnsureCE es (SubType a (SequenceA to b))
+  , SuitableForCE es)
+  =>
+  CanSub (CollectErrors es a) (SequenceA to b)
+  where
+  type SubType (CollectErrors es  a) (SequenceA to b) =
+    EnsureCE es (SubType a (SequenceA to b))
+  sub = lift2TCE sub
+
 
 {- multiplication -}
 
@@ -181,6 +229,28 @@ instance
   where
   type MulType MPBall (Sequence b) = MulType MPBall b
   mul = flip $ binaryWithEnclTranslateAC (\ _ -> mulGetInitAC) (flip mul)
+
+instance
+  (CanMulAsymmetric (SequenceA to a) b
+  , CanEnsureCE es (MulType (SequenceA to a) b)
+  , SuitableForCE es)
+  =>
+  CanMulAsymmetric (SequenceA to a) (CollectErrors es  b)
+  where
+  type MulType (SequenceA to a) (CollectErrors es  b) =
+    EnsureCE es (MulType (SequenceA to a) b)
+  mul = lift2TLCE mul
+
+instance
+  (CanMulAsymmetric a (SequenceA to b)
+  , CanEnsureCE es (MulType a (SequenceA to b))
+  , SuitableForCE es)
+  =>
+  CanMulAsymmetric (CollectErrors es a) (SequenceA to b)
+  where
+  type MulType (CollectErrors es  a) (SequenceA to b) =
+    EnsureCE es (MulType a (SequenceA to b))
+  mul = lift2TCE mul
 
 
 mulGetInitQ1T ::

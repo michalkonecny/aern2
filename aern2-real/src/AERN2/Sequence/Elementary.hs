@@ -20,6 +20,8 @@ import Numeric.MixedTypes
 
 import Control.Arrow
 
+import Control.CollectErrors
+
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
@@ -165,6 +167,28 @@ instance
   type PowType MPBall (Sequence e) = PowType MPBall e
   pow =
     flip (binaryWithEnclTranslateAC (flip powGetInitAC2) (flip pow))
+
+instance
+  (CanPow (SequenceA to a) b
+  , CanEnsureCE es (PowType (SequenceA to a) b)
+  , SuitableForCE es)
+  =>
+  CanPow (SequenceA to a) (CollectErrors es  b)
+  where
+  type PowType (SequenceA to a) (CollectErrors es  b) =
+    EnsureCE es (PowType (SequenceA to a) b)
+  pow = lift2TLCE pow
+
+instance
+  (CanPow a (SequenceA to b)
+  , CanEnsureCE es (PowType a (SequenceA to b))
+  , SuitableForCE es)
+  =>
+  CanPow (CollectErrors es a) (SequenceA to b)
+  where
+  type PowType (CollectErrors es  a) (SequenceA to b) =
+    EnsureCE es (PowType a (SequenceA to b))
+  pow = lift2TCE pow
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Dyadic |], [t| Rational |]]

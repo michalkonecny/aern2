@@ -24,6 +24,8 @@ import Numeric.MixedTypes hiding (id)
 import Control.Category (id)
 import Control.Arrow
 
+import Control.CollectErrors
+
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
@@ -91,6 +93,65 @@ instance
   leq = lift2 "<=" (<=)
   greaterThan = lift2 ">" (>)
   geq = lift2 ">=" (>=)
+
+{- comparing CollectErrors and Sequences -}
+
+instance
+  (HasEqAsymmetric (SequenceA to a) b
+  , CanEnsureCE es (EqCompareType (SequenceA to a) b)
+  , IsBool (EnsureCE es (EqCompareType (SequenceA to a) b))
+  , SuitableForCE es)
+  =>
+  HasEqAsymmetric (SequenceA to a) (CollectErrors es b)
+  where
+  type EqCompareType (SequenceA to a) (CollectErrors es b) =
+    EnsureCE es (EqCompareType (SequenceA to a) b)
+  equalTo = lift2TLCE equalTo
+
+instance
+  (HasEqAsymmetric a (SequenceA to b)
+  , CanEnsureCE es (EqCompareType a (SequenceA to b))
+  , IsBool (EnsureCE es (EqCompareType a (SequenceA to b)))
+  , SuitableForCE es)
+  =>
+  HasEqAsymmetric (CollectErrors es a) (SequenceA to b)
+  where
+  type EqCompareType (CollectErrors es  a) (SequenceA to b) =
+    EnsureCE es (EqCompareType a (SequenceA to b))
+  equalTo = lift2TCE equalTo
+
+instance
+  (HasOrderAsymmetric (SequenceA to a) b
+  , CanEnsureCE es (OrderCompareType (SequenceA to a) b)
+  , IsBool (EnsureCE es (OrderCompareType (SequenceA to a) b))
+  , SuitableForCE es)
+  =>
+  HasOrderAsymmetric (SequenceA to a) (CollectErrors es  b)
+  where
+  type OrderCompareType (SequenceA to a) (CollectErrors es  b) =
+    EnsureCE es (OrderCompareType (SequenceA to a) b)
+  lessThan = lift2TLCE lessThan
+  leq = lift2TLCE leq
+  greaterThan = lift2TLCE greaterThan
+  geq = lift2TLCE geq
+
+instance
+  (HasOrderAsymmetric a (SequenceA to b)
+  , CanEnsureCE es (OrderCompareType a (SequenceA to b))
+  , IsBool (EnsureCE es (OrderCompareType a (SequenceA to b)))
+  , SuitableForCE es)
+  =>
+  HasOrderAsymmetric (CollectErrors es a) (SequenceA to b)
+  where
+  type OrderCompareType (CollectErrors es  a) (SequenceA to b) =
+    EnsureCE es (OrderCompareType a (SequenceA to b))
+  lessThan = lift2TCE lessThan
+  leq = lift2TCE leq
+  greaterThan = lift2TCE greaterThan
+  geq = lift2TCE geq
+
+
+{- comparisons of SequenceAtAccuracy -}
 
 {-| SequenceAtAccuracy exists only so that we can QuickCheck that
    Sequence satisfies properties whose statement relies on an instance of HasEqCertainly.
@@ -166,6 +227,31 @@ instance
   type MinMaxType MPBall (Sequence b) = MinMaxType MPBall b
   min = flip $ binaryWithEncl (flip min)
   max = flip $ binaryWithEncl (flip max)
+
+instance
+  (CanMinMaxAsymmetric (SequenceA to a) b
+  , CanEnsureCE es (MinMaxType (SequenceA to a) b)
+  , SuitableForCE es)
+  =>
+  CanMinMaxAsymmetric (SequenceA to a) (CollectErrors es  b)
+  where
+  type MinMaxType (SequenceA to a) (CollectErrors es  b) =
+    EnsureCE es (MinMaxType (SequenceA to a) b)
+  min = lift2TLCE min
+  max = lift2TLCE max
+
+instance
+  (CanMinMaxAsymmetric a (SequenceA to b)
+  , CanEnsureCE es (MinMaxType a (SequenceA to b))
+  , SuitableForCE es)
+  =>
+  CanMinMaxAsymmetric (CollectErrors es a) (SequenceA to b)
+  where
+  type MinMaxType (CollectErrors es  a) (SequenceA to b) =
+    EnsureCE es (MinMaxType a (SequenceA to b))
+  min = lift2TCE min
+  max = lift2TCE max
+
 
 lift2 ::
   (QAArrow to, SuitableForSeq a, SuitableForSeq b, SuitableForSeq c)
