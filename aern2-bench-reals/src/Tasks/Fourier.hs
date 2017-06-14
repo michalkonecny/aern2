@@ -8,8 +8,11 @@ import Control.Arrow
 import AERN2.Utils.Arrows
 
 import qualified Data.Map as Map
+import qualified Data.Sequence as SQ
+import GHC.Exts (toList)
 
 import Data.Complex
+import Data.Monoid
 
 import AERN2.QA.Protocol
 import AERN2.Real
@@ -72,22 +75,25 @@ ditfft2 ::
   (CauchyReal -> c) ->
   (c -> Maybe c) ->
   Integer -> [c] -> Maybe [c]
-ditfft2 cr2c (hook :: c -> Maybe c) nI x = aux 0 nI 1
+ditfft2 cr2c (hook :: c -> Maybe c) nI x =
+  fmap toList $ aux 0 nI 1
   where
+  xSQ = SQ.fromList x
   aux i n s
-    | n == 1 = Just [x !! i]
+    | n == 1 = Just $ SQ.singleton $ xSQ `SQ.index` (int i)
     | otherwise = convLR
     where
+    nHalf = n `div` 2
     convLR =
       do
-      yEven <- aux i (n `div` 2) (2*s)
-      yOdd <- aux (i+s) (n `div` 2) (2*s)
-      yOddTw <- hookOnList $ zipWith (*) yOdd [tw k n | k <- [0..]]
-      let yL = zipWith (+) yEven yOddTw
-      let yR = zipWith (-) yEven yOddTw
-      Just (yL ++ yR)
-  hookOnList :: [c] -> Maybe [c]
-  hookOnList list = sequence (map hook list)
+      yEven <- aux i nHalf (2*s)
+      yOdd <- aux (i+s) nHalf (2*s)
+      yOddTw <- hookOnList $ SQ.zipWith (*) yOdd $ SQ.fromList [tw k n | k <- [0..nHalf-1]]
+      let yL = SQ.zipWith (+) yEven yOddTw
+      let yR = SQ.zipWith (-) yEven yOddTw
+      Just (yL <> yR)
+  hookOnList :: SQ.Seq c -> Maybe (SQ.Seq c)
+  hookOnList list = sequence (fmap hook list)
   tw k n =
     case Map.lookup (k%n) twsNI of -- memoisation
       Just v -> v
