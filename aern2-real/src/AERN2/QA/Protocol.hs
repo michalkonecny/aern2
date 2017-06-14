@@ -19,10 +19,10 @@ module AERN2.QA.Protocol
   , mapQA, mapQAsameQ
   -- * QAArrows
   , AnyProtocolQA(..)
-  , QAArrow(..), defaultNewQA
+  , QAArrow(..), defaultNewQA, QARegOption(..)
   , qaMakeQuery, qaMakeQueryA, qaMakeQueriesA, qaMakeQueryOnManyA
   , (?)
-  , (-:-)
+  , (-:-), (-:-|), (-:-||)
   , (-?-), (-?..-), (-???-), (-<?>-)
   , qaMake2Queries, (??)
 )
@@ -104,6 +104,10 @@ anyPqaId (AnyProtocolQA qa) = qaId qa
 anyPqaSources :: AnyProtocolQA to -> [QAId to]
 anyPqaSources (AnyProtocolQA qa) = qaSources qa
 
+data QARegOption =
+  QARegPreferParallel | QARegPreferSerial
+  deriving (P.Eq)
+
 {-|
   A class of Arrows suitable for use in QA objects.
 -}
@@ -120,7 +124,7 @@ class (ArrowChoice to, P.Eq (QAId to)) => QAArrow to where
     of dependencies **empty**
     as the registration has recorded them elsewhere.
   -}
-  qaRegister :: (QAProtocolCacheable p) => (QA to p) `to` (QA to p)
+  qaRegister :: (QAProtocolCacheable p) => [QARegOption] -> (QA to p) `to` (QA to p)
   {-|
     Create a qa object.  The object is not "registered" automatically.
     Invoking this function does not lead to any `to'-arrow computation.
@@ -176,7 +180,15 @@ infix 1 ?
 
 {-| An infix synonym of 'qaRegister'. -}
 (-:-) :: (QAArrow to, QAProtocolCacheable p) => (QA to p) `to` (QA to p)
-(-:-) = qaRegister
+(-:-) = qaRegister []
+
+{-| An infix synonym of 'qaRegister'. -}
+(-:-||) :: (QAArrow to, QAProtocolCacheable p) => (QA to p) `to` (QA to p)
+(-:-||) = qaRegister [QARegPreferParallel]
+
+{-| An infix synonym of 'qaRegister'. -}
+(-:-|) :: (QAArrow to, QAProtocolCacheable p) => (QA to p) `to` (QA to p)
+(-:-|) = qaRegister [QARegPreferSerial]
 
 {-| An infix synonym of 'qaMakeQueryGetPromiseA'. -}
 (-?..-) :: (QAArrow to) => (QA to p, Q p) `to` (QAPromiseA to (A p))

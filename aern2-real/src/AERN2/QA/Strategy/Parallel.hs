@@ -58,7 +58,9 @@ instance MonadIO QAParM where
 
 instance QAArrow QAParA where
   type QAId QAParA = ()
-  qaRegister = Kleisli qaRegisterM
+  qaRegister options
+    | QARegPreferSerial `elem` options = arr id
+    | otherwise = Kleisli qaRegisterM
     where
     qaRegisterM qa@(QA__ name Nothing _sourceIds (p :: p) sampleQ _) =
       QAParM $

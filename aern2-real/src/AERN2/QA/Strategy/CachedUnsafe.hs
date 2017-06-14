@@ -43,7 +43,7 @@ import AERN2.QA.Protocol
 -}
 instance QAArrow (->) where
   type QAId (->) = ()
-  qaRegister = id
+  qaRegister _ = id
   newQA name sources p sampleQ makeQ =
     addUnsafeMemoisation $
       defaultNewQA name sources p sampleQ makeQ
