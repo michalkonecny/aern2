@@ -210,7 +210,7 @@ fft_CR_parArrow isFFT k acSG =
   task
     | isFFT = taskFFTWithHookA hookA k
     | otherwise = taskDFTWithHookA (hookA 0) k
-  n = (~!) (2^k)
+  n = 2^!k
   hookA nH name =
     proc (a :+ i) ->
       do

@@ -111,7 +111,7 @@ valuesSmall = map makeSmall values
   makeSmall :: CauchyReal -> CauchyReal
   makeSmall x
     | abs (getBall x) !<! 1000000 = x
-    | otherwise = (~!) (1000000 * (x/(1000000+(abs x))))
+    | otherwise = 1000000 * (x/!(1000000+(abs x)))
     where
     getBall :: CauchyReal -> MPBall
     getBall xx = xx ? (bitsS 53)

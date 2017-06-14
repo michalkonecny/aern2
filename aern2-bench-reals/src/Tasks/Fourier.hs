@@ -37,7 +37,7 @@ taskFFTWithHook cr2c hook k =
   ditfft2 cr2c hook n x
   where
   x = [ convertExactly i | i <- [1..n]]
-  n = (~!)(2^k)
+  n = 2^!k
 
 taskFFTWithHookA ::
   (FFTOpsA to c, QAArrow to, HasIntegers c)
@@ -53,7 +53,7 @@ taskFFTWithHookA hookA k =
   where
   reg i = hookA 0 ("x" ++ show i)
   x = [ convertExactly i | i <- [1..n]]
-  n = (~!) (2^k)
+  n = 2^!k
 
 type FFTOpsA to c =
   (CanAddSubMulBy c c, CanMulBy c (Complex (CauchyRealA to)))
@@ -89,7 +89,7 @@ ditfft2 cr2c (hook :: c -> Maybe c) nI x = aux 0 nI 1
   hookOnList :: [c] -> Maybe [c]
   hookOnList list = sequence (map hook list)
   tw k n =
-    case Map.lookup ((~!)(k/n)) twsNI of -- memoisation
+    case Map.lookup (k%n) twsNI of -- memoisation
       Just v -> v
       _ -> error "ditfft2: tw: internal error"
   twsNI = tws cr2c nI nI
@@ -137,13 +137,13 @@ ditfft2A (hookA :: Integer -> String -> c `to` Maybe c) nI = aux 0 nI 1
         binReg (*) -< (a, tw k n)
   tw :: Integer -> Integer -> (Complex (CauchyRealA to))
   tw k n =
-    case Map.lookup ((~!)(k/n)) twsNI of -- memoisation
+    case Map.lookup (k%n) twsNI of -- memoisation
       Just v -> convertExactly v
       _ -> error "ditfft2A: tw: internal error"
   twsNI = twsCR nI nI
 
 twsCR :: Integer -> Integer -> Map.Map Rational (Complex CauchyReal)
-twsCR n nN = foldl insertTw Map.empty [(~!)(k/nN) | k <- [0..n]]
+twsCR n nN = foldl insertTw Map.empty [ k%nN | k <- [0..n]]
   where
   insertTw twsPrev r =
     case Map.lookup r twsPrev of
@@ -161,7 +161,7 @@ tws ::
   (CauchyReal -> c) ->
   Integer -> Integer -> Map.Map Rational c
 tws cr2a n nN =
-  foldl insertTw Map.empty [(~!)(k/nN) | k <- [0..n]]
+  foldl insertTw Map.empty [ k % nN | k <- [0..n]]
   where
   insertTw twsPrev r =
     case Map.lookup r twsPrev of
@@ -196,7 +196,7 @@ taskDFTWithHook cr2c hook k =
   dft cr2c hook x
   where
   x = [ convertExactly i | i <- [1..n]]
-  n = (~!)(2^k)
+  n = 2^!k
 
 taskDFTWithHookA ::
   (FFTOpsA to c, QAArrow to, HasIntegers c)
@@ -211,7 +211,7 @@ taskDFTWithHookA hookA k =
   where
   reg i = hookA $ "x" ++ show i
   x = [ convertExactly i | i <- [1..n]]
-  n = (~!)(2^k)
+  n = 2^!k
 
 dft ::
   (FFTOps c, HasIntegers c)
@@ -226,8 +226,8 @@ dft cr2c hook x =
     sum $ map tw (zip [0..] x)
     where
     tw (n,xn) =
-    --   let r = (~!) (n*k/nN) in xn * (exp (-2*r*(cr2c pi)*(0:+1)))
-      case Map.lookup ((~!)(n*k/nN)) twsNN of -- memoisation
+    --   xn * (exp (-2*((n*k) % nN)*(cr2c pi)*(0:+1)))
+      case Map.lookup ((n*k) % nN) twsNN of -- memoisation
         Just v -> v * xn
         _ -> error "dft: tw: internal error"
     twsNN = tws cr2c ((nN-1)*(nN-1)) nN
@@ -250,7 +250,7 @@ dftA (hookA :: String -> c `to` Maybe c) =
     nN = integer (length x)
     tw :: (Integer, c) -> c
     tw (n,xn) =
-      case Map.lookup ((~!)(n*k/nN)) twsNN of -- memoisation
+      case Map.lookup ((n*k) % nN) twsNN of -- memoisation
         Just v -> (convertExactly v :: Complex (CauchyRealA to)) * xn
         _ -> error "dft: tw: internal error"
     twsNN = twsCR ((nN-1)*(nN-1)) nN
@@ -264,7 +264,7 @@ _testFFT k =
   putStrLn "z = "
   sequence_ $ map print z
   where
-  n = (~!)(2^k)
+  n = 2^!k
   x = [complex i | i <- [1..n]]
   Just y = ditfft2A (\_ _ l -> Just l) n x
   y' = map (/n) $ head y : (reverse $ tail y)
