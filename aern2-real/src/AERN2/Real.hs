@@ -141,8 +141,8 @@ _trisection f (l,r) =
     | otherwise             = pick [tryM m1, tryM m2]
     where
     ab = fromEndpoints (mpBall a) (mpBall b) :: MPBall
-    m1 = (5*a + 3*b)*(dyadic ((1/8)⚡))
-    m2 = (3*a + 5*b)*(dyadic ((1/8)⚡))
+    m1 = (5*a + 3*b)*(dyadic (1/!8))
+    m2 = (3*a + 5*b)*(dyadic (1/!8))
     tryM :: Dyadic -> Sequence (Maybe (CN MPBall))
     tryM m = newSeqSimple Nothing withAC
       where

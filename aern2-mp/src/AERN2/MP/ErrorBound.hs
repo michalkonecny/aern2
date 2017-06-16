@@ -214,6 +214,6 @@ instance Arbitrary ErrorBound where
         | otherwise =
           do
           (s :: Integer) <- arbitrary
-          let resultR = ((((abs s) `mod` ((2^35)⚡))/(2^32))⚡)
+          let resultR = ((abs s) `mod` (2^!35))/!(2^!32)
           let result = convert resultR
           return result

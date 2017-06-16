@@ -155,16 +155,16 @@ instance P.Ord MPBall where
 
 instance P.Fractional MPBall where
     fromRational = convertExactly . dyadic -- will work only for dyadic rationals
-    recip = (⚡) . recip
-    a / b = ((a / b) ⚡)
+    recip = (~!) . recip
+    (/) = (/!)
 
 instance P.Floating MPBall where
     pi = error "MPBall: no pi :: MPBall, use pi ? (bitsS n) instead"
-    sqrt = (⚡) . sqrt
+    sqrt = (~!) . sqrt
     exp = exp
     sin = sin
     cos = cos
-    log = (⚡) . log
+    log = (~!) . log
     atan = error "MPBall: atan not implemented yet"
     atanh = error "MPBall: atanh not implemented yet"
     asin = error "MPBall: asin not implemented yet"

@@ -86,7 +86,7 @@ instance Read Dyadic where
         [nS,eS] ->
           case (reads nS, reads eS) of
             ([(n,"")],[(e,"")]) ->
-              [(dyadic (((n :: Integer)*0.5^(e :: Integer))⚡), afterS)]
+              [((n :: Integer)*(dyadic 0.5)^!(e :: Integer), afterS)]
             _ -> tryNext
         _ -> tryNext
       where
@@ -128,7 +128,7 @@ instance ConvertibleExactly Rational Dyadic where
     | isDyadic = Right $ Dyadic (fromRationalUp (prec $ max 2 (dp + np + 1)) q)
     | otherwise = convError "this number is not dyadic" q
     where
-    isDyadic = d == ((2^dp)⚡)
+    isDyadic = d == 2^!dp
     dp = integerLog2 d
     d = denominator q
     np = integerLog2 (max 1 $ abs $ numerator q)

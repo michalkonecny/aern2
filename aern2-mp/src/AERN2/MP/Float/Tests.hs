@@ -66,7 +66,7 @@ instance Arbitrary MPFloat where
           (p :: Precision) <- arbitrary
           (s :: Integer) <- arbitrary
           ex <- choose (-20,10)
-          let resultR = ((s * (10.0^ex))⚡)
+          let resultR = s * (10.0^!ex)
           let result = fromRationalUp p resultR
           return result
 
@@ -96,7 +96,7 @@ approxEqual e x y
   | isNaN x || isNaN y = False
   | isInfinite x || isInfinite y = x == y
   | otherwise =
-      abs (x -. y) <= ((0.5^e)⚡)
+      abs (x -. y) <= 0.5^!e
 
 {-|
   Assert equality of two MPFloat's with tolerance derived from the size and precision
@@ -123,7 +123,7 @@ approxEqualWithArgs argsPre l r =
       norm = getNormLog x
       pI = integer $ getPrecision x
     description =
-      printf "args:\n%s tolerance: <= %s (e=%d)" argsS (show (double ((0.5^e)⚡))) e
+      printf "args:\n%s tolerance: <= %s (e=%d)" argsS (show (double (0.5^!e))) e
     argsS =
       unlines
         [printf "    %s = %s (p=%s)" argS (show arg) (show $ getPrecision arg) | (arg, argS) <- args]
