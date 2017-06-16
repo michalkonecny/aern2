@@ -425,6 +425,7 @@ instance CanPow Dyadic Int where
 instance
   (CanDiv a Dyadic
   , CanEnsureCE es (DivType a Dyadic)
+  , CanEnsureCE es (DivTypeNoCN a Dyadic)
   , SuitableForCE es)
   =>
   CanDiv (CollectErrors es a) Dyadic
@@ -432,31 +433,35 @@ instance
   type DivType (CollectErrors es  a) Dyadic =
     EnsureCE es (DivType a Dyadic)
   divide = lift2TCE divide
+  type DivTypeNoCN (CollectErrors es a) Dyadic =
+    EnsureCE es (DivTypeNoCN a Dyadic)
+  divideNoCN = lift2TCE divideNoCN
 
 instance CanDiv Integer Dyadic where
-  type DivType Integer Dyadic = CN Rational
-  divide a b = divide a (rational b)
+  type DivTypeNoCN Integer Dyadic = Rational
+  divideNoCN a b = divideNoCN a (rational b)
 instance CanDiv Dyadic Integer where
-  type DivType Dyadic Integer = CN Rational
-  divide a b = divide (rational a) b
+  type DivTypeNoCN Dyadic Integer = Rational
+  divideNoCN a b = divideNoCN (rational a) b
 
 instance CanDiv Int Dyadic where
-  type DivType Int Dyadic = CN Rational
-  divide a b = divide a (rational b)
+  type DivTypeNoCN Int Dyadic = Rational
+  divideNoCN a b = divideNoCN a (rational b)
 instance CanDiv Dyadic Int where
-  type DivType Dyadic Int = CN Rational
-  divide a b = divide (rational a) b
+  type DivTypeNoCN Dyadic Int = Rational
+  divideNoCN a b = divideNoCN (rational a) b
 
 instance CanDiv Rational Dyadic where
-  type DivType Rational Dyadic = CN Rational
-  divide = convertSecond divide
+  type DivTypeNoCN Rational Dyadic = Rational
+  divideNoCN = convertSecond divideNoCN
 instance CanDiv Dyadic Rational where
-  type DivType Dyadic Rational = CN Rational
-  divide = convertFirst divide
+  type DivTypeNoCN Dyadic Rational = Rational
+  divideNoCN = convertFirst divideNoCN
 
 instance
   (CanDiv Dyadic b
   , CanEnsureCE es (DivType Dyadic b)
+  , CanEnsureCE es (DivTypeNoCN Dyadic b)
   , SuitableForCE es)
   =>
   CanDiv Dyadic (CollectErrors es  b)
@@ -464,6 +469,9 @@ instance
   type DivType Dyadic (CollectErrors es  b) =
     EnsureCE es (DivType Dyadic b)
   divide = lift2TLCE divide
+  type DivTypeNoCN Dyadic (CollectErrors es  b) =
+    EnsureCE es (DivTypeNoCN Dyadic b)
+  divideNoCN = lift2TLCE divideNoCN
 
 instance
   (CanPow Dyadic b

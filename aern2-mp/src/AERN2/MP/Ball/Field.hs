@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-|
     Module      :  AERN2.MP.Ball.Field
     Description :  Field operations on arbitrary precision dyadic balls
@@ -195,6 +196,8 @@ instance
 {- division -}
 
 instance CanDiv MPBall MPBall where
+  type DivTypeNoCN MPBall MPBall = MPBall
+  divideNoCN b1 b2 = (~!) (divide b1 b2)
   type DivType MPBall MPBall = CN MPBall
   divide (MPBall x1 e1) b2@(MPBall x2 e2)
     | isCertainlyNonZero b2 =
@@ -231,40 +234,39 @@ A derivation of the above formula for an upper bound on the error:
         * ≤ (e1 +^ e12*^|x2| +^ |x|*^e2 ) /^ (|x2| -. e2)
 -}
 
-instance CanDiv MPBall Int where
-  type DivType MPBall Int = CN MPBall
-  divide = convertSecond divide
-instance CanDiv Int MPBall where
-  type DivType Int MPBall = CN MPBall
-  divide = convertFirst divide
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Dyadic |]]
+  (\ t -> [d|
+    instance CanDiv MPBall $t where
+      type DivType MPBall $t = CN MPBall
+      divide = convertSecond divide
+      type DivTypeNoCN MPBall $t = MPBall
+      divideNoCN = convertSecond divideNoCN
+    instance CanDiv $t MPBall where
+      type DivType $t MPBall = CN MPBall
+      divide = convertFirst divide
+      type DivTypeNoCN $t MPBall = MPBall
+      divideNoCN = convertFirst divideNoCN
+  |]))
 
-instance CanDiv MPBall Integer where
-  type DivType MPBall Integer = CN MPBall
-  divide = convertSecond divide
-instance CanDiv Integer MPBall where
-  type DivType Integer MPBall = CN MPBall
-  divide = convertFirst divide
-
-instance CanDiv MPBall Dyadic where
-  type DivType MPBall Dyadic = CN MPBall
-  divide = convertSecond divide
-instance CanDiv Dyadic MPBall where
-  type DivType Dyadic MPBall = CN MPBall
-  divide = convertFirst divide
 instance CanDiv Dyadic Dyadic where
-  type DivType Dyadic Dyadic = CN MPBall
+  type DivTypeNoCN Dyadic Dyadic = MPBall
+  divideNoCN a b = divideNoCN (mpBall a) (mpBall b)
   divide a b = divide (mpBall a) (mpBall b)
 
 instance CanDiv MPBall Rational where
-  type DivType MPBall Rational = CN MPBall
+  type DivTypeNoCN MPBall Rational = MPBall
+  divideNoCN = convertPSecond divideNoCN
   divide = convertPSecond divide
 instance CanDiv Rational MPBall where
-  type DivType Rational MPBall = CN MPBall
+  type DivTypeNoCN Rational MPBall = MPBall
+  divideNoCN = convertPFirst divideNoCN
   divide = convertPFirst divide
 
 instance
   (CanDiv MPBall b
   , CanEnsureCE es (DivType MPBall b)
+  , CanEnsureCE es (DivTypeNoCN MPBall b)
   , SuitableForCE es)
   =>
   CanDiv MPBall (CollectErrors es  b)
@@ -272,10 +274,14 @@ instance
   type DivType MPBall (CollectErrors es  b) =
     EnsureCE es (DivType MPBall b)
   divide = lift2TLCE divide
+  type DivTypeNoCN MPBall (CollectErrors es  b) =
+    EnsureCE es (DivTypeNoCN MPBall b)
+  divideNoCN = lift2TLCE divideNoCN
 
 instance
   (CanDiv a MPBall
   , CanEnsureCE es (DivType a MPBall)
+  , CanEnsureCE es (DivTypeNoCN a MPBall)
   , SuitableForCE es)
   =>
   CanDiv (CollectErrors es a) MPBall
@@ -283,6 +289,9 @@ instance
   type DivType (CollectErrors es  a) MPBall =
     EnsureCE es (DivType a MPBall)
   divide = lift2TCE divide
+  type DivTypeNoCN (CollectErrors es  a) MPBall =
+    EnsureCE es (DivTypeNoCN a MPBall)
+  divideNoCN = lift2TCE divideNoCN
 
 {- integer power -}
 

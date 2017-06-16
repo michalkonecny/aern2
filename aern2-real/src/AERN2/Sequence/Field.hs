@@ -36,25 +36,33 @@ import AERN2.Sequence.Ring (mulGetInitAC)
 
 instance
   (QAArrow to, CanDiv a b, HasNorm (EnsureNoCN a), HasNorm (EnsureNoCN b)
-  , SuitableForSeq a, SuitableForSeq b, SuitableForSeq (DivType a b))
+  , SuitableForSeq a, SuitableForSeq b
+  , SuitableForSeq (DivType a b), SuitableForSeq (DivTypeNoCN a b))
   =>
   CanDiv (SequenceA to a) (SequenceA to b)
   where
   type DivType (SequenceA to a) (SequenceA to b) = SequenceA to (DivType a b)
-  divide =
-    binaryOp "/" divide getInitQ1Q2
-    where
-    getInitQ1Q2 a1 a2 =
-      proc q ->
-        do
-        -- In a Fractional instance, optimising 3/x and not optimising x/3 etc.
-        -- In a Fractional instance, x/3 should be replaced by (1/3)*x etc.
-        b1 <- seqWithAccuracy a1 -< q
-        let jPre2 = mulGetInitAC b1 q
-        b2 <- seqWithAccuracy a2 -< jPre2
-        let jInit1 = divGetInitAC1 b2 q
-        let jInit2 = divGetInitAC2 b1 b2 q
-        returnA -< ((jInit1, Just b1), (jInit2, Just b2))
+  divide = binaryOp "/" divide getInitQ1Q2
+  type DivTypeNoCN (SequenceA to a) (SequenceA to b) = SequenceA to (DivTypeNoCN a b)
+  divideNoCN = binaryOp "/" divideNoCN getInitQ1Q2
+
+getInitQ1Q2 ::
+  (QAArrow to
+  , HasNorm (EnsureNoCN a), HasNorm (EnsureNoCN b)
+  , SuitableForSeq a, SuitableForSeq b)
+  =>
+  SequenceA to a -> SequenceA to b -> AccuracySG `to` ((AccuracySG, Maybe a), (AccuracySG, Maybe b))
+getInitQ1Q2 a1 a2 =
+  proc q ->
+    do
+    -- In a Fractional instance, optimising 3/x and not optimising x/3 etc.
+    -- In a Fractional instance, x/3 should be replaced by (1/3)*x etc.
+    b1 <- seqWithAccuracy a1 -< q
+    let jPre2 = mulGetInitAC b1 q
+    b2 <- seqWithAccuracy a2 -< jPre2
+    let jInit1 = divGetInitAC1 b2 q
+    let jInit2 = divGetInitAC2 b1 b2 q
+    returnA -< ((jInit1, Just b1), (jInit2, Just b2))
 
 divGetInitAC1 ::
   (HasNorm (EnsureNoCN denom), CanEnsureCN denom)
@@ -85,26 +93,32 @@ divGetInitAC2 numer denom acSG =
 
 instance
   (CanDiv a MPBall, SuitableForSeq a
-  , CanSetPrecision (DivType a MPBall))
+  , CanSetPrecision (DivType a MPBall), CanSetPrecision (DivTypeNoCN a MPBall))
   =>
   CanDiv (Sequence a) MPBall
   where
   type DivType (Sequence a) MPBall = DivType a MPBall
   divide = binaryWithEnclTranslateAC (\ _ -> divGetInitAC1) divide
+  type DivTypeNoCN (Sequence a) MPBall = DivTypeNoCN a MPBall
+  divideNoCN = binaryWithEnclTranslateAC (\ _ -> divGetInitAC1) divideNoCN
 
 instance
   (CanDiv MPBall b, SuitableForSeq b
   , HasNorm (EnsureNoCN b), CanEnsureCN b
-  , CanSetPrecision (DivType MPBall b))
+  , CanSetPrecision (DivType MPBall b)
+  , CanSetPrecision (DivTypeNoCN MPBall b))
   =>
   CanDiv MPBall (Sequence b)
   where
   type DivType MPBall (Sequence b) = DivType MPBall b
   divide = flip (binaryWithEnclTranslateAC (flip divGetInitAC2) (flip divide))
+  type DivTypeNoCN MPBall (Sequence b) = DivTypeNoCN MPBall b
+  divideNoCN = flip (binaryWithEnclTranslateAC (flip divGetInitAC2) (flip divideNoCN))
 
 instance
   (CanDiv (SequenceA to a) b
   , CanEnsureCE es (DivType (SequenceA to a) b)
+  , CanEnsureCE es (DivTypeNoCN (SequenceA to a) b)
   , SuitableForCE es)
   =>
   CanDiv (SequenceA to a) (CollectErrors es  b)
@@ -112,10 +126,14 @@ instance
   type DivType (SequenceA to a) (CollectErrors es  b) =
     EnsureCE es (DivType (SequenceA to a) b)
   divide = lift2TLCE divide
+  type DivTypeNoCN (SequenceA to a) (CollectErrors es  b) =
+    EnsureCE es (DivTypeNoCN (SequenceA to a) b)
+  divideNoCN = lift2TLCE divideNoCN
 
 instance
   (CanDiv a (SequenceA to b)
   , CanEnsureCE es (DivType a (SequenceA to b))
+  , CanEnsureCE es (DivTypeNoCN a (SequenceA to b))
   , SuitableForCE es)
   =>
   CanDiv (CollectErrors es a) (SequenceA to b)
@@ -123,6 +141,9 @@ instance
   type DivType (CollectErrors es  a) (SequenceA to b) =
     EnsureCE es (DivType a (SequenceA to b))
   divide = lift2TCE divide
+  type DivTypeNoCN (CollectErrors es  a) (SequenceA to b) =
+    EnsureCE es (DivTypeNoCN a (SequenceA to b))
+  divideNoCN = lift2TCE divideNoCN
 
 divGetInitQ1T ::
   (Arrow to, HasNorm (EnsureNoCN denom), CanEnsureCN denom)
@@ -148,20 +169,28 @@ $(declForTypes
   (\ t -> [d|
 
   instance
-    (QAArrow to, CanDiv a $t, SuitableForSeq a, SuitableForSeq (DivType a $t))
+    (QAArrow to, CanDiv a $t, SuitableForSeq a
+    , SuitableForSeq (DivType a $t), SuitableForSeq (DivTypeNoCN a $t))
     =>
     CanDiv (SequenceA to a) $t
     where
     type DivType (SequenceA to a) $t = SequenceA to (DivType a $t)
     divide = binaryOpWithPureArg "/" divide divGetInitQ1T
+    type DivTypeNoCN (SequenceA to a) $t = SequenceA to (DivTypeNoCN a $t)
+    divideNoCN = binaryOpWithPureArg "/" divideNoCN divGetInitQ1T
 
   instance
-    (QAArrow to, CanDiv $t b, SuitableForSeq b, SuitableForSeq (DivType $t b), HasNorm (EnsureNoCN b))
+    (QAArrow to, CanDiv $t b, SuitableForSeq b
+    , SuitableForSeq (DivType $t b)
+    , SuitableForSeq (DivTypeNoCN $t b)
+    , HasNorm (EnsureNoCN b))
     =>
     CanDiv $t (SequenceA to b)
     where
     type DivType $t (SequenceA to b) = SequenceA to (DivType $t b)
     divide = flip $ binaryOpWithPureArg "/" (flip divide) (flip divGetInitQ2T)
+    type DivTypeNoCN $t (SequenceA to b) = SequenceA to (DivTypeNoCN $t b)
+    divideNoCN = flip $ binaryOpWithPureArg "/" (flip divideNoCN) (flip divGetInitQ2T)
 
   |]))
 

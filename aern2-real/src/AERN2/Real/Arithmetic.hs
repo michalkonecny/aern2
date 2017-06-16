@@ -188,10 +188,14 @@ instance CanMulAsymmetric Double CauchyReal where
 instance CanDiv CauchyReal Double where
   type DivType CauchyReal Double = Double
   divide = binaryWithDouble divide
+  type DivTypeNoCN CauchyReal Double = Double
+  divideNoCN = binaryWithDouble divideNoCN
 
 instance CanDiv Double CauchyReal where
   type DivType Double CauchyReal = Double
   divide = flip $ binaryWithDouble (flip divide)
+  type DivTypeNoCN Double CauchyReal = Double
+  divideNoCN = flip $ binaryWithDouble (flip divideNoCN)
 
 instance CanPow CauchyReal Double where
   type PowType CauchyReal Double = Double

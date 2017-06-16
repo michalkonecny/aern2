@@ -197,7 +197,9 @@ instance CanMulAsymmetric Rational ErrorBound where
         | otherwise = error "trying to multiply ErrorBound by a negative integer"
 
 instance CanDiv ErrorBound Integer where
+    type DivTypeNoCN ErrorBound Integer = ErrorBound
     type DivType ErrorBound Integer = ErrorBound
+    divideNoCN = divide
     divide (ErrorBound a) i
         | i > 0 = ErrorBound $ a /^ (MPFloat.fromIntegerUp errorBoundPrecision i)
         | otherwise = error "trying to multiply ErrorBound by a non-positive integer"
