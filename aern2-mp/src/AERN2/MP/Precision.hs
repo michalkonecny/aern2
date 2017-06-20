@@ -150,9 +150,9 @@ maximumPrecision = Precision 1000000
 defaultPrecision :: Precision
 defaultPrecision = Precision 100
 
-standardPrecisions :: [Precision]
-standardPrecisions =
-    map Precision $ aux 8 13
+standardPrecisions :: Precision -> [Precision]
+standardPrecisions (Precision initPrec) =
+    map Precision $ aux initPrec (3*initPrec `P.div` 2)
     where
     aux j j'
         | Precision j <= maximumPrecision = j : (aux j' (j+j'))
@@ -162,17 +162,18 @@ precisionTimes2 :: Precision -> Precision
 precisionTimes2 (Precision p) = Precision (2*p)
 
 iterateUntilOK ::
+    Precision ->
     (a -> Bool) ->
     (Precision -> a) ->
     [(Precision, a)]
-iterateUntilOK isOK fn =
+iterateUntilOK initPrec isOK fn =
     stopWhenAccurate ps
     where
 --    fnWrap p =
 --        unsafePerformIO $
 --            catch (return $! Just $! fn p)
 --                (\e -> let _ = e :: SomeException in return Nothing)
-    ps = standardPrecisions
+    ps = standardPrecisions initPrec
     stopWhenAccurate [] = []
     stopWhenAccurate (p : rest)
       | isOK result = [(p, result)]

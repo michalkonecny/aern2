@@ -137,8 +137,12 @@ mpFloat = convertExactly
 
 instance ConvertibleExactly Integer MPFloat where
     safeConvertExactly n =
-        findExact $ map upDown $ drop (int 4) standardPrecisions
+        findExact $ map upDown $ standardPrecisions initPrec
         where
+        initPrec =
+            case getNormLog n of
+              NormBits b -> prec (b + 8)
+              _ -> prec 8
         upDown p = (fromIntegerDown p n, fromIntegerUp p n)
         findExact [] =
             convError "integer too high to represent exactly" n

@@ -12,8 +12,8 @@
 -}
 module AERN2.MP.Accuracy
     (Accuracy(NoInformation, Exact), bits, fromAccuracy,
-     normLog2Accuracy,
      HasAccuracy(..), getFiniteAccuracy,
+     ac2prec,
      CanReduceSizeUsingAccuracyGuide(..),
       specCanReduceSizeUsingAccuracyGuide,
      iterateUntilAccurate,
@@ -68,13 +68,12 @@ instance ConvertibleExactly Int Accuracy where
   safeConvertExactly = Right . Bits . integer
 instance ConvertibleExactly Precision Accuracy where
   safeConvertExactly = Right . Bits . integer
+instance ConvertibleExactly NormLog Accuracy where
+  safeConvertExactly (NormBits b) = Right $ bits (-b)
+  safeConvertExactly NormZero = Right Exact
 
 bits :: (ConvertibleExactly t Accuracy) => t -> Accuracy
 bits = convertExactly
-
-normLog2Accuracy :: NormLog -> Accuracy
-normLog2Accuracy (NormBits b) = bits (-b)
-normLog2Accuracy NormZero = Exact
 
 instance Show Accuracy where
     show (NoInformation) = "NoInformation"
@@ -212,10 +211,16 @@ iterateUntilAccurate ::
   (Precision -> Maybe t) ->
   [(Precision, Maybe t)]
 iterateUntilAccurate ac =
-  iterateUntilOK $ \maybeResult ->
-      case maybeResult of
-          Just result -> getAccuracy result >= ac
-          _ -> False
+  iterateUntilOK (ac2prec ac) $ \maybeResult ->
+    case maybeResult of
+      Just result -> getAccuracy result >= ac
+      _ -> False
+
+ac2prec :: Accuracy -> Precision
+ac2prec ac =
+  case ac of
+    Bits b -> prec (max 2 $ b + 50)
+    _ -> prec 100
 
 seqByPrecision2CauchySeq ::
     (HasAccuracy t) =>
@@ -224,7 +229,7 @@ seqByPrecision2CauchySeq seqByPrecision ac =
     convergentList2CauchySeq list ac
     where
     list =
-      map seqByPrecision $ dropWhile (lowPrec ac) standardPrecisions
+      map seqByPrecision $ dropWhile (lowPrec ac) (standardPrecisions (ac2prec ac))
     lowPrec Exact _ = False
     lowPrec _ p = bits p < ac
 
