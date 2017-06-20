@@ -18,7 +18,7 @@ import Test.QuickCheck
 import Test.QuickCheck.Random (mkQCGen)
 import Test.QuickCheck.Gen (Gen(..))
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 listFromGen :: Gen a -> [a]

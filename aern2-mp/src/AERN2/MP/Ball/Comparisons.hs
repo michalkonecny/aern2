@@ -16,14 +16,15 @@ module AERN2.MP.Ball.Comparisons
   module AERN2.Norm
   -- * Ball operations (see also instances)
   , reducePrecionIfInaccurate
-  , intersect
   -- * Helpers for constructing ball functions
   , byEndpointsMP
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
+
+import Control.CollectErrors
 
 import AERN2.Norm
 import AERN2.MP.Dyadic (Dyadic)
@@ -32,7 +33,7 @@ import AERN2.MP.Float (MPFloat)
 import AERN2.MP.Precision
 
 import AERN2.MP.Ball.Type
-import AERN2.MP.Ball.Conversions (integerBounds)
+import AERN2.MP.Ball.Conversions ()
 
 {- comparisons -}
 
@@ -67,6 +68,30 @@ instance HasEqAsymmetric MPBall Dyadic where
 instance HasEqAsymmetric Dyadic MPBall where
   type EqCompareType Dyadic MPBall = Maybe Bool
   b1 `equalTo` b2 =   b1 >= b2 && b1 <= b2
+
+instance
+  (HasEqAsymmetric MPBall b
+  , CanEnsureCE es (EqCompareType MPBall b)
+  , IsBool (EnsureCE es (EqCompareType MPBall b))
+  , SuitableForCE es)
+  =>
+  HasEqAsymmetric MPBall (CollectErrors es  b)
+  where
+  type EqCompareType MPBall (CollectErrors es  b) =
+    EnsureCE es (EqCompareType MPBall b)
+  equalTo = lift2TLCE equalTo
+
+instance
+  (HasEqAsymmetric a MPBall
+  , CanEnsureCE es (EqCompareType a MPBall)
+  , IsBool (EnsureCE es (EqCompareType a MPBall))
+  , SuitableForCE es)
+  =>
+  HasEqAsymmetric (CollectErrors es a) MPBall
+  where
+  type EqCompareType (CollectErrors es  a) MPBall =
+    EnsureCE es (EqCompareType a MPBall)
+  equalTo = lift2TCE equalTo
 
 instance HasOrderAsymmetric MPBall MPBall where
   type OrderCompareType MPBall MPBall = Maybe Bool
@@ -150,6 +175,36 @@ instance HasOrderAsymmetric Rational MPBall where
     l1 = q1
     r1 = q1
 
+instance
+  (HasOrderAsymmetric MPBall b
+  , CanEnsureCE es (OrderCompareType MPBall b)
+  , IsBool (EnsureCE es (OrderCompareType MPBall b))
+  , SuitableForCE es)
+  =>
+  HasOrderAsymmetric MPBall (CollectErrors es  b)
+  where
+  type OrderCompareType MPBall (CollectErrors es  b) =
+    EnsureCE es (OrderCompareType MPBall b)
+  lessThan = lift2TLCE lessThan
+  leq = lift2TLCE leq
+  greaterThan = lift2TLCE greaterThan
+  geq = lift2TLCE geq
+
+instance
+  (HasOrderAsymmetric a MPBall
+  , CanEnsureCE es (OrderCompareType a MPBall)
+  , IsBool (EnsureCE es (OrderCompareType a MPBall))
+  , SuitableForCE es)
+  =>
+  HasOrderAsymmetric (CollectErrors es a) MPBall
+  where
+  type OrderCompareType (CollectErrors es  a) MPBall =
+    EnsureCE es (OrderCompareType a MPBall)
+  lessThan = lift2TCE lessThan
+  leq = lift2TCE leq
+  greaterThan = lift2TCE greaterThan
+  geq = lift2TCE geq
+
 instance CanTestZero MPBall
 instance CanTestPosNeg MPBall
 
@@ -204,17 +259,52 @@ instance CanMinMaxAsymmetric Rational MPBall where
   min = convertPFirst min
   max = convertPFirst max
 
+instance
+  (CanMinMaxAsymmetric MPBall b
+  , CanEnsureCE es (MinMaxType MPBall b)
+  , SuitableForCE es)
+  =>
+  CanMinMaxAsymmetric MPBall (CollectErrors es  b)
+  where
+  type MinMaxType MPBall (CollectErrors es  b) =
+    EnsureCE es (MinMaxType MPBall b)
+  min = lift2TLCE min
+  max = lift2TLCE max
+
+instance
+  (CanMinMaxAsymmetric a MPBall
+  , CanEnsureCE es (MinMaxType a MPBall)
+  , SuitableForCE es)
+  =>
+  CanMinMaxAsymmetric (CollectErrors es a) MPBall
+  where
+  type MinMaxType (CollectErrors es  a) MPBall =
+    EnsureCE es (MinMaxType a MPBall)
+  min = lift2TCE min
+  max = lift2TCE max
+
 {- intersection -}
 
-intersect :: MPBall -> MPBall -> MPBall
-intersect a b
-  | rL > rR = error $ "intersect: empty intersection: " ++ show a ++ "; " ++ show b
-  | otherwise = fromEndpointsMP rL rR
-  where
-  rL = max aL bL
-  rR = min aR bR
-  (aL,aR) = endpointsMP a
-  (bL,bR) = endpointsMP b
+instance CanIntersectAssymetric MPBall MPBall where
+  intersect a b
+    | rL > rR =
+        noValueNumErrorCertainCN $ NumError $ "intersect: empty intersection: " ++ show a ++ "; " ++ show b
+    | otherwise = cn $ fromEndpointsMP rL rR
+    where
+    rL = max aL bL
+    rR = min aR bR
+    (aL,aR) = endpointsMP a
+    (bL,bR) = endpointsMP b
+
+{- union -}
+
+instance CanUnionAssymetric MPBall MPBall where
+  union a b = fromEndpointsMP rL rR
+    where
+    rL = min aL bL
+    rR = max aR bR
+    (aL,aR) = endpointsMP a
+    (bL,bR) = endpointsMP b
 
 {-|
   Computes an *increasing* ball fucntion @f@ from *exact* MPFR operations.

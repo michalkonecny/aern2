@@ -23,7 +23,7 @@ module AERN2.Real.Tests
   )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 -- import Data.Ratio
 -- import Text.Printf
@@ -32,12 +32,11 @@ import Test.Hspec
 import Test.QuickCheck
 -- import qualified Test.Hspec.SmallCheck as SC
 
--- import Numeric.CatchingExceptions
-
 -- import AERN2.Norm
 import AERN2.MP.Accuracy
 --
 import qualified AERN2.MP.Ball.Type as MB
+import AERN2.MP
 import AERN2.MP.Dyadic
 import AERN2.MP.Float
 
@@ -45,14 +44,10 @@ import AERN2.QA.Protocol
 import AERN2.AccuracySG
 
 import AERN2.Real.Type
-import AERN2.Real.Comparison (CauchyRealAtAccuracy(..))
-import AERN2.Real.Ring ()
-import AERN2.Real.Field ()
-import AERN2.Real.Elementary ()
 
 instance Arbitrary CauchyRealAtAccuracy where
   arbitrary =
-    CauchyRealAtAccuracy <$>
+    cauchyRealAtAccuracy <$>
       arbitrary <*>
       ((accuracySG . bits) <$> (arbitrarySmall 1000 :: Gen Integer))
 
@@ -73,7 +68,7 @@ instance Arbitrary CauchyReal where
             Exact -> error "signedBinary2Real: cannot request the number Exactly"
             _ -> balls !! (fromAccuracy acG + 1)
         where
-        balls = nextBit (MB.mpBall (0,1)) sbits
+        balls = nextBit (mpBall (0,1)) sbits
         nextBit ball (sbit:rest) =
           ball : nextBit newBall rest
           where
@@ -118,13 +113,23 @@ specCRrespectsAccuracy1 ::
   (CauchyReal -> CauchyReal) ->
   (CauchyReal -> AccuracySG -> Bool) ->
   Spec
-specCRrespectsAccuracy1 opName op precond =
+specCRrespectsAccuracy1 opName op =
+  specCRrespectsAccuracy1CN opName (\ a -> cn (op a))
+
+specCRrespectsAccuracy1CN ::
+  String ->
+  (CauchyReal -> CauchyRealCN) ->
+  (CauchyReal -> AccuracySG -> Bool) ->
+  Spec
+specCRrespectsAccuracy1CN opName op precond =
   it (opName ++ " respects accuracy requests") $ do
     property $
       \ (x :: CauchyReal) (ac :: Accuracy) ->
         let acSG = accuracySG ac in
         ac < (bits 1000) && precond x acSG ==>
-        getAccuracy ((op x) ? acSG) >= ac
+        case getMaybeValueCN ((op x) ? acSG) of
+          Just v -> getAccuracy v >= ac
+          _ -> True
 
 precondAnyReal :: CauchyReal -> AccuracySG -> Bool
 precondAnyReal _x _ac = True
@@ -148,13 +153,24 @@ specCRrespectsAccuracy2 ::
   (CauchyReal -> AccuracySG -> Bool) ->
   (CauchyReal -> AccuracySG -> Bool) ->
   Spec
-specCRrespectsAccuracy2 opName op precond1 precond2 =
+specCRrespectsAccuracy2 opName op =
+  specCRrespectsAccuracy2CN opName (\ a b -> cn (op a b))
+
+specCRrespectsAccuracy2CN ::
+  String ->
+  (CauchyReal -> CauchyReal -> CauchyRealCN) ->
+  (CauchyReal -> AccuracySG -> Bool) ->
+  (CauchyReal -> AccuracySG -> Bool) ->
+  Spec
+specCRrespectsAccuracy2CN opName op precond1 precond2 =
   it (opName ++ " respects accuracy requests") $ do
     property $
       \ (x :: CauchyReal) (y :: CauchyReal) (ac :: Accuracy) ->
         let acSG = accuracySG ac in
         ac < (bits 1000) && precond1 x acSG && precond2 y acSG  ==>
-        getAccuracy ((op x y) ? acSG) >= ac
+        case getMaybeValueCN ((op x y) ? acSG) of
+          Just v -> getAccuracy v >= ac
+          _ -> True
 
 specCRrespectsAccuracy2T ::
   (Arbitrary t, Show t) =>
@@ -164,13 +180,26 @@ specCRrespectsAccuracy2T ::
   (CauchyReal -> AccuracySG -> Bool) ->
   (t -> Bool) ->
   Spec
-specCRrespectsAccuracy2T (T tName :: T t) opName op precond1 precond2 =
+specCRrespectsAccuracy2T tt opName op =
+  specCRrespectsAccuracy2TCN tt opName (\ a b -> cn (op a b))
+
+specCRrespectsAccuracy2TCN ::
+  (Arbitrary t, Show t) =>
+  T t ->
+  String ->
+  (CauchyReal -> t -> CauchyRealCN) ->
+  (CauchyReal -> AccuracySG -> Bool) ->
+  (t -> Bool) ->
+  Spec
+specCRrespectsAccuracy2TCN (T tName :: T t) opName op precond1 precond2 =
   it (opName ++ " with " ++ tName ++ " respects accuracy requests") $ do
     property $
       \ (x :: CauchyReal) (t :: t) (ac :: Accuracy) ->
         let acSG = accuracySG ac in
         ac < (bits 1000) && precond1 x acSG && precond2 t  ==>
-        getAccuracy ((op x t) ? acSG) >= ac
+        case getMaybeValueCN ((op x t) ? acSG) of
+          Just v -> getAccuracy v >= ac
+          _ -> True
 
 precondAnyT :: t -> Bool
 precondAnyT _t = True
@@ -210,17 +239,17 @@ specCauchyReal =
       specCRrespectsAccuracy2T tRational "*" mul precondAnyReal precondAnyT
       specCRrespectsAccuracy2T tDyadic "*" mul precondAnyReal precondAnyT
     describe "field" $ do
-      specCRrespectsAccuracy2 "/" divide precondAnyReal precondNonZeroReal
-      specCRrespectsAccuracy2T tInteger "/" divide precondAnyReal precondNonZeroT
-      specCRrespectsAccuracy2T tRational "/" divide precondAnyReal precondNonZeroT
-      specCRrespectsAccuracy2T tDyadic "/" divide precondAnyReal precondNonZeroT
+      specCRrespectsAccuracy2CN "/" divide precondAnyReal precondNonZeroReal
+      specCRrespectsAccuracy2TCN tInteger "/" divide precondAnyReal precondNonZeroT
+      specCRrespectsAccuracy2TCN tRational "/" divide precondAnyReal precondNonZeroT
+      specCRrespectsAccuracy2TCN tDyadic "/" divide precondAnyReal precondNonZeroT
     describe "elementary" $ do
-      specCRrespectsAccuracy1 "sqrt" sqrt precondPositiveReal
+      specCRrespectsAccuracy1CN "sqrt" sqrt precondPositiveReal
       specCRrespectsAccuracy1 "exp" exp precondSmallReal
-      specCRrespectsAccuracy1 "log" log precondPositiveSmallReal
-      specCRrespectsAccuracy2 "pow" pow precondPositiveSmallReal precondSmallReal
-      specCRrespectsAccuracy2T tInteger "pow" pow precondNonZeroReal precondSmallT
-      specCRrespectsAccuracy2T tRational "pow" pow precondPositiveSmallReal precondSmallT
-      specCRrespectsAccuracy2T tDyadic "pow" pow precondPositiveSmallReal precondSmallT
+      specCRrespectsAccuracy1CN "log" log precondPositiveSmallReal
+      specCRrespectsAccuracy2CN "pow" pow precondPositiveSmallReal precondSmallReal
+      specCRrespectsAccuracy2TCN tInteger "pow" pow precondNonZeroReal precondSmallT
+      specCRrespectsAccuracy2TCN tRational "pow" pow precondPositiveSmallReal precondSmallT
+      specCRrespectsAccuracy2TCN tDyadic "pow" pow precondPositiveSmallReal precondSmallT
       specCRrespectsAccuracy1 "cos" cos precondAnyReal
       specCRrespectsAccuracy1 "sine" sin precondAnyReal

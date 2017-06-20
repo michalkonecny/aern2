@@ -18,7 +18,7 @@ module AERN2.RealFun.PlotService
 )
 where
 
--- import Numeric.MixedTypes
+-- import MixedTypesNumPrelude
 -- import qualified Prelude as P
 -- import Text.Printf
 

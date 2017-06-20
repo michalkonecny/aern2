@@ -1,6 +1,6 @@
 module AERN2.Poly.Power.SignedSubresultantVector where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import AERN2.MP.Ball
 import AERN2.Poly.Power.Type
 import AERN2.Poly.Basics

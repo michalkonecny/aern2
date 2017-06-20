@@ -5,7 +5,7 @@ module AERN2.Local.Frac
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 import Data.Ratio

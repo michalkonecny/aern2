@@ -15,18 +15,20 @@ module AERN2.QA.Protocol
 (
   -- * QA protocols and objects
   QAProtocol(..), QAProtocolCacheable(..)
-  , QA(..), QAPromiseA, (?..), AnyProtocolQA(..)
+  , QA(..), QAPromiseA, (?..)
+  , mapQA, mapQAsameQ
   -- * QAArrows
-  , QAArrow(..), defaultNewQA
+  , AnyProtocolQA(..)
+  , QAArrow(..), defaultNewQA, QARegOption(..)
   , qaMakeQuery, qaMakeQueryA, qaMakeQueriesA, qaMakeQueryOnManyA
   , (?)
-  , (-:-)
+  , (-:-), (-:-|), (-:-||)
   , (-?-), (-?..-), (-???-), (-<?>-)
   , qaMake2Queries, (??)
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 -- import Text.Printf
 
@@ -35,6 +37,8 @@ import AERN2.Utils.Arrows
 
 -- import Data.Maybe
 import Data.List
+
+import Control.CollectErrors
 
 {-| A QA protocol at this level is simply a pair of types. -}
 class (Show p, Show (Q p), Show (A p)) => QAProtocol p where
@@ -47,6 +51,10 @@ class (QAProtocol p, HasOrderCertainly (Q p) (Q p)) => QAProtocolCacheable p whe
   newQACache :: p -> QACache p
   lookupQACache :: p -> QACache p -> Q p -> (Maybe (A p), Maybe String) -- ^ the String is a log message
   updateQACache :: p -> Q p -> A p -> QACache p -> QACache p
+
+instance (QAProtocol p, SuitableForCE es) => (QAProtocol (CollectErrors es p)) where
+  type Q (CollectErrors es p) = Q p
+  type A (CollectErrors es p) = CollectErrors es (A p)
 
 {-| An object we can ask queries about.  Queries can be asked in some Arrow @to@. -}
 data QA to p = QA__
@@ -67,6 +75,26 @@ type QAPromiseA to a = () `to` a
 
 infix 1 ?..
 
+mapQA ::
+  (Arrow to) =>
+  (p1 -> p2) ->
+  (Q p1 -> Q p2) ->
+  (Q p2 -> Q p1) ->
+  (A p1 -> A p2) ->
+  QA to p1 -> QA to p2
+mapQA
+    translateP translateQ translateBackQ translateA
+    (QA__ name qaid sources p sampleQ makeQ) =
+  QA__ name qaid sources (translateP p) (translateQ sampleQ) $
+    (arr $ ((arr translateA) <<<) ) <<< makeQ <<< arr translateBackQ
+
+mapQAsameQ ::
+  (Arrow to, Q p1 ~ Q p2) =>
+  (p1 -> p2) ->
+  (A p1 -> A p2) ->
+  QA to p1 -> QA to p2
+mapQAsameQ translateP = mapQA translateP id id
+
 data AnyProtocolQA to =
   forall p. (QAProtocolCacheable p) => AnyProtocolQA (QA to p)
 
@@ -75,6 +103,10 @@ anyPqaId (AnyProtocolQA qa) = qaId qa
 
 anyPqaSources :: AnyProtocolQA to -> [QAId to]
 anyPqaSources (AnyProtocolQA qa) = qaSources qa
+
+data QARegOption =
+  QARegPreferParallel | QARegPreferSerial
+  deriving (P.Eq)
 
 {-|
   A class of Arrows suitable for use in QA objects.
@@ -92,7 +124,7 @@ class (ArrowChoice to, P.Eq (QAId to)) => QAArrow to where
     of dependencies **empty**
     as the registration has recorded them elsewhere.
   -}
-  qaRegister :: (QAProtocolCacheable p) => (QA to p) `to` (QA to p)
+  qaRegister :: (QAProtocolCacheable p) => [QARegOption] -> (QA to p) `to` (QA to p)
   {-|
     Create a qa object.  The object is not "registered" automatically.
     Invoking this function does not lead to any `to'-arrow computation.
@@ -148,7 +180,15 @@ infix 1 ?
 
 {-| An infix synonym of 'qaRegister'. -}
 (-:-) :: (QAArrow to, QAProtocolCacheable p) => (QA to p) `to` (QA to p)
-(-:-) = qaRegister
+(-:-) = qaRegister []
+
+{-| An infix synonym of 'qaRegister'. -}
+(-:-||) :: (QAArrow to, QAProtocolCacheable p) => (QA to p) `to` (QA to p)
+(-:-||) = qaRegister [QARegPreferParallel]
+
+{-| An infix synonym of 'qaRegister'. -}
+(-:-|) :: (QAArrow to, QAProtocolCacheable p) => (QA to p) `to` (QA to p)
+(-:-|) = qaRegister [QARegPreferSerial]
 
 {-| An infix synonym of 'qaMakeQueryGetPromiseA'. -}
 (-?..-) :: (QAArrow to) => (QA to p, Q p) `to` (QAPromiseA to (A p))
@@ -174,6 +214,8 @@ infix 0 -:-
 (??) = qaMake2Queries
 
 infix 1 ??
+
+{- arrow conversions -}
 
 {-| Run two queries in an interleaving manner, enabling parallelism. -}
 qaMake2Queries :: (QAArrow to) => (QA to p1, QA to p2) -> (Q p1, Q p2) `to` (A p1, A p2)

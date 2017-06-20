@@ -10,7 +10,7 @@
 -}
 module Values where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import Prelude
 
 import Test.QuickCheck

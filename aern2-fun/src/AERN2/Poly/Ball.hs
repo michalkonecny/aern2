@@ -26,7 +26,7 @@ import Debug.Trace (trace)
 #define maybeTrace (flip const)
 #endif
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 -- import Text.Printf
 
@@ -36,7 +36,7 @@ import Numeric.MixedTypes
 -- import Test.Hspec
 -- import Test.QuickCheck
 
-import AERN2.Utils.TH
+
 
 import AERN2.Normalize
 

@@ -27,7 +27,7 @@ import Debug.Trace (trace)
 #define maybeTraceIO  (\ (_ :: String)-> return ())
 #endif
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 -- import Text.Printf
 
@@ -43,7 +43,7 @@ import AERN2.QA.Protocol
 -}
 instance QAArrow (->) where
   type QAId (->) = ()
-  qaRegister = id
+  qaRegister _ = id
   newQA name sources p sampleQ makeQ =
     addUnsafeMemoisation $
       defaultNewQA name sources p sampleQ makeQ
@@ -90,4 +90,8 @@ addUnsafeMemoisation qa = qa { qaMakeQueryGetPromise = unsafeMemo }
               let a = qaMakeQueryGetPromise qa q ()
               modifyMVar_ cacheVar (const (return (updateQACache p q a cache)))
               -- putStrLn $ printf "memoIO  %s: updated cache: ? %s -> ! %s" name (show q) (show a)
-              return a
+              cache' <- readMVar cacheVar
+              case lookupQACache p cache' q of
+                (Just a', _) -> return a'
+                -- this arranges that any size reductions specified in lookupQACache are applied even when the cache was not used
+                _ -> return a

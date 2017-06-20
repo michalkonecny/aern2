@@ -1,7 +1,7 @@
 module AERN2.Frac.Field
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import AERN2.MP.Accuracy
 import AERN2.MP.Ball
 import AERN2.Interval

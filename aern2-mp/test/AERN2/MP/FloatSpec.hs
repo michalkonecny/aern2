@@ -11,7 +11,7 @@
 
 module AERN2.MP.FloatSpec (spec) where
 
--- import Numeric.MixedTypes
+-- import MixedTypesNumPrelude
 import AERN2.MP.Float.Tests
 
 import Test.Hspec

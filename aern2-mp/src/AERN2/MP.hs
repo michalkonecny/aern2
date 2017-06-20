@@ -21,7 +21,7 @@ module AERN2.MP
 )
 where
 
--- import Numeric.MixedTypes
+-- import MixedTypesNumPrelude
 -- import qualified Prelude as P
 -- import Text.Printf
 

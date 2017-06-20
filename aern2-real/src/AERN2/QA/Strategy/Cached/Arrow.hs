@@ -28,7 +28,7 @@ import Debug.Trace (trace)
 #define maybeTrace (\ (_ :: String) t -> t)
 #endif
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 -- import Text.Printf
 
@@ -56,7 +56,7 @@ instance Monad QACachedM where
 
 instance QAArrow QACachedA where
   type QAId QACachedA = ValueId
-  qaRegister = Kleisli qaRegisterM
+  qaRegister _ = Kleisli qaRegisterM
     where
     qaRegisterM (QA__ name Nothing sourceIds p sampleQ (Kleisli q2pa)) =
       do

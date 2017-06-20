@@ -22,7 +22,7 @@ module AERN2.MP.Precision
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 import Text.Printf
 
@@ -108,6 +108,17 @@ instance CanSetPrecision t => CanSetPrecision (Complex t) where
   setPrecision p (a :+ i) =
     (setPrecision p a) :+ (setPrecision p i)
 
+instance HasPrecision t => HasPrecision (Maybe t) where
+  getPrecision (Just v) = getPrecision v
+  getPrecision Nothing = defaultPrecision
+instance CanSetPrecision t => CanSetPrecision (Maybe t) where
+  setPrecision p = fmap (setPrecision p)
+
+instance HasPrecision Bool where
+  getPrecision _ = defaultPrecision
+instance CanSetPrecision Bool where
+  setPrecision _ = id
+
 lowerPrecisionIfAbove :: (CanSetPrecision t) => Precision -> t -> t
 lowerPrecisionIfAbove p x
   | getPrecision x > p = setPrecision p x
@@ -139,9 +150,9 @@ maximumPrecision = Precision 1000000
 defaultPrecision :: Precision
 defaultPrecision = Precision 100
 
-standardPrecisions :: [Precision]
-standardPrecisions =
-    map Precision $ aux 8 13
+standardPrecisions :: Precision -> [Precision]
+standardPrecisions (Precision initPrec) =
+    map Precision $ aux initPrec (3*initPrec `P.div` 2)
     where
     aux j j'
         | Precision j <= maximumPrecision = j : (aux j' (j+j'))
@@ -151,17 +162,18 @@ precisionTimes2 :: Precision -> Precision
 precisionTimes2 (Precision p) = Precision (2*p)
 
 iterateUntilOK ::
+    Precision ->
     (a -> Bool) ->
     (Precision -> a) ->
     [(Precision, a)]
-iterateUntilOK isOK fn =
+iterateUntilOK initPrec isOK fn =
     stopWhenAccurate ps
     where
 --    fnWrap p =
 --        unsafePerformIO $
 --            catch (return $! Just $! fn p)
 --                (\e -> let _ = e :: SomeException in return Nothing)
-    ps = standardPrecisions
+    ps = standardPrecisions initPrec
     stopWhenAccurate [] = []
     stopWhenAccurate (p : rest)
       | isOK result = [(p, result)]

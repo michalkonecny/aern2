@@ -28,7 +28,7 @@ import Debug.Trace (trace)
 #define maybeTraceIO  (\ (_ :: String)-> return ())
 #endif
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 import Text.Printf
 
@@ -58,8 +58,9 @@ instance MonadIO QAParM where
 
 instance QAArrow QAParA where
   type QAId QAParA = ()
-  qaRegister = Kleisli qaRegisterM
+  qaRegister options = Kleisli qaRegisterM
     where
+    isParallel = not (QARegPreferSerial `elem` options)
     qaRegisterM qa@(QA__ name Nothing _sourceIds (p :: p) sampleQ _) =
       QAParM $
         do
@@ -110,8 +111,11 @@ instance QAArrow QAParA where
           case lookupQACache p cache q of
             (Just a, _mLogMsg) -> return a
             (_, _mLogMsg) -> retry
-        forkComputation computeId =
-          forkIO $
+        forkComputation computeId
+          | isParallel = do { _ <- forkIO computation; return () }
+          | otherwise = do { computation; return () }
+          where
+          computation =
             do
             -- compute an answer:
             a <- unQAParM $ runKleisli (qaMakeQuery qa) q

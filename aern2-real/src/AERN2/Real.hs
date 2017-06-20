@@ -26,39 +26,37 @@ module AERN2.Real
   , CanBeComplex, complex, CanBeComplexA, complexA
   -- * constants
   , pi, piA
-  -- * arrow-generic versions of some operations
-  , expA, logA, sqrtA, sinA, cosA
-  -- * auxiliary functions for making new real operations
-  , unaryOp, binaryOp, binaryOpWithPureArg
-  , getCRFnNormLog
-  , getInitQ1FromSimple, getInitQ1TFromSimple, getInitQ1Q2FromSimple
-  , binaryWithBall
   -- * mini tests
   , _addslACachedPrint
   , _addslAParPrint
+  , _example_pif
+  , _trisection
 )
 where
 
-import Numeric.MixedTypes hiding (id)
+import AERN2.MP
+import AERN2.QA.Protocol
+import AERN2.AccuracySG
+import AERN2.Sequence ()
+import AERN2.Real.Type
+import AERN2.Real.Arithmetic (pi, piA)
+import AERN2.Real.Tests ()
+
+-- imports used in examples below:
+
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 import Control.Arrow
 
-import AERN2.MP
-
-import AERN2.QA.Protocol
-import AERN2.AccuracySG
-import AERN2.Real.Type
-import AERN2.Real.Helpers
-import AERN2.Real.Comparison ()
-import AERN2.Real.Ring ()
-import AERN2.Real.Field ()
-import AERN2.Real.Elementary
-import AERN2.Real.Tests ()
-
 import AERN2.QA.NetLog
 import AERN2.QA.Strategy.Cached
 import AERN2.QA.Strategy.Parallel
+
+import Text.Printf
+import AERN2.MP.Dyadic
+import AERN2.Sequence
+
 
 {-|
   Example arrow-generic real number computation
@@ -95,7 +93,7 @@ _addAcachedPrint =
       x <-_addAcached -< ()
       (-?-) -< (x, bitsS 10)
 
-_addslA :: (QAArrow to) => (CauchyRealA to) `to` (CauchyRealA to)
+_addslA :: (QAArrow to) => (CauchyRealA to) `to` (CauchyRealCNA to)
 _addslA =
   proc x ->
     do
@@ -123,3 +121,43 @@ _addslAParPrint =
       x <-_addslA -< realA 2
       (-?-) -< (x, bitsS 100)
   print r
+
+{- parallel branching -}
+
+_example_pif :: CauchyReal -> CauchyReal
+_example_pif r =
+  if r < 0 then -r else r -- abs via parallel if
+
+_trisection ::
+  (Dyadic -> CauchyReal) ->
+  (Dyadic,Dyadic) ->
+  CauchyRealCN
+_trisection f (l,r) =
+  newSeqSimple (cn $ mpBall 0) $ fromSegment l r
+  where
+  fromSegment :: Dyadic -> Dyadic -> AccuracySG -> CN MPBall
+  fromSegment a b ac
+    | getAccuracy ab >= ac  = cn ab
+    | otherwise             = pick [tryM m1, tryM m2]
+    where
+    ab = fromEndpoints (mpBall a) (mpBall b) :: MPBall
+    m1 = (5*a + 3*b)*(dyadic (1/!8))
+    m2 = (3*a + 5*b)*(dyadic (1/!8))
+    tryM :: Dyadic -> Sequence (Maybe (CN MPBall))
+    tryM m = newSeqSimple Nothing withAC
+      where
+      withAC :: AccuracySG -> Maybe (CN MPBall)
+      withAC acF
+        | fa * fm !<! 0 = Just $ fromSegment a m ac
+        | fm * fb !<! 0 = Just $ fromSegment m b ac
+        | fa * fb !>=! 0 = Just $ err
+        | otherwise = Nothing
+        where
+        fa = (f a) ? acF
+        fm = (f m) ? acF
+        fb = (f b) ? acF
+    err :: CN MPBall
+    err =
+      noValueNumErrorCertainCN $
+        NumError $
+          printf "trisection: function does not have opposite signs on points %s %s" (show a) (show b)

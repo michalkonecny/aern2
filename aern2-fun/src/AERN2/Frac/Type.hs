@@ -1,6 +1,6 @@
 module AERN2.Frac.Type where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import AERN2.MP
 import AERN2.MP.Dyadic
 import AERN2.Normalize

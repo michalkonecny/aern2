@@ -19,7 +19,7 @@ import Debug.Trace (trace)
 #define maybeTrace (flip const)
 #endif
 
-import Numeric.MixedTypes hiding (maximum, minimum)
+import MixedTypesNumPrelude hiding (maximum, minimum)
 
 --import Text.Printf
 

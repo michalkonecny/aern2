@@ -16,7 +16,7 @@ module AERN2.Poly
 -- )
 where
 
--- import Numeric.MixedTypes
+-- import MixedTypesNumPrelude
 -- import qualified Prelude as P
 -- import Text.Printf
 

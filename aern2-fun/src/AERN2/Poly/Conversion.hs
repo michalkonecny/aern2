@@ -1,7 +1,7 @@
 module AERN2.Poly.Conversion
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import AERN2.Poly.Basics
 import AERN2.Poly.Power.Type
 import AERN2.Poly.Power (PowPoly)

@@ -12,7 +12,7 @@
 -}
 module AERN2.QA.NetLog where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 
 type QANetLog = [QANetLogItem]

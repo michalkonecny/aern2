@@ -1,6 +1,6 @@
 {-|
     Module      :  AERN2.AccuracySG
-    Description :  The type of Cauchy real numbers
+    Description :  strict and guide accuracy pairs
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -8,19 +8,24 @@
     Stability   :  experimental
     Portability :  portable
 
-    The type of Cauchy real numbers
+    strict and guide accuracy pairs
 -}
 module AERN2.AccuracySG
 (
   AccuracySG(..), acSG0, accuracySG, bitsS, bitsSG
 , accuracySGdefaultTolerance
+, CanAdjustToAccuracySG(..)
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 
+-- import qualified Control.CollectErrors as CE
+import Control.CollectErrors (CollectErrors) --, EnsureCE, CanEnsureCE, ensureCE)
+
 import AERN2.MP.Accuracy
+import AERN2.MP.Ball
 
 {-| An accuracy specification which includes a soft target "guide" accuracy
     in addition to the usual string accuracy requirement. -}
@@ -91,3 +96,20 @@ instance CanAddAsymmetric Integer AccuracySG where
   type AddType Integer AccuracySG = AccuracySG
   add = flip add
 instance CanSub AccuracySG Integer where
+
+
+class CanAdjustToAccuracySG t where
+  adjustToAccuracySG :: AccuracySG -> t -> t
+
+instance CanAdjustToAccuracySG MPBall where
+  adjustToAccuracySG (AccuracySG acS acG) =
+    setPrecisionAtLeastAccuracy acS . reduceSizeUsingAccuracyGuide acG
+
+instance CanAdjustToAccuracySG Bool where
+  adjustToAccuracySG _ = id
+
+instance CanAdjustToAccuracySG t => CanAdjustToAccuracySG (Maybe t) where
+  adjustToAccuracySG acSG = fmap (adjustToAccuracySG acSG)
+
+instance CanAdjustToAccuracySG t => CanAdjustToAccuracySG (CollectErrors es t) where
+  adjustToAccuracySG acSG = fmap (adjustToAccuracySG acSG)

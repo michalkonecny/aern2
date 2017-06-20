@@ -14,7 +14,7 @@ module AERN2.Normalize
 )
 where
 
--- import Numeric.MixedTypes
+-- import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 class CanNormalize t where

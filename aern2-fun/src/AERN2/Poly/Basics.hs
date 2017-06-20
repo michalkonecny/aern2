@@ -33,7 +33,7 @@ module AERN2.Poly.Basics
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 -- import Text.Printf
 
@@ -43,7 +43,7 @@ import qualified Data.List as List
 -- import Test.Hspec
 -- import Test.QuickCheck
 
-import AERN2.Utils.TH
+
 
 -- import AERN2.MP.ErrorBound
 import AERN2.MP.Ball

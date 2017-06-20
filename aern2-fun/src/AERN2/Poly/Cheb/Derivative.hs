@@ -12,7 +12,7 @@
 -}
 module AERN2.Poly.Cheb.Derivative where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 
 import AERN2.Normalize
 

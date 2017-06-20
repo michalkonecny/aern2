@@ -21,7 +21,7 @@ module AERN2.MP.Float.Constants
   )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 -- import Data.Ratio
 
@@ -50,4 +50,7 @@ itisInfinite x =
 
 instance CanTestFinite MPFloat where
   isInfinite = itisInfinite
+  isFinite x = not (itisInfinite x || itisNaN x)
+
+instance CanTestNaN MPFloat where
   isNaN = itisNaN

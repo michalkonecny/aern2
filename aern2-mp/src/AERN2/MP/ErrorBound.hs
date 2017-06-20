@@ -18,7 +18,7 @@ module AERN2.MP.ErrorBound
      absMP, subMP)
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import Data.Typeable
@@ -197,7 +197,9 @@ instance CanMulAsymmetric Rational ErrorBound where
         | otherwise = error "trying to multiply ErrorBound by a negative integer"
 
 instance CanDiv ErrorBound Integer where
+    type DivTypeNoCN ErrorBound Integer = ErrorBound
     type DivType ErrorBound Integer = ErrorBound
+    divideNoCN = divide
     divide (ErrorBound a) i
         | i > 0 = ErrorBound $ a /^ (MPFloat.fromIntegerUp errorBoundPrecision i)
         | otherwise = error "trying to multiply ErrorBound by a non-positive integer"
@@ -214,6 +216,6 @@ instance Arbitrary ErrorBound where
         | otherwise =
           do
           (s :: Integer) <- arbitrary
-          let resultR = ((abs s) `mod` (2^35))/(2^32)
+          let resultR = ((abs s) `mod` (2^!35))/!(2^!32)
           let result = convert resultR
           return result

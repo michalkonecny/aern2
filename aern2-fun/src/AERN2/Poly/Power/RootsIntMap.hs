@@ -13,7 +13,7 @@ module AERN2.Poly.Power.RootsIntMap
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import Data.Map (Map)
 import qualified Data.Map as Map
 import qualified Prelude

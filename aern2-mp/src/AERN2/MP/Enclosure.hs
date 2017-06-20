@@ -15,14 +15,20 @@ module AERN2.MP.Enclosure
   IsBall(..)
   , IsInterval(..), intervalFunctionByEndpoints, intervalFunctionByEndpointsUpDown
   , CanTestContains(..), CanMapInside(..), specCanMapInside
-)
+  , CanIntersectAssymetric(..), CanIntersect
+  , CanIntersectBy, CanIntersectSameType
+  , CanIntersectCNBy, CanIntersectCNSameType
+  , CanUnionAssymetric(..), CanUnion, CanUnionBy, CanUnionSameType
+  )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 import Test.Hspec
 import Test.QuickCheck
+
+import Control.CollectErrors
 
 import AERN2.MP.ErrorBound
 
@@ -111,3 +117,93 @@ specCanMapInside (T dName :: T d) (T eName :: T e) =
     property $
       \ (d :: d) (e :: e) ->
         contains d $ mapInside d e
+
+{- intersection -}
+
+type CanIntersect e1 e2 = (CanIntersectAssymetric e1 e2, CanIntersectAssymetric e1 e2)
+
+class CanIntersectAssymetric e1 e2 where
+  type IntersectionType e1 e2
+  type IntersectionType e1 e2 = EnsureCN e1
+  intersect :: e1 -> e2 -> IntersectionType e1 e2
+
+type CanIntersectBy e1 e2 = (CanIntersect e1 e2, IntersectionType e1 e2 ~ e1)
+type CanIntersectCNBy e1 e2 = (CanIntersect e1 e2, IntersectionType e1 e2 ~ EnsureCN e1)
+
+type CanIntersectSameType e1 = CanIntersectBy e1 e1
+type CanIntersectCNSameType e1 = CanIntersectCNBy e1 e1
+
+instance CanIntersectAssymetric Bool Bool where
+  intersect b1 b2
+    | b1 == b2 = cn b1
+    | otherwise =
+      noValueNumErrorCertainCN $ NumError "empty Boolean intersection"
+
+instance
+  (CanIntersectCNSameType a, CanEnsureCN a)
+  =>
+  CanIntersectAssymetric (Maybe a) (Maybe a)
+  where
+  type IntersectionType (Maybe a) (Maybe a) = EnsureCN (Maybe a)
+  intersect (ma :: Maybe a) mb =
+    case (ma, mb) of
+      (Just a, Just b) -> justCN sample_a (intersect a b)
+      (Just a, Nothing) -> justCN sample_a (ensureCN a)
+      (Nothing, Just b) -> justCN sample_a (ensureCN b)
+      _ -> cn (Nothing :: Maybe a)
+    where
+    sample_a = Nothing :: Maybe a
+
+justCN :: (CanEnsureCN a) => Maybe a -> EnsureCN a -> EnsureCN (Maybe a)
+justCN (_sample_a :: Maybe a) aCN =
+  case deEnsureCN aCN of
+    Right a -> cn (Just (a :: a))
+    _ -> cn (Nothing :: Maybe a)
+
+
+-- --- Version that removes inner CN:
+-- instance
+--   (CanIntersectCNSameType a, CanEnsureCN a)
+--   =>
+--   CanIntersectAssymetric (Maybe a) (Maybe a)
+--   where
+--   type IntersectionType (Maybe a) (Maybe a) = CN (Maybe (WithoutCN (IntersectionType a a)))
+--   intersect (Just a) (Just b) = fmap Just (intersect a b)
+--   intersect (Just a) Nothing = fmap Just (ensureCN a)
+--   intersect Nothing (Just b) = fmap Just (ensureCN b)
+--   intersect Nothing Nothing = cn Nothing
+--
+instance
+  (CanIntersectAssymetric e1 e2, SuitableForCE es, CanEnsureCE es (IntersectionType e1 e2))
+  =>
+  CanIntersectAssymetric (CollectErrors es e1) (CollectErrors es e2)
+  where
+  type IntersectionType (CollectErrors es e1) (CollectErrors es e2) =
+    EnsureCE es (IntersectionType e1 e2)
+  intersect = lift2CE intersect
+
+{- union -}
+
+type CanUnion e1 e2 = (CanUnionAssymetric e1 e2, CanUnionAssymetric e1 e2)
+
+class CanUnionAssymetric e1 e2 where
+  type UnionionType e1 e2
+  type UnionionType e1 e2 = e1
+  union :: e1 -> e2 -> UnionionType e1 e2
+
+type CanUnionBy e1 e2 = (CanUnion e1 e2, UnionionType e1 e2 ~ e1)
+
+type CanUnionSameType e1 = CanUnionBy e1 e1
+
+instance
+  (CanUnionAssymetric e1 e2, SuitableForCE es, CanEnsureCE es (UnionionType e1 e2))
+  =>
+  CanUnionAssymetric (CollectErrors es e1) (CollectErrors es e2)
+  where
+  type UnionionType (CollectErrors es e1) (CollectErrors es e2) =
+    EnsureCE es (UnionionType e1 e2)
+  union = lift2CE union
+
+instance (CanUnionSameType t) => HasIfThenElse (Maybe Bool) t where
+  ifThenElse (Just b) e1 e2 = if b then e1 else e2
+  ifThenElse Nothing e1 e2 = e1 `union` e2

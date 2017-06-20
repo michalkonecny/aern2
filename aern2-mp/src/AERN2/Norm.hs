@@ -14,7 +14,7 @@ module AERN2.Norm
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import Data.Complex
@@ -56,7 +56,7 @@ instance HasNorm Rational where
     getNormLog x
         | x == 0.0 = NormZero
         | abs x >= 1.0 = getNormLog $ ceiling $ abs x
-        | otherwise = NormBits $ negate $ integer $ integerLog2 $ floor (1 / (abs x))
+        | otherwise = NormBits $ negate $ integer $ integerLog2 $ floor $ (1 /! (abs x))
 
 instance
   (HasNorm t)

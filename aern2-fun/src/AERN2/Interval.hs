@@ -24,7 +24,7 @@ module AERN2.Interval
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 import Text.Printf
 -- import Text.Regex.TDFA
@@ -39,7 +39,7 @@ import Data.Typeable
 -- import Test.Hspec
 import Test.QuickCheck
 
-import AERN2.Utils.TH
+
 
 import AERN2.MP.Dyadic
 import AERN2.MP.Ball hiding (intersect)

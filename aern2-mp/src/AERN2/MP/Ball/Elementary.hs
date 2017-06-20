@@ -20,7 +20,7 @@ module AERN2.MP.Ball.Elementary
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import AERN2.Normalize
@@ -96,26 +96,36 @@ instance CanExp MPBall where
   exp = intervalFunctionByEndpointsUpDown MPFloat.expDown MPFloat.expUp
 
 instance CanLog MPBall where
+  type LogType MPBall = CN MPBall
   log x
-    | x !>! 0 = intervalFunctionByEndpointsUpDown MPFloat.logDown MPFloat.logUp x
-    | otherwise = error $ "MPBall log: cannot establish that the argument is positive: " ++ show x
+    | x !>! 0 =
+        cn $ intervalFunctionByEndpointsUpDown MPFloat.logDown MPFloat.logUp x
+    | x !<=! 0 = noValueNumErrorCertainCN err
+    | otherwise = noValueNumErrorPotentialCN err
+    where
+    err = OutOfRange $ "log: argument must be > 0: " ++ show x
 
 instance CanPow MPBall MPBall where
+  type PowType MPBall MPBall = CN MPBall
   pow = powUsingExpLog
 
 instance CanPow MPBall Dyadic where
+  type PowType MPBall Dyadic = CN MPBall
   pow x q = powUsingExpLog x (mpBall q)
 
 instance CanPow MPBall Rational where
+  type PowType MPBall Rational = CN MPBall
   pow x q = powUsingExpLog x (mpBallP (getPrecision x) q)
 
 instance CanSqrt MPBall where
+  type SqrtType MPBall = CN MPBall
   sqrt x
-    | x !>=! 0 = aux x
-    --- | x ?>=? 0 = aux (max 0 x)
-    | otherwise = error $ "MPBall sqrt: cannot establish that the argument is non-negative: " ++ show x
+    | x !>=! 0 = cn $ aux x
+    | x !<! 0 = noValueNumErrorCertainCN err
+    | otherwise = prependErrorsCN [(ErrorPotential, err)] $ cn $ aux (max 0 x)
     where
-      aux = intervalFunctionByEndpointsUpDown MPFloat.sqrtDown MPFloat.sqrtUp
+    aux = intervalFunctionByEndpointsUpDown MPFloat.sqrtDown MPFloat.sqrtUp
+    err = OutOfRange $ "sqrt: argument must be >= 0: " ++ show x
 
 {- Instances of Prelude numerical classes provided for convenient use outside AERN2
    and also because Template Haskell translates (-x) to (Prelude.negate x) -}
@@ -141,20 +151,20 @@ instance P.Ord MPBall where
         | (r1 < r2) == Just True = LT
         | (r1 > r2) == Just True = GT
         | (r1 == r2) == Just True = EQ
-        | otherwise = error "AERN2.Num.MPBall: compare: cannot decide"
+        | otherwise = error "MPBall: compare: cannot decide"
 
 instance P.Fractional MPBall where
     fromRational = convertExactly . dyadic -- will work only for dyadic rationals
-    recip = recip
-    (/) = (/)
+    recip = (~!) . recip
+    (/) = (/!)
 
 instance P.Floating MPBall where
-    pi = error "MPBall: pi not implemented" -- no global precision to pick
-    sqrt = sqrt
+    pi = error "MPBall: no pi :: MPBall, use pi ? (bitsS n) instead"
+    sqrt = (~!) . sqrt
     exp = exp
     sin = sin
     cos = cos
-    log = log
+    log = (~!) . log
     atan = error "MPBall: atan not implemented yet"
     atanh = error "MPBall: atanh not implemented yet"
     asin = error "MPBall: asin not implemented yet"

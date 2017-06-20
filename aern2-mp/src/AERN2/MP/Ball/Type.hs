@@ -25,14 +25,14 @@ module AERN2.MP.Ball.Type
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
+
+import Control.CollectErrors
 
 import GHC.Generics (Generic)
 
-import Numeric.CatchingExceptions (CanTestValid(..))
-
-import AERN2.Utils.TH
+import Text.Printf
 
 import AERN2.Normalize
 
@@ -49,29 +49,39 @@ import AERN2.MP.ErrorBound (ErrorBound, errorBound)
 import AERN2.MP.Enclosure
 
 data MPBall = MPBall
-  -- { ball_value :: MPFloat
-  -- , ball_error :: ErrorBound
-  -- }
-  { ball_value :: {-# UNPACK #-} ! MPFloat
-  , ball_error :: {-# UNPACK #-} ! ErrorBound
+  { ball_value :: MPFloat
+  , ball_error :: ErrorBound
   }
+  -- { ball_value :: {-# UNPACK #-} ! MPFloat
+  -- , ball_error :: {-# UNPACK #-} ! ErrorBound
+  -- }
   deriving (Generic)
 
 instance Show MPBall
     where
-    show (MPBall x e) =
-      "[" ++ show x ++ " ± " ++ show e ++ "](prec=" ++ (show $ integer $ getPrecision x) ++ ")"
+    show b@(MPBall x _e) =
+      printf "[%s ± %s]" (show x) (showAC $ getAccuracy b)
+      -- "[" ++ show x ++ " ± " ++ show e ++ "](prec=" ++ (show $ integer $ getPrecision x) ++ ")"
+      where
+      showAC Exact = "0"
+      showAC NoInformation = "oo"
+      showAC ac = "<2^(" ++ show (negate $ fromAccuracy ac) ++ ")"
 
-instance CanTestValid MPBall where
-  isValid (MPBall x e) = isFinite x && isFinite (mpFloat e)
 
+instance (SuitableForCE es) => CanEnsureCE es MPBall where
+
+-- instance CanTestValid MPBall where
+--   isValid = isFinite
+
+instance CanTestNaN MPBall where
+  isNaN = not . isFinite
 instance CanTestFinite MPBall where
-  isNaN = not . isValid
   isInfinite = const False
+  isFinite (MPBall x e) = isFinite x && isFinite (mpFloat e)
 
 instance CanNormalize MPBall where
   normalize b
-    | isValid b =
+    | isFinite b =
         b
         -- reducePrecionIfInaccurate b
     | otherwise = error $ "invalid MPBall: " ++ show b
@@ -193,14 +203,26 @@ instance HasAccuracy MPBall where
 
 instance CanReduceSizeUsingAccuracyGuide MPBall where
   reduceSizeUsingAccuracyGuide acGuide b@(MPBall x _e) =
-    lowerPrecisionIfAbove (getPrecision bWithLowAC) b
+    case acGuide of
+      Exact -> b
+      NoInformation ->
+        lowerPrecisionIfAbove (prec 2) b
+      _ ->
+        lowerPrecisionIfAbove newPrec b
     where
-    bWithLowAC =
-      case acGuide of
-        Exact -> b
-        NoInformation -> b
-        _ -> normalize $
-              MPBall x (errorBound $ 0.5^(fromAccuracy acGuide))
+    queryBits = fromAccuracy acGuide
+    newPrec =
+      case (getNormLog x) of
+        NormBits xNormBits ->
+          prec (max 2 (queryBits + xNormBits + 2))
+        NormZero ->
+          prec $ max 2 queryBits
+    -- bWithLowAC =
+    --   case acGuide of
+    --     Exact -> b
+    --     NoInformation -> b
+    --     _ -> normalize $
+    --           MPBall x (errorBound ((0.5^(fromAccuracy acGuide))⚡))
 
 instance HasNorm MPBall where
     getNormLog ball = getNormLog boundMP

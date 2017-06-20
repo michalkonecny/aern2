@@ -6,7 +6,7 @@ module AERN2.Analytic
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import AERN2.Real
 import Data.List
 

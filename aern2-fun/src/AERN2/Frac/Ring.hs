@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module AERN2.Frac.Ring where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import AERN2.MP.Ball
 import AERN2.Poly.Basics
 import AERN2.Poly.Cheb
@@ -10,7 +10,7 @@ import AERN2.Frac.Type
 import AERN2.MP.Dyadic
 import AERN2.Real
 
-import AERN2.Utils.TH
+
 
 instance (PolyCoeffRing a, a ~ MPBall)
   => CanMulAsymmetric (Frac a) (Frac a)

@@ -7,7 +7,7 @@ module AERN2.Frac.Eval
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import AERN2.MP.Dyadic
 import AERN2.MP.Ball
 

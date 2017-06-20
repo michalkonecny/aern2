@@ -9,7 +9,7 @@ module AERN2.Frac.Maximum
 )
 where
 
-import Numeric.MixedTypes hiding (maximum, minimum)
+import MixedTypesNumPrelude hiding (maximum, minimum)
 
 import qualified Data.Map as Map
 

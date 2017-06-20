@@ -33,7 +33,7 @@ module AERN2.MP.Ball
 )
 where
 
--- import Numeric.MixedTypes
+-- import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 import AERN2.Norm

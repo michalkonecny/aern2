@@ -19,7 +19,7 @@ module AERN2.QA.Strategy.Cached.NetState
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 -- import Text.Printf
 
@@ -126,8 +126,10 @@ getAnswerPromise ns (p :: p) valueId q =
       do
       pa <- q2pa q
       a <- runKleisli pa ()
+      let cache' = updateQACache p q a cache
+      let a' = case lookupQACache p cache' q of (Just aa, _) -> aa; _ -> a
       if should_cache
-        then return $ \() -> return (a, logMsg, updateQACache p q a cache)
+        then return $ \() -> return (a', logMsg, cache')
         else return $ \() -> return (a, logMsg, cache)
       where logMsg = "not used cache" ++ case mLogMsg of Nothing -> ""; (Just m) -> " (" ++ m ++ ")"
   where

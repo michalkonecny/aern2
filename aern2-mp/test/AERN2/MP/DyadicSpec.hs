@@ -11,7 +11,7 @@
 
 module AERN2.MP.DyadicSpec (spec) where
 
--- import Numeric.MixedTypes
+-- import MixedTypesNumPrelude
 import AERN2.MP.Dyadic
 
 import Test.Hspec

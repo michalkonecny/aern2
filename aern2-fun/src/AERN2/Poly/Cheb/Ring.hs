@@ -27,14 +27,14 @@ import Debug.Trace (trace)
 #define maybeTrace ((flip const :: (String -> a -> a)))
 #endif
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 import Text.Printf
 
 -- import Test.Hspec
 -- import Test.QuickCheck
 
-import AERN2.Utils.TH
+
 
 import AERN2.Normalize
 

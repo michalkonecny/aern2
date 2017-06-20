@@ -1,6 +1,6 @@
 module AERN2.PPoly.Maximum where
 
-import Numeric.MixedTypes hiding (maximum, minimum)
+import MixedTypesNumPrelude hiding (maximum, minimum)
 import qualified Prelude
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic

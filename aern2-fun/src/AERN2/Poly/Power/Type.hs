@@ -2,9 +2,9 @@
 module AERN2.Poly.Power.Type
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import AERN2.Poly.Basics
-import AERN2.Utils.TH
+
 import qualified Data.Map as Map
 import AERN2.MP.Ball hiding (iterateUntilAccurate)
 import AERN2.MP.Dyadic

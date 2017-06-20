@@ -20,7 +20,7 @@ module AERN2.Tolerant
 )
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 -- import Text.Printf
 -- import Data.Ratio

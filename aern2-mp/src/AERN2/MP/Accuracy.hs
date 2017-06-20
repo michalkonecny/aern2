@@ -12,8 +12,8 @@
 -}
 module AERN2.MP.Accuracy
     (Accuracy(NoInformation, Exact), bits, fromAccuracy,
-     normLog2Accuracy,
      HasAccuracy(..), getFiniteAccuracy,
+     ac2prec,
      CanReduceSizeUsingAccuracyGuide(..),
       specCanReduceSizeUsingAccuracyGuide,
      iterateUntilAccurate,
@@ -23,17 +23,15 @@ module AERN2.MP.Accuracy
      HasApproximate(..))
 where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import qualified Prelude as P
+
+import Control.CollectErrors
 
 import Data.Complex
 
-import Control.Lens
-
 import Test.Hspec
 import Test.QuickCheck
-
-import Numeric.CatchingExceptions
 
 import AERN2.Norm
 import AERN2.MP.Precision
@@ -70,13 +68,12 @@ instance ConvertibleExactly Int Accuracy where
   safeConvertExactly = Right . Bits . integer
 instance ConvertibleExactly Precision Accuracy where
   safeConvertExactly = Right . Bits . integer
+instance ConvertibleExactly NormLog Accuracy where
+  safeConvertExactly (NormBits b) = Right $ bits (-b)
+  safeConvertExactly NormZero = Right Exact
 
 bits :: (ConvertibleExactly t Accuracy) => t -> Accuracy
 bits = convertExactly
-
-normLog2Accuracy :: NormLog -> Accuracy
-normLog2Accuracy (NormBits b) = bits (-b)
-normLog2Accuracy NormZero = Exact
 
 instance Show Accuracy where
     show (NoInformation) = "NoInformation"
@@ -176,15 +173,14 @@ instance CanSub Accuracy Integer where
 class HasAccuracy a where
   getAccuracy :: a -> Accuracy
 
-instance HasAccuracy a => HasAccuracy (CatchingNumExceptions a) where
+instance (HasAccuracy a, SuitableForCE es) => HasAccuracy (CollectErrors es a) where
   getAccuracy aCE =
-    case aCE ^. numEXC_maybeValue of
-      Just v -> getAccuracy v
-      _ -> NoInformation
+    getValueIfNoErrorCE aCE getAccuracy (const NoInformation)
 
 instance HasAccuracy Int where getAccuracy _ = Exact
 instance HasAccuracy Integer where getAccuracy _ = Exact
 instance HasAccuracy Rational where getAccuracy _ = Exact
+instance HasAccuracy Bool where getAccuracy _ = Exact
 
 instance HasAccuracy t => HasAccuracy (Complex t) where
   getAccuracy (a :+ i) =
@@ -192,6 +188,10 @@ instance HasAccuracy t => HasAccuracy (Complex t) where
 
 instance HasAccuracy t => HasAccuracy [t] where
   getAccuracy xs = foldl min Exact $ map getAccuracy xs
+
+instance HasAccuracy t => HasAccuracy (Maybe t) where
+  getAccuracy (Just x) = getAccuracy x
+  getAccuracy _ = NoInformation
 
 {-| Return accuracy, except when the element is Exact, return its nominal Precision dressed as Accuracy.
     This function is useful when we have a convergent sequence where all elements happen to be
@@ -211,10 +211,16 @@ iterateUntilAccurate ::
   (Precision -> Maybe t) ->
   [(Precision, Maybe t)]
 iterateUntilAccurate ac =
-  iterateUntilOK $ \maybeResult ->
-      case maybeResult of
-          Just result -> getAccuracy result >= ac
-          _ -> False
+  iterateUntilOK (ac2prec ac) $ \maybeResult ->
+    case maybeResult of
+      Just result -> getAccuracy result >= ac
+      _ -> False
+
+ac2prec :: Accuracy -> Precision
+ac2prec ac =
+  case ac of
+    Bits b -> prec (max 2 $ b + 50)
+    _ -> prec 100
 
 seqByPrecision2CauchySeq ::
     (HasAccuracy t) =>
@@ -223,7 +229,7 @@ seqByPrecision2CauchySeq seqByPrecision ac =
     convergentList2CauchySeq list ac
     where
     list =
-      map seqByPrecision $ dropWhile (lowPrec ac) standardPrecisions
+      map seqByPrecision $ dropWhile (lowPrec ac) (standardPrecisions (ac2prec ac))
     lowPrec Exact _ = False
     lowPrec _ p = bits p < ac
 

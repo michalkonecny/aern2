@@ -1,6 +1,6 @@
 module AERN2.Frac.Conversion where
 
-import Numeric.MixedTypes
+import MixedTypesNumPrelude
 import AERN2.MP.Ball
 
 import AERN2.Frac.Type
