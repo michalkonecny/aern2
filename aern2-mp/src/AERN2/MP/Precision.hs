@@ -151,9 +151,10 @@ defaultPrecision :: Precision
 defaultPrecision = Precision 100
 
 standardPrecisions :: Precision -> [Precision]
-standardPrecisions (Precision initPrec) =
-    map Precision $ aux initPrec (3*initPrec `P.div` 2)
+standardPrecisions (Precision initPrec0) =
+    map (Precision . (+ initPrec)) $ aux 0 (max 2 (initPrec `P.div` 16))
     where
+    initPrec = max 2 initPrec0
     aux j j'
         | Precision j <= maximumPrecision = j : (aux j' (j+j'))
         | otherwise = []
