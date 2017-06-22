@@ -29,7 +29,9 @@ taskFFT ::
   Integer -> [c]
 taskFFT cr2c k = r
   where
-  (Just r) = taskFFTWithHook cr2c Just k
+  r = ditfft2 cr2c n x
+  x = [ convertExactly i | i <- [1..n]]
+  n = 2^!k
 
 taskFFTWithHook ::
   (FFTOps c, HasIntegers c)
@@ -37,7 +39,7 @@ taskFFTWithHook ::
   (CauchyReal -> c) ->
   (c -> Maybe c) -> Integer -> Maybe [c]
 taskFFTWithHook cr2c hook k =
-  ditfft2 cr2c hook n x
+  ditfft2Hook cr2c hook n x
   where
   x = [ convertExactly i | i <- [1..n]]
   n = 2^!k
@@ -68,14 +70,49 @@ type FFTOps c =
 
 {-| Cooley-Tukey FFT closely following
     https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Pseudocode
+
+    A vanilla version using Data.Sequence.
 -}
 ditfft2 ::
   (FFTOps c)
   =>
   (CauchyReal -> c) ->
+  Integer -> [c] -> [c]
+ditfft2 cr2c nI x =
+  toList $ aux 0 nI 1
+  where
+  xSQ = SQ.fromList x
+  aux i n s
+    | n == 1 = SQ.singleton $ xSQ `SQ.index` (int i)
+    | otherwise =
+      let
+        nHalf = n `div` 2
+        yEven = aux i nHalf (2*s)
+        yOdd = aux (i+s) nHalf (2*s)
+        yOddTw = SQ.zipWith (*) yOdd $ SQ.fromList [tw k n | k <- [0..nHalf-1]]
+        yL = SQ.zipWith (+) yEven yOddTw
+        yR = SQ.zipWith (-) yEven yOddTw
+      in
+      (yL <> yR)
+  tw k n =
+    case Map.lookup (k%n) twsNI of -- memoisation
+      Just v -> v
+      _ -> error "ditfft2Hook: tw: internal error"
+  twsNI = tws cr2c nI nI
+
+{-| Cooley-Tukey FFT closely following
+    https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Pseudocode
+
+    A version with a hook that allows one to stop the computation at any point
+    and propagate Nothing.
+-}
+ditfft2Hook ::
+  (FFTOps c)
+  =>
+  (CauchyReal -> c) ->
   (c -> Maybe c) ->
   Integer -> [c] -> Maybe [c]
-ditfft2 cr2c (hook :: c -> Maybe c) nI x =
+ditfft2Hook cr2c (hook :: c -> Maybe c) nI x =
   fmap toList $ aux 0 nI 1
   where
   xSQ = SQ.fromList x
@@ -97,7 +134,7 @@ ditfft2 cr2c (hook :: c -> Maybe c) nI x =
   tw k n =
     case Map.lookup (k%n) twsNI of -- memoisation
       Just v -> v
-      _ -> error "ditfft2: tw: internal error"
+      _ -> error "ditfft2Hook: tw: internal error"
   twsNI = tws cr2c nI nI
 
 {-| Cooley-Tukey FFT closely following

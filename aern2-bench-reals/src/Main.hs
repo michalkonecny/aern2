@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds, Arrows, ScopedTypeVariables #-}
 {-# LANGUAGE CPP #-}
--- #define DEBUG
+#define DEBUG
 module Main where
 
 #ifdef DEBUG
