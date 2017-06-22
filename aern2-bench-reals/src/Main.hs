@@ -1,6 +1,6 @@
 {-# LANGUAGE DataKinds, Arrows, ScopedTypeVariables #-}
 {-# LANGUAGE CPP #-}
-#define DEBUG
+-- #define DEBUG
 module Main where
 
 #ifdef DEBUG
@@ -155,6 +155,7 @@ fft_CR_cachedUnsafe isFFT k acSG =
 
 fft_CR_cachedArrow :: Bool -> Integer -> AccuracySG -> [Complex MPBall]
 fft_CR_cachedArrow isFFT k acSG =
+  -- seq (unsafePerformIO $ writeFile "netlog.json" $ formatQALogJSON netlog) $
   maybeTrace (formatQALog 0 netlog) $
   results
   where
@@ -176,11 +177,11 @@ fft_CR_cachedArrow isFFT k acSG =
   hookA _ name =
     proc (a :+ i) ->
       do
-      aNext <- (-:-)-< (rename a)
-      iNext <- (-:-)-< (rename i)
+      aNext <- (-:-)-< (rename ".R" a)
+      iNext <- (-:-)-< (rename ".I" i)
       returnA -< Just (aNext :+ iNext)
     where
-    rename = realRename (\_ -> name)
+    rename suffix = realRename (\_ -> name ++ suffix)
 
 fft_CR_parArrow :: Bool -> Integer -> AccuracySG -> [Complex MPBall]
 fft_CR_parArrow isFFT k acSG =

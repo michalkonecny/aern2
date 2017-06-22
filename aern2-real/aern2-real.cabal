@@ -35,6 +35,8 @@ library
     , transformers >= 0.4 && < 0.6
     , lens >= 4.13 && < 4.16
     , stm >= 2.4 && < 2.5
+    , bytestring >= 0.10 && < 0.11
+    , aeson >= 0.11 && < 1.1
     , mixed-types-num == 0.2.*
     , aern2-mp == 0.1.*
   ghc-options:     -Wall -O2 -fno-warn-orphans

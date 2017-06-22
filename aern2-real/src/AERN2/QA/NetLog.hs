@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric, DeriveAnyClass, GeneralizedNewtypeDeriving #-}
 {-|
     Module      :  AERN2.QA.NetLog
     Description :  QA network log data structure
@@ -15,6 +16,10 @@ module AERN2.QA.NetLog where
 import MixedTypesNumPrelude
 import qualified Prelude as P
 
+import GHC.Generics
+import qualified Data.ByteString.Lazy.Char8 as BS
+import Data.Aeson as J (ToJSON, encode)
+
 type QANetLog = [QANetLogItem]
 
 data QANetLogItem
@@ -29,6 +34,7 @@ data QANetLogItem
         ValueId -- the value being described
         String -- information about the use of cache
         String -- description of answer
+    deriving (Generic, ToJSON)
 
 instance Show QANetLogItem where
   show (QANetLogCreate valId sources name) =
@@ -39,7 +45,11 @@ instance Show QANetLogItem where
     "(" ++ (show valId) ++ "): ! " ++ answerS ++ " (" ++ cacheInfoS ++ ")"
 
 newtype ValueId = ValueId Integer
-    deriving (Show, P.Eq, P.Ord, Enum)
+    deriving (Show, P.Eq, P.Ord, Generic, ToJSON)
+
+instance Enum ValueId where
+  toEnum = ValueId . toEnum
+  fromEnum (ValueId n) = fromEnum n
 
 printQANetLogThenResult :: (Show a) =>(QANetLog, a) -> IO ()
 printQANetLogThenResult (lg, result) =
@@ -64,3 +74,10 @@ formatQALog = aux
                 QANetLogQuery _ _ -> (level + 1, level + 1)
                 QANetLogAnswer _ _ _ -> (level, level - 1)
                 _ -> (level, level)
+
+formatQALogJSON :: QANetLog -> String
+formatQALogJSON = BS.unpack . J.encode
+
+printQALogJSON :: QANetLog -> IO ()
+printQALogJSON =
+  BS.putStrLn . J.encode

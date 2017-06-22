@@ -54,7 +54,7 @@ taskFFTWithHookA hookA k =
     do
     mxR <- mapWithIndexA reg -< x
     let Just xR = sequence mxR
-    ditfft2A hookA n -< xR
+    ditfft2AHook hookA n -< xR
   where
   reg i = hookA 0 ("x" ++ show i)
   x = [ convertExactly i | i <- [1..n]]
@@ -140,12 +140,12 @@ ditfft2Hook cr2c (hook :: c -> Maybe c) nI x =
 {-| Cooley-Tukey FFT closely following
     https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Pseudocode
 -}
-ditfft2A ::
+ditfft2AHook ::
   (FFTOpsA to c, QAArrow to)
   =>
   (Integer -> String -> c `to` Maybe c) ->
   Integer -> [c] `to` Maybe [c]
-ditfft2A (hookA :: Integer -> String -> c `to` Maybe c) nI = aux 0 nI 1
+ditfft2AHook (hookA :: Integer -> String -> c `to` Maybe c) nI = aux 0 nI 1
   where
   aux i n s
     | n == 1 =
@@ -163,26 +163,31 @@ ditfft2A (hookA :: Integer -> String -> c `to` Maybe c) nI = aux 0 nI 1
         case (yEven_m, yOdd_m) of
           (Just yEven, Just yOdd) ->
             do
-            yOddTw_ms <- mapA twiddleA -< zip yOdd [0..]
+            yOddTw_ms <- mapWithIndexA twiddleA -< yOdd
             case sequence yOddTw_ms of
               Just yOddTw ->
                 do
-                yLm <- mapA (binReg (+)) -< zip yEven yOddTw
-                yRm <- mapA (binReg (-)) -< zip yEven yOddTw
+                yLm <- mapWithIndexA (binHook "+" (+)) -< zip yEven yOddTw
+                yRm <- mapWithIndexA (binHook "-" (-)) -< zip yEven yOddTw
                 returnA -< do { yL <- sequence yLm; yR <- sequence yRm; return (yL ++ yR) }
               _ -> returnA -< Nothing
           _ -> returnA -< Nothing
-    binReg :: (t1 -> t2 -> c) -> ((t1,t2) `to` Maybe c)
-    binReg op =
-      proc (a,b) -> hookA n "node?" -< op a b
-    twiddleA =
-      proc (a,k) ->
-        binReg (*) -< (a, tw k n)
+    binHook :: String -> (t1 -> t2 -> c) -> (Integer -> (t1,t2) `to` Maybe c)
+    binHook opName op _k =
+      proc (a,b) -> hookA n nodeName -< op a b
+      where
+      nodeName =
+        opName
+        -- printf "%s(i=%d,n=%d,s=%d,k=%d)" opName i n s k
+    twiddleA k =
+      proc a -> binHook opName (*) k -< (a, tw k n)
+      where
+      opName = printf "*(tw %d/%d)" k n
   tw :: Integer -> Integer -> (Complex (CauchyRealA to))
   tw k n =
     case Map.lookup (k%n) twsNI of -- memoisation
       Just v -> convertExactly v
-      _ -> error "ditfft2A: tw: internal error"
+      _ -> error "ditfft2AHook: tw: internal error"
   twsNI = twsCR nI nI
 
 twsCR :: Integer -> Integer -> Map.Map Rational (Complex CauchyReal)
@@ -309,6 +314,6 @@ _testFFT k =
   where
   n = 2^!k
   x = [complex i | i <- [1..n]]
-  Just y = ditfft2A (\_ _ l -> Just l) n x
+  Just y = ditfft2AHook (\_ _ l -> Just l) n x
   y' = map (/n) $ head y : (reverse $ tail y)
-  Just z = ditfft2A (\_ _ l -> Just l) n y'
+  Just z = ditfft2AHook (\_ _ l -> Just l) n y'
