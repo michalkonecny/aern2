@@ -25,12 +25,14 @@ type QANetLog = [QANetLogItem]
 data QANetLogItem
     = QANetLogCreate
         ValueId -- new value
-        [ValueId] -- dependent values
+        [ValueId] -- dependent values (sources of queries)
         String -- name
     | QANetLogQuery
+        (Maybe ValueId) -- the source of the query
         ValueId -- the value being queried
         String -- description of query
     | QANetLogAnswer
+        (Maybe ValueId) -- the destination of the answer
         ValueId -- the value being described
         String -- information about the use of cache
         String -- description of answer
