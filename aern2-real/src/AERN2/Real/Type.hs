@@ -81,15 +81,15 @@ realSources = qaSources
 realWithAccuracy :: (QAArrow to) => CauchyRealA to -> AccuracySG `to` MPBall
 realWithAccuracy = (?)
 
-realWithAccuracyA :: (QAArrow to) => (CauchyRealA to, AccuracySG) `to` MPBall
+realWithAccuracyA :: (QAArrow to) => (Maybe (QAId to)) -> (CauchyRealA to, AccuracySG) `to` MPBall
 realWithAccuracyA = qaMakeQueryA
 
-realsWithAccuracyA :: (QAArrow to) => ([CauchyRealA to], AccuracySG) `to` [MPBall]
+realsWithAccuracyA :: (QAArrow to) => (Maybe (QAId to)) -> ([CauchyRealA to], AccuracySG) `to` [MPBall]
 realsWithAccuracyA = qaMakeQueryOnManyA
 
 {- constructions -}
 
-newCR :: (QAArrow to) => String -> [AnyProtocolQA to] -> AccuracySG `to` MPBall -> CauchyRealA to
+newCR :: (QAArrow to) => String -> [AnyProtocolQA to] -> ((Maybe (QAId to), Maybe (QAId to)) -> AccuracySG `to` MPBall) -> CauchyRealA to
 newCR = newSeq (mpBall 0)
 
 convergentList2CauchyRealA :: (QAArrow to) => String -> [MPBall] -> (CauchyRealA to)
@@ -120,9 +120,9 @@ complexA = convertExactly
 
 instance (QAArrow to) => ConvertibleExactly Rational (CauchyRealA to) where
   safeConvertExactly x =
-    Right $ newCR (show x) [] (arr makeQ)
+    Right $ newCR (show x) [] (\me_src -> arr (makeQ me_src))
     where
-    makeQ = seqByPrecision2CauchySeq (flip mpBallP x) . bits
+    makeQ _ = seqByPrecision2CauchySeq (flip mpBallP x) . bits
 
 instance ConvertibleWithPrecision CauchyReal MPBall where
   safeConvertP p r =

@@ -44,10 +44,10 @@ instance
   type ExpType (SequenceA to a) = SequenceA to (ExpType a)
   exp = unaryOp "exp" exp expGetInitQ1
     where
-    expGetInitQ1 a1 =
+    expGetInitQ1 me a1 =
       proc q ->
         do
-        (m_a1NormLog, b) <- getSeqFnNormLog a1 exp -< q
+        (m_a1NormLog, b) <- getSeqFnNormLog me a1 exp -< q
         let jInit = case m_a1NormLog of
                 Just expNL -> q + expNL
                 _ -> q
@@ -65,10 +65,10 @@ instance
   type LogType (SequenceA to a) = SequenceA to (LogType a)
   log = unaryOp "log" log logGetInitQ1
     where
-    logGetInitQ1 a1 =
+    logGetInitQ1 me a1 =
       proc q ->
         do
-        (m_a1NormLog, b) <- getSeqFnNormLog a1 id -< q
+        (m_a1NormLog, b) <- getSeqFnNormLog me a1 id -< q
         let jInit = case m_a1NormLog of
                 Just a1normLog -> q - a1normLog
                 _ -> q
@@ -91,11 +91,11 @@ instance
   pow =
     binaryOp "^" pow getInitQ1Q2
     where
-    getInitQ1Q2 base e =
+    getInitQ1Q2 me base e =
       proc q ->
         do
-        baseB <- seqWithAccuracy base -< q
-        eB <- seqWithAccuracy e -< q
+        baseB <- seqWithAccuracy base me -< q
+        eB <- seqWithAccuracy e me -< q
         let jInit1 = powGetInitAC1 baseB eB q
         let jInit2 = powGetInitAC2 baseB eB q
         returnA -< ((jInit1, Just baseB), (jInit2, Just eB))
@@ -130,21 +130,21 @@ powGetInitAC2 base e acSG =
 powGetInitQ1T ::
   (QAArrow to, HasNorm (EnsureNoCN base), CanEnsureCN base, HasIntegerBounds e)
   =>
-  SequenceA to base -> e -> AccuracySG `to` (AccuracySG, Maybe base)
-powGetInitQ1T baseSeq e =
+  (Maybe (QAId to)) -> SequenceA to base -> e -> AccuracySG `to` (AccuracySG, Maybe base)
+powGetInitQ1T me baseSeq e =
   proc q ->
     do
-    base <- seqWithAccuracy baseSeq -< q
+    base <- seqWithAccuracy baseSeq me -< q
     returnA -< (powGetInitAC1 base e q, Just base)
 
 powGetInitQ2T ::
   (QAArrow to, HasNorm (EnsureNoCN base), CanEnsureCN base, HasIntegerBounds e)
   =>
-  base -> SequenceA to e -> AccuracySG `to` (AccuracySG, Maybe e)
-powGetInitQ2T base eSeq =
+  (Maybe (QAId to)) -> base -> SequenceA to e -> AccuracySG `to` (AccuracySG, Maybe e)
+powGetInitQ2T me base eSeq =
   proc q ->
     do
-    e <- seqWithAccuracy eSeq -< q
+    e <- seqWithAccuracy eSeq me -< q
     returnA -< (powGetInitAC1 base e q, Just e)
 
 instance
@@ -214,7 +214,7 @@ $(declForTypes
       =>
       CanPow $t (SequenceA to a) where
       type PowType $t (SequenceA to a) = SequenceA to (PowType $t a)
-      pow = flip $ binaryOpWithPureArg "^" (flip pow) (flip powGetInitQ2T)
+      pow = flip $ binaryOpWithPureArg "^" (flip pow) (\me -> flip (powGetInitQ2T me))
 
   |]))
 
@@ -231,10 +231,10 @@ instance
   type SqrtType (SequenceA to a) = SequenceA to (SqrtType a)
   sqrt = unaryOp "sqrt" sqrt sqrtGetInitQ1
     where
-    sqrtGetInitQ1 a1 =
+    sqrtGetInitQ1 me a1 =
       proc q ->
         do
-        (m_a1NormLog, b) <- getSeqFnNormLog a1 sqrtSafe -< q
+        (m_a1NormLog, b) <- getSeqFnNormLog me a1 sqrtSafe -< q
         let jInit = case m_a1NormLog of
                 Just sqrtNormLog -> max acSG0 (q - 1 - sqrtNormLog)
                 _ -> acSG0
@@ -253,20 +253,20 @@ instance
   type SinCosType (SequenceA to a) = SequenceA to (SinCosType a)
   cos = unaryOp "cos" cos cosGetInitQ1
     where
-    cosGetInitQ1 a1 =
+    cosGetInitQ1 me a1 =
       proc q ->
         do
-        (m_a1NormLog, b) <- getSeqFnNormLog a1 sin -< q
+        (m_a1NormLog, b) <- getSeqFnNormLog me a1 sin -< q
         let jInit = case m_a1NormLog of
                 Just sinNormLog -> q + sinNormLog
                 _ -> acSG0 -- this should never happen
         returnA -< (jInit, Just b)
   sin = unaryOp "sin" sin sinGetInitQ1
     where
-    sinGetInitQ1 a1 =
+    sinGetInitQ1 me a1 =
       proc q ->
         do
-        (m_a1NormLog, b) <- getSeqFnNormLog a1 cos -< q
+        (m_a1NormLog, b) <- getSeqFnNormLog me a1 cos -< q
         let jInit = case m_a1NormLog of
                 Just cosNormLog -> q + cosNormLog
                 _ -> acSG0 -- this should never happen

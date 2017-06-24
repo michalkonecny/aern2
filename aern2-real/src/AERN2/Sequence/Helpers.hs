@@ -53,52 +53,52 @@ unaryOp ::
   =>
   String ->
   (a -> b) ->
-  (SequenceA to a -> (AccuracySG `to` (AccuracySG, Maybe a))) ->
+  (Maybe (QAId to) {-^ my id -} -> SequenceA to a -> (AccuracySG `to` (AccuracySG, Maybe a))) ->
   SequenceA to a -> SequenceA to b
 unaryOp name op getInitQ1 r1 =
   newSeq (op sampleA1) name [AnyProtocolQA r1] makeQ
   where
   SequenceP sampleA1 = qaProtocol r1
-  makeQ =
+  makeQ (me, _src) =
     proc ac ->
       do
-      q1Init <- getInitQ1 r1 -< ac
-      ensureAccuracyA1 (r1 ?) op -< (ac, q1Init)
+      q1Init <- getInitQ1 me r1 -< ac
+      ensureAccuracyA1 (r1 ?<- me) op -< (ac, q1Init)
 
 binaryOpWithPureArg ::
   (QAArrow to, SuitableForSeq a, SuitableForSeq b)
   =>
   String ->
   (a -> t -> b) ->
-  (SequenceA to a -> t -> (AccuracySG `to` (AccuracySG, Maybe a))) ->
+  (Maybe (QAId to) {-^ my id -} -> SequenceA to a -> t -> (AccuracySG `to` (AccuracySG, Maybe a))) ->
   SequenceA to a -> t -> SequenceA to b
 binaryOpWithPureArg name op getInitQ1T r1 t =
   newSeq (op sampleA t) name [AnyProtocolQA r1] makeQ
   where
   SequenceP sampleA = qaProtocol r1
-  makeQ =
+  makeQ (me, _src) =
     proc ac ->
       do
-      q1Init <- getInitQ1T r1 t -< ac
-      ensureAccuracyA1 (r1 ?) (flip op t) -< (ac, q1Init)
+      q1Init <- getInitQ1T me r1 t -< ac
+      ensureAccuracyA1 (r1 ?<- me) (flip op t) -< (ac, q1Init)
 
 binaryOp ::
   (QAArrow to, SuitableForSeq a, SuitableForSeq b, SuitableForSeq c)
   =>
   String ->
   (a -> b -> c) ->
-  (SequenceA to a -> SequenceA to b -> (AccuracySG `to` ((AccuracySG, Maybe a), (AccuracySG, Maybe b)))) ->
+  (Maybe (QAId to) {-^ my id -} -> SequenceA to a -> SequenceA to b -> (AccuracySG `to` ((AccuracySG, Maybe a), (AccuracySG, Maybe b)))) ->
   SequenceA to a -> SequenceA to b -> SequenceA to c
 binaryOp name op getInitQ1Q2 r1 r2 =
   newSeq (op sampleA sampleB) name [AnyProtocolQA r1, AnyProtocolQA r2] makeQ
   where
   SequenceP sampleA = qaProtocol r1
   SequenceP sampleB = qaProtocol r2
-  makeQ =
+  makeQ (me,_src) =
     proc ac ->
       do
-      (q1Init, q2Init) <- getInitQ1Q2 r1 r2 -< ac
-      ensureAccuracyA2 ((r1,r2) ??) op -< (ac, q1Init, q2Init)
+      (q1Init, q2Init) <- getInitQ1Q2 me r1 r2 -< ac
+      ensureAccuracyA2 ((r1,r2) ??<- me) op -< (ac, q1Init, q2Init)
 
 {- functions to help determine initial queries -}
 
@@ -106,8 +106,8 @@ getInitQ1FromSimple ::
   (Arrow to)
   =>
   AccuracySG `to` q ->
-  r1 -> AccuracySG `to` (q, Maybe a)
-getInitQ1FromSimple simpleA _ =
+  Maybe (QAId to) {-^ my id -} -> r1 -> AccuracySG `to` (q, Maybe a)
+getInitQ1FromSimple simpleA _ _ =
   proc q ->
     do
     initQ1 <- simpleA -< q
@@ -117,8 +117,8 @@ getInitQ1TFromSimple ::
   (Arrow to)
   =>
   AccuracySG `to` q ->
-  r1 -> t -> AccuracySG `to` (q, Maybe a)
-getInitQ1TFromSimple simpleA _ _ =
+  Maybe (QAId to) {-^ my id -} -> r1 -> t -> AccuracySG `to` (q, Maybe a)
+getInitQ1TFromSimple simpleA _ _ _ =
   proc q ->
     do
     initQ1 <- simpleA -< q
@@ -128,8 +128,8 @@ getInitQ1Q2FromSimple ::
   (Arrow to)
   =>
   AccuracySG `to` (q,q) ->
-  r1 -> r2 -> AccuracySG `to` ((q, Maybe a), (q, Maybe b))
-getInitQ1Q2FromSimple simpleA _ _ =
+  Maybe (QAId to) {-^ my id -} -> r1 -> r2 -> AccuracySG `to` ((q, Maybe a), (q, Maybe b))
+getInitQ1Q2FromSimple simpleA _ _ _ =
   proc q ->
     do
     (initQ1, initQ2) <- simpleA -< q
@@ -275,11 +275,11 @@ seqElementSimilarToEncl accuracyTranslation b sa =
 getSeqFnNormLog ::
   (QAArrow to, CanEnsureCN v, HasNorm (EnsureNoCN v))
   =>
-  SequenceA to a -> (a -> v) -> AccuracySG `to` (Maybe Integer, a)
-getSeqFnNormLog a f =
+  Maybe (QAId to) -> SequenceA to a -> (a -> v) -> AccuracySG `to` (Maybe Integer, a)
+getSeqFnNormLog src a f =
   proc q ->
     do
-    aq <- seqWithAccuracy a -< q
+    aq <- seqWithAccuracy a src -< q
     returnA -< (aux aq, aq)
   where
   aux aq =

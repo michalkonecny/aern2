@@ -190,13 +190,13 @@ instance
   mul =
     binaryOp "*" mul getInitQ1Q2
     where
-    getInitQ1Q2 a1 a2 =
+    getInitQ1Q2 me a1 a2 =
       proc q ->
         do
-        b1 <- seqWithAccuracy a1 -< q
+        b1 <- seqWithAccuracy a1 me -< q
         let jInit2 = mulGetInitAC b1 q
         -- favouring 2*x over x*2 in a Num instance
-        b2 <- seqWithAccuracy a2 -< jInit2
+        b2 <- seqWithAccuracy a2 me -< jInit2
         let jInit1 = mulGetInitAC b2 q
         returnA -< ((jInit1, Just b1), (jInit2, Just b2))
 
@@ -256,8 +256,8 @@ instance
 mulGetInitQ1T ::
   (Arrow to, HasNorm (EnsureNoCN other), CanEnsureCN other)
   =>
-  SequenceA to t -> other -> AccuracySG `to` (AccuracySG, Maybe t)
-mulGetInitQ1T _seq other =
+  Maybe (QAId to) {-^ my id -} -> SequenceA to t -> other -> AccuracySG `to` (AccuracySG, Maybe t)
+mulGetInitQ1T _me _seq other =
   arr $ \q -> (mulGetInitAC other q, Nothing)
 
 $(declForTypes

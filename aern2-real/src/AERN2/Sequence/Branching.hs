@@ -46,20 +46,21 @@ import AERN2.Sequence.Comparison
 pickNonZeroSeqA ::
   (QAArrow to, CanPickNonZero a)
   =>
+  Maybe (QAId to) ->
   [(SequenceA to a, s)] `to` Maybe (SequenceA to a, s)
-pickNonZeroSeqA =
+pickNonZeroSeqA src =
   startFromAccuracy (bits 0)
   where
   startFromAccuracy ac =
     proc seqsAndS -> do
-      balls <- seqsWithAccuracyA -< (map fst seqsAndS, accuracySG ac)
+      balls <- seqsWithAccuracyA src -< (map fst seqsAndS, accuracySG ac)
       let maybeNonZero = pickNonZero $ zip balls seqsAndS
       case maybeNonZero of
         Just (_,result) -> returnA -< Just result
         _ -> startFromAccuracy (ac + 1) -< seqsAndS
 
 instance (CanPickNonZero a) => CanPickNonZero (Sequence a) where
-  pickNonZero = pickNonZeroSeqA
+  pickNonZero = pickNonZeroSeqA Nothing
 
 {-| "parallel if" -}
 instance
@@ -70,19 +71,20 @@ instance
   ifThenElse b e1 e2 =
     newSeq (e1 ? (bitsS 0)) "pif" [AnyProtocolQA b, AnyProtocolQA e1, AnyProtocolQA e2] makeQ
     where
-    makeQ ac =
-      if (b ? ac) then (e1 ? ac) else (e2 ? ac)
+    makeQ (me,_src) ac =
+      if ((b ?<- me) ac) then ((e1 ?<- me) ac) else ((e2 ?<- me) ac)
 
 pick ::
   (QAArrow to)
   =>
+  (Maybe (QAId to)) ->
   [(SequenceA to (Maybe a))] `to` a
-pick = aux (bitsS 0)
+pick src = aux (bitsS 0)
   where
   aux ac =
     proc options ->
       do
-      mas <- qaMakeQueryOnManyA -< (options, ac)
+      mas <- qaMakeQueryOnManyA src -< (options, ac)
       case catMaybes mas of
         [] -> aux (ac + 1) -< options
         (a : _) -> returnA -< a

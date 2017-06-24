@@ -50,7 +50,7 @@ instance (QAArrow to, HasBools b, SuitableForSeq b) => ConvertibleExactly Bool (
   safeConvertExactly bool =
     do
     b <- safeConvertExactly bool
-    Right $ newSeq b (show b) [] $ arr $ const b
+    Right $ newSeq b (show b) [] $ \_me_src -> arr $ const b
 
 instance
   (QAArrow to, CanNeg a, SuitableForSeq a, SuitableForSeq (NegType a))
@@ -262,11 +262,11 @@ lift2 name op aSeq bSeq =
   where
   SequenceP sampleA = qaProtocol aSeq
   SequenceP sampleB = qaProtocol bSeq
-  makeQ =
+  makeQ (me, _src) =
     proc ac ->
       do
-      a <- seqWithAccuracy aSeq -< ac
-      b <- seqWithAccuracy bSeq -< ac
+      a <- seqWithAccuracy aSeq me -< ac
+      b <- seqWithAccuracy bSeq me -< ac
       returnA -< op a b
 
 lift2T ::
@@ -277,10 +277,10 @@ lift2T name op aSeq b =
   newSeq (op sampleA b) name [AnyProtocolQA aSeq] makeQ
   where
   SequenceP sampleA = qaProtocol aSeq
-  makeQ =
+  makeQ (me, _src) =
     proc ac ->
       do
-      a <- seqWithAccuracy aSeq -< ac
+      a <- seqWithAccuracy aSeq me -< ac
       returnA -< op a b
 
 $(declForTypes

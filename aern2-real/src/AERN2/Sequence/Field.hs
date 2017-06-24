@@ -42,24 +42,24 @@ instance
   CanDiv (SequenceA to a) (SequenceA to b)
   where
   type DivType (SequenceA to a) (SequenceA to b) = SequenceA to (DivType a b)
-  divide = binaryOp "/" divide getInitQ1Q2
+  divide = binaryOp "/" divide divGetInitQ1Q2
   type DivTypeNoCN (SequenceA to a) (SequenceA to b) = SequenceA to (DivTypeNoCN a b)
-  divideNoCN = binaryOp "/" divideNoCN getInitQ1Q2
+  divideNoCN = binaryOp "/" divideNoCN divGetInitQ1Q2
 
-getInitQ1Q2 ::
+divGetInitQ1Q2 ::
   (QAArrow to
   , HasNorm (EnsureNoCN a), HasNorm (EnsureNoCN b)
   , SuitableForSeq a, SuitableForSeq b)
   =>
-  SequenceA to a -> SequenceA to b -> AccuracySG `to` ((AccuracySG, Maybe a), (AccuracySG, Maybe b))
-getInitQ1Q2 a1 a2 =
+  Maybe (QAId to) -> SequenceA to a -> SequenceA to b -> AccuracySG `to` ((AccuracySG, Maybe a), (AccuracySG, Maybe b))
+divGetInitQ1Q2 me a1 a2 =
   proc q ->
     do
     -- In a Fractional instance, optimising 3/x and not optimising x/3 etc.
     -- In a Fractional instance, x/3 should be replaced by (1/3)*x etc.
-    b1 <- seqWithAccuracy a1 -< q
+    b1 <- seqWithAccuracy a1 me -< q
     let jPre2 = mulGetInitAC b1 q
-    b2 <- seqWithAccuracy a2 -< jPre2
+    b2 <- seqWithAccuracy a2 me -< jPre2
     let jInit1 = divGetInitAC1 b2 q
     let jInit2 = divGetInitAC2 b1 b2 q
     returnA -< ((jInit1, Just b1), (jInit2, Just b2))
@@ -148,8 +148,8 @@ instance
 divGetInitQ1T ::
   (Arrow to, HasNorm (EnsureNoCN denom), CanEnsureCN denom)
   =>
-  SequenceA to numer -> denom -> AccuracySG `to` (AccuracySG, Maybe numer)
-divGetInitQ1T _numerSeq denom =
+  Maybe (QAId to) -> SequenceA to numer -> denom -> AccuracySG `to` (AccuracySG, Maybe numer)
+divGetInitQ1T _me _numerSeq denom =
   arr $ \q -> (divGetInitAC1 denom q, Nothing)
 
 divGetInitQ2T ::
@@ -157,11 +157,11 @@ divGetInitQ2T ::
   , HasNorm (EnsureNoCN numer), CanEnsureCN numer
   , HasNorm (EnsureNoCN denom), CanEnsureCN denom)
   =>
-  numer -> SequenceA to denom -> AccuracySG `to` (AccuracySG, Maybe denom)
-divGetInitQ2T numer denomSeq =
+  Maybe (QAId to) -> numer -> SequenceA to denom -> AccuracySG `to` (AccuracySG, Maybe denom)
+divGetInitQ2T me numer denomSeq =
   proc q ->
     do
-    denom <- seqWithAccuracy denomSeq -< q
+    denom <- seqWithAccuracy denomSeq me -< q
     returnA -< (divGetInitAC2 numer denom q, Just denom)
 
 $(declForTypes
@@ -188,9 +188,9 @@ $(declForTypes
     CanDiv $t (SequenceA to b)
     where
     type DivType $t (SequenceA to b) = SequenceA to (DivType $t b)
-    divide = flip $ binaryOpWithPureArg "/" (flip divide) (flip divGetInitQ2T)
+    divide = flip $ binaryOpWithPureArg "/" (flip divide) (\ me -> flip (divGetInitQ2T me))
     type DivTypeNoCN $t (SequenceA to b) = SequenceA to (DivTypeNoCN $t b)
-    divideNoCN = flip $ binaryOpWithPureArg "/" (flip divideNoCN) (flip divGetInitQ2T)
+    divideNoCN = flip $ binaryOpWithPureArg "/" (flip divideNoCN) (\ me -> flip (divGetInitQ2T me))
 
   |]))
 

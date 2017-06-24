@@ -131,13 +131,13 @@ seqSources = qaSources
 
 {-| Get an approximation of the limit with at least the specified accuracy.
    (A specialisation of 'qaMakeQuery' for Cauchy sequences.) -}
-seqWithAccuracy :: (QAArrow to) => SequenceA to a -> AccuracySG `to` a
-seqWithAccuracy = (?)
+seqWithAccuracy :: (QAArrow to) => SequenceA to a -> Maybe (QAId to) -> AccuracySG `to` a
+seqWithAccuracy = (?<-)
 
-seqWithAccuracyA :: (QAArrow to) => (SequenceA to a, AccuracySG) `to` a
+seqWithAccuracyA :: (QAArrow to) => (Maybe (QAId to)) -> (SequenceA to a, AccuracySG) `to` a
 seqWithAccuracyA = qaMakeQueryA
 
-seqsWithAccuracyA :: (QAArrow to) => ([SequenceA to a], AccuracySG) `to` [a]
+seqsWithAccuracyA :: (QAArrow to) => (Maybe (QAId to)) -> ([SequenceA to a], AccuracySG) `to` [a]
 seqsWithAccuracyA = qaMakeQueryOnManyA
 
 {- constructions -}
@@ -145,7 +145,7 @@ seqsWithAccuracyA = qaMakeQueryOnManyA
 newSeq ::
   (QAArrow to, SuitableForSeq a)
   =>
-  a -> String -> [AnyProtocolQA to] -> AccuracySG `to` a -> SequenceA to a
+  a -> String -> [AnyProtocolQA to] -> ((Maybe (QAId to), Maybe (QAId to)) -> AccuracySG `to` a) -> SequenceA to a
 newSeq sampleA name sources makeQ =
   newQA name sources (pSeq sampleA) (AccuracySG NoInformation NoInformation) makeQ
   -- where
@@ -155,20 +155,23 @@ newSeq sampleA name sources makeQ =
   --     a <- makeQ -< q
   --     returnA -< adjustToAccuracySG q a
 
-newSeqSimple :: (QAArrow to, SuitableForSeq a) => a -> AccuracySG `to` a -> SequenceA to a
+newSeqSimple ::
+  (QAArrow to, SuitableForSeq a)
+  =>
+  a -> ((Maybe (QAId to), Maybe (QAId to)) -> AccuracySG `to` a) -> SequenceA to a
 newSeqSimple sampleA = newSeq sampleA "simple" []
 
 convergentList2SequenceA ::
   (QAArrow to, SuitableForSeq a) =>
   String -> [a] -> (SequenceA to a)
 convergentList2SequenceA name balls@(sampleA : _) =
-  newSeq sampleA name [] (arr $ convergentList2CauchySeq balls . bits)
+  newSeq sampleA name [] (\_src -> arr $ convergentList2CauchySeq balls . bits)
 convergentList2SequenceA name [] =
   error $ "convergentList2SequenceA: empty sequence " ++ name
 
 seqByPrecision2SequenceA :: (QAArrow to, SuitableForSeq a) => String -> (Precision -> a) -> (SequenceA to a)
 seqByPrecision2SequenceA name byPrec =
-  newSeq sampleA name [] (arr $ seqByPrecision2CauchySeq byPrec . bits)
+  newSeq sampleA name [] (\_src -> arr $ seqByPrecision2CauchySeq byPrec . bits)
     where
     sampleA = byPrec (prec 0)
 
@@ -232,7 +235,7 @@ $(declForTypes
       ConvertibleExactly $t (SequenceA to a)
       where
       safeConvertExactly x =
-        Right $ newSeq a (show x) [] (arr $ flip setPrecisionAtLeastAccuracy a . bits)
+        Right $ newSeq a (show x) [] (\_src -> arr $ flip setPrecisionAtLeastAccuracy a . bits)
         where
         a = convertExactly x
 

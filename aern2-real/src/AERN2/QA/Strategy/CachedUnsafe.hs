@@ -47,7 +47,7 @@ instance QAArrow (->) where
   newQA name sources p sampleQ makeQ =
     addUnsafeMemoisation $
       defaultNewQA name sources p sampleQ makeQ
-  qaMakeQueryGetPromiseA src (qa,q) = qaMakeQueryGetPromise qa src q
+  qaMakeQueryGetPromiseA src (qa,q) = qaMakeQueryGetPromise qa (qaId qa, src) q
   qaFulfilPromiseA promise = promise ()
 
 {-| A global variable controlling whether unsafe caching is used in QA objects in the (->) arrow -}
@@ -74,7 +74,7 @@ addUnsafeMemoisation qa = qa { qaMakeQueryGetPromise = \ _src -> unsafeMemo }
     useMVar cacheVar q () =
       do
       shouldCache <- readMVar qaUnsafeCachingMV
-      if not shouldCache then return $ qaMakeQueryGetPromise qa Nothing q ()
+      if not shouldCache then return $ qaMakeQueryGetPromise qa (Nothing, Nothing) q ()
         else
           do
           -- putStrLn $ "memoIO: q = " ++ (show q)
@@ -87,7 +87,7 @@ addUnsafeMemoisation qa = qa { qaMakeQueryGetPromise = \ _src -> unsafeMemo }
               return a
             _ ->
               do
-              let a = qaMakeQueryGetPromise qa Nothing q ()
+              let a = qaMakeQueryGetPromise qa (Nothing, Nothing) q ()
               modifyMVar_ cacheVar (const (return (updateQACache p q a cache)))
               -- putStrLn $ printf "memoIO  %s: updated cache: ? %s -> ! %s" name (show q) (show a)
               cache' <- readMVar cacheVar

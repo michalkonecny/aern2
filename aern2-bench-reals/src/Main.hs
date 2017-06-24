@@ -105,9 +105,9 @@ logistic_CR_cachedArrow n acSG =
     executeQACachedA $
       proc () ->
         do
-        x0R <- (-:-)-< realA x0
+        x0R <- (-:-) -< realA x0
         (Just x) <-taskLogisticWithHookA n hookA -< x0R
-        realWithAccuracyA -< (x, acSG)
+        realWithAccuracyA Nothing -< (x, acSG)
   x0 = TP.taskLogistic_x0 :: Rational
   hookA i =
     proc r ->

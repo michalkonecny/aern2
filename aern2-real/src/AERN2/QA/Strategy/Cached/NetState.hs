@@ -50,7 +50,7 @@ data QAComputation m p =
     QAComputation
         p
         (QACache p)
-        (Q p -> m (QAPromiseA (Kleisli m) (A p))) -- ^ used only if a suitable answer is not in the above cache
+        ((Maybe ValueId, Maybe ValueId) -> Q p -> m (QAPromiseA (Kleisli m) (A p))) -- ^ used only if a suitable answer is not in the above cache
 
 initQANetState :: Bool -> QANetState m
 initQANetState should_cache =
@@ -66,7 +66,7 @@ insertNode ::
   p ->
   String ->
   [ValueId] ->
-  (Q p -> m (QAPromiseA (Kleisli m) (A p))) ->
+  ((Maybe ValueId, Maybe ValueId) -> Q p -> m (QAPromiseA (Kleisli m) (A p))) ->
   QANetState m ->
   (ValueId, QANetState m)
 insertNode p name sourceIds q2pa ns =
@@ -83,24 +83,24 @@ insertNode p name sourceIds q2pa ns =
 
 
 logQuery ::
-  QANetState m -> ValueId -> String -> QANetState m
-logQuery ns valueId qS =
+  QANetState m -> Maybe ValueId -> ValueId -> String -> QANetState m
+logQuery ns src valueId qS =
   ns { net_log = (net_log ns) ++ [logItem] }
   where
-  logItem = QANetLogQuery valueId qS
+  logItem = QANetLogQuery src valueId qS
 
 logAnswerUpdateCache ::
   (QAProtocolCacheable p)
   =>
-  QANetState m -> p -> ValueId -> (String, String, QACache p) -> QANetState m
-logAnswerUpdateCache ns (p :: p) valueId (aS, usedCacheS, cache') =
+  QANetState m -> p -> Maybe ValueId -> ValueId -> (String, String, QACache p) -> QANetState m
+logAnswerUpdateCache ns (p :: p) src valueId (aS, usedCacheS, cache') =
   ns
   {
       net_id2value = id2value',
       net_log = (net_log ns) ++ [logItem]
   }
   where
-  logItem = QANetLogAnswer valueId usedCacheS aS
+  logItem = QANetLogAnswer src valueId usedCacheS aS
   id2value' =
       Map.insert valueId
           (AnyQAComputation (QAComputation p cache' q2a))
@@ -115,8 +115,8 @@ logAnswerUpdateCache ns (p :: p) valueId (aS, usedCacheS, cache') =
 getAnswerPromise ::
   (QAProtocolCacheable p, Monad m)
   =>
-  QANetState m -> p -> ValueId -> Q p -> m (() -> m (A p, [Char], QACache p))
-getAnswerPromise ns (p :: p) valueId q =
+  QANetState m -> p -> Maybe ValueId -> ValueId -> Q p -> m (() -> m (A p, [Char], QACache p))
+getAnswerPromise ns (p :: p) src valueId q =
   do
   case lookupQACache p cache q of
     (Just a, mLogMsg) ->
@@ -124,7 +124,7 @@ getAnswerPromise ns (p :: p) valueId q =
       where logMsg = "used cache" ++ case mLogMsg of Nothing -> ""; (Just m) -> " (" ++ m ++ ")"
     (_, mLogMsg) ->
       do
-      pa <- q2pa q
+      pa <- q2pa (Just valueId, src) q
       a <- runKleisli pa ()
       let cache' = updateQACache p q a cache
       let a' = case lookupQACache p cache' q of (Just aa, _) -> aa; _ -> a

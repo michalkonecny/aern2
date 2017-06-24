@@ -66,14 +66,14 @@ instance QAArrow QAParA where
         do
         activeQsTV <- atomically $ newTVar initActiveQs
         cacheTV <- atomically $ newTVar $ newQACache p
-        return $ QA__ name (Just ()) [] p sampleQ (Kleisli $ makeQPar activeQsTV cacheTV)
+        return $ QA__ name (Just ()) [] p sampleQ (\me_src -> Kleisli $ makeQPar activeQsTV cacheTV me_src)
       where
       initActiveQs = IntMap.empty :: IntMap.IntMap (Q p)
       nextActiveQId activeQs
         | IntMap.null activeQs = int 1
         | otherwise =
             int $ 1 + (fst $ IntMap.findMax activeQs)
-      makeQPar activeQsTV cacheTV q =
+      makeQPar activeQsTV cacheTV (_, src) q =
         QAParM $
           do
           maybeTraceIO $ printf "[%s]: q = %s" name (show q)
@@ -118,7 +118,7 @@ instance QAArrow QAParA where
           computation =
             do
             -- compute an answer:
-            a <- unQAParM $ runKleisli (qaMakeQuery qa) q
+            a <- unQAParM $ runKleisli (qaMakeQuery qa src) q
             -- update the cache with this answer:
             atomically $ modifyTVar cacheTV (updateQACache p q a)
             -- remove computeId from active queries:
@@ -130,10 +130,10 @@ instance QAArrow QAParA where
     where
     qaFulfilPromiseM promiseA =
       runKleisli promiseA ()
-  qaMakeQueryGetPromiseA = Kleisli qaMakeQueryGetPromiseM
+  qaMakeQueryGetPromiseA src = Kleisli qaMakeQueryGetPromiseM
     where
     qaMakeQueryGetPromiseM (qa, q) =
-      runKleisli (qaMakeQueryGetPromise qa) q
+      runKleisli (qaMakeQueryGetPromise qa (qaId qa, src)) q
 --
 executeQAParA :: (QAParA () a) -> IO a
 executeQAParA code = unQAParM $ runKleisli code ()

@@ -16,6 +16,8 @@ module AERN2.QA.NetLog where
 import MixedTypesNumPrelude
 import qualified Prelude as P
 
+import Text.Printf
+
 import GHC.Generics
 import qualified Data.ByteString.Lazy.Char8 as BS
 import Data.Aeson as J (ToJSON, encode)
@@ -40,11 +42,17 @@ data QANetLogItem
 
 instance Show QANetLogItem where
   show (QANetLogCreate valId sources name) =
-    "new (" ++ (show valId) ++ ") " ++ name ++ " <- " ++ show sources
-  show (QANetLogQuery valId queryS) =
-    "(" ++ (show valId) ++ "): ? " ++ queryS
-  show (QANetLogAnswer valId cacheInfoS answerS) =
-    "(" ++ (show valId) ++ "): ! " ++ answerS ++ " (" ++ cacheInfoS ++ ")"
+    printf "new (%s) %s <- %s"
+      (show valId) name (show sources)
+  show (QANetLogQuery mSrcId valId queryS) =
+    printf "(%s)<-(%s): ? %s"
+      (show valId) (showSrc mSrcId) queryS
+  show (QANetLogAnswer mSrcId valId cacheInfoS answerS) =
+    printf "(%s)->(%s): ! %s (%s)"
+      (show valId) (showSrc mSrcId) answerS cacheInfoS
+
+showSrc (Just srcId) = show srcId
+showSrc Nothing = ""
 
 newtype ValueId = ValueId Integer
     deriving (Show, P.Eq, P.Ord, Generic, ToJSON)
@@ -73,8 +81,8 @@ formatQALog = aux
         indent = replicate (int levelNow) ' '
         (levelNow, level') =
             case item of
-                QANetLogQuery _ _ -> (level + 1, level + 1)
-                QANetLogAnswer _ _ _ -> (level, level - 1)
+                QANetLogQuery _ _ _ -> (level + 1, level + 1)
+                QANetLogAnswer _ _ _ _ -> (level, level - 1)
                 _ -> (level, level)
 
 formatQALogJSON :: QANetLog -> String

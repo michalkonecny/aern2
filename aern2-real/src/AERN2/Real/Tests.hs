@@ -62,7 +62,7 @@ instance Arbitrary CauchyReal where
       arbitrarySignedBinary =
         signedBinary2Real <$> infiniteListOf (elements [-1,0,1])
       signedBinary2Real sbits =
-        newCR "random" [] $ \ (AccuracySG _ acG) ->
+        newCR "random" [] $ \ _ (AccuracySG _ acG) ->
           case acG of
             NoInformation -> balls !! 0
             Exact -> error "signedBinary2Real: cannot request the number Exactly"
