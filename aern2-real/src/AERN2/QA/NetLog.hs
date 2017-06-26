@@ -20,25 +20,39 @@ import Text.Printf
 
 import GHC.Generics
 import qualified Data.ByteString.Lazy.Char8 as BS
-import Data.Aeson as J (ToJSON, encode)
+import Data.Aeson as J
+import Data.Aeson.Types as JT
 
 type QANetLog = [QANetLogItem]
 
 data QANetLogItem
     = QANetLogCreate
-        ValueId -- new value
-        [ValueId] -- dependent values (sources of queries)
-        String -- name
+      {
+        qaLogCreate_newId :: ValueId
+      , qaLogCreate_sources :: [ValueId]
+      , qaLogCreate_name :: String
+      }
     | QANetLogQuery
-        (Maybe ValueId) -- the source of the query
-        ValueId -- the value being queried
-        String -- description of query
+      {
+        qaLogQuery_client :: (Maybe ValueId)
+      , qaLogQuery_provider :: ValueId
+      , qaLogQuery_description :: String
+      }
     | QANetLogAnswer
-        (Maybe ValueId) -- the destination of the answer
-        ValueId -- the value being described
-        String -- information about the use of cache
-        String -- description of answer
-    deriving (Generic, ToJSON)
+      {
+        qaLogAnswer_client :: (Maybe ValueId)
+      , qaLogAnswer_provider :: ValueId
+      , qaLogAnswer_cacheUseDescription :: String
+      , qaLogAnswer_description :: String
+      }
+    deriving (Generic)
+
+instance ToJSON QANetLogItem where
+  toJSON = J.genericToJSON customOptions
+    where
+    customOptions = J.defaultOptions
+        { JT.sumEncoding = JT.ObjectWithSingleField }
+
 
 instance Show QANetLogItem where
   show (QANetLogCreate valId sources name) =
@@ -51,10 +65,11 @@ instance Show QANetLogItem where
     printf "(%s)->(%s): ! %s (%s)"
       (show valId) (showSrc mSrcId) answerS cacheInfoS
 
+showSrc :: (Show a) => Maybe a -> String
 showSrc (Just srcId) = show srcId
 showSrc Nothing = ""
 
-newtype ValueId = ValueId Integer
+data ValueId = ValueId Integer
     deriving (Show, P.Eq, P.Ord, Generic, ToJSON)
 
 instance Enum ValueId where
