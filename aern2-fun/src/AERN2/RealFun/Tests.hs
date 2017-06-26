@@ -38,8 +38,6 @@ import MixedTypesNumPrelude
 import Test.Hspec
 import Test.QuickCheck
 
-import Numeric.CatchingExceptions
-
 -- import AERN2.Interval
 
 -- import AERN2.MP.Dyadic

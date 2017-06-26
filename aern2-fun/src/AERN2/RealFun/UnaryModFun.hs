@@ -34,7 +34,7 @@ import MixedTypesNumPrelude
 
 -- import Control.Applicative
 
-import Numeric.CatchingExceptions
+
 
 import AERN2.MP
 -- import qualified AERN2.MP.Ball as MPBall

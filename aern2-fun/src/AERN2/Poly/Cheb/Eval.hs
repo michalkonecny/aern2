@@ -26,7 +26,7 @@ import MixedTypesNumPrelude
 
 import Data.Maybe
 
-import Numeric.CatchingExceptions
+
 
 import AERN2.MP.ErrorBound
 import AERN2.MP.Ball

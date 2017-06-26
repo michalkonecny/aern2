@@ -51,7 +51,7 @@ import Test.Hspec
 import Test.QuickCheck
 -- import qualified Test.Hspec.SmallCheck as SC
 
--- import Numeric.CatchingExceptions
+-- 
 
 import AERN2.MP
 import AERN2.MP.Dyadic

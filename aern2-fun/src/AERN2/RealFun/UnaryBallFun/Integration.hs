@@ -37,7 +37,7 @@ import MixedTypesNumPrelude
 -- import Control.Lens.Operators
 -- import Control.Lens (_Just)
 
-import Numeric.CatchingExceptions
+
 
 -- import AERN2.MP.Dyadic
 import AERN2.MP

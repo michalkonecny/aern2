@@ -76,7 +76,7 @@ initialBernsteinCoefs p l r =
   binoms = Map.fromList [(k, binom d (d - k)) | k <- [0.. d]]
   bs =
     Map.mapKeys (\k -> d - k) $
-    Map.mapWithKey (\k c -> c / (fromJust $ Map.lookup k binoms)) cs
+    Map.mapWithKey (\k c -> c /! (fromJust $ Map.lookup k binoms)) cs
 
 -- Input: (l,r,m, List of coefficients of P in Bernstein basis on [l,r])
 -- Output: Lists of coefficients of P in Bernstein basis on [l,m] and [m,r].
@@ -88,8 +88,8 @@ bernsteinCoefs ::
 bernsteinCoefs l r m bsI =
   (buildLeft p Map.empty, buildRight p Map.empty)
   where
-  alpha = (r - m)/(r - l)
-  beta  = (m - l)/(r - l)
+  alpha = (r - m)/!(r - l)
+  beta  = (m - l)/!(r - l)
   bijs = buildBijs 0 0 Map.empty
   p = ts_deg bsI
   buildLeft j bs =
@@ -135,10 +135,13 @@ translate t poly@(PowPoly (Poly ts)) =
       in
         translateAcc (n - 1) $ c + (shiftRight 1 poly') - (t*poly')
 
-contract :: (CanMulSameType c, CanPow c Integer, PowType c Integer ~ c)
-  => c -> PowPoly c -> PowPoly c
+contract ::
+  (CanEnsureCN c, CanPowCNBy c Integer, CanMulSameType (EnsureCN c)
+  , CanEnsureCN (EnsureCN c), EnsureNoCN (EnsureCN c) ~ c, Show (EnsureCN c))
+  =>
+  c -> PowPoly c -> PowPoly c
 contract l (PowPoly (Poly ts)) =
-  PowPoly $ Poly $ Map.mapWithKey (\p c -> c*(l^p)) ts
+  PowPoly $ Poly $ Map.mapWithKey (\p c -> (((cn c)*(l^p)) ~!)) ts
 
 transform :: MPBall -> MPBall -> PowPoly MPBall -> PowPoly MPBall
 transform l r =

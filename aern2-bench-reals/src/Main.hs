@@ -155,7 +155,7 @@ fft_CR_cachedUnsafe isFFT k acSG =
 
 fft_CR_cachedArrow :: Bool -> Integer -> AccuracySG -> [Complex MPBall]
 fft_CR_cachedArrow isFFT k acSG =
-  -- seq (unsafePerformIO $ writeFile "netlog.json" $ formatQALogJSON netlog) $
+  seq (unsafePerformIO $ writeFile "netlog.json" $ formatQALogJSON netlog) $
   maybeTrace (formatQALog 0 netlog) $
   results
   where

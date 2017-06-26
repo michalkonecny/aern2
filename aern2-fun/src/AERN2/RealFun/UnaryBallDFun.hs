@@ -23,7 +23,7 @@ import MixedTypesNumPrelude
 
 import Control.Applicative
 
-import Numeric.CatchingExceptions
+
 
 import AERN2.Norm
 import AERN2.MP

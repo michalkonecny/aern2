@@ -41,7 +41,7 @@ import Control.Lens.Operators
 
 import qualified AERN2.PQueue as Q
 
-import Numeric.CatchingExceptions
+
 
 import AERN2.Norm
 import AERN2.MP.Accuracy

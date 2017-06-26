@@ -161,22 +161,26 @@ instance
 
 {- intersection -}
 
-intersect ::
+instance
   (CanMinMaxSameType l, CanMinMaxSameType r, HasOrderCertainly l r)
   =>
-  Interval l r -> Interval l r -> Maybe (Interval l r)
-intersect (Interval l1 r1) (Interval l2 r2)
-  | l !<=! r = Just (Interval l r)
-  | otherwise = Nothing
+  CanIntersectAssymetric (Interval l r) (Interval l r)
   where
-  l = l1 `max` l2
-  r = r1 `min` r2
+  type IntersectionType (Interval l r) (Interval l r) = CN (Interval l r)
+  intersect (Interval l1 r1) (Interval l2 r2)
+    | l !<=! r = pure (Interval l r)
+    | l !>! r = noValueNumErrorCertainCN err
+    | otherwise = prependErrorsCN [(ErrorPotential, err)] $ pure (Interval l r)
+    where
+    l = l1 `max` l2
+    r = r1 `min` r2
+    err = NumError "empty intersection"
 
 intersects ::
   (CanMinMaxSameType l, CanMinMaxSameType r, HasOrderCertainly l r)
   =>
   Interval l r -> Interval l r -> Bool
-intersects i1 i2 = isJust $ intersect i1 i2
+intersects i1 i2 = null $ getErrorsCN $ intersect i1 i2
 
 {- comparison -}
 

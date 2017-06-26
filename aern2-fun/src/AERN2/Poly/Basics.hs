@@ -71,14 +71,14 @@ type PolyCoeffRing c =
   loose enough to permit Rational coefficients.
 -}
 type PolyCoeffField c =
-  (PolyCoeffRing c, Field c, HasDyadics c, CanAddSubMulDivBy c Dyadic)
+  (PolyCoeffRing c, Field c, HasDyadics c, CanAddSubMulDivCNBy c Dyadic)
 
 {-|
   a shortcut type constraint for
   types suitable as coefficients of our polynomials
 -}
 type PolyCoeffBall c =
-  (PolyCoeffField c, CanAddSubMulDivBy c CauchyReal
+  (PolyCoeffField c, CanAddSubMulDivCNBy c CauchyReal
   , IsInterval c c, IsBall c, CanSetPrecision c)
 
 data Poly c = Poly { poly_terms :: Terms c }
@@ -143,6 +143,12 @@ terms_coeffs = Map.elems
 
 terms_map :: (c1 -> c2) -> Terms c1 -> Terms c2
 terms_map = Map.map
+
+terms_collectCN :: (CanEnsureCN c) => Terms c -> CN (Terms (EnsureNoCN c))
+terms_collectCN terms =
+  case sequence (Map.map ensureNoCN terms) of
+    Right terms2 -> pure terms2
+    Left es -> noValueCN es
 
 terms_updateConst :: (HasIntegers c) => (c -> c) -> Terms c -> Terms c
 terms_updateConst updateFn ts =
@@ -234,9 +240,11 @@ $(declForTypes
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
   (\ t -> [d|
-    instance (CanDivBy c $t) => CanDiv (Poly c) $t where
-      type DivType (Poly c) $t = Poly c
-      divide (Poly t1) n = Poly $ terms_map (/ n) t1
+    instance (CanDivCNBy c $t, CanEnsureCN (DivType c $t), EnsureNoCN (DivType c $t) ~ c) => CanDiv (Poly c) $t where
+      type DivType (Poly c) $t = CN (Poly c)
+      divide (Poly t1) n = fmap Poly $ terms_collectCN $ terms_map (/ n) t1
+      type DivTypeNoCN (Poly c) $t = Poly c
+      divideNoCN (Poly t1) n = Poly $ terms_map (/! n) t1
   |]))
 
 

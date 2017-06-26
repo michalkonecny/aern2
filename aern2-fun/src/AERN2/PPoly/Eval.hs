@@ -1,7 +1,7 @@
 module AERN2.PPoly.Eval where
 
 import MixedTypesNumPrelude
-import Numeric.CatchingExceptions
+
 import qualified AERN2.Poly.Cheb as Cheb hiding (evalDf)
 import AERN2.Poly.Cheb (ChPoly)
 import qualified AERN2.Poly.Cheb.Eval as ChE (evalDirect, evalDf, evalLDf)

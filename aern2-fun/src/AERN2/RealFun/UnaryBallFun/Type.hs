@@ -28,7 +28,7 @@ import Data.Typeable
 -- import Test.Hspec
 -- import Test.QuickCheck
 
-import Numeric.CatchingExceptions
+
 
 -- import AERN2.MP.Dyadic
 import AERN2.MP.Ball

@@ -35,8 +35,7 @@ library
     , QuickCheck >= 2.7 && < 2.10
     , transformers >= 0.4 && < 0.6
     , lens >= 4.13 && < 4.16
-    , mixed-types-num == 0.1.*
-    , num-exceptions == 0.1.*
+    , mixed-types-num == 0.2.*
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
     , vector
@@ -173,8 +172,7 @@ executable aern2-fun-ChPoly-benchOp
     , bytestring >= 0.10 && < 0.11
     , regex-tdfa >= 1.2.1 && < 1.3
     , zlib >= 0.6 && < 0.7
-    , mixed-types-num == 0.1.*
-    , num-exceptions == 0.1.*
+    , mixed-types-num == 0.2.*
     , aern2-mp == 0.1.*
     -- , aern2-real == 0.1.*
     , aern2-fun == 0.1.*
@@ -199,8 +197,7 @@ executable aern2-fun-ChPoly-serialise
   build-depends:
     base == 4.*
     , bytestring >= 0.10 && < 0.11
-    , mixed-types-num == 0.1.*
-    , num-exceptions == 0.1.*
+    , mixed-types-num == 0.2.*
     , aern2-mp == 0.1.*
     -- , aern2-real == 0.1.*
     , aern2-fun == 0.1.*

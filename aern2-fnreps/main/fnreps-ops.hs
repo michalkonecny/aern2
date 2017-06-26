@@ -11,7 +11,7 @@ import Debug.Trace (trace)
 #endif
 
 import MixedTypesNumPrelude
-import Numeric.CatchingExceptions
+
 -- import qualified Prelude as P
 -- import Text.Printf
 
