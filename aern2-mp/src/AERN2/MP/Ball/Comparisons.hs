@@ -299,8 +299,13 @@ instance CanIntersectAssymetric MPBall MPBall where
 {- union -}
 
 instance CanUnionAssymetric MPBall MPBall where
-  union a b = fromEndpointsMP rL rR
+  union a b =
+    case getMaybeValueCN (a `intersect` b) of
+      Just _ -> prependErrorsCN [(ErrorPotential, err)] r
+      _ -> prependErrorsCN [(ErrorCertain, err)] r
     where
+    err = NumError $ "union of enclosures: not enclosing the same value"
+    r = cn $ fromEndpointsMP rL rR
     rL = min aL bL
     rR = max aR bR
     (aL,aR) = endpointsMP a

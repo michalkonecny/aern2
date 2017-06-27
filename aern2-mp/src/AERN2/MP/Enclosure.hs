@@ -16,9 +16,9 @@ module AERN2.MP.Enclosure
   , IsInterval(..), intervalFunctionByEndpoints, intervalFunctionByEndpointsUpDown
   , CanTestContains(..), CanMapInside(..), specCanMapInside
   , CanIntersectAssymetric(..), CanIntersect
-  , CanIntersectBy, CanIntersectSameType
   , CanIntersectCNBy, CanIntersectCNSameType
-  , CanUnionAssymetric(..), CanUnion, CanUnionBy, CanUnionSameType
+  , CanUnionAssymetric(..), CanUnion
+  , CanUnionCNBy, CanUnionCNSameType
   )
 where
 
@@ -127,10 +127,7 @@ class CanIntersectAssymetric e1 e2 where
   type IntersectionType e1 e2 = EnsureCN e1
   intersect :: e1 -> e2 -> IntersectionType e1 e2
 
-type CanIntersectBy e1 e2 = (CanIntersect e1 e2, IntersectionType e1 e2 ~ e1)
 type CanIntersectCNBy e1 e2 = (CanIntersect e1 e2, IntersectionType e1 e2 ~ EnsureCN e1)
-
-type CanIntersectSameType e1 = CanIntersectBy e1 e1
 type CanIntersectCNSameType e1 = CanIntersectCNBy e1 e1
 
 instance CanIntersectAssymetric Bool Bool where
@@ -188,12 +185,12 @@ type CanUnion e1 e2 = (CanUnionAssymetric e1 e2, CanUnionAssymetric e1 e2)
 
 class CanUnionAssymetric e1 e2 where
   type UnionionType e1 e2
-  type UnionionType e1 e2 = e1
+  type UnionionType e1 e2 = EnsureCN e1
   union :: e1 -> e2 -> UnionionType e1 e2
 
-type CanUnionBy e1 e2 = (CanUnion e1 e2, UnionionType e1 e2 ~ e1)
+type CanUnionCNBy e1 e2 = (CanUnion e1 e2, UnionionType e1 e2 ~ EnsureCN e1)
 
-type CanUnionSameType e1 = CanUnionBy e1 e1
+type CanUnionCNSameType e1 = CanUnionCNBy e1 e1
 
 instance
   (CanUnionAssymetric e1 e2, SuitableForCE es, CanEnsureCE es (UnionionType e1 e2))
@@ -204,6 +201,9 @@ instance
     EnsureCE es (UnionionType e1 e2)
   union = lift2CE union
 
-instance (CanUnionSameType t) => HasIfThenElse (Maybe Bool) t where
-  ifThenElse (Just b) e1 e2 = if b then e1 else e2
+instance (CanUnionCNSameType t, CanEnsureCN t) =>
+  HasIfThenElse (Maybe Bool) t
+  where
+  type IfThenElseType (Maybe Bool) t = EnsureCN t
+  ifThenElse (Just b) e1 e2 = cn $ if b then e1 else e2
   ifThenElse Nothing e1 e2 = e1 `union` e2

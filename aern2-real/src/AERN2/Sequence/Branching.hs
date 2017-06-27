@@ -64,14 +64,16 @@ instance (CanPickNonZero a) => CanPickNonZero (Sequence a) where
 
 {-| "parallel if" -}
 instance
-  (QAArrow to, HasIfThenElse b t, SuitableForSeq b, SuitableForSeq t)
+  (QAArrow to, HasIfThenElse b t
+  , SuitableForSeq b, SuitableForSeq t, SuitableForSeq (IfThenElseType b t))
   =>
   HasIfThenElse (SequenceA to b) (SequenceA to t)
   where
-  ifThenElse b e1 e2 =
+  type IfThenElseType (SequenceA to b) (SequenceA to t) = (SequenceA to (IfThenElseType b t))
+  ifThenElse (b::SequenceA to b) (e1::SequenceA to t) e2 =
     newSeq sampleT "pif" [AnyProtocolQA b, AnyProtocolQA e1, AnyProtocolQA e2] makeQ
     where
-    SequenceP sampleT = qaProtocol e1
+    sampleT = undefined :: (IfThenElseType b t)
     makeQ (me,_src) =
       proc ac ->
         do

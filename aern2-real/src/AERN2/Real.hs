@@ -124,8 +124,12 @@ _addslAParPrint =
 
 {- parallel branching -}
 
-_example_pif :: CauchyReal -> CauchyReal
+_example_pif :: CauchyReal -> CauchyRealCN
 _example_pif r =
+  if r < 0 then -r else r -- abs via parallel if
+
+_example_pif0 :: MPBall -> CN MPBall
+_example_pif0 r =
   if r < 0 then -r else r -- abs via parallel if
 
 _nsection ::
