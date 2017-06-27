@@ -172,14 +172,14 @@ ditfft2A nI = aux 0 nI 1
         yEven <- aux i nHalf (2*s) -< x
         yOdd <- aux (i+s) nHalf (2*s) -< x
         yOddTw <- mapWithIndexA twiddleA -< yOdd
-        let yL = map (complexGiveName "+") (zipWith (+) yEven yOddTw)
-        let yR = map (complexGiveName "-") (zipWith (-) yEven yOddTw)
+        let yL = map (complexGiveName "+ node") (zipWith (+) yEven yOddTw)
+        let yR = map (complexGiveName "- node") (zipWith (-) yEven yOddTw)
         mapA (regComplex isParallel) -< yL ++ yR
     twiddleA k =
       proc (a :: c) ->
         regComplex isParallel -< complexGiveName opName (a * (tw k n :: c))
       where
-      opName = printf "*(tw %d/%d)" k n
+      opName = printf "*(tw %d/%d) node" k n
   tw k n =
     case Map.lookup (k%n) twsNI of -- memoisation
       Just v -> convertExactly v
@@ -204,8 +204,8 @@ regComplex isParallel
 complexGiveName :: String -> Complex (QA to p) -> Complex (QA to p)
 complexGiveName name (a:+b) = (a':+b')
   where
-  a' = qaRename (\_ -> name ++ ".L") a
-  b' = qaRename (\_ -> name ++ ".L") b
+  a' = qaRename (\_ -> name ++ " (R)") a
+  b' = qaRename (\_ -> name ++ " (I)") b
 
 {-| Cooley-Tukey FFT closely following
     https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Pseudocode
