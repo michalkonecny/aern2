@@ -215,6 +215,7 @@ view s =
           ++
           (List.concat <| List.map (drawNode s) <| Dict.toList s.nodes)
           ++ drawPendingQueries s pendingQueries
+          ++ drawCachedAnswers s s.eventsDone
           ++ case s.eventsTodo of
               nextEvent :: _ -> drawEvent s nextEvent
               _ -> []
@@ -377,6 +378,29 @@ drawPendingQueries s pendingQueries =
           ]
   in
   List.concat <| List.map drawQuery pendingQueries
+
+drawCachedAnswers s events =
+  let
+    { width, height } = s.plotCanvasSize
+    w = toFloat width
+    h = toFloat height
+    nw = nodeW*w
+    nh = nodeH*h
+    drawAnswer event =
+      case event of
+        QANetLogAnswer a ->
+          case getNodeInfoPos s a.qaLogAnswer_provider of
+            Nothing -> []
+            Just (info, pos) ->
+              [
+                Collage.text (Text.fromString ("! " ++ a.qaLogAnswer_description))
+                |> scale (h/500.0)
+                |> move (0.0, -nh*0.3)
+                |> move pos
+              ]
+        _ -> []
+  in
+  List.concat <| List.map drawAnswer events
 
 
 filterPendingQueries =
