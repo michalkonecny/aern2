@@ -133,7 +133,10 @@ instance QAArrow QAParA where
   qaMakeQueryGetPromiseA src = Kleisli qaMakeQueryGetPromiseM
     where
     qaMakeQueryGetPromiseM (qa, q) =
-      runKleisli (qaMakeQueryGetPromise qa (qaId qa, src)) q
---
+      runKleisli (qaMakeQueryGetPromise qa (me, src)) q
+      where
+      me = case qaId qa of Nothing -> src; me2 -> me2
+
+
 executeQAParA :: (QAParA () a) -> IO a
 executeQAParA code = unQAParM $ runKleisli code ()

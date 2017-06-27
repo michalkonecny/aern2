@@ -75,7 +75,7 @@ instance QAArrow QACachedA where
           put ns'
           return i
       makeQCached me_src@(_,src) valueId q =
-        maybeTrace ("getAnswer: q = " ++ show q) $
+        maybeTrace ("makeQCached: q = " ++ show q) $
         QACachedM $
           do
           ns <- get
@@ -92,7 +92,7 @@ instance QAArrow QACachedA where
             let ns2' = logAnswerUpdateCache ns2 p src valueId (show a, usedCache, cache')
             put ns2'
             return $
-                maybeTrace ("getAnswer: a = " ++ show a)
+                maybeTrace ("makeQCached: a = " ++ show a)
                     a
     qaRegisterM _ =
       error "internal error in AERN2.QA.Strategy.Cached: qaRegister called with an existing id"
@@ -104,7 +104,9 @@ instance QAArrow QACachedA where
   qaMakeQueryGetPromiseA src = Kleisli qaMakeQueryGetPromiseM
     where
     qaMakeQueryGetPromiseM (qa, q) =
-      runKleisli (qaMakeQueryGetPromise qa (qaId qa, src)) q
+      runKleisli (qaMakeQueryGetPromise qa (me, src)) q
+      where
+      me = case qaId qa of Nothing -> src; me2 -> me2
 
 executeQACachedA :: (QACachedA () a) -> (QANetLog, a)
 executeQACachedA code =

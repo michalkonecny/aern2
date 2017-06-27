@@ -170,7 +170,9 @@ defaultNewQA name sources p sampleQ makeQ =
 
 qaMakeQuery :: (QAArrow to) => (QA to p) -> (Maybe (QAId to)) -> (Q p) `to` (A p)
   -- ^ composition of qaMakeQueryGetPromise and the execution of the promise
-qaMakeQuery qa src = (qaMakeQueryGetPromise qa (qaId qa, src)) >>> qaFulfilPromiseA
+qaMakeQuery qa src = (qaMakeQueryGetPromise qa (me, src)) >>> qaFulfilPromiseA
+  where
+  me = case qaId qa of Nothing -> src; me2 -> me2
 
 qaMakeQueryA :: (QAArrow to) => Maybe (QAId to) -> (QA to p, Q p) `to` (A p)
 qaMakeQueryA src = qaMakeQueryGetPromiseA src >>> qaFulfilPromiseA
