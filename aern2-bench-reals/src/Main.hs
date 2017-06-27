@@ -169,19 +169,11 @@ fft_CR_cachedArrow isFFT k acSG =
     executeQACachedA $
       proc () ->
         do
-        (Just resultRs) <- task -< ()
-        mapA approxA -< resultRs
+        resultRs <- task -< ()
+        mapA approxA -< resultRs :: [Complex (CauchyRealA QACachedA)]
   task
-    | isFFT = taskFFTWithHookA hookA k
-    | otherwise = taskDFTWithHookA (hookA 0) k
-  hookA _ name =
-    proc (a :+ i) ->
-      do
-      aNext <- (-:-)-< (rename ".R" a)
-      iNext <- (-:-)-< (rename ".I" i)
-      returnA -< Just (aNext :+ iNext)
-    where
-    rename suffix = realRename (\_ -> name ++ suffix)
+    | isFFT = taskFFTA k
+    -- | otherwise = taskDFTA k
 
 fft_CR_parArrow :: Bool -> Integer -> AccuracySG -> [Complex MPBall]
 fft_CR_parArrow isFFT k acSG =

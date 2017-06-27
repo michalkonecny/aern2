@@ -44,6 +44,20 @@ taskFFTWithHook cr2c hook k =
   x = [ convertExactly i | i <- [1..n]]
   n = 2^!k
 
+taskFFTA ::
+  (FFTOpsA to c, QAArrow to, HasIntegers c
+  , c ~ Complex (QA to p), QAProtocolCacheable p, ConvertibleExactly CauchyReal (QA to p))
+  =>
+  Integer -> () `to` [c]
+taskFFTA k =
+  proc () ->
+    do
+    xR <- mapA (regComplex False) -< x
+    ditfft2A n -< xR
+  where
+  x = [ complexGiveName ("x" ++ show i) $ convertExactly i | i <- [1..n]]
+  n = 2^!k
+
 taskFFTWithHookA ::
   (FFTOpsA to c, QAArrow to, HasIntegers c)
   =>
@@ -141,7 +155,8 @@ ditfft2Hook cr2c (hook :: c -> Maybe c) nI x =
     https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Pseudocode
 -}
 ditfft2A ::
-  (FFTOpsA to c, QAArrow to, c ~ Complex (CauchyRealA to))
+  (FFTOpsA to c, QAArrow to
+  , c ~ Complex (QA to p), QAProtocolCacheable p, ConvertibleExactly CauchyReal (QA to p))
   =>
   Integer -> [c] `to` [c]
 ditfft2A nI = aux 0 nI 1
@@ -151,39 +166,46 @@ ditfft2A nI = aux 0 nI 1
     | otherwise = convLR
     where
     nHalf = n `div` 2
+    isParallel = (nI == n)
     convLR =
       proc x -> do
         yEven <- aux i nHalf (2*s) -< x
         yOdd <- aux (i+s) nHalf (2*s) -< x
         yOddTw <- mapWithIndexA twiddleA -< yOdd
-        let yL = map (renameComplex "+") (zipWith (+) yEven yOddTw)
-        let yR = map (renameComplex "-") (zipWith (-) yEven yOddTw)
-        mapA regComplex -< yL ++ yR
+        let yL = map (complexGiveName "+") (zipWith (+) yEven yOddTw)
+        let yR = map (complexGiveName "-") (zipWith (-) yEven yOddTw)
+        mapA (regComplex isParallel) -< yL ++ yR
     twiddleA k =
       proc (a :: c) ->
-        regComplex -< renameComplex opName (a * (tw k n :: c))
+        regComplex isParallel -< complexGiveName opName (a * (tw k n :: c))
       where
       opName = printf "*(tw %d/%d)" k n
-    renameComplex name (a:+b) = (a':+b')
-      where
-      a' = realRename (\_ -> name ++ ".L") a
-      b' = realRename (\_ -> name ++ ".L") b
-    regComplex
-      | n == nI =
-        proc (a:+b) -> do
-          a' <- (-:-||) -< a
-          b' <- (-:-||) -< b
-          returnA -< (a':+b')
-      | otherwise =
-        proc (a:+b) -> do
-          a' <- (-:-) -< a
-          b' <- (-:-) -< b
-          returnA -< (a':+b')
   tw k n =
     case Map.lookup (k%n) twsNI of -- memoisation
       Just v -> convertExactly v
       _ -> error "ditfft2A: tw: internal error"
   twsNI = twsCR nI nI
+
+regComplex ::
+  (QAArrow to, QAProtocolCacheable p) =>
+  Bool -> (Complex (QA to p)) `to` (Complex (QA to p))
+regComplex isParallel
+  | isParallel =
+    proc (a:+b) -> do
+      a' <- (-:-||) -< a
+      b' <- (-:-||) -< b
+      returnA -< (a':+b')
+  | otherwise =
+    proc (a:+b) -> do
+      a' <- (-:-) -< a
+      b' <- (-:-) -< b
+      returnA -< (a':+b')
+
+complexGiveName :: String -> Complex (QA to p) -> Complex (QA to p)
+complexGiveName name (a:+b) = (a':+b')
+  where
+  a' = qaRename (\_ -> name ++ ".L") a
+  b' = qaRename (\_ -> name ++ ".L") b
 
 {-| Cooley-Tukey FFT closely following
     https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Pseudocode

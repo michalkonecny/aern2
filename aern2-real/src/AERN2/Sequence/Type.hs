@@ -129,7 +129,7 @@ seqName :: SequenceA to a -> String
 seqName = qaName
 --
 seqRename :: (String -> String) -> SequenceA to a -> SequenceA to a
-seqRename f r = r {  qaName = f (qaName r)  }
+seqRename = qaRename
 
 seqId :: SequenceA to a -> Maybe (QAId to)
 seqId = qaId

@@ -16,6 +16,7 @@ module AERN2.QA.Protocol
   -- * QA protocols and objects
   QAProtocol(..), QAProtocolCacheable(..)
   , QA(..), QAPromiseA, (?..)
+  , qaRename
   , mapQA, mapQAsameQ
   -- * QAArrows
   , AnyProtocolQA(..)
@@ -77,6 +78,9 @@ type QAPromiseA to a = () `to` a
 (?..) qa = qaMakeQueryGetPromise qa (Nothing, Nothing)
 
 infix 1 ?..
+
+qaRename :: (String -> String) -> QA to p -> QA to p
+qaRename f qa = qa {  qaName = f (qaName qa)  }
 
 mapQA ::
   (Arrow to) =>
