@@ -3,6 +3,8 @@ module Main exposing (..)
 import Http
 import Platform.Sub as Sub exposing (..)
 import Task
+import Mouse
+import Window
 
 import Json.Decode as Decode exposing (Decoder, (:=))
 
@@ -27,8 +29,7 @@ main =
         { init = initState ! initCmds
         , update = update
         , subscriptions =
-            (\s -> Sub.none)
-              -- (\_ -> Window.resizes Resize)
+            (\s -> (Sub.batch [Mouse.clicks (\pos -> NextEvent), Window.resizes Resize]))
         , view = view
         }
 
@@ -65,7 +66,7 @@ initState =
   }
 
 initCmds : List (Cmd Msg)
-initCmds = [getLog]
+initCmds = [getLog, simulateResize]
 
 jsonDecQANetLog : Decoder (List QANetLogItem)
 jsonDecQANetLog = Decode.list jsonDecQANetLogItem
@@ -94,11 +95,13 @@ getLog =
     (Http.get jsonDecNodePositions posUrl)
   |> Task.perform (\e -> Err (toString e)) (\t -> t)
 
--- simulateResize =
---   Task.perform (\_ -> NoAction) Resize Window.size
+simulateResize : Cmd Msg
+simulateResize =
+  Task.perform (\_ -> NoAction) Resize Window.size
 
 type Msg
     = NoAction
+    | Resize Window.Size
     | Err String
     | SetLog QANetLog NodePositions
     | NextEvent
@@ -107,6 +110,8 @@ update : Msg -> State -> ( State, Cmd Msg )
 update msg s =
   case msg of
     NoAction -> s ! []
+    Resize size ->
+      { s | plotCanvasSize = size } ! []
     Err e -> { s | err = Just e } ! []
     SetLog log nodepositions ->
       { s |
@@ -163,6 +168,7 @@ view : State -> Html Msg
 view s =
   let
     { width, height } = s.plotCanvasSize
+    pendingQueries = filterPendingQueries <| List.reverse s.eventsDone
   in
     div [] <|
       [
@@ -181,10 +187,21 @@ view s =
           ]
           ++
           (List.concat <| List.map (drawNode s) <| Dict.toList s.nodes)
+          ++ drawPendingQueries s pendingQueries
+          ++ case s.eventsTodo of
+              nextEvent :: _ -> drawEvent s nextEvent
+              _ -> []
       ]
-      ++ case s.eventsTodo of
-          nextEvent :: _ -> [Html.text (toString nextEvent)]
-          _ -> []
+      -- ++ case s.eventsTodo of
+      --     nextEvent :: _ -> [Html.text (toString nextEvent)]
+      --     _ -> []
+      -- ++ [Html.text (toString pendingQueries)]
+
+nodeW : Float
+nodeW = 0.16
+
+nodeH : Float
+nodeH = 0.1
 
 bgrColour : Color
 bgrColour =
@@ -192,17 +209,16 @@ bgrColour =
   rgb 200 255 220
 
 drawNode : State -> (Int, NodeInfo) -> List Form
-drawNode s (nodeId, info) =
-  case info.pos of
+drawNode s (nodeIx, _) =
+  case getNodeInfoPos s (ValueId nodeIx) of
     Nothing -> []
-    Just (x,y) ->
+    Just (info, pos) ->
       let
         { width, height } = s.plotCanvasSize
         w = toFloat width
         h = toFloat height
         nw = nodeW*w
         nh = nodeH*h
-        pos = ((x-0.5)*w, (y-0.5)*h)
         srcN = List.length info.sources
         nodeBox = rect nw nh
         nameBox = rect (nw) (0.3*nh)
@@ -212,12 +228,9 @@ drawNode s (nodeId, info) =
         group
         [
           nodeBox |> filled white
-        ,
-          nameBox |> filled (rgb 200 220 255) |> nameMove
-        ,
-          nameBox |> outlined (solid black) |> nameMove
-        ,
-          nodeBox |> outlined (solid black)
+        , nameBox |> filled (rgb 200 220 255) |> nameMove
+        , nameBox |> outlined (solid black) |> nameMove
+        , nodeBox |> outlined (solid black)
         ,
           Collage.text (Text.fromString (info.name))
           |> scale (h/500.0)
@@ -225,35 +238,130 @@ drawNode s (nodeId, info) =
         ]
         |> move pos
       ]
-      ++ (List.concat <| List.map (drawLink s pos srcN) (List.map2 (,) [0..(srcN-1)] info.sources))
+      ++ (List.concat <| List.map (drawLink s blue (ValueId nodeIx)) info.sources)
 
-drawLink : State -> (Float, Float) -> Int -> (Int, ValueId) -> List Form
-drawLink s (destX, destY) srcN (srcK, srcId) =
-  case Dict.get (fromValueId srcId) s.nodes of
-    Nothing -> []
+drawLink : State -> Color -> ValueId -> ValueId -> List Form
+drawLink s c destId srcId =
+  --  (destX, destY) srcN (srcK, srcId)
+  case (getNodeInfoPos s srcId, getNodeInfoPos s destId) of
+    (Just (srcInfo, (srcX,srcY)), Just (destInfo, (destX,destY))) ->
+      let
+        { width, height } = s.plotCanvasSize
+        w = toFloat width
+        h = toFloat height
+        nw = nodeW*w
+        nh = nodeH*h
+        srcN = List.length destInfo.sources
+        msrcK =
+          Maybe.oneOf <|
+          List.map2
+            (\k sId -> if sId == srcId then Just k else Nothing)
+            [0..(srcN-1)]
+            destInfo.sources
+        srcK =
+          case msrcK of
+            Just k -> k
+            _ -> 0
+        destYK =
+          if srcN <= 1 then destY
+            else destY + (0.4*nh)*(0.5-((toFloat srcK)/((toFloat srcN)-1)))
+      in
+      [
+        path [(srcX+nw*0.5,srcY), (srcX+nw*0.55,srcY), (destX-nw*0.55,destYK), (destX-nw*0.5,destYK)]
+        |> traced (solid c)
+      ]
+    _ -> []
+
+getNodeInfoPos : State -> ValueId -> Maybe (NodeInfo, (Float,Float))
+getNodeInfoPos s vId =
+  case Dict.get (fromValueId vId) s.nodes of
+    Nothing -> Nothing
     Just info ->
       case info.pos of
-        Nothing -> []
+        Nothing -> Nothing
         Just (x,y) ->
           let
             { width, height } = s.plotCanvasSize
             w = toFloat width
             h = toFloat height
-            nw = nodeW*w
-            nh = nodeH*h
-            (srcX, srcY) = ((x-0.5)*w, (y-0.5)*h)
-            destYK =
-              if srcN <= 1 then destY
-                else destY + (0.4*nh)*(0.5-((toFloat srcK)/((toFloat srcN)-1)))
           in
+          Just (info, ((x-0.5)*w, (y-0.5)*h))
+
+drawEvent : State -> QANetLogItem -> List Form
+drawEvent s event =
+  let
+    { width, height } = s.plotCanvasSize
+    w = toFloat width
+    h = toFloat height
+    nw = nodeW*w
+    nh = nodeH*h
+    drawQuery q =
+      case getNodeInfoPos s q.qaLogQuery_provider of
+        Nothing -> []
+        Just (info, pos) ->
           [
-            path [(srcX+nw*0.5,srcY), (srcX+nw*0.55,srcY), (destX-nw*0.55,destYK), (destX-nw*0.5,destYK)]
-            |> traced (solid blue)
+            Collage.text (Text.fromString ("? " ++ q.qaLogQuery_description) |> Text.color red)
+            |> scale (h/500.0)
+            |> move (0.0, nh*0.1)
+            |> move pos
           ]
+          ++
+          case q.qaLogQuery_client of
+            Nothing -> []
+            Just clientId ->
+              drawLink s red clientId q.qaLogQuery_provider
+    drawAnswer a =
+      case getNodeInfoPos s a.qaLogAnswer_provider of
+        Nothing -> []
+        Just (info, pos) ->
+          [
+            Collage.text (Text.fromString ("! " ++ a.qaLogAnswer_description) |> Text.color red)
+            |> scale (h/500.0)
+            |> move (0.0, -nh*0.3)
+            |> move pos
+          ]
+          ++
+          case a.qaLogAnswer_client of
+            Nothing -> []
+            Just clientId ->
+              drawLink s red clientId a.qaLogAnswer_provider
+  in
+  case event of
+    QANetLogCreate _ -> []
+    QANetLogQuery q -> drawQuery q
+    QANetLogAnswer a -> drawAnswer a
+
+drawPendingQueries s pendingQueries =
+  let
+    { width, height } = s.plotCanvasSize
+    w = toFloat width
+    h = toFloat height
+    nw = nodeW*w
+    nh = nodeH*h
+    drawQuery q =
+      case getNodeInfoPos s q.qaLogQuery_provider of
+        Nothing -> []
+        Just (info, pos) ->
+          [
+            Collage.text (Text.fromString ("? " ++ q.qaLogQuery_description))
+            |> scale (h/500.0)
+            |> move (0.0, nh*0.1)
+            |> move pos
+          ]
+  in
+  List.concat <| List.map drawQuery pendingQueries
 
 
-nodeW : Float
-nodeW = 0.16
-
-nodeH : Float
-nodeH = 0.1
+filterPendingQueries =
+  let
+    aux prevQueries events =
+      case events of
+        [] ->
+          Dict.values prevQueries
+        (QANetLogQuery q :: rest) ->
+          aux (Dict.insert (fromValueId q.qaLogQuery_provider) q prevQueries) rest
+        (QANetLogAnswer a :: rest) ->
+          aux (Dict.remove (fromValueId a.qaLogAnswer_provider) prevQueries) rest
+        (_ :: rest) -> aux prevQueries rest
+  in
+  aux Dict.empty
