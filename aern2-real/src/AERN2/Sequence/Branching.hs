@@ -30,7 +30,7 @@ import AERN2.MP
 import AERN2.QA.Protocol
 import AERN2.AccuracySG
 import AERN2.Sequence.Type
--- import AERN2.Sequence.Helpers
+import AERN2.Sequence.Helpers (ensureAccuracyA)
 import AERN2.Sequence.Comparison
 
 {- non-zero picking -}
@@ -64,15 +64,21 @@ instance (CanPickNonZero a) => CanPickNonZero (Sequence a) where
 
 {-| "parallel if" -}
 instance
-  (HasIfThenElse b t, SuitableForSeq b, SuitableForSeq t)
+  (QAArrow to, HasIfThenElse b t, SuitableForSeq b, SuitableForSeq t)
   =>
-  HasIfThenElse (Sequence b) (Sequence t)
+  HasIfThenElse (SequenceA to b) (SequenceA to t)
   where
   ifThenElse b e1 e2 =
-    newSeq (e1 ? (bitsS 0)) "pif" [AnyProtocolQA b, AnyProtocolQA e1, AnyProtocolQA e2] makeQ
+    newSeq sampleT "pif" [AnyProtocolQA b, AnyProtocolQA e1, AnyProtocolQA e2] makeQ
     where
-    makeQ (me,_src) ac =
-      if ((b ?<- me) ac) then ((e1 ?<- me) ac) else ((e2 ?<- me) ac)
+    SequenceP sampleT = qaProtocol e1
+    makeQ (me,_src) =
+      proc ac ->
+        do
+        ensureAccuracyA
+          (proc [q] -> qaMake3Queries (b,e1,e2) me -< (q,q,q))
+          (\(b',e1',e2') -> if b' then e1' else e2')
+            -< (ac, ([ac], Nothing))
 
 pick ::
   (QAArrow to)

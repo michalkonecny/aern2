@@ -25,6 +25,7 @@ module AERN2.QA.Protocol
   , (-:-), (-:-|), (-:-||)
   , (-?<-), (-?-), (-?..<-), (-?..-), (-???<-), (-<?<->-)
   , qaMake2Queries, (??<-)
+  , qaMake3Queries
 )
 where
 
@@ -230,9 +231,7 @@ infix 0 -:-, -:-|, -:-||
 (??<-) :: (QAArrow to) => (QA to p1, QA to p2) -> Maybe (QAId to) -> (Q p1, Q p2) `to` (A p1, A p2)
 (??<-) = qaMake2Queries
 
-infix 1 ??<-
-
-{- arrow conversions -}
+infix 0 ??<-
 
 {-| Run two queries in an interleaving manner, enabling parallelism. -}
 qaMake2Queries :: (QAArrow to) => (QA to p1, QA to p2) -> Maybe (QAId to) -> (Q p1, Q p2) `to` (A p1, A p2)
@@ -244,6 +243,23 @@ qaMake2Queries (qa1, qa2) src =
     a1 <- qaFulfilPromiseA -< ap1
     a2 <- qaFulfilPromiseA -< ap2
     returnA -< (a1,a2)
+
+{-| Run two queries in an interleaving manner, enabling parallelism. -}
+qaMake3Queries ::
+  (QAArrow to) =>
+  (QA to p1, QA to p2, QA to p3) -> Maybe (QAId to) -> (Q p1, Q p2, Q p3) `to` (A p1, A p2, A p3)
+qaMake3Queries (qa1, qa2, qa3) src =
+  proc (q1,q2,q3) ->
+    do
+    ap1 <- (-?..<-) src -< (qa1, q1)
+    ap2 <- (-?..<-) src -< (qa2, q2)
+    ap3 <- (-?..<-) src -< (qa3, q3)
+    a1 <- qaFulfilPromiseA -< ap1
+    a2 <- qaFulfilPromiseA -< ap2
+    a3 <- qaFulfilPromiseA -< ap3
+    returnA -< (a1,a2,a3)
+
+{- arrow conversions -}
 
 instance
   (CanSwitchArrow to1 to2, QAArrow to1, QAArrow to2, QAProtocolCacheable p)
