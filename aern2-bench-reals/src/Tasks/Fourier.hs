@@ -140,6 +140,54 @@ ditfft2Hook cr2c (hook :: c -> Maybe c) nI x =
 {-| Cooley-Tukey FFT closely following
     https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Pseudocode
 -}
+ditfft2A ::
+  (FFTOpsA to c, QAArrow to, c ~ Complex (CauchyRealA to))
+  =>
+  Integer -> [c] `to` [c]
+ditfft2A nI = aux 0 nI 1
+  where
+  aux i n s
+    | n == 1 = arr (\ x -> [x !! i])
+    | otherwise = convLR
+    where
+    nHalf = n `div` 2
+    convLR =
+      proc x -> do
+        yEven <- aux i nHalf (2*s) -< x
+        yOdd <- aux (i+s) nHalf (2*s) -< x
+        yOddTw <- mapWithIndexA twiddleA -< yOdd
+        let yL = map (renameComplex "+") (zipWith (+) yEven yOddTw)
+        let yR = map (renameComplex "-") (zipWith (-) yEven yOddTw)
+        mapA regComplex -< yL ++ yR
+    twiddleA k =
+      proc (a :: c) ->
+        regComplex -< renameComplex opName (a * (tw k n :: c))
+      where
+      opName = printf "*(tw %d/%d)" k n
+    renameComplex name (a:+b) = (a':+b')
+      where
+      a' = realRename (\_ -> name ++ ".L") a
+      b' = realRename (\_ -> name ++ ".L") b
+    regComplex
+      | n == nI =
+        proc (a:+b) -> do
+          a' <- (-:-||) -< a
+          b' <- (-:-||) -< b
+          returnA -< (a':+b')
+      | otherwise =
+        proc (a:+b) -> do
+          a' <- (-:-) -< a
+          b' <- (-:-) -< b
+          returnA -< (a':+b')
+  tw k n =
+    case Map.lookup (k%n) twsNI of -- memoisation
+      Just v -> convertExactly v
+      _ -> error "ditfft2A: tw: internal error"
+  twsNI = twsCR nI nI
+
+{-| Cooley-Tukey FFT closely following
+    https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Pseudocode
+-}
 ditfft2AHook ::
   (FFTOpsA to c, QAArrow to)
   =>
