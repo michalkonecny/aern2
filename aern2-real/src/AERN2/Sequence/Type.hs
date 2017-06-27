@@ -16,10 +16,12 @@
 module AERN2.Sequence.Type
 (
   SequenceP(..), pSeq
+  , FastConvSeqP, EffortConvSeqP
   , SuitableForSeq
   , seqName, seqId, seqSources, seqRename
   , seqWithAccuracy, seqWithAccuracyA, seqsWithAccuracyA
   , SequenceA, Sequence
+  , FastConvSeqA, EffortConvSeqA, FastConvSeq, EffortConvSeq
   , newSeq, newSeqSimple
   , convergentList2SequenceA
   , seqByPrecision2SequenceA
@@ -56,6 +58,8 @@ import AERN2.AccuracySG
 {- QA protocol -}
 
 data SequenceP a = SequenceP { unSequenceP :: a} deriving (Show)
+type FastConvSeqP a = SequenceP a -- synonym, emphasising stric accuracy requirement
+type EffortConvSeqP a = SequenceP a -- synonym, emphasising accuracy guide
 
 pSeq :: a -> SequenceP a
 pSeq a = SequenceP a
@@ -106,8 +110,12 @@ instance Functor SequenceP where
 {- Seqeuences -}
 
 type SequenceA to a = QA to (SequenceP a)
-
 type Sequence a = SequenceA (->) a
+
+type FastConvSeqA to a = SequenceA to a -- synonym, emphasising stric accuracy requirement
+type EffortConvSeqA to a = SequenceA to a -- synonym, emphasising accuracy guide
+type FastConvSeq a = Sequence a -- synonym, emphasising stric accuracy requirement
+type EffortConvSeq a = Sequence a -- synonym, emphasising accuracy guide
 
 instance (Show a) => Show (Sequence a) where
   show r = show $ r ? (accuracySG (bits 100))
