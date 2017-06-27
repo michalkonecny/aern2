@@ -148,7 +148,7 @@ getInitQ1Q2FromSimple simpleA _ _ _ =
 ensureAccuracyA ::
   (ArrowChoice to, Show a, Show b
   , HasAccuracy b
-  , CanEnsureCN b, HasAccuracy (EnsureNoCN b))
+  , CanEnsureCN b, HasAccuracy (EnsureNoCN b), HasAccuracy (EnsureNoCN b), Show (EnsureNoCN b))
   =>
   ([AccuracySG] `to` a) ->
   (a -> b) ->
@@ -190,6 +190,8 @@ ensureAccuracyA getA op =
                           "ensureAccuracyA: Not enough ... (q = " ++ show q ++
                           "; js = " ++ show js ++
                           "; a = " ++ show a ++
+                          "; resultNoCN = " ++ show resultNoCN ++
+                          "; resultNoCN accuracy = " ++ (show $ getAccuracy resultNoCN) ++ ")" ++
                           "; result = " ++ show result ++
                           "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
                       ) $

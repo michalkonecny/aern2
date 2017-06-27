@@ -70,7 +70,7 @@ instance (Show a) => QAProtocol (SequenceP a) where
   -- sampleQ _ = AccuracySG NoInformation NoInformation
 
 type SuitableForSeq a =
-  (Show a, HasAccuracy a, CanAdjustToAccuracySG a
+  (Show a, Show (EnsureNoCN a), HasAccuracy a, CanAdjustToAccuracySG a
   , CanEnsureCN a, HasAccuracy (EnsureNoCN a), CanIntersectCNSameType a)
 
 instance

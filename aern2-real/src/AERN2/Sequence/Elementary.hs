@@ -239,7 +239,8 @@ instance
                 Just sqrtNormLog -> max acSG0 (q - 1 - sqrtNormLog)
                 _ -> acSG0
         returnA -< (jInit, Just b)
-    sqrtSafe x = sqrt (max 0 x)
+    sqrtSafe x =
+      sqrt (max 0 x)
 
 {- sine, cosine -}
 
