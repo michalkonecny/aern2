@@ -1,17 +1,15 @@
 module Main exposing (..)
 
 import Http
-import Task
-import Html exposing (..)
-import Html.Events exposing (..)
-import Json.Decode as Decode exposing (Decoder, (:=))
-
 import Platform.Sub as Sub exposing (..)
+import Task
+
+import Json.Decode as Decode exposing (Decoder, (:=))
 
 import Html exposing (..)
 import Html.App exposing (program)
-import Html.Attributes as A exposing (..)
-import Html.Events exposing (..)
+-- import Html.Attributes as A exposing (..)
+-- import Html.Events exposing (..)
 
 import Color exposing (..)
 import Collage exposing (..)
@@ -38,10 +36,12 @@ type alias QANetLog = List QANetLogItem
 
 type alias State =
   {
-    log : Maybe QANetLog
-  , nodes : Dict.Dict Int NodeInfo
-  , err : Maybe String
+    err : Maybe String
+  , log : Maybe QANetLog
   , plotCanvasSize : { width : Pixels, height : Pixels }
+  , nodes : Dict.Dict Int NodeInfo
+  , eventsDone : List QANetLogItem
+  , eventsTodo : List QANetLogItem
   }
 
 type alias NodeInfo =
@@ -56,10 +56,12 @@ type alias Pixels = Int
 initState : State
 initState =
   {
-    log = Nothing
-  , nodes = Dict.empty
-  , err = Nothing
+    err = Nothing
+  , log = Nothing
   , plotCanvasSize = { width = 800, height = 600 }
+  , nodes = Dict.empty
+  , eventsDone = []
+  , eventsTodo = []
   }
 
 initCmds : List (Cmd Msg)
@@ -97,15 +99,30 @@ getLog =
 
 type Msg
     = NoAction
-    | SetLog QANetLog NodePositions
     | Err String
+    | SetLog QANetLog NodePositions
+    | NextEvent
 
 update : Msg -> State -> ( State, Cmd Msg )
 update msg s =
   case msg of
     NoAction -> s ! []
-    SetLog log nodepositions -> { s | log = Just log, nodes = getNodeInfo log nodepositions } ! []
     Err e -> { s | err = Just e } ! []
+    SetLog log nodepositions ->
+      { s |
+        log = Just log
+      , nodes = getNodeInfo log nodepositions
+      , eventsTodo = List.filter (not << isQANetLogCreate) log
+      , eventsDone = []
+      } ! []
+    NextEvent ->
+      case s.eventsTodo of
+        (nextEvent :: rest) ->
+          { s |
+            eventsTodo = rest
+          , eventsDone = nextEvent :: s.eventsDone
+          } ! []
+        _ -> s ! []
 
 getNodeInfo : QANetLog -> NodePositions -> Dict.Dict Int NodeInfo
 getNodeInfo log nodepositions =
@@ -133,6 +150,12 @@ getNodeInfo log nodepositions =
     List.map (\c -> (fromValueId <| c.qaLogCreate_newId, makeNodeInfo c)) |>
     Dict.fromList
 
+isQANetLogCreate : QANetLogItem -> Bool
+isQANetLogCreate logItem =
+  case logItem of
+    QANetLogCreate c -> True
+    _ -> False
+
 fromValueId : ValueId -> Int
 fromValueId (ValueId n) = n
 
@@ -159,6 +182,9 @@ view s =
           ++
           (List.concat <| List.map (drawNode s) <| Dict.toList s.nodes)
       ]
+      ++ case s.eventsTodo of
+          nextEvent :: _ -> [Html.text (toString nextEvent)]
+          _ -> []
 
 bgrColour : Color
 bgrColour =
@@ -178,15 +204,23 @@ drawNode s (nodeId, info) =
         nh = nodeH*h
         pos = ((x-0.5)*w, (y-0.5)*h)
         srcN = List.length info.sources
+        nodeBox = rect nw nh
+        nameBox = rect (nw) (0.3*nh)
+        nameMove = move (0.0, 0.35*nh)
       in
       [
         group
         [
-          rect nw nh
-            |> outlined (solid black)
+          nodeBox |> filled white
+        ,
+          nameBox |> filled (rgb 200 220 255) |> nameMove
+        ,
+          nameBox |> outlined (solid black) |> nameMove
+        ,
+          nodeBox |> outlined (solid black)
         ,
           Collage.text (Text.fromString (info.name))
-          |> scale 1.0
+          |> scale (h/500.0)
           |> move (0.0, nh*0.4)
         ]
         |> move pos
