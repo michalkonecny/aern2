@@ -3,7 +3,9 @@ module Main exposing (..)
 import Http
 import Platform.Sub as Sub exposing (..)
 import Task
-import Mouse
+
+-- import Mouse
+import Keyboard
 import Window
 
 import Json.Decode as Decode exposing (Decoder, (:=))
@@ -20,6 +22,7 @@ import Text
 
 import List
 import Dict
+import Char
 
 import QANetLog exposing (..)
 
@@ -28,10 +31,25 @@ main =
     program
         { init = initState ! initCmds
         , update = update
-        , subscriptions =
-            (\s -> (Sub.batch [Mouse.clicks (\pos -> NextEvent), Window.resizes Resize]))
+        , subscriptions = subscriptions
         , view = view
         }
+
+subscriptions : State -> Sub Msg
+subscriptions s =
+  let
+    keyEvent code =
+      case Char.fromCode code of
+        '[' -> PrevEvent
+        ']' -> NextEvent
+        _ -> NoAction
+  in
+  Sub.batch
+    [
+      -- Mouse.clicks (\pos -> NextEvent)
+      Keyboard.presses keyEvent
+    , Window.resizes Resize
+    ]
 
 type alias QANetLog = List QANetLogItem
 
@@ -105,6 +123,7 @@ type Msg
     | Err String
     | SetLog QANetLog NodePositions
     | NextEvent
+    | PrevEvent
 
 update : Msg -> State -> ( State, Cmd Msg )
 update msg s =
@@ -126,6 +145,14 @@ update msg s =
           { s |
             eventsTodo = rest
           , eventsDone = nextEvent :: s.eventsDone
+          } ! []
+        _ -> s ! []
+    PrevEvent ->
+      case s.eventsDone of
+        (lastEvent :: rest) ->
+          { s |
+            eventsDone = rest
+          , eventsTodo = lastEvent :: s.eventsTodo
           } ! []
         _ -> s ! []
 
