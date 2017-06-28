@@ -40,8 +40,8 @@ subscriptions s =
   let
     keyEvent code =
       case Char.fromCode code of
-        '[' -> PrevEvent
-        ']' -> NextEvent
+        'q' -> PrevEvent
+        'w' -> NextEvent
         _ -> NoAction
   in
   Sub.batch
@@ -343,7 +343,7 @@ drawEvent s event =
         Nothing -> []
         Just (info, pos) ->
           [
-            Collage.text (Text.fromString ("! " ++ a.qaLogAnswer_description) |> Text.color red)
+            Collage.text (Text.fromString ("" ++ a.qaLogAnswer_description) |> Text.color red)
             |> scale (h/500.0)
             |> move (0.0, -nh*0.3)
             |> move pos
@@ -393,7 +393,7 @@ drawCachedAnswers s events =
             Nothing -> []
             Just (info, pos) ->
               [
-                Collage.text (Text.fromString ("! " ++ a.qaLogAnswer_description))
+                Collage.text (Text.fromString ("" ++ a.qaLogAnswer_description))
                 |> scale (h/500.0)
                 |> move (0.0, -nh*0.3)
                 |> move pos
