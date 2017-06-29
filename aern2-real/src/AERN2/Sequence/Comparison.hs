@@ -318,6 +318,16 @@ $(declForTypes
       notEqualTo = lift2T "/=" (/=)
 
     instance
+      (QAArrow to, HasEqAsymmetric $t a
+      , SuitableForSeq a, SuitableForSeq (EqCompareType $t a))
+      =>
+      HasEqAsymmetric $t (SequenceA to a)
+      where
+      type EqCompareType $t (SequenceA to a) = SequenceA to (EqCompareType $t a)
+      equalTo = flip $ lift2T "==" (flip (==))
+      notEqualTo = flip $ lift2T "/=" (flip (/=))
+
+    instance
       (QAArrow to, HasOrderAsymmetric a $t
       , SuitableForSeq a, SuitableForSeq (OrderCompareType a $t))
       =>
@@ -328,5 +338,17 @@ $(declForTypes
       leq = lift2T "<=" (<=)
       greaterThan = lift2T ">" (>)
       geq = lift2T ">=" (>=)
+
+    instance
+      (QAArrow to, HasOrderAsymmetric $t a
+      , SuitableForSeq a, SuitableForSeq (OrderCompareType $t a))
+      =>
+      HasOrderAsymmetric $t (SequenceA to a)
+      where
+      type OrderCompareType $t (SequenceA to a) = SequenceA to (OrderCompareType $t a)
+      lessThan = flip $ lift2T "<" (flip (<))
+      leq = flip $ lift2T "<=" (flip (<=))
+      greaterThan = flip $ lift2T ">" (flip (>))
+      geq = flip $ lift2T ">=" (flip (>=))
 
   |]))
