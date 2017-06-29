@@ -14,7 +14,7 @@
 module AERN2.QA.NetLog
 (ValueId(..), QANetLogItem(..), QANetLog
 , formatQALog, printQALog, printQANetLogThenResult
-, formatQALogJSON, printQALogJSON)
+, formatQALogJSON, printQALogJSON, writeNetLogJSON)
 where
 
 import MixedTypesNumPrelude
@@ -110,3 +110,11 @@ formatQALogJSON = BS.unpack . J.encode
 printQALogJSON :: QANetLog -> IO ()
 printQALogJSON =
   BS.putStrLn . J.encode
+
+writeNetLogJSON :: QANetLog -> IO ()
+writeNetLogJSON netlog =
+  writeFile "netlog.js" $
+    "netlog='" ++  (filter goodChar $ formatQALogJSON netlog) ++ "'"
+  where
+  goodChar 'Â' = False
+  goodChar _ = True

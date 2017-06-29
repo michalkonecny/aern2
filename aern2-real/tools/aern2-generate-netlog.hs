@@ -30,7 +30,8 @@ deriveElmDef defaultOptions ''QANetLogItem
 
 main :: IO ()
 main =
-    putStrLn $ makeElmModule "QANetLog"
-    [ DefineElm (Proxy :: Proxy QANetLogItem),
-      DefineElm (Proxy :: Proxy ValueId)
-    ]
+    do
+    putStr $ makeElmModule "QANetLog"
+              [ DefineElm (Proxy :: Proxy QANetLogItem),
+                DefineElm (Proxy :: Proxy ValueId)
+              ]

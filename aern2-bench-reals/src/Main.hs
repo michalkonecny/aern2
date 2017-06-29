@@ -155,7 +155,7 @@ fft_CR_cachedUnsafe isFFT k acSG =
 
 fft_CR_cachedArrow :: Bool -> Integer -> AccuracySG -> [Complex MPBall]
 fft_CR_cachedArrow isFFT k acSG =
-  seq (unsafePerformIO $ writeFile "netlog.json" $ formatQALogJSON netlog) $
+  seq (unsafePerformIO $ writeNetLogJSON netlog) $
   maybeTrace (formatQALog 0 netlog) $
   results
   where
@@ -183,10 +183,10 @@ fft_CR_parArrow isFFT k acSG =
       executeQAParA $
         proc () ->
           do
-          (Just resultRs) <- task -< ()
-          promises <- mapA getPromiseComplexA -< resultRs
+          resultRs <- task -< ()
+          promises <- mapA getPromiseComplexA -< resultRs :: [Complex (CauchyRealA QAParA)]
           mapA fulfilPromiseComplex -< promises
-    writeFile "netlog.json" $ formatQALogJSON netlog
+    writeNetLogJSON netlog
     return results
   where
   getPromiseComplexA =
@@ -202,20 +202,8 @@ fft_CR_parArrow isFFT k acSG =
       i <- qaFulfilPromiseA -< iProm
       returnA -< a :+ i
   task
-    | isFFT = taskFFTWithHookA hookA k
-    | otherwise = taskDFTWithHookA (hookA 0) k
-  n = 2^!k
-  hookA nH name =
-    proc (a :+ i) ->
-      do
-      aNext <- reg -< (rename a)
-      iNext <- reg -< (rename i)
-      returnA -< Just (aNext :+ iNext)
-    where
-    rename = realRename (\_ -> name)
-    reg
-      | nH < n = (-:-|)
-      | otherwise = (-:-||)
+    | isFFT = taskFFTA k
+    -- | otherwise = taskDFTA k
 
 
 fft_MP :: Bool -> Integer -> AccuracySG -> Maybe [Complex MPBall]
