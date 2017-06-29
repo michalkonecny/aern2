@@ -74,7 +74,7 @@ instance QAArrow QACachedA where
           let (i, ns') = insertNode p name sourceIds sq2pa ns
           put ns'
           return i
-      makeQCached me_src@(_,src) valueId q =
+      makeQCached (_me,src) valueId q =
         maybeTrace ("makeQCached: q = " ++ show q) $
         QACachedM $
           do

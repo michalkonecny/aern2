@@ -179,13 +179,14 @@ fft_CR_parArrow :: Bool -> Integer -> AccuracySG -> [Complex MPBall]
 fft_CR_parArrow isFFT k acSG =
   unsafePerformIO $
     do
-    results <-
+    (netlog, results) <-
       executeQAParA $
         proc () ->
           do
           (Just resultRs) <- task -< ()
           promises <- mapA getPromiseComplexA -< resultRs
           mapA fulfilPromiseComplex -< promises
+    writeFile "netlog.json" $ formatQALogJSON netlog
     return results
   where
   getPromiseComplexA =

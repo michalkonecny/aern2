@@ -11,7 +11,11 @@
 
     QA network log data structure
 -}
-module AERN2.QA.NetLog where
+module AERN2.QA.NetLog
+(ValueId(..), QANetLogItem(..), QANetLog
+, formatQALog, printQALog, printQANetLogThenResult
+, formatQALogJSON, printQALogJSON)
+where
 
 import MixedTypesNumPrelude
 import qualified Prelude as P
