@@ -15,7 +15,7 @@
 module AERN2.QA.Strategy.Parallel
 (
   QAParA
-  , executeQAParA --, executeQAParUncachedA
+  , executeQAParA, executeQAParAwithLog
 )
 where
 
@@ -47,7 +47,7 @@ data QANetState =
   QANetState
   {
     net_nextId :: ValueId
-    , net_log :: QANetLog
+  , net_log :: QANetLog
   }
 
 initQANetState :: QANetState
@@ -90,7 +90,7 @@ logAnswer ns src valueId (aS, usedCacheS) =
 
 type QAParA = Kleisli QAParM
 
-data QAParM a = QAParM { unQAParM :: TVar QANetState -> IO a }
+data QAParM a = QAParM { unQAParM :: Maybe (TVar QANetState) -> IO a }
 
 instance Functor QAParM where
   -- fmap f (QAParM tv2ma) = QAParM (\nsTV -> fmap f (tv2ma nsTV))
@@ -111,14 +111,17 @@ instance QAArrow QAParA where
     where
     isParallel = not (QARegPreferSerial `elem` options)
     qaRegisterM qa@(QA__ name Nothing sourceIds (p :: p) sampleQ _) =
-      QAParM $ \nsTV ->
+      QAParM $ \m_nsTV ->
         do
-        vId <- atomically $
-          do
-          ns <- readTVar nsTV
-          let (ns2,i) = getValueId ns sourceIds name
-          writeTVar nsTV ns2
-          pure i
+        vId <- case m_nsTV of
+          Nothing -> pure (ValueId 0)
+          Just nsTV ->
+            atomically $
+              do
+              ns <- readTVar nsTV
+              let (ns2,i) = getValueId ns sourceIds name
+              writeTVar nsTV ns2
+              pure i
         activeQsTV <- atomically $ newTVar initActiveQs
         cacheTV <- atomically $ newTVar $ newQACache p
         return $ QA__ name (Just vId) [] p sampleQ (\me_src -> Kleisli $ makeQPar vId activeQsTV cacheTV me_src)
@@ -129,12 +132,15 @@ instance QAArrow QAParA where
         | otherwise =
             int $ 1 + (fst $ IntMap.findMax activeQs)
       makeQPar vId activeQsTV cacheTV (_, src) q =
-        QAParM $ \nsTV ->
+        QAParM $ \m_nsTV ->
           do
           maybeTraceIO $ printf "[%s]: q = %s" name (show q)
-          atomically $ do -- log query
-            ns <- readTVar nsTV
-            writeTVar nsTV $ logQuery ns src vId (show q)
+          case m_nsTV of
+            Nothing -> pure ()
+            Just nsTV ->
+              atomically $ do -- log query
+                ns <- readTVar nsTV
+                writeTVar nsTV $ logQuery ns src vId (show q)
 
           -- consult the cache and index of active queries in an atomic transaction:
           (maybeAnswer, mLogMsg, maybeComputeId) <- atomically $
@@ -158,19 +164,21 @@ instance QAArrow QAParA where
             (_, Just computeId) ->
               -- no cached answer, no pending computation:
               do
-              _ <- forkComputation nsTV computeId -- start a new computation
+              _ <- forkComputation m_nsTV computeId -- start a new computation
               pure $ promise mLogMsg waitForAnwer -- and wait for the answer
             _ -> -- no cached answer but there is a pending computation:
               pure $ promise mLogMsg waitForAnwer -- wait for a pending computation
         where
         promise mLogMsg answerIO =
-          Kleisli $ const $ QAParM $ \nsTV ->
-            do
-            a <- answerIO
-            atomically $ do
-              ns <- readTVar nsTV
-              writeTVar nsTV $ logAnswer ns src vId (show a,  logMsg)
-            pure a
+          Kleisli $ const $ QAParM $ \m_nsTV ->
+            case m_nsTV of
+              Nothing -> answerIO
+              Just nsTV -> do
+                a <- answerIO
+                atomically $ do
+                  ns <- readTVar nsTV
+                  writeTVar nsTV $ logAnswer ns src vId (show a,  logMsg)
+                pure a
           where
           logMsg = case mLogMsg of Just m -> m; _ -> ""
         waitForAnwer = atomically $
@@ -205,10 +213,15 @@ instance QAArrow QAParA where
       where
       me = case qaId qa of Nothing -> src; me2 -> me2
 
-executeQAParA :: (QAParA () a) -> IO (QANetLog, a)
+executeQAParA :: (QAParA () a) -> IO a
 executeQAParA code =
   do
+  (unQAParM $ runKleisli code ()) Nothing
+
+executeQAParAwithLog :: (QAParA () a) -> IO (QANetLog, a)
+executeQAParAwithLog code =
+  do
   nsTV <- atomically $ newTVar initQANetState
-  result <- (unQAParM $ runKleisli code ()) nsTV
+  result <- (unQAParM $ runKleisli code ()) (Just nsTV)
   ns <- atomically $ readTVar nsTV
   return (net_log ns, result)

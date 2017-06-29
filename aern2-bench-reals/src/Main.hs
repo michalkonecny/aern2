@@ -155,7 +155,7 @@ fft_CR_cachedUnsafe isFFT k acSG =
 
 fft_CR_cachedArrow :: Bool -> Integer -> AccuracySG -> [Complex MPBall]
 fft_CR_cachedArrow isFFT k acSG =
-  seq (unsafePerformIO $ writeNetLogJSON netlog) $
+  -- seq (unsafePerformIO $ writeNetLogJSON netlog) $
   maybeTrace (formatQALog 0 netlog) $
   results
   where
@@ -179,15 +179,16 @@ fft_CR_parArrow :: Bool -> Integer -> AccuracySG -> [Complex MPBall]
 fft_CR_parArrow isFFT k acSG =
   unsafePerformIO $
     do
-    (netlog, results) <-
+    -- (netlog, results) <-
+      -- executeQAParAwithLog $
       executeQAParA $
         proc () ->
           do
           resultRs <- task -< ()
           promises <- mapA getPromiseComplexA -< resultRs :: [Complex (CauchyRealA QAParA)]
           mapA fulfilPromiseComplex -< promises
-    writeNetLogJSON netlog
-    return results
+    -- writeNetLogJSON netlog
+    -- return results
   where
   getPromiseComplexA =
     proc (aR :+ iR) ->
