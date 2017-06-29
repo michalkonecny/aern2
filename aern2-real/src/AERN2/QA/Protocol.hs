@@ -65,7 +65,7 @@ data QA to p = QA__
     qaId :: Maybe (QAId to),
     qaSources :: [QAId to],
     qaProtocol :: p,
-    qaSampleQ :: Q p,
+    qaSampleQ :: Maybe (Q p),
     qaMakeQueryGetPromise ::
       (Maybe (QAId to), Maybe (QAId to)) {-^ this node id, source of query-} ->
       (Q p) `to` (QAPromiseA to (A p))
@@ -92,7 +92,7 @@ mapQA ::
 mapQA
     translateP translateQ translateBackQ translateA
     (QA__ name qaid sources p sampleQ makeQ) =
-  QA__ name qaid sources (translateP p) (translateQ sampleQ) $
+  QA__ name qaid sources (translateP p) (fmap translateQ sampleQ) $
     \ source -> (arr $ ((arr translateA) <<<) ) <<< makeQ source <<< arr translateBackQ
 
 mapQAsameQ ::
@@ -142,14 +142,14 @@ class (ArrowChoice to, P.Eq (QAId to)) => QAArrow to where
     For most arrows, the default implementation is sufficient.
   -}
   newQA :: (QAProtocolCacheable p) =>
-    String -> [AnyProtocolQA to] -> p -> Q p -> ((Maybe (QAId to), Maybe (QAId to)) -> (Q p) `to` (A p)) -> QA to p
+    String -> [AnyProtocolQA to] -> p -> Maybe (Q p) -> ((Maybe (QAId to), Maybe (QAId to)) -> (Q p) `to` (A p)) -> QA to p
   newQA = defaultNewQA
   qaFulfilPromiseA :: (QAPromiseA to a) `to` a
   qaMakeQueryGetPromiseA :: Maybe (QAId to) -> (QA to p, Q p) `to` (QAPromiseA to (A p))
 
 defaultNewQA ::
   (QAArrow to, QAProtocolCacheable p) =>
-  String -> [AnyProtocolQA to] -> p -> Q p ->
+  String -> [AnyProtocolQA to] -> p -> Maybe (Q p) ->
   ((Maybe (QAId to), Maybe (QAId to)) -> (Q p) `to` (A p)) -> QA to p
 defaultNewQA name sources p sampleQ makeQ =
   QA__ name Nothing (nub $ concat $ map getSourceIds sources) p sampleQ makeQPromise

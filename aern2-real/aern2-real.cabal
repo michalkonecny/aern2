@@ -63,7 +63,7 @@ library
     AERN2.QA.Strategy.Cached
     AERN2.QA.Strategy.Parallel
     AERN2.AccuracySG
-    AERN2.Sequence
+    AERN2.WithGlobalParam.Type
     AERN2.Sequence.Type
     AERN2.Sequence.Helpers
     AERN2.Sequence.Comparison
@@ -71,10 +71,11 @@ library
     AERN2.Sequence.Ring
     AERN2.Sequence.Field
     AERN2.Sequence.Elementary
-    AERN2.Real
+    AERN2.Sequence
     AERN2.Real.Type
     AERN2.Real.Arithmetic
     AERN2.Real.Tests
+    AERN2.Real
 
 test-suite spec
   type:

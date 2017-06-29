@@ -155,13 +155,7 @@ newSeq ::
   =>
   a -> String -> [AnyProtocolQA to] -> ((Maybe (QAId to), Maybe (QAId to)) -> AccuracySG `to` a) -> SequenceA to a
 newSeq sampleA name sources makeQ =
-  newQA name sources (pSeq sampleA) (AccuracySG NoInformation NoInformation) makeQ
-  -- where
-  -- makeQ' =
-  --   proc q ->
-  --     do
-  --     a <- makeQ -< q
-  --     returnA -< adjustToAccuracySG q a
+  newQA name sources (pSeq sampleA) Nothing makeQ
 
 newSeqSimple ::
   (QAArrow to, SuitableForSeq a)
