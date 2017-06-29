@@ -64,6 +64,8 @@ library
     AERN2.QA.Strategy.Parallel
     AERN2.AccuracySG
     AERN2.WithGlobalParam.Type
+    AERN2.WithGlobalParam.Helpers
+    AERN2.WithGlobalParam.Comparison
     AERN2.Sequence.Type
     AERN2.Sequence.Helpers
     AERN2.Sequence.Comparison
