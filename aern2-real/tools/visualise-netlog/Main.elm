@@ -11,7 +11,7 @@ import Window
 import Json.Decode as Decode exposing (Decoder, (:=))
 
 import Html exposing (..)
-import Html.App exposing (program)
+import Html.App exposing (programWithFlags)
 -- import Html.Attributes as A exposing (..)
 -- import Html.Events exposing (..)
 
@@ -26,10 +26,10 @@ import Char
 
 import QANetLog exposing (..)
 
-main : Program Never
+main : Program Flags
 main =
-    program
-        { init = initState ! initCmds
+    programWithFlags
+        { init = \flags -> (initState flags) ! initCmds
         , update = update
         , subscriptions = subscriptions
         , view = view
@@ -72,19 +72,39 @@ type alias NodeInfo =
 
 type alias Pixels = Int
 
-initState : State
-initState =
-  {
-    err = Nothing
-  , log = Nothing
-  , plotCanvasSize = { width = 800, height = 600 }
-  , nodes = Dict.empty
-  , eventsDone = []
-  , eventsTodo = []
+type alias Flags =
+  { netlogS : String
+  , nodeposS : String
   }
 
+initState : Flags -> State
+initState flags =
+  let
+    logR = Decode.decodeString jsonDecQANetLog flags.netlogS
+    nodepositionsR = Decode.decodeString jsonDecNodePositions flags.nodeposS
+  in
+  case (logR, nodepositionsR) of
+    (Ok log, Ok nodepositions) ->
+      {
+        err = Nothing
+      , log = Just log
+      , plotCanvasSize = { width = 800, height = 600 }
+      , nodes = getNodeInfo log nodepositions
+      , eventsDone = []
+      , eventsTodo = List.filter (not << isQANetLogCreate) log
+      }
+    _ ->
+      {
+        err = Just (toString logR ++ toString nodepositionsR)
+      , log = Nothing
+      , plotCanvasSize = { width = 800, height = 600 }
+      , nodes = Dict.empty
+      , eventsDone = []
+      , eventsTodo = []
+      }
+
 initCmds : List (Cmd Msg)
-initCmds = [getLog, simulateResize]
+initCmds = [simulateResize]
 
 jsonDecQANetLog : Decoder (List QANetLogItem)
 jsonDecQANetLog = Decode.list jsonDecQANetLogItem
@@ -99,19 +119,19 @@ jsonDecNodePos =
 type alias NodePos = (Int, Float, Float)
 type alias NodePositions = List NodePos
 
-logUrl : String
-logUrl = "./netlog.json"
-
-posUrl : String
-posUrl = "./nodepos.json"
-
-getLog : Cmd Msg
-getLog =
-  Task.map2
-    SetLog
-    (Http.get jsonDecQANetLog logUrl)
-    (Http.get jsonDecNodePositions posUrl)
-  |> Task.perform (\e -> Err (toString e)) (\t -> t)
+-- logUrl : String
+-- logUrl = "netlog.json"
+--
+-- posUrl : String
+-- posUrl = "nodepos.json"
+--
+-- getLog : Cmd Msg
+-- getLog =
+--   Task.map2
+--     SetLog
+--     (Http.get jsonDecQANetLog logUrl)
+--     (Http.get jsonDecNodePositions posUrl)
+--   |> Task.perform (\e -> Err (toString e)) (\t -> t)
 
 simulateResize : Cmd Msg
 simulateResize =
@@ -121,7 +141,7 @@ type Msg
     = NoAction
     | Resize Window.Size
     | Err String
-    | SetLog QANetLog NodePositions
+    -- | SetLog QANetLog NodePositions
     | NextEvent
     | PrevEvent
 
@@ -132,13 +152,13 @@ update msg s =
     Resize size ->
       { s | plotCanvasSize = size } ! []
     Err e -> { s | err = Just e } ! []
-    SetLog log nodepositions ->
-      { s |
-        log = Just log
-      , nodes = getNodeInfo log nodepositions
-      , eventsTodo = List.filter (not << isQANetLogCreate) log
-      , eventsDone = []
-      } ! []
+    -- SetLog log nodepositions ->
+    --   { s |
+    --     log = Just log
+    --   , nodes = getNodeInfo log nodepositions
+    --   , eventsTodo = List.filter (not << isQANetLogCreate) log
+    --   , eventsDone = []
+    --   } ! []
     NextEvent ->
       case s.eventsTodo of
         (nextEvent :: rest) ->
