@@ -16,6 +16,7 @@
 -}
 module AERN2.WithGlobalParam.Type
 (
+  -- * The protocol and type of fast converging sequences
   WithGlobalParamP(..), pWGParam
   , SuitableForWGParam
   , wgprmName, wgprmId, wgprmSources, wgprmRename
@@ -45,8 +46,8 @@ import Text.Printf
 
 import Control.CollectErrors
 
-import AERN2.MP
-import AERN2.MP.Dyadic
+-- import AERN2.MP
+-- import AERN2.MP.Dyadic
 
 import AERN2.QA.Protocol
 import AERN2.QA.Strategy.CachedUnsafe ()
@@ -171,18 +172,21 @@ instance
   noValueECE _sample_vCE _es =
     error "noValueECE not implemented for WithGlobalParam yet"
 
-$(declForTypes
-  [[t| Integer |], [t| Int |], [t| Dyadic |]]
-  (\ t -> [d|
-
-    instance
-      (QAArrow to, ConvertibleExactly $t a, CanSetPrecision a, SuitableForWGParam prm a)
-      =>
-      ConvertibleExactly $t (WithGlobalParamA to prm a)
-      where
-      safeConvertExactly x =
-        Right $ newWGParam Nothing a (show x) [] (\_src -> arr $ \_prm -> a)
-        where
-        a = convertExactly x
-
-  |]))
+-- The following has to be made specific to specific prm and a types
+-- so that the dependency on the parameter can be expressed
+--
+-- $(declForTypes
+--   [[t| Integer |], [t| Int |], [t| Dyadic |]]
+--   (\ t -> [d|
+--
+--     instance
+--       (QAArrow to, ConvertibleExactly $t a, CanSetPrecision a, SuitableForWGParam prm a)
+--       =>
+--       ConvertibleExactly $t (WithGlobalParamA to prm a)
+--       where
+--       safeConvertExactly x =
+--         Right $ newWGParam Nothing a (show x) [] (\_src -> arr $ \_prm -> a)
+--         where
+--         a = convertExactly x
+--
+--   |]))

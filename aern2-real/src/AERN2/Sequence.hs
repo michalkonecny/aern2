@@ -20,7 +20,7 @@ module AERN2.Sequence
   , seqWithAccuracy, (?), seqWithAccuracyA, seqsWithAccuracyA
   , SequenceA, Sequence, newSeq, newSeqSimple
   , SequenceAtAccuracy(..)
-  , (-:-)
+  , (-:-), (-:-||), (-:-|)
   , convergentList2SequenceA
   , seqByPrecision2SequenceA
   -- * picking one of several staged computations running in parallel

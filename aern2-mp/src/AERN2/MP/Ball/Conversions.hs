@@ -90,6 +90,13 @@ instance ConvertibleWithPrecision Integer MPBall where
 instance ConvertibleWithPrecision Int MPBall where
   safeConvertP p = safeConvertP p . integer
 
+instance ConvertibleWithPrecision Dyadic MPBall where
+  safeConvertP p x
+    | isFinite b = Right b
+    | otherwise = convError ("too large to convert to MPBall with precision " ++ show p) x
+    where
+    b = mpBall x
+
 instance ConvertibleWithPrecision Rational MPBall where
   safeConvertP p x
     | isFinite b = Right b

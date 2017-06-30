@@ -66,6 +66,12 @@ library
     AERN2.WithGlobalParam.Type
     AERN2.WithGlobalParam.Helpers
     AERN2.WithGlobalParam.Comparison
+    AERN2.WithGlobalParam.Branching
+    AERN2.WithGlobalParam.Ring
+    AERN2.WithGlobalParam.Field
+    AERN2.WithGlobalParam.Elementary
+    AERN2.WithGlobalParam
+    AERN2.MPBallWithGlobalPrec
     AERN2.Sequence.Type
     AERN2.Sequence.Helpers
     AERN2.Sequence.Comparison
