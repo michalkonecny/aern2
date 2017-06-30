@@ -19,9 +19,10 @@ where
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
+import Data.Typeable
 import Data.Convertible
 
-import AERN2.MP.Dyadic (Dyadic)
+import AERN2.MP.Dyadic (Dyadic, dyadic)
 import qualified AERN2.MP.Float as MPFloat
 import AERN2.MP.Float (mpFloat)
 -- import AERN2.MP.Float.Operators
@@ -56,6 +57,18 @@ instance ConvertibleExactly Dyadic MPBall where
 instance ConvertibleExactly EB.ErrorBound MPBall where
   safeConvertExactly eb = Right $ MPBall (mpFloat eb) (errorBound 0)
 
+instance
+  (ConvertibleExactly c Dyadic, ConvertibleExactly e Dyadic
+  , Show c, Show e, Typeable c, Typeable e)
+  =>
+  ConvertibleExactly (c, e) MPBall
+  where
+  safeConvertExactly (c,e)
+    | isFinite b = Right b
+    | otherwise = convError "too large to convert to MPBall" (c,e)
+    where
+    b = MPBall (mpFloat $ dyadic c) (errorBound $ mpFloat $ dyadic e)
+
 instance ConvertibleExactly Integer MPBall where
   safeConvertExactly x
     | isFinite b = Right b
@@ -63,18 +76,8 @@ instance ConvertibleExactly Integer MPBall where
     where
       b = MPBall (mpFloat x) (errorBound 0)
 
-instance ConvertibleExactly (Integer, Integer) MPBall where
-  safeConvertExactly (x,e)
-    | isFinite b = Right b
-    | otherwise = convError "too large to convert to MPBall" x
-    where
-      b = MPBall (mpFloat x) (errorBound $ mpFloat e)
-
 instance ConvertibleExactly Int MPBall where
   safeConvertExactly x = Right $ MPBall (mpFloat x) (errorBound 0)
-
-instance ConvertibleExactly (Int, Int) MPBall where
-  safeConvertExactly (x,e) = Right $ MPBall (mpFloat x) (errorBound $ mpFloat e)
 
 {--- constructing a ball with a given precision ---}
 

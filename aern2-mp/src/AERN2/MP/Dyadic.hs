@@ -101,6 +101,9 @@ instance (SuitableForCE es) => CanEnsureCE es Dyadic
 
 type HasDyadics t = ConvertibleExactly Dyadic t
 
+instance ConvertibleExactly Dyadic Dyadic where
+  safeConvertExactly = Right
+  
 instance ConvertibleExactly Dyadic MPFloat where
   safeConvertExactly = Right . dyadicMPFloat
 
