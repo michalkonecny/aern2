@@ -192,10 +192,10 @@ instance
   ensureNoCE sample_es (SequenceP a) =  fmap SequenceP (ensureNoCE sample_es a)
 
   noValueECE sample_vCE es = SequenceP (noValueECE (fmap unSequenceP sample_vCE) es)
+  prependErrorsECE sample_vCE es1 = fmap (prependErrorsECE (fmap unSequenceP sample_vCE) es1)
 
   -- getMaybeValueECE sample_es (SequenceP a) = fmap SequenceP (getMaybeValueECE sample_es a)
   -- getErrorsECE sample_vCE (SequenceP a) = getErrorsECE (fmap unSequenceP sample_vCE) a
-  -- prependErrorsECE sample_vCE es1 = fmap (prependErrorsECE (fmap unSequenceP sample_vCE) es1)
 
 instance
   (Arrow to, SuitableForCE es, CanEnsureCE es a)
@@ -218,14 +218,15 @@ instance
   noValueECE _sample_vCE _es =
     error "noValueECE not implemented for Sequence yet"
 
+  prependErrorsECE (_sample_vCE :: Maybe (SequenceA to a)) es1 =
+    fmapSeq (prependErrorsECE (Nothing :: Maybe a) es1)
+
   -- getMaybeValueECE sample_es = Just . fmapSeq (removeJust . getMaybeValueECE sample_es)
   --   where
   --   removeJust (Just a) = a
   --   removeJust _ = error "getMaybeValueECE failed for a Sequence"
   -- getErrorsECE _sample_mv _s =
   --   error "getErrorsECE not implemented for Sequence yet"
-  -- prependErrorsECE (_sample_vCE :: Maybe (SequenceA to a)) es1 =
-  --   fmapSeq (prependErrorsECE (Nothing :: Maybe a) es1)
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Dyadic |]]

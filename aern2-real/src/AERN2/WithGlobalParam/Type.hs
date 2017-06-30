@@ -151,6 +151,9 @@ instance
     WithGlobalParamP (join $ fmap withGlobalState_s sample_vCE)
       (noValueECE (fmap withGlobalState_a sample_vCE) es)
 
+  prependErrorsECE sample_vCE es (WithGlobalParamP prm aCE) =
+    (WithGlobalParamP prm (prependErrorsECE (fmap withGlobalState_a sample_vCE) es aCE))
+
 instance
   (Arrow to, SuitableForCE es, CanEnsureCE es a)
   =>
@@ -171,6 +174,9 @@ instance
 
   noValueECE _sample_vCE _es =
     error "noValueECE not implemented for WithGlobalParam yet"
+
+  prependErrorsECE (_sample_vCE :: Maybe (WithGlobalParamA to prm a)) es =
+    fmapWGParam (prependErrorsECE (Nothing :: Maybe a) es)
 
 -- The following has to be made specific to specific prm and a types
 -- so that the dependency on the parameter can be expressed
