@@ -79,7 +79,7 @@ instance
       Just (b, _) -> (Nothing, Just (logMsg b))
       Nothing -> (Nothing, Just ("cache empty"))
     where
-    logMsg _b = printf "query: %s; cache: %prm" (show prm) (show cache)
+    logMsg _b = printf "query: %s; cache: %s" (show prm) (show cache)
   updateQACache _ prm b _ = Just (b, prm)
 
 instance Functor (WithGlobalParamP prm) where

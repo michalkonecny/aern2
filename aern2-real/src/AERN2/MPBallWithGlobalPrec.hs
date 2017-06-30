@@ -32,6 +32,7 @@ import AERN2.MP
 import AERN2.MP.Dyadic
 
 import AERN2.QA.Protocol
+import AERN2.Real
 import AERN2.WithGlobalParam
 
 type MPBallWithGlobalPrecP = WithGlobalParamP Precision MPBall
@@ -56,7 +57,7 @@ newMPBallWGPrecSimple = newMPBallWGPrec "simple" []
 
 
 $(declForTypes
-  [[t| Integer |], [t| Int |], [t| Dyadic |], [t| Rational |]]
+  [[t| Integer |], [t| Int |], [t| Dyadic |], [t| Rational |], [t| CauchyReal |]]
   (\ t -> [d|
 
     instance

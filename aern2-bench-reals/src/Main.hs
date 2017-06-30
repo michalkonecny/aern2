@@ -13,7 +13,7 @@ import Debug.Trace (trace)
 #endif
 
 import MixedTypesNumPrelude
--- import Data.String (fromString)
+import Text.Printf
 
 import System.Environment (getArgs)
 import System.IO.Unsafe (unsafePerformIO)
@@ -31,6 +31,7 @@ import AERN2.QA.Strategy.Cached
 import AERN2.QA.Strategy.Parallel
 
 import AERN2.Real
+import AERN2.MPBallWithGlobalPrec
 
 import qualified Tasks.LogisticPreludeOps as TP
 import Tasks.Logistic
@@ -83,6 +84,7 @@ bench implName benchName benchParamsS =
           case implName of
               "Double" -> showL (fft_FP isFFT k)
               "MP" -> showL (case fft_MP isFFT k (bitsSG acS acG) of Just rs -> rs; _ -> error "no result")
+              "MP_parArrow" -> showL (case fft_MP_parArrow isFFT k (bitsSG acS acG) of Just rs -> rs; _ -> error "no result")
               "CR_cachedUnsafe" -> showL (fft_CR_cachedUnsafe isFFT k (bitsSG acS acG))
               "CR_cachedArrow" -> showL (fft_CR_cachedArrow isFFT k (bitsSG acS acG))
               "CR_parArrow" -> showL (fft_CR_parArrow isFFT k (bitsSG acS acG))
@@ -223,6 +225,48 @@ fft_MP isFFT k _acSG@(AccuracySG acS _) =
           a2 <- checkAccuracy a
           i2 <- checkAccuracy i
           return $ setPrecision p (a2 :+ i2)
+
+fft_MP_parArrow :: Bool -> Integer -> AccuracySG -> Maybe [Complex MPBall]
+fft_MP_parArrow isFFT k _acSG@(AccuracySG acS _) =
+    snd $ last $ iterateUntilAccurate acS $ withP
+    where
+    withP p =
+      Just $ unsafePerformIO $
+        do
+        -- (netlog, results) <-
+        --   executeQAParAwithLog $
+        results <-
+          executeQAParA $
+            proc () ->
+              do
+              resultRs <- task -< ()
+              promises <- mapA getPromiseComplexA -< resultRs :: [Complex (MPBallWithGlobalPrecA QAParA)]
+              mapA fulfilPromiseComplex -< promises
+        -- writeNetLogJSON netlog
+        -- putStrLn $ printf "p = %s: accuracy = %s" (show p) (show $ getAccuracy results)
+        return results
+      where
+      getPromiseComplexA =
+        proc (aR :+ iR) ->
+          do
+          aProm <- (-?..-) -< (aR, p)
+          iProm <- (-?..-) -< (iR, p)
+          returnA -< aProm :+ iProm
+      fulfilPromiseComplex =
+        proc (aProm :+ iProm) ->
+          do
+          a <- qaFulfilPromiseA -< aProm
+          i <- qaFulfilPromiseA -< iProm
+          returnA -< a :+ i
+      task
+        | isFFT = taskFFTA k
+        -- | otherwise = taskDFTA k
+
+        -- checkCAccuracy (a :+ i) =
+        --   do
+        --   a2 <- checkAccuracy a
+        --   i2 <- checkAccuracy i
+        --   return $ setPrecision p (a2 :+ i2)
 
 fft_FP :: Bool -> Integer -> [Complex Double]
 fft_FP True k = taskFFT (\r -> (double r :+ double 0)) k
