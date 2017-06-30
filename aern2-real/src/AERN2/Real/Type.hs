@@ -14,7 +14,7 @@ module AERN2.Real.Type
 (
   CauchyRealP, pCR, CauchyRealCNP, pCRCN
   , CauchyRealA, CauchyReal, newCR
-  , CauchyRealCNA, CauchyRealCN --, newCRCN
+  , CauchyRealCNA, CauchyRealCN, newCRCN
   , CauchyRealAtAccuracy, cauchyRealAtAccuracy
   , realName, realId, realSources, realRename
   , realWithAccuracy, realWithAccuracyA, realsWithAccuracyA
@@ -91,6 +91,9 @@ realsWithAccuracyA = qaMakeQueryOnManyA
 
 newCR :: (QAArrow to) => String -> [AnyProtocolQA to] -> ((Maybe (QAId to), Maybe (QAId to)) -> AccuracySG `to` MPBall) -> CauchyRealA to
 newCR = newSeq (mpBall 0)
+
+newCRCN :: (QAArrow to) => String -> [AnyProtocolQA to] -> ((Maybe (QAId to), Maybe (QAId to)) -> AccuracySG `to` CN MPBall) -> CauchyRealCNA to
+newCRCN = newSeq (cn $ mpBall 0)
 
 convergentList2CauchyRealA :: (QAArrow to) => String -> [MPBall] -> (CauchyRealA to)
 convergentList2CauchyRealA = convergentList2SequenceA

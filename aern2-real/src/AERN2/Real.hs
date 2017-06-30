@@ -19,6 +19,7 @@ module AERN2.Real
   , realName, realId, realSources, realRename
   , realWithAccuracy, (?), realWithAccuracyA, realsWithAccuracyA
   , CauchyRealA, CauchyReal, newCR
+  , CauchyRealCNA, CauchyRealCN, newCRCN
   , (-:-)
   , convergentList2CauchyRealA
   , seqByPrecision2CauchyRealA
