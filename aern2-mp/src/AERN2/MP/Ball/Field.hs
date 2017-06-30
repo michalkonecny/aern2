@@ -296,20 +296,24 @@ instance
 {- integer power -}
 
 instance CanPow MPBall Integer where
-  type PowType MPBall Integer = CN MPBall
+  powNoCN b e = (~!) $ powUsingMulRecip b e
   pow = powUsingMulRecip
 
 instance CanPow MPBall Int where
-  type PowType MPBall Int = CN MPBall
+  powNoCN b e = (~!) $ powUsingMulRecip b e
   pow = powUsingMulRecip
 
 instance
   (CanPow MPBall b
   , CanEnsureCE es (PowType MPBall b)
+  , CanEnsureCE es (PowTypeNoCN MPBall b)
   , SuitableForCE es)
   =>
   CanPow MPBall (CollectErrors es  b)
   where
+  type PowTypeNoCN MPBall (CollectErrors es  b) =
+    EnsureCE es (PowTypeNoCN MPBall b)
+  powNoCN = lift2TLCE powNoCN
   type PowType MPBall (CollectErrors es  b) =
     EnsureCE es (PowType MPBall b)
   pow = lift2TLCE pow
@@ -317,10 +321,14 @@ instance
 instance
   (CanPow a MPBall
   , CanEnsureCE es (PowType a MPBall)
+  , CanEnsureCE es (PowTypeNoCN a MPBall)
   , SuitableForCE es)
   =>
   CanPow (CollectErrors es a) MPBall
   where
+  type PowTypeNoCN (CollectErrors es  a) MPBall =
+    EnsureCE es (PowTypeNoCN a MPBall)
+  powNoCN = lift2TCE powNoCN
   type PowType (CollectErrors es  a) MPBall =
     EnsureCE es (PowType a MPBall)
   pow = lift2TCE pow

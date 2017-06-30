@@ -67,11 +67,15 @@ instance
 
 instance
   (CanPow (WithGlobalParamA to prm a) b
+  , CanEnsureCE es (PowTypeNoCN (WithGlobalParamA to prm a) b)
   , CanEnsureCE es (PowType (WithGlobalParamA to prm a) b)
   , SuitableForCE es)
   =>
   CanPow (WithGlobalParamA to prm a) (CollectErrors es  b)
   where
+  type PowTypeNoCN (WithGlobalParamA to prm a) (CollectErrors es  b) =
+    EnsureCE es (PowTypeNoCN (WithGlobalParamA to prm a) b)
+  powNoCN = lift2TLCE powNoCN
   type PowType (WithGlobalParamA to prm a) (CollectErrors es  b) =
     EnsureCE es (PowType (WithGlobalParamA to prm a) b)
   pow = lift2TLCE pow
@@ -79,10 +83,14 @@ instance
 instance
   (CanPow a (WithGlobalParamA to prm b)
   , CanEnsureCE es (PowType a (WithGlobalParamA to prm b))
+  , CanEnsureCE es (PowTypeNoCN a (WithGlobalParamA to prm b))
   , SuitableForCE es)
   =>
   CanPow (CollectErrors es a) (WithGlobalParamA to prm b)
   where
+  type PowTypeNoCN (CollectErrors es  a) (WithGlobalParamA to prm b) =
+    EnsureCE es (PowTypeNoCN a (WithGlobalParamA to prm b))
+  powNoCN = lift2TCE powNoCN
   type PowType (CollectErrors es  a) (WithGlobalParamA to prm b) =
     EnsureCE es (PowType a (WithGlobalParamA to prm b))
   pow = lift2TCE pow
@@ -94,19 +102,29 @@ $(declForTypes
     instance
       (QAArrow to, CanPow a $t
       , SuitableForWGParam prm  a
+      , SuitableForWGParam prm  (PowTypeNoCN a $t)
       , SuitableForWGParam prm  (PowType a $t))
       =>
       CanPow (WithGlobalParamA to prm a) $t where
-      type PowType (WithGlobalParamA to prm a) $t = WithGlobalParamA to prm (PowType a $t)
+      type PowTypeNoCN (WithGlobalParamA to prm a) $t =
+        WithGlobalParamA to prm (PowTypeNoCN a $t)
+      powNoCN = binaryOpWithPureArg "^" powNoCN
+      type PowType (WithGlobalParamA to prm a) $t =
+        WithGlobalParamA to prm (PowType a $t)
       pow = binaryOpWithPureArg "^" pow
 
     instance
       (QAArrow to, CanPow $t a
       , SuitableForWGParam prm  a
+      , SuitableForWGParam prm  (PowTypeNoCN $t a)
       , SuitableForWGParam prm  (PowType $t a))
       =>
       CanPow $t (WithGlobalParamA to prm a) where
-      type PowType $t (WithGlobalParamA to prm a) = WithGlobalParamA to prm (PowType $t a)
+      type PowTypeNoCN $t (WithGlobalParamA to prm a) =
+        WithGlobalParamA to prm (PowTypeNoCN $t a)
+      powNoCN = flip $ binaryOpWithPureArg "^" (flip powNoCN)
+      type PowType $t (WithGlobalParamA to prm a) =
+        WithGlobalParamA to prm (PowType $t a)
       pow = flip $ binaryOpWithPureArg "^" (flip pow)
 
   |]))

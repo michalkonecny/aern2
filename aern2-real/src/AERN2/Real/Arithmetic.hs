@@ -120,35 +120,43 @@ instance CanLog Rational where
 {- non-integer power of finite values -}
 
 instance CanPow Integer Dyadic where
-  type PowType Integer Dyadic = CauchyRealCN
+  type PowTypeNoCN Integer Dyadic = CauchyReal
+  powNoCN b e = powNoCN (real b) (real e)
   pow b e = pow (real b) (real e)
 
 instance CanPow Int Dyadic where
-  type PowType Int Dyadic = CauchyRealCN
+  type PowTypeNoCN Int Dyadic = CauchyReal
+  powNoCN b e = powNoCN (real b) (real e)
   pow b e = pow (real b) (real e)
 
 instance CanPow Dyadic Dyadic where
-  type PowType Dyadic Dyadic = CauchyRealCN
+  type PowTypeNoCN Dyadic Dyadic = CauchyReal
+  powNoCN b e = powNoCN (real b) (real e)
   pow b e = pow (real b) (real e)
 
 instance CanPow Rational Dyadic where
-  type PowType Rational Dyadic = CauchyRealCN
+  type PowTypeNoCN Rational Dyadic = CauchyReal
+  powNoCN b e = powNoCN (real b) (real e)
   pow b e = pow (real b) (real e)
 
 instance CanPow Integer Rational where
-  type PowType Integer Rational = CauchyRealCN
+  type PowTypeNoCN Integer Rational = CauchyReal
+  powNoCN b e = powNoCN (real b) (real e)
   pow b e = pow (real b) (real e)
 
 instance CanPow Int Rational where
-  type PowType Int Rational = CauchyRealCN
+  type PowTypeNoCN Int Rational = CauchyReal
+  powNoCN b e = powNoCN (real b) (real e)
   pow b e = pow (real b) (real e)
 
 instance CanPow Dyadic Rational where
-  type PowType Dyadic Rational = CauchyRealCN
+  type PowTypeNoCN Dyadic Rational = CauchyReal
+  powNoCN b e = powNoCN (real b) (real e)
   pow b e = pow (real b) (real e)
 
 instance CanPow Rational Rational where
-  type PowType Rational Rational = CauchyRealCN
+  type PowTypeNoCN Rational Rational = CauchyReal
+  powNoCN b e = powNoCN (real b) (real e)
   pow b e = pow (real b) (real e)
 
 {- reals mixed with Double -}
@@ -198,10 +206,13 @@ instance CanDiv Double CauchyReal where
   divideNoCN = flip $ binaryWithDouble (flip divideNoCN)
 
 instance CanPow CauchyReal Double where
+  type PowTypeNoCN CauchyReal Double = Double
   type PowType CauchyReal Double = Double
+  powNoCN = binaryWithDouble pow
   pow = binaryWithDouble pow
 
 instance CanPow Double CauchyReal where
+  powNoCN = flip $ binaryWithDouble (flip pow)
   type PowType Double CauchyReal = Double
   pow = flip $ binaryWithDouble (flip pow)
 

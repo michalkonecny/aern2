@@ -193,22 +193,3 @@ $(declForTypes
     divideNoCN = flip $ binaryOpWithPureArg "/" (flip divideNoCN) (\ me -> flip (divGetInitQ2T me))
 
   |]))
-
--- {- integer power -}
--- A BETTER INSTANCE IS IN Sequence.Elementary
--- instance
---   (QAArrow to
---   , CanEnsureCN a, CanEnsureCN (EnsureCN a)
---   , Field a
---   , CanIntersectCNSameType a, CanIntersectCNSameType (EnsureCN a)
---   , CanSetPrecision a
---   , HasAccuracy a, HasAccuracy (EnsureCN a)
---   , CanAdjustToAccuracySG a, CanAdjustToAccuracySG (EnsureCN a)
---   , HasNorm (EnsureNoCN a)
---   , Show a, Show (EnsureCN a)
---   )
---   =>
---   CanPow (SequenceA to a) Integer
---   where
---   type PowType (SequenceA to a) Integer = SequenceA to (EnsureCN a)
---   pow = powUsingMulRecip
