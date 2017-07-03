@@ -171,7 +171,9 @@ justCN (_sample_a :: Maybe a) aCN =
 --   intersect Nothing Nothing = cn Nothing
 --
 instance
-  (CanIntersectAssymetric e1 e2, SuitableForCE es, CanEnsureCE es (IntersectionType e1 e2))
+  (CanIntersectAssymetric e1 e2, SuitableForCE es
+  , CanEnsureCE es e1, CanEnsureCE es e2
+  , CanEnsureCE es (IntersectionType e1 e2))
   =>
   CanIntersectAssymetric (CollectErrors es e1) (CollectErrors es e2)
   where
@@ -193,7 +195,9 @@ type CanUnionCNBy e1 e2 = (CanUnion e1 e2, UnionionType e1 e2 ~ EnsureCN e1)
 type CanUnionCNSameType e1 = CanUnionCNBy e1 e1
 
 instance
-  (CanUnionAssymetric e1 e2, SuitableForCE es, CanEnsureCE es (UnionionType e1 e2))
+  (CanUnionAssymetric e1 e2, SuitableForCE es
+  , CanEnsureCE es e1, CanEnsureCE es e2
+  , CanEnsureCE es (UnionionType e1 e2))
   =>
   CanUnionAssymetric (CollectErrors es e1) (CollectErrors es e2)
   where

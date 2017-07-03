@@ -157,6 +157,7 @@ instance HasEqAsymmetric Rational Dyadic where
 
 instance
   (HasEqAsymmetric Dyadic b
+  , CanEnsureCE es b
   , CanEnsureCE es (EqCompareType Dyadic b)
   , IsBool (EnsureCE es (EqCompareType Dyadic b))
   , SuitableForCE es)
@@ -169,6 +170,7 @@ instance
 
 instance
   (HasEqAsymmetric a Dyadic
+  , CanEnsureCE es a
   , CanEnsureCE es (EqCompareType a Dyadic)
   , IsBool (EnsureCE es (EqCompareType a Dyadic))
   , SuitableForCE es)
@@ -203,6 +205,7 @@ instance HasOrderAsymmetric Dyadic Rational where
 
 instance
   (HasOrderAsymmetric Dyadic b
+  , CanEnsureCE es b
   , CanEnsureCE es (OrderCompareType Dyadic b)
   , IsBool (EnsureCE es (OrderCompareType Dyadic b))
   , SuitableForCE es)
@@ -218,6 +221,7 @@ instance
 
 instance
   (HasOrderAsymmetric a Dyadic
+  , CanEnsureCE es a
   , CanEnsureCE es (OrderCompareType a Dyadic)
   , IsBool (EnsureCE es (OrderCompareType a Dyadic))
   , SuitableForCE es)
@@ -279,6 +283,7 @@ instance CanMinMaxAsymmetric Dyadic Rational where
 
 instance
   (CanMinMaxAsymmetric Dyadic b
+  , CanEnsureCE es b
   , CanEnsureCE es (MinMaxType Dyadic b)
   , SuitableForCE es)
   =>
@@ -291,6 +296,7 @@ instance
 
 instance
   (CanMinMaxAsymmetric a Dyadic
+  , CanEnsureCE es a
   , CanEnsureCE es (MinMaxType a Dyadic)
   , SuitableForCE es)
   =>
@@ -329,6 +335,7 @@ instance CanAddAsymmetric Dyadic Rational where
 
 instance
   (CanAddAsymmetric Dyadic b
+  , CanEnsureCE es b
   , CanEnsureCE es (AddType Dyadic b)
   , SuitableForCE es)
   =>
@@ -340,6 +347,7 @@ instance
 
 instance
   (CanAddAsymmetric a Dyadic
+  , CanEnsureCE es a
   , CanEnsureCE es (AddType a Dyadic)
   , SuitableForCE es)
   =>
@@ -377,6 +385,7 @@ instance CanSub Dyadic Rational where
 
 instance
   (CanSub Dyadic b
+  , CanEnsureCE es b
   , CanEnsureCE es (SubType Dyadic b)
   , SuitableForCE es)
   =>
@@ -388,6 +397,7 @@ instance
 
 instance
   (CanSub a Dyadic
+  , CanEnsureCE es a
   , CanEnsureCE es (SubType a Dyadic)
   , SuitableForCE es)
   =>
@@ -426,6 +436,7 @@ instance CanMulAsymmetric Dyadic Rational where
 
 instance
   (CanMulAsymmetric Dyadic b
+  , CanEnsureCE es b
   , CanEnsureCE es (MulType Dyadic b)
   , SuitableForCE es)
   =>
@@ -437,6 +448,7 @@ instance
 
 instance
   (CanMulAsymmetric a Dyadic
+  , CanEnsureCE es a
   , CanEnsureCE es (MulType a Dyadic)
   , SuitableForCE es)
   =>
@@ -455,6 +467,7 @@ instance CanPow Dyadic Int where
 
 instance
   (CanDiv a Dyadic
+  , CanEnsureCE es a
   , CanEnsureCE es (DivType a Dyadic)
   , CanEnsureCE es (DivTypeNoCN a Dyadic)
   , SuitableForCE es)
@@ -491,6 +504,7 @@ instance CanDiv Dyadic Rational where
 
 instance
   (CanDiv Dyadic b
+  , CanEnsureCE es b
   , CanEnsureCE es (DivType Dyadic b)
   , CanEnsureCE es (DivTypeNoCN Dyadic b)
   , SuitableForCE es)
@@ -506,6 +520,7 @@ instance
 
 instance
   (CanPow Dyadic b
+  , CanEnsureCE es b
   , CanEnsureCE es (PowTypeNoCN Dyadic b)
   , CanEnsureCE es (PowType Dyadic b)
   , SuitableForCE es)
@@ -521,6 +536,7 @@ instance
 
 instance
   (CanPow a Dyadic
+  , CanEnsureCE es a
   , CanEnsureCE es (PowType a Dyadic)
   , CanEnsureCE es (PowTypeNoCN a Dyadic)
   , SuitableForCE es)

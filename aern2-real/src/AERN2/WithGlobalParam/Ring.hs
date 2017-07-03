@@ -63,6 +63,7 @@ $(declForTypes
 
 instance
   (CanAddAsymmetric (WithGlobalParamA to prm a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (AddType (WithGlobalParamA to prm a) b)
   , SuitableForCE es)
   =>
@@ -74,6 +75,7 @@ instance
 
 instance
   (CanAddAsymmetric a (WithGlobalParamA to prm b)
+  , CanEnsureCE es a
   , CanEnsureCE es (AddType a (WithGlobalParamA to prm b))
   , SuitableForCE es)
   =>
@@ -119,6 +121,7 @@ $(declForTypes
 
 instance
   (CanSub (WithGlobalParamA to prm a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (SubType (WithGlobalParamA to prm a) b)
   , SuitableForCE es)
   =>
@@ -130,6 +133,7 @@ instance
 
 instance
   (CanSub a (WithGlobalParamA to prm b)
+  , CanEnsureCE es a
   , CanEnsureCE es (SubType a (WithGlobalParamA to prm b))
   , SuitableForCE es)
   =>
@@ -154,6 +158,7 @@ instance
 
 instance
   (CanMulAsymmetric (WithGlobalParamA to prm a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (MulType (WithGlobalParamA to prm a) b)
   , SuitableForCE es)
   =>
@@ -165,6 +170,7 @@ instance
 
 instance
   (CanMulAsymmetric a (WithGlobalParamA to prm b)
+  , CanEnsureCE es a
   , CanEnsureCE es (MulType a (WithGlobalParamA to prm b))
   , SuitableForCE es)
   =>

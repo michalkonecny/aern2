@@ -85,6 +85,7 @@ instance
 
 instance
   (CanAddAsymmetric (SequenceA to a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (AddType (SequenceA to a) b)
   , SuitableForCE es)
   =>
@@ -96,6 +97,7 @@ instance
 
 instance
   (CanAddAsymmetric a (SequenceA to b)
+  , CanEnsureCE es a
   , CanEnsureCE es (AddType a (SequenceA to b))
   , SuitableForCE es)
   =>
@@ -157,6 +159,7 @@ instance
 
 instance
   (CanSub (SequenceA to a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (SubType (SequenceA to a) b)
   , SuitableForCE es)
   =>
@@ -168,6 +171,7 @@ instance
 
 instance
   (CanSub a (SequenceA to b)
+  , CanEnsureCE es a
   , CanEnsureCE es (SubType a (SequenceA to b))
   , SuitableForCE es)
   =>
@@ -232,6 +236,7 @@ instance
 
 instance
   (CanMulAsymmetric (SequenceA to a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (MulType (SequenceA to a) b)
   , SuitableForCE es)
   =>
@@ -243,6 +248,7 @@ instance
 
 instance
   (CanMulAsymmetric a (SequenceA to b)
+  , CanEnsureCE es a
   , CanEnsureCE es (MulType a (SequenceA to b))
   , SuitableForCE es)
   =>

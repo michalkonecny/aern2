@@ -46,6 +46,7 @@ instance
 
 instance
   (CanDiv (WithGlobalParamA to prm a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (DivType (WithGlobalParamA to prm a) b)
   , CanEnsureCE es (DivTypeNoCN (WithGlobalParamA to prm a) b)
   , SuitableForCE es)
@@ -61,6 +62,7 @@ instance
 
 instance
   (CanDiv a (WithGlobalParamA to prm b)
+  , CanEnsureCE es a
   , CanEnsureCE es (DivType a (WithGlobalParamA to prm b))
   , CanEnsureCE es (DivTypeNoCN a (WithGlobalParamA to prm b))
   , SuitableForCE es)

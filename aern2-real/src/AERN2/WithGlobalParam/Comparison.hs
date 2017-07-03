@@ -19,12 +19,12 @@ where
 import MixedTypesNumPrelude hiding (id)
 -- import qualified Prelude as P
 
-import Control.Category (id)
+-- import Control.Category (id)
 import Control.Arrow
 
 import Control.CollectErrors
 
-import AERN2.MP.Ball
+-- import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
 import AERN2.QA.Protocol
@@ -86,6 +86,7 @@ instance
 
 instance
   (HasEqAsymmetric (WithGlobalParamA to prm a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (EqCompareType (WithGlobalParamA to prm a) b)
   , IsBool (EnsureCE es (EqCompareType (WithGlobalParamA to prm a) b))
   , SuitableForCE es)
@@ -98,6 +99,7 @@ instance
 
 instance
   (HasEqAsymmetric a (WithGlobalParamA to prm b)
+  , CanEnsureCE es a
   , CanEnsureCE es (EqCompareType a (WithGlobalParamA to prm b))
   , IsBool (EnsureCE es (EqCompareType a (WithGlobalParamA to prm b)))
   , SuitableForCE es)
@@ -110,6 +112,7 @@ instance
 
 instance
   (HasOrderAsymmetric (WithGlobalParamA to prm a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (OrderCompareType (WithGlobalParamA to prm a) b)
   , IsBool (EnsureCE es (OrderCompareType (WithGlobalParamA to prm a) b))
   , SuitableForCE es)
@@ -125,6 +128,7 @@ instance
 
 instance
   (HasOrderAsymmetric a (WithGlobalParamA to prm b)
+  , CanEnsureCE es a
   , CanEnsureCE es (OrderCompareType a (WithGlobalParamA to prm b))
   , IsBool (EnsureCE es (OrderCompareType a (WithGlobalParamA to prm b)))
   , SuitableForCE es)
@@ -162,6 +166,7 @@ instance
 
 instance
   (CanMinMaxAsymmetric (WithGlobalParamA to prm a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (MinMaxType (WithGlobalParamA to prm a) b)
   , SuitableForCE es)
   =>
@@ -174,6 +179,7 @@ instance
 
 instance
   (CanMinMaxAsymmetric a (WithGlobalParamA to prm b)
+  , CanEnsureCE es a
   , CanEnsureCE es (MinMaxType a (WithGlobalParamA to prm b))
   , SuitableForCE es)
   =>

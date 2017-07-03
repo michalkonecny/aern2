@@ -67,6 +67,7 @@ instance
 
 instance
   (CanPow (WithGlobalParamA to prm a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (PowTypeNoCN (WithGlobalParamA to prm a) b)
   , CanEnsureCE es (PowType (WithGlobalParamA to prm a) b)
   , SuitableForCE es)
@@ -82,6 +83,7 @@ instance
 
 instance
   (CanPow a (WithGlobalParamA to prm b)
+  , CanEnsureCE es a
   , CanEnsureCE es (PowType a (WithGlobalParamA to prm b))
   , CanEnsureCE es (PowTypeNoCN a (WithGlobalParamA to prm b))
   , SuitableForCE es)

@@ -117,6 +117,7 @@ instance
 
 instance
   (CanDiv (SequenceA to a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (DivType (SequenceA to a) b)
   , CanEnsureCE es (DivTypeNoCN (SequenceA to a) b)
   , SuitableForCE es)
@@ -132,6 +133,7 @@ instance
 
 instance
   (CanDiv a (SequenceA to b)
+  , CanEnsureCE es a
   , CanEnsureCE es (DivType a (SequenceA to b))
   , CanEnsureCE es (DivTypeNoCN a (SequenceA to b))
   , SuitableForCE es)

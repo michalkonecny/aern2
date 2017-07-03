@@ -98,6 +98,7 @@ instance
 
 instance
   (HasEqAsymmetric (SequenceA to a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (EqCompareType (SequenceA to a) b)
   , IsBool (EnsureCE es (EqCompareType (SequenceA to a) b))
   , SuitableForCE es)
@@ -110,6 +111,7 @@ instance
 
 instance
   (HasEqAsymmetric a (SequenceA to b)
+  , CanEnsureCE es a
   , CanEnsureCE es (EqCompareType a (SequenceA to b))
   , IsBool (EnsureCE es (EqCompareType a (SequenceA to b)))
   , SuitableForCE es)
@@ -122,6 +124,7 @@ instance
 
 instance
   (HasOrderAsymmetric (SequenceA to a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (OrderCompareType (SequenceA to a) b)
   , IsBool (EnsureCE es (OrderCompareType (SequenceA to a) b))
   , SuitableForCE es)
@@ -137,6 +140,7 @@ instance
 
 instance
   (HasOrderAsymmetric a (SequenceA to b)
+  , CanEnsureCE es a
   , CanEnsureCE es (OrderCompareType a (SequenceA to b))
   , IsBool (EnsureCE es (OrderCompareType a (SequenceA to b)))
   , SuitableForCE es)
@@ -230,6 +234,7 @@ instance
 
 instance
   (CanMinMaxAsymmetric (SequenceA to a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (MinMaxType (SequenceA to a) b)
   , SuitableForCE es)
   =>
@@ -242,6 +247,7 @@ instance
 
 instance
   (CanMinMaxAsymmetric a (SequenceA to b)
+  , CanEnsureCE es a
   , CanEnsureCE es (MinMaxType a (SequenceA to b))
   , SuitableForCE es)
   =>

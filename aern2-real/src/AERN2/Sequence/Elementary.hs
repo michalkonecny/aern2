@@ -185,6 +185,7 @@ instance
 
 instance
   (CanPow (SequenceA to a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (PowTypeNoCN (SequenceA to a) b)
   , CanEnsureCE es (PowType (SequenceA to a) b)
   , SuitableForCE es)
@@ -200,6 +201,7 @@ instance
 
 instance
   (CanPow a (SequenceA to b)
+  , CanEnsureCE es a
   , CanEnsureCE es (PowType a (SequenceA to b))
   , CanEnsureCE es (PowTypeNoCN a (SequenceA to b))
   , SuitableForCE es)
