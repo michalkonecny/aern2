@@ -183,19 +183,19 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     integrateBallFun fn ac =
         r ? accuracySG ac
         where
-        r = fn `integrateOverDom` (getDomain fn)
+        r = (~!) $ fn `integrateOverDom` (getDomain fn)
 
     integrateModFun :: UnaryModFun -> Accuracy -> MPBall
     integrateModFun fn ac =
         r ? accuracySG ac
         where
-        r = fn `integrateOverDom` (getDomain fn)
+        r = (~!) $ fn `integrateOverDom` (getDomain fn)
 
     integrateDBallFun :: UnaryBallFun -> UnaryBallFun -> Accuracy -> MPBall
     integrateDBallFun f f' ac =
         r ? accuracySG ac
         where
-        r = fn `integrateOverDom` (getDomain f)
+        r = (~!) $ fn `integrateOverDom` (getDomain f)
         dom = getDomain f
         fn = UnaryBallDFun [f,f']
 processArgs _ =
@@ -479,7 +479,7 @@ runge_Name = "1/(100x^2+1) over [-1,1]"
 
 runge_PB :: Accuracy -> ChPoly MPBall
 runge_PB acGuide =
-  ChPoly.chebDivideDCT acGuide (x-x+1) denom
+  (~!) $ ChPoly.chebDivideDCT acGuide (x-x+1) denom
   where
   denom = 100*(x*x)+1
   x = setPrc1 xPre
@@ -489,18 +489,18 @@ runge_PB acGuide =
 
 runge_ModFun :: UnaryModFun
 runge_ModFun =
-  1/(100*x*x+1)
+  1/!(100*x*x+1)
   where
   x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
 
 runge_B2B :: UnaryBallFun
 runge_B2B =
-  UnaryBallFun unaryIntervalDom $ \x ->    1/(100*x^2+1)
+  UnaryBallFun unaryIntervalDom $ \x ->    1/!(100*x^2+1)
 
 rungeDeriv_B2B :: UnaryBallFun
 rungeDeriv_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    (-200*x)/((100*x^2+1)^2)
+    (-200*x)/!((100*x^2+1)^2)
 
 runge_PP :: Accuracy -> PPoly
 runge_PP acGuide =
@@ -519,25 +519,25 @@ runge_FR :: Accuracy -> FracMB
 runge_FR acGuide =
   inv
   where
-  inv = setPrec (1 / (Frac.fromPoly $ 100*x*x+1))
+  inv = setPrec (1 /! (Frac.fromPoly $ 100*x*x+1))
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   setPrec = setPrecisionAtLeastAccuracy (4*acGuide)
 
 runge_LP :: LPolyMB
 runge_LP =
-  1/(100*x*x+1)
+  1/!(100*x*x+1)
   where
   x = LPoly.variable
 
 runge_LPP :: LPPolyMB
 runge_LPP =
-  1/(100*x*x+1)
+  1/!(100*x*x+1)
   where
   x = LPPoly.fromPoly $ LPoly.variable
 
 runge_LF :: LFracMB
 runge_LF =
-  1/(100*x*x+1)
+  1/!(100*x*x+1)
   where
   x = LFrac.fromPoly $ LPoly.variable
 
@@ -549,7 +549,7 @@ rungeX_Name = "x/(100x^2+1) over [-1,1]"
 
 rungeX_PB :: Accuracy -> ChPoly MPBall
 rungeX_PB acGuide =
-  ChPoly.chebDivideDCT acGuide x denom
+  (~!) $ ChPoly.chebDivideDCT acGuide x denom
   where
   denom = 100*(x*x)+1
   x = setPrc1 xPre
@@ -559,19 +559,19 @@ rungeX_PB acGuide =
 
 rungeX_ModFun :: UnaryModFun
 rungeX_ModFun =
-  x/(100*x*x+1)
+  x/!(100*x*x+1)
   where
   x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
 
 rungeX_B2B :: UnaryBallFun
 rungeX_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    x/(100*x^2+1)
+    x/!(100*x^2+1)
 
 rungeXDeriv_B2B :: UnaryBallFun
 rungeXDeriv_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    (1-100*x^2)/((100*x^2+1)^2)
+    (1-100*x^2)/!((100*x^2+1)^2)
 
 rungeX_PP :: Accuracy -> PPoly
 rungeX_PP acGuide =
@@ -590,25 +590,25 @@ rungeX_FR :: Accuracy -> FracMB
 rungeX_FR acGuide =
   inv
   where
-  inv = setPrec $ (Frac.fromPoly x) / (Frac.fromPoly $ 100*x*x+1)
+  inv = setPrec $ (Frac.fromPoly x) /! (Frac.fromPoly $ 100*x*x+1)
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   setPrec = setPrecisionAtLeastAccuracy (4*acGuide)
 
 rungeX_LP :: LPolyMB
 rungeX_LP =
-  x/(100*x*x+1)
+  x/!(100*x*x+1)
   where
   x = LPoly.variable
 
 rungeX_LPP :: LPPolyMB
 rungeX_LPP =
-  x/(100*x*x+1)
+  x/!(100*x*x+1)
   where
   x = LPPoly.fromPoly $ LPoly.variable
 
 rungeX_LF :: LFracMB
 rungeX_LF =
-  x/(100*x*x+1)
+  x/!(100*x*x+1)
   where
   x = LFrac.fromPoly $ LPoly.variable
 
@@ -620,7 +620,7 @@ rungeSC_Name = "(sin(10x)+cos(20x))/(100x^2+1) over [-1,1]"
 
 rungeSC_PB :: Accuracy -> ChPoly MPBall
 rungeSC_PB acGuide =
-  ChPoly.chebDivideDCT acGuide num denom
+  (~!) $ ChPoly.chebDivideDCT acGuide num denom
   where
   num = sine (10*x) + cosine (20*x)
   denom = 100*(x*x)+1
@@ -633,24 +633,24 @@ rungeSC_PB acGuide =
 
 rungeSC_ModFun :: UnaryModFun
 rungeSC_ModFun =
-  (sin (10*x) + cos(20*x))/(100*x*x+1)
+  (sin (10*x) + cos(20*x))/!(100*x*x+1)
   where
   x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
 
 rungeSC_B2B :: UnaryBallFun
 rungeSC_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    (sin (10*x) + cos(20*x))/(100*x^2+1)
+    (sin (10*x) + cos(20*x))/!(100*x^2+1)
 
 rungeSCDeriv_B2B :: UnaryBallFun
 rungeSCDeriv_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
     ((10*cos(10*x) - 20*sin(20*x))
-     /
+     /!
      (100*x^2+1))
     -
     ((sin (10*x) + cos(20*x))*(200*x)
-     /
+     /!
      ((100*x^2+1)^2))
 
 rungeSC_PP :: Accuracy -> PPoly
@@ -678,7 +678,7 @@ rungeSC_FR acGuide =
   maybeTrace ("rungeSC_FR: getPrecision num = " ++ show (getPrecision num)) $
   maybeTrace ("rungeSC_FR: getAccuracy denom = " ++ show (getAccuracy denom)) $
   maybeTrace ("rungeSC_FR: getPrecision denom = " ++ show (getPrecision denom)) $
-  (setPrc2 num) / denom
+  (setPrc2 num) /! denom
   where
   num = Frac.fromPoly $ sine (10*x) + cosine (20*x)
   denom = (Frac.fromPoly $ 100*x*x+1)
@@ -695,7 +695,7 @@ rungeSC_FR acGuide =
 
 rungeSC_LP :: LPolyMB
 rungeSC_LP =
-  (sine(10*x)+cosine(20*x))/(100*x*x+1)
+  (sine(10*x)+cosine(20*x))/!(100*x*x+1)
   where
     x = LPoly.variable
     sine = Local.sineLocal
@@ -703,7 +703,7 @@ rungeSC_LP =
 
 rungeSC_LPP :: LPPolyMB
 rungeSC_LPP =
-  (LPPoly.fromPoly $ sine(10*x)+cosine(20*x))/(LPPoly.fromPoly $ 100*x*x+1)
+  (LPPoly.fromPoly $ sine(10*x)+cosine(20*x))/!(LPPoly.fromPoly $ 100*x*x+1)
   where
   x = LPoly.variable
   sine = Local.sineLocal
@@ -711,7 +711,7 @@ rungeSC_LPP =
 
 rungeSC_LF :: LFracMB
 rungeSC_LF =
-  (LFrac.fromPoly $ sine(10*x)+cosine(20*x))/(LFrac.fromPoly $ 100*x*x+1)
+  (LFrac.fromPoly $ sine(10*x)+cosine(20*x))/!(LFrac.fromPoly $ 100*x*x+1)
   where
   x = LPoly.variable
   sine = Local.sineLocal
@@ -725,7 +725,7 @@ fracSin_Name = "1/(10(sin(7x))^2+1) over [-1,1]"
 
 fracSin_PB :: Accuracy -> ChPoly MPBall
 fracSin_PB acGuide =
-  ChPoly.chebDivideDCT acGuide (x-x+1) denom
+  (~!) $ ChPoly.chebDivideDCT acGuide (x-x+1) denom
   where
   denom = (10*(sine7x*sine7x)+1)
   sine7x = sine1 (7*x)
@@ -737,7 +737,7 @@ fracSin_PB acGuide =
 
 fracSin_ModFun :: UnaryModFun
 fracSin_ModFun =
-  1/(10*(sin7x*sin7x)+1)
+  1/!(10*(sin7x*sin7x)+1)
   where
   sin7x = sin (7*x)
   x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
@@ -745,12 +745,12 @@ fracSin_ModFun =
 fracSin_B2B :: UnaryBallFun
 fracSin_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    1/(10*(sin (7*x))^2+1)
+    1/!(10*(sin (7*x))^2+1)
 
 fracSinDeriv_B2B :: UnaryBallFun
 fracSinDeriv_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    (-140*sin(7*x)*cos(7*x))/((10*(sin (7*x))^2+1)^2)
+    (-140*sin(7*x)*cos(7*x))/!((10*(sin (7*x))^2+1)^2)
 
 fracSin_PP :: Accuracy -> PPoly
 fracSin_PP acGuide =
@@ -772,28 +772,28 @@ fracSin_FR :: Accuracy -> FracMB
 fracSin_FR acGuide =
   inv
   where
-  inv = 1 / (Frac.fromPoly $ (10*(sine7x*sine7x)+1))
+  inv = 1 /! (Frac.fromPoly $ (10*(sine7x*sine7x)+1))
   sine7x = sine1 (7*x)
   sine1 = sineWithAccuracyGuide (acGuide + 10)
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 fracSin_LP :: LPolyMB
 fracSin_LP =
-  1/(10*(sine (7*x))*(sine (7*x))+1)
+  1/!(10*(sine (7*x))*(sine (7*x))+1)
   where
   x = LPoly.variable
   sine = Local.sineLocal
 
 fracSin_LPP :: LPPolyMB
 fracSin_LPP =
-  1/(LPPoly.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
+  1/!(LPPoly.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
   where
   x = LPoly.variable
   sine = Local.sineLocal
 
 fracSin_LF :: LFracMB
 fracSin_LF =
-  1/(LFrac.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
+  1/!(LFrac.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
   where
   x = LPoly.variable
   sine = Local.sineLocal
@@ -816,7 +816,7 @@ fracSinX_PB acGuide =
 
 fracSinX_ModFun :: UnaryModFun
 fracSinX_ModFun =
-  x/(10*(sin7x*sin7x)+1)
+  x/!(10*(sin7x*sin7x)+1)
   where
   sin7x = sin (7*x)
   x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
@@ -824,14 +824,14 @@ fracSinX_ModFun =
 fracSinX_B2B :: UnaryBallFun
 fracSinX_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    x/(10*(sin (7*x))^2+1)
+    x/!(10*(sin (7*x))^2+1)
 
 fracSinXDeriv_B2B :: UnaryBallFun
 fracSinXDeriv_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    (-140*sin(7*x)*cos(7*x)*x)/((10*(sin (7*x))^2+1)^2)
+    (-140*sin(7*x)*cos(7*x)*x)/!((10*(sin (7*x))^2+1)^2)
     +
-    (1/(10*(sin (7*x))^2+1))
+    (1/!(10*(sin (7*x))^2+1))
 fracSinX_PP :: Accuracy -> PPoly
 fracSinX_PP acGuide =
   maybeTrace ("fracSinX_PP: getAccuracy sine7x = " ++ show (getAccuracy sine7x)) $
@@ -852,28 +852,28 @@ fracSinX_FR :: Accuracy -> FracMB
 fracSinX_FR acGuide =
   inv
   where
-  inv = (Frac.fromPoly x) / (Frac.fromPoly $ (10*(sine7x*sine7x)+1))
+  inv = (Frac.fromPoly x) /! (Frac.fromPoly $ (10*(sine7x*sine7x)+1))
   sine7x = sine1 (7*x)
   sine1 = sineWithAccuracyGuide (acGuide + 10)
   x = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
 
 fracSinX_LP :: LPolyMB
 fracSinX_LP =
-  x/(10*(sine (7*x))*(sine (7*x))+1)
+  x/!(10*(sine (7*x))*(sine (7*x))+1)
   where
   x = LPoly.variable
   sine = Local.sineLocal
 
 fracSinX_LPP :: LPPolyMB
 fracSinX_LPP =
-  (LPPoly.fromPoly $ x)/(LPPoly.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
+  (LPPoly.fromPoly $ x)/!(LPPoly.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
   where
   x = LPoly.variable
   sine = Local.sineLocal
 
 fracSinX_LF :: LFracMB
 fracSinX_LF =
-  (LFrac.fromPoly $ x)/(LFrac.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
+  (LFrac.fromPoly $ x)/!(LFrac.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
   where
   x = LPoly.variable
   sine = Local.sineLocal
@@ -886,7 +886,7 @@ fracSinSC_Name = "(sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]"
 
 fracSinSC_PB :: Accuracy -> ChPoly MPBall
 fracSinSC_PB acGuide =
-  ChPoly.chebDivideDCT acGuide num denom
+  (~!) $ ChPoly.chebDivideDCT acGuide num denom
   where
   num = sine2(10*x) + cosine(20*x)
   denom = (10*(sine7x*sine7x)+1)
@@ -901,7 +901,7 @@ fracSinSC_PB acGuide =
 
 fracSinSC_ModFun :: UnaryModFun
 fracSinSC_ModFun =
-  (sin(10*x)+cos(20*x))/(10*(sin7x*sin7x)+1)
+  (sin(10*x)+cos(20*x))/!(10*(sin7x*sin7x)+1)
   where
   sin7x = sin (7*x)
   x = varFn (unaryModFun (unaryIntervalDom, 0)) ()
@@ -909,17 +909,17 @@ fracSinSC_ModFun =
 fracSinSC_B2B :: UnaryBallFun
 fracSinSC_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    (sin(10*x)+cos(20*x))/(10*(sin (7*x))^2+1)
+    (sin(10*x)+cos(20*x))/!(10*(sin (7*x))^2+1)
 
 fracSinSCDeriv_B2B :: UnaryBallFun
 fracSinSCDeriv_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
     ((10*cos(10*x)-20*sin(20*x))
-     /
+     /!
      (10*(sin (7*x))^2+1))
     -
     ((sin(10*x)+cos(20*x))*(140*sin(7*x)*cos(7*x))
-     /
+     /!
      ((10*(sin (7*x))^2+1)^2))
 
 fracSinSC_PP :: Accuracy -> PPoly
@@ -953,7 +953,7 @@ fracSinSC_FR acGuide =
   maybeTrace ("fracSinSC_FR: getPrecision fracSinSC = " ++ show (getPrecision fracSinSC)) $
   fracSinSC
   where
-  fracSinSC = num / denom
+  fracSinSC = num /! denom
   num = Frac.fromPoly $ sine2(10*x) + cosine(20*x)
   denom = Frac.fromPoly $ (10*(sine7x*sine7x)+1)
   sine7x = sine1 (7*x)
@@ -964,7 +964,7 @@ fracSinSC_FR acGuide =
 
 fracSinSC_LP :: LPolyMB
 fracSinSC_LP =
-  (sine(10*x)+cosine(20*x))/(10*(sine (7*x))*(sine (7*x))+1)
+  (sine(10*x)+cosine(20*x))/!(10*(sine (7*x))*(sine (7*x))+1)
   where
   x = LPoly.variable
   sine = Local.sineLocal
@@ -972,7 +972,7 @@ fracSinSC_LP =
 
 fracSinSC_LPP :: LPPolyMB
 fracSinSC_LPP =
-  (LPPoly.fromPoly $ sine(10*x)+cosine(20*x))/(LPPoly.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
+  (LPPoly.fromPoly $ sine(10*x)+cosine(20*x))/!(LPPoly.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
   where
   x = LPoly.variable
   sine = Local.sineLocal
@@ -980,7 +980,7 @@ fracSinSC_LPP =
 
 fracSinSC_LF :: LFracMB
 fracSinSC_LF =
-  (LFrac.fromPoly $ sine(10*x)+cosine(20*x))/(LFrac.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
+  (LFrac.fromPoly $ sine(10*x)+cosine(20*x))/!(LFrac.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
   where
   x = LPoly.variable
   sine = Local.sineLocal
@@ -1000,15 +1000,15 @@ hat_PB acGuide =
 hat_B2B :: UnaryBallFun
 hat_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    1 - (abs (x+1/3))
+    cn $ 1 - (abs (x+1/!3))
 
 hatDeriv_B2B :: UnaryBallFun
 hatDeriv_B2B =
-  UnaryBallFun unaryIntervalDom $ \x ->
-    catchingNumExceptions $
-      case x > -1/3 of
-         Just (Just True) -> mpBall 1
-         Just (Just False) -> mpBall (-1)
+  UnaryBallFun unaryIntervalDom $ \xCN ->
+    cn $
+      case ((~!) xCN) > -1/!3 of
+         Just True -> mpBall 1
+         Just False -> mpBall (-1)
          _ -> fromEndpoints (mpBall $ -1) (mpBall 1)
 
 hat_PP :: Accuracy -> PPoly
@@ -1043,7 +1043,7 @@ bumpy_PB acGuide =
 bumpy_B2B :: UnaryBallFun
 bumpy_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    max (sin (10*x)) (cos (11*x))
+    cn $ max (sin (10*x)) (cos (11*x))
 
 bumpyDeriv_B2B :: UnaryBallFun
 bumpyDeriv_B2B =

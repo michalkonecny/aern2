@@ -27,8 +27,7 @@ executable aern2-fnreps-ops
     -- , lens == 4.13.*
     , psqueues == 0.2.*
     , containers == 0.5.*
-    , mixed-types-num == 0.1.*
-    , num-exceptions == 0.1.*
+    , mixed-types-num == 0.2.*
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
     , aern2-fun == 0.1.*

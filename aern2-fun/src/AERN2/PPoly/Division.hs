@@ -27,11 +27,17 @@ import Math.NumberTheory.Logarithms (integerLog2)
 -- import Data.Maybe
 
 instance CanDiv PPoly PPoly where -- TODO: support negative denominator
+  type DivTypeNoCN PPoly PPoly = PPoly
+  divideNoCN p q =
+    p * inverse q
   type DivType PPoly PPoly = PPoly
   divide p q =
     p * inverse q
 
 instance CanDiv Integer PPoly where -- TODO: support negative denominator
+  type DivTypeNoCN Integer PPoly = PPoly
+  divideNoCN n q =
+    n * inverse q
   type DivType Integer PPoly = PPoly
   divide n q =
     n * inverse q
