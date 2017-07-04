@@ -182,8 +182,8 @@ instance ElmType Dyadic where
 
 dyadicS2dyadic :: DyadicS -> Dyadic
 dyadicS2dyadic (DyadicS v e)
-  | e < 0 = (dyadic v) * ((dyadic 0.5)^(-e))
-  | otherwise = (dyadic v) * ((dyadic 2)^e)
+  | e < 0 = (dyadic v) * ((dyadic 0.5)^!(-e))
+  | otherwise = (dyadic v) * ((dyadic 2)^!e)
 
 dyadic2dyadicS :: Dyadic -> DyadicS
 dyadic2dyadicS d = DyadicS v e

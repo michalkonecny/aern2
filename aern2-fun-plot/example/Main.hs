@@ -1,11 +1,13 @@
 {-# LANGUAGE CPP #-}
-#define DEBUG
+-- #define DEBUG
 
 #ifdef DEBUG
 import Debug.Trace (trace)
 #define maybeTrace trace
+#define maybeTraceIO putStrLn
 #else
-#define maybeTrace (flip const)
+#define maybeTrace (\ (_ :: String) t -> t)
+#define maybeTraceIO (\ (_ :: String) -> return ())
 #endif
 
 import MixedTypesNumPrelude
@@ -63,7 +65,7 @@ fnsRungeFun =
   [ ("Fun 1/(10*x^2+1)", fnBlack, unitDom, runge10)])
   where
   runge10 :: MPBall -> MPBall
-  runge10 x = 1/(max 1 (10*x^2+1))
+  runge10 x = 1/!(max 1 (10*x^!2+1))
 
 fnsRungePoly :: Plot.Functions
 fnsRungePoly =
@@ -74,9 +76,9 @@ fnsRungePoly =
   ]
   ++
   (map funFn
-  [ ("Fun 1/(10*x^2+1)", fnBlack, unitDom, \x -> 1/(10*x^2+1))])
+  [ ("Fun 1/(10*x^2+1)", fnBlack, unitDom, \x -> 1/!(10*x^!2+1))])
   where
-  runge_4bits = ChPoly.chebDivideDCT (bits 4) (xU-xU+1) (10*xU*xU+1)
+  runge_4bits = (~!) $ ChPoly.chebDivideDCT (bits 4) (xU-xU+1) (10*xU*xU+1)
   xU :: ChPoly MPBall
   xU = varFn sampleFn ()
   sampleFn = constFn (unitDom, 1)
@@ -89,7 +91,7 @@ fnsRungePPoly =
   ]
   ++
   (map funFn
-  [ ("Fun 1/(10*x^2+1)", fnBlack, unitDom, \x -> 1/(10*x^2+1))])
+  [ ("Fun 1/(10*x^2+1)", fnBlack, unitDom, \x -> 1/!(10*x^!2+1))])
   where
   runge_bits b =
     PPoly.inverseWithAccuracy (bits b) (PPoly.fromPoly $ setPrecision (prec (2+b*10)) $ 10*xU*xU+1)
@@ -100,13 +102,13 @@ fnsRungePPoly =
 fnsSine :: Plot.Functions
 fnsSine =
   map chPolyFn
-  [ ("Poly (1+sin[ac=3](6x))/2", fnBlue, (1+sine (6*xU))/2)
-  , ("Poly (1+cos[ac=3](6x))/2", fnGreen, (1+cosine (6*xU))/2)
+  [ ("Poly (1+sin[ac=3](6x))/2", fnBlue, (1+sine (6*xU))/!2)
+  , ("Poly (1+cos[ac=3](6x))/2", fnGreen, (1+cosine (6*xU))/!2)
   ]
   ++
   (map funFn
-  [ ("Fun (1+sin(6x))/2", fnBlack, unitDom, \x -> (1+sin (6*x))/2)
-  , ("Fun (1+cos(6x))/2", fnBlack, unitDom, \x -> (1+cos (6*x))/2)
+  [ ("Fun (1+sin(6x))/2", fnBlack, unitDom, \x -> (1+sin (6*x))/!2)
+  , ("Fun (1+cos(6x))/2", fnBlack, unitDom, \x -> (1+cos (6*x))/!2)
   ])
   where
   sine = sineWithAccuracyGuide (bits 3)
@@ -122,7 +124,7 @@ fnsSquare =
   ++
   (map funFn
   [
-    ("Fun x^2", fnBlack, unitDom, \x -> x^2)
+    ("Fun x^2", fnBlack, unitDom, \x -> x^!2)
   ])
   where
   xP :: ChPoly MPBall

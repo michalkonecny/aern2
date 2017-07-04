@@ -39,8 +39,7 @@ library
     , wai
     , wai-extra
     , wai-make-assets
-    , mixed-types-num == 0.1.*
-    , num-exceptions == 0.1.*
+    , mixed-types-num == 0.2.*
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
     , aern2-fun == 0.1.*
@@ -69,26 +68,7 @@ library
 executable aern2-fun-plot-example
   build-depends:
     base == 4.*
-    -- , arithmoi == 0.4.*
-    -- , containers == 0.5.*
-    -- , psqueues == 0.2.*
-    -- -- , arithmoi == 0.4.*
-    -- , convertible >= 1.1.1.0 && < 1.2
-    -- , hspec >= 2.1 && < 2.3
-    -- -- , hspec-smallcheck >= 0.3 && < 0.5
-    -- , QuickCheck >= 2.7 && < 2.9
-    -- , transformers >= 0.4 && < 0.6
-    -- , lens == 4.13.*
-    -- , servant >= 0.7.1
-    -- , servant-server >= 0.7.1
-    -- , servant-elm
-    -- , elm-export
-    -- , warp
-    -- , aeson
-    -- , wai
-    -- , wai-make-assets
-    , mixed-types-num == 0.1.*
-    -- , num-exceptions == 0.1.*
+    , mixed-types-num == 0.2.*
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
     , aern2-fun == 0.1.*
