@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+-- #define DEBUG
 module AERN2.Poly.Power.RootsIntVector
 (
     initialBernsteinCoefs
@@ -14,12 +16,21 @@ module AERN2.Poly.Power.RootsIntVector
 )
 where
 
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#define maybeTraceIO putStrLn
+#else
+#define maybeTrace (\ (_ :: String) t -> t)
+#define maybeTraceIO (\ (_ :: String) -> return ())
+#endif
+
 import MixedTypesNumPrelude
 import qualified Data.Map as Map
 import qualified Prelude
 import AERN2.Interval
 import AERN2.MP.Ball hiding (iterateUntilAccurate)
-import AERN2.MP.Dyadic
+-- import AERN2.MP.Dyadic
 import Data.Maybe
 import Data.Ratio
 
@@ -31,16 +42,6 @@ import Data.Vector (Vector, (!))
 import qualified Data.Vector as V
 
 --import AERN2.Poly.Power.SignedSubresultant
-
-import Debug.Trace
-
-shouldTrace :: Bool
-shouldTrace = False
-
-maybeTrace :: String -> a -> a
-maybeTrace
-    | shouldTrace = trace
-    | otherwise = const id
 
 type Terms = (ErrorBound, Integer, Vector Integer)
 
@@ -191,7 +192,7 @@ translate t poly@(PowPoly (Poly ts)) =
       in
         translateAcc (n - 1) $ c + (shiftRight 1 poly') - (t*poly')
 
-contract :: (CanMulSameType c, CanPow c Integer, PowType c Integer ~ c)
+contract :: (CanMulSameType c, CanPow c Integer, PowTypeNoCN c Integer ~ c, CanEnsureCN c)
   => c -> PowPoly c -> PowPoly c
 contract l (PowPoly (Poly ts)) =
   PowPoly $ Poly $ Map.mapWithKey (\p c -> c*(l^!p)) ts

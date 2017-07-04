@@ -29,7 +29,7 @@ import qualified Prelude as P
 import Text.Printf
 -- import Text.Regex.TDFA
 
-import Data.Maybe
+-- import Data.Maybe
 
 import GHC.Generics
 import Data.Typeable
@@ -149,14 +149,14 @@ $(declForTypes
 
 instance
   (CanSubSameType e, CanAddSubMulBy t e
-  , HasIntegerBounds t, CanSubThis t Integer, CanDivBy t Integer)
+  , HasIntegerBounds t, CanSubThis t Integer, CanDivCNBy t Integer)
   =>
   CanMapInside (Interval e e) t
   where
   mapInside (Interval l r) x =
     l + xUnit * (r - l)
     where
-    xUnit = (x - xL) / (max 1 $ xU - xL)
+    xUnit = (x - xL) /! (max 1 $ xU - xL)
     (xL,xU) = integerBounds x
 
 {- intersection -}

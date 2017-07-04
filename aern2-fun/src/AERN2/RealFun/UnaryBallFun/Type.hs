@@ -53,7 +53,7 @@ data UnaryBallFun =
     unaryBallFun_Domain :: DyadicInterval
     ,
     {-| For convergent sequence of *open* balls the resulting sequence should also converge. -}
-    unaryBallFun_Eval :: CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall
+    unaryBallFun_Eval :: MPBall -> CN MPBall
   }
 
 instance HasDomain UnaryBallFun where
@@ -70,12 +70,12 @@ instance (CanBeMPBall t, Show t, Typeable t)
   where
   safeConvertExactly (dom, x) =
     case safeConvertExactly x of
-      Right b -> Right $ UnaryBallFun dom (fmap $ const b)
+      Right b -> Right $ UnaryBallFun dom (const $ cn (b :: MPBall))
       _err -> convError "unable to convert to constant function: " (dom,x)
 
 instance HasVars UnaryBallFun where
   type Var UnaryBallFun = ()
   varFn sampleF () =
-    UnaryBallFun dom id
+    UnaryBallFun dom cn
     where
     dom = getDomain sampleF

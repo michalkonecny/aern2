@@ -47,7 +47,7 @@ genericisePoly fI a b =
   (a, b, evalF, fAcc, evalDF, dom, bsI)
   where
   Interval l r = getDomain fI
-  evalF = evalDf fI (2/(r - l) * dfI)
+  evalF = evalDf fI (2/!(r - l) * dfI)
   fAcc = getAccuracy fI
   evalDF = evalDirect dfRat :: Rational -> Rational
   ch2Power (e, p) = (e, cheb2Power p)

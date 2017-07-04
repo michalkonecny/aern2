@@ -26,9 +26,9 @@ instance (CanIntegrateOverDom f DyadicInterval,
       foldl' (+) (convertExactly 0) integrals
       --integrateOverDom (f l r ac) dom
       where
-      n = fromAccuracy ac
+      n = max 2 $ fromAccuracy ac
       ac' = ac + (bits . integerLog2 . fromAccuracy) ac + 1
-      ps = [l + k*(r - l)/n | k <- [0 .. n]]
+      ps = [l + k*(r - l)/!n | k <- [0 .. n]]
       dyPs = map (centre . mpBallP (prec $ fromAccuracy ac)) ps
       dyIntervals = zip dyPs (tail dyPs)
       integrals = [integrateOverDom (f a b ac') (Interval a b) | (a,b) <- dyIntervals]

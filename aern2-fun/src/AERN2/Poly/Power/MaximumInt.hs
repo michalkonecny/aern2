@@ -306,7 +306,7 @@ computeMidpoint :: Rational -> Rational -> Rational
 computeMidpoint l r = 0.5*(l + r)
 
 {-evalDirectAccurately ::
- (Ring t, CanAddSubMulDivBy t Dyadic, CanDivBy t Integer,
+ (Ring t, CanAddSubMulDivCNBy t Dyadic, CanDivCNBy t Integer,
   CanAddSubMulBy t c, Ring c, HasAccuracy t,
   HasPrecision t, CanSetPrecision t) =>
     ChPoly c -> t -> t

@@ -59,19 +59,20 @@ specFnPointwiseOp2 ::
   ( HasDomain f, CanMapInside (Domain f) x
   , CanApply f x, ApplyType f x ~ v
   , HasEqCertainly v v
+  , CanEnsureCN v
   , Arbitrary (FnAndDescr f), ArbitraryWithDom (FnAndDescr f), Show f
   , Arbitrary x, Show x
   ) =>
   (T f) -> (T x) ->
   String ->
   (f -> f -> f) ->
-  (CatchingNumExceptions v -> CatchingNumExceptions v -> CatchingNumExceptions v) ->
+  (v -> v -> v) ->
   (FnAndDescr f -> FnAndDescr f) ->
   (FnAndDescr f -> FnAndDescr f) ->
   Spec
 specFnPointwiseOp2
     (T fName :: T f) (T _xName :: T x)
-    opName opFn opVal reshapeFn1 reshapeFn2
+    opName opFn (opVal :: v -> v -> v) reshapeFn1 reshapeFn2
   =
   it ("pointwise " ++ opName ++ " on " ++ fName ++
       " corresponds to " ++ opName ++ " on values") $ property $
@@ -82,28 +83,26 @@ specFnPointwiseOp2
             let x = mapInside (getDomain f1) xPre in
             let v1 = apply f1 x in
             let v2 = apply f2 x in
-            let vrE = opVal (catchingNumExceptions v1) (catchingNumExceptions v2) in
-            case _numEXC_maybeValue vrE of
-              Just vr | not (hasCertainException vrE) -> apply (opFn f1 f2) x ?==? vr
-              _ -> True
-
+            let vr = opVal v1 v2 in
+            apply (opFn f1 f2) x ?==? (vr :: v)
 
 specFnPointwiseOp1 ::
   ( HasDomain f, CanMapInside (Domain f) x
   , CanApply f x, ApplyType f x ~ v
   , HasEqCertainly v v
+  , CanEnsureCN v
   , Arbitrary (FnAndDescr f), ArbitraryWithDom (FnAndDescr f), Show f
   , Arbitrary x, Show x
   ) =>
   (T f) -> (T x) ->
   String ->
   (f -> f) ->
-  (CatchingNumExceptions v -> CatchingNumExceptions v) ->
+  (v -> v) ->
   (FnAndDescr f -> FnAndDescr f) ->
   Spec
 specFnPointwiseOp1
     (T fName :: T f) (T _xName :: T x)
-    opName opFn opVal reshapeFn1
+    opName opFn (opVal :: v -> v) reshapeFn1
   =
   it ("pointwise " ++ opName ++ " on " ++ fName ++
       " corresponds to " ++ opName ++ " on values") $ property $
@@ -112,7 +111,5 @@ specFnPointwiseOp1
           and $ flip map xPres $ \xPre ->
             let x = mapInside (getDomain f1) xPre in
             let v1 = apply f1 x in
-            let vrE = opVal (catchingNumExceptions v1) in
-            case _numEXC_maybeValue vrE of
-              Just vr | not (hasCertainException vrE) -> apply (opFn f1) x ?==? vr
-              _ -> True
+            let vr = opVal v1 in
+            apply (opFn f1) x ?==? (vr :: v)

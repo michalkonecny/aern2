@@ -64,7 +64,7 @@ sineWithAccuracyGuide ::
   (HasDomain f, CanApplyApprox f (Domain f)
   , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
   , CanNegSameType f, CanAddSameType f, CanMulSameType f
-  , CanAddSubMulDivBy f Integer, CanAddSubMulDivBy f CauchyReal
+  , CanAddSubMulDivCNBy f Integer, CanAddSubMulDivCNBy f CauchyReal
   , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
   , IsBall f
   , Show f)
@@ -76,7 +76,7 @@ cosineWithAccuracyGuide ::
   (HasDomain f, CanApplyApprox f (Domain f)
   , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
   , CanNegSameType f, CanAddSameType f, CanMulSameType f
-  , CanAddSubMulDivBy f Integer, CanAddSubMulDivBy f CauchyReal
+  , CanAddSubMulDivCNBy f Integer, CanAddSubMulDivCNBy f CauchyReal
   , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
   , IsBall f
   , Show f)
@@ -88,7 +88,7 @@ sineCosineWithAccuracyGuide ::
   (HasDomain f, CanApplyApprox f (Domain f)
   , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
   , CanNegSameType f, CanAddSameType f, CanMulSameType f
-  , CanAddSubMulDivBy f Integer, CanAddSubMulDivBy f CauchyReal
+  , CanAddSubMulDivCNBy f Integer, CanAddSubMulDivCNBy f CauchyReal
   , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
   , IsBall f
   , Show f)
@@ -132,12 +132,12 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     rC = centreAsBall r :: MPBall
 
     -- compute k = round(rC/(pi/2)):
-    k = fst $ integerBounds $ 0.5 + (2*rC / pi)
+    k = fst $ integerBounds $ 0.5 + (2*rC /! pi)
 
     -- shift xC near 0 using multiples of pi/2:
-    txC ac = (setPrecisionAtLeastAccuracy (ac) xC) - k * pi / 2
+    txC ac = (setPrecisionAtLeastAccuracy (ac) xC) - k * pi /! 2
     -- work out an absolute range bound for txC:
-    (_, trM :: MPBall) = endpoints $ abs $ r - k * pi / 2
+    (_, trM :: MPBall) = endpoints $ abs $ r - k * pi /! 2
 
     -- compute sin or cos of txC = xC-k*pi/2 using Taylor series:
     (taylorSum, taylorSumE, n)
@@ -160,7 +160,7 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
 sineTaylorSum ::
-  (CanAddSameType f, CanMulSameType f, CanAddSubMulDivBy f Integer
+  (CanAddSameType f, CanMulSameType f, CanAddSubMulDivCNBy f Integer
   , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
   , Show f)
   =>
@@ -172,7 +172,7 @@ sineTaylorSum = sineCosineTaylorSum True
     it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
 cosineTaylorSum ::
-  (CanAddSameType f, CanMulSameType f, CanAddSubMulDivBy f Integer
+  (CanAddSameType f, CanMulSameType f, CanAddSubMulDivCNBy f Integer
   , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
   , Show f)
   =>
@@ -180,7 +180,7 @@ cosineTaylorSum ::
 cosineTaylorSum = sineCosineTaylorSum False
 
 sineCosineTaylorSum ::
-  (CanAddSameType f, CanMulSameType f, CanAddSubMulDivBy f Integer
+  (CanAddSameType f, CanMulSameType f, CanAddSubMulDivCNBy f Integer
   , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
   , Show f)
   =>
@@ -204,8 +204,8 @@ sineCosineTaylorSum isSine (xAC :: Accuracy -> f) xM acGuidePre =
         where aux i fc_i = (i,fc_i) : aux (i+1) (fc_i*(i+1))
       addE (i, fc_i) = (i, (fc_i, xM_i, e_i))
         where
-        e_i = errorBound $ xM_i/fc_i
-        xM_i = xM^i
+        e_i = errorBound $ xM_i/!fc_i
+        xM_i = xM^!i
       takeUntilAccurate (t_i@(i,(_fc_i, _xM_i,e_i)):rest)
         | getAccuracy e_i > acGuide && (even i == isSine) = [t_i]
         | otherwise = t_i : takeUntilAccurate rest
@@ -222,7 +222,7 @@ sineCosineTaylorSum isSine (xAC :: Accuracy -> f) xM acGuidePre =
       res = Map.map aux factorialsE
       aux (fc_i,_xM_i,_e_i) =
         -- the accuracy needed of the power to give a sufficiently accurate term:
-        acGuide + 1 + (normLog2Accuracy $ getNormLog fc_i)
+        acGuide + 1 + (bits $ getNormLog fc_i)
     -- Ensure the accuracies in powers are sufficient
     -- to compute accurate higher powers by their multiplications:
     powerAccuracies =
@@ -266,7 +266,7 @@ sineCosineTaylorSum isSine (xAC :: Accuracy -> f) xM acGuidePre =
         log_pw_jD = getLogXM (j-1)
         getLogXM k =
           case (Map.lookup k factorialsE) of
-            Just (_fc_k,xM_k,_e_k) -> normLog2Accuracy $ getNormLog xM_k
+            Just (_fc_k,xM_k,_e_k) -> bits $ getNormLog xM_k
             _ -> error "sineCosineTaylorSum: internal error"
 
     x = case Map.lookup 1 powerAccuracies of
@@ -345,7 +345,7 @@ sineCosineTaylorSum isSine (xAC :: Accuracy -> f) xM acGuidePre =
       initNum | isSine = 0
               | otherwise = 1
     makeTerm i pwr (fact,_,_e) =
-      sign * pwr/fact -- alternate signs
+      sign * pwr/!fact -- alternate signs
       where
       sign = if (even $ i `div` 2) then 1 else -1
     in

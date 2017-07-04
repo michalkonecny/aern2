@@ -13,8 +13,10 @@ minimumOptimisedWithAccuracy
 #ifdef DEBUG
 import Debug.Trace (trace)
 #define maybeTrace trace
+#define maybeTraceIO putStrLn
 #else
-#define maybeTrace (flip const)
+#define maybeTrace (\ (_ :: String) t -> t)
+#define maybeTraceIO (\ (_ :: String) -> return ())
 #endif
 
 import MixedTypesNumPrelude hiding (maximum, minimum)
@@ -71,7 +73,7 @@ maximumOptimisedWithAccuracy acc (ChPoly dom poly _) l r initialDegree steps =
         reduceDegreeToAccuracy (d + 5) g
   f   = reduceDegreeToAccuracy 5 $ makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly Nothing
   fc' = (makeExactCentre . derivativeExact . centre) f
-  maxKey = max 0 (ceiling ((degree f - initialDegree) / steps))
+  maxKey = max 0 (ceiling ((degree f - initialDegree) /! steps))
   ch2Power :: ChPoly MPBall -> Pow.PowPoly MPBall
   ch2Power p =
     let

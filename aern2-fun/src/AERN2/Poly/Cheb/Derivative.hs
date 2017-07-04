@@ -27,7 +27,7 @@ import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Ring ()
 
 derivativeExact :: ChPoly MPBall -> ChPoly MPBall -- TODO: add check for domain?
-derivativeExact f@(ChPoly dom@(Interval l r) (Poly ts) _) =
+derivativeExact _f@(ChPoly dom@(Interval _l _r) (Poly ts) _) =
   ChPoly dom (Poly $ terms_map mpBall dts) Nothing
   where
   fDy = ChPoly dom (Poly $ terms_map centre ts) Nothing
@@ -54,7 +54,7 @@ derivativeRational = derivative
 derivative ::
   (PolyCoeffRing c
   , CanMulBy (ChPoly c) c
-  , CanDivBy c Dyadic
+  , CanDivCNBy c Dyadic
   , CanNormalize (ChPoly c))
    =>
    ChPoly c -> ChPoly c
@@ -98,13 +98,13 @@ derivativeI (ChPoly dom (Poly ts :: Poly c) _) =
 derivative' ::
   (PolyCoeffRing c
   , CanMulBy (ChPoly c) c
-  , CanDivBy c Dyadic
+  , CanDivCNBy c Dyadic
   , CanNormalize (ChPoly c))
   =>
   ChPoly c -> ChPoly c
 derivative' (ChPoly dom@(Interval l r) (Poly ts :: Poly c) _)  =
   normalize $
-  (((convertExactly 2 :: c) / (r - l)) *
+  (((convertExactly 2 :: c) /! (r - l)) *
    (foldl' (+)
     zero
     [a*(deriv n) | (n,a) <- terms_toList ts]))
@@ -114,6 +114,6 @@ derivative' (ChPoly dom@(Interval l r) (Poly ts :: Poly c) _)  =
   deriv n =
     ChPoly dom
       (Poly $
-        terms_updateConst (/(dyadic 2)) $
+        terms_updateConst (/!(dyadic 2)) $
           terms_fromList [(i, convertExactly (2*n)) | i <- [0 .. n - 1], odd (n - i)])
       Nothing

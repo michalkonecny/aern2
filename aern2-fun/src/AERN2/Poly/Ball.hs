@@ -37,6 +37,7 @@ import MixedTypesNumPrelude
 -- import Test.QuickCheck
 
 
+import Control.CollectErrors
 
 import AERN2.Normalize
 
@@ -80,6 +81,13 @@ data Ball t = Ball { ball_value :: t, ball_radius :: ErrorBound }
 instance (Show t) => Show (Ball t) where
   show (Ball c e) = "Ball " ++ (show c) ++ "+-" ++ (show e)
 
+instance (SuitableForCE es) => CanEnsureCE es (Ball t)
+instance (SuitableForCE es) => CanExtractCE es Ball where
+  extractCE sample_es (Ball cCE e) =
+    case ensureNoCE sample_es cCE of
+      Right c -> ensureCE sample_es (Ball c e)
+      Left es -> noValueCE es
+
 ballLift1R :: (IsBall t) => (t -> t1) -> (Ball t -> t1)
 ballLift1R f (Ball c e) = f (updateRadius (+ e) c)
 
@@ -92,6 +100,25 @@ ballLift1T f (Ball c e) t = Ball fceC fceE
   fceC = centreAsBall fce
   fceE = radius fce
   fce = f (updateRadius (+e) c) t
+
+ballLift1TCN ::
+  (IsBall t, CanEnsureCN t) =>
+  (t -> t1 -> EnsureCN t) -> (Ball t -> t1 -> CN (Ball t))
+ballLift1TCN f b@(Ball c e) t =
+  case deEnsureCN fceCN of
+    Right fce ->
+      let
+        fceC = centreAsBall fce
+        fceE = radius fce
+      in
+      cn $ Ball fceC fceE
+    Left es ->
+      noValueECN (Just b) es
+  where
+  fceCN = f (updateRadius (+e) c) t
+
+-- instance CanExtractCE es Ball where
+--   extractCE sample_es
 
 ballLift2 :: (IsBall t) => (t -> t -> t) -> (Ball t -> Ball t -> Ball t)
 ballLift2 f (Ball c1 e1) (Ball c2 e2) = Ball fceC fceE
@@ -246,9 +273,11 @@ $(declForTypes
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
   (\ t -> [d|
-    instance (CanDivBy t $t, IsBall t, CanNormalize t) => CanDiv (Ball t) $t where
-      type DivType (Ball t) $t = Ball t
-      divide = ballLift1T divide
+    instance (CanDivCNBy t $t, IsBall t, CanNormalize t, CanEnsureCN t) => CanDiv (Ball t) $t where
+      type DivTypeNoCN (Ball t) $t = Ball t
+      divideNoCN = ballLift1T divideNoCN
+      type DivType (Ball t) $t = EnsureCN (Ball t)
+      divide = ballLift1TCN divide
   |]))
 
 {- evaluation -}

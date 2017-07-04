@@ -18,8 +18,10 @@ module AERN2.Poly.Cheb.Field where
 #ifdef DEBUG
 import Debug.Trace (trace)
 #define maybeTrace trace
+#define maybeTraceIO putStrLn
 #else
 #define maybeTrace (\ (_ :: String) t -> t)
+#define maybeTraceIO (\ (_ :: String) -> return ())
 #endif
 
 import MixedTypesNumPrelude
@@ -46,11 +48,12 @@ import AERN2.Poly.Cheb.Ring ()
 
 chebDivideDCT ::
   (c ~ MPBall) =>
-  Accuracy -> ChPoly c -> ChPoly c -> ChPoly c
+  Accuracy -> ChPoly c -> ChPoly c -> CN (ChPoly c)
 chebDivideDCT acGuide p q
-    | (minQ > 0) == Just True = r
+    | (minQ > 0) == Just True = cn r
     | otherwise =
-        error "When dividing polynomials, the numerator could not be separated from 0"
+        noValueNumErrorCertainCN $ NumError $
+          "When dividing polynomials, the numerator could not be separated from 0"
         {- TODO: Use Maybe (ChPoly c) as return type?
             Then one can avoid checking the range of @q@ twice.
         -}
@@ -86,13 +89,13 @@ chebDivideDCT acGuide p q
       res
         | accurateEnough = updateRadius (+rEd) rCd
         | otherwise = tryWithDegree (2*d)
-      rCd = lift2_DCT (const $ const $ d) (/) pC qC
+      rCd = lift2_DCT (const $ const $ d) (/!) pC qC
       rEd = errorBound $
-        (maxDifferenceC + pR + qR * rCMaxNorm) / minQ
+        (maxDifferenceC + pR + qR * rCMaxNorm) /! minQ
       maxDifferenceC = maxNorm $ pC - rCd * qC
       rCMaxNorm = maxNorm rCd
       accurateEnough = dctAccuracy > acGuide
-      dctAccuracy = getAccuracy (errorBound $ maxDifferenceC/minQ)
+      dctAccuracy = getAccuracy (errorBound $ maxDifferenceC/!minQ)
 
     {-
         |r(x) - p(x)/q(x)| <= max(|p(x) - r(x)*q(x)|) / min(|q(x)|)
@@ -144,6 +147,9 @@ sepFromZero f =
   dom = getDomain f
 
 instance CanDiv (ChPoly MPBall) (ChPoly MPBall) where
+  type DivTypeNoCN  (ChPoly MPBall) (ChPoly MPBall) = ChPoly MPBall
+  divideNoCN p q = ((divide p q) ~!)
+  type DivType  (ChPoly MPBall) (ChPoly MPBall) = CN (ChPoly MPBall)
   divide p q = chebDivideDCT acGuide p q
     where
     acGuide = getFiniteAccuracy p `min` getFiniteAccuracy q
@@ -152,11 +158,14 @@ $(declForTypes
   [[t| Integer |], [t| Int |], [t| Dyadic |], [t| MPBall |]]
   (\ t -> [d|
   instance CanDiv $t (ChPoly MPBall) where
-    type DivType $t (ChPoly MPBall) = ChPoly MPBall
+    type DivTypeNoCN $t (ChPoly MPBall) = ChPoly MPBall
+    divideNoCN n p = divideNoCN nP p
+      where
+      nP = chPoly (getDomain p,n) :: ChPoly MPBall
+    type DivType $t (ChPoly MPBall) = CN (ChPoly MPBall)
     divide n p = divide nP p
       where
-      _ = [nP,p]
-      nP = chPoly (getDomain p,n)
+      nP = chPoly (getDomain p,n) :: ChPoly MPBall
   |]))
 
 -- instance CanDiv MPBall (ChPoly MPBall) where

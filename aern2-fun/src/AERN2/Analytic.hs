@@ -16,12 +16,12 @@ anaSin :: Analytic
 anaSin =
   Analytic 3 1 an
   where
-  iFact n = foldl' (/) (real 1) (map real (reverse [2 .. n]))
+  iFact n = foldl' (/!) (real 1) (map real (reverse [2 .. n]))
   an n =
     if even n then
       real 0 :: CauchyReal
     else
-      (-1)^((n - 1)/2)*(iFact n) :: CauchyReal
+      (-1)^!((n - 1)/!2)*(iFact n) :: CauchyReal
 
 anaGeom :: Analytic
 anaGeom =
@@ -29,6 +29,6 @@ anaGeom =
   where
   an n =
     if even n then
-      real $ 0.5^n
+      real $ 0.5^!n
     else
       real 0 :: CauchyReal

@@ -48,8 +48,10 @@ $(declForTypes
       mul (Frac p q dIM) n = Frac (p*n) q dIM
 
     instance (CanMulBy (ChPoly c) $t) => CanDiv (Frac c) $t where
-      type DivType (Frac c) $t = Frac c
-      divide (Frac p q dIM) n = Frac p (q*n) dIM
+      type DivTypeNoCN (Frac c) $t = Frac c
+      divideNoCN (Frac p q dIM) n = Frac p (q*n) dIM
+      type DivType (Frac c) $t = CN (Frac c)
+      divide (Frac p q dIM) n = cn $ Frac p (q*n) dIM
   |]))
 
 $(declForTypes
@@ -77,6 +79,6 @@ $(declForTypes
       CanSub (Frac c) $t
     instance
       (CanMulBy (ChPoly c) $t, CanAddSameType (ChPoly c), CanNegSameType (ChPoly c))
-      => 
+      =>
       CanSub $t (Frac c)
   |]))
