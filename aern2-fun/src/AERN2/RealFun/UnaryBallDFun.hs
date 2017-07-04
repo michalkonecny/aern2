@@ -62,7 +62,7 @@ instance CanMinimiseOverDom UnaryBallDFun DyadicInterval where
 
 evalUseD ::
   [UnaryBallFun] ->
-  (MPBall -> CN MPBall) ->
+  (CN MPBall -> CN MPBall) ->
   DyadicInterval ->
   (Maybe (CN MPBall, CN MPBall), CN MPBall)
 evalUseD [] f di = (Nothing, evalOnIntervalGuessPrecision f di)
@@ -72,9 +72,9 @@ evalUseD (UnaryBallFun _ f' : rest) f di@(Interval l r)
   | otherwise = (Nothing, fm + errBall)
   where
   (_, f'di) = evalUseD rest f' di -- recursive call
-  fl = f $ raisePrecisionIfBelow p $ mpBall l
-  fr = f $ raisePrecisionIfBelow p $ mpBall r
-  fm = f $ raisePrecisionIfBelow p $ mpBall m
+  fl = f $ cn $ raisePrecisionIfBelow p $ mpBall l
+  fr = f $ cn $ raisePrecisionIfBelow p $ mpBall r
+  fm = f $ cn $ raisePrecisionIfBelow p $ mpBall m
   m = (l + r)*half
   errBall = f'di*((r-l)*half)*unitBall
   unitBall = mpBall (0,1)

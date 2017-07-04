@@ -215,5 +215,5 @@ instance ConvertibleExactly (ChPoly MPBall) (UnaryBallFun, ErrorBound) where
     where
     e = radius cp
     cpExact = centreAsBall cp
-    eval :: MPBall -> CN MPBall
-    eval b = cn $ evalDirect cpExact b
+    eval :: CN MPBall -> CN MPBall
+    eval b = evalDirect cpExact b

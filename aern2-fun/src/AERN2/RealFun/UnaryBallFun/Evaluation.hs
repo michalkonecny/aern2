@@ -56,9 +56,7 @@ import AERN2.RealFun.UnaryBallFun.Type
 instance CanApply UnaryBallFun MPBall where
   type ApplyType UnaryBallFun MPBall = CN MPBall
   apply f@(UnaryBallFun _ eval) x =
-    do
-    x' <- checkInDom f x
-    eval x'
+    eval $ checkInDom f (cn x)
 
 checkInDom ::
   (HasOrderCertainly t Dyadic, CanMinMaxThis t Dyadic, CanEnsureCN t)
@@ -82,9 +80,7 @@ instance
   where
   type ApplyType UnaryBallFun (CN MPBall) = CN MPBall
   apply f@(UnaryBallFun _ eval) cx =
-    do
-    x' <- checkInDom f cx
-    eval x'
+    eval $ checkInDom f cx
 
 instance (QAArrow to) => CanApply UnaryBallFun (CauchyRealA to) where
   type ApplyType UnaryBallFun (CauchyRealA to) = (CauchyRealCNA to)
@@ -119,7 +115,7 @@ instance CanMinimiseOverDom UnaryBallFun DyadicInterval where
     minimumOnIntervalSubdivide (((,) Nothing) . evalOnIntervalGuessPrecision f)
 
 evalOnIntervalGuessPrecision ::
-  (MPBall -> CN MPBall)
+  (CN MPBall -> CN MPBall)
   ->
   (DyadicInterval -> CN MPBall)
 evalOnIntervalGuessPrecision f (Interval l r) =
@@ -142,7 +138,7 @@ evalOnIntervalGuessPrecision f (Interval l r) =
     resultsWithIncreasingPrecision = map fp precisions
     fp p = f b
         where
-        b = fromEndpoints lMP rMP
+        b = cn $ (fromEndpoints lMP rMP :: MPBall)
         lMP = setPrecision p $ mpBall l
         rMP = setPrecision p $ mpBall r
     precisions =

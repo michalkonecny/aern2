@@ -95,9 +95,9 @@ modFun2BallFun :: UnaryModFun -> UnaryBallFun
 modFun2BallFun (UnaryModFun dom eval modulus) =
     UnaryBallFun dom (b2bE)
     where
-    b2bE b =
+    b2bE bCN =
       maybeTrace ("UnaryModFun b2bE: "
-        ++ "b = "  ++ show b
+        ++ "bCN = "  ++ show bCN
         ++ ", domAC = "  ++ show domAC
         ++ ", rangeAC = "  ++ show rangeAC
         ++ ", tolerance = "  ++ show tolerance
@@ -109,6 +109,7 @@ modFun2BallFun (UnaryModFun dom eval modulus) =
       where
       fbCN = eval (centre b)
 
+      b = (~!) bCN
       domAC = fromAccuracy $ getFiniteAccuracy b
       rangeAC = inverseNonDecreasingFnMaxBelow (modulus b) domAC
       -- rangeAC = inverseNonDecreasingFnAnyBelow (modulus b) domAC

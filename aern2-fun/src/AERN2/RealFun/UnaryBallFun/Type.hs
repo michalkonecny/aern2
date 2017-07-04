@@ -53,7 +53,7 @@ data UnaryBallFun =
     unaryBallFun_Domain :: DyadicInterval
     ,
     {-| For convergent sequence of *open* balls the resulting sequence should also converge. -}
-    unaryBallFun_Eval :: MPBall -> CN MPBall
+    unaryBallFun_Eval :: CN MPBall -> CN MPBall
   }
 
 instance HasDomain UnaryBallFun where
