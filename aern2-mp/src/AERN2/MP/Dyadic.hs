@@ -169,19 +169,6 @@ instance
   equalTo = lift2TLCE equalTo
 
 instance
-  (HasEqAsymmetric Dyadic b
-  , CanEnsureCE es b
-  , CanEnsureCE es (EqCompareType Dyadic b)
-  , IsBool (EnsureCE es (EqCompareType Dyadic b))
-  , SuitableForCE es)
-  =>
-  HasEqAsymmetric Dyadic (CollectErrors es  b)
-  where
-  type EqCompareType Dyadic (CollectErrors es  b) =
-    EnsureCE es (EqCompareType Dyadic b)
-  equalTo = lift2TLCE equalTo
-
-instance
   (HasEqAsymmetric a Dyadic
   , CanEnsureCE es a
   , CanEnsureCE es (EqCompareType a Dyadic)
