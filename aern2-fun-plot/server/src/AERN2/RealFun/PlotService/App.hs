@@ -166,11 +166,11 @@ getFunctionValues fns samplingsStore fnId samplingId =
   useSamplingAndFn Nothing _ = throwE err404
   useSamplingAndFn _ Nothing = throwE err404
   useSamplingAndFn (Just sampling) (Just fn) =
-    case maybeIntersectedDom of
+    case getMaybeValueCN intersectedDomCN of
       Just intersectedDom -> return $ recursiveEval maxDepth intersectedDom
       _ -> return []
     where
-    maybeIntersectedDom = dom `Interval.intersect` samplingDom
+    intersectedDomCN = dom `Interval.intersect` samplingDom
     dom = function_dom fn
     samplingDom = sampling_dom sampling
     maxStep = dyadic $ sampling_maxStep sampling

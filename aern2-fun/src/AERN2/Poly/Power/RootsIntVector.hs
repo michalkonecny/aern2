@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+-- #define DEBUG
 module AERN2.Poly.Power.RootsIntVector
 (
     initialBernsteinCoefs
@@ -14,12 +16,21 @@ module AERN2.Poly.Power.RootsIntVector
 )
 where
 
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#define maybeTraceIO putStrLn
+#else
+#define maybeTrace (\ (_ :: String) t -> t)
+#define maybeTraceIO (\ (_ :: String) -> return ())
+#endif
+
 import MixedTypesNumPrelude
 import qualified Data.Map as Map
 import qualified Prelude
 import AERN2.Interval
 import AERN2.MP.Ball hiding (iterateUntilAccurate)
-import AERN2.MP.Dyadic
+-- import AERN2.MP.Dyadic
 import Data.Maybe
 import Data.Ratio
 
@@ -31,16 +42,6 @@ import Data.Vector (Vector, (!))
 import qualified Data.Vector as V
 
 --import AERN2.Poly.Power.SignedSubresultant
-
-import Debug.Trace
-
-shouldTrace :: Bool
-shouldTrace = False
-
-maybeTrace :: String -> a -> a
-maybeTrace
-    | shouldTrace = trace
-    | otherwise = const id
 
 type Terms = (ErrorBound, Integer, Vector Integer)
 
@@ -122,7 +123,7 @@ initialBernsteinCoefs p e l r =
   bsFrac =
     V.generate
     (int $ d + 1)
-    (\k -> toRational (csVect ! k) / toRational (binoms ! int k))
+    (\k -> toRational (csVect ! k) /! toRational (binoms ! int k))
   lambdaI = V.foldl' lcm 1 (V.map denominator bsFrac)
   bsI =
     V.generate
@@ -140,7 +141,7 @@ bernsteinCoefs :: Rational -> Rational -> Rational -> Terms -> (Terms, Terms)
 bernsteinCoefs l r m ts@(e, c, bs) =
   ((e, c', bsL), (e, c', bsR))
   where
-  c' = (diff^p)*c
+  c' = (diff^!p)*c
   d  = toRational $ foldl1 lcm $ map denominator [l,r,m]
   l' = numerator $ d*l
   m' = numerator $ d*m
@@ -166,11 +167,11 @@ bernsteinCoefs l r m ts@(e, c, bs) =
   bsL =
     V.generate
       (int $ p + 1)
-      (\j -> diff^(p - j) * (fromJust (Map.lookup (integer j) bi)) ! int 0)
+      (\j -> diff^!(p - j) * (fromJust (Map.lookup (integer j) bi)) ! int 0)
   bsR =
     V.generate
       (int $ p + 1)
-      (\j -> diff^j * (fromJust (Map.lookup (p - j) bi) ! j))
+      (\j -> diff^!j * (fromJust (Map.lookup (p - j) bi) ! j))
 
 reflect :: PowPoly c -> PowPoly c
 reflect poly@(PowPoly (Poly ts)) =
@@ -191,10 +192,10 @@ translate t poly@(PowPoly (Poly ts)) =
       in
         translateAcc (n - 1) $ c + (shiftRight 1 poly') - (t*poly')
 
-contract :: (CanMulSameType c, CanPow c Integer, PowType c Integer ~ c)
+contract :: (CanMulSameType c, CanPow c Integer, PowTypeNoCN c Integer ~ c, CanEnsureCN c)
   => c -> PowPoly c -> PowPoly c
 contract l (PowPoly (Poly ts)) =
-  PowPoly $ Poly $ Map.mapWithKey (\p c -> c*(l^p)) ts
+  PowPoly $ Poly $ Map.mapWithKey (\p c -> c*(l^!p)) ts
 
 transform :: Integer -> Integer -> PowPoly Integer -> PowPoly Integer
 transform l r =
@@ -231,7 +232,7 @@ findRootsWithAccuracy poly acc l r =
       case hasRoot of
         Yes      ->
           let
-          m  = (a + b)/2
+          m  = (a + b)/!2
           fa = evalDirect poly a
           fm = evalDirect poly m
           in
@@ -242,7 +243,7 @@ findRootsWithAccuracy poly acc l r =
         DontKnow ->
           let
             Just vars = signVars bs
-            m    = (a + b)/2
+            m    = (a + b)/!2
             (bsL, bsR) = bernsteinCoefs a b m bs
             pm = (thd bsR) ! (int 0)
           in
@@ -254,7 +255,7 @@ findRootsWithAccuracy poly acc l r =
                 ++ splitUntilAccurate (Interval a m, bsL, DontKnow)
                 ++ splitUntilAccurate (Interval m b, bsR, DontKnow)
   intervalAccurate (Interval a b) =
-    b - a < 0.5^(fromAccuracy $ acc)
+    b - a < 0.5^!(fromAccuracy $ acc)
 
 
 {-

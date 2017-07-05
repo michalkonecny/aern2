@@ -118,7 +118,7 @@ maximumOptimisedWithAccuracy' (PPoly ps dom@(Interval dl dr)) l r initialDegree 
     (PPE.evalLDf f
       --dfsCheb
       (map
-        (\dfc -> (2/(dr - dl)) * reduceToEvalDirectAccuracy dfc (bits $ 0))
+        (\dfc -> (2/!(dr - dl)) * reduceToEvalDirectAccuracy dfc (bits $ 0))
         dfsCheb))
     dfsMap
     maxKeys
@@ -158,7 +158,7 @@ maximumOptimisedWithAccuracy' (PPoly ps dom@(Interval dl dr)) l r initialDegree 
     map
     (\df ->
       let
-        maxKey = max 0 (ceiling $ (Cheb.degree df - initialDegree) / steps)
+        maxKey = max 0 (ceiling $ (Cheb.degree df - initialDegree) /! steps)
       in
       {-trace(
       "maxKey: "++(show maxKey)
@@ -178,7 +178,7 @@ maximumOptimisedWithAccuracy' (PPoly ps dom@(Interval dl dr)) l r initialDegree 
   dfsMap  = Map.fromList dfsZipped
   maxKeys =
     Map.fromList
-      [(k, max 0 (1 + ceiling ((Cheb.degree (dfcsCheb !! k) - initialDegree) / steps))) -- TODO: avoid slow list index lookup
+      [(k, max 0 (1 + ceiling ((Cheb.degree (dfcsCheb !! k) - initialDegree) /! steps))) -- TODO: avoid slow list index lookup
         | k <- [0 .. integer $ length ps - 1]]
   nodes   =
     lI : [setPrecision (getPrecision f) $ mpBall n | n <- nodesI, (lI < n) == Just True, (n < rI) == Just True] ++ [rI]   -- note that the elements of nodesI are balls of radius 0,

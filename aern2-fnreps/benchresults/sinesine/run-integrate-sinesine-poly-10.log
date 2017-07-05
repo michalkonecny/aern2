@@ -1,22 +1,23 @@
+integratePB: accuracy f = bits 3
 computing integrate  sin(10x+sin(20x^2)) over [-1,1]
-result = [-1.308177225643798e-1 ± 4.959353557387242e-2](prec=288)
-accuracy: bits 4
-precision = Precision 288
+result = [-1.310738523711581e-1 ± <2^(-2)]
+accuracy: bits 2
+precision = Precision 324
 	Command being timed: "aern2-fnreps-ops integrate sinesine poly 10"
-	User time (seconds): 16.62
-	System time (seconds): 0.19
-	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:16.80
+	User time (seconds): 9.82
+	System time (seconds): 0.12
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:09.95
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 311700
+	Maximum resident set size (kbytes): 322108
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 90692
+	Minor (reclaiming a frame) page faults: 101729
 	Voluntary context switches: 1
-	Involuntary context switches: 75
+	Involuntary context switches: 255
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

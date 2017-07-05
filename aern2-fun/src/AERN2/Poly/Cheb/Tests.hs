@@ -51,7 +51,7 @@ import Test.Hspec
 import Test.QuickCheck
 -- import qualified Test.Hspec.SmallCheck as SC
 
--- import Numeric.CatchingExceptions
+--
 
 import AERN2.MP
 import AERN2.MP.Dyadic
@@ -129,7 +129,7 @@ type FnIndex = Integer
 type Frequency = Integer
 
 basicFunctions :: DyadicInterval -> [(Frequency, ChPoly MPBall)]
-basicFunctions dom = [(10,x), (1, c 0.5), (1, c 2), (1, c 100), (1, c (0.5^20))]
+basicFunctions dom = [(10,x), (1, c 0.5), (1, c 2), (1, c 100), (1, c (0.5^!20))]
   where
   x = varFn (constFn (dom, 0)) ()
   c :: (CanBeDyadic t, HasIntegers c, HasDyadics c) => t -> ChPoly c
@@ -252,7 +252,7 @@ makeFnSmallRange limit (FnAndDescr p pDescr) =
   where
   res
     | b !<! limit = p
-    | otherwise = centreAsBall $ (limit * p / b)
+    | otherwise = centreAsBall $ (limit * p /! b)
   b = ub `max` (-lb)
   lb, ub :: MPBall
   -- (lb, _) = endpoints $ minimumOverDom p (getDomain p)
@@ -268,7 +268,7 @@ makeFnPositiveSmallRange limit (FnAndDescr p pDescr) =
   res
     | 1 !<=! lb && ub !<! limit = p
     | b !<! limit = centreAsBall $ p - lb + 1
-    | otherwise = centreAsBall $ (1 - lb + (limit * p / b))
+    | otherwise = centreAsBall $ (1 - lb + (limit * p /! b))
   b = ub `max` (-lb)
   lb, ub :: MPBall
   -- (lb, _) = endpoints $ minimumOverDom p (getDomain p)
@@ -306,7 +306,7 @@ specChPoly =
     describe "trigonometric" $ do
       specFnPointwiseOp1 tChPolyMPBall tMPBall "sine" (sineWithAccuracyGuide (bits 10)) (sin) (makeFnSmallRange 10)
     describe "field" $ do
-      specFnPointwiseOp2 tChPolyMPBall tMPBall "/" (chebDivideDCT (bits 0)) (/) anyFn (makeFnPositiveSmallRange 100)
+      specFnPointwiseOp2 tChPolyMPBall tMPBall "/" (\ a b -> (~!) (chebDivideDCT (bits 0) a b)) (/!) anyFn (makeFnPositiveSmallRange 100)
 
 
 {- recent bugs:

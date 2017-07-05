@@ -58,27 +58,30 @@ instance QAArrow QACachedA where
   type QAId QACachedA = ValueId
   qaRegister _ = Kleisli qaRegisterM
     where
-    qaRegisterM (QA__ name Nothing sourceIds p sampleQ (Kleisli q2pa)) =
+    qaRegisterM (QA__ name Nothing sourceIds p sampleQ q2paA) =
       do
       valueId <- newId
-      return $ QA__ name (Just valueId) [] p sampleQ (Kleisli $ makeQCached valueId)
+      return $ QA__ name (Just valueId) [] p sampleQ (\me_src -> (Kleisli $ makeQCached me_src valueId))
       where
+      sq2pa me_src = q2pa
+        where
+        (Kleisli q2pa) = q2paA me_src
       newId =
         maybeTrace ("newId: " ++ show name) $
         QACachedM $
           do
           ns <- get
-          let (i, ns') = insertNode p name sourceIds q2pa ns
+          let (i, ns') = insertNode p name sourceIds sq2pa ns
           put ns'
           return i
-      makeQCached valueId q =
-        maybeTrace ("getAnswer: q = " ++ show q) $
+      makeQCached (_me,src) valueId q =
+        maybeTrace ("makeQCached: q = " ++ show q) $
         QACachedM $
           do
           ns <- get
-          let ns' = logQuery ns valueId (show q)
+          let ns' = logQuery ns src valueId (show q)
           put ns'
-          aAndCachePromise <- unQACachedM $ getAnswerPromise ns' p valueId q
+          aAndCachePromise <- unQACachedM $ getAnswerPromise ns' p src valueId q
           return $ Kleisli (aPromise aAndCachePromise)
         where
         aPromise aAndCachePromise () =
@@ -86,10 +89,10 @@ instance QAArrow QACachedA where
             do
             (a, usedCache, cache') <- unQACachedM $ aAndCachePromise ()
             ns2 <- get
-            let ns2' = logAnswerUpdateCache ns2 p valueId (show a, usedCache, cache')
+            let ns2' = logAnswerUpdateCache ns2 p src valueId (show a, usedCache, cache')
             put ns2'
             return $
-                maybeTrace ("getAnswer: a = " ++ show a)
+                maybeTrace ("makeQCached: a = " ++ show a)
                     a
     qaRegisterM _ =
       error "internal error in AERN2.QA.Strategy.Cached: qaRegister called with an existing id"
@@ -98,10 +101,12 @@ instance QAArrow QACachedA where
     where
     qaFulfilPromiseM promiseA =
       runKleisli promiseA ()
-  qaMakeQueryGetPromiseA = Kleisli qaMakeQueryGetPromiseM
+  qaMakeQueryGetPromiseA src = Kleisli qaMakeQueryGetPromiseM
     where
     qaMakeQueryGetPromiseM (qa, q) =
-      runKleisli (qaMakeQueryGetPromise qa) q
+      runKleisli (qaMakeQueryGetPromise qa (me, src)) q
+      where
+      me = case qaId qa of Nothing -> src; me2 -> me2
 
 executeQACachedA :: (QACachedA () a) -> (QANetLog, a)
 executeQACachedA code =

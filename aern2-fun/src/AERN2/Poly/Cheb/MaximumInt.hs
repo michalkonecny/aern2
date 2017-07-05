@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#define DEBUG
+-- #define DEBUG
 module AERN2.Poly.Cheb.MaximumInt
 (
 maximum,
@@ -15,8 +15,10 @@ minimumOptimisedWithAccuracy
 #ifdef DEBUG
 import Debug.Trace (trace)
 #define maybeTrace trace
+#define maybeTraceIO putStrLn
 #else
-#define maybeTrace (flip const)
+#define maybeTrace (\ (_ :: String) t -> t)
+#define maybeTraceIO (\ (_ :: String) -> return ())
 #endif
 
 import MixedTypesNumPrelude hiding (maximum, minimum)
@@ -24,7 +26,7 @@ import MixedTypesNumPrelude hiding (maximum, minimum)
 --import Text.Printf
 
 import AERN2.MP.Ball
-import AERN2.MP.Dyadic
+-- import AERN2.MP.Dyadic
 import Data.Ratio
 import qualified Data.Map as Map
 
@@ -97,10 +99,10 @@ maximumOptimisedWithAccuracy acc (ChPoly dom@(Interval dR dL) poly _) l r initia
       (fromDomToUnitInterval dom (setPrecision (getPrecision f) l))
       (fromDomToUnitInterval dom (setPrecision (getPrecision f) r))
   where
-  c = 1/(0.5*(dR - dL))
+  c = 1/!(0.5*(dR - dL))
   f   = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly Nothing
   fc' = ({-makeExactCentre .-} derivativeExact . centre) f
-  maxKey = max 0 (ceiling ((degree f - initialDegree) / steps))
+  maxKey = max 0 (ceiling ((degree f - initialDegree) /! steps))
   ch2Power :: (ErrorBound, Poly Integer) -> (ErrorBound, Pow.PowPoly Integer)
   ch2Power (e, p) = (e, cheb2Power p)
   dfsWithEval =
@@ -126,7 +128,7 @@ maximumOptimisedWithAccuracyAndBounds acc (ChPoly dom poly _) l r initialDegree 
   where
   f   = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly Nothing
   fc' = (derivativeExact . centre) f
-  maxKey = max 0 (ceiling ((degree f - initialDegree) / steps))
+  maxKey = max 0 (ceiling ((degree f - initialDegree) /! steps))
   ch2Power :: (ErrorBound, Poly Integer) -> (ErrorBound, Pow.PowPoly Integer)
   ch2Power (e, p) = (e, cheb2Power p)
   dfsWithEval =

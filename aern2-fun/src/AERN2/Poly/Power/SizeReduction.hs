@@ -14,7 +14,7 @@ reduceDegree (PowPoly (Poly ts)) l r n =
   where
   m = max (abs l) (abs r)
   errBall = fromEndpoints (-err) err :: MPBall
-  err = Map.foldlWithKey' (\s k c -> s + (abs c) * (m^k)) (mpBall 0)
+  err = Map.foldlWithKey' (\s k c -> s + (abs c) * (m^!k)) (mpBall 0)
           $ Map.filterWithKey (\k _ -> k > n) ts
 
 reduceDegreeI :: PowPoly MPBall -> Integer -> PowPoly MPBall

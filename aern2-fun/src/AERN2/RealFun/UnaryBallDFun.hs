@@ -23,7 +23,7 @@ import MixedTypesNumPrelude
 
 import Control.Applicative
 
-import Numeric.CatchingExceptions
+
 
 import AERN2.Norm
 import AERN2.MP
@@ -62,9 +62,9 @@ instance CanMinimiseOverDom UnaryBallDFun DyadicInterval where
 
 evalUseD ::
   [UnaryBallFun] ->
-  (CatchingNumExceptions MPBall -> CatchingNumExceptions MPBall) ->
+  (CN MPBall -> CN MPBall) ->
   DyadicInterval ->
-  (Maybe (CatchingNumExceptions MPBall, CatchingNumExceptions MPBall), CatchingNumExceptions MPBall)
+  (Maybe (CN MPBall, CN MPBall), CN MPBall)
 evalUseD [] f di = (Nothing, evalOnIntervalGuessPrecision f di)
 evalUseD (UnaryBallFun _ f' : rest) f di@(Interval l r)
   | f'di !>=! 0 = (Just (fl,fr), liftA2 fromEndpoints fl fr)
@@ -72,12 +72,12 @@ evalUseD (UnaryBallFun _ f' : rest) f di@(Interval l r)
   | otherwise = (Nothing, fm + errBall)
   where
   (_, f'di) = evalUseD rest f' di -- recursive call
-  fl = f $ catchingNumExceptions $ raisePrecisionIfBelow p $ mpBall l
-  fr = f $ catchingNumExceptions $ raisePrecisionIfBelow p $ mpBall r
-  fm = f $ catchingNumExceptions $ raisePrecisionIfBelow p $ mpBall m
+  fl = f $ cn $ raisePrecisionIfBelow p $ mpBall l
+  fr = f $ cn $ raisePrecisionIfBelow p $ mpBall r
+  fm = f $ cn $ raisePrecisionIfBelow p $ mpBall m
   m = (l + r)*half
   errBall = f'di*((r-l)*half)*unitBall
-  unitBall = catchingNumExceptions $ mpBall (-1,1)
+  unitBall = mpBall (0,1)
   half = dyadic 0.5
 
   p =
@@ -88,17 +88,18 @@ evalUseD (UnaryBallFun _ f' : rest) f di@(Interval l r)
 
 
 instance CanIntegrateOverDom UnaryBallDFun DyadicInterval where
-  type IntegralOverDomType UnaryBallDFun DyadicInterval = CauchyReal
+  type IntegralOverDomType UnaryBallDFun DyadicInterval = CauchyRealCN
   integrateOverDom (UnaryBallDFun []) = error "integrating UnaryBallDFun []"
   integrateOverDom (UnaryBallDFun [f]) = integrateOverDom f
   integrateOverDom (UnaryBallDFun (f : f' : _)) =
-    integralOnIntervalSubdivide (integralOnIntervalIncreasePrecision getArea) standardPrecisions
+    integralOnIntervalSubdivide (integralOnIntervalIncreasePrecision getArea)
+      (\ (AccuracySG _ acG) -> standardPrecisions (ac2prec acG))
     where
     getArea di p =
       (apply f diM)*diW+errB
       where
       diW = Interval.width di
-      errB = ((deriv - deriv)/2)*((diW*0.5)^2)*0.5
-      deriv = apply f' (catchingNumExceptions diB)
-      diM = catchingNumExceptions $ centreAsBall diB
+      errB = ((deriv - deriv)/!2)*((diW*0.5)^!2)*0.5
+      deriv = apply f' diB
+      diM = centreAsBall diB
       diB = setPrecision p $ mpBall di

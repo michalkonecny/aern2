@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveGeneric, DeriveAnyClass, GeneralizedNewtypeDeriving #-}
 {-|
     Module      :  AERN2.QA.NetLog
     Description :  QA network log data structure
@@ -10,36 +11,74 @@
 
     QA network log data structure
 -}
-module AERN2.QA.NetLog where
+module AERN2.QA.NetLog
+(ValueId(..), QANetLogItem(..), QANetLog
+, formatQALog, printQALog, printQANetLogThenResult
+, formatQALogJSON, printQALogJSON, writeNetLogJSON)
+where
 
 import MixedTypesNumPrelude
 import qualified Prelude as P
+
+import Text.Printf
+
+import GHC.Generics
+import qualified Data.ByteString.Lazy.Char8 as BS
+import Data.Aeson as J
+import Data.Aeson.Types as JT
 
 type QANetLog = [QANetLogItem]
 
 data QANetLogItem
     = QANetLogCreate
-        ValueId -- new value
-        [ValueId] -- dependent values
-        String -- name
+      {
+        qaLogCreate_newId :: ValueId
+      , qaLogCreate_sources :: [ValueId]
+      , qaLogCreate_name :: String
+      }
     | QANetLogQuery
-        ValueId -- the value being queried
-        String -- description of query
+      {
+        qaLogQuery_client :: (Maybe ValueId)
+      , qaLogQuery_provider :: ValueId
+      , qaLogQuery_description :: String
+      }
     | QANetLogAnswer
-        ValueId -- the value being described
-        String -- information about the use of cache
-        String -- description of answer
+      {
+        qaLogAnswer_client :: (Maybe ValueId)
+      , qaLogAnswer_provider :: ValueId
+      , qaLogAnswer_cacheUseDescription :: String
+      , qaLogAnswer_description :: String
+      }
+    deriving (Generic)
+
+instance ToJSON QANetLogItem where
+  toJSON = J.genericToJSON customOptions
+    where
+    customOptions = J.defaultOptions
+        { JT.sumEncoding = JT.ObjectWithSingleField }
+
 
 instance Show QANetLogItem where
   show (QANetLogCreate valId sources name) =
-    "new (" ++ (show valId) ++ ") " ++ name ++ " <- " ++ show sources
-  show (QANetLogQuery valId queryS) =
-    "(" ++ (show valId) ++ "): ? " ++ queryS
-  show (QANetLogAnswer valId cacheInfoS answerS) =
-    "(" ++ (show valId) ++ "): ! " ++ answerS ++ " (" ++ cacheInfoS ++ ")"
+    printf "new (%s) %s <- %s"
+      (show valId) name (show sources)
+  show (QANetLogQuery mSrcId valId queryS) =
+    printf "(%s)<-(%s): ? %s"
+      (show valId) (showSrc mSrcId) queryS
+  show (QANetLogAnswer mSrcId valId cacheInfoS answerS) =
+    printf "(%s)->(%s): ! %s (%s)"
+      (show valId) (showSrc mSrcId) answerS cacheInfoS
 
-newtype ValueId = ValueId Integer
-    deriving (Show, P.Eq, P.Ord, Enum)
+showSrc :: (Show a) => Maybe a -> String
+showSrc (Just srcId) = show srcId
+showSrc Nothing = ""
+
+data ValueId = ValueId Integer
+    deriving (Show, P.Eq, P.Ord, Generic, ToJSON)
+
+instance Enum ValueId where
+  toEnum = ValueId . toEnum
+  fromEnum (ValueId n) = fromEnum n
 
 printQANetLogThenResult :: (Show a) =>(QANetLog, a) -> IO ()
 printQANetLogThenResult (lg, result) =
@@ -61,6 +100,21 @@ formatQALog = aux
         indent = replicate (int levelNow) ' '
         (levelNow, level') =
             case item of
-                QANetLogQuery _ _ -> (level + 1, level + 1)
-                QANetLogAnswer _ _ _ -> (level, level - 1)
+                QANetLogQuery _ _ _ -> (level + 1, level + 1)
+                QANetLogAnswer _ _ _ _ -> (level, level - 1)
                 _ -> (level, level)
+
+formatQALogJSON :: QANetLog -> String
+formatQALogJSON = BS.unpack . J.encode
+
+printQALogJSON :: QANetLog -> IO ()
+printQALogJSON =
+  BS.putStrLn . J.encode
+
+writeNetLogJSON :: QANetLog -> IO ()
+writeNetLogJSON netlog =
+  writeFile "netlog.js" $
+    "netlog='" ++  (filter goodChar $ formatQALogJSON netlog) ++ "'"
+  where
+  goodChar 'Â' = False
+  goodChar _ = True

@@ -1,22 +1,22 @@
 computing max  1/(10(sin(7x))^2+1) over [-1,1]
-result = [9.999999999999415e-1 ± 3.772721693416254e-13](prec=284)
-accuracy: bits 41
-precision = Precision 284
+result = [9.999136533183537e-1 ± <2^(-48)]
+accuracy: bits 48
+precision = Precision 240
 	Command being timed: "aern2-fnreps-ops max fracSin lppoly 40"
-	User time (seconds): 44.69
-	System time (seconds): 0.21
-	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:44.96
+	User time (seconds): 20.77
+	System time (seconds): 0.06
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:20.84
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 34684
+	Maximum resident set size (kbytes): 30744
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 6580
+	Minor (reclaiming a frame) page faults: 5110
 	Voluntary context switches: 1
-	Involuntary context switches: 61
+	Involuntary context switches: 36
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

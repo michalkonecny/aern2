@@ -1,6 +1,9 @@
 module AERN2.Frac.Type where
 
 import MixedTypesNumPrelude
+
+import Control.CollectErrors
+
 import AERN2.MP
 import AERN2.MP.Dyadic
 import AERN2.Normalize
@@ -15,6 +18,11 @@ data Frac a =
     , frac_denominator  :: ChPoly a
     , frac_dIM          :: a  -- upper bound on 1/Q(x) on domain
   }
+
+instance (SuitableForCE es) => CanEnsureCE es (Frac a)
+-- instance (SuitableForCE es) => CanExtractCE es Frac where
+--   extractCE sample_es (Frac numer denom dIM) =
+--     Frac <$> (extractCE sample_es numer) <*> (extractCE sample_es denom) <*> dIM
 
 instance Show (ChPoly a) => (Show (Frac a)) where
   show (Frac p q _) =
@@ -50,7 +58,7 @@ instance
   centre (Frac p q m) = Frac (centreAsBall p) (centreAsBall q) m
   centreAsBallAndRadius f@(Frac p q _) = (centre f, err)
     where
-    err = errorBound $ (abs(rng*delta) + eps) / (qMin - delta)
+    err = errorBound $ (abs(rng*delta) + eps) /! (qMin - delta)
     qMin =
       if (Cheb.evalDirect q m > mpBall 0) == Just True then
         Cheb.minimumOptimisedWithAccuracy (bits 2) q (mpBall l) (mpBall r) 5 5
@@ -61,7 +69,7 @@ instance
     pRng = max (abs pMx) (abs pMin)
     m = mpBall $ (dyadic 0.5)*(l + r)
     Interval l r = getDomain p
-    rng = pRng / qMin
+    rng = pRng /! qMin
     delta =
       let
       acc = getAccuracy q
@@ -69,7 +77,7 @@ instance
       if acc == Exact then
         0.0
       else
-        0.5^(fromAccuracy acc)
+        0.5^!(fromAccuracy acc)
     eps =
       let
       acc = getAccuracy p
@@ -77,7 +85,7 @@ instance
       if acc == Exact then
         0.0
       else
-        0.5^(fromAccuracy acc)
+        0.5^!(fromAccuracy acc)
   updateRadius f (Frac p q m) = Frac (updateRadius fp p) q m
     where
     fp e =
@@ -90,7 +98,7 @@ instance CanReduceSizeUsingAccuracyGuide (Frac MPBall) where
   reduceSizeUsingAccuracyGuide acGuide (Frac p q m) =
     Frac (reduceSizeUsingAccuracyGuide ac_p p) q m -- TODO: reduce also q
       where
-      ac_p = acGuide - (normLog2Accuracy $ getNormLog m)
+      ac_p = acGuide - (bits $ getNormLog m)
 
 fracLift1 :: (HasIntegers a) => (Frac a -> b) -> ChPoly a -> b
 fracLift1 f = f . fromPoly

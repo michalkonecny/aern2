@@ -34,7 +34,7 @@ import MixedTypesNumPrelude
 
 -- import Control.Applicative
 
-import Numeric.CatchingExceptions
+
 
 import AERN2.MP
 -- import qualified AERN2.MP.Ball as MPBall
@@ -63,7 +63,7 @@ data UnaryModFun =
   UnaryModFun
   {
     _modfun_domain :: DyadicInterval
-  , _modfun_eval :: CatchingNumExceptions Dyadic -> CatchingNumExceptions CauchyReal {-^ \\(d \mapsto f(d)\\) -}
+  , _modfun_eval :: Dyadic -> CauchyRealCN {-^ \\(d \mapsto f(d)\\) -}
   , _modfun_modulus :: MPBall -> Integer -> Integer {-^ \\(\omega\\) -}
   }
 
@@ -73,7 +73,7 @@ instance HasDomain UnaryModFun where
 
 instance ConvertibleExactly (DyadicInterval, Integer) UnaryModFun where
   safeConvertExactly (dom,n) =
-    Right $ UnaryModFun dom  (const $ pure (real n)) (constFnModulus)
+    Right $ UnaryModFun dom  (const $ cn (real n)) (constFnModulus)
 
 constFnModulus :: MPBall -> Integer -> Integer
 constFnModulus _b i = i
@@ -84,7 +84,7 @@ unaryModFun = convertExactly
 instance HasVars UnaryModFun where
   type Var UnaryModFun = ()
   varFn sampleFn () =
-    UnaryModFun dom (fmap real) (const id)
+    UnaryModFun dom (cn . real) (const id)
     where
     dom = getDomain sampleFn
 
@@ -93,26 +93,27 @@ instance ConvertibleExactly UnaryModFun UnaryBallFun where
 
 modFun2BallFun :: UnaryModFun -> UnaryBallFun
 modFun2BallFun (UnaryModFun dom eval modulus) =
-    UnaryBallFun dom (b2bE =<<)
+    UnaryBallFun dom (b2bE)
     where
-    b2bE b =
+    b2bE bCN =
       maybeTrace ("UnaryModFun b2bE: "
-        ++ "b = "  ++ show b
+        ++ "bCN = "  ++ show bCN
         ++ ", domAC = "  ++ show domAC
         ++ ", rangeAC = "  ++ show rangeAC
         ++ ", tolerance = "  ++ show tolerance
-        ++ ", fbCE = "  ++ show fbCE
+        ++ ", fbCN = "  ++ show fbCN
       ) $
-      do
-      fbC <- fbCE
-      pure $ updateRadius (+ tolerance) $ fbC ? (bitsS $ rangeAC + 2)
+      case ensureNoCN fbCN of
+        Right fb -> cn $ updateRadius (+ tolerance) $ fb ? (bitsS $ rangeAC + 2)
+        Left es -> noValueECN (Nothing::Maybe MPBall) es
       where
-      fbCE = eval (catchingNumExceptions (centre b))
+      fbCN = eval (centre b)
 
+      b = (~!) bCN
       domAC = fromAccuracy $ getFiniteAccuracy b
       rangeAC = inverseNonDecreasingFnMaxBelow (modulus b) domAC
       -- rangeAC = inverseNonDecreasingFnAnyBelow (modulus b) domAC
-      tolerance = errorBound $ 0.5^(rangeAC)
+      tolerance = errorBound $ 0.5^!(rangeAC)
 
 {-|
   For a monotone integer function \(f\), and an integer \(n\) which is neither
@@ -177,56 +178,56 @@ inverseNonDecreasingFnMaxBelow f n
     fm = f m
 
 
-_modFun2BallFun_split :: UnaryModFun -> UnaryBallFun
-_modFun2BallFun_split (UnaryModFun dom eval modulus) =
-    UnaryBallFun dom (b2bE =<<)
-    where
-    b2bE b =
-      maybeTrace ("UnaryModFun b2bE: "
-        ++ "b = "  ++ show b
-        ++ ", ac = "  ++ show ac
-        ++ ", distEval = "  ++ show distEval
-        ++ ", n = "  ++ show n
-      ) $
-      do -- using the CatchingNumExceptions monad
-      minVal <- minValE
-      maxVal <- maxValE
-      pure $ withExtremesOnPoints minVal maxVal
-      where
-      ac = getFiniteAccuracy b
-      distEval = 0.5^(modulus b (fromAccuracy ac))
-      l,r :: MPBall
-      (l,r) = endpoints b
-      (_, n) = integerBounds $ (r-l)/(2*distEval)
-        -- we need to split b into at least n segments and evaluate on each
-        -- segment to get a reliable estimate of the range of f on b
-        -- using the modulus of continuity
-      pts -- points to evaluate f on
-        | ptsOK pts1 = pts1
-        | otherwise = pts2
-        where
-        pts1 = ptsWithN n
-        pts2 = ptsWithN (n + 1)
-        ptsOK [] = False
-        ptsOK ps =
-          and $
-            [(head ps) - l !<=! distEval, r - (last ps) !<=! distEval]
-            ++
-            zipWith (\p p' -> p' - p !<=! 2*distEval) ps (tail ps)
-        ptsWithN n2 =
-          map centre [ (l*(i-0.5) + r*(n2-(i-0.5))) / n2 | i <- [1..n2]]
-          -- centres of n2 equal-sized segments of b=[l,r]
-      values = sequence $ map (eval . catchingNumExceptions) pts
-      maxValE = fmap maximum values
-      minValE = fmap minimum values
-      withExtremesOnPoints :: CauchyReal -> CauchyReal -> MPBall
-      withExtremesOnPoints minVal maxVal =
-        updateRadius (+ (errorBound $ 0.5^(fromAccuracy ac))) rangeOnPoints
-        where
-        rangeOnPoints = fromEndpoints (minVal ? (accuracySG ac)) (maxVal ? (accuracySG ac))
+-- _modFun2BallFun_split :: UnaryModFun -> UnaryBallFun
+-- _modFun2BallFun_split (UnaryModFun dom eval modulus) =
+--     UnaryBallFun dom (b2bE =<<)
+--     where
+--     b2bE b =
+--       maybeTrace ("UnaryModFun b2bE: "
+--         ++ "b = "  ++ show b
+--         ++ ", ac = "  ++ show ac
+--         ++ ", distEval = "  ++ show distEval
+--         ++ ", n = "  ++ show n
+--       ) $
+--       do -- using the CatchingNumExceptions monad
+--       minVal <- minValE
+--       maxVal <- maxValE
+--       pure $ withExtremesOnPoints minVal maxVal
+--       where
+--       ac = getFiniteAccuracy b
+--       distEval = 0.5^(modulus b (fromAccuracy ac))
+--       l,r :: MPBall
+--       (l,r) = endpoints b
+--       (_, n) = integerBounds $ (r-l)/(2*distEval)
+--         -- we need to split b into at least n segments and evaluate on each
+--         -- segment to get a reliable estimate of the range of f on b
+--         -- using the modulus of continuity
+--       pts -- points to evaluate f on
+--         | ptsOK pts1 = pts1
+--         | otherwise = pts2
+--         where
+--         pts1 = ptsWithN n
+--         pts2 = ptsWithN (n + 1)
+--         ptsOK [] = False
+--         ptsOK ps =
+--           and $
+--             [(head ps) - l !<=! distEval, r - (last ps) !<=! distEval]
+--             ++
+--             zipWith (\p p' -> p' - p !<=! 2*distEval) ps (tail ps)
+--         ptsWithN n2 =
+--           map centre [ (l*(i-0.5) + r*(n2-(i-0.5))) / n2 | i <- [1..n2]]
+--           -- centres of n2 equal-sized segments of b=[l,r]
+--       values = sequence $ map eval pts
+--       maxValE = fmap maximum values
+--       minValE = fmap minimum values
+--       withExtremesOnPoints :: CauchyReal -> CauchyReal -> MPBall
+--       withExtremesOnPoints minVal maxVal =
+--         updateRadius (+ (errorBound $ 0.5^(fromAccuracy ac))) rangeOnPoints
+--         where
+--         rangeOnPoints = fromEndpoints (minVal ? (accuracySG ac)) (maxVal ? (accuracySG ac))
 
 instance CanApply UnaryModFun MPBall where
-  type ApplyType UnaryModFun MPBall = MPBall
+  type ApplyType UnaryModFun MPBall = CN MPBall
   apply = apply . unaryBallFun
 
 instance CanApply UnaryModFun DyadicInterval where
@@ -242,7 +243,7 @@ instance CanMinimiseOverDom UnaryModFun DyadicInterval where
   minimumOverDom = minimumOverDom . unaryBallFun
 
 instance CanIntegrateOverDom UnaryModFun DyadicInterval where
-  type IntegralOverDomType UnaryModFun DyadicInterval = CauchyReal
+  type IntegralOverDomType UnaryModFun DyadicInterval = CauchyRealCN
   integrateOverDom = integrateOverDom . unaryBallFun
 
 {- selected field ops -}
@@ -298,14 +299,14 @@ instance CanMulAsymmetric UnaryModFun UnaryModFun where
       max m1 m2
       where
       i22 = (i+2) `div` 2
-      x1 = apply (unaryBallFun f1) b
-      x2 = apply (unaryBallFun f2) b
+      x1CN = apply (unaryBallFun f1) b
+      x2CN = apply (unaryBallFun f2) b
       m1 =
-        case getNormLog x2 of
+        case getNormLog (x2CN ~!) of
           NormZero -> modulus1 b i22
           NormBits nx2 -> modulus1 b (max (i + nx2 + 2) i22)
       m2 =
-        case getNormLog x1 of
+        case getNormLog (x1CN ~!) of
           NormZero -> modulus2 b i22
           NormBits nx1 -> modulus2 b (max (i + nx1 + 2) i22)
 
@@ -324,23 +325,23 @@ instance CanMulAsymmetric UnaryModFun Integer where
   mul f n = mul n f
 
 instance CanDiv UnaryModFun UnaryModFun where
+  type DivTypeNoCN UnaryModFun UnaryModFun =  UnaryModFun
+  type DivType UnaryModFun UnaryModFun =  UnaryModFun
   divide f1 f2 = f1 * recipF f2
+  divideNoCN f1 f2 = f1 * recipF f2
 
 recipF :: UnaryModFun -> UnaryModFun
 recipF f@(UnaryModFun dom eval modulus) =
   UnaryModFun dom eval' modulus'
   where
-  eval' d =
-    do
-    fd <- eval d
-    pure $ 1 / fd -- cannot detect div by 0 for CauchyReals...
+  eval' d = 1 / (eval d)
   modulus' b i =
     {-
       To compute the modulus, we need to know the size of (f b).
     -}
     modulus b $ j (apply f b)
     where
-    j x =
+    j xCN =
       {-
         Assume |x| > 0.
         (When x admits zero, the modulus is still OK to use
@@ -382,7 +383,7 @@ recipF f@(UnaryModFun dom eval modulus) =
         j = max (1-(lognorm x)) (i-2*((lognorm x) - 1)+ 1 + max(0,(-i+(lognorm x))))
         has the desired property.
       -}
-      case getNormLog x of
+      case getNormLog (xCN ~!) of
         NormZero -> error "UnaryModFun: division modulus: internal error"
         NormBits nx ->
           -- max (1-nx) -- |e| < |x|
@@ -395,6 +396,8 @@ recipF f@(UnaryModFun dom eval modulus) =
 
 
 instance CanDiv Integer UnaryModFun where
+  type DivTypeNoCN Integer UnaryModFun = UnaryModFun
+  divideNoCN n f = divide (unaryModFun (getDomain f, n)) f
   type DivType Integer UnaryModFun = UnaryModFun
   divide n f = divide (unaryModFun (getDomain f, n)) f
 

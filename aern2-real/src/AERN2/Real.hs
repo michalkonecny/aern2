@@ -19,6 +19,7 @@ module AERN2.Real
   , realName, realId, realSources, realRename
   , realWithAccuracy, (?), realWithAccuracyA, realsWithAccuracyA
   , CauchyRealA, CauchyReal, newCR
+  , CauchyRealCNA, CauchyRealCN, newCRCN
   , (-:-)
   , convergentList2CauchyRealA
   , seqByPrecision2CauchyRealA
@@ -30,7 +31,7 @@ module AERN2.Real
   , _addslACachedPrint
   , _addslAParPrint
   , _example_pif
-  , _trisection
+  , _nsection
 )
 where
 
@@ -54,7 +55,7 @@ import AERN2.QA.Strategy.Cached
 import AERN2.QA.Strategy.Parallel
 
 import Text.Printf
-import AERN2.MP.Dyadic
+-- import AERN2.MP.Dyadic
 import AERN2.Sequence
 
 
@@ -124,40 +125,47 @@ _addslAParPrint =
 
 {- parallel branching -}
 
-_example_pif :: CauchyReal -> CauchyReal
+_example_pif :: CauchyReal -> CauchyRealCN
 _example_pif r =
   if r < 0 then -r else r -- abs via parallel if
 
-_trisection ::
-  (Dyadic -> CauchyReal) ->
-  (Dyadic,Dyadic) ->
+_example_pif0 :: MPBall -> CN MPBall
+_example_pif0 r =
+  if r < 0 then -r else r -- abs via parallel if
+
+_nsection ::
+  Integer ->
+  (Rational -> CauchyReal) ->
+  (Rational,Rational) ->
   CauchyRealCN
-_trisection f (l,r) =
-  newSeqSimple (cn $ mpBall 0) $ fromSegment l r
+_nsection n f (l,r) =
+  newSeqSimple (cn $ mpBall 0) $ withAccuracy
   where
-  fromSegment :: Dyadic -> Dyadic -> AccuracySG -> CN MPBall
-  fromSegment a b ac
-    | getAccuracy ab >= ac  = cn ab
-    | otherwise             = pick [tryM m1, tryM m2]
+  withAccuracy (me,_) ac@(AccuracySG _ acG) =
+    onSegment (l,r)
     where
-    ab = fromEndpoints (mpBall a) (mpBall b) :: MPBall
-    m1 = (5*a + 3*b)*(dyadic (1/!8))
-    m2 = (3*a + 5*b)*(dyadic (1/!8))
-    tryM :: Dyadic -> Sequence (Maybe (CN MPBall))
-    tryM m = newSeqSimple Nothing withAC
+    onSegment (a,b) =
+      let ab = mpBallP p ((a+b)/!2, (b-a)/!2) in
+      if getAccuracy ab >= ac
+        then cn ab
+        else pick me (map withMidpoint midpoints)
       where
-      withAC :: AccuracySG -> Maybe (CN MPBall)
-      withAC acF
-        | fa * fm !<! 0 = Just $ fromSegment a m ac
-        | fm * fb !<! 0 = Just $ fromSegment m b ac
-        | fa * fb !>=! 0 = Just $ err
-        | otherwise = Nothing
+      midpoints = [ (i*a + (n-i)*b)/!n | i <- [1..n-1] ]
+      withMidpoint :: Rational -> Sequence (Maybe (CN MPBall))
+      withMidpoint m = newSeqSimple Nothing withAC
         where
-        fa = (f a) ? acF
-        fm = (f m) ? acF
-        fb = (f b) ? acF
-    err :: CN MPBall
-    err =
-      noValueNumErrorCertainCN $
-        NumError $
-          printf "trisection: function does not have opposite signs on points %s %s" (show a) (show b)
+        withAC (meF, _) acF
+          | fa * fm !<! 0 = Just $ onSegment (a, m)
+          | fm * fb !<! 0 = Just $ onSegment (m, b)
+          | fa * fb !>=! 0 = Just $ err
+          | otherwise = Nothing
+          where
+          fa = ((f a) ?<- meF) acF
+          fm = ((f m) ?<- meF) acF
+          fb = ((f b) ?<- meF) acF
+      err :: CN MPBall
+      err =
+        noValueNumErrorCertainCN $
+          NumError $
+            printf "n-section: function does not have opposite signs on points %s %s" (show a) (show b)
+    p = prec $ fromAccuracy acG + 8

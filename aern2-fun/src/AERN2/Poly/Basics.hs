@@ -43,7 +43,7 @@ import qualified Data.List as List
 -- import Test.Hspec
 -- import Test.QuickCheck
 
-
+import Control.CollectErrors
 
 -- import AERN2.MP.ErrorBound
 import AERN2.MP.Ball
@@ -71,21 +71,30 @@ type PolyCoeffRing c =
   loose enough to permit Rational coefficients.
 -}
 type PolyCoeffField c =
-  (PolyCoeffRing c, Field c, HasDyadics c, CanAddSubMulDivBy c Dyadic)
+  (PolyCoeffRing c, Field c, HasDyadics c, CanAddSubMulDivCNBy c Dyadic)
 
 {-|
   a shortcut type constraint for
   types suitable as coefficients of our polynomials
 -}
 type PolyCoeffBall c =
-  (PolyCoeffField c, CanAddSubMulDivBy c CauchyReal
+  (PolyCoeffField c, CanAddSubMulDivCNBy c CauchyReal
   , IsInterval c c, IsBall c, CanSetPrecision c)
 
 data Poly c = Poly { poly_terms :: Terms c }
 
+instance (SuitableForCE es) => CanEnsureCE es (Poly c)
+
+instance (SuitableForCE es) => CanExtractCE es Poly
+  where
+  extractCE sample_es (Poly terms) =
+    fmap Poly (extractCE sample_es terms)
+
 type Terms c = Map.Map Degree c
 
 type Degree = Integer
+
+instance (SuitableForCE es) => CanExtractCE es (Map.Map Degree)
 
 terms_empty :: Terms c
 terms_empty = Map.empty
@@ -234,9 +243,11 @@ $(declForTypes
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
   (\ t -> [d|
-    instance (CanDivBy c $t) => CanDiv (Poly c) $t where
-      type DivType (Poly c) $t = Poly c
+    instance (CanDivCNBy c $t, CanEnsureCN (DivType c $t), EnsureNoCN (DivType c $t) ~ c) => CanDiv (Poly c) $t where
+      type DivType (Poly c) $t = (Poly (EnsureCN c))
       divide (Poly t1) n = Poly $ terms_map (/ n) t1
+      type DivTypeNoCN (Poly c) $t = Poly c
+      divideNoCN (Poly t1) n = Poly $ terms_map (/! n) t1
   |]))
 
 

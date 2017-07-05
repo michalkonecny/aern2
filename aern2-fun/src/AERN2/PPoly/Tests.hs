@@ -51,7 +51,7 @@ import Test.Hspec
 import Test.QuickCheck
 -- import qualified Test.Hspec.SmallCheck as SC
 
--- import Numeric.CatchingExceptions
+--
 
 import AERN2.MP
 import AERN2.MP.Dyadic
@@ -142,7 +142,7 @@ operations =
     ruA = abs ru
     x
       | rlA == 0 || ruA == 0 = dyadic 0
-      | otherwise = centre $ (ruA - rlA) / (mpBall $ rlA + ruA)
+      | otherwise = centre $ (ruA - rlA) /! (mpBall $ rlA + ruA)
     -- x is an approximate average of dom endpoints, weighted by the range endpoints.
     -- This definitoin is deliberately rather arbitrary to achieve a high variation.
   addBreak _ = error "addBreak used with wrong arity"
@@ -151,7 +151,7 @@ type FnIndex = Integer
 type Frequency = Integer
 
 basicFunctions :: DyadicInterval -> [(Frequency, PPoly)]
-basicFunctions dom = [(10,x), (1, c 0.5), (1, c 2), (1, c 100), (1, c (0.5^20))]
+basicFunctions dom = [(10,x), (1, c 0.5), (1, c 2), (1, c 100), (1, c (0.5^!20))]
   where
   x = fromPoly $ varFn (constFn (dom, 0)) ()
   c :: (CanBeDyadic t) => t -> PPoly
@@ -275,7 +275,7 @@ makeFnSmallRange limit (FnAndDescr p pDescr) =
   where
   res
     | b !<! limit = p
-    | otherwise = centreAsBall $ (limit * p / b)
+    | otherwise = centreAsBall $ (limit * p /! b)
   b = ub `max` (-lb)
   lb, ub :: MPBall
   -- (lb, _) = endpoints $ minimumOverDom p (getDomain p)
@@ -291,7 +291,7 @@ makeFnPositiveSmallRange limit (FnAndDescr p pDescr) =
   res
     | 1 !<=! lb && ub !<! limit = p
     | b !<! limit = p - lb + 1
-    | otherwise = centreAsBall $ (1 - lb + (limit * p / b))
+    | otherwise = centreAsBall $ (1 - lb + (limit * p /! b))
   b = ub `max` (-lb)
   lb, ub :: MPBall
   -- (lb, _) = endpoints $ minimumOverDom p (getDomain p)
@@ -321,7 +321,7 @@ specChPoly =
       specFnPointwiseOp2 tPPoly tMPBall "-" (-) (-) anyFn anyFn
       specFnPointwiseOp2 tPPoly tMPBall "*" (*) (*) anyFn anyFn
     describe "field" $ do
-      specFnPointwiseOp1 tPPoly tMPBall "1/" (inverseWithAccuracy (bits 0)) (1/) (makeFnPositiveSmallRange 100)
+      specFnPointwiseOp1 tPPoly tMPBall "1/" (inverseWithAccuracy (bits 0)) (1/!) (makeFnPositiveSmallRange 100)
     -- describe "size reduction" $ do
     --   specFnPointwiseOp1 tPPoly tMPBall "reduce size (bits=10)" (reduceSizeUsingAccuracyGuide (bits 10)) id anyFn
     --   specFnPointwiseOp1 tPPoly tMPBall "reduce size (bits=0)" (reduceSizeUsingAccuracyGuide (bits 0)) id anyFn

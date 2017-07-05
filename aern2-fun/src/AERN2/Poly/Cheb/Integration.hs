@@ -37,7 +37,7 @@ import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Ring ()
 
 instance
-  (Ring c, CanDivBy c Integer, CanNormalize (ChPoly c)
+  (Ring c, CanDivCNBy c Integer, CanNormalize (ChPoly c)
   , PolyCoeffBall c
   , CanApply (ChPoly c) c, ApplyType (ChPoly c) c ~ c)
   =>
@@ -65,7 +65,7 @@ instance
     -- prc = getPrecision cp
 
 primitive_function ::
-  (Ring c, CanDivBy c Integer, CanNormalize (ChPoly c),
+  (Ring c, CanDivCNBy c Integer, CanNormalize (ChPoly c),
    CanMulBy c Dyadic)
   =>
   ChPoly c -> ChPoly c
@@ -79,7 +79,7 @@ primitive_function (ChPoly dom@(Interval l r) (Poly terms) _) =
   where
   oneTerm (n,a)
     | n == 0 = [(1,a)]
-    | n == 1 = [(0,a/4), (2,a/4)]
+    | n == 1 = [(0,a/!4), (2,a/!4)]
     | otherwise =
-      [(n-1, -a/(2*(n-1))),
-       (n+1, a/(2*(n+1)))]
+      [(n-1, -a/!(2*(n-1))),
+       (n+1, a/!(2*(n+1)))]

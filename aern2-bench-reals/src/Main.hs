@@ -13,7 +13,7 @@ import Debug.Trace (trace)
 #endif
 
 import MixedTypesNumPrelude
--- import Data.String (fromString)
+import Text.Printf
 
 import System.Environment (getArgs)
 import System.IO.Unsafe (unsafePerformIO)
@@ -31,6 +31,7 @@ import AERN2.QA.Strategy.Cached
 import AERN2.QA.Strategy.Parallel
 
 import AERN2.Real
+import AERN2.MPBallWithGlobalPrec
 
 import qualified Tasks.LogisticPreludeOps as TP
 import Tasks.Logistic
@@ -83,8 +84,9 @@ bench implName benchName benchParamsS =
           case implName of
               "Double" -> showL (fft_FP isFFT k)
               "MP" -> showL (case fft_MP isFFT k (bitsSG acS acG) of Just rs -> rs; _ -> error "no result")
+              "MP_parArrow" -> showL (case fft_MP_parArrow isFFT k (bitsSG acS acG) of Just rs -> rs; _ -> error "no result")
               "CR_cachedUnsafe" -> showL (fft_CR_cachedUnsafe isFFT k (bitsSG acS acG))
-              "CR_cachedArrow" -> showL (fft_CR_cachedArrow True isFFT k (bitsSG acS acG))
+              "CR_cachedArrow" -> showL (fft_CR_cachedArrow isFFT k (bitsSG acS acG))
               "CR_parArrow" -> showL (fft_CR_parArrow isFFT k (bitsSG acS acG))
               _ -> error $ "unknown implementation: " ++ implName
           where
@@ -105,9 +107,9 @@ logistic_CR_cachedArrow n acSG =
     executeQACachedA $
       proc () ->
         do
-        x0R <- (-:-)-< realA x0
+        x0R <- (-:-) -< realA x0
         (Just x) <-taskLogisticWithHookA n hookA -< x0R
-        realWithAccuracyA -< (x, acSG)
+        realWithAccuracyA Nothing -< (x, acSG)
   x0 = TP.taskLogistic_x0 :: Rational
   hookA i =
     proc r ->
@@ -153,8 +155,9 @@ fft_CR_cachedUnsafe isFFT k acSG =
   approx :: Complex CauchyReal -> Complex MPBall
   approx (a :+ i) = (a ? acSG) :+ (i ? acSG)
 
-fft_CR_cachedArrow :: Bool -> Bool -> Integer -> AccuracySG -> [Complex MPBall]
-fft_CR_cachedArrow shouldCache isFFT k acSG =
+fft_CR_cachedArrow :: Bool -> Integer -> AccuracySG -> [Complex MPBall]
+fft_CR_cachedArrow isFFT k acSG =
+  -- seq (unsafePerformIO $ writeNetLogJSON netlog) $
   maybeTrace (formatQALog 0 netlog) $
   results
   where
@@ -165,38 +168,29 @@ fft_CR_cachedArrow shouldCache isFFT k acSG =
       i <- (-?-) -< (iR, acSG)
       returnA -< a :+ i
   (netlog, results) =
-    executeA $
+    executeQACachedA $
       proc () ->
         do
-        (Just resultRs) <- task -< ()
-        mapA approxA -< resultRs
-  executeA
-    | shouldCache = executeQACachedA
-    | otherwise = executeQAUncachedA
+        resultRs <- task -< ()
+        mapA approxA -< resultRs :: [Complex (CauchyRealA QACachedA)]
   task
-    | isFFT = taskFFTWithHookA hookA k
-    | otherwise = taskDFTWithHookA (hookA 0) k
-  hookA _ name =
-    proc (a :+ i) ->
-      do
-      aNext <- (-:-)-< (rename a)
-      iNext <- (-:-)-< (rename i)
-      returnA -< Just (aNext :+ iNext)
-    where
-    rename = realRename (\_ -> name)
+    | isFFT = taskFFTA k
+    -- | otherwise = taskDFTA k
 
 fft_CR_parArrow :: Bool -> Integer -> AccuracySG -> [Complex MPBall]
 fft_CR_parArrow isFFT k acSG =
   unsafePerformIO $
     do
-    results <-
+    -- (netlog, results) <-
+      -- executeQAParAwithLog $
       executeQAParA $
         proc () ->
           do
-          (Just resultRs) <- task -< ()
-          promises <- mapA getPromiseComplexA -< resultRs
+          resultRs <- task -< ()
+          promises <- mapA getPromiseComplexA -< resultRs :: [Complex (CauchyRealA QAParA)]
           mapA fulfilPromiseComplex -< promises
-    return results
+    -- writeNetLogJSON netlog
+    -- return results
   where
   getPromiseComplexA =
     proc (aR :+ iR) ->
@@ -211,20 +205,8 @@ fft_CR_parArrow isFFT k acSG =
       i <- qaFulfilPromiseA -< iProm
       returnA -< a :+ i
   task
-    | isFFT = taskFFTWithHookA hookA k
-    | otherwise = taskDFTWithHookA (hookA 0) k
-  n = 2^!k
-  hookA nH name =
-    proc (a :+ i) ->
-      do
-      aNext <- reg -< (rename a)
-      iNext <- reg -< (rename i)
-      returnA -< Just (aNext :+ iNext)
-    where
-    rename = realRename (\_ -> name)
-    reg
-      | nH < n = (-:-|)
-      | otherwise = (-:-||)
+    | isFFT = taskFFTA k
+    -- | otherwise = taskDFTA k
 
 
 fft_MP :: Bool -> Integer -> AccuracySG -> Maybe [Complex MPBall]
@@ -243,6 +225,48 @@ fft_MP isFFT k _acSG@(AccuracySG acS _) =
           a2 <- checkAccuracy a
           i2 <- checkAccuracy i
           return $ setPrecision p (a2 :+ i2)
+
+fft_MP_parArrow :: Bool -> Integer -> AccuracySG -> Maybe [Complex MPBall]
+fft_MP_parArrow isFFT k _acSG@(AccuracySG acS _) =
+    snd $ last $ iterateUntilAccurate acS $ withP
+    where
+    withP p =
+      Just $ unsafePerformIO $
+        do
+        -- (netlog, results) <-
+        --   executeQAParAwithLog $
+        results <-
+          executeQAParA $
+            proc () ->
+              do
+              resultRs <- task -< ()
+              promises <- mapA getPromiseComplexA -< resultRs :: [Complex (MPBallWithGlobalPrecA QAParA)]
+              mapA fulfilPromiseComplex -< promises
+        -- writeNetLogJSON netlog
+        -- putStrLn $ printf "p = %s: accuracy = %s" (show p) (show $ getAccuracy results)
+        return results
+      where
+      getPromiseComplexA =
+        proc (aR :+ iR) ->
+          do
+          aProm <- (-?..-) -< (aR, p)
+          iProm <- (-?..-) -< (iR, p)
+          returnA -< aProm :+ iProm
+      fulfilPromiseComplex =
+        proc (aProm :+ iProm) ->
+          do
+          a <- qaFulfilPromiseA -< aProm
+          i <- qaFulfilPromiseA -< iProm
+          returnA -< a :+ i
+      task
+        | isFFT = taskFFTA k
+        -- | otherwise = taskDFTA k
+
+        -- checkCAccuracy (a :+ i) =
+        --   do
+        --   a2 <- checkAccuracy a
+        --   i2 <- checkAccuracy i
+        --   return $ setPrecision p (a2 :+ i2)
 
 fft_FP :: Bool -> Integer -> [Complex Double]
 fft_FP True k = taskFFT (\r -> (double r :+ double 0)) k

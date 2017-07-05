@@ -101,6 +101,9 @@ instance (SuitableForCE es) => CanEnsureCE es Dyadic
 
 type HasDyadics t = ConvertibleExactly Dyadic t
 
+instance ConvertibleExactly Dyadic Dyadic where
+  safeConvertExactly = Right
+
 instance ConvertibleExactly Dyadic MPFloat where
   safeConvertExactly = Right . dyadicMPFloat
 
@@ -152,13 +155,22 @@ instance HasEqAsymmetric Dyadic Rational where
 instance HasEqAsymmetric Rational Dyadic where
   equalTo = convertSecond equalTo
 
--- -- TODO: finish it once we have HasEq for a pair of CatchingNumExceptions
--- instance HasEqAsymmetric t Dyadic => HasEqAsymmetric (CatchingNumExceptions t) Dyadic where
---   type EqCompareType (CatchingNumExceptions t) Dyadic = CatchingNumExceptions (EqCompareType t Dyadic)
---   equalTo = convertSecondUsing catchingNumExceptions equalTo
+instance
+  (HasEqAsymmetric Dyadic b
+  , CanEnsureCE es b
+  , CanEnsureCE es (EqCompareType Dyadic b)
+  , IsBool (EnsureCE es (EqCompareType Dyadic b))
+  , SuitableForCE es)
+  =>
+  HasEqAsymmetric Dyadic (CollectErrors es  b)
+  where
+  type EqCompareType Dyadic (CollectErrors es  b) =
+    EnsureCE es (EqCompareType Dyadic b)
+  equalTo = lift2TLCE equalTo
 
 instance
   (HasEqAsymmetric Dyadic b
+  , CanEnsureCE es b
   , CanEnsureCE es (EqCompareType Dyadic b)
   , IsBool (EnsureCE es (EqCompareType Dyadic b))
   , SuitableForCE es)
@@ -171,6 +183,7 @@ instance
 
 instance
   (HasEqAsymmetric a Dyadic
+  , CanEnsureCE es a
   , CanEnsureCE es (EqCompareType a Dyadic)
   , IsBool (EnsureCE es (EqCompareType a Dyadic))
   , SuitableForCE es)
@@ -202,6 +215,39 @@ instance HasOrderAsymmetric Rational Dyadic where
 instance HasOrderAsymmetric Dyadic Rational where
   lessThan = convertFirst lessThan
   leq = convertFirst leq
+
+instance
+  (HasOrderAsymmetric Dyadic b
+  , CanEnsureCE es b
+  , CanEnsureCE es (OrderCompareType Dyadic b)
+  , IsBool (EnsureCE es (OrderCompareType Dyadic b))
+  , SuitableForCE es)
+  =>
+  HasOrderAsymmetric Dyadic (CollectErrors es  b)
+  where
+  type OrderCompareType Dyadic (CollectErrors es  b) =
+    EnsureCE es (OrderCompareType Dyadic b)
+  lessThan = lift2TLCE lessThan
+  leq = lift2TLCE leq
+  greaterThan = lift2TLCE greaterThan
+  geq = lift2TLCE geq
+
+instance
+  (HasOrderAsymmetric a Dyadic
+  , CanEnsureCE es a
+  , CanEnsureCE es (OrderCompareType a Dyadic)
+  , IsBool (EnsureCE es (OrderCompareType a Dyadic))
+  , SuitableForCE es)
+  =>
+  HasOrderAsymmetric (CollectErrors es a) Dyadic
+  where
+  type OrderCompareType (CollectErrors es  a) Dyadic =
+    EnsureCE es (OrderCompareType a Dyadic)
+  lessThan = lift2TCE lessThan
+  leq = lift2TCE leq
+  greaterThan = lift2TCE greaterThan
+  geq = lift2TCE geq
+
 
 instance CanTestPosNeg Dyadic
 
@@ -250,6 +296,7 @@ instance CanMinMaxAsymmetric Dyadic Rational where
 
 instance
   (CanMinMaxAsymmetric Dyadic b
+  , CanEnsureCE es b
   , CanEnsureCE es (MinMaxType Dyadic b)
   , SuitableForCE es)
   =>
@@ -262,6 +309,7 @@ instance
 
 instance
   (CanMinMaxAsymmetric a Dyadic
+  , CanEnsureCE es a
   , CanEnsureCE es (MinMaxType a Dyadic)
   , SuitableForCE es)
   =>
@@ -300,6 +348,7 @@ instance CanAddAsymmetric Dyadic Rational where
 
 instance
   (CanAddAsymmetric Dyadic b
+  , CanEnsureCE es b
   , CanEnsureCE es (AddType Dyadic b)
   , SuitableForCE es)
   =>
@@ -311,6 +360,7 @@ instance
 
 instance
   (CanAddAsymmetric a Dyadic
+  , CanEnsureCE es a
   , CanEnsureCE es (AddType a Dyadic)
   , SuitableForCE es)
   =>
@@ -348,6 +398,7 @@ instance CanSub Dyadic Rational where
 
 instance
   (CanSub Dyadic b
+  , CanEnsureCE es b
   , CanEnsureCE es (SubType Dyadic b)
   , SuitableForCE es)
   =>
@@ -359,6 +410,7 @@ instance
 
 instance
   (CanSub a Dyadic
+  , CanEnsureCE es a
   , CanEnsureCE es (SubType a Dyadic)
   , SuitableForCE es)
   =>
@@ -397,6 +449,7 @@ instance CanMulAsymmetric Dyadic Rational where
 
 instance
   (CanMulAsymmetric Dyadic b
+  , CanEnsureCE es b
   , CanEnsureCE es (MulType Dyadic b)
   , SuitableForCE es)
   =>
@@ -408,6 +461,7 @@ instance
 
 instance
   (CanMulAsymmetric a Dyadic
+  , CanEnsureCE es a
   , CanEnsureCE es (MulType a Dyadic)
   , SuitableForCE es)
   =>
@@ -418,12 +472,15 @@ instance
   mul = lift2TCE mul
 
 instance CanPow Dyadic Integer where
-  pow = powUsingMul
+  powNoCN = powUsingMul
+  pow = integerPowCN powUsingMul
 instance CanPow Dyadic Int where
-  pow = powUsingMul
+  powNoCN = powUsingMul
+  pow = integerPowCN powUsingMul
 
 instance
   (CanDiv a Dyadic
+  , CanEnsureCE es a
   , CanEnsureCE es (DivType a Dyadic)
   , CanEnsureCE es (DivTypeNoCN a Dyadic)
   , SuitableForCE es)
@@ -460,6 +517,7 @@ instance CanDiv Dyadic Rational where
 
 instance
   (CanDiv Dyadic b
+  , CanEnsureCE es b
   , CanEnsureCE es (DivType Dyadic b)
   , CanEnsureCE es (DivTypeNoCN Dyadic b)
   , SuitableForCE es)
@@ -475,22 +533,33 @@ instance
 
 instance
   (CanPow Dyadic b
+  , CanEnsureCE es b
+  , CanEnsureCE es (PowTypeNoCN Dyadic b)
   , CanEnsureCE es (PowType Dyadic b)
   , SuitableForCE es)
   =>
   CanPow Dyadic (CollectErrors es  b)
   where
-  type PowType Dyadic (CollectErrors es  b) =
+  type PowTypeNoCN Dyadic (CollectErrors es b) =
+    EnsureCE es (PowTypeNoCN Dyadic b)
+  powNoCN = lift2TLCE powNoCN
+  type PowType Dyadic (CollectErrors es b) =
     EnsureCE es (PowType Dyadic b)
   pow = lift2TLCE pow
 
 instance
   (CanPow a Dyadic
   , CanEnsureCE es (PowType a Dyadic)
+  , CanEnsureCE es a
+  , CanEnsureCE es (PowType a Dyadic)
+  , CanEnsureCE es (PowTypeNoCN a Dyadic)
   , SuitableForCE es)
   =>
   CanPow (CollectErrors es a) Dyadic
   where
+  type PowTypeNoCN (CollectErrors es  a) Dyadic =
+    EnsureCE es (PowTypeNoCN a Dyadic)
+  powNoCN = lift2TCE powNoCN
   type PowType (CollectErrors es  a) Dyadic =
     EnsureCE es (PowType a Dyadic)
   pow = lift2TCE pow

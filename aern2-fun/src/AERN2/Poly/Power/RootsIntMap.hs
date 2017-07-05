@@ -42,7 +42,7 @@ type Terms = (ErrorBound, Integer, Map Integer Integer)
 
 reduce :: Terms -> Terms
 reduce (e, c, ts) =
-  ((e / tsGcd) / tsCGcd, c, ts'')
+  ((e /! tsGcd) /! tsCGcd, c, ts'')
   where
   tsGcd = Map.foldl' gcd 0 ts
   ts' = if tsGcd > 1 then trace("reduction 1 successful") $ Map.map (`P.div` tsGcd) ts else ts
@@ -86,7 +86,7 @@ initialBernsteinCoefs p e l r =
   d = degree p
   PowPoly (Poly csI) = transform (-1) (integer lI) p
   binoms = Map.fromList [(k, binom d (d - k)) | k <- [0.. d]]
-  bsFrac = Map.mapWithKey (\k c -> (toRational c) / (toRational $ fromJust $ Map.lookup k binoms)) csI
+  bsFrac = Map.mapWithKey (\k c -> (toRational c) /! (toRational $ fromJust $ Map.lookup k binoms)) csI
   lambdaI = Map.foldl' lcm 1 (Map.map denominator bsFrac)
   bsI = Map.mapKeys (\k -> d - k) $ Map.mapWithKey (\k c -> lambdaI*c `Prelude.div` (fromJust $ Map.lookup k binoms)) csI
   (_, (_,lambdaL, bsL)) = bernsteinCoefs (-1.0) (rational lI) l (e, lambdaI, bsI)
@@ -103,7 +103,7 @@ bernsteinCoefs l r m (e, c, bs) =
   ((e, c', buildLeft p 1 Map.empty),
    (e, c', buildRight p 1 Map.empty))
   where
-  c' = diff^p*c
+  c' = diff^!p*c
   d  = toRational $ foldl1 lcm $ map denominator [l,r,m]
   l' = numerator $ d*l
   m' = numerator $ d*m
@@ -150,10 +150,13 @@ translate t poly@(PowPoly (Poly ts)) =
       in
         translateAcc (n - 1) $ c + (shiftRight 1 poly') - (t*poly')
 
-contract :: (CanMulSameType c, CanPow c Integer, PowType c Integer ~ c)
-  => c -> PowPoly c -> PowPoly c
+contract ::
+  (CanEnsureCN c, CanPowCNBy c Integer, CanMulSameType (EnsureCN c)
+  , CanEnsureCN (EnsureCN c), EnsureNoCN (EnsureCN c) ~ c, Show (EnsureCN c))
+  =>
+  c -> PowPoly c -> PowPoly c
 contract l (PowPoly (Poly ts)) =
-  PowPoly $ Poly $ Map.mapWithKey (\p c -> c*(l^p)) ts
+  PowPoly $ Poly $ Map.mapWithKey (\p c -> (((cn c)*(l^p)) ~!)) ts
 
 transform :: Integer -> Integer -> PowPoly Integer -> PowPoly Integer
 transform l r =

@@ -67,7 +67,7 @@ maximumOptimisedWithAccuracy acc f@(Frac p q _) l r iDeg steps =
   pc = centre pI
   qc = centre qI
   df = (derivativeExact pc) * qc - pc * (derivativeExact qc)
-  maxKey = max 0 (ceiling ((Cheb.degree df - iDeg) / steps))
+  maxKey = max 0 (ceiling ((Cheb.degree df - iDeg) /! steps))
   dfs = [(k, reduceDegree (iDeg + steps*k) df) | k <- [0..maxKey + 1]]
   dfsWithEval =
     Map.fromList

@@ -120,7 +120,7 @@ runBenchmark mode op serialisedFile p acGuide count =
     case op of
       "add" -> map (uncurry (+)) paramPairs
       "mul" -> map (uncurry (*)) paramPairs
-      "div" -> map (uncurry (ChPoly.chebDivideDCT acGuide)) paramPairs
+      "div" -> map (\(a,b) -> (~!) (ChPoly.chebDivideDCT acGuide a b )) paramPairs
       _ -> error $ "unknown op " ++ op
   getResultCompDurationAndAccuracy (i,result) =
     do
@@ -154,16 +154,16 @@ runBenchmark mode op serialisedFile p acGuide count =
     dPrepParams = tGotParams .-. tStart
     dsResults = zipWith (.-.) ((tail tsResults) ++ [tDone]) tsResults
     n = length tsResults
-    dGetResMean = round $ (sum dsResults) / n
+    dGetResMean = round $ (sum dsResults) /! n
     dGetResWorst = foldl1 max dsResults
     dGetResStDev =
-      round $ sqrt $ double $
-        (sum $ map (^2) $ (map (\x -> x-dGetResMean) dsResults))
-          / (n - 1)
+      round $ (~!) $ sqrt $ double $
+        (sum $ map (^!2) $ (map (\x -> x-dGetResMean) dsResults))
+          /! (n - 1)
   csvSummaryLine _ _ _ _ _ = pure ()
 
   a .-. b = toNanoSecs $ diffTimeSpec a b
-  toSec ns = (double ns) / (10^9)
+  toSec ns = (double ns) /! (10^!9)
   showAC Exact = "exact"
   showAC NoInformation = "noinformation"
   showAC ac = show $ fromAccuracy ac

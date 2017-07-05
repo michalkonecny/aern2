@@ -1,7 +1,7 @@
 module AERN2.PPoly.Eval where
 
 import MixedTypesNumPrelude
-import Numeric.CatchingExceptions
+
 import qualified AERN2.Poly.Cheb as Cheb hiding (evalDf)
 import AERN2.Poly.Cheb (ChPoly)
 import qualified AERN2.Poly.Cheb.Eval as ChE (evalDirect, evalDf, evalLDf)
@@ -88,7 +88,7 @@ evalDI f@(PPoly ps dom) x =
   evalDf f dfs x
   where
   (Interval l r) = dom
-  c = 1/(0.5*(r - l))
+  c = 1/!(0.5*(r - l))
   dfs = map ((c *) . (ballLift1R Cheb.derivative) . snd) ps
 
 instance
@@ -100,8 +100,8 @@ instance
       _ -> evalDI p x
 
 instance
-  CanApply PPoly (CatchingNumExceptions MPBall) where
-  type ApplyType PPoly (CatchingNumExceptions MPBall) = CatchingNumExceptions MPBall
+  CanApply PPoly (CN MPBall) where
+  type ApplyType PPoly (CN MPBall) = CN MPBall
   apply p x =
     -- TODO: check x is in the domain
     apply p <$> x

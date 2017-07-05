@@ -35,6 +35,8 @@ import qualified Data.List as List
 -- import Test.Hspec
 -- import Test.QuickCheck
 
+import Control.CollectErrors
+
 import AERN2.Normalize
 
 import AERN2.Norm
@@ -69,11 +71,18 @@ data ChPoly c =
   , chPoly_maybeBounds :: Maybe (ChPolyBounds c)
   }
 
+instance (SuitableForCE es) => CanEnsureCE es (ChPoly c)
+
 data ChPolyBounds c =
   ChPolyBounds
   { chPolyBounds_lip :: c
   }
   deriving (Show)
+
+instance (SuitableForCE es) => CanExtractCE es ChPoly
+  where
+  extractCE sample_es (ChPoly dom poly _mb) =
+    fmap (\p -> ChPoly dom p Nothing) (extractCE sample_es poly)
 
 chPoly_maybeLip :: ChPoly c -> Maybe c
 chPoly_maybeLip = fmap chPolyBounds_lip . chPoly_maybeBounds
@@ -93,8 +102,8 @@ instance Show (ChPoly MPBall) where
     where
     pp = cheb2Power poly
     ppDom =
-      Pow.translate ((rB+lB)/2) $
-        Pow.contract (2/(rB-lB)) pp
+      Pow.translate ((rB+lB)/!2) $
+        Pow.contract (2/!(rB-lB)) pp
     lB = mpBall l
     rB = mpBall r
     Interval l r = dom
@@ -126,10 +135,10 @@ deserialise polyS =
     -- :: (String,String,String,[String])
 
 fromDomToUnitInterval ::
-  (CanAddSubMulDivBy t Dyadic) =>
+  (CanAddSubMulDivCNBy t Dyadic) =>
   DyadicInterval -> t -> t
 fromDomToUnitInterval (Interval l r) xInDom =
-  (xInDom - m)/(half*(r-l))
+  (xInDom - m)/!(half*(r-l))
   where
   m = (r+l)*half
   half = dyadic 0.5
@@ -172,7 +181,7 @@ sweepUsingAccuracy (ChPoly dom poly@(Poly ts) bnd) =
   where
   ts' = reduceTerms shouldKeep ts
   shouldKeep deg coeff =
-    normLog2Accuracy (getNormLog coeff) <= deg + thresholdAcc
+    bits (getNormLog coeff) <= deg + thresholdAcc
       -- prefer to remove terms with higher degree
   thresholdAcc = getFiniteAccuracy poly
 

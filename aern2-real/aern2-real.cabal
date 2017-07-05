@@ -35,6 +35,8 @@ library
     , transformers >= 0.4 && < 0.6
     , lens >= 4.13 && < 4.16
     , stm >= 2.4 && < 2.5
+    , bytestring >= 0.10 && < 0.11
+    , aeson >= 0.11 && < 1.1
     , mixed-types-num == 0.2.*
     , aern2-mp == 0.1.*
   ghc-options:     -Wall -O2 -fno-warn-orphans
@@ -42,7 +44,6 @@ library
     RebindableSyntax,
     PostfixOperators,
     ScopedTypeVariables,
-    GeneralizedNewtypeDeriving,
     TypeFamilies,
     TypeOperators,
     ConstraintKinds,
@@ -62,7 +63,15 @@ library
     AERN2.QA.Strategy.Cached
     AERN2.QA.Strategy.Parallel
     AERN2.AccuracySG
-    AERN2.Sequence
+    AERN2.WithGlobalParam.Type
+    AERN2.WithGlobalParam.Helpers
+    AERN2.WithGlobalParam.Comparison
+    AERN2.WithGlobalParam.Branching
+    AERN2.WithGlobalParam.Ring
+    AERN2.WithGlobalParam.Field
+    AERN2.WithGlobalParam.Elementary
+    AERN2.WithGlobalParam
+    AERN2.MPBallWithGlobalPrec
     AERN2.Sequence.Type
     AERN2.Sequence.Helpers
     AERN2.Sequence.Comparison
@@ -70,10 +79,11 @@ library
     AERN2.Sequence.Ring
     AERN2.Sequence.Field
     AERN2.Sequence.Elementary
-    AERN2.Real
+    AERN2.Sequence
     AERN2.Real.Type
     AERN2.Real.Arithmetic
     AERN2.Real.Tests
+    AERN2.Real
 
 test-suite spec
   type:
@@ -118,3 +128,23 @@ executable aern2-real-benchOp
     , aern2-real == 0.1.*
     , random
     , QuickCheck >= 2.7 && < 2.10
+
+executable aern2-generate-netlog-elm
+  ghc-options:
+      -Wall -O2
+  extensions:
+    RebindableSyntax,
+    PostfixOperators,
+    ScopedTypeVariables,
+    FlexibleContexts,
+    TypeSynonymInstances
+  hs-source-dirs:
+      tools
+  main-is:
+      aern2-generate-netlog.hs
+  build-depends:
+    base == 4.*
+    , elm-bridge == 0.3.*
+    , mixed-types-num == 0.2.*
+    , aern2-mp == 0.1.*
+    , aern2-real == 0.1.*

@@ -106,16 +106,16 @@ instance CanLog MPBall where
     err = OutOfRange $ "log: argument must be > 0: " ++ show x
 
 instance CanPow MPBall MPBall where
-  type PowType MPBall MPBall = CN MPBall
+  powNoCN b e = (~!) $ pow b e
   pow = powUsingExpLog
 
 instance CanPow MPBall Dyadic where
-  type PowType MPBall Dyadic = CN MPBall
-  pow x q = powUsingExpLog x (mpBall q)
+  powNoCN b e = (~!) $ pow b e
+  pow b e = powUsingExpLog b (mpBall e)
 
 instance CanPow MPBall Rational where
-  type PowType MPBall Rational = CN MPBall
-  pow x q = powUsingExpLog x (mpBallP (getPrecision x) q)
+  powNoCN b e = (~!) $ pow b e
+  pow b e = powUsingExpLog b (mpBallP (getPrecision b) e)
 
 instance CanSqrt MPBall where
   type SqrtType MPBall = CN MPBall

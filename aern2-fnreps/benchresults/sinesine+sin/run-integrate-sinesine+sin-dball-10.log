@@ -1,22 +1,22 @@
 computing integrate  sin(10x+sin(20x^2)) + sin(10x) over [-1,1]
-result = [-1.307209118949876e-1 ± 5.167068551322635e-4](prec=55)
+result = [-1.3079833984375e-1 ± <2^(-10)]
 accuracy: bits 10
-precision = Precision 55
+precision = Precision 12
 	Command being timed: "aern2-fnreps-ops integrate sinesine+sin dball 10"
-	User time (seconds): 1.90
+	User time (seconds): 1.10
 	System time (seconds): 0.02
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.92
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.13
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 10524
+	Maximum resident set size (kbytes): 16820
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 988
+	Minor (reclaiming a frame) page faults: 2488
 	Voluntary context switches: 1
-	Involuntary context switches: 4
+	Involuntary context switches: 5
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

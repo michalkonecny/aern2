@@ -50,7 +50,7 @@ instance (QAArrow to, HasBools b, SuitableForSeq b) => ConvertibleExactly Bool (
   safeConvertExactly bool =
     do
     b <- safeConvertExactly bool
-    Right $ newSeq b (show b) [] $ arr $ const b
+    Right $ newSeq b (show b) [] $ \_me_src -> arr $ const b
 
 instance
   (QAArrow to, CanNeg a, SuitableForSeq a, SuitableForSeq (NegType a))
@@ -98,6 +98,7 @@ instance
 
 instance
   (HasEqAsymmetric (SequenceA to a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (EqCompareType (SequenceA to a) b)
   , IsBool (EnsureCE es (EqCompareType (SequenceA to a) b))
   , SuitableForCE es)
@@ -110,6 +111,7 @@ instance
 
 instance
   (HasEqAsymmetric a (SequenceA to b)
+  , CanEnsureCE es a
   , CanEnsureCE es (EqCompareType a (SequenceA to b))
   , IsBool (EnsureCE es (EqCompareType a (SequenceA to b)))
   , SuitableForCE es)
@@ -122,6 +124,7 @@ instance
 
 instance
   (HasOrderAsymmetric (SequenceA to a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (OrderCompareType (SequenceA to a) b)
   , IsBool (EnsureCE es (OrderCompareType (SequenceA to a) b))
   , SuitableForCE es)
@@ -137,6 +140,7 @@ instance
 
 instance
   (HasOrderAsymmetric a (SequenceA to b)
+  , CanEnsureCE es a
   , CanEnsureCE es (OrderCompareType a (SequenceA to b))
   , IsBool (EnsureCE es (OrderCompareType a (SequenceA to b)))
   , SuitableForCE es)
@@ -230,6 +234,7 @@ instance
 
 instance
   (CanMinMaxAsymmetric (SequenceA to a) b
+  , CanEnsureCE es b
   , CanEnsureCE es (MinMaxType (SequenceA to a) b)
   , SuitableForCE es)
   =>
@@ -242,6 +247,7 @@ instance
 
 instance
   (CanMinMaxAsymmetric a (SequenceA to b)
+  , CanEnsureCE es a
   , CanEnsureCE es (MinMaxType a (SequenceA to b))
   , SuitableForCE es)
   =>
@@ -262,11 +268,11 @@ lift2 name op aSeq bSeq =
   where
   SequenceP sampleA = qaProtocol aSeq
   SequenceP sampleB = qaProtocol bSeq
-  makeQ =
+  makeQ (me, _src) =
     proc ac ->
       do
-      a <- seqWithAccuracy aSeq -< ac
-      b <- seqWithAccuracy bSeq -< ac
+      a <- seqWithAccuracy aSeq me -< ac
+      b <- seqWithAccuracy bSeq me -< ac
       returnA -< op a b
 
 lift2T ::
@@ -277,10 +283,10 @@ lift2T name op aSeq b =
   newSeq (op sampleA b) name [AnyProtocolQA aSeq] makeQ
   where
   SequenceP sampleA = qaProtocol aSeq
-  makeQ =
+  makeQ (me, _src) =
     proc ac ->
       do
-      a <- seqWithAccuracy aSeq -< ac
+      a <- seqWithAccuracy aSeq me -< ac
       returnA -< op a b
 
 $(declForTypes
@@ -318,6 +324,16 @@ $(declForTypes
       notEqualTo = lift2T "/=" (/=)
 
     instance
+      (QAArrow to, HasEqAsymmetric $t a
+      , SuitableForSeq a, SuitableForSeq (EqCompareType $t a))
+      =>
+      HasEqAsymmetric $t (SequenceA to a)
+      where
+      type EqCompareType $t (SequenceA to a) = SequenceA to (EqCompareType $t a)
+      equalTo = flip $ lift2T "==" (flip (==))
+      notEqualTo = flip $ lift2T "/=" (flip (/=))
+
+    instance
       (QAArrow to, HasOrderAsymmetric a $t
       , SuitableForSeq a, SuitableForSeq (OrderCompareType a $t))
       =>
@@ -328,5 +344,17 @@ $(declForTypes
       leq = lift2T "<=" (<=)
       greaterThan = lift2T ">" (>)
       geq = lift2T ">=" (>=)
+
+    instance
+      (QAArrow to, HasOrderAsymmetric $t a
+      , SuitableForSeq a, SuitableForSeq (OrderCompareType $t a))
+      =>
+      HasOrderAsymmetric $t (SequenceA to a)
+      where
+      type OrderCompareType $t (SequenceA to a) = SequenceA to (OrderCompareType $t a)
+      lessThan = flip $ lift2T "<" (flip (<))
+      leq = flip $ lift2T "<=" (flip (<=))
+      greaterThan = flip $ lift2T ">" (flip (>))
+      geq = flip $ lift2T ">=" (flip (>=))
 
   |]))

@@ -50,7 +50,7 @@ maximumOptimised f l r initialDegree steps =
   genericMaximum (evalDf f f') dfsWithEval (getAccuracy f) l r
   where
   f' = derivative f
-  maxKey = ceiling $ (degree f - initialDegree) / steps
+  maxKey = ceiling $ (degree f - initialDegree) /! steps
   dfsWithEval = Map.fromList [(k,(evalDirect df :: MPBall -> MPBall, df)) | (k,df) <- dfs]
   dfs = [(k, reduceDegree f' l r (initialDegree + steps*k)) | k <- [0..maxKey]]
 
@@ -298,11 +298,11 @@ computeMidpoint l r =
   in
   aux ip
       ip
-      ((l + r)/2)
+      ((l + r)/!2)
   where
   aux p q prevM =
     let
-      tryM = ((setPrecision p l) + (setPrecision p r))/2
+      tryM = ((setPrecision p l) + (setPrecision p r))/!2
     in
       if getAccuracy tryM <= getAccuracy prevM then
         prevM
@@ -310,7 +310,7 @@ computeMidpoint l r =
         aux (p + q) p tryM
 
 {-evalDirectAccurately ::
- (Ring t, CanAddSubMulDivBy t Dyadic, CanDivBy t Integer,
+ (Ring t, CanAddSubMulDivCNBy t Dyadic, CanDivCNBy t Integer,
   CanAddSubMulBy t c, Ring c, HasAccuracy t,
   HasPrecision t, CanSetPrecision t) =>
     ChPoly c -> t -> t

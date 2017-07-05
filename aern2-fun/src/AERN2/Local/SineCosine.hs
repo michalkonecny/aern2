@@ -11,7 +11,7 @@ sineLocal ::
   (HasDomain f, CanApplyApprox f (Domain f)
   , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
   , CanNegSameType f, CanAddSameType f, CanMulSameType f
-  , CanAddSubMulDivBy f Integer, CanAddSubMulDivBy f CauchyReal
+  , CanAddSubMulDivCNBy f Integer, CanAddSubMulDivCNBy f CauchyReal
   , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
   , IsBall f
   , Show f)
@@ -23,7 +23,7 @@ cosineLocal ::
   (HasDomain f, CanApplyApprox f (Domain f)
   , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
   , CanNegSameType f, CanAddSameType f, CanMulSameType f
-  , CanAddSubMulDivBy f Integer, CanAddSubMulDivBy f CauchyReal
+  , CanAddSubMulDivCNBy f Integer, CanAddSubMulDivCNBy f CauchyReal
   , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
   , IsBall f
   , Show f)

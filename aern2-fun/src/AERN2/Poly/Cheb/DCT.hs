@@ -87,7 +87,7 @@ lift2_DCT getDegree op pA pB
   dB = terms_degree $ chPoly_terms pB
   resultDegree = getDegree dA dB
   cNexponent = 1 + (integer $ integerLog2 $ max 1 (resultDegree + 1))
-  cN = 2 ^ cNexponent
+  cN = 2 ^! cNexponent
 
   -- prc = (getPrecision pA) `max` (getPrecision pB)
   workingPrec = prec $ 100 + cN
@@ -99,13 +99,13 @@ lift2_DCT getDegree op pA pB
 
   cT = zipWith op aT bT -- multiplication of the cN+1 values of the polynomials on the grid
 
-  (c0Double : c) = map (* (2 / cN)) (tDCT_I_nlogn cT) -- interpolate the values using a polynomial
+  (c0Double : c) = map (* (2 /! cN)) (tDCT_I_nlogn cT) -- interpolate the values using a polynomial
 
   result =
     normalize $
     -- setPrecision prc $
     reduceDegree resultDegree $
-      ChPoly domA (Poly $ terms_fromList $ zip [0..] (c0Double / 2 : c)) Nothing
+      ChPoly domA (Poly $ terms_fromList $ zip [0..] (c0Double /! 2 : c)) Nothing
 --    terms_fromList [(0, mpBall 1)] -- dummy for debugging exceptions
 
 {-|
@@ -133,16 +133,16 @@ lift1_DCT getDegree op (ChPoly dom (Poly termsA) _) =
     ChPoly dom (Poly terms) Nothing
     where
     terms =
-      terms_fromList $ zip [0..] (c0Double / 2 : c)
+      terms_fromList $ zip [0..] (c0Double /! 2 : c)
 --    terms_fromList [(0, mpBall 1)] -- dummy for debugging exceptions
-    (c0Double : c) = map (* (2 / cN)) (tDCT_I_nlogn cT) -- interpolate the values using a polynomial
+    (c0Double : c) = map (* (2 /! cN)) (tDCT_I_nlogn cT) -- interpolate the values using a polynomial
 
     -- op on the cN+1 values of the polynomials on the grid:
     cT = map op aT
 
     aT = coeffs2gridvalues cN termsA
 
-    cN = 2 ^ (1 + (integer $ integerLog2 $ max 1 (getDegree dA + 1)))
+    cN = 2 ^! (1 + (integer $ integerLog2 $ max 1 (getDegree dA + 1)))
     dA = terms_degree termsA
 
 
@@ -172,7 +172,7 @@ tDCT_I_reference ::
   [c] {-^ @a@ a vector of validated real numbers -} ->
   [c] {-^ @a~@ a vector of validated real numbers -}
 tDCT_I_reference a =
-    [sum [ (eps cN k) * (a !! k) * cos ( ((mu * k) * pi) / cN)
+    [sum [ (eps cN k) * (a !! k) * cos ( ((mu * k) * pi) /! cN)
             | k <- [0..cN]
          ]
         | mu <- [0..cN]
@@ -202,14 +202,14 @@ tDCT_I_nlogn a
     | otherwise = map aTilde [0..cN]
     where
     aTilde i
-        | even i = fTilde !! (floor (i/2))
-        | otherwise = gTilde !! (floor ((i - 1)/2))
+        | even i = fTilde !! (floor (i/!2))
+        | otherwise = gTilde !! (floor ((i - 1)/!2))
     fTilde = tDCT_I_nlogn f
     gTilde = tDCT_III_nlogn g
     f = [ (a !! ell) + (a !! (cN - ell)) | ell <- [0..cN1]]
     g = [ (a !! ell) - (a !! (cN - ell)) | ell <- [0..cN1-1]]
     cN = integer (length a) - 1
-    cN1 = floor (cN / 2)
+    cN1 = floor (cN /! 2)
 
 {-|
     DCT-III computed directly from its definition in
@@ -222,7 +222,7 @@ _tDCT_III_reference ::
   [c] {-^ g a vector of validated real numbers -} ->
   [c] {-^ g~ a vector of validated real numbers -}
 _tDCT_III_reference g =
-    [sum [ (eps cN1 k) * (g !! k) * cos ( (((2*j+1)*k) * pi) / cN)
+    [sum [ (eps cN1 k) * (g !! k) * cos ( (((2*j+1)*k) * pi) /! cN)
             | k <- [0..(cN1-1)]
          ]
         | j <- [0..(cN1-1)]
@@ -247,8 +247,8 @@ tDCT_III_nlogn g =
     h2g h = map get_g [0..cN1-1]
         where
         get_g i
-            | even i = h !! (floor (i/2 :: Rational))
-            | otherwise = h !! (floor $ (2*cN1 - i - 1)/2)
+            | even i = h !! (floor (i/!2 :: Rational))
+            | otherwise = h !! (floor $ (2*cN1 - i - 1)/!2)
     cN1 = integer (length g)
 
 {-|
@@ -262,7 +262,7 @@ _tSDCT_III_reference ::
   [c] {-^ h a vector of validated real numbers -} ->
   [c] {-^ h~ a vector of validated real numbers -}
 _tSDCT_III_reference h =
-    [sum [ (h !! ell) * cos ( (((4*j+1)*ell) * pi) / cN)
+    [sum [ (h !! ell) * cos ( (((4*j+1)*ell) * pi) /! cN)
             | ell <- [0..(cN1-1)]
          ]
         | j <- [0..(cN1-1)]
@@ -319,10 +319,10 @@ tSDCT_III_nlogn (h :: [c]) =
                 +
                 ((2 * (minusOnePow bit_iTauMinus1)) * (hItau_minus_1 !! (c_Ntau_plus_1+n)) * gamma)
             gamma =
-                cos $ (((4 * c_Itau_minus_1) + 1) * pi) / (4*two_pow_tau_minus_1)
+                cos $ (((4 * c_Itau_minus_1) + 1) * pi) /! (4*two_pow_tau_minus_1)
         c_Ntau = integer (length hItau_minus_1)
         c_Ntau_plus_1
-            | even c_Ntau = floor (c_Ntau/2)
+            | even c_Ntau = floor (c_Ntau/!2)
             | otherwise = error "tSDCT_III_nlogn: precondition violated: (length h) has to be a power of 2"
 
     minusOnePow :: Integer -> Integer

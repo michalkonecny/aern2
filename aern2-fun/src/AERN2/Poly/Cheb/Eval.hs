@@ -26,7 +26,7 @@ import MixedTypesNumPrelude
 
 import Data.Maybe
 
-import Numeric.CatchingExceptions
+
 
 import AERN2.MP.ErrorBound
 import AERN2.MP.Ball
@@ -43,7 +43,7 @@ import AERN2.Poly.Basics
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Derivative
 
-import Debug.Trace
+-- import Debug.Trace
 
 {- evaluation -}
 
@@ -57,8 +57,8 @@ instance
       _ -> evalDI p x
 
 instance
-  CanApply (ChPoly MPBall) (CatchingNumExceptions MPBall) where
-  type ApplyType (ChPoly MPBall) (CatchingNumExceptions MPBall) = CatchingNumExceptions MPBall
+  CanApply (ChPoly MPBall) (CN MPBall) where
+  type ApplyType (ChPoly MPBall) (CN MPBall) = CN MPBall
   apply p x =
     -- TODO: check x is in the domain
     apply p <$> x
@@ -72,12 +72,12 @@ instance
 --       apply cp $ setPrecision pr $ mpBall x
 
 evalDirect ::
-  (Ring t, CanAddSubMulDivBy t Dyadic, CanDivBy t Integer,
+  (Ring t, CanAddSubMulDivCNBy t Dyadic, CanDivCNBy t Integer,
    CanAddSubMulBy t c, Ring c)
   =>
   (ChPoly c) -> t -> t
 evalDirect (ChPoly dom (Poly terms) _) (xInDom :: t) =
-    (b0 - b2)/2
+    (b0 - b2)/!2
     where
     x = fromDomToUnitInterval dom xInDom
     n = terms_degree terms
@@ -215,4 +215,5 @@ instance ConvertibleExactly (ChPoly MPBall) (UnaryBallFun, ErrorBound) where
     where
     e = radius cp
     cpExact = centreAsBall cp
-    eval bE = fmap (evalDirect cpExact) bE
+    eval :: CN MPBall -> CN MPBall
+    eval b = evalDirect cpExact b

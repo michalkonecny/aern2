@@ -33,7 +33,7 @@ instance GenericMaximum (LocalFrac MPBall) where
   genericise f l r ac =
     [(l, r, evalF, fAcc, evalDF, dom, bsI)]
     where
-    evalF = Frac.evalDf fI (2/(r - l) * dNum) (2/(r - l) * dDenom)
+    evalF = Frac.evalDf fI (2/!(r - l) * dNum) (2/!(r - l) * dDenom)
     fAcc = getAccuracy fI
     evalDF = Cheb.evalDirect dfRat :: Rational -> Rational
     fI@(Frac num denom _dIM) = f l r ac

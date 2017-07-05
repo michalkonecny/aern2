@@ -26,6 +26,8 @@ import MixedTypesNumPrelude
 import qualified Prelude as P
 import Text.Printf
 
+import Control.CollectErrors
+
 import Data.Complex
 
 import Data.Typeable
@@ -119,6 +121,14 @@ instance HasPrecision Bool where
 instance CanSetPrecision Bool where
   setPrecision _ = id
 
+instance HasPrecision t => HasPrecision (CollectErrors es t) where
+  getPrecision vCE =
+    case getMaybeValueCE vCE of
+      Just v -> getPrecision v
+      _ -> defaultPrecision
+instance CanSetPrecision t => CanSetPrecision (CollectErrors es t) where
+  setPrecision p = fmap (setPrecision p)
+
 lowerPrecisionIfAbove :: (CanSetPrecision t) => Precision -> t -> t
 lowerPrecisionIfAbove p x
   | getPrecision x > p = setPrecision p x
@@ -151,9 +161,10 @@ defaultPrecision :: Precision
 defaultPrecision = Precision 100
 
 standardPrecisions :: Precision -> [Precision]
-standardPrecisions (Precision initPrec) =
-    map Precision $ aux initPrec (3*initPrec `P.div` 2)
+standardPrecisions (Precision initPrec0) =
+    map (Precision . (+ initPrec)) $ aux 0 (max 2 (initPrec `P.div` 16))
     where
+    initPrec = max 2 initPrec0
     aux j j'
         | Precision j <= maximumPrecision = j : (aux j' (j+j'))
         | otherwise = []

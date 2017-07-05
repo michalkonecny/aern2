@@ -24,7 +24,7 @@ instance
   CanApply (Frac c) t
   where
   type ApplyType (Frac c) t = ApplyType (ChPoly c) t
-  apply (Frac p q _) t = (apply p t) / (apply q t)
+  apply (Frac p q _) t = (apply p t) /! (apply q t)
     -- TODO: replace with a specific instance with c~MPBall using evalDI?
 
 instance
@@ -33,14 +33,14 @@ instance
   CanApplyApprox (Frac c) t
   where
   type ApplyApproxType (Frac c) t = ApplyApproxType (ChPoly c) t
-  applyApprox (Frac p q _) t = (applyApprox p t) / (applyApprox q t)
+  applyApprox (Frac p q _) t = (applyApprox p t) /! (applyApprox q t)
 
 evalDirect ::
-  (Field t, CanAddSubMulDivBy t Dyadic, CanDivBy t Integer,
+  (Field t, CanAddSubMulDivCNBy t Dyadic, CanDivCNBy t Integer,
   CanAddSubMulBy t c, Ring c)
   => Frac c -> t -> t
 evalDirect (Frac p q _) x =
-  (Cheb.evalDirect p x) / (Cheb.evalDirect q x)
+  (Cheb.evalDirect p x) /! (Cheb.evalDirect q x)
 
 evalDI :: Frac MPBall -> MPBall -> MPBall
 evalDI f@(Frac p q _) =

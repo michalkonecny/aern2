@@ -37,7 +37,7 @@ import MixedTypesNumPrelude
 -- import Control.Lens.Operators
 -- import Control.Lens (_Just)
 
-import Numeric.CatchingExceptions
+
 
 -- import AERN2.MP.Dyadic
 import AERN2.MP
@@ -55,21 +55,21 @@ import AERN2.RealFun.UnaryBallFun.Type
 import AERN2.RealFun.UnaryBallFun.Evaluation ()
 
 instance CanIntegrateOverDom UnaryBallFun DyadicInterval where
-  type IntegralOverDomType UnaryBallFun DyadicInterval = CauchyReal
+  type IntegralOverDomType UnaryBallFun DyadicInterval = CauchyRealCN
   integrateOverDom f =
-    integralOnIntervalSubdivide (integralOnIntervalIncreasePrecision getArea) standardPrecisions
+    integralOnIntervalSubdivide (integralOnIntervalIncreasePrecision getArea)
+      (\ (AccuracySG _ acG) -> standardPrecisions (ac2prec acG))
     -- integralOnIntervalSubdivide (\s di _ac -> (s, getArea di)) standardPrecisions
     where
     getArea di p =
       (apply f diB)*(Interval.width di)
       where
-      diB =
-        catchingNumExceptions $ setPrecision p $ mpBall di
+      diB = setPrecision p $ mpBall di
 
 integralOnIntervalIncreasePrecision ::
-  (DyadicInterval -> Precision -> CatchingNumExceptions MPBall) ->
+  (DyadicInterval -> Precision -> CN MPBall) ->
   [Precision] -> DyadicInterval -> Accuracy ->
-  ([Precision], CatchingNumExceptions MPBall)
+  ([Precision], CN MPBall)
 integralOnIntervalIncreasePrecision _getArea [] _di _ac =
   error "AERN2.RealFun.UnaryBallFun: internal error in integrateOverDom"
 integralOnIntervalIncreasePrecision getArea ps@(p1_O:_) di ac =
@@ -100,15 +100,14 @@ integralOnIntervalIncreasePrecision getArea ps@(p1_O:_) di ac =
   aux diArea1 ps2 = (ps2, diArea1)
 
 integralOnIntervalSubdivide ::
-  (s -> DyadicInterval -> Accuracy -> (s,CatchingNumExceptions MPBall))
+  (s -> DyadicInterval -> Accuracy -> (s, CN MPBall))
   ->
-  s -> (DyadicInterval -> CauchyReal)
+  (AccuracySG -> s) -> (DyadicInterval -> CauchyRealCN)
 integralOnIntervalSubdivide integralOnInterval initS diO =
-    newCR "integral" [] makeQ
+    newCRCN "integral" [] makeQ
     where
-    makeQ ac =
-      ifCertainExceptionDie "integrate by subdivide" $
-          integr initS diO (_acStrict ac)
+    makeQ _ ac =
+      integr (initS ac) diO (_acStrict ac)
     integr s di ac
         | getAccuracy value >= ac =
             maybeTrace

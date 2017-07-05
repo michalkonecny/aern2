@@ -27,11 +27,17 @@ import Math.NumberTheory.Logarithms (integerLog2)
 -- import Data.Maybe
 
 instance CanDiv PPoly PPoly where -- TODO: support negative denominator
+  type DivTypeNoCN PPoly PPoly = PPoly
+  divideNoCN p q =
+    p * inverse q
   type DivType PPoly PPoly = PPoly
   divide p q =
     p * inverse q
 
 instance CanDiv Integer PPoly where -- TODO: support negative denominator
+  type DivTypeNoCN Integer PPoly = PPoly
+  divideNoCN n q =
+    n * inverse q
   type DivType Integer PPoly = PPoly
   divide n q =
     n * inverse q
@@ -44,14 +50,14 @@ inverseWithAccuracy cutoff' f@(PPoly _ (Interval l r)) =
   updateRadius (+ radius f) fcInv
   where
   cutoff = min (getFiniteAccuracy f) cutoff'
-  numIts = (integer . integerLog2 . (`max` 1) . ceiling . (/ 10) . fromAccuracy) cutoff
+  numIts = (integer . integerLog2 . (`max` 1) . ceiling . (/! 10) . fromAccuracy) cutoff
   fcInv = iterateInverse cutoff numIts fc (setPrecision (getPrecision f) if0)
-  bts   = max (2 + (integer . integerLog2 . snd . integerBounds) bf) $ (fromAccuracy cutoff) `Prelude.div` (2^numIts)
+  bts   = max (2 + (integer . integerLog2 . snd . integerBounds) bf) $ (fromAccuracy cutoff) `Prelude.div` (2^!numIts)
   fc    = centre f
   fRed0 = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 (bits 1)) fc
   fRed1 = fc--(liftCheb2PPoly $ reduceDegreeToAccuracy 5 (2*thresholdAccuracy)) fc
   bf    = abs $ AERN2.PPoly.Maximum.maximumOptimisedWithAccuracy fRed0 (mpBall l) (mpBall r) 5 5 (bits 4)
-  threshold = (mpBall $ (dyadic 0.5)^bts)/(centreAsBall bf) --1/((2^bts)*(1 + (centreAsBall bf)))
+  threshold = (mpBall $ (dyadic 0.5)^!bts)/!(centreAsBall bf) --1/((2^bts)*(1 + (centreAsBall bf)))
   if0 = initialApproximation fRed1 bts thresholdAccuracy
   thresholdAccuracy = 2 + 2*getAccuracy ((fromEndpoints (-threshold) (threshold)) :: MPBall)
 
@@ -216,8 +222,8 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) bts thresholdAccuracy {-bf-}
   nodesNErrs =
     Set.toList $
     refineUntilAccurate $
-    LineSegment (dyadic $ -1, mpBall $ centre $ 1/(evalDirect f (mpBall l)))
-                (dyadic 1, mpBall $ centre $ 1/(evalDirect f (mpBall r)))
+    LineSegment (dyadic $ -1, mpBall $ centre $ 1/!(evalDirect f (mpBall l)))
+                (dyadic 1, mpBall $ centre $ 1/!(evalDirect f (mpBall r)))
   nodes = map fst nodesNErrs
   errs = map snd nodesNErrs
   {-minf =
@@ -237,7 +243,7 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) bts thresholdAccuracy {-bf-}
       absErr-}
   bf = maximumOptimisedWithAccuracy fRed (mpBall l) (mpBall r) 5 5 (bits 1)
   pieceThreshold (LineSegment (a, fa) (b,fb)) =
-    mpBall $ (dyadic 0.5)^bts--1/((2^bts)*(1 + bf))
+    mpBall $ (dyadic 0.5)^!bts--1/((2^bts)*(1 + bf))
     {-let
     bfp = maximumOptimisedWithAccuracy fRed (mpBall a) (mpBall b) 5 5 (bits 4)
     in
@@ -257,7 +263,7 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) bts thresholdAccuracy {-bf-}
       absErr = max (abs maxErr) (abs minErr)-}
       minf   = minimumOptimisedWithAccuracy f (mpBall a) (mpBall b) 5 5 thresholdAccuracy
     in
-        absErr/minf
+        absErr/!minf
 
   refineUntilAccurate :: LineSegment -> Set (LineSegment, MPBall)
   refineUntilAccurate p@(LineSegment (a,_) (b, _)) =
@@ -279,7 +285,7 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) bts thresholdAccuracy {-bf-}
   refinePiece (LineSegment (a,fa) (b,fb)) =
     let
       m  = (dyadic 0.5)*(a + b)
-      fm = 1/((mpBall . centre . evalDirect f . mpBall . fromUnitIntervalToDom) m)
+      fm = 1/!((mpBall . centre . evalDirect f . mpBall . fromUnitIntervalToDom) m)
     in
       Set.fromList [LineSegment (a,fa) (m, fm), LineSegment (m, fm) (b, fb)]
   lineSegment ((a,fa), (b, fb)) =

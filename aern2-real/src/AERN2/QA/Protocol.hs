@@ -16,15 +16,17 @@ module AERN2.QA.Protocol
   -- * QA protocols and objects
   QAProtocol(..), QAProtocolCacheable(..)
   , QA(..), QAPromiseA, (?..)
+  , qaRename
   , mapQA, mapQAsameQ
   -- * QAArrows
   , AnyProtocolQA(..)
   , QAArrow(..), defaultNewQA, QARegOption(..)
   , qaMakeQuery, qaMakeQueryA, qaMakeQueriesA, qaMakeQueryOnManyA
-  , (?)
+  , (?<-), (?)
   , (-:-), (-:-|), (-:-||)
-  , (-?-), (-?..-), (-???-), (-<?>-)
-  , qaMake2Queries, (??)
+  , (-?<-), (-?-), (-?..<-), (-?..-), (-???<-), (-<?<->-)
+  , qaMake2Queries, (??<-)
+  , qaMake3Queries
 )
 where
 
@@ -63,17 +65,22 @@ data QA to p = QA__
     qaId :: Maybe (QAId to),
     qaSources :: [QAId to],
     qaProtocol :: p,
-    qaSampleQ :: Q p,
-    qaMakeQueryGetPromise :: (Q p) `to` (QAPromiseA to (A p))
+    qaSampleQ :: Maybe (Q p),
+    qaMakeQueryGetPromise ::
+      (Maybe (QAId to), Maybe (QAId to)) {-^ this node id, source of query-} ->
+      (Q p) `to` (QAPromiseA to (A p))
   }
 
 type QAPromiseA to a = () `to` a
 
 {-| An infix synonym of 'qaMakeQuery'. -}
 (?..) :: QA to p -> (Q p) `to` (QAPromiseA to (A p))
-(?..) = qaMakeQueryGetPromise
+(?..) qa = qaMakeQueryGetPromise qa (Nothing, Nothing)
 
 infix 1 ?..
+
+qaRename :: (String -> String) -> QA to p -> QA to p
+qaRename f qa = qa {  qaName = f (qaName qa)  }
 
 mapQA ::
   (Arrow to) =>
@@ -85,8 +92,8 @@ mapQA ::
 mapQA
     translateP translateQ translateBackQ translateA
     (QA__ name qaid sources p sampleQ makeQ) =
-  QA__ name qaid sources (translateP p) (translateQ sampleQ) $
-    (arr $ ((arr translateA) <<<) ) <<< makeQ <<< arr translateBackQ
+  QA__ name qaid sources (translateP p) (fmap translateQ sampleQ) $
+    \ source -> (arr $ ((arr translateA) <<<) ) <<< makeQ source <<< arr translateBackQ
 
 mapQAsameQ ::
   (Arrow to, Q p1 ~ Q p2) =>
@@ -135,14 +142,15 @@ class (ArrowChoice to, P.Eq (QAId to)) => QAArrow to where
     For most arrows, the default implementation is sufficient.
   -}
   newQA :: (QAProtocolCacheable p) =>
-    String -> [AnyProtocolQA to] -> p -> Q p -> (Q p) `to` (A p) -> QA to p
+    String -> [AnyProtocolQA to] -> p -> Maybe (Q p) -> ((Maybe (QAId to), Maybe (QAId to)) -> (Q p) `to` (A p)) -> QA to p
   newQA = defaultNewQA
   qaFulfilPromiseA :: (QAPromiseA to a) `to` a
-  qaMakeQueryGetPromiseA :: (QA to p, Q p) `to` (QAPromiseA to (A p))
+  qaMakeQueryGetPromiseA :: Maybe (QAId to) -> (QA to p, Q p) `to` (QAPromiseA to (A p))
 
 defaultNewQA ::
   (QAArrow to, QAProtocolCacheable p) =>
-  String -> [AnyProtocolQA to] -> p -> Q p -> (Q p) `to` (A p) -> QA to p
+  String -> [AnyProtocolQA to] -> p -> Maybe (Q p) ->
+  ((Maybe (QAId to), Maybe (QAId to)) -> (Q p) `to` (A p)) -> QA to p
 defaultNewQA name sources p sampleQ makeQ =
   QA__ name Nothing (nub $ concat $ map getSourceIds sources) p sampleQ makeQPromise
   where
@@ -150,86 +158,114 @@ defaultNewQA name sources p sampleQ makeQ =
     case anyPqaId source of
       Just id1 -> [id1]
       Nothing -> anyPqaSources source
-  makeQPromise =
+  makeQPromise me_src =
     proc acSG ->
       returnA -< promise acSG
-  promise acSG =
-    proc () ->
-      do
-      a <- makeQ -< acSG
-      returnA -< a
+    where
+    promise acSG =
+      proc () ->
+        do
+        a <- makeQ me_src -< acSG
+        returnA -< a
 
-qaMakeQuery :: (QAArrow to) => (QA to p) -> (Q p) `to` (A p) -- ^ composition of qaMakeQueryGetPromise and the execution of the promise
-qaMakeQuery qa = (qaMakeQueryGetPromise qa) >>> qaFulfilPromiseA
+qaMakeQuery :: (QAArrow to) => (QA to p) -> (Maybe (QAId to)) -> (Q p) `to` (A p)
+  -- ^ composition of qaMakeQueryGetPromise and the execution of the promise
+qaMakeQuery qa src = (qaMakeQueryGetPromise qa (me, src)) >>> qaFulfilPromiseA
+  where
+  me = case qaId qa of Nothing -> src; me2 -> me2
 
-qaMakeQueryA :: (QAArrow to) => (QA to p, Q p) `to` (A p)
-qaMakeQueryA = qaMakeQueryGetPromiseA >>> qaFulfilPromiseA
+qaMakeQueryA :: (QAArrow to) => Maybe (QAId to) -> (QA to p, Q p) `to` (A p)
+qaMakeQueryA src = qaMakeQueryGetPromiseA src >>> qaFulfilPromiseA
 
-qaMakeQueriesA :: (QAArrow to) => [(QA to p, Q p)] `to` [A p]
-qaMakeQueriesA = (mapA qaMakeQueryGetPromiseA) >>> (mapA qaFulfilPromiseA)
+qaMakeQueriesA :: (QAArrow to) => Maybe (QAId to) -> [(QA to p, Q p)] `to` [A p]
+qaMakeQueriesA src = (mapA (qaMakeQueryGetPromiseA src)) >>> (mapA qaFulfilPromiseA)
 
-qaMakeQueryOnManyA :: (QAArrow to) => ([QA to p], Q p) `to` [A p]
-qaMakeQueryOnManyA =
-  proc (qas, q) -> qaMakeQueriesA -< map (flip (,) q) qas
+qaMakeQueryOnManyA :: (QAArrow to) => Maybe (QAId to) -> ([QA to p], Q p) `to` [A p]
+qaMakeQueryOnManyA src =
+  proc (qas, q) -> qaMakeQueriesA src -< map (flip (,) q) qas
 
-{-| An infix synonym of 'qaMakeQuery'. -}
+{-| An infix synonym of 'qaMakeQuery' -}
+(?<-) :: (QAArrow to) => QA to p -> Maybe (QAId to) -> (Q p) `to` (A p)
+(?<-) = qaMakeQuery
+
+{-| An infix synonym of 'qaMakeQuery' with no source -}
 (?) :: (QAArrow to) => QA to p -> (Q p) `to` (A p)
-(?) = qaMakeQuery
+(?) = \qa -> qaMakeQuery qa Nothing
 
-infix 1 ?
+infix 1 ?, ?<-
 
-{-| An infix synonym of 'qaRegister'. -}
+{-| An infix synonym of 'qaRegister' -}
 (-:-) :: (QAArrow to, QAProtocolCacheable p) => (QA to p) `to` (QA to p)
 (-:-) = qaRegister []
 
-{-| An infix synonym of 'qaRegister'. -}
+{-| An infix synonym of 'qaRegister' -}
 (-:-||) :: (QAArrow to, QAProtocolCacheable p) => (QA to p) `to` (QA to p)
 (-:-||) = qaRegister [QARegPreferParallel]
 
-{-| An infix synonym of 'qaRegister'. -}
+{-| An infix synonym of 'qaRegister' -}
 (-:-|) :: (QAArrow to, QAProtocolCacheable p) => (QA to p) `to` (QA to p)
 (-:-|) = qaRegister [QARegPreferSerial]
 
-{-| An infix synonym of 'qaMakeQueryGetPromiseA'. -}
+{-| An infix synonym of 'qaMakeQueryGetPromiseA' -}
+(-?..<-) :: (QAArrow to) => Maybe (QAId to) -> (QA to p, Q p) `to` (QAPromiseA to (A p))
+(-?..<-) = qaMakeQueryGetPromiseA
+
+{-| An infix synonym of 'qaMakeQueryGetPromiseA' with no source -}
 (-?..-) :: (QAArrow to) => (QA to p, Q p) `to` (QAPromiseA to (A p))
-(-?..-) = qaMakeQueryGetPromiseA
+(-?..-) = qaMakeQueryGetPromiseA Nothing
 
-{-| An infix synonym of 'qaMakeQueryA'. -}
+{-| An infix synonym of 'qaMakeQueryA' -}
+(-?<-) :: (QAArrow to) => Maybe (QAId to) -> (QA to p, Q p) `to` (A p)
+(-?<-) = qaMakeQueryA
+
+{-| An infix synonym of 'qaMakeQueryA' with no source -}
 (-?-) :: (QAArrow to) => (QA to p, Q p) `to` (A p)
-(-?-) = qaMakeQueryA
+(-?-) = qaMakeQueryA Nothing
 
-{-| An infix synonym of 'qaMakeQueryOnManyA'. -}
-(-<?>-) :: (QAArrow to) => ([QA to p], Q p) `to` [A p]
-(-<?>-) = qaMakeQueryOnManyA
+{-| An infix synonym of 'qaMakeQueryOnManyA' -}
+(-<?<->-) :: (QAArrow to) => Maybe (QAId to) -> ([QA to p], Q p) `to` [A p]
+(-<?<->-) = qaMakeQueryOnManyA
 
-{-| An infix synonym of 'qaMakeQueriesA'. -}
-(-???-) :: (QAArrow to) => [(QA to p, Q p)] `to` [A p]
-(-???-) = qaMakeQueriesA
+{-| An infix synonym of 'qaMakeQueriesA' -}
+(-???<-) :: (QAArrow to) => Maybe (QAId to) -> [(QA to p, Q p)] `to` [A p]
+(-???<-) = qaMakeQueriesA
 
-infix 0 -?-, -?..-, -???-, -<?>-
-infix 0 -:-
+infix 0 -?<-, -?..<-, -???<-, -<?<->-
+infix 0 -:-, -:-|, -:-||
 
 {-| An infix synonym of 'qaMake2Queries'. -}
-(??) :: (QAArrow to) => (QA to p1, QA to p2) -> (Q p1, Q p2) `to` (A p1, A p2)
-(??) = qaMake2Queries
+(??<-) :: (QAArrow to) => (QA to p1, QA to p2) -> Maybe (QAId to) -> (Q p1, Q p2) `to` (A p1, A p2)
+(??<-) = qaMake2Queries
 
-infix 1 ??
-
-{- arrow conversions -}
+infix 0 ??<-
 
 {-| Run two queries in an interleaving manner, enabling parallelism. -}
-qaMake2Queries :: (QAArrow to) => (QA to p1, QA to p2) -> (Q p1, Q p2) `to` (A p1, A p2)
-qaMake2Queries (qa1, qa2) =
+qaMake2Queries :: (QAArrow to) => (QA to p1, QA to p2) -> Maybe (QAId to) -> (Q p1, Q p2) `to` (A p1, A p2)
+qaMake2Queries (qa1, qa2) src =
   proc (q1,q2) ->
     do
-    ap1 <- qaMakeQueryGetPromiseA -< (qa1, q1)
-    ap2 <- qaMakeQueryGetPromiseA -< (qa2, q2)
+    ap1 <- (-?..<-) src -< (qa1, q1)
+    ap2 <- (-?..<-) src -< (qa2, q2)
     a1 <- qaFulfilPromiseA -< ap1
     a2 <- qaFulfilPromiseA -< ap2
     returnA -< (a1,a2)
 
--- (//..) :: a -> b -> (a,b)
--- a //..b = (a,b)
+{-| Run two queries in an interleaving manner, enabling parallelism. -}
+qaMake3Queries ::
+  (QAArrow to) =>
+  (QA to p1, QA to p2, QA to p3) -> Maybe (QAId to) -> (Q p1, Q p2, Q p3) `to` (A p1, A p2, A p3)
+qaMake3Queries (qa1, qa2, qa3) src =
+  proc (q1,q2,q3) ->
+    do
+    ap1 <- (-?..<-) src -< (qa1, q1)
+    ap2 <- (-?..<-) src -< (qa2, q2)
+    ap3 <- (-?..<-) src -< (qa3, q3)
+    a1 <- qaFulfilPromiseA -< ap1
+    a2 <- qaFulfilPromiseA -< ap2
+    a3 <- qaFulfilPromiseA -< ap3
+    returnA -< (a1,a2,a3)
+
+{- arrow conversions -}
 
 instance
   (CanSwitchArrow to1 to2, QAArrow to1, QAArrow to2, QAProtocolCacheable p)
@@ -237,4 +273,4 @@ instance
   ConvertibleExactly (QA to1 p) (QA to2 p)
   where
   safeConvertExactly qa =
-    Right $ defaultNewQA (qaName qa) [] (qaProtocol qa) (qaSampleQ qa) (switchArrow $ qaMakeQuery qa)
+    Right $ defaultNewQA (qaName qa) [] (qaProtocol qa) (qaSampleQ qa) (\ _src -> switchArrow (qaMakeQuery qa Nothing))

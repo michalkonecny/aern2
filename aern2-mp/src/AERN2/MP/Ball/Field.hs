@@ -72,6 +72,7 @@ instance CanAddAsymmetric Rational MPBall where
 
 instance
   (CanAddAsymmetric MPBall b
+  , CanEnsureCE es b
   , CanEnsureCE es (AddType MPBall b)
   , SuitableForCE es)
   =>
@@ -83,6 +84,7 @@ instance
 
 instance
   (CanAddAsymmetric a MPBall
+  , CanEnsureCE es a
   , CanEnsureCE es (AddType a MPBall)
   , SuitableForCE es)
   =>
@@ -110,6 +112,7 @@ instance CanSub Dyadic MPBall
 
 instance
   (CanSub MPBall b
+  , CanEnsureCE es b
   , CanEnsureCE es (SubType MPBall b)
   , SuitableForCE es)
   =>
@@ -121,6 +124,7 @@ instance
 
 instance
   (CanSub a MPBall
+  , CanEnsureCE es a
   , CanEnsureCE es (SubType a MPBall)
   , SuitableForCE es)
   =>
@@ -172,6 +176,7 @@ instance CanMulAsymmetric Rational MPBall where
 
 instance
   (CanMulAsymmetric MPBall b
+  , CanEnsureCE es b
   , CanEnsureCE es (MulType MPBall b)
   , SuitableForCE es)
   =>
@@ -183,6 +188,7 @@ instance
 
 instance
   (CanMulAsymmetric a MPBall
+  , CanEnsureCE es a
   , CanEnsureCE es (MulType a MPBall)
   , SuitableForCE es)
   =>
@@ -265,6 +271,7 @@ instance CanDiv Rational MPBall where
 
 instance
   (CanDiv MPBall b
+  , CanEnsureCE es b
   , CanEnsureCE es (DivType MPBall b)
   , CanEnsureCE es (DivTypeNoCN MPBall b)
   , SuitableForCE es)
@@ -280,6 +287,7 @@ instance
 
 instance
   (CanDiv a MPBall
+  , CanEnsureCE es a
   , CanEnsureCE es (DivType a MPBall)
   , CanEnsureCE es (DivTypeNoCN a MPBall)
   , SuitableForCE es)
@@ -296,31 +304,41 @@ instance
 {- integer power -}
 
 instance CanPow MPBall Integer where
-  type PowType MPBall Integer = CN MPBall
+  powNoCN b e = (~!) $ powUsingMulRecip b e
   pow = powUsingMulRecip
 
 instance CanPow MPBall Int where
-  type PowType MPBall Int = CN MPBall
+  powNoCN b e = (~!) $ powUsingMulRecip b e
   pow = powUsingMulRecip
 
 instance
   (CanPow MPBall b
+  , CanEnsureCE es b
   , CanEnsureCE es (PowType MPBall b)
+  , CanEnsureCE es (PowTypeNoCN MPBall b)
   , SuitableForCE es)
   =>
   CanPow MPBall (CollectErrors es  b)
   where
+  type PowTypeNoCN MPBall (CollectErrors es  b) =
+    EnsureCE es (PowTypeNoCN MPBall b)
+  powNoCN = lift2TLCE powNoCN
   type PowType MPBall (CollectErrors es  b) =
     EnsureCE es (PowType MPBall b)
   pow = lift2TLCE pow
 
 instance
   (CanPow a MPBall
+  , CanEnsureCE es a
   , CanEnsureCE es (PowType a MPBall)
+  , CanEnsureCE es (PowTypeNoCN a MPBall)
   , SuitableForCE es)
   =>
   CanPow (CollectErrors es a) MPBall
   where
+  type PowTypeNoCN (CollectErrors es  a) MPBall =
+    EnsureCE es (PowTypeNoCN a MPBall)
+  powNoCN = lift2TCE powNoCN
   type PowType (CollectErrors es  a) MPBall =
     EnsureCE es (PowType a MPBall)
   pow = lift2TCE pow

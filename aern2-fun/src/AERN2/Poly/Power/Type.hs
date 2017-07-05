@@ -34,14 +34,14 @@ _powPoly_truncatedSin :: Integer -> PowPoly MPBall
 _powPoly_truncatedSin n =
   PowPoly $ Poly $ terms_fromList
     ((0, mpBall 0) :
-    [ (2*k + 1, convertP (prec 55) $ ((-1)^k) /(fac (2*k + 1)))  | k <- [0..n]])
+    [ (2*k + 1, convertP (prec 55) $ ((-1)^!k) /! (fac (2*k + 1)))  | k <- [0..n]])
   where
   fac k = foldl' (*) 1 [1..k]
 
 _powPoly_truncatedSin_rat :: Integer -> PowPoly Rational
 _powPoly_truncatedSin_rat n =
   PowPoly $ Poly $ terms_fromList
-    [ (2*k + 1, ((-1)^k) /(fac (2*k + 1)))  | k <- [0..n]]
+    [ (2*k + 1, ((-1)^!k) /! (fac (2*k + 1)))  | k <- [0..n]]
   where
   fac k = foldl' (*) 1 [1..k]
 

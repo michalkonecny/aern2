@@ -181,9 +181,20 @@ $(declForTypes
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
   (\ t -> [d|
-    instance (CanDivBy c $t, HasIntegers c, CanNormalize (ChPoly c)) => CanDiv (ChPoly c) $t where
-      type DivType (ChPoly c) $t = ChPoly c
-      divide (ChPoly d1 p1 _) n = normalize $ ChPoly d1 (p1/n) Nothing
+    instance
+      (CanDivCNBy c $t
+      , CanEnsureCN c, EnsureNoCN c ~ c
+      , CanEnsureCN (EnsureCN c)
+      , HasIntegers c, CanNormalize (ChPoly c))
+      =>
+      CanDiv (ChPoly c) $t
+      where
+      type DivTypeNoCN (ChPoly c) $t = ChPoly c
+      divideNoCN (ChPoly d1 p1 _) n = normalize $ ChPoly d1 (p1/!n) Nothing
+      type DivType (ChPoly c) $t = CN (ChPoly c)
+      divide (ChPoly d1 p1 _) n =
+        fmap normalize $ extractCN $ ChPoly d1 (p1/n) Nothing
+
   |]))
 
 {- integer power -}

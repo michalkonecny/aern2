@@ -71,6 +71,7 @@ instance HasEqAsymmetric Dyadic MPBall where
 
 instance
   (HasEqAsymmetric MPBall b
+  , CanEnsureCE es b
   , CanEnsureCE es (EqCompareType MPBall b)
   , IsBool (EnsureCE es (EqCompareType MPBall b))
   , SuitableForCE es)
@@ -83,6 +84,7 @@ instance
 
 instance
   (HasEqAsymmetric a MPBall
+  , CanEnsureCE es a
   , CanEnsureCE es (EqCompareType a MPBall)
   , IsBool (EnsureCE es (EqCompareType a MPBall))
   , SuitableForCE es)
@@ -177,6 +179,7 @@ instance HasOrderAsymmetric Rational MPBall where
 
 instance
   (HasOrderAsymmetric MPBall b
+  , CanEnsureCE es b
   , CanEnsureCE es (OrderCompareType MPBall b)
   , IsBool (EnsureCE es (OrderCompareType MPBall b))
   , SuitableForCE es)
@@ -192,6 +195,7 @@ instance
 
 instance
   (HasOrderAsymmetric a MPBall
+  , CanEnsureCE es a
   , CanEnsureCE es (OrderCompareType a MPBall)
   , IsBool (EnsureCE es (OrderCompareType a MPBall))
   , SuitableForCE es)
@@ -261,6 +265,7 @@ instance CanMinMaxAsymmetric Rational MPBall where
 
 instance
   (CanMinMaxAsymmetric MPBall b
+  , CanEnsureCE es b
   , CanEnsureCE es (MinMaxType MPBall b)
   , SuitableForCE es)
   =>
@@ -273,6 +278,7 @@ instance
 
 instance
   (CanMinMaxAsymmetric a MPBall
+  , CanEnsureCE es a
   , CanEnsureCE es (MinMaxType a MPBall)
   , SuitableForCE es)
   =>
@@ -299,8 +305,13 @@ instance CanIntersectAssymetric MPBall MPBall where
 {- union -}
 
 instance CanUnionAssymetric MPBall MPBall where
-  union a b = fromEndpointsMP rL rR
+  union a b =
+    case getMaybeValueCN (a `intersect` b) of
+      Just _ -> prependErrorsCN [(ErrorPotential, err)] r
+      _ -> prependErrorsCN [(ErrorCertain, err)] r
     where
+    err = NumError $ "union of enclosures: not enclosing the same value"
+    r = cn $ fromEndpointsMP rL rR
     rL = min aL bL
     rR = max aR bR
     (aL,aR) = endpointsMP a

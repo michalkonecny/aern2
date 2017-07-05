@@ -16,10 +16,12 @@
 module AERN2.Sequence.Type
 (
   SequenceP(..), pSeq
+  , FastConvSeqP, EffortConvSeqP
   , SuitableForSeq
   , seqName, seqId, seqSources, seqRename
   , seqWithAccuracy, seqWithAccuracyA, seqsWithAccuracyA
   , SequenceA, Sequence
+  , FastConvSeqA, EffortConvSeqA, FastConvSeq, EffortConvSeq
   , newSeq, newSeqSimple
   , convergentList2SequenceA
   , seqByPrecision2SequenceA
@@ -56,6 +58,8 @@ import AERN2.AccuracySG
 {- QA protocol -}
 
 data SequenceP a = SequenceP { unSequenceP :: a} deriving (Show)
+type FastConvSeqP a = SequenceP a -- synonym, emphasising stric accuracy requirement
+type EffortConvSeqP a = SequenceP a -- synonym, emphasising accuracy guide
 
 pSeq :: a -> SequenceP a
 pSeq a = SequenceP a
@@ -66,7 +70,7 @@ instance (Show a) => QAProtocol (SequenceP a) where
   -- sampleQ _ = AccuracySG NoInformation NoInformation
 
 type SuitableForSeq a =
-  (Show a, HasAccuracy a, CanAdjustToAccuracySG a
+  (Show a, Show (EnsureNoCN a), HasAccuracy a, CanAdjustToAccuracySG a
   , CanEnsureCN a, HasAccuracy (EnsureNoCN a), CanIntersectCNSameType a)
 
 instance
@@ -106,8 +110,12 @@ instance Functor SequenceP where
 {- Seqeuences -}
 
 type SequenceA to a = QA to (SequenceP a)
-
 type Sequence a = SequenceA (->) a
+
+type FastConvSeqA to a = SequenceA to a -- synonym, emphasising stric accuracy requirement
+type EffortConvSeqA to a = SequenceA to a -- synonym, emphasising accuracy guide
+type FastConvSeq a = Sequence a -- synonym, emphasising stric accuracy requirement
+type EffortConvSeq a = Sequence a -- synonym, emphasising accuracy guide
 
 instance (Show a) => Show (Sequence a) where
   show r = show $ r ? (accuracySG (bits 100))
@@ -121,7 +129,7 @@ seqName :: SequenceA to a -> String
 seqName = qaName
 --
 seqRename :: (String -> String) -> SequenceA to a -> SequenceA to a
-seqRename f r = r {  qaName = f (qaName r)  }
+seqRename = qaRename
 
 seqId :: SequenceA to a -> Maybe (QAId to)
 seqId = qaId
@@ -131,13 +139,13 @@ seqSources = qaSources
 
 {-| Get an approximation of the limit with at least the specified accuracy.
    (A specialisation of 'qaMakeQuery' for Cauchy sequences.) -}
-seqWithAccuracy :: (QAArrow to) => SequenceA to a -> AccuracySG `to` a
-seqWithAccuracy = (?)
+seqWithAccuracy :: (QAArrow to) => SequenceA to a -> Maybe (QAId to) -> AccuracySG `to` a
+seqWithAccuracy = (?<-)
 
-seqWithAccuracyA :: (QAArrow to) => (SequenceA to a, AccuracySG) `to` a
+seqWithAccuracyA :: (QAArrow to) => (Maybe (QAId to)) -> (SequenceA to a, AccuracySG) `to` a
 seqWithAccuracyA = qaMakeQueryA
 
-seqsWithAccuracyA :: (QAArrow to) => ([SequenceA to a], AccuracySG) `to` [a]
+seqsWithAccuracyA :: (QAArrow to) => (Maybe (QAId to)) -> ([SequenceA to a], AccuracySG) `to` [a]
 seqsWithAccuracyA = qaMakeQueryOnManyA
 
 {- constructions -}
@@ -145,30 +153,27 @@ seqsWithAccuracyA = qaMakeQueryOnManyA
 newSeq ::
   (QAArrow to, SuitableForSeq a)
   =>
-  a -> String -> [AnyProtocolQA to] -> AccuracySG `to` a -> SequenceA to a
+  a -> String -> [AnyProtocolQA to] -> ((Maybe (QAId to), Maybe (QAId to)) -> AccuracySG `to` a) -> SequenceA to a
 newSeq sampleA name sources makeQ =
-  newQA name sources (pSeq sampleA) (AccuracySG NoInformation NoInformation) makeQ
-  -- where
-  -- makeQ' =
-  --   proc q ->
-  --     do
-  --     a <- makeQ -< q
-  --     returnA -< adjustToAccuracySG q a
+  newQA name sources (pSeq sampleA) Nothing makeQ
 
-newSeqSimple :: (QAArrow to, SuitableForSeq a) => a -> AccuracySG `to` a -> SequenceA to a
+newSeqSimple ::
+  (QAArrow to, SuitableForSeq a)
+  =>
+  a -> ((Maybe (QAId to), Maybe (QAId to)) -> AccuracySG `to` a) -> SequenceA to a
 newSeqSimple sampleA = newSeq sampleA "simple" []
 
 convergentList2SequenceA ::
   (QAArrow to, SuitableForSeq a) =>
   String -> [a] -> (SequenceA to a)
 convergentList2SequenceA name balls@(sampleA : _) =
-  newSeq sampleA name [] (arr $ convergentList2CauchySeq balls . bits)
+  newSeq sampleA name [] (\_src -> arr $ convergentList2CauchySeq balls . bits)
 convergentList2SequenceA name [] =
   error $ "convergentList2SequenceA: empty sequence " ++ name
 
 seqByPrecision2SequenceA :: (QAArrow to, SuitableForSeq a) => String -> (Precision -> a) -> (SequenceA to a)
 seqByPrecision2SequenceA name byPrec =
-  newSeq sampleA name [] (arr $ seqByPrecision2CauchySeq byPrec . bits)
+  newSeq sampleA name [] (\_src -> arr $ seqByPrecision2CauchySeq byPrec . bits)
     where
     sampleA = byPrec (prec 0)
 
@@ -187,10 +192,10 @@ instance
   ensureNoCE sample_es (SequenceP a) =  fmap SequenceP (ensureNoCE sample_es a)
 
   noValueECE sample_vCE es = SequenceP (noValueECE (fmap unSequenceP sample_vCE) es)
+  prependErrorsECE sample_vCE es1 = fmap (prependErrorsECE (fmap unSequenceP sample_vCE) es1)
 
   -- getMaybeValueECE sample_es (SequenceP a) = fmap SequenceP (getMaybeValueECE sample_es a)
   -- getErrorsECE sample_vCE (SequenceP a) = getErrorsECE (fmap unSequenceP sample_vCE) a
-  -- prependErrorsECE sample_vCE es1 = fmap (prependErrorsECE (fmap unSequenceP sample_vCE) es1)
 
 instance
   (Arrow to, SuitableForCE es, CanEnsureCE es a)
@@ -213,14 +218,15 @@ instance
   noValueECE _sample_vCE _es =
     error "noValueECE not implemented for Sequence yet"
 
+  prependErrorsECE (_sample_vCE :: Maybe (SequenceA to a)) es1 =
+    fmapSeq (prependErrorsECE (Nothing :: Maybe a) es1)
+
   -- getMaybeValueECE sample_es = Just . fmapSeq (removeJust . getMaybeValueECE sample_es)
   --   where
   --   removeJust (Just a) = a
   --   removeJust _ = error "getMaybeValueECE failed for a Sequence"
   -- getErrorsECE _sample_mv _s =
   --   error "getErrorsECE not implemented for Sequence yet"
-  -- prependErrorsECE (_sample_vCE :: Maybe (SequenceA to a)) es1 =
-  --   fmapSeq (prependErrorsECE (Nothing :: Maybe a) es1)
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Dyadic |]]
@@ -232,7 +238,7 @@ $(declForTypes
       ConvertibleExactly $t (SequenceA to a)
       where
       safeConvertExactly x =
-        Right $ newSeq a (show x) [] (arr $ flip setPrecisionAtLeastAccuracy a . bits)
+        Right $ newSeq a (show x) [] (\_src -> arr $ flip setPrecisionAtLeastAccuracy a . bits)
         where
         a = convertExactly x
 

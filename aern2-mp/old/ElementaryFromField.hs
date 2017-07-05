@@ -60,7 +60,7 @@ instance CanExp MPBall where
     acGuide = 4 + getFiniteAccuracy x
 
 expWithAccuracyGuide ::
-  (Ring t, CanDivBy t Integer, ConvertibleWithPrecision Rational t
+  (Ring t, CanDivCNBy t Integer, ConvertibleWithPrecision Rational t
   , CanAbsSameType t
   , HasIntegerBounds t
   , HasOrderCertainly Integer t
@@ -77,7 +77,7 @@ expWithAccuracyGuide acGuide =
   intervalFunctionByEndpoints (expThinArg acGuide)
 
 expThinArg ::
-  (Ring t, CanDivBy t Integer, ConvertibleWithPrecision Rational t
+  (Ring t, CanDivCNBy t Integer, ConvertibleWithPrecision Rational t
   , CanAbsSameType t
   , HasIntegerBounds t
   , HasOrderCertainly Integer t
@@ -100,7 +100,7 @@ expThinArg acGuide x
   (_,n) = integerBounds $ abs x
 
 expTaylorHorner ::
-  (Ring t, CanDivBy t Integer, ConvertibleWithPrecision Rational t
+  (Ring t, CanDivCNBy t Integer, ConvertibleWithPrecision Rational t
   , HasOrderCertainly Integer t
   , IsInterval t t
   , CanSetPrecision t, HasAccuracy t)

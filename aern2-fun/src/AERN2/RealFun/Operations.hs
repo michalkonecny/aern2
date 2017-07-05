@@ -30,8 +30,10 @@ where
 #ifdef DEBUG
 import Debug.Trace (trace)
 #define maybeTrace trace
+#define maybeTraceIO putStrLn
 #else
-#define maybeTrace (flip const)
+#define maybeTrace (\ (_ :: String) t -> t)
+#define maybeTraceIO (\ (_ :: String) -> return ())
 #endif
 
 import MixedTypesNumPrelude
@@ -108,8 +110,8 @@ sampledRange (Interval l r) depth f =
     samplePointsT = map convertExactly samplePoints
     _ = minValue : samplePointsT
     samplePoints :: [Dyadic]
-    samplePoints = [(l*i + r*(size - i))*(dyadic (1/size)) | i <- [0..size]]
-    size = 2^depth
+    samplePoints = [(l*i + r*(size - i))*(dyadic (1/!size)) | i <- [0..size]]
+    size = 2^!depth
 
 
 {- constructing basic functions -}

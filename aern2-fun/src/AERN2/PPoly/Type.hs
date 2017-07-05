@@ -1,3 +1,4 @@
+{-# LANGUAGE TupleSections #-}
 module AERN2.PPoly.Type
 where
 
@@ -68,12 +69,12 @@ linearPolygonI ((x,y) : xys) dom =
       (errorBound 0)
   linearTerm a fa b fb p q prev =
     let
-    a' = setPrecision (max (getPrecision a) p) (mpBall a)
-    b' = setPrecision (max (getPrecision b) p) (mpBall b)
-    fa' = setPrecision (max (getPrecision fa) p) fa
-    fb' = setPrecision (max (getPrecision fb) p) fb
+    a' = raisePrecisionIfBelow p (mpBall a)
+    b' = raisePrecisionIfBelow p (mpBall b)
+    fa' = raisePrecisionIfBelow p fa
+    fb' = raisePrecisionIfBelow p fb
     try =
-      (fb' - fa')/(b' - a')
+      (fb' - fa')/!(b' - a')
     in
       if getAccuracy try >= min (getFiniteAccuracy fa) (getFiniteAccuracy fb)
       || (isJust prev
@@ -83,12 +84,12 @@ linearPolygonI ((x,y) : xys) dom =
         linearTerm a fa b fb (p + q) p (Just try)
   constantTerm a fa b fb p q prev =
     let
-    a' = setPrecision (max (getPrecision a) p) (mpBall a)
-    b' = setPrecision (max (getPrecision b) p) (mpBall b)
-    fa' = setPrecision (max (getPrecision fa) p) fa
-    fb' = setPrecision (max (getPrecision fb) p) fb
+    a' = raisePrecisionIfBelow p (mpBall a)
+    b' = raisePrecisionIfBelow p (mpBall b)
+    fa' = raisePrecisionIfBelow p fa
+    fb' = raisePrecisionIfBelow p fb
     try =
-      fa'- (a'*(fb' - fa'))/(b' - a')
+      fa'- (a'*(fb' - fa'))/!(b' - a')
     in
       if getAccuracy try >= min (getFiniteAccuracy fa) (getFiniteAccuracy fb)
       || (isJust prev
@@ -107,6 +108,15 @@ liftBall2PPoly f (PPoly ps dom)  =
     -> (DyadicInterval, PolyBall)
     -> (DyadicInterval, PolyBall)
   domify g (i, p) = (i, g p)
+
+liftBall2PPolyCN :: (PolyBall -> CN PolyBall) -> (PPoly -> CN PPoly)
+liftBall2PPolyCN f (PPoly ps dom)  =
+  fmap (\ps2 -> PPoly ps2 dom) (sequence (map (domify f) ps))
+  where
+  domify :: (PolyBall -> CN PolyBall)
+    -> (DyadicInterval, PolyBall)
+    -> CN (DyadicInterval, PolyBall)
+  domify g (i, p) = fmap (i,) (g p)
 
 liftCheb2PPoly :: (Cheb -> Cheb) -> (PPoly -> PPoly)
 liftCheb2PPoly f =
@@ -261,8 +271,10 @@ instance CanMulAsymmetric Integer PPoly where
     mul n p = liftBall2PPoly (n*) $ p
 
 instance CanDiv PPoly Integer where
-    type DivType PPoly Integer = PPoly
-    divide p n = liftBall2PPoly (/n) $ p
+    type DivTypeNoCN PPoly Integer = PPoly
+    divideNoCN p n = liftBall2PPoly (/!n) $ p
+    type DivType PPoly Integer = CN PPoly
+    divide p n = liftBall2PPolyCN (/n) $ p
 
 {- Mixed operations with MPBall -}
 
@@ -292,5 +304,7 @@ instance CanMulAsymmetric MPBall PPoly where
     mul n p = liftBall2PPoly (*n) p
 
 instance CanDiv PPoly MPBall where
-    type DivType PPoly MPBall = PPoly
-    divide p n = liftBall2PPoly (/ n) p
+    type DivTypeNoCN PPoly MPBall = PPoly
+    divideNoCN p n = liftBall2PPoly (/!n) p
+    type DivType PPoly MPBall = CN PPoly
+    divide p n = liftBall2PPolyCN (/n) p

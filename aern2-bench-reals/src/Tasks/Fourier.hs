@@ -29,7 +29,9 @@ taskFFT ::
   Integer -> [c]
 taskFFT cr2c k = r
   where
-  (Just r) = taskFFTWithHook cr2c Just k
+  r = ditfft2 cr2c n x
+  x = [ convertExactly i | i <- [1..n]]
+  n = 2^!k
 
 taskFFTWithHook ::
   (FFTOps c, HasIntegers c)
@@ -37,29 +39,43 @@ taskFFTWithHook ::
   (CauchyReal -> c) ->
   (c -> Maybe c) -> Integer -> Maybe [c]
 taskFFTWithHook cr2c hook k =
-  ditfft2 cr2c hook n x
+  ditfft2Hook cr2c hook n x
   where
   x = [ convertExactly i | i <- [1..n]]
   n = 2^!k
 
-taskFFTWithHookA ::
-  (FFTOpsA to c, QAArrow to, HasIntegers c)
+taskFFTA ::
+  (FFTOpsA r c, QAArrow to, HasIntegers c
+  , c ~ Complex (QA to p), QAProtocolCacheable p, ConvertibleExactly CauchyReal (QA to p))
   =>
-  (Integer -> String -> c `to` Maybe c) ->
-  Integer -> () `to` Maybe [c]
-taskFFTWithHookA hookA k =
+  Integer -> () `to` [c]
+taskFFTA k =
   proc () ->
     do
-    mxR <- mapWithIndexA reg -< x
-    let Just xR = sequence mxR
-    ditfft2A hookA n -< xR
+    xR <- mapA (regComplex False) -< x
+    ditfft2A n -< xR
   where
-  reg i = hookA 0 ("x" ++ show i)
-  x = [ convertExactly i | i <- [1..n]]
+  x = [ complexGiveName ("x" ++ show i) $ convertExactly i | i <- [1..n]]
   n = 2^!k
 
-type FFTOpsA to c =
-  (CanAddSubMulBy c c, CanMulBy c (Complex (CauchyRealA to)))
+-- taskFFTWithHookA ::
+--   (FFTOpsA r c, QAArrow to, HasIntegers c)
+--   =>
+--   (Integer -> String -> c `to` Maybe c) ->
+--   Integer -> () `to` Maybe [c]
+-- taskFFTWithHookA hookA k =
+--   proc () ->
+--     do
+--     mxR <- mapWithIndexA reg -< x
+--     let Just xR = sequence mxR
+--     ditfft2AHook hookA n -< xR
+--   where
+--   reg i = hookA 0 ("x" ++ show i)
+--   x = [ convertExactly i | i <- [1..n]]
+--   n = 2^!k
+
+type FFTOpsA r c =
+  (CanAddSubMulBy r r, c ~ Complex r)
 
 type FFTOps c =
   (CanMulBy c Rational, CanMulBy c (Complex Integer)
@@ -68,14 +84,49 @@ type FFTOps c =
 
 {-| Cooley-Tukey FFT closely following
     https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Pseudocode
+
+    A vanilla version using Data.Sequence.
 -}
 ditfft2 ::
   (FFTOps c)
   =>
   (CauchyReal -> c) ->
+  Integer -> [c] -> [c]
+ditfft2 cr2c nI x =
+  toList $ aux 0 nI 1
+  where
+  xSQ = SQ.fromList x
+  aux i n s
+    | n == 1 = SQ.singleton $ xSQ `SQ.index` (int i)
+    | otherwise =
+      let
+        nHalf = n `div` 2
+        yEven = aux i nHalf (2*s)
+        yOdd = aux (i+s) nHalf (2*s)
+        yOddTw = SQ.zipWith (*) yOdd $ SQ.fromList [tw k n | k <- [0..nHalf-1]]
+        yL = SQ.zipWith (+) yEven yOddTw
+        yR = SQ.zipWith (-) yEven yOddTw
+      in
+      (yL <> yR)
+  tw k n =
+    case Map.lookup (k%n) twsNI of -- memoisation
+      Just v -> v
+      _ -> error "ditfft2Hook: tw: internal error"
+  twsNI = tws cr2c nI nI
+
+{-| Cooley-Tukey FFT closely following
+    https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Pseudocode
+
+    A version with a hook that allows one to stop the computation at any point
+    and propagate Nothing.
+-}
+ditfft2Hook ::
+  (FFTOps c)
+  =>
+  (CauchyReal -> c) ->
   (c -> Maybe c) ->
   Integer -> [c] -> Maybe [c]
-ditfft2 cr2c (hook :: c -> Maybe c) nI x =
+ditfft2Hook cr2c (hook :: c -> Maybe c) nI x =
   fmap toList $ aux 0 nI 1
   where
   xSQ = SQ.fromList x
@@ -97,56 +148,117 @@ ditfft2 cr2c (hook :: c -> Maybe c) nI x =
   tw k n =
     case Map.lookup (k%n) twsNI of -- memoisation
       Just v -> v
-      _ -> error "ditfft2: tw: internal error"
+      _ -> error "ditfft2Hook: tw: internal error"
   twsNI = tws cr2c nI nI
 
 {-| Cooley-Tukey FFT closely following
     https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Pseudocode
 -}
 ditfft2A ::
-  (FFTOpsA to c, QAArrow to)
+  (FFTOpsA r c, QAArrow to
+  , c ~ Complex (QA to p), QAProtocolCacheable p, ConvertibleExactly CauchyReal (QA to p))
   =>
-  (Integer -> String -> c `to` Maybe c) ->
-  Integer -> [c] `to` Maybe [c]
-ditfft2A (hookA :: Integer -> String -> c `to` Maybe c) nI = aux 0 nI 1
+  Integer -> [c] `to` [c]
+ditfft2A nI = aux 0 nI 1
   where
   aux i n s
-    | n == 1 =
-        proc x -> returnA -< Just [x !! i]
+    | n == 1 = arr (\ x -> [x !! i])
     | otherwise = convLR
     where
     nHalf = n `div` 2
-    -- nodeName = printf "node(%d,%d,%d)" i n s
-    convLR :: [c] `to` Maybe [c]
+    isParallel = (nI == n)
     convLR =
-      proc x ->
-        do
-        yEven_m <- aux i nHalf (2*s) -< x
-        yOdd_m <- aux (i+s) nHalf (2*s) -< x
-        case (yEven_m, yOdd_m) of
-          (Just yEven, Just yOdd) ->
-            do
-            yOddTw_ms <- mapA twiddleA -< zip yOdd [0..]
-            case sequence yOddTw_ms of
-              Just yOddTw ->
-                do
-                yLm <- mapA (binReg (+)) -< zip yEven yOddTw
-                yRm <- mapA (binReg (-)) -< zip yEven yOddTw
-                returnA -< do { yL <- sequence yLm; yR <- sequence yRm; return (yL ++ yR) }
-              _ -> returnA -< Nothing
-          _ -> returnA -< Nothing
-    binReg :: (t1 -> t2 -> c) -> ((t1,t2) `to` Maybe c)
-    binReg op =
-      proc (a,b) -> hookA n "node?" -< op a b
-    twiddleA =
-      proc (a,k) ->
-        binReg (*) -< (a, tw k n)
-  tw :: Integer -> Integer -> (Complex (CauchyRealA to))
+      proc x -> do
+        yEven <- aux i nHalf (2*s) -< x
+        yOdd <- aux (i+s) nHalf (2*s) -< x
+        yOddTw <- mapWithIndexA twiddleA -< yOdd
+        let yL = map (complexGiveName "+ node") (zipWith (+) yEven yOddTw)
+        let yR = map (complexGiveName "- node") (zipWith (-) yEven yOddTw)
+        mapA (regComplex isParallel) -< yL ++ yR
+    twiddleA k =
+      proc (a :: c) ->
+        regComplex isParallel -< complexGiveName opName (a * (tw k n :: c))
+      where
+      opName = printf "*(tw %d/%d) node" k n
   tw k n =
     case Map.lookup (k%n) twsNI of -- memoisation
       Just v -> convertExactly v
       _ -> error "ditfft2A: tw: internal error"
   twsNI = twsCR nI nI
+
+regComplex ::
+  (QAArrow to, QAProtocolCacheable p) =>
+  Bool -> (Complex (QA to p)) `to` (Complex (QA to p))
+regComplex isParallel
+  | isParallel =
+    proc (a:+b) -> do
+      a' <- (-:-||) -< a
+      b' <- (-:-||) -< b
+      returnA -< (a':+b')
+  | otherwise =
+    proc (a:+b) -> do
+      a' <- (-:-) -< a
+      b' <- (-:-) -< b
+      returnA -< (a':+b')
+
+complexGiveName :: String -> Complex (QA to p) -> Complex (QA to p)
+complexGiveName name (a:+b) = (a':+b')
+  where
+  a' = qaRename (\_ -> name ++ " (R)") a
+  b' = qaRename (\_ -> name ++ " (I)") b
+
+-- {-| Cooley-Tukey FFT closely following
+--     https://en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm#Pseudocode
+-- -}
+-- ditfft2AHook ::
+--   (FFTOpsA r c, QAArrow to)
+--   =>
+--   (Integer -> String -> c `to` Maybe c) ->
+--   Integer -> [c] `to` Maybe [c]
+-- ditfft2AHook (hookA :: Integer -> String -> c `to` Maybe c) nI = aux 0 nI 1
+--   where
+--   aux i n s
+--     | n == 1 =
+--         proc x -> returnA -< Just [x !! i]
+--     | otherwise = convLR
+--     where
+--     nHalf = n `div` 2
+--     -- nodeName = printf "node(%d,%d,%d)" i n s
+--     convLR :: [c] `to` Maybe [c]
+--     convLR =
+--       proc x ->
+--         do
+--         yEven_m <- aux i nHalf (2*s) -< x
+--         yOdd_m <- aux (i+s) nHalf (2*s) -< x
+--         case (yEven_m, yOdd_m) of
+--           (Just yEven, Just yOdd) ->
+--             do
+--             yOddTw_ms <- mapWithIndexA twiddleA -< yOdd
+--             case sequence yOddTw_ms of
+--               Just yOddTw ->
+--                 do
+--                 yLm <- mapWithIndexA (binHook "+" (+)) -< zip yEven yOddTw
+--                 yRm <- mapWithIndexA (binHook "-" (-)) -< zip yEven yOddTw
+--                 returnA -< do { yL <- sequence yLm; yR <- sequence yRm; return (yL ++ yR) }
+--               _ -> returnA -< Nothing
+--           _ -> returnA -< Nothing
+--     binHook :: String -> (t1 -> t2 -> c) -> (Integer -> (t1,t2) `to` Maybe c)
+--     binHook opName op _k =
+--       proc (a,b) -> hookA n nodeName -< op a b
+--       where
+--       nodeName =
+--         opName
+--         -- printf "%s(i=%d,n=%d,s=%d,k=%d)" opName i n s k
+--     twiddleA k =
+--       proc a -> binHook opName (*) k -< (a, tw k n)
+--       where
+--       opName = printf "*(tw %d/%d)" k n
+--   tw :: Integer -> Integer -> (Complex (CauchyRealA to))
+--   tw k n =
+--     case Map.lookup (k%n) twsNI of -- memoisation
+--       Just v -> convertExactly v
+--       _ -> error "ditfft2AHook: tw: internal error"
+--   twsNI = twsCR nI nI
 
 twsCR :: Integer -> Integer -> Map.Map Rational (Complex CauchyReal)
 twsCR n nN = foldl insertTw Map.empty [ k%nN | k <- [0..n]]
@@ -204,20 +316,20 @@ taskDFTWithHook cr2c hook k =
   x = [ convertExactly i | i <- [1..n]]
   n = 2^!k
 
-taskDFTWithHookA ::
-  (FFTOpsA to c, QAArrow to, HasIntegers c)
-  =>
-  (String -> c `to` Maybe c) -> Integer -> () `to` Maybe [c]
-taskDFTWithHookA hookA k =
-  proc () ->
-    do
-    mxR <- mapWithIndexA reg -< x
-    let Just xR = sequence mxR
-    dftA hookA -< xR
-  where
-  reg i = hookA $ "x" ++ show i
-  x = [ convertExactly i | i <- [1..n]]
-  n = 2^!k
+-- taskDFTWithHookA ::
+--   (FFTOpsA r c, QAArrow to, HasIntegers c)
+--   =>
+--   (String -> c `to` Maybe c) -> Integer -> () `to` Maybe [c]
+-- taskDFTWithHookA hookA k =
+--   proc () ->
+--     do
+--     mxR <- mapWithIndexA reg -< x
+--     let Just xR = sequence mxR
+--     dftA hookA -< xR
+--   where
+--   reg i = hookA $ "x" ++ show i
+--   x = [ convertExactly i | i <- [1..n]]
+--   n = 2^!k
 
 dft ::
   (FFTOps c, HasIntegers c)
@@ -240,7 +352,7 @@ dft cr2c hook x =
 
 
 dftA ::
-  (FFTOpsA to c, QAArrow to, HasIntegers c)
+  (FFTOpsA r c, QAArrow to, HasIntegers c, CanAddSubMulBy r (CauchyRealA to))
   =>
   (String -> c `to` Maybe c) -> [c] `to` Maybe [c]
 dftA (hookA :: String -> c `to` Maybe c) =
@@ -262,16 +374,16 @@ dftA (hookA :: String -> c `to` Maybe c) =
     twsNN = twsCR ((nN-1)*(nN-1)) nN
 
 
-_testFFT :: Integer -> IO ()
-_testFFT k =
-  do
-  putStrLn "x = "
-  sequence_ $ map print x
-  putStrLn "z = "
-  sequence_ $ map print z
-  where
-  n = 2^!k
-  x = [complex i | i <- [1..n]]
-  Just y = ditfft2A (\_ _ l -> Just l) n x
-  y' = map (/n) $ head y : (reverse $ tail y)
-  Just z = ditfft2A (\_ _ l -> Just l) n y'
+-- _testFFT :: Integer -> IO ()
+-- _testFFT k =
+--   do
+--   putStrLn "x = "
+--   sequence_ $ map print x
+--   putStrLn "z = "
+--   sequence_ $ map print z
+--   where
+--   n = 2^!k
+--   x = [complex i | i <- [1..n]]
+--   y = ditfft2A n x
+--   y' = map (/n) $ head y : (reverse $ tail y)
+--   z = ditfft2A n y'

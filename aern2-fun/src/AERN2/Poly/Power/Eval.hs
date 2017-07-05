@@ -45,4 +45,4 @@ evalLip f lip x =
 
 markovBoundI :: PowPoly MPBall -> MPBall
 markovBoundI f@(PowPoly (Poly ts)) =
-  ((degree f)^2) * Map.foldl' (\s y -> s + abs y) (mpBall 0) ts
+  ((degree f)^!2) * Map.foldl' (\s y -> s + abs y) (mpBall 0) ts

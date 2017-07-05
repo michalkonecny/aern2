@@ -23,6 +23,7 @@ module AERN2.Sequence.Helpers
   , seqElementSimilarToEncl
   -- misc
   ,getSeqFnNormLog
+  ,ensureAccuracyA
 )
 where
 
@@ -53,52 +54,56 @@ unaryOp ::
   =>
   String ->
   (a -> b) ->
-  (SequenceA to a -> (AccuracySG `to` (AccuracySG, Maybe a))) ->
+  (Maybe (QAId to) {-^ my id -} -> SequenceA to a -> (AccuracySG `to` (AccuracySG, Maybe a))) ->
   SequenceA to a -> SequenceA to b
 unaryOp name op getInitQ1 r1 =
   newSeq (op sampleA1) name [AnyProtocolQA r1] makeQ
   where
   SequenceP sampleA1 = qaProtocol r1
-  makeQ =
+  makeQ (me, _src) =
     proc ac ->
       do
-      q1Init <- getInitQ1 r1 -< ac
-      ensureAccuracyA1 (r1 ?) op -< (ac, q1Init)
+      (q1Init, mb1) <- getInitQ1 me r1 -< ac
+      ensureAccuracyA (proc [q1] -> (r1 ?<- me) -< q1) op -< (ac, ([q1Init], mb1))
 
 binaryOpWithPureArg ::
   (QAArrow to, SuitableForSeq a, SuitableForSeq b)
   =>
   String ->
   (a -> t -> b) ->
-  (SequenceA to a -> t -> (AccuracySG `to` (AccuracySG, Maybe a))) ->
+  (Maybe (QAId to) {-^ my id -} -> SequenceA to a -> t -> (AccuracySG `to` (AccuracySG, Maybe a))) ->
   SequenceA to a -> t -> SequenceA to b
 binaryOpWithPureArg name op getInitQ1T r1 t =
   newSeq (op sampleA t) name [AnyProtocolQA r1] makeQ
   where
   SequenceP sampleA = qaProtocol r1
-  makeQ =
+  makeQ (me, _src) =
     proc ac ->
       do
-      q1Init <- getInitQ1T r1 t -< ac
-      ensureAccuracyA1 (r1 ?) (flip op t) -< (ac, q1Init)
+      (q1Init, mb1) <- getInitQ1T me r1 t -< ac
+      ensureAccuracyA (proc [q1] -> (r1 ?<- me) -< q1) (flip op t) -< (ac, ([q1Init], mb1))
 
 binaryOp ::
   (QAArrow to, SuitableForSeq a, SuitableForSeq b, SuitableForSeq c)
   =>
   String ->
   (a -> b -> c) ->
-  (SequenceA to a -> SequenceA to b -> (AccuracySG `to` ((AccuracySG, Maybe a), (AccuracySG, Maybe b)))) ->
+  (Maybe (QAId to) {-^ my id -} -> SequenceA to a -> SequenceA to b ->
+  (AccuracySG `to` ((AccuracySG, Maybe a), (AccuracySG, Maybe b)))) ->
   SequenceA to a -> SequenceA to b -> SequenceA to c
 binaryOp name op getInitQ1Q2 r1 r2 =
   newSeq (op sampleA sampleB) name [AnyProtocolQA r1, AnyProtocolQA r2] makeQ
   where
   SequenceP sampleA = qaProtocol r1
   SequenceP sampleB = qaProtocol r2
-  makeQ =
+  makeQ (me,_src) =
     proc ac ->
       do
-      (q1Init, q2Init) <- getInitQ1Q2 r1 r2 -< ac
-      ensureAccuracyA2 ((r1,r2) ??) op -< (ac, q1Init, q2Init)
+      ((q1Init, mb1), (q2Init, mb2)) <- getInitQ1Q2 me r1 r2 -< ac
+      ensureAccuracyA
+        (proc [q1,q2] -> ((r1,r2) ??<- me) -< (q1,q2))
+        (uncurry op)
+          -< (ac, ([q1Init, q2Init], do {b1<-mb1;b2<-mb2;Just (b1,b2)}))
 
 {- functions to help determine initial queries -}
 
@@ -106,8 +111,8 @@ getInitQ1FromSimple ::
   (Arrow to)
   =>
   AccuracySG `to` q ->
-  r1 -> AccuracySG `to` (q, Maybe a)
-getInitQ1FromSimple simpleA _ =
+  Maybe (QAId to) {-^ my id -} -> r1 -> AccuracySG `to` (q, Maybe a)
+getInitQ1FromSimple simpleA _ _ =
   proc q ->
     do
     initQ1 <- simpleA -< q
@@ -117,8 +122,8 @@ getInitQ1TFromSimple ::
   (Arrow to)
   =>
   AccuracySG `to` q ->
-  r1 -> t -> AccuracySG `to` (q, Maybe a)
-getInitQ1TFromSimple simpleA _ _ =
+  Maybe (QAId to) {-^ my id -} -> r1 -> t -> AccuracySG `to` (q, Maybe a)
+getInitQ1TFromSimple simpleA _ _ _ =
   proc q ->
     do
     initQ1 <- simpleA -< q
@@ -128,8 +133,8 @@ getInitQ1Q2FromSimple ::
   (Arrow to)
   =>
   AccuracySG `to` (q,q) ->
-  r1 -> r2 -> AccuracySG `to` ((q, Maybe a), (q, Maybe b))
-getInitQ1Q2FromSimple simpleA _ _ =
+  Maybe (QAId to) {-^ my id -} -> r1 -> r2 -> AccuracySG `to` ((q, Maybe a), (q, Maybe b))
+getInitQ1Q2FromSimple simpleA _ _ _ =
   proc q ->
     do
     (initQ1, initQ2) <- simpleA -< q
@@ -140,33 +145,33 @@ getInitQ1Q2FromSimple simpleA _ _ =
   until the result is of a sufficient accuracy
 -}
 
-ensureAccuracyA1 ::
-  (ArrowChoice to, Show a1, Show b
+ensureAccuracyA ::
+  (ArrowChoice to, Show a, Show b
   , HasAccuracy b
-  , CanEnsureCN b, HasAccuracy (EnsureNoCN b))
+  , CanEnsureCN b, HasAccuracy (EnsureNoCN b), Show (EnsureNoCN b))
   =>
-  (AccuracySG `to` a1) ->
-  (a1 -> b) ->
-  ((AccuracySG, (AccuracySG, Maybe a1)) `to` b)
-ensureAccuracyA1 getA1 op =
-    proc (q,(j1, a1Prelim)) ->
-        case fmap op a1Prelim of
+  ([AccuracySG] `to` a) ->
+  (a -> b) ->
+  ((AccuracySG, ([AccuracySG], Maybe a)) `to` b)
+ensureAccuracyA getA op =
+    proc (q,(js, aPrelim)) ->
+        case fmap op aPrelim of
           Just resultPrelim | getAccuracy resultPrelim >= q ->
             returnA -<
                 maybeTrace (
-                    "ensureAccuracy1: Pre-computed result sufficient. (q = " ++ show q ++
-                    "; j1 = " ++ show j1 ++
+                    "ensureAccuracyA: Pre-computed result sufficient. (q = " ++ show q ++
+                    "; js = " ++ show js ++
                     "; result accuracy = " ++ (show $ getAccuracy resultPrelim) ++ ")"
                 ) $
                 resultPrelim
           _ ->
-            aux -< (q,j1)
+            aux -< (q,js)
     where
     aux =
-        proc (q,j1) ->
+        proc (q,js) ->
             do
-            a1 <- getA1 -< j1
-            let result = op a1
+            a <- getA -< js
+            let result = op a
             case ensureNoCN result of
               Left _ -> returnA -< result -- errors, give up improving
               Right resultNoCN ->
@@ -174,75 +179,24 @@ ensureAccuracyA1 getA1 op =
                   then
                   returnA -<
                       maybeTrace (
-                          "ensureAccuracy1: Succeeded. (q = " ++ show q ++
-                          "; j1 = " ++ show j1 ++
+                          "ensureAccuracyA: Succeeded. (q = " ++ show q ++
+                          "; js = " ++ show js ++
                           "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
                       ) $
                       result
                   else
                   aux -<
                       maybeTrace (
-                          "ensureAccuracy1: Not enough ... (q = " ++ show q ++
-                          "; j1 = " ++ show j1 ++
-                          "; a1 = " ++ show a1 ++
+                          "ensureAccuracyA: Not enough ... (q = " ++ show q ++
+                          "; js = " ++ show js ++
+                          "; a = " ++ show a ++
+                          "; resultNoCN = " ++ show resultNoCN ++
+                          "; resultNoCN accuracy = " ++ (show $ getAccuracy resultNoCN) ++ ")" ++
                           "; result = " ++ show result ++
                           "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
                       ) $
-                      (q, j1+1)
+                      (q, map (+1) js)
 
-ensureAccuracyA2 ::
-  (ArrowChoice to, Show a1, Show a2, Show b
-  , HasAccuracy b
-  , CanEnsureCN b, HasAccuracy (EnsureNoCN b))
-  =>
-  ((AccuracySG, AccuracySG) `to` (a1,a2)) ->
-  (a1 -> a2 -> b) ->
-  ((AccuracySG, (AccuracySG, Maybe a1), (AccuracySG, Maybe a2)) `to` b)
-ensureAccuracyA2 getA12 op =
-    proc (q,(j1, a1Prelim),(j2, a2Prelim)) ->
-        let resultP = do a1P <- a1Prelim; a2P <- a2Prelim; Just (op a1P a2P) in
-        case resultP of
-          Just resultPrelim | getAccuracy resultPrelim >= q ->
-            returnA -<
-                maybeTrace (
-                    "ensureAccuracy1: Pre-computed result sufficient. (q = " ++ show q ++
-                    "; j1 = " ++ show j1 ++
-                    "; result accuracy = " ++ (show $ getAccuracy resultPrelim) ++ ")"
-                ) $
-                resultPrelim
-          _ ->
-            aux -< (q,j1,j2)
-    where
-    aux =
-        proc (q,j1,j2) ->
-            do
-            (a1, a2) <- getA12 -< (j1, j2)
-            let result = op a1 a2
-            case ensureNoCN result of
-              Left _ -> returnA -< result -- errors, give up improving
-              Right resultNoCN ->
-                if getAccuracy resultNoCN >= _acStrict q
-                  then
-                    returnA -<
-                        maybeTrace (
-                            "ensureAccuracy2: Succeeded. (q = " ++ show q ++
-                            "; j1 = " ++ show j1 ++
-                            "; j2 = " ++ show j2 ++
-                            "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
-                        ) $
-                        result
-                  else
-                    aux -<
-                        maybeTrace (
-                            "ensureAccuracy2: Not enough ... (q = " ++ show q ++
-                            "; j1 = " ++ show j1 ++
-                            "; a1 = " ++ show a1 ++
-                            "; j2 = " ++ show j2 ++
-                            "; a2 = " ++ show a2 ++
-                            "; result = " ++ show result ++
-                            "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
-                        ) $
-                        (q, j1+1, j2+1)
 
 {- MPBall + CauchyReal = MPBall, only allowed in the (->) arrow  -}
 
@@ -275,11 +229,11 @@ seqElementSimilarToEncl accuracyTranslation b sa =
 getSeqFnNormLog ::
   (QAArrow to, CanEnsureCN v, HasNorm (EnsureNoCN v))
   =>
-  SequenceA to a -> (a -> v) -> AccuracySG `to` (Maybe Integer, a)
-getSeqFnNormLog a f =
+  Maybe (QAId to) -> SequenceA to a -> (a -> v) -> AccuracySG `to` (Maybe Integer, a)
+getSeqFnNormLog src a f =
   proc q ->
     do
-    aq <- seqWithAccuracy a -< q
+    aq <- seqWithAccuracy a src -< q
     returnA -< (aux aq, aq)
   where
   aux aq =

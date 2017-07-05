@@ -76,7 +76,7 @@ maximumOptimisedWithAccuracy cutoff f l r iDeg steps =
   where
   {-df  = (derivativeExact . centre) f
   df0 = reduceToEvalDirectAccuracy df (bits 0)-}
-  maxKey = max 0 (ceiling ((degree f - iDeg) / steps))
+  maxKey = max 0 (ceiling ((degree f - iDeg) /! steps))
   fs = Map.fromList [(k, fk k) | k <- [0 .. maxKey + 1]]
   fk k =
     let

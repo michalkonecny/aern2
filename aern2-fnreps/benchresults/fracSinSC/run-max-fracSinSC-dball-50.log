@@ -1,22 +1,22 @@
 computing max  (sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]
-result = [1.073602548175605 ± 8.101188799206837e-16](prec=175)
-accuracy: bits 50
-precision = Precision 175
+result = [1.073602548175605 ± <2^(-52)]
+accuracy: bits 52
+precision = Precision 55
 	Command being timed: "aern2-fnreps-ops max fracSinSC dball 50"
-	User time (seconds): 925.79
-	System time (seconds): 0.95
+	User time (seconds): 508.70
+	System time (seconds): 0.48
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 15:27.79
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 8:29.22
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 14756
+	Maximum resident set size (kbytes): 15328
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 741303
-	Voluntary context switches: 4
-	Involuntary context switches: 1402
+	Minor (reclaiming a frame) page faults: 475421
+	Voluntary context switches: 1
+	Involuntary context switches: 4363
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8
