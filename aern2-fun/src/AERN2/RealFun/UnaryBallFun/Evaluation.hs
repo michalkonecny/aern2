@@ -234,8 +234,10 @@ maximumOnIntervalSubdivide evalOnInterval di =
         ++ "\n  normLog(width(seg)) = " ++ show (getNormLog (Interval.width seg))
     -- ) $ maybeTrace (
     --     "UnaryBallFun maximumOnIntervalSubdivide search (2):"
-        ++ "\n  nextL = " ++ show nextL
+        ++ "\n  segValL = " ++ show segValL
         ++ "\n  segValR = " ++ show segValR
+        ++ "\n  prevL = " ++ show prevL
+        ++ "\n  nextL = " ++ show nextL
         ++ "\n  currentBall = " ++ show currentBall
         ++ "\n  accuracy(currentBall) = " ++ show (getAccuracy currentBall)
     ) $
@@ -245,9 +247,12 @@ maximumOnIntervalSubdivide evalOnInterval di =
     -- unpack the current segment and a pre-computed enclosure of the function on this segment:
     Just (MaxSearchSegment seg segValL segValR, rest) = Q.minView prevQueue
     -- get an enclosure of the function's maximum based on previous segments and the current segment:
-    nextL
-      | hasCertainErrorCN prevL = segValL
-      | otherwise = liftA2 max segValL prevL
+    nextL =
+      case (ensureNoCN prevL, ensureNoCN segValL) of
+        (Right _pL, Right _sVL) -> max segValL prevL
+        (Right _pL, _) -> prevL
+        (_, Right _sVL) -> segValL
+        _ -> prevL
     currentBall :: CN MPBall
     currentBall = liftA2 fromEndpoints nextL segValR
 
