@@ -68,8 +68,8 @@ function sinecosModFun
   fn=sine+cos; repr=fun
   dir=$fn
 
-  op=max; paramss="10 15 20 25"; runForParamss
-  op=integrate; paramss="10 12 14"; runForParamss
+  op=max; paramss="10 15 20"; runForParamss
+  op=integrate; paramss="10 12"; runForParamss
 }
 
 function sinecosBallFun
@@ -274,7 +274,7 @@ function rungeBallFun
   dir=$fn
 
   op=max; paramss="05 35 65 100"; runForParamss
-  op=integrate; paramss="05 10 15 20"; runForParamss
+  op=integrate; paramss="05 10 15 17"; runForParamss
 }
 
 function rungeDBallFun
@@ -328,7 +328,7 @@ function rungeLPPoly
   dir=$fn
 
   op=max; paramss="10 20 40 80"; runForParamss
-  op=integrate; paramss="2 10 80 120"; runForParamss
+  # op=integrate; paramss="2 10 80 120"; runForParamss # FIXME
 }
 
 function rungeLFrac
@@ -337,7 +337,7 @@ function rungeLFrac
   dir=$fn
 
   op=max; paramss="10 20 40 80"; runForParamss
-  op=integrate; paramss="2 10 80 120"; runForParamss
+  # op=integrate; paramss="2 10 80 120"; runForParamss # FIXME
 }
 
 #################
@@ -604,19 +604,19 @@ sinecosDBallFun
 sinecosPoly
 sinecosLPoly
 
-sinesineModFun
+# sinesineModFun
 sinesineBallFun
 sinesineDBallFun
 sinesinePoly
 sinesineLPoly
 
-sinesine+cosModFun
+# sinesine+cosModFun
 sinesine+cosBallFun
 sinesine+cosDBallFun
 sinesine+cosPoly
 sinesine+cosLPoly
 
-sinesine+sinModFun
+# sinesine+sinModFun
 sinesine+sinBallFun
 sinesine+sinDBallFun
 sinesine+sinPoly
@@ -648,7 +648,7 @@ fracSinDBallFun
 fracSinPPoly
 fracSinPoly
 fracSinFrac
-fracSinLPoly
+# fracSinLPoly -- FIXME
 fracSinLPPoly
 fracSinLFrac
 
@@ -657,6 +657,6 @@ fracSinSCDBallFun
 fracSinSCPoly
 fracSinSCPPoly
 fracSinSCFrac
-fracSinSCLPoly
+# fracSinSCLPoly -- FIXME
 fracSinSCLPPoly
 fracSinSCLFrac

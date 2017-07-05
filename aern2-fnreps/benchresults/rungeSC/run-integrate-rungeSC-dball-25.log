@@ -1,22 +1,22 @@
 computing integrate  (sin(10x)+cos(20x))/(100x^2+1) over [-1,1]
-result = [4.336915992544279e-2 ± 1.738981358091837e-8](prec=55)
+result = [4.336916469037533e-2 ± <2^(-25)]
 accuracy: bits 25
-precision = Precision 55
+precision = Precision 25
 	Command being timed: "aern2-fnreps-ops integrate rungeSC dball 25"
-	User time (seconds): 133.75
-	System time (seconds): 0.48
+	User time (seconds): 67.50
+	System time (seconds): 0.40
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:14.39
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:07.92
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 107944
+	Maximum resident set size (kbytes): 451968
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 25394
+	Minor (reclaiming a frame) page faults: 111305
 	Voluntary context switches: 1
-	Involuntary context switches: 199
+	Involuntary context switches: 93
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

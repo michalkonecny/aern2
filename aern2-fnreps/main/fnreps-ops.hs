@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-unused-matches #-}
 {-# LANGUAGE CPP #-}
-#define DEBUG
+-- #define DEBUG
 module Main where
 
 #ifdef DEBUG
@@ -620,14 +620,21 @@ rungeSC_Name = "(sin(10x)+cos(20x))/(100x^2+1) over [-1,1]"
 
 rungeSC_PB :: Accuracy -> ChPoly MPBall
 rungeSC_PB acGuide =
-  (~!) $ ChPoly.chebDivideDCT acGuide num denom
+  maybeTrace ("rungeSC_PB: getAccuracy num = " ++ show (getAccuracy num)) $
+  maybeTrace ("rungeSC_PB: getPrecision num = " ++ show (getPrecision num)) $
+  maybeTrace ("rungeSC_PB: getAccuracy denom = " ++ show (getAccuracy denom)) $
+  maybeTrace ("rungeSC_PB: getPrecision denom = " ++ show (getPrecision denom)) $
+  maybeTrace ("rungeSC_PB: getAccuracy res = " ++ show (getAccuracy res)) $
+  maybeTrace ("rungeSC_PB: getPrecision res = " ++ show (getPrecision res)) $
+  res
   where
+  res = (~!) $ ChPoly.chebDivideDCT acGuide num denom
   num = sine (10*x) + cosine (20*x)
   denom = 100*(x*x)+1
   x = setPrc1 xPre
   xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   setPrc1 :: (CanSetPrecision t) => t -> t
-  setPrc1 = setPrecisionAtLeastAccuracy (3*acGuide)
+  setPrc1 = setPrecisionAtLeastAccuracy (16*acGuide+16)
   sine = sineWithAccuracyGuide acGuide
   cosine = cosineWithAccuracyGuide acGuide
 

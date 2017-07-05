@@ -1,20 +1,20 @@
 computing integrate  (sin(10x)+cos(20x))/(100x^2+1) over [-1,1]
-result = [5.362982371887193e-2 ± 1.295618887239253](prec=1424)
+result = [-5.190931895394838e-3 ± <2^(0)]
 accuracy: bits 0
 precision = Precision 1424
 	Command being timed: "aern2-fnreps-ops integrate rungeSC poly 01"
-	User time (seconds): 50.50
-	System time (seconds): 0.24
-	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:50.70
+	User time (seconds): 43.15
+	System time (seconds): 0.19
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:43.35
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 53876
+	Maximum resident set size (kbytes): 61188
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 25301
+	Minor (reclaiming a frame) page faults: 34913
 	Voluntary context switches: 1
 	Involuntary context switches: 36
 	Swaps: 0

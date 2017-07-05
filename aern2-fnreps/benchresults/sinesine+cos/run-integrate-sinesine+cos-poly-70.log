@@ -1,23 +1,23 @@
 integratePB: accuracy f = bits 59
 computing integrate  sin(10x+sin(20x^2)) + cos(10x) over [-1,1]
-result = [-2.396213547883964e-1 ± 2.137574098025468e-18](prec=932)
+result = [-2.396213547883964e-1 ± <2^(-58)]
 accuracy: bits 58
-precision = Precision 932
+precision = Precision 1244
 	Command being timed: "aern2-fnreps-ops integrate sinesine+cos poly 70"
-	User time (seconds): 170.16
-	System time (seconds): 1.64
+	User time (seconds): 111.04
+	System time (seconds): 1.21
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:51.99
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:52.27
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 2082340
+	Maximum resident set size (kbytes): 2248944
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 887513
-	Voluntary context switches: 5
-	Involuntary context switches: 151
+	Minor (reclaiming a frame) page faults: 978370
+	Voluntary context switches: 1
+	Involuntary context switches: 1202
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

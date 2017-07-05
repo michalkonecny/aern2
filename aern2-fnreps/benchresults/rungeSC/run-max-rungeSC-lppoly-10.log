@@ -1,22 +1,22 @@
 computing max  (sin(10x)+cos(20x))/(100x^2+1) over [-1,1]
-result = [4.717998064627115 ± 7.2983981422626e-4](prec=110)
+result = [1.080759464672008 ± <2^(-10)]
 accuracy: bits 10
-precision = Precision 110
+precision = Precision 212
 	Command being timed: "aern2-fnreps-ops max rungeSC lppoly 10"
-	User time (seconds): 20.00
-	System time (seconds): 0.11
+	User time (seconds): 1.50
+	System time (seconds): 0.00
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:20.14
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.51
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 71672
+	Maximum resident set size (kbytes): 19572
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 15810
+	Minor (reclaiming a frame) page faults: 2140
 	Voluntary context switches: 1
-	Involuntary context switches: 39
+	Involuntary context switches: 9
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8
