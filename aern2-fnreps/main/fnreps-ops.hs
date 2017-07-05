@@ -495,12 +495,12 @@ runge_ModFun =
 
 runge_B2B :: UnaryBallFun
 runge_B2B =
-  UnaryBallFun unaryIntervalDom $ \x ->    1/!(100*x^2+1)
+  UnaryBallFun unaryIntervalDom $ \x ->    1/(100*x^2+1)
 
 rungeDeriv_B2B :: UnaryBallFun
 rungeDeriv_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    (-200*x)/!((100*x^2+1)^2)
+    (-200*x)/((100*x^2+1)^2)
 
 runge_PP :: Accuracy -> PPoly
 runge_PP acGuide =
@@ -566,12 +566,12 @@ rungeX_ModFun =
 rungeX_B2B :: UnaryBallFun
 rungeX_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    x/!(100*x^2+1)
+    x/(100*x^2+1)
 
 rungeXDeriv_B2B :: UnaryBallFun
 rungeXDeriv_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    (1-100*x^2)/!((100*x^2+1)^2)
+    (1-100*x^2)/((100*x^2+1)^2)
 
 rungeX_PP :: Accuracy -> PPoly
 rungeX_PP acGuide =
@@ -640,17 +640,17 @@ rungeSC_ModFun =
 rungeSC_B2B :: UnaryBallFun
 rungeSC_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    (sin (10*x) + cos(20*x))/!(100*x^2+1)
+    (sin (10*x) + cos(20*x))/(100*x^2+1)
 
 rungeSCDeriv_B2B :: UnaryBallFun
 rungeSCDeriv_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
     ((10*cos(10*x) - 20*sin(20*x))
-     /!
+     /
      (100*x^2+1))
     -
     ((sin (10*x) + cos(20*x))*(200*x)
-     /!
+     /
      ((100*x^2+1)^2))
 
 rungeSC_PP :: Accuracy -> PPoly
@@ -745,12 +745,12 @@ fracSin_ModFun =
 fracSin_B2B :: UnaryBallFun
 fracSin_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    1/!(10*(sin (7*x))^2+1)
+    1/(10*(sin (7*x))^2+1)
 
 fracSinDeriv_B2B :: UnaryBallFun
 fracSinDeriv_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    (-140*sin(7*x)*cos(7*x))/!((10*(sin (7*x))^2+1)^2)
+    (-140*sin(7*x)*cos(7*x))/((10*(sin (7*x))^2+1)^2)
 
 fracSin_PP :: Accuracy -> PPoly
 fracSin_PP acGuide =
@@ -824,14 +824,14 @@ fracSinX_ModFun =
 fracSinX_B2B :: UnaryBallFun
 fracSinX_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    x/!(10*(sin (7*x))^2+1)
+    x/(10*(sin (7*x))^2+1)
 
 fracSinXDeriv_B2B :: UnaryBallFun
 fracSinXDeriv_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    (-140*sin(7*x)*cos(7*x)*x)/!((10*(sin (7*x))^2+1)^2)
+    (-140*sin(7*x)*cos(7*x)*x)/((10*(sin (7*x))^2+1)^2)
     +
-    (1/!(10*(sin (7*x))^2+1))
+    (1/(10*(sin (7*x))^2+1))
 fracSinX_PP :: Accuracy -> PPoly
 fracSinX_PP acGuide =
   maybeTrace ("fracSinX_PP: getAccuracy sine7x = " ++ show (getAccuracy sine7x)) $
@@ -909,17 +909,17 @@ fracSinSC_ModFun =
 fracSinSC_B2B :: UnaryBallFun
 fracSinSC_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    (sin(10*x)+cos(20*x))/!(10*(sin (7*x))^2+1)
+    (sin(10*x)+cos(20*x))/(10*(sin (7*x))^2+1)
 
 fracSinSCDeriv_B2B :: UnaryBallFun
 fracSinSCDeriv_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
     ((10*cos(10*x)-20*sin(20*x))
-     /!
+     /
      (10*(sin (7*x))^2+1))
     -
     ((sin(10*x)+cos(20*x))*(140*sin(7*x)*cos(7*x))
-     /!
+     /
      ((10*(sin (7*x))^2+1)^2))
 
 fracSinSC_PP :: Accuracy -> PPoly
@@ -1000,7 +1000,7 @@ hat_PB acGuide =
 hat_B2B :: UnaryBallFun
 hat_B2B =
   UnaryBallFun unaryIntervalDom $ \x ->
-    cn $ 1 - (abs (x+1/!3))
+    cn $ 1 - (abs (x+1/3))
 
 hatDeriv_B2B :: UnaryBallFun
 hatDeriv_B2B =
