@@ -266,8 +266,8 @@ sinecos_LP =
   sine(10*x)+cosine(20*x)
   where
   x = LPoly.variable
-  sine = Local.sineLocal
-  cosine = Local.cosineLocal
+  sine = Local.sineLocal :: LPolyMB -> LPolyMB
+  cosine = Local.cosineLocal :: LPolyMB -> LPolyMB
 
 sinecos_LPP :: LPPolyMB
 sinecos_LPP =
@@ -328,7 +328,7 @@ sinesine_LP =
   sine(10*x + sine(20*x*x))
   where
   x = LPoly.variable
-  sine = Local.sineLocal
+  sine = Local.sineLocal :: LPolyMB -> LPolyMB
 
 sinesine_LPP :: LPPolyMB
 sinesine_LPP =
@@ -393,8 +393,8 @@ sinesineCos_LP =
   sine(10*x + sine(20*x*x)) + cosine(10*x)
   where
   x = LPoly.variable
-  sine = Local.sineLocal
-  cosine = Local.cosineLocal
+  sine = Local.sineLocal :: LPolyMB -> LPolyMB
+  cosine = Local.cosineLocal :: LPolyMB -> LPolyMB
 
 sinesineCos_LPP :: LPPolyMB
 sinesineCos_LPP =
@@ -456,7 +456,7 @@ sinesineSin_LP =
   sine(10*x + sine(20*x*x)) + sine(10*x)
   where
   x = LPoly.variable
-  sine = Local.sineLocal
+  sine = Local.sineLocal :: LPolyMB -> LPolyMB
 
 sinesineSin_LPP :: LPPolyMB
 sinesineSin_LPP =
@@ -705,24 +705,24 @@ rungeSC_LP =
   (sine(10*x)+cosine(20*x))/!(100*x*x+1)
   where
     x = LPoly.variable
-    sine = Local.sineLocal
-    cosine = Local.cosineLocal
+    sine = Local.sineLocal :: LPolyMB -> LPolyMB
+    cosine = Local.cosineLocal :: LPolyMB -> LPolyMB
 
 rungeSC_LPP :: LPPolyMB
 rungeSC_LPP =
   (LPPoly.fromPoly $ sine(10*x)+cosine(20*x))/!(LPPoly.fromPoly $ 100*x*x+1)
   where
   x = LPoly.variable
-  sine = Local.sineLocal
-  cosine = Local.cosineLocal
+  sine = Local.sineLocal :: LPolyMB -> LPolyMB
+  cosine = Local.cosineLocal :: LPolyMB -> LPolyMB
 
 rungeSC_LF :: LFracMB
 rungeSC_LF =
   (LFrac.fromPoly $ sine(10*x)+cosine(20*x))/!(LFrac.fromPoly $ 100*x*x+1)
   where
   x = LPoly.variable
-  sine = Local.sineLocal
-  cosine = Local.cosineLocal
+  sine = Local.sineLocal :: LPolyMB -> LPolyMB
+  cosine = Local.cosineLocal :: LPolyMB -> LPolyMB
 
 -----------------------------------
 -----------------------------------
@@ -789,21 +789,21 @@ fracSin_LP =
   1/!(10*(sine (7*x))*(sine (7*x))+1)
   where
   x = LPoly.variable
-  sine = Local.sineLocal
+  sine = Local.sineLocal :: LPolyMB -> LPolyMB
 
 fracSin_LPP :: LPPolyMB
 fracSin_LPP =
   1/!(LPPoly.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
   where
   x = LPoly.variable
-  sine = Local.sineLocal
+  sine = Local.sineLocal :: LPolyMB -> LPolyMB
 
 fracSin_LF :: LFracMB
 fracSin_LF =
   1/!(LFrac.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
   where
   x = LPoly.variable
-  sine = Local.sineLocal
+  sine = Local.sineLocal :: LPolyMB -> LPolyMB
 
 -----------------------------------
 -----------------------------------
@@ -869,21 +869,21 @@ fracSinX_LP =
   x/!(10*(sine (7*x))*(sine (7*x))+1)
   where
   x = LPoly.variable
-  sine = Local.sineLocal
+  sine = Local.sineLocal :: LPolyMB -> LPolyMB
 
 fracSinX_LPP :: LPPolyMB
 fracSinX_LPP =
   (LPPoly.fromPoly $ x)/!(LPPoly.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
   where
   x = LPoly.variable
-  sine = Local.sineLocal
+  sine = Local.sineLocal :: LPolyMB -> LPolyMB
 
 fracSinX_LF :: LFracMB
 fracSinX_LF =
   (LFrac.fromPoly $ x)/!(LFrac.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
   where
   x = LPoly.variable
-  sine = Local.sineLocal
+  sine = Local.sineLocal :: LPolyMB -> LPolyMB
 
 -----------------------------------
 -----------------------------------
@@ -974,24 +974,24 @@ fracSinSC_LP =
   (sine(10*x)+cosine(20*x))/!(10*(sine (7*x))*(sine (7*x))+1)
   where
   x = LPoly.variable
-  sine = Local.sineLocal
-  cosine = Local.cosineLocal
+  sine = Local.sineLocal :: LPolyMB -> LPolyMB
+  cosine = Local.cosineLocal :: LPolyMB -> LPolyMB
 
 fracSinSC_LPP :: LPPolyMB
 fracSinSC_LPP =
   (LPPoly.fromPoly $ sine(10*x)+cosine(20*x))/!(LPPoly.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
   where
   x = LPoly.variable
-  sine = Local.sineLocal
-  cosine = Local.cosineLocal
+  sine = Local.sineLocal :: LPolyMB -> LPolyMB
+  cosine = Local.cosineLocal :: LPolyMB -> LPolyMB
 
 fracSinSC_LF :: LFracMB
 fracSinSC_LF =
   (LFrac.fromPoly $ sine(10*x)+cosine(20*x))/!(LFrac.fromPoly $ 10*(sine (7*x))*(sine (7*x))+1)
   where
   x = LPoly.variable
-  sine = Local.sineLocal
-  cosine = Local.cosineLocal
+  sine = Local.sineLocal :: LPolyMB -> LPolyMB
+  cosine = Local.cosineLocal :: LPolyMB -> LPolyMB
 
 -----------------------------------
 -----------------------------------
@@ -1063,6 +1063,7 @@ bumpy_PP acGuide =
 bumpy_FR :: Accuracy -> FracMB
 bumpy_FR acGuide =
   error $ "Not yet supporting Frac for: " ++ bumpy_Name
+
 
 unaryIntervalDom :: DyadicInterval
 unaryIntervalDom = dyadicInterval (-1,1)

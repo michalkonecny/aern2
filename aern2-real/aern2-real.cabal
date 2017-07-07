@@ -144,7 +144,7 @@ executable aern2-generate-netlog-elm
       aern2-generate-netlog.hs
   build-depends:
     base == 4.*
-    , elm-bridge == 0.3.*
+    , elm-bridge >= 0.3 && < 0.5
     , mixed-types-num == 0.2.*
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
