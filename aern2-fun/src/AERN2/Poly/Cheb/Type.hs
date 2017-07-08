@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-|
     Module      :  AERN2.Poly.Cheb.Type
     Description :  Chebyshev basis unary sparse polynomials
@@ -173,9 +174,9 @@ instance CanNormalize (ChPoly Rational) where
 instance CanNormalize (ChPoly Dyadic) where
   normalize = chPoly_map_terms (terms_filterKeepConst (\_d c -> c /= 0))
 
-sweepUsingAccuracy ::
-  (PolyCoeffBall c) =>
-  ChPoly c -> ChPoly c
+-- sweepUsingAccuracy ::
+--   (PolyCoeffBall c) =>
+--   ChPoly c -> ChPoly c
 sweepUsingAccuracy (ChPoly dom poly@(Poly ts) bnd) =
   ChPoly dom (Poly ts') bnd
   where
@@ -237,9 +238,9 @@ instance (HasAccuracy c, HasIntegers c, IsBall c) => HasAccuracy (ChPoly c) wher
     Drop all terms that whose degree is above the given limit or whose norm is at or below the threshold.
     Compensate for the drops in the constant term.
 -}
-reduceDegree ::
-  (PolyCoeffBall c) =>
-  Degree -> ChPoly c -> ChPoly c
+-- reduceDegree ::
+--   (PolyCoeffBall c) =>
+--   Degree -> ChPoly c -> ChPoly c
 reduceDegree maxDegree p =
     p { chPoly_poly = Poly terms' }
     where
@@ -251,18 +252,18 @@ reduceDegree maxDegree p =
     Drop all terms that whose degree is above the given limit or whose norm is at or below the threshold.
     Compensate for the drops in the constant term.
 -}
-reduceDegreeTerms ::
-  (PolyCoeffBall c) =>
-  Degree -> Terms c -> Terms c
+-- reduceDegreeTerms ::
+--   (PolyCoeffBall c) =>
+--   Degree -> Terms c -> Terms c
 reduceDegreeTerms maxDegree =
   reduceTerms shouldKeep
   where
   shouldKeep deg _coeff =
       deg <= maxDegree
 
-reduceTerms ::
-  (PolyCoeffBall c) =>
-  (Degree -> c -> Bool) -> Terms c -> Terms c
+-- reduceTerms ::
+--   (PolyCoeffBall c) =>
+--   (Degree -> c -> Bool) -> Terms c -> Terms c
 reduceTerms shouldKeep terms
     | terms_size termsToRemove == 0 = terms
     | otherwise =
@@ -282,9 +283,9 @@ instance
   where
   reduceSizeUsingAccuracyGuide = reduceDegreeWithLostAccuracyLimit
 
-reduceDegreeWithLostAccuracyLimit ::
-  (PolyCoeffBall c) =>
-  Accuracy -> ChPoly c -> ChPoly c
+-- reduceDegreeWithLostAccuracyLimit ::
+--   (PolyCoeffBall c) =>
+--   Accuracy -> ChPoly c -> ChPoly c
 reduceDegreeWithLostAccuracyLimit accuracyLossLimit p =
     p { chPoly_poly = Poly terms' }
     where
@@ -292,9 +293,9 @@ reduceDegreeWithLostAccuracyLimit accuracyLossLimit p =
     terms' =
       reduceDegreeWithLostAccuracyLimitTerms accuracyLossLimit terms
 
-reduceDegreeWithLostAccuracyLimitTerms ::
-  (PolyCoeffBall c) =>
-  Accuracy -> Terms c -> Terms c
+-- reduceDegreeWithLostAccuracyLimitTerms ::
+--   (PolyCoeffBall c) =>
+--   Accuracy -> Terms c -> Terms c
 reduceDegreeWithLostAccuracyLimitTerms accuracyLossLimit (termsMap :: Terms c) =
   terms_updateConst (+ err) (terms_fromList termsToKeep)
   where

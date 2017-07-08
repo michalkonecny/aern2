@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 -- #define DEBUG
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-|
     Module      :  AERN2.Poly.Cheb.Ring
     Description :  Chebyshev basis ring operations
@@ -121,10 +122,10 @@ instance
   type MulType (ChPoly Dyadic) (ChPoly Dyadic) = ChPoly Dyadic
   mul = mulChebDirect
 
-mulCheb ::
-  (PolyCoeffBall c, CanNormalize (ChPoly c))
-  =>
-  (ChPoly c) -> (ChPoly c) -> (ChPoly c)
+-- mulCheb ::
+--   (PolyCoeffBall c, CanNormalize (ChPoly c))
+--   =>
+--   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
 mulCheb p1@(ChPoly _ (Poly terms1) _) p2@(ChPoly _ (Poly terms2) _) =
   maybeTrace
     (printf "mulCheb: getAccuracy p1 = %s, getAccuracy p2 = %s, size1+size2 = %d, using %s, getAccuracy result = %s"
@@ -141,10 +142,10 @@ mulCheb p1@(ChPoly _ (Poly terms1) _) p2@(ChPoly _ (Poly terms2) _) =
   size1 = terms_size terms1
   size2 = terms_size terms2
 
-mulChebDirect ::
-  (PolyCoeffRing c, CanMulBy c Dyadic, CanNormalize (ChPoly c))
-  =>
-  (ChPoly c) -> (ChPoly c) -> (ChPoly c)
+-- mulChebDirect ::
+--   (PolyCoeffRing c, CanMulBy c Dyadic, CanNormalize (ChPoly c))
+--   =>
+--   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
 mulChebDirect (ChPoly d1 (Poly terms1) _) (ChPoly d2 (Poly terms2) _)
   | d1 /= d2 = error $ "Multiplying ChPoly's with incompatible domains"
   | otherwise =
@@ -159,10 +160,10 @@ mulChebDirect (ChPoly d1 (Poly terms1) _) (ChPoly d2 (Poly terms2) _)
         (j,b) <- terms_toList terms2
       ]
 
-mulChebDCT ::
-  (PolyCoeffBall c, CanNormalize (ChPoly c))
-  =>
-  (ChPoly c) -> (ChPoly c) -> (ChPoly c)
+-- mulChebDCT ::
+--   (PolyCoeffBall c, CanNormalize (ChPoly c))
+--   =>
+--   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
 mulChebDCT = lift2_DCT (+) (*)
 
 $(declForTypes

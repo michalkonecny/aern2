@@ -58,28 +58,42 @@ import AERN2.Real
 {- types -}
 
 {-|
-  A shortcut type constraint for
+  An aggregate sub-class for
   types suitable as coefficients of our polynomials,
   loose enough to permit Integer coefficients.
 -}
-type PolyCoeffRing c =
-  (Ring c, HasIntegers c, HasAccuracy c, HasNorm c, Show c)
+class
+  (Ring c, HasIntegers c, HasAccuracy c, HasNorm c, Show c) =>
+  PolyCoeffRing c
+
+instance PolyCoeffRing Integer
+instance PolyCoeffRing Dyadic
+instance PolyCoeffRing Rational
+instance PolyCoeffRing MPBall
 
 {-|
-  A shortcut type constraint for
+  An aggregate sub-class for
   types suitable as coefficients of our polynomials,
   loose enough to permit Rational coefficients.
 -}
-type PolyCoeffField c =
-  (PolyCoeffRing c, Field c, HasDyadics c, CanAddSubMulDivCNBy c Dyadic)
+class
+  (PolyCoeffRing c, Field c, HasDyadics c, CanAddSubMulDivCNBy c Dyadic) =>
+  PolyCoeffField c
+
+instance PolyCoeffField Rational
+instance PolyCoeffField MPBall
 
 {-|
-  a shortcut type constraint for
+  An aggregate sub-class for
   types suitable as coefficients of our polynomials
 -}
-type PolyCoeffBall c =
+class
   (PolyCoeffField c, CanAddSubMulDivCNBy c CauchyReal
   , IsInterval c c, IsBall c, CanSetPrecision c)
+  =>
+  PolyCoeffBall c
+
+instance PolyCoeffBall MPBall
 
 data Poly c = Poly { poly_terms :: Terms c }
 

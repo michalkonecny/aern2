@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-|
     Module      :  AERN2.Poly.Cheb.DCT
     Description :  Interpolation using Discrete cosine transform
@@ -58,13 +59,13 @@ maybeTrace
   DCT-approximate the result of applying the given binary function @f@
   pointwise to the given polynomials @p1@ and @p2@.
 -}
-lift2_DCT ::
-  (PolyCoeffBall c, CanNormalize (ChPoly c))
-  =>
-  (Degree -> Degree -> Degree)
-    {-^ detemining a degree bound for the result from the degrees of @p1@ and @p2@ -} ->
-  (c -> c -> c) {-^ the function @f@ to apply pointwise to @p1@ and @p2@ -} ->
-  ChPoly c {-^ @p1@ -} -> ChPoly c {-^ @p2@ -} -> ChPoly c
+-- lift2_DCT ::
+--   (PolyCoeffBall c, CanNormalize (ChPoly c))
+--   =>
+--   (Degree -> Degree -> Degree)
+--     {-^ detemining a degree bound for the result from the degrees of @p1@ and @p2@ -} ->
+--   (c -> c -> c) {-^ the function @f@ to apply pointwise to @p1@ and @p2@ -} ->
+--   ChPoly c {-^ @p1@ -} -> ChPoly c {-^ @p2@ -} -> ChPoly c
 lift2_DCT getDegree op pA pB
   | domA /= domB = error "lift2_DCT: combining functions with incompatible domains"
   | otherwise =
@@ -112,12 +113,12 @@ lift2_DCT getDegree op pA pB
   DCT-approximate the result of applying the given function @f@
   pointwise to the given polynomial @p@.
 -}
-lift1_DCT ::
-  (Field c, CanMulBy c CauchyReal, CanNormalize (ChPoly c), Show c) =>
-  (Degree -> Degree) {-^ detemining a degree bound for the result from the degree of @p@ -} ->
-  (c -> c) {-^ the function @f@ to apply pointwise to @p@ -} ->
-  ChPoly c {-^ @p@ -} ->
-  ChPoly c
+-- lift1_DCT ::
+--   (Field c, CanMulBy c CauchyReal, CanNormalize (ChPoly c), Show c) =>
+--   (Degree -> Degree) {-^ detemining a degree bound for the result from the degree of @p@ -} ->
+--   (c -> c) {-^ the function @f@ to apply pointwise to @p@ -} ->
+--   ChPoly c {-^ @p@ -} ->
+--   ChPoly c
 lift1_DCT getDegree op (ChPoly dom (Poly termsA) _) =
     maybeTrace
     (
@@ -149,9 +150,9 @@ lift1_DCT getDegree op (ChPoly dom (Poly termsA) _) =
 {-|
     Compute the values of the polynomial termsA on a grid.
 -}
-coeffs2gridvalues ::
-  (Field c, CanMulBy c CauchyReal) =>
-  Integer -> Terms c -> [c]
+-- coeffs2gridvalues ::
+--   (Field c, CanMulBy c CauchyReal) =>
+--   Integer -> Terms c -> [c]
 coeffs2gridvalues cN terms =
     tDCT_I_nlogn coeffs
     where
@@ -167,10 +168,10 @@ coeffs2gridvalues cN terms =
     This is quite inefficient for large N.
     It is to be used only for N<8 and as a reference in tests.
 -}
-tDCT_I_reference ::
-  (Field c, CanMulBy c CauchyReal) =>
-  [c] {-^ @a@ a vector of validated real numbers -} ->
-  [c] {-^ @a~@ a vector of validated real numbers -}
+-- tDCT_I_reference ::
+--   (Field c, CanMulBy c CauchyReal) =>
+--   [c] {-^ @a@ a vector of validated real numbers -} ->
+--   [c] {-^ @a~@ a vector of validated real numbers -}
 tDCT_I_reference a =
     [sum [ (eps cN k) * (a !! k) * cos ( ((mu * k) * pi) /! cN)
             | k <- [0..cN]
@@ -193,10 +194,10 @@ eps n k
 
     Precondition: (length a) = 1+2^{t+1} where t > 1
 -}
-tDCT_I_nlogn ::
-  (Field c, CanMulBy c CauchyReal) =>
-  [c] {-^ @a@ a vector of validated real numbers -} ->
-  [c] {-^ @a~@ a vector of validated real numbers -}
+-- tDCT_I_nlogn ::
+--   (Field c, CanMulBy c CauchyReal) =>
+--   [c] {-^ @a@ a vector of validated real numbers -} ->
+--   [c] {-^ @a~@ a vector of validated real numbers -}
 tDCT_I_nlogn a
     | cN < 8 = tDCT_I_reference a
     | otherwise = map aTilde [0..cN]
@@ -217,10 +218,10 @@ tDCT_I_nlogn a
 
     This is quite inefficient.  It is to be used only as a reference in tests.
 -}
-_tDCT_III_reference ::
-  (Field c, CanMulBy c CauchyReal) =>
-  [c] {-^ g a vector of validated real numbers -} ->
-  [c] {-^ g~ a vector of validated real numbers -}
+-- _tDCT_III_reference ::
+--   (Field c, CanMulBy c CauchyReal) =>
+--   [c] {-^ g a vector of validated real numbers -} ->
+--   [c] {-^ g~ a vector of validated real numbers -}
 _tDCT_III_reference g =
     [sum [ (eps cN1 k) * (g !! k) * cos ( (((2*j+1)*k) * pi) /! cN)
             | k <- [0..(cN1-1)]
@@ -236,10 +237,10 @@ _tDCT_III_reference g =
 
     Precondition: integer (length g) is a power of 2
 -}
-tDCT_III_nlogn ::
-  (Field c, CanMulBy c CauchyReal) =>
-  [c] {-^ g a vector of validated real numbers -} ->
-  [c] {-^ g~ a vector of validated real numbers -}
+-- tDCT_III_nlogn ::
+--   (Field c, CanMulBy c CauchyReal) =>
+--   [c] {-^ g a vector of validated real numbers -} ->
+--   [c] {-^ g~ a vector of validated real numbers -}
 tDCT_III_nlogn g =
     h2g $ tSDCT_III_nlogn $ map g2h $ zip [0..] g
     where
@@ -257,10 +258,10 @@ tDCT_III_nlogn g =
 
     This is quite inefficient.  It is to be used only as a reference in tests.
 -}
-_tSDCT_III_reference ::
-  (Field c, CanMulBy c CauchyReal) =>
-  [c] {-^ h a vector of validated real numbers -} ->
-  [c] {-^ h~ a vector of validated real numbers -}
+-- _tSDCT_III_reference ::
+--   (Field c, CanMulBy c CauchyReal) =>
+--   [c] {-^ h a vector of validated real numbers -} ->
+--   [c] {-^ h~ a vector of validated real numbers -}
 _tSDCT_III_reference h =
     [sum [ (h !! ell) * cos ( (((4*j+1)*ell) * pi) /! cN)
             | ell <- [0..(cN1-1)]
@@ -280,10 +281,10 @@ _tSDCT_III_reference h =
 
     Precondition: length h is a power of 2
 -}
-tSDCT_III_nlogn ::
-  (Field c, CanMulBy c CauchyReal) =>
-  [c] {-^ h a vector of validated real numbers -} ->
-  [c] {-^ h~ a vector of validated real numbers -}
+-- tSDCT_III_nlogn ::
+--   (Field c, CanMulBy c CauchyReal) =>
+--   [c] {-^ h a vector of validated real numbers -} ->
+--   [c] {-^ h~ a vector of validated real numbers -}
 tSDCT_III_nlogn (h :: [c]) =
     map (\ (_,[a],_) -> a) $
         List.sortBy (\ (i,_,_) (j,_,_) -> P.compare i j) $
