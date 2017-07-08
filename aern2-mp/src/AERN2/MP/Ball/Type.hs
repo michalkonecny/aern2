@@ -204,13 +204,16 @@ instance HasAccuracy MPBall where
 instance CanReduceSizeUsingAccuracyGuide MPBall where
   reduceSizeUsingAccuracyGuide acGuide b@(MPBall x _e) =
     case acGuide of
-      Exact -> b
-      NoInformation ->
-        lowerPrecisionIfAbove (prec 2) b
-      _ ->
-        lowerPrecisionIfAbove newPrec b
+      NoInformation -> lowerPrecisionIfAbove (prec 2) b
+      _ | getAccuracy b > acGuide -> tryPrec newPrec
+      _ -> b
     where
-    queryBits = fromAccuracy acGuide
+    tryPrec p
+      | getAccuracy bP >= acGuide = bP
+      | otherwise = tryPrec (p + 10)
+      where
+      bP = lowerPrecisionIfAbove p b
+    queryBits = 1 + fromAccuracy acGuide
     newPrec =
       case (getNormLog x) of
         NormBits xNormBits ->
