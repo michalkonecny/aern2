@@ -85,8 +85,8 @@ instance (SuitableForCE es) => CanEnsureCE es (Ball t)
 instance (SuitableForCE es) => CanExtractCE es Ball where
   extractCE sample_es (Ball cCE e) =
     case ensureNoCE sample_es cCE of
-      Right c -> ensureCE sample_es (Ball c e)
-      Left es -> noValueCE es
+      (Just c, es) -> CollectErrors (Just (Ball c e)) es
+      (_, es) -> CollectErrors Nothing es
 
 ballLift1R :: (IsBall t) => (t -> t1) -> (Ball t -> t1)
 ballLift1R f (Ball c e) = f (updateRadius (+ e) c)

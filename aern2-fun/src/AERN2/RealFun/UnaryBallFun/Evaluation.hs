@@ -177,7 +177,7 @@ filterNoException maxConsequentExceptions shouldErrorOnMaxReached =
   aux _ [] = []
   aux n (xCN:rest) =
     case ensureNoCN xCN of
-      Right x -> x : (aux maxConsequentExceptions rest)
+      (Just x, es) | not (hasCertainError es) -> x : (aux maxConsequentExceptions rest)
       _
         | n < 1 && shouldErrorOnMaxReached ->
           error $ printf "filterNoException: reached maxConsequentExceptions (%d): %s" maxConsequentExceptions (show xCN)
@@ -249,9 +249,9 @@ maximumOnIntervalSubdivide evalOnInterval di =
     -- get an enclosure of the function's maximum based on previous segments and the current segment:
     nextL =
       case (ensureNoCN prevL, ensureNoCN segValL) of
-        (Right _pL, Right _sVL) -> max segValL prevL
-        (Right _pL, _) -> prevL
-        (_, Right _sVL) -> segValL
+        ((Just _pL, _), (Just _sVL, _)) -> max segValL prevL
+        ((Just _pL, _), _) -> prevL
+        (_, (Just _sVL, _)) -> segValL
         _ -> prevL
     currentBall :: CN MPBall
     currentBall = liftA2 fromEndpoints nextL segValR
@@ -304,11 +304,11 @@ instance P.Eq MaxSearchSegment where
 instance P.Ord MaxSearchSegment where
   compare (MaxSearchSegment _ _ u2CN) (MaxSearchSegment _ _ u1CN) =
     case (ensureNoCN u1CN, ensureNoCN u2CN) of
-      (Right u1, Right u2)
+      ((Just u1, _), (Just u2, _))
         | u1 !<! u2 -> P.LT
         | u1 !>! u2 -> P.GT
-      (Right _, _) -> P.LT
-      (_, Right _) -> P.GT
+      ((Just _, _), _) -> P.LT
+      (_, (Just _, _)) -> P.GT
       _ -> P.EQ
       --   case (u1 < u2, u1 > u2) of
       --     (Just True, _) -> P.LT

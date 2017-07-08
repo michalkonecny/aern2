@@ -145,7 +145,8 @@ instance
 
   ensureCE sample_es = fmap (ensureCE sample_es)
   deEnsureCE sample_es (WithGlobalParamP prm a) = fmap (WithGlobalParamP prm) (deEnsureCE sample_es a)
-  ensureNoCE sample_es (WithGlobalParamP prm a) =  fmap (WithGlobalParamP prm) (ensureNoCE sample_es a)
+  ensureNoCE sample_es (WithGlobalParamP prm a) =
+    (\(ma,es) -> (fmap (WithGlobalParamP prm) ma, es)) (ensureNoCE sample_es a)
 
   noValueECE sample_vCE es =
     WithGlobalParamP (join $ fmap withGlobalState_s sample_vCE)
@@ -167,10 +168,11 @@ instance
     where
     removeEither (Right a) = a
     removeEither (Left es) = error $ "WithGlobalParam deEnsureCE: " ++ show es
-  ensureNoCE sample_es = Right . fmapWGParam (removeEither . ensureNoCE sample_es)
+  ensureNoCE sample_es = (\v -> (Just v, mempty)) . fmapWGParam (removeES . ensureNoCE sample_es)
     where
-    removeEither (Right a) = a
-    removeEither (Left es) = error $ "WithGlobalParam ensureNoCE: " ++ show es
+    removeES (Just a, es) | not (hasCertainError es) = a
+    removeES (_, es) = error $ "WithGlobalParam ensureNoCE: " ++ show es
+    -- es =
 
   noValueECE _sample_vCE _es =
     error "noValueECE not implemented for WithGlobalParam yet"

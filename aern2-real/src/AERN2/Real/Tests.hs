@@ -128,8 +128,11 @@ specCRrespectsAccuracy1CN opName op precond =
         let acSG = accuracySG ac in
         ac < (bits 1000) && precond x acSG ==>
         case getMaybeValueCN ((op x) ? acSG) of
-          Just v -> getAccuracy v >= ac
-          _ -> True
+          Just v -> getAccuracy v >=$ ac
+          _ -> property True
+
+(>=$) :: Accuracy -> Accuracy -> Property
+(>=$) = printArgsIfFails2 ">=" (>=)
 
 precondAnyReal :: CauchyReal -> AccuracySG -> Bool
 precondAnyReal _x _ac = True
@@ -169,8 +172,8 @@ specCRrespectsAccuracy2CN opName op precond1 precond2 =
         let acSG = accuracySG ac in
         ac < (bits 1000) && precond1 x acSG && precond2 y acSG  ==>
         case getMaybeValueCN ((op x y) ? acSG) of
-          Just v -> getAccuracy v >= ac
-          _ -> True
+          Just v -> getAccuracy v >=$ ac
+          _ -> property True
 
 specCRrespectsAccuracy2T ::
   (Arbitrary t, Show t) =>
@@ -198,8 +201,8 @@ specCRrespectsAccuracy2TCN (T tName :: T t) opName op precond1 precond2 =
         let acSG = accuracySG ac in
         ac < (bits 1000) && precond1 x acSG && precond2 t  ==>
         case getMaybeValueCN ((op x t) ? acSG) of
-          Just v -> getAccuracy v >= ac
-          _ -> True
+          Just v -> getAccuracy v >=$ ac
+          _ -> property True
 
 precondAnyT :: t -> Bool
 precondAnyT _t = True

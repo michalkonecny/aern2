@@ -173,8 +173,7 @@ ensureAccuracyA getA op =
             a <- getA -< js
             let result = op a
             case ensureNoCN result of
-              Left _ -> returnA -< result -- errors, give up improving
-              Right resultNoCN ->
+              (Just resultNoCN, es) | not (hasCertainError es) ->
                 if getAccuracy resultNoCN >= _acStrict q
                   then
                   returnA -<
@@ -196,6 +195,7 @@ ensureAccuracyA getA op =
                           "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
                       ) $
                       (q, map (+1) js)
+              _ -> returnA -< result -- certain error, give up improving
 
 
 {- MPBall + CauchyReal = MPBall, only allowed in the (->) arrow  -}
@@ -238,8 +238,8 @@ getSeqFnNormLog src a f =
   where
   aux aq =
     case ensureNoCN (f aq) of
-      Left _ -> Nothing
-      Right faqNoCN ->
+      (Just faqNoCN, es) | not (hasCertainError es) ->
         case getNormLog faqNoCN of
           NormBits faqNL -> Just faqNL
           NormZero -> Nothing
+      _ -> Nothing

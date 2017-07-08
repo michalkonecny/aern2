@@ -189,7 +189,8 @@ instance
 
   ensureCE sample_es = fmap (ensureCE sample_es)
   deEnsureCE sample_es (SequenceP a) = fmap SequenceP (deEnsureCE sample_es a)
-  ensureNoCE sample_es (SequenceP a) =  fmap SequenceP (ensureNoCE sample_es a)
+  ensureNoCE sample_es (SequenceP a) =
+    (\(ma,es) -> (fmap SequenceP ma, es)) (ensureNoCE sample_es a)
 
   noValueECE sample_vCE es = SequenceP (noValueECE (fmap unSequenceP sample_vCE) es)
   prependErrorsECE sample_vCE es1 = fmap (prependErrorsECE (fmap unSequenceP sample_vCE) es1)
@@ -210,10 +211,11 @@ instance
     where
     removeEither (Right a) = a
     removeEither (Left es) = error $ "Sequence deEnsureCE: " ++ show es
-  ensureNoCE sample_es = Right . fmapSeq (removeEither . ensureNoCE sample_es)
+  ensureNoCE sample_es = (\v -> (Just v, mempty)) . fmapSeq (removeES . ensureNoCE sample_es)
     where
-    removeEither (Right a) = a
-    removeEither (Left es) = error $ "Sequence ensureNoCE: " ++ show es
+    removeES (Just a, es) | not (hasCertainError es) = a
+    removeES (_, es) = error $ "WithGlobalParam ensureNoCE: " ++ show es
+    -- es =
 
   noValueECE _sample_vCE _es =
     error "noValueECE not implemented for Sequence yet"

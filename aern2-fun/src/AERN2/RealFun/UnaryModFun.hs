@@ -104,8 +104,9 @@ modFun2BallFun (UnaryModFun dom eval modulus) =
         ++ ", fbCN = "  ++ show fbCN
       ) $
       case ensureNoCN fbCN of
-        Right fb -> cn $ updateRadius (+ tolerance) $ fb ? (bitsS $ rangeAC + 2)
-        Left es -> noValueECN (Nothing::Maybe MPBall) es
+        (Just fb, es) | not (hasCertainError es) ->
+          cn $ updateRadius (+ tolerance) $ fb ? (bitsS $ rangeAC + 2)
+        (_, es) -> noValueECN (Nothing::Maybe MPBall) es
       where
       fbCN = eval (centre b)
 
