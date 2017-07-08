@@ -536,7 +536,6 @@ instance
 
 instance
   (CanPow a Dyadic
-  , CanEnsureCE es (PowType a Dyadic)
   , CanEnsureCE es a
   , CanEnsureCE es (PowType a Dyadic)
   , CanEnsureCE es (PowTypeNoCN a Dyadic)
