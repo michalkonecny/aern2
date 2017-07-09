@@ -174,8 +174,10 @@ class HasAccuracy a where
   getAccuracy :: a -> Accuracy
 
 instance (HasAccuracy a, SuitableForCE es) => HasAccuracy (CollectErrors es a) where
-  getAccuracy aCE =
-    getValueIfNoErrorCE aCE getAccuracy (const NoInformation)
+  getAccuracy (CollectErrors ma es) =
+    case ma of
+      Just a | not (hasCertainError es) -> getAccuracy a
+      _ -> NoInformation
 
 instance HasAccuracy Int where getAccuracy _ = Exact
 instance HasAccuracy Integer where getAccuracy _ = Exact
