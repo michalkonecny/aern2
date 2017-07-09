@@ -267,7 +267,9 @@ instance
         do
         (m_a1NormLog, b) <- getSeqFnNormLog me a1 sqrtSafe -< q
         let jInit = case m_a1NormLog of
-                Just sqrtNormLog -> max acSG0 (q - 1 - sqrtNormLog)
+                Just sqrtNormLog
+                  | sqrtNormLog < 0 -> max acSG0 (q - 1 - 2*sqrtNormLog) -- nearer 0
+                  | otherwise -> max acSG0 (q - 1 - sqrtNormLog)
                 _ -> acSG0
         returnA -< (jInit, Just b)
     sqrtSafe x =
