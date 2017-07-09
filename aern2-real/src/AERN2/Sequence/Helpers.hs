@@ -171,10 +171,13 @@ ensureAccuracyA getA op =
         proc (q,js) ->
             do
             a <- getA -< js
-            let result = op a
+            let result =
+                    -- maybeTrace ("op a = " ++ show (op a)) $
+                    -- maybeTrace ("ac (op a) = " ++ show (getAccuracy (op a))) $
+                    op a
             case ensureNoCN result of
-              (Just resultNoCN, es) | not (hasCertainError es) ->
-                if getAccuracy resultNoCN >= _acStrict q
+              (Just _resultNoCN, es) | not (hasCertainError es) ->
+                if getAccuracy result >= _acStrict q
                   then
                   returnA -<
                       maybeTrace (
@@ -189,8 +192,6 @@ ensureAccuracyA getA op =
                           "ensureAccuracyA: Not enough ... (q = " ++ show q ++
                           "; js = " ++ show js ++
                           "; a = " ++ show a ++
-                          "; resultNoCN = " ++ show resultNoCN ++
-                          "; resultNoCN accuracy = " ++ (show $ getAccuracy resultNoCN) ++ ")" ++
                           "; result = " ++ show result ++
                           "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
                       ) $

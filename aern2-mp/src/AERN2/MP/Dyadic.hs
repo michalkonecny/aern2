@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+-- #define DEBUG
 {-# LANGUAGE DeriveDataTypeable #-}
 {-|
     Module      :  AERN2.MP.Dyadic
@@ -25,6 +27,15 @@ module AERN2.MP.Dyadic
    , specDyadic, tDyadic
 )
 where
+
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#define maybeTraceIO putStrLn
+#else
+#define maybeTrace (\ (_ :: String) t -> t)
+#define maybeTraceIO (\ (_ :: String) -> return ())
+#endif
 
 import MixedTypesNumPrelude
 import qualified Prelude as P
@@ -558,7 +569,9 @@ lift2 opDown opUp (Dyadic x0) (Dyadic y0) = Dyadic (opExact x0 y0)
   where
     opExact x y
       | rUp == rDown = rUp
-      | otherwise = opExact xH yH
+      | otherwise =
+          maybeTrace (printf "Dyadic.lift2: rUp = %s; rDown = %s; p = %s" (show rUp) (show rDown) (show $ integer p)) $
+          opExact xH yH
       where
       rUp = opUp x y
       rDown = opDown x y

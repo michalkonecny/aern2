@@ -60,6 +60,7 @@ data MPBall = MPBall
 instance Show MPBall
     where
     show b@(MPBall x _e) =
+      -- printf "[%s ± %s](prec=%s)" (show x) (showAC $ getAccuracy b) (show $ integer $ getPrecision b)
       printf "[%s ± %s]" (show x) (showAC $ getAccuracy b)
       -- "[" ++ show x ++ " ± " ++ show e ++ "](prec=" ++ (show $ integer $ getPrecision x) ++ ")"
       where
