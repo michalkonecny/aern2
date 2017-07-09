@@ -124,7 +124,10 @@ instance CanSqrt MPBall where
     | x !<! 0 = noValueNumErrorCertainCN err
     | otherwise = prependErrorsCN [(ErrorPotential, err)] $ cn $ aux (max 0 x)
     where
-    aux = intervalFunctionByEndpointsUpDown MPFloat.sqrtDown MPFloat.sqrtUp
+    aux =
+      intervalFunctionByEndpointsUpDown
+        (\ e -> MPFloat.sqrtDown (P.max (mpFloat 0) e))
+        (\ e -> MPFloat.sqrtUp (P.max (mpFloat 0) e))
     err = OutOfRange $ "sqrt: argument must be >= 0: " ++ show x
 
 {- Instances of Prelude numerical classes provided for convenient use outside AERN2
