@@ -1,7 +1,7 @@
 * Regenerate results.csv:
 
 rm results.csv
-bash runBench.sh
+bash runBench.sh results.csv
 
 * Generate svg execution time charts:
 

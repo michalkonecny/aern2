@@ -3,20 +3,20 @@ result = [1.000091581236786 ± <2^(-10)]
 accuracy: bits 10
 precision = Precision 264
 	Command being timed: "aern2-fnreps-ops max runge lpoly 10"
-	User time (seconds): 9.07
-	System time (seconds): 0.04
+	User time (seconds): 9.44
+	System time (seconds): 0.03
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:09.12
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:09.47
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 17816
+	Maximum resident set size (kbytes): 16636
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1993
+	Minor (reclaiming a frame) page faults: 2026
 	Voluntary context switches: 1
-	Involuntary context switches: 21
+	Involuntary context switches: 18
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

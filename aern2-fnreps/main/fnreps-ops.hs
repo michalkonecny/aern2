@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-unused-matches #-}
 {-# LANGUAGE CPP #-}
--- #define DEBUG
+#define DEBUG
 module Main where
 
 #ifdef DEBUG
@@ -685,10 +685,11 @@ rungeSC_FR acGuide =
   maybeTrace ("rungeSC_FR: getPrecision num = " ++ show (getPrecision num)) $
   maybeTrace ("rungeSC_FR: getAccuracy denom = " ++ show (getAccuracy denom)) $
   maybeTrace ("rungeSC_FR: getPrecision denom = " ++ show (getPrecision denom)) $
-  (setPrc2 num) /! denom
+  res
   where
+  res = (setPrc2 num) /! denom
   num = Frac.fromPoly $ sine (10*x) + cosine (20*x)
-  denom = (Frac.fromPoly $ 100*x*x+1)
+  denom = Frac.fromPoly $ 100*x*x+1
   xPre = varFn (chPolyMPBall (unaryIntervalDom, 0)) ()
   x = setPrc1 xPre
   sine = sineWithAccuracyGuide ((fromAccuracy acGuide `div` 4 + 1)*(acGuide) + 25)
