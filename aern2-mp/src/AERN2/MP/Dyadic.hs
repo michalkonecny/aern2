@@ -65,6 +65,9 @@ import AERN2.MP.Float
 newtype Dyadic = Dyadic { dyadicMPFloat :: MPFloat }
   deriving (P.Eq, P.Ord, CanRound, HasPrecision, HasNorm, Typeable)
 
+instance Ring Dyadic
+instance Ring (CN Dyadic)
+
 instance HasAccuracy Dyadic where getAccuracy _ = Exact
 
 instance Show Dyadic where

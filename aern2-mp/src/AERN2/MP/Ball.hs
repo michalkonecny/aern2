@@ -25,7 +25,6 @@ module AERN2.MP.Ball
   -- * Ball construction/extraction functions
   -- , endpointsMP, fromEndpointsMP
   -- * Ball operations (see also instances)
-  , intersect
   , piBallP
   -- * Helpers for constructing ball functions
   , byEndpointsMP
@@ -33,7 +32,7 @@ module AERN2.MP.Ball
 )
 where
 
--- import MixedTypesNumPrelude
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 import AERN2.Norm
@@ -47,3 +46,8 @@ import AERN2.MP.Ball.Conversions ()
 import AERN2.MP.Ball.Comparisons
 import AERN2.MP.Ball.Field ()
 import AERN2.MP.Ball.Elementary
+
+instance Ring MPBall
+instance Ring (CN MPBall)
+instance Field MPBall
+instance Field (CN MPBall)
