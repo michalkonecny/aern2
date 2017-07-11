@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-unused-matches #-}
 {-# LANGUAGE CPP #-}
-#define DEBUG
+-- #define DEBUG
 module Main where
 
 #ifdef DEBUG

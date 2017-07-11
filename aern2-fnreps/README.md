@@ -137,8 +137,8 @@ open interval within the function's domain.  LPPoly and LFrac are defined analog
 
 Source code of the benchmark tasks: [fnreps-ops.hs](https://github.com/michalkonecny/aern2/blob/master/aern2-fnreps/main/fnreps-ops.hs)
 
-The benchmark timings are obtained on a Dell Inspiron 15R with 16GB RAM,
-Intel(R) Core(TM) i7-3632QM CPU @ 2.20GHz running Ubuntu 14.04.
+The benchmark timings are obtained on a Lenovo T440p with 16GB RAM,
+Intel(R) Core(TM) i7-4710MQ CPU @ 2.50GHz running Ubuntu 14.04.
 
 The benchmarks have been compiled using ghc-7.10.3 with -O2.
 
