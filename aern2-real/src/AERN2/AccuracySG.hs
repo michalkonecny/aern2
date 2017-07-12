@@ -12,7 +12,7 @@
 -}
 module AERN2.AccuracySG
 (
-  AccuracySG(..), acSG0, accuracySG, bitsS, bitsSG
+  AccuracySG(..), acSG0, default_acSG, accuracySG, bitsS, bitsSG
 , accuracySGdefaultTolerance
 , CanAdjustToAccuracySG(..)
 )
@@ -54,6 +54,9 @@ bitsS = accuracySG . bits
 
 acSG0 :: AccuracySG
 acSG0 = bitsS 0
+
+default_acSG :: AccuracySG
+default_acSG = bitsS 100
 
 instance HasEqAsymmetric AccuracySG AccuracySG
 instance HasOrderAsymmetric AccuracySG AccuracySG where

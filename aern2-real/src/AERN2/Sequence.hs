@@ -47,3 +47,4 @@ import AERN2.Sequence.Branching
 import AERN2.Sequence.Ring ()
 import AERN2.Sequence.Field ()
 import AERN2.Sequence.Elementary ()
+import AERN2.Sequence.PreludeOps ()

@@ -79,6 +79,7 @@ library
     AERN2.Sequence.Ring
     AERN2.Sequence.Field
     AERN2.Sequence.Elementary
+    AERN2.Sequence.PreludeOps
     AERN2.Sequence
     AERN2.Real.Type
     AERN2.Real.Arithmetic
