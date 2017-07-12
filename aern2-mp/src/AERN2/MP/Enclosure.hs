@@ -143,19 +143,71 @@ instance CanIntersectAsymmetric Bool Bool where
       noValueNumErrorCertainCN $ NumError "empty Boolean intersection"
 
 instance
-  (CanIntersectCNSameType a, CanEnsureCN a)
+  (CanIntersectAsymmetric Bool b
+  , CanEnsureCE es b
+  , CanEnsureCE es (IntersectionType Bool b)
+  , SuitableForCE es)
   =>
-  CanIntersectAsymmetric (Maybe a) (Maybe a)
+  CanIntersectAsymmetric Bool (CollectErrors es b)
   where
-  type IntersectionType (Maybe a) (Maybe a) = EnsureCN (Maybe a)
-  intersect (ma :: Maybe a) mb =
+  type IntersectionType Bool (CollectErrors es b) =
+    EnsureCE es (IntersectionType Bool b)
+  intersect = lift2TLCE intersect
+
+instance
+  (CanIntersectAsymmetric a Bool
+  , CanEnsureCE es a
+  , CanEnsureCE es (IntersectionType a Bool)
+  , SuitableForCE es)
+  =>
+  CanIntersectAsymmetric (CollectErrors es a) Bool
+  where
+  type IntersectionType (CollectErrors es  a) Bool =
+    EnsureCE es (IntersectionType a Bool)
+  intersect = lift2TCE intersect
+
+instance
+  (CanIntersectAsymmetric (Maybe a) b
+  , CanEnsureCE es b
+  , CanEnsureCE es (IntersectionType (Maybe a) b)
+  , SuitableForCE es)
+  =>
+  CanIntersectAsymmetric (Maybe a) (CollectErrors es b)
+  where
+  type IntersectionType (Maybe a) (CollectErrors es b) =
+    EnsureCE es (IntersectionType (Maybe a) b)
+  intersect = lift2TLCE intersect
+
+instance
+  (CanIntersectAsymmetric a (Maybe b)
+  , CanEnsureCE es a
+  , CanEnsureCE es (IntersectionType a (Maybe b))
+  , SuitableForCE es)
+  =>
+  CanIntersectAsymmetric (CollectErrors es a) (Maybe b)
+  where
+  type IntersectionType (CollectErrors es  a) (Maybe b) =
+    EnsureCE es (IntersectionType a (Maybe b))
+  intersect = lift2TCE intersect
+
+
+instance
+  (CanIntersectAsymmetric a b
+  , CanEnsureCN a, IntersectionType a b ~ EnsureCN a
+  , CanEnsureCN (EnsureCN a)
+  , CanEnsureCN b, EnsureCN b ~ EnsureCN a)
+  =>
+  CanIntersectAsymmetric (Maybe a) (Maybe b)
+  where
+  type IntersectionType (Maybe a) (Maybe b) = EnsureCN (Maybe (IntersectionType a b))
+  intersect (ma :: Maybe a) (mb :: Maybe b) =
     case (ma, mb) of
-      (Just a, Just b) -> justCN sample_a (intersect a b)
-      (Just a, Nothing) -> justCN sample_a (ensureCN a)
-      (Nothing, Just b) -> justCN sample_a (ensureCN b)
+      (Just a, Just b) -> justCN sample_r (intersect a b)
+      (Just a, Nothing) -> justCN sample_r (ensureCN a)
+      (Nothing, Just b) -> justCN sample_r (ensureCN b)
       _ -> cn (Nothing :: Maybe a)
     where
-    sample_a = Nothing :: Maybe a
+    sample_r = Nothing :: EnsureCN (Maybe (IntersectionType a b))
 
 justCN :: (CanEnsureCN a) => Maybe a -> EnsureCN a -> EnsureCN (Maybe a)
 justCN (_sample_a :: Maybe a) aCN =
