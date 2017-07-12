@@ -82,27 +82,14 @@ instance
 instance
   (Field a, CanAbsSameType a, HasDyadics a
   , SuitableForSeq a, SuitableForSeq (EnsureCN a), CanSetPrecision a
-  , HasNorm (EnsureNoCN a), CanEnsureCN a, EnsureNoCN a ~ a
+  , HasNorm (EnsureNoCN a), CanEnsureCN a
   , CanIntersectCNSameType a)
   =>
   P.Fractional (Sequence a)
   where
   fromRational = convertExactly . dyadic
-  recip = (~!) . recip
+  recip a =
+    case deEnsureCN (recip a) of
+      Right r -> r
+      Left es -> error $ show es
   (/) = (/!)
---
--- instance P.Floating MPBall where
---     pi = error "MPBall: no pi :: MPBall, use pi ? (bitsS n) instead"
---     sqrt = (~!) . sqrt
---     exp = exp
---     sin = sin
---     cos = cos
---     log = (~!) . log
---     atan = error "MPBall: atan not implemented yet"
---     atanh = error "MPBall: atanh not implemented yet"
---     asin = error "MPBall: asin not implemented yet"
---     acos = error "MPBall: acos not implemented yet"
---     sinh = error "MPBall: sinh not implemented yet"
---     cosh = error "MPBall: cosh not implemented yet"
---     asinh = error "MPBall: asinh not implemented yet"
---     acosh = error "MPBall: acosh not implemented yet"

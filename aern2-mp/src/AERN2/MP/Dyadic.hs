@@ -159,6 +159,9 @@ instance ConvertibleExactly Rational Dyadic where
 instance Convertible Dyadic Double where
   safeConvert = safeConvert . dyadicMPFloat
 
+instance (ConvertibleExactly Dyadic t, Monoid es) => ConvertibleExactly Dyadic (CollectErrors es t) where
+  safeConvertExactly = fmap (\v -> CollectErrors (Just v) mempty) . safeConvertExactly
+
 {-- comparisons --}
 
 instance HasEqAsymmetric Dyadic Dyadic
