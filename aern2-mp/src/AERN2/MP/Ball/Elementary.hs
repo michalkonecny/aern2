@@ -25,7 +25,7 @@ import qualified Prelude as P
 
 import AERN2.Normalize
 
-import AERN2.MP.Dyadic (Dyadic, dyadic)
+import AERN2.MP.Dyadic (Dyadic)
 import qualified AERN2.MP.Float as MPFloat
 import AERN2.MP.Float (MPFloat, mpFloat)
 -- import AERN2.MP.Float.Operators
@@ -129,53 +129,6 @@ instance CanSqrt MPBall where
         (\ e -> MPFloat.sqrtDown (P.max (mpFloat 0) e))
         (\ e -> MPFloat.sqrtUp (P.max (mpFloat 0) e))
     err = OutOfRange $ "sqrt: argument must be >= 0: " ++ show x
-
-{- Instances of Prelude numerical classes provided for convenient use outside AERN2
-   and also because Template Haskell translates (-x) to (Prelude.negate x) -}
-
-instance P.Num MPBall where
-    fromInteger = convertExactly
-    negate = negate
-    (+) = (+)
-    (*) = (*)
-    abs = abs
-    signum = error "Prelude.signum not implemented for MPBall"
-
-instance P.Eq MPBall where
-    a == b = (a == b) == Just True
-    a /= b = (a /= b) == Just True
-
-instance P.Ord MPBall where
-    a < b =  (a < b) == Just True
-    a <= b =  (a <= b) == Just True
-    a > b =  (a > b) == Just True
-    a >= b =  (a >= b) == Just True
-    compare r1 r2
-        | (r1 < r2) == Just True = LT
-        | (r1 > r2) == Just True = GT
-        | (r1 == r2) == Just True = EQ
-        | otherwise = error "MPBall: compare: cannot decide"
-
-instance P.Fractional MPBall where
-    fromRational = convertExactly . dyadic -- will work only for dyadic rationals
-    recip = (~!) . recip
-    (/) = (/!)
-
-instance P.Floating MPBall where
-    pi = error "MPBall: no pi :: MPBall, use pi ? (bitsS n) instead"
-    sqrt = (~!) . sqrt
-    exp = exp
-    sin = sin
-    cos = cos
-    log = (~!) . log
-    atan = error "MPBall: atan not implemented yet"
-    atanh = error "MPBall: atanh not implemented yet"
-    asin = error "MPBall: asin not implemented yet"
-    acos = error "MPBall: acos not implemented yet"
-    sinh = error "MPBall: sinh not implemented yet"
-    cosh = error "MPBall: cosh not implemented yet"
-    asinh = error "MPBall: asinh not implemented yet"
-    acosh = error "MPBall: acosh not implemented yet"
 
 #endif
 
