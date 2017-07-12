@@ -48,11 +48,11 @@ maximumOptimisedWithAccuracySimple (PPoly ps dom@(Interval dL dR)) l r initialDe
   foldl1 max
     [Cheb.maximumOptimisedWithAccuracy
       (min cutoffAccuracy (getFiniteAccuracy p))
-      (updateRadius (+ err) $ ChPoly dom p bnds)
+      (updateRadius (+ err) $ ChPoly dom p acG bnds)
       (setPrecision (getPrecision p) $ max l (mpBall $ fromUnitIntervalToDom a))
       (setPrecision (getPrecision p) $ min r (mpBall $ fromUnitIntervalToDom b))
       initialDegree steps
-      | (i@(Interval a b),(Ball (ChPoly _ p bnds) err)) <- ppoly_pieces f, intersectsLR i]
+      | (i@(Interval a b),(Ball (ChPoly _ p acG bnds) err)) <- ppoly_pieces f, intersectsLR i]
   where
   fromUnitIntervalToDom x = (dyadic 0.5)*((dR - dL)*x + (dR + dL))
   lI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) l)
@@ -500,7 +500,7 @@ iterateUntilFixed f x =
         aux fx (p + q) p
 
 intify :: ChPoly MPBall -> (ErrorBound, Poly Integer)
-intify (ChPoly _ p _) =
+intify (ChPoly _ p _ _) =
   (err, pInt)
   where
   termsRational = terms_map (rational . ball_value) (poly_terms p)

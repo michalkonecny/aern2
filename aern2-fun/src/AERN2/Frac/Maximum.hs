@@ -60,8 +60,8 @@ maximumOptimisedWithAccuracy acc f@(Frac p q _) l r iDeg steps =
                    (reduceToEvalDirectAccuracy q (bits 1))
   dom = chPoly_dom p
   unit = Interval (dyadic $ -1) (dyadic 1)
-  pI = makeExactCentre $ ChPoly unit (chPoly_poly p) (chPoly_maybeBounds p)
-  qI = makeExactCentre $ ChPoly unit (chPoly_poly q) (chPoly_maybeBounds q)
+  pI = makeExactCentre $ p { chPoly_dom = unit }
+  qI = makeExactCentre $ q { chPoly_dom = unit }
   lI = fromDomToUnitInterval dom l
   rI = fromDomToUnitInterval dom r -- TODO: set precision
   pc = centre pI
@@ -74,7 +74,7 @@ maximumOptimisedWithAccuracy acc f@(Frac p q _) l r iDeg steps =
     [(k,(Cheb.evalDirect dfk :: MPBall -> MPBall, (ch2Power . intify) dfk)) | (k, dfk) <- dfs]
 
 intify :: ChPoly MPBall -> (ErrorBound, Poly Integer)
-intify (ChPoly _ p _) =
+intify (ChPoly _ p _ _) =
   (err, pInt)
   where
   termsRational = terms_map (rational . ball_value) (poly_terms p)

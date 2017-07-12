@@ -45,13 +45,13 @@ fromPoly :: Cheb -> PPoly
 fromPoly p = fromPolyBall $ normalize (Ball p (errorBound 0))
 
 fromPolyBall :: PolyBall -> PPoly
-fromPolyBall (Ball (ChPoly dom p bnds) err) =
-  PPoly [(uInt, Ball (ChPoly uInt p bnds) err)] dom
+fromPolyBall (Ball (ChPoly dom p acG bnds) err) =
+  PPoly [(uInt, Ball (ChPoly uInt p acG bnds) err)] dom
   where
   uInt = Interval (dyadic $ -1) (dyadic 1)
 
-linearPolygonI :: [(Dyadic, MPBall)] -> DyadicInterval -> PPoly
-linearPolygonI ((x,y) : xys) dom =
+linearPolygonI :: [(Dyadic, MPBall)] -> DyadicInterval -> Accuracy -> PPoly
+linearPolygonI ((x,y) : xys) dom acG =
   aux xys x y []
   where
   aux [] _ _ res = PPoly (reverse res) dom
@@ -65,7 +65,7 @@ linearPolygonI ((x,y) : xys) dom =
         (Poly $ terms_fromList
                 [(0, constantTerm a fa b fb (getPrecision fa) (getPrecision fb) Nothing),
                  (1, linearTerm a fa b fb (getPrecision fa) (getPrecision fb)  Nothing)])
-        Nothing)
+        acG Nothing)
       (errorBound 0)
   linearTerm a fa b fb p q prev =
     let
@@ -97,7 +97,7 @@ linearPolygonI ((x,y) : xys) dom =
         try
       else
         constantTerm a fa b fb (p + q) p (Just try)
-linearPolygonI [] _ =
+linearPolygonI [] _ _ =
   error "linearPolygonI must be provided with a list of at least 2 points"
 
 liftBall2PPoly :: (PolyBall -> PolyBall) -> (PPoly -> PPoly)

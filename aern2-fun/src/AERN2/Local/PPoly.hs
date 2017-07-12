@@ -28,10 +28,10 @@ instance GenericMaximum LocalPPoly where
     PPoly ps dom@(Interval dR dL) = f l r ac
     polys :: [(DyadicInterval, ChPoly MPBall)]
     polys = map (\(i, Ball c err) -> (i, updateRadius (+ err) c)) ps
-    psDom = map (\(i, ChPoly _ p bnds) -> (i, ChPoly dom p bnds)) polys
+    psDom = map (\(i, ChPoly _ p acG bnds) -> (i, ChPoly dom p acG bnds)) polys
     fromUnitIntervalToDom x = (dyadic 0.5)*((dR - dL)*x + (dR + dL))
 
 
-makeRational :: ChPoly MPBall -> ChPoly Rational
-makeRational (ChPoly dom (Poly ts) _) =
-  ChPoly dom (Poly $ terms_map (rational . centre) ts) Nothing
+-- makeRational :: ChPoly MPBall -> ChPoly Rational
+-- makeRational (ChPoly dom (Poly ts) acG _) =
+--   ChPoly dom (Poly $ terms_map (rational . centre) ts) acG Nothing

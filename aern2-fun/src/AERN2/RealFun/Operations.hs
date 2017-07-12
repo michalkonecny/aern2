@@ -19,8 +19,9 @@ module AERN2.RealFun.Operations
   , SameDomFnPair(..), ArbitraryWithDom(..)
   , CanApply(..)
   , CanApplyApprox(..), sampledRange
-  , HasVars(..), specEvalUnaryVarFn
+  , HasFnConstructorInfo(..)
   , HasConstFunctions, constFn, specEvalConstFn
+  , HasVars(..), specEvalUnaryVarFn
   , CanMaximiseOverDom(..), CanMinimiseOverDom(..)
   , specCanMaximiseOverDom
   , CanIntegrateOverDom(..)
@@ -116,33 +117,40 @@ sampledRange (Interval l r) depth f =
 
 {- constructing basic functions -}
 
-type HasConstFunctions t f = (HasDomain f, ConvertibleExactly (Domain f, t) f)
+class HasFnConstructorInfo f where
+  type FnConstructorInfo f
+  getFnConstructorInfo :: f -> FnConstructorInfo f
 
-constFn :: (HasConstFunctions t f) => (Domain f, t) -> f
-constFn = convertExactly
+type HasConstFunctions t f =
+  (ConvertibleExactly (FnConstructorInfo f, t) f)
+
+constFn :: (HasConstFunctions t f) => (FnConstructorInfo f) -> t -> f
+constFn = curry convertExactly
 
 specEvalConstFn ::
   (HasConstFunctions c f
+  , HasDomain f
   , CanMapInside (Domain f) x
   , CanApply f x
   , HasEqCertainly c (ApplyType f x)
-  , Arbitrary c, Arbitrary f, Arbitrary x
-  , Show c, Show f, Show x)
+  , Arbitrary c, Arbitrary f, Arbitrary (FnConstructorInfo f), Arbitrary x
+  , Show c, Show f, Show (FnConstructorInfo f), Show x)
   =>
   T c-> T f -> T x -> Spec
 specEvalConstFn (T cName :: T c) (T fName :: T f) (T xName :: T x) =
   it (printf "Evaluating %s-constant functions %s on %s" cName fName xName) $
     property $
-      \ (c :: c) (sampleFn :: f) (xPres :: [x]) ->
-        let dom = getDomain sampleFn in
+      \ (c :: c) (constrInfo :: FnConstructorInfo f) (xPres :: [x]) ->
+        let f = constFn constrInfo c :: f in
+        let dom = getDomain f in
         and $ flip map xPres $ \xPre ->
-          apply (constFn (dom, c) :: f) (mapInside dom xPre) ?==? c
+          apply f (mapInside dom xPre) ?==? c
 
 class HasVars f where
   type Var f
   {-| the function @x@, ie the function that project the domain to the given variable @x@  -}
   varFn ::
-    f {-^ sample function with the same domain -}->
+    FnConstructorInfo f {-^ eg domain and/or accuracy guide -}->
     Var f {-^ @x@ -} ->
     f
 
@@ -151,16 +159,17 @@ specEvalUnaryVarFn ::
   , HasDomain f, CanMapInside (Domain f) x
   , CanApply f x
   , HasEqCertainly x (ApplyType f x)
-  , Arbitrary f, Arbitrary x
-  , Show f, Show x)
+  , Arbitrary (FnConstructorInfo f), Arbitrary x
+  , Show f, Show x, Show (FnConstructorInfo f))
   =>
   T f -> T x -> Spec
 specEvalUnaryVarFn (T fName :: T f) (T xName :: T x) =
   it (printf "Evaluating variable functions %s on %s" fName xName) $ property $
-    \ (sampleFn :: f) (xPres :: [x]) ->
+    \ (constrInfo :: FnConstructorInfo f) (xPres :: [x]) ->
       and $ flip map xPres $ \xPre ->
-        let x = mapInside (getDomain sampleFn) xPre in
-        apply (varFn sampleFn () :: f) x ?==? x
+        let f = varFn constrInfo () :: f in
+        let x = mapInside (getDomain f) xPre in
+        apply f x ?==? x
 
 
 {- range computation -}

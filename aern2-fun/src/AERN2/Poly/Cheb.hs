@@ -51,8 +51,7 @@ _chPolyX =
     x
     where
     x :: ChPoly MPBall
-    x = varFn sampleFn ()
-    sampleFn = constFn (dom, 1)
+    x = varFn (dom, bits 10) ()
     dom = dyadicInterval (-1.0,1.0)
 
 _chPoly10X :: ChPoly MPBall

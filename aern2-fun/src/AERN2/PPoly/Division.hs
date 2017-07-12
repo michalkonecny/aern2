@@ -210,7 +210,7 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) bts thresholdAccuracy {-bf-}
   fromUnitIntervalToDom x = (dyadic 0.5)*((r - l)*x + (r + l))
   fRed = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 thresholdAccuracy) f
   --thresholdAccuracy = 2 + getAccuracy ((fromEndpoints (mpBall 0) threshold) :: MPBall)
-  PPoly linps _ = linearPolygonI ((lsFst $ head nodes) : (map lsSnd nodes)) dom
+  PPoly linps _ = linearPolygonI ((lsFst $ head nodes) : (map lsSnd nodes)) dom thresholdAccuracy
   result =
     PPoly
       (zipWith
@@ -290,13 +290,13 @@ initialApproximation f@(PPoly _ dom@(Interval l r)) bts thresholdAccuracy {-bf-}
       Set.fromList [LineSegment (a,fa) (m, fm), LineSegment (m, fm) (b, fb)]
   lineSegment ((a,fa), (b, fb)) =
     if a /= -1 && b /= 1 then
-      linearPolygonI [(dyadic $ -1, fa), (a, fa), (b, fb), (dyadic 1, fb)] dom
+      linearPolygonI [(dyadic $ -1, fa), (a, fa), (b, fb), (dyadic 1, fb)] dom thresholdAccuracy
     else if a /= -1 && b == 1 then
-      linearPolygonI [(dyadic $ -1, fa), (a, fa), (b, fb)] dom
+      linearPolygonI [(dyadic $ -1, fa), (a, fa), (b, fb)] dom thresholdAccuracy
     else if a == -1 && b /= 1 then
-      linearPolygonI [(a, fa), (b, fb), (dyadic 1, fb)] dom
+      linearPolygonI [(a, fa), (b, fb), (dyadic 1, fb)] dom thresholdAccuracy
     else
-      linearPolygonI [(a,fa), (b,fb)] dom
+      linearPolygonI [(a,fa), (b,fb)] dom thresholdAccuracy
 
 {- -}
 {-initialApproximation' :: PPoly -> PPoly -- for now approximation up to error 1/(2|P(x)|)

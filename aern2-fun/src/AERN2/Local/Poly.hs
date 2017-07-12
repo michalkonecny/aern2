@@ -29,8 +29,7 @@ variable l r ac =
   setPrecision ((prec . fromAccuracy) ac) x
   where
   x :: ChPoly MPBall
-  x = varFn sampleFn ()
-  sampleFn = constFn (dom, 1)
+  x = varFn (dom, ac) ()
   dom = Interval l r
 
 debug_useSeparablePart :: Bool
@@ -68,11 +67,11 @@ genericisePoly fI a b =
   bsI = initialBernsteinCoefs dfIPow' eI aI bI
 
 makeRational :: ChPoly MPBall -> ChPoly Rational
-makeRational (ChPoly dom (Poly ts) _) =
-  ChPoly dom (Poly $ terms_map (rational . centre) ts) Nothing
+makeRational (ChPoly dom (Poly ts) acG _) =
+  ChPoly dom (Poly $ terms_map (rational . centre) ts) acG Nothing
 
 intify :: ChPoly MPBall -> (ErrorBound, Poly Integer)
-intify (ChPoly _ p _) =
+intify (ChPoly _ p _ _) =
   (err, pInt)
   where
   termsRational = terms_map (rational . ball_value) (poly_terms p)

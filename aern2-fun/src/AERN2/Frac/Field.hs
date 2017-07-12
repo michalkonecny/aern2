@@ -12,11 +12,11 @@ import AERN2.RealFun.Operations
 
 inverseWithLowerBound ::
   (Field a) => (ChPoly a) -> a -> Frac a
-inverseWithLowerBound p m =
+inverseWithLowerBound p@(ChPoly _ _ acG _) m =
   Frac one p (1/!m)
   where
   dom = getDomain p
-  one = chPoly (dom,1)
+  one = constFn (dom,acG) 1
 
 instance CanDiv (Frac MPBall) (Frac MPBall) where
   type DivTypeNoCN (Frac MPBall) (Frac MPBall) = Frac MPBall
@@ -37,10 +37,12 @@ instance CanDiv Integer (Frac MPBall) where
   type DivTypeNoCN Integer (Frac MPBall) = Frac MPBall
   divideNoCN n f = divideNoCN nFR f
     where
-    nFR = fromPoly $ chPoly (dom,n) :: Frac MPBall
+    nFR = fromPoly $ constFn (dom, acG) n :: Frac MPBall
     dom = getDomain f
+    acG = frac_acGuide f
   type DivType Integer (Frac MPBall) = CN (Frac MPBall)
   divide n f = divide nFR f
     where
-    nFR = fromPoly $ chPoly (dom,n) :: Frac MPBall
+    nFR = fromPoly $ constFn (dom, acG) n :: Frac MPBall
     dom = getDomain f
+    acG = frac_acGuide f

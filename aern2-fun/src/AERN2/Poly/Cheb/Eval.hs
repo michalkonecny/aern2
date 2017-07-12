@@ -76,7 +76,7 @@ evalDirect ::
    CanAddSubMulBy t c, Ring c)
   =>
   (ChPoly c) -> t -> t
-evalDirect (ChPoly dom (Poly terms) _) (xInDom :: t) =
+evalDirect (ChPoly dom (Poly terms) _acG _) (xInDom :: t) =
     (b0 - b2)/!2
     where
     x = fromDomToUnitInterval dom xInDom
@@ -211,7 +211,7 @@ instance CanApplyApprox (ChPoly MPBall) DyadicInterval where
 -- rangeViaRoots :: (ChPoly MPBall) -> DyadicInterval -> (Interval CauchyReal CauchyReal, ErrorBound)
 
 instance ConvertibleExactly (ChPoly MPBall) (UnaryBallFun, ErrorBound) where
-  safeConvertExactly cp@(ChPoly dom _p _) = Right (UnaryBallFun dom eval, e)
+  safeConvertExactly cp@(ChPoly dom _p _acG _) = Right (UnaryBallFun dom eval, e)
     where
     e = radius cp
     cpExact = centreAsBall cp

@@ -31,6 +31,10 @@ instance Show (ChPoly a) => (Show (Frac a)) where
 degree :: Frac a -> Integer
 degree (Frac p q _) = Cheb.degree p + Cheb.degree q
 
+frac_acGuide :: Frac a -> Accuracy
+frac_acGuide (Frac n d _) =
+  (chPoly_acGuide n) `min` (chPoly_acGuide d)
+
 instance (CanNormalize (ChPoly a)) => CanNormalize (Frac a) where
   normalize (Frac p q m) = Frac (normalize p) (normalize q) m
 
@@ -108,14 +112,14 @@ fracLift2 :: (HasIntegers a)
 fracLift2 f p q = f (fromPoly p) (fromPoly q)
 
 fromPoly :: (HasIntegers a) => ChPoly a -> Frac a
-fromPoly chp@(ChPoly dom _ _) =
+fromPoly chp@(ChPoly dom _ acG _) =
   Frac chp one (convertExactly 1)
   where
-  one = chPoly (dom, 1)
+  one = constFn (dom, acG) 1
 
 _fracX :: Frac MPBall
 _fracX = fromPoly chpolyX
   where
   chpolyX :: ChPoly MPBall
-  chpolyX = varFn (constFn (dom, 0)) ()
+  chpolyX = varFn (dom, bits 100) ()
   dom = dyadicInterval (-1,1)

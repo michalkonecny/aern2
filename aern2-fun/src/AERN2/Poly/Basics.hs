@@ -95,7 +95,7 @@ class
 
 instance PolyCoeffBall MPBall
 
-data Poly c = Poly { poly_terms :: Terms c }
+newtype Poly c = Poly { poly_terms :: Terms c }
 
 instance (SuitableForCE es) => CanEnsureCE es (Poly c)
 

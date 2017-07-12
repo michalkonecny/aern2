@@ -87,7 +87,7 @@ chPolyFromOps :: ChPolyConstruction -> ChPolyMB
 chPolyFromOps (ChPolyConstruction acGuide dom i0 opIndices) =
   applyOps opIndices (centreAsBall $ fns !! i0)
   where
-  fns = map snd $ basicFunctions dom
+  fns = map snd $ basicFunctions (dom, acGuide)
   applyOps [] fn = fn
   applyOps ((opIndex, operandIndices):rest) fn =
     applyOps rest newFn
@@ -100,7 +100,7 @@ chPolyFromOpsWithDeg :: Integer -> ChPolyConstruction -> (ChPolyMB, ChPolyConstr
 chPolyFromOpsWithDeg deg (ChPolyConstruction acGuide dom i0 opIndices) =
   applyOps [] opIndices (centreAsBall $ fns !! i0)
   where
-  fns = map snd $ basicFunctions dom
+  fns = map snd $ basicFunctions (dom, acGuide)
   applyOps usedOpIndices [] fn =
     (fn, ChPolyConstruction acGuide dom i0 (reverse usedOpIndices))
   applyOps usedOpIndices ((opIndex, operandIndices):rest) fn
@@ -128,12 +128,12 @@ operations =
 type FnIndex = Integer
 type Frequency = Integer
 
-basicFunctions :: DyadicInterval -> [(Frequency, ChPoly MPBall)]
-basicFunctions dom = [(10,x), (1, c 0.5), (1, c 2), (1, c 100), (1, c (0.5^!20))]
+basicFunctions :: (DyadicInterval, Accuracy) -> [(Frequency, ChPoly MPBall)]
+basicFunctions (dom, acG) = [(10,x), (1, c 0.5), (1, c 2), (1, c 100), (1, c (0.5^!20))]
   where
-  x = varFn (constFn (dom, 0)) ()
+  x = varFn (dom, acG) ()
   c :: (CanBeDyadic t, HasIntegers c, HasDyadics c) => t -> ChPoly c
-  c n = constFn (dom, dyadic n)
+  c n = constFn (dom, acG) (dyadic n)
 
 instance HasDomain ChPolyConstruction where
   type Domain ChPolyConstruction = DyadicInterval
@@ -165,7 +165,7 @@ arbitraryWithMinOpsDom minOps dom =
     return $ ChPolyConstruction acGuide dom fn0 opIndices
     where
     opIndicesArities = zip [0..] $ map fst operations
-    fnIndices = map (\(i,(n,_)) -> (n,i)) $ zip [0..] $ basicFunctions dom
+    fnIndices = map (\(i,(n,_)) -> (n,i)) $ zip [0..] $ basicFunctions (dom, acGuide)
     elementsWeighted es = frequency $ map (\(n,e) -> (int n, return e)) es
     acGuide = bits $ 10 + size
     addOperands (i, arity) =
@@ -188,7 +188,7 @@ arbitraryWithDegDom deg dom =
     return $ chPolyFromOpsWithDeg deg $ ChPolyConstruction acGuide dom fn0 opIndices
     where
     opIndicesArities = zip [0..] $ map fst operations
-    fnIndices = map (\(i,(n,_)) -> (n,i)) $ zip [0..] $ basicFunctions dom
+    fnIndices = map (\(i,(n,_)) -> (n,i)) $ zip [0..] $ basicFunctions (dom, acGuide)
     elementsWeighted es = frequency $ map (\(n,e) -> (int n, return e)) es
     acGuide = bits $ 100 + size
     addOperands (i, arity) =

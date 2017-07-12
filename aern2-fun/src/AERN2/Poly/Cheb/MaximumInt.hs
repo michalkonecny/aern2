@@ -45,7 +45,7 @@ import AERN2.Poly.Conversion
 import AERN2.Interval
 
 intify :: ChPoly MPBall -> (ErrorBound, Poly Integer)
-intify (ChPoly _ p _) =
+intify (ChPoly _ p _acG _) =
   (err, pInt)
   where
   termsRational = terms_map (rational . ball_value) (poly_terms p)
@@ -55,14 +55,14 @@ intify (ChPoly _ p _) =
   pInt = Poly $ terms_map (numerator . (* termsDenominator)) termsRational
 
 maximum :: ChPoly MPBall -> MPBall -> MPBall -> MPBall
-maximum (ChPoly dom poly _) l r  =
+maximum (ChPoly dom poly acG _) l r  =
    Pow.genericMaximum (evalDf f $ reduceToEvalDirectAccuracy df (bits 0))
     (Map.fromList [(0, (evalDirect df, (err , cheb2Power dfInt)))])
     (getFiniteAccuracy f)
     (fromDomToUnitInterval dom l) (fromDomToUnitInterval dom r)
    where
-   f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly Nothing
-   df@(ChPoly _ dfp _) = derivativeExact (centre f) --makeExactCentre $ derivative f
+   f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG Nothing
+   df@(ChPoly _ dfp _ _) = derivativeExact (centre f) --makeExactCentre $ derivative f
    termsRational = terms_map (rational . ball_value) (poly_terms dfp)
    err = termsError * termsDenominator
    termsError = ball_error $ terms_lookupCoeff (poly_terms dfp) 0
@@ -70,14 +70,14 @@ maximum (ChPoly dom poly _) l r  =
    dfInt = Poly $ terms_map (numerator . (* termsDenominator)) termsRational
 
 maximumWithAccuracy :: Accuracy -> ChPoly MPBall -> MPBall -> MPBall -> MPBall
-maximumWithAccuracy acc (ChPoly dom poly _) l r  =
+maximumWithAccuracy acc (ChPoly dom poly acG _) l r  =
   Pow.genericMaximum (evalDf f $ reduceToEvalDirectAccuracy df (bits 0))
    (Map.fromList [(0, (evalDirect df, (err , cheb2Power dfInt)))])
    (min (getFiniteAccuracy f) acc)
    (fromDomToUnitInterval dom l) (fromDomToUnitInterval dom r)
   where
-  f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly Nothing
-  df@(ChPoly _ dfp _) = derivativeExact (centre f) --makeExactCentre $ derivative f
+  f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG Nothing
+  df@(ChPoly _ dfp _ _) = derivativeExact (centre f) --makeExactCentre $ derivative f
   termsRational = terms_map (rational . ball_value) (poly_terms dfp)
   err = termsError * termsDenominator
   termsError = ball_error $ terms_lookupCoeff (poly_terms dfp) 0
@@ -87,7 +87,7 @@ maximumWithAccuracy acc (ChPoly dom poly _) l r  =
 
 maximumOptimisedWithAccuracy
   :: Accuracy -> ChPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall
-maximumOptimisedWithAccuracy acc (ChPoly dom@(Interval dR dL) poly _) l r initialDegree steps =
+maximumOptimisedWithAccuracy acc (ChPoly dom@(Interval dR dL) poly acG _) l r initialDegree steps =
   --trace("f = "++(show f)) $
     {-trace("maximum optimised... ")$
     trace("f: "++(show f))$
@@ -100,7 +100,7 @@ maximumOptimisedWithAccuracy acc (ChPoly dom@(Interval dR dL) poly _) l r initia
       (fromDomToUnitInterval dom (setPrecision (getPrecision f) r))
   where
   c = 1/!(0.5*(dR - dL))
-  f   = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly Nothing
+  f   = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG Nothing
   fc' = ({-makeExactCentre .-} derivativeExact . centre) f
   maxKey = max 0 (ceiling ((degree f - initialDegree) /! steps))
   ch2Power :: (ErrorBound, Poly Integer) -> (ErrorBound, Pow.PowPoly Integer)
@@ -112,7 +112,7 @@ maximumOptimisedWithAccuracy acc (ChPoly dom@(Interval dR dL) poly _) l r initia
 
 maximumOptimisedWithAccuracyAndBounds
   :: Accuracy -> ChPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall -> MPBall -> MPBall
-maximumOptimisedWithAccuracyAndBounds acc (ChPoly dom poly _) l r initialDegree steps lower upper =
+maximumOptimisedWithAccuracyAndBounds acc (ChPoly dom poly acG _) l r initialDegree steps lower upper =
   --trace("f = "++(show f)) $
     {-trace("maximum optimised... ")$
     trace("f: "++(show f))$
@@ -126,7 +126,7 @@ maximumOptimisedWithAccuracyAndBounds acc (ChPoly dom poly _) l r initialDegree 
       lower
       upper
   where
-  f   = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly Nothing
+  f   = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG Nothing
   fc' = (derivativeExact . centre) f
   maxKey = max 0 (ceiling ((degree f - initialDegree) /! steps))
   ch2Power :: (ErrorBound, Poly Integer) -> (ErrorBound, Pow.PowPoly Integer)

@@ -1,7 +1,6 @@
 {-# LANGUAGE CPP #-}
 -- #define DEBUG
 {-# LANGUAGE TemplateHaskell #-}
-{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-|
     Module      :  AERN2.Poly.Cheb.Ring
     Description :  Chebyshev basis ring operations
@@ -58,7 +57,7 @@ import AERN2.Poly.Cheb.DCT
 
 instance CanNegSameType c => CanNeg (ChPoly c) where
   type NegType (ChPoly c) = ChPoly c
-  negate (ChPoly d x _) = ChPoly d (negate x) Nothing
+  negate (ChPoly d x acG _) = ChPoly d (negate x) acG Nothing
 
 {- addition -}
 
@@ -68,8 +67,8 @@ instance
   CanAddAsymmetric (ChPoly c) (ChPoly c)
   where
   type AddType (ChPoly c) (ChPoly c) = ChPoly c
-  add (ChPoly d1 p1 _) (ChPoly d2 p2 _)
-    | d1 == d2 = normalize $ ChPoly d1 (p1 + p2) Nothing
+  add (ChPoly d1 p1 acG1 _) (ChPoly d2 p2 acG2 _)
+    | d1 == d2 = normalize $ ChPoly d1 (p1 + p2) (min acG1 acG2) Nothing
     | otherwise = error $ "Adding polynomials with incompatible domains"
 
 $(declForTypes
@@ -77,11 +76,11 @@ $(declForTypes
   (\ t -> [d|
     instance (CanAddThis c $t, HasIntegers c) => CanAddAsymmetric $t (ChPoly c) where
       type AddType $t (ChPoly c) = ChPoly c
-      add n (ChPoly d2 p2 _) = ChPoly d2 (n + p2) Nothing
+      add n (ChPoly d2 p2 acG _) = ChPoly d2 (n + p2) acG Nothing
 
     instance (CanAddThis c $t, HasIntegers c) => CanAddAsymmetric (ChPoly c) $t where
       type AddType (ChPoly c) $t = ChPoly c
-      add (ChPoly d1 p1 _) n = ChPoly d1 (n + p1) Nothing
+      add (ChPoly d1 p1 acG _) n = ChPoly d1 (n + p1) acG Nothing
   |]))
 
 
@@ -122,11 +121,11 @@ instance
   type MulType (ChPoly Dyadic) (ChPoly Dyadic) = ChPoly Dyadic
   mul = mulChebDirect
 
--- mulCheb ::
---   (PolyCoeffBall c, CanNormalize (ChPoly c))
---   =>
---   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
-mulCheb p1@(ChPoly _ (Poly terms1) _) p2@(ChPoly _ (Poly terms2) _) =
+mulCheb ::
+  (PolyCoeffBall c, CanNormalize (ChPoly c))
+  =>
+  (ChPoly c) -> (ChPoly c) -> (ChPoly c)
+mulCheb p1@(ChPoly _ (Poly terms1) _acG1 _) p2@(ChPoly _ (Poly terms2) _acG2 _) =
   maybeTrace
     (printf "mulCheb: getAccuracy p1 = %s, getAccuracy p2 = %s, size1+size2 = %d, using %s, getAccuracy result = %s"
       (show $ getAccuracy p1) (show $ getAccuracy p2) (size1 + size2) methodS (show $ getAccuracy result)
@@ -142,14 +141,14 @@ mulCheb p1@(ChPoly _ (Poly terms1) _) p2@(ChPoly _ (Poly terms2) _) =
   size1 = terms_size terms1
   size2 = terms_size terms2
 
--- mulChebDirect ::
---   (PolyCoeffRing c, CanMulBy c Dyadic, CanNormalize (ChPoly c))
---   =>
---   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
-mulChebDirect (ChPoly d1 (Poly terms1) _) (ChPoly d2 (Poly terms2) _)
+mulChebDirect ::
+  (PolyCoeffRing c, CanMulBy c Dyadic, CanNormalize (ChPoly c))
+  =>
+  (ChPoly c) -> (ChPoly c) -> (ChPoly c)
+mulChebDirect (ChPoly d1 (Poly terms1) acG1 _) (ChPoly d2 (Poly terms2) acG2 _)
   | d1 /= d2 = error $ "Multiplying ChPoly's with incompatible domains"
   | otherwise =
-    normalize $ ChPoly d1 (Poly terms) Nothing
+    normalize $ ChPoly d1 (Poly terms) (min acG1 acG2) Nothing
   where
   terms =
     terms_fromListAddCoeffs $
@@ -160,10 +159,10 @@ mulChebDirect (ChPoly d1 (Poly terms1) _) (ChPoly d2 (Poly terms2) _)
         (j,b) <- terms_toList terms2
       ]
 
--- mulChebDCT ::
---   (PolyCoeffBall c, CanNormalize (ChPoly c))
---   =>
---   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
+mulChebDCT ::
+  (PolyCoeffBall c, CanNormalize (ChPoly c), CanSetPrecision c)
+  =>
+  (ChPoly c) -> (ChPoly c) -> (ChPoly c)
 mulChebDCT = lift2_DCT (+) (*)
 
 $(declForTypes
@@ -171,7 +170,7 @@ $(declForTypes
   (\ t -> [d|
     instance (CanMulBy c $t, HasIntegers c, CanNormalize (ChPoly c)) => CanMulAsymmetric $t (ChPoly c) where
       type MulType $t (ChPoly c) = ChPoly c
-      mul n (ChPoly d2 p2 _) = normalize $ ChPoly d2 (n * p2) Nothing
+      mul n (ChPoly d2 p2 acG _) = normalize $ ChPoly d2 (n * p2) acG Nothing
 
     instance (CanMulBy c $t, HasIntegers c, CanNormalize (ChPoly c)) => CanMulAsymmetric (ChPoly c) $t where
       type MulType (ChPoly c) $t = ChPoly c
@@ -191,10 +190,10 @@ $(declForTypes
       CanDiv (ChPoly c) $t
       where
       type DivTypeNoCN (ChPoly c) $t = ChPoly c
-      divideNoCN (ChPoly d1 p1 _) n = normalize $ ChPoly d1 (p1/!n) Nothing
+      divideNoCN (ChPoly d1 p1 acG _) n = normalize $ ChPoly d1 (p1/!n) acG Nothing
       type DivType (ChPoly c) $t = CN (ChPoly c)
-      divide (ChPoly d1 p1 _) n =
-        fmap normalize $ extractCN $ ChPoly d1 (p1/n) Nothing
+      divide (ChPoly d1 p1 acG _) n =
+        fmap normalize $ extractCN $ ChPoly d1 (p1/n) acG Nothing
 
   |]))
 

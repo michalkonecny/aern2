@@ -60,7 +60,7 @@ minimumOptimised f = minimumOptimisedWithAccuracy (getFiniteAccuracy f) f
 
 
 intify :: ChPoly MPBall -> Poly Integer
-intify (ChPoly _ p _) =
+intify (ChPoly _ p _ _) =
   pInt
   where
   termsRational = terms_map (rational . ball_value) (poly_terms p)

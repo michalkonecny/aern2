@@ -67,6 +67,10 @@ data UnaryModFun =
   , _modfun_modulus :: MPBall -> Integer -> Integer {-^ \\(\omega\\) -}
   }
 
+instance HasFnConstructorInfo UnaryModFun where
+  type FnConstructorInfo UnaryModFun = DyadicInterval
+  getFnConstructorInfo = getDomain
+
 instance HasDomain UnaryModFun where
   type Domain UnaryModFun = DyadicInterval
   getDomain f = _modfun_domain f
@@ -83,10 +87,8 @@ unaryModFun = convertExactly
 
 instance HasVars UnaryModFun where
   type Var UnaryModFun = ()
-  varFn sampleFn () =
+  varFn dom () =
     UnaryModFun dom (cn . real) (const id)
-    where
-    dom = getDomain sampleFn
 
 instance ConvertibleExactly UnaryModFun UnaryBallFun where
   safeConvertExactly = Right . modFun2BallFun

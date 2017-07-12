@@ -161,11 +161,11 @@ $(declForTypes
     type DivTypeNoCN $t (ChPoly MPBall) = ChPoly MPBall
     divideNoCN n p = divideNoCN nP p
       where
-      nP = chPoly (getDomain p,n) :: ChPoly MPBall
+      nP = chPoly (p,n) :: ChPoly MPBall
     type DivType $t (ChPoly MPBall) = CN (ChPoly MPBall)
     divide n p = divide nP p
       where
-      nP = chPoly (getDomain p,n) :: ChPoly MPBall
+      nP = chPoly (p,n) :: ChPoly MPBall
   |]))
 
 -- instance CanDiv MPBall (ChPoly MPBall) where

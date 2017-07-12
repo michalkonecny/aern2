@@ -69,13 +69,13 @@ primitive_function ::
    CanMulBy c Dyadic)
   =>
   ChPoly c -> ChPoly c
-primitive_function (ChPoly dom@(Interval l r) (Poly terms) _) =
+primitive_function (ChPoly dom@(Interval l r) (Poly terms) acG _) =
   normalize $
     (dyadic 0.5)*(r - l) *
       ChPoly dom
       (Poly $ terms_fromListAddCoeffs $
         concat $ map oneTerm $ terms_toList terms)
-    Nothing
+    acG Nothing
   where
   oneTerm (n,a)
     | n == 0 = [(1,a)]

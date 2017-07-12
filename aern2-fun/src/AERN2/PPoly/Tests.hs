@@ -87,7 +87,7 @@ pPolyFromOps :: PPolyConstruction -> PPoly
 pPolyFromOps (PPolyConstruction acGuide dom i0 opIndices) =
   applyOps opIndices (centreAsBall $ fns !! i0)
   where
-  fns = map snd $ basicFunctions dom
+  fns = map snd $ basicFunctions (dom, acGuide)
   applyOps [] fn = fn
   applyOps ((opIndex, operandIndices):rest) fn =
     applyOps rest newFn
@@ -100,7 +100,7 @@ pPolyFromOpsWithDeg :: Integer -> PPolyConstruction -> (PPoly, PPolyConstruction
 pPolyFromOpsWithDeg deg (PPolyConstruction acGuide dom i0 opIndices) =
   applyOps [] opIndices (centreAsBall $ fns !! i0)
   where
-  fns = map snd $ basicFunctions dom
+  fns = map snd $ basicFunctions (dom, acGuide)
   applyOps usedOpIndices [] fn =
     (fn, PPolyConstruction acGuide dom i0 (reverse usedOpIndices))
   applyOps usedOpIndices ((opIndex, operandIndices):rest) fn
@@ -134,7 +134,7 @@ operations =
           (Interval l r) = getDomain p
   addBreak [p] =
     -- Force a break point in the partition by adding a piecewise constant 0:
-    p + (linearPolygonI [(dyadic $ -1,mpBall 0),(x,mpBall 0),(dyadic 1,mpBall 0)] dom)
+    p + (linearPolygonI [(dyadic $ -1,mpBall 0),(x,mpBall 0),(dyadic 1,mpBall 0)] dom acGuide)
     where
     dom = getDomain p
     Interval rl ru = applyApprox p dom
@@ -150,12 +150,12 @@ operations =
 type FnIndex = Integer
 type Frequency = Integer
 
-basicFunctions :: DyadicInterval -> [(Frequency, PPoly)]
-basicFunctions dom = [(10,x), (1, c 0.5), (1, c 2), (1, c 100), (1, c (0.5^!20))]
+basicFunctions :: (DyadicInterval, Accuracy) -> [(Frequency, PPoly)]
+basicFunctions domAcc = [(10,x), (1, c 0.5), (1, c 2), (1, c 100), (1, c (0.5^!20))]
   where
-  x = fromPoly $ varFn (constFn (dom, 0)) ()
+  x = fromPoly $ varFn domAcc ()
   c :: (CanBeDyadic t) => t -> PPoly
-  c n = fromPoly $ constFn (dom, dyadic n)
+  c n = fromPoly $ constFn domAcc (dyadic n)
 
 instance HasDomain PPolyConstruction where
   type Domain PPolyConstruction = DyadicInterval
@@ -188,7 +188,7 @@ arbitraryWithMinOpsDom minOps dom =
     return $ PPolyConstruction acGuide dom fn0 opIndices
     where
     opIndicesArities = zip [0..] $ map fst operations
-    fnIndices = map (\(i,(n,_)) -> (n,i)) $ zip [0..] $ basicFunctions dom
+    fnIndices = map (\(i,(n,_)) -> (n,i)) $ zip [0..] $ basicFunctions (dom, acGuide)
     elementsWeighted es = frequency $ map (\(n,e) -> (int n, return e)) es
     acGuide = bits $ 10 + size
     addOperands (i, arity) =
@@ -211,7 +211,7 @@ arbitraryWithDegDom deg dom =
     return $ pPolyFromOpsWithDeg deg $ PPolyConstruction acGuide dom fn0 opIndices
     where
     opIndicesArities = zip [0..] $ map fst operations
-    fnIndices = map (\(i,(n,_)) -> (n,i)) $ zip [0..] $ basicFunctions dom
+    fnIndices = map (\(i,(n,_)) -> (n,i)) $ zip [0..] $ basicFunctions (dom, acGuide)
     elementsWeighted es = frequency $ map (\(n,e) -> (int n, return e)) es
     acGuide = bits $ 100 + size
     addOperands (i, arity) =

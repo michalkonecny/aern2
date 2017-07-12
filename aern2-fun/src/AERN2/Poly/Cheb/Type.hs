@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-|
     Module      :  AERN2.Poly.Cheb.Type
     Description :  Chebyshev basis unary sparse polynomials
@@ -69,6 +68,7 @@ data ChPoly c =
   ChPoly
   { chPoly_dom :: DyadicInterval
   , chPoly_poly :: Poly c
+  , chPoly_acGuide :: Accuracy
   , chPoly_maybeBounds :: Maybe (ChPolyBounds c)
   }
 
@@ -82,14 +82,14 @@ data ChPolyBounds c =
 
 instance (SuitableForCE es) => CanExtractCE es ChPoly
   where
-  extractCE sample_es (ChPoly dom poly _mb) =
-    fmap (\p -> ChPoly dom p Nothing) (extractCE sample_es poly)
+  extractCE sample_es (ChPoly dom poly acG _mb) =
+    fmap (\p -> ChPoly dom p acG Nothing) (extractCE sample_es poly)
 
 chPoly_maybeLip :: ChPoly c -> Maybe c
 chPoly_maybeLip = fmap chPolyBounds_lip . chPoly_maybeBounds
 
 chPoly_setLip :: c -> ChPoly c -> ChPoly c -- TODO: use Maybe c instead?
-chPoly_setLip lip (ChPoly dom poly _) =  ChPoly dom poly (Just $ ChPolyBounds lip)
+chPoly_setLip lip (ChPoly dom poly acG _) =  ChPoly dom poly acG (Just $ ChPolyBounds lip)
 
 chPoly_terms :: ChPoly c -> Terms c
 chPoly_terms = poly_terms . chPoly_poly
@@ -99,7 +99,7 @@ chPoly_map_terms f cp =
   cp { chPoly_poly = (chPoly_poly cp) { poly_terms = f (chPoly_terms cp)} }
 
 instance Show (ChPoly MPBall) where
-  show (ChPoly dom poly _) = show ppDom
+  show (ChPoly dom poly _acG _) = show ppDom
     where
     pp = cheb2Power poly
     ppDom =
@@ -110,27 +110,30 @@ instance Show (ChPoly MPBall) where
     Interval l r = dom
 
 showInternals :: (Show c) => ChPoly c -> String
-showInternals (ChPoly dom (Poly terms) bnd) =
+showInternals (ChPoly dom (Poly terms) acG bnd) =
   "ChPoly: dom = " ++ show dom ++
+  ", acG = " ++ show acG ++
   ", bounds = " ++ show bnd ++
   ", terms = " ++ show terms
 
 serialise :: ChPolyMB -> String
-serialise (ChPoly dom (Poly terms) _) =
-  printf "(ChPoly (%s{--}) (Poly (terms_fromList %s{--})) Nothing)"
-    (show dom) (show $ terms_toList $ terms_map dyadicInterval terms)
+serialise (ChPoly dom (Poly terms) acG _) =
+  printf "(ChPoly (%s{--}) (Poly (terms_fromList %s{--})) (%s{--}) Nothing)"
+    (show dom) (show $ terms_toList $ terms_map dyadicInterval terms) (show $ fromAccuracy acG)
 
 deserialise :: BS.ByteString -> Maybe ChPolyMB
 deserialise polyS =
   case groups of
-    [domS,termsS] ->
-      case (reads (BS.unpack domS), reads (BS.unpack termsS)) of
-        ([(dom,"")],[(terms,"")]) ->
-          Just $ ChPoly dom (Poly $ terms_map mpBall $ terms_fromList (terms :: [(Integer, DyadicInterval)])) Nothing
+    [domS,termsS, acG_S] ->
+      case (reads (BS.unpack domS), reads (BS.unpack termsS), reads (BS.unpack acG_S)) of
+        ([(dom,"")],[(terms,"")], [(acG_I :: Integer, "")]) ->
+          Just $ ChPoly dom
+                  (Poly $ terms_map mpBall $ terms_fromList (terms :: [(Integer, DyadicInterval)]))
+                  (bits acG_I) Nothing
         _ -> Nothing
     _ -> Nothing
   where
-  pat = "\\(ChPoly \\(([^{]*){--}\\) \\(Poly \\(terms_fromList ([^{]*){--}\\)\\) Nothing\\)"
+  pat = "\\(ChPoly \\(([^{]*){--}\\) \\(Poly \\(terms_fromList ([^{]*){--}\\)\\) \\(([^{]*){--}\\) Nothing\\)"
   (_before,_whole,_after,groups) = polyS =~ pat
     :: (BS.ByteString,BS.ByteString,BS.ByteString,[BS.ByteString])
     -- :: (String,String,String,[String])
@@ -150,14 +153,14 @@ instance HasDomain (ChPoly c) where
 
 instance (IsBall c, HasIntegers c) => IsBall (ChPoly c) where
   type CentreType (ChPoly c) = ChPoly c
-  radius (ChPoly _dom (Poly terms) _) =
+  radius (ChPoly _dom (Poly terms) _acG _) =
     List.foldl' (+) (errorBound 0) $ map radius $ terms_coeffs terms
-  centre (ChPoly dom (Poly terms) _bnd) =
-    ChPoly dom (Poly (terms_map centreAsBall terms)) Nothing
+  centre (ChPoly dom (Poly terms) acG _bnd) =
+    ChPoly dom (Poly (terms_map centreAsBall terms)) acG Nothing
   centreAsBall = centre
   centreAsBallAndRadius cp = (centre cp, radius cp)
-  updateRadius updateFn (ChPoly dom (Poly terms) _) =
-    ChPoly dom (Poly $ terms_updateConst (updateRadius updateFn) terms) Nothing
+  updateRadius updateFn (ChPoly dom (Poly terms) acG _) =
+    ChPoly dom (Poly $ terms_updateConst (updateRadius updateFn) terms) acG Nothing
 
 instance CanNormalize (ChPoly MPBall) where
   normalize p =
@@ -174,26 +177,29 @@ instance CanNormalize (ChPoly Rational) where
 instance CanNormalize (ChPoly Dyadic) where
   normalize = chPoly_map_terms (terms_filterKeepConst (\_d c -> c /= 0))
 
--- sweepUsingAccuracy ::
---   (PolyCoeffBall c) =>
---   ChPoly c -> ChPoly c
-sweepUsingAccuracy (ChPoly dom poly@(Poly ts) bnd) =
-  ChPoly dom (Poly ts') bnd
+sweepUsingAccuracy ::
+  (PolyCoeffBall c) =>
+  ChPoly c -> ChPoly c
+sweepUsingAccuracy (ChPoly dom _poly@(Poly ts) acG bnd) =
+  ChPoly dom (Poly ts') acG bnd
   where
   ts' = reduceTerms shouldKeep ts
   shouldKeep deg coeff =
     bits (getNormLog coeff) <= deg + thresholdAcc
       -- prefer to remove terms with higher degree
-  thresholdAcc = getFiniteAccuracy poly
+  thresholdAcc = acG -- getFiniteAccuracy poly
 
 {- constructors -}
 
+instance HasFnConstructorInfo (ChPoly c) where
+  type FnConstructorInfo (ChPoly c) = (DyadicInterval, Accuracy)
+  getFnConstructorInfo (ChPoly dom _ acG _) = (dom, acG)
+
 instance (HasDyadics c, HasIntegers c) => HasVars (ChPoly c) where
   type Var (ChPoly c) = ()
-  varFn sampleFn () =
-    ChPoly dom (Poly terms) Nothing
+  varFn (dom@(Interval l r), acG) () =
+    ChPoly dom (Poly terms) acG Nothing
     where
-    dom@(Interval l r) = getDomain sampleFn
     terms = terms_fromList [(0, c0), (1, c1)]
     c0 = coeff $ (r + l) * half
     c1 = coeff $ (r - l) * half
@@ -204,30 +210,30 @@ type CanBeChPoly c t = ConvertibleExactly t (ChPoly c)
 chPoly :: (CanBeChPoly c t) => t -> (ChPoly c)
 chPoly = convertExactly
 
-instance (ConvertibleExactly t c, HasIntegers c) => ConvertibleExactly (DyadicInterval, t) (ChPoly c)
+instance (ConvertibleExactly t c, HasIntegers c) => ConvertibleExactly ((DyadicInterval, Accuracy), t) (ChPoly c)
   where
-  safeConvertExactly (dom, x) =
+  safeConvertExactly ((dom, acG), x) =
     case safeConvertExactly x of
-      Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)]) Nothing
+      Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)]) acG Nothing
       Left e -> Left e
 
 instance (ConvertibleExactly t c, HasIntegers c) => ConvertibleExactly (ChPoly c, t) (ChPoly c)
   where
-  safeConvertExactly (ChPoly dom _ _, x) =
+  safeConvertExactly (ChPoly dom _ acG _, x) =
     case safeConvertExactly x of
-      Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)]) Nothing
+      Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)]) acG Nothing
       Left e -> Left e
 
 degree :: ChPoly c -> Integer
-degree (ChPoly _ (Poly ts) _) = terms_degree ts
+degree (ChPoly _ (Poly ts) _ _) = terms_degree ts
 
 {- precision -}
 
 instance (HasPrecision c) => HasPrecision (ChPoly c) where
-  getPrecision (ChPoly _ poly _) = getPrecision poly
+  getPrecision (ChPoly _ poly _ _) = getPrecision poly
 
 instance (CanSetPrecision c, CanNormalize (ChPoly c)) => CanSetPrecision (ChPoly c) where
-  setPrecision p (ChPoly dom poly bnd) = normalize $ ChPoly dom (setPrecision p poly) bnd
+  setPrecision p (ChPoly dom poly acG bnd) = normalize $ ChPoly dom (setPrecision p poly) acG bnd
 
 {- accuracy -}
 
@@ -238,9 +244,9 @@ instance (HasAccuracy c, HasIntegers c, IsBall c) => HasAccuracy (ChPoly c) wher
     Drop all terms that whose degree is above the given limit or whose norm is at or below the threshold.
     Compensate for the drops in the constant term.
 -}
--- reduceDegree ::
---   (PolyCoeffBall c) =>
---   Degree -> ChPoly c -> ChPoly c
+reduceDegree ::
+  (PolyCoeffBall c) =>
+  Degree -> ChPoly c -> ChPoly c
 reduceDegree maxDegree p =
     p { chPoly_poly = Poly terms' }
     where
@@ -252,18 +258,18 @@ reduceDegree maxDegree p =
     Drop all terms that whose degree is above the given limit or whose norm is at or below the threshold.
     Compensate for the drops in the constant term.
 -}
--- reduceDegreeTerms ::
---   (PolyCoeffBall c) =>
---   Degree -> Terms c -> Terms c
+reduceDegreeTerms ::
+  (PolyCoeffBall c) =>
+  Degree -> Terms c -> Terms c
 reduceDegreeTerms maxDegree =
   reduceTerms shouldKeep
   where
   shouldKeep deg _coeff =
       deg <= maxDegree
 
--- reduceTerms ::
---   (PolyCoeffBall c) =>
---   (Degree -> c -> Bool) -> Terms c -> Terms c
+reduceTerms ::
+  (PolyCoeffBall c) =>
+  (Degree -> c -> Bool) -> Terms c -> Terms c
 reduceTerms shouldKeep terms
     | terms_size termsToRemove == 0 = terms
     | otherwise =
@@ -283,9 +289,9 @@ instance
   where
   reduceSizeUsingAccuracyGuide = reduceDegreeWithLostAccuracyLimit
 
--- reduceDegreeWithLostAccuracyLimit ::
---   (PolyCoeffBall c) =>
---   Accuracy -> ChPoly c -> ChPoly c
+reduceDegreeWithLostAccuracyLimit ::
+  (PolyCoeffBall c) =>
+  Accuracy -> ChPoly c -> ChPoly c
 reduceDegreeWithLostAccuracyLimit accuracyLossLimit p =
     p { chPoly_poly = Poly terms' }
     where
@@ -293,9 +299,9 @@ reduceDegreeWithLostAccuracyLimit accuracyLossLimit p =
     terms' =
       reduceDegreeWithLostAccuracyLimitTerms accuracyLossLimit terms
 
--- reduceDegreeWithLostAccuracyLimitTerms ::
---   (PolyCoeffBall c) =>
---   Accuracy -> Terms c -> Terms c
+reduceDegreeWithLostAccuracyLimitTerms ::
+  (PolyCoeffBall c) =>
+  Accuracy -> Terms c -> Terms c
 reduceDegreeWithLostAccuracyLimitTerms accuracyLossLimit (termsMap :: Terms c) =
   terms_updateConst (+ err) (terms_fromList termsToKeep)
   where

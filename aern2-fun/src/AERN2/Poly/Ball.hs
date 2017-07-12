@@ -58,15 +58,14 @@ import AERN2.Poly.Cheb
 
 _pb_const1 :: PolyBall
 _pb_const1 =
-    constFn (dom, 1)
+    constFn (dom, bits 100) 1
     where
     dom = dyadicInterval (0.0,1.0)
 
 _pb_X :: PolyBall
 _pb_X =
-    varFn sampleFn ()
+    varFn (dom, bits 100) ()
     where
-    sampleFn = constFn (dom, 1)
     dom = dyadicInterval (0.0,1.0)
 
 {- type -}
@@ -139,21 +138,29 @@ instance (IsBall t, CanNormalize t) => CanNormalize (Ball t) where
     where
     xN = normalize x
 
-instance (ConvertibleExactly (DyadicInterval, t2) t) =>
-  ConvertibleExactly (DyadicInterval, t2) (Ball t)
+instance
+  HasFnConstructorInfo t
+  =>
+  HasFnConstructorInfo (Ball t)
   where
-  safeConvertExactly (dom, x) =
-    case safeConvertExactly (dom, x) of
+  type FnConstructorInfo (Ball t) = FnConstructorInfo t
+  getFnConstructorInfo (Ball c _) = getFnConstructorInfo c
+
+instance (ConvertibleExactly (i, t2) t) =>
+  ConvertibleExactly (i, t2) (Ball t)
+  where
+  safeConvertExactly (constrInfo, x) =
+    case safeConvertExactly (constrInfo, x) of
       Right c -> Right $ Ball c (errorBound 0)
       Left e -> Left e
 
-instance (ConvertibleExactly (t, t2) t) =>
-  ConvertibleExactly (Ball t, t2) (Ball t)
-  where
-  safeConvertExactly (Ball sample eb, x) =
-    case safeConvertExactly (sample, x) of
-      Right c -> Right $ Ball c eb
-      Left e -> Left e
+-- instance (ConvertibleExactly (t, t2) t) =>
+--   ConvertibleExactly (Ball t, t2) (Ball t)
+--   where
+--   safeConvertExactly (Ball sample eb, x) =
+--     case safeConvertExactly (sample, x) of
+--       Right c -> Right $ Ball c eb
+--       Left e -> Left e
 
 instance (HasDomain t) => HasDomain (Ball t)
   where
@@ -162,7 +169,7 @@ instance (HasDomain t) => HasDomain (Ball t)
 
 instance (HasVars t) => HasVars (Ball t) where
   type Var (Ball t) = Var t
-  varFn (Ball c _) var = Ball (varFn c var) (errorBound 0)
+  varFn constrInfo var = Ball (varFn constrInfo var) (errorBound 0)
 
 {- precision -}
 

@@ -73,9 +73,11 @@ instance (CanBeMPBall t, Show t, Typeable t)
       Right b -> Right $ UnaryBallFun dom (const $ cn (b :: MPBall))
       _err -> convError "unable to convert to constant function: " (dom,x)
 
+instance HasFnConstructorInfo UnaryBallFun where
+  type FnConstructorInfo UnaryBallFun = DyadicInterval
+  getFnConstructorInfo = getDomain
+
 instance HasVars UnaryBallFun where
   type Var UnaryBallFun = ()
-  varFn sampleF () =
+  varFn dom () =
     UnaryBallFun dom cn
-    where
-    dom = getDomain sampleF
