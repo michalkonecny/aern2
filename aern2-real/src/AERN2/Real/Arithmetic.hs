@@ -31,6 +31,11 @@ import AERN2.QA.Protocol
 import AERN2.AccuracySG
 import AERN2.Real.Type
 
+instance (QAArrow to) => Ring (CauchyRealA to)
+instance (QAArrow to) => OrderedRing (CauchyRealA to)
+instance (QAArrow to) => Field (CauchyRealA to)
+instance (QAArrow to) => OrderedField (CauchyRealA to)
+
 {-|
   To get @pi@ in an arbitrary arrow, use 'piA'.
 -}

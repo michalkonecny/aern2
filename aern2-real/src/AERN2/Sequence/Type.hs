@@ -78,6 +78,7 @@ class
 instance SuitableForSeq MPBall
 instance SuitableForSeq (CN MPBall)
 instance SuitableForSeq Bool
+instance SuitableForSeq (CN Bool)
 instance SuitableForSeq t => SuitableForSeq (Maybe t)
 
 instance
