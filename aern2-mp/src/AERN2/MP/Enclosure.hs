@@ -120,15 +120,21 @@ specCanMapInside (T dName :: T d) (T eName :: T e) =
 
 {- intersection -}
 
-type CanIntersect e1 e2 = (CanIntersectAssymetric e1 e2, CanIntersectAssymetric e1 e2)
+type CanIntersect e1 e2 =
+  (CanIntersectAssymetric e1 e2, CanIntersectAssymetric e1 e2
+  , IntersectionType e1 e2 ~ IntersectionType e2 e1)
 
 class CanIntersectAssymetric e1 e2 where
   type IntersectionType e1 e2
   type IntersectionType e1 e2 = EnsureCN e1
   intersect :: e1 -> e2 -> IntersectionType e1 e2
 
-type CanIntersectCNBy e1 e2 = (CanIntersect e1 e2, IntersectionType e1 e2 ~ EnsureCN e1)
-type CanIntersectCNSameType e1 = CanIntersectCNBy e1 e1
+type CanIntersectCNBy e1 e2 =
+  (CanIntersect e1 e2, IntersectionType e1 e2 ~ EnsureCN e1
+  , CanIntersect (EnsureCN e1) e2, IntersectionType (EnsureCN e1) e2 ~ EnsureCN e1)
+type CanIntersectCNSameType e1 =
+  (CanIntersectCNBy e1 e1
+  , CanIntersect (EnsureCN e1) (EnsureCN e1), IntersectionType (EnsureCN e1) (EnsureCN e1) ~ EnsureCN e1)
 
 instance CanIntersectAssymetric Bool Bool where
   intersect b1 b2
@@ -183,26 +189,32 @@ instance
 
 {- union -}
 
-type CanUnion e1 e2 = (CanUnionAssymetric e1 e2, CanUnionAssymetric e1 e2)
+type CanUnion e1 e2 =
+  (CanUnionAssymetric e1 e2, CanUnionAssymetric e1 e2
+  , UnionType e1 e2 ~ UnionType e2 e1)
 
 class CanUnionAssymetric e1 e2 where
-  type UnionionType e1 e2
-  type UnionionType e1 e2 = EnsureCN e1
-  union :: e1 -> e2 -> UnionionType e1 e2
+  type UnionType e1 e2
+  type UnionType e1 e2 = EnsureCN e1
+  union :: e1 -> e2 -> UnionType e1 e2
 
-type CanUnionCNBy e1 e2 = (CanUnion e1 e2, UnionionType e1 e2 ~ EnsureCN e1)
+type CanUnionCNBy e1 e2 =
+  (CanUnion e1 e2, UnionType e1 e2 ~ EnsureCN e1
+  , CanUnion (EnsureCN e1) e2, UnionType (EnsureCN e1) e2 ~ EnsureCN e1)
 
-type CanUnionCNSameType e1 = CanUnionCNBy e1 e1
+type CanUnionCNSameType e1 =
+  (CanUnionCNBy e1 e1
+  , CanUnion (EnsureCN e1) (EnsureCN e1), UnionType (EnsureCN e1) (EnsureCN e1) ~ EnsureCN e1)
 
 instance
   (CanUnionAssymetric e1 e2, SuitableForCE es
   , CanEnsureCE es e1, CanEnsureCE es e2
-  , CanEnsureCE es (UnionionType e1 e2))
+  , CanEnsureCE es (UnionType e1 e2))
   =>
   CanUnionAssymetric (CollectErrors es e1) (CollectErrors es e2)
   where
-  type UnionionType (CollectErrors es e1) (CollectErrors es e2) =
-    EnsureCE es (UnionionType e1 e2)
+  type UnionType (CollectErrors es e1) (CollectErrors es e2) =
+    EnsureCE es (UnionType e1 e2)
   union = lift2CE union
 
 instance (CanUnionCNSameType t, CanEnsureCN t) =>
