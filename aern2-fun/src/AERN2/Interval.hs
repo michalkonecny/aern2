@@ -164,7 +164,7 @@ instance
 instance
   (CanMinMaxSameType l, CanMinMaxSameType r, HasOrderCertainly l r)
   =>
-  CanIntersectAssymetric (Interval l r) (Interval l r)
+  CanIntersectAsymmetric (Interval l r) (Interval l r)
   where
   type IntersectionType (Interval l r) (Interval l r) = CN (Interval l r)
   intersect (Interval l1 r1) (Interval l2 r2)

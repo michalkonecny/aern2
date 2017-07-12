@@ -291,7 +291,7 @@ instance
 
 {- intersection -}
 
-instance CanIntersectAssymetric MPBall MPBall where
+instance CanIntersectAsymmetric MPBall MPBall where
   intersect a b
     | rL > rR =
         noValueNumErrorCertainCN $ NumError $ "intersect: empty intersection: " ++ show a ++ "; " ++ show b
@@ -302,9 +302,33 @@ instance CanIntersectAssymetric MPBall MPBall where
     (aL,aR) = endpointsMP a
     (bL,bR) = endpointsMP b
 
+instance
+  (CanIntersectAsymmetric MPBall b
+  , CanEnsureCE es b
+  , CanEnsureCE es (IntersectionType MPBall b)
+  , SuitableForCE es)
+  =>
+  CanIntersectAsymmetric MPBall (CollectErrors es b)
+  where
+  type IntersectionType MPBall (CollectErrors es b) =
+    EnsureCE es (IntersectionType MPBall b)
+  intersect = lift2TLCE intersect
+
+instance
+  (CanIntersectAsymmetric a MPBall
+  , CanEnsureCE es a
+  , CanEnsureCE es (IntersectionType a MPBall)
+  , SuitableForCE es)
+  =>
+  CanIntersectAsymmetric (CollectErrors es a) MPBall
+  where
+  type IntersectionType (CollectErrors es  a) MPBall =
+    EnsureCE es (IntersectionType a MPBall)
+  intersect = lift2TCE intersect
+
 {- union -}
 
-instance CanUnionAssymetric MPBall MPBall where
+instance CanUnionAsymmetric MPBall MPBall where
   union a b =
     case getMaybeValueCN (a `intersect` b) of
       Just _ -> prependErrorsCN [(ErrorPotential, err)] r
@@ -316,6 +340,31 @@ instance CanUnionAssymetric MPBall MPBall where
     rR = max aR bR
     (aL,aR) = endpointsMP a
     (bL,bR) = endpointsMP b
+
+
+instance
+  (CanUnionAsymmetric MPBall b
+  , CanEnsureCE es b
+  , CanEnsureCE es (UnionType MPBall b)
+  , SuitableForCE es)
+  =>
+  CanUnionAsymmetric MPBall (CollectErrors es b)
+  where
+  type UnionType MPBall (CollectErrors es b) =
+    EnsureCE es (UnionType MPBall b)
+  union = lift2TLCE union
+
+instance
+  (CanUnionAsymmetric a MPBall
+  , CanEnsureCE es a
+  , CanEnsureCE es (UnionType a MPBall)
+  , SuitableForCE es)
+  =>
+  CanUnionAsymmetric (CollectErrors es a) MPBall
+  where
+  type UnionType (CollectErrors es  a) MPBall =
+    EnsureCE es (UnionType a MPBall)
+  union = lift2TCE union
 
 {-|
   Computes an *increasing* ball fucntion @f@ from *exact* MPFR operations.
