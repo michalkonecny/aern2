@@ -34,14 +34,6 @@ import AERN2.MP.Ball.Elementary
 {- Instances of Prelude numerical classes provided for convenient use outside AERN2
    and also because Template Haskell translates (-x) to (Prelude.negate x) -}
 
-instance P.Num MPBall where
-    fromInteger = convertExactly
-    negate = negate
-    (+) = (+)
-    (*) = (*)
-    abs = abs
-    signum = error "Prelude.signum not implemented for MPBall"
-
 instance P.Eq MPBall where
   a == b =
     case a == b of
@@ -57,6 +49,14 @@ instance P.Ord MPBall where
       (_, _, Just True) -> P.GT
       _ ->
         error "Failed to decide order of MPBalls.  If you switch to MixedTypesNumPrelude instead of Prelude, comparison of MPBalls returns Maybe Bool instead of Bool."
+
+instance P.Num MPBall where
+    fromInteger = convertExactly
+    negate = negate
+    (+) = (+)
+    (*) = (*)
+    abs = abs
+    signum = error "Prelude.signum not implemented for MPBall"
 
 instance P.Fractional MPBall where
     fromRational = convertExactly . dyadic -- will work only for dyadic rationals

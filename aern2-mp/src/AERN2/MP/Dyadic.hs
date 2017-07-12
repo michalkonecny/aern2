@@ -648,3 +648,17 @@ specDyadic =
         property $ \ (x :: Dyadic) (y :: Dyadic) ->
           x * y == x * (rational y)
       specCanPow tDyadic tInteger
+
+instance P.Num Dyadic where
+    fromInteger = convertExactly
+    negate = negate
+    (+) = (+)
+    (*) = (*)
+    abs = abs
+    signum d
+      | d < 0 = dyadic (-1)
+      | d == 0 = dyadic 0
+      | otherwise = dyadic 1
+
+instance P.Real Dyadic where
+    toRational = convertExactly
