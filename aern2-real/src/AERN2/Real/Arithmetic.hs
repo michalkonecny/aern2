@@ -17,8 +17,8 @@ module AERN2.Real.Arithmetic
 )
 where
 
-import MixedTypesNumPrelude hiding (id)
--- import qualified Prelude as P
+import MixedTypesNumPrelude
+import qualified Prelude as P
 
 import Data.Convertible
 
@@ -30,6 +30,45 @@ import AERN2.MP.Dyadic
 import AERN2.QA.Protocol
 import AERN2.AccuracySG
 import AERN2.Real.Type
+
+instance (QAArrow to) => Ring (CauchyRealA to)
+instance (QAArrow to) => OrderedRing (CauchyRealA to)
+instance (QAArrow to) => Field (CauchyRealA to)
+instance (QAArrow to) => OrderedField (CauchyRealA to)
+
+instance P.Floating CauchyReal where
+    pi = pi
+    sqrt = (~!) . sqrt
+    exp = exp
+    sin = sin
+    cos = cos
+    log = (~!) . log
+    (**) = (^!)
+    atan = error "CauchyReal: atan not implemented yet"
+    atanh = error "CauchyReal: atanh not implemented yet"
+    asin = error "CauchyReal: asin not implemented yet"
+    acos = error "CauchyReal: acos not implemented yet"
+    sinh = error "CauchyReal: sinh not implemented yet"
+    cosh = error "CauchyReal: cosh not implemented yet"
+    asinh = error "CauchyReal: asinh not implemented yet"
+    acosh = error "CauchyReal: acosh not implemented yet"
+
+instance P.Floating CauchyRealCN where
+    pi = cn pi
+    sqrt = sqrt
+    exp = exp
+    sin = sin
+    cos = cos
+    log = log
+    -- (**) = (^)
+    atan = error "CauchyReal: atan not implemented yet"
+    atanh = error "CauchyReal: atanh not implemented yet"
+    asin = error "CauchyReal: asin not implemented yet"
+    acos = error "CauchyReal: acos not implemented yet"
+    sinh = error "CauchyReal: sinh not implemented yet"
+    cosh = error "CauchyReal: cosh not implemented yet"
+    asinh = error "CauchyReal: asinh not implemented yet"
+    acosh = error "CauchyReal: acosh not implemented yet"
 
 {-|
   To get @pi@ in an arbitrary arrow, use 'piA'.

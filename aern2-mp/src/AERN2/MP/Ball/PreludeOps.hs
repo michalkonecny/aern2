@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-|
-    Module      :  AERN2.MP.Ball.Elementary
-    Description :  Elementary operations on arbitrary precision dyadic balls
+    Module      :  AERN2.MP.Ball.PreludeOps
+    Description :  Instances of Prelude.Num etc
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -9,14 +9,10 @@
     Stability   :  experimental
     Portability :  portable
 
-    Elementary operations on arbitrary precision dyadic balls
+    Instances of Prelude classes Eq, Ord, Num etc
 -}
 module AERN2.MP.Ball.PreludeOps
 (
-  -- * Ball operations (see also instances)
-  piBallP
-  -- * Helpers for constructing ball functions
-  , fromApproxWithLipschitz
 )
 where
 

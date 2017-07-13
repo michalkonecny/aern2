@@ -69,9 +69,17 @@ instance (Show a) => QAProtocol (SequenceP a) where
   type A (SequenceP a) = a
   -- sampleQ _ = AccuracySG NoInformation NoInformation
 
-type SuitableForSeq a =
-  (Show a, Show (EnsureNoCN a), HasAccuracy a, CanAdjustToAccuracySG a
-  , CanEnsureCN a, HasAccuracy (EnsureNoCN a), CanIntersectCNSameType a)
+class
+  (Show a, Show (EnsureNoCN a), Show (EnsureCN a), HasAccuracy a, CanAdjustToAccuracySG a
+  , CanEnsureCN a, CanEnsureCN (EnsureCN a), HasAccuracy (EnsureNoCN a), CanIntersectCNSameType a)
+  =>
+  SuitableForSeq a
+
+instance SuitableForSeq MPBall
+instance SuitableForSeq (CN MPBall)
+instance SuitableForSeq Bool
+instance SuitableForSeq (CN Bool)
+instance SuitableForSeq t => SuitableForSeq (Maybe t)
 
 instance
   SuitableForSeq a
@@ -118,7 +126,7 @@ type FastConvSeq a = Sequence a -- synonym, emphasising stric accuracy requireme
 type EffortConvSeq a = Sequence a -- synonym, emphasising accuracy guide
 
 instance (Show a) => Show (Sequence a) where
-  show r = show $ r ? (accuracySG (bits 100))
+  show r = show $ r ? default_acSG
 
 fmapSeq ::
   (Arrow to) =>

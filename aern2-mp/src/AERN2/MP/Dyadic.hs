@@ -68,6 +68,12 @@ newtype Dyadic = Dyadic { dyadicMPFloat :: MPFloat }
 instance Ring Dyadic
 instance Ring (CN Dyadic)
 
+instance OrderedRing Dyadic
+instance OrderedRing (CN Dyadic)
+
+instance OrderedCertainlyRing Dyadic
+instance OrderedCertainlyRing (CN Dyadic)
+
 instance HasAccuracy Dyadic where getAccuracy _ = Exact
 
 instance Show Dyadic where
@@ -152,6 +158,9 @@ instance ConvertibleExactly Rational Dyadic where
 
 instance Convertible Dyadic Double where
   safeConvert = safeConvert . dyadicMPFloat
+
+instance (ConvertibleExactly Dyadic t, Monoid es) => ConvertibleExactly Dyadic (CollectErrors es t) where
+  safeConvertExactly = fmap (\v -> CollectErrors (Just v) mempty) . safeConvertExactly
 
 {-- comparisons --}
 

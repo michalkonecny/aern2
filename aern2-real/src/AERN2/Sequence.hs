@@ -33,10 +33,13 @@ module AERN2.Sequence
 )
 where
 
--- import MixedTypesNumPrelude
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 -- import Control.Arrow
+
+-- import AERN2.Norm
+-- import AERN2.MP.Precision
 
 import AERN2.QA.Protocol
 import AERN2.AccuracySG
@@ -47,3 +50,16 @@ import AERN2.Sequence.Branching
 import AERN2.Sequence.Ring ()
 import AERN2.Sequence.Field ()
 import AERN2.Sequence.Elementary ()
+import AERN2.Sequence.PreludeOps ()
+
+-- instance
+--   (QAArrow to
+--   , OrderedRing a
+--   , SuitableForSeq a
+--   , SuitableForSeq (EqCompareType a a)
+--   , SuitableForSeq (EqCompareType a Int)
+--   , SuitableForSeq (EqCompareType a Integer)
+--   , HasNorm (EnsureNoCN a)
+--   , CanSetPrecision a, CanSetPrecision (EnsureCN a))
+--   =>
+--   Ring (SequenceA to a)
