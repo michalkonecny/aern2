@@ -240,6 +240,13 @@ instance (CanSetPrecision c, CanNormalize (ChPoly c)) => CanSetPrecision (ChPoly
 instance (HasAccuracy c, HasIntegers c, IsBall c) => HasAccuracy (ChPoly c) where
   getAccuracy = getAccuracy . radius
 
+instance HasAccuracyGuide (ChPoly c) where
+  getAccuracyGuide = chPoly_acGuide
+
+instance CanSetAccuracyGuide (ChPoly c) where
+  setAccuracyGuide acGuide p = p { chPoly_acGuide = acGuide }
+
+
 {-|
     Drop all terms that whose degree is above the given limit or whose norm is at or below the threshold.
     Compensate for the drops in the constant term.

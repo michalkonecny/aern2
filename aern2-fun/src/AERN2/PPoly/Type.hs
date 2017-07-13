@@ -25,7 +25,7 @@ import AERN2.Poly.Basics (terms_fromList, Poly(..))
 
 import Control.Arrow (second)
 
-import Debug.Trace
+-- import Debug.Trace
 
 type Cheb = ChPoly MPBall
 
@@ -189,6 +189,15 @@ instance IsBall PPoly where
 instance HasAccuracy PPoly where
   getAccuracy (PPoly ps _) =
     foldl' min Exact [getAccuracy p | (_,p) <- ps]
+
+instance HasAccuracyGuide PPoly where
+  getAccuracyGuide (PPoly ((_,p):_) _) =
+    getAccuracyGuide p
+  getAccuracyGuide _ = error "getAccuracyGuide: empty PPoly"
+
+instance CanSetAccuracyGuide PPoly where
+  setAccuracyGuide acGuide (PPoly ps dom) =
+    (PPoly (map (\(d,p) -> (d, setAccuracyGuide acGuide p)) ps) dom)
 
 instance HasPrecision PPoly where
   getPrecision (PPoly ps _) =

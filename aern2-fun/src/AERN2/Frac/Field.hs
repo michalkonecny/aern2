@@ -39,10 +39,10 @@ instance CanDiv Integer (Frac MPBall) where
     where
     nFR = fromPoly $ constFn (dom, acG) n :: Frac MPBall
     dom = getDomain f
-    acG = frac_acGuide f
+    acG = getAccuracyGuide f
   type DivType Integer (Frac MPBall) = CN (Frac MPBall)
   divide n f = divide nFR f
     where
     nFR = fromPoly $ constFn (dom, acG) n :: Frac MPBall
     dom = getDomain f
-    acG = frac_acGuide f
+    acG = getAccuracyGuide f

@@ -31,9 +31,13 @@ instance Show (ChPoly a) => (Show (Frac a)) where
 degree :: Frac a -> Integer
 degree (Frac p q _) = Cheb.degree p + Cheb.degree q
 
-frac_acGuide :: Frac a -> Accuracy
-frac_acGuide (Frac n d _) =
-  (chPoly_acGuide n) `min` (chPoly_acGuide d)
+instance HasAccuracyGuide (Frac a) where
+  getAccuracyGuide (Frac n d _) =
+    (chPoly_acGuide n) `min` (chPoly_acGuide d)
+
+instance CanSetAccuracyGuide (Frac a) where
+  setAccuracyGuide acGuide (Frac n d dIM) =
+    (Frac (setAccuracyGuide acGuide n) (setAccuracyGuide acGuide d) dIM)
 
 instance (CanNormalize (ChPoly a)) => CanNormalize (Frac a) where
   normalize (Frac p q m) = Frac (normalize p) (normalize q) m

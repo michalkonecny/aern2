@@ -119,6 +119,13 @@ ballLift1TCN f b@(Ball c e) t =
 -- instance CanExtractCE es Ball where
 --   extractCE sample_es
 
+ballLift1 :: (IsBall t) => (t -> t) -> (Ball t -> Ball t)
+ballLift1 f (Ball c1 e1) = Ball fceC fceE
+  where
+  fceC = centreAsBall fce
+  fceE = radius fce
+  fce = f (updateRadius (+e1) c1)
+
 ballLift2 :: (IsBall t) => (t -> t -> t) -> (Ball t -> Ball t -> Ball t)
 ballLift2 f (Ball c1 e1) (Ball c2 e2) = Ball fceC fceE
   where
@@ -183,6 +190,12 @@ instance (CanSetPrecision t, IsBall t) => CanSetPrecision (Ball t) where
 
 instance (HasAccuracy t, IsBall t) => HasAccuracy (Ball t) where
   getAccuracy= ballLift1R getAccuracy
+
+instance (HasAccuracyGuide t, IsBall t) => HasAccuracyGuide (Ball t) where
+  getAccuracyGuide = ballLift1R getAccuracyGuide
+
+instance (CanSetAccuracyGuide t, IsBall t) => CanSetAccuracyGuide (Ball t) where
+  setAccuracyGuide acGuide = ballLift1 (setAccuracyGuide acGuide)
 
 instance
   (IsBall t, CanNormalize t, CanReduceSizeUsingAccuracyGuide t)
