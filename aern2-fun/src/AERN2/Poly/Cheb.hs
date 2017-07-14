@@ -36,11 +36,11 @@ import AERN2.Interval
 import AERN2.MP
 
 import AERN2.RealFun.Operations
-import AERN2.RealFun.SineCosine
 
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Ring
 import AERN2.Poly.Cheb.Field
+import AERN2.Poly.Cheb.Elementary ()
 import AERN2.Poly.Cheb.Eval
 import AERN2.Poly.Cheb.Maximum
 import AERN2.Poly.Cheb.Derivative
@@ -62,21 +62,21 @@ _chPoly10X =
 
 _chPolySineX :: Accuracy -> ChPoly MPBall
 _chPolySineX ac =
-    sineWithAccuracyGuide ac x
+    sin x
     where
-    x = _chPolyX
+    x = setAccuracyGuide ac _chPolyX
 
 _chPolySine10X :: Accuracy -> ChPoly MPBall
 _chPolySine10X ac =
-    sineWithAccuracyGuide ac (10*x)
+    sin (10*x)
     where
-    x = _chPolyX
+    x = setAccuracyGuide (ac + 4) _chPolyX
 
 _chPolyCosine10X :: Accuracy -> ChPoly MPBall
 _chPolyCosine10X ac =
-    cosineWithAccuracyGuide ac (10*x)
+    cos (10*x)
     where
-    x = _chPolyX
+    x = setAccuracyGuide (ac + 4) _chPolyX
 
 {-
 

@@ -83,6 +83,7 @@ library
     AERN2.Poly.Cheb.DCT
     AERN2.Poly.Cheb.Ring
     AERN2.Poly.Cheb.Field
+    AERN2.Poly.Cheb.Elementary
     AERN2.Poly.Cheb.Tests
     AERN2.Poly.Ball
     AERN2.Poly.Power
