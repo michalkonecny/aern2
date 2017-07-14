@@ -1,3 +1,5 @@
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 {-|
     Module      :  AERN2.Poly.Cheb.Type
     Description :  Chebyshev basis unary sparse polynomials
@@ -178,7 +180,7 @@ instance CanNormalize (ChPoly Dyadic) where
   normalize = chPoly_map_terms (terms_filterKeepConst (\_d c -> c /= 0))
 
 sweepUsingAccuracy ::
-  (PolyCoeffBall c) =>
+  _ =>
   ChPoly c -> ChPoly c
 sweepUsingAccuracy (ChPoly dom _poly@(Poly ts) acG bnd) =
   ChPoly dom (Poly ts') acG bnd
@@ -252,7 +254,7 @@ instance CanSetAccuracyGuide (ChPoly c) where
     Compensate for the drops in the constant term.
 -}
 reduceDegree ::
-  (PolyCoeffBall c) =>
+  _ =>
   Degree -> ChPoly c -> ChPoly c
 reduceDegree maxDegree p =
     p { chPoly_poly = Poly terms' }
@@ -266,7 +268,7 @@ reduceDegree maxDegree p =
     Compensate for the drops in the constant term.
 -}
 reduceDegreeTerms ::
-  (PolyCoeffBall c) =>
+  _ =>
   Degree -> Terms c -> Terms c
 reduceDegreeTerms maxDegree =
   reduceTerms shouldKeep
@@ -275,7 +277,7 @@ reduceDegreeTerms maxDegree =
       deg <= maxDegree
 
 reduceTerms ::
-  (PolyCoeffBall c) =>
+  _ =>
   (Degree -> c -> Bool) -> Terms c -> Terms c
 reduceTerms shouldKeep terms
     | terms_size termsToRemove == 0 = terms
@@ -296,8 +298,9 @@ instance
   where
   reduceSizeUsingAccuracyGuide = reduceDegreeWithLostAccuracyLimit
 
+
 reduceDegreeWithLostAccuracyLimit ::
-  (PolyCoeffBall c) =>
+  _ =>
   Accuracy -> ChPoly c -> ChPoly c
 reduceDegreeWithLostAccuracyLimit accuracyLossLimit p =
     p { chPoly_poly = Poly terms' }
@@ -307,7 +310,7 @@ reduceDegreeWithLostAccuracyLimit accuracyLossLimit p =
       reduceDegreeWithLostAccuracyLimitTerms accuracyLossLimit terms
 
 reduceDegreeWithLostAccuracyLimitTerms ::
-  (PolyCoeffBall c) =>
+  _ =>
   Accuracy -> Terms c -> Terms c
 reduceDegreeWithLostAccuracyLimitTerms accuracyLossLimit (termsMap :: Terms c) =
   terms_updateConst (+ err) (terms_fromList termsToKeep)

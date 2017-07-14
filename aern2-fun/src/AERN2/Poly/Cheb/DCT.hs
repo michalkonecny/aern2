@@ -1,3 +1,5 @@
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 {-|
     Module      :  AERN2.Poly.Cheb.DCT
     Description :  Interpolation using Discrete cosine transform
@@ -59,8 +61,8 @@ maybeTrace
   pointwise to the given polynomials @p1@ and @p2@.
 -}
 lift2_DCT ::
-  (PolyCoeffBall c, CanNormalize (ChPoly c), CanSetPrecision c)
-  =>
+  -- (PolyCoeffBall c, CanNormalize (ChPoly c), CanSetPrecision c) =>
+  _ =>
   (Degree -> Degree -> Degree)
     {-^ detemining a degree bound for the result from the degrees of @p1@ and @p2@ -} ->
   (c -> c -> c) {-^ the function @f@ to apply pointwise to @p1@ and @p2@ -} ->
@@ -114,7 +116,8 @@ lift2_DCT getDegree op pA pB
   pointwise to the given polynomial @p@.
 -}
 lift1_DCT ::
-  (Field c, CanMulBy c CauchyReal, CanNormalize (ChPoly c), CanSetPrecision c, Show c) =>
+  -- (Field c, CanMulBy c CauchyReal, CanNormalize (ChPoly c), CanSetPrecision c, Show c) =>
+  _ =>
   (Degree -> Degree) {-^ detemining a degree bound for the result from the degree of @p@ -} ->
   (c -> c) {-^ the function @f@ to apply pointwise to @p@ -} ->
   ChPoly c {-^ @p@ -} ->
@@ -153,7 +156,8 @@ lift1_DCT getDegree op p =
     Compute the values of the polynomial termsA on a grid.
 -}
 coeffs2gridvalues ::
-  (Field c, CanMulBy c CauchyReal) =>
+  -- (Field c, CanMulBy c CauchyReal) =>
+  _ =>
   Integer -> Terms c -> [c]
 coeffs2gridvalues cN terms =
     tDCT_I_nlogn coeffs
@@ -171,7 +175,8 @@ coeffs2gridvalues cN terms =
     It is to be used only for N<8 and as a reference in tests.
 -}
 tDCT_I_reference ::
-  (Field c, CanMulBy c CauchyReal) =>
+  -- (Field c, CanMulBy c CauchyReal) =>
+  _ =>
   [c] {-^ @a@ a vector of validated real numbers -} ->
   [c] {-^ @a~@ a vector of validated real numbers -}
 tDCT_I_reference a =
@@ -197,7 +202,8 @@ eps n k
     Precondition: (length a) = 1+2^{t+1} where t > 1
 -}
 tDCT_I_nlogn ::
-  (Field c, CanMulBy c CauchyReal) =>
+  -- (Field c, CanMulBy c CauchyReal) =>
+  _ =>
   [c] {-^ @a@ a vector of validated real numbers -} ->
   [c] {-^ @a~@ a vector of validated real numbers -}
 tDCT_I_nlogn a
@@ -221,7 +227,8 @@ tDCT_I_nlogn a
     This is quite inefficient.  It is to be used only as a reference in tests.
 -}
 _tDCT_III_reference ::
-  (Field c, CanMulBy c CauchyReal) =>
+  -- (Field c, CanMulBy c CauchyReal) =>
+  _ =>
   [c] {-^ g a vector of validated real numbers -} ->
   [c] {-^ g~ a vector of validated real numbers -}
 _tDCT_III_reference g =
@@ -240,7 +247,8 @@ _tDCT_III_reference g =
     Precondition: integer (length g) is a power of 2
 -}
 tDCT_III_nlogn ::
-  (Field c, CanMulBy c CauchyReal) =>
+  -- (Field c, CanMulBy c CauchyReal) =>
+  _ =>
   [c] {-^ g a vector of validated real numbers -} ->
   [c] {-^ g~ a vector of validated real numbers -}
 tDCT_III_nlogn g =
@@ -261,7 +269,8 @@ tDCT_III_nlogn g =
     This is quite inefficient.  It is to be used only as a reference in tests.
 -}
 _tSDCT_III_reference ::
-  (Field c, CanMulBy c CauchyReal) =>
+  -- (Field c, CanMulBy c CauchyReal) =>
+  _ =>
   [c] {-^ h a vector of validated real numbers -} ->
   [c] {-^ h~ a vector of validated real numbers -}
 _tSDCT_III_reference h =
@@ -284,7 +293,8 @@ _tSDCT_III_reference h =
     Precondition: length h is a power of 2
 -}
 tSDCT_III_nlogn ::
-  (Field c, CanMulBy c CauchyReal) =>
+  -- (Field c, CanMulBy c CauchyReal) =>
+  _ =>
   [c] {-^ h a vector of validated real numbers -} ->
   [c] {-^ h~ a vector of validated real numbers -}
 tSDCT_III_nlogn (h :: [c]) =
