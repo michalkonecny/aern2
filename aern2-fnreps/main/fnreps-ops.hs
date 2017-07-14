@@ -91,10 +91,10 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         ("poly", "max") -> maxPB $ fn_x id (x_PB accuracy)
         ("poly", "integrate") -> integratePB $ fn_x id (x_PB accuracy)
 
-        -- ("ppoly", "max") -> maxPP $ fn_x (x_PP accuracy)
-        -- ("ppoly", "integrate") -> integratePP $ fn_x (x_PP accuracy)
-        -- ("frac", "max") -> maxFR $ fn_x (x_FR accuracy)
-        -- ("frac", "integrate") -> integrateFR $ fn_x (x_FR accuracy)
+        ("ppoly", "max") -> maxPP $ fn_x PPoly.fromPoly (x_PB accuracy)
+        ("ppoly", "integrate") -> integratePP $ fn_x PPoly.fromPoly (x_PB accuracy)
+        ("frac", "max") -> maxFR $ fn_x Frac.fromPoly (x_PB accuracy)
+        ("frac", "integrate") -> integrateFR $ fn_x Frac.fromPoly (x_PB accuracy)
 
         -- ("lpoly", "max") -> maxLP (fn_x x_LP) accuracy
         -- ("lpoly", "integrate") -> integrateLP (fn_x x_LP) accuracy
@@ -218,14 +218,8 @@ x_PB :: Accuracy -> ChPoly MPBall
 x_PB acG =
   setAccuracyGuide acG $ varFn (unaryIntervalDom, bits 10) ()
 
--- x_PP :: Accuracy -> PPoly
--- x_PP acG =
---   setAccuracyGuide acG $ varFn (unaryIntervalDom, bits 10) ()
---
--- x_FR :: Accuracy -> Frac MPBall
--- x_FR acG =
---   setAccuracyGuide acG $ varFn (unaryIntervalDom, bits 10) ()
-
+-- x_LP :: LPoly
+-- x_LP = varFn () ()
 
 functions ::
   Map.Map String (String, forall f1 f2. (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2)

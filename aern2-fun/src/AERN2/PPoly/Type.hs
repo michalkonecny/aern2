@@ -7,6 +7,8 @@ import MixedTypesNumPrelude
 import Data.List
 import Data.Maybe
 
+import Control.CollectErrors
+
 import AERN2.Normalize
 
 import AERN2.MP.Ball (IsBall(..), MPBall, mpBall)
@@ -32,6 +34,8 @@ type Cheb = ChPoly MPBall
 data PPoly =
   PPoly {ppoly_pieces  :: [(DyadicInterval, PolyBall)],
          ppoly_dom     :: DyadicInterval}
+
+instance (SuitableForCE es) => CanEnsureCE es PPoly
 
 ppoly_degree :: PPoly -> Integer
 ppoly_degree (PPoly ps _) =

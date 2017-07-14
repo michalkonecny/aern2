@@ -5,6 +5,8 @@ where
 import MixedTypesNumPrelude hiding (maximum, minimum)
 import qualified Prelude
 
+import Control.CollectErrors
+
 import AERN2.Poly.Cheb (reduceDegree, degree)
 
 import AERN2.MP.Dyadic
@@ -30,17 +32,18 @@ instance CanDiv PPoly PPoly where -- TODO: support negative denominator
   type DivTypeNoCN PPoly PPoly = PPoly
   divideNoCN p q =
     p * inverse q
-  type DivType PPoly PPoly = PPoly
+  type DivType PPoly PPoly = CN PPoly
   divide p q =
-    p * inverse q
+    cn $ p * inverse q -- TODO: detect divide by zero
 
 instance CanDiv Integer PPoly where -- TODO: support negative denominator
   type DivTypeNoCN Integer PPoly = PPoly
   divideNoCN n q =
     n * inverse q
-  type DivType Integer PPoly = PPoly
+  type DivType Integer PPoly = CN PPoly
   divide n q =
-    n * inverse q
+    cn $ n * inverse q -- TODO: detect divide by zero
+
 
 inverseWithAccuracy :: Accuracy -> PPoly -> PPoly
 inverseWithAccuracy cutoff' f@(PPoly _ (Interval l r)) =
@@ -63,7 +66,8 @@ inverseWithAccuracy cutoff' f@(PPoly _ (Interval l r)) =
 
 inverse :: PPoly -> PPoly -- TODO: allow negative f
 inverse f =
-  inverseWithAccuracy (getFiniteAccuracy f) f
+  inverseWithAccuracy (getAccuracyGuide f) f
+  -- inverseWithAccuracy (getFiniteAccuracy f) f
   {-iterateInverse f (setPrecision (getPrecision f) if0)
   where
   fRed0 = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 (bits 4)) f
@@ -331,3 +335,36 @@ reduceDegreeToAccuracy d cutoffAccuracy g =
     else
       --trace("trying with higher degree") $
       reduceDegreeToAccuracy (d + 5) cutoffAccuracy g
+
+
+instance
+  (CanDiv PPoly b
+  , CanEnsureCE es b
+  , CanEnsureCE es (DivType PPoly b)
+  , CanEnsureCE es (DivTypeNoCN PPoly b)
+  , SuitableForCE es)
+  =>
+  CanDiv PPoly (CollectErrors es  b)
+  where
+  type DivType PPoly (CollectErrors es  b) =
+    EnsureCE es (DivType PPoly b)
+  divide = lift2TLCE divide
+  type DivTypeNoCN PPoly (CollectErrors es  b) =
+    EnsureCE es (DivTypeNoCN PPoly b)
+  divideNoCN = lift2TLCE divideNoCN
+
+instance
+  (CanDiv a PPoly
+  , CanEnsureCE es a
+  , CanEnsureCE es (DivType a PPoly)
+  , CanEnsureCE es (DivTypeNoCN a PPoly)
+  , SuitableForCE es)
+  =>
+  CanDiv (CollectErrors es a) PPoly
+  where
+  type DivType (CollectErrors es  a) PPoly =
+    EnsureCE es (DivType a PPoly)
+  divide = lift2TCE divide
+  type DivTypeNoCN (CollectErrors es  a) PPoly =
+    EnsureCE es (DivTypeNoCN a PPoly)
+  divideNoCN = lift2TCE divideNoCN

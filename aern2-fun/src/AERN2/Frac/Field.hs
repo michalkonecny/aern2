@@ -2,6 +2,9 @@ module AERN2.Frac.Field
 where
 
 import MixedTypesNumPrelude
+
+import Control.CollectErrors
+
 import AERN2.MP.Accuracy
 import AERN2.MP.Ball
 import AERN2.Interval
@@ -46,3 +49,36 @@ instance CanDiv Integer (Frac MPBall) where
     nFR = fromPoly $ constFn (dom, acG) n :: Frac MPBall
     dom = getDomain f
     acG = getAccuracyGuide f
+
+
+instance
+  (CanDiv (Frac c) b
+  , CanEnsureCE es b
+  , CanEnsureCE es (DivType (Frac c) b)
+  , CanEnsureCE es (DivTypeNoCN (Frac c) b)
+  , SuitableForCE es)
+  =>
+  CanDiv (Frac c) (CollectErrors es  b)
+  where
+  type DivType (Frac c) (CollectErrors es  b) =
+    EnsureCE es (DivType (Frac c) b)
+  divide = lift2TLCE divide
+  type DivTypeNoCN (Frac c) (CollectErrors es  b) =
+    EnsureCE es (DivTypeNoCN (Frac c) b)
+  divideNoCN = lift2TLCE divideNoCN
+
+instance
+  (CanDiv a (Frac c)
+  , CanEnsureCE es a
+  , CanEnsureCE es (DivType a (Frac c))
+  , CanEnsureCE es (DivTypeNoCN a (Frac c))
+  , SuitableForCE es)
+  =>
+  CanDiv (CollectErrors es a) (Frac c)
+  where
+  type DivType (CollectErrors es  a) (Frac c) =
+    EnsureCE es (DivType a (Frac c))
+  divide = lift2TCE divide
+  type DivTypeNoCN (CollectErrors es  a) (Frac c) =
+    EnsureCE es (DivTypeNoCN a (Frac c))
+  divideNoCN = lift2TCE divideNoCN
