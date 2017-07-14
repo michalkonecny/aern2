@@ -213,6 +213,13 @@ instance Show PPoly where
   show (PPoly ps _) =
     concatMap (\(i,p) -> show (i,p) ++ "\n") ps
 
+instance HasFnConstructorInfo PPoly where
+  type FnConstructorInfo PPoly = (DyadicInterval, Accuracy)
+  getFnConstructorInfo (PPoly ((_,p):_) dom) = (dom, acG)
+    where
+    (_, acG) = getFnConstructorInfo p
+  getFnConstructorInfo _ = error "PPoly getFnConstructorInfo: no segments"
+
 {- -}
 
 multiplyWithBounds :: PPoly -> MPBall -> PPoly -> MPBall -> PPoly

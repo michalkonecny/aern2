@@ -27,9 +27,9 @@ import Debug.Trace (trace)
 import MixedTypesNumPrelude
 import Text.Printf
 
+import Control.CollectErrors
+
 -- import AERN2.Normalize
-
-
 
 import AERN2.MP
 import AERN2.MP.Dyadic
@@ -167,6 +167,38 @@ $(declForTypes
       where
       nP = chPoly (p,n) :: ChPoly MPBall
   |]))
+
+instance
+  (CanDiv (ChPoly c) b
+  , CanEnsureCE es b
+  , CanEnsureCE es (DivType (ChPoly c) b)
+  , CanEnsureCE es (DivTypeNoCN (ChPoly c) b)
+  , SuitableForCE es)
+  =>
+  CanDiv (ChPoly c) (CollectErrors es  b)
+  where
+  type DivType (ChPoly c) (CollectErrors es  b) =
+    EnsureCE es (DivType (ChPoly c) b)
+  divide = lift2TLCE divide
+  type DivTypeNoCN (ChPoly c) (CollectErrors es  b) =
+    EnsureCE es (DivTypeNoCN (ChPoly c) b)
+  divideNoCN = lift2TLCE divideNoCN
+
+instance
+  (CanDiv a (ChPoly c)
+  , CanEnsureCE es a
+  , CanEnsureCE es (DivType a (ChPoly c))
+  , CanEnsureCE es (DivTypeNoCN a (ChPoly c))
+  , SuitableForCE es)
+  =>
+  CanDiv (CollectErrors es a) (ChPoly c)
+  where
+  type DivType (CollectErrors es  a) (ChPoly c) =
+    EnsureCE es (DivType a (ChPoly c))
+  divide = lift2TCE divide
+  type DivTypeNoCN (CollectErrors es  a) (ChPoly c) =
+    EnsureCE es (DivTypeNoCN a (ChPoly c))
+  divideNoCN = lift2TCE divideNoCN
 
 -- instance CanDiv MPBall (ChPoly MPBall) where
 --   type DivType MPBall (ChPoly MPBall) = ChPoly MPBall

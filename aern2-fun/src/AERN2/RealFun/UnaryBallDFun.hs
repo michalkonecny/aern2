@@ -23,7 +23,7 @@ import MixedTypesNumPrelude
 
 import Control.Applicative
 
-
+import Control.CollectErrors
 
 import AERN2.Norm
 import AERN2.MP
@@ -42,11 +42,29 @@ import AERN2.RealFun.UnaryBallFun.Integration
 
 data UnaryBallDFun = UnaryBallDFun { _dballfun_derivatives :: [UnaryBallFun] }
 
+instance HasFnConstructorInfo UnaryBallDFun where
+  type FnConstructorInfo UnaryBallDFun = DyadicInterval
+  getFnConstructorInfo (UnaryBallDFun (f:_)) = getDomain f
+  getFnConstructorInfo (UnaryBallDFun _) = error "getFnConstructorInfo UnaryBallDFun: empty"
+
+instance HasVars UnaryBallDFun where
+  type Var UnaryBallDFun = ()
+  varFn dom () = UnaryBallDFun [varFn dom (), constFn dom 1]
+
 instance HasAccuracyGuide UnaryBallDFun where
   getAccuracyGuide _f = NoInformation
 
 instance CanSetAccuracyGuide UnaryBallDFun where
   setAccuracyGuide _ f = f
+
+instance (SuitableForCE es) => CanEnsureCE es UnaryBallDFun where
+  type EnsureCE es UnaryBallDFun = UnaryBallDFun
+  type EnsureNoCE es UnaryBallDFun = UnaryBallDFun
+  ensureCE _sample_es = id
+  deEnsureCE _sample_es = Right
+  ensureNoCE _sample_es v = (Just v, mempty)
+  noValueECE _sample_vCE _es = error "UnaryBallDFun noValueCE not implemented yet"
+  prependErrorsECE _sample_vCE _es = error "UnaryBallDFun prependErrorsECE not implemented yet"
 
 instance CanApply UnaryBallDFun DyadicInterval where
   type ApplyType UnaryBallDFun DyadicInterval = RealInterval
@@ -108,3 +126,81 @@ instance CanIntegrateOverDom UnaryBallDFun DyadicInterval where
       deriv = apply f' diB
       diM = centreAsBall diB
       diB = setPrecision p $ mpBall di
+
+
+instance CanNeg UnaryBallDFun where
+  negate (UnaryBallDFun as) = UnaryBallDFun (map negate as)
+
+instance CanAddAsymmetric UnaryBallDFun UnaryBallDFun where
+  add (UnaryBallDFun as) (UnaryBallDFun bs) =
+    UnaryBallDFun (zipWith (+) as bs)
+instance CanAddAsymmetric UnaryBallDFun Integer where
+  add (UnaryBallDFun (a:rest)) t = UnaryBallDFun (t+a:rest)
+  add _ _ = error "UnaryBallDFun: add operand does not contain any value"
+instance CanAddAsymmetric Integer UnaryBallDFun where
+  type AddType Integer UnaryBallDFun = UnaryBallDFun
+  add t (UnaryBallDFun (a:rest)) = UnaryBallDFun (t+a:rest)
+  add _ _ = error "UnaryBallDFun: add operand does not contain any value"
+
+instance CanSub UnaryBallDFun UnaryBallDFun where
+  sub (UnaryBallDFun as) (UnaryBallDFun bs) =
+    UnaryBallDFun (zipWith (-) as bs)
+instance CanSub UnaryBallDFun Integer where
+  sub (UnaryBallDFun (a:rest)) t = UnaryBallDFun (a-t:rest)
+  sub _ _ = error "UnaryBallDFun: sub operand does not contain any value"
+instance CanSub Integer UnaryBallDFun where
+  type SubType Integer UnaryBallDFun = UnaryBallDFun
+  sub t (UnaryBallDFun (a:rest)) = UnaryBallDFun (t-a:rest)
+  sub _ _ = error "UnaryBallDFun: sub operand does not contain any value"
+
+instance CanMulAsymmetric UnaryBallDFun UnaryBallDFun where
+  mul (UnaryBallDFun (a:ad:_)) (UnaryBallDFun (b:bd:_)) =
+    UnaryBallDFun [a*b, ad*b+a*bd]
+  mul _ _ = error "UnaryBallDFun: mul operand does not contain a derivative"
+instance CanMulAsymmetric UnaryBallDFun Integer where
+  mul (UnaryBallDFun as) t = UnaryBallDFun (map (*t) as)
+instance CanMulAsymmetric Integer UnaryBallDFun where
+  type MulType Integer UnaryBallDFun = UnaryBallDFun
+  mul t (UnaryBallDFun as) = UnaryBallDFun (map (*t) as)
+
+instance CanDiv UnaryBallDFun UnaryBallDFun where
+  type DivTypeNoCN UnaryBallDFun UnaryBallDFun = UnaryBallDFun
+  divideNoCN (UnaryBallDFun (a:ad:_)) (UnaryBallDFun (b:bd:_)) =
+    UnaryBallDFun [a/b, (ad*b-a*bd)/(b^2)]
+  divideNoCN _ _ = error "UnaryBallDFun: divideNoCN operand does not contain a derivative"
+  type DivType UnaryBallDFun UnaryBallDFun = UnaryBallDFun
+  divide (UnaryBallDFun (a:ad:_)) (UnaryBallDFun (b:bd:_)) =
+    UnaryBallDFun [a/b, (ad*b-a*bd)/(b^2)]
+  divide _ _ = error "UnaryBallDFun: divide operand does not contain a derivative"
+instance CanDiv UnaryBallDFun Integer where
+  type DivTypeNoCN UnaryBallDFun Integer = UnaryBallDFun
+  divideNoCN (UnaryBallDFun as) t = UnaryBallDFun (map (/t) as)
+  type DivType UnaryBallDFun Integer = UnaryBallDFun
+  divide (UnaryBallDFun as) t = UnaryBallDFun (map (/t) as)
+instance CanDiv Integer UnaryBallDFun where
+  type DivTypeNoCN Integer UnaryBallDFun = UnaryBallDFun
+  divideNoCN t (UnaryBallDFun (b:bd:_)) =
+    UnaryBallDFun [t/b, (-t*bd)/(b^2)]
+  divideNoCN _ _ = error "UnaryBallDFun: divideNoCN operand does not contain a derivative"
+  type DivType Integer UnaryBallDFun = UnaryBallDFun
+  divide t (UnaryBallDFun (b:bd:_)) =
+    UnaryBallDFun [t/b, (-t*bd)/(b^2)]
+  divide _ _ = error "UnaryBallDFun: divide operand does not contain a derivative"
+
+instance CanPow UnaryBallDFun Integer where
+  type PowTypeNoCN UnaryBallDFun Integer = UnaryBallDFun
+  powNoCN (UnaryBallDFun (b:bd:_)) n =
+    UnaryBallDFun [b^n, n*(b^(n-1))*bd]
+  powNoCN _ _ = error "UnaryBallDFun: powNoCN operand does not contain a derivative"
+  type PowType UnaryBallDFun Integer = UnaryBallDFun
+  pow (UnaryBallDFun (b:bd:_)) n =
+    UnaryBallDFun [b^n, n*(b^(n-1))*bd]
+  pow _ _ = error "UnaryBallDFun: pow operand does not contain a derivative"
+
+instance CanSinCos UnaryBallDFun where
+  sin (UnaryBallDFun (a:ad:_)) =
+    UnaryBallDFun [sin a, (cos a) * ad]
+  sin _ = error "UnaryBallDFun: sin operand does not contain a derivative"
+  cos (UnaryBallDFun (a:ad:_)) =
+    UnaryBallDFun [cos a, -(sin a) * ad]
+  cos _ = error "UnaryBallDFun: sin operand does not contain a derivative"

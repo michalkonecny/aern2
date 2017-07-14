@@ -28,7 +28,7 @@ import Data.Typeable
 -- import Test.Hspec
 -- import Test.QuickCheck
 
-
+import Control.CollectErrors
 
 -- import AERN2.MP.Dyadic
 import AERN2.MP.Ball
@@ -87,6 +87,18 @@ instance HasAccuracyGuide UnaryBallFun where
 
 instance CanSetAccuracyGuide UnaryBallFun where
   setAccuracyGuide _ f = f
+
+instance (SuitableForCE es) => CanEnsureCE es UnaryBallFun where
+  type EnsureCE es UnaryBallFun = UnaryBallFun
+  type EnsureNoCE es UnaryBallFun = UnaryBallFun
+  ensureCE _sample_es = id
+  deEnsureCE _sample_es = Right
+  ensureNoCE _sample_es v = (Just v, mempty)
+  noValueECE _sample_vCE _es = error "UnaryBallFun noValueCE not implemented yet"
+  prependErrorsECE _sample_vCE _es = error "UnaryBallFun prependErrorsECE not implemented yet"
+
+instance CanNeg UnaryBallFun where
+  negate = lift1 negate
 
 instance CanAddAsymmetric UnaryBallFun UnaryBallFun where
   add = lift2 add

@@ -1,4 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-unused-matches #-}
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE CPP #-}
 -- #define DEBUG
 module Main where
@@ -80,26 +82,28 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 
     result =
       case (representationCode, operationCode) of
-        ("fun", "max") -> maxModFun fnModFun accuracy
-        ("ball", "max") -> maxBallFun fnB2B accuracy
-        ("dball", "max") -> maxDBallFun fnB2B dfnB2B accuracy
-        ("fun", "integrate") -> integrateModFun fnModFun accuracy
-        ("ball", "integrate") -> integrateBallFun fnB2B accuracy
-        ("dball", "integrate") -> integrateDBallFun fnB2B dfnB2B accuracy
-        ("poly", "max") -> maxPB $ fnPB accuracy
-        ("poly", "integrate") -> integratePB $ fnPB accuracy
-        ("ppoly", "max") -> maxPP $ fnPP accuracy
-        ("ppoly", "integrate") -> integratePP $ fnPP accuracy
-        ("frac", "max") -> maxFR $ fnFR accuracy
-        ("frac", "integrate") -> integrateFR $ fnFR accuracy
-        ("lpoly", "max") -> maxLP fnLP accuracy
-        ("lpoly", "integrate") -> integrateLP fnLP accuracy
-        ("lppoly", "max") -> maxLPP fnLPP accuracy
-        ("lppoly", "integrate") -> integrateLPP fnLPP accuracy
-        ("lfrac", "max") -> maxLF fnLF accuracy
-        ("lfrac", "integrate") -> integrateLF fnLF accuracy
+        ("fun", "max") -> maxModFun (fn_x id x_MF) accuracy
+        ("fun", "integrate") -> integrateModFun (fn_x id x_MF) accuracy
+        ("ball", "max") -> maxBallFun (fn_x id x_BF) accuracy
+        ("ball", "integrate") -> integrateBallFun (fn_x id x_BF) accuracy
+        ("dball", "max") -> maxDBallFun (fn_x id x_DBF) accuracy
+        ("dball", "integrate") -> integrateDBallFun (fn_x id x_DBF) accuracy
+        ("poly", "max") -> maxPB $ fn_x id (x_PB accuracy)
+        ("poly", "integrate") -> integratePB $ fn_x id (x_PB accuracy)
+
+        -- ("ppoly", "max") -> maxPP $ fn_x (x_PP accuracy)
+        -- ("ppoly", "integrate") -> integratePP $ fn_x (x_PP accuracy)
+        -- ("frac", "max") -> maxFR $ fn_x (x_FR accuracy)
+        -- ("frac", "integrate") -> integrateFR $ fn_x (x_FR accuracy)
+
+        -- ("lpoly", "max") -> maxLP (fn_x x_LP) accuracy
+        -- ("lpoly", "integrate") -> integrateLP (fn_x x_LP) accuracy
+        -- ("lppoly", "max") -> maxLPP (fn_x x_LPP) accuracy
+        -- ("lppoly", "integrate") -> integrateLPP (fn_x x_LPP) accuracy
+        -- ("lfrac", "max") -> maxLF (fn_x x_LF) accuracy
+        -- ("lfrac", "integrate") -> integrateLF (fn_x x_LF) accuracy
         _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
-    (Just (fnDescription, fnPB, fnModFun, fnB2B, dfnB2B, fnPP, fnFR, fnLP, fnLPP, fnLF)) = Map.lookup functionCode functions
+    (Just (fnDescription, fn_x)) = Map.lookup functionCode functions
 
     accuracy = bits $ (read accuracyS :: Int)
     [accuracyS] = effortArgs
@@ -172,8 +176,8 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         where
         m = fn `maximumOverDom` getDomain fn
 
-    maxDBallFun :: UnaryBallFun -> UnaryBallFun -> Accuracy -> MPBall
-    maxDBallFun f f' ac =
+    maxDBallFun :: UnaryBallDFun -> Accuracy -> MPBall
+    maxDBallFun (UnaryBallDFun [f, f']) ac =
         m ? accuracySG ac
         where
         m = fn `maximumOverDom` getDomain f
@@ -191,8 +195,8 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         where
         r = (~!) $ fn `integrateOverDom` (getDomain fn)
 
-    integrateDBallFun :: UnaryBallFun -> UnaryBallFun -> Accuracy -> MPBall
-    integrateDBallFun f f' ac =
+    integrateDBallFun :: UnaryBallDFun -> Accuracy -> MPBall
+    integrateDBallFun (UnaryBallDFun [f, f']) ac =
         r ? accuracySG ac
         where
         r = (~!) $ fn `integrateOverDom` (getDomain f)
@@ -201,26 +205,45 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 processArgs _ =
     error "expecting arguments: <operationCode> <functionCode> <representationCode> <effort parameters...>"
 
+x_MF :: UnaryModFun
+x_MF = varFn unaryIntervalDom ()
+
+x_BF :: UnaryBallFun
+x_BF = varFn unaryIntervalDom ()
+
+x_DBF :: UnaryBallDFun
+x_DBF = varFn unaryIntervalDom ()
+
+x_PB :: Accuracy -> ChPoly MPBall
+x_PB acG =
+  setAccuracyGuide acG $ varFn (unaryIntervalDom, bits 10) ()
+
+-- x_PP :: Accuracy -> PPoly
+-- x_PP acG =
+--   setAccuracyGuide acG $ varFn (unaryIntervalDom, bits 10) ()
+--
+-- x_FR :: Accuracy -> Frac MPBall
+-- x_FR acG =
+--   setAccuracyGuide acG $ varFn (unaryIntervalDom, bits 10) ()
+
+
 functions ::
-  Map.Map String
-  (String, Accuracy -> ChPoly MPBall, UnaryModFun, UnaryBallFun, UnaryBallFun,
-   Accuracy -> PPoly, Accuracy -> FracMB,
-   LPolyMB, LPPolyMB, LFracMB)
+  Map.Map String (String, forall f1 f2. (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2)
 functions =
     Map.fromList
     [
-      ("sine+cos", (sinecos_Name, sinecos_x . x_PB, sinecos_x x_MF, sinecos_x x_BF, sinecosDeriv_B2B, sinecos_PP, sinecos_FR, sinecos_LP, sinecos_LPP, sinecos_LF))
-    , ("sinesine", (sinesine_Name, sinesine_PB, sinesine_ModFun, sinesine_B2B, sinesineDeriv_B2B, sinesine_PP, sinesine_FR, sinesine_LP, sinesine_LPP, sinesine_LF))
-    , ("sinesine+sin", (sinesineSin_Name, sinesineSin_PB, sinesineSin_ModFun, sinesineSin_B2B, sinesineSinDeriv_B2B, sinesineSin_PP, sinesineSin_FR, sinesineSin_LP, sinesineSin_LPP, sinesineSin_LF))
-    , ("sinesine+cos", (sinesineCos_Name, sinesineCos_PB, sinesineCos_ModFun, sinesineCos_B2B, sinesineCosDeriv_B2B, sinesineCos_PP, sinesineCos_FR, sinesineCos_LP, sinesineCos_LPP, sinesineCos_LF))
-    , ("runge", (runge_Name, runge_PB, runge_ModFun, runge_B2B, rungeDeriv_B2B, runge_PP, runge_FR, runge_LP, runge_LPP, runge_LF))
-    , ("rungeX", (rungeX_Name, rungeX_PB, rungeX_ModFun, rungeX_B2B, rungeXDeriv_B2B, rungeX_PP, rungeX_FR, rungeX_LP, rungeX_LPP, rungeX_LF))
-    , ("rungeSC", (rungeSC_Name, rungeSC_PB, rungeSC_ModFun, rungeSC_B2B, rungeSCDeriv_B2B, rungeSC_PP, rungeSC_FR, rungeSC_LP, rungeSC_LPP, rungeSC_LF))
-    , ("fracSin", (fracSin_Name, fracSin_PB, fracSin_ModFun, fracSin_B2B, fracSinDeriv_B2B, fracSin_PP, fracSin_FR, fracSin_LP, fracSin_LPP, fracSin_LF))
-    , ("fracSinX", (fracSinX_Name, fracSinX_PB, fracSinX_ModFun, fracSinX_B2B, fracSinXDeriv_B2B, fracSinX_PP, fracSinX_FR, fracSinX_LP, fracSinX_LPP, fracSinX_LF))
-    , ("fracSinSC", (fracSinSC_Name, fracSinSC_PB, fracSinSC_ModFun, fracSinSC_B2B, fracSinSCDeriv_B2B, fracSinSC_PP, fracSinSC_FR, fracSinSC_LP, fracSinSC_LPP, fracSinSC_LF))
-    -- , ("hat", (hat_Name, hat_PB, hat_B2B, hatDeriv_B2B, hat_PP, hat_FR))
-    -- , ("bumpy", (bumpy_Name, bumpy_PB, bumpy_B2B, bumpyDeriv_B2B, bumpy_PP, bumpy_FR))
+      ("sine+cos", (sinecos_Name, sinecos_x))
+    -- , ("sinesine", (sinesine_Name, sinesine_PB, sinesine_ModFun, sinesine_B2B, sinesineDeriv_B2B, sinesine_PP, sinesine_FR, sinesine_LP, sinesine_LPP, sinesine_LF))
+    -- , ("sinesine+sin", (sinesineSin_Name, sinesineSin_PB, sinesineSin_ModFun, sinesineSin_B2B, sinesineSinDeriv_B2B, sinesineSin_PP, sinesineSin_FR, sinesineSin_LP, sinesineSin_LPP, sinesineSin_LF))
+    -- , ("sinesine+cos", (sinesineCos_Name, sinesineCos_PB, sinesineCos_ModFun, sinesineCos_B2B, sinesineCosDeriv_B2B, sinesineCos_PP, sinesineCos_FR, sinesineCos_LP, sinesineCos_LPP, sinesineCos_LF))
+    -- , ("runge", (runge_Name, runge_PB, runge_ModFun, runge_B2B, rungeDeriv_B2B, runge_PP, runge_FR, runge_LP, runge_LPP, runge_LF))
+    -- , ("rungeX", (rungeX_Name, rungeX_PB, rungeX_ModFun, rungeX_B2B, rungeXDeriv_B2B, rungeX_PP, rungeX_FR, rungeX_LP, rungeX_LPP, rungeX_LF))
+    -- , ("rungeSC", (rungeSC_Name, rungeSC_PB, rungeSC_ModFun, rungeSC_B2B, rungeSCDeriv_B2B, rungeSC_PP, rungeSC_FR, rungeSC_LP, rungeSC_LPP, rungeSC_LF))
+    -- , ("fracSin", (fracSin_Name, fracSin_PB, fracSin_ModFun, fracSin_B2B, fracSinDeriv_B2B, fracSin_PP, fracSin_FR, fracSin_LP, fracSin_LPP, fracSin_LF))
+    -- , ("fracSinX", (fracSinX_Name, fracSinX_PB, fracSinX_ModFun, fracSinX_B2B, fracSinXDeriv_B2B, fracSinX_PP, fracSinX_FR, fracSinX_LP, fracSinX_LPP, fracSinX_LF))
+    -- , ("fracSinSC", (fracSinSC_Name, fracSinSC_PB, fracSinSC_ModFun, fracSinSC_B2B, fracSinSCDeriv_B2B, fracSinSC_PP, fracSinSC_FR, fracSinSC_LP, fracSinSC_LPP, fracSinSC_LF))
+    -- -- , ("hat", (hat_Name, hat_PB, hat_B2B, hatDeriv_B2B, hat_PP, hat_FR))
+    -- -- , ("bumpy", (bumpy_Name, bumpy_PB, bumpy_B2B, bumpyDeriv_B2B, bumpy_PP, bumpy_FR))
     ]
 
 -- data Operator = OpMax | OpIntegrate
@@ -229,29 +252,16 @@ functions =
 sinecos_Name :: String
 sinecos_Name = "sin(10x)+cos(20x) over [-1,1]"
 
-sinecos_x ::
+type Signature1 f =
   (CanSinCosSameType f
   , CanMulBy f Integer
   , CanAddSameType f)
-  =>
-  f -> f
-sinecos_x x = sin(10*x)+cos(20*x)
 
-x_PB :: Accuracy -> ChPoly MPBall
-x_PB acG =
-  setAccuracyGuide acG $ varFn (unaryIntervalDom, bits 10) ()
+type Signature2 f =
+  (CanDivCNSameType f)
 
-x_MF :: UnaryModFun
-x_MF = varFn unaryIntervalDom ()
-
-x_BF :: UnaryBallFun
-x_BF = varFn unaryIntervalDom ()
-
-sinecosDeriv_B2B :: UnaryBallFun
-sinecosDeriv_B2B =
-  10*cos(10*x)-20*sin(20*x)
-  where
-  x = x_BF
+sinecos_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+sinecos_x tr12 x = tr12 $ sin(10*x)+cos(20*x)
 
 sinecos_PP :: Accuracy -> PPoly
 sinecos_PP =

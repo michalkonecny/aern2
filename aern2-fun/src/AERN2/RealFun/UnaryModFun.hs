@@ -34,7 +34,7 @@ import MixedTypesNumPrelude
 
 -- import Control.Applicative
 
-
+import Control.CollectErrors
 
 import AERN2.MP
 -- import qualified AERN2.MP.Ball as MPBall
@@ -80,6 +80,15 @@ instance HasAccuracyGuide UnaryModFun where
 
 instance CanSetAccuracyGuide UnaryModFun where
   setAccuracyGuide _ f = f
+
+instance (SuitableForCE es) => CanEnsureCE es UnaryModFun where
+  type EnsureCE es UnaryModFun = UnaryModFun
+  type EnsureNoCE es UnaryModFun = UnaryModFun
+  ensureCE _sample_es = id
+  deEnsureCE _sample_es = Right
+  ensureNoCE _sample_es v = (Just v, mempty)
+  noValueECE _sample_vCE _es = error "UnaryModFun noValueCE not implemented yet"
+  prependErrorsECE _sample_vCE _es = error "UnaryModFun prependErrorsECE not implemented yet"
 
 instance ConvertibleExactly (DyadicInterval, Integer) UnaryModFun where
   safeConvertExactly (dom,n) =

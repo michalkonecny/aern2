@@ -39,6 +39,10 @@ instance CanSetAccuracyGuide (Frac a) where
   setAccuracyGuide acGuide (Frac n d dIM) =
     (Frac (setAccuracyGuide acGuide n) (setAccuracyGuide acGuide d) dIM)
 
+instance HasFnConstructorInfo (Frac a) where
+  type FnConstructorInfo (Frac a) = (DyadicInterval, Accuracy)
+  getFnConstructorInfo (Frac p _q _) = getFnConstructorInfo p
+
 instance (CanNormalize (ChPoly a)) => CanNormalize (Frac a) where
   normalize (Frac p q m) = Frac (normalize p) (normalize q) m
 
