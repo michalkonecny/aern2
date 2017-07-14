@@ -80,8 +80,7 @@ fnsRungePoly =
   where
   runge_4bits = (~!) $ ChPoly.chebDivideDCT (bits 4) (xU-xU+1) (10*xU*xU+1)
   xU :: ChPoly MPBall
-  xU = varFn sampleFn ()
-  sampleFn = constFn (unitDom, 1)
+  xU = varFn (unitDom, bits 100) ()
 
 fnsRungePPoly :: Plot.Functions
 fnsRungePPoly =
@@ -96,8 +95,7 @@ fnsRungePPoly =
   runge_bits b =
     PPoly.inverseWithAccuracy (bits b) (PPoly.fromPoly $ setPrecision (prec (2+b*10)) $ 10*xU*xU+1)
   xU :: ChPoly MPBall
-  xU = varFn sampleFn ()
-  sampleFn = constFn (unitDom, 1)
+  xU = varFn (unitDom, bits 100) ()
 
 fnsSine :: Plot.Functions
 fnsSine =
@@ -114,8 +112,7 @@ fnsSine =
   sine = sineWithAccuracyGuide (bits 3)
   cosine = cosineWithAccuracyGuide (bits 3)
   xU :: ChPoly MPBall
-  xU = varFn sampleFn ()
-  sampleFn = constFn (unitDom, 1)
+  xU = varFn (unitDom, bits 100) ()
 
 fnsSquare :: Plot.Functions
 fnsSquare =
@@ -128,8 +125,7 @@ fnsSquare =
   ])
   where
   xP :: ChPoly MPBall
-  xP = varFn sampleFnP ()
-  sampleFnP = constFn (unitDomP, 1)
+  xP = varFn (unitDomP, bits 100) ()
 
 funFn :: (String, FunctionColour, DyadicInterval, MPBall -> MPBall) -> Plot.Function
 funFn (name, colour, dom, b2b) =

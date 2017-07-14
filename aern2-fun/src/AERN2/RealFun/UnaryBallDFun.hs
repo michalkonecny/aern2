@@ -42,6 +42,11 @@ import AERN2.RealFun.UnaryBallFun.Integration
 
 data UnaryBallDFun = UnaryBallDFun { _dballfun_derivatives :: [UnaryBallFun] }
 
+instance HasAccuracyGuide UnaryBallDFun where
+  getAccuracyGuide _f = NoInformation
+
+instance CanSetAccuracyGuide UnaryBallDFun where
+  setAccuracyGuide _ f = f
 
 instance CanApply UnaryBallDFun DyadicInterval where
   type ApplyType UnaryBallDFun DyadicInterval = RealInterval

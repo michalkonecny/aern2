@@ -75,6 +75,12 @@ instance HasDomain UnaryModFun where
   type Domain UnaryModFun = DyadicInterval
   getDomain f = _modfun_domain f
 
+instance HasAccuracyGuide UnaryModFun where
+  getAccuracyGuide _f = NoInformation
+
+instance CanSetAccuracyGuide UnaryModFun where
+  setAccuracyGuide _ f = f
+
 instance ConvertibleExactly (DyadicInterval, Integer) UnaryModFun where
   safeConvertExactly (dom,n) =
     Right $ UnaryModFun dom  (const $ cn (real n)) (constFnModulus)
@@ -180,54 +186,6 @@ inverseNonDecreasingFnMaxBelow f n
     m = (i + j) `div` 2
     fm = f m
 
-
--- _modFun2BallFun_split :: UnaryModFun -> UnaryBallFun
--- _modFun2BallFun_split (UnaryModFun dom eval modulus) =
---     UnaryBallFun dom (b2bE =<<)
---     where
---     b2bE b =
---       maybeTrace ("UnaryModFun b2bE: "
---         ++ "b = "  ++ show b
---         ++ ", ac = "  ++ show ac
---         ++ ", distEval = "  ++ show distEval
---         ++ ", n = "  ++ show n
---       ) $
---       do -- using the CatchingNumExceptions monad
---       minVal <- minValE
---       maxVal <- maxValE
---       pure $ withExtremesOnPoints minVal maxVal
---       where
---       ac = getFiniteAccuracy b
---       distEval = 0.5^(modulus b (fromAccuracy ac))
---       l,r :: MPBall
---       (l,r) = endpoints b
---       (_, n) = integerBounds $ (r-l)/(2*distEval)
---         -- we need to split b into at least n segments and evaluate on each
---         -- segment to get a reliable estimate of the range of f on b
---         -- using the modulus of continuity
---       pts -- points to evaluate f on
---         | ptsOK pts1 = pts1
---         | otherwise = pts2
---         where
---         pts1 = ptsWithN n
---         pts2 = ptsWithN (n + 1)
---         ptsOK [] = False
---         ptsOK ps =
---           and $
---             [(head ps) - l !<=! distEval, r - (last ps) !<=! distEval]
---             ++
---             zipWith (\p p' -> p' - p !<=! 2*distEval) ps (tail ps)
---         ptsWithN n2 =
---           map centre [ (l*(i-0.5) + r*(n2-(i-0.5))) / n2 | i <- [1..n2]]
---           -- centres of n2 equal-sized segments of b=[l,r]
---       values = sequence $ map eval pts
---       maxValE = fmap maximum values
---       minValE = fmap minimum values
---       withExtremesOnPoints :: CauchyReal -> CauchyReal -> MPBall
---       withExtremesOnPoints minVal maxVal =
---         updateRadius (+ (errorBound $ 0.5^(fromAccuracy ac))) rangeOnPoints
---         where
---         rangeOnPoints = fromEndpoints (minVal ? (accuracySG ac)) (maxVal ? (accuracySG ac))
 
 instance CanApply UnaryModFun MPBall where
   type ApplyType UnaryModFun MPBall = CN MPBall
