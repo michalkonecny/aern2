@@ -26,7 +26,7 @@ type LocalPoly a = Local (ChPoly a)
 
 variable :: LocalPoly MPBall
 variable l r ac =
-  setPrecision ((prec . fromAccuracy) ac) x
+  setPrecisionAtLeastAccuracy ac x
   where
   x :: ChPoly MPBall
   x = varFn (dom, ac) ()
