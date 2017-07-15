@@ -482,11 +482,11 @@ instance
   mul = lift2TCE mul
 
 instance CanPow Dyadic Integer where
-  powNoCN = powUsingMul
-  pow = integerPowCN powUsingMul
+  powNoCN = powUsingMul (dyadic 1)
+  pow = integerPowCN (powUsingMul (dyadic 1))
 instance CanPow Dyadic Int where
-  powNoCN = powUsingMul
-  pow = integerPowCN powUsingMul
+  powNoCN = powUsingMul (dyadic 1)
+  pow = integerPowCN (powUsingMul (dyadic 1))
 
 instance
   (CanDiv a Dyadic

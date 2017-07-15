@@ -107,15 +107,15 @@ instance CanLog MPBall where
 
 instance CanPow MPBall MPBall where
   powNoCN b e = (~!) $ pow b e
-  pow = powUsingExpLog
+  pow = powUsingExpLog (mpBall 0) (mpBall 1)
 
 instance CanPow MPBall Dyadic where
   powNoCN b e = (~!) $ pow b e
-  pow b e = powUsingExpLog b (mpBall e)
+  pow b e = powUsingExpLog (mpBall 0) (mpBall 1) b (mpBall e)
 
 instance CanPow MPBall Rational where
   powNoCN b e = (~!) $ pow b e
-  pow b e = powUsingExpLog b (mpBallP (getPrecision b) e)
+  pow b e = powUsingExpLog (mpBall 0) (mpBall 1) b (mpBallP (getPrecision b) e)
 
 instance CanSqrt MPBall where
   type SqrtType MPBall = CN MPBall

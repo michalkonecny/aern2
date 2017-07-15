@@ -304,12 +304,12 @@ instance
 {- integer power -}
 
 instance CanPow MPBall Integer where
-  powNoCN b e = (~!) $ powUsingMulRecip b e
-  pow = powUsingMulRecip
+  powNoCN b e = (~!) $ powUsingMulRecip (mpBall 1) b e
+  pow = powUsingMulRecip (mpBall 1)
 
 instance CanPow MPBall Int where
-  powNoCN b e = (~!) $ powUsingMulRecip b e
-  pow = powUsingMulRecip
+  powNoCN b e = (~!) $ powUsingMulRecip (mpBall 1) b e
+  pow = powUsingMulRecip (mpBall 1)
 
 instance
   (CanPow MPBall b
