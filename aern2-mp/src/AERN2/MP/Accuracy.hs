@@ -13,7 +13,7 @@
 module AERN2.MP.Accuracy
     (Accuracy(NoInformation, Exact), bits, fromAccuracy,
      HasAccuracy(..),
-     HasAccuracyGuide(..), CanSetAccuracyGuide(..),
+     HasAccuracyGuide(..), CanSetAccuracyGuide(..), adjustAccuracyGuide,
      getFiniteAccuracy,
      ac2prec,
      CanReduceSizeUsingAccuracyGuide(..),
@@ -203,6 +203,11 @@ class HasAccuracyGuide a where
 class HasAccuracyGuide a => CanSetAccuracyGuide a where
   setAccuracyGuide :: Accuracy -> a -> a
 
+adjustAccuracyGuide ::
+  (CanSetAccuracyGuide a) =>
+  (Accuracy -> Accuracy) -> a -> a
+adjustAccuracyGuide adj_acG a =
+  setAccuracyGuide (adj_acG (getAccuracyGuide a)) a
 
 {-| Return accuracy, except when the element is Exact, return its nominal Precision dressed as Accuracy.
     This function is useful when we have a convergent sequence where all elements happen to be

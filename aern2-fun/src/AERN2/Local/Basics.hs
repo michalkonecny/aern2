@@ -15,3 +15,9 @@ liftLocal1 f locX =
 liftLocal2 :: (a -> b -> c) -> Local a -> Local b -> Local c
 liftLocal2 op locX locY =
   \l r ac -> (locX l r ac) `op` (locY l r ac)
+
+instance HasAccuracyGuide (Local a) where
+  getAccuracyGuide _ = NoInformation
+
+instance CanSetAccuracyGuide (Local a) where
+  setAccuracyGuide _ f = f

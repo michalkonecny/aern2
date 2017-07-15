@@ -369,11 +369,18 @@ instance CanDiv Integer UnaryModFun where
   type DivTypeNoCN Integer UnaryModFun = UnaryModFun
   divideNoCN n f = divide (unaryModFun (getDomain f, n)) f
   type DivType Integer UnaryModFun = UnaryModFun
-  divide n f = divide (unaryModFun (getDomain f, n)) f
+  divide = divideNoCN
+
+instance CanPow UnaryModFun Integer where
+  type PowTypeNoCN UnaryModFun Integer = UnaryModFun
+  powNoCN p = powUsingMulRecip (constFn (getFnConstructorInfo p) 1) p
+  type PowType UnaryModFun Integer = UnaryModFun
+  pow = powNoCN
 
 instance CanSinCos UnaryModFun where
   sin (UnaryModFun dom eval modulus) = UnaryModFun dom (sin . eval) modulus
   cos (UnaryModFun dom eval modulus) = UnaryModFun dom (cos . eval) modulus
+
 
 {-
 example_ModFun :: UnaryModFun

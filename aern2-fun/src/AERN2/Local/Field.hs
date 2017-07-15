@@ -3,12 +3,11 @@ module AERN2.Local.Field where
 
 import MixedTypesNumPrelude
 
-import AERN2.Local.Basics
-
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 import AERN2.Real
 
+import AERN2.Local.Basics
 
 
 instance (CanDiv a b) => (CanDiv (Local a) (Local b)) where
@@ -26,3 +25,9 @@ $(declForTypes
         type DivTypeNoCN $t (Local a) = Local (DivTypeNoCN $t a)
         divideNoCN c = liftLocal1 (divideNoCN c)
   |]))
+
+instance (CanPowCNBy a t) => CanPow (Local a) t where
+  type PowTypeNoCN (Local a) t = Local (PowTypeNoCN a t)
+  powNoCN la t l r ac = powNoCN (la l r ac) t
+  type PowType (Local a) t = Local (PowType a t)
+  pow la t l r ac = pow (la l r ac) t

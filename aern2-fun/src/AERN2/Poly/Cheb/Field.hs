@@ -206,3 +206,11 @@ instance
 --     where
 --     _ = [nP,p]
 --     nP = chPoly (getDomain p,n)
+
+instance
+  CanPow (ChPoly MPBall) Integer
+  where
+  type PowTypeNoCN (ChPoly MPBall) Integer = ChPoly MPBall
+  type PowType (ChPoly MPBall) Integer = CN (ChPoly MPBall)
+  powNoCN p n = (~!) $ powUsingMulRecip (constFn (getFnConstructorInfo p) 1) p n
+  pow p n = powUsingMulRecip (constFn (getFnConstructorInfo p) 1) p n

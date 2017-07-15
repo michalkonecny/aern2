@@ -221,18 +221,13 @@ x_PB acG =
 x_LP :: LPoly.LocalPoly MPBall
 x_LP = LPoly.variable
 
-x_LPP :: LPPoly.LocalPPoly
-x_LPP = LPPoly.fromPoly x_LP
-
-x_LF :: LFrac.LocalFrac MPBall
-x_LF = LFrac.fromPoly x_LP
-
 functions ::
   Map.Map String (String, forall f1 f2. (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2)
 functions =
     Map.fromList
     [
       ("sine+cos", (sinecos_Name, sinecos_x))
+      ,("sinesine", (sinesine_Name, sinesine_x))
     -- , ("sinesine", (sinesine_Name, sinesine_PB, sinesine_ModFun, sinesine_B2B, sinesineDeriv_B2B, sinesine_PP, sinesine_FR, sinesine_LP, sinesine_LPP, sinesine_LF))
     -- , ("sinesine+sin", (sinesineSin_Name, sinesineSin_PB, sinesineSin_ModFun, sinesineSin_B2B, sinesineSinDeriv_B2B, sinesineSin_PP, sinesineSin_FR, sinesineSin_LP, sinesineSin_LPP, sinesineSin_LF))
     -- , ("sinesine+cos", (sinesineCos_Name, sinesineCos_PB, sinesineCos_ModFun, sinesineCos_B2B, sinesineCosDeriv_B2B, sinesineCos_PP, sinesineCos_FR, sinesineCos_LP, sinesineCos_LPP, sinesineCos_LF))
@@ -246,45 +241,23 @@ functions =
     -- -- , ("bumpy", (bumpy_Name, bumpy_PB, bumpy_B2B, bumpyDeriv_B2B, bumpy_PP, bumpy_FR))
     ]
 
--- data Operator = OpMax | OpIntegrate
--- type FnPP = Operator -> Precision -> Degree -> Rational -> Integer -> Accuracy -> MPBall
-
-sinecos_Name :: String
-sinecos_Name = "sin(10x)+cos(20x) over [-1,1]"
 
 type Signature1 f =
   (CanSinCosSameType f
   , CanMulBy f Integer
-  , CanAddSameType f)
+  , CanSetAccuracyGuide f
+  , CanAddSameType f
+  , CanPowCNBy f Integer)
 
 type Signature2 f =
   (CanDivCNSameType f)
 
+
+sinecos_Name :: String
+sinecos_Name = "sin(10x)+cos(20x) over [-1,1]"
+
 sinecos_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 sinecos_x tr12 x = tr12 $ sin(10*x)+cos(20*x)
-
-sinecos_LP :: LPolyMB
-sinecos_LP =
-  sine(10*x)+cosine(20*x)
-  where
-  x = LPoly.variable
-  sine = sin :: LPolyMB -> LPolyMB
-  cosine = cos :: LPolyMB -> LPolyMB
-
-sinecos_LPP :: LPPolyMB
-sinecos_LPP =
-  error $ "Not (yet) supporting LPPoly for: " ++ sinecos_Name
-
-sinecos_LF :: LFracMB
-sinecos_LF =
-  error $ "Not (yet) supporting LFrac for: " ++ sinecos_Name
-  -- -- sine(10*x)+cosine(20*x)
-  -- LFrac.fromPoly $ sine(10*x)+cosine(20*x)
-  -- where
-  -- -- x = LFrac.fromPoly $ LPoly.variable
-  -- x = LPoly.variable
-  -- sine = sin
-  -- cosine = cos
 
 -----------------------------------
 -----------------------------------
@@ -292,57 +265,12 @@ sinecos_LF =
 sinesine_Name :: String
 sinesine_Name = "sin(10x+sin(20x^2)) over [-1,1]"
 
-sinesine_PB :: Accuracy -> ChPoly MPBall
-sinesine_PB acGuide =
-  sine2(10*x + sine1(20*x*x))
+sinesine_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+sinesine_x tr12 xPre =
+  tr12 $ sin(adj (+(-2)) $ 10*x + sin(20*x^!2))
   where
-  sine1 = sineWithAccuracyGuide (acGuide+2)
-  sine2 = sineWithAccuracyGuide acGuide
-  x = x_PB acGuide
-
-sinesine_ModFun :: UnaryModFun
-sinesine_ModFun =
-  sin(10*x + sin(20*x*x))
-  where
-  x = x_MF
-
-sinesine_B2B :: UnaryBallFun
-sinesine_B2B =
-  UnaryBallFun unaryIntervalDom $ \x ->
-    sin(10*x + sin(20*x*x))
-
-sinesineDeriv_B2B :: UnaryBallFun
-sinesineDeriv_B2B =
-  UnaryBallFun unaryIntervalDom $ \x ->
-    (10+40*x*cos(20*x*x))*cos(10*x + sin(20*x*x))
-
-sinesine_PP :: Accuracy -> PPoly
-sinesine_PP acGuide =
-  error $ "Not (yet) supporting PPoly for: " ++ sinesine_Name
-    -- PPolyBench.sinesineMax deg deg rangeAcc p
-
-sinesine_FR :: Accuracy -> FracMB
-sinesine_FR acGuide =
-  error $ "Not (yet) supporting Frac for: " ++ sinesine_Name
-
-sinesine_LP :: LPolyMB
-sinesine_LP =
-  sine(10*x + sine(20*x*x))
-  where
-  x = LPoly.variable
-  sine = sin :: LPolyMB -> LPolyMB
-
-sinesine_LPP :: LPPolyMB
-sinesine_LPP =
-  error $ "Not (yet) supporting LPPoly for: " ++ sinesine_Name
-
-sinesine_LF :: LFracMB
-sinesine_LF =
-  error $ "Not (yet) supporting LFrac for: " ++ sinesine_Name
-  -- sine(10*x + sine(20*x*x))
-  -- where
-  -- x = LFrac.fromPoly $ LPoly.variable
-  -- sine = sin
+  x = adj (+2) xPre
+  adj = adjustAccuracyGuide
 
 -----------------------------------
 -----------------------------------
