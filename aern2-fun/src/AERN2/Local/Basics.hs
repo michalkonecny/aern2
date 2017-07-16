@@ -16,6 +16,9 @@ liftLocal2 :: (a -> b -> c) -> Local a -> Local b -> Local c
 liftLocal2 op locX locY =
   \l r ac -> (locX l r ac) `op` (locY l r ac)
 
+instance HasAccuracy (Local a) where
+  getAccuracy _f = Exact
+
 instance HasAccuracyGuide (Local a) where
   getAccuracyGuide _ = NoInformation
 

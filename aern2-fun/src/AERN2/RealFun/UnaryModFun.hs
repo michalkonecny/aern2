@@ -75,6 +75,9 @@ instance HasDomain UnaryModFun where
   type Domain UnaryModFun = DyadicInterval
   getDomain f = _modfun_domain f
 
+instance HasAccuracy UnaryModFun where
+  getAccuracy _f = Exact
+
 instance HasAccuracyGuide UnaryModFun where
   getAccuracyGuide _f = NoInformation
 

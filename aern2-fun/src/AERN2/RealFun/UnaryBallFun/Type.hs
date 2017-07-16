@@ -82,6 +82,9 @@ instance HasVars UnaryBallFun where
   varFn dom () =
     UnaryBallFun dom cn
 
+instance HasAccuracy UnaryBallFun where
+  getAccuracy _f = Exact
+
 instance HasAccuracyGuide UnaryBallFun where
   getAccuracyGuide _f = NoInformation
 

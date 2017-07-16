@@ -2,7 +2,7 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE CPP #-}
--- #define DEBUG
+#define DEBUG
 module Main where
 
 #ifdef DEBUG
@@ -13,9 +13,8 @@ import Debug.Trace (trace)
 #endif
 
 import MixedTypesNumPrelude
-
 -- import qualified Prelude as P
--- import Text.Printf
+import Text.Printf
 
 import qualified Data.Map as Map
 
@@ -242,14 +241,16 @@ functions =
 
 
 type Signature1 f =
-  (CanSinCosSameType f
+  ( HasAccuracy f, HasAccuracyGuide f
+  , CanSinCosSameType f
   , CanMulBy f Integer
   , CanSetAccuracyGuide f
   , CanAddSameType f
   , CanPowCNBy f Integer)
 
 type Signature2 f =
-  (CanDivCNSameType f)
+  ( HasAccuracy f, HasAccuracyGuide f
+  , CanDivCNSameType f)
 
 -----------------------------------
 -----------------------------------
@@ -268,9 +269,14 @@ sinesine_Name = "sin(10x+sin(20x^2)) over [-1,1]"
 
 sinesine_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 sinesine_x tr12 xPre =
-  tr12 $ sin(10*x + sin(20*x^!2))
+  maybeTrace (printf "sin(20*x^!2): acG = %s; ac = %s" (show $ getAccuracyGuide sin20x2) (show $ getAccuracy sin20x2)) $
+  maybeTrace (printf "res: acG = %s; ac = %s" (show $ getAccuracyGuide res) (show $ getAccuracy res)) $
+  -- tr12 $ sin(10*x + sin(20*x^!2))
+  res
   where
-  x = adj (+2) xPre
+  res = tr12 $ sin(10*x + sin20x2)
+  sin20x2 = sin(20*x^!2)
+  x = adj (\a -> max 45 (a+15)) xPre
   adj = adjustAccuracyGuide
 
 -----------------------------------

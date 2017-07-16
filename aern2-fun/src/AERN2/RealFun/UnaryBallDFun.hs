@@ -51,6 +51,9 @@ instance HasVars UnaryBallDFun where
   type Var UnaryBallDFun = ()
   varFn dom () = UnaryBallDFun [varFn dom (), constFn dom 1]
 
+instance HasAccuracy UnaryBallDFun where
+  getAccuracy _f = Exact
+
 instance HasAccuracyGuide UnaryBallDFun where
   getAccuracyGuide _f = NoInformation
 
