@@ -228,7 +228,6 @@ functions =
     [
       ("sine+cos", (sinecos_Name, sinecos_x))
       ,("sinesine", (sinesine_Name, sinesine_x))
-    -- , ("sinesine", (sinesine_Name, sinesine_PB, sinesine_ModFun, sinesine_B2B, sinesineDeriv_B2B, sinesine_PP, sinesine_FR, sinesine_LP, sinesine_LPP, sinesine_LF))
     -- , ("sinesine+sin", (sinesineSin_Name, sinesineSin_PB, sinesineSin_ModFun, sinesineSin_B2B, sinesineSinDeriv_B2B, sinesineSin_PP, sinesineSin_FR, sinesineSin_LP, sinesineSin_LPP, sinesineSin_LF))
     -- , ("sinesine+cos", (sinesineCos_Name, sinesineCos_PB, sinesineCos_ModFun, sinesineCos_B2B, sinesineCosDeriv_B2B, sinesineCos_PP, sinesineCos_FR, sinesineCos_LP, sinesineCos_LPP, sinesineCos_LF))
     -- , ("runge", (runge_Name, runge_PB, runge_ModFun, runge_B2B, rungeDeriv_B2B, runge_PP, runge_FR, runge_LP, runge_LPP, runge_LF))
@@ -252,6 +251,8 @@ type Signature1 f =
 type Signature2 f =
   (CanDivCNSameType f)
 
+-----------------------------------
+-----------------------------------
 
 sinecos_Name :: String
 sinecos_Name = "sin(10x)+cos(20x) over [-1,1]"
@@ -267,7 +268,7 @@ sinesine_Name = "sin(10x+sin(20x^2)) over [-1,1]"
 
 sinesine_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 sinesine_x tr12 xPre =
-  tr12 $ sin(adj (+(-2)) $ 10*x + sin(20*x^!2))
+  tr12 $ sin(10*x + sin(20*x^!2))
   where
   x = adj (+2) xPre
   adj = adjustAccuracyGuide
