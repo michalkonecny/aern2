@@ -2,7 +2,7 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE CPP #-}
-#define DEBUG
+-- #define DEBUG
 module Main where
 
 #ifdef DEBUG

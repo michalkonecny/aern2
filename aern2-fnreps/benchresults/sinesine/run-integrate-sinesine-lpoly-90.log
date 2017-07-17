@@ -1,22 +1,22 @@
 computing integrate  sin(10x+sin(20x^2)) over [-1,1]
-result = [-1.308171326105225e-1 ± <2^(-91)]
-accuracy: bits 91
-precision = Precision 2000
+result = [-1.308171326105225e-1 ± <2^(-92)]
+accuracy: bits 92
+precision = Precision 7104
 	Command being timed: "aern2-fnreps-ops integrate sinesine lpoly 90"
-	User time (seconds): 37.78
-	System time (seconds): 0.17
+	User time (seconds): 29.60
+	System time (seconds): 0.12
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:37.95
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:29.73
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 27688
+	Maximum resident set size (kbytes): 27468
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 62871
+	Minor (reclaiming a frame) page faults: 30007
 	Voluntary context switches: 1
-	Involuntary context switches: 50
+	Involuntary context switches: 42
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

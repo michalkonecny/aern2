@@ -62,58 +62,76 @@ function getDataFromRunlog
 function runForAllReprs
 {
   if [ "$repr_fun_max_paramss" != "" ]; then
-    repr=fun; op=max; paramss="$repr_fun_max_paramss"; runForParamss
+    repr=fun; op=max; paramss="$repr_fun_max_paramss"; repr_fun_max_paramss=""
+    runForParamss
   fi
   if [ "$repr_fun_itg_paramss" != "" ]; then
-    repr=fun; op=integrate; paramss="$repr_fun_itg_paramss"; runForParamss
+    repr=fun; op=integrate; paramss="$repr_fun_itg_paramss"; repr_fun_itg_paramss=""
+    runForParamss
   fi
   if [ "$repr_ball_max_paramss" != "" ]; then
-    repr=ball; op=max; paramss="$repr_ball_max_paramss"; runForParamss
+    repr=ball; op=max; paramss="$repr_ball_max_paramss"; repr_ball_max_paramss=""
+    runForParamss
   fi
   if [ "$repr_ball_itg_paramss" != "" ]; then
-    repr=ball; op=integrate; paramss="$repr_ball_itg_paramss"; runForParamss
+    repr=ball; op=integrate; paramss="$repr_ball_itg_paramss"; repr_ball_itg_paramss=""
+    runForParamss
   fi
   if [ "$repr_dball_max_paramss" != "" ]; then
-    repr=dball; op=max; paramss="$repr_dball_max_paramss"; runForParamss
+    repr=dball; op=max; paramss="$repr_dball_max_paramss"; repr_dball_max_paramss=""
+    runForParamss
   fi
   if [ "$repr_dball_itg_paramss" != "" ]; then
-    repr=dball; op=integrate; paramss="$repr_dball_itg_paramss"; runForParamss
+    repr=dball; op=integrate; paramss="$repr_dball_itg_paramss"; repr_dball_itg_paramss=""
+    runForParamss
   fi
   if [ "$repr_poly_max_paramss" != "" ]; then
-    repr=poly; op=max; paramss="$repr_poly_max_paramss"; runForParamss
+    repr=poly; op=max; paramss="$repr_poly_max_paramss"; repr_poly_max_paramss=""
+    runForParamss
   fi
   if [ "$repr_poly_itg_paramss" != "" ]; then
-    repr=poly; op=integrate; paramss="$repr_poly_itg_paramss"; runForParamss
+    repr=poly; op=integrate; paramss="$repr_poly_itg_paramss"; repr_poly_itg_paramss=""
+    runForParamss
   fi
   if [ "$repr_ppoly_max_paramss" != "" ]; then
-    repr=ppoly; op=max; paramss="$repr_ppoly_max_paramss"; runForParamss
+    repr=ppoly; op=max; paramss="$repr_ppoly_max_paramss"; repr_ppoly_max_paramss=""
+    runForParamss
   fi
   if [ "$repr_ppoly_itg_paramss" != "" ]; then
-    repr=ppoly; op=integrate; paramss="$repr_ppoly_itg_paramss"; runForParamss
+    repr=ppoly; op=integrate; paramss="$repr_ppoly_itg_paramss"; repr_ppoly_itg_paramss=""
+    runForParamss
   fi
   if [ "$repr_frac_max_paramss" != "" ]; then
-    repr=frac; op=max; paramss="$repr_frac_max_paramss"; runForParamss
+    repr=frac; op=max; paramss="$repr_frac_max_paramss"; repr_frac_max_paramss=""
+    runForParamss
   fi
   if [ "$repr_frac_itg_paramss" != "" ]; then
-    repr=frac; op=integrate; paramss="$repr_frac_itg_paramss"; runForParamss
+    repr=frac; op=integrate; paramss="$repr_frac_itg_paramss"; repr_frac_itg_paramss=""
+    runForParamss
   fi
   if [ "$repr_lpoly_max_paramss" != "" ]; then
-    repr=lpoly; op=max; paramss="$repr_lpoly_max_paramss"; runForParamss
+    repr=lpoly; op=max; paramss="$repr_lpoly_max_paramss"; repr_lpoly_max_paramss=""
+    runForParamss
   fi
   if [ "$repr_lpoly_itg_paramss" != "" ]; then
-    repr=lpoly; op=integrate; paramss="$repr_lpoly_itg_paramss"; runForParamss
+    repr=lpoly; op=integrate; paramss="$repr_lpoly_itg_paramss"; repr_lpoly_itg_paramss=""
+    runForParamss
   fi
   if [ "$repr_lppoly_max_paramss" != "" ]; then
-    repr=lppoly; op=max; paramss="$repr_lppoly_max_paramss"; runForParamss
+    repr=lppoly; op=max; paramss="$repr_lppoly_max_paramss"; repr_lppoly_max_paramss=""
+    runForParamss
   fi
   if [ "$repr_lppoly_itg_paramss" != "" ]; then
-    repr=lppoly; op=integrate; paramss="$repr_lppoly_itg_paramss"; runForParamss
+    repr=lppoly; op=integrate; paramss="$repr_lppoly_itg_paramss"; repr_lppoly_itg_paramss=""
+    runForParamss
   fi
   if [ "$repr_lfrac_max_paramss" != "" ]; then
-    repr=lfrac; op=max; paramss="$repr_lfrac_max_paramss"; runForParamss
+    repr=lfrac; op=max; paramss="$repr_lfrac_max_paramss"; repr_lfrac_max_paramss=""
+    runForParamss
   fi
   if [ "$repr_lfrac_itg_paramss" != "" ]; then
-    repr=lfrac; op=integrate; paramss="$repr_lfrac_itg_paramss"; runForParamss
+    repr=lfrac; op=integrate; paramss="$repr_lfrac_itg_paramss"; repr_lfrac_itg_paramss=""
+    runForParamss
   fi
 }
 
@@ -124,9 +142,9 @@ function runForAllReprs
 function sinecosAllReprs
 {
   repr_fun_max_paramss="10 15 20";
-  repr_fun_itg_paramss="10 12";
+  repr_fun_itg_paramss="06 08 09 10";
   repr_ball_max_paramss="10 15 20 25";
-  repr_ball_itg_paramss="10 12 14";
+  repr_ball_itg_paramss="10 12 13 14";
   repr_dball_max_paramss="10 30 50 70 90";
   repr_dball_itg_paramss="10 15 20 25 30";
   repr_poly_max_paramss="10 30 50 70 90 110";
@@ -144,14 +162,16 @@ function sinecosAllReprs
 
 function sinesineAllReprs
 {
+  # repr_fun_max_paramss="10 15 20";
+  # repr_fun_itg_paramss="06 08";
   repr_ball_max_paramss="10 30 50 70 90";
-  repr_ball_itg_paramss="05 10 15";
+  repr_ball_itg_paramss="05 10 12 13";
   repr_dball_max_paramss="10 30 50 70 90";
-  repr_dball_itg_paramss="05 10 15 20 25 30";
-  repr_poly_max_paramss="10 20 30 40 50 70 90";
-  repr_poly_itg_paramss="10 20 30 40 50 70 90";
-  repr_lpoly_max_paramss="10 20 30 40 50 70 90";
-  repr_lpoly_itg_paramss="10 20 30 40 50 70 90";
+  repr_dball_itg_paramss="05 10 15 20 25";
+  repr_poly_max_paramss="30 40 50 70 90";
+  repr_poly_itg_paramss="30 40 50 70 90";
+  repr_lpoly_max_paramss="30 40 50 70 90";
+  repr_lpoly_itg_paramss="30 40 50 70 90";
 
   fn=sinesine; dir=$fn;
   runForAllReprs
@@ -164,13 +184,13 @@ function sinesineAllReprs
 function sinesine+cosAllReprs
 {
   repr_ball_max_paramss="10 20 30";
-  repr_ball_itg_paramss="05 10 13";
+  repr_ball_itg_paramss="05 10 12 13";
   repr_dball_max_paramss="10 30 50 70 90";
-  repr_dball_itg_paramss="05 10 15 20 25 28";
-  repr_poly_max_paramss="10 20 30 40 50 70 90";
-  repr_poly_itg_paramss="10 20 30 40 50 70 90";
-  repr_lpoly_max_paramss="10 20 30 40 50 70 90";
-  repr_lpoly_itg_paramss="10 20 30 40 50 70 90";
+  repr_dball_itg_paramss="05 10 15 20 25";
+  repr_poly_max_paramss="30 40 50 70 90";
+  repr_poly_itg_paramss="30 40 50 70 90";
+  repr_lpoly_max_paramss="30 40 50 70 90";
+  repr_lpoly_itg_paramss="30 40 50 70 90";
 
   fn=sinesine+cos; dir=$fn;
   runForAllReprs
@@ -192,9 +212,9 @@ function rungeAllReprs
   repr_ppoly_itg_paramss="10 20 40 60 80";
   repr_frac_max_paramss="10 20 40 60 80";
   repr_frac_itg_paramss="10 20 40 60 80";
-  repr_lpoly_max_paramss="10 20 40 60 80 100";
+  repr_lpoly_max_paramss="10 20 40";
   repr_lpoly_itg_paramss="10 20 40 60 80 100";
-  repr_lppoly_max_paramss="10 20 40 60 80 100";
+  repr_lppoly_max_paramss="10 20 40";
   repr_lppoly_itg_paramss="10 20 40 60 80 100";
   repr_lfrac_max_paramss="10 20 40 60 80 100";
   repr_lfrac_itg_paramss="10 20 40 60 80 100";
@@ -219,9 +239,9 @@ function rungeSCAllReprs
   repr_ppoly_itg_paramss="10 20 40";
   repr_frac_max_paramss="10 20 40 60 80";
   repr_frac_itg_paramss="10 20 40";
-  repr_lpoly_max_paramss="10 20 40 60 80 100";
+  repr_lpoly_max_paramss="10 20 40";
   repr_lpoly_itg_paramss="10 20 40 60 80 100";
-  repr_lppoly_max_paramss="10 20 40 60 80 100";
+  repr_lppoly_max_paramss="10 20 40";
   repr_lppoly_itg_paramss="10 20 40 60 80 100";
   repr_lfrac_max_paramss="10 20 40 60 80 100";
   repr_lfrac_itg_paramss="10 20 40 60 80 100";
@@ -246,11 +266,11 @@ function fracSinAllReprs
   repr_ppoly_itg_paramss="10 15 20";
   repr_frac_max_paramss="10 20 40 60 80 100";
   repr_frac_itg_paramss="10 15 20";
-  repr_lpoly_max_paramss="10 20 40 60";
+  repr_lpoly_max_paramss="10 20 40";
   repr_lpoly_itg_paramss="10 20 40 60";
-  repr_lppoly_max_paramss="10 20 40 60 80";
+  repr_lppoly_max_paramss="10 20 40";
   repr_lppoly_itg_paramss="10 20 40 60";
-  repr_lfrac_max_paramss="10 20 40 60 80";
+  repr_lfrac_max_paramss="10 20 40 60 80 100";
   repr_lfrac_itg_paramss="10 20 40 60";
 
   fn=fracSin; dir=$fn;
@@ -273,11 +293,11 @@ function fracSinSCAllReprs
   repr_ppoly_itg_paramss="10 15 20";
   repr_frac_max_paramss="10 20 40 60 80";
   repr_frac_itg_paramss="10 15 20";
-  repr_lpoly_max_paramss="10 20 40 60";
+  repr_lpoly_max_paramss="10 20 40";
   repr_lpoly_itg_paramss="10 20 40 60";
-  repr_lppoly_max_paramss="10 20 40 60 80";
+  repr_lppoly_max_paramss="10 20 40";
   repr_lppoly_itg_paramss="10 20 40 60";
-  repr_lfrac_max_paramss="10 20 40 60 80";
+  repr_lfrac_max_paramss="10 20 40 60 80 100";
   repr_lfrac_itg_paramss="10 20 40 60";
 
   fn=fracSinSC; dir=$fn;

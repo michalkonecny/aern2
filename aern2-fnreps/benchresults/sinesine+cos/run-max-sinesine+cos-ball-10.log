@@ -1,20 +1,20 @@
 computing max  sin(10x+sin(20x^2)) + cos(10x) over [-1,1]
-result = [1.87847900390625 ± <2^(-11)]
-accuracy: bits 11
-precision = Precision 15
+result = [1.878462132734578 ± <2^(-12)]
+accuracy: bits 12
+precision = Precision 106
 	Command being timed: "aern2-fnreps-ops max sinesine+cos ball 10"
-	User time (seconds): 0.13
+	User time (seconds): 0.14
 	System time (seconds): 0.00
-	Percent of CPU this job got: 99%
+	Percent of CPU this job got: 100%
 	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.14
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 12828
+	Maximum resident set size (kbytes): 12720
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1403
+	Minor (reclaiming a frame) page faults: 1390
 	Voluntary context switches: 1
 	Involuntary context switches: 3
 	Swaps: 0
