@@ -72,9 +72,9 @@ chebDivideDCT acGuide p q
     r =
       maybeTrace
       (printf "chebDivideDCT: acGuide = %s, minQ = %s" (show acGuide) (show minQ)) $
-      tryWithDegree initD
+      tryWithDegree NoInformation initD
 
-    tryWithDegree d =
+    tryWithDegree prevAccuracy d =
       maybeTrace
       (printf "chebDivideDCT: tryWithDegree: d = %d" d) $
       maybeTrace
@@ -88,13 +88,13 @@ chebDivideDCT acGuide p q
       where
       res
         | accurateEnough = updateRadius (+rEd) rCd
-        | otherwise = tryWithDegree (2*d)
+        | otherwise = tryWithDegree dctAccuracy (2*d)
       rCd = lift2_DCT (const $ const $ d) (/!) pC qC
       rEd = errorBound $
         (maxDifferenceC + pR + qR * rCMaxNorm) /! minQ
       maxDifferenceC = maxNorm $ pC - rCd * qC
       rCMaxNorm = maxNorm rCd
-      accurateEnough = dctAccuracy > acGuide
+      accurateEnough = dctAccuracy >= acGuide || dctAccuracy <= prevAccuracy -- stop iterating when no improvement
       dctAccuracy = getAccuracy (errorBound $ maxDifferenceC/!minQ)
 
     {-

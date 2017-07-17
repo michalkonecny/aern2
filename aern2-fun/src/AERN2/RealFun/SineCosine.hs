@@ -65,7 +65,7 @@ sineWithAccuracyGuide ::
   , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
   , CanNegSameType f, CanAddSameType f, CanMulSameType f
   , CanAddSubMulDivCNBy f Integer, CanAddSubMulDivCNBy f CauchyReal
-  , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
+  , HasAccuracy f, CanSetAccuracyGuide f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
   , IsBall f
   , Show f)
   =>
@@ -77,7 +77,7 @@ cosineWithAccuracyGuide ::
   , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
   , CanNegSameType f, CanAddSameType f, CanMulSameType f
   , CanAddSubMulDivCNBy f Integer, CanAddSubMulDivCNBy f CauchyReal
-  , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
+  , HasAccuracy f, CanSetAccuracyGuide f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
   , IsBall f
   , Show f)
   =>
@@ -89,7 +89,7 @@ sineCosineWithAccuracyGuide ::
   , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
   , CanNegSameType f, CanAddSameType f, CanMulSameType f
   , CanAddSubMulDivCNBy f Integer, CanAddSubMulDivCNBy f CauchyReal
-  , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
+  , HasAccuracy f, CanSetAccuracyGuide f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
   , IsBall f
   , Show f)
   =>
@@ -135,7 +135,7 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     k = fst $ integerBounds $ 0.5 + (2*rC /! pi)
 
     -- shift xC near 0 using multiples of pi/2:
-    txC ac = (setPrecisionAtLeastAccuracy (ac) xC) - k * pi /! 2
+    txC ac = (setAccuracyGuide ac $ setPrecisionAtLeastAccuracy (ac) xC) - k * pi /! 2
     -- work out an absolute range bound for txC:
     (_, trM :: MPBall) = endpoints $ abs $ r - k * pi /! 2
 
