@@ -297,7 +297,11 @@ runge_Name = "1/(100x^2+1) over [-1,1]"
 
 runge_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 runge_x tr12 x =
+  -- maybeTrace (printf "res: acG = %s; ac = %s" (show $ getAccuracyGuide res) (show $ getAccuracy res)) $
+  -- res
   1/!(tr12 $ 100*x^!2+1)
+  where
+  res = 1/!(tr12 $ 100*x^!2+1)
 
 -----------------------------------
 -----------------------------------
