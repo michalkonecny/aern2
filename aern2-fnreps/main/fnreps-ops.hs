@@ -2,7 +2,7 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE CPP #-}
--- #define DEBUG
+#define DEBUG
 module Main where
 
 #ifdef DEBUG
@@ -311,13 +311,13 @@ rungeSC_Name = "(sin(10x)+cos(20x))/(100x^2+1) over [-1,1]"
 
 rungeSC_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 rungeSC_x tr12 x =
-  -- maybeTrace (printf "numer: acG = %s; ac = %s" (show $ getAccuracyGuide numer) (show $ getAccuracy numer)) $
-  -- maybeTrace (printf "res: acG = %s; ac = %s" (show $ getAccuracyGuide res) (show $ getAccuracy res)) $
-  -- res
-  (tr12 $ sin (10*xA) + cos(20*xA))/!(tr12 $ 100*x^!2+1)
+  maybeTrace (printf "numer: acG = %s; ac = %s" (show $ getAccuracyGuide numer) (show $ getAccuracy numer)) $
+  maybeTrace (printf "res: acG = %s; ac = %s" (show $ getAccuracyGuide res) (show $ getAccuracy res)) $
+  res
+  -- (tr12 $ sin (10*xA) + cos(20*xA))/!(tr12 $ 100*x^!2+1)
   where
-  -- res = (tr12 numer)/!(tr12 $ 100*x^!2+1)
-  -- numer = sin (10*xA) + cos(20*xA)
+  res = (tr12 numer)/!(tr12 $ 100*x^!2+1)
+  numer = sin (10*xA) + cos(20*xA)
   xA = adjustAccuracyGuide (\a -> a+15) x
 
 -----------------------------------
@@ -328,9 +328,10 @@ fracSin_Name = "1/(10(sin(7x))^2+1) over [-1,1]"
 
 fracSin_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 fracSin_x tr12 x =
-  1/!(tr12 $ 10*(sin(7*xA)^!2)+1)
+  1/!(tr12R $ 10*(sin(7*xA)^!2)+1)
   where
-  xA = adjustAccuracyGuide (\a -> a+10) x
+  xA = adjustAccuracyGuide (\a -> a+20) x
+  tr12R = tr12 . setAccuracyGuide (getAccuracyGuide x)
 
 -----------------------------------
 -----------------------------------
@@ -340,9 +341,10 @@ fracSinSC_Name = "(sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]"
 
 fracSinSC_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 fracSinSC_x tr12 x =
-  (tr12 $ sin (10*xA) + cos(20*xA))/!(tr12 $ 10*(sin(7*xA)^!2)+1)
+  (tr12R $ sin (10*xA) + cos(20*xA))/!(tr12R $ 10*(sin(7*xA)^!2)+1)
   where
-  xA = adjustAccuracyGuide (\a -> a+10) x
+  xA = adjustAccuracyGuide (\a -> a+30) x
+  tr12R = tr12 . setAccuracyGuide (getAccuracyGuide x)
 
 -----------------------------------
 -----------------------------------

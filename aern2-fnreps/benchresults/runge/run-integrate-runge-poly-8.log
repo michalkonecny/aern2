@@ -1,0 +1,28 @@
+integratePB: accuracy f = bits 10
+computing integrate  1/(100x^2+1) over [-1,1]
+result = [2.942255348304286e-1 ± <2^(-9)]
+accuracy: bits 9
+precision = Precision 1424
+	Command being timed: "aern2-fnreps-ops integrate runge poly 8"
+	User time (seconds): 38.27
+	System time (seconds): 0.18
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:38.46
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 44400
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 15062
+	Voluntary context switches: 1
+	Involuntary context switches: 34
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
