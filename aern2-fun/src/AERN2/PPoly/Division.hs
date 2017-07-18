@@ -94,51 +94,51 @@ iterateInverse cutoff n f if0 =
       ipn
     else
       aux'' (newtonPiece ipn pf bfp) pf bfp (k - 1)
-  aux' ipn pf bfp =
-    let
-      next = {-reduce $-} newtonPiece ipn pf bfp
-      nextAccuracy = getAccuracy next
-    in
-      if nextAccuracy >= cutoff then
-        next
-      else if nextAccuracy <= getAccuracy ipn then
-        ipn
-      else
-        aux' next pf bfp
-  {-aux ifn =
-    let
-      next = newton ifn
-    in
-      {-trace (
-      "next iterate degree "++(show $ (degree . centre . snd . head . ppoly_pieces) next)++"\n"++
-      "accuracy: "++(show $ getAccuracy next)
-      ) $-}
-      if getAccuracy next <= getAccuracy ifn then
-        ifn
-      else
-        aux next-}
-  reduce :: PolyBall -> PolyBall
-  reduce p =
-    aux' (((ballLift1R degree) p) `Prelude.div` 2)
-    where
-    aux' d =
-      let
-        red = setPrecision (getPrecision p) $ normalize $ Ball ((ballLift1R $ reduceDegree d) p) (errorBound 0)
-        redRad = radius red
-        pRad   = radius p
-      in
-        {-trace (
-        "reducing..."++(show d)++"\n"++
-        "reduced accuracy: "++(show $ getAccuracy red)++"\n"++
-        "original accuracy: "++(show $ getAccuracy p)
-        ) $-}
-        if d >= (ballLift1R degree) p
-        {-- || getAccuracy red >= max (bits 5) (getAccuracy p - (bits 2))-}
-          || redRad <= 4*pRad
-        then
-          red
-        else
-          aux' (d + 10)
+  -- aux' ipn pf bfp =
+  --   let
+  --     next = {-reduce $-} newtonPiece ipn pf bfp
+  --     nextAccuracy = getAccuracy next
+  --   in
+  --     if nextAccuracy >= cutoff then
+  --       next
+  --     else if nextAccuracy <= getAccuracy ipn then
+  --       ipn
+  --     else
+  --       aux' next pf bfp
+  -- aux ifn =
+  --   let
+  --     next = newton ifn
+  --   in
+  --     {-trace (
+  --     "next iterate degree "++(show $ (degree . centre . snd . head . ppoly_pieces) next)++"\n"++
+  --     "accuracy: "++(show $ getAccuracy next)
+  --     ) $-}
+  --     if getAccuracy next <= getAccuracy ifn then
+  --       ifn
+  --     else
+  --       aux next
+  -- reduce :: PolyBall -> PolyBall
+  -- reduce p =
+  --   aux' (((ballLift1R degree) p) `Prelude.div` 2)
+  --   where
+  --   aux' d =
+  --     let
+  --       red = setPrecision (getPrecision p) $ normalize $ Ball ((ballLift1R $ reduceDegree d) p) (errorBound 0)
+  --       redRad = radius red
+  --       pRad   = radius p
+  --     in
+  --       {-trace (
+  --       "reducing..."++(show d)++"\n"++
+  --       "reduced accuracy: "++(show $ getAccuracy red)++"\n"++
+  --       "original accuracy: "++(show $ getAccuracy p)
+  --       ) $-}
+  --       if d >= (ballLift1R degree) p
+  --       {-- || getAccuracy red >= max (bits 5) (getAccuracy p - (bits 2))-}
+  --         || redRad <= 4*pRad
+  --       then
+  --         red
+  --       else
+  --         aux' (d + 10)
   newtonError :: PolyBall -> MPBall -> ErrorBound
   newtonError pg bfp =
     let
@@ -148,7 +148,10 @@ iterateInverse cutoff n f if0 =
   newtonPiece :: PolyBall -> PolyBall -> MPBall -> PolyBall
   newtonPiece pg pf bfp =
     let
-      cg = setPrecision (getPrecision f) $ centreAsBall pg
+      cg =
+        setPrecision (getPrecision f) $
+        setAccuracyGuide (getAccuracyGuide f) $ 
+          centreAsBall pg
       ni = normalize $
             Ball (((ballLift1R $ reduceDegreeToAccuracy 5 (getAccuracy ne + 1)))
               ((2 - cg*pf)*cg))
