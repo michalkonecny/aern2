@@ -1,6 +1,15 @@
+{-# LANGUAGE CPP #-}
+-- #define DEBUG
 module AERN2.PPoly.Division
 (inverse, inverseWithAccuracy, initialApproximation)
 where
+
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#else
+#define maybeTrace (\ (_ :: String) t -> t)
+#endif
 
 import MixedTypesNumPrelude hiding (maximum, minimum)
 import qualified Prelude
@@ -44,24 +53,30 @@ instance CanDiv Integer PPoly where -- TODO: support negative denominator
   divide n q =
     cn $ n * inverse q -- TODO: detect divide by zero
 
-
 inverseWithAccuracy :: Accuracy -> PPoly -> PPoly
 inverseWithAccuracy cutoff' f@(PPoly _ (Interval l r)) =
-  --trace("num its: "++(show numIts)) $
-  --trace("initial bits: "++(show bts)) $
-  --trace("cutoff: "++(show cutoff  )) $
+  maybeTrace("num its: "++(show numIts)) $
+  maybeTrace("initial bits: "++(show bts)) $
+  maybeTrace("cutoff: "++(show cutoff  )) $
+  maybeTrace("getAccuracy f: "++(show $ getAccuracy f)) $
+  maybeTrace("getAccuracy if0: "++(show $ getAccuracy if0)) $
+  maybeTrace("getAccuracy fcInv: "++(show $ getAccuracy fcInv)) $
   updateRadius (+ radius f) fcInv
   where
   cutoff = min (getFiniteAccuracy f) cutoff'
-  numIts = (integer . integerLog2 . (`max` 1) . ceiling . (/! 10) . fromAccuracy) cutoff
+  numIts = ((integer . integerLog2 . (`max` 1) . ceiling . (/! 10) . fromAccuracy) cutoff)
   fcInv = iterateInverse cutoff numIts fc (setPrecision (getPrecision f) if0)
-  bts   = max (2 + (integer . integerLog2 . snd . integerBounds) bf) $ (fromAccuracy cutoff) `Prelude.div` (2^!numIts)
-  fc    = centre f
+  bts   = max (2 + (integer . integerLog2 . snd . integerBounds) bf) 0 -- $ (fromAccuracy cutoff) `Prelude.div` (2^!numIts)
+  fc    =
+          setAccuracyGuide ((2^!numIts)*cutoff) $
+            centre f
   fRed0 = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 (bits 1)) fc
   fRed1 = fc--(liftCheb2PPoly $ reduceDegreeToAccuracy 5 (2*thresholdAccuracy)) fc
   bf    = abs $ AERN2.PPoly.Maximum.maximumOptimisedWithAccuracy fRed0 (mpBall l) (mpBall r) 5 5 (bits 4)
   threshold = (mpBall $ (dyadic 0.5)^!bts)/!(centreAsBall bf) --1/((2^bts)*(1 + (centreAsBall bf)))
-  if0 = initialApproximation fRed1 bts thresholdAccuracy
+  if0 =
+    setAccuracyGuide ((2^!numIts)*cutoff) $
+    initialApproximation fRed1 bts thresholdAccuracy
   thresholdAccuracy = 2 + 2*getAccuracy ((fromEndpoints (-threshold) (threshold)) :: MPBall)
 
 inverse :: PPoly -> PPoly -- TODO: allow negative f
@@ -84,16 +99,22 @@ iterateInverse cutoff n f if0 =
     [let
      bfp = maximumOptimisedWithAccuracy fRed (mpBall $ fromUnitIntervalToDom l) (mpBall $ fromUnitIntervalToDom r) 5 5 (bits 4)
      in
-     (i, aux'' pg pf bfp n) | (i@(Interval l r),pg,pf) <- refine if0 f]
+     (i, aux'' i pg (getAccuracy pg) pf bfp n) | (i@(Interval l r),pg,pf) <- refine if0 f]
     (ppoly_dom f)
   where
   fromUnitIntervalToDom x = (dyadic 0.5)*((r - l)*x + (r + l)) where (Interval l r) = ppoly_dom f
   fRed = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 (bits 4)) f
-  aux'' ipn pf bfp k =
-    if k == 0 || getAccuracy ipn >= cutoff then
+  aux'' i ipn ipnAc pf bfp k =
+    -- maybeTrace ("i = " ++ show i) $
+    -- maybeTrace ("ipnAc = " ++ show ipnAc) $
+    -- maybeTrace ("ipnAc' = " ++ show ipnAc') $
+    if (ipnAc' <= ipnAc) || ipnAc >= cutoff then
       ipn
     else
-      aux'' (newtonPiece ipn pf bfp) pf bfp (k - 1)
+      aux'' i ipn' ipnAc' pf bfp (k - 1)
+    where
+    ipn' = newtonPiece ipn pf bfp
+    ipnAc' = getAccuracy ipn'
   -- aux' ipn pf bfp =
   --   let
   --     next = {-reduce $-} newtonPiece ipn pf bfp
@@ -150,7 +171,7 @@ iterateInverse cutoff n f if0 =
     let
       cg =
         setPrecision (getPrecision f) $
-        setAccuracyGuide (getAccuracyGuide f) $ 
+        setAccuracyGuide (getAccuracyGuide f) $
           centreAsBall pg
       ni = normalize $
             Ball (((ballLift1R $ reduceDegreeToAccuracy 5 (getAccuracy ne + 1)))
