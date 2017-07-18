@@ -127,8 +127,10 @@ mulCheb ::
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
 mulCheb p1@(ChPoly _ (Poly terms1) _acG1 _) p2@(ChPoly _ (Poly terms2) _acG2 _) =
   maybeTrace
-    (printf "mulCheb: getAccuracy p1 = %s, getAccuracy p2 = %s, size1+size2 = %d, using %s, getAccuracy result = %s"
-      (show $ getAccuracy p1) (show $ getAccuracy p2) (size1 + size2) methodS (show $ getAccuracy result)
+    (printf "mulCheb: ac p1 = %s, ac p2 = %s, acG p1 = %s, acG p2 = %s, size1+size2 = %d, using %s, getAccuracy result = %s"
+      (show $ getAccuracy p1) (show $ getAccuracy p2)
+      (show $ getAccuracyGuide p1) (show $ getAccuracyGuide p2)
+      (size1 + size2) methodS (show $ getAccuracy result)
     ) $
   result
   where

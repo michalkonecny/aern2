@@ -318,7 +318,7 @@ rungeSC_x tr12 x =
   where
   res = (tr12 numer)/!(tr12 $ 100*x^!2+1)
   numer = sin (10*xA) + cos(20*xA)
-  xA = adjustAccuracyGuide (\a -> a+15) x
+  xA = adjustAccuracyGuide (\a -> 4*a+15) x
 
 -----------------------------------
 -----------------------------------
@@ -341,9 +341,10 @@ fracSinSC_Name = "(sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]"
 
 fracSinSC_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 fracSinSC_x tr12 x =
-  (tr12R $ sin (10*xA) + cos(20*xA))/!(tr12R $ 10*(sin(7*xA)^!2)+1)
+  (tr12R $ sin (10*xA1) + cos(20*xA1))/!(tr12R $ 10*(sin(7*xA2)^!2)+1)
   where
-  xA = adjustAccuracyGuide (\a -> a+30) x
+  xA1 = adjustAccuracyGuide (\a -> 4*a+30) x
+  xA2 = adjustAccuracyGuide (\a -> a+30) x
   tr12R = tr12 . setAccuracyGuide (getAccuracyGuide x)
 
 -----------------------------------
