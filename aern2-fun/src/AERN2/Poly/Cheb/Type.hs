@@ -245,8 +245,10 @@ instance (HasAccuracy c, HasIntegers c, IsBall c) => HasAccuracy (ChPoly c) wher
 instance HasAccuracyGuide (ChPoly c) where
   getAccuracyGuide = chPoly_acGuide
 
-instance CanSetAccuracyGuide (ChPoly c) where
-  setAccuracyGuide acGuide p = p { chPoly_acGuide = acGuide }
+instance (CanSetPrecision c, CanNormalize (ChPoly c)) => CanSetAccuracyGuide (ChPoly c) where
+  setAccuracyGuide acGuide p =
+    setPrecisionAtLeastAccuracy (acGuide + (degree p)) $
+      p { chPoly_acGuide = acGuide }
 
 
 {-|
