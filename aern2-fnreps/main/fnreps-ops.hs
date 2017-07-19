@@ -30,7 +30,6 @@ import AERN2.Real
 import AERN2.Interval
 
 import AERN2.RealFun.Operations
-import AERN2.RealFun.SineCosine
 import AERN2.RealFun.UnaryBallFun
 import AERN2.RealFun.UnaryBallDFun
 import AERN2.RealFun.UnaryModFun
@@ -40,7 +39,6 @@ import qualified AERN2.PPoly as PPoly
 import AERN2.PPoly (PPoly)
 
 import AERN2.Poly.Cheb (ChPoly)
-import qualified AERN2.Poly.Cheb as ChPoly
 
 import qualified AERN2.Frac as Frac
 import AERN2.Frac (Frac)
@@ -313,13 +311,16 @@ rungeSC_Name = "(sin(10x)+cos(20x))/(100x^2+1) over [-1,1]"
 rungeSC_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 rungeSC_x tr12 x =
   maybeTrace (printf "numer: acG = %s; ac = %s" (show $ getAccuracyGuide numer) (show $ getAccuracy numer)) $
+  maybeTrace (printf "inv: acG = %s; ac = %s" (show $ getAccuracyGuide inv) (show $ getAccuracy inv)) $
   maybeTrace (printf "res: acG = %s; ac = %s" (show $ getAccuracyGuide res) (show $ getAccuracy res)) $
   res
   -- (tr12 $ sin (10*xA) + cos(20*xA))/!(tr12 $ 100*x^!2+1)
   where
-  res = (tr12 numer)/!(tr12 $ 100*x^!2+1)
-  numer = sin (10*xA) + cos(20*xA)
+  res = numer*inv
+  inv = 1/!(tr12 $ 100*x^!2+1)
+  numer = tr12 $ sin (10*xA) + cos(20*xA)
   xA = adjustAccuracyGuide (\a -> 4*a+15) x
+  -- tr12R = tr12 . setAccuracyGuide (getAccuracyGuide x)
 
 -----------------------------------
 -----------------------------------
@@ -331,7 +332,7 @@ fracSin_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 fracSin_x tr12 x =
   1/!(tr12R $ 10*(sin(7*xA)^!2)+1)
   where
-  xA = adjustAccuracyGuide (\a -> a+20) x
+  xA = adjustAccuracyGuide (\a -> 2*a+20) x
   tr12R = tr12 . setAccuracyGuide (getAccuracyGuide x)
 
 -----------------------------------
@@ -349,13 +350,13 @@ fracSinSC_x tr12 x =
   res
   -- (tr12R $ sin (10*xA1) + cos(20*xA1))/!(tr12R $ 10*(sin(7*xA2)^!2)+1)
   where
-  res = (tr12R $ numer) * inv
+  res = (tr12 $ numer) * inv
   inv = 1/! (tr12R $ denom)
   numer = sin (10*xA1) + cos(20*xA1)
   denom = 10*(sin(7*xA2)^!2)+1
   xA1 = adjustAccuracyGuide (\a -> 4*a+30) x
-  xA2 = adjustAccuracyGuide (\a -> a+30) x
-  tr12R = tr12 . setAccuracyGuide (getAccuracyGuide x)
+  xA2 = adjustAccuracyGuide (\a -> 2*a+30) x
+  tr12R = tr12 . setAccuracyGuide (getAccuracyGuide x + 2)
 
 -----------------------------------
 -----------------------------------

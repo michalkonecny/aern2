@@ -51,7 +51,7 @@ import AERN2.Real hiding (ball_value)
 import AERN2.Interval
 import AERN2.RealFun.Operations
 
-import AERN2.Poly.Cheb
+import AERN2.Poly.Cheb as ChPoly
 
 
 {- examples -}
@@ -86,6 +86,9 @@ instance (SuitableForCE es) => CanExtractCE es Ball where
     case ensureNoCE sample_es cCE of
       (Just c, es) -> CollectErrors (Just (Ball c e)) es
       (_, es) -> CollectErrors Nothing es
+
+degree :: PolyBall -> Integer
+degree (Ball c _e) = ChPoly.degree c
 
 ballLift1R :: (IsBall t) => (t -> t1) -> (Ball t -> t1)
 ballLift1R f (Ball c e) = f (updateRadius (+ e) c)

@@ -152,7 +152,7 @@ instance CanDiv (ChPoly MPBall) (ChPoly MPBall) where
   type DivType  (ChPoly MPBall) (ChPoly MPBall) = CN (ChPoly MPBall)
   divide p q = chebDivideDCT acGuide p q
     where
-    acGuide = getAccuracyGuide p `min` getAccuracyGuide q
+    acGuide = getAccuracyGuide p `max` getAccuracyGuide q
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Dyadic |], [t| MPBall |]]

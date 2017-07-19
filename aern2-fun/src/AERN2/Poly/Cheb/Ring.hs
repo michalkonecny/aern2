@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#define DEBUG
+-- #define DEBUG
 {-# LANGUAGE TemplateHaskell #-}
 {-|
     Module      :  AERN2.Poly.Cheb.Ring
@@ -68,7 +68,7 @@ instance
   where
   type AddType (ChPoly c) (ChPoly c) = ChPoly c
   add (ChPoly d1 p1 acG1 _) (ChPoly d2 p2 acG2 _)
-    | d1 == d2 = normalize $ ChPoly d1 (p1 + p2) (min acG1 acG2) Nothing
+    | d1 == d2 = normalize $ ChPoly d1 (p1 + p2) (max acG1 acG2) Nothing
     | otherwise = error $ "Adding polynomials with incompatible domains"
 
 $(declForTypes
@@ -151,7 +151,7 @@ mulChebDirect ::
 mulChebDirect cp1@(ChPoly d1 p1 acG1 _) cp2@(ChPoly d2 p2 acG2 _)
   | d1 /= d2 = error $ "Multiplying ChPoly's with incompatible domains"
   | otherwise =
-    normalize $ ChPoly d1 (Poly terms) (min acG1 acG2) Nothing
+    normalize $ ChPoly d1 (Poly terms) (max acG1 acG2) Nothing
   where
   terms =
     terms_fromListAddCoeffs $

@@ -1,0 +1,31 @@
+numer: acG = bits 43; ac = bits 22
+denom: acG = bits 39; ac = bits 29
+inv: acG = bits 4; ac = bits 7
+res: acG = bits 43; ac = bits 5
+computing max  (sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]
+result = [1.074645220436256 ± <2^(-5)]
+accuracy: bits 5
+precision = Precision 3088
+	Command being timed: "aern2-fnreps-ops max fracSinSC poly 02"
+	User time (seconds): 97.12
+	System time (seconds): 1.06
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:38.18
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 605028
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 910755
+	Voluntary context switches: 1
+	Involuntary context switches: 133
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 24
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

@@ -1,22 +1,22 @@
 computing integrate  1/(100x^2+1) over [-1,1]
-result = [2.94225556349362e-1 ± <2^(-16)]
-accuracy: bits 16
-precision = Precision 53
+result = [2.942255348607469e-1 ± <2^(-68)]
+accuracy: bits 68
+precision = Precision 242
 	Command being timed: "aern2-fnreps-ops integrate runge ppoly 60"
-	User time (seconds): 13.62
+	User time (seconds): 6.17
 	System time (seconds): 0.08
-	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:13.71
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:06.26
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 43696
+	Maximum resident set size (kbytes): 127384
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 8905
+	Minor (reclaiming a frame) page faults: 66495
 	Voluntary context switches: 1
-	Involuntary context switches: 27
+	Involuntary context switches: 13
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

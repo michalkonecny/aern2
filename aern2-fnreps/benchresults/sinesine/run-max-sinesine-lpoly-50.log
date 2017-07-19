@@ -1,20 +1,20 @@
 computing max  sin(10x+sin(20x^2)) over [-1,1]
 result = [1 ± <2^(-50)]
 accuracy: bits 50
-precision = Precision 496
+precision = Precision 300
 	Command being timed: "aern2-fnreps-ops max sinesine lpoly 50"
-	User time (seconds): 2.48
+	User time (seconds): 2.42
 	System time (seconds): 0.02
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.50
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.44
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 23784
+	Maximum resident set size (kbytes): 24428
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 5558
+	Minor (reclaiming a frame) page faults: 7231
 	Voluntary context switches: 1
 	Involuntary context switches: 5
 	Swaps: 0

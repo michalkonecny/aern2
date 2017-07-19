@@ -1,22 +1,22 @@
 computing max  sin(10x)+cos(20x) over [-1,1]
-result = [1.125001068258554 ± <2^(-19)]
-accuracy: bits 19
-precision = Precision 1412
+result = [1.125000357478345 ± <2^(-20)]
+accuracy: bits 20
+precision = Precision 706
 	Command being timed: "aern2-fnreps-ops max sine+cos poly 30"
-	User time (seconds): 1.38
-	System time (seconds): 0.02
+	User time (seconds): 1.29
+	System time (seconds): 0.01
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.40
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.31
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 48064
+	Maximum resident set size (kbytes): 48548
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 10015
-	Voluntary context switches: 0
-	Involuntary context switches: 3
+	Minor (reclaiming a frame) page faults: 10026
+	Voluntary context switches: 1
+	Involuntary context switches: 7
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

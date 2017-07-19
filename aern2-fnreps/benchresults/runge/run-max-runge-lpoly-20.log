@@ -1,22 +1,22 @@
 computing max  1/(100x^2+1) over [-1,1]
 result = [1.000000232268992 ± <2^(-22)]
 accuracy: bits 22
-precision = Precision 264
+precision = Precision 322
 	Command being timed: "aern2-fnreps-ops max runge lpoly 20"
-	User time (seconds): 4.96
-	System time (seconds): 0.02
+	User time (seconds): 4.88
+	System time (seconds): 0.01
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.99
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.89
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 15424
+	Maximum resident set size (kbytes): 15920
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1688
+	Minor (reclaiming a frame) page faults: 1673
 	Voluntary context switches: 1
-	Involuntary context switches: 9
+	Involuntary context switches: 8
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8
