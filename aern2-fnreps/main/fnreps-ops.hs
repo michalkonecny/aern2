@@ -249,6 +249,7 @@ type Signature1 f =
 
 type Signature2 f =
   ( HasAccuracy f, HasAccuracyGuide f
+  , CanMulSameType f
   , CanDivCNSameType f, CanRecipCNSameType f)
 
 -----------------------------------
@@ -341,8 +342,17 @@ fracSinSC_Name = "(sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]"
 
 fracSinSC_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 fracSinSC_x tr12 x =
-  (tr12R $ sin (10*xA1) + cos(20*xA1))/!(tr12R $ 10*(sin(7*xA2)^!2)+1)
+  maybeTrace (printf "numer: acG = %s; ac = %s" (show $ getAccuracyGuide numer) (show $ getAccuracy numer)) $
+  maybeTrace (printf "denom: acG = %s; ac = %s" (show $ getAccuracyGuide denom) (show $ getAccuracy denom)) $
+  maybeTrace (printf "inv: acG = %s; ac = %s" (show $ getAccuracyGuide inv) (show $ getAccuracy inv)) $
+  maybeTrace (printf "res: acG = %s; ac = %s" (show $ getAccuracyGuide res) (show $ getAccuracy res)) $
+  res
+  -- (tr12R $ sin (10*xA1) + cos(20*xA1))/!(tr12R $ 10*(sin(7*xA2)^!2)+1)
   where
+  res = (tr12R $ numer) * inv
+  inv = 1/! (tr12R $ denom)
+  numer = sin (10*xA1) + cos(20*xA1)
+  denom = 10*(sin(7*xA2)^!2)+1
   xA1 = adjustAccuracyGuide (\a -> 4*a+30) x
   xA2 = adjustAccuracyGuide (\a -> a+30) x
   tr12R = tr12 . setAccuracyGuide (getAccuracyGuide x)

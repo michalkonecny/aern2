@@ -42,7 +42,7 @@ instance GenericMaximum (LocalFrac MPBall) where
     dDenom   = derivativeExact cDenom
     cNum   = centre num
     cDenom = centre denom
-    dfINum = computeNum (prec 100) (prec 50) --num*dDenom - dNum*denom
+    dfINum = computeNum 100 50 --num*dDenom - dNum*denom
     --dfI = dfINum * (inverseWithLowerBound (denom*denom) (dIM*dIM))
     dfRat = makeRational dfINum
     (eI, dfIPow) = (ch2Power . intify) dfINum
@@ -53,8 +53,8 @@ instance GenericMaximum (LocalFrac MPBall) where
     computeNum p q =
       let
         try =
-          (setPrecision p cNum)*(setPrecision p dDenom)
-          - (setPrecision p dNum)*(setPrecision p cDenom)
+          (setAccuracyGuide (bits p) cNum)*(setAccuracyGuide (bits p) dDenom)
+          - (setAccuracyGuide (bits p) dNum)*(setAccuracyGuide (bits p) cDenom)
       in
         if getAccuracy try == Exact then
           try

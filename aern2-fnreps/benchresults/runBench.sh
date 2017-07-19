@@ -214,10 +214,10 @@ function rungeAllReprs
   repr_frac_itg_paramss="10 20 40 60 80";
   repr_lpoly_max_paramss="20 40 60 80 100";
   repr_lpoly_itg_paramss="20 40 60 80 100";
-  repr_lppoly_max_paramss="20 40";
-  repr_lppoly_itg_paramss="20 40 60 80 100";
+  repr_lppoly_max_paramss="20 40 60 80 100";
+  # repr_lppoly_itg_paramss="20 40 60 80 100";
   repr_lfrac_max_paramss="20 40 60 80 100";
-  repr_lfrac_itg_paramss="20 40 60 80 100";
+  # repr_lfrac_itg_paramss="20 40 60 80 100";
 
   fn=runge; dir=$fn;
   runForAllReprs
@@ -241,10 +241,10 @@ function rungeSCAllReprs
   repr_frac_itg_paramss="10 20 40";
   repr_lpoly_max_paramss="20 40 60 80 100";
   repr_lpoly_itg_paramss="20 40 60 80 100";
-  repr_lppoly_max_paramss="20 30 40";
-  repr_lppoly_itg_paramss="20 40 60 80 100";
+  repr_lppoly_max_paramss="20 40 60 80 100";
+  # repr_lppoly_itg_paramss="20 40 60 80 100";
   repr_lfrac_max_paramss="20 40 60 80 100";
-  repr_lfrac_itg_paramss="20 40 60 80 100";
+  # repr_lfrac_itg_paramss="20 40 60 80 100";
 
   fn=rungeSC; dir=$fn;
   runForAllReprs
@@ -268,10 +268,10 @@ function fracSinAllReprs
   repr_frac_itg_paramss="10 15 20";
   repr_lpoly_max_paramss="10 20 40 60";
   repr_lpoly_itg_paramss="10 20 40 60";
-  repr_lppoly_max_paramss="10 20 40";
-  repr_lppoly_itg_paramss="10 20 40 60";
+  repr_lppoly_max_paramss="10 20 40 60";
+  # repr_lppoly_itg_paramss="10 20 40 60";
   repr_lfrac_max_paramss="10 20 40 60 80 100";
-  repr_lfrac_itg_paramss="10 20 40 60";
+  # repr_lfrac_itg_paramss="10 20 40 60";
 
   fn=fracSin; dir=$fn;
   runForAllReprs
@@ -295,10 +295,10 @@ function fracSinSCAllReprs
   repr_frac_itg_paramss="10 15 20";
   repr_lpoly_max_paramss="10 20 40 60";
   repr_lpoly_itg_paramss="10 20 40 60";
-  repr_lppoly_max_paramss="10 20 40";
-  repr_lppoly_itg_paramss="10 20 40 60";
-  # repr_lfrac_max_paramss="10 20 40 60 80 100";
-  repr_lfrac_itg_paramss="10 20 40 60";
+  repr_lppoly_max_paramss="10 20 40 60 80 100";
+  # repr_lppoly_itg_paramss="10 20 40 60";
+  repr_lfrac_max_paramss="10 20 40 60 80 100";
+  # repr_lfrac_itg_paramss="10 20 40 60";
 
   fn=fracSinSC; dir=$fn;
   runForAllReprs
