@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
--- #define DEBUG
+#define DEBUG
 {-# LANGUAGE TemplateHaskell #-}
 {-|
     Module      :  AERN2.Poly.Cheb.Ring
@@ -109,17 +109,17 @@ instance
   type MulType (ChPoly c) (ChPoly c) = ChPoly c
   mul = mulCheb
 
-instance
-  CanMulAsymmetric (ChPoly Rational) (ChPoly Rational)
-  where
-  type MulType (ChPoly Rational) (ChPoly Rational) = ChPoly Rational
-  mul = mulChebDirect
-
-instance
-  CanMulAsymmetric (ChPoly Dyadic) (ChPoly Dyadic)
-  where
-  type MulType (ChPoly Dyadic) (ChPoly Dyadic) = ChPoly Dyadic
-  mul = mulChebDirect
+-- instance
+--   CanMulAsymmetric (ChPoly Rational) (ChPoly Rational)
+--   where
+--   type MulType (ChPoly Rational) (ChPoly Rational) = ChPoly Rational
+--   mul = mulChebDirect
+--
+-- instance
+--   CanMulAsymmetric (ChPoly Dyadic) (ChPoly Dyadic)
+--   where
+--   type MulType (ChPoly Dyadic) (ChPoly Dyadic) = ChPoly Dyadic
+--   mul = mulChebDirect
 
 mulCheb ::
   (PolyCoeffBall c, CanNormalize (ChPoly c))
@@ -127,10 +127,11 @@ mulCheb ::
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
 mulCheb p1@(ChPoly _ (Poly terms1) _acG1 _) p2@(ChPoly _ (Poly terms2) _acG2 _) =
   maybeTrace
-    (printf "mulCheb: ac p1 = %s, ac p2 = %s, acG p1 = %s, acG p2 = %s, size1+size2 = %d, using %s, getAccuracy result = %s"
+    (printf "mulCheb: ac p1 = %s, ac p2 = %s, acG p1 = %s, acG p2 = %s, size1+size2 = %d, using %s, ac result = %s, prec result = %s"
       (show $ getAccuracy p1) (show $ getAccuracy p2)
       (show $ getAccuracyGuide p1) (show $ getAccuracyGuide p2)
-      (size1 + size2) methodS (show $ getAccuracy result)
+      (size1 + size2) methodS
+      (show $ getAccuracy result) (show $ getPrecision result)
     ) $
   result
   where
@@ -144,10 +145,10 @@ mulCheb p1@(ChPoly _ (Poly terms1) _acG1 _) p2@(ChPoly _ (Poly terms2) _acG2 _) 
   size2 = terms_size terms2
 
 mulChebDirect ::
-  (PolyCoeffRing c, CanMulBy c Dyadic, CanNormalize (ChPoly c))
+  (PolyCoeffRing c, CanMulBy c Dyadic, CanNormalize (ChPoly c), CanSetPrecision c)
   =>
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
-mulChebDirect (ChPoly d1 (Poly terms1) acG1 _) (ChPoly d2 (Poly terms2) acG2 _)
+mulChebDirect cp1@(ChPoly d1 p1 acG1 _) cp2@(ChPoly d2 p2 acG2 _)
   | d1 /= d2 = error $ "Multiplying ChPoly's with incompatible domains"
   | otherwise =
     normalize $ ChPoly d1 (Poly terms) (min acG1 acG2) Nothing
@@ -160,6 +161,10 @@ mulChebDirect (ChPoly d1 (Poly terms1) acG1 _) (ChPoly d2 (Poly terms2) acG2 _)
         (i,a) <- terms_toList terms1,
         (j,b) <- terms_toList terms2
       ]
+  (Poly terms1) = p1 -- setPrecision prc p1
+  (Poly terms2) = p2 -- setPrecision prc p2
+  -- prc = (getPrecision p1) `max` (getPrecision p2) `max` (prec $ 2 `max` ((fromAccuracy (acG1 `min` acG2)) * deg))
+  -- deg = degree cp1 + degree cp2
 
 mulChebDCT ::
   (PolyCoeffBall c, CanNormalize (ChPoly c), CanSetPrecision c)

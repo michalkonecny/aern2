@@ -92,14 +92,15 @@ lift2_DCT getDegree op pA pB
   cN = 2 ^! cNexponent
 
   -- prc = (getPrecision pA) `max` (getPrecision pB)
-  workingPrec = prec $ 100 + cN
+  workingPrec = (prec $ 100 + cN) + (getPrecision pA) + (getPrecision pB)
+
   (ChPoly domA (Poly termsA) acGA _) = raisePrecisionIfBelow workingPrec pA
   (ChPoly domB (Poly termsB) acGB _) = raisePrecisionIfBelow workingPrec pB
 
   aT = coeffs2gridvalues cN termsA
   bT = coeffs2gridvalues cN termsB
 
-  cT = zipWith op aT bT -- multiplication of the cN+1 values of the polynomials on the grid
+  cT = zipWith op aT bT -- op on the cN+1 values of the polynomials on the grid
 
   (c0Double : c) = map (* (2 /! cN)) (tDCT_I_nlogn cT) -- interpolate the values using a polynomial
 
@@ -147,7 +148,7 @@ lift1_DCT getDegree op p =
     aT = coeffs2gridvalues cN termsA
 
     cN = 2 ^! (1 + (integer $ integerLog2 $ max 1 (getDegree dA + 1)))
-    workingPrec = prec $ 100 + cN
+    workingPrec = (prec $ 100 + cN) + (getPrecision p)
     (ChPoly dom (Poly termsA) acG _) = raisePrecisionIfBelow workingPrec p
     dA = terms_degree termsA
 
