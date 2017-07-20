@@ -51,7 +51,7 @@ it holds
 ![](http://latex.codecogs.com/gif.latex?|f(x)-f(y)|\\leq 2^{-i}).
 
 
-### Ball
+### BFun
 
 <!-- line breaks are forced by 2 trailing spaces -->
 
@@ -74,7 +74,7 @@ and a double-precision radius.
 Equivalently, the function could be given by an evaluator over dyadics and a bound on its modulus of continuity.
 
 
-### DBall
+### DBFun
 
 <!-- line breaks are forced by 2 trailing spaces -->
 

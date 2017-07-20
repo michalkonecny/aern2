@@ -182,9 +182,9 @@ fileOpts :: FileOptions
 fileOpts = def { _fo_size = (300,300) }
 
 reprShow :: String -> String
-reprShow "dball" = "DBall"
-reprShow "ball" = "Ball"
-reprShow "fun" = "Fun"
+reprShow "dball" = "DBFun"
+reprShow "ball" = "BFun"
+reprShow "fun" = "MFun"
 reprShow "poly" = "Poly"
 reprShow "ppoly" = "PPoly"
 reprShow "frac" = "Frac"
