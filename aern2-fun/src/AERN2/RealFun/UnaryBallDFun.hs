@@ -130,6 +130,11 @@ instance CanIntegrateOverDom UnaryBallDFun DyadicInterval where
       diM = centreAsBall diB
       diB = setPrecision p $ mpBall di
 
+instance CanMinMaxAsymmetric UnaryBallDFun UnaryBallDFun where
+  min (UnaryBallDFun as) (UnaryBallDFun bs) =
+    UnaryBallDFun (zipWith min as bs)
+  max (UnaryBallDFun as) (UnaryBallDFun bs) =
+    UnaryBallDFun (zipWith max as bs)
 
 instance CanNeg UnaryBallDFun where
   negate (UnaryBallDFun as) = UnaryBallDFun (map negate as)

@@ -219,7 +219,23 @@ instance CanIntegrateOverDom UnaryModFun DyadicInterval where
   type IntegralOverDomType UnaryModFun DyadicInterval = CauchyRealCN
   integrateOverDom = integrateOverDom . unaryBallFun
 
-{- selected field ops -}
+{- selected ops -}
+
+instance CanMinMaxAsymmetric UnaryModFun UnaryModFun where
+  min (UnaryModFun dom1 eval1 modulus1) (UnaryModFun dom2 eval2 modulus2)
+    | dom1 == dom2 =
+      UnaryModFun dom1 (\d -> eval1 d `min` eval2 d) modulus'
+    | otherwise =
+      error "UnaryModFun: min: incompatible domains"
+    where
+    modulus' b i = max (modulus1 b (i+1)) (modulus2 b (i+1))
+  max (UnaryModFun dom1 eval1 modulus1) (UnaryModFun dom2 eval2 modulus2)
+    | dom1 == dom2 =
+      UnaryModFun dom1 (\d -> eval1 d `max` eval2 d) modulus'
+    | otherwise =
+      error "UnaryModFun: max: incompatible domains"
+    where
+    modulus' b i = max (modulus1 b (i+1)) (modulus2 b (i+1))
 
 instance CanAddAsymmetric UnaryModFun UnaryModFun where
   add (UnaryModFun dom1 eval1 modulus1) (UnaryModFun dom2 eval2 modulus2)

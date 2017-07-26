@@ -100,6 +100,10 @@ instance (SuitableForCE es) => CanEnsureCE es UnaryBallFun where
   noValueECE _sample_vCE _es = error "UnaryBallFun noValueCE not implemented yet"
   prependErrorsECE _sample_vCE _es = error "UnaryBallFun prependErrorsECE not implemented yet"
 
+instance CanMinMaxAsymmetric UnaryBallFun UnaryBallFun where
+  min = lift2 min
+  max = lift2 max
+
 instance CanNeg UnaryBallFun where
   negate = lift1 negate
 

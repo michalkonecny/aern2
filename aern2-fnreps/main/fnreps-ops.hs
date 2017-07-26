@@ -3,6 +3,7 @@
 {-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE CPP #-}
 #define DEBUG
+#define BUMPY
 module Main where
 
 #ifdef DEBUG
@@ -81,11 +82,15 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         ("ball", "integrate") -> integrateBallFun (fn_x id x_BF) accuracy
         ("dball", "max") -> maxDBallFun (fn_x id x_DBF) accuracy
         ("dball", "integrate") -> integrateDBallFun (fn_x id x_DBF) accuracy
+#ifdef BUMPY
+#else
         ("poly", "max") -> maxPB $ fn_x id (x_PB accuracy)
         ("poly", "integrate") -> integratePB $ fn_x id (x_PB accuracy)
-
+#endif
         ("ppoly", "max") -> maxPP $ fn_x PPoly.fromPoly (x_PB accuracy)
         ("ppoly", "integrate") -> integratePP $ fn_x PPoly.fromPoly (x_PB accuracy)
+#ifdef BUMPY
+#else
         ("frac", "max") -> maxFR $ fn_x Frac.fromPoly (x_PB accuracy)
         ("frac", "integrate") -> integrateFR $ fn_x Frac.fromPoly (x_PB accuracy)
 
@@ -95,6 +100,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         ("lppoly", "integrate") -> integrateLPP (fn_x LPPoly.fromPoly x_LP) accuracy
         ("lfrac", "max") -> maxLF (fn_x LFrac.fromPoly x_LP) accuracy
         ("lfrac", "integrate") -> integrateLF (fn_x LFrac.fromPoly x_LP) accuracy
+#endif
         _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
     (Just (fnDescription, fn_x)) = Map.lookup functionCode functions
 
@@ -232,7 +238,9 @@ functions =
     , ("fracSin", (fracSin_Name, fracSin_x))
     , ("fracSinSC", (fracSinSC_Name, fracSinSC_x))
     -- -- , ("hat", (hat_Name, hat_x))
-    -- -- , ("bumpy", (bumpy_Name, bumpy_x))
+#ifdef BUMPY
+    , ("bumpy", (bumpy_Name, bumpy_x))
+#endif
     ]
 
 
@@ -248,6 +256,9 @@ type Signature1 f =
 type Signature2 f =
   ( HasAccuracy f, HasAccuracyGuide f
   , CanMulSameType f
+#ifdef BUMPY
+  , CanMinMaxSameType f
+#endif
   , CanDivCNSameType f, CanRecipCNSameType f)
 
 -----------------------------------
@@ -370,10 +381,11 @@ hat_Name = "1-|x+1/3| over [-1,1]"
 
 -----------------------------------
 -----------------------------------
-
+#ifdef BUMPY
 bumpy_Name :: String
 bumpy_Name = "max(sin(10x),cos(11x)) over [-1,1]"
 
--- bumpy_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
--- bumpy_x tr12 x =
---     tr12 $ max (sin (10*x)) (cos (11*x))
+bumpy_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+bumpy_x tr12 x =
+    max (tr12 $ sin (10*x)) (tr12 $ cos (11*x))
+#endif

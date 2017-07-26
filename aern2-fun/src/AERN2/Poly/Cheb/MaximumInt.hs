@@ -10,6 +10,7 @@ minimum,
 minimumOptimised,
 minimumOptimisedWithAccuracy
 , maximumOptimisedWithAccuracyAndBounds
+, intify
 ) where
 
 #ifdef DEBUG

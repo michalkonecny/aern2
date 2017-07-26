@@ -17,6 +17,7 @@ module AERN2.PPoly
 , module AERN2.PPoly.Eval
 , module AERN2.PPoly.Maximum
 , module AERN2.PPoly.Division
+, module AERN2.PPoly.MinMax
 , module AERN2.PPoly.Integration
 )
 where
@@ -45,4 +46,5 @@ import AERN2.PPoly.Type
 import AERN2.PPoly.Eval
 import AERN2.PPoly.Maximum
 import AERN2.PPoly.Division
+import AERN2.PPoly.MinMax
 import AERN2.PPoly.Integration
