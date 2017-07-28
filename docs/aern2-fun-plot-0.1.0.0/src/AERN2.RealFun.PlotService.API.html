@@ -1,0 +1,226 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-|
+    Module      :  AERN2.RealFun.PlotService.API
+    Description :  Restful API for real functions
+    Copyright   :  (c) Michal Konecny
+    License     :  BSD3
+
+    Maintainer  :  mikkonecny@gmail.com
+    Stability   :  experimental
+    Portability :  portable
+
+    Restful API for real functions
+-}</span><span>
+</span><a name="line-13"></a><span>
+</span><a name="line-14"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">RealFun</span><span class="hs-operator">.</span><span class="hs-identifier">PlotService</span><span class="hs-operator">.</span><span class="hs-identifier">API</span><span>
+</span><a name="line-15"></a><span class="hs-special">(</span><span>
+</span><a name="line-16"></a><span>  </span><a href="AERN2.RealFun.PlotService.API.html#Api"><span class="hs-identifier hs-type">Api</span></a><span class="hs-special">,</span><span> </span><a href="AERN2.RealFun.PlotService.API.html#api"><span class="hs-identifier hs-var">api</span></a><span>
+</span><a name="line-17"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="AERN2.RealFun.PlotService.API.html#Sampling"><span class="hs-identifier hs-type">Sampling</span></a><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><a href="AERN2.RealFun.PlotService.API.html#SamplingId"><span class="hs-identifier hs-type">SamplingId</span></a><span class="hs-special">,</span><span> </span><a href="AERN2.RealFun.PlotService.API.html#sampling_dom"><span class="hs-identifier hs-var">sampling_dom</span></a><span>
+</span><a name="line-18"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="AERN2.RealFun.PlotService.API.html#FunctionId"><span class="hs-identifier hs-type">FunctionId</span></a><span class="hs-special">,</span><span> </span><a href="AERN2.RealFun.PlotService.API.html#FunctionName"><span class="hs-identifier hs-type">FunctionName</span></a><span class="hs-special">,</span><span> </span><a href="AERN2.RealFun.PlotService.API.html#FunctionDomain"><span class="hs-identifier hs-type">FunctionDomain</span></a><span class="hs-special">,</span><span> </span><a href="AERN2.RealFun.PlotService.API.html#FunctionSegment"><span class="hs-identifier hs-type">FunctionSegment</span></a><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><a name="line-19"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="AERN2.RealFun.PlotService.API.html#FunctionColour"><span class="hs-identifier hs-type">FunctionColour</span></a><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><a href="AERN2.RealFun.PlotService.API.html#functionColour"><span class="hs-identifier hs-var">functionColour</span></a><span>
+</span><a name="line-20"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="AERN2.RealFun.PlotService.API.html#mpBallIntervalAPI"><span class="hs-identifier hs-var">mpBallIntervalAPI</span></a><span class="hs-special">,</span><span> </span><a href="AERN2.RealFun.PlotService.API.html#dyadicIntervalAPI"><span class="hs-identifier hs-var">dyadicIntervalAPI</span></a><span>
+</span><a name="line-21"></a><span class="hs-special">)</span><span>
+</span><a name="line-22"></a><span class="hs-keyword">where</span><span>
+</span><a name="line-23"></a><span>
+</span><a name="line-24"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">MixedTypesNumPrelude</span><span>
+</span><a name="line-25"></a><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="hs-identifier">Prelude</span><span> </span><span class="hs-keyword">as</span><span> </span><span class="hs-identifier">P</span><span>
+</span><a name="line-26"></a><span class="hs-comment">-- import Text.Printf</span><span>
+</span><a name="line-27"></a><span>
+</span><a name="line-28"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">Ratio</span><span>
+</span><a name="line-29"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Math</span><span class="hs-operator">.</span><span class="hs-identifier">NumberTheory</span><span class="hs-operator">.</span><span class="hs-identifier">Logarithms</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">integerLog2</span><span class="hs-special">)</span><span>
+</span><a name="line-30"></a><span>
+</span><a name="line-31"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">Aeson</span><span>
+</span><a name="line-32"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Data</span><span class="hs-operator">.</span><span class="hs-identifier">Proxy</span><span>
+</span><a name="line-33"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">GHC</span><span class="hs-operator">.</span><span class="hs-identifier">Generics</span><span>
+</span><a name="line-34"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Servant</span><span class="hs-operator">.</span><span class="hs-identifier">API</span><span>
+</span><a name="line-35"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Servant</span><span class="hs-operator">.</span><span class="hs-identifier">Elm</span><span>
+</span><a name="line-36"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Elm</span><span>
+</span><a name="line-37"></a><span>
+</span><a name="line-38"></a><span class="hs-comment">-- import qualified Data.List as List</span><span>
+</span><a name="line-39"></a><span>
+</span><a name="line-40"></a><span class="hs-comment">-- import Test.Hspec</span><span>
+</span><a name="line-41"></a><span class="hs-comment">-- import Test.QuickCheck</span><span>
+</span><a name="line-42"></a><span>
+</span><a name="line-43"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">MP</span><span class="hs-operator">.</span><span class="hs-identifier">Float</span><span>
+</span><a name="line-44"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">MP</span><span class="hs-operator">.</span><span class="hs-identifier">Dyadic</span><span>
+</span><a name="line-45"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">MP</span><span>
+</span><a name="line-46"></a><span>
+</span><a name="line-47"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Interval</span><span>
+</span><a name="line-48"></a><span>
+</span><a name="line-49"></a><span class="hs-comment">-- import AERN2.RealFun.Operations</span><span>
+</span><a name="line-50"></a><span>
+</span><a name="line-51"></a><span>
+</span><a name="line-52"></a><span class="hs-keyword">type</span><span> </span><a name="Api"><a href="AERN2.RealFun.PlotService.API.html#Api"><span class="hs-identifier">Api</span></a></a><span> </span><span class="hs-glyph">=</span><span>
+</span><a name="line-53"></a><span>  </span><span class="hs-string">&quot;aern2Plot&quot;</span><span> </span><span class="hs-operator">:&gt;</span><span>
+</span><a name="line-54"></a><span>    </span><span class="hs-special">(</span><span class="hs-string">&quot;sampling&quot;</span><span> </span><span class="hs-operator">:&gt;</span><span> </span><span class="hs-identifier hs-type">Get</span><span> </span><span class="hs-char">'[JSON] [SamplingId] :&lt;|&gt;
+     &quot;sampling&quot; :&gt; ReqBody '[JSON] Sampling :&gt; Post '[JSON] SamplingId :&lt;|&gt;
+     &quot;sampling&quot; :&gt; Capture &quot;samplingId&quot; SamplingId :&gt; Get '[JSON] Sampling :&lt;|&gt;
+     &quot;function&quot; :&gt; Get '[JSON] [FunctionId] :&lt;|&gt;
+     &quot;function&quot; :&gt; Capture &quot;functionId&quot; FunctionId :&gt; &quot;domain&quot; :&gt; Get '[JSON] FunctionDomain :&lt;|&gt;
+     &quot;function&quot; :&gt; Capture &quot;functionId&quot; FunctionId :&gt;
+        &quot;valuesForSampling&quot; :&gt; Capture &quot;samplingId&quot; SamplingId :&gt; Get '[JSON] [FunctionSegment] :&lt;|&gt;
+     &quot;function&quot; :&gt; Capture &quot;functionId&quot; FunctionId :&gt; &quot;name&quot; :&gt; Get '[JSON] FunctionName :&lt;|&gt;
+     &quot;function&quot; :&gt; Capture &quot;functionId&quot; FunctionId :&gt; &quot;colour&quot; :&gt; Get '[JSON] FunctionColour
+    )
+
+api :: Proxy Api
+api = Proxy
+
+type SamplingId = Int
+type FunctionId = Int
+type FunctionName = String
+type FunctionDomain = DyadicIntervalAPI
+data FunctionSegment =
+  FunctionSegment
+  { functionSegmentDom :: DyadicIntervalAPI
+  , functionSegmentValueL :: MPBallIntervalAPI
+  , functionSegmentValueR :: MPBallIntervalAPI
+  }
+  deriving (Show, P.Eq, Generic)
+
+instance ElmType FunctionSegment
+instance ToJSON FunctionSegment
+instance FromJSON FunctionSegment
+
+data FunctionColour =
+  FunctionColour
+  { functionColourR :: Int
+  , functionColourG :: Int
+  , functionColourB :: Int
+  }
+  deriving (Show, P.Eq, Generic)
+
+instance ElmType FunctionColour
+instance ToJSON FunctionColour
+instance FromJSON FunctionColour
+
+functionColour :: (Integer, Integer, Integer) -&gt; FunctionColour
+functionColour (r,g,b) =
+  FunctionColour
+  { functionColourR = int r
+  , functionColourG = int g
+  , functionColourB = int b
+  }
+
+instance (ElmType l, ElmType r) =&gt; ElmType (Interval l r)
+instance (ToJSON l, ToJSON r) =&gt; ToJSON (Interval l r)
+instance (FromJSON l, FromJSON r) =&gt; FromJSON (Interval l r)
+
+data DyadicIntervalAPI =
+  DyadicIntervalAPI
+  { dyadic_endpointL :: Dyadic
+  , dyadic_endpointR :: Dyadic }
+  deriving (Show, P.Eq, Generic)
+
+dyadicIntervalAPI :: DyadicInterval -&gt; DyadicIntervalAPI
+dyadicIntervalAPI (Interval l r) =
+  DyadicIntervalAPI { dyadic_endpointL = l,  dyadic_endpointR = r }
+
+instance ElmType DyadicIntervalAPI
+instance ToJSON DyadicIntervalAPI
+instance FromJSON DyadicIntervalAPI
+--
+data MPBallIntervalAPI =
+  MPBallIntervalAPI
+  { mpBall_endpointL :: MPBall
+  , mpBall_endpointR :: MPBall }
+  deriving (Show, P.Eq, Generic)
+
+mpBallIntervalAPI :: Interval MPBall MPBall -&gt; MPBallIntervalAPI
+mpBallIntervalAPI (Interval l r) =
+  MPBallIntervalAPI { mpBall_endpointL = l,  mpBall_endpointR = r }
+
+instance ElmType MPBall
+instance ToJSON MPBall
+instance FromJSON MPBall
+
+instance ElmType MPBallIntervalAPI
+instance ToJSON MPBallIntervalAPI
+instance FromJSON MPBallIntervalAPI
+
+data Sampling =
+  Sampling
+  {
+    sampling_dom' :: DyadicIntervalAPI
+    , sampling_maxStep :: ErrorBound
+  }
+  deriving (Show, P.Eq, Generic)
+
+sampling_dom :: Sampling -&gt; DyadicInterval
+sampling_dom (Sampling (DyadicIntervalAPI domL domR) _) = Interval domL domR
+
+instance ElmType Sampling
+instance ToJSON Sampling
+instance FromJSON Sampling
+
+data DyadicS =
+  DyadicS
+  {
+    dyadic_value :: Int,
+    dyadic_exp :: Int
+  }
+  deriving (Show, P.Eq, Generic)
+
+instance ElmType DyadicS
+instance ToJSON DyadicS
+instance FromJSON DyadicS
+
+-- the following definitions exist only to stop unused warnings:
+_use_dyadic_value :: Integer
+_use_dyadic_value = integer $ dyadic_value undefined
+_use_dyadic_exp :: Int
+_use_dyadic_exp = dyadic_exp undefined
+
+instance FromJSON Dyadic where
+  parseJSON jd = dyadicS2dyadic &lt;$&gt; parseJSON jd
+
+instance ToJSON Dyadic where
+  toJSON = toJSON . dyadic2dyadicS
+  toEncoding = toEncoding . dyadic2dyadicS
+
+instance ElmType Dyadic where
+  toElmType = toElmType . dyadic2dyadicS
+
+dyadicS2dyadic :: DyadicS -&gt; Dyadic
+dyadicS2dyadic (DyadicS v e)
+  | e &lt; 0 = (dyadic v) * ((dyadic 0.5)^!(-e))
+  | otherwise = (dyadic v) * ((dyadic 2)^!e)
+
+dyadic2dyadicS :: Dyadic -&gt; DyadicS
+dyadic2dyadicS d = DyadicS v e
+  where
+  v = int $ numerator r
+  e = negate $ integerLog2 $ denominator r
+  r = rational d
+
+instance FromJSON MPFloat where
+  parseJSON jd = dyadic2mpFloat &lt;$&gt; parseJSON jd
+
+instance ToJSON MPFloat where
+  toJSON = toJSON . mpFloat2dyadic
+  toEncoding = toEncoding . mpFloat2dyadic
+
+instance ElmType MPFloat where
+  toElmType = toElmType . mpFloat2dyadic
+
+dyadic2mpFloat :: Dyadic -&gt; MPFloat
+dyadic2mpFloat = convertExactly
+
+mpFloat2dyadic :: MPFloat -&gt; Dyadic
+mpFloat2dyadic = convertExactly
+
+instance FromJSON ErrorBound where
+  parseJSON jd = mpFloat2errorBound &lt;$&gt; parseJSON jd
+
+instance ToJSON ErrorBound where
+  toJSON = toJSON . errorBound2MPFloat
+  toEncoding = toEncoding . errorBound2MPFloat
+
+instance ElmType ErrorBound where
+  toElmType = toElmType . errorBound2MPFloat
+
+errorBound2MPFloat :: ErrorBound -&gt; MPFloat
+errorBound2MPFloat = convertExactly
+
+mpFloat2errorBound :: MPFloat -&gt; ErrorBound
+mpFloat2errorBound = errorBound
+</span></pre></body></html>

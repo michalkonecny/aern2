@@ -1,0 +1,102 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-|
+    Module      :  AERN2.Poly.Cheb
+    Description :  Chebyshev basis unary sparse polynomials
+    Copyright   :  (c) Michal Konecny
+    License     :  BSD3
+
+    Maintainer  :  mikkonecny@gmail.com
+    Stability   :  experimental
+    Portability :  portable
+
+    Chebyshev basis unary sparse polynomials
+-}</span><span>
+</span><a name="line-13"></a><span>
+</span><a name="line-14"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span>
+</span><a name="line-15"></a><span class="hs-special">(</span><span>
+</span><a name="line-16"></a><span>  </span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Type</span><span>
+</span><a name="line-17"></a><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Eval</span><span>
+</span><a name="line-18"></a><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Maximum</span><span>
+</span><a name="line-19"></a><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Ring</span><span>
+</span><a name="line-20"></a><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Field</span><span>
+</span><a name="line-21"></a><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Derivative</span><span>
+</span><a name="line-22"></a><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Integration</span><span>
+</span><a name="line-23"></a><span class="hs-special">,</span><span> </span><a href="AERN2.Poly.Cheb.html#_chPolyX"><span class="hs-identifier hs-var">_chPolyX</span></a><span>
+</span><a name="line-24"></a><span class="hs-special">,</span><span> </span><a href="AERN2.Poly.Cheb.html#_chPoly10X"><span class="hs-identifier hs-var">_chPoly10X</span></a><span>
+</span><a name="line-25"></a><span class="hs-special">,</span><span> </span><a href="AERN2.Poly.Cheb.html#_chPolySineX"><span class="hs-identifier hs-var">_chPolySineX</span></a><span>
+</span><a name="line-26"></a><span class="hs-special">,</span><span> </span><a href="AERN2.Poly.Cheb.html#_chPolySine10X"><span class="hs-identifier hs-var">_chPolySine10X</span></a><span>
+</span><a name="line-27"></a><span class="hs-special">,</span><span> </span><a href="AERN2.Poly.Cheb.html#_chPolyCosine10X"><span class="hs-identifier hs-var">_chPolyCosine10X</span></a><span>
+</span><a name="line-28"></a><span class="hs-special">)</span><span>
+</span><a name="line-29"></a><span class="hs-keyword">where</span><span>
+</span><a name="line-30"></a><span>
+</span><a name="line-31"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">MixedTypesNumPrelude</span><span>
+</span><a name="line-32"></a><span class="hs-comment">-- import qualified Prelude as P</span><span>
+</span><a name="line-33"></a><span class="hs-comment">-- import Text.Printf</span><span>
+</span><a name="line-34"></a><span>
+</span><a name="line-35"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.Interval.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Interval</span></a><span>
+</span><a name="line-36"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">MP</span><span>
+</span><a name="line-37"></a><span>
+</span><a name="line-38"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.RealFun.Operations.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">RealFun</span><span class="hs-operator">.</span><span class="hs-identifier">Operations</span></a><span>
+</span><a name="line-39"></a><span>
+</span><a name="line-40"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.Poly.Cheb.Type.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Type</span></a><span>
+</span><a name="line-41"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.Poly.Cheb.Ring.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Ring</span></a><span>
+</span><a name="line-42"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.Poly.Cheb.Field.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Field</span></a><span>
+</span><a name="line-43"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.Poly.Cheb.Elementary.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Elementary</span></a><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><a name="line-44"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.Poly.Cheb.Eval.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Eval</span></a><span>
+</span><a name="line-45"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.Poly.Cheb.Maximum.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Maximum</span></a><span>
+</span><a name="line-46"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.Poly.Cheb.Derivative.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Derivative</span></a><span>
+</span><a name="line-47"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.Poly.Cheb.Integration.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Integration</span></a><span>
+</span><a name="line-48"></a><span>
+</span><a name="line-49"></a><span class="hs-identifier">_chPolyX</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="AERN2.Poly.Cheb.Type.html#ChPoly"><span class="hs-identifier hs-type">ChPoly</span></a><span> </span><span class="hs-identifier hs-type">MPBall</span><span>
+</span><a name="line-50"></a><a name="_chPolyX"><a href="AERN2.Poly.Cheb.html#_chPolyX"><span class="hs-identifier">_chPolyX</span></a></a><span> </span><span class="hs-glyph">=</span><span>
+</span><a name="line-51"></a><span>    </span><a href="#local-6989586621680367794"><span class="hs-identifier hs-var">x</span></a><span>
+</span><a name="line-52"></a><span>    </span><span class="hs-keyword">where</span><span>
+</span><a name="line-53"></a><span>    </span><span class="hs-identifier">x</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="AERN2.Poly.Cheb.Type.html#ChPoly"><span class="hs-identifier hs-type">ChPoly</span></a><span> </span><span class="hs-identifier hs-type">MPBall</span><span>
+</span><a name="line-54"></a><span>    </span><a name="local-6989586621680367794"><a href="#local-6989586621680367794"><span class="hs-identifier">x</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><a href="AERN2.RealFun.Operations.html#varFn"><span class="hs-identifier hs-var">varFn</span></a><span> </span><span class="hs-special">(</span><a href="#local-6989586621680367795"><span class="hs-identifier hs-var">dom</span></a><span class="hs-special">,</span><span> </span><span class="hs-identifier hs-var">bits</span><span> </span><span class="hs-number">10</span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><a name="line-55"></a><span>    </span><a name="local-6989586621680367795"><a href="#local-6989586621680367795"><span class="hs-identifier">dom</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><a href="AERN2.Interval.html#dyadicInterval"><span class="hs-identifier hs-var">dyadicInterval</span></a><span> </span><span class="hs-special">(</span><span class="hs-glyph">-</span><span class="hs-number">1.0</span><span class="hs-special">,</span><span class="hs-number">1.0</span><span class="hs-special">)</span><span>
+</span><a name="line-56"></a><span>
+</span><a name="line-57"></a><span class="hs-identifier">_chPoly10X</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="AERN2.Poly.Cheb.Type.html#ChPoly"><span class="hs-identifier hs-type">ChPoly</span></a><span> </span><span class="hs-identifier hs-type">MPBall</span><span>
+</span><a name="line-58"></a><a name="_chPoly10X"><a href="AERN2.Poly.Cheb.html#_chPoly10X"><span class="hs-identifier">_chPoly10X</span></a></a><span> </span><span class="hs-glyph">=</span><span>
+</span><a name="line-59"></a><span>    </span><span class="hs-number">10</span><span class="hs-operator hs-var">*</span><a href="#local-6989586621680367796"><span class="hs-identifier hs-var">x</span></a><span>
+</span><a name="line-60"></a><span>    </span><span class="hs-keyword">where</span><span>
+</span><a name="line-61"></a><span>    </span><a name="local-6989586621680367796"><a href="#local-6989586621680367796"><span class="hs-identifier">x</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><a href="AERN2.Poly.Cheb.html#_chPolyX"><span class="hs-identifier hs-var">_chPolyX</span></a><span>
+</span><a name="line-62"></a><span>
+</span><a name="line-63"></a><span class="hs-identifier">_chPolySineX</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier hs-type">Accuracy</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="AERN2.Poly.Cheb.Type.html#ChPoly"><span class="hs-identifier hs-type">ChPoly</span></a><span> </span><span class="hs-identifier hs-type">MPBall</span><span>
+</span><a name="line-64"></a><a name="_chPolySineX"><a href="AERN2.Poly.Cheb.html#_chPolySineX"><span class="hs-identifier">_chPolySineX</span></a></a><span> </span><a name="local-6989586621680367797"><a href="#local-6989586621680367797"><span class="hs-identifier">ac</span></a></a><span> </span><span class="hs-glyph">=</span><span>
+</span><a name="line-65"></a><span>    </span><span class="hs-identifier hs-var">sin</span><span> </span><a href="#local-6989586621680367798"><span class="hs-identifier hs-var">x</span></a><span>
+</span><a name="line-66"></a><span>    </span><span class="hs-keyword">where</span><span>
+</span><a name="line-67"></a><span>    </span><a name="local-6989586621680367798"><a href="#local-6989586621680367798"><span class="hs-identifier">x</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">setAccuracyGuide</span><span> </span><a href="#local-6989586621680367797"><span class="hs-identifier hs-var">ac</span></a><span> </span><a href="AERN2.Poly.Cheb.html#_chPolyX"><span class="hs-identifier hs-var">_chPolyX</span></a><span>
+</span><a name="line-68"></a><span>
+</span><a name="line-69"></a><span class="hs-identifier">_chPolySine10X</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier hs-type">Accuracy</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="AERN2.Poly.Cheb.Type.html#ChPoly"><span class="hs-identifier hs-type">ChPoly</span></a><span> </span><span class="hs-identifier hs-type">MPBall</span><span>
+</span><a name="line-70"></a><a name="_chPolySine10X"><a href="AERN2.Poly.Cheb.html#_chPolySine10X"><span class="hs-identifier">_chPolySine10X</span></a></a><span> </span><a name="local-6989586621680367799"><a href="#local-6989586621680367799"><span class="hs-identifier">ac</span></a></a><span> </span><span class="hs-glyph">=</span><span>
+</span><a name="line-71"></a><span>    </span><span class="hs-identifier hs-var">sin</span><span> </span><span class="hs-special">(</span><span class="hs-number">10</span><span class="hs-operator hs-var">*</span><a href="#local-6989586621680367800"><span class="hs-identifier hs-var">x</span></a><span class="hs-special">)</span><span>
+</span><a name="line-72"></a><span>    </span><span class="hs-keyword">where</span><span>
+</span><a name="line-73"></a><span>    </span><a name="local-6989586621680367800"><a href="#local-6989586621680367800"><span class="hs-identifier">x</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">setAccuracyGuide</span><span> </span><span class="hs-special">(</span><a href="#local-6989586621680367799"><span class="hs-identifier hs-var">ac</span></a><span> </span><span class="hs-operator hs-var">+</span><span> </span><span class="hs-number">4</span><span class="hs-special">)</span><span> </span><a href="AERN2.Poly.Cheb.html#_chPolyX"><span class="hs-identifier hs-var">_chPolyX</span></a><span>
+</span><a name="line-74"></a><span>
+</span><a name="line-75"></a><span class="hs-identifier">_chPolyCosine10X</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier hs-type">Accuracy</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="AERN2.Poly.Cheb.Type.html#ChPoly"><span class="hs-identifier hs-type">ChPoly</span></a><span> </span><span class="hs-identifier hs-type">MPBall</span><span>
+</span><a name="line-76"></a><a name="_chPolyCosine10X"><a href="AERN2.Poly.Cheb.html#_chPolyCosine10X"><span class="hs-identifier">_chPolyCosine10X</span></a></a><span> </span><a name="local-6989586621680367801"><a href="#local-6989586621680367801"><span class="hs-identifier">ac</span></a></a><span> </span><span class="hs-glyph">=</span><span>
+</span><a name="line-77"></a><span>    </span><span class="hs-identifier hs-var">cos</span><span> </span><span class="hs-special">(</span><span class="hs-number">10</span><span class="hs-operator hs-var">*</span><a href="#local-6989586621680367802"><span class="hs-identifier hs-var">x</span></a><span class="hs-special">)</span><span>
+</span><a name="line-78"></a><span>    </span><span class="hs-keyword">where</span><span>
+</span><a name="line-79"></a><span>    </span><a name="local-6989586621680367802"><a href="#local-6989586621680367802"><span class="hs-identifier">x</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">setAccuracyGuide</span><span> </span><span class="hs-special">(</span><a href="#local-6989586621680367801"><span class="hs-identifier hs-var">ac</span></a><span> </span><span class="hs-operator hs-var">+</span><span> </span><span class="hs-number">4</span><span class="hs-special">)</span><span> </span><a href="AERN2.Poly.Cheb.html#_chPolyX"><span class="hs-identifier hs-var">_chPolyX</span></a><span>
+</span><a name="line-80"></a><span>
+</span><a name="line-81"></a><span class="hs-comment">{-
+
+_testSine10X :: ChPoly MPBall
+_testSine10X =
+    sineWithPrecDegSweep (prec 100) 100 NormZero (10*x)
+    where
+    x :: ChPoly MPBall
+    x = varFn sampleFn ()
+    sampleFn = constFn (dom, 1)
+    dom = dyadicInterval (0.0,1.0)
+
+_testSine10Xe :: ChPoly MPBall
+_testSine10Xe =
+    sineWithPrecDegSweep (prec 100) 100 NormZero (updateRadius (+ (errorBound 0.1)) (10*x))
+    where
+    x :: ChPoly MPBall
+    x = varFn sampleFn ()
+    sampleFn = constFn (dom, 1)
+    dom = dyadicInterval (0.0,1.0)
+
+-}</span><span>
+</span><a name="line-102"></a></pre></body></html>

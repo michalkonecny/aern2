@@ -54,7 +54,7 @@ unaryOp ::
   =>
   String ->
   (a -> b) ->
-  (Maybe (QAId to) {-^ my id -} -> SequenceA to a -> (AccuracySG `to` (AccuracySG, Maybe a))) ->
+  (Maybe (QAId to) {- my id -} -> SequenceA to a -> (AccuracySG `to` (AccuracySG, Maybe a))) ->
   SequenceA to a -> SequenceA to b
 unaryOp name op getInitQ1 r1 =
   newSeq (op sampleA1) name [AnyProtocolQA r1] makeQ
@@ -71,7 +71,7 @@ binaryOpWithPureArg ::
   =>
   String ->
   (a -> t -> b) ->
-  (Maybe (QAId to) {-^ my id -} -> SequenceA to a -> t -> (AccuracySG `to` (AccuracySG, Maybe a))) ->
+  (Maybe (QAId to) {- my id -} -> SequenceA to a -> t -> (AccuracySG `to` (AccuracySG, Maybe a))) ->
   SequenceA to a -> t -> SequenceA to b
 binaryOpWithPureArg name op getInitQ1T r1 t =
   newSeq (op sampleA t) name [AnyProtocolQA r1] makeQ
@@ -88,8 +88,8 @@ binaryOp ::
   =>
   String ->
   (a -> b -> c) ->
-  (Maybe (QAId to) {-^ my id -} -> SequenceA to a -> SequenceA to b ->
-  (AccuracySG `to` ((AccuracySG, Maybe a), (AccuracySG, Maybe b)))) ->
+  (Maybe (QAId to) {- my id -} -> SequenceA to a -> SequenceA to b ->
+    (AccuracySG `to` ((AccuracySG, Maybe a), (AccuracySG, Maybe b)))) ->
   SequenceA to a -> SequenceA to b -> SequenceA to c
 binaryOp name op getInitQ1Q2 r1 r2 =
   newSeq (op sampleA sampleB) name [AnyProtocolQA r1, AnyProtocolQA r2] makeQ

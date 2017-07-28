@@ -1,6 +1,6 @@
 {-|
     Module      :  AERN2.Real
-    Description :  Cauchy reals
+    Description :  Exact real numbers
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -8,26 +8,29 @@
     Stability   :  experimental
     Portability :  portable
 
-    Cauchy reals
+    Exact real numbers represented by fast-converging Cauchy sequences of MPBalls.
 -}
 module AERN2.Real
 (
+  -- * Re-exported dependencies
   module AERN2.MP
   , module AERN2.AccuracySG
   -- * The type of real numbers
   , CauchyRealP, pCR
-  , realName, realId, realSources, realRename
-  , realWithAccuracy, (?), realWithAccuracyA, realsWithAccuracyA
   , CauchyRealA, CauchyReal, newCR
   , CauchyRealCNA, CauchyRealCN, newCRCN
+  -- * Sequence ops specialised to reals
+  , realName, realId, realSources, realRename
+  , realWithAccuracy, (?), realWithAccuracyA, realsWithAccuracyA
   , (-:-)
   , convergentList2CauchyRealA
   , seqByPrecision2CauchyRealA
+  -- * Conversions
   , CanBeReal, real, CanBeRealA, realA
   , CanBeComplex, complex, CanBeComplexA, complexA
-  -- * constants
+  -- * Constants
   , pi, piA
-  -- * mini tests
+  -- * Mini tests
   , _addslACachedPrint
   , _addslAParPrint
   , _example_pif

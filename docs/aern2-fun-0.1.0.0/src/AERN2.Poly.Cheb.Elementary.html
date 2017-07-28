@@ -1,0 +1,49 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><a name="line-2"></a><span class="hs-pragma">{-# LANGUAGE CPP #-}</span><span>
+</span><a name="line-3"></a><span class="hs-comment">-- #define DEBUG</span><span>
+</span><a name="line-4"></a><span class="hs-comment">{-|
+    Module      :  AERN2.Poly.Cheb.Elementary
+    Description :  Poly point-wise elementary functions
+    Copyright   :  (c) Michal Konecny
+    License     :  BSD3
+
+    Maintainer  :  mikkonecny@gmail.com
+    Stability   :  experimental
+    Portability :  portable
+
+    ChPoly point-wise elementary functions
+-}</span><span>
+</span><a name="line-16"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Elementary</span><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-17"></a><span>
+</span><a name="line-18"></a><span class="hs-cpp">#ifdef DEBUG</span><span>
+</span><a name="line-19"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Debug</span><span class="hs-operator">.</span><span class="hs-identifier">Trace</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">trace</span><span class="hs-special">)</span><span>
+</span><a name="line-20"></a><span class="hs-cpp">#define maybeTrace trace</span><span>
+</span><a name="line-21"></a><span class="hs-cpp">#define maybeTraceIO putStrLn</span><span>
+</span><a name="line-22"></a><span class="hs-cpp">#else</span><span>
+</span><a name="line-23"></a><span class="hs-cpp">#define maybeTrace (\ (_ :: String) t -&gt; t)</span><span>
+</span><a name="line-24"></a><span class="hs-cpp">#define maybeTraceIO (\ (_ :: String) -&gt; return ())</span><span>
+</span><a name="line-25"></a><span class="hs-cpp">#endif</span><span>
+</span><a name="line-26"></a><span>
+</span><a name="line-27"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">MixedTypesNumPrelude</span><span>
+</span><a name="line-28"></a><span class="hs-comment">-- import Text.Printf</span><span>
+</span><a name="line-29"></a><span>
+</span><a name="line-30"></a><span class="hs-comment">-- import AERN2.Normalize</span><span>
+</span><a name="line-31"></a><span>
+</span><a name="line-32"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">MP</span><span>
+</span><a name="line-33"></a><span>
+</span><a name="line-34"></a><span class="hs-comment">-- import AERN2.Real</span><span>
+</span><a name="line-35"></a><span>
+</span><a name="line-36"></a><span class="hs-comment">-- import AERN2.RealFun.Operations</span><span>
+</span><a name="line-37"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.RealFun.SineCosine.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">RealFun</span><span class="hs-operator">.</span><span class="hs-identifier">SineCosine</span></a><span>
+</span><a name="line-38"></a><span>
+</span><a name="line-39"></a><span class="hs-comment">-- import AERN2.Poly.Basics</span><span>
+</span><a name="line-40"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.Poly.Cheb.Type.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Type</span></a><span>
+</span><a name="line-41"></a><span class="hs-comment">-- import AERN2.Poly.Cheb.DCT</span><span>
+</span><a name="line-42"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.Poly.Cheb.Maximum.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Maximum</span></a><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><a name="line-43"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.Poly.Cheb.Ring.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span><span class="hs-operator">.</span><span class="hs-identifier">Ring</span></a><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><a name="line-44"></a><span>
+</span><a name="line-45"></a><span class="hs-keyword">instance</span><span> </span><span class="hs-identifier hs-type">CanSinCos</span><span> </span><span class="hs-special">(</span><a href="AERN2.Poly.Cheb.Type.html#ChPoly"><span class="hs-identifier hs-type">ChPoly</span></a><span> </span><span class="hs-identifier hs-type">MPBall</span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-46"></a><span>  </span><span class="hs-keyword">type</span><span> </span><span class="hs-identifier">SinCosType</span><span> </span><span class="hs-special">(</span><a href="AERN2.Poly.Cheb.Type.html#ChPoly"><span class="hs-identifier hs-type">ChPoly</span></a><span> </span><span class="hs-identifier hs-type">MPBall</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><a href="AERN2.Poly.Cheb.Type.html#ChPoly"><span class="hs-identifier hs-type">ChPoly</span></a><span> </span><span class="hs-identifier hs-type">MPBall</span><span>
+</span><a name="line-47"></a><span>  </span><a name="local-8214565720323804706"><span class="hs-identifier">sin</span></a><span> </span><a name="local-6989586621680316054"><a href="#local-6989586621680316054"><span class="hs-identifier">p</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><a href="AERN2.RealFun.SineCosine.html#sineWithAccuracyGuide"><span class="hs-identifier hs-var">sineWithAccuracyGuide</span></a><span> </span><span class="hs-special">(</span><span class="hs-identifier">chPoly_acGuide</span><span> </span><a href="#local-6989586621680316054"><span class="hs-identifier hs-var">p</span></a><span class="hs-special">)</span><span> </span><a href="#local-6989586621680316054"><span class="hs-identifier hs-var">p</span></a><span>
+</span><a name="line-48"></a><span>  </span><a name="local-8214565720323804707"><span class="hs-identifier">cos</span></a><span> </span><a name="local-6989586621680316055"><a href="#local-6989586621680316055"><span class="hs-identifier">p</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><a href="AERN2.RealFun.SineCosine.html#cosineWithAccuracyGuide"><span class="hs-identifier hs-var">cosineWithAccuracyGuide</span></a><span> </span><span class="hs-special">(</span><span class="hs-identifier">chPoly_acGuide</span><span> </span><a href="#local-6989586621680316055"><span class="hs-identifier hs-var">p</span></a><span class="hs-special">)</span><span> </span><a href="#local-6989586621680316055"><span class="hs-identifier hs-var">p</span></a><span>
+</span><a name="line-49"></a></pre></body></html>

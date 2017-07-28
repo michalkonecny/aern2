@@ -66,14 +66,14 @@ inverseWithAccuracy cutoff' f@(PPoly _ (Interval l r)) =
   cutoff = min (getFiniteAccuracy f) cutoff'
   numIts = ((integer . integerLog2 . (`max` 1) . ceiling . (/! 10) . fromAccuracy) cutoff)
   fcInv = iterateInverse cutoff numIts fc (setPrecision (getPrecision f) if0)
-  bts   = max (2 + (integer . integerLog2 . snd . integerBounds) bf) 0 -- $ (fromAccuracy cutoff) `Prelude.div` (2^!numIts)
+  bts   = max (2 + (integer . integerLog2 . snd . integerBounds) bf) 0 -- (fromAccuracy cutoff) `Prelude.div` (2^!numIts)
   fc    =
           setAccuracyGuide ((2^!numIts)*cutoff) $
             centre f
   fRed0 = (liftCheb2PPoly $ reduceDegreeToAccuracy 5 (bits 1)) fc
   fRed1 = fc--(liftCheb2PPoly $ reduceDegreeToAccuracy 5 (2*thresholdAccuracy)) fc
   bf    = abs $ AERN2.PPoly.Maximum.maximumOptimisedWithAccuracy fRed0 (mpBall l) (mpBall r) 5 5 (bits 4)
-  threshold = (mpBall $ (dyadic 0.5)^!bts)/!(centreAsBall bf) --1/((2^bts)*(1 + (centreAsBall bf)))
+  threshold = (mpBall $ (dyadic 0.5)^!bts)/!(centreAsBall bf) -- 1/((2^bts)*(1 + (centreAsBall bf)))
   if0 =
     setAccuracyGuide ((2^!numIts)*cutoff) $
     initialApproximation fRed1 bts thresholdAccuracy

@@ -67,7 +67,8 @@ data QA to p = QA__
     qaProtocol :: p,
     qaSampleQ :: Maybe (Q p),
     qaMakeQueryGetPromise ::
-      (Maybe (QAId to), Maybe (QAId to)) {-^ this node id, source of query-} ->
+      (Maybe (QAId to), Maybe (QAId to)) -- this node id, source of query
+      ->
       (Q p) `to` (QAPromiseA to (A p))
   }
 

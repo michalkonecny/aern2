@@ -1,0 +1,40 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE CPP #-}</span><span>
+</span><a name="line-2"></a><span class="hs-cpp">#define DEBUG</span><span>
+</span><a name="line-3"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Frac</span><span class="hs-operator">.</span><span class="hs-identifier">Conversion</span><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-4"></a><span>
+</span><a name="line-5"></a><span class="hs-cpp">#ifdef DEBUG</span><span>
+</span><a name="line-6"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Debug</span><span class="hs-operator">.</span><span class="hs-identifier">Trace</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">trace</span><span class="hs-special">)</span><span>
+</span><a name="line-7"></a><span class="hs-cpp">#define maybeTrace trace</span><span>
+</span><a name="line-8"></a><span class="hs-cpp">#define maybeTraceIO putStrLn</span><span>
+</span><a name="line-9"></a><span class="hs-cpp">#else</span><span>
+</span><a name="line-10"></a><span class="hs-cpp">#define maybeTrace (\ (_ :: String) t -&gt; t)</span><span>
+</span><a name="line-11"></a><span class="hs-cpp">#define maybeTraceIO (\ (_ :: String) -&gt; return ())</span><span>
+</span><a name="line-12"></a><span class="hs-cpp">#endif</span><span>
+</span><a name="line-13"></a><span>
+</span><a name="line-14"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">MixedTypesNumPrelude</span><span>
+</span><a name="line-15"></a><span>
+</span><a name="line-16"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Text</span><span class="hs-operator">.</span><span class="hs-identifier">Printf</span><span>
+</span><a name="line-17"></a><span>
+</span><a name="line-18"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Math</span><span class="hs-operator">.</span><span class="hs-identifier">NumberTheory</span><span class="hs-operator">.</span><span class="hs-identifier">Logarithms</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">integerLog2</span><span class="hs-special">)</span><span>
+</span><a name="line-19"></a><span>
+</span><a name="line-20"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">MP</span><span>
+</span><a name="line-21"></a><span>
+</span><a name="line-22"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.Frac.Type.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Frac</span><span class="hs-operator">.</span><span class="hs-identifier">Type</span></a><span>
+</span><a name="line-23"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.Poly.Cheb.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Poly</span><span class="hs-operator">.</span><span class="hs-identifier">Cheb</span></a><span> </span><span class="hs-keyword">as</span><span> </span><span class="hs-identifier">ChPoly</span><span>
+</span><a name="line-24"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.PPoly.Type.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">PPoly</span><span class="hs-operator">.</span><span class="hs-identifier">Type</span></a><span> </span><span class="hs-keyword">as</span><span> </span><span class="hs-identifier">PPoly</span><span>
+</span><a name="line-25"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.PPoly.Division.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">PPoly</span><span class="hs-operator">.</span><span class="hs-identifier">Division</span></a><span>
+</span><a name="line-26"></a><span>
+</span><a name="line-27"></a><span class="hs-identifier">toPPoly</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="AERN2.Frac.Type.html#Frac"><span class="hs-identifier hs-type">Frac</span></a><span> </span><span class="hs-identifier hs-type">MPBall</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="AERN2.PPoly.Type.html#PPoly"><span class="hs-identifier hs-type">PPoly</span></a><span>
+</span><a name="line-28"></a><a name="toPPoly"><a href="AERN2.Frac.Conversion.html#toPPoly"><span class="hs-identifier">toPPoly</span></a></a><span> </span><span class="hs-special">(</span><a href="AERN2.Frac.Type.html#Frac"><span class="hs-identifier hs-var">Frac</span></a><span> </span><a name="local-6989586621681069542"><a href="#local-6989586621681069542"><span class="hs-identifier">p</span></a></a><span> </span><a name="local-6989586621681069543"><a href="#local-6989586621681069543"><span class="hs-identifier">q</span></a></a><span> </span><span class="hs-identifier">_</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><a name="line-29"></a><span>  </span><span class="hs-comment">-- maybeTrace (printf &quot;Frac toPPoly: ac p = %s; ac q = %s; acG = %s; acGmul = %s; &quot;</span><span>
+</span><a name="line-30"></a><span>  </span><span class="hs-comment">--   (show $ getAccuracy p) (show $ getAccuracy q) (show $ acG) (show $ acGmul)) $</span><span>
+</span><a name="line-31"></a><span>  </span><span class="hs-comment">-- maybeTrace (printf &quot;Frac toPPoly: ac inv = %s &quot; (show $ getAccuracy inv)) $</span><span>
+</span><a name="line-32"></a><span>  </span><span class="hs-comment">-- maybeTrace (printf &quot;Frac toPPoly: ac res = %s &quot; (show $ getAccuracy res)) $</span><span>
+</span><a name="line-33"></a><span>  </span><span class="hs-comment">-- res</span><span>
+</span><a name="line-34"></a><span>  </span><span class="hs-special">(</span><a href="AERN2.PPoly.Type.html#fromPoly"><span class="hs-identifier hs-var">PPoly</span><span class="hs-operator hs-var">.</span><span class="hs-identifier hs-var">fromPoly</span></a><span> </span><a href="#local-6989586621681069542"><span class="hs-identifier hs-var">p</span></a><span class="hs-special">)</span><span> </span><span class="hs-operator hs-var">*</span><span> </span><span class="hs-special">(</span><a href="AERN2.PPoly.Division.html#inverse"><span class="hs-identifier hs-var">inverse</span></a><span> </span><span class="hs-operator hs-var">.</span><span> </span><a href="AERN2.PPoly.Type.html#fromPoly"><span class="hs-identifier hs-var">PPoly</span><span class="hs-operator hs-var">.</span><span class="hs-identifier hs-var">fromPoly</span></a><span class="hs-special">)</span><span> </span><a href="#local-6989586621681069543"><span class="hs-identifier hs-var">q</span></a><span>
+</span><a name="line-35"></a><span>  </span><span class="hs-comment">-- where</span><span>
+</span><a name="line-36"></a><span>  </span><span class="hs-comment">-- res = setAccuracyGuide acG $ (setAccuracyGuide acGmul $ PPoly.fromPoly p) * (setAccuracyGuide acGmul inv)</span><span>
+</span><a name="line-37"></a><span>  </span><span class="hs-comment">-- inv = (inverse . PPoly.fromPoly) q</span><span>
+</span><a name="line-38"></a><span>  </span><span class="hs-comment">-- acG = (getAccuracyGuide p) `min` (getAccuracyGuide q)</span><span>
+</span><a name="line-39"></a><span>  </span><span class="hs-comment">-- acGmul = acG * (integer $ integerLog2 $ max 2 $ ChPoly.degree p)</span><span>
+</span><a name="line-40"></a></pre></body></html>

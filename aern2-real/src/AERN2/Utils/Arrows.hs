@@ -1,6 +1,6 @@
 {-|
     Module      :  AERN2.Utils.Arrows
-    Description :  Cacheable question-answer protocols
+    Description :  Miscellaneous arrow-generic functions
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -8,7 +8,7 @@
     Stability   :  experimental
     Portability :  portable
 
-    Cacheable question-answer protocols
+    Miscellaneous arrow-generic functions
 -}
 module AERN2.Utils.Arrows
 (
