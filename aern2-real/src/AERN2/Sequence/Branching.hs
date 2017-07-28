@@ -30,7 +30,7 @@ import AERN2.MP
 import AERN2.QA.Protocol
 import AERN2.AccuracySG
 import AERN2.Sequence.Type
-import AERN2.Sequence.Helpers (ensureAccuracyA)
+-- import AERN2.Sequence.Helpers (ensureAccuracyA)
 import AERN2.Sequence.Comparison
 
 {- non-zero picking -}
@@ -64,7 +64,10 @@ instance (CanPickNonZero a) => CanPickNonZero (Sequence a) where
 
 {-| "parallel if" -}
 instance
-  (QAArrow to, HasIfThenElse b t
+  (QAArrow to, ArrowApply to
+  , HasIfThenElse b t
+  , HasIfThenElse b (to AccuracySG t)
+  , IfThenElseType b (to AccuracySG t) ~ to AccuracySG (IfThenElseType b t)
   , SuitableForSeq b, SuitableForSeq t, SuitableForSeq (IfThenElseType b t))
   =>
   HasIfThenElse (SequenceA to b) (SequenceA to t)
@@ -77,10 +80,69 @@ instance
     makeQ (me,_src) =
       proc ac ->
         do
-        ensureAccuracyA
-          (proc [q] -> qaMake3Queries (b,e1,e2) me -< (q,q,q))
-          (\(b',e1',e2') -> if b' then e1' else e2')
-            -< (ac, ([ac], Nothing))
+        bAC <- (-?<-) me -< (b, ac)
+        app -< (if bAC then (e1 ?<- me) else (e2 ?<- me), (ac+1))
+
+-- instance
+--   (QAArrow to, ArrowApply to
+--   , HasIfThenElse b t
+--   , HasIfThenElse b (to AccuracySG t)
+--   -- , IfThenElseType b (to AccuracySG t) ~ to AccuracySG (IfThenElseType b t)
+--   , IfThenElseType b (([Maybe (QAId to)], [t])) ~ (([Maybe (QAId to)], [IfThenElseType b t]))
+--   , IfThenElseType b (to AccuracySG ([Maybe (QAId to)], [t])) ~ to AccuracySG (IfThenElseType b ([Maybe (QAId to)], [t]))
+--   , SuitableForSeq b, SuitableForSeq t, SuitableForSeq (IfThenElseType b t))
+--   =>
+--   HasIfThenElse (SequenceA to b) [(SequenceA to t)]
+--   where
+--   type IfThenElseType (SequenceA to b) [(SequenceA to t)] = () `to` [(SequenceA to (IfThenElseType b t))]
+--   ifThenElse (b::SequenceA to b) (e1::[SequenceA to t]) e2 =
+--     sequence2list $
+--       newSeq sampleT "pifList" [AnyProtocolQA b] makeQ
+--       where
+--       sampleT = undefined :: ([Maybe (QAId to)], [IfThenElseType b t])
+--       makeQ (me,_src) =
+--         proc ac ->
+--           do
+--           bAC <- (-?-) -< (b, ac)
+--           let eS = if bAC
+--                       then (list2sequence e1 ?<- me)
+--                       else (list2sequence e2 ?<- me)
+--           app -< (eS, (ac+1))
+
+list2sequence ::
+  (QAArrow to, SuitableForSeq ([Maybe (QAId to)], [t]))
+  =>
+  [SequenceA to t] -> SequenceA to ([Maybe (QAId to)], [t])
+list2sequence (list :: [SequenceA to t]) =
+  newSeq sampleT "list" [] makeQ
+  where
+  sampleT = undefined :: ([Maybe (QAId to)], [t])
+  makeQ (me,_src) =
+    proc ac ->
+      do
+      ts <- qaMakeQueryOnManyA me -< (list,ac)
+      returnA -< (map seqId list, ts)
+
+sequence2list ::
+  (QAArrow to, SuitableForSeq t)
+  =>
+  SequenceA to ([Maybe (QAId to)], [t]) -> () `to` [SequenceA to t]
+sequence2list (s :: SequenceA to ([Maybe (QAId to)], [t])) =
+  proc () ->
+    do
+    (sources, _) <- (-?-) -< (s, acSG0)
+    returnA -< (map forSource $ zip [0..] sources)
+  where
+  forSource (i,src) =
+    -- newSeq sampleT "list" [AnyProtocolQA src] makeQ
+    newSeq sampleT "list" [] makeQ
+    where
+    sampleT = undefined :: t
+    makeQ (me, _src) =
+      proc ac ->
+        do
+        (_, ts) <- (-?<-) me -< (s, ac)
+        returnA -< ts !! i
 
 pick ::
   (QAArrow to)

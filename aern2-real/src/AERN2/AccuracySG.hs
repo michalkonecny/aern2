@@ -1,3 +1,4 @@
+{-# LANGUAGE Arrows #-}
 {-|
     Module      :  AERN2.AccuracySG
     Description :  strict and guide accuracy pairs
@@ -20,6 +21,8 @@ where
 
 import MixedTypesNumPrelude
 import qualified Prelude as P
+
+import Control.Arrow
 
 -- import qualified Control.CollectErrors as CE
 import Control.CollectErrors (CollectErrors) --, EnsureCE, CanEnsureCE, ensureCE)
@@ -116,3 +119,18 @@ instance CanAdjustToAccuracySG t => CanAdjustToAccuracySG (Maybe t) where
 
 instance CanAdjustToAccuracySG t => CanAdjustToAccuracySG (CollectErrors es t) where
   adjustToAccuracySG acSG = fmap (adjustToAccuracySG acSG)
+
+instance
+  (Arrow to, CanUnionAsymmetric e1 e2)
+  =>
+  CanUnionAsymmetric (to AccuracySG e1) (to AccuracySG e2)
+  -- this instance is important for "parallel if"
+  where
+  type UnionType (to AccuracySG e1) (to AccuracySG e2) =
+    to AccuracySG (UnionType e1 e2)
+  union xA yA =
+    proc ac ->
+      do
+      x <- xA -< ac
+      y <- yA -< ac
+      returnA -< union x y

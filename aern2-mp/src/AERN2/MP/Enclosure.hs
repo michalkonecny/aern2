@@ -1,3 +1,4 @@
+{-# LANGUAGE Arrows #-}
 {-|
     Module      :  AERN2.MP.Enclosure
     Description :  Enclosure operations
@@ -25,12 +26,15 @@ where
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
+import Control.Arrow
+
 import Test.Hspec
 import Test.QuickCheck
 
 import Control.CollectErrors
 
 import AERN2.MP.ErrorBound
+import AERN2.MP.Accuracy
 
 {- ball-specific operations -}
 
@@ -259,15 +263,31 @@ type CanUnionCNSameType e1 =
   , CanUnion (EnsureCN e1) (EnsureCN e1), UnionType (EnsureCN e1) (EnsureCN e1) ~ EnsureCN e1)
 
 instance
-  (CanUnionAsymmetric e1 e2, SuitableForCE es
-  , CanEnsureCE es e1, CanEnsureCE es e2
-  , CanEnsureCE es (UnionType e1 e2))
+  (CanUnionAsymmetric e1 e2
+  , CanEnsureCN e1, CanEnsureCN e2
+  , CanEnsureCN (UnionType e1 e2))
   =>
-  CanUnionAsymmetric (CollectErrors es e1) (CollectErrors es e2)
+  CanUnionAsymmetric (CN e1) (CN e2)
+  -- a more general `CollectErrors` instance conflicts with the Arrow instance below
   where
-  type UnionType (CollectErrors es e1) (CollectErrors es e2) =
-    EnsureCE es (UnionType e1 e2)
+  type UnionType (CN e1) (CN e2) =
+    EnsureCN (UnionType e1 e2)
   union = lift2CE union
+
+instance
+  (Arrow to, CanUnionAsymmetric e1 e2)
+  =>
+  CanUnionAsymmetric (to Accuracy e1) (to Accuracy e2)
+  -- this instance is important for "parallel if"
+  where
+  type UnionType (to Accuracy e1) (to Accuracy e2) =
+    to Accuracy (UnionType e1 e2)
+  union xA yA =
+    proc ac ->
+      do
+      x <- xA -< ac
+      y <- yA -< ac
+      returnA -< union x y
 
 instance (CanUnionCNSameType t, CanEnsureCN t) =>
   HasIfThenElse (Maybe Bool) t
