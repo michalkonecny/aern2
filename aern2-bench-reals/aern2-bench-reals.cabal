@@ -18,6 +18,9 @@ executable aern2-bench-reals
   build-depends:
     base >= 4
     , containers
+    , parallel, deepseq
+    , stm
+    , QuickCheck
     , mixed-types-num == 0.2.*
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
@@ -28,6 +31,23 @@ executable aern2-bench-reals
         Arrows, FlexibleContexts, TypeOperators, TypeFamilies, ConstraintKinds, ScopedTypeVariables
   main-is: Main.hs
   other-modules:
+    Demos
     Tasks.LogisticPreludeOps
     Tasks.Logistic
     Tasks.Fourier
+    Tasks.ClosestPairA
+
+executable aern2-bench-reals-demoPar
+  build-depends:
+    base >= 4
+    , containers
+    , parallel, deepseq
+    , mixed-types-num == 0.2.*
+    , aern2-mp == 0.1.*
+    , aern2-real == 0.1.*
+  hs-source-dirs:  src
+  ghc-options:     -O2 -Wall -rtsopts -threaded
+  extensions:
+        RebindableSyntax,
+        Arrows, FlexibleContexts, TypeOperators, TypeFamilies, ConstraintKinds, ScopedTypeVariables
+  main-is: DemoPar.hs
