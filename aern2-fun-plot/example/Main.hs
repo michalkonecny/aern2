@@ -21,7 +21,6 @@ import AERN2.MP
 import AERN2.Interval (Interval(..), DyadicInterval, dyadicInterval)
 import qualified AERN2.Interval as Interval
 import AERN2.RealFun.Operations
-import AERN2.RealFun.SineCosine
 import qualified AERN2.Poly.Cheb as ChPoly
 import AERN2.Poly.Cheb (ChPoly)
 import qualified AERN2.PPoly as PPoly
@@ -100,8 +99,8 @@ fnsRungePPoly =
 fnsSine :: Plot.Functions
 fnsSine =
   map chPolyFn
-  [ ("Poly (1+sin[ac=3](6x))/2", fnBlue, (1+sine (6*xU))/!2)
-  , ("Poly (1+cos[ac=3](6x))/2", fnGreen, (1+cosine (6*xU))/!2)
+  [ ("Poly (1+sin[ac=3](6x))/2", fnBlue, (1+sin (6*xU))/!2)
+  , ("Poly (1+cos[ac=3](6x))/2", fnGreen, (1+cos (6*xU))/!2)
   ]
   ++
   (map funFn
@@ -109,10 +108,8 @@ fnsSine =
   , ("Fun (1+cos(6x))/2", fnBlack, unitDom, \x -> (1+cos (6*x))/!2)
   ])
   where
-  sine = sineWithAccuracyGuide (bits 3)
-  cosine = cosineWithAccuracyGuide (bits 3)
   xU :: ChPoly MPBall
-  xU = varFn (unitDom, bits 100) ()
+  xU = varFn (unitDom, bits 3) ()
 
 fnsSquare :: Plot.Functions
 fnsSquare =

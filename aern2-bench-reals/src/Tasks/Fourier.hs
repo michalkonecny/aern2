@@ -45,7 +45,7 @@ taskFFTWithHook cr2c hook k =
   n = 2^!k
 
 taskFFTA ::
-  (FFTOpsA r c, QAArrow to, HasIntegers c
+  (FFTOpsA r c, QAArrow to, HasIntegers (QA to p)
   , c ~ Complex (QA to p), QAProtocolCacheable p, ConvertibleExactly CauchyReal (QA to p))
   =>
   Integer -> () `to` [c]

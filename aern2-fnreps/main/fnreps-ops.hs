@@ -1,9 +1,8 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-unused-matches #-}
 {-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE ImpredicativeTypes #-}
 {-# LANGUAGE CPP #-}
 #define DEBUG
-#define BUMPY
+-- #define BUMPY
 module Main where
 
 #ifdef DEBUG
@@ -74,44 +73,56 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     computationDescription =
         "computing " ++ operationCode ++ "  " ++ fnDescription
 
-    result =
+    (result, fnDescription) =
       case (representationCode, operationCode) of
-        ("fun", "max") -> maxModFun (fn_x id x_MF) accuracy
-        ("fun", "integrate") -> integrateModFun (fn_x id x_MF) accuracy
-        ("ball", "max") -> maxBallFun (fn_x id x_BF) accuracy
-        ("ball", "integrate") -> integrateBallFun (fn_x id x_BF) accuracy
-        ("dball", "max") -> maxDBallFun (fn_x id x_DBF) accuracy
-        ("dball", "integrate") -> integrateDBallFun (fn_x id x_DBF) accuracy
+        ("fun", "max") ->  eval functions maxModFun id x_MF
+        ("fun", "integrate") -> eval functions integrateModFun id x_MF
+        ("ball", "max") -> eval functions maxBallFun id x_BF
+        ("ball", "integrate") -> eval functions integrateBallFun id x_BF
+        ("dball", "max") -> eval functions maxDBallFun id x_DBF
+        ("dball", "integrate") -> eval functions integrateDBallFun id x_DBF
 #ifdef BUMPY
 #else
-        ("poly", "max") -> maxPB $ fn_x id (x_PB accuracy)
-        ("poly", "integrate") -> integratePB $ fn_x id (x_PB accuracy)
+        ("poly", "max") -> eval functions maxPB id (x_PB accuracy)
+        ("poly", "integrate") -> eval functions integratePB id (x_PB accuracy)
 #endif
-        ("ppoly", "max") -> maxPP $ fn_x PPoly.fromPoly (x_PB accuracy)
-        ("ppoly", "integrate") -> integratePP $ fn_x PPoly.fromPoly (x_PB accuracy)
+        ("ppoly", "max") -> eval functions maxPP PPoly.fromPoly (x_PB accuracy)
+        ("ppoly", "integrate") -> eval functions integratePP PPoly.fromPoly (x_PB accuracy)
 #ifdef BUMPY
 #else
-        ("frac", "max") -> maxFR $ fn_x Frac.fromPoly (x_PB accuracy)
-        ("frac", "integrate") -> integrateFR $ fn_x Frac.fromPoly (x_PB accuracy)
+        ("frac", "max") -> eval functions maxFR Frac.fromPoly (x_PB accuracy)
+        ("frac", "integrate") -> eval functions integrateFR Frac.fromPoly (x_PB accuracy)
 
-        ("lpoly", "max") -> maxLP (fn_x id x_LP) accuracy
-        ("lpoly", "integrate") -> integrateLP (fn_x id x_LP) accuracy
-        ("lppoly", "max") -> maxLPP (fn_x LPPoly.fromPoly x_LP) accuracy
-        ("lppoly", "integrate") -> integrateLPP (fn_x LPPoly.fromPoly x_LP) accuracy
-        ("lfrac", "max") -> maxLF (fn_x LFrac.fromPoly x_LP) accuracy
-        ("lfrac", "integrate") -> integrateLF (fn_x LFrac.fromPoly x_LP) accuracy
+        ("lpoly", "max") -> eval functions maxLP id x_LP
+        ("lpoly", "integrate") -> eval functions integrateLP id x_LP
+        ("lppoly", "max") -> eval functions maxLPP LPPoly.fromPoly x_LP
+        ("lppoly", "integrate") -> eval functions integrateLPP LPPoly.fromPoly x_LP
+        ("lfrac", "max") -> eval functions maxLF LFrac.fromPoly x_LP
+        ("lfrac", "integrate") -> eval functions integrateLF LFrac.fromPoly x_LP
 #endif
         _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
-    (Just (fnDescription, fn_x)) = Map.lookup functionCode functions
+    eval ::
+      (Signature1 f1, Signature2 f2)
+      =>
+      Map.Map String (String, (f1 -> f2) -> (f1 -> f2)) ->
+      (f2 -> Accuracy -> MPBall) ->
+      (f1 -> f2) ->
+      f1 ->
+      (MPBall, String)
+    eval fns functional tr12 x  =
+      case Map.lookup functionCode fns of
+        Just (fnDescription2, fn_x) ->
+          (functional (fn_x tr12 x) accuracy, fnDescription2)
+        _ -> error $ "unknown function: " ++ functionCode
 
     accuracy = bits $ (read accuracyS :: Int)
     [accuracyS] = effortArgs
 
-    maxPB :: ChPoly MPBall -> MPBall
-    maxPB f = f `maximumOverDom` (getDomain f)
+    maxPB :: ChPoly MPBall -> Accuracy -> MPBall
+    maxPB f _ = f `maximumOverDom` (getDomain f)
 
-    integratePB :: ChPoly MPBall -> MPBall
-    integratePB f =
+    integratePB :: ChPoly MPBall -> Accuracy -> MPBall
+    integratePB f _ =
       maybeTrace ("integratePB: accuracy f = " ++ show (getAccuracy f)) $
       f `integrateOverDom` (getDomain f)
 
@@ -128,8 +139,8 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
     integrateLPP lf = lf `integrateOverDom` unaryIntervalDom
     integrateLF lf = lf `integrateOverDom` unaryIntervalDom
 
-    maxPP :: PPoly -> MPBall
-    maxPP f = f `maximumOverDomPP` (getDomain f)
+    maxPP :: PPoly -> Accuracy -> MPBall
+    maxPP f _ = f `maximumOverDomPP` (getDomain f)
       where
       maximumOverDomPP f2 (Interval l r) =
         PPoly.maximum f2 lB rB
@@ -138,14 +149,14 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         rB = setPrecision prc $ mpBall r
         prc = getPrecision f2
 
-    integratePP :: PPoly -> MPBall
-    integratePP f = f `integrateOverDomPP` (getDomain f)
+    integratePP :: PPoly -> Accuracy -> MPBall
+    integratePP f _ = f `integrateOverDomPP` (getDomain f)
       where
       integrateOverDomPP ff (Interval l r) =
         PPoly.integral ff (mpBall l) (mpBall r)
 
-    maxFR :: FracMB -> MPBall
-    maxFR f = f `maximumOverDomFR` (getDomain f)
+    maxFR :: FracMB -> Accuracy -> MPBall
+    maxFR f _ = f `maximumOverDomFR` (getDomain f)
       where
       maximumOverDomFR f2 (Interval l r) =
         Frac.maximumOptimisedWithAccuracy accuracy (setPrc f2) lB rB 5 5
@@ -157,8 +168,8 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
           setPrecisionAtLeastAccuracy (accuracy) . setPrecision prc
         prc = getPrecision f2
 
-    integrateFR :: FracMB -> MPBall
-    integrateFR f = f `integrateOverDomFR` (getDomain f)
+    integrateFR :: FracMB -> Accuracy -> MPBall
+    integrateFR f _ = f `integrateOverDomFR` (getDomain f)
       where
       integrateOverDomFR ff (Interval l r) =
         Frac.integral ff (mpBall l) (mpBall r)
@@ -226,7 +237,8 @@ unaryIntervalDom :: DyadicInterval
 unaryIntervalDom = dyadicInterval (-1,1)
 
 functions ::
-  Map.Map String (String, forall f1 f2. (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2)
+  forall f1 f2. (Signature1 f1, Signature2 f2) =>
+  Map.Map String (String, (f1 -> f2) -> f1 -> f2)
 functions =
     Map.fromList
     [
@@ -267,7 +279,7 @@ type Signature2 f =
 sinecos_Name :: String
 sinecos_Name = "sin(10x)+cos(20x) over [-1,1]"
 
-sinecos_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+sinecos_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 sinecos_x tr12 x = tr12 $ sin(10*x)+cos(20*x)
 
 -----------------------------------
@@ -276,7 +288,7 @@ sinecos_x tr12 x = tr12 $ sin(10*x)+cos(20*x)
 sinesine_Name :: String
 sinesine_Name = "sin(10x+sin(20x^2)) over [-1,1]"
 
-sinesine_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+sinesine_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 sinesine_x tr12 xPre =
   -- maybeTrace (printf "sin(20*x^!2): acG = %s; ac = %s" (show $ getAccuracyGuide sin20x2) (show $ getAccuracy sin20x2)) $
   -- maybeTrace (printf "res: acG = %s; ac = %s" (show $ getAccuracyGuide res) (show $ getAccuracy res)) $
@@ -293,7 +305,7 @@ sinesine_x tr12 xPre =
 sinesineCos_Name :: String
 sinesineCos_Name = "sin(10x+sin(20x^2)) + cos(10x) over [-1,1]"
 
-sinesineCos_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+sinesineCos_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 sinesineCos_x tr12 xPre =
   tr12 $ sin(10*x + sin(20*x^!2)) + cos(10*x)
   where
@@ -305,7 +317,7 @@ sinesineCos_x tr12 xPre =
 runge_Name :: String
 runge_Name = "1/(100x^2+1) over [-1,1]"
 
-runge_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+runge_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 runge_x tr12 x =
   -- maybeTrace (printf "res: acG = %s; ac = %s" (show $ getAccuracyGuide res) (show $ getAccuracy res)) $
   -- res
@@ -319,7 +331,7 @@ runge_x tr12 x =
 rungeSC_Name :: String
 rungeSC_Name = "(sin(10x)+cos(20x))/(100x^2+1) over [-1,1]"
 
-rungeSC_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+rungeSC_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 rungeSC_x tr12 x =
   maybeTrace (printf "numer: acG = %s; ac = %s" (show $ getAccuracyGuide numer) (show $ getAccuracy numer)) $
   maybeTrace (printf "inv: acG = %s; ac = %s" (show $ getAccuracyGuide inv) (show $ getAccuracy inv)) $
@@ -339,7 +351,7 @@ rungeSC_x tr12 x =
 fracSin_Name :: String
 fracSin_Name = "1/(10(sin(7x))^2+1) over [-1,1]"
 
-fracSin_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+fracSin_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 fracSin_x tr12 x =
   1/!(tr12R $ 10*(sin(7*xA)^!2)+1)
   where
@@ -352,7 +364,7 @@ fracSin_x tr12 x =
 fracSinSC_Name :: String
 fracSinSC_Name = "(sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]"
 
-fracSinSC_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+fracSinSC_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 fracSinSC_x tr12 x =
   maybeTrace (printf "numer: acG = %s; ac = %s" (show $ getAccuracyGuide numer) (show $ getAccuracy numer)) $
   maybeTrace (printf "denom: acG = %s; ac = %s" (show $ getAccuracyGuide denom) (show $ getAccuracy denom)) $
@@ -385,7 +397,7 @@ hat_Name = "1-|x+1/3| over [-1,1]"
 bumpy_Name :: String
 bumpy_Name = "max(sin(10x),cos(11x)) over [-1,1]"
 
-bumpy_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+bumpy_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 bumpy_x tr12 x =
     max (tr12 $ sin (10*x)) (tr12 $ cos (11*x))
 #endif
