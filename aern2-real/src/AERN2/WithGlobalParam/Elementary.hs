@@ -57,13 +57,15 @@ instance
 instance
   (QAArrow to, CanPow a e
   , SuitableForWGParam prm  a, SuitableForWGParam prm  e
+  , SuitableForWGParam prm  (PowTypeNoCN a e)
   , SuitableForWGParam prm  (PowType a e))
   =>
   CanPow (WithGlobalParamA to prm a) (WithGlobalParamA to prm e)
   where
+  type PowTypeNoCN (WithGlobalParamA to prm a) (WithGlobalParamA to prm e) = WithGlobalParamA to prm (PowTypeNoCN a e)
+  powNoCN = binaryOp "^!" powNoCN
   type PowType (WithGlobalParamA to prm a) (WithGlobalParamA to prm e) = WithGlobalParamA to prm (PowType a e)
-  pow =
-    binaryOp "^" pow
+  pow = binaryOp "^" pow
 
 instance
   (CanPow (WithGlobalParamA to prm a) b
