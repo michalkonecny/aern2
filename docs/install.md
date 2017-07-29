@@ -36,4 +36,7 @@
 
   * Clone mixed-types-num and aern2 git repositories as follows:
 
-    * In a new folder, run: TODO
+    * Create a new folder (here assuming `aern2etal` and in this folder, run:
+
+      > git clone https://github.com/michalkonecny/mixed-types-num.git
+      > git clone https://github.com/michalkonecny/aern2.git
