@@ -22,6 +22,8 @@
 
     > sudo apt-get install build-essential
 
+    > sudo apt-get install libmpfr-dev
+
     > stack setup --resolver lts-6.5
 
       * This command is likely to take several minutes to complete and download a large amount of data.
@@ -36,7 +38,21 @@
 
   * Clone mixed-types-num and aern2 git repositories as follows:
 
-    * Create a new folder (here assuming `aern2etal` and in this folder, run:
+    * Create a new "base" folder and in this folder, run:
 
       > git clone https://github.com/michalkonecny/mixed-types-num.git
       > git clone https://github.com/michalkonecny/aern2.git
+
+  * Build the packages as follows:
+
+    * Copy stack.yaml to the base folder:
+
+      > cp aern2/docs/install/stack.yaml-6.5 stack.yaml
+
+    * Run `stack install` in the base folder.
+
+      * If successful, you should see something like:
+
+        > Copied executables to /home/.../.local/bin:
+        > - aern2-generate-netlog-elm
+        > - aern2-real-benchOp
