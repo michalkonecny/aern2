@@ -20,7 +20,7 @@ executable aern2-demo
     , containers
     , stm
     , QuickCheck
-    , mixed-types-num == 0.2.*
+    , mixed-types-num == 0.3.*
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
   hs-source-dirs:  src
@@ -34,13 +34,14 @@ executable aern2-demo
     Tasks.LogisticPreludeOps
     Tasks.Logistic
     Tasks.Fourier
+    -- EffortConcept1
 
 -- executable aern2-demoPar
 --   build-depends:
 --     base >= 4
 --     , containers
 --     , parallel, deepseq
---     , mixed-types-num == 0.2.*
+--     , mixed-types-num == 0.3.*
 --     , aern2-mp == 0.1.*
 --     , aern2-real == 0.1.*
 --   hs-source-dirs:  src
