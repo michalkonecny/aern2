@@ -2,9 +2,9 @@
 
 A set of Haskell packages for exact real number computation.
 
-[Installation instructions](docs/install.md)
+[Installation guide](docs/install.md)
 
-For a crash course, see [Demos.hs](aern2-demos/src/Demos.hs).
+For a crude mini-crash course, see [Demos.hs](aern2-demos/src/Demos.hs).
 
 Library packages:
 

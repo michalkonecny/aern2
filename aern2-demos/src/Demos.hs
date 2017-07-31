@@ -22,7 +22,7 @@ import AERN2.Real
 
 -- import Debug.Trace
 
-{-- Introduction to Haskell in general --}
+{-- A nano-introduction to Haskell --}
 
 {- lists, types -}
 
