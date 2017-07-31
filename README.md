@@ -2,7 +2,11 @@
 
 A set of Haskell packages for exact real number computation.
 
-Provided library packages:
+[Installation instructions](docs/install.md)
+
+For a crash course, see [Demos.hs](aern2-demos/src/Demos.hs).
+
+Library packages:
 
   * [aern2-mp](http://michalkonecny.github.io/aern2/aern2-mp-0.1.0.0/): Multiple-precision ball arithmetic based on MPFR (fairly complete)
 
@@ -12,7 +16,7 @@ Provided library packages:
 
   * [aern2-fun-plot](http://michalkonecny.github.io/aern2/aern2-fun-plot-0.1.0.0/): Plotting of real functions in browser (currently broken)
 
-Provided executables:
+Executables:
 
   * [aern2-fnreps](https://github.com/michalkonecny/aern2/tree/master/aern2-fnreps): Benchmark comparison of representations of continuous functions
 
