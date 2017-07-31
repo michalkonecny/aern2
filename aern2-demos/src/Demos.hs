@@ -8,6 +8,8 @@ import MixedTypesNumPrelude hiding (replicate)
 import qualified Prelude as P
 -- import Text.Printf
 
+import Control.Arrow
+
 import Control.Concurrent
 import Control.Concurrent.STM
 
@@ -15,9 +17,12 @@ import Test.QuickCheck
 
 import qualified Data.List as List
 
+import AERN2.QA.Protocol
 import AERN2.Real
 
 -- import Debug.Trace
+
+{-- Introduction to Haskell in general --}
 
 {- lists, types -}
 
@@ -30,7 +35,6 @@ fact1 n = product [1..n]
 fact2 n = foldl1 (*) [1..n]
 
 allPairs list = [(i,j) | i<-list, j<-list, i<j ]
-
 
 {- IO -}
 
@@ -62,15 +66,20 @@ sync_run =
 
 {- type classes -}
 
--- toStrings :: [a] -> [String]
+-- toStrings :: (Show a) => [a] -> [String]
 toStrings xs = map show xs
 
 -- toStrings_bad = toStrings [io_run1, io_run2]
 
+
+{-- Introduction to aern2-real --}
+
 {- real numbers -}
 
 type R = CauchyReal
--- real numbers represented by fast converging Cauchy sequences of dyadic intervals
+-- Real numbers represented by fast converging Cauchy sequences of dyadic intervals
+type RA to = CauchyRealA to
+-- Real numbers to which one can send an accuracy query in any QAArrow
 
 -- internally:
 -- CauchyReal = Sequence MPBall
@@ -234,6 +243,66 @@ compRApprox a b = (a?ac) !<! (b?ac)
 compMPBall :: MPBall -> MPBall -> Bool
 compMPBall = (!<!)
 
+task_closestPairA ::
+  (QAArrow to
+  , CanSinCosSameType t
+  , CanMinMaxSameType t, CanSubSameType t, CanAbsSameType t
+  , HasIntegers t, CanAddSameType t, CanDivCNBy t Int)
+  =>
+  (t `to` t) -> ((t, t) `to` Bool) -> Integer -> () `to` t
+task_closestPairA (reg :: t `to` t) comp n =
+  proc () ->
+    closestPairDistA reg comp -< [sin (convertExactly i :: t) | i <- [1..n]]
+
+closestPairDistA ::
+  (QAArrow to
+  , CanMinMaxSameType t, CanSubSameType t, CanAbsSameType t
+  , HasIntegers t, CanAddSameType t, CanDivCNBy t Int)
+  =>
+  (t `to` t) -> ((t, t) `to` Bool) -> [t] `to` t
+closestPairDistA (reg :: (t `to` t)) comp =
+  proc pts ->
+    do
+    (ptsL,ptsR) <- partitionByComp -< pts
+    if (length ptsL < 2 || length ptsR < 2)
+      then returnA -< closestPairDist_naive pts
+      else splitAndMerge -< (ptsL,ptsR)
+  where
+  partitionByComp =
+    proc pts ->
+      case pts of
+        [] -> returnA -< ([], [])
+        (pt:rest) ->
+          do
+          let avg = average pts
+          (l1,l2) <- partitionByComp -< rest
+          b <- comp -< (pt, avg)
+          returnA -< if b then (pt:l1,l2) else (l1,pt:l2)
+  splitAndMerge :: ([t], [t]) `to` t
+  splitAndMerge =
+    proc (ptsL, ptsR) ->
+      do
+      dL_pre <- closestPairDistA reg comp -< ptsL
+      dL <- reg -< dL_pre
+      dLR <- reg -< distance (largest ptsL, smallest ptsR)
+      dR_pre <- closestPairDistA reg comp -< ptsR
+      dR <- reg -< dR_pre
+      returnA -< foldl1 min [dL, dLR, dR]
+
+compApproxA :: (QAArrow to) => (RA to, RA to) `to` Bool
+compApproxA =
+  proc (a,b) ->
+    do
+    aB <- (-?-) -< (a,ac)
+    bB <- (-?-) -< (b,ac)
+    returnA -< aB !<! bB
+  where
+  ac = bitsS 10
+
+closestPairDistA_Real :: (QAArrow to) => [RA to] `to` (RA to)
+closestPairDistA_Real = closestPairDistA (-:-||) compApproxA
+
+
 {- auxiliary functions -}
 
 hull :: MPBall -> MPBall -> MPBall
@@ -258,3 +327,4 @@ tails1 list =
 
 replicate :: Integer -> a -> [a]
 replicate = P.replicate . int
+-- TODO: move this to mixed-types-num

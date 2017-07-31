@@ -1,8 +1,8 @@
-Name:           aern2-bench-reals
+Name:           aern2-demos
 version:        0.1.0.0
 cabal-version:  >= 1.9.2
 build-type:     Simple
-homepage:       https://github.com/michalkonecny/aern2/aern2-bench-reals
+homepage:       https://github.com/michalkonecny/aern2/aern2-demos
 author:         Michal Konecny
 maintainer:     Michal Konecny <mikkonecny@gmail.com>
 copyright:      (c) 2017 Michal Konecny
@@ -14,11 +14,10 @@ category:       Math
 Synopsis:       comparison of difference exact real computation strategies
 Description:    Comparison of difference exact real computation strategies
 
-executable aern2-bench-reals
+executable aern2-demo
   build-depends:
     base >= 4
     , containers
-    , parallel, deepseq
     , stm
     , QuickCheck
     , mixed-types-num == 0.2.*
@@ -35,9 +34,8 @@ executable aern2-bench-reals
     Tasks.LogisticPreludeOps
     Tasks.Logistic
     Tasks.Fourier
-    Tasks.ClosestPairA
 
--- executable aern2-bench-reals-demoPar
+-- executable aern2-demoPar
 --   build-depends:
 --     base >= 4
 --     , containers

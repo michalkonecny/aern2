@@ -42,24 +42,24 @@ largest pts = foldl1 max pts
 smallest :: (CanMinMaxSameType t) => [t] -> t
 smallest pts = foldl1 min pts
 
-task_closestPair ::
+task_closestPairA ::
   (QAArrow to
   , CanSinCosSameType t
   , CanMinMaxSameType t, CanSubSameType t, CanAbsSameType t
   , HasIntegers t, CanAddSameType t, CanDivCNBy t Int)
   =>
   (t `to` t) -> ((t, t) `to` Bool) -> Integer -> () `to` Maybe t
-task_closestPair (reg :: t `to` t) comp n =
+task_closestPairA (reg :: t `to` t) comp n =
   proc () ->
-    closestPairDist1D reg comp -< [sin (convertExactly i :: t) | i <- [1..n]]
+    closestPairDistA reg comp -< [sin (convertExactly i :: t) | i <- [1..n]]
 
-closestPairDist1D ::
+closestPairDistA ::
   (QAArrow to
   , CanMinMaxSameType t, CanSubSameType t, CanAbsSameType t
   , HasIntegers t, CanAddSameType t, CanDivCNBy t Int)
   =>
   (t `to` t) -> ((t, t) `to` Bool) -> [t] `to` Maybe t
-closestPairDist1D (reg :: (t `to` t)) comp =
+closestPairDistA (reg :: (t `to` t)) comp =
   proc pts ->
     do
     (ptsL,ptsR) <- partitionByComp -< pts
@@ -81,15 +81,15 @@ closestPairDist1D (reg :: (t `to` t)) comp =
   splitAndMerge =
     proc (ptsL, ptsR) ->
       do
-      (Just dL_pre) <- closestPairDist1D reg comp -< ptsL
+      (Just dL_pre) <- closestPairDistA reg comp -< ptsL
       dL <- reg -< dL_pre
       dLR <- reg -< distance (largest ptsL, smallest ptsR)
-      (Just dR_pre) <- closestPairDist1D reg comp -< ptsR
+      (Just dR_pre) <- closestPairDistA reg comp -< ptsR
       dR <- reg -< dR_pre
       returnA -< Just (foldl1 min [dL, dLR, dR])
 
-compApprox :: (QAArrow to) => (Real to, Real to) `to` Bool
-compApprox =
+compApproxA :: (QAArrow to) => (Real to, Real to) `to` Bool
+compApproxA =
   proc (a,b) ->
     do
     aB <- (-?-) -< (a,ac)
@@ -98,8 +98,8 @@ compApprox =
   where
   ac = bitsS 10
 
-closestPairDist1D_Real :: (QAArrow to) => [Real to] `to` Maybe (Real to)
-closestPairDist1D_Real = closestPairDist1D (-:-||) compApprox
+closestPairDistA_Real :: (QAArrow to) => [Real to] `to` Maybe (Real to)
+closestPairDistA_Real = closestPairDistA (-:-||) compApproxA
 
 
 {- auxiliary functions -}
