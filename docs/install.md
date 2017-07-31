@@ -1,5 +1,12 @@
 # Installation guide
 
+At the moment, there are only installation instructions for Ubuntu.
+It should be easy to adapt these instructions for other Linux systems.
+
+On a non-Linux OS, I recommend to install AERN2 in a
+small Ubuntu VM.  The main obstacle I hit when installing
+natively on other OS is linking Haskell with MPFR.
+
 ## From latest sources on Ubuntu 16.04 using stack
 
   * Install stack (Haskell build tool).
