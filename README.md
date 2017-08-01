@@ -4,7 +4,9 @@ A set of Haskell packages for exact real number computation.
 
 [Installation guide](docs/install.md)
 
-For a crude mini-crash course, see [Demos.hs](aern2-demos/src/Demos.hs).
+For a mini-crash course, see first
+[documentation for MixedTypesNumPrelude](https://hackage.haskell.org/package/mixed-types-num-0.3.0.1/docs/MixedTypesNumPrelude.html)
+and then [Demos.hs](aern2-demos/src/Demos.hs).
 
 Library packages:
 
