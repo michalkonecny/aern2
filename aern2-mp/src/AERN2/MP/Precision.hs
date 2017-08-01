@@ -156,7 +156,7 @@ specCanSetPrecision (T typeName :: T t) check =
           check xP x
 
 maximumPrecision :: Precision
-maximumPrecision = Precision 1000000
+maximumPrecision = Precision 5000000
 
 defaultPrecision :: Precision
 defaultPrecision = Precision 100
