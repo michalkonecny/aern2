@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-|
-    Module      :  AERN2.MP.Ball.Field
+    Module      :  AERN2.MP.UseMPFR.Ball.Field
     Description :  Field operations on arbitrary precision dyadic balls
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -11,7 +11,7 @@
 
     Field operations on arbitrary precision dyadic balls
 -}
-module AERN2.MP.Ball.Field
+module AERN2.MP.UseMPFR.Ball.Field
 ()
 where
 
@@ -23,14 +23,14 @@ import Control.CollectErrors
 import AERN2.Normalize
 
 import AERN2.MP.Dyadic (Dyadic)
-import AERN2.MP.Float (mpFloat)
-import AERN2.MP.Float.Operators
+import AERN2.MP.UseMPFR.Float (mpFloat)
+import AERN2.MP.UseMPFR.Float.Operators
 import AERN2.MP.Precision
-import qualified AERN2.MP.ErrorBound as EB
+import qualified AERN2.MP.UseMPFR.ErrorBound as EB
 
-import AERN2.MP.Ball.Type
-import AERN2.MP.Ball.Conversions ()
-import AERN2.MP.Ball.Comparisons ()
+import AERN2.MP.UseMPFR.Ball.Type
+import AERN2.MP.UseMPFR.Ball.Conversions ()
+import AERN2.MP.UseMPFR.Ball.Comparisons ()
 
 {- addition -}
 

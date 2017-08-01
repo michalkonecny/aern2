@@ -40,7 +40,7 @@ import Elm
 -- import Test.Hspec
 -- import Test.QuickCheck
 
-import AERN2.MP.Float
+import AERN2.MP.UseMPFR.Float
 import AERN2.MP.Dyadic
 import AERN2.MP
 

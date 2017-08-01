@@ -16,8 +16,8 @@ import System.Random (randomRIO)
 
 import Criterion.Main
 
-import AERN2.MP.Float
-import AERN2.MP.Ball
+import AERN2.MP.UseMPFR.Float
+import AERN2.MP.UseMPFR.Ball
 import AERN2.MP.Ball.Tests () -- instance Arbitrary MPBall
 
 import Values

@@ -33,9 +33,8 @@ source-repository head
   subdir: aern2-mp
 
 flag MPFR
-  Description: Use MPFR backend (default); Integer backend is incomplete
+  Description: Use MPFR backend (default); Integer backend is planned
   Default:     True
-  -- WARNING:
 
 library
   hs-source-dirs:  src
@@ -51,7 +50,7 @@ library
     , template-haskell
     , mixed-types-num == 0.3.*
   if flag(MPFR)
-    cpp-options: -DMPFRBackend
+    cpp-options: -DUSEMPFR
     if impl(ghc >= 7.10)
       build-depends:
         hmpfr == 0.4.*,
@@ -63,7 +62,8 @@ library
         integer-gmp < 0.6
       cpp-options: -DHaskellMPFR
   else
-    cpp-options: -DIntegerBackend
+    cpp-options: -DUseIReal
+    -- TODO
   ghc-options:     -Wall -O2 -fno-warn-orphans
   extensions:
     RebindableSyntax,
@@ -79,28 +79,34 @@ library
     FlexibleContexts,
     FlexibleInstances,
     UndecidableInstances
+  if flag(MPFR)
+    exposed-modules:
+      AERN2.MP.UseMPFR.Float.Type
+      AERN2.MP.UseMPFR.Float.Arithmetic
+      AERN2.MP.UseMPFR.Float.Conversions
+      AERN2.MP.UseMPFR.Float.Operators
+      AERN2.MP.UseMPFR.Float.Constants
+      AERN2.MP.UseMPFR.Float
+      AERN2.MP.UseMPFR.Dyadic
+      AERN2.MP.UseMPFR.ErrorBound
+      AERN2.MP.UseMPFR.Ball.Type
+      AERN2.MP.UseMPFR.Ball.Conversions
+      AERN2.MP.UseMPFR.Ball.Comparisons
+      AERN2.MP.UseMPFR.Ball.Field
+      AERN2.MP.UseMPFR.Ball.Elementary
+      AERN2.MP.UseMPFR.Ball.PreludeOps
+      AERN2.MP.UseMPFR.Ball
   exposed-modules:
     AERN2.Utils.Bench
     AERN2.Normalize
     AERN2.Norm
     AERN2.MP.Precision
     AERN2.MP.Accuracy
-    AERN2.MP.Float.Type
-    AERN2.MP.Float.Arithmetic
-    AERN2.MP.Float.Conversions
-    AERN2.MP.Float.Operators
-    AERN2.MP.Float.Constants
+    AERN2.MP.Enclosure
     AERN2.MP.Float.Tests
     AERN2.MP.Float
     AERN2.MP.Dyadic
     AERN2.MP.ErrorBound
-    AERN2.MP.Enclosure
-    AERN2.MP.Ball.Type
-    AERN2.MP.Ball.Conversions
-    AERN2.MP.Ball.Comparisons
-    AERN2.MP.Ball.Field
-    AERN2.MP.Ball.Elementary
-    AERN2.MP.Ball.PreludeOps
     AERN2.MP.Ball.Tests
     AERN2.MP.Ball
     AERN2.MP

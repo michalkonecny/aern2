@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-|
-    Module      :  AERN2.MP.Float.Constants
+    Module      :  AERN2.MP.UseMPFR.Float.Constants
     Description :  Special constants NaN, infinity etc
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -12,12 +12,10 @@
     Special constants NaN, infinity etc
 -}
 
-module AERN2.MP.Float.Constants
+module AERN2.MP.UseMPFR.Float.Constants
   (
     zero, one
-#ifdef MPFRBackend
     , nan, infinity
-#endif
   )
 where
 
@@ -25,19 +23,17 @@ import MixedTypesNumPrelude
 import qualified Prelude as P
 -- import Data.Ratio
 
-import AERN2.MP.Float.Type
-import AERN2.MP.Float.Conversions
-import AERN2.MP.Float.Operators
+import AERN2.MP.UseMPFR.Float.Type
+import AERN2.MP.UseMPFR.Float.Conversions
+import AERN2.MP.UseMPFR.Float.Operators
 
 zero, one :: MPFloat
 zero = mpFloat 0
 one = mpFloat 1
 
-#ifdef MPFRBackend
 nan, infinity :: MPFloat
 nan = zero /. zero
 infinity = one /. zero
-#endif
 
 itisNaN :: MPFloat -> Bool
 itisNaN x = x *^ one /= x

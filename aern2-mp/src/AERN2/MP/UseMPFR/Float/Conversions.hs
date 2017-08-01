@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-|
-    Module      :  AERN2.MP.Float.Conversions
+    Module      :  AERN2.MP.UseMPFR.Float.Conversions
     Description :  Conversions and comparisons of arbitrary precision floats
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -15,7 +15,7 @@
     and haskell-mpfr when compiling with ghc 7.8.
 -}
 
-module AERN2.MP.Float.Conversions
+module AERN2.MP.UseMPFR.Float.Conversions
   (
    -- * MPFloat to other types (see also instances)
    toDoubleUp, toDoubleDown
@@ -27,34 +27,16 @@ module AERN2.MP.Float.Conversions
 where
 
 import MixedTypesNumPrelude
-#ifdef MPFRBackend
 import qualified Prelude as P
-#endif
 
 import Data.Ratio
 import Data.Convertible
 
-#ifdef MPFRBackend
 import AERN2.Norm
-#endif
 import AERN2.MP.Precision
 
-import AERN2.MP.Float.Type
-import AERN2.MP.Float.Arithmetic
-
-#ifdef IntegerBackend
-import qualified AERN2.MP.Float.Native as MPLow
-
-mpToDouble :: MPLow.RoundMode -> MPFloat -> Double
-mpToDouble = MPLow.toDouble
-
-mpToRational :: MPFloat -> Rational
-mpToRational = MPLow.toRational
-
-mpFromRationalA :: MPLow.RoundMode -> MPLow.Precision -> Rational -> MPFloat
-mpFromRationalA = MPLow.fromRationalA
-
-#endif
+import AERN2.MP.UseMPFR.Float.Type
+import AERN2.MP.UseMPFR.Float.Arithmetic
 
 #ifdef HaskellMPFR
 import qualified Data.Approximate.MPFRLowLevel as MPLow
@@ -100,12 +82,10 @@ mpFromRationalA dir p q
 
 #endif
 
-#ifdef MPFRBackend
 instance HasNorm MPFloat where
   getNormLog x
     | x == 0 = NormZero
     | otherwise = NormBits (P.toInteger $ MPLow.getExp x)
-#endif
 
 {- conversions -}
 

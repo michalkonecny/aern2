@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-|
-    Module      :  AERN2.MP.Ball.PreludeOps
+    Module      :  AERN2.MP.UseMPFR.Ball.PreludeOps
     Description :  Instances of Prelude.Num etc
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -11,7 +11,7 @@
 
     Instances of Prelude classes Eq, Ord, Num etc
 -}
-module AERN2.MP.Ball.PreludeOps
+module AERN2.MP.UseMPFR.Ball.PreludeOps
 (
 )
 where
@@ -21,11 +21,11 @@ import qualified Prelude as P
 
 import AERN2.MP.Dyadic (dyadic)
 
-import AERN2.MP.Ball.Type
-import AERN2.MP.Ball.Conversions ()
-import AERN2.MP.Ball.Comparisons ()
-import AERN2.MP.Ball.Field ()
-import AERN2.MP.Ball.Elementary
+import AERN2.MP.UseMPFR.Ball.Type
+import AERN2.MP.UseMPFR.Ball.Conversions ()
+import AERN2.MP.UseMPFR.Ball.Comparisons ()
+import AERN2.MP.UseMPFR.Ball.Field ()
+import AERN2.MP.UseMPFR.Ball.Elementary
 
 {- Instances of Prelude numerical classes provided for convenient use outside AERN2
    and also because Template Haskell translates (-x) to (Prelude.negate x) -}

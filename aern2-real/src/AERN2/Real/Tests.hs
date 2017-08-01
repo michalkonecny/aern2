@@ -35,10 +35,8 @@ import Test.QuickCheck
 -- import AERN2.Norm
 import AERN2.MP.Accuracy
 --
-import qualified AERN2.MP.Ball.Type as MB
 import AERN2.MP
 import AERN2.MP.Dyadic
-import AERN2.MP.Float
 
 import AERN2.QA.Protocol
 import AERN2.AccuracySG
@@ -68,23 +66,22 @@ instance Arbitrary CauchyReal where
             Exact -> error "signedBinary2Real: cannot request the number Exactly"
             _ -> balls !! (fromAccuracy acG + 1)
         where
-        balls = nextBit (mpBall (0,1)) sbits
-        nextBit ball (sbit:rest) =
+        balls = nextBit (mpBall (0,1)) $ zip sbits (map prec [10..])
+        nextBit ball ((sbit, p):rest) =
           ball : nextBit newBall rest
           where
           newBall =
             case sbit of
-              (-1) -> MB.fromEndpointsMP l m
-              0 -> MB.fromEndpointsMP l2 r2
-              1 -> MB.fromEndpointsMP m r
+              (-1) -> fromEndpoints l m
+              0 -> fromEndpoints l2 r2
+              1 -> fromEndpoints m r
               _ -> error "in Arbitrary CauchyReal"
-          (l,r) = MB.endpointsMP ball
-          m = mpFloat mDy
-          l2 = mpFloat l2Dy
-          r2 = mpFloat r2Dy
-          mDy = ((dyadic l) + (dyadic r)) * (dyadic 0.5)
-          l2Dy = ((dyadic l) + mDy) * (dyadic 0.5)
-          r2Dy = ((dyadic r) + mDy) * (dyadic 0.5)
+          (l_,r_) = endpoints ball :: (MPBall, MPBall)
+          l = setPrecision p l_
+          r = setPrecision p r_
+          m = (l + r) * (dyadic 0.5)
+          l2 = (l + m) * (dyadic 0.5)
+          r2 = (r + m) * (dyadic 0.5)
         nextBit _ _ = error "in Arbitrary CauchyReal"
 
 arbitrarySmall :: (Arbitrary a, HasOrderCertainly a Integer) => Integer -> Gen a

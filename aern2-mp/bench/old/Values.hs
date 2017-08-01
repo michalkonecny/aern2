@@ -19,8 +19,8 @@ import Control.DeepSeq
 
 import AERN2.Utils.Bench
 
-import AERN2.MP.Float
-import AERN2.MP.Ball
+import AERN2.MP.UseMPFR.Float
+import AERN2.MP.UseMPFR.Ball
 import AERN2.MP.Ball.Tests () -- instance Arbitrary MPBall
 
 ballsExactPositive :: [MPBall]

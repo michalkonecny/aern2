@@ -33,7 +33,7 @@ import Test.QuickCheck
 
 import Control.CollectErrors
 
-import AERN2.MP.ErrorBound
+import AERN2.MP.UseMPFR.ErrorBound
 import AERN2.MP.Accuracy
 
 {- ball-specific operations -}

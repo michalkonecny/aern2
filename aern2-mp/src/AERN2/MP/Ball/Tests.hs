@@ -36,11 +36,11 @@ import Test.QuickCheck
 -- import AERN2.Norm
 import AERN2.MP.Precision
 
-import AERN2.MP.Ball.Type
--- import AERN2.MP.Ball.Conversions ()
-import AERN2.MP.Ball.Comparisons ()
-import AERN2.MP.Ball.Field ()
-import AERN2.MP.Ball.Elementary ()
+import AERN2.MP.UseMPFR.Ball.Type
+-- import AERN2.MP.UseMPFR.Ball.Conversions ()
+import AERN2.MP.UseMPFR.Ball.Comparisons ()
+import AERN2.MP.UseMPFR.Ball.Field ()
+import AERN2.MP.UseMPFR.Ball.Elementary ()
 
 instance Arbitrary MPBall where
   arbitrary =
@@ -58,15 +58,9 @@ instance Arbitrary MPBall where
       finiteMPFloat =
         do
           x <- arbitrary
-#ifdef MPFRBackend
           if isFinite x
             then return x
             else finiteMPFloat
-#else
-          if abs x !<! 1000
-            then return $ lowerPrecisionIfAbove (prec 1000) x
-            else finiteMPFloat
-#endif
 
 {-|
   A runtime representative of type @MPBall@.
@@ -113,8 +107,6 @@ specMPBall =
       specCanDiv tMPBall tRational
     describe "elementary" $ do
       specCanExpReal tMPBall
-#ifdef MPFRBackend
       specCanLogReal tMPBall
       specCanSqrtReal tMPBall
       specCanSinCosReal tMPBall
-#endif

@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveGeneric, DeriveDataTypeable, StandaloneDeriving #-}
 {-|
-    Module      :  AERN2.MP.Float.Type
+    Module      :  AERN2.MP.UseMPFR.Float.Type
     Description :  Arbitrary precision floating point numbers
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -16,7 +16,7 @@
     and haskell-mpfr when compiling with ghc 7.8.
 -}
 
-module AERN2.MP.Float.Type
+module AERN2.MP.UseMPFR.Float.Type
   (
    -- * MPFloat numbers and their basic operations
    MPFloat, setPrecisionUp, setPrecisionDown
@@ -30,7 +30,7 @@ import qualified Prelude as P
 import AERN2.MP.Precision
 
 #ifdef IntegerBackend
-import qualified AERN2.MP.Float.Native as MPLow
+import qualified AERN2.MP.UseMPFR.Float.Native as MPLow
 
 type MPFloat = MPLow.MPFloat
 

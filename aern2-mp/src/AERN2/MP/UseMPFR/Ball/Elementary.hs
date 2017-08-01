@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-|
-    Module      :  AERN2.MP.Ball.Elementary
+    Module      :  AERN2.MP.UseMPFR.Ball.Elementary
     Description :  Elementary operations on arbitrary precision dyadic balls
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -11,7 +11,7 @@
 
     Elementary operations on arbitrary precision dyadic balls
 -}
-module AERN2.MP.Ball.Elementary
+module AERN2.MP.UseMPFR.Ball.Elementary
 (
   -- * Ball operations (see also instances)
   piBallP
@@ -26,23 +26,18 @@ import qualified Prelude as P
 import AERN2.Normalize
 
 import AERN2.MP.Dyadic (Dyadic)
-import qualified AERN2.MP.Float as MPFloat
-import AERN2.MP.Float (MPFloat, mpFloat)
--- import AERN2.MP.Float.Operators
+import qualified AERN2.MP.UseMPFR.Float as MPFloat
+import AERN2.MP.UseMPFR.Float (MPFloat, mpFloat)
+-- import AERN2.MP.UseMPFR.Float.Operators
 import AERN2.MP.Precision
-import qualified AERN2.MP.ErrorBound as EB
-import AERN2.MP.ErrorBound (errorBound)
+import qualified AERN2.MP.UseMPFR.ErrorBound as EB
+import AERN2.MP.UseMPFR.ErrorBound (errorBound)
 
-import AERN2.MP.Ball.Type
-import AERN2.MP.Ball.Conversions ()
-import AERN2.MP.Ball.Comparisons ()
-import AERN2.MP.Ball.Field ()
+import AERN2.MP.UseMPFR.Ball.Type
+import AERN2.MP.UseMPFR.Ball.Conversions ()
+import AERN2.MP.UseMPFR.Ball.Comparisons ()
+import AERN2.MP.UseMPFR.Ball.Field ()
 
-#ifdef IntegerBackend
-import AERN2.MP.Ball.ElementaryFromField
-#endif
-
-#ifdef MPFRBackend
 
 {- trigonometrics -}
 
@@ -82,13 +77,13 @@ cosB i x =
 --   precisions p1 p2 = p1 : (precisions p2 (p1 + p2))
 --   aux p = f $ setPrecision p x
 --   waitUntilNotImproving xx@(x1:_) = aux2 (getAccuracy x1) xx
---   waitUntilNotImproving _ = error "AERN2.MP.Ball.Elementary: internal error in increasingPrecisionUntilNotImproving"
+--   waitUntilNotImproving _ = error "AERN2.MP.UseMPFR.Ball.Elementary: internal error in increasingPrecisionUntilNotImproving"
 --   aux2 x1AC (x1:x2:rest)
 --     | x1AC < x2AC = aux2 x2AC (x2:rest)
 --     | otherwise = x1
 --     where
 --     x2AC = getAccuracy x2
---   aux2 _ _ = error "AERN2.MP.Ball.Elementary: internal error in increasingPrecisionUntilNotImproving"
+--   aux2 _ _ = error "AERN2.MP.UseMPFR.Ball.Elementary: internal error in increasingPrecisionUntilNotImproving"
 
 {- exp, log, power -}
 
@@ -129,8 +124,6 @@ instance CanSqrt MPBall where
         (\ e -> MPFloat.sqrtDown (P.max (mpFloat 0) e))
         (\ e -> MPFloat.sqrtUp (P.max (mpFloat 0) e))
     err = OutOfRange $ "sqrt: argument must be >= 0: " ++ show x
-
-#endif
 
 {- generic methods for computing real functions from MPFR-approximations -}
 

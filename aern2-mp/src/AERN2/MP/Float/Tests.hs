@@ -40,13 +40,11 @@ import Test.QuickCheck
 import AERN2.Norm
 import AERN2.MP.Precision
 
-import AERN2.MP.Float.Type
-#ifdef MPFRBackend
-import AERN2.MP.Float.Arithmetic
-#endif
-import AERN2.MP.Float.Conversions
-import AERN2.MP.Float.Operators
-import AERN2.MP.Float.Constants
+import AERN2.MP.UseMPFR.Float.Type
+import AERN2.MP.UseMPFR.Float.Arithmetic
+import AERN2.MP.UseMPFR.Float.Conversions
+import AERN2.MP.UseMPFR.Float.Operators
+import AERN2.MP.UseMPFR.Float.Constants
 
 instance Arbitrary MPFloat where
   arbitrary =
@@ -56,11 +54,7 @@ instance Arbitrary MPFloat where
     where
       aux giveSpecialValue
         | giveSpecialValue =
-#ifdef IntegerBackend
-            elements [zero, one, -one]
-#else
             elements [nan, infinity, -infinity, zero, one, -one]
-#endif
         | otherwise =
           do
           (p :: Precision) <- arbitrary
@@ -138,19 +132,12 @@ tMPFloat = T "MPFloat"
 specMPFloat :: Spec
 specMPFloat =
   describe ("MPFloat") $ do
-#ifdef IntegerBackend
-    describe "order" $ do
-      specHasEqNotMixed tMPFloat
-      specCanTestZero tMPFloat
-      specHasOrderNotMixed tMPFloat
-#endif
     specCanSetPrecision tMPFloat (printArgsIfFails2 "=~=" (=~=))
     specCanRound tMPFloat
     specCanNegNum tMPFloat
     specCanAbs tMPFloat
     specCanMinMaxNotMixed tMPFloat
     -- specCanMinMax tMPFloat tInteger tMPFloat
-#ifdef MPFRBackend
     describe "special values" $ do
       it "0 * infinity = NaN" $ do
         isNaN (zero *^ infinity)
@@ -164,7 +151,6 @@ specMPFloat =
         isNaN (infinity -^ infinity)
         &&
         isNaN (infinity -. infinity)
-#endif
     describe "approximate addition" $ do
       it "down <= up" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
@@ -241,11 +227,7 @@ specMPFloat =
     describe "approximate division" $ do
       it "down <= up" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
-#ifdef MPFRBackend
           not (isNaN (x /. y))
-#else
-          (y > 0 || y < 0) -- no NaN and Infinity in Integer (native) backend
-#endif
           ==>
           x /. y <= x /^ y
       it "up ~ down" $ do
@@ -254,11 +236,7 @@ specMPFloat =
             (=~~=) = approxEqualWithArgs [(x /. y,"x/.y")]
             infix 4 =~~=
           in
-#ifdef MPFRBackend
           not (isNaN (x /. y))
-#else
-          (y > 0 || y < 0) -- no NaN and Infinity in Integer (native) backend
-#endif
           ==>
           x /. y =~~= x /^ y
       it "recip(recip x) = x" $ do
@@ -283,7 +261,6 @@ specMPFloat =
           (x /. y) <= x *^ (one /^ y)
           &&
           (x /^ y) >= x *. (one /. y)
-#ifdef MPFRBackend
     describe "approximate sqrt" $ do
       it "down <= up" $ do
         property $ \ (x :: MPFloat) ->
@@ -445,4 +422,3 @@ specMPFloat =
           (cosx2D +. sinx2D) <= one
           &&
           (cosx2U +^ sinx2U) >= one
-#endif

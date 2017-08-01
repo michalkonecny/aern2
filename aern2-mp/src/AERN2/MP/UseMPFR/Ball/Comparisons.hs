@@ -1,5 +1,5 @@
 {-|
-    Module      :  AERN2.MP.Ball.Comparisons
+    Module      :  AERN2.MP.UseMPFR.Ball.Comparisons
     Description :  Comparisons of arbitrary precision dyadic balls
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -10,7 +10,7 @@
 
     Comparisons of arbitrary precision dyadic balls
 -}
-module AERN2.MP.Ball.Comparisons
+module AERN2.MP.UseMPFR.Ball.Comparisons
 (
   -- * Auxiliary types
   module AERN2.Norm
@@ -28,12 +28,12 @@ import Control.CollectErrors
 
 import AERN2.Norm
 import AERN2.MP.Dyadic (Dyadic)
-import AERN2.MP.Float (MPFloat)
--- import AERN2.MP.Float.Operators
+import AERN2.MP.UseMPFR.Float (MPFloat)
+-- import AERN2.MP.UseMPFR.Float.Operators
 import AERN2.MP.Precision
 
-import AERN2.MP.Ball.Type
-import AERN2.MP.Ball.Conversions ()
+import AERN2.MP.UseMPFR.Ball.Type
+import AERN2.MP.UseMPFR.Ball.Conversions ()
 
 {- comparisons -}
 

@@ -1,5 +1,5 @@
 {-|
-    Module      :  AERN2.MP.Float.Native
+    Module      :  AERN2.MP.UseMPFR.Float.Native
     Description :  Integer-based arbitrary precision floating point numbers
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -12,8 +12,8 @@
     Currently not used.  It is much slower than to MPFR.
 -}
 
-module AERN2.MP.Float.Native
-( module AERN2.MP.Float.Native
+module AERN2.MP.UseMPFR.Float.Native
+( module AERN2.MP.UseMPFR.Float.Native
 , Precision
 )
 where

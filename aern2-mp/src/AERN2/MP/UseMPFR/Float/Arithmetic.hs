@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-|
-    Module      :  AERN2.MP.Float.Arithmetic
+    Module      :  AERN2.MP.UseMPFR.Float.Arithmetic
     Description :  Arbitrary precision floating point numbers
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -15,17 +15,15 @@
     and haskell-mpfr when compiling with ghc 7.8.
 -}
 
-module AERN2.MP.Float.Arithmetic
+module AERN2.MP.UseMPFR.Float.Arithmetic
   (
    -- * MPFloat basic arithmetic
      addUp, addDown, subUp, subDown
    , mulUp, mulDown, divUp, divDown, recipUp, recipDown
-#ifdef MPFRBackend
    -- * MPFloat selected constants and operations
    , piUp, piDown
    , cosUp, cosDown, sinUp, sinDown
    , sqrtUp, sqrtDown, expUp, expDown, logUp, logDown
-#endif
    )
 where
 
@@ -33,14 +31,7 @@ import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import AERN2.MP.Precision
-import AERN2.MP.Float.Type
-
-#ifdef IntegerBackend
-import qualified AERN2.MP.Float.Native as MPLow
-
-one :: MPFloat
-one = MPLow.one
-#endif
+import AERN2.MP.UseMPFR.Float.Type
 
 #ifdef HaskellMPFR
 import qualified Data.Approximate.MPFRLowLevel as MPLow
@@ -90,8 +81,6 @@ recipDown :: MPFloat -> MPFloat
 recipDown x = divDown one x
 
 
-#ifdef MPFRBackend
-
 {- special constants and functions -}
 
 piUp :: Precision -> MPFloat
@@ -132,8 +121,6 @@ logUp = unaryUp MPLow.log
 logDown :: MPFloat -> MPFloat
 logDown = unaryDown MPLow.log
 
-#endif
-
 {- auxiliary functions to automatically determine result precision from operand precisions -}
 
 unaryUp ::
@@ -143,14 +130,12 @@ unaryUp opRP x = opRP MPLow.Up p x
     where
     p = MPLow.getPrec x
 
-#ifdef MPFRBackend
 unaryDown ::
     (MPLow.RoundMode -> MPLow.Precision -> MPFloat -> MPFloat) ->
     (MPFloat -> MPFloat)
 unaryDown opRP x = opRP MPLow.Down p x
     where
     p = MPLow.getPrec x
-#endif
 
 binaryUp ::
     Bool ->
