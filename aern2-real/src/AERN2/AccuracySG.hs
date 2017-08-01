@@ -44,7 +44,7 @@ instance ConvertibleExactly AccuracySG Accuracy where
   safeConvertExactly (AccuracySG acS acG) = Right $ acS `max` acG
 
 accuracySGdefaultTolerance :: Integer
-accuracySGdefaultTolerance = 2
+accuracySGdefaultTolerance = 20
 
 accuracySG :: Accuracy -> AccuracySG
 accuracySG ac = AccuracySG ac (ac + accuracySGdefaultTolerance)
