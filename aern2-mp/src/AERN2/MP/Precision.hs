@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-|
     Module      :  AERN2.MP.Precision
@@ -215,3 +216,11 @@ convertPSecond = convertSecondUsing (\ b q -> convertP (getPrecision b) q)
 instance Arbitrary Precision where
   arbitrary =
     sized $ \size -> choose (4,10+size) >>= return . prec
+
+$(declForTypes
+  [[t| Bool |], [t| Integer |], [t| Int |], [t| Rational |], [t| Double |]]
+  (\ t -> [d|
+
+    instance (ConvertibleWithPrecision $t t, Monoid es) => ConvertibleWithPrecision $t (CollectErrors es t) where
+      safeConvertP p = fmap (\v -> CollectErrors (Just v) mempty) . safeConvertP p
+  |]))

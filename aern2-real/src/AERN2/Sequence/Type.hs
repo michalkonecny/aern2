@@ -238,6 +238,16 @@ instance
   -- getErrorsECE _sample_mv _s =
   --   error "getErrorsECE not implemented for Sequence yet"
 
+instance
+  (QAArrow to, ConvertibleWithPrecision Rational a, CanSetPrecision a, SuitableForSeq a)
+  =>
+  ConvertibleExactly Rational (SequenceA to a)
+  where
+  safeConvertExactly x =
+    Right $ newSeq a (show x) [] (\_src -> arr $ seqByPrecision2CauchySeq (flip convertP x) . bits)
+    where
+    a = convertP (prec 2) x
+
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Dyadic |]]
   (\ t -> [d|

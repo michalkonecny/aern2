@@ -80,14 +80,14 @@ instance
   signum = error "Prelude.signum not implemented for Sequence"
 
 instance
-  (Field a, CanAbsSameType a, HasDyadics a
+  (Field a, CanAbsSameType a, ConvertibleWithPrecision Rational a
   , SuitableForSeq a, SuitableForSeq (EnsureCN a), CanSetPrecision a
   , HasNorm (EnsureNoCN a), CanEnsureCN a
   , CanIntersectCNSameType a)
   =>
   P.Fractional (Sequence a)
   where
-  fromRational = convertExactly . dyadic
+  fromRational = convertExactly
   recip a =
     case deEnsureCN (recip a) of
       Right r -> r

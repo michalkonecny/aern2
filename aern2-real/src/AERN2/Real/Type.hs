@@ -121,11 +121,11 @@ complex = convertExactly
 complexA :: (CanBeComplexA to t) => t -> Complex (CauchyRealA to)
 complexA = convertExactly
 
-instance (QAArrow to) => ConvertibleExactly Rational (CauchyRealA to) where
-  safeConvertExactly x =
-    Right $ newCR (show x) [] (\me_src -> arr (makeQ me_src))
-    where
-    makeQ _ = seqByPrecision2CauchySeq (flip mpBallP x) . bits
+-- instance (QAArrow to) => ConvertibleExactly Rational (CauchyRealA to) where
+--   safeConvertExactly x =
+--     Right $ newCR (show x) [] (\me_src -> arr (makeQ me_src))
+--     where
+--     makeQ _ = seqByPrecision2CauchySeq (flip mpBallP x) . bits
 
 instance ConvertibleWithPrecision CauchyReal MPBall where
   safeConvertP p r =
