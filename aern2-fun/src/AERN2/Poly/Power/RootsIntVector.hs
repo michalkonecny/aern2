@@ -38,8 +38,14 @@ import AERN2.Poly.Power.Type
 import AERN2.Poly.Basics hiding (Terms)
 import AERN2.Poly.Power.Eval
 
-import Data.Vector (Vector, (!))
+import Data.Vector (Vector)
 import qualified Data.Vector as V
+
+(!) :: Vector c -> Integer -> c
+v ! i = v V.! (int i)
+
+vlength :: Vector c -> Integer
+vlength = integer . V.length
 
 --import AERN2.Poly.Power.SignedSubresultant
 
@@ -101,7 +107,7 @@ signVars ts@(e, c, cfs) =
    | otherwise        = Nothing
   aux vrs _ (-1) = Just vrs
   aux vrs sg d =
-    case sgn (cfs ! int d) of
+    case sgn (cfs ! d) of
       Nothing   -> Nothing
       Just sgnx ->
         if sgnx == 0 || sg == 0 || sgnx == sg then
@@ -112,23 +118,23 @@ signVars ts@(e, c, cfs) =
 -- Input: l,m and Polynomial P.
 -- Output: some positive integer constant c and coefficients of c*P in Bernstein basis on [l,r].
 initialBernsteinCoefs ::  PowPoly Integer -> ErrorBound -> Rational -> Rational -> Terms
-initialBernsteinCoefs p e l r =
+initialBernsteinCoefs p@(PowPoly (Poly ts)) e l r =
   (e, lambda, bs)
   where
   lI = if l == 1.0 then 2 else 1
   d = degree p
-  PowPoly (Poly csI) = transform (-1) (integer lI) $ p
+  tsV = V.generate (int $ d + 1) (\i -> fromJust $ Map.lookup (integer i) ts)
+  csI = transform (-1) (integer lI) $ tsV
   binoms = V.generate (int $ d + 1) (\k -> binom d (d - k))
-  csVect = V.generate (int $ d + 1) (\i -> terms_lookupCoeff csI (integer i))
   bsFrac =
     V.generate
     (int $ d + 1)
-    (\k -> toRational (csVect ! k) /! toRational (binoms ! int k))
+    (\k -> toRational (csI V.! k) /! toRational (binoms V.! k))
   lambdaI = V.foldl' lcm 1 (V.map denominator bsFrac)
   bsI =
     V.generate
     (int $ d + 1)
-    (\k -> numerator $ lambdaI * (bsFrac ! int (d - k)))
+    (\k -> numerator $ lambdaI * (bsFrac ! (d - k)))
   (_, (_,lambdaL, bsL)) = bernsteinCoefs (-1.0) (rational lI) l (e, lambdaI, bsI)
   ( (_, lambda, bs), _) = bernsteinCoefs l (rational lI) r (e, lambdaL, bsL)
 
@@ -162,42 +168,52 @@ bernsteinCoefs l r m ts@(e, c, bs) =
             let
               b = fromJust $ Map.lookup (i - 1) biM
             in
-            (r' - m')*(b ! int j) + (m' - l')*(b ! int (j + 1))))
+            (r' - m')*(b V.! j) + (m' - l')*(b ! (j + 1))))
             biM)
   bsL =
     V.generate
       (int $ p + 1)
-      (\j -> diff^!(p - j) * (fromJust (Map.lookup (integer j) bi)) ! int 0)
+      (\j -> diff^!(p - j) * (fromJust (Map.lookup (integer j) bi)) ! 0)
   bsR =
     V.generate
       (int $ p + 1)
-      (\j -> diff^!j * (fromJust (Map.lookup (p - j) bi) ! j))
+      (\j -> diff^!j * (fromJust (Map.lookup (p - j) bi) V.! j))
 
-reflect :: PowPoly c -> PowPoly c
-reflect poly@(PowPoly (Poly ts)) =
-  PowPoly $ Poly ts'
+reflect :: Vector c -> Vector c
+reflect = V.reverse
+
+translate :: Integer -> Vector Integer -> Vector Integer
+translate t ts =
+  translateAcc
+    (vlength ts - 2)
+    (V.singleton (ts ! (V.length ts - 1)))
   where
-  ts' = Map.mapKeys (\p -> deg - p) ts
-  deg = degree poly
-
-translate :: Integer -> PowPoly Integer -> PowPoly Integer
-translate t poly@(PowPoly (Poly ts)) =
-    translateAcc ((degree poly) - 1) $
-      (fromList [(0,terms_lookupCoeff ts (degree poly))])
-    where
-    translateAcc (-1) poly' = poly'
-    translateAcc n poly' =
-      let
-        c = terms_lookupCoeff ts n
-      in
-        translateAcc (n - 1) $ c + (shiftRight 1 poly') - (t*poly')
+  translateAcc (-1) ts' = ts'
+  translateAcc n ts' =
+    let
+      c  = ts ! n
+      v  =
+        V.generate
+          (int $ vlength ts' + 1)
+          (\i ->
+            if i == 0 then
+              c - t * ts' ! 0
+            else if i == V.length ts' then
+              ts' ! (i - 1)
+            else
+              ts' ! (i - 1) - t * ts' V.! i
+          )
+    in
+      translateAcc
+        (n - 1)
+        v
 
 contract :: (CanMulSameType c, CanPow c Integer, PowTypeNoCN c Integer ~ c, CanEnsureCN c)
-  => c -> PowPoly c -> PowPoly c
-contract l (PowPoly (Poly ts)) =
-  PowPoly $ Poly $ Map.mapWithKey (\p c -> c*(l^!p)) ts
+  => c -> Vector c -> Vector c
+contract l ts =
+  V.imap (\p c -> c*(l^!(integer p))) ts
 
-transform :: Integer -> Integer -> PowPoly Integer -> PowPoly Integer
+transform :: Integer -> Integer -> Vector Integer -> Vector Integer
 transform l r =
   (translate (-1)) .
     (reflect) .
@@ -245,7 +261,7 @@ findRootsWithAccuracy poly acc l r =
             Just vars = signVars bs
             m    = (a + b)/!2
             (bsL, bsR) = bernsteinCoefs a b m bs
-            pm = (thd bsR) ! (int 0)
+            pm = (thd bsR) ! 0
           in
             case vars of
               0 -> []
