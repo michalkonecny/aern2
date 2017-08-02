@@ -2,7 +2,7 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE CPP #-}
 #define DEBUG
--- #define BUMPY
+#define BUMPY
 module Main where
 
 #ifdef DEBUG
@@ -95,8 +95,11 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 
         ("lpoly", "max") -> eval functions maxLP id x_LP
         ("lpoly", "integrate") -> eval functions integrateLP id x_LP
+#endif
         ("lppoly", "max") -> eval functions maxLPP LPPoly.fromPoly x_LP
         ("lppoly", "integrate") -> eval functions integrateLPP LPPoly.fromPoly x_LP
+#ifdef BUMPY
+#else
         ("lfrac", "max") -> eval functions maxLF LFrac.fromPoly x_LP
         ("lfrac", "integrate") -> eval functions integrateLF LFrac.fromPoly x_LP
 #endif
