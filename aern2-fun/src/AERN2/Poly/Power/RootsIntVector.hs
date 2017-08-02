@@ -10,6 +10,7 @@ module AERN2.Poly.Power.RootsIntVector
   , translate
   , transform
   , findRoots
+  , findRootsWithEvaluation
   , Terms
 )
 where
@@ -227,6 +228,44 @@ data HasRoot =
 instance HasEqAsymmetric HasRoot HasRoot where
   type EqCompareType HasRoot HasRoot = Bool
 
+findRootsWithEvaluation :: PowPoly Integer -> (Interval Rational Rational -> a) -> (a -> Bool) -> Rational -> Rational -> [(Interval Rational Rational, a)]
+findRootsWithEvaluation poly eval valueOK l r =
+  splitUntilAccurate (Interval l r, bsI, DontKnow)
+  where
+  bsI = initialBernsteinCoefs poly (errorBound 0) l r -- TODO: allow non-zero error?
+  splitUntilAccurate (i@(Interval a b), bs, hasRoot) =
+    let
+    val = eval i
+    in
+    if valueOK val then
+      [(i,val)]
+    else
+      case hasRoot of
+        Yes      ->
+          let
+          m  = (a + b)/!2
+          fa = evalDirect poly a
+          fm = evalDirect poly m
+          in
+          if fa*fm < 0 then
+            splitUntilAccurate (Interval a m, bs, Yes)
+          else
+            splitUntilAccurate (Interval m b, bs, Yes)
+        DontKnow ->
+          let
+            Just vars = signVars bs
+            m    = (a + b)/!2
+            (bsL, bsR) = bernsteinCoefs a b m bs
+            pm = (thd bsR) ! 0
+          in
+            case vars of
+              0 -> []
+              1 -> splitUntilAccurate (i, (errorBound 0, 0, V.empty), Yes)
+              _ ->
+                if (pm :: Integer) == 0 then let j = Interval m m in [(j, eval j)] else []
+                ++ splitUntilAccurate (Interval a m, bsL, DontKnow)
+                ++ splitUntilAccurate (Interval m b, bsR, DontKnow)
+
 {-
   Upper bound on the roots of poly in the open interval (l,r),
   i.e. an ordered list of intervals whose union
@@ -234,7 +273,7 @@ instance HasEqAsymmetric HasRoot HasRoot where
   list contains a root.
 -}
 findRoots :: PowPoly Integer -> (Interval Rational Rational -> Bool) -> Rational -> Rational -> [Interval Rational Rational]
-findRoots poly intervalOK l r =
+findRoots poly intervalOK l r =  -- equivalent to (map fst $ findRootsWithEvaluation poly intervalOK id l r)
   splitUntilAccurate (Interval l r, bsI, DontKnow)
   where
   bsI = initialBernsteinCoefs poly (errorBound 0) l r -- TODO: allow non-zero error?

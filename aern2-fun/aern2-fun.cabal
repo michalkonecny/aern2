@@ -120,6 +120,7 @@ library
     AERN2.Local.Basics
     AERN2.Local.Ring
     AERN2.Local.Field
+    AERN2.Local.MinMax
     AERN2.Local.Poly
     AERN2.Local.Maximum
     AERN2.Local.Integration

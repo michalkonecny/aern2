@@ -15,3 +15,4 @@ import AERN2.Local.Field ()
 import AERN2.Local.SineCosine
 import AERN2.Local.Maximum
 import AERN2.Local.Integration ()
+import AERN2.Local.MinMax ()
