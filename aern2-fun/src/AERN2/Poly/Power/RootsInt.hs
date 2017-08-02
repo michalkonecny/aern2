@@ -7,7 +7,7 @@ module AERN2.Poly.Power.RootsInt
   , contract
   , translate
   , transform
---  , findRoots
+  , findRoots
   --, reduce
   , Terms
 )

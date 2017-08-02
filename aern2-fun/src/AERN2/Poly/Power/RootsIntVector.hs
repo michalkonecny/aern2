@@ -9,9 +9,7 @@ module AERN2.Poly.Power.RootsIntVector
   , contract
   , translate
   , transform
-  , findRootsWithAccuracy
---  , findRoots
-  --, reduce
+  , findRoots
   , Terms
 )
 where
@@ -235,14 +233,14 @@ instance HasEqAsymmetric HasRoot HasRoot where
   contains all roots. There is no guarantee that every interval in the
   list contains a root.
 -}
-findRootsWithAccuracy :: PowPoly Integer -> Accuracy -> Rational -> Rational -> [Interval Rational Rational]
-findRootsWithAccuracy poly acc l r =
+findRoots :: PowPoly Integer -> (Interval Rational Rational -> Bool) -> Rational -> Rational -> [Interval Rational Rational]
+findRoots poly intervalOK l r =
   splitUntilAccurate (Interval l r, bsI, DontKnow)
   where
   bsI = initialBernsteinCoefs poly (errorBound 0) l r -- TODO: allow non-zero error?
   splitUntilAccurate :: (Interval Rational Rational, Terms, HasRoot) -> [Interval Rational Rational]
   splitUntilAccurate (i@(Interval a b), bs, hasRoot) =
-    if intervalAccurate i then
+    if intervalOK i then
       [i]
     else
       case hasRoot of
@@ -270,8 +268,6 @@ findRootsWithAccuracy poly acc l r =
                 if (pm :: Integer) == 0 then [Interval m m] else []
                 ++ splitUntilAccurate (Interval a m, bsL, DontKnow)
                 ++ splitUntilAccurate (Interval m b, bsR, DontKnow)
-  intervalAccurate (Interval a b) =
-    b - a < 0.5^!(fromAccuracy $ acc)
 
 
 {-

@@ -27,7 +27,7 @@ import AERN2.Poly.Basics (terms_fromList, Poly(..))
 
 import Control.Arrow (second)
 
--- import Debug.Trace
+import Debug.Trace
 
 type Cheb = ChPoly MPBall
 
@@ -55,7 +55,50 @@ fromPolyBall (Ball (ChPoly dom p acG bnds) err) =
   uInt = Interval (dyadic $ -1) (dyadic 1)
 
 linearPolygonI :: [(Dyadic, MPBall)] -> DyadicInterval -> Accuracy -> PPoly
-linearPolygonI ((x,y) : xys) dom acG =
+linearPolygonI = linearPolygonNew
+
+linearPolygonNew :: [(Dyadic, MPBall)] -> DyadicInterval -> Accuracy -> PPoly
+linearPolygonNew ((x,y) : xys) dom acG =
+  aux xys x y []
+  where
+  aux [] _ _ res = PPoly (reverse res) dom
+  aux ((x',y'):xys) x y res =
+    aux xys x' y' ((Interval x x', linSpline x y x' y') : res)
+  p = prec $ fromAccuracy acG
+  linSpline a fa b fb =
+    Ball
+      (ChPoly
+        (dyadicInterval (-1,1))
+        --(Poly $ terms_fromList [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))]))
+        (Poly $ terms_fromList
+                [(0, constantTerm a fa b fb),
+                 (1, linearTerm a fa b fb)])
+        acG Nothing)
+      (errorBound 0)
+  linearTerm a fa b fb =
+    let
+    a' = raisePrecisionIfBelow p (mpBall a)
+    b' = raisePrecisionIfBelow p (mpBall b)
+    fa' = raisePrecisionIfBelow p fa
+    fb' = raisePrecisionIfBelow p fb
+    in
+      (fb' - fa')/!(b' - a')
+  constantTerm a fa b fb =
+    let
+    a'  = raisePrecisionIfBelow p (mpBall a)
+    b'  = raisePrecisionIfBelow p (mpBall b)
+    fa' = raisePrecisionIfBelow p fa
+    fb' = raisePrecisionIfBelow p fb
+    in
+      fa'- (a'*(fb' - fa'))/!(b' - a')
+linearPolygonNew [] _ _ =
+  error "linearPolygonI must be provided with a list of at least 2 points"
+
+linearPolygonOld :: [(Dyadic, MPBall)] -> DyadicInterval -> Accuracy -> PPoly
+linearPolygonOld ((x,y) : xys) dom acG =
+  trace("linear polygon ") $
+  trace("input: "++ (show $ ((x,y) : xys))) $
+  trace("result: "++ (show $ aux xys x y [])) $
   aux xys x y []
   where
   aux [] _ _ res = PPoly (reverse res) dom
@@ -101,7 +144,7 @@ linearPolygonI ((x,y) : xys) dom acG =
         try
       else
         constantTerm a fa b fb (p + q) p (Just try)
-linearPolygonI [] _ _ =
+linearPolygonOld [] _ _ =
   error "linearPolygonI must be provided with a list of at least 2 points"
 
 liftBall2PPoly :: (PolyBall -> PolyBall) -> (PPoly -> PPoly)
