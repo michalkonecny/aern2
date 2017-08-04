@@ -14,7 +14,7 @@ category:       Math
 Synopsis:       comparison of difference exact real computation strategies
 Description:    Comparison of difference exact real computation strategies
 
-executable aern2-demo
+executable aern2-demos-run-bench
   build-depends:
     base >= 4
     , containers
