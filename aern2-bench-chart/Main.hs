@@ -154,7 +154,7 @@ renderChart (_, lineId, xAxis@(xCont, _xMode), yAxis@(yCont, _yMode)) outFolder 
 
     axisTitle MaxMem = "Space (kB)"
     axisTitle ExecTime = "Time (s)"
-    axisTitle Accuracy = "Requested Accuracy (bits)"
+    axisTitle Accuracy = "Accuracy (bits)"
     axisTitle BenchN = "n"
 
     axisForModeCont (_, Lin) = autoScaledAxis def
