@@ -21,7 +21,6 @@ import Data.Maybe
 
 import qualified Prelude
 
---import Debug.Trace
 
 type GenFun =
   Dyadic -> Dyadic -> Accuracy ->
@@ -50,7 +49,7 @@ genericMaximum f lBall rBall targetAcc =
   dyPs = map (centre . mpBallP (prec $ fromAccuracy targetAcc)) ps
   dyIntervals = zip dyPs (tail dyPs)
   initialIntervals = concat [mi_searchIntervals f a b ac0 | (a,b) <- dyIntervals]
-  ac0 = bits 10
+  ac0 = bits 5
   updateAccuracy ac =
     if ac >= targetAcc
     || ac < bits 20 then
@@ -63,9 +62,6 @@ genericMaximum f lBall rBall targetAcc =
     let
       Just (mi, q') = Q.minView q
     in
-    {-trace("mi: "++(show $ mpBall $ mi_left mi)++ " " ++ (show $ mpBall $ mi_right mi)) $
-    trace("mi value: "++ (show $ mi_value mi)) $
-    trace("mi accuracy: "++ (show $ getAccuracy $ mi_value mi)) $-}
     if mi_isAccurate mi targetAcc then
       mi_value mi
     else
@@ -142,9 +138,9 @@ mi_criticalValue l r f df ac =
     aux l r (sign $ df (rational l)) (sign $ df (rational r))
   where
   sign x
-    | x == 0    = 0
+    | x == 0    =  0
     | x < 0     = -1
-    | otherwise = 1
+    | otherwise =  1
   aux :: Dyadic -> Dyadic -> Integer -> Integer -> MPBall
   aux a b sgA sgB =
     let

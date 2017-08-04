@@ -54,8 +54,8 @@ genericisePoly fI a b =
   dfRat = makeRational dfI
   (eI, dfIPow) = (ch2Power . intify) dfI
   dom = chPoly_dom fI
-  aI = fromDomToUnitInterval dom (rational l)
-  bI = fromDomToUnitInterval dom (rational r)
+  aI = fromDomToUnitInterval dom (rational a)
+  bI = fromDomToUnitInterval dom (rational b)
   dfIPow' =
     if debug_useSeparablePart
       && dyadic eI == 0
@@ -79,3 +79,9 @@ intify (ChPoly _ p _ _) =
   termsError = ball_error $ terms_lookupCoeff (poly_terms p) 0
   termsDenominator = Map.foldl' lcm 1 $ terms_map denominator termsRational
   pInt = Poly $ terms_map (numerator . (* termsDenominator)) termsRational
+
+instance CanDiv (Local (ChPoly MPBall)) Integer where
+  type DivType (Local (ChPoly MPBall)) Integer = Local (ChPoly MPBall)
+  (f `divide` i) l r ac = (f l r ac) /! (mpBallP (prec $ fromAccuracy $ ac) i)
+  type DivTypeNoCN (Local (ChPoly MPBall)) Integer = Local (ChPoly MPBall)
+  (f `divideNoCN` i) l r ac = (f l r ac) /! (mpBallP (prec $ fromAccuracy $ ac) i)

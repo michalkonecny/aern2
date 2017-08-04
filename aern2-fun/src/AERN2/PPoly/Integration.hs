@@ -18,8 +18,8 @@ integral (PPoly ps dom) l r =
     [pieceIntegral i p | (i,p) <- ppoly_pieces f, intersectsLR i]
   where
   (Interval domL domR) = dom
-  lI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) l)
-  rI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) r) -- TODO: properly work out required endpoint precision
+  lI      = fromDomToUnitInterval dom (setPrecision (ac2prec $ getAccuracyGuide f) l)
+  rI      = fromDomToUnitInterval dom (setPrecision (ac2prec $ getAccuracyGuide f) r) -- TODO: properly work out required endpoint precision
   unit    = Interval (dyadic $ -1) (dyadic 1)
   f       = PPoly ps unit
   lrInterval = Interval (mpBall lI) (mpBall rI)

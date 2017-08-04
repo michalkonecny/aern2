@@ -52,26 +52,24 @@ instance CanMinMaxAsymmetric PPoly PPoly where
 ppolyMax ::
   PPoly -> PPoly -> PPoly
 ppolyMax a b =
-  PPoly (concat (map pballMax (refine a b)))
-        (ppoly_dom a) -- TODO: how to handle polys with different domains?
+  if ppoly_dom a /= ppoly_dom b then
+    error "ppolyMax: PPoly domains do not match."
+  else
+    PPoly (concat (map pballMax (refine a b)))
+          (ppoly_dom a)
   where
-  (Interval dl dr) = ppoly_dom a
-  pballMax ((Interval domL domR), p@(Ball pC _pR), q@(Ball qC _qR)) =
+  pballMax ((Interval domL domR), p@(Ball pC pR), q@(Ball qC qR)) =
     polys
     where
-
-    fromUnitIntervalToDom :: MPBall -> MPBall
-    fromUnitIntervalToDom x = dl + 0.5*(x + 1)*(dr - dl)
-
     acGuide = getAccuracyGuide pC `max` getAccuracyGuide qC
     precision = getPrecision pC `max` getPrecision qC
+    realAcc = getAccuracy p `min` getAccuracy q
 
     diffC  = centre $ p - q
     diffC' = derivativeExact diffC
     evalOnInterval (Interval l r) =
-      evalDf diffC diffC' $
-        fromUnitIntervalToDom $
-        fromEndpoints (mpBallP precision l) (mpBallP precision r)
+        evalDf diffC diffC' $
+          fromEndpoints (mpBallP precision l) (mpBallP precision r)
     (_diffCIntErr, diffCInt) = intify diffC
     diffCRoots =
       map
@@ -80,15 +78,17 @@ ppolyMax a b =
       findRootsWithEvaluation
         (cheb2Power diffCInt)
         (abs . evalOnInterval)
-        (\v -> getAccuracy v >= acGuide)
+        (\v -> (v <= (dyadic 0.5)^!(fromAccuracy acGuide)) == Just True)
         (rational domL) (rational domR)
     intervals :: [(DyadicInterval, ErrorBound)]
-    intervals = aux [] (domL, errorBound 0) (diffCRoots ++ [(domR, errorBound 0)])
+    intervals =
+      reverse $
+      aux [] (domL, errorBound 0) (diffCRoots ++ [(domR, errorBound 0)])
       where
       aux is (l, e0) ((x, e1) : []) =
-        is ++ [(Interval l x, max e0 e1)]
+        (Interval l x, max e0 e1) : is
       aux is (l, e0) ((x, e1) : xs) =
-        aux (is ++ [(Interval l x, max e0 e1)]) (x, e1) xs
+        aux ((Interval l x, max e0 e1) : is) (x, e1) xs
     biggest :: (DyadicInterval, ErrorBound) -> (DyadicInterval, PolyBall)
     biggest (i@(Interval l r), e) =
       if (pm >= qm) == Just True then
@@ -96,11 +96,12 @@ ppolyMax a b =
       else
         (i, q')
       where
-      p' = updateRadius (+ e) p
-      q' = updateRadius (+ e) q
+      rad = max (pR + e) (qR + e)
+      p' = updateRadius (const rad) p
+      q' = updateRadius (const rad) q
       m  = (dyadic 0.5) * (l + r)
-      pm = apply pC (fromUnitIntervalToDom $ mpBall m)
-      qm = apply qC (fromUnitIntervalToDom $ mpBall m)
+      pm = evalDirect pC (mpBall m)
+      qm = evalDirect qC (mpBall m)
     polys :: [(DyadicInterval, PolyBall)]
     polys =
       map biggest intervals

@@ -25,7 +25,7 @@ instance GenericMaximum LocalPPoly where
   genericise f l r ac =
     [genericisePoly p (fromUnitIntervalToDom a) (fromUnitIntervalToDom b) | (Interval a b, p) <- psDom]
     where
-    PPoly ps dom@(Interval dR dL) = f l r ac
+    PPoly ps dom@(Interval dL dR) = f l r ac
     polys :: [(DyadicInterval, ChPoly MPBall)]
     polys = map (\(i, Ball c err) -> (i, updateRadius (+ err) c)) ps
     psDom = map (\(i, ChPoly _ p acG bnds) -> (i, ChPoly dom p acG bnds)) polys
