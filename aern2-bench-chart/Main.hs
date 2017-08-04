@@ -155,7 +155,7 @@ renderChart (_, lineId, xAxis@(xCont, _xMode), yAxis@(yCont, _yMode)) outFolder 
         mapM layoutPlotData $ zip [0..] plotData
 
     legend_cols FnRepr = 4
-    legend_cols Method = 2
+    -- legend_cols Method = 2
     legend_cols _ = 3
 
     axisTitle MaxMem = "Space (kB)"
