@@ -143,6 +143,8 @@ renderChart (_, lineId, xAxis@(xCont, _xMode), yAxis@(yCont, _yMode)) outFolder 
     chartLayout =
         execEC $
         do
+        layout_legend . _Just . legend_orientation .= LORows (legend_cols lineId)
+
         layout_y_axis . laxis_generate .= axisForModeCont yAxis
         layout_y_axis . laxis_title .= axisTitle yCont
 
@@ -151,6 +153,10 @@ renderChart (_, lineId, xAxis@(xCont, _xMode), yAxis@(yCont, _yMode)) outFolder 
 
         layout_x_axis . laxis_style . axis_label_gap .= 1
         mapM layoutPlotData $ zip [0..] plotData
+
+    legend_cols FnRepr = 4
+    legend_cols Method = 2
+    legend_cols _ = 3
 
     axisTitle MaxMem = "Space (kB)"
     axisTitle ExecTime = "Time (s)"
