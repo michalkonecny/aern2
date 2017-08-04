@@ -1,20 +1,20 @@
 computing integrate  max(sin(10x),cos(11x)) over [-1,1]
-result = [6.444993654288972e-1 ± <2^(-2)]
-accuracy: bits 2
+result = [7.615294157022268e-1 ± <2^(-19)]
+accuracy: bits 19
 precision = Precision 80
 	Command being timed: "aern2-fnreps-ops integrate bumpy lppoly 20"
-	User time (seconds): 0.56
+	User time (seconds): 0.58
 	System time (seconds): 0.00
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.57
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.58
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 14396
+	Maximum resident set size (kbytes): 13708
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1355
+	Minor (reclaiming a frame) page faults: 1205
 	Voluntary context switches: 1
 	Involuntary context switches: 4
 	Swaps: 0
