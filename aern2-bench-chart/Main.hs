@@ -8,6 +8,8 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.List as List
 
+import Data.Convertible
+
 import Graphics.Rendering.Chart
 import Graphics.Rendering.Chart.Easy
 import Graphics.Rendering.Chart.Grid
@@ -21,22 +23,35 @@ main :: IO ()
 main =
     do
     args <- getArgs
-    let (mode, plotQuantity, inFileName, outFolder) = checkArgs args
+    let (mode, inFileName, outFolder) = checkArgs args
     contents <- readFile inFileName
     let chartsData = parseBenchResults mode inFileName contents
-    void $ mapM (renderChart mode plotQuantity outFolder) chartsData
+    void $ mapM (renderChart mode outFolder) chartsData
 
-data Mode = FnOpReprs | Ops
+data ChartId = CSVName | FnOp
   deriving (Show, Read)
 
-data PlotQuantity = MaxMem | ExecTime
+data LineId = FnRepr | OpCount | Method
   deriving (Show, Read)
 
-checkArgs :: [String] -> (Mode, PlotQuantity, String, String)
-checkArgs [modeS, plotQuantityS, inFileName, outFolder] =
-  (read modeS, read plotQuantityS, inFileName, outFolder)
+data AxisContent = BenchN | Accuracy | MaxMem | ExecTime
+  deriving (Show, Read)
+
+data AxisMode = Log | Lin | LogTo Int | LinTo Int
+  deriving (Show, Read)
+
+type Mode = (ChartId, LineId, (AxisContent, AxisMode), (AxisContent, AxisMode))
+
+lineKeys :: LineId -> [String]
+lineKeys OpCount = ["Op", "Count"]
+lineKeys Method = ["Method"]
+lineKeys FnRepr = ["FnRepr"]
+
+checkArgs :: [String] -> (Mode, String, String)
+checkArgs [chartIdS, lineIdS, xContS, xModeS, yContS, yModeS, inFileName, outFolder] =
+  ((read chartIdS, read lineIdS, (read xContS, read xModeS), (read yContS, read yModeS)), inFileName, outFolder)
 checkArgs _ =
-  error "usage: aern2-bench-chart <mode(Ops|FnOpReprs)> <plotQuantity(MaxMem|ExecTime)> <csvFileName> <outFolder>"
+  error "usage: aern2-bench-chart <chartsBy(CSVName|FnOp)> <linesBy(OpCount|Method|FnRepr)> <xAxis(Accuracy|BenchN)> <Lin|\"LinTo n\"|Log|\"LogTo n\"> <yAxis(MaxMem|ExecTime)> <Lin|\"LinTo n\"|Log|\"LogTo n\"> <csvFileName> <outFolder>"
 
 {-|
     A dummy sample result:
@@ -51,37 +66,56 @@ checkArgs _ =
     ]
 @
 -}
-parseBenchResults :: Mode -> String -> String -> [(String, [(String, [(Double, Double, Double)])])]
-parseBenchResults FnOpReprs _inFileName csvContent =
+parseBenchResults :: Mode -> String -> String -> [(String, [(String, [(Double, Double)])])]
+parseBenchResults mode@(FnOp, lineId, _, _) _inFileName csvContent =
     over (mapped._2.mapped._2) Set.toAscList $ -- convert the inner Sets to ascending lists (using Lens)
         over (mapped._2) Map.toList $ -- convert the inner Maps to lists
             Map.toList fnOp_To_Repr_To_Points -- convert the outer Map to list
     where
-    fnOp_To_Repr_To_Points = mergeByFnOp_FnRepr records
-    records = indexRecordsByKeysAndHeader ["Fn","Op","FnRepr"] $ parseCSV csvContent
-parseBenchResults Ops inFileName csvContent =
+    fnOp_To_Repr_To_Points = mergeByFnOp_FnRepr mode records
+    records = indexRecordsByKeysAndHeader (["Fn", "Op"] ++ lineKeys lineId) $ parseCSV csvContent
+parseBenchResults mode@(CSVName, lineId, _, _) inFileName csvContent =
     over (mapped._2.mapped._2) Set.toAscList $ -- convert the inner Sets to ascending lists (using Lens)
         over (mapped._2) Map.toList $ -- convert the inner Maps to lists
             Map.toList fnOp_To_Repr_To_Points -- convert the outer Map to list
     where
-    fnOp_To_Repr_To_Points = Map.singleton inFileNameNoCSV $ mergeByOp records
+    fnOp_To_Repr_To_Points = Map.singleton inFileNameNoCSV $ mergeByKeys mode records
     inFileNameNoCSV = take (length inFileName-4) inFileName
-    records = indexRecordsByKeysAndHeader ["Op", "Count"] $ parseCSV csvContent
+    records = indexRecordsByKeysAndHeader (lineKeys lineId) $ parseCSV csvContent
 
-mergeByOp ::
-    [([String], Map.Map String String)] -> Map.Map String (Set.Set (Double,Double,Double))
-mergeByOp records =
+mergeByFnOp_FnRepr ::
+    Mode -> [([String], Map.Map String String)] -> Map.Map String (Map.Map String (Set.Set (Double,Double)))
+mergeByFnOp_FnRepr mode records =
     foldl insertRecord Map.empty records
     where
-    insertRecord preMap ([opName, countS], fields) =
-        Map.insertWith Set.union
-            (opName ++ countS) (Set.singleton $ getPoint fields)
+    insertRecord preMap (fnName : opName : lKeys, fields) =
+        Map.insertWith
+            (Map.unionWith Set.union)
+            chartTitle (Map.singleton (concat lKeys) (Set.singleton $ getPoint mode fields))
             preMap
-    insertRecord _ _ = error "internal error in mergeByOp"
+        where
+        chartTitle = fnName ++ "-" ++ opName
+    insertRecord _ _ = error "internal error in mergeByFnOp_FnRepr"
 
-getPoint :: Map.Map String String -> (Double,Double,Double)
-getPoint fields = (realToFrac (min 100 bits),utime+stime,maxram)
+mergeByKeys ::
+    Mode -> [([String], Map.Map String String)] -> Map.Map String (Set.Set (Double,Double))
+mergeByKeys mode records =
+    foldl insertRecord Map.empty records
+    where
+    insertRecord preMap (keys, fields) =
+        Map.insertWith Set.union
+            (concat keys) (Set.singleton $ getPoint mode fields)
+            preMap
+    -- insertRecord _ _ = error "internal error in mergeByKeys"
+
+getPoint :: Mode -> Map.Map String String -> (Double,Double)
+getPoint (_, _, xAxis, yAxis) fields = (pt xAxis, pt yAxis)
   where
+  pt (BenchN, _) = benchParams
+  pt (Accuracy, _) = realToFrac (min 100 bits)
+  pt (MaxMem, _) = maxram
+  pt (ExecTime, _) = utime+stime
+  benchParams = read (lookupValue fields "BenchParams") :: Double
   utime = read (lookupValue fields "UTime(s)") :: Double
   stime = read (lookupValue fields "STime(s)") :: Double
   maxram = read (lookupValue fields "Mem(kB)") :: Double
@@ -93,65 +127,57 @@ getPoint fields = (realToFrac (min 100 bits),utime+stime,maxram)
     accS = lookupValue fields "Accuracy(bits)"
 
 
-mergeByFnOp_FnRepr ::
-    [([String], Map.Map String String)] -> Map.Map String (Map.Map String (Set.Set (Double,Double,Double)))
-mergeByFnOp_FnRepr records =
-    foldl insertRecord Map.empty records
-    where
-    insertRecord preMap ([fnName,opName,reprName], fields) =
-        Map.insertWith
-            (Map.unionWith Set.union)
-            chartTitle (Map.singleton reprName (Set.singleton $ getPoint fields))
-            preMap
-        where
-        chartTitle = fnName ++ "-" ++ opName
-    insertRecord _ _ = error "internal error in mergeByFnOp_FnRepr"
-
 renderChart ::
-    Mode -> PlotQuantity -> String -> (String, [(String, [(Double, Double, Double)])]) -> IO ()
-renderChart mode plotQuantity outFolder (title, plotData) =
+    Mode -> String -> (String, [(String, [(Double, Double)])]) -> IO ()
+renderChart (_, lineId, xAxis@(xCont, _xMode), yAxis@(yCont, _yMode)) outFolder (title, plotData) =
     void $
-        renderableToFile fileOpts filePathTime $
+        renderableToFile fileOpts (filePath yCont) $
             fillBackground def $
-                gridToRenderable $ layoutToGrid (chartLayout mode)
+                gridToRenderable $ layoutToGrid chartLayout
     where
-    filePathTime =
-      case plotQuantity of
-        MaxMem -> outFolder ++ "/" ++ title ++ "-space.svg"
-        ExecTime -> outFolder ++ "/" ++ title ++ "-time.svg"
-    chartLayout FnOpReprs =
+    filePath MaxMem = outFolder ++ "/" ++ title ++ "-space.svg"
+    filePath ExecTime = outFolder ++ "/" ++ title ++ "-time.svg"
+    filePath Accuracy = outFolder ++ "/" ++ title ++ "-bits.svg"
+    filePath BenchN = outFolder ++ "/" ++ title ++ "-n.svg"
+
+    chartLayout =
         execEC $
         do
-        layout_y_axis . laxis_generate .= scaledLogAxis def (minV,maxV)
-        -- layout_y_axis . laxis_generate .= scaledAxis def (minV,maxV)
-        layout_y_axis . laxis_title .= plotQuantityTitle
-        layout_x_axis . laxis_generate .= scaledAxisExtraXSteps def (minAC, maxAC) [24,53]
-        layout_x_axis . laxis_title .= "Accuracy (bits)"
+        layout_y_axis . laxis_generate .= axisForModeCont yAxis
+        layout_y_axis . laxis_title .= axisTitle yCont
+
+        layout_x_axis . laxis_generate .= axisForModeCont xAxis
+        layout_x_axis . laxis_title .= axisTitle xCont
+
         layout_x_axis . laxis_style . axis_label_gap .= 1
         mapM layoutPlotData $ zip [0..] plotData
-    chartLayout Ops =
-        execEC $
-        do
-        layout_y_axis . laxis_title .= plotQuantityTitle
-        layout_x_axis . laxis_title .= "Requested Accuracy (bits)"
-        layout_x_axis . laxis_style . axis_label_gap .= 1
-        mapM layoutPlotData $ zip [0..] plotData
-    (minAC, maxAC) = (0,100) :: (Double, Double)
-    (minV,maxV) =
-      case plotQuantity of
-        MaxMem -> (1,1000000)
-        ExecTime -> (0.01,1000)
-    plotQuantityTitle =
-      case plotQuantity of MaxMem -> "Space (kB)"; ExecTime -> "Time (s)"
-    layoutPlotData (benchNum, (benchName, benchPoints)) =
-        plotPoints name
-          [(ac, case plotQuantity of MaxMem -> maxmem; ExecTime -> time)
-            | (ac,time,maxmem) <- benchPoints]
+
+    axisTitle MaxMem = "Space (kB)"
+    axisTitle ExecTime = "Time (s)"
+    axisTitle Accuracy = "Requested Accuracy (bits)"
+    axisTitle BenchN = "n"
+
+    axisForModeCont (_, Lin) = autoScaledAxis def
+    axisForModeCont (_, Log) = autoScaledLogAxis def
+    axisForModeCont (Accuracy, LinTo limit) = scaledAxisExtraXSteps def (lowLin limit, convert limit) [24,53]
+    axisForModeCont (_, LinTo limit) = scaledAxis def (lowLin limit, convert limit)
+    axisForModeCont (_, LogTo limit) = scaledLogAxis def (lowLog limit, convert limit)
+
+    lowLog :: Int -> Double
+    lowLog limit
+      | limit > 1000 = 1
+      | otherwise = 0.01
+
+    lowLin :: Int -> Double
+    lowLin _ = 0
+
+    layoutPlotData (lineNum, (lineName, linePoints)) =
+        plotPoints name linePoints
         where
         (name, colour, shape) =
-          case mode of
-            FnOpReprs -> (reprShow benchName, reprColor benchName, reprShape benchName)
-            Ops -> (benchName, stdColors !! benchNum, stdShapes !! benchNum)
+          case lineId of
+            FnRepr -> (reprShow lineName, reprColor lineName, reprShape lineName)
+            _ -> (lineName, stdColors !! lineNum, stdShapes !! lineNum)
         plotPoints ltitle values =
             do
             plot $ pointsLayout ltitle values
