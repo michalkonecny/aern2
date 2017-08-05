@@ -19,7 +19,7 @@ type IntPoly = PowPoly Integer
 
 separablePart :: IntPoly -> IntPoly
 separablePart p =
-  if degree (derivative p) <= 0 then
+  if degree p <= 0 || degree (derivative p) <= 0 then
     p
   else
     snd $ gcdAndgcdFreePart p (derivative p)

@@ -17,10 +17,13 @@ import AERN2.Interval
 import AERN2.PQueue (PQueue)
 import qualified AERN2.PQueue as Q
 
+import Data.Ord (Ordering(..))
+import qualified Data.List as List
 import Data.Maybe
 
 import qualified Prelude
 
+import Debug.Trace
 
 type GenFun =
   Dyadic -> Dyadic -> Accuracy ->
@@ -55,7 +58,8 @@ genericMaximum f lBall rBall targetAcc =
     || ac < bits 20 then
       ac + 5
     else
-      max targetAcc (bits $ ceiling $ 1.3*(fromAccuracy ac))
+      min (bits $ ceiling $ 1.1*(fromAccuracy targetAcc))
+          (bits $ 2*(fromAccuracy ac))
 
   splitUntilAccurate :: PQueue MaximisationInterval -> MPBall
   splitUntilAccurate q =
@@ -66,12 +70,12 @@ genericMaximum f lBall rBall targetAcc =
       mi_value mi
     else
       case mi of
-        SearchInterval a b uA uB v tac aac g dg bs ->
-          if getAccuracy v >= aac then -- TODO: maybe also if accuracy doesn't change over 2-3 iterations
+        SearchInterval a b uA uB _v tac aac g dg bs ->
+          {-if getAccuracy v >= aac then -- TODO: maybe also if accuracy doesn't change over 2-3 iterations
             splitUntilAccurate $
               insertAll (mi_searchIntervals f a b (updateAccuracy tac))
               q'
-          else
+          else-}
             case signVars bs of
               Nothing ->
                 splitUntilAccurate $
@@ -131,23 +135,34 @@ mi_mononoteValue :: Dyadic -> Dyadic -> (MPBall -> MPBall) -> Accuracy -> MPBall
 mi_mononoteValue l r f ac =
   max (evalOnDyadic f l ac) (evalOnDyadic f r ac)
 
-mi_criticalValue :: Dyadic -> Dyadic -> (MPBall -> MPBall) -> (Rational -> Rational) -> Accuracy -> MPBall
+mi_criticalValue :: Dyadic -> Dyadic -> (MPBall -> MPBall) -> (Rational -> Rational) -> Accuracy -> (Dyadic, Dyadic, MPBall)
 mi_criticalValue l r f df ac =
-  max (evalOnDyadic f l ac) $
-    max (evalOnDyadic f r ac)  $
-    aux l r (sign $ df (rational l)) (sign $ df (rational r))
+  head $ List.sortBy (\(_,_,v0) (_,_,v1) -> comp v0 v1) [(l,l,fl), (r,r,fr), (cl,cr,fc)]
   where
+  comp a b =
+    let
+    (_, aR :: MPBall) = endpoints a
+    (_, bR :: MPBall) = endpoints b
+    in
+    if aR !<! bR then
+      GT
+    else
+      LT
+  fl = evalOnDyadic f l ac
+  fr = evalOnDyadic f r ac
+  (cl, cr, fc) = aux l r (sign $ df (rational l)) (sign $ df (rational r))
+
   sign x
     | x == 0    =  0
     | x < 0     = -1
     | otherwise =  1
-  aux :: Dyadic -> Dyadic -> Integer -> Integer -> MPBall
+  aux :: Dyadic -> Dyadic -> Integer -> Integer -> (Dyadic, Dyadic,  MPBall)
   aux a b sgA sgB =
     let
       v = evalOnInterval f a b ac
     in
       if getAccuracy v >= ac then
-        v
+        (a, b, v)
       else
         let
           m   = (dyadic 0.5)*(a + b)
@@ -155,7 +170,7 @@ mi_criticalValue l r f df ac =
           sgM = sign dfm
         in
           if sgM == 0 then
-            evalOnDyadic f m ac
+            (m, m, evalOnDyadic f m ac)
           else if sgM * sgA < 0 then
             aux a m sgA sgM
           else
@@ -163,15 +178,43 @@ mi_criticalValue l r f df ac =
 
 mi_criticalInterval :: Dyadic -> Dyadic -> (MPBall -> MPBall) -> (Rational -> Rational) -> Accuracy -> Accuracy -> MaximisationInterval
 mi_criticalInterval l r f df tac aac =
-  CriticalInterval l r cv tac aac
+  CriticalInterval l' r' cv tac aac
   where
-  cv = mi_criticalValue l r f df (min tac aac)
+  ac = min tac aac
+  (bl, br, cv) = mi_criticalValue l r f df ac
+  (l',r')      = approxMax cv bl br f ac l r
 
 mi_monotoneInterval :: Dyadic -> Dyadic -> (MPBall -> MPBall) -> Accuracy -> Accuracy -> MaximisationInterval
 mi_monotoneInterval l r f tac aac =
-    CriticalInterval l r mv tac aac
+  if fl !>! fr then
+      let
+      r' = aux r
+      aux a =
+        let
+         a' = (dyadic 0.5)*a + (dyadic 0.5)*l
+        in
+        if evalOnDyadic f a' (min tac aac) !<! fl then
+          aux a'
+        else
+          a
+      in
+        CriticalInterval l r' fl tac aac
+    else
+      let
+      l' = aux l
+      aux a =
+        let
+         a' = (dyadic 0.5)*a + (dyadic 0.5)*r
+        in
+        if evalOnDyadic f a' (min tac aac) !<! fr then
+          aux a'
+        else
+          a
+      in
+        CriticalInterval l' r fr tac aac
     where
-    mv = mi_mononoteValue l r f (min tac aac)
+    fl = evalOnDyadic f l (min tac aac)
+    fr = evalOnDyadic f r (min tac aac)
 
 mi_searchIntervals :: GenFun -> Dyadic -> Dyadic -> Accuracy ->  [MaximisationInterval]
 mi_searchIntervals f l r ac =
@@ -204,8 +247,57 @@ instance Prelude.Ord MaximisationInterval where
     (_, u0 :: MPBall) = endpoints $ mi_value mi0
     (_, u1 :: MPBall) = endpoints $ mi_value mi1
 
-
 {- auxiliary functions -}
+
+approxMax
+  :: MPBall -> Dyadic -> Dyadic -> (MPBall -> MPBall) -> Accuracy ->
+     Dyadic -> Dyadic -> (Dyadic, Dyadic)
+approxMax m bl br f ac l r =
+  case (fl'smaller, fr'smaller) of
+    (True, True)   ->
+      approxMax m bl br f ac l' r'
+    (False, True)  ->
+      approxMaxRight m bl br f ac l r'
+    (True, False)  ->
+      approxMaxLeft m bl br f ac l' r
+    (False, False) ->
+      (l,r)
+  where
+  h = dyadic 0.5
+  l' = h*l + h*bl
+  r' = h*r + h*br
+  fl' = evalOnDyadic f l' ac
+  fr' = evalOnDyadic f r' ac
+  fl'smaller = fl' !<! m
+  fr'smaller = fr' !<! m
+
+approxMaxLeft
+  :: MPBall -> Dyadic -> Dyadic -> (MPBall -> MPBall) -> Accuracy ->
+     Dyadic -> Dyadic -> (Dyadic, Dyadic)
+approxMaxLeft m bl br f ac l r =
+  if fl'smaller then
+    approxMaxLeft m bl br f ac l' r
+  else
+    (l, r)
+  where
+  h = dyadic 0.5
+  l' = h*l + h*bl
+  fl' = evalOnDyadic f l' ac
+  fl'smaller = fl' !<! m
+
+approxMaxRight
+  :: MPBall -> Dyadic -> Dyadic -> (MPBall -> MPBall) -> Accuracy ->
+     Dyadic -> Dyadic -> (Dyadic, Dyadic)
+approxMaxRight m bl br f ac l r =
+  if fr'smaller then
+    approxMaxRight m bl br f ac l r'
+  else
+    (l, r)
+  where
+  h = dyadic 0.5
+  r' = h*r + h*br
+  fr' = evalOnDyadic f r' ac
+  fr'smaller = fr' !<! m
 
 insertAll :: (Prelude.Ord a) => [a] -> PQueue a -> PQueue a
 insertAll [] q = q

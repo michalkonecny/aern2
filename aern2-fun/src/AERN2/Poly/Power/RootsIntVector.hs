@@ -122,7 +122,7 @@ initialBernsteinCoefs p@(PowPoly (Poly ts)) e l r =
   where
   lI = if l == 1.0 then 2 else 1
   d = degree p
-  tsV = V.generate (int $ d + 1) (\i -> fromJust $ Map.lookup (integer i) ts)
+  tsV = V.generate (int $ d + 1) (\i -> terms_lookupCoeff ts (integer i))
   csI = transform (-1) (integer lI) $ tsV
   binoms = V.generate (int $ d + 1) (\k -> binom d (d - k))
   bsFrac =
