@@ -310,14 +310,14 @@ function fracSinSCAllReprs
 
 function bumpyAllReprs
 {
-  repr_ball_max_paramss="10 15 20 25";
+  repr_ball_max_paramss="0 20 40 60 80";
   repr_ball_itg_paramss="10 12 13 14";
-  repr_dball_max_paramss="10 20 40 60 80 100";
+  repr_dball_max_paramss="0 20 40 60 80";
   repr_dball_itg_paramss="10 15 20 25 30";
   # repr_poly_max_paramss="01 05 08";
   # repr_poly_itg_paramss="01 05 08";
-  repr_ppoly_max_paramss="10 20";
-  repr_ppoly_itg_paramss="10 20";
+  repr_ppoly_max_paramss="10 20 40 60 80 100";
+  repr_ppoly_itg_paramss="10 20 40 60 80 100";
   # repr_frac_max_paramss="10 20 40 60 80";
   # repr_frac_itg_paramss="10 15 20";
   # repr_lpoly_max_paramss="10 20 40 60";

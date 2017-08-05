@@ -217,11 +217,13 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 | :---: | :---: |
 | <img src="benchresults/charts/hat-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/hat-integrate-time.png?raw=true" width="300"> |
 
+-->
 
 ### A non-smooth function with multiple maxima
 
 ![bumpy](http://latex.codecogs.com/gif.latex?\\max(\\sin(10x),\\cos(11x)))
 <img src="plots/bumpy.png?raw=true" width="150">
 
-_(coming soon)_
--->
+| Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
+| :---: | :---: |
+| <img src="benchresults/charts/bumpy-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/bumpy-integrate-time.png?raw=true" width="300"> |

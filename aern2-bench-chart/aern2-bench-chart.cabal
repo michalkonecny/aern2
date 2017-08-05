@@ -23,6 +23,7 @@ executable aern2-bench-chart
   build-depends:
                    base >= 4.4,
                    containers,
+                   convertible,
                    Chart,
                    Chart-diagrams,
                    lens
