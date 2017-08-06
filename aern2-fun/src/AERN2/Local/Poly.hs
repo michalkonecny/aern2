@@ -33,7 +33,7 @@ variable l r ac =
   dom = Interval l r
 
 debug_useSeparablePart :: Bool
-debug_useSeparablePart = False
+debug_useSeparablePart = True
 
 instance GenericMaximum (LocalPoly MPBall) where
   genericise f l r ac =
