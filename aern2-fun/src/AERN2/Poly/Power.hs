@@ -14,7 +14,7 @@
 module AERN2.Poly.Power
 (
   module AERN2.Poly.Power.Type
-, module AERN2.Poly.Power.Roots
+, module AERN2.Poly.Power.RootsInt
 , module AERN2.Poly.Power.Eval
 , module AERN2.Poly.Power.Maximum
 , module AERN2.Poly.Power.SizeReduction
@@ -33,6 +33,6 @@ where
 
 import AERN2.Poly.Power.Type
 import AERN2.Poly.Power.SizeReduction
-import AERN2.Poly.Power.Roots
+import AERN2.Poly.Power.RootsInt
 import AERN2.Poly.Power.Eval
 import AERN2.Poly.Power.Maximum

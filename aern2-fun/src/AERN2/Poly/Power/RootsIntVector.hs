@@ -247,7 +247,12 @@ findRootsWithEvaluation poly eval valueOK l r =
           fa = evalDirect poly a
           fm = evalDirect poly m
           in
-          if fa*fm < 0 then
+          if fm == 0 then
+            let
+             j = Interval m m
+            in
+            [(j, eval j)]
+          else if fa*fm < 0 then
             splitUntilAccurate (Interval a m, bs, Yes)
           else
             splitUntilAccurate (Interval m b, bs, Yes)
@@ -262,7 +267,7 @@ findRootsWithEvaluation poly eval valueOK l r =
               0 -> []
               1 -> splitUntilAccurate (i, (errorBound 0, 0, V.empty), Yes)
               _ ->
-                if (pm :: Integer) == 0 then let j = Interval m m in [(j, eval j)] else []
+                (if (pm :: Integer) == 0 then let j = Interval m m in [(j, eval j)] else [])
                 ++ splitUntilAccurate (Interval a m, bsL, DontKnow)
                 ++ splitUntilAccurate (Interval m b, bsR, DontKnow)
 
@@ -289,7 +294,9 @@ findRoots poly intervalOK l r =  -- equivalent to (map fst $ findRootsWithEvalua
           fa = evalDirect poly a
           fm = evalDirect poly m
           in
-          if fa*fm < 0 then
+          if fm == 0 then
+            [Interval m m]
+          else if fa*fm < 0 then
             splitUntilAccurate (Interval a m, bs, Yes)
           else
             splitUntilAccurate (Interval m b, bs, Yes)
@@ -304,7 +311,7 @@ findRoots poly intervalOK l r =  -- equivalent to (map fst $ findRootsWithEvalua
               0 -> []
               1 -> splitUntilAccurate (i, (errorBound 0, 0, V.empty), Yes)
               _ ->
-                if (pm :: Integer) == 0 then [Interval m m] else []
+                (if (pm :: Integer) == 0 then [Interval m m] else [])
                 ++ splitUntilAccurate (Interval a m, bsL, DontKnow)
                 ++ splitUntilAccurate (Interval m b, bsR, DontKnow)
 

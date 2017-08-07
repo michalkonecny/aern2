@@ -57,7 +57,8 @@ import AERN2.RealFun.Operations
 
 import AERN2.Poly.Basics
 import AERN2.Poly.Conversion
-import qualified AERN2.Poly.Power as Pow
+import qualified AERN2.Poly.Power as Pow hiding (translate, contract)
+import qualified AERN2.Poly.Power.Roots as Pow
 
 chPolyMPBall :: (ConvertibleExactly t (ChPoly MPBall)) => t -> ChPoly MPBall
 chPolyMPBall = convertExactly
