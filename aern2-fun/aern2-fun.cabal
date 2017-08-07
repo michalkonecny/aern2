@@ -131,6 +131,7 @@ library
     AERN2.Analytic.Type
     AERN2.Analytic.Field
     AERN2.Analytic
+    AERN2.Poly.Cheb.Analytic
 
 
 test-suite spec
