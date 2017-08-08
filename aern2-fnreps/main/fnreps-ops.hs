@@ -2,7 +2,7 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE CPP #-}
 #define DEBUG
-#define BUMPY
+-- #define BUMPY
 module Main where
 
 #ifdef DEBUG

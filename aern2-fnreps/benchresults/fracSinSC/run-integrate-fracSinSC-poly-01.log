@@ -4,24 +4,24 @@ inv: acG = bits 3; ac = bits 3
 res: acG = bits 39; ac = bits 1
 integratePB: accuracy f = bits 1
 computing integrate  (sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]
-result = [3.427417646960567e-2 ± <2^(-1)]
+result = [3.427417646959613e-2 ± <2^(-1)]
 accuracy: bits 1
 precision = Precision 1010
 	Command being timed: "aern2-fnreps-ops integrate fracSinSC poly 01"
-	User time (seconds): 29.54
-	System time (seconds): 0.18
-	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:29.74
+	User time (seconds): 28.26
+	System time (seconds): 0.14
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:28.40
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 83880
+	Maximum resident set size (kbytes): 82164
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 74908
+	Minor (reclaiming a frame) page faults: 76068
 	Voluntary context switches: 1
-	Involuntary context switches: 982
+	Involuntary context switches: 34
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

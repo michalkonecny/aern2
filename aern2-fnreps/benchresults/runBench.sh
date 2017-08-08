@@ -208,10 +208,10 @@ function rungeAllReprs
   repr_dball_itg_paramss="05 10 15 20 25 30 35";
   repr_poly_max_paramss="01 08 20";
   repr_poly_itg_paramss="01 08 20";
-  repr_ppoly_max_paramss="10 20 40 60 80";
-  repr_ppoly_itg_paramss="10 20 40 60 80";
-  repr_frac_max_paramss="10 20 40 60 80";
-  repr_frac_itg_paramss="30 40 60 80";
+  repr_ppoly_max_paramss="10 20 40 60 80 100";
+  repr_ppoly_itg_paramss="10 20 40 60 80 100";
+  repr_frac_max_paramss="10 20 40 60 80 100";
+  repr_frac_itg_paramss="30 40 60 80 100";
   repr_lpoly_max_paramss="20 40 60 80 100";
   repr_lpoly_itg_paramss="20 40 60 80 100";
   repr_lppoly_max_paramss="20 40 60 80 100";
@@ -235,10 +235,10 @@ function rungeSCAllReprs
   repr_dball_itg_paramss="05 10 15 20 25 30";
   repr_poly_max_paramss="03 05 12";
   repr_poly_itg_paramss="03 05 12";
-  repr_ppoly_max_paramss="10 20 40 60 80";
-  repr_ppoly_itg_paramss="10 20 40 60 80";
-  repr_frac_max_paramss="10 20 40 60 80";
-  repr_frac_itg_paramss="30 40 60 80";
+  repr_ppoly_max_paramss="10 20 40 60 80 100";
+  repr_ppoly_itg_paramss="10 20 40 60 80 100";
+  repr_frac_max_paramss="10 20 40 60 80 100";
+  repr_frac_itg_paramss="30 40 60 80 100";
   repr_lpoly_max_paramss="20 40 60 80 100";
   repr_lpoly_itg_paramss="20 40 60 80 100";
   repr_lppoly_max_paramss="20 40 60 80 100";
@@ -266,8 +266,8 @@ function fracSinAllReprs
   repr_ppoly_itg_paramss="10 15 20 25";
   repr_frac_max_paramss="10 20 40 60 80 100";
   repr_frac_itg_paramss="10 15 20 25";
-  repr_lpoly_max_paramss="10 20 40 60";
-  repr_lpoly_itg_paramss="10 20 40 60";
+  repr_lpoly_max_paramss="10 20 40 60 80 100";
+  repr_lpoly_itg_paramss="10 20 40 60 80 100";
   repr_lppoly_max_paramss="10 20 40 60 80 100";
   repr_lppoly_itg_paramss="10 20 40 60 80 100";
   repr_lfrac_max_paramss="10 20 40 60 80 100";
@@ -291,9 +291,11 @@ function fracSinSCAllReprs
   repr_poly_itg_paramss="01 05 08";
   repr_ppoly_max_paramss="10 15 20";
   repr_ppoly_itg_paramss="10 15 20";
-  repr_frac_max_paramss="10 20 40 60 80";
-  # repr_frac_itg_paramss="10 15 20";
-  repr_lpoly_max_paramss="10 20 40 60";
+  repr_frac_max_paramss="10 20 40 60 80 100";
+  # repr_frac_itg_paramss="02 05 10";
+    # unable to get a good result because don't know how to
+    #   set effort for translation to PPoly separately from the integration effort
+  repr_lpoly_max_paramss="10 20 40 60 80 100";
   repr_lpoly_itg_paramss="10 20 40 60";
   repr_lppoly_max_paramss="10 20 40 60 80 100";
   repr_lppoly_itg_paramss="10 20 40 60 80 100";
@@ -338,4 +340,4 @@ rungeAllReprs
 rungeSCAllReprs
 fracSinAllReprs
 fracSinSCAllReprs
-bumpyAllReprs
+# bumpyAllReprs

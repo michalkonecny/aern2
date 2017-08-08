@@ -1,22 +1,22 @@
 computing integrate  1/(100x^2+1) over [-1,1]
-result = [2.94225532952056e-1 ± <2^(-23)]
+result = [2.942255329520566e-1 ± <2^(-23)]
 accuracy: bits 23
-precision = Precision 62
+precision = Precision 110
 	Command being timed: "aern2-fnreps-ops integrate runge frac 30"
-	User time (seconds): 3.13
+	User time (seconds): 3.26
 	System time (seconds): 0.01
-	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:03.14
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:03.27
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 24796
+	Maximum resident set size (kbytes): 18796
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 3982
+	Minor (reclaiming a frame) page faults: 3576
 	Voluntary context switches: 1
-	Involuntary context switches: 9
+	Involuntary context switches: 6
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

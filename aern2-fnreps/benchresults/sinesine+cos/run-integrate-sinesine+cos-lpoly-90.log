@@ -3,20 +3,20 @@ result = [-2.396213547883964e-1 ± <2^(-93)]
 accuracy: bits 93
 precision = Precision 3616
 	Command being timed: "aern2-fnreps-ops integrate sinesine+cos lpoly 90"
-	User time (seconds): 36.48
-	System time (seconds): 0.22
+	User time (seconds): 37.97
+	System time (seconds): 0.23
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:36.72
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:38.22
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 34908
+	Maximum resident set size (kbytes): 35268
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 102861
+	Minor (reclaiming a frame) page faults: 114442
 	Voluntary context switches: 1
-	Involuntary context switches: 61
+	Involuntary context switches: 69
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

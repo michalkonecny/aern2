@@ -1,25 +1,25 @@
-numer: acG = bits 60; ac = bits 38
-inv: acG = bits 10; ac = Exact
-res: acG = bits 60; ac = bits 38
+numer: acG = bits 420; ac = bits 400
+inv: acG = bits 800; ac = bits 101
+res: acG = bits 800; ac = bits 99
 computing integrate  (sin(10x)+cos(20x))/(100x^2+1) over [-1,1]
-result = [4.336916185542231e-2 ± <2^(81)]
-accuracy: bits -81
-precision = Precision 442
-	Command being timed: "aern2-fnreps-ops integrate rungeSC frac 10"
-	User time (seconds): 7.81
-	System time (seconds): 0.07
+result = [4.336916185540269e-2 ± <2^(-103)]
+accuracy: bits 103
+precision = Precision 1346
+	Command being timed: "aern2-fnreps-ops integrate rungeSC ppoly 100"
+	User time (seconds): 23.66
+	System time (seconds): 0.14
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:07.89
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:23.81
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 76868
+	Maximum resident set size (kbytes): 260580
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 28363
+	Minor (reclaiming a frame) page faults: 105835
 	Voluntary context switches: 1
-	Involuntary context switches: 19
+	Involuntary context switches: 35
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8
