@@ -3,18 +3,18 @@ result = [7.61529428926379e-1 ± <2^(-64)]
 accuracy: bits 64
 precision = Precision 123
 	Command being timed: "aern2-fnreps-ops integrate bumpy lppoly 60"
-	User time (seconds): 2.94
-	System time (seconds): 0.01
+	User time (seconds): 3.08
+	System time (seconds): 0.02
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.95
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:03.11
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 17220
+	Maximum resident set size (kbytes): 17272
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 3003
+	Minor (reclaiming a frame) page faults: 3113
 	Voluntary context switches: 1
 	Involuntary context switches: 8
 	Swaps: 0

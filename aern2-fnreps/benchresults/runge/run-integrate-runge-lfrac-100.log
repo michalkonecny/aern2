@@ -1,22 +1,22 @@
 computing integrate  1/(100x^2+1) over [-1,1]
 result = [2.942255348607469e-1 ± <2^(-100)]
 accuracy: bits 100
-precision = Precision 850
+precision = Precision 898
 	Command being timed: "aern2-fnreps-ops integrate runge lfrac 100"
-	User time (seconds): 7.62
+	User time (seconds): 7.82
 	System time (seconds): 0.10
-	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:07.73
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:07.93
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 33704
+	Maximum resident set size (kbytes): 33140
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 98739
+	Minor (reclaiming a frame) page faults: 99919
 	Voluntary context switches: 1
-	Involuntary context switches: 19
+	Involuntary context switches: 14
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

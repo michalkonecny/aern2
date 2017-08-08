@@ -7,20 +7,20 @@ result = [3.428442599655032e-2 ± <2^(-63)]
 accuracy: bits 63
 precision = Precision 1648
 	Command being timed: "aern2-fnreps-ops integrate fracSinSC lpoly 60"
-	User time (seconds): 225.11
-	System time (seconds): 0.93
+	User time (seconds): 225.68
+	System time (seconds): 0.96
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:46.04
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:46.64
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 20304
+	Maximum resident set size (kbytes): 20856
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 10633
+	Minor (reclaiming a frame) page faults: 12375
 	Voluntary context switches: 1
-	Involuntary context switches: 221
+	Involuntary context switches: 231
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 16

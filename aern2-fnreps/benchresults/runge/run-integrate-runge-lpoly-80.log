@@ -3,20 +3,20 @@ result = [2.942255348607469e-1 ± <2^(-87)]
 accuracy: bits 87
 precision = Precision 664
 	Command being timed: "aern2-fnreps-ops integrate runge lpoly 80"
-	User time (seconds): 108.51
-	System time (seconds): 0.41
+	User time (seconds): 104.93
+	System time (seconds): 0.38
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:48.93
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:45.32
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 15356
+	Maximum resident set size (kbytes): 15112
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 3145
+	Minor (reclaiming a frame) page faults: 3999
 	Voluntary context switches: 1
-	Involuntary context switches: 133
+	Involuntary context switches: 126
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

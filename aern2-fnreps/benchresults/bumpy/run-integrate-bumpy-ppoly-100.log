@@ -3,20 +3,20 @@ result = [7.61529428926379e-1 ± <2^(-96)]
 accuracy: bits 96
 precision = Precision 378
 	Command being timed: "aern2-fnreps-ops integrate bumpy ppoly 100"
-	User time (seconds): 1.73
+	User time (seconds): 1.78
 	System time (seconds): 0.02
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.76
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.81
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 44696
+	Maximum resident set size (kbytes): 44964
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 9075
+	Minor (reclaiming a frame) page faults: 9091
 	Voluntary context switches: 1
-	Involuntary context switches: 6
+	Involuntary context switches: 8
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

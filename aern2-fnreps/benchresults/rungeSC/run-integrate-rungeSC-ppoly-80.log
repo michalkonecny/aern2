@@ -6,20 +6,20 @@ result = [4.336916185540269e-2 ± <2^(-83)]
 accuracy: bits 83
 precision = Precision 1163
 	Command being timed: "aern2-fnreps-ops integrate rungeSC ppoly 80"
-	User time (seconds): 18.50
-	System time (seconds): 0.16
+	User time (seconds): 18.05
+	System time (seconds): 0.12
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:18.67
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:18.17
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 276668
+	Maximum resident set size (kbytes): 256404
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 81407
+	Minor (reclaiming a frame) page faults: 81042
 	Voluntary context switches: 1
-	Involuntary context switches: 43
+	Involuntary context switches: 29
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

@@ -80,7 +80,7 @@ library
     AERN2.Poly.Cheb.MaximumInt
     AERN2.Poly.Cheb.MaximumPrime
     AERN2.Poly.Cheb.Maximum
-    -- AERN2.Poly.Cheb.MinMax
+    AERN2.Poly.Cheb.MinMax
     AERN2.Poly.Cheb.DCT
     AERN2.Poly.Cheb.Ring
     AERN2.Poly.Cheb.Field

@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE CPP #-}
-#define DEBUG
+-- #define DEBUG
 {-|
     Module      :  AERN2.PPoly.MinMax
     Description :  PPoly pointwise min and max
@@ -31,7 +31,7 @@ import AERN2.MP.Dyadic
 
 import AERN2.Interval
 
-import AERN2.RealFun.Operations
+-- import AERN2.RealFun.Operations
 
 import AERN2.Poly.Cheb
 import AERN2.Poly.Cheb.MaximumInt (intify)
@@ -63,11 +63,11 @@ ppolyMax a b =
     where
     acGuide = getAccuracyGuide pC `max` getAccuracyGuide qC
     precision = getPrecision pC `max` getPrecision qC
-    realAcc = getAccuracy p `min` getAccuracy q
+    -- realAcc = getAccuracy p `min` getAccuracy q
 
     diffC  = centre $ p - q
     diffC' = derivativeExact diffC
-    evalOnInterval (Interval l r) =
+    evalDiffOnInterval (Interval l r) =
         evalDf diffC diffC' $
           fromEndpoints (mpBallP precision l) (mpBallP precision r)
     (_diffCIntErr, diffCInt) = intify diffC
@@ -77,7 +77,7 @@ ppolyMax a b =
         (centre $ mpBallP (ac2prec acGuide) $ (l + r)/!2, errorBound err)) $
       findRootsWithEvaluation
         (cheb2Power diffCInt)
-        (abs . evalOnInterval)
+        (abs . evalDiffOnInterval)
         (\v -> (v <= (dyadic 0.5)^!(fromAccuracy acGuide)) == Just True)
         (rational domL) (rational domR)
     intervals :: [(DyadicInterval, ErrorBound)]
