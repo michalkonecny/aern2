@@ -1,0 +1,41 @@
+chebMaxDCT: acGuide = bits 14
+chebMaxDCT: tryWithDegree: d = 16
+chebMaxDCT: tryWithDegree: d = 16; getAccuracy maxCd = bits 1
+chebMaxDCT: tryWithDegree: d = 16; dctAccuracy = bits 0; maxEd = 1.703011210814222
+chebMaxDCT: tryWithDegree: d = 32
+chebMaxDCT: tryWithDegree: d = 32; getAccuracy maxCd = bits 2
+chebMaxDCT: tryWithDegree: d = 32; dctAccuracy = bits 1; maxEd = 5.634217299191289e-1
+chebMaxDCT: tryWithDegree: d = 64
+chebMaxDCT: tryWithDegree: d = 64; getAccuracy maxCd = bits 3
+chebMaxDCT: tryWithDegree: d = 64; dctAccuracy = bits 2; maxEd = 2.934833638902605e-1
+chebMaxDCT: tryWithDegree: d = 128
+chebMaxDCT: tryWithDegree: d = 128; getAccuracy maxCd = bits 4
+chebMaxDCT: tryWithDegree: d = 128; dctAccuracy = bits 2; maxEd = 1.765655208030453e-1
+integratePB: accuracy f = bits 2
+computing integrate  max(sin(10x),cos(11x)) over [-1,1]
+result = [7.621595043130893e-1 ± <2^(-1)]
+accuracy: bits 1
+precision = Precision 2536
+	Command being timed: "aern2-fnreps-ops integrate bumpy poly 09"
+	User time (seconds): 65.96
+	System time (seconds): 0.90
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:06.87
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 63356
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 694722
+	Voluntary context switches: 1
+	Involuntary context switches: 91
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 16
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
