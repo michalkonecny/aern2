@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE CPP #-}
--- #define DEBUG
+#define DEBUG
 {-|
     Module      :  AERN2.Poly.Cheb.MinMax
     Description :  Poly pointwise min and max
@@ -27,9 +27,9 @@ import Debug.Trace (trace)
 import MixedTypesNumPrelude
 import Text.Printf
 
-import Control.CollectErrors
+-- import Control.CollectErrors
 
-import AERN2.Normalize
+-- import AERN2.Normalize
 
 import AERN2.MP
 import AERN2.MP.Dyadic
@@ -40,167 +40,128 @@ import AERN2.Interval
 
 import AERN2.RealFun.Operations
 
-import AERN2.Poly.Basics
+-- import AERN2.Poly.Basics
 import AERN2.Poly.Cheb.Type
+import AERN2.Poly.Cheb.Eval
+import AERN2.Poly.Cheb.Derivative
 import AERN2.Poly.Cheb.DCT
 import AERN2.Poly.Cheb.MaximumInt (intify)
 import AERN2.Poly.Conversion (cheb2Power)
-import AERN2.Poly.Power.RootsIntVector (findRootsWithAccuracy)
+import AERN2.Poly.Power.RootsIntVector (findRootsWithEvaluation)
 import AERN2.Poly.Cheb.Ring ()
 
 {- min/max -}
-
--- isolateIntersections ::
---   -- (PolyCoeffRing c, CanNormalize (ChPoly c)) =>
---   (c~MPBall) =>
---   ChPoly c -> ChPoly c -> [(DyadicInterval, Maybe Ordering, MPBall)]
--- isolateIntersections p q =
---   mergeSameSign $
---     bisect (getDomain p)
---   where
---   acGuide = getAccuracyGuide p `max` getAccuracyGuide q
---   bisect dom
---     | diffMin !>=! 0 = [(dom, Just GT, diffMin)]
---     | diffMax !<=! 0 = [(dom, Just LT, diffMax)]
---     | getAccuracy diffBall >= acGuide = [(dom, Nothing, diffBall)]
---     | otherwise = bisect domL ++ bisect domR
---     where
---     diff = p - q
---     diffMax = maximumOverDom diff dom
---     diffMin = minimumOverDom diff dom
---     diffBall = fromEndpoints diffMin diffMax :: MPBall
---     (domL, domR) = split dom
---   mergeSameSign =
---     map mergeGroup . groupBy sameSign
---     where
---     sameSign (_dom1, Just ord1, _) (_dom2, Just ord2, _) = (ord1 == ord2)
---     sameSign _ _ = False
---     mergeGroup = foldl1 mergeSegments
---     mergeSegments (dom1, Just LT, diff1) (dom2, Just LT, diff2) =
---       (dom1 `union` dom2, Just LT, diff1 `max` diff2)
---     mergeSegments (dom1, Just GT, diff1) (dom2, Just GT, diff2) =
---       (dom1 `union` dom2, Just GT, diff1 `min` diff2)
 
 chebMaxDCT ::
   (c ~ MPBall) =>
   ChPoly c -> ChPoly c -> ChPoly c
 chebMaxDCT p q =
   case diffCRoots of
-    [] -> undefined -- TODO: p or q, but sometimes need to enlarge the radius
-    _ -> undefined -- TODO: use DCT with increasing size until the accuracy is OK
+    [] -- no roots -> pC and qC are separated (but p and q may still overlap)
+      | diffC_onDom !<=! (- pqRB) ->
+          q -- enclosure tubes are certainly separated, q >= p
+      | pqRB !<=! diffC_onDom ->
+          p -- enclosure tubes are certainly separated, p <= q
+      | diffC_onDomL !<=! 0 ->
+          updateRadius (const pqR) qC -- certainly pC <= qC
+      | diffC_onDomL !>=! 0 ->
+          updateRadius (const pqR) pC -- certainly pC >= qC
+      | otherwise ->
+          updateRadius (const (pqR + errorBound diffC_onDom)) pC -- pC and qC very close...
+    _ ->
+      usingDCT
   where
   acGuide = getAccuracyGuide p `max` getAccuracyGuide q
+  precision = getPrecision pC `max` getPrecision qC
 
   -- separate radius and exact dyadic polynomials:
   pC = centreAsBall p
   qC = centreAsBall q
 
-  pR = mpBall $ radius p
-  qR = mpBall $ radius q
+  pR = radius p
+  qR = radius q
+  pqR = pR `max` qR
+  pqRB = mpBall pqR
 
   -- enclose roots of pC-qC:
   diffC = pC - qC
-  Interval domL domR = getDomain diffC
-  (diffCIntErr, diffCInt) = intify diffC
-  diffCRoots = findRootsWithAccuracy (cheb2Power diffCInt) acGuide (rational domL) (rational domR)
+  diffC' = derivativeExact diffC
+  evalDiffOnInterval (Interval l r) =
+      evalDf diffC diffC' $
+        fromEndpoints (mpBallP precision l) (mpBallP precision r)
+  (Interval domL domR) = getDomain diffC
+  diffC_onDom =
+      evalDiffOnInterval (Interval (rational domL) (rational domR))
+  diffC_onDomL =
+      evalDirect diffC (mpBallP precision domL)
 
-  rootSegments = aux (rational domL) diffCRoots
+  (_diffCIntErr, diffCInt) = intify diffC
+  diffCRoots =
+    map
+    (\(Interval l r, err) ->
+      (centre $ mpBallP (ac2prec acGuide) $ (l + r)/!2, errorBound err)) $
+    findRootsWithEvaluation
+      (cheb2Power diffCInt)
+      (abs . evalDiffOnInterval)
+      (\v -> (v !<=! (dyadic 0.5)^!(fromAccuracy acGuide)))
+      (rational domL) (rational domR)
+  segments :: [(DyadicInterval, ErrorBound)]
+  segments =
+    reverse $
+    aux [] (domL, errorBound 0) (diffCRoots ++ [(domR, errorBound 0)])
     where
-    aux l [] = [(l,rational domR, diffSample l)]
-    aux l (Interval rootsL rootsR:rest) =
-      (l, rootsL, diffSample l):(rootsL, rootsR, Nothing):(aux rootsR rest)
-    diffSample l = Just $ apply diffC (mpBallP (ac2prec acGuide) l)
+    aux is (l, e0) ((x, e1) : []) =
+      (Interval l x, max e0 e1) : is
+    aux is (l, e0) ((x, e1) : xs) =
+      aux ((Interval l x, max e0 e1) : is) (x, e1) xs
+    aux _ _ _ = error "internal error in Poly.Cheb.MinMax segments"
 
   -- bounding the error of a guess:
   boundError resGuess =
-    foldl1 max $ map onSegment rootSegments
+    foldl1 max $ map onSegment segments
     where
-    onSegment (l, r, Nothing) = undefined :: MPBall
+    _ = [resGuess, p] -- infer type of resGuess
+    onSegment (i@(Interval l r), e)
+      | pm !>=! qm = maxDifferenceFrom pC
+      | otherwise = maxDifferenceFrom qC
+      where
+      m  = (dyadic 0.5) * (l + r)
+      pm = evalDirect pC (mpBall m)
+      qm = evalDirect qC (mpBall m)
+      rad = max (pR + e) (qR + e)
 
--- initD = 16 -- degree p + degree q
---
---
---     r =
---       maybeTrace
---       (printf "chebDivideDCT: acGuide = %s, minQ = %s" (show acGuide) (show minQ)) $
---       tryWithDegree NoInformation initD
---
---     tryWithDegree prevAccuracy d =
---       maybeTrace
---       (printf "chebDivideDCT: tryWithDegree: d = %d" d) $
---       maybeTrace
---       (printf "chebDivideDCT: tryWithDegree: d = %d; getAccuracy rCd = %s" d (show $ getAccuracy rCd)) $
---       maybeTrace
---       (printf "chebDivideDCT: tryWithDegree: d = %d; rCMaxNorm = %s" d (show rCMaxNorm)) $
---       maybeTrace
---       (printf "chebDivideDCT: tryWithDegree: d = %d; maxDifferenceC = %s; dctAccuracy = %s; getAccuracy rEd = %s"
---         d (show maxDifferenceC) (show dctAccuracy) (show $ getAccuracy rEd)) $
---       res
---       where
---       res
---         | accurateEnough = updateRadius (+rEd) rCd
---         | otherwise = tryWithDegree dctAccuracy (2*d)
---       rCd = lift2_DCT (const $ const $ d) (/!) pC qC
---       rEd = errorBound $
---         (maxDifferenceC + pR + qR * rCMaxNorm) /! minQ
---       maxDifferenceC = maxNorm $ pC - rCd * qC
---       rCMaxNorm = maxNorm rCd
---       accurateEnough = dctAccuracy >= acGuide || dctAccuracy <= prevAccuracy -- stop iterating when no improvement
---       dctAccuracy = getAccuracy (errorBound $ maxDifferenceC/!minQ)
---
---     {-
---         |r(x) - p(x)/q(x)| <= max(|p(x) - r(x)*q(x)|) / min(|q(x)|)
---
---         Assuming q(x) does not change sign, min(|q(x)|) = min |range(q(x))|.
---
---         Even if f changes sign, we have max(|f(x)|) = max |range(f(x))|.
---
---         With f = p - rq in the above, we reduce the range to centres as follows:
---             range(p(x) - r(x)*q(x))
---             = range(pC(x) ± pR - r(x)*(qC(x)±qR))
---             ⊆ range(pC(x) ± pR - r(x)*qC(x) ± r(x)*qR))
---             ⊆ range(pC(x) - r(x)*qC(x)) ± pR ± max(r(x))*qR
---     -}
---
---
--- maxNorm ::
---   (r ~ MaximumOverDomType f (Domain f)
---   , r ~ MinimumOverDomType f (Domain f)
---   , CanAbsSameType r
---   , CanMinMaxSameType r
---   , CanMaximiseOverDom f (Domain f)
---   , CanMinimiseOverDom f (Domain f)
---   , HasDomain f)
---   =>
---   f -> r
--- maxNorm f =
---   (abs $ f `maximumOverDom` dom)
---   `max`
---   (abs $ f `minimumOverDom` dom)
---   where
---   dom = getDomain f
---
--- sepFromZero ::
---   (r ~ MaximumOverDomType f (Domain f)
---   , r ~ MinimumOverDomType f (Domain f)
---   , CanNegSameType r
---   , CanMinMaxSameType r
---   , CanMaximiseOverDom f (Domain f)
---   , CanMinimiseOverDom f (Domain f)
---   , HasDomain f)
---   =>
---   f -> r
--- sepFromZero f =
---   (negate $ f `maximumOverDom` dom)
---   `max`
---   (f `minimumOverDom` dom)
---   where
---   dom = getDomain f
---
--- instance CanDiv (ChPoly MPBall) (ChPoly MPBall) where
---   type DivTypeNoCN  (ChPoly MPBall) (ChPoly MPBall) = ChPoly MPBall
---   divideNoCN p q = ((divide p q) ~!)
---   type DivType  (ChPoly MPBall) (ChPoly MPBall) = CN (ChPoly MPBall)
---   divide p q = chebDivideDCT acGuide p q
---     where
---     acGuide = getAccuracyGuide p `max` getAccuracyGuide q
+      maxDifferenceFrom c =
+        (mpBall rad) +
+        ((abs (minimumOverDom diff i))  `max` (abs (maximumOverDom diff i)))
+        where
+        diff = c - resGuess
+
+  initD = 16 -- degree p + degree q
+
+  usingDCT =
+    maybeTrace
+    (printf "chebMaxDCT: acGuide = %s" (show acGuide)) $
+    tryWithDegree NoInformation initD
+
+  tryWithDegree prevAccuracy d =
+    maybeTrace
+    (printf "chebMaxDCT: tryWithDegree: d = %d" d) $
+    maybeTrace
+    (printf "chebMaxDCT: tryWithDegree: d = %d; getAccuracy maxCd = %s" d (show $ getAccuracy maxCd)) $
+    maybeTrace
+    (printf "chebMaxDCT: tryWithDegree: d = %d; dctAccuracy = %s; maxEd = %s"
+      d (show dctAccuracy) (show maxEd)) $
+    res
+    where
+    res
+      | accurateEnough = updateRadius (+maxEd) maxCd
+      | otherwise = tryWithDegree dctAccuracy (2*d)
+    maxCd = lift2_DCT (const $ const $ d) max pC qC
+    maxEd = errorBound $ boundError maxCd
+    dctAccuracy = getAccuracy maxEd
+    accurateEnough = dctAccuracy >= acGuide || dctAccuracy <= prevAccuracy -- stop iterating when no improvement
+
+instance CanMinMaxAsymmetric (ChPoly MPBall) (ChPoly MPBall) where
+  type MinMaxType  (ChPoly MPBall) (ChPoly MPBall) = (ChPoly MPBall)
+  max p q = chebMaxDCT p q
+  min p q = negate $ max (- p) (- q)

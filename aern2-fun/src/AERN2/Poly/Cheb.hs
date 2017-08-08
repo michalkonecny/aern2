@@ -45,6 +45,7 @@ import AERN2.Poly.Cheb.Eval
 import AERN2.Poly.Cheb.Maximum
 import AERN2.Poly.Cheb.Derivative
 import AERN2.Poly.Cheb.Integration
+import AERN2.Poly.Cheb.MinMax ()
 
 _chPolyX :: ChPoly MPBall
 _chPolyX =
