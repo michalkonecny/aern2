@@ -44,6 +44,28 @@ executable aern2-fnreps-ops
   ghc-options:     -O2 -Wall -rtsopts
   main-is:         fnreps-ops.hs
 
+executable waac-benchmarks
+  build-depends:
+    base == 4.*
+    , psqueues == 0.2.*
+    , containers == 0.5.*
+    , mixed-types-num == 0.3.*
+    , aern2-mp == 0.1.*
+    , aern2-real == 0.1.*
+    , aern2-fun == 0.1.*
+  extensions:
+                  Arrows,
+                  FlexibleContexts,
+                  FlexibleInstances,
+                  MultiParamTypeClasses,
+                  RebindableSyntax,
+                  TypeFamilies,
+                  TypeOperators,
+                  ScopedTypeVariables
+  hs-source-dirs:  main
+  ghc-options:     -O2 -Wall -rtsopts
+  main-is:         waac-benchmarks.hs
+
 -- executable aern2-rootIsolation-bench
 --   build-depends:
 --                    base >= 4.4,
