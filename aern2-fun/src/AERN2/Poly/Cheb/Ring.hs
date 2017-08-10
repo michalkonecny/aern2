@@ -68,8 +68,10 @@ instance
   where
   type AddType (ChPoly c) (ChPoly c) = ChPoly c
   add (ChPoly d1 p1 acG1 _) (ChPoly d2 p2 acG2 _)
-    | d1 == d2 = normalize $ ChPoly d1 (p1 + p2) (max acG1 acG2) Nothing
+    | d1 == d2 = normalize $ ChPoly d1 (p1 + p2) acG Nothing
     | otherwise = error $ "Adding polynomials with incompatible domains"
+    where
+    acG = max acG1 acG2
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
@@ -148,7 +150,7 @@ mulChebDirect ::
   (PolyCoeffRing c, CanMulBy c Dyadic, CanNormalize (ChPoly c), CanSetPrecision c)
   =>
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
-mulChebDirect cp1@(ChPoly d1 p1 acG1 _) cp2@(ChPoly d2 p2 acG2 _)
+mulChebDirect _cp1@(ChPoly d1 p1 acG1 _) _cp2@(ChPoly d2 p2 acG2 _)
   | d1 /= d2 = error $ "Multiplying ChPoly's with incompatible domains"
   | otherwise =
     normalize $ ChPoly d1 (Poly terms) (max acG1 acG2) Nothing

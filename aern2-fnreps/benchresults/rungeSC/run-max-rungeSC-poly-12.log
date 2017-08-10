@@ -1,25 +1,25 @@
-numer: acG = bits 68; ac = bits 47
+numer: acG = bits 68; ac = bits 34
 inv: acG = bits 12; ac = bits 29
 res: acG = bits 68; ac = bits 27
-computing max  (sin(10x)+cos(20x))/(100x^2+1) over [-1,1]
-result = [1.080894897833951 ± <2^(-27)]
+computing max  (sin(10x)+cos(7pi*x))/(100x^2+1) over [-1,1]
+result = [1.071560871775163 ± <2^(-27)]
 accuracy: bits 27
 precision = Precision 2692
 	Command being timed: "aern2-fnreps-ops max rungeSC poly 12"
-	User time (seconds): 256.92
-	System time (seconds): 2.01
+	User time (seconds): 249.06
+	System time (seconds): 1.89
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 4:18.96
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 4:11.01
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 139088
+	Maximum resident set size (kbytes): 142440
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1216544
+	Minor (reclaiming a frame) page faults: 1156124
 	Voluntary context switches: 1
-	Involuntary context switches: 296
+	Involuntary context switches: 1381
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 16

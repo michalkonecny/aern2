@@ -27,7 +27,7 @@ of continuous functions, facilitating a reasonably fair comparison.
 
 ## Representations
 
-### Fun
+### MFun
 
 A function
 ![](http://latex.codecogs.com/gif.latex?f)
@@ -157,16 +157,25 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 | :---: | :---: |
 | <img src="benchresults/charts/sine+cos-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/sine+cos-integrate-time.png?raw=true" width="300"> |
 
+The following slightly modified version of this function reveals how sensitive is DBall to the type of constants present in the formula:
+
+![sine+cospi](http://latex.codecogs.com/gif.latex?\\sin(10x)+\\cos(7\\pi{}x))
+<img src="plots/sine+cospi.png?raw=true" width="150">
+
+| Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
+| :---: | :---: |
+| <img src="benchresults/charts/sine+cospi-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/sine+cospi-integrate-time.png?raw=true" width="300"> |
+
 ### A nested sine function
 
-![sinesine](http://latex.codecogs.com/gif.latex?\\sin(10x+\\sin(20x^2)))
+<!-- ![sinesine](http://latex.codecogs.com/gif.latex?\\sin(10x+\\sin(20x^2)))
 <img src="plots/sinesine.png?raw=true" width="150">
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="benchresults/charts/sinesine-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/sinesine-integrate-time.png?raw=true" width="300"> |  
+| <img src="benchresults/charts/sinesine-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/sinesine-integrate-time.png?raw=true" width="300"> |   -->
 
-![sinesine+cos](http://latex.codecogs.com/gif.latex?\\sin(10x+\\sin(20x^2))+\\cos(10x))
+![sinesine+cos](http://latex.codecogs.com/gif.latex?\\sin(10x+\\sin(7\\pi{}x^2))+\\cos(10x))
 <img src="plots/sinesine+cos.png?raw=true" width="150">
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
@@ -176,14 +185,14 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 ### An analytic function with singularities near the origin
 
-![runge](http://latex.codecogs.com/gif.latex?{\\frac{1}{100x^2+1}})
+<!-- ![runge](http://latex.codecogs.com/gif.latex?{\\frac{1}{100x^2+1}})
 <img src="plots/runge.png?raw=true" width="150">
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="benchresults/charts/runge-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/runge-integrate-time.png?raw=true" width="300"> |
+| <img src="benchresults/charts/runge-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/runge-integrate-time.png?raw=true" width="300"> | -->
 
-![rungeSC](http://latex.codecogs.com/gif.latex?{\\frac{\\sin(10x)+\\cos(20x)}{100x^2+1}})
+![rungeSC](http://latex.codecogs.com/gif.latex?{\\frac{\\sin(10x)+\\cos(7\\pi{}x)}{100x^2+1}})
 <img src="plots/rungeSC.png?raw=true" width="150">
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
@@ -192,14 +201,14 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 ### An analytic function with singularities near the origin and with multiple maxima
 
-![fracSin](http://latex.codecogs.com/gif.latex?{\\frac{1}{10(\\sin(7x))^2+1}})
+<!-- ![fracSin](http://latex.codecogs.com/gif.latex?{\\frac{1}{10(\\sin(7x))^2+1}})
 <img src="plots/fracSin.png?raw=true" width="150">
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="benchresults/charts/fracSin-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/fracSin-integrate-time.png?raw=true" width="300"> |
+| <img src="benchresults/charts/fracSin-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/fracSin-integrate-time.png?raw=true" width="300"> | -->
 
-![fracSinSC](http://latex.codecogs.com/gif.latex?{\\frac{\\sin(10x)+\\cos(20x)}{10(\\sin(7x))^2+1}})
+![fracSinSC](http://latex.codecogs.com/gif.latex?{\\frac{\\sin(10x)+\\cos(7\\pi{}x)}{10(\\sin(7x))^2+1}})
 <img src="plots/fracSinSC.png?raw=true" width="150">
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
@@ -223,6 +232,15 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 ![bumpy](http://latex.codecogs.com/gif.latex?\\max(\\sin(10x),\\cos(11x)))
 <img src="plots/bumpy.png?raw=true" width="150">
+
+| Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
+| :---: | :---: |
+| <img src="benchresults/charts/bumpy-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/bumpy-integrate-time.png?raw=true" width="300"> |
+
+### A non-smooth function with a nearby singularity
+
+![bumpy2](http://latex.codecogs.com/gif.latex?{\\max(x^2,\\frac{\\sin(10x)+\\cos(7\\pi{}x)}{10(\\sin(7x))^2+1}})
+<img src="plots/bumpy2.png?raw=true" width="150">
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |

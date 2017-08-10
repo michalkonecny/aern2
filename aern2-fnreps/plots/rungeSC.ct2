@@ -8,4 +8,4 @@ left line /stroke_color grey
 right line /stroke_color grey
 draw-line -1,0 1,0  /color grey
 math /xrange -1:1 /samples 501
-plot '(sin(10*x)+cos(20*x))/(100*x**2+1)' /color black 
+plot '(sin(10*x)+cos(7*4*atan(1)*x))/(100*x**2+1)' /color black 

@@ -1,26 +1,26 @@
-numer: acG = bits 115; ac = bits 95
+numer: acG = bits 195; ac = bits 161
 denom: acG = bits 75; ac = bits 65
 inv: acG = bits 44; ac = bits 22
-res: acG = bits 115; ac = bits 20
-computing max  (sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]
-result = [1.073602548175559 ± <2^(-20)]
+res: acG = bits 42; ac = bits 20
+computing max  (sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
+result = [1.271873428908773 ± <2^(-20)]
 accuracy: bits 20
-precision = Precision 2400
+precision = Precision 3412
 	Command being timed: "aern2-fnreps-ops max fracSinSC ppoly 20"
-	User time (seconds): 182.94
-	System time (seconds): 1.84
+	User time (seconds): 190.77
+	System time (seconds): 2.26
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:04.78
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:13.05
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 438136
+	Maximum resident set size (kbytes): 434228
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1575661
-	Voluntary context switches: 1
-	Involuntary context switches: 145
+	Minor (reclaiming a frame) page faults: 1832460
+	Voluntary context switches: 3
+	Involuntary context switches: 166
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 24

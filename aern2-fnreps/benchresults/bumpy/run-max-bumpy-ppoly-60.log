@@ -1,22 +1,22 @@
-computing max  max(sin(10x),cos(11x)) over [-1,1]
+computing max  max(sin(10x),cos(11*x)) over [-1,1]
 result = [1 ± <2^(-57)]
 accuracy: bits 57
 precision = Precision 562
 	Command being timed: "aern2-fnreps-ops max bumpy ppoly 60"
-	User time (seconds): 3.71
-	System time (seconds): 0.00
+	User time (seconds): 3.82
+	System time (seconds): 0.02
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:03.72
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:03.85
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 30252
+	Maximum resident set size (kbytes): 30756
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
 	Minor (reclaiming a frame) page faults: 5354
 	Voluntary context switches: 1
-	Involuntary context switches: 7
+	Involuntary context switches: 8
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

@@ -2,25 +2,25 @@ numer: acG = NoInformation; ac = Exact
 denom: acG = NoInformation; ac = Exact
 inv: acG = NoInformation; ac = Exact
 res: acG = NoInformation; ac = Exact
-computing max  (sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]
-result = [1.073602548189228 ± <2^(-32)]
-accuracy: bits 32
-precision = Precision 36
+computing max  (sin(10x)+cos(7pi*x))/(10(sin(7x))^2+pi/2) over [-1,1]
+result = [1.271873495651833 ± <2^(-30)]
+accuracy: bits 30
+precision = Precision 120
 	Command being timed: "aern2-fnreps-ops max fracSinSC dball 30"
-	User time (seconds): 219.30
-	System time (seconds): 0.37
+	User time (seconds): 206.86
+	System time (seconds): 0.16
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:39.71
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:27.05
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 15088
+	Maximum resident set size (kbytes): 16284
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 203454
+	Minor (reclaiming a frame) page faults: 203936
 	Voluntary context switches: 1
-	Involuntary context switches: 2123
+	Involuntary context switches: 863
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 16

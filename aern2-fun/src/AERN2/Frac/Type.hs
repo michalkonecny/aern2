@@ -112,6 +112,7 @@ instance CanReduceSizeUsingAccuracyGuide (Frac MPBall) where
       where
       ac_p = acGuide - (bits $ getNormLog m)
 
+
 fracLift1 :: (HasIntegers a) => (Frac a -> b) -> ChPoly a -> b
 fracLift1 f = f . fromPoly
 

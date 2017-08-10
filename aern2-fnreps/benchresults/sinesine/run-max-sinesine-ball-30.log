@@ -1,20 +1,20 @@
-computing max  sin(10x+sin(20x^2)) over [-1,1]
-result = [9.99999999999896e-1 ± <2^(-32)]
-accuracy: bits 32
+computing max  sin(10x+sin(7pi*x^2)) over [-1,1]
+result = [9.999999999687127e-1 ± <2^(-30)]
+accuracy: bits 30
 precision = Precision 106
 	Command being timed: "aern2-fnreps-ops max sinesine ball 30"
-	User time (seconds): 0.12
+	User time (seconds): 0.29
 	System time (seconds): 0.00
-	Percent of CPU this job got: 96%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.12
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.29
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 12004
+	Maximum resident set size (kbytes): 16388
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1323
+	Minor (reclaiming a frame) page faults: 2253
 	Voluntary context switches: 1
 	Involuntary context switches: 3
 	Swaps: 0

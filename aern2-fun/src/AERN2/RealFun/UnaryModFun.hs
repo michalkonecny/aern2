@@ -1,5 +1,6 @@
 {-# LANGUAGE CPP #-}
 -- #define DEBUG
+{-# LANGUAGE TemplateHaskell #-}
 {-|
     Module      :  AERN2.RealFun.UnaryModFun
     Description :  Real functions by evaluator on dyadic points and a modulus of continuity
@@ -92,10 +93,6 @@ instance (SuitableForCE es) => CanEnsureCE es UnaryModFun where
   ensureNoCE _sample_es v = (Just v, mempty)
   noValueECE _sample_vCE _es = error "UnaryModFun noValueCE not implemented yet"
   prependErrorsECE _sample_vCE _es = error "UnaryModFun prependErrorsECE not implemented yet"
-
-instance ConvertibleExactly (DyadicInterval, Integer) UnaryModFun where
-  safeConvertExactly (dom,n) =
-    Right $ UnaryModFun dom  (const $ cn (real n)) (constFnModulus)
 
 constFnModulus :: MPBall -> Integer -> Integer
 constFnModulus _b i = i
@@ -246,13 +243,13 @@ instance CanAddAsymmetric UnaryModFun UnaryModFun where
     where
     modulus' b i = max (modulus1 b (i+1)) (modulus2 b (i+1))
 
-instance CanAddAsymmetric Integer UnaryModFun where
-  type AddType Integer UnaryModFun = UnaryModFun
+instance CanAddAsymmetric CauchyReal UnaryModFun where
+  type AddType CauchyReal UnaryModFun = UnaryModFun
   add n (UnaryModFun dom eval modulus) =
     UnaryModFun dom (\d -> n + (eval d)) modulus
 
-instance CanAddAsymmetric UnaryModFun Integer where
-  type AddType UnaryModFun Integer = UnaryModFun
+instance CanAddAsymmetric UnaryModFun CauchyReal where
+  type AddType UnaryModFun CauchyReal = UnaryModFun
   add f n = add n f
 
 instance CanMulAsymmetric UnaryModFun UnaryModFun where
@@ -299,19 +296,20 @@ instance CanMulAsymmetric UnaryModFun UnaryModFun where
           NormZero -> modulus2 b i22
           NormBits nx1 -> modulus2 b (max (i + nx1 + 2) i22)
 
-instance CanMulAsymmetric Integer UnaryModFun where
-  type MulType Integer UnaryModFun = UnaryModFun
-  mul n (UnaryModFun dom eval modulus) =
-    UnaryModFun dom (\d -> n * (eval d)) modulus'
+instance CanMulAsymmetric CauchyReal UnaryModFun where
+  type MulType CauchyReal UnaryModFun = UnaryModFun
+  mul r (UnaryModFun dom eval modulus) =
+    UnaryModFun dom (\d -> r * (eval d)) modulus'
     where
     modulus' b =
-      case (getNormLog (abs n)) of
+      case (getNormLog (abs (r ? (accuracySG $ getFiniteAccuracy b)))) of
         NormZero -> constFnModulus b
         NormBits nn -> \ i -> modulus b (i + nn)
 
-instance CanMulAsymmetric UnaryModFun Integer where
-  type MulType UnaryModFun Integer = UnaryModFun
+instance CanMulAsymmetric UnaryModFun CauchyReal where
+  type MulType UnaryModFun CauchyReal = UnaryModFun
   mul f n = mul n f
+
 
 instance CanDiv UnaryModFun UnaryModFun where
   type DivTypeNoCN UnaryModFun UnaryModFun =  UnaryModFun
@@ -384,12 +382,6 @@ recipF f@(UnaryModFun dom eval modulus) =
             --  + (max 0 (nx-i))) -- this is redundant for the same reason
 
 
-instance CanDiv Integer UnaryModFun where
-  type DivTypeNoCN Integer UnaryModFun = UnaryModFun
-  divideNoCN n f = divide (unaryModFun (getDomain f, n)) f
-  type DivType Integer UnaryModFun = UnaryModFun
-  divide = divideNoCN
-
 instance CanPow UnaryModFun Integer where
   type PowTypeNoCN UnaryModFun Integer = UnaryModFun
   powNoCN p = powUsingMulRecip (constFn (getFnConstructorInfo p) 1) p
@@ -400,30 +392,40 @@ instance CanSinCos UnaryModFun where
   sin (UnaryModFun dom eval modulus) = UnaryModFun dom (sin . eval) modulus
   cos (UnaryModFun dom eval modulus) = UnaryModFun dom (cos . eval) modulus
 
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
+  (\ t -> [d|
 
-{-
-example_ModFun :: UnaryModFun
-example_ModFun =
-  x*x
-  -- sin(10*x)+cos(20*x)
-  -- 1/((10*x*x)+1)
-  -- 1/(x+2)
-  where
-  x = x_modfun
+    instance ConvertibleExactly (DyadicInterval, $t) UnaryModFun where
+      safeConvertExactly (dom,n) =
+        Right $ UnaryModFun dom  (const $ cn (real n)) (constFnModulus)
 
-x_modfun :: UnaryModFun
-x_modfun = varFn (unaryModFun (unaryIntervalDom, 0)) ()
+    instance CanAddAsymmetric $t UnaryModFun where
+      type AddType $t UnaryModFun = UnaryModFun
+      add n (UnaryModFun dom eval modulus) =
+        UnaryModFun dom (\d -> n + (eval d)) modulus
 
-mtest1 :: Integer -> MPBall
-mtest1 b =
-  m ? (bits b)
-  where
-  m =
-    -- integrateOverDom example_ModFun $
-    -- minimumOverDom example_ModFun $
-    maximumOverDom example_ModFun $
-      dyadicInterval (-1.0,1.0)
+    instance CanAddAsymmetric UnaryModFun $t where
+      type AddType UnaryModFun $t = UnaryModFun
+      add f n = add n f
 
-unaryIntervalDom :: DyadicInterval
-unaryIntervalDom = dyadicInterval (-1,1)
--}
+    instance CanMulAsymmetric $t UnaryModFun where
+      type MulType $t UnaryModFun = UnaryModFun
+      mul n (UnaryModFun dom eval modulus) =
+        UnaryModFun dom (\d -> n * (eval d)) modulus'
+        where
+        modulus' b =
+          case (getNormLog (abs n)) of
+            NormZero -> constFnModulus b
+            NormBits nn -> \ i -> modulus b (i + nn)
+
+    instance CanMulAsymmetric UnaryModFun $t where
+      type MulType UnaryModFun $t = UnaryModFun
+      mul f n = mul n f
+
+    instance CanDiv $t UnaryModFun where
+      type DivTypeNoCN $t UnaryModFun = UnaryModFun
+      divideNoCN n f = divide (unaryModFun (getDomain f, n)) f
+      type DivType $t UnaryModFun = UnaryModFun
+      divide = divideNoCN
+  |]))

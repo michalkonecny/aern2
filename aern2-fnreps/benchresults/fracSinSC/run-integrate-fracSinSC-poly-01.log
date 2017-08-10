@@ -1,30 +1,47 @@
-numer: acG = bits 39; ac = bits 21
+numer: acG = bits 43; ac = bits 9
 denom: acG = bits 37; ac = bits 27
+chebDivideDCT: acGuide = bits 3, minQ = [9.999999990580231e-1 ± <2^(-27)]
+chebDivideDCT: tryWithDegree: d = 16
+chebDivideDCT: tryWithDegree: d = 16; getAccuracy rCd = bits 1
+chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [1.169507964757724 ± <2^(-1)]
+chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [5.008433706205397 ± <2^(2)]; dctAccuracy = bits -3; getAccuracy rEd = bits -3
+chebDivideDCT: tryWithDegree: d = 32
+chebDivideDCT: tryWithDegree: d = 32; getAccuracy rCd = bits 2
+chebDivideDCT: tryWithDegree: d = 32; rCMaxNorm = [1.057647337232861 ± <2^(-2)]
+chebDivideDCT: tryWithDegree: d = 32; maxDifferenceC = [2.471602900871242 ± <2^(1)]; dctAccuracy = bits -2; getAccuracy rEd = bits -2
+chebDivideDCT: tryWithDegree: d = 64
+chebDivideDCT: tryWithDegree: d = 64; getAccuracy rCd = bits 3
+chebDivideDCT: tryWithDegree: d = 64; rCMaxNorm = [1.066884879884334 ± <2^(-3)]
+chebDivideDCT: tryWithDegree: d = 64; maxDifferenceC = [1.497820933561797 ± <2^(0)]; dctAccuracy = bits -1; getAccuracy rEd = bits -1
+chebDivideDCT: tryWithDegree: d = 128
+chebDivideDCT: tryWithDegree: d = 128; getAccuracy rCd = bits 8
+chebDivideDCT: tryWithDegree: d = 128; rCMaxNorm = [1.000653410659611 ± <2^(-8)]
+chebDivideDCT: tryWithDegree: d = 128; maxDifferenceC = [4.28966481215586e-2 ± <2^(-4)]; dctAccuracy = bits 3; getAccuracy rEd = bits 3
 inv: acG = bits 3; ac = bits 3
-res: acG = bits 39; ac = bits 1
+res: acG = bits 4; ac = bits 1
 integratePB: accuracy f = bits 1
-computing integrate  (sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]
-result = [3.427417646959613e-2 ± <2^(-1)]
+computing integrate  (sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
+result = [1.983859199738725e-2 ± <2^(-1)]
 accuracy: bits 1
 precision = Precision 1010
 	Command being timed: "aern2-fnreps-ops integrate fracSinSC poly 01"
-	User time (seconds): 28.26
-	System time (seconds): 0.14
-	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:28.40
+	User time (seconds): 28.13
+	System time (seconds): 0.16
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:28.30
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 82164
+	Maximum resident set size (kbytes): 73352
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 76068
+	Minor (reclaiming a frame) page faults: 55900
 	Voluntary context switches: 1
-	Involuntary context switches: 34
+	Involuntary context switches: 49
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 8
+	File system outputs: 32
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

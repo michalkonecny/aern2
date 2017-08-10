@@ -99,11 +99,11 @@ chebMaxDCT p q =
   diffCRoots =
     map
     (\(Interval l r, err) ->
-      (centre $ mpBallP (ac2prec acGuide) $ (l + r)/!2, errorBound err)) $
+      (centre $ mpBallP (15 + ac2prec acGuide) $ (l + r)/!2, errorBound err)) $
     findRootsWithEvaluation
       (cheb2Power diffCInt)
       (abs . evalDiffOnInterval)
-      (\v -> (v !<=! (dyadic 0.5)^!(fromAccuracy acGuide)))
+      (\v -> (v !<=! (dyadic 0.5)^!(2 + fromAccuracy acGuide)))
       (rational domL) (rational domR)
   segments :: [(DyadicInterval, ErrorBound)]
   segments =

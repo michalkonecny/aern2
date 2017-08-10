@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE CPP #-}
--- #define DEBUG
+#define DEBUG
 {-|
     Module      :  AERN2.Poly.Cheb.Field
     Description :  Poly division and integer power

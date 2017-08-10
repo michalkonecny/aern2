@@ -10,7 +10,13 @@ import AERN2.Frac.Type
 import AERN2.MP.Dyadic
 import AERN2.Real
 
-
+instance (PolyCoeffRing a, a ~ MPBall)
+  => CanMinMaxAsymmetric (Frac a) (Frac a) where
+  type MinMaxType (Frac a) (Frac a) = Frac a
+  min (Frac p0 q0 m0) (Frac p1 q1 m1) =
+    Frac ((p0*q1) `min` (p1*q0)) (q0*q1) (m0 * m1)
+  max (Frac p0 q0 m0) (Frac p1 q1 m1) =
+    Frac ((p0*q1) `max` (p1*q0)) (q0*q1) (m0 * m1)
 
 instance (PolyCoeffRing a, a ~ MPBall)
   => CanMulAsymmetric (Frac a) (Frac a)

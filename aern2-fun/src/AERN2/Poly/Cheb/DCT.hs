@@ -1,5 +1,7 @@
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
+{-# LANGUAGE CPP #-}
+-- #define DEBUG
 {-|
     Module      :  AERN2.Poly.Cheb.DCT
     Description :  Interpolation using Discrete cosine transform
@@ -18,6 +20,15 @@ module AERN2.Poly.Cheb.DCT
   lift1_DCT, lift2_DCT
 )
 where
+
+#ifdef DEBUG
+import Debug.Trace (trace)
+#define maybeTrace trace
+#define maybeTraceIO putStrLn
+#else
+#define maybeTrace (\ (_ :: String) t -> t)
+#define maybeTraceIO (\ (_ :: String) -> return ())
+#endif
 
 import MixedTypesNumPrelude
 import qualified Prelude as P
@@ -45,17 +56,6 @@ import AERN2.Poly.Basics
 import AERN2.Poly.Cheb.Type
 
 
-import Debug.Trace (trace)
-
-shouldTrace :: Bool
-shouldTrace = False
--- shouldTrace = True
-
-maybeTrace :: String -> a -> a
-maybeTrace
-    | shouldTrace = trace
-    | otherwise = const id
-
 {-|
   DCT-approximate the result of applying the given binary function @f@
   pointwise to the given polynomials @p1@ and @p2@.
@@ -70,19 +70,16 @@ lift2_DCT ::
 lift2_DCT getDegree op pA pB
   | domA /= domB = error "lift2_DCT: combining functions with incompatible domains"
   | otherwise =
-    -- maybeTrace
-    -- (
-    --     "lift2_DCT:"
-    --     ++ "\n cN = " ++ show cN
-    --     ++ "\n prc = " ++ show prc
-    --     ++ "\n workingPrec = " ++ show workingPrec
-    --     -- ++ "\n dA = " ++ show dA
-    --     -- ++ "\n dB = " ++ show dB
-    --     -- ++ "\n aT = " ++ show aT
-    --     -- ++ "\n bT = " ++ show bT
-    --     -- ++ "\n cT = " ++ show cT
-    --     -- ++ "\n c = " ++ show c
-    -- ) $
+    maybeTrace
+    (
+        "lift2_DCT:"
+        ++ "\n cN = " ++ show cN
+        ++ "\n workingPrec = " ++ show workingPrec
+        -- ++ "\n aT = " ++ show aT
+        -- ++ "\n bT = " ++ show bT
+        -- ++ "\n cT = " ++ show cT
+        -- ++ "\n c = " ++ show c
+    ) $
     result
   where
   dA = terms_degree $ chPoly_terms pA
@@ -105,11 +102,11 @@ lift2_DCT getDegree op pA pB
   (c0Double : c) = map (* (2 /! cN)) (tDCT_I_nlogn cT) -- interpolate the values using a polynomial
 
   result =
+    setAccuracyGuide acG $
     normalize $
-    -- setPrecision prc $
     reduceDegree resultDegree $
-      ChPoly domA (Poly $ terms_fromList $ zip [0..] (c0Double /! 2 : c)) acG Nothing
-  acG = min acGA acGB
+      ChPoly domA (Poly $ terms_fromList $ zip [0..] (c0Double /! 2 : c)) (acG + cN) Nothing
+  acG = (max acGA acGB)
 --    terms_fromList [(0, mpBall 1)] -- dummy for debugging exceptions
 
 {-|

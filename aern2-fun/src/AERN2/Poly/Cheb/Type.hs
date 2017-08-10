@@ -20,6 +20,7 @@ module AERN2.Poly.Cheb.Type
 , CanBeChPoly, chPoly, chPolyMPBall
 , showInternals, fromDomToUnitInterval
 , serialise, deserialise
+, sweepUsingOwnAccuracyGuide
 , Degree, degree, reduceDegree, reduceDegreeWithLostAccuracyLimit
 )
 where
@@ -166,10 +167,7 @@ instance (IsBall c, HasIntegers c) => IsBall (ChPoly c) where
     ChPoly dom (Poly $ terms_updateConst (updateRadius updateFn) terms) acG Nothing
 
 instance CanNormalize (ChPoly MPBall) where
-  normalize p =
-    case chPoly_maybeLip p of
-      Nothing  -> (makeExactCentre . sweepUsingAccuracy) p
-      Just lip -> (chPoly_setLip lip . makeExactCentre . sweepUsingAccuracy) p
+  normalize p = (makeExactCentre . sweepUsingOwnAccuracyGuide) p
 
 instance CanNormalize (ChPoly Integer) where
   normalize = chPoly_map_terms (terms_filterKeepConst (\_d c -> c /= 0))
@@ -180,10 +178,10 @@ instance CanNormalize (ChPoly Rational) where
 instance CanNormalize (ChPoly Dyadic) where
   normalize = chPoly_map_terms (terms_filterKeepConst (\_d c -> c /= 0))
 
-sweepUsingAccuracy ::
+sweepUsingOwnAccuracyGuide ::
   _ =>
   ChPoly c -> ChPoly c
-sweepUsingAccuracy (ChPoly dom _poly@(Poly ts) acG bnd) =
+sweepUsingOwnAccuracyGuide (ChPoly dom _poly@(Poly ts) acG bnd) =
   ChPoly dom (Poly ts') acG bnd
   where
   ts' = reduceTerms shouldKeep ts

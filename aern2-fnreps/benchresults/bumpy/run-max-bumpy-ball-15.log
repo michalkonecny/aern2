@@ -1,20 +1,20 @@
-computing max  max(sin(10x),cos(11x)) over [-1,1]
-result = [9.999999999912839e-1 ± <2^(-35)]
-accuracy: bits 35
+computing max  max(sin(10x),cos(11*x)) over [-1,1]
+result = [9.999998872265036e-1 ± <2^(-15)]
+accuracy: bits 15
 precision = Precision 106
 	Command being timed: "aern2-fnreps-ops max bumpy ball 15"
-	User time (seconds): 0.16
+	User time (seconds): 0.06
 	System time (seconds): 0.00
-	Percent of CPU this job got: 98%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.16
+	Percent of CPU this job got: 94%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.07
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 13192
+	Maximum resident set size (kbytes): 11396
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1579
+	Minor (reclaiming a frame) page faults: 1080
 	Voluntary context switches: 1
 	Involuntary context switches: 3
 	Swaps: 0

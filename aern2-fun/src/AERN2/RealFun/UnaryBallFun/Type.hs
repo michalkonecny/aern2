@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-|
     Module      :  AERN2.RealFun.UnaryBallFun.Type
     Description :  type definition and basics
@@ -30,8 +31,10 @@ import Data.Typeable
 
 import Control.CollectErrors
 
--- import AERN2.MP.Dyadic
+import AERN2.MP.Dyadic
 import AERN2.MP.Ball
+
+import AERN2.Real
 
 import AERN2.Interval
 import AERN2.RealFun.Operations
@@ -109,56 +112,25 @@ instance CanNeg UnaryBallFun where
 
 instance CanAddAsymmetric UnaryBallFun UnaryBallFun where
   add = lift2 add
-instance CanAddAsymmetric UnaryBallFun Integer where
-  add = lift2T add
-instance CanAddAsymmetric Integer UnaryBallFun where
-  type AddType Integer UnaryBallFun = UnaryBallFun
-  add = flip $ lift2T (flip add)
 
 instance CanSub UnaryBallFun UnaryBallFun where
   type SubType UnaryBallFun UnaryBallFun = UnaryBallFun
   sub = lift2 sub
-instance CanSub UnaryBallFun Integer where
-  type SubType UnaryBallFun Integer = UnaryBallFun
-  sub = lift2T sub
-instance CanSub Integer UnaryBallFun where
-  type SubType Integer UnaryBallFun = UnaryBallFun
-  sub = flip $ lift2T (flip sub)
 
 instance CanMulAsymmetric UnaryBallFun UnaryBallFun where
   mul = lift2 mul
-instance CanMulAsymmetric UnaryBallFun Integer where
-  mul = lift2T mul
-instance CanMulAsymmetric Integer UnaryBallFun where
-  type MulType Integer UnaryBallFun = UnaryBallFun
-  mul = flip $ lift2T (flip mul)
 
 instance CanDiv UnaryBallFun UnaryBallFun where
   type DivTypeNoCN UnaryBallFun UnaryBallFun = UnaryBallFun
   divideNoCN = lift2 divide
   type DivType UnaryBallFun UnaryBallFun = UnaryBallFun
   divide = lift2 divide
-instance CanDiv UnaryBallFun Integer where
-  type DivTypeNoCN UnaryBallFun Integer = UnaryBallFun
-  divideNoCN = lift2T divide
-  type DivType UnaryBallFun Integer = UnaryBallFun
-  divide = lift2T divide
-instance CanDiv Integer UnaryBallFun where
-  type DivTypeNoCN Integer UnaryBallFun = UnaryBallFun
-  divideNoCN = flip $ lift2T (flip divide)
-  type DivType Integer UnaryBallFun = UnaryBallFun
-  divide = flip $ lift2T (flip divide)
 
 instance CanPow UnaryBallFun UnaryBallFun where
   type PowTypeNoCN UnaryBallFun UnaryBallFun = UnaryBallFun
   powNoCN = lift2 pow
   type PowType UnaryBallFun UnaryBallFun = UnaryBallFun
   pow = lift2 pow
-instance CanPow UnaryBallFun Integer where
-  type PowTypeNoCN UnaryBallFun Integer = UnaryBallFun
-  powNoCN = lift2T pow
-  type PowType UnaryBallFun Integer = UnaryBallFun
-  pow = lift2T pow
 
 instance CanSinCos UnaryBallFun where
   sin = lift1 sin
@@ -175,3 +147,44 @@ lift2 op (UnaryBallFun dom1 f1) (UnaryBallFun _dom2 f2) =
 lift2T :: (CN MPBall -> t -> CN MPBall) -> UnaryBallFun -> t -> UnaryBallFun
 lift2T op (UnaryBallFun dom1 f1) t =
   UnaryBallFun dom1 (\ x -> op (f1 x) t)
+
+
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| CauchyReal |]]
+  (\ t -> [d|
+    instance CanAddAsymmetric UnaryBallFun $t where
+      add = lift2T add
+    instance CanAddAsymmetric $t UnaryBallFun where
+      type AddType $t UnaryBallFun = UnaryBallFun
+      add = flip $ lift2T (flip add)
+
+    instance CanMulAsymmetric UnaryBallFun $t where
+      mul = lift2T mul
+    instance CanMulAsymmetric $t UnaryBallFun where
+      type MulType $t UnaryBallFun = UnaryBallFun
+      mul = flip $ lift2T (flip mul)
+
+    instance CanSub UnaryBallFun $t where
+      type SubType UnaryBallFun $t = UnaryBallFun
+      sub = lift2T sub
+    instance CanSub $t UnaryBallFun where
+      type SubType $t UnaryBallFun = UnaryBallFun
+      sub = flip $ lift2T (flip sub)
+
+    instance CanDiv UnaryBallFun $t where
+      type DivTypeNoCN UnaryBallFun $t = UnaryBallFun
+      divideNoCN = lift2T divide
+      type DivType UnaryBallFun $t = UnaryBallFun
+      divide = lift2T divide
+    instance CanDiv $t UnaryBallFun where
+      type DivTypeNoCN $t UnaryBallFun = UnaryBallFun
+      divideNoCN = flip $ lift2T (flip divide)
+      type DivType $t UnaryBallFun = UnaryBallFun
+      divide = flip $ lift2T (flip divide)
+
+    instance CanPow UnaryBallFun $t where
+      type PowTypeNoCN UnaryBallFun $t = UnaryBallFun
+      powNoCN = lift2T pow
+      type PowType UnaryBallFun $t = UnaryBallFun
+      pow = lift2T pow
+  |]))

@@ -2,7 +2,6 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE CPP #-}
 #define DEBUG
-#define BUMPY
 module Main where
 
 #ifdef DEBUG
@@ -85,20 +84,14 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         ("poly", "integrate") -> eval functions integratePB id (x_PB accuracy)
         ("ppoly", "max") -> eval functions maxPP PPoly.fromPoly (x_PB accuracy)
         ("ppoly", "integrate") -> eval functions integratePP PPoly.fromPoly (x_PB accuracy)
-#ifdef BUMPY
-#else
         ("frac", "max") -> eval functions maxFR Frac.fromPoly (x_PB accuracy)
         ("frac", "integrate") -> eval functions integrateFR Frac.fromPoly (x_PB accuracy)
-#endif
         ("lpoly", "max") -> eval functions maxLP id x_LP
         ("lpoly", "integrate") -> eval functions integrateLP id x_LP
         ("lppoly", "max") -> eval functions maxLPP LPPoly.fromPoly x_LP
         ("lppoly", "integrate") -> eval functions integrateLPP LPPoly.fromPoly x_LP
-#ifdef BUMPY
-#else
         ("lfrac", "max") -> eval functions maxLF LFrac.fromPoly x_LP
         ("lfrac", "integrate") -> eval functions integrateLF LFrac.fromPoly x_LP
-#endif
         _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
     eval ::
       (Signature1 f1, Signature2 f2)
@@ -175,19 +168,19 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 
     maxBallFun :: UnaryBallFun -> Accuracy -> MPBall
     maxBallFun fn ac =
-        m ? accuracySG ac
+        m ? AccuracySG ac ac
         where
         m = fn `maximumOverDom` getDomain fn
 
     maxModFun :: UnaryModFun -> Accuracy -> MPBall
     maxModFun fn ac =
-        m ? accuracySG ac
+        m ? AccuracySG ac ac
         where
         m = fn `maximumOverDom` getDomain fn
 
     maxDBallFun :: UnaryBallDFun -> Accuracy -> MPBall
     maxDBallFun (UnaryBallDFun [f, f']) ac =
-        m ? accuracySG ac
+        m ? AccuracySG ac ac
         where
         m = fn `maximumOverDom` getDomain f
         fn = UnaryBallDFun [f,f']
@@ -195,19 +188,19 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 
     integrateBallFun :: UnaryBallFun -> Accuracy -> MPBall
     integrateBallFun fn ac =
-        r ? accuracySG ac
+        r ? AccuracySG ac ac
         where
         r = (~!) $ fn `integrateOverDom` (getDomain fn)
 
     integrateModFun :: UnaryModFun -> Accuracy -> MPBall
     integrateModFun fn ac =
-        r ? accuracySG ac
+        r ? AccuracySG ac ac
         where
         r = (~!) $ fn `integrateOverDom` (getDomain fn)
 
     integrateDBallFun :: UnaryBallDFun -> Accuracy -> MPBall
     integrateDBallFun (UnaryBallDFun [f, f']) ac =
-        r ? accuracySG ac
+        r ? AccuracySG ac ac
         where
         r = (~!) $ fn `integrateOverDom` (getDomain f)
         dom = getDomain f
@@ -242,6 +235,7 @@ functions =
     Map.fromList
     [
       ("sine+cos", (sinecos_Name, sinecos_x))
+    , ("sine+cospi", (sinecospi_Name, sinecospi_x))
     , ("sinesine", (sinesine_Name, sinesine_x))
     , ("sinesine+cos", (sinesineCos_Name, sinesineCos_x))
     , ("runge", (runge_Name, runge_x))
@@ -249,27 +243,27 @@ functions =
     , ("fracSin", (fracSin_Name, fracSin_x))
     , ("fracSinSC", (fracSinSC_Name, fracSinSC_x))
     -- -- , ("hat", (hat_Name, hat_x))
-#ifdef BUMPY
     , ("bumpy", (bumpy_Name, bumpy_x))
-#endif
+    , ("bumpy2", (bumpy2_Name, bumpy2_x))
     ]
 
 
 type Signature1 f =
   ( HasAccuracy f, HasAccuracyGuide f
+  , CanSetAccuracyGuide f
   , CanSinCosSameType f
   , CanMulBy f Integer
-  , CanSetAccuracyGuide f
+  , CanMulBy f CauchyReal
   , CanAddSameType f
   , CanAddThis f Integer
+  , CanAddThis f CauchyReal
   , CanPowCNBy f Integer)
 
 type Signature2 f =
   ( HasAccuracy f, HasAccuracyGuide f
+  , CanSetAccuracyGuide f
   , CanMulSameType f
-#ifdef BUMPY
   , CanMinMaxSameType f
-#endif
   , CanDivCNSameType f, CanRecipCNSameType f)
 
 -----------------------------------
@@ -284,15 +278,24 @@ sinecos_x tr12 x = tr12 $ sin(10*x)+cos(20*x)
 -----------------------------------
 -----------------------------------
 
+sinecospi_Name :: String
+sinecospi_Name = "sin(10x)+cos(7pi*x) over [-1,1]"
+
+sinecospi_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+sinecospi_x tr12 x = tr12 $ sin(10*x)+cos(7*pi*x)
+
+-----------------------------------
+-----------------------------------
+
 sinesine_Name :: String
-sinesine_Name = "sin(10x+sin(20x^2)) over [-1,1]"
+sinesine_Name = "sin(10x+sin(7pi*x^2)) over [-1,1]"
 
 sinesine_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 sinesine_x tr12 xPre =
   -- maybeTrace (printf "sin(20*x^!2): acG = %s; ac = %s" (show $ getAccuracyGuide sin20x2) (show $ getAccuracy sin20x2)) $
   -- maybeTrace (printf "res: acG = %s; ac = %s" (show $ getAccuracyGuide res) (show $ getAccuracy res)) $
   -- res
-  tr12 $ sin(10*x + sin(20*x^!2))
+  tr12 $ sin(10*x + sin(7*pi*x^!2))
   where
   -- res = tr12 $ sin(10*x + sin20x2)
   -- sin20x2 = sin(20*x^!2)
@@ -302,11 +305,11 @@ sinesine_x tr12 xPre =
 -----------------------------------
 
 sinesineCos_Name :: String
-sinesineCos_Name = "sin(10x+sin(20x^2)) + cos(10x) over [-1,1]"
+sinesineCos_Name = "sin(10x+sin(7pi*x^2)) + cos(3pi*x) over [-1,1]"
 
 sinesineCos_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 sinesineCos_x tr12 xPre =
-  tr12 $ sin(10*x + sin(20*x^!2)) + cos(10*x)
+  tr12 $ sin(10*x + sin(7*pi*x^!2)) + cos(3*pi*x)
   where
   x = adjustAccuracyGuide (\a -> max 45 (a+15)) xPre
 
@@ -321,14 +324,14 @@ runge_x tr12 x =
   -- maybeTrace (printf "res: acG = %s; ac = %s" (show $ getAccuracyGuide res) (show $ getAccuracy res)) $
   -- res
   1/!(tr12 $ 100*x^!2+1)
-  where
-  res = 1/!(tr12 $ 100*x^!2+1)
+  -- where
+  -- res = 1/!(tr12 $ 100*x^!2+1)
 
 -----------------------------------
 -----------------------------------
 
 rungeSC_Name :: String
-rungeSC_Name = "(sin(10x)+cos(20x))/(100x^2+1) over [-1,1]"
+rungeSC_Name = "(sin(10x)+cos(7pi*x))/(100x^2+1) over [-1,1]"
 
 rungeSC_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 rungeSC_x tr12 x =
@@ -336,11 +339,11 @@ rungeSC_x tr12 x =
   maybeTrace (printf "inv: acG = %s; ac = %s" (show $ getAccuracyGuide inv) (show $ getAccuracy inv)) $
   maybeTrace (printf "res: acG = %s; ac = %s" (show $ getAccuracyGuide res) (show $ getAccuracy res)) $
   res
-  -- (tr12 $ sin (10*xA) + cos(20*xA))/!(tr12 $ 100*x^!2+1)
+  -- (tr12 $ sin (10*xA) + cos(7*pi*xA))/!(tr12 $ 100*x^!2+1)
   where
   res = numer*inv
   inv = 1/!(tr12 $ 100*x^!2+1)
-  numer = tr12 $ sin (10*xA) + cos(20*xA)
+  numer = tr12 $ sin (10*xA) + cos(7*pi*xA)
   xA = adjustAccuracyGuide (\a -> 4*a+15) x
   -- tr12R = tr12 . setAccuracyGuide (getAccuracyGuide x)
 
@@ -361,7 +364,7 @@ fracSin_x tr12 x =
 -----------------------------------
 
 fracSinSC_Name :: String
-fracSinSC_Name = "(sin(10x)+cos(20x))/(10(sin(7x))^2+1) over [-1,1]"
+fracSinSC_Name = "(sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]"
 
 fracSinSC_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 fracSinSC_x tr12 x =
@@ -370,15 +373,22 @@ fracSinSC_x tr12 x =
   maybeTrace (printf "inv: acG = %s; ac = %s" (show $ getAccuracyGuide inv) (show $ getAccuracy inv)) $
   maybeTrace (printf "res: acG = %s; ac = %s" (show $ getAccuracyGuide res) (show $ getAccuracy res)) $
   res
-  -- (tr12R $ sin (10*xA1) + cos(20*xA1))/!(tr12R $ 10*(sin(7*xA2)^!2)+1)
+  -- (tr12R $ sin (10*xA1) + cos(7*pi*xA1))/!(tr12R $ 10*(sin(7*xA2)^!2)+1)
   where
-  res = (tr12 $ numer) * inv
-  inv = 1/! (tr12R $ denom)
-  numer = sin (10*xA1) + cos(20*xA1)
+  res = (setACprod $ tr12 numer) * (setACprod inv)
+  inv = 1/! (tr12 $ setACdiv $ denom)
+  numer = sin (10*xA1) + cos(7*pi*xA1)
   denom = 10*(sin(7*xA2)^!2)+1
-  xA1 = adjustAccuracyGuide (\a -> 4*a+30) x
-  xA2 = adjustAccuracyGuide (\a -> 2*a+30) x
-  tr12R = tr12 . setAccuracyGuide (getAccuracyGuide x + 2)
+
+  -- xA1 = adjustAccuracyGuide (\a -> 4*a+30) x
+  -- xA2 = adjustAccuracyGuide (\a -> 2*a+30) x
+  -- tr12R = tr12 . setAccuracyGuide (getAccuracyGuide x + 2)
+
+  ac = getAccuracyGuide x
+  xA1 = setAccuracyGuide (8*ac+30) x
+  xA2 = setAccuracyGuide (2*ac+30) x
+  setACdiv = setAccuracyGuide (ac + 2)
+  setACprod = setAccuracyGuide (2*ac + 2)
 
 -----------------------------------
 -----------------------------------
@@ -392,11 +402,43 @@ hat_Name = "1-|x+1/3| over [-1,1]"
 
 -----------------------------------
 -----------------------------------
-#ifdef BUMPY
 bumpy_Name :: String
-bumpy_Name = "max(sin(10x),cos(11x)) over [-1,1]"
+bumpy_Name = "max(sin(10x),cos(11*x)) over [-1,1]"
 
 bumpy_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 bumpy_x tr12 x =
-    max (tr12 $ sin (10*x)) (tr12 $ cos (11*x))
-#endif
+  maybeTrace (printf "maxL: acG = %s; ac = %s" (show $ getAccuracyGuide maxL) (show $ getAccuracy maxL)) $
+  maybeTrace (printf "maxR: acG = %s; ac = %s" (show $ getAccuracyGuide maxR) (show $ getAccuracy maxR)) $
+  max (setACmax maxL) (setACmax maxR)
+  where
+  maxL = tr12 $ sin (10*xA1)
+  maxR = tr12 $ cos (11*xA1)
+
+  ac = getAccuracyGuide x
+  xA1 = setAccuracyGuide (10*ac+10) x
+  setACmax = setAccuracyGuide (ac)
+
+bumpy2_Name :: String
+bumpy2_Name = "max((x^2)/2,(sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]"
+
+bumpy2_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+bumpy2_x tr12 x =
+  maybeTrace (printf "numer: acG = %s; ac = %s" (show $ getAccuracyGuide numer) (show $ getAccuracy numer)) $
+  maybeTrace (printf "denom: acG = %s; ac = %s" (show $ getAccuracyGuide denom) (show $ getAccuracy denom)) $
+  maybeTrace (printf "inv: acG = %s; ac = %s" (show $ getAccuracyGuide inv) (show $ getAccuracy inv)) $
+  maybeTrace (printf "frac: acG = %s; ac = %s" (show $ getAccuracyGuide frac) (show $ getAccuracy frac)) $
+  max (setACmax maxL) (setACmax maxR)
+  where
+  maxL = tr12 $ (x^!2)*(real 0.5)
+  maxR = frac
+  frac = (setACprod $ tr12 $ numer) * (setACprod inv)
+  inv = 1/!(tr12 $ setACdiv denom)
+  numer = sin (10*xA1) + cos(7*pi*xA1)
+  denom = 10*(sin(7*xA2)^!2)+1
+
+  ac = getAccuracyGuide x
+  xA1 = setAccuracyGuide (8*ac+10) x
+  xA2 = setAccuracyGuide (2*ac+30) x
+  setACdiv = setAccuracyGuide (ac + 2)
+  setACprod = setAccuracyGuide (2*ac + 2)
+  setACmax = setAccuracyGuide (ac)

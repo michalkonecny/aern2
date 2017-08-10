@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-|
     Module      :  AERN2.RealFun.UnaryBallDFun
     Description :  Real functions by MPBall evaluators, including derivatives
@@ -142,34 +143,15 @@ instance CanNeg UnaryBallDFun where
 instance CanAddAsymmetric UnaryBallDFun UnaryBallDFun where
   add (UnaryBallDFun as) (UnaryBallDFun bs) =
     UnaryBallDFun (zipWith (+) as bs)
-instance CanAddAsymmetric UnaryBallDFun Integer where
-  add (UnaryBallDFun (a:rest)) t = UnaryBallDFun (t+a:rest)
-  add _ _ = error "UnaryBallDFun: add operand does not contain any value"
-instance CanAddAsymmetric Integer UnaryBallDFun where
-  type AddType Integer UnaryBallDFun = UnaryBallDFun
-  add t (UnaryBallDFun (a:rest)) = UnaryBallDFun (t+a:rest)
-  add _ _ = error "UnaryBallDFun: add operand does not contain any value"
 
 instance CanSub UnaryBallDFun UnaryBallDFun where
   sub (UnaryBallDFun as) (UnaryBallDFun bs) =
     UnaryBallDFun (zipWith (-) as bs)
-instance CanSub UnaryBallDFun Integer where
-  sub (UnaryBallDFun (a:rest)) t = UnaryBallDFun (a-t:rest)
-  sub _ _ = error "UnaryBallDFun: sub operand does not contain any value"
-instance CanSub Integer UnaryBallDFun where
-  type SubType Integer UnaryBallDFun = UnaryBallDFun
-  sub t (UnaryBallDFun (a:rest)) = UnaryBallDFun (t-a:rest)
-  sub _ _ = error "UnaryBallDFun: sub operand does not contain any value"
 
 instance CanMulAsymmetric UnaryBallDFun UnaryBallDFun where
   mul (UnaryBallDFun (a:ad:_)) (UnaryBallDFun (b:bd:_)) =
     UnaryBallDFun [a*b, ad*b+a*bd]
   mul _ _ = error "UnaryBallDFun: mul operand does not contain a derivative"
-instance CanMulAsymmetric UnaryBallDFun Integer where
-  mul (UnaryBallDFun as) t = UnaryBallDFun (map (*t) as)
-instance CanMulAsymmetric Integer UnaryBallDFun where
-  type MulType Integer UnaryBallDFun = UnaryBallDFun
-  mul t (UnaryBallDFun as) = UnaryBallDFun (map (*t) as)
 
 instance CanDiv UnaryBallDFun UnaryBallDFun where
   type DivTypeNoCN UnaryBallDFun UnaryBallDFun = UnaryBallDFun
@@ -179,20 +161,6 @@ instance CanDiv UnaryBallDFun UnaryBallDFun where
   type DivType UnaryBallDFun UnaryBallDFun = UnaryBallDFun
   divide (UnaryBallDFun (a:ad:_)) (UnaryBallDFun (b:bd:_)) =
     UnaryBallDFun [a/b, (ad*b-a*bd)/(b^2)]
-  divide _ _ = error "UnaryBallDFun: divide operand does not contain a derivative"
-instance CanDiv UnaryBallDFun Integer where
-  type DivTypeNoCN UnaryBallDFun Integer = UnaryBallDFun
-  divideNoCN (UnaryBallDFun as) t = UnaryBallDFun (map (/t) as)
-  type DivType UnaryBallDFun Integer = UnaryBallDFun
-  divide (UnaryBallDFun as) t = UnaryBallDFun (map (/t) as)
-instance CanDiv Integer UnaryBallDFun where
-  type DivTypeNoCN Integer UnaryBallDFun = UnaryBallDFun
-  divideNoCN t (UnaryBallDFun (b:bd:_)) =
-    UnaryBallDFun [t/b, (-t*bd)/(b^2)]
-  divideNoCN _ _ = error "UnaryBallDFun: divideNoCN operand does not contain a derivative"
-  type DivType Integer UnaryBallDFun = UnaryBallDFun
-  divide t (UnaryBallDFun (b:bd:_)) =
-    UnaryBallDFun [t/b, (-t*bd)/(b^2)]
   divide _ _ = error "UnaryBallDFun: divide operand does not contain a derivative"
 
 instance CanPow UnaryBallDFun Integer where
@@ -212,3 +180,45 @@ instance CanSinCos UnaryBallDFun where
   cos (UnaryBallDFun (a:ad:_)) =
     UnaryBallDFun [cos a, -(sin a) * ad]
   cos _ = error "UnaryBallDFun: sin operand does not contain a derivative"
+
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| CauchyReal |]]
+  (\ t -> [d|
+
+    instance CanAddAsymmetric UnaryBallDFun $t where
+      add (UnaryBallDFun (a:rest)) n = UnaryBallDFun (n+a:rest)
+      add _ _ = error "UnaryBallDFun: add operand does not contain any value"
+    instance CanAddAsymmetric $t UnaryBallDFun where
+      type AddType $t UnaryBallDFun = UnaryBallDFun
+      add n (UnaryBallDFun (a:rest)) = UnaryBallDFun (n+a:rest)
+      add _ _ = error "UnaryBallDFun: add operand does not contain any value"
+
+    instance CanSub UnaryBallDFun $t where
+      sub (UnaryBallDFun (a:rest)) n = UnaryBallDFun (a-n:rest)
+      sub _ _ = error "UnaryBallDFun: sub operand does not contain any value"
+    instance CanSub $t UnaryBallDFun where
+      type SubType $t UnaryBallDFun = UnaryBallDFun
+      sub n (UnaryBallDFun (a:rest)) = UnaryBallDFun (n-a:rest)
+      sub _ _ = error "UnaryBallDFun: sub operand does not contain any value"
+
+    instance CanMulAsymmetric UnaryBallDFun $t where
+      mul (UnaryBallDFun as) n = UnaryBallDFun (map (*n) as)
+    instance CanMulAsymmetric $t UnaryBallDFun where
+      type MulType $t UnaryBallDFun = UnaryBallDFun
+      mul n (UnaryBallDFun as) = UnaryBallDFun (map (*n) as)
+
+    instance CanDiv UnaryBallDFun $t where
+      type DivTypeNoCN UnaryBallDFun $t = UnaryBallDFun
+      divideNoCN (UnaryBallDFun as) n = UnaryBallDFun (map (/n) as)
+      type DivType UnaryBallDFun $t = UnaryBallDFun
+      divide (UnaryBallDFun as) n = UnaryBallDFun (map (/n) as)
+    instance CanDiv $t UnaryBallDFun where
+      type DivTypeNoCN $t UnaryBallDFun = UnaryBallDFun
+      divideNoCN n (UnaryBallDFun (b:bd:_)) =
+        UnaryBallDFun [n/b, (negate n*bd)/(b^!2)]
+      divideNoCN _ _ = error "UnaryBallDFun: divideNoCN operand does not contain a derivative"
+      type DivType $t UnaryBallDFun = UnaryBallDFun
+      divide n (UnaryBallDFun (b:bd:_)) =
+        UnaryBallDFun [n/b, (negate n*bd)/(b^!2)]
+      divide _ _ = error "UnaryBallDFun: divide operand does not contain a derivative"
+  |]))

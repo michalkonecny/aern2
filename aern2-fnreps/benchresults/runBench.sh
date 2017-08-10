@@ -157,6 +157,27 @@ function sinecosAllReprs
 }
 
 #################
+### sine+cospi
+#################
+
+function sinecospiAllReprs
+{
+  # repr_fun_max_paramss="10 15 20";
+  # repr_fun_itg_paramss="06 08 09 10";
+  repr_ball_max_paramss="10 15 20 25 30 35";
+  repr_ball_itg_paramss="10 12 13";
+  repr_dball_max_paramss="10 20 30 40 45 50";
+  repr_dball_itg_paramss="10 15 20 21 22";
+  repr_poly_max_paramss="30 50 70 90 110";
+  repr_poly_itg_paramss="30 50 70 90 110";
+  repr_lpoly_max_paramss="10 30 50 70 90";
+  repr_lpoly_itg_paramss="10 30 50 70 90";
+
+  fn=sine+cospi; dir=$fn;
+  runForAllReprs
+}
+
+#################
 ### sinesine
 #################
 
@@ -183,10 +204,10 @@ function sinesineAllReprs
 
 function sinesine+cosAllReprs
 {
-  repr_ball_max_paramss="10 20 25 30";
+  repr_ball_max_paramss="10 20 25 30 32";
   repr_ball_itg_paramss="05 10 12 13";
-  repr_dball_max_paramss="10 30 50 70 90";
-  repr_dball_itg_paramss="05 10 15 20 25";
+  repr_dball_max_paramss="10 20 30 40 42 44";
+  repr_dball_itg_paramss="05 10 15 20 21";
   repr_poly_max_paramss="30 40 50 70 90";
   repr_poly_itg_paramss="30 40 50 70 90";
   repr_lpoly_max_paramss="30 40 50 70 90";
@@ -202,10 +223,10 @@ function sinesine+cosAllReprs
 
 function rungeAllReprs
 {
-  repr_ball_max_paramss="10 30 50 70 90";
+  repr_ball_max_paramss="10 20 30 40";
   repr_ball_itg_paramss="05 10 15 17";
-  repr_dball_max_paramss="10 30 50 70 90";
-  repr_dball_itg_paramss="05 10 15 20 25 30 35";
+  repr_dball_max_paramss="10 20 30 40";
+  repr_dball_itg_paramss="05 10 15 20 25";
   repr_poly_max_paramss="01 08 20";
   repr_poly_itg_paramss="01 08 20";
   repr_ppoly_max_paramss="10 20 40 60 80 100";
@@ -229,10 +250,10 @@ function rungeAllReprs
 
 function rungeSCAllReprs
 {
-  repr_ball_max_paramss="05 10 15 20 25 30";
-  repr_ball_itg_paramss="05 10 15";
-  repr_dball_max_paramss="10 30 50 70 90";
-  repr_dball_itg_paramss="05 10 15 20 25 30";
+  repr_ball_max_paramss="05 10 15 20 25 30 32";
+  repr_ball_itg_paramss="05 10 12 15";
+  repr_dball_max_paramss="10 20 30 40 43 46";
+  repr_dball_itg_paramss="05 10 15 20 25";
   repr_poly_max_paramss="03 05 12";
   repr_poly_itg_paramss="03 05 12";
   repr_ppoly_max_paramss="10 20 40 60 80 100";
@@ -256,10 +277,10 @@ function rungeSCAllReprs
 
 function fracSinAllReprs
 {
-  repr_ball_max_paramss="10 30 50 70 90";
+  repr_ball_max_paramss="10 20 30";
   repr_ball_itg_paramss="05 10 15";
-  repr_dball_max_paramss="10 30 50 70 90";
-  repr_dball_itg_paramss="05 10 15 20 25 30";
+  repr_dball_max_paramss="10 20 30";
+  repr_dball_itg_paramss="05 10 15 20";
   repr_poly_max_paramss="05 08 10";
   repr_poly_itg_paramss="05 08 10";
   repr_ppoly_max_paramss="10 15 20 25";
@@ -284,11 +305,11 @@ function fracSinAllReprs
 function fracSinSCAllReprs
 {
   repr_ball_max_paramss="10 20 25 30";
-  repr_ball_itg_paramss="05 10 15";
-  repr_dball_max_paramss="10 30 50 70 90";
-  repr_dball_itg_paramss="05 10 15 20 25";
-  repr_poly_max_paramss="01 05 08";
-  repr_poly_itg_paramss="01 05 08";
+  repr_ball_itg_paramss="05 10 12 13";
+  repr_dball_max_paramss="10 20 30 40 43 46";
+  repr_dball_itg_paramss="05 10 15 20 21 22";
+  repr_poly_max_paramss="01 05";
+  repr_poly_itg_paramss="01 05";
   repr_ppoly_max_paramss="10 15 20";
   repr_ppoly_itg_paramss="10 15 20";
   repr_frac_max_paramss="10 20 40 60 80 100";
@@ -312,16 +333,17 @@ function fracSinSCAllReprs
 
 function bumpyAllReprs
 {
-  repr_ball_max_paramss="0 20 40 60 80";
+
+  repr_ball_max_paramss="10 20 40 60 80 100";
   repr_ball_itg_paramss="10 12 13 14";
-  repr_dball_max_paramss="0 20 40 60 80";
+  repr_dball_max_paramss="10 20 40 60 80 100";
   repr_dball_itg_paramss="10 15 20 25 30";
-  repr_poly_max_paramss="08 09 10";
-  repr_poly_itg_paramss="08 09 10";
+  repr_poly_max_paramss="02 03 04";
+  repr_poly_itg_paramss="02 03 04";
   repr_ppoly_max_paramss="10 20 40 60 80 100";
   repr_ppoly_itg_paramss="10 20 40 60 80 100";
-  # repr_frac_max_paramss="10 20 40 60 80";
-  # repr_frac_itg_paramss="10 15 20";
+  # repr_frac_max_paramss="08 09 10";
+  # repr_frac_itg_paramss="08 09 10";
   repr_lpoly_max_paramss="10 20 40 60 80 100";
   repr_lpoly_itg_paramss="10 20 40 60 81 100"; # gets stuck to 80 - bug?
   repr_lppoly_max_paramss="10 20 40 60 80 100";
@@ -333,11 +355,40 @@ function bumpyAllReprs
   runForAllReprs
 }
 
+#################
+### bumpy2
+#################
+
+function bumpy2AllReprs
+{
+  repr_ball_max_paramss="10 20 25 30";
+  repr_ball_itg_paramss="05 10 12 13 14";
+  repr_dball_max_paramss="10 20 30 40 50 60 70 80 90 100";
+  repr_dball_itg_paramss="05 10 15 20 21 22";
+  # repr_poly_max_paramss="01 02";
+  # repr_poly_itg_paramss="01 02";
+  repr_ppoly_max_paramss="05 10 15 20 25";
+  repr_ppoly_itg_paramss="05 10 15 20 25";
+  # repr_frac_max_paramss="01 03";
+  # repr_frac_itg_paramss="01 03";
+  # repr_lpoly_max_paramss="10 20 40 60 80 100";
+  # repr_lpoly_itg_paramss="10 20 40 60 80 100";
+  repr_lppoly_max_paramss="10 20 40 60 80 100";
+  repr_lppoly_itg_paramss="20 25 30 40 60 80 100";
+  # repr_lfrac_max_paramss="10 20 40 60 80 100";
+  # repr_lfrac_itg_paramss="10 20 40 60 80 100";
+
+  fn=bumpy2; dir=$fn;
+  runForAllReprs
+}
+
 sinecosAllReprs
+sinecospiAllReprs
 sinesineAllReprs
 sinesine+cosAllReprs
-rungeAllReprs
+# rungeAllReprs
 rungeSCAllReprs
-fracSinAllReprs
+# fracSinAllReprs
 fracSinSCAllReprs
 bumpyAllReprs
+bumpy2AllReprs
