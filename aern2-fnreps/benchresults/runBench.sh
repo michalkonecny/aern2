@@ -254,12 +254,12 @@ function rungeSCAllReprs
   repr_ball_itg_paramss="05 10 12 15";
   repr_dball_max_paramss="10 20 30 40 43 46";
   repr_dball_itg_paramss="05 10 15 20 25";
-  repr_poly_max_paramss="03 05 12";
-  repr_poly_itg_paramss="03 05 12";
+  repr_poly_max_paramss="05 12";
+  repr_poly_itg_paramss="05 12";
   repr_ppoly_max_paramss="10 20 40 60 80 100";
   repr_ppoly_itg_paramss="10 20 40 60 80 100";
   repr_frac_max_paramss="10 20 40 60 80 100";
-  repr_frac_itg_paramss="30 40 60 80 100";
+  repr_frac_itg_paramss="40 60 80 100";
   repr_lpoly_max_paramss="20 40 60 80 100";
   repr_lpoly_itg_paramss="20 40 60 80 100";
   repr_lppoly_max_paramss="20 40 60 80 100";
