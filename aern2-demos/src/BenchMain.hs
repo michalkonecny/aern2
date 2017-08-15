@@ -37,6 +37,8 @@ import qualified Tasks.LogisticPreludeOps as TP
 import Tasks.Logistic
 import Tasks.Fourier
 
+import CIDR
+
 main :: IO ()
 main =
     do
@@ -57,6 +59,7 @@ bench implName benchName benchParamsS =
             "logistic" -> logisticAux benchParams
             "fft" -> fftAux benchParams
             "dft" -> dftAux benchParams
+            "mysqrt" -> mysqrtAux benchParams
             _ ->
                 error $ "unknown benchmark: " ++ benchName
         where
@@ -66,6 +69,8 @@ bench implName benchName benchParamsS =
         fftAux _ = error "fft requires 3 integer parameters \"k\", \"acS\" and \"acG\""
         dftAux [k,acS, acG] = taskDFTDescription k acS acG
         dftAux _ = error "dft requires 3 integer parameters \"k\", \"acS\" and \"acG\""
+        mysqrtAux [_acS, _acG] = "mysqrt 2"
+        mysqrtAux _ = error "mysqrt requires 2 integer parameters \"acS\" and \"acG\""
     resultDecription =
         case (benchName, benchParams) of
             ("logistic", [n,acS, acG]) ->
@@ -78,6 +83,12 @@ bench implName benchName benchParamsS =
                     _ -> error $ "unknown implementation: " ++ implName
             ("fft", [k,acS, acG]) -> fourier True k acS acG
             ("dft", [k,acS, acG]) -> fourier False k acS acG
+            ("mysqrt", [acS, acG]) ->
+                case implName of
+                    "MP" -> show (mysqrt (mpBallP (prec acG) 2))
+                    "CR" -> show (mysqrt (real 2) ? (bitsSG acS acG))
+                    _ -> error $ "unsupported implementation: " ++ implName
+
             _ -> error ""
         where
         fourier isFFT k acS acG =

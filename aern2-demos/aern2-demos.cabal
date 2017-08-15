@@ -27,13 +27,15 @@ executable aern2-demos-run-bench
   ghc-options:     -O2 -Wall -rtsopts -threaded
   extensions:
         RebindableSyntax,
-        Arrows, FlexibleContexts, TypeOperators, TypeFamilies, ConstraintKinds, ScopedTypeVariables
+        Arrows, FlexibleContexts, TypeOperators, TypeFamilies, MultiParamTypeClasses
+        ConstraintKinds, ScopedTypeVariables, FlexibleInstances
   main-is: BenchMain.hs
   other-modules:
     Demos
     Tasks.LogisticPreludeOps
     Tasks.Logistic
     Tasks.Fourier
+    CIDR
     -- EffortConcept1
 
 -- executable aern2-demoPar
