@@ -16,14 +16,15 @@ module AERN2.Sequence
   module AERN2.AccuracySG
   -- * The protocol and type of fast converging sequences
   , SequenceP(..), pSeq
+  , SuitableForSeq
+  , SequenceA, Sequence, newSeq, newSeqSimple
   , seqName, seqId, seqSources, seqRename
   , seqWithAccuracy, (?), seqWithAccuracyA, seqsWithAccuracyA
-  , SequenceA, Sequence, newSeq, newSeqSimple
-  , SequenceAtAccuracy(..)
   , (-:-), (-:-||), (-:-|)
+  , SequenceAtAccuracy(..)
   , convergentList2SequenceA
   , seqByPrecision2SequenceA
-  -- * picking one of several staged computations running in parallel
+  -- * selecting one of several staged computations
   , pick
   -- * auxiliary functions for making new sequence operations
   , unaryOp, binaryOp, binaryOpWithPureArg

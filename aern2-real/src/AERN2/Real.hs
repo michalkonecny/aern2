@@ -30,7 +30,7 @@ module AERN2.Real
   , CanBeComplex, complex, CanBeComplexA, complexA
   -- * Constants
   , pi, piA
-  -- * Mini tests
+  -- * Mini demos
   , _addslACachedPrint
   , _addslAParPrint
   , _example_pif

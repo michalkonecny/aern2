@@ -89,7 +89,55 @@ type RA to = CauchyRealA to
 -- CauchyReal = Sequence MPBall
 -- Sequence t = ... (AccuracySG -> t)
 
-{- Cauchy reals vs iRRAM style execution -}
+{- accuracy guide -}
+
+sumSines1 n = sum [sin i | i <- [1..n]]
+
+sumSines1_run1 = sumSines1 100
+sumSines1_run2 = (sumSines1 100) ? (bitsSG 100 200)
+sumSines1_run3 = (sumSines1 100) ? (bitsSG 100 100)
+
+{- comparisons -}
+
+pi100 = pi?(bitsS 100)
+
+compare_run1 = pi100 > 0
+compare_run2 = pi100 == pi100
+
+compare_run3 = pi > 0
+compare_run4 = pi == pi + 0.5^!1000
+compare_run5 = (pi == pi + 0.5^!1000) ? (bitsS 100)
+compare_run6 = real 0 == 0
+
+{- partial function checking -}
+
+-- partialfn_run0 = sqrt (-1) :: R
+partialfn_run1 = sqrt (-1)
+partialfn_run2 = sqrt 0
+partialfn_run3 = sqrt (pi-pi)
+partialfn_run4 = (~!) (sqrt (pi-pi))
+
+{- pif -}
+
+-- myabs0 :: R -> R
+myabs0 x = if x < 0 then -x else x
+
+type RCN = CauchyRealCN
+
+myabs1 :: R -> RCN
+myabs1 x = if x < 0 then -x else x
+
+myabs2 :: R -> R
+myabs2 x = (~!) $ if x < 0 then -x else x
+
+{- lim -}
+
+-- TODO
+
+
+-----------------------------------------
+-- Cauchy reals vs iRRAM style execution
+-----------------------------------------
 
 logistic1 :: _ => Rational -> Integer -> t -> t
 logistic1 c n x0 =
@@ -136,47 +184,6 @@ irramEval f x =
     withPrecision p = f xWithP
       where
       xWithP = (setPrecision p (x ? (accuracySG $ bits p)))
-
-{- accuracy guide -}
-
-sumSines1 n = sum [sin i | i <- [1..n]]
-
-sumSines1_run1 = sumSines1 100
-sumSines1_run2 = (sumSines1 100) ? (bitsSG 100 200)
-sumSines1_run3 = (sumSines1 100) ? (bitsSG 100 100)
-
-{- comparisons -}
-
-pi100 = pi?(bitsS 100)
-
-compare_run1 = pi100 > 0
-compare_run2 = pi100 == pi100
-
-compare_run3 = pi > 0
-compare_run4 = pi == pi + 0.5^!1000
-compare_run5 = (pi == pi + 0.5^!1000) ? (bitsS 100)
-compare_run6 = real 0 == 0
-
-{- partial function checking -}
-
--- partialfn_run0 = sqrt (-1) :: R
-partialfn_run1 = sqrt (-1)
-partialfn_run2 = sqrt 0
-partialfn_run3 = sqrt (pi-pi)
-partialfn_run4 = (~!) (sqrt (pi-pi))
-
-{- pif -}
-
--- myabs0 :: R -> R
-myabs0 x = if x < 0 then -x else x
-
-type RCN = CauchyRealCN
-
-myabs1 :: R -> RCN
-myabs1 x = if x < 0 then -x else x
-
-myabs2 :: R -> R
-myabs2 x = (~!) $ if x < 0 then -x else x
 
 
 ----------------------------------
