@@ -2,6 +2,15 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE CPP #-}
 #define DEBUG
+{-|
+
+Experimenting with programming in CIDR shallow
+embedding in Haskell/AERN2.
+
+CIDR is a core language for exact real computation
+being developed within the CID EU project.
+
+-}
 module CIDR where
 
 #ifdef DEBUG
