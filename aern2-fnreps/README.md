@@ -159,7 +159,7 @@ Each benchmark has been executed repeatedly until 3 consecutive times the result
 
 The following slightly modified version of this function reveals how sensitive is DBall to the type of constants present in the formula:
 
-![sine+cospi](http://latex.codecogs.com/gif.latex?\\sin(10x)+\\cos(7\\pi{}x))
+![sine+cospi](http://latex.codecogs.com/gif.latex?\\sin(10x)+\\cos(7\\pi&space;x))
 <img src="plots/sine+cospi.png?raw=true" width="150">
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
