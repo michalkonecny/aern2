@@ -20,7 +20,7 @@ executable aern2-demos-run-bench
     , containers
     , stm
     , QuickCheck
-    , mixed-types-num == 0.3.*
+    , mixed-types-num >= 0.3.1 && < 0.4
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
   hs-source-dirs:  src
@@ -43,7 +43,7 @@ executable aern2-demos-run-bench
 --     base >= 4
 --     , containers
 --     , parallel, deepseq
---     , mixed-types-num == 0.3.*
+--     , mixed-types-num >= 0.3.1 && < 0.4
 --     , aern2-mp == 0.1.*
 --     , aern2-real == 0.1.*
 --   hs-source-dirs:  src

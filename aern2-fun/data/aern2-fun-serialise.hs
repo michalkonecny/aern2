@@ -70,7 +70,7 @@ serialisePolys deg count =
   fileName = serialiseFileName deg count
   polys =
     concat $ map (\(a,b) -> [a, b]) $
-      take (int count) $ valuePairsWithDeg deg
+      take count $ valuePairsWithDeg deg
 
 serialiseFileName :: Integer -> Integer -> String
 serialiseFileName deg count =

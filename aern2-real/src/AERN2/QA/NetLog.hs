@@ -97,7 +97,7 @@ formatQALog = aux
         (indent ++ show item ++ "\n") ++
         (aux level' rest)
         where
-        indent = replicate (int levelNow) ' '
+        indent = replicate levelNow ' '
         (levelNow, level') =
             case item of
                 QANetLogQuery _ _ _ -> (level + 1, level + 1)

@@ -20,7 +20,7 @@ import AERN2.PPoly.Type
 import qualified AERN2.PPoly.Eval as PPE
 import AERN2.PQueue (PQueue)
 import qualified AERN2.PQueue as Q
-import Data.List hiding (maximum, minimum, (!!))
+import Data.List (foldl')
 import AERN2.Poly.Basics hiding (Terms)
 import AERN2.Poly.Conversion
 import AERN2.Interval

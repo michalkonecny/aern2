@@ -85,7 +85,7 @@ lift2_DCT getDegree op pA pB
   dA = terms_degree $ chPoly_terms pA
   dB = terms_degree $ chPoly_terms pB
   resultDegree = getDegree dA dB
-  cNexponent = 1 + (integer $ integerLog2 $ max 1 (resultDegree + 1))
+  cNexponent = 1 + (integerLog2 $ max 1 (resultDegree + 1))
   cN = 2 ^! cNexponent
 
   -- prc = (getPrecision pA) `max` (getPrecision pB)
@@ -144,7 +144,7 @@ lift1_DCT getDegree op p =
 
     aT = coeffs2gridvalues cN termsA
 
-    cN = 2 ^! (1 + (integer $ integerLog2 $ max 1 (getDegree dA + 1)))
+    cN = 2 ^! (1 + (integerLog2 $ max 1 (getDegree dA + 1)))
     workingPrec = (prec $ 100 + cN) + (getPrecision p)
     (ChPoly dom (Poly termsA) acG _) = raisePrecisionIfBelow workingPrec p
     dA = terms_degree termsA
@@ -162,7 +162,7 @@ coeffs2gridvalues cN terms =
     where
     -- convert from sparse to dense representation:
     coeffs = pad0 $ map (terms_lookupCoeffDoubleConstTerm terms) [0..(terms_degree terms)]
-    pad0 list = take (int $ cN + 1) $ list ++ (repeat (convertExactly 0))
+    pad0 list = take (cN + 1) $ list ++ (repeat (convertExactly 0))
 
 
 {-|
@@ -184,7 +184,7 @@ tDCT_I_reference a =
         | mu <- [0..cN]
     ]
     where
-    cN = integer (length a) - 1
+    cN = (length a) - 1
 
 {-| An auxiliary family of constants, frequently used in Chebyshev-basis expansions. -}
 eps :: Integer -> Integer -> Rational
@@ -215,7 +215,7 @@ tDCT_I_nlogn a
     gTilde = tDCT_III_nlogn g
     f = [ (a !! ell) + (a !! (cN - ell)) | ell <- [0..cN1]]
     g = [ (a !! ell) - (a !! (cN - ell)) | ell <- [0..cN1-1]]
-    cN = integer (length a) - 1
+    cN = (length a) - 1
     cN1 = floor (cN /! 2)
 
 {-|
@@ -237,12 +237,12 @@ _tDCT_III_reference g =
     ]
     where
     cN = cN1 * 2
-    cN1 = integer (length g)
+    cN1 = (length g)
 
 {-|
     DCT-III computed via SDCT-III.  The reduction is described on page 20.
 
-    Precondition: integer (length g) is a power of 2
+    Precondition: (length g) is a power of 2
 -}
 tDCT_III_nlogn ::
   -- (Field c, CanMulBy c CauchyReal) =>
@@ -258,7 +258,7 @@ tDCT_III_nlogn g =
         get_g i
             | even i = h !! (floor (i/!2 :: Rational))
             | otherwise = h !! (floor $ (2*cN1 - i - 1)/!2)
-    cN1 = integer (length g)
+    cN1 = (length g)
 
 {-|
     Simplified DCT-III computed directly from its definition in
@@ -279,7 +279,7 @@ _tSDCT_III_reference h =
     ]
     where
     cN = cN1 * 2
-    cN1 = integer (length h)
+    cN1 = (length h)
 
 {-|
     Simplified DCT-III computed as described in
@@ -331,7 +331,7 @@ tSDCT_III_nlogn (h :: [c]) =
                 ((2 * (minusOnePow bit_iTauMinus1)) * (hItau_minus_1 !! (c_Ntau_plus_1+n)) * gamma)
             gamma =
                 cos $ (((4 * c_Itau_minus_1) + 1) * pi) /! (4*two_pow_tau_minus_1)
-        c_Ntau = integer (length hItau_minus_1)
+        c_Ntau = length hItau_minus_1
         c_Ntau_plus_1
             | even c_Ntau = floor (c_Ntau/!2)
             | otherwise = error "tSDCT_III_nlogn: precondition violated: (length h) has to be a power of 2"

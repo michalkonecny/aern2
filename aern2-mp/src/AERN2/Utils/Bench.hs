@@ -29,5 +29,5 @@ listFromGen gen =
         concat $ map genSome [1..]
         where
         genSome size =
-            unGen (sequence $ replicate (int 10) gen) qcGen (int size)
+            unGen (sequence $ replicate 10 gen) qcGen (int size)
     qcGen = mkQCGen (int 148548830)

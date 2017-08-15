@@ -51,6 +51,6 @@ merge l@(rL:rsL) r@(rR:rsR) =
 splitAtMiddle :: [a] -> ([a],[a])
 splitAtMiddle list =
   let
-    middle = (length list) `div` (int 2)
+    middle = (length list) `div` 2
   in
     splitAt middle list

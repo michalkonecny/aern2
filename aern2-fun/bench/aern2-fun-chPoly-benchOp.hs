@@ -92,7 +92,7 @@ runBenchmark mode op serialisedFile p acGuide count =
   reportProgress tStart "preparing arguments"
   valuePairs <- loadSerialised serialisedFile
   -- paramPairsPre <- pick valuePairs count
-  let paramPairsPre = take (int count) valuePairs
+  let paramPairsPre = take count valuePairs
 
   let paramPairs =
         map (mapBoth (centreAsBall . setPrecision p)) paramPairsPre

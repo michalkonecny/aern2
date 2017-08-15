@@ -259,7 +259,7 @@ task_closestPairA ::
   (QAArrow to
   , CanSinCosSameType t
   , CanMinMaxSameType t, CanSubSameType t, CanAbsSameType t
-  , HasIntegers t, CanAddSameType t, CanDivCNBy t Int)
+  , HasIntegers t, CanAddSameType t, CanDivCNBy t Integer)
   =>
   (t `to` t) -> ((t, t) `to` Bool) -> Integer -> () `to` t
 task_closestPairA (reg :: t `to` t) comp n =
@@ -269,7 +269,7 @@ task_closestPairA (reg :: t `to` t) comp n =
 closestPairDistA ::
   (QAArrow to
   , CanMinMaxSameType t, CanSubSameType t, CanAbsSameType t
-  , HasIntegers t, CanAddSameType t, CanDivCNBy t Int)
+  , HasIntegers t, CanAddSameType t, CanDivCNBy t Integer)
   =>
   (t `to` t) -> ((t, t) `to` Bool) -> [t] `to` t
 closestPairDistA (reg :: (t `to` t)) comp =
@@ -320,7 +320,7 @@ closestPairDistA_Real = closestPairDistA (-:-||) compApproxA
 hull :: MPBall -> MPBall -> MPBall
 hull = fromEndpoints
 
-average :: (HasIntegers t, CanAddSameType t, CanDivCNBy t Int) => [t] -> t
+average :: (HasIntegers t, CanAddSameType t, CanDivCNBy t Integer) => [t] -> t
 average xs = (sum xs) /! (length xs)
 
 largest :: (CanMinMaxSameType t) => [t] -> t
@@ -335,7 +335,7 @@ distinctPairs xs = [(x,y) | (x:rest) <- tails1 xs, y <- rest]
 {-| non-empty tails -}
 tails1 :: [t] -> [[t]]
 tails1 list =
-  take (int $ length list - 1) $ List.tails list
+  take (length list - 1) $ List.tails list
 
 replicate :: Integer -> a -> [a]
 replicate = P.replicate . int

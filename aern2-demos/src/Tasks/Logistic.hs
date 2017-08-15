@@ -43,7 +43,7 @@ logisticWithHookA ::
   =>
   (Integer -> r `to` Maybe r) -> Rational -> Integer -> (Maybe r `to` Maybe r)
 logisticWithHookA hookA c n =
-    foldl1 (<<<) (take (int n) (map step [1..]))
+    foldl1 (<<<) (take n (map step [1..]))
     where
     step i = proc mx ->
       do
@@ -60,7 +60,7 @@ logisticA ::
   =>
   Rational -> Integer -> (r `to` r)
 logisticA c n =
-    foldl1 (<<<) (take (int n) (repeat l))
+    foldl1 (<<<) (take n (repeat l))
     where
     l = arr (\x -> (c * x * (1 - x)))
 
@@ -77,7 +77,7 @@ irramEval f rIn = rOut
 
 logistic :: (HasLogisticOps t) => Rational -> Integer -> t -> t
 logistic c n x0 =
-  foldl1 (.) (take (int n) (repeat l)) x0
+  foldl1 (.) (take n (repeat l)) x0
   where
   l x = c * x * (1-x)
 -}

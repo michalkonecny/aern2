@@ -39,7 +39,7 @@ library
     , wai
     , wai-extra
     , wai-make-assets
-    , mixed-types-num == 0.3.*
+    , mixed-types-num >= 0.3.1 && < 0.4
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
     , aern2-fun == 0.1.*
@@ -68,7 +68,7 @@ library
 executable aern2-fun-plot-example
   build-depends:
     base == 4.*
-    , mixed-types-num == 0.3.*
+    , mixed-types-num >= 0.3.1 && < 0.4
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
     , aern2-fun == 0.1.*
@@ -110,7 +110,7 @@ executable aern2-fun-plot-example
 --       Spec.hs
 --   build-depends:
 --     base == 4.*
---     -- , mixed-types-num == 0.3.*
+--     -- , mixed-types-num >= 0.3.1 && < 0.4
 --     -- , aern2-mp
 --     , aern2-real
 --     , hspec >= 2.1 && < 2.3

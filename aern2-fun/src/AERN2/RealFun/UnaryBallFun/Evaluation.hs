@@ -123,10 +123,10 @@ evalOnIntervalGuessPrecision f (Interval l r) =
         "evalOnIntervalGuessPrecision (1):"
         ++ "\n (l,r) = " ++ show (l,r)
         ++ "\n nl = " ++ show nl
-        ++ "\n precisions = " ++ show (take (int 21) precisions)
+        ++ "\n precisions = " ++ show (take 21 precisions)
     ) $ maybeTrace (
         "evalOnIntervalGuessPrecision (2):"
-        ++ "\n resultsWithIncreasingPrecision = " ++ show (take (int 21) resultsWithIncreasingPrecision)
+        ++ "\n resultsWithIncreasingPrecision = " ++ show (take 21 resultsWithIncreasingPrecision)
     ) $ maybeTrace (
         "evalOnIntervalGuessPrecision (3):"
         ++ "\n result accuracy = " ++ show (getAccuracy result)
@@ -142,10 +142,10 @@ evalOnIntervalGuessPrecision f (Interval l r) =
         lMP = setPrecision p $ mpBall l
         rMP = setPrecision p $ mpBall r
     precisions =
-        drop (int 1) $ -- ignore the initial precision
+        drop 1 $ -- ignore the initial precision
         map prec precisions'
     precisions' = -- Fibonacci series starting with initPrec, initPrec+10, 2*initPrec + 10, ...
-        initPrec : (initPrec+10) : zipWith (+) precisions' (drop (int 1) precisions')
+        initPrec : (initPrec+10) : zipWith (+) precisions' (drop 1 precisions')
     initPrec =
         case nl of
             NormBits i -> max 10 (-i)
@@ -155,7 +155,7 @@ evalOnIntervalGuessPrecision f (Interval l r) =
         case results of
             [] -> head resultsCN
             _ ->
-                maybeTrace ("untilLittleImprovement: improvements = " ++ show (take (int 10) improvements)) $
+                maybeTrace ("untilLittleImprovement: improvements = " ++ show (take 10 improvements)) $
                 cn $ pickFirstResultWithLowImprovement $ zip improvements results
         where
         results = filterNoException 20 False resultsCN
@@ -165,7 +165,7 @@ evalOnIntervalGuessPrecision f (Interval l r) =
             | otherwise = pickFirstResultWithLowImprovement rest
         pickFirstResultWithLowImprovement _ = error "internal error in onRationalInterval"
         radii = map (mpBall . dyadic . radius) results
-        improvements = zipWith measureImprovement radii (drop (int 1) radii)
+        improvements = zipWith measureImprovement radii (drop 1 radii)
         measureImprovement r1 r2 = getNormLog $ max (mpBall 0) $ r1 - r2
 
 filterNoException ::

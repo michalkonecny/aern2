@@ -37,7 +37,7 @@ library
     , stm >= 2.4 && < 2.5
     , bytestring >= 0.10 && < 0.11
     , aeson >= 0.11 && < 1.1
-    , mixed-types-num == 0.3.*
+    , mixed-types-num >= 0.3.1 && < 0.4
     , aern2-mp == 0.1.*
   ghc-options:     -Wall -O2 -fno-warn-orphans
   extensions:
@@ -104,7 +104,7 @@ test-suite spec
     AERN2.RealSpec
   build-depends:
     base == 4.*
-    -- , mixed-types-num == 0.3.*
+    -- , mixed-types-num >= 0.3.1 && < 0.4
     -- , aern2-mp
     , aern2-real == 0.1.*
     , hspec >= 2.1 && < 2.5
@@ -126,7 +126,7 @@ executable aern2-real-benchOp
       aern2-real-benchOp.hs
   build-depends:
     base == 4.*
-    , mixed-types-num == 0.3.*
+    , mixed-types-num >= 0.3.1 && < 0.4
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
     , random
@@ -148,6 +148,6 @@ executable aern2-generate-netlog-elm
   build-depends:
     base == 4.*
     , elm-bridge >= 0.3 && < 0.5
-    , mixed-types-num == 0.3.*
+    , mixed-types-num >= 0.3.1 && < 0.4
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*

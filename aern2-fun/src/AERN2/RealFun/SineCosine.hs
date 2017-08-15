@@ -231,8 +231,8 @@ sineCosineTaylorSum isSine (xAC :: Accuracy -> f) xM acGuidePre =
       where
       res =
         foldl updateAccuracies powerAccuracies0 $
-          drop (int 1) $ reverse $ -- from second-highest down to the lowest
-            drop (int 2) $ Map.toAscList powerAccuracies0 -- the 2 lowest are computed directly
+          drop 1 $ reverse $ -- from second-highest down to the lowest
+            drop 2 $ Map.toAscList powerAccuracies0 -- the 2 lowest are computed directly
       updateAccuracies powerACs (i, ac_i)
         | odd i && odd j =  -- pw_(2j+1) = x * pw_j * pw_j
             updateAC j (ac_i + log_pw_j + log_x) $
