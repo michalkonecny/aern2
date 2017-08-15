@@ -28,7 +28,7 @@ executable aern2-demos-run-bench
   extensions:
         RebindableSyntax,
         Arrows, FlexibleContexts, TypeOperators, TypeFamilies, ConstraintKinds, ScopedTypeVariables
-  main-is: Main.hs
+  main-is: BenchMain.hs
   other-modules:
     Demos
     Tasks.LogisticPreludeOps

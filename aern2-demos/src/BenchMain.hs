@@ -13,7 +13,7 @@ import Debug.Trace (trace)
 #endif
 
 import MixedTypesNumPrelude
-import Text.Printf
+-- import Text.Printf
 
 import System.Environment (getArgs)
 import System.IO.Unsafe (unsafePerformIO)
