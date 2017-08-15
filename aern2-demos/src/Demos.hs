@@ -22,7 +22,9 @@ import AERN2.Real
 
 -- import Debug.Trace
 
-{-- A nano-introduction to Haskell --}
+----------------------------------
+-- A nano-introduction to Haskell
+----------------------------------
 
 {- lists, types -}
 
@@ -72,7 +74,9 @@ toStrings xs = map show xs
 -- toStrings_bad = toStrings [io_run1, io_run2]
 
 
-{-- Introduction to aern2-real --}
+----------------------------------
+-- Introduction to aern2-real
+----------------------------------
 
 {- real numbers -}
 
@@ -174,9 +178,10 @@ myabs1 x = if x < 0 then -x else x
 myabs2 :: R -> R
 myabs2 x = (~!) $ if x < 0 then -x else x
 
-{-
-  Finding closest pair of numbers using naive enumeration
--}
+
+----------------------------------
+-- Finding the smallest distance within a set of real numbers
+----------------------------------
 
 closestPairDist_naive ::
   _ => [t] -> t
