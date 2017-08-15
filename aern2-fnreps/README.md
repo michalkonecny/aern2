@@ -44,11 +44,11 @@ and an integer ![](http://latex.codecogs.com/gif.latex?i).
 A modulus of continuity returns an integer
 ![](http://latex.codecogs.com/gif.latex?j)
 such that for any
-![](http://latex.codecogs.com/gif.latex?x,y\\in [-1,1])
+![](http://latex.codecogs.com/gif.latex?x,y\\in[-1,1])
 with
-![](http://latex.codecogs.com/gif.latex?|x-y|\\leq 2^{-j})
+![](http://latex.codecogs.com/gif.latex?|x-y|\\leq2^{-j})
 it holds
-![](http://latex.codecogs.com/gif.latex?|f(x)-f(y)|\\leq 2^{-i}).
+![](http://latex.codecogs.com/gif.latex?|f(x)-f(y)|\\leq2^{-i}).
 
 
 ### BFun
