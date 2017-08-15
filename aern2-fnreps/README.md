@@ -239,7 +239,7 @@ The following slightly modified version of this function reveals how sensitive i
 
 ### A non-smooth function with a nearby singularity
 
-![bumpy2](http://latex.codecogs.com/gif.latex?\\max\\left(x^2,\\frac{\\sin(10x)+\\cos(7\\pi&space;x)}{10(\\sin(7x))^2+1}\\right))
+![bumpy2](http://latex.codecogs.com/gif.latex?\\max\\left(\\frac{x^2}{2},\\frac{\\sin(10x)+\\cos(7\\pi&space;x)}{10(\\sin(7x))^2+1}\\right))
 <img src="plots/bumpy2.png?raw=true" width="150">
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
