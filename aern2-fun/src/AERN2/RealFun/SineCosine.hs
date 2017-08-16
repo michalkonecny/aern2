@@ -61,8 +61,13 @@ import AERN2.RealFun.Operations
 -}
 
 sineWithAccuracyGuide ::
-  (HasDomain f, CanApplyApprox f (Domain f)
-  , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
+  (HasDomain f
+  -- , CanApplyApprox f (Domain f)
+  -- , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
+  , CanMaximiseOverDom f (Domain f)
+  , CanMinimiseOverDom f (Domain f)
+  , MinimumOverDomType f (Domain f) ~ MaximumOverDomType f (Domain f)
+  , IsInterval MPBall (MinimumOverDomType f (Domain f))
   , CanNegSameType f, CanAddSameType f, CanMulSameType f
   , CanAddSubMulDivCNBy f Integer, CanAddSubMulDivCNBy f CauchyReal
   , HasAccuracy f, CanSetAccuracyGuide f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
@@ -73,8 +78,13 @@ sineWithAccuracyGuide ::
 sineWithAccuracyGuide = sineCosineWithAccuracyGuide True
 
 cosineWithAccuracyGuide ::
-  (HasDomain f, CanApplyApprox f (Domain f)
-  , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
+  (HasDomain f
+  -- , CanApplyApprox f (Domain f)
+  -- , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
+  , CanMaximiseOverDom f (Domain f)
+  , CanMinimiseOverDom f (Domain f)
+  , MinimumOverDomType f (Domain f) ~ MaximumOverDomType f (Domain f)
+  , IsInterval MPBall (MinimumOverDomType f (Domain f))
   , CanNegSameType f, CanAddSameType f, CanMulSameType f
   , CanAddSubMulDivCNBy f Integer, CanAddSubMulDivCNBy f CauchyReal
   , HasAccuracy f, CanSetAccuracyGuide f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
@@ -85,8 +95,13 @@ cosineWithAccuracyGuide ::
 cosineWithAccuracyGuide = sineCosineWithAccuracyGuide False
 
 sineCosineWithAccuracyGuide ::
-  (HasDomain f, CanApplyApprox f (Domain f)
-  , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
+  (HasDomain f
+  -- , CanApplyApprox f (Domain f)
+  -- , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
+  , CanMaximiseOverDom f (Domain f)
+  , CanMinimiseOverDom f (Domain f)
+  , MinimumOverDomType f (Domain f) ~ MaximumOverDomType f (Domain f)
+  , IsInterval MPBall (MinimumOverDomType f (Domain f))
   , CanNegSameType f, CanAddSameType f, CanMulSameType f
   , CanAddSubMulDivCNBy f Integer, CanAddSubMulDivCNBy f CauchyReal
   , HasAccuracy f, CanSetAccuracyGuide f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
@@ -127,8 +142,11 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     xE = radius x
     xAccuracy = getAccuracy x
 
-    -- compute (rC+-rE) = range(xC):
-    r = mpBall $ applyApprox xC (getDomain xC)
+    -- compute (rC+-rE) = range(x):
+    dom = getDomain x
+    -- r = mpBall $ applyApprox xC (getDomain xC)
+
+    r = fromEndpoints (minimumOverDom x dom) (maximumOverDom x dom)
     rC = centreAsBall r :: MPBall
 
     -- compute k = round(rC/(pi/2)):
