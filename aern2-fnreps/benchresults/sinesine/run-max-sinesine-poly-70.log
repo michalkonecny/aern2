@@ -1,22 +1,22 @@
 computing max  sin(10x+sin(7pi*x^2)) over [-1,1]
 result = [1 ± <2^(-73)]
 accuracy: bits 73
-precision = Precision 2046
+precision = Precision 2082
 	Command being timed: "aern2-fnreps-ops max sinesine poly 70"
-	User time (seconds): 217.79
-	System time (seconds): 2.38
+	User time (seconds): 226.10
+	System time (seconds): 2.48
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:40.29
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:48.63
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 3439752
+	Maximum resident set size (kbytes): 3476152
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 2060251
+	Minor (reclaiming a frame) page faults: 2072318
 	Voluntary context switches: 1
-	Involuntary context switches: 369
+	Involuntary context switches: 1279
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

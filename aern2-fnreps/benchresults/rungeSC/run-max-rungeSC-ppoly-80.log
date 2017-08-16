@@ -6,18 +6,18 @@ result = [1.071560871290678 ± <2^(-81)]
 accuracy: bits 81
 precision = Precision 2446
 	Command being timed: "aern2-fnreps-ops max rungeSC ppoly 80"
-	User time (seconds): 90.61
-	System time (seconds): 0.36
+	User time (seconds): 90.77
+	System time (seconds): 0.39
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:30.98
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:31.17
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 301684
+	Maximum resident set size (kbytes): 299420
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 83055
+	Minor (reclaiming a frame) page faults: 85187
 	Voluntary context switches: 1
 	Involuntary context switches: 84
 	Swaps: 0

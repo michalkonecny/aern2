@@ -1,22 +1,24 @@
+maxL: acG = bits 615; ac = bits 607
+maxR: acG = bits 615; ac = bits 608
 computing max  max(sin(10x),cos(11*x)) over [-1,1]
-result = [1 ± <2^(-57)]
-accuracy: bits 57
-precision = Precision 562
+result = [1 ± <2^(-60)]
+accuracy: bits 60
+precision = Precision 2724
 	Command being timed: "aern2-fnreps-ops max bumpy ppoly 60"
-	User time (seconds): 3.82
-	System time (seconds): 0.02
+	User time (seconds): 18.94
+	System time (seconds): 0.13
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:03.85
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:19.08
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 30756
+	Maximum resident set size (kbytes): 265200
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 5354
+	Minor (reclaiming a frame) page faults: 103368
 	Voluntary context switches: 1
-	Involuntary context switches: 8
+	Involuntary context switches: 131
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

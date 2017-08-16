@@ -3,18 +3,18 @@ result = [1.772900514334109 ± <2^(-100)]
 accuracy: bits 100
 precision = Precision 720
 	Command being timed: "aern2-fnreps-ops max sinesine+cos lpoly 90"
-	User time (seconds): 0.97
+	User time (seconds): 1.21
 	System time (seconds): 0.00
-	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.97
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.22
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 18036
+	Maximum resident set size (kbytes): 19900
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 2387
+	Minor (reclaiming a frame) page faults: 2675
 	Voluntary context switches: 1
 	Involuntary context switches: 7
 	Swaps: 0

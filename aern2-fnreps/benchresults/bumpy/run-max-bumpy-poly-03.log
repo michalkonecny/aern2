@@ -18,20 +18,20 @@ result = [1.115901098928126 ± <2^(-2)]
 accuracy: bits 2
 precision = Precision 3228
 	Command being timed: "aern2-fnreps-ops max bumpy poly 03"
-	User time (seconds): 63.37
-	System time (seconds): 0.39
+	User time (seconds): 61.35
+	System time (seconds): 0.34
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:03.98
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:01.70
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 48520
+	Maximum resident set size (kbytes): 47956
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 179461
+	Minor (reclaiming a frame) page faults: 152488
 	Voluntary context switches: 1
-	Involuntary context switches: 3747
+	Involuntary context switches: 105
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 16

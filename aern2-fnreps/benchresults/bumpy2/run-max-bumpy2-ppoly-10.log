@@ -7,23 +7,23 @@ result = [1.271873428908772 ± <2^(-9)]
 accuracy: bits 9
 precision = Precision 1174
 	Command being timed: "aern2-fnreps-ops max bumpy2 ppoly 10"
-	User time (seconds): 78.14
-	System time (seconds): 0.42
+	User time (seconds): 77.49
+	System time (seconds): 0.49
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:18.58
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:18.00
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 136464
+	Maximum resident set size (kbytes): 135656
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 137328
+	Minor (reclaiming a frame) page faults: 161512
 	Voluntary context switches: 1
-	Involuntary context switches: 886
+	Involuntary context switches: 105
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 8
+	File system outputs: 24
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

@@ -8,19 +8,19 @@ accuracy: bits 62
 precision = Precision 2348
 	Command being timed: "aern2-fnreps-ops max fracSinSC lppoly 60"
 	User time (seconds): 4.72
-	System time (seconds): 0.01
+	System time (seconds): 0.02
 	Percent of CPU this job got: 99%
 	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.74
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 24692
+	Maximum resident set size (kbytes): 24452
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 3721
+	Minor (reclaiming a frame) page faults: 3727
 	Voluntary context switches: 1
-	Involuntary context switches: 11
+	Involuntary context switches: 8
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

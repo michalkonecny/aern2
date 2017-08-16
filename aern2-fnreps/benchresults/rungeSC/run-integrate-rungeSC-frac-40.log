@@ -6,20 +6,20 @@ result = [3.491989808941693e-2 ± <2^(-26)]
 accuracy: bits 26
 precision = Precision 824
 	Command being timed: "aern2-fnreps-ops integrate rungeSC frac 40"
-	User time (seconds): 10.58
-	System time (seconds): 0.12
+	User time (seconds): 10.93
+	System time (seconds): 0.10
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:10.70
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:11.03
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 114204
+	Maximum resident set size (kbytes): 114252
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 60377
+	Minor (reclaiming a frame) page faults: 53809
 	Voluntary context switches: 1
-	Involuntary context switches: 17
+	Involuntary context switches: 24
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

@@ -12,12 +12,12 @@ precision = Precision 706
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 31644
+	Maximum resident set size (kbytes): 32812
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 5944
+	Minor (reclaiming a frame) page faults: 6028
 	Voluntary context switches: 1
-	Involuntary context switches: 4
+	Involuntary context switches: 5
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

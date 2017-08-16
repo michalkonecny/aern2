@@ -4,20 +4,20 @@ result = [1.870390550939385e-29 ± <2^(-80)]
 accuracy: bits 80
 precision = Precision 1282
 	Command being timed: "aern2-fnreps-ops integrate sine+cospi poly 110"
-	User time (seconds): 0.70
-	System time (seconds): 0.02
-	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.72
+	User time (seconds): 0.75
+	System time (seconds): 0.01
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.77
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 67452
+	Maximum resident set size (kbytes): 67224
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 14866
+	Minor (reclaiming a frame) page faults: 14609
 	Voluntary context switches: 1
-	Involuntary context switches: 4
+	Involuntary context switches: 3
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

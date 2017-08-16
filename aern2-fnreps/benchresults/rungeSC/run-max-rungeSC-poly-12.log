@@ -1,28 +1,49 @@
 numer: acG = bits 68; ac = bits 34
+chebDivideDCT: acGuide = bits 12, minQ = [1 ± 0]
+chebDivideDCT: tryWithDegree: d = 16
+chebDivideDCT: tryWithDegree: d = 16; getAccuracy rCd = bits 2
+chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [9.155955442280999e-1 ± <2^(-2)]
+chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [23.01295890858422 ± <2^(4)]; dctAccuracy = bits -5; getAccuracy rEd = bits -5
+chebDivideDCT: tryWithDegree: d = 32
+chebDivideDCT: tryWithDegree: d = 32; getAccuracy rCd = bits 4
+chebDivideDCT: tryWithDegree: d = 32; rCMaxNorm = [9.840953289564644e-1 ± <2^(-4)]
+chebDivideDCT: tryWithDegree: d = 32; maxDifferenceC = [2.2988844386625 ± <2^(1)]; dctAccuracy = bits -2; getAccuracy rEd = bits -2
+chebDivideDCT: tryWithDegree: d = 64
+chebDivideDCT: tryWithDegree: d = 64; getAccuracy rCd = bits 9
+chebDivideDCT: tryWithDegree: d = 64; rCMaxNorm = [9.988849596489629e-1 ± <2^(-9)]
+chebDivideDCT: tryWithDegree: d = 64; maxDifferenceC = [2.622448404712516e-1 ± <2^(-2)]; dctAccuracy = bits 1; getAccuracy rEd = bits 1
+chebDivideDCT: tryWithDegree: d = 128
+chebDivideDCT: tryWithDegree: d = 128; getAccuracy rCd = bits 18
+chebDivideDCT: tryWithDegree: d = 128; rCMaxNorm = [9.999982458884707e-1 ± <2^(-18)]
+chebDivideDCT: tryWithDegree: d = 128; maxDifferenceC = [3.481877207436541e-4 ± <2^(-11)]; dctAccuracy = bits 10; getAccuracy rEd = bits 10
+chebDivideDCT: tryWithDegree: d = 256
+chebDivideDCT: tryWithDegree: d = 256; getAccuracy rCd = bits 37
+chebDivideDCT: tryWithDegree: d = 256; rCMaxNorm = [9.999999999929011e-1 ± <2^(-37)]
+chebDivideDCT: tryWithDegree: d = 256; maxDifferenceC = [6.053760892723935e-10 ± <2^(-30)]; dctAccuracy = bits 29; getAccuracy rEd = bits 29
 inv: acG = bits 12; ac = bits 29
 res: acG = bits 68; ac = bits 27
 computing max  (sin(10x)+cos(7pi*x))/(100x^2+1) over [-1,1]
 result = [1.071560871775163 ± <2^(-27)]
 accuracy: bits 27
-precision = Precision 2692
+precision = Precision 5384
 	Command being timed: "aern2-fnreps-ops max rungeSC poly 12"
-	User time (seconds): 249.06
-	System time (seconds): 1.89
+	User time (seconds): 268.82
+	System time (seconds): 1.97
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 4:11.01
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 4:30.81
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 142440
+	Maximum resident set size (kbytes): 136644
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1156124
+	Minor (reclaiming a frame) page faults: 1338007
 	Voluntary context switches: 1
-	Involuntary context switches: 1381
+	Involuntary context switches: 295
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 16
+	File system outputs: 24
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

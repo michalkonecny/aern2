@@ -3,18 +3,18 @@ result = [-1.465102544187247e-1 ± <2^(-42)]
 accuracy: bits 42
 precision = Precision 1280
 	Command being timed: "aern2-fnreps-ops integrate sinesine lpoly 40"
-	User time (seconds): 6.26
-	System time (seconds): 0.03
+	User time (seconds): 7.41
+	System time (seconds): 0.02
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:06.30
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:07.44
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 24524
+	Maximum resident set size (kbytes): 24268
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 10656
+	Minor (reclaiming a frame) page faults: 11456
 	Voluntary context switches: 1
 	Involuntary context switches: 12
 	Swaps: 0

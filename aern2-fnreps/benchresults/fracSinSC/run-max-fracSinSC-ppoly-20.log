@@ -7,20 +7,20 @@ result = [1.271873428908773 ± <2^(-20)]
 accuracy: bits 20
 precision = Precision 3412
 	Command being timed: "aern2-fnreps-ops max fracSinSC ppoly 20"
-	User time (seconds): 190.77
-	System time (seconds): 2.26
+	User time (seconds): 201.70
+	System time (seconds): 2.51
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:13.05
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:24.76
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 434228
+	Maximum resident set size (kbytes): 434028
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1832460
-	Voluntary context switches: 3
-	Involuntary context switches: 166
+	Minor (reclaiming a frame) page faults: 1867046
+	Voluntary context switches: 1
+	Involuntary context switches: 2854
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 24

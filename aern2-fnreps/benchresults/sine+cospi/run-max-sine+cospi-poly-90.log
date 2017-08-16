@@ -3,18 +3,18 @@ result = [1.792167310671809 ± <2^(-61)]
 accuracy: bits 61
 precision = Precision 2348
 	Command being timed: "aern2-fnreps-ops max sine+cospi poly 90"
-	User time (seconds): 1.51
-	System time (seconds): 0.00
+	User time (seconds): 1.56
+	System time (seconds): 0.03
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.52
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.60
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 90796
+	Maximum resident set size (kbytes): 67184
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 20493
+	Minor (reclaiming a frame) page faults: 14575
 	Voluntary context switches: 1
 	Involuntary context switches: 5
 	Swaps: 0
