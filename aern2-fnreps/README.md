@@ -244,4 +244,4 @@ The following slightly modified version of this function reveals how sensitive i
 
 | Maximum  over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) | Integral over ![unit-interval](http://latex.codecogs.com/gif.latex?[-1,1]) |
 | :---: | :---: |
-| <img src="benchresults/charts/bumpy-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/bumpy-integrate-time.png?raw=true" width="300"> |
+| <img src="benchresults/charts/bumpy2-max-time.png?raw=true" width="300"> | <img src="benchresults/charts/bumpy2-integrate-time.png?raw=true" width="300"> |
