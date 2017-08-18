@@ -55,27 +55,7 @@ sqrtApprox p x =
   isAccurate y = mvApproxEq p y (x/!y)
   step y = (y + (x/!y))/!2
 
--- | a version of 'sqrtApprox' that safely "simplifies" the value at each iteration
-sqrtApproxSimplify ::
-  (_) => Rational -> r -> EnsureCN r
-sqrtApproxSimplify p x =
-  while (cn $ nearbySimpler p x) isAccurate step
-  where
-  isAccurate y = mvApproxEq p y (x/!y)
-  -- step y =
-  --   if y*y > x && (not (yNS < y)) then -- no improvement, give up
-  --     noValueNumErrorPotentialECN (Just yN) $ NumError "sqrtApproxSimplify: iteration stopped converging"
-  --   else yNS
-  step y
-    | y*y !>! x && (not (yNS !<! y)) = -- no improvement, give up
-      noValueNumErrorPotentialECN (Just yN) $ NumError "sqrtApproxSimplify: iteration stopped converging"
-    | otherwise = yNS
-    where
-    yNS = nearbySimpler (p/!2) yN
-    yN = (y + (x/!y))/!2
-
 data UseLipschitz = UseLipschitz_YES | UseLipschitz_NO
-data UseNearbySimpler = UseNearbySimpler_YES | UseNearbySimpler_NO
 
 {-|
   @mysqrt useLipschitz useNearbySimpler x@
@@ -85,60 +65,49 @@ data UseNearbySimpler = UseNearbySimpler_YES | UseNearbySimpler_NO
   returns $\sqrt{x}$.
 -}
 mysqrtX ::
-  _ => UseLipschitz -> UseNearbySimpler -> r -> EnsureCN r
-mysqrtX useLipschitz useNearbySimpler (x :: r) =
+  _ => UseLipschitz -> r -> EnsureCN r
+mysqrtX useLipschitz (x :: r) =
   case useLipschitz of
     UseLipschitz_NO ->
-      (limit sqrtApproxX) x
+      (limit (sqrtApprox :: Rational -> r -> EnsureCN r)) x
     UseLipschitz_YES ->
-      (limit sqrtApproxXL) x
+      (limit sqrtApproxL) x
   where
-  sqrtApproxX :: Rational -> r -> EnsureCN r
-  sqrtApproxX =
-    case useNearbySimpler of
-      UseNearbySimpler_NO -> sqrtApprox
-      UseNearbySimpler_YES -> sqrtApproxSimplify
-  sqrtApproxXL n =
+  sqrtApproxL n =
     WithLipschitz
-      (sqrtApproxX n :: r -> EnsureCN r)
+      (sqrtApprox n :: r -> EnsureCN r)
       (\ _ -> (cn (half :: r)))
   half = convertExactly (dyadic 0.5)
 
 -- | A n-times nested sqrt:
 mysqrtNx ::
-  (_) => UseLipschitz -> UseNearbySimpler -> Integer -> r -> r
-mysqrtNx useLipschitz useNearbySimpler n x =
+  (_) => UseLipschitz -> Integer -> r -> r
+mysqrtNx useLipschitz n x =
   foldl1 (.) (replicate n ((~!) . mysqrt)) x
   where
-  mysqrt = mysqrtX useLipschitz useNearbySimpler
+  mysqrt = mysqrtX useLipschitz
 
--- -- Cauchy reals are slow here:
--- mysqrtNx_CR_test :: CauchyReal
--- mysqrtNx_CR_test =
---   mysqrtNx UseLipschitz_NO UseNearbySimpler_NO 10 (real 2)
+-- Cauchy reals are slow here:
+mysqrtNx_CR_test :: CauchyReal
+mysqrtNx_CR_test =
+  mysqrtNx UseLipschitz_NO 10 (real 2)
+-- [1.000677130693066 ± <2^(-100)]
+-- (28.80 secs, 40,191,745,944 bytes)
 
 -- a rapid loss of accuracy, eg:
 mysqrtNx_vanilla_test :: MPBall
 mysqrtNx_vanilla_test =
-  mysqrtNx UseLipschitz_NO UseNearbySimpler_NO 10 (mpBallP (prec 10000) 2)
+  mysqrtNx UseLipschitz_NO 10 (mpBallP (prec 10000) 2)
 -- [1.000677130693066 ± <2^(-6435)]
+-- (0.10 secs, 166,158,944 bytes)
 
 -- Lipschitz information radically reduces the loss of accuracy, eg:
 mysqrtNx_Lip_test :: MPBall
 mysqrtNx_Lip_test =
-  mysqrtNx UseLipschitz_YES UseNearbySimpler_NO 10 (mpBallP (prec 10000) 2)
+  mysqrtNx UseLipschitz_YES 10 (mpBallP (prec 10000) 2)
 -- [1.000677130693066 ± <2^(-9610)]
+-- (0.09 secs, 156,292,424 bytes)
 
--- Simplifying the iteratees does not make much difference:
-mysqrtNx_simplify_test :: MPBall
-mysqrtNx_simplify_test =
-  mysqrtNx UseLipschitz_NO UseNearbySimpler_YES 10 (mpBallP (prec 10000) 2)
--- [1.000677130693066 ± <2^(-6442)]
-
-mysqrtNx_Lip_simplify_test :: MPBall
-mysqrtNx_Lip_simplify_test =
-  mysqrtNx UseLipschitz_YES UseNearbySimpler_YES 10 (mpBallP (prec 10000) 2)
--- [1.000677130693066 ± <2^(-9611)]
 
 ----------------
 -- redundant comparison
