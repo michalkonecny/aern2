@@ -36,7 +36,7 @@ import AERN2.Sequence
 import AERN2.Real
 
 ------------------------------------------------------
--- sqrt example using limit WITHOUT Lipschitz info
+-- example: sqrt via limit using various strategies
 ------------------------------------------------------
 
 {-|
@@ -48,75 +48,104 @@ import AERN2.Real
   $2^{{}-k}$ away from $\sqrt{x}$.
 -}
 sqrtApprox ::
-  _ => Integer -> r -> EnsureCN r
+  _ => Rational -> r -> EnsureCN r
 sqrtApprox p x =
   while x isAccurate step
   where
-  isAccurate y = mvIsPositiveUpTo (p+1) (0.5^!(p+1) - abs(y*y-x))
+  isAccurate y = mvApproxEq p y (x/!y)
   step y = (y + (x/!y))/!2
 
-{-|
-  @mysqrt x@
-
-  preconditions: @x > 1@
-
-  returns $\sqrt{x}$.
--}
-mysqrt ::
-  _ => r -> EnsureCN r
-mysqrt (x :: r) = (limit (sqrtApprox :: Integer -> r -> EnsureCN r)) x
-
-mysqrtNx ::
-  _ => Integer -> r -> r
-mysqrtNx n x =
-  foldl1 (.) (replicate n ((~!) . mysqrt)) x
-
--- a rapid loss of accuracy, eg:
-_test_mysqrtNx :: MPBall
-_test_mysqrtNx =
-  mysqrtNx 10 (mpBallP (prec 10000) 2)
--- [1.000677130693093 ± <2^(-18)]
-
-
-------------------------------------------------------
--- sqrt example using limit WITH Lipschitz info
-------------------------------------------------------
-
-{-|
-  @mysqrt x@
-
-  preconditions: @x > 1@
-
-  returns $\sqrt{x}$.
--}
-mysqrtL ::
-  _ => r -> EnsureCN r
-mysqrtL (x :: r) =
-  limit sqrtApproxL x
+-- | a version of 'sqrtApprox' that safely "simplifies" the value at each iteration
+sqrtApproxSimplify ::
+  (_) => Rational -> r -> EnsureCN r
+sqrtApproxSimplify p x =
+  while (cn $ nearbySimpler p x) isAccurate step
   where
-  sqrtApproxL n =
+  isAccurate y = mvApproxEq p y (x/!y)
+  -- step y =
+  --   if y*y > x && (not (yNS < y)) then -- no improvement, give up
+  --     noValueNumErrorPotentialECN (Just yN) $ NumError "sqrtApproxSimplify: iteration stopped converging"
+  --   else yNS
+  step y
+    | y*y !>! x && (not (yNS !<! y)) = -- no improvement, give up
+      noValueNumErrorPotentialECN (Just yN) $ NumError "sqrtApproxSimplify: iteration stopped converging"
+    | otherwise = yNS
+    where
+    yNS = nearbySimpler (p/!2) yN
+    yN = (y + (x/!y))/!2
+
+data UseLipschitz = UseLipschitz_YES | UseLipschitz_NO
+data UseNearbySimpler = UseNearbySimpler_YES | UseNearbySimpler_NO
+
+{-|
+  @mysqrt useLipschitz useNearbySimpler x@
+
+  preconditions: @x > 1@
+
+  returns $\sqrt{x}$.
+-}
+mysqrtX ::
+  _ => UseLipschitz -> UseNearbySimpler -> r -> EnsureCN r
+mysqrtX useLipschitz useNearbySimpler (x :: r) =
+  case useLipschitz of
+    UseLipschitz_NO ->
+      (limit sqrtApproxX) x
+    UseLipschitz_YES ->
+      (limit sqrtApproxXL) x
+  where
+  sqrtApproxX :: Rational -> r -> EnsureCN r
+  sqrtApproxX =
+    case useNearbySimpler of
+      UseNearbySimpler_NO -> sqrtApprox
+      UseNearbySimpler_YES -> sqrtApproxSimplify
+  sqrtApproxXL n =
     WithLipschitz
-      (sqrtApprox n :: r -> EnsureCN r)
+      (sqrtApproxX n :: r -> EnsureCN r)
       (\ _ -> (cn (half :: r)))
   half = convertExactly (dyadic 0.5)
 
-mysqrtLNx ::
-  _ => Integer -> r -> r
-mysqrtLNx n x =
-  foldl1 (.) (replicate n ((~!) . mysqrtL)) x
+-- | A n-times nested sqrt:
+mysqrtNx ::
+  (_) => UseLipschitz -> UseNearbySimpler -> Integer -> r -> r
+mysqrtNx useLipschitz useNearbySimpler n x =
+  foldl1 (.) (replicate n ((~!) . mysqrt)) x
+  where
+  mysqrt = mysqrtX useLipschitz useNearbySimpler
 
--- a much less rapid loss of accuracy, eg:
-_test_mysqrtLNx :: MPBall
-_test_mysqrtLNx =
-  mysqrtLNx 10 (mpBallP (prec 10000) 2)
--- [1.000677130693066 ± <2^(-515)]
+-- -- Cauchy reals are slow here:
+-- mysqrtNx_CR_test :: CauchyReal
+-- mysqrtNx_CR_test =
+--   mysqrtNx UseLipschitz_NO UseNearbySimpler_NO 10 (real 2)
+
+-- a rapid loss of accuracy, eg:
+mysqrtNx_vanilla_test :: MPBall
+mysqrtNx_vanilla_test =
+  mysqrtNx UseLipschitz_NO UseNearbySimpler_NO 10 (mpBallP (prec 10000) 2)
+-- [1.000677130693066 ± <2^(-6435)]
+
+-- Lipschitz information radically reduces the loss of accuracy, eg:
+mysqrtNx_Lip_test :: MPBall
+mysqrtNx_Lip_test =
+  mysqrtNx UseLipschitz_YES UseNearbySimpler_NO 10 (mpBallP (prec 10000) 2)
+-- [1.000677130693066 ± <2^(-9610)]
+
+-- Simplifying the iteratees does not make much difference:
+mysqrtNx_simplify_test :: MPBall
+mysqrtNx_simplify_test =
+  mysqrtNx UseLipschitz_NO UseNearbySimpler_YES 10 (mpBallP (prec 10000) 2)
+-- [1.000677130693066 ± <2^(-6442)]
+
+mysqrtNx_Lip_simplify_test :: MPBall
+mysqrtNx_Lip_simplify_test =
+  mysqrtNx UseLipschitz_YES UseNearbySimpler_YES 10 (mpBallP (prec 10000) 2)
+-- [1.000677130693066 ± <2^(-9611)]
 
 ----------------
 -- redundant comparison
 ----------------
 
-class CanTestMVIsPositiveUpTo t where
-  type MVIsPositiveUpToType t
+class CanMVApproxCompare t1 t2 where
+  type CanMVApproxCompareType t1 t2
   {-| @mvIsPositiveUpTo p x@
 
       Return true if @x@ is above $2^{{}-p}$.
@@ -125,24 +154,43 @@ class CanTestMVIsPositiveUpTo t where
 
       Return true or false if the number is between 0 and $2^{{}-p}$.
   -}
-  mvIsPositiveUpTo :: Integer -> t -> MVIsPositiveUpToType t
+  mvApproxEq :: Rational -> t1 -> t2 -> CanMVApproxCompareType t1 t2
 
-instance CanTestMVIsPositiveUpTo MPBall where
-  type MVIsPositiveUpToType MPBall = Maybe Bool
-  mvIsPositiveUpTo p b
-    | b !<! 0.5^!p = Just False
-    | b !>! 0 = Just True
+instance CanMVApproxCompare MPBall MPBall where
+  type CanMVApproxCompareType MPBall MPBall = Maybe Bool
+  mvApproxEq p l r
+    | d !<! (p/!2) = Just True
+    | d !>! 0 = Just False
     | otherwise = Nothing
+    where
+    d = abs(l - r)
 
-instance CanTestMVIsPositiveUpTo CauchyReal where
-  type MVIsPositiveUpToType CauchyReal = Bool
-  mvIsPositiveUpTo p r =
-    searchForDecision $ map (mvIsPositiveUpTo p) $ map (r ?) acs
+instance CanMVApproxCompare (CN MPBall) (CN MPBall) where
+  type CanMVApproxCompareType (CN MPBall) (CN MPBall) = Maybe Bool
+  mvApproxEq p lCN rCN =
+    case (ensureNoCN lCN, ensureNoCN rCN) of
+      ((Just l, []), (Just r, [])) -> mvApproxEq p l r
+      _ -> Nothing
+
+instance CanMVApproxCompare CauchyReal CauchyReal where
+  type CanMVApproxCompareType CauchyReal CauchyReal = Bool
+  mvApproxEq p l r =
+    searchForDecision $ map (uncurry $ mvApproxEq p) $ map (\ac -> (l ? ac, r ? ac)) acs
     where
     acs = map (accuracySG .  bits) $ standardPrecisions (prec 2)
     searchForDecision (Just d : _) = d
     searchForDecision (_ : rest) = searchForDecision rest
     searchForDecision [] = error "mvIsPositiveUpTo CauchyReal: failed to decide"
+
+instance CanMVApproxCompare CauchyRealCN CauchyRealCN where
+  type CanMVApproxCompareType CauchyRealCN CauchyRealCN = Bool
+  mvApproxEq p l r =
+    searchForDecision $ map (uncurry $ mvApproxEq p) $ map (\ac -> (l ? ac, r ? ac)) acs
+    where
+    acs = map (accuracySG .  bits) $ standardPrecisions (prec 2)
+    searchForDecision (Just d : _) = d
+    searchForDecision (_ : rest) = searchForDecision rest
+    searchForDecision [] = error "mvIsPositiveUpTo CauchyRealCN: failed to decide"
 
 --------------
 -- while loop with many-valued condition
@@ -208,37 +256,34 @@ class HasLimits ix s where
   type LimitType ix s
   limit :: (ix -> s) -> LimitType ix s
 
-instance (HasLimits Accuracy t) => HasLimits Integer t where
-  type LimitType Integer t = LimitType Accuracy t
-  limit s = limit (s . fromAccuracy)
-
-instance HasLimits Accuracy CauchyReal where
-  type LimitType Accuracy CauchyReal = CauchyReal
+instance HasLimits Rational CauchyReal where
+  type LimitType Rational CauchyReal = CauchyReal
   limit s = newCR "limit" [] makeQ
     where
     makeQ (me, _src) ac@(AccuracySG acS _acG) =
-      updateRadius (+ e) $ (s (acS + 1) ?<- me) (ac + 1)
+      updateRadius (+ (errorBound e)) $ (s e ?<- me) (ac + 1)
       where
-      e = errorBound $ 0.5^!(fromAccuracy acS + 1)
+      e = 0.5^!(fromAccuracy acS + 1)
 
-instance HasLimits Accuracy (CauchyReal -> CauchyRealCN) where
-  type LimitType Accuracy (CauchyReal -> CauchyRealCN) = (CauchyReal -> CauchyRealCN)
+instance HasLimits Rational (CauchyReal -> CauchyRealCN) where
+  type LimitType Rational (CauchyReal -> CauchyRealCN) = (CauchyReal -> CauchyRealCN)
   limit fs x = newCRCN "limit" [AnyProtocolQA x] makeQ
     where
     makeQ (me, _src) ac@(AccuracySG acS _acG) =
       maybeTrace ("limit (CauchyReal -> CauchyRealCN): ac = " ++ show ac ) $
-      lift1CE (updateRadius (+ e)) $ (fx ?<- me) (ac + 1)
+      lift1CE (updateRadius (+ (errorBound e))) $ (fx ?<- me) (ac + 1)
       where
-      fx = fs (acS + 1) x
-      e = errorBound $ 0.5^!(fromAccuracy acS + 1)
+      fx = fs e x
+      e = 0.5^!(fromAccuracy acS + 1)
 
 {-
-  The following strategy is inspired by
+  The following strategies are inspired by
   Mueller: The iRRAM: Exact Arithmetic in C++, Section 10.1
   https://link.springer.com/chapter/10.1007/3-540-45335-0_14
 -}
-instance HasLimits Accuracy (MPBall -> CN MPBall) where
-  type LimitType Accuracy (MPBall -> CN MPBall) = (MPBall -> CN MPBall)
+
+instance HasLimits Rational (MPBall -> CN MPBall) where
+  type LimitType Rational (MPBall -> CN MPBall) = (MPBall -> CN MPBall)
   limit fs x =
     maybeTrace ("limit (MPBall -> CN MPBall): x = " ++ show x) $
     maybeTrace ("limit (MPBall -> CN MPBall): xPNext = " ++ show xPNext) $
@@ -249,10 +294,12 @@ instance HasLimits Accuracy (MPBall -> CN MPBall) where
     accuracies = aux (fromAccuracy acX)
       where
       aux a
-        | a >= 4 = bits a : aux (a `div` 2)
+        | a >= 4 = bits a : aux ((100 * a) `div` 105)
         | otherwise = [bits a]
     xPNext = setPrecision (increaseP $ getPrecision x) x
-    increaseP p = prec $ ((105 * (integer p)) `div` 100) + 1
+    increaseP p =
+      prec $ (integer p) + 10
+      -- prec $ ((101 * (integer p)) `div` 100) + 1
 
     tryAccuracies [] =
       noValueNumErrorPotentialECN (Nothing :: Maybe MPBall) $
@@ -265,15 +312,14 @@ instance HasLimits Accuracy (MPBall -> CN MPBall) where
 
     withAccuracy ac =
       maybeTrace ("limit (MPBall -> CN MPBall): withAccuracy: ac = " ++ show ac) $
-      lift1CE (updateRadius (+ acEB)) (fs ac xPNext)
+      lift1CE (updateRadius (+ (errorBound e))) (fs e xPNext)
       where
-      acI = fromAccuracy ac
-      acEB = errorBound $ 0.5^!acI
+      e = 0.5^!(fromAccuracy ac)
 
 data WithLipschitz f = WithLipschitz f f
 
-instance HasLimits Accuracy (WithLipschitz (MPBall -> CN MPBall)) where
-  type LimitType Accuracy (WithLipschitz (MPBall -> CN MPBall)) = (MPBall -> CN MPBall)
+instance HasLimits Rational (WithLipschitz (MPBall -> CN MPBall)) where
+  type LimitType Rational (WithLipschitz (MPBall -> CN MPBall)) = (MPBall -> CN MPBall)
   limit ffs xPre =
     maybeTrace ("limit (MPBall -> CN MPBall): x = " ++ show x) $
     maybeTrace ("limit (MPBall -> CN MPBall): xC = " ++ show xC) $
@@ -285,12 +331,14 @@ instance HasLimits Accuracy (WithLipschitz (MPBall -> CN MPBall)) where
     accuracies = aux (fromAccuracy acX)
       where
       aux a
-        | a >= 4 = bits a : aux (a `div` 2)
+        | a >= 4 = bits a : aux ((100 * a) `div` 105)
         | otherwise = [bits a]
     x = increasePrec xPre
       where
       increasePrec z = setPrecision (inc $ getPrecision xPre) z
-      inc p = prec $ ((105 * (integer p)) `div` 100) + 1
+      inc p =
+          prec $ (integer p) + 10
+          -- prec $ ((101 * (integer p)) `div` 100) + 1
     xC = centreAsBall x
     xE = radius x
 
@@ -305,11 +353,10 @@ instance HasLimits Accuracy (WithLipschitz (MPBall -> CN MPBall)) where
 
     withAccuracy ac =
       maybeTrace ("limit (MPBall -> CN MPBall): withAccuracy: ac = " ++ show ac) $
-      lift1CE (updateRadius (+ acEB)) fx
+      lift1CE (updateRadius (+ (errorBound e))) fx
       where
-      acI = fromAccuracy ac
-      acEB = errorBound $ 0.5^!acI
-      WithLipschitz f f' = ffs ac
+      e = 0.5^!(fromAccuracy ac)
+      WithLipschitz f f' = ffs e
       fxC_CN = f xC
       f'x_CN = f' x
       fx :: CN MPBall
@@ -319,3 +366,29 @@ instance HasLimits Accuracy (WithLipschitz (MPBall -> CN MPBall)) where
               cn $ updateRadius (+ (xE * (errorBound f'x))) fxC
             _ ->
               f x -- fallback
+
+instance HasLimits Rational (WithLipschitz (CauchyReal -> CauchyRealCN)) where
+  type LimitType Rational (WithLipschitz (CauchyReal -> CauchyRealCN)) = (CauchyReal -> CauchyRealCN)
+  limit ffs x = limit fs x
+    where
+    fs e = f
+      where
+      WithLipschitz f _ = ffs e
+
+---------
+-- nearby
+---------
+
+class CanFindNearbySimpler r where
+  nearbySimpler :: Rational -> r -> r
+
+instance CanFindNearbySimpler MPBall where
+  nearbySimpler epsilon x
+    | radius x <= epsilon = centreAsBall x
+    | otherwise = x
+
+instance CanFindNearbySimpler CauchyRealCN where
+  nearbySimpler _ x = x -- TODO
+
+instance CanFindNearbySimpler (CN MPBall) where
+  nearbySimpler eps x = lift1CE (nearbySimpler eps) x
