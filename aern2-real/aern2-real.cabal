@@ -85,6 +85,7 @@ library
     AERN2.Real.Arithmetic
     AERN2.Real.Tests
     AERN2.Real
+    AERN2.Limit
 
 test-suite spec
   type:
