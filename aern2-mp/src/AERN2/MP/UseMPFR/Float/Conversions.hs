@@ -54,7 +54,7 @@ mpFromRationalA = MPLow.fromRationalA
 
 #endif
 #ifdef MPFRRounded
-import qualified AERN2.MP.UseMPFR.Float.RoundedAnyRP as MPLow
+import qualified AERN2.MP.UseMPFR.Float.RoundedAdaptor as MPLow
 
 mpToDouble :: MPLow.RoundMode -> MPFloat -> Double
 mpToDouble = MPLow.toDoubleA

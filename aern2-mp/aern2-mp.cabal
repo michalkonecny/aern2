@@ -33,11 +33,11 @@ source-repository head
   subdir: aern2-mp
 
 flag MPFR
-  Description: Use MPFR backend (default); Integer backend is planned
+  Description: Use a MPFR backend (default); Integer backend is planned
   Default:     True
 
 flag MPFRRounded
-  Description: Use Data.Rounded as MPFR backend (default)
+  Description: Use rounded (Numeric.MPFR.LowLevel) as MPFR backend (default)
   Default:     True
   -- Default:     False
 
@@ -92,7 +92,7 @@ library
   if flag(MPFR)
     exposed-modules:
       AERN2.MP.UseMPFR.Float.Type
-      -- AERN2.MP.UseMPFR.Float.RoundedAnyRP
+      AERN2.MP.UseMPFR.Float.RoundedAdaptor
       AERN2.MP.UseMPFR.Float.Arithmetic
       AERN2.MP.UseMPFR.Float.Conversions
       AERN2.MP.UseMPFR.Float.Operators
