@@ -37,7 +37,7 @@ flag MPFR
   Default:     True
 
 flag MPFRRounded
-  Description: Use rounded (Numeric.MPFR.LowLevel) as MPFR backend (default)
+  Description: Use rounded (Numeric.RoundedSimple) as MPFR backend (default)
   Default:     True
   -- Default:     False
 
