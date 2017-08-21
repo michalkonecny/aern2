@@ -57,8 +57,8 @@ p2mpfrPrec = P.fromInteger . integer
 import qualified AERN2.MP.UseMPFR.Float.RoundedAdaptor as MPLow
 import Data.Typeable
 
-{-| Multiple-precision floating-point type based on MPFR via haskell-mpfr. -}
-type MPFloat = MPLow.MPFR
+{-| Multiple-precision floating-point type based on MPFR via rounded. -}
+type MPFloat = MPLow.Rounded
 
 deriving instance (Typeable MPFloat)
 

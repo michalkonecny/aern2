@@ -19,48 +19,48 @@ module AERN2.MP.UseMPFR.Float.RoundedAdaptor
 #else
 (
   module AERN2.MP.UseMPFR.Float.RoundedAdaptor
-, module Numeric.MPFR.LowLevel
+, module Numeric.RoundedSimple
 )
 where
 
 import Prelude hiding (div, pi)
 -- import qualified Prelude as P
 
-import Numeric.MPFR.LowLevel
--- import qualified Numeric.MPFR.LowLevel as R
+import Numeric.RoundedSimple hiding (prec)
+-- import qualified Numeric.RoundedSimple as R
 
 type RoundMode = RoundingMode
 
 defaultPrecision :: Precision
 defaultPrecision = 10
 
-pi :: RoundMode -> Precision -> MPFR
+pi :: RoundMode -> Precision -> Rounded
 pi = kPi
 
-fromIntegerA :: RoundMode -> Precision -> Integer -> MPFR
+fromIntegerA :: RoundMode -> Precision -> Integer -> Rounded
 fromIntegerA = fromInteger'
 
-zero, one :: MPFR
+zero, one :: Rounded
 zero = fromIntegerA Up defaultPrecision 0
 one = fromIntegerA Up defaultPrecision 1
 
-toDoubleA :: RoundMode -> MPFR -> Double
+toDoubleA :: RoundMode -> Rounded -> Double
 toDoubleA = toDouble
 
-fromRationalA :: RoundMode -> Precision -> Rational -> MPFR
+fromRationalA :: RoundMode -> Precision -> Rational -> Rounded
 fromRationalA = fromRational'
 
-toRationalA :: MPFR -> Rational
+toRationalA :: Rounded -> Rational
 toRationalA = toRational'
 
-add, sub, mul, div, atan2 :: RoundMode -> Precision -> MPFR -> MPFR -> MPFR
+add, sub, mul, div, atan2 :: RoundMode -> Precision -> Rounded -> Rounded -> Rounded
 add = add_
 sub = sub_
 mul = mul_
 div = div_
 atan2 = atan2_
 
-neg, abs, sqrt, exp, log, sin, cos :: RoundMode -> Precision -> MPFR -> MPFR
+neg, abs, sqrt, exp, log, sin, cos :: RoundMode -> Precision -> Rounded -> Rounded
 neg = negate_
 abs = abs_
 sqrt = sqrt_
