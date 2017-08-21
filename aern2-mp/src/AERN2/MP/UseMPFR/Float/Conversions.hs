@@ -53,6 +53,21 @@ mpFromRationalA :: MPLow.RoundMode -> MPLow.Precision -> Rational -> MPFloat
 mpFromRationalA = MPLow.fromRationalA
 
 #endif
+#ifdef MPFRRounded
+import qualified AERN2.MP.UseMPFR.Float.RoundedAnyRP as MPLow
+
+mpToDouble :: MPLow.RoundMode -> MPFloat -> Double
+mpToDouble = MPLow.toDoubleA
+
+mpToRational :: MPFloat -> Rational
+mpToRational x
+  | x == 0 = 0.0
+  | otherwise = MPLow.toRationalA x
+
+mpFromRationalA :: MPLow.RoundMode -> MPLow.Precision -> Rational -> MPFloat
+mpFromRationalA = MPLow.fromRationalA
+
+#endif
 #ifdef HMPFR
 import qualified Data.Number.MPFR as MPLow
 

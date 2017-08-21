@@ -36,6 +36,11 @@ flag MPFR
   Description: Use MPFR backend (default); Integer backend is planned
   Default:     True
 
+flag MPFRRounded
+  Description: Use Data.Rounded as MPFR backend (default)
+  Default:     True
+  -- Default:     False
+
 library
   hs-source-dirs:  src
   build-depends:
@@ -52,10 +57,15 @@ library
   if flag(MPFR)
     cpp-options: -DUSEMPFR
     if impl(ghc >= 7.10)
-      build-depends:
-        hmpfr == 0.4.*,
-        integer-gmp >= 1.0 && < 1.1
-      cpp-options: -DHMPFR
+      if flag(MPFRRounded)
+        build-depends:
+          rounded == 0.1.*
+        cpp-options: -DMPFRRounded
+      else
+        build-depends:
+          hmpfr == 0.4.*,
+          integer-gmp >= 1.0 && < 1.1
+        cpp-options: -DHMPFR
     else
       build-depends:
         haskell-mpfr == 0.1.*,
@@ -82,6 +92,7 @@ library
   if flag(MPFR)
     exposed-modules:
       AERN2.MP.UseMPFR.Float.Type
+      -- AERN2.MP.UseMPFR.Float.RoundedAnyRP
       AERN2.MP.UseMPFR.Float.Arithmetic
       AERN2.MP.UseMPFR.Float.Conversions
       AERN2.MP.UseMPFR.Float.Operators

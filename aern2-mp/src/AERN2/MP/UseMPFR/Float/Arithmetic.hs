@@ -41,6 +41,14 @@ one = MPLow.fromInt MPLow.Up (P.fromInteger 10) (int 1)
 
 #endif
 
+#ifdef MPFRRounded
+import qualified AERN2.MP.UseMPFR.Float.RoundedAnyRP as MPLow
+
+one :: MPFloat
+one = MPLow.one
+
+#endif
+
 #ifdef HMPFR
 import qualified Data.Number.MPFR as MPLow
 
