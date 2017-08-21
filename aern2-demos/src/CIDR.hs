@@ -57,6 +57,10 @@ sqrtApprox p x =
 
 data UseLipschitz = UseLipschitz_YES | UseLipschitz_NO
 
+mysqrt ::
+  _ => r -> EnsureCN r
+mysqrt x = mysqrtX UseLipschitz_YES x
+
 {-|
   @mysqrt useLipschitz useNearbySimpler x@
 
@@ -83,9 +87,9 @@ mysqrtX useLipschitz (x :: r) =
 mysqrtNx ::
   (_) => UseLipschitz -> Integer -> r -> r
 mysqrtNx useLipschitz n x =
-  foldl1 (.) (replicate n ((~!) . mysqrt)) x
+  foldl1 (.) (replicate n ((~!) . mysqrtUL)) x
   where
-  mysqrt = mysqrtX useLipschitz
+  mysqrtUL = mysqrtX useLipschitz
 
 -- Cauchy reals are slow here:
 mysqrtNx_CR_test :: CauchyReal
