@@ -41,12 +41,14 @@ natively on other OS is linking Haskell with MPFR.
 
       * This should report ghc version 7.10.3.
 
-  * Clone mixed-types-num and aern2 git repositories as follows:
+  * Clone aern2 and other dependency git repositories as follows:
 
-    * Create a new "base" folder and in this folder, run:
+    * Create a new folder (from now on called the "base folder") and in this folder run:
 
       ```
       git clone https://github.com/michalkonecny/mixed-types-num.git
+      git clone https://github.com/michalkonecny/hgmp.git
+      git clone https://github.com/michalkonecny/rounded.git
       git clone https://github.com/michalkonecny/aern2.git
       ```
 
