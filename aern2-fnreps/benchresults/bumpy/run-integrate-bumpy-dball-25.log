@@ -1,25 +1,27 @@
+maxL: acG = NoInformation; ac = Exact
+maxR: acG = NoInformation; ac = Exact
 computing integrate  max(sin(10x),cos(11*x)) over [-1,1]
-result = [7.615294456481934e-1 ± <2^(-25)]
+result = [0.7615294456 ± <2^(-25)]
 accuracy: bits 25
 precision = Precision 28
 	Command being timed: "aern2-fnreps-ops integrate bumpy dball 25"
-	User time (seconds): 48.93
-	System time (seconds): 0.33
+	User time (seconds): 46.37
+	System time (seconds): 0.16
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:49.28
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:46.54
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 501784
+	Maximum resident set size (kbytes): 35240
 	Average resident set size (kbytes): 0
-	Major (requiring I/O) page faults: 16
-	Minor (reclaiming a frame) page faults: 123807
-	Voluntary context switches: 21
-	Involuntary context switches: 62
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 7219
+	Voluntary context switches: 1
+	Involuntary context switches: 42
 	Swaps: 0
-	File system inputs: 712
-	File system outputs: 8
+	File system inputs: 0
+	File system outputs: 16
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

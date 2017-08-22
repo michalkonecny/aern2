@@ -3,33 +3,33 @@ maxR: acG = bits 35; ac = bits 27
 chebMaxDCT: acGuide = bits 2
 chebMaxDCT: tryWithDegree: d = 16
 chebMaxDCT: tryWithDegree: d = 16; getAccuracy maxCd = bits 1
-chebMaxDCT: tryWithDegree: d = 16; dctAccuracy = bits 0; maxEd = 1.676492435358575
+chebMaxDCT: tryWithDegree: d = 16; dctAccuracy = bits 0; maxEd = 1.6764924353585751
 chebMaxDCT: tryWithDegree: d = 32
 chebMaxDCT: tryWithDegree: d = 32; getAccuracy maxCd = bits 2
-chebMaxDCT: tryWithDegree: d = 32; dctAccuracy = bits 1; maxEd = 5.259809204577426e-1
+chebMaxDCT: tryWithDegree: d = 32; dctAccuracy = bits 1; maxEd = 0.52598092045774258
 chebMaxDCT: tryWithDegree: d = 64
 chebMaxDCT: tryWithDegree: d = 64; getAccuracy maxCd = bits 3
-chebMaxDCT: tryWithDegree: d = 64; dctAccuracy = bits 2; maxEd = 2.662505720723349e-1
+chebMaxDCT: tryWithDegree: d = 64; dctAccuracy = bits 2; maxEd = 0.26625057207233482
 integratePB: accuracy f = bits 1
 computing integrate  max(sin(10x),cos(11*x)) over [-1,1]
-result = [7.613061628052017e-1 ± <2^(-1)]
+result = [0.761306162805201746094532620590 ± <2^(-1)]
 accuracy: bits 1
-precision = Precision 1268
+precision = Precision 2536
 	Command being timed: "aern2-fnreps-ops integrate bumpy poly 02"
-	User time (seconds): 10.96
-	System time (seconds): 0.03
+	User time (seconds): 9.36
+	System time (seconds): 0.04
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:11.00
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:09.40
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 20136
+	Maximum resident set size (kbytes): 19916
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 2930
+	Minor (reclaiming a frame) page faults: 19158
 	Voluntary context switches: 1
-	Involuntary context switches: 18
+	Involuntary context switches: 97
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

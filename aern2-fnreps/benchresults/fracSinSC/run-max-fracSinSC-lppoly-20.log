@@ -3,24 +3,24 @@ denom: acG = NoInformation; ac = Exact
 inv: acG = NoInformation; ac = Exact
 res: acG = NoInformation; ac = Exact
 computing max  (sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
-result = [1.271873490914729 ± <2^(-20)]
+result = [1.2718734909147288199881530873 ± <2^(-20)]
 accuracy: bits 20
 precision = Precision 424
 	Command being timed: "aern2-fnreps-ops max fracSinSC lppoly 20"
-	User time (seconds): 4.58
+	User time (seconds): 4.37
 	System time (seconds): 0.02
-	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.60
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.39
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 23816
+	Maximum resident set size (kbytes): 13424
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 3453
+	Minor (reclaiming a frame) page faults: 946
 	Voluntary context switches: 1
-	Involuntary context switches: 13
+	Involuntary context switches: 10
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

@@ -1,23 +1,23 @@
 integratePB: accuracy f = bits 73
 computing integrate  sin(10x+sin(7pi*x^2)) + cos(3pi*x) over [-1,1]
-result = [-1.465102544187378e-1 ± <2^(-72)]
+result = [-0.146510254418737751130302458665 ± <2^(-72)]
 accuracy: bits 72
 precision = Precision 694
 	Command being timed: "aern2-fnreps-ops integrate sinesine+cos poly 70"
-	User time (seconds): 194.30
-	System time (seconds): 2.29
+	User time (seconds): 154.96
+	System time (seconds): 1.75
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:16.61
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:36.72
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 3480848
+	Maximum resident set size (kbytes): 250860
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1873753
+	Minor (reclaiming a frame) page faults: 1188135
 	Voluntary context switches: 1
-	Involuntary context switches: 203
+	Involuntary context switches: 195
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

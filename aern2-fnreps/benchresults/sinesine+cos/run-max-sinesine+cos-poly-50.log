@@ -1,22 +1,22 @@
 computing max  sin(10x+sin(7pi*x^2)) + cos(3pi*x) over [-1,1]
-result = [1.772900514334109 ± <2^(-53)]
+result = [1.77290051433410915326121720032 ± <2^(-53)]
 accuracy: bits 53
-precision = Precision 894
+precision = Precision 1788
 	Command being timed: "aern2-fnreps-ops max sinesine+cos poly 50"
-	User time (seconds): 132.18
-	System time (seconds): 1.56
+	User time (seconds): 105.13
+	System time (seconds): 1.12
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:13.78
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:46.26
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 2433400
+	Maximum resident set size (kbytes): 181252
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1336304
+	Minor (reclaiming a frame) page faults: 754048
 	Voluntary context switches: 1
-	Involuntary context switches: 637
+	Involuntary context switches: 140
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

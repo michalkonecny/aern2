@@ -2,24 +2,24 @@ numer: acG = bits 100; ac = bits 66
 inv: acG = bits 40; ac = bits 18
 res: acG = bits 100; ac = bits 15
 computing integrate  (sin(10x)+cos(7pi*x))/(100x^2+1) over [-1,1]
-result = [3.491993379175998e-2 ± <2^(-17)]
+result = [3.4919933791759979358025408511e-2 ± <2^(-17)]
 accuracy: bits 17
 precision = Precision 600
 	Command being timed: "aern2-fnreps-ops integrate rungeSC ppoly 20"
-	User time (seconds): 4.67
-	System time (seconds): 0.06
+	User time (seconds): 4.36
+	System time (seconds): 0.02
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.74
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.38
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 96108
+	Maximum resident set size (kbytes): 14948
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 21735
+	Minor (reclaiming a frame) page faults: 1495
 	Voluntary context switches: 1
-	Involuntary context switches: 12
+	Involuntary context switches: 8
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

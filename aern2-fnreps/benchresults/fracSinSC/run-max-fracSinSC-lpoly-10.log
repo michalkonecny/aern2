@@ -2,119 +2,119 @@ numer: acG = NoInformation; ac = Exact
 denom: acG = NoInformation; ac = Exact
 inv: acG = NoInformation; ac = Exact
 res: acG = NoInformation; ac = Exact
-chebDivideDCT: acGuide = bits 10, minQ = [9.969955899503142e-1 ± <2^(-6)]
+chebDivideDCT: acGuide = bits 10, minQ = [0.996995589950314166724108441708 ± <2^(-6)]
 chebDivideDCT: tryWithDegree: d = 16
 chebDivideDCT: tryWithDegree: d = 16; getAccuracy rCd = bits 10
-chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [9.994211780075402e-1 ± <2^(-10)]
-chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [6.019186859398119e-3 ± <2^(-7)]; dctAccuracy = bits 6; getAccuracy rEd = bits 5
+chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [0.999421178007540187632756392128 ± <2^(-10)]
+chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [6.01918685939811853433564791045e-3 ± <2^(-7)]; dctAccuracy = bits 6; getAccuracy rEd = bits 5
 chebDivideDCT: tryWithDegree: d = 32
 chebDivideDCT: tryWithDegree: d = 32; getAccuracy rCd = bits 19
-chebDivideDCT: tryWithDegree: d = 32; rCMaxNorm = [1.000000155522122 ± <2^(-19)]
-chebDivideDCT: tryWithDegree: d = 32; maxDifferenceC = [5.804527208760115e-6 ± <2^(-17)]; dctAccuracy = bits 16; getAccuracy rEd = bits 6
-chebDivideDCT: acGuide = bits 10, minQ = [4.989257378270127 ± <2^(-4)]
+chebDivideDCT: tryWithDegree: d = 32; rCMaxNorm = [1.00000015552212183376908802868 ± <2^(-19)]
+chebDivideDCT: tryWithDegree: d = 32; maxDifferenceC = [5.8045272087601147778673833646e-6 ± <2^(-17)]; dctAccuracy = bits 16; getAccuracy rEd = bits 6
+chebDivideDCT: acGuide = bits 10, minQ = [4.98925737827012671932180865042 ± <2^(-4)]
 chebDivideDCT: tryWithDegree: d = 16
 chebDivideDCT: tryWithDegree: d = 16; getAccuracy rCd = bits 32
-chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [2.004306302424678e-1 ± <2^(-32)]
-chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [1.662504105729559e-9 ± <2^(-29)]; dctAccuracy = bits 30; getAccuracy rEd = bits 9
-chebDivideDCT: acGuide = bits 10, minQ = [9.956430686149724e-1 ± <2^(-5)]
+chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [0.200430630242467833659505348783 ± <2^(-32)]
+chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [1.66250410572955880723878567734e-9 ± <2^(-29)]; dctAccuracy = bits 30; getAccuracy rEd = bits 9
+chebDivideDCT: acGuide = bits 10, minQ = [0.995643068614972353787374094072 ± <2^(-5)]
 chebDivideDCT: tryWithDegree: d = 16
 chebDivideDCT: tryWithDegree: d = 16; getAccuracy rCd = bits 11
-chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [9.998418296432933e-1 ± <2^(-11)]
-chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [6.182191320900033e-3 ± <2^(-7)]; dctAccuracy = bits 6; getAccuracy rEd = bits 4
+chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [0.999841829643293302895851949313 ± <2^(-11)]
+chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [6.18219132090003272051960323279e-3 ± <2^(-7)]; dctAccuracy = bits 6; getAccuracy rEd = bits 4
 chebDivideDCT: tryWithDegree: d = 32
 chebDivideDCT: tryWithDegree: d = 32; getAccuracy rCd = bits 22
-chebDivideDCT: tryWithDegree: d = 32; rCMaxNorm = [1.000000089893603 ± <2^(-22)]
-chebDivideDCT: tryWithDegree: d = 32; maxDifferenceC = [1.432260338045435e-6 ± <2^(-19)]; dctAccuracy = bits 18; getAccuracy rEd = bits 5
-chebDivideDCT: acGuide = bits 10, minQ = [2.127934150289429 ± <2^(-3)]
+chebDivideDCT: tryWithDegree: d = 32; rCMaxNorm = [1.00000008989360259010513438709 ± <2^(-22)]
+chebDivideDCT: tryWithDegree: d = 32; maxDifferenceC = [1.43226033804543516097435805293e-6 ± <2^(-19)]; dctAccuracy = bits 18; getAccuracy rEd = bits 5
+chebDivideDCT: acGuide = bits 10, minQ = [2.12793415028942891828456218661 ± <2^(-3)]
 chebDivideDCT: tryWithDegree: d = 16
 chebDivideDCT: tryWithDegree: d = 16; getAccuracy rCd = bits 27
-chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [4.699393469662015e-1 ± <2^(-27)]
-chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [7.790747707321249e-8 ± <2^(-23)]; dctAccuracy = bits 23; getAccuracy rEd = bits 5
-chebDivideDCT: acGuide = bits 10, minQ = [9.939713342283957e-1 ± <2^(-3)]
+chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [0.469939346966201509641801020064 ± <2^(-27)]
+chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [7.79074770732124857366834850134e-8 ± <2^(-23)]; dctAccuracy = bits 23; getAccuracy rEd = bits 5
+chebDivideDCT: acGuide = bits 10, minQ = [0.993971334228395716366015103350 ± <2^(-3)]
 chebDivideDCT: tryWithDegree: d = 16
 chebDivideDCT: tryWithDegree: d = 16; getAccuracy rCd = bits 16
-chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [9.999748540222185e-1 ± <2^(-16)]
-chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [9.330806090958929e-5 ± <2^(-13)]; dctAccuracy = bits 12; getAccuracy rEd = bits 2
-chebDivideDCT: acGuide = bits 10, minQ = [9.746108349597039e-1 ± <2^(-3)]
+chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [0.999974854022218459226210835703 ± <2^(-16)]
+chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [9.33080609095892911006878791135e-5 ± <2^(-13)]; dctAccuracy = bits 12; getAccuracy rEd = bits 2
+chebDivideDCT: acGuide = bits 10, minQ = [0.974610834959703878192364176046 ± <2^(-3)]
 chebDivideDCT: tryWithDegree: d = 16
 chebDivideDCT: tryWithDegree: d = 16; getAccuracy rCd = bits 16
-chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [1.000008461069577 ± <2^(-16)]
-chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [9.285988908818075e-5 ± <2^(-13)]; dctAccuracy = bits 12; getAccuracy rEd = bits 3
-chebDivideDCT: acGuide = bits 10, minQ = [2.093925459960512 ± <2^(-2)]
+chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [1.00000846106957714029546396361 ± <2^(-16)]
+chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [9.28598890881807460765291217578e-5 ± <2^(-13)]; dctAccuracy = bits 12; getAccuracy rEd = bits 3
+chebDivideDCT: acGuide = bits 10, minQ = [2.09392545996051231832479899708 ± <2^(-2)]
 chebDivideDCT: tryWithDegree: d = 16
 chebDivideDCT: tryWithDegree: d = 16; getAccuracy rCd = bits 26
-chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [4.775719098365448e-1 ± <2^(-26)]
-chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [1.790180748078541e-7 ± <2^(-22)]; dctAccuracy = bits 22; getAccuracy rEd = bits 4
-chebDivideDCT: acGuide = bits 10, minQ = [9.940837368254808e-1 ± <2^(-5)]
+chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [0.477571909836544823317416618899 ± <2^(-26)]
+chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [1.79018074807854116558148880064e-7 ± <2^(-22)]; dctAccuracy = bits 22; getAccuracy rEd = bits 4
+chebDivideDCT: acGuide = bits 10, minQ = [0.994083736825480766048619975477 ± <2^(-5)]
 chebDivideDCT: tryWithDegree: d = 16
 chebDivideDCT: tryWithDegree: d = 16; getAccuracy rCd = bits 11
-chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [9.998660378559415e-1 ± <2^(-11)]
-chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [6.184937134270179e-3 ± <2^(-7)]; dctAccuracy = bits 6; getAccuracy rEd = bits 5
+chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [0.999866037855941506923614385720 ± <2^(-11)]
+chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [6.18493713427017918386139648261e-3 ± <2^(-7)]; dctAccuracy = bits 6; getAccuracy rEd = bits 5
 chebDivideDCT: tryWithDegree: d = 32
 chebDivideDCT: tryWithDegree: d = 32; getAccuracy rCd = bits 22
-chebDivideDCT: tryWithDegree: d = 32; rCMaxNorm = [9.999999356121732e-1 ± <2^(-22)]
-chebDivideDCT: tryWithDegree: d = 32; maxDifferenceC = [1.43335655004181e-6 ± <2^(-19)]; dctAccuracy = bits 18; getAccuracy rEd = bits 5
-chebDivideDCT: acGuide = bits 10, minQ = [4.922769748916632 ± <2^(-4)]
+chebDivideDCT: tryWithDegree: d = 32; rCMaxNorm = [0.999999935612173187811543386155 ± <2^(-22)]
+chebDivideDCT: tryWithDegree: d = 32; maxDifferenceC = [1.43335655004181013206883434601e-6 ± <2^(-19)]; dctAccuracy = bits 18; getAccuracy rEd = bits 5
+chebDivideDCT: acGuide = bits 10, minQ = [4.92276974891663243738548771943 ± <2^(-4)]
 chebDivideDCT: tryWithDegree: d = 16
 chebDivideDCT: tryWithDegree: d = 16; getAccuracy rCd = bits 32
-chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [2.031376748945022e-1 ± <2^(-32)]
-chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [1.836055481896054e-9 ± <2^(-29)]; dctAccuracy = bits 30; getAccuracy rEd = bits 9
-chebDivideDCT: acGuide = bits 10, minQ = [9.539638012169548e-1 ± <2^(-3)]
+chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [0.203137674894502155647562071244 ± <2^(-32)]
+chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [1.83605548189605377635455910268e-9 ± <2^(-29)]; dctAccuracy = bits 30; getAccuracy rEd = bits 9
+chebDivideDCT: acGuide = bits 10, minQ = [0.953963801216954819672428985571 ± <2^(-3)]
 chebDivideDCT: tryWithDegree: d = 16
 chebDivideDCT: tryWithDegree: d = 16; getAccuracy rCd = bits 10
-chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [9.993889530803375e-1 ± <2^(-10)]
-chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [6.23986983961504e-3 ± <2^(-7)]; dctAccuracy = bits 6; getAccuracy rEd = bits 3
+chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [0.999388953080337489353304836307 ± <2^(-10)]
+chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [6.23986983961504002204266578833e-3 ± <2^(-7)]; dctAccuracy = bits 6; getAccuracy rEd = bits 3
 chebDivideDCT: tryWithDegree: d = 32
 chebDivideDCT: tryWithDegree: d = 32; getAccuracy rCd = bits 19
-chebDivideDCT: tryWithDegree: d = 32; rCMaxNorm = [9.999993336344193e-1 ± <2^(-19)]
-chebDivideDCT: tryWithDegree: d = 32; maxDifferenceC = [5.842230571436297e-6 ± <2^(-17)]; dctAccuracy = bits 16; getAccuracy rEd = bits 3
-chebDivideDCT: acGuide = bits 15, minQ = [9.881756036849053e-1 ± <2^(-4)]
+chebDivideDCT: tryWithDegree: d = 32; rCMaxNorm = [0.999999333634419324612731398097 ± <2^(-19)]
+chebDivideDCT: tryWithDegree: d = 32; maxDifferenceC = [5.84223057143629743493610419636e-6 ± <2^(-17)]; dctAccuracy = bits 16; getAccuracy rEd = bits 3
+chebDivideDCT: acGuide = bits 15, minQ = [0.988175603684905323489941436718 ± <2^(-4)]
 chebDivideDCT: tryWithDegree: d = 16
 chebDivideDCT: tryWithDegree: d = 16; getAccuracy rCd = bits 23
-chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [9.999999082203243e-1 ± <2^(-23)]
-chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [3.170992017988167e-7 ± <2^(-21)]; dctAccuracy = bits 20; getAccuracy rEd = bits 4
-chebDivideDCT: acGuide = bits 15, minQ = [9.99842761993867e-1 ± <2^(-7)]
+chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [0.999999908220324339448184564995 ± <2^(-23)]
+chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [3.17099201798816652773747833131e-7 ± <2^(-21)]; dctAccuracy = bits 20; getAccuracy rEd = bits 4
+chebDivideDCT: acGuide = bits 15, minQ = [0.999842761993867019360659603155 ± <2^(-7)]
 chebDivideDCT: tryWithDegree: d = 16
 chebDivideDCT: tryWithDegree: d = 16; getAccuracy rCd = bits 25
-chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [9.999999738226032e-1 ± <2^(-25)]
-chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [1.85195793791324e-7 ± <2^(-22)]; dctAccuracy = bits 21; getAccuracy rEd = bits 7
-chebDivideDCT: acGuide = bits 20, minQ = [9.999983952646957e-1 ± <2^(-17)]
+chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [0.999999973822603164602216358173 ± <2^(-25)]
+chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [1.85195793791324048565253696524e-7 ± <2^(-22)]; dctAccuracy = bits 21; getAccuracy rEd = bits 7
+chebDivideDCT: acGuide = bits 20, minQ = [0.999998395264695713056625051116 ± <2^(-17)]
 chebDivideDCT: tryWithDegree: d = 16
 chebDivideDCT: tryWithDegree: d = 16; getAccuracy rCd = bits 30
-chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [9.99999992348784e-1 ± <2^(-30)]
-chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [1.538465875410734e-9 ± <2^(-29)]; dctAccuracy = bits 28; getAccuracy rEd = bits 17
-chebDivideDCT: acGuide = bits 15, minQ = [9.999819114839811e-1 ± <2^(-12)]
+chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [0.999999992348783989962348348013 ± <2^(-30)]
+chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [1.53846587541073448220170333558e-9 ± <2^(-29)]; dctAccuracy = bits 28; getAccuracy rEd = bits 17
+chebDivideDCT: acGuide = bits 15, minQ = [0.999981911483981125579177265462 ± <2^(-12)]
 chebDivideDCT: tryWithDegree: d = 16
 chebDivideDCT: tryWithDegree: d = 16; getAccuracy rCd = bits 33
-chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [9.999955326929433e-1 ± <2^(-33)]
-chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [1.5293179988036e-10 ± <2^(-32)]; dctAccuracy = bits 31; getAccuracy rEd = bits 12
-chebDivideDCT: acGuide = bits 17, minQ = [1.003810448612307 ± <2^(-13)]
+chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [0.999995532692943346051927827539 ± <2^(-33)]
+chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [1.52931799880360047801414553364e-10 ± <2^(-32)]; dctAccuracy = bits 31; getAccuracy rEd = bits 12
+chebDivideDCT: acGuide = bits 17, minQ = [1.00381044861230744880131737772 ± <2^(-13)]
 chebDivideDCT: tryWithDegree: d = 16
 chebDivideDCT: tryWithDegree: d = 16; getAccuracy rCd = bits 50
-chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [9.962040157904568e-1 ± <2^(-50)]
-chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [8.363497771134932e-16 ± <2^(-50)]; dctAccuracy = bits 49; getAccuracy rEd = bits 13
+chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [0.996204015790456814707225477284 ± <2^(-50)]
+chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [8.36349777113493174639357507996e-16 ± <2^(-50)]; dctAccuracy = bits 49; getAccuracy rEd = bits 13
 computing max  (sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
-result = [1.271858477835922 ± <2^(-14)]
+result = [1.27185847783592222406720016483 ± <2^(-14)]
 accuracy: bits 14
 precision = Precision 386
 	Command being timed: "aern2-fnreps-ops max fracSinSC lpoly 10"
-	User time (seconds): 27.03
-	System time (seconds): 0.09
+	User time (seconds): 24.66
+	System time (seconds): 0.10
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:27.13
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:24.78
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 30328
+	Maximum resident set size (kbytes): 24640
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 8302
+	Minor (reclaiming a frame) page faults: 12940
 	Voluntary context switches: 1
-	Involuntary context switches: 29
+	Involuntary context switches: 24
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 16
+	File system outputs: 24
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

@@ -2,22 +2,22 @@ numer: acG = NoInformation; ac = Exact
 inv: acG = NoInformation; ac = Exact
 res: acG = NoInformation; ac = Exact
 computing integrate  (sin(10x)+cos(7pi*x))/(100x^2+1) over [-1,1]
-result = [3.49197760294971e-2 ± <2^(-17)]
+result = [3.49197760294970640115511121758e-2 ± <2^(-17)]
 accuracy: bits 17
 precision = Precision 106
 	Command being timed: "aern2-fnreps-ops integrate rungeSC lppoly 20"
-	User time (seconds): 1.56
+	User time (seconds): 1.38
 	System time (seconds): 0.00
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.56
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.39
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 19368
+	Maximum resident set size (kbytes): 13020
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 2584
+	Minor (reclaiming a frame) page faults: 926
 	Voluntary context switches: 1
 	Involuntary context switches: 4
 	Swaps: 0

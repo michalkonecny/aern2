@@ -1,22 +1,22 @@
 computing integrate  sin(10x+sin(7pi*x^2)) over [-1,1]
-result = [-1.465102520869894e-1 ± <2^(-13)]
+result = [-0.14651025208698942412 ± <2^(-13)]
 accuracy: bits 13
 precision = Precision 63
 	Command being timed: "aern2-fnreps-ops integrate sinesine ball 13"
-	User time (seconds): 208.92
-	System time (seconds): 1.62
+	User time (seconds): 162.84
+	System time (seconds): 0.54
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:30.65
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:43.40
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 3696664
+	Maximum resident set size (kbytes): 156732
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 922445
+	Minor (reclaiming a frame) page faults: 37695
 	Voluntary context switches: 1
-	Involuntary context switches: 321
+	Involuntary context switches: 100
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

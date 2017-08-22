@@ -1,50 +1,50 @@
 numer: acG = bits 75; ac = bits 41
 denom: acG = bits 45; ac = bits 34
-chebDivideDCT: acGuide = bits 7, minQ = [9.99999999977089e-1 ± <2^(-34)]
+chebDivideDCT: acGuide = bits 7, minQ = [0.999999999977089036461930927332 ± <2^(-34)]
 chebDivideDCT: tryWithDegree: d = 16
 chebDivideDCT: tryWithDegree: d = 16; getAccuracy rCd = bits 1
-chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [1.169507964765142 ± <2^(-1)]
-chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [5.006549282491376 ± <2^(2)]; dctAccuracy = bits -3; getAccuracy rEd = bits -3
+chebDivideDCT: tryWithDegree: d = 16; rCMaxNorm = [1.16950796476514184972047211936 ± <2^(-1)]
+chebDivideDCT: tryWithDegree: d = 16; maxDifferenceC = [5.00654928249137649415258189074 ± <2^(2)]; dctAccuracy = bits -3; getAccuracy rEd = bits -3
 chebDivideDCT: tryWithDegree: d = 32
 chebDivideDCT: tryWithDegree: d = 32; getAccuracy rCd = bits 2
-chebDivideDCT: tryWithDegree: d = 32; rCMaxNorm = [1.057647337254405 ± <2^(-2)]
-chebDivideDCT: tryWithDegree: d = 32; maxDifferenceC = [2.471604211236633 ± <2^(1)]; dctAccuracy = bits -2; getAccuracy rEd = bits -2
+chebDivideDCT: tryWithDegree: d = 32; rCMaxNorm = [1.05764733725440480684447521352 ± <2^(-2)]
+chebDivideDCT: tryWithDegree: d = 32; maxDifferenceC = [2.47160421123663253157247701622 ± <2^(1)]; dctAccuracy = bits -2; getAccuracy rEd = bits -2
 chebDivideDCT: tryWithDegree: d = 64
 chebDivideDCT: tryWithDegree: d = 64; getAccuracy rCd = bits 3
-chebDivideDCT: tryWithDegree: d = 64; rCMaxNorm = [1.066884879897082 ± <2^(-3)]
-chebDivideDCT: tryWithDegree: d = 64; maxDifferenceC = [1.497820933912508 ± <2^(0)]; dctAccuracy = bits -1; getAccuracy rEd = bits -1
+chebDivideDCT: tryWithDegree: d = 64; rCMaxNorm = [1.06688487989708239011177131698 ± <2^(-3)]
+chebDivideDCT: tryWithDegree: d = 64; maxDifferenceC = [1.49782093391250810656447286786 ± <2^(0)]; dctAccuracy = bits -1; getAccuracy rEd = bits -1
 chebDivideDCT: tryWithDegree: d = 128
 chebDivideDCT: tryWithDegree: d = 128; getAccuracy rCd = bits 8
-chebDivideDCT: tryWithDegree: d = 128; rCMaxNorm = [1.000653410659634 ± <2^(-8)]
-chebDivideDCT: tryWithDegree: d = 128; maxDifferenceC = [4.289664801803722e-2 ± <2^(-4)]; dctAccuracy = bits 3; getAccuracy rEd = bits 3
+chebDivideDCT: tryWithDegree: d = 128; rCMaxNorm = [1.00065341065963357011157364579 ± <2^(-8)]
+chebDivideDCT: tryWithDegree: d = 128; maxDifferenceC = [4.28966480180372170650953098213e-2 ± <2^(-4)]; dctAccuracy = bits 3; getAccuracy rEd = bits 3
 chebDivideDCT: tryWithDegree: d = 256
 chebDivideDCT: tryWithDegree: d = 256; getAccuracy rCd = bits 16
-chebDivideDCT: tryWithDegree: d = 256; rCMaxNorm = [1.000004008623397 ± <2^(-16)]
-chebDivideDCT: tryWithDegree: d = 256; maxDifferenceC = [1.639953490812602e-4 ± <2^(-12)]; dctAccuracy = bits 11; getAccuracy rEd = bits 11
+chebDivideDCT: tryWithDegree: d = 256; rCMaxNorm = [1.00000400862339671911656958181 ± <2^(-16)]
+chebDivideDCT: tryWithDegree: d = 256; maxDifferenceC = [1.63995349081260207930600519614e-4 ± <2^(-12)]; dctAccuracy = bits 11; getAccuracy rEd = bits 11
 inv: acG = bits 7; ac = bits 11
 res: acG = bits 12; ac = bits 9
 computing max  (sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
-result = [1.271960855253676 ± <2^(-9)]
+result = [1.27196085525367629060610913924 ± <2^(-9)]
 accuracy: bits 9
 precision = Precision 1564
 	Command being timed: "aern2-fnreps-ops max fracSinSC poly 05"
-	User time (seconds): 210.06
-	System time (seconds): 1.81
+	User time (seconds): 190.55
+	System time (seconds): 2.19
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:31.91
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:12.76
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 1378776
+	Maximum resident set size (kbytes): 1305720
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1267072
+	Minor (reclaiming a frame) page faults: 1689561
 	Voluntary context switches: 1
-	Involuntary context switches: 1131
+	Involuntary context switches: 220
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 24
+	File system outputs: 32
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

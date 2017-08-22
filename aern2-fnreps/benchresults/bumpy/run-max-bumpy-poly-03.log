@@ -6,32 +6,32 @@ chebMaxDCT: tryWithDegree: d = 16; getAccuracy maxCd = bits 1
 chebMaxDCT: tryWithDegree: d = 16; dctAccuracy = bits 0; maxEd = 1.650561770792087
 chebMaxDCT: tryWithDegree: d = 32
 chebMaxDCT: tryWithDegree: d = 32; getAccuracy maxCd = bits 2
-chebMaxDCT: tryWithDegree: d = 32; dctAccuracy = bits 1; maxEd = 5.038772689036938e-1
+chebMaxDCT: tryWithDegree: d = 32; dctAccuracy = bits 1; maxEd = 0.50387726890369378
 chebMaxDCT: tryWithDegree: d = 64
 chebMaxDCT: tryWithDegree: d = 64; getAccuracy maxCd = bits 3
-chebMaxDCT: tryWithDegree: d = 64; dctAccuracy = bits 2; maxEd = 2.438636255687052e-1
+chebMaxDCT: tryWithDegree: d = 64; dctAccuracy = bits 2; maxEd = 0.24386362556870517
 chebMaxDCT: tryWithDegree: d = 128
 chebMaxDCT: tryWithDegree: d = 128; getAccuracy maxCd = bits 4
-chebMaxDCT: tryWithDegree: d = 128; dctAccuracy = bits 3; maxEd = 1.264136417583242e-1
+chebMaxDCT: tryWithDegree: d = 128; dctAccuracy = bits 3; maxEd = 0.1264136417583242
 computing max  max(sin(10x),cos(11*x)) over [-1,1]
-result = [1.115901098928126 ± <2^(-2)]
+result = [1.11590109892812590330735280581 ± <2^(-2)]
 accuracy: bits 2
 precision = Precision 3228
 	Command being timed: "aern2-fnreps-ops max bumpy poly 03"
-	User time (seconds): 61.35
-	System time (seconds): 0.34
+	User time (seconds): 49.32
+	System time (seconds): 0.61
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:01.70
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:49.93
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 47956
+	Maximum resident set size (kbytes): 47404
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 152488
+	Minor (reclaiming a frame) page faults: 438650
 	Voluntary context switches: 1
-	Involuntary context switches: 105
+	Involuntary context switches: 68
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 16

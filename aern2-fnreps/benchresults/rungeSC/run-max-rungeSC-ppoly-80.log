@@ -2,27 +2,27 @@ numer: acG = bits 340; ac = bits 306
 inv: acG = bits 640; ac = bits 83
 res: acG = bits 640; ac = bits 81
 computing max  (sin(10x)+cos(7pi*x))/(100x^2+1) over [-1,1]
-result = [1.071560871290678 ± <2^(-81)]
+result = [1.07156087129067772231805894419 ± <2^(-81)]
 accuracy: bits 81
 precision = Precision 2446
 	Command being timed: "aern2-fnreps-ops max rungeSC ppoly 80"
-	User time (seconds): 90.77
-	System time (seconds): 0.39
+	User time (seconds): 89.28
+	System time (seconds): 0.66
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:31.17
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:29.96
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 299420
+	Maximum resident set size (kbytes): 84396
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 85187
+	Minor (reclaiming a frame) page faults: 151986
 	Voluntary context switches: 1
-	Involuntary context switches: 84
+	Involuntary context switches: 102
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 16
+	File system outputs: 24
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

@@ -1,20 +1,20 @@
 computing max  sin(10x)+cos(7pi*x) over [-1,1]
-result = [1.792167310671817 ± <2^(-30)]
+result = [1.79216731067181688608726753618 ± <2^(-30)]
 accuracy: bits 30
-precision = Precision 116
+precision = Precision 185
 	Command being timed: "aern2-fnreps-ops max sine+cospi ball 30"
-	User time (seconds): 87.92
-	System time (seconds): 0.58
+	User time (seconds): 74.25
+	System time (seconds): 0.27
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:28.56
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:14.53
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 1313180
+	Maximum resident set size (kbytes): 92208
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 326478
+	Minor (reclaiming a frame) page faults: 21334
 	Voluntary context switches: 1
 	Involuntary context switches: 97
 	Swaps: 0

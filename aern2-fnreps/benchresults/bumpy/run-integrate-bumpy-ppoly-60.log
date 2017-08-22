@@ -1,24 +1,24 @@
 maxL: acG = bits 615; ac = bits 607
 maxR: acG = bits 615; ac = bits 608
 computing integrate  max(sin(10x),cos(11*x)) over [-1,1]
-result = [7.61529428926379e-1 ± <2^(-59)]
+result = [0.761529428926379001371973520799 ± <2^(-59)]
 accuracy: bits 59
 precision = Precision 2662
 	Command being timed: "aern2-fnreps-ops integrate bumpy ppoly 60"
-	User time (seconds): 6.54
-	System time (seconds): 0.10
+	User time (seconds): 5.54
+	System time (seconds): 0.03
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:06.64
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:05.58
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 266504
+	Maximum resident set size (kbytes): 22632
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 85785
+	Minor (reclaiming a frame) page faults: 4505
 	Voluntary context switches: 1
-	Involuntary context switches: 10
+	Involuntary context switches: 11
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

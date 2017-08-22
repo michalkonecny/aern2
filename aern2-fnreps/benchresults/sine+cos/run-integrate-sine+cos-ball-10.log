@@ -1,24 +1,24 @@
 computing integrate  sin(10x)+cos(20x) over [-1,1]
-result = [9.129406967177429e-2 ± <2^(-10)]
+result = [9.129406967177429162e-2 ± <2^(-10)]
 accuracy: bits 10
-precision = Precision 62
+precision = Precision 60
 	Command being timed: "aern2-fnreps-ops integrate sine+cos ball 10"
-	User time (seconds): 22.78
-	System time (seconds): 0.21
+	User time (seconds): 19.04
+	System time (seconds): 0.08
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:23.03
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:19.14
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 467628
+	Maximum resident set size (kbytes): 30236
 	Average resident set size (kbytes): 0
-	Major (requiring I/O) page faults: 22
-	Minor (reclaiming a frame) page faults: 115516
-	Voluntary context switches: 164
-	Involuntary context switches: 99
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 5936
+	Voluntary context switches: 1
+	Involuntary context switches: 350
 	Swaps: 0
-	File system inputs: 12192
+	File system inputs: 0
 	File system outputs: 8
 	Socket messages sent: 0
 	Socket messages received: 0

@@ -3,39 +3,39 @@ maxR: acG = bits 55; ac = bits 47
 chebMaxDCT: acGuide = bits 4
 chebMaxDCT: tryWithDegree: d = 16
 chebMaxDCT: tryWithDegree: d = 16; getAccuracy maxCd = bits 1
-chebMaxDCT: tryWithDegree: d = 16; dctAccuracy = bits 0; maxEd = 1.630698498263428
+chebMaxDCT: tryWithDegree: d = 16; dctAccuracy = bits 0; maxEd = 1.6306984982634278
 chebMaxDCT: tryWithDegree: d = 32
 chebMaxDCT: tryWithDegree: d = 32; getAccuracy maxCd = bits 2
-chebMaxDCT: tryWithDegree: d = 32; dctAccuracy = bits 1; maxEd = 4.912968280292952e-1
+chebMaxDCT: tryWithDegree: d = 32; dctAccuracy = bits 1; maxEd = 0.4912968280292952
 chebMaxDCT: tryWithDegree: d = 64
 chebMaxDCT: tryWithDegree: d = 64; getAccuracy maxCd = bits 3
-chebMaxDCT: tryWithDegree: d = 64; dctAccuracy = bits 2; maxEd = 2.239837806053762e-1
+chebMaxDCT: tryWithDegree: d = 64; dctAccuracy = bits 2; maxEd = 0.22398378060537619
 chebMaxDCT: tryWithDegree: d = 128
 chebMaxDCT: tryWithDegree: d = 128; getAccuracy maxCd = bits 4
-chebMaxDCT: tryWithDegree: d = 128; dctAccuracy = bits 3; maxEd = 1.067371770752419e-1
+chebMaxDCT: tryWithDegree: d = 128; dctAccuracy = bits 3; maxEd = 0.10673717707524182
 chebMaxDCT: tryWithDegree: d = 256
 chebMaxDCT: tryWithDegree: d = 256; getAccuracy maxCd = bits 5
-chebMaxDCT: tryWithDegree: d = 256; dctAccuracy = bits 4; maxEd = 5.782816570222922e-2
+chebMaxDCT: tryWithDegree: d = 256; dctAccuracy = bits 4; maxEd = 5.7828165702229213e-2
 integratePB: accuracy f = bits 3
 computing integrate  max(sin(10x),cos(11*x)) over [-1,1]
-result = [7.615517001005511e-1 ± <2^(-2)]
+result = [0.761551700100551089641984425679 ± <2^(-2)]
 accuracy: bits 2
-precision = Precision 2218
+precision = Precision 4436
 	Command being timed: "aern2-fnreps-ops integrate bumpy poly 04"
-	User time (seconds): 396.62
-	System time (seconds): 18.74
+	User time (seconds): 410.33
+	System time (seconds): 19.61
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 6:55.40
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 7:09.99
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 383724
+	Maximum resident set size (kbytes): 958664
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 19694988
-	Voluntary context switches: 1
-	Involuntary context switches: 595
+	Minor (reclaiming a frame) page faults: 20763031
+	Voluntary context switches: 7
+	Involuntary context switches: 669
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 24

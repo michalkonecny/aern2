@@ -3,24 +3,24 @@ denom: acG = bits 65; ac = bits 56
 inv: acG = bits 34; ac = bits 17
 res: acG = bits 32; ac = bits 14
 computing integrate  (sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
-result = [2.835538546162375e-2 ± <2^(-16)]
+result = [2.83553854616237517660036320056e-2 ± <2^(-16)]
 accuracy: bits 16
 precision = Precision 1066
 	Command being timed: "aern2-fnreps-ops integrate fracSinSC ppoly 15"
-	User time (seconds): 95.15
-	System time (seconds): 0.94
+	User time (seconds): 78.44
+	System time (seconds): 0.39
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:36.10
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:18.84
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 362244
+	Maximum resident set size (kbytes): 36344
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 742216
+	Minor (reclaiming a frame) page faults: 85909
 	Voluntary context switches: 1
-	Involuntary context switches: 131
+	Involuntary context switches: 91
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 16

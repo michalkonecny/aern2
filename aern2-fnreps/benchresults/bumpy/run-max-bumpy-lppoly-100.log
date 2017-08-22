@@ -1,24 +1,24 @@
 maxL: acG = NoInformation; ac = Exact
 maxR: acG = NoInformation; ac = Exact
 computing max  max(sin(10x),cos(11*x)) over [-1,1]
-result = [1 ± <2^(-110)]
+result = [0.999999999999999999999999999999 ± <2^(-110)]
 accuracy: bits 110
 precision = Precision 124
 	Command being timed: "aern2-fnreps-ops max bumpy lppoly 100"
-	User time (seconds): 1.04
+	User time (seconds): 0.98
 	System time (seconds): 0.00
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.05
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.98
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 19088
+	Maximum resident set size (kbytes): 13028
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 2358
+	Minor (reclaiming a frame) page faults: 924
 	Voluntary context switches: 1
-	Involuntary context switches: 5
+	Involuntary context switches: 4
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

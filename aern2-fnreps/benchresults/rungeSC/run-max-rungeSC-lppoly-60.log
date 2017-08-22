@@ -2,24 +2,24 @@ numer: acG = NoInformation; ac = Exact
 inv: acG = NoInformation; ac = Exact
 res: acG = NoInformation; ac = Exact
 computing max  (sin(10x)+cos(7pi*x))/(100x^2+1) over [-1,1]
-result = [1.071560871290678 ± <2^(-64)]
+result = [1.07156087129067772230488902267 ± <2^(-64)]
 accuracy: bits 64
 precision = Precision 1048
 	Command being timed: "aern2-fnreps-ops max rungeSC lppoly 60"
-	User time (seconds): 0.93
+	User time (seconds): 0.87
 	System time (seconds): 0.01
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.95
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.89
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 17804
+	Maximum resident set size (kbytes): 13416
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1998
-	Voluntary context switches: 0
-	Involuntary context switches: 6
+	Minor (reclaiming a frame) page faults: 943
+	Voluntary context switches: 1
+	Involuntary context switches: 4
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

@@ -1,25 +1,29 @@
+numer: acG = NoInformation; ac = Exact
+denom: acG = NoInformation; ac = Exact
+inv: acG = NoInformation; ac = Exact
+frac: acG = NoInformation; ac = Exact
 computing max  max((x^2)/2,(sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
-result = [1.271772104606602 ± <2^(-10)]
+result = [1.27177213315349137059268036509 ± <2^(-10)]
 accuracy: bits 10
 precision = Precision 106
 	Command being timed: "aern2-fnreps-ops max bumpy2 ball 10"
-	User time (seconds): 161.11
-	System time (seconds): 0.14
+	User time (seconds): 52.55
+	System time (seconds): 0.05
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:41.26
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:52.61
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 14604
+	Maximum resident set size (kbytes): 14716
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 150619
+	Minor (reclaiming a frame) page faults: 55738
 	Voluntary context switches: 1
-	Involuntary context switches: 242
+	Involuntary context switches: 98
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 8
+	File system outputs: 16
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

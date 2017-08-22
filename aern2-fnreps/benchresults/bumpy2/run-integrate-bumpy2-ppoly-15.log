@@ -3,24 +3,24 @@ denom: acG = bits 65; ac = bits 56
 inv: acG = bits 34; ac = bits 17
 frac: acG = bits 32; ac = bits 14
 computing integrate  max((x^2)/2,(sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
-result = [4.994422327809506e-1 ± <2^(-13)]
+result = [0.499442232780950646069348487129 ± <2^(-13)]
 accuracy: bits 13
 precision = Precision 1014
 	Command being timed: "aern2-fnreps-ops integrate bumpy2 ppoly 15"
-	User time (seconds): 100.10
-	System time (seconds): 1.01
+	User time (seconds): 88.28
+	System time (seconds): 0.80
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:41.13
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:29.09
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 360596
+	Maximum resident set size (kbytes): 60684
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 753799
+	Minor (reclaiming a frame) page faults: 481324
 	Voluntary context switches: 1
-	Involuntary context switches: 113
+	Involuntary context switches: 137
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 24
