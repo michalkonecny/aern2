@@ -1,0 +1,74 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE CPP #-}</span><span>
+</span><a name="line-2"></a><span class="hs-pragma">{-# LANGUAGE DataKinds, ExistentialQuantification, RankNTypes #-}</span><span>
+</span><a name="line-3"></a><span class="hs-comment">-- {-# LANGUAGE DeriveGeneric, DeriveDataTypeable, StandaloneDeriving #-}</span><span>
+</span><a name="line-4"></a><span class="hs-comment">{-|
+    Module      :  AERN2.MP.UseMPFR.Float.RoundedAdaptor
+    Description :  Numeric.Rounded + variable precision
+    Copyright   :  (c) Michal Konecny
+    License     :  BSD3
+
+    Maintainer  :  mikkonecny@gmail.com
+    Stability   :  experimental
+    Portability :  portable
+
+    Numeric.Rounded + variable precision
+-}</span><span>
+</span><a name="line-16"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">MP</span><span class="hs-operator">.</span><span class="hs-identifier">UseMPFR</span><span class="hs-operator">.</span><span class="hs-identifier">Float</span><span class="hs-operator">.</span><span class="hs-identifier">RoundedAdaptor</span><span>
+</span><a name="line-17"></a><span class="hs-cpp">#ifndef MPFRRounded</span><span>
+</span><a name="line-18"></a><span class="hs-special">(</span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-19"></a><span class="hs-cpp">#else</span><span>
+</span><a name="line-20"></a><span class="hs-special">(</span><span>
+</span><a name="line-21"></a><span>  </span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">MP</span><span class="hs-operator">.</span><span class="hs-identifier">UseMPFR</span><span class="hs-operator">.</span><span class="hs-identifier">Float</span><span class="hs-operator">.</span><span class="hs-identifier">RoundedAdaptor</span><span>
+</span><a name="line-22"></a><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Numeric</span><span class="hs-operator">.</span><span class="hs-identifier">RoundedSimple</span><span>
+</span><a name="line-23"></a><span class="hs-special">)</span><span>
+</span><a name="line-24"></a><span class="hs-keyword">where</span><span>
+</span><a name="line-25"></a><span>
+</span><a name="line-26"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Prelude</span><span> </span><span class="hs-keyword">hiding</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">div</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">pi</span><span class="hs-special">)</span><span>
+</span><a name="line-27"></a><span class="hs-comment">-- import qualified Prelude as P</span><span>
+</span><a name="line-28"></a><span>
+</span><a name="line-29"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Numeric</span><span class="hs-operator">.</span><span class="hs-identifier">RoundedSimple</span><span> </span><span class="hs-keyword">hiding</span><span> </span><span class="hs-special">(</span><span class="hs-identifier">prec</span><span class="hs-special">)</span><span>
+</span><a name="line-30"></a><span class="hs-comment">-- import qualified Numeric.RoundedSimple as R</span><span>
+</span><a name="line-31"></a><span>
+</span><a name="line-32"></a><span class="hs-keyword">type</span><span> </span><span class="hs-identifier">RoundMode</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">RoundingMode</span><span>
+</span><a name="line-33"></a><span>
+</span><a name="line-34"></a><span class="hs-identifier">defaultPrecision</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">Precision</span><span>
+</span><a name="line-35"></a><span class="hs-identifier">defaultPrecision</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-number">10</span><span>
+</span><a name="line-36"></a><span>
+</span><a name="line-37"></a><span class="hs-identifier">pi</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">RoundMode</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Precision</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Rounded</span><span>
+</span><a name="line-38"></a><span class="hs-identifier">pi</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">kPi</span><span>
+</span><a name="line-39"></a><span>
+</span><a name="line-40"></a><span class="hs-identifier">fromIntegerA</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">RoundMode</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Precision</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Integer</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Rounded</span><span>
+</span><a name="line-41"></a><span class="hs-identifier">fromIntegerA</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">fromInteger'</span><span>
+</span><a name="line-42"></a><span>
+</span><a name="line-43"></a><span class="hs-identifier">zero</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">one</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">Rounded</span><span>
+</span><a name="line-44"></a><span class="hs-identifier">zero</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">fromIntegerA</span><span> </span><span class="hs-identifier">Up</span><span> </span><span class="hs-identifier">defaultPrecision</span><span> </span><span class="hs-number">0</span><span>
+</span><a name="line-45"></a><span class="hs-identifier">one</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">fromIntegerA</span><span> </span><span class="hs-identifier">Up</span><span> </span><span class="hs-identifier">defaultPrecision</span><span> </span><span class="hs-number">1</span><span>
+</span><a name="line-46"></a><span>
+</span><a name="line-47"></a><span class="hs-identifier">toDoubleA</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">RoundMode</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Rounded</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Double</span><span>
+</span><a name="line-48"></a><span class="hs-identifier">toDoubleA</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">toDouble</span><span>
+</span><a name="line-49"></a><span>
+</span><a name="line-50"></a><span class="hs-identifier">fromRationalA</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">RoundMode</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Precision</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Rational</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Rounded</span><span>
+</span><a name="line-51"></a><span class="hs-identifier">fromRationalA</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">fromRational'</span><span>
+</span><a name="line-52"></a><span>
+</span><a name="line-53"></a><span class="hs-identifier">toRationalA</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">Rounded</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Rational</span><span>
+</span><a name="line-54"></a><span class="hs-identifier">toRationalA</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">toRational'</span><span>
+</span><a name="line-55"></a><span>
+</span><a name="line-56"></a><span class="hs-identifier">add</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sub</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">mul</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">div</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">atan2</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">RoundMode</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Precision</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Rounded</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Rounded</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Rounded</span><span>
+</span><a name="line-57"></a><span class="hs-identifier">add</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">add_</span><span>
+</span><a name="line-58"></a><span class="hs-identifier">sub</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">sub_</span><span>
+</span><a name="line-59"></a><span class="hs-identifier">mul</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">mul_</span><span>
+</span><a name="line-60"></a><span class="hs-identifier">div</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">div_</span><span>
+</span><a name="line-61"></a><span class="hs-identifier">atan2</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">atan2_</span><span>
+</span><a name="line-62"></a><span>
+</span><a name="line-63"></a><span class="hs-identifier">neg</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">abs</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sqrt</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">exp</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">log</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">sin</span><span class="hs-special">,</span><span> </span><span class="hs-identifier">cos</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier">RoundMode</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Precision</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Rounded</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier">Rounded</span><span>
+</span><a name="line-64"></a><span class="hs-identifier">neg</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">negate_</span><span>
+</span><a name="line-65"></a><span class="hs-identifier">abs</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">abs_</span><span>
+</span><a name="line-66"></a><span class="hs-identifier">sqrt</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">sqrt_</span><span>
+</span><a name="line-67"></a><span class="hs-identifier">exp</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">exp_</span><span>
+</span><a name="line-68"></a><span class="hs-identifier">log</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">log_</span><span>
+</span><a name="line-69"></a><span class="hs-identifier">sin</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">sin_</span><span>
+</span><a name="line-70"></a><span class="hs-identifier">cos</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier">cos_</span><span>
+</span><a name="line-71"></a><span class="hs-comment">-- TODO: add more ops</span><span>
+</span><a name="line-72"></a><span>
+</span><a name="line-73"></a><span class="hs-cpp">#endif</span><span>
+</span><a name="line-74"></a></pre></body></html>

@@ -30,7 +30,7 @@ A set of Haskell packages for exact real number computation.
 
 ## Significant dependencies
 
-  * [mixed-types-num](https://michalkonecny.github.io/mixed-types-num/Numeric-MixedTypes.html):
+  * [mixed-types-num](https://michalkonecny.github.io/mixed-types-num/MixedTypesNumPrelude.html):
     Bottom-up-typed numerical expressions
 
   * [hmpfr](https://hackage.haskell.org/package/hmpfr):
