@@ -38,7 +38,6 @@ resolver: lts-8.3
 # will not be run. This is useful for tweaking upstream packages.
 packages:
 - 'mixed-types-num'
-- 'hgmp'
 - 'rounded'
 - 'aern2/aern2-mp'
 - 'aern2/aern2-real'
@@ -53,6 +52,7 @@ packages:
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps: {}
+- hgmp-0.1.0.1
 #- wai-make-assets-0.2
 #- ireal-0.2.3
 
