@@ -33,8 +33,12 @@ A set of Haskell packages for exact real number computation.
   * [mixed-types-num](https://michalkonecny.github.io/mixed-types-num/Numeric-MixedTypes.html):
     Bottom-up-typed numerical expressions
 
-  * [hmpfr](https://michalkonecny.github.io/hmpfr):
+  * [hmpfr](https://hackage.haskell.org/package/hmpfr):
     A binding to the C [MPFR](http://www.mpfr.org/) (Multiple-Precision Floating-point computations with correct Rounding) library
+
+  * [rounded](https://github.com/michalkonecny/rounded):
+    A newer and faster binding to [MPFR](http://www.mpfr.org/).
+    See [aern2-mp](http://michalkonecny.github.io/aern2/aern2-mp-0.1.0.0/) for information on how to switch to this backend.
 
 ## Other references
 

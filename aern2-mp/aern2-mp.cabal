@@ -11,7 +11,7 @@ license-file:   LICENSE
 stability:      experimental
 tested-with:    GHC==7.10.3, GHC==8.0.2
 category:       Math
-synopsis:       Multi-precision floats via haskell-mpfr or hmpfr
+synopsis:       Multi-precision floats via MPFR
 Description:
   A wrapper around MPFR (and, in future, an alternative to MPFR), providing the types:
   .
@@ -21,11 +21,20 @@ Description:
   .
   * MPBall: float ± error bound with field & elementary (interval-like) operations
   .
-  By default, we use hmpfr when compiling with ghc 7.10 and higher
+  By default, we use hmpfr when compiling with ghc >=7.10
   and haskell-mpfr when compiling with ghc 7.8.
   .
-  There is also an Integer backend which does not need MPFR, but
-  it is not yet complete.
+  Set flag MPFRRounded to bind MPFR not via hmpfr but via tweaked versions of packages
+  rounded and hgmp:
+  .
+  * https://github.com/michalkonecny/rounded
+  .
+  * https://github.com/michalkonecny/hgmp
+  .
+  This backend is considerably faster than hmpfr.
+  It is likely to become the default in future.
+  .
+  There is a plan to add an Integer backend which does not need MPFR.
 
 source-repository head
   type:     git
@@ -38,8 +47,8 @@ flag MPFR
 
 flag MPFRRounded
   Description: Use rounded (Numeric.RoundedSimple) as MPFR backend (default)
-  Default:     True
-  -- Default:     False
+  -- Default:     True
+  Default:     False
 
 library
   hs-source-dirs:  src
