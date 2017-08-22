@@ -34,7 +34,7 @@ Description:
   This backend is considerably faster than hmpfr.
   It is likely to become the default in future.
   .
-  There is a plan to add an Integer backend which does not need MPFR.
+  There is a plan to add an Integer-only backend which does not link with MPFR.
 
 source-repository head
   type:     git
@@ -46,7 +46,7 @@ flag MPFR
   Default:     True
 
 flag MPFRRounded
-  Description: Use rounded (Numeric.RoundedSimple) as MPFR backend (default)
+  Description: Use rounded (Numeric.RoundedSimple) as MPFR backend (not default)
   -- Default:     True
   Default:     False
 
