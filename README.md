@@ -8,7 +8,7 @@ A set of Haskell packages for exact real number computation.
 
   * run `stack repl aern2/aern2-demos/src/Demos.hs`
 
-  * follow [documentation for MixedTypesNumPrelude](https://hackage.haskell.org/package/mixed-types-num-0.3.0.1/docs/MixedTypesNumPrelude.html)
+  * follow [documentation for MixedTypesNumPrelude](https://michalkonecny.github.io/mixed-types-num/MixedTypesNumPrelude.html)
 
   * read and play with [Demos.hs](aern2-demos/src/Demos.hs).
 
