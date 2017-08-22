@@ -11,8 +11,31 @@ license-file:   LICENSE
 stability:      experimental
 tested-with:    GHC==7.10.3, GHC==8.0.2
 category:       Math
-Synopsis:       comparison of difference exact real computation strategies
-Description:    Comparison of difference exact real computation strategies
+Synopsis:       Various examples and experiments
+Description:    Various examples and experiments
+
+library
+  build-depends:
+    base >= 4
+    , containers
+    , stm
+    , QuickCheck
+    , mixed-types-num >= 0.3.1 && < 0.4
+    , aern2-mp == 0.1.*
+    , aern2-real == 0.1.*
+  hs-source-dirs:  src
+  ghc-options:     -O2 -Wall -rtsopts -threaded
+  extensions:
+        RebindableSyntax,
+        Arrows, FlexibleContexts, TypeOperators, TypeFamilies, MultiParamTypeClasses
+        ConstraintKinds, ScopedTypeVariables, FlexibleInstances
+  exposed-modules:
+    Demos
+    Tasks.LogisticPreludeOps
+    Tasks.Logistic
+    Tasks.Fourier
+    CIDR
+    -- EffortConcept1
 
 executable aern2-demos-run-bench
   build-depends:
@@ -23,6 +46,7 @@ executable aern2-demos-run-bench
     , mixed-types-num >= 0.3.1 && < 0.4
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
+    , aern2-demos == 0.1.*
   hs-source-dirs:  src
   ghc-options:     -O2 -Wall -rtsopts -threaded
   extensions:
