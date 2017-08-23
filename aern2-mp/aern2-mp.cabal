@@ -13,15 +13,13 @@ tested-with:    GHC==7.10.3, GHC==8.0.2
 category:       Math
 synopsis:       Multi-precision floats via MPFR
 Description:
-  A wrapper around MPFR (and, in future, an alternative to MPFR), providing the types:
+  Arbitrary-precision dyadic numbers and interval arithmetic, via the types:
   .
   * Dyadic:  variable-precision floats with exact ring operations
   .
-  * MPFloat: fixed-precision floats with approximate field & elementary operations
-  .
   * MPBall: float ± error bound with field & elementary (interval-like) operations
   .
-  By default, we use hmpfr when compiling with ghc >=7.10
+  By default, using hmpfr when compiling with ghc >=7.10
   and haskell-mpfr when compiling with ghc 7.8.
   .
   Set flag MPFRRounded to bind MPFR not via hmpfr but via tweaked versions of packages
@@ -34,7 +32,8 @@ Description:
   This backend is considerably faster than hmpfr.
   It is likely to become the default in future.
   .
-  There is a plan to add an Integer-only backend which does not link with MPFR.
+  There is a plan to add an Integer-only backend so that this library can
+  be used without MPFR.
 
 source-repository head
   type:     git
@@ -124,7 +123,6 @@ library
     AERN2.MP.Precision
     AERN2.MP.Accuracy
     AERN2.MP.Enclosure
-    AERN2.MP.Float
     AERN2.MP.Dyadic
     AERN2.MP.ErrorBound
     AERN2.MP.Ball.Tests
