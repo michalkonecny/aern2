@@ -31,9 +31,8 @@ library
         ConstraintKinds, ScopedTypeVariables, FlexibleInstances
   exposed-modules:
     Demos
-    Tasks.LogisticPreludeOps
-    Tasks.Logistic
-    Tasks.Fourier
+    BenchTasks.Logistic
+    BenchTasks.Fourier
     CIDR
     -- EffortConcept1
 
@@ -56,9 +55,8 @@ executable aern2-demos-run-bench
   main-is: BenchMain.hs
   other-modules:
     Demos
-    Tasks.LogisticPreludeOps
-    Tasks.Logistic
-    Tasks.Fourier
+    BenchTasks.Logistic
+    BenchTasks.Fourier
     CIDR
     -- EffortConcept1
 

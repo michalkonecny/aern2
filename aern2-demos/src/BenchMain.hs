@@ -33,9 +33,8 @@ import AERN2.QA.Strategy.Parallel
 import AERN2.Real
 import AERN2.MPBallWithGlobalPrec
 
-import qualified Tasks.LogisticPreludeOps as TP
-import Tasks.Logistic
-import Tasks.Fourier
+import BenchTasks.Logistic as Logistic
+import BenchTasks.Fourier as Fourier
 
 import CIDR
 
@@ -63,7 +62,7 @@ bench implName benchName benchParamsS =
             _ ->
                 error $ "unknown benchmark: " ++ benchName
         where
-        logisticAux [n,_acS, _acG] = TP.taskLogisticDescription n
+        logisticAux [n,_acS, _acG] = Logistic.taskDescription n
         logisticAux _ = error "logistic requires 3 integer parameters \"n\", \"acS\" and \"acG\""
         fftAux [k,acS, acG] = taskFFTDescription k acS acG
         fftAux _ = error "fft requires 3 integer parameters \"k\", \"acS\" and \"acG\""
@@ -75,7 +74,6 @@ bench implName benchName benchParamsS =
         case (benchName, benchParams) of
             ("logistic", [n,acS, acG]) ->
                 case implName of
-                    "MP_preludeOps" -> show (logistic_MP_preludeOps n)
                     "MP" -> show (logistic_MP n)
                     -- "CR_AC_plain" -> show (logistic_CR_AC_plain n)
                     "CR_cachedUnsafe" -> show (logistic_CR_cachedUnsafe n (bitsSG acS acG))
@@ -107,7 +105,7 @@ bench implName benchName benchParamsS =
 
 logistic_CR_cachedUnsafe :: Integer -> AccuracySG -> MPBall
 logistic_CR_cachedUnsafe n acSG =
-  (taskLogistic n $ real (TP.taskLogistic_x0 :: Rational)) ? acSG
+  (taskLogistic n $ real Logistic.x0) ? acSG
 
 logistic_CR_cachedArrow ::  Integer -> AccuracySG -> MPBall
 logistic_CR_cachedArrow n acSG =
@@ -118,10 +116,9 @@ logistic_CR_cachedArrow n acSG =
     executeQACachedA $
       proc () ->
         do
-        x0R <- (-:-) -< realA x0
+        x0R <- (-:-) -< realA Logistic.x0
         (Just x) <-taskLogisticWithHookA n hookA -< x0R
         realWithAccuracyA Nothing -< (x, acSG)
-  x0 = TP.taskLogistic_x0 :: Rational
   hookA i =
     proc r ->
       do
@@ -130,16 +127,6 @@ logistic_CR_cachedArrow n acSG =
     where
     rename = realRename (\_ -> "x_" ++ show i)
 
-logistic_MP_preludeOps :: Integer -> Maybe MPBall
-logistic_MP_preludeOps n =
-    snd $ last $ iterateUntilAccurate (bits (50 :: Integer)) $ withP
-    where
-    withP p =
-        TP.taskLogisticWithHook n checkAccuracy c x0
-        where
-        x0 = mpBallP p (TP.taskLogistic_x0 :: Rational)
-        c = mpBallP p (TP.taskLogistic_c :: Rational)
-
 logistic_MP :: Integer -> Maybe MPBall
 logistic_MP n =
     snd $ last $ iterateUntilAccurate (bits (50 :: Integer)) $ withP
@@ -147,8 +134,7 @@ logistic_MP n =
     withP p =
         (taskLogisticWithHook n (const checkAccuracy)) x0
         where
-        x0 = mpBallP p (TP.taskLogistic_x0 :: Rational)
-
+        x0 = mpBallP p Logistic.x0
 
 checkAccuracy :: MPBall -> Maybe MPBall
 checkAccuracy ball

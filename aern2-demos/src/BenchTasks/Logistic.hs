@@ -1,12 +1,22 @@
 {-# LANGUAGE Arrows, FlexibleContexts, TypeOperators, TypeFamilies, ConstraintKinds, ScopedTypeVariables #-}
-module Tasks.Logistic where
+module BenchTasks.Logistic where
 
 import MixedTypesNumPrelude
+-- import qualified Prelude as P
 -- import Text.Printf
 
 import Control.Arrow
 
-import Tasks.LogisticPreludeOps (taskLogistic_c)
+taskDescription :: Integer -> String
+taskDescription n =
+  "taskLogistic1: " ++ show n ++ " iterations of logistic map with c = "
+  ++ (show (double c)) ++ " and x0 = 0.125"
+
+c :: Rational
+c = 3.82 -- not dyadic
+
+x0 :: Rational
+x0 = 0.125
 
 type HasLogisticOps r =
   (CanMulSameType r,
@@ -30,7 +40,7 @@ taskLogisticWithHookA ::
   Integer -> (Integer -> r `to` Maybe r) -> (r `to` Maybe r)
 taskLogisticWithHookA n hookA =
   proc r ->
-    logisticWithHookA hookA taskLogistic_c n -< (Just r)
+    logisticWithHookA hookA c n -< (Just r)
 
 logisticWithHook ::
   (HasLogisticOps r)
@@ -52,32 +62,3 @@ logisticWithHookA hookA c n =
           hookA i -< c*x*(1-x)
         Nothing ->
           returnA -< Nothing
-
-
-{-
-logisticA ::
-  (ArrowChoice to, HasLogisticOps r)
-  =>
-  Rational -> Integer -> (r `to` r)
-logisticA c n =
-    foldl1 (<<<) (take n (repeat l))
-    where
-    l = arr (\x -> (c * x * (1 - x)))
-
-executeLogistic c n =
-  irramEval (logistic c n)
-
-irramEval :: (MPBall -> MPBall) -> (CR -> CR)
-irramEval f rIn = rOut
-  where
-  rOut = newCR ... getAnswer
-  getAnswer ac =
-    ...
-    where
-
-logistic :: (HasLogisticOps t) => Rational -> Integer -> t -> t
-logistic c n x0 =
-  foldl1 (.) (take n (repeat l)) x0
-  where
-  l x = c * x * (1-x)
--}
