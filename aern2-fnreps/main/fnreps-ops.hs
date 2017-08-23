@@ -1,7 +1,9 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-unused-matches #-}
+{-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE CPP #-}
 #define DEBUG
+-- #define LIMIT
 module Main where
 
 #ifdef DEBUG
@@ -25,6 +27,7 @@ import AERN2.MP
 -- import qualified AERN2.MP.Ball as MPBall
 
 import AERN2.Real
+import AERN2.Limit
 
 import AERN2.Interval
 
@@ -94,7 +97,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         ("lfrac", "integrate") -> eval functions integrateLF LFrac.fromPoly x_LP
         _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
     eval ::
-      (Signature1 f1, Signature2 f2)
+      (Signature1 f1 r, Signature2 f2)
       =>
       Map.Map String (String, (f1 -> f2) -> (f1 -> f2)) ->
       (f2 -> Accuracy -> MPBall) ->
@@ -229,7 +232,7 @@ unaryIntervalDom :: DyadicInterval
 unaryIntervalDom = dyadicInterval (-1,1)
 
 functions ::
-  forall f1 f2. (Signature1 f1, Signature2 f2) =>
+  forall f1 f2 r. (Signature1 f1 r, Signature2 f2) =>
   Map.Map String (String, (f1 -> f2) -> f1 -> f2)
 functions =
     Map.fromList
@@ -248,16 +251,30 @@ functions =
     ]
 
 
-type Signature1 f =
+type Signature1 f r =
   ( HasAccuracy f, HasAccuracyGuide f
   , CanSetAccuracyGuide f
   , CanSinCosSameType f
-  , CanMulBy f Integer
-  , CanMulBy f CauchyReal
   , CanAddSameType f
   , CanAddThis f Integer
   , CanAddThis f CauchyReal
-  , CanPowCNBy f Integer)
+  , CanMulBy f Integer
+  , CanMulBy f CauchyReal
+  , CanPowCNBy f Integer
+#ifdef LIMIT
+  , HasDomain f
+  , CanMaximiseOverDom f (Domain f)
+  , CanMinimiseOverDom f (Domain f)
+  , CanDivCNBy f Integer
+  , MaximumOverDomType f (Domain f) ~ r
+  , MinimumOverDomType f (Domain f) ~ r
+  , Field r, CanAbsSameType r, CanMinMaxSameType r
+  , HasOrderCertainly r Rational
+  , HasLimits Rational f, LimitType Rational f ~ f
+#else
+  , f ~ r
+#endif
+  )
 
 type Signature2 f =
   ( HasAccuracy f, HasAccuracyGuide f
@@ -272,7 +289,7 @@ type Signature2 f =
 sinecos_Name :: String
 sinecos_Name = "sin(10x)+cos(20x) over [-1,1]"
 
-sinecos_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+sinecos_x :: forall f1 f2 r.(Signature1 f1 r, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 sinecos_x tr12 x = tr12 $ sin(10*x)+cos(20*x)
 
 -----------------------------------
@@ -281,7 +298,7 @@ sinecos_x tr12 x = tr12 $ sin(10*x)+cos(20*x)
 sinecospi_Name :: String
 sinecospi_Name = "sin(10x)+cos(7pi*x) over [-1,1]"
 
-sinecospi_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+sinecospi_x :: forall f1 f2 r.(Signature1 f1 r, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 sinecospi_x tr12 x = tr12 $ sin(10*x)+cos(7*pi*x)
 
 -----------------------------------
@@ -290,7 +307,7 @@ sinecospi_x tr12 x = tr12 $ sin(10*x)+cos(7*pi*x)
 sinesine_Name :: String
 sinesine_Name = "sin(10x+sin(7pi*x^2)) over [-1,1]"
 
-sinesine_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+sinesine_x :: forall f1 f2 r.(Signature1 f1 r, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 sinesine_x tr12 xPre =
   -- maybeTrace (printf "sin(20*x^!2): acG = %s; ac = %s" (show $ getAccuracyGuide sin20x2) (show $ getAccuracy sin20x2)) $
   -- maybeTrace (printf "res: acG = %s; ac = %s" (show $ getAccuracyGuide res) (show $ getAccuracy res)) $
@@ -307,7 +324,7 @@ sinesine_x tr12 xPre =
 sinesineCos_Name :: String
 sinesineCos_Name = "sin(10x+sin(7pi*x^2)) + cos(3pi*x) over [-1,1]"
 
-sinesineCos_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+sinesineCos_x :: forall f1 f2 r.(Signature1 f1 r, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 sinesineCos_x tr12 xPre =
   tr12 $ sin(10*x + sin(7*pi*x^!2)) + cos(3*pi*x)
   where
@@ -319,7 +336,7 @@ sinesineCos_x tr12 xPre =
 runge_Name :: String
 runge_Name = "1/(100x^2+1) over [-1,1]"
 
-runge_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+runge_x :: forall f1 f2 r.(Signature1 f1 r, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 runge_x tr12 x =
   -- maybeTrace (printf "res: acG = %s; ac = %s" (show $ getAccuracyGuide res) (show $ getAccuracy res)) $
   -- res
@@ -333,7 +350,7 @@ runge_x tr12 x =
 rungeSC_Name :: String
 rungeSC_Name = "(sin(10x)+cos(7pi*x))/(100x^2+1) over [-1,1]"
 
-rungeSC_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+rungeSC_x :: forall f1 f2 r.(Signature1 f1 r, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 rungeSC_x tr12 x =
   maybeTrace (printf "numer: acG = %s; ac = %s" (show $ getAccuracyGuide numer) (show $ getAccuracy numer)) $
   maybeTrace (printf "inv: acG = %s; ac = %s" (show $ getAccuracyGuide inv) (show $ getAccuracy inv)) $
@@ -353,7 +370,7 @@ rungeSC_x tr12 x =
 fracSin_Name :: String
 fracSin_Name = "1/(10(sin(7x))^2+1) over [-1,1]"
 
-fracSin_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+fracSin_x :: forall f1 f2 r.(Signature1 f1 r, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 fracSin_x tr12 x =
   1/!(tr12R $ 10*(sin(7*xA)^!2)+1)
   where
@@ -366,7 +383,7 @@ fracSin_x tr12 x =
 fracSinSC_Name :: String
 fracSinSC_Name = "(sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]"
 
-fracSinSC_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+fracSinSC_x :: forall f1 f2 r.(Signature1 f1 r, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 fracSinSC_x tr12 x =
   maybeTrace (printf "numer: acG = %s; ac = %s" (show $ getAccuracyGuide numer) (show $ getAccuracy numer)) $
   maybeTrace (printf "denom: acG = %s; ac = %s" (show $ getAccuracyGuide denom) (show $ getAccuracy denom)) $
@@ -393,9 +410,9 @@ fracSinSC_x tr12 x =
 -----------------------------------
 -----------------------------------
 
-hat_Name :: String
-hat_Name = "1-|x+1/3| over [-1,1]"
-
+-- hat_Name :: String
+-- hat_Name = "1-|x+1/3| over [-1,1]"
+--
 -- hat_x :: (Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 -- hat_x tr12 x =
 --   tr12 $ 1 - (abs (x+1/3))
@@ -405,7 +422,7 @@ hat_Name = "1-|x+1/3| over [-1,1]"
 bumpy_Name :: String
 bumpy_Name = "max(sin(10x),cos(11*x)) over [-1,1]"
 
-bumpy_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+bumpy_x :: forall f1 f2 r.(Signature1 f1 r, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 bumpy_x tr12 x =
   maybeTrace (printf "maxL: acG = %s; ac = %s" (show $ getAccuracyGuide maxL) (show $ getAccuracy maxL)) $
   maybeTrace (printf "maxR: acG = %s; ac = %s" (show $ getAccuracyGuide maxR) (show $ getAccuracy maxR)) $
@@ -421,7 +438,7 @@ bumpy_x tr12 x =
 bumpy2_Name :: String
 bumpy2_Name = "max((x^2)/2,(sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]"
 
-bumpy2_x :: forall f1 f2.(Signature1 f1, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+bumpy2_x :: forall f1 f2 r.(Signature1 f1 r, Signature2 f2) => (f1 -> f2) -> f1 -> f2
 bumpy2_x tr12 x =
   maybeTrace (printf "numer: acG = %s; ac = %s" (show $ getAccuracyGuide numer) (show $ getAccuracy numer)) $
   maybeTrace (printf "denom: acG = %s; ac = %s" (show $ getAccuracyGuide denom) (show $ getAccuracy denom)) $
@@ -442,3 +459,29 @@ bumpy2_x tr12 x =
   setACdiv = setAccuracyGuide (ac + 2)
   setACprod = setAccuracyGuide (2*ac + 2)
   setACmax = setAccuracyGuide (ac)
+
+-----------------------------------
+-----------------------------------
+#ifdef LIMIT
+sinelim_Name :: String
+sinelim_Name = "lim(λ e.sum(k=1..n(e),(-1)^k*x^(2*k+1)/(fact (2*k+1)))) over [-1,1]"
+
+sinelim_x  :: forall f1 f2 r.(Signature1 f1 r, Signature2 f2) => (f1 -> f2) -> f1 -> f2
+sinelim_x tr12 x =
+  tr12 $ limit taylorSum
+  where
+  taylorSum (eps :: Rational) =
+    foldl1 (+) $
+      map fst $ takeWhile (not . belowEps) $
+       [termAndMax k | k <- [1,3..] ]
+    where
+    dom = getDomain x
+    xM = (abs $ maximumOverDom x dom) `max` (abs $ minimumOverDom x dom)
+    termAndMax k =
+      (term x, term xM)
+      where
+      term :: (CanPowCNBy t Integer, CanMulBy t Integer, CanDivCNBy t Integer) => t -> t
+      term y = (-1)^!(k `div` 2) * (y^!k) /! (product [1..k])
+    belowEps (_, m) =
+      (-eps) !<=! m && m !<! eps
+#endif
