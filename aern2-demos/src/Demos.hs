@@ -4,17 +4,11 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Demos where
 
-import MixedTypesNumPrelude hiding (replicate)
-import qualified Prelude as P
+import MixedTypesNumPrelude
+-- import qualified Prelude as P
 -- import Text.Printf
 
-import Control.Arrow
-
-import Control.Concurrent
-import Control.Concurrent.STM
-
 import Test.QuickCheck
-
 import qualified Data.List as List
 
 import AERN2.QA.Protocol
@@ -22,61 +16,12 @@ import AERN2.Real
 
 -- import Debug.Trace
 
-----------------------------------
--- A nano-introduction to Haskell
-----------------------------------
-
-{- lists, types -}
-
--- types are inferred and checked
-squareList :: [Integer] -> _
-squareList list = map (^!2) list
-
-fact1 n = product [1..n]
-
-fact2 n = foldl1 (*) [1..n]
-
-allPairs list = [(i,j) | i<-list, j<-list, i<j ]
-
-{- IO -}
-
-io_run1 = print (fact1 100)
-io_run2 = do { line <- getLine; print (reverse line) }
-io_run3 = sequence_ [print (fact1 i) | i <- [1..10]]
-
-
-{- imperative multithreading -}
-
-fork_run =
-  do
-  sequence_ [forkIO (print (fact1 i)) | i <- [1..10]]
-  threadDelay (int 100000)
-
-sync_run =
-  do
-  busyVar <- atomically (newTVar False)
-  sequence_ [forkIO $ do {set busyVar; print (fact1 i); unset busyVar} | i <- [1..10]]
-  threadDelay (int 100000)
-  where
-  set busyVar = atomically $
-    do
-    busy <- readTVar busyVar
-    if busy
-      then retry
-      else writeTVar busyVar True
-  unset busyVar = atomically $ writeTVar busyVar False
-
 {- type classes -}
 
 -- toStrings :: (Show a) => [a] -> [String]
 toStrings xs = map show xs
 
 -- toStrings_bad = toStrings [io_run1, io_run2]
-
-
-----------------------------------
--- Introduction to aern2-real
-----------------------------------
 
 {- real numbers -}
 
@@ -255,66 +200,6 @@ compRApprox a b = (a?ac) !<! (b?ac)
 compMPBall :: MPBall -> MPBall -> Bool
 compMPBall = (!<!)
 
-task_closestPairA ::
-  (QAArrow to
-  , CanSinCosSameType t
-  , CanMinMaxSameType t, CanSubSameType t, CanAbsSameType t
-  , HasIntegers t, CanAddSameType t, CanDivCNBy t Integer)
-  =>
-  (t `to` t) -> ((t, t) `to` Bool) -> Integer -> () `to` t
-task_closestPairA (reg :: t `to` t) comp n =
-  proc () ->
-    closestPairDistA reg comp -< [sin (convertExactly i :: t) | i <- [1..n]]
-
-closestPairDistA ::
-  (QAArrow to
-  , CanMinMaxSameType t, CanSubSameType t, CanAbsSameType t
-  , HasIntegers t, CanAddSameType t, CanDivCNBy t Integer)
-  =>
-  (t `to` t) -> ((t, t) `to` Bool) -> [t] `to` t
-closestPairDistA (reg :: (t `to` t)) comp =
-  proc pts ->
-    do
-    (ptsL,ptsR) <- partitionByComp -< pts
-    if (length ptsL < 2 || length ptsR < 2)
-      then returnA -< closestPairDist_naive pts
-      else splitAndMerge -< (ptsL,ptsR)
-  where
-  partitionByComp =
-    proc pts ->
-      case pts of
-        [] -> returnA -< ([], [])
-        (pt:rest) ->
-          do
-          let avg = average pts
-          (l1,l2) <- partitionByComp -< rest
-          b <- comp -< (pt, avg)
-          returnA -< if b then (pt:l1,l2) else (l1,pt:l2)
-  splitAndMerge :: ([t], [t]) `to` t
-  splitAndMerge =
-    proc (ptsL, ptsR) ->
-      do
-      dL_pre <- closestPairDistA reg comp -< ptsL
-      dL <- reg -< dL_pre
-      dLR <- reg -< distance (largest ptsL, smallest ptsR)
-      dR_pre <- closestPairDistA reg comp -< ptsR
-      dR <- reg -< dR_pre
-      returnA -< foldl1 min [dL, dLR, dR]
-
-compApproxA :: (QAArrow to) => (RA to, RA to) `to` Bool
-compApproxA =
-  proc (a,b) ->
-    do
-    aB <- (-?-) -< (a,ac)
-    bB <- (-?-) -< (b,ac)
-    returnA -< aB !<! bB
-  where
-  ac = bitsS 10
-
-closestPairDistA_Real :: (QAArrow to) => [RA to] `to` (RA to)
-closestPairDistA_Real = closestPairDistA (-:-||) compApproxA
-
-
 {- auxiliary functions -}
 
 hull :: MPBall -> MPBall -> MPBall
@@ -336,7 +221,3 @@ distinctPairs xs = [(x,y) | (x:rest) <- tails1 xs, y <- rest]
 tails1 :: [t] -> [[t]]
 tails1 list =
   take (length list - 1) $ List.tails list
-
-replicate :: Integer -> a -> [a]
-replicate = P.replicate . int
--- TODO: move this to mixed-types-num
