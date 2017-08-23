@@ -106,6 +106,7 @@ library
       AERN2.MP.UseMPFR.Float.Conversions
       AERN2.MP.UseMPFR.Float.Operators
       AERN2.MP.UseMPFR.Float.Constants
+      AERN2.MP.UseMPFR.Float.Tests
       AERN2.MP.UseMPFR.Float
       AERN2.MP.UseMPFR.Dyadic
       AERN2.MP.UseMPFR.ErrorBound
@@ -123,7 +124,6 @@ library
     AERN2.MP.Precision
     AERN2.MP.Accuracy
     AERN2.MP.Enclosure
-    AERN2.MP.Float.Tests
     AERN2.MP.Float
     AERN2.MP.Dyadic
     AERN2.MP.ErrorBound
@@ -148,7 +148,7 @@ test-suite spec
   other-modules:
     AERN2.MP.BallSpec
     AERN2.MP.DyadicSpec
-    AERN2.MP.FloatSpec
+    AERN2.MP.UseMPFR.FloatSpec
   build-depends:
     base == 4.*
     -- , mixed-types-num >= 0.3.1 && < 0.4

@@ -30,7 +30,7 @@ module AERN2.MP.UseMPFR.Float
    -- * Constants such as NaN, infinity
    , module AERN2.MP.UseMPFR.Float.Constants
    -- * Tests
-   , module AERN2.MP.Float.Tests
+   , module AERN2.MP.UseMPFR.Float.Tests
    )
 where
 
@@ -43,7 +43,7 @@ import AERN2.MP.UseMPFR.Float.Arithmetic
 import AERN2.MP.UseMPFR.Float.Conversions
 import AERN2.MP.UseMPFR.Float.Operators
 import AERN2.MP.UseMPFR.Float.Constants
-import AERN2.MP.Float.Tests
+import AERN2.MP.UseMPFR.Float.Tests
 
 -- | Computes an upper bound to the distance @|x - y|@ of @x@ and @y@.
 distUp :: MPFloat -> MPFloat -> MPFloat

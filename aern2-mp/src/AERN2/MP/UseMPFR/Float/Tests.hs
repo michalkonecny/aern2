@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-|
-    Module      :  AERN2.MP.Float.Tests
+    Module      :  AERN2.MP.UseMPFR.Float.Tests
     Description :  Tests for operations on arbitrary precision floats
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -18,7 +18,7 @@
     @
 -}
 
-module AERN2.MP.Float.Tests
+module AERN2.MP.UseMPFR.Float.Tests
   (
     specMPFloat, tMPFloat
     , (=~=), approxEqual, approxEqualWithArgs
