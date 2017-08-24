@@ -31,7 +31,7 @@ library
         ConstraintKinds, ScopedTypeVariables, FlexibleInstances
         PartialTypeSignatures
   exposed-modules:
-    Demos
+    Introduction
     ClosestPairDist
     BenchTasks.Logistic
     BenchTasks.Fourier
@@ -56,7 +56,6 @@ executable aern2-demos-run-bench
         ConstraintKinds, ScopedTypeVariables, FlexibleInstances
   main-is: BenchMain.hs
   other-modules:
-    Demos
     ClosestPairDist
     BenchTasks.Logistic
     BenchTasks.Fourier

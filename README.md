@@ -6,11 +6,11 @@ A set of Haskell packages for exact real number computation.
 
   * [Installation guide](docs/install.md)
 
-  * run `stack repl aern2/aern2-demos/src/Demos.hs`
+  * run `stack repl aern2/aern2-demos/src/Introduction.hs`
 
   * follow [documentation for MixedTypesNumPrelude](https://michalkonecny.github.io/mixed-types-num/MixedTypesNumPrelude.html)
 
-  * read and play with [Demos.hs](aern2-demos/src/Demos.hs).
+  * read and play with [Introduction.hs](aern2-demos/src/Introduction.hs).
 
 ## Library packages
 

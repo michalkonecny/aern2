@@ -1,4 +1,4 @@
-module Demos where
+module Introduction where
 
 import MixedTypesNumPrelude
 
@@ -26,7 +26,7 @@ sumSines1 n = sum [sin i | i <- [1..n]]
   you can start ghci using the following command in the base
   folder:
 
-  stack repl aern2/aern2-demos/src/Demos.hs
+  stack repl aern2/aern2-demos/src/Introduction.hs
 -}
 
 -- Request accuracy
@@ -35,7 +35,7 @@ sumSines1 n = sum [sin i | i <- [1..n]]
 sumSines1_run1 :: MPBall
 sumSines1_run1 = (sumSines1 100) ? (bitsSG 100 120)
 {- output:
-*Demos> sumSines1_run1
+*Introduction> sumSines1_run1
 [-0.127171013660420115436752171427 ± <2^(-112)]
 (0.02 secs, 0 bytes)
 
@@ -51,7 +51,7 @@ we miss the accuracy target.
 -- Request 100 bits of the result of the above expression with n = 100:
 sumSines1_run2 = (sumSines1 100) ? (bitsSG 100 100)
 {- output:
-  *Demos> sumSines1_run2
+  *Introduction> sumSines1_run2
   [-0.127171013660420115436752171426 ± <2^(-100)]
   (1.60 secs, 2,382,797,736 bytes)
 
@@ -79,7 +79,9 @@ compare_run4 = pi == pi + 0.5^!1000
 compare_run5 = (pi == pi + 0.5^!1000) ? (bitsS 100)
 compare_run6 = real 0 == 0
 
-{- partial function checking -}
+------------------------------
+-- checking partial functions
+------------------------------
 
 -- partialfn_run0 = sqrt (-1) :: R
 partialfn_run1 = sqrt (-1)
@@ -87,7 +89,9 @@ partialfn_run2 = sqrt 0
 partialfn_run3 = sqrt (pi-pi)
 partialfn_run4 = (~!) (sqrt (pi-pi))
 
-{- pif -}
+---------------------------------
+-- "parallel" branching for real numbers
+--------------------------------
 
 -- myabs0 :: R -> R
 myabs0 x = if x < 0 then -x else x
