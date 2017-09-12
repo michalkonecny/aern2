@@ -8,6 +8,7 @@ maintainer:     Michal Konecny <mikkonecny@gmail.com>
 copyright:      (c) 2015-2017 Michal Konecny
 license:        BSD3
 license-file:   LICENSE
+extra-source-files:  changelog.md
 stability:      experimental
 tested-with:    GHC==7.10.3, GHC==8.0.2
 category:       Math
