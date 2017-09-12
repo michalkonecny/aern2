@@ -2,7 +2,7 @@ Name:           aern2-bench-chart
 Version:        0.1.0.0
 Cabal-Version:  >= 1.8
 Build-Type:     Simple
-Homepage:       https://github.com/michalkonecny/aern2/aern2-bench-chart
+Homepage:       https://github.com/michalkonecny/aern2
 Author:         Michal Konecny (Aston University)
 Maintainer:     mikkonecny@gmail.com
 Copyright:      (c) 2016-2017 Michal Konecny

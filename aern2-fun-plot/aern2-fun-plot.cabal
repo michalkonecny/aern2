@@ -2,7 +2,7 @@ name:           aern2-fun-plot
 version:        0.1.0.0
 cabal-version:  >= 1.9.2
 build-type:     Simple
-homepage:       https://github.com/michalkonecny/aern2/aern2-fun-plot
+homepage:       https://github.com/michalkonecny/aern2
 author:         Michal Konecny
 maintainer:     Michal Konecny <mikkonecny@gmail.com>
 copyright:      (c) 2015-2017 Michal Konecny
