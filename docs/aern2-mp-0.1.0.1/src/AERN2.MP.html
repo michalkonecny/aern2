@@ -1,0 +1,34 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-|
+    Module      :  AERN2.MP
+    Description :  Multiple-precision ball arithmetic
+    Copyright   :  (c) Michal Konecny
+    License     :  BSD3
+
+    Maintainer  :  mikkonecny@gmail.com
+    Stability   :  experimental
+    Portability :  portable
+
+    Multiple-precision ball arithmetic
+-}</span><span>
+</span><a name="line-13"></a><span>
+</span><a name="line-14"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">MP</span><span>
+</span><a name="line-15"></a><span class="hs-special">(</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Norm</span><span>
+</span><a name="line-16"></a><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">MP</span><span class="hs-operator">.</span><span class="hs-identifier">Precision</span><span>
+</span><a name="line-17"></a><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">MP</span><span class="hs-operator">.</span><span class="hs-identifier">Accuracy</span><span>
+</span><a name="line-18"></a><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">MP</span><span class="hs-operator">.</span><span class="hs-identifier">UseMPFR</span><span class="hs-operator">.</span><span class="hs-identifier">ErrorBound</span><span>
+</span><a name="line-19"></a><span class="hs-special">,</span><span> </span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">MP</span><span class="hs-operator">.</span><span class="hs-identifier">Enclosure</span><span>
+</span><a name="line-20"></a><span class="hs-special">,</span><span> </span><a href="AERN2.MP.UseMPFR.Ball.Type.html#MPBall"><span class="hs-identifier hs-type">MPBall</span></a><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><a href="AERN2.MP.UseMPFR.Ball.Type.html#CanBeMPBall"><span class="hs-identifier hs-type">CanBeMPBall</span></a><span class="hs-special">,</span><span> </span><a href="AERN2.MP.UseMPFR.Ball.Type.html#mpBall"><span class="hs-identifier hs-var">mpBall</span></a><span class="hs-special">,</span><span> </span><a href="AERN2.MP.UseMPFR.Ball.Type.html#CanBeMPBallP"><span class="hs-identifier hs-type">CanBeMPBallP</span></a><span class="hs-special">,</span><span> </span><a href="AERN2.MP.UseMPFR.Ball.Type.html#mpBallP"><span class="hs-identifier hs-var">mpBallP</span></a><span>
+</span><a name="line-21"></a><span class="hs-special">)</span><span>
+</span><a name="line-22"></a><span class="hs-keyword">where</span><span>
+</span><a name="line-23"></a><span>
+</span><a name="line-24"></a><span class="hs-comment">-- import MixedTypesNumPrelude</span><span>
+</span><a name="line-25"></a><span class="hs-comment">-- import qualified Prelude as P</span><span>
+</span><a name="line-26"></a><span class="hs-comment">-- import Text.Printf</span><span>
+</span><a name="line-27"></a><span>
+</span><a name="line-28"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.Norm.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Norm</span></a><span>
+</span><a name="line-29"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.MP.Precision.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">MP</span><span class="hs-operator">.</span><span class="hs-identifier">Precision</span></a><span>
+</span><a name="line-30"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.MP.Accuracy.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">MP</span><span class="hs-operator">.</span><span class="hs-identifier">Accuracy</span></a><span>
+</span><a name="line-31"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.MP.UseMPFR.ErrorBound.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">MP</span><span class="hs-operator">.</span><span class="hs-identifier">UseMPFR</span><span class="hs-operator">.</span><span class="hs-identifier">ErrorBound</span></a><span>
+</span><a name="line-32"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.MP.Enclosure.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">MP</span><span class="hs-operator">.</span><span class="hs-identifier">Enclosure</span></a><span>
+</span><a name="line-33"></a><span class="hs-keyword">import</span><span> </span><a href="AERN2.MP.UseMPFR.Ball.html"><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">MP</span><span class="hs-operator">.</span><span class="hs-identifier">UseMPFR</span><span class="hs-operator">.</span><span class="hs-identifier">Ball</span></a><span>
+</span><a name="line-34"></a></pre></body></html>

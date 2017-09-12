@@ -1,0 +1,34 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">{-|
+    Module      :  AERN2.Utils.Bench
+    Description :  utilities for benchmarks
+    Copyright   :  (c) Michal Konecny
+    License     :  BSD3
+
+    Maintainer  :  mikkonecny@gmail.com
+    Stability   :  experimental
+    Portability :  portable
+-}</span><span>
+</span><a name="line-11"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AERN2</span><span class="hs-operator">.</span><span class="hs-identifier">Utils</span><span class="hs-operator">.</span><span class="hs-identifier">Bench</span><span>
+</span><a name="line-12"></a><span class="hs-special">(</span><span>
+</span><a name="line-13"></a><span>    </span><a href="AERN2.Utils.Bench.html#listFromGen"><span class="hs-identifier hs-var">listFromGen</span></a><span>
+</span><a name="line-14"></a><span class="hs-special">)</span><span>
+</span><a name="line-15"></a><span class="hs-keyword">where</span><span>
+</span><a name="line-16"></a><span>
+</span><a name="line-17"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Test</span><span class="hs-operator">.</span><span class="hs-identifier">QuickCheck</span><span>
+</span><a name="line-18"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Test</span><span class="hs-operator">.</span><span class="hs-identifier">QuickCheck</span><span class="hs-operator">.</span><span class="hs-identifier">Random</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">mkQCGen</span><span class="hs-special">)</span><span>
+</span><a name="line-19"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">Test</span><span class="hs-operator">.</span><span class="hs-identifier">QuickCheck</span><span class="hs-operator">.</span><span class="hs-identifier">Gen</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Gen</span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><a name="line-20"></a><span>
+</span><a name="line-21"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">MixedTypesNumPrelude</span><span>
+</span><a name="line-22"></a><span class="hs-comment">-- import qualified Prelude as P</span><span>
+</span><a name="line-23"></a><span>
+</span><a name="line-24"></a><span class="hs-identifier">listFromGen</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier hs-type">Gen</span><span> </span><a href="#local-6989586621679053700"><span class="hs-identifier hs-type">a</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><a href="#local-6989586621679053700"><span class="hs-identifier hs-type">a</span></a><span class="hs-special">]</span><span>
+</span><a name="line-25"></a><a name="listFromGen"><a href="AERN2.Utils.Bench.html#listFromGen"><span class="hs-identifier">listFromGen</span></a></a><span> </span><a name="local-6989586621679053701"><a href="#local-6989586621679053701"><span class="hs-identifier">gen</span></a></a><span> </span><span class="hs-glyph">=</span><span>
+</span><a name="line-26"></a><span>    </span><a href="#local-6989586621679053702"><span class="hs-identifier hs-var">list</span></a><span>
+</span><a name="line-27"></a><span>    </span><span class="hs-keyword">where</span><span>
+</span><a name="line-28"></a><span>    </span><a name="local-6989586621679053702"><a href="#local-6989586621679053702"><span class="hs-identifier">list</span></a></a><span> </span><span class="hs-glyph">=</span><span>
+</span><a name="line-29"></a><span>        </span><span class="hs-identifier hs-var">concat</span><span> </span><span class="hs-operator hs-var">$</span><span> </span><span class="hs-identifier hs-var">map</span><span> </span><a href="#local-6989586621679053704"><span class="hs-identifier hs-var">genSome</span></a><span> </span><span class="hs-special">[</span><span class="hs-number">1</span><span class="hs-glyph">..</span><span class="hs-special">]</span><span>
+</span><a name="line-30"></a><span>        </span><span class="hs-keyword">where</span><span>
+</span><a name="line-31"></a><span>        </span><a name="local-6989586621679053704"><a href="#local-6989586621679053704"><span class="hs-identifier">genSome</span></a></a><span> </span><a name="local-6989586621679053705"><a href="#local-6989586621679053705"><span class="hs-identifier">size</span></a></a><span> </span><span class="hs-glyph">=</span><span>
+</span><a name="line-32"></a><span>            </span><span class="hs-identifier">unGen</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">sequence</span><span> </span><span class="hs-operator hs-var">$</span><span> </span><span class="hs-identifier hs-var">replicate</span><span> </span><span class="hs-number">10</span><span> </span><a href="#local-6989586621679053701"><span class="hs-identifier hs-var">gen</span></a><span class="hs-special">)</span><span> </span><a href="#local-6989586621679053703"><span class="hs-identifier hs-var">qcGen</span></a><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">int</span><span> </span><a href="#local-6989586621679053705"><span class="hs-identifier hs-var">size</span></a><span class="hs-special">)</span><span>
+</span><a name="line-33"></a><span>    </span><a name="local-6989586621679053703"><a href="#local-6989586621679053703"><span class="hs-identifier">qcGen</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">mkQCGen</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">int</span><span> </span><span class="hs-number">148548830</span><span class="hs-special">)</span><span>
+</span><a name="line-34"></a></pre></body></html>
