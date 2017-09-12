@@ -41,7 +41,7 @@ executable aern2-fnreps-ops
                     TypeOperators,
                     ScopedTypeVariables
   hs-source-dirs:  main
-  ghc-options:     -O2 -Wall -rtsopts
+  ghc-options:     -Wall -rtsopts
   main-is:         fnreps-ops.hs
 
 executable waac-benchmarks
@@ -63,7 +63,7 @@ executable waac-benchmarks
                   TypeOperators,
                   ScopedTypeVariables
   hs-source-dirs:  main
-  ghc-options:     -O2 -Wall -rtsopts
+  ghc-options:     -Wall -rtsopts
   main-is:         waac-benchmarks.hs
 
 -- executable aern2-rootIsolation-bench

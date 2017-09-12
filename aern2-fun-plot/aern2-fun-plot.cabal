@@ -43,7 +43,7 @@ library
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
     , aern2-fun == 0.1.*
-  ghc-options:     -Wall -O2 -fno-warn-orphans
+  ghc-options:     -Wall -fno-warn-orphans
   extensions:
     DataKinds,
     RebindableSyntax,
@@ -74,7 +74,7 @@ executable aern2-fun-plot-example
     , aern2-fun == 0.1.*
     , aern2-fun-plot == 0.1.*
   hs-source-dirs:  example
-  ghc-options:     -O2 -Wall -rtsopts
+  ghc-options:     -Wall -rtsopts
   extensions:
   extensions:
     DataKinds,

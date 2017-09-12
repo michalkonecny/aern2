@@ -40,7 +40,7 @@ library
     , aern2-real == 0.1.*
     , vector
 
-  ghc-options:     -Wall -O2 -fno-warn-orphans
+  ghc-options:     -Wall -fno-warn-orphans
   extensions:
     RebindableSyntax,
     PostfixOperators,
@@ -162,7 +162,7 @@ test-suite spec
 
 executable aern2-fun-ChPoly-benchOp
   ghc-options:
-      -Wall -O2
+      -Wall
   extensions:
     RebindableSyntax,
     TypeFamilies,
@@ -188,7 +188,7 @@ executable aern2-fun-ChPoly-benchOp
 
 executable aern2-fun-ChPoly-serialise
   ghc-options:
-      -Wall -O2
+      -Wall
   cpp-options: -DCHPOLY
   extensions:
     RebindableSyntax,
@@ -212,7 +212,7 @@ executable aern2-fun-ChPoly-serialise
 
 -- executable aern2-fun-PPoly-serialise
 --   ghc-options:
---       -Wall -O2 -DPPOLY
+--       -Wall -DPPOLY
 --   extensions:
 --     RebindableSyntax,
 --     TypeFamilies,
