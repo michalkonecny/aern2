@@ -19,15 +19,12 @@ Description:
   .
   * MPBall: float ± error bound with field & elementary (interval-like) operations
   .
-  By default, using hmpfr when compiling with ghc >=7.10
-  and haskell-mpfr when compiling with ghc 7.8.
+  By default, using hmpfr when compiling with ghc >=7.10.  Older versions of ghc are no longer tested.
   .
-  Set flag MPFRRounded to bind MPFR not via hmpfr but via tweaked versions of packages
-  rounded and hgmp:
+  Set flag MPFRRounded to bind MPFR not via hmpfr but via a tweaked version of package
+  rounded:
   .
   * https://github.com/michalkonecny/rounded
-  .
-  * https://github.com/michalkonecny/hgmp
   .
   This backend is considerably faster than hmpfr.
   It is likely to become the default in future.
