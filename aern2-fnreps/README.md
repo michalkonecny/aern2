@@ -27,7 +27,7 @@ of continuous functions, facilitating a reasonably fair comparison.
 
 ## Representations
 
-### MFun
+### Fun
 
 A function
 ![](http://latex.codecogs.com/gif.latex?f)
