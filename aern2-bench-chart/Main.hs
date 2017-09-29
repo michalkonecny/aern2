@@ -216,7 +216,7 @@ fileOpts = def { _fo_size = (300,200) }
 reprShow :: String -> String
 reprShow "dball" = "DBFun"
 reprShow "ball" = "BFun"
-reprShow "fun" = "MFun"
+reprShow "fun" = "Fun"
 reprShow "poly" = "Poly"
 reprShow "ppoly" = "PPoly"
 reprShow "frac" = "Frac"
