@@ -1,5 +1,5 @@
 name:           aern2-real
-version:        0.1.0.1
+version:        0.1.0.2
 cabal-version:  >= 1.9.2
 build-type:     Simple
 homepage:       https://github.com/michalkonecny/aern2

@@ -25,12 +25,12 @@ Description:
   Set flag MPFRRounded to bind MPFR not via hmpfr but via a tweaked version of package
   rounded:
   .
-  * https://github.com/michalkonecny/rounded
+  * https://github.com/claudeha/rounded/tree/claude
   .
   This backend is considerably faster than hmpfr.
   It is likely to become the default in future.
   .
-  There is a plan to add an Integer-only backend so that this library can
+  There is a plan to add an Integer-only backend so that aern2-mp can
   be used without MPFR.
 
 source-repository head
