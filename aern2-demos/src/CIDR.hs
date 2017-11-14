@@ -63,7 +63,7 @@ mysqrt ::
 mysqrt x = mysqrtX UseLipschitz_YES x
 
 {-|
-  @mysqrt useLipschitz useNearbySimpler x@
+  @mysqrt useLipschitz x@
 
   preconditions: @x > 1@
 
