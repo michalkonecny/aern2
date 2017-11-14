@@ -32,45 +32,59 @@ import Numeric.Rounded.Simple
 instance Show Rounded where
   show = show'
 
-type RoundMode = RoundingMode
+getPrec :: Rounded -> Int
+getPrec = precision
+
+getExp :: Rounded -> Int
+getExp = exponent'
+
+data RoundMode = Up | Down
+
+withRoundMode :: (RoundingMode -> t) -> (RoundMode -> t)
+withRoundMode op Up = op TowardInf
+withRoundMode op Down = op TowardNegInf
+{-# INLINE withRoundMode #-}
+
+set :: RoundMode -> Precision -> Rounded -> Rounded
+set = withRoundMode precRound
 
 defaultPrecision :: Precision
 defaultPrecision = 10
 
 pi :: RoundMode -> Precision -> Rounded
-pi = kPi
+pi = withRoundMode kPi
 
 fromIntegerA :: RoundMode -> Precision -> Integer -> Rounded
-fromIntegerA = fromInteger'
+fromIntegerA = withRoundMode fromInteger'
 
 zero, one :: Rounded
-zero = fromIntegerA TowardNearest defaultPrecision 0
-one = fromIntegerA TowardNearest defaultPrecision 1
+zero = fromIntegerA Up defaultPrecision 0
+one = fromIntegerA Up defaultPrecision 1
 
 toDoubleA :: RoundMode -> Rounded -> Double
-toDoubleA = toDouble
+toDoubleA = withRoundMode toDouble
 
 fromRationalA :: RoundMode -> Precision -> Rational -> Rounded
-fromRationalA = fromRational'
+fromRationalA = withRoundMode fromRational'
 
 toRationalA :: Rounded -> Rational
 toRationalA = toRational' TowardNearest
 
 add, sub, mul, div, atan2 :: RoundMode -> Precision -> Rounded -> Rounded -> Rounded
-add = add_
-sub = sub_
-mul = mul_
-div = div_
-atan2 = atan2_
+add = withRoundMode add_
+sub = withRoundMode sub_
+mul = withRoundMode mul_
+div = withRoundMode div_
+atan2 = withRoundMode atan2_
 
 neg, abs, sqrt, exp, log, sin, cos :: RoundMode -> Precision -> Rounded -> Rounded
-neg = negate_
-abs = abs_
-sqrt = sqrt_
-exp = exp_
-log = log_
-sin = sin_
-cos = cos_
+neg = withRoundMode negate_
+abs = withRoundMode abs_
+sqrt = withRoundMode sqrt_
+exp = withRoundMode exp_
+log = withRoundMode log_
+sin = withRoundMode sin_
+cos = withRoundMode cos_
 -- TODO: add more ops
 
 #endif

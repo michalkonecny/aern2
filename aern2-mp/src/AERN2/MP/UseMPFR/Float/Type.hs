@@ -79,13 +79,13 @@ p2mpfrPrec = P.fromInteger . integer
 #endif
 
 instance HasPrecision MPFloat where
-  getPrecision x = prec (P.toInteger $ MPLow.precision x)
+  getPrecision x = prec (P.toInteger $ MPLow.getPrec x)
 
 instance CanSetPrecision MPFloat where
   setPrecision = setPrecisionUp
 
 setPrecisionUp :: Precision -> MPFloat -> MPFloat
-setPrecisionUp p = MPLow.precRound MPLow.TowardInf (p2mpfrPrec p)
+setPrecisionUp p = MPLow.set MPLow.Up (p2mpfrPrec p)
 
 setPrecisionDown :: Precision -> MPFloat -> MPFloat
-setPrecisionDown p = MPLow.precRound MPLow.TowardNegInf (p2mpfrPrec p)
+setPrecisionDown p = MPLow.set MPLow.Down (p2mpfrPrec p)
