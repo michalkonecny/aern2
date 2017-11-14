@@ -32,7 +32,7 @@ library
     , bytestring >= 0.10 && < 0.11
     , hspec >= 2.1 && < 2.5
     -- , hspec-smallcheck >= 0.3 && < 0.5
-    , QuickCheck >= 2.7 && < 2.10
+    , QuickCheck >= 2.7 && < 2.11
     , transformers >= 0.4 && < 0.6
     , lens >= 4.13 && < 4.16
     , mixed-types-num >= 0.3.1 && < 0.4
@@ -158,7 +158,7 @@ test-suite spec
     , aern2-fun == 0.1.*
     , hspec >= 2.1 && < 2.5
     -- , hspec-smallcheck >= 0.3 && < 0.5
-    , QuickCheck >= 2.7 && < 2.10
+    , QuickCheck >= 2.7 && < 2.11
 
 executable aern2-fun-ChPoly-benchOp
   ghc-options:
@@ -176,14 +176,14 @@ executable aern2-fun-ChPoly-benchOp
       aern2-fun-chPoly-benchOp.hs
   build-depends:
     base == 4.*
-    , bytestring >= 0.10 && < 0.11
-    , regex-tdfa >= 1.2.1 && < 1.3
-    , zlib >= 0.6 && < 0.7
+    , bytestring
+    , regex-tdfa
+    , zlib
     , mixed-types-num >= 0.3.1 && < 0.4
     , aern2-mp == 0.1.*
     -- , aern2-real == 0.1.*
     , aern2-fun == 0.1.*
-    , QuickCheck >= 2.7 && < 2.10
+    , QuickCheck
     , clock
 
 executable aern2-fun-ChPoly-serialise
@@ -203,12 +203,12 @@ executable aern2-fun-ChPoly-serialise
       aern2-fun-serialise.hs
   build-depends:
     base == 4.*
-    , bytestring >= 0.10 && < 0.11
+    , bytestring
     , mixed-types-num >= 0.3.1 && < 0.4
     , aern2-mp == 0.1.*
     -- , aern2-real == 0.1.*
     , aern2-fun == 0.1.*
-    , QuickCheck >= 2.7 && < 2.10
+    , QuickCheck
 
 -- executable aern2-fun-PPoly-serialise
 --   ghc-options:

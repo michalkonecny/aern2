@@ -174,7 +174,7 @@ instance (ConvertibleExactly (i, t2) t) =>
 
 instance (HasDomain t) => HasDomain (Ball t)
   where
-  type Domain (Ball c) = Domain c
+  type Domain (Ball t) = Domain t
   getDomain = getDomain . ball_value
 
 instance (HasVars t) => HasVars (Ball t) where

@@ -24,7 +24,7 @@ library
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
   hs-source-dirs:  src
-  ghc-options:     -O2 -Wall -rtsopts -fno-warn-missing-signatures -fno-warn-partial-type-signatures
+  ghc-options:     -Wall -rtsopts -fno-warn-missing-signatures -fno-warn-partial-type-signatures
   extensions:
         RebindableSyntax,
         Arrows, FlexibleContexts, TypeOperators, TypeFamilies, MultiParamTypeClasses
@@ -49,11 +49,12 @@ executable aern2-demos-run-bench
     , aern2-real == 0.1.*
     , aern2-demos == 0.1.*
   hs-source-dirs:  src
-  ghc-options:     -Wall -rtsopts
+  ghc-options:     -Wall -rtsopts -fno-warn-missing-signatures -fno-warn-partial-type-signatures
   extensions:
         RebindableSyntax,
         Arrows, FlexibleContexts, TypeOperators, TypeFamilies, MultiParamTypeClasses
         ConstraintKinds, ScopedTypeVariables, FlexibleInstances
+        PartialTypeSignatures
   main-is: BenchMain.hs
   other-modules:
     ClosestPairDist

@@ -24,12 +24,12 @@ library
   hs-source-dirs:  server/src
   build-depends:
     base == 4.*
-    , integer-logarithms >= 1.0 && < 1.1
-    , containers == 0.5.*
-    , psqueues == 0.2.*
-    , convertible >= 1.1.1.0 && < 1.2
-    , transformers >= 0.4 && < 0.6
-    , lens >= 4.13 && < 4.16
+    , integer-logarithms
+    , containers
+    , psqueues
+    , convertible
+    , transformers
+    , lens
     , servant >= 0.7.1
     , servant-server >= 0.7.1
     , servant-elm

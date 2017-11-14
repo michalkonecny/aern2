@@ -95,7 +95,7 @@ instance (CanSubSameType c, CanNegSameType c, CanAddSameType c)
   sub (PowPoly p) (PowPoly q) = PowPoly $ p - q
 
 instance (CanNegSameType c) => CanNeg (PowPoly c) where
-  type NegType (PowPoly p) = PowPoly p
+  type NegType (PowPoly c) = PowPoly c
   negate (PowPoly p) = PowPoly $ -p
 
 {- multiplication -}

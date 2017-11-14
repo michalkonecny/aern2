@@ -22,6 +22,6 @@ executable ireal-benchOp
     base
     , ireal
     , random
-    , QuickCheck >= 2.7 && < 2.10
+    , QuickCheck >= 2.7 && < 2.11
     , aern2-mp == 0.1.*
   default-language:    Haskell2010

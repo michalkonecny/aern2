@@ -25,8 +25,8 @@ executable aern2-fnreps-ops
     -- , arithmoi == 0.4.*
     -- , convertible >= 1.1.1.0 && < 1.2
     -- , lens == 4.13.*
-    , psqueues == 0.2.*
-    , containers == 0.5.*
+    , psqueues
+    , containers
     , mixed-types-num >= 0.3.1 && < 0.4
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
@@ -47,8 +47,8 @@ executable aern2-fnreps-ops
 executable waac-benchmarks
   build-depends:
     base == 4.*
-    , psqueues == 0.2.*
-    , containers == 0.5.*
+    , psqueues
+    , containers
     , mixed-types-num >= 0.3.1 && < 0.4
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
