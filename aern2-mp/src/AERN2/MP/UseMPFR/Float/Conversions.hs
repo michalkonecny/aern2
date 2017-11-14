@@ -91,8 +91,8 @@ mpFromRationalA dir p q
   where
   (divDir, dirOpp) =
     case dir of
-      MPLow.Down -> (divDown, MPLow.Up)
-      MPLow.Up -> (divUp, MPLow.Down)
+      MPLow.TowardNegInf -> (divDown, MPLow.TowardInf)
+      MPLow.TowardInf -> (divUp, MPLow.TowardNegInf)
       _ -> error "in mpFromRationalA"
 
 #endif
@@ -100,7 +100,7 @@ mpFromRationalA dir p q
 instance HasNorm MPFloat where
   getNormLog x
     | x == 0 = NormZero
-    | otherwise = NormBits (P.toInteger $ MPLow.getExp x)
+    | otherwise = NormBits (P.toInteger $ MPLow.exponent' x)
 
 {- conversions -}
 
@@ -115,16 +115,16 @@ instance ConvertibleExactly MPFloat Rational where
   safeConvertExactly = Right . mpToRational
 
 toDoubleUp :: MPFloat -> Double
-toDoubleUp = mpToDouble MPLow.Up
+toDoubleUp = mpToDouble MPLow.TowardInf
 
 toDoubleDown :: MPFloat -> Double
-toDoubleDown = mpToDouble MPLow.Down
+toDoubleDown = mpToDouble MPLow.TowardNegInf
 
 fromIntegerUp :: Precision -> Integer -> MPFloat
-fromIntegerUp p i = MPLow.fromIntegerA MPLow.Up (p2mpfrPrec p) i
+fromIntegerUp p i = MPLow.fromIntegerA MPLow.TowardInf (p2mpfrPrec p) i
 
 fromIntegerDown :: Precision -> Integer -> MPFloat
-fromIntegerDown p i = MPLow.fromIntegerA MPLow.Down (p2mpfrPrec p) i
+fromIntegerDown p i = MPLow.fromIntegerA MPLow.TowardNegInf (p2mpfrPrec p) i
 
 type CanBeMPFloat t = ConvertibleExactly t MPFloat
 mpFloat :: (CanBeMPFloat t) => t -> MPFloat
@@ -150,11 +150,11 @@ instance ConvertibleExactly Int MPFloat where
 
 fromRationalUp :: Precision -> Rational -> MPFloat
 fromRationalUp p x =
-    mpFromRationalA MPLow.Up (p2mpfrPrec p) x
+    mpFromRationalA MPLow.TowardInf (p2mpfrPrec p) x
 
 fromRationalDown :: Precision -> Rational -> MPFloat
 fromRationalDown p x =
-    mpFromRationalA MPLow.Down (p2mpfrPrec p) x
+    mpFromRationalA MPLow.TowardNegInf (p2mpfrPrec p) x
 
 instance Convertible MPFloat Double where
   safeConvert x

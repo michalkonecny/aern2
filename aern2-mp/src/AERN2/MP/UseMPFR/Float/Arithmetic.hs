@@ -37,7 +37,7 @@ import AERN2.MP.UseMPFR.Float.Type
 import qualified Data.Approximate.MPFRLowLevel as MPLow
 
 one :: MPFloat
-one = MPLow.fromInt MPLow.Up (P.fromInteger 10) (int 1)
+one = MPLow.fromInt MPLow.TowardInf (P.fromInteger 10) (int 1)
 
 #endif
 
@@ -93,11 +93,11 @@ recipDown x = divDown one x
 
 piUp :: Precision -> MPFloat
 piUp p =
-    MPLow.pi MPLow.Up (p2mpfrPrec p)
+    MPLow.pi MPLow.TowardInf (p2mpfrPrec p)
 
 piDown :: Precision -> MPFloat
 piDown p =
-    MPLow.pi MPLow.Down (p2mpfrPrec p)
+    MPLow.pi MPLow.TowardNegInf (p2mpfrPrec p)
 
 cosUp :: MPFloat -> MPFloat
 cosUp = unaryUp MPLow.cos
@@ -134,16 +134,16 @@ logDown = unaryDown MPLow.log
 unaryUp ::
     (MPLow.RoundMode -> MPLow.Precision -> MPFloat -> MPFloat) ->
     (MPFloat -> MPFloat)
-unaryUp opRP x = opRP MPLow.Up p x
+unaryUp opRP x = opRP MPLow.TowardInf p x
     where
-    p = MPLow.getPrec x
+    p = MPLow.precision x
 
 unaryDown ::
     (MPLow.RoundMode -> MPLow.Precision -> MPFloat -> MPFloat) ->
     (MPFloat -> MPFloat)
-unaryDown opRP x = opRP MPLow.Down p x
+unaryDown opRP x = opRP MPLow.TowardNegInf p x
     where
-    p = MPLow.getPrec x
+    p = MPLow.precision x
 
 binaryUp ::
     Bool ->
@@ -166,5 +166,5 @@ binaryApprox isUp _canBeExact opRP x y =
     where
     pMax = (getPrecision x) `max` (getPrecision y)
     withPrec p
-        | isUp = opRP MPLow.Up (p2mpfrPrec p) x y
-        | otherwise = opRP MPLow.Down (p2mpfrPrec p) x y
+        | isUp = opRP MPLow.TowardInf (p2mpfrPrec p) x y
+        | otherwise = opRP MPLow.TowardNegInf (p2mpfrPrec p) x y

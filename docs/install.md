@@ -47,7 +47,7 @@ natively on other OS is linking Haskell with MPFR.
 
       ```
       git clone https://github.com/michalkonecny/mixed-types-num.git
-      git clone -b michal https://github.com/michalkonecny/rounded.git
+      git clone -b claude https://github.com/claudeha/rounded.git
       git clone https://github.com/michalkonecny/aern2.git
       ```
 

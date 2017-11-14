@@ -19,15 +19,18 @@ module AERN2.MP.UseMPFR.Float.RoundedAdaptor
 #else
 (
   module AERN2.MP.UseMPFR.Float.RoundedAdaptor
-, module Numeric.RoundedSimple
+, module Numeric.Rounded.Simple
 )
 where
 
 import Prelude hiding (div, pi)
 -- import qualified Prelude as P
 
-import Numeric.RoundedSimple hiding (prec)
+import Numeric.Rounded.Simple
 -- import qualified Numeric.RoundedSimple as R
+
+instance Show Rounded where
+  show = show'
 
 type RoundMode = RoundingMode
 
@@ -41,8 +44,8 @@ fromIntegerA :: RoundMode -> Precision -> Integer -> Rounded
 fromIntegerA = fromInteger'
 
 zero, one :: Rounded
-zero = fromIntegerA Up defaultPrecision 0
-one = fromIntegerA Up defaultPrecision 1
+zero = fromIntegerA TowardNearest defaultPrecision 0
+one = fromIntegerA TowardNearest defaultPrecision 1
 
 toDoubleA :: RoundMode -> Rounded -> Double
 toDoubleA = toDouble
@@ -51,7 +54,7 @@ fromRationalA :: RoundMode -> Precision -> Rational -> Rounded
 fromRationalA = fromRational'
 
 toRationalA :: Rounded -> Rational
-toRationalA = toRational'
+toRationalA = toRational' TowardNearest
 
 add, sub, mul, div, atan2 :: RoundMode -> Precision -> Rounded -> Rounded -> Rounded
 add = add_
