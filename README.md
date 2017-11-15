@@ -36,7 +36,7 @@ A set of Haskell packages for exact real number computation.
   * [hmpfr](https://hackage.haskell.org/package/hmpfr):
     A binding to the C [MPFR](http://www.mpfr.org/) (Multiple-Precision Floating-point computations with correct Rounding) library
 
-  * [rounded](https://github.com/michalkonecny/rounded):
+  * [rounded](https://github.com/claudeha/rounded/tree/claude):
     A newer and faster binding to [MPFR](http://www.mpfr.org/).
     See [aern2-mp](https://hackage.haskell.org/package/aern2-mp) for information on how to switch to this backend.
 
