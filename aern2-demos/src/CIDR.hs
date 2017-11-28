@@ -36,6 +36,29 @@ import AERN2.QA.Protocol
 import AERN2.Sequence
 import AERN2.Real
 
+--------------------------------------------------
+-- example: sqrt as used in Isabelle formalisation
+--------------------------------------------------
+
+sqrtNewton ::
+  _ => Rational -> r -> r -> r
+sqrtNewton p x y =
+  if yIsAccurate
+    then y
+    else sqrtNewton p x yNext
+  where
+  yIsAccurate = mvApproxEq p y (x/y)
+  yNext = (y+x/y)/2
+
+sqrtNewton_F :: Rational -> Double -> Double -> Double
+sqrtNewton_F = sqrtNewton
+
+sqrtNewton_I :: Rational -> CN MPBall -> CN MPBall -> CN MPBall
+sqrtNewton_I = sqrtNewton
+
+sqrtNewton_R :: Rational -> CauchyRealCN -> CauchyRealCN -> CauchyRealCN
+sqrtNewton_R = sqrtNewton
+
 ------------------------------------------------------
 -- example: sqrt via limit using various strategies
 ------------------------------------------------------
@@ -120,21 +143,21 @@ mysqrtNx_Lip_test =
 
 class CanMVApproxCompare t1 t2 where
   type CanMVApproxCompareType t1 t2
-  {-| @mvIsPositiveUpTo p x@
+  {-| @mvApproxEq p l r@ where @p>0@
 
-      Return true if @x@ is above $2^{{}-p}$.
+      Return true if @|l-r|@ is $< p$.
 
-      Return false if the number is negative.
+      Return false if @|l-r|@ is $> p/2$.
 
-      Return true or false if the number is between 0 and $2^{{}-p}$.
+      Return true or false if @|l-r|@ is between $p/2$ and $p$.
   -}
   mvApproxEq :: Rational -> t1 -> t2 -> CanMVApproxCompareType t1 t2
 
 instance CanMVApproxCompare MPBall MPBall where
   type CanMVApproxCompareType MPBall MPBall = Maybe Bool
   mvApproxEq p l r
-    | d !<! (p/!2) = Just True
-    | d !>! 0 = Just False
+    | d !<! p = Just True
+    | d !>! p/!2 = Just False
     | otherwise = Nothing
     where
     d = abs(l - r)
@@ -165,6 +188,14 @@ instance CanMVApproxCompare CauchyRealCN CauchyRealCN where
     searchForDecision (Just d : _) = d
     searchForDecision (_ : rest) = searchForDecision rest
     searchForDecision [] = error "mvIsPositiveUpTo CauchyRealCN: failed to decide"
+
+instance CanMVApproxCompare Double Double where
+  type CanMVApproxCompareType Double Double = Bool
+  mvApproxEq p l r
+    | d < (double (3*p/!4)) = True
+    | otherwise = False
+    where
+    d = abs(l - r)
 
 --------------
 -- while loop with many-valued condition
