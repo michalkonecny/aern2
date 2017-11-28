@@ -332,3 +332,9 @@ instance CanIntegrateOverDom PolyBall DyadicInterval where
   type IntegralOverDomType PolyBall DyadicInterval = MPBall
   integrateOverDom (Ball c e) di =
     integrateOverDom (updateRadius (+e) c) di
+
+
+instance CanSinCosSameType t => CanSinCos (Ball t) where
+  type SinCosType (Ball t) = Ball t
+  sin (Ball x e) = Ball (sin x) e
+  cos (Ball x e) = Ball (cos x) e

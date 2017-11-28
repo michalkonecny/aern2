@@ -50,6 +50,8 @@ import qualified AERN2.Local.Poly as LPoly
 import qualified AERN2.Local.PPoly as LPPoly
 import qualified AERN2.Local.Frac as LFrac
 
+import Demo ()
+
 type FracMB = Frac MPBall
 
 type LPolyMB = LPoly.LocalPoly MPBall

@@ -43,6 +43,7 @@ executable aern2-fnreps-ops
   hs-source-dirs:  main
   ghc-options:     -Wall -rtsopts
   main-is:         fnreps-ops.hs
+  other-modules:   Demo
 
 executable waac-benchmarks
   build-depends:

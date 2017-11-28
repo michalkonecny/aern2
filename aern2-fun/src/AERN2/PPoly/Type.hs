@@ -371,3 +371,11 @@ instance CanDiv PPoly MPBall where
     divideNoCN p n = liftBall2PPoly (/!n) p
     type DivType PPoly MPBall = CN PPoly
     divide p n = liftBall2PPolyCN (/n) p
+
+
+instance CanSinCos PPoly where
+  type SinCosType PPoly = PPoly
+  sin (PPoly pieces dom) =
+      PPoly (fmap (\(i,p) -> (i, sin p)) pieces) dom
+  cos (PPoly pieces dom) =
+      PPoly (fmap (\(i,p) -> (i, cos p)) pieces) dom
