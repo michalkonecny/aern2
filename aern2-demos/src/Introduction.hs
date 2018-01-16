@@ -208,15 +208,24 @@ logistic1 c n x0 =
   where
   lg x = c * x * (1-x)
 
-logisticR_run1 = logistic1 3.82 1000 (real 0.5)
+logistic2 :: _ => Rational -> Integer -> t -> t
+logistic2 c n x0 =
+  aux n x0
+  where
+  aux 0 x = x
+  aux m x = aux (m-1) (lg x)
+  lg x = c * x * (1-x)
 
-logisticMB1_run1 =
+logistic1R_run n = logistic1 3.82 n (real 0.5)
+logistic2R_run n = logistic2 3.82 n (real 0.5)
+
+logistic1MB_run1 =
   logistic1 3.82 1000 (mpBallP (prec 1000) 0.5)
-logisticMB1_run2 =
+logistic1MB_run2 =
   logistic1 3.82 1000 (mpBallP (prec 2000) 0.5)
 
-logistic2 :: _ => Rational -> Integer -> t -> Maybe t
-logistic2 c n x0 =
+logistic3 :: _ => Rational -> Integer -> t -> Maybe t
+logistic3 c n x0 =
   (foldl1 (.) (replicate n lg)) (Just x0)
   where
   lg Nothing = Nothing
@@ -226,14 +235,14 @@ logistic2 c n x0 =
     where
     res = c * x * (1-x)
 
-logisticMB2_run1 =
-  logistic2 3.82 10000 (mpBallP (prec 10000) 0.5)
-logisticMB2_run2 =
-  logistic2 3.82 10000 (mpBallP (prec 20000) 0.5)
+logistic3MB_run1 =
+  logistic3 3.82 10000 (mpBallP (prec 10000) 0.5)
+logistic3MB_run2 =
+  logistic3 3.82 10000 (mpBallP (prec 20000) 0.5)
 
 logisticIter :: Rational -> Integer -> R -> R
 logisticIter c n =
-  irramEval (logistic2 c n)
+  irramEval (logistic3 c n)
 
 irramEval :: (MPBall -> Maybe MPBall) -> (R -> R)
 irramEval f x =

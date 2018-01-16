@@ -11,7 +11,7 @@ import MixedTypesNumPrelude
 import AERN2.MP
 -- import qualified AERN2.MP.Ball as MPBall
 
--- import AERN2.Real
+import AERN2.Real
 -- import AERN2.Limit
 
 import AERN2.Interval
@@ -36,30 +36,29 @@ x_Poly :: Accuracy -> ChPoly MPBall
 x_Poly acG =
   setAccuracyGuide acG $ varFn (unaryIntervalDom, bits 10) ()
 
-x_PPoly :: Accuracy -> PPoly
-x_PPoly = PPoly.fromPoly . x_Poly
-
 unaryIntervalDom :: DyadicInterval
 unaryIntervalDom = dyadicInterval (-1,1)
 
-x_LPoly :: LPoly
-x_LPoly = LPoly.variable
+
+---------------------------------------------------------------------
+-- THE IDENTITY FUNCTION (USING VARIOUS TYPES)
+x_PPoly :: Accuracy -> PPoly
+x_PPoly = PPoly.fromPoly . x_Poly
 
 x_LPPoly :: LPPoly
 x_LPPoly = LPPoly.fromPoly LPoly.variable
 
+---------------------------------------------------------------------
+-- REAL FUNCTION DEFINITION (GENERIC IN TYPE)
 bumpy :: (CanSinCosSameType t, CanMulBy t Integer, CanMinMaxSameType t) => t -> t
 -- bumpy :: _ => t -> t
 bumpy x = sin (10*x) `max` cos (11 * x)
 
-bumpy_I_Poly :: MPBall
-bumpy_I_Poly = integrateOverDom (bumpy $ x_Poly (bits 5)) unaryIntervalDom
+---------------------------------------------------------------------
+-- EVALUATING AND INTEGRATING THE FUNCTION USING PIECEWISE POLYNOMIAL APPROXIMATIONS
+bumpy_I_PPoly :: Integer -> MPBall
+bumpy_I_PPoly n = integrateOverDom (bumpy $ x_PPoly (bits n)) unaryIntervalDom
 
-bumpy_I_PPoly :: MPBall
-bumpy_I_PPoly = integrateOverDom (bumpy $ x_PPoly (bits 25)) unaryIntervalDom
-
-bumpy_I_LPoly :: MPBall
-bumpy_I_LPoly = integrateOverDom (bumpy x_LPoly) unaryIntervalDom (bits 20)
-
-bumpy_I_LPPoly :: MPBall
-bumpy_I_LPPoly = integrateOverDom (bumpy x_LPPoly) unaryIntervalDom (bits 20)
+bumpy_I_LPPoly :: Integer -> MPBall
+bumpy_I_LPPoly n = integrateOverDom (bumpy x_LPPoly) unaryIntervalDom (bits n)
+---------------------------------------------------------------------
