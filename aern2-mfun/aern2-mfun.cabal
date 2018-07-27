@@ -1,0 +1,69 @@
+name:           aern2-mfun
+version:        0.1.0.0
+cabal-version:  >= 1.9.2
+build-type:     Simple
+homepage:       https://github.com/michalkonecny/aern2/aern2-mfun
+author:         Michal Konecny, Eike Neumann
+maintainer:     Michal Konecny <mikkonecny@gmail.com>
+copyright:      (c) 2015-2017 Michal Konecny, Eike Neumann
+license:        BSD3
+license-file:   LICENSE
+stability:      experimental
+tested-with:    GHC==7.10.3, GHC==8.0.2
+category:       Math
+synopsis:       Multivariate real functions
+Description:
+  TODO
+
+source-repository head
+  type:     git
+  location: https://github.com/mikkonecny/aern2.git
+  subdir: aern2-mfun
+
+library
+  hs-source-dirs:  src
+  build-depends:
+    base == 4.*
+    , containers == 0.5.*
+    , psqueues == 0.2.*
+    , integer-logarithms >= 1.0 && < 1.1
+    , convertible >= 1.1.1.0 && < 1.2
+    , regex-tdfa >= 1.2.1 && < 1.3
+    , bytestring >= 0.10 && < 0.11
+    , hspec >= 2.1 && < 2.5
+    -- , hspec-smallcheck >= 0.3 && < 0.5
+    , QuickCheck >= 2.7 && < 2.10
+    , transformers >= 0.4 && < 0.6
+    , lens >= 4.13 && < 4.16
+    , mixed-types-num == 0.3.*
+    , aern2-mp == 0.1.*
+    , aern2-real == 0.1.*
+    , aern2-fun == 0.1.*
+    , vector
+
+  ghc-options:     -Wall -O2 -fno-warn-orphans
+  extensions:
+    RebindableSyntax,
+    PostfixOperators,
+    ScopedTypeVariables,
+    DeriveGeneric,
+    GeneralizedNewtypeDeriving,
+    TypeFamilies,
+    TypeOperators,
+    ConstraintKinds,
+    DefaultSignatures,
+    MultiParamTypeClasses,
+    FlexibleContexts,
+    FlexibleInstances,
+    UndecidableInstances,
+    Arrows
+  exposed-modules:
+    AERN2.Util.Vector
+    AERN2.Box
+    AERN2.MPoly.Type
+    AERN2.MPoly.Power.Type
+    AERN2.MPoly.Power.Evaluation
+    AERN2.MPoly.Power.Ring
+    AERN2.MPoly.Power.Integration
+    AERN2.MPoly.Power.SineCosine
+    AERN2.MPoly.Power
