@@ -36,6 +36,15 @@ instance HasLimits Rational CauchyReal where
       where
       e = 0.5^!(fromAccuracy acS + 1)
 
+instance HasLimits Rational CauchyRealCN where
+  type LimitType Rational CauchyRealCN = CauchyRealCN
+  limit s = newCRCN "limit" [] makeQ
+    where
+    makeQ (me, _src) ac@(AccuracySG acS _acG) =
+      lift1CE (updateRadius (+ (errorBound e))) $ (s e ?<- me) (ac + 1)
+      where
+      e = 0.5^!(fromAccuracy acS + 1)
+
 instance HasLimits Rational (CauchyReal -> CauchyRealCN) where
   type LimitType Rational (CauchyReal -> CauchyRealCN) = (CauchyReal -> CauchyRealCN)
   limit fs x = newCRCN "limit" [AnyProtocolQA x] makeQ
