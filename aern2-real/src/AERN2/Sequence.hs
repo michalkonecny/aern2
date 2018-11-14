@@ -18,6 +18,7 @@ module AERN2.Sequence
   , SequenceP(..), pSeq
   , SuitableForSeq
   , SequenceA, Sequence, newSeq, newSeqSimple
+  , fmapSeq
   , seqName, seqId, seqSources, seqRename
   , seqWithAccuracy, (?), seqWithAccuracyA, seqsWithAccuracyA
   , (-:-), (-:-||), (-:-|)
