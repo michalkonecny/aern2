@@ -27,7 +27,7 @@ library
   hs-source-dirs:  src
   build-depends:
     base == 4.*
-    , containers == 0.5.*
+    , containers >= 0.5
     , convertible >= 1.1.1.0
     , hspec >= 2.1
     -- , hspec-smallcheck >= 0.3 && < 0.5
