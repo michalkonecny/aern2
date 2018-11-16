@@ -7,7 +7,7 @@ On a non-Linux OS, I recommend to install AERN2 in a
 small Ubuntu VM.  The main obstacle I hit when installing
 natively on other OS is linking Haskell with MPFR.
 
-## From latest sources on Ubuntu 16.04 using stack
+## From latest sources on Ubuntu using stack
 
   * Install stack (Haskell build tool).
 
@@ -21,33 +21,31 @@ natively on other OS is linking Haskell with MPFR.
 
       `stack --version`
 
-        * This should report version 1.5 or newer.
+        * This should report version 1.9 or newer.
 
-  * Setup stack and install [ghc](https://www.haskell.org/ghc/) (Haskell compiler) 7.10.3 (unless already installed).
+  * Setup stack and install [ghc](https://www.haskell.org/ghc/) (Haskell compiler) 8.4.4 (unless already installed).
 
     ```
     sudo apt-get install build-essential
     sudo apt-get install libmpfr-dev
-    stack setup --resolver lts-6.5
+    stack setup --resolver lts-12.17
     ```
 
       * This command is likely to take several minutes to complete and download a large amount of data.
 
-      * Prefer a newer resolver?  AERN2 is likely to work with newer resolvers, but beware that in ghc 8.0.2 AERN2 does not work with ghci due to a ghci bug.
+      * Prefer another stack resolver?  AERN2 is likely to work with other resolvers, but beware that in ghc 8.0.2 AERN2 does not work with ghci due to a ghci bug.
 
     * Check your installation by running:
 
       `stack ghc -- --version`
 
-      * This should report ghc version 7.10.3.
+      * This should report ghc version 8.4.4.
 
-  * Clone aern2 and other dependency git repositories as follows:
+  * Clone aern2 git repository as follows:
 
     * Create a new folder (from now on called the "base folder") and in this folder run:
 
       ```
-      git clone https://github.com/michalkonecny/mixed-types-num.git
-      git clone -b claude https://github.com/claudeha/rounded.git
       git clone https://github.com/michalkonecny/aern2.git
       ```
 
@@ -55,7 +53,7 @@ natively on other OS is linking Haskell with MPFR.
 
     * Copy stack.yaml to the base folder:
 
-      `cp aern2/docs/install/stack.yaml-6.5 stack.yaml`
+      `cp aern2/docs/install/stack.yaml-ghc8.4.4 stack.yaml`
 
     * Run `stack install` in the base folder.
 
@@ -63,6 +61,7 @@ natively on other OS is linking Haskell with MPFR.
 
         ```
         Copied executables to /home/.../.local/bin:
-        - aern2-generate-netlog-elm
         - aern2-real-benchOp
-        ```
+    
+  * Run the test suite using `stack test aern2-real`
+    ```
