@@ -5,11 +5,10 @@ build-type:     Simple
 homepage:       https://github.com/michalkonecny/aern2
 author:         Michal Konecny
 maintainer:     Michal Konecny <mikkonecny@gmail.com>
-copyright:      (c) 2017 Michal Konecny
+copyright:      (c) 2017-2018 Michal Konecny
 license:        BSD3
 license-file:   LICENSE
 stability:      experimental
-tested-with:    GHC==7.10.3, GHC==8.0.2
 category:       Math
 Synopsis:       Various examples and experiments
 Description:    Various examples and experiments
@@ -36,6 +35,7 @@ library
     BenchTasks.Logistic
     BenchTasks.Fourier
     CIDR
+    -- Sewon
     -- EffortConcept1
 
 executable aern2-demos-run-bench
