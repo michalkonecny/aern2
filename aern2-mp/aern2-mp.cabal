@@ -5,7 +5,7 @@ build-type:     Simple
 homepage:       https://github.com/michalkonecny/aern2
 author:         Michal Konecny
 maintainer:     Michal Konecny <mikkonecny@gmail.com>
-copyright:      (c) 2015-2017 Michal Konecny
+copyright:      (c) 2015-2018 Michal Konecny
 license:        BSD3
 license-file:   LICENSE
 extra-source-files:  changelog.md
@@ -13,21 +13,11 @@ stability:      experimental
 category:       Math
 synopsis:       Multi-precision floats via MPFR
 Description:
-  Arbitrary-precision dyadic numbers and interval arithmetic, via the types:
+  Arbitrary-precision dyadic numbers and safely-rounded interval arithmetic:
   .
   * Dyadic:  variable-precision floats with exact ring operations
   .
   * MPBall: float ± error bound with field & elementary (interval-like) operations
-  .
-  By default, using hmpfr when compiling with ghc >=7.10.  Older versions of ghc are no longer tested.
-  .
-  Set flag MPFRRounded to bind MPFR not via hmpfr but via a tweaked version of package
-  rounded:
-  .
-  * https://github.com/claudeha/rounded/tree/claude
-  .
-  This backend is considerably faster than hmpfr.
-  It is likely to become the default in future.
   .
   There is a plan to add an Integer-only backend so that aern2-mp can
   be used without MPFR.
@@ -38,13 +28,13 @@ source-repository head
   subdir: aern2-mp
 
 flag MPFR
-  Description: Use a MPFR backend (default); Integer backend is planned
+  Description: Use a MPFR backend (default)
   Default:     True
 
 flag MPFRRounded
-  Description: Use rounded (Numeric.RoundedSimple) as MPFR backend (not default)
-  -- Default:     True
-  Default:     False
+  Description: Use rounded (Numeric.RoundedSimple), not hmpfr as MPFR backend (default)
+  Default:     True
+  -- Default:     False
 
 library
   hs-source-dirs:  src
