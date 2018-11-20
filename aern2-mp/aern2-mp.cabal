@@ -68,6 +68,7 @@ library
     FlexibleInstances,
     UndecidableInstances
   if flag(UseCDAR)
+    exposed-modules:
   else
     exposed-modules:
       AERN2.MP.Float.UseRounded.Type
