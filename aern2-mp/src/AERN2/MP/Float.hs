@@ -20,27 +20,18 @@ module AERN2.MP.Float
    -- * Precision operations
    module AERN2.MP.Precision
    -- * The type definition and basic operations
-#ifdef UseCDAR
-   , module AERN2.MP.Float.UseCDAR.Type
+   , module Type
    -- * Arithmetic operations
-   , module AERN2.MP.Float.UseCDAR.Arithmetic
+   , module Arithmetic
    , distUp, distDown, avgUp, avgDown
    -- * Conversions, comparisons and norm
-   , module AERN2.MP.Float.UseCDAR.Conversions
-#else
-    , module AERN2.MP.Float.UseRounded.Type
-    -- * Arithmetic operations
-    , module AERN2.MP.Float.UseRounded.Arithmetic
-    , distUp, distDown, avgUp, avgDown
-    -- * Conversions, comparisons and norm
-    , module AERN2.MP.Float.UseRounded.Conversions
-#endif
+   , module Conversions
    -- * Infix operators for up/down-rounded operations
-   , module AERN2.MP.Float.Operators
+   , module Operators
    -- * Constants such as NaN, infinity
-   , module AERN2.MP.Float.Constants
+   , module Constants
    -- * Tests
-   , module AERN2.MP.Float.Tests
+   , module Tests
    )
 where
 
@@ -50,18 +41,18 @@ import MixedTypesNumPrelude
 import AERN2.MP.Precision
 
 #ifdef UseCDAR
-import AERN2.MP.Float.UseCDAR.Type
-import AERN2.MP.Float.UseCDAR.Arithmetic
-import AERN2.MP.Float.UseCDAR.Conversions
+import AERN2.MP.Float.UseCDAR.Type as Type
+import AERN2.MP.Float.UseCDAR.Arithmetic as Arithmetic
+import AERN2.MP.Float.UseCDAR.Conversions as Conversions
 #else
-import AERN2.MP.Float.UseRounded.Type
-import AERN2.MP.Float.UseRounded.Arithmetic
-import AERN2.MP.Float.UseRounded.Conversions
+import AERN2.MP.Float.UseRounded.Type as Type
+import AERN2.MP.Float.UseRounded.Arithmetic as Arithmetic
+import AERN2.MP.Float.UseRounded.Conversions as Conversions
 #endif
 
-import AERN2.MP.Float.Operators
-import AERN2.MP.Float.Constants
-import AERN2.MP.Float.Tests
+import AERN2.MP.Float.Operators as Operators
+import AERN2.MP.Float.Constants as Constants
+import AERN2.MP.Float.Tests as Tests
 
 -- | Computes an upper bound to the distance @|x - y|@ of @x@ and @y@.
 distUp :: MPFloat -> MPFloat -> MPFloat
