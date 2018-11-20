@@ -1,3 +1,8 @@
+# Change log for aern2-mp
+
+* v 0.1.3.0 2018-11-20
+  * only one MPFR backend - rounded
+  * reduce backend-specific code
 * v 0.1.2.0 2017-11-14
   * fix compilation with haskell-mpfr
 * v 0.1.1.0 2017-11-14

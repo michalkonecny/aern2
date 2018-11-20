@@ -1,5 +1,5 @@
 name:           aern2-mp
-version:        0.1.2.0
+version:        0.1.3.0
 cabal-version:  >= 1.9.2
 build-type:     Simple
 homepage:       https://github.com/michalkonecny/aern2
@@ -11,7 +11,7 @@ license-file:   LICENSE
 extra-source-files:  changelog.md
 stability:      experimental
 category:       Math
-synopsis:       Multi-precision floats via MPFR
+synopsis:       Multi-precision floats via rounded (MPFR)
 Description:
   Arbitrary-precision dyadic numbers and safely-rounded interval arithmetic:
   .
