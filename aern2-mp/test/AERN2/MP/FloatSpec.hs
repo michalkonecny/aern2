@@ -9,10 +9,10 @@
     Portability :  portable
 -}
 
-module AERN2.MP.UseMPFR.FloatSpec (spec) where
+module AERN2.MP.FloatSpec (spec) where
 
 -- import MixedTypesNumPrelude
-import AERN2.MP.UseMPFR.Float.Tests
+import AERN2.MP.Float.Tests
 
 import Test.Hspec
 
