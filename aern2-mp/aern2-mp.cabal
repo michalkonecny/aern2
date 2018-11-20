@@ -27,14 +27,9 @@ source-repository head
   location: https://github.com/mikkonecny/aern2.git
   subdir: aern2-mp
 
-flag MPFR
-  Description: Use a MPFR backend (default)
-  Default:     True
-
-flag MPFRRounded
-  Description: Use rounded (Numeric.RoundedSimple), not hmpfr as MPFR backend (default)
-  Default:     True
-  -- Default:     False
+flag UseCDAR
+  Description: Use an integer-only backend (work in progress, not default)
+  Default:     False
 
 library
   hs-source-dirs:  src
@@ -49,26 +44,14 @@ library
     , lens
     , template-haskell
     , mixed-types-num
-  if flag(MPFR)
-    cpp-options: -DUSEMPFR
-    if impl(ghc >= 7.10)
-      if flag(MPFRRounded)
-        build-depends:
-          rounded == 0.1.*
-        cpp-options: -DMPFRRounded
-      else
-        build-depends:
-          hmpfr == 0.4.*,
-          integer-gmp >= 1.0 && < 1.1
-        cpp-options: -DHMPFR
-    else
-      build-depends:
-        haskell-mpfr == 0.1.*,
-        integer-gmp < 0.6
-      cpp-options: -DHaskellMPFR
+  if flag(UseCDAR)
+    cpp-options: -DUseCDAR
+      cdar
   else
-    cpp-options: -DUseIReal
-    -- TODO
+    cpp-options: -DMPFRRounded
+    build-depends:
+      rounded == 0.1.*
+-- TODO
   ghc-options:     -Wall -fno-warn-orphans
   extensions:
     RebindableSyntax,
@@ -84,25 +67,13 @@ library
     FlexibleContexts,
     FlexibleInstances,
     UndecidableInstances
-  if flag(MPFR)
+  if flag(UseCDAR)
+  else
     exposed-modules:
-      AERN2.MP.UseMPFR.Float.Type
-      AERN2.MP.UseMPFR.Float.RoundedAdaptor
-      AERN2.MP.UseMPFR.Float.Arithmetic
-      AERN2.MP.UseMPFR.Float.Conversions
-      AERN2.MP.UseMPFR.Float.Operators
-      AERN2.MP.UseMPFR.Float.Constants
-      AERN2.MP.UseMPFR.Float.Tests
-      AERN2.MP.UseMPFR.Float
-      AERN2.MP.UseMPFR.Dyadic
-      AERN2.MP.UseMPFR.ErrorBound
-      AERN2.MP.UseMPFR.Ball.Type
-      AERN2.MP.UseMPFR.Ball.Conversions
-      AERN2.MP.UseMPFR.Ball.Comparisons
-      AERN2.MP.UseMPFR.Ball.Field
-      AERN2.MP.UseMPFR.Ball.Elementary
-      AERN2.MP.UseMPFR.Ball.PreludeOps
-      AERN2.MP.UseMPFR.Ball
+      AERN2.MP.Float.UseRounded.Type
+      AERN2.MP.Float.UseRounded.RoundedAdaptor
+      AERN2.MP.Float.UseRounded.Arithmetic
+      AERN2.MP.Float.UseRounded.Conversions
   exposed-modules:
     AERN2.Utils.Bench
     AERN2.Normalize
@@ -110,10 +81,20 @@ library
     AERN2.MP.Precision
     AERN2.MP.Accuracy
     AERN2.MP.Enclosure
-    AERN2.MP.Dyadic
     AERN2.MP.ErrorBound
-    AERN2.MP.Ball.Tests
+    AERN2.MP.Float.Operators
+    AERN2.MP.Float.Constants
+    AERN2.MP.Float.Tests
+    AERN2.MP.Float
+    AERN2.MP.Dyadic
+    AERN2.MP.Ball.Type
+    AERN2.MP.Ball.Conversions
+    AERN2.MP.Ball.Comparisons
+    AERN2.MP.Ball.Field
+    AERN2.MP.Ball.Elementary
+    AERN2.MP.Ball.PreludeOps
     AERN2.MP.Ball
+    AERN2.MP.Ball.Tests
     AERN2.MP
 
 test-suite spec
@@ -133,7 +114,8 @@ test-suite spec
   other-modules:
     AERN2.MP.BallSpec
     AERN2.MP.DyadicSpec
-    AERN2.MP.UseMPFR.FloatSpec
+    AERN2.MP.FloatSpec
+    -- AERN2.MP.UseCDAR.FloatSpec
   build-depends:
     base == 4.*
     -- , mixed-types-num >= 0.3.1 && < 0.4

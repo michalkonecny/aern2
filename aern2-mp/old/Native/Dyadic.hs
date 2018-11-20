@@ -2,7 +2,7 @@
 -- #define DEBUG
 {-# LANGUAGE DeriveDataTypeable #-}
 {-|
-    Module      :  AERN2.MP.UseIReal.Dyadic
+    Module      :  AERN2.MP.Native.Dyadic
     Description :  Dyadics with exact ring operations
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -12,17 +12,18 @@
     Portability :  portable
 
     Arbitrary precision dyadic numbers with exact ring operations.
+    This module uses native Haskell Integer, not MPFR.
 -}
 
-module AERN2.MP.UseIReal.Dyadic
--- (
---    -- * Dyadic numbers and their basic operations
---    Dyadic, HasDyadics
---    -- * Dyadic constructors
---    , CanBeDyadic, dyadic
---    -- * tests
---    , specDyadic, tDyadic
--- )
+module AERN2.MP.Native.Dyadic
+(
+   -- * Dyadic numbers and their basic operations
+  --  Dyadic, HasDyadics
+  --  -- * Dyadic constructors
+  --  , CanBeDyadic, dyadic
+  --  -- * tests
+  --  , specDyadic, tDyadic
+)
 where
 
 #ifdef DEBUG
@@ -105,6 +106,7 @@ instance OrderedCertainlyRing (CN Dyadic)
 
 instance HasAccuracy Dyadic where getAccuracy _ = Exact
 
+{-
 instance Show Dyadic where
   show (Dyadic d e)
     | e >= 0 = printf "dyadic (%d)" (d * 2^!e)
@@ -687,3 +689,6 @@ instance P.Num Dyadic where
 
 instance P.Real Dyadic where
     toRational = convertExactly
+
+-}
+

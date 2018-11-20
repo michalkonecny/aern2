@@ -1,8 +1,7 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds, ExistentialQuantification, RankNTypes #-}
 -- {-# LANGUAGE DeriveGeneric, DeriveDataTypeable, StandaloneDeriving #-}
 {-|
-    Module      :  AERN2.MP.UseMPFR.Float.RoundedAdaptor
+    Module      :  AERN2.MP.Float.UseRounded.RoundedAdaptor
     Description :  Numeric.Rounded + variable precision
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -13,12 +12,9 @@
 
     Numeric.Rounded + variable precision
 -}
-module AERN2.MP.UseMPFR.Float.RoundedAdaptor
-#ifndef MPFRRounded
-() where
-#else
+module AERN2.MP.Float.UseRounded.RoundedAdaptor
 (
-  module AERN2.MP.UseMPFR.Float.RoundedAdaptor
+  module AERN2.MP.Float.UseRounded.RoundedAdaptor
 , module Numeric.Rounded.Simple
 )
 where
@@ -86,5 +82,3 @@ log = withRoundMode log_
 sin = withRoundMode sin_
 cos = withRoundMode cos_
 -- TODO: add more ops
-
-#endif

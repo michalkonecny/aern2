@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-|
-    Module      :  AERN2.MP.UseMPFR.Ball.Type
+    Module      :  AERN2.MP.Ball.Type
     Description :  Arbitrary precision dyadic balls
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -11,7 +11,7 @@
 
     Arbitrary precision dyadic balls
 -}
-module AERN2.MP.UseMPFR.Ball.Type
+module AERN2.MP.Ball.Type
 (
   -- * Auxiliary types
   module AERN2.MP.Precision
@@ -39,13 +39,13 @@ import AERN2.Normalize
 import AERN2.Norm
 
 import AERN2.MP.Dyadic
-import qualified AERN2.MP.UseMPFR.Float as MPFloat
-import AERN2.MP.UseMPFR.Float (MPFloat, mpFloat)
-import AERN2.MP.UseMPFR.Float.Operators
+import qualified AERN2.MP.Float as MPFloat
+import AERN2.MP.Float (MPFloat, mpFloat)
+import AERN2.MP.Float.Operators
 import AERN2.MP.Precision
 import AERN2.MP.Accuracy
-import qualified AERN2.MP.UseMPFR.ErrorBound as EB
-import AERN2.MP.UseMPFR.ErrorBound (ErrorBound, errorBound)
+import qualified AERN2.MP.ErrorBound as EB
+import AERN2.MP.ErrorBound (ErrorBound, errorBound)
 import AERN2.MP.Enclosure
 
 data MPBall = MPBall

@@ -36,11 +36,11 @@ import Test.QuickCheck
 -- import AERN2.Norm
 import AERN2.MP.Precision
 
-import AERN2.MP.UseMPFR.Ball.Type
--- import AERN2.MP.UseMPFR.Ball.Conversions ()
-import AERN2.MP.UseMPFR.Ball.Comparisons ()
-import AERN2.MP.UseMPFR.Ball.Field ()
-import AERN2.MP.UseMPFR.Ball.Elementary ()
+import AERN2.MP.Ball.Type
+-- import AERN2.MP.Ball.Conversions ()
+import AERN2.MP.Ball.Comparisons ()
+import AERN2.MP.Ball.Field ()
+import AERN2.MP.Ball.Elementary ()
 
 instance Arbitrary MPBall where
   arbitrary =

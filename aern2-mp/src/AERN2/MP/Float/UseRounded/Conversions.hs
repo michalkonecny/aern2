@@ -1,6 +1,5 @@
-{-# LANGUAGE CPP #-}
 {-|
-    Module      :  AERN2.MP.UseMPFR.Float.Conversions
+    Module      :  AERN2.MP.Float.UseRounded.Conversions
     Description :  Conversions and comparisons of arbitrary precision floats
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -15,7 +14,7 @@
     and haskell-mpfr when compiling with ghc 7.8.
 -}
 
-module AERN2.MP.UseMPFR.Float.Conversions
+module AERN2.MP.Float.UseRounded.Conversions
   (
    -- * MPFloat to other types (see also instances)
    toDoubleUp, toDoubleDown
@@ -35,26 +34,10 @@ import Data.Convertible
 import AERN2.Norm
 import AERN2.MP.Precision
 
-import AERN2.MP.UseMPFR.Float.Type
-import AERN2.MP.UseMPFR.Float.Arithmetic
+import AERN2.MP.Float.UseRounded.Type
+import AERN2.MP.Float.UseRounded.Arithmetic
 
-#ifdef HaskellMPFR
-import qualified Data.Approximate.MPFRLowLevel as MPLow
-
-mpToDouble :: MPLow.RoundMode -> MPFloat -> Double
-mpToDouble = MPLow.toDoubleA
-
-mpToRational :: MPFloat -> Rational
-mpToRational x
-    | x == 0 = 0.0
-    | otherwise = MPLow.toRationalA x
-
-mpFromRationalA :: MPLow.RoundMode -> MPLow.Precision -> Rational -> MPFloat
-mpFromRationalA = MPLow.fromRationalA
-
-#endif
-#ifdef MPFRRounded
-import qualified AERN2.MP.UseMPFR.Float.RoundedAdaptor as MPLow
+import qualified AERN2.MP.Float.UseRounded.RoundedAdaptor as MPLow
 
 mpToDouble :: MPLow.RoundMode -> MPFloat -> Double
 mpToDouble = MPLow.toDoubleA
@@ -66,36 +49,6 @@ mpToRational x
 
 mpFromRationalA :: MPLow.RoundMode -> MPLow.Precision -> Rational -> MPFloat
 mpFromRationalA = MPLow.fromRationalA
-
-#endif
-#ifdef HMPFR
-import qualified Data.Number.MPFR as MPLow
-
-mpToDouble :: MPLow.RoundMode -> MPLow.MPFR -> Double
-mpToDouble = MPLow.toDouble
-
-mpToRational :: MPFloat -> Rational
-mpToRational x
-    | x == 0 = 0.0
-    | otherwise = mantissa * 2.0^!e
-    where
-    (mantissa, ePre) = MPLow.decompose x
-    e = P.toInteger ePre
-
-mpFromRationalA :: MPLow.RoundMode -> MPLow.Precision -> Rational -> MPFloat
-mpFromRationalA dir p q
-  | q < 0 =
-    MPLow.fromIntegerA dir p (numerator q) `divDir` MPLow.fromIntegerA dir p (denominator q)
-  | otherwise =
-    MPLow.fromIntegerA dir p (numerator q) `divDir` MPLow.fromIntegerA dirOpp p (denominator q)
-  where
-  (divDir, dirOpp) =
-    case dir of
-      MPLow.Down -> (divDown, MPLow.Up)
-      MPLow.Up -> (divUp, MPLow.Down)
-      _ -> error "in mpFromRationalA"
-
-#endif
 
 instance HasNorm MPFloat where
   getNormLog x

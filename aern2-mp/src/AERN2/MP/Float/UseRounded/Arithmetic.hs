@@ -1,6 +1,5 @@
-{-# LANGUAGE CPP #-}
 {-|
-    Module      :  AERN2.MP.UseMPFR.Float.Arithmetic
+    Module      :  AERN2.MP.Float.UseRounded.Arithmetic
     Description :  Arbitrary precision floating point numbers
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -15,7 +14,7 @@
     and haskell-mpfr when compiling with ghc 7.8.
 -}
 
-module AERN2.MP.UseMPFR.Float.Arithmetic
+module AERN2.MP.Float.UseRounded.Arithmetic
   (
    -- * MPFloat basic arithmetic
      addUp, addDown, subUp, subDown
@@ -31,30 +30,12 @@ import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import AERN2.MP.Precision
-import AERN2.MP.UseMPFR.Float.Type
 
-#ifdef HaskellMPFR
-import qualified Data.Approximate.MPFRLowLevel as MPLow
-
-one :: MPFloat
-one = MPLow.fromInt MPLow.Up (P.fromInteger 10) (int 1)
-
-#endif
-
-#ifdef MPFRRounded
-import qualified AERN2.MP.UseMPFR.Float.RoundedAdaptor as MPLow
+import qualified AERN2.MP.Float.UseRounded.RoundedAdaptor as MPLow
+import AERN2.MP.Float.UseRounded.Type
 
 one :: MPFloat
 one = MPLow.one
-
-#endif
-
-#ifdef HMPFR
-import qualified Data.Number.MPFR as MPLow
-
-one :: MPFloat
-one = MPLow.one
-#endif
 
 {- common functions -}
 

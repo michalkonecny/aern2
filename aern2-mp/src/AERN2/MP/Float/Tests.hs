@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-|
-    Module      :  AERN2.MP.UseMPFR.Float.Tests
+    Module      :  AERN2.MP.Float.Tests
     Description :  Tests for operations on arbitrary precision floats
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -18,7 +18,7 @@
     @
 -}
 
-module AERN2.MP.UseMPFR.Float.Tests
+module AERN2.MP.Float.Tests
   (
     specMPFloat, tMPFloat
     , (=~=), approxEqual, approxEqualWithArgs
@@ -40,11 +40,18 @@ import Test.QuickCheck
 import AERN2.Norm
 import AERN2.MP.Precision
 
-import AERN2.MP.UseMPFR.Float.Type
-import AERN2.MP.UseMPFR.Float.Arithmetic
-import AERN2.MP.UseMPFR.Float.Conversions
-import AERN2.MP.UseMPFR.Float.Operators
-import AERN2.MP.UseMPFR.Float.Constants
+#ifdef UseCDAR
+import AERN2.MP.Float.UseCDAR.Type
+import AERN2.MP.Float.UseCDAR.Arithmetic
+import AERN2.MP.Float.UseCDAR.Conversions
+#else
+import AERN2.MP.Float.UseRounded.Type
+import AERN2.MP.Float.UseRounded.Arithmetic
+import AERN2.MP.Float.UseRounded.Conversions
+#endif
+
+import AERN2.MP.Float.Operators
+import AERN2.MP.Float.Constants
 
 instance Arbitrary MPFloat where
   arbitrary =

@@ -1,5 +1,6 @@
+{-# LANGUAGE CPP #-}
 {-|
-    Module      :  AERN2.MP.UseMPFR.Float.Operators
+    Module      :  AERN2.MP.Float.Operators
     Description :  Infix operators for up/down-rounded floating-point numbers
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -11,10 +12,15 @@
     Infix operators for up/down-rounded floating-point numbers
 -}
 
-module AERN2.MP.UseMPFR.Float.Operators where
+module AERN2.MP.Float.Operators where
 
-import AERN2.MP.UseMPFR.Float.Type
-import AERN2.MP.UseMPFR.Float.Arithmetic
+#ifdef UseCDAR
+import AERN2.MP.Float.UseCDAR.Type
+import AERN2.MP.Float.UseCDAR.Arithmetic
+#else
+import AERN2.MP.Float.UseRounded.Type
+import AERN2.MP.Float.UseRounded.Arithmetic
+#endif
 
 infixl 6  +^, -^, +., -.
 infixl 7  *^, *., /^, /.

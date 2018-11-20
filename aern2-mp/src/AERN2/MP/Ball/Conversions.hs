@@ -1,5 +1,5 @@
 {-|
-    Module      :  AERN2.MP.UseMPFR.Ball.Conversions
+    Module      :  AERN2.MP.Ball.Conversions
     Description :  Conversions of arbitrary precision dyadic balls
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -10,7 +10,7 @@
 
     Conversions of arbitrary precision dyadic balls
 -}
-module AERN2.MP.UseMPFR.Ball.Conversions
+module AERN2.MP.Ball.Conversions
 (
   integerBounds
 )
@@ -23,14 +23,14 @@ import Data.Typeable
 import Data.Convertible
 
 import AERN2.MP.Dyadic (Dyadic, dyadic)
-import qualified AERN2.MP.UseMPFR.Float as MPFloat
-import AERN2.MP.UseMPFR.Float (mpFloat)
--- import AERN2.MP.UseMPFR.Float.Operators
+import qualified AERN2.MP.Float as MPFloat
+import AERN2.MP.Float (mpFloat)
+-- import AERN2.MP.Float.Operators
 import AERN2.MP.Precision
-import qualified AERN2.MP.UseMPFR.ErrorBound as EB
-import AERN2.MP.UseMPFR.ErrorBound (errorBound)
+import qualified AERN2.MP.ErrorBound as EB
+import AERN2.MP.ErrorBound (errorBound)
 
-import AERN2.MP.UseMPFR.Ball.Type
+import AERN2.MP.Ball.Type
 
 {--- extracting from a ball ---}
 
