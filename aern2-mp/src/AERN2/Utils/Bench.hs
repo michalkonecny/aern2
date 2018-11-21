@@ -14,7 +14,7 @@ module AERN2.Utils.Bench
 )
 where
 
-import Test.QuickCheck
+-- import Test.QuickCheck
 import Test.QuickCheck.Random (mkQCGen)
 import Test.QuickCheck.Gen (Gen(..))
 

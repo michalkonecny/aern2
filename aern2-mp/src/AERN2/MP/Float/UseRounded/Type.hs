@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveGeneric, DeriveDataTypeable, StandaloneDeriving #-}
 {-|
     Module      :  AERN2.MP.Float.UseRounded.Type
