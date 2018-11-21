@@ -9,9 +9,6 @@
     Portability :  portable
 
     Conversions and comparisons of arbitrary precision floating point numbers
-
-    Currently, we use hmpfr when compiling with ghc 7.10 and higher
-    and haskell-mpfr when compiling with ghc 7.8.
 -}
 
 module AERN2.MP.Float.UseRounded.Conversions

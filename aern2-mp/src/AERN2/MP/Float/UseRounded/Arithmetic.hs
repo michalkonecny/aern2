@@ -9,9 +9,6 @@
     Portability :  portable
 
     Arbitrary precision floating-point numbers with up/down-rounded operations.
-
-    Currently, we use hmpfr when compiling with ghc 7.10 and higher
-    and haskell-mpfr when compiling with ghc 7.8.
 -}
 
 module AERN2.MP.Float.UseRounded.Arithmetic
