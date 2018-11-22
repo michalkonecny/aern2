@@ -23,12 +23,16 @@ import MixedTypesNumPrelude
 import qualified Prelude as P
 -- import Data.Ratio
 
-#ifdef UseCDAR
+#ifdef USE_CDAR
+
 import AERN2.MP.Float.UseCDAR.Type
 import AERN2.MP.Float.UseCDAR.Conversions
+
 #else
+
 import AERN2.MP.Float.UseRounded.Type
 import AERN2.MP.Float.UseRounded.Conversions
+
 #endif
 
 import AERN2.MP.Float.Operators

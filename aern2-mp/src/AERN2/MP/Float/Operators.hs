@@ -14,12 +14,16 @@
 
 module AERN2.MP.Float.Operators where
 
-#ifdef UseCDAR
+#ifdef USE_CDAR
+
 import AERN2.MP.Float.UseCDAR.Type
 import AERN2.MP.Float.UseCDAR.Arithmetic
+
 #else
+
 import AERN2.MP.Float.UseRounded.Type
 import AERN2.MP.Float.UseRounded.Arithmetic
+
 #endif
 
 infixl 6  +^, -^, +., -.
