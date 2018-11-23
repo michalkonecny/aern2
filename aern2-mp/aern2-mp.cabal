@@ -48,7 +48,7 @@ library
     , template-haskell
     , mixed-types-num
   if flag(UseCDAR)
-    cpp-options: -DUseCDAR
+    cpp-options: -DUSE_CDAR
     build-depends:
       cdar
   else
@@ -72,6 +72,9 @@ library
     UndecidableInstances
   if flag(UseCDAR)
     exposed-modules:
+      AERN2.MP.Float.UseCDAR.Type
+      AERN2.MP.Float.UseCDAR.Arithmetic
+      AERN2.MP.Float.UseCDAR.Conversions
   else
     exposed-modules:
       AERN2.MP.Float.UseRounded.Type

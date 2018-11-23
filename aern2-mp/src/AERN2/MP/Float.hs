@@ -10,9 +10,6 @@
     Portability :  portable
 
     Arbitrary precision floating-point numbers with up/down-rounded operations.
-
-    Currently, we use hmpfr when compiling with ghc 7.10 and higher
-    and haskell-mpfr when compiling with ghc 7.8.
 -}
 
 module AERN2.MP.Float
@@ -40,14 +37,18 @@ import MixedTypesNumPrelude
 
 import AERN2.MP.Precision
 
-#ifdef UseCDAR
+#ifdef USE_CDAR
+
 import AERN2.MP.Float.UseCDAR.Type as Type
 import AERN2.MP.Float.UseCDAR.Arithmetic as Arithmetic
 import AERN2.MP.Float.UseCDAR.Conversions as Conversions
+
 #else
+
 import AERN2.MP.Float.UseRounded.Type as Type
 import AERN2.MP.Float.UseRounded.Arithmetic as Arithmetic
 import AERN2.MP.Float.UseRounded.Conversions as Conversions
+
 #endif
 
 import AERN2.MP.Float.Operators as Operators
