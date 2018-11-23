@@ -39,6 +39,7 @@ import Test.QuickCheck
 
 import AERN2.Norm
 import AERN2.MP.Precision
+import AERN2.MP.Float.BoundsCEDU
 
 #ifdef USE_CDAR
 
@@ -55,7 +56,6 @@ import AERN2.MP.Float.UseRounded.Conversions
 #endif
 
 import AERN2.MP.Float.Operators
-import AERN2.MP.Float.Constants
 
 instance Arbitrary MPFloat where
   arbitrary =
@@ -72,7 +72,7 @@ instance Arbitrary MPFloat where
           (s :: Integer) <- arbitrary
           ex <- choose (-20,10)
           let resultR = s * (10.0^!ex)
-          let result = fromRationalUp p resultR
+          let result = ceduCentre $ fromRationalCEDU p resultR
           return result
 
 frequencyElements :: ConvertibleExactly t Int => [(t, a)] -> Gen a
@@ -374,10 +374,11 @@ specMPFloat =
       it "sin(pi)=0" $ do
         property $ \ (p :: Precision) ->
           let
-            (=~~=) = approxEqualWithArgs [(piDown p,"pi")]
+            piA = ceduCentre $ piCEDU p
+            (=~~=) = approxEqualWithArgs [(piA,"pi")]
             infix 4 =~~=
           in
-          sinUp(piDown p) =~~= (fromIntegerUp p 0)
+          sinUp(piA) =~~= zero
       it "in [-1,1]" $ do
         property $ \ (x :: MPFloat) ->
           (abs x < 1000000)
@@ -409,7 +410,12 @@ specMPFloat =
           cosUp x >= -one
       it "cos(pi)=-1" $ do
         property $ \ (p :: Precision) ->
-          cosUp(piDown p) =~= (fromIntegerUp p (-1))
+          let
+            piA = ceduCentre $ piCEDU p
+            (=~~=) = approxEqualWithArgs [(piA,"pi")]
+            infix 4 =~~=
+          in
+          cosUp(piA) =~~= (-one)
       it "cos(x)^2 + sin(x)^2 = 1" $ do
         property $ \ (x :: MPFloat) ->
           (abs x < 1000000)

@@ -16,17 +16,17 @@ module AERN2.MP.Float
   (
    -- * Precision operations
    module AERN2.MP.Precision
+   -- * Helper structure
+   , BoundsCEDU(..)
    -- * The type definition and basic operations
    , module Type
    -- * Arithmetic operations
    , module Arithmetic
    , distUp, distDown, avgUp, avgDown
-   -- * Conversions, comparisons and norm
+   -- * Conversions, comparisons and norm, constants such as NaN, infinity
    , module Conversions
    -- * Infix operators for up/down-rounded operations
    , module Operators
-   -- * Constants such as NaN, infinity
-   , module Constants
    -- * Tests
    , module Tests
    )
@@ -36,6 +36,7 @@ import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 import AERN2.MP.Precision
+import AERN2.MP.Float.BoundsCEDU
 
 #ifdef USE_CDAR
 
@@ -52,7 +53,6 @@ import AERN2.MP.Float.UseRounded.Conversions as Conversions
 #endif
 
 import AERN2.MP.Float.Operators as Operators
-import AERN2.MP.Float.Constants as Constants
 import AERN2.MP.Float.Tests as Tests
 
 -- | Computes an upper bound to the distance @|x - y|@ of @x@ and @y@.

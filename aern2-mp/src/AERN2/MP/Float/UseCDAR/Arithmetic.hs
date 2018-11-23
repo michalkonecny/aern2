@@ -14,12 +14,13 @@
 module AERN2.MP.Float.UseCDAR.Arithmetic
   (
    -- * MPFloat basic arithmetic
-     addCentreErr, subCentreErr
-   , mulCentreErr, divCentreErr, recipCentreErr
+     addCEDU, subCEDU
+   , mulCEDU, divCEDU, recipCEDU
    -- * MPFloat selected constants and operations
-   , piCentreErr
-   , cosCentreErr, sinCentreErr
-   , sqrtCentreErr, expCentreErr, logCentreErr
+   , piCEDU
+   , cosCEDU, sinCEDU
+   , sqrtCEDU, expCEDU, logCEDU
+   , getBoundsCEDU
    )
 where
 
@@ -27,8 +28,10 @@ import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import AERN2.MP.Precision
+import AERN2.MP.Float.BoundsCEDU
 
 import qualified Data.CDAR as MPLow
+
 import AERN2.MP.Float.UseCDAR.Type
 
 {- common functions -}
@@ -39,69 +42,64 @@ instance CanNeg MPFloat where
 instance CanAbs MPFloat where
   abs = P.abs
 
-addCentreErr :: MPFloat -> MPFloat -> (MPFloat, MPFloat)
-addCentreErr = binaryCentreErr (P.+)
+addCEDU :: MPFloat -> MPFloat -> BoundsCEDU MPFloat
+addCEDU = binaryCEDU (P.+)
 
-subCentreErr :: MPFloat -> MPFloat -> (MPFloat, MPFloat)
-subCentreErr= binaryCentreErr (P.-)
+subCEDU :: MPFloat -> MPFloat -> BoundsCEDU MPFloat
+subCEDU= binaryCEDU (P.-)
 
-mulCentreErr :: MPFloat -> MPFloat -> (MPFloat, MPFloat)
-mulCentreErr= binaryCentreErr (P.*)
+mulCEDU :: MPFloat -> MPFloat -> BoundsCEDU MPFloat
+mulCEDU= binaryCEDU (P.*)
 
-divCentreErr :: MPFloat -> MPFloat -> (MPFloat, MPFloat)
-divCentreErr= binaryCentreErr (P./)
+divCEDU :: MPFloat -> MPFloat -> BoundsCEDU MPFloat
+divCEDU x y 
+    | y P.== (P.fromInteger 0) = getBoundsCEDU MPLow.Bottom
+    | otherwise = binaryCEDU (P./) x y
 
-recipCentreErr :: MPFloat -> (MPFloat, MPFloat)
-recipCentreErr = unaryCentreErr P.recip
+recipCEDU :: MPFloat -> BoundsCEDU MPFloat
+recipCEDU = unaryCEDU P.recip
 
 {- special constants and functions -}
 
-piCentreErr :: Precision -> (MPFloat, MPFloat)
-piCentreErr pp = 
-    getCentreErr $ MPLow.piA (p2mpfrPrec pp)
+piCEDU :: Precision -> BoundsCEDU MPFloat
+piCEDU pp = 
+    getBoundsCEDU $ MPLow.piA (p2mpfrPrec pp)
 
-cosCentreErr :: MPFloat -> (MPFloat, MPFloat)
-cosCentreErr = unaryPrecCentreErr 0 MPLow.cosA
+cosCEDU :: MPFloat -> BoundsCEDU MPFloat
+cosCEDU = unaryPrecCEDU 0 MPLow.cosA
 
-sinCentreErr :: MPFloat -> (MPFloat, MPFloat)
-sinCentreErr = unaryPrecCentreErr 0 MPLow.sinA
+sinCEDU :: MPFloat -> BoundsCEDU MPFloat
+sinCEDU = unaryPrecCEDU 0 MPLow.sinA
             
-sqrtCentreErr :: MPFloat -> (MPFloat, MPFloat)
-sqrtCentreErr = unaryPrecCentreErr 0 MPLow.sqrtA
+sqrtCEDU :: MPFloat -> BoundsCEDU MPFloat
+sqrtCEDU = unaryPrecCEDU 0 MPLow.sqrtA
             
-expCentreErr :: MPFloat -> (MPFloat, MPFloat)
-expCentreErr = unaryPrecCentreErr 0 MPLow.expA
+expCEDU :: MPFloat -> BoundsCEDU MPFloat
+expCEDU = unaryPrecCEDU 0 MPLow.expA
             
-logCentreErr :: MPFloat -> (MPFloat, MPFloat)
-logCentreErr = unaryPrecCentreErr 0 MPLow.logA
+logCEDU :: MPFloat -> BoundsCEDU MPFloat
+logCEDU = unaryPrecCEDU 0 MPLow.logA
             
 {- auxiliary functions to automatically determine result precision from operand precisions -}
 
-binaryCentreErr ::
+binaryCEDU ::
     (MPFloat -> MPFloat -> MPFloat) ->
-    (MPFloat -> MPFloat -> (MPFloat, MPFloat))
-binaryCentreErr op x y =
-    getCentreErr $ op x y
+    (MPFloat -> MPFloat -> BoundsCEDU MPFloat)
+binaryCEDU op x y =
+    getBoundsCEDU $ op x y
 
-unaryCentreErr ::
+unaryCEDU ::
     (MPFloat -> MPFloat) ->
-    (MPFloat -> (MPFloat, MPFloat))
-unaryCentreErr op x =
-    getCentreErr $ op x
+    (MPFloat -> BoundsCEDU MPFloat)
+unaryCEDU op x =
+    getBoundsCEDU $ op x
 
-unaryPrecCentreErr ::
+unaryPrecCEDU ::
     Integer ->
     (MPLow.Precision -> MPFloat -> MPFloat) ->
-    (MPFloat -> (MPFloat, MPFloat))
-unaryPrecCentreErr addPrec op x@(MPLow.Approx _ _ p) =
-    getCentreErr $ op (p P.+ (int addPrec)) x
-unaryPrecCentreErr _ _ MPLow.Bottom =
-    error "unaryPrecCentreErr: Bottom"
-
-
-getCentreErr :: MPFloat -> (MPFloat, MPFloat)
-getCentreErr (MPLow.Approx m e s) = 
-    (MPLow.Approx m 0 s, MPLow.Approx e 0 s)
-getCentreErr MPLow.Bottom =
-    error "getCentreErr: Bottom"
+    (MPFloat -> BoundsCEDU MPFloat)
+unaryPrecCEDU addPrec op x@(MPLow.Approx _ _ s) =
+    getBoundsCEDU $ op ((-s) P.+ (int addPrec)) x
+unaryPrecCEDU _ _ MPLow.Bottom =
+    error "unaryPrecCEDU: Bottom"
     

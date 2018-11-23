@@ -15,19 +15,21 @@
 module AERN2.MP.Float.UseCDAR.Type
   (
    -- * MPFloat numbers and their basic operations
-   MPFloat, setPrecisionUp, setPrecisionDown
+   MPFloat, setPrecisionCEDU
    , p2mpfrPrec
-  --  , downUp2centerError
+   , getBoundsCEDU
    )
 where
 
 import MixedTypesNumPrelude
 import qualified Prelude as P
 
-import AERN2.MP.Precision
-
 import Data.Bits (unsafeShiftL)
 import Data.Typeable
+
+import AERN2.Norm
+import AERN2.MP.Precision
+import AERN2.MP.Float.BoundsCEDU
 
 import qualified Data.CDAR as MPLow
 
@@ -39,32 +41,33 @@ deriving instance (Typeable MPFloat)
 p2mpfrPrec :: Precision -> MPLow.Precision
 p2mpfrPrec = P.fromInteger . integer
 
+getBoundsCEDU :: MPFloat -> BoundsCEDU MPFloat
+getBoundsCEDU (MPLow.Approx m e s) = 
+  BoundsCEDU 
+    (MPLow.Approx m 0 s) (MPLow.Approx e 0 s)
+    (MPLow.Approx (m-e) 0 s) (MPLow.Approx (m+e) 0 s)
+getBoundsCEDU MPLow.Bottom =
+  BoundsCEDU
+    MPLow.Bottom MPLow.Bottom MPLow.Bottom MPLow.Bottom
+
 instance HasPrecision MPFloat where
-  getPrecision (MPLow.Approx _ _ p) = prec (P.toInteger $ - p)
+  getPrecision (MPLow.Approx _ _ s) = prec (P.toInteger $ -s)
   getPrecision MPLow.Bottom = error "illegal MPFloat (Bottom)"
   
 
 instance CanSetPrecision MPFloat where
-  setPrecision = setPrecisionUp
+  setPrecision p = ceduCentre . setPrecisionCEDU p
 
-setPrecisionUp :: Precision -> MPFloat -> MPFloat
-setPrecisionUp = setPrecisionWithRound MPLow.upperA
-
-setPrecisionDown :: Precision -> MPFloat -> MPFloat
-setPrecisionDown = setPrecisionWithRound MPLow.lowerA
-
-setPrecisionWithRound :: (MPFloat -> MPFloat) -> Precision -> MPFloat -> MPFloat
-setPrecisionWithRound roundFn pp x@(MPLow.Approx m _ s)
-  | s < -p = roundFn $ MPLow.limitSize p x
-  | s == -p = x
-  | otherwise = MPLow.Approx (unsafeShiftL m (int $ s+p)) 0 (-p)
+setPrecisionCEDU :: Precision -> MPFloat -> BoundsCEDU MPFloat
+setPrecisionCEDU pp x@(MPLow.Approx m _ s)
+  | s < -p = getBoundsCEDU $ MPLow.limitSize p x
+  | s == -p = getBoundsCEDU x
+  | otherwise = getBoundsCEDU $ MPLow.Approx (unsafeShiftL m (int $ s+p)) 0 (-p)
   where
   p = p2mpfrPrec pp
-setPrecisionWithRound _ _ MPLow.Bottom = MPLow.Bottom
+setPrecisionCEDU _ MPLow.Bottom = error "setPrecisionCentreErr: Bottom"
 
--- downUp2centerError :: (MPFloat, MPFloat) -> (MPFloat, MPFloat)
--- downUp2centerError (MPLow.Approx l _eL sL, MPLow.Approx u _eR _sR)
---   -- | eL == 0 && eR == 0 && sL == sR = && even (l+r)
---     = (MPLow.Approx ((l+u) `P.div` 2) 0 sL, MPLow.Approx ((u-l) `P.div` 2) 0 sL)
--- downUp2centerError _ = error "downUp2centerError: incompatible operands"
-  
+instance HasNorm MPFloat where
+  getNormLog (MPLow.Approx m _ s) = (getNormLog m) + (integer s)
+  getNormLog MPLow.Bottom = error "getNormLog undefined for Bottom"
+

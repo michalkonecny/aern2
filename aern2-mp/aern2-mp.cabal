@@ -89,8 +89,8 @@ library
     AERN2.MP.Accuracy
     AERN2.MP.Enclosure
     AERN2.MP.ErrorBound
+    AERN2.MP.Float.BoundsCEDU
     AERN2.MP.Float.Operators
-    AERN2.MP.Float.Constants
     AERN2.MP.Float.Tests
     AERN2.MP.Float
     AERN2.MP.Dyadic
