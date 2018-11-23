@@ -148,7 +148,7 @@ instance ConvertibleExactly Int Dyadic where
 
 instance ConvertibleExactly Rational Dyadic where
   safeConvertExactly q
-    | isDyadic = Right $ Dyadic (fromRationalUp (prec $ max 2 (dp + np + 1)) q)
+    | isDyadic = Right $ Dyadic (ceduCentre $ fromRationalCEDU (prec $ max 2 (dp + np + 1)) q)
     | otherwise = convError "this number is not dyadic" q
     where
     isDyadic = d == 2^!dp
@@ -333,7 +333,7 @@ instance
 {- addition -}
 
 instance CanAddAsymmetric Dyadic Dyadic where
-  add = lift2 addDown addUp
+  add = lift2 addCEDU
 
 instance CanAddAsymmetric Integer Dyadic where
   type AddType Integer Dyadic = Dyadic
@@ -383,7 +383,7 @@ instance
 {- subtraction -}
 
 instance CanSub Dyadic Dyadic where
-  sub = lift2 subDown subUp
+  sub = lift2 subCEDU
 
 instance CanSub Integer Dyadic where
   type SubType Integer Dyadic = Dyadic
@@ -434,7 +434,7 @@ instance
 {- multiplication -}
 
 instance CanMulAsymmetric Dyadic Dyadic where
-  mul = lift2 mulDown mulUp
+  mul = lift2 mulCEDU
 
 instance CanMulAsymmetric Integer Dyadic where
   type MulType Integer Dyadic = Dyadic
@@ -574,23 +574,23 @@ instance
   pow = lift2TCE pow
 
 lift2 ::
-  (MPFloat -> MPFloat -> MPFloat) ->
-  (MPFloat -> MPFloat -> MPFloat) ->
+  (MPFloat -> MPFloat -> BoundsCEDU MPFloat) ->
   (Dyadic -> Dyadic -> Dyadic)
-lift2 opDown opUp (Dyadic x0) (Dyadic y0) = Dyadic (opExact x0 y0)
+lift2 opCEDU (Dyadic x0) (Dyadic y0) = Dyadic (opExact x0 y0)
   where
     opExact x y
-      | rUp == rDown = rUp
+      | rE P.== zero = rC
       | otherwise =
-          maybeTrace (printf "Dyadic.lift2: rUp = %s; rDown = %s; p = %s" (show rUp) (show rDown) (show $ integer p)) $
+          maybeTrace (printf "Dyadic.lift2: rC = %s; rE = %s; p = %s" (show rC) (show rE) (show $ integer p)) $
           opExact xH yH
       where
-      rUp = opUp x y
-      rDown = opDown x y
+      rC = ceduCentre rCEDU
+      rE = ceduErr rCEDU
+      rCEDU = opCEDU x y
       xH = setPrecision pH x
       yH = setPrecision pH y
       pH = precisionTimes2 p
-      p = getPrecision rUp
+      p = getPrecision rC
 
 instance Arbitrary Dyadic where
   arbitrary =
