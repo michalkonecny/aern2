@@ -19,6 +19,8 @@ module AERN2.MP.Float.UseRounded.Conversions
    , CanBeMPFloat, mpFloat
    , fromIntegerUp, fromIntegerDown
    , fromRationalUp, fromRationalDown
+   -- * comparisons and constants (see also instances)
+   , zero, one, two
    )
 where
 
@@ -156,3 +158,28 @@ instance CanTestPosNeg MPFloat
 {- min, max -}
 
 instance CanMinMaxAsymmetric MPFloat MPFloat
+
+{- constants -}
+
+zero, one, two :: MPFloat
+zero = mpFloat 0
+one = mpFloat 1
+two = mpFloat 2
+
+itisNaN :: MPFloat -> Bool
+itisNaN x = 
+  fst (mulCentreErr x one) P./= x
+
+itisInfinite :: MPFloat -> Bool
+itisInfinite x =
+  fst (mulCentreErr x two) P.== x
+  &&
+  x P./= zero
+
+instance CanTestFinite MPFloat where
+  isInfinite = itisInfinite
+  isFinite x = not (itisInfinite x || itisNaN x)
+
+instance CanTestNaN MPFloat where
+  isNaN = itisNaN
+
