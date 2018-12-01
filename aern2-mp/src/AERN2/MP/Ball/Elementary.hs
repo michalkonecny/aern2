@@ -29,7 +29,7 @@ import qualified AERN2.MP.Float as MPFloat
 import AERN2.MP.Float (MPFloat, mpFloat)
 -- import AERN2.MP.Float.Operators
 import AERN2.MP.Precision
-import qualified AERN2.MP.ErrorBound as EB
+-- import qualified AERN2.MP.ErrorBound as EB
 import AERN2.MP.ErrorBound (errorBound)
 
 import AERN2.MP.Ball.Type
@@ -41,10 +41,9 @@ import AERN2.MP.Ball.Field ()
 {- trigonometrics -}
 
 piBallP :: Precision -> MPBall
-piBallP p = MPBall piUp (piUp `EB.subMP` piDown)
+piBallP p = MPBall piC (errorBound piErr)
   where
-  piUp = MPFloat.piUp p
-  piDown = MPFloat.piDown p
+  (piC, piErr) = MPFloat.ceduCentreErr $ MPFloat.piCEDU p
 
 instance CanSinCos MPBall where
   sin = sinB 1
@@ -53,7 +52,7 @@ instance CanSinCos MPBall where
 sinB :: Integer -> MPBall -> MPBall
 sinB i x =
     -- increasingPrecisionUntilNotImproving (fromApproxWithLipschitz MPFloat.sinDown MPFloat.sinUp lip) x
-    fromApproxWithLipschitz MPFloat.sinDown MPFloat.sinUp lip x
+    fromApproxWithLipschitz MPFloat.sinCEDU lip x
     where
     lip
         | i == 0 = mpFloat 1
@@ -62,7 +61,7 @@ sinB i x =
 cosB :: Integer -> MPBall -> MPBall
 cosB i x =
     -- increasingPrecisionUntilNotImproving (fromApproxWithLipschitz MPFloat.cosDown MPFloat.cosUp lip) x
-    fromApproxWithLipschitz MPFloat.cosDown MPFloat.cosUp lip x
+    fromApproxWithLipschitz MPFloat.cosCEDU lip x
     where
     lip
         | i == 0 = mpFloat 1
@@ -131,16 +130,14 @@ instance CanSqrt MPBall where
     Lipschitz constant for @f@, i.e. @|f(x) - f(y)| <= lip * |x - y|@ for all @x@,@y@.
 -}
 fromApproxWithLipschitz ::
-    (MPFloat -> MPFloat) {-^ @fDown@: a version of @f@ on MPFloat rounding *downwards* -} ->
-    (MPFloat -> MPFloat) {-^ @fUp@: a version of @f@ on MPFloat rounding *upwards* -} ->
+    (MPFloat -> MPFloat.BoundsCEDU MPFloat) {-^ @fCEDU@: a version of @f@ on MPFloat returning rigorous bounds -} ->
     MPFloat {-^ @lip@ a Lipschitz constant for @f@, @lip > 0@ -} ->
     (MPBall -> MPBall) {-^ @f@ on MPBall rounding *outwards* -}
-fromApproxWithLipschitz fDown fUp lip _x@(MPBall xc xe) =
-    normalize $ MPBall fxc err
+fromApproxWithLipschitz fCEDU lip _x@(MPBall xc xe) =
+    normalize $ MPBall fxCP err
     where
-    fxl = fDown xc
-    fxu = fUp xc
-    (MPBall fxc fxe) =
-      setPrecision (getPrecision xc) $ -- beware, some MPFR functions increase precision, eg sine and cosine
-        fromEndpointsMP fxl fxu
+    (fxC, fxErr) = MPFloat.ceduCentreErr $ fCEDU xc
+    (MPBall fxCP fxe) =
+      setPrecision (getPrecision xc) $ -- beware, some MPFloat functions may increase precision, eg sine and cosine
+        (MPBall fxC (errorBound fxErr))
     err = (errorBound lip) * xe  +  fxe

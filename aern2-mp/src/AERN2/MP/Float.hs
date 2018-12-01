@@ -15,9 +15,9 @@
 module AERN2.MP.Float
   (
    -- * Precision operations
-   module AERN2.MP.Precision
+   module Precision
    -- * Helper structure
-   , BoundsCEDU(..)
+   , module BoundsCEDU
    -- * The type definition and basic operations
    , module Type
    -- * Arithmetic operations
@@ -35,8 +35,8 @@ where
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
-import AERN2.MP.Precision
-import AERN2.MP.Float.BoundsCEDU
+import AERN2.MP.Precision as Precision
+import AERN2.MP.Float.BoundsCEDU as BoundsCEDU
 
 #ifdef USE_CDAR
 

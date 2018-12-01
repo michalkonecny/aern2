@@ -15,6 +15,8 @@
 module AERN2.MP.Float.BoundsCEDU
 (
     BoundsCEDU(..)
+    , ceduDownUp
+    , ceduCentreErr
 )
 where
 
@@ -26,3 +28,9 @@ data BoundsCEDU a =
   , ceduDown :: a
   , ceduUp :: a
   }
+
+ceduDownUp :: BoundsCEDU a -> (a,a)
+ceduDownUp cedu = (ceduDown cedu, ceduUp cedu)
+
+ceduCentreErr :: BoundsCEDU a -> (a,a)
+ceduCentreErr cedu = (ceduCentre cedu, ceduErr cedu)

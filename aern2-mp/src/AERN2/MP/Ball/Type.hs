@@ -44,7 +44,6 @@ import AERN2.MP.Float (MPFloat, mpFloat)
 import AERN2.MP.Float.Operators
 import AERN2.MP.Precision
 import AERN2.MP.Accuracy
-import qualified AERN2.MP.ErrorBound as EB
 import AERN2.MP.ErrorBound (ErrorBound, errorBound)
 import AERN2.MP.Enclosure
 
@@ -241,7 +240,7 @@ instance HasApproximate MPBall where
         isAccurate = getAccuracy b < ac
         approx
             | closeToN = n
-            | otherwise = MPFloat.setPrecisionUp (prec (fromAccuracy ac)) x
+            | otherwise = MPFloat.ceduCentre $ MPFloat.setPrecisionCEDU (prec (fromAccuracy ac)) x
             where
             n = mpFloat $ round $ rational x
             closeToN = ((abs $ x -^ n) <= e)
@@ -251,12 +250,13 @@ instance HasPrecision MPBall where
 
 instance CanSetPrecision MPBall where
     setPrecision p (MPBall x e)
-        | p >= pPrev = MPBall xUp e
-        | otherwise  = MPBall xUp (e + (xUp `EB.subMP` xDown))
+        | p >= pPrev = MPBall x e
+        | otherwise  = MPBall xC (e + (xErr))
         where
         pPrev = MPFloat.getPrecision x
-        xUp = MPFloat.setPrecisionUp p x
-        xDown = MPFloat.setPrecisionDown p x
+        xErr = MPFloat.ceduErr xCEDU
+        xC = MPFloat.ceduCentre xCEDU
+        xCEDU = MPFloat.setPrecisionCEDU p x
 
 {- negation & abs -}
 
