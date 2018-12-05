@@ -31,7 +31,7 @@ where
 import MixedTypesNumPrelude
 
 import AERN2.MP.Precision
-import AERN2.MP.Float.BoundsCEDU
+import AERN2.MP.Float.Aux
 
 #ifdef USE_CDAR
 

@@ -1,8 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-|
-    Module      :  AERN2.MP.Float.BoundsCEDU
-    Description :  Auxiliary structure for bounds on result
+    Module      :  AERN2.MP.Float.Aux
+    Description :  Auxiliary structures
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -10,9 +10,9 @@
     Stability   :  experimental
     Portability :  portable
 
-    Auxiliary structure for bounds on result
+    Auxiliary structures for bounds on result and printing.
 -}
-module AERN2.MP.Float.BoundsCEDU
+module AERN2.MP.Float.Aux
 (
     BoundsCEDU(..)
     , ceduDownUp

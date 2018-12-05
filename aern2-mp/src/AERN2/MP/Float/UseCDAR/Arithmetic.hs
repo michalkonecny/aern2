@@ -28,7 +28,7 @@ import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import AERN2.MP.Precision
-import AERN2.MP.Float.BoundsCEDU
+import AERN2.MP.Float.Aux
 
 import qualified Data.CDAR as MPLow
 

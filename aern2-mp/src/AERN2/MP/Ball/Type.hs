@@ -40,7 +40,7 @@ import AERN2.Norm
 
 import AERN2.MP.Dyadic
 import qualified AERN2.MP.Float as MPFloat
-import AERN2.MP.Float (MPFloat, mpFloat)
+import AERN2.MP.Float (MPFloat, mpFloat, showMPFloat)
 import AERN2.MP.Float.Operators
 import AERN2.MP.Precision
 import AERN2.MP.Accuracy
@@ -60,7 +60,7 @@ instance Show MPBall
     where
     show b@(MPBall x _e) =
       -- printf "[%s ± %s](prec=%s)" (show x) (showAC $ getAccuracy b) (show $ integer $ getPrecision b)
-      printf "[%s ± %s]" (show x) (showAC $ getAccuracy b)
+      printf "[%s ± %s]" (showMPFloat x) (showAC $ getAccuracy b)
       -- "[" ++ show x ++ " ± " ++ show e ++ "](prec=" ++ (show $ integer $ getPrecision x) ++ ")"
       where
       showAC Exact = "0"

@@ -15,7 +15,9 @@
 module AERN2.MP.Float.UseCDAR.Type
   (
    -- * MPFloat numbers and their basic operations
-   MPFloat, setPrecisionCEDU
+   MPFloat
+   , showMPFloat
+   , setPrecisionCEDU
    , p2mpfrPrec
    , getBoundsCEDU
    )
@@ -29,12 +31,15 @@ import Data.Typeable
 
 import AERN2.Norm
 import AERN2.MP.Precision
-import AERN2.MP.Float.BoundsCEDU
+import AERN2.MP.Float.Aux
 
 import qualified Data.CDAR as MPLow
 
 {-| Multiple-precision floating-point type based on CDAR.Approx with 0 radius. -}
 type MPFloat = MPLow.Approx
+
+showMPFloat :: MPLow.Approx -> String
+showMPFloat x = MPLow.showA x
 
 deriving instance (Typeable MPFloat)
 
@@ -70,4 +75,3 @@ setPrecisionCEDU _ MPLow.Bottom = error "setPrecisionCentreErr: Bottom"
 instance HasNorm MPFloat where
   getNormLog (MPLow.Approx m _ s) = (getNormLog m) + (integer s)
   getNormLog MPLow.Bottom = error "getNormLog undefined for Bottom"
-
