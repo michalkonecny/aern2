@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-|
     Module      :  AERN2.MP.Float
     Description :  Arbitrary precision floating point numbers
@@ -38,19 +37,9 @@ import MixedTypesNumPrelude
 import AERN2.MP.Precision as Precision
 import AERN2.MP.Float.Aux as Aux
 
-#ifdef USE_CDAR
-
-import AERN2.MP.Float.UseCDAR.Type as Type
-import AERN2.MP.Float.UseCDAR.Arithmetic as Arithmetic
-import AERN2.MP.Float.UseCDAR.Conversions as Conversions
-
-#else
-
-import AERN2.MP.Float.UseRounded.Type as Type
-import AERN2.MP.Float.UseRounded.Arithmetic as Arithmetic
-import AERN2.MP.Float.UseRounded.Conversions as Conversions
-
-#endif
+import AERN2.MP.Float.Type as Type
+import AERN2.MP.Float.Arithmetic as Arithmetic
+import AERN2.MP.Float.Conversions as Conversions
 
 import AERN2.MP.Float.Operators as Operators
 import AERN2.MP.Float.Tests as Tests

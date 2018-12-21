@@ -1,5 +1,5 @@
 {-|
-    Module      :  AERN2.MP.Float.UseCDAR.Arithmetic
+    Module      :  AERN2.MP.Float.Arithmetic
     Description :  Arbitrary precision floating point numbers
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -11,7 +11,7 @@
     Arbitrary precision floating-point numbers with up/down-rounded operations.
 -}
 
-module AERN2.MP.Float.UseCDAR.Arithmetic
+module AERN2.MP.Float.Arithmetic
   (
    -- * MPFloat basic arithmetic
      addCEDU, subCEDU
@@ -32,7 +32,7 @@ import AERN2.MP.Float.Aux
 
 import qualified Data.CDAR as MPLow
 
-import AERN2.MP.Float.UseCDAR.Type
+import AERN2.MP.Float.Type
 
 {- common functions -}
 

@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveGeneric, DeriveDataTypeable, StandaloneDeriving #-}
 {-|
-    Module      :  AERN2.MP.Float.UseCDAR.Type
+    Module      :  AERN2.MP.Float.Type
     Description :  Arbitrary precision floating point numbers (via cdar)
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -9,10 +9,10 @@
     Stability   :  experimental
     Portability :  portable
 
-    Arbitrary precision floating-point numbers using MPFR via package rounded.
+    Arbitrary precision floating-point numbers, re-using CDAR Approx type.
 -}
 
-module AERN2.MP.Float.UseCDAR.Type
+module AERN2.MP.Float.Type
   (
    -- * MPFloat numbers and their basic operations
    MPFloat

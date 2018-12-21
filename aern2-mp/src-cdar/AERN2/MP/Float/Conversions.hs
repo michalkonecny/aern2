@@ -1,5 +1,5 @@
 {-|
-    Module      :  AERN2.MP.Float.UseCDAR.Conversions
+    Module      :  AERN2.MP.Float.Conversions
     Description :  Conversions and comparisons of arbitrary precision floats
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -11,7 +11,7 @@
     Conversions and comparisons of arbitrary precision floating point numbers
 -}
 
-module AERN2.MP.Float.UseCDAR.Conversions
+module AERN2.MP.Float.Conversions
   (
    -- * MPFloat to other types (see also instances)
    toDouble
@@ -37,8 +37,8 @@ import AERN2.MP.Float.Aux
 
 import qualified Data.CDAR as MPLow
 
-import AERN2.MP.Float.UseCDAR.Type
-import AERN2.MP.Float.UseCDAR.Arithmetic
+import AERN2.MP.Float.Type
+import AERN2.MP.Float.Arithmetic
 
 
 {- conversions to MPFloat -}

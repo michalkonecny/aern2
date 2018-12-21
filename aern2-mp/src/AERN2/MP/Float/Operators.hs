@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-|
     Module      :  AERN2.MP.Float.Operators
     Description :  Infix operators for up/down-rounded floating-point numbers
@@ -33,19 +32,9 @@ import MixedTypesNumPrelude
 import AERN2.MP.Precision
 import AERN2.MP.Float.Aux
 
-#ifdef USE_CDAR
-
-import AERN2.MP.Float.UseCDAR.Type
-import AERN2.MP.Float.UseCDAR.Arithmetic
-import AERN2.MP.Float.UseCDAR.Conversions
-
-#else
-
-import AERN2.MP.Float.UseRounded.Type
-import AERN2.MP.Float.UseRounded.Arithmetic
-import AERN2.MP.Float.UseRounded.Conversions
-
-#endif
+import AERN2.MP.Float.Type
+import AERN2.MP.Float.Arithmetic
+import AERN2.MP.Float.Conversions
 
 infixl 6  +^, -^, +., -.
 infixl 7  *^, *., /^, /.
