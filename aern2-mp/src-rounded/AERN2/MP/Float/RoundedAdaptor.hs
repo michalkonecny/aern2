@@ -12,9 +12,9 @@
 
     Numeric.Rounded + variable precision
 -}
-module AERN2.MP.Float.UseRounded.RoundedAdaptor
+module AERN2.MP.Float.RoundedAdaptor
 (
-  module AERN2.MP.Float.UseRounded.RoundedAdaptor
+  module AERN2.MP.Float.RoundedAdaptor
 , module Numeric.Rounded.Simple
 )
 where

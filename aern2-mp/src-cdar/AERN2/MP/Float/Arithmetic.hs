@@ -20,7 +20,6 @@ module AERN2.MP.Float.Arithmetic
    , piCEDU
    , cosCEDU, sinCEDU
    , sqrtCEDU, expCEDU, logCEDU
-   , getBoundsCEDU
    )
 where
 
@@ -28,10 +27,10 @@ import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import AERN2.MP.Precision
-import AERN2.MP.Float.Aux
 
 import qualified Data.CDAR as MPLow
 
+import AERN2.MP.Float.Aux
 import AERN2.MP.Float.Type
 
 {- common functions -}
@@ -46,10 +45,10 @@ addCEDU :: MPFloat -> MPFloat -> BoundsCEDU MPFloat
 addCEDU = binaryCEDU (P.+)
 
 subCEDU :: MPFloat -> MPFloat -> BoundsCEDU MPFloat
-subCEDU= binaryCEDU (P.-)
+subCEDU = binaryCEDU (P.-)
 
 mulCEDU :: MPFloat -> MPFloat -> BoundsCEDU MPFloat
-mulCEDU= binaryCEDU (P.*)
+mulCEDU = binaryCEDU (P.*)
 
 divCEDU :: MPFloat -> MPFloat -> BoundsCEDU MPFloat
 divCEDU x y 

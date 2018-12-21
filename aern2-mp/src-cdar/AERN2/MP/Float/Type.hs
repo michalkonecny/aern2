@@ -38,7 +38,7 @@ import qualified Data.CDAR as MPLow
 {-| Multiple-precision floating-point type based on CDAR.Approx with 0 radius. -}
 type MPFloat = MPLow.Approx
 
-showMPFloat :: MPLow.Approx -> String
+showMPFloat :: MPFloat -> String
 showMPFloat x = MPLow.showA x
 
 deriving instance (Typeable MPFloat)

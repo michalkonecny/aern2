@@ -70,6 +70,9 @@ library
     FlexibleContexts,
     FlexibleInstances,
     UndecidableInstances
+  if !flag(UseCDAR)
+    exposed-modules:
+      AERN2.MP.Float.RoundedAdaptor
   exposed-modules:
     -- modules that depend on backend choice:
     AERN2.MP.Float.Type

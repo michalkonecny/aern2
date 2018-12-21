@@ -1,5 +1,5 @@
 {-|
-    Module      :  AERN2.MP.Float.UseRounded.Arithmetic
+    Module      :  AERN2.MP.Float.Arithmetic
     Description :  Arbitrary precision floating point numbers
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -11,15 +11,17 @@
     Arbitrary precision floating-point numbers with up/down-rounded operations.
 -}
 
-module AERN2.MP.Float.UseRounded.Arithmetic
+module AERN2.MP.Float.Arithmetic
   (
    -- * MPFloat basic arithmetic
-     addUp, addDown, subUp, subDown
-   , mulUp, mulDown, divUp, divDown, recipUp, recipDown
+     addCEDU, subCEDU
+   , mulCEDU, divCEDU, recipCEDU
    -- * MPFloat selected constants and operations
-   , piUp, piDown
-   , cosUp, cosDown, sinUp, sinDown
-   , sqrtUp, sqrtDown, expUp, expDown, logUp, logDown
+   , piCEDU
+   , cosCEDU, sinCEDU
+   , sqrtCEDU, expCEDU, logCEDU
+   -- * auxiliary functions
+   , constCEDU, unaryCEDU, binaryCEDU
    )
 where
 
@@ -28,8 +30,10 @@ import qualified Prelude as P
 
 import AERN2.MP.Precision
 
-import qualified AERN2.MP.Float.UseRounded.RoundedAdaptor as MPLow
-import AERN2.MP.Float.UseRounded.Type
+import qualified AERN2.MP.Float.RoundedAdaptor as MPLow
+
+import AERN2.MP.Float.Aux
+import AERN2.MP.Float.Type
 
 one :: MPFloat
 one = MPLow.one
@@ -37,112 +41,77 @@ one = MPLow.one
 {- common functions -}
 
 instance CanNeg MPFloat where
-  negate = unaryUp MPLow.neg
+  negate = ceduUp . unaryCEDU MPLow.neg
 
 instance CanAbs MPFloat where
   abs x
     | x P.< MPLow.zero = negate x
     | otherwise = x
 
-addUp, addDown :: MPFloat -> MPFloat -> MPFloat
-addUp = binaryUp True MPLow.add
-addDown = binaryDown True MPLow.add
 
-subUp, subDown :: MPFloat -> MPFloat -> MPFloat
-subUp = binaryUp True MPLow.sub
-subDown = binaryDown True MPLow.sub
+addCEDU :: MPFloat -> MPFloat -> BoundsCEDU MPFloat
+addCEDU = binaryCEDU MPLow.add
 
-mulUp, mulDown :: MPFloat -> MPFloat -> MPFloat
-mulUp = binaryUp True MPLow.mul
-mulDown = binaryDown True MPLow.mul
+subCEDU :: MPFloat -> MPFloat -> BoundsCEDU MPFloat
+subCEDU = binaryCEDU MPLow.sub
 
-divUp,divDown :: MPFloat -> MPFloat -> MPFloat
-divUp = binaryUp False MPLow.div
-divDown = binaryDown False MPLow.div
+mulCEDU :: MPFloat -> MPFloat -> BoundsCEDU MPFloat
+mulCEDU = binaryCEDU MPLow.mul
 
-recipUp :: MPFloat -> MPFloat
-recipUp x = divUp one x
+divCEDU :: MPFloat -> MPFloat -> BoundsCEDU MPFloat
+divCEDU = binaryCEDU MPLow.div
 
-recipDown :: MPFloat -> MPFloat
-recipDown x = divDown one x
-
+recipCEDU :: MPFloat -> BoundsCEDU MPFloat
+recipCEDU x = divCEDU one x
 
 {- special constants and functions -}
 
-piUp :: Precision -> MPFloat
-piUp p =
-    MPLow.pi MPLow.Up (p2mpfrPrec p)
+piCEDU :: Precision -> BoundsCEDU MPFloat
+piCEDU pp = 
+    constCEDU MPLow.pi (p2mpfrPrec pp)
 
-piDown :: Precision -> MPFloat
-piDown p =
-    MPLow.pi MPLow.Down (p2mpfrPrec p)
+cosCEDU :: MPFloat -> BoundsCEDU MPFloat
+cosCEDU = unaryCEDU MPLow.cos
 
-cosUp :: MPFloat -> MPFloat
-cosUp = unaryUp MPLow.cos
-
-cosDown :: MPFloat -> MPFloat
-cosDown = unaryDown MPLow.cos
-
-sinUp :: MPFloat -> MPFloat
-sinUp = unaryUp MPLow.sin
-
-sinDown :: MPFloat -> MPFloat
-sinDown = unaryDown MPLow.sin
-
-sqrtUp :: MPFloat -> MPFloat
-sqrtUp = unaryUp MPLow.sqrt
-
-sqrtDown :: MPFloat -> MPFloat
-sqrtDown = unaryDown MPLow.sqrt
-
-expUp :: MPFloat -> MPFloat
-expUp = unaryUp MPLow.exp
-
-expDown :: MPFloat -> MPFloat
-expDown = unaryDown MPLow.exp
-
-logUp :: MPFloat -> MPFloat
-logUp = unaryUp MPLow.log
-
-logDown :: MPFloat -> MPFloat
-logDown = unaryDown MPLow.log
+sinCEDU :: MPFloat -> BoundsCEDU MPFloat
+sinCEDU = unaryCEDU MPLow.sin
+            
+sqrtCEDU :: MPFloat -> BoundsCEDU MPFloat
+sqrtCEDU = unaryCEDU MPLow.sqrt
+            
+expCEDU :: MPFloat -> BoundsCEDU MPFloat
+expCEDU = unaryCEDU MPLow.exp
+            
+logCEDU :: MPFloat -> BoundsCEDU MPFloat
+logCEDU = unaryCEDU MPLow.log
 
 {- auxiliary functions to automatically determine result precision from operand precisions -}
 
-unaryUp ::
-    (MPLow.RoundMode -> MPLow.Precision -> MPFloat -> MPFloat) ->
-    (MPFloat -> MPFloat)
-unaryUp opRP x = opRP MPLow.Up p x
+binaryCEDU :: 
+    (MPLow.RoundMode -> MPLow.Precision -> MPFloat -> MPFloat -> MPFloat) -> 
+    MPFloat -> MPFloat -> BoundsCEDU MPFloat
+binaryCEDU op x y =
+    getCEDU d u
     where
-    p = MPLow.getPrec x
+    d = op MPLow.Down p x y
+    u = op MPLow.Up p x y
+    p = p2mpfrPrec $ (getPrecision x) `max` (getPrecision y)
 
-unaryDown ::
-    (MPLow.RoundMode -> MPLow.Precision -> MPFloat -> MPFloat) ->
-    (MPFloat -> MPFloat)
-unaryDown opRP x = opRP MPLow.Down p x
+unaryCEDU :: 
+    (MPLow.RoundMode -> MPLow.Precision -> MPFloat -> MPFloat) -> 
+    MPFloat -> BoundsCEDU MPFloat
+unaryCEDU op x =
+    getCEDU d u
     where
-    p = MPLow.getPrec x
+    d = op MPLow.Down p x
+    u = op MPLow.Up p x
+    p = p2mpfrPrec $ getPrecision x
 
-binaryUp ::
-    Bool ->
-    (MPLow.RoundMode -> MPLow.Precision -> MPFloat -> MPFloat -> MPFloat) ->
-    (MPFloat -> MPFloat -> MPFloat)
-binaryUp = binaryApprox True
-
-binaryDown ::
-    Bool ->
-    (MPLow.RoundMode -> MPLow.Precision -> MPFloat -> MPFloat -> MPFloat) ->
-    (MPFloat -> MPFloat -> MPFloat)
-binaryDown = binaryApprox False
-
-binaryApprox ::
-    Bool -> Bool ->
-    (MPLow.RoundMode -> MPLow.Precision -> MPFloat -> MPFloat -> MPFloat) ->
-    (MPFloat -> MPFloat -> MPFloat)
-binaryApprox isUp _canBeExact opRP x y =
-    withPrec pMax
+constCEDU :: 
+    (MPLow.RoundMode -> MPLow.Precision -> MPFloat) -> 
+    MPLow.Precision -> BoundsCEDU MPFloat
+constCEDU op p =
+    getCEDU d u
     where
-    pMax = (getPrecision x) `max` (getPrecision y)
-    withPrec p
-        | isUp = opRP MPLow.Up (p2mpfrPrec p) x y
-        | otherwise = opRP MPLow.Down (p2mpfrPrec p) x y
+    d = op MPLow.Down p
+    u = op MPLow.Up p
