@@ -26,7 +26,7 @@ where
 import MixedTypesNumPrelude
 import qualified Prelude as P
 
-import Data.Bits (unsafeShiftL)
+-- import Data.Bits (unsafeShiftL)
 import Data.Typeable
 
 import AERN2.Norm
@@ -47,16 +47,24 @@ p2mpfrPrec :: Precision -> MPLow.Precision
 p2mpfrPrec = P.fromInteger . integer
 
 getBoundsCEDU :: MPFloat -> BoundsCEDU MPFloat
-getBoundsCEDU (MPLow.Approx m e s) = 
+getBoundsCEDU (MPLow.Approx mb m e s) = 
   BoundsCEDU 
-    (MPLow.Approx m 0 s) (MPLow.Approx e 0 s)
-    (MPLow.Approx (m-e) 0 s) (MPLow.Approx (m+e) 0 s)
+    (MPLow.Approx mb m 0 s) (MPLow.approxMB eb_mb e 0 s)
+    (MPLow.Approx mb (m-e) 0 s) (MPLow.Approx mb (m+e) 0 s)
 getBoundsCEDU MPLow.Bottom =
   BoundsCEDU
     MPLow.Bottom MPLow.Bottom MPLow.Bottom MPLow.Bottom
 
+{-| The bit-size bound for the error bound in CEDU -}
+eb_prec :: Precision
+eb_prec = prec 63
+
+{-| The bit-size bound for the error bound in CEDU -}
+eb_mb :: Int
+eb_mb = int $ integer eb_prec
+
 instance HasPrecision MPFloat where
-  getPrecision (MPLow.Approx _ _ s) = prec (P.toInteger $ -s)
+  getPrecision (MPLow.Approx mb _ _ _) = prec (P.toInteger $ mb)
   getPrecision MPLow.Bottom = error "illegal MPFloat (Bottom)"
   
 
@@ -64,14 +72,8 @@ instance CanSetPrecision MPFloat where
   setPrecision p = ceduCentre . setPrecisionCEDU p
 
 setPrecisionCEDU :: Precision -> MPFloat -> BoundsCEDU MPFloat
-setPrecisionCEDU pp x@(MPLow.Approx m _ s)
-  | s < -p = getBoundsCEDU $ MPLow.limitSize p x
-  | s == -p = getBoundsCEDU x
-  | otherwise = getBoundsCEDU $ MPLow.Approx (unsafeShiftL m (int $ s+p)) 0 (-p)
-  where
-  p = p2mpfrPrec pp
-setPrecisionCEDU _ MPLow.Bottom = error "setPrecisionCentreErr: Bottom"
+setPrecisionCEDU pp = getBoundsCEDU . MPLow.enforceMB . MPLow.setMB (p2mpfrPrec pp)
 
 instance HasNorm MPFloat where
-  getNormLog (MPLow.Approx m _ s) = (getNormLog m) + (integer s)
+  getNormLog (MPLow.Approx _ m _ s) = (getNormLog m) + (integer s)
   getNormLog MPLow.Bottom = error "getNormLog undefined for Bottom"
