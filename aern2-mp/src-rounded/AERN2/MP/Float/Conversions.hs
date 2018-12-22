@@ -68,8 +68,8 @@ instance ConvertibleExactly Integer MPFloat where
         findExact [] =
             convError "integer too high to represent exactly" n
         findExact (cedu : rest)
-            | ceduCentre cedu P.== zero = Right (ceduCentre cedu)
-            | otherwise = findExact rest
+            | ceduErr cedu P.> zero = findExact rest
+            | otherwise = Right (ceduCentre cedu)
 
 instance ConvertibleExactly Int MPFloat where
     safeConvertExactly = safeConvertExactly . integer
