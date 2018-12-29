@@ -26,7 +26,7 @@ import AERN2.Normalize
 
 import AERN2.MP.Dyadic (Dyadic)
 import qualified AERN2.MP.Float as MPFloat
-import AERN2.MP.Float (MPFloat, mpFloat)
+import AERN2.MP.Float (MPFloat, mpFloat, ceduCentreErr)
 -- import AERN2.MP.Float.Operators
 import AERN2.MP.Precision
 -- import qualified AERN2.MP.ErrorBound as EB
@@ -92,11 +92,17 @@ instance CanLog MPBall where
   type LogType MPBall = CN MPBall
   log x
     | x !>! 0 =
-        cn $ intervalFunctionByEndpointsUpDown MPFloat.logDown MPFloat.logUp x
+        cn $ setPrecision p $ ballFunctionUsingLipschitz log_ logLip x_
     | x !<=! 0 = noValueNumErrorCertainCN err
     | otherwise = noValueNumErrorPotentialCN err
     where
+    p = getPrecision x
+    x_ = reducePrecionIfInaccurate x
     err = OutOfRange $ "log: argument must be > 0: " ++ show x
+    log_ (MPBall c e) = MPBall lc (e + (errorBound le))
+      where
+      (lc, le) = ceduCentreErr $ MPFloat.logCEDU c
+    logLip y = errorBound $ (1/!y)
 
 instance CanPow MPBall MPBall where
   powNoCN b e = (~!) $ pow b e

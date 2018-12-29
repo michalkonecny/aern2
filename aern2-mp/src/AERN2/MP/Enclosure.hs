@@ -13,7 +13,7 @@
 -}
 module AERN2.MP.Enclosure
 (
-  IsBall(..)
+  IsBall(..), ballFunctionUsingLipschitz
   , IsInterval(..), intervalFunctionByEndpoints, intervalFunctionByEndpointsUpDown
   , CanTestContains(..), CanMapInside(..), specCanMapInside
   , CanIntersectAsymmetric(..), CanIntersect
@@ -57,6 +57,22 @@ class IsBall t where
     updateRadius (+r) c
     where
     (c, r) = centreAsBallAndRadius v
+
+{-|
+    Computes a ball function @f@ on the centre and updating the error bound using a Lipschitz constant.
+-}
+ballFunctionUsingLipschitz ::
+  (IsBall t, HasEqCertainly t t)
+  =>
+  (t -> t) {-^ @fThin@: a version of @f@ that works well on thin balls -} ->
+  (t -> ErrorBound) {-^ @fLip@: a Lipschitz function of @f@ over large balls -} ->
+  (t -> t) {-^ @f@ on *large* balls -}
+ballFunctionUsingLipschitz fThin fLip x
+  | r == 0 = fThin c
+  | otherwise = updateRadius (+ (fLip x)*r) (fThin c)
+  where
+  (c, r) = centreAsBallAndRadius x
+
 
 {- interval-specific operations -}
 
