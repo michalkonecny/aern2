@@ -250,13 +250,11 @@ instance HasPrecision MPBall where
 
 instance CanSetPrecision MPBall where
     setPrecision p (MPBall x e)
-        | p >= pPrev = MPBall x e
+        | p >= pPrev = MPBall xC e
         | otherwise  = MPBall xC (e + (xErr))
         where
         pPrev = MPFloat.getPrecision x
-        xErr = MPFloat.ceduErr xCEDU
-        xC = MPFloat.ceduCentre xCEDU
-        xCEDU = MPFloat.setPrecisionCEDU p x
+        (xC, xErr) = MPFloat.ceduCentreErr $ MPFloat.setPrecisionCEDU p x
 
 {- negation & abs -}
 
