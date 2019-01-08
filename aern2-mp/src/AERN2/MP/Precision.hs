@@ -215,7 +215,7 @@ convertPSecond = convertSecondUsing (\ b q -> convertP (getPrecision b) q)
 
 instance Arbitrary Precision where
   arbitrary =
-    sized $ \size -> choose (4,10+size) >>= return . prec
+    sized $ \size -> choose (4*(size+1),10*(size+1)) >>= return . prec
 
 $(declForTypes
   [[t| Bool |], [t| Integer |], [t| Int |], [t| Rational |], [t| Double |]]
