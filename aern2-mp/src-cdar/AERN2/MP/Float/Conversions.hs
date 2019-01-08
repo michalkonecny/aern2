@@ -82,7 +82,7 @@ instance CanRound MPFloat where
   properFraction x = (n,f)
     where
       r = rational x
-      n = (numerator r) `quot` (denominator r)
+      n = (numerator r) `P.quot` (denominator r)
       f =  ceduCentre $ x `subCEDU` (P.fromInteger n)
   
 {- comparisons -}
