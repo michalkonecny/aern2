@@ -339,3 +339,15 @@ instance
   type PowType (CollectErrors es  a) MPBall =
     EnsureCE es (PowType a MPBall)
   pow = lift2TCE pow
+
+instance
+  CanDivIMod MPBall MPBall
+  where
+  divIMod x m 
+    | m !>! 0 = (cn d, cn xm)
+    | otherwise = (err (0 :: Integer), err xm)
+    where
+    d = floor $ centre $ (centreAsBall x) /! (centreAsBall m)
+    xm = x - m*d
+    err :: (CanEnsureCN t) => t -> EnsureCN t
+    err s = noValueNumErrorCertainECN (Just s) $ OutOfRange $ "modulus not positive: " ++ show m
