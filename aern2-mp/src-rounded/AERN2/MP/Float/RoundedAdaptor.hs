@@ -45,7 +45,7 @@ set :: RoundMode -> Precision -> Rounded -> Rounded
 set = withRoundMode precRound
 
 defaultPrecision :: Precision
-defaultPrecision = 10
+defaultPrecision = 53
 
 pi :: RoundMode -> Precision -> Rounded
 pi = withRoundMode kPi

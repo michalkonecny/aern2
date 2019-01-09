@@ -101,7 +101,7 @@ instance CanRound MPFloat where
   properFraction x = (n,f)
     where
       r = rational x
-      n = (numerator r) `quot` (denominator r)
+      n = (numerator r) `P.quot` (denominator r)
       f = ceduCentre $ x `subCEDU` (mpFloat n)
 
 {- comparisons -}
@@ -151,9 +151,9 @@ instance CanMinMaxAsymmetric MPFloat MPFloat
 {- constants -}
 
 zero, one, two :: MPFloat
-zero = mpFloat 0
-one = mpFloat 1
-two = mpFloat 2
+zero = MPLow.zero
+one = MPLow.one
+two = MPLow.add MPLow.Up (MPLow.getPrec one) one one
 
 nan, infinity :: MPFloat
 nan = ceduCentre $ divCEDU zero zero 
