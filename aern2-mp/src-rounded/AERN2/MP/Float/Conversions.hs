@@ -160,8 +160,7 @@ nan = ceduCentre $ divCEDU zero zero
 infinity = ceduCentre $ divCEDU one zero 
 
 itisNaN :: MPFloat -> Bool
-itisNaN x = 
-  ceduCentre (mulCEDU x one) P./= x
+itisNaN x = not $ x P.== x
 
 itisInfinite :: MPFloat -> Bool
 itisInfinite x =
