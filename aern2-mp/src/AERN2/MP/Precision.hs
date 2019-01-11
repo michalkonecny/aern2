@@ -141,13 +141,14 @@ raisePrecisionIfBelow p x
   | otherwise = x
 
 specCanSetPrecision ::
-  (CanSetPrecision t, Arbitrary t, Show t, Testable prop)
+  (CanSetPrecision t, CanTestFinite t, Arbitrary t, Show t, Testable prop)
   =>
   (T t) -> (t -> t -> prop) -> Spec
 specCanSetPrecision (T typeName :: T t) check =
   describe (printf "CanSetPrecision %s" typeName) $ do
     it "set then get" $ do
       property $ \ (x :: t) (p :: Precision) ->
+        isFinite x ==>
         let xP = setPrecision p x in
           p == getPrecision xP
     it "setPrecision x ~ x" $ do
