@@ -99,6 +99,6 @@ unaryPrecCEDU ::
     (MPFloat -> BoundsCEDU MPFloat)
 unaryPrecCEDU addPrec op x@(MPLow.Approx mb _ _ s) =
     getBoundsCEDU $ op ((-s P.+ mb) P.+ (int addPrec)) x
-unaryPrecCEDU _ _ MPLow.Bottom =
-    error "unaryPrecCEDU: Bottom"
+unaryPrecCEDU addPrec op MPLow.Bottom =
+    getBoundsCEDU $ op ((int $ integer defaultPrecision) P.+ (int addPrec)) MPLow.Bottom
     
