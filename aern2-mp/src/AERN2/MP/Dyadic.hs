@@ -573,6 +573,10 @@ instance
     EnsureCE es (PowType a Dyadic)
   pow = lift2TCE pow
 
+instance CanTestFinite Dyadic where
+  isFinite = isFinite . dyadicMPFloat
+  isInfinite = isInfinite . dyadicMPFloat
+
 lift2 ::
   (MPFloat -> MPFloat -> BoundsCEDU MPFloat) ->
   (Dyadic -> Dyadic -> Dyadic)
