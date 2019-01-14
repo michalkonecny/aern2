@@ -314,7 +314,9 @@ specMPFloat =
           one /^ (one /. x) >=% x
       it "x/1 = x" $ do 
         property $ \ (x :: MPFloat) ->
-          (x /. one) ==% x
+          (x /. one) <=% x
+          &&
+          (x /^ one) >=% x
       it "x/x = 1" $ do
         property $ \ (x :: MPFloat) ->
           -- (isCertainlyNonZero x && (not $ isNaN $ x /. x)) ==>
