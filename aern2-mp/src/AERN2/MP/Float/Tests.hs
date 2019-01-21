@@ -128,7 +128,7 @@ infix 4 =~=
 
 (=~=) :: MPFloat -> MPFloat -> Property
 l =~= r =
-  approxEqualWithArgs [] l r
+  approxEqualWithArgs 1 [] l r
 
 {-|
   Assert equality of two MPFloat's with tolerance @1/2^p@.
@@ -153,11 +153,12 @@ approxEqual e x y
   When the assertion fails, report the given values using the given names.
 -}
 approxEqualWithArgs ::
+  Integer {-^ bits of extra precision loss allowed -} ->
   [(MPFloat, String)] {-^ intermediate values from which to determine tolerance, their names to report when the equality fails -} ->
   MPFloat {-^ LHS of equation-} ->
   MPFloat {-^ RHS of equation -}->
   Property
-approxEqualWithArgs argsPre l r =
+approxEqualWithArgs precLoss argsPre l r =
   counterexample description $ approxEqual e l r
   where
     args = argsPre ++ [(l, "L"), (r, "R"), (abs (l-.r),"|L-R|")]
@@ -167,7 +168,7 @@ approxEqualWithArgs argsPre l r =
     getNminusP (x,_) =
       case norm of
         NormZero -> Nothing -- ideally infinity
-        NormBits b -> Just (pI-b-1)
+        NormBits b -> Just (pI-b-precLoss)
       where
       norm = getNormLog x
       pI = integer $ getPrecision x
@@ -300,7 +301,7 @@ specMPFloat =
       it "up ~ down" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
           let
-            (=~~=) = approxEqualWithArgs [(x /. y,"x/.y")]
+            (=~~=) = approxEqualWithArgs 10 [(x,"x"), (y,"y"), (x /. y,"x/.y"), (x /^ y,"x/^y")]
             infix 4 =~~=
           in
           -- not (isNaN (x /. y))
@@ -337,8 +338,12 @@ specMPFloat =
           sqrtDown x <=% sqrtUp x
       it "up ~ down" $ do
         property $ \ (x_ :: MPFloat) ->
-          let x = enforceRangeMP (Just 0, Nothing) x_ in
-          sqrtDown x =~= sqrtUp x
+          let 
+            x = enforceRangeMP (Just 0, Nothing) x_ 
+            (=~~=) = approxEqualWithArgs 1 [(x,"x")]
+            infix 4 =~~=
+          in
+          sqrtDown x =~~= sqrtUp x
       it "sqrt(x) >= 0" $ do
         property $ \ (x_ :: MPFloat) ->
           let x = enforceRangeMP (Just 0, Nothing) x_ in
@@ -358,7 +363,7 @@ specMPFloat =
         property $ \ (x_ :: MPFloat) ->
           let x = enforceRangeMP (Just (-1000000), Just 1000000) x_ in
           let
-            (=~~=) = approxEqualWithArgs [(x,"x")]
+            (=~~=) = approxEqualWithArgs 3 [(x,"x")]
             infix 4 =~~=
           in
           expDown x =~~= expUp x
@@ -383,7 +388,11 @@ specMPFloat =
       it "up ~ down" $ do
         property $ \ (x_ :: MPFloat) ->
           let x = enforceRangeMP (Just 0, Nothing) x_ in
-          logDown x =~= logUp x
+          let
+            (=~~=) = approxEqualWithArgs 1 [(x,"x")]
+            infix 4 =~~=
+          in
+          logDown x =~~= logUp x
       it "log(1/x) == -(log x)" $ do
         property $ \ (x_ :: MPFloat) ->
           let x = enforceRangeMP (Just 0, Nothing) x_ in
@@ -412,7 +421,7 @@ specMPFloat =
         property $ \ (x_ :: MPFloat) ->
           let x = enforceRangeMP (Just (-1000000), Just 1000000) x_ in
           let
-            (=~~=) = approxEqualWithArgs [(x,"x")]
+            (=~~=) = approxEqualWithArgs 1 [(x,"x")]
             infix 4 =~~=
           in
           sinDown x =~~= sinUp x
@@ -420,7 +429,7 @@ specMPFloat =
         property $ \ (p :: Precision) ->
           let
             piA = ceduCentre $ piCEDU p
-            (=~~=) = approxEqualWithArgs [(piA,"pi")]
+            (=~~=) = approxEqualWithArgs 1 [(piA,"pi")]
             infix 4 =~~=
           in
           sinUp(piA) =~~= zero
@@ -439,7 +448,7 @@ specMPFloat =
         property $ \ (x_ :: MPFloat) ->
           let x = enforceRangeMP (Just (-1000000), Just 1000000) x_ in
           let
-            (=~~=) = approxEqualWithArgs [(x,"x")]
+            (=~~=) = approxEqualWithArgs 1 [(x,"x")]
             infix 4 =~~=
           in
           cosDown x =~~= cosUp x
@@ -453,7 +462,7 @@ specMPFloat =
         property $ \ (p :: Precision) ->
           let
             piA = ceduCentre $ piCEDU p
-            (=~~=) = approxEqualWithArgs [(piA,"pi")]
+            (=~~=) = approxEqualWithArgs 1 [(piA,"pi")]
             infix 4 =~~=
           in
           cosUp(piA) =~~= (-one)

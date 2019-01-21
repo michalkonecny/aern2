@@ -71,14 +71,14 @@ sinCEDU :: MPFloat -> BoundsCEDU MPFloat
 sinCEDU = unaryPrecCEDU 0 MPLow.sinA
             
 sqrtCEDU :: MPFloat -> BoundsCEDU MPFloat
-sqrtCEDU = unaryPrecCEDU 0 MPLow.sqrtA
+sqrtCEDU = unaryCEDU MPLow.sqrtA
             
 expCEDU :: MPFloat -> BoundsCEDU MPFloat
-expCEDU = unaryPrecCEDU 0 MPLow.expA
-            
+expCEDU = unaryCEDU MPLow.expA
+
 logCEDU :: MPFloat -> BoundsCEDU MPFloat
-logCEDU = unaryPrecCEDU 0 MPLow.logA
-            
+logCEDU = unaryCEDU MPLow.logA
+
 {- auxiliary functions to automatically determine result precision from operand precisions -}
 
 binaryCEDU ::
