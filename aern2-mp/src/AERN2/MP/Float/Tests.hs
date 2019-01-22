@@ -21,7 +21,7 @@ module AERN2.MP.Float.Tests
   (
     specMPFloat, tMPFloat
     , enforceRangeMP
-    , (=~=), approxEqual, approxEqualWithArgs
+    , approxEqual, approxEqualWithArgs
     , frequencyElements
   )
 where
@@ -30,7 +30,7 @@ import MixedTypesNumPrelude
 -- import qualified Prelude as P
 -- import Data.Ratio
 import Text.Printf
-import Data.Maybe
+-- import Data.Maybe
 
 import Test.Hspec
 import Test.QuickCheck
@@ -124,11 +124,11 @@ instance CanDivIMod MPFloat MPFloat where
 
 {- approximate comparison -}
 
-infix 4 =~=
+-- infix 4 =~=
 
-(=~=) :: MPFloat -> MPFloat -> Property
-l =~= r =
-  approxEqualWithArgs 1 [] l r
+-- (=~=) :: MPFloat -> MPFloat -> Property
+-- l =~= r =
+--   approxEqualWithArgs 1 [(l, "L"),(r, "R")] l r
 
 {-|
   Assert equality of two MPFloat's with tolerance @1/2^p@.
@@ -149,7 +149,11 @@ approxEqual e x y
 
 {-|
   Assert equality of two MPFloat's with tolerance derived from the size and precision
-  of the given intermediate values.
+  of the given list of input and intermediate values.
+  The result is expected to have at least as many significant digits
+  as the (highest) nominal precision of the input and intermediate numbers
+  minus the given precision loss parameter.
+
   When the assertion fails, report the given values using the given names.
 -}
 approxEqualWithArgs ::
@@ -158,25 +162,38 @@ approxEqualWithArgs ::
   MPFloat {-^ LHS of equation-} ->
   MPFloat {-^ RHS of equation -}->
   Property
-approxEqualWithArgs precLoss argsPre l r =
+approxEqualWithArgs precLoss args l r =
   counterexample description $ approxEqual e l r
   where
+  description =
+    printf "args:\n%s tolerance: <= 2^(%d)" argsS (-e)
+  argsS =
+    unlines
+      [printf "    %s = %s (p=%s)" argS (show arg) (show $ getPrecision arg) 
+      | (arg, argS) <- args ++ [(l, "L"), (r, "R"), (abs(r-.l), "|R-L|")]
+      ]
+
+  e = p - resNorm - precLoss
+  resNorm =
+    case (getNormLog l, getNormLog r) of
+     (NormBits nl, NormBits nr) -> nl `max` nr; 
+     (NormBits nl, _) -> nl
+     (_, NormBits nr) -> nr
+     _ -> 0
+  p = foldl max 2 $ map (integer . getPrecision . fst) args
+
+  {-
     args = argsPre ++ [(l, "L"), (r, "R"), (abs (l-.r),"|L-R|")]
     e =
-      (foldl min 1000000 $ catMaybes $ map getNminusP args)
+      (foldl min 1000000 $ catMaybes $ map getAbsPrecBits args)
       - (length argsPre)
-    getNminusP (x,_) =
-      case norm of
+    getAbsPrecBits (x,_) =
+      case getNormLog x of
         NormZero -> Nothing -- ideally infinity
         NormBits b -> Just (pI-b-precLoss)
       where
-      norm = getNormLog x
       pI = integer $ getPrecision x
-    description =
-      printf "args:\n%s tolerance: <= %s (e=%d)" argsS (show (double (0.5^!e))) e
-    argsS =
-      unlines
-        [printf "    %s = %s (p=%s)" argS (show arg) (show $ getPrecision arg) | (arg, argS) <- args]
+  -}
 
 {-|
   A runtime representative of type @MPFloat@.
@@ -210,7 +227,8 @@ specMPFloat =
     (==%) = trueForNotFinite (==) 
   in
   describe ("MPFloat") $ do
-    specCanSetPrecision tMPFloat (printArgsIfFails2 "=~=" (=~=))
+    specCanSetPrecision tMPFloat 
+      (printArgsIfFails2 "=~=" (\xPrec x -> approxEqualWithArgs 1 [(xPrec, "xPrec")] x xPrec))
     specCanRound tMPFloat
     specCanNegNum tMPFloat
     specCanAbs tMPFloat
@@ -235,9 +253,14 @@ specMPFloat =
           x +. y <=% x +^ y
       it "up ~ down" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
-          x +. y =~= x +^ y
+          let
+            (=~~=) = approxEqualWithArgs 1 [(x,"x"), (y,"y")]
+            infix 4 =~~=
+          in
+          x +. y =~~= x +^ y
       it "absorbs 0" $ do
         property $ \ (x :: MPFloat) ->
+          not (isNaN x) ==>
             x +. zero == x
       it "approximately commutative" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
@@ -255,7 +278,11 @@ specMPFloat =
           x -. y <=% x -^ y
       it "up ~ down" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
-          x -. y =~= x -^ y
+          let
+            (=~~=) = approxEqualWithArgs 1 [(x,"x"), (y,"y")]
+            infix 4 =~~=
+          in
+          x -. y =~~= x -^ y
       it "same as negate and add" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
           x -. y <=% x +^ (-y)
@@ -267,7 +294,11 @@ specMPFloat =
           x *. y <=% x *^ y
       it "up ~ down" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
-          x *. y =~= x *^ y
+          let
+            (=~~=) = approxEqualWithArgs 1 [(x,"x"), (y,"y")]
+            infix 4 =~~=
+          in
+          x *. y =~~= x *^ y
       it "absorbs 1" $ do
         property $ \ (x :: MPFloat) ->
             x *. one ==% x
@@ -304,8 +335,8 @@ specMPFloat =
             (=~~=) = approxEqualWithArgs 10 [(x,"x"), (y,"y"), (x /. y,"x/.y"), (x /^ y,"x/^y")]
             infix 4 =~~=
           in
-          -- not (isNaN (x /. y))
-          -- ==>
+          isFinite y && y /= 0
+          ==>
           x /. y =~~= x /^ y
       it "recip(recip x) = x" $ do
         property $ \ (x :: MPFloat) ->
