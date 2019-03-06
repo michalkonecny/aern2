@@ -40,11 +40,10 @@ import AERN2.Norm
 
 import AERN2.MP.Dyadic
 import qualified AERN2.MP.Float as MPFloat
-import AERN2.MP.Float (MPFloat, mpFloat)
+import AERN2.MP.Float (MPFloat, mpFloat, showMPFloat)
 import AERN2.MP.Float.Operators
 import AERN2.MP.Precision
 import AERN2.MP.Accuracy
-import qualified AERN2.MP.ErrorBound as EB
 import AERN2.MP.ErrorBound (ErrorBound, errorBound)
 import AERN2.MP.Enclosure
 
@@ -61,7 +60,7 @@ instance Show MPBall
     where
     show b@(MPBall x _e) =
       -- printf "[%s ± %s](prec=%s)" (show x) (showAC $ getAccuracy b) (show $ integer $ getPrecision b)
-      printf "[%s ± %s]" (show x) (showAC $ getAccuracy b)
+      printf "[%s ± %s]" (showMPFloat x) (showAC $ getAccuracy b)
       -- "[" ++ show x ++ " ± " ++ show e ++ "](prec=" ++ (show $ integer $ getPrecision x) ++ ")"
       where
       showAC Exact = "0"
@@ -241,7 +240,7 @@ instance HasApproximate MPBall where
         isAccurate = getAccuracy b < ac
         approx
             | closeToN = n
-            | otherwise = MPFloat.setPrecisionUp (prec (fromAccuracy ac)) x
+            | otherwise = MPFloat.ceduCentre $ MPFloat.setPrecisionCEDU (prec (fromAccuracy ac)) x
             where
             n = mpFloat $ round $ rational x
             closeToN = ((abs $ x -^ n) <= e)
@@ -251,12 +250,11 @@ instance HasPrecision MPBall where
 
 instance CanSetPrecision MPBall where
     setPrecision p (MPBall x e)
-        | p >= pPrev = MPBall xUp e
-        | otherwise  = MPBall xUp (e + (xUp `EB.subMP` xDown))
+        | p >= pPrev = MPBall xC e
+        | otherwise  = MPBall xC (e + (xErr))
         where
         pPrev = MPFloat.getPrecision x
-        xUp = MPFloat.setPrecisionUp p x
-        xDown = MPFloat.setPrecisionDown p x
+        (xC, xErr) = MPFloat.ceduCentreErr $ MPFloat.setPrecisionCEDU p x
 
 {- negation & abs -}
 

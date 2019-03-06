@@ -27,8 +27,8 @@ import qualified AERN2.MP.Float as MPFloat
 import AERN2.MP.Float (mpFloat)
 -- import AERN2.MP.Float.Operators
 import AERN2.MP.Precision
-import qualified AERN2.MP.ErrorBound as EB
-import AERN2.MP.ErrorBound (errorBound)
+-- import qualified AERN2.MP.ErrorBound as EB
+import AERN2.MP.ErrorBound (ErrorBound, errorBound)
 
 import AERN2.MP.Ball.Type
 
@@ -40,7 +40,7 @@ instance HasIntegerBounds MPBall where
     where
       (l,r) = endpointsMP b
 
-instance Convertible MPBall EB.ErrorBound where
+instance Convertible MPBall ErrorBound where
   safeConvert b =
     Right (errorBound (max (abs l) (abs r)))
     where
@@ -54,7 +54,7 @@ instance ConvertibleExactly MPBall MPBall where
 instance ConvertibleExactly Dyadic MPBall where
   safeConvertExactly x = Right $ MPBall (mpFloat x) (errorBound 0)
 
-instance ConvertibleExactly EB.ErrorBound MPBall where
+instance ConvertibleExactly ErrorBound MPBall where
   safeConvertExactly eb = Right $ MPBall (mpFloat eb) (errorBound 0)
 
 instance
@@ -86,9 +86,8 @@ instance ConvertibleWithPrecision Integer MPBall where
     | isFinite b = Right b
     | otherwise = convError ("too large to convert to MPBall with precision " ++ show p) x
     where
-    b = MPBall xUp (xUp `EB.subMP` xDn)
-    xUp = MPFloat.fromIntegerUp p x
-    xDn = MPFloat.fromIntegerDown p x
+    b = MPBall xC (errorBound xErr)
+    (xC, xErr) = MPFloat.ceduCentreErr $ MPFloat.fromIntegerCEDU p x
 
 instance ConvertibleWithPrecision Int MPBall where
   safeConvertP p = safeConvertP p . integer
@@ -105,9 +104,8 @@ instance ConvertibleWithPrecision Rational MPBall where
     | isFinite b = Right b
     | otherwise = convError ("too large to convert to MPBall with precision " ++ show p) x
     where
-    b = MPBall xUp (xUp `EB.subMP` xDn)
-    xUp = MPFloat.fromRationalUp p x
-    xDn = MPFloat.fromRationalDown p x
+    b = MPBall xC (errorBound xErr)
+    (xC, xErr) = MPFloat.ceduCentreErr $ MPFloat.fromRationalCEDU p x
 
 instance ConvertibleWithPrecision (Rational, Rational) MPBall where
   safeConvertP p (x,e)

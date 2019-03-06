@@ -141,13 +141,14 @@ raisePrecisionIfBelow p x
   | otherwise = x
 
 specCanSetPrecision ::
-  (CanSetPrecision t, Arbitrary t, Show t, Testable prop)
+  (CanSetPrecision t, CanTestFinite t, Arbitrary t, Show t, Testable prop)
   =>
   (T t) -> (t -> t -> prop) -> Spec
 specCanSetPrecision (T typeName :: T t) check =
   describe (printf "CanSetPrecision %s" typeName) $ do
     it "set then get" $ do
       property $ \ (x :: t) (p :: Precision) ->
+        isFinite x ==>
         let xP = setPrecision p x in
           p == getPrecision xP
     it "setPrecision x ~ x" $ do
@@ -215,7 +216,7 @@ convertPSecond = convertSecondUsing (\ b q -> convertP (getPrecision b) q)
 
 instance Arbitrary Precision where
   arbitrary =
-    sized $ \size -> choose (4,10+size) >>= return . prec
+    sized $ \size -> choose (4*(size+1),10*(size+1)) >>= return . prec
 
 $(declForTypes
   [[t| Bool |], [t| Integer |], [t| Int |], [t| Rational |], [t| Double |]]

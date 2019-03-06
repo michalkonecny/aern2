@@ -1,5 +1,5 @@
 {-|
-    Module      :  AERN2.MP.Float.UseCDAR.Conversions
+    Module      :  AERN2.MP.Float.Conversions
     Description :  Conversions and comparisons of arbitrary precision floats
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -11,14 +11,17 @@
     Conversions and comparisons of arbitrary precision floating point numbers
 -}
 
-module AERN2.MP.Float.UseCDAR.Conversions
+module AERN2.MP.Float.Conversions
   (
    -- * MPFloat to other types (see also instances)
-  --  toDoubleUp, toDoubleDown
-  --  -- * MPFloat constructors (see also instances)
-  --  , CanBeMPFloat, mpFloat
-  --  , fromIntegerUp, fromIntegerDown
-  --  , fromRationalUp, fromRationalDown
+   toDouble
+   -- * MPFloat constructors (see also instances)
+   , CanBeMPFloat, mpFloat
+   , fromIntegerCEDU
+   , fromRationalCEDU
+   -- * comparisons and constants (see also instances)
+   , zero, one, two
+   , nan, infinity
    )
 where
 
@@ -31,11 +34,11 @@ import Data.Convertible
 import AERN2.Norm
 import AERN2.MP.Precision
 
-{-
-import AERN2.MP.Float.UseRounded.Type
-import AERN2.MP.Float.UseRounded.Arithmetic
+import AERN2.MP.Float.Aux
+import AERN2.MP.Float.Type
+import AERN2.MP.Float.Arithmetic
 
-import qualified AERN2.MP.Float.UseRounded.RoundedAdaptor as MPLow
+import qualified AERN2.MP.Float.RoundedAdaptor as MPLow
 
 mpToDouble :: MPLow.RoundMode -> MPFloat -> Double
 mpToDouble = MPLow.toDoubleA
@@ -48,34 +51,7 @@ mpToRational x
 mpFromRationalA :: MPLow.RoundMode -> MPLow.Precision -> Rational -> MPFloat
 mpFromRationalA = MPLow.fromRationalA
 
-instance HasNorm MPFloat where
-  getNormLog x
-    | x == 0 = NormZero
-    | otherwise = NormBits (P.toInteger $ MPLow.getExp x)
-
-{- conversions -}
-
-instance CanRound MPFloat where
-  properFraction x = (n,f)
-    where
-      r = rational x
-      n = (numerator r) `quot` (denominator r)
-      f = x `subUp` (mpFloat n)
-
-instance ConvertibleExactly MPFloat Rational where
-  safeConvertExactly = Right . mpToRational
-
-toDoubleUp :: MPFloat -> Double
-toDoubleUp = mpToDouble MPLow.Up
-
-toDoubleDown :: MPFloat -> Double
-toDoubleDown = mpToDouble MPLow.Down
-
-fromIntegerUp :: Precision -> Integer -> MPFloat
-fromIntegerUp p i = MPLow.fromIntegerA MPLow.Up (p2mpfrPrec p) i
-
-fromIntegerDown :: Precision -> Integer -> MPFloat
-fromIntegerDown p i = MPLow.fromIntegerA MPLow.Down (p2mpfrPrec p) i
+{- conversions to MPFloat -}
 
 type CanBeMPFloat t = ConvertibleExactly t MPFloat
 mpFloat :: (CanBeMPFloat t) => t -> MPFloat
@@ -83,36 +59,50 @@ mpFloat = convertExactly
 
 instance ConvertibleExactly Integer MPFloat where
     safeConvertExactly n =
-        findExact $ map upDown $ standardPrecisions initPrec
+        findExact $ map (flip fromIntegerCEDU n) $ standardPrecisions initPrec
         where
         initPrec =
             case getNormLog n of
               NormBits b -> prec (b + 8)
               _ -> prec 8
-        upDown p = (fromIntegerDown p n, fromIntegerUp p n)
         findExact [] =
             convError "integer too high to represent exactly" n
-        findExact ((nDown, nUp) : rest)
-            | nDown == nUp = Right nUp
-            | otherwise = findExact rest
+        findExact (cedu : rest)
+            | ceduErr cedu P.> zero = findExact rest
+            | otherwise = Right (ceduCentre cedu)
 
 instance ConvertibleExactly Int MPFloat where
     safeConvertExactly = safeConvertExactly . integer
 
-fromRationalUp :: Precision -> Rational -> MPFloat
-fromRationalUp p x =
-    mpFromRationalA MPLow.Up (p2mpfrPrec p) x
+fromIntegerCEDU :: Precision -> Integer -> BoundsCEDU MPFloat
+fromIntegerCEDU pp n =
+  constCEDU (\r p -> MPLow.fromIntegerA r p n) (p2mpfrPrec pp)
 
-fromRationalDown :: Precision -> Rational -> MPFloat
-fromRationalDown p x =
-    mpFromRationalA MPLow.Down (p2mpfrPrec p) x
+fromRationalCEDU :: Precision -> Rational -> BoundsCEDU MPFloat
+fromRationalCEDU pp q =
+  constCEDU (\r p -> mpFromRationalA r p q) (p2mpfrPrec pp)
+
+{- conversions from MPFloat -}
+
+instance ConvertibleExactly MPFloat Rational where
+  safeConvertExactly = Right . mpToRational
+
+toDouble :: MPFloat -> Double
+toDouble = mpToDouble MPLow.Up
 
 instance Convertible MPFloat Double where
   safeConvert x
     | isFinite dbl = Right dbl
     | otherwise = convError "conversion to double: out of bounds" x
     where
-    dbl = toDoubleUp x
+    dbl = toDouble x
+
+instance CanRound MPFloat where
+  properFraction x = (n,f)
+    where
+      r = rational x
+      n = (numerator r) `P.quot` (denominator r)
+      f = ceduCentre $ x `subCEDU` (mpFloat n)
 
 {- comparisons -}
 
@@ -157,4 +147,32 @@ instance CanTestPosNeg MPFloat
 {- min, max -}
 
 instance CanMinMaxAsymmetric MPFloat MPFloat
--}
+
+{- constants -}
+
+zero, one, two :: MPFloat
+zero = MPLow.zero
+one = MPLow.one
+two = MPLow.add MPLow.Up (MPLow.getPrec one) one one
+
+nan, infinity :: MPFloat
+nan = ceduCentre $ divCEDU zero zero 
+infinity = ceduCentre $ divCEDU one zero 
+
+itisNaN :: MPFloat -> Bool
+itisNaN x = not $ x P.== x
+
+itisInfinite :: MPFloat -> Bool
+itisInfinite x =
+  ceduCentre (mulCEDU x two) P.== x
+  &&
+  x P./= zero
+
+instance CanTestFinite MPFloat where
+  isInfinite = itisInfinite
+  isFinite x = not (itisInfinite x || itisNaN x)
+
+instance CanTestNaN MPFloat where
+  isNaN = itisNaN
+
+

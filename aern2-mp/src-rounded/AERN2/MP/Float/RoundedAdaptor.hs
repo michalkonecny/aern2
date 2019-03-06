@@ -12,9 +12,9 @@
 
     Numeric.Rounded + variable precision
 -}
-module AERN2.MP.Float.UseRounded.RoundedAdaptor
+module AERN2.MP.Float.RoundedAdaptor
 (
-  module AERN2.MP.Float.UseRounded.RoundedAdaptor
+  module AERN2.MP.Float.RoundedAdaptor
 , module Numeric.Rounded.Simple
 )
 where
@@ -45,7 +45,7 @@ set :: RoundMode -> Precision -> Rounded -> Rounded
 set = withRoundMode precRound
 
 defaultPrecision :: Precision
-defaultPrecision = 10
+defaultPrecision = 53
 
 pi :: RoundMode -> Precision -> Rounded
 pi = withRoundMode kPi

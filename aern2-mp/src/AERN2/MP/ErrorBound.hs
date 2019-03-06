@@ -32,7 +32,7 @@ import Math.NumberTheory.Logarithms (integerLog2)
 import AERN2.MP.Precision
 import AERN2.MP.Accuracy
 import qualified AERN2.MP.Float as MPFloat
-import AERN2.MP.Float (MPFloat, mpFloat, frequencyElements)
+import AERN2.MP.Float (MPFloat, mpFloat, frequencyElements, one, ceduUp)
 import AERN2.MP.Float.Operators
 import AERN2.MP.Dyadic
 
@@ -63,7 +63,7 @@ instance HasAccuracy ErrorBound where
       | otherwise = NoInformation
       where
       eN = floor $ rational e
-      eRecipN = ceiling $ rational $ MPFloat.recipDown e
+      eRecipN = ceiling $ rational $ one /. e
 
 {- conversions -}
 
@@ -87,7 +87,7 @@ instance Convertible Rational ErrorBound where
 
 instance Convertible MPFloat ErrorBound where
   safeConvert x
-    | x >= 0 = Right $ ErrorBound $ MPFloat.setPrecisionUp errorBoundPrecision x
+    | x >= 0 = Right $ ErrorBound $ ceduUp $ MPFloat.setPrecisionCEDU errorBoundPrecision x
     | otherwise = convError "Trying to construct a negative ErrorBound" x
 
 instance Convertible Integer ErrorBound where
@@ -216,6 +216,6 @@ instance Arbitrary ErrorBound where
         | otherwise =
           do
           (s :: Integer) <- arbitrary
-          let resultR = ((abs s) `mod` (2^!35))/!(2^!32)
+          let resultR = ((abs s) `P.mod` (2^!35))/!(2^!32)
           let result = convert resultR
           return result

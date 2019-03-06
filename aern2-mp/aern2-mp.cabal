@@ -48,13 +48,13 @@ library
     , template-haskell
     , mixed-types-num
   if flag(UseCDAR)
-    cpp-options: -DUSE_CDAR
+    hs-source-dirs:  src-cdar
     build-depends:
       cdar
   else
+    hs-source-dirs:  src-rounded
     build-depends:
       rounded == 0.1.*
--- TODO
   ghc-options:     -Wall -fno-warn-orphans
   extensions:
     RebindableSyntax,
@@ -70,18 +70,15 @@ library
     FlexibleContexts,
     FlexibleInstances,
     UndecidableInstances
-  if flag(UseCDAR)
+  if !flag(UseCDAR)
     exposed-modules:
-      AERN2.MP.Float.UseCDAR.Type
-      AERN2.MP.Float.UseCDAR.Arithmetic
-      AERN2.MP.Float.UseCDAR.Conversions
-  else
-    exposed-modules:
-      AERN2.MP.Float.UseRounded.Type
-      AERN2.MP.Float.UseRounded.RoundedAdaptor
-      AERN2.MP.Float.UseRounded.Arithmetic
-      AERN2.MP.Float.UseRounded.Conversions
+      AERN2.MP.Float.RoundedAdaptor
   exposed-modules:
+    -- modules that depend on backend choice:
+    AERN2.MP.Float.Type
+    AERN2.MP.Float.Arithmetic
+    AERN2.MP.Float.Conversions
+    -- modules common to all backends:
     AERN2.Utils.Bench
     AERN2.Normalize
     AERN2.Norm
@@ -89,8 +86,8 @@ library
     AERN2.MP.Accuracy
     AERN2.MP.Enclosure
     AERN2.MP.ErrorBound
+    AERN2.MP.Float.Aux
     AERN2.MP.Float.Operators
-    AERN2.MP.Float.Constants
     AERN2.MP.Float.Tests
     AERN2.MP.Float
     AERN2.MP.Dyadic

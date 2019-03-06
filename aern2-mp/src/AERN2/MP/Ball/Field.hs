@@ -23,10 +23,11 @@ import Control.CollectErrors
 import AERN2.Normalize
 
 import AERN2.MP.Dyadic (Dyadic)
+import qualified AERN2.MP.Float as MPFloat
 import AERN2.MP.Float (mpFloat)
 import AERN2.MP.Float.Operators
 import AERN2.MP.Precision
-import qualified AERN2.MP.ErrorBound as EB
+-- import qualified AERN2.MP.ErrorBound as EB
 
 import AERN2.MP.Ball.Type
 import AERN2.MP.Ball.Conversions ()
@@ -37,10 +38,9 @@ import AERN2.MP.Ball.Comparisons ()
 instance CanAddAsymmetric MPBall MPBall where
   type AddType MPBall MPBall = MPBall
   add (MPBall x1 e1) (MPBall x2 e2) =
-    normalize $ MPBall sumUp ((sumUp `EB.subMP` sumDn) + e1 + e2)
+    normalize $ MPBall sumC (e1 + e2 + sumErr)
     where
-    sumUp = x1 +^ x2
-    sumDn = x1 +. x2
+    (sumC, sumErr) = MPFloat.ceduCentreErr $ MPFloat.addCEDU x1 x2
 
 instance CanAddAsymmetric MPBall Int where
   type AddType MPBall Int = MPBall
@@ -138,13 +138,11 @@ instance
 
 instance CanMulAsymmetric MPBall MPBall where
   mul (MPBall x1 e1) (MPBall x2 e2) =
-    normalize $ MPBall x12Up (e12 + e1*(abs x2) + e2*(abs x1) + e1*e2)
+    normalize $ MPBall x12C (e12 + e1*(abs x2) + e2*(abs x1) + e1*e2)
       -- the mixed operations above automatically convert
       -- MPFloat to ErrorBound, checking non-negativity
     where
-    x12Up = x1 *^ x2
-    x12Down = x1 *. x2
-    e12 = x12Up -^ x12Down
+    (x12C, e12) = MPFloat.ceduCentreErr $ MPFloat.mulCEDU x1 x2
 
 instance CanMulAsymmetric MPBall Int where
   type MulType MPBall Int = MPBall
@@ -207,25 +205,24 @@ instance CanDiv MPBall MPBall where
   type DivType MPBall MPBall = CN MPBall
   divide (MPBall x1 e1) b2@(MPBall x2 e2)
     | isCertainlyNonZero b2 =
-        cn $ normalize $ MPBall x12Up err
+        cn $ normalize $ MPBall x12C err
     | isCertainlyZero b2 =
         noValueNumErrorCertainCN DivByZero
     | otherwise =
         noValueNumErrorPotentialCN DivByZero
     where
-    x12Up = x1 /^ x2
-    x12Down = x1 /. x2
-    x12AbsUp = (abs x12Up) `max` (abs x12Down)
-    e12 = x12Up -^ x12Down
+    (x12C, e12) = MPFloat.ceduCentreErr $ MPFloat.divCEDU x1 x2
+    x12AbsUp = (abs x12C) +^ e12
+    x2abs = abs x2
     err =
-        ((e12 *^ (abs x2)) -- e12 * |x2|
+        ((e12 *^ x2abs) -- e12 * |x2|
          +
          e1
          +
          (e2 * x12AbsUp) -- e2 * |x|
         )
         *
-        ((mpFloat 1) /^ ((abs x2) -. (mpFloat e2)))
+        ((mpFloat 1) /^ (x2abs -. (mpFloat e2)))
             -- 1/(|x2| - e2) rounded upwards
 {-
 A derivation of the above formula for an upper bound on the error:
@@ -342,3 +339,15 @@ instance
   type PowType (CollectErrors es  a) MPBall =
     EnsureCE es (PowType a MPBall)
   pow = lift2TCE pow
+
+instance
+  CanDivIMod MPBall MPBall
+  where
+  divIMod x m 
+    | m !>! 0 = (cn d, cn xm)
+    | otherwise = (err (0 :: Integer), err xm)
+    where
+    d = floor $ centre $ (centreAsBall x) /! (centreAsBall m)
+    xm = x - m*d
+    err :: (CanEnsureCN t) => t -> EnsureCN t
+    err s = noValueNumErrorCertainECN (Just s) $ OutOfRange $ "modulus not positive: " ++ show m

@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-|
     Module      :  AERN2.MP.Float
     Description :  Arbitrary precision floating point numbers
@@ -15,18 +14,18 @@
 module AERN2.MP.Float
   (
    -- * Precision operations
-   module AERN2.MP.Precision
+   module Precision
+   -- * Helper structure
+   , module Aux
    -- * The type definition and basic operations
    , module Type
    -- * Arithmetic operations
    , module Arithmetic
    , distUp, distDown, avgUp, avgDown
-   -- * Conversions, comparisons and norm
+   -- * Conversions, comparisons and norm, constants such as NaN, infinity
    , module Conversions
    -- * Infix operators for up/down-rounded operations
    , module Operators
-   -- * Constants such as NaN, infinity
-   , module Constants
    -- * Tests
    , module Tests
    )
@@ -35,24 +34,14 @@ where
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
-import AERN2.MP.Precision
+import AERN2.MP.Precision as Precision
+import AERN2.MP.Float.Aux as Aux
 
-#ifdef USE_CDAR
-
-import AERN2.MP.Float.UseCDAR.Type as Type
-import AERN2.MP.Float.UseCDAR.Arithmetic as Arithmetic
-import AERN2.MP.Float.UseCDAR.Conversions as Conversions
-
-#else
-
-import AERN2.MP.Float.UseRounded.Type as Type
-import AERN2.MP.Float.UseRounded.Arithmetic as Arithmetic
-import AERN2.MP.Float.UseRounded.Conversions as Conversions
-
-#endif
+import AERN2.MP.Float.Type as Type
+import AERN2.MP.Float.Arithmetic as Arithmetic
+import AERN2.MP.Float.Conversions as Conversions
 
 import AERN2.MP.Float.Operators as Operators
-import AERN2.MP.Float.Constants as Constants
 import AERN2.MP.Float.Tests as Tests
 
 -- | Computes an upper bound to the distance @|x - y|@ of @x@ and @y@.

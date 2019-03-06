@@ -65,3 +65,20 @@ instance
   where
   getNormLog (a :+ i) =
     (getNormLog a) `max` (getNormLog i)
+
+instance CanAddAsymmetric NormLog Integer where
+    type AddType NormLog Integer = NormLog
+    add NormZero _ = NormZero
+    add (NormBits b) n = NormBits (b+n)
+
+instance CanAddAsymmetric Integer NormLog where
+    type AddType Integer NormLog = NormLog
+    add _ NormZero = NormZero
+    add n (NormBits b) = NormBits (b+n)
+
+instance CanSub NormLog Integer where
+    type SubType NormLog Integer = NormLog
+    sub NormZero _ = NormZero
+    sub (NormBits b) n = NormBits (b-n)
+    
+    
