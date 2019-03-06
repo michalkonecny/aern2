@@ -74,7 +74,7 @@ instance HasLimits Rational (MPBall -> CN MPBall) where
     accuracies = aux (fromAccuracy acX)
       where
       aux a
-        | a >= 4 = bits a : aux ((100 * a) `div` 105)
+        | a >= 4 = bits a : aux ((100 * a) `divINoCN` 105)
         | otherwise = [bits a]
     xPNext = setPrecision (increaseP $ getPrecision x) x
     increaseP p =
@@ -111,7 +111,7 @@ instance HasLimits Rational (WithLipschitz (MPBall -> CN MPBall)) where
     accuracies = aux (fromAccuracy acX)
       where
       aux a
-        | a >= 4 = bits a : aux ((100 * a) `div` 105)
+        | a >= 4 = bits a : aux ((100 * a) `divINoCN` 105)
         | otherwise = [bits a]
     x = increasePrec xPre
       where
