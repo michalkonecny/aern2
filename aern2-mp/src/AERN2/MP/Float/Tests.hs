@@ -371,7 +371,7 @@ specMPFloat =
         property $ \ (x_ :: MPFloat) ->
           let 
             x = enforceRangeMP (Just 0, Nothing) x_ 
-            (=~~=) = approxEqualWithArgs 1 [(x,"x")]
+            (=~~=) = approxEqualWithArgs 2 [(x,"x")]
             infix 4 =~~=
           in
           sqrtDown x =~~= sqrtUp x
