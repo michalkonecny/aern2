@@ -439,7 +439,7 @@ specMPFloat =
           logUp (x *^ y) >=% (logDown x) +. (logDown y)
       it "log(exp x) == x" $ do
         property $ \ (x_ :: MPFloat) ->
-          let x = enforceRangeMP (Just (-10000), Just 1000000) x_ in
+          let x = enforceRangeMP (Just (-1000), Just 10000) x_ in
           logDown (expDown x) <=% x
           &&
           logUp (expUp x) >=% x
