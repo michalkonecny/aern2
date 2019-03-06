@@ -91,8 +91,12 @@ instance CanExp MPBall where
 instance CanLog MPBall where
   type LogType MPBall = CN MPBall
   log x
-    | x !>! 0 =
+    | x_!>! 1 =
         cn $ setPrecision p $ ballFunctionUsingLipschitz log_ logLip x_
+    | x_!>! 0 =
+        cn $ setPrecision p $ intervalFunctionByEndpoints log_ x_
+    | x !>! 0 =
+        cn $ setPrecision p $ intervalFunctionByEndpoints log_ x
     | x !<=! 0 = noValueNumErrorCertainCN err
     | otherwise = noValueNumErrorPotentialCN err
     where
