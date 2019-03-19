@@ -1,5 +1,9 @@
 # Change log for aern2-mp
 
+* v 0.1.4 2019-03-19
+  * CDAR-based Integer-only backend
+    * needs the mBound branch of CDAR
+  * adapts to mixed-types-num 0.3.2 (new divI, mod)
 * v 0.1.3.1 2018-11-21
   * small fixes, mainly documentation
 * v 0.1.3.0 2018-11-20
