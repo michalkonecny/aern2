@@ -1,3 +1,5 @@
+* v 0.1.2 2019-03-19
+  * adapts to mixed-types-num 0.3.2 (new divI, mod)
 * v 0.1.1.0 2017-12-06
   * disable aern2-generate-netlog-elm for now
 * v 0.1.0.3 2017-12-06

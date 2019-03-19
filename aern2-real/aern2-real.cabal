@@ -5,7 +5,7 @@ build-type:     Simple
 homepage:       https://github.com/michalkonecny/aern2
 author:         Michal Konecny
 maintainer:     Michal Konecny <mikkonecny@gmail.com>
-copyright:      (c) 2015-2017 Michal Konecny
+copyright:      (c) 2015-2019 Michal Konecny
 license:        BSD3
 license-file:   LICENSE
 extra-source-files:  changelog.md
@@ -37,8 +37,8 @@ library
     , stm >= 2.4
     , bytestring >= 0.10
     , aeson >= 0.11
-    , mixed-types-num >= 0.3.1
-    , aern2-mp == 0.1.*
+    , mixed-types-num >= 0.3.2
+    , aern2-mp >= 0.1.4
   ghc-options:     -Wall -fno-warn-orphans
   extensions:
     RebindableSyntax,
