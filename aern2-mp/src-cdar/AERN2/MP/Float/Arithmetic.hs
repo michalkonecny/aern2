@@ -62,7 +62,7 @@ recipCEDU = unaryCEDU P.recip
 
 piCEDU :: Precision -> BoundsCEDU MPFloat
 piCEDU pp = 
-    getBoundsCEDU $ MPLow.piA (p2mpfrPrec pp)
+    getBoundsCEDU $ MPLow.piA (p2cdarPrec pp)
 
 cosCEDU :: MPFloat -> BoundsCEDU MPFloat
 cosCEDU = unaryPrecCEDU 0 MPLow.cosA

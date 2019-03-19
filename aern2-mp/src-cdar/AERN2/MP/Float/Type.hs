@@ -18,7 +18,7 @@ module AERN2.MP.Float.Type
    MPFloat
    , showMPFloat
    , setPrecisionCEDU
-   , p2mpfrPrec
+   , p2cdarPrec
    , getBoundsCEDU
    )
 where
@@ -43,8 +43,8 @@ showMPFloat x = MPLow.showA x
 
 deriving instance (Typeable MPFloat)
 
-p2mpfrPrec :: Precision -> MPLow.Precision
-p2mpfrPrec = P.fromInteger . integer
+p2cdarPrec :: Precision -> MPLow.Precision
+p2cdarPrec = P.fromInteger . integer
 
 getBoundsCEDU :: MPFloat -> BoundsCEDU MPFloat
 getBoundsCEDU (MPLow.Approx mb m e s) = 
@@ -72,7 +72,7 @@ instance CanSetPrecision MPFloat where
   setPrecision p = ceduCentre . setPrecisionCEDU p
 
 setPrecisionCEDU :: Precision -> MPFloat -> BoundsCEDU MPFloat
-setPrecisionCEDU pp = getBoundsCEDU . MPLow.enforceMB . MPLow.setMB (p2mpfrPrec pp)
+setPrecisionCEDU pp = getBoundsCEDU . MPLow.enforceMB . MPLow.setMB (p2cdarPrec pp)
 
 instance HasNorm MPFloat where
   getNormLog (MPLow.Approx _ m _ s) = (getNormLog m) + (integer s)
