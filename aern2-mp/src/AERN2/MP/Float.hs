@@ -16,7 +16,7 @@ module AERN2.MP.Float
    -- * Precision operations
    module Precision
    -- * Helper structure
-   , module Aux
+   , module Auxi
    -- * The type definition and basic operations
    , module Type
    -- * Arithmetic operations
@@ -35,7 +35,7 @@ import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 import AERN2.MP.Precision as Precision
-import AERN2.MP.Float.Aux as Aux
+import AERN2.MP.Float.Auxi as Auxi
 
 import AERN2.MP.Float.Type as Type
 import AERN2.MP.Float.Arithmetic as Arithmetic

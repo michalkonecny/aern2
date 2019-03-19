@@ -86,7 +86,7 @@ library
     AERN2.MP.Accuracy
     AERN2.MP.Enclosure
     AERN2.MP.ErrorBound
-    AERN2.MP.Float.Aux
+    AERN2.MP.Float.Auxi
     AERN2.MP.Float.Operators
     AERN2.MP.Float.Tests
     AERN2.MP.Float

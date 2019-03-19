@@ -30,7 +30,7 @@ import AERN2.MP.Precision
 
 import qualified Data.CDAR as MPLow
 
-import AERN2.MP.Float.Aux
+import AERN2.MP.Float.Auxi
 import AERN2.MP.Float.Type
 
 {- common functions -}

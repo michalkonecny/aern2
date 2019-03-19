@@ -32,7 +32,7 @@ import AERN2.MP.Precision
 
 import qualified AERN2.MP.Float.RoundedAdaptor as MPLow
 
-import AERN2.MP.Float.Aux
+import AERN2.MP.Float.Auxi
 import AERN2.MP.Float.Type
 
 one :: MPFloat

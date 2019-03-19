@@ -28,7 +28,7 @@ import qualified Prelude as P
 
 import AERN2.Norm
 import AERN2.MP.Precision
-import AERN2.MP.Float.Aux
+import AERN2.MP.Float.Auxi
 
 import qualified AERN2.MP.Float.RoundedAdaptor as MPLow
 import Data.Typeable

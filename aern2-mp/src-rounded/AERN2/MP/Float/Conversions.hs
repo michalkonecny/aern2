@@ -34,7 +34,7 @@ import Data.Convertible
 import AERN2.Norm
 import AERN2.MP.Precision
 
-import AERN2.MP.Float.Aux
+import AERN2.MP.Float.Auxi
 import AERN2.MP.Float.Type
 import AERN2.MP.Float.Arithmetic
 
