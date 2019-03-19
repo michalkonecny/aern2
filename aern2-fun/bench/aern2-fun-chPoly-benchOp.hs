@@ -173,7 +173,7 @@ runBenchmark mode op serialisedFile p acGuide count =
         printf "[%06d.%06d] ChPoly benchmark: %s\n" (sec now) (msec now) msg
       _ -> pure ()
     where
-    msec time = nsec time `div` (P.fromInteger 1000)
+    msec time = nsec time `P.div` (P.fromInteger 1000)
 
 
 mapBoth :: (t1 -> t2) -> (t1,t1) -> (t2,t2)

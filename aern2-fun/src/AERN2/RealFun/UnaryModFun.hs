@@ -154,7 +154,7 @@ inverseNonDecreasingFnAnyBelow f n =
   decrease = negate . increase . negate
   increase i
     | i == 0 = 1
-    | i < 0 = -((-i) `div` 2)
+    | i < 0 = -((-i) `divINoCN` 2)
     | otherwise = i * 2
 
 {-|
@@ -185,14 +185,14 @@ inverseNonDecreasingFnMaxBelow f n
   decrease = negate . increase . negate
   increase i
     | i == 0 = 1
-    | i < 0 = -((-i) `div` 2)
+    | i < 0 = -((-i) `divINoCN` 2)
     | otherwise = i * 2
   searchMax ((i,fi),(j,fj))
     | m == i || m == j = i
     | fm <= n = searchMax ((m,fm), (j,fj))
     | otherwise = searchMax ((i,fi), (m,fm))
     where
-    m = (i + j) `div` 2
+    m = (i + j) `divINoCN` 2
     fm = f m
 
 
@@ -284,7 +284,7 @@ instance CanMulAsymmetric UnaryModFun UnaryModFun where
       -}
       max m1 m2
       where
-      i22 = (i+2) `div` 2
+      i22 = (i+2) `divINoCN` 2
       x1CN = apply (unaryBallFun f1) b
       x2CN = apply (unaryBallFun f2) b
       m1 =

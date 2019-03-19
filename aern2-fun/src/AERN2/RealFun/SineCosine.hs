@@ -164,7 +164,7 @@ sineCosineWithAccuracyGuide isSine acGuide x =
         | otherwise = cosineTaylorSum txC trM acGuide
     -- if k mod 4 = 2 then negate result,
     -- if k mod 4 = 3 then negate result:
-    km4 = k `mod` 4
+    km4 = k `modNoCN` 4
     resC
         | isSine && 2 <= km4 && km4 <= 3 = -taylorSum
         | isCosine && 1 <= km4 && km4 <= 2 = -taylorSum
@@ -277,7 +277,7 @@ sineCosineTaylorSum isSine (xAC :: Accuracy -> f) xM acGuidePre =
             powerACs
         where
         updateAC k ac_k = Map.adjust (max ac_k) k
-        j = i `div` 2
+        j = i `divINoCN` 2
         log_x = getLogXM 1
         log_pw_j = getLogXM j
         log_pw_jU = getLogXM (j+1)
@@ -365,7 +365,7 @@ sineCosineTaylorSum isSine (xAC :: Accuracy -> f) xM acGuidePre =
     makeTerm i pwr (fact,_,_e) =
       sign * pwr/!fact -- alternate signs
       where
-      sign = if (even $ i `div` 2) then 1 else -1
+      sign = if (even $ i `divINoCN` 2) then 1 else -1
     in
     (termSum, termSumEB, n)
 --

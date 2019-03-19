@@ -100,7 +100,7 @@ ditfft2 cr2c nI x =
     | n == 1 = SQ.singleton $ xSQ `SQ.index` (int i)
     | otherwise =
       let
-        nHalf = n `div` 2
+        nHalf = n `divINoCN` 2
         yEven = aux i nHalf (2*s)
         yOdd = aux (i+s) nHalf (2*s)
         yOddTw = SQ.zipWith (*) yOdd $ SQ.fromList [tw k n | k <- [0..nHalf-1]]
@@ -134,7 +134,7 @@ ditfft2Hook cr2c (hook :: c -> Maybe c) nI x =
     | n == 1 = Just $ SQ.singleton $ xSQ `SQ.index` (int i)
     | otherwise = convLR
     where
-    nHalf = n `div` 2
+    nHalf = n `divINoCN` 2
     convLR =
       do
       yEven <- aux i nHalf (2*s)
@@ -165,7 +165,7 @@ ditfft2A nI = aux 0 nI 1
     | n == 1 = arr (\ x -> [x !! i])
     | otherwise = convLR
     where
-    nHalf = n `div` 2
+    nHalf = n `divINoCN` 2
     isParallel = (nI == n)
     convLR =
       proc x -> do
