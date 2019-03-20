@@ -15,7 +15,7 @@ import Graphics.Rendering.Chart.Easy
 import Graphics.Rendering.Chart.Grid
 import Graphics.Rendering.Chart.Backend.Diagrams(renderableToFile, FileOptions(..))
 
-import ChartTweaks (scaledLogAxis, scaledAxisExtraXSteps)
+import ChartTweaks (scaledAxisExtraXSteps) -- (scaledLogAxis, scaledAxisExtraXSteps)
 
 --import Debug.Trace (trace)
 
@@ -25,7 +25,8 @@ main =
     args <- getArgs
     let (mode, inFileName, outFolder) = checkArgs args
     contents <- readFile inFileName
-    let chartsData = parseBenchResults mode inFileName contents
+    let chartsData =  
+            translateLogToLin mode $ parseBenchResults mode inFileName contents
     void $ mapM (renderChart mode outFolder) chartsData
 
 data ChartId = CSVName | FnOp
@@ -83,6 +84,21 @@ parseBenchResults mode@(CSVName, lineId, _, _) inFileName csvContent =
     inFileNameNoCSV = take (length inFileName-4) inFileName
     records = indexRecordsByKeysAndHeader (lineKeys lineId) $ parseCSV csvContent
 
+translateLogToLin :: Mode -> [(String, [(String, [(Double, Double)])])] -> [(String, [(String, [(Double, Double)])])]
+translateLogToLin mode dat = over (mapped._2.mapped._2.mapped) translateCoords dat
+    where
+    xMode = mode ^. _3 . _2
+    yMode = mode ^. _4 . _2
+    (_xMode2, xShouldTranslate) = log2linMode xMode
+    (_yMode2, yShouldTranslate) = log2linMode yMode
+    -- mode2 = mode & _3 . _2 .~ xMode2 & _4 . _2 .~ yMode2
+    log2linMode Log = (Lin, True)
+    log2linMode (LogTo limit) = (LinTo (round $ logBase 10 (fromIntegral limit :: Double)), True)
+    log2linMode m = (m, False)
+    translateCoords (x,y) = 
+        (if xShouldTranslate then logBase 10 x else x,
+         if yShouldTranslate then logBase 10 y else y)
+
 mergeByFnOp_FnRepr ::
     Mode -> [([String], Map.Map String String)] -> Map.Map String (Map.Map String (Set.Set (Double,Double)))
 mergeByFnOp_FnRepr mode records =
@@ -129,7 +145,7 @@ getPoint (_, _, xAxis, yAxis) fields = (pt xAxis, pt yAxis)
 
 renderChart ::
     Mode -> String -> (String, [(String, [(Double, Double)])]) -> IO ()
-renderChart (_, lineId, xAxis@(xCont, _xMode), yAxis@(yCont, _yMode)) outFolder (title, plotData) =
+renderChart (_, lineId, xAxis@(xCont, xMode), yAxis@(yCont, yMode)) outFolder (title, plotData) =
     void $
         renderableToFile fileOpts (filePath yCont) $
             fillBackground def $
@@ -146,10 +162,10 @@ renderChart (_, lineId, xAxis@(xCont, _xMode), yAxis@(yCont, _yMode)) outFolder 
         layout_legend . _Just . legend_orientation .= LORows (legend_cols lineId)
 
         layout_y_axis . laxis_generate .= axisForModeCont yAxis
-        layout_y_axis . laxis_title .= axisTitle yCont
+        layout_y_axis . laxis_title .= axisTitle yCont yMode
 
         layout_x_axis . laxis_generate .= axisForModeCont xAxis
-        layout_x_axis . laxis_title .= axisTitle xCont
+        layout_x_axis . laxis_title .= axisTitle xCont xMode
 
         layout_x_axis . laxis_style . axis_label_gap .= 1
         mapM layoutPlotData $ zip [0..] plotData
@@ -158,21 +174,24 @@ renderChart (_, lineId, xAxis@(xCont, _xMode), yAxis@(yCont, _yMode)) outFolder 
     -- legend_cols Method = 2
     legend_cols _ = 3
 
-    axisTitle MaxMem = "Space (kB)"
-    axisTitle ExecTime = "Time (s)"
-    axisTitle Accuracy = "Accuracy (bits)"
-    axisTitle BenchN = "n"
+    axisTitle MaxMem =  addLog "Space (kB)"
+    axisTitle ExecTime = addLog "Time (s)"
+    axisTitle Accuracy = addLog "Accuracy (bits)"
+    axisTitle BenchN = addLog "n"
+    addLog s Log = "Log10 " ++ s
+    addLog s (LogTo _) = "Log10 " ++ s
+    addLog s _ = s
 
     axisForModeCont (_, Lin) = autoScaledAxis def
-    axisForModeCont (_, Log) = autoScaledLogAxis def
+    axisForModeCont (_, Log) = autoScaledAxis def -- autoScaledLogAxis def
     axisForModeCont (Accuracy, LinTo limit) = scaledAxisExtraXSteps def (lowLin limit, convert limit) [24,53]
     axisForModeCont (_, LinTo limit) = scaledAxis def (lowLin limit, convert limit)
-    axisForModeCont (_, LogTo limit) = scaledLogAxis def (lowLog limit, convert limit)
+    axisForModeCont (_, LogTo limit) = scaledAxis def (lowLin limit, convert limit) -- scaledLogAxis def (lowLog limit, convert limit)
 
-    lowLog :: Int -> Double
-    lowLog limit
-      | limit > 1000 = 1
-      | otherwise = 0.01
+    -- lowLog :: Int -> Double
+    -- lowLog limit
+    --   | limit > 1000 = 1
+    --   | otherwise = 0.01
 
     lowLin :: Int -> Double
     lowLin _ = 0
@@ -211,7 +230,7 @@ renderChart (_, lineId, xAxis@(xCont, _xMode), yAxis@(yCont, _yMode)) outFolder 
         isFilled _ = False
 
 fileOpts :: FileOptions
-fileOpts = def { _fo_size = (300,200) }
+fileOpts = def { _fo_size = (400,300) }
 
 reprShow :: String -> String
 reprShow "dball" = "DBFun"
