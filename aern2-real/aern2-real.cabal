@@ -28,7 +28,7 @@ library
   build-depends:
     base == 4.*
     , containers >= 0.5
-    , convertible >= 1.1.1.0
+    -- , convertible >= 1.1.1.0
     , hspec >= 2.1
     -- , hspec-smallcheck >= 0.3 && < 0.5
     , QuickCheck >= 2.7
@@ -37,7 +37,7 @@ library
     , stm >= 2.4
     , bytestring >= 0.10
     , aeson >= 0.11
-    , mixed-types-num >= 0.3.2
+    , mixed-types-num >= 0.4
     , aern2-mp >= 0.1.4
   ghc-options:     -Wall -fno-warn-orphans
   extensions:

@@ -29,7 +29,7 @@ import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import Data.Ratio
-import Data.Convertible
+-- import Data.Convertible
 
 -- import AERN2.Norm
 import AERN2.MP.Precision

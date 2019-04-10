@@ -20,7 +20,7 @@ where
 import MixedTypesNumPrelude
 import qualified Prelude as P
 
-import Data.Convertible
+-- import Data.Convertible
 
 import Data.Complex
 

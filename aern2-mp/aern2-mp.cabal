@@ -39,14 +39,14 @@ library
   build-depends:
     base == 4.*
     , integer-logarithms
-    , convertible
+    -- , convertible
     , regex-tdfa
     , hspec
     -- , hspec-smallcheck >= 0.3
     , QuickCheck
     , lens
     , template-haskell
-    , mixed-types-num >= 0.3.2
+    , mixed-types-num >= 0.4
   if flag(UseCDAR)
     hs-source-dirs:  src-cdar
     build-depends:

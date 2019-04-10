@@ -25,7 +25,7 @@ import Data.Typeable
 
 import Test.QuickCheck
 
-import Data.Convertible
+-- import Data.Convertible
 
 import Math.NumberTheory.Logarithms (integerLog2)
 

@@ -46,7 +46,7 @@ import Text.Printf
 import Text.Regex.TDFA
 
 import Data.Typeable
-import Data.Convertible
+-- import Data.Convertible
 
 import Test.Hspec
 import Test.QuickCheck
