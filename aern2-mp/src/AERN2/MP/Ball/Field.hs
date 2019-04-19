@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE PartialTypeSignatures #-}
 {-|
     Module      :  AERN2.MP.Ball.Field
     Description :  Field operations on arbitrary precision dyadic balls
@@ -301,12 +302,18 @@ instance
 {- integer power -}
 
 instance CanPow MPBall Integer where
-  powNoCN b e = (~!) $ powUsingMulRecip (mpBall 1) b e
-  pow = powUsingMulRecip (mpBall 1)
+  powNoCN b e = (~!) $ powUsingMulRecipCutNeg (mpBall 1) b e
+  pow = powUsingMulRecipCutNeg (mpBall 1)
 
 instance CanPow MPBall Int where
-  powNoCN b e = (~!) $ powUsingMulRecip (mpBall 1) b e
-  pow = powUsingMulRecip (mpBall 1)
+  powNoCN b e = (~!) $ powUsingMulRecipCutNeg (mpBall 1) b e
+  pow = powUsingMulRecipCutNeg (mpBall 1)
+
+powUsingMulRecipCutNeg ::_ => t -> t -> e -> DivType Integer (EnsureCN t)
+powUsingMulRecipCutNeg one x e 
+  | even e = 
+      max 0 $ powUsingMulRecip one x e
+  | otherwise = powUsingMulRecip one x e
 
 instance
   (CanPow MPBall b
