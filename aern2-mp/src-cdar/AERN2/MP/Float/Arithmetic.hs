@@ -65,10 +65,10 @@ piCEDU pp =
     getBoundsCEDU $ MPLow.piA (p2cdarPrec pp)
 
 cosCEDU :: MPFloat -> BoundsCEDU MPFloat
-cosCEDU = unaryPrecCEDU 0 MPLow.cosA
+cosCEDU = unaryCEDU MPLow.cosA
 
 sinCEDU :: MPFloat -> BoundsCEDU MPFloat
-sinCEDU = unaryPrecCEDU 0 MPLow.sinA
+sinCEDU = unaryCEDU MPLow.sinA
             
 sqrtCEDU :: MPFloat -> BoundsCEDU MPFloat
 sqrtCEDU = unaryCEDU MPLow.sqrtA
