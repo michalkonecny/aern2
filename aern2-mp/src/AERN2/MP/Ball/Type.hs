@@ -22,6 +22,7 @@ module AERN2.MP.Ball.Type
   , reducePrecionIfInaccurate
   -- * Ball construction/extraction functions
   , endpointsMP, fromEndpointsMP
+  , endpointsMPBall, fromEndpointsMPBall
 )
 where
 
@@ -170,6 +171,12 @@ instance IsInterval MPBall MPBall where
       l = MPBall lMP (errorBound 0)
       u = MPBall uMP (errorBound 0)
       (lMP, uMP) = endpointsMP x
+
+fromEndpointsMPBall :: MPBall -> MPBall -> MPBall
+fromEndpointsMPBall = fromEndpoints
+
+endpointsMPBall :: MPBall -> (MPBall, MPBall)
+endpointsMPBall = endpoints
 
 instance IsBall MPBall where
   type CentreType MPBall = Dyadic
