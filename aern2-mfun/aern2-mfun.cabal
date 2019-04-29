@@ -1,0 +1,100 @@
+name:           aern2-mfun
+version:        0.1.0.0
+cabal-version:  >= 1.9.2
+build-type:     Simple
+homepage:       https://github.com/michalkonecny/aern2
+author:         Eike Neumann
+maintainer:     Eike Neumann
+copyright:      (c) 2019 Eike Neumann
+license:        BSD3
+stability:      experimental
+category:       Math
+synopsis:       Exact real functions
+Description:
+  
+
+source-repository head
+  type:     git
+  location: https://github.com/mikkonecny/aern2.git
+  subdir: aern2-mfun
+
+library
+  hs-source-dirs:  src
+  build-depends:
+    base == 4.*
+    , containers >= 0.5
+    , psqueues >= 0.2
+    , integer-logarithms >= 1.0
+    , convertible >= 1.1.1.0
+    , regex-tdfa >= 1.2.1
+    , bytestring >= 0.10
+    , hspec >= 2.1
+    -- , hspec-smallcheck >= 0.3 && < 0.5
+    , QuickCheck >= 2.7
+    , transformers >= 0.4
+    , lens >= 4.13
+    , mixed-types-num >= 0.3.1 && < 0.4
+    , aern2-mp == 0.1.*
+    , aern2-real == 0.1.*
+    , vector
+    -- TODO: delete below eventually
+    , aern2-fun 
+    , async
+
+  ghc-options:     -Wall -fno-warn-orphans -O2 -threaded
+  extensions:
+    RebindableSyntax,
+    PostfixOperators,
+    ScopedTypeVariables,
+    DeriveGeneric,
+    GeneralizedNewtypeDeriving,
+    TypeFamilies,
+    TypeOperators,
+    ConstraintKinds,
+    DefaultSignatures,
+    MultiParamTypeClasses,
+    FlexibleContexts,
+    FlexibleInstances,
+    UndecidableInstances,
+    Arrows
+  exposed-modules:
+    AERN2.Util.Util
+    AERN2.AD.Type
+    AERN2.AD.GenericOperations
+    AERN2.AD.MPBallOperations
+    AERN2.AD.Differential
+    AERN2.Linear.Vector.Type
+    AERN2.Linear.Matrix.Type
+    AERN2.Linear.Matrix.Inverse
+    AERN2.BoxFun.Box
+    AERN2.BoxFun.Type
+    AERN2.BoxFun.TestFunctions
+    AERN2.BoxFun.Optimisation   
+    --AERN2.BoxFun.OptimisationConcurrent 
+
+executable aern2-mfun-benchmark
+  ghc-options:
+      -Wall -O2 -threaded
+  extensions:
+    RebindableSyntax,
+    TypeFamilies,
+    PostfixOperators,
+    ScopedTypeVariables,
+    FlexibleContexts,
+    TypeSynonymInstances
+  hs-source-dirs:
+      src/AERN2/Benchmark
+  main-is:
+      OptimisationBenchmark.hs
+  build-depends:
+    base == 4.*
+    , bytestring
+    , regex-tdfa
+    , zlib
+    , mixed-types-num >= 0.3.1 && < 0.4
+    , aern2-mp == 0.1.*
+    , aern2-mfun == 0.1.*
+    , aern2-real == 0.1.*
+    , QuickCheck
+    , clock
+    , async
