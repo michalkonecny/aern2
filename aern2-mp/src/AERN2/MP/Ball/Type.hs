@@ -139,18 +139,15 @@ instance IsInterval MPBall MPFloat where
   fromEndpoints l u
     | u < l = fromEndpoints u l
     | otherwise =
-      MPBall (mpFloat cDy) (errorBound $ mpFloat eDy)
+      MPBall c (errorBound e)
       where
-      lDy = dyadic l
-      uDy = dyadic u
-      cDy = (lDy + uDy) * (dyadic 0.5)
-      eDy = (uDy - cDy) `max` (cDy - lDy)
-  endpoints (MPBall x e) = (mpFloat lDy, mpFloat uDy)
+      c = (l +. u) *. (mpFloat $ dyadic 0.5)
+      e = (u -^ c) `max` (c -^ l)
+  endpoints (MPBall x e) = (l, u)
       where
-      xDy = dyadic x
-      eDy = dyadic e
-      lDy   = xDy - eDy
-      uDy   = xDy + eDy
+      eFl = mpFloat e
+      l   = x -. eFl
+      u   = x +^ eFl
 
 fromEndpointsMP :: MPFloat -> MPFloat -> MPBall
 fromEndpointsMP = fromEndpoints
