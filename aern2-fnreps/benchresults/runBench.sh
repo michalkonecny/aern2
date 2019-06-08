@@ -135,6 +135,18 @@ function runForAllReprs
   fi
 }
 
+function runForPPoly
+{
+  if [ "$repr_ppoly_max_paramss" != "" ]; then
+    repr=ppoly; op=max; paramss="$repr_ppoly_max_paramss"; repr_ppoly_max_paramss=""
+    runForParamss
+  fi
+  if [ "$repr_ppoly_itg_paramss" != "" ]; then
+    repr=ppoly; op=integrate; paramss="$repr_ppoly_itg_paramss"; repr_ppoly_itg_paramss=""
+    runForParamss
+  fi
+}
+
 #################
 ### sine+cos
 #################
@@ -327,6 +339,15 @@ function fracSinSCAllReprs
   runForAllReprs
 }
 
+function fracSinSCPPoly
+{
+  repr_ppoly_max_paramss="10 15";
+  repr_ppoly_itg_paramss="10 15";
+
+  fn=fracSinSC; dir=$fn;
+  runForPPoly
+}
+
 #################
 ### bumpy
 #################
@@ -381,6 +402,10 @@ function bumpy2AllReprs
   fn=bumpy2; dir=$fn;
   runForAllReprs
 }
+
+fracSinSCPPoly
+
+exit 0
 
 sinecosAllReprs
 sinecospiAllReprs

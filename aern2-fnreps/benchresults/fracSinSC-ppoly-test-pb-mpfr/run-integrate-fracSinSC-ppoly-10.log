@@ -1,0 +1,31 @@
+numer: acG = bits 115; ac = bits 81
+denom: acG = bits 55; ac = bits 46
+inv: acG = bits 24; ac = bits 12
+res: acG = bits 22; ac = bits 9
+computing integrate  (sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
+result = [2.8354068796012136176521140966230411727735680052078099091566144936810274583207392186576127693253922748986259188803982347108802446368131395666356000183507248435801921271560891453303396885050373623e-2 ± <2^(-10)]
+accuracy: bits 10
+precision = Precision 641
+	Command being timed: "aern2-fnreps-ops integrate fracSinSC ppoly 10"
+	User time (seconds): 105.82
+	System time (seconds): 0.53
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:46.36
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 20308
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 3162
+	Voluntary context switches: 1
+	Involuntary context switches: 68
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 16
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

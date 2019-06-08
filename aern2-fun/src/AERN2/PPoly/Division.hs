@@ -19,7 +19,7 @@ import Control.CollectErrors
 import AERN2.Poly.Cheb (reduceDegree, degree)
 
 import AERN2.MP.Dyadic
-import AERN2.Poly.Ball as PolyBall
+-- import AERN2.Poly.Ball as PolyBall
 import AERN2.MP.Ball
 import AERN2.Normalize
 
@@ -160,13 +160,13 @@ iterateInverse cutoff n f if0 =
   --         red
   --       else
   --         aux' (d + 10)
-  newtonError :: PolyBall -> MPBall -> ErrorBound
+  newtonError :: Cheb -> MPBall -> ErrorBound
   newtonError pg bfp =
     let
     rg = radius pg
     in
     errorBound bfp*rg*rg
-  newtonPiece :: PolyBall -> PolyBall -> MPBall -> PolyBall
+  newtonPiece :: Cheb -> Cheb -> MPBall -> Cheb
   newtonPiece pg pf bfp =
     let
       cg =
@@ -174,9 +174,8 @@ iterateInverse cutoff n f if0 =
         setAccuracyGuide (getAccuracyGuide f) $
           centreAsBall pg
       ni = normalize $
-            Ball (((ballLift1R $ reduceDegreeToAccuracy 5 (getAccuracy ne + 1)))
-              ((2 - cg*pf)*cg))
-              (errorBound 0)
+            (reduceDegreeToAccuracy 5 (getAccuracy ne + 1))
+              ((2 - cg*pf)*cg)
       ne = newtonError pg bfp
     in
       updateRadius (+ne) ni

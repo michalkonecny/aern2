@@ -1,0 +1,5 @@
+Time,Op,Fn,FnRepr,Parameters,Accuracy(bits),UTime(s),STime(s),Mem(kB)
+Sat  8 Jun 08:44:08 BST 2019,max,fracSinSC,ppoly,10,9,287.06,0.27,59100
+Sat  8 Jun 08:59:53 BST 2019,max,fracSinSC,ppoly,15,14,944.51,0.77,150364
+Sat  8 Jun 08:59:53 BST 2019,integrate,fracSinSC,ppoly,10,10,68.44,0.15,21060
+Sat  8 Jun 08:59:53 BST 2019,integrate,fracSinSC,ppoly,15,16,102.20,0.23,32348

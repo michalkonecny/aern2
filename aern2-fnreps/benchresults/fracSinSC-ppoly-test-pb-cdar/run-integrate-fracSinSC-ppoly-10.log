@@ -1,0 +1,31 @@
+numer: acG = bits 115; ac = bits 81
+denom: acG = bits 55; ac = bits 46
+inv: acG = bits 24; ac = bits 12
+res: acG = bits 22; ac = bits 9
+computing integrate  (sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
+result = [0.02835406879601212968595694406622471608753078170879783110556084274700574753761753275958844318149203043673013926278016290025623253492730524918267822846057477371864911402024230648889103831394927129653061548372673573941765494341208949029523380367081585728625529837475244679734305155405588536501498413788801980890653007541769726976127738197983218168812559264968065482136887999375375628500694223778620775399357153258486193067749991081349639173172541009352168736108181262046620448948875666285342648027043237954649682074793113106888532094605414730304120570455654916029853242530473187708034177912337701725487004722481287899427115917205810546875 ± <2^(-10)]
+accuracy: bits 10
+precision = Precision 633
+	Command being timed: "aern2-fnreps-ops integrate fracSinSC ppoly 10"
+	User time (seconds): 68.44
+	System time (seconds): 0.15
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:08.60
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 21060
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 3668
+	Voluntary context switches: 1
+	Involuntary context switches: 105
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 16
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

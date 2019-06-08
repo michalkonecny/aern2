@@ -48,11 +48,11 @@ maximumOptimisedWithAccuracySimple (PPoly ps dom@(Interval dL dR)) l r initialDe
   foldl1 max
     [Cheb.maximumOptimisedWithAccuracy
       (min cutoffAccuracy (getFiniteAccuracy p))
-      (updateRadius (+ err) $ ChPoly dom p acG bnds)
+      (ChPoly dom p acG bnds)
       (setPrecision (getPrecision p) $ max l (mpBall $ fromUnitIntervalToDom a))
       (setPrecision (getPrecision p) $ min r (mpBall $ fromUnitIntervalToDom b))
       initialDegree steps
-      | (i@(Interval a b),(Ball (ChPoly _ p acG bnds) err)) <- ppoly_pieces f, intersectsLR i]
+      | (i@(Interval a b),(ChPoly _ p acG bnds)) <- ppoly_pieces f, intersectsLR i]
   where
   fromUnitIntervalToDom x = (dyadic 0.5)*((dR - dL)*x + (dR + dL))
   lI      = fromDomToUnitInterval dom (setPrecision (getPrecision f) l)
@@ -149,7 +149,7 @@ maximumOptimisedWithAccuracy' (PPoly ps dom@(Interval dl dr)) l r initialDegree 
   {-fs = map ({-reduceDegreeToAccuracy 5 .-} ballLift1R makeExactCentre . snd)
         $ filter (intersectsLR . fst) ps-}
   fs  = [p | (_,p) <- fps]
-  fps = [(i, ({-reduceDegreeToAccuracy 5 .-} ballLift1R makeExactCentre) p) | (i,p) <- ps]
+  fps = [(i, ({-reduceDegreeToAccuracy 5 .-} makeExactCentre) p) | (i,p) <- ps]
   dfpsCheb =
     map (\(i,p) -> (i,(makeExactCentre . Cheb.derivativeExact . centre) p)) fps
   dfsCheb = map snd dfpsCheb
@@ -203,7 +203,7 @@ maximum (PPoly ps dom) l r =
   f       = makeExactCentre $ PPoly ps unit
   fs      = map snd ps
   --dfsCheb  = map (ballLift1R (Cheb.derivative . makeExactCentre)) fs
-  dfcsCheb = map (ballLift1R (Cheb.derivativeExact . centre)) fs
+  dfcsCheb = map (Cheb.derivativeExact . centre) fs
   ch2Power (e, p) = (e, cheb2Power p)
   dfsPow  = map (ch2Power . intify) dfcsCheb
   dfsMap  = Map.fromList $ zip (map (\k -> (k,0)) [0..]) $

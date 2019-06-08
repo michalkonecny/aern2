@@ -9,8 +9,8 @@ import AERN2.Local.Poly
 import AERN2.Local.Maximum
 
 import AERN2.Poly.Cheb
-import AERN2.Poly.Basics
-import AERN2.Poly.Ball
+-- import AERN2.Poly.Basics
+-- import AERN2.Poly.Ball
 
 import AERN2.Interval
 
@@ -27,7 +27,7 @@ instance GenericMaximum LocalPPoly where
     where
     PPoly ps dom@(Interval dL dR) = f l r ac
     polys :: [(DyadicInterval, ChPoly MPBall)]
-    polys = map (\(i, Ball c err) -> (i, updateRadius (+ err) c)) ps
+    polys = map (\(i, p) -> (i, p)) ps
     psDom = map (\(i, ChPoly _ p acG bnds) -> (i, ChPoly dom p acG bnds)) polys
     fromUnitIntervalToDom x = (dyadic 0.5)*((dR - dL)*x + (dR + dL))
 

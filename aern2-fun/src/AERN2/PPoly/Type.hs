@@ -9,7 +9,7 @@ import Data.Maybe
 
 import Control.CollectErrors
 
-import AERN2.Normalize
+-- import AERN2.Normalize
 
 import AERN2.MP.Ball (IsBall(..), MPBall, mpBall)
 import AERN2.MP.Precision
@@ -20,8 +20,8 @@ import AERN2.Interval
 
 import AERN2.RealFun.Operations
 
-import AERN2.Poly.Ball (PolyBall, Ball(..))
-import qualified AERN2.Poly.Ball as PolyBall
+-- import AERN2.Poly.Ball (PolyBall, Ball(..))
+-- import qualified AERN2.Poly.Ball as PolyBall
 import AERN2.Poly.Cheb
 import AERN2.Poly.Basics (terms_fromList, Poly(..))
 
@@ -32,49 +32,53 @@ import Debug.Trace
 type Cheb = ChPoly MPBall
 
 data PPoly =
-  PPoly {ppoly_pieces  :: [(DyadicInterval, PolyBall)],
+  PPoly {ppoly_pieces  :: [(DyadicInterval, Cheb)],
          ppoly_dom     :: DyadicInterval}
 
 instance (SuitableForCE es) => CanEnsureCE es PPoly
 
 ppoly_degree :: PPoly -> Integer
 ppoly_degree (PPoly ps _) =
-  foldl' (\d p -> max d $ ((PolyBall.ballLift1R degree) . snd) p) 1 ps
+  foldl' (\d p -> max d $ (degree . snd) p) 1 ps
 
 instance HasDomain PPoly where
   type Domain PPoly = DyadicInterval
   getDomain = ppoly_dom
 
 fromPoly :: Cheb -> PPoly
-fromPoly p = fromPolyBall $ normalize (Ball p (errorBound 0))
-
-fromPolyBall :: PolyBall -> PPoly
-fromPolyBall (Ball (ChPoly dom p acG bnds) err) =
-  PPoly [(uInt, Ball (ChPoly uInt p acG bnds) err)] dom
+fromPoly (ChPoly dom p acG bnds) =
+  PPoly [(uInt, (ChPoly uInt p acG bnds))] dom
   where
-  uInt = Interval (dyadic $ -1) (dyadic 1)
+  uInt = dyadicInterval (-1, 1)
+
+-- fromPoly :: Cheb -> PPoly
+-- fromPoly p = fromPolyBall $ normalize (Ball p (errorBound 0))
+
+-- fromPolyBall :: PolyBall -> PPoly
+-- fromPolyBall (Ball (ChPoly dom p acG bnds) err) =
+--   PPoly [(uInt, Ball (ChPoly uInt p acG bnds) err)] dom
+--   where
+--   uInt = Interval (dyadic $ -1) (dyadic 1)
 
 linearPolygonI :: [(Dyadic, MPBall)] -> DyadicInterval -> Accuracy -> PPoly
 linearPolygonI = linearPolygonNew
 
 linearPolygonNew :: [(Dyadic, MPBall)] -> DyadicInterval -> Accuracy -> PPoly
-linearPolygonNew ((x,y) : xys) dom acG =
-  aux xys x y []
+linearPolygonNew ((x0,y0) : xys0) dom acG =
+  aux xys0 x0 y0 []
   where
   aux [] _ _ res = PPoly (reverse res) dom
   aux ((x',y'):xys) x y res =
     aux xys x' y' ((Interval x x', linSpline x y x' y') : res)
   p = prec $ fromAccuracy acG
   linSpline a fa b fb =
-    Ball
-      (ChPoly
-        (dyadicInterval (-1,1))
-        --(Poly $ terms_fromList [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))]))
-        (Poly $ terms_fromList
-                [(0, constantTerm a fa b fb),
-                 (1, linearTerm a fa b fb)])
-        acG Nothing)
-      (errorBound 0)
+    (ChPoly
+      (dyadicInterval (-1,1))
+      --(Poly $ terms_fromList [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))]))
+      (Poly $ terms_fromList
+              [(0, constantTerm a fa b fb),
+                (1, linearTerm a fa b fb)])
+      acG Nothing)
   linearTerm a fa b fb =
     let
     a' = raisePrecisionIfBelow p (mpBall a)
@@ -95,17 +99,16 @@ linearPolygonNew [] _ _ =
   error "linearPolygonI must be provided with a list of at least 2 points"
 
 linearPolygonOld :: [(Dyadic, MPBall)] -> DyadicInterval -> Accuracy -> PPoly
-linearPolygonOld ((x,y) : xys) dom acG =
+linearPolygonOld ((x0,y0) : xys0) dom acG =
   trace("linear polygon ") $
-  trace("input: "++ (show $ ((x,y) : xys))) $
-  trace("result: "++ (show $ aux xys x y [])) $
-  aux xys x y []
+  trace("input: "++ (show $ ((x0,y0) : xys0))) $
+  trace("result: "++ (show $ aux xys0 x0 y0 [])) $
+  aux xys0 x0 y0 []
   where
   aux [] _ _ res = PPoly (reverse res) dom
   aux ((x',y'):xys) x y res =
     aux xys x' y' ((Interval x x', linSpline x y x' y') : res)
   linSpline a fa b fb =
-    Ball
       (ChPoly
         (dyadicInterval (-1,1))
         --(Poly $ terms_fromList [(0, (y*(x' - x) - x*(y' - y))/(x' - x)), (1, (y' - y)/(x' - x))]))
@@ -113,7 +116,6 @@ linearPolygonOld ((x,y) : xys) dom acG =
                 [(0, constantTerm a fa b fb (getPrecision fa) (getPrecision fb) Nothing),
                  (1, linearTerm a fa b fb (getPrecision fa) (getPrecision fb)  Nothing)])
         acG Nothing)
-      (errorBound 0)
   linearTerm a fa b fb p q prev =
     let
     a' = raisePrecisionIfBelow p (mpBall a)
@@ -147,43 +149,30 @@ linearPolygonOld ((x,y) : xys) dom acG =
 linearPolygonOld [] _ _ =
   error "linearPolygonI must be provided with a list of at least 2 points"
 
-liftBall2PPoly :: (PolyBall -> PolyBall) -> (PPoly -> PPoly)
-liftBall2PPoly f (PPoly ps dom)  =
+liftCheb2PPoly :: (Cheb -> Cheb) -> (PPoly -> PPoly)
+liftCheb2PPoly f (PPoly ps dom)  =
   PPoly (map (domify f) ps) dom
   where
-  domify :: (PolyBall -> PolyBall)
-    -> (DyadicInterval, PolyBall)
-    -> (DyadicInterval, PolyBall)
+  domify :: (Cheb -> Cheb)
+    -> (DyadicInterval, Cheb)
+    -> (DyadicInterval, Cheb)
   domify g (i, p) = (i, g p)
 
-liftBall2PPolyCN :: (PolyBall -> CN PolyBall) -> (PPoly -> CN PPoly)
-liftBall2PPolyCN f (PPoly ps dom)  =
+liftCheb2PPolyCN :: (Cheb -> CN Cheb) -> (PPoly -> CN PPoly)
+liftCheb2PPolyCN f (PPoly ps dom)  =
   fmap (\ps2 -> PPoly ps2 dom) (sequence (map (domify f) ps))
   where
-  domify :: (PolyBall -> CN PolyBall)
-    -> (DyadicInterval, PolyBall)
-    -> CN (DyadicInterval, PolyBall)
+  domify :: (Cheb -> CN Cheb)
+    -> (DyadicInterval, Cheb)
+    -> CN (DyadicInterval, Cheb)
   domify g (i, p) = fmap (i,) (g p)
-
-liftCheb2PPoly :: (Cheb -> Cheb) -> (PPoly -> PPoly)
-liftCheb2PPoly f =
-  liftBall2PPoly (ballify f)
-  where
-  ballify g (Ball c r) =
-    let
-      ballAsCheb =
-        case chPoly_maybeLip c of
-          Nothing  -> updateRadius (+r) c
-          Just lip -> chPoly_setLip lip $ updateRadius (+r) c
-    in
-    normalize $ Ball (g ballAsCheb) (errorBound 0)
 
 {-lift2PPoly :: (Poly MPBall -> Poly MPBall) -> (PPoly -> PPoly)
 lift2PPoly f (PPoly pieces overlap dom) =
   PPoly (map (\(i,p) -> (i, f p)) pieces) overlap dom-}
 
 refine :: PPoly -> PPoly
-  -> [(DyadicInterval, PolyBall, PolyBall)]
+  -> [(DyadicInterval, Cheb, Cheb)]
 refine f@(PPoly ps _) g@(PPoly qs _) =
    reverse $ aux [] ps qs
    where
@@ -203,9 +192,9 @@ refine f@(PPoly ps _) g@(PPoly qs _) =
 
 --precondition: both intervals have the same left end-point
 intersectionAndDifference ::
-  (DyadicInterval, PolyBall) -> (DyadicInterval, PolyBall)
-  -> (Bool, (DyadicInterval, PolyBall, PolyBall),
-      Maybe (DyadicInterval, PolyBall))
+  (DyadicInterval, Cheb) -> (DyadicInterval, Cheb)
+  -> (Bool, (DyadicInterval, Cheb, Cheb),
+      Maybe (DyadicInterval, Cheb))
 intersectionAndDifference (Interval l r, p) (Interval l' r', p') =
    if l /= l' then
        error $ "PPoly intersectionAndDifference: precondition violated. Intervals are [" ++ (show l) ++ "," ++(show r)++"] and ["++(show l')++ ","++(show r')++"]."
@@ -269,10 +258,10 @@ instance HasFnConstructorInfo PPoly where
 
 {- -}
 
-multiplyWithBounds :: PPoly -> MPBall -> PPoly -> MPBall -> PPoly
-multiplyWithBounds a ba b bb =
-  PPoly [(i, PolyBall.multiplyWithBounds p ba q bb) | (i,p,q) <- refine a b]
-        (ppoly_dom a)
+-- multiplyWithBounds :: PPoly -> MPBall -> PPoly -> MPBall -> PPoly
+-- multiplyWithBounds a ba b bb =
+--   PPoly [(i, PolyBall.multiplyWithBounds p ba q bb) | (i,p,q) <- refine a b]
+--         (ppoly_dom a)
 
 {- arithmetic -}
 
@@ -311,66 +300,66 @@ instance CanSub PPoly PPoly where
 
 instance CanAddAsymmetric PPoly Integer where
     type AddType PPoly Integer = PPoly
-    add p n = liftBall2PPoly (+n) $ p
+    add p n = liftCheb2PPoly (+n) $ p
 
 instance CanSub PPoly Integer where
     type SubType PPoly Integer = PPoly
-    sub p n = liftBall2PPoly (\x -> x - n) $ p
+    sub p n = liftCheb2PPoly (\x -> x - n) $ p
 
 instance CanSub Integer PPoly where
     type SubType Integer PPoly = PPoly
-    sub n p = liftBall2PPoly (\x -> n - x) $ p
+    sub n p = liftCheb2PPoly (\x -> n - x) $ p
 
 instance CanAddAsymmetric Integer PPoly where
     type AddType Integer PPoly = PPoly
-    add n p = liftBall2PPoly (n+) $ p
+    add n p = liftCheb2PPoly (n+) $ p
 
 instance CanMulAsymmetric PPoly Integer where
     type MulType PPoly Integer = PPoly
-    mul p n = liftBall2PPoly (*n) $ p
+    mul p n = liftCheb2PPoly (*n) $ p
 
 instance CanMulAsymmetric Integer PPoly where
     type MulType Integer PPoly = PPoly
-    mul n p = liftBall2PPoly (n*) $ p
+    mul n p = liftCheb2PPoly (n*) $ p
 
 instance CanDiv PPoly Integer where
     type DivTypeNoCN PPoly Integer = PPoly
-    divideNoCN p n = liftBall2PPoly (/!n) $ p
+    divideNoCN p n = liftCheb2PPoly (/!n) $ p
     type DivType PPoly Integer = CN PPoly
-    divide p n = liftBall2PPolyCN (/n) $ p
+    divide p n = liftCheb2PPolyCN (/n) $ p
 
 {- Mixed operations with MPBall -}
 
 instance CanAddAsymmetric PPoly MPBall where
     type AddType PPoly MPBall = PPoly
-    add p n = liftBall2PPoly (+n) p
+    add p n = liftCheb2PPoly (+n) p
 
 
 instance CanSub MPBall PPoly where
     type SubType MPBall PPoly = PPoly
-    sub n p = liftBall2PPoly (\x -> n - x) $ p
+    sub n p = liftCheb2PPoly (\x -> n - x) $ p
 
 instance CanSub PPoly MPBall where
     type SubType PPoly MPBall = PPoly
-    sub p n = liftBall2PPoly (\x -> x - n) $ p
+    sub p n = liftCheb2PPoly (\x -> x - n) $ p
 
 instance CanAddAsymmetric MPBall PPoly where
     type AddType MPBall PPoly = PPoly
-    add n p = liftBall2PPoly (n+) p
+    add n p = liftCheb2PPoly (n+) p
 
 instance CanMulAsymmetric PPoly MPBall where
     type MulType PPoly MPBall = PPoly
-    mul p n = liftBall2PPoly (*n) p
+    mul p n = liftCheb2PPoly (*n) p
 
 instance CanMulAsymmetric MPBall PPoly where
     type MulType MPBall PPoly = PPoly
-    mul n p = liftBall2PPoly (*n) p
+    mul n p = liftCheb2PPoly (*n) p
 
 instance CanDiv PPoly MPBall where
     type DivTypeNoCN PPoly MPBall = PPoly
-    divideNoCN p n = liftBall2PPoly (/!n) p
+    divideNoCN p n = liftCheb2PPoly (/!n) p
     type DivType PPoly MPBall = CN PPoly
-    divide p n = liftBall2PPolyCN (/n) p
+    divide p n = liftCheb2PPolyCN (/n) p
 
 
 instance CanSinCos PPoly where

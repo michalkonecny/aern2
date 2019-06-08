@@ -55,14 +55,14 @@ ppolyMax a b =
   if ppoly_dom a /= ppoly_dom b then
     error "ppolyMax: PPoly domains do not match."
   else
-    PPoly (concat (map pballMax (refine a b)))
+    PPoly (concat (map chebMax (refine a b)))
           (ppoly_dom a)
   where
-  pballMax ((Interval domL domR), p@(Ball pC pR), q@(Ball qC qR)) =
+  chebMax ((Interval domL domR), p, q) =
     polys
     where
-    acGuide = getAccuracyGuide pC `max` getAccuracyGuide qC
-    precision = getPrecision pC `max` getPrecision qC
+    acGuide = getAccuracyGuide p `max` getAccuracyGuide q
+    precision = getPrecision p `max` getPrecision q
     -- realAcc = getAccuracy p `min` getAccuracy q
 
     diffC  = centre $ p - q
@@ -89,19 +89,20 @@ ppolyMax a b =
         (Interval l x, max e0 e1) : is
       aux is (l, e0) ((x, e1) : xs) =
         aux ((Interval l x, max e0 e1) : is) (x, e1) xs
-    biggest :: (DyadicInterval, ErrorBound) -> (DyadicInterval, PolyBall)
+      aux _ _ [] = []
+    biggest :: (DyadicInterval, ErrorBound) -> (DyadicInterval, Cheb)
     biggest (i@(Interval l r), e) =
       if (pm >= qm) == Just True then
         (i, p')
       else
         (i, q')
       where
-      rad = max (pR + e) (qR + e)
-      p' = updateRadius (const rad) p
-      q' = updateRadius (const rad) q
+      -- TODO: check and fix the following if necesary
+      p' = updateRadius (+ e) p
+      q' = updateRadius (+ e) q
       m  = (dyadic 0.5) * (l + r)
-      pm = evalDirect pC (mpBall m)
-      qm = evalDirect qC (mpBall m)
-    polys :: [(DyadicInterval, PolyBall)]
+      pm = evalDirect p (mpBall m)
+      qm = evalDirect q (mpBall m)
+    polys :: [(DyadicInterval, Cheb)]
     polys =
       map biggest intervals
