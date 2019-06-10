@@ -136,11 +136,7 @@ evalDf f f' x =
 
 evalLDf :: ChPoly MPBall -> ChPoly MPBall -> MPBall -> MPBall
 evalLDf f f' x =
-  case chPoly_maybeLip f of
-    Nothing ->
       evalLip f (abs $ evalDirect f' x) x
-    Just lip ->
-      evalLip f lip x
 
 reduceToEvalDirectAccuracy :: ChPoly MPBall -> Accuracy -> ChPoly MPBall
 reduceToEvalDirectAccuracy f ac =

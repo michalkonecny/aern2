@@ -16,7 +16,7 @@
 module AERN2.Poly.Cheb.Type
 (
   ChPolyMB, ChPoly(..), chPoly_terms
-, ChPolyBounds(..), chPoly_maybeLip, chPoly_setLip
+, ChPolyBounds(..) --, chPoly_maybeLip, chPoly_setLip
 , CanBeChPoly, chPoly, chPolyMPBall
 , showInternals, fromDomToUnitInterval
 , serialise, deserialise
@@ -58,7 +58,7 @@ import AERN2.RealFun.Operations
 
 import AERN2.Poly.Basics
 import AERN2.Poly.Conversion
-import qualified AERN2.Poly.Power as Pow hiding (translate, contract)
+-- import qualified AERN2.Poly.Power as Pow hiding (translate, contract)
 import qualified AERN2.Poly.Power.Roots as Pow
 
 chPolyMPBall :: (ConvertibleExactly t (ChPoly MPBall)) => t -> ChPoly MPBall
@@ -80,7 +80,8 @@ instance (SuitableForCE es) => CanEnsureCE es (ChPoly c)
 
 data ChPolyBounds c =
   ChPolyBounds
-  { chPolyBounds_lip :: c
+  { 
+    -- chPolyBounds_lip :: c
   }
   deriving (Show)
 
@@ -89,11 +90,11 @@ instance (SuitableForCE es) => CanExtractCE es ChPoly
   extractCE sample_es (ChPoly dom poly acG _mb) =
     fmap (\p -> ChPoly dom p acG Nothing) (extractCE sample_es poly)
 
-chPoly_maybeLip :: ChPoly c -> Maybe c
-chPoly_maybeLip = fmap chPolyBounds_lip . chPoly_maybeBounds
+-- chPoly_maybeLip :: ChPoly c -> Maybe c
+-- chPoly_maybeLip = fmap chPolyBounds_lip . chPoly_maybeBounds
 
-chPoly_setLip :: c -> ChPoly c -> ChPoly c -- TODO: use Maybe c instead?
-chPoly_setLip lip (ChPoly dom poly acG _) =  ChPoly dom poly acG (Just $ ChPolyBounds lip)
+-- chPoly_setLip :: c -> ChPoly c -> ChPoly c -- TODO: use Maybe c instead?
+-- chPoly_setLip lip (ChPoly dom poly acG _) =  ChPoly dom poly acG (Just $ ChPolyBounds lip)
 
 chPoly_terms :: ChPoly c -> Terms c
 chPoly_terms = poly_terms . chPoly_poly
