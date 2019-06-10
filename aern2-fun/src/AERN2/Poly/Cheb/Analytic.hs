@@ -47,7 +47,7 @@ liftAnalytic f p =
     ChPoly (Interval (dyadic $ -1) (dyadic 1))
             (Poly $ terms_fromList [(0, mpBall 0), (1, mpBall 1)])
             (getAccuracyGuide p)
-            Nothing
+            ChPolyBounds
   (n, chebErr) = boundTerms 0 (mpBall 1)
   s = lift1_DCT (const n) (f 0 . fromUnitIntervalToDom sDom) x
   fromUnitIntervalToDom (Interval a b) y = a + (b - a)*(y + 1)/!2
@@ -77,7 +77,7 @@ evalNoFuzz (ChPoly _dom (Poly terms) _acG _) (x :: ChPoly MPBall) =
       ChPoly (chPoly_dom x)
               (Poly $ terms_fromList [(0, mpBall 0)])
               (bits $ ceiling $ 1.5*(fromAccuracy $ getAccuracyGuide x))
-              Nothing
+              ChPolyBounds
     aux k bKp2 bKp1
         | k == 0 = [bKp2, bKp1, bK]
         | otherwise = bKp2 : aux (k - 1) bKp1 bK

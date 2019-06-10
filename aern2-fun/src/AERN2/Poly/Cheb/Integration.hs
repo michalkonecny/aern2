@@ -75,7 +75,7 @@ primitive_function (ChPoly dom@(Interval l r) (Poly terms) acG _) =
       ChPoly dom
       (Poly $ terms_fromListAddCoeffs $
         concat $ map oneTerm $ terms_toList terms)
-    acG Nothing
+    acG ChPolyBounds
   where
   oneTerm (n,a)
     | n == 0 = [(1,a)]

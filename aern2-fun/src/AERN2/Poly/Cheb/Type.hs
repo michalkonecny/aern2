@@ -73,7 +73,7 @@ data ChPoly c =
   { chPoly_dom :: DyadicInterval
   , chPoly_poly :: Poly c
   , chPoly_acGuide :: Accuracy
-  , chPoly_maybeBounds :: Maybe (ChPolyBounds c)
+  , chPoly_bounds :: ChPolyBounds c
   }
 
 instance (SuitableForCE es) => CanEnsureCE es (ChPoly c)
@@ -83,12 +83,19 @@ data ChPolyBounds c =
   { 
     -- chPolyBounds_lip :: c
   }
-  deriving (Show)
+  deriving (Show, Read)
+
+instance (SuitableForCE es) => CanExtractCE es ChPolyBounds
+  where
+  extractCE sample_es (ChPolyBounds) =
+    pure ChPolyBounds
 
 instance (SuitableForCE es) => CanExtractCE es ChPoly
   where
-  extractCE sample_es (ChPoly dom poly acG _mb) =
-    fmap (\p -> ChPoly dom p acG Nothing) (extractCE sample_es poly)
+  extractCE sample_es (ChPoly dom poly acG bnds) =
+    do
+    bnds' <- extractCE sample_es bnds
+    fmap (\p -> ChPoly dom p acG bnds') (extractCE sample_es poly)
 
 -- chPoly_maybeLip :: ChPoly c -> Maybe c
 -- chPoly_maybeLip = fmap chPolyBounds_lip . chPoly_maybeBounds
@@ -122,23 +129,26 @@ showInternals (ChPoly dom (Poly terms) acG bnd) =
   ", terms = " ++ show terms
 
 serialise :: ChPolyMB -> String
-serialise (ChPoly dom (Poly terms) acG _) =
-  printf "(ChPoly (%s{--}) (Poly (terms_fromList %s{--})) (%s{--}) Nothing)"
-    (show dom) (show $ terms_toList $ terms_map dyadicInterval terms) (show $ fromAccuracy acG)
+serialise (ChPoly dom (Poly terms) acG bnds) =
+  printf "(ChPoly (%s{--}) (Poly (terms_fromList %s{--})) (%s{--}) (%s{--}))"
+    (show dom) 
+    (show $ terms_toList $ terms_map dyadicInterval terms) 
+    (show $ fromAccuracy acG)
+    (show $ bnds)
 
 deserialise :: BS.ByteString -> Maybe ChPolyMB
 deserialise polyS =
   case groups of
-    [domS,termsS, acG_S] ->
-      case (reads (BS.unpack domS), reads (BS.unpack termsS), reads (BS.unpack acG_S)) of
-        ([(dom,"")],[(terms,"")], [(acG_I :: Integer, "")]) ->
+    [domS,termsS, acG_S, bnds_S] ->
+      case (reads (BS.unpack domS), reads (BS.unpack termsS), reads (BS.unpack acG_S), reads (BS.unpack bnds_S)) of
+        ([(dom,"")], [(terms,"")], [(acG_I :: Integer, "")], [(bnds,"")]) ->
           Just $ ChPoly dom
                   (Poly $ terms_map mpBall $ terms_fromList (terms :: [(Integer, DyadicInterval)]))
-                  (bits acG_I) Nothing
+                  (bits acG_I) bnds
         _ -> Nothing
     _ -> Nothing
   where
-  pat = "\\(ChPoly \\(([^{]*){--}\\) \\(Poly \\(terms_fromList ([^{]*){--}\\)\\) \\(([^{]*){--}\\) Nothing\\)"
+  pat = "\\(ChPoly \\(([^{]*){--}\\) \\(Poly \\(terms_fromList ([^{]*){--}\\)\\) \\(([^{]*){--}\\) \\(([^{]*){--}\\)\\)"
   (_before,_whole,_after,groups) = polyS =~ pat
     :: (BS.ByteString,BS.ByteString,BS.ByteString,[BS.ByteString])
     -- :: (String,String,String,[String])
@@ -160,12 +170,12 @@ instance (IsBall c, HasIntegers c) => IsBall (ChPoly c) where
   type CentreType (ChPoly c) = ChPoly c
   radius (ChPoly _dom (Poly terms) _acG _) =
     List.foldl' (+) (errorBound 0) $ map radius $ terms_coeffs terms
-  centre (ChPoly dom (Poly terms) acG _bnd) =
-    ChPoly dom (Poly (terms_map centreAsBall terms)) acG Nothing
+  centre (ChPoly dom (Poly terms) acG (ChPolyBounds)) =
+    ChPoly dom (Poly (terms_map centreAsBall terms)) acG ChPolyBounds
   centreAsBall = centre
   centreAsBallAndRadius cp = (centre cp, radius cp)
-  updateRadius updateFn (ChPoly dom (Poly terms) acG _) =
-    ChPoly dom (Poly $ terms_updateConst (updateRadius updateFn) terms) acG Nothing
+  updateRadius updateFn (ChPoly dom (Poly terms) acG ChPolyBounds) =
+    ChPoly dom (Poly $ terms_updateConst (updateRadius updateFn) terms) acG ChPolyBounds
 
 instance CanNormalize (ChPoly MPBall) where
   normalize p = (makeExactCentre . sweepUsingOwnAccuracyGuide) p
@@ -200,7 +210,7 @@ instance HasFnConstructorInfo (ChPoly c) where
 instance (HasDyadics c, HasIntegers c) => HasVars (ChPoly c) where
   type Var (ChPoly c) = ()
   varFn (dom@(Interval l r), acG) () =
-    ChPoly dom (Poly terms) acG Nothing
+    ChPoly dom (Poly terms) acG ChPolyBounds
     where
     terms = terms_fromList [(0, c0), (1, c1)]
     c0 = coeff $ (r + l) * half
@@ -216,14 +226,14 @@ instance (ConvertibleExactly t c, HasIntegers c) => ConvertibleExactly ((DyadicI
   where
   safeConvertExactly ((dom, acG), x) =
     case safeConvertExactly x of
-      Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)]) acG Nothing
+      Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)]) acG ChPolyBounds
       Left e -> Left e
 
 instance (ConvertibleExactly t c, HasIntegers c) => ConvertibleExactly (ChPoly c, t) (ChPoly c)
   where
   safeConvertExactly (ChPoly dom _ acG _, x) =
     case safeConvertExactly x of
-      Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)]) acG Nothing
+      Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)]) acG ChPolyBounds
       Left e -> Left e
 
 degree :: ChPoly c -> Integer

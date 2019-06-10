@@ -46,7 +46,7 @@ maximum (ChPoly dom poly acG _) l r  =
     (getAccuracy f)
     (fromDomToUnitInterval dom l) (fromDomToUnitInterval dom r)
    where
-   f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG Nothing
+   f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG ChPolyBounds
    df = makeExactCentre $ derivative f
    dfc = derivative $ centre f
 
@@ -71,7 +71,7 @@ maximumOptimisedWithAccuracy acc (ChPoly dom poly acG _) l r initialDegree steps
         try
       else
         reduceDegreeToAccuracy (d + 5) g
-  f   = reduceDegreeToAccuracy 5 $ makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG Nothing
+  f   = reduceDegreeToAccuracy 5 $ makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG ChPolyBounds
   fc' = (makeExactCentre . derivativeExact . centre) f
   maxKey = max 0 (ceiling ((degree f - initialDegree) /! steps))
   ch2Power :: ChPoly MPBall -> Pow.PowPoly MPBall

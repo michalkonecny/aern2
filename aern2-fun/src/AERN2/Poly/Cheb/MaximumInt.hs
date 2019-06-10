@@ -62,7 +62,7 @@ maximum (ChPoly dom poly acG _) l r  =
     (getFiniteAccuracy f)
     (fromDomToUnitInterval dom l) (fromDomToUnitInterval dom r)
    where
-   f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG Nothing
+   f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG ChPolyBounds
    df@(ChPoly _ dfp _ _) = derivativeExact (centre f) --makeExactCentre $ derivative f
    termsRational = terms_map (rational . ball_value) (poly_terms dfp)
    err = termsError * termsDenominator
@@ -77,7 +77,7 @@ maximumWithAccuracy acc (ChPoly dom poly acG _) l r  =
    (min (getFiniteAccuracy f) acc)
    (fromDomToUnitInterval dom l) (fromDomToUnitInterval dom r)
   where
-  f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG Nothing
+  f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG ChPolyBounds
   df@(ChPoly _ dfp _ _) = derivativeExact (centre f) --makeExactCentre $ derivative f
   termsRational = terms_map (rational . ball_value) (poly_terms dfp)
   err = termsError * termsDenominator
@@ -101,7 +101,7 @@ maximumOptimisedWithAccuracy acc (ChPoly dom@(Interval dR dL) poly acG _) l r in
       (fromDomToUnitInterval dom (setPrecision (getPrecision f) r))
   where
   c = 1/!(0.5*(dR - dL))
-  f   = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG Nothing
+  f   = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG ChPolyBounds
   fc' = ({-makeExactCentre .-} derivativeExact . centre) f
   maxKey = max 0 (ceiling ((degree f - initialDegree) /! steps))
   ch2Power :: (ErrorBound, Poly Integer) -> (ErrorBound, Pow.PowPoly Integer)
@@ -127,7 +127,7 @@ maximumOptimisedWithAccuracyAndBounds acc (ChPoly dom poly acG _) l r initialDeg
       lower
       upper
   where
-  f   = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG Nothing
+  f   = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG ChPolyBounds
   fc' = (derivativeExact . centre) f
   maxKey = max 0 (ceiling ((degree f - initialDegree) /! steps))
   ch2Power :: (ErrorBound, Poly Integer) -> (ErrorBound, Pow.PowPoly Integer)

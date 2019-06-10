@@ -28,9 +28,9 @@ import AERN2.Poly.Cheb.Ring ()
 
 derivativeExact :: ChPoly MPBall -> ChPoly MPBall -- TODO: add check for domain?
 derivativeExact _f@(ChPoly dom@(Interval _l _r) (Poly ts) acG _) =
-  ChPoly dom (Poly $ terms_map mpBall dts) acG Nothing
+  ChPoly dom (Poly $ terms_map mpBall dts) acG ChPolyBounds
   where
-  fDy = ChPoly dom (Poly $ terms_map centre ts) acG Nothing
+  fDy = ChPoly dom (Poly $ terms_map centre ts) acG ChPolyBounds
   ChPoly _ (Poly dts) _ _ = derivativeI fDy
   {-trace("derivative exact of "++(show f)) $
   trace("accuracy of f: "++(show $ getAccuracy f)) $
@@ -93,7 +93,7 @@ derivativeI (ChPoly dom (Poly ts :: Poly c) acG _) =
       (Poly $
         terms_updateConst (*(dyadic 0.5)) $
           terms_fromList [(i, convertExactly (2*n)) | i <- [0 .. n - 1], odd (n - i)])
-      acG Nothing
+      acG ChPolyBounds
 
 derivative' ::
   (PolyCoeffRing c
@@ -116,4 +116,4 @@ derivative' (ChPoly dom@(Interval l r) (Poly ts :: Poly c) acG _)  =
       (Poly $
         terms_updateConst (/!(dyadic 2)) $
           terms_fromList [(i, convertExactly (2*n)) | i <- [0 .. n - 1], odd (n - i)])
-      acG Nothing
+      acG ChPolyBounds

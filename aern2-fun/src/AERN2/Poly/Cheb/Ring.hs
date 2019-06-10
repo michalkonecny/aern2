@@ -57,7 +57,7 @@ import AERN2.Poly.Cheb.DCT
 
 instance CanNegSameType c => CanNeg (ChPoly c) where
   type NegType (ChPoly c) = ChPoly c
-  negate (ChPoly d x acG _) = ChPoly d (negate x) acG Nothing
+  negate (ChPoly d x acG _) = ChPoly d (negate x) acG ChPolyBounds
 
 {- addition -}
 
@@ -68,7 +68,7 @@ instance
   where
   type AddType (ChPoly c) (ChPoly c) = ChPoly c
   add (ChPoly d1 p1 acG1 _) (ChPoly d2 p2 acG2 _)
-    | d1 == d2 = normalize $ ChPoly d1 (p1 + p2) acG Nothing
+    | d1 == d2 = normalize $ ChPoly d1 (p1 + p2) acG ChPolyBounds
     | otherwise = error $ "Adding polynomials with incompatible domains"
     where
     acG = max acG1 acG2
@@ -78,11 +78,11 @@ $(declForTypes
   (\ t -> [d|
     instance (CanAddThis c $t, HasIntegers c) => CanAddAsymmetric $t (ChPoly c) where
       type AddType $t (ChPoly c) = ChPoly c
-      add n (ChPoly d2 p2 acG _) = ChPoly d2 (n + p2) acG Nothing
+      add n (ChPoly d2 p2 acG _) = ChPoly d2 (n + p2) acG ChPolyBounds
 
     instance (CanAddThis c $t, HasIntegers c) => CanAddAsymmetric (ChPoly c) $t where
       type AddType (ChPoly c) $t = ChPoly c
-      add (ChPoly d1 p1 acG _) n = ChPoly d1 (n + p1) acG Nothing
+      add (ChPoly d1 p1 acG _) n = ChPoly d1 (n + p1) acG ChPolyBounds
   |]))
 
 
@@ -153,7 +153,7 @@ mulChebDirect ::
 mulChebDirect _cp1@(ChPoly d1 p1 acG1 _) _cp2@(ChPoly d2 p2 acG2 _)
   | d1 /= d2 = error $ "Multiplying ChPoly's with incompatible domains"
   | otherwise =
-    normalize $ ChPoly d1 (Poly terms) (max acG1 acG2) Nothing
+    normalize $ ChPoly d1 (Poly terms) (max acG1 acG2) ChPolyBounds
   where
   terms =
     terms_fromListAddCoeffs $
@@ -179,7 +179,7 @@ $(declForTypes
   (\ t -> [d|
     instance (CanMulBy c $t, HasIntegers c, CanNormalize (ChPoly c)) => CanMulAsymmetric $t (ChPoly c) where
       type MulType $t (ChPoly c) = ChPoly c
-      mul n (ChPoly d2 p2 acG _) = normalize $ ChPoly d2 (n * p2) acG Nothing
+      mul n (ChPoly d2 p2 acG _) = normalize $ ChPoly d2 (n * p2) acG ChPolyBounds
 
     instance (CanMulBy c $t, HasIntegers c, CanNormalize (ChPoly c)) => CanMulAsymmetric (ChPoly c) $t where
       type MulType (ChPoly c) $t = ChPoly c
@@ -199,10 +199,10 @@ $(declForTypes
       CanDiv (ChPoly c) $t
       where
       type DivTypeNoCN (ChPoly c) $t = ChPoly c
-      divideNoCN (ChPoly d1 p1 acG _) n = normalize $ ChPoly d1 (p1/!n) acG Nothing
+      divideNoCN (ChPoly d1 p1 acG _) n = normalize $ ChPoly d1 (p1/!n) acG ChPolyBounds
       type DivType (ChPoly c) $t = CN (ChPoly c)
       divide (ChPoly d1 p1 acG _) n =
-        fmap normalize $ extractCN $ ChPoly d1 (p1/n) acG Nothing
+        fmap normalize $ extractCN $ ChPoly d1 (p1/n) acG ChPolyBounds
 
   |]))
 

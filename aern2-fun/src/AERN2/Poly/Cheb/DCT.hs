@@ -105,7 +105,7 @@ lift2_DCT getDegree op pA pB
     setAccuracyGuide acG $
     normalize $
     reduceDegree resultDegree $
-      ChPoly domA (Poly $ terms_fromList $ zip [0..] (c0Double /! 2 : c)) (acG + cN) Nothing
+      ChPoly domA (Poly $ terms_fromList $ zip [0..] (c0Double /! 2 : c)) (acG + cN) ChPolyBounds
   acG = (max acGA acGB)
 --    terms_fromList [(0, mpBall 1)] -- dummy for debugging exceptions
 
@@ -132,7 +132,7 @@ lift1_DCT getDegree op p =
         ++ "\n c = " ++ show c
     ) $
     normalize $
-    ChPoly dom (Poly terms) acG Nothing
+    ChPoly dom (Poly terms) acG ChPolyBounds
     where
     terms =
       terms_fromList $ zip [0..] (c0Double /! 2 : c)
