@@ -15,9 +15,7 @@
 -}
 
 module AERN2.Poly.Cheb.Ring
-(
-  mulCheb, mulChebDirect, mulChebDCT
-)
+-- (  mulCheb, mulChebDirect, mulChebDCT )
 where
 
 #ifdef DEBUG
@@ -42,7 +40,7 @@ import AERN2.Normalize
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
-import AERN2.Real
+-- import AERN2.Real
 
 -- import AERN2.Interval
 -- import AERN2.RealFun.Operations
@@ -51,83 +49,75 @@ import AERN2.Real
 import AERN2.Poly.Basics
 
 import AERN2.Poly.Cheb.Type
+import AERN2.Poly.Cheb.ShiftScale ()
+import AERN2.Poly.Cheb.Maximum
 import AERN2.Poly.Cheb.DCT
-
-{- negation -}
-
-instance CanNegSameType c => CanNeg (ChPoly c) where
-  type NegType (ChPoly c) = ChPoly c
-  negate (ChPoly d x acG _) = ChPoly d (negate x) acG ChPolyBounds
 
 {- addition -}
 
 instance
-  (PolyCoeffRing c, CanNormalize (ChPoly c))
-  =>
+  -- (PolyCoeffRing c, CanNormalize (ChPoly c))
+  (c ~ MPBall) =>
   CanAddAsymmetric (ChPoly c) (ChPoly c)
   where
   type AddType (ChPoly c) (ChPoly c) = ChPoly c
-  add (ChPoly d1 p1 acG1 _) (ChPoly d2 p2 acG2 _)
-    | d1 == d2 = normalize $ ChPoly d1 (p1 + p2) acG ChPolyBounds
+  add cp1@(ChPoly d1 p1 acG1 bnds1) cp2@(ChPoly d2 p2 acG2 bnds2)
+    | d1 == d2 = 
+        case (chPolyBounds_valueIfConst bnds1, chPolyBounds_valueIfConst bnds2) of
+          (Just b1, _) -> b1 + cp2
+          (_, Just b2) -> cp1 + b2
+          _ -> result
     | otherwise = error $ "Adding polynomials with incompatible domains"
     where
     acG = max acG1 acG2
-
-$(declForTypes
-  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
-  (\ t -> [d|
-    instance (CanAddThis c $t, HasIntegers c) => CanAddAsymmetric $t (ChPoly c) where
-      type AddType $t (ChPoly c) = ChPoly c
-      add n (ChPoly d2 p2 acG _) = ChPoly d2 (n + p2) acG ChPolyBounds
-
-    instance (CanAddThis c $t, HasIntegers c) => CanAddAsymmetric (ChPoly c) $t where
-      type AddType (ChPoly c) $t = ChPoly c
-      add (ChPoly d1 p1 acG _) n = ChPoly d1 (n + p1) acG ChPolyBounds
-  |]))
+    result = 
+      normalize $ ChPoly d1 (p1 + p2) acG (chPolyBounds_forChPoly result)
 
 
 {- subtraction -}
 
 instance
-  (PolyCoeffRing c, CanNormalize (ChPoly c))
-  =>
+  -- (PolyCoeffRing c, CanNormalize (ChPoly c)) =>
+  (c ~ MPBall) =>
   CanSub (ChPoly c) (ChPoly c)
-
-$(declForTypes
-  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
-  (\ t -> [d|
-    instance (CanAddThis c $t, CanNegSameType c, HasIntegers c) => CanSub $t (ChPoly c)
-    instance (CanAddThis c $t, HasIntegers c) => CanSub (ChPoly c) $t
-  |]))
-
 
 {- multiplication -}
 
 instance
-  (c~MPBall)
-  =>
+  (c~MPBall) =>
   CanMulAsymmetric (ChPoly c) (ChPoly c)
   where
   type MulType (ChPoly c) (ChPoly c) = ChPoly c
-  mul = mulCheb
+  mul = mulChebNoBounds
 
--- instance
---   CanMulAsymmetric (ChPoly Rational) (ChPoly Rational)
---   where
---   type MulType (ChPoly Rational) (ChPoly Rational) = ChPoly Rational
---   mul = mulChebDirect
---
--- instance
---   CanMulAsymmetric (ChPoly Dyadic) (ChPoly Dyadic)
---   where
---   type MulType (ChPoly Dyadic) (ChPoly Dyadic) = ChPoly Dyadic
---   mul = mulChebDirect
-
-mulCheb ::
-  (PolyCoeffBall c, CanNormalize (ChPoly c))
-  =>
+mulChebUseBounds ::
+  -- (PolyCoeffBall c, CanNormalize (ChPoly c))
+  -- =>
+  (c~MPBall) =>
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
-mulCheb p1@(ChPoly _ (Poly terms1) _acG1 _) p2@(ChPoly _ (Poly terms2) _acG2 _) =
+mulChebUseBounds cp1@(ChPoly d1 _p1 _acG1 bnds1) cp2@(ChPoly d2 _p2 _acG2 bnds2)
+  | d1 == d2 = 
+      case (chPolyBounds_valueIfConst bnds1, chPolyBounds_valueIfConst bnds2) of
+        (Just b1, _) -> b1 * cp2
+        (_, Just b2) -> cp1 * b2
+        _ -> updateRadius (+ e) resultC
+  | otherwise = error $ "Multiplying polynomials with incompatible domains"
+  where
+  resultC = mulChebNoBounds cp1C cp2C
+  (cp1C, e1) = centreAsBallAndRadius cp1
+  (cp2C, e2) = centreAsBallAndRadius cp2
+  (ChPolyBounds pmin1 pmax1) = bnds1
+  (ChPolyBounds pmin2 pmax2) = bnds2
+  bnd1 = errorBound $ (abs pmin1) `max` (abs pmax1)
+  bnd2 = errorBound $ (abs pmin2) `max` (abs pmax2)
+  e = e1 * bnd2 + e2 * bnd1 + e1 * e2
+
+mulChebNoBounds ::
+  -- (PolyCoeffBall c, CanNormalize (ChPoly c))
+  -- =>
+  (c~MPBall) =>
+  (ChPoly c) -> (ChPoly c) -> (ChPoly c)
+mulChebNoBounds p1@(ChPoly _ (Poly terms1) _acG1 _) p2@(ChPoly _ (Poly terms2) _acG2 _) =
   maybeTrace
     (printf "mulCheb: ac p1 = %s, ac p2 = %s, acG p1 = %s, acG p2 = %s, size1+size2 = %d, using %s, ac result = %s, prec result = %s"
       (show $ getAccuracy p1) (show $ getAccuracy p2)
@@ -147,14 +137,16 @@ mulCheb p1@(ChPoly _ (Poly terms1) _acG1 _) p2@(ChPoly _ (Poly terms2) _acG2 _) 
   size2 = terms_size terms2
 
 mulChebDirect ::
-  (PolyCoeffRing c, CanMulBy c Dyadic, CanNormalize (ChPoly c), CanSetPrecision c)
-  =>
+  -- (PolyCoeffRing c, CanMulBy c Dyadic, CanNormalize (ChPoly c), CanSetPrecision c)
+  -- =>
+  (c~MPBall) =>
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
 mulChebDirect _cp1@(ChPoly d1 p1 acG1 _) _cp2@(ChPoly d2 p2 acG2 _)
-  | d1 /= d2 = error $ "Multiplying ChPoly's with incompatible domains"
-  | otherwise =
-    normalize $ ChPoly d1 (Poly terms) (max acG1 acG2) ChPolyBounds
+  | d1 /= d2 = error $ "Multiplying ChPoly values with incompatible domains"
+  | otherwise = result
   where
+  result = 
+    normalize $ ChPoly d1 (Poly terms) (max acG1 acG2) (chPolyBounds_forChPoly result)
   terms =
     terms_fromListAddCoeffs $
       concat
@@ -169,42 +161,12 @@ mulChebDirect _cp1@(ChPoly d1 p1 acG1 _) _cp2@(ChPoly d2 p2 acG2 _)
   -- deg = degree cp1 + degree cp2
 
 mulChebDCT ::
-  (PolyCoeffBall c, CanNormalize (ChPoly c), CanSetPrecision c)
-  =>
+  -- (PolyCoeffBall c, CanNormalize (ChPoly c), CanSetPrecision c)
+  -- =>
+  (c~MPBall) =>
   (ChPoly c) -> (ChPoly c) -> (ChPoly c)
 mulChebDCT = lift2_DCT (+) (*)
 
-$(declForTypes
-  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
-  (\ t -> [d|
-    instance (CanMulBy c $t, HasIntegers c, CanNormalize (ChPoly c)) => CanMulAsymmetric $t (ChPoly c) where
-      type MulType $t (ChPoly c) = ChPoly c
-      mul n (ChPoly d2 p2 acG _) = normalize $ ChPoly d2 (n * p2) acG ChPolyBounds
-
-    instance (CanMulBy c $t, HasIntegers c, CanNormalize (ChPoly c)) => CanMulAsymmetric (ChPoly c) $t where
-      type MulType (ChPoly c) $t = ChPoly c
-      mul = flip mul
-  |]))
-
-
-$(declForTypes
-  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |], [t| MPBall |], [t| CauchyReal |]]
-  (\ t -> [d|
-    instance
-      (CanDivCNBy c $t
-      , CanEnsureCN c, EnsureNoCN c ~ c
-      , CanEnsureCN (EnsureCN c)
-      , HasIntegers c, CanNormalize (ChPoly c))
-      =>
-      CanDiv (ChPoly c) $t
-      where
-      type DivTypeNoCN (ChPoly c) $t = ChPoly c
-      divideNoCN (ChPoly d1 p1 acG _) n = normalize $ ChPoly d1 (p1/!n) acG ChPolyBounds
-      type DivType (ChPoly c) $t = CN (ChPoly c)
-      divide (ChPoly d1 p1 acG _) n =
-        fmap normalize $ extractCN $ ChPoly d1 (p1/n) acG ChPolyBounds
-
-  |]))
 
 {- integer power -}
 
@@ -222,3 +184,4 @@ instance
   pow = powUsingMul
 
 -}
+

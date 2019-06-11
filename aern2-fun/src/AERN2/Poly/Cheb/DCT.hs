@@ -54,6 +54,7 @@ import AERN2.Real
 import AERN2.Poly.Basics
 
 import AERN2.Poly.Cheb.Type
+import AERN2.Poly.Cheb.Maximum
 
 
 {-|
@@ -62,7 +63,8 @@ import AERN2.Poly.Cheb.Type
 -}
 lift2_DCT ::
   -- (PolyCoeffBall c, CanNormalize (ChPoly c), CanSetPrecision c) =>
-  _ =>
+  -- _ =>
+  (c ~ MPBall) =>
   (Degree -> Degree -> Degree)
     {-^ detemining a degree bound for the result from the degrees of @p1@ and @p2@ -} ->
   (c -> c -> c) {-^ the function @f@ to apply pointwise to @p1@ and @p2@ -} ->
@@ -105,7 +107,8 @@ lift2_DCT getDegree op pA pB
     setAccuracyGuide acG $
     normalize $
     reduceDegree resultDegree $
-      ChPoly domA (Poly $ terms_fromList $ zip [0..] (c0Double /! 2 : c)) (acG + cN) ChPolyBounds
+      ChPoly domA (Poly $ terms_fromList $ zip [0..] (c0Double /! 2 : c)) (acG + cN) 
+        (chPolyBounds_forChPoly result)
   acG = (max acGA acGB)
 --    terms_fromList [(0, mpBall 1)] -- dummy for debugging exceptions
 
@@ -115,7 +118,8 @@ lift2_DCT getDegree op pA pB
 -}
 lift1_DCT ::
   -- (Field c, CanMulBy c CauchyReal, CanNormalize (ChPoly c), CanSetPrecision c, Show c) =>
-  _ =>
+  -- _ =>
+  (c ~ MPBall) =>
   (Degree -> Degree) {-^ detemining a degree bound for the result from the degree of @p@ -} ->
   (c -> c) {-^ the function @f@ to apply pointwise to @p@ -} ->
   ChPoly c {-^ @p@ -} ->
@@ -131,9 +135,11 @@ lift1_DCT getDegree op p =
         ++ "\n c0Double = " ++ show c0Double
         ++ "\n c = " ++ show c
     ) $
-    normalize $
-    ChPoly dom (Poly terms) acG ChPolyBounds
+    result
     where
+    result =
+      normalize $
+      ChPoly dom (Poly terms) acG (chPolyBounds_forChPoly result)
     terms =
       terms_fromList $ zip [0..] (c0Double /! 2 : c)
 --    terms_fromList [(0, mpBall 1)] -- dummy for debugging exceptions
@@ -155,7 +161,8 @@ lift1_DCT getDegree op p =
 -}
 coeffs2gridvalues ::
   -- (Field c, CanMulBy c CauchyReal) =>
-  _ =>
+  -- _ =>
+  (c ~ MPBall) =>
   Integer -> Terms c -> [c]
 coeffs2gridvalues cN terms =
     tDCT_I_nlogn coeffs
@@ -174,7 +181,8 @@ coeffs2gridvalues cN terms =
 -}
 tDCT_I_reference ::
   -- (Field c, CanMulBy c CauchyReal) =>
-  _ =>
+  -- _ =>
+  (c ~ MPBall) =>
   [c] {-^ @a@ a vector of validated real numbers -} ->
   [c] {-^ @a~@ a vector of validated real numbers -}
 tDCT_I_reference a =
@@ -201,7 +209,8 @@ eps n k
 -}
 tDCT_I_nlogn ::
   -- (Field c, CanMulBy c CauchyReal) =>
-  _ =>
+  -- _ =>
+  (c ~ MPBall) =>
   [c] {-^ @a@ a vector of validated real numbers -} ->
   [c] {-^ @a~@ a vector of validated real numbers -}
 tDCT_I_nlogn a
@@ -226,7 +235,8 @@ tDCT_I_nlogn a
 -}
 _tDCT_III_reference ::
   -- (Field c, CanMulBy c CauchyReal) =>
-  _ =>
+  -- _ =>
+  (c ~ MPBall) =>
   [c] {-^ g a vector of validated real numbers -} ->
   [c] {-^ g~ a vector of validated real numbers -}
 _tDCT_III_reference g =
@@ -246,7 +256,8 @@ _tDCT_III_reference g =
 -}
 tDCT_III_nlogn ::
   -- (Field c, CanMulBy c CauchyReal) =>
-  _ =>
+  -- _ =>
+  (c ~ MPBall) =>
   [c] {-^ g a vector of validated real numbers -} ->
   [c] {-^ g~ a vector of validated real numbers -}
 tDCT_III_nlogn g =
@@ -268,7 +279,8 @@ tDCT_III_nlogn g =
 -}
 _tSDCT_III_reference ::
   -- (Field c, CanMulBy c CauchyReal) =>
-  _ =>
+  -- _ =>
+  (c ~ MPBall) =>
   [c] {-^ h a vector of validated real numbers -} ->
   [c] {-^ h~ a vector of validated real numbers -}
 _tSDCT_III_reference h =
@@ -292,7 +304,8 @@ _tSDCT_III_reference h =
 -}
 tSDCT_III_nlogn ::
   -- (Field c, CanMulBy c CauchyReal) =>
-  _ =>
+  -- _ =>
+  (c ~ MPBall) =>
   [c] {-^ h a vector of validated real numbers -} ->
   [c] {-^ h~ a vector of validated real numbers -}
 tSDCT_III_nlogn (h :: [c]) =

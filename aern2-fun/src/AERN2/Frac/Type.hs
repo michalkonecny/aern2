@@ -35,7 +35,11 @@ instance HasAccuracyGuide (Frac a) where
   getAccuracyGuide (Frac n d _) =
     (chPoly_acGuide n) `min` (chPoly_acGuide d)
 
-instance (CanSetPrecision a, CanNormalize (ChPoly a)) => CanSetAccuracyGuide (Frac a) where
+instance 
+  -- (CanSetPrecision a, CanNormalize (ChPoly a)) => 
+  (a ~ MPBall) =>
+  CanSetAccuracyGuide (Frac a) 
+  where
   setAccuracyGuide acGuide (Frac n d dIM) =
     (Frac (setAccuracyGuide acGuide n) (setAccuracyGuide acGuide d) dIM)
 

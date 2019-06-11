@@ -36,8 +36,6 @@ import qualified Data.Map as Map
 import qualified AERN2.Poly.Power as Pow hiding (genericMaximum)
 import qualified AERN2.Poly.Power.MaximumIntAlt as Pow
 
-import AERN2.RealFun.Operations
-
 import AERN2.Poly.Basics
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.Eval
@@ -55,6 +53,9 @@ intify (ChPoly _ p _acG _) =
   termsDenominator = Map.foldl' lcm 1 $ terms_map denominator termsRational
   pInt = Poly $ terms_map (numerator . (* termsDenominator)) termsRational
 
+chPolyBoundsError :: ChPolyBounds c
+chPolyBoundsError = error "ChPolyBounds undefined in internal MaximumInt functions"
+
 maximum :: ChPoly MPBall -> MPBall -> MPBall -> MPBall
 maximum (ChPoly dom poly acG _) l r  =
    Pow.genericMaximum (evalDf f $ reduceToEvalDirectAccuracy df (bits 0))
@@ -62,7 +63,7 @@ maximum (ChPoly dom poly acG _) l r  =
     (getFiniteAccuracy f)
     (fromDomToUnitInterval dom l) (fromDomToUnitInterval dom r)
    where
-   f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG ChPolyBounds
+   f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG chPolyBoundsError
    df@(ChPoly _ dfp _ _) = derivativeExact (centre f) --makeExactCentre $ derivative f
    termsRational = terms_map (rational . ball_value) (poly_terms dfp)
    err = termsError * termsDenominator
@@ -77,7 +78,7 @@ maximumWithAccuracy acc (ChPoly dom poly acG _) l r  =
    (min (getFiniteAccuracy f) acc)
    (fromDomToUnitInterval dom l) (fromDomToUnitInterval dom r)
   where
-  f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG ChPolyBounds
+  f  = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG chPolyBoundsError
   df@(ChPoly _ dfp _ _) = derivativeExact (centre f) --makeExactCentre $ derivative f
   termsRational = terms_map (rational . ball_value) (poly_terms dfp)
   err = termsError * termsDenominator
@@ -101,7 +102,7 @@ maximumOptimisedWithAccuracy acc (ChPoly dom@(Interval dR dL) poly acG _) l r in
       (fromDomToUnitInterval dom (setPrecision (getPrecision f) r))
   where
   c = 1/!(0.5*(dR - dL))
-  f   = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG ChPolyBounds
+  f   = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG chPolyBoundsError
   fc' = ({-makeExactCentre .-} derivativeExact . centre) f
   maxKey = max 0 (ceiling ((degree f - initialDegree) /! steps))
   ch2Power :: (ErrorBound, Poly Integer) -> (ErrorBound, Pow.PowPoly Integer)
@@ -127,7 +128,7 @@ maximumOptimisedWithAccuracyAndBounds acc (ChPoly dom poly acG _) l r initialDeg
       lower
       upper
   where
-  f   = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG ChPolyBounds
+  f   = makeExactCentre $ ChPoly (dyadicInterval (-1,1)) poly acG chPolyBoundsError
   fc' = (derivativeExact . centre) f
   maxKey = max 0 (ceiling ((degree f - initialDegree) /! steps))
   ch2Power :: (ErrorBound, Poly Integer) -> (ErrorBound, Pow.PowPoly Integer)
@@ -149,33 +150,3 @@ minimumOptimisedWithAccuracy acc f l r iDeg steps = -(maximumOptimisedWithAccura
 
 minimumOptimised :: ChPoly MPBall -> MPBall -> MPBall -> Integer -> Integer -> MPBall
 minimumOptimised f = minimumOptimisedWithAccuracy (getFiniteAccuracy f) f
-
-instance CanMinimiseOverDom (ChPoly MPBall) DyadicInterval where
-  type MinimumOverDomType (ChPoly MPBall) DyadicInterval = MPBall
-  minimumOverDom f (Interval l r) =
-    minimumOptimised f (mpBall l) (mpBall r) 5 5
-    {-res
-    where
-    (_, Just res) = last $ iterateUntilAccurate ac withPrec
-    ac = getFiniteAccuracy f
-    withPrec p =
-      maybeTrace (printf "ChPoly: MinimumOverDomType: withPrec: p = %s; ac = %s"
-        (show p) (show $ getAccuracy resP)) $
-      Just resP
-      where
-      resP = minimumOptimised (setPrecision p f) (mpBall l) (mpBall r) 5 5-}
-
-instance CanMaximiseOverDom (ChPoly MPBall) DyadicInterval where
-  type MaximumOverDomType (ChPoly MPBall) DyadicInterval = MPBall
-  maximumOverDom f (Interval l r) =
-    maximumOptimised f (mpBall l) (mpBall r) 5 5
-    {-res
-    where
-    (_, Just res) = last $ iterateUntilAccurate ac withPrec
-    ac = getFiniteAccuracy f
-    withPrec p =
-      maybeTrace (printf "ChPoly: MaximumOverDomType: withPrec: p = %s; ac = %s"
-        (show p) (show $ getAccuracy resP)) $
-      Just resP
-      where
-      resP = maximumOptimised (setPrecision p f) (mpBall l) (mpBall r) 5 5-}

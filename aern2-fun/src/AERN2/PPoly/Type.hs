@@ -78,7 +78,10 @@ linearPolygonNew ((x0,y0) : xys0) dom acG =
       (Poly $ terms_fromList
               [(0, constantTerm a fa b fb),
                 (1, linearTerm a fa b fb)])
-      acG ChPolyBounds)
+      acG (ChPolyBounds pmin pmax))
+    where
+    pmin = fa `min` fb
+    pmax = fa `max` fb
   linearTerm a fa b fb =
     let
     a' = raisePrecisionIfBelow p (mpBall a)
@@ -115,7 +118,10 @@ linearPolygonOld ((x0,y0) : xys0) dom acG =
         (Poly $ terms_fromList
                 [(0, constantTerm a fa b fb (getPrecision fa) (getPrecision fb) Nothing),
                  (1, linearTerm a fa b fb (getPrecision fa) (getPrecision fb)  Nothing)])
-        acG ChPolyBounds)
+        acG (ChPolyBounds pmin pmax))
+    where
+    pmin = fa `min` fb
+    pmax = fa `max` fb
   linearTerm a fa b fb p q prev =
     let
     a' = raisePrecisionIfBelow p (mpBall a)

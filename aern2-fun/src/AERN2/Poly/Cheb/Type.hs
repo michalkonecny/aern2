@@ -12,11 +12,10 @@
 
     Chebyshev basis unary sparse polynomials
 -}
-
 module AERN2.Poly.Cheb.Type
 (
   ChPolyMB, ChPoly(..), chPoly_terms
-, ChPolyBounds(..) --, chPoly_maybeLip, chPoly_setLip
+, ChPolyBounds(..) , chPolyBounds_map, chPolyBounds_valueIfConst
 , CanBeChPoly, chPoly, chPolyMPBall
 , showInternals, fromDomToUnitInterval
 , serialise, deserialise
@@ -82,13 +81,33 @@ data ChPolyBounds c =
   ChPolyBounds
   { 
     -- chPolyBounds_lip :: c
+    chPolyBounds_min :: c
+  , chPolyBounds_max :: c
   }
   deriving (Show, Read)
 
+chPolyBounds_map :: (c -> c') -> ChPolyBounds c -> ChPolyBounds c'
+chPolyBounds_map f bnds =
+  ChPolyBounds (f pmin) (f pmax)
+  where
+  (ChPolyBounds pmin pmax) = bnds
+
+chPolyBounds_valueIfConst :: 
+  _ => ChPolyBounds c -> Maybe c
+chPolyBounds_valueIfConst (ChPolyBounds pmin pmax) 
+  | pmin !<! pmax = Nothing
+  | otherwise = getMaybeValueCE $ pmin `union` pmax
+
+
 instance (SuitableForCE es) => CanExtractCE es ChPolyBounds
   where
-  extractCE sample_es (ChPolyBounds) =
-    pure ChPolyBounds
+  extractCE sample_es (ChPolyBounds pmin pmax) =
+    case (maybePmin, maybePmax) of
+      (Just pmin', Just pmax') -> pure $ ChPolyBounds pmin' pmax'
+      _ -> noValueCE $ pminES <> pmaxES
+    where
+    (maybePmin, pminES) = ensureNoCE sample_es pmin
+    (maybePmax, pmaxES) = ensureNoCE sample_es pmax
 
 instance (SuitableForCE es) => CanExtractCE es ChPoly
   where
@@ -134,17 +153,20 @@ serialise (ChPoly dom (Poly terms) acG bnds) =
     (show dom) 
     (show $ terms_toList $ terms_map dyadicInterval terms) 
     (show $ fromAccuracy acG)
-    (show $ bnds)
+    (show $ chPolyBounds_map dyadicInterval bnds)
 
 deserialise :: BS.ByteString -> Maybe ChPolyMB
 deserialise polyS =
   case groups of
     [domS,termsS, acG_S, bnds_S] ->
-      case (reads (BS.unpack domS), reads (BS.unpack termsS), reads (BS.unpack acG_S), reads (BS.unpack bnds_S)) of
+      case 
+        (reads (BS.unpack domS), reads (BS.unpack termsS), 
+         reads (BS.unpack acG_S), reads (BS.unpack bnds_S)) 
+      of
         ([(dom,"")], [(terms,"")], [(acG_I :: Integer, "")], [(bnds,"")]) ->
           Just $ ChPoly dom
                   (Poly $ terms_map mpBall $ terms_fromList (terms :: [(Integer, DyadicInterval)]))
-                  (bits acG_I) bnds
+                  (bits acG_I) (chPolyBounds_map mpBall (bnds :: ChPolyBounds DyadicInterval))
         _ -> Nothing
     _ -> Nothing
   where
@@ -166,16 +188,39 @@ instance HasDomain (ChPoly c) where
   type Domain (ChPoly c) = DyadicInterval
   getDomain = chPoly_dom
 
-instance (IsBall c, HasIntegers c) => IsBall (ChPoly c) where
+instance 
+  (IsBall c, HasIntegers c, CanAddSameType c, CanSubSameType c, 
+   ConvertibleExactly ErrorBound c) 
+  => IsBall (ChPoly c) 
+  where
   type CentreType (ChPoly c) = ChPoly c
   radius (ChPoly _dom (Poly terms) _acG _) =
-    List.foldl' (+) (errorBound 0) $ map radius $ terms_coeffs terms
-  centre (ChPoly dom (Poly terms) acG (ChPolyBounds)) =
-    ChPoly dom (Poly (terms_map centreAsBall terms)) acG ChPolyBounds
+    radius $ terms_lookupCoeff terms 0
+  centre (ChPoly dom (Poly terms) acG bnds) =
+    ChPoly dom (Poly (terms_updateConst centreAsBall terms)) acG (ChPolyBounds (pmin+r) (pmax-r))
+    where
+    _ = [r,pmin]
+    r = convertExactly $ radius $ terms_lookupCoeff terms 0
+    (ChPolyBounds pmin pmax) = bnds
   centreAsBall = centre
   centreAsBallAndRadius cp = (centre cp, radius cp)
-  updateRadius updateFn (ChPoly dom (Poly terms) acG ChPolyBounds) =
-    ChPoly dom (Poly $ terms_updateConst (updateRadius updateFn) terms) acG ChPolyBounds
+  updateRadius updateFn (ChPoly dom (Poly terms) acG bnds) =
+    ChPoly dom (Poly terms') acG (ChPolyBounds (pmin - rdiff) (pmax + rdiff))
+    where
+    terms' = terms_updateConst (updateRadius updateFn) terms
+    (ChPolyBounds pmin pmax) = bnds
+    r = radius $ terms_lookupCoeff terms 0
+    r' = updateFn r
+    rdiff = rc' - rc
+    rc = convertExactly r
+    rc' = convertExactly r'
+    _ = [rc,rc',pmin,pmax]
+  makeExactCentre (ChPoly dom (Poly terms) acG bnds) =
+    ChPoly dom (Poly terms') acG bnds
+    where
+    terms' = terms_updateConst (updateRadius (+ r)) $ terms_map centreAsBall terms
+    r = List.foldl' (+) (errorBound 0) $ map radius $ terms_coeffs terms
+
 
 instance CanNormalize (ChPoly MPBall) where
   normalize p = (makeExactCentre . sweepUsingOwnAccuracyGuide) p
@@ -210,7 +255,7 @@ instance HasFnConstructorInfo (ChPoly c) where
 instance (HasDyadics c, HasIntegers c) => HasVars (ChPoly c) where
   type Var (ChPoly c) = ()
   varFn (dom@(Interval l r), acG) () =
-    ChPoly dom (Poly terms) acG ChPolyBounds
+    ChPoly dom (Poly terms) acG (ChPolyBounds (convertExactly l) (convertExactly r))
     where
     terms = terms_fromList [(0, c0), (1, c1)]
     c0 = coeff $ (r + l) * half
@@ -226,14 +271,14 @@ instance (ConvertibleExactly t c, HasIntegers c) => ConvertibleExactly ((DyadicI
   where
   safeConvertExactly ((dom, acG), x) =
     case safeConvertExactly x of
-      Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)]) acG ChPolyBounds
+      Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)]) acG (ChPolyBounds c c)
       Left e -> Left e
 
 instance (ConvertibleExactly t c, HasIntegers c) => ConvertibleExactly (ChPoly c, t) (ChPoly c)
   where
   safeConvertExactly (ChPoly dom _ acG _, x) =
     case safeConvertExactly x of
-      Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)]) acG ChPolyBounds
+      Right c -> Right $ ChPoly dom (Poly $ terms_fromList [(0,c)]) acG (ChPolyBounds c c)
       Left e -> Left e
 
 degree :: ChPoly c -> Integer
@@ -249,16 +294,17 @@ instance (CanSetPrecision c, CanNormalize (ChPoly c)) => CanSetPrecision (ChPoly
 
 {- accuracy -}
 
-instance (HasAccuracy c, HasIntegers c, IsBall c) => HasAccuracy (ChPoly c) where
-  getAccuracy = getAccuracy . radius
+instance
+  (HasAccuracy c, HasIntegers c)  => HasAccuracy (ChPoly c) where
+  getAccuracy (ChPoly _dom (Poly terms) _acG _) =
+    getAccuracy $ terms_lookupCoeff terms 0
+  getFiniteAccuracy (ChPoly _dom (Poly terms) acG _) =
+    case getAccuracy $ terms_lookupCoeff terms 0 of
+      Exact -> acG
+      a -> a
 
 instance HasAccuracyGuide (ChPoly c) where
   getAccuracyGuide = chPoly_acGuide
-
-instance (CanSetPrecision c, CanNormalize (ChPoly c)) => CanSetAccuracyGuide (ChPoly c) where
-  setAccuracyGuide acGuide p =
-    setPrecisionAtLeastAccuracy (acGuide + (degree p)) $
-      p { chPoly_acGuide = acGuide }
 
 
 {-|
