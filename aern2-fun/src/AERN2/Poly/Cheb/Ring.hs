@@ -63,10 +63,11 @@ instance
   type AddType (ChPoly c) (ChPoly c) = ChPoly c
   add cp1@(ChPoly d1 p1 acG1 bnds1) cp2@(ChPoly d2 p2 acG2 bnds2)
     | d1 == d2 = 
-        case (chPolyBounds_valueIfConst bnds1, chPolyBounds_valueIfConst bnds2) of
-          (Just b1, _) -> b1 + cp2
-          (_, Just b2) -> cp1 + b2
-          _ -> result
+        result
+        -- case (chPolyBounds_valueIfConst bnds1, chPolyBounds_valueIfConst bnds2) of
+        --   (Just b1, _) -> b1 + cp2
+        --   (_, Just b2) -> cp1 + b2
+        --   _ -> result
     | otherwise = error $ "Adding polynomials with incompatible domains"
     where
     acG = max acG1 acG2
