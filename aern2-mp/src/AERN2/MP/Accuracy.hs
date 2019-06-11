@@ -14,7 +14,6 @@ module AERN2.MP.Accuracy
     (Accuracy(NoInformation, Exact), bits, fromAccuracy,
      HasAccuracy(..),
      HasAccuracyGuide(..), CanSetAccuracyGuide(..), adjustAccuracyGuide,
-     getFiniteAccuracy,
      ac2prec,
      CanReduceSizeUsingAccuracyGuide(..),
       specCanReduceSizeUsingAccuracyGuide,
@@ -174,28 +173,47 @@ instance CanSub Accuracy Integer where
 
 class HasAccuracy a where
   getAccuracy :: a -> Accuracy
+  {-| Return accuracy, except when the element is Exact, return its nominal Precision dressed as Accuracy.
+      This function is useful when we have a convergent sequence where all elements happen to be
+      actually equal to the limit and we need the property that the sequence elements keep improving.
+  -}
+  getFiniteAccuracy :: a -> Accuracy
+  default getFiniteAccuracy :: (HasPrecision a) => a -> Accuracy
+  getFiniteAccuracy b =
+      case getAccuracy b of
+          Exact -> bits $ getPrecision b
+          a -> a
 
 instance (HasAccuracy a, SuitableForCE es) => HasAccuracy (CollectErrors es a) where
   getAccuracy (CollectErrors ma es) =
     case ma of
       Just a | not (hasCertainError es) -> getAccuracy a
       _ -> NoInformation
+  getFiniteAccuracy (CollectErrors ma es) = 
+    case ma of
+      Just a | not (hasCertainError es) -> getFiniteAccuracy a
+      _ -> NoInformation
 
-instance HasAccuracy Int where getAccuracy _ = Exact
-instance HasAccuracy Integer where getAccuracy _ = Exact
-instance HasAccuracy Rational where getAccuracy _ = Exact
-instance HasAccuracy Bool where getAccuracy _ = Exact
+instance HasAccuracy Int where getAccuracy _ = Exact; getFiniteAccuracy _ = NoInformation
+instance HasAccuracy Integer where getAccuracy _ = Exact; getFiniteAccuracy _ = NoInformation
+instance HasAccuracy Rational where getAccuracy _ = Exact; getFiniteAccuracy _ = NoInformation
+instance HasAccuracy Bool where getAccuracy _ = Exact; getFiniteAccuracy _ = NoInformation
 
 instance HasAccuracy t => HasAccuracy (Complex t) where
   getAccuracy (a :+ i) =
     (getAccuracy a) `min` (getAccuracy i)
-
+  getFiniteAccuracy (a :+ i) =
+    (getFiniteAccuracy a) `min` (getFiniteAccuracy i)
+  
 instance HasAccuracy t => HasAccuracy [t] where
   getAccuracy xs = foldl min Exact $ map getAccuracy xs
+  getFiniteAccuracy xs = foldl min Exact $ map getFiniteAccuracy xs
 
 instance HasAccuracy t => HasAccuracy (Maybe t) where
   getAccuracy (Just x) = getAccuracy x
   getAccuracy _ = NoInformation
+  getFiniteAccuracy (Just x) = getFiniteAccuracy x
+  getFiniteAccuracy _ = NoInformation
 
 class HasAccuracyGuide a where
   getAccuracyGuide :: a -> Accuracy
@@ -208,18 +226,6 @@ adjustAccuracyGuide ::
   (Accuracy -> Accuracy) -> a -> a
 adjustAccuracyGuide adj_acG a =
   setAccuracyGuide (adj_acG (getAccuracyGuide a)) a
-
-{-| Return accuracy, except when the element is Exact, return its nominal Precision dressed as Accuracy.
-    This function is useful when we have a convergent sequence where all elements happen to be
-    actually equal to the limit and we need the property that the sequence elements keep improving.
--}
-getFiniteAccuracy ::
-    (HasAccuracy t, HasPrecision t) =>
-    t -> Accuracy
-getFiniteAccuracy b =
-    case getAccuracy b of
-        Exact -> bits $ getPrecision b
-        a -> a
 
 iterateUntilAccurate ::
   (HasAccuracy t) =>

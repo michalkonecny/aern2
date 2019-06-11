@@ -87,6 +87,7 @@ instance HasVars UnaryBallFun where
 
 instance HasAccuracy UnaryBallFun where
   getAccuracy _f = Exact
+  getFiniteAccuracy _ = error "getFiniteAccuracy not defined for UnaryBallFun"
 
 instance HasAccuracyGuide UnaryBallFun where
   getAccuracyGuide _f = NoInformation

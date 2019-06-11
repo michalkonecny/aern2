@@ -193,6 +193,7 @@ instance (CanSetPrecision t, IsBall t) => CanSetPrecision (Ball t) where
 
 instance (HasAccuracy t, IsBall t) => HasAccuracy (Ball t) where
   getAccuracy= ballLift1R getAccuracy
+  getFiniteAccuracy= ballLift1R getFiniteAccuracy
 
 instance (HasAccuracyGuide t, IsBall t) => HasAccuracyGuide (Ball t) where
   getAccuracyGuide = ballLift1R getAccuracyGuide

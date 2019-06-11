@@ -64,6 +64,10 @@ instance HasAccuracy ErrorBound where
       where
       eN = floor $ rational e
       eRecipN = ceiling $ rational $ one /. e
+  getFiniteAccuracy eb@(ErrorBound e) 
+    | e == 0 = bits errorBoundPrecision
+    | otherwise = getAccuracy eb
+
 
 {- conversions -}
 

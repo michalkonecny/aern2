@@ -1,5 +1,7 @@
 module AERN2.Local.Basics where
 
+import MixedTypesNumPrelude
+
 import AERN2.MP.Accuracy
 import AERN2.MP.Dyadic
 
@@ -18,6 +20,7 @@ liftLocal2 op locX locY =
 
 instance HasAccuracy (Local a) where
   getAccuracy _f = Exact
+  getFiniteAccuracy _f = error "getFiniteAccuracy not defined for (Local a)"
 
 instance HasAccuracyGuide (Local a) where
   getAccuracyGuide _ = NoInformation

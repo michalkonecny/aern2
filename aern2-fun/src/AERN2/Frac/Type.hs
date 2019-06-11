@@ -48,6 +48,7 @@ instance (CanNormalize (ChPoly a)) => CanNormalize (Frac a) where
 
 instance (IsBall (Frac a)) => HasAccuracy (Frac a) where
   getAccuracy f = getAccuracy $ radius f
+  getFiniteAccuracy f = getFiniteAccuracy $ radius f
 
 instance (HasPrecision a) => HasPrecision (Frac a) where
   getPrecision (Frac p q m) =

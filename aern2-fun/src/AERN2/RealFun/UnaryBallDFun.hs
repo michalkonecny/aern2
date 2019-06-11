@@ -54,6 +54,7 @@ instance HasVars UnaryBallDFun where
 
 instance HasAccuracy UnaryBallDFun where
   getAccuracy _f = Exact
+  getFiniteAccuracy _f = error "getFiniteAccuracy not defined for UnaryBallDFun"
 
 instance HasAccuracyGuide UnaryBallDFun where
   getAccuracyGuide _f = NoInformation

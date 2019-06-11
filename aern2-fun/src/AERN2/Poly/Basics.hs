@@ -27,7 +27,7 @@ module AERN2.Poly.Basics
   , terms_filterMayLoseConst
   , terms_degree, terms_degrees
   , terms_coeffs
-  , terms_updateConst
+  , terms_updateConst, terms_updateReturnConst
   , terms_lookupCoeff, terms_lookupCoeffDoubleConstTerm
   , formatTerms
 )
@@ -173,6 +173,16 @@ terms_updateConst updateFn ts =
     Nothing -> Map.insert 0 (updateFn $ convertExactly 0) ts
     Just _  -> Map.adjust updateFn 0 ts
 
+terms_updateReturnConst :: (HasIntegers c) => (c -> c) -> Terms c -> (Terms c,c,c)
+terms_updateReturnConst updateFn ts =
+  case Map.lookup 0 ts of
+    Nothing -> 
+      let new = updateFn z in (Map.insert 0 new ts, z, new)
+    Just old -> 
+      let new = updateFn old in (Map.insert 0 new ts, old, new)
+  where
+  z = convertExactly 0
+
 terms_lookupCoeffDoubleConstTerm ::
   (HasIntegers c, CanAddSameType c) =>
   (Terms c) -> Degree -> c
@@ -202,6 +212,7 @@ instance (CanSetPrecision c) => CanSetPrecision (Poly c) where
 
 instance (HasAccuracy c) => HasAccuracy (Poly c) where
   getAccuracy (Poly ts) = foldl1 min $ map getAccuracy $ terms_coeffs ts
+  getFiniteAccuracy (Poly ts) = foldl1 min $ map getFiniteAccuracy $ terms_coeffs ts
 
 {- negation -}
 
