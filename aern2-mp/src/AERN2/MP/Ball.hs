@@ -27,7 +27,7 @@ module AERN2.MP.Ball
   -}
   -- * Ball operations (see also instances)
   , piBallP
-  , endpointsMPBall, fromEndpointsMPBall
+  , endpointsMPBall, fromEndpointsMPBall, hullMPBall
   -- * Helpers for constructing ball functions
   , byEndpointsMP
   , fromApproxWithLipschitz

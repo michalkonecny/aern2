@@ -23,6 +23,7 @@ module AERN2.MP.Ball.Type
   -- * Ball construction/extraction functions
   , endpointsMP, fromEndpointsMP
   , endpointsMPBall, fromEndpointsMPBall
+  , hullMPBall
 )
 where
 
@@ -184,6 +185,16 @@ instance IsBall MPBall where
     cB = MPBall cMP (errorBound 0)
   radius (MPBall _ e) = e
   updateRadius updateFn (MPBall c e) = MPBall c (updateFn e)
+
+hullMPBall :: MPBall -> MPBall -> MPBall
+hullMPBall a b = 
+  fromEndpointsMP rL rR
+  where
+  rL = min aL bL
+  rR = max aR bR
+  (aL,aR) = endpointsMP a
+  (bL,bR) = endpointsMP b
+
 
 {--- constructing a ball with a given precision ---}
 
