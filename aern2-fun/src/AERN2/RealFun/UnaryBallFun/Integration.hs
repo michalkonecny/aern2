@@ -64,7 +64,7 @@ instance CanIntegrateOverDom UnaryBallFun DyadicInterval where
     getArea di p =
       (apply f diB)*(Interval.width di)
       where
-      diB = setPrecision p $ mpBall di
+      diB = raisePrecisionIfBelow p $ mpBall di
 
 integralOnIntervalIncreasePrecision ::
   (DyadicInterval -> Precision -> CN MPBall) ->
