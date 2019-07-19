@@ -9,7 +9,7 @@ aern2-bench-chart FnOp FnRepr Accuracy "LinFromTo 0 100" ExecTime "LogFromTo 0.1
 
 * Generate svg memory usage charts:
 
-aern2-bench-chart FnOp FnRepr Accuracy "LinFromTo 0 100" MaxMem "LogFromTo 0.1 1000" results.csv charts
+aern2-bench-chart FnOp FnRepr Accuracy "LinFromTo 0 100" MaxMem "LogFromTo 5000 300000" results.csv charts
 
 * Convert all svgs to pngs suitable for web:
 
