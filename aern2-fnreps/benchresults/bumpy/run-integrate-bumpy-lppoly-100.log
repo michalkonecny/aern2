@@ -1,24 +1,24 @@
 maxL: acG = NoInformation; ac = Exact
 maxR: acG = NoInformation; ac = Exact
 computing integrate  max(sin(10x),cos(11*x)) over [-1,1]
-result = [0.761529428926379001371973520799 ± <2^(-105)]
-accuracy: bits 105
+result = [0.76152942892637900137197352079979796131432829587826288759725705083541335646123848512541929540253786583154737905563258138533645361182057580162238423750914958240514074372384811795200221240520477294921875 ± <2^(-107)]
+accuracy: bits 107
 precision = Precision 200
 	Command being timed: "aern2-fnreps-ops integrate bumpy lppoly 100"
-	User time (seconds): 6.81
-	System time (seconds): 0.02
-	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:06.84
+	User time (seconds): 9.50
+	System time (seconds): 0.03
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:09.53
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 12896
+	Maximum resident set size (kbytes): 12780
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 921
+	Minor (reclaiming a frame) page faults: 1107
 	Voluntary context switches: 1
-	Involuntary context switches: 9
+	Involuntary context switches: 13
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

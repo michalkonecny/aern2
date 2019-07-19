@@ -3,24 +3,24 @@ denom: acG = NoInformation; ac = Exact
 inv: acG = NoInformation; ac = Exact
 res: acG = NoInformation; ac = Exact
 computing integrate  (sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
-result = [2.83553657976205492110904793773e-2 ± <2^(-61)]
-accuracy: bits 61
-precision = Precision 322
+result = [0.0283553657976205492064646995409183597672229554945398411248370342908105494693330765538486630865306160332403042522184139326105222412399803347852279102910288834369215147583791222659818241449573261321511077512289657819236912519547489370786012827476718174811641272931466305470951858300832624211278674974945346320964745245873928070068359375 ± <2^(-62)]
+accuracy: bits 62
+precision = Precision 330
 	Command being timed: "aern2-fnreps-ops integrate fracSinSC lppoly 60"
-	User time (seconds): 11.01
+	User time (seconds): 16.47
 	System time (seconds): 0.04
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:11.06
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:16.52
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 14244
+	Maximum resident set size (kbytes): 14076
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1190
+	Minor (reclaiming a frame) page faults: 1374
 	Voluntary context switches: 1
-	Involuntary context switches: 13
+	Involuntary context switches: 18
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

@@ -3,27 +3,27 @@ denom: acG = NoInformation; ac = Exact
 inv: acG = NoInformation; ac = Exact
 res: acG = NoInformation; ac = Exact
 computing integrate  (sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
-result = [2.83553657976205492064005398371e-2 ± <2^(-81)]
-accuracy: bits 81
+result = [0.028355365797620549206400540205691937295225733660020384175508362445606942602474490282278684276237939009306803275366777111554745094222237319801479322936236101871689619544907708975841821262081234583666160558380604105835816486470791634206864992362253831091273134683136011081003589774761664959563451256882861691914264855012315562434696932322582092748756897955173840576299166774821310951831889304695874137422994346446186935060136912031954319896555761287309209020363861952483360531307597072887682433227541602630320898116822949325348377714208648020454784150423720775395524234863560102291342482576907235938806292881062560042939661740868174535065174268259559199542346035965610710279368684936666428992322968770576870634835196785283891084063385978897287031941232271492481231689453125 ± <2^(-82)]
+accuracy: bits 82
 precision = Precision 770
 	Command being timed: "aern2-fnreps-ops integrate fracSinSC lfrac 80"
-	User time (seconds): 19.78
+	User time (seconds): 33.58
 	System time (seconds): 0.06
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:19.85
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:33.65
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 14192
+	Maximum resident set size (kbytes): 14392
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1191
+	Minor (reclaiming a frame) page faults: 1588
 	Voluntary context switches: 1
-	Involuntary context switches: 18
+	Involuntary context switches: 16
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 8
+	File system outputs: 16
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

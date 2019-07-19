@@ -5,11 +5,11 @@ bash runBench.sh results.csv
 
 * Generate svg execution time charts:
 
-aern2-bench-chart FnOp FnRepr Accuracy "LinTo 100" ExecTime "LogTo 1000" results.csv charts
+aern2-bench-chart FnOp FnRepr Accuracy "LinFromTo 0 100" ExecTime "LogFromTo 0.1 1000" results.csv charts
 
 * Generate svg memory usage charts:
 
-aern2-bench-chart FnOp FnRepr Accuracy "LinTo 100" MaxMem "LogTo 1000" results.csv charts
+aern2-bench-chart FnOp FnRepr Accuracy "LinFromTo 0 100" MaxMem "LogFromTo 0.1 1000" results.csv charts
 
 * Convert all svgs to pngs suitable for web:
 

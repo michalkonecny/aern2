@@ -1,22 +1,22 @@
 computing max  sin(10x)+cos(7pi*x) over [-1,1]
-result = [1.7921673106663939259053776507 ± <2^(-33)]
+result = [1.7921673106664796921906924744361954475370752257816336383360161614528041493090468910700900628807374914686079137027263641357421875 ± <2^(-33)]
 accuracy: bits 33
-precision = Precision 240
+precision = Precision 128
 	Command being timed: "aern2-fnreps-ops max sine+cospi lpoly 30"
-	User time (seconds): 0.29
+	User time (seconds): 0.32
 	System time (seconds): 0.00
-	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.30
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.33
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 12340
+	Maximum resident set size (kbytes): 11800
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 842
-	Voluntary context switches: 0
-	Involuntary context switches: 2
+	Minor (reclaiming a frame) page faults: 921
+	Voluntary context switches: 1
+	Involuntary context switches: 1
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

@@ -3,24 +3,24 @@ denom: acG = NoInformation; ac = Exact
 inv: acG = NoInformation; ac = Exact
 frac: acG = NoInformation; ac = Exact
 computing integrate  max((x^2)/2,(sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
-result = [0.499441511250433148109695051387 ± <2^(-81)]
-accuracy: bits 81
-precision = Precision 762
+result = [0.499441511250433148109695053283737440615131014365456373955202768926759018914027139742633953641443607410287688315159641526032618219227762894506866513713494614491111577114460994587591979821152771179749015799181032234102301755551487120473556400924076042746229051427899846707365107295976302793780419438995070617793672532110752928255342442822219983238601427623648220638316971106005762068007801065136480351628753994362519355517794188609834114850751902280596378566619663576828201791992880537402714641649060810329374342135058391046503768831495687240607104387834045958399820619139060545224828698155040714678959859227185064177875014072771453826588877408515132137300876612029831900729045230683518752786014540730735825998358623060686746315752111702312987517871079035103321075439453125 ± <2^(-84)]
+accuracy: bits 84
+precision = Precision 770
 	Command being timed: "aern2-fnreps-ops integrate bumpy2 lppoly 80"
-	User time (seconds): 34.77
-	System time (seconds): 0.13
+	User time (seconds): 66.71
+	System time (seconds): 0.11
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:34.91
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:06.83
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 15240
+	Maximum resident set size (kbytes): 15460
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1466
+	Minor (reclaiming a frame) page faults: 1860
 	Voluntary context switches: 1
-	Involuntary context switches: 27
+	Involuntary context switches: 33
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 16

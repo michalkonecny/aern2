@@ -2,24 +2,24 @@ numer: acG = NoInformation; ac = Exact
 inv: acG = NoInformation; ac = Exact
 res: acG = NoInformation; ac = Exact
 computing integrate  (sin(10x)+cos(7pi*x))/(100x^2+1) over [-1,1]
-result = [3.49198980894169348956161413544e-2 ± <2^(-59)]
+result = [0.034919898089416934896418332583356568557419733095804558034763888421524637836281616773548905475645500715458366219692007854756605489636141174494486071380863409088691982879582189733251850001193407550834821748017381402872484781915459461101501741356673854761562765131260874045503184159855436519137583673000335693359375 ± <2^(-59)]
 accuracy: bits 59
 precision = Precision 310
 	Command being timed: "aern2-fnreps-ops integrate rungeSC lppoly 60"
-	User time (seconds): 5.55
+	User time (seconds): 7.51
 	System time (seconds): 0.01
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:05.57
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:07.52
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 13124
+	Maximum resident set size (kbytes): 12960
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 929
+	Minor (reclaiming a frame) page faults: 1107
 	Voluntary context switches: 1
-	Involuntary context switches: 8
+	Involuntary context switches: 7
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

@@ -1,26 +1,26 @@
 numer: acG = bits 155; ac = bits 121
-denom: acG = bits 65; ac = bits 56
+denom: acG = bits 65; ac = bits 55
 inv: acG = bits 34; ac = bits 17
 res: acG = bits 32; ac = bits 14
 computing integrate  (sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
-result = [2.83553854616237517660036320056e-2 ± <2^(-16)]
+result = [0.0283553854616237520112162159052226837748586863102862815910764793223045270475791769643452559764307864999542720289481622700411149705320753983117151741110833803316753364807470511042872195725352840273778826366973206863093441774176342200220119426737184465182942794711566631622800823983589855625113430168777164221822570799299577151660641740876430304074502671818013081943005421770253388893206139856041542245799630841767442997363389410292864196209442270542873856880625657117123571562102567640904078809275266066144836088399301983731181960934687824992235091815612287866183904025695205459086291817969391645329471241004675785983242207256737588875595356798394893458111109259819061197126290074639211622285443134236740283897482139963130975957028567790985107421875 ± <2^(-16)]
 accuracy: bits 16
-precision = Precision 1066
+precision = Precision 745
 	Command being timed: "aern2-fnreps-ops integrate fracSinSC ppoly 15"
-	User time (seconds): 78.44
-	System time (seconds): 0.39
+	User time (seconds): 148.46
+	System time (seconds): 0.27
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:18.84
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:28.74
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 36344
+	Maximum resident set size (kbytes): 38396
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 85909
+	Minor (reclaiming a frame) page faults: 41565
 	Voluntary context switches: 1
-	Involuntary context switches: 91
+	Involuntary context switches: 196
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 16

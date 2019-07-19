@@ -1,22 +1,22 @@
 computing max  sin(10x)+cos(20x) over [-1,1]
-result = [1.12500035747834457249730800942 ± <2^(-20)]
-accuracy: bits 20
-precision = Precision 706
+result = [1.1250000005806364389463885755315534310941455576004113265592644361030707981128169906650945157616686919645420399329880498500325990326542457921953031127106993701718179334623902673682500885523628395267178629292171495274247757205849534070856121208640863855562135460166767842299623278440283314353773640396183023163864017444548023761675774257800205735022585301767296098202177660407476295552992023016163294167957145365703090995350773732171002775259841849277229963615376350856993619453568580645943568578107910125072802872187743480833115400349144005646475056321826625287453905613139533930197884075016974590577183003788914901213310022292901605580633133782040254666778622549827559851109981536865234375 ± <2^(-29)]
+accuracy: bits 29
+precision = Precision 690
 	Command being timed: "aern2-fnreps-ops max sine+cos poly 30"
-	User time (seconds): 1.14
-	System time (seconds): 0.00
-	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.15
+	User time (seconds): 4.31
+	System time (seconds): 0.02
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.33
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 12360
+	Maximum resident set size (kbytes): 12352
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 897
+	Minor (reclaiming a frame) page faults: 1074
 	Voluntary context switches: 1
-	Involuntary context switches: 3
+	Involuntary context switches: 7
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

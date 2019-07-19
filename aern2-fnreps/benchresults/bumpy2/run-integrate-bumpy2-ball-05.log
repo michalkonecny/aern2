@@ -3,24 +3,24 @@ denom: acG = NoInformation; ac = Exact
 inv: acG = NoInformation; ac = Exact
 frac: acG = NoInformation; ac = Exact
 computing integrate  max((x^2)/2,(sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
-result = [0.500144812071634835427416402513 ± <2^(-5)]
+result = [0.5003977480992875801250018008570208394303335808217525482177734375 ± <2^(-5)]
 accuracy: bits 5
-precision = Precision 110
+precision = Precision 64
 	Command being timed: "aern2-fnreps-ops integrate bumpy2 ball 05"
-	User time (seconds): 0.37
+	User time (seconds): 1.51
 	System time (seconds): 0.00
-	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.37
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.52
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 9456
+	Maximum resident set size (kbytes): 9608
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 581
+	Minor (reclaiming a frame) page faults: 629
 	Voluntary context switches: 1
-	Involuntary context switches: 4
+	Involuntary context switches: 3
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

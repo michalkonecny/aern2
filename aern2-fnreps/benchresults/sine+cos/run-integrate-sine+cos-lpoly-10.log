@@ -1,22 +1,22 @@
 computing integrate  sin(10x)+cos(20x) over [-1,1]
-result = [9.13206568805059104229626676385e-2 ± <2^(-9)]
-accuracy: bits 9
-precision = Precision 106
+result = [0.091294670995897580003311864386830952506011183865502860745649031834272269587355119055340109401885939632848021574318408966064453125 ± <2^(-14)]
+accuracy: bits 14
+precision = Precision 128
 	Command being timed: "aern2-fnreps-ops integrate sine+cos lpoly 10"
-	User time (seconds): 0.17
+	User time (seconds): 0.20
 	System time (seconds): 0.00
-	Percent of CPU this job got: 98%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.17
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.20
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 12252
+	Maximum resident set size (kbytes): 11804
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 811
+	Minor (reclaiming a frame) page faults: 939
 	Voluntary context switches: 1
-	Involuntary context switches: 3
+	Involuntary context switches: 1
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

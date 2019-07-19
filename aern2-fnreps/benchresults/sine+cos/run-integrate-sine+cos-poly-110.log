@@ -1,23 +1,23 @@
-integratePB: accuracy f = bits 95
+integratePB: accuracy f = bits 94
 computing integrate  sin(10x)+cos(20x) over [-1,1]
-result = [9.12945250727627654376099983861e-2 ± <2^(-94)]
-accuracy: bits 94
-precision = Precision 1200
+result = [0.091294525072762765437609998384021309559037263387345001210658959179644040632547914930069864844719833419640480794744894361935503484526255970523105925492818017971233642031839445592312752608242800027939149779890452787704336710945329618183927115877708963270169514840825215684578795230790811394252086800911700911021232572333370215756789642863580903164097113850699989940808209727101535047286650839893967098907941318509647427114943443292421443294580911491014104977317830650090615901286921957825898605444148054187000614363633146539716439147977718822652090928555790316778484339010901749134063720703125 ± <2^(-93)]
+accuracy: bits 93
+precision = Precision 1184
 	Command being timed: "aern2-fnreps-ops integrate sine+cos poly 110"
-	User time (seconds): 0.52
+	User time (seconds): 0.77
 	System time (seconds): 0.00
 	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.52
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.78
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 14588
+	Maximum resident set size (kbytes): 13988
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1500
+	Minor (reclaiming a frame) page faults: 1480
 	Voluntary context switches: 1
-	Involuntary context switches: 4
+	Involuntary context switches: 1
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

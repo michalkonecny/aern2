@@ -8,7 +8,7 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.List as List
 
-import Data.Convertible
+-- import Data.Convertible
 
 import Graphics.Rendering.Chart
 import Graphics.Rendering.Chart.Easy
@@ -24,6 +24,7 @@ main =
     do
     args <- getArgs
     let (mode, inFileName, outFolder) = checkArgs args
+    print mode
     contents <- readFile inFileName
     let chartsData =  
             translateLogToLin mode $ parseBenchResults mode inFileName contents
@@ -38,7 +39,7 @@ data LineId = FnRepr | OpCount | Method
 data AxisContent = BenchN | Accuracy | MaxMem | ExecTime
   deriving (Show, Read)
 
-data AxisMode = Log | Lin | LogTo Int | LinTo Int
+data AxisMode = Log | Lin | LogFromTo Double Double | LinFromTo Double Double
   deriving (Show, Read)
 
 type Mode = (ChartId, LineId, (AxisContent, AxisMode), (AxisContent, AxisMode))
@@ -52,7 +53,7 @@ checkArgs :: [String] -> (Mode, String, String)
 checkArgs [chartIdS, lineIdS, xContS, xModeS, yContS, yModeS, inFileName, outFolder] =
   ((read chartIdS, read lineIdS, (read xContS, read xModeS), (read yContS, read yModeS)), inFileName, outFolder)
 checkArgs _ =
-  error "usage: aern2-bench-chart <chartsBy(CSVName|FnOp)> <linesBy(OpCount|Method|FnRepr)> <xAxis(Accuracy|BenchN)> <Lin|\"LinTo n\"|Log|\"LogTo n\"> <yAxis(MaxMem|ExecTime)> <Lin|\"LinTo n\"|Log|\"LogTo n\"> <csvFileName> <outFolder>"
+  error "usage: aern2-bench-chart <chartsBy(CSVName|FnOp)> <linesBy(OpCount|Method|FnRepr)> <xAxis(Accuracy|BenchN)> <Lin|\"LinFromTo n m\"|Log|\"LogFromTo n m\"> <yAxis(MaxMem|ExecTime)> <Lin|\"LinFromTo n m\"|Log|\"LogFromTo n m\"> <csvFileName> <outFolder>"
 
 {-|
     A dummy sample result:
@@ -89,12 +90,12 @@ translateLogToLin mode dat = over (mapped._2.mapped._2.mapped) translateCoords d
     where
     xMode = mode ^. _3 . _2
     yMode = mode ^. _4 . _2
-    (_xMode2, xShouldTranslate) = log2linMode xMode
-    (_yMode2, yShouldTranslate) = log2linMode yMode
+    xShouldTranslate = getShouldTranslate xMode
+    yShouldTranslate = getShouldTranslate yMode
     -- mode2 = mode & _3 . _2 .~ xMode2 & _4 . _2 .~ yMode2
-    log2linMode Log = (Lin, True)
-    log2linMode (LogTo limit) = (LinTo (round $ logBase 10 (fromIntegral limit :: Double)), True)
-    log2linMode m = (m, False)
+    getShouldTranslate Log = True
+    getShouldTranslate (LogFromTo _ _) = True
+    getShouldTranslate _ = False
     translateCoords (x,y) = 
         (if xShouldTranslate then logBase 10 x else x,
          if yShouldTranslate then logBase 10 y else y)
@@ -179,22 +180,23 @@ renderChart (_, lineId, xAxis@(xCont, xMode), yAxis@(yCont, yMode)) outFolder (t
     axisTitle Accuracy = addLog "Accuracy (bits)"
     axisTitle BenchN = addLog "n"
     addLog s Log = "Log10 " ++ s
-    addLog s (LogTo _) = "Log10 " ++ s
+    addLog s (LogFromTo _ _) = "Log10 " ++ s
     addLog s _ = s
 
     axisForModeCont (_, Lin) = autoScaledAxis def
     axisForModeCont (_, Log) = autoScaledAxis def -- autoScaledLogAxis def
-    axisForModeCont (Accuracy, LinTo limit) = scaledAxisExtraXSteps def (lowLin limit, convert limit) [24,53]
-    axisForModeCont (_, LinTo limit) = scaledAxis def (lowLin limit, convert limit)
-    axisForModeCont (_, LogTo limit) = scaledAxis def (lowLin limit, convert limit) -- scaledLogAxis def (lowLog limit, convert limit)
+    axisForModeCont (Accuracy, LinFromTo n m) = scaledAxisExtraXSteps def (n, m) [24,53]
+    axisForModeCont (_, LinFromTo n m) = scaledAxis def (n, m)
+    axisForModeCont (_, LogFromTo n m) = scaledAxis def (logBase 10 n, logBase 10 m) -- scaledLogAxis def (lowLog limit, convert limit)
 
     -- lowLog :: Int -> Double
     -- lowLog limit
     --   | limit > 1000 = 1
     --   | otherwise = 0.01
 
-    lowLin :: Int -> Double
-    lowLin _ = 0
+    -- lowLin :: Int -> Double
+    -- lowLin _ = 0
+
 
     layoutPlotData (lineNum, (lineName, linePoints)) =
         plotPoints name linePoints
