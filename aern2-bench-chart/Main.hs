@@ -149,7 +149,7 @@ getPoint (_, _, xAxis, yAxis) fields = (pt xAxis, pt yAxis)
 
 renderChart ::
     Mode -> String -> (String, [(String, [(Double, Double)])]) -> IO ()
-renderChart (_, lineId, xAxis@(xCont, xMode), yAxis@(yCont, yMode)) outFolder (title, plotData) =
+renderChart (_, lineId, xAxis@(_xCont, _xMode), yAxis@(yCont, _yMode)) outFolder (title, plotData) =
     void $
         renderableToFile fileOpts (filePath yCont) $
             fillBackground def $
@@ -166,25 +166,26 @@ renderChart (_, lineId, xAxis@(xCont, xMode), yAxis@(yCont, yMode)) outFolder (t
         layout_legend . _Just . legend_orientation .= LORows (legend_cols lineId)
 
         layout_y_axis . laxis_generate .= axisForModeCont yAxis
-        layout_y_axis . laxis_title .= axisTitle yCont yMode
+        -- layout_y_axis . laxis_title .= axisTitle yCont yMode
 
         layout_x_axis . laxis_generate .= axisForModeCont xAxis
-        layout_x_axis . laxis_title .= axisTitle xCont xMode
+        -- layout_x_axis . laxis_title .= axisTitle xCont xMode
+        -- layout_x_axis . laxis_title_style . font_size .= 10
 
-        layout_x_axis . laxis_style . axis_label_gap .= 1
+        layout_x_axis . laxis_style . axis_label_gap .= 0
         mapM layoutPlotData $ zip [0..] plotData
 
-    legend_cols FnRepr = 4
+    legend_cols FnRepr = 5
     -- legend_cols Method = 2
     legend_cols _ = 3
 
-    axisTitle MaxMem =  addLog "Space (kB)"
-    axisTitle ExecTime = addLog "Time (s)"
-    axisTitle Accuracy = addLog "Accuracy (bits)"
-    axisTitle BenchN = addLog "n"
-    -- addLog s Log = "Log10 " ++ s
-    -- addLog s (LogFromTo _ _) = "Log10 " ++ s
-    addLog s _ = s
+    -- axisTitle MaxMem =  addLog "Space (kB)"
+    -- axisTitle ExecTime = addLog "Time (s)"
+    -- axisTitle Accuracy = addLog "Accuracy (bits)"
+    -- axisTitle BenchN = addLog "n"
+    -- -- addLog s Log = "Log10 " ++ s
+    -- -- addLog s (LogFromTo _ _) = "Log10 " ++ s
+    -- addLog s _ = s
 
     -- axisForModeCont (_, Lin) = autoScaledAxis def
     -- axisForModeCont (_, Log) = autoScaledLogAxis def
