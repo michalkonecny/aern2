@@ -241,6 +241,7 @@ renderChart (_, lineId, xAxis@(_xCont, _xMode), yAxis@(yCont, _yMode)) outFolder
 
 fileOpts :: FileOptions
 fileOpts = def { _fo_size = (400,300) }
+-- fileOpts = def { _fo_size = (330,200) }
 
 reprShow :: String -> String
 reprShow "dball" = "DBFun"
