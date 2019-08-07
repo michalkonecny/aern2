@@ -1,4 +1,4 @@
-module Main where
+module Main (main) where
 
 import Control.Monad(void,when)
 import Control.Lens
@@ -15,7 +15,7 @@ import Graphics.Rendering.Chart.Easy
 import Graphics.Rendering.Chart.Grid
 import Graphics.Rendering.Chart.Backend.Diagrams(renderableToFile, FileOptions(..))
 
-import ChartTweaks (scaledAxisExtraXSteps) -- (scaledLogAxis, scaledAxisExtraXSteps)
+import ChartTweaks (scaledLogAxis, scaledAxisExtraXSteps)
 
 --import Debug.Trace (trace)
 
@@ -27,7 +27,8 @@ main =
     print mode
     contents <- readFile inFileName
     let chartsData =  
-            translateLogToLin mode $ parseBenchResults mode inFileName contents
+            -- translateLogToLin mode $ 
+            parseBenchResults mode inFileName contents
     void $ mapM (renderChart mode outFolder) chartsData
 
 data ChartId = CSVName | FnOp
@@ -39,7 +40,9 @@ data LineId = FnRepr | OpCount | Method
 data AxisContent = BenchN | Accuracy | MaxMem | ExecTime
   deriving (Show, Read)
 
-data AxisMode = Log | Lin | LogFromTo Double Double | LinFromTo Double Double
+-- data AxisMode = LogFromTo Double Double | LinFromTo Double Double
+-- data AxisMode = Log | Lin | LogFromTo Double Double | LinFromTo Double Double
+data AxisMode = LogFromTo Double Double | LinFromTo Double Double
   deriving (Show, Read)
 
 type Mode = (ChartId, LineId, (AxisContent, AxisMode), (AxisContent, AxisMode))
@@ -85,20 +88,20 @@ parseBenchResults mode@(CSVName, lineId, _, _) inFileName csvContent =
     inFileNameNoCSV = take (length inFileName-4) inFileName
     records = indexRecordsByKeysAndHeader (lineKeys lineId) $ parseCSV csvContent
 
-translateLogToLin :: Mode -> [(String, [(String, [(Double, Double)])])] -> [(String, [(String, [(Double, Double)])])]
-translateLogToLin mode dat = over (mapped._2.mapped._2.mapped) translateCoords dat
-    where
-    xMode = mode ^. _3 . _2
-    yMode = mode ^. _4 . _2
-    xShouldTranslate = getShouldTranslate xMode
-    yShouldTranslate = getShouldTranslate yMode
-    -- mode2 = mode & _3 . _2 .~ xMode2 & _4 . _2 .~ yMode2
-    getShouldTranslate Log = True
-    getShouldTranslate (LogFromTo _ _) = True
-    getShouldTranslate _ = False
-    translateCoords (x,y) = 
-        (if xShouldTranslate then logBase 10 x else x,
-         if yShouldTranslate then logBase 10 y else y)
+-- translateLogToLin :: Mode -> [(String, [(String, [(Double, Double)])])] -> [(String, [(String, [(Double, Double)])])]
+-- translateLogToLin mode dat = over (mapped._2.mapped._2.mapped) translateCoords dat
+--     where
+--     xMode = mode ^. _3 . _2
+--     yMode = mode ^. _4 . _2
+--     xShouldTranslate = getShouldTranslate xMode
+--     yShouldTranslate = getShouldTranslate yMode
+--     -- mode2 = mode & _3 . _2 .~ xMode2 & _4 . _2 .~ yMode2
+--     -- getShouldTranslate Log = True
+--     getShouldTranslate (LogFromTo _ _) = True
+--     getShouldTranslate _ = False
+--     translateCoords (x,y) = 
+--         (if xShouldTranslate then logBase 10 x else x,
+--          if yShouldTranslate then logBase 10 y else y)
 
 mergeByFnOp_FnRepr ::
     Mode -> [([String], Map.Map String String)] -> Map.Map String (Map.Map String (Set.Set (Double,Double)))
@@ -179,15 +182,19 @@ renderChart (_, lineId, xAxis@(xCont, xMode), yAxis@(yCont, yMode)) outFolder (t
     axisTitle ExecTime = addLog "Time (s)"
     axisTitle Accuracy = addLog "Accuracy (bits)"
     axisTitle BenchN = addLog "n"
-    addLog s Log = "Log10 " ++ s
-    addLog s (LogFromTo _ _) = "Log10 " ++ s
+    -- addLog s Log = "Log10 " ++ s
+    -- addLog s (LogFromTo _ _) = "Log10 " ++ s
     addLog s _ = s
 
-    axisForModeCont (_, Lin) = autoScaledAxis def
-    axisForModeCont (_, Log) = autoScaledAxis def -- autoScaledLogAxis def
+    -- axisForModeCont (_, Lin) = autoScaledAxis def
+    -- axisForModeCont (_, Log) = autoScaledLogAxis def
     axisForModeCont (Accuracy, LinFromTo n m) = scaledAxisExtraXSteps def (n, m) [24,53]
     axisForModeCont (_, LinFromTo n m) = scaledAxis def (n, m)
-    axisForModeCont (_, LogFromTo n m) = scaledAxis def (logBase 10 n, logBase 10 m) -- scaledLogAxis def (lowLog limit, convert limit)
+    axisForModeCont (_, LogFromTo n m) = 
+        -- scaledAxisPow10 def (logBase 10 n, logBase 10 m) 
+        scaledLogAxis (LogAxisParams labelf) (n, m)
+        where
+        labelf = map show
 
     -- lowLog :: Int -> Double
     -- lowLog limit
@@ -270,9 +277,9 @@ reprShape "lppoly" = PointShapeStar
 reprShape "lfrac" = PointShapeStar
 reprShape reprName = error $ "unknown representation " ++ reprName
 
-opShow :: String -> String
-opShow s = s
--- opShow opName = error $ "unknown operation " ++ opName
+-- opShow :: String -> String
+-- opShow s = s
+-- -- opShow opName = error $ "unknown operation " ++ opName
 
 stdShapes :: [PointShape]
 stdShapes =
