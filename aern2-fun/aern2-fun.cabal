@@ -38,6 +38,7 @@ library
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
     , vector
+    , memoize
 
   ghc-options:     -Wall -fno-warn-orphans
   extensions:
