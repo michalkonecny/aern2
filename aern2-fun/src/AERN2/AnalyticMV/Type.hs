@@ -63,7 +63,7 @@ instance Show P where
     List.intercalate " + " $ map showTerm $ Map.toAscList p
     where
     showTerm (m, c) = show (double c) ++ concat (map showV $ zip [1..] m)
-    showV (i,0) = ""
+    showV (_i,0) = ""
     showV (i,1) = printf "x%d" i
     showV (i,n) = printf "x%d^%d" i n
 
@@ -71,11 +71,17 @@ instance Show P where
 {- P arithmetic  -}
 
 x_d_i_n :: Integer -> Integer -> Integer -> P
-x_d_i_n d i n = P (Map.singleton (m_d_i_n d i n) (real 1))  
+x_d_i_n d i n = P $ Map.singleton (m_d_i_n d i n) (real 1)
+
+constP :: Integer -> P
+constP d = P $ Map.singleton (replicate d 0) (real 1)
+
+vars :: Integer -> [P]
+vars d = 
+  [ x_d_i_n d i 1 | i<-[1..d]]
 
 _x1,_x2 :: P
-_x1 = x_d_i_n 2 1 1
-_x2 = x_d_i_n 2 2 1
+[_x1, _x2] = vars 2
 
 m_d_i_n :: Integer -> Integer -> Integer -> MultiIndex
 m_d_i_n d i n = 
@@ -83,6 +89,8 @@ m_d_i_n d i n =
 
 instance CanAddAsymmetric P P where
   add (P p1) (P p2) = P $ Map.unionWith (+) p1 p2
+instance CanNeg P where
+  negate (P p) = P (Map.map negate p)
 instance CanAddAsymmetric P CauchyReal where
   type AddType P CauchyReal = P
   add (P p1) r2 = P $ Map.insertWith (+) m0000 r2 p1
@@ -108,125 +116,65 @@ instance CanMulAsymmetric P P where
         (m1,c1) <- (Map.toList p1) ,  (m2,c2) <- (Map.toList p2)
       ]
 
-{- P translation to centre  -}
+{- P translation to centre x0  -}
 
 translate_P :: P -> V CauchyReal -> P
 translate_P (P p) x0 =
   foldl1 (+) $ map evalT $ Map.toList p
   where
   d = length x0
-  evalT (m,c) =
-    c * (foldl1 (*) $ map evalV $ zip3 [1..] m x0)
+  evalT (m,c) 
+    | null varVals = c * (constP d)
+    | otherwise = c * (foldl1 (*) varVals)
+    where
+    varVals = map evalV $ filter (\(_,n,_) -> n > 0) $ zip3 [1..] m x0
   evalV (i,n,x0i) =
-    foldl1 (*) $ replicate n $ xi + (- x0i)
+    foldl1 (*) $ replicate n $ xi + x0i
     where
     xi = x_d_i_n d i 1
 
--- poly_PowS :: P -> V CauchyReal -> PowS
--- poly_PowS p x0 =
+type Analytic = V CauchyReal -> PowS
 
-
-_ode_f1 :: PowS
-_ode_f1 = -- (y(x)-1)^2, around 0
+poly_Analytic :: P -> Analytic
+poly_Analytic pp x0 =
   PowS {
-    pows_x0 = [real 0],
+    pows_x0 = x0,
     pows_k = 1,
-    pows_A = 2,
+    pows_A = snd $ integerBounds $ (maximum (map abs $ Map.elems tp)) ? (bitsS 0),
     pows_terms = terms
-  } 
+  }
   where
-  terms [0] = real (1)
-  terms [1] = real (-2)
-  terms [2] = real 1
-  terms _ = real 0
+  (P tp) = translate_P pp x0
+  terms m =
+    case Map.lookup m tp of
+      Just c -> c
+      _ -> real 0
+
+{- Example Analytic functions -}
 
 {-
 
 Define sine using a 2-variable linear ODE.
 
-Attempt 1:
-
 y1' = y2
 y2' = -y1
 y1(0) = 0
-y2(0) = 1 -- eek, we currently support only initial value 0
+y2(0) = 1
 
-Attempt 2:
-
-y1(t) = sin(t)
-y2(t) = cos(t) - 1
-
-y1' = y2+1
-y2' = -y1
-y1(0) = 0
-y2(0) = 0
+(apply (head $ ode_step_Analytic [_ode_sine_1, _ode_sine_2] (rational 0) [real 0, real 1]) [real 0.1]) ? (bits S 10)
 
 -}
-
-_ode_sine_1 :: PowS
-_ode_sine_1 = -- f(y1,y2) = y2
-  PowS {
-    pows_x0 = [real 0],
-    pows_k = 1,
-    pows_A = 1,
-    pows_terms = terms
-  } 
+_ode_sine_1 :: Analytic
+_ode_sine_1 =
+  poly_Analytic y2
   where
-  terms [0,1] = real 1
-  terms [0,0] = real 1
-  terms _ = real 0
-
-_ode_sine_2 :: PowS
-_ode_sine_2 = -- f(y1,y2) = -y1
-  PowS {
-    pows_x0 = [real 0],
-    pows_k = 1,
-    pows_A = 1,
-    pows_terms = terms
-  } 
+  [_y1, y2] = vars 2
+  
+_ode_sine_2 :: Analytic
+_ode_sine_2 =
+  poly_Analytic (-y1)
   where
-  terms [1,0] = real (-1)
-  terms _ = real 0
-
-_poly1_0 :: PowS
-_poly1_0 = -- x^2-1, around 0
-  PowS {
-    pows_x0 = [real 0],
-    pows_k = 1,
-    pows_A = 1,
-    pows_terms = terms
-  } 
-  where
-  terms [0] = real (-1)
-  terms [2] = real 1
-  terms _ = real 0
-
-_poly2_0 :: PowS
-_poly2_0 = -- x^2-y^2, around 0
-  PowS {
-    pows_x0 = [real 0, real 0],
-    pows_k = 1,
-    pows_A = 1,
-    pows_terms = terms
-  } 
-  where
-  terms [2,0] = real 1
-  terms [0,2] = real (-1)
-  terms _ = real 0
-
-_poly3_0 :: PowS
-_poly3_0 = -- x^2-y^2+x*z^3, around 0
-  PowS {
-    pows_x0 = [real 0, real 0, real 0],
-    pows_k = 1,
-    pows_A = 1,
-    pows_terms = terms
-  } 
-  where
-  terms [2,0,0] = real 1
-  terms [0,2,0] = real (-1)
-  terms [1,0,3] = real (1)
-  terms _ = real 0
+  [y1, _y2] = vars 2
 
 -- usage: (apply _exp1_0 [real 0.5]) ? (bitsS 100)
 _exp1_0 :: PowS
@@ -245,6 +193,8 @@ _exp1_0 =
     aux trms [m1] = (1/!(real m1))*(trms [m1-1])
     aux _ _ = error "unary _exp1_0 used illegaly"
 
+{- EVALUATION -}
+
 sum1 :: PowS -> CauchyReal -> CauchyReal
 sum1 f x1 =
   realLim
@@ -255,7 +205,7 @@ sum1 f x1 =
   k = pows_k f
   (x0_1:_) = pows_x0 f
   a_m m = pows_terms f [m]
-  q = (abs x1) * k
+  q = (abs (x1-x0_1)) * k
   horn 0 y = y
   horn i y = horn (i - 1) (y * (x1 - x0_1) + (a_m (i - 1)))
 
@@ -406,7 +356,7 @@ deriv_powS f j =
 
 ode_step_powS :: V PowS -> Rational -> V CauchyReal -> V PowS 
 ode_step_powS f t0 y0 = map step_i [1..d]
-  -- TODO: currently works only with y0 = x0 (where x0 is the centre of f)  
+  -- works only with y0 = x0 (where x0 is the centre of f)  
   where
   d = length f
   step_i i =
@@ -424,7 +374,7 @@ ode_step_powS f t0 y0 = map step_i [1..d]
     terms _ = error "bad terms"
     fi0 = 
       PowS {
-        pows_x0 = map (const (real 0)) y0,
+        pows_x0 = y0,
         pows_k = 1,
         pows_A = 1,
         pows_terms = terms_i
@@ -443,9 +393,10 @@ ode_step_powS f t0 y0 = map step_i [1..d]
     fim = memoFix fim'
 
 
+{- Many steps ODE solving (polynomial only for now) -}
 
-
-
-
-
+ode_step_Analytic :: V Analytic -> Rational -> V CauchyReal -> V PowS
+ode_step_Analytic fA t0 y0 = ode_step_powS fPowS t0 y0
+  where
+  fPowS = map ($ y0) fA
 
