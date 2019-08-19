@@ -15,19 +15,22 @@
 -- TODO: remove the above pragma
 
 module AERN2.AnalyticMV.Type
-(
-  --   Analytic(..)
-  -- , UnitInterval (..)
-  -- , toUnitInterval
-  -- , fromUnitInterval
-  -- , lift1UI
-  -- , ana_derivative
-)
+-- (
+--     Analytic(..)
+--   , UnitInterval (..)
+--   , toUnitInterval
+--   , fromUnitInterval
+--   , lift1UI
+--   , ana_derivative
+-- )
 where
 
 import MixedTypesNumPrelude
 
--- import qualified Data.Map as Map
+import Text.Printf
+
+import qualified Data.Map as Map
+import qualified Data.List as List
 import Data.Function.Memoize
 
 import AERN2.MP.Ball
@@ -50,6 +53,78 @@ data PowS =
 type V a = [a]
 
 type MultiIndex = V Integer
+
+{- POLYNOMIAL to PowS conversion -}
+
+newtype P = P (Map.Map MultiIndex CauchyReal)
+
+instance Show P where
+  show (P p) =
+    List.intercalate " + " $ map showTerm $ Map.toAscList p
+    where
+    showTerm (m, c) = show (double c) ++ concat (map showV $ zip [1..] m)
+    showV (i,0) = ""
+    showV (i,1) = printf "x%d" i
+    showV (i,n) = printf "x%d^%d" i n
+
+
+{- P arithmetic  -}
+
+x_d_i_n :: Integer -> Integer -> Integer -> P
+x_d_i_n d i n = P (Map.singleton (m_d_i_n d i n) (real 1))  
+
+_x1,_x2 :: P
+_x1 = x_d_i_n 2 1 1
+_x2 = x_d_i_n 2 2 1
+
+m_d_i_n :: Integer -> Integer -> Integer -> MultiIndex
+m_d_i_n d i n = 
+  take (i-1) (repeat 0) ++ [n] ++ (take (d-i) (repeat 0))
+
+instance CanAddAsymmetric P P where
+  add (P p1) (P p2) = P $ Map.unionWith (+) p1 p2
+instance CanAddAsymmetric P CauchyReal where
+  type AddType P CauchyReal = P
+  add (P p1) r2 = P $ Map.insertWith (+) m0000 r2 p1
+    where
+    d = length (fst $ Map.findMin p1)
+    m0000 = replicate d 0
+instance CanMulAsymmetric CauchyReal P where
+  type MulType CauchyReal P = P
+  mul r1 (P p2) = P $ Map.map (* r1) p2
+instance CanMulAsymmetric Rational P where
+  type MulType Rational P = P
+  mul r1 (P p2) = P $ Map.map (* r1) p2
+instance CanMulAsymmetric Integer P where
+  type MulType Integer P = P
+  mul r1 (P p2) = P $ Map.map (* r1) p2
+instance CanMulAsymmetric P P where
+  mul (P p1) (P p2) = foldl1 (+) pairs 
+    where
+    pairs = 
+      [
+        P (Map.fromList [(zipWith (+) m1 m2, c1 * c2)]) 
+      | 
+        (m1,c1) <- (Map.toList p1) ,  (m2,c2) <- (Map.toList p2)
+      ]
+
+{- P translation to centre  -}
+
+translate_P :: P -> V CauchyReal -> P
+translate_P (P p) x0 =
+  foldl1 (+) $ map evalT $ Map.toList p
+  where
+  d = length x0
+  evalT (m,c) =
+    c * (foldl1 (*) $ map evalV $ zip3 [1..] m x0)
+  evalV (i,n,x0i) =
+    foldl1 (*) $ replicate n $ xi + (- x0i)
+    where
+    xi = x_d_i_n d i 1
+
+-- poly_PowS :: P -> V CauchyReal -> PowS
+-- poly_PowS p x0 =
+
 
 _ode_f1 :: PowS
 _ode_f1 = -- (y(x)-1)^2, around 0
@@ -166,7 +241,7 @@ _exp1_0 =
   terms = memoFix aux
     where
     aux :: (([Integer] -> CauchyReal) -> [Integer] -> CauchyReal)
-    aux trms [0] = real 1
+    aux _trms [0] = real 1
     aux trms [m1] = (1/!(real m1))*(trms [m1-1])
     aux _ _ = error "unary _exp1_0 used illegaly"
 
@@ -342,11 +417,11 @@ ode_step_powS f t0 y0 = map step_i [1..d]
       pows_terms = terms
     } 
     where
-    x0 = pows_x0 (head f) -- all components of the field must have the same centre
+    -- x0 = pows_x0 (head f) -- all components of the field must have the same centre
     a = maximum $ map pows_A f
     k = maximum $ map pows_k f
-    terms [m] =
-      fim m `apply` y0
+    terms [m] = fim m `apply` y0
+    terms _ = error "bad terms"
     fi0 = 
       PowS {
         pows_x0 = map (const (real 0)) y0,
@@ -358,10 +433,10 @@ ode_step_powS f t0 y0 = map step_i [1..d]
       terms_i mx 
         | mx == mx_i = real 1
         | otherwise = real 0
-      mx_i = take (i-1) (repeat 0) ++ [1] ++ (take (d-i) (repeat 0))
+      mx_i = m_d_i_n d i 1
 
-    fimP1 m fim = 
-      (1/!(m+1))*(foldl1 (+) [ (deriv_powS fim j) * fj | (j, fj) <- zip [1..d] f])
+    fimP1 m fim'' = 
+      (1/!(m+1))*(foldl1 (+) [ (deriv_powS fim'' j) * fj | (j, fj) <- zip [1..d] f])
 
     fim' _ 0 = fi0
     fim' fim'' m = fimP1 (m-1) (fim'' (m-1))
