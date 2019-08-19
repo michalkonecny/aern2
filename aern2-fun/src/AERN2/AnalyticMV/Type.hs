@@ -14,7 +14,7 @@
   #-}
 -- TODO: remove the above pragma
 
-module AERN2.Analytic.Type
+module AERN2.AnalyticMV.Type
 (
   --   Analytic(..)
   -- , UnitInterval (..)
@@ -50,6 +50,68 @@ data PowS =
 type V a = [a]
 
 type MultiIndex = V Integer
+
+_ode_f1 :: PowS
+_ode_f1 = -- (y(x)-1)^2, around 0
+  PowS {
+    pows_x0 = [real 0],
+    pows_k = 1,
+    pows_A = 2,
+    pows_terms = terms
+  } 
+  where
+  terms [0] = real (1)
+  terms [1] = real (-2)
+  terms [2] = real 1
+  terms _ = real 0
+
+{-
+
+Define sine using a 2-variable linear ODE.
+
+Attempt 1:
+
+y1' = y2
+y2' = -y1
+y1(0) = 0
+y2(0) = 1 -- eek, we currently support only initial value 0
+
+Attempt 2:
+
+y1(t) = sin(t)
+y2(t) = cos(t) - 1
+
+y1' = y2+1
+y2' = -y1
+y1(0) = 0
+y2(0) = 0
+
+-}
+
+_ode_sine_1 :: PowS
+_ode_sine_1 = -- f(y1,y2) = y2
+  PowS {
+    pows_x0 = [real 0],
+    pows_k = 1,
+    pows_A = 1,
+    pows_terms = terms
+  } 
+  where
+  terms [0,1] = real 1
+  terms [0,0] = real 1
+  terms _ = real 0
+
+_ode_sine_2 :: PowS
+_ode_sine_2 = -- f(y1,y2) = -y1
+  PowS {
+    pows_x0 = [real 0],
+    pows_k = 1,
+    pows_A = 1,
+    pows_terms = terms
+  } 
+  where
+  terms [1,0] = real (-1)
+  terms _ = real 0
 
 _poly1_0 :: PowS
 _poly1_0 = -- x^2-1, around 0
@@ -98,7 +160,7 @@ _exp1_0 =
     pows_x0 = [real 0],
     pows_k = 1,
     pows_A = 1,
-    pows_terms = memoize terms
+    pows_terms = terms
   } 
   where
   terms = memoFix aux
@@ -195,6 +257,29 @@ instance CanAddAsymmetric PowS PowS where
     terms2 = pows_terms f2
     terms m = terms1 m + terms2 m
 
+{-- SCALING --}
+
+-- assuming that both power series use the same centre
+instance CanMulAsymmetric Rational PowS where
+  type MulType Rational PowS = PowS
+  mul q1 f2 = 
+    PowS {
+          pows_x0 = x0,
+          pows_k = k,
+          pows_A = max 1 $ ceiling $ a*(abs q1),
+          pows_terms = memoize terms
+      }
+    where
+    x0 = pows_x0 f2
+    a = pows_A f2
+    k = pows_k f2
+    terms2 = pows_terms f2
+    terms m = q1 * terms2 m
+
+instance CanMulAsymmetric Integer PowS where
+  type MulType Integer PowS = PowS
+  mul n1 f2 = mul (rational n1) f2 
+
 {-- MLUTIPLICATION --}
 
 -- assuming that both power series use the same centre
@@ -243,4 +328,49 @@ deriv_powS f j =
     m' = take (j-1) m ++ [mj+1] ++ drop j m
 
 {-- ODE one step --}
+
+ode_step_powS :: V PowS -> Rational -> V CauchyReal -> V PowS 
+ode_step_powS f t0 y0 = map step_i [1..d]
+  -- TODO: currently works only with y0 = x0 (where x0 is the centre of f)  
+  where
+  d = length f
+  step_i i =
+    PowS {
+      pows_x0 = [real t0],
+      pows_k = a*k,
+      pows_A = 1,
+      pows_terms = terms
+    } 
+    where
+    x0 = pows_x0 (head f) -- all components of the field must have the same centre
+    a = maximum $ map pows_A f
+    k = maximum $ map pows_k f
+    terms [m] =
+      fim m `apply` y0
+    fi0 = 
+      PowS {
+        pows_x0 = map (const (real 0)) y0,
+        pows_k = 1,
+        pows_A = 1,
+        pows_terms = terms_i
+      } 
+      where
+      terms_i mx 
+        | mx == mx_i = real 1
+        | otherwise = real 0
+      mx_i = take (i-1) (repeat 0) ++ [1] ++ (take (d-i) (repeat 0))
+
+    fimP1 m fim = 
+      (1/!(m+1))*(foldl1 (+) [ (deriv_powS fim j) * fj | (j, fj) <- zip [1..d] f])
+
+    fim' _ 0 = fi0
+    fim' fim'' m = fimP1 (m-1) (fim'' (m-1))
+    fim = memoFix fim'
+
+
+
+
+
+
+
 

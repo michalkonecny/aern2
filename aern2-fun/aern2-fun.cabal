@@ -133,6 +133,7 @@ library
     AERN2.Analytic.Type
     AERN2.Analytic.Field
     AERN2.Analytic
+    AERN2.AnalyticMV.Type
     AERN2.Poly.Cheb.Analytic
     AERN2.Poly.Cheb.MaxNaive
 
