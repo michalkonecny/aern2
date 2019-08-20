@@ -27,6 +27,8 @@ where
 
 import MixedTypesNumPrelude
 
+import Debug.Trace
+
 import Text.Printf
 
 import qualified Data.Map as Map
@@ -34,18 +36,18 @@ import qualified Data.List as List
 import Data.Function.Memoize
 
 import AERN2.MP.Ball
-import AERN2.MP.Dyadic
+-- import AERN2.MP.Dyadic
 import AERN2.RealFun.Operations
-import AERN2.Real
+-- import AERN2.Real
 
 
 data PowS =
   PowS
   {
-    pows_x0 :: V CauchyReal
+    pows_x0 :: V MPBall
   , pows_k :: Integer
   , pows_A :: Integer
-  , pows_terms :: (MultiIndex -> CauchyReal)
+  , pows_terms :: (MultiIndex -> MPBall)
   }
   deriving Show
 
@@ -53,15 +55,23 @@ type V a = [a]
 
 type MultiIndex = V Integer
 
+debug_PowS :: String -> PowS -> PowS
+debug_PowS name pw =
+  pw { pows_terms = terms }
+  where
+  terms m = (trace msg . pows_terms pw) m
+    where
+    msg = "term of " ++ name ++ ": " ++ show m
+
 {- POLYNOMIAL to PowS conversion -}
 
-newtype P = P (Map.Map MultiIndex CauchyReal)
+newtype P = P (Map.Map MultiIndex MPBall)
 
 instance Show P where
   show (P p) =
     List.intercalate " + " $ map showTerm $ Map.toAscList p
     where
-    showTerm (m, c) = show (double c) ++ concat (map showV $ zip [1..] m)
+    showTerm (m, c) = show (c) ++ concat (map showV $ zip [1..] m)
     showV (_i,0) = ""
     showV (i,1) = printf "x%d" i
     showV (i,n) = printf "x%d^%d" i n
@@ -70,10 +80,10 @@ instance Show P where
 {- P arithmetic  -}
 
 x_d_i_n :: Integer -> Integer -> Integer -> P
-x_d_i_n d i n = P $ Map.singleton (m_d_i_n d i n) (real 1)
+x_d_i_n d i n = P $ Map.singleton (m_d_i_n d i n) (mpBall 1)
 
 constP :: Integer -> P
-constP d = P $ Map.singleton (replicate d 0) (real 1)
+constP d = P $ Map.singleton (replicate d 0) (mpBall 1)
 
 vars :: Integer -> [P]
 vars d = 
@@ -90,14 +100,14 @@ instance CanAddAsymmetric P P where
   add (P p1) (P p2) = P $ Map.unionWith (+) p1 p2
 instance CanNeg P where
   negate (P p) = P (Map.map negate p)
-instance CanAddAsymmetric P CauchyReal where
-  type AddType P CauchyReal = P
+instance CanAddAsymmetric P MPBall where
+  type AddType P MPBall = P
   add (P p1) r2 = P $ Map.insertWith (+) m0000 r2 p1
     where
     d = length (fst $ Map.findMin p1)
     m0000 = replicate d 0
-instance CanMulAsymmetric CauchyReal P where
-  type MulType CauchyReal P = P
+instance CanMulAsymmetric MPBall P where
+  type MulType MPBall P = P
   mul r1 (P p2) = P $ Map.map (* r1) p2
 instance CanMulAsymmetric Rational P where
   type MulType Rational P = P
@@ -117,7 +127,7 @@ instance CanMulAsymmetric P P where
 
 {- P translation to centre x0  -}
 
-translate_P :: P -> V CauchyReal -> P
+translate_P :: P -> V MPBall -> P
 translate_P (P p) x0 =
   foldl1 (+) $ map evalT $ Map.toList p
   where
@@ -132,14 +142,14 @@ translate_P (P p) x0 =
     where
     xi = x_d_i_n d i 1
 
-type Analytic = V CauchyReal -> PowS
+type Analytic = V MPBall -> PowS
 
 poly_Analytic :: P -> Analytic
 poly_Analytic pp x0 =
   PowS {
     pows_x0 = x0,
     pows_k = 1,
-    pows_A = snd $ integerBounds $ (maximum (map abs $ Map.elems tp)) ? (bitsS 0),
+    pows_A = snd $ integerBounds $ (maximum (map abs $ Map.elems tp)),
     pows_terms = terms
   }
   where
@@ -147,7 +157,7 @@ poly_Analytic pp x0 =
   terms m =
     case Map.lookup m tp of
       Just c -> c
-      _ -> real 0
+      _ -> mpBall 0
 
 {- Example Analytic functions -}
 
@@ -160,12 +170,13 @@ y2' = -y1
 y1(0) = 0
 y2(0) = 1
 
-(apply (head $ ode_step_Analytic [_ode_sine_1, _ode_sine_2] (rational 0) [real 0, real 1]) [real 0.1]) ? (bits S 10)
+(apply (head $ ode_step_Analytic [_ode_sine_1, _ode_sine_2] (rational 0) [mpBall 0, mpBall 1]) [mpBall 0.1]) ? (bits S 10)
 
 -}
 _ode_sine_1 :: Analytic
 _ode_sine_1 =
   poly_Analytic y2
+  -- debug_PowS "_ode_sine_1" . poly_Analytic y2
   where
   [_y1, y2] = vars 2
   
@@ -175,11 +186,15 @@ _ode_sine_2 =
   where
   [y1, _y2] = vars 2
 
--- usage: (apply _exp1_0 [real 0.5]) ? (bitsS 100)
+_solve_sine_1 :: (CanBeRational t) => Precision -> t -> MPBall
+_solve_sine_1 p t = 
+  (head $ fst $ ode_Analytic [_ode_sine_1, _ode_sine_2] (rational 0) [mpBallP p 0, mpBallP p 1] (rational t))
+
+-- usage: (apply _exp1_0 [mpBall 0.5]) ? (bitsS 100)
 _exp1_0 :: PowS
 _exp1_0 =
   PowS {
-    pows_x0 = [real 0],
+    pows_x0 = [mpBall 0],
     pows_k = 1,
     pows_A = 1,
     pows_terms = terms
@@ -187,28 +202,56 @@ _exp1_0 =
   where
   terms = memoFix aux
     where
-    aux :: (([Integer] -> CauchyReal) -> [Integer] -> CauchyReal)
-    aux _trms [0] = real 1
-    aux trms [m1] = (1/!(real m1))*(trms [m1-1])
+    aux :: (([Integer] -> MPBall) -> [Integer] -> MPBall)
+    aux _trms [0] = mpBall 1
+    aux trms [m1] = (1/!(mpBall m1))*(trms [m1-1])
     aux _ _ = error "unary _exp1_0 used illegaly"
 
 {- EVALUATION -}
 
-sum1 :: PowS -> CauchyReal -> CauchyReal
+sum1 :: PowS -> MPBall -> MPBall
 sum1 f x1 =
-  realLim
-    (\m ->  horn m (a_m m)) -- TODO: evaluate more cleverly
-    (\m -> a * q^!(m + 1) /! (1 - q))
+  updateRadius (+ (errorBound r)) c
   where
+  p = getPrecision x1
   a = pows_A f
   k = pows_k f
   (x0_1:_) = pows_x0 f
-  a_m m = pows_terms f [m]
+  a_m m' = pows_terms f [m']
   q = (abs (x1-x0_1)) * k
+  r_prelim = mpBall $ radius x1
+  r 
+    | r_prelim !>! 0 = r_prelim
+    | otherwise = (mpBallP p 0.5)^!(integer $ getPrecision x1)
+  m 
+    | r ?==? 0 || q ?==? 0 = 0
+    | otherwise =
+        max 0 $ (snd $ integerBounds $ (~!) $ (log ((1-q)*r/a))/(log q)) - 1
+  c = horn m (a_m m)
   horn 0 y = y
   horn i y = horn (i - 1) (y * (x1 - x0_1) + (a_m (i - 1)))
 
-sigma :: PowS -> CauchyReal -> PowS
+-- realLim :: (Integer -> MPBall) -> (Integer -> MPBall) -> MPBall
+-- realLim xe_n err_n =
+--   newCR "lim" [] makeQ
+--   where
+--   makeQ _me_src acc@(AccuracySG s _) = h 0
+--     where
+--     h k
+--       | kthOk =
+--         centreAsBall ((xe_n k) ? (acc + 1)) -- TODO: is this correct?
+--         + (mpBall (0, (dyadic 0.5)^!(fromAccuracy s)))
+--       | otherwise =
+--         h (k + 1)
+--       where
+--       kthError :: MPBall
+--       kthError = (err_n k) ? (acc + 2)
+--       kthOk :: Bool
+--       kthOk =
+--         (kthError <= 0.5^!((fromAccuracy s) + 1)) == Just True
+
+
+sigma :: PowS -> MPBall -> PowS
 sigma f x1 =
   f {
         pows_x0 = x0_rest, 
@@ -231,33 +274,14 @@ sigma f x1 =
     
 {-- EVALUATION --}
 
-instance CanApply PowS (V CauchyReal) where
-  type ApplyType PowS (V CauchyReal) = CauchyReal
+instance CanApply PowS (V MPBall) where
+  type ApplyType PowS (V MPBall) = MPBall
   apply f x = 
     case x of
       [] -> error "CanApply PowS does not support 0-dimensional PowS"
       [x1] -> sum1 f x1
       (x1 : xs) -> apply (sigma f x1) xs
 
-
-realLim :: (Integer -> CauchyReal) -> (Integer -> CauchyReal) -> CauchyReal
-realLim xe_n err_n =
-  newCR "lim" [] makeQ
-  where
-  makeQ _me_src acc@(AccuracySG s _) = h 0
-    where
-    h k
-      | kthOk =
-        centreAsBall ((xe_n k) ? (acc + 1)) -- TODO: is this correct?
-        + (mpBall (0, (dyadic 0.5)^!(fromAccuracy s)))
-      | otherwise =
-        h (k + 1)
-      where
-      kthError :: MPBall
-      kthError = (err_n k) ? (acc + 2)
-      kthOk :: Bool
-      kthOk =
-        (kthError <= 0.5^!((fromAccuracy s) + 1)) == Just True
 
 {-- ADDITION --}
 
@@ -353,15 +377,16 @@ deriv_powS f j =
 
 {-- ODE one step --}
 
-ode_step_powS :: V PowS -> Rational -> V CauchyReal -> V PowS 
+ode_step_powS :: V PowS -> Rational -> V MPBall -> V PowS 
 ode_step_powS f t0 y0 = map step_i [1..d]
   -- works only with y0 = x0 (where x0 is the centre of f)  
   where
   d = length f
   m0000 = replicate d 0
+  p = getPrecision (head y0)
   step_i i =
     PowS {
-      pows_x0 = [real t0],
+      pows_x0 = [mpBallP p t0],
       pows_k = a*k,
       pows_A = 1,
       pows_terms = terms
@@ -381,9 +406,9 @@ ode_step_powS f t0 y0 = map step_i [1..d]
       } 
       where
       terms_i mx 
-        | mx == mx_i = real 1
+        | mx == mx_i = mpBall 1
         | mx == m0000 = y0 !! (i-1)
-        | otherwise = real 0
+        | otherwise = mpBall 0
       mx_i = m_d_i_n d i 1
 
     fimP1 m fim'' = 
@@ -396,21 +421,22 @@ ode_step_powS f t0 y0 = map step_i [1..d]
 
 {- Many steps ODE solving (polynomial only for now) -}
 
-ode_step_Analytic :: V Analytic -> Rational -> V CauchyReal -> V PowS
+ode_step_Analytic :: V Analytic -> Rational -> V MPBall -> V PowS
 ode_step_Analytic fA t0 y0 = ode_step_powS fPowS t0 y0
   where
   fPowS = map ($ y0) fA
 
-ode_Analytic :: V Analytic -> Rational -> V CauchyReal -> Rational -> (V CauchyReal, [(Rational, V CauchyReal, V PowS)])
+ode_Analytic :: V Analytic -> Rational -> V MPBall -> Rational -> (V MPBall, [(Rational, V MPBall, V PowS)])
 ode_Analytic fA t00 y00 tE = aux [] t00 y00
   where
+  p = getPrecision $ head y00
   aux prevSegs t0 y0 
-    | tE <= t1 = (map (flip apply [real tE]) seg, reverse $ (t0,y0,seg) : prevSegs)
+    | tE <= t1 = (map (flip apply [mpBallP p tE]) seg, reverse $ (t0,y0,seg) : prevSegs)
     | otherwise = aux ((t0,y0,seg):prevSegs) t1 y1
     where
     seg = ode_step_Analytic fA t0 y0
     k = maximum $ map pows_k seg
     h = 1/!(2*k)
     t1 = t0 + h
-    y1 = map (flip apply [real t1]) seg
+    y1 = map (flip apply [mpBallP p t1]) seg
   
