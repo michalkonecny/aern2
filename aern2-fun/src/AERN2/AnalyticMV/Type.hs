@@ -39,7 +39,6 @@ import AERN2.RealFun.Operations
 import AERN2.Real
 
 
-
 data PowS =
   PowS
   {
@@ -359,6 +358,7 @@ ode_step_powS f t0 y0 = map step_i [1..d]
   -- works only with y0 = x0 (where x0 is the centre of f)  
   where
   d = length f
+  m0000 = replicate d 0
   step_i i =
     PowS {
       pows_x0 = [real t0],
@@ -382,6 +382,7 @@ ode_step_powS f t0 y0 = map step_i [1..d]
       where
       terms_i mx 
         | mx == mx_i = real 1
+        | mx == m0000 = y0 !! (i-1)
         | otherwise = real 0
       mx_i = m_d_i_n d i 1
 
@@ -400,3 +401,16 @@ ode_step_Analytic fA t0 y0 = ode_step_powS fPowS t0 y0
   where
   fPowS = map ($ y0) fA
 
+ode_Analytic :: V Analytic -> Rational -> V CauchyReal -> Rational -> (V CauchyReal, [(Rational, V CauchyReal, V PowS)])
+ode_Analytic fA t00 y00 tE = aux [] t00 y00
+  where
+  aux prevSegs t0 y0 
+    | tE <= t1 = (map (flip apply [real tE]) seg, reverse $ (t0,y0,seg) : prevSegs)
+    | otherwise = aux ((t0,y0,seg):prevSegs) t1 y1
+    where
+    seg = ode_step_Analytic fA t0 y0
+    k = maximum $ map pows_k seg
+    h = 1/!(2*k)
+    t1 = t0 + h
+    y1 = map (flip apply [real t1]) seg
+  
