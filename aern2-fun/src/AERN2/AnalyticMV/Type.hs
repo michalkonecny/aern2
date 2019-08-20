@@ -28,6 +28,8 @@ where
 import MixedTypesNumPrelude
 
 import Debug.Trace
+import Data.IORef
+import System.IO.Unsafe
 
 import Text.Printf
 
@@ -55,13 +57,26 @@ type V a = [a]
 
 type MultiIndex = V Integer
 
-debug_PowS :: String -> PowS -> PowS
-debug_PowS name pw =
+debug_print_PowS :: String -> PowS -> PowS
+debug_print_PowS name pw =
   pw { pows_terms = terms }
   where
   terms m = (trace msg . pows_terms pw) m
     where
     msg = "term of " ++ name ++ ": " ++ show m
+
+type PowS_Sumup = Map.Map MultiIndex Integer
+
+debug_sumup_PowS :: IORef PowS_Sumup -> PowS -> PowS
+debug_sumup_PowS sumupRef pw =
+  pw { pows_terms = terms }
+  where
+  terms m = (logM . pows_terms pw) m
+    where
+    logM v =
+      unsafePerformIO $ do
+        modifyIORef sumupRef $ Map.insertWith (+) m 1 
+        return v
 
 {- POLYNOMIAL to PowS conversion -}
 
@@ -186,9 +201,17 @@ _ode_sine_2 =
   where
   [y1, _y2] = vars 2
 
-_solve_sine_1 :: (CanBeRational t) => Precision -> t -> MPBall
-_solve_sine_1 p t = 
-  (head $ fst $ ode_Analytic [_ode_sine_1, _ode_sine_2] (rational 0) [mpBallP p 0, mpBallP p 1] (rational t))
+_solve_sine_1 :: (CanBeRational t) => Precision -> t -> IO MPBall
+_solve_sine_1 p t =
+  do
+  sumupRef <- newIORef (Map.empty)
+  let _ode_sine_1' = debug_sumup_PowS sumupRef . _ode_sine_1
+  let result =
+        (head $ fst $ ode_Analytic [_ode_sine_1', _ode_sine_2] (rational 0) [mpBallP p 0, mpBallP p 1] (rational t))
+  print result
+  sumup <- readIORef sumupRef
+  mapM_ print $ Map.toAscList sumup
+  return result
 
 -- usage: (apply _exp1_0 [mpBall 0.5]) ? (bitsS 100)
 _exp1_0 :: PowS
