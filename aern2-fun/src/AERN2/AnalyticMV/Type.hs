@@ -306,6 +306,11 @@ instance CanApply PowS (V MPBall) where
       (x1 : xs) -> apply (sigma f x1) xs
 
 
+apply0 :: PowS -> MPBall
+apply0 f = (pows_terms f m0000)
+  where
+    d = length (pows_x0 f)
+    m0000 = replicate d 0
 {-- ADDITION --}
 
 -- assuming that both power series use the same centre
@@ -418,7 +423,7 @@ ode_step_powS f t0 y0 = map step_i [1..d]
     -- x0 = pows_x0 (head f) -- all components of the field must have the same centre
     a = maximum $ map pows_A f
     k = maximum $ map pows_k f
-    terms [m] = fim m `apply` y0
+    terms [m] = apply0 (fim m) 
     terms _ = error "bad terms"
     fi0 = 
       PowS {
@@ -459,7 +464,7 @@ ode_Analytic fA t00 y00 tE = aux [] t00 y00
     where
     seg = ode_step_Analytic fA t0 y0
     k = maximum $ map pows_k seg
-    h = 1/!(2*k)
+    h = 1/!(256*k)
     t1 = t0 + h
     y1 = map (flip apply [mpBallP p t1]) seg
   
