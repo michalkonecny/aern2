@@ -133,6 +133,42 @@ executable aern2-real-benchOp
     , random
     , QuickCheck
 
+executable aern2-real-simpleOp
+  ghc-options:
+      -Wall
+  extensions:
+    RebindableSyntax,
+    PostfixOperators,
+    ScopedTypeVariables,
+    FlexibleContexts,
+    TypeSynonymInstances
+  hs-source-dirs:
+      bench
+  main-is:
+      aern2-real-simpleOp.hs
+  build-depends:
+    base == 4.*
+    , mixed-types-num >= 0.3.1
+    , aern2-mp == 0.1.*
+    , aern2-real
+
+executable aern2-real-cdar-simpleOp
+  ghc-options:
+      -Wall
+  extensions:
+    RebindableSyntax,
+    PostfixOperators,
+    ScopedTypeVariables,
+    FlexibleContexts,
+    TypeSynonymInstances
+  hs-source-dirs:
+      bench
+  main-is:
+      aern2-real-cdar-simpleOp.hs
+  build-depends:
+    base == 4.*
+    , cdar
+
 -- executable aern2-generate-netlog-elm
 --   ghc-options:
 --       -Wall
