@@ -3,27 +3,27 @@ denom: acG = bits 75; ac = bits 65
 inv: acG = bits 22; ac = bits 62
 res: acG = bits 42; ac = bits 61
 computing max  (sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
-result = [1.03340096844416441154559983295 ± <2^(-20)]
+result = [1.033400968444164411545599850700554500188687649336495890111671827098079116788270807191232118215382528751006480926932887454760799207519875207333164273048834671580873147836870021984022398570463106922378485217385449782640218437642359693048880235178592659316865487313292537106203257999193013577544450751668046042228207605900707153783222232238450509325824106574593606206166664476475613331104375908011451658636771768353637631462633576981379220919366326071107325444889589270125296061976329244318426136576918905539321068789197424597040932659521928829042335771423531443690865113126408160241510696296336271209985611559557544530140767778565884559280439892401852099617544690764113897637059520818473679097457086538416272195167665506598773307095584363044993154535980523441343703881780168101145704803831454123140513455710032264533992929500527679920196533203125 ± <2^(-20)]
 accuracy: bits 20
-precision = Precision 1706
+precision = Precision 845
 	Command being timed: "aern2-fnreps-ops max fracSinSC frac 20"
-	User time (seconds): 4.02
-	System time (seconds): 0.02
+	User time (seconds): 43.99
+	System time (seconds): 0.01
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.04
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:44.01
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 19152
+	Maximum resident set size (kbytes): 18056
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 2711
+	Minor (reclaiming a frame) page faults: 2391
 	Voluntary context switches: 1
-	Involuntary context switches: 9
+	Involuntary context switches: 38
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 8
+	File system outputs: 16
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

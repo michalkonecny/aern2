@@ -20,7 +20,7 @@ import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 import Data.Typeable
-import Data.Convertible
+-- import Data.Convertible
 
 import AERN2.MP.Dyadic (Dyadic, dyadic)
 import qualified AERN2.MP.Float as MPFloat

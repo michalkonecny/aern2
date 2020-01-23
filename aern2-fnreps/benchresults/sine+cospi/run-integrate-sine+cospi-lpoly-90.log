@@ -1,22 +1,22 @@
 computing integrate  sin(10x)+cos(7pi*x) over [-1,1]
-result = [-8.14282671527824900458018913416e-31 ± <2^(-91)]
-accuracy: bits 91
-precision = Precision 720
+result = [0.0000000000000000000000000000001126005840956802042726028247509537834364972595923047971623395888142299703715041893071753257243171899838916774557360889983010116577487668387418891205270363052726548852750710935446407212546816471554535261164855146841453075178275594039346773904173366189457655812690039234071394440830372431349847180126477752537539345212280750274658203125 ± <2^(-92)]
+accuracy: bits 92
+precision = Precision 360
 	Command being timed: "aern2-fnreps-ops integrate sine+cospi lpoly 90"
-	User time (seconds): 5.28
-	System time (seconds): 0.01
-	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:05.30
+	User time (seconds): 7.01
+	System time (seconds): 0.02
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:07.03
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 12512
+	Maximum resident set size (kbytes): 12248
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 901
+	Minor (reclaiming a frame) page faults: 1071
 	Voluntary context switches: 1
-	Involuntary context switches: 5
+	Involuntary context switches: 6
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

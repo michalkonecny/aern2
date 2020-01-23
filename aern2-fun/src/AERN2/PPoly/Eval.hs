@@ -18,7 +18,7 @@ import Debug.Trace
 evalDirect :: PPoly -> MPBall -> MPBall
 evalDirect (PPoly ps dom) x =
   foldl1' meet $
-  map (\(_,f) -> (ballLift1TR ChE.evalDirect) f xI) intersectingPieces
+  map (\(_,f) -> ChE.evalDirect f xI) intersectingPieces
   where
   xI = (Cheb.fromDomToUnitInterval dom x)
   meet :: MPBall -> MPBall -> MPBall
@@ -35,7 +35,7 @@ evalDirect (PPoly ps dom) x =
 evalDirectWithAccuracy :: Accuracy -> PPoly -> MPBall -> MPBall
 evalDirectWithAccuracy bts (PPoly ps dom) x =
   foldl1' meet $
-  map (\(_,f) -> (ballLift1TR $ Cheb.evalDirectWithAccuracy bts) f xI) intersectingPieces
+  map (\(_,f) -> Cheb.evalDirectWithAccuracy bts f xI) intersectingPieces
   where
   xI = (Cheb.fromDomToUnitInterval dom x)
   meet :: MPBall -> MPBall -> MPBall
@@ -52,7 +52,7 @@ evalDirectWithAccuracy bts (PPoly ps dom) x =
 evalDf :: PPoly -> [ChPoly MPBall] -> MPBall -> MPBall
 evalDf (PPoly ps dom) fs' x =
   foldl1' meet $
-  map (\((_, f), f') -> (ballLift1TR (\g -> ChE.evalDf g f')) f xI) intersectingPieces
+  map (\((_, f), f') -> (ChE.evalDf f f' xI)) intersectingPieces
   where
   xI = (Cheb.fromDomToUnitInterval dom x)
   meet :: MPBall -> MPBall -> MPBall
@@ -69,7 +69,7 @@ evalDf (PPoly ps dom) fs' x =
 evalLDf :: PPoly -> [ChPoly MPBall] -> MPBall -> MPBall
 evalLDf (PPoly ps dom) fs' x =
   foldl1' meet $
-  map (\((_, f), f') -> (ballLift1TR (\g -> ChE.evalLDf g f')) f xI) intersectingPieces
+  map (\((_, f), f') -> (ChE.evalLDf f f' xI)) intersectingPieces
   where
   xI = (Cheb.fromDomToUnitInterval dom x)
   meet :: MPBall -> MPBall -> MPBall
@@ -89,7 +89,7 @@ evalDI f@(PPoly ps dom) x =
   where
   (Interval l r) = dom
   c = 1/!(0.5*(r - l))
-  dfs = map ((c *) . (ballLift1R Cheb.derivative) . snd) ps
+  dfs = map ((c *) . Cheb.derivative . snd) ps
 
 instance
   CanApply PPoly MPBall where

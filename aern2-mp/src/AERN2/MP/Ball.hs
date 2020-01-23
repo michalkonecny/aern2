@@ -21,10 +21,13 @@ module AERN2.MP.Ball
   -- * The Ball type
   , MPBall(..), CanBeMPBall, mpBall, CanBeMPBallP, mpBallP
   , reducePrecionIfInaccurate
+  {-
   -- * Ball construction/extraction functions
-  -- , endpointsMP, fromEndpointsMP
+  , endpointsMP, fromEndpointsMP
+  -}
   -- * Ball operations (see also instances)
   , piBallP
+  , endpointsMPBall, fromEndpointsMPBall, hullMPBall
   -- * Helpers for constructing ball functions
   , byEndpointsMP
   , fromApproxWithLipschitz

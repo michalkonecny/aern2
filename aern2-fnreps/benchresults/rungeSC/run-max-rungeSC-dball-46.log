@@ -2,27 +2,27 @@ numer: acG = NoInformation; ac = Exact
 inv: acG = NoInformation; ac = Exact
 res: acG = NoInformation; ac = Exact
 computing max  (sin(10x)+cos(7pi*x))/(100x^2+1) over [-1,1]
-result = [1.07156087129067342873656818916 ± <2^(-46)]
+result = [1.0715608712906777215124706652885758011849262913820616100665759584901735794434232210630854168799397374556292561464942991733551025390625 ± <2^(-46)]
 accuracy: bits 46
-precision = Precision 390
+precision = Precision 135
 	Command being timed: "aern2-fnreps-ops max rungeSC dball 46"
-	User time (seconds): 152.97
-	System time (seconds): 0.57
+	User time (seconds): 0.39
+	System time (seconds): 0.00
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:33.57
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.39
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 134464
+	Maximum resident set size (kbytes): 10580
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 31864
+	Minor (reclaiming a frame) page faults: 832
 	Voluntary context switches: 1
-	Involuntary context switches: 317
+	Involuntary context switches: 0
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 16
+	File system outputs: 8
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

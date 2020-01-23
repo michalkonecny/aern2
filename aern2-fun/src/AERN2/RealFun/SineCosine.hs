@@ -30,7 +30,7 @@ import MixedTypesNumPrelude
 import Text.Printf
 
 import qualified Data.Map as Map
--- import qualified Data.List as List
+import qualified Data.List as List
 
 -- import Test.Hspec
 -- import Test.QuickCheck
@@ -356,8 +356,14 @@ sineCosineTaylorSum isSine (xAC :: Accuracy -> f) xM acGuidePre =
     termSum =
       maybeTrace ("sineCosineTaylorSum: term accuracies = "
         ++ (show (map (\(i,t) -> (i,getAccuracy t)) terms))) $
-      foldl1 (+) (map snd terms) + initNum
+      maybeTrace ("sineCosineTaylorSum: term partial sum accuracies = "
+        ++ (show (map (getAccuracy . sumP) (tail $ List.inits (map snd terms))))) $
+      -- maybeTrace ("sineCosineTaylorSum: terms = " ++ (show terms)) $
+      -- maybeTrace ("sineCosineTaylorSum: term partial sums = " 
+      --   ++ (show (map sumP (tail $ List.inits (map snd terms))))) $
+      sumP (map snd terms) + initNum
       where
+      sumP = foldl1 (+)
       terms =
         Map.toAscList $ Map.intersectionWithKey makeTerm powers factorialsE
       initNum | isSine = 0

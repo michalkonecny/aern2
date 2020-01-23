@@ -1,29 +1,29 @@
-numer: acG = bits 55; ac = bits 21
-denom: acG = bits 45; ac = bits 34
+numer: acG = bits 55; ac = bits 27
+denom: acG = bits 45; ac = bits 36
 inv: acG = bits 7; ac = bits 7
 frac: acG = bits 12; ac = bits 4
 computing max  max((x^2)/2,(sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
-result = [1.2715818623405309717147058922 ± <2^(-3)]
+result = [1.2715818623291651740668841026747534187596144285508582699637845436230893475380934983139081127489071855057376415334170101144887652624297950533660626048235377221366121981366723308464921609679911568163126826663707789032912719783651768255440302390866044568222505107835321213231617368195628697293539020238606864046016494392488351480569115091172700772072270194821542016053305920805349905183162639084415262288498716103661043139513332341199980066022046413681967238116478126316714948086451169341558796809507873574590055094152395922249568872951649486132322186623770125753873088608509368235063424859423552658503795263569746502144896114572372354770465081644265738311302292320674046850339207645546409093571673239798027324930612288071752867357956907396802122861847304183362642884481356659021106082697184181330288466962978042702759171054358811181756284754517500289183740136422784416936337947845458984375 ± <2^(-3)]
 accuracy: bits 3
-precision = Precision 910
+precision = Precision 894
 	Command being timed: "aern2-fnreps-ops max bumpy2 ppoly 05"
-	User time (seconds): 43.17
+	User time (seconds): 75.84
 	System time (seconds): 0.14
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:43.33
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:15.98
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 29164
+	Maximum resident set size (kbytes): 24160
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 28721
+	Minor (reclaiming a frame) page faults: 7800
 	Voluntary context switches: 1
-	Involuntary context switches: 440
+	Involuntary context switches: 108
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 24
+	File system outputs: 16
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

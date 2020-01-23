@@ -52,7 +52,7 @@ class IsBall t where
      to the explicit radius, making the centre exact.  This may lose some information,
      but as a ball is equivalent to the original.
      For MPBall this function is pointless because it is equivalent to the identity.  -}
-  makeExactCentre :: (IsBall t) => t -> t
+  makeExactCentre :: t -> t
   makeExactCentre v =
     updateRadius (+r) c
     where

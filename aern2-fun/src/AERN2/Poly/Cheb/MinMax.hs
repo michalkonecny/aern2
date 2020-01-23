@@ -84,8 +84,17 @@ chebMaxDCT p q =
   pqRB = mpBall pqR
 
   -- enclose roots of pC-qC:
-  diffC = pC - qC
+  diff   = p - q
+  diffC  = centre diff
   diffC' = derivativeExact diffC
+  mapToDomRat (Interval l r) =
+    Interval (t l) (t r)
+    where 
+    t (x :: Rational) = domL + (dyadic 0.5) * (domR - domL) * (x + 1) :: Rational
+  mapToDom (Interval l r) = 
+    Interval (t l) (t r)
+    where 
+      t (x :: Dyadic) = domL + (dyadic 0.5) * (domR - domL) * (x + 1) :: Dyadic
   evalDiffOnInterval (Interval l r) =
       evalDf diffC diffC' $
         fromEndpoints (mpBallP precision l) (mpBallP precision r)
@@ -93,7 +102,7 @@ chebMaxDCT p q =
   diffC_onDom =
       evalDiffOnInterval (Interval (rational domL) (rational domR))
   diffC_onDomL =
-      evalDirect diffC (mpBallP precision domL)
+      evalDirect diff (mpBallP precision domL)
 
   (_diffCIntErr, diffCInt) = intify diffC
   diffCRoots =
@@ -102,9 +111,9 @@ chebMaxDCT p q =
       (centre $ mpBallP (15 + ac2prec acGuide) $ (l + r)/!2, errorBound err)) $
     findRootsWithEvaluation
       (cheb2Power diffCInt)
-      (abs . evalDiffOnInterval)
+      (abs . evalDiffOnInterval . mapToDomRat)
       (\v -> (v !<=! (dyadic 0.5)^!(2 + fromAccuracy acGuide)))
-      (rational domL) (rational domR)
+      (-1.0) 1.0
   segments :: [(DyadicInterval, ErrorBound)]
   segments =
     reverse $
@@ -118,7 +127,7 @@ chebMaxDCT p q =
 
   -- bounding the error of a guess:
   boundError resGuess =
-    foldl1 max $ map onSegment segments
+    foldl1 max $ map (onSegment . (\(i, e) -> (mapToDom i, e))) segments
     where
     _ = [resGuess, p] -- infer type of resGuess
     onSegment (i@(Interval l r), e)

@@ -35,7 +35,11 @@ instance HasAccuracyGuide (Frac a) where
   getAccuracyGuide (Frac n d _) =
     (chPoly_acGuide n) `min` (chPoly_acGuide d)
 
-instance (CanSetPrecision a, CanNormalize (ChPoly a)) => CanSetAccuracyGuide (Frac a) where
+instance 
+  -- (CanSetPrecision a, CanNormalize (ChPoly a)) => 
+  (a ~ MPBall) =>
+  CanSetAccuracyGuide (Frac a) 
+  where
   setAccuracyGuide acGuide (Frac n d dIM) =
     (Frac (setAccuracyGuide acGuide n) (setAccuracyGuide acGuide d) dIM)
 
@@ -48,6 +52,7 @@ instance (CanNormalize (ChPoly a)) => CanNormalize (Frac a) where
 
 instance (IsBall (Frac a)) => HasAccuracy (Frac a) where
   getAccuracy f = getAccuracy $ radius f
+  getFiniteAccuracy f = getFiniteAccuracy $ radius f
 
 instance (HasPrecision a) => HasPrecision (Frac a) where
   getPrecision (Frac p q m) =

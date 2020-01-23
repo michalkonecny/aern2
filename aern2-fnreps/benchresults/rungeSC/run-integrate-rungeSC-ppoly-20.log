@@ -1,25 +1,25 @@
 numer: acG = bits 100; ac = bits 66
-inv: acG = bits 40; ac = bits 18
-res: acG = bits 100; ac = bits 15
+inv: acG = bits 40; ac = bits 22
+res: acG = bits 100; ac = bits 19
 computing integrate  (sin(10x)+cos(7pi*x))/(100x^2+1) over [-1,1]
-result = [3.4919933791759979358025408511e-2 ± <2^(-17)]
-accuracy: bits 17
-precision = Precision 600
+result = [0.03491989347654456023295876314523374394001646962336479664567695236922752505067880535835771583981508248130966053096399492236893999405069264623728634937134700474948747517947480064908961736225739695567005930051793966303151735873114965369149816752163028834640134567651955974474389639405010666359727338828142037097787847557403595939145624731043930220131443188764645012269673196359213799168619656989746857212724962620301926936957028097035132654078648586642206946305845113144159909840936482387132144399928685862776918070294888992548775113526622983026265960131151455669851202401332557201385498046875 ± <2^(-21)]
+accuracy: bits 21
+precision = Precision 592
 	Command being timed: "aern2-fnreps-ops integrate rungeSC ppoly 20"
-	User time (seconds): 4.36
+	User time (seconds): 5.25
 	System time (seconds): 0.02
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.38
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:05.28
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 14948
+	Maximum resident set size (kbytes): 16076
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1495
+	Minor (reclaiming a frame) page faults: 1867
 	Voluntary context switches: 1
-	Involuntary context switches: 8
+	Involuntary context switches: 10
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

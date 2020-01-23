@@ -2,27 +2,27 @@ numer: acG = bits 180; ac = bits 146
 inv: acG = bits 40; ac = Exact
 res: acG = bits 180; ac = bits 146
 computing max  (sin(10x)+cos(7pi*x))/(100x^2+1) over [-1,1]
-result = [1.07156087129067772231805532532 ± <2^(-40)]
+result = [1.0715608712906777223180553253268212185109712491364304034704761171667213103947953369337517129073325603032448929760562109751078725406203449537299273549865772246212345418701748895574392306662237552700792805695069953731277127211405656635121781952084130198507148428386635854841584732041316668266154305168081734707480898101692878871173421815999095719518368785308553502215043698768464990722376634823223909825864094930663829164068583995642887273698401105509044108251138627482146449290053068903464058235486818815591288612338116194900340197268661000553652425943826725752469629865138395785150484066409694295672658476907450060142639458048654743420672066041681514822066398916033094287957023951090741279473156592548301903936669799522545892983436819860619151292105767559235087840883692282718808730379578264546580612659454345703125 ± <2^(-40)]
 accuracy: bits 40
-precision = Precision 1648
+precision = Precision 816
 	Command being timed: "aern2-fnreps-ops max rungeSC frac 40"
-	User time (seconds): 3.75
-	System time (seconds): 0.02
+	User time (seconds): 82.80
+	System time (seconds): 0.01
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:03.77
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:22.82
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 17848
+	Maximum resident set size (kbytes): 19748
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 2316
+	Minor (reclaiming a frame) page faults: 2906
 	Voluntary context switches: 1
-	Involuntary context switches: 43
+	Involuntary context switches: 66
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 8
+	File system outputs: 16
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

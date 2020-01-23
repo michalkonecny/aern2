@@ -21,7 +21,7 @@ import AERN2.Frac.Type
 import AERN2.Frac.Eval
 import AERN2.Frac.Ring()
 import AERN2.Poly.Cheb (derivativeExact, reduceDegree, chPoly_dom,
-      chPoly_poly, chPoly_maybeBounds, ChPoly(..),
+      ChPoly(..),
       fromDomToUnitInterval, reduceToEvalDirectAccuracy)
 import qualified AERN2.Poly.Cheb as Cheb
 import AERN2.Poly.Conversion
@@ -30,7 +30,7 @@ import Data.Ratio
 import qualified AERN2.Poly.Power as Pow
 import qualified AERN2.Poly.Power.MaximumInt as PM
 
-import Debug.Trace
+-- import Debug.Trace
 
 maximum :: Frac MPBall -> MPBall -> MPBall -> MPBall
 maximum f l r = maximumOptimised f l r (degree f - 1) 1

@@ -152,6 +152,7 @@ instance (CanSetPrecision c) => CanSetPrecision (PowPoly c) where
 
 instance (HasAccuracy c) => HasAccuracy (PowPoly c) where
   getAccuracy (PowPoly p) = getAccuracy p
+  getFiniteAccuracy (PowPoly p) = getFiniteAccuracy p
 
 instance (Show (Poly c)) => Show (PowPoly c) where
   show (PowPoly p) = show p

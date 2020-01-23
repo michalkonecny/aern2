@@ -1,22 +1,22 @@
 computing integrate  sin(10x)+cos(7pi*x) over [-1,1]
-result = [1.96511643762997678664e-19 ± <2^(-15)]
-accuracy: bits 15
-precision = Precision 65
+result = [0.0000000894069671630859375 ± <2^(-16)]
+accuracy: bits 16
+precision = Precision 15
 	Command being timed: "aern2-fnreps-ops integrate sine+cospi dball 15"
-	User time (seconds): 4.68
-	System time (seconds): 0.00
+	User time (seconds): 15.53
+	System time (seconds): 0.02
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.69
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:15.56
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 11400
+	Maximum resident set size (kbytes): 11996
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1084
+	Minor (reclaiming a frame) page faults: 1278
 	Voluntary context switches: 1
-	Involuntary context switches: 22
+	Involuntary context switches: 16
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

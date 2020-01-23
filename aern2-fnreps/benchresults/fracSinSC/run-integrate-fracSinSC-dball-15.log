@@ -3,27 +3,27 @@ denom: acG = NoInformation; ac = Exact
 inv: acG = NoInformation; ac = Exact
 res: acG = NoInformation; ac = Exact
 computing integrate  (sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
-result = [2.83547506465343532012e-2 ± <2^(-15)]
+result = [0.0283546558471967829201799797533833924489954370073974132537841796875 ± <2^(-15)]
 accuracy: bits 15
 precision = Precision 65
 	Command being timed: "aern2-fnreps-ops integrate fracSinSC dball 15"
-	User time (seconds): 10.67
-	System time (seconds): 0.02
+	User time (seconds): 39.94
+	System time (seconds): 0.05
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:10.70
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:40.00
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 12540
+	Maximum resident set size (kbytes): 13156
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1345
+	Minor (reclaiming a frame) page faults: 1541
 	Voluntary context switches: 1
-	Involuntary context switches: 22
+	Involuntary context switches: 17
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 8
+	File system outputs: 16
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

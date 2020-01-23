@@ -5,7 +5,7 @@ build-type:     Simple
 homepage:       https://github.com/michalkonecny/aern2
 author:         Michal Konecny, Eike Neumann
 maintainer:     Michal Konecny <mikkonecny@gmail.com>
-copyright:      (c) 2015-2017 Michal Konecny, Eike Neumann
+copyright:      (c) 2015-2019 Michal Konecny, Eike Neumann
 license:        BSD3
 license-file:   LICENSE
 stability:      experimental
@@ -26,7 +26,7 @@ library
     , containers >= 0.5
     , psqueues >= 0.2
     , integer-logarithms >= 1.0
-    , convertible >= 1.1.1.0
+    -- , convertible >= 1.1.1.0
     , regex-tdfa >= 1.2.1
     , bytestring >= 0.10
     , hspec >= 2.1
@@ -34,10 +34,11 @@ library
     , QuickCheck >= 2.7
     , transformers >= 0.4
     , lens >= 4.13
-    , mixed-types-num >= 0.3.1 && < 0.4
+    , mixed-types-num >= 0.4
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
     , vector
+    , memoize
 
   ghc-options:     -Wall -fno-warn-orphans
   extensions:
@@ -73,15 +74,16 @@ library
     AERN2.Poly.Cheb
     AERN2.Poly.Cheb.Type
     AERN2.Poly.Cheb.Eval
+    AERN2.Poly.Cheb.ShiftScale
     AERN2.Poly.Cheb.Derivative
     AERN2.Poly.Cheb.Integration
     AERN2.Poly.Cheb.MaximumMP
     AERN2.Poly.Cheb.MaximumInt
     AERN2.Poly.Cheb.MaximumPrime
     AERN2.Poly.Cheb.Maximum
+    AERN2.Poly.Cheb.Ring
     AERN2.Poly.Cheb.MinMax
     AERN2.Poly.Cheb.DCT
-    AERN2.Poly.Cheb.Ring
     AERN2.Poly.Cheb.Field
     AERN2.Poly.Cheb.Elementary
     AERN2.Poly.Cheb.Tests
@@ -131,6 +133,7 @@ library
     AERN2.Analytic.Type
     AERN2.Analytic.Field
     AERN2.Analytic
+    AERN2.AnalyticMV.Type
     AERN2.Poly.Cheb.Analytic
     AERN2.Poly.Cheb.MaxNaive
 
@@ -178,7 +181,7 @@ executable aern2-fun-ChPoly-benchOp
     , bytestring
     , regex-tdfa
     , zlib
-    , mixed-types-num >= 0.3.1 && < 0.4
+    , mixed-types-num >= 0.4
     , aern2-mp == 0.1.*
     -- , aern2-real == 0.1.*
     , aern2-fun == 0.1.*
@@ -203,7 +206,7 @@ executable aern2-fun-ChPoly-serialise
   build-depends:
     base == 4.*
     , bytestring
-    , mixed-types-num >= 0.3.1 && < 0.4
+    , mixed-types-num >= 0.4
     , aern2-mp == 0.1.*
     -- , aern2-real == 0.1.*
     , aern2-fun == 0.1.*

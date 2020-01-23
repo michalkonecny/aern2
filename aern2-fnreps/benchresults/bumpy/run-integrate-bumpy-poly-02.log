@@ -1,38 +1,38 @@
-maxL: acG = bits 35; ac = bits 28
-maxR: acG = bits 35; ac = bits 27
+maxL: acG = bits 35; ac = bits 31
+maxR: acG = bits 35; ac = bits 31
 chebMaxDCT: acGuide = bits 2
 chebMaxDCT: tryWithDegree: d = 16
 chebMaxDCT: tryWithDegree: d = 16; getAccuracy maxCd = bits 1
-chebMaxDCT: tryWithDegree: d = 16; dctAccuracy = bits 0; maxEd = 1.6764924353585751
+chebMaxDCT: tryWithDegree: d = 16; dctAccuracy = bits 0; maxEd = Approx 53 7550250679204175 0 (-52)
 chebMaxDCT: tryWithDegree: d = 32
 chebMaxDCT: tryWithDegree: d = 32; getAccuracy maxCd = bits 2
-chebMaxDCT: tryWithDegree: d = 32; dctAccuracy = bits 1; maxEd = 0.52598092045774258
+chebMaxDCT: tryWithDegree: d = 32; dctAccuracy = bits 1; maxEd = Approx 53 4737614913674513 0 (-53)
 chebMaxDCT: tryWithDegree: d = 64
 chebMaxDCT: tryWithDegree: d = 64; getAccuracy maxCd = bits 3
-chebMaxDCT: tryWithDegree: d = 64; dctAccuracy = bits 2; maxEd = 0.26625057207233482
+chebMaxDCT: tryWithDegree: d = 64; dctAccuracy = bits 2; maxEd = Approx 53 4796343818333205 0 (-54)
 integratePB: accuracy f = bits 1
 computing integrate  max(sin(10x),cos(11*x)) over [-1,1]
-result = [0.761306162805201746094532620590 ± <2^(-1)]
+result = [0.761306162567507656852886800187717720227606929479666260750836163657914755923420778440238099911597482514260084496693083533820331923928678463311575641541375925817655008506307746097003949591962823725764574691200209706074432649878585292540900079492817197020774185502715184002431032269323348373459895450208340615280929120165500776767042399214922484851891625715071038878467883484880006226746112748252008947517522127348875422660879325009774576540930172515666915879431694722625377548924637904183218225169343669167292162875111947931724468197795311106224909296452140321507047537335492919742324590166187604778347264300464303232729434967041015625 ± <2^(-1)]
 accuracy: bits 1
-precision = Precision 2536
+precision = Precision 1236
 	Command being timed: "aern2-fnreps-ops integrate bumpy poly 02"
-	User time (seconds): 9.36
-	System time (seconds): 0.04
+	User time (seconds): 63.17
+	System time (seconds): 0.06
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:09.40
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:03.24
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 19916
+	Maximum resident set size (kbytes): 18724
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 19158
+	Minor (reclaiming a frame) page faults: 2646
 	Voluntary context switches: 1
-	Involuntary context switches: 97
+	Involuntary context switches: 79
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 8
+	File system outputs: 16
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

@@ -61,4 +61,55 @@ bumpy_I_PPoly n = integrateOverDom (bumpy $ x_PPoly (bits n)) unaryIntervalDom
 
 bumpy_I_LPPoly :: Integer -> MPBall
 bumpy_I_LPPoly n = integrateOverDom (bumpy x_LPPoly) unaryIntervalDom (bits n)
+
 ---------------------------------------------------------------------
+-- UNIVARIATE GLOBAL OPTIMISATION
+-- |sin x - (x - x^3/6 + x^5/120 - x^7/5040)| <= eps
+
+sinT7 :: 
+  (CanAddSubMulBy t t, CanPowCNBy t Integer
+  , CanDivCNBy t Integer) => 
+  t -> t
+sinT7 x = x - x^!3/!6 + x^!5/!120 - x^!7/!5040
+
+sinT7horner :: 
+  (CanAddSubMulBy t t, CanPowCNBy t Integer
+  , CanSub Integer t, SubType Integer t ~ t
+  , CanDivCNBy t Integer) => 
+  t -> t
+sinT7horner x = 
+  x * (1 - x^!2/!6 * (1 - x^!2/!20*(1 - x^!2/!42)))
+
+sinT7fp :: 
+  (CanAddSubMulBy t t, CanPowCNBy t Integer, CanMulBy t MPBall
+  , CanSub Integer t, SubType Integer t ~ t
+  , CanDivCNBy t Integer) => 
+  Integer -> t -> t
+sinT7fp prec x = 
+  x *. (1 -. x2/!.6 *. (1 -. x2/!.20*.(1 -. x2/!.42)))
+  where
+  x2 = (x^!2)*onePMe
+  a -. b = (a-b)*onePMe
+  a *. b = (a*b)*onePMe
+  a /!. b = (a/!b)*onePMe
+  infixl 6 -.
+  infixl 7 *.
+  infixl 7 /!.
+  onePMe = mpBall (1,0.5^!(prec))
+
+domSP :: DyadicInterval
+domSP = dyadicInterval (fpAvoidDenorm, 0.75)
+
+fpAvoidDenorm :: Rational
+fpAvoidDenorm = 0.5^!(23) + 0.5^!(126)
+
+xP8 :: Accuracy -> ChPoly MPBall
+xP8 acG = setAccuracyGuide acG $ varFn (domSP, acG) ()
+
+sinT7fpErr :: Integer -> Accuracy -> MPBall
+sinT7fpErr prec acG = 
+  max (abs diffMin) (abs diffMax)
+  where
+  diffMax = maximumOverDom (sinT7fp prec x - sinT7horner x) domSP
+  diffMin = minimumOverDom (sinT7fp prec x - sinT7horner x) domSP
+  x = xP8 acG

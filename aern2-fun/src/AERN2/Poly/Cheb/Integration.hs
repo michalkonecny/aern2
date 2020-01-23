@@ -34,13 +34,15 @@ import AERN2.RealFun.Operations
 
 import AERN2.Poly.Basics
 import AERN2.Poly.Cheb.Type
+import AERN2.Poly.Cheb.Maximum
 import AERN2.Poly.Cheb.Ring ()
 
 instance
-  (Ring c, CanDivCNBy c Integer, CanNormalize (ChPoly c)
-  , PolyCoeffBall c
-  , CanApply (ChPoly c) c, ApplyType (ChPoly c) c ~ c)
-  =>
+  -- (Ring c, CanDivCNBy c Integer, CanNormalize (ChPoly c)
+  -- , PolyCoeffBall c
+  -- , CanApply (ChPoly c) c, ApplyType (ChPoly c) c ~ c)
+  -- =>
+  (c ~ MPBall) =>
   CanIntegrateOverDom (ChPoly c) DyadicInterval
   where
   type IntegralOverDomType (ChPoly c) DyadicInterval = c
@@ -65,18 +67,21 @@ instance
     -- prc = getPrecision cp
 
 primitive_function ::
-  (Ring c, CanDivCNBy c Integer, CanNormalize (ChPoly c),
-   CanMulBy c Dyadic)
-  =>
+  -- (Ring c, CanDivCNBy c Integer, CanNormalize (ChPoly c),
+  --  CanMulBy c Dyadic)
+  -- =>
+  (c ~ MPBall) =>
   ChPoly c -> ChPoly c
 primitive_function (ChPoly dom@(Interval l r) (Poly terms) acG _) =
-  normalize $
-    (dyadic 0.5)*(r - l) *
-      ChPoly dom
-      (Poly $ terms_fromListAddCoeffs $
-        concat $ map oneTerm $ terms_toList terms)
-    acG Nothing
+  result
   where
+  result = 
+    normalize $
+      (dyadic 0.5)*(r - l) *
+        ChPoly dom
+        (Poly $ terms_fromListAddCoeffs $
+          concat $ map oneTerm $ terms_toList terms)
+      acG (chPolyBounds_forChPoly result)
   oneTerm (n,a)
     | n == 0 = [(1,a)]
     | n == 1 = [(0,a/!4), (2,a/!4)]

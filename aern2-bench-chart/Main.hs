@@ -1,4 +1,4 @@
-module Main where
+module Main (main) where
 
 import Control.Monad(void,when)
 import Control.Lens
@@ -8,7 +8,7 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.List as List
 
-import Data.Convertible
+-- import Data.Convertible
 
 import Graphics.Rendering.Chart
 import Graphics.Rendering.Chart.Easy
@@ -24,8 +24,11 @@ main =
     do
     args <- getArgs
     let (mode, inFileName, outFolder) = checkArgs args
+    print mode
     contents <- readFile inFileName
-    let chartsData = parseBenchResults mode inFileName contents
+    let chartsData =  
+            -- translateLogToLin mode $ 
+            parseBenchResults mode inFileName contents
     void $ mapM (renderChart mode outFolder) chartsData
 
 data ChartId = CSVName | FnOp
@@ -37,7 +40,9 @@ data LineId = FnRepr | OpCount | Method
 data AxisContent = BenchN | Accuracy | MaxMem | ExecTime
   deriving (Show, Read)
 
-data AxisMode = Log | Lin | LogTo Int | LinTo Int
+-- data AxisMode = LogFromTo Double Double | LinFromTo Double Double
+-- data AxisMode = Log | Lin | LogFromTo Double Double | LinFromTo Double Double
+data AxisMode = LogFromTo Double Double | LinFromTo Double Double
   deriving (Show, Read)
 
 type Mode = (ChartId, LineId, (AxisContent, AxisMode), (AxisContent, AxisMode))
@@ -51,7 +56,7 @@ checkArgs :: [String] -> (Mode, String, String)
 checkArgs [chartIdS, lineIdS, xContS, xModeS, yContS, yModeS, inFileName, outFolder] =
   ((read chartIdS, read lineIdS, (read xContS, read xModeS), (read yContS, read yModeS)), inFileName, outFolder)
 checkArgs _ =
-  error "usage: aern2-bench-chart <chartsBy(CSVName|FnOp)> <linesBy(OpCount|Method|FnRepr)> <xAxis(Accuracy|BenchN)> <Lin|\"LinTo n\"|Log|\"LogTo n\"> <yAxis(MaxMem|ExecTime)> <Lin|\"LinTo n\"|Log|\"LogTo n\"> <csvFileName> <outFolder>"
+  error "usage: aern2-bench-chart <chartsBy(CSVName|FnOp)> <linesBy(OpCount|Method|FnRepr)> <xAxis(Accuracy|BenchN)> <Lin|\"LinFromTo n m\"|Log|\"LogFromTo n m\"> <yAxis(MaxMem|ExecTime)> <Lin|\"LinFromTo n m\"|Log|\"LogFromTo n m\"> <csvFileName> <outFolder>"
 
 {-|
     A dummy sample result:
@@ -82,6 +87,21 @@ parseBenchResults mode@(CSVName, lineId, _, _) inFileName csvContent =
     fnOp_To_Repr_To_Points = Map.singleton inFileNameNoCSV $ mergeByKeys mode records
     inFileNameNoCSV = take (length inFileName-4) inFileName
     records = indexRecordsByKeysAndHeader (lineKeys lineId) $ parseCSV csvContent
+
+-- translateLogToLin :: Mode -> [(String, [(String, [(Double, Double)])])] -> [(String, [(String, [(Double, Double)])])]
+-- translateLogToLin mode dat = over (mapped._2.mapped._2.mapped) translateCoords dat
+--     where
+--     xMode = mode ^. _3 . _2
+--     yMode = mode ^. _4 . _2
+--     xShouldTranslate = getShouldTranslate xMode
+--     yShouldTranslate = getShouldTranslate yMode
+--     -- mode2 = mode & _3 . _2 .~ xMode2 & _4 . _2 .~ yMode2
+--     -- getShouldTranslate Log = True
+--     getShouldTranslate (LogFromTo _ _) = True
+--     getShouldTranslate _ = False
+--     translateCoords (x,y) = 
+--         (if xShouldTranslate then logBase 10 x else x,
+--          if yShouldTranslate then logBase 10 y else y)
 
 mergeByFnOp_FnRepr ::
     Mode -> [([String], Map.Map String String)] -> Map.Map String (Map.Map String (Set.Set (Double,Double)))
@@ -129,7 +149,7 @@ getPoint (_, _, xAxis, yAxis) fields = (pt xAxis, pt yAxis)
 
 renderChart ::
     Mode -> String -> (String, [(String, [(Double, Double)])]) -> IO ()
-renderChart (_, lineId, xAxis@(xCont, _xMode), yAxis@(yCont, _yMode)) outFolder (title, plotData) =
+renderChart (_, lineId, xAxis@(_xCont, _xMode), yAxis@(yCont, _yMode)) outFolder (title, plotData) =
     void $
         renderableToFile fileOpts (filePath yCont) $
             fillBackground def $
@@ -146,36 +166,45 @@ renderChart (_, lineId, xAxis@(xCont, _xMode), yAxis@(yCont, _yMode)) outFolder 
         layout_legend . _Just . legend_orientation .= LORows (legend_cols lineId)
 
         layout_y_axis . laxis_generate .= axisForModeCont yAxis
-        layout_y_axis . laxis_title .= axisTitle yCont
+        -- layout_y_axis . laxis_title .= axisTitle yCont yMode
 
         layout_x_axis . laxis_generate .= axisForModeCont xAxis
-        layout_x_axis . laxis_title .= axisTitle xCont
+        -- layout_x_axis . laxis_title .= axisTitle xCont xMode
+        -- layout_x_axis . laxis_title_style . font_size .= 10
 
-        layout_x_axis . laxis_style . axis_label_gap .= 1
+        layout_x_axis . laxis_style . axis_label_gap .= 0
         mapM layoutPlotData $ zip [0..] plotData
 
-    legend_cols FnRepr = 4
+    legend_cols FnRepr = 5
     -- legend_cols Method = 2
     legend_cols _ = 3
 
-    axisTitle MaxMem = "Space (kB)"
-    axisTitle ExecTime = "Time (s)"
-    axisTitle Accuracy = "Accuracy (bits)"
-    axisTitle BenchN = "n"
+    -- axisTitle MaxMem =  addLog "Space (kB)"
+    -- axisTitle ExecTime = addLog "Time (s)"
+    -- axisTitle Accuracy = addLog "Accuracy (bits)"
+    -- axisTitle BenchN = addLog "n"
+    -- -- addLog s Log = "Log10 " ++ s
+    -- -- addLog s (LogFromTo _ _) = "Log10 " ++ s
+    -- addLog s _ = s
 
-    axisForModeCont (_, Lin) = autoScaledAxis def
-    axisForModeCont (_, Log) = autoScaledLogAxis def
-    axisForModeCont (Accuracy, LinTo limit) = scaledAxisExtraXSteps def (lowLin limit, convert limit) [24,53]
-    axisForModeCont (_, LinTo limit) = scaledAxis def (lowLin limit, convert limit)
-    axisForModeCont (_, LogTo limit) = scaledLogAxis def (lowLog limit, convert limit)
+    -- axisForModeCont (_, Lin) = autoScaledAxis def
+    -- axisForModeCont (_, Log) = autoScaledLogAxis def
+    axisForModeCont (Accuracy, LinFromTo n m) = scaledAxisExtraXSteps def (n, m) [24,53]
+    axisForModeCont (_, LinFromTo n m) = scaledAxis def (n, m)
+    axisForModeCont (_, LogFromTo n m) = 
+        -- scaledAxisPow10 def (logBase 10 n, logBase 10 m) 
+        scaledLogAxis (LogAxisParams labelf) (n, m)
+        where
+        labelf = map show
 
-    lowLog :: Int -> Double
-    lowLog limit
-      | limit > 1000 = 1
-      | otherwise = 0.01
+    -- lowLog :: Int -> Double
+    -- lowLog limit
+    --   | limit > 1000 = 1
+    --   | otherwise = 0.01
 
-    lowLin :: Int -> Double
-    lowLin _ = 0
+    -- lowLin :: Int -> Double
+    -- lowLin _ = 0
+
 
     layoutPlotData (lineNum, (lineName, linePoints)) =
         plotPoints name linePoints
@@ -211,7 +240,8 @@ renderChart (_, lineId, xAxis@(xCont, _xMode), yAxis@(yCont, _yMode)) outFolder 
         isFilled _ = False
 
 fileOpts :: FileOptions
-fileOpts = def { _fo_size = (300,200) }
+fileOpts = def { _fo_size = (400,300) }
+-- fileOpts = def { _fo_size = (330,200) }
 
 reprShow :: String -> String
 reprShow "dball" = "DBFun"
@@ -249,9 +279,9 @@ reprShape "lppoly" = PointShapeStar
 reprShape "lfrac" = PointShapeStar
 reprShape reprName = error $ "unknown representation " ++ reprName
 
-opShow :: String -> String
-opShow s = s
--- opShow opName = error $ "unknown operation " ++ opName
+-- opShow :: String -> String
+-- opShow s = s
+-- -- opShow opName = error $ "unknown operation " ++ opName
 
 stdShapes :: [PointShape]
 stdShapes =

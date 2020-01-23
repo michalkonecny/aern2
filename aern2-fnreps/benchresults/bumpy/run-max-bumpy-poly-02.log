@@ -1,37 +1,37 @@
-maxL: acG = bits 35; ac = bits 28
-maxR: acG = bits 35; ac = bits 27
+maxL: acG = bits 35; ac = bits 31
+maxR: acG = bits 35; ac = bits 31
 chebMaxDCT: acGuide = bits 2
 chebMaxDCT: tryWithDegree: d = 16
 chebMaxDCT: tryWithDegree: d = 16; getAccuracy maxCd = bits 1
-chebMaxDCT: tryWithDegree: d = 16; dctAccuracy = bits 0; maxEd = 1.6764924353585751
+chebMaxDCT: tryWithDegree: d = 16; dctAccuracy = bits 0; maxEd = Approx 53 7550250679204175 0 (-52)
 chebMaxDCT: tryWithDegree: d = 32
 chebMaxDCT: tryWithDegree: d = 32; getAccuracy maxCd = bits 2
-chebMaxDCT: tryWithDegree: d = 32; dctAccuracy = bits 1; maxEd = 0.52598092045774258
+chebMaxDCT: tryWithDegree: d = 32; dctAccuracy = bits 1; maxEd = Approx 53 4737614913674513 0 (-53)
 chebMaxDCT: tryWithDegree: d = 64
 chebMaxDCT: tryWithDegree: d = 64; getAccuracy maxCd = bits 3
-chebMaxDCT: tryWithDegree: d = 64; dctAccuracy = bits 2; maxEd = 0.26625057207233482
+chebMaxDCT: tryWithDegree: d = 64; dctAccuracy = bits 2; maxEd = Approx 53 4796343818333205 0 (-54)
 computing max  max(sin(10x),cos(11*x)) over [-1,1]
-result = [1.59494490084991516999124113666 ± <2^(-1)]
-accuracy: bits 1
-precision = Precision 2536
+result = [1.3226228056061351990522019027943180174070884763800298890227895884719755353679627308081101246326098643482399312960741605182436945202456705117493447496760229851586777333953798343878266690891402710263061673572824583511142441926499325283000051280341820431747638416279269389536592137752502404023081176073385529456285134470426582283487724741903609019514477877405664901298766975714942014745774945632717290439454003188007988749375741027207783422940615899467303113734863476253279594935590469735619284062316966645537348802205666980122876173206510742740286804218145712447607274657611025861821382834728259816224155164522310356554970794732317564715490381694245234933829912623170749852047580777246437074162375370451263150606124109147904922997558349734694686223711986360650011087473949009467337412913765895312129292457397653220137912761496625437483286358876632736780623355883154043214982135307171718197489636332325546197088042014470939108135412728215468459779287218488085881436832924975978942070684309722239018363080449789795924514711295089941892468381301685869355953984625074748888777762269236322957223058664581738508303487833472900092601776123046875 ± <2^(-3)]
+accuracy: bits 3
+precision = Precision 1236
 	Command being timed: "aern2-fnreps-ops max bumpy poly 02"
-	User time (seconds): 9.76
-	System time (seconds): 0.04
+	User time (seconds): 70.21
+	System time (seconds): 0.07
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:09.80
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:10.29
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 19680
+	Maximum resident set size (kbytes): 18572
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 18162
+	Minor (reclaiming a frame) page faults: 2645
 	Voluntary context switches: 1
-	Involuntary context switches: 16
+	Involuntary context switches: 30
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 8
+	File system outputs: 16
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

@@ -37,6 +37,7 @@ type Terms c = Map Integer c
 
 instance (HasAccuracy c) => HasAccuracy (Terms c) where
   getAccuracy ts = Map.foldl' min (Exact) $ Map.map getAccuracy ts
+  getFiniteAccuracy ts = Map.foldl' min (Exact) $ Map.map getFiniteAccuracy ts
 
 ts_deg :: Terms c -> Integer
 ts_deg = fst . Map.findMax

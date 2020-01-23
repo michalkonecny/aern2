@@ -22,6 +22,8 @@ module AERN2.MP.Ball.Type
   , reducePrecionIfInaccurate
   -- * Ball construction/extraction functions
   , endpointsMP, fromEndpointsMP
+  , endpointsMPBall, fromEndpointsMPBall
+  , hullMPBall
 )
 where
 
@@ -138,18 +140,15 @@ instance IsInterval MPBall MPFloat where
   fromEndpoints l u
     | u < l = fromEndpoints u l
     | otherwise =
-      MPBall (mpFloat cDy) (errorBound $ mpFloat eDy)
+      MPBall c (errorBound e)
       where
-      lDy = dyadic l
-      uDy = dyadic u
-      cDy = (lDy + uDy) * (dyadic 0.5)
-      eDy = (uDy - cDy) `max` (cDy - lDy)
-  endpoints (MPBall x e) = (mpFloat lDy, mpFloat uDy)
+      c = (l +. u) *. (mpFloat $ dyadic 0.5)
+      e = (u -^ c) `max` (c -^ l)
+  endpoints (MPBall x e) = (l, u)
       where
-      xDy = dyadic x
-      eDy = dyadic e
-      lDy   = xDy - eDy
-      uDy   = xDy + eDy
+      eFl = mpFloat e
+      l   = x -. eFl
+      u   = x +^ eFl
 
 fromEndpointsMP :: MPFloat -> MPFloat -> MPBall
 fromEndpointsMP = fromEndpoints
@@ -171,6 +170,12 @@ instance IsInterval MPBall MPBall where
       u = MPBall uMP (errorBound 0)
       (lMP, uMP) = endpointsMP x
 
+fromEndpointsMPBall :: MPBall -> MPBall -> MPBall
+fromEndpointsMPBall = fromEndpoints
+
+endpointsMPBall :: MPBall -> (MPBall, MPBall)
+endpointsMPBall = endpoints
+
 instance IsBall MPBall where
   type CentreType MPBall = Dyadic
   centre (MPBall cMP _e) = dyadic cMP
@@ -180,6 +185,16 @@ instance IsBall MPBall where
     cB = MPBall cMP (errorBound 0)
   radius (MPBall _ e) = e
   updateRadius updateFn (MPBall c e) = MPBall c (updateFn e)
+
+hullMPBall :: MPBall -> MPBall -> MPBall
+hullMPBall a b = 
+  fromEndpointsMP rL rR
+  where
+  rL = min aL bL
+  rR = max aR bR
+  (aL,aR) = endpointsMP a
+  (bL,bR) = endpointsMP b
+
 
 {--- constructing a ball with a given precision ---}
 

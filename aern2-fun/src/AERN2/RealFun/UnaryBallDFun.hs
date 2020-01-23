@@ -28,6 +28,7 @@ import Control.CollectErrors
 
 import AERN2.Norm
 import AERN2.MP
+import AERN2.MP.Ball
 -- import qualified AERN2.MP.Ball as MPBall
 import AERN2.MP.Dyadic
 
@@ -54,6 +55,7 @@ instance HasVars UnaryBallDFun where
 
 instance HasAccuracy UnaryBallDFun where
   getAccuracy _f = Exact
+  getFiniteAccuracy _f = error "getFiniteAccuracy not defined for UnaryBallDFun"
 
 instance HasAccuracyGuide UnaryBallDFun where
   getAccuracyGuide _f = NoInformation
@@ -132,10 +134,28 @@ instance CanIntegrateOverDom UnaryBallDFun DyadicInterval where
       diB = setPrecision p $ mpBall di
 
 instance CanMinMaxAsymmetric UnaryBallDFun UnaryBallDFun where
-  min (UnaryBallDFun as) (UnaryBallDFun bs) =
-    UnaryBallDFun (zipWith min as bs)
-  max (UnaryBallDFun as) (UnaryBallDFun bs) =
-    UnaryBallDFun (zipWith max as bs)
+  min (UnaryBallDFun (a:ad:_)) (UnaryBallDFun (b:bd:_)) =
+    UnaryBallDFun [a `min` b,  lift2withX (lift3CE pickD) ad bd]
+      where
+      pickD x a'x b'x 
+        | ax !<! bx = a'x
+        | ax !>! bx = b'x
+        | otherwise = hullMPBall a'x b'x
+        where
+        ax = a `apply` x
+        bx = b `apply` x
+  min _ _ = error "UnaryBallDFun: min operand does not contain a derivative"
+  max (UnaryBallDFun (a:ad:_)) (UnaryBallDFun (b:bd:_)) =
+    UnaryBallDFun [a `max` b,  lift2withX (lift3CE pickD) ad bd]
+      where
+      pickD x a'x b'x 
+        | ax !<! bx = b'x
+        | ax !>! bx = a'x
+        | otherwise = hullMPBall a'x b'x
+        where
+        ax = a `apply` x
+        bx = b `apply` x
+  max _ _ = error "UnaryBallDFun: max operand does not contain a derivative"
 
 instance CanNeg UnaryBallDFun where
   negate (UnaryBallDFun as) = UnaryBallDFun (map negate as)

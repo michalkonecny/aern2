@@ -7,10 +7,10 @@ where
 
 import MixedTypesNumPrelude
 import AERN2.MP.Ball
-import AERN2.MP.Dyadic
+-- import AERN2.MP.Dyadic
 import Data.Ratio
 import AERN2.Local.Basics
-import AERN2.Local.Poly hiding (fromPoly)
+import AERN2.Local.Poly
 import AERN2.Local.Maximum
 import AERN2.Poly.Basics
 import AERN2.Poly.Conversion
@@ -18,11 +18,11 @@ import AERN2.Poly.Cheb as Cheb
 import AERN2.Poly.Power.RootsInt
 import AERN2.Frac as Frac hiding (fromPoly)
 import qualified AERN2.Frac as Frac (fromPoly)
-import AERN2.Frac.Field
+import AERN2.Frac.Field ()
 
 import qualified Data.Map as Map
 
-import Debug.Trace
+-- import Debug.Trace
 
 type LocalFrac a = Local (Frac a)
 
@@ -65,7 +65,8 @@ instance GenericMaximum (LocalFrac MPBall) where
 
 makeRational :: ChPoly MPBall -> ChPoly Rational
 makeRational (ChPoly dom (Poly ts) acG _) =
-  ChPoly dom (Poly $ terms_map (rational . centre) ts) acG Nothing
+  ChPoly dom (Poly $ terms_map (rational . centre) ts) acG
+    (error "makeRational does not define bounds")
 
 intify :: ChPoly MPBall -> (ErrorBound, Poly Integer)
 intify (ChPoly _ p _ _) =

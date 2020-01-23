@@ -66,7 +66,8 @@ genericiseDPoly (DPoly fLoc evalLoc _loclip) a b ac =
 
 makeRational :: ChPoly MPBall -> ChPoly Rational
 makeRational (ChPoly dom (Poly ts) acG _) =
-  ChPoly dom (Poly $ terms_map (rational . centre) ts) acG Nothing
+  ChPoly dom (Poly $ terms_map (rational . centre) ts) acG
+    (error "makeRational does not define bounds")
 
 intify :: ChPoly MPBall -> (ErrorBound, Poly Integer)
 intify (ChPoly _ p _ _) =

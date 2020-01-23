@@ -1,22 +1,22 @@
 computing integrate  sin(10x+sin(7pi*x^2)) + cos(3pi*x) over [-1,1]
-result = [-0.14651027312587436365422 ± <2^(-20)]
+result = [-0.14651027556229781076825067847278771804298003189614973962306976318359375 ± <2^(-20)]
 accuracy: bits 20
 precision = Precision 70
 	Command being timed: "aern2-fnreps-ops integrate sinesine+cos dball 20"
-	User time (seconds): 90.91
-	System time (seconds): 0.32
+	User time (seconds): 198.02
+	System time (seconds): 0.25
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:31.25
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:18.29
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 39808
+	Maximum resident set size (kbytes): 29224
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 8262
+	Minor (reclaiming a frame) page faults: 5635
 	Voluntary context switches: 1
-	Involuntary context switches: 110
+	Involuntary context switches: 94
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

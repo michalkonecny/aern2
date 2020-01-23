@@ -3,24 +3,24 @@ denom: acG = NoInformation; ac = Exact
 inv: acG = NoInformation; ac = Exact
 frac: acG = NoInformation; ac = Exact
 computing max  max((x^2)/2,(sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
-result = [1.2718734956522845469626218141 ± <2^(-62)]
+result = [1.2718734956522845470626582697325082462453385661105437913652456399125350477766250222176140206188868197631618752793308211270957026004977023692563913039841815787941479736010612446017808226812119156872091299769690533792893830493041450439836734363953989466655571788204769739679978104312021699665258986107619561486751486311449546698381497533906055417711530966818495113102015886686763273768416086581755711611120901753994012924832892218898931682013779807416676563944918795626683788728441488282812365574148829820517427297322528528871038676273423555259495763836152804060475318692624568939208984375 ± <2^(-62)]
 accuracy: bits 62
-precision = Precision 2348
+precision = Precision 1174
 	Command being timed: "aern2-fnreps-ops max bumpy2 lppoly 60"
-	User time (seconds): 4.45
-	System time (seconds): 0.02
+	User time (seconds): 5.15
+	System time (seconds): 0.01
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.48
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:05.16
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 13440
+	Maximum resident set size (kbytes): 13184
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 954
+	Minor (reclaiming a frame) page faults: 1113
 	Voluntary context switches: 1
-	Involuntary context switches: 9
+	Involuntary context switches: 3
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

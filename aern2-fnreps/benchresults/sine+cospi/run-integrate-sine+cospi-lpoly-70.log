@@ -1,22 +1,22 @@
 computing integrate  sin(10x)+cos(7pi*x) over [-1,1]
-result = [-2.75131457759130580587805534174e-24 ± <2^(-70)]
-accuracy: bits 70
-precision = Precision 560
+result = [0.000000000000000000000001328890921229835465798950062061039882025520317402351062247204250912984372898089195894140970762297005569661002077632242515735997864546418094867013841475934393622138591930131878378846888594564758551114726140250923169827158842881686950931907631456851959228515625 ± <2^(-71)]
+accuracy: bits 71
+precision = Precision 280
 	Command being timed: "aern2-fnreps-ops integrate sine+cospi lpoly 70"
-	User time (seconds): 3.23
+	User time (seconds): 4.11
 	System time (seconds): 0.00
-	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:03.24
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:04.12
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 12504
+	Maximum resident set size (kbytes): 12272
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 903
+	Minor (reclaiming a frame) page faults: 1067
 	Voluntary context switches: 1
-	Involuntary context switches: 8
+	Involuntary context switches: 13
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

@@ -1,24 +1,24 @@
-maxL: acG = bits 215; ac = bits 207
-maxR: acG = bits 215; ac = bits 208
+maxL: acG = bits 215; ac = bits 206
+maxR: acG = bits 215; ac = bits 207
 computing integrate  max(sin(10x),cos(11*x)) over [-1,1]
-result = [0.761529428926368614311630623430 ± <2^(-19)]
+result = [0.76152942892636861431163062343006389833501054281457112659557719893792801480162299224066071224254334920085178563281835266670836907742081339036222064649252912879196551730235369438529400414785017373103061210556148106029903880788201973461645569897871305869698701172813084476539742236895030111272939227025182145779055343294008208332659884149186912822736661373864971921551829424056589027719745334747894011019423481637059255936498731715919605930158515534049212262723010231699163838650561093294886635339816214780603283114229973729780129685682357291935437758955184235249726530658787027050493634305894374847412109375 ± <2^(-19)]
 accuracy: bits 19
-precision = Precision 1146
+precision = Precision 606
 	Command being timed: "aern2-fnreps-ops integrate bumpy ppoly 20"
-	User time (seconds): 1.06
+	User time (seconds): 1.67
 	System time (seconds): 0.00
-	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.06
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.68
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 15012
+	Maximum resident set size (kbytes): 14848
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1438
+	Minor (reclaiming a frame) page faults: 1609
 	Voluntary context switches: 1
-	Involuntary context switches: 6
+	Involuntary context switches: 0
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

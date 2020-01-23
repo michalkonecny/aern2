@@ -28,7 +28,7 @@ library
   build-depends:
     base == 4.*
     , containers >= 0.5
-    , convertible >= 1.1.1.0
+    -- , convertible >= 1.1.1.0
     , hspec >= 2.1
     -- , hspec-smallcheck >= 0.3 && < 0.5
     , QuickCheck >= 2.7
@@ -37,7 +37,7 @@ library
     , stm >= 2.4
     , bytestring >= 0.10
     , aeson >= 0.11
-    , mixed-types-num >= 0.3.2
+    , mixed-types-num >= 0.4
     , aern2-mp >= 0.1.4
   ghc-options:     -Wall -fno-warn-orphans
   extensions:
@@ -132,6 +132,42 @@ executable aern2-real-benchOp
     , aern2-real
     , random
     , QuickCheck
+
+executable aern2-real-simpleOp
+  ghc-options:
+      -Wall
+  extensions:
+    RebindableSyntax,
+    PostfixOperators,
+    ScopedTypeVariables,
+    FlexibleContexts,
+    TypeSynonymInstances
+  hs-source-dirs:
+      bench
+  main-is:
+      aern2-real-simpleOp.hs
+  build-depends:
+    base == 4.*
+    , mixed-types-num >= 0.3.1
+    , aern2-mp == 0.1.*
+    , aern2-real
+
+executable aern2-real-cdar-simpleOp
+  ghc-options:
+      -Wall
+  extensions:
+    RebindableSyntax,
+    PostfixOperators,
+    ScopedTypeVariables,
+    FlexibleContexts,
+    TypeSynonymInstances
+  hs-source-dirs:
+      bench
+  main-is:
+      aern2-real-cdar-simpleOp.hs
+  build-depends:
+    base == 4.*
+    , cdar
 
 -- executable aern2-generate-netlog-elm
 --   ghc-options:

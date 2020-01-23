@@ -34,9 +34,13 @@ function runOne
     if [ ! -f $runlog ] || grep -q "terminated" $runlog
         then
             echo " (running and logging in $runlog)"
-            /usr/bin/time -v $fnrepsmain $op $fn $repr $params >& $runlog
-            if [ $? != 0 ]; then rm $runlog; exit 1; fi
-            getDataFromRunlog
+            timeout 1000s /usr/bin/time -v $fnrepsmain $op $fn $repr $params >& $runlog
+            res=$?
+            if [ $res != 124 -a $res != 0 ]
+                then rm $runlog; exit 1
+            fi
+	    if [ $res == 124 ]; then echo "timed out" | tee $runlog; fi
+            if [ $res == 0 ]; then getDataFromRunlog; fi
         else
           if [ "$reuselogs" = "" ]
             then
@@ -135,6 +139,18 @@ function runForAllReprs
   fi
 }
 
+function runForPPoly
+{
+  if [ "$repr_ppoly_max_paramss" != "" ]; then
+    repr=ppoly; op=max; paramss="$repr_ppoly_max_paramss"; repr_ppoly_max_paramss=""
+    runForParamss
+  fi
+  if [ "$repr_ppoly_itg_paramss" != "" ]; then
+    repr=ppoly; op=integrate; paramss="$repr_ppoly_itg_paramss"; repr_ppoly_itg_paramss=""
+    runForParamss
+  fi
+}
+
 #################
 ### sine+cos
 #################
@@ -142,14 +158,15 @@ function runForAllReprs
 function sinecosAllReprs
 {
   repr_fun_max_paramss="10 15 20";
-  repr_fun_itg_paramss="06 08 09 10";
+  repr_fun_itg_paramss="06 08 09";
   repr_ball_max_paramss="10 15 20 25";
-  repr_ball_itg_paramss="10 12 13 14";
+  repr_ball_itg_paramss="10 11 12";
   repr_dball_max_paramss="10 30 50 70 90";
-  repr_dball_itg_paramss="10 15 20 25 30";
+  repr_dball_itg_paramss="10 15 20 25";
   repr_poly_max_paramss="30 50 70 90 110";
   repr_poly_itg_paramss="30 50 70 90 110";
   repr_lpoly_max_paramss="10 30 50 70 90";
+
   repr_lpoly_itg_paramss="10 30 50 70 90";
 
   fn=sine+cos; dir=$fn;
@@ -164,12 +181,12 @@ function sinecospiAllReprs
 {
   # repr_fun_max_paramss="10 15 20";
   # repr_fun_itg_paramss="06 08 09 10";
-  repr_ball_max_paramss="10 15 20 25 30 35";
+  repr_ball_max_paramss="10 15 20 25 30";
   repr_ball_itg_paramss="10 12 13";
   repr_dball_max_paramss="10 20 30 40 45 50";
   repr_dball_itg_paramss="10 15 20 21 22";
-  repr_poly_max_paramss="30 50 70 90 110";
-  repr_poly_itg_paramss="30 50 70 90 110";
+  repr_poly_max_paramss="50 70 90 110";
+  repr_poly_itg_paramss="50 70 90 110";
   repr_lpoly_max_paramss="10 30 50 70 90";
   repr_lpoly_itg_paramss="10 30 50 70 90";
 
@@ -186,7 +203,7 @@ function sinesineAllReprs
   # repr_fun_max_paramss="10 15 20";
   # repr_fun_itg_paramss="06 08";
   repr_ball_max_paramss="10 30 50 70 90";
-  repr_ball_itg_paramss="05 10 12 13";
+  repr_ball_itg_paramss="05 07 10 11";
   repr_dball_max_paramss="10 30 50 70 90";
   repr_dball_itg_paramss="05 10 15 20 25";
   repr_poly_max_paramss="30 40 50 70 90";
@@ -204,8 +221,8 @@ function sinesineAllReprs
 
 function sinesine+cosAllReprs
 {
-  repr_ball_max_paramss="10 20 25 30 32";
-  repr_ball_itg_paramss="05 10 12 13";
+  repr_ball_max_paramss="10 20 25 30 31";
+  repr_ball_itg_paramss="05 07 10 11";
   repr_dball_max_paramss="10 20 30 40 42 44";
   repr_dball_itg_paramss="05 10 15 20 21";
   repr_poly_max_paramss="30 40 50 70 90";
@@ -250,16 +267,16 @@ function rungeAllReprs
 
 function rungeSCAllReprs
 {
-  repr_ball_max_paramss="05 10 15 20 25 30 32";
-  repr_ball_itg_paramss="05 10 12 15";
+  repr_ball_max_paramss="05 10 15 20 25 27";
+  repr_ball_itg_paramss="05 10 12 14";
   repr_dball_max_paramss="10 20 30 40 43 46";
   repr_dball_itg_paramss="05 10 15 20 25";
-  repr_poly_max_paramss="05 12";
-  repr_poly_itg_paramss="05 12";
-  repr_ppoly_max_paramss="10 20 40 60 80 100";
+  # repr_poly_max_paramss="05 10";
+  # repr_poly_itg_paramss="05 10";
+  repr_ppoly_max_paramss="10 20 40 50";
   repr_ppoly_itg_paramss="10 20 40 60 80 100";
   repr_frac_max_paramss="10 20 40 60 80 100";
-  repr_frac_itg_paramss="40 60 80 100";
+  repr_frac_itg_paramss="60 80 100";
   repr_lpoly_max_paramss="20 40 60 80 100";
   repr_lpoly_itg_paramss="20 40 60 80 100";
   repr_lppoly_max_paramss="20 40 60 80 100";
@@ -304,27 +321,36 @@ function fracSinAllReprs
 
 function fracSinSCAllReprs
 {
-  repr_ball_max_paramss="10 20 25 30";
-  repr_ball_itg_paramss="05 10 12 13";
-  repr_dball_max_paramss="10 20 30 40 43 46";
+  repr_ball_max_paramss="10 20 25 27";
+  repr_ball_itg_paramss="05 07 10 11 12";
+  # repr_dball_max_paramss="10 20 30 40 43 46"; # timing out
   repr_dball_itg_paramss="05 10 15 20 21 22";
-  repr_poly_max_paramss="01 05";
-  repr_poly_itg_paramss="01 05";
-  repr_ppoly_max_paramss="10 15 20";
+  # repr_poly_max_paramss="01 05";
+  # repr_poly_itg_paramss="01 05";
+  repr_ppoly_max_paramss="10 12 14";
   repr_ppoly_itg_paramss="10 15 20";
-  repr_frac_max_paramss="10 20 40 60 80 100";
+  repr_frac_max_paramss="10 20 40 60 80";
   # repr_frac_itg_paramss="02 05 10";
     # unable to get a good result because don't know how to
     #   set effort for translation to PPoly separately from the integration effort
   repr_lpoly_max_paramss="10 20 40 60 80 100";
-  repr_lpoly_itg_paramss="10 20 40 60";
+  repr_lpoly_itg_paramss="20 40 60";
   repr_lppoly_max_paramss="10 20 40 60 80 100";
-  repr_lppoly_itg_paramss="10 20 40 60 80 100";
+  repr_lppoly_itg_paramss="20 40 60 80 100";
   repr_lfrac_max_paramss="10 20 40 60 80 100";
-  repr_lfrac_itg_paramss="10 20 40 60 80 100";
+  repr_lfrac_itg_paramss="20 40 60 80 100";
 
   fn=fracSinSC; dir=$fn;
   runForAllReprs
+}
+
+function fracSinSCPPoly
+{
+  repr_ppoly_max_paramss="10 15";
+  repr_ppoly_itg_paramss="10 15";
+
+  fn=fracSinSC; dir=$fn;
+  runForPPoly
 }
 
 #################
@@ -335,12 +361,12 @@ function bumpyAllReprs
 {
 
   repr_ball_max_paramss="10 20 40 60 80 100";
-  repr_ball_itg_paramss="10 12 13 14";
+  repr_ball_itg_paramss="10 12 13";
   repr_dball_max_paramss="10 20 40 60 80 100";
   repr_dball_itg_paramss="10 15 20 25 30";
-  repr_poly_max_paramss="02 03 04";
-  repr_poly_itg_paramss="02 03 04";
-  repr_ppoly_max_paramss="10 20 40 60 80 100";
+  repr_poly_max_paramss="02 03";
+  repr_poly_itg_paramss="02 03";
+  repr_ppoly_max_paramss="10 20 40 60";
   repr_ppoly_itg_paramss="10 20 40 60 80 100";
   # repr_frac_max_paramss="08 09 10";
   # repr_frac_itg_paramss="08 09 10";
@@ -361,20 +387,20 @@ function bumpyAllReprs
 
 function bumpy2AllReprs
 {
-  repr_ball_max_paramss="10 20 25 30";
-  repr_ball_itg_paramss="05 10 12 13 14";
-  repr_dball_max_paramss="10 20 30 40 50 60 70 80 90 100";
+  repr_ball_max_paramss="10 20 25 27";
+  repr_ball_itg_paramss="05 10 12 13";
+  # repr_dball_max_paramss="10 20 30 40 50 60 70 80 90 100"; # timing out
   repr_dball_itg_paramss="05 10 15 20 21 22";
   # repr_poly_max_paramss="01 02";
   # repr_poly_itg_paramss="01 02";
-  repr_ppoly_max_paramss="05 10 15 20 25";
+  repr_ppoly_max_paramss="05 10 15 17";
   repr_ppoly_itg_paramss="05 10 15 20 25";
   # repr_frac_max_paramss="01 03";
   # repr_frac_itg_paramss="01 03";
   # repr_lpoly_max_paramss="10 20 40 60 80 100";
   # repr_lpoly_itg_paramss="10 20 40 60 80 100";
-  repr_lppoly_max_paramss="10 20 40 60 80 100";
-  repr_lppoly_itg_paramss="20 25 30 40 60 80 100";
+  repr_lppoly_max_paramss="20 40 60 80 100";
+  repr_lppoly_itg_paramss="30 40 60 80 100";
   # repr_lfrac_max_paramss="10 20 40 60 80 100";
   # repr_lfrac_itg_paramss="10 20 40 60 80 100";
 
@@ -382,9 +408,13 @@ function bumpy2AllReprs
   runForAllReprs
 }
 
+# fracSinSCPPoly
+
+# exit 0
+
 sinecosAllReprs
 sinecospiAllReprs
-sinesineAllReprs
+# sinesineAllReprs
 sinesine+cosAllReprs
 # rungeAllReprs
 rungeSCAllReprs

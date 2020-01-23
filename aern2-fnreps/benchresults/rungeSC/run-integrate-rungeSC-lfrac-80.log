@@ -2,24 +2,24 @@ numer: acG = NoInformation; ac = Exact
 inv: acG = NoInformation; ac = Exact
 res: acG = NoInformation; ac = Exact
 computing integrate  (sin(10x)+cos(7pi*x))/(100x^2+1) over [-1,1]
-result = [3.49198980894169348959456105146e-2 ± <2^(-80)]
+result = [0.0349198980894169348959456125954491083381913281450620345327932761317310764895859611785280213327040421074659086916750794804142399234185002128781444589132015966220311137216089744131355996390090971868917458215250114170521520558539653499610584229398549133604314302635797779127686705520459335941041542211834357523369795132335163297964270651614140186036507824708296345280667601879166252449534681641987954813038356609726737078264083360660728966232785340331046025378690678323299084543907014946822686787657198140560754870648000772997925331580014892481014167050410819942191155211270250654519177218398004200114859785603267872218077130394290874230239355711744166774697341185816303475268363682031645217786666583227594973237728481763042509555816650390625 ± <2^(-80)]
 accuracy: bits 80
 precision = Precision 738
 	Command being timed: "aern2-fnreps-ops integrate rungeSC lfrac 80"
-	User time (seconds): 9.53
-	System time (seconds): 0.04
-	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:09.57
+	User time (seconds): 14.41
+	System time (seconds): 0.02
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:14.44
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 13244
+	Maximum resident set size (kbytes): 12912
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 932
+	Minor (reclaiming a frame) page faults: 1108
 	Voluntary context switches: 1
-	Involuntary context switches: 12
+	Involuntary context switches: 9
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

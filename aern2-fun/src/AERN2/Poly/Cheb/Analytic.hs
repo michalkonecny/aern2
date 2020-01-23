@@ -7,13 +7,18 @@ module AERN2.Poly.Cheb.Analytic
 where
 
 import MixedTypesNumPrelude
+
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
-import AERN2.Poly.Basics
 import AERN2.Interval
+
+import AERN2.RealFun.Operations
+
+import AERN2.Poly.Basics
 import AERN2.Poly.Cheb.Type
 import AERN2.Poly.Cheb.DCT
 import AERN2.Poly.Cheb.Maximum
+import AERN2.Poly.Cheb.Ring
 
 sinDCT :: ChPoly MPBall -> ChPoly MPBall
 sinDCT =
@@ -43,11 +48,7 @@ liftAnalytic f p =
   Interval l r = chPoly_dom p
   errp = errorBound (lip * (mpBall $ radius p))
   targetErr = errorBound $ mpBall $ (dyadic 0.5)^!((fromAccuracy $ getAccuracyGuide p))
-  x =
-    ChPoly (Interval (dyadic $ -1) (dyadic 1))
-            (Poly $ terms_fromList [(0, mpBall 0), (1, mpBall 1)])
-            (getAccuracyGuide p)
-            Nothing
+  x = varFn (dyadicInterval (-1,1), getAccuracyGuide p) ()
   (n, chebErr) = boundTerms 0 (mpBall 1)
   s = lift1_DCT (const n) (f 0 . fromUnitIntervalToDom sDom) x
   fromUnitIntervalToDom (Interval a b) y = a + (b - a)*(y + 1)/!2
@@ -73,11 +74,8 @@ evalNoFuzz (ChPoly _dom (Poly terms) _acG _) (x :: ChPoly MPBall) =
     (b0:_:b2:_) = bs
     bs :: [ChPoly MPBall]
     bs = reverse $ aux n z z
-    z =
-      ChPoly (chPoly_dom x)
-              (Poly $ terms_fromList [(0, mpBall 0)])
-              (bits $ ceiling $ 1.5*(fromAccuracy $ getAccuracyGuide x))
-              Nothing
+    z = convertExactly ((chPoly_dom x, acG), 0)
+    acG = bits $ ceiling $ 1.5*(fromAccuracy $ getAccuracyGuide x)
     aux k bKp2 bKp1
         | k == 0 = [bKp2, bKp1, bK]
         | otherwise = bKp2 : aux (k - 1) bKp1 bK

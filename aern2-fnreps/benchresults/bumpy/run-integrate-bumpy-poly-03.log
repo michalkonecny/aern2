@@ -1,41 +1,41 @@
-maxL: acG = bits 45; ac = bits 37
-maxR: acG = bits 45; ac = bits 37
+maxL: acG = bits 45; ac = bits 41
+maxR: acG = bits 45; ac = bits 41
 chebMaxDCT: acGuide = bits 3
 chebMaxDCT: tryWithDegree: d = 16
 chebMaxDCT: tryWithDegree: d = 16; getAccuracy maxCd = bits 1
-chebMaxDCT: tryWithDegree: d = 16; dctAccuracy = bits 0; maxEd = 1.650561770792087
+chebMaxDCT: tryWithDegree: d = 16; dctAccuracy = bits 0; maxEd = Approx 53 7433469375865901 0 (-52)
 chebMaxDCT: tryWithDegree: d = 32
 chebMaxDCT: tryWithDegree: d = 32; getAccuracy maxCd = bits 2
-chebMaxDCT: tryWithDegree: d = 32; dctAccuracy = bits 1; maxEd = 0.50387726890369378
+chebMaxDCT: tryWithDegree: d = 32; dctAccuracy = bits 1; maxEd = Approx 53 4538522960909129 0 (-53)
 chebMaxDCT: tryWithDegree: d = 64
 chebMaxDCT: tryWithDegree: d = 64; getAccuracy maxCd = bits 3
-chebMaxDCT: tryWithDegree: d = 64; dctAccuracy = bits 2; maxEd = 0.24386362556870517
+chebMaxDCT: tryWithDegree: d = 64; dctAccuracy = bits 2; maxEd = Approx 53 8786113065723425 0 (-55)
 chebMaxDCT: tryWithDegree: d = 128
 chebMaxDCT: tryWithDegree: d = 128; getAccuracy maxCd = bits 4
-chebMaxDCT: tryWithDegree: d = 128; dctAccuracy = bits 3; maxEd = 0.1264136417583242
+chebMaxDCT: tryWithDegree: d = 128; dctAccuracy = bits 3; maxEd = Approx 53 4554531439142124 0 (-55)
 integratePB: accuracy f = bits 2
 computing integrate  max(sin(10x),cos(11*x)) over [-1,1]
-result = [0.761474560796192104099877349068 ± <2^(-1)]
+result = [0.761474560796193882228978696727651429788513974015378306558718469596018537136781311578864351566934288180521326071333139206016532382739747090559339788577199663073185503293061215408997883497288468445786911880440442574318850134599603864899721673914324360810824832076951462810894663774314169116658488424424478213977464975351079885366957788210405557628414458803327595595807317723951307479989018900017934573322782042837596140985681025539041892730277545083721749788927422258649166522150616196248923416235902570797683190233721334054915090555438244632604220208439811650019089727784985451621360160227730779530907625959266585576069181171301162540130531658572112526788262718335328417631355724936455606632928422499903748653610001530178420766962615936646521670285277939491310664657628022589097582795147900469601154327392578125 ± <2^(-1)]
 accuracy: bits 1
-precision = Precision 3228
+precision = Precision 1582
 	Command being timed: "aern2-fnreps-ops integrate bumpy poly 03"
-	User time (seconds): 48.23
-	System time (seconds): 0.59
+	User time (seconds): 682.29
+	System time (seconds): 0.74
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:48.83
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 11:23.07
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 47644
+	Maximum resident set size (kbytes): 46320
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 427668
+	Minor (reclaiming a frame) page faults: 339306
 	Voluntary context switches: 1
-	Involuntary context switches: 65
+	Involuntary context switches: 1201
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 16
+	File system outputs: 24
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

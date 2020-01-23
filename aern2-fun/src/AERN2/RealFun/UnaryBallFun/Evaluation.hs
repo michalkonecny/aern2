@@ -280,9 +280,10 @@ maximumOnIntervalSubdivide evalOnInterval di =
           "UnaryBallFun maximumOnIntervalSubdivide search: fiEE:"
           ++ "\n  fis = " ++ show fis
       ) $
-      case maybeMonotone of
-        Nothing -> (gunzip $ fmap endpoints fis, s)
-        Just (minB, maxB) -> ((minB, maxB), s)
+      (gunzip $ fmap endpoints fis, s)
+      -- case maybeMonotone of
+      --   Nothing -> (gunzip $ fmap endpoints fis, s)
+      --   Just (minB, maxB) -> ((minB, maxB), s)
       where
       (maybeMonotone, fis) = fi s
       -- lI = Interval lE lE

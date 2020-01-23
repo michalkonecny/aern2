@@ -2,24 +2,24 @@ numer: acG = bits 100; ac = bits 66
 inv: acG = bits 20; ac = Exact
 res: acG = bits 100; ac = bits 66
 computing max  (sin(10x)+cos(7pi*x))/(100x^2+1) over [-1,1]
-result = [1.07156087128932725877010711085 ± <2^(-20)]
+result = [1.0715608712893272587701080023088070399040855847157289437866445896511955875045273642163739560535214787068990406416526662881909730558336919582834255131658111299168396011193794539370325832240812569185386662507512008061040208327738221868326802739019603825640057961320131287342289281381174110762589851714707811908597935273694635045442254575294943940852446072606796253143089418110261776305598544961583022183161009790162018777762856066892590639884438421584857367720171503276476502682802581200897128050368644458832647990549665900624919010558859672831264094050585100603711907751858234405517578125 ± <2^(-20)]
 accuracy: bits 20
-precision = Precision 1200
+precision = Precision 592
 	Command being timed: "aern2-fnreps-ops max rungeSC frac 20"
-	User time (seconds): 2.56
-	System time (seconds): 0.01
-	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.58
+	User time (seconds): 26.64
+	System time (seconds): 0.02
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:26.66
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 14884
+	Maximum resident set size (kbytes): 17024
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 1496
+	Minor (reclaiming a frame) page faults: 2131
 	Voluntary context switches: 1
-	Involuntary context switches: 7
+	Involuntary context switches: 47
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

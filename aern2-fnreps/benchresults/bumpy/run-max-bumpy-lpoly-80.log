@@ -1,24 +1,24 @@
 maxL: acG = NoInformation; ac = Exact
 maxR: acG = NoInformation; ac = Exact
 computing max  max(sin(10x),cos(11*x)) over [-1,1]
-result = [1.00000000000000000000000001364 ± <2^(-81)]
+result = [1.00000000000000000000000001364395171845537264436805876519083794574114925861621906198555519151849324543945840559899806976318359375 ± <2^(-81)]
 accuracy: bits 81
 precision = Precision 129
 	Command being timed: "aern2-fnreps-ops max bumpy lpoly 80"
-	User time (seconds): 0.75
+	User time (seconds): 0.97
 	System time (seconds): 0.00
-	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.76
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.97
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 12528
+	Maximum resident set size (kbytes): 12820
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 829
+	Minor (reclaiming a frame) page faults: 1091
 	Voluntary context switches: 1
-	Involuntary context switches: 4
+	Involuntary context switches: 2
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

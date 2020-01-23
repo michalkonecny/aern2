@@ -52,6 +52,7 @@ instance CanSinCos MPBall where
 sinB :: Integer -> MPBall -> MPBall
 sinB i x =
     -- increasingPrecisionUntilNotImproving (fromApproxWithLipschitz MPFloat.sinDown MPFloat.sinUp lip) x
+    max (-1) $ min 1 $
     fromApproxWithLipschitz MPFloat.sinCEDU lip x
     where
     lip
@@ -61,6 +62,7 @@ sinB i x =
 cosB :: Integer -> MPBall -> MPBall
 cosB i x =
     -- increasingPrecisionUntilNotImproving (fromApproxWithLipschitz MPFloat.cosDown MPFloat.cosUp lip) x
+    max (-1) $ min 1 $
     fromApproxWithLipschitz MPFloat.cosCEDU lip x
     where
     lip

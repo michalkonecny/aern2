@@ -1,24 +1,24 @@
 maxL: acG = NoInformation; ac = Exact
 maxR: acG = NoInformation; ac = Exact
 computing integrate  max(sin(10x),cos(11*x)) over [-1,1]
-result = [0.759765163452442151719048884459 ± <2^(-106)]
-accuracy: bits 106
+result = [0.759765163452442151719048884459524900779117548801631145308507141467164261122588013503057848920220260099515193561586065418801182938956365518652677811900694720441636773734213725424152933467113433265290087375486245959911743279411283234554470148850080266712299899642445545168019874911239317925975246048895975242769223986525626470709011519963745967484206230636747773921069182279097731225192546844482421875 ± <2^(-107)]
+accuracy: bits 107
 precision = Precision 400
 	Command being timed: "aern2-fnreps-ops integrate bumpy lpoly 100"
-	User time (seconds): 6.71
-	System time (seconds): 0.02
-	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:06.73
+	User time (seconds): 8.80
+	System time (seconds): 0.01
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:08.81
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 12840
+	Maximum resident set size (kbytes): 12692
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 916
+	Minor (reclaiming a frame) page faults: 1101
 	Voluntary context switches: 1
-	Involuntary context switches: 8
+	Involuntary context switches: 12
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

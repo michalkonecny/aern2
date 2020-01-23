@@ -2,27 +2,27 @@ numer: acG = bits 180; ac = bits 146
 inv: acG = bits 40; ac = Exact
 res: acG = bits 180; ac = bits 146
 computing integrate  (sin(10x)+cos(7pi*x))/(100x^2+1) over [-1,1]
-result = [3.49198980894169348134173885351e-2 ± <2^(-26)]
-accuracy: bits 26
-precision = Precision 824
+result = [0.034919898089416934896127506947260177350764947879891365703847333634130737483791456658362028022817572353603220979721370082528210397847470142830708808920743795477465941725284495939076738511416748321714670795769860753032054395941187670116578252550385046565562292886206149584645219118840213615070654239773609913583294779994182554983494348791447391948343853557581001801553684735723116464971862918968607967678284115163067427379931058333619820089027130249561126940244418940129068325406658629921855098466286096197165054027167052801018901116302683881608243040196936276488774025757272774424981814335259845587132117979550781129174177153425132585321113098831196548272712207293305895590743756188571050359565539500414424044656513345176865458917465911969912895074230618774890899658203125 ± <2^(10)]
+accuracy: bits -10
+precision = Precision 816
 	Command being timed: "aern2-fnreps-ops integrate rungeSC frac 40"
-	User time (seconds): 9.52
-	System time (seconds): 0.04
+	User time (seconds): 64.51
+	System time (seconds): 0.03
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:09.57
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:04.55
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 18928
+	Maximum resident set size (kbytes): 20016
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 2467
+	Minor (reclaiming a frame) page faults: 2916
 	Voluntary context switches: 1
-	Involuntary context switches: 49
+	Involuntary context switches: 25
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 8
+	File system outputs: 16
 	Socket messages sent: 0
 	Socket messages received: 0
 	Signals delivered: 0

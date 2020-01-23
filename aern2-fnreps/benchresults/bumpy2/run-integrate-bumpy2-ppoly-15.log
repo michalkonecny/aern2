@@ -1,26 +1,26 @@
 numer: acG = bits 135; ac = bits 101
-denom: acG = bits 65; ac = bits 56
+denom: acG = bits 65; ac = bits 55
 inv: acG = bits 34; ac = bits 17
 frac: acG = bits 32; ac = bits 14
 computing integrate  max((x^2)/2,(sin(10x)+cos(7pi*x))/(10(sin(7x))^2+1) over [-1,1]
-result = [0.499442232780950646069348487129 ± <2^(-13)]
-accuracy: bits 13
-precision = Precision 1014
+result = [0.499441475461639569946283981551270375757257333980850016335038903284642212555951049183205233029818411739725205415817851184823509240745680714037822550857633057245926923045352659432001042380450671642250285274993695132431370409691385300413370871237496830614293838293657902669296181296927207969968516765662205325858359028735060157239257026631987135073136786049579002916642503077437326889589403745013305336035991692559479566978760261746744294566259223949397206705301021755375642432690052785982118729619678854108426498366246863162610406735798757517764581289362205065587073029878701905433850891448698776262841119368274030057177209118472316332199138220595342925467452488419439760036766529083251953125 ± <2^(-17)]
+accuracy: bits 17
+precision = Precision 689
 	Command being timed: "aern2-fnreps-ops integrate bumpy2 ppoly 15"
-	User time (seconds): 88.28
-	System time (seconds): 0.80
+	User time (seconds): 161.51
+	System time (seconds): 0.63
 	Percent of CPU this job got: 99%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:29.09
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:42.16
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 60684
+	Maximum resident set size (kbytes): 68312
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 481324
+	Minor (reclaiming a frame) page faults: 332908
 	Voluntary context switches: 1
-	Involuntary context switches: 137
+	Involuntary context switches: 286
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 24

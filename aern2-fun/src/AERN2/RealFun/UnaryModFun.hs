@@ -78,6 +78,7 @@ instance HasDomain UnaryModFun where
 
 instance HasAccuracy UnaryModFun where
   getAccuracy _f = Exact
+  getFiniteAccuracy _f = error "getFiniteAccuracy not defined for UnaryModFun"
 
 instance HasAccuracyGuide UnaryModFun where
   getAccuracyGuide _f = NoInformation

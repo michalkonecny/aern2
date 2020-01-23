@@ -228,6 +228,13 @@ data HasRoot =
 instance HasEqAsymmetric HasRoot HasRoot where
   type EqCompareType HasRoot HasRoot = Bool
 
+{-
+  An ordered list of intervals whose union
+  contains all roots of the polynomial "p" in the open interval (l,r)
+  together with the values of the function "eval" on this list of 
+  intervals. 
+  There is no guarantee that every interval in the list contains a root.
+-}
 findRootsWithEvaluation :: PowPoly Integer -> (Interval Rational Rational -> a) -> (a -> Bool) -> Rational -> Rational -> [(Interval Rational Rational, a)]
 findRootsWithEvaluation poly eval valueOK l r =
   splitUntilAccurate (Interval l r, bsI, DontKnow)

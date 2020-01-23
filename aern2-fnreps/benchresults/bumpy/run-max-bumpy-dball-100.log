@@ -1,24 +1,24 @@
 maxL: acG = NoInformation; ac = Exact
 maxR: acG = NoInformation; ac = Exact
 computing max  max(sin(10x),cos(11*x)) over [-1,1]
-result = [0.999999999999999999999999999999 ± <2^(-100)]
+result = [0.999999999999999999999999999999878041681556866085317507777029632747403463488577032800951541250219153719012388685138661011184060279516848154564273804393359132525861143951045314748626403821901181186262082205633667371481184912331008352026628926978446543216705322265625 ± <2^(-100)]
 accuracy: bits 100
-precision = Precision 520
+precision = Precision 265
 	Command being timed: "aern2-fnreps-ops max bumpy dball 100"
-	User time (seconds): 0.19
+	User time (seconds): 0.79
 	System time (seconds): 0.00
 	Percent of CPU this job got: 100%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.20
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.80
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 10340
+	Maximum resident set size (kbytes): 10332
 	Average resident set size (kbytes): 0
 	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 824
+	Minor (reclaiming a frame) page faults: 830
 	Voluntary context switches: 1
-	Involuntary context switches: 2
+	Involuntary context switches: 0
 	Swaps: 0
 	File system inputs: 0
 	File system outputs: 8

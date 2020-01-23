@@ -14,7 +14,8 @@
 
 module AERN2.RealFun.UnaryBallFun.Type
 (
-  UnaryBallFun(..), unaryBallFun
+  UnaryBallFun(..), unaryBallFun,
+  lift1, lift2, lift2withX
 )
 where
 
@@ -87,6 +88,7 @@ instance HasVars UnaryBallFun where
 
 instance HasAccuracy UnaryBallFun where
   getAccuracy _f = Exact
+  getFiniteAccuracy _ = error "getFiniteAccuracy not defined for UnaryBallFun"
 
 instance HasAccuracyGuide UnaryBallFun where
   getAccuracyGuide _f = NoInformation
@@ -143,6 +145,10 @@ lift1 op (UnaryBallFun dom1 f1) =
 lift2 :: (CN MPBall -> CN MPBall -> CN MPBall) -> UnaryBallFun -> UnaryBallFun -> UnaryBallFun
 lift2 op (UnaryBallFun dom1 f1) (UnaryBallFun _dom2 f2) =
   UnaryBallFun dom1 (\ x -> op (f1 x) (f2 x))
+
+lift2withX :: (CN MPBall -> CN MPBall -> CN MPBall -> CN MPBall) -> UnaryBallFun -> UnaryBallFun -> UnaryBallFun
+lift2withX op (UnaryBallFun dom1 f1) (UnaryBallFun _dom2 f2) =
+  UnaryBallFun dom1 (\ x -> op x (f1 x) (f2 x))
 
 lift2T :: (CN MPBall -> t -> CN MPBall) -> UnaryBallFun -> t -> UnaryBallFun
 lift2T op (UnaryBallFun dom1 f1) t =

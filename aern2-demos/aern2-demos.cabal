@@ -5,7 +5,7 @@ build-type:     Simple
 homepage:       https://github.com/michalkonecny/aern2
 author:         Michal Konecny
 maintainer:     Michal Konecny <mikkonecny@gmail.com>
-copyright:      (c) 2017-2018 Michal Konecny
+copyright:      (c) 2017-2019 Michal Konecny
 license:        BSD3
 license-file:   LICENSE
 stability:      experimental
@@ -19,7 +19,7 @@ library
     , containers
     , stm
     , QuickCheck
-    , mixed-types-num >= 0.3.1 && < 0.4
+    , mixed-types-num >= 0.4
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
   hs-source-dirs:  src
@@ -44,7 +44,7 @@ executable aern2-demos-run-bench
     , containers
     , stm
     , QuickCheck
-    , mixed-types-num >= 0.3.1 && < 0.4
+    , mixed-types-num >= 0.4
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
     , aern2-demos == 0.1.*
