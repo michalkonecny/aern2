@@ -44,6 +44,28 @@ executable aern2-fnreps-ops
   main-is:         fnreps-ops.hs
   other-modules:   Demo
 
+executable aern2-fnreps-bounds
+  build-depends:
+    base == 4.*
+    , psqueues
+    , containers
+    , mixed-types-num >= 0.4
+    , aern2-mp == 0.1.*
+    , aern2-real == 0.1.*
+    , aern2-fun == 0.1.*
+  extensions:
+                    Arrows,
+                    FlexibleContexts,
+                    FlexibleInstances,
+                    MultiParamTypeClasses,
+                    RebindableSyntax,
+                    TypeFamilies,
+                    TypeOperators,
+                    ScopedTypeVariables
+  hs-source-dirs:  main
+  ghc-options:     -Wall -rtsopts
+  main-is:         fnreps-bounds.hs
+
 executable waac-benchmarks
   build-depends:
     base == 4.*
