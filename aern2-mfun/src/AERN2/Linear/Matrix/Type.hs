@@ -153,7 +153,13 @@ instance
         V.fromList [r * v| r <- rows m]
 
 instance 
-    (HasAccuracy a) => HasAccuracy (Matrix a)
+    (HasAccuracy a, HasPrecision a) => HasAccuracy (Matrix a)
     where
     getAccuracy m = 
         V.foldl' max NoInformation $ V.map getAccuracy (entries m)
+
+instance 
+    (HasPrecision a) => HasPrecision (Matrix a)
+    where
+    getPrecision m = 
+        V.foldl' max (prec 2) $ V.map getPrecision (entries m)

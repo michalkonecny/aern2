@@ -45,7 +45,7 @@ inftyNorm (v :: Vector a) =
     V.foldl' max (convertExactly 0 :: a) v
 
 instance 
-    (HasAccuracy a) => HasAccuracy (Vector a)
+    (HasAccuracy a, HasPrecision a) => HasAccuracy (Vector a)
     where
     getAccuracy v = 
         V.foldl' max NoInformation $ V.map getAccuracy v
