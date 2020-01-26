@@ -231,6 +231,10 @@ type Signature2 f =
 -----------------------------------
 -----------------------------------
 
+---------------------------------------------------------------------
+-- UNIVARIATE GLOBAL OPTIMISATION
+-- |sin x - (x - x^3/6 + x^5/120 - x^7/5040)| <= eps
+
 sine_name :: String -> String
 sine_name label = 
   "sine deg-7 single-precision Taylor series " ++ label
