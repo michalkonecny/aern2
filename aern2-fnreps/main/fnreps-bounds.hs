@@ -57,6 +57,8 @@ type LPolyMB = LPoly.LocalPoly MPBall
 type LPPolyMB = LPPoly.LocalPPoly
 type LFracMB = LFrac.LocalFrac MPBall
 
+type RF = ChPoly MPBall
+
 main :: IO ()
 main =
     do
@@ -81,7 +83,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         -- ("fun", "max") ->  eval functions maxModFun id x_MF
         -- ("ball", "max") -> eval functions maxBallFun id x_BF
         -- ("dball", "max") -> eval functions maxDBallFun id x_DBF
-        ("poly", "bounds") -> eval functions boundsPB id (x_PB (bits 60))
+        ("poly", "bounds") -> eval functions boundsPB (x_PB (bits 60))
         -- ("ppoly", "max") -> eval functions maxPP PPoly.fromPoly (x_PB accuracy)
         -- ("frac", "max") -> eval functions maxFR Frac.fromPoly (x_PB accuracy)
         -- ("lpoly", "max") -> eval functions maxLP id x_LP
@@ -89,17 +91,14 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
         -- ("lfrac", "max") -> eval functions maxLF LFrac.fromPoly x_LP
         _ -> error $ "unknown (representationCode, operationCode): " ++ show (representationCode, operationCode)
     eval ::
-      (Signature1 f1 r, Signature2 f2)
-      =>
-      Map.Map String (String, DyadicInterval, (f1 -> f2) -> (f1 -> f2)) ->
-      (f2 -> DyadicInterval -> MPBall) ->
-      (f1 -> f2) ->
-      (DyadicInterval -> f1) ->
+      Map.Map String (String, DyadicInterval, (RF -> RF)) ->
+      (RF -> DyadicInterval -> MPBall) ->
+      (DyadicInterval -> RF) ->
       (MPBall, String)
-    eval fns op tr12 xForDom  =
+    eval fns op xForDom  =
       case Map.lookup functionCode fns of
         Just (fnDescription2, fnDom, fn_x) ->
-          (op (fn_x tr12 (xForDom fnDom)) fnDom, fnDescription2)
+          (op (fn_x (xForDom fnDom)) fnDom, fnDescription2)
         _ -> error $ "unknown function: " ++ functionCode
 
     -- accuracy = bits $ (read accuracyS :: Int)
@@ -183,8 +182,7 @@ x_PB acG dom =
 -- x_LP = LPoly.variable
 
 functions ::
-  forall f1 f2 r. (Signature1 f1 r, Signature2 f2) =>
-  Map.Map String (String, DyadicInterval, (f1 -> f2) -> f1 -> f2)
+  Map.Map String (String, DyadicInterval, RF -> RF)
 functions =
     Map.fromList
     [
@@ -199,37 +197,57 @@ functions =
       ("sine-R", 
         (sine_name "R (rounding error)", 
          sine_dom, sine_rounderr_x))
+      ,
+      -- ("heron-init-T", 
+      --   (heron_init_name "T (total error)", 
+      --    heron_x_dom, heron_init_totalerr_x))
+      -- ,
+      -- ("heron-init-M", 
+      --   (heron_init_name "M (model error)", 
+      --    heron_x_dom, heron_init_modelerr_x))
+      -- ,
+      ("heron-init-R", 
+        (heron_init_name "R (rounding error)", 
+         heron_x_dom, heron_init_rounderr_x))
     ]
 
 
-type Signature1 f r =
-  ( HasAccuracy f, HasAccuracyGuide f
-  , CanSetAccuracyGuide f
-  , CanSinCosSameType f
-  , CanAddSameType f
-  , CanAddThis f Integer
-  , CanAddThis f CauchyReal
-  , CanAddThis f MPBall
-  , CanMulBy f Integer
-  , CanMulBy f CauchyReal
-  , CanMulBy f MPBall
-  , CanMulSameType f
-  , CanDivCNBy f Integer
-  , CanPowCNBy f Integer
-  , CanSub Integer f, SubType Integer f ~ f
-  , CanSub f f, SubType f f ~ f
-  , f ~ r
-  )
+-- type Signature1 f r =
+--   ( HasAccuracy f, HasAccuracyGuide f
+--   , CanSetAccuracyGuide f
+--   , CanSinCosSameType f
+--   , CanSqrtCNSameType f
+--   , CanAddSameType f
+--   , CanAddThis f Integer
+--   , CanAddThis f CauchyReal
+--   , CanAddThis f MPBall
+--   , CanMulBy f Integer
+--   , CanMulBy f CauchyReal
+--   , CanMulBy f MPBall
+--   , CanMulSameType f
+--   , CanDivCNBy f Integer
+--   , CanPowCNBy f Integer
+--   , CanSub Integer f, SubType Integer f ~ f
+--   , CanSub f f, SubType f f ~ f
+--   , f ~ r
+--   )
 
-type Signature2 f =
-  ( HasAccuracy f, HasAccuracyGuide f
-  , CanSetAccuracyGuide f
-  , CanMulSameType f
-  , CanMinMaxSameType f
-  , CanDivCNSameType f, CanRecipCNSameType f)
+-- type Signature2 f =
+--   ( HasAccuracy f, HasAccuracyGuide f
+--   , CanSetAccuracyGuide f
+--   , CanMulSameType f
+--   , CanMinMaxSameType f
+--   , CanDivCNSameType f, CanRecipCNSameType f)
 
 -----------------------------------
 -----------------------------------
+
+-- constants related to single-precision floating-point format
+single_prec :: Integer
+single_prec = 23
+
+single_minExp :: Integer
+single_minExp = 126
 
 ---------------------------------------------------------------------
 -- UNIVARIATE GLOBAL OPTIMISATION
@@ -239,23 +257,17 @@ sine_name :: String -> String
 sine_name label = 
   "sine deg-7 single-precision Taylor series " ++ label
 
-sine_totalerr_x :: 
-  forall f1 f2 r.(Signature1 f1 r, Signature2 f2) => 
-    (f1 -> f2) -> f1 -> f2
-sine_totalerr_x tr12 x = 
-  tr12 $ sin x - (sinT7fp single_prec single_minExp x)
+sine_totalerr_x :: RF -> RF
+sine_totalerr_x x = 
+  sin x - (sinT7fp single_prec single_minExp x)
 
-sine_modelerr_x :: 
-  forall f1 f2 r.(Signature1 f1 r, Signature2 f2) => 
-    (f1 -> f2) -> f1 -> f2
-sine_modelerr_x tr12 x = 
-  tr12 $ sin x - (sinT7horner x)
+sine_modelerr_x :: RF -> RF
+sine_modelerr_x x = 
+  sin x - (sinT7horner x)
 
-sine_rounderr_x :: 
-  forall f1 f2 r.(Signature1 f1 r, Signature2 f2) => 
-    (f1 -> f2) -> f1 -> f2
-sine_rounderr_x tr12 x = 
-  tr12 $ (sinT7fp single_prec single_minExp x) - (sinT7horner x)
+sine_rounderr_x :: RF -> RF
+sine_rounderr_x x = 
+  (sinT7fp single_prec single_minExp x) - (sinT7horner x)
 
 sinT7horner :: 
   (CanAddSubMulBy t t, CanPowCNBy t Integer
@@ -288,8 +300,50 @@ sinT7fp fpPrec fpMinExp x =
 sine_dom :: DyadicInterval
 sine_dom = dyadicInterval (0.0, 0.75)
 
-single_prec :: Integer
-single_prec = 23
+-- |sqrt x - (x+1)/2| <= 1/(2^(2^1)) + 6*eps
 
-single_minExp :: Integer
-single_minExp = 126
+heron_init_name :: String -> String
+heron_init_name label = 
+  "heron first iteration single-precision rounding " ++ label
+
+-- heron_init_totalerr_x :: RF -> RF
+-- heron_init_totalerr_x x = 
+--   (sqrt x) - (heron_init_y1_fp p x) + (real $ 0.25 + 6*eps) -- >= 0
+--   where
+--   p = single_prec
+--   eps = 0.5^!p
+
+-- heron_init_modelerr_x :: RF -> RF
+-- heron_init_modelerr_x x = 
+--   (sqrt x) - (heron_init_y1 x) + (real $ 0.25) -- >= 0
+
+heron_init_rounderr_x :: RF -> RF
+heron_init_rounderr_x x = 
+  (heron_init_y1 x) - (heron_init_y1_fp single_prec x) -- >= 6*eps
+  where
+  p = single_prec
+  eps = 0.5^!p
+
+heron_init_y1 :: 
+  (CanAddThis t Integer, CanDivCNBy t Integer) => 
+  t -> t
+heron_init_y1 x = (1 + x)/!2
+
+heron_init_y1_fp :: 
+  (CanMulBy t MPBall
+  , CanAddThis t Integer
+  , CanDivCNBy t Integer) => 
+  Integer -> t -> t
+heron_init_y1_fp fpPrec x = 
+  (1 +^ x)/!^2
+  where
+  a +^ b = (a+b)*onePMe
+  a /!^ b = ((a/!b))*onePMe
+  infixl 6 +^
+  infixl 7 /!^
+  onePMe = mpBall (1, 0.5^!fpPrec)
+
+heron_x_dom :: DyadicInterval
+heron_x_dom = dyadicInterval (0.5, 2.0)
+
+
