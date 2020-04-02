@@ -4,11 +4,11 @@ import qualified Prelude as Prelude
 import MixedTypesNumPrelude
 import AERN2.MP.Dyadic
 import AERN2.MP.Ball
-import AERN2.MP.Float
+-- import AERN2.MP.Float
 import AERN2.BoxFun.Box (Box)
 import qualified AERN2.BoxFun.Box as Box
 import AERN2.BoxFun.Type
-import AERN2.AD.Differential
+-- import AERN2.AD.Differential ()
 import Data.Maybe
 
 import AERN2.Linear.Vector.Type (Vector, (!))
@@ -100,7 +100,7 @@ bestLocalMinimumWithCutoff f box ac initialCutoff =
     initialQueue     = Q.singleton initialSearchBox
     dummyBox         = SearchBox (V.fromList [cn $ mpBall $ 10^!6]) initialRange -- TODO: hack...
 
-    aux q cutoff steps (SearchBox lastBox rng) =  
+    aux q cutoff steps (SearchBox _lastBox rng) =  
         case Q.minView q of
             Nothing -> trace ("no local minimum.") $ (steps, rng)
             Just (minBox, q') ->
@@ -149,7 +149,7 @@ lipschitzContraction f g (SearchBox box m) =
     m'             = intersectCN m newRange
 
 lipschitzRange :: BoxFun -> CN MPBall -> Box -> Box -> Box -> CN MPBall -> CN MPBall
-lipschitzRange f fc c g box m =
+lipschitzRange _f fc c g box m =
     m'
     where
     difference     = box - c
@@ -189,7 +189,7 @@ newtonStep f ac c dfc hInv b@(SearchBox box m) newtonSuccesful =
     where
     {-c           = centre box
     dfc         = gradient f c-}
-    hInvDefined = V.foldl' (&&) (True) $ V.map (isJust . fst . ensureNoCN) (entries hInv)
+    -- hInvDefined = V.foldl' (&&) (True) $ V.map (isJust . fst . ensureNoCN) (entries hInv)
     newtonBox   = c - hInv * (dfc)
     box'        = Box.nonEmptyIntersection box newtonBox
     m'          = apply f box'
@@ -202,11 +202,11 @@ processBox f ac cutoff box =
         result
     where
     ext            = extents box
-    (fb, dfb, hfb) = valueGradientHessian f ext
+    (_fb, dfb, hfb) = valueGradientHessian f ext
     c              = centre ext
     dfc            = gradient f c
     maybeHinv      = inverse hfb
-    p              = getPrecision box
+    -- p              = getPrecision box
     box'           = --Just (False, box)
         case maybeHinv of 
             Nothing   -> Just (False, box)

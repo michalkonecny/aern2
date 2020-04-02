@@ -4,15 +4,15 @@ import MixedTypesNumPrelude
 import AERN2.BoxFun.TestFunctions
 import AERN2.BoxFun.Optimisation
 import AERN2.MP.Ball
-import AERN2.Real
-import AERN2.MP.Dyadic
-import AERN2.MP.Accuracy
-import AERN2.AD.Differential
+-- import AERN2.Real
+-- import AERN2.MP.Dyadic
+-- import AERN2.MP.Accuracy
+-- import AERN2.AD.Differential
 
-import qualified Data.List as List
+-- import qualified Data.List as List
 
-import AERN2.BoxFun.Type
-import AERN2.Linear.Vector.Type as V
+-- import AERN2.BoxFun.Type
+-- import AERN2.Linear.Vector.Type as V
 
 main :: IO ()
 main = 
