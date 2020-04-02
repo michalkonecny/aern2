@@ -2,113 +2,181 @@ module AERN2.AD.MPBallOperations where
 
 import MixedTypesNumPrelude
 
-import AERN2.AD.Type
-import AERN2.AD.GenericOperations
+import AERN2.AD.Type hiding (x,dx,dxt,d2x)
+import AERN2.AD.GenericOperations ()
 import AERN2.MP.Ball
 
-instance 
-    CanAddAsymmetric (CN MPBall) (Differential (CN MPBall))
+{-- addition --}
+
+instance
+    CanAddAsymmetric MPBall (Differential (CN MPBall))
     where
-    type AddType (CN MPBall) (Differential (CN MPBall)) = Differential (CN MPBall)
-    add a b = add (differential (order b) a) b
+    type AddType MPBall (Differential (CN MPBall)) = Differential (CN MPBall)
+    add a b = add (differential (order b) (cn a)) b
 
 instance 
-    CanAddAsymmetric (Differential (CN MPBall)) (CN MPBall)
+    CanAddAsymmetric (Differential (CN MPBall)) MPBall
     where
-    type AddType (Differential (CN MPBall)) (CN MPBall) = Differential (CN MPBall)
-    add b a = add b (differential (order b) a)
+    type AddType (Differential (CN MPBall)) MPBall = Differential (CN MPBall)
+    add b a = add b (differential (order b) (cn a))
 
 instance 
-    CanSub (CN MPBall) (Differential (CN MPBall))
+    CanAddAsymmetric Integer (Differential (CN MPBall))
     where
-    type SubType (CN MPBall) (Differential (CN MPBall)) = Differential (CN MPBall)
-    sub a b = sub (differential (order b) a) b
+    type AddType Integer (Differential (CN MPBall)) = Differential (CN MPBall)
+    add a b = add (differential (order b) (cn $ mpBall a)) b
 
 instance 
-    CanSub (Differential (CN MPBall)) (CN MPBall) 
+    CanAddAsymmetric (Differential (CN MPBall)) Integer
     where
-    type SubType (Differential (CN MPBall)) (CN MPBall) = Differential (CN MPBall)
-    sub b a = sub b (differential (order b) a)
+    type AddType (Differential (CN MPBall)) Integer = Differential (CN MPBall)
+    add b a = add b (differential (order b) (cn $ mpBall a))
+
+instance
+    (CanBeMPBall a) =>
+    CanAddAsymmetric (CN a) (Differential (CN MPBall))
+    where
+    type AddType (CN a) (Differential (CN MPBall)) = Differential (CN MPBall)
+    add a b = add (differential (order b) (fmap mpBall a)) b
 
 instance 
-    CanMulAsymmetric (CN MPBall) (Differential (CN MPBall))
+    (CanBeMPBall a) =>
+    CanAddAsymmetric (Differential (CN MPBall)) (CN a)
     where
-    type MulType (CN MPBall) (Differential (CN MPBall)) = Differential (CN MPBall)
-    mul a b = mul (differential (order b) a) b
+    type AddType (Differential (CN MPBall)) (CN a) = Differential (CN MPBall)
+    add b a = add b (differential (order b) (fmap mpBall a))
+
+{-- subtraction --}
 
 instance 
-    CanMulAsymmetric (Differential (CN MPBall)) (CN MPBall)
+    CanSub Integer (Differential (CN MPBall))
+    where
+    type SubType Integer (Differential (CN MPBall)) = Differential (CN MPBall)
+    sub a b = sub (differential (order b) (cn $ mpBall a)) b
+
+instance 
+    CanSub (Differential (CN MPBall)) Integer
+    where
+    type SubType (Differential (CN MPBall)) Integer = Differential (CN MPBall)
+    sub b a = sub b (differential (order b) (cn $ mpBall a))
+
+instance 
+    CanSub MPBall (Differential (CN MPBall))
+    where
+    type SubType MPBall (Differential (CN MPBall)) = Differential (CN MPBall)
+    sub a b = sub (differential (order b) (cn a)) b
+
+instance 
+    CanSub (Differential (CN MPBall)) MPBall
+    where
+    type SubType (Differential (CN MPBall)) MPBall = Differential (CN MPBall)
+    sub b a = sub b (differential (order b) (cn a))
+
+instance 
+    (CanBeMPBall a) =>
+    CanSub (CN a) (Differential (CN MPBall))
+    where
+    type SubType (CN a) (Differential (CN MPBall)) = Differential (CN MPBall)
+    sub a b = sub (differential (order b) (fmap mpBall a)) b
+
+instance 
+    (CanBeMPBall a) =>
+    CanSub (Differential (CN MPBall)) (CN a) 
+    where
+    type SubType (Differential (CN MPBall)) (CN a) = Differential (CN MPBall)
+    sub b a = sub b (differential (order b) (fmap mpBall a))
+
+{-- multiplication --}
+
+instance 
+    CanMulAsymmetric Integer (Differential (CN MPBall))
+    where
+    type MulType Integer (Differential (CN MPBall)) = Differential (CN MPBall)
+    mul a b = mul (differential (order b) (cn $ mpBall a)) b
+
+instance 
+    CanMulAsymmetric (Differential (CN MPBall)) Integer
         where
-        type MulType (Differential (CN MPBall)) (CN MPBall) = Differential (CN MPBall)
-        mul b a = mul b (differential (order b) a)
+        type MulType (Differential (CN MPBall)) Integer = Differential (CN MPBall)
+        mul b a = mul b (differential (order b) (cn $ mpBall a))
 
 instance 
-    CanDiv (CN MPBall) (Differential (CN MPBall))
+    CanMulAsymmetric MPBall (Differential (CN MPBall))
     where
-    type DivTypeNoCN (CN MPBall) (Differential (CN MPBall)) = Differential (CN MPBall)
-    type DivType     (CN MPBall) (Differential (CN MPBall)) = Differential (CN MPBall)
-    divideNoCN a b = divideNoCN (differential (order b) a) b
-    divide     a b = divide     (differential (order b) a) b
+    type MulType MPBall (Differential (CN MPBall)) = Differential (CN MPBall)
+    mul a b = mul (differential (order b) (cn a)) b
 
 instance 
-    CanDiv (Differential (CN MPBall)) (CN MPBall) 
-    where
-    type DivTypeNoCN (Differential (CN MPBall)) (CN MPBall) = Differential (CN MPBall)
-    type DivType     (Differential (CN MPBall)) (CN MPBall) = Differential (CN MPBall)
-    divideNoCN b a = divideNoCN b (differential (order b) a)
-    divide     b a = divide     b (differential (order b) a)
-
-instance 
-    CanAddAsymmetric (CN Integer) (Differential (CN MPBall))
-    where
-    type AddType (CN Integer) (Differential (CN MPBall)) = Differential (CN MPBall)
-    add a b = add (differential (order b) ((fmap mpBall) a)) b
-
-instance 
-    CanAddAsymmetric (Differential (CN MPBall)) (CN Integer)
-    where
-    type AddType (Differential (CN MPBall)) (CN Integer) = Differential (CN MPBall)
-    add b a = add b (differential (order b) ((fmap mpBall) a))
-
-instance 
-    CanSub (CN Integer) (Differential (CN MPBall))
-    where
-    type SubType (CN Integer) (Differential (CN MPBall)) = Differential (CN MPBall)
-    sub a b = sub (differential (order b) ((fmap mpBall) a)) b
-
-instance 
-    CanSub (Differential (CN MPBall)) (CN Integer)
-    where
-    type SubType (Differential (CN MPBall)) (CN Integer) = Differential (CN MPBall)
-    sub b a = sub b (differential (order b) ((fmap mpBall) a))
-
-instance 
-    CanMulAsymmetric (CN Integer) (Differential (CN MPBall))
-    where
-    type MulType (CN Integer) (Differential (CN MPBall)) = Differential (CN MPBall)
-    mul a b = mul (differential (order b) ((fmap mpBall) a)) b
-
-instance 
-    CanMulAsymmetric (Differential (CN MPBall)) (CN Integer)
+    CanMulAsymmetric (Differential (CN MPBall)) MPBall
         where
-        type MulType (Differential (CN MPBall)) (CN Integer) = Differential (CN MPBall)
-        mul b a = mul b (differential (order b) ((fmap mpBall) a))
+        type MulType (Differential (CN MPBall)) MPBall = Differential (CN MPBall)
+        mul b a = mul b (differential (order b) (cn a))
+
+{-- division --}
 
 instance 
-    CanDiv (CN Integer) (Differential (CN MPBall))
+    CanDiv Integer (Differential (CN MPBall))
     where
-    type DivTypeNoCN (CN Integer) (Differential (CN MPBall)) = Differential (CN MPBall)
-    type DivType     (CN Integer) (Differential (CN MPBall)) = Differential (CN MPBall)
-    divideNoCN a b = divideNoCN (differential (order b) ((fmap mpBall) a)) b
-    divide     a b = divide     (differential (order b) ((fmap mpBall) a)) b
+    type DivTypeNoCN Integer (Differential (CN MPBall)) = Differential (CN MPBall)
+    type DivType     Integer (Differential (CN MPBall)) = Differential (CN MPBall)
+    divideNoCN a b = divideNoCN (differential (order b) (cn $ mpBall a)) b
+    divide     a b = divide     (differential (order b) (cn $ mpBall a)) b
     
 instance 
-    CanDiv (Differential (CN MPBall)) (CN Integer)
+    CanDiv (Differential (CN MPBall)) Integer
     where
-    type DivTypeNoCN (Differential (CN MPBall)) (CN Integer) = Differential (CN MPBall)
-    type DivType     (Differential (CN MPBall)) (CN Integer) = Differential (CN MPBall)
-    divideNoCN b a = divideNoCN b (differential (order b) ((fmap mpBall) a))
-    divide     b a = divide     b (differential (order b) ((fmap mpBall) a))        
+    type DivTypeNoCN (Differential (CN MPBall)) Integer = Differential (CN MPBall)
+    type DivType     (Differential (CN MPBall)) Integer = Differential (CN MPBall)
+    divideNoCN b a = divideNoCN b (differential (order b) (cn $ mpBall a))
+    divide     b a = divide     b (differential (order b) (cn $ mpBall a))        
+
+instance 
+    CanDiv MPBall (Differential (CN MPBall))
+    where
+    type DivTypeNoCN MPBall (Differential (CN MPBall)) = Differential (CN MPBall)
+    type DivType     MPBall (Differential (CN MPBall)) = Differential (CN MPBall)
+    divideNoCN a b = divideNoCN (differential (order b) (cn a)) b
+    divide     a b = divide     (differential (order b) (cn a)) b
+    
+instance 
+    CanDiv (Differential (CN MPBall)) MPBall
+    where
+    type DivTypeNoCN (Differential (CN MPBall)) MPBall = Differential (CN MPBall)
+    type DivType     (Differential (CN MPBall)) MPBall = Differential (CN MPBall)
+    divideNoCN b a = divideNoCN b (differential (order b) (cn a))
+    divide     b a = divide     b (differential (order b) (cn a))        
+
+instance 
+    (CanBeMPBall a) =>
+    CanMulAsymmetric (CN a) (Differential (CN MPBall))
+    where
+    type MulType (CN a) (Differential (CN MPBall)) = Differential (CN MPBall)
+    mul a b = mul (differential (order b) (fmap mpBall a)) b
+
+instance 
+    (CanBeMPBall a) =>
+    CanMulAsymmetric (Differential (CN MPBall)) (CN a)
+        where
+        type MulType (Differential (CN MPBall)) (CN a) = Differential (CN MPBall)
+        mul b a = mul b (differential (order b) (fmap mpBall a))
+
+instance 
+    (CanBeMPBall a) =>
+    CanDiv (CN a) (Differential (CN MPBall))
+    where
+    type DivTypeNoCN (CN a) (Differential (CN MPBall)) = Differential (CN MPBall)
+    type DivType     (CN a) (Differential (CN MPBall)) = Differential (CN MPBall)
+    divideNoCN a b = divideNoCN (differential (order b) (fmap mpBall a)) b
+    divide     a b = divide     (differential (order b) (fmap mpBall a)) b
+
+instance 
+    (CanBeMPBall a) =>
+    CanDiv (Differential (CN MPBall)) (CN a) 
+    where
+    type DivTypeNoCN (Differential (CN MPBall)) (CN a) = Differential (CN MPBall)
+    type DivType     (Differential (CN MPBall)) (CN a) = Differential (CN MPBall)
+    divideNoCN b a = divideNoCN b (differential (order b) (fmap mpBall a))
+    divide     b a = divide     b (differential (order b) (fmap mpBall a))
 
 
 instance 
