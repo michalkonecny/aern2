@@ -109,3 +109,33 @@ ratz4 =
             sin(xs + 2 * ys) * exp (-xs - ys)
     )
     (symmetricDomain 2 (-3.0) 3.0)
+
+-- global minimum at schwefel(420.9687, 420.9687) ~ -837.9658
+schwefel :: BoxFun
+schwefel =
+    BoxFun
+    2
+    (\v ->
+        let
+            x = v!0
+            y = v!1
+            abs n = sqrt (n^2)
+        in
+            (-x * sin (sqrt (abs x))) + (-y * sin (sqrt (abs y)))
+    )
+    (symmetricDomain 2 (-500.0) 500.0)
+
+-- global minimum at bukin(-10, 1) ~ 0
+bukin :: BoxFun
+bukin =
+    BoxFun
+    2
+    (\v ->
+        let
+            x = v!0
+            y = v!1
+            abs n = sqrt (n^2)
+        in
+            100 * sqrt (abs (y - x^2 / 100)) + abs(x + 10) / 100
+    )
+    (symmetricDomain 2 (-15.0) 3.0) -- TODO: Make this -15 <= x <= 5, -3 <= y <= 3
