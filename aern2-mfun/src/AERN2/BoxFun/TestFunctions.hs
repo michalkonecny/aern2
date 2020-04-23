@@ -10,6 +10,17 @@ import AERN2.BoxFun.Type
 import AERN2.Linear.Vector.Type ((!), Vector)
 import qualified AERN2.Linear.Vector.Type as V
 
+fromListDomain :: [(Rational, Rational)] -> Vector (CN MPBall)
+fromListDomain [] = V.empty
+fromListDomain [x] = V.singleton $ fromEndpoints (cn $ mpBallP (prec 53) $ (fst x)) (cn $  mpBallP (prec 53) (snd x))
+fromListDomain (x:xs) = V.cons (fromEndpoints (cn $ mpBallP (prec 53) $ (fst x)) (cn $  mpBallP (prec 53) (snd x))) (fromListDomain xs)
+
+xyDomain :: (Rational, Rational) -> (Rational, Rational) -> Vector (CN MPBall)
+xyDomain x y =
+    (V.fromList [
+        fromEndpoints (cn $ mpBallP (prec 53) $ (fst x)) (cn $  mpBallP (prec 53) (snd x)),
+        fromEndpoints (cn $ mpBallP (prec 53) $ (fst y)) (cn $  mpBallP (prec 53) (snd y))]
+    )
 
 symmetricDomain :: Integer -> Rational -> Rational -> Vector (CN MPBall)
 symmetricDomain n l r = 
@@ -122,7 +133,7 @@ bukin =
         in
             100 * sqrt (abs (y - x^2 / 100)) + abs(x + 10) / 100
     )
-    (symmetricDomain 2 (-15.0) 3.0) -- TODO: Make this -15 <= x <= 5, -3 <= y <= 3
+    (fromListDomain [(-15.0, 5.0), (-3.0, 3.0)])
 
 ackley :: BoxFun
 ackley =
@@ -151,7 +162,7 @@ eggholder =
             -(y + 47) * sin (sqrt (abs (x / 2 + (y + 47)))) - x * sin (sqrt (abs (x - (y + 47))))
     )
     (symmetricDomain 2 (-512.0) 512.0)
-
+    
 heron :: BoxFun
 heron = 
     BoxFun
@@ -167,4 +178,4 @@ heron =
             max (abs(sqrt x - y) - (mpBallP p 1/2)^(2^(i-1)) - (mpBallP p 6) * eps * (i - 1))
                 (- abs(sqrt x - (y + x / y) / 2) + (mpBallP p 1/2)^(2^i) + (mpBallP p 6) * eps * (i - 1))
     )
-    (symmetricDomain 2 (0.5) 2.0)
+    (fromListDomain [(0.5, 2.0), (0.8, 1.8)])

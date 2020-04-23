@@ -10,6 +10,15 @@ import AERN2.MP.Ball
 
 type (Vector a) = V.Vector a
 
+empty :: Vector a
+empty = V.empty
+
+singleton :: a -> Vector a
+singleton = V.singleton
+
+cons :: a -> Vector a -> Vector a
+cons = V.cons
+
 fromList :: [a] -> Vector a
 fromList = V.fromList
 
