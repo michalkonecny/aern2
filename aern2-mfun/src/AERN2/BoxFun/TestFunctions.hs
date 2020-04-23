@@ -110,21 +110,6 @@ ratz4 =
     )
     (symmetricDomain 2 (-3.0) 3.0)
 
--- global minimum at schwefel(420.9687, 420.9687) ~ -837.9658
-schwefel :: BoxFun
-schwefel =
-    BoxFun
-    2
-    (\v ->
-        let
-            x = v!0
-            y = v!1
-            abs n = sqrt (n^2)
-        in
-            (-x * sin (sqrt (abs x))) + (-y * sin (sqrt (abs y)))
-    )
-    (symmetricDomain 2 (-500.0) 500.0)
-
 -- global minimum at bukin(-10, 1) ~ 0
 bukin :: BoxFun
 bukin =
@@ -134,8 +119,52 @@ bukin =
         let
             x = v!0
             y = v!1
-            abs n = sqrt (n^2)
         in
             100 * sqrt (abs (y - x^2 / 100)) + abs(x + 10) / 100
     )
     (symmetricDomain 2 (-15.0) 3.0) -- TODO: Make this -15 <= x <= 5, -3 <= y <= 3
+
+ackley :: BoxFun
+ackley =
+    BoxFun
+    2
+    (\v ->
+        let
+            x = v!0
+            y = v!1
+            p = getPrecision v
+            pi = piBallP p
+        in
+            -20 * exp(sqrt((x^2 + y^2) / 2) / (-5)) - exp((cos (2 * pi * x) + cos(2 * pi * y)) / 2) + exp(mpBallP p 1) + 20
+    )
+    (symmetricDomain 2 (-5.0) 5.0)
+
+eggholder :: BoxFun
+eggholder =
+    BoxFun
+    2
+    (\v ->
+        let
+            x = v!0
+            y = v!1
+        in
+            -(y + 47) * sin (sqrt (abs (x / 2 + (y + 47)))) - x * sin (sqrt (abs (x - (y + 47))))
+    )
+    (symmetricDomain 2 (-512.0) 512.0)
+
+heron :: BoxFun
+heron = 
+    BoxFun
+    2
+    (\v ->
+        let
+            x = v!0
+            y = v!1
+            p = getPrecision v
+            eps = 1/2^(23)
+            i = 2
+        in
+            max (abs(sqrt x - y) - (mpBallP p 1/2)^(2^(i-1)) - (mpBallP p 6) * eps * (i - 1))
+                (- abs(sqrt x - (y + x / y) / 2) + (mpBallP p 1/2)^(2^i) + (mpBallP p 6) * eps * (i - 1))
+    )
+    (symmetricDomain 2 (0.5) 2.0)

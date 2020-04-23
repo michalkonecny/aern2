@@ -24,6 +24,12 @@ import AERN2.Util.Util
 
 import Debug.Trace (trace)
 
+globalMinimumGreaterThanN :: BoxFun -> Accuracy -> CN Rational -> Bool
+globalMinimumGreaterThanN f ac n =
+    trace (show x)
+    x !>=! n
+    where x = globalMinimum f ac
+
 minFun :: BoxFun -> Accuracy -> (Integer, CN MPBall)
 minFun f ac = 
     bestLocalMinimum f (domain f) ac
