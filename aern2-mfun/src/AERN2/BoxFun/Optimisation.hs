@@ -24,15 +24,15 @@ import AERN2.Util.Util
 
 import Debug.Trace (trace)
 
-globalMinimumGreaterThanN :: BoxFun -> Accuracy -> CN Rational -> Bool
-globalMinimumGreaterThanN f ac n =
+globalMinimumGreaterThanN :: BoxFun -> Accuracy -> CN Rational -> Precision -> Bool
+globalMinimumGreaterThanN f ac n initialPrecision =
     trace (show x)
     x !>=! n
-    where x = globalMinimum f ac
+    where x = globalMinimum f ac initialPrecision 
 
-minFun :: BoxFun -> Accuracy -> (Integer, CN MPBall)
-minFun f ac = 
-    bestLocalMinimum f (domain f) ac
+minFun :: BoxFun -> Accuracy -> Precision -> (Integer, CN MPBall)
+minFun f ac initialPrecision = 
+    bestLocalMinimum f (domain f) ac initialPrecision
 
 data SearchBox =
     SearchBox
@@ -66,41 +66,41 @@ instance Prelude.Ord SearchBox where
 
 ---
 
-globalMinimumWithCutoff :: BoxFun -> Accuracy -> CN MPBall -> CN MPBall
-globalMinimumWithCutoff f ac cutoff =
+globalMinimumWithCutoff :: BoxFun -> Accuracy -> CN MPBall -> Precision -> CN MPBall
+globalMinimumWithCutoff f ac cutoff initialPrecision =
     if dimension f == 1 then
         let
             fl       = apply f (V.map lowerBound $ domain f)
             fr       = apply f (V.map upperBound $ domain f)
-            localMin = snd $ bestLocalMinimumWithCutoff f (domain f) ac cutoff
+            localMin = snd $ bestLocalMinimumWithCutoff f (domain f) ac cutoff initialPrecision
         in
             min fl $ min localMin fr
     else 
         let
-            localMin       = snd $ bestLocalMinimumWithCutoff f (domain f) ac cutoff
+            localMin       = snd $ bestLocalMinimumWithCutoff f (domain f) ac cutoff initialPrecision
             boundaryFuns   = boundaryRestrictions f
-            boundaryMinima = List.map (\g -> globalMinimumWithCutoff g ac $ min cutoff $ (upperBound localMin :: CN MPBall)) boundaryFuns
+            boundaryMinima = List.map (\g -> globalMinimumWithCutoff g ac (min cutoff ((upperBound localMin :: CN MPBall))) initialPrecision) boundaryFuns
         in
             List.foldl' min localMin boundaryMinima
 
 
-globalMinimum :: BoxFun -> Accuracy -> CN MPBall
-globalMinimum f ac =
-    globalMinimumWithCutoff f ac $ apply f (centre boxp)
+globalMinimum :: BoxFun -> Accuracy -> Precision -> CN MPBall
+globalMinimum f ac initialPrecision =
+    globalMinimumWithCutoff f ac (apply f (centre boxp)) initialPrecision
     where
-    boxp = setPrecision (prec 53) (domain f)
+    boxp = setPrecision initialPrecision (domain f)
 
-bestLocalMinimum :: BoxFun -> Box -> Accuracy -> (Integer, CN MPBall)
-bestLocalMinimum f box ac =
-    bestLocalMinimumWithCutoff f box ac $ apply f (centre boxp)
+bestLocalMinimum :: BoxFun -> Box -> Accuracy -> Precision -> (Integer, CN MPBall)
+bestLocalMinimum f box ac initialPrecision =
+    bestLocalMinimumWithCutoff f box ac (apply f (centre boxp)) initialPrecision
     where
-    boxp = setPrecision (prec 53) box
+    boxp = setPrecision initialPrecision box
 
-bestLocalMinimumWithCutoff :: BoxFun -> Box -> Accuracy -> CN MPBall -> (Integer, CN MPBall)
-bestLocalMinimumWithCutoff f box ac initialCutoff =
+bestLocalMinimumWithCutoff :: BoxFun -> Box -> Accuracy -> CN MPBall -> Precision -> (Integer, CN MPBall)
+bestLocalMinimumWithCutoff f box ac initialCutoff initialPrecision =
     aux initialQueue initialCutoff 0 dummyBox
     where
-    boxp             = setPrecision (prec 53) box
+    boxp             = setPrecision initialPrecision box
     initialRange     = apply f boxp
     initialSearchBox = SearchBox boxp initialRange
     initialQueue     = Q.singleton initialSearchBox
