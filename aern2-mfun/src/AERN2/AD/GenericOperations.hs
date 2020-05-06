@@ -121,27 +121,28 @@ instance
                                                     ((dx / ta * (-dx / (ta * x * sqrt x))) + (d2x / (ta * sqrt x)))
                                                     where (ta :: a) = convertExactly 2
 
-instance
-    (CanMinMaxSameType a, HasIntegers a) =>
-    CanMinMaxAsymmetric (Differential a) (Differential a)
-    where
-    type MinMaxType (Differential a) (Differential a) = Differential a
-    min a b = 
-        case min (order a) (order b) of
-            2 -> OrderTwo  (min (x a) (x b)) (min (dx a) (dx b)) (min (dxt a) (dxt b)) 
-                           (min (d2x a) (d2x b))
-            1 -> OrderOne  (min (x a) (x b)) (min (dx a) (dx b))
-            0 -> OrderZero (min (x a) (x b))
-    max a b =
-        case min (order a) (order b) of
-            2 -> OrderTwo  (max (x a) (x b)) (max (dx a) (dx b)) (max (dxt a) (dxt b)) 
-                           (max (d2x a) (d2x b))
-            1 -> OrderOne  (max (x a) (x b)) (max (dx a) (dx b))
-            0 -> OrderZero (max (x a) (x b))
+-- instance
+--     (CanMinMaxSameType a, HasIntegers a) =>
+--     CanMinMaxAsymmetric (Differential a) (Differential a)
+--     where
+--     type MinMaxType (Differential a) (Differential a) = Differential a
+--     min a b = 
+--         case min (order a) (order b) of
+--             2 -> OrderTwo  (min (x a) (x b)) (min (dx a) (dx b)) (min (dxt a) (dxt b)) 
+--                            (min (d2x a) (d2x b))
+--             1 -> OrderOne  (min (x a) (x b)) (min (dx a) (dx b))
+--             0 -> OrderZero (min (x a) (x b))
+--     max a b =
+--         case min (order a) (order b) of
+--             2 -> OrderTwo  (max (x a) (x b)) (max (dx a) (dx b)) (max (dxt a) (dxt b)) 
+--                            (max (d2x a) (d2x b))
+--             1 -> OrderOne  (max (x a) (x b)) (max (dx a) (dx b))
+--             0 -> OrderZero (max (x a) (x b))
 
-instance
-    (CanAbsSameType a) =>
-    CanAbs (Differential a)
-    where
-    type AbsType (Differential a) = Differential a
-    abs = fmap abs
+-- instance
+--     (CanAbsSameType a) =>
+--     CanAbs (Differential a)
+--     where
+--     type AbsType (Differential a) = Differential a
+--     abs = fmap abs
+

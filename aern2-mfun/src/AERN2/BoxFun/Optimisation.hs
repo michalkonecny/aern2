@@ -27,7 +27,7 @@ import Debug.Trace (trace)
 globalMinimumGreaterThanN :: BoxFun -> Accuracy -> CN Rational -> Precision -> Bool
 globalMinimumGreaterThanN f ac n initialPrecision =
     trace (show x)
-    x !>=! n
+    x !>! n
     where x = globalMinimum f ac initialPrecision 
 
 minFun :: BoxFun -> Accuracy -> Precision -> (Integer, CN MPBall)
@@ -272,3 +272,46 @@ split f dfb cutoff bxe =
             (False, False) -> [SearchBox a fa', SearchBox b fb']
     in
         (cutoff', boxes)
+
+maxBoxFunGreaterThanN :: BoxFun -> BoxFun -> Accuracy -> CN Rational -> Precision -> Bool
+maxBoxFunGreaterThanN f g ac n initialPrecision =
+    (fmin !>! n || gmin !>!n) ||
+        (not (Box.intersectionCertainlyEmpty fbox gbox) &&
+            (Box.width fboxp !>! cutoff && Box.width gboxp !>! cutoff) &&
+                let
+                    newFBoxes = Box.fullBisect fboxp
+                    newGBoxes = Box.fullBisect gboxp
+
+                    bounds extents          = (lowerBound extents :: CN MPBall, upperBound extents :: CN MPBall)
+                    nBetweenBounds n (l, r) = l !<=! n && n !<=! r
+
+                    filteredNewFBoxes = List.filter (nBetweenBounds n . bounds . apply f) newFBoxes
+                    filteredNewGBoxes = List.filter (nBetweenBounds n . bounds . apply f) newGBoxes
+
+                    updateDomain z = BoxFun (dimension z) (bf_eval z)
+
+                    checkBoxes [] _                     =   False
+                    checkBoxes (fboxp' : fboxes) gboxes =   checkBoxes2 
+                                                                fboxp' 
+                                                                (filter (not . Box.intersectionCertainlyEmpty fboxp') gboxes) 
+                                                            || checkBoxes fboxes gboxes
+
+                    checkBoxes2 _ []                     =  False
+                    checkBoxes2 fboxp' (gboxp' : gboxes) =  maxBoxFunGreaterThanN    
+                                                                (updateDomain f fboxp') 
+                                                                (updateDomain g gboxp') 
+                                                                ac n initialPrecision 
+                                                            || checkBoxes2 fboxp' gboxes
+                in
+                    checkBoxes filteredNewFBoxes filteredNewGBoxes
+            )
+    where
+        fmin = globalMinimum f ac initialPrecision 
+        gmin = globalMinimum g ac initialPrecision
+        cutoff = 1/2^50
+
+        fbox                 = domain f
+        fboxp                = setPrecision initialPrecision fbox 
+
+        gbox                 = domain g
+        gboxp                = setPrecision initialPrecision gbox

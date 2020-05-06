@@ -10,6 +10,12 @@ import AERN2.MP.Ball
 
 type (Vector a) = V.Vector a
 
+(+++) :: Vector a -> Vector a -> Vector a
+(+++) = (V.++)
+
+take :: Int -> Vector a -> Vector a 
+take = V.take
+
 empty :: Vector a
 empty = V.empty
 

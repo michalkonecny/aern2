@@ -122,18 +122,18 @@ ratz4 =
     (symmetricDomain 2 (-3.0) 3.0)
 
 -- global minimum at bukin(-10, 1) ~ 0
-bukin :: BoxFun
-bukin =
-    BoxFun
-    2
-    (\v ->
-        let
-            x = v!0
-            y = v!1
-        in
-            100 * sqrt (abs (y - x^2 / 100)) + abs(x + 10) / 100
-    )
-    (fromListDomain [(-15.0, 5.0), (-3.0, 3.0)])
+-- bukin :: BoxFun
+-- bukin =
+--     BoxFun
+--     2
+--     (\v ->
+--         let
+--             x = v!0
+--             y = v!1
+--         in
+--             100 * sqrt (abs (y - x^2 / 100)) + abs(x + 10) / 100
+--     )
+--     (fromListDomain [(-15.0, 5.0), (-3.0, 3.0)])
 
 ackley :: BoxFun
 ackley =
@@ -150,21 +150,54 @@ ackley =
     )
     (symmetricDomain 2 (-5.0) 5.0)
 
-eggholder :: BoxFun
-eggholder =
-    BoxFun
-    2
-    (\v ->
-        let
-            x = v!0
-            y = v!1
-        in
-            -(y + 47) * sin (sqrt (abs (x / 2 + (y + 47)))) - x * sin (sqrt (abs (x - (y + 47))))
-    )
-    (symmetricDomain 2 (-512.0) 512.0)
+-- eggholder :: BoxFun
+-- eggholder =
+--     BoxFun
+--     2
+--     (\v ->
+--         let
+--             x = v!0
+--             y = v!1
+--         in
+--             -(y + 47) * sin (sqrt (abs (x / 2 + (y + 47)))) - x * sin (sqrt (abs (x - (y + 47))))
+--     )
+--     (symmetricDomain 2 (-512.0) 512.0)
     
-heron :: BoxFun
-heron = 
+-- heron :: BoxFun
+-- heron = 
+--     BoxFun
+--     2
+--     (\v ->
+--         let
+--             x = v!0
+--             y = v!1
+--             p = getPrecision v
+--             eps = 1/2^(23)
+--             i = 2
+--         in
+--             max
+--                 min
+--                     max
+--                         (y - sqrt x)
+--                         ((sqrt x - y) - (mpBallP p 1/2)^(2^(i-1)) - 6 * eps * (i-1))
+--                     max
+--                         (sqrt x - y)
+--                         (- (sqrt x - y) - (mpBallP p 1/2)^(2^(i-1)) - 6 * eps * (i-1))
+--                 min
+--                     max
+--                         ((y + x/y)/2 - sqrt x)
+--                         (- (sqrt x - (y+x/y)/2) + (mpBallP p 1/2)^(2^i) + 6 * eps * (i-1))
+--                     max
+--                         (sqrt x - (y+x/y)/2)
+--                         ((sqrt x - (y+x/y)/2) + (mpBallP p 1/2)^(2^i) + 6 * eps * (i-1))
+
+--     )
+--     (fromListDomain [(0.5, 2.0), (0.8, 1.8)])
+
+-- max (min (max 1p 1q) (max 2p 2q)) (min (max 3p 3q) (max 4p 4q))
+    
+heron1p :: BoxFun
+heron1p = 
     BoxFun
     2
     (\v ->
@@ -175,7 +208,155 @@ heron =
             eps = 1/2^(23)
             i = 2
         in
-            max (abs(sqrt x - y) - (mpBallP p 1/2)^(2^(i-1)) - (mpBallP p 6) * eps * (i - 1))
-                (- abs(sqrt x - (y + x / y) / 2) + (mpBallP p 1/2)^(2^i) + (mpBallP p 6) * eps * (i - 1))
+            (y - sqrt x)
+     )
+    (fromListDomain [(0.5, 2.0), (0.8, 1.8)])
+
+    
+heron1q :: BoxFun
+heron1q = 
+    BoxFun
+    2
+    (\v ->
+        let
+            x = v!0
+            y = v!1
+            p = getPrecision v
+            eps = 1/2^(23)
+            i = 2
+        in
+            ((sqrt x - y) - (mpBallP p 1/2)^(2^(i-1)) - (mpBallP p 6) * eps * (i-1))
+
     )
     (fromListDomain [(0.5, 2.0), (0.8, 1.8)])
+
+    
+heron2p :: BoxFun
+heron2p = 
+    BoxFun
+    2
+    (\v ->
+        let
+            x = v!0
+            y = v!1
+            p = getPrecision v
+            eps = 1/2^(23)
+            i = 2
+        in
+            (sqrt x - y)
+    )
+    (fromListDomain [(0.5, 2.0), (0.8, 1.8)])
+
+    
+heron2q :: BoxFun
+heron2q = 
+    BoxFun
+    2
+    (\v ->
+        let
+            x = v!0
+            y = v!1
+            p = getPrecision v
+            eps = 1/2^(23)
+            i = 2
+        in
+            (- (sqrt x - y) - (mpBallP p 1/2)^(2^(i-1)) - (mpBallP p 6) * eps * (i-1))
+
+    )
+    (fromListDomain [(0.5, 2.0), (0.8, 1.8)])
+
+    
+heron3p :: BoxFun
+heron3p = 
+    BoxFun
+    2
+    (\v ->
+        let
+            x = v!0
+            y = v!1
+            p = getPrecision v
+            eps = 1/2^(23)
+            i = 2
+        in
+            ((y + x/y)/2 - sqrt x)
+    )
+    (fromListDomain [(0.5, 2.0), (0.8, 1.8)])
+    
+heron3q :: BoxFun
+heron3q = 
+    BoxFun
+    2
+    (\v ->
+        let
+            x = v!0
+            y = v!1
+            p = getPrecision v
+            eps = 1/2^(23)
+            i = 2
+        in
+            (- (sqrt x - (y+x/y)/2) + (mpBallP p 1/2)^(2^i) + (mpBallP p 6) * eps * (i-1))
+    )
+    (fromListDomain [(0.5, 2.0), (0.8, 1.8)])
+
+    
+heron4p :: BoxFun
+heron4p = 
+    BoxFun
+    2
+    (\v ->
+        let
+            x = v!0
+            y = v!1
+            p = getPrecision v
+            eps = 1/2^(23)
+            i = 2
+        in
+            (sqrt x - (y+x/y)/2)
+    )
+    (fromListDomain [(0.5, 2.0), (0.8, 1.8)])
+
+    
+heron4q :: BoxFun
+heron4q = 
+    BoxFun
+    2
+    (\v ->
+        let
+            x = v!0
+            y = v!1
+            p = getPrecision v
+            eps = 1/2^(23)
+            i = 2
+        in
+            ((sqrt x - (y+x/y)/2) + (mpBallP p 1/2)^(2^i) + (mpBallP p 6) * eps * (i-1))
+
+    )
+    (fromListDomain [(0.5, 2.0), (0.8, 1.8)])
+
+mxp1 :: BoxFun
+mxp1 =
+    BoxFun
+    2
+    (\v ->
+        let
+            x = v!0
+            y = v!1
+        in
+            -x+1
+
+    )
+    (fromListDomain [(0.0, 2.0), (0.0, 2.0)])
+
+xm1 :: BoxFun
+xm1 =
+    BoxFun
+    2
+    (\v ->
+        let
+            x = v!0
+            y = v!1
+        in
+            x-1
+
+    )
+    (fromListDomain [(0.0, 2.0), (0.0, 2.0)])

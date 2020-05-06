@@ -97,6 +97,22 @@ bisect k box =
     leftBox  = V.imap (\i x -> if i == k then fromEndpointsAsIntervals l m else x) box
     rightBox = V.imap (\i x -> if i == k then fromEndpointsAsIntervals m r else x) box
 
+-- Bisects a into 2^d boxes of the same size, where d is the dimension of the given box
+fullBisect :: Box -> [Box]
+fullBisect b =
+    case V.length b of
+        0 -> []
+        -- Store the one dimensional bisected domain in a [Box]
+        1 -> [V.singleton (fst b0 ! 0), V.singleton (snd b0 ! 0)] where b0 = bisect 0 b
+        l ->
+            -- y is the dimension bisected in the current iteration
+            -- x starts from the (1) case and builds up
+            -- Append y to the Box x, then bisect the next dimension
+            concatMap (\x -> map (\y -> x V.+++ V.singleton y) (bisectDimension (l-1))) (fullBisect (V.take (fromIntegral (l-1)) b))
+
+            where
+                bisectDimension n = [fst bn ! n, snd bn ! n]
+                    where bn = bisect n b
 
 instance 
     CanNeg Box
