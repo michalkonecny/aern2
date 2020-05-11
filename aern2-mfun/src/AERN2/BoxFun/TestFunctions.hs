@@ -360,3 +360,29 @@ xm1 =
 
     )
     (fromListDomain [(0.0, 2.0), (0.0, 2.0)])
+
+xe2p1 :: BoxFun
+xe2p1 =
+    BoxFun
+    2
+    (\v ->
+        let
+            x = v!0
+            y = v!1
+        in
+            x^2+1
+    )
+    (fromListDomain [(0.0, 2.0), (0.0, 2.0)])
+
+xe2m1 :: BoxFun
+xe2m1 =
+    BoxFun
+    2
+    (\v ->
+        let
+            x = v!0
+            y = v!1
+        in
+            x^2-1
+    )
+    (fromListDomain [(0.0, 2.0), (0.0, 2.0)])
