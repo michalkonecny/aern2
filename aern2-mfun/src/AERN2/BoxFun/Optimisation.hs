@@ -273,45 +273,71 @@ split f dfb cutoff bxe =
     in
         (cutoff', boxes)
 
-maxBoxFunGreaterThanN :: BoxFun -> BoxFun -> Accuracy -> CN Rational -> Precision -> Bool
-maxBoxFunGreaterThanN f g ac n initialPrecision =
-    (fmin !>! n || gmin !>!n) ||
-        (not (Box.intersectionCertainlyEmpty fbox gbox) &&
-            (Box.width fboxp !>! cutoff && Box.width gboxp !>! cutoff) &&
-                let
-                    newFBoxes = Box.fullBisect fboxp
-                    newGBoxes = Box.fullBisect gboxp
+maxBoxFunGreaterThanN :: BoxFun -> BoxFun -> Accuracy -> CN Rational -> Precision -> Maybe (CN MPBall, CN MPBall) -> Bool
+maxBoxFunGreaterThanN f g ac n initialPrecision currentMins =
+    case currentMins of
+        Nothing ->
+            maxBoxFunGreaterThanN f g ac n initialPrecision (Just (fmin, gmin))
+            where
+                fmin = globalMinimum f ac initialPrecision 
+                gmin = globalMinimum g ac initialPrecision
+        Just (currentFMin, currentGMin) ->
+            (fmin !>! n || gmin !>!n) ||
+                (not (Box.intersectionCertainlyEmpty fbox gbox) &&
+                    (Box.width fboxp !>! cutoff && Box.width gboxp !>! cutoff) &&
+                        let
+                            newFBoxes = Box.fullBisect fboxp
+                            newGBoxes = Box.fullBisect gboxp
 
-                    bounds extents          = (lowerBound extents :: CN MPBall, upperBound extents :: CN MPBall)
-                    nBetweenBounds n (l, r) = l !<=! n && n !<=! r
+                            bounds i              = (lowerBound i :: CN MPBall, upperBound i :: CN MPBall)
+                            mAboveBounds m (l, _) = l !<! m
+                            mUnderBounds m (l, _) = m !<! l
 
-                    filteredNewFBoxes = List.filter (nBetweenBounds n . bounds . apply f) newFBoxes
-                    filteredNewGBoxes = List.filter (nBetweenBounds n . bounds . apply f) newGBoxes
+                            filteredNewFBoxes = 
+                                if currentFMin !<! n then
+                                    List.filter (mUnderBounds n . bounds . apply f) newFBoxes
+                                else
+                                    List.filter ((&&) <$> 
+                                                    (mAboveBounds currentFMin . bounds . apply f) <*> 
+                                                    (mUnderBounds n . bounds . apply f)) 
+                                                newFBoxes
 
-                    updateDomain z = BoxFun (dimension z) (bf_eval z)
 
-                    checkBoxes [] _                     =   False
-                    checkBoxes (fboxp' : fboxes) gboxes =   checkBoxes2 
-                                                                fboxp' 
-                                                                (filter (not . Box.intersectionCertainlyEmpty fboxp') gboxes) 
-                                                            || checkBoxes fboxes gboxes
+                            filteredNewGBoxes = 
+                                if currentGMin !<! n then
+                                    List.filter (mUnderBounds n . bounds . apply g) newGBoxes
+                                else
+                                    List.filter ((&&) <$> 
+                                                    (mAboveBounds currentGMin . bounds . apply g) <*> 
+                                                    (mUnderBounds n . bounds . apply g))
+                                                newGBoxes
 
-                    checkBoxes2 _ []                     =  False
-                    checkBoxes2 fboxp' (gboxp' : gboxes) =  maxBoxFunGreaterThanN    
-                                                                (updateDomain f fboxp') 
-                                                                (updateDomain g gboxp') 
-                                                                ac n initialPrecision 
-                                                            || checkBoxes2 fboxp' gboxes
-                in
-                    checkBoxes filteredNewFBoxes filteredNewGBoxes
-            )
-    where
-        fmin = globalMinimum f ac initialPrecision 
-        gmin = globalMinimum g ac initialPrecision
-        cutoff = 1/2^50
 
-        fbox                 = domain f
-        fboxp                = setPrecision initialPrecision fbox 
+                            updateDomain z = BoxFun (dimension z) (bf_eval z)
 
-        gbox                 = domain g
-        gboxp                = setPrecision initialPrecision gbox
+                            checkBoxes [] _                     =   False
+                            checkBoxes (fboxp' : fboxes) gboxes =   checkBoxes2 
+                                                                        fboxp' 
+                                                                        (filter (not . Box.intersectionCertainlyEmpty fboxp') gboxes) 
+                                                                    || checkBoxes fboxes gboxes
+
+                            checkBoxes2 _ []                     =  False
+                            checkBoxes2 fboxp' (gboxp' : gboxes) =  maxBoxFunGreaterThanN    
+                                                                        (updateDomain f fboxp') 
+                                                                        (updateDomain g gboxp') 
+                                                                        ac n initialPrecision (Just (currentFMin, currentGMin))
+                                                                    || checkBoxes2 fboxp' gboxes
+                        in
+                            checkBoxes filteredNewFBoxes filteredNewGBoxes     
+                    )
+            where
+                fmin = globalMinimum f ac initialPrecision 
+                gmin = globalMinimum g ac initialPrecision
+                cutoff = 1/2^10
+
+                fbox                 = domain f
+                fboxp                = setPrecision initialPrecision fbox 
+
+                gbox                 = domain g
+                gboxp                = setPrecision initialPrecision gbox
+
