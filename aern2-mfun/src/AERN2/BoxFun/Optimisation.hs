@@ -290,26 +290,26 @@ maxBoxFunGreaterThanN f g ac n initialPrecision currentMins =
                             newGBoxes = Box.fullBisect gboxp
 
                             bounds i              = (lowerBound i :: CN MPBall, upperBound i :: CN MPBall)
-                            mAboveBounds m (l, _) = l !<! m
-                            mUnderBounds m (l, _) = m !<! l
+                            mAboveLowerBound m (l, _) = l !<! m
+                            mUnderLowerBound m (l, _) = m !<! l
 
                             filteredNewFBoxes = 
                                 if currentFMin !<! n then
-                                    List.filter (mUnderBounds n . bounds . apply f) newFBoxes
+                                    List.filter (mUnderLowerBound n . bounds . apply f) newFBoxes
                                 else
                                     List.filter ((&&) <$> 
-                                                    (mAboveBounds currentFMin . bounds . apply f) <*> 
-                                                    (mUnderBounds n . bounds . apply f)) 
+                                                    (mAboveLowerBound currentFMin . bounds . apply f) <*> 
+                                                    (mUnderLowerBound           n . bounds . apply f)) 
                                                 newFBoxes
 
 
                             filteredNewGBoxes = 
                                 if currentGMin !<! n then
-                                    List.filter (mUnderBounds n . bounds . apply g) newGBoxes
+                                    List.filter (mUnderLowerBound n . bounds . apply g) newGBoxes
                                 else
                                     List.filter ((&&) <$> 
-                                                    (mAboveBounds currentGMin . bounds . apply g) <*> 
-                                                    (mUnderBounds n . bounds . apply g))
+                                                    (mAboveLowerBound currentGMin . bounds . apply g) <*> 
+                                                    (mUnderLowerBound           n . bounds . apply g))
                                                 newGBoxes
 
 
