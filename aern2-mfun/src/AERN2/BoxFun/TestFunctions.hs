@@ -15,13 +15,6 @@ fromListDomain [] = V.empty
 fromListDomain [x] = V.singleton $ fromEndpoints (cn $ mpBallP (prec 53) $ (fst x)) (cn $  mpBallP (prec 53) (snd x))
 fromListDomain (x:xs) = V.cons (fromEndpoints (cn $ mpBallP (prec 53) $ (fst x)) (cn $  mpBallP (prec 53) (snd x))) (fromListDomain xs)
 
-xyDomain :: (Rational, Rational) -> (Rational, Rational) -> Vector (CN MPBall)
-xyDomain x y =
-    (V.fromList [
-        fromEndpoints (cn $ mpBallP (prec 53) $ (fst x)) (cn $  mpBallP (prec 53) (snd x)),
-        fromEndpoints (cn $ mpBallP (prec 53) $ (fst y)) (cn $  mpBallP (prec 53) (snd y))]
-    )
-
 symmetricDomain :: Integer -> Rational -> Rational -> Vector (CN MPBall)
 symmetricDomain n l r = 
     V.map (\_ -> fromEndpointsAsIntervals (cn $ mpBallP (prec 53) $ l) (cn $  mpBallP (prec 53) r)) $ V.enumFromTo 1 n

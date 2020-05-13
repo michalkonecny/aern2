@@ -101,18 +101,22 @@ bisect k box =
 fullBisect :: Box -> [Box]
 fullBisect b =
     case V.length b of
-        0 -> []
-        -- Store the one dimensional bisected domain in a [Box]
-        1 -> [V.singleton (fst b0 ! 0), V.singleton (snd b0 ! 0)] where b0 = bisect 0 b
+        0 -> [b]
         l ->
             -- y is the dimension bisected in the current iteration
-            -- x starts from the (1) case and builds up
-            -- Append y to the Box x, then bisect the next dimension
+            -- x is a bisection of the previous dimension (tail recursion)
             concatMap (\x -> map (\y -> x V.+++ V.singleton y) (bisectDimension (l-1))) (fullBisect (V.take (fromIntegral (l-1)) b))
 
             where
                 bisectDimension n = [fst bn ! n, snd bn ! n]
                     where bn = bisect n b
+
+-- Get the endpoints of a box as a list containing a pair of MPBalls for each dimension
+getEndpoints :: Box -> [(MPBall, MPBall)]
+getEndpoints b  = 
+    case V.length b of
+        0 -> []
+        l -> endpoints ((b ! (l-1)) ~!) : getEndpoints (V.take (fromIntegral (l-1)) b)
 
 instance 
     CanNeg Box
