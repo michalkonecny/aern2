@@ -36,9 +36,9 @@ library
     , mixed-types-num == 0.4.*
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
+    , aern2-fun == 0.1.*
     , vector
     -- TODO: delete below eventually
-    , aern2-fun 
     , async
 
   ghc-options:     -Wall -fno-warn-orphans -O2 -threaded
