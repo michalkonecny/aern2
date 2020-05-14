@@ -17,68 +17,40 @@ import Debug.Trace
 
 evalDirect :: PPoly -> MPBall -> MPBall
 evalDirect (PPoly ps dom) x =
-  foldl1' meet $
+  foldl1' hullMPBall $
   map (\(_,f) -> ChE.evalDirect f xI) intersectingPieces
   where
   xI = (Cheb.fromDomToUnitInterval dom x)
-  meet :: MPBall -> MPBall -> MPBall
-  meet a b =
-    let
-    (la, ra :: MPBall) = endpoints a
-    (lb, rb :: MPBall) = endpoints b
-    in
-    fromEndpoints (min la lb) (max ra rb)
   xAsInterval = dyadicInterval xI
   intersectingPieces =
     filter (\p -> (fst p) `intersects` xAsInterval) ps
 
 evalDirectWithAccuracy :: Accuracy -> PPoly -> MPBall -> MPBall
 evalDirectWithAccuracy bts (PPoly ps dom) x =
-  foldl1' meet $
+  foldl1' hullMPBall $
   map (\(_,f) -> Cheb.evalDirectWithAccuracy bts f xI) intersectingPieces
   where
   xI = (Cheb.fromDomToUnitInterval dom x)
-  meet :: MPBall -> MPBall -> MPBall
-  meet a b =
-    let
-    (la, ra :: MPBall) = endpoints a
-    (lb, rb :: MPBall) = endpoints b
-    in
-    fromEndpoints (min la lb) (max ra rb)
   xAsInterval = dyadicInterval xI
   intersectingPieces =
     filter (\p -> (fst p) `intersects` xAsInterval) ps
 
 evalDf :: PPoly -> [ChPoly MPBall] -> MPBall -> MPBall
 evalDf (PPoly ps dom) fs' x =
-  foldl1' meet $
+  foldl1' hullMPBall $
   map (\((_, f), f') -> (ChE.evalDf f f' xI)) intersectingPieces
   where
   xI = (Cheb.fromDomToUnitInterval dom x)
-  meet :: MPBall -> MPBall -> MPBall
-  meet a b =
-    let
-    (la, ra :: MPBall) = endpoints a
-    (lb, rb :: MPBall) = endpoints b
-    in
-    fromEndpoints (min la lb) (max ra rb)
   xAsInterval = dyadicInterval xI
   intersectingPieces =
     filter (\p -> fst (fst p) `intersects` xAsInterval) $ zip ps fs'
 
 evalLDf :: PPoly -> [ChPoly MPBall] -> MPBall -> MPBall
 evalLDf (PPoly ps dom) fs' x =
-  foldl1' meet $
+  foldl1' hullMPBall $
   map (\((_, f), f') -> (ChE.evalLDf f f' xI)) intersectingPieces
   where
   xI = (Cheb.fromDomToUnitInterval dom x)
-  meet :: MPBall -> MPBall -> MPBall
-  meet a b =
-    let
-    (la, ra :: MPBall) = endpoints a
-    (lb, rb :: MPBall) = endpoints b
-    in
-    fromEndpoints (min la lb) (max ra rb)
   xAsInterval = dyadicInterval (Cheb.fromDomToUnitInterval dom xI)
   intersectingPieces =
     filter (\p -> fst (fst p) `intersects` xAsInterval) $ zip ps fs'
@@ -109,6 +81,6 @@ instance
 instance CanApplyApprox PPoly DyadicInterval where
   type ApplyApproxType PPoly DyadicInterval = DyadicInterval
   applyApprox p di =
-    dyadicInterval (fromEndpoints lB uB :: MPBall)
+    dyadicInterval (fromEndpointsAsIntervals lB uB)
     where
     (Interval lB uB) = sampledRange di 5 p :: Interval MPBall MPBall

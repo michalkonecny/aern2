@@ -18,6 +18,9 @@ module AERN2.MP.Ball.Comparisons
   , reducePrecionIfInaccurate
   -- * Helpers for constructing ball functions
   , byEndpointsMP
+  -- * intersection and hull
+  , intersectCNMPBall
+  , hullMPBall
 )
 where
 
@@ -102,15 +105,15 @@ instance HasOrderAsymmetric MPBall MPBall where
     | r2 <= l1 = Just False
     | otherwise = Nothing
     where
-    (l1, r1) = endpointsMP b1
-    (l2, r2) = endpointsMP b2
+    (l1, r1) = endpoints b1
+    (l2, r2) = endpoints b2
   leq b1 b2
     | r1 <= l2 = Just True
     | r2 < l1 = Just False
     | otherwise = Nothing
     where
-    (l1, r1) = endpointsMP b1
-    (l2, r2) = endpointsMP b2
+    (l1, r1) = endpoints b1
+    (l2, r2) = endpoints b2
 
 instance HasOrderAsymmetric Integer MPBall where
   type OrderCompareType Integer MPBall = Maybe Bool
@@ -146,7 +149,7 @@ instance HasOrderAsymmetric MPBall Rational where
     | r2 <= l1 = Just False
     | otherwise = Nothing
     where
-    (l1, r1) = endpointsMP b1
+    (l1, r1) = endpoints b1
     l2 = q2
     r2 = q2
   leq b1 q2
@@ -154,7 +157,7 @@ instance HasOrderAsymmetric MPBall Rational where
     | r2 < l1 = Just False
     | otherwise = Nothing
     where
-    (l1, r1) = endpointsMP b1
+    (l1, r1) = endpoints b1
     l2 = q2
     r2 = q2
 
@@ -165,7 +168,7 @@ instance HasOrderAsymmetric Rational MPBall where
     | r2 <= l1 = Just False
     | otherwise = Nothing
     where
-    (l2, r2) = endpointsMP b2
+    (l2, r2) = endpoints b2
     l1 = q1
     r1 = q1
   leq q1 b2
@@ -173,7 +176,7 @@ instance HasOrderAsymmetric Rational MPBall where
     | r2 < l1 = Just False
     | otherwise = Nothing
     where
-    (l2, r2) = endpointsMP b2
+    (l2, r2) = endpoints b2
     l1 = q1
     r1 = q1
 
@@ -293,14 +296,23 @@ instance
 
 instance CanIntersectAsymmetric MPBall MPBall where
   intersect a b
-    | rL > rR =
+    | l > r =
         noValueNumErrorCertainCN $ NumError $ "intersect: empty intersection: " ++ show a ++ "; " ++ show b
-    | otherwise = cn $ fromEndpointsMP rL rR
+    | otherwise = cn $ setPrecision p $ fromMPFloatEndpoints l r
     where
-    rL = max aL bL
-    rR = min aR bR
-    (aL,aR) = endpointsMP a
-    (bL,bR) = endpointsMP b
+    p  = getPrecision a
+    l = max aL bL
+    r = min aR bR
+    (aL,aR) = endpoints a
+    (bL,bR) = endpoints b
+
+intersectCNMPBall :: CN MPBall -> CN MPBall -> CN MPBall
+intersectCNMPBall x y =
+  case (fst $ ensureNoCN x, fst $ ensureNoCN y) of 
+    (Nothing, Nothing) -> x
+    (Just _ , Nothing) -> x
+    (Nothing, Just _ ) -> y
+    (Just _ , Just _ ) -> lift2CE intersect x y
 
 instance
   (CanIntersectAsymmetric MPBall b
@@ -328,6 +340,16 @@ instance
 
 {- union -}
 
+hullMPBall :: MPBall -> MPBall -> MPBall
+hullMPBall a b = 
+  fromEndpoints rL rR
+  where
+  rL = min aL bL
+  rR = max aR bR
+  (aL,aR) = endpoints a
+  (bL,bR) = endpoints b
+
+
 instance CanUnionAsymmetric MPBall MPBall where
   union a b =
     case getMaybeValueCN (a `intersect` b) of
@@ -335,11 +357,7 @@ instance CanUnionAsymmetric MPBall MPBall where
       _ -> prependErrorsCN [(ErrorCertain, err)] r
     where
     err = NumError $ "union of enclosures: not enclosing the same value"
-    r = cn $ fromEndpointsMP rL rR
-    rL = min aL bL
-    rR = max aR bR
-    (aL,aR) = endpointsMP a
-    (bL,bR) = endpointsMP b
+    r = cn $ hullMPBall a b
 
 
 instance
@@ -367,15 +385,16 @@ instance
   union = lift2TCE union
 
 {-|
-  Computes an *increasing* ball fucntion @f@ from *exact* MPFR operations.
+  Compute an MPBall function from *exact* MPFloat operations on interval endpoints.
+  This works only for *non-decreasing* operations, eg addition, min, max.
 -}
 byEndpointsMP ::
     (MPFloat -> MPFloat -> MPFloat) ->
     (MPBall -> MPBall -> MPBall)
 byEndpointsMP op b1 b2 =
-    fromEndpointsMP (l1 `op` l2) (r1 `op` r2)
+    fromEndpoints (l1 `op` l2) (r1 `op` r2)
     where
-    (l1,r1) = endpointsMP b1
-    (l2,r2) = endpointsMP b2
+    (l1,r1) = endpoints b1
+    (l2,r2) = endpoints b2
 
 {-  random generation -}

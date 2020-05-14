@@ -335,7 +335,7 @@ reduceDegreeTerms maxDegree =
       deg <= maxDegree
 
 reduceTerms ::
-  _ =>
+  PolyCoeffBall c =>
   (Degree -> c -> Bool) -> Terms c -> Terms c
 reduceTerms shouldKeep terms
     | terms_size termsToRemove == 0 = terms
@@ -345,7 +345,7 @@ reduceTerms shouldKeep terms
     errorBall =
         sum $ map plusMinus $ terms_coeffs termsToRemove
         where
-        plusMinus c = fromEndpoints (-c) c
+        plusMinus c = fromEndpointsAsIntervals (-c) c
     termsToRemove = terms_filterMayLoseConst shouldRemove terms
     shouldRemove deg coeff =
         deg /= 0 && (not $ shouldKeep deg coeff)
@@ -358,7 +358,7 @@ instance
 
 
 reduceDegreeWithLostAccuracyLimit ::
-  _ =>
+  PolyCoeffBall c =>
   Accuracy -> ChPoly c -> ChPoly c
 reduceDegreeWithLostAccuracyLimit accuracyLossLimit p =
     p { chPoly_poly = Poly terms' }
@@ -368,7 +368,7 @@ reduceDegreeWithLostAccuracyLimit accuracyLossLimit p =
       reduceDegreeWithLostAccuracyLimitTerms accuracyLossLimit terms
 
 reduceDegreeWithLostAccuracyLimitTerms ::
-  _ =>
+  PolyCoeffBall c =>
   Accuracy -> Terms c -> Terms c
 reduceDegreeWithLostAccuracyLimitTerms accuracyLossLimit (termsMap :: Terms c) =
   terms_updateConst (+ err) (terms_fromList termsToKeep)
@@ -386,5 +386,5 @@ reduceDegreeWithLostAccuracyLimitTerms accuracyLossLimit (termsMap :: Terms c) =
       dropTermsUntilLimit errSoFar (term : termsSoFar) rest
     where
     errNew = errSoFar + (plusMinus cf)
-    plusMinus :: (Ring c, IsInterval c c) => c -> c
-    plusMinus c = fromEndpoints (-c) c
+    plusMinus :: (PolyCoeffBall c) => c -> c
+    plusMinus c = fromEndpointsAsIntervals (-c) c

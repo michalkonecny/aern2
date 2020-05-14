@@ -38,13 +38,13 @@ instance HasIntegerBounds MPBall where
   integerBounds b =
     (floor l, ceiling r)
     where
-      (l,r) = endpointsMP b
+      (l,r) = endpoints b
 
 instance Convertible MPBall ErrorBound where
   safeConvert b =
     Right (errorBound (max (abs l) (abs r)))
     where
-    (l,r) = endpointsMP b
+    (l,r) = endpoints b
 
 {--- constructing an exact ball ---}
 

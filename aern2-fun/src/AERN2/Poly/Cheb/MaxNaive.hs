@@ -32,7 +32,7 @@ maxNaive f a b bts' =
     (\i -> getAccuracy (evalF i) >= bts)
     a b
   evalF (Interval c d) =
-    evalDf f dfc (fromEndpoints (mpBallP prc c) (mpBallP prc d))
+    evalDf f dfc (fromEndpointsAsIntervals (mpBallP prc c) (mpBallP prc d))
   prc = getPrecision f
   mxmm =
     foldl'

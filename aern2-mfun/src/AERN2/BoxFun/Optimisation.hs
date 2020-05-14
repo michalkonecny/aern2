@@ -122,7 +122,7 @@ bestLocalMinimumWithCutoff f box ac initialCutoff =
                 else 
                     aux q'' newCutoff (steps + 1) (SearchBox ext rng)
                 where
-                val' = fromEndpoints (lowerBound val) (cutoff)
+                val' = fromEndpointsAsIntervals (lowerBound val) (cutoff)
                 SearchBox ext val = minBox
 
                 (newCutoff, newBoxes) = 
@@ -156,7 +156,7 @@ lipschitzRange _f fc c g box m =
     normG          = Box.ellOneNorm g
     normDiff       = Box.inftyNorm  difference
     dotProduct     = normG * normDiff
-    newRange       = fc + (fromEndpoints (-dotProduct) dotProduct :: CN MPBall)
+    newRange       = fc + (fromEndpointsAsIntervals (-dotProduct) dotProduct :: CN MPBall)
     m'             = intersectCN m newRange
 
 increasePrecision :: Precision -> Precision

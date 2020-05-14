@@ -141,8 +141,8 @@ mi_criticalValue l r f df ac =
   where
   comp a b =
     let
-    (_, aR :: MPBall) = endpoints a
-    (_, bR :: MPBall) = endpoints b
+    (_, aR) = endpointsAsIntervals a
+    (_, bR) = endpointsAsIntervals b
     in
     if aR !<! bR then
       GT
@@ -244,8 +244,8 @@ instance Prelude.Ord MaximisationInterval where
   (<=) mi0 mi1 =
     fromJust $ u0 >= u1
     where
-    (_, u0 :: MPBall) = endpoints $ mi_value mi0
-    (_, u1 :: MPBall) = endpoints $ mi_value mi1
+    (_, u0) = endpointsAsIntervals $ mi_value mi0
+    (_, u1) = endpointsAsIntervals $ mi_value mi1
 
 {- auxiliary functions -}
 
@@ -326,7 +326,7 @@ evalOnInterval f a b bts =
     result = aux (prec 100) (prec 50) NoInformation
     aux p q ac =
       let
-        x    = setPrecision p (fromEndpoints (mpBall a) (mpBall b))
+        x    = setPrecision p (hullMPBall (mpBall a) (mpBall b))
         try  = f x
       in
         if getAccuracy try >= bts

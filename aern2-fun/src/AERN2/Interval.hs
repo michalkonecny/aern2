@@ -49,7 +49,7 @@ import AERN2.Real
 
 {- type -}
 
-data Interval l r = Interval { endpointL :: l, endpointR :: r }
+data Interval l r = Interval l r
   deriving (P.Eq, Generic)
 
 instance (Show l, Show r) => Show (Interval l r) where
@@ -78,7 +78,8 @@ instance (Read l, Read r) => Read (Interval l r) where
 singleton :: a -> Interval a a
 singleton a = Interval a a
 
-instance IsInterval (Interval e e) e where
+instance IsInterval (Interval e e) where
+  type IntervalEndpoint (Interval e e) = e
   fromEndpoints l r = Interval l r
   endpoints (Interval l r) = (l,r)
 
@@ -232,12 +233,11 @@ instance ConvertibleExactly MPBall DyadicInterval where
   safeConvertExactly ball =
     Right $ Interval (centre l) (centre r)
     where
-    l,r :: MPBall
-    (l,r) = endpoints ball
+    (l,r) = endpointsAsIntervals ball
 
 instance ConvertibleExactly DyadicInterval MPBall where
   safeConvertExactly (Interval lD rD) =
-    Right $ MPBall.fromEndpoints (mpBall lD) (mpBall rD)
+    Right $ fromEndpointsAsIntervals (mpBall lD) (mpBall rD)
 
 {- CauchyReal intervals -}
 

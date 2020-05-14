@@ -57,7 +57,7 @@ sinB i x =
     where
     lip
         | i == 0 = mpFloat 1
-        | otherwise = snd $ endpointsMP $ abs $ cosB (i - 1) x
+        | otherwise = endpointR $ abs $ cosB (i - 1) x
 
 cosB :: Integer -> MPBall -> MPBall
 cosB i x =
@@ -67,7 +67,7 @@ cosB i x =
     where
     lip
         | i == 0 = mpFloat 1
-        | otherwise = snd $ endpointsMP $ abs $ sinB (i - 1) x
+        | otherwise = endpointR $ abs $ sinB (i - 1) x
 
 -- increasingPrecisionUntilNotImproving :: (MPBall -> MPBall) -> (MPBall -> MPBall)
 -- increasingPrecisionUntilNotImproving f x =

@@ -130,7 +130,7 @@ genericMaximum f dfs bts lBall rBall =
     let
       aux p q ac =
         let
-          x    = (fromEndpoints (mpBallP p a) (mpBallP p b))
+          x    = hullMPBall (mpBallP p a) (mpBallP p b)
           try  = f x
         in
           maybeTrace (
@@ -292,8 +292,8 @@ instance Prelude.Ord MaximisationInterval where
   (<=) mi0 mi1 =
     fromJust $ u0 >= u1
     where
-    (_, u0 :: MPBall) = endpoints $ mi_value mi0
-    (_, u1 :: MPBall) = endpoints $ mi_value mi1
+    (_, u0) = endpointsAsIntervals $ mi_value mi0
+    (_, u1) = endpointsAsIntervals $ mi_value mi1
 
 {- auxiliary functions -}
 

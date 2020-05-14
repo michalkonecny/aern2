@@ -72,11 +72,11 @@ instance Arbitrary CauchyReal where
           where
           newBall =
             case sbit of
-              (-1) -> fromEndpoints l m
-              0 -> fromEndpoints l2 r2
-              1 -> fromEndpoints m r
+              (-1) -> fromEndpointsAsIntervals l m
+              0 -> fromEndpointsAsIntervals l2 r2
+              1 -> fromEndpointsAsIntervals m r
               _ -> error "in Arbitrary CauchyReal"
-          (l_,r_) = endpoints ball :: (MPBall, MPBall)
+          (l_,r_) = endpointsAsIntervals ball
           l = setPrecision p l_
           r = setPrecision p r_
           m = (l + r) * (dyadic 0.5)

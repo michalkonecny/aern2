@@ -65,14 +65,14 @@ maximumNaive f l r eps =
    "critical values: "++ show values
   ) $
   (foldl1' max values)
-    + (fromEndpoints (-(mpBall $ dyadic err)) (mpBall $ dyadic err) :: MPBall) -- TODO: this conversion is somewhat terrible
+    + (hullMPBall (-(mpBall $ dyadic err)) (mpBall $ dyadic err)) -- TODO: this conversion is somewhat terrible
   where
   fc  = powPoly_centre f
   err = powPoly_radius f
   fc' = derivative_exact fc
   values = critValues ++ boundaryValues
   boundaryValues = map (evalDirect fc) [l, r]
-  critValues = map (evalDf fc fc') $ map (\(a,b) -> fromEndpoints a b) roots
+  critValues = map (evalDf fc fc') $ map (\(a,b) -> hullMPBall a b) roots
   roots  = findRoots fc' l r (\(a,b) -> (abs (b - a) < eps) == Just True)
 
 minimumNaive :: PowPoly MPBall -> MPBall -> MPBall -> Rational -> MPBall
@@ -115,7 +115,7 @@ genericMaximum f dfs bts l r =
     let
       aux p q ac =
         let
-          try = f (fromEndpoints (setPrecision p a) (setPrecision p b))
+          try = f (hullMPBall (setPrecision p a) (setPrecision p b))
         in
           maybeTrace (
           "evaluating on interval "++(show a)++ ", "++(show b)++"\n"++
@@ -281,8 +281,8 @@ instance Prelude.Ord MaximisationInterval where
   (<=) mi0 mi1 =
     fromJust $ u0 >= u1
     where
-    (_, u0 :: MPBall) = endpoints $ mi_value mi0
-    (_, u1 :: MPBall) = endpoints $ mi_value mi1
+    (_, u0) = endpointsAsIntervals $ mi_value mi0
+    (_, u1) = endpointsAsIntervals $ mi_value mi1
 
 {- auxiliary functions -}
 

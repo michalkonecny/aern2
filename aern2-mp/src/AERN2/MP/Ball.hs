@@ -19,7 +19,7 @@ module AERN2.MP.Ball
   , module AERN2.MP.ErrorBound
   , module AERN2.MP.Enclosure
   -- * The Ball type
-  , MPBall(..), CanBeMPBall, mpBall, CanBeMPBallP, mpBallP
+  , MPBall(..), CanBeMPBall, mpBall, cnMPBall, CanBeMPBallP, mpBallP, cnMPBallP
   , reducePrecionIfInaccurate
   {-
   -- * Ball construction/extraction functions
@@ -27,7 +27,8 @@ module AERN2.MP.Ball
   -}
   -- * Ball operations (see also instances)
   , piBallP
-  , endpointsMPBall, fromEndpointsMPBall, hullMPBall
+  , intersectCNMPBall
+  , hullMPBall
   -- * Helpers for constructing ball functions
   , byEndpointsMP
   , fromApproxWithLipschitz

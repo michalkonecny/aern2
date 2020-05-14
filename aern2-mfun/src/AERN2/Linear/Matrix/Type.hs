@@ -78,7 +78,7 @@ intersection (Matrix w0 v0) (Matrix w1 v1) =
             (Nothing, Nothing) -> l -- TODO: safe?
             (Nothing, Just _ ) -> l
             (Just _, Nothing ) -> r
-            (Just  x, Just y ) -> pure (fromEndpoints x y :: MPBall)
+            (Just  x, Just y ) -> pure (fromEndpointsAsIntervals x y)
         where
         ncnl = ensureNoCN l
         ncnr = ensureNoCN r 

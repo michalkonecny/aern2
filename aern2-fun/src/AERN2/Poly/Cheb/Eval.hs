@@ -114,7 +114,7 @@ evalLip f l x =
   --trace ("centre: "++ (show $ evalDirect f (centreAsBall x))) $
   --trace ("lipschitz: "++ (show $ l)) $
   --trace ("error: "++ (show $ err)) $
-  (evalDirect f (centreAsBall x)) + (fromEndpoints (-err) err :: MPBall)
+  (evalDirect f (centreAsBall x)) + (hullMPBall (-err) err)
   where
   err = l* dyadic (ball_error x)
 
@@ -177,7 +177,7 @@ evalDfAccurately f f' x = (aux 100 50) + (fromEndpoints (-err) err :: MPBall)
 instance CanApplyApprox (ChPoly MPBall) DyadicInterval where
   type ApplyApproxType (ChPoly MPBall) DyadicInterval = MPBall
   applyApprox p di =
-    fromEndpoints lB uB
+    fromEndpointsAsIntervals lB uB
     where
     (Interval lB uB) = sampledRange di 5 p :: Interval MPBall MPBall
 

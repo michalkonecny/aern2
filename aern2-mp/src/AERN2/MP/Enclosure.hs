@@ -14,7 +14,9 @@
 module AERN2.MP.Enclosure
 (
   IsBall(..), ballFunctionUsingLipschitz
-  , IsInterval(..), intervalFunctionByEndpoints, intervalFunctionByEndpointsUpDown
+  , IsInterval(..), endpointL, endpointR
+  , fromEndpointsAsIntervals, endpointsAsIntervals, endpointLAsInterval, endpointRAsInterval
+  , intervalFunctionByEndpoints, intervalFunctionByEndpointsUpDown
   , CanTestContains(..), CanMapInside(..), specCanMapInside
   , CanIntersectAsymmetric(..), CanIntersect
   , CanIntersectCNBy, CanIntersectCNSameType
@@ -75,33 +77,66 @@ ballFunctionUsingLipschitz fThin fLip x
 
 
 {- interval-specific operations -}
+class IsInterval i where
+  type IntervalEndpoint i
+  endpoints :: i -> (IntervalEndpoint i, IntervalEndpoint i)
+  fromEndpoints :: IntervalEndpoint i -> IntervalEndpoint i -> i
 
-class IsInterval i e where
-  fromEndpoints :: e -> e -> i
-  endpoints :: i -> (e,e)
+endpointL :: (IsInterval i) => i -> IntervalEndpoint i
+endpointL = fst . endpoints
+
+endpointR :: (IsInterval i) => i -> IntervalEndpoint i
+endpointR = snd . endpoints
+
+endpointsAsIntervals :: 
+  (IsInterval i) => i -> (i,i)
+endpointsAsIntervals x = (lI,rI)
+  where
+  lI = fromEndpoints l l
+  rI = fromEndpoints r r
+  (l,r) = endpoints x
+
+endpointLAsInterval :: (IsInterval i) => i -> i
+endpointLAsInterval = fst . endpointsAsIntervals
+
+endpointRAsInterval :: (IsInterval i) => i -> i
+endpointRAsInterval = snd . endpointsAsIntervals
+
+
+fromEndpointsAsIntervals :: 
+  (IsInterval i, CanMinMaxSameType (IntervalEndpoint i)) =>
+  i -> i -> i
+fromEndpointsAsIntervals l r = 
+  fromEndpoints lMP uMP
+  where
+  lMP = min llMP rlMP
+  uMP = max luMP ruMP
+  (llMP, luMP) = endpoints l
+  (rlMP, ruMP) = endpoints r
+
 
 {-|
     Computes a *monotone* ball function @f@ on intervals using the interval endpoints.
 -}
 intervalFunctionByEndpoints ::
-  (IsInterval t t, HasEqCertainly t t)
+  (IsInterval t, CanMinMaxSameType (IntervalEndpoint t), HasEqCertainly t t)
   =>
   (t -> t) {-^ @fThin@: a version of @f@ that works well on thin intervals -} ->
   (t -> t) {-^ @f@ on *large* intervals -}
 intervalFunctionByEndpoints fThin x
   | l !==! u = fThin l
-  | otherwise = fromEndpoints (fThin l) (fThin u)
+  | otherwise = fromEndpointsAsIntervals (fThin l) (fThin u)
   where
-  (l,u) = endpoints x
+  (l,u) = endpointsAsIntervals x
 
 {-|
     Computes a *monotone* ball function @f@ on intervals using the interval endpoints.
 -}
 intervalFunctionByEndpointsUpDown ::
-  (IsInterval t e)
+  (IsInterval t)
   =>
-  (e -> e) {-^ @fDown@: a version of @f@ working on endpoints, rounded down -} ->
-  (e -> e) {-^ @fUp@: a version of @f@ working on endpoints, rounded up -} ->
+  (IntervalEndpoint t -> IntervalEndpoint t) {-^ @fDown@: a version of @f@ working on endpoints, rounded down -} ->
+  (IntervalEndpoint t -> IntervalEndpoint t) {-^ @fUp@: a version of @f@ working on endpoints, rounded up -} ->
   (t -> t) {-^ @f@ on intervals rounding *outwards* -}
 intervalFunctionByEndpointsUpDown fDown fUp x =
   fromEndpoints (fDown l) (fUp u)

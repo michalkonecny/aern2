@@ -39,7 +39,7 @@ evalDIn f x n =
 
 evalLip :: PowPoly MPBall -> MPBall -> MPBall -> MPBall
 evalLip f lip x =
-  (evalDirect f $ centreAsBall x) + (fromEndpoints (-err) err :: MPBall)
+  (evalDirect f $ centreAsBall x) + (hullMPBall (-err) err)
   where
   err = lip*(dyadic $ ball_error x)*0.5
 

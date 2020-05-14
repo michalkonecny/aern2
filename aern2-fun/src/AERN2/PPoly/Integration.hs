@@ -34,7 +34,7 @@ integral (PPoly ps dom) l r =
     a' = max a lI
     b' = min b rI
     eps = (mpBall $ radius p)*(b' - a')
-    err = fromEndpoints (-eps) eps :: MPBall
+    err = hullMPBall (-eps) eps
     in
     (evalDf q cp b' - evalDf q cp a') + err -- TODO: eval direct?
 

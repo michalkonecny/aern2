@@ -138,7 +138,7 @@ evalOnIntervalGuessPrecision f (Interval l r) =
     resultsWithIncreasingPrecision = map fp precisions
     fp p = f b
         where
-        b = cn $ (fromEndpoints lMP rMP :: MPBall)
+        b = cn $ (fromEndpointsAsIntervals lMP rMP)
         lMP = setPrecision p $ mpBall l
         rMP = setPrecision p $ mpBall r
     precisions =
@@ -224,7 +224,7 @@ maximumOnIntervalSubdivide evalOnInterval di =
   res = convergentList2CauchyRealA "range max" $ filterNoException 100 True maxSequence
   maxSequence = search fi fdiL $ Q.singleton $ MaxSearchSegment di fdiL fdiR
     where
-    (fdiL, fdiR) = gunzip $ fmap endpoints fdi
+    (fdiL, fdiR) = gunzip $ fmap endpointsAsIntervals fdi
     (_,fdi) = fi di
     fi = evalOnInterval
   search fi prevL prevQueue =
@@ -254,7 +254,7 @@ maximumOnIntervalSubdivide evalOnInterval di =
         (_, (Just _sVL, _)) -> segValL
         _ -> prevL
     currentBall :: CN MPBall
-    currentBall = liftA2 fromEndpoints nextL segValR
+    currentBall = liftA2 fromEndpointsAsIntervals nextL segValR
 
     -- split the current segment and pre-compute
     (seg1, seg2) = Interval.split seg
@@ -280,7 +280,7 @@ maximumOnIntervalSubdivide evalOnInterval di =
           "UnaryBallFun maximumOnIntervalSubdivide search: fiEE:"
           ++ "\n  fis = " ++ show fis
       ) $
-      (gunzip $ fmap endpoints fis, s)
+      (gunzip $ fmap endpointsAsIntervals fis, s)
       -- case maybeMonotone of
       --   Nothing -> (gunzip $ fmap endpoints fis, s)
       --   Just (minB, maxB) -> ((minB, maxB), s)

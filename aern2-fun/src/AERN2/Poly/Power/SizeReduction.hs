@@ -13,7 +13,7 @@ reduceDegree (PowPoly (Poly ts)) l r n =
     Map.filterWithKey (\k _ -> k <= n) ts
   where
   m = max (abs l) (abs r)
-  errBall = fromEndpoints (-err) err :: MPBall
+  errBall = hullMPBall (-err) err
   err = Map.foldlWithKey' (\s k c -> s + (abs c) * (m^!k)) (mpBall 0)
           $ Map.filterWithKey (\k _ -> k > n) ts
 

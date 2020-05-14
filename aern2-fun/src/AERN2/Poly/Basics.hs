@@ -89,7 +89,7 @@ instance PolyCoeffField MPBall
 -}
 class
   (PolyCoeffField c, CanAddSubMulDivCNBy c CauchyReal
-  , IsInterval c c, IsBall c, CanSetPrecision c)
+  , IsInterval c, CanMinMaxSameType (IntervalEndpoint c), IsBall c, CanSetPrecision c)
   =>
   PolyCoeffBall c
 

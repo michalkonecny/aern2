@@ -28,7 +28,7 @@ inverse m =
     nye    = V.map V.inftyNorm (columns yid)
     err    = id - y * m
     nerr   = inftyNorm err
-    ui     = pure $ fromEndpoints (mpBall $ -1) (mpBall 1)   :: CN MPBall
+    ui     = cn $ fromEndpointsAsIntervals (mpBall $ -1) (mpBall 1)
     x0     = create (width m) (width m) (\_ j -> (ui *  (nye ! j)) / (1 - nerr))
     aux x  = let x' = it x in if getAccuracy x' <= getAccuracy x then x' else aux x'
     it x   = intersection x $ yid + err * x

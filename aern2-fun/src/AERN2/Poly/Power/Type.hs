@@ -67,7 +67,7 @@ instance IsBall (PowPoly MPBall) where
      let
      nr = mpBall $ dyadic $ updateFn (radius p)
      in
-     (fromEndpoints (-nr) nr :: MPBall) + (powPoly_centre p)
+     (hullMPBall (-nr) nr) + (powPoly_centre p)
 
 instance (CanAddSameType c) => CanAddAsymmetric (PowPoly c) (PowPoly c) where
   type AddType (PowPoly c) (PowPoly c) = PowPoly c

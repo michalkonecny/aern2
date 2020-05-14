@@ -39,10 +39,10 @@ liftAnalytic f p =
   res
   where
   res = updateRadius (+ (errp + chebErr + radius s)) $ evalNoFuzz (centre s) (fromDomToUnitInterval sDom $ centre p)
-  (rl :: MPBall, _) = endpoints $ minimumOptimisedWithAccuracy (bits 5) p (mpBall $ l) (mpBall $ r) 5 5
-  (_, rr :: MPBall) = endpoints $ maximumOptimisedWithAccuracy (bits 5) p (mpBall $ l) (mpBall $ r) 5 5
+  (rl, _) = endpointsAsIntervals $ minimumOptimisedWithAccuracy (bits 5) p (mpBall $ l) (mpBall $ r) 5 5
+  (_, rr) = endpointsAsIntervals $ maximumOptimisedWithAccuracy (bits 5) p (mpBall $ l) (mpBall $ r) 5 5
   sDom  = Interval (centre rl) (centre rr)
-  sDomB = setPrecision (prec 100) $ fromEndpoints rl rr :: MPBall
+  sDomB = setPrecision (prec 100) $ fromEndpointsAsIntervals rl rr
   fBound k = abs $ f k sDomB
   lip = hdiff * fBound 1
   Interval l r = chPoly_dom p

@@ -120,7 +120,7 @@ genericMaximum fs cutoff lBall rBall =
   maxKey = fst $ Map.findMax fs
   initialQueue =
     Q.singleton $
-      SearchInterval l r (f0 (fromEndpoints lBall rBall :: MPBall)) Nothing 0 bsI
+      SearchInterval l r (f0 (fromEndpointsAsIntervals lBall rBall)) Nothing 0 bsI
 
   splitUntilAccurate q =
     let
@@ -323,7 +323,7 @@ splitCritical cutoff f df l r sgnL =
   else
     splitCritical cutoff f df m r sgnM
   where
-  ivl  = (fromEndpoints (mpBall l) (mpBall r) :: MPBall)
+  ivl  = (fromEndpointsAsIntervals (mpBall l) (mpBall r))
   fivl = f ivl
   m    = (dyadic 0.5) * (l + r)
   sgnM  = polySgn df m
@@ -344,7 +344,7 @@ mi_newValue fs _maxKey (SearchInterval l r _ _ d ts) =
     Just 0 -> (max (f lBall) (f rBall), 0)
     Just 1 ->
       (splitCritical cutoff f df l r sgnL, 1)
-    Just n -> (f (fromEndpoints lBall rBall :: MPBall), n)
+    Just n -> (f (fromEndpointsAsIntervals lBall rBall), n)
     _ -> error "fff"
 
 mi_newValue fs maxKey (CriticalInterval l r _ _ _) =
@@ -353,7 +353,7 @@ mi_newValue fs maxKey (CriticalInterval l r _ _ _) =
     lBall = mpBall l
     rBall = mpBall r
   in
-    (f (fromEndpoints lBall rBall :: MPBall), 1)
+    (f (fromEndpointsAsIntervals lBall rBall), 1)
 
 mi_newValue _ _ FinalInterval{} =
   error "trying to compute new value of final interval."
@@ -362,8 +362,8 @@ instance P.Ord MaximisationInterval where
   (<=) mi0 mi1 =
     fromJust $ u0 >= u1
     where
-    (_, u0 :: MPBall) = endpoints $ mi_value mi0
-    (_, u1 :: MPBall) = endpoints $ mi_value mi1
+    (_, u0) = endpointsAsIntervals $ mi_value mi0
+    (_, u1) = endpointsAsIntervals $ mi_value mi1
 
 ffst :: (a,b,c) -> a
 ffst (a,_,_) = a

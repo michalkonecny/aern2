@@ -97,7 +97,7 @@ chebMaxDCT p q =
       t (x :: Dyadic) = domL + (dyadic 0.5) * (domR - domL) * (x + 1) :: Dyadic
   evalDiffOnInterval (Interval l r) =
       evalDf diffC diffC' $
-        fromEndpoints (mpBallP precision l) (mpBallP precision r)
+        fromEndpointsAsIntervals (mpBallP precision l) (mpBallP precision r)
   (Interval domL domR) = getDomain diffC
   diffC_onDom =
       evalDiffOnInterval (Interval (rational domL) (rational domR))

@@ -82,7 +82,7 @@ maximumOptimisedWithAccuracy acc (ChPoly dom poly acG _) l r initialDegree steps
     let
       err = mpBall $ dyadic $ radius p
     in
-    (fromEndpoints (-err) err :: MPBall) + (cheb2Power . chPoly_poly . centre) p
+    (fromEndpointsAsIntervals (-err) err) + (cheb2Power . chPoly_poly . centre) p
   dfsWithEval =
     Map.fromList
     [(k,(evalDirect df :: MPBall -> MPBall, ch2Power df)) | (k,df) <- dfs]
@@ -120,13 +120,3 @@ instance CanMaximiseOverDom (ChPoly MPBall) DyadicInterval where
   type MaximumOverDomType (ChPoly MPBall) DyadicInterval = MPBall
   maximumOverDom f (Interval l r) =
     maximumOptimised (setPrecision (3*getPrecision f) f) (mpBall l) (mpBall r) 5 5
-    {-res
-    where
-    (_, Just res) = last $ iterateUntilAccurate ac withPrec
-    ac = getFiniteAccuracy f
-    withPrec p =
-      maybeTrace (printf "ChPoly: MaximumOverDomType: withPrec: p = %s; ac = %s"
-        (show p) (show $ getAccuracy resP)) $
-      Just resP
-      where
-      resP = maximumOptimised (setPrecision p f) (mpBall l) (mpBall r) 5 5-}

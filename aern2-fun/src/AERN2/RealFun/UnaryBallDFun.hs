@@ -96,8 +96,8 @@ evalUseD ::
   (Maybe (CN MPBall, CN MPBall), CN MPBall)
 evalUseD [] f di = (Nothing, evalOnIntervalGuessPrecision f di)
 evalUseD (UnaryBallFun _ f' : rest) f di@(Interval l r)
-  | f'di !>=! 0 = (Just (fl,fr), liftA2 fromEndpoints fl fr)
-  | f'di !<=! 0 = (Just (fr,fl), liftA2 fromEndpoints fr fl)
+  | f'di !>=! 0 = (Just (fl,fr), liftA2 fromEndpointsAsIntervals fl fr)
+  | f'di !<=! 0 = (Just (fr,fl), liftA2 fromEndpointsAsIntervals fr fl)
   | otherwise = (Nothing, fm + errBall)
   where
   (_, f'di) = evalUseD rest f' di -- recursive call

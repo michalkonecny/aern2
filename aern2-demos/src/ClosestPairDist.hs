@@ -84,8 +84,8 @@ compMPBall = (!<!)
 
 {- auxiliary functions -}
 
-hull :: MPBall -> MPBall -> MPBall
-hull = fromEndpoints
+-- hull :: MPBall -> MPBall -> MPBall
+-- hull = hullMPBall
 
 average :: (HasIntegers t, CanAddSameType t, CanDivCNBy t Integer) => [t] -> t
 average xs = (sum xs) /! (length xs)

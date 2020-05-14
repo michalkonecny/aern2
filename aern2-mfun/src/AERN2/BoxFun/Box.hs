@@ -31,9 +31,8 @@ intersectionCertainlyEmpty vx vy =
     ballIntersectionCertainlyEmpty x y = 
         (lx !>! ry || rx !<! ly)
         where
-        (lx :: CN MPBall, rx :: CN MPBall) = endpoints x
-        (ly :: CN MPBall, ry :: CN MPBall) = endpoints y
-
+        (lx, rx) = endpointsAsIntervals x
+        (ly, ry) = endpointsAsIntervals y
 
 nonEmptyIntersection :: Box -> Box -> Box
 nonEmptyIntersection vx vy = 
@@ -94,9 +93,9 @@ bisect k box =
     p   = getPrecision box
     interval = box ! k
     m = (fmap $ mpBallP p) $ (fmap centre) interval
-    (l, r) = endpoints interval
-    leftBox  = V.imap (\i x -> if i == k then fromEndpoints l m else x) box
-    rightBox = V.imap (\i x -> if i == k then fromEndpoints m r else x) box
+    (l, r) = endpointsAsIntervals interval
+    leftBox  = V.imap (\i x -> if i == k then fromEndpointsAsIntervals l m else x) box
+    rightBox = V.imap (\i x -> if i == k then fromEndpointsAsIntervals m r else x) box
 
 
 instance 

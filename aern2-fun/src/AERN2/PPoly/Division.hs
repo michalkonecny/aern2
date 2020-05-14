@@ -77,7 +77,7 @@ inverseWithAccuracy cutoff' f@(PPoly _ (Interval l r)) =
   if0 =
     setAccuracyGuide ((2^!numIts)*cutoff) $
     initialApproximation fRed1 bts thresholdAccuracy
-  thresholdAccuracy = 2 + 2*getAccuracy ((fromEndpoints (-threshold) (threshold)) :: MPBall)
+  thresholdAccuracy = 2 + 2*getAccuracy ((fromEndpointsAsIntervals (-threshold) (threshold)))
 
 inverse :: PPoly -> PPoly -- TODO: allow negative f
 inverse f =

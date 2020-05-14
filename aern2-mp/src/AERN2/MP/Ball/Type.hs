@@ -18,17 +18,19 @@ module AERN2.MP.Ball.Type
   , module AERN2.MP.Accuracy
   , module AERN2.MP.Enclosure
   -- * The Ball type
-  , MPBall(..), CanBeMPBall, mpBall, CanBeMPBallP, mpBallP
+  , MPBall(..), CanBeMPBall, mpBall, cnMPBall
+  , CanBeMPBallP, mpBallP, cnMPBallP
   , reducePrecionIfInaccurate
   -- * Ball construction/extraction functions
-  , endpointsMP, fromEndpointsMP
-  , endpointsMPBall, fromEndpointsMPBall
-  , hullMPBall
+  , fromMPFloatEndpoints
+  , mpBallEndpoints, fromMPBallEndpoints
 )
 where
 
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
+
+import Control.Applicative
 
 import Control.CollectErrors
 
@@ -136,7 +138,8 @@ $(declForTypes
 
 {- ball construction/extraction functions -}
 
-instance IsInterval MPBall MPFloat where
+instance IsInterval MPBall where
+  type IntervalEndpoint MPBall = MPFloat
   fromEndpoints l u
     | u < l = fromEndpoints u l
     | otherwise =
@@ -150,31 +153,19 @@ instance IsInterval MPBall MPFloat where
       l   = x -. eFl
       u   = x +^ eFl
 
-fromEndpointsMP :: MPFloat -> MPFloat -> MPBall
-fromEndpointsMP = fromEndpoints
+instance (IsInterval (CN MPBall)) where
+    type (IntervalEndpoint (CN MPBall)) = CN MPFloat
+    fromEndpoints l u = liftA2 fromEndpoints l u
+    endpoints x = (fmap endpointL x, fmap endpointR x)
 
-endpointsMP :: MPBall -> (MPFloat, MPFloat)
-endpointsMP = endpoints
+fromMPFloatEndpoints :: MPFloat -> MPFloat -> MPBall
+fromMPFloatEndpoints = fromEndpoints
 
-instance IsInterval MPBall MPBall where
-  fromEndpoints l r = -- works as union even when r < l
-      fromEndpointsMP lMP uMP
-      where
-      lMP = min llMP rlMP
-      uMP = max luMP ruMP
-      (llMP, luMP) = endpointsMP l
-      (rlMP, ruMP) = endpointsMP r
-  endpoints x = (l,u)
-      where
-      l = MPBall lMP (errorBound 0)
-      u = MPBall uMP (errorBound 0)
-      (lMP, uMP) = endpointsMP x
+fromMPBallEndpoints :: MPBall -> MPBall -> MPBall
+fromMPBallEndpoints = fromEndpointsAsIntervals
 
-fromEndpointsMPBall :: MPBall -> MPBall -> MPBall
-fromEndpointsMPBall = fromEndpoints
-
-endpointsMPBall :: MPBall -> (MPBall, MPBall)
-endpointsMPBall = endpoints
+mpBallEndpoints :: MPBall -> (MPBall, MPBall)
+mpBallEndpoints = endpointsAsIntervals
 
 instance IsBall MPBall where
   type CentreType MPBall = Dyadic
@@ -186,14 +177,9 @@ instance IsBall MPBall where
   radius (MPBall _ e) = e
   updateRadius updateFn (MPBall c e) = MPBall c (updateFn e)
 
-hullMPBall :: MPBall -> MPBall -> MPBall
-hullMPBall a b = 
-  fromEndpointsMP rL rR
-  where
-  rL = min aL bL
-  rR = max aR bR
-  (aL,aR) = endpointsMP a
-  (bL,bR) = endpointsMP b
+instance (IsBall (CN MPBall)) where
+    type CentreType (CN MPBall) = CN Dyadic
+    centre = fmap centre
 
 
 {--- constructing a ball with a given precision ---}
@@ -203,6 +189,8 @@ type CanBeMPBallP t = (ConvertibleWithPrecision t MPBall)
 mpBallP :: (CanBeMPBallP t) => Precision -> t -> MPBall
 mpBallP = convertP
 
+cnMPBallP :: (CanBeMPBallP a) => Precision -> CN a -> CN MPBall
+cnMPBallP p = fmap (mpBallP p)
 
 {--- constructing an exact ball ---}
 
@@ -210,6 +198,10 @@ type CanBeMPBall t = ConvertibleExactly t MPBall
 
 mpBall :: (CanBeMPBall t) => t -> MPBall
 mpBall = convertExactly
+
+cnMPBall :: (CanBeMPBall a) => CN a -> CN MPBall
+cnMPBall = fmap mpBall
+
 
 {-- extracting approximate information about a ball --}
 
@@ -245,7 +237,7 @@ instance CanReduceSizeUsingAccuracyGuide MPBall where
 instance HasNorm MPBall where
     getNormLog ball = getNormLog boundMP
         where
-        (_, MPBall boundMP _) = endpoints $ absRaw ball
+        (_, MPBall boundMP _) = mpBallEndpoints $ absRaw ball
 
 instance HasApproximate MPBall where
     type Approximate MPBall = (MPFloat, Bool)
@@ -282,8 +274,8 @@ instance CanAbs MPBall where
 absRaw :: MPBall -> MPBall
 absRaw b
   | l < 0 && 0 < r =
-    fromEndpointsMP (mpFloat 0) (max (-l) r)
+    fromEndpoints (mpFloat 0) (max (-l) r)
   | 0 <= l = b
   | otherwise = -b
   where
-  (l,r) = endpointsMP b
+  (l,r) = endpoints b

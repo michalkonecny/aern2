@@ -69,7 +69,7 @@ maximumOptimisedWithAccuracyAndDerivedBounds :: PPoly -> MPBall -> MPBall -> Int
 maximumOptimisedWithAccuracyAndDerivedBounds f l r iDeg steps acc =
   maximumOptimisedWithAccuracyAndBounds f l r iDeg steps acc lower upper
   where
-  rangeBall = PPE.evalDI f (fromEndpoints l r)
+  rangeBall = PPE.evalDI f (fromEndpointsAsIntervals l r)
   (c,rad) = centreAsBallAndRadius rangeBall
   lower = c - mpBall rad
   upper = c + mpBall rad
@@ -81,7 +81,7 @@ maximumOptimisedWithAccuracyAndBounds (PPoly ps dom) l r initialDegree steps cut
     (
     \(m, lw, up) ((Interval a b), p) ->
       let
-        mu = (fromEndpoints m upper :: MPBall)
+        mu = (fromEndpointsAsIntervals m upper)
         m' = Cheb.maximumOptimisedWithAccuracyAndBounds
               (min cutoffAccuracy (getFiniteAccuracy p))
               (updateRadius (+ (radius p)) $ centre p)
@@ -285,7 +285,7 @@ genericMaximum f dfs maxKeys nodes cutoffAccuracies =
     let
       aux p q ac =
         let
-          try = f (fromEndpoints (mpBallP p a) (mpBallP p b))
+          try = f (fromEndpointsAsIntervals (mpBallP p a) (mpBallP p b))
         in
           {-trace (
           "evaluating on interval "++(show a)++ ", "++(show b)++"\n"++
@@ -475,8 +475,8 @@ instance Prelude.Ord MaximisationInterval where
   (<=) mi0 mi1 =
     fromJust $ u0 >= u1
     where
-    (_, u0 :: MPBall) = endpoints $ mi_value mi0
-    (_, u1 :: MPBall) = endpoints $ mi_value mi1
+    (_, u0) = endpointsAsIntervals $ mi_value mi0
+    (_, u1) = endpointsAsIntervals $ mi_value mi1
 
 isMoreAccurate :: MPBall -> Maybe MPBall -> Bool
 isMoreAccurate _ Nothing  = True

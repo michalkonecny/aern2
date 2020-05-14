@@ -239,7 +239,7 @@ makeFnPositive (FnAndDescr p pDescr) =
     | otherwise = centreAsBall $ p - lb + 1
   Interval l r = getDomain p
   lb :: MPBall
-  (lb, _) = endpoints $ minimumOptimisedWithAccuracy (bits 0) p (mpBall l) (mpBall r) 5 5
+  (lb, _) = endpointsAsIntervals $ minimumOptimisedWithAccuracy (bits 0) p (mpBall l) (mpBall r) 5 5
 
 makeFnSmallRange :: Integer -> FnAndDescr (ChPoly MPBall) -> FnAndDescr (ChPoly MPBall)
 makeFnSmallRange limit (FnAndDescr p pDescr) =
@@ -257,8 +257,8 @@ makeFnSmallRange limit (FnAndDescr p pDescr) =
   lb, ub :: MPBall
   -- (lb, _) = endpoints $ minimumOverDom p (getDomain p)
   -- (_, ub) = endpoints $ maximumOverDom p (getDomain p)
-  (lb, _) = endpoints $ minimumOptimisedWithAccuracy (bits 0) p (mpBall l) (mpBall r) 5 5
-  (_, ub) = endpoints $ maximumOptimisedWithAccuracy (bits 0) p (mpBall l) (mpBall r) 5 5
+  (lb, _) = endpointsAsIntervals $ minimumOptimisedWithAccuracy (bits 0) p (mpBall l) (mpBall r) 5 5
+  (_, ub) = endpointsAsIntervals $ maximumOptimisedWithAccuracy (bits 0) p (mpBall l) (mpBall r) 5 5
   Interval l r = getDomain p
 
 makeFnPositiveSmallRange :: Integer -> FnAndDescr (ChPoly MPBall) -> FnAndDescr (ChPoly MPBall)
@@ -273,8 +273,8 @@ makeFnPositiveSmallRange limit (FnAndDescr p pDescr) =
   lb, ub :: MPBall
   -- (lb, _) = endpoints $ minimumOverDom p (getDomain p)
   -- (_, ub) = endpoints $ maximumOverDom p (getDomain p)
-  (lb, _) = endpoints $ minimumOptimisedWithAccuracy (bits 0) p (mpBall l) (mpBall r) 5 5
-  (_, ub) = endpoints $ maximumOptimisedWithAccuracy (bits 0) p (mpBall l) (mpBall r) 5 5
+  (lb, _) = endpointsAsIntervals $ minimumOptimisedWithAccuracy (bits 0) p (mpBall l) (mpBall r) 5 5
+  (_, ub) = endpointsAsIntervals $ maximumOptimisedWithAccuracy (bits 0) p (mpBall l) (mpBall r) 5 5
   Interval l r = getDomain p
 
 

@@ -41,7 +41,7 @@ genericMaximum
 genericMaximum f df bts lBall rBall =
   genericMaximumWithBounds f df bts lBall rBall lower upper
   where
-  rangeBall = f (fromEndpoints lBall rBall)
+  rangeBall = f (hullMPBall lBall rBall)
   Interval lower' upper' = dyadicInterval rangeBall
   lower = mpBall lower'
   upper = mpBall upper'
@@ -98,7 +98,7 @@ genericMaximumWithBounds f dfs bts lBall rBall lower' upper' =
     let
       aux p q ac =
         let
-          x    = (fromEndpoints (mpBallP p a) (mpBallP p b))
+          x    = (hullMPBall (mpBallP p a) (mpBallP p b))
           try  = min upper $ max lower (f x)
         in
           maybeTrace (
@@ -135,7 +135,7 @@ genericMaximumWithBounds f dfs bts lBall rBall lower' upper' =
   splitUntilAccurate ::  MPBall -> MPBall -> PQueue MaximisationInterval -> MPBall
   splitUntilAccurate lower upper q =
     let
-      ul = fromEndpoints lower upper :: MPBall
+      ul = hullMPBall lower upper
       Just (mi, q') = {-trace("q size: "++(show $ Q.size q)) $-} Q.minView q
     in
       maybeTrace (
@@ -265,8 +265,8 @@ instance Prelude.Ord MaximisationInterval where
   (<=) mi0 mi1 =
     fromJust $ u0 >= u1
     where
-    (_, u0 :: MPBall) = endpoints $ mi_value mi0
-    (_, u1 :: MPBall) = endpoints $ mi_value mi1
+    (_, u0) = endpointsAsIntervals $ mi_value mi0
+    (_, u1) = endpointsAsIntervals $ mi_value mi1
 
 {- auxiliary functions -}
 

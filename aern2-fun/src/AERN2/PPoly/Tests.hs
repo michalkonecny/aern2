@@ -127,7 +127,7 @@ operations =
     where
     lb :: MPBall
     (lb, _) =
-        endpoints $
+        endpointsAsIntervals $
           -- minimumOverDom p (getDomain p)
           minimumOptimisedWithAccuracy p (mpBall l) (mpBall r) 5 5 acGuide
           where
@@ -262,7 +262,7 @@ makeFnPositive (FnAndDescr p pDescr) =
     | otherwise = centreAsBall $ p - lb + 1
   Interval l r = getDomain p
   lb :: MPBall
-  (lb, _) = endpoints $ minimumOptimisedWithAccuracy p (mpBall l) (mpBall r) 5 5 (bits 0)
+  (lb, _) = endpointsAsIntervals $ minimumOptimisedWithAccuracy p (mpBall l) (mpBall r) 5 5 (bits 0)
 
 makeFnSmallRange :: Integer -> FnAndDescr PPoly -> FnAndDescr PPoly
 makeFnSmallRange limit (FnAndDescr p pDescr) =
@@ -280,8 +280,8 @@ makeFnSmallRange limit (FnAndDescr p pDescr) =
   lb, ub :: MPBall
   -- (lb, _) = endpoints $ minimumOverDom p (getDomain p)
   -- (_, ub) = endpoints $ maximumOverDom p (getDomain p)
-  (lb, _) = endpoints $ minimumOptimisedWithAccuracy p (mpBall l) (mpBall r) 5 5 (bits 0)
-  (_, ub) = endpoints $ maximumOptimisedWithAccuracy p (mpBall l) (mpBall r) 5 5 (bits 0)
+  (lb, _) = endpointsAsIntervals $ minimumOptimisedWithAccuracy p (mpBall l) (mpBall r) 5 5 (bits 0)
+  (_, ub) = endpointsAsIntervals $ maximumOptimisedWithAccuracy p (mpBall l) (mpBall r) 5 5 (bits 0)
   Interval l r = getDomain p
 
 makeFnPositiveSmallRange :: Integer -> FnAndDescr PPoly -> FnAndDescr PPoly
@@ -296,8 +296,8 @@ makeFnPositiveSmallRange limit (FnAndDescr p pDescr) =
   lb, ub :: MPBall
   -- (lb, _) = endpoints $ minimumOverDom p (getDomain p)
   -- (_, ub) = endpoints $ maximumOverDom p (getDomain p)
-  (lb, _) = endpoints $ minimumOptimisedWithAccuracy p (mpBall l) (mpBall r) 5 5 (bits 0)
-  (_, ub) = endpoints $ maximumOptimisedWithAccuracy p (mpBall l) (mpBall r) 5 5 (bits 0)
+  (lb, _) = endpointsAsIntervals $ minimumOptimisedWithAccuracy p (mpBall l) (mpBall r) 5 5 (bits 0)
+  (_, ub) = endpointsAsIntervals $ maximumOptimisedWithAccuracy p (mpBall l) (mpBall r) 5 5 (bits 0)
   Interval l r = getDomain p
 
 

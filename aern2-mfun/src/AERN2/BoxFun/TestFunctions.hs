@@ -13,7 +13,7 @@ import qualified AERN2.Linear.Vector.Type as V
 
 symmetricDomain :: Integer -> Rational -> Rational -> Vector (CN MPBall)
 symmetricDomain n l r = 
-    V.map (\_ -> fromEndpoints (cn $ mpBallP (prec 53) $ l) (cn $  mpBallP (prec 53) r)) $ V.enumFromTo 1 n
+    V.map (\_ -> fromEndpointsAsIntervals (cn $ mpBallP (prec 53) $ l) (cn $  mpBallP (prec 53) r)) $ V.enumFromTo 1 n
 
 griewank :: Integer -> BoxFun
 griewank n =

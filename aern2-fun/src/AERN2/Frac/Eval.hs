@@ -52,7 +52,7 @@ evalDf f dp dq x =
 
 evalLip :: Frac MPBall -> MPBall -> MPBall -> MPBall -> MPBall
 evalLip f@(Frac _ _ m) lp lq x =
-  fc + (fromEndpoints (-errB) (errB) :: MPBall)
+  fc + (hullMPBall (-errB) (errB))
   where
   absFc = abs fc
   fc    = evalDirect f c

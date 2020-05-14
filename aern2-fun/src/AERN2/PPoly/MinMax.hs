@@ -69,7 +69,7 @@ ppolyMax a b =
     diffC' = derivativeExact diffC
     evalDiffOnInterval (Interval l r) =
         evalDf diffC diffC' $
-          fromEndpoints (mpBallP precision l) (mpBallP precision r)
+          fromEndpointsAsIntervals (mpBallP precision l) (mpBallP precision r)
     (_diffCIntErr, diffCInt) = intify diffC
     diffCRoots =
       map

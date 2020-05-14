@@ -67,7 +67,7 @@ sineWithAccuracyGuide ::
   , CanMaximiseOverDom f (Domain f)
   , CanMinimiseOverDom f (Domain f)
   , MinimumOverDomType f (Domain f) ~ MaximumOverDomType f (Domain f)
-  , IsInterval MPBall (MinimumOverDomType f (Domain f))
+  , ConvertibleExactly (MinimumOverDomType f (Domain f)) MPBall
   , CanNegSameType f, CanAddSameType f, CanMulSameType f
   , CanAddSubMulDivCNBy f Integer, CanAddSubMulDivCNBy f CauchyReal
   , HasAccuracy f, CanSetAccuracyGuide f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
@@ -84,7 +84,7 @@ cosineWithAccuracyGuide ::
   , CanMaximiseOverDom f (Domain f)
   , CanMinimiseOverDom f (Domain f)
   , MinimumOverDomType f (Domain f) ~ MaximumOverDomType f (Domain f)
-  , IsInterval MPBall (MinimumOverDomType f (Domain f))
+  , ConvertibleExactly (MinimumOverDomType f (Domain f)) MPBall
   , CanNegSameType f, CanAddSameType f, CanMulSameType f
   , CanAddSubMulDivCNBy f Integer, CanAddSubMulDivCNBy f CauchyReal
   , HasAccuracy f, CanSetAccuracyGuide f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
@@ -101,7 +101,7 @@ sineCosineWithAccuracyGuide ::
   , CanMaximiseOverDom f (Domain f)
   , CanMinimiseOverDom f (Domain f)
   , MinimumOverDomType f (Domain f) ~ MaximumOverDomType f (Domain f)
-  , IsInterval MPBall (MinimumOverDomType f (Domain f))
+  , ConvertibleExactly (MinimumOverDomType f (Domain f)) MPBall
   , CanNegSameType f, CanAddSameType f, CanMulSameType f
   , CanAddSubMulDivCNBy f Integer, CanAddSubMulDivCNBy f CauchyReal
   , HasAccuracy f, CanSetAccuracyGuide f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
@@ -146,7 +146,7 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     dom = getDomain x
     -- r = mpBall $ applyApprox xC (getDomain xC)
 
-    r = fromEndpoints (minimumOverDom x dom) (maximumOverDom x dom)
+    r = fromEndpointsAsIntervals (mpBall $ minimumOverDom x dom) (mpBall $ maximumOverDom x dom)
     rC = centreAsBall r :: MPBall
 
     -- compute k = round(rC/(pi/2)):
@@ -155,7 +155,7 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     -- shift xC near 0 using multiples of pi/2:
     txC ac = (setAccuracyGuide ac $ setPrecisionAtLeastAccuracy (ac) xC) - k * pi /! 2
     -- work out an absolute range bound for txC:
-    (_, trM :: MPBall) = endpoints $ abs $ r - k * pi /! 2
+    (_, trM) = endpointsAsIntervals $ abs $ r - k * pi /! 2
 
     -- compute sin or cos of txC = xC-k*pi/2 using Taylor series:
     (taylorSum, taylorSumE, n)
