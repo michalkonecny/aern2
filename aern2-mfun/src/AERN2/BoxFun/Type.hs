@@ -115,3 +115,6 @@ hessian (BoxFun d e _) v =
     w i j = V.imap (\k x -> OrderTwo x (delta i k) (delta j k) (pure $ mpBall 0)) v
     delta :: Integer -> Integer -> CN MPBall
     delta i k = if i == k then (cn $ mpBall 1) else (cn $ mpBall 0)
+
+getMinimum :: BoxFun -> CN MPBall
+getMinimum h = fst $ endpointsAsIntervals (apply h (domain h))

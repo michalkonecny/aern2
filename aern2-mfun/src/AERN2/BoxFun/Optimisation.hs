@@ -309,9 +309,6 @@ maxBoxFunGreaterThanN f g n initialPrecision =
         gbox                = domain g
         gboxp               = setPrecision initialPrecision gbox
 
-        getMinimum :: BoxFun -> CN MPBall
-        getMinimum h = fst $ endpoints (apply h (domain h))
-
         checkMaxAboveN h i = getMinimum h !>! n || getMinimum i !>! n
 
 

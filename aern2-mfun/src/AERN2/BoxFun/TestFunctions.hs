@@ -12,8 +12,8 @@ import qualified AERN2.Linear.Vector.Type as V
 
 fromListDomain :: [(Rational, Rational)] -> Vector (CN MPBall)
 fromListDomain [] = V.empty
-fromListDomain [x] = V.singleton $ fromEndpoints (cn $ mpBallP (prec 53) $ (fst x)) (cn $  mpBallP (prec 53) (snd x))
-fromListDomain (x:xs) = V.cons (fromEndpoints (cn $ mpBallP (prec 53) $ (fst x)) (cn $  mpBallP (prec 53) (snd x))) (fromListDomain xs)
+fromListDomain [x] = V.singleton $ fromEndpointsAsIntervals (cn $ mpBallP (prec 53) $ (fst x)) (cn $  mpBallP (prec 53) (snd x))
+fromListDomain (x:xs) = V.cons (fromEndpointsAsIntervals (cn $ mpBallP (prec 53) $ (fst x)) (cn $  mpBallP (prec 53) (snd x))) (fromListDomain xs)
 
 symmetricDomain :: Integer -> Rational -> Rational -> Vector (CN MPBall)
 symmetricDomain n l r = 
