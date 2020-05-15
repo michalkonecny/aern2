@@ -106,7 +106,7 @@ processArgs (operationCode : functionCode : representationCode : effortArgs) =
 
     boundsPB :: ChPoly MPBall -> DyadicInterval -> MPBall
     boundsPB f fDom = 
-        snd $ endpoints $ max (abs fMin) (abs fMax)
+        endpointRAsInterval $ max (abs fMin) (abs fMax)
         where
         fMax = maximumOverDom f fDom
         fMin = minimumOverDom f fDom

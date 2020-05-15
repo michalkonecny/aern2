@@ -30,6 +30,7 @@ executable aern2-fnreps-ops
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
     , aern2-fun == 0.1.*
+    , aern2-fun-univariate == 0.1.*
   extensions:
                     Arrows,
                     FlexibleContexts,
@@ -53,6 +54,7 @@ executable aern2-fnreps-bounds
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
     , aern2-fun == 0.1.*
+    , aern2-fun-univariate == 0.1.*
   extensions:
                     Arrows,
                     FlexibleContexts,
@@ -75,6 +77,7 @@ executable waac-benchmarks
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
     , aern2-fun == 0.1.*
+    , aern2-fun-univariate == 0.1.*
   extensions:
                   Arrows,
                   FlexibleContexts,
