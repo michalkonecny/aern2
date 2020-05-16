@@ -154,9 +154,9 @@ test-suite spec
     -- , aern2-real
     -- , aern2-fun == 0.1.*
     , aern2-fun-univariate == 0.1.*
-    , hspec >= 2.1 && < 2.5
+    , hspec >= 2.1
     -- , hspec-smallcheck >= 0.3 && < 0.5
-    , QuickCheck >= 2.7 && < 2.11
+    , QuickCheck >= 2.7
 
 executable aern2-fun-ChPoly-benchOp
   ghc-options:
