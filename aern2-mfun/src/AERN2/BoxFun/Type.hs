@@ -118,3 +118,6 @@ hessian (BoxFun d e _) v =
 
 getMinimum :: BoxFun -> CN MPBall
 getMinimum h = fst $ endpointsAsIntervals (apply h (domain h))
+
+getMinimumOnBox :: BoxFun -> Vector (CN MPBall) -> CN MPBall
+getMinimumOnBox h hbox = fst $ endpointsAsIntervals (apply h hbox)
