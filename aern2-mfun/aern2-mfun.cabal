@@ -70,6 +70,8 @@ library
     AERN2.BoxFun.Type
     AERN2.BoxFun.TestFunctions
     AERN2.BoxFun.Optimisation   
+    AERN2.BoxFunMinMax.Type
+    AERN2.BoxFunMinMax.Optimisation
     --AERN2.BoxFun.OptimisationConcurrent 
 
 executable aern2-mfun-benchmark
