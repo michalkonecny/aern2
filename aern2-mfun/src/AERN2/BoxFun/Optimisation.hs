@@ -309,6 +309,6 @@ maxBoxFunGreaterThanN f g n initialPrecision =
         gbox                = domain g
         gboxp               = setPrecision initialPrecision gbox
 
-        checkMaxAboveN h i = getMinimum h !>! n || getMinimum i !>! n
+        checkMaxAboveN h i = applyMinimum h !>! n || applyMinimum i !>! n
 
 

@@ -9,6 +9,7 @@ import AERN2.BoxFun.Optimisation
 
 import Debug.Trace
 
+-- All leaves in the tree must have the same domain
 data MinMaxTree = Leaf {tree_f :: BoxFun} | Min {tree_l :: MinMaxTree, tree_r :: MinMaxTree} | Max {tree_l :: MinMaxTree, tree_r :: MinMaxTree}
 
 heronTree :: MinMaxTree
@@ -28,71 +29,61 @@ heron3 = Max (Leaf heron3p) (Leaf heron3q)
 heron4 :: MinMaxTree
 heron4 = Max (Leaf heron4p) (Leaf heron4q)
 
-checkTree :: MinMaxTree -> Bool
-checkTree (Leaf f) = globalMinimumGreaterThanN f (bits 100) (0/1) (prec 1000)
-checkTree (Max (Leaf f) (Leaf g))
-  | fGTg f g fbox' = checkTree (Leaf f)
-  | fGTg g f fbox' = checkTree (Leaf g)
-  | otherwise      = 
-    let
-      newBoxes = fullBisect fbox'
-      updateDomain z = BoxFun (dimension z) (bf_eval z)
-      
-      newTree [] = undefined
-      newTree [box]         = Max (Leaf (updateDomain f box)) (Leaf (updateDomain g box))
-      newTree (box : boxes) = Min
-                                (Max (Leaf (updateDomain f box)) (Leaf (updateDomain g box)))
-                                (newTree boxes)
-    in
-      ((getMinimumOnBox f fbox' !>! 0 || getMinimumOnBox g fbox' !>! 0)
-      ||
-      (if AERN2.BoxFun.Box.width fbox' !>! 1 / (2 ^ 5) then
-          checkTree $ newTree newBoxes
-        else
-          checkTree (Leaf f) || checkTree (Leaf g)))
+checkTree :: MinMaxTree -> Box -> Accuracy -> Precision -> Bool
+checkTree (Leaf f) box ac p = 
+  applyMinimumOnBox f box' !>! 0 
+  ||
+  globalMinimumGreaterThanN (BoxFun (dimension f) (bf_eval f) box') ac (cn 0.0) p
   where
-    fbox = domain f
-    fbox' = setPrecision (prec 1000) fbox
+    box' = setPrecision p box
+checkTree (Max l r) box ac p
+  | lRange !>! rRange = 
+    trace "Left branch greater than right branch"
+    trace ("Left  range: " ++ show (endpointsAsIntervals lRange))
+    trace ("Right range: " ++ show (endpointsAsIntervals rRange))
+    checkTree l box ac p
 
-checkTree (Min (Leaf f) (Leaf g))
-  | fLTg f g fbox' = checkTree (Leaf f)
-  | fLTg g f fbox' = checkTree (Leaf g)
-  | otherwise      = 
-    let
-      newBoxes = fullBisect (domain f)
-      updateDomain z = BoxFun (dimension z) (bf_eval z)
+  | rRange !>! lRange = 
+    trace "Right branch greater than left branch"
+    trace ("Left  range: " ++ show (endpointsAsIntervals lRange))
+    trace ("Right range: " ++ show (endpointsAsIntervals rRange))
+    checkTree r box ac p
 
-      newTree [] = undefined
-      newTree [box]         = Min (Leaf (updateDomain f box)) (Leaf (updateDomain g box))
-      newTree (box : boxes) = Min
-                                (Min (Leaf (updateDomain f box)) (Leaf (updateDomain g box)))
-                                (newTree boxes)
-    in
-      ((getMinimumOnBox f fbox' !>! 0 && getMinimumOnBox g fbox' !>! 0)
-      ||
-      (if AERN2.BoxFun.Box.width fbox' !>! 1 / (2 ^ 5) then
-        checkTree $ newTree newBoxes
+  | otherwise      =
+    (lRange !>! 0 || rRange !>! 0)
+    ||
+    (if AERN2.BoxFun.Box.width box' !>! 1 / 2 ^ fromAccuracy ac then
+        trace ("Bisected boxes: " ++ show newBoxes)
+        checkBoxes newBoxes
       else
-        checkTree (Leaf f) && checkTree (Leaf g)))
-  where
-    fbox = domain f
-    fbox' = setPrecision (prec 1000) fbox
-checkTree (Max l r) = checkTree l || checkTree r
-checkTree (Min l r) = checkTree l && checkTree r
+        trace "Stopping bisections (Box too small)"
+        checkTree l box' ac p || checkTree r box' ac p)
+    where
+      lRange = applyTree l box'
+      rRange = applyTree r box'
+ 
+      box' = setPrecision p box
 
-fGTg :: BoxFun -> BoxFun -> Box -> Bool
-fGTg f g box = fst (endpointsAsIntervals (apply f box)) !>! snd (endpointsAsIntervals (apply g box))
+      newBoxes = fullBisect box'
 
-fLTg :: BoxFun -> BoxFun -> Box -> Bool
-fLTg f g box = snd (endpointsAsIntervals (apply f box)) !<! fst (endpointsAsIntervals (apply g box))
+      checkBoxes []           = True
+      checkBoxes [b]          = checkTree (Max l r) b ac p
+      checkBoxes (b : boxes)  = checkBoxes [b]
+                                &&
+                                checkBoxes boxes
+checkTree (Min l r) box ac p = checkTree l box ac p && checkTree r box ac p
 
 size :: MinMaxTree -> Integer
-size (Leaf _)  = 
-  trace "Leaf, +1"
-  1
-size (Min l r) = 
-  trace "Min, 1+l+r"
-  1 + size l + size r
-size (Max l r) =  
-  trace "Max, 1+l+r"
-  1 + size l + size r
+size (Leaf _)  = 1
+size (Min l r) = 1 + size l + size r
+size (Max l r) = 1 + size l + size r
+
+applyTree :: MinMaxTree -> Box -> CN MPBall
+applyTree (Leaf f)  box = apply f box
+applyTree (Max l r) box = max (applyTree l box) (applyTree r box)
+applyTree (Min l r) box = min (applyTree l box) (applyTree r box)
+
+domainTree :: MinMaxTree -> Box
+domainTree (Leaf f) = domain f 
+domainTree (Min l _) = domainTree l 
+domainTree (Max l _) = domainTree l

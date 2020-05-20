@@ -91,6 +91,18 @@ apply (BoxFun d e _) v =
     where
     v' = V.map (\x -> differential 0 x) v
 
+applyMinimum :: BoxFun -> CN MPBall
+applyMinimum h = fst $ endpointsAsIntervals (apply h (domain h))
+
+applyMinimumOnBox :: BoxFun -> Vector (CN MPBall) -> CN MPBall
+applyMinimumOnBox h hbox = fst $ endpointsAsIntervals (apply h hbox)
+
+applyMaximum :: BoxFun -> CN MPBall
+applyMaximum h = fst $ endpointsAsIntervals (apply h (domain h))
+
+applyMaximumOnBox :: BoxFun -> Vector (CN MPBall) -> CN MPBall
+applyMaximumOnBox h hbox = fst $ endpointsAsIntervals (apply h hbox)
+
 gradient :: BoxFun -> Vector (CN MPBall) -> Vector (CN MPBall)
 gradient (BoxFun d e _) v =
     aux (d - 1) []
@@ -115,9 +127,3 @@ hessian (BoxFun d e _) v =
     w i j = V.imap (\k x -> OrderTwo x (delta i k) (delta j k) (pure $ mpBall 0)) v
     delta :: Integer -> Integer -> CN MPBall
     delta i k = if i == k then (cn $ mpBall 1) else (cn $ mpBall 0)
-
-getMinimum :: BoxFun -> CN MPBall
-getMinimum h = fst $ endpointsAsIntervals (apply h (domain h))
-
-getMinimumOnBox :: BoxFun -> Vector (CN MPBall) -> CN MPBall
-getMinimumOnBox h hbox = fst $ endpointsAsIntervals (apply h hbox)
