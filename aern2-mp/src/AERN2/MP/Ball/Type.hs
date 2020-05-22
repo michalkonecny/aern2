@@ -62,14 +62,14 @@ data MPBall = MPBall
 
 instance Show MPBall
     where
-    show b@(MPBall x _e) =
+    show b@(MPBall x e) =
       -- printf "[%s ± %s](prec=%s)" (show x) (showAC $ getAccuracy b) (show $ integer $ getPrecision b)
-      printf "[%s ± %s]" (showMPFloat x) (showAC $ getAccuracy b)
+      printf "[%s ± %.4g%s]" (showMPFloat x) (double $ dyadic e) (showAC $ getAccuracy b)
       -- "[" ++ show x ++ " ± " ++ show e ++ "](prec=" ++ (show $ integer $ getPrecision x) ++ ")"
       where
-      showAC Exact = "0"
-      showAC NoInformation = "oo"
-      showAC ac = "<2^(" ++ show (negate $ fromAccuracy ac) ++ ")"
+      showAC Exact = ""
+      showAC NoInformation = "(oo)"
+      showAC ac = " <2^(" ++ show (negate $ fromAccuracy ac) ++ ")"
 
 
 instance (SuitableForCE es) => CanEnsureCE es MPBall where
