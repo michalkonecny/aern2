@@ -13,6 +13,9 @@ type (Vector a) = V.Vector a
 (+++) :: Vector a -> Vector a -> Vector a
 (+++) = (V.++)
 
+drop :: Int -> Vector a -> Vector a 
+drop = V.drop
+
 take :: Int -> Vector a -> Vector a 
 take = V.take
 

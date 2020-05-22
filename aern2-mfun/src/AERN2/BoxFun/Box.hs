@@ -116,7 +116,7 @@ getEndpoints :: Box -> [(MPBall, MPBall)]
 getEndpoints b  = 
     case V.length b of
         0 -> []
-        l -> endpointsAsIntervals ((b ! (l-1)) ~!) : getEndpoints (V.take (fromIntegral (l-1)) b)
+        _ -> endpointsAsIntervals ((b ! 0) ~!) : getEndpoints (V.drop (fromIntegral 1) b)
 
 instance 
     CanNeg Box
