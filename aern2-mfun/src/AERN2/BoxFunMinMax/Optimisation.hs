@@ -64,7 +64,7 @@ globalMinimumWithCutoffAboveN f ac cutoff initialPrecision n =
                 Just localMin ->
                     Just (List.foldl' min (snd localMin) boundaryMinima)
                     where
-                        boundaryMinima = List.map (\g -> globalMinimumWithCutoff g ac (min cutoff ((upperBound (snd localMin) :: CN MPBall))) initialPrecision) boundaryFuns
+                        boundaryMinima = mapMaybe (\g -> globalMinimumWithCutoffAboveN g ac (min cutoff ((upperBound (snd localMin) :: CN MPBall))) initialPrecision n) boundaryFuns
                 Nothing ->
                     Nothing
 
@@ -86,7 +86,7 @@ bestLocalMinimumWithCutoffAboveN f box ac initialCutoff initialPrecision n =
 
     aux q cutoff steps (SearchBox _lastBox rng) =  
         case Q.minView q of
-            Nothing -> trace ("no local minimum.") $ Just (steps, rng)
+            Nothing -> trace ("no local minimum.") $ Nothing
             Just (minBox, q') ->
                 --trace ("value: "++ (show $ val)) $
                 trace ("min box: "++ (show $ minBox)) $
