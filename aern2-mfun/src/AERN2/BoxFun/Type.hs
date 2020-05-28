@@ -98,10 +98,10 @@ applyMinimumOnBox :: BoxFun -> Vector (CN MPBall) -> CN MPBall
 applyMinimumOnBox h hbox = fst $ endpointsAsIntervals (apply h hbox)
 
 applyMaximum :: BoxFun -> CN MPBall
-applyMaximum h = fst $ endpointsAsIntervals (apply h (domain h))
+applyMaximum h = snd $ endpointsAsIntervals (apply h (domain h))
 
 applyMaximumOnBox :: BoxFun -> Vector (CN MPBall) -> CN MPBall
-applyMaximumOnBox h hbox = fst $ endpointsAsIntervals (apply h hbox)
+applyMaximumOnBox h hbox = snd $ endpointsAsIntervals (apply h hbox)
 
 gradient :: BoxFun -> Vector (CN MPBall) -> Vector (CN MPBall)
 gradient (BoxFun d e _) v =
