@@ -1,10 +1,8 @@
 # Comparing representations of exact univariate continuous real functions
 
-_This is work in progress._
-
-_An older version of this page corresponding to the [CCA 2016](http://cca-net.de/cca2016/) talk
+<!-- _An older version of this page corresponding to the [CCA 2016](http://cca-net.de/cca2016/) talk
 "Representations for feasibly approximable functions"
-is [here](https://github.com/michalkonecny/aern2/tree/preJuly2016/aern2-fnreps)_
+is [here](https://github.com/michalkonecny/aern2/tree/preJuly2016/aern2-fnreps)_ -->
 
 We benchmark the performance of several data types of (exact) univariate continuous real functions
 on a set of tasks.
