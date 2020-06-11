@@ -1,9 +1,13 @@
 module AERN2.BoxFunMinMax.Expressions.Type where
 
 import MixedTypesNumPrelude
-import Data.Maybe
+import Data.Ratio
+import System.IO
+import System.IO.Unsafe (unsafePerformIO)
 
-import Debug.Trace
+import qualified Prelude as P
+
+import Data.List
 
 -- TODO: Implement symbolic expressions
 
@@ -43,150 +47,254 @@ import Debug.Trace
 -- BoxFunMinMax will be
 -- MinMaxTree, dimension, and domain
 
-data E = Add E E | Sub E E | Mul E E | Div E E | Sqrt E | Negate E | Var String | Lit Rational | Min E E | Max E E |  Abs E
-  deriving Show
-
--- The right E does not contain any Min/Max/Abs
--- This is done by dropping one branch for Min/Max
--- For abs, we can rewrite as Max(x,-x), and apply previous rule
--- The left E is a list of expressions where, if all expressions 
--- are >= 0, the right E is equivalent to the original E
-minMaxAbsEliminator :: E -> [([E],E)]
-minMaxAbsEliminator (Min e1 e2)   = [([Sub e2 e1], e1), ([Sub e1 e2], e2)]
-minMaxAbsEliminator (Max e1 e2)   = [([Sub e1 e2], e1), ([Sub e2 e1], e2)]
-minMaxAbsEliminator (Abs e)       = minMaxAbsEliminator (Max e (Negate e))
-minMaxAbsEliminator e             = [([],e)] -- Vacuously true
-
-expressionsGEZero :: [E] -> Maybe Bool
-expressionsGEZero []                              = Just True
-expressionsGEZero ((Lit e) : es)                  = Just (e >= 0) && expressionsGEZero es
-expressionsGEZero (e : es)                        = case computeE e of
-                                                      Nothing -> Nothing
-                                                      Just e' ->
-                                                        expressionsGEZero [e'] && expressionsGEZero es
-
-chooseEFromEliminatorList :: [([E],E)] -> E
-chooseEFromEliminatorList x = 
-  let
-    l = (map (\es -> (expressionsGEZero (fst es), snd es :: E))) x
-    
-    findE :: [(Maybe Bool,E)] -> E
-    findE []       = Var "nothing" --TODO: Nothing
-    findE (b : bs) = if fromMaybe False (fst b) then snd b else findE bs
-  in
-    findE l
+-- TODO: Refactor E to this
 
 
+data BinOp = Add | Sub | Mul | Div | Min | Max | Pow
+  deriving (Show, P.Eq)
+data UnOp  = Sqrt | Negate | Abs
+  deriving (Show, P.Eq)
+data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String  -- TODO: Make Var a pair, (String, (Rational, Rational)), where (Rational, Rational) is domain
+  deriving (Show, P.Eq)
 
--- Add (Min (Lit 1) (Lit 2)) (Max (Min (Lit 4) (Lit 8)) (Lit 7))
+data Comp = Gt | Ge | Lt | Le
+  deriving (Show, P.Eq)
 
--- Break E down to Just Lit or Just Var. If we have an invalid operation, return Nothing
-computeE :: E -> Maybe E -- TODO: Handle Var
-computeE (Lit e)                 = Just $ Lit e
-computeE (Var e)                 = Just $ Var e
+data Conn = And | Or | Impl
+  deriving (Show, P.Eq)
 
-computeE (Add (Lit e1) (Lit e2)) = Just $ Lit (e1 + e2)
-computeE (Add e1 e2)             = case computeE e1 of
-                                    Nothing -> Nothing
-                                    Just e1' ->
-                                      case computeE e2 of
-                                        Nothing -> Nothing
-                                        Just e2' ->
-                                          computeE $ Add e1' e2'
+data F = FComp Comp E E | FConn Conn F F
+  deriving (Show, P.Eq)
 
-computeE (Sub e1 e2)             = computeE $ Add e1 (Negate e2)
+simpleMax = EBinOp Max (Lit 1.0) (EUnOp Negate (Lit 1.0))
+simpleMin = EBinOp Min (Lit 1.0) (EUnOp Negate (Lit 1.0))
 
-computeE (Mul (Lit e1) (Lit e2)) = Just $ Lit (e1 * e2)
-computeE (Mul e1 e2)             = case computeE e1 of
-                                    Nothing -> Nothing
-                                    Just e1' ->
-                                      case computeE e2 of
-                                        Nothing -> Nothing
-                                        Just e2' ->
-                                          computeE $ Mul e1' e2'
+simpleMixed = EBinOp Add (EBinOp Min (Lit 4.0) (Lit (-8.0))) (EBinOp Max (Lit 7.9) (Lit 4.0))
 
-computeE (Div (Lit e1) (Lit e2)) = if e2 == 0 then Nothing else Just (Lit (e1 /! e2))
-computeE (Div e1 e2)             = case computeE e1 of
-                                    Nothing -> Nothing
-                                    Just e1' ->
-                                      case computeE e2 of
-                                        Nothing -> Nothing
-                                        Just e2' ->
-                                          computeE $ Div e1' e2'
+heronPreservationM =
+    FConn
+      Impl -- ->
+      (FComp 
+        Le -- |sqrt x - y| <= 0.5^(2^(i-1)) + 6 eps * (i-1)
+        (EUnOp Abs (EBinOp Sub (EUnOp Sqrt (Var "x")) (Var "y"))) -- |sqrt x - y|
+        (EBinOp Add (EBinOp Pow (Lit 0.5) (EBinOp Pow (Lit 2.0) (EBinOp Sub (Var "i") (Lit 1.0)))) (EBinOp Mul (EBinOp Mul (Lit 6.0) (Var "eps")) (EBinOp Sub (Var "i") (Lit 1.0)))))  -- 0.5^(2^(i-1)) + 6 eps * (i-1)
+      (FComp 
+        Le -- |sqrt x - (y+x/y)/2| <= 0.5^(2^i) + 6 eps * (i-1)
+        (EUnOp Abs (EBinOp Sub (EUnOp Sqrt (Var "x")) (EBinOp Div (EBinOp Add (Var "y") (EBinOp Div (Var "x") (Var "y"))) (Lit 2.0)))) -- |sqrt x - (y+x/y)/2|
+        (EBinOp Add (EBinOp Pow (Lit 0.5) (EBinOp Pow (Lit 2.0) (Var "i"))) (EBinOp Mul (EBinOp Mul (Lit 6.0) (Var "eps")) (EBinOp Sub (Var "i") (Lit 1.0)))))  -- 0.5^(2^i) + 6 eps * (i-1)
 
-computeE (Min e1 e2)             = computeE $ chooseEFromEliminatorList (minMaxAbsEliminator (Min e1 e2))
-computeE (Max e1 e2)             = computeE $ chooseEFromEliminatorList (minMaxAbsEliminator (Max e1 e2))
-computeE (Abs e)                 = computeE $ chooseEFromEliminatorList (minMaxAbsEliminator (Abs e))
+-- Translate F to a single expression
+-- Removes implications, logical connectives
+fToE :: F -> E
+fToE (FComp op e1 e2)   = case op of
+  Le ->
+    EBinOp Add (EUnOp Negate e1) e2 -- f1 <= f2 == f1 - f2 <= 0 == -f1 + f2 >= 0
+  Lt ->
+    EBinOp Add (EUnOp Negate e1) e2
+  Ge ->
+    EBinOp Sub e1 e2 -- f1 >= f2 == f1 - f2 >= 0 == 
+  Gt ->
+    EBinOp Sub e1 e2
+fToE (FConn op e1 e2)   = case op of
+  And ->
+    EBinOp Min (fToE e1) (fToE e2)
+  Or ->
+    EBinOp Max (fToE e1) (fToE e2)
+  Impl -> 
+    EBinOp Max (EUnOp Negate (fToE e1)) (fToE e2) -- !f1 \/ f2 = max(!f1, f2)
 
-computeE (Sqrt e)                = case computeE e of
-                                    Nothing -> Nothing
-                                    Just _ -> undefined -- TODO: Finish
+minMaxAbsEliminator :: E -> [([E],E)] -- TODO: have an intermediate translation qualifiedEstoCNF :: [([E],E)] -> E
+minMaxAbsEliminator (EBinOp op e1 e2) =
+  case op of
+    Min ->
+      concat 
+      [
+        [
+          (p1 ++ [EBinOp Sub e2' e1'], e1'), -- e2' >= e1'
+          (p2 ++ [EBinOp Sub e1' e2'], e2')  -- e1' >= e2'
+        ] 
+        | 
+        (p1, e1') <- branch1, (p2, e2') <- branch2
+      ]
+    Max ->
+      concat 
+      [
+        [
+          (p1 ++ [EBinOp Sub e1' e2'], e1'), -- e1' >= e2'
+          (p2 ++ [EBinOp Sub e2' e1'], e2')  -- e2' >= e1'
+        ] 
+        | 
+        (p1, e1') <- branch1, (p2, e2') <- branch2
+      ]
+    op' ->
+      [(nub (p1 ++ p2), EBinOp op' e1' e2') | (p1, e1') <- branch1, (p2, e2') <- branch2]
+  where
+    branch1 = minMaxAbsEliminator e1
+    branch2 = minMaxAbsEliminator e2
+minMaxAbsEliminator (EUnOp op e) =
+  case op of
+    Abs -> 
+      minMaxAbsEliminator (EBinOp Max e (EUnOp Negate e))
+    op' ->
+      [(p, EUnOp op' e') | (p, e') <- minMaxAbsEliminator e]
+minMaxAbsEliminator e@(Lit _)             = [([],e)]
+minMaxAbsEliminator e@(Var _)             = [([],e)]
 
-computeE (Negate (Lit e))        = Just $ Lit (negate e)
-computeE (Negate e)              = case computeE e of
-                                    Nothing -> Nothing
-                                    Just e' -> computeE (Negate (e'))
+qualifiedEsToCNF :: [([E],E)] -> E
+qualifiedEsToCNF []               = undefined
+qualifiedEsToCNF [([], q)]        = q
+qualifiedEsToCNF [(ps, q)]        = EBinOp Max (buildPs ps) q
+  where
+    buildPs :: [E] -> E
+    buildPs []  = undefined
+    buildPs [p] = (EUnOp Negate p)
+    buildPs (p : ps) = EBinOp Max (EUnOp Negate p) (buildPs ps) -- Max !p ps >= 0
+qualifiedEsToCNF ((ps, q) : es) = EBinOp Min (qualifiedEsToCNF [(ps, q)]) (qualifiedEsToCNF es)
 
+runTranslator :: E -> IO ()
+runTranslator e = do
+  putStrLn "Running Haskell to SMT translator for Expressions"
+  -- PutStr "Enter tool: "
+  putStr "Enter target file name: "
+  fileName <- getLine
+  putStr "Enter epsilon exponent (integer): "
+  epsilonExponent <- getLine
+  putStr "How many Real vars in expression? " -- BUG: dReal does not work as expected when a var has the same lower and upper bound
+  numReals <- getLine
+  putStr "How many Int vars in expression? "
+  numInts <- getLine
+  writeFile fileName (expressionAndDomainsToDreal e (parseDomains "real var name? " (read numReals)) (parseDomains "integer var name? " (read numInts)) (read epsilonExponent))
+  where
+    parseDomains :: String -> Integer -> [(String, (Rational, Rational))]
+    parseDomains _ 0 = []
+    parseDomains msg n =
+      (unsafePerformIO (getVar msg), (unsafePerformIO (parseRational "lower bound") :: Rational, unsafePerformIO (parseRational "upper bound") :: Rational))
+      : parseDomains msg (n - 1)
 
+    getVar message = do
+      putStr message
+      getLine
 
--- computeE :: E -> Integer
--- computeE (Add (Lit e1) (Lit e2)) = e1+e2
--- computeE (Add (Lit e1) e2)       =
---   case e2 of
---     Min m1 m2 ->
---       trace "1"
---       computeE (Add (Min (Lit e1) (Lit e1)) (Min m1 m2))
---     Max m1 m2 ->
---       trace "2"
---       computeE (Add (Max (Lit e1) (Lit e1)) (Max m1 m2))
---     _ ->
---       trace "3"
---       computeE (Add (Lit e1) (Lit (computeE e2)))
--- computeE (Add e1 (Lit e2))       = computeE (Add (Lit e2) e1)
--- computeE (Add e1 e2)             = 
---   case e1 of
---     Min m1 m2 ->
---       trace "4"
---       computeE (Add (chooseEFromEliminatorList (minMaxAbsEliminator (Min m1 m2))) e2)
---     Max m1 m2 ->
---       trace "5"
---       computeE (Add (chooseEFromEliminatorList (minMaxAbsEliminator (Max m1 m2))) e2)
---     Abs e ->
---       trace "6"
---       computeE (Add (chooseEFromEliminatorList (minMaxAbsEliminator (Abs e))) e2)
---     _ -> case e2 of
---       Min m1 m2 ->
---         trace "7"
---         computeE (Add e1 (chooseEFromEliminatorList (minMaxAbsEliminator (Min m1 m2))))
---       Max m1 m2 ->
---         trace "8"
---         computeE (Add e1 (chooseEFromEliminatorList (minMaxAbsEliminator (Max m1 m2))))
---       Abs e ->
---         trace "9"
---         computeE (Add e1 (chooseEFromEliminatorList (minMaxAbsEliminator (Abs e))))
---       _ ->
---         trace "No" $
---         -1000
+    parseRational message = do
+      putStr (message ++ " numerator? ")
+      num <- getLine
+      putStr (message ++ " denominator? ")
+      den <- getLine
+      return ((read num :: Integer) /! (read den :: Integer))
 
-  
+-- Various rules to simplify expressions
+-- TODO: simplifyE :: E -> E
+simplifyE :: E -> E
+simplifyE (EBinOp Div e (Lit 1.0)) = e
+simplifyE (EBinOp Div (Lit 0.0) _) = Lit 0.0
+simplifyE (EBinOp Mul (Lit 0.0) _) = Lit 0.0
+simplifyE (EBinOp Mul _ (Lit 0.0)) = Lit 0.0
+simplifyE (EBinOp Mul (Lit 1.0) e) = e
+simplifyE (EBinOp Mul e (Lit 1.0)) = e
+simplifyE (EBinOp Add (Lit 0.0) e) = e
+simplifyE (EBinOp Add e (Lit 0.0)) = e
+simplifyE (EBinOp Sub e (Lit 0.0)) = e
+simplifyE (EBinOp Pow _ (Lit 0.0)) = Lit 1.0
+simplifyE (EBinOp Pow e (Lit 1.0)) = e
+simplifyE (EUnOp Negate (Lit 0.0)) = Lit 0.0
+simplifyE (EUnOp Sqrt (Lit 0.0))   = Lit 0.0
+simplifyE (EUnOp Sqrt (Lit 1.0))   = Lit 1.0
+simplifyE (EBinOp op e1 e2)        = EBinOp op (simplifyE e1) (simplifyE e2)
+simplifyE (EUnOp op e)             = EUnOp op (simplifyE e)
+simplifyE e                        = e
 
-  
-  -- let x = map (\l2 -> map (\l1 -> (fst l1 ++ fst l2, Add (snd l1) (snd l2))) (minMaxAbsEliminator e1)) (minMaxAbsEliminator e2) in
-  -- trace (show x) $
-  -- trace (show (map (map (\es -> (expressionsGEZero (fst es), snd es :: E))) x)) $
-  -- concat x
+expressionToSMT :: E -> String
+expressionToSMT (EBinOp op e1 e2) =
+  case op of
+    Add -> "(+ " ++ expressionToSMT e1 ++ " " ++ expressionToSMT e2 ++ ")"
+    Sub -> "(- " ++ expressionToSMT e1 ++ " " ++ expressionToSMT e2 ++ ")"
+    Mul -> "(* " ++ expressionToSMT e1 ++ " " ++ expressionToSMT e2 ++ ")"
+    Div -> "(/ " ++ expressionToSMT e1 ++ " " ++ expressionToSMT e2 ++ ")"
+    Min -> "(min " ++ expressionToSMT e1 ++ " " ++ expressionToSMT e2 ++ ")"
+    Max -> "(max " ++ expressionToSMT e1 ++ " " ++ expressionToSMT e2 ++ ")"
+    Pow -> "(^ "  ++ expressionToSMT e1 ++ " " ++ expressionToSMT e2 ++ ")"
+expressionToSMT (EUnOp op e) =
+  case op of
+    Sqrt -> "(sqrt " ++ expressionToSMT e ++ ")"
+    Negate -> "(* -1 " ++ expressionToSMT e ++ ")"
+    Abs -> "(abs " ++ expressionToSMT e ++ ")"
+expressionToSMT (Var e) = e
+expressionToSMT (Lit e) = 
+  case denominator e of
+    1 -> show (numerator e)
+    _ ->
+      "(/ " ++ show (numerator e) ++ " " ++ show (denominator e) ++ ")" -- TODO: If denominator is 1, just use numerator
 
+expressionToGappa :: E -> String --FIXME
+expressionToGappa (EBinOp op e1 e2) =
+  case op of
+    Add -> expressionToGappa e1 ++ "+" ++ expressionToGappa e2
+    Sub -> expressionToGappa e1 ++ "-" ++ expressionToGappa e2
+    Mul -> expressionToGappa e1 ++ "*" ++ expressionToGappa e2
+    Div -> expressionToGappa e1 ++ "/" ++ expressionToGappa e2
+    Min -> expressionToGappa e1 ++ ">= 0 /\\ " ++ expressionToGappa e2 ++ " >= 0"
+    Max -> expressionToGappa e1 ++ ">= 0 \\/ " ++ expressionToGappa e2 ++ " >= 0"
+    Pow -> undefined
+expressionToGappa (EUnOp op e) =
+  case op of
+    Sqrt -> "sqrt (" ++ expressionToSMT e ++ ")"
+    Negate -> "(-1 * " ++ expressionToSMT e ++ ")"
+    Abs -> "|" ++ expressionToSMT e ++ "|"
+expressionToGappa (Var e) = e
+expressionToGappa (Lit e) = 
+  case (denominator e) of
+    1 -> show (numerator e)
+    _ ->
+      show (numerator e) ++ "/" ++ show (denominator e) -- TODO: If denominator is 1, just use numerator
 
--- minMaxAbsEliminator2 :: E -> [([E],E)]
--- minMaxAbsEliminator2 (Min e1(Just True,Add (Lit 1) (Lit 7)) e2) = ([Sub e2 e1], e1) : ([Sub e1 e2], e2) : minMaxAbsEliminator e1 : minMaxAbsEliminator e2
--- minMaxAbsEliminator2 (Max e1 e2) = ([Sub e1 e2], e1) : ([Sub e2 e1], e2) : minMaxAbsEliminator e1 : minMaxAbsEliminator e2
--- minMaxAbsEliminator2 (Abs e)     = minMaxAbsEliminator $ Max e (Negate e)
-
-
--- say we have Min (e1, e2)
--- function would return [([Sub e2 e1], e1), ([Sub e1 e2], e2)]
--- This is only the case if e1 e2 are without Abs/Min/Max 
-
--- Next step, E -> MinMaxTree
-
--- In particular, we can take an E value and put all the abs on the top
+-- Once Var is updated, search through expression to find any Vars, and then specify domains
+-- Will need two searches, one will place constants before "(assert ", and the other will place foralls after "(assert "
+expressionAndDomainsToDreal :: E -> [(String, (Rational, Rational))] -> [(String, (Rational, Rational))] -> Int -> String
+expressionAndDomainsToDreal e realDomains intDomains epsilonExponent =
+  "(set-option :precision 1e-300)" ++
+  "(declare-const eps Real)" ++
+  "(assert (= eps (^ 2 " ++ show epsilonExponent ++ "))) " ++
+  "(assert " ++
+  case Data.List.length realDomains of
+    0 ->       
+      case Data.List.length intDomains of
+        0 ->
+          "(>= " ++
+          expressionToSMT e ++
+          "(+ 0 1e-300))" ++
+          ")" ++
+          commonEnd
+        _ ->
+          "(forall (" ++
+          concatMap (\(x, (xL, xR)) -> "(" ++ x ++ " Int " ++ "[" ++ expressionToSMT (Lit xL) ++ ", " ++ expressionToSMT (Lit xR) ++ "]" ++ ")") intDomains ++
+          ")" ++       
+          "(>= " ++
+          expressionToSMT e ++
+          "(+ 0 1e-300))" ++
+          "))" ++
+          commonEnd
+    _ ->
+      case Data.List.length intDomains of
+        0 ->
+          "(forall (" ++
+          concatMap (\(x, (xL, xR)) -> "(" ++ x ++ " Real " ++ "[" ++ expressionToSMT (Lit xL) ++ ", " ++ expressionToSMT (Lit xR) ++ "]" ++ ")") realDomains ++
+          ")" ++       
+          "(>= " ++
+          expressionToSMT e ++
+          "(+ 0 1e-300))" ++
+          "))" ++
+          commonEnd
+        _ ->
+          "(forall (" ++
+          concatMap (\(x, (xL, xR)) -> "(" ++ x ++ " Real " ++ "[" ++ expressionToSMT (Lit xL) ++ ", " ++ expressionToSMT (Lit xR) ++ "]" ++ ")") realDomains ++
+          concatMap (\(x, (xL, xR)) -> "(" ++ x ++ " Int " ++ "[" ++ expressionToSMT (Lit xL) ++ ", " ++ expressionToSMT (Lit xR) ++ "]" ++ ")") intDomains ++
+          ")" ++       
+          "(>= " ++
+          expressionToSMT e ++
+          "(+ 0 1e-300))" ++
+          "))" ++
+          commonEnd
+  where
+    commonEnd =
+      "(check-sat)" ++
+      "(exit)"
