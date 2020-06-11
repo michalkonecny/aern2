@@ -103,7 +103,7 @@ fToE (FConn op e1 e2)   = case op of
   Impl -> 
     EBinOp Max (EUnOp Negate (fToE e1)) (fToE e2) -- !f1 \/ f2 = max(!f1, f2)
 
-minMaxAbsEliminator :: E -> [([E],E)] -- TODO: have an intermediate translation qualifiedEstoCNF :: [([E],E)] -> E
+minMaxAbsEliminator :: E -> [([E],E)]
 minMaxAbsEliminator (EBinOp op e1 e2) =
   case op of
     Min ->
@@ -148,7 +148,7 @@ qualifiedEsToCNF [(ps, q)]        = EBinOp Max (buildPs ps) q
     buildPs :: [E] -> E
     buildPs []  = undefined
     buildPs [p] = (EUnOp Negate p)
-    buildPs (p : ps) = EBinOp Max (EUnOp Negate p) (buildPs ps) -- Max !p ps >= 0
+    buildPs (p : ps) = EBinOp Max (EUnOp Negate p) (buildPs ps) 
 qualifiedEsToCNF ((ps, q) : es) = EBinOp Min (qualifiedEsToCNF [(ps, q)]) (qualifiedEsToCNF es)
 
 runTranslator :: E -> IO ()
@@ -223,7 +223,7 @@ expressionToSMT (Lit e) =
   case denominator e of
     1 -> show (numerator e)
     _ ->
-      "(/ " ++ show (numerator e) ++ " " ++ show (denominator e) ++ ")" -- TODO: If denominator is 1, just use numerator
+      "(/ " ++ show (numerator e) ++ " " ++ show (denominator e) ++ ")"
 
 expressionToGappa :: E -> String --FIXME
 expressionToGappa (EBinOp op e1 e2) =
@@ -245,7 +245,7 @@ expressionToGappa (Lit e) =
   case (denominator e) of
     1 -> show (numerator e)
     _ ->
-      show (numerator e) ++ "/" ++ show (denominator e) -- TODO: If denominator is 1, just use numerator
+      show (numerator e) ++ "/" ++ show (denominator e)
 
 -- Once Var is updated, search through expression to find any Vars, and then specify domains
 -- Will need two searches, one will place constants before "(assert ", and the other will place foralls after "(assert "
