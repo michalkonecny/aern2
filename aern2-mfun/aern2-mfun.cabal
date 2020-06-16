@@ -38,6 +38,8 @@ library
     , aern2-real == 0.1.*
     , aern2-fun == 0.1.*
     , vector
+    , stm
+    , parallel
     -- TODO: delete below eventually
     , async
 
@@ -73,6 +75,7 @@ library
     AERN2.BoxFunMinMax.Type
     AERN2.BoxFunMinMax.Optimisation
     AERN2.BoxFunMinMax.TestFunctions
+    AERN2.BoxFunMinMax.Expressions.TestFunctions
     AERN2.BoxFunMinMax.Expressions.Type
     --AERN2.BoxFun.OptimisationConcurrent 
 
