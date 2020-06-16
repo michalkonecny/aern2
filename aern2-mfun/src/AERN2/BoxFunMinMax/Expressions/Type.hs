@@ -5,7 +5,15 @@ import Data.Ratio
 import System.IO
 import System.IO.Unsafe (unsafePerformIO)
 
+import AERN2.MP.Ball
+import AERN2.AD.Type
+import AERN2.BoxFun.Type
+
+import qualified AERN2.Linear.Vector.Type as V
+import qualified AERN2.BoxFunMinMax.Type as T
 import qualified Prelude as P
+
+import AERN2.BoxFun.TestFunctions (fromListDomain) -- TODO: Move this to Util?
 
 import Data.List
 
@@ -54,7 +62,7 @@ data BinOp = Add | Sub | Mul | Div | Min | Max | Pow
   deriving (Show, P.Eq)
 data UnOp  = Sqrt | Negate | Abs
   deriving (Show, P.Eq)
-data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String  -- TODO: Make Var a pair, (String, (Rational, Rational)), where (Rational, Rational) is domain
+data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String | PowI E Integer  -- TODO: Make Var a pair, (String, (Rational, Rational)), where (Rational, Rational) is domain
   deriving (Show, P.Eq)
 
 data Comp = Gt | Ge | Lt | Le
@@ -65,23 +73,6 @@ data Conn = And | Or | Impl
 
 data F = FComp Comp E E | FConn Conn F F
   deriving (Show, P.Eq)
-
-simpleMax = EBinOp Max (Lit 1.0) (EUnOp Negate (Lit 1.0))
-simpleMin = EBinOp Min (Lit 1.0) (EUnOp Negate (Lit 1.0))
-
-simpleMixed = EBinOp Add (EBinOp Min (Lit 4.0) (Lit (-8.0))) (EBinOp Max (Lit 7.9) (Lit 4.0))
-
-heronPreservationM =
-    FConn
-      Impl -- ->
-      (FComp 
-        Le -- |sqrt x - y| <= 0.5^(2^(i-1)) + 6 eps * (i-1)
-        (EUnOp Abs (EBinOp Sub (EUnOp Sqrt (Var "x")) (Var "y"))) -- |sqrt x - y|
-        (EBinOp Add (EBinOp Pow (Lit 0.5) (EBinOp Pow (Lit 2.0) (EBinOp Sub (Var "i") (Lit 1.0)))) (EBinOp Mul (EBinOp Mul (Lit 6.0) (Var "eps")) (EBinOp Sub (Var "i") (Lit 1.0)))))  -- 0.5^(2^(i-1)) + 6 eps * (i-1)
-      (FComp 
-        Le -- |sqrt x - (y+x/y)/2| <= 0.5^(2^i) + 6 eps * (i-1)
-        (EUnOp Abs (EBinOp Sub (EUnOp Sqrt (Var "x")) (EBinOp Div (EBinOp Add (Var "y") (EBinOp Div (Var "x") (Var "y"))) (Lit 2.0)))) -- |sqrt x - (y+x/y)/2|
-        (EBinOp Add (EBinOp Pow (Lit 0.5) (EBinOp Pow (Lit 2.0) (Var "i"))) (EBinOp Mul (EBinOp Mul (Lit 6.0) (Var "eps")) (EBinOp Sub (Var "i") (Lit 1.0)))))  -- 0.5^(2^i) + 6 eps * (i-1)
 
 -- Translate F to a single expression
 -- Removes implications, logical connectives
@@ -137,6 +128,8 @@ minMaxAbsEliminator (EUnOp op e) =
       minMaxAbsEliminator (EBinOp Max e (EUnOp Negate e))
     op' ->
       [(p, EUnOp op' e') | (p, e') <- minMaxAbsEliminator e]
+minMaxAbsEliminator (PowI e i)            =
+  [(p, PowI e' i) | (p, e') <- minMaxAbsEliminator e]
 minMaxAbsEliminator e@(Lit _)             = [([],e)]
 minMaxAbsEliminator e@(Var _)             = [([],e)]
 
@@ -151,19 +144,30 @@ qualifiedEsToCNF [(ps, q)]        = EBinOp Max (buildPs ps) q
     buildPs (p : ps) = EBinOp Max (EUnOp Negate p) (buildPs ps) 
 qualifiedEsToCNF ((ps, q) : es) = EBinOp Min (qualifiedEsToCNF [(ps, q)]) (qualifiedEsToCNF es)
 
+qualifiedEsToCNFList :: [([E],E)] -> [E]
+qualifiedEsToCNFList []               = undefined
+qualifiedEsToCNFList [([], q)]        = [q]
+qualifiedEsToCNFList [(ps, q)]        = [EBinOp Max (buildPs ps) q]
+  where
+    buildPs :: [E] -> E
+    buildPs []  = undefined
+    buildPs [p] = (EUnOp Negate p)
+    buildPs (p : ps) = EBinOp Max (EUnOp Negate p) (buildPs ps) 
+qualifiedEsToCNFList ((ps, q) : es) = (qualifiedEsToCNFList [(ps, q)]) ++ (qualifiedEsToCNFList es)
+
+
 runTranslator :: E -> IO ()
 runTranslator e = do
   putStrLn "Running Haskell to SMT translator for Expressions"
   -- PutStr "Enter tool: "
   putStr "Enter target file name: "
   fileName <- getLine
-  putStr "Enter epsilon exponent (integer): "
-  epsilonExponent <- getLine
+  epsilon <- parseRational "epsilon "
   putStr "How many Real vars in expression? " -- BUG: dReal does not work as expected when a var has the same lower and upper bound
   numReals <- getLine
   putStr "How many Int vars in expression? "
   numInts <- getLine
-  writeFile fileName (expressionAndDomainsToDreal e (parseDomains "real var name? " (read numReals)) (parseDomains "integer var name? " (read numInts)) (read epsilonExponent))
+  writeFile fileName (expressionAndDomainsToDreal e (parseDomains "real var name? " (read numReals)) (parseDomains "integer var name? " (read numInts)) epsilon)
   where
     parseDomains :: String -> Integer -> [(String, (Rational, Rational))]
     parseDomains _ 0 = []
@@ -196,6 +200,8 @@ simplifyE (EBinOp Add e (Lit 0.0)) = e
 simplifyE (EBinOp Sub e (Lit 0.0)) = e
 simplifyE (EBinOp Pow _ (Lit 0.0)) = Lit 1.0
 simplifyE (EBinOp Pow e (Lit 1.0)) = e
+simplifyE (PowI e 0)               = Lit 1.0
+simplifyE (PowI e 1)               = e
 simplifyE (EUnOp Negate (Lit 0.0)) = Lit 0.0
 simplifyE (EUnOp Sqrt (Lit 0.0))   = Lit 0.0
 simplifyE (EUnOp Sqrt (Lit 1.0))   = Lit 1.0
@@ -218,12 +224,70 @@ expressionToSMT (EUnOp op e) =
     Sqrt -> "(sqrt " ++ expressionToSMT e ++ ")"
     Negate -> "(* -1 " ++ expressionToSMT e ++ ")"
     Abs -> "(abs " ++ expressionToSMT e ++ ")"
+expressionToSMT (PowI e i) = "(^ " ++ expressionToSMT e ++ " " ++ show i ++ ")"
 expressionToSMT (Var e) = e
 expressionToSMT (Lit e) = 
   case denominator e of
     1 -> show (numerator e)
     _ ->
       "(/ " ++ show (numerator e) ++ " " ++ show (denominator e) ++ ")"
+
+-- Precondition: Mins and Maxes at the top and no Abs in E
+expressionToTree :: E -> [(String, (Rational, Rational))] -> T.MinMaxTree
+expressionToTree e@(EBinOp op e1 e2) domain = 
+  case op of
+    Max -> T.Max (expressionToTree e1 domain) (expressionToTree e2 domain)
+    Min -> T.Min (expressionToTree e1 domain) (expressionToTree e2 domain)
+    op' -> T.Leaf $ expressionToBoxFun e domain
+expressionToTree e@(EUnOp op _) domain =
+  case op of
+    Abs -> undefined
+    op' -> T.Leaf $ expressionToBoxFun e domain
+expressionToTree e@(Lit _) domain = T.Leaf (expressionToBoxFun e domain) 
+expressionToTree e@(Var _) domain = T.Leaf (expressionToBoxFun e domain) 
+expressionToTree e@(PowI _ _) domain = T.Leaf (expressionToBoxFun e domain) 
+
+-- data BoxFun =
+--     BoxFun
+--     {
+--             dimension :: Integer
+--         ,   bf_eval   :: Vector (Differential (CN MPBall)) -> Differential (CN MPBall)
+--         ,   domain    :: Vector (CN MPBall)
+--     }
+
+expressionToBoxFun :: E -> [(String, (Rational, Rational))] -> BoxFun
+expressionToBoxFun e domain =
+  BoxFun
+    (fromIntegral (Data.List.length domain))
+    (expressionToDifferential e)
+    vectorDomain
+  where
+
+    expressionToDifferential :: E -> V.Vector (Differential (CN MPBall)) -> Differential (CN MPBall)
+    expressionToDifferential (EBinOp op e1 e2) v = 
+      case op of
+        Min -> undefined
+        Max -> undefined
+        Pow -> undefined
+        Add -> expressionToDifferential e1 v + expressionToDifferential e2 v
+        Sub -> expressionToDifferential e1 v - expressionToDifferential e2 v
+        Mul -> expressionToDifferential e1 v * expressionToDifferential e2 v
+        Div -> expressionToDifferential e1 v / expressionToDifferential e2 v
+    expressionToDifferential (EUnOp op e) v = 
+      case op of
+        Abs -> undefined
+        Sqrt -> sqrt (expressionToDifferential e v)
+        Negate -> negate (expressionToDifferential e v)
+    expressionToDifferential (Lit e) _ = differential 2 $ cn (mpBallP (prec 1000) e) -- TODO: paramaterise precision
+    expressionToDifferential (Var e) v = 
+      case elemIndex e variableOrder of
+        Nothing -> undefined
+        Just i -> v V.! (fromIntegral i)
+    expressionToDifferential (PowI e i) v = expressionToDifferential e v ^! i
+
+
+    variableOrder = map fst domain
+    vectorDomain  = fromListDomain (map snd domain)
 
 expressionToGappa :: E -> String --FIXME
 expressionToGappa (EBinOp op e1 e2) =
@@ -240,6 +304,7 @@ expressionToGappa (EUnOp op e) =
     Sqrt -> "sqrt (" ++ expressionToSMT e ++ ")"
     Negate -> "(-1 * " ++ expressionToSMT e ++ ")"
     Abs -> "|" ++ expressionToSMT e ++ "|"
+-- expressionToGappa (PowI e i) = TODO: translate a recursive Pow? 
 expressionToGappa (Var e) = e
 expressionToGappa (Lit e) = 
   case (denominator e) of
@@ -249,11 +314,11 @@ expressionToGappa (Lit e) =
 
 -- Once Var is updated, search through expression to find any Vars, and then specify domains
 -- Will need two searches, one will place constants before "(assert ", and the other will place foralls after "(assert "
-expressionAndDomainsToDreal :: E -> [(String, (Rational, Rational))] -> [(String, (Rational, Rational))] -> Int -> String
-expressionAndDomainsToDreal e realDomains intDomains epsilonExponent =
+expressionAndDomainsToDreal :: E -> [(String, (Rational, Rational))] -> [(String, (Rational, Rational))] -> Rational -> String
+expressionAndDomainsToDreal e realDomains intDomains epsilon =
   "(set-option :precision 1e-300)" ++
   "(declare-const eps Real)" ++
-  "(assert (= eps (^ 2 " ++ show epsilonExponent ++ "))) " ++
+  "(assert (= eps (/ " ++ show (numerator epsilon) ++ " " ++ show (denominator epsilon) ++ "))) " ++
   "(assert " ++
   case Data.List.length realDomains of
     0 ->       
