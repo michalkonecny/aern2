@@ -170,8 +170,8 @@ checkTree (Max l r) box ac p n
     if (lRange !>! n || rRange !>! n) then
       (Just True, Nothing)
     else 
-      case parallelOr lOptAboveN rOptAboveN of
-        (Just True, _) -> (Just True, Nothing)
+      case minimumAboveNTree (Max l r) box' ac p n of
+        (Just True, mBox) -> (Just True, mBox)
         _ -> 
           if AERN2.BoxFun.Box.width box' !>! 1 / (10000000) then -- make this threshold quite small (maybe 10^-7)
               trace ("Bisected boxes: " ++ show newBoxes)
@@ -179,15 +179,15 @@ checkTree (Max l r) box ac p n
             else
               trace "Stopping bisections (Box too small)" $
               case checkTree l box' ac p n of
-                (Just True, _)  -> (Just True, Nothing)
-                _               -> checkTree r box' ac p n -- TODO: Refactor to return nothing instead of False
-    where
+                (Just True, mBox)  -> (Just True, mBox)
+                _               -> 
+                  case checkTree r box' ac p n of
+                    (Just True, mBox) -> (Just True, mBox) -- TODO: Refactor to return nothing instead of False
+                    (_, mBox)      -> (Nothing, mBox)
+    where   
       lRange = applyTree l box'
       rRange = applyTree r box'
-      
-      lOptAboveN = minimumAboveNTree l box' ac p n
-      rOptAboveN = minimumAboveNTree r box' ac p n
- 
+
       box' = setPrecision p box
 
       newBoxes = fullBisect box'
