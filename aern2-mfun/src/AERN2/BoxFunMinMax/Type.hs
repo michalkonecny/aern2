@@ -34,6 +34,35 @@ parallelOr b1 b2 =
       (r, _)                -> r
       -- ((o1, b1), (o2, b2)) -> (o1, b1)
 
+parallelOrList :: [(Maybe Bool, Maybe SearchBox)] -> (Maybe Bool, Maybe SearchBox)
+parallelOrList l =
+    checkList list (Nothing, Nothing)
+  where
+    list = l `using` parList (dot rpar rseq)
+
+    checkList []       c    = c
+    checkList (x : xs) c    =
+      case x of
+        r@(Just True, _)  -> r
+        -- Prefer False counterexample over Nothing counterexamples
+        o@(Just False, _) -> checkList xs o 
+        o@(Nothing, _)    -> 
+          case c of
+            (Just False, _) -> checkList xs c 
+            _               -> checkList xs o
+
+parallelAndList :: [(Maybe Bool, Maybe SearchBox)] -> (Maybe Bool, Maybe SearchBox)
+parallelAndList l =
+    checkList list
+  where
+    list = l `using` parList (dot rpar rseq)
+
+    checkList []            = (Just True, Nothing)
+    checkList (x : xs)      =
+      case x of
+        (Just True, _)  -> checkList xs
+        o               -> o
+
 parallelAnd :: (Maybe Bool, Maybe SearchBox) -> (Maybe Bool, Maybe SearchBox) -> (Maybe Bool, Maybe SearchBox)
 parallelAnd b1 b2 =
   result
@@ -122,25 +151,27 @@ pand7 = pand (Just False, Nothing) (Just False, Nothing)
 
 -- All leaves in the tree must have the same domain
 -- leaves should be bf_eval
-data MinMaxTree = Leaf {tree_f :: BoxFun} | Min {tree_l :: MinMaxTree, tree_r :: MinMaxTree} | Max {tree_l :: MinMaxTree, tree_r :: MinMaxTree}
+data MinMaxTree = Leaf {tree_f :: BoxFun} | Min [MinMaxTree] | Max [MinMaxTree]
 -- TODO: Refactor tree to take Min/Max of a list of trees
 
 heronTree2 :: MinMaxTree
 heronTree2 = Max 
-            (Min heron1 heron2)
-            (Min heron3 heron4)
+            [
+              Min [heron1, heron2],
+              Min [heron3, heron4]
+            ]
             
 heron1 :: MinMaxTree
-heron1 = Max (Leaf (heron1p)) (Leaf (heron1q))
+heron1 = Max [Leaf heron1p, Leaf heron1q]
 
 heron2 :: MinMaxTree
-heron2 = Max (Leaf (heron2p)) (Leaf (heron2q))
+heron2 = Max [Leaf heron2p, Leaf heron2q]
 
 heron3 :: MinMaxTree
-heron3 = Max (Leaf (heron3p)) (Leaf (heron3q))
+heron3 = Max [Leaf heron3p, Leaf heron3q]
 
 heron4 :: MinMaxTree
-heron4 = Max (Leaf (heron4p)) (Leaf (heron4q))
+heron4 = Max [Leaf heron4p, Leaf heron4q]
 
 checkTree :: MinMaxTree -> Box -> Accuracy -> Precision -> Rational -> (Maybe Bool, Maybe SearchBox)
 checkTree (Leaf f) box ac p n = 
@@ -154,23 +185,17 @@ checkTree (Leaf f) box ac p n =
   where
     f' = BoxFun (dimension f) (bf_eval f) box'
     box' = setPrecision p box
-checkTree (Max l r) box ac p n
-  | rRange !<! n =
-    trace ("Right branch below " ++ show n)
-    trace ("Left  range: " ++ show (endpointsAsIntervals lRange))
-    trace ("Right range: " ++ show (endpointsAsIntervals rRange))
-    checkTree l box ac p n
-
-  | lRange !<! n =
-    trace ("Left branch below " ++ show n)
-    trace ("Left  range: " ++ show (endpointsAsIntervals lRange))
-    trace ("Right range: " ++ show (endpointsAsIntervals rRange))
-    checkTree r box ac p n
+checkTree (Max []) _ _ _ _ = (Just True, Nothing)
+checkTree (Max (t : ts)) box ac p n
+  | tRange !<! n =
+    trace ("branch below " ++ show n)
+    trace ("branch range: " ++ show (endpointsAsIntervals tRange))
+    checkTree (Max ts) box ac p n
   | otherwise      =
-    if (lRange !>! n || rRange !>! n) then
+    if (tRange !>! n) then
       (Just True, Nothing)
     else 
-      case minimumAboveNTree (Max l r) box' ac p n of
+      case minimumAboveNTree (Max (t : ts)) box' ac p n of
         (Just True, mBox) -> (Just True, mBox)
         _ -> 
           if AERN2.BoxFun.Box.width box' !>! 1 / (10000000) then -- make this threshold quite small (maybe 10^-7)
@@ -178,68 +203,69 @@ checkTree (Max l r) box ac p n
               checkBoxes newBoxes
             else
               trace "Stopping bisections (Box too small)" $
-              case checkTree l box' ac p n of
-                (Just True, mBox)  -> (Just True, mBox)
-                _               -> 
-                  case checkTree r box' ac p n of
-                    (Just True, mBox) -> (Just True, mBox) -- TODO: Refactor to return nothing instead of False
-                    (_, mBox)      -> (Nothing, mBox)
+              case minimumAboveNTree (Max (t : ts)) box' ac p n of
+                (Just True, mBox) -> (Just True, mBox)
+                (_, mBox)      -> (Nothing, mBox) -- Cannot guarantee that a result is False here
     where   
-      lRange = applyTree l box'
-      rRange = applyTree r box'
+      tRange = applyTree t box'
 
       box' = setPrecision p box
 
       newBoxes = fullBisect box'
 
       checkBoxes []           = (Just True, Nothing)
-      checkBoxes (b : boxes)  = case checkTree (Max l r) b ac p n of
+      checkBoxes (b : boxes)  = case checkTree (Max (t : ts)) b ac p n of
                                   (Just True, _) -> checkBoxes boxes
                                   o              -> o
 
-checkTree (Min l r) box ac p n = 
-  parallelAnd (checkTree l box ac p n) (checkTree r box ac p n)
-  -- case checkTree l box ac p n of
-  --   (Just True, _) -> 
-  --     case checkTree r box ac p n of
-  --       (Just True, _) -> (Just True, Nothing)
-  --       o -> o
-  --   o -> o
+checkTree (Min l) box ac p n = minimumAboveNTree (Min l) box ac p n
 
 size :: MinMaxTree -> Integer
 size (Leaf _)  = 1
-size (Min l r) = 1 + size l + size r
-size (Max l r) = 1 + size l + size r
+size (Min l) = 1 + sum (map size l)
+size (Max l) = 1 + sum (map size l)
 
 applyTree :: MinMaxTree -> Box -> CN MPBall
 
 -- applyTree (Leaf f)  box = globalMinimumAboveN (BoxFun (dimension (fst f)) (bf_eval (fst f)) box) (bits 100) (prec 1000) (cn 0.0)
 applyTree (Leaf f)  box = apply f box
-applyTree (Max l r) box = max (applyTree l box) (applyTree r box)
-applyTree (Min l r) box = min (applyTree l box) (applyTree r box)
+applyTree (Max l) box   = maximum (map (\t -> applyTree t box) l)
+applyTree (Min l) box   = minimum (map (\t -> applyTree t box) l)
 
 -- TODO: globalMinimum and globalMaximum with low accuracy/precision to compute more accurate r and lRanges
 
 domainTree :: MinMaxTree -> Box
 domainTree (Leaf f) = domain f 
-domainTree (Min l _) = domainTree l 
-domainTree (Max l _) = domainTree l
+domainTree (Min l) = domainTree (head l) 
+domainTree (Max l) = domainTree (head l)
 
 minimumAboveNTree :: MinMaxTree -> Box -> Accuracy -> Precision -> Rational -> (Maybe Bool, Maybe SearchBox) -- make the cutoff a quarter of a width
 minimumAboveNTree (Leaf f) box ac p n = globalMinimumGreaterThanN (BoxFun (dimension f) (bf_eval f) box) ac p ((width box) / 2) (cn n)
-minimumAboveNTree (Max l r) box ac p n = 
-  parallelOr (minimumAboveNTree l box ac p n) (minimumAboveNTree r box ac p n)
-  -- case minimumAboveNTree l box ac p n of
-  --   (Just True, _) -> (Just True, Nothing)
-  --   _ ->
-  --      case minimumAboveNTree r box ac p n of
-  --        (Just True, _) -> (Just True, Nothing)
-  --        (_, b) -> (Nothing, b)
-minimumAboveNTree (Min l r) box ac p n = 
-  parallelAnd (minimumAboveNTree l box ac p n) (minimumAboveNTree r box ac p n)
-  -- case minimumAboveNTree l box ac p n of
-  --   (Just True, _) ->
-  --     case minimumAboveNTree r box ac p n of
-  --       (Just True, _) -> (Just True, Nothing)
-  --       o -> o
-  --   o -> o
+minimumAboveNTree (Max l)  box ac p n = parallelOrList (map (\t -> minimumAboveNTree t box ac p n) l)
+minimumAboveNTree (Min l) box ac p n  = parallelAndList (map (\t -> minimumAboveNTree t box ac p n) l)
+
+
+-- Below is simpler, won't have to drop branches in max cases
+-- But dropping branches seems to be more efficient
+
+-- minimumAboveNTree :: MinMaxTree -> Box -> Accuracy -> Precision -> Rational -> (Maybe Bool, Maybe SearchBox) -- make the cutoff a quarter of a width
+-- minimumAboveNTree (Leaf f) box ac p n = 
+--   if apply f box !>! n 
+--     then (Just True, Nothing)
+--     else globalMinimumGreaterThanN (BoxFun (dimension f) (bf_eval f) box) ac p ((width box) / 2) (cn n)
+-- minimumAboveNTree (Max l)  box ac p n = 
+--   parallelOrList  
+--   (map 
+--   (\t -> 
+--     if applyTree (Max l) box !>! n 
+--       then (Just True, Nothing)
+--       else minimumAboveNTree t box ac p n)
+--   l)
+-- minimumAboveNTree (Min l) box ac p n  = 
+--   parallelAndList 
+--   (map 
+--   (\t -> 
+--     if applyTree (Min l) box !<=! n
+--       then (Just False, Nothing)
+--       else minimumAboveNTree t box ac p n) 
+--   l)

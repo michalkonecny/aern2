@@ -14,6 +14,7 @@ import qualified AERN2.BoxFunMinMax.Type as T
 import qualified Prelude as P
 
 import AERN2.BoxFun.TestFunctions (fromListDomain) -- TODO: Move this to Util?
+import AERN2.BoxFun.Optimisation (SearchBox)
 
 import Data.List
 import qualified Data.Map as Map
@@ -234,21 +235,6 @@ expressionToSMT (Lit e) =
     1 -> show (numerator e)
     _ ->
       "(/ " ++ show (numerator e) ++ " " ++ show (denominator e) ++ ")"
-
--- Precondition: Mins and Maxes at the top and no Abs in E
-expressionToTree :: E -> [(String, (Rational, Rational))] -> T.MinMaxTree
-expressionToTree e@(EBinOp op e1 e2) domain = 
-  case op of
-    Max -> T.Max (expressionToTree e1 domain) (expressionToTree e2 domain)
-    Min -> T.Min (expressionToTree e1 domain) (expressionToTree e2 domain)
-    op' -> T.Leaf $ expressionToBoxFun e domain
-expressionToTree e@(EUnOp op _) domain =
-  case op of
-    Abs -> undefined
-    op' -> T.Leaf $ expressionToBoxFun e domain
-expressionToTree e@(Lit _) domain = T.Leaf (expressionToBoxFun e domain) 
-expressionToTree e@(Var _) domain = T.Leaf (expressionToBoxFun e domain) 
-expressionToTree e@(PowI _ _) domain = T.Leaf (expressionToBoxFun e domain) 
 
 -- data BoxFun =
 --     BoxFun

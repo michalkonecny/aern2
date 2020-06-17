@@ -40,6 +40,7 @@ library
     , vector
     , stm
     , parallel
+    , universe-reverse-instances
     -- TODO: delete below eventually
     , async
 
@@ -74,7 +75,6 @@ library
     AERN2.BoxFun.Optimisation   
     AERN2.BoxFunMinMax.Type
     AERN2.BoxFunMinMax.Optimisation
-    AERN2.BoxFunMinMax.TestFunctions
     AERN2.BoxFunMinMax.Expressions.TestFunctions
     AERN2.BoxFunMinMax.Expressions.Type
     --AERN2.BoxFun.OptimisationConcurrent 
