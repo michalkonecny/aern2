@@ -16,6 +16,9 @@ import qualified Prelude as P
 import AERN2.BoxFun.TestFunctions (fromListDomain) -- TODO: Move this to Util?
 
 import Data.List
+import qualified Data.Map as Map
+
+import Debug.Trace (trace)
 
 -- TODO: Implement symbolic expressions
 
@@ -101,8 +104,8 @@ minMaxAbsEliminator (EBinOp op e1 e2) =
       concat 
       [
         [
-          (p1 ++ [EBinOp Sub e2' e1'], e1'), -- e2' >= e1'
-          (p2 ++ [EBinOp Sub e1' e2'], e2')  -- e1' >= e2'
+          (nub (p1 ++ p2) ++ [EBinOp Sub e2' e1'], e1'), -- e2' >= e1'
+          (nub (p2 ++ p1) ++ [EBinOp Sub e1' e2'], e2')  -- e1' >= e2'
         ] 
         | 
         (p1, e1') <- branch1, (p2, e2') <- branch2
@@ -111,8 +114,8 @@ minMaxAbsEliminator (EBinOp op e1 e2) =
       concat 
       [
         [
-          (p1 ++ [EBinOp Sub e1' e2'], e1'), -- e1' >= e2'
-          (p2 ++ [EBinOp Sub e2' e1'], e2')  -- e2' >= e1'
+          (nub (p1 ++ p2) ++ [EBinOp Sub e1' e2'], e1'), -- e1' >= e2'
+          (nub (p2 ++ p1) ++ [EBinOp Sub e2' e1'], e2')  -- e2' >= e1'
         ] 
         | 
         (p1, e1') <- branch1, (p2, e2') <- branch2
@@ -363,3 +366,39 @@ expressionAndDomainsToDreal e realDomains intDomains epsilon =
     commonEnd =
       "(check-sat)" ++
       "(exit)"
+
+
+
+-- data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String | PowI E Integer  -- TODO: Make Var a pair, (String, (Rational, Rational)), where (Rational, Rational) is domain
+
+-- computeE using haskell with variables at specified points
+computeE :: E -> [(String, Double)] -> CN Double
+computeE (EBinOp op e1 e2) varMap = 
+  case op of
+    Min -> computeE e1 varMap `min` computeE e2 varMap
+    Max -> computeE e1 varMap `max` computeE e2 varMap
+    Add -> computeE e1 varMap + computeE e2 varMap
+    Sub -> computeE e1 varMap - computeE e2 varMap
+    Mul -> computeE e1 varMap * computeE e2 varMap
+    Div -> computeE e1 varMap / computeE e2 varMap
+    Pow -> computeE e1 varMap ^ computeE e2 varMap 
+computeE (EUnOp op e) varMap =
+  case op of
+    Abs -> abs (computeE e varMap)
+    Sqrt -> sqrt (computeE e varMap)
+    Negate -> negate (computeE e varMap)
+computeE (Var v) varMap = 
+  case Map.lookup v (Map.fromList varMap) of
+    Nothing -> 
+      trace ("map does not contain variable " ++ show v)
+      undefined
+    Just r -> cn r
+computeE (Lit i) _ = cn (double i)
+computeE (PowI e i) varMap = computeE e varMap  ^ i
+
+computeQualifiedEs :: [([E], E)] -> [(String, Double)] -> [CN Double]
+computeQualifiedEs [] _ = []
+computeQualifiedEs ((ps, q) : es) varMap =
+  if all (\p -> computeE p varMap !>=! 0) ps
+    then computeE q varMap : computeQualifiedEs es varMap
+    else computeQualifiedEs es varMap
