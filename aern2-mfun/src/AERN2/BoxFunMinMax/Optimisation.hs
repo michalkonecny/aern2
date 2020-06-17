@@ -12,10 +12,50 @@ import qualified Data.List as List
 
 import qualified AERN2.PQueue as Q
 
-
 import AERN2.Util.Util
 
 import Debug.Trace (trace)
+
+import AERN2.BoxFun.Box
+import AERN2.Linear.Vector.Type (Vector, (!))
+import qualified AERN2.Linear.Vector.Type as V
+import AERN2.Util.Util
+import AERN2.AD.Type
+
+
+boundaryRestrictionsWithInversion :: BoxFun -> [(BoxFun, Box -> Box)]
+boundaryRestrictionsWithInversion (BoxFun d ev dom) =
+  concat
+  [
+    [
+      (BoxFun 
+        (d - 1)
+        (
+        \v ->
+          ev $ (vAddDimension i (setPrecision (getPrecision v) (differential 2 (upperBound (dom ! i)))) v)
+        ) 
+        (domWithoutDimension i)
+      ,
+      (vAddDimension i (upperBound (dom ! i))))
+      ,
+      (BoxFun 
+        (d - 1)
+        (
+        \v ->
+          ev $ (vAddDimension i (setPrecision (getPrecision v) (differential 2 (lowerBound (dom ! i)))) v)
+        )
+        (domWithoutDimension i)
+      ,
+      (vAddDimension i (lowerBound (dom ! i))))
+    ]
+    |
+    i <- [0 .. d - 1]
+  ]
+  where
+    domWithoutDimension i = (V.map (\j -> if j >= i then dom ! (j + 1) else dom ! j) $ V.enumFromTo 0 (d - 2))
+    
+    vAddDimension :: Integer -> a -> Vector a -> Vector a
+    vAddDimension i value v = V.map (\j -> if j == i then value else if j < i then v ! j else v ! (j - 1)) (V.enumFromTo 0 (d - 1))
 
 globalMinimumGreaterThanN :: BoxFun -> Accuracy -> Precision -> CN MPBall -> CN Rational -> (Maybe Bool, Maybe SearchBox)
 globalMinimumGreaterThanN f ac initialPrecision widthCutoff n =
@@ -29,25 +69,33 @@ globalMinimumAboveN f ac initialPrecision widthCutoff n =
             fr         = apply f (V.map upperBound $ domain f)
         in
             if fl !<=! n then
+                trace "Left boundary"
                 (Just False, Just (SearchBox (V.map lowerBound (domain f)) fl))
             else
                 if fr !<=! n then
+                    trace "Right boundary"
                     (Just False, Just (SearchBox (V.map upperBound (domain f)) fr))
                 else
                     minimumAboveN f (domain f) ac initialPrecision widthCutoff n
     else 
         let
-            boundaryFuns = boundaryRestrictions f
+            boundaryFuns = boundaryRestrictionsWithInversion f
         in
                     case minimumAboveN f (domain f) ac initialPrecision widthCutoff n of
                         (Just True, _)  -> boundaryMinima boundaryFuns
-                        o               -> o 
+                        o               -> 
+                            trace ("Indeterminate/False domain: " ++ show (domain f))
+                            o 
                 where
                     boundaryMinima  []      =   (Just True, Nothing)
-                    boundaryMinima  (g:gs)  =  
+                    boundaryMinima  ((g, restoreBox) : gs)  =  
                         case globalMinimumAboveN g ac initialPrecision widthCutoff n of
                             (Just True, _)  -> boundaryMinima gs
-                            o               -> o
+                            (mBool, mBox)   -> 
+                                trace ("Indeterminate/False domain: " ++ show (domain g)) $
+                                case mBox of
+                                    Nothing  -> (mBool, Nothing)
+                                    Just (SearchBox box minimum) -> (mBool, Just $ SearchBox (restoreBox box) minimum)
 
 minimumAboveN :: BoxFun -> Box -> Accuracy -> Precision -> CN MPBall -> CN MPBall -> (Maybe Bool, Maybe SearchBox) -- TODO: Maybe Bool
 minimumAboveN f box ac initialPrecision widthCutoff n =
