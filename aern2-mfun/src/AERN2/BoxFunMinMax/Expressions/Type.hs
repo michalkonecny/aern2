@@ -160,6 +160,28 @@ qualifiedEsToCNFList [(ps, q)]        = [EBinOp Max (buildPs ps) q]
 qualifiedEsToCNFList ((ps, q) : es) = (qualifiedEsToCNFList [(ps, q)]) ++ (qualifiedEsToCNFList es)
 
 
+-- [ps >= 0 -> e >= 0]
+-- [-ps >= 0 \/ e >= 0]
+-- [max (-ps, e) >= 0]
+-- min [max (-ps, e) >= 0]
+qualifiedEsToTree :: [([E], E)] -> [(String, (Rational, Rational))] -> T.MinMaxTree
+qualifiedEsToTree l varDomains =
+  T.Min $ 
+    map 
+      (\(ps, q) -> 
+        T.Max 
+          (T.Leaf (expressionToBoxFun (simplifyE q) varDomains) : 
+          map (\p -> T.Leaf (expressionToBoxFun (simplifyE (EUnOp Negate p)) varDomains)) ps)) 
+      l
+
+-- expressionToTree :: E -> [(String, (Rational, Rational))] -> T.MinMaxTree
+-- expressionToTree e@(EBinOp op e1 e2) varDomains = 
+--   case op of
+--     Max -> T.Max $ [expressionToTree e1 varDomains] ++ [expressionToTree e2 varDomains] 
+--     Min -> T.Min $ [expressionToTree e1 varDomains] ++ [expressionToTree e2 varDomains] 
+--     _ -> T.Leaf (expressionToBoxFun e varDomains)
+-- expressionToTree e varDomains = T.Leaf $ expressionToBoxFun e varDomains
+
 runTranslator :: E -> IO ()
 runTranslator e = do
   putStrLn "Running Haskell to SMT translator for Expressions"

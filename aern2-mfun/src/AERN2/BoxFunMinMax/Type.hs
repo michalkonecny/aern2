@@ -10,8 +10,9 @@ import AERN2.BoxFunMinMax.Optimisation
 
 import Data.Maybe
 
-import Debug.Trace
+import Debug.Trace (trace)
 
+import Control.Monad
 import Control.Concurrent
 import Control.Concurrent.STM
 import System.IO.Unsafe
@@ -19,26 +20,91 @@ import System.IO.Unsafe
 import Control.Parallel
 import Control.Parallel.Strategies
 
-parallelOr :: (Maybe Bool, Maybe SearchBox) -> (Maybe Bool, Maybe SearchBox) -> (Maybe Bool, Maybe SearchBox)
-parallelOr b1 b2 =
-    result
-  where
-    tuple = (b1, b2) `using` (parTuple2 (dot rpar rseq) (dot rpar rseq))
-    -- b1' = b1 `using` r0
-    -- b2' = b2 `using` r0
-    result = case (tuple) of
-      (r@(Just True, _), _) -> r
-      (_, r@(Just True, _)) -> r
-      (r@(Nothing, _), _)   -> r
-      (_, r@(Nothing, _))   -> r
-      (r, _)                -> r
-      -- ((o1, b1), (o2, b2)) -> (o1, b1)
+-- import System.Environment
+
+-- import Data.List (find)
+
+
+-- evalToTVar x tvar = atomically (writeTVar tvar x)
+
+-- readSTM tvar =
+--   case tvar of
+--     Just r -> pure r
+--     _      -> retry
+
+-- parTree t tvar = forkIO (atomically (seq t (writeTVar tvar (Just t))))
+
+-- orP ts tvar = 
+--   do
+--     result <- readTVar tvar
+
+--     case result of
+--       Just r -> pure r
+--       _ -> retry
+    
+-- globalTVar = newTVar Nothing
+
+-- runThreads ts =
+--   parTree (ts !! 0) globalTVar
+
+
+-- parOrList :: [(Maybe Bool, Maybe SearchBox)] -> IO (Maybe Bool, Maybe SearchBox)
+-- parOrList l = do
+--   resultVs  <- mapM (\_ -> 
+--     trace ("creating" ++ (show n) ++ "MVars")
+--     newEmptyMVar) [0 .. n-1]
+--   threads <- mapM (\j -> 
+--     trace ("creating" ++ (show n) ++ "MVars")
+--     forkIO (seq (l!!j) (void (tryPutMVar (resultVs !! j) (Just (l!!j)))))) [0 .. n-1]
+
+--   mapM_ killThread threads
+--   checkResultVs resultVs
+--   where
+--     n = unsafePerformIO getNumCapabilities 
+
+--     checkResultVs :: [MVar (Maybe (Maybe Bool, Maybe SearchBox))] -> IO (Maybe Bool, Maybe SearchBox)
+--     checkResultVs []        = return (Just False, Nothing)
+--     checkResultVs (x : xs)  =
+--       case unsafePerformIO (tryReadMVar x) of
+--         Just x' ->
+--           case x' of
+--             Just r@(Just True, _) -> return r
+--             Just _                -> checkResultVs xs -- False or nothing, remove from list
+--             Nothing               -> checkResultVs (xs ++ [x])
+--         Nothing ->
+--           checkResultVs (xs ++ [x])
+
+-- parAndList :: [(Maybe Bool, Maybe SearchBox)] -> IO (Maybe Bool, Maybe SearchBox)
+-- parAndList l = do
+--     resultVs  <- mapM (\_ -> 
+--       trace ("creating" ++ (show n) ++ "MVars")
+--       newEmptyMVar) [0 .. n-1]
+--     threads <- mapM (\j -> 
+--       trace ("creating" ++ (show n) ++ "threads")
+--       forkIO (seq (l!!j) (void (tryPutMVar (resultVs !! j) (Just (l!!j)))))) [0 .. n-1]
+
+--     mapM_ killThread threads
+--     checkResultVs resultVs
+--   where
+--     n = length l
+
+--     checkResultVs :: [MVar (Maybe (Maybe Bool, Maybe SearchBox))] -> IO (Maybe Bool, Maybe SearchBox)
+--     checkResultVs []        = return (Just False, Nothing)
+--     checkResultVs (x : xs)  =
+--       case unsafePerformIO (tryReadMVar x) of
+--         Just x' ->
+--           case x' of
+--             Just (Just True, _)   -> checkResultVs xs
+--             Just r@_              -> return r
+--             Nothing               -> checkResultVs (xs ++ [x])
+--         Nothing ->
+--           checkResultVs (xs ++ [x])
 
 parallelOrList :: [(Maybe Bool, Maybe SearchBox)] -> (Maybe Bool, Maybe SearchBox)
 parallelOrList l =
     checkList list (Nothing, Nothing)
   where
-    list = l `using` parList (dot rpar rseq)
+    list = l `using` parList rpar
 
     checkList []       c    = c
     checkList (x : xs) c    =
@@ -55,99 +121,13 @@ parallelAndList :: [(Maybe Bool, Maybe SearchBox)] -> (Maybe Bool, Maybe SearchB
 parallelAndList l =
     checkList list
   where
-    list = l `using` parList (dot rpar rseq)
+    list = l `using` parList rpar
 
     checkList []            = (Just True, Nothing)
     checkList (x : xs)      =
       case x of
         (Just True, _)  -> checkList xs
         o               -> o
-
-parallelAnd :: (Maybe Bool, Maybe SearchBox) -> (Maybe Bool, Maybe SearchBox) -> (Maybe Bool, Maybe SearchBox)
-parallelAnd b1 b2 =
-  result
-  where
-    tuple = (b1, b2) `using` (parTuple2 (dot rpar rseq) (dot rpar rseq))
-    -- b1' = b1 `using` r0
-    -- b2' = b2 `using` r0
-    result = case (tuple) of
-      (r@(Just True, _), (Just True, _)) -> r
-      (r@(Nothing, _), _)                -> r
-      (_, r@(Nothing, _))                -> r
-      (r@(Just False, _), _)             -> r
-      (_, r@(Just False, _))             -> r
-      -- ((o1, b1), (o2, b2)) -> (o1, b1)
-
-por :: (Maybe Bool, Maybe SearchBox) -> (Maybe Bool, Maybe SearchBox) -> (Maybe Bool, Maybe SearchBox)
-por b1 b2 =
-  unsafePerformIO $ do
-    print "creating threads"
-    result1TV <- atomically $ newTVar Nothing
-    result2TV <- atomically $ newTVar Nothing
-    thread1 <- forkIO (atomically (seq b1 $ writeTVar result1TV (Just b1)))
-    thread2 <- forkIO (atomically (seq b2 $ writeTVar result2TV (Just b2)))
-    result <- atomically $ do
-      maybeResult1 <- readTVar result1TV
-      maybeResult2 <- readTVar result2TV
-      case (maybeResult1, maybeResult2) of
-        (Just r@(Just True, _), _)                     -> pure r
-        (_, Just r@(Just True, _))                     -> pure r
-        (Just r@(Nothing, _), Just _)                  -> pure r
-        (Just _, Just r@(Nothing, _))                  -> pure r
-        (Just r@(Just False, _), Just (Just False, _)) -> pure r
-        _ -> retry
-    print "killing thread 1 and thread 2"
-    killThread thread1
-    killThread thread2
-    pure result
-pand :: (Maybe Bool, Maybe SearchBox) -> (Maybe Bool, Maybe SearchBox) -> (Maybe Bool, Maybe SearchBox)
-pand b1 b2 =
-  unsafePerformIO $ do
-    result1TV <- atomically $ newTVar Nothing
-    result2TV <- atomically $ newTVar Nothing
-    thread1 <- forkIO (atomically (seq b1 $ writeTVar result1TV (Just b1)))
-    thread2 <- forkIO (atomically (seq b2 $ writeTVar result2TV (Just b2)))
-    result <- atomically $ do
-      maybeResult1 <- readTVar result1TV
-      maybeResult2 <- readTVar result2TV
-      case (maybeResult1, maybeResult2) of
-        (Just r@(Just True, _), Just (Just True, _))   -> pure r
-        (Just r@(Nothing, _), _)                       -> pure r
-        (_, Just r@(Nothing, _))                       -> pure r
-        (Just r@(Just False, _), _)                    -> pure r
-        (_, Just r@(Just False, _))                    -> pure r
-        _ -> retry
-    killThread thread1
-    killThread thread2
-    pure result
-
--- pand1 = pand True True
--- pand2 = pand True False
--- pand3 = pand False True
--- pand4 = pand False False
--- pand5 = pand loop False
--- pand6 = pand False loop
-
-loop = loop
-
-por1 = por (Just True, Nothing) (Just False, Nothing)
-por2 = por (Just False, Nothing) (Just True, Nothing)
-por3 = por (Just True, Nothing) (Just True, Nothing)
-por4 = por (Just True, Nothing) (Nothing, Nothing)
-por5 = por (Nothing, Nothing) (Just True, Nothing)
-por6 = por (Nothing, Nothing) (Nothing, Nothing)
-por7 = por (Just False, Nothing) (Just False, Nothing)
-por8 = por (Just True, Nothing) loop
-por9 = por loop (Just True, Nothing)
-
-
-pand1 = pand (Just True, Nothing) (Just False, Nothing)
-pand2 = pand (Just False, Nothing) (Just True, Nothing)
-pand3 = pand (Just True, Nothing) (Just True, Nothing)
-pand4 = pand (Nothing, Nothing) (Just True, Nothing)
-pand5 = pand (Just True, Nothing) (Nothing, Nothing)
-pand6 = pand (Nothing, Nothing) (Nothing, Nothing)
-pand7 = pand (Just False, Nothing) (Just False, Nothing)
 
 -- All leaves in the tree must have the same domain
 -- leaves should be bf_eval
@@ -181,44 +161,56 @@ checkTree (Leaf f) box ac p n =
   if applyMinimumOnBox f box' !>! n then
     (Just True, Nothing)
   else
-    globalMinimumGreaterThanN f' ac p ((width box') / 10000000) (cn n)
+    globalMinimumGreaterThanN f' ac p (width box' / 100) (cn n)
   where
     f' = BoxFun (dimension f) (bf_eval f) box'
     box' = setPrecision p box
-checkTree (Max []) _ _ _ _ = (Just True, Nothing)
-checkTree (Max (t : ts)) box ac p n
-  | tRange !<! n =
-    trace ("branch below " ++ show n)
-    trace ("branch range: " ++ show (endpointsAsIntervals tRange))
-    checkTree (Max ts) box ac p n
-  | otherwise      =
-    if (tRange !>! n) then
+checkTree (Max ts) box ac p n =
+    if (or roughCheck) then
       (Just True, Nothing)
     else 
-      case minimumAboveNTree (Max (t : ts)) box' ac p n of
-        (Just True, mBox) -> (Just True, mBox)
-        _ -> 
-          if AERN2.BoxFun.Box.width box' !>! 1 / (10000000) then -- make this threshold quite small (maybe 10^-7)
-              trace ("Bisected boxes: " ++ show newBoxes)
-              checkBoxes newBoxes
-            else
-              trace "Stopping bisections (Box too small)" $
-              case minimumAboveNTree (Max (t : ts)) box' ac p n of
-                (Just True, mBox) -> (Just True, mBox)
-                (_, mBox)      -> (Nothing, mBox) -- Cannot guarantee that a result is False here
+      case filteredTs of
+        [] -> (Just False, Nothing)
+        [t] -> checkTree t box ac p n
+        _ ->
+          case minimumAboveNTree (Max filteredTs) box' ac p (width box / 2) n of
+            (Just True, mBox) -> (Just True, mBox)
+            _ -> 
+              if AERN2.BoxFun.Box.width box' !>! 1 / (100) then -- make this threshold quite small (maybe 10^-7)
+                  trace ("Bisected boxes: " ++ show newBoxes)
+                  checkBoxes newBoxes filteredTs
+                else
+                  trace "Stopping bisections (Box too small)" $
+                  case minimumAboveNTree (Max filteredTs) box' ac p (width box / 100) n of
+                    (Just True, mBox) -> (Just True, mBox)
+                    (_, mBox)      -> (Nothing, mBox) -- Cannot guarantee that a result is False here
     where   
-      tRange = applyTree t box'
+      filteredTs = 
+        filter 
+          (\t ->
+            not (applyTree t box' !<! n)
+          ) 
+          ts
+
+      roughCheck = 
+        map
+          (\t ->
+            applyTree t box' !>=! n
+          )
+        filteredTs
 
       box' = setPrecision p box
 
       newBoxes = fullBisect box'
 
-      checkBoxes []           = (Just True, Nothing)
-      checkBoxes (b : boxes)  = case checkTree (Max (t : ts)) b ac p n of
-                                  (Just True, _) -> checkBoxes boxes
-                                  o              -> o
+      checkBoxes []          _  = (Just True, Nothing)
+      checkBoxes (b : boxes) ts' = case checkTree (Max ts') b ac p n of
+                                  (Just True, _) -> checkBoxes boxes ts'
+                                  o              -> 
+                                    trace ("found false at " ++ show b)
+                                    o
 
-checkTree (Min l) box ac p n = minimumAboveNTree (Min l) box ac p n
+checkTree (Min l) box ac p n = parallelAndList (map (\t -> checkTree t box ac p n) l)
 
 size :: MinMaxTree -> Integer
 size (Leaf _)  = 1
@@ -239,11 +231,10 @@ domainTree (Leaf f) = domain f
 domainTree (Min l) = domainTree (head l) 
 domainTree (Max l) = domainTree (head l)
 
-minimumAboveNTree :: MinMaxTree -> Box -> Accuracy -> Precision -> Rational -> (Maybe Bool, Maybe SearchBox) -- make the cutoff a quarter of a width
-minimumAboveNTree (Leaf f) box ac p n = globalMinimumGreaterThanN (BoxFun (dimension f) (bf_eval f) box) ac p ((width box) / 2) (cn n)
-minimumAboveNTree (Max l)  box ac p n = parallelOrList (map (\t -> minimumAboveNTree t box ac p n) l)
-minimumAboveNTree (Min l) box ac p n  = parallelAndList (map (\t -> minimumAboveNTree t box ac p n) l)
-
+minimumAboveNTree :: MinMaxTree -> Box -> Accuracy -> Precision -> CN MPBall -> Rational -> (Maybe Bool, Maybe SearchBox) -- make the cutoff a quarter of a width
+minimumAboveNTree (Leaf f) box ac p widthCutoff n = globalMinimumGreaterThanN (BoxFun (dimension f) (bf_eval f) box) ac p widthCutoff (cn n)
+minimumAboveNTree (Max l)  box ac p widthCutoff n = parallelOrList (map (\t -> minimumAboveNTree t box ac p widthCutoff n) l)
+minimumAboveNTree (Min l)  box ac p widthCutoff n = parallelAndList (map (\t -> minimumAboveNTree t box ac p widthCutoff n) l)
 
 -- Below is simpler, won't have to drop branches in max cases
 -- But dropping branches seems to be more efficient
