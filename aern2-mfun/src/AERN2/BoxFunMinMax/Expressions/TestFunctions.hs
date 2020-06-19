@@ -1,7 +1,10 @@
 module AERN2.BoxFunMinMax.Expressions.TestFunctions where
 
 import MixedTypesNumPrelude
+import AERN2.BoxFunMinMax.Expressions.Eliminator
 import AERN2.BoxFunMinMax.Expressions.Type
+import AERN2.BoxFunMinMax.Expressions.Translators.DReal
+import AERN2.BoxFunMinMax.Expressions.Translators.Tree
 import qualified AERN2.BoxFunMinMax.Type as T
 
 simpleMax = EBinOp Max (Lit 1.0) (EUnOp Negate (Lit 1.0))

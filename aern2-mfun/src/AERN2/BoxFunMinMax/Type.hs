@@ -196,7 +196,6 @@ parallelAndList l =
 -- All leaves in the tree must have the same domain
 -- leaves should be bf_eval
 data MinMaxTree = Leaf {tree_f :: BoxFun} | Min [MinMaxTree] | Max [MinMaxTree]
--- TODO: Refactor tree to take Min/Max of a list of trees
 
 heronTree2 :: MinMaxTree
 heronTree2 = Max 

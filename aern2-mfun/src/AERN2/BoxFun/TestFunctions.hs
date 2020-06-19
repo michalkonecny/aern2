@@ -188,7 +188,10 @@ ackley =
 --     (fromListDomain [(0.5, 2.0), (0.8, 1.8)])
 
 -- max (min (max 1p 1q) (max 2p 2q)) (min (max 3p 3q) (max 4p 4q))
-    
+
+i :: Integer
+i = 3
+
 heron1p :: BoxFun
 heron1p = 
     BoxFun
@@ -199,7 +202,6 @@ heron1p =
             y = v!1
             p = getPrecision v
             eps = 1/2^(23)
-            i = 4
         in
             (y - sqrt x)
      )
@@ -216,7 +218,6 @@ heron1q =
             y = v!1
             p = getPrecision v
             eps = 1/2^(23)
-            i = 4
         in
             ((sqrt x - y) - (mpBallP p 1/2)^(2^(i-1)) - (mpBallP p 6) * eps * (i-1))
 
@@ -234,7 +235,6 @@ heron2p =
             y = v!1
             p = getPrecision v
             eps = 1/2^(23)
-            i = 4
         in
             (sqrt x - y)
     )
@@ -251,7 +251,6 @@ heron2q =
             y = v!1
             p = getPrecision v
             eps = 1/2^(23)
-            i = 4
         in
             (- (sqrt x - y) - (mpBallP p 1/2)^(2^(i-1)) - (mpBallP p 6) * eps * (i-1))
 
@@ -269,7 +268,6 @@ heron3p =
             y = v!1
             p = getPrecision v
             eps = 1/2^(23)
-            i = 4
         in
             ((y + x/y)/2 - sqrt x)
     )
@@ -285,7 +283,6 @@ heron3q =
             y = v!1
             p = getPrecision v
             eps = 1/2^(23)
-            i = 4
         in
             (- (sqrt x - (y+x/y)/2) + (mpBallP p 1/2)^(2^i) + (mpBallP p 6) * eps * (i-1))
     )
@@ -334,7 +331,6 @@ heron4p =
             y = v!1
             p = getPrecision v
             eps = 1/2^(23)
-            i = 4
         in
             (sqrt x - (y+x/y)/2)
     )
@@ -351,12 +347,29 @@ heron4q =
             y = v!1
             p = getPrecision v
             eps = 1/2^(23)
-            i = 4
         in
             ((sqrt x - (y+x/y)/2) + (mpBallP p 1/2)^(2^i) + (mpBallP p 6) * eps * (i-1))
 
     )
     (fromListDomain [(0.5, 2.0), (0.8, 1.8)])
+
+-- heronFull :: BoxFun
+-- heronFull =
+--     BoxFun
+--     3
+--     (\v ->
+--         let
+--             x = v!0
+--             y = v!1
+--             i = v!2
+--             p = getPrecision v
+--             eps = 1/2^(23)
+--         in
+--             ((sqrt x - (y+x/y)/2) + (mpBallP p 1/2)^(2^i) + (mpBallP p 6) * eps * (i-1))
+
+--     )
+--     (fromListDomain [(0.5, 2.0), (0.8, 1.8), (1.0, 5.0)])
+
 
 mxp1 :: BoxFun
 mxp1 =
