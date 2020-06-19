@@ -57,10 +57,6 @@ boundaryRestrictionsWithInversion (BoxFun d ev dom) =
     vAddDimension :: Integer -> a -> Vector a -> Vector a
     vAddDimension i value v = V.map (\j -> if j == i then value else if j < i then v ! j else v ! (j - 1)) (V.enumFromTo 0 (d - 1))
 
-globalMinimumGreaterThanN :: BoxFun -> Accuracy -> Precision -> CN MPBall -> CN Rational -> (Maybe Bool, Maybe SearchBox)
-globalMinimumGreaterThanN f ac initialPrecision widthCutoff n =
-    globalMinimumAboveN f ac initialPrecision widthCutoff (cnMPBallP initialPrecision n)
-
 globalMinimumAboveN :: BoxFun -> Accuracy -> Precision -> CN MPBall -> CN MPBall -> (Maybe Bool, Maybe SearchBox)
 globalMinimumAboveN f ac initialPrecision widthCutoff n =
     if dimension f == 1 then

@@ -105,8 +105,8 @@ minMaxAbsEliminator (EBinOp op e1 e2) =
       concat 
       [
         [
-          (nub (p1 ++ p2) ++ [EBinOp Sub e2' e1'], e1'), -- e2' >= e1'
-          (nub (p2 ++ p1) ++ [EBinOp Sub e1' e2'], e2')  -- e1' >= e2'
+          (nub ((p1 ++ p2) ++ [EBinOp Sub e2' e1']), e1'), -- e2' >= e1'
+          (nub ((p2 ++ p1) ++ [EBinOp Sub e1' e2']), e2')  -- e1' >= e2'
         ] 
         | 
         (p1, e1') <- branch1, (p2, e2') <- branch2
@@ -115,8 +115,8 @@ minMaxAbsEliminator (EBinOp op e1 e2) =
       concat 
       [
         [
-          (nub (p1 ++ p2) ++ [EBinOp Sub e1' e2'], e1'), -- e1' >= e2'
-          (nub (p2 ++ p1) ++ [EBinOp Sub e2' e1'], e2')  -- e2' >= e1'
+          (nub ((p1 ++ p2) ++ [EBinOp Sub e1' e2']), e1'), -- e1' >= e2'
+          (nub ((p2 ++ p1) ++ [EBinOp Sub e2' e1']), e2')  -- e2' >= e1'
         ] 
         | 
         (p1, e1') <- branch1, (p2, e2') <- branch2
@@ -289,7 +289,7 @@ expressionToBoxFun e domain =
         Abs -> undefined
         Sqrt -> sqrt (expressionToDifferential e v)
         Negate -> negate (expressionToDifferential e v)
-    expressionToDifferential (Lit e) _ = differential 2 $ cn (mpBallP (prec 1000) e) -- TODO: paramaterise precision
+    expressionToDifferential (Lit e) _ = differential 2 $ cn (mpBallP (prec 100) e) -- TODO: paramaterise precision
     expressionToDifferential (Var e) v = 
       case elemIndex e variableOrder of
         Nothing -> undefined

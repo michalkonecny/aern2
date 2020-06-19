@@ -2,6 +2,7 @@ module AERN2.BoxFunMinMax.Expressions.TestFunctions where
 
 import MixedTypesNumPrelude
 import AERN2.BoxFunMinMax.Expressions.Type
+import qualified AERN2.BoxFunMinMax.Type as T
 
 simpleMax = EBinOp Max (Lit 1.0) (EUnOp Negate (Lit 1.0))
 simpleMin = EBinOp Min (Lit 1.0) (EUnOp Negate (Lit 1.0))
@@ -115,5 +116,16 @@ generateUnifiedHeronDrealFiles =
   writeFile 
     "heronPreservationM.smt2" 
     (expressionAndDomainsToDreal
-      (simplifyE (qualifiedEsToCNF (minMaxAbsEliminator (fToE heronPreservationMi1))))
-      [("x", (0.5, 2.0)), ("y", (0.8, 1.8))] [("i", (3.0, 5.0))] (0.5^!(-23)))
+      (simplifyE (qualifiedEsToCNF (minMaxAbsEliminator (fToE heronPreservationM))))
+      [("x", (0.5, 2.0)), ("y", (0.8, 1.8))] [("i", (0.0, 5.0))] (0.5^!(-23)))
+
+generateHeronTree :: T.MinMaxTree
+generateHeronTree =
+  T.Min
+  [
+    qualifiedEsToTree (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi1))) [("x", (0.5, 2.0)), ("y", (0.8, 1.8))],
+    qualifiedEsToTree (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi2))) [("x", (0.5, 2.0)), ("y", (0.8, 1.8))],
+    qualifiedEsToTree (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi3))) [("x", (0.5, 2.0)), ("y", (0.8, 1.8))],
+    qualifiedEsToTree (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi4))) [("x", (0.5, 2.0)), ("y", (0.8, 1.8))],
+    qualifiedEsToTree (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi5))) [("x", (0.5, 2.0)), ("y", (0.8, 1.8))]
+  ]
