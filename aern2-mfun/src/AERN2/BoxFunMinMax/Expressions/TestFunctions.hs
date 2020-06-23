@@ -124,11 +124,4 @@ generateUnifiedHeronDrealFiles =
 
 generateHeronTree :: T.MinMaxTree
 generateHeronTree =
-  T.Min
-  [
-    qualifiedEsToTree (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi1))) [("x", (0.5, 2.0)), ("y", (0.8, 1.8))],
-    qualifiedEsToTree (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi2))) [("x", (0.5, 2.0)), ("y", (0.8, 1.8))],
-    qualifiedEsToTree (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi3))) [("x", (0.5, 2.0)), ("y", (0.8, 1.8))],
-    qualifiedEsToTree (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi4))) [("x", (0.5, 2.0)), ("y", (0.8, 1.8))],
-    qualifiedEsToTree (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi5))) [("x", (0.5, 2.0)), ("y", (0.8, 1.8))]
-  ]
+    qualifiedEsToTree (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi2))) [("x", (0.5, 2.0)), ("y", (0.8, 1.8))]

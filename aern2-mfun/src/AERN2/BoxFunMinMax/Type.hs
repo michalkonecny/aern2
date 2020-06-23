@@ -3,10 +3,12 @@ module AERN2.BoxFunMinMax.Type where
 import AERN2.MP.Ball
 import MixedTypesNumPrelude
 import AERN2.BoxFun.Type
-import AERN2.BoxFun.Box
 import AERN2.BoxFun.Optimisation (SearchBox)
-import AERN2.BoxFun.TestFunctions
 import AERN2.BoxFunMinMax.Optimisation
+import AERN2.BoxFunMinMax.VarMap
+import AERN2.BoxFunMinMax.Expressions.Translators.BoxFun
+import qualified AERN2.BoxFunMinMax.Expressions.Type as E
+
 
 import Debug.Trace (trace)
 
@@ -195,108 +197,91 @@ parallelAndList l =
 
 -- All leaves in the tree must have the same domain
 -- leaves should be bf_eval
-data MinMaxTree = Leaf {tree_f :: BoxFun} | Min [MinMaxTree] | Max [MinMaxTree]
+data MinMaxTree = Leaf {expression :: E.E, varMap :: VarMap} | Min {list :: [MinMaxTree], varMap :: VarMap} | Max {list :: [MinMaxTree], varMap :: VarMap}
+  deriving Show
 
-heronTree2 :: MinMaxTree
-heronTree2 = Max 
-            [
-              Min [heron1, heron2],
-              Min [heron3, heron4]
-            ]
-            
-heron1 :: MinMaxTree
-heron1 = Max [Leaf heron1p, Leaf heron1q]
-
-heron2 :: MinMaxTree
-heron2 = Max [Leaf heron2p, Leaf heron2q]
-
-heron3 :: MinMaxTree
-heron3 = Max [Leaf heron3p, Leaf heron3q]
-
-heron4 :: MinMaxTree
-heron4 = Max [Leaf heron4p, Leaf heron4q]
-
-checkTree :: MinMaxTree -> Box -> Accuracy -> Precision -> Rational -> (Maybe Bool, Maybe SearchBox)
-checkTree (Leaf f) box ac p n = 
-  trace ("Checking on domain: " ++ show (getEndpoints box)) $
+checkTree :: MinMaxTree -> Accuracy -> Precision -> Rational -> (Maybe Bool, Maybe SearchBox)
+checkTree (Leaf e vMap) ac p n = 
+  trace ("Checking on domain: " ++ show (map snd vMap)) $
   trace ("rough bound gives: " ++ show ((applyMinimumOnBox f box'))) $
   if applyMinimumOnBox f box' !>! n then
     (Just True, Nothing)
   else
-    globalMinimumAboveN f' ac p (width box' / 10000000) (cn (mpBallP p n))
+    globalMinimumAboveN f' ac p (cn (mpBallP p (width vMap /! 10000000))) (cn (mpBallP p n))
   where
+    f = expressionToBoxFun e vMap
     f' = BoxFun (dimension f) (bf_eval f) box'
-    box' = setPrecision p box
-checkTree (Max ts) box ac p n =
+    box' = setPrecision p (domain f)
+checkTree (Max ts vMap) ac p n =
     if (or roughCheck) then
       (Just True, Nothing)
     else 
       case filteredTs of
         [] -> (Just False, Nothing)
-        [t] -> checkTree t box ac p n
+        [t] -> checkTree (updateVarMap t vMap) ac p n
         _ ->
-          case minimumAboveNTree (Max filteredTs) box' (bits 10) (prec 10) (width box / 2) n of
+          case minimumAboveNTree (Max filteredTs vMap) (bits 10) (prec 10) (width vMap /! 2) n of
             (Just True, mBox) -> (Just True, mBox)
             _ -> 
-              if AERN2.BoxFun.Box.width box' !>! 1 / (10000000) then -- make this threshold quite small (maybe 10^-7)
+              if width vMap !>! 1 / 10000000 then -- make this threshold quite small (maybe 10^-7)
                   trace ("Bisected boxes: " ++ show newBoxes)
                   checkBoxes newBoxes filteredTs
                 else
                   trace "Stopping bisections (Box too small)" $
-                  case minimumAboveNTree (Max filteredTs) box' ac p (width box / 10000000) n of
+                  case minimumAboveNTree (Max filteredTs vMap) ac p (width vMap /! 10000000) n of
                     (Just True, mBox) -> (Just True, mBox)
                     (_, mBox)      -> (Nothing, mBox) -- Cannot guarantee that a result is False here
     where   
       filteredTs = 
         filter 
           (\t ->
-            not (applyTree t box' !<! n)
+            not (applyTree (updateVarMap t vMap) !<! n)
           ) 
           ts
 
       roughCheck = 
         map
           (\t ->
-            applyTree t box' !>=! n
+            applyTree (updateVarMap t vMap) !>=! n
           )
         filteredTs
 
-      box' = setPrecision p box
-
-      newBoxes = fullBisect box'
+      newBoxes = fullBisect vMap
 
       checkBoxes []          _  = (Just True, Nothing)
-      checkBoxes (b : boxes) ts' = case checkTree (Max ts') b ac p n of
-                                  (Just True, _) -> checkBoxes boxes ts'
+      checkBoxes (v : vs) ts' = case checkTree (Max ts' v) ac p n of
+                                  (Just True, _) -> checkBoxes vs ts'
                                   o              -> 
-                                    trace ("found false at " ++ show b)
+                                    trace ("found false at " ++ show v)
                                     o
 
-checkTree (Min l) box ac p n = parallelAndList (map (\t -> checkTree t box ac p n) l)
+checkTree (Min ts vMap) ac p n = parallelAndList (map (\t -> checkTree (updateVarMap t vMap) ac p n) ts)
 
 size :: MinMaxTree -> Integer
-size (Leaf _)  = 1
-size (Min l) = 1 + sum (map size l)
-size (Max l) = 1 + sum (map size l)
+size (Leaf _ _)  = 1
+size (Min ts _) = 1 + sum (map size ts)
+size (Max ts _) = 1 + sum (map size ts)
 
-applyTree :: MinMaxTree -> Box -> CN MPBall
+applyTree :: MinMaxTree -> CN MPBall
 
 -- applyTree (Leaf f)  box = globalMinimumAboveN (BoxFun (dimension (fst f)) (bf_eval (fst f)) box) (bits 100) (prec 1000) (cn 0.0)
-applyTree (Leaf f)  box = apply f box
-applyTree (Max l) box   = maximum (map (\t -> applyTree t box) l)
-applyTree (Min l) box   = minimum (map (\t -> applyTree t box) l)
+applyTree (Leaf e vMap)  = apply f (domain f) where f = expressionToBoxFun e vMap
+applyTree (Max ts vMap)   = maximum (map (\t -> applyTree (updateVarMap t vMap)) ts)
+applyTree (Min ts vMap)   = minimum (map (\t -> applyTree (updateVarMap t vMap)) ts)
 
 -- TODO: globalMinimum and globalMaximum with low accuracy/precision to compute more accurate r and lRanges
 
-domainTree :: MinMaxTree -> Box
-domainTree (Leaf f) = domain f 
-domainTree (Min l) = domainTree (head l) 
-domainTree (Max l) = domainTree (head l)
+minimumAboveNTree :: MinMaxTree -> Accuracy -> Precision -> Rational -> Rational -> (Maybe Bool, Maybe SearchBox) -- make the cutoff a quarter of a width
+minimumAboveNTree (Leaf t vMap) ac p widthCutoff n = globalMinimumAboveN f ac p (cn (mpBallP p widthCutoff)) (cn (mpBallP p n))
+  where f = expressionToBoxFun t vMap
+minimumAboveNTree (Max ts vMap) ac p widthCutoff n = parallelOrList (map (\t -> minimumAboveNTree (updateVarMap t vMap) ac p widthCutoff n) ts)
+minimumAboveNTree (Min ts vMap) ac p widthCutoff n = parallelAndList (map (\t -> minimumAboveNTree (updateVarMap t vMap) ac p widthCutoff n) ts)
 
-minimumAboveNTree :: MinMaxTree -> Box -> Accuracy -> Precision -> CN MPBall -> Rational -> (Maybe Bool, Maybe SearchBox) -- make the cutoff a quarter of a width
-minimumAboveNTree (Leaf f) box ac p widthCutoff n = globalMinimumAboveN (BoxFun (dimension f) (bf_eval f) box) ac p widthCutoff (cn (mpBallP p n))
-minimumAboveNTree (Max l)  box ac p widthCutoff n = parallelOrList (map (\t -> minimumAboveNTree t box ac p widthCutoff n) l)
-minimumAboveNTree (Min l)  box ac p widthCutoff n = parallelAndList (map (\t -> minimumAboveNTree t box ac p widthCutoff n) l)
+updateVarMap :: MinMaxTree -> VarMap -> MinMaxTree
+updateVarMap (Leaf t _) vMap = Leaf t vMap
+updateVarMap (Min ts _) vMap = Min ts vMap
+updateVarMap (Max ts _) vMap = Max ts vMap
+
 
 -- Below is simpler, won't have to drop branches in max cases
 -- But dropping branches seems to be more efficient

@@ -1,20 +1,9 @@
 module AERN2.BoxFunMinMax.Expressions.Type where
 
 import MixedTypesNumPrelude
-import Data.Ratio
-import System.IO.Unsafe (unsafePerformIO)
 
-import AERN2.MP.Ball
-import AERN2.AD.Type
-import AERN2.BoxFun.Type
-
-import qualified AERN2.Linear.Vector.Type as V
-import qualified AERN2.BoxFunMinMax.Type as T
 import qualified Prelude as P
 
-import AERN2.BoxFun.TestFunctions (fromListDomain) -- TODO: Move this to Util?
-
-import Data.List
 import qualified Data.Map as Map
 
 import Debug.Trace (trace)
