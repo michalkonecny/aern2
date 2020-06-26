@@ -38,3 +38,11 @@ bisect n vMap =
   )
   where
     (fstBisect, sndBisect) = bisectVar (vMap L.!! (int n))
+
+-- v1 contains v2
+contains :: VarMap -> VarMap -> Bool
+contains v1 v2 =
+  L.all (\((v1v, (v1l, v1r)), (v2v, (v2l, v2r))) -> v1v == v2v && v1l !<=! v2l && v2r !<=! v1r) (zip v1' v2')
+  where
+    v1' = sort v1
+    v2' = sort v2
