@@ -50,11 +50,11 @@ import Debug.Trace (trace)
 
 
 data BinOp = Add | Sub | Mul | Div | Min | Max | Pow
-  deriving (Show, P.Eq)
+  deriving (Show, P.Eq, P.Ord)
 data UnOp  = Sqrt | Negate | Abs
-  deriving (Show, P.Eq)
+  deriving (Show, P.Eq, P.Ord)
 data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String | PowI E Integer
-  deriving (Show, P.Eq)
+  deriving (Show, P.Eq, P.Ord)
 
 data Comp = Gt | Ge | Lt | Le
   deriving (Show, P.Eq)
@@ -139,3 +139,4 @@ computeQualifiedEs ((ps, q) : es) varMap =
   if all (\p -> computeE p varMap !>=! 0) ps
     then computeE q varMap : computeQualifiedEs es varMap
     else computeQualifiedEs es varMap
+    

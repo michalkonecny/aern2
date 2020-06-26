@@ -18,7 +18,9 @@ import System.IO.Unsafe
 
 import Control.Parallel.Strategies
 
-import Data.List (take, drop, null)
+import Data.List (take, drop, null, filter, delete)
+
+import qualified Prelude as P
 
 -- import System.Environment
 
@@ -198,17 +200,18 @@ parallelAndList l =
 -- All leaves in the tree must have the same domain
 -- leaves should be bf_eval
 data MinMaxTree = Leaf {expression :: E.E, varMap :: VarMap} | Min {list :: [MinMaxTree], varMap :: VarMap} | Max {list :: [MinMaxTree], varMap :: VarMap}
-  deriving Show
+  deriving (Show, P.Eq)
 
 checkTree :: MinMaxTree -> Accuracy -> Precision -> Rational -> (Maybe Bool, Maybe SearchBox)
 checkTree (Leaf e vMap) ac p n = 
   trace ("Checking on domain: " ++ show (map snd vMap)) $
   trace ("rough bound gives: " ++ show ((applyMinimumOnBox f box'))) $
-  if applyMinimumOnBox f box' !>! n then
+  if applyMinimumOnBox f box' !>! n then 
     (Just True, Nothing)
   else
-    globalMinimumAboveN f' ac p (cn (mpBallP p (width vMap /! 10000000))) (cn (mpBallP p n))
+    result
   where
+    result = globalMinimumAboveN f' ac p (cn (mpBallP p (width vMap /! 10000000))) (cn (mpBallP p n))
     f = expressionToBoxFun e vMap
     f' = BoxFun (dimension f) (bf_eval f) box'
     box' = setPrecision p (domain f)
@@ -282,6 +285,18 @@ updateVarMap (Leaf t _) vMap = Leaf t vMap
 updateVarMap (Min ts _) vMap = Min ts vMap
 updateVarMap (Max ts _) vMap = Max ts vMap
 
+findLeaves :: MinMaxTree -> [MinMaxTree]
+findLeaves (Min ts _) = concatMap findLeaves ts
+findLeaves (Max ts _) = concatMap findLeaves ts
+findLeaves l@(Leaf _ _) = [l]
+
+findUniqueLeaves :: MinMaxTree -> [MinMaxTree]
+findUniqueLeaves t = filter (\t' -> t' `notElem` delete t' ts) ts
+  where ts = findLeaves t
+
+findNonUniqueLeaves :: MinMaxTree -> [MinMaxTree]
+findNonUniqueLeaves t = filter (\t' -> t' `elem` delete t' ts) ts
+  where ts = findLeaves t
 
 -- Below is simpler, won't have to drop branches in max cases
 -- But dropping branches seems to be more efficient
