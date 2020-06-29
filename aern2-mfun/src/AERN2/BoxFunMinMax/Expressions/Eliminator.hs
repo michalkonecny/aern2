@@ -55,3 +55,16 @@ qualifiedEsToCNF [(ps, q)]        = EBinOp Max (buildPs ps) q
     buildPs (p : ps) = EBinOp Max (EUnOp Negate p) (buildPs ps) 
 qualifiedEsToCNF ((ps, q) : es) = EBinOp Min (qualifiedEsToCNF [(ps, q)]) (qualifiedEsToCNF es)
 
+-- | Outer list is conjunction, inner list is disjunction
+qualifiedEsToCNF2 :: [([E],E)] -> [[E]]
+qualifiedEsToCNF2 = map (\(ps,q) -> q : map (EUnOp Negate) ps)
+
+
+-- TODO:
+
+-- Translate to this type
+-- Vector (Differential (CN MPBall)) -> [[Differential (CN MPBall)]]
+-- We'd give this type some domain
+
+-- type EvalE = Vector (Differential (CN MPBall)) -> Differential (CN MPBall)
+-- type EvalECNF = Vector (Differential (CN MPBall)) -> [[Differential (CN MPBall)]]

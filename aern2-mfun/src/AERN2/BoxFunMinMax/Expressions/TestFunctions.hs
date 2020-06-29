@@ -4,7 +4,6 @@ import MixedTypesNumPrelude
 import AERN2.BoxFunMinMax.Expressions.Eliminator
 import AERN2.BoxFunMinMax.Expressions.Type
 import AERN2.BoxFunMinMax.Expressions.Translators.DReal
-import AERN2.BoxFunMinMax.Expressions.Translators.Tree
 import qualified AERN2.BoxFunMinMax.Type as T
 
 simpleMax = EBinOp Max (Lit 1.0) (EUnOp Negate (Lit 1.0))
@@ -122,6 +121,6 @@ generateUnifiedHeronDrealFiles =
       (simplifyE (qualifiedEsToCNF (minMaxAbsEliminator (fToE heronPreservationM))))
       [("x", (0.5, 2.0)), ("y", (0.8, 1.8))] [("i", (0.0, 5.0))] (0.5^!(-23)))
 
-generateHeronTree :: T.MinMaxTree
-generateHeronTree =
-    qualifiedEsToTree (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi2))) [("x", (0.5, 2.0)), ("y", (0.8, 1.8))]
+-- generateHeronTree :: T.MinMaxTree
+-- generateHeronTree =
+--     qualifiedEsToTree (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi2))) [("x", (0.5, 2.0)), ("y", (0.8, 1.8))]
