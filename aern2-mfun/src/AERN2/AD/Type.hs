@@ -39,3 +39,7 @@ instance
     (CanSetPrecision a) => (CanSetPrecision (Differential a))
     where
     setPrecision p = fmap (setPrecision p)
+
+setValue (OrderZero x)           v = OrderZero v
+setValue (OrderOne x dx)         v = OrderOne  v dx
+setValue (OrderTwo x dx dxt d2x) v = OrderTwo  v dx dxt d2x

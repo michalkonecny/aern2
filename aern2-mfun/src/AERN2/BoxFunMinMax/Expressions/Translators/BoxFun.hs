@@ -20,6 +20,14 @@ expressionToBoxFun e domain =
     vectorDomain
   where
 
+    expressionToDifferential2 :: E -> V.Vector (Differential (CN MPBall)) -> Differential (CN MPBall)
+    expressionToDifferential2 e v = expressionToDifferential e v
+      where
+        ev  = expressionToDifferential e v
+        evc = expressionToDifferential e vc
+        vc  = V.map (fmap (fmap centreAsBall)) v
+        
+
     -- TODO: Change to bfEval
     expressionToDifferential :: E -> V.Vector (Differential (CN MPBall)) -> Differential (CN MPBall)
     expressionToDifferential (EBinOp op e1 e2) v = 
