@@ -40,7 +40,6 @@ library
     , vector
     , stm
     , parallel
-    , universe-reverse-instances
     -- TODO: delete below eventually
     , async
 
@@ -81,7 +80,6 @@ library
     AERN2.BoxFunMinMax.Expressions.Type
     AERN2.BoxFunMinMax.Expressions.Translators.BoxFun
     AERN2.BoxFunMinMax.Expressions.Translators.DReal
-    AERN2.BoxFunMinMax.Expressions.Translators.Tree
     --AERN2.BoxFun.OptimisationConcurrent 
 
 executable aern2-mfun-benchmark
@@ -109,4 +107,42 @@ executable aern2-mfun-benchmark
     , aern2-real == 0.1.*
     , QuickCheck
     , clock
+    , async
+
+executable aern2-mfun-heron-benchmark
+  ghc-options:
+      -Wall -O2 -threaded -rtsopts
+  extensions:
+    RebindableSyntax,
+    TypeFamilies,
+    PostfixOperators,
+    ScopedTypeVariables,
+    FlexibleContexts,
+    TypeSynonymInstances
+  hs-source-dirs:
+      src/AERN2/BoxFunMinMax/Benchmark
+  main-is:
+      Heron.hs
+  build-depends:
+    base == 4.*
+    , containers >= 0.5
+    , psqueues >= 0.2
+    , integer-logarithms >= 1.0
+    , convertible >= 1.1.1.0
+    , regex-tdfa >= 1.2.1
+    , bytestring >= 0.10
+    , hspec >= 2.1
+    -- , hspec-smallcheck >= 0.3 && < 0.5
+    , QuickCheck >= 2.7
+    , transformers >= 0.4
+    , lens >= 4.13
+    , mixed-types-num == 0.4.*
+    , aern2-mp == 0.1.*
+    , aern2-real == 0.1.*
+    , aern2-fun == 0.1.*
+    , aern2-mfun == 0.1.*
+    , vector
+    , stm
+    , parallel
+    -- TODO: delete below eventually
     , async
