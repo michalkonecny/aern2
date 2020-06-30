@@ -5,6 +5,26 @@ import MixedTypesNumPrelude
 import Data.List
 import AERN2.BoxFunMinMax.Expressions.Type
 
+-- | Given an expression, eliminate all Min, Max, and Abs
+-- occurences. This is done by:
+-- 
+-- When we come across a Min e1 e2:
+-- 1) We have two cases
+-- 1a) if e2 >= e1, then choose e1
+-- 1b) if e1 >= e2, then choose e2
+-- 2) So, we eliminate min and add two elements to the qualified list
+-- 2a) Add e2 - e1 to the list of premises, call the eliminiator on e1 and e2
+-- recursively, add any new premises from the recursive call to the list of premises,
+-- set the qualified value of e1 from the recursive call to be the qualified value
+-- in this case
+-- 2b) similar to 2a
+-- 
+-- Max e1 e2 is similar to Min e1 e2
+-- Abs is treated as Max e (-e)
+-- 
+-- If we come across any other operator, recursively call the eliminator on any
+-- expressions, add any resulting premises, and set the qualified value to be
+-- the operator called on the resulting Es 
 minMaxAbsEliminator :: E -> [([E],E)]
 minMaxAbsEliminator (EBinOp op e1 e2) =
   case op of
@@ -44,6 +64,14 @@ minMaxAbsEliminator (PowI e i)            =
 minMaxAbsEliminator e@(Lit _)             = [([],e)]
 minMaxAbsEliminator e@(Var _)             = [([],e)]
 
+-- | Translate the qualified Es list to a single expression
+-- The qualified Es list is basically the following formula:
+-- e >= 0 == (p1 >= 0 /\ p2 >= 0 /\ p3 >=0 -> q1 >= 0) /\ repeat...
+-- where e is the expression passed to minMaxAbsEliminator
+-- 
+-- This can be rewritten to
+-- (-p1 >= 0 \/ - p2 >= 0 \/ -p3 >= 0 \/ q1 >= 0)
+-- ???
 qualifiedEsToCNF :: [([E],E)] -> E
 qualifiedEsToCNF []               = undefined
 qualifiedEsToCNF [([], q)]        = q
@@ -55,7 +83,9 @@ qualifiedEsToCNF [(ps, q)]        = EBinOp Max (buildPs ps) q
     buildPs (p : ps) = EBinOp Max (EUnOp Negate p) (buildPs ps) 
 qualifiedEsToCNF ((ps, q) : es) = EBinOp Min (qualifiedEsToCNF [(ps, q)]) (qualifiedEsToCNF es)
 
--- | Outer list is conjunction, inner list is disjunction
+-- | Convert a list of qualified Es to a list of lists where
+-- the outer list is a conjunction and the inner list is a disjunction,
+-- AKA a CNF
 qualifiedEsToCNF2 :: [([E],E)] -> [[E]]
 qualifiedEsToCNF2 = map (\(ps,q) -> q : map (EUnOp Negate) ps)
 

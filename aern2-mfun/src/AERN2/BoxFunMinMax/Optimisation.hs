@@ -23,6 +23,8 @@ import AERN2.Util.Util
 import AERN2.AD.Type
 
 
+-- | Modified version of AERN2.BoxFun.Type.boundaryRestrictions which
+-- keeps track of reduced dimensions
 boundaryRestrictionsWithInversion :: BoxFun -> [(BoxFun, Box -> Box)]
 boundaryRestrictionsWithInversion (BoxFun d ev dom) =
   concat
@@ -57,6 +59,10 @@ boundaryRestrictionsWithInversion (BoxFun d ev dom) =
     vAddDimension :: Integer -> a -> Vector a -> Vector a
     vAddDimension i value v = V.map (\j -> if j == i then value else if j < i then v ! j else v ! (j - 1)) (V.enumFromTo 0 (d - 1))
 
+-- | Check that the global minimum of a given function is above n.
+-- This function ensures that the edges of a BoxFun is above n,
+-- and then calls minimumAboveN to ensure the rest of the BoxFun
+-- is above n. 
 globalMinimumAboveN :: BoxFun -> Accuracy -> Precision -> CN MPBall -> CN MPBall -> (Maybe Bool, Maybe SearchBox)
 globalMinimumAboveN f ac initialPrecision widthCutoff n =
     if dimension f == 1 then
@@ -77,23 +83,24 @@ globalMinimumAboveN f ac initialPrecision widthCutoff n =
         let
             boundaryFuns = boundaryRestrictionsWithInversion f
         in
-                    case minimumAboveN f (domain f) ac initialPrecision widthCutoff n of
-                        (Just True, _)  -> boundaryMinima boundaryFuns
-                        o               -> 
-                            trace ("Indeterminate/False domain: " ++ show (domain f))
-                            o 
-                where
-                    boundaryMinima  []      =   (Just True, Nothing)
-                    boundaryMinima  ((g, restoreBox) : gs)  =  
-                        case globalMinimumAboveN g ac initialPrecision widthCutoff n of
-                            (Just True, _)  -> boundaryMinima gs
-                            (mBool, mBox)   -> 
-                                trace ("Indeterminate/False domain: " ++ show (domain g)) $
-                                case mBox of
-                                    Nothing  -> (mBool, Nothing)
-                                    Just (SearchBox box minimum) -> (mBool, Just $ SearchBox (restoreBox box) minimum)
+            case minimumAboveN f (domain f) ac initialPrecision widthCutoff n of
+                (Just True, _)  -> boundaryMinima boundaryFuns
+                o               -> 
+                    trace ("Indeterminate/False domain: " ++ show (domain f))
+                    o 
+            where
+                boundaryMinima  []      =   (Just True, Nothing)
+                boundaryMinima  ((g, restoreBox) : gs)  =  
+                    case globalMinimumAboveN g ac initialPrecision widthCutoff n of
+                        (Just True, _)  -> boundaryMinima gs
+                        (mBool, mBox)   -> 
+                            trace ("Indeterminate/False domain: " ++ show (domain g)) $
+                            case mBox of
+                                Nothing  -> (mBool, Nothing)
+                                Just (SearchBox box minimum) -> (mBool, Just $ SearchBox (restoreBox box) minimum)
 
-minimumAboveN :: BoxFun -> Box -> Accuracy -> Precision -> CN MPBall -> CN MPBall -> (Maybe Bool, Maybe SearchBox) -- TODO: Maybe Bool
+-- | Use the newton step to check whether or not the minimum of a given function is above n.
+minimumAboveN :: BoxFun -> Box -> Accuracy -> Precision -> CN MPBall -> CN MPBall -> (Maybe Bool, Maybe SearchBox)
 minimumAboveN f box ac initialPrecision widthCutoff n =
     aux initialQueue 0 dummyBox
     where
@@ -106,7 +113,6 @@ minimumAboveN f box ac initialPrecision widthCutoff n =
     aux q steps (SearchBox _lastBox rng) =  
         case Q.minView q of
             Nothing -> 
-                -- If this is exhaustive
                 -- we know that the upper bound of f is not under n
                 trace ("f is above " ++ show n) $ (Just True, Nothing)
             Just (minBox, q') ->
@@ -138,20 +144,8 @@ minimumAboveN f box ac initialPrecision widthCutoff n =
                             aux q'' (steps + 1) (SearchBox ext rng)
                         else
                             (Nothing, Just minBox)
-                        -- Some way to terminate the algorithm and return Nothing. Maybe check the size of the box
                 where
                 SearchBox ext val = minBox
-
-                -- cutoff is upper bound of the range of f on the entire domain? 
-
-
-                -- TODO:
-                -- refactor this
-                -- If we find a minimum below N, we stop
-                -- when we get to the nothing case, we can return True (because we've checked all possible minimums)
-
-                -- newton step shrinks the box with the guarantee that the part where the minimum is will not go away
-                -- focuses on parts where the derivative is zero
 
                 (_, newBoxes) = 
                     processBox f ac (apply f (centre box)) minBox

@@ -8,51 +8,12 @@ import qualified Data.Map as Map
 
 import Debug.Trace (trace)
 
--- TODO: Implement symbolic expressions
-
--- data E = Add E E | Sub E E | Mul E E | Div E E | Sqrt E | Abs E | Var String | Lit Rational | Min E E | Max E E | Negate E
-
--- minMaxTransformer :: E -> E
--- minMaxTransformer (Add e1 e2) = minMaxTransformer e1
-
--- The right E does not contain any Min/Max/Abs
--- This is done by dropping one branch for Min/Max
--- For abs, we can rewrite as Max(x,-x), and apply previous rule
--- The left E is a list of expressions where all expressions must be >= 0
---  If this is true, then the right E is equivalent to the original E
--- minMaxAbsEliminator :: E -> [([E],E)]
--- minMaxAbsEliminator (Min e1 e2) = ([Sub e2 e1], e1) : ([Sub e1 e2], e2) : minMaxAbsEliminator e1 : minMaxAbsEliminator e2
--- minMaxAbsEliminator (Max e1 e2) = ([Sub e1 e2], e1) : ([Sub e2 e1], e2) : minMaxAbsEliminator e1 : minMaxAbsEliminator e2
--- minMaxAbsEliminator (Abs e)     = minMaxAbsEliminator (Max (e, Negate e))
-
--- say we have Min (e1, e2)
--- function would return [([Sub e2 e1], e1), ([Sub e1 e2], e2)]
--- This is only the case if e1 e2 are without Abs/Min/Max 
-
--- Next step, E -> MinMaxTree
-
--- In particular, we can take an E value and put all the abs on the top
-
--- If we abandon symbolic expressions...
--- We want abs on trees
--- We need to implement mathematical operations on trees
--- TODO: Implement addition on trees
---  - Easy case, one tree is a leaf. Add result of leaf to all leaves in the other tree
---  - Another easy case, tree is the same shape. Simply add matching leaves with eachother
---  - Other cases will need thinking
---  -  Probably can just add a dummy Min/Max node and then recurse
-
-
--- BoxFunMinMax will be
--- MinMaxTree, dimension, and domain
-
--- TODO: Refactor E to this
-
-
 data BinOp = Add | Sub | Mul | Div | Min | Max | Pow
   deriving (Show, P.Eq, P.Ord)
 data UnOp  = Sqrt | Negate | Abs
   deriving (Show, P.Eq, P.Ord)
+
+-- | The E type represents the inequality: expression :: E >= 0
 data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String | PowI E Integer
   deriving (Show, P.Eq, P.Ord)
 
@@ -62,10 +23,12 @@ data Comp = Gt | Ge | Lt | Le
 data Conn = And | Or | Impl
   deriving (Show, P.Eq)
 
+-- | The F type is used to specify comparisons between E types
+-- and logical connectives between F types
 data F = FComp Comp E E | FConn Conn F F
   deriving (Show, P.Eq)
 
--- Translate F to a single expression
+-- | Translate F to a single expression (E)
 -- Removes implications, logical connectives
 fToE :: F -> E
 fToE (FComp op e1 e2)   = case op of
@@ -85,8 +48,7 @@ fToE (FConn op e1 e2)   = case op of
   Impl -> 
     EBinOp Max (EUnOp Negate (fToE e1)) (fToE e2) -- !f1 \/ f2 = max(!f1, f2)
 
--- Various rules to simplify expressions
--- TODO: simplifyE :: E -> E
+-- | Various rules to simplify expressions
 simplifyE :: E -> E
 simplifyE (EBinOp Div e (Lit 1.0)) = e
 simplifyE (EBinOp Div (Lit 0.0) _) = Lit 0.0
@@ -108,7 +70,7 @@ simplifyE (EBinOp op e1 e2)        = EBinOp op (simplifyE e1) (simplifyE e2)
 simplifyE (EUnOp op e)             = EUnOp op (simplifyE e)
 simplifyE e                        = e
 
--- computeE using haskell with variables at specified points
+-- | compute the value of E with Vars at specified points
 computeE :: E -> [(String, Double)] -> CN Double
 computeE (EBinOp op e1 e2) varMap = 
   case op of
@@ -133,6 +95,12 @@ computeE (Var v) varMap =
 computeE (Lit i) _ = cn (double i)
 computeE (PowI e i) varMap = computeE e varMap  ^ i
 
+-- | Given a list of qualified Es and points for all Vars,
+-- compute a list of valid values. 
+-- 
+-- A value is the computed result of the second element of 
+-- the tuple and is valid if all the expressions in the list 
+-- at the first element of the tuple compute to be above 0.
 computeQualifiedEs :: [([E], E)] -> [(String, Double)] -> [CN Double]
 computeQualifiedEs [] _ = []
 computeQualifiedEs ((ps, q) : es) varMap =

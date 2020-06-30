@@ -20,6 +20,7 @@ expressionToBoxFun e domain =
     vectorDomain
   where
 
+    -- TODO: Change to bfEval
     expressionToDifferential :: E -> V.Vector (Differential (CN MPBall)) -> Differential (CN MPBall)
     expressionToDifferential (EBinOp op e1 e2) v = 
       case op of
