@@ -9,6 +9,7 @@ import AERN2.BoxFunMinMax.VarMap
 import AERN2.BoxFunMinMax.Expressions.Translators.BoxFun
 import qualified AERN2.BoxFunMinMax.Expressions.Type as E
 
+import Control.Parallel.Strategies
 
 import Debug.Trace (trace)
 
@@ -38,13 +39,18 @@ import Data.List (filter)
 -- a False or indeterminate result with a possible counterexample.
 -- Once we've exhausted the CNF (list of lists), we return a True result.
 
-checkECNF :: [[E.E]] -> VarMap -> Accuracy -> Precision -> Rational -> (Maybe Bool, Maybe SearchBox)
-checkECNF [] _ _ _ _                      = (Just True, Nothing) 
-checkECNF (esInit : cnf) vMapInit ac p n  = 
-  case checkDisjunction esInit vMapInit of
-    (Just True, _) -> checkECNF cnf vMapInit ac p n
-    r              -> r
+checkECNF :: [[E.E]] -> VarMap -> Accuracy -> Precision -> (Maybe Bool, Maybe SearchBox)
+checkECNF cnf vMapInit ac p = 
+  checkConjunctionResults parCheckConjunction
   where
+    parCheckConjunction = parMap rseq (\esInit -> checkDisjunction esInit vMapInit) cnf
+
+    checkConjunctionResults []        = (Just True, Nothing)
+    checkConjunctionResults (x : xs)  =
+      case x of
+        (Just True, _)  -> checkConjunctionResults xs
+        o               -> o
+
     checkDisjunction es vMap =
       case filterOutFalseEsUsingApply of
         []  -> (Just False, Nothing) -- TODO: return current vMap as SearchBox counterexample
@@ -54,7 +60,7 @@ checkECNF (esInit : cnf) vMapInit ac p n  =
             else 
               case filterOutFalseUsingGlobalMinimum es' of
                 [] -> (Just False, Nothing) -- TODO: return current vMap as SearchBox counterexample
-                [e] -> globalMinimumAboveN f' ac p (cn (mpBallP p (width vMap /! 1024))) (cn (mpBallP p 0.0))
+                [e] -> globalMinimumAboveN f' ac p (cn (mpBallP p (1 /! 10000000))) (cn (mpBallP p 0.0))
                   where
                     f = expressionToBoxFun e vMap
                     f' = BoxFun (dimension f) (bf_eval f) (setPrecision p (domain f))
