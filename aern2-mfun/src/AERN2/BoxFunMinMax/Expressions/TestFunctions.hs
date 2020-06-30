@@ -121,6 +121,45 @@ generateUnifiedHeronDrealFiles =
       (simplifyE (qualifiedEsToCNF (minMaxAbsEliminator (fToE heronPreservationM))))
       [("x", (0.5, 2.0)), ("y", (0.8, 1.8))] [("i", (0.0, 5.0))] (0.5^!(-23)))
 
+
+generateSeperateHeronDrealFilesCNF :: IO ()
+generateSeperateHeronDrealFilesCNF =
+  do
+    writeFile 
+      "heronPreservationMi1.smt2" 
+      (cnfExpressionAndDomainsToDreal
+        (qualifiedEsToCNF2 (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi1))))
+        [("x", (0.5, 2.0)), ("y", (0.8, 1.8))] [] (0.5^!(-23)))
+    writeFile 
+      "heronPreservationMi2.smt2" 
+      (cnfExpressionAndDomainsToDreal
+        (qualifiedEsToCNF2 (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi2))))
+        [("x", (0.5, 2.0)), ("y", (0.8, 1.8))] [] (0.5^!(-23)))
+    writeFile 
+      "heronPreservationMi3.smt2" 
+      (cnfExpressionAndDomainsToDreal
+        (qualifiedEsToCNF2 (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi3))))
+        [("x", (0.5, 2.0)), ("y", (0.8, 1.8))] [] (0.5^!(-23)))
+    writeFile 
+      "heronPreservationMi4.smt2" 
+      (cnfExpressionAndDomainsToDreal
+        (qualifiedEsToCNF2 (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi4))))
+        [("x", (0.5, 2.0)), ("y", (0.8, 1.8))] [] (0.5^!(-23)))
+    writeFile 
+      "heronPreservationMi5.smt2" 
+      (cnfExpressionAndDomainsToDreal
+        (qualifiedEsToCNF2 (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi5))))
+        [("x", (0.5, 2.0)), ("y", (0.8, 1.8))] [] (0.5^!(-23)))
+
+generateUnifiedHeronDrealFilesCNF :: IO ()
+generateUnifiedHeronDrealFilesCNF =
+  writeFile 
+    "heronPreservationM.smt2" 
+    (cnfExpressionAndDomainsToDreal
+      (qualifiedEsToCNF2 (minMaxAbsEliminator (simplifyE (fToE heronPreservationM))))
+      [("x", (0.5, 2.0)), ("y", (0.8, 1.8))] [("i", (0.0, 5.0))] (0.5^!(-23)))
+
+
 -- generateHeronTree :: T.MinMaxTree
 -- generateHeronTree =
 --     qualifiedEsToTree (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi2))) [("x", (0.5, 2.0)), ("y", (0.8, 1.8))]
