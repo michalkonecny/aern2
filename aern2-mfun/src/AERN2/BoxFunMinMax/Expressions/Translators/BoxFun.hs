@@ -6,14 +6,15 @@ import AERN2.AD.Differential
 import AERN2.BoxFun.Type
 import AERN2.BoxFun.TestFunctions (fromListDomain)
 import AERN2.BoxFunMinMax.Expressions.Type
+import AERN2.BoxFunMinMax.VarMap
 import AERN2.MP.Ball
 
 import qualified AERN2.Linear.Vector.Type as V
 
 import Data.List
 
-expressionToBoxFun :: E -> [(String, (Rational, Rational))] -> BoxFun
-expressionToBoxFun e domain =
+expressionToBoxFun :: E -> VarMap -> Precision -> BoxFun
+expressionToBoxFun e domain p =
   BoxFun
     (fromIntegral (Data.List.length domain))
     (expressionToDifferential e)
@@ -44,7 +45,7 @@ expressionToBoxFun e domain =
         Abs -> undefined
         Sqrt -> sqrt (expressionToDifferential e v)
         Negate -> negate (expressionToDifferential e v)
-    expressionToDifferential (Lit e) _ = differential 2 $ cn (mpBallP (prec 100) e) -- TODO: paramaterise precision
+    expressionToDifferential (Lit e) _ = differential 2 $ cn (mpBallP p e)
     expressionToDifferential (Var e) v = 
       case elemIndex e variableOrder of
         Nothing -> undefined

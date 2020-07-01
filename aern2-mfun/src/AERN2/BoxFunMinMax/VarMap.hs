@@ -2,6 +2,9 @@ module AERN2.BoxFunMinMax.VarMap where
 
 import MixedTypesNumPrelude
 import Data.List as L
+import AERN2.BoxFun.Optimisation
+import AERN2.MP.Ball
+import AERN2.BoxFun.TestFunctions (fromListDomain)
 
 -- | An assosciation list mapping variable names to rational interval domains
 type VarMap = [(String, (Rational, Rational))]
@@ -53,3 +56,7 @@ contains v1 v2 =
   where
     v1' = sort v1
     v2' = sort v2
+
+-- | Convert VarMap to SearchBox with the provided minimum
+toSearchBox :: VarMap -> CN MPBall -> SearchBox
+toSearchBox vMap = SearchBox (fromListDomain (map snd vMap))
