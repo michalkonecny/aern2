@@ -16,4 +16,10 @@ import AERN2.BoxFunMinMax.Expressions.TestFunctions
 
 main :: IO ()
 main = 
-  print $ checkECNF ((qualifiedEsToCNF2 (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi2))))) [("x", (0.5, 2.0)), ("y", (0.8, 1.8))] (bits 200) (prec 200)
+  print $ checkECNF 
+      heronCNF 
+      -- (heronDisjunction 1) 
+      [("x", (0.5, 2.0)), ("y", (0.8, 1.8))] (bits 100) (prec 100)
+  where
+  heronDisjunction j = [heronCNF !! (j-1)]
+  heronCNF = (qualifiedEsToCNF2 (minMaxAbsEliminator (simplifyE (fToE heronPreservationMi4))))

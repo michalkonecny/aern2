@@ -85,7 +85,8 @@ checkECNF cnf vMapInit ac p =
 
           filterOutFalseEsUsingApply = map fst filterOutFalseTerms
 
-          applyE e = apply f (setPrecision p (domain f))
+          -- applyE e = apply f (setPrecision p (domain f))
+          applyE e = applyLipschitz f (setPrecision p (domain f))
             where
               f = expressionToBoxFun (snd e) vMap p
           

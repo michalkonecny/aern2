@@ -165,6 +165,14 @@ lipschitzRange _f fc c g box m =
     newRange       = fc + (fromEndpointsAsIntervals (-dotProduct) dotProduct :: CN MPBall)
     m'             = intersectCN m newRange
 
+applyLipschitz :: BoxFun -> Box -> CN MPBall
+applyLipschitz f box = 
+    lipschitzRange f fbc bc dfb' box fb
+    where
+    (fb, dfb') = valueGradient f box
+    bc  = centre box
+    fbc  = apply f bc
+
 increasePrecision :: Precision -> Precision
 increasePrecision p =
     p + (prec $ (integer p) `Prelude.div` 2)
