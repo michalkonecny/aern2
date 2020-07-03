@@ -48,6 +48,21 @@ fToE (FConn op e1 e2)   = case op of
   Impl -> 
     EBinOp Max (EUnOp Negate (fToE e1)) (fToE e2) -- !f1 \/ f2 = max(!f1, f2)
 
+fToECNF :: F -> [[E]]
+fToECNF (FComp op e1 e2)   = case op of
+  Le ->
+    [[EBinOp Add (EUnOp Negate e1) e2]] -- f1 <= f2 == f1 - f2 <= 0 == -f1 + f2 >= 0
+  Lt ->
+    [[EBinOp Add (EUnOp Negate e1) e2]]
+  Ge ->
+    [[EBinOp Sub e1 e2]] -- f1 >= f2 == f1 - f2 >= 0 == 
+  Gt ->
+    [[EBinOp Sub e1 e2]]
+fToECNF (FConn op f1 f2)   = case op of
+  And -> fToECNF f1 ++ fToECNF f2 -- [e1 /\ e2 /\ (e3 \/ e4)] ++ [p1 /\ (p2 \/ p3) /\ p4] = [e1 /\ e2 /\ (e3 \/ e4) /\ p1 /\ (p2 \/ p3) /\ p4]
+  Or ->  [d1 ++ d2 | d1 <- fToECNF f1, d2 <- fToECNF f2] -- [e1 /\ e2 /\ (e3 \/ e4)] \/ [p1 /\ (p2 \/ p3) /\ p4] 
+  Impl -> [d1 ++ d2 | d1 <- map (map (EUnOp Negate)) (fToECNF f1), d2 <- fToECNF f2]
+
 -- | Various rules to simplify expressions
 simplifyE :: E -> E
 simplifyE (EBinOp Div e (Lit 1.0)) = e
@@ -69,6 +84,9 @@ simplifyE (EUnOp Sqrt (Lit 1.0))   = Lit 1.0
 simplifyE (EBinOp op e1 e2)        = EBinOp op (simplifyE e1) (simplifyE e2)
 simplifyE (EUnOp op e)             = EUnOp op (simplifyE e)
 simplifyE e                        = e
+
+simplifyECNF :: [[E]] -> [[E]]
+simplifyECNF = map (map simplifyE) 
 
 -- | compute the value of E with Vars at specified points
 computeE :: E -> [(String, Double)] -> CN Double

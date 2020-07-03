@@ -81,7 +81,7 @@ checkECNF cnf vMapInit ac p =
           esWithRanges = zip es (parMap rseq applyE es)
 
           filterOutFalseTerms     = (filter (\(_, range) -> not (range !<! 0))  esWithRanges)
-          checkIfEsTrueUsingApply = map (\((i,e), range) -> (i, range !>=! 0))  filterOutFalseTerms
+          checkIfEsTrueUsingApply = map (\((i,_), range) -> (i, range !>=! 0))  filterOutFalseTerms
 
           filterOutFalseEsUsingApply = map fst filterOutFalseTerms
 

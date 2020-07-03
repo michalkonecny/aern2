@@ -64,6 +64,19 @@ minMaxAbsEliminator (PowI e i)            =
 minMaxAbsEliminator e@(Lit _)             = [([],e)]
 minMaxAbsEliminator e@(Var _)             = [([],e)]
 
+-- [[[[E]]]] where [[E]] = [e1 /\ (e2 \/ e3) /\ e4]
+-- [[[e1 /\ (e2 \/ e3) /\ e4]] \/ [e1 /\ (e2 \/ e3) /\ e4]]
+-- [[[[e1 /\ (e2 \/ e3) /\ e4]] \/ [e1 /\ (e2 \/ e3) /\ e4]] /\ [[[e1 /\ (e2 \/ e3) /\ e4]] \/ [e1 /\ (e2 \/ e3) /\ e4]]]
+minMaxAbsEliminatorECNF :: [[E]] -> [[E]]
+minMaxAbsEliminatorECNF ecnf = and $ map or (map (map (qualifiedEsToCNF2 . minMaxAbsEliminator)) ecnf)
+  where
+    and2 = (++)
+    or2 ecnf1 ecnf2 = [d1 ++ d2 | d1 <- ecnf1, d2 <- ecnf2]
+    and :: [[[E]]] -> [[E]]
+    and = foldl and2 []
+    or :: [[[E]]] -> [[E]]
+    or = foldl or2 [[]]
+
 -- | Translate the qualified Es list to a single expression
 -- The qualified Es list is basically the following formula:
 -- e >= 0 == (p1 >= 0 /\ p2 >= 0 /\ p3 >=0 -> q1 >= 0) /\ repeat...
