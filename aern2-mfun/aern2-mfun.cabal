@@ -80,6 +80,7 @@ library
     AERN2.BoxFunMinMax.Expressions.Type
     AERN2.BoxFunMinMax.Expressions.Translators.BoxFun
     AERN2.BoxFunMinMax.Expressions.Translators.DReal
+    AERN2.BoxFunMinMax.Expressions.Translators.MetiTarski
     --AERN2.BoxFun.OptimisationConcurrent 
 
 executable aern2-mfun-benchmark
