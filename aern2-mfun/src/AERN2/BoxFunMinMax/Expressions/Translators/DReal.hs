@@ -31,15 +31,25 @@ expressionToSMT (Lit e) =
     _ ->
       "(/ " ++ show (numerator e) ++ " " ++ show (denominator e) ++ ")"
 
+-- disjunctionExpressionsToSMT :: [E] -> String
+-- disjunctionExpressionsToSMT []        = ""
+-- disjunctionExpressionsToSMT [e]       = expressionToSMT e
+-- disjunctionExpressionsToSMT (e : es)  = "(max " ++ expressionToSMT e ++ disjunctionExpressionsToSMT es ++ ")"
+
+-- cnfExpressionsToSMT :: [[E]] -> String
+-- cnfExpressionsToSMT []        = ""
+-- cnfExpressionsToSMT [e]       = disjunctionExpressionsToSMT e
+-- cnfExpressionsToSMT (e : es)  = "(min " ++ disjunctionExpressionsToSMT e ++ cnfExpressionsToSMT es ++ ")"
+
 disjunctionExpressionsToSMT :: [E] -> String
 disjunctionExpressionsToSMT []        = ""
-disjunctionExpressionsToSMT [e]       = expressionToSMT e
-disjunctionExpressionsToSMT (e : es)  = "(max " ++ expressionToSMT e ++ disjunctionExpressionsToSMT es ++ ")"
+disjunctionExpressionsToSMT [e]       = "(>=" ++ expressionToSMT e ++ " (+ 0 1e-300))"
+disjunctionExpressionsToSMT (e : es)  = "(or " ++ "(>= " ++ expressionToSMT e ++ " (+ 0 1e-300))" ++ disjunctionExpressionsToSMT es ++ ")"
 
 cnfExpressionsToSMT :: [[E]] -> String
 cnfExpressionsToSMT []        = ""
 cnfExpressionsToSMT [e]       = disjunctionExpressionsToSMT e
-cnfExpressionsToSMT (e : es)  = "(min " ++ disjunctionExpressionsToSMT e ++ cnfExpressionsToSMT es ++ ")"
+cnfExpressionsToSMT (e : es)  = "(and " ++ disjunctionExpressionsToSMT e ++ cnfExpressionsToSMT es ++ ")"
 
 cnfExpressionAndDomainsToDreal :: [[E]] -> [(String, (Rational, Rational))] -> [(String, (Rational, Rational))] -> Rational -> String
 cnfExpressionAndDomainsToDreal cnf realDomains intDomains epsilon =
@@ -51,18 +61,14 @@ cnfExpressionAndDomainsToDreal cnf realDomains intDomains epsilon =
     0 ->       
       case Data.List.length intDomains of
         0 ->
-          "(>= " ++
           cnfExpressionsToSMT cnf ++
-          "(+ 0 1e-300))" ++
           ")" ++
           commonEnd
         _ ->
           "(forall (" ++
           concatMap (\(x, (xL, xR)) -> "(" ++ x ++ " Int " ++ "[" ++ expressionToSMT (Lit xL) ++ ", " ++ expressionToSMT (Lit xR) ++ "]" ++ ")") intDomains ++
           ")" ++       
-          "(>= " ++
           cnfExpressionsToSMT cnf ++
-          "(+ 0 1e-300))" ++
           "))" ++
           commonEnd
     _ ->
@@ -71,9 +77,7 @@ cnfExpressionAndDomainsToDreal cnf realDomains intDomains epsilon =
           "(forall (" ++
           concatMap (\(x, (xL, xR)) -> "(" ++ x ++ " Real " ++ "[" ++ expressionToSMT (Lit xL) ++ ", " ++ expressionToSMT (Lit xR) ++ "]" ++ ")") realDomains ++
           ")" ++       
-          "(>= " ++
           cnfExpressionsToSMT cnf ++
-          "(+ 0 1e-300))" ++
           "))" ++
           commonEnd
         _ ->
@@ -81,9 +85,7 @@ cnfExpressionAndDomainsToDreal cnf realDomains intDomains epsilon =
           concatMap (\(x, (xL, xR)) -> "(" ++ x ++ " Real " ++ "[" ++ expressionToSMT (Lit xL) ++ ", " ++ expressionToSMT (Lit xR) ++ "]" ++ ")") realDomains ++
           concatMap (\(x, (xL, xR)) -> "(" ++ x ++ " Int " ++ "[" ++ expressionToSMT (Lit xL) ++ ", " ++ expressionToSMT (Lit xR) ++ "]" ++ ")") intDomains ++
           ")" ++       
-          "(>= " ++
           cnfExpressionsToSMT cnf ++
-          "(+ 0 1e-300))" ++
           "))" ++
           commonEnd
   where
