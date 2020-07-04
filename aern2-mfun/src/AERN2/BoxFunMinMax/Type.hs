@@ -39,8 +39,8 @@ import Data.List (filter, find)
 -- a False or indeterminate result with a possible counterexample.
 -- Once we've exhausted the CNF (list of lists), we return a True result.
 
-checkECNF :: [[E.E]] -> VarMap -> Accuracy -> Precision -> (Maybe Bool, Maybe SearchBox)
-checkECNF cnf vMapInit ac p = 
+checkECNF :: [[E.E]] -> VarMap -> Precision -> (Maybe Bool, Maybe SearchBox)
+checkECNF cnf vMapInit p = 
   checkConjunctionResults parCheckConjunction
   where
     parCheckConjunction = parMap rseq (\(j, esInit) -> checkDisjunction j (zip [1..] esInit) vMapInit) (zip [1..] cnf)
@@ -98,8 +98,9 @@ checkECNF cnf vMapInit ac p =
         (Just True, _) -> checkBoxes es' vs j
         o              -> trace ("found false at " ++ show v) o
 
-    vMapToJSON colour vm j = show j ++ ": { \"colour\": " ++ show colour ++ ", \"xL\":" ++ show (fst (snd (vm' !! 0))) ++ ", \"xU\": " ++ show (snd (snd (vm' !! 0))) ++ ", \"yL\": " ++ show (fst (snd (vm' !! 1))) ++ ", \"yU\": " ++ show (snd (snd (vm' !! 1))) ++ " }"
-      where vm' = map (\(v, (l,u)) -> (v, (double l, double u))) vm
+    vMapToJSON _ _ _= ""
+    -- vMapToJSON colour vm j = show j ++ ": { \"colour\": " ++ show colour ++ ", \"xL\":" ++ show (fst (snd (vm' !! 0))) ++ ", \"xU\": " ++ show (snd (snd (vm' !! 0))) ++ ", \"yL\": " ++ show (fst (snd (vm' !! 1))) ++ ", \"yU\": " ++ show (snd (snd (vm' !! 1))) ++ " }"
+    --   where vm' = map (\(v, (l,u)) -> (v, (double l, double u))) vm
     --    negation of max e1 e2 e3 >= 0 ...
     -- == min -e1 -e2 -e3 < 0
     -- == min (-e1 < 0) (-e2 < 0) (-e3 < 0)
