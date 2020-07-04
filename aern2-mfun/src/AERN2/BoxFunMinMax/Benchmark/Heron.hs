@@ -21,7 +21,7 @@ main =
   print $ checkECNF 
       heronCNF 
       -- (heronDisjunction 1) 
-      [("x", (0.5, 2.0)), ("y", (0.7, 1.8))] (bits 100) (prec 100)
+      [("x", (0.5, 2.0)), ("y", (0.7, 1.8))] (prec 100)
   where
   heronDisjunction j = [heronCNF !! (j-1)]
   heronCNF = (minMaxAbsEliminatorECNF (fToECNF heronPreservationMi3))
