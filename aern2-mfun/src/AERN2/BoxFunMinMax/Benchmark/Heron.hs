@@ -13,19 +13,27 @@ import AERN2.BoxFunMinMax.Type
 import AERN2.BoxFunMinMax.Expressions.Type
 import AERN2.BoxFunMinMax.Expressions.Eliminator
 import AERN2.BoxFunMinMax.Expressions.TestFunctions
-
-
+import System.Environment
+import System.IO.Unsafe
 
 main :: IO ()
 main = 
-  print $ checkECNF 
-      heronCNF 
-      -- (heronDisjunction 1) 
-      [("x", (0.5, 2.0)), ("y", (0.7, 1.8))] (prec 100)
-  where
-  heronDisjunction j = [heronCNF !! (j-1)]
-  heronCNF = (minMaxAbsEliminatorECNF (fToECNF heronPreservationMi3))
-
+  do
+    args <- getArgs
+    case args of
+      [vc] ->
+        case (vc) of
+          "sine" -> print checkSineVC
+          "heronInit" -> print checkHeronInitExact
+          _ ->
+            print "Not supported"
+      (vc: [i]) ->
+        case (vc) of
+          "heronPreservation" -> print $ checkHeronPreservationExact (read i :: Integer)
+          "heronPreservationYGE" -> print $ checkHeronPreservationExactYGE (read i :: Integer)
+          "heronPreservationYLE" -> print $ checkHeronPreservationExactYLE (read i :: Integer)
+          _ -> print "Not supported"
+      _ -> print "Not supported"
 
 {-
   A run by Michal on 1st July 2020:

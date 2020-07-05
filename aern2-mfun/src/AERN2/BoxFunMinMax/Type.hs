@@ -65,18 +65,18 @@ checkECNF cnf vMapInit p =
         es' ->
           case find snd checkIfEsTrueUsingApply of
             Just (i,_) -> 
-              trace (vMapToJSON i vMap j)
+              -- trace (vMapToJSON i vMap j)
               (Just True, Nothing)
             _ ->
               if width vMap !>! 1 / 10000000 then -- make this threshold quite small (maybe 10^-7)
-                trace ("Bisected boxes: " ++ show newBoxes) $
+                -- trace ("Bisected boxes: " ++ show newBoxes) $
                 case checkBoxes es' newBoxes j of
                   r@(Just True, _) -> 
                     -- trace (vMapToJSON 1 vMap)
                     r
                   r -> r
               else
-                trace "Stopping bisections (Box too small)" (Nothing, Nothing)
+                trace "Stopping bisections (Box too small)" (Nothing,  Just (toSearchBox vMap (maximum (map snd esWithRanges))))
         where
           esWithRanges = zip es (parMap rseq applyE es)
 
@@ -96,11 +96,10 @@ checkECNF cnf vMapInit p =
     checkBoxes es' (v : vs) j  = 
       case checkDisjunction j es' v of
         (Just True, _) -> checkBoxes es' vs j
-        o              -> trace ("found false at " ++ show v) o
+        o              -> o --trace ("found false at " ++ show v) o 
 
-    vMapToJSON _ _ _= ""
     -- vMapToJSON colour vm j = show j ++ ": { \"colour\": " ++ show colour ++ ", \"xL\":" ++ show (fst (snd (vm' !! 0))) ++ ", \"xU\": " ++ show (snd (snd (vm' !! 0))) ++ ", \"yL\": " ++ show (fst (snd (vm' !! 1))) ++ ", \"yU\": " ++ show (snd (snd (vm' !! 1))) ++ " }"
-    --   where vm' = map (\(v, (l,u)) -> (v, (double l, double u))) vm
+      -- where vm' = map (\(v, (l,u)) -> (v, (double l, double u))) vm
     --    negation of max e1 e2 e3 >= 0 ...
     -- == min -e1 -e2 -e3 < 0
     -- == min (-e1 < 0) (-e2 < 0) (-e3 < 0)

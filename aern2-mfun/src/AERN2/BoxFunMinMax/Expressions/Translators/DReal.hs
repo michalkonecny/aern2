@@ -23,6 +23,7 @@ expressionToSMT (EUnOp op e) =
     Sqrt -> "(sqrt " ++ expressionToSMT e ++ ")"
     Negate -> "(* -1 " ++ expressionToSMT e ++ ")"
     Abs -> "(abs " ++ expressionToSMT e ++ ")"
+    Sin -> "(sin " ++ expressionToSMT e ++ ")"
 expressionToSMT (PowI e i) = "(^ " ++ expressionToSMT e ++ " " ++ show i ++ ")"
 expressionToSMT (Var e) = e
 expressionToSMT (Lit e) = 

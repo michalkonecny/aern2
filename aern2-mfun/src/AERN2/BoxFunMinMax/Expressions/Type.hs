@@ -10,7 +10,7 @@ import Debug.Trace (trace)
 
 data BinOp = Add | Sub | Mul | Div | Min | Max | Pow
   deriving (Show, P.Eq, P.Ord)
-data UnOp  = Sqrt | Negate | Abs
+data UnOp  = Sqrt | Negate | Abs | Sin
   deriving (Show, P.Eq, P.Ord)
 
 -- | The E type represents the inequality: expression :: E >= 0
@@ -104,6 +104,7 @@ computeE (EUnOp op e) varMap =
     Abs -> abs (computeE e varMap)
     Sqrt -> sqrt (computeE e varMap)
     Negate -> negate (computeE e varMap)
+    Sin -> sin (computeE e varMap)
 computeE (Var v) varMap = 
   case Map.lookup v (Map.fromList varMap) of
     Nothing -> 

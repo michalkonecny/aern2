@@ -22,6 +22,8 @@ expressionToTptp (EUnOp op e) =
     Sqrt -> "(sqrt(" ++ expressionToTptp e ++ "))"
     Negate -> "(-1 * " ++ expressionToTptp e ++ ")"
     Abs -> "(abs(" ++ expressionToTptp e ++ "))"
+    Sin -> "(sin(" ++ expressionToTptp e ++ "))"
+    
 expressionToTptp (PowI e i) = "(" ++ expressionToTptp e ++ " ^ " ++ show i ++ ")"
 expressionToTptp (Var e) = e
 expressionToTptp (Lit e) = 

@@ -45,6 +45,7 @@ expressionToBoxFun e domain p =
         Abs -> undefined
         Sqrt -> sqrt (expressionToDifferential e v)
         Negate -> negate (expressionToDifferential e v)
+        Sin -> sin (expressionToDifferential e v)
     expressionToDifferential (Lit e) _ = differential 2 $ cn (mpBallP p e)
     expressionToDifferential (Var e) v = 
       case elemIndex e variableOrder of
