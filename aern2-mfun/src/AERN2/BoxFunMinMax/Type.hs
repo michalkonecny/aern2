@@ -87,7 +87,6 @@ checkECNF cnf vMapInit p =
                         trace "Stopping bisections (Box too small)" (Nothing,  Just (toSearchBox vMap (maximum (map snd esWithRanges))))
                       PaveDFS -> 
                         checkDisjunctionJ PaveBFS jobQueue0 -- try to find a counterexample using BFS
-
             where
               esWithRanges = zip es (parMap rseq applyE es)
 
