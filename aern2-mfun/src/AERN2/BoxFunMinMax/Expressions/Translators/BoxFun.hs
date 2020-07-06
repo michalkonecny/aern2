@@ -42,7 +42,7 @@ expressionToBoxFun e domain p =
         Div -> expressionToDifferential e1 v / expressionToDifferential e2 v
     expressionToDifferential (EUnOp op e) v = 
       case op of
-        Abs -> undefined
+        Abs -> abs (expressionToDifferential e v)
         Sqrt -> sqrt (expressionToDifferential e v)
         Negate -> negate (expressionToDifferential e v)
         Sin -> sin (expressionToDifferential e v)
