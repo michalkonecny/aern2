@@ -60,3 +60,6 @@ contains v1 v2 =
 -- | Convert VarMap to SearchBox with the provided minimum
 toSearchBox :: VarMap -> CN MPBall -> SearchBox
 toSearchBox vMap = SearchBox (fromListDomain (map snd vMap))
+
+centre :: VarMap -> VarMap
+centre = map (\(x,(dL,dR)) -> (x, ((dR+dL)/!2,(dR+dL)/!2)))
