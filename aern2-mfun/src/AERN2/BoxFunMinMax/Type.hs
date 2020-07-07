@@ -108,8 +108,8 @@ checkECNF cnf vMapInit p =
     --     (Just True, _) -> checkBoxes es' vs j
     --     o              -> o --trace ("found false at " ++ show v) o 
 
-    -- vMapToJSON colour vm j = show j ++ ": { \"colour\": " ++ show colour ++ ", \"xL\":" ++ show (fst (snd (vm' !! 0))) ++ ", \"xU\": " ++ show (snd (snd (vm' !! 0))) ++ ", \"yL\": " ++ show (fst (snd (vm' !! 1))) ++ ", \"yU\": " ++ show (snd (snd (vm' !! 1))) ++ " }"
-      -- where vm' = map (\(v, (l,u)) -> (v, (double l, double u))) vm
+    vMapToJSON colour vm j = show j ++ ": { \"colour\": " ++ show colour ++ ", \"xL\":" ++ show (fst (snd (vm' !! 0))) ++ ", \"xU\": " ++ show (snd (snd (vm' !! 0))) ++ ", \"yL\": " ++ show (fst (snd (vm' !! 1))) ++ ", \"yU\": " ++ show (snd (snd (vm' !! 1))) ++ " }"
+      where vm' = map (\(v, (l,u)) -> (v, (double l, double u))) vm
     --    negation of max e1 e2 e3 >= 0 ...
     -- == min -e1 -e2 -e3 < 0
     -- == min (-e1 < 0) (-e2 < 0) (-e3 < 0)
