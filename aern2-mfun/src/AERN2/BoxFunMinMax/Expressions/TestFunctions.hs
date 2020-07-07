@@ -147,12 +147,29 @@ heronPreservationExact i1 =
         EBinOp Add (EBinOp Add (EBinOp Sub (Lit 0.0) (EBinOp Add (Var "Y1") (EBinOp Div (Var "X") (Var "Y1")))) (Lit maxFloat)) (Lit 2.384186e-07),
         EBinOp Add (EBinOp Sub (EBinOp Add (Var "Y1") (EBinOp Div (Var "X") (Var "Y1"))) (Lit (-maxFloat))) (Lit 2.384186e-07)
       ]
+    -- goal = -- Heron Pres Sub
+    --   EBinOp Sub
+    --     (EBinOp Add
+    --       (EBinOp Sub (Lit 0.0) (EUnOp Abs (EBinOp Sub (EUnOp Sqrt (Var "X")) (EBinOp Div (EBinOp Add (Var "Y1") (EBinOp Div (Var "X") (Var "Y1"))) (Lit 2.0)))))
+    --       (EBinOp Sub (EBinOp Div (Lit 1.0) (PowI (Lit 2.0) (2^!(i1+1)))) (EBinOp Mul (Lit 6.0) (EBinOp Mul (Lit (i1+1.0)) (Lit (1/!8388608))))))
+    --     (Lit 1.192093e-07)
+    -- goal = -- Heron Pres Swap
+    --   EBinOp Sub
+    --     (EBinOp Add
+    --       (EBinOp Sub (Lit 0.0) (EUnOp Abs (EBinOp Sub (EUnOp Sqrt (Var "Y1")) (EBinOp Div (EBinOp Add (Var "X") (EBinOp Div (Var "Y1") (Var "X"))) (Lit 2.0)))))
+    --       (EBinOp Add (EBinOp Div (Lit 1.0) (PowI (Lit 2.0) (2^!(i1+1)))) (EBinOp Mul (Lit 6.0) (EBinOp Mul (Lit (i1+1.0)) (Lit (1/!8388608))))))
+    --     (Lit 1.192093e-07)    
     goal =
       EBinOp Sub
         (EBinOp Add
-          (EBinOp Sub (Lit 0.0) (EUnOp Abs (EBinOp Sub (EUnOp Sqrt (Var "X")) (EBinOp Div (EBinOp Add (Var "Y1") (EBinOp Div (Var "X") (Var "Y1"))) (Lit 2.0)))))
-          (EBinOp Add (EBinOp Div (Lit 1.0) (PowI (Lit 2.0) (2^!(i1+1)))) (EBinOp Mul (Lit 6.0) (EBinOp Mul (Lit (i1+1.0)) (Lit (1/!8388608))))))
+          (EBinOp Sub (Lit 0.0) 
+            (EUnOp Abs (EBinOp Sub (EUnOp Sqrt (Var "X"))
+                       (EBinOp Div (EBinOp Add (Var "Y1") (EBinOp Div (Var "X") (Var "Y1"))) (Lit 2.0)))))
+          (EBinOp Add 
+            (EBinOp Div (Lit 1.0) (PowI (Lit 2.0) (2^!(i1+1)))) 
+            (EBinOp Mul (Lit 6.0) (EBinOp Mul (Lit (i1+1.0)) (Lit (1/!8388608))))))
         (Lit 1.192093e-07)
+        -- (Lit 0.1)
 
 heronPreservationExactYGE i1 =
   [negatedContext ++ [goal]]
