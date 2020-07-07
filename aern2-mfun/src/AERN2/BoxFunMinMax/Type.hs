@@ -60,6 +60,8 @@ checkECNF cnf vMapInit p =
           (_, Seq.Empty) -> (Just True, Nothing)
           (PaveDFS, (es, vMap) Seq.:<| restJobs) -> checkBox PaveDFS es vMap restJobs
           (PaveBFS, restJobs Seq.:|> (es, vMap)) | Seq.length jobQueue < 2000 -> checkBox PaveBFS es vMap restJobs
+          (_,restJobs Seq.:|> (es, vMap)) -> 
+                        trace "Stopping bisections (too many boxes)" (Nothing,  Just (toSearchBox vMap (cn $ mpBall 0)))
       checkBox mode es vMap restJobs =
           case filterOutFalseEsUsingApply of
             []  -> (Just False, Just (toSearchBox vMap (maximum (map snd esWithRanges))))
