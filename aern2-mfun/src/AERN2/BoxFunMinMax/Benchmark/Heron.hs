@@ -34,14 +34,3 @@ main =
           "heronPreservationYLE" -> print $ checkHeronPreservationExactYLE (read i :: Integer)
           _ -> print "Not supported"
       _ -> print "Not supported"
-
-{-
-  A run by Michal on 1st July 2020:
-
-  $ /usr/bin/time -v aern2-mfun-heron-benchmark +RTS -N4 |& tee i5.log | grep ": { " > i5.boxes
-  $ grep "wall clock" i5.log 
-        Elapsed (wall clock) time (h:mm:ss or m:ss): 2:05:43
-  $ wc -l i5.boxes
-  7531826 i5.boxes
-  
--}

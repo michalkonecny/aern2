@@ -14,6 +14,7 @@ import Control.Parallel.Strategies
 import Debug.Trace (trace)
 
 import Data.List (filter, find)
+import qualified Data.Sequence as Seq
 
 -- | Check a CNF (Conjunctive Normal Form) of Expressions in the form of a list of lists
 -- over the given VarMap.
@@ -43,7 +44,7 @@ checkECNF :: [[E.E]] -> VarMap -> Precision -> (Maybe Bool, Maybe SearchBox)
 checkECNF cnf vMapInit p = 
   checkConjunctionResults parCheckConjunction
   where
-    parCheckConjunction = parMap rseq (\(j, esInit) -> checkDisjunction j (zip [1..] esInit) vMapInit) (zip [1..] cnf)
+    parCheckConjunction = parMap rseq (\(j, esInit) -> checkDisjunction j (Seq.singleton (zip [1..] esInit, vMapInit))) (zip [1..] cnf)
 
     checkConjunctionResults []        = (Just True, Nothing)
     checkConjunctionResults (x : xs)  =
@@ -51,52 +52,51 @@ checkECNF cnf vMapInit p =
         (Just True, _)  -> checkConjunctionResults xs
         o               -> o
 
-    checkDisjunction :: Integer -> [(Integer, E.E)] -> VarMap -> (Maybe Bool, Maybe SearchBox)
-    checkDisjunction j es vMap =
-      case filterOutFalseEsUsingApply of
-        []  -> (Just False, Just (toSearchBox vMap (maximum (map snd esWithRanges))))
-        -- [(i,e)] -> 
-        --   case globalMinimumAboveN f' ac p (cn (mpBallP p (1 /! 10000000))) (cn (mpBallP p 0.0)) of
-        --     r@(Just True, _) -> trace (vMapToJSON (i+4) vMap j) r
-        --     o -> o
-        --     where
-        --       f = expressionToBoxFun e vMap p
-        --       f' = BoxFun (dimension f) (bf_eval f) (setPrecision p (domain f))
-        es' ->
-          case find snd checkIfEsTrueUsingApply of
-            Just (i,_) -> 
-              -- trace (vMapToJSON i vMap j)
-              (Just True, Nothing)
-            _ ->
-              if width vMap !>! 1 / 10000000 then -- make this threshold quite small (maybe 10^-7)
-                -- trace ("Bisected boxes: " ++ show newBoxes) $
-                case checkBoxes es' newBoxes j of
-                  r@(Just True, _) -> 
-                    -- trace (vMapToJSON 1 vMap)
-                    r
-                  r -> r
-              else
-                trace "Stopping bisections (Box too small)" (Nothing,  Just (toSearchBox vMap (maximum (map snd esWithRanges))))
-        where
-          esWithRanges = zip es (parMap rseq applyE es)
-
-          filterOutFalseTerms     = (filter (\(_, range) -> not (range !<! 0))  esWithRanges)
-          checkIfEsTrueUsingApply = map (\((i,_), range) -> (i, range !>=! 0))  filterOutFalseTerms
-
-          filterOutFalseEsUsingApply = map fst filterOutFalseTerms
-
-          -- applyE e = apply f (setPrecision p (domain f))
-          applyE e = applyLipschitz f (setPrecision p (domain f))
+    checkDisjunction :: Integer -> Seq.Seq ([(Integer, E.E)], VarMap) -> (Maybe Bool, Maybe SearchBox)
+    checkDisjunction j jobQueue =
+      case jobQueue of
+        Seq.Empty -> (Just True, Nothing)
+        ((es, vMap) Seq.:<| restJobs) ->
+          case filterOutFalseEsUsingApply of
+            []  -> (Just False, Just (toSearchBox vMap (maximum (map snd esWithRanges))))
+            -- [(i,e)] -> 
+            --   case globalMinimumAboveN f' ac p (cn (mpBallP p (1 /! 10000000))) (cn (mpBallP p 0.0)) of
+            --     r@(Just True, _) -> trace (vMapToJSON (i+4) vMap j) r
+            --     o -> o
+            --     where
+            --       f = expressionToBoxFun e vMap p
+            --       f' = BoxFun (dimension f) (bf_eval f) (setPrecision p (domain f))
+            es' ->
+              case find snd checkIfEsTrueUsingApply of
+                Just (i,_) -> 
+                  -- trace (vMapToJSON i vMap j)
+                  checkDisjunction j restJobs
+                _ ->
+                  if width vMap !>! 1 / 10000000 then -- make this threshold quite small (maybe 10^-7)
+                    -- trace ("Bisected boxes: " ++ show newBoxes) $
+                    checkDisjunction j (Seq.fromList (map (\box -> (es',box)) newBoxes) <> restJobs)
+                  else
+                    trace "Stopping bisections (Box too small)" (Nothing,  Just (toSearchBox vMap (maximum (map snd esWithRanges))))
             where
-              f = expressionToBoxFun (snd e) vMap p
-          
-          newBoxes = fullBisect vMap
+              esWithRanges = zip es (parMap rseq applyE es)
 
-    checkBoxes _ []         j  = (Just True, Nothing)
-    checkBoxes es' (v : vs) j  = 
-      case checkDisjunction j es' v of
-        (Just True, _) -> checkBoxes es' vs j
-        o              -> o --trace ("found false at " ++ show v) o 
+              filterOutFalseTerms     = (filter (\(_, range) -> not (range !<! 0))  esWithRanges)
+              checkIfEsTrueUsingApply = map (\((i,_), range) -> (i, range !>=! 0))  filterOutFalseTerms
+
+              filterOutFalseEsUsingApply = map fst filterOutFalseTerms
+
+              -- applyE e = apply f (setPrecision p (domain f))
+              applyE e = applyLipschitz f (setPrecision p (domain f))
+                where
+                  f = expressionToBoxFun (snd e) vMap p
+              
+              newBoxes = fullBisect vMap
+
+    -- checkBoxes _ []         j  = (Just True, Nothing)
+    -- checkBoxes es' (v : vs) j  = 
+    --   case checkDisjunction j es' v of
+    --     (Just True, _) -> checkBoxes es' vs j
+    --     o              -> o --trace ("found false at " ++ show v) o 
 
     -- vMapToJSON colour vm j = show j ++ ": { \"colour\": " ++ show colour ++ ", \"xL\":" ++ show (fst (snd (vm' !! 0))) ++ ", \"xU\": " ++ show (snd (snd (vm' !! 0))) ++ ", \"yL\": " ++ show (fst (snd (vm' !! 1))) ++ ", \"yU\": " ++ show (snd (snd (vm' !! 1))) ++ " }"
       -- where vm' = map (\(v, (l,u)) -> (v, (double l, double u))) vm
