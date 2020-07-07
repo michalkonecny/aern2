@@ -44,7 +44,7 @@ checkECNF :: [[E.E]] -> VarMap -> Precision -> (Maybe Bool, Maybe SearchBox)
 checkECNF cnf vMapInit p = 
   checkConjunctionResults parCheckConjunction
   where
-    parCheckConjunction = parMap rseq (\(j, esInit) -> checkDisjunction j (Seq.singleton (zip [1..] esInit, vMapInit))) (zip [1..] cnf)
+    parCheckConjunction = parMap rseq (\(j, esInit) -> checkDisjunction j PaveDFS (Seq.singleton (zip [1..] esInit, vMapInit))) (zip [1..] cnf)
 
     checkConjunctionResults []        = (Just True, Nothing)
     checkConjunctionResults (x : xs)  =
@@ -52,11 +52,15 @@ checkECNF cnf vMapInit p =
         (Just True, _)  -> checkConjunctionResults xs
         o               -> o
 
-    checkDisjunction :: Integer -> Seq.Seq ([(Integer, E.E)], VarMap) -> (Maybe Bool, Maybe SearchBox)
-    checkDisjunction j jobQueue =
-      case jobQueue of
-        Seq.Empty -> (Just True, Nothing)
-        ((es, vMap) Seq.:<| restJobs) ->
+    checkDisjunction :: Integer -> PavingMode -> Seq.Seq ([(Integer, E.E)], VarMap) -> (Maybe Bool, Maybe SearchBox)
+    checkDisjunction j mode0 jobQueue0 = checkDisjunctionJ mode0 jobQueue0
+      where
+      checkDisjunctionJ mode jobQueue =
+        case (mode, jobQueue) of
+          (_, Seq.Empty) -> (Just True, Nothing)
+          (PaveDFS, (es, vMap) Seq.:<| restJobs) -> checkBox PaveDFS es vMap restJobs
+          (PaveBFS, restJobs Seq.:|> (es, vMap)) | Seq.length jobQueue < 2000 -> checkBox PaveBFS es vMap restJobs
+      checkBox mode es vMap restJobs =
           case filterOutFalseEsUsingApply of
             []  -> (Just False, Just (toSearchBox vMap (maximum (map snd esWithRanges))))
             -- [(i,e)] -> 
@@ -70,13 +74,18 @@ checkECNF cnf vMapInit p =
               case find snd checkIfEsTrueUsingApply of
                 Just (i,_) -> 
                   -- trace (vMapToJSON i vMap j)
-                  checkDisjunction j restJobs
+                  checkDisjunctionJ mode restJobs
                 _ ->
                   if width vMap !>! 1 / 10000000 then -- make this threshold quite small (maybe 10^-7)
                     -- trace ("Bisected boxes: " ++ show newBoxes) $
-                    checkDisjunction j (Seq.fromList (map (\box -> (es',box)) newBoxes) <> restJobs)
+                    checkDisjunctionJ mode (Seq.fromList (map (\box -> (es',box)) newBoxes) <> restJobs)
                   else
-                    trace "Stopping bisections (Box too small)" (Nothing,  Just (toSearchBox vMap (maximum (map snd esWithRanges))))
+                    case mode of
+                      PaveBFS ->
+                        trace "Stopping bisections (Box too small)" (Nothing,  Just (toSearchBox vMap (maximum (map snd esWithRanges))))
+                      PaveDFS -> 
+                        checkDisjunctionJ PaveBFS jobQueue0 -- try to find a counterexample using BFS
+
             where
               esWithRanges = zip es (parMap rseq applyE es)
 
@@ -115,3 +124,6 @@ checkECNF cnf vMapInit p =
 
     -- checkInversion should check if a negation is false
     -- it is like a filter
+
+
+data PavingMode = PaveDFS | PaveBFS
