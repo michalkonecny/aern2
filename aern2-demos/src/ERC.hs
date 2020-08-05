@@ -30,8 +30,9 @@ import MixedTypesNumPrelude
 
 import Control.Monad.ST
 import Data.STRef
-import qualified  Data.Vector.Mutable.Sized as V
-import Control.Monad.Primitive
+import qualified  Data.Vector.Mutable.Sized as VM
+import qualified  Data.Vector.Sized as V
+-- import Control.Monad.Primitive
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Maybe
 import Control.Monad.Trans.State
@@ -65,14 +66,20 @@ type INTEGER = Integer
 
 type REAL = CN MPBall -- TODO: REAL should be an abstract type
 
-type REALn n s = V.MVector n s REAL
--- type REALnm n m s = V.MVector (n*m) s REAL
+type REALn n s = VM.MVector n s REAL
+-- type REALnm n m s = VM.MVector (n*m) s REAL
+
+array :: (KnownNat n) => [REAL] -> ERC s (REALn n s)
+array items = 
+  case V.fromList items of
+    Just vector -> V.unsafeThaw vector
+    _ -> error "ERC array literal of incorrect size"
 
 arrayLookup :: (KnownNat n) => (REALn n s) -> INTEGER -> ERC s REAL
-arrayLookup array index = V.read array (finite index)
+arrayLookup a index = VM.read a (finite index)
 
 arrayUpdate :: (KnownNat n) => (REALn n s) -> INTEGER -> REAL -> ERC s ()
-arrayUpdate array index = V.write array (finite index)
+arrayUpdate a index = VM.write a (finite index)
 
 declareKLEENEAN :: KLEENEAN -> ERC s (STRef s KLEENEAN)
 declareKLEENEAN = lift . lift . newSTRef
@@ -83,20 +90,19 @@ declareINTEGER = lift . lift . newSTRef
 declareREAL :: REAL -> ERC s (STRef s REAL)
 declareREAL = lift . lift . newSTRef
 
-declareREALn :: REALn n s -> ERC s (STRef s (REALn n s))
-declareREALn = lift . lift . newSTRef
+declareREALn :: p n -> REALn n s -> ERC s (STRef s (REALn n s))
+declareREALn _ = lift . lift . newSTRef
 
 -- declareREALnm :: REALnm n m s -> ERC s (STRef s (REALnm n m s))
 -- declareREALnm = lift . lift . newSTRef
 
-choose :: [KLEENEAN] -> ERC s (CN Integer)
+choose :: [KLEENEAN] -> ERC s INTEGER
 choose options
   | all (== kFalse) options =
-      pure $ noValueNumErrorCertainECN (Nothing :: Maybe Integer) $
-        NumError "choose: all options failed"
+      error "ERC choose: all options failed"
   | otherwise =
     case elemIndex kTrue options of
-      Just i -> pure $ cn (integer i)
+      Just i -> pure $ integer i
       _ -> insufficientPrecision
 
 
