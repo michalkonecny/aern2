@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE PostfixOperators #-}
 -- #define DEBUG
 {-|
 
@@ -55,8 +56,8 @@ insufficientPrecision = MaybeT $ pure Nothing
 
 type Var s = STRef s
 
-var :: Var s t -> ERC s t
-var = lift . lift . readSTRef
+(?) :: Var s t -> ERC s t
+(?) = lift . lift . readSTRef
 
 assign :: Var s t -> ERC s t -> ERC s ()
 assign v valERC =
@@ -170,17 +171,31 @@ choose options
       Just i -> pure $ fromIntegral i
       _ -> insufficientPrecision
 
+while :: ERC s KLEENEAN -> ERC s a -> ERC s ()
+while condERC doAction = aux
+  where
+  aux = 
+    do
+    cond <- condERC
+    case cond of
+      Nothing -> insufficientPrecision
+      Just True -> do { _ <- doAction; aux } 
+      _ -> pure ()
 
 --------------------------------------------------
 -- Example JMMuller
 --------------------------------------------------
 
 erc_example_JMMuller :: INTEGER -> ERC s REAL
-erc_example_JMMuller n =
+erc_example_JMMuller n0 =
   do
-  nVar <- declareINTEGER $ pure n
+  n <- declareINTEGER $ fromInteger n0
   a <- declareREAL $ 11 / 2
   b <- declareREAL $ 61 / 11
   c <- declareREAL $ 0
-  (var nVar) ># 0
-  insufficientPrecision
+  while ((n?) ># 0) $ do
+    c .= 111 - (1130 - 3000/(a?))/(b?)
+    a .= (b?)
+    b .= (c?)
+    n .= (n?) - 1
+  (a?)
