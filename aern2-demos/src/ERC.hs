@@ -44,7 +44,7 @@ import Control.Monad.Trans.State
 import Data.List
 
 import AERN2.MP
-import Numeric.MixedTypes.Ord ((!<!),(!>!))
+import qualified Numeric.MixedTypes.Ord as MixOrd
 
 -- import AERN2.Limit
 
@@ -180,7 +180,7 @@ instance Fractional (ERC s REAL) where
     do
     a_ <- a
     b_ <- b
-    case b_ !>! (0 :: MPBall) || b_ !<! (0 :: MPBall) of
+    case b_ MixOrd.!>! (0 :: MPBall) || b_ MixOrd.!<! (0 :: MPBall) of
       True -> pure $ a_ / b_
       _ -> insufficientPrecision
 
@@ -228,8 +228,8 @@ while condERC doAction = aux
 -- Example JMMuller
 --------------------------------------------------
 
-erc_example_JMMuller :: INTEGER -> ERC s REAL
-erc_example_JMMuller n0 =
+erc_JMMuller :: INTEGER -> ERC s REAL
+erc_JMMuller n0 =
   do
   n <- declareINTEGER $ fromInteger n0
   a <- declareREAL $ 11 / 2
@@ -243,5 +243,6 @@ erc_example_JMMuller n0 =
     n .= (n?) - 1
   (a?)
 
-run_JMMuller :: Integer -> Integer -> MPBall
-run_JMMuller n ac = runERC_REAL (bits ac) (erc_example_JMMuller n)
+run_erc_JMMuller :: Integer -> Integer -> MPBall
+run_erc_JMMuller n ac = runERC_REAL (bits ac) (erc_JMMuller n)
+
