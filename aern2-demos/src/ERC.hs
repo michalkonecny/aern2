@@ -1,3 +1,4 @@
+{-# LANGUAGE Rank2Types #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE PostfixOperators #-}
 -- #define DEBUG
@@ -124,6 +125,29 @@ type REAL = MPBall -- TODO: REAL should be an abstract type
 declareREAL :: ERC s REAL -> ERC s (STRef s REAL)
 declareREAL r = 
   r >>= (lift . lift . newSTRef)
+
+showREAL :: Accuracy -> ERC s REAL -> ERC s String
+showREAL ac rComp =
+  do
+  r <- rComp
+  case getAccuracy r >= ac of
+    True -> pure (show r)
+    _ -> insufficientPrecision
+
+
+runERC_REAL :: Accuracy -> (forall s. ERC s REAL) -> MPBall
+runERC_REAL ac (rComp :: forall s. ERC s REAL) =
+  getFirstAccurateResult $ map tryWithPrecision $ standardPrecisions 20
+  where
+  tryWithPrecision p = 
+    case rComp of 
+      (MaybeT (StateT (rComp2 :: forall s. Precision -> ST s (Maybe REAL, Precision)))) ->
+        fst $ runST (rComp2 p)
+  getFirstAccurateResult (Nothing : rest) = getFirstAccurateResult rest
+  getFirstAccurateResult (Just result : rest) 
+    | getAccuracy result >= ac = result
+    | otherwise = getFirstAccurateResult rest
+  
 
 instance Num (ERC s REAL) where
   fromInteger = real
