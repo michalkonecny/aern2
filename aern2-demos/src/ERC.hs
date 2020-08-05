@@ -1,6 +1,3 @@
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# LANGUAGE UndecidableInstances #-}
-{-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 {-# LANGUAGE CPP #-}
 -- #define DEBUG
 {-|
@@ -23,10 +20,11 @@ import Debug.Trace (trace)
 #define maybeTraceIO (\ (_ :: String) -> return ())
 #endif
 
-import MixedTypesNumPrelude
--- import qualified Prelude as P
+import Prelude
 
--- import Control.CollectErrors
+-- import MixedTypesNumPrelude
+-- import Numeric.CollectErrors
+-- import qualified Prelude as P
 
 import Control.Monad.ST
 import Data.STRef
@@ -55,6 +53,22 @@ type ERC s = MaybeT (StateT Precision (ST s))
 insufficientPrecision :: ERC s a
 insufficientPrecision = MaybeT $ pure Nothing
 
+type Var s = STRef s
+
+var :: Var s t -> ERC s t
+var = lift . lift . readSTRef
+
+assign :: Var s t -> ERC s t -> ERC s ()
+assign v valERC =
+  do
+  val <- valERC
+  lift $ lift $ writeSTRef v val
+
+(.=) :: Var s t -> ERC s t -> ERC s ()
+(.=) = assign
+
+infixl 0 .=
+
 type KLEENEAN = Maybe Bool
 
 kTrue, kFalse, kUnknown :: KLEENEAN
@@ -64,13 +78,15 @@ kUnknown = Nothing
 
 type INTEGER = Integer
 
-type REAL = CN MPBall -- TODO: REAL should be an abstract type
+type REAL = MPBall -- TODO: REAL should be an abstract type
 
 type REALn n s = VM.MVector n s REAL
 -- type REALnm n m s = VM.MVector (n*m) s REAL
 
-array :: (KnownNat n) => [REAL] -> ERC s (REALn n s)
-array items = 
+array :: (KnownNat n) => [ERC s REAL] -> ERC s (REALn n s)
+array itemsERC = 
+  do
+  items <- sequence itemsERC
   case V.fromList items of
     Just vector -> V.unsafeThaw vector
     _ -> error "ERC array literal of incorrect size"
@@ -81,14 +97,47 @@ arrayLookup a index = VM.read a (finite index)
 arrayUpdate :: (KnownNat n) => (REALn n s) -> INTEGER -> REAL -> ERC s ()
 arrayUpdate a index = VM.write a (finite index)
 
-declareKLEENEAN :: KLEENEAN -> ERC s (STRef s KLEENEAN)
-declareKLEENEAN = lift . lift . newSTRef
+declareKLEENEAN :: ERC s KLEENEAN -> ERC s (STRef s KLEENEAN)
+declareKLEENEAN k =
+  k >>= (lift . lift . newSTRef)
 
-declareINTEGER :: INTEGER -> ERC s (STRef s INTEGER)
-declareINTEGER = lift . lift . newSTRef
+declareINTEGER :: ERC s INTEGER -> ERC s (STRef s INTEGER)
+declareINTEGER i =
+  i >>= (lift . lift . newSTRef)
 
-declareREAL :: REAL -> ERC s (STRef s REAL)
-declareREAL = lift . lift . newSTRef
+instance Num (ERC s INTEGER) where
+  fromInteger = pure
+  a + b = (+) <$> a <*> b
+  a * b = (*) <$> a <*> b
+  -- TODO
+
+
+declareREAL :: ERC s REAL -> ERC s (STRef s REAL)
+declareREAL r = 
+  r >>= (lift . lift . newSTRef)
+
+real :: Integer -> ERC s REAL
+real i = 
+  lift $
+    do
+    precision <- get
+    pure $ mpBallP precision i
+
+instance Num (ERC s REAL) where
+  fromInteger = real
+  a + b = (+) <$> a <*> b
+  a * b = (*) <$> a <*> b
+  -- TODO
+
+instance Fractional (ERC s REAL) where
+  a / b = (/) <$> a <*> b
+  -- TODO
+
+-- instance CanDiv (ERC s REAL) (ERC s REAL) where
+--   type DivTypeNoCN (ERC s REAL) (ERC s REAL) = (ERC s REAL)
+--   type DivType (ERC s REAL) (ERC s REAL) = (ERC s REAL)
+--   divide a b = divide <$> a <*> b
+--   divideNoCN a b = divideNoCN <$> a <*> b
 
 declareREALn :: p n -> REALn n s -> ERC s (STRef s (REALn n s))
 declareREALn _ = lift . lift . newSTRef
@@ -102,7 +151,20 @@ choose options
       error "ERC choose: all options failed"
   | otherwise =
     case elemIndex kTrue options of
-      Just i -> pure $ integer i
+      Just i -> pure $ fromIntegral i
       _ -> insufficientPrecision
 
 
+--------------------------------------------------
+-- Example JMMuller
+--------------------------------------------------
+
+erc_example_JMMuller :: INTEGER -> ERC s REAL
+erc_example_JMMuller n =
+  do
+  nVar <- declareINTEGER (pure n)
+  a <- declareREAL $ 11 / 2
+  b <- declareREAL $ 61 / 11
+  c <- declareREAL $ 0
+  -- while (var nVar) > 0 
+  insufficientPrecision
