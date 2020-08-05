@@ -1,6 +1,7 @@
 {-# LANGUAGE Rank2Types #-}
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE PostfixOperators #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE CPP #-}
 -- #define DEBUG
 {-|
 
@@ -29,23 +30,20 @@ import Prelude
 -- import qualified Prelude as P
 
 import Control.Monad.ST.Trans
-import Control.Monad.Error
+import Control.Monad.Except
 -- import Data.STRef
 
-import qualified  Data.Vector.Mutable.Sized as VM
-import qualified  Data.Vector.Sized as V
-import Control.Monad.Primitive
+-- import qualified  Data.Vector.Mutable.Sized as VM
+-- import qualified  Data.Vector.Sized as V
+-- import Control.Monad.Primitive
+-- import Data.Finite
+-- import GHC.TypeNats
 
-import Control.Monad.Trans.Class
-import Control.Monad.Trans.Maybe
 import Control.Monad.Trans.State
-import Data.Finite
-import GHC.TypeNats
 
 import Data.List
 
 import AERN2.MP
-import AERN2.MP.Ball
 import Numeric.MixedTypes.Ord ((!<!),(!>!))
 
 -- import AERN2.Limit
@@ -125,10 +123,11 @@ infix 4 <#, <=#, >=#, >#
 instance Num (ERC s INTEGER) where
   fromInteger = pure
   negate a = negate <$> a
+  abs a = abs <$> a
+  signum a = signum <$> a
   a + b = (+) <$> a <*> b
   a - b = (-) <$> a <*> b
   a * b = (*) <$> a <*> b
-  -- TODO
 
 type REAL = MPBall -- TODO: REAL should be an abstract type
 
@@ -159,21 +158,24 @@ runERC_REAL ac rComp =
   
 
 instance Num (ERC s REAL) where
-  fromInteger = real
+  fromInteger i = 
+    lift $
+      do
+      precision <- get
+      pure $ mpBallP precision i
   negate a = negate <$> a
+  abs a = abs <$> a
+  signum a = signum <$> a
   a + b = (+) <$> a <*> b
   a - b = (-) <$> a <*> b
   a * b = (*) <$> a <*> b
-  -- TODO
-
-real :: Integer -> ERC s REAL
-real i = 
-  lift $
-    do
-    precision <- get
-    pure $ mpBallP precision i
 
 instance Fractional (ERC s REAL) where
+  fromRational q = 
+    lift $
+      do
+      precision <- get
+      pure $ mpBallP precision q
   a / b = 
     do
     a_ <- a
@@ -181,7 +183,6 @@ instance Fractional (ERC s REAL) where
     case b_ !>! (0 :: MPBall) || b_ !<! (0 :: MPBall) of
       True -> pure $ a_ / b_
       _ -> insufficientPrecision
-  -- TODO
 
 -- instance CanDiv (ERC s REAL) (ERC s REAL) where
 --   type DivTypeNoCN (ERC s REAL) (ERC s REAL) = (ERC s REAL)
