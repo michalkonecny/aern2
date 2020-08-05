@@ -155,7 +155,6 @@ runERC_REAL ac rComp =
       _ -> tryWithPrecision rest
     where
     (StateT rComp2) = runSTT rComp
-  
 
 instance Num (ERC s REAL) where
   fromInteger i = 
@@ -183,12 +182,6 @@ instance Fractional (ERC s REAL) where
     case b_ MixOrd.!>! (0 :: MPBall) || b_ MixOrd.!<! (0 :: MPBall) of
       True -> pure $ a_ / b_
       _ -> insufficientPrecision
-
--- instance CanDiv (ERC s REAL) (ERC s REAL) where
---   type DivTypeNoCN (ERC s REAL) (ERC s REAL) = (ERC s REAL)
---   type DivType (ERC s REAL) (ERC s REAL) = (ERC s REAL)
---   divide a b = divide <$> a <*> b
---   divideNoCN a b = divideNoCN <$> a <*> b
 
 -- type REALn n s = VM.MVector n s REAL
 -- -- type REALnm n m s = VM.MVector (n*m) s REAL
@@ -225,7 +218,7 @@ while condERC doAction = aux
       Nothing -> insufficientPrecision
 
 --------------------------------------------------
--- Example JMMuller
+-- ERC programs
 --------------------------------------------------
 
 erc_JMMuller :: INTEGER -> ERC s REAL
@@ -246,3 +239,4 @@ erc_JMMuller n0 =
 run_erc_JMMuller :: Integer -> Integer -> MPBall
 run_erc_JMMuller n ac = runERC_REAL (bits ac) (erc_JMMuller n)
 
+-- erc_HeronSqrt' :: INTEGER -> REAL -> ERC s REAL
