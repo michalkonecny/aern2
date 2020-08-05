@@ -81,30 +81,20 @@ boolToKleenean :: Bool -> KLEENEAN
 boolToKleenean True = kTrue
 boolToKleenean False = kFalse
 
-type INTEGER = Integer
-
-type REAL = MPBall -- TODO: REAL should be an abstract type
-
-type REALn n s = VM.MVector n s REAL
--- type REALnm n m s = VM.MVector (n*m) s REAL
-
-array :: (KnownNat n) => [ERC s REAL] -> ERC s (REALn n s)
-array itemsERC = 
-  do
-  items <- sequence itemsERC
-  case V.fromList items of
-    Just vector -> V.unsafeThaw vector
-    _ -> error "ERC array literal of incorrect size"
-
-arrayLookup :: (KnownNat n) => (REALn n s) -> INTEGER -> ERC s REAL
-arrayLookup a index = VM.read a (finite index)
-
-arrayUpdate :: (KnownNat n) => (REALn n s) -> INTEGER -> REAL -> ERC s ()
-arrayUpdate a index = VM.write a (finite index)
-
 declareKLEENEAN :: ERC s KLEENEAN -> ERC s (STRef s KLEENEAN)
 declareKLEENEAN k =
   k >>= (lift . lift . newSTRef)
+
+choose :: [KLEENEAN] -> ERC s INTEGER
+choose options
+  | all (== kFalse) options =
+      error "ERC choose: all options failed"
+  | otherwise =
+    case elemIndex kTrue options of
+      Just i -> pure $ fromIntegral i
+      _ -> insufficientPrecision
+
+type INTEGER = Integer
 
 declareINTEGER :: ERC s INTEGER -> ERC s (STRef s INTEGER)
 declareINTEGER i =
@@ -128,6 +118,8 @@ instance Num (ERC s INTEGER) where
   a + b = (+) <$> a <*> b
   a * b = (*) <$> a <*> b
   -- TODO
+
+type REAL = MPBall -- TODO: REAL should be an abstract type
 
 declareREAL :: ERC s REAL -> ERC s (STRef s REAL)
 declareREAL r = 
@@ -156,20 +148,28 @@ instance Fractional (ERC s REAL) where
 --   divide a b = divide <$> a <*> b
 --   divideNoCN a b = divideNoCN <$> a <*> b
 
+type REALn n s = VM.MVector n s REAL
+-- type REALnm n m s = VM.MVector (n*m) s REAL
+
 declareREALn :: p n -> REALn n s -> ERC s (STRef s (REALn n s))
 declareREALn _ = lift . lift . newSTRef
 
 -- declareREALnm :: REALnm n m s -> ERC s (STRef s (REALnm n m s))
 -- declareREALnm = lift . lift . newSTRef
 
-choose :: [KLEENEAN] -> ERC s INTEGER
-choose options
-  | all (== kFalse) options =
-      error "ERC choose: all options failed"
-  | otherwise =
-    case elemIndex kTrue options of
-      Just i -> pure $ fromIntegral i
-      _ -> insufficientPrecision
+array :: (KnownNat n) => [ERC s REAL] -> ERC s (REALn n s)
+array itemsERC = 
+  do
+  items <- sequence itemsERC
+  case V.fromList items of
+    Just vector -> V.unsafeThaw vector
+    _ -> error "ERC array literal of incorrect size"
+
+arrayLookup :: (KnownNat n) => (REALn n s) -> INTEGER -> ERC s REAL
+arrayLookup a index = VM.read a (finite index)
+
+arrayUpdate :: (KnownNat n) => (REALn n s) -> INTEGER -> REAL -> ERC s ()
+arrayUpdate a index = VM.write a (finite index)
 
 while :: ERC s KLEENEAN -> ERC s a -> ERC s ()
 while condERC doAction = aux
