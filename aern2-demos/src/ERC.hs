@@ -76,6 +76,10 @@ kTrue = Just True
 kFalse = Just False
 kUnknown = Nothing
 
+boolToKleenean :: Bool -> KLEENEAN
+boolToKleenean True = kTrue
+boolToKleenean False = kFalse
+
 type INTEGER = Integer
 
 type REAL = MPBall -- TODO: REAL should be an abstract type
@@ -105,16 +109,34 @@ declareINTEGER :: ERC s INTEGER -> ERC s (STRef s INTEGER)
 declareINTEGER i =
   i >>= (lift . lift . newSTRef)
 
+ltINTEGER, leqINTEGER, geqINTEGER, gtINTEGER :: ERC s INTEGER -> ERC s INTEGER -> ERC s KLEENEAN
+ltINTEGER a b = boolToKleenean <$> ((<) <$> a <*> b)
+leqINTEGER a b = boolToKleenean <$> ((<=) <$> a <*> b)
+geqINTEGER a b = boolToKleenean <$> ((>=) <$> a <*> b)
+gtINTEGER a b = boolToKleenean <$> ((>) <$> a <*> b)
+
+(<#),(<=#),(>#),(>=#) :: ERC s INTEGER -> ERC s INTEGER -> ERC s KLEENEAN
+(<#) = ltINTEGER
+(<=#) = leqINTEGER
+(>=#) = geqINTEGER
+(>#) = gtINTEGER
+infix 4 <#, <=#, >=#, >#
+
 instance Num (ERC s INTEGER) where
   fromInteger = pure
   a + b = (+) <$> a <*> b
   a * b = (*) <$> a <*> b
   -- TODO
 
-
 declareREAL :: ERC s REAL -> ERC s (STRef s REAL)
 declareREAL r = 
   r >>= (lift . lift . newSTRef)
+
+instance Num (ERC s REAL) where
+  fromInteger = real
+  a + b = (+) <$> a <*> b
+  a * b = (*) <$> a <*> b
+  -- TODO
 
 real :: Integer -> ERC s REAL
 real i = 
@@ -122,12 +144,6 @@ real i =
     do
     precision <- get
     pure $ mpBallP precision i
-
-instance Num (ERC s REAL) where
-  fromInteger = real
-  a + b = (+) <$> a <*> b
-  a * b = (*) <$> a <*> b
-  -- TODO
 
 instance Fractional (ERC s REAL) where
   a / b = (/) <$> a <*> b
@@ -162,9 +178,9 @@ choose options
 erc_example_JMMuller :: INTEGER -> ERC s REAL
 erc_example_JMMuller n =
   do
-  nVar <- declareINTEGER (pure n)
+  nVar <- declareINTEGER $ pure n
   a <- declareREAL $ 11 / 2
   b <- declareREAL $ 61 / 11
   c <- declareREAL $ 0
-  -- while (var nVar) > 0 
+  (var nVar) ># 0
   insufficientPrecision
