@@ -13,8 +13,8 @@ developed within the CID EU project in 2017-2020.
 -}
 module ERC where
 
-#ifdef DEBUG
 import Debug.Trace (trace)
+#ifdef DEBUG
 #define maybeTrace trace
 #define maybeTraceIO putStrLn
 #else
@@ -28,11 +28,14 @@ import Prelude
 -- import Numeric.CollectErrors
 -- import qualified Prelude as P
 
-import Control.Monad.ST
-import Data.STRef
+import Control.Monad.ST.Trans
+import Control.Monad.Error
+-- import Data.STRef
+
 import qualified  Data.Vector.Mutable.Sized as VM
 import qualified  Data.Vector.Sized as V
--- import Control.Monad.Primitive
+import Control.Monad.Primitive
+
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.Maybe
 import Control.Monad.Trans.State
@@ -42,6 +45,8 @@ import GHC.TypeNats
 import Data.List
 
 import AERN2.MP
+import AERN2.MP.Ball
+import Numeric.MixedTypes.Ord ((!<!),(!>!))
 
 -- import AERN2.Limit
 
@@ -50,21 +55,26 @@ import AERN2.MP
 --------------------------------------------------
 
 {-| ERC is a monad of stateful computations that maintain a global precision and may fail. -}
-type ERC s = MaybeT (StateT Precision (ST s))
+type ERC s =  (STT s (StateT Precision Maybe))
+
+-- instance PrimMonad (STT s m) where
+--   type PrimState (STT s m) = s
+--   primitive = ST
+--   {-# INLINE primitive #-}
 
 insufficientPrecision :: ERC s a
-insufficientPrecision = MaybeT $ pure Nothing
+insufficientPrecision = throwError ()
 
 type Var s = STRef s
 
 (?) :: Var s t -> ERC s t
-(?) = lift . lift . readSTRef
+(?) = readSTRef
 
 assign :: Var s t -> ERC s t -> ERC s ()
 assign v valERC =
   do
   val <- valERC
-  lift $ lift $ writeSTRef v val
+  writeSTRef v val
 
 (.=) :: Var s t -> ERC s t -> ERC s ()
 (.=) = assign
@@ -83,8 +93,7 @@ boolToKleenean True = kTrue
 boolToKleenean False = kFalse
 
 declareKLEENEAN :: ERC s KLEENEAN -> ERC s (STRef s KLEENEAN)
-declareKLEENEAN k =
-  k >>= (lift . lift . newSTRef)
+declareKLEENEAN k = k >>= newSTRef
 
 choose :: [KLEENEAN] -> ERC s INTEGER
 choose options
@@ -98,8 +107,7 @@ choose options
 type INTEGER = Integer
 
 declareINTEGER :: ERC s INTEGER -> ERC s (STRef s INTEGER)
-declareINTEGER i =
-  i >>= (lift . lift . newSTRef)
+declareINTEGER i = i >>= newSTRef
 
 ltINTEGER, leqINTEGER, geqINTEGER, gtINTEGER :: ERC s INTEGER -> ERC s INTEGER -> ERC s KLEENEAN
 ltINTEGER a b = boolToKleenean <$> ((<) <$> a <*> b)
@@ -116,7 +124,9 @@ infix 4 <#, <=#, >=#, >#
 
 instance Num (ERC s INTEGER) where
   fromInteger = pure
+  negate a = negate <$> a
   a + b = (+) <$> a <*> b
+  a - b = (-) <$> a <*> b
   a * b = (*) <$> a <*> b
   -- TODO
 
@@ -124,34 +134,35 @@ type REAL = MPBall -- TODO: REAL should be an abstract type
 
 declareREAL :: ERC s REAL -> ERC s (STRef s REAL)
 declareREAL r = 
-  r >>= (lift . lift . newSTRef)
+  r >>= newSTRef
 
-showREAL :: Accuracy -> ERC s REAL -> ERC s String
-showREAL ac rComp =
+traceREAL :: String -> ERC s REAL -> ERC s ()
+traceREAL label rComp =
   do
   r <- rComp
-  case getAccuracy r >= ac of
-    True -> pure (show r)
-    _ -> insufficientPrecision
+  trace (label ++ show r) $ pure ()
 
 
 runERC_REAL :: Accuracy -> (forall s. ERC s REAL) -> MPBall
-runERC_REAL ac (rComp :: forall s. ERC s REAL) =
-  getFirstAccurateResult $ map tryWithPrecision $ standardPrecisions 20
+runERC_REAL ac rComp =
+  tryWithPrecision $ standardPrecisions 20
   where
-  tryWithPrecision p = 
-    case rComp of 
-      (MaybeT (StateT (rComp2 :: forall s. Precision -> ST s (Maybe REAL, Precision)))) ->
-        fst $ runST (rComp2 p)
-  getFirstAccurateResult (Nothing : rest) = getFirstAccurateResult rest
-  getFirstAccurateResult (Just result : rest) 
-    | getAccuracy result >= ac = result
-    | otherwise = getFirstAccurateResult rest
+  tryWithPrecision [] = error "runERC_REAL: no more precisions to try"
+  tryWithPrecision (p:rest) = 
+    maybeTrace ("p = " ++ show p) $
+    maybeTrace ("rComp2 p = " ++ show (rComp2 p)) $
+    case rComp2 p of
+      Just (result, _) | getAccuracy result >= ac -> result
+      _ -> tryWithPrecision rest
+    where
+    (StateT rComp2) = runSTT rComp
   
 
 instance Num (ERC s REAL) where
   fromInteger = real
+  negate a = negate <$> a
   a + b = (+) <$> a <*> b
+  a - b = (-) <$> a <*> b
   a * b = (*) <$> a <*> b
   -- TODO
 
@@ -163,7 +174,13 @@ real i =
     pure $ mpBallP precision i
 
 instance Fractional (ERC s REAL) where
-  a / b = (/) <$> a <*> b
+  a / b = 
+    do
+    a_ <- a
+    b_ <- b
+    case b_ !>! (0 :: MPBall) || b_ !<! (0 :: MPBall) of
+      True -> pure $ a_ / b_
+      _ -> insufficientPrecision
   -- TODO
 
 -- instance CanDiv (ERC s REAL) (ERC s REAL) where
@@ -172,28 +189,28 @@ instance Fractional (ERC s REAL) where
 --   divide a b = divide <$> a <*> b
 --   divideNoCN a b = divideNoCN <$> a <*> b
 
-type REALn n s = VM.MVector n s REAL
--- type REALnm n m s = VM.MVector (n*m) s REAL
+-- type REALn n s = VM.MVector n s REAL
+-- -- type REALnm n m s = VM.MVector (n*m) s REAL
 
-declareREALn :: p n -> REALn n s -> ERC s (STRef s (REALn n s))
-declareREALn _ = lift . lift . newSTRef
+-- declareREALn :: p n -> REALn n s -> ERC s (STRef s (REALn n s))
+-- declareREALn _ = newSTRef
 
--- declareREALnm :: REALnm n m s -> ERC s (STRef s (REALnm n m s))
--- declareREALnm = lift . lift . newSTRef
+-- -- declareREALnm :: REALnm n m s -> ERC s (STRef s (REALnm n m s))
+-- -- declareREALnm = lift . lift . newSTRef
 
-array :: (KnownNat n) => [ERC s REAL] -> ERC s (REALn n s)
-array itemsERC = 
-  do
-  items <- sequence itemsERC
-  case V.fromList items of
-    Just vector -> V.unsafeThaw vector
-    _ -> error "ERC array literal of incorrect size"
+-- array :: (KnownNat n) => [ERC s REAL] -> ERC s (REALn n s)
+-- array itemsERC = 
+--   do
+--   items <- sequence itemsERC
+--   case V.fromList items of
+--     Just vector -> V.unsafeThaw vector
+--     _ -> error "ERC array literal of incorrect size"
 
-arrayLookup :: (KnownNat n) => (REALn n s) -> INTEGER -> ERC s REAL
-arrayLookup a index = VM.read a (finite index)
+-- arrayLookup :: (KnownNat n) => (REALn n s) -> INTEGER -> ERC s REAL
+-- arrayLookup a index = VM.read a (finite index)
 
-arrayUpdate :: (KnownNat n) => (REALn n s) -> INTEGER -> REAL -> ERC s ()
-arrayUpdate a index = VM.write a (finite index)
+-- arrayUpdate :: (KnownNat n) => (REALn n s) -> INTEGER -> REAL -> ERC s ()
+-- arrayUpdate a index = VM.write a (finite index)
 
 while :: ERC s KLEENEAN -> ERC s a -> ERC s ()
 while condERC doAction = aux
@@ -202,9 +219,9 @@ while condERC doAction = aux
     do
     cond <- condERC
     case cond of
-      Nothing -> insufficientPrecision
       Just True -> do { _ <- doAction; aux } 
-      _ -> pure ()
+      Just False -> pure ()
+      Nothing -> insufficientPrecision
 
 --------------------------------------------------
 -- Example JMMuller
@@ -218,8 +235,12 @@ erc_example_JMMuller n0 =
   b <- declareREAL $ 61 / 11
   c <- declareREAL $ 0
   while ((n?) ># 0) $ do
+    -- traceREAL "a = " (a?)
     c .= 111 - (1130 - 3000/(a?))/(b?)
     a .= (b?)
     b .= (c?)
     n .= (n?) - 1
   (a?)
+
+run_JMMuller :: Integer -> Integer -> MPBall
+run_JMMuller n ac = runERC_REAL (bits ac) (erc_example_JMMuller n)

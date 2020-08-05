@@ -19,6 +19,8 @@ library
     , containers
     , primitive
     , transformers
+    , mtl
+    , STMonadTrans
     , finite-typelits
     , vector-sized
     , stm
