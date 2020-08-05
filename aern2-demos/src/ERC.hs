@@ -38,6 +38,8 @@ import Control.Monad.Trans.State
 import Data.Finite
 import GHC.TypeNats
 
+import Data.List
+
 import AERN2.MP
 
 -- import AERN2.Limit
@@ -48,6 +50,9 @@ import AERN2.MP
 
 {-| ERC is a monad of stateful computations that maintain a global precision and may fail. -}
 type ERC s = MaybeT (StateT Precision (ST s))
+
+insufficientPrecision :: ERC s a
+insufficientPrecision = MaybeT $ pure Nothing
 
 type KLEENEAN = Maybe Bool
 
@@ -84,26 +89,14 @@ declareREALn = lift . lift . newSTRef
 -- declareREALnm :: REALnm n m s -> ERC s (STRef s (REALnm n m s))
 -- declareREALnm = lift . lift . newSTRef
 
--- choose :: [KLEENEAN] -> CN Integer
-
--- instance (CanEnsureCN t) => CanChoose (Maybe Bool) t where
---   choose (options :: [(Maybe Bool,t)]) 
---     | and $ map ((== Just False) . fst) options = 
---         noValueNumErrorCertainECN (Nothing :: Maybe t) $ NumError "choose: all options failed"
---     | or $ map ((== Just True) . fst) options = 
---       prependErrorsCN [NumError "choose: undecided predicate"] 
---     where
---     trueOptions 
-
-    -- choose = aux
-  --   where
-  --   aux ([] :: [(Maybe Bool,t)]) =
-  --     noValueNumErrorCertainECN (Nothing :: Maybe t) $ NumError "choose: all options failed"
-  --   aux ((b, t) : rest)
-  --     | b == Just True = cn t
-  --     | b == Just False = aux rest
-  --     | otherwise =
-  --         noValueNumErrorPotentialECN (Nothing :: Maybe t) $ NumError "choose: undecided predicate"
-
+choose :: [KLEENEAN] -> ERC s (CN Integer)
+choose options
+  | all (== kFalse) options =
+      pure $ noValueNumErrorCertainECN (Nothing :: Maybe Integer) $
+        NumError "choose: all options failed"
+  | otherwise =
+    case elemIndex kTrue options of
+      Just i -> pure $ cn (integer i)
+      _ -> insufficientPrecision
 
 
