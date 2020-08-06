@@ -44,6 +44,7 @@ import Control.Monad.Trans.State
 import Data.List
 
 import AERN2.MP
+import AERN2.MP.Ball (hullMPBall)
 import qualified Numeric.MixedTypes.Ord as MixOrd
 
 -- import AERN2.Limit
@@ -93,32 +94,36 @@ boolToKleenean False = kFalse
 declareKLEENEAN :: ERC s KLEENEAN -> ERC s (STRef s KLEENEAN)
 declareKLEENEAN k = k >>= newSTRef
 
-choose :: [KLEENEAN] -> ERC s INTEGER
-choose options
-  | all (== kFalse) options =
-      error "ERC choose: all options failed"
-  | otherwise =
-    case elemIndex kTrue options of
-      Just i -> pure $ fromIntegral i
-      _ -> insufficientPrecision
+choose :: [ERC s KLEENEAN] -> ERC s INTEGER
+choose options =
+  do
+  options2 <- sequence options
+  case all (== kFalse) options2 of
+    True -> error "ERC choose: all options failed"
+    _ -> 
+      case elemIndex kTrue options2 of
+        Just i -> pure $ fromIntegral i
+        _ -> insufficientPrecision
 
 type INTEGER = Integer
 
 declareINTEGER :: ERC s INTEGER -> ERC s (STRef s INTEGER)
 declareINTEGER i = i >>= newSTRef
 
-ltINTEGER, leqINTEGER, geqINTEGER, gtINTEGER :: ERC s INTEGER -> ERC s INTEGER -> ERC s KLEENEAN
+eqINTEGER, ltINTEGER, leqINTEGER, geqINTEGER, gtINTEGER :: ERC s INTEGER -> ERC s INTEGER -> ERC s KLEENEAN
+eqINTEGER a b = boolToKleenean <$> ((==) <$> a <*> b)
 ltINTEGER a b = boolToKleenean <$> ((<) <$> a <*> b)
 leqINTEGER a b = boolToKleenean <$> ((<=) <$> a <*> b)
 geqINTEGER a b = boolToKleenean <$> ((>=) <$> a <*> b)
 gtINTEGER a b = boolToKleenean <$> ((>) <$> a <*> b)
 
-(<#),(<=#),(>#),(>=#) :: ERC s INTEGER -> ERC s INTEGER -> ERC s KLEENEAN
+(==#), (<#),(<=#),(>#),(>=#) :: ERC s INTEGER -> ERC s INTEGER -> ERC s KLEENEAN
+(==#) = eqINTEGER
 (<#) = ltINTEGER
 (<=#) = leqINTEGER
 (>=#) = geqINTEGER
 (>#) = gtINTEGER
-infix 4 <#, <=#, >=#, >#
+infix 4 ==#, <#, <=#, >=#, >#
 
 instance Num (ERC s INTEGER) where
   fromInteger = pure
@@ -141,7 +146,6 @@ traceREAL label rComp =
   r <- rComp
   trace (label ++ show r) $ pure ()
 
-
 runERC_REAL :: Accuracy -> (forall s. ERC s REAL) -> MPBall
 runERC_REAL ac rComp =
   tryWithPrecision $ standardPrecisions 20
@@ -155,6 +159,22 @@ runERC_REAL ac rComp =
       _ -> tryWithPrecision rest
     where
     (StateT rComp2) = runSTT rComp
+
+ltREAL, leqREAL, geqREAL, gtREAL :: ERC s REAL -> ERC s REAL -> ERC s KLEENEAN
+ltREAL a b = (MixOrd.<) <$> a <*> b
+leqREAL a b = ((MixOrd.<=) <$> a <*> b)
+geqREAL a b = ((MixOrd.>=) <$> a <*> b)
+gtREAL a b = ((MixOrd.>) <$> a <*> b)
+
+(<*),(<=*),(>*),(>=*) :: ERC s REAL -> ERC s REAL -> ERC s KLEENEAN
+(<*) = ltREAL
+(<=*) = leqREAL
+(>=*) = geqREAL
+(>*) = gtREAL
+infix 4 <*, <=*, >=*, >*
+
+iota :: ERC s INTEGER -> ERC s REAL
+iota i = (2^^) <$> i
 
 instance Num (ERC s REAL) where
   fromInteger i = 
@@ -221,10 +241,10 @@ while condERC doAction = aux
 -- ERC programs
 --------------------------------------------------
 
-erc_JMMuller :: INTEGER -> ERC s REAL
-erc_JMMuller n0 =
+erc_JMMuller :: ERC s INTEGER -> ERC s REAL
+erc_JMMuller param_n =
   do
-  n <- declareINTEGER $ fromInteger n0
+  n <- declareINTEGER $ param_n -- copy-in parameter passing
   a <- declareREAL $ 11 / 2
   b <- declareREAL $ 61 / 11
   c <- declareREAL $ 0
@@ -237,6 +257,30 @@ erc_JMMuller n0 =
   (a?)
 
 run_erc_JMMuller :: Integer -> Integer -> MPBall
-run_erc_JMMuller n ac = runERC_REAL (bits ac) (erc_JMMuller n)
+run_erc_JMMuller n ac = runERC_REAL (bits ac) (erc_JMMuller (pure n))
 
--- erc_HeronSqrt' :: INTEGER -> REAL -> ERC s REAL
+erc_HeronSqrt'_p :: ERC s INTEGER -> ERC s REAL -> ERC s REAL
+erc_HeronSqrt'_p p param_x =
+  do
+  x <- declareREAL $ param_x -- copy-in parameter passing
+  y <- declareREAL $ (x?)
+  z <- declareREAL $ (x?)/(y?)
+  while (choose [iota(p) >* (y?) - (z?), (y?) - (z?) >* iota(p-1)] ==# 1) $ do
+    y .= ((y?) + (z?))/2
+    z .= (x?)/(y?)
+  (y?)
+
+erc_HeronSqrt' :: ERC s REAL -> ERC s REAL
+erc_HeronSqrt' param_x = limit (\p -> erc_HeronSqrt'_p p param_x)
+
+limit :: (ERC s INTEGER -> ERC s REAL) -> ERC s REAL
+limit x_ = 
+  do
+  precision <- lift get
+  let p = negate $ fromIntegral precision - 10
+  x_p <- x_ (pure p)
+  iotaP <- iota (pure p)
+  pure (x_p + (hullMPBall (- iotaP) iotaP))
+
+run_erc_HeronSqrt' :: Rational -> Integer -> MPBall
+run_erc_HeronSqrt' x ac = runERC_REAL (bits ac) (erc_HeronSqrt' (fromRational x))
