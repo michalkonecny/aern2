@@ -41,7 +41,14 @@ library
     BenchTasks.Logistic
     BenchTasks.Fourier
     CIDR
-    ERC
+    ERC.Monad
+    ERC.Variables
+    ERC.Logic
+    ERC.Statements
+    ERC.Integer
+    ERC.Real
+    ERC.Array
+    ERC.Examples
     -- Sewon
     -- EffortConcept1
 
