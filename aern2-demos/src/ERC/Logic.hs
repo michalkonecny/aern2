@@ -38,12 +38,25 @@ declareKLEENEAN :: ERC s KLEENEAN -> ERC s (STRef s KLEENEAN)
 declareKLEENEAN k = k >>= newSTRef
 
 choose :: [ERC s KLEENEAN] -> ERC s Integer
-choose options =
+choose optionsERC =
   do
-  options2 <- sequence options
-  case all (== kFalse) options2 of
+  options <- sequence optionsERC
+  case all (== kFalse) options of
     True -> error "ERC choose: all options failed"
     _ -> 
-      case elemIndex kTrue options2 of
+      case elemIndex kTrue options of
         Just i -> pure $ fromIntegral i
         _ -> insufficientPrecision
+
+parallelIfThenElse :: (CanHull (ERC s a)) => ERC s KLEENEAN -> ERC s a -> ERC s a -> ERC s a
+parallelIfThenElse condERC branch1 branch2 =
+  do
+  cond <- condERC
+  case cond of
+    Just True -> branch1
+    Just False -> branch2
+    _ -> do
+      branch1 `hull` branch2
+
+class CanHull a where
+  hull :: a -> a -> a

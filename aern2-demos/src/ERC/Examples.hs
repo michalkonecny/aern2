@@ -44,7 +44,7 @@ run_erc_JMMuller :: Integer -> Integer -> MPBall
 run_erc_JMMuller n ac = runERC_REAL (bits ac) (erc_JMMuller (pure n))
 
 --------------------------------------------------
--- HeronSqrt'
+-- HeronSqrt
 --------------------------------------------------
 
 erc_HeronSqrt'_p :: ERC s INTEGER -> ERC s REAL -> ERC s REAL
@@ -63,3 +63,9 @@ erc_HeronSqrt' param_x = limit (\p -> erc_HeronSqrt'_p p param_x)
 
 run_erc_HeronSqrt' :: Rational -> Integer -> MPBall
 run_erc_HeronSqrt' x ac = runERC_REAL (bits ac) (erc_HeronSqrt' (fromRational x))
+
+erc_HeronSqrt :: ERC s REAL -> ERC s REAL
+erc_HeronSqrt x = parallelIfThenElse (x >* 1) (erc_HeronSqrt' x) (1/(erc_HeronSqrt' (1/x)))
+
+run_erc_HeronSqrt :: Rational -> Integer -> MPBall
+run_erc_HeronSqrt x ac = runERC_REAL (bits ac) (erc_HeronSqrt (fromRational x))

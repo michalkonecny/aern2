@@ -100,3 +100,6 @@ instance Fractional (ERC s REAL) where
     case b_ MixOrd.!>! (0 :: MPBall) || b_ MixOrd.!<! (0 :: MPBall) of
       True -> pure $ a_ / b_
       _ -> insufficientPrecision
+
+instance CanHull (ERC s REAL) where
+  hull a b = hullMPBall <$> a <*> b
