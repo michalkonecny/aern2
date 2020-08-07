@@ -17,9 +17,6 @@ import Debug.Trace (trace)
 import Prelude
 
 import Control.Monad.ST.Trans
-import Control.Monad.Except (lift)
-
-import Control.Monad.Trans.State
 
 import AERN2.MP
 import AERN2.MP.Ball (hullMPBall)
@@ -39,8 +36,10 @@ import ERC.Statements
 type REAL = MPBall
 
 declareREAL :: ERC s REAL -> ERC s (STRef s REAL)
-declareREAL r = 
-  r >>= newSTRef
+declareREAL rERC = 
+  do
+  r <- rERC
+  newSTRef r
 
 traceREAL :: String -> ERC s REAL -> ERC s ()
 traceREAL label rComp =
@@ -52,10 +51,10 @@ runERC_REAL :: Integer -> (forall s. ERC s REAL) -> MPBall
 runERC_REAL ac = runERC (\result -> getAccuracy result >= bits ac)
 
 ltREAL, leqREAL, geqREAL, gtREAL :: ERC s REAL -> ERC s REAL -> ERC s KLEENEAN
-ltREAL a b = (MixOrd.<) <$> a <*> b
-leqREAL a b = ((MixOrd.<=) <$> a <*> b)
-geqREAL a b = ((MixOrd.>=) <$> a <*> b)
-gtREAL a b = ((MixOrd.>) <$> a <*> b)
+ltREAL a b = checkK $ (MixOrd.<) <$> a <*> b
+leqREAL a b = checkK $ ((MixOrd.<=) <$> a <*> b)
+geqREAL a b = checkK $ ((MixOrd.>=) <$> a <*> b)
+gtREAL a b = checkK $ ((MixOrd.>) <$> a <*> b)
 
 (<*),(<=*),(>*),(>=*) :: ERC s REAL -> ERC s REAL -> ERC s KLEENEAN
 (<*) = ltREAL
@@ -72,34 +71,32 @@ instance CanHull (ERC s REAL) where
 
 instance Num (ERC s REAL) where
   fromInteger i = 
-    lift $
-      do
-      precision <- get
-      pure $ mpBallP precision i
-  negate a = negate <$> a
-  abs a = abs <$> a
+    do
+    precision <- getPrecisionERC
+    pure $ mpBallP precision i
+  negate a = checkR $ negate <$> a
+  abs a = checkR $ abs <$> a
   signum a = signum <$> a
-  a + b = (+) <$> a <*> b
-  a - b = (-) <$> a <*> b
-  a * b = (*) <$> a <*> b
+  a + b = checkR $ (+) <$> a <*> b
+  a - b = checkR $ (-) <$> a <*> b
+  a * b = checkR $ (*) <$> a <*> b
 
 instance Fractional (ERC s REAL) where
   fromRational q = 
-    lift $
-      do
-      precision <- get
-      pure $ mpBallP precision q
-  a / b = 
     do
+    precision <- getPrecisionERC
+    pure $ mpBallP precision q
+  a / b =
+    checkR $ do
     a_ <- a
     b_ <- b
     case b_ MixOrd.!>! (0 :: MPBall) || b_ MixOrd.!<! (0 :: MPBall) of
       True -> pure $ a_ / b_
-      _ -> insufficientPrecision
+      _ -> insufficientPrecision dummyReal
 
 powerREALtoINTEGER :: ERC s REAL -> ERC s INTEGER -> ERC s REAL
 powerREALtoINTEGER param_x j =
-  do
+  checkR $ do
   x <- declareREAL $ param_x
   y <- declareREAL $ 1
   n <- declareINTEGER $ 0
@@ -115,23 +112,33 @@ powerREALtoINTEGER param_x j =
 infix 8 ^*
 
 iota :: ERC s INTEGER -> ERC s REAL
-iota i = (2^^) <$> i
+iota i = checkR $ (2^^) <$> i
 
 limit :: (ERC s INTEGER -> ERC s REAL) -> ERC s REAL
-limit x_ = 
-  do
-  precision <- lift get
+limit x_ = checkR $ do
+  precision <- getPrecisionERC
   let p = negate $ fromIntegral precision - 10
   let precisions = take 100 $ standardPrecisions precision
   x_p <- raisePrecisionUntilAccurate precisions p $ x_ (pure p)
+  setPrecisionERC precision
   iotaP <- iota (pure p)
   pure (x_p + (hullMPBall (- iotaP) iotaP))
   where
-  raisePrecisionUntilAccurate [] _ _ = error "limit: no more precisions to try"
-  raisePrecisionUntilAccurate (precision:precs) accuracy action =
-    do
-    lift $ put precision
+  raisePrecisionUntilAccurate [] _ _ = insufficientPrecision dummyReal
+  raisePrecisionUntilAccurate (precision:precs) accuracy action = checkR $ do
+    setPrecisionERC precision
     result <- action
-    case getAccuracy result >= (bits accuracy) of
+    isValid <- getIsValidERC
+    -- traceREAL "result" (pure result)
+    case isValid && getAccuracy result >= (bits accuracy) of
       True -> pure result
-      False -> raisePrecisionUntilAccurate precs accuracy action
+      False -> 
+        do
+        setValidERC
+        raisePrecisionUntilAccurate precs accuracy action
+
+checkR :: ERC s REAL -> ERC s REAL
+checkR = ifInvalidUseDummy dummyReal
+
+dummyReal :: REAL
+dummyReal = 1

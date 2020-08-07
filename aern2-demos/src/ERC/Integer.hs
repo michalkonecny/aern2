@@ -33,11 +33,11 @@ traceINTEGER label rComp =
   trace (label ++ show r) $ pure ()
 
 eqINTEGER, ltINTEGER, leqINTEGER, geqINTEGER, gtINTEGER :: ERC s INTEGER -> ERC s INTEGER -> ERC s KLEENEAN
-eqINTEGER a b = boolToKleenean <$> ((==) <$> a <*> b)
-ltINTEGER a b = boolToKleenean <$> ((<) <$> a <*> b)
-leqINTEGER a b = boolToKleenean <$> ((<=) <$> a <*> b)
-geqINTEGER a b = boolToKleenean <$> ((>=) <$> a <*> b)
-gtINTEGER a b = boolToKleenean <$> ((>) <$> a <*> b)
+eqINTEGER a b = checkK $ boolToKleenean <$> ((==) <$> a <*> b)
+ltINTEGER a b = checkK $ boolToKleenean <$> ((<) <$> a <*> b)
+leqINTEGER a b = checkK $ boolToKleenean <$> ((<=) <$> a <*> b)
+geqINTEGER a b = checkK $ boolToKleenean <$> ((>=) <$> a <*> b)
+gtINTEGER a b = checkK $ boolToKleenean <$> ((>) <$> a <*> b)
 
 (==#), (<#),(<=#),(>#),(>=#) :: ERC s INTEGER -> ERC s INTEGER -> ERC s KLEENEAN
 (==#) = eqINTEGER
@@ -49,10 +49,12 @@ infix 4 ==#, <#, <=#, >=#, >#
 
 instance Num (ERC s INTEGER) where
   fromInteger = pure
-  negate a = negate <$> a
-  abs a = abs <$> a
-  signum a = signum <$> a
-  a + b = (+) <$> a <*> b
-  a - b = (-) <$> a <*> b
-  a * b = (*) <$> a <*> b
-
+  negate a = checkI $ negate <$> a
+  abs a = checkI $ abs <$> a
+  signum a = checkI $ signum <$> a
+  a + b = checkI $ (+) <$> a <*> b
+  a - b = checkI $ (-) <$> a <*> b
+  a * b = checkI $ (*) <$> a <*> b
+    
+checkI :: ERC s INTEGER -> ERC s INTEGER
+checkI = ifInvalidUseDummy (-1)

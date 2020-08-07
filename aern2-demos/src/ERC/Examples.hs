@@ -128,11 +128,11 @@ erc_exp2_p p param_x =
   a <- declareREAL $ (c?)
   b <- declareREAL $ (a?) * (c?)
   while (choose [iota(p) >* (b?)-(a?), (b?)-(a?) >* iota(p-1)] ==# 1) $ do
-    tracePrecision
-    traceINTEGER "p=" p
-    traceREAL "iota(p-1)=" (iota(p-1))
-    traceREAL "a=" (a?)
-    traceREAL "b=" (b?)
+    -- tracePrecision
+    -- traceINTEGER "p=" p
+    -- traceREAL "iota(p-1)=" (iota(p-1))
+    -- traceREAL "b-a=" ((b?)-(a?))
+    -- traceREAL "a=" (a?)
     n .= (n?)+(n?)
     rn .= 2*(rn?)
     c .= 1 + (x?)/(rn?)

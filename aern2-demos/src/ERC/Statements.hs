@@ -28,7 +28,7 @@ while condERC doAction = aux
     case cond of
       Just True -> do { _ <- doAction; aux } 
       Just False -> pure ()
-      Nothing -> insufficientPrecision
+      Nothing -> insufficientPrecision ()
 
 forNfromTo :: Var s INTEGER -> ERC s INTEGER -> ERC s INTEGER -> ERC s a -> ERC s ()
 forNfromTo n k l c =

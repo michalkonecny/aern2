@@ -46,7 +46,7 @@ choose optionsERC =
     _ -> 
       case elemIndex kTrue options of
         Just i -> pure $ fromIntegral i
-        _ -> insufficientPrecision
+        _ -> insufficientPrecision (-1)
 
 parallelIfThenElse :: (CanHull (ERC s a)) => ERC s KLEENEAN -> ERC s a -> ERC s a -> ERC s a
 parallelIfThenElse condERC branch1 branch2 =
@@ -60,3 +60,6 @@ parallelIfThenElse condERC branch1 branch2 =
 
 class CanHull a where
   hull :: a -> a -> a
+
+checkK :: ERC s KLEENEAN -> ERC s KLEENEAN
+checkK = ifInvalidUseDummy kUnknown

@@ -19,6 +19,7 @@ import Debug.Trace (trace)
 
 import Control.Monad.ST.Trans
 import Control.Monad.Except
+import Data.Functor.Identity
 
 import Control.Monad.Trans.State
 
@@ -35,15 +36,48 @@ import Debug.Trace (trace)
 
 
 {-| ERC is a monad of stateful computations that maintain a global precision and may fail. -}
-type ERC s =  (STT s (StateT Precision Maybe))
+type ERC s =  (STT s (State (Precision, Bool)))
 
 -- instance PrimMonad (STT s m) where
 --   type PrimState (STT s m) = s
 --   primitive = ST
 --   {-# INLINE primitive #-}
 
-insufficientPrecision :: ERC s a
-insufficientPrecision = throwError ()
+
+getPrecisionERC :: ERC s Precision
+getPrecisionERC = lift $ fst <$> get
+
+setPrecisionERC :: Precision -> ERC s ()
+setPrecisionERC precision =
+  lift $ do 
+    (_, isValid) <- get
+    put (precision, isValid)
+
+getIsValidERC :: ERC s Bool
+getIsValidERC = lift $ snd <$> get
+
+setInvalidERC :: ERC s ()
+setInvalidERC =
+  lift $ do 
+    (precision, _) <- get
+    put (precision, False)
+
+setValidERC :: ERC s ()
+setValidERC =
+  lift $ do 
+    (precision, _) <- get
+    put (precision, True)
+
+insufficientPrecision :: a -> ERC s a
+insufficientPrecision dummy = setInvalidERC >> pure dummy
+
+ifInvalidUseDummy :: a -> ERC s a -> ERC s a
+ifInvalidUseDummy dummy iERC =
+  do
+  isValid <- getIsValidERC
+  case isValid of
+    True -> iERC
+    False -> pure dummy
 
 runERC :: (Show t) => (t -> Bool) -> (forall s. ERC s t) -> t
 runERC isOK rComp =
@@ -51,8 +85,8 @@ runERC isOK rComp =
   where
   tryWithPrecision [] = error "runERC: no more precisions to try"
   tryWithPrecision (p:rest) = 
-    case rComp2 p of
-      Just (result, _) | isOK result -> result
+    case rComp2 (p, True) of
+      Identity (result, (_, isValid)) | isValid && isOK result -> result
       _ -> tryWithPrecision rest
     where
     (StateT rComp2) = runSTT rComp
@@ -60,5 +94,5 @@ runERC isOK rComp =
 tracePrecision :: ERC s ()
 tracePrecision =
   do
-  precision <- lift get
+  precision <- getPrecisionERC
   trace ("precision = " ++ show precision) $ pure ()
