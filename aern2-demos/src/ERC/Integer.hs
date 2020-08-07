@@ -14,6 +14,8 @@ module ERC.Integer where
 
 import Prelude
 
+import Debug.Trace (trace)
+
 import Control.Monad.ST.Trans
 
 import ERC.Monad
@@ -23,6 +25,12 @@ type INTEGER = Integer
 
 declareINTEGER :: ERC s INTEGER -> ERC s (STRef s INTEGER)
 declareINTEGER i = i >>= newSTRef
+
+traceINTEGER :: String -> ERC s INTEGER -> ERC s ()
+traceINTEGER label rComp =
+  do
+  r <- rComp
+  trace (label ++ show r) $ pure ()
 
 eqINTEGER, ltINTEGER, leqINTEGER, geqINTEGER, gtINTEGER :: ERC s INTEGER -> ERC s INTEGER -> ERC s KLEENEAN
 eqINTEGER a b = boolToKleenean <$> ((==) <$> a <*> b)

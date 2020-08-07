@@ -15,6 +15,8 @@ module ERC.Monad where
 
 import Prelude
 
+import Debug.Trace (trace)
+
 import Control.Monad.ST.Trans
 import Control.Monad.Except
 
@@ -49,10 +51,14 @@ runERC isOK rComp =
   where
   tryWithPrecision [] = error "runERC: no more precisions to try"
   tryWithPrecision (p:rest) = 
-    maybeTrace ("p = " ++ show p) $
-    maybeTrace ("rComp2 p = " ++ show (rComp2 p)) $
     case rComp2 p of
       Just (result, _) | isOK result -> result
       _ -> tryWithPrecision rest
     where
     (StateT rComp2) = runSTT rComp
+
+tracePrecision :: ERC s ()
+tracePrecision =
+  do
+  precision <- lift get
+  trace ("precision = " ++ show precision) $ pure ()

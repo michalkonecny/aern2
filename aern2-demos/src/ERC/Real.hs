@@ -48,8 +48,8 @@ traceREAL label rComp =
   r <- rComp
   trace (label ++ show r) $ pure ()
 
-runERC_REAL :: Accuracy -> (forall s. ERC s REAL) -> MPBall
-runERC_REAL ac = runERC (\result -> getAccuracy result >= ac)
+runERC_REAL :: Integer -> (forall s. ERC s REAL) -> MPBall
+runERC_REAL ac = runERC (\result -> getAccuracy result >= bits ac)
 
 ltREAL, leqREAL, geqREAL, gtREAL :: ERC s REAL -> ERC s REAL -> ERC s KLEENEAN
 ltREAL a b = (MixOrd.<) <$> a <*> b
@@ -97,18 +97,6 @@ instance Fractional (ERC s REAL) where
       True -> pure $ a_ / b_
       _ -> insufficientPrecision
 
-iota :: ERC s INTEGER -> ERC s REAL
-iota i = (2^^) <$> i
-
-limit :: (ERC s INTEGER -> ERC s REAL) -> ERC s REAL
-limit x_ = 
-  do
-  precision <- lift get
-  let p = negate $ fromIntegral precision - 10
-  x_p <- x_ (pure p)
-  iotaP <- iota (pure p)
-  pure (x_p + (hullMPBall (- iotaP) iotaP))
-
 powerREALtoINTEGER :: ERC s REAL -> ERC s INTEGER -> ERC s REAL
 powerREALtoINTEGER param_x j =
   do
@@ -125,3 +113,25 @@ powerREALtoINTEGER param_x j =
 (^*) = powerREALtoINTEGER
 
 infix 8 ^*
+
+iota :: ERC s INTEGER -> ERC s REAL
+iota i = (2^^) <$> i
+
+limit :: (ERC s INTEGER -> ERC s REAL) -> ERC s REAL
+limit x_ = 
+  do
+  precision <- lift get
+  let p = negate $ fromIntegral precision - 10
+  let precisions = take 100 $ standardPrecisions precision
+  x_p <- raisePrecisionUntilAccurate precisions p $ x_ (pure p)
+  iotaP <- iota (pure p)
+  pure (x_p + (hullMPBall (- iotaP) iotaP))
+  where
+  raisePrecisionUntilAccurate [] _ _ = error "limit: no more precisions to try"
+  raisePrecisionUntilAccurate (precision:precs) accuracy action =
+    do
+    lift $ put precision
+    result <- action
+    case getAccuracy result >= (bits accuracy) of
+      True -> pure result
+      False -> raisePrecisionUntilAccurate precs accuracy action
