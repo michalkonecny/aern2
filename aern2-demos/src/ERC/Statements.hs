@@ -13,6 +13,9 @@ import Prelude
 import ERC.Monad
 import ERC.Logic
 
+return_ :: ERC s a -> ERC s a
+return_ = id
+
 while :: ERC s KLEENEAN -> ERC s a -> ERC s ()
 while condERC doAction = aux
   where

@@ -38,7 +38,7 @@ erc_JMMuller param_n =
     a .= (b?)
     b .= (c?)
     n .= (n?) - 1
-  (a?)
+  return_ (a?)
 
 run_erc_JMMuller :: Integer -> Integer -> MPBall
 run_erc_JMMuller n ac = runERC_REAL (bits ac) (erc_JMMuller (pure n))
@@ -56,16 +56,18 @@ erc_HeronSqrt'_p p param_x =
   while (choose [iota(p) >* (y?) - (z?), (y?) - (z?) >* iota(p-1)] ==# 1) $ do
     y .= ((y?) + (z?))/2
     z .= (x?)/(y?)
-  (y?)
+  return_ (y?)
 
 erc_HeronSqrt' :: ERC s REAL -> ERC s REAL
-erc_HeronSqrt' x = limit (\p -> erc_HeronSqrt'_p p x)
+erc_HeronSqrt' x = 
+  return_ $ limit (\p -> erc_HeronSqrt'_p p x)
 
 run_erc_HeronSqrt' :: Rational -> Integer -> MPBall
 run_erc_HeronSqrt' x ac = runERC_REAL (bits ac) (erc_HeronSqrt' (fromRational x))
 
 erc_HeronSqrt :: ERC s REAL -> ERC s REAL
-erc_HeronSqrt x = parallelIfThenElse (x >* 1) (erc_HeronSqrt' x) (1/(erc_HeronSqrt' (1/x)))
+erc_HeronSqrt x = 
+  return_ $ parallelIfThenElse (x >* 1) (erc_HeronSqrt' x) (1/(erc_HeronSqrt' (1/x)))
 
 run_erc_HeronSqrt :: Rational -> Integer -> MPBall
 run_erc_HeronSqrt x ac = runERC_REAL (bits ac) (erc_HeronSqrt (fromRational x))
@@ -89,10 +91,11 @@ erc_exp'_p p param_x =
     rj .= (rj?) + 1
     z .= (z?)*(x?)
     jf .= (jf?) * (rj?)
-  (y?)
+  return_ (y?)
 
 erc_exp' :: ERC s REAL -> ERC s REAL
-erc_exp' x = limit (\p -> erc_exp'_p p x)
+erc_exp' x = 
+  return_ $ limit (\p -> erc_exp'_p p x)
 
 run_erc_exp' :: Rational -> Integer -> MPBall
 run_erc_exp' x ac = runERC_REAL (bits ac) (erc_exp' (fromRational x))
@@ -106,7 +109,7 @@ erc_exp param_x =
   while (choose [(x?) <* 1, (x?) >* 1/2] ==# 1) $ do
     y .= (y?) * (z?)
     x .= (x?) - 1/2
-  (y?)*(erc_exp' (x?))
+  return_ $ (y?)*(erc_exp' (x?))
   
 run_erc_exp :: Rational -> Integer -> MPBall
 run_erc_exp x ac = runERC_REAL (bits ac) (erc_exp (fromRational x))
