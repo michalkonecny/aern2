@@ -26,8 +26,10 @@ import AERN2.MP.Ball (hullMPBall)
 import qualified Numeric.MixedTypes.Ord as MixOrd
 
 import ERC.Monad
+import ERC.Variables
 import ERC.Logic
 import ERC.Integer
+import ERC.Statements
 
 --------------------------------------------------
 -- Elements of the ERC language
@@ -62,17 +64,11 @@ gtREAL a b = ((MixOrd.>) <$> a <*> b)
 (>*) = gtREAL
 infix 4 <*, <=*, >=*, >*
 
-iota :: ERC s INTEGER -> ERC s REAL
-iota i = (2^^) <$> i
+maxREAL :: (ERC s REAL, ERC s REAL) -> ERC s REAL
+maxREAL (x, y) = parallelIfThenElse (x >* y) x y
 
-limit :: (ERC s INTEGER -> ERC s REAL) -> ERC s REAL
-limit x_ = 
-  do
-  precision <- lift get
-  let p = negate $ fromIntegral precision - 10
-  x_p <- x_ (pure p)
-  iotaP <- iota (pure p)
-  pure (x_p + (hullMPBall (- iotaP) iotaP))
+instance CanHull (ERC s REAL) where
+  hull a b = hullMPBall <$> a <*> b
 
 instance Num (ERC s REAL) where
   fromInteger i = 
@@ -101,5 +97,31 @@ instance Fractional (ERC s REAL) where
       True -> pure $ a_ / b_
       _ -> insufficientPrecision
 
-instance CanHull (ERC s REAL) where
-  hull a b = hullMPBall <$> a <*> b
+iota :: ERC s INTEGER -> ERC s REAL
+iota i = (2^^) <$> i
+
+limit :: (ERC s INTEGER -> ERC s REAL) -> ERC s REAL
+limit x_ = 
+  do
+  precision <- lift get
+  let p = negate $ fromIntegral precision - 10
+  x_p <- x_ (pure p)
+  iotaP <- iota (pure p)
+  pure (x_p + (hullMPBall (- iotaP) iotaP))
+
+powerREALtoINTEGER :: ERC s REAL -> ERC s INTEGER -> ERC s REAL
+powerREALtoINTEGER param_x j =
+  do
+  x <- declareREAL $ param_x
+  y <- declareREAL $ 1
+  n <- declareINTEGER $ 0
+  forNfromTo n 1 j $ do
+    y .= (y?) * (x?)
+  forNfromTo n 1 (-j) $ do
+    y .= (y?) / (x?)
+  return_ (y?)
+
+(^*) :: ERC s REAL -> ERC s INTEGER -> ERC s REAL
+(^*) = powerREALtoINTEGER
+
+infix 8 ^*

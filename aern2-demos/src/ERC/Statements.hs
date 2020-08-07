@@ -1,3 +1,4 @@
+{-# LANGUAGE PostfixOperators #-}
 {-|
 
 ERC shallow embedding in Haskell/AERN2.
@@ -11,7 +12,9 @@ module ERC.Statements where
 import Prelude
 
 import ERC.Monad
+import ERC.Variables
 import ERC.Logic
+import ERC.Integer
 
 return_ :: ERC s a -> ERC s a
 return_ = id
@@ -26,3 +29,11 @@ while condERC doAction = aux
       Just True -> do { _ <- doAction; aux } 
       Just False -> pure ()
       Nothing -> insufficientPrecision
+
+forNfromTo :: Var s INTEGER -> ERC s INTEGER -> ERC s INTEGER -> ERC s a -> ERC s ()
+forNfromTo n k l c =
+  do
+  n .= k
+  while ((n?) <=# l) $ do
+    _ <- c
+    n .= (n?) + 1
