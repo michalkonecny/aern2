@@ -59,7 +59,7 @@ erc_HeronSqrt'_p p param_x =
   (y?)
 
 erc_HeronSqrt' :: ERC s REAL -> ERC s REAL
-erc_HeronSqrt' param_x = limit (\p -> erc_HeronSqrt'_p p param_x)
+erc_HeronSqrt' x = limit (\p -> erc_HeronSqrt'_p p x)
 
 run_erc_HeronSqrt' :: Rational -> Integer -> MPBall
 run_erc_HeronSqrt' x ac = runERC_REAL (bits ac) (erc_HeronSqrt' (fromRational x))
@@ -69,3 +69,30 @@ erc_HeronSqrt x = parallelIfThenElse (x >* 1) (erc_HeronSqrt' x) (1/(erc_HeronSq
 
 run_erc_HeronSqrt :: Rational -> Integer -> MPBall
 run_erc_HeronSqrt x ac = runERC_REAL (bits ac) (erc_HeronSqrt (fromRational x))
+
+--------------------------------------------------
+-- Exp using Taylor formula
+--------------------------------------------------
+
+erc_exp'_p :: ERC s INTEGER -> ERC s REAL -> ERC s REAL
+erc_exp'_p p param_x =
+  do
+  x <- declareREAL $ param_x -- copy-in parameter passing
+  j <- declareINTEGER $ 1
+  rj <- declareREAL $ 1
+  jf <- declareREAL $ 1
+  y <- declareREAL $ 1
+  z <- declareREAL $ (x?)
+  while ((j?) <=# -p) $ do
+    y .= (y?) + (z?)/(jf?)
+    j .= (j?) + 1
+    rj .= (rj?) + 1
+    z .= (z?)*(x?)
+    jf .= (jf?) * (rj?)
+  (y?)
+
+erc_exp' :: ERC s REAL -> ERC s REAL
+erc_exp' x = limit (\p -> erc_exp'_p p x)
+
+run_erc_exp' :: Rational -> Integer -> MPBall
+run_erc_exp' x ac = runERC_REAL (bits ac) (erc_exp' (fromRational x))

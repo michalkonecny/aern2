@@ -16,11 +16,6 @@ module ERC.Variables where
 import Prelude
 
 import Control.Monad.ST.Trans
-import Control.Monad.Except
-
-import Control.Monad.Trans.State
-
-import AERN2.MP
 
 import ERC.Monad
 
