@@ -10,7 +10,7 @@ developed within the CID EU project in 2017-2020.
 -}
 module ERC.Examples where
 
-import Prelude
+import Prelude hiding ((<*))
 
 import AERN2.MP
 
@@ -96,3 +96,17 @@ erc_exp' x = limit (\p -> erc_exp'_p p x)
 
 run_erc_exp' :: Rational -> Integer -> MPBall
 run_erc_exp' x ac = runERC_REAL (bits ac) (erc_exp' (fromRational x))
+
+erc_exp :: ERC s REAL -> ERC s REAL
+erc_exp param_x =
+  do
+  x <- declareREAL $ param_x -- copy-in parameter passing
+  z <- declareREAL $ erc_exp' (1/2)
+  y <- declareREAL $ 1
+  while (choose [(x?) <* 1, (x?) >* 1/2] ==# 1) $ do
+    y .= (y?) * (z?)
+    x .= (x?) - 1/2
+  (y?)*(erc_exp' (x?))
+  
+run_erc_exp :: Rational -> Integer -> MPBall
+run_erc_exp x ac = runERC_REAL (bits ac) (erc_exp (fromRational x))
