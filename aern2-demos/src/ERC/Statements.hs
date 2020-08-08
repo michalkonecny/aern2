@@ -19,10 +19,10 @@ import ERC.Integer
 return_ :: ERC s a -> ERC s a
 return_ = id
 
-while :: ERC s KLEENEAN -> ERC s a -> ERC s ()
-while condERC doAction = aux
+while_ :: ERC s KLEENEAN -> ERC s a -> ERC s ()
+while_ condERC doAction = aux
   where
-  aux = 
+  aux =
     do
     cond <- condERC
     case cond of
@@ -30,10 +30,28 @@ while condERC doAction = aux
       Just False -> pure ()
       Nothing -> insufficientPrecision ()
 
-forNfromTo :: Var s INTEGER -> ERC s INTEGER -> ERC s INTEGER -> ERC s a -> ERC s ()
-forNfromTo n k l c =
+ifThenElse_ :: ERC s KLEENEAN -> ERC s () -> ERC s () -> ERC s ()
+ifThenElse_ condERC thenAction elseAction =
+  do
+  cond <- condERC
+  case cond of
+    Just True -> thenAction
+    Just False -> elseAction
+    Nothing -> insufficientPrecision ()
+
+ifThen_ :: ERC s KLEENEAN -> ERC s () -> ERC s ()
+ifThen_ condERC thenAction =
+  do
+  cond <- condERC
+  case cond of
+    Just True -> thenAction
+    Just False -> pure ()
+    Nothing -> insufficientPrecision ()
+
+forNfromTo_ :: Var s INTEGER -> ERC s INTEGER -> ERC s INTEGER -> ERC s a -> ERC s ()
+forNfromTo_ n k l c =
   do
   n .= k
-  while ((n?) <=# l) $ do
+  while_ ((n?) <=# l) $ do
     _ <- c
     n .= (n?) + 1

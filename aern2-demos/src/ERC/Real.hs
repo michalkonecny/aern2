@@ -66,6 +66,9 @@ infix 4 <*, <=*, >=*, >*
 maxREAL :: (ERC s REAL, ERC s REAL) -> ERC s REAL
 maxREAL (x, y) = parallelIfThenElse (x >* y) x y
 
+absREAL :: ERC s REAL -> ERC s REAL
+absREAL x = parallelIfThenElse (x >* 0) x (- x)
+
 instance CanHull (ERC s REAL) where
   hull a b = hullMPBall <$> a <*> b
 
@@ -100,9 +103,9 @@ powerREALtoINTEGER param_x j =
   x <- declareREAL $ param_x
   y <- declareREAL $ 1
   n <- declareINTEGER $ 0
-  forNfromTo n 1 j $ do
+  forNfromTo_ n 1 j $ do
     y .= (y?) * (x?)
-  forNfromTo n 1 (-j) $ do
+  forNfromTo_ n 1 (-j) $ do
     y .= (y?) / (x?)
   return_ (y?)
 

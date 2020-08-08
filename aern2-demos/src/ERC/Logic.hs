@@ -37,6 +37,16 @@ boolToKleenean False = kFalse
 declareKLEENEAN :: ERC s KLEENEAN -> ERC s (STRef s KLEENEAN)
 declareKLEENEAN k = k >>= newSTRef
 
+(&&?) :: ERC s KLEENEAN -> ERC s KLEENEAN -> ERC s KLEENEAN
+a &&? b = checkK $ andK <$> a <*> b
+  where
+  andK (Just False) _ = Just False
+  andK _ (Just False) = Just False
+  andK (Just True) (Just True) = Just True
+  andK _ _ = Nothing
+
+infix 3 &&? -- TODO: check fixity level
+
 choose :: [ERC s KLEENEAN] -> ERC s Integer
 choose optionsERC =
   do

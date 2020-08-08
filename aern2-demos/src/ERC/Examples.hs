@@ -32,7 +32,7 @@ erc_JMMuller param_n =
   a <- declareREAL $ 11 / 2
   b <- declareREAL $ 61 / 11
   c <- declareREAL $ 0
-  while ((n?) ># 0) $ do
+  while_ ((n?) ># 0) $ do
     -- traceREAL "a = " (a?)
     c .= 111 - (1130 - 3000/(a?))/(b?)
     a .= (b?)
@@ -53,7 +53,7 @@ erc_HeronSqrt'_p p param_x =
   x <- declareREAL $ param_x -- copy-in parameter passing
   y <- declareREAL $ (x?)
   z <- declareREAL $ (x?)/(y?)
-  while (choose [iota(p) >* (y?) - (z?), (y?) - (z?) >* iota(p-1)] ==# 1) $ do
+  while_ (choose [iota(p) >* (y?) - (z?), (y?) - (z?) >* iota(p-1)] ==# 1) $ do
     y .= ((y?) + (z?))/2
     z .= (x?)/(y?)
   return_ (y?)
@@ -85,7 +85,7 @@ erc_exp'_p p param_x =
   jf <- declareREAL $ 1
   y <- declareREAL $ 1
   z <- declareREAL $ (x?)
-  while ((j?) <=# -p) $ do
+  while_ ((j?) <=# -p) $ do
     y .= (y?) + (z?)/(jf?)
     j .= (j?) + 1
     rj .= (rj?) + 1
@@ -106,7 +106,7 @@ erc_exp param_x =
   x <- declareREAL $ param_x -- copy-in parameter passing
   z <- declareREAL $ erc_exp' (1/2)
   y <- declareREAL $ 1
-  while (choose [(x?) <* 1, (x?) >* 1/2] ==# 1) $ do
+  while_ (choose [(x?) <* 1, (x?) >* 1/2] ==# 1) $ do
     y .= (y?) * (z?)
     x .= (x?) - 1/2
   return_ $ (y?)*(erc_exp' (x?))
@@ -127,7 +127,7 @@ erc_exp2_p p param_x =
   c <- declareREAL $ 1 + (x?)
   a <- declareREAL $ (c?)
   b <- declareREAL $ (a?) * (c?)
-  while (choose [iota(p) >* (b?)-(a?), (b?)-(a?) >* iota(p-1)] ==# 1) $ do
+  while_ (choose [iota(p) >* (b?)-(a?), (b?)-(a?) >* iota(p-1)] ==# 1) $ do
     -- tracePrecision
     -- traceINTEGER "p=" p
     -- traceREAL "iota(p-1)=" (iota(p-1))
@@ -146,3 +146,53 @@ erc_exp2 x =
 
 run_erc_exp2 :: Rational -> Integer -> MPBall
 run_erc_exp2 x ac = runERC_REAL ac (erc_exp2 (fromRational x))
+
+--------------------------------------------------
+-- Rounding to a nearby integer
+--------------------------------------------------
+
+erc_round1 :: ERC s REAL -> ERC s INTEGER
+erc_round1 param_x =
+  do
+  x <- declareREAL $ param_x -- copy-in parameter passing
+  k <- declareINTEGER $ 0
+  while_ (choose [(x?) <* 1, (x?) >* 1/2] ==# 1) $ do
+    k .= (k?) + 1
+    x .= (x?) - 1
+  while_ (choose [(x?) >* (-1), (x?) <* (-1/2)] ==# 1) $ do
+    k .= (k?) - 1
+    x .= (x?) + 1
+  return_ (k?)
+
+run_erc_round1 :: Rational -> Integer
+run_erc_round1 x = runERC (const True) (erc_round1 (fromRational x))
+
+erc_round1_sqrt :: ERC s REAL -> ERC s INTEGER
+erc_round1_sqrt x = erc_round1 (erc_HeronSqrt x)
+
+run_erc_round1_sqrt :: Rational -> Integer
+run_erc_round1_sqrt x = runERC (const True) (erc_round1_sqrt (fromRational x))
+
+erc_round2 :: ERC s REAL -> ERC s INTEGER
+erc_round2 param_x =
+  do
+  x <- declareREAL $ param_x -- copy-in parameter passing
+  k <- declareINTEGER $ 0
+  j <- declareINTEGER $ 0
+  b <- declareINTEGER $ 0
+  y <- declareREAL $ (x?)
+  while_ (choose [absREAL (y?) <* 1, absREAL (y?) >* 1/2] ==# 1) $ do
+    j .= (j?) + 1
+    y .= (y?) / 2
+  while_ ((j?) ># 0) $ do
+    y .= (y?) * 2
+    b .= choose [(y?) <* 0, -1 <* (y?) &&? (y?) <* 1, (y?) >* 0] - 1
+    -- y .= (y?) - (b?)
+    ifThen_ ((b?) ==# -1) $ y .= (y?) + 1
+    ifThen_ ((b?) ==# 1) $ y .= (y?) - 1
+    k .= 2*(k?) + (b?)
+    j .= (j?) - 1
+  return_ (k?)
+
+run_erc_round2 :: Rational -> Integer
+run_erc_round2 x = runERC (const True) (erc_round2 (fromRational x))

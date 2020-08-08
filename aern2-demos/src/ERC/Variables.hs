@@ -33,4 +33,4 @@ assign v valERC =
 (.=) :: Var s t -> ERC s t -> ERC s ()
 (.=) = assign
 
-infixl 0 .=
+infixl 1 .=
