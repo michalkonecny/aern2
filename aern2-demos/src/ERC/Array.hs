@@ -30,37 +30,64 @@ import Control.Monad.Except
 -- import Data.Finite
 -- import GHC.TypeNats
 
-import Control.Monad.Trans.State
+import Control.Monad.ST.Trans
 
 import AERN2.MP
 import AERN2.MP.Ball (hullMPBall)
 import qualified Numeric.MixedTypes.Ord as MixOrd
 
 import ERC.Monad
+import ERC.Variables
 import ERC.Logic
 import ERC.Integer
 import ERC.Real
 
 
--- type REALn n s = VM.MVector n s REAL
--- -- type REALnm n m s = VM.MVector (n*m) s REAL
+type REALn s = STArray s Integer REAL
 
--- declareREALn :: p n -> REALn n s -> ERC s (STRef s (REALn n s))
--- declareREALn _ = newSTRef
-
--- -- declareREALnm :: REALnm n m s -> ERC s (STRef s (REALnm n m s))
--- -- declareREALnm = lift . lift . newSTRef
+declareREALn :: ERC s (REALn s) -> ERC s (Var s (REALn s))
+declareREALn aERC = 
+  do
+  a <- checkA $ aERC
+  newSTRef a
 
 -- array :: (KnownNat n) => [ERC s REAL] -> ERC s (REALn n s)
--- array itemsERC = 
---   do
---   items <- sequence itemsERC
---   case V.fromList items of
---     Just vector -> V.unsafeThaw vector
---     _ -> error "ERC array literal of incorrect size"
+array :: [ERC s REAL] -> ERC s (REALn s)
+array itemsERC = 
+  do
+  items <- sequence itemsERC
+  let n = fromIntegral (length items) :: Integer
+  a <- newSTArray (0, n - 1) 0
+  zipWithM_ (writeSTArray a) [0..] items -- initialise the array using items
+  return a
 
 -- arrayLookup :: (KnownNat n) => (REALn n s) -> INTEGER -> ERC s REAL
--- arrayLookup a index = VM.read a (finite index)
+arrayLookup, (?!) :: ERC s (REALn s) -> [ERC s INTEGER] -> ERC s REAL
+arrayLookup aERC [iERC] =
+  do
+  a <- checkA aERC
+  i <- checkI iERC
+  checkR $ readSTArray a i
+arrayLookup _ _ = error "arrayLookup: supporting only 1-dimensional arrays"
+
+(?!) = arrayLookup
+infix 1 ?!
 
 -- arrayUpdate :: (KnownNat n) => (REALn n s) -> INTEGER -> REAL -> ERC s ()
--- arrayUpdate a index = VM.write a (finite index)
+arrayUpdate :: ERC s (REALn s) -> [ERC s INTEGER] -> ERC s REAL -> ERC s ()
+arrayUpdate aERC [iERC] rERC =
+  do
+  a <- checkA aERC
+  i <- checkI iERC
+  r <- checkR rERC
+  ifInvalidUseDummy () $ writeSTArray a i r
+arrayUpdate _ _ _ = error "arrayUpdate: supporting only 1-dimensional arrays"
+
+(.=!) = arrayLookup
+infix 1 .=!
+
+checkA :: ERC s (REALn s) -> ERC s (REALn s)
+checkA aERC = 
+  do
+  dummyA <- error "accessing a non-existent dummy array"
+  ifInvalidUseDummy dummyA aERC
