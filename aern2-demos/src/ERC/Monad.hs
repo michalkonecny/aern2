@@ -90,3 +90,8 @@ tracePrecision =
   do
   precision <- getPrecisionERC
   trace ("precision = " ++ show precision) $ pure ()
+
+(....) :: ERC s a -> ERC s a
+(....) = id
+
+infix 0 ....

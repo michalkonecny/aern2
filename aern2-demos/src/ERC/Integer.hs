@@ -30,14 +30,15 @@ declareINTEGER iERC =
   i <- checkI $ iERC
   newSTRef i
 
-traceINTEGER :: String -> ERC s INTEGER -> ERC s ()
-traceINTEGER label iERC =
+____traceINTEGER :: String -> ERC s INTEGER -> ERC s ()
+____traceINTEGER label iERC =
   do
   i <- iERC
   trace (label ++ show i) $ pure ()
 
-eqINTEGER, ltINTEGER, leqINTEGER, geqINTEGER, gtINTEGER :: ERC s INTEGER -> ERC s INTEGER -> ERC s KLEENEAN
+eqINTEGER, neqINTEGER, ltINTEGER, leqINTEGER, geqINTEGER, gtINTEGER :: ERC s INTEGER -> ERC s INTEGER -> ERC s KLEENEAN
 eqINTEGER a b = checkK $ boolToKleenean <$> ((==) <$> a <*> b)
+neqINTEGER a b = checkK $ boolToKleenean <$> ((/=) <$> a <*> b)
 ltINTEGER a b = checkK $ boolToKleenean <$> ((<) <$> a <*> b)
 leqINTEGER a b = checkK $ boolToKleenean <$> ((<=) <$> a <*> b)
 geqINTEGER a b = checkK $ boolToKleenean <$> ((>=) <$> a <*> b)
@@ -45,6 +46,7 @@ gtINTEGER a b = checkK $ boolToKleenean <$> ((>) <$> a <*> b)
 
 (==#), (<#),(<=#),(>#),(>=#) :: ERC s INTEGER -> ERC s INTEGER -> ERC s KLEENEAN
 (==#) = eqINTEGER
+(/=#) = neqINTEGER
 (<#) = ltINTEGER
 (<=#) = leqINTEGER
 (>=#) = geqINTEGER

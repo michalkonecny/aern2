@@ -36,8 +36,8 @@ declareREAL rERC =
   r <- checkR $ rERC
   newSTRef r
 
-traceREAL :: String -> ERC s REAL -> ERC s ()
-traceREAL label rERC =
+____traceREAL :: String -> ERC s REAL -> ERC s ()
+____traceREAL label rERC =
   do
   r <- rERC
   trace (label ++ show r) $ pure ()

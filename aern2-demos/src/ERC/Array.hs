@@ -6,8 +6,8 @@
 -- #define DEBUG
 module ERC.Array where
 
-#ifdef DEBUG
 import Debug.Trace (trace)
+#ifdef DEBUG
 #define maybeTrace trace
 #define maybeTraceIO putStrLn
 #else
@@ -47,6 +47,23 @@ declareREALnm aERC =
   do
   a <- checkAA $ aERC
   newSTRef a
+
+____traceREALn :: (KnownNat n) => String -> ERC s (REALn s n) -> ERC s ()
+____traceREALn label aERC =
+  do
+  aa@(REALn a) <- aERC
+  let n = natVal aa
+  items <- mapM (readSTArray a) [0..(n - 1)] 
+  trace (label ++ show items) $ pure ()
+
+____traceREALnm :: (KnownNat n, KnownNat m) => String -> ERC s (REALnm s n m) -> ERC s ()
+____traceREALnm label aERC =
+  do
+  aaa@(REALnm aa@(REALn a)) <- aERC
+  let n = natVal aa
+  let m = natVal aaa
+  items <- mapM (\j -> mapM (readSTArray a) [n*j .. (n*j+n-1)]) [0..(m - 1)] 
+  trace (label ++ show items) $ pure ()
 
 array :: (KnownNat n) => [ERC s REAL] -> ERC s (REALn s n)
 array itemsERC = 
@@ -118,7 +135,7 @@ arrayLookup aERC [iERC] =
 arrayLookup _ _ = error "arrayLookup: supporting only 1-dimensional arrays"
 
 (?!) = arrayLookup
-infix 1 ?!
+infix 9 ?!
 
 array2DLookup, (?!!) :: (KnownNat n, KnownNat m) => ERC s (REALnm s n m) -> [ERC s INTEGER] -> ERC s REAL
 array2DLookup _ [] =
@@ -139,12 +156,12 @@ array2DLookup aERC [iERC, jERC] =
 array2DLookup _ _ = error "array2DLookup: supporting only 2-dimensional arrays"
 
 (?!!) = array2DLookup
-infix 1 ?!!
+infix 9 ?!!
 
-arrayUpdate, (.=!) :: (KnownNat n) => ERC s (REALn s n) -> [ERC s INTEGER] -> ERC s REAL -> ERC s ()
-arrayUpdate _ [] _ =
+arrayUpdate, (.=!) :: (KnownNat n) => (ERC s (REALn s n), [ERC s INTEGER]) -> ERC s REAL -> ERC s ()
+arrayUpdate (_,[]) _ =
   error "arrayUpdate: missing index"
-arrayUpdate aERC [iERC] rERC =
+arrayUpdate (aERC,[iERC]) rERC =
   do
   aa@(REALn a) <- aERC
   i <- checkI iERC
@@ -153,18 +170,18 @@ arrayUpdate aERC [iERC] rERC =
     False -> error "arrayUpdate: index out of bounds"
   r <- checkR rERC
   ifInvalidUseDummy () $ writeSTArray a i r
-arrayUpdate _ _ _ = error "arrayUpdate: supporting only 1-dimensional arrays"
+arrayUpdate _ _ = error "arrayUpdate: too many indices"
 
 (.=!) = arrayUpdate
 infix 1 .=!
 
 
-array2DUpdate, (.=!!) :: (KnownNat n, KnownNat m) => ERC s (REALnm s n m) -> [ERC s INTEGER] -> ERC s REAL -> ERC s ()
-array2DUpdate _ [] _ =
+array2DUpdate, (.=!!) :: (KnownNat n, KnownNat m) => (ERC s (REALnm s n m), [ERC s INTEGER]) -> ERC s REAL -> ERC s ()
+array2DUpdate (_,[]) _ =
   error "array2DUpdate: missing index"
-array2DUpdate _ [_] _ =
+array2DUpdate (_,[_]) _ =
   error "array2DUpdate: missing second index"
-array2DUpdate aERC [iERC,jERC] rERC =
+array2DUpdate (aERC,[iERC,jERC]) rERC =
   do
   aaa@(REALnm aa@(REALn a)) <- aERC
   i <- checkI iERC
@@ -176,10 +193,30 @@ array2DUpdate aERC [iERC,jERC] rERC =
     False -> error "array2DUpdate: index out of bounds"
   r <- checkR rERC
   ifInvalidUseDummy () $ writeSTArray a (i + j*di) r
-array2DUpdate _ _ _ = error "array2DUpdate: supporting only 2-dimensional arrays"
+array2DUpdate _ _ = error "array2DUpdate: too many indices"
 
 (.=!!) = array2DUpdate
 infix 1 .=!!
+
+arraySwap :: 
+  (KnownNat n1, KnownNat n2) => 
+  (ERC s (REALn s n1), [ERC s INTEGER], ERC s (REALn s n2), [ERC s INTEGER]) -> 
+  ERC s ()
+arraySwap (a1,ix1,a2,ix2) =
+  do
+  temp <- a1?!ix1
+  (a1,ix1) .=! a2?!ix2
+  (a2,ix2) .=! (pure temp)
+
+array2DSwap :: 
+  (KnownNat n1, KnownNat m1, KnownNat n2, KnownNat m2) => 
+  (ERC s (REALnm s n1 m1), [ERC s INTEGER], ERC s (REALnm s n2 m2), [ERC s INTEGER]) -> 
+  ERC s ()
+array2DSwap (a1,ix1,a2,ix2) =
+  do
+  temp <- a1?!!ix1
+  (a1,ix1) .=!! a2?!!ix2
+  (a2,ix2) .=!! (pure temp)
 
 checkA :: ERC s (REALn s n) -> ERC s (REALn s n)
 checkA aERC = 

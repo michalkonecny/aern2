@@ -11,7 +11,7 @@ developed within the CID EU project in 2017-2020.
 -}
 module ERC.Examples where
 
-import Prelude hiding ((<*))
+import Prelude hiding ((<*),pi)
 
 import GHC.TypeLits
 import Data.Proxy
@@ -39,7 +39,7 @@ erc_JMMuller param_n =
   b <- declareREAL $ 61 / 11
   c <- declareREAL $ 0
   while_ ((n?) ># 0) $ do
-    -- traceREAL "a = " (a?)
+    -- ____traceREAL "a = " (a?)
     c .= 111 - (1130 - 3000/(a?))/(b?)
     a .= (b?)
     b .= (c?)
@@ -134,11 +134,11 @@ erc_exp2_p p param_x =
   a <- declareREAL $ (c?)
   b <- declareREAL $ (a?) * (c?)
   while_ (choose [iota(p) >* (b?)-(a?), (b?)-(a?) >* iota(p-1)] ==# 1) $ do
-    -- tracePrecision
-    -- traceINTEGER "p=" p
-    -- traceREAL "iota(p-1)=" (iota(p-1))
-    -- traceREAL "b-a=" ((b?)-(a?))
-    -- traceREAL "a=" (a?)
+    -- ____tracePrecision
+    -- ____traceINTEGER "p=" p
+    -- ____traceREAL "iota(p-1)=" (iota(p-1))
+    -- ____traceREAL "b-a=" ((b?)-(a?))
+    -- ____traceREAL "a=" (a?)
     n .= (n?)+(n?)
     rn .= 2*(rn?)
     c .= 1 + (x?)/(rn?)
@@ -207,8 +207,8 @@ run_erc_round2 x = runERC (const True) (erc_round2 (fromRational x))
 -- Determinant function using Gaussian elimination
 --------------------------------------------------
 
-erc_pivot :: (KnownNat d) => ERC s (REALnm s d d) -> ERC s INTEGER -> ERC s (INTEGER, INTEGER)
-erc_pivot a k = 
+erc_pivot :: (KnownNat d) => (ERC s (REALnm s d d), ERC s INTEGER) -> ERC s (INTEGER, INTEGER)
+erc_pivot (a, k) = 
   let d = array2DLength1 a in
   do
   i0 <- declareINTEGER $ k
@@ -219,30 +219,76 @@ erc_pivot a k =
   forNfromTo_ i k (d-1) $ do
     forNfromTo_ j k (d-1) $ do
       x .= maxREAL ((x?), absREAL (a ?!! [(i?), (j?)]))
-      traceREAL "x=" (x?)
   forNfromTo_ i k (d-1) $ do
     forNfromTo_ j k (d-1) $ do
-      ifThen_ (choose [absREAL (a ?!! [(i?), (j?)]) <* (x?), absREAL (a ?!! [(i?), (j?)]) >* (x?)/2] ==# 1) $ do
+      ifThen_ (choose [absREAL (a?!![(i?), (j?)]) <* (x?), absREAL (a?!![(i?), (j?)]) >* (x?)/2] ==# 1) $ do
         i0 .= (i?)
         j0 .= (j?)
   return_ $ pair_ (i0?) (j0?)
 
-erc_pivot_rational :: (KnownNat d) => Proxy d -> [[Rational]] -> ERC s INTEGER -> ERC s (INTEGER, INTEGER)
-erc_pivot_rational  (_ :: Proxy d) aRational (k :: ERC s INTEGER) =
-  do
-  (a :: REALnm s d d) <- array2D $ map (map fromRational) aRational
-  erc_pivot (pure a) k
-  
 run_erc_pivot :: (KnownNat d) => Proxy d -> [[Rational]] -> Integer -> (Integer, Integer)
-run_erc_pivot pd aRational k = 
+run_erc_pivot (_ :: Proxy d) aRational k = 
   runERC (const True) $ do
-    erc_pivot_rational pd aRational (pure k)
+    (a :: REALnm s d d) <- array2D $ map (map fromRational) aRational
+    erc_pivot (pure a, pure k)
 
 run_erc_pivot_test1 =
   run_erc_pivot (Proxy::Proxy 2) [[1,0],[-2,1]] 0
 
--- erc_det :: (KnownNat d) => ERC s (REALnm s d d) -> ERC s REAL
--- erc_det a = 
---   let d = array2DLength1 a in
---   do
---   i0 <- declareINTEGER $ k
+erc_det :: (KnownNat d) => ERC s (REALnm s d d) -> ERC s REAL
+erc_det a = -- precondition: a is invertible
+  let d = array2DLength1 a in
+  do
+  i <- declareINTEGER $ 0
+  j <- declareINTEGER $ 0
+  k <- declareINTEGER $ 0
+  pi <- declareINTEGER $ 0
+  pj <- declareINTEGER $ 0
+  det <- declareREAL $ 1
+  forNfromTo_ k 0 (d-2) $ do
+    ____traceREALnm "a=" a
+    ____traceINTEGER "k=" (k?)
+    (pi, pj) ..= erc_pivot (a, (k?))
+    ____traceINTEGER "pi=" (pi?)
+    ____traceINTEGER "pj=" (pj?)
+    det .= (det?) * a?!![(pi?), (pj?)]
+    forNfromTo_ j 0 (d-1) $ do
+      array2DSwap (a, [(k?),(j?)], a, [(pi?), (j?)])
+    ____traceREALnm "after swap 1: a=" a
+    ifThen_ ((k?) /=# (pi?)) $ do
+      det .= - (det?)
+    forNfromTo_ i 0 (d-1) $ do
+      array2DSwap (a, [(i?),(k?)], a, [(i?), (pj?)])
+    ____traceREALnm "after swap 2: a=" a
+    ifThen_ ((k?) /=# (pj?)) $ do
+      det .= - (det?)
+    forNfromTo_ j ((k?)+1) (d-1) $ do
+      ____traceINTEGER "j=" (j?)
+      (a, [(k?),(j?)]) .=!! a?!![(k?),(j?)] / a?!![(k?),(k?)]
+      ____traceREALnm "a=" a
+      forNfromTo_ i ((k?)+1) (d-1) $ do
+        ____traceINTEGER "i=" (i?)
+        (a, [(i?),(j?)]) .=!! a?!![(i?),(j?)] - a?!![(i?),(k?)] * a?!![(k?),(j?)]
+        ____traceREALnm "a=" a
+    (a, [(k?),(k?)]) .=!! 1
+    forNfromTo_ i ((k?)+1) (d-1) $ do
+      (a, [(i?),(k?)]) .=!! 0
+  ____traceREALnm "a=" a
+  det .= (det?) * a?!![d-1,d-1]
+  return_ (det?)
+
+run_erc_det :: (KnownNat d) => Proxy d -> [[Rational]] -> Integer -> MPBall
+run_erc_det (_ :: Proxy d) aRational ac = 
+  runERC_REAL ac $ do
+    (a :: REALnm s d d) <- array2D $ map (map fromRational) aRational
+    erc_det (pure a)
+
+run_erc_det_test1 =
+  run_erc_det (Proxy::Proxy 2) [[1,0],[2,1]] 10
+
+run_erc_det_test2 =
+  run_erc_det (Proxy::Proxy 3) [[1,2,1],[1,2,0],[2,2,1]] 10
+
+run_erc_det_test3 =
+  run_erc_det (Proxy::Proxy 4) [[1,5,-2,1],[3,1,1,3],[3,2,1,3],[-7,2,1,5]] 10
+  -- Alpha:  det({{1,5,-2,1},{3,1,1,3},{3,2,1,3},{-7,2,1,5}})
