@@ -35,16 +35,16 @@ import ERC.Statements
 
 type REAL = MPBall
 
-declareREAL :: ERC s REAL -> ERC s (STRef s REAL)
+declareREAL :: ERC s REAL -> ERC s (Var s REAL)
 declareREAL rERC = 
   do
-  r <- rERC
+  r <- checkR $ rERC
   newSTRef r
 
 traceREAL :: String -> ERC s REAL -> ERC s ()
-traceREAL label rComp =
+traceREAL label rERC =
   do
-  r <- rComp
+  r <- rERC
   trace (label ++ show r) $ pure ()
 
 runERC_REAL :: Integer -> (forall s. ERC s REAL) -> MPBall
@@ -103,9 +103,9 @@ powerREALtoINTEGER param_x j =
   x <- declareREAL $ param_x
   y <- declareREAL $ 1
   n <- declareINTEGER $ 0
-  forNfromTo_ n 1 j $ do
+  forNfromTo_ n 1 j $
     y .= (y?) * (x?)
-  forNfromTo_ n 1 (-j) $ do
+  forNfromTo_ n 1 (-j) $
     y .= (y?) / (x?)
   return_ (y?)
 

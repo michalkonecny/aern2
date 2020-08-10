@@ -28,7 +28,7 @@ assign :: Var s t -> ERC s t -> ERC s ()
 assign v valERC =
   do
   val <- valERC
-  writeSTRef v val
+  ifInvalidUseDummy () $ writeSTRef v val
 
 (.=) :: Var s t -> ERC s t -> ERC s ()
 (.=) = assign

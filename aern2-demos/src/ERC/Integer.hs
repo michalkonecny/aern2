@@ -19,18 +19,22 @@ import Debug.Trace (trace)
 import Control.Monad.ST.Trans
 
 import ERC.Monad
+import ERC.Variables
 import ERC.Logic
 
 type INTEGER = Integer
 
-declareINTEGER :: ERC s INTEGER -> ERC s (STRef s INTEGER)
-declareINTEGER i = i >>= newSTRef
+declareINTEGER :: ERC s INTEGER -> ERC s (Var s INTEGER)
+declareINTEGER iERC =
+  do
+  i <- checkI $ iERC
+  newSTRef i
 
 traceINTEGER :: String -> ERC s INTEGER -> ERC s ()
-traceINTEGER label rComp =
+traceINTEGER label iERC =
   do
-  r <- rComp
-  trace (label ++ show r) $ pure ()
+  i <- iERC
+  trace (label ++ show i) $ pure ()
 
 eqINTEGER, ltINTEGER, leqINTEGER, geqINTEGER, gtINTEGER :: ERC s INTEGER -> ERC s INTEGER -> ERC s KLEENEAN
 eqINTEGER a b = checkK $ boolToKleenean <$> ((==) <$> a <*> b)
