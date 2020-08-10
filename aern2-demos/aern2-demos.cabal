@@ -21,8 +21,6 @@ library
     , transformers
     , mtl
     , STMonadTrans
-    , finite-typelits
-    , vector-sized
     , stm
     , QuickCheck
     , mixed-types-num >= 0.4
@@ -47,6 +45,7 @@ library
     ERC.Statements
     ERC.Integer
     ERC.Real
+    ERC.Pair
     ERC.Array
     ERC.Examples
     -- Sewon

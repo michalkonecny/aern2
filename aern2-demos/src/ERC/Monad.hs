@@ -38,12 +38,6 @@ import Debug.Trace (trace)
 {-| ERC is a monad of stateful computations that maintain a global precision and may fail. -}
 type ERC s =  (STT s (State (Precision, Bool)))
 
--- instance PrimMonad (STT s m) where
---   type PrimState (STT s m) = s
---   primitive = ST
---   {-# INLINE primitive #-}
-
-
 getPrecisionERC :: ERC s Precision
 getPrecisionERC = lift $ fst <$> get
 

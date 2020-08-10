@@ -19,10 +19,6 @@ import Data.List
 
 import ERC.Monad
 
---------------------------------------------------
--- Elements of the ERC language
---------------------------------------------------
-
 type KLEENEAN = Maybe Bool
 
 kTrue, kFalse, kUnknown :: KLEENEAN

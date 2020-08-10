@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE PostfixOperators #-}
 {-|
 
@@ -12,14 +13,19 @@ module ERC.Examples where
 
 import Prelude hiding ((<*))
 
-import AERN2.MP
+import GHC.TypeLits
+import Data.Proxy
+
+import AERN2.MP (MPBall)
 
 import ERC.Monad
 import ERC.Variables
 import ERC.Logic
 import ERC.Integer
-import ERC.Real
 import ERC.Statements
+import ERC.Real
+import ERC.Pair
+import ERC.Array
 
 --------------------------------------------------
 -- JMMuller
@@ -196,3 +202,47 @@ erc_round2 param_x =
 
 run_erc_round2 :: Rational -> Integer
 run_erc_round2 x = runERC (const True) (erc_round2 (fromRational x))
+
+--------------------------------------------------
+-- Determinant function using Gaussian elimination
+--------------------------------------------------
+
+erc_pivot :: (KnownNat d) => ERC s (REALnm s d d) -> ERC s INTEGER -> ERC s (INTEGER, INTEGER)
+erc_pivot a k = 
+  let d = array2DLength1 a in
+  do
+  i0 <- declareINTEGER $ k
+  j0 <- declareINTEGER $ k
+  x <- declareREAL $ 0
+  i <- declareINTEGER $ 0
+  j <- declareINTEGER $ 0
+  forNfromTo_ i k (d-1) $ do
+    forNfromTo_ j k (d-1) $ do
+      x .= maxREAL ((x?), absREAL (a ?!! [(i?), (j?)]))
+      traceREAL "x=" (x?)
+  forNfromTo_ i k (d-1) $ do
+    forNfromTo_ j k (d-1) $ do
+      ifThen_ (choose [absREAL (a ?!! [(i?), (j?)]) <* (x?), absREAL (a ?!! [(i?), (j?)]) >* (x?)/2] ==# 1) $ do
+        i0 .= (i?)
+        j0 .= (j?)
+  return_ $ pair_ (i0?) (j0?)
+
+erc_pivot_rational :: (KnownNat d) => Proxy d -> [[Rational]] -> ERC s INTEGER -> ERC s (INTEGER, INTEGER)
+erc_pivot_rational  (_ :: Proxy d) aRational (k :: ERC s INTEGER) =
+  do
+  (a :: REALnm s d d) <- array2D $ map (map fromRational) aRational
+  erc_pivot (pure a) k
+  
+run_erc_pivot :: (KnownNat d) => Proxy d -> [[Rational]] -> Integer -> (Integer, Integer)
+run_erc_pivot pd aRational k = 
+  runERC (const True) $ do
+    erc_pivot_rational pd aRational (pure k)
+
+run_erc_pivot_test1 =
+  run_erc_pivot (Proxy::Proxy 2) [[1,0],[-2,1]] 0
+
+-- erc_det :: (KnownNat d) => ERC s (REALnm s d d) -> ERC s REAL
+-- erc_det a = 
+--   let d = array2DLength1 a in
+--   do
+--   i0 <- declareINTEGER $ k

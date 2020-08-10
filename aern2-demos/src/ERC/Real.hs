@@ -28,11 +28,6 @@ import ERC.Logic
 import ERC.Integer
 import ERC.Statements
 
---------------------------------------------------
--- Elements of the ERC language
---------------------------------------------------
-
-
 type REAL = MPBall
 
 declareREAL :: ERC s REAL -> ERC s (Var s REAL)
