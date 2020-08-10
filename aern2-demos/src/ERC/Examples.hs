@@ -125,7 +125,7 @@ run_erc_exp x ac = runERC_REAL ac (erc_exp (fromRational x))
 --------------------------------------------------
 
 erc_exp2_p :: ERC s INTEGER -> ERC s REAL -> ERC s REAL
-erc_exp2_p p param_x =
+erc_exp2_p p param_x = -- precondition: 0 <= x <= 2
   do
   x <- declareREAL $ param_x -- copy-in parameter passing
   n <- declareINTEGER $ 1
@@ -292,3 +292,50 @@ run_erc_det_test2 =
 run_erc_det_test3 =
   run_erc_det (Proxy::Proxy 4) [[1,5,-2,1],[3,1,1,3],[3,2,1,3],[-7,2,1,5]] 10
   -- Alpha:  det({{1,5,-2,1},{3,1,1,3},{3,2,1,3},{-7,2,1,5}})
+
+----------------------------------------------------------------------
+-- Enclosing the unique root of a continuous function using trisection
+----------------------------------------------------------------------
+
+erc_Root_p :: ERC s INTEGER -> (ERC s REAL -> ERC s REAL) -> ERC s REAL
+erc_Root_p p f =
+  do
+  a <- declareREAL $ 0
+  b <- declareREAL $ 1
+  while_ (choose [iota(p) >* (b?)-(a?), (b?)-(a?) >* iota(p-1)] ==# 1) $ do
+    ifThenElse_ (choose [0 >* f((b?)/3 + 2*(a?)/3) * f((b?)), 0 >* f((a?))*f(2*(b?)/3 + (a?)/3)] ==# 1) $ do
+      b .= 2*(b?)/3 + (a?)/3
+      `else_` do
+        a .= (b?)/3 + 2*(a?)/3
+  return_ (a?)
+
+erc_Root :: (ERC s REAL -> ERC s REAL) -> ERC s REAL
+erc_Root f = 
+  return_ $ limit (\p -> erc_Root_p p f)
+
+erc_Root_sqrt :: ERC s REAL -> ERC s REAL
+erc_Root_sqrt y =
+  do
+  erc_Root $ \ x -> do
+    x^*2-y
+
+run_erc_Root_sqrt :: Rational -> Integer -> MPBall
+run_erc_Root_sqrt y ac 
+  | 0 < y && y < 1 = 
+    runERC_REAL ac (erc_Root_sqrt (fromRational y))
+  | otherwise =
+    error "run_erc_Root_sqrt y is defined only for 0<y<1"
+
+erc_Root_log :: ERC s REAL -> ERC s REAL
+erc_Root_log y =
+  do
+  erc_Root $ \ x -> do
+    (erc_exp x) - y
+
+run_erc_Root_log :: Rational -> Integer -> MPBall
+run_erc_Root_log y ac 
+  | 1 < y && (fromRational y) < exp(1::Double) = 
+    runERC_REAL ac (erc_Root_log (fromRational y))
+  | otherwise =
+    error "run_erc_Root_log y is defined only for 1<y<e"
+

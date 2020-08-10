@@ -30,14 +30,17 @@ while_ condERC doAction = aux
       Just False -> pure ()
       Nothing -> insufficientPrecision ()
 
-ifThenElse_ :: ERC s KLEENEAN -> ERC s () -> ERC s () -> ERC s ()
-ifThenElse_ condERC thenAction elseAction =
+ifThenElse_ :: ERC s KLEENEAN -> (ERC s (), ERC s ()) -> ERC s ()
+ifThenElse_ condERC (thenAction, elseAction) =
   do
   cond <- condERC
   case cond of
     Just True -> thenAction
     Just False -> elseAction
     Nothing -> insufficientPrecision ()
+
+else_ :: ERC s () -> ERC s () -> (ERC s (), ERC s ())
+else_ = (,)
 
 ifThen_ :: ERC s KLEENEAN -> ERC s () -> ERC s ()
 ifThen_ condERC thenAction =
