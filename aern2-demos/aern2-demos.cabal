@@ -17,6 +17,10 @@ library
   build-depends:
     base >= 4
     , containers
+    , primitive
+    , transformers
+    , mtl
+    , STMonadTrans
     , stm
     , QuickCheck
     , mixed-types-num >= 0.4
@@ -35,6 +39,15 @@ library
     BenchTasks.Logistic
     BenchTasks.Fourier
     CIDR
+    ERC.Monad
+    ERC.Variables
+    ERC.Logic
+    ERC.Statements
+    ERC.Integer
+    ERC.Real
+    ERC.Pair
+    ERC.Array
+    ERC.Examples
     -- Sewon
     -- EffortConcept1
 
@@ -47,7 +60,6 @@ executable aern2-demos-run-bench
     , mixed-types-num >= 0.4
     , aern2-mp == 0.1.*
     , aern2-real == 0.1.*
-    , aern2-demos == 0.1.*
   hs-source-dirs:  src
   ghc-options:     -Wall -rtsopts -fno-warn-missing-signatures -fno-warn-partial-type-signatures
   extensions:
