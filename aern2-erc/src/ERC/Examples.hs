@@ -47,6 +47,28 @@ erc_JMMuller param_n =
 run_erc_JMMuller :: Integer -> Integer -> MPBall
 run_erc_JMMuller n ac = runERC_REAL ac (erc_JMMuller (pure n))
 
+{- Executing the above in GHCi:
+
+(bash)$ cd aern2-erc
+(bash)$ stack repl src/ERC/Examples.hs
+...
+Ok, 9 modules loaded.
+Loaded GHCi configuration from ...
+
+*ERC.Examples> run_erc_JMMuller 0 10 -- (0 iterations)
+[5.5 ± 0.0000]
+(0.00 secs, 425,744 bytes)
+
+*ERC.Examples> run_erc_JMMuller 100 10 -- (100 iterations)
+[5.9999999879253266733840708907... ± 4.0254e-20 <2^(-64)]
+(0.03 secs, 21,755,648 bytes)
+
+*ERC.Examples> run_erc_JMMuller 100 100 -- (100 iterations, higher accuracy)
+[5.99999998792532667338407110425743258160281278756170273422680108083925255889... ± 8.0941e-107 <2^(-352)]
+(0.04 secs, 29,081,688 bytes)
+
+-}
+
 --------------------------------------------------
 -- HeronSqrt
 --------------------------------------------------
@@ -76,12 +98,31 @@ erc_HeronSqrt x =
 run_erc_HeronSqrt :: Rational -> Integer -> MPBall
 run_erc_HeronSqrt x ac = runERC_REAL ac (erc_HeronSqrt (fromRational x))
 
+{- Executing the above in GHCi:
+
+*ERC.Examples> run_erc_HeronSqrt 2 10
+[1.414215564727783203125 ± 2.4557e-4 <2^(-11)]
+(0.01 secs, 1,396,352 bytes)
+
+*ERC.Examples> run_erc_HeronSqrt 2 100
+[1.414213562373095048801688724209698078568.... ± 7.5892e-37 <2^(-119)]
+(0.02 secs, 7,905,680 bytes)
+
+*ERC.Examples> run_erc_HeronSqrt 1000000000000 10
+[1000000 ± 3.4939e-4 <2^(-11)]
+(0.04 secs, 37,456,928 bytes)
+
+*ERC.Examples> run_erc_HeronSqrt 1000000000000 100
+[999999.9999999999999999999999999.... ± 7.5386e-37 <2^(-119)]
+(0.22 secs, 237,809,384 bytes)
+
+-}
 --------------------------------------------------
 -- Exp using Taylor formula
 --------------------------------------------------
 
 erc_Exp'_p :: ERC s INTEGER -> ERC s REAL -> ERC s REAL
-erc_Exp'_p p param_x =
+erc_Exp'_p p param_x =  -- precondition: 0 <= x <= 1
   do
   x <- declareREAL $ param_x -- copy-in parameter passing
   j <- declareINTEGER $ 1
@@ -98,14 +139,14 @@ erc_Exp'_p p param_x =
   return_ (y?)
 
 erc_Exp' :: ERC s REAL -> ERC s REAL
-erc_Exp' x = 
+erc_Exp' x =  -- precondition: 0 <= x <= 1
   return_ $ limit (\p -> erc_Exp'_p p x)
 
 run_erc_Exp' :: Rational -> Integer -> MPBall
 run_erc_Exp' x ac = runERC_REAL ac (erc_Exp' (fromRational x))
 
 erc_Exp :: ERC s REAL -> ERC s REAL
-erc_Exp param_x =
+erc_Exp param_x = -- precondition: 0 <= x
   do
   x <- declareREAL $ param_x -- copy-in parameter passing
   z <- declareREAL $ erc_Exp' (1/2)
@@ -117,6 +158,26 @@ erc_Exp param_x =
   
 run_erc_Exp :: Rational -> Integer -> MPBall
 run_erc_Exp x ac = runERC_REAL ac (erc_Exp (fromRational x))
+
+{- Executing the above in GHCi:
+
+*ERC.Examples> run_erc_Exp 1 10
+[2.718278510358004496083594858646392822265625 ± 8.2085e-4 <2^(-10)]
+(0.02 secs, 2,861,344 bytes)
+
+*ERC.Examples> run_erc_Exp 1 100
+[2.718281828459045235360287471352662497697337029.... ± 3.0555e-36 <2^(-117)]
+(0.05 secs, 41,953,832 bytes)
+
+*ERC.Examples> run_erc_Exp 100 10
+[26881171418161354484126255515800135873611118.7737419224148646135.... ± 1.1351e-11 <2^(-36)]
+(0.17 secs, 187,626,456 bytes)
+
+*ERC.Examples> run_erc_Exp 100 100
+[26881171418161354484126255515800135873611118.77374192241519160861528028703.... ± 1.0120e-44 <2^(-146)]
+(0.21 secs, 236,094,728 bytes)
+
+-}
 
 --------------------------------------------------
 -- Exp using iteration
@@ -150,6 +211,22 @@ erc_Exp2 x =
 
 run_erc_Exp2 :: Rational -> Integer -> MPBall
 run_erc_Exp2 x ac = runERC_REAL ac (erc_Exp2 (fromRational x))
+
+{- Executing the above in GHCi:
+
+*ERC.Examples> run_erc_Exp2 1 10
+[2.718190954066812992095947265625 ± 2.5998e-4 <2^(-11)]
+(1.29 secs, 1,693,245,408 bytes)
+
+*ERC.Examples> run_erc_Exp2 1 12
+[2.718260965993977151811122894287109375 ± 6.1283e-5 <2^(-13)]
+(6.86 secs, 8,792,343,768 bytes)
+
+*ERC.Examples> run_erc_Exp2 1 14
+[2.7182765199422647128812968730926513671875 ± 1.5506e-5 <2^(-15)]
+(19.43 secs, 24,331,009,040 bytes)
+
+-}
 
 --------------------------------------------------
 -- Rounding to a nearby integer
@@ -201,6 +278,46 @@ erc_Round2 param_x =
 run_erc_Round2 :: Rational -> Integer
 run_erc_Round2 x = runERC (const True) (erc_Round2 (fromRational x))
 
+{- Executing the above in GHCi:
+
+*ERC.Examples> run_erc_Round1 (-10.5)
+-10
+(0.01 secs, 769,048 bytes)
+
+*ERC.Examples> run_erc_Round1 10.5
+10
+(0.01 secs, 748,384 bytes)
+
+*ERC.Examples> run_erc_Round1 1000.5
+1000
+(0.04 secs, 33,558,024 bytes)
+
+*ERC.Examples> run_erc_Round1 100000.5
+100000
+(3.26 secs, 3,317,331,712 bytes)
+
+*ERC.Examples> run_erc_Round2 (-10.5)
+-11
+(0.01 secs, 837,312 bytes)
+
+*ERC.Examples> run_erc_Round2 10.5
+10
+(0.01 secs, 823,768 bytes)
+
+*ERC.Examples> run_erc_Round2 1000.5
+1000
+(0.01 secs, 1,429,648 bytes)
+
+*ERC.Examples> run_erc_Round2 100000.5
+100000
+(0.01 secs, 2,099,120 bytes)
+
+*ERC.Examples> run_erc_Round2 100000.8
+100001
+(0.01 secs, 2,106,736 bytes)
+
+-}
+
 --------------------------------------------------
 -- Determinant function using Gaussian elimination
 --------------------------------------------------
@@ -248,27 +365,27 @@ erc_Det a = -- precondition: a is invertible
     ____traceREALnm "a=" a
     ____traceINTEGER "k=" (k?)
     (pi, pj) ..= erc_Pivot (a, (k?))
-    ____traceINTEGER "pi=" (pi?)
-    ____traceINTEGER "pj=" (pj?)
+    ____traceINTEGER "  pi=" (pi?)
+    ____traceINTEGER "  pj=" (pj?)
     det .= (det?) * a?!![(pi?), (pj?)]
     forNfromTo_ j 0 (d-1) $ do
       array2DSwap (a, [(k?),(j?)], a, [(pi?), (j?)])
-    ____traceREALnm "after swap 1: a=" a
+    ____traceREALnm "  after swap 1: a=" a
     ifThen_ ((k?) /=# (pi?)) $ do
       det .= - (det?)
     forNfromTo_ i 0 (d-1) $ do
       array2DSwap (a, [(i?),(k?)], a, [(i?), (pj?)])
-    ____traceREALnm "after swap 2: a=" a
+    ____traceREALnm "  after swap 2: a=" a
     ifThen_ ((k?) /=# (pj?)) $ do
       det .= - (det?)
     forNfromTo_ j ((k?)+1) (d-1) $ do
-      ____traceINTEGER "j=" (j?)
+      ____traceINTEGER "  j=" (j?)
       (a, [(k?),(j?)]) .=!! a?!![(k?),(j?)] / a?!![(k?),(k?)]
-      ____traceREALnm "a=" a
+      ____traceREALnm "    a=" a
       forNfromTo_ i ((k?)+1) (d-1) $ do
-        ____traceINTEGER "i=" (i?)
+        ____traceINTEGER "    i=" (i?)
         (a, [(i?),(j?)]) .=!! a?!![(i?),(j?)] - a?!![(i?),(k?)] * a?!![(k?),(j?)]
-        ____traceREALnm "a=" a
+        ____traceREALnm "      a=" a
     (a, [(k?),(k?)]) .=!! 1
     forNfromTo_ i ((k?)+1) (d-1) $ do
       (a, [(i?),(k?)]) .=!! 0
@@ -294,6 +411,51 @@ run_erc_Det_test3 :: MPBall
 run_erc_Det_test3 =
   run_erc_Det (Proxy::Proxy 4) [[1,5,-2,1],[3,1,1,3],[3,2,1,3],[-7,2,1,5]] 10
   -- Alpha:  det({{1,5,-2,1},{3,1,1,3},{3,2,1,3},{-7,2,1,5}})
+
+{- Executing the above in GHCi:
+
+*ERC.Examples> run_erc_Pivot (Proxy::Proxy 2) [[1,0],[-2,1]] 0
+(0,1)
+(0.01 secs, 856,064 bytes)
+
+*ERC.Examples> run_erc_Pivot (Proxy::Proxy 2) [[1,3],[-2,1]] 0
+(1,0)
+(0.01 secs, 867,248 bytes)
+
+*ERC.Examples> run_erc_Det (Proxy::Proxy 3) [[1,2,1],[1,2,0],[2,2,1]] 10
+a=[[[1 ± 0.0000],[2 ± 0.0000],[1 ± 0.0000]],[[1 ± 0.0000],[2 ± 0.0000],[0 ± 0.0000]],[[2 ± 0.0000],[2 ± 0.0000],[1 ± 0.0000]]]
+k=0
+  pi=1
+  pj=2
+  after swap 1: a=[[[2 ± 0.0000],[1 ± 0.0000],[1 ± 0.0000]],[[2 ± 0.0000],[1 ± 0.0000],[0 ± 0.0000]],[[2 ± 0.0000],[2 ± 0.0000],[1 ± 0.0000]]]
+  after swap 2: a=[[[2 ± 0.0000],[2 ± 0.0000],[1 ± 0.0000]],[[2 ± 0.0000],[1 ± 0.0000],[0 ± 0.0000]],[[2 ± 0.0000],[1 ± 0.0000],[1 ± 0.0000]]]
+  j=1
+    a=[[[2 ± 0.0000],[2 ± 0.0000],[1 ± 0.0000]],[[1 ± 0.0000],[1 ± 0.0000],[0 ± 0.0000]],[[2 ± 0.0000],[1 ± 0.0000],[1 ± 0.0000]]]
+    i=1
+      a=[[[2 ± 0.0000],[2 ± 0.0000],[1 ± 0.0000]],[[1 ± 0.0000],[-1 ± 0.0000],[0 ± 0.0000]],[[2 ± 0.0000],[1 ± 0.0000],[1 ± 0.0000]]]
+    i=2
+      a=[[[2 ± 0.0000],[2 ± 0.0000],[1 ± 0.0000]],[[1 ± 0.0000],[-1 ± 0.0000],[-1 ± 0.0000]],[[2 ± 0.0000],[1 ± 0.0000],[1 ± 0.0000]]]
+  j=2
+    a=[[[2 ± 0.0000],[2 ± 0.0000],[1 ± 0.0000]],[[1 ± 0.0000],[-1 ± 0.0000],[-1 ± 0.0000]],[[1 ± 0.0000],[1 ± 0.0000],[1 ± 0.0000]]]
+    i=1
+      a=[[[2 ± 0.0000],[2 ± 0.0000],[1 ± 0.0000]],[[1 ± 0.0000],[-1 ± 0.0000],[-1 ± 0.0000]],[[1 ± 0.0000],[-1 ± 0.0000],[1 ± 0.0000]]]
+    i=2
+      a=[[[2 ± 0.0000],[2 ± 0.0000],[1 ± 0.0000]],[[1 ± 0.0000],[-1 ± 0.0000],[-1 ± 0.0000]],[[1 ± 0.0000],[-1 ± 0.0000],[0 ± 0.0000]]]
+a=[[[1 ± 0.0000],[0 ± 0.0000],[0 ± 0.0000]],[[1 ± 0.0000],[-1 ± 0.0000],[-1 ± 0.0000]],[[1 ± 0.0000],[-1 ± 0.0000],[0 ± 0.0000]]]
+k=1
+  pi=2
+  pj=1
+  after swap 1: a=[[[1 ± 0.0000],[0 ± 0.0000],[0 ± 0.0000]],[[1 ± 0.0000],[-1 ± 0.0000],[-1 ± 0.0000]],[[1 ± 0.0000],[0 ± 0.0000],[-1 ± 0.0000]]]
+  after swap 2: a=[[[1 ± 0.0000],[0 ± 0.0000],[0 ± 0.0000]],[[1 ± 0.0000],[-1 ± 0.0000],[-1 ± 0.0000]],[[1 ± 0.0000],[0 ± 0.0000],[-1 ± 0.0000]]]
+  j=2
+    a=[[[1 ± 0.0000],[0 ± 0.0000],[0 ± 0.0000]],[[1 ± 0.0000],[-1 ± 0.0000],[-1 ± 0.0000]],[[1 ± 0.0000],[0 ± 0.0000],[-1 ± 0.0000]]]
+    i=2
+      a=[[[1 ± 0.0000],[0 ± 0.0000],[0 ± 0.0000]],[[1 ± 0.0000],[-1 ± 0.0000],[-1 ± 0.0000]],[[1 ± 0.0000],[0 ± 0.0000],[-1 ± 0.0000]]]
+a=[[[1 ± 0.0000],[0 ± 0.0000],[0 ± 0.0000]],[[1 ± 0.0000],[1 ± 0.0000],[0 ± 0.0000]],[[1 ± 0.0000],[0 ± 0.0000],[-1 ± 0.0000]]]
+[-2 ± 0.0000]
+(0.02 secs, 6,384,184 bytes)
+
+-}
 
 ----------------------------------------------------------------------
 -- Enclosing the unique root of a continuous function using trisection
@@ -341,3 +503,22 @@ run_erc_Root_log y ac
   | otherwise =
     error "run_erc_Root_log y is defined only for 1<y<e"
 
+{- Executing the above in GHCi:
+
+*ERC.Examples> run_erc_Root_sqrt 0.5 10
+[0.707033634185791015625 ± 2.4796e-4 <2^(-11)]
+(0.03 secs, 17,292,056 bytes)
+
+*ERC.Examples> run_erc_Root_sqrt 0.5 20
+[0.7071067793876864016056060791015625 ± 1.5417e-8 <2^(-25)]
+(0.10 secs, 85,380,168 bytes)
+
+*ERC.Examples> run_erc_Root_log 2 10
+[0.69301664829254150390625 ± 2.4533e-4 <2^(-11)]
+(0.38 secs, 372,953,168 bytes)
+
+*ERC.Examples> run_erc_Root_log 2 20
+[0.69314717282759374938905239105224609375 ± 1.5089e-8 <2^(-25)]
+(3.19 secs, 3,388,868,584 bytes)
+
+-}
