@@ -80,8 +80,8 @@ run_erc_HeronSqrt x ac = runERC_REAL ac (erc_HeronSqrt (fromRational x))
 -- Exp using Taylor formula
 --------------------------------------------------
 
-erc_exp'_p :: ERC s INTEGER -> ERC s REAL -> ERC s REAL
-erc_exp'_p p param_x =
+erc_Exp'_p :: ERC s INTEGER -> ERC s REAL -> ERC s REAL
+erc_Exp'_p p param_x =
   do
   x <- declareREAL $ param_x -- copy-in parameter passing
   j <- declareINTEGER $ 1
@@ -97,33 +97,33 @@ erc_exp'_p p param_x =
     jf .= (jf?) * (rj?)
   return_ (y?)
 
-erc_exp' :: ERC s REAL -> ERC s REAL
-erc_exp' x = 
-  return_ $ limit (\p -> erc_exp'_p p x)
+erc_Exp' :: ERC s REAL -> ERC s REAL
+erc_Exp' x = 
+  return_ $ limit (\p -> erc_Exp'_p p x)
 
-run_erc_exp' :: Rational -> Integer -> MPBall
-run_erc_exp' x ac = runERC_REAL ac (erc_exp' (fromRational x))
+run_erc_Exp' :: Rational -> Integer -> MPBall
+run_erc_Exp' x ac = runERC_REAL ac (erc_Exp' (fromRational x))
 
-erc_exp :: ERC s REAL -> ERC s REAL
-erc_exp param_x =
+erc_Exp :: ERC s REAL -> ERC s REAL
+erc_Exp param_x =
   do
   x <- declareREAL $ param_x -- copy-in parameter passing
-  z <- declareREAL $ erc_exp' (1/2)
+  z <- declareREAL $ erc_Exp' (1/2)
   y <- declareREAL $ 1
   while_ (choose [(x?) <* 1, (x?) >* 1/2] ==# 1) $ do
     y .= (y?) * (z?)
     x .= (x?) - 1/2
-  return_ $ (y?)*(erc_exp' (x?))
+  return_ $ (y?)*(erc_Exp' (x?))
   
-run_erc_exp :: Rational -> Integer -> MPBall
-run_erc_exp x ac = runERC_REAL ac (erc_exp (fromRational x))
+run_erc_Exp :: Rational -> Integer -> MPBall
+run_erc_Exp x ac = runERC_REAL ac (erc_Exp (fromRational x))
 
 --------------------------------------------------
 -- Exp using iteration
 --------------------------------------------------
 
-erc_exp2_p :: ERC s INTEGER -> ERC s REAL -> ERC s REAL
-erc_exp2_p p param_x = -- precondition: 0 <= x <= 2
+erc_Exp2_p :: ERC s INTEGER -> ERC s REAL -> ERC s REAL
+erc_Exp2_p p param_x = -- precondition: 0 <= x <= 2
   do
   x <- declareREAL $ param_x -- copy-in parameter passing
   n <- declareINTEGER $ 1
@@ -144,19 +144,19 @@ erc_exp2_p p param_x = -- precondition: 0 <= x <= 2
     b .= (a?)*(c?)
   return_ (a?)
 
-erc_exp2 :: ERC s REAL -> ERC s REAL
-erc_exp2 x = 
-  return_ $ limit (\p -> erc_exp2_p p x)
+erc_Exp2 :: ERC s REAL -> ERC s REAL
+erc_Exp2 x = 
+  return_ $ limit (\p -> erc_Exp2_p p x)
 
-run_erc_exp2 :: Rational -> Integer -> MPBall
-run_erc_exp2 x ac = runERC_REAL ac (erc_exp2 (fromRational x))
+run_erc_Exp2 :: Rational -> Integer -> MPBall
+run_erc_Exp2 x ac = runERC_REAL ac (erc_Exp2 (fromRational x))
 
 --------------------------------------------------
 -- Rounding to a nearby integer
 --------------------------------------------------
 
-erc_round1 :: ERC s REAL -> ERC s INTEGER
-erc_round1 param_x =
+erc_Round1 :: ERC s REAL -> ERC s INTEGER
+erc_Round1 param_x =
   do
   x <- declareREAL $ param_x -- copy-in parameter passing
   k <- declareINTEGER $ 0
@@ -168,17 +168,17 @@ erc_round1 param_x =
     x .= (x?) + 1
   return_ (k?)
 
-run_erc_round1 :: Rational -> Integer
-run_erc_round1 x = runERC (const True) (erc_round1 (fromRational x))
+run_erc_Round1 :: Rational -> Integer
+run_erc_Round1 x = runERC (const True) (erc_Round1 (fromRational x))
 
-erc_round1_sqrt :: ERC s REAL -> ERC s INTEGER
-erc_round1_sqrt x = erc_round1 (erc_HeronSqrt x)
+erc_Round1_sqrt :: ERC s REAL -> ERC s INTEGER
+erc_Round1_sqrt x = erc_Round1 (erc_HeronSqrt x)
 
-run_erc_round1_sqrt :: Rational -> Integer
-run_erc_round1_sqrt x = runERC (const True) (erc_round1_sqrt (fromRational x))
+run_erc_Round1_sqrt :: Rational -> Integer
+run_erc_Round1_sqrt x = runERC (const True) (erc_Round1_sqrt (fromRational x))
 
-erc_round2 :: ERC s REAL -> ERC s INTEGER
-erc_round2 param_x =
+erc_Round2 :: ERC s REAL -> ERC s INTEGER
+erc_Round2 param_x =
   do
   x <- declareREAL $ param_x -- copy-in parameter passing
   k <- declareINTEGER $ 0
@@ -198,15 +198,15 @@ erc_round2 param_x =
     j .= (j?) - 1
   return_ (k?)
 
-run_erc_round2 :: Rational -> Integer
-run_erc_round2 x = runERC (const True) (erc_round2 (fromRational x))
+run_erc_Round2 :: Rational -> Integer
+run_erc_Round2 x = runERC (const True) (erc_Round2 (fromRational x))
 
 --------------------------------------------------
 -- Determinant function using Gaussian elimination
 --------------------------------------------------
 
-erc_pivot :: (KnownNat d) => (ERC s (REALnm s d d), ERC s INTEGER) -> ERC s (INTEGER, INTEGER)
-erc_pivot (a, k) = 
+erc_Pivot :: (KnownNat d) => (ERC s (REALnm s d d), ERC s INTEGER) -> ERC s (INTEGER, INTEGER)
+erc_Pivot (a, k) = 
   let d = array2DLength1 a in
   do
   i0 <- declareINTEGER $ k
@@ -224,18 +224,18 @@ erc_pivot (a, k) =
         j0 .= (j?)
   return_ $ pair_ (i0?) (j0?)
 
-run_erc_pivot :: (KnownNat d) => Proxy d -> [[Rational]] -> Integer -> (Integer, Integer)
-run_erc_pivot (_ :: Proxy d) aRational k = 
+run_erc_Pivot :: (KnownNat d) => Proxy d -> [[Rational]] -> Integer -> (Integer, Integer)
+run_erc_Pivot (_ :: Proxy d) aRational k = 
   runERC (const True) $ do
     (a :: REALnm s d d) <- array2D $ map (map fromRational) aRational
-    erc_pivot (pure a, pure k)
+    erc_Pivot (pure a, pure k)
 
-run_erc_pivot_test1 :: (Integer, Integer)
-run_erc_pivot_test1 =
-  run_erc_pivot (Proxy::Proxy 2) [[1,0],[-2,1]] 0
+run_erc_Pivot_test1 :: (Integer, Integer)
+run_erc_Pivot_test1 =
+  run_erc_Pivot (Proxy::Proxy 2) [[1,0],[-2,1]] 0
 
-erc_det :: (KnownNat d) => ERC s (REALnm s d d) -> ERC s REAL
-erc_det a = -- precondition: a is invertible
+erc_Det :: (KnownNat d) => ERC s (REALnm s d d) -> ERC s REAL
+erc_Det a = -- precondition: a is invertible
   let d = array2DLength1 a in
   do
   i <- declareINTEGER $ 0
@@ -247,7 +247,7 @@ erc_det a = -- precondition: a is invertible
   forNfromTo_ k 0 (d-2) $ do
     ____traceREALnm "a=" a
     ____traceINTEGER "k=" (k?)
-    (pi, pj) ..= erc_pivot (a, (k?))
+    (pi, pj) ..= erc_Pivot (a, (k?))
     ____traceINTEGER "pi=" (pi?)
     ____traceINTEGER "pj=" (pj?)
     det .= (det?) * a?!![(pi?), (pj?)]
@@ -276,23 +276,23 @@ erc_det a = -- precondition: a is invertible
   det .= (det?) * a?!![d-1,d-1]
   return_ (det?)
 
-run_erc_det :: (KnownNat d) => Proxy d -> [[Rational]] -> Integer -> MPBall
-run_erc_det (_ :: Proxy d) aRational ac = 
+run_erc_Det :: (KnownNat d) => Proxy d -> [[Rational]] -> Integer -> MPBall
+run_erc_Det (_ :: Proxy d) aRational ac = 
   runERC_REAL ac $ do
     (a :: REALnm s d d) <- array2D $ map (map fromRational) aRational
-    erc_det (pure a)
+    erc_Det (pure a)
 
-run_erc_det_test1 :: MPBall
-run_erc_det_test1 =
-  run_erc_det (Proxy::Proxy 2) [[1,0],[2,1]] 10
+run_erc_Det_test1 :: MPBall
+run_erc_Det_test1 =
+  run_erc_Det (Proxy::Proxy 2) [[1,0],[2,1]] 10
 
-run_erc_det_test2 :: MPBall
-run_erc_det_test2 =
-  run_erc_det (Proxy::Proxy 3) [[1,2,1],[1,2,0],[2,2,1]] 10
+run_erc_Det_test2 :: MPBall
+run_erc_Det_test2 =
+  run_erc_Det (Proxy::Proxy 3) [[1,2,1],[1,2,0],[2,2,1]] 10
 
-run_erc_det_test3 :: MPBall
-run_erc_det_test3 =
-  run_erc_det (Proxy::Proxy 4) [[1,5,-2,1],[3,1,1,3],[3,2,1,3],[-7,2,1,5]] 10
+run_erc_Det_test3 :: MPBall
+run_erc_Det_test3 =
+  run_erc_Det (Proxy::Proxy 4) [[1,5,-2,1],[3,1,1,3],[3,2,1,3],[-7,2,1,5]] 10
   -- Alpha:  det({{1,5,-2,1},{3,1,1,3},{3,2,1,3},{-7,2,1,5}})
 
 ----------------------------------------------------------------------
@@ -332,7 +332,7 @@ erc_Root_log :: ERC s REAL -> ERC s REAL
 erc_Root_log y =
   do
   erc_Root $ \ x -> do
-    (erc_exp x) - y
+    (erc_Exp x) - y
 
 run_erc_Root_log :: Rational -> Integer -> MPBall
 run_erc_Root_log y ac 
