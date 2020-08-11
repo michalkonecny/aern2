@@ -1,15 +1,5 @@
-{-# LANGUAGE Rank2Types #-}
-{-# LANGUAGE PostfixOperators #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-|
 
-Experimenting with programming in ERC shallow
-embedding in Haskell/AERN2.
-
-ERC is an experimental core language for exact real computation
-developed within the CID EU project in 2017-2020.
-
--}
 module ERC.Integer where
 
 import Prelude
@@ -44,7 +34,7 @@ leqINTEGER a b = checkK $ boolToKleenean <$> ((<=) <$> a <*> b)
 geqINTEGER a b = checkK $ boolToKleenean <$> ((>=) <$> a <*> b)
 gtINTEGER a b = checkK $ boolToKleenean <$> ((>) <$> a <*> b)
 
-(==#), (<#),(<=#),(>#),(>=#) :: ERC s INTEGER -> ERC s INTEGER -> ERC s KLEENEAN
+(==#),(/=#),(<#),(<=#),(>#),(>=#) :: ERC s INTEGER -> ERC s INTEGER -> ERC s KLEENEAN
 (==#) = eqINTEGER
 (/=#) = neqINTEGER
 (<#) = ltINTEGER

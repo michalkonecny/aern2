@@ -1,16 +1,3 @@
-{-# LANGUAGE Rank2Types #-}
-{-# LANGUAGE PostfixOperators #-}
-{-# LANGUAGE CPP #-}
--- #define DEBUG
-{-|
-
-Experimenting with programming in ERC shallow
-embedding in Haskell/AERN2.
-
-ERC is an experimental core language for exact real computation
-developed within the CID EU project in 2017-2020.
-
--}
 module ERC.Variables where
 
 import Prelude

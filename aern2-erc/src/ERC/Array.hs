@@ -1,19 +1,7 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE Rank2Types #-}
-{-# LANGUAGE PostfixOperators #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE CPP #-}
--- #define DEBUG
 module ERC.Array where
 
 import Debug.Trace (trace)
-#ifdef DEBUG
-#define maybeTrace trace
-#define maybeTraceIO putStrLn
-#else
-#define maybeTrace (\ (_ :: String) t -> t)
-#define maybeTraceIO (\ (_ :: String) -> return ())
-#endif
 
 import Prelude
 

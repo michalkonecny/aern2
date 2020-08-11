@@ -1,5 +1,3 @@
-{-# LANGUAGE Rank2Types #-}
-{-# LANGUAGE PostfixOperators #-}
 {-|
 
 Experimenting with programming in ERC shallow

@@ -1,16 +1,3 @@
-{-# LANGUAGE Rank2Types #-}
-{-# LANGUAGE PostfixOperators #-}
-{-# LANGUAGE CPP #-}
--- #define DEBUG
-{-|
-
-Experimenting with programming in ERC shallow
-embedding in Haskell/AERN2.
-
-ERC is an experimental core language for exact real computation
-developed within the CID EU project in 2017-2020.
-
--}
 module ERC.Monad where
 
 import Prelude
@@ -24,16 +11,6 @@ import Data.Functor.Identity
 import Control.Monad.Trans.State
 
 import AERN2.MP
-
-#ifdef DEBUG
-import Debug.Trace (trace)
-#define maybeTrace trace
-#define maybeTraceIO putStrLn
-#else
-#define maybeTrace (\ (_ :: String) t -> t)
-#define maybeTraceIO (\ (_ :: String) -> return ())
-#endif
-
 
 {-| ERC is a monad of stateful computations that maintain a global precision and may fail. -}
 type ERC s =  (STT s (State (Precision, Bool)))

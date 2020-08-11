@@ -17,10 +17,6 @@ library
   build-depends:
     base >= 4
     , containers
-    , primitive
-    , transformers
-    , mtl
-    , STMonadTrans
     , stm
     , QuickCheck
     , mixed-types-num >= 0.4
@@ -39,15 +35,6 @@ library
     BenchTasks.Logistic
     BenchTasks.Fourier
     CIDR
-    ERC.Monad
-    ERC.Variables
-    ERC.Logic
-    ERC.Statements
-    ERC.Integer
-    ERC.Real
-    ERC.Pair
-    ERC.Array
-    ERC.Examples
     -- Sewon
     -- EffortConcept1
 

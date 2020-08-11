@@ -1,5 +1,3 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE PostfixOperators #-}
 {-|
 
 Experimenting with programming in ERC shallow
@@ -232,6 +230,7 @@ run_erc_pivot (_ :: Proxy d) aRational k =
     (a :: REALnm s d d) <- array2D $ map (map fromRational) aRational
     erc_pivot (pure a, pure k)
 
+run_erc_pivot_test1 :: (Integer, Integer)
 run_erc_pivot_test1 =
   run_erc_pivot (Proxy::Proxy 2) [[1,0],[-2,1]] 0
 
@@ -283,12 +282,15 @@ run_erc_det (_ :: Proxy d) aRational ac =
     (a :: REALnm s d d) <- array2D $ map (map fromRational) aRational
     erc_det (pure a)
 
+run_erc_det_test1 :: MPBall
 run_erc_det_test1 =
   run_erc_det (Proxy::Proxy 2) [[1,0],[2,1]] 10
 
+run_erc_det_test2 :: MPBall
 run_erc_det_test2 =
   run_erc_det (Proxy::Proxy 3) [[1,2,1],[1,2,0],[2,2,1]] 10
 
+run_erc_det_test3 :: MPBall
 run_erc_det_test3 =
   run_erc_det (Proxy::Proxy 4) [[1,5,-2,1],[3,1,1,3],[3,2,1,3],[-7,2,1,5]] 10
   -- Alpha:  det({{1,5,-2,1},{3,1,1,3},{3,2,1,3},{-7,2,1,5}})
