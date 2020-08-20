@@ -21,6 +21,9 @@ data BoxFun =
         ,   domain    :: Vector (CN MPBall)
     }
 
+instance Show BoxFun where
+    show (BoxFun d f b) = show d ++ " dimensional BoxFun, domain: " ++ show b
+
 boundaryRestrictions :: BoxFun -> [BoxFun]
 boundaryRestrictions (BoxFun d ev dom) =
     concat
@@ -125,5 +128,16 @@ hessian (BoxFun d e _) v =
     where
     a i j = d2x $ e (w i j)
     w i j = V.imap (\k x -> OrderTwo x (delta i k) (delta j k) (pure $ mpBall 0)) v
+    delta :: Integer -> Integer -> CN MPBall
+    delta i k = if i == k then (cn $ mpBall 1) else (cn $ mpBall 0)
+
+jacobian :: [BoxFun] -> Vector (CN MPBall) -> Matrix (CN MPBall)
+jacobian fs v =
+    create (length fs) highestDiminseionInFs a
+    where
+    highestDiminseionInFs = maximum (map dimension fs)
+
+    a i j = dx $ bf_eval (fs!!i) (w i j)
+    w i j = V.imap (\k x -> OrderTwo x (delta j k) (delta i k) (pure $ mpBall 0)) v
     delta :: Integer -> Integer -> CN MPBall
     delta i k = if i == k then (cn $ mpBall 1) else (cn $ mpBall 0)
