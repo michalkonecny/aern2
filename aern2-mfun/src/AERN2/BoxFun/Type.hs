@@ -8,7 +8,7 @@ import qualified AERN2.Linear.Vector.Type as V
 import AERN2.MP.Ball
 import MixedTypesNumPrelude
 import AERN2.AD.Differential
-import AERN2.Linear.Matrix.Type
+import qualified AERN2.Linear.Matrix.Type as M
 import AERN2.Util.Util
 
 import Debug.Trace
@@ -49,7 +49,7 @@ boundaryRestrictions (BoxFun d ev dom) =
         i <- [0 .. d - 1]
     ]
 
-valueGradientHessian :: BoxFun -> Vector (CN MPBall) -> (CN MPBall, Vector (CN MPBall), Matrix (CN MPBall))
+valueGradientHessian :: BoxFun -> Vector (CN MPBall) -> (CN MPBall, Vector (CN MPBall), M.Matrix (CN MPBall))
 valueGradientHessian (BoxFun d e _) v =
     (value, grad, hess)
     where
@@ -60,7 +60,7 @@ valueGradientHessian (BoxFun d e _) v =
 
     value = x $ (triangle ! 0) ! 0
     grad  = V.map (\i -> dx $ (triangle ! i) ! 0) $ V.enumFromTo 0 (d - 1)
-    hess  = create d d (\i j -> d2x $ if i > j then (triangle ! i) ! j else (triangle ! j) ! i)
+    hess  = M.create d d (\i j -> d2x $ if i > j then (triangle ! i) ! j else (triangle ! j) ! i)
 
     w i j = V.imap (\k x -> OrderTwo x (delta i k) (delta j k) (pure $ mpBall 0)) v
     delta :: Integer -> Integer -> CN MPBall
@@ -122,18 +122,18 @@ gradient (BoxFun d e _) v =
     delta :: Integer -> Integer -> CN MPBall
     delta i k = if i == k then (cn $ mpBall 1) else (cn $ mpBall 0)
 
-hessian :: BoxFun -> Vector (CN MPBall) -> Matrix (CN MPBall)
+hessian :: BoxFun -> Vector (CN MPBall) -> M.Matrix (CN MPBall)
 hessian (BoxFun d e _) v = 
-    create d d a
+    M.create d d a
     where
     a i j = d2x $ e (w i j)
     w i j = V.imap (\k x -> OrderTwo x (delta i k) (delta j k) (pure $ mpBall 0)) v
     delta :: Integer -> Integer -> CN MPBall
     delta i k = if i == k then (cn $ mpBall 1) else (cn $ mpBall 0)
 
-jacobian :: [BoxFun] -> Vector (CN MPBall) -> Matrix (CN MPBall)
+jacobian :: [BoxFun] -> Vector (CN MPBall) -> M.Matrix (CN MPBall)
 jacobian fs v =
-    create (length fs) highestDiminseionInFs a
+    M.create (length fs) highestDiminseionInFs a
     where
     highestDiminseionInFs = maximum (map dimension fs)
 
