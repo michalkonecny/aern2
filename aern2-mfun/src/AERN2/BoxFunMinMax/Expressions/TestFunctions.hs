@@ -409,6 +409,18 @@ bisectionRootFinder =
     goal =
       EBinOp Sub (EBinOp Add (EBinOp Sub (Lit 0.0) (EUnOp Abs (EBinOp Sub (EUnOp Sqrt (EBinOp Sub (Var "B") (Lit 1.0))) (EUnOp Sin (Var "B"))))) (Lit 0.00200000009499490261077880859375)) (Lit 2.033996e-04)
 
+yannickSineVC =
+  [negatedContext ++ [goal]]
+  where
+    negatedContext = map (EUnOp Negate) context
+    context = []
+    goal =
+      (EBinOp Add (EBinOp Sub (EBinOp Sub (Lit 0.0) (EBinOp Mul (Var "X") (EBinOp Sub (Lit 1.0) (EBinOp Mul (EBinOp Mul (Var "X") (Var "X")) (EBinOp Sub (Lit 0.16666667163372039794921875) (EBinOp Mul (EBinOp Mul (Var "X") (Var "X")) (EBinOp Sub (Lit 0.008333333767950534820556640625) (EBinOp Div (EBinOp Mul (Var "X") (Var "X")) (Lit 5040.0))))))))) (Lit 6.321845e-07)) (EBinOp Mul (Lit 12.0) (Lit 0.0000001192092895507812500000000000000000000000)))
+
+testDisjunction = [EBinOp Sub (PowI (Var "X") 3) (Lit 1.0), EBinOp Sub (PowI (Var "X") 2) (Lit 2.0)]
+testDisjunction2 = [EBinOp Sub (PowI (EBinOp Sub (Var "X") (Lit 2.0)) 2) (Lit 1.0),
+                    EBinOp Add (EBinOp Mul (PowI (Var "X") 3) (Lit (-1.0))) (Lit 2.0)]
+
 checkHeronInitExact = T.checkECNF heronInitExact [("X", (0.5, 2.0))] (prec 100)
 
 checkHeronPreservationExact i = T.checkECNF (heronPreservationExact i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (prec 100)
@@ -418,6 +430,8 @@ checkHeronPreservationExactYGE i = T.checkECNF (heronPreservationExactYGE i) [("
 checkHeronPreservationExactYLE i = T.checkECNF (heronPreservationExactYLE i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (prec 100)
 
 checkSineVC = T.checkECNF sineVC [("X", (-1.0, 1.0))] (prec 100)
+
+checkSineVC2 = T.checkECNF yannickSineVC [("X", (-3.1, -3.0))] (prec 100)
 
 checkBisectionRootFinder = T.checkECNF bisectionRootFinder [("A", (1.0001, 5.0)), ("B", (1.0001, 5.0))] (prec 100)
 
