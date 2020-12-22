@@ -106,6 +106,14 @@ heronPreservationMi5 =
 maxFloat :: Rational
 maxFloat = (2.0 - 2.0^!(-23)) * 2.0^!127
 
+testX = [(Var "X")]
+
+testX2 = [EBinOp Mul (Var "X") (Lit 2.0)]
+
+testXm2 = [EBinOp Mul (Var "X") (Lit (-2.0))]
+
+testXY = [EBinOp Mul (Var "X") (Var "Y")]
+
 heronInitExact =
   -- ps -> q
   -- !ps \/ q
