@@ -137,7 +137,7 @@ jacobian fs v =
     where
     highestDiminseionInFs = maximum (map dimension fs)
 
-    a i j = dx $ bf_eval (fs!!i) (w i j)
-    w i j = V.imap (\k x -> OrderTwo x (delta j k) (delta i k) (pure $ mpBall 0)) v
+    a i j = dx $ bf_eval (fs!!i) (w j)
+    w j = V.imap (\k x -> OrderOne x (delta j k)) v
     delta :: Integer -> Integer -> CN MPBall
     delta i k = if i == k then (cn $ mpBall 1) else (cn $ mpBall 0)
