@@ -10,6 +10,7 @@ import MixedTypesNumPrelude
 import AERN2.AD.Differential
 import qualified AERN2.Linear.Matrix.Type as M
 import AERN2.Util.Util
+import AERN2.BoxFun.Box
 
 import Debug.Trace
 
@@ -141,3 +142,16 @@ jacobian fs v =
     w j = V.imap (\k x -> OrderOne x (delta j k)) v
     delta :: Integer -> Integer -> CN MPBall
     delta i k = if i == k then (cn $ mpBall 1) else (cn $ mpBall 0)
+
+gradientUsingGradient :: BoxFun -> Box -> Box
+gradientUsingGradient f v =
+    V.zipWith fromEndpointsAsIntervals lowerBounds upperBounds
+    where
+        -- lowerBounds = firstDerivatives - secondDerivatives * (cn mpBallP p 0.5 * firstDerivatives)
+        -- upperBounds = firstDerivatives + secondDerivatives * (cn mpBallP p 0.5 * firstDerivatives)
+        lowerBounds = firstDerivatives - secondDerivatives * (V.map (fmap ((mpBall) . radius)) v)
+        upperBounds = firstDerivatives + secondDerivatives * (V.map (fmap ((mpBall) . radius)) v)
+        firstDerivatives  = head $ M.rows $ jacobian [f] (centre v)
+        secondDerivatives = hessian f v
+        p = getPrecision v
+        
