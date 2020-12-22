@@ -13,7 +13,6 @@ import AERN2.MP.Enclosure
 
 import AERN2.Util.Util
 
-
 type Box = Vector (CN MPBall)
 
 instance HasEqAsymmetric Box Box where
@@ -124,3 +123,29 @@ instance
     type NegType Box = Box
     negate box = V.map (\x -> -x) box
     
+createEnclosingBox :: Box -> Box -> Box
+createEnclosingBox box1 box2 =
+    enclosingBox
+    where
+        indexedBox1 = V.zip (V.fromList [0 .. integer (V.length box1) - 1]) box1
+        enclosingBox = 
+            V.map 
+            (\(i, x) -> 
+                let
+                    y = box2 V.! i
+                    (l, r) = endpointsAsIntervals x
+                    (l', r') = endpointsAsIntervals y
+                    newL = min l l'
+                    newR = max r r'
+                in
+                    fromEndpointsAsIntervals newL newR)
+            indexedBox1
+
+fromVarMap :: [(String, (Rational, Rational))] -> Precision -> Box
+fromVarMap vs p = V.fromList $ map (\(_,(l,r)) -> fromEndpointsAsIntervals (cn (mpBallP p l)) (cn (mpBallP p r))) vs
+
+intersectList :: [Box] -> Box
+intersectList []            = V.empty
+intersectList [b]           = b
+intersectList [b1,b2]       = if intersectionCertainlyEmpty b1 b2 then V.empty else nonEmptyIntersection b1 b2
+intersectList (b1:b2:bs)    = if intersectionCertainlyEmpty b1 b2 then V.empty else intersectList $ nonEmptyIntersection b1 b2 : bs
