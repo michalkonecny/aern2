@@ -40,6 +40,7 @@ library
     , vector
     , stm
     , parallel
+    , simplex-haskell == 0.1.*
     -- TODO: delete below eventually
     , async
 
@@ -68,6 +69,7 @@ library
     AERN2.Linear.Vector.Type
     AERN2.Linear.Matrix.Type
     AERN2.Linear.Matrix.Inverse
+    AERN2.MP.Float
     AERN2.BoxFun.Box
     AERN2.BoxFun.Type
     AERN2.BoxFun.TestFunctions
@@ -81,7 +83,8 @@ library
     AERN2.BoxFunMinMax.Expressions.Translators.BoxFun
     AERN2.BoxFunMinMax.Expressions.Translators.DReal
     AERN2.BoxFunMinMax.Expressions.Translators.MetiTarski
-    --AERN2.BoxFun.OptimisationConcurrent 
+    -- AERN2.BoxFunMinMax.Expressions.Translators.PolyConstraint
+    -- AERN2.BoxFun.OptimisationConcurrent 
 
 executable aern2-mfun-benchmark
   ghc-options:
