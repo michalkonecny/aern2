@@ -246,7 +246,7 @@ decideDisjunctionWithBisectionUntilCutoff expressions varMap p widthCutoff =
   -- else
     case decideDisjunction expressions' varMap p Nothing of 
       r@(Just True, _) -> r
-      r@(_, mAreaContainingMinimum) ->
+      (_, mAreaContainingMinimum) ->
         if width varMap > widthCutoff then
           let
             checkBisectionResults [] = (Just True, Nothing)
@@ -352,7 +352,20 @@ checkECNFSimplex [] _ _ = (Just True, Nothing)
 checkECNFSimplex (disjunction : disjunctions) varMap p =
   case decideDisjunctionWithSimplex disjunction varMap p of
     (Just True, _) -> checkECNFSimplex disjunctions varMap p
-    r              -> r
+    r@(Just False, _)              -> r
+    (Nothing, indeterminateArea) -> (Nothing, indeterminateArea)
+      where
+        checkUsingGlobalMinimum []       mFalseArea = 
+          case mFalseArea of
+            Nothing         -> (Nothing, indeterminateArea)
+            Just falseArea  -> (Just False, Just (fromBox (extents falseArea) (map fst varMap)))
+
+        checkUsingGlobalMinimum (e : es) mFalseArea = 
+          case globalMinimumAboveN2 (expressionToBoxFun e varMap p) (bits 100) p (cn (mpBallP p 0)) of
+            (Just True, _)                -> checkECNFSimplex disjunctions varMap p
+            (Just False, Just falseArea)  -> checkUsingGlobalMinimum es (Just falseArea) -- TODO: Improve this by comparing current and new false areas. Keep the area with the smallest width overall
+            (Nothing, _)                  -> checkUsingGlobalMinimum es mFalseArea
+            (Just False, _)               -> error "False result from globalMinimumAboveN2 did not return a SearchBox"
 
 decideDisjunctionWithSimplex :: [E.E] -> VarMap -> Precision -> (Maybe Bool, Maybe VarMap)
 decideDisjunctionWithSimplex expressions varMap p =
@@ -382,15 +395,16 @@ decideDisjunctionWithSimplex expressions varMap p =
                       else trace "stopping bisections" (Nothing, Just varMap)
                 else
                   decideDisjunctionWithSimplex filteredExpressions newVarMap p
+            _ -> undefined
       
   where
     applyE e                = applyLipschitz f (setPrecision p (domain f))
       where
         f = expressionToBoxFun e varMap p
     esWithRanges            = zip expressions (parMap rseq applyE expressions)
-    filterOutFalseTerms     = (filter (\(_, range) -> not (range !<! 0))  esWithRanges)
+    filterOutFalseTerms     = filter (\(_, range) -> not (range !<! 0))  esWithRanges
     filteredExpressions     = map fst filterOutFalseTerms
-    checkIfEsTrueUsingApply = or $ map (\(_, range) -> range !>=! 0)  filterOutFalseTerms
+    checkIfEsTrueUsingApply = any (\(_, range) -> range !>=! 0)  filterOutFalseTerms
 
 decideWithSimplex :: [E.E] -> VarMap -> Precision -> (Maybe Bool, Maybe VarMap)
 decideWithSimplex expressions varMap p =
