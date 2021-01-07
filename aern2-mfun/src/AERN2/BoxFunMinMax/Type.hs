@@ -352,20 +352,21 @@ checkECNFSimplex [] _ _ = (Just True, Nothing)
 checkECNFSimplex (disjunction : disjunctions) varMap p =
   case decideDisjunctionWithSimplex disjunction varMap p of
     (Just True, _) -> checkECNFSimplex disjunctions varMap p
-    r@(Just False, _)              -> r
-    (Nothing, indeterminateArea) -> (Nothing, indeterminateArea)
-      where
-        checkUsingGlobalMinimum []       mFalseArea = 
-          case mFalseArea of
-            Nothing         -> (Nothing, indeterminateArea)
-            Just falseArea  -> (Just False, Just (fromBox (extents falseArea) (map fst varMap)))
+    r@(_, _)              -> r
+    -- (Nothing, Just indeterminateArea) -> checkUsingGlobalMinimum disjunction Nothing
+    --   where
+    --     checkUsingGlobalMinimum []       mFalseArea = 
+    --       case mFalseArea of
+    --         Nothing         -> (Nothing, Just indeterminateArea)
+    --         Just falseArea  -> (Just False, Just (fromBox (extents falseArea) (map fst varMap)))
 
-        checkUsingGlobalMinimum (e : es) mFalseArea = 
-          case globalMinimumAboveN2 (expressionToBoxFun e varMap p) (bits 100) p (cn (mpBallP p 0)) of
-            (Just True, _)                -> checkECNFSimplex disjunctions varMap p
-            (Just False, Just falseArea)  -> checkUsingGlobalMinimum es (Just falseArea) -- TODO: Improve this by comparing current and new false areas. Keep the area with the smallest width overall
-            (Nothing, _)                  -> checkUsingGlobalMinimum es mFalseArea
-            (Just False, _)               -> error "False result from globalMinimumAboveN2 did not return a SearchBox"
+    --     checkUsingGlobalMinimum (e : es) mFalseArea = 
+    --       case globalMinimumAboveN2 (expressionToBoxFun e indeterminateArea p) (bits 100) p (cn (mpBallP p 0)) of
+    --         (Just True, _)                -> checkECNFSimplex disjunctions varMap p
+    --         (Just False, Just falseArea)  -> checkUsingGlobalMinimum es (Just falseArea) -- TODO: Improve this by comparing current and new false areas. Keep the area with the smallest width overall
+    --         (Nothing, _)                  -> checkUsingGlobalMinimum es mFalseArea
+    --         (Just False, _)               -> error "False result from globalMinimumAboveN2 did not return a SearchBox"
+    -- (Nothing, _) -> error "Indeterminate result from decideDisjunctionWithSimplex did not return indeterminate area"
 
 decideDisjunctionWithSimplex :: [E.E] -> VarMap -> Precision -> (Maybe Bool, Maybe VarMap)
 decideDisjunctionWithSimplex expressions varMap p =
@@ -378,23 +379,34 @@ decideDisjunctionWithSimplex expressions varMap p =
           case decideWithSimplex expressions varMap p of
             r@(Just True, _) -> r
             (Nothing, Just newVarMap) ->
-              if varMap == newVarMap 
-                then
-                  let
-                    bisectedVarMaps = fullBisect varMap
+              let
+                checkUsingGlobalMinimum :: [E.E] -> (Maybe Bool, Maybe VarMap)
+                
+                checkUsingGlobalMinimum [] = (Nothing, Just newVarMap)
+
+                checkUsingGlobalMinimum (e : es) = 
+                  case globalMinimumAboveN2 (expressionToBoxFun e newVarMap p) (bits 100) p (cn (mpBallP p 0)) of
+                    (Just True, _)                    -> (Just True, Nothing)
+                    (_, _)                            -> checkUsingGlobalMinimum es
+              in
+                checkUsingGlobalMinimum expressions 
+              -- if varMap == newVarMap 
+              --   then
+              --     let
+              --       bisectedVarMaps = fullBisect varMap
                     
-                    checkBisection :: [VarMap] -> (Maybe Bool, Maybe VarMap)
-                    checkBisection []         = (Just True, Nothing)
-                    checkBisection (vm : vms) = 
-                      case decideDisjunctionWithSimplex filteredExpressions vm p of
-                        (Just True, _) -> checkBisection vms
-                        r@(_, _) -> r
-                  in
-                    if width varMap !>! 1 / 10000000
-                      then trace "bisecting" checkBisection bisectedVarMaps
-                      else trace "stopping bisections" (Nothing, Just varMap)
-                else
-                  decideDisjunctionWithSimplex filteredExpressions newVarMap p
+              --       checkBisection :: [VarMap] -> (Maybe Bool, Maybe VarMap)
+              --       checkBisection []         = (Just True, Nothing)
+              --       checkBisection (vm : vms) = 
+              --         case decideDisjunctionWithSimplex filteredExpressions vm p of
+              --           (Just True, _) -> checkBisection vms
+              --           r@(_, _) -> r
+              --     in
+              --       if width varMap !>! 1 / 10000000
+              --         then trace "bisecting" checkBisection bisectedVarMaps
+              --         else trace "stopping bisections" (Nothing, Just varMap)
+              --   else
+              --     decideDisjunctionWithSimplex filteredExpressions newVarMap p
             _ -> undefined
       
   where
