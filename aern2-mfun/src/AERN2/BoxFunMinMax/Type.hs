@@ -376,47 +376,59 @@ decideDisjunctionWithSimplex expressions varMap p =
       if checkIfEsTrueUsingApply 
         then (Just True, Nothing)
         else 
-          case decideWithSimplex expressions varMap p of
-            r@(Just True, _) -> r
-            (Nothing, Just newVarMap) ->
-              let
-                checkUsingGlobalMinimum :: [E.E] -> (Maybe Bool, Maybe VarMap)
-                
-                checkUsingGlobalMinimum [] = (Nothing, Just newVarMap)
-
-                checkUsingGlobalMinimum (e : es) = 
-                  case globalMinimumAboveN2 (expressionToBoxFun e newVarMap p) (bits 100) p (cn (mpBallP p 0)) of
-                    (Just True, _)                    -> (Just True, Nothing)
-                    (_, _)                            -> checkUsingGlobalMinimum es
-              in
-                checkUsingGlobalMinimum expressions 
-              -- if varMap == newVarMap 
-              --   then
-              --     let
-              --       bisectedVarMaps = fullBisect varMap
+          if null filteredEsWithRangesAtCorner
+            then
+              bisectAllDimensionsAndRecurse
+            else
+              trace "simplex" $
+              case decideWithSimplex filteredEsAboveZeroAtCorner varMap p of
+                r@(Just True, _) -> r
+                (Nothing, Just newVarMap) ->
+                  -- let
+                  --   checkUsingGlobalMinimum :: [E.E] -> (Maybe Bool, Maybe VarMap)
                     
-              --       checkBisection :: [VarMap] -> (Maybe Bool, Maybe VarMap)
-              --       checkBisection []         = (Just True, Nothing)
-              --       checkBisection (vm : vms) = 
-              --         case decideDisjunctionWithSimplex filteredExpressions vm p of
-              --           (Just True, _) -> checkBisection vms
-              --           r@(_, _) -> r
-              --     in
-              --       if width varMap !>! 1 / 10000000
-              --         then trace "bisecting" checkBisection bisectedVarMaps
-              --         else trace "stopping bisections" (Nothing, Just varMap)
-              --   else
-              --     decideDisjunctionWithSimplex filteredExpressions newVarMap p
-            _ -> undefined
+                  --   checkUsingGlobalMinimum [] = (Nothing, Just newVarMap)
+
+                  --   checkUsingGlobalMinimum (e : es) = 
+                  --     case globalMinimumAboveN2 (expressionToBoxFun e newVarMap p) (bits 100) p (cn (mpBallP p 0)) of
+                  --       (Just True, _)                    -> (Just True, Nothing)
+                  --       (_, _)                            -> checkUsingGlobalMinimum es
+                  -- in
+                  --   checkUsingGlobalMinimum expressions 
+                  if varMap == newVarMap 
+                    then
+                      bisectAllDimensionsAndRecurse
+                    else
+                      decideDisjunctionWithSimplex filteredExpressions newVarMap p
+                _ -> undefined
       
   where
-    applyE e                = applyLipschitz f (setPrecision p (domain f))
+    applyE vm e = applyLipschitz f (setPrecision p (domain f))
       where
-        f = expressionToBoxFun e varMap p
-    esWithRanges            = zip expressions (parMap rseq applyE expressions)
+        f = expressionToBoxFun e vm p
+    esWithRanges            = zip expressions (parMap rseq (applyE varMap) expressions)
     filterOutFalseTerms     = filter (\(_, range) -> not (range !<! 0))  esWithRanges
     filteredExpressions     = map fst filterOutFalseTerms
     checkIfEsTrueUsingApply = any (\(_, range) -> range !>=! 0)  filterOutFalseTerms
+    
+    corner                             = map (\(v, (l, _)) -> (v, (l, l))) varMap
+    filteredEsWithRangesAtCorner       = zip filteredExpressions (parMap rseq (applyE corner) expressions)
+    filteredEsAboveZeroAtCorner        = map fst $ filter (\(_, range) -> range !>! 0) filteredEsWithRangesAtCorner 
+
+    bisectAllDimensionsAndRecurse =
+      let
+        bisectedVarMaps = fullBisect varMap
+        
+        checkBisection :: [VarMap] -> (Maybe Bool, Maybe VarMap)
+        checkBisection []         = (Just True, Nothing)
+        checkBisection (vm : vms) = 
+          case decideDisjunctionWithSimplex filteredExpressions vm p of
+            (Just True, _) -> checkBisection vms
+            (_, indeterminateArea) -> (Nothing, indeterminateArea)
+      in
+        if width varMap !>! 1 / 10000000
+          then trace "bisecting" checkBisection bisectedVarMaps
+          else trace "stopping bisections" (Nothing, Just varMap)
 
 decideWithSimplex :: [E.E] -> VarMap -> Precision -> (Maybe Bool, Maybe VarMap)
 decideWithSimplex expressions varMap p =
@@ -433,10 +445,12 @@ createDomainConstraints ((_, (l, r)) : xs) currentIndex =
   let
     ((resultsL, resultsR), nextAvailableVar) = createDomainConstraints xs (currentIndex + 1)
   in
-    if l < 0 then
+    if l < 0 then -- If the current domain is under zero, transform the domain by subtracting the left bound
+                  -- This will make the left bound equal to zero and will make the right bound above zero
+                  -- Store this transformation in resultsR
       (([S.GEQ [(currentIndex, rational 1)] (l - l), S.LEQ [(currentIndex, rational 1)] (r - l)] ++ resultsL, (currentIndex, l) : resultsR), nextAvailableVar)
     else
-      (([(S.GEQ [(currentIndex, rational 1)] l), (S.LEQ [(currentIndex, rational 1)] r)] ++ resultsL, resultsR), nextAvailableVar)
+      (([S.GEQ [(currentIndex, rational 1)] l, S.LEQ [(currentIndex, rational 1)] r] ++ resultsL, resultsR), nextAvailableVar)
 
 createFunctionConstraints :: [BoxFun] -> Box -> Integer -> [(Integer, Rational)] -> [S.PolyConstraint]
 createFunctionConstraints [] _ _ _ = []
@@ -473,15 +487,6 @@ createFunctionConstraints (f : fs) cornerBox currentIndex substVars =
 
 encloseAreaUnderZeroWithSimplex :: [E.E] -> VarMap -> Precision -> Maybe [(String, (Rational, Rational))]
 encloseAreaUnderZeroWithSimplex expressions varMap p = 
-  -- trace (show variables) $
-  -- trace (show functions) $
-  -- trace (show derivatives) $
-  -- trace (show domainConstraints) $
-  -- trace ("d") $
-  -- trace (show functionConstraints) $
-  -- trace ("f") $
-  -- trace (show underZeroConstraints) $
-  -- trace ("z") $
   trace (show completeSystem) $
   trace (show substVars) $
   case head newPoints of
@@ -558,41 +563,8 @@ encloseAreaUnderZeroWithSimplex expressions varMap p =
 
     indexedVarMap = zip variables varMap
     indexedVariables = zip (map fst varMap) variables
-    -- indexedFunctionEndpoints = zip functions ysEndpoints
-
-    -- derivatives = map (\f -> gradient f box) boxFuns
-
-    -- indexedDerivativeEndpoints = map (\dfs -> zip variables (V.toList (V.map (\df -> bimap (rational . (~!)) (rational . (~!)) (endpoints df)) dfs))) derivatives
-  
-    -- domainConstraints = 
-    --   trace "domain" $
-    --   concatMap 
-    --   (\(v, (_, (vl, vr))) -> 
-    --     [S.GEQ [(v, rational 1)] vl, S.LEQ [(v, rational 1)] vr]
-    --   ) 
-    --   indexedVarMap
-
-    -- functionConstraints =
-    --   trace "function" $
-    --   concatMap
-    --   (\((f, (fl, fr)), ids) ->
-    --     let
-    --       leftDerivatives = map (\(v, (dvl, _)) -> (v, dvl)) ids
-    --       rightDerivatives = map (\(v, (_, dvr)) -> (v, dvr)) ids
-
-    --       addList :: [Rational] -> Rational
-    --       addList []        = trace "finished" $ rational 0
-    --       addList (x : xs)  = trace (show f) $ x + addList xs
-
-    --       leq = S.LEQ ((f, rational (-1)) : leftDerivatives) $ addList ((-fl) : (map (\((_, (l, _)), (_, dl)) -> l * dl)) (zip varMap leftDerivatives))
-    --       geq = S.GEQ ((f, rational (-1)) : rightDerivatives) $ addList ((-fr) : (map (\((_, (l, _)), (_, dr)) -> l * dr)) (zip varMap rightDerivatives))
-    --     in
-    --       [leq, geq]
-    --   )
-    --   $ zip indexedFunctionEndpoints indexedDerivativeEndpoints
 
     underZeroConstraints =
-      -- trace "final" $
       map
       (\v -> S.GEQ [(v, 1.0)] 0.0)
       functions
@@ -616,40 +588,3 @@ encloseAreaUnderZeroWithSimplex expressions varMap p =
           Nothing -> undefined
       )
       variables
-
-    -- x1l = V.fromList [fst (endpoints (box V.! 0)), fst (endpoints (box V.! 0))]
-    -- x1r = V.fromList [snd (endpoints (box V.! 0)), fst (endpoints (box V.! 0))]
-    -- x2l = V.fromList [fst (endpoints (box V.! 0)), fst (endpoints (box V.! 0))]
-    -- x2r = V.fromList [fst (endpoints (box V.! 0)), snd (endpoints (box V.! 0))]
-
-    -- ylR   = rational ((~!) yl)
-    -- yrR   = rational ((~!) yr)
-    -- dx1lR = rational ((~!) dx1l)
-    -- dx1rR = rational ((~!) dx1r)
-    -- dx2lR = rational ((~!) dx2l)
-    -- dx2rR = rational ((~!) dx2r)
-    -- x1lR = rational ((~!) x1lR)
-    -- x1rR = rational ((~!) x1rR)
-    -- x2lR = rational ((~!) x2lR)
-    -- x2rR = rational ((~!) x2rR)
-
-
-    -- x1 = 1, x2 = 2, y = 3
-    -- system :: (S.ObjectiveFunction, [S.PolyConstraint])
-    -- system = 
-    --   (S.Max [(3, rational 1)],
-    --   [
-    --     S.GEQ [(1, rational 1)] x1lR,
-    --     S.LEQ [(1, rational 1)] x1rR,
-    --     S.LEQ [(2, rational 1)] x2lR,
-    --     S.LEQ [(2, rational 1)] x2rR,
-    --     S.LEQ [(1, dx1lR), (2, dx2lR), (3, (rational (-1)))] (-ylR + (dx1lR * x1lR) + (dx2lR * x2lR)),
-    --     S.GEQ [(1, dx1rR), (2, dx2rR), (3, (rational (-1)))] (-yrR + (dx1rR * x1rR) + (dx2rR * x2rR))
-    --   ]
-    --   )
-
-
-    -- y >= yl + (x_1 - x_1l) * dx_1L + (x_2 - x_2l) * dx_2L
-
-
-
