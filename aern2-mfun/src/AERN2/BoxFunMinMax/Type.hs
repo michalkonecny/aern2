@@ -9,6 +9,7 @@ import AERN2.BoxFunMinMax.VarMap
 import AERN2.BoxFunMinMax.Expressions.Translators.BoxFun
 import qualified AERN2.BoxFunMinMax.Expressions.Type as E
 import AERN2.BoxFun.Box (createEnclosingBox, Box, fromVarMap, intersectionCertainlyEmpty, nonEmptyIntersection)
+import qualified AERN2.BoxFun.Box as Box
 import qualified AERN2.Linear.Vector.Type as V
 import Control.Parallel.Strategies
 import AERN2.MP.Float
@@ -395,7 +396,12 @@ decideDisjunctionWithSimplex expressions varMap p =
                   --       (_, _)                            -> checkUsingGlobalMinimum es
                   -- in
                   --   checkUsingGlobalMinimum expressions 
-                  if varMap == newVarMap 
+                  let 
+                    lastBox = fromVarMap varMap p
+                    newBox  = fromVarMap newVarMap p
+                    boxChangeWidth = abs(Box.width (lastBox - newBox)) -- FIXME: Add support to VarMap to do this within VarMap? Will reduce unnecessary conversion
+                  in
+                  if (boxChangeWidth !>=! cn 0.1) -- FIXME: MPBall/Rational parameter
                     then
                       bisectAllDimensionsAndRecurse
                     else
