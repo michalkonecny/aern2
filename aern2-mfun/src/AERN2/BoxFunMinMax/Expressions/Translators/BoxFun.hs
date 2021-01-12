@@ -49,7 +49,7 @@ expressionToBoxFun e domain p =
     expressionToDifferential (Lit e) _ = differential 2 $ cn (mpBallP p e)
     expressionToDifferential (Var e) v = 
       case elemIndex e variableOrder of
-        Nothing -> undefined
+        Nothing -> error $ "Variable: " ++ show e ++ " not found in varMap: " ++ show domain ++ " when translating expression: " ++ show e 
         Just i -> v V.! (fromIntegral i)
     expressionToDifferential (PowI e i) v = expressionToDifferential e v ^! i
 
