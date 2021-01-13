@@ -399,13 +399,13 @@ decideDisjunctionWithSimplex expressions varMap p =
                   let 
                     lastBox = fromVarMap varMap p
                     newBox  = fromVarMap newVarMap p
-                    boxChangeWidth = abs(Box.width (lastBox - newBox)) -- FIXME: Add support to VarMap to do this within VarMap? Will reduce unnecessary conversion
+                    boxChangeWidth = abs(width varMap - width newVarMap) -- FIXME: Add support to VarMap to do this within VarMap? Will reduce unnecessary conversion
                   in
-                  if (boxChangeWidth !>=! cn 0.1) -- FIXME: MPBall/Rational parameter
+                  if (boxChangeWidth !>=! 0.001) -- FIXME: MPBall/Rational parameter
                     then
-                      bisectAllDimensionsAndRecurse
-                    else
                       decideDisjunctionWithSimplex filteredExpressions newVarMap p
+                    else
+                      bisectAllDimensionsAndRecurse
                 _ -> undefined
       
   where
@@ -460,19 +460,20 @@ createDomainConstraints ((_, (l, r)) : xs) currentIndex =
 
 createFunctionConstraints :: [BoxFun] -> Box -> Integer -> [(Integer, Rational)] -> [S.PolyConstraint]
 createFunctionConstraints [] _ _ _ = []
-createFunctionConstraints (f : fs) cornerBox currentIndex substVars = 
+createFunctionConstraints (f : fs) box currentIndex substVars = 
   (
     [
       S.LEQ ((currentIndex, 1.0) : zip [1..] leftDerivatives) (foldl add (-fl - leftSubst) leftRhs),
       S.GEQ ((currentIndex, 1.0) : zip [1..] rightDerivatives) (foldl add (-fr - rightSubst) rightRhs)
     ]
     ++
-    createFunctionConstraints fs cornerBox (currentIndex + 1) substVars
+    createFunctionConstraints fs box (currentIndex + 1) substVars
   )
   where
+    cornerBox = V.map (fst . endpointsAsIntervals) box --FIXME: Can be optimized
     (fl, fr) = bimap (rational . (~!)) (rational . (~!)) $ endpoints $ apply f cornerBox
     
-    firstDerivatives = V.map (bimap (rational . (~!)) (rational . (~!)) . endpoints) $ gradient f cornerBox
+    firstDerivatives = V.map (bimap (rational . (~!)) (rational . (~!)) . endpoints) $ gradientUsingGradient f cornerBox -- FIXME: Want to use box here, but this encounters bug with divide by zero errors
 
     leftDerivatives = V.toList $ V.map fst firstDerivatives
     rightDerivatives = V.toList $ V.map snd firstDerivatives
@@ -534,7 +535,6 @@ encloseAreaUnderZeroWithSimplex expressions varMap p =
     corner = map (\(v,(l,_)) -> (v, (l, l))) varMap
 
     box = fromVarMap varMap p
-    cornerBox = fromVarMap corner p
 
     boxFuns = map (\e -> expressionToBoxFun e corner p) expressions
     -- corner = head corners -- TODO: Choose corner with smallest val (applied) here
@@ -565,7 +565,7 @@ encloseAreaUnderZeroWithSimplex expressions varMap p =
     variables = [1 .. (nextAvailableVar - 1)]
     functions = [nextAvailableVar .. nextAvailableVar + numberOfFunctions - 1]
 
-    functionConstraints = createFunctionConstraints boxFuns cornerBox nextAvailableVar substVars
+    functionConstraints = createFunctionConstraints boxFuns box nextAvailableVar substVars
 
     indexedVarMap = zip variables varMap
     indexedVariables = zip (map fst varMap) variables
