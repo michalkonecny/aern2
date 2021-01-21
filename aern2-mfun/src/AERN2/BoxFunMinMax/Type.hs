@@ -9,12 +9,9 @@ import AERN2.BoxFunMinMax.VarMap
 import AERN2.BoxFunMinMax.Expressions.Translators.BoxFun
 import qualified AERN2.BoxFunMinMax.Expressions.Type as E
 import AERN2.BoxFun.Box (createEnclosingBox, Box, fromVarMap, intersectionCertainlyEmpty, nonEmptyIntersection)
-import qualified AERN2.BoxFun.Box as Box
 import qualified AERN2.Linear.Vector.Type as V
 import Control.Parallel.Strategies
-import AERN2.MP.Float
 import Data.Bifunctor
-import Data.Maybe
 import qualified Simplex as S
 
 import Debug.Trace (trace)
@@ -22,6 +19,7 @@ import Debug.Trace (trace)
 import Data.List (filter, find)
 import qualified Data.Sequence as Seq
 
+import Control.CollectErrors (getValueIfNoErrorCE)
 -- trace a x = x
 
 -- | Check a CNF (Conjunctive Normal Form) of Expressions in the form of a list of lists
@@ -370,43 +368,53 @@ checkECNFSimplex (disjunction : disjunctions) varMap p =
     -- (Nothing, _) -> error "Indeterminate result from decideDisjunctionWithSimplex did not return indeterminate area"
 
 decideDisjunctionWithSimplex :: [E.E] -> VarMap -> Precision -> (Maybe Bool, Maybe VarMap)
-decideDisjunctionWithSimplex expressions varMap p =
-  if null filteredExpressions
-    then (Just False, Just varMap)
-    else 
-      if checkIfEsTrueUsingApply 
-        then (Just True, Nothing)
+decideDisjunctionWithSimplex expressions varMap p = 
+  -- trace (show varMap) $
+  -- unsafePerformIO $ do
+  --   appendFile "/home/junaid/Research/git/aern2-base/aern2/boxes/3s.txt" (show varMap ++ "\n")
+  --   return $ 
+      if null filteredExpressions
+        then (Just False, Just varMap)
         else 
-          if null filteredEsWithRangesAtCorner
-            then
-              bisectAllDimensionsAndRecurse
-            else
-              trace "simplex" $
-              case decideWithSimplex filteredEsAboveZeroAtCorner varMap p of
-                r@(Just True, _) -> r
-                (Nothing, Just newVarMap) ->
-                  -- let
-                  --   checkUsingGlobalMinimum :: [E.E] -> (Maybe Bool, Maybe VarMap)
-                    
-                  --   checkUsingGlobalMinimum [] = (Nothing, Just newVarMap)
+          if checkIfEsTrueUsingApply 
+            then (Just True, Nothing)
+            else 
+              -- Only call decideWithSimplex if all derivatives can be calculated
+              if and (concatMap V.toList (map (V.map (\value -> getValueIfNoErrorCE value (const True) (const False))) esDerivativesOverVarMap))
+                then 
+                  -- trace "simplex" $
+                  case decideWithSimplex esRangesAtCorner esDerivativesOverVarMap varMap corner of
+                    r@(Just True, _) -> r
+                    (Nothing, Just newVarMap) ->
+                      -- let
+                      --   checkUsingGlobalMinimum :: [E.E] -> (Maybe Bool, Maybe VarMap)
+                        
+                      --   checkUsingGlobalMinimum [] = (Nothing, Just newVarMap)
 
-                  --   checkUsingGlobalMinimum (e : es) = 
-                  --     case globalMinimumAboveN2 (expressionToBoxFun e newVarMap p) (bits 100) p (cn (mpBallP p 0)) of
-                  --       (Just True, _)                    -> (Just True, Nothing)
-                  --       (_, _)                            -> checkUsingGlobalMinimum es
-                  -- in
-                  --   checkUsingGlobalMinimum expressions 
-                  let 
-                    lastBox = fromVarMap varMap p
-                    newBox  = fromVarMap newVarMap p
-                    boxChangeWidth = abs(width varMap - width newVarMap) -- FIXME: Add support to VarMap to do this within VarMap? Will reduce unnecessary conversion
-                  in
-                  if (boxChangeWidth !>=! 0.001) -- FIXME: MPBall/Rational parameter
-                    then
-                      decideDisjunctionWithSimplex filteredExpressions newVarMap p
-                    else
-                      bisectAllDimensionsAndRecurse
-                _ -> undefined
+                      --   checkUsingGlobalMinimum (e : es) = 
+                      --     case globalMinimumAboveN2 (expressionToBoxFun e newVarMap p) (bits 100) p (cn (mpBallP p 0)) of
+                      --       (Just True, _)                    -> (Just True, Nothing)
+                      --       (_, _)                            -> checkUsingGlobalMinimum es
+                      -- in
+                      --   checkUsingGlobalMinimum expressions 
+                      let 
+                        -- lastBox = fromVarMap varMap p
+                        -- newBox  = fromVarMap newVarMap p
+                        -- boxChangeWidth = abs(Box.width (lastBox - newBox))
+                        boxChangeWidth = abs(width varMap - width newVarMap) -- FIXME: Add support to VarMap to do this within VarMap? Will reduce unnecessary conversion
+                      in
+                      if (boxChangeWidth !>=! cn 0.01) -- FIXME: MPBall/Rational parameter
+                        then
+                          -- trace "--------------------"
+                          -- trace (show varMap)
+                          -- trace (show newVarMap)
+                          -- trace "--------------------"
+                          decideDisjunctionWithSimplex filteredExpressions newVarMap p
+                        else
+                          bisectAllDimensionsAndRecurse newVarMap
+                    _ -> undefined
+                  else
+                    bisectAllDimensionsAndRecurse varMap
       
   where
     applyE vm e = applyLipschitz f (setPrecision p (domain f))
@@ -417,13 +425,14 @@ decideDisjunctionWithSimplex expressions varMap p =
     filteredExpressions     = map fst filterOutFalseTerms
     checkIfEsTrueUsingApply = any (\(_, range) -> range !>=! 0)  filterOutFalseTerms
     
-    corner                             = map (\(v, (l, _)) -> (v, (l, l))) varMap
-    filteredEsWithRangesAtCorner       = zip filteredExpressions (parMap rseq (applyE corner) expressions)
-    filteredEsAboveZeroAtCorner        = map fst $ filter (\(_, range) -> range !>! 0) filteredEsWithRangesAtCorner 
+    corner                      = map (\(v, (l, _)) -> (v, (l, l))) varMap
+    esRangesAtCorner            = parMap rseq (applyE corner) filteredExpressions
+    esDerivativesOverVarMap     = parMap rseq (\e -> gradientUsingGradient (expressionToBoxFun e varMap p) (fromVarMap varMap p)) filteredExpressions
+    -- filteredEsAboveZeroAtCorner = map fst $ filter (\(_, range) -> range !>! 0) filteredEsWithRangesAtCorner 
 
-    bisectAllDimensionsAndRecurse =
+    bisectAllDimensionsAndRecurse varMapToBisect =
       let
-        bisectedVarMaps = fullBisect varMap
+        bisectedVarMaps = fullBisect varMapToBisect
         
         checkBisection :: [VarMap] -> (Maybe Bool, Maybe VarMap)
         checkBisection []         = (Just True, Nothing)
@@ -432,20 +441,51 @@ decideDisjunctionWithSimplex expressions varMap p =
             (Just True, _) -> checkBisection vms
             (_, indeterminateArea) -> (Nothing, indeterminateArea)
       in
-        if width varMap !>! 1 / 10000000
-          then trace "bisecting" checkBisection bisectedVarMaps
-          else trace "stopping bisections" (Nothing, Just varMap)
+        if width varMapToBisect !>! 1 / 10000000
+          then 
+            --trace "bisecting" 
+            checkBisection bisectedVarMaps
+          else 
+            --trace "stopping bisections" 
+            (Nothing, Just varMap)
 
-decideWithSimplex :: [E.E] -> VarMap -> Precision -> (Maybe Bool, Maybe VarMap)
-decideWithSimplex expressions varMap p =
-  case encloseAreaUnderZeroWithSimplex expressions varMap p of
-    Just newVarMap -> 
-      if newVarMap == varMap 
-        then trace (show newVarMap) (Nothing, Just newVarMap)
-        else trace "recurse" $ decideWithSimplex expressions newVarMap p
+decideWithSimplex :: [CN MPBall] -> [Box] -> VarMap -> VarMap -> (Maybe Bool, Maybe VarMap)
+decideWithSimplex valuesAtCorner derivativesOverVarMap varMap corner =
+  case encloseAreaUnderZeroWithSimplex valuesAtCorner derivativesOverVarMap varMap corner of
+    Just newVarMap -> (Nothing, Just newVarMap)
+      -- if newVarMap == varMap 
+        -- then trace (show newVarMap) (Nothing, Just newVarMap)
+        -- else trace "recurse" $ decideWithSimplex expressions newVarMap p
     Nothing -> (Just True, Nothing)
 
-createDomainConstraints :: VarMap -> Integer -> (([S.PolyConstraint], [(Integer, Rational)]), Integer)
+-- |Create constraints for the given domains
+--
+-- Examples:
+--   createDomainConstraints [("X", (1.0, 3.0))] 1
+--     returns:
+--       (
+--         ([S.GEQ [(1, 1.0)] 1.0, S.LEQ [(1, 1.0)] 3.0]), []),
+--         2
+--       )
+--   createDomainConstraints [("X", (1.0, 3.0)), ("Y", (0.0, 2.0))] 1
+--     returns:
+--       (
+--         ([S.GEQ [(1, 1.0)] 1.0, S.LEQ [(1, 1.0)] 3.0], [S.GEQ [(2, 1.0)] 0.0, S.LEQ [(2, 1.0)] 2.0]), []),
+--         3
+--       )
+--   createDomainConstraints [("X", (-1.0, 3.0))] 1
+--     returns:
+--       (
+--         ([S.GEQ [(1, 1.0)] 0.0, S.LEQ [(1, 1.0)] 4.0], [(1, -1)]),
+--         2
+--       )
+createDomainConstraints 
+  :: VarMap -- ^ The domains to create constraints for
+  -> Integer -- ^ The next available variable
+  -> (([S.PolyConstraint], [(Integer, Rational)]), Integer) {- ^  The first item in the pair is the system of constraints created from the VarMap.
+                                                                  The first item in the second item part of the pair stores the amount a variable
+                                                                  has been shifted from the LHS.
+                                                                  The second item in the second pair denotes the next integer variable available. -} 
 createDomainConstraints [] nextAvailableVar = (([], []), nextAvailableVar)
 createDomainConstraints ((_, (l, r)) : xs) currentIndex =
   let
@@ -458,118 +498,146 @@ createDomainConstraints ((_, (l, r)) : xs) currentIndex =
     else
       (([S.GEQ [(currentIndex, rational 1)] l, S.LEQ [(currentIndex, rational 1)] r] ++ resultsL, resultsR), nextAvailableVar)
 
-createFunctionConstraints :: [BoxFun] -> Box -> Integer -> [(Integer, Rational)] -> [S.PolyConstraint]
-createFunctionConstraints [] _ _ _ = []
-createFunctionConstraints (f : fs) box currentIndex substVars = 
+-- |Create constraints for the given parameters functions given as the first variable.
+-- The second variable is the box for which we are creating constraints.
+-- The third variable stores the integer variable that is available to be assigned.
+-- The fourth variable stores a map of variables with the amount they have been transformed
+-- from the left hand side
+createFunctionConstraints 
+  :: [CN MPBall] -- ^ Each item is the value of a function examined at the given corner
+  -> [Box] -- ^ The first derivatives of each function over the entire varMap
+  -> VarMap -- ^ The corner for which we examine each function which leads to the values in the first parameter
+  -> Integer -- ^ The next integer variable available to be assigned
+  -> [(Integer, Rational)] -- ^ The amount each variable needs to be shifted from the LHS
+  -> [S.PolyConstraint] -- ^ Each item is a constraint for each function
+createFunctionConstraints [] derivatives _ _ _ = if null derivatives then [] else error "derivatives not null"
+createFunctionConstraints cornerValues [] _ _ _ = if null cornerValues then [] else error "cornerValues not null"
+createFunctionConstraints (cornerValue : cornerValues) (currentDerivatives : derivatives) corner currentIndex substVars = 
   (
     [
-      S.LEQ ((currentIndex, 1.0) : zip [1..] leftDerivatives) (foldl add (-fl - leftSubst) leftRhs),
-      S.GEQ ((currentIndex, 1.0) : zip [1..] rightDerivatives) (foldl add (-fr - rightSubst) rightRhs)
+      -- Here, we set the coefficient for the variable representing the current function to be 1
+      -- We then append a list of the lower and upper bounds of the first derivatives for each
+      -- respective constraint
+      -- On the right hand side of each constraint, we add:
+      --   the negation of the lower/upper bound of the function applied at the bottom left corner of the box.
+      --   the values of the lower/upper derivatives multiplied by the values of the bottom left corner of the box.
+      --   any transformations that need to take place as a result of shifting the constraints for the domain
+      --     the above transformation only occurs when at least one domain is partly negative.
+      S.LEQ ((currentIndex, 1.0) : zip [1..] lowerDerivatives) (foldl add (-fl - lowerSubst) lowerDerivativesAtCorner),
+      S.GEQ ((currentIndex, 1.0) : zip [1..] upperDerivatives) (foldl add (-fr - upperSubst) upperDerivativesAtCorner)
     ]
     ++
-    createFunctionConstraints fs box (currentIndex + 1) substVars
+    createFunctionConstraints cornerValues derivatives corner (currentIndex + 1) substVars
   )
   where
-    cornerBox = V.map (fst . endpointsAsIntervals) box --FIXME: Can be optimized
-    (fl, fr) = bimap (rational . (~!)) (rational . (~!)) $ endpoints $ apply f cornerBox
+    -- Get the lower and upper bounds of the function applied at the bottom left corner of the box
+    (fl, fr) = bimap (rational . (~!)) (rational . (~!)) $ endpoints cornerValue
     
-    firstDerivatives = V.map (bimap (rational . (~!)) (rational . (~!)) . endpoints) $ gradientUsingGradient f cornerBox -- FIXME: Want to use box here, but this encounters bug with divide by zero errors
+    -- Get the first derivatives as rationals
+    firstDerivatives = V.map (bimap (rational . (~!)) (rational . (~!)) . endpoints) currentDerivatives
+    
+    lowerDerivatives = V.toList $ V.map fst firstDerivatives
+    upperDerivatives = V.toList $ V.map snd firstDerivatives
 
-    leftDerivatives = V.toList $ V.map fst firstDerivatives
-    rightDerivatives = V.toList $ V.map snd firstDerivatives
+    -- Get the rational values of the corner
+    rationalCornerValue = map (\(_, (v, _)) -> (rational . (~!)) v) corner
 
-    cornerValues = V.toList $ V.map (rational . (~!) . fst . endpoints) cornerBox
+    -- Get the values of multiplying the lower/upper bounds of the derivatives with the values 
+    -- of the points at the bottom left corner of the box
+    lowerDerivativesAtCorner = zipWith mul rationalCornerValue lowerDerivatives
+    upperDerivativesAtCorner = zipWith mul rationalCornerValue upperDerivatives
 
-    leftRhs = map (\(c, d) -> c * d) $ zip cornerValues leftDerivatives
-    rightRhs = map (\(c, d) -> c * d) $ zip cornerValues rightDerivatives
+    -- Map over the substVars, lookup the value of the first derivative for the current var
+    -- being mapped over, multiply this value with the value the variable maps to in substVars
+    -- (i.e. the value the variable was transformed from the left side in createDomainConstraints).
+    -- Do this for both the lower and upper derivatives
+    substValuesLower = 
+      map (\(v, c) -> (lowerDerivatives !! (v - 1)) * c) substVars
 
-    substValuesLeft = 
-      map (\(v, c) -> (leftDerivatives !! (v - 1)) * c) substVars
+    substValuesUpper =
+      map (\(v, c) -> (upperDerivatives !! (v - 1)) * c) substVars
 
-    substValuesRight =
-      map (\(v, c) -> (rightDerivatives !! (v - 1)) * c) substVars
+    -- Fold the above lists using addition
+    lowerSubst = foldl add 0.0 substValuesLower
+    upperSubst = foldl add 0.0 substValuesUpper
 
-    leftSubst = foldl add 0.0 substValuesLeft
-    rightSubst = foldl add 0.0 substValuesRight
-
-encloseAreaUnderZeroWithSimplex :: [E.E] -> VarMap -> Precision -> Maybe [(String, (Rational, Rational))]
-encloseAreaUnderZeroWithSimplex expressions varMap p = 
-  trace (show completeSystem) $
-  trace (show substVars) $
+-- | Enclose the area under zero where the given values of functions along with each functions
+-- first derivatives enclose the area under zero which intersects with the given varMap.
+encloseAreaUnderZeroWithSimplex 
+  :: [CN MPBall] -- ^ The value of each function at the given corner
+  -> [Box] -- ^ The first derivatives for each function over the given varMap
+  -> VarMap -- ^ The domains for each function which leads to the first derivatives
+  -> VarMap -- ^ The corner at which we get the value for each function for the first parameter
+  -> Maybe VarMap {- ^ This function returns:
+                    Nothing when there is no area under zero to enclose (so the system is above zero). FIXME: Is it better to return an empty list here?
+                    Just [("variable1", (newLowerBound, newUpperBound)), ...] when the created system
+                      is feasible. The new VarMap may be the same as the old VarMap, which means
+                      that the simplex was not able to shrink the original VarMap.
+                  -}
+encloseAreaUnderZeroWithSimplex cornerValues derivativesOverVarMap varMap corner = 
+  --trace (show completeSystem) $
+  --trace (show substVars) $
+  -- If the first result from the list returned by the simplex method is empty,
+  -- the system is infeasible, so we return nothing
   case head newPoints of
     (_, (Nothing, _)) ->
       Nothing
     _ -> 
       let
+        -- Should never get an undefined result if the first resuls in newPoints is feasible
         extractResult :: Maybe (Integer, [(Integer, Rational)]) -> Rational
         extractResult mr =
           case mr of
-            Just (v, rs) ->
+            Just (v, rs) -> -- v refers to the objective variable. We extract the value of the objective
+                            -- variable from rs (the result determined by the simplex method)
               case lookup v rs of
                 Just r -> r
-                Nothing -> undefined
-            Nothing -> undefined
+                Nothing -> undefined 
+            Nothing -> undefined 
       in
         Just $
         map
         (\(v, r) ->
-          trace (show r)
+          --trace (show r)
           (v, 
           case lookup v indexedVariables of
-            Just iv ->
-              case lookup iv substVars of
-                Just c -> (bimap ((add c) . extractResult) ((add c) . extractResult) r)
+            Just iv -> -- Get the integer variable for the current string variable 
+              case lookup iv substVars of -- Check if any transformation needs to be done to get the final result
+                Just c -> (bimap ((add c) . extractResult) ((add c) . extractResult) r) -- Add any needed transformation to lower/upper bounds
                 Nothing -> bimap extractResult extractResult r
-            Nothing -> undefined
+            Nothing -> undefined -- Should never get here
           )  
         )
         newPoints
-  -- S.twoPhaseSimplex (fst system) (snd system)
   where
-    -- Lets assume box is 2d
+    -- Get the bottom left corner of the varMap
 
-    -- bfExpression = expressionToBoxFun expression varMap p
+    -- boxFuns = map (\e -> expressionToBoxFun e corner p) expressions
 
-    -- corners = map (\corner -> fromVarMap corner p) $ getCorners varMap
-
-    corner = map (\(v,(l,_)) -> (v, (l, l))) varMap
-
-    box = fromVarMap varMap p
-
-    boxFuns = map (\e -> expressionToBoxFun e corner p) expressions
-    -- corner = head corners -- TODO: Choose corner with smallest val (applied) here
-
-    -- ys = map (\f -> apply f cornerBox) boxFuns
-
-    -- y = apply bfExpression corner
-
-    -- ysEndpoints = map (bimap (rational . (~!)) (rational . (~!)) . endpoints) ys
-
-    -- ysEndpoints = 
-    --   map 
-    --   (\y -> let (yl, yr) = (bimap (~!) (~!) (endpoints y)) in (rational yl, rational yr))
-    --   ys
-
-
-    -- dx1 = derivatives V.! 0
-    -- dx2 = derivatives V.! 1
-    
-    -- (dx1l, dx1r) = endpoints dx1
-    -- (dx2l, dx2r) = endpoints dx2
-
+    -- Create constraints for the domain
+    -- substVars stores any variable transformations (for the LHS)
     ((domainConstraints, substVars), nextAvailableVar) = createDomainConstraints varMap 1
 
-    -- numberOfVariables = length varMap
-    numberOfFunctions = length expressions
+    numberOfFunctions = length cornerValues
 
     variables = [1 .. (nextAvailableVar - 1)]
+
+    -- Set the variables that will be used to refer to each function
     functions = [nextAvailableVar .. nextAvailableVar + numberOfFunctions - 1]
 
-    functionConstraints = createFunctionConstraints boxFuns box nextAvailableVar substVars
+    functionConstraints = createFunctionConstraints cornerValues derivativesOverVarMap corner nextAvailableVar substVars
 
+    -- Map integer variables to their respective varMap
     indexedVarMap = zip variables varMap
+
+    -- Map string variables to their respective integer variable
     indexedVariables = zip (map fst varMap) variables
 
+    -- Create constraints to bound the area under zero for each function
+    -- LEQ [(functionVariable, 1.0)] 0.0 would not work because the simplex method assumes >= 0
+    -- for each variable, so we use GEQ [(functionVariable, 1.0)] 0.0 instead, and make the
+    -- appropriate changes in createFunctionConstraints to effectively contain the area
+    -- under zero for each function.
     underZeroConstraints =
       map
       (\v -> S.GEQ [(v, 1.0)] 0.0)
@@ -577,14 +645,9 @@ encloseAreaUnderZeroWithSimplex expressions varMap p =
 
     completeSystem = domainConstraints ++ functionConstraints ++ underZeroConstraints
 
-    -- Process a completed system
-    -- We need to
-    -- - Deal with negative numbers for the domain constraints
-    -- - Deal with underZero constraints (LEQ 0 simplifies to EQ 0) and their variables
-    -- processSystem :: [S.PolyConstraint] -> [Rational, (Rational Rational)] -> [S.PolyConstraint]
-    -- Deal with domain constraints
-    -- processSystem ((S.GEQ [(vr, rr)] r) : (S.LEQ [(vl, rl)] r)) xs) substVars =
-
+    -- Call the simplex method twice for each variable (setting the objective function to Min/Max of each
+    -- variable). Map each (String) variable to a pair. The pair is the results determined by the simplex
+    -- method when Min/Maxing the key variable. 
     newPoints :: [(String, (Maybe (Integer, [(Integer, Rational)]), Maybe (Integer, [(Integer, Rational)])))]
     newPoints =
       map
