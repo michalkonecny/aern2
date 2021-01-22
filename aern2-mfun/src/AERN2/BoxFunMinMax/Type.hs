@@ -83,7 +83,7 @@ checkECNF cnf vMapInit p =
                   -- trace (vMapToJSON i mode vMap j) -- proved the disjunction on this box
                   checkDisjunctionJ mode restJobs
                 _ ->
-                  if width vMap !>! 1 / 10000000 then -- make this threshold quite small (maybe 10^-7)
+                  if maxWidth vMap !>! 1 / 10000000 then -- make this threshold quite small (maybe 10^-7)
                     -- trace ("Bisected boxes: " ++ show newBoxes) $
                     checkDisjunctionJ mode (Seq.fromList (map (\box -> (es',box)) newBoxes) <> restJobs)
                   else
@@ -134,7 +134,7 @@ checkECNF cnf vMapInit p =
                   -- trace (vMapToJSON i mode vMap j) -- proved the disjunction on this box
                   checkDisjunctionJ mode restJobs
                 (_, box) ->
-                  if width vMap !>! 1 / 10000000 then -- make this threshold quite small (maybe 10^-7)
+                  if maxWidth vMap !>! 1 / 10000000 then -- make this threshold quite small (maybe 10^-7)
                     -- trace ("Bisected boxes: " ++ show newBoxes) $
                     case box of
                       Just box' ->
@@ -245,7 +245,7 @@ decideDisjunctionWithBisectionUntilCutoff expressions varMap p widthCutoff =
     case decideDisjunction expressions' varMap p Nothing of 
       r@(Just True, _) -> r
       (_, mAreaContainingMinimum) ->
-        if width varMap > widthCutoff then
+        if maxWidth varMap > widthCutoff then
           let
             checkBisectionResults [] = (Just True, Nothing)
             checkBisectionResults (r:rs) =
@@ -405,7 +405,7 @@ decideDisjunctionWithSimplex expressions varMap p =
                         -- lastBox = fromVarMap varMap p
                         -- newBox  = fromVarMap newVarMap p
                         -- boxChangeWidth = abs(Box.width (lastBox - newBox))
-                        boxChangeWidth = (width varMap - width newVarMap) -- FIXME: Add the sum of all widths before getting the difference
+                        boxChangeWidth = (taxicabWidth varMap - taxicabWidth newVarMap) -- FIXME: Add the sum of all widths before getting the difference
                       in
                       if (boxChangeWidth !>=! cn 0.01) -- FIXME: MPBall/Rational parameter
                                                        -- FIXME: check if new box is larger?
@@ -417,7 +417,7 @@ decideDisjunctionWithSimplex expressions varMap p =
                           trace "recursing with simplex" $
                           decideDisjunctionWithSimplex filteredExpressions newVarMap p
                         else
-                          if width newVarMap !>=! 0.00000000001 --FIXME: parameter
+                          if maxWidth newVarMap !>=! 0.00000000001 --FIXME: parameter
                             then 
                               trace ("bisecting with reduced by simplex varMap: " ++ show newVarMap) $ 
                               bisectAllDimensionsAndRecurse newVarMap
@@ -426,7 +426,7 @@ decideDisjunctionWithSimplex expressions varMap p =
                               r
                     _ -> undefined
                   else
-                    if width varMap !>=! 0.00000000001 
+                    if maxWidth varMap !>=! 0.00000000001 
                       then trace ("bisecting without simplex" ++ show varMap) $ bisectAllDimensionsAndRecurse varMap
                       else trace ("varMap too small to bisect" ++ show varMap) $ (Nothing, Just varMap)
       

@@ -15,9 +15,13 @@ import Debug.Trace
 type VarMap = [(String, (Rational, Rational))]
 
 -- | Get the width of the widest interval
-width :: VarMap -> Rational
-width vMap = 
-  L.maximum (map (\(_, ds) -> snd ds - fst ds) vMap)
+-- Fixme: maxWidth
+maxWidth :: VarMap -> Rational
+maxWidth vMap = L.maximum (map (\(_, ds) -> snd ds - fst ds) vMap)
+
+-- | Get the sum of the width of each interval
+taxicabWidth :: VarMap -> Rational
+taxicabWidth vMap = L.sum (map (\(_, ds) -> snd ds - fst ds) vMap)
 
 -- | Bisect all elements in a given VarMap
 fullBisect :: VarMap -> [VarMap]
