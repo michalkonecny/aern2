@@ -19,7 +19,6 @@ import Debug.Trace (trace)
 import Data.List (filter, find)
 import qualified Data.Sequence as Seq
 
-import Control.CollectErrors (getValueIfNoErrorCE)
 -- trace a x = x
 
 -- | Check a CNF (Conjunctive Normal Form) of Expressions in the form of a list of lists
@@ -369,23 +368,28 @@ checkECNFSimplex (disjunction : disjunctions) varMap p =
 
 decideDisjunctionWithSimplex :: [E.E] -> VarMap -> Precision -> (Maybe Bool, Maybe VarMap)
 decideDisjunctionWithSimplex expressions varMap p = 
-  -- trace (show varMap) $
+  -- trace (showVarMapWithDecimals varMap) $
   -- unsafePerformIO $ do
   --   appendFile "/home/junaid/Research/git/aern2-base/aern2/boxes/3s.txt" (show varMap ++ "\n")
   --   return $ 
       if null filteredExpressions
-        then (Just False, Just varMap)
+        then 
+          trace "proved false with apply" 
+          (Just False, Just varMap)
         else 
           if checkIfEsTrueUsingApply 
-            then (Just True, Nothing)
+            then 
+              trace "proved true with apply" 
+              (Just True, Nothing)
             else 
               -- Only call decideWithSimplex if all derivatives can be calculated
-              if and (concatMap V.toList (map (V.map (\value -> getValueIfNoErrorCE value (const True) (const False))) esDerivativesOverVarMap))
+              if and (concatMap (V.toList . V.map (not . hasErrorCN)) esDerivativesOverVarMap)
                 then 
-                  -- trace "simplex" $
                   case decideWithSimplex esRangesAtCorner esDerivativesOverVarMap varMap corner of
-                    r@(Just True, _) -> r
-                    (Nothing, Just newVarMap) ->
+                    r@(Just True, _) -> 
+                      trace "proved true with simplex" 
+                      r
+                    r@(Nothing, Just newVarMap) ->
                       -- let
                       --   checkUsingGlobalMinimum :: [E.E] -> (Maybe Bool, Maybe VarMap)
                         
@@ -401,22 +405,35 @@ decideDisjunctionWithSimplex expressions varMap p =
                         -- lastBox = fromVarMap varMap p
                         -- newBox  = fromVarMap newVarMap p
                         -- boxChangeWidth = abs(Box.width (lastBox - newBox))
-                        boxChangeWidth = abs(width varMap - width newVarMap) -- FIXME: Add support to VarMap to do this within VarMap? Will reduce unnecessary conversion
+                        boxChangeWidth = (width varMap - width newVarMap) -- FIXME: Add the sum of all widths before getting the difference
                       in
                       if (boxChangeWidth !>=! cn 0.01) -- FIXME: MPBall/Rational parameter
+                                                       -- FIXME: check if new box is larger?
                         then
                           -- trace "--------------------"
                           -- trace (show varMap)
                           -- trace (show newVarMap)
                           -- trace "--------------------"
+                          trace "recursing with simplex" $
                           decideDisjunctionWithSimplex filteredExpressions newVarMap p
                         else
-                          bisectAllDimensionsAndRecurse newVarMap
+                          if width newVarMap !>=! 0.00000000001 --FIXME: parameter
+                            then 
+                              trace ("bisecting with reduced by simplex varMap: " ++ show newVarMap) $ 
+                              bisectAllDimensionsAndRecurse newVarMap
+                            else 
+                              trace ("varMap too small to bisect after simplex" ++ show newVarMap) $ 
+                              r
                     _ -> undefined
                   else
-                    bisectAllDimensionsAndRecurse varMap
+                    if width varMap !>=! 0.00000000001 
+                      then trace ("bisecting without simplex" ++ show varMap) $ bisectAllDimensionsAndRecurse varMap
+                      else trace ("varMap too small to bisect" ++ show varMap) $ (Nothing, Just varMap)
       
   where
+    showVarMapWithDecimals :: VarMap -> String
+    showVarMapWithDecimals vm = concatMap (\(v, (l, u)) -> show v ++ ": [" ++ ((show . double)  l) ++ ", " ++ ((show . double) u) ++ "] \n") vm
+      where
     applyE vm e = applyLipschitz f (setPrecision p (domain f))
       where
         f = expressionToBoxFun e vm p
@@ -425,7 +442,7 @@ decideDisjunctionWithSimplex expressions varMap p =
     filteredExpressions     = map fst filterOutFalseTerms
     checkIfEsTrueUsingApply = any (\(_, range) -> range !>=! 0)  filterOutFalseTerms
     
-    corner                      = map (\(v, (l, _)) -> (v, (l, l))) varMap
+    corner                      = map (\(v, (l, r)) -> (v, (l, l))) varMap
     esRangesAtCorner            = parMap rseq (applyE corner) filteredExpressions
     esDerivativesOverVarMap     = parMap rseq (\e -> gradientUsingGradient (expressionToBoxFun e varMap p) (fromVarMap varMap p)) filteredExpressions
     -- filteredEsAboveZeroAtCorner = map fst $ filter (\(_, range) -> range !>! 0) filteredEsWithRangesAtCorner 
@@ -434,20 +451,15 @@ decideDisjunctionWithSimplex expressions varMap p =
       let
         bisectedVarMaps = fullBisect varMapToBisect
         
-        checkBisection :: [VarMap] -> (Maybe Bool, Maybe VarMap)
-        checkBisection []         = (Just True, Nothing)
-        checkBisection (vm : vms) = 
+        checkBisection :: [VarMap] -> Bool -> Maybe VarMap -> (Maybe Bool, Maybe VarMap)
+        checkBisection []         foundIndeterminate indeterminateVarMap = if foundIndeterminate then (Nothing, indeterminateVarMap) else (Just True, Nothing)
+        checkBisection (vm : vms) foundIndeterminate indeterminateVarMap = 
           case decideDisjunctionWithSimplex filteredExpressions vm p of
-            (Just True, _) -> checkBisection vms
-            (_, indeterminateArea) -> (Nothing, indeterminateArea)
+            (Just True, _)                -> checkBisection vms foundIndeterminate indeterminateVarMap
+            r@(Just False, _)             -> r 
+            (Nothing, indeterminateArea)  -> checkBisection vms True indeterminateArea --FIXME: look into doing breadth first search for counterexamples
       in
-        if width varMapToBisect !>! 1 / 10000000
-          then 
-            --trace "bisecting" 
-            checkBisection bisectedVarMaps
-          else 
-            --trace "stopping bisections" 
-            (Nothing, Just varMap)
+        checkBisection bisectedVarMaps False Nothing
 
 decideWithSimplex :: [CN MPBall] -> [Box] -> VarMap -> VarMap -> (Maybe Bool, Maybe VarMap)
 decideWithSimplex valuesAtCorner derivativesOverVarMap varMap corner =
@@ -530,17 +542,21 @@ createFunctionConstraints (cornerValue : cornerValues) (currentDerivatives : der
     createFunctionConstraints cornerValues derivatives corner (currentIndex + 1) substVars
   )
   where
+    mpBallToRational :: CN MPBall -> (Rational, Rational)
+    mpBallToRational = bimap (rational . (~!)) (rational . (~!)) . endpoints . reducePrecionIfInaccurate . (~!)
+      -- bimap (endpoints . reducePrecionIfInaccurate)
+
     -- Get the lower and upper bounds of the function applied at the bottom left corner of the box
-    (fl, fr) = bimap (rational . (~!)) (rational . (~!)) $ endpoints cornerValue
+    (fl, fr) = mpBallToRational cornerValue
     
     -- Get the first derivatives as rationals
-    firstDerivatives = V.map (bimap (rational . (~!)) (rational . (~!)) . endpoints) currentDerivatives
+    firstDerivatives = V.map mpBallToRational currentDerivatives
     
     lowerDerivatives = V.toList $ V.map fst firstDerivatives
     upperDerivatives = V.toList $ V.map snd firstDerivatives
 
     -- Get the rational values of the corner
-    rationalCornerValue = map (\(_, (v, _)) -> (rational . (~!)) v) corner
+    rationalCornerValue = map (\(_, (v, _)) -> v) corner
 
     -- Get the values of multiplying the lower/upper bounds of the derivatives with the values 
     -- of the points at the bottom left corner of the box
@@ -570,7 +586,7 @@ encloseAreaUnderZeroWithSimplex
   -> VarMap -- ^ The corner at which we get the value for each function for the first parameter
   -> Maybe VarMap {- ^ This function returns:
                     Nothing when there is no area under zero to enclose (so the system is above zero). FIXME: Is it better to return an empty list here?
-                    Just [("variable1", (newLowerBound, newUpperBound)), ...] when the created system
+                    `Just [("variable1", (newLowerBound, newUpperBound)), ...]` when the created system
                       is feasible. The new VarMap may be the same as the old VarMap, which means
                       that the simplex was not able to shrink the original VarMap.
                   -}
