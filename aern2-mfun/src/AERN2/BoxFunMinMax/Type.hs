@@ -385,7 +385,7 @@ decideDisjunctionWithSimplex expressions varMap p =
               -- Only call decideWithSimplex if all derivatives can be calculated
               if and (concatMap (V.toList . V.map (not . hasErrorCN)) esDerivativesOverVarMap)
                 then 
-                  case decideWithSimplex esRangesAtCorner esDerivativesOverVarMap varMap corner of
+                  case decideWithSimplex leftCornerRagesWithDerivatives varMap (Left leftCorner) of
                     r@(Just True, _) -> 
                       trace "proved true with simplex" 
                       r
@@ -441,10 +441,11 @@ decideDisjunctionWithSimplex expressions varMap p =
     filterOutFalseTerms     = filter (\(_, range) -> not (range !<! 0))  esWithRanges
     filteredExpressions     = map fst filterOutFalseTerms
     checkIfEsTrueUsingApply = any (\(_, range) -> range !>=! 0)  filterOutFalseTerms
-    
-    corner                      = map (\(v, (l, r)) -> (v, (l, l))) varMap
-    esRangesAtCorner            = parMap rseq (applyE corner) filteredExpressions
-    esDerivativesOverVarMap     = parMap rseq (\e -> gradientUsingGradient (expressionToBoxFun e varMap p) (fromVarMap varMap p)) filteredExpressions
+
+    leftCorner                     = map (\(v, (l, r)) -> (v, (l, l))) varMap
+    esRangesAtLeftCorner           = parMap rseq (applyE leftCorner) filteredExpressions
+    esDerivativesOverVarMap        = parMap rseq (\e -> gradient (expressionToBoxFun e varMap p) (fromVarMap varMap p)) filteredExpressions
+    leftCornerRagesWithDerivatives = zip esRangesAtLeftCorner esDerivativesOverVarMap
     -- filteredEsAboveZeroAtCorner = map fst $ filter (\(_, range) -> range !>! 0) filteredEsWithRangesAtCorner 
 
     bisectAllDimensionsAndRecurse varMapToBisect =
@@ -461,9 +462,9 @@ decideDisjunctionWithSimplex expressions varMap p =
       in
         checkBisection bisectedVarMaps False Nothing
 
-decideWithSimplex :: [CN MPBall] -> [Box] -> VarMap -> VarMap -> (Maybe Bool, Maybe VarMap)
-decideWithSimplex valuesAtCorner derivativesOverVarMap varMap corner =
-  case encloseAreaUnderZeroWithSimplex valuesAtCorner derivativesOverVarMap varMap corner of
+decideWithSimplex :: ([(CN MPBall, Box)]) -> VarMap -> Either VarMap VarMap -> (Maybe Bool, Maybe VarMap)
+decideWithSimplex cornerValuesWithDerivatives varMap eCorner =
+  case encloseAreaUnderZeroWithSimplex cornerValuesWithDerivatives varMap eCorner of
     Just newVarMap -> (Nothing, Just newVarMap)
       -- if newVarMap == varMap 
         -- then trace (show newVarMap) (Nothing, Just newVarMap)
@@ -516,17 +517,16 @@ createDomainConstraints ((_, (l, r)) : xs) currentIndex =
 -- The fourth variable stores a map of variables with the amount they have been transformed
 -- from the left hand side
 createFunctionConstraints 
-  :: [CN MPBall] -- ^ Each item is the value of a function examined at the given corner
-  -> [Box] -- ^ The first derivatives of each function over the entire varMap
-  -> VarMap -- ^ The corner for which we examine each function which leads to the values in the first parameter
+  :: ([(CN MPBall, Box)]) -- ^ Each item is the value of each function at the given corner along with the first derivatives for the function
+  -> Either VarMap VarMap -- ^ The corner for which we examine each function which leads to the values in the first parameter
+                          -- Left or Right indicates whether or not this corner is the extreme left or extreme right corner of
+                          -- the original box
   -> Integer -- ^ The next integer variable available to be assigned
   -> [(Integer, Rational)] -- ^ The amount each variable needs to be shifted from the LHS
   -> [S.PolyConstraint] -- ^ Each item is a constraint for each function
-createFunctionConstraints [] derivatives _ _ _ = if null derivatives then [] else error "derivatives not null"
-createFunctionConstraints cornerValues [] _ _ _ = if null cornerValues then [] else error "cornerValues not null"
-createFunctionConstraints (cornerValue : cornerValues) (currentDerivatives : derivatives) corner currentIndex substVars = 
+createFunctionConstraints [] _ _ _ = []
+createFunctionConstraints ((cornerValue, derivatives) : values) eCorner currentIndex substVars = 
   (
-    [
       -- Here, we set the coefficient for the variable representing the current function to be 1
       -- We then append a list of the lower and upper bounds of the first derivatives for each
       -- respective constraint
@@ -535,11 +535,19 @@ createFunctionConstraints (cornerValue : cornerValues) (currentDerivatives : der
       --   the values of the lower/upper derivatives multiplied by the values of the bottom left corner of the box.
       --   any transformations that need to take place as a result of shifting the constraints for the domain
       --     the above transformation only occurs when at least one domain is partly negative.
-      S.LEQ ((currentIndex, 1.0) : zip [1..] lowerDerivatives) (foldl add (-fl - lowerSubst) lowerDerivativesAtCorner),
-      S.GEQ ((currentIndex, 1.0) : zip [1..] upperDerivatives) (foldl add (-fr - upperSubst) upperDerivativesAtCorner)
-    ]
+      case eCorner of
+        Left _ ->
+          [
+            S.LEQ ((currentIndex, 1.0) : zip [1..] lowerDerivatives) (foldl add (-fl - lowerSubst) lowerDerivativesAtCorner),
+            S.GEQ ((currentIndex, 1.0) : zip [1..] upperDerivatives) (foldl add (-fr - upperSubst) upperDerivativesAtCorner)
+          ]
+        Right _ ->    
+          [  
+            S.GEQ ((currentIndex, 1.0) : zip [1..] lowerDerivatives) (foldl add (-fl - lowerSubst) lowerDerivativesAtCorner),
+            S.LEQ ((currentIndex, 1.0) : zip [1..] upperDerivatives) (foldl add (-fr - upperSubst) upperDerivativesAtCorner)
+          ]
     ++
-    createFunctionConstraints cornerValues derivatives corner (currentIndex + 1) substVars
+    createFunctionConstraints values eCorner (currentIndex + 1) substVars
   )
   where
     mpBallToRational :: CN MPBall -> (Rational, Rational)
@@ -550,13 +558,13 @@ createFunctionConstraints (cornerValue : cornerValues) (currentDerivatives : der
     (fl, fr) = mpBallToRational cornerValue
     
     -- Get the first derivatives as rationals
-    firstDerivatives = V.map mpBallToRational currentDerivatives
+    firstDerivatives = V.map mpBallToRational derivatives
     
     lowerDerivatives = V.toList $ V.map fst firstDerivatives
     upperDerivatives = V.toList $ V.map snd firstDerivatives
 
     -- Get the rational values of the corner
-    rationalCornerValue = map (\(_, (v, _)) -> v) corner
+    rationalCornerValue = either (map (\(_, (v, _)) -> v)) (map (\(_, (v, _)) -> v)) eCorner
 
     -- Get the values of multiplying the lower/upper bounds of the derivatives with the values 
     -- of the points at the bottom left corner of the box
@@ -580,18 +588,18 @@ createFunctionConstraints (cornerValue : cornerValues) (currentDerivatives : der
 -- | Enclose the area under zero where the given values of functions along with each functions
 -- first derivatives enclose the area under zero which intersects with the given varMap.
 encloseAreaUnderZeroWithSimplex 
-  :: [CN MPBall] -- ^ The value of each function at the given corner
-  -> [Box] -- ^ The first derivatives for each function over the given varMap
+  :: ([(CN MPBall, Box)]) -- ^ Each item is the value of each function at the given corner along with the first derivatives for the function
   -> VarMap -- ^ The domains for each function which leads to the first derivatives
-  -> VarMap -- ^ The corner at which we get the value for each function for the first parameter
+  -> Either VarMap VarMap {- ^ The corner at which we get the value for each function for the first parameter
+                             Left or Right indicates whether or not this corner is the extreme left or extreme right corner of
+                             the original box -}
   -> Maybe VarMap {- ^ This function returns:
                     Nothing when there is no area under zero to enclose (so the system is above zero). FIXME: Is it better to return an empty list here?
                     `Just [("variable1", (newLowerBound, newUpperBound)), ...]` when the created system
                       is feasible. The new VarMap may be the same as the old VarMap, which means
-                      that the simplex was not able to shrink the original VarMap.
-                  -}
-encloseAreaUnderZeroWithSimplex cornerValues derivativesOverVarMap varMap corner = 
-  --trace (show completeSystem) $
+                      that the simplex was not able to shrink the original VarMap. -}
+encloseAreaUnderZeroWithSimplex cornerValuesWithDerivatives varMap eCorner = 
+  trace (show completeSystem) $
   --trace (show substVars) $
   -- If the first result from the list returned by the simplex method is empty,
   -- the system is infeasible, so we return nothing
@@ -634,14 +642,14 @@ encloseAreaUnderZeroWithSimplex cornerValues derivativesOverVarMap varMap corner
     -- substVars stores any variable transformations (for the LHS)
     ((domainConstraints, substVars), nextAvailableVar) = createDomainConstraints varMap 1
 
-    numberOfFunctions = length cornerValues
+    numberOfFunctions = length cornerValuesWithDerivatives
 
     variables = [1 .. (nextAvailableVar - 1)]
 
     -- Set the variables that will be used to refer to each function
     functions = [nextAvailableVar .. nextAvailableVar + numberOfFunctions - 1]
 
-    functionConstraints = createFunctionConstraints cornerValues derivativesOverVarMap corner nextAvailableVar substVars
+    functionConstraints = createFunctionConstraints cornerValuesWithDerivatives eCorner nextAvailableVar substVars
 
     -- Map integer variables to their respective varMap
     indexedVarMap = zip variables varMap
