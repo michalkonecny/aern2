@@ -107,12 +107,104 @@ maxFloat :: Rational
 maxFloat = (2.0 - 2.0^!(-23)) * 2.0^!127
 
 testX = [(Var "X")]
-
+testMx = [EBinOp Sub (Lit 0.0) (Var "X")]
 testX2 = [EBinOp Mul (Var "X") (Lit 2.0)]
 
 testXm2 = [EBinOp Mul (Var "X") (Lit (-2.0))]
+testXs2 = [EBinOp Sub (Var "X") (Lit (2.0))]
+testXp2s4 = [EBinOp Sub (EBinOp Mul (Var "X") (Var "X")) (Lit (4.0))]
 
 testXY = [EBinOp Mul (Var "X") (Var "Y")]
+testXp2 = [EBinOp Mul (Var "X") (Var "X")]
+testXp3 = [EBinOp Mul (Var "X") (EBinOp Mul (Var "X") (Var "X"))]
+
+testEps :: Rational
+testEps = (0) % 100
+
+-- List.map (List.map (\e -> apply (expressionToBoxFun e [("X", (-1.0, 1.0))] (prec 100)) (fromVarMap [("X", (-1.0, 1.0))] (prec 100)))) testMoreDep
+-- List.map (List.map (\e -> gradient (expressionToBoxFun e [("X", (-1.0, 1.0))] (prec 100)) (fromVarMap [("X", (-1.0, 1.0))] (prec 100)))) testMoreDep
+-- List.map (List.map (\e -> gradientUsingGradient (expressionToBoxFun e [("X", (-1.0, 1.0))] (prec 100)) (fromVarMap [("X", (-1.0, 1.0))] (prec 100)))) testMoreDep
+testMoreDep =
+  [
+    [
+      -- X^2 + X - eps
+      EBinOp Sub (EBinOp Add (PowI (Var "X") 2) (Var "X")) (Lit testEps),
+      -- X^2 - X - eps
+      EBinOp Sub (EBinOp Sub (PowI (Var "X") 2) (Var "X")) (Lit testEps)
+    ]
+  ]
+
+-- List.map (List.map (\e -> apply (expressionToBoxFun e [("X", (-1.0, 1.0))] (prec 100)) (fromVarMap [("X", (-1.0, 1.0))] (prec 100)))) testLessDep
+-- List.map (List.map (\e -> gradient (expressionToBoxFun e [("X", (-1.0, 1.0))] (prec 100)) (fromVarMap [("X", (-1.0, 1.0))] (prec 100)))) testLessDep
+-- List.map (List.map (\e -> gradientUsingGradient (expressionToBoxFun e [("X", (-1.0, 1.0))] (prec 100)) (fromVarMap [("X", (-1.0, 1.0))] (prec 100)))) testLessDep
+testLessDep =
+  [
+    [
+      -- (X + 1/2)^2 - 1/4 - eps
+      EBinOp Sub (EBinOp Sub (PowI (EBinOp Add (Var "X") (Lit 0.5)) 2) (Lit 0.25)) (Lit testEps),
+      -- (X - 1/2)^2 + 1/4 - eps
+      EBinOp Sub (EBinOp Sub (PowI (EBinOp Sub (Var "X") (Lit 0.5)) 2) (Lit 0.25)) (Lit testEps)
+    ]
+  ]
+
+-- List.map (List.map (\e -> gradient (expressionToBoxFun e [("X", (-1.0, 1.0))] (prec 100)) (fromVarMap [("X", (-1.0, 1.0))] (prec 100)))) testXp3OrMXp3Pow
+-- List.map (List.map (\e -> gradientUsingGradient (expressionToBoxFun e [("X", (-1.0, 1.0))] (prec 100)) (fromVarMap [("X", (-1.0, 1.0))] (prec 100)))) testXp3OrMXp3Pow
+testXp3OrMXp3Pow = 
+  [
+    [
+      -- X^3 - testEps >= 0
+      EBinOp Sub (PowI (Var "X") 3) (Lit testEps), 
+      -- (-X)^3 - testEps >=0
+      EBinOp Sub (PowI (EUnOp Negate (Var "X")) 3) (Lit testEps)
+    ]
+  ]
+
+testXp3Yp3OrMXp3MYp3Pow = 
+  [
+    [
+      -- X^3 + Y^3 - testEps >= 0
+      EBinOp Sub (EBinOp Add (PowI (Var "X") 3) (PowI (Var "Y") 3)) (Lit testEps), 
+      -- (-X)^3 + (-Y)^3 - testEps >=0
+      EBinOp Sub (EBinOp Add (PowI (EUnOp Negate (Var "X")) 3) (PowI (EUnOp Negate (Var "Y")) 3)) (Lit testEps)
+    ]
+  ]
+
+
+-- List.map (List.map (\e -> gradient (expressionToBoxFun e [("X", (-1.0, 1.0))] (prec 100)) (fromVarMap [("X", (-1.0, 1.0))] (prec 100)))) testXp3OrMXp3
+-- List.map (List.map (\e -> gradientUsingGradient (expressionToBoxFun e [("X", (-1.0, 1.0))] (prec 100)) (fromVarMap [("X", (-1.0, 1.0))] (prec 100)))) testXp3OrMXp3
+testXp3OrMXp3 = 
+  [
+    [
+      -- X^3 - testEps >= 0
+      EBinOp Sub (EBinOp Mul (Var "X") (EBinOp Mul (Var "X") (Var "X"))) (Lit testEps), 
+      -- (-X)^3 - testEps >=0
+      EBinOp Sub (EBinOp Mul (EUnOp Negate (Var "X")) (EBinOp Mul (EUnOp Negate (Var "X")) (EUnOp Negate (Var "X")))) (Lit testEps)
+    ]
+  ]
+
+-- checkECNFSimplex (minMaxAbsEliminatorECNF (heronPreservationExact 1)) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (prec 100)
+
+badHeron = EUnOp Negate (EBinOp Add (EBinOp Sub (EBinOp Div (EBinOp Add (Var "Y1") (EBinOp Div (Var "X") (Var "Y1"))) (Lit (2 % 1))) (Lit (11744051 % 16777216))) (Lit (1192093 % 10000000000000)))
+-- badF = EUnOp Negate (EBinOp Div (EBinOp Add (Var "Y1") (EBinOp Div (Var "X") (Var "Y1"))))
+-- gradient (expressionToBoxFun badHeron [("X", (0.5, 2.0)), ("Y1", (0.7, 1.8))] (prec 100)) (fromVarMap [("X", (0.5, 2.0)), ("Y1", (0.7, 1.8))] (prec 100))
+
+-- getValueIfNoErrorCE badCn (const 1.0) (const 0.0)  returns 0.0
+-- getValueIfNoErrorCE goodCn (const 1.0) (const 0.0) returns 1.0
+
+-- getValueIfNoErrorCE goodCn (id) (const (mpBall 0)) returns the value of cn
+
+-- badCn = gradient (expressionToBoxFun badHeron [("X", (0.5, 2.0)), ("Y1", (0.7, 1.8))] (prec 100)) (fromVarMap [("X", (0.5, 2.0)), ("Y1", (0.7, 1.8))] (prec 100))
+
+-- branch =
+--   if badCn
+--     then error "branch 1"
+--     else error "branch 2"
+
+-- Can also case using getMaybeValueCE
+
+-- Try two expressions (X^3 and -X^3) are above just under zero
+-- Try two expressions (X^3 and -X^3) are just above zero/at zero (should zoom in)
+
 
 heronInitExact =
   -- ps -> q
