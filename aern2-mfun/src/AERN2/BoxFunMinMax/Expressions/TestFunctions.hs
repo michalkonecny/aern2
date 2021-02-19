@@ -116,10 +116,15 @@ testXp2s4 = [EBinOp Sub (EBinOp Mul (Var "X") (Var "X")) (Lit (4.0))]
 
 testXY = [EBinOp Mul (Var "X") (Var "Y")]
 testXp2 = [EBinOp Mul (Var "X") (Var "X")]
-testXp3 = [EBinOp Mul (Var "X") (EBinOp Mul (Var "X") (Var "X"))]
+testXp3 = [EBinOp Mul (EUnOp Negate (Var "X")) (EBinOp Mul (EUnOp Negate (Var "X")) (EUnOp Negate (Var "X")))]
+
+testXp3Float = [Float (EBinOp Mul (Var "X") (EBinOp Mul (Var "X") (Var "X"))) 2]
 
 testEps :: Rational
-testEps = (0) % 100
+testEps = (-1) % 100
+
+-- [("X", (0.5, 2.0))]
+heronInit1PlusXDiv1 = Float (EBinOp Add (Lit 1.0) (Float (EBinOp Div (Var "X") (Lit 1.0)) 24)) 24
 
 -- List.map (List.map (\e -> apply (expressionToBoxFun e [("X", (-1.0, 1.0))] (prec 100)) (fromVarMap [("X", (-1.0, 1.0))] (prec 100)))) testMoreDep
 -- List.map (List.map (\e -> gradient (expressionToBoxFun e [("X", (-1.0, 1.0))] (prec 100)) (fromVarMap [("X", (-1.0, 1.0))] (prec 100)))) testMoreDep
@@ -159,6 +164,8 @@ testXp3OrMXp3Pow =
     ]
   ]
 
+-- List.map (List.map (\e -> gradient (expressionToBoxFun e [("X", (-1.0, 1.0)), ("Y", (-1.0, 1.0))] (prec 100)) (fromVarMap [("X", (-1.0, 1.0)), ("Y", (-1.0, 1.0))] (prec 100)))) testXp3Yp3OrMXp3MYp3Pow
+-- List.map (List.map (\e -> gradientUsingGradient (expressionToBoxFun e [("X", (-1.0, 1.0)), ("Y", (-1.0, 1.0))] (prec 100)) (fromVarMap [("X", (-1.0, 1.0)), ("Y", (-1.0, 1.0))] (prec 100)))) testXp3Yp3OrMXp3MYp3Pow
 testXp3Yp3OrMXp3MYp3Pow = 
   [
     [
@@ -166,6 +173,18 @@ testXp3Yp3OrMXp3MYp3Pow =
       EBinOp Sub (EBinOp Add (PowI (Var "X") 3) (PowI (Var "Y") 3)) (Lit testEps), 
       -- (-X)^3 + (-Y)^3 - testEps >=0
       EBinOp Sub (EBinOp Add (PowI (EUnOp Negate (Var "X")) 3) (PowI (EUnOp Negate (Var "Y")) 3)) (Lit testEps)
+    ]
+  ]
+
+-- List.map (List.map (\e -> gradient (expressionToBoxFun e [("X", (-1.0, 1.0)), ("Y", (-1.0, 1.0))] (prec 100)) (fromVarMap [("X", (-1.0, 1.0)), ("Y", (-1.0, 1.0))] (prec 100)))) testXp3Yp3OrMXp3MYp3PowFloat
+-- List.map (List.map (\e -> gradientUsingGradient (expressionToBoxFun e [("X", (-1.0, 1.0)), ("Y", (-1.0, 1.0))] (prec 100)) (fromVarMap [("X", (-1.0, 1.0)), ("Y", (-1.0, 1.0))] (prec 100)))) testXp3Yp3OrMXp3MYp3PowFloat
+testXp3Yp3OrMXp3MYp3PowFloat = 
+  [
+    [
+      -- X^3 + Y^3 - testEps >= 0
+      Float (EBinOp Sub (EBinOp Add (PowI (Var "X") 3) (PowI (Var "Y") 3)) (Lit testEps)) 24, 
+      -- (-X)^3 + (-Y)^3 - testEps >=0
+      Float (EBinOp Sub (EBinOp Add (PowI (EUnOp Negate (Var "X")) 3) (PowI (EUnOp Negate (Var "Y")) 3)) (Lit testEps)) 24
     ]
   ]
 
@@ -672,3 +691,165 @@ generateSineExactDreal =
     "sineExact.smt2"
     (cnfExpressionAndDomainsToDreal sineVCNoMaxFloat
       [("X", (-1.0, 1.0))] [] (0.5^!(-23)))
+
+{-  
+Circle packing
+
+Unit square = [("X", (-1, 1)), ("Y", (-1, 1))] ?
+
+checkECNFSimplex will check if a conjunction of disjunctions of expressions is true
+
+We could use the Simplex library to caclulate the centre points/radius of the circles?
+
+Or just verify known packings
+
+We shrink the square by the radius of the circles on all sides
+Distance is calculated as maxWidth of shrunk square
+
+Assuming we know the centre and radius of each circle, the following should be verifiable
+
+circleN are variables
+
+Bound circles within square
+circle1 >= (-1, 1)
+circle1 <= (-1, 1)
+circle2 >= (-1, 1)
+circle2 <= (-1, 1)
+
+circleNCentre is a point in X,Y
+circleRadius is a rational number
+
+circle1 <= circle1Centre + circleRadius
+circle1 >= circle1Centre - circleRadius
+
+circle2 <= circle2Centre + circleRadius
+circle2 >= circle2Centre - circleRadius
+
+Actually...
+
+circleN are variables
+
+Bound circles within square
+pointSquareX <= X - circleRadius
+pointSquareX >= X + circleRadius
+pointSquareY <= Y - circleRadius
+pointSquareY >= Y + circleRadius
+
+circle1PointX <= pointSquareX - circleRadius
+circle1PointX >= pointSquareX + circleRadius
+circle1PointY <= pointSquareY - circleRadius
+circle1PointY >= pointSquareY + circleRadius
+
+circle2PointX <= pointSquareX - circleRadius
+circle2PointX >= pointSquareX + circleRadius
+circle2PointY <= pointSquareY - circleRadius
+circle2PointY >= pointSquareY + circleRadius
+
+Goals:
+
+|circle1PointX - circle2PointX| <= maxDistance
+|circle1PointY - circle2PointY| <= maxDistance
+
+------------------------------
+
+
+
+
+circle1X <= X - circleRadius
+circle1X >= X + circleRadius
+circle1Y <= Y - circleRadius
+circle1Y >= Y + circleRadius
+
+circle2X <= X - circleRadius
+circle2X >= X + circleRadius
+circle2Y <= Y - circleRadius
+circle2Y >= Y + circleRadius
+
+circleNCentre is a point in X,Y
+circleNRadius is a rational number
+
+circle1 <= circle1Centre + circle1Radius
+circle1 >= circle1Centre - circle1Radius
+
+circle2 <= circle2Centre + circle2Radius
+circle2 >= circle2Centre - circle2Radius
+
+Case for n=2
+
+Context:
+X1 in [0, 1]
+Y1 in [0, 1]
+X2 in [0, 1]
+Y2 in [0, 1]
+
+Goal:
+(X1 - X2)^2 + (Y1 - Y2)^2 <= 2 + eps
+
+Case for n=3
+
+Context:
+X1 in [0, 1]
+Y1 in [0, 1]
+X2 in [0, 1]
+Y2 in [0, 1]
+X3 in [0, 1]
+Y3 in [0, 1]
+
+Goal:
+(X1 - X2)^2 + (Y1 - Y2)^2 <= (sqrt(6) - sqrt(2))^2 + eps
+\/
+(X1 - X3)^2 + (Y1 - Y3)^2 <= (sqrt(6) - sqrt(2))^2 + eps
+\/
+(X2 - X3)^2 + (Y2 - Y3)^2 <= (sqrt(6) - sqrt(2))^2 + eps
+
+-}
+
+epsC = 1/!(2^!1)
+
+-- List.map (\f -> apply f (domain f)) (List.map (\e -> expressionToBoxFun e [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0))] (prec 100)) (head square2p))
+-- List.map (\f -> gradient f (domain f)) (List.map (\e -> expressionToBoxFun e [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0))] (prec 100)) (head square2p))
+-- decideDisjunctionWithSimplex (head square2p) [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0))] 0.00000001 1.2 (prec 100)
+-- checkECNFSimplex square2p [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0))] 0.00000001 1.2 1000 (prec 100)
+square2p =
+  [negatedContext ++ goal]
+  where
+    negatedContext = map (EUnOp Negate) context
+    context = []
+    -- sqrt((X1 - X2)^2 + (Y1 - Y2)^2) <= sqrt(2) + eps
+    goal = [fToE goalF]
+    goalF = 
+      FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y2")) 2)))) (EBinOp Add (EUnOp Sqrt (Lit 2.0)) (Lit epsC))
+      -- (X1 - X2)^2 + (Y1 - Y2)^2 <= 2 + eps
+      -- FComp Le ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y2")) 2))) (EBinOp Add ((Lit 2.0)) (Lit epsC))
+
+-- checkECNFSimplex  square3p [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0)), ("Z1", (0.0, 1.0)), ("Z2", (0.0, 1.0))] 0.00000001 1.2 1000 (prec 100)
+square3p =
+  [negatedContext ++ goal]
+  where
+    negatedContext = map (EUnOp Negate) context
+    context = []
+    -- 2 + eps - (X1 - X2)^2 - (Y1 - Y2) >= 0
+    goal = [fToE goalF]
+    goalF = 
+      FComp Le (EUnOp Sqrt (EBinOp Add (EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y2")) 2)) (PowI (EBinOp Sub (Var "Z1") (Var "Z2")) 2))) (EBinOp Add (EBinOp Sub (EUnOp Sqrt (Lit 6.0)) (EUnOp Sqrt (Lit 2.0))) (Lit epsC))
+
+-- checkECNFSimplex  square4p [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0)), ("Z1", (0.0, 1.0)), ("Z2", (0.0, 1.0)), ("A1", (0.0, 1.0)), ("A2", (0.0, 1.0))] 0.00000001 1.2 1000 (prec 100)
+square4p =
+  [negatedContext ++ goal]
+  where
+    negatedContext = map (EUnOp Negate) context
+    context = []
+    -- 2 + eps - (X1 - X2)^2 - (Y1 - Y2) >= 0
+    goal = [fToE goalF]
+    goalF = 
+      FComp Le (EUnOp Sqrt (EBinOp Add (EBinOp Add (EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y2")) 2)) (PowI (EBinOp Sub (Var "Z1") (Var "Z2")) 2)) (PowI (EBinOp Sub (Var "A1") (Var "A2")) 2))) (EBinOp Add (Lit 1.0) (Lit epsC))
+
+testInf =
+  [negatedContext ++ goal]
+  where
+    negatedContext = map (EUnOp Negate) context
+    context = []
+    -- 2 + eps - (X1 - X2)^2 - (Y1 - Y2) >= 0
+    goal = [EBinOp Add (EBinOp Add (EBinOp Add (PowI (Var "X") 3) (PowI (Var "Y") 3)) (PowI (Var "Z") 3)) (PowI (Var "A") 3)]
+
+      
