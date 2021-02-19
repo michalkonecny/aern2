@@ -31,6 +31,7 @@ expressionToBoxFun e domain p =
 
     -- TODO: Change to bfEval
     expressionToDifferential :: E -> V.Vector (Differential (CN MPBall)) -> Differential (CN MPBall)
+    expressionToDifferential (Float e significand) v = undefined
     expressionToDifferential (EBinOp op e1 e2) v = 
       case op of
         Min -> undefined

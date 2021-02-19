@@ -14,7 +14,7 @@ data UnOp  = Sqrt | Negate | Abs | Sin
   deriving (Show, P.Eq, P.Ord)
 
 -- | The E type represents the inequality: expression :: E >= 0
-data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String | PowI E Integer
+data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String | PowI E Integer | Float E Integer -- Float Expression Significand
   deriving (Show, P.Eq, P.Ord)
 
 data Comp = Gt | Ge | Lt | Le
@@ -62,6 +62,14 @@ fToECNF (FConn op f1 f2)   = case op of
   And -> fToECNF f1 ++ fToECNF f2 -- [e1 /\ e2 /\ (e3 \/ e4)] ++ [p1 /\ (p2 \/ p3) /\ p4] = [e1 /\ e2 /\ (e3 \/ e4) /\ p1 /\ (p2 \/ p3) /\ p4]
   Or ->  [d1 ++ d2 | d1 <- fToECNF f1, d2 <- fToECNF f2] -- [e1 /\ e2 /\ (e3 \/ e4)] \/ [p1 /\ (p2 \/ p3) /\ p4] 
   Impl -> [d1 ++ d2 | d1 <- map (map (EUnOp Negate)) (fToECNF f1), d2 <- fToECNF f2]
+
+-- | Add bounds for any Float expressions
+-- addRoundingBounds :: E -> [[E]]
+-- addRoundingBounds (Float e significand) = [[exactExpression - machineEpsilon], [exactExpression + machineEpsilon]]
+--   where
+--     exactExpression = addRoundingBounds e
+--     machineEpsilon = 2^(-23)
+-- addRoundingBounds e = e
 
 -- | Various rules to simplify expressions
 simplifyE :: E -> E
