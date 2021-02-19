@@ -347,15 +347,69 @@ locateNegationOfInequality expression varMap p =
       where
         f = expressionToBoxFun expression varMap p
 
-checkECNFSimplex :: [[E.E]] -> VarMap -> Rational -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
-checkECNFSimplex [] _ _ _ _ = (Just True, Nothing)
-checkECNFSimplex (disjunction : disjunctions) varMap maxWidthCutoff relativeImprovementCutoff p =
+checkECNFSimplex :: [[E.E]] -> VarMap -> Rational -> Rational -> Integer -> Precision -> (Maybe Bool, Maybe VarMap)
+checkECNFSimplex [] _ _ _ _ _ = (Just True, Nothing)
+checkECNFSimplex (disjunction : disjunctions) varMap maxWidthCutoff relativeImprovementCutoff maxBoxesCutoff p =
   case decideDisjunctionWithSimplex disjunction varMap maxWidthCutoff relativeImprovementCutoff p of
     (Just True, _) -> 
-      checkECNFSimplex disjunctions varMap maxWidthCutoff relativeImprovementCutoff p
+      checkECNFSimplex disjunctions varMap maxWidthCutoff relativeImprovementCutoff maxBoxesCutoff p
     r@(Just False, _)              -> r
-    r@(Nothing, Just indeterminateArea) -> r
+    r@(Nothing, Just indeterminateArea) ->
+      let
+        areaToSearch = intersectVarMap varMap $ increaseRadius indeterminateArea ((maxWidth indeterminateArea) /! 10.0) --TODO: Parameterise
+                                                                    
+        
+                                                                                                                        --TODO: Could be better to increase the radius of each variable seperately
+        areaToRight = zipWith (\(v, (_ , newL)) (_, (_, oldR)) -> (v, (newL, oldR))) areaToSearch varMap
+        
+        checkIndeterminateArea areaToCheck = case decideDisjunctionWithSimplex disjunction areaToCheck (maxWidth areaToCheck) relativeImprovementCutoff p of
+          r@(Just True, _) -> r
+          r@(Just False, _) -> r
+          r@(Nothing, _) -> r
 
+        -- We have a cutoff for the boxes we have examined in total
+        checkBFS :: [VarMap] -> [VarMap] -> Integer -> (Maybe Bool, Maybe VarMap)
+        checkBFS [] [] _ = (Just True, Nothing)
+        checkBFS [] indeterminateAreas boxesProcessed =
+          let 
+            newAreas = concatMap fullBisect indeterminateAreas
+          in
+            if boxesProcessed < maxBoxesCutoff
+              then checkBFS newAreas [] boxesProcessed
+              else (Nothing, Just (head indeterminateAreas)) -- (Smallest area?)
+        checkBFS (area : areas) indeterminateAreas boxesProcessed =
+          if boxesProcessed < maxBoxesCutoff
+            then
+              case checkIndeterminateArea area of
+                r@(Just True, _) -> checkBFS areas indeterminateAreas (boxesProcessed + 1)
+                r@(Just False, _) -> r
+                (Nothing, Just indeterminateArea) -> checkBFS areas (indeterminateArea : indeterminateAreas) (boxesProcessed + 1)
+                (Nothing, Nothing) -> error "Given indeterminate result without indeterminate area"
+            else (Nothing, Just area)
+
+        -- checkBFS :: [VarMap] -> [VarMap] -> (Maybe Bool, Maybe VarMap)
+        -- checkBFS [] [] = (Just True, Nothing)
+        -- checkBFS [] indeterminateAreas =
+        --   let 
+        --     newAreas = concatMap fullBisect indeterminateAreas
+        --   in
+        --     if length newAreas < maxBoxesCutoff
+        --       then checkBFS newAreas []
+        --       else (Nothing, Just (head indeterminateAreas)) -- (Smallest area?)
+        -- checkBFS (area : areas) indeterminateAreas =
+        --   case checkIndeterminateArea area of
+        --     r@(Just True, _) -> checkBFS areas indeterminateAreas
+        --     r@(Just False, _) -> r
+        --     (Nothing, Just indeterminateArea) -> checkBFS areas (indeterminateArea : indeterminateAreas)
+        --     (Nothing, Nothing) -> error "Given indeterminate result without indeterminate area"
+      in
+        case checkBFS [areaToSearch] [] 0 of
+          r@(Just True, _) ->
+            case checkECNFSimplex [disjunction] varMap maxWidthCutoff relativeImprovementCutoff maxBoxesCutoff p of -- FIXME: Do breadth-first (whole area)
+              r@(Just True, _) -> checkECNFSimplex disjunctions varMap maxWidthCutoff relativeImprovementCutoff maxBoxesCutoff p
+              r@(_, _) -> r
+          r@(Just False, _) -> r
+          r@(Nothing, _) -> checkBFS [varMap] [] 0
     (Nothing, Nothing) -> error "Given indeterminate result without indeterminate area"
     -- TODO: If this is indeterminate, increase the radius of this box to capture a neighbourhood surrounding the box
     -- Make sure the new box is completely within the original box
@@ -465,8 +519,8 @@ decideDisjunctionWithSimplex expressions varMap maxWidthCutoff relativeImproveme
                         else
                           if maxWidth newVarMap !>=! maxWidthCutoff
                             then 
-                              trace ("bisecting with reduced by simplex varMap: " ++ show newVarMap) $ 
-                              bisectAllDimensionsAndRecurse newVarMap
+                              trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $
+                              bisectAllDimensionsAndRecurse newVarMap --TODO: bisect one dimension, maxWidth dimension?
                             else 
                               trace ("varMap too small to bisect after simplex" ++ show newVarMap) $ 
                               r
@@ -605,6 +659,7 @@ createFunctionConstraints ((leftCornerValue, rightCornerValue, derivatives) : va
             -- y + (dx_1L * x_1) >= yl + (dx_1L * x_1r)
             -- S.GEQ ((currentIndex, -1.0) : zip [1..] lowerDerivatives) (foldl add (rightL - lowerSubst) lowerDerivativesTimesRightCorner),
             -- S.LEQ ((currentIndex, -1.0) : zip [1..] upperDerivatives) (foldl add (rightU - upperSubst) upperDerivativesTimesRightCorner)
+            -- y + (x_1 * (-dx_1R)) >= yl + (x_1r * (-dx_1R))
             S.GEQ ((currentIndex, -1.0) : zip [1..] negatedUpperDerivatives) (foldl add (rightL + upperSubst) negatedUpperDerivativesTimesRightCorner),
             S.LEQ ((currentIndex, -1.0) : zip [1..] negatedLowerDerivatives) (foldl add (rightU + lowerSubst) negatedLowerDerivativesTimesRightCorner)
             

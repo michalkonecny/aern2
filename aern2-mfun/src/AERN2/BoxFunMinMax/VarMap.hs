@@ -23,6 +23,15 @@ maxWidth vMap = L.maximum (map (\(_, ds) -> snd ds - fst ds) vMap)
 taxicabWidth :: VarMap -> Rational
 taxicabWidth vMap = L.sum (map (\(_, ds) -> snd ds - fst ds) vMap)
 
+-- | Increase the diameter of all variables in a varMap by the given rational
+increaseDiameter :: VarMap -> Rational -> VarMap
+increaseDiameter [] _ = []
+increaseDiameter ((v, (l, r)) : vs) d = ((v, (l - d, r + d)) : vs)
+
+-- | Increase the radius of all variables in a varMap by the given rational
+increaseRadius :: VarMap -> Rational -> VarMap
+increaseRadius vm r = increaseDiameter vm (r/!2)
+
 -- | Bisect all elements in a given VarMap
 fullBisect :: VarMap -> [VarMap]
 fullBisect vMap = case L.length vMap of
@@ -105,6 +114,24 @@ upperbound = map (\(v,(_,r)) -> (v, (r, r)))
 
 lowerbound :: VarMap -> VarMap
 lowerbound = map (\(v,(l,_)) -> (v, (l, l)))
+
+
+-- |Intersect two varMaps
+-- This assumes that both VarMaps have the same variables in the same order
+intersectVarMap :: VarMap -> VarMap -> VarMap
+intersectVarMap vm1 vm2 =
+  zipWith 
+    (\(v, (l1, r1)) (_, (l2, r2)) -> 
+      (v,
+      (
+        max l1 l2,
+        min r1 r2
+      )
+      )
+    ) 
+    vm1 
+    vm2
+
 
 -- | Get all the possible edges of a given VarMap as a list of VarMaps
 -- Examples:
