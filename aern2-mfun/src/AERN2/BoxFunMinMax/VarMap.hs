@@ -43,12 +43,12 @@ fullBisect vMap = case L.length vMap of
 
             where
                 bisectDimension n = [fst bn L.!! (int n), snd bn L.!! (int n)]
-                    where bn = bisect n vMap
+                    where bn = bisectN n vMap
 
--- | Bisect the domain of the given Var, resulting in a pair
+-- | Bisect the domain of the given interval, resulting in a pair
 -- Vars
-bisectVar :: (String, (Rational, Rational)) -> ((String, (Rational, Rational)), (String, (Rational, Rational)))
-bisectVar vMap = bisectedVar
+bisectInterval :: (String, (Rational, Rational)) -> ((String, (Rational, Rational)), (String, (Rational, Rational)))
+bisectInterval vMap = bisectedVar
   where
     varCentre = fst dom + (snd dom - fst dom) /! 2 where dom = snd vMap
     bisectedVar = ((var, (fst dom, varCentre)), (var, (varCentre, snd dom)))
@@ -58,14 +58,24 @@ bisectVar vMap = bisectedVar
 
 -- | Bisect the given dimension of the given VarMap,
 -- resulting in a pair of VarMaps
-bisect :: Integer ->  VarMap -> (VarMap, VarMap)
-bisect n vMap = 
+bisectN :: Integer ->  VarMap -> (VarMap, VarMap)
+bisectN n vMap = 
   (
     map (\v -> if fst v == fst fstBisect then fstBisect else v) vMap,
     map (\v -> if fst v == fst sndBisect then sndBisect else v) vMap
   )
   where
-    (fstBisect, sndBisect) = bisectVar (vMap L.!! (int n))
+    (fstBisect, sndBisect) = bisectInterval (vMap L.!! (int n))
+
+bisectVar :: VarMap -> String -> (VarMap, VarMap)
+bisectVar [] _ = ([], [])
+bisectVar (v@(currentVar, (_, _)) : vm) bisectionVar =
+  if currentVar == bisectionVar 
+    then ((leftBisection : vm), (rightBisection : vm))
+    else ((v : leftList), (v : rightList))
+  where
+    (leftBisection, rightBisection) = bisectInterval v
+    (leftList, rightList) = bisectVar vm bisectionVar
 
 -- | Check whether or not v1 contain v2.
 contains :: VarMap -> VarMap -> Bool
@@ -119,7 +129,7 @@ lowerbound = map (\(v,(l,_)) -> (v, (l, l)))
 -- |Intersect two varMaps
 -- This assumes that both VarMaps have the same variables in the same order
 intersectVarMap :: VarMap -> VarMap -> VarMap
-intersectVarMap vm1 vm2 =
+intersectVarMap =
   zipWith 
     (\(v, (l1, r1)) (_, (l2, r2)) -> 
       (v,
@@ -129,8 +139,15 @@ intersectVarMap vm1 vm2 =
       )
       )
     ) 
-    vm1 
-    vm2
+
+-- | Returns the widest interval in the given VarMap
+widestInterval :: VarMap -> (String, (Rational, Rational)) -> (String, (Rational, Rational))
+widestInterval [] widest = widest
+widestInterval (current@(_, (cL, cR)) : vm) widest@(_, (wL, wR)) =
+  if widestDist >= currentDist then widestInterval vm widest else widestInterval vm current
+  where
+    widestDist = abs(wR - wL)
+    currentDist = abs(cR - cL)
 
 
 -- | Get all the possible edges of a given VarMap as a list of VarMaps

@@ -372,7 +372,17 @@ checkECNFSimplex (disjunction : disjunctions) varMap maxWidthCutoff relativeImpr
         checkBFS [] [] _ = (Just True, Nothing)
         checkBFS [] indeterminateAreas boxesProcessed =
           let 
-            newAreas = concatMap fullBisect indeterminateAreas
+            -- (leftVarMap, rightVarMap) = bisectVar varMapToBisect (fst (widestInterval (tail varMapToBisect) (head varMapToBisect)))
+            -- newAreas = concatMap fullBisect indeterminateAreas
+            newAreas = 
+              concatMap 
+              (\vm -> 
+                let
+                  (leftBisection, rightBisection) = bisectVar vm (fst (widestInterval (tail vm) (head vm))) 
+                in
+                  [leftBisection, rightBisection]
+              )
+              indeterminateAreas
           in
             if boxesProcessed < maxBoxesCutoff
               then checkBFS newAreas [] boxesProcessed
@@ -475,6 +485,8 @@ decideDisjunctionWithSimplex expressions varMap maxWidthCutoff relativeImproveme
       if null filteredExpressions
         then 
           trace ("proved false with apply " ++ showVarMapWithDecimals varMap)
+          trace (show expressions)
+          trace (show filteredExpressions)
           (Just False, Just varMap)
         else 
           if checkIfEsTrueUsingApply 
@@ -520,14 +532,14 @@ decideDisjunctionWithSimplex expressions varMap maxWidthCutoff relativeImproveme
                           if maxWidth newVarMap !>=! maxWidthCutoff
                             then 
                               trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $
-                              bisectAllDimensionsAndRecurse newVarMap --TODO: bisect one dimension, maxWidth dimension?
+                              bisectWidestDimensionAndRecurse newVarMap --TODO: bisect one dimension, maxWidth dimension?
                             else 
                               trace ("varMap too small to bisect after simplex" ++ show newVarMap) $ 
                               r
                     _ -> undefined
                   else
                     if maxWidth varMap !>=! maxWidthCutoff 
-                      then trace ("bisecting without simplex" ++ show varMap) $ bisectAllDimensionsAndRecurse varMap
+                      then trace ("bisecting without simplex" ++ show varMap) $ bisectWidestDimensionAndRecurse varMap
                       else trace ("varMap too small to bisect" ++ show varMap) $ (Nothing, Just varMap)
       
   where
@@ -550,6 +562,29 @@ decideDisjunctionWithSimplex expressions varMap maxWidthCutoff relativeImproveme
     cornerRangesWithDerivatives     = zip3 esRangesAtLeftCorner esRangesAtRightCorner esDerivativesOverVarMap
     -- filteredEsAboveZeroAtCorner = map fst $ filter (\(_, range) -> range !>! 0) filteredEsWithRangesAtCorner 
 
+    bisectWidestDimensionAndRecurse varMapToBisect =
+      let
+        (leftVarMap, rightVarMap) = bisectVar varMapToBisect (fst (widestInterval (tail varMapToBisect) (head varMapToBisect)))
+        bisectedVarMaps = [leftVarMap, rightVarMap]
+
+        checkBisection :: [VarMap] -> Bool -> Maybe VarMap -> (Maybe Bool, Maybe VarMap)
+        checkBisection []         foundIndeterminate indeterminateVarMap = if foundIndeterminate 
+          -- Recurse with 'breadth-first' mode
+          then (Nothing, indeterminateVarMap) 
+          else (Just True, Nothing)
+        checkBisection (vm : vms) foundIndeterminate indeterminateVarMap = 
+          case decideDisjunctionWithSimplex filteredExpressions vm maxWidthCutoff relativeImprovementCutoff p of
+            (Just True, _)                -> checkBisection vms foundIndeterminate indeterminateVarMap
+            r@(Just False, _)             -> r 
+            r@(Nothing, indeterminateArea)  -> -- Try depth first search until we reach cutoff.
+              -- case decideDisjunctionWithBreadthFirst filteredExpressions vms [] maxWidthCutoff p of
+              --   c@(Just _) -> (Just False, c)
+              --   Nothing -> r
+
+              -- r
+              checkBisection vms True indeterminateArea
+      in
+        checkBisection bisectedVarMaps False Nothing
     bisectAllDimensionsAndRecurse varMapToBisect =
       let
         bisectedVarMaps = fullBisect varMapToBisect
