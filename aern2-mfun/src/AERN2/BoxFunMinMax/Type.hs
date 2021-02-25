@@ -14,12 +14,10 @@ import Control.Parallel.Strategies
 import Data.Bifunctor
 import qualified Simplex as S
 
-import Debug.Trace (trace)
-
 import Data.List (filter, find)
 import qualified Data.Sequence as Seq
 
-import System.IO.Unsafe
+import Debug.Trace (trace)
 
 -- trace a x = x
 
@@ -350,22 +348,16 @@ locateNegationOfInequality expression varMap p =
 checkECNFSimplex :: [[E.E]] -> VarMap -> Rational -> Rational -> Integer -> Precision -> (Maybe Bool, Maybe VarMap)
 checkECNFSimplex [] _ _ _ _ _ = (Just True, Nothing)
 checkECNFSimplex (disjunction : disjunctions) varMap maxWidthCutoff relativeImprovementCutoff maxBoxesCutoff p =
-  case decideDisjunctionWithSimplex disjunction varMap maxWidthCutoff relativeImprovementCutoff p of
+  case decideDisjunctionWithSimplex (map (\e -> (e, expressionToBoxFun e varMap p)) disjunction) varMap maxWidthCutoff relativeImprovementCutoff p of
     (Just True, _) -> 
       checkECNFSimplex disjunctions varMap maxWidthCutoff relativeImprovementCutoff maxBoxesCutoff p
     r@(Just False, _)              -> r
-    r@(Nothing, Just indeterminateArea) ->
+    (Nothing, Just indeterminateArea) ->
       let
         areaToSearch = intersectVarMap varMap $ increaseRadius indeterminateArea ((maxWidth indeterminateArea) /! 10.0) --TODO: Parameterise
-                                                                    
-        
                                                                                                                         --TODO: Could be better to increase the radius of each variable seperately
-        areaToRight = zipWith (\(v, (_ , newL)) (_, (_, oldR)) -> (v, (newL, oldR))) areaToSearch varMap
         
-        checkIndeterminateArea areaToCheck = case decideDisjunctionWithSimplex disjunction areaToCheck (maxWidth areaToCheck) relativeImprovementCutoff p of
-          r@(Just True, _) -> r
-          r@(Just False, _) -> r
-          r@(Nothing, _) -> r
+        checkIndeterminateArea areaToCheck = decideDisjunctionWithSimplex (map (\e -> (e, expressionToBoxFun e areaToCheck p)) disjunction) areaToCheck (maxWidth areaToCheck) relativeImprovementCutoff p
 
         -- We have a cutoff for the boxes we have examined in total
         checkBFS :: [VarMap] -> [VarMap] -> Integer -> (Maybe Bool, Maybe VarMap)
@@ -391,7 +383,7 @@ checkECNFSimplex (disjunction : disjunctions) varMap maxWidthCutoff relativeImpr
           if boxesProcessed < maxBoxesCutoff
             then
               case checkIndeterminateArea area of
-                r@(Just True, _) -> checkBFS areas indeterminateAreas (boxesProcessed + 1)
+                (Just True, _) -> checkBFS areas indeterminateAreas (boxesProcessed + 1)
                 r@(Just False, _) -> r
                 (Nothing, Just indeterminateArea) -> checkBFS areas (indeterminateArea : indeterminateAreas) (boxesProcessed + 1)
                 (Nothing, Nothing) -> error "Given indeterminate result without indeterminate area"
@@ -414,12 +406,12 @@ checkECNFSimplex (disjunction : disjunctions) varMap maxWidthCutoff relativeImpr
         --     (Nothing, Nothing) -> error "Given indeterminate result without indeterminate area"
       in
         case checkBFS [areaToSearch] [] 0 of
-          r@(Just True, _) ->
+          (Just True, _) ->
             case checkIndeterminateArea varMap of
-              r@(Just True, _) -> checkECNFSimplex disjunctions varMap maxWidthCutoff relativeImprovementCutoff maxBoxesCutoff p
+              (Just True, _) -> checkECNFSimplex disjunctions varMap maxWidthCutoff relativeImprovementCutoff maxBoxesCutoff p
               r@(_, _) -> r
           r@(Just False, _) -> r
-          r@(Nothing, _) -> checkBFS [varMap] [] 0
+          (Nothing, _) -> checkBFS [varMap] [] 0
     (Nothing, Nothing) -> error "Given indeterminate result without indeterminate area"
     -- TODO: If this is indeterminate, increase the radius of this box to capture a neighbourhood surrounding the box
     -- Make sure the new box is completely within the original box
@@ -476,17 +468,15 @@ decideDisjunctionWithBreadthFirst expressions (varMap : varMaps) checkedVarMaps 
     areExpressionsTrue      = map (\(_, range) -> range !>! 0) esWithRanges
     filteredExpressions     = map fst filterOutFalseTerms
 
-decideDisjunctionWithSimplex :: [E.E] -> VarMap -> Rational -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
-decideDisjunctionWithSimplex expressions varMap maxWidthCutoff relativeImprovementCutoff p = 
+decideDisjunctionWithSimplex :: [(E.E, BoxFun)] -> VarMap -> Rational -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
+decideDisjunctionWithSimplex expressionsWithFunctions varMap maxWidthCutoff relativeImprovementCutoff p = 
   -- trace (showVarMapWithDecimals varMap) $
   -- unsafePerformIO $ do
   --   appendFile "/home/junaid/Research/git/aern2-base/aern2/boxes/3s2oneCorner.txt" (show varMap ++ "\n")
   --   return $ 
-      if null filteredExpressions
+      if null filterOutFalseTerms
         then 
           trace ("proved false with apply " ++ showVarMapWithDecimals varMap)
-          trace (show expressions)
-          trace (show filteredExpressions)
           (Just False, Just varMap)
         else 
           if checkIfEsTrueUsingApply 
@@ -527,7 +517,7 @@ decideDisjunctionWithSimplex expressions varMap maxWidthCutoff relativeImproveme
                           -- trace (show newVarMap)
                           -- trace "--------------------"
                           trace "recursing with simplex" $
-                          decideDisjunctionWithSimplex filteredExpressions newVarMap maxWidthCutoff relativeImprovementCutoff p
+                          decideDisjunctionWithSimplex filteredExpressionsWithFunctions newVarMap maxWidthCutoff relativeImprovementCutoff p
                         else
                           if maxWidth newVarMap !>=! maxWidthCutoff
                             then 
@@ -545,35 +535,32 @@ decideDisjunctionWithSimplex expressions varMap maxWidthCutoff relativeImproveme
   where
     showVarMapWithDecimals :: VarMap -> String
     showVarMapWithDecimals vm = concatMap (\(v, (l, u)) -> show v ++ ": [" ++ ((show . double)  l) ++ ", " ++ ((show . double) u) ++ "] \n") vm
-      where
 
-    expressionsWithFunctions = map (\e -> (e, expressionToBoxFun e varMap p)) expressions
-    functions = map snd expressionsWithFunctions
+    box  = fromVarMap varMap p
+    boxL = lowerBounds box
+    boxU = upperBounds box
 
-    esWithRanges            = zip expressionsWithFunctions (parMap rseq (\f -> apply f (domain f)) functions)
+    esWithRanges            = parMap rseq (\(e, f) -> ((e, f), apply f box)) expressionsWithFunctions
     filterOutFalseTerms     = filter (\(_, range) -> not (range !<! 0))  esWithRanges -- Could make this cleaner with list comprehension
     
-    filteredExpressions               = map (fst . fst) filterOutFalseTerms
-    filteredFunctions                 = map (snd . fst) filterOutFalseTerms
+    filteredExpressionsWithFunctions = map fst filterOutFalseTerms
     
     checkIfEsTrueUsingApply = any (\(_, range) -> range !>=! 0)  filterOutFalseTerms
 
     cornerRangesWithDerivatives = 
       parMap 
       rseq
-      (\f ->
-        let b = domain f
-        in
+      (\((_,f),_) ->
         (
           -- left corner range
-          apply f (lowerBounds b),
+          apply f boxL,
           -- right corner range
-          apply f (upperBounds b),
+          apply f boxU,
           -- derivatives
-          gradientUsingGradient f b
+          gradientUsingGradient f box
         )
       )
-      filteredFunctions
+      filterOutFalseTerms
     
 
     bisectWidestDimensionAndRecurse varMapToBisect =
@@ -583,8 +570,8 @@ decideDisjunctionWithSimplex expressions varMap maxWidthCutoff relativeImproveme
           withStrategy 
           (parTuple2 rseq rseq) 
           (
-            decideDisjunctionWithSimplex filteredExpressions leftVarMap maxWidthCutoff relativeImprovementCutoff p, 
-            decideDisjunctionWithSimplex filteredExpressions rightVarMap maxWidthCutoff relativeImprovementCutoff p
+            decideDisjunctionWithSimplex filteredExpressionsWithFunctions leftVarMap maxWidthCutoff relativeImprovementCutoff p, 
+            decideDisjunctionWithSimplex filteredExpressionsWithFunctions rightVarMap maxWidthCutoff relativeImprovementCutoff p
           )
       in
         case leftR of
@@ -608,7 +595,7 @@ decideDisjunctionWithSimplex expressions varMap maxWidthCutoff relativeImproveme
           then (Nothing, indeterminateVarMap) 
           else (Just True, Nothing)
         checkBisection (vm : vms) foundIndeterminate indeterminateVarMap = 
-          case decideDisjunctionWithSimplex filteredExpressions vm maxWidthCutoff relativeImprovementCutoff p of
+          case decideDisjunctionWithSimplex filteredExpressionsWithFunctions vm maxWidthCutoff relativeImprovementCutoff p of
             (Just True, _)                -> checkBisection vms foundIndeterminate indeterminateVarMap
             r@(Just False, _)             -> r 
             r@(Nothing, indeterminateArea)  -> -- Try depth first search until we reach cutoff.
