@@ -415,7 +415,7 @@ checkECNFSimplex (disjunction : disjunctions) varMap maxWidthCutoff relativeImpr
       in
         case checkBFS [areaToSearch] [] 0 of
           r@(Just True, _) ->
-            case checkECNFSimplex [disjunction] varMap maxWidthCutoff relativeImprovementCutoff maxBoxesCutoff p of -- FIXME: Do breadth-first (whole area)
+            case checkIndeterminateArea varMap of
               r@(Just True, _) -> checkECNFSimplex disjunctions varMap maxWidthCutoff relativeImprovementCutoff maxBoxesCutoff p
               r@(_, _) -> r
           r@(Just False, _) -> r
