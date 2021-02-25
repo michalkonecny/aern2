@@ -485,7 +485,7 @@ decideDisjunctionWithSimplex expressionsWithFunctions varMap maxWidthCutoff rela
               (Just True, Nothing)
             else 
               -- Only call decideWithSimplex if all derivatives can be calculated
-              if and (concatMap (V.toList . V.map (not . hasErrorCN)) (map (\(_,_,c) -> c) cornerRangesWithDerivatives))
+              if and (concatMap (\(_, _, c) -> V.toList (V.map (not . hasErrorCN) c)) cornerRangesWithDerivatives)
                 then 
                   case decideWithSimplex cornerRangesWithDerivatives varMap of
                     r@(Just True, _) -> 
@@ -509,8 +509,7 @@ decideDisjunctionWithSimplex expressionsWithFunctions varMap maxWidthCutoff rela
                         -- boxChangeWidth = abs(Box.width (lastBox - newBox))
                         -- boxChangeWidth = (taxicabWidth varMap - taxicabWidth newVarMap)
                       in
-                      if (taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff)
-
+                      if taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff
                         then
                           -- trace "--------------------"
                           -- trace (show varMap)
@@ -530,11 +529,11 @@ decideDisjunctionWithSimplex expressionsWithFunctions varMap maxWidthCutoff rela
                   else
                     if maxWidth varMap !>=! maxWidthCutoff 
                       then trace ("bisecting without simplex" ++ show varMap) $ bisectWidestDimensionAndRecurse varMap
-                      else trace ("varMap too small to bisect" ++ show varMap) $ (Nothing, Just varMap)
+                      else trace ("varMap too small to bisect" ++ show varMap) (Nothing, Just varMap)
       
   where
     showVarMapWithDecimals :: VarMap -> String
-    showVarMapWithDecimals vm = concatMap (\(v, (l, u)) -> show v ++ ": [" ++ ((show . double)  l) ++ ", " ++ ((show . double) u) ++ "] \n") vm
+    showVarMapWithDecimals = concatMap (\(v, (l, u)) -> show v ++ ": [" ++ ((show . double)  l) ++ ", " ++ ((show . double) u) ++ "] \n")
 
     box  = fromVarMap varMap p
     boxL = lowerBounds box
