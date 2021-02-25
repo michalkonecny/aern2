@@ -8,7 +8,7 @@ import AERN2.BoxFunMinMax.Optimisation
 import AERN2.BoxFunMinMax.VarMap
 import AERN2.BoxFunMinMax.Expressions.Translators.BoxFun
 import qualified AERN2.BoxFunMinMax.Expressions.Type as E
-import AERN2.BoxFun.Box (createEnclosingBox, Box, fromVarMap, intersectionCertainlyEmpty, nonEmptyIntersection)
+import AERN2.BoxFun.Box (createEnclosingBox, Box, fromVarMap, intersectionCertainlyEmpty, nonEmptyIntersection, lowerBounds, upperBounds)
 import qualified AERN2.Linear.Vector.Type as V
 import Control.Parallel.Strategies
 import Data.Bifunctor
@@ -495,7 +495,7 @@ decideDisjunctionWithSimplex expressions varMap maxWidthCutoff relativeImproveme
               (Just True, Nothing)
             else 
               -- Only call decideWithSimplex if all derivatives can be calculated
-              if and (concatMap (V.toList . V.map (not . hasErrorCN)) esDerivativesOverVarMap)
+              if and (concatMap (V.toList . V.map (not . hasErrorCN)) (map (\(_,_,c) -> c) cornerRangesWithDerivatives))
                 then 
                   case decideWithSimplex cornerRangesWithDerivatives varMap of
                     r@(Just True, _) -> 
@@ -546,45 +546,58 @@ decideDisjunctionWithSimplex expressions varMap maxWidthCutoff relativeImproveme
     showVarMapWithDecimals :: VarMap -> String
     showVarMapWithDecimals vm = concatMap (\(v, (l, u)) -> show v ++ ": [" ++ ((show . double)  l) ++ ", " ++ ((show . double) u) ++ "] \n") vm
       where
-    applyE vm e = applyLipschitz f (setPrecision p (domain f))
-      where
-        f = expressionToBoxFun e vm p
-    esWithRanges            = zip expressions (parMap rseq (applyE varMap) expressions)
+
+    expressionsWithFunctions = map (\e -> (e, expressionToBoxFun e varMap p)) expressions
+    functions = map snd expressionsWithFunctions
+
+    esWithRanges            = zip expressionsWithFunctions (parMap rseq (\f -> apply f (domain f)) functions)
     filterOutFalseTerms     = filter (\(_, range) -> not (range !<! 0))  esWithRanges -- Could make this cleaner with list comprehension
-    filteredExpressions     = map fst filterOutFalseTerms
+    
+    filteredExpressions               = map (fst . fst) filterOutFalseTerms
+    filteredFunctions                 = map (snd . fst) filterOutFalseTerms
+    
     checkIfEsTrueUsingApply = any (\(_, range) -> range !>=! 0)  filterOutFalseTerms
 
-    leftCorner                      = map (\(v, (l, r)) -> (v, (l, l))) varMap
-    rightCorner                     = map (\(v, (l, r)) -> (v, (r, r))) varMap
-    esRangesAtLeftCorner            = parMap rseq (applyE leftCorner) filteredExpressions
-    esRangesAtRightCorner           = parMap rseq (applyE rightCorner) filteredExpressions
-    esDerivativesOverVarMap         = parMap rseq (\e -> gradientUsingGradient (expressionToBoxFun e varMap p) (fromVarMap varMap p)) filteredExpressions
-    cornerRangesWithDerivatives     = zip3 esRangesAtLeftCorner esRangesAtRightCorner esDerivativesOverVarMap
-    -- filteredEsAboveZeroAtCorner = map fst $ filter (\(_, range) -> range !>! 0) filteredEsWithRangesAtCorner 
+    cornerRangesWithDerivatives = 
+      parMap 
+      rseq
+      (\f ->
+        let b = domain f
+        in
+        (
+          -- left corner range
+          apply f (lowerBounds b),
+          -- right corner range
+          apply f (upperBounds b),
+          -- derivatives
+          gradientUsingGradient f b
+        )
+      )
+      filteredFunctions
+    
 
     bisectWidestDimensionAndRecurse varMapToBisect =
       let
         (leftVarMap, rightVarMap) = bisectVar varMapToBisect (fst (widestInterval (tail varMapToBisect) (head varMapToBisect)))
-        bisectedVarMaps = [leftVarMap, rightVarMap]
-
-        checkBisection :: [VarMap] -> Bool -> Maybe VarMap -> (Maybe Bool, Maybe VarMap)
-        checkBisection []         foundIndeterminate indeterminateVarMap = if foundIndeterminate 
-          -- Recurse with 'breadth-first' mode
-          then (Nothing, indeterminateVarMap) 
-          else (Just True, Nothing)
-        checkBisection (vm : vms) foundIndeterminate indeterminateVarMap = 
-          case decideDisjunctionWithSimplex filteredExpressions vm maxWidthCutoff relativeImprovementCutoff p of
-            (Just True, _)                -> checkBisection vms foundIndeterminate indeterminateVarMap
-            r@(Just False, _)             -> r 
-            r@(Nothing, indeterminateArea)  -> -- Try depth first search until we reach cutoff.
-              -- case decideDisjunctionWithBreadthFirst filteredExpressions vms [] maxWidthCutoff p of
-              --   c@(Just _) -> (Just False, c)
-              --   Nothing -> r
-
-              -- r
-              checkBisection vms True indeterminateArea
+        (leftR, rightR) = 
+          withStrategy 
+          (parTuple2 rseq rseq) 
+          (
+            decideDisjunctionWithSimplex filteredExpressions leftVarMap maxWidthCutoff relativeImprovementCutoff p, 
+            decideDisjunctionWithSimplex filteredExpressions rightVarMap maxWidthCutoff relativeImprovementCutoff p
+          )
       in
-        checkBisection bisectedVarMaps False Nothing
+        case leftR of
+            (Just True, _) ->
+              case rightR of
+                (Just True, _) -> (Just True, Nothing)
+                r -> r
+            r@(Just False, _) -> r
+            i@(Nothing, _) -> 
+              case rightR of
+                (Just True, _) -> i
+                r -> r
+
     bisectAllDimensionsAndRecurse varMapToBisect =
       let
         bisectedVarMaps = fullBisect varMapToBisect

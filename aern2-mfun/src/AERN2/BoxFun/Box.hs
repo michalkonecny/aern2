@@ -117,6 +117,12 @@ getEndpoints b  =
         0 -> []
         _ -> endpointsAsIntervals ((b ! 0) ~!) : getEndpoints (V.drop (fromIntegral 1) b)
 
+lowerBounds :: Box -> Box
+lowerBounds = V.map lowerBound
+
+upperBounds :: Box -> Box
+upperBounds = V.map upperBound
+
 instance 
     CanNeg Box
     where
