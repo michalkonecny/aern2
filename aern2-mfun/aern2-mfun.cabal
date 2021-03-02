@@ -69,7 +69,7 @@ library
     AERN2.Linear.Vector.Type
     AERN2.Linear.Matrix.Type
     AERN2.Linear.Matrix.Inverse
-    AERN2.MP.Float
+    -- AERN2.MP.Float
     AERN2.BoxFun.Box
     AERN2.BoxFun.Type
     AERN2.BoxFun.TestFunctions
@@ -83,38 +83,39 @@ library
     AERN2.BoxFunMinMax.Expressions.Translators.BoxFun
     AERN2.BoxFunMinMax.Expressions.Translators.DReal
     AERN2.BoxFunMinMax.Expressions.Translators.MetiTarski
+    AERN2.BoxFunMinMax.Expressions.Translators.FPTaylor
     -- AERN2.BoxFun.OptimisationConcurrent 
 
-executable aern2-mfun-benchmark
-  ghc-options:
-      -Wall -O2 -threaded
-  extensions:
-    RebindableSyntax,
-    TypeFamilies,
-    PostfixOperators,
-    ScopedTypeVariables,
-    FlexibleContexts,
-    TypeSynonymInstances
-  hs-source-dirs:
-      src/AERN2/Benchmark
-  main-is:
-      OptimisationBenchmark.hs
-  build-depends:
-    base == 4.*
-    , bytestring
-    , regex-tdfa
-    , zlib
-    , mixed-types-num == 0.4.*
-    , aern2-mp == 0.1.*
-    , aern2-mfun == 0.1.*
-    , aern2-real == 0.1.*
-    , QuickCheck
-    , clock
-    , async
+-- executable aern2-mfun-benchmark
+--   ghc-options:
+--       -Wall -O2 -threaded
+--   extensions:
+--     RebindableSyntax,
+--     TypeFamilies,
+--     PostfixOperators,
+--     ScopedTypeVariables,
+--     FlexibleContexts,
+--     TypeSynonymInstances
+--   hs-source-dirs:
+--       src/AERN2/Benchmark
+--   main-is:
+--       OptimisationBenchmark.hs
+--   build-depends:
+--     base == 4.*
+--     , bytestring
+--     , regex-tdfa
+--     , zlib
+--     , mixed-types-num == 0.4.*
+--     , aern2-mp == 0.1.*
+--     , aern2-mfun == 0.1.*
+--     , aern2-real == 0.1.*
+--     , QuickCheck
+--     , clock
+--     , async
 
 executable aern2-mfun-heron-benchmark
   ghc-options:
-      -Wall -O2 -threaded -rtsopts
+      -Wall -O2 -threaded -rtsopts +RTS -N6 -RTS
   extensions:
     RebindableSyntax,
     TypeFamilies,
