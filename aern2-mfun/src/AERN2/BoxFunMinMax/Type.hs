@@ -17,9 +17,9 @@ import qualified Simplex as S
 import Data.List (filter, find)
 import qualified Data.Sequence as Seq
 
-import Debug.Trace (trace)
+-- import Debug.Trace (trace)
 
--- trace a x = x
+trace a x = x
 
 -- | Check a CNF (Conjunctive Normal Form) of Expressions in the form of a list of lists
 -- over the given VarMap.
@@ -474,63 +474,62 @@ decideDisjunctionWithSimplex expressionsWithFunctions varMap maxWidthCutoff rela
   -- unsafePerformIO $ do
   --   appendFile "/home/junaid/Research/git/aern2-base/aern2/boxes/3s2oneCorner.txt" (show varMap ++ "\n")
   --   return $ 
-      if null filterOutFalseTerms
+  if null filterOutFalseTerms
+    then 
+      trace ("proved false with apply " ++ showVarMapWithDecimals varMap)
+      (Just False, Just varMap)
+    else 
+      if checkIfEsTrueUsingApply 
         then 
-          trace ("proved false with apply " ++ showVarMapWithDecimals varMap)
-          (Just False, Just varMap)
+          trace "proved true with apply" 
+          (Just True, Nothing)
         else 
-          if checkIfEsTrueUsingApply 
+          -- Only call decideWithSimplex if all derivatives can be calculated
+          if and (concatMap (\(_, _, c) -> V.toList (V.map (not . hasErrorCN) c)) cornerRangesWithDerivatives)
             then 
-              trace "proved true with apply" 
-              (Just True, Nothing)
-            else 
-              -- Only call decideWithSimplex if all derivatives can be calculated
-              if and (concatMap (\(_, _, c) -> V.toList (V.map (not . hasErrorCN) c)) cornerRangesWithDerivatives)
-                then 
-                  case decideWithSimplex cornerRangesWithDerivatives varMap of
-                    r@(Just True, _) -> 
-                      trace "proved true with simplex" 
-                      r
-                    r@(Nothing, Just newVarMap) ->
-                      -- let
-                      --   checkUsingGlobalMinimum :: [E.E] -> (Maybe Bool, Maybe VarMap)
-                        
-                      --   checkUsingGlobalMinimum [] = (Nothing, Just newVarMap)
+              case decideWithSimplex cornerRangesWithDerivatives varMap of
+                r@(Just True, _) -> 
+                  trace "proved true with simplex" 
+                  r
+                r@(Nothing, Just newVarMap) ->
+                  -- let
+                  --   checkUsingGlobalMinimum :: [E.E] -> (Maybe Bool, Maybe VarMap)
+                    
+                  --   checkUsingGlobalMinimum [] = (Nothing, Just newVarMap)
 
-                      --   checkUsingGlobalMinimum (e : es) = 
-                      --     case globalMinimumAboveN2 (expressionToBoxFun e newVarMap p) (bits 100) p (cn (mpBallP p 0)) of
-                      --       (Just True, _)                    -> (Just True, Nothing)
-                      --       (_, _)                            -> checkUsingGlobalMinimum es
-                      -- in
-                      --   checkUsingGlobalMinimum expressions 
-                      let 
-                        -- lastBox = fromVarMap varMap p
-                        -- newBox  = fromVarMap newVarMap p
-                        -- boxChangeWidth = abs(Box.width (lastBox - newBox))
-                        -- boxChangeWidth = (taxicabWidth varMap - taxicabWidth newVarMap)
-                      in
-                      if taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff
-                        then
-                          -- trace "--------------------"
-                          -- trace (show varMap)
-                          -- trace (show newVarMap)
-                          -- trace "--------------------"
-                          trace "recursing with simplex" $
-                          decideDisjunctionWithSimplex filteredExpressionsWithFunctions newVarMap maxWidthCutoff relativeImprovementCutoff p
-                        else
-                          if maxWidth newVarMap !>=! maxWidthCutoff
-                            then 
-                              trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $
-                              bisectWidestDimensionAndRecurse newVarMap --TODO: bisect one dimension, maxWidth dimension?
-                            else 
-                              trace ("varMap too small to bisect after simplex" ++ show newVarMap) $ 
-                              r
-                    _ -> undefined
-                  else
-                    if maxWidth varMap !>=! maxWidthCutoff 
-                      then trace ("bisecting without simplex" ++ show varMap) $ bisectWidestDimensionAndRecurse varMap
-                      else trace ("varMap too small to bisect" ++ show varMap) (Nothing, Just varMap)
-      
+                  --   checkUsingGlobalMinimum (e : es) = 
+                  --     case globalMinimumAboveN2 (expressionToBoxFun e newVarMap p) (bits 100) p (cn (mpBallP p 0)) of
+                  --       (Just True, _)                    -> (Just True, Nothing)
+                  --       (_, _)                            -> checkUsingGlobalMinimum es
+                  -- in
+                  --   checkUsingGlobalMinimum expressions 
+                  let 
+                    -- lastBox = fromVarMap varMap p
+                    -- newBox  = fromVarMap newVarMap p
+                    -- boxChangeWidth = abs(Box.width (lastBox - newBox))
+                    -- boxChangeWidth = (taxicabWidth varMap - taxicabWidth newVarMap)
+                  in
+                  if taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff
+                    then
+                      -- trace "--------------------"
+                      -- trace (show varMap)
+                      -- trace (show newVarMap)
+                      -- trace "--------------------"
+                      trace ("recursing with simplex with varMap: " ++ show newVarMap) $
+                      decideDisjunctionWithSimplex filteredExpressionsWithFunctions newVarMap maxWidthCutoff relativeImprovementCutoff p
+                    else
+                      if maxWidth newVarMap !>=! maxWidthCutoff
+                        then 
+                          trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $
+                          bisectWidestDimensionAndRecurse newVarMap --TODO: bisect one dimension, maxWidth dimension?
+                        else 
+                          trace ("varMap too small to bisect after simplex" ++ show newVarMap) $ 
+                          r
+                _ -> undefined
+              else
+                if maxWidth varMap !>=! maxWidthCutoff 
+                  then trace ("bisecting without simplex" ++ show varMap) $ bisectWidestDimensionAndRecurse varMap
+                  else trace ("varMap too small to bisect" ++ show varMap) (Nothing, Just varMap)  
   where
     showVarMapWithDecimals :: VarMap -> String
     showVarMapWithDecimals = concatMap (\(v, (l, u)) -> show v ++ ": [" ++ ((show . double)  l) ++ ", " ++ ((show . double) u) ++ "] \n")
@@ -539,7 +538,7 @@ decideDisjunctionWithSimplex expressionsWithFunctions varMap maxWidthCutoff rela
     boxL = lowerBounds box
     boxU = upperBounds box
 
-    esWithRanges            = parMap rseq (\(e, f) -> ((e, f), apply f box)) expressionsWithFunctions
+    esWithRanges            = map (\(e, f) -> ((e, f), apply f box)) expressionsWithFunctions
     filterOutFalseTerms     = filter (\(_, range) -> not (range !<! 0))  esWithRanges -- Could make this cleaner with list comprehension
     
     filteredExpressionsWithFunctions = map fst filterOutFalseTerms
@@ -547,8 +546,7 @@ decideDisjunctionWithSimplex expressionsWithFunctions varMap maxWidthCutoff rela
     checkIfEsTrueUsingApply = any (\(_, range) -> range !>=! 0)  filterOutFalseTerms
 
     cornerRangesWithDerivatives = 
-      parMap 
-      rseq
+      map
       (\((_,f),_) ->
         (
           -- left corner range
@@ -556,7 +554,7 @@ decideDisjunctionWithSimplex expressionsWithFunctions varMap maxWidthCutoff rela
           -- right corner range
           apply f boxU,
           -- derivatives
-          gradientUsingGradient f box
+          gradient f box
         )
       )
       filterOutFalseTerms
@@ -662,7 +660,7 @@ createDomainConstraints ((_, (l, r)) : xs) currentIndex =
 -- The fourth variable stores a map of variables with the amount they have been transformed
 -- from the left hand side
 createFunctionConstraints 
-  :: ([(CN MPBall, CN MPBall,  Box)]) -- ^ Each item is the value of each function at the given corner along with the first derivatives for the function
+  :: ([(CN MPBall, CN MPBall, Box)]) -- ^ Each item is the value of each function at the given corner along with the first derivatives for the function
   -> [Rational] -- ^ The corner for which we examine each function which leads to the values in the first parameter
                           -- Left or Right indicates whether or not this corner is the extreme left or extreme right corner of
                           -- the original box
