@@ -117,10 +117,9 @@ instance
     type SqrtType (Differential a) = Differential a
     sqrt (OrderZero x)             = OrderZero  (sqrt x)
     sqrt (OrderOne x dx)           = OrderOne   (sqrt x) (dx / (ta * sqrt x)) where (ta :: a) = convertExactly 2
-    sqrt (OrderTwo x dx dxt d2x)   = undefined -- FIXME: Bugged
-                                    -- OrderTwo   (sqrt x) (dx / (ta * sqrt x)) (dxt / (ta * sqrt x))
-                                    --     ((dx / ta * (-dx / (ta * x * sqrt x))) + (d2x / (ta * sqrt x)))
-                                    --     where (ta :: a) = convertExactly 2
+    sqrt (OrderTwo x dx dxt d2x)   = OrderTwo   (sqrt x) (dx / (ta * sqrt x)) (dxt / (ta * sqrt x))
+                                        ((dx / ta * (-dx / (ta * x * sqrt x))) + (d2x / (ta * sqrt x)))
+                                        where (ta :: a) = convertExactly 2
 
 -- instance
 --     (CanMinMaxSameType a, HasIntegers a) =>
