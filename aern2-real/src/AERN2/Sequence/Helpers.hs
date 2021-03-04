@@ -177,25 +177,25 @@ ensureAccuracyA getA op =
                     op a
             case ensureNoCN result of
               (Just _resultNoCN, es) | not (hasCertainError es) ->
-                if getAccuracy result >= _acStrict q
-                  then
-                  returnA -<
-                      maybeTrace (
-                          "ensureAccuracyA: Succeeded. (q = " ++ show q ++
-                          "; js = " ++ show js ++
-                          "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
-                      ) $
-                      result
-                  else
-                  aux -<
-                      maybeTrace (
-                          "ensureAccuracyA: Not enough ... (q = " ++ show q ++
-                          "; js = " ++ show js ++
-                          "; a = " ++ show a ++
-                          "; result = " ++ show result ++
-                          "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
-                      ) $
-                      (q, map (+1) js)
+                case getAccuracy result >= _acStrict q of
+                  True ->
+                    returnA -<
+                        maybeTrace (
+                            "ensureAccuracyA: Succeeded. (q = " ++ show q ++
+                            "; js = " ++ show js ++
+                            "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
+                        ) $
+                        result
+                  False ->
+                    aux -<
+                        maybeTrace (
+                            "ensureAccuracyA: Not enough ... (q = " ++ show q ++
+                            "; js = " ++ show js ++
+                            "; a = " ++ show a ++
+                            "; result = " ++ show result ++
+                            "; result accuracy = " ++ (show $ getAccuracy result) ++ ")"
+                        ) $
+                        (q, map (+1) js)
               _ -> returnA -< result -- certain error, give up improving
 
 
