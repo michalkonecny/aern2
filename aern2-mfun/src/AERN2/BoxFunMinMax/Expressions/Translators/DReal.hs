@@ -32,117 +32,22 @@ expressionToSMT (Lit e) =
     _ ->
       "(/ " ++ show (numerator e) ++ " " ++ show (denominator e) ++ ")"
 
--- disjunctionExpressionsToSMT :: [E] -> String
--- disjunctionExpressionsToSMT []        = ""
--- disjunctionExpressionsToSMT [e]       = expressionToSMT e
--- disjunctionExpressionsToSMT (e : es)  = "(max " ++ expressionToSMT e ++ disjunctionExpressionsToSMT es ++ ")"
-
--- cnfExpressionsToSMT :: [[E]] -> String
--- cnfExpressionsToSMT []        = ""
--- cnfExpressionsToSMT [e]       = disjunctionExpressionsToSMT e
--- cnfExpressionsToSMT (e : es)  = "(min " ++ disjunctionExpressionsToSMT e ++ cnfExpressionsToSMT es ++ ")"
-
 disjunctionExpressionsToSMT :: [E] -> String
-disjunctionExpressionsToSMT []        = ""
-disjunctionExpressionsToSMT [e]       = "(>=" ++ expressionToSMT e ++ " (+ 0 1e-300))"
-disjunctionExpressionsToSMT (e : es)  = "(or " ++ "(>= " ++ expressionToSMT e ++ " (+ 0 1e-300))" ++ disjunctionExpressionsToSMT es ++ ")"
+disjunctionExpressionsToSMT es = "(or " ++ concatMap (\e -> "(>= " ++ expressionToSMT e ++ "(+ 0 1e-300))") es ++ ")"
 
 cnfExpressionsToSMT :: [[E]] -> String
-cnfExpressionsToSMT []        = ""
-cnfExpressionsToSMT [e]       = disjunctionExpressionsToSMT e
-cnfExpressionsToSMT (e : es)  = "(and " ++ disjunctionExpressionsToSMT e ++ cnfExpressionsToSMT es ++ ")"
+cnfExpressionsToSMT disjunctions = "(and " ++ concatMap disjunctionExpressionsToSMT disjunctions ++ ")"
 
-cnfExpressionAndDomainsToDreal :: [[E]] -> [(String, (Rational, Rational))] -> [(String, (Rational, Rational))] -> Rational -> String
-cnfExpressionAndDomainsToDreal cnf realDomains intDomains epsilon =
+cnfExpressionAndDomainsToDreal :: [[E]] -> [(String, (Rational, Rational))] -> [(String, (Rational, Rational))] -> String
+cnfExpressionAndDomainsToDreal cnf realDomains intDomains =
   "(set-option :precision 1e-300)" ++
-  "(declare-const eps Real)" ++
-  "(assert (= eps (/ " ++ show (numerator epsilon) ++ " " ++ show (denominator epsilon) ++ "))) " ++
-  "(assert " ++
-  case Data.List.length realDomains of
-    0 ->       
-      case Data.List.length intDomains of
-        0 ->
-          cnfExpressionsToSMT cnf ++
-          ")" ++
-          commonEnd
-        _ ->
-          "(forall (" ++
-          concatMap (\(x, (xL, xR)) -> "(" ++ x ++ " Int " ++ "[" ++ expressionToSMT (Lit xL) ++ ", " ++ expressionToSMT (Lit xR) ++ "]" ++ ")") intDomains ++
-          ")" ++       
-          cnfExpressionsToSMT cnf ++
-          "))" ++
-          commonEnd
-    _ ->
-      case Data.List.length intDomains of
-        0 ->
-          "(forall (" ++
-          concatMap (\(x, (xL, xR)) -> "(" ++ x ++ " Real " ++ "[" ++ expressionToSMT (Lit xL) ++ ", " ++ expressionToSMT (Lit xR) ++ "]" ++ ")") realDomains ++
-          ")" ++       
-          cnfExpressionsToSMT cnf ++
-          "))" ++
-          commonEnd
-        _ ->
-          "(forall (" ++
-          concatMap (\(x, (xL, xR)) -> "(" ++ x ++ " Real " ++ "[" ++ expressionToSMT (Lit xL) ++ ", " ++ expressionToSMT (Lit xR) ++ "]" ++ ")") realDomains ++
-          concatMap (\(x, (xL, xR)) -> "(" ++ x ++ " Int " ++ "[" ++ expressionToSMT (Lit xL) ++ ", " ++ expressionToSMT (Lit xR) ++ "]" ++ ")") intDomains ++
-          ")" ++       
-          cnfExpressionsToSMT cnf ++
-          "))" ++
-          commonEnd
+  "(assert " ++ forAll (cnfExpressionsToSMT cnf) ++ ")(check-sat)(exit)"
   where
-    commonEnd =
-      "(check-sat)" ++
-      "(exit)"
-
-expressionAndDomainsToDreal :: E -> [(String, (Rational, Rational))] -> [(String, (Rational, Rational))] -> Rational -> String
-expressionAndDomainsToDreal e realDomains intDomains epsilon =
-  "(set-option :precision 1e-300)" ++
-  "(declare-const eps Real)" ++
-  "(assert (= eps (/ " ++ show (numerator epsilon) ++ " " ++ show (denominator epsilon) ++ "))) " ++
-  "(assert " ++
-  case Data.List.length realDomains of
-    0 ->       
-      case Data.List.length intDomains of
-        0 ->
-          "(>= " ++
-          expressionToSMT e ++
-          "(+ 0 1e-300))" ++
-          ")" ++
-          commonEnd
-        _ ->
-          "(forall (" ++
-          concatMap (\(x, (xL, xR)) -> "(" ++ x ++ " Int " ++ "[" ++ expressionToSMT (Lit xL) ++ ", " ++ expressionToSMT (Lit xR) ++ "]" ++ ")") intDomains ++
-          ")" ++       
-          "(>= " ++
-          expressionToSMT e ++
-          "(+ 0 1e-300))" ++
-          "))" ++
-          commonEnd
-    _ ->
-      case Data.List.length intDomains of
-        0 ->
-          "(forall (" ++
-          concatMap (\(x, (xL, xR)) -> "(" ++ x ++ " Real " ++ "[" ++ expressionToSMT (Lit xL) ++ ", " ++ expressionToSMT (Lit xR) ++ "]" ++ ")") realDomains ++
-          ")" ++       
-          "(>= " ++
-          expressionToSMT e ++
-          "(+ 0 1e-300))" ++
-          "))" ++
-          commonEnd
-        _ ->
-          "(forall (" ++
-          concatMap (\(x, (xL, xR)) -> "(" ++ x ++ " Real " ++ "[" ++ expressionToSMT (Lit xL) ++ ", " ++ expressionToSMT (Lit xR) ++ "]" ++ ")") realDomains ++
-          concatMap (\(x, (xL, xR)) -> "(" ++ x ++ " Int " ++ "[" ++ expressionToSMT (Lit xL) ++ ", " ++ expressionToSMT (Lit xR) ++ "]" ++ ")") intDomains ++
-          ")" ++       
-          "(>= " ++
-          expressionToSMT e ++
-          "(+ 0 1e-300))" ++
-          "))" ++
-          commonEnd
-  where
-    commonEnd =
-      "(check-sat)" ++
-      "(exit)"
+    forAll vc =
+      "(forall (" ++ concatMap (\(v, (_, _)) -> "(" ++ v ++ " Real)") realDomains ++ concatMap (\(v, (_, _)) -> "(" ++ v ++ " Int)") intDomains ++ ")" ++ 
+      "(=>" ++ 
+      "(and " ++ concatMap (\(v, (vL, vR)) -> "(>= " ++ v ++ " " ++ expressionToSMT (Lit vL) ++ ")(<= " ++ v ++ " " ++ expressionToSMT (Lit vR) ++ ")") (realDomains ++ intDomains) ++ ")" ++
+      vc ++ "))"
 
 runDRealTranslatorCNF :: [[E]] -> IO ()
 runDRealTranslatorCNF cnf = do
@@ -150,44 +55,11 @@ runDRealTranslatorCNF cnf = do
   -- PutStr "Enter tool: "
   putStr "Enter target file name: "
   fileName <- getLine
-  epsilon <- parseRational "epsilon "
-  putStr "How many Real vars in expression? " -- BUG: dReal does not work as expected when a var has the same lower and upper bound
+  putStr "How many Real vars in expression? "
   numReals <- getLine
   putStr "How many Int vars in expression? "
   numInts <- getLine
-  writeFile fileName (cnfExpressionAndDomainsToDreal cnf (parseDomains "real var name? " (read numReals)) (parseDomains "integer var name? " (read numInts)) epsilon)
-  where
-    parseDomains :: String -> Integer -> [(String, (Rational, Rational))]
-    parseDomains _ 0 = []
-    parseDomains msg n =
-
-      (unsafePerformIO (getVar msg), (unsafePerformIO (parseRational "lower bound") :: Rational, unsafePerformIO (parseRational "upper bound") :: Rational))
-      : parseDomains msg (n - 1)
-
-    getVar message = do
-      putStr message
-      getLine
-
-    parseRational message = do
-      putStr (message ++ " numerator? ")
-      num <- getLine
-      putStr (message ++ " denominator? ")
-      den <- getLine
-      return ((read num :: Integer) /! (read den :: Integer))
-
-
-runDRealTranslator :: E -> IO ()
-runDRealTranslator e = do
-  putStrLn "Running Haskell to dReal translator for Expressions"
-  -- PutStr "Enter tool: "
-  putStr "Enter target file name: "
-  fileName <- getLine
-  epsilon <- parseRational "epsilon "
-  putStr "How many Real vars in expression? " -- BUG: dReal does not work as expected when a var has the same lower and upper bound
-  numReals <- getLine
-  putStr "How many Int vars in expression? "
-  numInts <- getLine
-  writeFile fileName (expressionAndDomainsToDreal e (parseDomains "real var name? " (read numReals)) (parseDomains "integer var name? " (read numInts)) epsilon)
+  writeFile fileName (cnfExpressionAndDomainsToDreal cnf (parseDomains "real var name? " (read numReals)) (parseDomains "integer var name? " (read numInts)))
   where
     parseDomains :: String -> Integer -> [(String, (Rational, Rational))]
     parseDomains _ 0 = []
