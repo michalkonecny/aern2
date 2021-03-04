@@ -359,6 +359,34 @@ checkECNFSimplex (disjunction : disjunctions) varMap maxWidthCutoff relativeImpr
         
         checkIndeterminateArea areaToCheck = decideDisjunctionWithSimplex (map (\e -> (e, expressionToBoxFun e areaToCheck p)) disjunction) areaToCheck (maxWidth areaToCheck) relativeImprovementCutoff p
 
+        checkAreas :: [VarMap] -> [(Maybe Bool, Maybe VarMap)]
+        checkAreas = parMap rseq checkIndeterminateArea
+
+        checkBFSResults :: [(Maybe Bool, Maybe VarMap)] -> [VarMap] -> Integer -> (Maybe Bool, Maybe VarMap)
+        checkBFSResults [] [] _ = (Just True, Nothing)
+        checkBFSResults [] indeterminateAreas boxesChecked =
+          let
+            newAreas = 
+              concatMap 
+              (\vm -> 
+                let
+                  (leftBisection, rightBisection) = bisectVar vm (fst (widestInterval (tail vm) (head vm))) 
+                in
+                  [leftBisection, rightBisection]
+              )
+              indeterminateAreas
+          in
+            if boxesChecked < maxBoxesCutoff
+              then checkBFSResults (checkAreas newAreas) [] boxesChecked
+              else (Nothing, Just (head indeterminateAreas))
+        checkBFSResults (result : results) indeterminateAreas boxesChecked =
+          if boxesChecked < maxBoxesCutoff then
+            case result of
+              (Just True, _) -> checkBFSResults results indeterminateAreas boxesChecked
+              (Just False, _) -> result
+              (Nothing, Just indeterminateArea) -> checkBFSResults results (indeterminateArea : indeterminateAreas) (boxesChecked + 1)
+              (Nothing, Nothing) -> error "Given indeterminate result without indeterminate area"
+          else (Nothing, Just indeterminateArea)
         -- We have a cutoff for the boxes we have examined in total
         checkBFS :: [VarMap] -> [VarMap] -> Integer -> (Maybe Bool, Maybe VarMap)
         checkBFS [] [] _ = (Just True, Nothing)
@@ -387,7 +415,7 @@ checkECNFSimplex (disjunction : disjunctions) varMap maxWidthCutoff relativeImpr
                 r@(Just False, _) -> r
                 (Nothing, Just indeterminateArea) -> checkBFS areas (indeterminateArea : indeterminateAreas) (boxesProcessed + 1)
                 (Nothing, Nothing) -> error "Given indeterminate result without indeterminate area"
-            else (Nothing, Just area)
+            else (Nothing, Just indeterminateArea)
 
         -- checkBFS :: [VarMap] -> [VarMap] -> (Maybe Bool, Maybe VarMap)
         -- checkBFS [] [] = (Just True, Nothing)
@@ -405,13 +433,14 @@ checkECNFSimplex (disjunction : disjunctions) varMap maxWidthCutoff relativeImpr
         --     (Nothing, Just indeterminateArea) -> checkBFS areas (indeterminateArea : indeterminateAreas)
         --     (Nothing, Nothing) -> error "Given indeterminate result without indeterminate area"
       in
-        case checkBFS [areaToSearch] [] 0 of
+        -- undefined
+        case checkBFSResults (checkAreas [areaToSearch]) [] 0 of
           (Just True, _) ->
-            case checkBFS [varMap] [] 0 of
+            case checkBFSResults (checkAreas [varMap]) [] 0 of
               (Just True, _) -> checkECNFSimplex disjunctions varMap maxWidthCutoff relativeImprovementCutoff maxBoxesCutoff p
               r@(_, _) -> r
           r@(Just False, _) -> r
-          (Nothing, _) -> checkBFS [varMap] [] 0
+          (Nothing, _) -> checkBFSResults (checkAreas [varMap]) [] 0
     (Nothing, Nothing) -> error "Given indeterminate result without indeterminate area"
     -- TODO: If this is indeterminate, increase the radius of this box to capture a neighbourhood surrounding the box
     -- Make sure the new box is completely within the original box
@@ -521,7 +550,7 @@ decideDisjunctionWithSimplex expressionsWithFunctions varMap maxWidthCutoff rela
                       if maxWidth newVarMap !>=! maxWidthCutoff
                         then 
                           trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $
-                          bisectWidestDimensionAndRecurse newVarMap --TODO: bisect one dimension, maxWidth dimension?
+                          bisectWidestDimensionAndRecurse newVarMap
                         else 
                           trace ("varMap too small to bisect after simplex" ++ show newVarMap) $ 
                           r
@@ -576,11 +605,7 @@ decideDisjunctionWithSimplex expressionsWithFunctions varMap maxWidthCutoff rela
               case rightR of
                 (Just True, _) -> (Just True, Nothing)
                 r -> r
-            r@(Just False, _) -> r
-            i@(Nothing, _) -> 
-              case rightR of
-                (Just True, _) -> i
-                r -> r
+            r -> r
 
     bisectAllDimensionsAndRecurse varMapToBisect =
       let
