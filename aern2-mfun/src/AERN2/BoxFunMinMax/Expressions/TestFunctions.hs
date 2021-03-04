@@ -116,7 +116,8 @@ testXp2s4 = [EBinOp Sub (EBinOp Mul (Var "X") (Var "X")) (Lit (4.0))]
 
 testXY = [EBinOp Mul (Var "X") (Var "Y")]
 testXp2 = [EBinOp Mul (Var "X") (Var "X")]
-testXp3 = [EBinOp Mul (EUnOp Negate (Var "X")) (EBinOp Mul (EUnOp Negate (Var "X")) (EUnOp Negate (Var "X")))]
+testXp3 = [EBinOp Mul (Var "X") (EBinOp Mul (Var "X") (Var "X"))]
+testMXp3 = [EBinOp Mul (EUnOp Negate (Var "X")) (EBinOp Mul (EUnOp Negate (Var "X")) (EUnOp Negate (Var "X")))]
 
 testXp3Float = [Float (EBinOp Mul (Var "X") (EBinOp Mul (Var "X") (Var "X"))) 2]
 
@@ -554,143 +555,143 @@ checkSineVC2 = T.checkECNF yannickSineVC [("X", (-3.1, -3.0))] (prec 100)
 
 checkBisectionRootFinder = T.checkECNF bisectionRootFinder [("A", (1.0001, 5.0)), ("B", (1.0001, 5.0))] (prec 100)
 
-generateHeronInitMetiTarski =
-  writeFile
-    "heronInitExact.tptp"
-    (cnfExpressionAndDomainsToMetiTarski heronInitExact
-        [("X", (0.5, 2.0))] (0.5^!(-23)))
+-- generateHeronInitMetiTarski =
+--   writeFile
+--     "heronInitExact.tptp"
+--     (cnfExpressionAndDomainsToMetiTarski heronInitExact
+--         [("X", (0.5, 2.0))] (0.5^!(-23)))
 
-generateHeronPreservationExactMetiTarski =
-  do
-    writeFile 
-      "heronPreservationExacti1.tptp" 
-      (cnfExpressionAndDomainsToMetiTarski (heronPreservationExact 1)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
-    writeFile 
-      "heronPreservationExacti2.tptp" 
-      (cnfExpressionAndDomainsToMetiTarski (heronPreservationExact 2)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
-    writeFile 
-      "heronPreservationExacti3.tptp" 
-      (cnfExpressionAndDomainsToMetiTarski (heronPreservationExact 3)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
-    writeFile 
-      "heronPreservationExacti4.tptp" 
-      (cnfExpressionAndDomainsToMetiTarski (heronPreservationExact 4)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
+-- generateHeronPreservationExactMetiTarski =
+--   do
+--     writeFile 
+--       "heronPreservationExacti1.tptp" 
+--       (cnfExpressionAndDomainsToMetiTarski (heronPreservationExact 1)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
+--     writeFile 
+--       "heronPreservationExacti2.tptp" 
+--       (cnfExpressionAndDomainsToMetiTarski (heronPreservationExact 2)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
+--     writeFile 
+--       "heronPreservationExacti3.tptp" 
+--       (cnfExpressionAndDomainsToMetiTarski (heronPreservationExact 3)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
+--     writeFile 
+--       "heronPreservationExacti4.tptp" 
+--       (cnfExpressionAndDomainsToMetiTarski (heronPreservationExact 4)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
 
-generateHeronPreservationExactMetiTarskiYGE =
-  do
-    writeFile 
-      "heronPreservationExactYGEi1.tptp" 
-      (cnfExpressionAndDomainsToMetiTarski (heronPreservationExactYGE 1)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
-    writeFile 
-      "heronPreservationExactYGEi2.tptp" 
-      (cnfExpressionAndDomainsToMetiTarski (heronPreservationExactYGE 2)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
-    writeFile 
-      "heronPreservationExactYGEi3.tptp" 
-      (cnfExpressionAndDomainsToMetiTarski (heronPreservationExactYGE 3)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
-    writeFile 
-      "heronPreservationExactYGEi4.tptp" 
-      (cnfExpressionAndDomainsToMetiTarski (heronPreservationExactYGE 4)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
+-- generateHeronPreservationExactMetiTarskiYGE =
+--   do
+--     writeFile 
+--       "heronPreservationExactYGEi1.tptp" 
+--       (cnfExpressionAndDomainsToMetiTarski (heronPreservationExactYGE 1)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
+--     writeFile 
+--       "heronPreservationExactYGEi2.tptp" 
+--       (cnfExpressionAndDomainsToMetiTarski (heronPreservationExactYGE 2)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
+--     writeFile 
+--       "heronPreservationExactYGEi3.tptp" 
+--       (cnfExpressionAndDomainsToMetiTarski (heronPreservationExactYGE 3)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
+--     writeFile 
+--       "heronPreservationExactYGEi4.tptp" 
+--       (cnfExpressionAndDomainsToMetiTarski (heronPreservationExactYGE 4)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
 
-generateHeronPreservationExactMetiTarskiYLE =
-  do
-    writeFile 
-      "heronPreservationExactYLEi1.tptp" 
-      (cnfExpressionAndDomainsToMetiTarski (heronPreservationExactYLE 1)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
-    writeFile 
-      "heronPreservationExactYLEi2.tptp" 
-      (cnfExpressionAndDomainsToMetiTarski (heronPreservationExactYLE 2)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
-    writeFile 
-      "heronPreservationExactYLEi3.tptp" 
-      (cnfExpressionAndDomainsToMetiTarski (heronPreservationExactYLE 3)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
-    writeFile 
-      "heronPreservationExactYLEi4.tptp" 
-      (cnfExpressionAndDomainsToMetiTarski (heronPreservationExactYLE 4)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
+-- generateHeronPreservationExactMetiTarskiYLE =
+--   do
+--     writeFile 
+--       "heronPreservationExactYLEi1.tptp" 
+--       (cnfExpressionAndDomainsToMetiTarski (heronPreservationExactYLE 1)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
+--     writeFile 
+--       "heronPreservationExactYLEi2.tptp" 
+--       (cnfExpressionAndDomainsToMetiTarski (heronPreservationExactYLE 2)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
+--     writeFile 
+--       "heronPreservationExactYLEi3.tptp" 
+--       (cnfExpressionAndDomainsToMetiTarski (heronPreservationExactYLE 3)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
+--     writeFile 
+--       "heronPreservationExactYLEi4.tptp" 
+--       (cnfExpressionAndDomainsToMetiTarski (heronPreservationExactYLE 4)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (0.5^!(-23)))
 
-generateSineExactMetiTarski =
-  writeFile
-    "sineExact.tptp"
-    (cnfExpressionAndDomainsToMetiTarski sineVC
-      [("X", (-(1.0), 1.0))] (0.5^!(-23)))
+-- generateSineExactMetiTarski =
+--   writeFile
+--     "sineExact.tptp"
+--     (cnfExpressionAndDomainsToMetiTarski sineVC
+--       [("X", (-(1.0), 1.0))] (0.5^!(-23)))
 
-generateSeperateHeronPreservationExactDrealFiles =
-  do
-    writeFile 
-      "heronPreservationExacti1.smt2" 
-      (cnfExpressionAndDomainsToDreal (heronPreservationExactNoMaxFloat 1)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
-    writeFile 
-      "heronPreservationExacti2.smt2" 
-      (cnfExpressionAndDomainsToDreal (heronPreservationExactNoMaxFloat 2)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
-    writeFile 
-      "heronPreservationExacti3.smt2" 
-      (cnfExpressionAndDomainsToDreal (heronPreservationExactNoMaxFloat 3)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
-    writeFile 
-      "heronPreservationExacti4.smt2" 
-      (cnfExpressionAndDomainsToDreal (heronPreservationExactNoMaxFloat 4)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
+-- generateSeperateHeronPreservationExactDrealFiles =
+--   do
+--     writeFile 
+--       "heronPreservationExacti1.smt2" 
+--       (cnfExpressionAndDomainsToDreal (heronPreservationExactNoMaxFloat 1)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
+--     writeFile 
+--       "heronPreservationExacti2.smt2" 
+--       (cnfExpressionAndDomainsToDreal (heronPreservationExactNoMaxFloat 2)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
+--     writeFile 
+--       "heronPreservationExacti3.smt2" 
+--       (cnfExpressionAndDomainsToDreal (heronPreservationExactNoMaxFloat 3)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
+--     writeFile 
+--       "heronPreservationExacti4.smt2" 
+--       (cnfExpressionAndDomainsToDreal (heronPreservationExactNoMaxFloat 4)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
 
-generateSeperateHeronPreservationExactYGEDrealFiles =
-  do
-    writeFile 
-      "heronPreservationExactYGEi1.smt2" 
-      (cnfExpressionAndDomainsToDreal (heronPreservationExactYGENoMaxFloat 1)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
-    writeFile 
-      "heronPreservationExactYGEi2.smt2" 
-      (cnfExpressionAndDomainsToDreal (heronPreservationExactYGENoMaxFloat 2)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
-    writeFile 
-      "heronPreservationExactYGEi3.smt2" 
-      (cnfExpressionAndDomainsToDreal (heronPreservationExactYGENoMaxFloat 3)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
-    writeFile 
-      "heronPreservationExactYGEi4.smt2" 
-      (cnfExpressionAndDomainsToDreal (heronPreservationExactYGENoMaxFloat 4)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
+-- generateSeperateHeronPreservationExactYGEDrealFiles =
+--   do
+--     writeFile 
+--       "heronPreservationExactYGEi1.smt2" 
+--       (cnfExpressionAndDomainsToDreal (heronPreservationExactYGENoMaxFloat 1)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
+--     writeFile 
+--       "heronPreservationExactYGEi2.smt2" 
+--       (cnfExpressionAndDomainsToDreal (heronPreservationExactYGENoMaxFloat 2)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
+--     writeFile 
+--       "heronPreservationExactYGEi3.smt2" 
+--       (cnfExpressionAndDomainsToDreal (heronPreservationExactYGENoMaxFloat 3)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
+--     writeFile 
+--       "heronPreservationExactYGEi4.smt2" 
+--       (cnfExpressionAndDomainsToDreal (heronPreservationExactYGENoMaxFloat 4)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
 
-generateSeperateHeronPreservationExactYLEDrealFiles =
-  do
-    writeFile 
-      "heronPreservationExactYLEi1.smt2" 
-      (cnfExpressionAndDomainsToDreal (heronPreservationExactYLENoMaxFloat 1)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
-    writeFile 
-      "heronPreservationExactYLEi2.smt2" 
-      (cnfExpressionAndDomainsToDreal (heronPreservationExactYLENoMaxFloat 2)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
-    writeFile 
-      "heronPreservationExactYLEi3.smt2" 
-      (cnfExpressionAndDomainsToDreal (heronPreservationExactYLENoMaxFloat 3)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
-    writeFile 
-      "heronPreservationExactYLEi4.smt2" 
-      (cnfExpressionAndDomainsToDreal (heronPreservationExactYLENoMaxFloat 4)
-        [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
+-- generateSeperateHeronPreservationExactYLEDrealFiles =
+--   do
+--     writeFile 
+--       "heronPreservationExactYLEi1.smt2" 
+--       (cnfExpressionAndDomainsToDreal (heronPreservationExactYLENoMaxFloat 1)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
+--     writeFile 
+--       "heronPreservationExactYLEi2.smt2" 
+--       (cnfExpressionAndDomainsToDreal (heronPreservationExactYLENoMaxFloat 2)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
+--     writeFile 
+--       "heronPreservationExactYLEi3.smt2" 
+--       (cnfExpressionAndDomainsToDreal (heronPreservationExactYLENoMaxFloat 3)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
+--     writeFile 
+--       "heronPreservationExactYLEi4.smt2" 
+--       (cnfExpressionAndDomainsToDreal (heronPreservationExactYLENoMaxFloat 4)
+--         [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] [] (0.5^!(-23)))
 
-generateHeronInitExactDreal =
-  writeFile
-    "heronInitExact.smt2"
-    (cnfExpressionAndDomainsToDreal heronInitExactNoMaxFloat
-      [("X", (0.5, 2.0))] [] (0.5^!(-23)))
+-- generateHeronInitExactDreal =
+--   writeFile
+--     "heronInitExact.smt2"
+--     (cnfExpressionAndDomainsToDreal heronInitExactNoMaxFloat
+--       [("X", (0.5, 2.0))] [] (0.5^!(-23)))
 
-generateSineExactDreal =
-  writeFile
-    "sineExact.smt2"
-    (cnfExpressionAndDomainsToDreal sineVCNoMaxFloat
-      [("X", (-1.0, 1.0))] [] (0.5^!(-23)))
+-- generateSineExactDreal =
+--   writeFile
+--     "sineExact.smt2"
+--     (cnfExpressionAndDomainsToDreal sineVCNoMaxFloat
+--       [("X", (-1.0, 1.0))] [] (0.5^!(-23)))
 
 {-  
 Circle packing
@@ -804,7 +805,14 @@ Goal:
 
 -}
 
-epsC = 0.01
+-- gradient (expressionToBoxFun sqrtTest [("X", (1.0, 2.0))] (prec 100)) (fromVarMap [("X", (1.0, 2.0))] (prec 100))
+-- gradientUsingGradient (expressionToBoxFun sqrtTest [("X", (1.0, 2.0))] (prec 100)) (fromVarMap [("X", (1.0, 2.0))] (prec 100))
+sqrtTest = EUnOp Sqrt (PowI (Var "X") 3)
+-- gradient (expressionToBoxFun bugTest [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0))] (prec 100)) (fromVarMap [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0))] (prec 100))
+-- gradientUsingGradient (expressionToBoxFun sqrtTest [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0))] (prec 100)) (fromVarMap [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0))] (prec 100))
+bugTest = (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2)
+
+epsC = -1.0
 
 -- List.map (\f -> apply f (domain f)) (List.map (\e -> expressionToBoxFun e [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0))] (prec 100)) (head square2p))
 -- List.map (\f -> gradient f (domain f)) (List.map (\e -> expressionToBoxFun e [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0))] (prec 100)) (head square2p))
@@ -818,9 +826,17 @@ square2p =
     -- sqrt((X1 - Y1)^2 + (X2 - Y2)^2) <= sqrt(2) + eps
     goal = [fToE goalF]
     goalF = 
-      FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "Y1")) 2) (PowI (EBinOp Sub (Var "X2") (Var "Y2")) 2)))) (EBinOp Add (EUnOp Sqrt (Lit 2.0)) (Lit epsC))
+      -- FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "Y1")) 2) (PowI (EBinOp Sub (Var "X2") (Var "Y2")) 2)))) (EBinOp Add (EUnOp Sqrt (Lit 2.0)) (Lit epsC))
       -- (X1 - X2)^2 + (Y1 - Y2)^2 <= 2 + eps
-      -- FComp Le ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y2")) 2))) (EBinOp Add ((Lit 2.0)) (Lit epsC))
+
+      -- (X1 - X2) ^ 2 + (Y1 - Y2) ^ 2 <= 2 + eps
+      FComp Le ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y2")) 2))) (EBinOp Add ((Lit 2.0)) (Lit epsC))
+
+-- -2X1 + 2*X2
+-- -X1^2 + 2*X1*X2
+-- (-1 * (X1^2 - 2*X1*X2))
+-- (-1 * ((X1 - X2) ^ 2 + (Y1 - Y2) ^ 2) + (2 - 1)
+-- EBinOp Add (EUnOp Negate (EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y2")) 2))) (EBinOp Add (Lit (2 % 1)) (Lit ((-1) % 1)))
 
 -- createPontPackingGoal :: Integer -> [E]
 -- createPointPackingGoal numPoints =
@@ -856,7 +872,7 @@ proved false with apply "X1": [0.0, 8.081025067701121e-9]
 -- List.map (\f -> apply f (domain f)) (List.map (\e -> expressionToBoxFun e [("X1",(0 % 1,7905428304193763147344722058718882042087942999468583184570219366057484495240075289542401481871026624221 % 34886534858083592458438108985189172331832961488267752582992728857402954519777907739991605337513582374420480)),("X2",(144173611575899455984131794759632339019976210590231542509381925887784554922223588548169931387138570119459 % 1216632319040745753051812134546809768496513228717601005551617162030736315339709310701698662952076773949440,154312214234572337259563562547522420424113820829544884222312068904707357550054499470684086911739209902371 % 1297741140310128803255266276849930419729614110632107739255058306166118736362356598081811907148881892212736)),("Y1",(0 % 1,7905428304193763147344722058718882042087942999468583184570219366057484495240075289542401481871026624221 % 27233603147288186058564644894358024090590840208347048593665520287653113522522361933319063180587844061102080)),("Y2",(929040978017919951708752896168254361941134578059289554997557998184202105011880170864074767288470718834979 % 3747785625288454859424390472907892975932890084235032552728512870201038358028480984614468675081366981836800,7440233252447553376817367891404753777571164567473785023165034204839674324590281442202140539789636777304053 % 29982285002307638875395123783263143807463120673880260421828102961608306864227847876915749400650935854694400)),("Z1",(0 % 1,3508560102841960851568957642463473750909417650935436429759984465073323977785604424049452563830796333941 % 15959940570439369231991184892179414550957703686951300035117286911439870201643826269648468922385144888688640)),("Z2",(20703937620634699628164764458430925305649852189395656369571371536217293265246596228851304902042305399810339 % 20711843048938893391312109180489644187691940132395124952755941755583350749741836304140847303524176426434560,1 % 1))] (prec 100)) [(EUnOp Sqrt (EBinOp Add (EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y2")) 2)) (PowI (EBinOp Sub (Var "Z1") (Var "Z2")) 2)))])
 -- = [1.036776562210151 ± 3.9254e-4 <2^(-11)] for above counterexample using lowerbounds
 -- wolfram agrees? https://www.wolframalpha.com/input/?i=sqrt%28%280+-+0.11662721297468709%29%5E2+%2B+%280+-+0.24717805338943316%29%5E2+%2B+%280+-+0.9995846297270826%29%5E2%29
--- checkECNFSimplex  square3p [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0)), ("Z1", (0.0, 1.0)), ("Z2", (0.0, 1.0))] 0.00000001 1.2 1000 (prec 100)
+-- checkECNFSimplex  square3p [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("X3", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0)), ("Y3", (0.0, 1.0))] 0.00000001 1.2 1000 (prec 100)
 -- sqrt(6) - sqrt(2) == 1.0352761804100830493955953504961933133962756052797220552560128292
 square3p =
   [negatedContext ++ goal]
@@ -867,13 +883,13 @@ square3p =
     goal = map fToE goalF
     goalF = --dist(x,y) <= dn \/ dist(x,z) <= dn \/ dist(y,z) <= dn
       [
-        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "Y1")) 2) (PowI (EBinOp Sub (Var "X2") (Var "Y2")) 2)))) (EBinOp Add (EBinOp Sub (EUnOp Sqrt (Lit 6.0)) (EUnOp Sqrt (Lit 2.0))) (Lit epsC)),
-        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "Z1")) 2) (PowI (EBinOp Sub (Var "X2") (Var "Z2")) 2)))) (EBinOp Add (EBinOp Sub (EUnOp Sqrt (Lit 6.0)) (EUnOp Sqrt (Lit 2.0))) (Lit epsC)),
-        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "Y1") (Var "Z1")) 2) (PowI (EBinOp Sub (Var "Y2") (Var "Z2")) 2)))) (EBinOp Add (EBinOp Sub (EUnOp Sqrt (Lit 6.0)) (EUnOp Sqrt (Lit 2.0))) (Lit epsC))
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y2")) 2)))) (EBinOp Add (EBinOp Sub (EUnOp Sqrt (Lit 6.0)) (EUnOp Sqrt (Lit 2.0))) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X3")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y3")) 2)))) (EBinOp Add (EBinOp Sub (EUnOp Sqrt (Lit 6.0)) (EUnOp Sqrt (Lit 2.0))) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X2") (Var "X3")) 2) (PowI (EBinOp Sub (Var "Y2") (Var "Y3")) 2)))) (EBinOp Add (EBinOp Sub (EUnOp Sqrt (Lit 6.0)) (EUnOp Sqrt (Lit 2.0))) (Lit epsC))
       ]
       -- FComp Le (EUnOp Sqrt (EBinOp Add (EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y2")) 2)) (PowI (EBinOp Sub (Var "Z1") (Var "Z2")) 2))) (EBinOp Add (EBinOp Sub (EUnOp Sqrt (Lit 6.0)) (EUnOp Sqrt (Lit 2.0))) (Lit epsC))
 
--- checkECNFSimplex  square4p [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0)), ("Z1", (0.0, 1.0)), ("Z2", (0.0, 1.0)), ("A1", (0.0, 1.0)), ("A2", (0.0, 1.0))] 0.00000001 1.2 1000 (prec 100)
+-- checkECNFSimplex  square4p [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("X3", (0.0, 1.0)), ("X4", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0)), ("Y3", (0.0, 1.0)), ("Y4", (0.0, 1.0))] 0.00000001 1.2 1000 (prec 100)
 square4p =
   [negatedContext ++ goal]
   where
@@ -883,14 +899,64 @@ square4p =
     goal = map fToE goalF
     goalF = 
       [
-        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "Y1")) 2) (PowI (EBinOp Sub (Var "X2") (Var "Y2")) 2)))) (EBinOp Add (Lit 1.0) (Lit epsC)),
-        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "Z1")) 2) (PowI (EBinOp Sub (Var "X2") (Var "Z2")) 2)))) (EBinOp Add (Lit 1.0) (Lit epsC)),
-        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "A1")) 2) (PowI (EBinOp Sub (Var "X2") (Var "A2")) 2)))) (EBinOp Add (Lit 1.0) (Lit epsC)),
-        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "Y1") (Var "Z1")) 2) (PowI (EBinOp Sub (Var "Y2") (Var "Z2")) 2)))) (EBinOp Add (Lit 1.0) (Lit epsC)),
-        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "Y1") (Var "A1")) 2) (PowI (EBinOp Sub (Var "Y2") (Var "A2")) 2)))) (EBinOp Add (Lit 1.0) (Lit epsC)),
-        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "Z1") (Var "A1")) 2) (PowI (EBinOp Sub (Var "Z2") (Var "A2")) 2)))) (EBinOp Add (Lit 1.0) (Lit epsC))
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y2")) 2)))) (EBinOp Add (Lit 1.0) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X3")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y3")) 2)))) (EBinOp Add (Lit 1.0) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X4")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y4")) 2)))) (EBinOp Add (Lit 1.0) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X2") (Var "X3")) 2) (PowI (EBinOp Sub (Var "Y2") (Var "Y3")) 2)))) (EBinOp Add (Lit 1.0) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X2") (Var "X4")) 2) (PowI (EBinOp Sub (Var "Y2") (Var "Y4")) 2)))) (EBinOp Add (Lit 1.0) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X3") (Var "X4")) 2) (PowI (EBinOp Sub (Var "Y3") (Var "Y4")) 2)))) (EBinOp Add (Lit 1.0) (Lit epsC))
 
       ]
+
+-- checkECNFSimplex square5p [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("X3", (0.0, 1.0)), ("X4", (0.0, 1.0)), ("X5", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0)), ("Y3", (0.0, 1.0)), ("Y4", (0.0, 1.0)), ("Y5", (0.0, 1.0))] 0.00000001 1.2 1000 (prec 100)
+square5p =
+  [negatedContext ++ goal]
+  where
+    negatedContext = map (EUnOp Negate) context
+    context = []
+    -- 2 + eps - (X1 - X2)^2 - (Y1 - Y2) >= 0
+    goal = map fToE goalF
+    goalF = 
+      [
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y2")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 2.0)) (Lit 2.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X3")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y3")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 2.0)) (Lit 2.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X4")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y4")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 2.0)) (Lit 2.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X5")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y5")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 2.0)) (Lit 2.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X2") (Var "X3")) 2) (PowI (EBinOp Sub (Var "Y2") (Var "Y3")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 2.0)) (Lit 2.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X2") (Var "X4")) 2) (PowI (EBinOp Sub (Var "Y2") (Var "Y4")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 2.0)) (Lit 2.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X2") (Var "X5")) 2) (PowI (EBinOp Sub (Var "Y2") (Var "Y5")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 2.0)) (Lit 2.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X3") (Var "X4")) 2) (PowI (EBinOp Sub (Var "Y3") (Var "Y4")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 2.0)) (Lit 2.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X3") (Var "X5")) 2) (PowI (EBinOp Sub (Var "Y3") (Var "Y5")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 2.0)) (Lit 2.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X4") (Var "X5")) 2) (PowI (EBinOp Sub (Var "Y4") (Var "Y5")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 2.0)) (Lit 2.0)) (Lit epsC))
+      ]
+
+-- checkECNFSimplex square6p [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("X3", (0.0, 1.0)), ("X4", (0.0, 1.0)), ("X5", (0.0, 1.0)), ("X6", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0)), ("Y3", (0.0, 1.0)), ("Y4", (0.0, 1.0)), ("Y5", (0.0, 1.0)), ("Y6", (0.0, 1.0))] 0.00000001 1.2 1000 (prec 100)
+square6p =
+  [negatedContext ++ goal]
+  where
+    negatedContext = map (EUnOp Negate) context
+    context = []
+    -- 2 + eps - (X1 - X2)^2 - (Y1 - Y2) >= 0
+    goal = map fToE goalF
+    goalF = 
+      [
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y2")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 13.0)) (Lit 6.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X3")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y3")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 13.0)) (Lit 6.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X4")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y4")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 13.0)) (Lit 6.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X5")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y5")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 13.0)) (Lit 6.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X6")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y6")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 13.0)) (Lit 6.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X2") (Var "X3")) 2) (PowI (EBinOp Sub (Var "Y2") (Var "Y3")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 13.0)) (Lit 6.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X2") (Var "X4")) 2) (PowI (EBinOp Sub (Var "Y2") (Var "Y4")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 13.0)) (Lit 6.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X2") (Var "X5")) 2) (PowI (EBinOp Sub (Var "Y2") (Var "Y5")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 13.0)) (Lit 6.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X2") (Var "X6")) 2) (PowI (EBinOp Sub (Var "Y2") (Var "Y6")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 13.0)) (Lit 6.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X3") (Var "X4")) 2) (PowI (EBinOp Sub (Var "Y3") (Var "Y4")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 13.0)) (Lit 6.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X3") (Var "X5")) 2) (PowI (EBinOp Sub (Var "Y3") (Var "Y5")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 13.0)) (Lit 6.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X3") (Var "X6")) 2) (PowI (EBinOp Sub (Var "Y3") (Var "Y6")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 13.0)) (Lit 6.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X4") (Var "X5")) 2) (PowI (EBinOp Sub (Var "Y4") (Var "Y5")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 13.0)) (Lit 6.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X4") (Var "X6")) 2) (PowI (EBinOp Sub (Var "Y4") (Var "Y6")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 13.0)) (Lit 6.0)) (Lit epsC)),
+        FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X5") (Var "X6")) 2) (PowI (EBinOp Sub (Var "Y5") (Var "Y6")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 13.0)) (Lit 6.0)) (Lit epsC))
+      ]
+      
 testInf =
   [negatedContext ++ goal]
   where
@@ -900,3 +966,6 @@ testInf =
     goal = [EBinOp Add (EBinOp Add (EBinOp Add (PowI (Var "X") 3) (PowI (Var "Y") 3)) (PowI (Var "Z") 3)) (PowI (Var "A") 3)]
 
       
+-- Create dReal files
+-- writeFile "points3.smt2" $ cnfExpressionAndDomainsToDreal square3p [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0)), ("Z1", (0.0, 1.0)), ("Z2", (0.0, 1.0))] [] 0.0
+-- writeFile "points4.smt2" $ cnfExpressionAndDomainsToDreal square3p [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0)), ("Z1", (0.0, 1.0)), ("Z2", (0.0, 1.0)), ("A1", (0.0, 1.0)), ("A2", (0.0, 1.0))] [] 0.0
