@@ -147,11 +147,9 @@ gradientUsingGradient :: BoxFun -> Box -> Box
 gradientUsingGradient f v =
     V.zipWith fromEndpointsAsIntervals lowerBounds upperBounds
     where
-        -- lowerBounds = firstDerivatives - secondDerivatives * (cn mpBallP p 0.5 * firstDerivatives)
-        -- upperBounds = firstDerivatives + secondDerivatives * (cn mpBallP p 0.5 * firstDerivatives)
-        lowerBounds = firstDerivatives - secondDerivatives * (V.map (fmap ((mpBall) . radius)) v)
-        upperBounds = firstDerivatives + secondDerivatives * (V.map (fmap ((mpBall) . radius)) v)
+        lowerBounds = firstDerivatives - secondDerivatives * V.map (fmap (mpBall . radius)) v
+        upperBounds = firstDerivatives + secondDerivatives * V.map (fmap (mpBall . radius)) v
         firstDerivatives  = head $ M.rows $ jacobian [f] (centre v)
-        secondDerivatives = hessian f v
+        secondDerivatives = fmap abs $ hessian f v
         p = getPrecision v
         
