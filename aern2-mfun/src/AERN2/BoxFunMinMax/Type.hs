@@ -16,6 +16,7 @@ import qualified Simplex as S
 
 import Data.List (filter, find)
 import qualified Data.Sequence as Seq
+import qualified Data.Map as M
 
 -- import Debug.Trace (trace)
 
@@ -496,6 +497,189 @@ decideDisjunctionWithBreadthFirst expressions (varMap : varMaps) checkedVarMaps 
     filterOutFalseTerms     = filter (\(_, range) -> not (range !<! 0))  esWithRanges -- Could make this cleaner with list comprehension
     areExpressionsTrue      = map (\(_, range) -> range !>! 0) esWithRanges
     filteredExpressions     = map fst filterOutFalseTerms
+
+type BoxAddress = [(String, Int)]
+data Mode = Proving | CounterExample
+
+checkECNFCE :: [[E.E]] -> VarMap -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
+checkECNFCE [] _ _ _ _ _ = (Just True, Nothing)
+checkECNFCE (disjunction : disjunctions) varMap depthCutoff zoomOutAmount relativeImprovementCutoff p =
+  case decideDisjunctionWithSimplexCE (map (\e -> (e, expressionToBoxFun e varMap p)) disjunction) varMap [(0, varMap)] Proving 0 depthCutoff zoomOutAmount relativeImprovementCutoff p of
+    (Just True, _) -> checkECNFCE disjunctions varMap depthCutoff zoomOutAmount relativeImprovementCutoff p
+    r -> r -- TODO: check other disjunctions for false? 
+
+decideDisjunctionWithSimplexCE :: [(E.E, BoxFun)] -> VarMap -> [(Integer, VarMap)] -> Mode -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
+decideDisjunctionWithSimplexCE expressionsWithFunctions varMap recursionMap mode currentDepth depthCutoff zoomOutAmount relativeImprovementCutoff p = 
+  case mode of
+    CounterExample -> 
+      if null filterOutFalseTerms
+        then 
+          trace ("proved false with apply " ++ show varMap)
+          (Just False, Just varMap)
+        else 
+          if checkIfEsTrueUsingApply 
+            then 
+              trace "proved true with apply" 
+              (Just True, Nothing) -- This is fine, if we do not recurse, we return true. after bisection, we only return false because of the bisect functions' logic
+            else 
+              -- Only call decideWithSimplex if all derivatives can be calculated
+              if and (concatMap (\(_, _, c) -> V.toList (V.map (not . hasErrorCN) c)) cornerRangesWithDerivatives)
+                then 
+                  case decideWithSimplex cornerRangesWithDerivatives varMap of
+                    r@(Just True, _) -> 
+                      trace "proved true with simplex" $ r -- see above 'true' comment
+                    r@(Nothing, Just newVarMap) ->
+                      if currentDepth !<! depthCutoff 
+                        then
+                          if taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff
+                            then
+                              trace ("recursing with simplex with varMap: " ++ show newVarMap) $
+                              decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions newVarMap ((currentDepth + 1, newVarMap) : recursionMap) mode (currentDepth + 1) depthCutoff zoomOutAmount relativeImprovementCutoff p
+                            else 
+                              trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $
+                              bisectWidestDimensionAndRecurse newVarMap
+                        else 
+                          trace ("depth cutoff reached after simplex " ++ show newVarMap) $ 
+                          r
+                    _ -> undefined
+                  else
+                    if currentDepth !<! depthCutoff 
+                      then trace ("bisecting without simplex " ++ show varMap) $ 
+                        bisectWidestDimensionAndRecurse varMap
+                      else trace ("depth cutoff reached without simplex " ++ show varMap) (Nothing, Just varMap)  
+      where
+        box  = fromVarMap varMap p
+        boxL = lowerBounds box
+        boxU = upperBounds box
+
+        esWithRanges            = map (\(e, f) -> ((e, f), apply f box)) expressionsWithFunctions
+        filterOutFalseTerms     = filter (\(_, range) -> not (range !<! 0))  esWithRanges -- Could make this cleaner with list comprehension
+        
+        filteredExpressionsWithFunctions = map fst filterOutFalseTerms
+        
+        checkIfEsTrueUsingApply = any (\(_, range) -> range !>=! 0)  filterOutFalseTerms
+
+        cornerRangesWithDerivatives = 
+          map
+          (\((_,f),_) ->
+            (
+              -- left corner range
+              apply f boxL,
+              -- right corner range
+              apply f boxU,
+              -- derivatives
+              gradient f box
+            )
+          )
+          filterOutFalseTerms
+
+        bisectWidestDimensionAndRecurse varMapToBisect =
+          let
+            widestBox@(widestVar, (_,_)) = widestInterval (tail varMapToBisect) (head varMapToBisect)
+            (leftVarMap, rightVarMap) = bisectVar varMapToBisect widestVar
+            (leftR, rightR) = 
+              withStrategy 
+              (parTuple2 rseq rseq) 
+              (
+                decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions leftVarMap ((currentDepth + 1, leftVarMap) : recursionMap) mode (currentDepth + 1) depthCutoff zoomOutAmount relativeImprovementCutoff p, 
+                decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions rightVarMap ((currentDepth + 1, rightVarMap) : recursionMap) mode (currentDepth + 1) depthCutoff zoomOutAmount relativeImprovementCutoff p
+              )
+          in
+            case leftR of
+                r@(Just False, _) -> r 
+                r ->
+                  case rightR of
+                    r@(Just False, _) -> r
+                    r -> (Nothing, Nothing) --TODO: If all boxes are true, we can return true here
+    Proving ->
+      if null filterOutFalseTerms
+        then 
+          trace ("proved false with apply " ++ show varMap)
+          (Just False, Just varMap)
+        else 
+          if checkIfEsTrueUsingApply 
+            then 
+              trace "proved true with apply" 
+              (Just True, Nothing)
+            else 
+              -- Only call decideWithSimplex if all derivatives can be calculated
+              if and (concatMap (\(_, _, c) -> V.toList (V.map (not . hasErrorCN) c)) cornerRangesWithDerivatives)
+                then 
+                  case decideWithSimplex cornerRangesWithDerivatives varMap of
+                    r@(Just True, _) -> 
+                      trace "proved true with simplex" 
+                      r
+                    r@(Nothing, Just newVarMap) ->
+                      if currentDepth !<! depthCutoff 
+                        then
+                          if taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff
+                            then
+                              trace ("recursing with simplex with varMap: " ++ show newVarMap) $
+                              decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions newVarMap ((currentDepth + 1, newVarMap) : recursionMap) mode (currentDepth + 1) depthCutoff zoomOutAmount relativeImprovementCutoff p
+                            else
+                              trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $
+                              bisectWidestDimensionAndRecurse newVarMap
+                        else 
+                          trace ("depth cutoff reached after simplex " ++ show newVarMap) $ 
+                          case lookup (currentDepth - zoomOutAmount) recursionMap of
+                            Just zoomedOutVarMap -> decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions zoomedOutVarMap [] CounterExample 0 zoomOutAmount 0 relativeImprovementCutoff p
+                            Nothing -> undefined
+                    _ -> undefined
+                  else
+                    if currentDepth !<! depthCutoff 
+                      then trace ("bisecting without simplex " ++ show varMap) $ bisectWidestDimensionAndRecurse varMap
+                      else trace ("depth cutoff reached without simplex " ++ show varMap) $
+                        case lookup (currentDepth - zoomOutAmount) recursionMap of
+                              Just zoomedOutVarMap -> decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions zoomedOutVarMap [] CounterExample 0 zoomOutAmount 0 relativeImprovementCutoff p
+                              Nothing -> undefined
+      where
+        box  = fromVarMap varMap p
+        boxL = lowerBounds box
+        boxU = upperBounds box
+
+        esWithRanges            = map (\(e, f) -> ((e, f), apply f box)) expressionsWithFunctions
+        filterOutFalseTerms     = filter (\(_, range) -> not (range !<! 0))  esWithRanges -- Could make this cleaner with list comprehension
+        
+        filteredExpressionsWithFunctions = map fst filterOutFalseTerms
+        
+        checkIfEsTrueUsingApply = any (\(_, range) -> range !>=! 0)  filterOutFalseTerms
+
+        cornerRangesWithDerivatives = 
+          map
+          (\((_,f),_) ->
+            (
+              -- left corner range
+              apply f boxL,
+              -- right corner range
+              apply f boxU,
+              -- derivatives
+              gradient f box
+            )
+          )
+          filterOutFalseTerms
+
+        bisectWidestDimensionAndRecurse varMapToBisect =
+          let
+            widestBox@(widestVar, (_,_)) = widestInterval (tail varMapToBisect) (head varMapToBisect)
+            (leftVarMap, rightVarMap) = bisectVar varMapToBisect widestVar
+            (leftR, rightR) = 
+              withStrategy 
+              (parTuple2 rseq rseq) 
+              (
+                decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions leftVarMap ((currentDepth + 1, leftVarMap) : recursionMap) mode (currentDepth + 1) depthCutoff zoomOutAmount relativeImprovementCutoff p, 
+                decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions rightVarMap ((currentDepth + 1, rightVarMap) : recursionMap) mode (currentDepth + 1) depthCutoff zoomOutAmount relativeImprovementCutoff p
+              )
+          in
+            case leftR of
+                (Just True, _) ->
+                  case rightR of
+                    (Just True, _) -> (Just True, Nothing)
+                    r -> r
+                r -> r
+
+        -- searchForCounterexample finalVarMap =
+        --   let
+        --     zoomedOutVarMap 
 
 decideDisjunctionWithSimplex :: [(E.E, BoxFun)] -> VarMap -> Rational -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
 decideDisjunctionWithSimplex expressionsWithFunctions varMap maxWidthCutoff relativeImprovementCutoff p = 
