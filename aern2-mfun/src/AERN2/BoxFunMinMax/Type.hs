@@ -530,7 +530,8 @@ searchDisjunctionCE (varMap : varMaps) indeterminateVarMaps expressions currentD
   case decideDisjunctionWithSimplexCE (map (\e -> (e, expressionToBoxFun e varMap p)) expressions) varMap [(0, varMap)] 0 0 0 0 relativeImprovementCutoff p of
     (Just True, _) -> searchDisjunctionCE varMaps indeterminateVarMaps expressions currentDepth depthCutoff relativeImprovementCutoff p
     r@(Just False, _) -> r
-    r@(Nothing, _) -> searchDisjunctionCE varMaps (varMap : indeterminateVarMaps) expressions currentDepth depthCutoff relativeImprovementCutoff p
+    r@(Nothing, Just indeterminateArea) -> searchDisjunctionCE varMaps (indeterminateArea : indeterminateVarMaps) expressions currentDepth depthCutoff relativeImprovementCutoff p
+    (Nothing, _) -> undefined -- shouldn't get here
 
 searchConjunctionCE :: [[E.E]] -> VarMap -> Integer -> Rational -> Bool -> Precision -> (Maybe Bool, Maybe VarMap)
 searchConjunctionCE [] _ _ _ indeterminateFound _ = if indeterminateFound then (Nothing, Nothing) else (Just True, Nothing)
@@ -569,7 +570,7 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap recursionMap curr
                     r@(Just True, _) -> 
                       trace "proved true with simplex" 
                       r
-                    r@(Nothing, Just newVarMap) ->
+                    (Nothing, Just newVarMap) ->
                       if currentDepth !<! depthCutoff 
                         then
                           if taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff
@@ -581,7 +582,7 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap recursionMap curr
                               bisectWidestDimensionAndRecurse newVarMap
                         else 
                           trace ("depth cutoff reached after simplex " ++ show newVarMap) $ 
-                          if zoomOutAmount == 0 then r else zoomOutAndLookForCounterExample r
+                          if zoomOutAmount == 0 then (Nothing, Just newVarMap) else zoomOutAndLookForCounterExample (Nothing, Just newVarMap)
                     _ -> undefined
                   else
                     if currentDepth !<! depthCutoff 
