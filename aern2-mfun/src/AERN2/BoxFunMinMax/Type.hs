@@ -544,7 +544,7 @@ searchConjunctionCE (disjunction : disjunctions) varMap depthCutoff relativeImpr
 
 decideDisjunctionWithSimplexCE :: [(E.E, BoxFun)] -> VarMap -> [(Integer, VarMap)] -> Integer -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
 decideDisjunctionWithSimplexCE expressionsWithFunctions varMap recursionMap currentDepth depthCutoff zoomOutAmount zoomOutEvery relativeImprovementCutoff p =
-  if (zoomOutAmount /= 0) && (currentDepth /= 0) && (((~!) . mod) currentDepth zoomOutEvery == 0) && currentDepth !<! depthCutoff -- Zoom out and search for CE
+  if (zoomOutAmount > 0) && (currentDepth > 0) && (((~!) . mod) currentDepth zoomOutEvery == 0) && currentDepth !<! depthCutoff -- Zoom out and search for CE
     then 
       case lookup (currentDepth - zoomOutAmount) recursionMap of
         Just zoomedOutVarMap -> 
@@ -582,13 +582,13 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap recursionMap curr
                               bisectWidestDimensionAndRecurse newVarMap
                         else 
                           trace ("depth cutoff reached after simplex " ++ show newVarMap) $ 
-                          if zoomOutAmount == 0 then (Nothing, Just newVarMap) else zoomOutAndLookForCounterExample (Nothing, Just newVarMap)
+                          if zoomOutAmount <= 0 then (Nothing, Just newVarMap) else zoomOutAndLookForCounterExample (Nothing, Just newVarMap)
                     _ -> undefined
                   else
                     if currentDepth !<! depthCutoff 
                       then trace ("bisecting without simplex " ++ show varMap) $ bisectWidestDimensionAndRecurse varMap
                       else trace ("depth cutoff reached without simplex " ++ show varMap) $
-                        if zoomOutAmount == 0 then (Nothing, Just varMap) else zoomOutAndLookForCounterExample (Nothing, Just varMap)
+                        if zoomOutAmount <= 0 then (Nothing, Just varMap) else zoomOutAndLookForCounterExample (Nothing, Just varMap)
   where
     zoomOutAndLookForCounterExample currentIndeterminateArea =
       case lookup (currentDepth - zoomOutAmount) recursionMap of
