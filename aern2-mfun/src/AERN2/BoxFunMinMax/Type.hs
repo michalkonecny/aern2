@@ -500,16 +500,16 @@ decideDisjunctionWithBreadthFirst expressions (varMap : varMaps) checkedVarMaps 
 
 type BoxAddress = [(String, Int)]
 
-checkECNFCE :: [[E.E]] -> VarMap -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
-checkECNFCE [] _ _ _ _ _ = (Just True, Nothing)
-checkECNFCE (disjunction : disjunctions) varMap depthCutoff zoomOutAmount relativeImprovementCutoff p =
-  case decideDisjunctionWithSimplexCE (map (\e -> (e, expressionToBoxFun e varMap p)) disjunction) varMap [(0, varMap)] 0 depthCutoff zoomOutAmount relativeImprovementCutoff p of
-    (Just True, _) -> checkECNFCE disjunctions varMap depthCutoff zoomOutAmount relativeImprovementCutoff p
+checkECNFCE :: [[E.E]] -> VarMap -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
+checkECNFCE [] _ _ _ _ _ _ = (Just True, Nothing)
+checkECNFCE (disjunction : disjunctions) varMap depthCutoff zoomOutAmount zoomOutEvery relativeImprovementCutoff p =
+  case decideDisjunctionWithSimplexCE (map (\e -> (e, expressionToBoxFun e varMap p)) disjunction) varMap [(0, varMap)] 0 depthCutoff zoomOutAmount zoomOutEvery relativeImprovementCutoff p of
+    (Just True, _) -> checkECNFCE disjunctions varMap depthCutoff zoomOutAmount zoomOutEvery relativeImprovementCutoff p
     r -> r -- TODO: check other disjunctions for false? 
 
-searchDisjunctionCE :: [VarMap] -> [VarMap] -> [(E.E, BoxFun)] -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
+searchDisjunctionCE :: [VarMap] -> [VarMap] -> [E.E] -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
 searchDisjunctionCE [] [] _ _ _ _ _ = (Just True, Nothing)
-searchDisjunctionCE [] indeterminateVarMaps expressionsWithFunctions currentDepth depthCutoff relativeImprovementCutoff p =
+searchDisjunctionCE [] indeterminateVarMaps expressions currentDepth depthCutoff relativeImprovementCutoff p =
   if currentDepth !<! depthCutoff 
     then
       let
@@ -523,61 +523,78 @@ searchDisjunctionCE [] indeterminateVarMaps expressionsWithFunctions currentDept
           )
           indeterminateVarMaps
       in
-        searchDisjunctionCE newVarMaps [] expressionsWithFunctions (currentDepth + 1) depthCutoff relativeImprovementCutoff p
+        searchDisjunctionCE newVarMaps [] expressions (currentDepth + 1) depthCutoff relativeImprovementCutoff p
     else
-      (Nothing, Nothing)
-    
-searchDisjunctionCE (varMap : varMaps) indeterminateVarMaps expressionsWithFunctions currentDepth depthCutoff relativeImprovementCutoff p =
-  case decideDisjunctionWithSimplexCE expressionsWithFunctions varMap [] 0 0 0 relativeImprovementCutoff p of
-    (Just True, _) -> searchDisjunctionCE varMaps indeterminateVarMaps expressionsWithFunctions currentDepth depthCutoff relativeImprovementCutoff p
+      (Nothing, Nothing)    
+searchDisjunctionCE (varMap : varMaps) indeterminateVarMaps expressions currentDepth depthCutoff relativeImprovementCutoff p =
+  case decideDisjunctionWithSimplexCE (map (\e -> (e, expressionToBoxFun e varMap p)) expressions) varMap [(0, varMap)] 0 0 0 0 relativeImprovementCutoff p of
+    (Just True, _) -> searchDisjunctionCE varMaps indeterminateVarMaps expressions currentDepth depthCutoff relativeImprovementCutoff p
     r@(Just False, _) -> r
-    r@(Nothing, _) -> searchDisjunctionCE varMaps (varMap : indeterminateVarMaps) expressionsWithFunctions currentDepth depthCutoff relativeImprovementCutoff p
+    r@(Nothing, _) -> searchDisjunctionCE varMaps (varMap : indeterminateVarMaps) expressions currentDepth depthCutoff relativeImprovementCutoff p
 
-decideDisjunctionWithSimplexCE :: [(E.E, BoxFun)] -> VarMap -> [(Integer, VarMap)] -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
-decideDisjunctionWithSimplexCE expressionsWithFunctions varMap recursionMap currentDepth depthCutoff zoomOutAmount relativeImprovementCutoff p = 
-  if null filterOutFalseTerms
+searchConjunctionCE :: [[E.E]] -> VarMap -> Integer -> Rational -> Bool -> Precision -> (Maybe Bool, Maybe VarMap)
+searchConjunctionCE [] _ _ _ indeterminateFound _ = if indeterminateFound then (Nothing, Nothing) else (Just True, Nothing)
+searchConjunctionCE (disjunction : disjunctions) varMap depthCutoff relativeImprovementCutoff indeterminateFound p  =
+  case searchDisjunctionCE [varMap] [] disjunction 0 depthCutoff relativeImprovementCutoff p of
+    (Just True, _) -> searchConjunctionCE disjunctions varMap depthCutoff relativeImprovementCutoff indeterminateFound p
+    (Nothing, _) -> searchConjunctionCE disjunctions varMap depthCutoff relativeImprovementCutoff True p
+    r@(Just False, _) -> r
+
+
+decideDisjunctionWithSimplexCE :: [(E.E, BoxFun)] -> VarMap -> [(Integer, VarMap)] -> Integer -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
+decideDisjunctionWithSimplexCE expressionsWithFunctions varMap recursionMap currentDepth depthCutoff zoomOutAmount zoomOutEvery relativeImprovementCutoff p =
+  if (zoomOutAmount /= 0) && (currentDepth /= 0) && (((~!) . mod) currentDepth zoomOutEvery == 0) && currentDepth !<! depthCutoff -- Zoom out and search for CE
     then 
-      trace ("proved false with apply " ++ show varMap)
-      (Just False, Just varMap)
-    else 
-      if checkIfEsTrueUsingApply 
+      case lookup (currentDepth - zoomOutAmount) recursionMap of
+        Just zoomedOutVarMap -> 
+          case searchDisjunctionCE [zoomedOutVarMap] [] (map fst expressionsWithFunctions) 0 zoomOutAmount relativeImprovementCutoff p of
+            (Nothing, _) -> bisectWidestDimensionAndRecurse varMap -- simplex may have shrunk varMap in CE search, here we lose this information
+            r -> r
+        Nothing -> undefined -- shouldn't get here
+    else
+      if null filterOutFalseTerms
         then 
-          trace "proved true with apply" 
-          (Just True, Nothing)
+          trace ("proved false with apply " ++ show varMap)
+          (Just False, Just varMap)
         else 
-          -- Only call decideWithSimplex if all derivatives can be calculated
-          if and (concatMap (\(_, _, c) -> V.toList (V.map (not . hasErrorCN) c)) cornerRangesWithDerivatives)
+          if checkIfEsTrueUsingApply 
             then 
-              case decideWithSimplex cornerRangesWithDerivatives varMap of
-                r@(Just True, _) -> 
-                  trace "proved true with simplex" 
-                  r
-                r@(Nothing, Just newVarMap) ->
-                  if currentDepth !<! depthCutoff 
-                    then
-                      if taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff
+              trace "proved true with apply" 
+              (Just True, Nothing)
+            else 
+              -- Only call decideWithSimplex if all derivatives can be calculated
+              if and (concatMap (\(_, _, c) -> V.toList (V.map (not . hasErrorCN) c)) cornerRangesWithDerivatives)
+                then 
+                  case decideWithSimplex cornerRangesWithDerivatives varMap of
+                    r@(Just True, _) -> 
+                      trace "proved true with simplex" 
+                      r
+                    r@(Nothing, Just newVarMap) ->
+                      if currentDepth !<! depthCutoff 
                         then
-                          trace ("recursing with simplex with varMap: " ++ show newVarMap) $
-                          decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions newVarMap ((currentDepth + 1, newVarMap) : recursionMap) (currentDepth + 1) depthCutoff zoomOutAmount relativeImprovementCutoff p
-                        else
-                          trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $
-                          bisectWidestDimensionAndRecurse newVarMap
-                    else 
-                      trace ("depth cutoff reached after simplex " ++ show newVarMap) $ 
-                      case lookup (currentDepth - zoomOutAmount) recursionMap of
-                        Just zoomedOutVarMap -> 
-                          searchDisjunctionCE [zoomedOutVarMap] [] filteredExpressionsWithFunctions 0 zoomOutAmount relativeImprovementCutoff p
-                        Nothing -> trace "zoomed out area not found, cancelling CE search " r
-                _ -> undefined
-              else
-                if currentDepth !<! depthCutoff 
-                  then trace ("bisecting without simplex " ++ show varMap) $ bisectWidestDimensionAndRecurse varMap
-                  else trace ("depth cutoff reached without simplex " ++ show varMap) $
-                    case lookup (currentDepth - zoomOutAmount) recursionMap of
-                          Just zoomedOutVarMap -> 
-                            searchDisjunctionCE [zoomedOutVarMap] [] filteredExpressionsWithFunctions 0 zoomOutAmount relativeImprovementCutoff p
-                          Nothing -> trace "zoomed out area not found, cancelling CE search " (Nothing, Just varMap)
+                          if taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff
+                            then
+                              trace ("recursing with simplex with varMap: " ++ show newVarMap) $
+                              decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions newVarMap ((currentDepth + 1, newVarMap) : recursionMap) (currentDepth + 1) depthCutoff zoomOutAmount zoomOutEvery relativeImprovementCutoff p
+                            else
+                              trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $
+                              bisectWidestDimensionAndRecurse newVarMap
+                        else 
+                          trace ("depth cutoff reached after simplex " ++ show newVarMap) $ 
+                          if zoomOutAmount == 0 then r else zoomOutAndLookForCounterExample r
+                    _ -> undefined
+                  else
+                    if currentDepth !<! depthCutoff 
+                      then trace ("bisecting without simplex " ++ show varMap) $ bisectWidestDimensionAndRecurse varMap
+                      else trace ("depth cutoff reached without simplex " ++ show varMap) $
+                        if zoomOutAmount == 0 then (Nothing, Just varMap) else zoomOutAndLookForCounterExample (Nothing, Just varMap)
   where
+    zoomOutAndLookForCounterExample currentIndeterminateArea =
+      case lookup (currentDepth - zoomOutAmount) recursionMap of
+        Just zoomedOutVarMap -> 
+          searchDisjunctionCE [zoomedOutVarMap] [] (map fst filteredExpressionsWithFunctions) 0 zoomOutAmount relativeImprovementCutoff p
+        Nothing -> trace "zoomed out area not found, cancelling CE search " currentIndeterminateArea
+
     box  = fromVarMap varMap p
     boxL = lowerBounds box
     boxU = upperBounds box
@@ -611,8 +628,8 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap recursionMap curr
           withStrategy 
           (parTuple2 rseq rseq) 
           (
-            decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions leftVarMap ((currentDepth + 1, leftVarMap) : recursionMap) (currentDepth + 1) depthCutoff zoomOutAmount relativeImprovementCutoff p, 
-            decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions rightVarMap ((currentDepth + 1, rightVarMap) : recursionMap) (currentDepth + 1) depthCutoff zoomOutAmount relativeImprovementCutoff p
+            decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions leftVarMap ((currentDepth + 1, leftVarMap) : recursionMap) (currentDepth + 1) depthCutoff zoomOutAmount zoomOutEvery relativeImprovementCutoff p, 
+            decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions rightVarMap ((currentDepth + 1, rightVarMap) : recursionMap) (currentDepth + 1) depthCutoff zoomOutAmount zoomOutEvery relativeImprovementCutoff p
           )
       in
         case leftR of
