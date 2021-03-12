@@ -544,6 +544,19 @@ parSearchDisjunctionCE varMaps expressions currentDepth depthCutoff relativeImpr
         (Nothing, Nothing)                -> undefined 
         (Just False, Nothing)             -> undefined
 
+searchDisjunctionBFS :: [VarMap] -> [E.E] -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
+searchDisjunctionBFS [] _ _ _ _ _ = (Just True, Nothing)
+searchDisjunctionBFS (varMap : varMaps) expressions numberOfBoxesExamined numberOfBoxesCutoff relativeImprovementCutoff p =
+  if numberOfBoxesExamined !<! numberOfBoxesCutoff then
+    case decideDisjunctionWithSimplexCE (map (\e -> (e, expressionToBoxFun e varMap p)) expressions) varMap [(0, varMap)] 0 0 0 0 relativeImprovementCutoff p of
+      (Just True, _) -> searchDisjunctionBFS varMaps expressions (numberOfBoxesExamined + 1) numberOfBoxesCutoff relativeImprovementCutoff p 
+      r@(Just False, _) -> r
+      (Nothing, Just indeterminateVarMap) -> 
+        let (leftVarMap, rightVarMap) = bisectVar indeterminateVarMap (fst (widestInterval (tail varMap) (head varMap)))
+        in searchDisjunctionBFS (varMaps ++ [leftVarMap, rightVarMap]) expressions (numberOfBoxesExamined + 1) numberOfBoxesCutoff relativeImprovementCutoff p
+      (Nothing, Nothing) -> undefined
+  else (Nothing, Just varMap) -- TODO: 'best' indeterminate area?
+
 -- FIXME: Use number of boxes bound, if a box is indeterminate, split and add to end of queue
 -- Two ideas
 --   keep track of boxes checked, stop after reaching a cutoff. We know this will stop
