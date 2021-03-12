@@ -507,6 +507,47 @@ checkECNFCE (disjunction : disjunctions) varMap depthCutoff zoomOutAmount zoomOu
     (Just True, _) -> checkECNFCE disjunctions varMap depthCutoff zoomOutAmount zoomOutEvery relativeImprovementCutoff p
     r -> r -- TODO: check other disjunctions for false? 
 
+parSearchDisjunctionCE :: [VarMap] -> [E.E] -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
+parSearchDisjunctionCE varMaps expressions currentDepth depthCutoff relativeImprovementCutoff p =
+  case checkBFSResults results [] of
+    (Just True, _)                -> (Just True, Nothing)
+    (Just False, [])              -> undefined
+    (Nothing, [])                 -> undefined 
+    (Just False, counterExamples) -> (Just False, Just (head counterExamples))
+    (Nothing, indeterminateVarMaps  ) -> 
+      if currentDepth !<! depthCutoff
+        then
+          let
+            newVarMaps = 
+              concatMap 
+              (\vm -> 
+                let
+                  (leftBisection, rightBisection) = bisectVar vm (fst (widestInterval (tail vm) (head vm))) 
+                in
+                  [leftBisection, rightBisection]
+              )
+              indeterminateVarMaps
+          in
+            parSearchDisjunctionCE newVarMaps expressions (currentDepth + 1) depthCutoff relativeImprovementCutoff p
+        else
+          (Nothing, Just (head indeterminateVarMaps)) -- TODO: Smallest area? Area with upperbound closest to zero?
+  where
+    results = parMap rseq (\varMap -> decideDisjunctionWithSimplexCE (map (\e -> (e, expressionToBoxFun e varMap p)) expressions) varMap [(0, varMap)] 0 0 0 0 relativeImprovementCutoff p) varMaps
+
+    checkBFSResults :: [(Maybe Bool, Maybe VarMap)] -> [VarMap] -> (Maybe Bool, [VarMap])
+    checkBFSResults [] indeterminateVarMaps = if null indeterminateVarMaps then (Just True, []) else (Nothing, indeterminateVarMaps) 
+    checkBFSResults (result : results) indeterminateVarMaps =
+      case result of
+        (Just True, _)                    -> checkBFSResults results indeterminateVarMaps
+        (Just False, Just counterExample) -> (Just False, [counterExample]) 
+        (Nothing, Just varMap)            -> checkBFSResults results (varMap : indeterminateVarMaps)
+        (Nothing, Nothing)                -> undefined 
+        (Just False, Nothing)             -> undefined
+
+-- FIXME: Use number of boxes bound, if a box is indeterminate, split and add to end of queue
+-- Two ideas
+--   keep track of boxes checked, stop after reaching a cutoff. We know this will stop
+--   count the number of indeterminate boxes at the next level, stop if list is too large. This may not terminate 
 searchDisjunctionCE :: [VarMap] -> [VarMap] -> [E.E] -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
 searchDisjunctionCE [] [] _ _ _ _ _ = (Just True, Nothing)
 searchDisjunctionCE [] indeterminateVarMaps expressions currentDepth depthCutoff relativeImprovementCutoff p =
@@ -525,7 +566,7 @@ searchDisjunctionCE [] indeterminateVarMaps expressions currentDepth depthCutoff
       in
         searchDisjunctionCE newVarMaps [] expressions (currentDepth + 1) depthCutoff relativeImprovementCutoff p
     else
-      (Nothing, Nothing)    
+      (Nothing, Nothing)
 searchDisjunctionCE (varMap : varMaps) indeterminateVarMaps expressions currentDepth depthCutoff relativeImprovementCutoff p =
   case decideDisjunctionWithSimplexCE (map (\e -> (e, expressionToBoxFun e varMap p)) expressions) varMap [(0, varMap)] 0 0 0 0 relativeImprovementCutoff p of
     (Just True, _) -> searchDisjunctionCE varMaps indeterminateVarMaps expressions currentDepth depthCutoff relativeImprovementCutoff p
@@ -536,12 +577,12 @@ searchDisjunctionCE (varMap : varMaps) indeterminateVarMaps expressions currentD
 searchConjunctionCE :: [[E.E]] -> VarMap -> Integer -> Rational -> Bool -> Precision -> (Maybe Bool, Maybe VarMap)
 searchConjunctionCE [] _ _ _ indeterminateFound _ = if indeterminateFound then (Nothing, Nothing) else (Just True, Nothing)
 searchConjunctionCE (disjunction : disjunctions) varMap depthCutoff relativeImprovementCutoff indeterminateFound p  =
-  case searchDisjunctionCE [varMap] [] disjunction 0 depthCutoff relativeImprovementCutoff p of
+  case parSearchDisjunctionCE [varMap] disjunction 0 depthCutoff relativeImprovementCutoff p of
     (Just True, _) -> searchConjunctionCE disjunctions varMap depthCutoff relativeImprovementCutoff indeterminateFound p
     (Nothing, _) -> searchConjunctionCE disjunctions varMap depthCutoff relativeImprovementCutoff True p
     r@(Just False, _) -> r
 
-
+-- FIXME: For zooming out, try zooming out after examining x boxes
 decideDisjunctionWithSimplexCE :: [(E.E, BoxFun)] -> VarMap -> [(Integer, VarMap)] -> Integer -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
 decideDisjunctionWithSimplexCE expressionsWithFunctions varMap recursionMap currentDepth depthCutoff zoomOutAmount zoomOutEvery relativeImprovementCutoff p =
   if (zoomOutAmount > 0) && (currentDepth > 0) && (((~!) . mod) currentDepth zoomOutEvery == 0) && currentDepth !<! depthCutoff -- Zoom out and search for CE
