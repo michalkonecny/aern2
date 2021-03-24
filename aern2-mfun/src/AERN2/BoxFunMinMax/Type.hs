@@ -18,7 +18,7 @@ import Data.List (filter, find)
 import qualified Data.Sequence as Seq
 import qualified Data.Map as M
 
--- import Debug.Trace (trace)
+import qualified Debug.Trace as T
 
 trace a x = x
 
@@ -544,7 +544,6 @@ decideDisjunctionBFS (varMap : varMaps) expressions numberOfBoxesExamined number
       (Nothing, Nothing) -> undefined
   else (Nothing, Just varMap) -- TODO: 'best' indeterminate area?
 
--- FIXME: For zooming out, try zooming out after examining x boxes
 decideDisjunctionWithSimplexCE :: [(E.E, BoxFun)] -> VarMap -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
 decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p =
   if null filterOutFalseTerms
@@ -557,27 +556,15 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth dept
           trace "proved true with apply" 
           (Just True, Nothing)
         else 
-          -- Only call decideWithSimplex if all derivatives can be calculated
-          if and (concatMap (\(_, _, c) -> V.toList (V.map (not . hasErrorCN) c)) cornerRangesWithDerivatives)
+          if greatestCentre !<! -0.1 -- Could check centre of the interval, takes into account the range of the intervals
             then 
-              case decideWithSimplex cornerRangesWithDerivatives varMap of
-                r@(Just True, _) -> 
-                  trace "proved true with simplex" 
-                  r
-                (Nothing, Just newVarMap) ->
-                  if taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff
-                    then
-                      trace ("recursing with simplex with varMap: " ++ show newVarMap) $
-                      decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions newVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
-                    else
-                      if currentDepth !<! depthCutoff 
-                        then trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $ bisectWidestDimensionAndRecurse newVarMap
-                        else trace ("depth cutoff reached, starting BFS search " ++ show newVarMap) decideDisjunctionBFS [newVarMap] (map fst filteredExpressionsWithFunctions) 0 bfsBoxesCutoff relativeImprovementCutoff p
-                _ -> undefined
-              else
-                if currentDepth !<! depthCutoff 
-                  then trace ("bisecting without simplex " ++ show varMap) $ bisectWidestDimensionAndRecurse varMap
-                  else trace ("depth cutoff reached without simplex " ++ show varMap) $ decideDisjunctionBFS [varMap] (map fst filteredExpressionsWithFunctions) 0 bfsBoxesCutoff relativeImprovementCutoff p
+              case decideDisjunctionBFS [varMap] (map fst filteredExpressionsWithFunctions) 0 bfsBoxesCutoff relativeImprovementCutoff p of
+                r@(Just True, _) -> r
+                r@(Just False, _) -> r
+                (Nothing, _) -> checkSimplex
+            else 
+              checkSimplex
+              
   where
     box  = fromVarMap varMap p
     boxL = lowerBounds box
@@ -586,6 +573,8 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth dept
     esWithRanges            = map (\(e, f) -> ((e, f), apply f box)) expressionsWithFunctions
     filterOutFalseTerms     = filter (\(_, range) -> not (range !<! 0))  esWithRanges -- Could make this cleaner with list comprehension
     
+    greatestCentre = maximum $ map (AERN2.MP.Ball.centre . snd) esWithRanges
+
     filteredExpressionsWithFunctions = map fst filterOutFalseTerms
     
     checkIfEsTrueUsingApply = any (\(_, range) -> range !>=! 0)  filterOutFalseTerms
@@ -622,6 +611,29 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth dept
                 (Just True, _) -> (Just True, Nothing)
                 r -> r
             r -> r
+
+    checkSimplex = 
+      -- Only call decideWithSimplex if all derivatives can be calculated
+      if and (concatMap (\(_, _, c) -> V.toList (V.map (not . hasErrorCN) c)) cornerRangesWithDerivatives)
+        then 
+          case decideWithSimplex cornerRangesWithDerivatives varMap of
+            r@(Just True, _) -> 
+              trace "proved true with simplex" 
+              r
+            (Nothing, Just newVarMap) ->
+              if taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff
+                then
+                  trace ("recursing with simplex with varMap: " ++ show newVarMap) $
+                  decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions newVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
+                else
+                  if currentDepth !<! depthCutoff 
+                    then trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $ bisectWidestDimensionAndRecurse newVarMap
+                    else trace ("depth cutoff reached, starting BFS search " ++ show newVarMap) decideDisjunctionBFS [newVarMap] (map fst filteredExpressionsWithFunctions) 0 bfsBoxesCutoff relativeImprovementCutoff p
+            _ -> undefined
+          else
+            if currentDepth !<! depthCutoff 
+              then trace ("bisecting without simplex " ++ show varMap) $ bisectWidestDimensionAndRecurse varMap
+              else trace ("depth cutoff reached without simplex " ++ show varMap) $ decideDisjunctionBFS [varMap] (map fst filteredExpressionsWithFunctions) 0 bfsBoxesCutoff relativeImprovementCutoff p
 
     -- searchForCounterexample finalVarMap =
     --   let
@@ -836,7 +848,7 @@ createFunctionConstraints ((leftCornerValue, rightCornerValue, derivatives) : va
       --     the above transformation only occurs when at least one domain is partly negative.
           [
             S.LEQ ((currentIndex, 1.0) : zip [1..] lowerDerivatives) (foldl add (-leftL - lowerSubst) lowerDerivativesTimesLeftCorner),
-            S.GEQ ((currentIndex, 1.0) : zip [1..] upperDerivatives) (foldl add (-leftU - upperSubst) upperDerivativesTimesLeftCorner),
+            -- S.GEQ ((currentIndex, 1.0) : zip [1..] upperDerivatives) (foldl add (-leftU - upperSubst) upperDerivativesTimesLeftCorner),
             -- FIXME: Swap order of subtraction for the right corner case, and then use the original order of constraints
             -- -y + (dx_1L * x_1) >= -yl + (dx_1L * x_1r)
             -- S.GEQ ((currentIndex, 1.0) : zip [1..] lowerDerivatives) (foldl add (-rightL - lowerSubst) lowerDerivativesTimesRightCorner),
@@ -847,8 +859,8 @@ createFunctionConstraints ((leftCornerValue, rightCornerValue, derivatives) : va
             -- S.GEQ ((currentIndex, -1.0) : zip [1..] lowerDerivatives) (foldl add (rightL - lowerSubst) lowerDerivativesTimesRightCorner),
             -- S.LEQ ((currentIndex, -1.0) : zip [1..] upperDerivatives) (foldl add (rightU - upperSubst) upperDerivativesTimesRightCorner)
             -- y + (x_1 * (-dx_1R)) >= yl + (x_1r * (-dx_1R))
-            S.GEQ ((currentIndex, -1.0) : zip [1..] negatedUpperDerivatives) (foldl add (rightL + upperSubst) negatedUpperDerivativesTimesRightCorner),
-            S.LEQ ((currentIndex, -1.0) : zip [1..] negatedLowerDerivatives) (foldl add (rightU + lowerSubst) negatedLowerDerivativesTimesRightCorner)
+            S.GEQ ((currentIndex, -1.0) : zip [1..] negatedUpperDerivatives) (foldl add (rightL + upperSubst) negatedUpperDerivativesTimesRightCorner)
+            -- S.LEQ ((currentIndex, -1.0) : zip [1..] negatedLowerDerivatives) (foldl add (rightU + lowerSubst) negatedLowerDerivativesTimesRightCorner)
             
           ]
     ++
