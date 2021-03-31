@@ -18,7 +18,11 @@ import Data.List (filter, find)
 import qualified Data.Sequence as Seq
 import qualified Data.Map as M
 
+import AERN2.MP.Dyadic (Dyadic)
+
 import qualified Debug.Trace as T
+
+import Data.Maybe
 
 trace a x = x
 
@@ -531,6 +535,13 @@ checkECNFCE disjunctions varMap depthCutoff bfsBoxesCutoff relativeImprovementCu
   --   r@(Just False, _) -> r
   --   (Nothing, _) -> undefined 
 
+-- TODO: Implement own record type with hasorder instance
+-- Use this https://hackage.haskell.org/package/pqueue-1.4.1.3/docs/Data-PQueue-Min.html
+-- Define P.Ord
+instance HasOrderAsymmetric (Dyadic, VarMap) (Dyadic, VarMap)  where
+  lessThan (v1, _) (v2, _) = lessThan v1 v2
+  leq (v1, _) (v2, _) = leq v1 v2
+
 decideDisjunctionBFS :: [VarMap] -> [E.E] -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
 decideDisjunctionBFS [] _ _ _ _ _ = (Just True, Nothing)
 decideDisjunctionBFS (varMap : varMaps) expressions numberOfBoxesExamined numberOfBoxesCutoff relativeImprovementCutoff p =
@@ -621,14 +632,17 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth dept
               trace "proved true with simplex" 
               r
             (Nothing, Just newVarMap) ->
-              if taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff
-                then
-                  trace ("recursing with simplex with varMap: " ++ show newVarMap) $
-                  decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions newVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
-                else
-                  if currentDepth !<! depthCutoff 
-                    then trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $ bisectWidestDimensionAndRecurse newVarMap
-                    else trace ("depth cutoff reached, starting BFS search " ++ show newVarMap) decideDisjunctionBFS [newVarMap] (map fst filteredExpressionsWithFunctions) 0 bfsBoxesCutoff relativeImprovementCutoff p
+              case findFalsePointWithSimplex cornerRangesWithDerivatives newVarMap of
+                Nothing ->
+                  if taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff
+                    then
+                      trace ("recursing with simplex with varMap: " ++ show newVarMap) $
+                      decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions newVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
+                    else
+                      if currentDepth !<! depthCutoff 
+                        then trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $ bisectWidestDimensionAndRecurse newVarMap
+                        else trace ("depth cutoff reached, starting BFS search " ++ show newVarMap) decideDisjunctionBFS [newVarMap] (map fst filteredExpressionsWithFunctions) 0 bfsBoxesCutoff relativeImprovementCutoff p
+                Just counterExample -> (Just False, Just counterExample)
             _ -> undefined
           else
             if currentDepth !<! depthCutoff 
@@ -638,6 +652,28 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth dept
     -- searchForCounterexample finalVarMap =
     --   let
     --     zoomedOutVarMap 
+
+setupSystem :: [E.E] -> VarMap -> ([(CN MPBall, CN MPBall, Box)])
+setupSystem expressions varMap = 
+  map  
+  (\e ->
+    let
+      f = expressionToBoxFun e varMap (prec 100)
+    in
+      (
+        -- left corner range
+        apply f boxL,
+        -- right corner range
+        apply f boxU,
+        -- derivatives
+        gradient f box
+      )
+  )
+  expressions
+  where
+    box  = fromVarMap varMap (prec 100)
+    boxL = lowerBounds box
+    boxU = upperBounds box
 
 decideDisjunctionWithSimplex :: [(E.E, BoxFun)] -> VarMap -> Rational -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
 decideDisjunctionWithSimplex expressionsWithFunctions varMap maxWidthCutoff relativeImprovementCutoff p = 
@@ -821,6 +857,59 @@ createDomainConstraints ((_, (l, r)) : xs) currentIndex =
     else
       (([S.GEQ [(currentIndex, rational 1)] l, S.LEQ [(currentIndex, rational 1)] r] ++ resultsL, resultsR), nextAvailableVar)
 
+encloseFunctionCounterExamples :: [(CN MPBall, CN MPBall, Box)] -> [Rational] -> [Rational] -> [(Integer, Rational)] -> [S.PolyConstraint]
+encloseFunctionCounterExamples [] _ _ _ = []
+encloseFunctionCounterExamples ((leftCornerValue, rightCornerValue, derivatives) : values) leftCorner rightCorner substVars =
+  [
+    S.LEQ (zip [1..] upperDerivatives) (foldl add (-leftU - upperSubst - eps) upperDerivativesTimesLeftCorner)
+    -- S.LEQ (zip [1..] negatedLowerDerivatives) (foldl add (rightU + lowerSubst) negatedLowerDerivativesTimesRightCorner)
+    -- S.LEQ (zip [1..] lowerDerivatives) (foldl add (-rightU - lowerSubst - eps) lowerDerivativesTimesRightCorner)
+  ]
+  ++ encloseFunctionCounterExamples values leftCorner rightCorner substVars
+  where
+    eps = 1/!1000000000
+    
+    mpBallToRational :: CN MPBall -> (Rational, Rational)
+    mpBallToRational = bimap (rational . (~!)) (rational . (~!)) . endpoints . reducePrecionIfInaccurate . (~!)
+      -- bimap (endpoints . reducePrecionIfInaccurate)
+
+    -- Get the lower and upper bounds of the function applied at the bottom left corner of the box
+    (_, leftU) = mpBallToRational leftCornerValue
+    (_, rightU) = mpBallToRational rightCornerValue
+    
+    -- Get the first derivatives as rationals
+    firstDerivatives = V.map mpBallToRational derivatives 
+    
+    lowerDerivatives = V.toList $ V.map fst firstDerivatives
+    upperDerivatives = V.toList $ V.map snd firstDerivatives
+
+    negatedLowerDerivatives  = map negate lowerDerivatives
+    negatedUpperDerivatives  = map negate upperDerivatives
+
+    -- Get the values of multiplying the lower/upper bounds of the derivatives with the values 
+    -- of the points at the bottom left corner of the box
+    lowerDerivativesTimesLeftCorner = zipWith mul leftCorner lowerDerivatives
+    upperDerivativesTimesLeftCorner = zipWith mul leftCorner upperDerivatives
+
+    lowerDerivativesTimesRightCorner = zipWith mul rightCorner lowerDerivatives
+    upperDerivativesTimesRightCorner = zipWith mul rightCorner upperDerivatives
+
+    negatedLowerDerivativesTimesRightCorner = zipWith mul rightCorner negatedLowerDerivatives
+    negatedUpperDerivativesTimesRightCorner = zipWith mul rightCorner negatedUpperDerivatives
+    -- Map over the substVars, lookup the value of the first derivative for the current var
+    -- being mapped over, multiply this value with the value the variable maps to in substVars
+    -- (i.e. the value the variable was transformed from the left side in createDomainConstraints).
+    -- Do this for both the lower and upper derivatives
+
+    substValuesLower = 
+      map (\(v, c) -> (lowerDerivatives !! (v - 1)) * c) substVars
+
+    substValuesUpper =
+      map (\(v, c) -> (upperDerivatives !! (v - 1)) * c) substVars
+
+    -- Fold the above lists using addition
+    lowerSubst = foldl add 0.0 substValuesLower
+    upperSubst = foldl add 0.0 substValuesUpper
 -- |Create constraints for the given parameters functions given as the first variable.
 -- The second variable is the box for which we are creating constraints.
 -- The third variable stores the integer variable that is available to be assigned.
@@ -996,6 +1085,122 @@ encloseAreaUnderZeroWithSimplex cornerValuesWithDerivatives varMap =
     -- Call the simplex method twice for each variable (setting the objective function to Min/Max of each
     -- variable). Map each (String) variable to a pair. The pair is the results determined by the simplex
     -- method when Min/Maxing the key variable. 
+    newPoints :: [(String, (Maybe (Integer, [(Integer, Rational)]), Maybe (Integer, [(Integer, Rational)])))]
+    newPoints =
+      map
+      (\v -> 
+        case lookup v indexedVarMap of
+          Just (sv, _) -> (sv, ((S.twoPhaseSimplex (S.Min [(v, 1.0)]) completeSystem), (S.twoPhaseSimplex (S.Max [(v, 1.0)]) completeSystem)))
+          Nothing -> undefined
+      )
+      variables
+
+findFalsePointWithSimplex  
+  :: [(CN MPBall, CN MPBall, Box)] -- ^ [(valueOfFunctionAtLeftCorner, valueOfFunctionAtRightCorner, derivativesOfFunction)]
+  -> VarMap -- ^ The domains for each function which leads to the first derivatives
+  -> Maybe VarMap
+findFalsePointWithSimplex cornerValuesWithDerivatives varMap =
+  -- T.trace (show completeSystem) $
+  case mNewPoints of
+    Just newPoints ->
+      Just $
+      map 
+      (\(s, v) ->
+        case lookup v newPoints of
+          Just r -> let c = fromMaybe 0.0 (lookup v substVars) in (s, (r + c, r + c))
+          Nothing -> let c = fromMaybe 0.0 (lookup v substVars) in (s, (c, c)) 
+      )
+      indexedVariables
+    Nothing -> Nothing
+  where
+    -- Get the bottom left corner of the varMap
+
+    -- boxFuns = map (\e -> expressionToBoxFun e corner p) expressions
+
+    -- Create constraints for the domain
+    -- substVars stores any variable transformations (for the LHS)
+    ((domainConstraints, substVars), nextAvailableVar) = createDomainConstraints varMap 1
+
+    variables = [1 .. (nextAvailableVar - 1)]
+
+    leftCorner = map (fst . snd) varMap
+    rightCorner = map (snd . snd) varMap
+
+    functionConstraints = encloseFunctionCounterExamples cornerValuesWithDerivatives leftCorner rightCorner substVars
+
+    -- Map integer variables to their respective varMap
+    indexedVarMap = zip variables varMap
+
+    -- Map string variables to their respective integer variable
+    indexedVariables = zip (map fst varMap) variables
+
+    completeSystem = domainConstraints ++ functionConstraints
+
+    -- Get a feasible solution for this system
+    mNewPoints :: Maybe [(Integer, Rational)]
+    mNewPoints = S.findFeasibleSolution completeSystem
+
+encloseFalseAreaWithSimplex  
+  :: [(CN MPBall, CN MPBall, Box)] -- ^ [(valueOfFunctionAtLeftCorner, valueOfFunctionAtRightCorner, derivativesOfFunction)]
+  -> VarMap -- ^ The domains for each function which leads to the first derivatives
+  -> Maybe VarMap
+encloseFalseAreaWithSimplex cornerValuesWithDerivatives varMap =
+  -- T.trace (show completeSystem) $
+  case head newPoints of
+  (_, (Nothing, _)) ->
+    Nothing
+  _ -> 
+    let
+      -- Should never get an undefined result if the first resuls in newPoints is feasible
+      extractResult :: Maybe (Integer, [(Integer, Rational)]) -> Rational
+      extractResult mr =
+        case mr of
+          Just (v, rs) -> -- v refers to the objective variable. We extract the value of the objective
+                          -- variable from rs (the result determined by the simplex method)
+            case lookup v rs of
+              Just r -> r
+              Nothing -> undefined 
+          Nothing -> undefined 
+    in
+      Just $
+      map
+      (\(v, r) ->
+        --trace (show r)
+        (v, 
+        case lookup v indexedVariables of
+          Just iv -> -- Get the integer variable for the current string variable 
+            case lookup iv substVars of -- Check if any transformation needs to be done to get the final result
+              Just c -> (bimap ((add c) . extractResult) ((add c) . extractResult) r) -- Add any needed transformation to lower/upper bounds
+              Nothing -> bimap extractResult extractResult r
+          Nothing -> undefined -- Should never get here
+        )  
+      )
+      newPoints
+  where
+    -- Get the bottom left corner of the varMap
+
+    -- boxFuns = map (\e -> expressionToBoxFun e corner p) expressions
+
+    -- Create constraints for the domain
+    -- substVars stores any variable transformations (for the LHS)
+    ((domainConstraints, substVars), nextAvailableVar) = createDomainConstraints varMap 1
+
+    variables = [1 .. (nextAvailableVar - 1)]
+
+    leftCorner = map (fst . snd) varMap
+    rightCorner = map (snd . snd) varMap
+
+    functionConstraints = encloseFunctionCounterExamples cornerValuesWithDerivatives leftCorner rightCorner substVars
+
+    -- Map integer variables to their respective varMap
+    indexedVarMap = zip variables varMap
+
+    -- Map string variables to their respective integer variable
+    indexedVariables = zip (map fst varMap) variables
+
+    completeSystem = domainConstraints ++ functionConstraints
+
+    -- Get a feasible solution for this system
     newPoints :: [(String, (Maybe (Integer, [(Integer, Rational)]), Maybe (Integer, [(Integer, Rational)])))]
     newPoints =
       map
