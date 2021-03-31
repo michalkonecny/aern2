@@ -54,7 +54,7 @@ library
   else
     hs-source-dirs:  src-rounded
     build-depends:
-      rounded == 0.1.*
+      rounded == 0.3
   ghc-options:     -Wall -fno-warn-orphans
   extensions:
     RebindableSyntax,
