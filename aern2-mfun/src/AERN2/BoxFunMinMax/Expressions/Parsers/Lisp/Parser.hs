@@ -33,6 +33,7 @@ isNumber = all isNumberCharacter
 tokenize :: String -> [String]
 tokenize [] = []
 tokenize (x:xs)
+  | x == ';' = tokenize $ dropWhile (/= '\n') xs -- Remove comments
   | x == '(' = [x] : tokenize xs
   | x == ')' = [x] : tokenize xs
   | isNumberCharacter x = tokenizeNumber (x:xs) ""
