@@ -41,8 +41,10 @@ library
     , stm
     , parallel
     , simplex-haskell == 0.1.*
+    , smt2-parser
     -- TODO: delete below eventually
     , async
+    , text
 
   ghc-options:     -Wall -fno-warn-orphans -O2 -threaded
   extensions:
@@ -84,6 +86,9 @@ library
     AERN2.BoxFunMinMax.Expressions.Translators.DReal
     AERN2.BoxFunMinMax.Expressions.Translators.MetiTarski
     AERN2.BoxFunMinMax.Expressions.Translators.FPTaylor
+    AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.DataTypes
+    AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.Parser
+    AERN2.BoxFunMinMax.Expressions.Parsers.Smt
     -- AERN2.BoxFun.OptimisationConcurrent 
 
 -- executable aern2-mfun-benchmark
