@@ -14,6 +14,7 @@ data UnOp  = Sqrt | Negate | Abs | Sin
   deriving (Show, P.Eq, P.Ord)
 
 -- | The E type represents the inequality: expression :: E >= 0
+-- TODO: Add rounding operator with certain epsilon/floating-point type
 data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String | PowI E Integer | Float E Integer -- Float Expression Significand
   deriving (Show, P.Eq, P.Ord)
 
@@ -25,7 +26,7 @@ data Conn = And | Or | Impl
 
 -- | The F type is used to specify comparisons between E types
 -- and logical connectives between F types
-data F = FComp Comp E E | FConn Conn F F
+data F = FComp Comp E E | FConn Conn F F | FNot F
   deriving (Show, P.Eq)
 
 -- | Translate F to a single expression (E)
@@ -47,6 +48,7 @@ fToE (FConn op e1 e2)   = case op of
     EBinOp Max (fToE e1) (fToE e2)
   Impl -> 
     EBinOp Max (EUnOp Negate (fToE e1)) (fToE e2) -- !f1 \/ f2 = max(!f1, f2)
+fToE (FNot f) = EUnOp Negate (fToE f)
 
 fToECNF :: F -> [[E]]
 fToECNF (FComp op e1 e2)   = case op of
@@ -62,6 +64,7 @@ fToECNF (FConn op f1 f2)   = case op of
   And -> fToECNF f1 ++ fToECNF f2 -- [e1 /\ e2 /\ (e3 \/ e4)] ++ [p1 /\ (p2 \/ p3) /\ p4] = [e1 /\ e2 /\ (e3 \/ e4) /\ p1 /\ (p2 \/ p3) /\ p4]
   Or ->  [d1 ++ d2 | d1 <- fToECNF f1, d2 <- fToECNF f2] -- [e1 /\ e2 /\ (e3 \/ e4)] \/ [p1 /\ (p2 \/ p3) /\ p4] 
   Impl -> [d1 ++ d2 | d1 <- map (map (EUnOp Negate)) (fToECNF f1), d2 <- fToECNF f2]
+fToECNF (FNot f) = map (map (EUnOp Negate)) (fToECNF f)
 
 -- | Add bounds for any Float expressions
 -- addRoundingBounds :: E -> [[E]]
