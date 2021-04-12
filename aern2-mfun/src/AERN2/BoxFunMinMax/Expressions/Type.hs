@@ -18,7 +18,7 @@ data UnOp  = Sqrt | Negate | Abs | Sin
 data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String | PowI E Integer | Float E Integer -- Float Expression Significand
   deriving (Show, P.Eq, P.Ord)
 
-data Comp = Gt | Ge | Lt | Le
+data Comp = Gt | Ge | Lt | Le | Eq
   deriving (Show, P.Eq)
 
 data Conn = And | Or | Impl
@@ -41,6 +41,7 @@ fToE (FComp op e1 e2)   = case op of
     EBinOp Sub e1 e2 -- f1 >= f2 == f1 - f2 >= 0 == 
   Gt ->
     EBinOp Sub e1 e2
+  Eq -> fToE $ FConn And (FComp Ge e1 e2) (FComp Le e1 e2) -- f1 = f2 == f1 >= f2 /\ f1 <= f2
 fToE (FConn op e1 e2)   = case op of
   And ->
     EBinOp Min (fToE e1) (fToE e2)
@@ -60,6 +61,7 @@ fToECNF (FComp op e1 e2)   = case op of
     [[EBinOp Sub e1 e2]] -- f1 >= f2 == f1 - f2 >= 0 == 
   Gt ->
     [[EBinOp Sub e1 e2]]
+  Eq -> fToECNF $ FConn And (FComp Ge e1 e2) (FComp Le e1 e2) -- f1 = f2 == f1 >= f2 /\ f1 <= f2
 fToECNF (FConn op f1 f2)   = case op of
   And -> fToECNF f1 ++ fToECNF f2 -- [e1 /\ e2 /\ (e3 \/ e4)] ++ [p1 /\ (p2 \/ p3) /\ p4] = [e1 /\ e2 /\ (e3 \/ e4) /\ p1 /\ (p2 \/ p3) /\ p4]
   Or ->  [d1 ++ d2 | d1 <- fToECNF f1, d2 <- fToECNF f2] -- [e1 /\ e2 /\ (e3 \/ e4)] \/ [p1 /\ (p2 \/ p3) /\ p4] 

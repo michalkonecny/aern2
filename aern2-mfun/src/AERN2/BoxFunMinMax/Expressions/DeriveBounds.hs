@@ -75,27 +75,27 @@ scanHypothesis (FConn Or h1 h2) intervals =
     box2 = scanHypothesis h2 intervals
     mergeWorse (l1,r1) (l2,r2) = (min <$> l1 <*> l2, max <$> r1 <*> r2)
     
--- -- We need: data Comp = Gt | Ge | Lt | Le | Eq
--- scanHypothesis (FComp Eq _e1@(Var v1) _e2@(Var v2)) intervals = 
---     Map.insert v1 val $
---     Map.insert v2 val $
---     intervals
---     where
---     Just val1 = Map.lookup v1 intervals
---     Just val2 = Map.lookup v2 intervals
---     val = updateUpper val1 $ updateLower val1 $ val2
+-- We need: data Comp = Gt | Ge | Lt | Le | Eq
+scanHypothesis (FComp Eq _e1@(Var v1) _e2@(Var v2)) intervals = 
+    Map.insert v1 val $
+    Map.insert v2 val $
+    intervals
+    where
+    Just val1 = Map.lookup v1 intervals
+    Just val2 = Map.lookup v2 intervals
+    val = updateUpper val1 $ updateLower val1 $ val2
 
--- scanHypothesis (FComp Eq (Var v) e) intervals = 
---     Map.insertWith updateUpper v val $
---     Map.insertWith updateLower v val intervals
---     where
---     val = evalE_Rational intervals e
+scanHypothesis (FComp Eq (Var v) e) intervals = 
+    Map.insertWith updateUpper v val $
+    Map.insertWith updateLower v val intervals
+    where
+    val = evalE_Rational intervals e
 
--- scanHypothesis (FComp Eq e (Var v)) intervals = 
---     Map.insertWith updateUpper v val $
---     Map.insertWith updateLower v val intervals
---     where
---     val = evalE_Rational intervals e
+scanHypothesis (FComp Eq e (Var v)) intervals = 
+    Map.insertWith updateUpper v val $
+    Map.insertWith updateLower v val intervals
+    where
+    val = evalE_Rational intervals e
     
 scanHypothesis (FComp Le _e1@(Var v1) _e2@(Var v2)) intervals = 
     Map.insert v1 (updateUpper val2 val1) $
