@@ -79,6 +79,7 @@ library
     AERN2.BoxFunMinMax.Type
     AERN2.BoxFunMinMax.Optimisation
     AERN2.BoxFunMinMax.VarMap
+    AERN2.BoxFunMinMax.Expressions.DeriveBounds
     AERN2.BoxFunMinMax.Expressions.Eliminator
     AERN2.BoxFunMinMax.Expressions.TestFunctions
     AERN2.BoxFunMinMax.Expressions.Type
