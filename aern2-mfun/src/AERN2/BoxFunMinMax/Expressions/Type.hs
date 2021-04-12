@@ -100,7 +100,7 @@ simplifyECNF :: [[E]] -> [[E]]
 simplifyECNF = map (map simplifyE) 
 
 -- | compute the value of E with Vars at specified points
-computeE :: E -> [(String, Double)] -> CN Double
+computeE :: E -> [(String, Rational)] -> CN Double
 computeE (EBinOp op e1 e2) varMap = 
   case op of
     Min -> computeE e1 varMap `min` computeE e2 varMap
@@ -121,7 +121,7 @@ computeE (Var v) varMap =
     Nothing -> 
       trace ("map does not contain variable " ++ show v)
       undefined
-    Just r -> cn r
+    Just r -> cn (double r)
 computeE (Lit i) _ = cn (double i)
 computeE (PowI e i) varMap = computeE e varMap  ^ i
 
@@ -131,10 +131,15 @@ computeE (PowI e i) varMap = computeE e varMap  ^ i
 -- A value is the computed result of the second element of 
 -- the tuple and is valid if all the expressions in the list 
 -- at the first element of the tuple compute to be above 0.
-computeQualifiedEs :: [([E], E)] -> [(String, Double)] -> [CN Double]
+computeQualifiedEs :: [([E], E)] -> [(String, Rational)] -> [CN Double]
 computeQualifiedEs [] _ = []
 computeQualifiedEs ((ps, q) : es) varMap =
   if all (\p -> computeE p varMap !>=! 0) ps
     then computeE q varMap : computeQualifiedEs es varMap
     else computeQualifiedEs es varMap
-    
+
+computeEDisjunction :: [E] -> [(String, Rational)] -> [CN Double]
+computeEDisjunction es varMap = map (`computeE` varMap) es
+
+computeECNF :: [[E]] -> [(String, Rational)] -> [[CN Double]]
+computeECNF cnf varMap = map (`computeEDisjunction` varMap) cnf
