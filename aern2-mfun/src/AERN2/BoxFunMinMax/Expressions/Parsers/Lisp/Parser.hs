@@ -10,7 +10,7 @@ import Prelude
 
 -- Constants.
 symbolCharacters :: String
-symbolCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_!?-+*/%<>#"
+symbolCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_!?-+*/%<>#."
 
 numberCharacters :: String
 numberCharacters = "0123456789."
@@ -25,7 +25,8 @@ isSymbol :: String -> Bool
 isSymbol = all isSymbolCharacter
 
 isNumber :: String -> Bool
-isNumber = all isNumberCharacter
+isNumber [] = True
+isNumber (c : cs) = elem c "0123456789" && all isNumberCharacter cs
 
 -- The "tokenize" function is the first phase of converting the source code of
 -- a Lisp program into an abstract syntax tree. It performs lexical analysis on
