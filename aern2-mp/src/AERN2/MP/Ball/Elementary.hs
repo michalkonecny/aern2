@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-|
     Module      :  AERN2.MP.Ball.Elementary
     Description :  Elementary operations on arbitrary precision dyadic balls
@@ -91,49 +92,43 @@ instance CanExp MPBall where
   exp = intervalFunctionByEndpointsUpDown MPFloat.expDown MPFloat.expUp
 
 instance CanLog MPBall where
-  type LogType MPBall = CN MPBall
+  type LogType MPBall = MPBall
   log x
     | x_!>! 1 =
-        cn $ setPrecision p $ ballFunctionUsingLipschitz log_ logLip x_
+        setPrecision p $ ballFunctionUsingLipschitz log_ logLip x_
     | x_!>! 0 =
-        cn $ setPrecision p $ intervalFunctionByEndpoints log_ x_
-    | x !>! 0 =
-        cn $ setPrecision p $ intervalFunctionByEndpoints log_ x
-    | x !<=! 0 = noValueNumErrorCertainCN err
-    | otherwise = noValueNumErrorPotentialCN err
+        setPrecision p $ intervalFunctionByEndpoints log_ x_
+    | otherwise = err
     where
     p = getPrecision x
     x_ = reducePrecionIfInaccurate x
-    err = OutOfRange $ "log: argument must be > 0: " ++ show x
+    err = error $ "log: argument must be > 0: " ++ show x
     log_ (MPBall c e) = MPBall lc (e + (errorBound le))
       where
       (lc, le) = ceduCentreErr $ MPFloat.logCEDU c
-    logLip y = errorBound $ (1/!y)
+    logLip y = errorBound $ (1/y)
 
 instance CanPow MPBall MPBall where
-  powNoCN b e = (~!) $ pow b e
-  pow = powUsingExpLog (mpBall 0) (mpBall 1)
+  pow = powUsingExpLog (mpBall 1)
 
 instance CanPow MPBall Dyadic where
-  powNoCN b e = (~!) $ pow b e
-  pow b e = powUsingExpLog (mpBall 0) (mpBall 1) b (mpBall e)
+  pow b e = powUsingExpLog (mpBall 1) b (mpBall e)
 
 instance CanPow MPBall Rational where
-  powNoCN b e = (~!) $ pow b e
-  pow b e = powUsingExpLog (mpBall 0) (mpBall 1) b (mpBallP (getPrecision b) e)
+  pow b e = powUsingExpLog (mpBall 1) b (mpBallP (getPrecision b) e)
 
 instance CanSqrt MPBall where
-  type SqrtType MPBall = CN MPBall
+  type SqrtType MPBall = MPBall
   sqrt x
-    | x !>=! 0 = cn $ aux x
-    | x !<! 0 = noValueNumErrorCertainCN err
-    | otherwise = prependErrorsCN [(ErrorPotential, err)] $ cn $ aux (max 0 x)
+    | x !>=! 0 = aux x
+    | x ?>=? 0 = aux $ max 0 x
+    | otherwise = err
     where
     aux =
       intervalFunctionByEndpointsUpDown
         (\ e -> MPFloat.sqrtDown (P.max (mpFloat 0) e))
         (\ e -> MPFloat.sqrtUp (P.max (mpFloat 0) e))
-    err = OutOfRange $ "sqrt: argument must be >= 0: " ++ show x
+    err = error $ "sqrt: argument must be >= 0: " ++ show x
 
 {- generic methods for computing real functions from MPFR-approximations -}
 

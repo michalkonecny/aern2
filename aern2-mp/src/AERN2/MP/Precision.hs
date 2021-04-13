@@ -27,7 +27,8 @@ import MixedTypesNumPrelude
 import qualified Prelude as P
 import Text.Printf
 
-import Control.CollectErrors
+import Control.CollectErrors (CollectErrors(..), CanBeErrors)
+-- import qualified Control.CollectErrors as CE
 
 import Data.Complex
 
@@ -124,7 +125,7 @@ instance CanSetPrecision Bool where
 
 instance HasPrecision t => HasPrecision (CollectErrors es t) where
   getPrecision vCE =
-    case getMaybeValueCE vCE of
+    case getMaybeValue vCE of
       Just v -> getPrecision v
       _ -> defaultPrecision
 instance CanSetPrecision t => CanSetPrecision (CollectErrors es t) where
@@ -222,6 +223,6 @@ $(declForTypes
   [[t| Bool |], [t| Integer |], [t| Int |], [t| Rational |], [t| Double |]]
   (\ t -> [d|
 
-    instance (ConvertibleWithPrecision $t t, Monoid es) => ConvertibleWithPrecision $t (CollectErrors es t) where
-      safeConvertP p = fmap (\v -> CollectErrors (Just v) mempty) . safeConvertP p
+    instance (ConvertibleWithPrecision $t t, CanBeErrors es) => ConvertibleWithPrecision $t (CollectErrors es t) where
+      safeConvertP p = fmap pure . safeConvertP p
   |]))

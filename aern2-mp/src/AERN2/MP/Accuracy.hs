@@ -184,7 +184,7 @@ class HasAccuracy a where
           Exact -> bits $ getPrecision b
           a -> a
 
-instance (HasAccuracy a, SuitableForCE es) => HasAccuracy (CollectErrors es a) where
+instance (HasAccuracy a, CanBeErrors es) => HasAccuracy (CollectErrors es a) where
   getAccuracy (CollectErrors ma es) =
     case ma of
       Just a | not (hasCertainError es) -> getAccuracy a

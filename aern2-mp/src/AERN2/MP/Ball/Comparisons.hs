@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-|
     Module      :  AERN2.MP.Ball.Comparisons
     Description :  Comparisons of arbitrary precision dyadic balls
@@ -27,7 +28,11 @@ where
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
+import qualified Control.CollectErrors as CE
 import Control.CollectErrors
+    ( CollectErrors(getMaybeValue), CanBeErrors )
+import qualified Numeric.CollectErrors as CN
+import Numeric.CollectErrors (CN, cn)
 
 import AERN2.Norm
 import AERN2.MP.Dyadic (Dyadic)
@@ -41,140 +46,136 @@ import AERN2.MP.Ball.Conversions ()
 {- comparisons -}
 
 instance HasEqAsymmetric MPBall MPBall where
-  type EqCompareType MPBall MPBall = Maybe Bool
+  type EqCompareType MPBall MPBall = Kleenean
   b1 `equalTo` b2 =   b1 >= b2 && b1 <= b2
 
 instance HasEqAsymmetric MPBall Integer where
-  type EqCompareType MPBall Integer = Maybe Bool
+  type EqCompareType MPBall Integer = Kleenean
   b1 `equalTo` b2 =   b1 >= b2 && b1 <= b2
 instance HasEqAsymmetric Integer MPBall where
-  type EqCompareType Integer MPBall = Maybe Bool
+  type EqCompareType Integer MPBall = Kleenean
   b1 `equalTo` b2 =   b1 >= b2 && b1 <= b2
 
 instance HasEqAsymmetric MPBall Int where
-  type EqCompareType MPBall Int = Maybe Bool
+  type EqCompareType MPBall Int = Kleenean
   b1 `equalTo` b2 =   b1 >= b2 && b1 <= b2
 instance HasEqAsymmetric Int MPBall where
-  type EqCompareType Int MPBall = Maybe Bool
+  type EqCompareType Int MPBall = Kleenean
   b1 `equalTo` b2 =   b1 >= b2 && b1 <= b2
 
 instance HasEqAsymmetric MPBall Rational where
-  type EqCompareType MPBall Rational = Maybe Bool
+  type EqCompareType MPBall Rational = Kleenean
   b1 `equalTo` b2 =   b1 >= b2 && b1 <= b2
 instance HasEqAsymmetric Rational MPBall where
-  type EqCompareType Rational MPBall = Maybe Bool
+  type EqCompareType Rational MPBall = Kleenean
   b1 `equalTo` b2 =   b1 >= b2 && b1 <= b2
 
 instance HasEqAsymmetric MPBall Dyadic where
-  type EqCompareType MPBall Dyadic = Maybe Bool
+  type EqCompareType MPBall Dyadic = Kleenean
   b1 `equalTo` b2 =   b1 >= b2 && b1 <= b2
 instance HasEqAsymmetric Dyadic MPBall where
-  type EqCompareType Dyadic MPBall = Maybe Bool
+  type EqCompareType Dyadic MPBall = Kleenean
   b1 `equalTo` b2 =   b1 >= b2 && b1 <= b2
 
 instance
   (HasEqAsymmetric MPBall b
-  , CanEnsureCE es b
-  , CanEnsureCE es (EqCompareType MPBall b)
-  , IsBool (EnsureCE es (EqCompareType MPBall b))
-  , SuitableForCE es)
+  , IsBool (EqCompareType MPBall b)
+  , CanBeErrors es)
   =>
-  HasEqAsymmetric MPBall (CollectErrors es  b)
+  HasEqAsymmetric MPBall (CollectErrors es b)
   where
-  type EqCompareType MPBall (CollectErrors es  b) =
-    EnsureCE es (EqCompareType MPBall b)
-  equalTo = lift2TLCE equalTo
+  type EqCompareType MPBall (CollectErrors es b) =
+    CollectErrors es (EqCompareType MPBall b)
+  equalTo = CE.liftT1 equalTo
 
 instance
   (HasEqAsymmetric a MPBall
-  , CanEnsureCE es a
-  , CanEnsureCE es (EqCompareType a MPBall)
-  , IsBool (EnsureCE es (EqCompareType a MPBall))
-  , SuitableForCE es)
+  , IsBool (EqCompareType a MPBall)
+  , CanBeErrors es)
   =>
   HasEqAsymmetric (CollectErrors es a) MPBall
   where
-  type EqCompareType (CollectErrors es  a) MPBall =
-    EnsureCE es (EqCompareType a MPBall)
-  equalTo = lift2TCE equalTo
+  type EqCompareType (CollectErrors es a) MPBall =
+    CollectErrors es (EqCompareType a MPBall)
+  equalTo = CE.lift1T equalTo
 
 instance HasOrderAsymmetric MPBall MPBall where
-  type OrderCompareType MPBall MPBall = Maybe Bool
+  type OrderCompareType MPBall MPBall = Kleenean
   lessThan b1 b2
-    | r1 < l2 = Just True
-    | r2 <= l1 = Just False
-    | otherwise = Nothing
+    | r1 < l2 = CertainTrue
+    | r2 <= l1 = CertainFalse
+    | otherwise = TrueOrFalse
     where
     (l1, r1) = endpoints b1
     (l2, r2) = endpoints b2
   leq b1 b2
-    | r1 <= l2 = Just True
-    | r2 < l1 = Just False
-    | otherwise = Nothing
+    | r1 <= l2 = CertainTrue
+    | r2 < l1 = CertainFalse
+    | otherwise = TrueOrFalse
     where
     (l1, r1) = endpoints b1
     (l2, r2) = endpoints b2
 
 instance HasOrderAsymmetric Integer MPBall where
-  type OrderCompareType Integer MPBall = Maybe Bool
+  type OrderCompareType Integer MPBall = Kleenean
   lessThan = convertFirst lessThan
   leq = convertFirst leq
 instance HasOrderAsymmetric MPBall Integer where
-  type OrderCompareType MPBall Integer = Maybe Bool
+  type OrderCompareType MPBall Integer = Kleenean
   lessThan = convertSecond lessThan
   leq = convertSecond leq
 
 instance HasOrderAsymmetric Int MPBall where
-  type OrderCompareType Int MPBall = Maybe Bool
+  type OrderCompareType Int MPBall = Kleenean
   lessThan = convertFirst lessThan
   leq = convertFirst leq
 instance HasOrderAsymmetric MPBall Int where
-  type OrderCompareType MPBall Int = Maybe Bool
+  type OrderCompareType MPBall Int = Kleenean
   lessThan = convertSecond lessThan
   leq = convertSecond leq
 
 instance HasOrderAsymmetric Dyadic MPBall where
-  type OrderCompareType Dyadic MPBall = Maybe Bool
+  type OrderCompareType Dyadic MPBall = Kleenean
   lessThan = convertFirst lessThan
   leq = convertFirst leq
 instance HasOrderAsymmetric MPBall Dyadic where
-  type OrderCompareType MPBall Dyadic = Maybe Bool
+  type OrderCompareType MPBall Dyadic = Kleenean
   lessThan = convertSecond lessThan
   leq = convertSecond leq
 
 instance HasOrderAsymmetric MPBall Rational where
-  type OrderCompareType MPBall Rational = Maybe Bool
+  type OrderCompareType MPBall Rational = Kleenean
   lessThan b1 q2
-    | r1 < l2 = Just True
-    | r2 <= l1 = Just False
-    | otherwise = Nothing
+    | r1 < l2 = CertainTrue
+    | r2 <= l1 = CertainFalse
+    | otherwise = TrueOrFalse
     where
     (l1, r1) = endpoints b1
     l2 = q2
     r2 = q2
   leq b1 q2
-    | r1 <= l2 = Just True
-    | r2 < l1 = Just False
-    | otherwise = Nothing
+    | r1 <= l2 = CertainTrue
+    | r2 < l1 = CertainFalse
+    | otherwise = TrueOrFalse
     where
     (l1, r1) = endpoints b1
     l2 = q2
     r2 = q2
 
 instance HasOrderAsymmetric Rational MPBall where
-  type OrderCompareType Rational MPBall = Maybe Bool
+  type OrderCompareType Rational MPBall = Kleenean
   lessThan q1 b2
-    | r1 < l2 = Just True
-    | r2 <= l1 = Just False
-    | otherwise = Nothing
+    | r1 < l2 = CertainTrue
+    | r2 <= l1 = CertainFalse
+    | otherwise = TrueOrFalse
     where
     (l2, r2) = endpoints b2
     l1 = q1
     r1 = q1
   leq q1 b2
-    | r1 <= l2 = Just True
-    | r2 < l1 = Just False
-    | otherwise = Nothing
+    | r1 <= l2 = CertainTrue
+    | r2 < l1 = CertainFalse
+    | otherwise = TrueOrFalse
     where
     (l2, r2) = endpoints b2
     l1 = q1
@@ -182,35 +183,31 @@ instance HasOrderAsymmetric Rational MPBall where
 
 instance
   (HasOrderAsymmetric MPBall b
-  , CanEnsureCE es b
-  , CanEnsureCE es (OrderCompareType MPBall b)
-  , IsBool (EnsureCE es (OrderCompareType MPBall b))
-  , SuitableForCE es)
+  , IsBool (OrderCompareType MPBall b)
+  , CanBeErrors es)
   =>
   HasOrderAsymmetric MPBall (CollectErrors es  b)
   where
   type OrderCompareType MPBall (CollectErrors es  b) =
-    EnsureCE es (OrderCompareType MPBall b)
-  lessThan = lift2TLCE lessThan
-  leq = lift2TLCE leq
-  greaterThan = lift2TLCE greaterThan
-  geq = lift2TLCE geq
+    CollectErrors es (OrderCompareType MPBall b)
+  lessThan = CE.liftT1 lessThan
+  leq = CE.liftT1 leq
+  greaterThan = CE.liftT1 greaterThan
+  geq = CE.liftT1 geq
 
 instance
   (HasOrderAsymmetric a MPBall
-  , CanEnsureCE es a
-  , CanEnsureCE es (OrderCompareType a MPBall)
-  , IsBool (EnsureCE es (OrderCompareType a MPBall))
-  , SuitableForCE es)
+  , IsBool (OrderCompareType a MPBall)
+  , CanBeErrors es)
   =>
   HasOrderAsymmetric (CollectErrors es a) MPBall
   where
   type OrderCompareType (CollectErrors es  a) MPBall =
-    EnsureCE es (OrderCompareType a MPBall)
-  lessThan = lift2TCE lessThan
-  leq = lift2TCE leq
-  greaterThan = lift2TCE greaterThan
-  geq = lift2TCE geq
+    CollectErrors es (OrderCompareType a MPBall)
+  lessThan = CE.lift1T lessThan
+  leq = CE.lift1T leq
+  greaterThan = CE.lift1T greaterThan
+  geq = CE.lift1T geq
 
 instance CanTestZero MPBall
 instance CanTestPosNeg MPBall
@@ -268,36 +265,32 @@ instance CanMinMaxAsymmetric Rational MPBall where
 
 instance
   (CanMinMaxAsymmetric MPBall b
-  , CanEnsureCE es b
-  , CanEnsureCE es (MinMaxType MPBall b)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanMinMaxAsymmetric MPBall (CollectErrors es  b)
   where
   type MinMaxType MPBall (CollectErrors es  b) =
-    EnsureCE es (MinMaxType MPBall b)
-  min = lift2TLCE min
-  max = lift2TLCE max
+    CollectErrors es (MinMaxType MPBall b)
+  min = CE.liftT1 min
+  max = CE.liftT1 max
 
 instance
   (CanMinMaxAsymmetric a MPBall
-  , CanEnsureCE es a
-  , CanEnsureCE es (MinMaxType a MPBall)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanMinMaxAsymmetric (CollectErrors es a) MPBall
   where
   type MinMaxType (CollectErrors es  a) MPBall =
-    EnsureCE es (MinMaxType a MPBall)
-  min = lift2TCE min
-  max = lift2TCE max
+    CollectErrors es (MinMaxType a MPBall)
+  min = CE.lift1T min
+  max = CE.lift1T max
 
 {- intersection -}
 
 instance CanIntersectAsymmetric MPBall MPBall where
   intersect a b
     | l > r =
-        noValueNumErrorCertainCN $ NumError $ "intersect: empty intersection: " ++ show a ++ "; " ++ show b
+        CN.noValueNumErrorCertain $ CN.NumError $ "intersect: empty intersection: " ++ show a ++ "; " ++ show b
     | otherwise = cn $ setPrecision p $ fromMPFloatEndpoints l r
     where
     p  = getPrecision a
@@ -307,38 +300,34 @@ instance CanIntersectAsymmetric MPBall MPBall where
     (bL,bR) = endpoints b
 
 intersectCNMPBall :: CN MPBall -> CN MPBall -> CN MPBall
-intersectCNMPBall x y =
-  case (fst $ ensureNoCN x, fst $ ensureNoCN y) of 
-    (Nothing, Nothing) -> x
-    (Just _ , Nothing) -> x
-    (Nothing, Just _ ) -> y
-    (Just _ , Just _ ) -> lift2CE intersect x y
+intersectCNMPBall = intersect
+  -- case (fst $ ensureNoCN x, fst $ ensureNoCN y) of 
+  --   (Nothing, Nothing) -> x
+  --   (Just _ , Nothing) -> x
+  --   (Nothing, Just _ ) -> y
+  --   (Just _ , Just _ ) -> lift2CE intersect x y
 
 instance
   (CanIntersectAsymmetric MPBall b
-  , CanEnsureCE es b
-  , CanEnsureCE es (IntersectionType MPBall b)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanIntersectAsymmetric MPBall (CollectErrors es b)
   where
   type IntersectionType MPBall (CollectErrors es b) =
-    EnsureCE es (IntersectionType MPBall b)
-  intersect = lift2TLCE intersect
+    CollectErrors es (IntersectionType MPBall b)
+  intersect = CE.liftT1 intersect
 
 instance
   (CanIntersectAsymmetric a MPBall
-  , CanEnsureCE es a
-  , CanEnsureCE es (IntersectionType a MPBall)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanIntersectAsymmetric (CollectErrors es a) MPBall
   where
   type IntersectionType (CollectErrors es  a) MPBall =
-    EnsureCE es (IntersectionType a MPBall)
-  intersect = lift2TCE intersect
+    CollectErrors es (IntersectionType a MPBall)
+  intersect = CE.lift1T intersect
 
-{- union -}
+{- hull -}
 
 hullMPBall :: MPBall -> MPBall -> MPBall
 hullMPBall a b = 
@@ -349,40 +338,37 @@ hullMPBall a b =
   (aL,aR) = endpoints a
   (bL,bR) = endpoints b
 
+{- union -}
 
 instance CanUnionAsymmetric MPBall MPBall where
   union a b =
-    case getMaybeValueCN (a `intersect` b) of
-      Just _ -> prependErrorsCN [(ErrorPotential, err)] r
-      _ -> prependErrorsCN [(ErrorCertain, err)] r
+    case getMaybeValue (a `intersect` b) of
+      Just _ -> CN.prependErrorPotential err r
+      _ -> CN.prependErrorCertain err r
     where
-    err = NumError $ "union of enclosures: not enclosing the same value"
+    err = CN.NumError $ "union of enclosures: not enclosing the same value"
     r = cn $ hullMPBall a b
 
 
 instance
   (CanUnionAsymmetric MPBall b
-  , CanEnsureCE es b
-  , CanEnsureCE es (UnionType MPBall b)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanUnionAsymmetric MPBall (CollectErrors es b)
   where
   type UnionType MPBall (CollectErrors es b) =
-    EnsureCE es (UnionType MPBall b)
-  union = lift2TLCE union
+    CollectErrors es (UnionType MPBall b)
+  union = CE.liftT1 union
 
 instance
   (CanUnionAsymmetric a MPBall
-  , CanEnsureCE es a
-  , CanEnsureCE es (UnionType a MPBall)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanUnionAsymmetric (CollectErrors es a) MPBall
   where
   type UnionType (CollectErrors es  a) MPBall =
-    EnsureCE es (UnionType a MPBall)
-  union = lift2TCE union
+    CollectErrors es (UnionType a MPBall)
+  union = CE.lift1T union
 
 {-|
   Compute an MPBall function from *exact* MPFloat operations on interval endpoints.

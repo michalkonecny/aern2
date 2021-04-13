@@ -27,6 +27,8 @@ import Test.QuickCheck
 
 -- import Data.Convertible
 
+import Data.Ratio (numerator)
+
 import Math.NumberTheory.Logarithms (integerLog2)
 
 import AERN2.MP.Precision
@@ -201,12 +203,11 @@ instance CanMulAsymmetric Rational ErrorBound where
         | otherwise = error "trying to multiply ErrorBound by a negative integer"
 
 instance CanDiv ErrorBound Integer where
-    type DivTypeNoCN ErrorBound Integer = ErrorBound
     type DivType ErrorBound Integer = ErrorBound
-    divideNoCN = divide
-    divide (ErrorBound a) i
-        | i > 0 = ErrorBound $ a /^ (MPFloat.fromIntegerUp errorBoundPrecision i)
-        | otherwise = error "trying to multiply ErrorBound by a non-positive integer"
+    divide = divide
+    -- divide (ErrorBound a) i
+    --     | i > 0 = ErrorBound $ a /^ (MPFloat.fromIntegerUp errorBoundPrecision i)
+    --     | otherwise = error "trying to multiply ErrorBound by a non-positive integer"
 
 instance Arbitrary ErrorBound where
   arbitrary =
@@ -220,6 +221,6 @@ instance Arbitrary ErrorBound where
         | otherwise =
           do
           (s :: Integer) <- arbitrary
-          let resultR = ((abs s) `P.mod` (2^!35))/!(2^!32)
+          let resultR = ((abs s) `P.mod` (numerator $ 2^35))/(2^32)
           let result = convert resultR
           return result

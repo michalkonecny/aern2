@@ -1,5 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE PartialTypeSignatures #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
+{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 {-|
     Module      :  AERN2.MP.Ball.Field
     Description :  Field operations on arbitrary precision dyadic balls
@@ -19,7 +21,10 @@ where
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
-import Control.CollectErrors
+import qualified Control.CollectErrors as CE
+import Control.CollectErrors ( CollectErrors, CanBeErrors )
+-- import qualified Numeric.CollectErrors as CN
+-- import Numeric.CollectErrors (CN, cn)
 
 import AERN2.Normalize
 
@@ -73,27 +78,23 @@ instance CanAddAsymmetric Rational MPBall where
 
 instance
   (CanAddAsymmetric MPBall b
-  , CanEnsureCE es b
-  , CanEnsureCE es (AddType MPBall b)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
-  CanAddAsymmetric MPBall (CollectErrors es  b)
+  CanAddAsymmetric MPBall (CollectErrors es b)
   where
-  type AddType MPBall (CollectErrors es  b) =
-    EnsureCE es (AddType MPBall b)
-  add = lift2TLCE add
+  type AddType MPBall (CollectErrors es b) =
+    CollectErrors es (AddType MPBall b)
+  add = CE.liftT1 add
 
 instance
   (CanAddAsymmetric a MPBall
-  , CanEnsureCE es a
-  , CanEnsureCE es (AddType a MPBall)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanAddAsymmetric (CollectErrors es a) MPBall
   where
   type AddType (CollectErrors es  a) MPBall =
-    EnsureCE es (AddType a MPBall)
-  add = lift2TCE add
+    CollectErrors es (AddType a MPBall)
+  add = CE.lift1T add
 
 {- subtraction -}
 
@@ -113,27 +114,23 @@ instance CanSub Dyadic MPBall
 
 instance
   (CanSub MPBall b
-  , CanEnsureCE es b
-  , CanEnsureCE es (SubType MPBall b)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanSub MPBall (CollectErrors es  b)
   where
   type SubType MPBall (CollectErrors es  b) =
-    EnsureCE es (SubType MPBall b)
-  sub = lift2TLCE sub
+    CollectErrors es (SubType MPBall b)
+  sub = CE.liftT1 sub
 
 instance
   (CanSub a MPBall
-  , CanEnsureCE es a
-  , CanEnsureCE es (SubType a MPBall)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanSub (CollectErrors es a) MPBall
   where
   type SubType (CollectErrors es  a) MPBall =
-    EnsureCE es (SubType a MPBall)
-  sub = lift2TCE sub
+    CollectErrors es (SubType a MPBall)
+  sub = CE.lift1T sub
 
 {- multiplication -}
 
@@ -175,42 +172,30 @@ instance CanMulAsymmetric Rational MPBall where
 
 instance
   (CanMulAsymmetric MPBall b
-  , CanEnsureCE es b
-  , CanEnsureCE es (MulType MPBall b)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanMulAsymmetric MPBall (CollectErrors es  b)
   where
   type MulType MPBall (CollectErrors es  b) =
-    EnsureCE es (MulType MPBall b)
-  mul = lift2TLCE mul
+    CollectErrors es (MulType MPBall b)
+  mul = CE.liftT1 mul
 
 instance
   (CanMulAsymmetric a MPBall
-  , CanEnsureCE es a
-  , CanEnsureCE es (MulType a MPBall)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanMulAsymmetric (CollectErrors es a) MPBall
   where
   type MulType (CollectErrors es  a) MPBall =
-    EnsureCE es (MulType a MPBall)
-  mul = lift2TCE mul
+    CollectErrors es (MulType a MPBall)
+  mul = CE.lift1T mul
 
 
 {- division -}
 
 instance CanDiv MPBall MPBall where
-  type DivTypeNoCN MPBall MPBall = MPBall
-  divideNoCN b1 b2 = (~!) (divide b1 b2)
-  type DivType MPBall MPBall = CN MPBall
-  divide (MPBall x1 e1) b2@(MPBall x2 e2)
-    | isCertainlyNonZero b2 =
-        cn $ normalize $ MPBall x12C err
-    | isCertainlyZero b2 =
-        noValueNumErrorCertainCN DivByZero
-    | otherwise =
-        noValueNumErrorPotentialCN DivByZero
+  type DivType MPBall MPBall = MPBall
+  divide (MPBall x1 e1) (MPBall x2 e2) = normalize $ MPBall x12C err
     where
     (x12C, e12) = MPFloat.ceduCentreErr $ MPFloat.divCEDU x1 x2
     x12AbsUp = (abs x12C) +^ e12
@@ -242,74 +227,53 @@ $(declForTypes
   [[t| Integer |], [t| Int |], [t| Dyadic |]]
   (\ t -> [d|
     instance CanDiv MPBall $t where
-      type DivType MPBall $t = CN MPBall
+      type DivType MPBall $t = MPBall
       divide = convertSecond divide
-      type DivTypeNoCN MPBall $t = MPBall
-      divideNoCN = convertSecond divideNoCN
     instance CanDiv $t MPBall where
-      type DivType $t MPBall = CN MPBall
+      type DivType $t MPBall = MPBall
       divide = convertFirst divide
-      type DivTypeNoCN $t MPBall = MPBall
-      divideNoCN = convertFirst divideNoCN
   |]))
 
 instance CanDiv Dyadic Dyadic where
-  type DivTypeNoCN Dyadic Dyadic = MPBall
-  divideNoCN a b = divideNoCN (mpBall a) (mpBall b)
+  type DivType Dyadic Dyadic = MPBall
   divide a b = divide (mpBall a) (mpBall b)
 
 instance CanDiv MPBall Rational where
-  type DivTypeNoCN MPBall Rational = MPBall
-  divideNoCN = convertPSecond divideNoCN
+  type DivType MPBall Rational = MPBall
   divide = convertPSecond divide
 instance CanDiv Rational MPBall where
-  type DivTypeNoCN Rational MPBall = MPBall
-  divideNoCN = convertPFirst divideNoCN
+  type DivType Rational MPBall = MPBall
   divide = convertPFirst divide
 
 instance
   (CanDiv MPBall b
-  , CanEnsureCE es b
-  , CanEnsureCE es (DivType MPBall b)
-  , CanEnsureCE es (DivTypeNoCN MPBall b)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanDiv MPBall (CollectErrors es  b)
   where
   type DivType MPBall (CollectErrors es  b) =
-    EnsureCE es (DivType MPBall b)
-  divide = lift2TLCE divide
-  type DivTypeNoCN MPBall (CollectErrors es  b) =
-    EnsureCE es (DivTypeNoCN MPBall b)
-  divideNoCN = lift2TLCE divideNoCN
+    CollectErrors es (DivType MPBall b)
+  divide = CE.liftT1 divide
 
 instance
   (CanDiv a MPBall
-  , CanEnsureCE es a
-  , CanEnsureCE es (DivType a MPBall)
-  , CanEnsureCE es (DivTypeNoCN a MPBall)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanDiv (CollectErrors es a) MPBall
   where
   type DivType (CollectErrors es  a) MPBall =
-    EnsureCE es (DivType a MPBall)
-  divide = lift2TCE divide
-  type DivTypeNoCN (CollectErrors es  a) MPBall =
-    EnsureCE es (DivTypeNoCN a MPBall)
-  divideNoCN = lift2TCE divideNoCN
+    CollectErrors es (DivType a MPBall)
+  divide = CE.lift1T divide
 
 {- integer power -}
 
 instance CanPow MPBall Integer where
-  powNoCN b e = (~!) $ powUsingMulRecipCutNeg (mpBall 1) b e
   pow = powUsingMulRecipCutNeg (mpBall 1)
 
 instance CanPow MPBall Int where
-  powNoCN b e = (~!) $ powUsingMulRecipCutNeg (mpBall 1) b e
   pow = powUsingMulRecipCutNeg (mpBall 1)
 
-powUsingMulRecipCutNeg ::_ => t -> t -> e -> DivType Integer (EnsureCN t)
+powUsingMulRecipCutNeg :: _ => t -> t -> e -> DivType Integer t
 powUsingMulRecipCutNeg one x e 
   | even e = 
       max 0 $ powUsingMulRecip one x e
@@ -317,44 +281,31 @@ powUsingMulRecipCutNeg one x e
 
 instance
   (CanPow MPBall b
-  , CanEnsureCE es b
-  , CanEnsureCE es (PowType MPBall b)
-  , CanEnsureCE es (PowTypeNoCN MPBall b)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanPow MPBall (CollectErrors es  b)
   where
-  type PowTypeNoCN MPBall (CollectErrors es  b) =
-    EnsureCE es (PowTypeNoCN MPBall b)
-  powNoCN = lift2TLCE powNoCN
   type PowType MPBall (CollectErrors es  b) =
-    EnsureCE es (PowType MPBall b)
-  pow = lift2TLCE pow
+    CollectErrors es (PowType MPBall b)
+  pow = CE.liftT1 pow
 
 instance
   (CanPow a MPBall
-  , CanEnsureCE es a
-  , CanEnsureCE es (PowType a MPBall)
-  , CanEnsureCE es (PowTypeNoCN a MPBall)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanPow (CollectErrors es a) MPBall
   where
-  type PowTypeNoCN (CollectErrors es  a) MPBall =
-    EnsureCE es (PowTypeNoCN a MPBall)
-  powNoCN = lift2TCE powNoCN
   type PowType (CollectErrors es  a) MPBall =
-    EnsureCE es (PowType a MPBall)
-  pow = lift2TCE pow
+    CollectErrors es (PowType a MPBall)
+  pow = CE.lift1T pow
 
 instance
   CanDivIMod MPBall MPBall
   where
+  type DivIType MPBall MPBall = Integer
   divIMod x m 
-    | m !>! 0 = (cn d, cn xm)
-    | otherwise = (err (0 :: Integer), err xm)
+    | m !>! 0 = (d, xm)
+    | otherwise = error $ "modulus not positive: " ++ show m
     where
-    d = floor $ centre $ (centreAsBall x) /! (centreAsBall m)
+    d = floor $ centre $ (centreAsBall x) / (centreAsBall m)
     xm = x - m*d
-    err :: (CanEnsureCN t) => t -> EnsureCN t
-    err s = noValueNumErrorCertainECN (Just s) $ OutOfRange $ "modulus not positive: " ++ show m

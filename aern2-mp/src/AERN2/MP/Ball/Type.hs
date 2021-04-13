@@ -30,9 +30,7 @@ where
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
-import Control.Applicative
-
-import Control.CollectErrors
+import Numeric.CollectErrors (CN)
 
 import GHC.Generics (Generic)
 
@@ -71,8 +69,6 @@ instance Show MPBall
       showAC NoInformation = "(oo)"
       showAC ac = " <2^(" ++ show (negate $ fromAccuracy ac) ++ ")"
 
-
-instance (SuitableForCE es) => CanEnsureCE es MPBall where
 
 -- instance CanTestValid MPBall where
 --   isValid = isFinite
@@ -153,11 +149,6 @@ instance IsInterval MPBall where
       l   = x -. eFl
       u   = x +^ eFl
 
-instance (IsInterval (CN MPBall)) where
-    type (IntervalEndpoint (CN MPBall)) = CN MPFloat
-    fromEndpoints l u = liftA2 fromEndpoints l u
-    endpoints x = (fmap endpointL x, fmap endpointR x)
-
 fromMPFloatEndpoints :: MPFloat -> MPFloat -> MPBall
 fromMPFloatEndpoints = fromEndpoints
 
@@ -176,11 +167,6 @@ instance IsBall MPBall where
     cB = MPBall cMP (errorBound 0)
   radius (MPBall _ e) = e
   updateRadius updateFn (MPBall c e) = MPBall c (updateFn e)
-
-instance (IsBall (CN MPBall)) where
-    type CentreType (CN MPBall) = CN Dyadic
-    centre = fmap centre
-
 
 {--- constructing a ball with a given precision ---}
 

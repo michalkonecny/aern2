@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE CPP #-}
 {-|
     Module      :  AERN2.MP.Ball.PreludeOps
@@ -33,16 +34,17 @@ import AERN2.MP.Ball.Elementary ()
 instance P.Eq MPBall where
   a == b =
     case a == b of
-      Just t -> t
+      CertainTrue  -> True
+      CertainFalse  -> False
       _ ->
         error "Failed to decide equality of MPBalls.  If you switch to MixedTypesNumPrelude instead of Prelude, comparison of MPBalls returns Maybe Bool instead of Bool."
 
 instance P.Ord MPBall where
   compare a b =
     case (a < b, a == b, a > b) of
-      (Just True, _, _) -> P.LT
-      (_, Just True, _) -> P.EQ
-      (_, _, Just True) -> P.GT
+      (CertainTrue, _, _) -> P.LT
+      (_, CertainTrue, _) -> P.EQ
+      (_, _, CertainTrue) -> P.GT
       _ ->
         error "Failed to decide order of MPBalls.  If you switch to MixedTypesNumPrelude instead of Prelude, comparison of MPBalls returns Maybe Bool instead of Bool."
 
@@ -56,16 +58,16 @@ instance P.Num MPBall where
 
 instance P.Fractional MPBall where
     fromRational = convertExactly . dyadic -- will work only for dyadic rationals
-    recip = (~!) . recip
-    (/) = (/!)
+    recip = recip
+    (/) = (/)
 
 instance P.Floating MPBall where
-    pi = error "MPBall: no pi :: MPBall, use pi ? (bitsS n) instead"
-    sqrt = (~!) . sqrt
+    pi = error "There is no pi :: MPBall, use pi :: Real instead"
+    sqrt = sqrt
     exp = exp
     sin = sin
     cos = cos
-    log = (~!) . log
+    log = log
     atan = error "MPBall: atan not implemented yet"
     atanh = error "MPBall: atanh not implemented yet"
     asin = error "MPBall: asin not implemented yet"

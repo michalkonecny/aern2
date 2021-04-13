@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-|
     Module      :  AERN2.MP.Float.Tests
     Description :  Tests for operations on arbitrary precision floats
@@ -16,7 +17,6 @@
     stack test aern2-mp --test-arguments "-a 1000 -m MPFloat"
     @
 -}
-
 module AERN2.MP.Float.Tests
   (
     specMPFloat, tMPFloat
@@ -36,7 +36,9 @@ import Test.Hspec
 import Test.QuickCheck
 -- import qualified Test.Hspec.SmallCheck as SC
 
-import Control.CollectErrors
+-- import qualified Control.CollectErrors as CE
+-- import Numeric.CollectErrors (CN)
+-- import qualified Numeric.CollectErrors as CN
 
 import AERN2.Norm
 import AERN2.MP.Precision
@@ -62,7 +64,7 @@ instance Arbitrary MPFloat where
           (p :: Precision) <- arbitrary
           (s :: Integer) <- arbitrary
           ex <- choose (-20,10)
-          let resultR = s * (10.0^!ex)
+          let resultR = s * (10.0^ex)
           let result = ceduCentre $ fromRationalCEDU p resultR
           return result
 
@@ -88,7 +90,7 @@ enforceRangeMP (Just l_, Just u_) a
     where
     l = mpFloat l_
     u = mpFloat u_
-    b = l +^ ((abs a) `modNoCN` (u-^l))
+    b = l +^ ((abs a) `mod` (u-^l))
 enforceRangeMP (Just l_, _) a
     | isInfinite a = abs a
     | l < a = a
@@ -105,21 +107,20 @@ enforceRangeMP (_, Just u_) a
     u = mpFloat u_
 enforceRangeMP _ a = a
 
-instance CanEnsureCE NumErrors MPFloat
-
 instance CanDivIMod MPFloat MPFloat where
-  divIMod x m 
-    | (not (isFinite m)) = (errM (d :: Integer), errM xm)
-    | (not (isFinite x)) = (errX (d :: Integer), errX xm)
-    | m > zero = (cn d, cn xm)
-    | otherwise = (errM (d :: Integer), errM xm)
+  type DivIType MPFloat MPFloat = Integer
+  divIMod x m
+    | (not (isFinite m)) = ((d :: Integer), xm)
+    | (not (isFinite x)) = ((d :: Integer), xm)
+    | m > zero = (d, xm)
+    | otherwise = ((d :: Integer), xm)
     where
     d = floor (x /^ m)
     xm = x -^ (mpFloat d)*^m
-    errM :: (CanEnsureCN t) => t -> EnsureCN t
-    errM s = noValueNumErrorCertainECN (Just s) $ OutOfRange $ "modulus not finite and positive: " ++ show m
-    errX :: (CanEnsureCN t) => t -> EnsureCN t
-    errX s = noValueNumErrorCertainECN (Just s) $ OutOfRange $ "modulus input not finite: " ++ show x
+    -- errM :: (CanEnsureCN t) => t -> EnsureCN t
+    -- errM s = CN.noValueNumErrorCertain $ CN.OutOfDomain $ "modulus not finite and positive: " ++ show m
+    -- errX :: (CanEnsureCN t) => t -> EnsureCN t
+    -- errX s = CN.noValueNumErrorCertain$ CN.OutOfDomain $ "modulus input not finite: " ++ show x
 
 
 {- approximate comparison -}
@@ -145,7 +146,7 @@ approxEqual e x y
   | isNaN x || isNaN y = False
   | isInfinite x || isInfinite y = x == y
   | otherwise =
-      abs (x -. y) <= 0.5^!e
+      abs (x -. y) <= 0.5^e
 
 {-|
   Assert equality of two MPFloat's with tolerance derived from the size and precision
