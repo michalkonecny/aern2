@@ -98,6 +98,8 @@ instance CanLog MPBall where
         setPrecision p $ ballFunctionUsingLipschitz log_ logLip x_
     | x_!>! 0 =
         setPrecision p $ intervalFunctionByEndpoints log_ x_
+    | x !>! 0 =
+        intervalFunctionByEndpoints log_ x
     | otherwise = err
     where
     p = getPrecision x
