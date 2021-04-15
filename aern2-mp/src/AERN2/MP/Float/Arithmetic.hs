@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-|
     Module      :  AERN2.MP.Float.Arithmetic
     Description :  Arbitrary precision floating point numbers
@@ -10,7 +11,6 @@
 
     Arbitrary precision floating-point numbers with up/down-rounded operations.
 -}
-
 module AERN2.MP.Float.Arithmetic
   (
    -- * MPFloat basic arithmetic
@@ -93,12 +93,12 @@ unaryCEDU ::
 unaryCEDU op x =
     getBoundsCEDU $ op x
 
-unaryPrecCEDU ::
-    Integer ->
-    (MPLow.Precision -> MPFloat -> MPFloat) ->
-    (MPFloat -> BoundsCEDU MPFloat)
-unaryPrecCEDU addPrec op x@(MPLow.Approx mb _ _ s) =
-    getBoundsCEDU $ op ((-s P.+ mb) P.+ (int addPrec)) x
-unaryPrecCEDU addPrec op MPLow.Bottom =
-    getBoundsCEDU $ op ((int $ integer defaultPrecision) P.+ (int addPrec)) MPLow.Bottom
+-- unaryPrecCEDU ::
+--     Integer ->
+--     (MPLow.Precision -> MPFloat -> MPFloat) ->
+--     (MPFloat -> BoundsCEDU MPFloat)
+-- unaryPrecCEDU addPrec op x@(MPLow.Approx mb _ _ s) =
+--     getBoundsCEDU $ op ((-s P.+ mb) P.+ (int addPrec)) x
+-- unaryPrecCEDU addPrec op MPLow.Bottom =
+--     getBoundsCEDU $ op ((int $ integer defaultPrecision) P.+ (int addPrec)) MPLow.Bottom
     

@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-|
     Module      :  AERN2.MP.Float.Conversions
     Description :  Conversions and comparisons of arbitrary precision floats
@@ -10,7 +11,6 @@
 
     Conversions and comparisons of arbitrary precision floating point numbers
 -}
-
 module AERN2.MP.Float.Conversions
   (
    -- * MPFloat to other types (see also instances)

@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-|
     Module      :  AERN2.MP.Ball.Conversions
     Description :  Conversions of arbitrary precision dyadic balls

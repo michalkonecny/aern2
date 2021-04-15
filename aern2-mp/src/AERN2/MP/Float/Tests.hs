@@ -45,7 +45,7 @@ import AERN2.MP.Precision
 import AERN2.MP.Float.Auxi
 
 import AERN2.MP.Float.Type
-import AERN2.MP.Float.Arithmetic
+-- import AERN2.MP.Float.Arithmetic
 import AERN2.MP.Float.Conversions
 
 import AERN2.MP.Float.Operators

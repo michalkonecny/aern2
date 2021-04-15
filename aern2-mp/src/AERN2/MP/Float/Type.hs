@@ -1,4 +1,5 @@
-{-# LANGUAGE DeriveGeneric, DeriveDataTypeable, StandaloneDeriving #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-|
     Module      :  AERN2.MP.Float.Type
     Description :  Arbitrary precision floating point numbers (via cdar)
@@ -11,7 +12,6 @@
 
     Arbitrary precision floating-point numbers, re-using CDAR Approx type.
 -}
-
 module AERN2.MP.Float.Type
   (
    -- * MPFloat numbers and their basic operations

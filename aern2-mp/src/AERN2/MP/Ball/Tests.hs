@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-|
     Module      :  AERN2.MP.Ball.Tests
     Description :  Tests for operations on arbitrary precision balls
@@ -17,7 +18,6 @@
     stack test aern2-mp --test-arguments "-a 1000 -m MPBall"
     @
 -}
-
 module AERN2.MP.Ball.Tests
   (
     specMPBall, tMPBall
@@ -28,6 +28,8 @@ import MixedTypesNumPrelude
 -- import qualified Prelude as P
 -- import Data.Ratio
 -- import Text.Printf
+
+-- import Numeric.CollectErrors ( CN )
 
 import Test.Hspec
 import Test.QuickCheck
@@ -68,6 +70,9 @@ instance Arbitrary MPBall where
 -}
 tMPBall :: T MPBall
 tMPBall = T "MPBall"
+
+-- tCNMPBall :: T (CN MPBall)
+-- tCNMPBall = T "(CN MPBall)"
 
 specMPBall :: Spec
 specMPBall =
