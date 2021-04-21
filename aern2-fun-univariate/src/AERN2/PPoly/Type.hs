@@ -35,7 +35,7 @@ data PPoly =
   PPoly {ppoly_pieces  :: [(DyadicInterval, Cheb)],
          ppoly_dom     :: DyadicInterval}
 
-instance (SuitableForCE es) => CanEnsureCE es PPoly
+instance (CanBeErrors es) => CanEnsureCE es PPoly
 
 ppoly_degree :: PPoly -> Integer
 ppoly_degree (PPoly ps _) =

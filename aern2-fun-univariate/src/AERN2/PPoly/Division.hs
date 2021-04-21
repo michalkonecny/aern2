@@ -365,7 +365,7 @@ instance
   , CanEnsureCE es b
   , CanEnsureCE es (DivType PPoly b)
   , CanEnsureCE es (DivTypeNoCN PPoly b)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanDiv PPoly (CollectErrors es  b)
   where
@@ -381,7 +381,7 @@ instance
   , CanEnsureCE es a
   , CanEnsureCE es (DivType a PPoly)
   , CanEnsureCE es (DivTypeNoCN a PPoly)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanDiv (CollectErrors es a) PPoly
   where
