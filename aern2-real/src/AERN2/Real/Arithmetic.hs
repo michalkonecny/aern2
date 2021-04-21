@@ -1,6 +1,8 @@
+{-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-|
     Module      :  AERN2.Real.Arithmetic
-    Description :  arithmetic operations on CR
+    Description :  arithmetic operations on CReal
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -8,299 +10,338 @@
     Stability   :  experimental
     Portability :  portable
 
-    Arithmetic operations on Cauchy Real numbers,
-    except those that are defined for more general sequences
+    Arithmetic operations on Cauchy Real numbers.
 -}
 module AERN2.Real.Arithmetic
 (
-  pi, piA
+  pi
 )
 where
 
 import MixedTypesNumPrelude
-import qualified Prelude as P
+-- import qualified Prelude as P
 
--- import Data.Convertible
+import Numeric.CollectErrors
+  ( cn )
 
 import Data.Complex
 
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
-import AERN2.QA.Protocol
-import AERN2.AccuracySG
 import AERN2.Real.Type
 
-instance (QAArrow to) => Ring (CauchyRealA to)
-instance (QAArrow to) => OrderedRing (CauchyRealA to)
-instance (QAArrow to) => Field (CauchyRealA to)
-instance (QAArrow to) => OrderedField (CauchyRealA to)
+{- field operations -}
 
-instance P.Floating CauchyReal where
-    pi = pi
-    sqrt = (~!) . sqrt
-    exp = exp
-    sin = sin
-    cos = cos
-    log = (~!) . log
-    (**) = (^!)
-    atan = error "CauchyReal: atan not implemented yet"
-    atanh = error "CauchyReal: atanh not implemented yet"
-    asin = error "CauchyReal: asin not implemented yet"
-    acos = error "CauchyReal: acos not implemented yet"
-    sinh = error "CauchyReal: sinh not implemented yet"
-    cosh = error "CauchyReal: cosh not implemented yet"
-    asinh = error "CauchyReal: asinh not implemented yet"
-    acosh = error "CauchyReal: acosh not implemented yet"
-
-instance P.Floating CauchyRealCN where
-    pi = cn pi
-    sqrt = sqrt
-    exp = exp
-    sin = sin
-    cos = cos
-    log = log
-    -- (**) = (^)
-    atan = error "CauchyReal: atan not implemented yet"
-    atanh = error "CauchyReal: atanh not implemented yet"
-    asin = error "CauchyReal: asin not implemented yet"
-    acos = error "CauchyReal: acos not implemented yet"
-    sinh = error "CauchyReal: sinh not implemented yet"
-    cosh = error "CauchyReal: cosh not implemented yet"
-    asinh = error "CauchyReal: asinh not implemented yet"
-    acosh = error "CauchyReal: acosh not implemented yet"
-
-{-|
-  To get @pi@ in an arbitrary arrow, use 'piA'.
--}
-pi :: CauchyReal
-pi = newCR "pi" [] (\_me_src -> (seqByPrecision2CauchySeq piBallP . _acGuide))
-
-piA :: (QAArrow to) => CauchyRealA to
-piA = realA pi
-
-
-{- sine, cosine of finite values -}
-
-instance CanSinCos Integer where
-  type SinCosType Integer = CauchyReal
-  cos = cos . real
-  sin = sin . real
-
-instance CanSinCos Int where
-  type SinCosType Int = CauchyReal
-  cos = cos . real
-  sin = sin . real
-
-instance CanSinCos Dyadic where
-  type SinCosType Dyadic = CauchyReal
-  cos = cos . real
-  sin = sin . real
-
-instance CanSinCos Rational where
-  type SinCosType Rational = CauchyReal
-  cos = cos . real
-  sin = sin . real
-
-{- sqrt of finite values -}
-
-instance CanSqrt Integer where
-  type SqrtType Integer = CauchyRealCN
-  sqrt = sqrt . real
-
-instance CanSqrt Int where
-  type SqrtType Int = CauchyRealCN
-  sqrt = sqrt . real
-
-instance CanSqrt Dyadic where
-  type SqrtType Dyadic = CauchyRealCN
-  sqrt = sqrt . real
-
-instance CanSqrt Rational where
-  type SqrtType Rational = CauchyRealCN
-  sqrt = sqrt . real
-
-{- exp of finite values -}
-
-instance CanExp Integer where
-  type ExpType Integer = CauchyReal
-  exp = exp . real
-
-instance CanExp Int where
-  type ExpType Int = CauchyReal
-  exp = exp . real
-
-instance CanExp Dyadic where
-  type ExpType Dyadic = CauchyReal
-  exp = exp . real
-
-instance CanExp Rational where
-  type ExpType Rational = CauchyReal
-  exp = exp . real
-
-{- log of finite values -}
-
-instance CanLog Integer where
-  type LogType Integer = CauchyRealCN
-  log = log . real
-
-instance CanLog Int where
-  type LogType Int = CauchyRealCN
-  log = log . real
-
-instance CanLog Dyadic where
-  type LogType Dyadic = CauchyRealCN
-  log = log . real
-
-instance CanLog Rational where
-  type LogType Rational = CauchyRealCN
-  log = log . real
-
-{- non-integer power of finite values -}
-
-instance CanPow Integer Dyadic where
-  type PowTypeNoCN Integer Dyadic = CauchyReal
-  powNoCN b e = powNoCN (real b) (real e)
-  pow b e = pow (real b) (real e)
-
-instance CanPow Int Dyadic where
-  type PowTypeNoCN Int Dyadic = CauchyReal
-  powNoCN b e = powNoCN (real b) (real e)
-  pow b e = pow (real b) (real e)
-
-instance CanPow Dyadic Dyadic where
-  type PowTypeNoCN Dyadic Dyadic = CauchyReal
-  powNoCN b e = powNoCN (real b) (real e)
-  pow b e = pow (real b) (real e)
-
-instance CanPow Rational Dyadic where
-  type PowTypeNoCN Rational Dyadic = CauchyReal
-  powNoCN b e = powNoCN (real b) (real e)
-  pow b e = pow (real b) (real e)
-
-instance CanPow Integer Rational where
-  type PowTypeNoCN Integer Rational = CauchyReal
-  powNoCN b e = powNoCN (real b) (real e)
-  pow b e = pow (real b) (real e)
-
-instance CanPow Int Rational where
-  type PowTypeNoCN Int Rational = CauchyReal
-  powNoCN b e = powNoCN (real b) (real e)
-  pow b e = pow (real b) (real e)
-
-instance CanPow Dyadic Rational where
-  type PowTypeNoCN Dyadic Rational = CauchyReal
-  powNoCN b e = powNoCN (real b) (real e)
-  pow b e = pow (real b) (real e)
-
-instance CanPow Rational Rational where
-  type PowTypeNoCN Rational Rational = CauchyReal
-  powNoCN b e = powNoCN (real b) (real e)
-  pow b e = pow (real b) (real e)
-
-{- reals mixed with Double -}
-
-instance Convertible CauchyReal Double where
-  safeConvert r =
-    safeConvert (centre (r ? (bitsS 53)))
-
-binaryWithDouble :: (Double -> Double -> Double) -> CauchyReal -> Double -> Double
-binaryWithDouble op r d =
-  op (convert r) d
-
-instance CanAddAsymmetric CauchyReal Double where
-  type AddType CauchyReal Double = Double
-  add = binaryWithDouble add
-
-instance CanAddAsymmetric Double CauchyReal where
-  type AddType Double CauchyReal = Double
-  add = flip add
-
-instance CanSub CauchyReal Double where
-  type SubType CauchyReal Double = Double
-  sub = binaryWithDouble sub
-
-instance CanSub Double CauchyReal where
-  type SubType Double CauchyReal = Double
-  sub = flip $ binaryWithDouble (flip sub)
-
-instance CanMulAsymmetric CauchyReal Double where
-  type MulType CauchyReal Double = Double
-  mul = binaryWithDouble mul
-
-instance CanMulAsymmetric Double CauchyReal where
-  type MulType Double CauchyReal = Double
-  mul = flip mul
-
-instance CanDiv CauchyReal Double where
-  type DivType CauchyReal Double = Double
-  divide = binaryWithDouble divide
-  type DivTypeNoCN CauchyReal Double = Double
-  divideNoCN = binaryWithDouble divideNoCN
-
-instance CanDiv Double CauchyReal where
-  type DivType Double CauchyReal = Double
-  divide = flip $ binaryWithDouble (flip divide)
-  type DivTypeNoCN Double CauchyReal = Double
-  divideNoCN = flip $ binaryWithDouble (flip divideNoCN)
-
-instance CanPow CauchyReal Double where
-  type PowTypeNoCN CauchyReal Double = Double
-  type PowType CauchyReal Double = Double
-  powNoCN = binaryWithDouble pow
-  pow = binaryWithDouble pow
-
-instance CanPow Double CauchyReal where
-  powNoCN = flip $ binaryWithDouble (flip pow)
-  type PowType Double CauchyReal = Double
-  pow = flip $ binaryWithDouble (flip pow)
-
-{- reals mixed with complex -}
+-- instance Ring CReal
+-- instance OrderedRing CReal
+-- instance Field CReal
+-- instance OrderedField CReal
 
 instance
-  (QAArrow to, CanAddAsymmetric (CauchyRealA to) t)
-  =>
-  CanAddAsymmetric (CauchyRealA to) (Complex t)
+  (CanAddAsymmetric t1 t2)
+  => 
+  CanAddAsymmetric (CSequence t1) (CSequence t2) 
   where
-  type AddType (CauchyRealA to) (Complex t) = Complex (AddType (CauchyRealA to) t)
-  add r (a :+ i) = (r + a) :+ (z + i)
-    where
-    z = realA 0
-    _ = [z,r]
+  type AddType (CSequence t1) (CSequence t2) = CSequence (AddType t1 t2)
+  add = lift2 add
 
 instance
-  (QAArrow to, CanAddAsymmetric t (CauchyRealA to))
-  =>
-  CanAddAsymmetric (Complex t) (CauchyRealA to)
+  (CanSub t1 t2)
+  => 
+  CanSub (CSequence t1) (CSequence t2) 
   where
-  type AddType (Complex t) (CauchyRealA to) = Complex (AddType t (CauchyRealA to))
-  add (a :+ i) r = (a + r) :+ (i + z)
-    where
-    z = realA 0
-    _ = [z,r]
+  type SubType (CSequence t1) (CSequence t2) = CSequence (SubType t1 t2)
+  sub = lift2 sub
 
 instance
-  (QAArrow to, CanAdd (CauchyRealA to) t, CanNegSameType t)
-  =>
-  CanSub (CauchyRealA to) (Complex t)
-
-instance
-  (QAArrow to, CanAdd t (CauchyRealA to))
-  =>
-  CanSub (Complex t) (CauchyRealA to)
-
-instance
-  (CanMulAsymmetric (CauchyRealA to) t)
-  =>
-  CanMulAsymmetric (CauchyRealA to) (Complex t)
+  (CanMulAsymmetric t1 t2)
+  => 
+  CanMulAsymmetric (CSequence t1) (CSequence t2) 
   where
-  type MulType (CauchyRealA to) (Complex t) = Complex (MulType (CauchyRealA to) t)
-  mul r (a :+ i) = (r * a) :+ (r * i)
+  type MulType (CSequence t1) (CSequence t2) = CSequence (MulType t1 t2)
+  mul = lift2 mul
 
 instance
-  (CanMulAsymmetric t (CauchyRealA to))
-  =>
-  CanMulAsymmetric (Complex t) (CauchyRealA to)
+  (CanDiv t1 t2, CanTestZero t2)
+  => 
+  CanDiv (CSequence t1) (CSequence t2) 
   where
-  type MulType (Complex t) (CauchyRealA to) = Complex (MulType t (CauchyRealA to))
-  mul (a :+ i) r = (a * r) :+ (i * r)
+  type DivType (CSequence t1) (CSequence t2) = CSequence (DivType t1 t2)
+  divide = lift2 divide
+
+
+-- TODO: add MPBall and CN MPBall mixed-type arithmetic
+
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
+  (\ t -> [d|
+
+    instance
+      (CanAddAsymmetric a $t)
+      => 
+      CanAddAsymmetric (CSequence a) $t
+      where
+      type AddType (CSequence a) $t = CSequence (AddType a $t)
+      add = lift1T add
+
+    instance
+      (CanAddAsymmetric $t a)
+      => 
+      CanAddAsymmetric $t (CSequence a)
+      where
+      type AddType $t (CSequence a) = CSequence (AddType $t a)
+      add = liftT1 add
+
+    -- TODO: add sub and div
+
+    instance
+      (CanMulAsymmetric a $t)
+      => 
+      CanMulAsymmetric (CSequence a) $t
+      where
+      type MulType (CSequence a) $t = CSequence (MulType a $t)
+      mul = lift1T mul
+
+    instance
+      (CanMulAsymmetric $t a)
+      => 
+      CanMulAsymmetric $t (CSequence a)
+      where
+      type MulType $t (CSequence a) = CSequence (MulType $t a)
+      mul = liftT1 mul
+
+  |]))
+
+{- common elementary operations -}
+
+pi :: CReal
+pi = CSequence $ map (cn . piBallP) cseqPrecisions
+
+-- instance P.Floating CReal where
+--     pi = pi
+--     sqrt = sqrt
+--     exp = exp
+--     sin = sin
+--     cos = cos
+--     log = log
+--     -- (**) = (^)
+--     atan = error "CReal: atan not implemented yet"
+--     atanh = error "CReal: atanh not implemented yet"
+--     asin = error "CReal: asin not implemented yet"
+--     acos = error "CReal: acos not implemented yet"
+--     sinh = error "CReal: sinh not implemented yet"
+--     cosh = error "CReal: cosh not implemented yet"
+--     asinh = error "CReal: asinh not implemented yet"
+--     acosh = error "CReal: acosh not implemented yet"
+
+
+-- {- sine, cosine of finite values -}
+
+-- instance CanSinCos Integer where
+--   type SinCosType Integer = CReal
+--   cos = cos . real
+--   sin = sin . real
+
+-- instance CanSinCos Int where
+--   type SinCosType Int = CReal
+--   cos = cos . real
+--   sin = sin . real
+
+-- instance CanSinCos Dyadic where
+--   type SinCosType Dyadic = CReal
+--   cos = cos . real
+--   sin = sin . real
+
+-- instance CanSinCos Rational where
+--   type SinCosType Rational = CReal
+--   cos = cos . real
+--   sin = sin . real
+
+-- {- sqrt of finite values -}
+
+-- instance CanSqrt Integer where
+--   type SqrtType Integer = CReal
+--   sqrt = sqrt . real
+
+-- instance CanSqrt Int where
+--   type SqrtType Int = CReal
+--   sqrt = sqrt . real
+
+-- instance CanSqrt Dyadic where
+--   type SqrtType Dyadic = CReal
+--   sqrt = sqrt . real
+
+-- instance CanSqrt Rational where
+--   type SqrtType Rational = CReal
+--   sqrt = sqrt . real
+
+-- {- exp of finite values -}
+
+-- instance CanExp Integer where
+--   type ExpType Integer = CReal
+--   exp = exp . real
+
+-- instance CanExp Int where
+--   type ExpType Int = CReal
+--   exp = exp . real
+
+-- instance CanExp Dyadic where
+--   type ExpType Dyadic = CReal
+--   exp = exp . real
+
+-- instance CanExp Rational where
+--   type ExpType Rational = CReal
+--   exp = exp . real
+
+-- {- log of finite values -}
+
+-- instance CanLog Integer where
+--   type LogType Integer = CReal
+--   log = log . real
+
+-- instance CanLog Int where
+--   type LogType Int = CReal
+--   log = log . real
+
+-- instance CanLog Dyadic where
+--   type LogType Dyadic = CReal
+--   log = log . real
+
+-- instance CanLog Rational where
+--   type LogType Rational = CReal
+--   log = log . real
+
+-- {- non-integer power of finite values -}
+
+-- instance CanPow Integer Dyadic where
+--   type PowType Integer Dyadic = CReal
+--   pow b e = pow (real b) (real e)
+
+-- instance CanPow Int Dyadic where
+--   type PowType Int Dyadic = CReal
+--   pow b e = pow (real b) (real e)
+
+-- instance CanPow Dyadic Dyadic where
+--   type PowType Dyadic Dyadic = CReal
+--   pow b e = pow (real b) (real e)
+
+-- instance CanPow Rational Dyadic where
+--   type PowType Rational Dyadic = CReal
+--   pow b e = pow (real b) (real e)
+
+-- instance CanPow Integer Rational where
+--   type PowType Integer Rational = CReal
+--   pow b e = pow (real b) (real e)
+
+-- instance CanPow Int Rational where
+--   type PowType Int Rational = CReal
+--   pow b e = pow (real b) (real e)
+
+-- instance CanPow Dyadic Rational where
+--   type PowType Dyadic Rational = CReal
+--   pow b e = pow (real b) (real e)
+
+-- instance CanPow Rational Rational where
+--   type PowType Rational Rational = CReal
+--   pow b e = pow (real b) (real e)
+
+-- {- reals mixed with Double -}
+
+-- instance Convertible CReal Double where
+--   safeConvert r =
+--     safeConvert (centre (r ? (bitsS 53)))
+
+-- binaryWithDouble :: (Double -> Double -> Double) -> CReal -> Double -> Double
+-- binaryWithDouble op r d =
+--   op (convert r) d
+
+-- instance CanAddAsymmetric CReal Double where
+--   type AddType CReal Double = Double
+--   add = binaryWithDouble add
+
+-- instance CanAddAsymmetric Double CReal where
+--   type AddType Double CReal = Double
+--   add = flip add
+
+-- instance CanSub CReal Double where
+--   type SubType CReal Double = Double
+--   sub = binaryWithDouble sub
+
+-- instance CanSub Double CReal where
+--   type SubType Double CReal = Double
+--   sub = flip $ binaryWithDouble (flip sub)
+
+-- instance CanMulAsymmetric CReal Double where
+--   type MulType CReal Double = Double
+--   mul = binaryWithDouble mul
+
+-- instance CanMulAsymmetric Double CReal where
+--   type MulType Double CReal = Double
+--   mul = flip mul
+
+-- instance CanDiv CReal Double where
+--   type DivType CReal Double = Double
+--   divide = binaryWithDouble divide
+
+-- instance CanDiv Double CReal where
+--   type DivType Double CReal = Double
+--   divide = flip $ binaryWithDouble (flip divide)
+
+-- instance CanPow CReal Double where
+--   type PowType CReal Double = Double
+--   pow = binaryWithDouble pow
+
+-- instance CanPow Double CReal where
+--   type PowType Double CReal = Double
+--   pow = flip $ binaryWithDouble (flip pow)
+
+-- {- reals mixed with complex -}
+
+-- instance
+--   (CanAddAsymmetric CReal t)
+--   =>
+--   CanAddAsymmetric CReal (Complex t)
+--   where
+--   type AddType CReal (Complex t) = Complex (AddType CReal t)
+--   add r (a :+ i) = (r + a) :+ (z + i)
+--     where
+--     z = realA 0
+--     _ = [z,r]
+
+-- instance
+--   (CanAddAsymmetric t CReal)
+--   =>
+--   CanAddAsymmetric (Complex t) CReal
+--   where
+--   type AddType (Complex t) CReal = Complex (AddType t CReal)
+--   add (a :+ i) r = (a + r) :+ (i + z)
+--     where
+--     z = realA 0
+--     _ = [z,r]
+
+-- instance
+--   (CanAdd CReal t, CanNegSameType t)
+--   =>
+--   CanSub CReal (Complex t)
+
+-- instance
+--   (CanAdd t CReal)
+--   =>
+--   CanSub (Complex t) CReal
+
+-- instance
+--   (CanMulAsymmetric CReal t)
+--   =>
+--   CanMulAsymmetric CReal (Complex t)
+--   where
+--   type MulType CReal (Complex t) = Complex (MulType CReal t)
+--   mul r (a :+ i) = (r * a) :+ (r * i)
+
+-- instance
+--   (CanMulAsymmetric t CReal)
+--   =>
+--   CanMulAsymmetric (Complex t) CReal
+--   where
+--   type MulType (Complex t) CReal = Complex (MulType t CReal)
+--   mul (a :+ i) r = (a * r) :+ (i * r)

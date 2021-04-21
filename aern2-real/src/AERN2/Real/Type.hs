@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-|
     Module      :  AERN2.Real.Type
     Description :  The type of Cauchy real numbers
@@ -10,123 +11,142 @@
 
     The type of Cauchy real numbers
 -}
-module AERN2.Real.Type
-(
-  CauchyRealP, pCR, CauchyRealCNP, pCRCN
-  , CauchyRealA, CauchyReal, newCR
-  , CauchyRealCNA, CauchyRealCN, newCRCN
-  , CauchyRealAtAccuracy, cauchyRealAtAccuracy
-  , realName, realId, realSources, realRename
-  , realWithAccuracy, realWithAccuracyA, realsWithAccuracyA
-  , convergentList2CauchyRealA
-  , seqByPrecision2CauchyRealA
-  , CanBeReal, real, CanBeRealA, realA
-  , CanBeComplex, complex, CanBeComplexA, complexA
-)
-where
+module AERN2.Real.Type where
 
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
--- import qualified Control.CollectErrors as CE
-import Control.Arrow
--- import Text.Printf
+import Numeric.CollectErrors
+  ( CN, noValueNumErrorPotential, NumError (..), cn )
+
+import qualified Data.List as List
 
 import Data.Complex
 
 import AERN2.MP
 
-import AERN2.QA.Protocol
-import AERN2.QA.Strategy.CachedUnsafe ()
+-- import AERN2.MP.Accuracy
 
-import AERN2.AccuracySG
+{- Convergent partial sequences -}
 
-import AERN2.Sequence
+newtype CSequence t = CSequence [CN t]
+
+instance Show t => Show (CSequence t) where
+  show (CSequence s) = 
+    "{?(prec " <> (show $ integer p) <> "): " 
+    <> (show $ s !! cseqShowDefaultIndex) <> "}"
+    where
+    p = cseqPrecisions !! cseqShowDefaultIndex
+
+cseqShowDefaultIndex :: Integer
+cseqShowDefaultIndex = 7
+
+lift1 :: (CN t1 -> CN t2) -> CSequence t1 -> CSequence t2
+lift1 f (CSequence a1) = CSequence (map f a1)
+
+lift2 :: (CN t1 -> CN t2 -> CN t3) -> CSequence t1 -> CSequence t2 -> CSequence t3
+lift2 f (CSequence a1) (CSequence a2) = CSequence (zipWith f a1 a2)
+
+lift1T :: (CN t1 -> t2 -> CN t3) -> CSequence t1 -> t2 -> CSequence t3
+lift1T f (CSequence a1) a2 = CSequence (map (flip f a2) a1)
+
+liftT1 :: (t1 -> CN t2 -> CN t3) -> t1 -> CSequence t2 -> CSequence t3
+liftT1 f a1 (CSequence a2) = CSequence (map (f a1) a2)
+
+cseqPrecisions :: [Precision]
+cseqPrecisions = standardPrecisions (prec 10)
+
+cseqIndexForPrecision :: Precision -> Integer
+cseqIndexForPrecision p =
+  case List.findIndex (>= p) cseqPrecisions of
+    Nothing -> error $ "unable to find index for precision " ++ show p
+    Just i -> integer i
+
 
 {- Cauchy real numbers -}
 
-type CauchyRealP = SequenceP MPBall
-type CauchyRealCNP = SequenceP (CN MPBall)
+type CReal = CSequence MPBall
 
-pCR :: CauchyRealP
-pCR = SequenceP (mpBall 0)
+type HasCReals t = ConvertibleExactly CReal t
 
-pCRCN :: CauchyRealCNP
-pCRCN = SequenceP (cn $ mpBall 0)
+type CanBeCReal t = ConvertibleExactly t CReal
 
-type CauchyRealA to = SequenceA to MPBall
-type CauchyReal = CauchyRealA (->)
+creal :: (CanBeCReal t) => t -> CReal
+creal = convertExactly
 
-type CauchyRealCNA to = SequenceA to (CN MPBall)
-type CauchyRealCN = CauchyRealCNA (->)
+type CComplex = Complex CReal
 
-type CauchyRealAtAccuracy = SequenceAtAccuracy MPBall
-cauchyRealAtAccuracy :: CauchyReal -> AccuracySG -> CauchyRealAtAccuracy
-cauchyRealAtAccuracy = SequenceAtAccuracy
+type CanBeCComplex t = ConvertibleExactly t CComplex
 
-realName :: SequenceA to a -> String
-realName = seqName
+type HasCComplex t = ConvertibleExactly CComplex t
 
-realRename :: (String -> String) -> SequenceA to a -> SequenceA to a
-realRename = seqRename
+ccomplex :: (CanBeCComplex t) => t -> CComplex
+ccomplex = convertExactly
 
-realId :: QA to p -> Maybe (QAId to)
-realId = qaId
+{- Extracting approximations -}
 
-realSources :: QA to p -> [QAId to]
-realSources = qaSources
+class CanExtractApproximation e q where
+  type ExtractedApproximation e q
+  {-| Get an approximation of an exact value using the given query -}
+  extractApproximation :: e {-^ exact value -} -> q {-^ query -} -> ExtractedApproximation e q
 
-{-| Get a ball approximation of the real number with at least the specified accuracy.
-   (A specialisation of 'qaMakeQuery' for Cauchy reals.) -}
-realWithAccuracy :: (QAArrow to) => CauchyRealA to -> AccuracySG `to` MPBall
-realWithAccuracy = (?)
+infix 1 ?
 
-realWithAccuracyA :: (QAArrow to) => (Maybe (QAId to)) -> (CauchyRealA to, AccuracySG) `to` MPBall
-realWithAccuracyA = qaMakeQueryA
+(?) :: CanExtractApproximation e q => e -> q -> ExtractedApproximation e q
+(?) = extractApproximation
 
-realsWithAccuracyA :: (QAArrow to) => (Maybe (QAId to)) -> ([CauchyRealA to], AccuracySG) `to` [MPBall]
-realsWithAccuracyA = qaMakeQueryOnManyA
+instance (HasAccuracy t) => CanExtractApproximation (CSequence t) Accuracy where
+  type ExtractedApproximation (CSequence t) Accuracy = CN t
+  extractApproximation (CSequence s) ac =
+    case List.find (\b -> getAccuracy b >= ac) s of
+      Just b -> b
+      Nothing -> 
+        noValueNumErrorPotential $ 
+          NumError "failed to find an approximation with sufficient accuracy"
+  
+{-| Get a ball approximation of the real number with at least the specified accuracy -}
+realWithAccuracy :: CReal -> Accuracy -> CN MPBall
+realWithAccuracy = extractApproximation
 
-{- constructions -}
+instance CanExtractApproximation (CSequence t) Precision where
+  type ExtractedApproximation (CSequence t) Precision = CN t
+  extractApproximation (CSequence s) p =
+    s !! (cseqIndexForPrecision p)
 
-newCR :: (QAArrow to) => String -> [AnyProtocolQA to] -> ((Maybe (QAId to), Maybe (QAId to)) -> AccuracySG `to` MPBall) -> CauchyRealA to
-newCR = newSeq (mpBall 0)
+instance ConvertibleWithPrecision CReal (CN MPBall) where
+  safeConvertP p r = Right $ r ? p
 
-newCRCN :: (QAArrow to) => String -> [AnyProtocolQA to] -> ((Maybe (QAId to), Maybe (QAId to)) -> AccuracySG `to` CN MPBall) -> CauchyRealCNA to
-newCRCN = newSeq (cn $ mpBall 0)
+-- {- exact conversions -}
 
-convergentList2CauchyRealA :: (QAArrow to) => String -> [MPBall] -> (CauchyRealA to)
-convergentList2CauchyRealA = convergentList2SequenceA
+instance ConvertibleExactly CReal CReal where
+  safeConvertExactly = Right
 
-seqByPrecision2CauchyRealA :: (QAArrow to) => String -> (Precision -> MPBall) -> (CauchyRealA to)
-seqByPrecision2CauchyRealA = seqByPrecision2SequenceA
+instance ConvertibleExactly Rational CReal where
+  safeConvertExactly x =
+    Right $ CSequence $ map (cn . flip mpBallP x) cseqPrecisions
 
-{- conversions -}
+instance ConvertibleExactly Integer CReal where
+  safeConvertExactly = safeConvertExactly . rational
 
-type CanBeRealA to t = ConvertibleExactly t (CauchyRealA to)
-type CanBeReal t = CanBeRealA (->) t
+instance (HasCReals t, HasIntegers t) => (ConvertibleExactly CReal (Complex t))
+  where
+  safeConvertExactly n =
+    do
+    nT <- safeConvertExactly n
+    zT <- safeConvertExactly 0
+    return $ nT :+ zT
 
-real :: (CanBeRealA (->) t) => t -> CauchyReal
-real = convertExactly
+_test1 :: CReal
+_test1 = creal 1.0
 
-realA :: (CanBeRealA to t) => t -> CauchyRealA to
-realA = convertExactly
+_test2 :: CComplex
+_test2 = ccomplex 1.0
 
-type CanBeComplexA to t = ConvertibleExactly t (Complex (CauchyRealA to))
-type CanBeComplex t = CanBeComplexA (->) t
+_test3 :: CComplex
+_test3 = ccomplex $ creal 1
 
-complex :: (CanBeComplexA (->) t) => t -> Complex CauchyReal
-complex = convertExactly
+_test4 :: CN MPBall
+_test4 = (creal $ 1/3) ? (bits 100)
 
-complexA :: (CanBeComplexA to t) => t -> Complex (CauchyRealA to)
-complexA = convertExactly
-
--- instance (QAArrow to) => ConvertibleExactly Rational (CauchyRealA to) where
---   safeConvertExactly x =
---     Right $ newCR (show x) [] (\me_src -> arr (makeQ me_src))
---     where
---     makeQ _ = seqByPrecision2CauchySeq (flip mpBallP x) . bits
-
-instance ConvertibleWithPrecision CauchyReal MPBall where
-  safeConvertP p r =
-    Right $ setPrecision p $ r ? (accuracySG $ bits p + 10)
+_test5 :: CN MPBall
+_test5 = convertP (prec 100) (creal $ 1/3)
