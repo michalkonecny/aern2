@@ -54,8 +54,8 @@ import AERN2.MP.Ball.Field ()
 import AERN2.MP.Ball.Elementary
 import AERN2.MP.Ball.PreludeOps ()
 
--- instance Ring MPBall
--- instance Ring (CN MPBall)
+instance Ring MPBall
+instance Ring (CN MPBall)
 instance Field MPBall
 instance Field (CN MPBall)
 

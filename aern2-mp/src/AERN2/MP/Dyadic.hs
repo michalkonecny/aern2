@@ -68,8 +68,8 @@ import AERN2.MP.Float
 newtype Dyadic = Dyadic { dyadicMPFloat :: MPFloat }
   deriving (P.Eq, P.Ord, CanRound, HasPrecision, HasNorm, Typeable)
 
--- instance Ring Dyadic
--- instance Ring (CN Dyadic)
+instance Ring Dyadic
+instance Ring (CN Dyadic)
 
 instance OrderedRing Dyadic
 instance OrderedRing (CN Dyadic)
