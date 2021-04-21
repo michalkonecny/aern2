@@ -198,6 +198,7 @@ instance HasAccuracy Int where getAccuracy _ = Exact; getFiniteAccuracy _ = NoIn
 instance HasAccuracy Integer where getAccuracy _ = Exact; getFiniteAccuracy _ = NoInformation
 instance HasAccuracy Rational where getAccuracy _ = Exact; getFiniteAccuracy _ = NoInformation
 instance HasAccuracy Bool where getAccuracy _ = Exact; getFiniteAccuracy _ = NoInformation
+instance HasAccuracy Kleenean where getAccuracy _ = Exact; getFiniteAccuracy _ = NoInformation
 
 instance HasAccuracy t => HasAccuracy (Complex t) where
   getAccuracy (a :+ i) =

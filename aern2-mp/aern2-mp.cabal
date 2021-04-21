@@ -4,15 +4,15 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c301a33e87cda58e37a030f17ba8449d51012ed61e3281a290a79178f8103777
+-- hash: 9abc5f7146f9405592c656165d7ba07c462da7ffc5d3f984272f3b5149cb96ca
 
 name:           aern2-mp
 version:        0.2.0.0
 synopsis:       Multi-precision ball (interval) arithmetic
-description:    Please see the README on GitHub at <https://github.com/michalkonecny/aern2-mp#readme>
+description:    Please see the README on GitHub at <https://github.com/michalkonecny/aern2/aern2-mp#readme>
 category:       Math
-homepage:       https://github.com/michalkonecny/aern2-mp#readme
-bug-reports:    https://github.com/michalkonecny/aern2-mp/issues
+homepage:       https://github.com/michalkonecny/aern2#readme
+bug-reports:    https://github.com/michalkonecny/aern2/issues
 author:         Michal Konecny
 maintainer:     mikkonecny@gmail.com
 copyright:      2015-2021 Michal Konecny
@@ -25,7 +25,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/michalkonecny/aern2-mp
+  location: https://github.com/michalkonecny/aern2
 
 library
   exposed-modules:
@@ -64,11 +64,11 @@ library
       QuickCheck >=2.7
     , base ==4.*
     , cdar
-    , collect-errors ==0.1.*
+    , collect-errors >=0.1
     , hspec
     , integer-logarithms
     , lens
-    , mixed-types-num >=0.4
+    , mixed-types-num >=0.5
     , regex-tdfa
     , template-haskell
   default-language: Haskell2010
@@ -91,11 +91,11 @@ test-suite aern2-mp-test
     , aern2-mp
     , base ==4.*
     , cdar
-    , collect-errors ==0.1.*
+    , collect-errors >=0.1
     , hspec
     , integer-logarithms
     , lens
-    , mixed-types-num >=0.4
+    , mixed-types-num >=0.5
     , regex-tdfa
     , template-haskell
   default-language: Haskell2010

@@ -1,6 +1,6 @@
 name:                aern2-mp
 version:             0.2.0.0
-github:              "michalkonecny/aern2-mp"
+github:              "michalkonecny/aern2"
 license:             BSD3
 author:              "Michal Konecny"
 maintainer:          "mikkonecny@gmail.com"
@@ -17,7 +17,7 @@ category:            Math
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/michalkonecny/aern2-mp#readme>
+description:         Please see the README on GitHub at <https://github.com/michalkonecny/aern2/aern2-mp#readme>
 
 dependencies:
 - base == 4.*
@@ -27,8 +27,8 @@ dependencies:
 - QuickCheck
 - lens
 - template-haskell
-- collect-errors == 0.1.*
-- mixed-types-num >= 0.4
+- collect-errors >= 0.1
+- mixed-types-num >= 0.5
 - QuickCheck >= 2.7
 - cdar
 
