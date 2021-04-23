@@ -596,14 +596,14 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth dept
           trace "proved true with apply" 
           (Just True, Nothing)
         else 
-          if greatestCentre !<! -0.1 -- Could check centre of the interval, takes into account the range of the intervals
-            then 
-              case decideDisjunctionBFS [varMap] (map fst filteredExpressionsWithFunctions) 0 bfsBoxesCutoff relativeImprovementCutoff p of
-                r@(Just True, _) -> r
-                r@(Just False, _) -> r
-                (Nothing, _) -> checkSimplex
-            else 
-              checkSimplex
+          -- if greatestCentre !<! -0.1 -- Could check centre of the interval, takes into account the range of the intervals
+          --   then 
+          --     case decideDisjunctionBFS [varMap] filteredExpressions 0 bfsBoxesCutoff relativeImprovementCutoff p of
+          --       r@(Just True, _) -> r
+          --       r@(Just False, _) -> r
+          --       (Nothing, _) -> checkSimplex
+          --   else 
+          checkSimplex
               
   where
     box  = fromVarMap varMap p
@@ -616,7 +616,8 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth dept
     greatestCentre = maximum $ map (AERN2.MP.Ball.centre . snd) esWithRanges
 
     filteredExpressionsWithFunctions = map fst filterOutFalseTerms
-    
+    filteredExpressions = map fst filteredExpressionsWithFunctions
+
     checkIfEsTrueUsingApply = any (\(_, range) -> range !>=! 0)  filterOutFalseTerms
 
     cornerRangesWithDerivatives = 
@@ -670,13 +671,27 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth dept
                     else
                       if currentDepth !<! depthCutoff 
                         then trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $ bisectWidestDimensionAndRecurse newVarMap
-                        else trace ("depth cutoff reached, starting BFS search " ++ show newVarMap) decideDisjunctionBFS [newVarMap] (map fst filteredExpressionsWithFunctions) 0 bfsBoxesCutoff relativeImprovementCutoff p
-                Just counterExample -> (Just False, Just counterExample)
+                        else trace ("depth cutoff reached, starting BFS search " ++ show newVarMap) decideDisjunctionBFS [newVarMap] filteredExpressions 0 bfsBoxesCutoff relativeImprovementCutoff p
+                Just counterExample -> 
+                  -- Verify result
+                  if disjunctionRangesBelowZero (applyDisjunction filteredExpressions counterExample p)
+                    then (Just False, Just counterExample)
+                    else
+                      -- T.trace "counterexample not verified" $
+                      if taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff
+                        then
+                          trace ("recursing with simplex with varMap: " ++ show newVarMap) $
+                          decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions newVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
+                        else
+                          if currentDepth !<! depthCutoff 
+                            then trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $ bisectWidestDimensionAndRecurse newVarMap
+                            else trace ("depth cutoff reached, starting BFS search " ++ show newVarMap) decideDisjunctionBFS [newVarMap] filteredExpressions 0 bfsBoxesCutoff relativeImprovementCutoff p
+
             _ -> undefined
           else
             if currentDepth !<! depthCutoff 
               then trace ("bisecting without simplex " ++ show varMap) $ bisectWidestDimensionAndRecurse varMap
-              else trace ("depth cutoff reached without simplex " ++ show varMap) $ decideDisjunctionBFS [varMap] (map fst filteredExpressionsWithFunctions) 0 bfsBoxesCutoff relativeImprovementCutoff p
+              else trace ("depth cutoff reached without simplex " ++ show varMap) $ decideDisjunctionBFS [varMap] filteredExpressions 0 bfsBoxesCutoff relativeImprovementCutoff p
 
     -- searchForCounterexample finalVarMap =
     --   let
@@ -1138,9 +1153,9 @@ findFalsePointWithSimplex cornerValuesWithDerivatives varMap =
   -- T.trace (show completeSystem) $
   case mNewPoints of
     Just newPoints ->
-      T.trace "========================"
-      T.trace (Data.List.intercalate "\n "(map S.prettyShowPolyConstraint completeSystem))
-      T.trace "========================"
+      -- T.trace "========================"
+      -- T.trace (Data.List.intercalate "\n "(map S.prettyShowPolyConstraint completeSystem))
+      -- T.trace "========================"
       Just $
       map 
       (\(s, v) ->
@@ -1178,84 +1193,13 @@ findFalsePointWithSimplex cornerValuesWithDerivatives varMap =
     mNewPoints :: Maybe [(Integer, Rational)]
     mNewPoints = S.findFeasibleSolution completeSystem
 
-encloseFalseAreaWithSimplex  
-  :: [(CN MPBall, CN MPBall, Box)] -- ^ [(valueOfFunctionAtLeftCorner, valueOfFunctionAtRightCorner, derivativesOfFunction)]
-  -> VarMap -- ^ The domains for each function which leads to the first derivatives
-  -> Maybe VarMap
-encloseFalseAreaWithSimplex cornerValuesWithDerivatives varMap =
-  -- T.trace (show completeSystem) $
-  case head newPoints of
-  (_, (Nothing, _)) ->
-    Nothing
-  _ -> 
-    let
-      -- Should never get an undefined result if the first resuls in newPoints is feasible
-      extractResult :: Maybe (Integer, [(Integer, Rational)]) -> Rational
-      extractResult mr =
-        case mr of
-          Just (v, rs) -> -- v refers to the objective variable. We extract the value of the objective
-                          -- variable from rs (the result determined by the simplex method)
-            case lookup v rs of
-              Just r -> r
-              Nothing -> undefined 
-          Nothing -> undefined 
-    in
-      Just $
-      map
-      (\(v, r) ->
-        --trace (show r)
-        (v, 
-        case lookup v indexedVariables of
-          Just iv -> -- Get the integer variable for the current string variable 
-            case lookup iv substVars of -- Check if any transformation needs to be done to get the final result
-              Just c -> (bimap ((add c) . extractResult) ((add c) . extractResult) r) -- Add any needed transformation to lower/upper bounds
-              Nothing -> bimap extractResult extractResult r
-          Nothing -> undefined -- Should never get here
-        )  
-      )
-      newPoints
-  where
-    -- Get the bottom left corner of the varMap
-
-    -- boxFuns = map (\e -> expressionToBoxFun e corner p) expressions
-
-    -- Create constraints for the domain
-    -- substVars stores any variable transformations (for the LHS)
-    ((domainConstraints, substVars), nextAvailableVar) = createDomainConstraints varMap 1
-
-    variables = [1 .. (nextAvailableVar - 1)]
-
-    leftCorner = map (fst . snd) varMap
-    rightCorner = map (snd . snd) varMap
-
-    functionConstraints = encloseFunctionCounterExamples cornerValuesWithDerivatives leftCorner rightCorner substVars
-
-    -- Map integer variables to their respective varMap
-    indexedVarMap = zip variables varMap
-
-    -- Map string variables to their respective integer variable
-    indexedVariables = zip (map fst varMap) variables
-
-    completeSystem = domainConstraints ++ functionConstraints
-
-    -- Get a feasible solution for this system
-    newPoints :: [(String, (Maybe (Integer, [(Integer, Rational)]), Maybe (Integer, [(Integer, Rational)])))]
-    newPoints =
-      map
-      (\v -> 
-        case lookup v indexedVarMap of
-          Just (sv, _) -> (sv, ((S.twoPhaseSimplex (S.Min [(v, 1.0)]) completeSystem), (S.twoPhaseSimplex (S.Max [(v, 1.0)]) completeSystem)))
-          Nothing -> undefined
-      )
-      variables
-
 checkECNFVerify :: [[E.E]] -> VarMap -> Integer -> Integer -> Rational -> Precision -> Bool
 checkECNFVerify cnf varMap depthCutoff bfsBoxesCutoff relativeImprovementCutoff p =
   case resultBox of
     Just box ->
-      T.trace (show box) $
-      T.trace (show resultBool) $
-      T.trace (show (applyECNF cnf box p)) $
+      -- T.trace (show box) $
+      -- T.trace (show resultBool) $
+      -- T.trace (show (applyECNF cnf box p)) $
       conjunctionRangesBelowZero $ applyECNF cnf box p
     Nothing -> undefined
   where
