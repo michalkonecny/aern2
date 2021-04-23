@@ -28,6 +28,7 @@ import qualified Data.List as L
 import AERN2.BoxFunMinMax.VarMap
 import AERN2.BoxFunMinMax.Expressions.DeriveBounds
 import AERN2.BoxFunMinMax.Expressions.EliminateFloats
+import AERN2.BoxFunMinMax.Expressions.Eliminator (minMaxAbsEliminatorECNF)
 
 parser :: String -> [LD.Expression]
 parser = LP.analyzeExpressionSequence . LP.parseSequence . LP.tokenize
@@ -415,19 +416,14 @@ deriveVCRanges vc@(FConn Impl contextCNF goal) =
 
 -- |Convert a VC to ECNF, eliminating any floats. 
 eliminateFloatsAndConvertVCToECNF :: F -> VarMap -> [[E]]
-eliminateFloatsAndConvertVCToECNF (FConn Impl context goal) varMap = 
+eliminateFloatsAndConvertVCToECNF (FConn Impl context goal) varMap =
+  minMaxAbsEliminatorECNF $
   [
     contextEs ++ goalEs 
     | 
     contextEs <- map (map (\e -> EUnOp Negate (eliminateFloats e varMap True))) (fToECNF context), 
     goalEs    <- map (map (\e -> eliminateFloats e varMap False)) (fToECNF goal)
   ]
-  where
-    -- contextECNF = map (map (\e -> EUnOp Negate (eliminateFloats e varMap True))) $ fToECNF context
-    -- goalECNF = map (map (\e -> eliminateFloats e varMap False)) $ fToECNF goal
-
-    contextECNF = map (map (EUnOp Negate)) $ fToECNF context
-    goalECNF = fToECNF goal
 
 
 -- findAssertions :: Script -> [Command]
