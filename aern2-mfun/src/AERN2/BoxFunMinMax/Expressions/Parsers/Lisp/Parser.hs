@@ -7,10 +7,10 @@ module AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.Parser
 ) where
 import AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.DataTypes
 import Prelude
-
+import Util (readRational)
 -- Constants.
 symbolCharacters :: String
-symbolCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_!?-+*/%<>#."
+symbolCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_!?-+*/%<>#.="
 
 numberCharacters :: String
 numberCharacters = "0123456789."
@@ -67,7 +67,7 @@ parse (x:xs)
   | "#t" == x = ((Boolean True), xs)
   | "#f" == x = ((Boolean False), xs)
   | "null" == x = ((Null), xs)
-  | isNumber x = ((Number (read x :: Double)), xs)
+  | isNumber x = ((Number (readRational x)), xs)
   | isSymbol x = ((Variable x), xs)
   | otherwise = (Null, [])
 

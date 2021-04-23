@@ -20,7 +20,7 @@ data Environment = EmptyEnvironment
 -- The Expression data type defines the elements of the abstract syntax tree
 -- and the runtime types manipulated by the Lisp system.
 data Expression = Null
-                | Number Double
+                | Number Rational
                 | Boolean Bool
                 | Variable String
                 | Pair Expression Expression
@@ -50,8 +50,8 @@ showExpression pair@(Pair first second)
   | otherwise = "(" ++ (show first) ++ " . " ++ (show second) ++ ")"
 showExpression (Lambda parameters body) = "#CompoundProcedure"
 showExpression (PrimitiveProcedure _) = "#PrimitiveProcedure"
-showExpression (Application operator operands) = "#Application"
-showExpression (Definition variable value) = "#Definition"
+showExpression (Application operator operands) = "#Application " ++ show operator ++ " " ++ show operands
+showExpression (Definition variable value) = "#Definition " ++ show variable ++ " " ++ show value
 showExpression _ = "#Unknown"
 
 showPairList :: Expression -> String
