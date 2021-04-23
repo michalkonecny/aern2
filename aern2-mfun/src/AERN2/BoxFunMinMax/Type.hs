@@ -14,9 +14,8 @@ import Control.Parallel.Strategies
 import Data.Bifunctor
 import qualified Simplex as S
 
-import Data.List (filter, find)
+import Data.List (find, intercalate)
 import qualified Data.Sequence as Seq
-import qualified Data.Map as M
 
 import AERN2.MP.Dyadic (Dyadic)
 
@@ -238,6 +237,36 @@ applyExpressionLipschitz expression varMap p =
   applyLipschitz f (fromVarMap varMap p)
   where
     f = expressionToBoxFun expression varMap p
+
+applyDisjunction :: [E.E] -> VarMap -> Precision -> [CN MPBall]
+applyDisjunction expressions varMap p =
+  map 
+  (\e -> apply (expressionToBoxFun e varMap p) box)
+  expressions
+  where
+    box = fromVarMap varMap p
+
+applyECNF :: [[E.E]] -> VarMap -> Precision -> [[CN MPBall]]
+applyECNF cnf varMap p = map (\d -> applyDisjunction d varMap p) cnf
+
+rangeAboveZero :: CN MPBall -> Bool
+rangeAboveZero r = r !>! 0 
+
+disjunctionRangesAboveZero :: [CN MPBall] -> Bool
+disjunctionRangesAboveZero = any rangeAboveZero
+
+conjunctionRangesAboveZero :: [[CN MPBall]] -> Bool
+conjunctionRangesAboveZero = all disjunctionRangesAboveZero
+
+rangeBelowZero :: CN MPBall -> Bool
+rangeBelowZero r = r !<! 0 
+
+disjunctionRangesBelowZero :: [CN MPBall] -> Bool
+disjunctionRangesBelowZero = all rangeBelowZero
+
+conjunctionRangesBelowZero :: [[CN MPBall]] -> Bool
+conjunctionRangesBelowZero = all disjunctionRangesBelowZero
+
 
 filterOutFalseTermsInDisjunction :: [E.E] -> VarMap -> Precision -> [E.E]
 filterOutFalseTermsInDisjunction expressions varMap p = filter (\e -> not (applyExpressionLipschitz e varMap p !>=! cnMPBallP p (cn 0))) expressions
@@ -860,20 +889,26 @@ createDomainConstraints ((_, (l, r)) : xs) currentIndex =
 encloseFunctionCounterExamples :: [(CN MPBall, CN MPBall, Box)] -> [Rational] -> [Rational] -> [(Integer, Rational)] -> [S.PolyConstraint]
 encloseFunctionCounterExamples [] _ _ _ = []
 encloseFunctionCounterExamples ((leftCornerValue, rightCornerValue, derivatives) : values) leftCorner rightCorner substVars =
-  [
-    S.LEQ (zip [1..] upperDerivatives) (foldl add (-leftU - upperSubst - eps) upperDerivativesTimesLeftCorner)
+  S.LEQ (zip [1..] upperDerivatives) (foldl add (-leftU - upperSubst - eps) upperDerivativesTimesLeftCorner)
     -- S.LEQ (zip [1..] negatedLowerDerivatives) (foldl add (rightU + lowerSubst) negatedLowerDerivativesTimesRightCorner)
     -- S.LEQ (zip [1..] lowerDerivatives) (foldl add (-rightU - lowerSubst - eps) lowerDerivativesTimesRightCorner)
-  ]
-  ++ encloseFunctionCounterExamples values leftCorner rightCorner substVars
+  : encloseFunctionCounterExamples values leftCorner rightCorner substVars
   where
-    eps = 1/!1000000000
-    
+    eps = 1/!100000000000000000000000000000
+
     mpBallToRational :: CN MPBall -> (Rational, Rational)
     mpBallToRational = bimap (rational . (~!)) (rational . (~!)) . endpoints . reducePrecionIfInaccurate . (~!)
       -- bimap (endpoints . reducePrecionIfInaccurate)
 
     -- Get the lower and upper bounds of the function applied at the bottom left corner of the box
+    -- FIXME: check that we are using correct bounds here
+    {-
+    We convert MPBall to rational
+    conversion gives us accurate endpoints
+    In the system, we are using the upperbound of the left corner this looks correct
+    We use upperbounds for derivatives, this also looks correct
+    -}
+
     (_, leftU) = mpBallToRational leftCornerValue
     (_, rightU) = mpBallToRational rightCornerValue
     
@@ -1103,6 +1138,9 @@ findFalsePointWithSimplex cornerValuesWithDerivatives varMap =
   -- T.trace (show completeSystem) $
   case mNewPoints of
     Just newPoints ->
+      T.trace "========================"
+      T.trace (Data.List.intercalate "\n "(map S.prettyShowPolyConstraint completeSystem))
+      T.trace "========================"
       Just $
       map 
       (\(s, v) ->
@@ -1210,3 +1248,15 @@ encloseFalseAreaWithSimplex cornerValuesWithDerivatives varMap =
           Nothing -> undefined
       )
       variables
+
+checkECNFVerify :: [[E.E]] -> VarMap -> Integer -> Integer -> Rational -> Precision -> Bool
+checkECNFVerify cnf varMap depthCutoff bfsBoxesCutoff relativeImprovementCutoff p =
+  case resultBox of
+    Just box ->
+      T.trace (show box) $
+      T.trace (show resultBool) $
+      T.trace (show (applyECNF cnf box p)) $
+      conjunctionRangesBelowZero $ applyECNF cnf box p
+    Nothing -> undefined
+  where
+    (resultBool, resultBox) = checkECNFCE cnf varMap depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
