@@ -42,7 +42,10 @@ library
     , parallel
     , simplex-haskell == 0.1.*
     , smt2-parser
-    -- TODO: delete below eventually
+    , binary
+    , scientific
+    , process
+-- TODO: delete below eventually
     , async
     , text
 
@@ -90,6 +93,7 @@ library
     AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.DataTypes
     AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.Parser
     AERN2.BoxFunMinMax.Expressions.Parsers.Smt
+    AERN2.BoxFunMinMax.Expressions.Parsers.EliminateFloats
     -- AERN2.BoxFun.OptimisationConcurrent 
 
 -- executable aern2-mfun-benchmark
@@ -156,3 +160,5 @@ executable aern2-mfun-heron-benchmark
     , parallel
     -- TODO: delete below eventually
     , async
+    , binary
+    , ghc

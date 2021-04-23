@@ -13,9 +13,10 @@ data BinOp = Add | Sub | Mul | Div | Min | Max | Pow
 data UnOp  = Sqrt | Negate | Abs | Sin
   deriving (Show, P.Eq, P.Ord)
 
+data RoundingMode = RNE | RTP | RTN | RTZ deriving (Show, P.Eq, P.Ord)
 -- | The E type represents the inequality: expression :: E >= 0
 -- TODO: Add rounding operator with certain epsilon/floating-point type
-data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String | PowI E Integer | Float E Integer -- Float Expression Significand
+data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String | PowI E Integer | Float32 RoundingMode E | Float64 RoundingMode E | Float RoundingMode E -- Float Expression Significand
   deriving (Show, P.Eq, P.Ord)
 
 data Comp = Gt | Ge | Lt | Le | Eq

@@ -9,13 +9,12 @@ import Data.Ratio
 import System.IO.Unsafe (unsafePerformIO)
 import AERN2.BoxFunMinMax.VarMap
 
-expressionContainsFloat :: E -> Bool
-expressionContainsFloat (Float _ _)       = True
-expressionContainsFloat (EBinOp _ e1 e2)  = expressionContainsFloat e1 || expressionContainsFloat e2
-expressionContainsFloat (EUnOp _ e)       = expressionContainsFloat e 
-expressionContainsFloat (PowI e _)        = expressionContainsFloat e 
-expressionContainsFloat (Lit _)           = False
-expressionContainsFloat (Var _)           = False
+import System.IO
+
+import Data.Scientific
+
+expressionToFPTaylorFile :: E -> FilePath -> IO ()
+expressionToFPTaylorFile e filePath = writeFile filePath $ expressionToFPTaylor e
 
 -- | All variables must appear in the VarMap
 expressionToFPTaylor :: E -> String
@@ -37,7 +36,20 @@ expressionToFPTaylor (EUnOp op e) =
 expressionToFPTaylor (PowI e i) = expressionToFPTaylor e ++ " ^ " ++ show i
 expressionToFPTaylor (Lit r) = showFrac r
 expressionToFPTaylor (Var v) = v
-expressionToFPTaylor (Float e s) = "rnd32(" ++ expressionToFPTaylor e ++ ")" --TODO: FPTaylor only supports 16,32,64,128 floats. Use these numbers in PP2?
+expressionToFPTaylor (Float32 mode e) = 
+  case mode of
+    RNE -> "rnd32(" ++ expressionToFPTaylor e ++ ")"
+    RTP -> "rnd32_up(" ++ expressionToFPTaylor e ++ ")"
+    RTN -> "rnd32_down(" ++ expressionToFPTaylor e ++ ")"
+    RTZ -> "rnd32_0(" ++ expressionToFPTaylor e ++ ")"
+expressionToFPTaylor (Float64 mode e) = 
+  case mode of
+    RNE -> "rnd64(" ++ expressionToFPTaylor e ++ ")"
+    RTP -> "rnd64_up(" ++ expressionToFPTaylor e ++ ")"
+    RTN -> "rnd64_down(" ++ expressionToFPTaylor e ++ ")"
+    RTZ -> "rnd64_0(" ++ expressionToFPTaylor e ++ ")"
+expressionToFPTaylor e@(Float _ _) = error "Float type with no precision found when translating to FPTaylor: " ++ show e
+-- expressionToFPTaylor (Float e s) = "rnd32(" ++ expressionToFPTaylor e ++ ")" --TODO: FPTaylor only supports 16,32,64,128 floats. Use these numbers in PP2?
 
 variableBoundsToFPTaylor :: VarMap -> String
 variableBoundsToFPTaylor [] = ""
@@ -72,11 +84,16 @@ expressionWithVarMapToFPTaylor e vm =
 --  Add one to compensate for missing digits
 --  divide integer using position of dot and length of string to get the rational we want
 
-parseFPTaylorRational :: String -> Rational
-parseFPTaylorRational output =
-  undefined
+parseFPTaylorRational :: String -> Maybe Rational
+parseFPTaylorRational output = toRational . (read :: String -> Scientific) <$> findErrorBound outputList
   where
-    ePos = Data.List.elemIndex 'e' output
+    outputList = words output
+
+    findErrorBound :: [String] -> Maybe String
+    findErrorBound [] = Nothing
+    findErrorBound ("Absolute" : "error" : "(exact):" : errorBound : _) = Just errorBound
+    findErrorBound (_ : xs) = findErrorBound xs
+    -- ePos = Data.List.elemIndex 'e' output
     -- (decimal, exponentWithE) = Data.List.splitAt (ePos) output
     -- exponent = tail exponentWithE
     -- exponentInt = read exponent --Could throw exception
