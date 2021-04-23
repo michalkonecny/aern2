@@ -18,20 +18,24 @@ import qualified Prelude as P
 
 import qualified Data.Set as Set
 import qualified Data.Map as Map
-
+import qualified Data.List as List
 import AERN2.MP.Ball
 
 import AERN2.BoxFunMinMax.Expressions.Type
 import AERN2.BoxFunMinMax.VarMap
 
+import Debug.Trace
+
 type VarName = String
 
-deriveBounds :: F -> Either VarName VarMap
-deriveBounds form
-    | allGood =
-        Right (map removeJust varRanges)
-    | otherwise = 
-        Left errorMessage
+deriveBounds :: F -> (VarMap, [VarName])
+deriveBounds form =
+  let (derivedRanges, underivedRanges) = List.partition isGood varRanges
+  in (map removeJust derivedRanges, map fst underivedRanges)
+    -- | allGood =
+    --     Right (map removeJust varRanges)
+    -- | otherwise = 
+    --     trace (show varRanges) $ Left errorMessage
     where
     allGood = and $ map isGood varRanges
     removeJust (v, (Just l, Just r)) = (v, (l, r))
@@ -162,7 +166,8 @@ getFreeVarsF (FComp _ e1 e2) =
   (getFreeVarsE e1) `Set.union` (getFreeVarsE e2)
 getFreeVarsF (FConn _ f1 f2) = 
   (getFreeVarsF f1) `Set.union` (getFreeVarsF f2)
-
+getFreeVarsF (FNot f) =
+  getFreeVarsF f
 -- | extract all variables from an expression
 getFreeVarsE :: E -> Set.Set VarName
 getFreeVarsE (Var v) = 
