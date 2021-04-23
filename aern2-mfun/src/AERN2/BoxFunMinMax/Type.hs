@@ -585,117 +585,93 @@ decideDisjunctionBFS (varMap : varMaps) expressions numberOfBoxesExamined number
   else (Nothing, Just varMap) -- TODO: 'best' indeterminate area?
 
 decideDisjunctionWithSimplexCE :: [(E.E, BoxFun)] -> VarMap -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
-decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p =
-  if null filterOutFalseTerms
-    then 
-      trace ("proved false with apply " ++ show varMap)
-      (Just False, Just varMap)
-    else 
-      if checkIfEsTrueUsingApply 
-        then 
-          trace "proved true with apply" 
-          (Just True, Nothing)
-        else 
-          -- if greatestCentre !<! -0.1 -- Could check centre of the interval, takes into account the range of the intervals
-          --   then 
-          --     case decideDisjunctionBFS [varMap] filteredExpressions 0 bfsBoxesCutoff relativeImprovementCutoff p of
-          --       r@(Just True, _) -> r
-          --       r@(Just False, _) -> r
-          --       (Nothing, _) -> checkSimplex
-          --   else 
-          checkSimplex
-              
+decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
+  | null filterOutFalseTerms = 
+    trace ("proved false with apply " ++ show varMap)
+    (Just False, Just varMap)
+  | checkIfEsTrueUsingApply = 
+    trace "proved true with apply" 
+    (Just True, Nothing)
+  | otherwise = checkSimplex
   where
-    box  = fromVarMap varMap p
-    boxL = lowerBounds box
-    boxU = upperBounds box
+      box  = fromVarMap varMap p
+      boxL = lowerBounds box
+      boxU = upperBounds box
 
-    esWithRanges            = map (\(e, f) -> ((e, f), apply f box)) expressionsWithFunctions
-    filterOutFalseTerms     = filter (\(_, range) -> not (range !<! 0))  esWithRanges -- Could make this cleaner with list comprehension
-    
-    greatestCentre = maximum $ map (AERN2.MP.Ball.centre . snd) esWithRanges
+      esWithRanges            = map (\ (e, f) -> ((e, f), apply f box)) expressionsWithFunctions
+      filterOutFalseTerms     = filter (\ (_, range) -> not (range !<! 0)) esWithRanges
+      greatestCentre          = maximum $ map (AERN2.MP.Ball.centre . snd) esWithRanges
+      checkIfEsTrueUsingApply = any (\ (_, range) -> range !>=! 0) filterOutFalseTerms
 
-    filteredExpressionsWithFunctions = map fst filterOutFalseTerms
-    filteredExpressions = map fst filteredExpressionsWithFunctions
+      filteredExpressionsWithFunctions = map fst filterOutFalseTerms
+      filteredExpressions              = map fst filteredExpressionsWithFunctions
 
-    checkIfEsTrueUsingApply = any (\(_, range) -> range !>=! 0)  filterOutFalseTerms
+      -- (rangeAtLeftCornerOfBox, rangeAtRightCornerOfBox, firstDerivativesOverBox) for each filtered expression
+      cornerRangesWithDerivatives = 
+        map
+        (\ ((_, f), _) -> (apply f boxL, apply f boxU, gradient f box))
+        filterOutFalseTerms
 
-    cornerRangesWithDerivatives = 
-      map
-      (\((_,f),_) ->
-        (
-          -- left corner range
-          apply f boxL,
-          -- right corner range
-          apply f boxU,
-          -- derivatives
-          gradient f box
-        )
-      )
-      filterOutFalseTerms
-
-    bisectWidestDimensionAndRecurse varMapToBisect =
-      let
-        (widestVar, (_,_)) = widestInterval (tail varMapToBisect) (head varMapToBisect)
-        (leftVarMap, rightVarMap) = bisectVar varMapToBisect widestVar
-        (leftR, rightR) = 
-          withStrategy 
-          (parTuple2 rseq rseq) 
-          (
-            decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions leftVarMap (currentDepth + 1) depthCutoff bfsBoxesCutoff relativeImprovementCutoff p, 
-            decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions rightVarMap (currentDepth + 1) depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
-          )
-      in
-        case leftR of
-            (Just True, _) ->
-              case rightR of
+      bisectWidestDimensionAndRecurse varMapToBisect = 
+        let
+          (widestVar, (_, _)) = widestInterval (tail varMapToBisect) (head varMapToBisect)
+          (leftVarMap, rightVarMap) = bisectVar varMapToBisect widestVar
+          (leftR, rightR) =
+            withStrategy
+            (parTuple2 rseq rseq)
+            (
+              decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions leftVarMap (currentDepth + 1) depthCutoff bfsBoxesCutoff relativeImprovementCutoff p, 
+              decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions rightVarMap (currentDepth + 1) depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
+            )
+        in
+          case leftR of
+            (Just True, _)
+              -> case rightR of
                 (Just True, _) -> (Just True, Nothing)
                 r -> r
             r -> r
-
-    checkSimplex = 
-      -- Only call decideWithSimplex if all derivatives can be calculated
-      if and (concatMap (\(_, _, c) -> V.toList (V.map (not . hasErrorCN) c)) cornerRangesWithDerivatives)
-        then 
+      checkSimplex
+        -- If we can calculate all derivatives
+        | and (concatMap (\ (_, _, c) -> V.toList (V.map (not . hasErrorCN) c)) cornerRangesWithDerivatives) 
+        = 
           case decideWithSimplex cornerRangesWithDerivatives varMap of
-            r@(Just True, _) -> 
-              trace "proved true with simplex" 
-              r
-            (Nothing, Just newVarMap) ->
+            r@(Just True, _) -> trace "proved true with simplex" r
+            (Nothing, Just newVarMap) -> 
               case findFalsePointWithSimplex cornerRangesWithDerivatives newVarMap of
-                Nothing ->
-                  if taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff
+                Nothing -> 
+                  if taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff 
                     then
                       trace ("recursing with simplex with varMap: " ++ show newVarMap) $
                       decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions newVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
                     else
-                      if currentDepth !<! depthCutoff 
-                        then trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $ bisectWidestDimensionAndRecurse newVarMap
-                        else trace ("depth cutoff reached, starting BFS search " ++ show newVarMap) decideDisjunctionBFS [newVarMap] filteredExpressions 0 bfsBoxesCutoff relativeImprovementCutoff p
+                      if currentDepth !<! depthCutoff then
+                          trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $
+                          bisectWidestDimensionAndRecurse newVarMap
+                      else
+                        trace ("depth cutoff reached, starting BFS search " ++ show newVarMap) $
+                        decideDisjunctionBFS [newVarMap] filteredExpressions 0 bfsBoxesCutoff relativeImprovementCutoff p
                 Just counterExample -> 
-                  -- Verify result
-                  if disjunctionRangesBelowZero (applyDisjunction filteredExpressions counterExample p)
+                  if disjunctionRangesBelowZero (applyDisjunction filteredExpressions counterExample p) 
                     then (Just False, Just counterExample)
                     else
-                      -- T.trace "counterexample not verified" $
-                      if taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff
+                      if taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff 
                         then
                           trace ("recursing with simplex with varMap: " ++ show newVarMap) $
                           decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions newVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
-                        else
-                          if currentDepth !<! depthCutoff 
-                            then trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $ bisectWidestDimensionAndRecurse newVarMap
-                            else trace ("depth cutoff reached, starting BFS search " ++ show newVarMap) decideDisjunctionBFS [newVarMap] filteredExpressions 0 bfsBoxesCutoff relativeImprovementCutoff p
-
+                        else  
+                          if currentDepth !<! depthCutoff then
+                            trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $
+                            bisectWidestDimensionAndRecurse newVarMap
+                          else
+                            trace ("depth cutoff reached, starting BFS search " ++ show newVarMap) $
+                            decideDisjunctionBFS [newVarMap] filteredExpressions 0 bfsBoxesCutoff relativeImprovementCutoff p
             _ -> undefined
-          else
-            if currentDepth !<! depthCutoff 
-              then trace ("bisecting without simplex " ++ show varMap) $ bisectWidestDimensionAndRecurse varMap
-              else trace ("depth cutoff reached without simplex " ++ show varMap) $ decideDisjunctionBFS [varMap] filteredExpressions 0 bfsBoxesCutoff relativeImprovementCutoff p
-
-    -- searchForCounterexample finalVarMap =
-    --   let
-    --     zoomedOutVarMap 
+        | currentDepth !<! depthCutoff = 
+          trace ("bisecting without simplex " ++ show varMap) $
+          bisectWidestDimensionAndRecurse varMap
+        | otherwise = 
+          trace ("depth cutoff reached without simplex " ++ show varMap) $
+          decideDisjunctionBFS [varMap] filteredExpressions 0 bfsBoxesCutoff relativeImprovementCutoff p -- Last ditch BFS attempt
 
 setupSystem :: [E.E] -> VarMap -> ([(CN MPBall, CN MPBall, Box)])
 setupSystem expressions varMap = 
