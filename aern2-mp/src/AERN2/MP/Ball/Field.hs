@@ -24,7 +24,7 @@ import MixedTypesNumPrelude
 import qualified Control.CollectErrors as CE
 import Control.CollectErrors ( CollectErrors, CanBeErrors )
 -- import qualified Numeric.CollectErrors as CN
--- import Numeric.CollectErrors (CN, cn)
+import Numeric.CollectErrors (CN, cn)
 
 import AERN2.Normalize
 
@@ -246,24 +246,20 @@ instance CanDiv Rational MPBall where
   divide = convertPFirst divide
 
 instance
-  (CanDiv MPBall b
-  , CanBeErrors es)
+  (CanDiv MPBall b, CanTestZero b)
   =>
-  CanDiv MPBall (CollectErrors es  b)
+  CanDiv MPBall (CN b)
   where
-  type DivType MPBall (CollectErrors es  b) =
-    CollectErrors es (DivType MPBall b)
-  divide = CE.liftT1 divide
+  type DivType MPBall (CN b) = CN (DivType MPBall b)
+  divide a b = divide (cn a) b
 
 instance
-  (CanDiv a MPBall
-  , CanBeErrors es)
+  (CanDiv a MPBall)
   =>
-  CanDiv (CollectErrors es a) MPBall
+  CanDiv (CN a) MPBall
   where
-  type DivType (CollectErrors es  a) MPBall =
-    CollectErrors es (DivType a MPBall)
-  divide = CE.lift1T divide
+  type DivType (CN a) MPBall = CN (DivType a MPBall)
+  divide a b = divide a (cn b)
 
 {- integer power -}
 
