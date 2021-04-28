@@ -141,10 +141,10 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) = -- Two param operat
         Just e2 ->
           case operator of
             n
-              | n `elem` [">=", "fp.geq"] -> Just $ FComp Ge e1 e2
-              | n `elem` [">",  "fp.gt"]  -> Just $ FComp Gt e1 e2
-              | n `elem` ["<=", "fp.leq"] -> Just $ FComp Le e1 e2
-              | n `elem` ["<",  "fp.lt"]  -> Just $ FComp Lt e1 e2
+              | n `elem` [">=", "fp.geq", "oge", "oge__logic"] -> Just $ FComp Ge e1 e2
+              | n `elem` [">",  "fp.gt", "ogt", "ogt__logic"]  -> Just $ FComp Gt e1 e2
+              | n `elem` ["<=", "fp.leq", "ole", "ole__logic"] -> Just $ FComp Le e1 e2
+              | n `elem` ["<",  "fp.lt", "olt", "olt__logic"]  -> Just $ FComp Lt e1 e2
               | n `elem` ["=",  "fp.eq"]  -> Just $ FComp Eq e1 e2
             _ -> Nothing
         Nothing -> Nothing
@@ -170,6 +170,17 @@ termToE (LD.Application (LD.Variable operator) [op]) =
   case termToE op of
     Nothing -> Nothing
     Just e -> case operator of
+      "abs"             -> Just $ EUnOp Abs e -- Haven't seen this, but added
+      "abs1"            -> Just $ EUnOp Abs e -- Seems to be real version of Abs
+      "sin"             -> Just $ EUnOp Sin e
+      "sin1"            -> Just $ EUnOp Sin e
+      "-"               -> Just $ EUnOp Negate e
+      -- SPARK Reals functions
+      "from_int"        -> Just e
+      -- Some to_int functions. different suffixes (1, 2, etc.)
+      -- e.g. In one file, to_int1 :: Float -> Int
+      --                   to_int2 :: Bool  -> Int
+      -- Are these suffixes consistent?
       -- Float functions
       "fp.abs"          -> Just $ EUnOp Abs e
       "fp.neg"          -> Just $ EUnOp Negate e
@@ -184,7 +195,22 @@ termToE (LD.Application (LD.Variable operator) [op]) =
       "fp.isIntegral32" -> Nothing
       "fp.isIntegral64" -> Nothing
       _                 -> Nothing
--- Float functions, two params
+-- two param functions
+termToE (LD.Application (LD.Variable operator) [op1, op2]) =
+  case termToE op1 of
+    Nothing -> Nothing
+    Just e1 -> 
+      case termToE op2 of
+        Nothing -> Nothing
+        Just e2 ->
+          case operator of
+            n
+              -- "o..." functions are from SPARK Reals
+              | n `elem` ["+", "oadd", "oadd__logic"] -> EBinOp Add e1 e2
+              | n `elem` ["-", "osubtract", "osubtract__logic"] -> EBinOp Sub e1 e2
+              | n `elem` ["*", "omultiply", "omultiply__logic"] -> EBinOp Mul e1 e2
+              | n `elem` ["/", "odivide", "odivide__logic"] -> EBinOp Div e1 e2
+              | n `elem` ["power"] -> EBinOp Pow e1 e2
 -- Float bits to Rational
 termToE (LD.Application (LD.Variable "fp") o@[LD.Variable sSign, LD.Variable sExponent, LD.Variable sMantissa]) =
   let
@@ -235,7 +261,7 @@ termToE (LD.Application (LD.Variable "fp") o@[LD.Variable sSign, LD.Variable sEx
 -- Float functions, three params
 termToE (LD.Application (LD.Variable operator) [roundingMode, op1, op2]) =
   case operator of
-    -- Undefined functions ops
+    -- SPARK Reals
     "fp.to_real" -> Nothing 
     _ -> -- Known ops
       case termToE op1 of
@@ -345,6 +371,7 @@ parseRoundingMode _ = Nothing
 -- If the goal cannot be determined, we return Nothing
 processVC  :: [LD.Expression] -> Maybe F
 processVC parsedExpressions = 
+  trace (show (maybe Nothing termToF mGoal)) $
   case mGoalF of
     Just goalF  -> if null contextF then Just goalF else Just $ FConn Impl (foldContextF contextF) goalF
     Nothing     -> Nothing
