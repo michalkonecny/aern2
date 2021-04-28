@@ -24,6 +24,7 @@ expressionToSMT (EUnOp op e) =
     Negate -> "(* -1 " ++ expressionToSMT e ++ ")"
     Abs -> "(abs " ++ expressionToSMT e ++ ")"
     Sin -> "(sin " ++ expressionToSMT e ++ ")"
+    Cos -> "(cos " ++ expressionToSMT e ++ ")"
 expressionToSMT (PowI e i) = "(^ " ++ expressionToSMT e ++ " " ++ show i ++ ")"
 expressionToSMT (Var e) = e
 expressionToSMT (Lit e) = 
@@ -31,6 +32,9 @@ expressionToSMT (Lit e) =
     1 -> show (numerator e)
     _ ->
       "(/ " ++ show (numerator e) ++ " " ++ show (denominator e) ++ ")"
+expressionToSMT (Float _ _)   = error "dReal translator does not support Floats"
+expressionToSMT (Float32 _ _) = error "dReal translator does not support Floats"
+expressionToSMT (Float64 _ _) = error "dReal translator does not support Floats"
 
 disjunctionExpressionsToSMT :: [E] -> String
 disjunctionExpressionsToSMT es = "(or " ++ concatMap (\e -> "(>= " ++ expressionToSMT e ++ "(+ 0 1e-300))") es ++ ")"

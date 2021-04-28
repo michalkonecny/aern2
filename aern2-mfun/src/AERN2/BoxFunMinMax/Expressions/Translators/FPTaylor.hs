@@ -33,6 +33,7 @@ expressionToFPTaylor (EUnOp op e) =
     Negate -> "(-1 * " ++ expressionToFPTaylor e ++ ")"
     Abs -> "|" ++ expressionToFPTaylor e ++ "|"
     Sin -> "sin(" ++ expressionToFPTaylor e ++ ")"
+    Cos -> "cos(" ++ expressionToFPTaylor e ++ ")"
 expressionToFPTaylor (PowI e i) = expressionToFPTaylor e ++ " ^ " ++ show i
 expressionToFPTaylor (Lit r) = showFrac r
 expressionToFPTaylor (Var v) = v

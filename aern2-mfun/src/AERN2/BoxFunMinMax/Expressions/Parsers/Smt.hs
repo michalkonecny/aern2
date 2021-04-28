@@ -174,6 +174,8 @@ termToE (LD.Application (LD.Variable operator) [op]) =
       "abs1"            -> Just $ EUnOp Abs e -- Seems to be real version of Abs
       "sin"             -> Just $ EUnOp Sin e
       "sin1"            -> Just $ EUnOp Sin e
+      "cos"            -> Just $ EUnOp Sin e
+      "cos1"            -> Just $ EUnOp Sin e
       "-"               -> Just $ EUnOp Negate e
       -- SPARK Reals functions
       "from_int"        -> Just e

@@ -10,7 +10,7 @@ import Debug.Trace (trace)
 
 data BinOp = Add | Sub | Mul | Div | Min | Max | Pow
   deriving (Show, P.Eq, P.Ord)
-data UnOp  = Sqrt | Negate | Abs | Sin
+data UnOp  = Sqrt | Negate | Abs | Sin | Cos
   deriving (Show, P.Eq, P.Ord)
 
 data RoundingMode = RNE | RTP | RTN | RTZ deriving (Show, P.Eq, P.Ord)
@@ -119,6 +119,7 @@ computeE (EUnOp op e) varMap =
     Sqrt -> sqrt (computeE e varMap)
     Negate -> negate (computeE e varMap)
     Sin -> sin (computeE e varMap)
+    Cos -> cos (computeE e varMap)
 computeE (Var v) varMap = 
   case Map.lookup v (Map.fromList varMap) of
     Nothing -> 
@@ -127,6 +128,9 @@ computeE (Var v) varMap =
     Just r -> cn (double r)
 computeE (Lit i) _ = cn (double i)
 computeE (PowI e i) varMap = computeE e varMap  ^ i
+computeE (Float _ _) _   = error "computeE for Floats not supported"
+computeE (Float32 _ _) _ = error "computeE for Floats not supported"
+computeE (Float64 _ _) _ = error "computeE for Floats not supported"
 
 -- | Given a list of qualified Es and points for all Vars,
 -- compute a list of valid values. 

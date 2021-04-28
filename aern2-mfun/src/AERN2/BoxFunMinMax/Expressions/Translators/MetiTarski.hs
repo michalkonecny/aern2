@@ -23,6 +23,7 @@ expressionToTptp (EUnOp op e) =
     Negate -> "(-1 * " ++ expressionToTptp e ++ ")"
     Abs -> "(abs(" ++ expressionToTptp e ++ "))"
     Sin -> "(sin(" ++ expressionToTptp e ++ "))"
+    Cos -> "(cos(" ++ expressionToTptp e ++ "))"
     
 expressionToTptp (PowI e i) = "(" ++ expressionToTptp e ++ " ^ " ++ show i ++ ")"
 expressionToTptp (Var e) = e
@@ -31,6 +32,9 @@ expressionToTptp (Lit e) =
     1 -> show (numerator e)
     _ ->
       "(" ++ show (numerator e) ++ " / " ++ show (denominator e) ++ ")"
+expressionToTptp (Float _ _)   = "MetiTarski translator does not support Floats"
+expressionToTptp (Float32 _ _) = "MetiTarski translator does not support Floats"
+expressionToTptp (Float64 _ _) = "MetiTarski translator does not support Floats"
 
 -- disjunctionExpressionsToSMT :: [E] -> String
 -- disjunctionExpressionsToSMT []        = ""

@@ -47,12 +47,15 @@ expressionToBoxFun e domain p =
         Sqrt -> sqrt (expressionToDifferential e v)
         Negate -> negate (expressionToDifferential e v)
         Sin -> sin (expressionToDifferential e v)
+        Cos -> cos (expressionToDifferential e v)
     expressionToDifferential (Lit e) _ = differential 2 $ cn (mpBallP p e)
     expressionToDifferential (Var e) v = 
       case elemIndex e variableOrder of
         Nothing -> error $ "Variable: " ++ show e ++ " not found in varMap: " ++ show domain ++ " when translating expression: " ++ show e 
         Just i -> v V.! (fromIntegral i)
     expressionToDifferential (PowI e i) v = expressionToDifferential e v ^! i
+    expressionToDifferential (Float32 _ e) v = expressionToDifferential e v
+    expressionToDifferential (Float64 _ e) v = expressionToDifferential e v
 
 
     variableOrder = map fst domain
