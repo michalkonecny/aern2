@@ -26,7 +26,8 @@ where
 import AERN2.MP
 import AERN2.Real.Type
 import AERN2.Real.Comparisons ()
-import AERN2.Real.Arithmetic (pi)
+import AERN2.Real.Field ()
+import AERN2.Real.Elementary (pi)
 -- import AERN2.Real.Tests ()
 
 -- imports used in examples below:

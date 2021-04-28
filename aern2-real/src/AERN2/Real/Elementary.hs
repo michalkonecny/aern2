@@ -1,8 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-|
-    Module      :  AERN2.Real.Arithmetic
-    Description :  arithmetic operations on CReal
+    Module      :  AERN2.Real.Elementary
+    Description :  selected elementary operations on CReal
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -10,9 +10,9 @@
     Stability   :  experimental
     Portability :  portable
 
-    Arithmetic operations on Cauchy Real numbers.
+    Selected elementary operations on Cauchy Real numbers.
 -}
-module AERN2.Real.Arithmetic
+module AERN2.Real.Elementary
 (
   pi
 )
@@ -21,97 +21,17 @@ where
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
+-- import qualified Prelude as P
 import Numeric.CollectErrors
-  ( cn )
+  ( cn, CN )
 
-import Data.Complex
+-- import Data.Complex
 
 import AERN2.MP.Ball
-import AERN2.MP.Dyadic
+-- import AERN2.MP.Dyadic
 
 import AERN2.Real.Type
-
-{- field operations -}
-
--- instance Ring CReal
--- instance OrderedRing CReal
--- instance Field CReal
--- instance OrderedField CReal
-
-instance
-  (CanAddAsymmetric t1 t2)
-  => 
-  CanAddAsymmetric (CSequence t1) (CSequence t2) 
-  where
-  type AddType (CSequence t1) (CSequence t2) = CSequence (AddType t1 t2)
-  add = lift2 add
-
-instance
-  (CanSub t1 t2)
-  => 
-  CanSub (CSequence t1) (CSequence t2) 
-  where
-  type SubType (CSequence t1) (CSequence t2) = CSequence (SubType t1 t2)
-  sub = lift2 sub
-
-instance
-  (CanMulAsymmetric t1 t2)
-  => 
-  CanMulAsymmetric (CSequence t1) (CSequence t2) 
-  where
-  type MulType (CSequence t1) (CSequence t2) = CSequence (MulType t1 t2)
-  mul = lift2 mul
-
-instance
-  (CanDiv t1 t2, CanTestZero t2)
-  => 
-  CanDiv (CSequence t1) (CSequence t2) 
-  where
-  type DivType (CSequence t1) (CSequence t2) = CSequence (DivType t1 t2)
-  divide = lift2 divide
-
-
--- TODO: add MPBall and CN MPBall mixed-type arithmetic
-
-$(declForTypes
-  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
-  (\ t -> [d|
-
-    instance
-      (CanAddAsymmetric a $t)
-      => 
-      CanAddAsymmetric (CSequence a) $t
-      where
-      type AddType (CSequence a) $t = CSequence (AddType a $t)
-      add = lift1T add
-
-    instance
-      (CanAddAsymmetric $t a)
-      => 
-      CanAddAsymmetric $t (CSequence a)
-      where
-      type AddType $t (CSequence a) = CSequence (AddType $t a)
-      add = liftT1 add
-
-    -- TODO: add sub and div
-
-    instance
-      (CanMulAsymmetric a $t)
-      => 
-      CanMulAsymmetric (CSequence a) $t
-      where
-      type MulType (CSequence a) $t = CSequence (MulType a $t)
-      mul = lift1T mul
-
-    instance
-      (CanMulAsymmetric $t a)
-      => 
-      CanMulAsymmetric $t (CSequence a)
-      where
-      type MulType $t (CSequence a) = CSequence (MulType $t a)
-      mul = liftT1 mul
-
-  |]))
+import AERN2.Real.Field ()
 
 {- common elementary operations -}
 
