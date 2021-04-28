@@ -62,6 +62,9 @@ cseqIndexForPrecision p =
     Nothing -> error $ "unable to find index for precision " ++ show p
     Just i -> integer i
 
+cseqFromPrecFunction :: (Precision -> CN b) -> CSequence b
+cseqFromPrecFunction withP = CSequence $ map withP cseqPrecisions
+
 
 {- Cauchy real numbers -}
 
@@ -73,6 +76,9 @@ type CanBeCReal t = ConvertibleExactly t CReal
 
 creal :: (CanBeCReal t) => t -> CReal
 creal = convertExactly
+
+crealFromPrecFunction :: (Precision -> CN MPBall) -> CReal
+crealFromPrecFunction = cseqFromPrecFunction
 
 type CComplex = Complex CReal
 
@@ -123,7 +129,7 @@ instance ConvertibleExactly CReal CReal where
 
 instance ConvertibleExactly Rational CReal where
   safeConvertExactly x =
-    Right $ CSequence $ map (cn . flip mpBallP x) cseqPrecisions
+    Right $ crealFromPrecFunction (cn . flip mpBallP x)
 
 instance ConvertibleExactly Integer CReal where
   safeConvertExactly = safeConvertExactly . rational
@@ -135,6 +141,7 @@ instance (HasCReals t, HasIntegers t) => (ConvertibleExactly CReal (Complex t))
     nT <- safeConvertExactly n
     zT <- safeConvertExactly 0
     return $ nT :+ zT
+
 
 _test1 :: CReal
 _test1 = creal 1.0
