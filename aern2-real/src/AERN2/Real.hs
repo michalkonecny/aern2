@@ -13,9 +13,13 @@
 module AERN2.Real
 (
    -- * real numbers and conversions
-   CReal, creal, HasCReals, CanBeCReal,
+   CReal, 
+   CSequence (..), 
+   creal, HasCReals, CanBeCReal,
    cseqPrecisions, cseqIndexForPrecision,
    pi,
+   -- * lazy Kleeneans
+   CKleenean,
    -- * complex numbers and conversions
    CComplex, ccomplex, HasCComplex, CanBeCComplex,
    -- * extracting approximations
@@ -25,7 +29,7 @@ where
 
 import AERN2.MP
 import AERN2.Real.Type
-import AERN2.Real.Comparisons ()
+import AERN2.Real.Comparisons (CKleenean)
 import AERN2.Real.Field ()
 import AERN2.Real.Elementary (pi)
 -- import AERN2.Real.Tests ()
