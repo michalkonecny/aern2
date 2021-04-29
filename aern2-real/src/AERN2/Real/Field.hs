@@ -56,7 +56,7 @@ instance
   sub = lift2 sub
 
 instance
-  (CanMulAsymmetric t1 t2)
+  (CanMulAsymmetric t1 t2, CanGiveUpIfVeryInaccurate (MulType t1 t2))
   => 
   CanMulAsymmetric (CSequence t1) (CSequence t2) 
   where
@@ -174,7 +174,7 @@ instance
   mul s b = mul (unCN $ s ? (getPrecision b)) b
 
 instance
-  (CanMulAsymmetric MPBall b)
+  (CanMulAsymmetric MPBall b, CanGiveUpIfVeryInaccurate (MulType MPBall b))
   => 
   CanMulAsymmetric (CN MPBall) (CSequence b)
   where
@@ -182,7 +182,7 @@ instance
   mul a s = mul a (s ? (getPrecision a))
 
 instance
-  (CanMulAsymmetric b MPBall)
+  (CanMulAsymmetric b MPBall, CanGiveUpIfVeryInaccurate (MulType b MPBall))
   => 
   CanMulAsymmetric (CSequence b) (CN MPBall)
   where
@@ -297,7 +297,7 @@ $(declForTypes
       sub = liftT1 sub
 
     instance
-      (CanMulAsymmetric a $t)
+      (CanMulAsymmetric a $t, CanGiveUpIfVeryInaccurate (MulType a $t))
       => 
       CanMulAsymmetric (CSequence a) $t
       where
@@ -305,7 +305,7 @@ $(declForTypes
       mul = lift1T mul
 
     instance
-      (CanMulAsymmetric a $t)
+      (CanMulAsymmetric a $t, CanGiveUpIfVeryInaccurate (MulType a $t))
       => 
       CanMulAsymmetric (CSequence a) (CN $t)
       where
@@ -313,7 +313,7 @@ $(declForTypes
       mul = lift1T mul
 
     instance
-      (CanMulAsymmetric $t a)
+      (CanMulAsymmetric $t a, CanGiveUpIfVeryInaccurate (MulType $t a))
       => 
       CanMulAsymmetric $t (CSequence a)
       where
@@ -321,7 +321,7 @@ $(declForTypes
       mul = liftT1 mul
 
     instance
-      (CanMulAsymmetric $t a)
+      (CanMulAsymmetric $t a, CanGiveUpIfVeryInaccurate (MulType $t a))
       => 
       CanMulAsymmetric (CN $t) (CSequence a)
       where
