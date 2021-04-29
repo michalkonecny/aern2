@@ -23,11 +23,6 @@ dependencies:
 - base == 4.*
 - hspec
 - QuickCheck
-- transformers
-- lens
-- stm
-- bytestring
-- aeson
 - collect-errors >= 0.1
 - mixed-types-num >= 0.5
 - aern2-mp >= 0.2
@@ -53,14 +48,14 @@ library:
   ghc-options:
   - -Wall
 
-tests:
-  aern2-real-test:
-    main:                Spec.hs
-    source-dirs:         test
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    - -Wall
-    dependencies:
-    - aern2-real
+# tests:
+#   aern2-real-test:
+#     main:                Spec.hs
+#     source-dirs:         test
+#     ghc-options:
+#     - -threaded
+#     - -rtsopts
+#     - -with-rtsopts=-N
+#     - -Wall
+#     dependencies:
+#     - aern2-real
