@@ -21,9 +21,7 @@ where
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
-import qualified Control.CollectErrors as CE
-import Control.CollectErrors ( CollectErrors, CanBeErrors )
--- import qualified Numeric.CollectErrors as CN
+import qualified Numeric.CollectErrors as CN
 import Numeric.CollectErrors (CN, cn)
 
 import AERN2.Normalize
@@ -77,24 +75,20 @@ instance CanAddAsymmetric Rational MPBall where
   add = convertPFirst add
 
 instance
-  (CanAddAsymmetric MPBall b
-  , CanBeErrors es)
+  (CanAddAsymmetric MPBall b)
   =>
-  CanAddAsymmetric MPBall (CollectErrors es b)
+  CanAddAsymmetric MPBall (CN b)
   where
-  type AddType MPBall (CollectErrors es b) =
-    CollectErrors es (AddType MPBall b)
-  add = CE.liftT1 add
+  type AddType MPBall (CN b) = CN (AddType MPBall b)
+  add = CN.liftT1 add
 
 instance
-  (CanAddAsymmetric a MPBall
-  , CanBeErrors es)
+  (CanAddAsymmetric a MPBall)
   =>
-  CanAddAsymmetric (CollectErrors es a) MPBall
+  CanAddAsymmetric (CN a) MPBall
   where
-  type AddType (CollectErrors es  a) MPBall =
-    CollectErrors es (AddType a MPBall)
-  add = CE.lift1T add
+  type AddType (CN a) MPBall = CN (AddType a MPBall)
+  add = CN.lift1T add
 
 {- subtraction -}
 
@@ -113,24 +107,20 @@ instance CanSub MPBall Dyadic
 instance CanSub Dyadic MPBall
 
 instance
-  (CanSub MPBall b
-  , CanBeErrors es)
+  (CanSub MPBall b)
   =>
-  CanSub MPBall (CollectErrors es  b)
+  CanSub MPBall (CN b)
   where
-  type SubType MPBall (CollectErrors es  b) =
-    CollectErrors es (SubType MPBall b)
-  sub = CE.liftT1 sub
+  type SubType MPBall (CN b) = CN (SubType MPBall b)
+  sub = CN.liftT1 sub
 
 instance
-  (CanSub a MPBall
-  , CanBeErrors es)
+  (CanSub a MPBall)
   =>
-  CanSub (CollectErrors es a) MPBall
+  CanSub (CN a) MPBall
   where
-  type SubType (CollectErrors es  a) MPBall =
-    CollectErrors es (SubType a MPBall)
-  sub = CE.lift1T sub
+  type SubType (CN a) MPBall = CN (SubType a MPBall)
+  sub = CN.lift1T sub
 
 {- multiplication -}
 
@@ -171,24 +161,20 @@ instance CanMulAsymmetric Rational MPBall where
   mul = convertPFirst mul
 
 instance
-  (CanMulAsymmetric MPBall b
-  , CanBeErrors es)
+  (CanMulAsymmetric MPBall b)
   =>
-  CanMulAsymmetric MPBall (CollectErrors es  b)
+  CanMulAsymmetric MPBall (CN b)
   where
-  type MulType MPBall (CollectErrors es  b) =
-    CollectErrors es (MulType MPBall b)
-  mul = CE.liftT1 mul
+  type MulType MPBall (CN b) = CN (MulType MPBall b)
+  mul = CN.liftT1 mul
 
 instance
-  (CanMulAsymmetric a MPBall
-  , CanBeErrors es)
+  (CanMulAsymmetric a MPBall)
   =>
-  CanMulAsymmetric (CollectErrors es a) MPBall
+  CanMulAsymmetric (CN a) MPBall
   where
-  type MulType (CollectErrors es  a) MPBall =
-    CollectErrors es (MulType a MPBall)
-  mul = CE.lift1T mul
+  type MulType (CN a) MPBall = CN (MulType a MPBall)
+  mul = CN.lift1T mul
 
 
 {- division -}
@@ -276,24 +262,20 @@ powUsingMulRecipCutNeg one x e
   | otherwise = powUsingMulRecip one x e
 
 instance
-  (CanPow MPBall b
-  , CanBeErrors es)
+  (CanPow MPBall b)
   =>
-  CanPow MPBall (CollectErrors es  b)
+  CanPow MPBall (CN b)
   where
-  type PowType MPBall (CollectErrors es  b) =
-    CollectErrors es (PowType MPBall b)
-  pow = CE.liftT1 pow
+  type PowType MPBall (CN b) = CN (PowType MPBall b)
+  pow = CN.liftT1 pow
 
 instance
-  (CanPow a MPBall
-  , CanBeErrors es)
+  (CanPow a MPBall)
   =>
-  CanPow (CollectErrors es a) MPBall
+  CanPow (CN a) MPBall
   where
-  type PowType (CollectErrors es  a) MPBall =
-    CollectErrors es (PowType a MPBall)
-  pow = CE.lift1T pow
+  type PowType (CN a) MPBall = CN (PowType a MPBall)
+  pow = CN.lift1T pow
 
 instance
   CanDivIMod MPBall MPBall
