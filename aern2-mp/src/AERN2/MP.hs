@@ -17,7 +17,9 @@ module AERN2.MP
 , module AERN2.MP.Accuracy
 , module AERN2.MP.ErrorBound
 , module AERN2.MP.Enclosure
-, MPBall(..), CanBeMPBall, mpBall, CanBeMPBallP, mpBallP, reducePrecionIfInaccurate
+, MPBall(..), CanBeMPBall, mpBall, CanBeMPBallP, mpBallP
+, reducePrecionIfInaccurate
+, giveUpIfVeryInaccurate
 )
 where
 

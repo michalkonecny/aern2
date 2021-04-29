@@ -30,7 +30,8 @@ where
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
-import Numeric.CollectErrors (CN)
+import qualified Numeric.CollectErrors as CN
+import Numeric.CollectErrors (CN, cn)
 
 import GHC.Generics (Generic)
 
@@ -107,6 +108,13 @@ reducePrecionIfInaccurate b@(MPBall x _) =
     p_x = getPrecision x
     p_e_nb = prec $ max 2 (10 + nb + fromAccuracy bAcc)
     (NormBits nb) = bNorm
+
+instance CanGiveUpIfVeryInaccurate MPBall where
+  giveUpIfVeryInaccurate = (aux =<<)
+    where
+    aux b@(MPBall _ e)
+      | e > 1000 = CN.noValueNumErrorCertain $ CN.NumError "Large loss of precision"
+      | otherwise = cn b
 
 instance CanTestContains MPBall MPBall where
   contains (MPBall xLarge eLarge) (MPBall xSmall eSmall) =

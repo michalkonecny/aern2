@@ -78,6 +78,7 @@ instance OrderedCertainlyRing Dyadic
 instance OrderedCertainlyRing (CN Dyadic)
 
 instance HasAccuracy Dyadic where getAccuracy _ = Exact
+instance CanGiveUpIfVeryInaccurate Dyadic -- ie, never give up
 
 instance Show Dyadic where
   show (Dyadic x)

@@ -22,6 +22,7 @@ module AERN2.MP.Ball
   -- * The Ball type
   , MPBall(..), CanBeMPBall, mpBall, cnMPBall, CanBeMPBallP, mpBallP, cnMPBallP
   , reducePrecionIfInaccurate
+  , giveUpIfVeryInaccurate
   {-
   -- * Ball construction/extraction functions
   , endpointsMP, fromEndpointsMP
