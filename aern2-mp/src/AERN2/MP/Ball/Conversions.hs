@@ -20,6 +20,9 @@ where
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
+import Numeric.CollectErrors (CN)
+-- import qualified Numeric.CollectErrors as CN
+
 import Data.Typeable
 -- import Data.Convertible
 
@@ -121,6 +124,9 @@ instance ConvertibleWithPrecision (Rational, Rational) MPBall where
 {--- constructing a fat ball ---}
 
 instance (CanBeErrorBound t) => CanPlusMinus MPBall t where
+  plusMinus b e = updateRadius (+ (errorBound e)) b
+
+instance (CanBeErrorBound t) => CanPlusMinus (CN MPBall) t where
   plusMinus b e = updateRadius (+ (errorBound e)) b
 
 instance (CanBeErrorBound t) => CanPlusMinus MPFloat t where
