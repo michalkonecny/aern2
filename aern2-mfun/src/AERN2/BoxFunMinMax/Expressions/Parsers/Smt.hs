@@ -117,12 +117,12 @@ termToF (LD.Application (LD.Variable operator) [op]) = -- Single param operators
     Just e ->
       case operator of
         "fp.isFinite32" ->
-          let maxFloat = (2.0-(1/!2^!23))*2^!127
+          let maxFloat = (2.0 - (1/!(2^!23))) * (2^!127)
               minFloat = negate maxFloat
           in
             Just $ FConn And (FComp Le (Lit minFloat) e)  (FComp Le e (Lit maxFloat))
         "fp.isFinite64" ->
-          let maxFloat = (2.0-(1/!2^!53))*2^!1023
+          let maxFloat = (2.0 - (1/!(2^!52))) * (2^!1023)
               minFloat = negate maxFloat
           in
             Just $ FConn And (FComp Le (Lit minFloat) e)  (FComp Le e (Lit maxFloat))
@@ -174,8 +174,8 @@ termToE (LD.Application (LD.Variable operator) [op]) =
       "abs1"            -> Just $ EUnOp Abs e -- Seems to be real version of Abs
       "sin"             -> Just $ EUnOp Sin e
       "sin1"            -> Just $ EUnOp Sin e
-      "cos"            -> Just $ EUnOp Sin e
-      "cos1"            -> Just $ EUnOp Sin e
+      "cos"             -> Just $ EUnOp Cos e
+      "cos1"            -> Just $ EUnOp Cos e
       "-"               -> Just $ EUnOp Negate e
       -- SPARK Reals functions
       "from_int"        -> Just e
@@ -187,6 +187,7 @@ termToE (LD.Application (LD.Variable operator) [op]) =
       "fp.abs"          -> Just $ EUnOp Abs e
       "fp.neg"          -> Just $ EUnOp Negate e
       "fp.to_real"      -> Just e
+      "value"           -> Just e
       -- Undefined functions
       "fp.isNormal"     -> Nothing
       "fp.isSubnormal"  -> Nothing
@@ -197,7 +198,17 @@ termToE (LD.Application (LD.Variable operator) [op]) =
       "fp.isIntegral32" -> Nothing
       "fp.isIntegral64" -> Nothing
       _                 -> Nothing
--- two param functions
+-- Why3 round function
+termToE (LD.Application (LD.Variable "round") [mode, operand]) = 
+  case parseRoundingMode mode of
+    Just roundingMode ->
+      case termToE operand of
+        Just e  -> Just $ Float roundingMode e
+        Nothing -> Nothing
+    Nothing -> Nothing
+-- two param functions where op1 and op2 can be parsed to the E type.
+-- Functions with two params which need special handling (i.e. round) should be
+-- placed before here
 termToE (LD.Application (LD.Variable operator) [op1, op2]) =
   case termToE op1 of
     Nothing -> Nothing
@@ -208,11 +219,12 @@ termToE (LD.Application (LD.Variable operator) [op1, op2]) =
           case operator of
             n
               -- "o..." functions are from SPARK Reals
-              | n `elem` ["+", "oadd", "oadd__logic"] -> EBinOp Add e1 e2
-              | n `elem` ["-", "osubtract", "osubtract__logic"] -> EBinOp Sub e1 e2
-              | n `elem` ["*", "omultiply", "omultiply__logic"] -> EBinOp Mul e1 e2
-              | n `elem` ["/", "odivide", "odivide__logic"] -> EBinOp Div e1 e2
-              | n `elem` ["power"] -> EBinOp Pow e1 e2
+              | n `elem` ["+", "oadd", "oadd__logic"]           -> Just $ EBinOp Add e1 e2
+              | n `elem` ["-", "osubtract", "osubtract__logic"] -> Just $ EBinOp Sub e1 e2
+              | n `elem` ["*", "omultiply", "omultiply__logic"] -> Just $ EBinOp Mul e1 e2
+              | n `elem` ["/", "odivide", "odivide__logic"]     -> Just $ EBinOp Div e1 e2
+              | n `elem` ["power"]                              -> Just $ EBinOp Pow e1 e2
+            _                                                   -> Nothing
 -- Float bits to Rational
 termToE (LD.Application (LD.Variable "fp") o@[LD.Variable sSign, LD.Variable sExponent, LD.Variable sMantissa]) =
   let
@@ -298,14 +310,18 @@ determineFloatTypeE (EUnOp op e)      varTypeMap  = case determineFloatTypeE e v
 determineFloatTypeE (PowI e i)        varTypeMap  = case determineFloatTypeE e varTypeMap of
                                                       Just p -> Just $ PowI p i 
 determineFloatTypeE (Float r e)       varTypeMap  = case mVariableType of
-                                                      Just "Float32" ->
-                                                        case determineFloatTypeE e varTypeMap of
-                                                          Just p -> Just $ Float32 r p
-                                                          Nothing -> Nothing
-                                                      Just "Float64" ->
-                                                        case determineFloatTypeE e varTypeMap of
-                                                          Just p -> Just $ Float64 r p
-                                                          Nothing -> Nothing
+                                                      Just variableType ->
+                                                        case variableType of
+                                                          t
+                                                            | t `elem` ["Float32", "single"] ->
+                                                                case determineFloatTypeE e varTypeMap of
+                                                                  Just p -> Just $ Float32 r p
+                                                                  Nothing -> Nothing
+                                                            | t `elem` ["Float64", "double"] ->
+                                                                case determineFloatTypeE e varTypeMap of
+                                                                  Just p -> Just $ Float64 r p
+                                                                  Nothing -> Nothing
+                                                          _ -> Nothing
                                                       Nothing -> Nothing
                                                     where
                                                       vars = findVariablesInExpressions e
@@ -363,17 +379,21 @@ findVariablesInExpressions (Var v) = [v]
 findVariablesInExpressions (Lit _) = []
 
 parseRoundingMode :: LD.Expression -> Maybe RoundingMode 
-parseRoundingMode (LD.Variable "RNE") = Just RNE
-parseRoundingMode (LD.Variable "RTP") = Just RTP
-parseRoundingMode (LD.Variable "RTN") = Just RTN
-parseRoundingMode (LD.Variable "RTZ") = Just RTZ
+parseRoundingMode (LD.Variable mode) = 
+  case mode of
+    m 
+      | m `elem` ["RNE", "NearestTiesToEven"] -> Just RNE
+      | m `elem` ["RTP", "Up"]                -> Just RTP
+      | m `elem` ["RTN", "Down"]              -> Just RTN
+      | m `elem` ["RTZ", "ToZero"]            -> Just RTZ
+    _                                         -> Nothing
 parseRoundingMode _ = Nothing
 
 -- |Process a parsed list of expressions to a VC. Everything in the context implies the goal.
 -- If the goal cannot be determined, we return Nothing
 processVC  :: [LD.Expression] -> Maybe F
 processVC parsedExpressions = 
-  trace (show (maybe Nothing termToF mGoal)) $
+  -- trace (show (maybe Nothing termToF mGoal)) $
   case mGoalF of
     Just goalF  -> if null contextF then Just goalF else Just $ FConn Impl (foldContextF contextF) goalF
     Nothing     -> Nothing
@@ -453,7 +473,7 @@ eliminateFloatsAndConvertVCToECNF (FConn Impl context goal) varMap =
     contextEs <- map (map (\e -> EUnOp Negate (eliminateFloats e varMap True))) (fToECNF context), 
     goalEs    <- map (map (\e -> eliminateFloats e varMap False)) (fToECNF goal)
   ]
-
+eliminateFloatsAndConvertVCToECNF _ _ = error "This function should only be called on implications (FConn Impl leftTerm rightTerm)"
 
 -- findAssertions :: Script -> [Command]
 -- findAssertions [] = []
