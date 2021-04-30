@@ -61,6 +61,12 @@ minMaxAbsEliminator (EUnOp op e) =
       [(p, EUnOp op' e') | (p, e') <- minMaxAbsEliminator e]
 minMaxAbsEliminator (PowI e i)            =
   [(p, PowI e' i) | (p, e') <- minMaxAbsEliminator e]
+minMaxAbsEliminator (Float mode e)        =
+  [(p, Float mode e') | (p, e') <- minMaxAbsEliminator e]
+minMaxAbsEliminator (Float32 mode e)        =
+  [(p, Float32 mode e') | (p, e') <- minMaxAbsEliminator e]
+minMaxAbsEliminator (Float64 mode e)        =
+  [(p, Float64 mode e') | (p, e') <- minMaxAbsEliminator e]
 minMaxAbsEliminator e@(Lit _)             = [([],e)]
 minMaxAbsEliminator e@(Var _)             = [([],e)]
 
