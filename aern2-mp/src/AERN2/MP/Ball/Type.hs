@@ -68,10 +68,12 @@ instance Show MPBall
       printf "[%s ± %s%s]" (dropSomeDigits $ showMPFloat x) eDS (showAC $ getAccuracy b)
       -- "[" ++ show x ++ " ± " ++ show e ++ "](prec=" ++ (show $ integer $ getPrecision x) ++ ")"
       where
-      eDS = 
-        case safeConvert (dyadic e) of
-          Right (eD :: Double) -> printf "~%.4g" $ eD
-          _ -> ""
+      eDS 
+        | e == 0 = "0"
+        | otherwise  =
+          case safeConvert (dyadic e) of
+            Right (eD :: Double) -> printf "~%.4g" $ eD
+            _ -> ""
       dropSomeDigits s =
         case List.findIndex (== '.') s of
           Nothing -> s
