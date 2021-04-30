@@ -19,7 +19,9 @@ import qualified Prelude as P
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 import qualified Data.List as List
+import qualified Data.Bifunctor as Bifunctor
 import AERN2.MP.Ball
+import AERN2.MP.Dyadic
 
 import AERN2.BoxFunMinMax.Expressions.Type
 import AERN2.BoxFunMinMax.VarMap
@@ -113,7 +115,15 @@ scanHypothesis (FComp Le (Var v) e) intervals =
     Map.insertWith updateUpper v (evalE_Rational intervals e) intervals
 scanHypothesis (FComp Le e (Var v)) intervals = 
     Map.insertWith updateLower v (evalE_Rational intervals e) intervals
+-- Bounds for absolute values of Vars
+scanHypothesis (FComp Le (EUnOp Abs (Var v)) e) intervals =
+  -- trace (show bounds)
+    Map.insertWith updateLower v bounds $ Map.insertWith updateUpper v bounds intervals
+    where
+    (eValL, eValR) = evalE_Rational intervals e
+    bounds         = (-eValL, eValR)
 -- reduce Le, Geq, Ge on equivalent Leq (note that we treat strict and non-strict the same way):
+-- Fixme: Some way to treat strict/non-strict with integer variables differently
 scanHypothesis (FComp Lt e1 e2) intervals = scanHypothesis (FComp Le e1 e2) intervals 
 scanHypothesis (FComp Ge e1 e2) intervals = scanHypothesis (FComp Le e2 e1) intervals
 scanHypothesis (FComp Gt e1 e2) intervals = scanHypothesis (FComp Le e2 e1) intervals
@@ -186,7 +196,8 @@ getFreeVarsE _ = Set.empty
 evalE :: 
   (Field v, EnsureCN v ~ v,
    CanMinMaxSameType v, CanAbsSameType v, 
-   CanPowCNBy v v, CanSqrtSameType v, CanSinCosSameType v
+   CanPowCNBy v v, CanSqrtSameType v, CanSinCosSameType v,
+   IsInterval v, CanAddThis v Integer, HasDyadics v, CanMinMaxSameType (IntervalEndpoint v)
   ) 
   =>
   (Rational -> v) ->
@@ -209,6 +220,7 @@ evalE fromR (varMap :: Map.Map VarName v) = evalVM
       Sqrt -> sqrt (evalVM e)
       Negate -> negate (evalVM e)
       Sin -> sin (evalVM e)
+      Cos -> cos (evalVM e)
   evalVM (Var v) = 
     case Map.lookup v varMap of
       Nothing -> 
@@ -216,4 +228,24 @@ evalE fromR (varMap :: Map.Map VarName v) = evalVM
       Just r -> cn r
   evalVM (Lit i) = (fromR i)
   evalVM (PowI e i) = evalVM e  ^ i
+  evalVM (Float32 _ e) = (onePlusMinusEpsilon * (evalVM e)) + zeroPlusMinusEpsilon
+    where
+      eps :: v
+      eps = convertExactly $ dyadic $ 1/!(2^!23)
+      onePlusMinusEpsilon :: v
+      onePlusMinusEpsilon = fromEndpointsAsIntervals (1 + (-eps)) (1 + eps)
+      epsD :: v
+      epsD = convertExactly $ dyadic $ 1/!(2^!149)
+      zeroPlusMinusEpsilon :: v
+      zeroPlusMinusEpsilon = fromEndpointsAsIntervals (-epsD) epsD
+  evalVM (Float64 _ e) = (onePlusMinusEpsilon * (evalVM e)) + zeroPlusMinusEpsilon
+    where
+      eps :: v
+      eps = convertExactly $ dyadic $ 1/!(2^!52)
+      onePlusMinusEpsilon :: v
+      onePlusMinusEpsilon = fromEndpointsAsIntervals  (1 + (-eps)) (1 + eps)
+      epsD :: v
+      epsD = convertExactly $ dyadic $ 1/!(2^!1074)
+      zeroPlusMinusEpsilon :: v
+      zeroPlusMinusEpsilon = fromEndpointsAsIntervals (-epsD) epsD
   evalVM e = error $ "evalE: undefined for: " ++ show e
