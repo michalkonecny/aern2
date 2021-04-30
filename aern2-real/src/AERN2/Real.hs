@@ -18,6 +18,8 @@ module AERN2.Real
    creal, HasCReals, CanBeCReal,
    cseqPrecisions, cseqIndexForPrecision,
    pi,
+   -- * limits
+   HasLimits(..),
    -- * lazy Kleeneans
    CKleenean,
    -- * complex numbers and conversions
@@ -31,6 +33,7 @@ import AERN2.MP
 import AERN2.Real.Type
 import AERN2.Real.Comparisons (CKleenean)
 import AERN2.Real.Field ()
+import AERN2.Real.Limit
 import AERN2.Real.Elementary (pi)
 -- import AERN2.Real.Tests ()
 

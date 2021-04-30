@@ -25,6 +25,7 @@ dependencies:
 - QuickCheck
 - collect-errors >= 0.1
 - mixed-types-num >= 0.5
+- integer-logarithms
 - aern2-mp >= 0.2
 
 default-extensions:

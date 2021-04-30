@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9d959a4f193b70ebd1feb4a879d20bda54942fbaad5aa0e0bfb7271659d665ec
+-- hash: aaf9d038d4adf58666694247259699137b6d94a2a7ca6746f3b9fd50ffed4156
 
 name:           aern2-real
 version:        0.2.0.0
@@ -32,6 +32,7 @@ library
       AERN2.Real.Comparisons
       AERN2.Real.Elementary
       AERN2.Real.Field
+      AERN2.Real.Limit
       AERN2.Real.Tests
       AERN2.Real.Type
   other-modules:
@@ -47,5 +48,6 @@ library
     , base ==4.*
     , collect-errors >=0.1
     , hspec
+    , integer-logarithms
     , mixed-types-num >=0.5
   default-language: Haskell2010
