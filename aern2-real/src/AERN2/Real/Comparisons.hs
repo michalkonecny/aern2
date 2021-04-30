@@ -13,40 +13,20 @@
     Comparison relations over Cauchy Real numbers.
 -}
 module AERN2.Real.Comparisons
-(
-  CKleenean
-)
+()
 where
 
 import MixedTypesNumPrelude
 
-import Numeric.CollectErrors
-  ( cn, CN )
+import Numeric.CollectErrors ( cn, CN )
 
 -- import Data.Complex
-
-import qualified Data.List as List
 
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
 import AERN2.Real.Type
-
-type CKleenean = CSequence Kleenean
-
--- IsBool CKleenean:
-
-instance (ConvertibleExactly t Kleenean) => ConvertibleExactly t CKleenean where
-  safeConvertExactly b = Right $ CSequence $ List.repeat $ cn $ kleenean b
-
-instance (CanNeg t) => CanNeg (CSequence t) where
-  type NegType (CSequence t) = CSequence (NegType t)
-  negate = lift1 negate
-
-instance (CanAndOrAsymmetric t1 t2) => CanAndOrAsymmetric (CSequence t1) (CSequence t2) where
-  type AndOrType (CSequence t1)  (CSequence t2) = CSequence (AndOrType t1 t2)
-  and2 = lift2 and2
-  or2 = lift2 or2
+import AERN2.Real.CKleenean ()
 
 -- equality:
 

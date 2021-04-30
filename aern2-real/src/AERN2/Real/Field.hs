@@ -23,8 +23,7 @@ where
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
-import Numeric.CollectErrors
-  ( CN, unCN )
+import Numeric.CollectErrors ( CN, unCN )
 
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
