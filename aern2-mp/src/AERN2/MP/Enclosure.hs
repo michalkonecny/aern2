@@ -17,6 +17,7 @@ module AERN2.MP.Enclosure
   , IsInterval(..), endpointL, endpointR
   , fromEndpointsAsIntervals, endpointsAsIntervals, endpointLAsInterval, endpointRAsInterval
   , intervalFunctionByEndpoints, intervalFunctionByEndpointsUpDown
+  , CanPlusMinus(..), (+-)
   , CanTestContains(..), CanMapInside(..), specCanMapInside
   , CanIntersectAsymmetric(..), CanIntersect
   , CanIntersectBy, CanIntersectSameType
@@ -126,6 +127,20 @@ fromEndpointsAsIntervals l r =
   uMP = max luMP ruMP
   (llMP, luMP) = endpoints l
   (rlMP, ruMP) = endpoints r
+
+{- plusMinus (+-) operator -}
+
+class CanPlusMinus t1 t2 where
+  type PlusMinusType t1 t2
+  type PlusMinusType t1 t2 = t1
+  {-| Operator for constructing or enlarging enclosures such as balls or intervals -}
+  plusMinus :: t1 -> t2 -> PlusMinusType t1 t2
+
+infixl 6  +-
+
+{-| Operator for constructing or enlarging enclosures such as balls or intervals -}
+(+-) :: (CanPlusMinus t1 t2) => t1 -> t2 -> PlusMinusType t1 t2
+(+-) = plusMinus
 
 
 {-|
@@ -323,3 +338,4 @@ instance (CanUnionCNSameType t) =>
   ifThenElse CertainTrue e1 _  = cn e1
   ifThenElse CertainFalse _ e2 = cn e2
   ifThenElse TrueOrFalse e1 e2 = e1 `union` e2
+

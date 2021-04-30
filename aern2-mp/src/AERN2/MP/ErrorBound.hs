@@ -73,6 +73,9 @@ instance HasAccuracy ErrorBound where
 
 {- conversions -}
 
+instance ConvertibleExactly ErrorBound ErrorBound where
+  safeConvertExactly = Right
+
 instance ConvertibleExactly ErrorBound MPFloat where
   safeConvertExactly = Right . er2mp
 
