@@ -99,6 +99,15 @@ simplifyE (EBinOp op e1 e2)        = EBinOp op (simplifyE e1) (simplifyE e2)
 simplifyE (EUnOp op e)             = EUnOp op (simplifyE e)
 simplifyE e                        = e
 
+simplifyF :: F -> F
+simplifyF f@(FConn Or (FComp Lt f1l f1r) (FComp Eq f2l f2r)) = if f1l P.== f2l P.&& f1r P.== f2r then FComp Le f1l f1r else f
+simplifyF (FConn Or (FComp Eq f1l f1r) (FComp Lt f2l f2r)) = simplifyF $ FConn Or (FComp Lt f2l f2r) (FComp Eq f1l f1r)
+simplifyF f@(FConn Or (FComp Gt f1l f1r) (FComp Eq f2l f2r)) = if f1l P.== f2l P.&& f1r P.== f2r then FComp Ge f1l f1r else f
+simplifyF (FConn Or (FComp Eq f1l f1r) (FComp Gt f2l f2r)) = simplifyF $ FConn Or (FComp Gt f2l f2r) (FComp Eq f1l f1r)
+simplifyF (FConn op f1 f2) = FConn op (simplifyF f1) (simplifyF f2)
+simplifyF (FComp op e1 e2) = FComp op (simplifyE e1) (simplifyE e2) -- Call simplifyE here?
+simplifyF (FNot f) = FNot (simplifyF f)
+
 simplifyECNF :: [[E]] -> [[E]]
 simplifyECNF = map (map simplifyE) 
 
