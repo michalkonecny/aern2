@@ -25,10 +25,11 @@ module AERN2.Real
    -- * complex numbers and conversions
    CComplex, ccomplex, HasCComplex, CanBeCComplex,
    -- * extracting approximations
-   CanExtractApproximation(..), (?), realWithAccuracy
+   CanExtractApproximation(..), (?), realWithAccuracy, bits, prec
 )
 where
 
+import AERN2.MP ( bits, prec )
 import AERN2.Real.Type
 import AERN2.Real.Comparisons ()
 import AERN2.Real.CKleenean ( CKleenean, select ) 
