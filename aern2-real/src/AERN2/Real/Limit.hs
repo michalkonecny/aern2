@@ -17,7 +17,7 @@ import MixedTypesNumPrelude
 import Numeric.CollectErrors ( CN )
 import qualified Numeric.CollectErrors as CN
 
-import Math.NumberTheory.Logarithms (integerLog2)
+-- import Math.NumberTheory.Logarithms (integerLog2)
 
 import AERN2.Real.Type
 import AERN2.MP
@@ -40,11 +40,16 @@ instance HasLimits Rational CReal where
     
 instance HasLimits Integer CReal where
   type LimitType Integer CReal = CReal
-  limit s = limit (s . getN)
+  limit s = crealFromPrecFunction withPrec
     where
-    -- q > 0 => 0 < 0.5^(getN q) <= q
-    getN :: Rational -> Integer
-    getN r = integer $ integerLog2 (max 1 $ (ceiling $ 1/r) - 1) + 1
+    withPrec p = ((s (integer p)) ? p) +- epsilon
+      where
+      epsilon = 0.5 ^ (integer p)
+  -- limit s = limit (s . getN)
+  --   where
+  --   -- q > 0 => 0 < 0.5^(getN q) <= q
+  --   getN :: Rational -> Integer
+  --   getN r = integer $ integerLog2 (max 1 $ (ceiling $ 1/r) - 1) + 1
 
 instance HasLimits Int CReal where
   type LimitType Int CReal = CReal
