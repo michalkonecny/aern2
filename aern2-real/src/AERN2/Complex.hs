@@ -42,6 +42,57 @@ instance (HasCReals t, HasIntegers t) => (ConvertibleExactly CReal (Complex t))
     zT <- safeConvertExactly 0
     return $ nT :+ zT
 
+-- {- reals mixed with complex -}
+
+-- instance
+--   (CanAddAsymmetric CReal t)
+--   =>
+--   CanAddAsymmetric CReal (Complex t)
+--   where
+--   type AddType CReal (Complex t) = Complex (AddType CReal t)
+--   add r (a :+ i) = (r + a) :+ (z + i)
+--     where
+--     z = realA 0
+--     _ = [z,r]
+
+-- instance
+--   (CanAddAsymmetric t CReal)
+--   =>
+--   CanAddAsymmetric (Complex t) CReal
+--   where
+--   type AddType (Complex t) CReal = Complex (AddType t CReal)
+--   add (a :+ i) r = (a + r) :+ (i + z)
+--     where
+--     z = realA 0
+--     _ = [z,r]
+
+-- instance
+--   (CanAdd CReal t, CanNegSameType t)
+--   =>
+--   CanSub CReal (Complex t)
+
+-- instance
+--   (CanAdd t CReal)
+--   =>
+--   CanSub (Complex t) CReal
+
+-- instance
+--   (CanMulAsymmetric CReal t)
+--   =>
+--   CanMulAsymmetric CReal (Complex t)
+--   where
+--   type MulType CReal (Complex t) = Complex (MulType CReal t)
+--   mul r (a :+ i) = (r * a) :+ (r * i)
+
+-- instance
+--   (CanMulAsymmetric t CReal)
+--   =>
+--   CanMulAsymmetric (Complex t) CReal
+--   where
+--   type MulType (Complex t) CReal = Complex (MulType t CReal)
+--   mul (a :+ i) r = (a * r) :+ (i * r)
+
+
 _test1 :: CComplex
 _test1 = ccomplex 1.0
 

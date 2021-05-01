@@ -19,152 +19,152 @@ module AERN2.Real.Elementary
 where
 
 import MixedTypesNumPrelude
--- import qualified Prelude as P
+import qualified Prelude as P
 
--- import qualified Prelude as P
 import Numeric.CollectErrors
   ( cn, CN )
 
--- import Data.Complex
-
 import AERN2.MP.Ball
--- import AERN2.MP.Dyadic
+import AERN2.MP.Dyadic
 
 import AERN2.Real.Type
 import AERN2.Real.Field ()
+
+{- Examples of use:
+
+*AERN2.Real MixedTypesNumPrelude> sin 1
+{?(prec 36): [0.841470984814804978668689727783203125 ± ~1.5621e-10 ~2^(-32)]}
+(0.06 secs, 722,440 bytes)
+*AERN2.Real MixedTypesNumPrelude> sin 1 ? (bits 1000)
+[0.8414709848078965066525023216302989996225630607... ± ~0.0000 ~2^(-1222)]
+
+*AERN2.Real MixedTypesNumPrelude> exp 2 ? (prec 100)
+[7.3890560989306502272304274605750078131770241145... ± ~4.7020e-38 ~2^(-124)]
+(0.01 secs, 691,448 bytes)
+*AERN2.Real MixedTypesNumPrelude> exp 2 ? (prec 1000)
+[7.3890560989306502272304274605750078131803155705... ± ~0.0000 ~2^(-1422)]
+(0.01 secs, 1,402,832 bytes)
+*AERN2.Real MixedTypesNumPrelude> exp 2 ? (prec 10000)
+[7.3890560989306502272304274605750078131803155705... ± ~0.0000 ~2^(-16086)]
+(0.02 secs, 17,478,648 bytes)
+*AERN2.Real MixedTypesNumPrelude> exp 2 ? (prec 100000)
+[7.3890560989306502272304274605750078131803155705... ± ~0.0000 ~2^(-179557)]
+(0.61 secs, 576,337,656 bytes)
+*AERN2.Real MixedTypesNumPrelude> exp 2 ? (prec 1000000)
+[7.3890560989306502272304274605750078131803155705... ± ~0.0000 ~2^(-1232830)]
+(14.98 secs, 10,234,710,976 bytes)
+
+*AERN2.Real MixedTypesNumPrelude> 2^0.5 ? (prec 100)
+[1.4142135623730950488016887242096980779395106418... ± ~1.3299e-36 ~2^(-119)]
+(0.01 secs, 1,128,824 bytes)
+*AERN2.Real MixedTypesNumPrelude> 2^0.5 ? (prec 1000)
+[1.4142135623730950488016887242096980785696718753... ± ~0.0000 ~2^(-1229)]
+(0.02 secs, 6,903,360 bytes)
+*AERN2.Real MixedTypesNumPrelude> 2^0.5 ? (prec 10000)
+[1.4142135623730950488016887242096980785696718753... ± ~0.0000 ~2^(-13539)]
+(0.38 secs, 282,175,336 bytes)
+
+*AERN2.Real MixedTypesNumPrelude> 2^(1/3) ? (prec 1000)
+[1.2599210498948731647672106072782283505702514647... ± ~0.0000 ~2^(-1229)]
+(0.01 secs, 6,946,896 bytes)
+*AERN2.Real MixedTypesNumPrelude> 2^(1/3) ? (prec 10000)
+[1.2599210498948731647672106072782283505702514647... ± ~0.0000 ~2^(-13539)]
+(0.40 secs, 281,994,312 bytes)
+
+-}
 
 {- common elementary operations -}
 
 pi :: CReal
 pi = CSequence $ map (cn . piBallP) cseqPrecisions
 
--- instance P.Floating CReal where
---     pi = pi
---     sqrt = sqrt
---     exp = exp
---     sin = sin
---     cos = cos
---     log = log
---     -- (**) = (^)
---     atan = error "CReal: atan not implemented yet"
---     atanh = error "CReal: atanh not implemented yet"
---     asin = error "CReal: asin not implemented yet"
---     acos = error "CReal: acos not implemented yet"
---     sinh = error "CReal: sinh not implemented yet"
---     cosh = error "CReal: cosh not implemented yet"
---     asinh = error "CReal: asinh not implemented yet"
---     acosh = error "CReal: acosh not implemented yet"
+{- sine, cosine -}
 
+instance CanSinCos CReal where
+  cos = lift1 cos
+  sin = lift1 sin
 
--- {- sine, cosine of finite values -}
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
+  (\ t -> [d|
 
--- instance CanSinCos Integer where
---   type SinCosType Integer = CReal
---   cos = cos . real
---   sin = sin . real
+  instance CanSinCos $t where
+    type SinCosType $t = CReal
+    cos = cos . creal
+    sin = sin . creal
 
--- instance CanSinCos Int where
---   type SinCosType Int = CReal
---   cos = cos . real
---   sin = sin . real
+  |]))
 
--- instance CanSinCos Dyadic where
---   type SinCosType Dyadic = CReal
---   cos = cos . real
---   sin = sin . real
+{- sqrt -}
 
--- instance CanSinCos Rational where
---   type SinCosType Rational = CReal
---   cos = cos . real
---   sin = sin . real
+instance CanSqrt CReal where
+  sqrt = lift1 sqrt
 
--- {- sqrt of finite values -}
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
+  (\ t -> [d|
 
--- instance CanSqrt Integer where
---   type SqrtType Integer = CReal
---   sqrt = sqrt . real
+  instance CanSqrt $t where
+    type SqrtType $t = CReal
+    sqrt = sqrt . creal
 
--- instance CanSqrt Int where
---   type SqrtType Int = CReal
---   sqrt = sqrt . real
+  |]))
 
--- instance CanSqrt Dyadic where
---   type SqrtType Dyadic = CReal
---   sqrt = sqrt . real
+{- exp -}
 
--- instance CanSqrt Rational where
---   type SqrtType Rational = CReal
---   sqrt = sqrt . real
+instance CanExp CReal where
+  exp = lift1 exp
 
--- {- exp of finite values -}
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
+  (\ t -> [d|
 
--- instance CanExp Integer where
---   type ExpType Integer = CReal
---   exp = exp . real
+  instance CanExp $t where
+    type ExpType $t = CReal
+    exp = exp . creal
 
--- instance CanExp Int where
---   type ExpType Int = CReal
---   exp = exp . real
+  |]))
 
--- instance CanExp Dyadic where
---   type ExpType Dyadic = CReal
---   exp = exp . real
+{- log  -}
 
--- instance CanExp Rational where
---   type ExpType Rational = CReal
---   exp = exp . real
+instance CanLog CReal where
+  log = lift1 log
 
--- {- log of finite values -}
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
+  (\ t -> [d|
 
--- instance CanLog Integer where
---   type LogType Integer = CReal
---   log = log . real
+  instance CanLog $t where
+    type LogType $t = CReal
+    log = log . creal
 
--- instance CanLog Int where
---   type LogType Int = CReal
---   log = log . real
+  |]))
 
--- instance CanLog Dyadic where
---   type LogType Dyadic = CReal
---   log = log . real
+{- power -}
 
--- instance CanLog Rational where
---   type LogType Rational = CReal
---   log = log . real
+instance CanPow CReal CReal where
+  type PowType CReal CReal = CReal
+  pow = lift2 pow
 
--- {- non-integer power of finite values -}
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
+  (\ t -> [d|
 
--- instance CanPow Integer Dyadic where
---   type PowType Integer Dyadic = CReal
---   pow b e = pow (real b) (real e)
+  instance CanPow $t Dyadic where
+    type PowType $t Dyadic = CReal
+    pow b e = pow (creal b) (creal e)
 
--- instance CanPow Int Dyadic where
---   type PowType Int Dyadic = CReal
---   pow b e = pow (real b) (real e)
+  |]))
 
--- instance CanPow Dyadic Dyadic where
---   type PowType Dyadic Dyadic = CReal
---   pow b e = pow (real b) (real e)
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
+  (\ t -> [d|
 
--- instance CanPow Rational Dyadic where
---   type PowType Rational Dyadic = CReal
---   pow b e = pow (real b) (real e)
+  instance CanPow $t Rational where
+    type PowType $t Rational = CReal
+    pow b e = pow (creal b) (creal e)
 
--- instance CanPow Integer Rational where
---   type PowType Integer Rational = CReal
---   pow b e = pow (real b) (real e)
-
--- instance CanPow Int Rational where
---   type PowType Int Rational = CReal
---   pow b e = pow (real b) (real e)
-
--- instance CanPow Dyadic Rational where
---   type PowType Dyadic Rational = CReal
---   pow b e = pow (real b) (real e)
-
--- instance CanPow Rational Rational where
---   type PowType Rational Rational = CReal
---   pow b e = pow (real b) (real e)
+  |]))
 
 -- {- reals mixed with Double -}
 
@@ -216,52 +216,19 @@ pi = CSequence $ map (cn . piBallP) cseqPrecisions
 --   type PowType Double CReal = Double
 --   pow = flip $ binaryWithDouble (flip pow)
 
--- {- reals mixed with complex -}
-
--- instance
---   (CanAddAsymmetric CReal t)
---   =>
---   CanAddAsymmetric CReal (Complex t)
---   where
---   type AddType CReal (Complex t) = Complex (AddType CReal t)
---   add r (a :+ i) = (r + a) :+ (z + i)
---     where
---     z = realA 0
---     _ = [z,r]
-
--- instance
---   (CanAddAsymmetric t CReal)
---   =>
---   CanAddAsymmetric (Complex t) CReal
---   where
---   type AddType (Complex t) CReal = Complex (AddType t CReal)
---   add (a :+ i) r = (a + r) :+ (i + z)
---     where
---     z = realA 0
---     _ = [z,r]
-
--- instance
---   (CanAdd CReal t, CanNegSameType t)
---   =>
---   CanSub CReal (Complex t)
-
--- instance
---   (CanAdd t CReal)
---   =>
---   CanSub (Complex t) CReal
-
--- instance
---   (CanMulAsymmetric CReal t)
---   =>
---   CanMulAsymmetric CReal (Complex t)
---   where
---   type MulType CReal (Complex t) = Complex (MulType CReal t)
---   mul r (a :+ i) = (r * a) :+ (r * i)
-
--- instance
---   (CanMulAsymmetric t CReal)
---   =>
---   CanMulAsymmetric (Complex t) CReal
---   where
---   type MulType (Complex t) CReal = Complex (MulType t CReal)
---   mul (a :+ i) r = (a * r) :+ (i * r)
+instance P.Floating CReal where
+    pi = pi
+    sqrt = sqrt
+    exp = exp
+    sin = sin
+    cos = cos
+    log = log
+    -- (**) = (^)
+    atan = error "CReal: atan not implemented yet"
+    atanh = error "CReal: atanh not implemented yet"
+    asin = error "CReal: asin not implemented yet"
+    acos = error "CReal: acos not implemented yet"
+    sinh = error "CReal: sinh not implemented yet"
+    cosh = error "CReal: cosh not implemented yet"
+    asinh = error "CReal: asinh not implemented yet"
+    acosh = error "CReal: acosh not implemented yet"
