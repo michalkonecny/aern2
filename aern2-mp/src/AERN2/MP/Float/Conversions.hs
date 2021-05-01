@@ -60,7 +60,7 @@ fromIntegerCEDU pp =
 
 fromRationalCEDU :: Precision -> Rational -> BoundsCEDU MPFloat
 fromRationalCEDU pp =
-  setPrecisionCEDU pp . (MPLow.toApprox (p2cdarPrec pp))
+  setPrecisionCEDU pp . (MPLow.toApproxMB (p2cdarPrec pp))
 
 {- conversions from MPFloat -}
 
