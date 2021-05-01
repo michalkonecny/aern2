@@ -17,6 +17,7 @@ module AERN2.Real.Comparisons
 where
 
 import MixedTypesNumPrelude
+import qualified Prelude as P
 
 import Numeric.CollectErrors ( cn, CN )
 
@@ -312,3 +313,35 @@ $(declForTypes
       geq = liftT1 geq
 
   |]))
+
+
+{- Prelude Eq, Ord instances -}
+
+instance
+  (HasEqCertainly a a)
+  =>
+  P.Eq (CSequence a)
+  where
+  a == b
+    | aD !==! bD = True
+    | aD !/=! bD = False
+    | otherwise =
+        error "Failed to decide equality of Sequences.  If you switch to MixedTypesNumPrelude instead of Prelude, comparison of Sequences returns Sequence (Maybe Bool) or similar instead of Bool."
+    where
+    aD = a ? defaultPrecision
+    bD = b ? defaultPrecision 
+
+instance
+  (HasEqCertainly a a, HasOrderCertainly a a)
+  =>
+  P.Ord (CSequence a)
+  where
+  compare a b
+    | aD !==! bD = P.EQ
+    | aD !<! bD = P.LT
+    | aD !>! bD = P.GT
+    | otherwise =
+        error "Failed to decide order of Sequences.  If you switch to MixedTypesNumPrelude instead of Prelude, comparison of Sequences returns Sequence (Maybe Bool) or similar instead of Bool."
+    where
+    aD = a ? defaultPrecision
+    bD = b ? defaultPrecision

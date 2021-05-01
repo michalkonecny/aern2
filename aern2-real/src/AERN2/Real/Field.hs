@@ -21,7 +21,7 @@ module AERN2.Real.Field
 where
 
 import MixedTypesNumPrelude
--- import qualified Prelude as P
+import qualified Prelude as P
 
 import Numeric.CollectErrors ( CN, unCN )
 
@@ -360,3 +360,22 @@ $(declForTypes
       divide = liftT1 divide
 
   |]))
+
+{- Prelude Num, Real, Fractional instance -}
+
+instance
+  P.Num CReal
+  where
+  fromInteger = convertExactly
+  negate = negate
+  (+) = (+)
+  (*) = (*)
+  abs = abs
+  signum = error "Prelude.signum not implemented for Sequence"
+
+instance
+  P.Fractional CReal
+  where
+  fromRational = convertExactly
+  recip = recip
+  (/) = (/)
