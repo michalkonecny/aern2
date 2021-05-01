@@ -58,16 +58,13 @@ instance HasLimits Int CReal where
     c :: Integer -> Int
     c = int
 
--- instance HasLimits Rational (CReal -> CReal) where
---   type LimitType Rational (CReal -> CReal) = (CReal -> CReal)
---   limit fs x = newCRCN "limit" [AnyProtocolQA x] makeQ
---     where
---     makeQ (me, _src) ac =
---       maybeTrace ("limit (CReal -> CReal): ac = " ++ show ac ) $
---       lift1CE (updateRadius (+ (errorBound e))) $ (fx ?<- me) (ac + 1)
---       where
---       fx = fs e x
---       e = 0.5^(fromAccuracy ac + 1)
+instance HasLimits Rational (CReal -> CReal) where
+  type LimitType Rational (CReal -> CReal) = (CReal -> CReal)
+  limit fs x = crealFromPrecFunction withPrec
+    where
+    withPrec p = ((fs epsilon x) ? p) +- epsilon
+      where
+      epsilon = 0.5 ^ (integer p)
 
 {-
   The following strategies are inspired by
