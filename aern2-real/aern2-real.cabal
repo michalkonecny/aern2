@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b3120660029b35ba71b60c155f25f015111e927227ff245dd5abb753b9de4f79
+-- hash: c2efb097ef779fe08fa41aa78a375b8090817b59b093e6685555ba6f7d0b9cb5
 
 name:           aern2-real
 version:        0.2.0.0
@@ -28,6 +28,7 @@ source-repository head
 
 library
   exposed-modules:
+      AERN2.Complex
       AERN2.Real
       AERN2.Real.CKleenean
       AERN2.Real.Comparisons
