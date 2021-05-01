@@ -22,8 +22,6 @@ module AERN2.Real
    HasLimits(..),
    -- * lazy Kleeneans
    CKleenean, select,
-   -- * complex numbers and conversions
-   CComplex, ccomplex, HasCComplex, CanBeCComplex,
    -- * extracting approximations
    CanExtractApproximation(..), (?), realWithAccuracy, bits, prec
 )

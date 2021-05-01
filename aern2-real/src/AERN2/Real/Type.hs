@@ -21,8 +21,6 @@ import Numeric.CollectErrors
 
 import qualified Data.List as List
 
-import Data.Complex
-
 import AERN2.MP
 
 -- import AERN2.MP.Accuracy
@@ -80,15 +78,6 @@ creal = convertExactly
 crealFromPrecFunction :: (Precision -> CN MPBall) -> CReal
 crealFromPrecFunction = cseqFromPrecFunction
 
-type CComplex = Complex CReal
-
-type CanBeCComplex t = ConvertibleExactly t CComplex
-
-type HasCComplex t = ConvertibleExactly CComplex t
-
-ccomplex :: (CanBeCComplex t) => t -> CComplex
-ccomplex = convertExactly
-
 {- Extracting approximations -}
 
 class CanExtractApproximation e q where
@@ -134,26 +123,11 @@ instance ConvertibleExactly Rational CReal where
 instance ConvertibleExactly Integer CReal where
   safeConvertExactly = safeConvertExactly . rational
 
-instance (HasCReals t, HasIntegers t) => (ConvertibleExactly CReal (Complex t))
-  where
-  safeConvertExactly n =
-    do
-    nT <- safeConvertExactly n
-    zT <- safeConvertExactly 0
-    return $ nT :+ zT
-
-
 _test1 :: CReal
 _test1 = creal 1.0
 
-_test2 :: CComplex
-_test2 = ccomplex 1.0
+_test2 :: CN MPBall
+_test2 = (creal $ 1/3) ? (bits 100)
 
-_test3 :: CComplex
-_test3 = ccomplex $ creal 1
-
-_test4 :: CN MPBall
-_test4 = (creal $ 1/3) ? (bits 100)
-
-_test5 :: CN MPBall
-_test5 = convertP (prec 100) (creal $ 1/3)
+_test3 :: CN MPBall
+_test3 = convertP (prec 100) (creal $ 1/3)
