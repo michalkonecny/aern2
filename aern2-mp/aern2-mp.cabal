@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9abc5f7146f9405592c656165d7ba07c462da7ffc5d3f984272f3b5149cb96ca
+-- hash: fcdfad19517845d1bae7f4d999db85c817540037a062b072130b35429f018b51
 
 name:           aern2-mp
 version:        0.2.0.0
@@ -63,7 +63,7 @@ library
   build-depends:
       QuickCheck >=2.7
     , base ==4.*
-    , cdar
+    , cdar-mBound
     , collect-errors >=0.1
     , hspec
     , integer-logarithms
@@ -90,7 +90,7 @@ test-suite aern2-mp-test
       QuickCheck >=2.7
     , aern2-mp
     , base ==4.*
-    , cdar
+    , cdar-mBound
     , collect-errors >=0.1
     , hspec
     , integer-logarithms

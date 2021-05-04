@@ -30,7 +30,7 @@ dependencies:
 - collect-errors >= 0.1
 - mixed-types-num >= 0.5
 - QuickCheck >= 2.7
-- cdar
+- cdar-mBound
 
 default-extensions:
 - RebindableSyntax,
