@@ -77,3 +77,10 @@ instance CanSelect Kleenean where
     CN.noValueNumErrorPotential $ 
       CN.NumError "select (Kleenean): Insufficient information to determine selection."
 
+instance CanSelect (CN Kleenean) where
+  type SelectType (CN Kleenean) = CN Bool
+  select cnk1 cnk2 =
+    do
+    k1 <- cnk1
+    k2 <- cnk2
+    select k1 k2
