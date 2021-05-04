@@ -47,7 +47,8 @@ instance (CanAndOrAsymmetric t1 t2) => CanAndOrAsymmetric (CSequence t1) (CSeque
 -- select:
 
 class (IsBool (SelectType k)) => CanSelect k where
-  type SelectType k {-^ Must be Bool or similar -}
+  {-| Must be Bool or similar -}
+  type SelectType k 
   {-|
     Execute two lazy computations "in parallel" until one of them succeeds. 
   -}
