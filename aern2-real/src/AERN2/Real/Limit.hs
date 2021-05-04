@@ -1,6 +1,7 @@
 {-# LANGUAGE CPP #-}
 -- #define DEBUG
 
+{-# LANGUAGE PartialTypeSignatures #-}
 module AERN2.Real.Limit where
 
 #ifdef DEBUG
@@ -45,11 +46,6 @@ instance HasLimits Integer CReal where
     withPrec p = ((s (integer p)) ? p) +- epsilon
       where
       epsilon = 0.5 ^ (integer p)
-  -- limit s = limit (s . getN)
-  --   where
-  --   -- q > 0 => 0 < 0.5^(getN q) <= q
-  --   getN :: Rational -> Integer
-  --   getN r = integer $ integerLog2 (max 1 $ (ceiling $ 1/r) - 1) + 1
 
 instance HasLimits Int CReal where
   type LimitType Int CReal = CReal
@@ -74,36 +70,57 @@ instance HasLimits Rational (CReal -> CReal) where
 
 instance HasLimits Rational (CN MPBall -> CN MPBall) where
   type LimitType Rational (CN MPBall -> CN MPBall) = (CN MPBall -> CN MPBall)
-  limit fs x =
-    maybeTrace ("limit (CN MPBall -> CN MPBall): x = " ++ show x) $
-    maybeTrace ("limit (CN MPBall -> CN MPBall): xPNext = " ++ show xPNext) $
-    maybeTrace ("limit (CN MPBall -> CN MPBall): accuracies = " ++ show accuracies) $
-    tryAccuracies accuracies
+  limit = limitMPBall (\ac -> 0.5^(fromAccuracy ac))
+
+instance HasLimits Integer (CN MPBall -> CN MPBall) where
+  type LimitType Integer (CN MPBall -> CN MPBall) = (CN MPBall -> CN MPBall)
+  limit = limitMPBall (\ac -> (fromAccuracy ac))
+  -- limit s = limit (s . getN)
+  --   where
+  --   -- q > 0 => 0 < 0.5^(getN q) <= q
+  --   getN :: Rational -> Integer
+  --   getN r = integer $ integerLog2 (max 1 $ (ceiling $ 1/r) - 1) + 1
+
+instance HasLimits Int (CN MPBall -> CN MPBall) where
+  type LimitType Int (CN MPBall -> CN MPBall) = (CN MPBall -> CN MPBall)
+  limit s = limit (s . c)
     where
-    acX = getFiniteAccuracy x
-    accuracies = aux (fromAccuracy acX)
-      where
-      aux a
-        | a >= 4 = bits a : aux ((100 * a) `divI` 105)
-        | otherwise = [bits a]
-    xPNext = setPrecision (increaseP $ getPrecision x) x
-    increaseP p =
-      prec $ (integer p) + 10
-      -- prec $ ((101 * (integer p)) `div` 100) + 1
+    c :: Integer -> Int
+    c = int
 
-    tryAccuracies [] =
-      CN.noValueNumErrorPotential $ CN.NumError "limit (MPBall -> CN MPBall) failed"
-    tryAccuracies (ac : rest) =
-      let result = withAccuracy ac in
-      case CN.hasError result of
-        True -> result
-        _ -> tryAccuracies rest
+  
+limitMPBall :: (Accuracy -> ix) -> (ix -> (CN MPBall -> CN MPBall)) -> (CN MPBall -> CN MPBall)
+limitMPBall ac2ix fs x =
+  maybeTrace ("limit (CN MPBall -> CN MPBall): x = " ++ show x) $
+  maybeTrace ("limit (CN MPBall -> CN MPBall): xPNext = " ++ show xPNext) $
+  maybeTrace ("limit (CN MPBall -> CN MPBall): accuracies = " ++ show accuracies) $
+  tryAccuracies accuracies
+  where
+  acX = getFiniteAccuracy x
+  accuracies = aux (fromAccuracy acX)
+    where
+    aux a
+      | a >= 4 = bits a : aux ((100 * a) `divI` 105)
+      | otherwise = [bits a]
+  xPNext = setPrecision (increaseP $ getPrecision x) x
+  increaseP p =
+    prec $ (integer p) + 10
+    -- prec $ ((101 * (integer p)) `div` 100) + 1
 
-    withAccuracy ac =
-      maybeTrace ("limit (MPBall -> CN MPBall): withAccuracy: ac = " ++ show ac) $
-      CN.lift (updateRadius (+ (errorBound e))) (fs e xPNext)
-      where
-      e = 0.5^(fromAccuracy ac)
+  tryAccuracies [] =
+    CN.noValueNumErrorPotential $ CN.NumError "limit (CN MPBall -> CN MPBall) failed"
+  tryAccuracies (ac : rest) =
+    let result = withAccuracy ac in
+    case CN.hasError result of
+      True -> result
+      _ -> tryAccuracies rest
+
+  withAccuracy ac =
+    maybeTrace ("limit (CN MPBall -> CN MPBall): withAccuracy: ac = " ++ show ac) $
+    (fs ix xPNext) +- e
+    where
+    ix = ac2ix ac
+    e = 0.5^(fromAccuracy ac)
 
 -- data WithLipschitz f = WithLipschitz f f
 
