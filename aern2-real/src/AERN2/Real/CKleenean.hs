@@ -19,7 +19,7 @@ where
 
 import MixedTypesNumPrelude
 
-import Numeric.CollectErrors ( cn )
+import Numeric.CollectErrors ( CN, cn )
 import qualified Numeric.CollectErrors as CN
 
 -- import Data.Complex
@@ -46,17 +46,33 @@ instance (CanAndOrAsymmetric t1 t2) => CanAndOrAsymmetric (CSequence t1) (CSeque
 
 -- select:
 
-{-|
-  Execute two lazy Kleenean computations "in parallel"
-  until one of them returns true. 
--}
-select :: CKleenean -> CKleenean -> Bool {-^ True means that the first computation succeeded. -}
-select (CSequence s1) (CSequence s2) = aux s1 s2
-  where
-  aux (k1 : rest1) (k2 : rest2) =
-    case (CN.toEither k1, CN.toEither k2) of
-      (Right CertainTrue, _) -> True 
-      (_, Right CertainTrue) -> False
-      _ -> aux rest1 rest2
-  aux _ _ = error "internal error in select"
+class (IsBool (SelectType k)) => CanSelect k where
+  type SelectType k {-^ Must be Bool or similar -}
+  {-|
+    Execute two lazy computations "in parallel" until one of them succeeds. 
+  -}
+  select :: k -> k -> (SelectType k) {-^ True means that the first computation succeeded. -}
+
+instance CanSelect CKleenean where
+  type SelectType CKleenean = Bool
+  select (CSequence s1) (CSequence s2) = aux s1 s2
+    where
+    aux (k1 : rest1) (k2 : rest2) =
+      case (CN.toEither k1, CN.toEither k2) of
+        (Right CertainTrue, _) -> True 
+        (_, Right CertainTrue) -> False
+        (Right CertainFalse, Right CertainFalse) -> error "select: Both branches failed!"
+        _ -> aux rest1 rest2
+    aux _ _ = error "select: internal error"
+
+instance CanSelect Kleenean where
+  type SelectType Kleenean = CN Bool
+  select CertainTrue _ = cn True
+  select _ CertainTrue = cn False
+  select CertainFalse CertainFalse =
+    CN.noValueNumErrorPotential $ 
+      CN.NumError "select (Kleenean): Both branches failed!"
+  select _ _ = 
+    CN.noValueNumErrorPotential $ 
+      CN.NumError "select (Kleenean): Insufficient information to determine selection."
 
