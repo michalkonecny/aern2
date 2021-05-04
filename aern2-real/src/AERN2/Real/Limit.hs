@@ -112,7 +112,7 @@ limitMPBall ac2ix fs x =
   tryAccuracies (ac : rest) =
     let result = withAccuracy ac in
     case CN.hasError result of
-      True -> result
+      False -> result
       _ -> tryAccuracies rest
 
   withAccuracy ac =
