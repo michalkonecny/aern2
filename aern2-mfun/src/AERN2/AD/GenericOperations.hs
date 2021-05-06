@@ -111,15 +111,17 @@ instance
     negate = fmap negate
 
 instance 
-    (CanSqrtSameType a, CanMulSameType a, CanNegSameType a, CanSubSameType a, CanAddSameType a, HasIntegers a, CanDivSameType a) =>
+    (CanSqrtSameType a, CanMulSameType a, CanNegSameType a, CanAddSameType a, HasIntegers a, CanDivSameType a) =>
     CanSqrt (Differential a)
     where
     type SqrtType (Differential a) = Differential a
-    sqrt (OrderZero x)             = OrderZero  (sqrt x)
-    sqrt (OrderOne x dx)           = OrderOne   (sqrt x) (dx / (ta * sqrt x)) where (ta :: a) = convertExactly 2
-    sqrt (OrderTwo x dx dxt d2x)   = OrderTwo   (sqrt x) (dx / (ta * sqrt x)) (dxt / (ta * sqrt x))
-                                        ((dx / ta * (-dx / (ta * x * sqrt x))) + (d2x / (ta * sqrt x)))
-                                        where (ta :: a) = convertExactly 2
+    sqrt (OrderZero x)             = OrderZero (sqrt x)
+    sqrt (OrderOne x dx)           = OrderOne  (sqrt x) (dx * sqrtx')                  where sqrtx' = (convertExactly 1 :: a) / ((convertExactly 2 :: a) * sqrt x)
+    sqrt (OrderTwo x dx dxt d2x)   = OrderTwo  (sqrt x) (dx * sqrtx') (dxt * sqrtx') 
+                                               ((d2x * sqrtx') + (dx * dxt * sqrtx'')) where sqrtx'  = (convertExactly 1 :: a) / ((convertExactly 2 :: a) * sqrt x) 
+                                                                                             sqrtx'' = (convertExactly (-1) :: a) / ((convertExactly 4 :: a) * x * sqrt x)  
+                                                                                             -- sqrtx'  == -1 / (2 * sqrt(x))
+                                                                                             -- sqrtx'' == -1 / (4 * x * sqrt(x)) == -1 / (4 * x^(3/2))
 
 -- instance
 --     (CanMinMaxSameType a, HasIntegers a) =>
