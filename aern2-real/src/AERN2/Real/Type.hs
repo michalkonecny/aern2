@@ -16,12 +16,12 @@ module AERN2.Real.Type where
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
-import Numeric.CollectErrors
-  ( CN, noValueNumErrorPotential, NumError (..), cn )
+import qualified Numeric.CollectErrors as CN
 
 import qualified Data.List as List
 
 import AERN2.MP
+import AERN2.MP.Dyadic
 
 -- import AERN2.MP.Accuracy
 
@@ -92,12 +92,15 @@ infix 1 ?
 
 instance (HasAccuracy t) => CanExtractApproximation (CSequence t) Accuracy where
   type ExtractedApproximation (CSequence t) Accuracy = CN t
-  extractApproximation (CSequence s) ac =
-    case List.find (\b -> getAccuracy b >= ac) s of
-      Just b -> b
-      Nothing -> 
-        noValueNumErrorPotential $ 
-          NumError "failed to find an approximation with sufficient accuracy"
+  extractApproximation (CSequence s) ac = aux s
+    where
+    aux (bCN : rest) 
+      | CN.hasCertainError bCN = bCN
+      | getAccuracy bCN >= ac = bCN
+      | otherwise = aux rest
+    aux [] =
+        CN.noValueNumErrorPotential $ 
+          CN.NumError "failed to find an approximation with sufficient accuracy"
   
 {-| Get a ball approximation of the real number with at least the specified accuracy -}
 realWithAccuracy :: CReal -> Accuracy -> CN MPBall
@@ -121,6 +124,12 @@ instance ConvertibleExactly Rational CReal where
     Right $ crealFromPrecFunction (cn . flip mpBallP x)
 
 instance ConvertibleExactly Integer CReal where
+  safeConvertExactly = safeConvertExactly . rational
+
+instance ConvertibleExactly Int CReal where
+  safeConvertExactly = safeConvertExactly . rational
+
+instance ConvertibleExactly Dyadic CReal where
   safeConvertExactly = safeConvertExactly . rational
 
 _test1 :: CReal
