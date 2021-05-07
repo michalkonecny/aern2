@@ -31,7 +31,6 @@ import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
 import qualified Numeric.CollectErrors as CN
-import Numeric.CollectErrors (CN, cn)
 
 import GHC.Generics (Generic)
 

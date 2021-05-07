@@ -20,7 +20,6 @@ where
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
-import Numeric.CollectErrors (CN)
 -- import qualified Numeric.CollectErrors as CN
 
 import Data.Typeable

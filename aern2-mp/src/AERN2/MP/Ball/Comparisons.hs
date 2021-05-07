@@ -32,7 +32,6 @@ import qualified Control.CollectErrors as CE
 import Control.CollectErrors
     ( CollectErrors(getMaybeValue), CanBeErrors )
 import qualified Numeric.CollectErrors as CN
-import Numeric.CollectErrors (CN, cn)
 
 import AERN2.Norm
 import AERN2.MP.Dyadic (Dyadic)

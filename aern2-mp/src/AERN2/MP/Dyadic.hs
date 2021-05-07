@@ -42,7 +42,6 @@ import qualified Prelude as P
 
 import Control.CollectErrors (CollectErrors(..), CanBeErrors)
 import qualified Control.CollectErrors as CE
-import Numeric.CollectErrors (CN)
 -- import qualified Numeric.CollectErrors as CN
 
 import Text.Printf

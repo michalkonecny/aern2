@@ -36,7 +36,6 @@ import MixedTypesNumPrelude
 import Test.Hspec
 import Test.QuickCheck
 
-import Numeric.CollectErrors (cn, CN)
 import qualified Numeric.CollectErrors as CN
 
 import AERN2.MP.ErrorBound
