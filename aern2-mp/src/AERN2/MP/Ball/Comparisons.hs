@@ -381,5 +381,3 @@ byEndpointsMP op b1 b2 =
     where
     (l1,r1) = endpoints b1
     (l2,r2) = endpoints b2
-
-{-  random generation -}

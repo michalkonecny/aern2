@@ -338,3 +338,14 @@ instance (CanUnionCNSameType t) =>
   ifThenElse CertainFalse _ e2 = cn e2
   ifThenElse TrueOrFalse e1 e2 = e1 `union` e2
 
+instance (CanUnionCNSameType t) =>
+  HasIfThenElse (CN Kleenean) (CN t)
+  where
+  type IfThenElseType (CN Kleenean) (CN t) = CN t
+  ifThenElse cCN r1CN r2CN = 
+    do  
+    c <- cCN
+    r1 <- r1CN
+    r2 <- r2CN
+    ifThenElse c r1 r2
+
