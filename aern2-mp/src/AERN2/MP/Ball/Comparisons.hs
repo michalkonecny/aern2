@@ -342,12 +342,11 @@ hullMPBall a b =
 instance CanUnionAsymmetric MPBall MPBall where
   union a b =
     case getMaybeValue (a `intersect` b) of
-      Just _ -> CN.prependErrorPotential err r
+      Just _ -> r
       _ -> CN.prependErrorCertain err r
     where
     err = CN.NumError $ "union of enclosures: not enclosing the same value"
     r = cn $ hullMPBall a b
-
 
 instance
   (CanUnionAsymmetric MPBall b
