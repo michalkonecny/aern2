@@ -23,8 +23,6 @@ where
 import MixedTypesNumPrelude
 import qualified Prelude as P
 
-import Numeric.CollectErrors ( CN, unCN )
-
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
@@ -70,21 +68,41 @@ instance
   type DivType (CSequence t1) (CSequence t2) = CSequence (DivType t1 t2)
   divide = lift2 divide
 
-instance 
-  (CanPowBy t Integer, HasOrderCertainly Integer t, HasEqCertainly Integer t)
+instance
+  (CanPow b e, HasOrderCertainly b Integer, HasOrderCertainly e Integer,
+   HasEqCertainly b Integer, CanTestInteger e) 
   =>
-  CanPow (CSequence t) Integer 
+  CanPow (CSequence b) (CSequence e) 
   where
-  type PowType (CSequence t) Integer = CSequence t
-  pow s i = lift1 (flip pow i) s
+  type PowType (CSequence b) (CSequence e) = CSequence (PowType b e)
+  pow = lift2 pow
 
-instance 
-  (CanPowBy t Int, HasOrderCertainly Integer t, HasEqCertainly Integer t)
-  =>
-  CanPow (CSequence t) Int 
-  where
-  type PowType (CSequence t) Int = CSequence t
-  pow s i = lift1 (flip pow i) s
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |]]
+  (\ e -> [d|
+
+  instance 
+    (CanPow b $e, HasOrderCertainly b Integer, HasEqCertainly b Integer)
+    =>
+    CanPow (CSequence b) $e 
+    where
+    type PowType (CSequence b) $e = CSequence (PowType b $e)
+    pow = lift1T pow
+
+  |]))
+
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |]]
+  (\ b -> [d|
+
+  instance 
+    (CanPow $b e, HasOrderCertainly e Integer, CanTestInteger e)
+    =>
+    CanPow $b (CSequence e) 
+    where
+    type PowType $b (CSequence e) = CSequence (PowType $b e)
+    pow = liftT1 pow
+  |]))
 
 ---------------------------------------------------
 ---------------------------------------------------

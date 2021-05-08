@@ -141,10 +141,6 @@ $(declForTypes
 
 {- power -}
 
-instance CanPow CReal CReal where
-  type PowType CReal CReal = CReal
-  pow = lift2 pow
-
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
   (\ t -> [d|

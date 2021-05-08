@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-|
     Module      :  AERN2.MP.Ball.Elementary
@@ -150,3 +151,15 @@ fromApproxWithLipschitz fCEDU lip _x@(MPBall xc xe) =
       setPrecision (getPrecision xc) $ -- beware, some MPFloat functions may increase precision, eg sine and cosine
         (MPBall fxC (errorBound fxErr))
     err = (errorBound lip) * xe  +  fxe
+
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |]]
+  (\ b -> [d|
+
+  instance 
+    CanPow $b MPBall 
+    where
+    type PowType $b MPBall = MPBall
+    pow x e = pow (mpBallP (getPrecision e) x) e
+  |]))
+
