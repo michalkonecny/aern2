@@ -19,8 +19,6 @@ where
 import MixedTypesNumPrelude
 import qualified Prelude as P
 
-import Numeric.CollectErrors ( cn, CN )
-
 -- import Data.Complex
 
 import AERN2.MP.Ball

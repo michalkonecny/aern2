@@ -26,6 +26,8 @@ import qualified Numeric.CollectErrors as CN
 
 import qualified Data.List as List
 
+import AERN2.MP
+
 import AERN2.Real.Type
 
 type CKleenean = CSequence Kleenean
@@ -84,3 +86,11 @@ instance CanSelect (CN Kleenean) where
     k1 <- cnk1
     k2 <- cnk2
     select k1 k2
+
+instance (CanUnionCNSameType t) =>
+  HasIfThenElse CKleenean (CSequence t)
+  where
+  type IfThenElseType CKleenean (CSequence t) = (CSequence t)
+  ifThenElse (CSequence sc) (CSequence s1) (CSequence s2) = (CSequence r)
+    where
+    r = zipWith3 ifThenElse sc s1 s2
