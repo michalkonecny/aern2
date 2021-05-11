@@ -36,6 +36,7 @@ import GHC.TypeLits
 
 -- import Data.Complex
 
+import AERN2.Limit
 import AERN2.MP.Precision
 import AERN2.MP.Ball
 
@@ -119,6 +120,14 @@ instance (HasCurrentPrecision p) => Floating (WithCurrentPrec (CN MPBall) p) whe
     log = lift1 log
     sin = lift1 sin
     cos = lift1 cos
+
+instance (HasLimits ix t) => HasLimits ix (WithCurrentPrec t p) where
+    type LimitType ix (WithCurrentPrec t p) = WithCurrentPrec (LimitType ix t) p
+    limit s = WithCurrentPrec $ limit (snop)
+        where
+        snop ix = 
+            case s ix of
+                WithCurrentPrec v -> v
 
 lift1 :: (t1 -> t2) -> (WithCurrentPrec t1 p) -> (WithCurrentPrec t2 p)
 lift1 f (WithCurrentPrec v1) = WithCurrentPrec (f v1)
