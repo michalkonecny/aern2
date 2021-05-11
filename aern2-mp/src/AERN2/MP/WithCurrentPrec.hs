@@ -68,10 +68,22 @@ runWithPrec p (wfp :: (forall n. (KnownNat n) => WithCurrentPrec t n)) =
 --     type AddType (WithCurrentPrec t1 p) (WithCurrentPrec t2 p) = WithCurrentPrec (AddType t1 t2) p
 --     add (WithCurrentPrec a1) (WithCurrentPrec a2) = WithCurrentPrec $ a1 + a2
 
+instance 
+    (MxP.HasOrderAsymmetric t1 t2)
+    =>
+    MxP.HasOrderAsymmetric (WithCurrentPrec t1 p1) (WithCurrentPrec t2 p2) 
+    where
+    type OrderCompareType (WithCurrentPrec t1 p1) (WithCurrentPrec t2 p2) = MxP.OrderCompareType t1 t2
+    greaterThan (WithCurrentPrec v1) (WithCurrentPrec v2) = MxP.greaterThan v1 v2
+    lessThan (WithCurrentPrec v1) (WithCurrentPrec v2) = MxP.lessThan v1 v2
+    geq (WithCurrentPrec v1) (WithCurrentPrec v2) = MxP.geq v1 v2
+    leq (WithCurrentPrec v1) (WithCurrentPrec v2) = MxP.leq v1 v2
+
 instance Eq t => Eq (WithCurrentPrec t p) where
     (==) = lift2P (==)
 instance Ord t => Ord (WithCurrentPrec t p) where
     compare = lift2P compare
+
 instance 
     (HasCurrentPrecision p, Num t, ConvertibleWithPrecision Integer t) 
     => 
