@@ -52,6 +52,7 @@ import AERN2.MP.Ball.Type
 import AERN2.MP.Ball.Conversions ()
 import AERN2.MP.Ball.Comparisons
 import AERN2.MP.Ball.Field ()
+import AERN2.MP.Ball.Limit ()
 import AERN2.MP.Ball.Elementary
 import AERN2.MP.Ball.PreludeOps ()
 

@@ -28,11 +28,12 @@ module AERN2.Real
 where
 
 import AERN2.MP ( bits, prec )
+import AERN2.Limit
 import AERN2.Real.Type
 import AERN2.Real.Comparisons ()
 import AERN2.Real.CKleenean ( CKleenean, select ) 
 import AERN2.Real.Field ()
-import AERN2.Real.Limit
+import AERN2.Real.Limit ()
 import AERN2.Real.Elementary (pi)
 -- import AERN2.Real.Tests ()
 
