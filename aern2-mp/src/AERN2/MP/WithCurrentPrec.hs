@@ -12,15 +12,18 @@
     Stability   :  experimental
     Portability :  portable
 
-    Type wrapper setting default precision.  
-    Not suitable for use with MixedTypesNumPrelude.
+    Type wrapper setting default precision.
 
-    Inspired by https://github.com/ekmett/rounded/blob/master/src/Numeric/Rounded/Precision.hs
+    Not suitable for use with MixedTypesNumPrelude since we need binary operators to enforce
+    the same precision on both operands via the equality of their types.
+
+    Borrowed some tricks from https://github.com/ekmett/rounded/blob/master/src/Numeric/Rounded/Precision.hs
 -}
-{-# LANGUAGE PartialTypeSignatures #-}
 module AERN2.MP.WithCurrentPrec
--- (
--- )
+(
+    WithCurrentPrec(..), runWithPrec
+    -- , _example1 , _example2 , _example3
+)
 where
 
 import qualified MixedTypesNumPrelude as MxP
@@ -51,7 +54,7 @@ instance KnownNat n => HasCurrentPrecision n where
 -- instance (HasCurrentPrecision p) => HasCurrentPrecision (PrecAdd10 p) where
 --     isPrecision (_ :: proxy _) = 10 + isPrecision (undefined :: proxy p)
 
-newtype WithCurrentPrec t p = WithCurrentPrec t
+newtype WithCurrentPrec t p = WithCurrentPrec { unWithCurrentPrec :: t }
     deriving (Show)
 
 runWithPrec :: Precision -> (forall n. (KnownNat n) => WithCurrentPrec t n) -> t
@@ -60,9 +63,7 @@ runWithPrec p (wfp :: (forall n. (KnownNat n) => WithCurrentPrec t n)) =
     where
     withNat :: KnownNat n => Proxy n -> t
     withNat (_ :: Proxy n) = 
-        let wfp' = wfp :: WithCurrentPrec t n in
-        case wfp' of
-            WithCurrentPrec v -> v
+        unWithCurrentPrec (wfp :: WithCurrentPrec t n)
 
 -- -- The following does not work:
 -- instance (CanAddAsymmetric t1 t2) => (CanAddAsymmetric (WithCurrentPrec t1 p) (WithCurrentPrec t2 p)) where
@@ -120,14 +121,32 @@ instance (HasCurrentPrecision p) => Floating (WithCurrentPrec (CN MPBall) p) whe
     log = lift1 log
     sin = lift1 sin
     cos = lift1 cos
+    asin = lift1 asin
+    acos = lift1 acos
+    atan = lift1 atan
+    sinh = lift1 sinh
+    cosh = lift1 cosh
+    asinh = lift1 asinh
+    acosh = lift1 acosh
+    atanh = lift1 atanh
 
-instance (HasLimits ix t) => HasLimits ix (WithCurrentPrec t p) where
-    type LimitType ix (WithCurrentPrec t p) = WithCurrentPrec (LimitType ix t) p
-    limit s = WithCurrentPrec $ limit (snop)
+instance 
+    (HasLimits ix (CN MPBall -> CN MPBall)
+    , LimitType ix (CN MPBall -> CN MPBall) ~ (CN MPBall -> CN MPBall)
+    ,HasCurrentPrecision p)
+    => 
+    HasLimits ix (WithCurrentPrec (CN MPBall) p) 
+    where
+    type LimitType ix (WithCurrentPrec (CN MPBall) p) = WithCurrentPrec (CN MPBall) p
+    limit (s :: ix -> (WithCurrentPrec (CN MPBall) p)) = 
+        WithCurrentPrec $ limit (snop) $ sample
         where
-        snop ix = 
-            case s ix of
-                WithCurrentPrec v -> v
+        sample :: CN MPBall
+        sample = setPrecision (getCurrentPrecision sampleP) 0 
+        sampleP :: WithCurrentPrec MPBall p
+        sampleP = error "sampleP is not defined, it is only a type proxy"
+        snop :: ix -> (CN MPBall -> CN MPBall)
+        snop ix _sample = unWithCurrentPrec $ s ix
 
 lift1 :: (t1 -> t2) -> (WithCurrentPrec t1 p) -> (WithCurrentPrec t2 p)
 lift1 f (WithCurrentPrec v1) = WithCurrentPrec (f v1)
@@ -137,7 +156,6 @@ lift2 f (WithCurrentPrec v1) (WithCurrentPrec v2) = WithCurrentPrec (f v1 v2)
 
 lift2P :: (t1 -> t2 -> t3) -> (WithCurrentPrec t1 p) -> (WithCurrentPrec t2 p) -> t3
 lift2P f (WithCurrentPrec v1) (WithCurrentPrec v2) = f v1 v2
-
 
 _example1 :: CN MPBall
 _example1 = runWithPrec (prec 1000) pi
