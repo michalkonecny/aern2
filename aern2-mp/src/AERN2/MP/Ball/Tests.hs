@@ -29,8 +29,6 @@ import MixedTypesNumPrelude
 -- import Data.Ratio
 -- import Text.Printf
 
--- import Numeric.CollectErrors ( CN )
-
 import Test.Hspec
 import Test.QuickCheck
 -- import qualified Test.Hspec.SmallCheck as SC

@@ -17,7 +17,7 @@
 module AERN2.Real.Type where
 
 import MixedTypesNumPrelude
-import qualified Prelude as P
+-- import qualified Prelude as P
 
 import qualified Numeric.CollectErrors as CN
 
@@ -146,11 +146,11 @@ instance ConvertibleExactly Int CReal where
 instance ConvertibleExactly Dyadic CReal where
   safeConvertExactly = safeConvertExactly . rational
 
-_test1 :: CReal
-_test1 = creal 1.0
+_example1 :: CReal
+_example1 = creal 1.0
 
-_test2 :: CN MPBall
-_test2 = (creal $ 1/3) ? (bits 100)
+_example2 :: CN MPBall
+_example2 = (creal $ 1/3) ? (bits 100)
 
-_test3 :: CN MPBall
-_test3 = convertP (prec 100) (creal $ 1/3)
+_example3 :: CN MPBall
+_example3 = convertP (prec 100) (creal $ 1/3)

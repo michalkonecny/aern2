@@ -38,7 +38,6 @@ module AERN2.MP.Ball
 where
 
 import MixedTypesNumPrelude
-import Numeric.CollectErrors (CN)
 -- import qualified Prelude as P
 
 import AERN2.Norm

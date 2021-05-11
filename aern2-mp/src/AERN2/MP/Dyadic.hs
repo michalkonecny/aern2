@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP #-}
 -- #define DEBUG
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-|
     Module      :  AERN2.MP.Dyadic
     Description :  Dyadics with exact ring operations
@@ -16,7 +16,6 @@
     Currently, we use hmpfr when compiling with ghc 7.10 and higher
     and haskell-mpfr when compiling with ghc 7.8.
 -}
-
 module AERN2.MP.Dyadic
 (
    -- * Dyadic numbers and their basic operations

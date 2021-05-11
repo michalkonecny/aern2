@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c2efb097ef779fe08fa41aa78a375b8090817b59b093e6685555ba6f7d0b9cb5
+-- hash: 30e1bbd518715dc6c045cdf20a1ba8ebc0b154033ff3b11d59777a86de53bfda
 
 name:           aern2-real
 version:        0.2.0.0
@@ -41,7 +41,7 @@ library
       Paths_aern2_real
   hs-source-dirs:
       src
-  default-extensions: RebindableSyntax, PostfixOperators, ScopedTypeVariables, TypeFamilies, TypeOperators, ConstraintKinds, DefaultSignatures, MultiParamTypeClasses, FlexibleContexts, FlexibleInstances, UndecidableInstances
+  default-extensions: RebindableSyntax, ScopedTypeVariables, TypeFamilies, TypeOperators, ConstraintKinds, DefaultSignatures, MultiParamTypeClasses, FlexibleContexts, FlexibleInstances, UndecidableInstances
   other-extensions: TemplateHaskell
   ghc-options: -Wall
   build-depends:

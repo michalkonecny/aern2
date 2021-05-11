@@ -19,7 +19,6 @@ where
 
 import MixedTypesNumPrelude
 
-import Numeric.CollectErrors ( CN, cn )
 import qualified Numeric.CollectErrors as CN
 
 -- import Data.Complex

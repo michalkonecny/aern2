@@ -30,7 +30,6 @@ dependencies:
 
 default-extensions:
 - RebindableSyntax,
-- PostfixOperators,
 - ScopedTypeVariables,
 - TypeFamilies,
 - TypeOperators,

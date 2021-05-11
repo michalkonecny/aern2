@@ -34,10 +34,8 @@ dependencies:
 
 default-extensions:
 - RebindableSyntax,
-- PostfixOperators,
 - ScopedTypeVariables,
 - DeriveGeneric,
-- GeneralizedNewtypeDeriving,
 - TypeFamilies,
 - TypeOperators,
 - ConstraintKinds,

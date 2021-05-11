@@ -21,8 +21,6 @@ where
 import MixedTypesNumPrelude
 import qualified Prelude as P
 
-import Numeric.CollectErrors ( cn )
-
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 

@@ -36,8 +36,6 @@ import Test.Hspec
 import Test.QuickCheck
 -- import qualified Test.Hspec.SmallCheck as SC
 
--- import qualified Control.CollectErrors as CE
--- import Numeric.CollectErrors (CN)
 -- import qualified Numeric.CollectErrors as CN
 
 import AERN2.Norm

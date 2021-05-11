@@ -16,7 +16,6 @@ module AERN2.Real.Limit where
 
 import MixedTypesNumPrelude
 
--- import Numeric.CollectErrors ( CN )
 -- import qualified Numeric.CollectErrors as CN
 
 -- import Math.NumberTheory.Logarithms (integerLog2)

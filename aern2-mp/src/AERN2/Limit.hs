@@ -14,7 +14,6 @@ module AERN2.Limit where
 
 -- import MixedTypesNumPrelude
 
--- import Numeric.CollectErrors ( CN )
 -- import qualified Numeric.CollectErrors as CN
 
 ---------

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 00b6475733a1eb17d4168366f8519b1f494ecd225e5ec71e5886647b978d350a
+-- hash: 62b0deac08703b3a7723abbe2447590f511b92695139e6d6b8c3250ccb5d634d
 
 name:           aern2-mp
 version:        0.2.0.0
@@ -60,7 +60,7 @@ library
       Paths_aern2_mp
   hs-source-dirs:
       src
-  default-extensions: RebindableSyntax, PostfixOperators, ScopedTypeVariables, DeriveGeneric, GeneralizedNewtypeDeriving, TypeFamilies, TypeOperators, ConstraintKinds, DefaultSignatures, MultiParamTypeClasses, FlexibleContexts, FlexibleInstances, UndecidableInstances
+  default-extensions: RebindableSyntax, ScopedTypeVariables, DeriveGeneric, TypeFamilies, TypeOperators, ConstraintKinds, DefaultSignatures, MultiParamTypeClasses, FlexibleContexts, FlexibleInstances, UndecidableInstances
   other-extensions: TemplateHaskell
   ghc-options: -Wall
   build-depends:
@@ -87,7 +87,7 @@ test-suite aern2-mp-test
       Paths_aern2_mp
   hs-source-dirs:
       test
-  default-extensions: RebindableSyntax, PostfixOperators, ScopedTypeVariables, DeriveGeneric, GeneralizedNewtypeDeriving, TypeFamilies, TypeOperators, ConstraintKinds, DefaultSignatures, MultiParamTypeClasses, FlexibleContexts, FlexibleInstances, UndecidableInstances
+  default-extensions: RebindableSyntax, ScopedTypeVariables, DeriveGeneric, TypeFamilies, TypeOperators, ConstraintKinds, DefaultSignatures, MultiParamTypeClasses, FlexibleContexts, FlexibleInstances, UndecidableInstances
   other-extensions: TemplateHaskell
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:
