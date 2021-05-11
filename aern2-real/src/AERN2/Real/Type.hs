@@ -1,4 +1,7 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE RankNTypes #-}
 {-|
     Module      :  AERN2.Real.Type
     Description :  The type of Cauchy real numbers
@@ -14,7 +17,7 @@
 module AERN2.Real.Type where
 
 import MixedTypesNumPrelude
--- import qualified Prelude as P
+import qualified Prelude as P
 
 import qualified Numeric.CollectErrors as CN
 
@@ -22,6 +25,9 @@ import qualified Data.List as List
 
 import AERN2.MP
 import AERN2.MP.Dyadic
+
+import AERN2.MP.WithCurrentPrec
+import GHC.TypeNats
 
 -- import AERN2.MP.Accuracy
 
@@ -63,6 +69,14 @@ cseqIndexForPrecision p =
 cseqFromPrecFunction :: (Precision -> CN b) -> CSequence b
 cseqFromPrecFunction withP = CSequence $ map withP cseqPrecisions
 
+cseqFromWithCurrentPrec :: (forall p. (KnownNat p) => WithCurrentPrec (CN b) p) -> CSequence b
+cseqFromWithCurrentPrec (withCurrentP :: (forall p. (KnownNat p) => WithCurrentPrec (CN b) p)) = 
+  CSequence $ map withP cseqPrecisions
+  where
+  withP p = runWithPrec p withCurrentP :: CN b
+
+crealFromWithCurrentPrec :: (forall p. (KnownNat p) => WithCurrentPrec (CN MPBall) p) -> CReal
+crealFromWithCurrentPrec = cseqFromWithCurrentPrec
 
 {- Cauchy real numbers -}
 

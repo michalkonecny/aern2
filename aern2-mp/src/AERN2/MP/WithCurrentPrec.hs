@@ -21,7 +21,7 @@
 -}
 module AERN2.MP.WithCurrentPrec
 (
-    WithCurrentPrec(..), runWithPrec
+    WithCurrentPrec(..), runWithPrec, HasCurrentPrecision(..)
     -- , _example1 , _example2 , _example3
 )
 where
