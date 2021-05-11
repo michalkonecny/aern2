@@ -26,11 +26,11 @@ dependencies:
 - hspec
 - QuickCheck
 - lens
+- reflection
 - template-haskell
 - collect-errors >= 0.1
 - mixed-types-num >= 0.5.0.1
-- QuickCheck >= 2.7
-- cdar-mBound
+- cdar-mBound >= 0.1.0.0
 
 default-extensions:
 - RebindableSyntax,
