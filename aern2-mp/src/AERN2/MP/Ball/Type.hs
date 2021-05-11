@@ -33,6 +33,7 @@ import MixedTypesNumPrelude
 import qualified Numeric.CollectErrors as CN
 
 import GHC.Generics (Generic)
+import Control.DeepSeq
 
 import qualified Data.List as List
 
@@ -59,6 +60,8 @@ data MPBall = MPBall
   -- , ball_error :: {-# UNPACK #-} ! ErrorBound
   -- }
   deriving (Generic)
+
+instance NFData MPBall
 
 instance Show MPBall
     where

@@ -22,6 +22,8 @@ import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import Data.Typeable
+import GHC.Generics (Generic)
+import Control.DeepSeq
 
 import Test.QuickCheck
 
@@ -47,7 +49,9 @@ _example1 = 2*((errorBound 0.01) + 0.1*(errorBound 0.01)/3)
 
 {-| A non-negative Double value to serve as an error bound. Arithmetic is rounded towards +infinity. -}
 newtype ErrorBound = ErrorBound { er2mp :: MPFloat }
-  deriving (P.Eq, P.Ord, Typeable)
+  deriving (P.Eq, P.Ord, Typeable, Generic)
+
+instance NFData ErrorBound
 
 instance Show ErrorBound where
     show (ErrorBound d) = show d

@@ -25,7 +25,7 @@ dependencies:
 - regex-tdfa
 - hspec
 - QuickCheck
-- lens
+- deepseq
 - reflection
 - template-haskell
 - collect-errors >= 0.1
