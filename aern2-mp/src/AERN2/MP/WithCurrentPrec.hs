@@ -2,6 +2,8 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-|
     Module      :  AERN2.MP.WithCurrentPrec
     Description :  Type wrapper setting default precision
@@ -30,7 +32,8 @@ import qualified MixedTypesNumPrelude as MxP
 import Prelude
 -- import Text.Printf
 
-import Numeric.CollectErrors (CN, cn)
+-- import Text.Printf
+import Numeric.CollectErrors (CN, cn, NumErrors, CanTakeErrors(..))
 -- import qualified Numeric.CollectErrors as CN
 
 import Data.Proxy
@@ -56,6 +59,8 @@ instance KnownNat n => HasCurrentPrecision n where
 
 newtype WithCurrentPrec t p = WithCurrentPrec { unWithCurrentPrec :: t }
     deriving (Show)
+
+deriving instance (CanTakeErrors NumErrors t) => (CanTakeErrors NumErrors (WithCurrentPrec t p))
 
 runWithPrec :: Precision -> (forall n. (KnownNat n) => WithCurrentPrec t n) -> t
 runWithPrec p (wfp :: (forall n. (KnownNat n) => WithCurrentPrec t n)) = 
