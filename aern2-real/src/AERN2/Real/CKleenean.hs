@@ -13,7 +13,7 @@
 -}
 module AERN2.Real.CKleenean
 (
-  CKleenean, select
+  CKleenean, CanSelect(..)
 )
 where
 
