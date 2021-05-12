@@ -24,7 +24,7 @@ dependencies:
 - hspec
 - QuickCheck
 - collect-errors >= 0.1
-- mixed-types-num >= 0.5
+- mixed-types-num >= 0.5.1
 - integer-logarithms
 - aern2-mp >= 0.2
 
