@@ -324,7 +324,7 @@ instance
     | aD !==! bD = True
     | aD !/=! bD = False
     | otherwise =
-        error "Failed to decide equality of Sequences.  If you switch to MixedTypesNumPrelude instead of Prelude, comparison of Sequences returns Sequence (Maybe Bool) or similar instead of Bool."
+        error "Failed to decide equality of Sequences.  If you switch to MixedTypesNumPrelude instead of Prelude, comparison of Sequences returns CSequence Kleenean or similar instead of Bool."
     where
     aD = a ? defaultPrecision
     bD = b ? defaultPrecision 
@@ -339,7 +339,7 @@ instance
     | aD !<! bD = P.LT
     | aD !>! bD = P.GT
     | otherwise =
-        error "Failed to decide order of Sequences.  If you switch to MixedTypesNumPrelude instead of Prelude, comparison of Sequences returns Sequence (Maybe Bool) or similar instead of Bool."
+        error "Failed to decide order of Sequences.  If you switch to MixedTypesNumPrelude instead of Prelude, comparison of Sequences returns CSequence Kleenean or similar instead of Bool."
     where
     aD = a ? defaultPrecision
     bD = b ? defaultPrecision
