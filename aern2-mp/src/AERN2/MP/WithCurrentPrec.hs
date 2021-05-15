@@ -86,6 +86,15 @@ instance
     geq (WithCurrentPrec v1) (WithCurrentPrec v2) = MxP.geq v1 v2
     leq (WithCurrentPrec v1) (WithCurrentPrec v2) = MxP.leq v1 v2
 
+instance 
+    (MxP.CanMinMaxAsymmetric t1 t2, p1 ~ p2)
+    =>
+    MxP.CanMinMaxAsymmetric (WithCurrentPrec t1 p1) (WithCurrentPrec t2 p2) 
+    where
+    type MinMaxType (WithCurrentPrec t1 p1) (WithCurrentPrec t2 p2) = WithCurrentPrec (MxP.MinMaxType t1 t2) p1
+    min (WithCurrentPrec v1) (WithCurrentPrec v2) = WithCurrentPrec $ MxP.min v1 v2
+    max (WithCurrentPrec v1) (WithCurrentPrec v2) = WithCurrentPrec $ MxP.max v1 v2
+
 instance Eq t => Eq (WithCurrentPrec t p) where
     (==) = lift2P (==)
 instance Ord t => Ord (WithCurrentPrec t p) where
