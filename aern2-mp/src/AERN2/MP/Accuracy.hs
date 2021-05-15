@@ -257,7 +257,7 @@ convergentList2seqByAccuracy list ac = findAccurate list
     it is at least as high as the supplied accuracy
     (assuming the accuracy is finite).
 -}
-setPrecisionAtLeastAccuracy :: (CanSetPrecision t) => Accuracy -> t -> t
+setPrecisionAtLeastAccuracy :: (HasPrecision t, CanSetPrecision t) => Accuracy -> t -> t
 setPrecisionAtLeastAccuracy acc b
     | p_b < p_acc = setPrecision p_acc b
     | otherwise = b

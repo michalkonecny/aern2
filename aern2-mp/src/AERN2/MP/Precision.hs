@@ -102,7 +102,7 @@ instance CanMulAsymmetric Precision Integer where
 class HasPrecision t where
     getPrecision :: t -> Precision
 
-class (HasPrecision t) => CanSetPrecision t where
+class CanSetPrecision t where
     setPrecision :: Precision -> t -> t
 
 instance HasPrecision t => HasPrecision (Complex t) where
@@ -132,18 +132,18 @@ instance HasPrecision t => HasPrecision (CollectErrors es t) where
 instance CanSetPrecision t => CanSetPrecision (CollectErrors es t) where
   setPrecision p = fmap (setPrecision p)
 
-lowerPrecisionIfAbove :: (CanSetPrecision t) => Precision -> t -> t
+lowerPrecisionIfAbove :: (HasPrecision t, CanSetPrecision t) => Precision -> t -> t
 lowerPrecisionIfAbove p x
   | getPrecision x > p = setPrecision p x
   | otherwise = x
 
-raisePrecisionIfBelow :: (CanSetPrecision t) => Precision -> t -> t
+raisePrecisionIfBelow :: (HasPrecision t, CanSetPrecision t) => Precision -> t -> t
 raisePrecisionIfBelow p x
   | getPrecision x < p = setPrecision p x
   | otherwise = x
 
 specCanSetPrecision ::
-  (CanSetPrecision t, CanTestFinite t, Arbitrary t, Show t, Testable prop)
+  (HasPrecision t, CanSetPrecision t, CanTestFinite t, Arbitrary t, Show t, Testable prop)
   =>
   (T t) -> (t -> t -> prop) -> Spec
 specCanSetPrecision (T typeName :: T t) check =
@@ -214,7 +214,6 @@ convertPSecond ::
   (ConvertibleWithPrecision t2 t1, HasPrecision t1) =>
   (t1 -> t1 -> c) -> (t1 -> t2 -> c)
 convertPSecond = convertSecondUsing (\ b q -> convertP (getPrecision b) q)
-
 
 instance Arbitrary Precision where
   arbitrary =
