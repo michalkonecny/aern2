@@ -91,7 +91,6 @@ instance Show MPBall
       showAC NoInformation = "(oo)"
       showAC ac = " ~2^(" ++ show (negate $ fromAccuracy ac) ++ ")"
 
-
 -- instance CanTestValid MPBall where
 --   isValid = isFinite
 
@@ -222,32 +221,6 @@ cnMPBall = fmap mpBall
 
 instance HasAccuracy MPBall where
     getAccuracy = getAccuracy . ball_error
-
-instance CanReduceSizeUsingAccuracyGuide MPBall where
-  reduceSizeUsingAccuracyGuide acGuide b@(MPBall x _e) =
-    case acGuide of
-      NoInformation -> lowerPrecisionIfAbove (prec 2) b
-      _ | getAccuracy b > acGuide -> tryPrec newPrec
-      _ -> b
-    where
-    tryPrec p
-      | getAccuracy bP >= acGuide = bP
-      | otherwise = tryPrec (p + 10)
-      where
-      bP = lowerPrecisionIfAbove p b
-    queryBits = 1 + fromAccuracy acGuide
-    newPrec =
-      case (getNormLog x) of
-        NormBits xNormBits ->
-          prec (max 2 (queryBits + xNormBits + 2))
-        NormZero ->
-          prec $ max 2 queryBits
-    -- bWithLowAC =
-    --   case acGuide of
-    --     Exact -> b
-    --     NoInformation -> b
-    --     _ -> normalize $
-    --           MPBall x (errorBound ((0.5^(fromAccuracy acGuide))⚡))
 
 instance HasNorm MPBall where
     getNormLog ball = getNormLog boundMP

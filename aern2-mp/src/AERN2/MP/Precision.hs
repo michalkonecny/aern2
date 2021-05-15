@@ -2,7 +2,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-|
     Module      :  AERN2.MP.Precision
-    Description :  Floating-point precision
+    Description :  number of significant binary digits
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -10,7 +10,8 @@
     Stability   :  experimental
     Portability :  portable
 
-    Floating-point precision type and its operations
+    Precision type and its operations.  Precision expresses a limit on the size
+    of an approximation, roughly corresponding to the number of significant bits for a floating-point number and its generalisations to other types.
 -}
 module AERN2.MP.Precision
 (
