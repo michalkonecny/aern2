@@ -37,7 +37,7 @@ instance P.Eq MPBall where
       CertainTrue  -> True
       CertainFalse  -> False
       _ ->
-        error "Failed to decide equality of MPBalls.  If you switch to MixedTypesNumPrelude instead of Prelude, comparison of MPBalls returns Maybe Bool instead of Bool."
+        error "Failed to decide equality of MPBalls.  If you switch to MixedTypesNumPrelude instead of Prelude, comparison of MPBalls returns Kleenean instead of Bool."
 
 instance P.Ord MPBall where
   compare a b =
@@ -46,7 +46,7 @@ instance P.Ord MPBall where
       (_, CertainTrue, _) -> P.EQ
       (_, _, CertainTrue) -> P.GT
       _ ->
-        error "Failed to decide order of MPBalls.  If you switch to MixedTypesNumPrelude instead of Prelude, comparison of MPBalls returns Maybe Bool instead of Bool."
+        error "Failed to decide order of MPBalls.  If you switch to MixedTypesNumPrelude instead of Prelude, comparison of MPBalls returns Kleenean instead of Bool."
 
 instance P.Num MPBall where
     fromInteger = convertExactly
