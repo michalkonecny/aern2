@@ -13,7 +13,8 @@
 -}
 module AERN2.Real.CKleenean
 (
-  CKleenean, CanSelect(..)
+  CKleenean, CanBeCKleenean, ckleenean
+  , CanSelect(..)
 )
 where
 
@@ -30,6 +31,11 @@ import AERN2.MP
 import AERN2.Real.Type
 
 type CKleenean = CSequence Kleenean
+
+type CanBeCKleenean t = ConvertibleExactly t CKleenean
+
+ckleenean :: (CanBeCKleenean t) => t -> CKleenean
+ckleenean = convertExactly
 
 -- IsBool CKleenean:
 
