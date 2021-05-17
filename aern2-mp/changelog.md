@@ -1,11 +1,11 @@
 # Change log for aern2-mp
 
-* v 0.2.0 2021-04-13
+* v 0.2.0 2021-05-17
   * switch to new simplified collect-errors, mixed-types-num 0.5.0
     * got rid of EnsureCE etc.
     * not introducing CN wrapper unless at least one parameter is already CN
-      * with the exception of intersect and union
   * using CDAR backend only, no MPFR for now
+  * WithCurrentPrec for specifying default precision via types
 * v 0.1.4 2019-03-19
   * CDAR-based Integer-only backend
     * needs the mBound branch of CDAR
