@@ -20,6 +20,7 @@ module AERN2.MP.Accuracy
      convergentList2seqByAccuracy,
      seqByPrecision2seqByAccuracy,
      setPrecisionAtLeastAccuracy,
+     ShowWithAccuracy(..),
      HasApproximate(..))
 where
 
@@ -269,6 +270,8 @@ setPrecisionAtLeastAccuracy acc b
           _ -> prec $ max 2 (fromAccuracy acc)
     p_b = getPrecision b
 
+class ShowWithAccuracy t where
+  showWithAccuracy :: Accuracy -> t -> String
 
 {-| An unsafe approximation of an enclosure or exact value,
     useful mainly for showing something brief and readable to humans.

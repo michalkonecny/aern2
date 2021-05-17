@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-|
     Module      :  AERN2.MP.Ball.Type
     Description :  Arbitrary precision dyadic balls
@@ -63,34 +64,41 @@ data MPBall = MPBall
 
 instance NFData MPBall
 
-instance Show MPBall
-    where
-    show b@(MPBall x e) =
-      -- printf "[%s ± %s](prec=%s)" (show x) (showAC $ getAccuracy b) (show $ integer $ getPrecision b)
-      printf "[%s ± %s%s]" (dropSomeDigits $ showMPFloat x) eDS (showAC $ getAccuracy b)
-      -- "[" ++ show x ++ " ± " ++ show e ++ "](prec=" ++ (show $ integer $ getPrecision x) ++ ")"
-      where
-      eDS 
-        | e == 0 = "0"
-        | otherwise  =
-          case safeConvert (dyadic e) of
-            Right (eD :: Double) -> printf "~%.4g" $ eD
-            _ -> ""
-      dropSomeDigits s =
-        case List.findIndex (== '.') s of
-          Nothing -> s
-          Just ix -> withDotIx ix
-        where
-        withDotIx ix =
-          let maxLength = ix + 50 in
-          let sTrimmed = take maxLength s in
-          if length sTrimmed < maxLength
-            then sTrimmed
-            else (take (maxLength - 3) sTrimmed) <> "..."
-      showAC Exact = ""
-      showAC NoInformation = "(oo)"
-      showAC ac = " ~2^(" ++ show (negate $ fromAccuracy ac) ++ ")"
+instance Show MPBall where
+  show  = showWithAccuracy (bits 50)
 
+instance ShowWithAccuracy MPBall where
+  showWithAccuracy displayAC b@(MPBall x e) =
+    -- printf "[%s ± %s](prec=%s)" (show x) (showAC $ getAccuracy b) (show $ integer $ getPrecision b)
+    printf "[%s ± %s%s]" (dropSomeDigits $ showMPFloat x) eDS (showAC $ getAccuracy b)
+    -- "[" ++ show x ++ " ± " ++ show e ++ "](prec=" ++ (show $ integer $ getPrecision x) ++ ")"
+    where
+    eDS 
+      | e == 0 = "0"
+      | otherwise  =
+        case safeConvert (dyadic e) of
+          Right (eD :: Double) -> printf "~%.4g" $ eD
+          _ -> ""
+    dropSomeDigits s =
+      case List.findIndex (== '.') s of
+        Nothing -> s
+        Just ix -> withDotIx ix
+      where
+      withDotIx ix =
+        let maxLength = ix + displayAC_n in
+        let sTrimmed = take maxLength s in
+        if length sTrimmed < maxLength
+          then sTrimmed
+          else (take (maxLength - 3) sTrimmed) <> "..."
+    displayAC_n = 
+      case displayAC of
+        Exact -> 1000000000
+        NoInformation -> 0
+        _ -> integer $ ac2prec displayAC
+    showAC Exact = ""
+    showAC NoInformation = "(oo)"
+    showAC ac = " ~2^(" ++ show (negate $ fromAccuracy ac) ++ ")"
+    
 -- instance CanTestValid MPBall where
 --   isValid = isFinite
 
