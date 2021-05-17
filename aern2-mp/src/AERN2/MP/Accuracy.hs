@@ -31,8 +31,8 @@ import Control.CollectErrors
 
 import Data.Complex
 
-import Test.Hspec
-import Test.QuickCheck
+-- import Test.Hspec
+import Test.QuickCheck ( Arbitrary(arbitrary), frequency )
 
 import AERN2.Norm
 import AERN2.MP.Precision
