@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-|
     Module      :  AERN2.MP.Ball.Type
     Description :  Arbitrary precision dyadic balls
@@ -30,11 +31,12 @@ where
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
 
-import Control.Applicative
-
-import Control.CollectErrors
+import qualified Numeric.CollectErrors as CN
 
 import GHC.Generics (Generic)
+import Control.DeepSeq
+
+import qualified Data.List as List
 
 import Text.Printf
 
@@ -60,20 +62,43 @@ data MPBall = MPBall
   -- }
   deriving (Generic)
 
-instance Show MPBall
+instance NFData MPBall
+
+instance Show MPBall where
+  show  = showWithAccuracy (bits 50)
+
+instance ShowWithAccuracy MPBall where
+  showWithAccuracy displayAC b@(MPBall x e) =
+    -- printf "[%s ± %s](prec=%s)" (show x) (showAC $ getAccuracy b) (show $ integer $ getPrecision b)
+    printf "[%s ± %s%s]" (dropSomeDigits $ showMPFloat x) eDS (showAC $ getAccuracy b)
+    -- "[" ++ show x ++ " ± " ++ show e ++ "](prec=" ++ (show $ integer $ getPrecision x) ++ ")"
     where
-    show b@(MPBall x e) =
-      -- printf "[%s ± %s](prec=%s)" (show x) (showAC $ getAccuracy b) (show $ integer $ getPrecision b)
-      printf "[%s ± %.4g%s]" (showMPFloat x) (double $ dyadic e) (showAC $ getAccuracy b)
-      -- "[" ++ show x ++ " ± " ++ show e ++ "](prec=" ++ (show $ integer $ getPrecision x) ++ ")"
+    eDS 
+      | e == 0 = "0"
+      | otherwise  =
+        case safeConvert (dyadic e) of
+          Right (eD :: Double) -> printf "~%.4g" $ eD
+          _ -> ""
+    dropSomeDigits s =
+      case List.findIndex (== '.') s of
+        Nothing -> s
+        Just ix -> withDotIx ix
       where
-      showAC Exact = ""
-      showAC NoInformation = "(oo)"
-      showAC ac = " <2^(" ++ show (negate $ fromAccuracy ac) ++ ")"
-
-
-instance (SuitableForCE es) => CanEnsureCE es MPBall where
-
+      withDotIx ix =
+        let maxLength = ix + displayAC_n in
+        let sTrimmed = take maxLength s in
+        if length sTrimmed < maxLength
+          then sTrimmed
+          else (take (maxLength - 3) sTrimmed) <> "..."
+    displayAC_n = 
+      case displayAC of
+        Exact -> 1000000000
+        NoInformation -> 0
+        _ -> integer $ ac2prec displayAC
+    showAC Exact = ""
+    showAC NoInformation = "(oo)"
+    showAC ac = " ~2^(" ++ show (negate $ fromAccuracy ac) ++ ")"
+    
 -- instance CanTestValid MPBall where
 --   isValid = isFinite
 
@@ -111,6 +136,13 @@ reducePrecionIfInaccurate b@(MPBall x _) =
     p_x = getPrecision x
     p_e_nb = prec $ max 2 (10 + nb + fromAccuracy bAcc)
     (NormBits nb) = bNorm
+
+instance CanGiveUpIfVeryInaccurate MPBall where
+  giveUpIfVeryInaccurate = (aux =<<)
+    where
+    aux b@(MPBall _ e)
+      | e > 1000 = CN.noValueNumErrorCertain $ numErrorVeryInaccurate "MPBall" ""
+      | otherwise = cn b
 
 instance CanTestContains MPBall MPBall where
   contains (MPBall xLarge eLarge) (MPBall xSmall eSmall) =
@@ -153,11 +185,6 @@ instance IsInterval MPBall where
       l   = x -. eFl
       u   = x +^ eFl
 
-instance (IsInterval (CN MPBall)) where
-    type (IntervalEndpoint (CN MPBall)) = CN MPFloat
-    fromEndpoints l u = liftA2 fromEndpoints l u
-    endpoints x = (fmap endpointL x, fmap endpointR x)
-
 fromMPFloatEndpoints :: MPFloat -> MPFloat -> MPBall
 fromMPFloatEndpoints = fromEndpoints
 
@@ -176,11 +203,6 @@ instance IsBall MPBall where
     cB = MPBall cMP (errorBound 0)
   radius (MPBall _ e) = e
   updateRadius updateFn (MPBall c e) = MPBall c (updateFn e)
-
-instance (IsBall (CN MPBall)) where
-    type CentreType (CN MPBall) = CN Dyadic
-    centre = fmap centre
-
 
 {--- constructing a ball with a given precision ---}
 
@@ -207,32 +229,6 @@ cnMPBall = fmap mpBall
 
 instance HasAccuracy MPBall where
     getAccuracy = getAccuracy . ball_error
-
-instance CanReduceSizeUsingAccuracyGuide MPBall where
-  reduceSizeUsingAccuracyGuide acGuide b@(MPBall x _e) =
-    case acGuide of
-      NoInformation -> lowerPrecisionIfAbove (prec 2) b
-      _ | getAccuracy b > acGuide -> tryPrec newPrec
-      _ -> b
-    where
-    tryPrec p
-      | getAccuracy bP >= acGuide = bP
-      | otherwise = tryPrec (p + 10)
-      where
-      bP = lowerPrecisionIfAbove p b
-    queryBits = 1 + fromAccuracy acGuide
-    newPrec =
-      case (getNormLog x) of
-        NormBits xNormBits ->
-          prec (max 2 (queryBits + xNormBits + 2))
-        NormZero ->
-          prec $ max 2 queryBits
-    -- bWithLowAC =
-    --   case acGuide of
-    --     Exact -> b
-    --     NoInformation -> b
-    --     _ -> normalize $
-    --           MPBall x (errorBound ((0.5^(fromAccuracy acGuide))⚡))
 
 instance HasNorm MPBall where
     getNormLog ball = getNormLog boundMP

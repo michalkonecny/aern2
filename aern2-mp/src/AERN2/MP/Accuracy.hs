@@ -8,19 +8,19 @@
     Stability   :  experimental
     Portability :  portable
 
-    A type for roughly measuring the accuracy of an enclosure.
+    A type for measuring the accuracy of an enclosing set,
+    roughly corresponding to the maximum absolute error in some distance metric
+    approximately measured in bits.
 -}
 module AERN2.MP.Accuracy
     (Accuracy(NoInformation, Exact), bits, fromAccuracy,
      HasAccuracy(..),
-     HasAccuracyGuide(..), CanSetAccuracyGuide(..), adjustAccuracyGuide,
      ac2prec,
-     CanReduceSizeUsingAccuracyGuide(..),
-      specCanReduceSizeUsingAccuracyGuide,
      iterateUntilAccurate,
-     convergentList2CauchySeq,
-     seqByPrecision2CauchySeq,
+     convergentList2seqByAccuracy,
+     seqByPrecision2seqByAccuracy,
      setPrecisionAtLeastAccuracy,
+     ShowWithAccuracy(..),
      HasApproximate(..))
 where
 
@@ -31,8 +31,8 @@ import Control.CollectErrors
 
 import Data.Complex
 
-import Test.Hspec
-import Test.QuickCheck
+-- import Test.Hspec
+import Test.QuickCheck ( Arbitrary(arbitrary), frequency )
 
 import AERN2.Norm
 import AERN2.MP.Precision
@@ -184,7 +184,7 @@ class HasAccuracy a where
           Exact -> bits $ getPrecision b
           a -> a
 
-instance (HasAccuracy a, SuitableForCE es) => HasAccuracy (CollectErrors es a) where
+instance (HasAccuracy a, CanBeErrors es) => HasAccuracy (CollectErrors es a) where
   getAccuracy (CollectErrors ma es) =
     case ma of
       Just a | not (hasCertainError es) -> getAccuracy a
@@ -198,6 +198,7 @@ instance HasAccuracy Int where getAccuracy _ = Exact; getFiniteAccuracy _ = NoIn
 instance HasAccuracy Integer where getAccuracy _ = Exact; getFiniteAccuracy _ = NoInformation
 instance HasAccuracy Rational where getAccuracy _ = Exact; getFiniteAccuracy _ = NoInformation
 instance HasAccuracy Bool where getAccuracy _ = Exact; getFiniteAccuracy _ = NoInformation
+instance HasAccuracy Kleenean where getAccuracy _ = Exact; getFiniteAccuracy _ = NoInformation
 
 instance HasAccuracy t => HasAccuracy (Complex t) where
   getAccuracy (a :+ i) =
@@ -214,18 +215,6 @@ instance HasAccuracy t => HasAccuracy (Maybe t) where
   getAccuracy _ = NoInformation
   getFiniteAccuracy (Just x) = getFiniteAccuracy x
   getFiniteAccuracy _ = NoInformation
-
-class HasAccuracyGuide a where
-  getAccuracyGuide :: a -> Accuracy
-
-class HasAccuracyGuide a => CanSetAccuracyGuide a where
-  setAccuracyGuide :: Accuracy -> a -> a
-
-adjustAccuracyGuide ::
-  (CanSetAccuracyGuide a) =>
-  (Accuracy -> Accuracy) -> a -> a
-adjustAccuracyGuide adj_acG a =
-  setAccuracyGuide (adj_acG (getAccuracyGuide a)) a
 
 iterateUntilAccurate ::
   (HasAccuracy t) =>
@@ -244,22 +233,22 @@ ac2prec ac =
     Bits b -> prec (max 2 $ b + 50)
     _ -> prec 100
 
-seqByPrecision2CauchySeq ::
+seqByPrecision2seqByAccuracy ::
     (HasAccuracy t) =>
     (Precision -> t) -> (Accuracy -> t)
-seqByPrecision2CauchySeq seqByPrecision ac =
-    convergentList2CauchySeq list ac
+seqByPrecision2seqByAccuracy seqByPrecision ac =
+    convergentList2seqByAccuracy list ac
     where
     list =
       map seqByPrecision $ dropWhile (lowPrec ac) (standardPrecisions (ac2prec ac))
     lowPrec Exact _ = False
     lowPrec _ p = bits p < ac
 
-convergentList2CauchySeq :: (HasAccuracy t) => [t] -> (Accuracy -> t)
-convergentList2CauchySeq list ac = findAccurate list
+convergentList2seqByAccuracy :: (HasAccuracy t) => [t] -> (Accuracy -> t)
+convergentList2seqByAccuracy list ac = findAccurate list
   where
   findAccurate [] =
-    error "convergentList2CauchySeq: the sequence either converges too slowly or it does not converge"
+    error "convergentList2seqByAccuracy: the sequence either converges too slowly or it does not converge"
   findAccurate (b : rest)
     | getAccuracy b >= ac = b
     | otherwise = findAccurate rest
@@ -269,7 +258,7 @@ convergentList2CauchySeq list ac = findAccurate list
     it is at least as high as the supplied accuracy
     (assuming the accuracy is finite).
 -}
-setPrecisionAtLeastAccuracy :: (CanSetPrecision t) => Accuracy -> t -> t
+setPrecisionAtLeastAccuracy :: (HasPrecision t, CanSetPrecision t) => Accuracy -> t -> t
 setPrecisionAtLeastAccuracy acc b
     | p_b < p_acc = setPrecision p_acc b
     | otherwise = b
@@ -281,22 +270,8 @@ setPrecisionAtLeastAccuracy acc b
           _ -> prec $ max 2 (fromAccuracy acc)
     p_b = getPrecision b
 
-
-class CanReduceSizeUsingAccuracyGuide t where
-  reduceSizeUsingAccuracyGuide :: Accuracy -> t -> t
-
-specCanReduceSizeUsingAccuracyGuide ::
-  ( CanReduceSizeUsingAccuracyGuide t
-  , HasEqCertainly t t
-  , Arbitrary t, Show t)
-  =>
-  (T t) -> Spec
-specCanReduceSizeUsingAccuracyGuide (T tName :: T t) =
-  describe ("CanReduceSizeUsingAccuracyGuide " ++ tName) $ do
-    it "is safe" $
-      property $
-        \ (t :: t) (ac :: Accuracy) ->
-          reduceSizeUsingAccuracyGuide ac t ?==? t
+class ShowWithAccuracy t where
+  showWithAccuracy :: Accuracy -> t -> String
 
 {-| An unsafe approximation of an enclosure or exact value,
     useful mainly for showing something brief and readable to humans.

@@ -97,9 +97,9 @@ instance PolyCoeffBall MPBall
 
 newtype Poly c = Poly { poly_terms :: Terms c }
 
-instance (SuitableForCE es) => CanEnsureCE es (Poly c)
+instance (CanBeErrors es) => CanEnsureCE es (Poly c)
 
-instance (SuitableForCE es) => CanExtractCE es Poly
+instance (CanBeErrors es) => CanExtractCE es Poly
   where
   extractCE sample_es (Poly terms) =
     fmap Poly (extractCE sample_es terms)
@@ -108,7 +108,7 @@ type Terms c = Map.Map Degree c
 
 type Degree = Integer
 
-instance (SuitableForCE es) => CanExtractCE es (Map.Map Degree)
+instance (CanBeErrors es) => CanExtractCE es (Map.Map Degree)
 
 terms_empty :: Terms c
 terms_empty = Map.empty

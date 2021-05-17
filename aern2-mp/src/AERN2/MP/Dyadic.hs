@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP #-}
 -- #define DEBUG
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-|
     Module      :  AERN2.MP.Dyadic
     Description :  Dyadics with exact ring operations
@@ -16,7 +16,6 @@
     Currently, we use hmpfr when compiling with ghc 7.10 and higher
     and haskell-mpfr when compiling with ghc 7.8.
 -}
-
 module AERN2.MP.Dyadic
 (
    -- * Dyadic numbers and their basic operations
@@ -40,7 +39,9 @@ import Debug.Trace (trace)
 import MixedTypesNumPrelude
 import qualified Prelude as P
 
-import Control.CollectErrors
+import Control.CollectErrors (CollectErrors(..), CanBeErrors)
+import qualified Control.CollectErrors as CE
+-- import qualified Numeric.CollectErrors as CN
 
 import Text.Printf
 import Text.Regex.TDFA
@@ -75,6 +76,7 @@ instance OrderedCertainlyRing Dyadic
 instance OrderedCertainlyRing (CN Dyadic)
 
 instance HasAccuracy Dyadic where getAccuracy _ = Exact
+instance CanGiveUpIfVeryInaccurate Dyadic -- ie, never give up
 
 instance Show Dyadic where
   show (Dyadic x)
@@ -106,15 +108,13 @@ instance Read Dyadic where
         [nS,eS] ->
           case (reads nS, reads eS) of
             ([(n,"")],[(e,"")]) ->
-              [((n :: Integer)*(dyadic 0.5)^!(e :: Integer), afterS)]
+              [((n :: Integer)*(dyadic 0.5)^(e :: Integer), afterS)]
             _ -> tryNext
         _ -> tryNext
       where
       (_,_,afterS,groups) =
         dyadicS =~ "\\`dyadic \\(([-0-9]*)\\*0.5\\^([0-9]*)\\)"
           :: (String, String, String, [String])
-
-instance (SuitableForCE es) => CanEnsureCE es Dyadic
 
 
 {-- conversions --}
@@ -151,7 +151,7 @@ instance ConvertibleExactly Rational Dyadic where
     | isDyadic = Right $ Dyadic (ceduCentre $ fromRationalCEDU (prec $ max 2 (dp + np + 1)) q)
     | otherwise = convError "this number is not dyadic" q
     where
-    isDyadic = d == 2^!dp
+    isDyadic = d == 2^dp
     dp = integerLog2 d
     d = denominator q
     np = integerLog2 (max 1 $ abs $ numerator q)
@@ -180,29 +180,25 @@ instance HasEqAsymmetric Rational Dyadic where
 
 instance
   (HasEqAsymmetric Dyadic b
-  , CanEnsureCE es b
-  , CanEnsureCE es (EqCompareType Dyadic b)
-  , IsBool (EnsureCE es (EqCompareType Dyadic b))
-  , SuitableForCE es)
+  , IsBool (CollectErrors es (EqCompareType Dyadic b))
+  , CanBeErrors es)
   =>
-  HasEqAsymmetric Dyadic (CollectErrors es  b)
+  HasEqAsymmetric Dyadic (CollectErrors es b)
   where
-  type EqCompareType Dyadic (CollectErrors es  b) =
-    EnsureCE es (EqCompareType Dyadic b)
-  equalTo = lift2TLCE equalTo
+  type EqCompareType Dyadic (CollectErrors es b) =
+    CollectErrors es (EqCompareType Dyadic b)
+  equalTo = CE.liftT1 equalTo
 
 instance
   (HasEqAsymmetric a Dyadic
-  , CanEnsureCE es a
-  , CanEnsureCE es (EqCompareType a Dyadic)
-  , IsBool (EnsureCE es (EqCompareType a Dyadic))
-  , SuitableForCE es)
+  , IsBool (CollectErrors es (EqCompareType a Dyadic))
+  , CanBeErrors es)
   =>
   HasEqAsymmetric (CollectErrors es a) Dyadic
   where
   type EqCompareType (CollectErrors es  a) Dyadic =
-    EnsureCE es (EqCompareType a Dyadic)
-  equalTo = lift2TCE equalTo
+    CollectErrors es (EqCompareType a Dyadic)
+  equalTo = CE.lift1T equalTo
 
 instance CanTestZero Dyadic
 
@@ -228,35 +224,31 @@ instance HasOrderAsymmetric Dyadic Rational where
 
 instance
   (HasOrderAsymmetric Dyadic b
-  , CanEnsureCE es b
-  , CanEnsureCE es (OrderCompareType Dyadic b)
-  , IsBool (EnsureCE es (OrderCompareType Dyadic b))
-  , SuitableForCE es)
+  , IsBool (CollectErrors es (OrderCompareType Dyadic b))
+  , CanBeErrors es)
   =>
   HasOrderAsymmetric Dyadic (CollectErrors es  b)
   where
   type OrderCompareType Dyadic (CollectErrors es  b) =
-    EnsureCE es (OrderCompareType Dyadic b)
-  lessThan = lift2TLCE lessThan
-  leq = lift2TLCE leq
-  greaterThan = lift2TLCE greaterThan
-  geq = lift2TLCE geq
+    CollectErrors es (OrderCompareType Dyadic b)
+  lessThan = CE.liftT1 lessThan
+  leq = CE.liftT1 leq
+  greaterThan = CE.liftT1 greaterThan
+  geq = CE.liftT1 geq
 
 instance
   (HasOrderAsymmetric a Dyadic
-  , CanEnsureCE es a
-  , CanEnsureCE es (OrderCompareType a Dyadic)
-  , IsBool (EnsureCE es (OrderCompareType a Dyadic))
-  , SuitableForCE es)
+  , IsBool (CollectErrors es (OrderCompareType a Dyadic))
+  , CanBeErrors es)
   =>
   HasOrderAsymmetric (CollectErrors es a) Dyadic
   where
   type OrderCompareType (CollectErrors es  a) Dyadic =
-    EnsureCE es (OrderCompareType a Dyadic)
-  lessThan = lift2TCE lessThan
-  leq = lift2TCE leq
-  greaterThan = lift2TCE greaterThan
-  geq = lift2TCE geq
+    CollectErrors es (OrderCompareType a Dyadic)
+  lessThan = CE.lift1T lessThan
+  leq = CE.lift1T leq
+  greaterThan = CE.lift1T greaterThan
+  geq = CE.lift1T geq
 
 
 instance CanTestPosNeg Dyadic
@@ -306,29 +298,25 @@ instance CanMinMaxAsymmetric Dyadic Rational where
 
 instance
   (CanMinMaxAsymmetric Dyadic b
-  , CanEnsureCE es b
-  , CanEnsureCE es (MinMaxType Dyadic b)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanMinMaxAsymmetric Dyadic (CollectErrors es  b)
   where
   type MinMaxType Dyadic (CollectErrors es  b) =
-    EnsureCE es (MinMaxType Dyadic b)
-  min = lift2TLCE min
-  max = lift2TLCE max
+    CollectErrors es (MinMaxType Dyadic b)
+  min = CE.liftT1 min
+  max = CE.liftT1 max
 
 instance
   (CanMinMaxAsymmetric a Dyadic
-  , CanEnsureCE es a
-  , CanEnsureCE es (MinMaxType a Dyadic)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanMinMaxAsymmetric (CollectErrors es a) Dyadic
   where
   type MinMaxType (CollectErrors es  a) Dyadic =
-    EnsureCE es (MinMaxType a Dyadic)
-  min = lift2TCE min
-  max = lift2TCE max
+    CollectErrors es (MinMaxType a Dyadic)
+  min = CE.lift1T min
+  max = CE.lift1T max
 
 {- addition -}
 
@@ -358,27 +346,23 @@ instance CanAddAsymmetric Dyadic Rational where
 
 instance
   (CanAddAsymmetric Dyadic b
-  , CanEnsureCE es b
-  , CanEnsureCE es (AddType Dyadic b)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanAddAsymmetric Dyadic (CollectErrors es  b)
   where
   type AddType Dyadic (CollectErrors es  b) =
-    EnsureCE es (AddType Dyadic b)
-  add = lift2TLCE add
+    CollectErrors es (AddType Dyadic b)
+  add = CE.liftT1 add
 
 instance
   (CanAddAsymmetric a Dyadic
-  , CanEnsureCE es a
-  , CanEnsureCE es (AddType a Dyadic)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanAddAsymmetric (CollectErrors es a) Dyadic
   where
   type AddType (CollectErrors es  a) Dyadic =
-    EnsureCE es (AddType a Dyadic)
-  add = lift2TCE add
+    CollectErrors es (AddType a Dyadic)
+  add = CE.lift1T add
 
 {- subtraction -}
 
@@ -408,27 +392,23 @@ instance CanSub Dyadic Rational where
 
 instance
   (CanSub Dyadic b
-  , CanEnsureCE es b
-  , CanEnsureCE es (SubType Dyadic b)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanSub Dyadic (CollectErrors es  b)
   where
   type SubType Dyadic (CollectErrors es  b) =
-    EnsureCE es (SubType Dyadic b)
-  sub = lift2TLCE sub
+    CollectErrors es (SubType Dyadic b)
+  sub = CE.liftT1 sub
 
 instance
   (CanSub a Dyadic
-  , CanEnsureCE es a
-  , CanEnsureCE es (SubType a Dyadic)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanSub (CollectErrors es a) Dyadic
   where
   type SubType (CollectErrors es  a) Dyadic =
-    EnsureCE es (SubType a Dyadic)
-  sub = lift2TCE sub
+    CollectErrors es (SubType a Dyadic)
+  sub = CE.lift1T sub
 
 
 {- multiplication -}
@@ -459,119 +439,89 @@ instance CanMulAsymmetric Dyadic Rational where
 
 instance
   (CanMulAsymmetric Dyadic b
-  , CanEnsureCE es b
-  , CanEnsureCE es (MulType Dyadic b)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanMulAsymmetric Dyadic (CollectErrors es  b)
   where
   type MulType Dyadic (CollectErrors es  b) =
-    EnsureCE es (MulType Dyadic b)
-  mul = lift2TLCE mul
+    CollectErrors es (MulType Dyadic b)
+  mul = CE.liftT1 mul
 
 instance
   (CanMulAsymmetric a Dyadic
-  , CanEnsureCE es a
-  , CanEnsureCE es (MulType a Dyadic)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanMulAsymmetric (CollectErrors es a) Dyadic
   where
   type MulType (CollectErrors es  a) Dyadic =
-    EnsureCE es (MulType a Dyadic)
-  mul = lift2TCE mul
+    CollectErrors es (MulType a Dyadic)
+  mul = CE.lift1T mul
 
 instance CanPow Dyadic Integer where
-  powNoCN = powUsingMul (dyadic 1)
-  pow = integerPowCN (powUsingMul (dyadic 1))
+  pow = powUsingMul (dyadic 1)
 instance CanPow Dyadic Int where
-  powNoCN = powUsingMul (dyadic 1)
-  pow = integerPowCN (powUsingMul (dyadic 1))
+  pow = powUsingMul (dyadic 1)
 
 instance
   (CanDiv a Dyadic
-  , CanEnsureCE es a
-  , CanEnsureCE es (DivType a Dyadic)
-  , CanEnsureCE es (DivTypeNoCN a Dyadic)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanDiv (CollectErrors es a) Dyadic
   where
   type DivType (CollectErrors es  a) Dyadic =
-    EnsureCE es (DivType a Dyadic)
-  divide = lift2TCE divide
-  type DivTypeNoCN (CollectErrors es a) Dyadic =
-    EnsureCE es (DivTypeNoCN a Dyadic)
-  divideNoCN = lift2TCE divideNoCN
+    CollectErrors es (DivType a Dyadic)
+  divide = CE.lift1T divide
 
 instance CanDiv Integer Dyadic where
-  type DivTypeNoCN Integer Dyadic = Rational
-  divideNoCN a b = divideNoCN a (rational b)
+  type DivType Integer Dyadic = Rational
+  divide a b = divide a (rational b)
 instance CanDiv Dyadic Integer where
-  type DivTypeNoCN Dyadic Integer = Rational
-  divideNoCN a b = divideNoCN (rational a) b
+  type DivType Dyadic Integer = Rational
+  divide a b = divide (rational a) b
 
 instance CanDiv Int Dyadic where
-  type DivTypeNoCN Int Dyadic = Rational
-  divideNoCN a b = divideNoCN a (rational b)
+  type DivType Int Dyadic = Rational
+  divide a b = divide a (rational b)
 instance CanDiv Dyadic Int where
-  type DivTypeNoCN Dyadic Int = Rational
-  divideNoCN a b = divideNoCN (rational a) b
+  type DivType Dyadic Int = Rational
+  divide a b = divide (rational a) b
 
 instance CanDiv Rational Dyadic where
-  type DivTypeNoCN Rational Dyadic = Rational
-  divideNoCN = convertSecond divideNoCN
+  type DivType Rational Dyadic = Rational
+  divide = convertSecond divide
 instance CanDiv Dyadic Rational where
-  type DivTypeNoCN Dyadic Rational = Rational
-  divideNoCN = convertFirst divideNoCN
+  type DivType Dyadic Rational = Rational
+  divide = convertFirst divide
 
 instance
   (CanDiv Dyadic b
-  , CanEnsureCE es b
-  , CanEnsureCE es (DivType Dyadic b)
-  , CanEnsureCE es (DivTypeNoCN Dyadic b)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
-  CanDiv Dyadic (CollectErrors es  b)
+  CanDiv Dyadic (CollectErrors es b)
   where
-  type DivType Dyadic (CollectErrors es  b) =
-    EnsureCE es (DivType Dyadic b)
-  divide = lift2TLCE divide
-  type DivTypeNoCN Dyadic (CollectErrors es  b) =
-    EnsureCE es (DivTypeNoCN Dyadic b)
-  divideNoCN = lift2TLCE divideNoCN
+  type DivType Dyadic (CollectErrors es b) =
+    CollectErrors es (DivType Dyadic b)
+  divide = CE.liftT1 divide
 
 instance
   (CanPow Dyadic b
-  , CanEnsureCE es b
-  , CanEnsureCE es (PowTypeNoCN Dyadic b)
-  , CanEnsureCE es (PowType Dyadic b)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanPow Dyadic (CollectErrors es  b)
   where
-  type PowTypeNoCN Dyadic (CollectErrors es b) =
-    EnsureCE es (PowTypeNoCN Dyadic b)
-  powNoCN = lift2TLCE powNoCN
   type PowType Dyadic (CollectErrors es b) =
-    EnsureCE es (PowType Dyadic b)
-  pow = lift2TLCE pow
+    CollectErrors es (PowType Dyadic b)
+  pow = CE.liftT1 pow
 
 instance
   (CanPow a Dyadic
-  , CanEnsureCE es a
-  , CanEnsureCE es (PowType a Dyadic)
-  , CanEnsureCE es (PowTypeNoCN a Dyadic)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanPow (CollectErrors es a) Dyadic
   where
-  type PowTypeNoCN (CollectErrors es  a) Dyadic =
-    EnsureCE es (PowTypeNoCN a Dyadic)
-  powNoCN = lift2TCE powNoCN
   type PowType (CollectErrors es  a) Dyadic =
-    EnsureCE es (PowType a Dyadic)
-  pow = lift2TCE pow
+    CollectErrors es (PowType a Dyadic)
+  pow = CE.lift1T pow
 
 instance CanTestFinite Dyadic where
   isFinite = isFinite . dyadicMPFloat

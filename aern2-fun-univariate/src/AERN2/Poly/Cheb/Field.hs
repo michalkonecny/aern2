@@ -173,7 +173,7 @@ instance
   , CanEnsureCE es b
   , CanEnsureCE es (DivType (ChPoly c) b)
   , CanEnsureCE es (DivTypeNoCN (ChPoly c) b)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanDiv (ChPoly c) (CollectErrors es  b)
   where
@@ -189,7 +189,7 @@ instance
   , CanEnsureCE es a
   , CanEnsureCE es (DivType a (ChPoly c))
   , CanEnsureCE es (DivTypeNoCN a (ChPoly c))
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanDiv (CollectErrors es a) (ChPoly c)
   where

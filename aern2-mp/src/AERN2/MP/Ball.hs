@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-|
     Module      :  AERN2.MP.Ball
     Description :  Arbitrary precision ball arithmetic
@@ -21,6 +22,7 @@ module AERN2.MP.Ball
   -- * The Ball type
   , MPBall(..), CanBeMPBall, mpBall, cnMPBall, CanBeMPBallP, mpBallP, cnMPBallP
   , reducePrecionIfInaccurate
+  , giveUpIfVeryInaccurate
   {-
   -- * Ball construction/extraction functions
   , endpointsMP, fromEndpointsMP
@@ -49,6 +51,7 @@ import AERN2.MP.Ball.Type
 import AERN2.MP.Ball.Conversions ()
 import AERN2.MP.Ball.Comparisons
 import AERN2.MP.Ball.Field ()
+import AERN2.MP.Ball.Limit ()
 import AERN2.MP.Ball.Elementary
 import AERN2.MP.Ball.PreludeOps ()
 

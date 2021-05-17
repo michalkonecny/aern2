@@ -96,7 +96,7 @@ instance HasAccuracyGuide UnaryBallFun where
 instance CanSetAccuracyGuide UnaryBallFun where
   setAccuracyGuide _ f = f
 
-instance (SuitableForCE es) => CanEnsureCE es UnaryBallFun where
+instance (CanBeErrors es) => CanEnsureCE es UnaryBallFun where
   type EnsureCE es UnaryBallFun = UnaryBallFun
   type EnsureNoCE es UnaryBallFun = UnaryBallFun
   ensureCE _sample_es = id

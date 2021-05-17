@@ -75,7 +75,7 @@ data ChPoly c =
   , chPoly_bounds :: ChPolyBounds c
   }
 
-instance (SuitableForCE es) => CanEnsureCE es (ChPoly c)
+instance (CanBeErrors es) => CanEnsureCE es (ChPoly c)
 
 data ChPolyBounds c =
   ChPolyBounds
@@ -99,7 +99,7 @@ chPolyBounds_valueIfConst (ChPolyBounds pmin pmax)
   | otherwise = getMaybeValueCE $ pmin `union` pmax
 
 
-instance (SuitableForCE es) => CanExtractCE es ChPolyBounds
+instance (CanBeErrors es) => CanExtractCE es ChPolyBounds
   where
   extractCE sample_es (ChPolyBounds pmin pmax) =
     case (maybePmin, maybePmax) of
@@ -109,7 +109,7 @@ instance (SuitableForCE es) => CanExtractCE es ChPolyBounds
     (maybePmin, pminES) = ensureNoCE sample_es pmin
     (maybePmax, pmaxES) = ensureNoCE sample_es pmax
 
-instance (SuitableForCE es) => CanExtractCE es ChPoly
+instance (CanBeErrors es) => CanExtractCE es ChPoly
   where
   extractCE sample_es (ChPoly dom poly acG bnds) =
     do

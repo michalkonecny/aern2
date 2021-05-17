@@ -86,7 +86,7 @@ instance HasAccuracyGuide UnaryModFun where
 instance CanSetAccuracyGuide UnaryModFun where
   setAccuracyGuide _ f = f
 
-instance (SuitableForCE es) => CanEnsureCE es UnaryModFun where
+instance (CanBeErrors es) => CanEnsureCE es UnaryModFun where
   type EnsureCE es UnaryModFun = UnaryModFun
   type EnsureNoCE es UnaryModFun = UnaryModFun
   ensureCE _sample_es = id

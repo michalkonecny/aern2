@@ -19,8 +19,8 @@ data Frac a =
     , frac_dIM          :: a  -- upper bound on 1/Q(x) on domain
   }
 
-instance (SuitableForCE es) => CanEnsureCE es (Frac a)
--- instance (SuitableForCE es) => CanExtractCE es Frac where
+instance (CanBeErrors es) => CanEnsureCE es (Frac a)
+-- instance (CanBeErrors es) => CanExtractCE es Frac where
 --   extractCE sample_es (Frac numer denom dIM) =
 --     Frac <$> (extractCE sample_es numer) <*> (extractCE sample_es denom) <*> dIM
 
