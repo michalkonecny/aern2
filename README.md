@@ -10,9 +10,9 @@ A set of Haskell packages for exact real number computation.
 
 ## Library packages
 
-  * [aern2-mp](aern2-mp/README.md): Multiple-precision ball arithmetic based on MPFR (fairly complete)
+  * [aern2-mp](aern2-mp): Multiple-precision interval arithmetic (fairly complete)
 
-  * [aern2-real](aern2-real/README.md): Cauchy real numbers (fairly complete)
+  * [aern2-real](aern2-real): Cauchy real numbers (fairly complete)
 
   * aern2-fun: Real functions (work in progress, not built by default)
 
