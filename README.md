@@ -6,39 +6,34 @@ A set of Haskell packages for exact real number computation.
 
   * [Installation guide](docs/install.md)
 
-  * run `stack repl aern2/aern2-demos/src/Introduction.hs`
-
-  * follow [documentation for MixedTypesNumPrelude](https://hackage.haskell.org/package/mixed-types-num/docs/MixedTypesNumPrelude.html)
-
-  * read and play with [Introduction.hs](aern2-demos/src/Introduction.hs).
+  * read and follow examples in [aern2-real README](aern2-real/README.md)
 
 ## Library packages
 
-  * [aern2-mp](https://hackage.haskell.org/package/aern2-mp): Multiple-precision ball arithmetic based on MPFR (fairly complete)
+  * [aern2-mp](aern2-mp/README.md): Multiple-precision ball arithmetic based on MPFR (fairly complete)
 
-  * [aern2-real](http://hackage.haskell.org/package/aern2-real): Cauchy real numbers (fairly complete)
+  * [aern2-real](aern2-real/README.md): Cauchy real numbers (fairly complete)
 
-  * aern2-fun: Real functions and their polynomial enclosures (work in progress, not built by default)
+  * aern2-fun: Real functions (work in progress, not built by default)
 
-  * aern2-fun-plot: Plotting of real functions in browser (currently broken)
+  * aern2-fun-univariate: Continuous real functions of one variable and their polynomial enclosures (work in progress, not built by default)
 
 ## Executables
 
-  * [aern2-fnreps](https://github.com/michalkonecny/aern2/tree/master/aern2-fnreps): Benchmark comparison of representations of continuous functions
+  * aern2-fnreps: Benchmarks evaluating various representations of univariate continuous real functions (see branch [fnreps2020](https://github.com/michalkonecny/aern2/tree/fnreps2020/aern2-fnreps))
 
   * `aern2-bench-chart`: Produce performance charts using data from a csv file.  Used internally, eg in `aern2-fnreps` and `aern2-fun`.
 
 ## Significant dependencies
 
+  * [collect-errors](https://hackage.haskell.org/package/collect-errors):
+    Type wrapper `CN` for gracefully propagating numerical errors through expressions
+
   * [mixed-types-num](https://hackage.haskell.org/package/mixed-types-num):
     Bottom-up-typed numerical expressions
 
-  * [hmpfr](https://hackage.haskell.org/package/hmpfr):
-    A binding to the C [MPFR](http://www.mpfr.org/) (Multiple-Precision Floating-point computations with correct Rounding) library
-
-  * [rounded](https://github.com/claudeha/rounded/tree/claude):
-    A newer and faster binding to [MPFR](http://www.mpfr.org/).
-    See [aern2-mp](https://hackage.haskell.org/package/aern2-mp) for information on how to switch to this backend.
+  * [cdar-mBound](https://hackage.haskell.org/package/cdar-mBound):
+    Exact real arithmetic built on floating-point-like intervals based on Haskell `Integer`s.  AERN2 currently uses the types `Dyadic` and `Approx`.
 
 ## Other references
 

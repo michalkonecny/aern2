@@ -13,9 +13,11 @@ This package provides the following two data types:
 The type `MPBall` has instances of both [mixed-types-num](https://hackage.haskell.org/package/mixed-types-num) type classes such as `CanAdd`, `CanSqrt` as well as with traditional Prelude type classes such as `Ord`, `Num` and `Floating`.
 The type `Dyadic` also has an appropriate subset of such instances.
 
+Package [aern2-real](../aern2-real/README.md) provides an arithmetic of exact real numbers as converging lazy sequences of `MPBall`s of increasing precision.  Exact real numbers offer additional convenience and readability to validated numeric programming.
+
 ### Examples
 
-First, let us test interval arithmetic with Prelude operations:
+First, let us test interval arithmetic with **Prelude** operations:
 
     $ stack ghci aern2-mp:lib --no-load --ghci-options AERN2.MP
     *AERN2.MP> import Prelude
@@ -44,7 +46,7 @@ First, let us test interval arithmetic with Prelude operations:
     ...> pi100 == pi100
     *** Exception: Failed to decide equality of MPBalls.  If you switch to MixedTypesNumPrelude instead of Prelude, comparison of MPBalls returns Kleenean instead of Bool.
 
-Some things do not work with Prelude. Let us try using MixedTypesNumPrelude operations:
+Some things do not work with Prelude. Let us try using **MixedTypesNumPrelude** operations:
 
     $ stack ghci aern2-mp:lib --no-load --ghci-options AERN2.MP
     *AERN2.MP> import MixedTypesNumPrelude
@@ -66,15 +68,13 @@ Some things do not work with Prelude. Let us try using MixedTypesNumPrelude oper
     ...> pi100 == pi100
     TrueOrFalse
 
-Package [aern2-real](https://github.com/michalkonecny/aern2) provides an arithmetic of exact real numbers as converging lazy sequences of `MPBall`s of increasing precision.
-
 ### Internal types and backends
 
 The type `MPBall` internally uses the type:
 
 * `MPFloat`: arbitrary-precision floats with both upwards and downwards-rounded arithmetic operations such as `*^` and `*.`
 
-The package uses [this fork](https://github.com/michalkonecny/cdar) of [cdar](https://github.com/jensblanck/cdar) as its backend for `Dyadic` and `MPFloat`.
+The package uses [cdar-mBound](https://hackage.haskell.org/package/cdar-mBound), a fork of [cdar](https://github.com/jensblanck/cdar) as its backend for `Dyadic` and `MPFloat`.
 
 In previous versions, there was an MPFR backend via [rounded](https://hackage.haskell.org/package/rounded).  This may be added again in future.
 

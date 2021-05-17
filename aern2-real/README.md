@@ -8,7 +8,7 @@ This package provides the following two data types:
 
 * `CReal`:  Exact real numbers via lazy sequences of interval approximations
   
-* `CKleenean`: Lazy Kleeneans, naturally arising from comparisons of `CReal`'s
+* `CKleenean`: Lazy Kleeneans, naturally arising from comparisons of `CReal`s
   
 The type `CReal` has instances of both [mixed-types-num](https://hackage.haskell.org/package/mixed-types-num) type classes such as `CanAdd`, `CanSqrt` as well as with traditional Prelude type classes such as `Ord`, `Num` and `Floating`.
 The type `CKleenean` supports the usual Boolean operations.
@@ -81,4 +81,30 @@ Some things do not work with Prelude. Let us try using MixedTypesNumPrelude oper
     ...> (pi == pi + 2^(-100)) ? (prec 1000)
     CertainFalse
 
-The approximations obtained using `? (bits n)` or `? (prec p)` are intervals of type `CN MPBall` from package [aern2-mp](https://github.com/michalkonecny/aern2).  This type is also used internally for all `CReal` arithmetic.  Package aern2-mp](https://github.com/michalkonecny/aern2) is tested against a fairly complete hspec/QuickCheck specification of algebraic properties for `MPBall` arithmetic.
+    ...> 2^0.5
+    {?(prec 36): [1.414213562371930730340852514178195642186126256312482171419747717302107387071785637999710161238908... ± ~1.0305e-11 ~2^(-36)]}
+
+## Partial functions and error handling
+
+Errors due to invalid input, such as division by zero or logarithm of a negative number can be only semi-detected in the same way as comparisons can be only semi-decided.
+Therefore, an invalid input gives a `CReal` leads to errors or potential errors only when extracting an approximation:
+
+    ...> bad1 = pi/0
+    ...> bad1 ? (prec 100)
+    {{ERROR: division by 0}}}
+
+    ...> bad2 = 1/(pi-pi)
+    ...> bad2 ? (prec 100)
+    {{POTENTIAL ERROR: division by 0}}
+
+When we are sure that potential errors are harmless, we can clear them:
+
+    ...> ok3 = sqrt (pi-pi)
+    ...> ok3 ? (prec 10)
+    [0.022097086912079610143710452219156792352805496193468570709228515625 ± ~2.2097e-2 ~2^(-5)]{{POTENTIAL ERROR: out of domain: negative sqrt argument}}
+    ...> clearPotentialErrors $ ok3 ? (prec 10)
+    [0.022097086912079610143710452219156792352805496193468570709228515625 ± ~2.2097e-2 ~2^(-5)]
+
+## Specification and tests
+
+The approximations obtained using `? (bits n)` or `? (prec p)` are intervals of type `CN MPBall` from package [aern2-mp](../aern2-mp/README.md).  This type is also used internally for all `CReal` arithmetic.  The `MPBall` arithmetic is tested against a fairly complete hspec/QuickCheck specification of algebraic properties.
