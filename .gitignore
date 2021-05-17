@@ -1,9 +1,8 @@
 .stack-work
 dist
 .dist*
-mixed-types-num
-docs/Makefile
+stack.yaml.lock
 aern2-fun-plot/client/elm-stuff
 aern2-fun-plot/aern2-fun-plot-example
 aern2-fun-plot/assets/index.html
-docs/haddock*
+

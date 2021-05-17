@@ -16,7 +16,8 @@
 #  name: custom-snapshot
 #  location: "./custom-snapshot.yaml"
 
-resolver: lts-12.17
+resolver: 
+  url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/2.yaml
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -37,35 +38,34 @@ resolver: lts-12.17
 # non-dependency (i.e. a user package), and its test suites and benchmarks
 # will not be run. This is useful for tweaking upstream packages.
 packages:
-# - 'mixed-types-num'
-- 'aern2/aern2-mp'
-- 'aern2/aern2-real'
-- 'aern2/aern2-demos'
-# - 'aern2/aern2-fun'
-# - 'aern2/aern2-fnreps'
-# - 'aern2/aern2-bench-chart'
-# - 'haskell-reals-comparison'
-# - 'aern2/ireal-benchOp'
-# - 'external/cdar'
+# - 'aern2-bench-chart'
+- 'aern2-mp'
+- 'aern2-real'
+# - 'aern2-demos'
+# - 'aern2-erc'
+# - 'aern2-net'
+# - 'aern2-fun'
+# - 'aern2-fun-univariate'
+# - 'aern2-fnreps'
+# - 'aern2-mfun'
 
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
-- rounded-0.1.0.1
-- long-double-0.1
-- hgmp-0.1.1
-# - ireal-0.2.3
-# - wai-make-assets-0.2
-# - elm-bridge-0.5.0
-# - Chart-1.9
-# - Chart-diagrams-1.9
-# - SVGFonts-1.6.0.3
+- cdar-mBound-0.1.0.1
+- collect-errors-0.1.4.0
+- mixed-types-num-0.5.3.0
+# - memoize-0.8.1
+# - rounded-0.1.0.1
+# - long-double-0.1
+# - hgmp-0.1.1
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
-flags:
-  aern2-mp:
-    usecdar: false
+# flags:
+#   aern2-mp:
+#     UseCDAR: true
+#    UseCDAR: false
 
 # Extra package databases containing global packages
 extra-package-dbs: []
