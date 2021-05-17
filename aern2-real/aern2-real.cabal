@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 21c39ca69527c05b7bafa37d77ea83f6641f6f34cc9d75a28c3eaaa42b0946dd
+-- hash: b57c88210a794528b882a16827029297ad35afce7480417eae1b92b8862d8853
 
 name:           aern2-real
 version:        0.2.0.0
@@ -17,6 +17,7 @@ author:         Michal Konecny
 maintainer:     mikkonecny@gmail.com
 copyright:      2015-2021 Michal Konecny
 license:        BSD3
+license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     README.md
