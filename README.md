@@ -14,15 +14,15 @@ A set of Haskell packages for exact real number computation.
 
   * [aern2-real](aern2-real): Cauchy real numbers (fairly complete)
 
-  * aern2-fun: Real functions (work in progress, not built by default)
+  * aern2-fun: Real functions (currently broken, not built by default)
 
-  * aern2-fun-univariate: Continuous real functions of one variable and their polynomial enclosures (work in progress, not built by default)
+  * aern2-fun-univariate: Continuous real functions of one variable and their polynomial enclosures (currently broken, not built by default)
+
+  * other packages (currently broken)
 
 ## Executables
 
-  * aern2-fnreps: Benchmarks evaluating various representations of univariate continuous real functions (see branch [fnreps2020](https://github.com/michalkonecny/aern2/tree/fnreps2020/aern2-fnreps))
-
-  * `aern2-bench-chart`: Produce performance charts using data from a csv file.  Used internally, eg in `aern2-fnreps` and `aern2-fun`.
+  * aern2-fnreps: Benchmarks evaluating various representations of univariate continuous real functions (working version on branch [fnreps2020](https://github.com/michalkonecny/aern2/tree/fnreps2020/aern2-fnreps))
 
 ## Significant dependencies
 
