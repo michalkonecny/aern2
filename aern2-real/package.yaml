@@ -17,7 +17,7 @@ category:            Math
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/michalkonecny/aern2/aern2-real#readme>
+description:         Please see the README on GitHub at <https://github.com/michalkonecny/aern2/#readme>
 
 dependencies:
 - base == 4.*

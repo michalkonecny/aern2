@@ -4,12 +4,12 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 96ef6431503892e5550f703466a2c3a6e2dd3dd6bc1f692adfb1ad9ab7a0cd17
+-- hash: 21c39ca69527c05b7bafa37d77ea83f6641f6f34cc9d75a28c3eaaa42b0946dd
 
 name:           aern2-real
 version:        0.2.0.0
 synopsis:       Real numbers as sequences of MPBalls
-description:    Please see the README on GitHub at <https://github.com/michalkonecny/aern2/aern2-real#readme>
+description:    Please see the README on GitHub at <https://github.com/michalkonecny/aern2/#readme>
 category:       Math
 homepage:       https://github.com/michalkonecny/aern2#readme
 bug-reports:    https://github.com/michalkonecny/aern2/issues
