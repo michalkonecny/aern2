@@ -181,7 +181,7 @@ approxEqualWithArgs precLoss args l r =
       ]
   argsLR = args ++ [(l, one, "L"), (r, one, "R"), (abs(r-.l), zero, "|R-L|")]
   e = 0 - maxStepLoss - precLoss
-  maxStepLoss = sum $ map (max 0) $ (catMaybes $ map stepLoss argsLR)
+  maxStepLoss = sum $ map (max 1) $ (catMaybes $ map stepLoss argsLR)
   stepLoss (arg, argD, _argS) =
     case (getNormLog argD, getErrorStepSizeLog arg) of
       (NormBits dbits, Just stepBits) -> Just $ dbits + stepBits
@@ -370,7 +370,7 @@ specMPFloat =
         property $ \ (x_ :: MPFloat) ->
           let 
             x = enforceRangeMP (Just 0, Nothing) x_ 
-            (=~~=) = approxEqualWithArgs 6 [(x,(one/^(sqrtUp x))/^two,"x")]
+            (=~~=) = approxEqualWithArgs 7 [(x,(one/^(sqrtUp x))/^two,"x")]
             infix 4 =~~=
           in
           sqrtDown x =~~= sqrtUp x
@@ -381,7 +381,7 @@ specMPFloat =
       it "sqrt(x)^2 ~ x" $ do
         property $ \ (x_ :: MPFloat) ->
           let x = enforceRangeMP (Just 0, Nothing) x_ in
-          (sqrtDown x) *. (sqrtDown x) <=% x
+          (max zero $ sqrtDown x) *. (max zero $ sqrtDown x) <=% x
           &&
           (sqrtUp x) *^ (sqrtUp x) >=% x
     describe "approximate exp" $ do
