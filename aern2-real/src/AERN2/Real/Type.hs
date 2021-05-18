@@ -4,7 +4,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-|
     Module      :  AERN2.Real.Type
-    Description :  The type of Cauchy real numbers
+    Description :  The type of constructive real numbers
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -12,7 +12,7 @@
     Stability   :  experimental
     Portability :  portable
 
-    The type of Cauchy real numbers
+    The type of constructive real numbers using convergent sequences of intervals.
 -}
 module AERN2.Real.Type where
 
@@ -145,6 +145,9 @@ instance ConvertibleExactly Int CReal where
 
 instance ConvertibleExactly Dyadic CReal where
   safeConvertExactly = safeConvertExactly . rational
+
+instance ConvertibleExactly (WithAnyPrec (CN MPBall)) CReal where
+  safeConvertExactly (WithAnyPrec wcp) = Right $ crealFromWithCurrentPrec wcp
 
 _example1 :: CReal
 _example1 = creal 1.0

@@ -1,5 +1,5 @@
 name:                aern2-real
-version:             0.2.0.0
+version:             0.2.1.0
 github:              "michalkonecny/aern2"
 license:             BSD3
 author:              "Michal Konecny"
@@ -26,7 +26,7 @@ dependencies:
 - collect-errors >= 0.1
 - mixed-types-num >= 0.5.1
 - integer-logarithms
-- aern2-mp >= 0.2
+- aern2-mp >= 0.2.1
 
 default-extensions:
 - RebindableSyntax,

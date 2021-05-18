@@ -1,5 +1,7 @@
 # Change log for aern2-real
 
+* v 0.2.1 2021-05-18
+  * add conversion from WithAnyPrec
 * v 0.2.0 2021-05-17
   * moving Arrow-based functionality to package aern2-net
   * replacing Arrow-based sequences by list-based sequences
