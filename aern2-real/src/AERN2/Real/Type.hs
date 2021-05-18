@@ -75,8 +75,14 @@ cseqFromWithCurrentPrec (withCurrentP :: (forall p. (KnownNat p) => WithCurrentP
   where
   withP p = runWithPrec p withCurrentP :: CN b
 
-crealFromWithCurrentPrec :: (forall p. (KnownNat p) => WithCurrentPrec (CN MPBall) p) -> CReal
-crealFromWithCurrentPrec = cseqFromWithCurrentPrec
+{- Error handling -}
+
+instance CN.CanTakeErrors CN.NumErrors (CSequence t) where
+  takeErrors es (CSequence s) = CSequence $ map (CN.takeErrors es) s
+  takeErrorsNoValue es = CSequence $ repeat (CN.takeErrorsNoValue es)
+
+instance CN.CanClearPotentialErrors (CSequence t) where
+  clearPotentialErrors (CSequence s) = CSequence $ map clearPotentialErrors s
 
 {- Cauchy real numbers -}
 
@@ -147,7 +153,7 @@ instance ConvertibleExactly Dyadic CReal where
   safeConvertExactly = safeConvertExactly . rational
 
 instance ConvertibleExactly (WithAnyPrec (CN MPBall)) CReal where
-  safeConvertExactly (WithAnyPrec wcp) = Right $ crealFromWithCurrentPrec wcp
+  safeConvertExactly (WithAnyPrec wcp) = Right $ cseqFromWithCurrentPrec wcp
 
 _example1 :: CReal
 _example1 = creal 1.0

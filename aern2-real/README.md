@@ -160,7 +160,9 @@ When we are sure that potential errors are harmless, we can clear them:
 ...> ok3 = sqrt (pi-pi)
 ...> ok3 ? (prec 10)
 [0.022097086912079610143710452219156792352805496193468570709228515625 ± ~2.2097e-2 ~2^(-5)]{{POTENTIAL ERROR: out of domain: negative sqrt argument}}
-...> clearPotentialErrors $ ok3 ? (prec 10)
+
+...> ok4 = clearPotentialErrors $ sqrt (pi-pi)
+...> ok4 ? (prec 10)
 [0.022097086912079610143710452219156792352805496193468570709228515625 ± ~2.2097e-2 ~2^(-5)]
 ```
 
