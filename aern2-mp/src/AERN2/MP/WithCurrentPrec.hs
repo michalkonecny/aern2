@@ -29,12 +29,12 @@ module AERN2.MP.WithCurrentPrec
 )
 where
 
-import qualified MixedTypesNumPrelude as MxP
-import Prelude
+import MixedTypesNumPrelude
+import qualified Prelude as P
 -- import Text.Printf
 
 -- import Text.Printf
-import Numeric.CollectErrors (CN, cn, NumErrors, CanTakeErrors(..))
+import Numeric.CollectErrors (NumErrors, CanTakeErrors(..))
 -- import qualified Numeric.CollectErrors as CN
 
 import Data.Proxy
@@ -80,7 +80,7 @@ deriving instance (CanTakeErrors NumErrors t) => (CanTakeErrors NumErrors (WithC
 
 runWithPrec :: Precision -> (forall n. (KnownNat n) => WithCurrentPrec t n) -> t
 runWithPrec p (wfp :: (forall n. (KnownNat n) => WithCurrentPrec t n)) = 
-    reifyNat (MxP.integer p) withNat
+    reifyNat (integer p) withNat
     where
     withNat :: KnownNat n => Proxy n -> t
     withNat (_ :: Proxy n) = 
@@ -92,73 +92,73 @@ runWithPrec p (wfp :: (forall n. (KnownNat n) => WithCurrentPrec t n)) =
 --     add (WithCurrentPrec a1) (WithCurrentPrec a2) = WithCurrentPrec $ a1 + a2
 
 instance 
-    (MxP.HasOrderAsymmetric t1 t2)
+    (HasOrderAsymmetric t1 t2)
     =>
-    MxP.HasOrderAsymmetric (WithCurrentPrec t1 p1) (WithCurrentPrec t2 p2) 
+    HasOrderAsymmetric (WithCurrentPrec t1 p1) (WithCurrentPrec t2 p2) 
     where
-    type OrderCompareType (WithCurrentPrec t1 p1) (WithCurrentPrec t2 p2) = MxP.OrderCompareType t1 t2
-    greaterThan (WithCurrentPrec v1) (WithCurrentPrec v2) = MxP.greaterThan v1 v2
-    lessThan (WithCurrentPrec v1) (WithCurrentPrec v2) = MxP.lessThan v1 v2
-    geq (WithCurrentPrec v1) (WithCurrentPrec v2) = MxP.geq v1 v2
-    leq (WithCurrentPrec v1) (WithCurrentPrec v2) = MxP.leq v1 v2
+    type OrderCompareType (WithCurrentPrec t1 p1) (WithCurrentPrec t2 p2) = OrderCompareType t1 t2
+    greaterThan (WithCurrentPrec v1) (WithCurrentPrec v2) = greaterThan v1 v2
+    lessThan (WithCurrentPrec v1) (WithCurrentPrec v2) = lessThan v1 v2
+    geq (WithCurrentPrec v1) (WithCurrentPrec v2) = geq v1 v2
+    leq (WithCurrentPrec v1) (WithCurrentPrec v2) = leq v1 v2
+
+instance
+    (CanMinMaxAsymmetric t1 t2, p1 ~ p2)
+    =>
+    CanMinMaxAsymmetric (WithCurrentPrec t1 p1) (WithCurrentPrec t2 p2) 
+    where
+    type MinMaxType (WithCurrentPrec t1 p1) (WithCurrentPrec t2 p2) = WithCurrentPrec (MinMaxType t1 t2) p1
+    min (WithCurrentPrec v1) (WithCurrentPrec v2) = WithCurrentPrec $ min v1 v2
+    max (WithCurrentPrec v1) (WithCurrentPrec v2) = WithCurrentPrec $ max v1 v2
+
+instance P.Eq t => P.Eq (WithCurrentPrec t p) where
+    (==) = lift2P (P.==)
+instance P.Ord t => P.Ord (WithCurrentPrec t p) where
+    compare = lift2P P.compare
 
 instance 
-    (MxP.CanMinMaxAsymmetric t1 t2, p1 ~ p2)
-    =>
-    MxP.CanMinMaxAsymmetric (WithCurrentPrec t1 p1) (WithCurrentPrec t2 p2) 
-    where
-    type MinMaxType (WithCurrentPrec t1 p1) (WithCurrentPrec t2 p2) = WithCurrentPrec (MxP.MinMaxType t1 t2) p1
-    min (WithCurrentPrec v1) (WithCurrentPrec v2) = WithCurrentPrec $ MxP.min v1 v2
-    max (WithCurrentPrec v1) (WithCurrentPrec v2) = WithCurrentPrec $ MxP.max v1 v2
-
-instance Eq t => Eq (WithCurrentPrec t p) where
-    (==) = lift2P (==)
-instance Ord t => Ord (WithCurrentPrec t p) where
-    compare = lift2P compare
-
-instance 
-    (HasCurrentPrecision p, Num t, ConvertibleWithPrecision Integer t) 
+    (HasCurrentPrecision p, P.Num t, ConvertibleWithPrecision Integer t) 
     => 
-    Num (WithCurrentPrec t p) 
+    P.Num (WithCurrentPrec t p) 
     where
     fromInteger n = r
         where   
         r = WithCurrentPrec $ convertP (getCurrentPrecision r) n
-    negate = lift1 negate
-    abs = lift1 abs
-    (+) = lift2 (+)
-    (*) = lift2 (*)
-    signum = lift1 signum
+    negate = lift1 P.negate
+    abs = lift1 P.abs
+    (+) = lift2 (P.+)
+    (*) = lift2 (P.*)
+    signum = lift1 P.signum
 
 instance 
-    (HasCurrentPrecision p, Fractional t
+    (HasCurrentPrecision p, P.Fractional t
     , ConvertibleWithPrecision Integer t, ConvertibleWithPrecision Rational t) 
     => 
-    Fractional (WithCurrentPrec t p) 
+    P.Fractional (WithCurrentPrec t p) 
     where
     fromRational q = r
         where   
         r = WithCurrentPrec $ convertP (getCurrentPrecision r) q
-    recip = lift1 recip
-    (/) = lift2 (/)
+    recip = lift1 P.recip
+    (/) = lift2 (P./)
 
-instance (HasCurrentPrecision p) => Floating (WithCurrentPrec (CN MPBall) p) where
+instance (HasCurrentPrecision p) => P.Floating (WithCurrentPrec (CN MPBall) p) where
     pi = r 
         where
         r = WithCurrentPrec $ cn $ piBallP (getCurrentPrecision r)
-    sqrt = lift1 sqrt
-    exp = lift1 exp
-    log = lift1 log
-    sin = lift1 sin
-    cos = lift1 cos
-    asin = lift1 asin
-    acos = lift1 acos
-    atan = lift1 atan
-    sinh = lift1 sinh
-    cosh = lift1 cosh
-    asinh = lift1 asinh
-    acosh = lift1 acosh
-    atanh = lift1 atanh
+    sqrt = lift1 P.sqrt
+    exp = lift1 P.exp
+    log = lift1 P.log
+    sin = lift1 P.sin
+    cos = lift1 P.cos
+    asin = lift1 P.asin
+    acos = lift1 P.acos
+    atan = lift1 P.atan
+    sinh = lift1 P.sinh
+    cosh = lift1 P.cosh
+    asinh = lift1 P.asinh
+    acosh = lift1 P.acosh
+    atanh = lift1 P.atanh
 
 instance 
     (HasLimits ix (CN MPBall -> CN MPBall)
@@ -172,7 +172,7 @@ instance
         WithCurrentPrec $ limit (snop) $ sample
         where
         sample :: CN MPBall
-        sample = setPrecision (getCurrentPrecision sampleP) 0 
+        sample = setPrecision (getCurrentPrecision sampleP) $ cn $ mpBall 0 
         sampleP :: WithCurrentPrec MPBall p
         sampleP = error "sampleP is not defined, it is only a type proxy"
         snop :: ix -> (CN MPBall -> CN MPBall)
@@ -188,10 +188,10 @@ lift2P :: (t1 -> t2 -> t3) -> (WithCurrentPrec t1 p) -> (WithCurrentPrec t2 p) -
 lift2P f (WithCurrentPrec v1) (WithCurrentPrec v2) = f v1 v2
 
 _example1 :: CN MPBall
-_example1 = runWithPrec (prec 1000) pi
+_example1 = runWithPrec (prec 1000) P.pi
 
 _example2 :: CN MPBall
-_example2 = runWithPrec (prec 1000) $ pi - pi
+_example2 = runWithPrec (prec 1000) $ P.pi P.- P.pi
 
 _example3 :: CN MPBall
-_example3 = runWithPrec (prec 1000) $ sqrt 2
+_example3 = runWithPrec (prec 1000) $ P.sqrt (P.fromInteger 2)
