@@ -24,6 +24,7 @@
 module AERN2.MP.WithCurrentPrec
 (
     WithCurrentPrec(..), runWithPrec, HasCurrentPrecision(..)
+    , WithAnyPrec(..)
     -- , _example1 , _example2 , _example3
 )
 where
@@ -51,6 +52,21 @@ class HasCurrentPrecision p where
 
 instance KnownNat n => HasCurrentPrecision n where
     getCurrentPrecision p = max (prec 2) . min maximumPrecision $ prec (natVal p)
+
+{-|
+
+An existential type wrapper for convenient conversions, eg using aern2-real:
+
+> _x :: KnownNat p => WithCurrentPrec (CN MPBall) p
+> _x = undefined
+>
+> _r_x :: CReal
+> _r_x = creal $ WithAnyPrec _x
+
+-}
+
+newtype WithAnyPrec t = WithAnyPrec (forall p. (KnownNat p) => WithCurrentPrec t p)
+
 
 -- data PrecAdd10 (p :: *)
 
