@@ -17,6 +17,7 @@ module AERN2.MP.Float.Type
    -- * MPFloat numbers and their basic operations
    MPFloat
    , showMPFloat
+   , getErrorStepSizeLog
    , setPrecisionCEDU
    , p2cdarPrec
    , getBoundsCEDU
@@ -73,6 +74,14 @@ instance CanSetPrecision MPFloat where
 
 setPrecisionCEDU :: Precision -> MPFloat -> BoundsCEDU MPFloat
 setPrecisionCEDU pp = getBoundsCEDU . MPLow.enforceMB . MPLow.setMB (p2cdarPrec pp)
+
+{-|
+  Returns @s@ such that @2^s@ is the distance to the nearest other number with the same precision.
+  Returns Nothing for Bottom.
+-}
+getErrorStepSizeLog :: MPLow.Approx -> Maybe Int
+getErrorStepSizeLog (MPLow.Approx _ _ _ s) = Just $ s
+getErrorStepSizeLog _ = Nothing -- represents +Infinity
 
 instance HasNorm MPFloat where
   getNormLog (MPLow.Approx _ m _ s) = (getNormLog m) + (integer s)
