@@ -68,12 +68,15 @@ instance HasPrecision MPFloat where
   getPrecision (MPLow.Approx mb _ _ _) = prec (P.toInteger $ mb)
   getPrecision MPLow.Bottom = error "illegal MPFloat (Bottom)"
   
-
 instance CanSetPrecision MPFloat where
   setPrecision p = ceduCentre . setPrecisionCEDU p
 
 setPrecisionCEDU :: Precision -> MPFloat -> BoundsCEDU MPFloat
 setPrecisionCEDU pp = getBoundsCEDU . MPLow.enforceMB . MPLow.setMB (p2cdarPrec pp)
+
+instance HasNorm MPFloat where
+  getNormLog (MPLow.Approx _ m _ s) = (getNormLog m) + (integer s)
+  getNormLog MPLow.Bottom = error "getNormLog undefined for Bottom"
 
 {-|
   Returns @s@ such that @2^s@ is the distance to the nearest other number with the same precision.
@@ -82,7 +85,3 @@ setPrecisionCEDU pp = getBoundsCEDU . MPLow.enforceMB . MPLow.setMB (p2cdarPrec 
 getErrorStepSizeLog :: MPLow.Approx -> Maybe Int
 getErrorStepSizeLog (MPLow.Approx _ _ _ s) = Just $ s
 getErrorStepSizeLog _ = Nothing -- represents +Infinity
-
-instance HasNorm MPFloat where
-  getNormLog (MPLow.Approx _ m _ s) = (getNormLog m) + (integer s)
-  getNormLog MPLow.Bottom = error "getNormLog undefined for Bottom"

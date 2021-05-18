@@ -127,7 +127,16 @@ instance CanTestPosNeg MPFloat
 
 {- min, max -}
 
-instance CanMinMaxAsymmetric MPFloat MPFloat
+instance CanMinMaxAsymmetric MPFloat MPFloat where
+  type MinMaxType MPFloat MPFloat = MPFloat
+  max x y
+    | isNaN x = x
+    | isNaN y = y
+    | otherwise = P.max x y
+  min x y
+    | isNaN x = x
+    | isNaN y = y
+    | otherwise = P.min x y
 
 {- constants -}
 
