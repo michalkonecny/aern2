@@ -4,7 +4,6 @@ import MixedTypesNumPrelude
 import qualified Prelude as P
 import Language.SMT2.Parser
 import Language.SMT2.Syntax
-import qualified Data.Text as T
 import qualified Data.Text.IO
 import qualified Data.Text.Internal
 import System.IO.Unsafe
@@ -21,9 +20,7 @@ import Data.Char (digitToInt)
 import Data.Word
 import qualified Data.ByteString.Lazy as B
 import Data.Binary.Get
-import Data.Maybe (mapMaybe, isJust, maybe)
-
-import qualified Data.List as L
+import Data.Maybe (mapMaybe)
 
 import AERN2.BoxFunMinMax.VarMap
 import AERN2.BoxFunMinMax.Expressions.DeriveBounds
@@ -255,7 +252,7 @@ termToE (LD.Application (LD.Variable operator) [op1, op2]) =
     (_, _) -> Nothing
 
 -- Float bits to Rational
-termToE (LD.Application (LD.Variable "fp") o@[LD.Variable sSign, LD.Variable sExponent, LD.Variable sMantissa]) =
+termToE (LD.Application (LD.Variable "fp") [LD.Variable sSign, LD.Variable sExponent, LD.Variable sMantissa]) =
   let
     bSign     = drop 2 sSign
     bExponent = drop 2 sExponent
@@ -305,8 +302,7 @@ termToE (LD.Application (LD.Variable operator) [roundingMode, op1, op2]) =
             _        -> Nothing
         Nothing -> Nothing
     (_, _) -> Nothing
-
-termToE (LD.Variable var) = Just $ Var var
+    
 termToE _ = Nothing
 
 termsToF :: [LD.Expression] -> [F]
@@ -348,8 +344,8 @@ determineFloatTypeE (Float32 r e)     varTypeMap  = case determineFloatTypeE e v
 determineFloatTypeE (Float64 r e)     varTypeMap  = case determineFloatTypeE e varTypeMap of
                                                       Just p -> Just $ Float64 r p
                                                       Nothing -> Nothing
-determineFloatTypeE (Var v)           varTypeMap  = Just (Var v)
-determineFloatTypeE (Lit n)           varTypeMap  = Just (Lit n)
+determineFloatTypeE (Var v)           _           = Just (Var v)
+determineFloatTypeE (Lit n)           _           = Just (Lit n)
 
 -- |Tries to determine whether a Float operation is single or double precision
 -- by searching for the type of all variables appearing in the function. If the
@@ -441,13 +437,6 @@ deriveVCRanges vc@(FConn Impl contextCNF goal) =
   where
     (derivedVarMap, underivableVariables) = deriveBounds vc
 
-    -- FConn And good1 (FConn And good2 bad)
-    -- FConn And good1 (FConn And good2 good3)
-    -- FConn And good1 (FConn And bad good2)
-    -- FConn And bad (FConn And good2 good3)
-    -- FConn And bad (FConn And bad bad)
-    -- FConn And bad (FConn And bad good)
-
     filterCNF :: F -> Maybe F
     filterCNF (FConn And f1 f2) = 
       if fContainsVars underivableVariables f1 
@@ -472,6 +461,7 @@ deriveVCRanges vc@(FConn Impl contextCNF goal) =
     fContainsVars vars (FConn _ f1 f2)  = fContainsVars vars f1 || fContainsVars vars f2
     fContainsVars vars (FComp _ e1 e2)  = eContainsVars vars e1 || eContainsVars vars e2
     fContainsVars vars (FNot f)         = fContainsVars vars f
+deriveVCRanges _ = Nothing
 
 -- |Convert a VC to ECNF, eliminating any floats. 
 eliminateFloatsAndConvertVCToECNF :: F -> VarMap -> [[E]]
