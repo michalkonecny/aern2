@@ -135,11 +135,17 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) = -- Two param operat
             _     -> Nothing
         (Just f1, _) ->
           case (operator, op2) of
-            ("=", LD.Variable "true") -> Just f1 -- If some f1 equals true, return f1
+            ("=", LD.Variable "true")                                                          -> Just f1 -- If some f1 equals true, return f1
+            ("=>", LD.Application (LD.Variable "=") [LD.Variable "false", LD.Variable "true"]) -> Just (FNot f1) -- If f1 implies false, negate f1
+            ("=>", LD.Application (LD.Variable "=") [LD.Variable "true", LD.Variable "false"]) -> Just (FNot f1)
+            ("=>", LD.Application (LD.Variable "=") [LD.Variable "false"])                     -> Just (FNot f1)
             (_, _) -> Nothing
         (_, Just f2) ->
           case (operator, op1) of
-            ("=", LD.Variable "true") -> Just f2 -- If some f2 equals true, return f2
+            ("=", LD.Variable "true")                                                          -> Just f2 -- If some f2 equals true, return f2
+            ("=>", LD.Application (LD.Variable "=") [LD.Variable "false", LD.Variable "true"]) -> Just (FNot f2) -- If f2 implies false, negate f2
+            ("=>", LD.Application (LD.Variable "=") [LD.Variable "true", LD.Variable "false"]) -> Just (FNot f2)
+            ("=>", LD.Application (LD.Variable "=") [LD.Variable "false"])                     -> Just (FNot f2)
             (_, _) -> Nothing
         -- Parse ite where it is used as an expression
         (_, _) ->
@@ -190,7 +196,7 @@ termToF _ = Nothing
 
 termToE :: LD.Expression -> Maybe E
 -- Symbols/Literals
-termToE (LD.Variable var) = Just $ Var var
+termToE (LD.Variable var) = if var `notElem` ["true", "false"] then Just $ Var var else Nothing
 termToE (LD.Number   num) = Just $ Lit num
 -- one param functions
 termToE (LD.Application (LD.Variable operator) [op]) =
@@ -302,7 +308,7 @@ termToE (LD.Application (LD.Variable operator) [roundingMode, op1, op2]) =
             _        -> Nothing
         Nothing -> Nothing
     (_, _) -> Nothing
-    
+
 termToE _ = Nothing
 
 termsToF :: [LD.Expression] -> [F]
