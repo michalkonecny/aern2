@@ -101,12 +101,13 @@ simplifyE e                        = e
 
 simplifyF :: F -> F
 simplifyF f@(FConn Or (FComp Lt f1l f1r) (FComp Eq f2l f2r)) = if f1l P.== f2l P.&& f1r P.== f2r then FComp Le f1l f1r else f
-simplifyF (FConn Or (FComp Eq f1l f1r) (FComp Lt f2l f2r)) = simplifyF $ FConn Or (FComp Lt f2l f2r) (FComp Eq f1l f1r)
+simplifyF (FConn Or (FComp Eq f1l f1r) (FComp Lt f2l f2r))   = simplifyF $ FConn Or (FComp Lt f2l f2r) (FComp Eq f1l f1r)
 simplifyF f@(FConn Or (FComp Gt f1l f1r) (FComp Eq f2l f2r)) = if f1l P.== f2l P.&& f1r P.== f2r then FComp Ge f1l f1r else f
-simplifyF (FConn Or (FComp Eq f1l f1r) (FComp Gt f2l f2r)) = simplifyF $ FConn Or (FComp Gt f2l f2r) (FComp Eq f1l f1r)
-simplifyF (FConn op f1 f2) = FConn op (simplifyF f1) (simplifyF f2)
-simplifyF (FComp op e1 e2) = FComp op (simplifyE e1) (simplifyE e2) -- Call simplifyE here?
-simplifyF (FNot f) = FNot (simplifyF f)
+simplifyF (FConn Or (FComp Eq f1l f1r) (FComp Gt f2l f2r))   = simplifyF $ FConn Or (FComp Gt f2l f2r) (FComp Eq f1l f1r)
+simplifyF (FConn op f1 f2)                                   = FConn op (simplifyF f1) (simplifyF f2)
+simplifyF (FComp op e1 e2)                                   = FComp op (simplifyE e1) (simplifyE e2)
+simplifyF (FNot (FNot f))                                    = simplifyF f
+simplifyF (FNot f)                                           = FNot (simplifyF f)
 
 simplifyECNF :: [[E]] -> [[E]]
 simplifyECNF = map (map simplifyE) 
@@ -159,3 +160,61 @@ computeEDisjunction es varMap = map (`computeE` varMap) es
 
 computeECNF :: [[E]] -> [(String, Rational)] -> [[CN Double]]
 computeECNF cnf varMap = map (`computeEDisjunction` varMap) cnf
+
+-- |Show an expression in a human-readable format
+-- Rationals are converted into doubles
+prettyShowE :: E -> String
+prettyShowE (EBinOp op e1 e2) =
+  case op of
+    Add -> "(" ++ prettyShowE e1 ++ " + " ++ prettyShowE e2 ++ ")"
+    Sub -> "(" ++ prettyShowE e1 ++ " - " ++ prettyShowE e2 ++ ")"
+    Div -> "(" ++ prettyShowE e1 ++ " / " ++ prettyShowE e2 ++ ")"
+    Mul -> "(" ++ prettyShowE e1 ++ " * " ++ prettyShowE e2 ++ ")"
+    Pow -> "(" ++ prettyShowE e1 ++ " ^ " ++ prettyShowE e2 ++ ")"
+    Min -> "min(" ++ prettyShowE e1 ++ ", " ++ prettyShowE e2 ++ ")"
+    Max -> "max(" ++ prettyShowE e1 ++ ", " ++ prettyShowE e2 ++ ")"
+prettyShowE (EUnOp op e) =
+  case op of
+    Abs    -> "|" ++ prettyShowE e ++ "|"
+    Sqrt   -> "sqrt(" ++ prettyShowE e ++ ")"
+    Negate -> "(-1 * " ++ prettyShowE e ++ ")"
+    Sin    -> "sin(" ++ prettyShowE e ++ ")"
+    Cos    -> "cos(" ++ prettyShowE e ++ ")"
+prettyShowE (PowI e i) = "(" ++ prettyShowE e ++ " ^ " ++ show i ++ ")"
+prettyShowE (Var v) = v
+prettyShowE (Lit v) = show (double v)
+prettyShowE (Float32 m e) = 
+  case m of
+    RNE -> "rnd32_ne(" ++ prettyShowE e ++ ")"
+    RTP -> "rnd32_tp(" ++ prettyShowE e ++ ")"
+    RTN -> "rnd32_tn(" ++ prettyShowE e ++ ")"
+    RTZ -> "rnd32_tz(" ++ prettyShowE e ++ ")"
+prettyShowE (Float64 m e) = 
+  case m of
+    RNE -> "rnd64_ne(" ++ prettyShowE e ++ ")"
+    RTP -> "rnd64_tp(" ++ prettyShowE e ++ ")"
+    RTN -> "rnd64_tn(" ++ prettyShowE e ++ ")"
+    RTZ -> "rnd64_tz(" ++ prettyShowE e ++ ")"
+prettyShowE (Float m e) = 
+  case m of
+    RNE -> "rnd_ne(" ++ prettyShowE e ++ ")"
+    RTP -> "rnd_tp(" ++ prettyShowE e ++ ")"
+    RTN -> "rnd_tn(" ++ prettyShowE e ++ ")"
+    RTZ -> "rnd_tz(" ++ prettyShowE e ++ ")"
+
+-- |Show a conjunction of expressions in a human-readable format
+-- This is shown as an AND with each disjunction tabbed in with an OR
+-- If there is only one term in a disjunction, the expression is shown without an OR 
+prettyShowECNF :: [[E]] -> String
+prettyShowECNF cnf =
+  "AND" ++ concatMap (\d -> "\n\t" ++ prettyShowDisjunction d) cnf
+  where
+    -- |Show a disjunction of expressions > 0 in a human-readable format
+    -- This is shown as an OR with each term tabbed in
+    -- If there is only one term, the expression is shown without an OR 
+    prettyShowDisjunction :: [E] -> String
+    prettyShowDisjunction []  = []
+    prettyShowDisjunction [e] = prettyShowE e
+    prettyShowDisjunction es  = 
+      "OR" ++ concatMap (\e -> "\n\t\t" ++ prettyShowE e ++ " > 0") es
+
