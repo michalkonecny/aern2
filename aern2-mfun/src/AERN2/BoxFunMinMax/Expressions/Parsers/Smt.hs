@@ -47,21 +47,6 @@ parseSMT filePath = parseFileMsg script fileAsText
   where
     fileAsText = unsafePerformIO $ Data.Text.IO.readFile filePath
 
--- -- |Finds assertions from [LD.Expression]
--- -- We keep whatever is within the assertions (operands)
--- -- If the assertion contains a 'not' at the top level, it is a goal
--- -- Goals are stored without the top level 'not'
--- processAssertions :: [LD.Expression] -> [LD.Expression] 
--- processAssertions [] = []
--- processAssertions ((LD.Application (LD.Variable "assert") operands) : expressions) =
---   let 
---     assertion = head operands
---   in 
---     case assertion of
---       ((LD.Application (LD.Variable "not") goal)) -> goal : processAssertions expressions
---       _ -> assertion : processAssertions expressions -- Take head of operands since assert has only one operand
--- processAssertions (_ : expressions) = processAssertions expressions
-
 -- |Find assertions in a parsed expression
 -- Assertions are Application types with the operator being a Variable equal to "assert"
 -- Assertions only have one 'operands'
@@ -90,7 +75,6 @@ findVariables (LD.Application (LD.Variable "declare-fun") [LD.Variable varName, 
   = (varName, varType) : findVariables expressions
 findVariables (_ : expressions) = findVariables expressions
 
-
 -- |Finds goals in assertion operands
 -- Goals are S-Expressions with a top level 'not'
 findGoalsInAssertions :: [LD.Expression] -> [LD.Expression]
@@ -109,9 +93,6 @@ takeGoalFromAssertions asserts = (goal, assertsWithoutGoal)
     numberOfAssertions = length asserts
     goal = last asserts
     assertsWithoutGoal = take (numberOfAssertions - 1) asserts
-
--- goalToF :: LD.Expression -> F
--- goalToF goal = FNot (termToF goal)
 
 termToF :: LD.Expression -> Maybe F
 termToF (LD.Application (LD.Variable operator) [op]) = -- Single param operators
@@ -252,31 +233,27 @@ termToE (LD.Application (LD.Variable operator) [op]) =
       _                 -> Nothing
 -- Why3 round function
 termToE (LD.Application (LD.Variable "round") [mode, operand]) = 
-  case parseRoundingMode mode of
-    Just roundingMode ->
-      case termToE operand of
-        Just e  -> Just $ Float roundingMode e
-        Nothing -> Nothing
-    Nothing -> Nothing
+  case (parseRoundingMode mode, termToE operand) of
+    (Just roundingMode, Just e) -> Just $ Float roundingMode e
+    (_, _) -> Nothing
+    
 -- two param functions where op1 and op2 can be parsed to the E type.
 -- Functions with two params which need special handling (i.e. round) should be
 -- placed before here
 termToE (LD.Application (LD.Variable operator) [op1, op2]) =
-  case termToE op1 of
-    Nothing -> Nothing
-    Just e1 -> 
-      case termToE op2 of
-        Nothing -> Nothing
-        Just e2 ->
-          case operator of
-            n
-              -- "o..." functions are from SPARK Reals
-              | n `elem` ["+", "oadd", "oadd__logic"]           -> Just $ EBinOp Add e1 e2
-              | n `elem` ["-", "osubtract", "osubtract__logic"] -> Just $ EBinOp Sub e1 e2
-              | n `elem` ["*", "omultiply", "omultiply__logic"] -> Just $ EBinOp Mul e1 e2
-              | n `elem` ["/", "odivide", "odivide__logic"]     -> Just $ EBinOp Div e1 e2
-              | n `elem` ["power", "pow"]                              -> Just $ EBinOp Pow e1 e2
-            _                                                   -> Nothing
+  case (termToE op1, termToE op2) of
+    (Just e1, Just e2) -> 
+      case operator of
+        n
+          -- "o..." functions are from SPARK Reals
+          | n `elem` ["+", "oadd", "oadd__logic"]           -> Just $ EBinOp Add e1 e2
+          | n `elem` ["-", "osubtract", "osubtract__logic"] -> Just $ EBinOp Sub e1 e2
+          | n `elem` ["*", "omultiply", "omultiply__logic"] -> Just $ EBinOp Mul e1 e2
+          | n `elem` ["/", "odivide", "odivide__logic"]     -> Just $ EBinOp Div e1 e2
+          | n `elem` ["power", "pow"]                       -> Just $ EBinOp Pow e1 e2
+        _                                                   -> Nothing
+    (_, _) -> Nothing
+
 -- Float bits to Rational
 termToE (LD.Application (LD.Variable "fp") o@[LD.Variable sSign, LD.Variable sExponent, LD.Variable sMantissa]) =
   let
@@ -309,42 +286,25 @@ termToE (LD.Application (LD.Variable "fp") o@[LD.Variable sSign, LD.Variable sEx
           64 -> Just $ Lit $ toRational $ runGet getDoublebe bsFloat -- Check if finite
           _       -> Nothing
       else Nothing
-    -- if all (`elem` "01") (bSign ++ bExponent ++ bMantissa) 
-    --   then
-    --     let pSign = if bSign == "1" then 1 else -1
-    --         pMantissa = readBits bMantissa (length bMantissa)
-    --     in
-    --       case length bExponent of
-    --         8 -> -- Single precision
-    --           let exponentBias = 127
-    --               pExponent = readBits bExponent 8
-    --               pExponentWithBias = pExponent - exponentBias
-    --           in  Just $ Lit $ rational $ pSign * 2^!pExponent * pMantissa
-    --         11 -> undefined
-    --   else Nothing
 
-  -- case bSign of
 -- Float functions, three params. Other three param functions should be placed before here
 termToE (LD.Application (LD.Variable operator) [roundingMode, op1, op2]) =
   -- case operator of
   --   -- SPARK Reals
   --   "fp.to_real" -> Nothing 
   --   _ -> -- Known ops
-  case termToE op1 of
-    Just e1 ->
-      case termToE op2 of
-        Just e2 -> 
-          case parseRoundingMode roundingMode of -- Floating-point ops
-            Just mode ->
-              case operator of
-                "fp.add" -> Just $ Float mode $ EBinOp Add e1 e2
-                "fp.sub" -> Just $ Float mode $ EBinOp Sub e1 e2
-                "fp.mul" -> Just $ Float mode $ EBinOp Mul e1 e2
-                "fp.div" -> Just $ Float mode $ EBinOp Div e1 e2
-                _        -> Nothing
-            Nothing -> Nothing
+  case (termToE op1, termToE op2) of
+    (Just e1, Just e2) -> 
+      case parseRoundingMode roundingMode of -- Floating-point ops
+        Just mode ->
+          case operator of
+            "fp.add" -> Just $ Float mode $ EBinOp Add e1 e2
+            "fp.sub" -> Just $ Float mode $ EBinOp Sub e1 e2
+            "fp.mul" -> Just $ Float mode $ EBinOp Mul e1 e2
+            "fp.div" -> Just $ Float mode $ EBinOp Div e1 e2
+            _        -> Nothing
         Nothing -> Nothing
-    Nothing -> Nothing
+    (_, _) -> Nothing
 
 termToE (LD.Variable var) = Just $ Var var
 termToE _ = Nothing
@@ -395,21 +355,15 @@ determineFloatTypeE (Lit n)           varTypeMap  = Just (Lit n)
 -- by searching for the type of all variables appearing in the function. If the
 -- types match and are all either Float32/Float64, we can determine the type.
 determineFloatTypeF :: F -> [(String, String)] -> Maybe F
-determineFloatTypeF (FComp op e1 e2) varTypeMap = case determineFloatTypeE e1 varTypeMap of
-                                                  Just p1 ->
-                                                    case determineFloatTypeE e2 varTypeMap of
-                                                      Just p2 -> Just $ FComp op p1 p2
-                                                      Nothing -> Nothing
-                                                  Nothing -> Nothing
-determineFloatTypeF (FConn op f1 f2) varTypeMap = case determineFloatTypeF f1 varTypeMap of
-                                                  Just p1 ->
-                                                    case determineFloatTypeF f2 varTypeMap of
-                                                      Just p2 -> Just $ FConn op p1 p2
-                                                      Nothing -> Nothing
-                                                  Nothing -> Nothing
+determineFloatTypeF (FComp op e1 e2) varTypeMap = case (determineFloatTypeE e1 varTypeMap, determineFloatTypeE e2 varTypeMap) of
+                                                    (Just p1, Just p2)  -> Just $ FComp op p1 p2
+                                                    (_, _)              -> Nothing
+determineFloatTypeF (FConn op f1 f2) varTypeMap = case (determineFloatTypeF f1 varTypeMap, determineFloatTypeF f2 varTypeMap) of
+                                                    (Just p1, Just p2)  -> Just $ FConn op p1 p2
+                                                    (_, _)              -> Nothing
 determineFloatTypeF (FNot f)         varTypeMap = case determineFloatTypeF f varTypeMap of
-                                                  Just p -> Just $ FNot p
-                                                  Nothing -> Nothing
+                                                    Just p  -> Just $ FNot p
+                                                    Nothing -> Nothing
         
 -- |Find the type for the given variables
 -- Type is looked for in the supplied map
@@ -530,98 +484,3 @@ eliminateFloatsAndConvertVCToECNF (FConn Impl context goal) varMap =
     goalEs    <- map (map (\e -> eliminateFloats e varMap False)) (fToECNF goal)
   ]
 eliminateFloatsAndConvertVCToECNF _ _ = error "This function should only be called on implications (FConn Impl leftTerm rightTerm)"
-
--- findAssertions :: Script -> [Command]
--- findAssertions [] = []
--- findAssertions (p : ps) =
---   case p of
---     Assert _ -> p : findAssertions ps
---     _ -> findAssertions ps
-
--- findGoalsInAssertions :: [Command] -> [Command]
--- findGoalsInAssertions [] = []
--- findGoalsInAssertions (p : ps) = 
---   case p of
---     Assert (TermApplication (Unqualified (IdSymbol s)) _) -> 
---       if s P.== T.pack "not"
---         then p : findGoalsInAssertions ps
---         else findGoalsInAssertions ps
---     _ -> findGoalsInAssertions ps
-
--- findGoals :: Script -> [Command]
--- findGoals [] = []
--- findGoals (p : ps) =
---   case p of
---     Assert (TermApplication (Unqualified s@(IdSymbol _)) _) -> 
---       if s P.== IdSymbol (T.pack "not")
---         then p : findGoalsInAssertions ps
---         else findGoalsInAssertions ps
---     _ -> findGoalsInAssertions ps
-
--- goalToF :: Command -> F
--- goalToF (Assert goal) = termApplicationToF goal
--- goalToF _ = undefined
-
--- termApplicationToF :: Term -> F
--- termApplicationToF (TermApplication (Unqualified (IdSymbol f)) terms) =
---   case T.unpack f of
---     "not" ->
---       case terms of
---         (term :| []) -> FNot (termApplicationToF term)
---         _ -> undefined -- Left errorMsg
---     "tqtisFinite" ->
---       case terms of
---         (term :| []) -> 
---           let
---             maxFloat = (2.0-(1/!2^!23))*2^!127
---             minFloat = negate maxFloat
---             e = termApplicationToE term
---           in
---             FConn And (FComp Ge (Lit minFloat) e)  (FComp Le e (Lit maxFloat))
---         _ -> undefined
---       -- undefined --FNot (termsToExpression terms)
---     _ -> trace (show f) undefined -- Left errorMsg
--- termApplicationToF _ = undefined
-
--- termApplicationToE :: Term -> E
--- termApplicationToE (TermApplication (Unqualified (IdSymbol f)) terms) =
---   case T.unpack f of
---     "div1" -> 
---       case terms of
---         (TermQualIdentifier (Unqualified (IdSymbol roundingMode)) :| (var1 : [var2])) ->
---           EBinOp Div (termQualToEVars var1) (termQualToEVars var2)
---         _ -> undefined
---     _ -> undefined
--- termApplicationToE _ = undefined
-
--- termQualToEVars :: Term -> E
--- termQualToEVars (TermQualIdentifier (Unqualified (IdSymbol v))) = Var (T.unpack v)
--- termQualToEVars _ = undefined
-
--- roundedOpsToE :: Term -> E
--- roundedOpsToE = (TermApplication (Unqualified (IdSymbol f)) terms)
-
--- termsToExpression :: NonEmpty Term -> F
--- termsToExpression (t :| []) = undefined
--- termsToExpression (t :| ts) = 
---   case t of
---     t@(TermApplication _ _) 
-
-
-
-
-{-
-  Assert 
-    (TermApplication (Unqualified (IdSymbol "not")) 
-    (TermApplication (Unqualified (IdSymbol "tqtisFinite")) 
-    (TermApplication (Unqualified (IdSymbol "div1")) (TermQualIdentifier (Unqualified (IdSymbol "RNE1")) 
-    :| [TermQualIdentifier (Unqualified (IdSymbol "x")),TermQualIdentifier (Unqualified (IdSymbol "y"))]) 
-    :| []) 
-    :| []))
-
-  Parsing this
-    identify top level not (done)
-    Translating tqtIsFinite to the expression MinFloat <= secondParam of TermApplication (recurse here) <= MaxFloat
-    When finding div1 the next term application indicates rounding mode
-      The next two term applications indicates variables
--}
