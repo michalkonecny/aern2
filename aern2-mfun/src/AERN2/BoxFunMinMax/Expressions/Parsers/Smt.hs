@@ -137,42 +137,77 @@ termToF (LD.Application (LD.Variable operator) [op]) = -- Single param operators
             _ -> Nothing 
         _ -> Nothing
 termToF (LD.Application (LD.Variable operator) [op1, op2]) = -- Two param operations
-  case termToE op1 of
-    Just e1 ->
-      case termToE op2 of
-        Just e2 ->
+  case (termToE op1, termToE op2) of
+    (Just e1, Just e2) ->
+      case operator of
+        n
+          | n `elem` [">=", "fp.geq", "oge", "oge__logic"] -> Just $ FComp Ge e1 e2
+          | n `elem` [">",  "fp.gt", "ogt", "ogt__logic"]  -> Just $ FComp Gt e1 e2
+          | n `elem` ["<=", "fp.leq", "ole", "ole__logic"] -> Just $ FComp Le e1 e2
+          | n `elem` ["<",  "fp.lt", "olt", "olt__logic"]  -> Just $ FComp Lt e1 e2
+          | n `elem` ["=",  "fp.eq"]  -> Just $ FComp Eq e1 e2
+        _ -> Nothing
+    (_, _) -> 
+      case (termToF op1, termToF op2) of
+        (Just f1, Just f2) ->
           case operator of
-            n
-              | n `elem` [">=", "fp.geq", "oge", "oge__logic"] -> Just $ FComp Ge e1 e2
-              | n `elem` [">",  "fp.gt", "ogt", "ogt__logic"]  -> Just $ FComp Gt e1 e2
-              | n `elem` ["<=", "fp.leq", "ole", "ole__logic"] -> Just $ FComp Le e1 e2
-              | n `elem` ["<",  "fp.lt", "olt", "olt__logic"]  -> Just $ FComp Lt e1 e2
-              | n `elem` ["=",  "fp.eq"]  -> Just $ FComp Eq e1 e2
-            _ -> Nothing
-        Nothing -> Nothing
-    Nothing -> 
-      case termToF op1 of
-        Just f1 ->
-          case termToF op2 of
-            Just f2 ->
-              case operator of
-                "and" -> Just $ FConn And f1 f2
-                "or"  -> Just $ FConn Or f1 f2
-                "=>"  -> Just $ FConn Impl f1 f2
-            "true" -> 
-              case operator of
-                "=" -> Just f1 -- If some f1 equals true, return f1
-            Nothing -> Nothing
-        Nothing -> Nothing
+            "and" -> Just $ FConn And f1 f2
+            "or"  -> Just $ FConn Or f1 f2
+            "=>"  -> Just $ FConn Impl f1 f2
+            _     -> Nothing
+        (Just f1, _) ->
+          case (operator, op2) of
+            ("=", LD.Variable "true") -> Just f1 -- If some f1 equals true, return f1
+            (_, _) -> Nothing
+        (_, Just f2) ->
+          case (operator, op1) of
+            ("=", LD.Variable "true") -> Just f2 -- If some f2 equals true, return f2
+            (_, _) -> Nothing
+        -- Parse ite where it is used as an expression
+        (_, _) ->
+          case (op1, termToE op2) of
+            (LD.Application (LD.Variable "ite") [cond, thenTerm, elseTerm], Just e2) ->
+              case (termToF cond, termToE thenTerm, termToE elseTerm) of
+                (Just condF, Just thenTermE, Just elseTermE) ->
+                  case operator of
+                    n
+                      | n `elem` [">=", "fp.geq", "oge", "oge__logic"]  -> Just $ FConn Or (FConn Impl condF (FComp Ge thenTermE e2))
+                                                                                           (FConn Impl (FNot condF) (FComp Ge elseTermE e2))
+                      | n `elem` [">",  "fp.gt", "ogt", "ogt__logic"]   -> Just $ FConn Or (FConn Impl condF (FComp Gt thenTermE e2))
+                                                                                           (FConn Impl (FNot condF) (FComp Gt elseTermE e2))
+                      | n `elem` ["<=", "fp.leq", "ole", "ole__logic"]  -> Just $ FConn Or (FConn Impl condF (FComp Le thenTermE e2))
+                                                                                           (FConn Impl (FNot condF) (FComp Le elseTermE e2))
+                      | n `elem` ["<",  "fp.lt", "olt", "olt__logic"]   -> Just $ FConn Or (FConn Impl condF (FComp Lt thenTermE e2))
+                                                                                           (FConn Impl (FNot condF) (FComp Lt elseTermE e2))
+                      | n `elem` ["=",  "fp.eq"]                        -> Just $ FConn Or (FConn Impl condF (FComp Gt thenTermE e2))
+                                                                                           (FConn Impl (FNot condF) (FComp Gt elseTermE e2))
+                    _ -> Nothing
+                (_, _, _) -> Nothing
+            (_, _) ->
+              case (termToE op1, op2) of
+                (Just e1, LD.Application (LD.Variable "ite") [cond, thenTerm, elseTerm]) ->
+                  case (termToF cond, termToE thenTerm, termToE elseTerm) of
+                    (Just condF, Just thenTermE, Just elseTermE) ->
+                      case operator of
+                        n
+                          | n `elem` [">=", "fp.geq", "oge", "oge__logic"]  -> Just $ FConn Or (FConn Impl condF (FComp Ge e1 thenTermE))
+                                                                                              (FConn Impl (FNot condF) (FComp Ge e1 elseTermE))
+                          | n `elem` [">",  "fp.gt", "ogt", "ogt__logic"]   -> Just $ FConn Or (FConn Impl condF (FComp Gt e1 thenTermE))
+                                                                                              (FConn Impl (FNot condF) (FComp Gt e1 elseTermE))
+                          | n `elem` ["<=", "fp.leq", "ole", "ole__logic"]  -> Just $ FConn Or (FConn Impl condF (FComp Le e1 thenTermE))
+                                                                                              (FConn Impl (FNot condF) (FComp Le e1 elseTermE))
+                          | n `elem` ["<",  "fp.lt", "olt", "olt__logic"]   -> Just $ FConn Or (FConn Impl condF (FComp Lt e1 thenTermE))
+                                                                                              (FConn Impl (FNot condF) (FComp Lt e1 elseTermE))
+                          | n `elem` ["=",  "fp.eq"]                        -> Just $ FConn Or (FConn Impl condF (FComp Gt e1 thenTermE))
+                                                                                              (FConn Impl (FNot condF) (FComp Gt e1 elseTermE))
+                        _ -> Nothing
+                    (_, _, _) -> Nothing
+                (_, _) -> Nothing
+                      
 termToF (LD.Application (LD.Variable "ite") [condition, thenTerm, elseTerm]) = -- if-then-else operator with F types
-  case termToF condition of
-    Just conditionF ->
-      case termToF thenTerm of
-        Just thenTermF ->
-          case termToF elseTerm of
-            Just elseTermF -> Just $ FConn Or (FConn Impl conditionF thenTermF) (FConn Impl (FNot conditionF) elseTermF)
-            Nothing -> Nothing
-        Nothing -> Nothing
+  case (termToF condition, termToF thenTerm, termToF elseTerm) of
+    (Just conditionF, Just thenTermF, Just elseTermF) -> Just $ FConn Or (FConn Impl conditionF thenTermF) (FConn Impl (FNot conditionF) elseTermF)
+    (_, _, _) -> Nothing
 termToF _ = Nothing
 
 termToE :: LD.Expression -> Maybe E
@@ -474,7 +509,6 @@ deriveVCRanges vc@(FConn Impl contextCNF goal) =
     eContainsVars _ (Lit _)             = False
     eContainsVars vars (EBinOp _ e1 e2) = eContainsVars vars e1 || eContainsVars vars e2  
     eContainsVars vars (EUnOp _ e)      = eContainsVars vars e  
-    eContainsVars vars (PowI e _)       = eContainsVars vars e  
     eContainsVars vars (PowI e _)       = eContainsVars vars e  
     eContainsVars vars (Float32 _ e)    = eContainsVars vars e  
     eContainsVars vars (Float64 _ e)    = eContainsVars vars e  
