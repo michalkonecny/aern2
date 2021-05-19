@@ -84,6 +84,8 @@ findDeclarations (_ : expressions) = findDeclarations expressions
 
 findVariables :: [LD.Expression] -> [(String, String)]
 findVariables [] = []
+findVariables (LD.Application (LD.Variable "declare-const") [LD.Variable varName, LD.Variable varType] : expressions) 
+  = (varName, varType) : findVariables expressions
 findVariables (LD.Application (LD.Variable "declare-fun") [LD.Variable varName, LD.Null, LD.Variable varType] : expressions) 
   = (varName, varType) : findVariables expressions
 findVariables (_ : expressions) = findVariables expressions
@@ -131,7 +133,7 @@ termToF (LD.Application (LD.Variable operator) [op]) = -- Single param operators
       case termToF op of
         Just f ->
           case operator of
-            "not" -> Just $ FNot f -- TODO: Do we need an FNot for E as well?
+            "not" -> Just $ FNot f -- TODO: Do we need an FNot for E as well? Answer: We could simply Negate, but we don't need it.
             _ -> Nothing 
         _ -> Nothing
 termToF (LD.Application (LD.Variable operator) [op1, op2]) = -- Two param operations
@@ -157,6 +159,18 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) = -- Two param operat
                 "and" -> Just $ FConn And f1 f2
                 "or"  -> Just $ FConn Or f1 f2
                 "=>"  -> Just $ FConn Impl f1 f2
+            "true" -> 
+              case operator of
+                "=" -> Just f1 -- If some f1 equals true, return f1
+            Nothing -> Nothing
+        Nothing -> Nothing
+termToF (LD.Application (LD.Variable "ite") [condition, thenTerm, elseTerm]) = -- if-then-else operator with F types
+  case termToF condition of
+    Just conditionF ->
+      case termToF thenTerm of
+        Just thenTermF ->
+          case termToF elseTerm of
+            Just elseTermF -> Just $ FConn Or (FConn Impl conditionF thenTermF) (FConn Impl (FNot conditionF) elseTermF)
             Nothing -> Nothing
         Nothing -> Nothing
 termToF _ = Nothing
@@ -176,6 +190,8 @@ termToE (LD.Application (LD.Variable operator) [op]) =
       "sin1"            -> Just $ EUnOp Sin e
       "cos"             -> Just $ EUnOp Cos e
       "cos1"            -> Just $ EUnOp Cos e
+      "sqrt"            -> Just $ EUnOp Sqrt e
+      "sqrt1"           -> Just $ EUnOp Sqrt e
       "-"               -> Just $ EUnOp Negate e
       -- SPARK Reals functions
       "from_int"        -> Just e
@@ -187,6 +203,7 @@ termToE (LD.Application (LD.Variable operator) [op]) =
       "fp.abs"          -> Just $ EUnOp Abs e
       "fp.neg"          -> Just $ EUnOp Negate e
       "fp.to_real"      -> Just e
+      "to_real"         -> Just e
       "value"           -> Just e
       -- Undefined functions
       "fp.isNormal"     -> Nothing
@@ -223,7 +240,7 @@ termToE (LD.Application (LD.Variable operator) [op1, op2]) =
               | n `elem` ["-", "osubtract", "osubtract__logic"] -> Just $ EBinOp Sub e1 e2
               | n `elem` ["*", "omultiply", "omultiply__logic"] -> Just $ EBinOp Mul e1 e2
               | n `elem` ["/", "odivide", "odivide__logic"]     -> Just $ EBinOp Div e1 e2
-              | n `elem` ["power"]                              -> Just $ EBinOp Pow e1 e2
+              | n `elem` ["power", "pow"]                              -> Just $ EBinOp Pow e1 e2
             _                                                   -> Nothing
 -- Float bits to Rational
 termToE (LD.Application (LD.Variable "fp") o@[LD.Variable sSign, LD.Variable sExponent, LD.Variable sMantissa]) =
@@ -272,27 +289,27 @@ termToE (LD.Application (LD.Variable "fp") o@[LD.Variable sSign, LD.Variable sEx
     --   else Nothing
 
   -- case bSign of
--- Float functions, three params
+-- Float functions, three params. Other three param functions should be placed before here
 termToE (LD.Application (LD.Variable operator) [roundingMode, op1, op2]) =
-  case operator of
-    -- SPARK Reals
-    "fp.to_real" -> Nothing 
-    _ -> -- Known ops
-      case termToE op1 of
-        Just e1 ->
-          case termToE op2 of
-            Just e2 -> 
-              case parseRoundingMode roundingMode of -- Floating-point ops
-                Just mode ->
-                  case operator of
-                    "fp.add" -> Just $ Float mode $ EBinOp Add e1 e2
-                    "fp.sub" -> Just $ Float mode $ EBinOp Sub e1 e2
-                    "fp.mul" -> Just $ Float mode $ EBinOp Mul e1 e2
-                    "fp.div" -> Just $ Float mode $ EBinOp Div e1 e2
-                    _        -> Nothing
-                Nothing -> Nothing
+  -- case operator of
+  --   -- SPARK Reals
+  --   "fp.to_real" -> Nothing 
+  --   _ -> -- Known ops
+  case termToE op1 of
+    Just e1 ->
+      case termToE op2 of
+        Just e2 -> 
+          case parseRoundingMode roundingMode of -- Floating-point ops
+            Just mode ->
+              case operator of
+                "fp.add" -> Just $ Float mode $ EBinOp Add e1 e2
+                "fp.sub" -> Just $ Float mode $ EBinOp Sub e1 e2
+                "fp.mul" -> Just $ Float mode $ EBinOp Mul e1 e2
+                "fp.div" -> Just $ Float mode $ EBinOp Div e1 e2
+                _        -> Nothing
             Nothing -> Nothing
         Nothing -> Nothing
+    Nothing -> Nothing
 
 termToE (LD.Variable var) = Just $ Var var
 termToE _ = Nothing
@@ -304,11 +321,15 @@ determineFloatTypeE :: E -> [(String, String)] -> Maybe E
 determineFloatTypeE (EBinOp op e1 e2) varTypeMap  = case determineFloatTypeE e1 varTypeMap of
                                                       Just p1 ->
                                                         case determineFloatTypeE e2 varTypeMap of
-                                                          Just p2 -> Just $ EBinOp op p1 p2                       
+                                                          Just p2 -> Just $ EBinOp op p1 p2      
+                                                          Nothing -> Nothing
+                                                      Nothing -> Nothing
 determineFloatTypeE (EUnOp op e)      varTypeMap  = case determineFloatTypeE e varTypeMap of
                                                       Just p -> Just $ EUnOp op p 
+                                                      Nothing -> Nothing
 determineFloatTypeE (PowI e i)        varTypeMap  = case determineFloatTypeE e varTypeMap of
                                                       Just p -> Just $ PowI p i 
+                                                      Nothing -> Nothing
 determineFloatTypeE (Float r e)       varTypeMap  = case mVariableType of
                                                       Just variableType ->
                                                         case variableType of
@@ -393,7 +414,8 @@ parseRoundingMode _ = Nothing
 -- If the goal cannot be determined, we return Nothing
 processVC  :: [LD.Expression] -> Maybe F
 processVC parsedExpressions = 
-  -- trace (show (maybe Nothing termToF mGoal)) $
+  trace (show (maybe Nothing termToF mGoal)) $
+  trace (show variablesWithTypes) $
   case mGoalF of
     Just goalF  -> if null contextF then Just goalF else Just $ FConn Impl (foldContextF contextF) goalF
     Nothing     -> Nothing
