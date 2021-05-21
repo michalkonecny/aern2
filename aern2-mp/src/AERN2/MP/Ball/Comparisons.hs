@@ -33,6 +33,7 @@ import Control.CollectErrors
     ( CollectErrors(getMaybeValue), CanBeErrors )
 import qualified Numeric.CollectErrors as CN
 
+import AERN2.Kleenean
 import AERN2.Norm
 import AERN2.MP.Dyadic (Dyadic)
 import AERN2.MP.Float (MPFloat)

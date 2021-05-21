@@ -35,6 +35,7 @@ import Data.Complex
 import Test.QuickCheck ( Arbitrary(arbitrary), frequency )
 
 import AERN2.Norm
+import AERN2.Kleenean
 import AERN2.MP.Precision
 
 {- example -}

@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b173a95426982332154ff9bd4b378842b3f7e36987e6c3cd6105fa8b5381f8c2
+-- hash: 40361ff56f370d2dc8f92f3cdf02d16ec342bf4122255b5dcf1a747e6755090d
 
 name:           aern2-mp
 version:        0.2.1.1
@@ -29,6 +29,7 @@ source-repository head
 
 library
   exposed-modules:
+      AERN2.Kleenean
       AERN2.Limit
       AERN2.MP
       AERN2.MP.Accuracy
@@ -60,8 +61,20 @@ library
       Paths_aern2_mp
   hs-source-dirs:
       src
-  default-extensions: RebindableSyntax, ScopedTypeVariables, DeriveGeneric, TypeFamilies, TypeOperators, ConstraintKinds, DefaultSignatures, MultiParamTypeClasses, FlexibleContexts, FlexibleInstances, UndecidableInstances
-  other-extensions: TemplateHaskell
+  default-extensions:
+      RebindableSyntax,
+      ScopedTypeVariables,
+      DeriveGeneric,
+      TypeFamilies,
+      TypeOperators,
+      ConstraintKinds,
+      DefaultSignatures,
+      MultiParamTypeClasses,
+      FlexibleContexts,
+      FlexibleInstances,
+      UndecidableInstances
+  other-extensions:
+      TemplateHaskell
   ghc-options: -Wall
   build-depends:
       QuickCheck
@@ -71,7 +84,7 @@ library
     , deepseq
     , hspec
     , integer-logarithms
-    , mixed-types-num >=0.5.1
+    , mixed-types-num >=0.5.4
     , reflection
     , regex-tdfa
     , template-haskell
@@ -87,8 +100,20 @@ test-suite aern2-mp-test
       Paths_aern2_mp
   hs-source-dirs:
       test
-  default-extensions: RebindableSyntax, ScopedTypeVariables, DeriveGeneric, TypeFamilies, TypeOperators, ConstraintKinds, DefaultSignatures, MultiParamTypeClasses, FlexibleContexts, FlexibleInstances, UndecidableInstances
-  other-extensions: TemplateHaskell
+  default-extensions:
+      RebindableSyntax,
+      ScopedTypeVariables,
+      DeriveGeneric,
+      TypeFamilies,
+      TypeOperators,
+      ConstraintKinds,
+      DefaultSignatures,
+      MultiParamTypeClasses,
+      FlexibleContexts,
+      FlexibleInstances,
+      UndecidableInstances
+  other-extensions:
+      TemplateHaskell
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:
       QuickCheck
@@ -99,7 +124,7 @@ test-suite aern2-mp-test
     , deepseq
     , hspec
     , integer-logarithms
-    , mixed-types-num >=0.5.1
+    , mixed-types-num >=0.5.4
     , reflection
     , regex-tdfa
     , template-haskell

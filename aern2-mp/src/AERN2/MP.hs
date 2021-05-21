@@ -12,14 +12,18 @@
 -}
 
 module AERN2.MP
-( module AERN2.Norm
+( 
+-- * Interval (centre-radius) arithmetic
+  MPBall(..), CanBeMPBall, mpBall, CanBeMPBallP, mpBallP
+, reducePrecionIfInaccurate
+, giveUpIfVeryInaccurate
+-- * Supporting concepts
+, module AERN2.Kleenean
+, module AERN2.Norm
 , module AERN2.MP.Precision
 , module AERN2.MP.Accuracy
 , module AERN2.MP.ErrorBound
 , module AERN2.MP.Enclosure
-, MPBall(..), CanBeMPBall, mpBall, CanBeMPBallP, mpBallP
-, reducePrecionIfInaccurate
-, giveUpIfVeryInaccurate
 )
 where
 
@@ -27,6 +31,7 @@ where
 -- import qualified Prelude as P
 -- import Text.Printf
 
+import AERN2.Kleenean
 import AERN2.Norm
 import AERN2.MP.Precision
 import AERN2.MP.Accuracy

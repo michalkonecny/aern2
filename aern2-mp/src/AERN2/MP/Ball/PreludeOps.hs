@@ -20,6 +20,7 @@ where
 import MixedTypesNumPrelude
 import qualified Prelude as P
 
+import AERN2.Kleenean
 import AERN2.MP.Dyadic (dyadic)
 
 import AERN2.MP.Ball.Type

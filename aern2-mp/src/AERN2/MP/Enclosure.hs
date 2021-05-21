@@ -38,6 +38,7 @@ import Test.QuickCheck
 
 import qualified Numeric.CollectErrors as CN
 
+import AERN2.Kleenean
 import AERN2.MP.ErrorBound
 -- import AERN2.MP.Accuracy
 
@@ -313,22 +314,6 @@ instance
   where
   type UnionType (CN a) (CN b) = UnionType a b
   union = CN.lift2CN union
-
--- TODO: move to aern2-real (or aern2-net)
--- instance
---   (Arrow to, CanUnionAsymmetric e1 e2)
---   =>
---   CanUnionAsymmetric (to Accuracy e1) (to Accuracy e2)
---   -- this instance is important for "parallel if"
---   where
---   type UnionType (to Accuracy e1) (to Accuracy e2) =
---     to Accuracy (UnionType e1 e2)
---   union xA yA =
---     proc ac ->
---       do
---       x <- xA -< ac
---       y <- yA -< ac
---       returnA -< union x y
 
 instance (CanUnionSameType t, CN.CanTakeCNErrors t) =>
   HasIfThenElse Kleenean t
