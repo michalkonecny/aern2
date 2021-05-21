@@ -1,5 +1,7 @@
 # Change log for aern2-mp
 
+* v 0.2.2 2021-05-21
+  * move Kleenean from mixed-types-num to here
 * v 0.2.1 2021-05-18
   * add WithAnyPrec existential type wrapper for WithCurrentPrec
 * v 0.2.0 2021-05-17
