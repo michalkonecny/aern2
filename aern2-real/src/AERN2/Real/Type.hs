@@ -112,8 +112,14 @@ infix 1 ?
 
 instance (HasAccuracy t) => CanExtractApproximation (CSequence t) Accuracy where
   type ExtractedApproximation (CSequence t) Accuracy = CN t
-  extractApproximation (CSequence s) ac = aux s
-    where
+  extractApproximation (CSequence s) ac = 
+    aux $ drop (cseqIndexForPrecision p - 1) s
+    where    
+    p = 
+      case ac of 
+        Exact -> defaultPrecision
+        NoInformation -> prec 2
+        _ -> ac2prec ac
     aux (bCN : rest) 
       | CN.hasCertainError bCN = bCN
       | getAccuracy bCN >= ac = bCN
