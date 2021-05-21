@@ -94,7 +94,7 @@ instance ShowWithAccuracy MPBall where
       case displayAC of
         Exact -> 1000000000
         NoInformation -> 0
-        _ -> integer $ ac2prec displayAC
+        _ -> round $ (log (double 2)/log (double 10)) * (integer $ ac2prec displayAC)
     showAC Exact = ""
     showAC NoInformation = "(oo)"
     showAC ac = " ~2^(" ++ show (negate $ fromAccuracy ac) ++ ")"
