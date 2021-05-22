@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 242290078e55dee9c94d52efa1a65e1555bb947d819c2418a402439b89c65927
+-- hash: cf1f24fcd2102ea5422660596c2b2f71d4eb9327a3ee3471f67d22cd34afd025
 
 name:           aern2-real
 version:        0.2.1.0
@@ -35,6 +35,7 @@ library
       AERN2.Real.Comparisons
       AERN2.Real.Elementary
       AERN2.Real.Field
+      AERN2.Real.Introduction
       AERN2.Real.Limit
       AERN2.Real.Tests
       AERN2.Real.Type
@@ -42,8 +43,19 @@ library
       Paths_aern2_real
   hs-source-dirs:
       src
-  default-extensions: RebindableSyntax, ScopedTypeVariables, TypeFamilies, TypeOperators, ConstraintKinds, DefaultSignatures, MultiParamTypeClasses, FlexibleContexts, FlexibleInstances, UndecidableInstances
-  other-extensions: TemplateHaskell
+  default-extensions:
+      RebindableSyntax,
+      ScopedTypeVariables,
+      TypeFamilies,
+      TypeOperators,
+      ConstraintKinds,
+      DefaultSignatures,
+      MultiParamTypeClasses,
+      FlexibleContexts,
+      FlexibleInstances,
+      UndecidableInstances
+  other-extensions:
+      TemplateHaskell
   ghc-options: -Wall
   build-depends:
       QuickCheck
