@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: db2ad6fe0e6460591de35bce8f443dcc33712ff74369d8be93d12371b3ccd0b7
+-- hash: 3a6ca9d8026d093f51e3a0bb5c6a09c0a4cb008c15b8d398d4fc46d44591a13a
 
 name:           aern2-mp
-version:        0.2.2.0
+version:        0.2.3.0
 synopsis:       Multi-precision ball (interval) arithmetic
 description:    Please see the README on GitHub at <https://github.com/michalkonecny/aern2/#readme>
 category:       Math
