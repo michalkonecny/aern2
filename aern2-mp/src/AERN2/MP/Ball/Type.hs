@@ -141,7 +141,7 @@ instance CanGiveUpIfVeryInaccurate MPBall where
   giveUpIfVeryInaccurate = (aux =<<)
     where
     aux b@(MPBall _ e)
-      | e > 1000 = CN.noValueNumErrorCertain $ numErrorVeryInaccurate "MPBall" ""
+      | e > 1000 = CN.noValueNumErrorPotential $ numErrorVeryInaccurate "MPBall" ""
       | otherwise = cn b
 
 instance CanTestContains MPBall MPBall where
