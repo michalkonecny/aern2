@@ -218,9 +218,9 @@ Therefore, an invalid input leads to a normal `CReal` value, and the error is de
 and sometimes an error cannot be determined with certainty:
 
 ```Text
-...> athird = creal (1/3)
+...> a_third = creal (1/3)
 
-...> bad2 = 1/(athird-athird)
+...> bad2 = 1/(a_third-a_third)
 ...> bad2 ? (prec 100)
 {{POTENTIAL ERROR: division by 0}}
 
@@ -316,8 +316,9 @@ We have two ways to overcome the challenge:
 ### 6.1. Parallel branching
 
 ```Text
-... MixedTypesNumPrelude> absR x = if x < 0 then -x else x
-... MixedTypesNumPrelude> absR (pi - pi)
+...> absR1 x = if x < 0 then -x else x
+
+...> absR1 (pi - pi)
 {?(prec 36): [0 ± ~2.9104e-11 ~2^(-35)]}
 ```
 
@@ -325,8 +326,19 @@ This simple definition works even when x = 0 because AERN2 has redefined the if-
 
 ### 6.2. Multi-valued selection
 
-TODO
+A more general mechanism for dealing with branching based on semi-decidable conditions such as real-number comparisons is non-deterministic `select`. If given two lazy Kleeneans, `select` will enquire them concurrently with increasing precisions until one of them becomes `CertainTrue`.  By convention `select` returns a `Bool` which is `True` if the first branch succeeds and `False` if the second branch succeeds.  
+
+Here we use `select` to implement a *soft* sign test with some tolerance `eps` and define `absR2` to be the limit of a sequence of approximate implementations of `abs` with different `eps`:
+
+```Text
+...> absR2_approx x (q :: Rational) = if select (x > -q) (x < q) then x else -x
+
+...> absR2 x = limit $ absR2_approx x
+
+...> absR2 (pi - pi)
+{?(prec 36): [0 ± ~4.3656e-11 ~2^(-34)]}
+```
 
 ## 7. Specification and tests
 
-The approximations obtained using `? (bits n)` or `? (prec p)` are intervals of type `CN MPBall` from package [aern2-mp](../aern2-mp/README.md).  This type is also used internally for all `CReal` arithmetic.  The `MPBall` arithmetic is tested against a fairly complete hspec/QuickCheck specification of algebraic properties.
+Most `CReal` operations is simply lifts of the corresponding `CN MPBall` operations, which are tested in package [aern2-mp](../aern2-mp/README.md) against a fairly complete hspec/QuickCheck specification of algebraic properties.

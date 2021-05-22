@@ -57,7 +57,7 @@ sumSines1_run1 :: CN MPBall
 sumSines1_run1 = (sumSines1 100) ? (prec 120)
 {- ghci log:
 
-*Introduction> sumSines1_run1
+*AERN2.Real.Introduction> sumSines1_run1
 [-0.12717101366042011543675217... ± ~2.8393e-33 ~2^(-108)]
 (0.03 secs, 26,203,776 bytes)
 -}
@@ -66,7 +66,7 @@ sumSines1_run1 = (sumSines1 100) ? (prec 120)
 sumSines1_run2 = (sumSines1 100) ? (bits 100)
 {- ghci log:
 
-*Introduction> sumSines1_run2
+*AERN2.Real.Introduction> sumSines1_run2
 [-0.12717101366042011543675217... ± ~2.8393e-33 ~2^(-108)]
 (0.19 secs, 319,789,600 bytes)
 
@@ -119,20 +119,20 @@ compare_run7 = pi == pi ? (prec 10000)
 partialfn_bad1 = sqrt (-1)
 {- ghci log:
 
-*Introduction> partialfn_bad1 ? (bits 100)
+*AERN2.Real.Introduction> partialfn_bad1 ? (bits 100)
 {{ERROR: out of domain: negative sqrt argument}}
 
 -}
 
-athird = creal (1/3)
+a_third = creal (1/3)
 
-partialfn_bad2 = 1/(athird-athird)
+partialfn_bad2 = 1/(a_third-a_third)
 {- ghci log:
 
-*Introduction> partialfn_bad2 ? (prec 100)
+*AERN2.Real.Introduction> partialfn_bad2 ? (prec 100)
 {{POTENTIAL ERROR: division by 0}}
 
-*Introduction> partialfn_bad2 ? (bits 100)
+*AERN2.Real.Introduction> partialfn_bad2 ? (bits 100)
 {{POTENTIAL ERROR: numeric error: failed to find an approximation with sufficient accuracy}}
 
 -}
@@ -140,10 +140,10 @@ partialfn_bad2 = 1/(athird-athird)
 partialfn_bad3 = 1/(pi-pi)
 {- ghci log:
 
-*Introduction> partialfn_bad3 ? (prec 100)
+*AERN2.Real.Introduction> partialfn_bad3 ? (prec 100)
 {{POTENTIAL ERROR: division by 0}}
 
-*Introduction> partialfn_bad3 ? (bits 100)
+*AERN2.Real.Introduction> partialfn_bad3 ? (bits 100)
 -- TAKES A VERY LONG TIME
 
 -}
@@ -156,14 +156,14 @@ partialfn_bad3 = 1/(pi-pi)
 partialfn_ok4 = sqrt (pi-pi)
 {- ghci log:
 
-*Introduction> partialfn_ok4 ? (prec 100)
+*AERN2.Real.Introduction> partialfn_ok4 ? (prec 100)
 [0.00000000000000000061331736... ± ~6.1332e-19 ~2^(-60)]{{POTENTIAL ERROR: out of domain: negative sqrt argument}}
 -}
 
 partialfn_ok5 = clearPotentialErrors (sqrt (pi-pi))
 {- ghci log:
 
-*Introduction> partialfn_ok5 ? (prec 100)
+*AERN2.Real.Introduction> partialfn_ok5 ? (prec 100)
 [0.00000000000000000061331736... ± ~6.1332e-19 ~2^(-60)]
 
 -}
@@ -171,7 +171,7 @@ partialfn_ok5 = clearPotentialErrors (sqrt (pi-pi))
 partialfn_bad6 = clearPotentialErrors (sqrt (pi-pi-1))
 {- ghci log:
 
-*Introduction> partialfn_bad6 ? (prec 100) 
+*AERN2.Real.Introduction> partialfn_bad6 ? (prec 100) 
 {{ERROR: out of domain: negative sqrt argument}}
 
 -}
@@ -179,10 +179,10 @@ partialfn_bad6 = clearPotentialErrors (sqrt (pi-pi-1))
 partialfn_bad7 = clearPotentialErrors (sqrt (pi-pi-2^(-1000)))
 {- ghci log:
 
-*Introduction> partialfn_bad7 ? (prec 100)
+*AERN2.Real.Introduction> partialfn_bad7 ? (prec 100)
 [0.00000000000000000061331736... ± ~6.1332e-19 ~2^(-60)]
 
-*Introduction> partialfn_bad7 ? (prec 1000)
+*AERN2.Real.Introduction> partialfn_bad7 ? (prec 1000)
 {{ERROR: out of domain: negative sqrt argument}}
 
 -}
@@ -191,10 +191,10 @@ detectCN :: CN.CanTestErrorsPresent a => a -> Maybe a
 detectCN r = if not (CN.hasError r) then Just r else Nothing
 {- ghci log:
 
-*Introduction> detectCN (sqrt (-1) ? (prec 100))
+*AERN2.Real.Introduction> detectCN (sqrt (-1) ? (prec 100))
 Nothing
 
-*Introduction> detectCN (sqrt 0 ? (prec 100))
+*AERN2.Real.Introduction> detectCN (sqrt 0 ? (prec 100))
 Just [0 ± 0]
 
 -}
@@ -214,7 +214,7 @@ my_e = limit $ \(n :: Integer) -> e_sum (n+2)
 
 {- ghci log:
 
-*Introduction> my_e ? (prec 1000)
+*AERN2.Real.Introduction> my_e ? (prec 1000)
 [2.71828182845904523536028747... ± ~0.0000 ~2^(-1217)]
 
 -}
@@ -242,8 +242,23 @@ absR1 x = if x < 0 then -x else x
 pif_run1 = absR1 (pi-pi)
 {- ghci log:
 
-*Introduction> pif_run1
+*AERN2.Real.Introduction> pif_run1
 {?(prec 36): [0 ± ~2.9104e-11 ~2^(-35)]}
+
+-}
+
+-- pif_run2 = foldl1 (.) (replicate 100 (absR1 . (100*))) (pi-pi)
+
+absR2_approx x (q :: Rational) = if select (x > -q) (x < q) then x else -x
+
+absR2 :: CReal -> CReal
+absR2 x = limit $ absR2_approx x
+
+select_run1 = absR2 (pi-pi)
+{- ghci log:
+
+*AERN2.Real.Introduction> select_run1
+{?(prec 36): [0 ± ~4.3656e-11 ~2^(-34)]}
 
 -}
 
@@ -262,7 +277,7 @@ logistic1R_run n = logistic1 3.82 n (creal 0.5)
 
 {-  Example uses:
 
-*Introduction> logistic2R_run 100 ? (bits 100)
+*AERN2.Real.Introduction> logistic2R_run 100 ? (bits 100)
 [0.9508758511648028... ± 2.0678e-32 <2^(-105)]
   
 -}
