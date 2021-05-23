@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cf1f24fcd2102ea5422660596c2b2f71d4eb9327a3ee3471f67d22cd34afd025
+-- hash: b0d09ac989747313de2b387021d671f960b9b4b8690b6f57d73b5a048c1bca8a
 
 name:           aern2-real
 version:        0.2.1.0
@@ -28,21 +28,10 @@ source-repository head
   location: https://github.com/michalkonecny/aern2
 
 library
-  exposed-modules:
-      AERN2.Complex
-      AERN2.Real
-      AERN2.Real.CKleenean
-      AERN2.Real.Comparisons
-      AERN2.Real.Elementary
-      AERN2.Real.Field
-      AERN2.Real.Introduction
-      AERN2.Real.Limit
-      AERN2.Real.Tests
-      AERN2.Real.Type
   other-modules:
       Paths_aern2_real
   hs-source-dirs:
-      src
+      src, examples
   default-extensions:
       RebindableSyntax,
       ScopedTypeVariables,

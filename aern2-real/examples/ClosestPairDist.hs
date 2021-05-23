@@ -7,13 +7,12 @@ import MixedTypesNumPrelude
 import Test.QuickCheck
 import qualified Data.List as List
 
-import AERN2.QA.Protocol
 import AERN2.Real
 
 -- import Debug.Trace
 
 -- define a short name for the type of real numbers:
-type R = CauchyReal
+type R = CReal
 
 ----------------------------------
 -- Finding the smallest distance within a set of real numbers

@@ -44,7 +44,7 @@ other-extensions:
 - TemplateHaskell
 
 library:
-  source-dirs: src
+  source-dirs: src, examples
   ghc-options:
   - -Wall
 
