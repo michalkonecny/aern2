@@ -44,18 +44,20 @@ other-extensions:
 - TemplateHaskell
 
 library:
-  source-dirs: src, examples
+  source-dirs: 
+  - src
+  - examples
   ghc-options:
   - -Wall
 
-# tests:
-#   aern2-real-test:
-#     main:                Spec.hs
-#     source-dirs:         test
-#     ghc-options:
-#     - -threaded
-#     - -rtsopts
-#     - -with-rtsopts=-N
-#     - -Wall
-#     dependencies:
-#     - aern2-real
+tests:
+  aern2-real-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    dependencies:
+    - aern2-real

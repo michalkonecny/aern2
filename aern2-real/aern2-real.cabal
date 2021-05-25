@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b0d09ac989747313de2b387021d671f960b9b4b8690b6f57d73b5a048c1bca8a
+-- hash: cbe1cdcc1baee536a1e9e33ca5dcbb40f0a0036ebbf49cfa7e0c57a229887431
 
 name:           aern2-real
 version:        0.2.1.0
@@ -28,10 +28,23 @@ source-repository head
   location: https://github.com/michalkonecny/aern2
 
 library
+  exposed-modules:
+      AERN2.Complex
+      AERN2.Real
+      AERN2.Real.CKleenean
+      AERN2.Real.Comparisons
+      AERN2.Real.Elementary
+      AERN2.Real.Field
+      AERN2.Real.Limit
+      AERN2.Real.Tests
+      AERN2.Real.Type
+      AERN2.Real.Examples.ClosestPairDist
+      AERN2.Real.Examples.Introduction
   other-modules:
       Paths_aern2_real
   hs-source-dirs:
-      src, examples
+      src
+      examples
   default-extensions:
       RebindableSyntax,
       ScopedTypeVariables,
@@ -49,6 +62,39 @@ library
   build-depends:
       QuickCheck
     , aern2-mp >=0.2.1
+    , base ==4.*
+    , collect-errors >=0.1.5
+    , hspec
+    , integer-logarithms
+    , mixed-types-num >=0.5.3
+  default-language: Haskell2010
+
+test-suite aern2-real-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      AERN2.RealSpec
+      Paths_aern2_real
+  hs-source-dirs:
+      test
+  default-extensions:
+      RebindableSyntax,
+      ScopedTypeVariables,
+      TypeFamilies,
+      TypeOperators,
+      ConstraintKinds,
+      DefaultSignatures,
+      MultiParamTypeClasses,
+      FlexibleContexts,
+      FlexibleInstances,
+      UndecidableInstances
+  other-extensions:
+      TemplateHaskell
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
+  build-depends:
+      QuickCheck
+    , aern2-mp >=0.2.1
+    , aern2-real
     , base ==4.*
     , collect-errors >=0.1.5
     , hspec

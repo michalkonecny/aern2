@@ -1,7 +1,8 @@
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
+{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 {-|
-    Module      :  Introduction
+    Module      :  AERN2.Real.Examples.Introduction
     Description :  aern2-real introductory examples
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
@@ -20,10 +21,10 @@
     folder:
 
     @
-    stack repl aern2-real/src/AERN2/Real/Introduction.hs
+    stack repl aern2-real/examples/AERN2/Real/Examples/Introduction.hs
     @
 -}
-module AERN2.Real.Introduction where
+module AERN2.Real.Examples.Introduction where
 
 import MixedTypesNumPrelude
 
