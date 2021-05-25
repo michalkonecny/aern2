@@ -1,4 +1,26 @@
-module ClosestPairDist where
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
+{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
+{-|
+    Module      :  AERN2.Real.Introduction
+    Description :  aern2-real introductory examples
+    Copyright   :  (c) Michal Konecny
+    License     :  BSD3
+
+    Maintainer  :  mikkonecny@gmail.com
+    Stability   :  experimental
+    Portability :  portable
+
+    You can run the examples in this file in ghci.
+    If you installed AERN2 using the official instructions,
+    you can start ghci using the following command in the base
+    folder:
+
+    @
+    stack repl aern2-real/examples/AERN2/Real/Examples/ClosestPairDist.hs
+    @
+-}
+module AERN2.Real.Examples.ClosestPairDist where
 
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
@@ -7,6 +29,7 @@ import MixedTypesNumPrelude
 import Test.QuickCheck
 import qualified Data.List as List
 
+import AERN2.MP
 import AERN2.Real
 
 -- import Debug.Trace
@@ -35,6 +58,26 @@ closestPairDist_run ::
 closestPairDist_run (closestPairDist :: [t] -> t) n =
   closestPairDist [sin (convertExactly i :: t) | i <- [1..n]]
 
+closestPairDist_run_naive :: Integer -> R
+closestPairDist_run_naive =
+  closestPairDist_run closestPairDist_naive 
+
+closestPairDist_run_split :: Integer -> R
+closestPairDist_run_split =
+  closestPairDist_run $ closestPairDist_split compRApprox
+
+{- Example runs:
+
+*AERN2.Real.Examples.ClosestPairDist> closestPairDist_run_naive 1000 ? (prec 1000)
+[0.00000013295546744391165086... ± ~0.0000 ~2^(-1221)]
+(13.80 secs, 12,017,593,904 bytes)
+
+*AERN2.Real.Examples.ClosestPairDist> closestPairDist_run_split 1000 ? (prec 1000)
+[0.00000013295546744391165086... ± ~0.0000 ~2^(-1221)]
+(4.95 secs, 9,979,768,504 bytes)
+
+-}
+
 {- specification and randomised tests -}
 
 closestPairDist_spec closestPairDist (getFinite :: r -> t) numbers =
@@ -46,7 +89,7 @@ closestPairDist_spec closestPairDist (getFinite :: r -> t) numbers =
   a ?==?$ b = printArgsIfFails2 "?==?" (?==?) a b
 
 closestPairDist_runTests1 =
-  quickCheck (closestPairDist_spec (closestPairDist_split compRApprox) (?bitsS 100) :: [Integer] -> Property)
+  quickCheck (closestPairDist_spec (closestPairDist_split compRApprox) (?bits 100) :: [Integer] -> Property)
 closestPairDist_runTests2 =
   quickCheck (closestPairDist_spec (closestPairDist_split compMPBall) id :: [Integer] -> Property)
 
@@ -66,17 +109,16 @@ closestPairDist_split (.<) pts
     where
     isCertainlyLeft x = x .< average pts
   recurseAndMerge =
-    -- foldl1 min [dL, dLR, dR]
-    foldl1 min [dL, dR]
+    foldl1 min [dL, dLR, dR]
     where
     dL = closestPairDist_split (.<) ptsL
-    -- dLR = distance (largest ptsL, smallest ptsR)
+    dLR = distance (largest ptsL, smallest ptsR)
     dR = closestPairDist_split (.<) ptsR
 
 compRApprox :: R -> R -> Bool
 compRApprox a b = (a?ac) !<! (b?ac)
   where
-  ac = bitsS 100
+  ac = bits 100
 
 compMPBall :: MPBall -> MPBall -> Bool
 compMPBall = (!<!)
@@ -86,8 +128,8 @@ compMPBall = (!<!)
 -- hull :: MPBall -> MPBall -> MPBall
 -- hull = hullMPBall
 
-average :: (HasIntegers t, CanAddSameType t, CanDivCNBy t Integer) => [t] -> t
-average xs = (sum xs) /! (length xs)
+average :: (HasIntegers t, CanAddSameType t, CanDivBy t Integer) => [t] -> t
+average xs = (sum xs) / (length xs)
 
 largest :: (CanMinMaxSameType t) => [t] -> t
 largest pts = foldl1 max pts
