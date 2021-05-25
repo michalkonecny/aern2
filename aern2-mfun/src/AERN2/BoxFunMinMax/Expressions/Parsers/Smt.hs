@@ -132,21 +132,8 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) = -- Two param operat
             "and" -> Just $ FConn And f1 f2
             "or"  -> Just $ FConn Or f1 f2
             "=>"  -> Just $ FConn Impl f1 f2
-            _     -> Nothing
-        (Just f1, _) ->
-          case (operator, op2) of
-            ("=", LD.Variable "true")                                                          -> Just f1 -- If some f1 equals true, return f1
-            ("=>", LD.Application (LD.Variable "=") [LD.Variable "false", LD.Variable "true"]) -> Just (FNot f1) -- If f1 implies false, negate f1
-            ("=>", LD.Application (LD.Variable "=") [LD.Variable "true", LD.Variable "false"]) -> Just (FNot f1)
-            ("=>", LD.Application (LD.Variable "=") [LD.Variable "false"])                     -> Just (FNot f1)
-            (_, _) -> Nothing
-        (_, Just f2) ->
-          case (operator, op1) of
-            ("=", LD.Variable "true")                                                          -> Just f2 -- If some f2 equals true, return f2
-            ("=>", LD.Application (LD.Variable "=") [LD.Variable "false", LD.Variable "true"]) -> Just (FNot f2) -- If f2 implies false, negate f2
-            ("=>", LD.Application (LD.Variable "=") [LD.Variable "true", LD.Variable "false"]) -> Just (FNot f2)
-            ("=>", LD.Application (LD.Variable "=") [LD.Variable "false"])                     -> Just (FNot f2)
-            (_, _) -> Nothing
+            "="   -> Just $ FConn Equiv f1 f2
+            _ -> Nothing
         -- Parse ite where it is used as an expression
         (_, _) ->
           case (op1, termToE op2) of
@@ -155,16 +142,16 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) = -- Two param operat
                 (Just condF, Just thenTermE, Just elseTermE) ->
                   case operator of
                     n
-                      | n `elem` [">=", "fp.geq", "oge", "oge__logic"]  -> Just $ FConn Or (FConn Impl condF (FComp Ge thenTermE e2))
-                                                                                           (FConn Impl (FNot condF) (FComp Ge elseTermE e2))
-                      | n `elem` [">",  "fp.gt", "ogt", "ogt__logic"]   -> Just $ FConn Or (FConn Impl condF (FComp Gt thenTermE e2))
-                                                                                           (FConn Impl (FNot condF) (FComp Gt elseTermE e2))
-                      | n `elem` ["<=", "fp.leq", "ole", "ole__logic"]  -> Just $ FConn Or (FConn Impl condF (FComp Le thenTermE e2))
-                                                                                           (FConn Impl (FNot condF) (FComp Le elseTermE e2))
-                      | n `elem` ["<",  "fp.lt", "olt", "olt__logic"]   -> Just $ FConn Or (FConn Impl condF (FComp Lt thenTermE e2))
-                                                                                           (FConn Impl (FNot condF) (FComp Lt elseTermE e2))
-                      | n `elem` ["=",  "fp.eq"]                        -> Just $ FConn Or (FConn Impl condF (FComp Gt thenTermE e2))
-                                                                                           (FConn Impl (FNot condF) (FComp Gt elseTermE e2))
+                      | n `elem` [">=", "fp.geq", "oge", "oge__logic"]  -> Just $ FConn And (FConn Impl condF (FComp Ge thenTermE e2))
+                                                                                            (FConn Impl (FNot condF) (FComp Ge elseTermE e2))
+                      | n `elem` [">",  "fp.gt", "ogt", "ogt__logic"]   -> Just $ FConn And (FConn Impl condF (FComp Gt thenTermE e2))
+                                                                                            (FConn Impl (FNot condF) (FComp Gt elseTermE e2))
+                      | n `elem` ["<=", "fp.leq", "ole", "ole__logic"]  -> Just $ FConn And (FConn Impl condF (FComp Le thenTermE e2))
+                                                                                            (FConn Impl (FNot condF) (FComp Le elseTermE e2))
+                      | n `elem` ["<",  "fp.lt", "olt", "olt__logic"]   -> Just $ FConn And (FConn Impl condF (FComp Lt thenTermE e2))
+                                                                                            (FConn Impl (FNot condF) (FComp Lt elseTermE e2))
+                      | n `elem` ["=",  "fp.eq"]                        -> Just $ FConn And (FConn Impl condF (FComp Gt thenTermE e2))
+                                                                                            (FConn Impl (FNot condF) (FComp Gt elseTermE e2))
                     _ -> Nothing
                 (_, _, _) -> Nothing
             (_, _) ->
@@ -173,31 +160,35 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) = -- Two param operat
                   case (termToF cond, termToE thenTerm, termToE elseTerm) of
                     (Just condF, Just thenTermE, Just elseTermE) ->
                       case operator of
-                        n
-                          | n `elem` [">=", "fp.geq", "oge", "oge__logic"]  -> Just $ FConn Or (FConn Impl condF (FComp Ge e1 thenTermE))
-                                                                                              (FConn Impl (FNot condF) (FComp Ge e1 elseTermE))
-                          | n `elem` [">",  "fp.gt", "ogt", "ogt__logic"]   -> Just $ FConn Or (FConn Impl condF (FComp Gt e1 thenTermE))
-                                                                                              (FConn Impl (FNot condF) (FComp Gt e1 elseTermE))
-                          | n `elem` ["<=", "fp.leq", "ole", "ole__logic"]  -> Just $ FConn Or (FConn Impl condF (FComp Le e1 thenTermE))
-                                                                                              (FConn Impl (FNot condF) (FComp Le e1 elseTermE))
-                          | n `elem` ["<",  "fp.lt", "olt", "olt__logic"]   -> Just $ FConn Or (FConn Impl condF (FComp Lt e1 thenTermE))
-                                                                                              (FConn Impl (FNot condF) (FComp Lt e1 elseTermE))
-                          | n `elem` ["=",  "fp.eq"]                        -> Just $ FConn Or (FConn Impl condF (FComp Gt e1 thenTermE))
-                                                                                              (FConn Impl (FNot condF) (FComp Gt e1 elseTermE))
+                        n -- TODO: Change these to AND
+                          | n `elem` [">=", "fp.geq", "oge", "oge__logic"]  -> Just $ FConn And (FConn Impl condF (FComp Ge e1 thenTermE))
+                                                                                                (FConn Impl (FNot condF) (FComp Ge e1 elseTermE))
+                          | n `elem` [">",  "fp.gt", "ogt", "ogt__logic"]   -> Just $ FConn And (FConn Impl condF (FComp Gt e1 thenTermE))
+                                                                                                (FConn Impl (FNot condF) (FComp Gt e1 elseTermE))
+                          | n `elem` ["<=", "fp.leq", "ole", "ole__logic"]  -> Just $ FConn And (FConn Impl condF (FComp Le e1 thenTermE))
+                                                                                                (FConn Impl (FNot condF) (FComp Le e1 elseTermE))
+                          | n `elem` ["<",  "fp.lt", "olt", "olt__logic"]   -> Just $ FConn And (FConn Impl condF (FComp Lt e1 thenTermE))
+                                                                                                (FConn Impl (FNot condF) (FComp Lt e1 elseTermE))
+                          | n `elem` ["=",  "fp.eq"]                        -> Just $ FConn And (FConn Impl condF (FComp Gt e1 thenTermE))
+                                                                                                (FConn Impl (FNot condF) (FComp Gt e1 elseTermE))
                         _ -> Nothing
                     (_, _, _) -> Nothing
                 (_, _) -> Nothing
                       
 termToF (LD.Application (LD.Variable "ite") [condition, thenTerm, elseTerm]) = -- if-then-else operator with F types
   case (termToF condition, termToF thenTerm, termToF elseTerm) of
-    (Just conditionF, Just thenTermF, Just elseTermF) -> Just $ FConn Or (FConn Impl conditionF thenTermF) (FConn Impl (FNot conditionF) elseTermF)
+    (Just conditionF, Just thenTermF, Just elseTermF) -> Just $ FConn And (FConn Impl conditionF thenTermF) (FConn Impl (FNot conditionF) elseTermF)
     (_, _, _) -> Nothing
+termToF (LD.Variable "true")  = Just FTrue
+termToF (LD.Variable "false") = Just FFalse
 termToF _ = Nothing
 
 termToE :: LD.Expression -> Maybe E
 -- Symbols/Literals
-termToE (LD.Variable var) = if var `notElem` ["true", "false"] then Just $ Var var else Nothing
-termToE (LD.Number   num) = Just $ Lit num
+termToE (LD.Variable "true")  = Nothing -- These should be parsed to F
+termToE (LD.Variable "false") = Nothing -- These should be parsed to F
+termToE (LD.Variable var)     =  Just $ Var var
+termToE (LD.Number   num)     = Just $ Lit num
 -- one param functions
 termToE (LD.Application (LD.Variable operator) [op]) =
   case termToE op of
@@ -366,6 +357,8 @@ determineFloatTypeF (FConn op f1 f2) varTypeMap = case (determineFloatTypeF f1 v
 determineFloatTypeF (FNot f)         varTypeMap = case determineFloatTypeF f varTypeMap of
                                                     Just p  -> Just $ FNot p
                                                     Nothing -> Nothing
+determineFloatTypeF FTrue  _ = Just FTrue
+determineFloatTypeF FFalse _ = Just FFalse
         
 -- |Find the type for the given variables
 -- Type is looked for in the supplied map
@@ -467,6 +460,8 @@ deriveVCRanges vc@(FConn Impl contextCNF goal) =
     fContainsVars vars (FConn _ f1 f2)  = fContainsVars vars f1 || fContainsVars vars f2
     fContainsVars vars (FComp _ e1 e2)  = eContainsVars vars e1 || eContainsVars vars e2
     fContainsVars vars (FNot f)         = fContainsVars vars f
+    fContainsVars _ FTrue               = False
+    fContainsVars _ FFalse              = False
 deriveVCRanges _ = Nothing
 
 -- |Convert a VC to ECNF, eliminating any floats. 
