@@ -1,5 +1,11 @@
 # Change log for aern2-real
 
+* v 0.2.4 2021-05-26
+  * overhaul README and examples
+  * stop "very inaccurate" errors breaking ? (bits n) queries
+  * optimisation: ? (bits n) queries start from precision n
+  * add tests for accuracy queries, limit and select
+  * fix div by 0 during low-accuracy integer powers
 * v 0.2.1 2021-05-18
   * add conversion from WithAnyPrec
 * v 0.2.0 2021-05-17
