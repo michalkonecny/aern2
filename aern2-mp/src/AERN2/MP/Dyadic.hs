@@ -458,9 +458,9 @@ instance
   mul = CE.lift1T mul
 
 instance CanPow Dyadic Integer where
-  pow = powUsingMul (dyadic 1)
+  pow = powUsingMul (dyadic 1) (*)
 instance CanPow Dyadic Int where
-  pow = powUsingMul (dyadic 1)
+  pow = powUsingMul (dyadic 1) (*)
 
 instance
   (CanDiv a Dyadic

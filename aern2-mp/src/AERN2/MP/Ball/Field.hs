@@ -15,7 +15,7 @@
     Field operations on arbitrary precision dyadic balls
 -}
 module AERN2.MP.Ball.Field
-()
+(mulBalls, mulByEndpoints)
 where
 
 import MixedTypesNumPrelude
@@ -124,12 +124,36 @@ instance
 {- multiplication -}
 
 instance CanMulAsymmetric MPBall MPBall where
-  mul (MPBall x1 e1) (MPBall x2 e2) =
+  mul = mulBalls
+  -- mul = mulByEndpoints
+
+mulBalls :: MPBall -> MPBall -> MPBall
+mulBalls (MPBall x1 e1) (MPBall x2 e2) =
     normalize $ MPBall x12C (e12 + e1*(abs x2) + e2*(abs x1) + e1*e2)
       -- the mixed operations above automatically convert
       -- MPFloat to ErrorBound, checking non-negativity
     where
     (x12C, e12) = MPFloat.ceduCentreErr $ MPFloat.mulCEDU x1 x2
+
+mulByEndpoints :: MPBall -> MPBall -> MPBall
+mulByEndpoints b1 b2 = 
+  fromEndpoints l r
+  where
+  (l,r) 
+    | 0 <= l1 && 0 <= l2 = (l1*.l2, r1*^r2) -- 0 <= l1 <= r1, 0 <= l2 <= r2
+    | r1 <= 0 && r2 <= 0 = (r1*.r2, l1*^l2) -- l1 <= r1 <= 0, l2 <= r2 <= 0
+    | 0 <= l1 && r2 <= 0 = (r1*.l2, l1*^r2) -- l2 <= r2 <= 0 <= l1 <= r1
+    | r1 <= 0 && 0 <= l2 = (l1*.r2, r1*^l2) -- l1 <= r1 <= 0 <= l2 <= r2
+    | l1 < 0 && 0 < r1 && 0 <= l2 = (l1*.r2, r1*^r2) -- l1 < 0 < r1, 0 <= l2 <= r2
+    | l1 < 0 && 0 < r1 && r2 <= 0 = (r1*.l2, l1*^l2) -- l1 < 0 < r1, l2 <= r2 <= 0
+    | l2 < 0 && 0 < r2 && 0 <= l1 = (l2*.r1, r2*^r1) -- l2 < 0 < r2, 0 <= l1 <= r1
+    | l2 < 0 && 0 < r2 && r1 <= 0 = (r2*.l1, l2*^l1) -- l2 < 0 < r2, l1 <= r1 <= 0
+    | otherwise = -- l1 < 0 < r1, l2 < 0 < r2
+      ((l1 *. r2) `min` (r1 *. l2)
+      ,(l1 *^ l2) `max` (r1 *^ r2))
+  (l1,r1) = endpoints b1
+  (l2,r2) = endpoints b2
+
 
 instance CanMulAsymmetric MPBall Int where
   type MulType MPBall Int = MPBall
@@ -254,11 +278,11 @@ instance CanPow MPBall Integer where
 instance CanPow MPBall Int where
   pow = powUsingMulRecipCutNeg (mpBall 1)
 
-powUsingMulRecipCutNeg :: _ => t -> t -> e -> DivType Integer t
+powUsingMulRecipCutNeg :: _ => MPBall -> MPBall -> e -> MPBall
 powUsingMulRecipCutNeg one x e 
   | even e = 
-      max 0 $ powUsingMulRecip one x e
-  | otherwise = powUsingMulRecip one x e
+      max 0 $ powUsingMulRecip one mulByEndpoints recip x e
+  | otherwise = powUsingMulRecip one mulByEndpoints recip x e
 
 instance
   (CanPow MPBall b)

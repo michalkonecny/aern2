@@ -37,7 +37,7 @@ import AERN2.MP.ErrorBound (errorBound)
 import AERN2.MP.Ball.Type
 import AERN2.MP.Ball.Conversions ()
 import AERN2.MP.Ball.Comparisons ()
-import AERN2.MP.Ball.Field ()
+import AERN2.MP.Ball.Field (mulByEndpoints)
 
 
 {- trigonometrics -}
@@ -112,13 +112,13 @@ instance CanLog MPBall where
     logLip y = errorBound $ (1/y)
 
 instance CanPow MPBall MPBall where
-  pow = powUsingExpLog (mpBall 1)
+  pow = powUsingExpLog (mpBall 1) mulByEndpoints recip
 
 instance CanPow MPBall Dyadic where
-  pow b e = powUsingExpLog (mpBall 1) b (mpBall e)
+  pow b e = pow b (mpBall e)
 
 instance CanPow MPBall Rational where
-  pow b e = powUsingExpLog (mpBall 1) b (mpBallP (getPrecision b) e)
+  pow b e = pow b (mpBallP (getPrecision b) e)
 
 instance CanSqrt MPBall where
   type SqrtType MPBall = MPBall

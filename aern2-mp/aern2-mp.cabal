@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 3a6ca9d8026d093f51e3a0bb5c6a09c0a4cb008c15b8d398d4fc46d44591a13a
+-- hash: 0a5edd34534f419ba10a87d5331ebd0f06d4ed27cedffc13a8f01b81345e8471
 
 name:           aern2-mp
 version:        0.2.3.0
@@ -84,7 +84,7 @@ library
     , deepseq
     , hspec
     , integer-logarithms
-    , mixed-types-num >=0.5.4
+    , mixed-types-num >=0.5.5
     , reflection
     , regex-tdfa
     , template-haskell
@@ -124,7 +124,7 @@ test-suite aern2-mp-test
     , deepseq
     , hspec
     , integer-logarithms
-    , mixed-types-num >=0.5.4
+    , mixed-types-num >=0.5.5
     , reflection
     , regex-tdfa
     , template-haskell

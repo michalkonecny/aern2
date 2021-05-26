@@ -51,9 +51,9 @@ packages:
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
-- cdar-mBound-0.1.0.1
+- cdar-mBound-0.1.0.2
 - collect-errors-0.1.5.0
-- mixed-types-num-0.5.4.0
+- mixed-types-num-0.5.5.0
 # - memoize-0.8.1
 # - rounded-0.1.0.1
 # - long-double-0.1
