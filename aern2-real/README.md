@@ -343,4 +343,4 @@ Here we use `select` to implement a *soft* sign test with some tolerance `eps` a
 
 Most `CReal` operations are simply lifts of the corresponding `CN MPBall` operations, which are tested in package [aern2-mp](../aern2-mp/README.md) against a fairly complete hspec/QuickCheck specification of algebraic properties.
 
-TODO: limit and select tests
+There are also tests specific to `CReal`, mostly checking that `? (bits n)` queries return sufficiently accurate approximations.  There is are tests for `select` and `limit`.
