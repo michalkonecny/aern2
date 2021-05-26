@@ -14,7 +14,7 @@
     To run the tests using stack, execute:
 
     @
-    stack test aern2-real --test-arguments "-a 1000 -m Real"
+    stack test aern2-real --test-arguments "-a 1000 -m CReal"
     @
 -}
 module AERN2.Real.Tests
@@ -40,9 +40,12 @@ import AERN2.MP.Accuracy
 import AERN2.MP
 import AERN2.MP.Dyadic
 
+import AERN2.Limit
 import AERN2.Real.Type
+import AERN2.Real.CKleenean
 import AERN2.Real.Field ()
 import AERN2.Real.Elementary ()
+import AERN2.Real.Limit ()
 
 instance Arbitrary CReal where
   arbitrary =
@@ -219,3 +222,15 @@ specCReal =
       -- specCRrespectsAccuracy2T tDyadic "pow" pow precondPositiveSmallReal precondSmallT
       specCRrespectsAccuracy1 "cos" cos precondAnyReal
       specCRrespectsAccuracy1 "sine" sin precondAnyReal
+    describe "select" $ do
+      it "soft abs via select" $ do
+        property $ \ (x :: CReal) (p :: Precision) (q :: Rational) ->
+          (1 < q) ==>
+          let eps = 1/q in
+          (abs (abs x - (if select (x > -eps) (x < eps) then x else -x)) ? p) ?<? 2*eps
+    describe "limit" $ do
+      it "computing e as a limit of Taylor series" $ do
+        property $ \ (p :: Precision) ->
+          ((exp (mpBallP p 1.0)) ?==?) $
+            (limit $ \(n :: Integer) -> sum $ map (recip . creal) $ take (n+3) $ scanl (*) 1 [1..(n)]) ? p
+
