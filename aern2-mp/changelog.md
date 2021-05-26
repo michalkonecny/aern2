@@ -1,5 +1,7 @@
 # Change log for aern2-mp
 
+* v 0.2.4 2021-05-26
+  * use endpoint multiplication in integer power to avoid crossing 0
 * v 0.2.3 2021-05-22
   * make MPBall "Very inaccurate" a *potential* error (important for CReal accuracy queries)
 * v 0.2.2 2021-05-21
