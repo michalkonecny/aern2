@@ -28,4 +28,3 @@
   * arrow-based networks of nodes communicating via query-answer protocols
   * networks executable with cached and parallel strategies
   * network execution can be visualised in browser using an Elm frontend
-
