@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: dcd52485dd451831f9e0d0903913a199f2dd7764f22b7fc61f3a3b292ba85676
+-- hash: 1ee9cd11320b2755650a6147dba4bfe80cf5c45f8e6f6f3fe4e25c2a629c76ce
 
 name:           aern2-real
-version:        0.2.4.0
+version:        0.2.4.1
 synopsis:       Real numbers as sequences of MPBalls
 description:    Please see the README on GitHub at <https://github.com/michalkonecny/aern2/#readme>
 category:       Math
@@ -61,12 +61,12 @@ library
   ghc-options: -Wall
   build-depends:
       QuickCheck
-    , aern2-mp >=0.2.1
+    , aern2-mp >=0.2.4
     , base ==4.*
     , collect-errors >=0.1.5
     , hspec
     , integer-logarithms
-    , mixed-types-num >=0.5.3
+    , mixed-types-num >=0.5.5
   default-language: Haskell2010
 
 test-suite aern2-real-test
@@ -93,11 +93,11 @@ test-suite aern2-real-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:
       QuickCheck
-    , aern2-mp >=0.2.1
+    , aern2-mp >=0.2.4
     , aern2-real
     , base ==4.*
     , collect-errors >=0.1.5
     , hspec
     , integer-logarithms
-    , mixed-types-num >=0.5.3
+    , mixed-types-num >=0.5.5
   default-language: Haskell2010
