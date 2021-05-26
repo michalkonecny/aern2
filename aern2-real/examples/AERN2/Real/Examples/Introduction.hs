@@ -273,14 +273,20 @@ logistic1 c n x0 =
   where
   lg x = c * x * (1-x)
 
-logistic1R_run :: Integer -> CReal
-logistic1R_run n = logistic1 3.82 n (creal 0.5)
+logistic1_CReal_run :: Integer -> CReal
+logistic1_CReal_run n = logistic1 3.82 n (creal 0.5)
+
+-- TODO: define logistic1_iter
 
 {-  Example uses:
 
-*AERN2.Real.Introduction> logistic2R_run 100 ? (bits 100)
-[0.9508758511648028... ± 2.0678e-32 <2^(-105)]
+*AERN2.Real.Examples.Introduction> logistic1_CReal_run 100 ? (bits 100)
+[0.95087585116480286419338875... ± ~2.9792e-32 ~2^(-104)]
   
+*AERN2.Real.Examples.Introduction> logistic1_CReal_run 10000 ? (bits 100)
+[0.20775682944252359241450861... ± ~0.0000 ~2^(-2566)]
+(2.06 secs, 2,970,188,704 bytes)
+
 -}
 
 {-
