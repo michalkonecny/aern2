@@ -24,9 +24,15 @@ import AERN2.Util.Util
 
 import Debug.Trace (trace)
 
-minFun :: BoxFun -> Accuracy -> (Integer, CN MPBall)
-minFun f ac = 
-    bestLocalMinimum f (domain f) ac
+globalMinimumGreaterThanN :: BoxFun -> Accuracy -> CN Rational -> Precision -> Bool
+globalMinimumGreaterThanN f ac n initialPrecision =
+    trace (show x)
+    x !>! n
+    where x = globalMinimum f ac initialPrecision 
+
+minFun :: BoxFun -> Accuracy -> Precision -> (Integer, CN MPBall)
+minFun f ac initialPrecision = 
+    bestLocalMinimum f (domain f) ac initialPrecision
 
 data SearchBox =
     SearchBox
@@ -60,41 +66,41 @@ instance Prelude.Ord SearchBox where
 
 ---
 
-globalMinimumWithCutoff :: BoxFun -> Accuracy -> CN MPBall -> CN MPBall
-globalMinimumWithCutoff f ac cutoff =
+globalMinimumWithCutoff :: BoxFun -> Accuracy -> CN MPBall -> Precision -> CN MPBall
+globalMinimumWithCutoff f ac cutoff initialPrecision =
     if dimension f == 1 then
         let
             fl       = apply f (V.map lowerBound $ domain f)
             fr       = apply f (V.map upperBound $ domain f)
-            localMin = snd $ bestLocalMinimumWithCutoff f (domain f) ac cutoff
+            localMin = snd $ bestLocalMinimumWithCutoff f (domain f) ac cutoff initialPrecision
         in
             min fl $ min localMin fr
     else 
         let
-            localMin       = snd $ bestLocalMinimumWithCutoff f (domain f) ac cutoff
+            localMin       = snd $ bestLocalMinimumWithCutoff f (domain f) ac cutoff initialPrecision
             boundaryFuns   = boundaryRestrictions f
-            boundaryMinima = List.map (\g -> globalMinimumWithCutoff g ac $ min cutoff $ (upperBound localMin :: CN MPBall)) boundaryFuns
+            boundaryMinima = List.map (\g -> globalMinimumWithCutoff g ac (min cutoff ((upperBound localMin :: CN MPBall))) initialPrecision) boundaryFuns
         in
             List.foldl' min localMin boundaryMinima
 
 
-globalMinimum :: BoxFun -> Accuracy -> CN MPBall
-globalMinimum f ac =
-    globalMinimumWithCutoff f ac $ apply f (centre boxp)
+globalMinimum :: BoxFun -> Accuracy -> Precision -> CN MPBall
+globalMinimum f ac initialPrecision =
+    globalMinimumWithCutoff f ac (apply f (centre boxp)) initialPrecision
     where
-    boxp = setPrecision (prec 53) (domain f)
+    boxp = setPrecision initialPrecision (domain f)
 
-bestLocalMinimum :: BoxFun -> Box -> Accuracy -> (Integer, CN MPBall)
-bestLocalMinimum f box ac =
-    bestLocalMinimumWithCutoff f box ac $ apply f (centre boxp)
+bestLocalMinimum :: BoxFun -> Box -> Accuracy -> Precision -> (Integer, CN MPBall)
+bestLocalMinimum f box ac initialPrecision =
+    bestLocalMinimumWithCutoff f box ac (apply f (centre boxp)) initialPrecision
     where
-    boxp = setPrecision (prec 53) box
+    boxp = setPrecision initialPrecision box
 
-bestLocalMinimumWithCutoff :: BoxFun -> Box -> Accuracy -> CN MPBall -> (Integer, CN MPBall)
-bestLocalMinimumWithCutoff f box ac initialCutoff =
+bestLocalMinimumWithCutoff :: BoxFun -> Box -> Accuracy -> CN MPBall -> Precision -> (Integer, CN MPBall)
+bestLocalMinimumWithCutoff f box ac initialCutoff initialPrecision =
     aux initialQueue initialCutoff 0 dummyBox
     where
-    boxp             = setPrecision (prec 53) box
+    boxp             = setPrecision initialPrecision box
     initialRange     = apply f boxp
     initialSearchBox = SearchBox boxp initialRange
     initialQueue     = Q.singleton initialSearchBox
@@ -158,6 +164,14 @@ lipschitzRange _f fc c g box m =
     dotProduct     = normG * normDiff
     newRange       = fc + (fromEndpointsAsIntervals (-dotProduct) dotProduct :: CN MPBall)
     m'             = intersectCN m newRange
+
+applyLipschitz :: BoxFun -> Box -> CN MPBall
+applyLipschitz f box = 
+    lipschitzRange f fbc bc dfb' box fb
+    where
+    (fb, dfb') = valueGradient f box
+    bc  = centre box
+    fbc  = apply f bc
 
 increasePrecision :: Precision -> Precision
 increasePrecision p =
@@ -266,3 +280,43 @@ split f dfb cutoff bxe =
             (False, False) -> [SearchBox a fa', SearchBox b fb']
     in
         (cutoff', boxes)
+
+-- Precondition: f and g must have the same domain
+maxBoxFunGreaterThanN :: BoxFun -> BoxFun -> CN Rational -> Precision -> Bool
+maxBoxFunGreaterThanN f g n initialPrecision =
+    case Box.getEndpoints fbox == Box.getEndpoints gbox of
+        Just True ->
+            checkMaxAboveN f g ||
+                (Box.width fboxp !>! cutoff && Box.width gboxp !>! cutoff) &&
+                    let
+                        newBoxes = Box.fullBisect fboxp
+
+                        updateDomain z = BoxFun (dimension z) (bf_eval z)
+
+                        checkBoxes [] = True
+                        checkBoxes (box : boxes) = 
+                            if checkMaxAboveN (updateDomain f box) (updateDomain g box) 
+                                then checkBoxes boxes
+                                else maxBoxFunGreaterThanN f' g' n initialPrecision && checkBoxes boxes
+                                where
+                                    f' = updateDomain f box
+                                    g' = updateDomain g box
+
+                    in
+                        checkBoxes newBoxes
+
+        _ ->
+            trace "Domain of f not equal to domain of g"
+            False
+    where
+        cutoff = 1/2^10
+
+        fbox                = domain f
+        fboxp               = setPrecision initialPrecision fbox 
+
+        gbox                = domain g
+        gboxp               = setPrecision initialPrecision gbox
+
+        checkMaxAboveN h i = applyMinimum h !>! n || applyMinimum i !>! n
+
+

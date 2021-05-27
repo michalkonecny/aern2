@@ -109,3 +109,42 @@ instance
     where
     type NegType (Differential a) = Differential (NegType a)
     negate = fmap negate
+
+instance 
+    (CanSqrtSameType a, CanMulSameType a, CanNegSameType a, CanAddSameType a, HasIntegers a, CanDivSameType a) =>
+    CanSqrt (Differential a)
+    where
+    type SqrtType (Differential a) = Differential a
+    sqrt (OrderZero x)             = OrderZero (sqrt x)
+    sqrt (OrderOne x dx)           = OrderOne  (sqrt x) (dx * sqrtx')                  where sqrtx' = (convertExactly 1 :: a) / ((convertExactly 2 :: a) * sqrt x)
+    sqrt (OrderTwo x dx dxt d2x)   = OrderTwo  (sqrt x) (dx * sqrtx') (dxt * sqrtx') 
+                                               ((d2x * sqrtx') + (dx * dxt * sqrtx'')) where sqrtx'  = (convertExactly 1 :: a) / ((convertExactly 2 :: a) * sqrt x) 
+                                                                                             sqrtx'' = (convertExactly (-1) :: a) / ((convertExactly 4 :: a) * x * sqrt x)  
+                                                                                             -- sqrtx'  == -1 / (2 * sqrt(x))
+                                                                                             -- sqrtx'' == -1 / (4 * x * sqrt(x)) == -1 / (4 * x^(3/2))
+
+-- instance
+--     (CanMinMaxSameType a, HasIntegers a) =>
+--     CanMinMaxAsymmetric (Differential a) (Differential a)
+--     where
+--     type MinMaxType (Differential a) (Differential a) = Differential a
+--     min a b = 
+--         case min (order a) (order b) of
+--             2 -> OrderTwo  (min (x a) (x b)) (min (dx a) (dx b)) (min (dxt a) (dxt b)) 
+--                            (min (d2x a) (d2x b))
+--             1 -> OrderOne  (min (x a) (x b)) (min (dx a) (dx b))
+--             0 -> OrderZero (min (x a) (x b))
+--     max a b =
+--         case min (order a) (order b) of
+--             2 -> OrderTwo  (max (x a) (x b)) (max (dx a) (dx b)) (max (dxt a) (dxt b)) 
+--                            (max (d2x a) (d2x b))
+--             1 -> OrderOne  (max (x a) (x b)) (max (dx a) (dx b))
+--             0 -> OrderZero (max (x a) (x b))
+
+-- instance
+--     (CanAbsSameType a) =>
+--     CanAbs (Differential a)
+--     where
+--     type AbsType (Differential a) = Differential a
+--     abs = fmap abs
+

@@ -20,11 +20,11 @@ main =
         ac = bits 100
     in
     do
-    putStrLn $ "ratz: "       ++ (show $ minFun ratz4        ac)
-    putStrLn $ "griewank 2: " ++ (show $ minFun (griewank 2) ac)
-    putStrLn $ "shekel 2: "   ++ (show $ minFun shekel       ac)
-    putStrLn $ "himmelblau: " ++ (show $ minFun himmelblau   ac)
-    putStrLn $ "rosenbrock: " ++ (show $ minFun rosenbrock   ac)
-    putStrLn $ "trefethen: "  ++ (show $ minFun siam4        ac)
-    putStrLn $ "griewank 5: " ++ (show $ minFun (griewank 5) ac)
-    putStrLn $ "griewank 7: " ++ (show $ minFun (griewank 7) ac)
+    putStrLn $ "ratz: "       ++ (show $ minFun ratz4        ac (prec 53))
+    putStrLn $ "griewank 2: " ++ (show $ minFun (griewank 2) ac (prec 53))
+    putStrLn $ "shekel 2: "   ++ (show $ minFun shekel       ac (prec 53))
+    putStrLn $ "himmelblau: " ++ (show $ minFun himmelblau   ac (prec 53))
+    putStrLn $ "rosenbrock: " ++ (show $ minFun rosenbrock   ac (prec 53))
+    putStrLn $ "trefethen: "  ++ (show $ minFun siam4        ac (prec 53))
+    putStrLn $ "griewank 5: " ++ (show $ minFun (griewank 5) ac (prec 53))
+    putStrLn $ "griewank 7: " ++ (show $ minFun (griewank 7) ac (prec 53))

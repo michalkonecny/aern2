@@ -7,8 +7,27 @@ import qualified Data.Vector as V
 import qualified Data.Vector.Generic.Mutable as M
 import AERN2.MP.Precision
 import AERN2.MP.Ball
+import qualified Prelude as P
 
 type (Vector a) = V.Vector a
+
+(+++) :: Vector a -> Vector a -> Vector a
+(+++) = (V.++)
+
+drop :: Int -> Vector a -> Vector a 
+drop = V.drop
+
+take :: Int -> Vector a -> Vector a 
+take = V.take
+
+empty :: Vector a
+empty = V.empty
+
+singleton :: a -> Vector a
+singleton = V.singleton
+
+cons :: a -> Vector a -> Vector a
+cons = V.cons
 
 fromList :: [a] -> Vector a
 fromList = V.fromList
@@ -43,6 +62,21 @@ intLength = V.length
 inftyNorm :: (HasIntegers a, CanMinMaxSameType a) => Vector a -> a
 inftyNorm (v :: Vector a) =
     V.foldl' max (convertExactly 0 :: a) v
+
+find :: (a -> Bool) -> Vector a -> Maybe a 
+find = V.find
+
+elem :: P.Eq a => a -> Vector a -> Bool
+elem = V.elem
+
+toList :: Vector a -> [a] 
+toList = V.toList
+
+zip :: Vector a -> Vector b -> Vector (a, b) 
+zip = V.zip
+
+null :: Vector a -> Bool
+null = V.null
 
 instance 
     (HasAccuracy a, HasPrecision a) => HasAccuracy (Vector a)

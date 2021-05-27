@@ -95,6 +95,7 @@ library
     , reflection
     , regex-tdfa
     , template-haskell
+
   default-language: Haskell2010
 
 test-suite aern2-mp-test

@@ -8,8 +8,9 @@ import qualified AERN2.Linear.Vector.Type as V
 import AERN2.MP.Ball
 import MixedTypesNumPrelude
 import AERN2.AD.Differential
-import AERN2.Linear.Matrix.Type
+import qualified AERN2.Linear.Matrix.Type as M
 import AERN2.Util.Util
+import AERN2.BoxFun.Box
 
 import Debug.Trace
 
@@ -20,6 +21,9 @@ data BoxFun =
         ,   bf_eval   :: Vector (Differential (CN MPBall)) -> Differential (CN MPBall)
         ,   domain    :: Vector (CN MPBall)
     }
+
+instance Show BoxFun where
+    show (BoxFun d f b) = show d ++ " dimensional BoxFun, domain: " ++ show b
 
 boundaryRestrictions :: BoxFun -> [BoxFun]
 boundaryRestrictions (BoxFun d ev dom) =
@@ -46,7 +50,7 @@ boundaryRestrictions (BoxFun d ev dom) =
         i <- [0 .. d - 1]
     ]
 
-valueGradientHessian :: BoxFun -> Vector (CN MPBall) -> (CN MPBall, Vector (CN MPBall), Matrix (CN MPBall))
+valueGradientHessian :: BoxFun -> Vector (CN MPBall) -> (CN MPBall, Vector (CN MPBall), M.Matrix (CN MPBall))
 valueGradientHessian (BoxFun d e _) v =
     (value, grad, hess)
     where
@@ -57,7 +61,7 @@ valueGradientHessian (BoxFun d e _) v =
 
     value = x $ (triangle ! 0) ! 0
     grad  = V.map (\i -> dx $ (triangle ! i) ! 0) $ V.enumFromTo 0 (d - 1)
-    hess  = create d d (\i j -> d2x $ if i > j then (triangle ! i) ! j else (triangle ! j) ! i)
+    hess  = M.create d d (\i j -> d2x $ if i > j then (triangle ! i) ! j else (triangle ! j) ! i)
 
     w i j = V.imap (\k x -> OrderTwo x (delta i k) (delta j k) (pure $ mpBall 0)) v
     delta :: Integer -> Integer -> CN MPBall
@@ -91,6 +95,18 @@ apply (BoxFun d e _) v =
     where
     v' = V.map (\x -> differential 0 x) v
 
+applyMinimum :: BoxFun -> CN MPBall
+applyMinimum h = fst $ endpointsAsIntervals (apply h (domain h))
+
+applyMinimumOnBox :: BoxFun -> Vector (CN MPBall) -> CN MPBall
+applyMinimumOnBox h hbox = fst $ endpointsAsIntervals (apply h hbox)
+
+applyMaximum :: BoxFun -> CN MPBall
+applyMaximum h = snd $ endpointsAsIntervals (apply h (domain h))
+
+applyMaximumOnBox :: BoxFun -> Vector (CN MPBall) -> CN MPBall
+applyMaximumOnBox h hbox = snd $ endpointsAsIntervals (apply h hbox)
+
 gradient :: BoxFun -> Vector (CN MPBall) -> Vector (CN MPBall)
 gradient (BoxFun d e _) v =
     aux (d - 1) []
@@ -107,11 +123,33 @@ gradient (BoxFun d e _) v =
     delta :: Integer -> Integer -> CN MPBall
     delta i k = if i == k then (cn $ mpBall 1) else (cn $ mpBall 0)
 
-hessian :: BoxFun -> Vector (CN MPBall) -> Matrix (CN MPBall)
+hessian :: BoxFun -> Vector (CN MPBall) -> M.Matrix (CN MPBall)
 hessian (BoxFun d e _) v = 
-    create d d a
+    M.create d d a
     where
     a i j = d2x $ e (w i j)
     w i j = V.imap (\k x -> OrderTwo x (delta i k) (delta j k) (pure $ mpBall 0)) v
     delta :: Integer -> Integer -> CN MPBall
     delta i k = if i == k then (cn $ mpBall 1) else (cn $ mpBall 0)
+
+jacobian :: [BoxFun] -> Vector (CN MPBall) -> M.Matrix (CN MPBall)
+jacobian fs v =
+    M.create (length fs) highestDiminseionInFs a
+    where
+    highestDiminseionInFs = maximum (map dimension fs)
+
+    a i j = dx $ bf_eval (fs!!i) (w j)
+    w j = V.imap (\k x -> OrderOne x (delta j k)) v
+    delta :: Integer -> Integer -> CN MPBall
+    delta i k = if i == k then (cn $ mpBall 1) else (cn $ mpBall 0)
+
+gradientUsingGradient :: BoxFun -> Box -> Box
+gradientUsingGradient f v =
+    V.zipWith fromEndpointsAsIntervals lowerBounds upperBounds
+    where
+        lowerBounds = firstDerivatives - secondDerivatives * V.map (fmap (mpBall . radius)) v
+        upperBounds = firstDerivatives + secondDerivatives * V.map (fmap (mpBall . radius)) v
+        firstDerivatives  = head $ M.rows $ jacobian [f] (centre v)
+        secondDerivatives = fmap abs $ hessian f v
+        p = getPrecision v
+        

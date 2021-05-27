@@ -13,7 +13,6 @@ import AERN2.MP.Enclosure
 
 import AERN2.Util.Util
 
-
 type Box = Vector (CN MPBall)
 
 instance HasEqAsymmetric Box Box where
@@ -97,6 +96,32 @@ bisect k box =
     leftBox  = V.imap (\i x -> if i == k then fromEndpointsAsIntervals l m else x) box
     rightBox = V.imap (\i x -> if i == k then fromEndpointsAsIntervals m r else x) box
 
+-- Bisects a into 2^d boxes of the same size, where d is the dimension of the given box
+fullBisect :: Box -> [Box]
+fullBisect b =
+    case V.length b of
+        0 -> [b]
+        l ->
+            -- y is the dimension bisected in the current iteration
+            -- x is a bisection of the previous dimension (tail recursion)
+            concatMap (\x -> map (\y -> x V.+++ V.singleton y) (bisectDimension (l-1))) (fullBisect (V.take (fromIntegral (l-1)) b))
+
+            where
+                bisectDimension n = [fst bn ! n, snd bn ! n]
+                    where bn = bisect n b
+
+-- Get the endpoints of a box as a list containing a pair of MPBalls for each dimension
+getEndpoints :: Box -> [(MPBall, MPBall)]
+getEndpoints b  = 
+    case V.length b of
+        0 -> []
+        _ -> endpointsAsIntervals ((b ! 0) ~!) : getEndpoints (V.drop (fromIntegral 1) b)
+
+lowerBounds :: Box -> Box
+lowerBounds = V.map lowerBound
+
+upperBounds :: Box -> Box
+upperBounds = V.map upperBound
 
 instance 
     CanNeg Box
@@ -104,3 +129,29 @@ instance
     type NegType Box = Box
     negate box = V.map (\x -> -x) box
     
+createEnclosingBox :: Box -> Box -> Box
+createEnclosingBox box1 box2 =
+    enclosingBox
+    where
+        indexedBox1 = V.zip (V.fromList [0 .. integer (V.length box1) - 1]) box1
+        enclosingBox = 
+            V.map 
+            (\(i, x) -> 
+                let
+                    y = box2 V.! i
+                    (l, r) = endpointsAsIntervals x
+                    (l', r') = endpointsAsIntervals y
+                    newL = min l l'
+                    newR = max r r'
+                in
+                    fromEndpointsAsIntervals newL newR)
+            indexedBox1
+
+fromVarMap :: [(String, (Rational, Rational))] -> Precision -> Box
+fromVarMap vs p = V.fromList $ map (\(_,(l,r)) -> fromEndpointsAsIntervals (cn (mpBallP p l)) (cn (mpBallP p r))) vs
+
+intersectList :: [Box] -> Box
+intersectList []            = V.empty
+intersectList [b]           = b
+intersectList [b1,b2]       = if intersectionCertainlyEmpty b1 b2 then V.empty else nonEmptyIntersection b1 b2
+intersectList (b1:b2:bs)    = if intersectionCertainlyEmpty b1 b2 then V.empty else intersectList $ nonEmptyIntersection b1 b2 : bs

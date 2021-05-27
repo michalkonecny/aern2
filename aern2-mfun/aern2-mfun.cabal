@@ -38,8 +38,16 @@ library
     , aern2-real == 0.1.*
     , aern2-fun == 0.1.*
     , vector
-    -- TODO: delete below eventually
+    , stm
+    , parallel
+    , simplex-haskell == 0.1.*
+    , smt2-parser
+    , binary
+    , scientific
+    , process
+-- TODO: delete below eventually
     , async
+    , text
 
   ghc-options:     -Wall -fno-warn-orphans -O2 -threaded
   extensions:
@@ -66,15 +74,58 @@ library
     AERN2.Linear.Vector.Type
     AERN2.Linear.Matrix.Type
     AERN2.Linear.Matrix.Inverse
+    -- AERN2.MP.Float
     AERN2.BoxFun.Box
     AERN2.BoxFun.Type
     AERN2.BoxFun.TestFunctions
     AERN2.BoxFun.Optimisation   
-    --AERN2.BoxFun.OptimisationConcurrent 
+    AERN2.BoxFunMinMax.Type
+    AERN2.BoxFunMinMax.Optimisation
+    AERN2.BoxFunMinMax.VarMap
+    AERN2.BoxFunMinMax.Expressions.DeriveBounds
+    AERN2.BoxFunMinMax.Expressions.Eliminator
+    AERN2.BoxFunMinMax.Expressions.TestFunctions
+    AERN2.BoxFunMinMax.Expressions.Type
+    AERN2.BoxFunMinMax.Expressions.Translators.BoxFun
+    AERN2.BoxFunMinMax.Expressions.Translators.DReal
+    AERN2.BoxFunMinMax.Expressions.Translators.MetiTarski
+    AERN2.BoxFunMinMax.Expressions.Translators.FPTaylor
+    AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.DataTypes
+    AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.Parser
+    AERN2.BoxFunMinMax.Expressions.Parsers.Smt
+    AERN2.BoxFunMinMax.Expressions.Parsers.EliminateFloats
+    -- AERN2.BoxFun.OptimisationConcurrent 
 
-executable aern2-mfun-benchmark
+-- executable aern2-mfun-benchmark
+--   ghc-options:
+--       -Wall -O2 -threaded
+--   extensions:
+--     RebindableSyntax,
+--     TypeFamilies,
+--     PostfixOperators,
+--     ScopedTypeVariables,
+--     FlexibleContexts,
+--     TypeSynonymInstances
+--   hs-source-dirs:
+--       src/AERN2/Benchmark
+--   main-is:
+--       OptimisationBenchmark.hs
+--   build-depends:
+--     base == 4.*
+--     , bytestring
+--     , regex-tdfa
+--     , zlib
+--     , mixed-types-num == 0.4.*
+--     , aern2-mp == 0.1.*
+--     , aern2-mfun == 0.1.*
+--     , aern2-real == 0.1.*
+--     , QuickCheck
+--     , clock
+--     , async
+
+executable aern2-mfun-heron-benchmark
   ghc-options:
-      -Wall -O2 -threaded
+      -Wall -O2 -threaded -rtsopts +RTS -N6 -RTS
   extensions:
     RebindableSyntax,
     TypeFamilies,
@@ -83,18 +134,31 @@ executable aern2-mfun-benchmark
     FlexibleContexts,
     TypeSynonymInstances
   hs-source-dirs:
-      src/AERN2/Benchmark
+      src/AERN2/BoxFunMinMax/Benchmark
   main-is:
-      OptimisationBenchmark.hs
+      Heron.hs
   build-depends:
     base == 4.*
-    , bytestring
-    , regex-tdfa
-    , zlib
+    , containers >= 0.5
+    , psqueues >= 0.2
+    , integer-logarithms >= 1.0
+    , convertible >= 1.1.1.0
+    , regex-tdfa >= 1.2.1
+    , bytestring >= 0.10
+    , hspec >= 2.1
+    -- , hspec-smallcheck >= 0.3 && < 0.5
+    , QuickCheck >= 2.7
+    , transformers >= 0.4
+    , lens >= 4.13
     , mixed-types-num == 0.4.*
     , aern2-mp == 0.1.*
-    , aern2-mfun == 0.1.*
     , aern2-real == 0.1.*
-    , QuickCheck
-    , clock
+    , aern2-fun == 0.1.*
+    , aern2-mfun == 0.1.*
+    , vector
+    , stm
+    , parallel
+    -- TODO: delete below eventually
     , async
+    , binary
+    , ghc

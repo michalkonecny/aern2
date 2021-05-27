@@ -212,5 +212,14 @@ instance
             xnm2 = if nEven then abs rawP'' else rawP''
             d2p  = n*((n - 1)*dx*dxt*xnm2 + d2x*xnm1)
 
-            
-            
+instance
+    CanAbs (Differential (CN MPBall))
+    where
+    type AbsType (Differential (CN MPBall)) = Differential (CN MPBall)
+    abs (OrderZero x)   = OrderZero $ abs x 
+    abs (OrderOne x dx) = OrderOne (abs x) newDx
+        where
+            newDx = do 
+                dx_ <- dx
+                pure $ (hullMPBall dx_ (-dx_))
+    abs (OrderTwo _ _ _ _) = error "Abs for differential order two undefined"
