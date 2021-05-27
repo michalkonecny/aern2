@@ -1,7 +1,7 @@
 {-|
     Module      :  AERN2.PQueue
     Description :  IntPSQ hiding keys and values
-    Copyright   :  (c) Michal Konecny
+    Copyright   :  2016 (c) Michal Konecny
     License     :  BSD3
 
     Maintainer  :  mikkonecny@gmail.com

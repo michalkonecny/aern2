@@ -1,0 +1,66 @@
+name:                aern2-fun
+version:             0.2.5.0
+github:              "michalkonecny/aern2"
+license:             BSD3
+author:              "Michal Konecny, Eike Neumann"
+maintainer:          "mikkonecny@gmail.com"
+copyright:           "2015-2021 Michal Konecny, Eike Neumann"
+
+extra-source-files:
+- README.md
+- changelog.md
+
+# Metadata used when publishing your package
+synopsis:            Real numbers as sequences of MPBalls
+category:            Math
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/michalkonecny/aern2/#readme>
+
+dependencies:
+- base == 4.*
+- containers
+- psqueues
+- hspec
+- QuickCheck
+- collect-errors >= 0.1.5
+- mixed-types-num >= 0.5.5
+# - integer-logarithms
+- aern2-mp >= 0.2.5
+- aern2-real >= 0.2.5
+
+default-extensions:
+- RebindableSyntax,
+- ScopedTypeVariables,
+- TypeFamilies,
+- TypeOperators,
+- ConstraintKinds,
+- DefaultSignatures,
+- MultiParamTypeClasses,
+- FlexibleContexts,
+- FlexibleInstances,
+- UndecidableInstances
+
+other-extensions:
+- TemplateHaskell
+
+library:
+  source-dirs: 
+  - src
+  - examples
+  ghc-options:
+  - -Wall
+
+tests:
+  aern2-real-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    dependencies:
+    - aern2-real

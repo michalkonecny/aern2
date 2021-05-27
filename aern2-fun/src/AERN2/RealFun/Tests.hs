@@ -1,5 +1,7 @@
 {-# LANGUAGE CPP #-}
 -- #define DEBUG
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 {-|
     Module      :  AERN2.RealFun.Tests
     Description :  Test support for real number function operations
@@ -12,7 +14,6 @@
 
     Test support for real number function operations
 -}
-
 module AERN2.RealFun.Tests
 (
   FnAndDescr(..)
@@ -56,13 +57,7 @@ instance (HasDomain f) => HasDomain (FnAndDescr f) where
   getDomain (FnAndDescr f _) = getDomain f
 
 specFnPointwiseOp2 ::
-  ( HasDomain f, CanMapInside (Domain f) x
-  , CanApply f x, ApplyType f x ~ v
-  , HasEqCertainly v v
-  , CanEnsureCN v
-  , Arbitrary (FnAndDescr f), ArbitraryWithDom (FnAndDescr f), Show f
-  , Arbitrary x, Show x
-  ) =>
+  _ =>
   (T f) -> (T x) ->
   String ->
   (f -> f -> f) ->
@@ -87,13 +82,7 @@ specFnPointwiseOp2
             apply (opFn f1 f2) x ?==? (vr :: v)
 
 specFnPointwiseOp1 ::
-  ( HasDomain f, CanMapInside (Domain f) x
-  , CanApply f x, ApplyType f x ~ v
-  , HasEqCertainly v v
-  , CanEnsureCN v
-  , Arbitrary (FnAndDescr f), ArbitraryWithDom (FnAndDescr f), Show f
-  , Arbitrary x, Show x
-  ) =>
+  _ =>
   (T f) -> (T x) ->
   String ->
   (f -> f) ->
