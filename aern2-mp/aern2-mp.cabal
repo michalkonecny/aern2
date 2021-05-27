@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: fbe9389cac52d7fe26a54b7acbf093242c4adab2d158cb51922c8e5d6547f73f
+-- hash: f380106cebd760457afe30f95f96a4613a687aa0d3f908c17172376defe10224
 
 name:           aern2-mp
 version:        0.2.5.0
@@ -57,6 +57,7 @@ library
       AERN2.MP.WithCurrentPrec.Comparisons
       AERN2.MP.WithCurrentPrec.Elementary
       AERN2.MP.WithCurrentPrec.Field
+      AERN2.MP.WithCurrentPrec.Limit
       AERN2.MP.WithCurrentPrec.PreludeInstances
       AERN2.MP.WithCurrentPrec.Type
       AERN2.Norm

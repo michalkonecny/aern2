@@ -27,7 +27,6 @@ import Prelude
 
 import Numeric.CollectErrors (cn, CN)
 
-import AERN2.Limit
 import AERN2.MP.Precision
 import AERN2.MP.Ball
 
@@ -87,24 +86,6 @@ instance (HasCurrentPrecision p) => Floating (WithCurrentPrec (CN MPBall) p) whe
     asinh = lift1 asinh
     acosh = lift1 acosh
     atanh = lift1 atanh
-
-instance 
-    (HasLimits ix (CN MPBall -> CN MPBall)
-    , LimitType ix (CN MPBall -> CN MPBall) ~ (CN MPBall -> CN MPBall)
-    ,HasCurrentPrecision p)
-    => 
-    HasLimits ix (WithCurrentPrec (CN MPBall) p) 
-    where
-    type LimitType ix (WithCurrentPrec (CN MPBall) p) = WithCurrentPrec (CN MPBall) p
-    limit (s :: ix -> (WithCurrentPrec (CN MPBall) p)) = 
-        WithCurrentPrec $ limit (snop) $ sample
-        where
-        sample :: CN MPBall
-        sample = setPrecision (getCurrentPrecision sampleP) $ cn $ mpBall (0::Integer) 
-        sampleP :: WithCurrentPrec MPBall p
-        sampleP = error "sampleP is not defined, it is only a type proxy"
-        snop :: ix -> (CN MPBall -> CN MPBall)
-        snop ix _sample = unWithCurrentPrec $ s ix
 
 _example1P :: CN MPBall
 _example1P = runWithPrec (prec 1000) pi
