@@ -3,7 +3,7 @@
 A set of Haskell packages for approximating exact real numbers and other validated numerical computation.
 
 - [A quick start](#a-quick-start)
-- [Library packages](#library-packages)
+- [Libraries](#libraries)
 - [Executables](#executables)
 - [Significant dependencies](#significant-dependencies)
 - [Other references](#other-references)
@@ -13,18 +13,18 @@ A set of Haskell packages for approximating exact real numbers and other validat
 - [Installation guide](docs/install.md)
 - Examples in [aern2-real README](aern2-real/README.md)
 
-## Library packages
+## Libraries
 
 - [aern2-mp](aern2-mp):
   Multiple-precision interval arithmetic (fairly complete)
 
 - [aern2-real](aern2-real):
   Cauchy real numbers (fairly complete)
-- aern2-fun:
-  Real functions (currently broken, not built by default)
+- [aern2-fun](aern2-fun):
+  Generic operations for real functions
 - aern2-fun-univariate:
   Continuous real functions of one variable and their polynomial enclosures (currently broken, not built by default)
-- other packages (currently broken)
+- *other packages* (currently broken)
 
 ## Executables
 
