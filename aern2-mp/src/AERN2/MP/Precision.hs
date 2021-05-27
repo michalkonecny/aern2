@@ -1,8 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-|
     Module      :  AERN2.MP.Precision
-    Description :  Floating-point precision
+    Description :  number of significant binary digits
     Copyright   :  (c) Michal Konecny
     License     :  BSD3
 
@@ -10,7 +10,8 @@
     Stability   :  experimental
     Portability :  portable
 
-    Floating-point precision type and its operations
+    Precision type and its operations.  Precision expresses a limit on the size
+    of an approximation, roughly corresponding to the number of significant bits for a floating-point number and its generalisations to other types.
 -}
 module AERN2.MP.Precision
 (
@@ -27,7 +28,8 @@ import MixedTypesNumPrelude
 import qualified Prelude as P
 import Text.Printf
 
-import Control.CollectErrors
+import Control.CollectErrors (CollectErrors(..), CanBeErrors)
+-- import qualified Control.CollectErrors as CE
 
 import Data.Complex
 
@@ -100,7 +102,7 @@ instance CanMulAsymmetric Precision Integer where
 class HasPrecision t where
     getPrecision :: t -> Precision
 
-class (HasPrecision t) => CanSetPrecision t where
+class CanSetPrecision t where
     setPrecision :: Precision -> t -> t
 
 instance HasPrecision t => HasPrecision (Complex t) where
@@ -124,24 +126,24 @@ instance CanSetPrecision Bool where
 
 instance HasPrecision t => HasPrecision (CollectErrors es t) where
   getPrecision vCE =
-    case getMaybeValueCE vCE of
+    case getMaybeValue vCE of
       Just v -> getPrecision v
       _ -> defaultPrecision
 instance CanSetPrecision t => CanSetPrecision (CollectErrors es t) where
   setPrecision p = fmap (setPrecision p)
 
-lowerPrecisionIfAbove :: (CanSetPrecision t) => Precision -> t -> t
+lowerPrecisionIfAbove :: (HasPrecision t, CanSetPrecision t) => Precision -> t -> t
 lowerPrecisionIfAbove p x
   | getPrecision x > p = setPrecision p x
   | otherwise = x
 
-raisePrecisionIfBelow :: (CanSetPrecision t) => Precision -> t -> t
+raisePrecisionIfBelow :: (HasPrecision t, CanSetPrecision t) => Precision -> t -> t
 raisePrecisionIfBelow p x
   | getPrecision x < p = setPrecision p x
   | otherwise = x
 
 specCanSetPrecision ::
-  (CanSetPrecision t, CanTestFinite t, Arbitrary t, Show t, Testable prop)
+  (HasPrecision t, CanSetPrecision t, CanTestFinite t, Arbitrary t, Show t, Testable prop)
   =>
   (T t) -> (t -> t -> prop) -> Spec
 specCanSetPrecision (T typeName :: T t) check =
@@ -213,7 +215,6 @@ convertPSecond ::
   (t1 -> t1 -> c) -> (t1 -> t2 -> c)
 convertPSecond = convertSecondUsing (\ b q -> convertP (getPrecision b) q)
 
-
 instance Arbitrary Precision where
   arbitrary =
     sized $ \size -> choose (4*(size+1),10*(size+1)) >>= return . prec
@@ -222,6 +223,6 @@ $(declForTypes
   [[t| Bool |], [t| Integer |], [t| Int |], [t| Rational |], [t| Double |]]
   (\ t -> [d|
 
-    instance (ConvertibleWithPrecision $t t, Monoid es) => ConvertibleWithPrecision $t (CollectErrors es t) where
-      safeConvertP p = fmap (\v -> CollectErrors (Just v) mempty) . safeConvertP p
+    instance (ConvertibleWithPrecision $t t, CanBeErrors es) => ConvertibleWithPrecision $t (CollectErrors es t) where
+      safeConvertP p = fmap pure . safeConvertP p
   |]))

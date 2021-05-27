@@ -56,7 +56,7 @@ instance
   , CanEnsureCE es b
   , CanEnsureCE es (DivType (Frac c) b)
   , CanEnsureCE es (DivTypeNoCN (Frac c) b)
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanDiv (Frac c) (CollectErrors es  b)
   where
@@ -72,7 +72,7 @@ instance
   , CanEnsureCE es a
   , CanEnsureCE es (DivType a (Frac c))
   , CanEnsureCE es (DivTypeNoCN a (Frac c))
-  , SuitableForCE es)
+  , CanBeErrors es)
   =>
   CanDiv (CollectErrors es a) (Frac c)
   where

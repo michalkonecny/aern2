@@ -1,4 +1,5 @@
 {-# LANGUAGE CPP #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-|
     Module      :  AERN2.MP.Ball.Tests
     Description :  Tests for operations on arbitrary precision balls
@@ -17,7 +18,6 @@
     stack test aern2-mp --test-arguments "-a 1000 -m MPBall"
     @
 -}
-
 module AERN2.MP.Ball.Tests
   (
     specMPBall, tMPBall
@@ -69,11 +69,13 @@ instance Arbitrary MPBall where
 tMPBall :: T MPBall
 tMPBall = T "MPBall"
 
+-- tCNMPBall :: T (CN MPBall)
+-- tCNMPBall = T "(CN MPBall)"
+
 specMPBall :: Spec
 specMPBall =
   describe ("MPBall") $ do
     specCanSetPrecision tMPBall (printArgsIfFails2 "`contains`" contains)
-    specCanReduceSizeUsingAccuracyGuide tMPBall
     specConversion tInteger tMPBall mpBall (fst . integerBounds)
     describe "order" $ do
       specHasEqNotMixed tMPBall

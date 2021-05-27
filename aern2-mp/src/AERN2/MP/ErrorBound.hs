@@ -22,10 +22,14 @@ import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import Data.Typeable
+import GHC.Generics (Generic)
+import Control.DeepSeq
 
 import Test.QuickCheck
 
 -- import Data.Convertible
+
+import Data.Ratio (numerator)
 
 import Math.NumberTheory.Logarithms (integerLog2)
 
@@ -45,7 +49,9 @@ _example1 = 2*((errorBound 0.01) + 0.1*(errorBound 0.01)/3)
 
 {-| A non-negative Double value to serve as an error bound. Arithmetic is rounded towards +infinity. -}
 newtype ErrorBound = ErrorBound { er2mp :: MPFloat }
-  deriving (P.Eq, P.Ord, Typeable)
+  deriving (P.Eq, P.Ord, Typeable, Generic)
+
+instance NFData ErrorBound
 
 instance Show ErrorBound where
     show (ErrorBound d) = show d
@@ -70,6 +76,9 @@ instance HasAccuracy ErrorBound where
 
 
 {- conversions -}
+
+instance ConvertibleExactly ErrorBound ErrorBound where
+  safeConvertExactly = Right
 
 instance ConvertibleExactly ErrorBound MPFloat where
   safeConvertExactly = Right . er2mp
@@ -201,12 +210,11 @@ instance CanMulAsymmetric Rational ErrorBound where
         | otherwise = error "trying to multiply ErrorBound by a negative integer"
 
 instance CanDiv ErrorBound Integer where
-    type DivTypeNoCN ErrorBound Integer = ErrorBound
     type DivType ErrorBound Integer = ErrorBound
-    divideNoCN = divide
-    divide (ErrorBound a) i
-        | i > 0 = ErrorBound $ a /^ (MPFloat.fromIntegerUp errorBoundPrecision i)
-        | otherwise = error "trying to multiply ErrorBound by a non-positive integer"
+    divide = divide
+    -- divide (ErrorBound a) i
+    --     | i > 0 = ErrorBound $ a /^ (MPFloat.fromIntegerUp errorBoundPrecision i)
+    --     | otherwise = error "trying to multiply ErrorBound by a non-positive integer"
 
 instance Arbitrary ErrorBound where
   arbitrary =
@@ -220,6 +228,6 @@ instance Arbitrary ErrorBound where
         | otherwise =
           do
           (s :: Integer) <- arbitrary
-          let resultR = ((abs s) `P.mod` (2^!35))/!(2^!32)
+          let resultR = ((abs s) `P.mod` (numerator $ 2^35))/(2^32)
           let result = convert resultR
           return result

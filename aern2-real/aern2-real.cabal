@@ -1,190 +1,103 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: a941e85f57a40b5cf3c43916267832d6e3d3d06355ebdf3245776b4d564ec0cf
+
 name:           aern2-real
-version:        0.1.2
-cabal-version:  >= 1.9.2
-build-type:     Simple
-homepage:       https://github.com/michalkonecny/aern2
+version:        0.2.5.0
+synopsis:       Real numbers as sequences of MPBalls
+description:    Please see the README on GitHub at <https://github.com/michalkonecny/aern2/#readme>
+category:       Math
+homepage:       https://github.com/michalkonecny/aern2#readme
+bug-reports:    https://github.com/michalkonecny/aern2/issues
 author:         Michal Konecny
-maintainer:     Michal Konecny <mikkonecny@gmail.com>
-copyright:      (c) 2015-2019 Michal Konecny
+maintainer:     mikkonecny@gmail.com
+copyright:      2015-2021 Michal Konecny
 license:        BSD3
 license-file:   LICENSE
-extra-source-files:  changelog.md
-stability:      experimental
-category:       Math
-synopsis:       Exact real numbers via Cauchy sequences and MPFR
-Description:
-  Exact real numbers as Cauchy sequences of MPFR approximations.
-  .
-  See module "AERN2.Real" for further documentation.
-
+build-type:     Simple
+extra-source-files:
+    README.md
+    changelog.md
 
 source-repository head
-  type:     git
-  location: https://github.com/mikkonecny/aern2.git
-  subdir: aern2-real
+  type: git
+  location: https://github.com/michalkonecny/aern2
 
 library
-  hs-source-dirs:  src
-  build-depends:
-    base == 4.*
-    , containers >= 0.5
-    -- , convertible >= 1.1.1.0
-    , hspec >= 2.1
-    -- , hspec-smallcheck >= 0.3 && < 0.5
-    , QuickCheck >= 2.7
-    , transformers >= 0.4
-    , lens >= 4.13
-    , stm >= 2.4
-    , bytestring >= 0.10
-    , aeson >= 0.11
-    , mixed-types-num >= 0.4
-    , aern2-mp >= 0.1.4
-  ghc-options:     -Wall -fno-warn-orphans
-  extensions:
-    RebindableSyntax,
-    PostfixOperators,
-    ScopedTypeVariables,
-    TypeFamilies,
-    TypeOperators,
-    ConstraintKinds,
-    DefaultSignatures,
-    MultiParamTypeClasses,
-    FlexibleContexts,
-    FlexibleInstances,
-    UndecidableInstances,
-    Arrows
   exposed-modules:
-    AERN2.Utils.Arrows
-    AERN2.QA.Protocol
-    AERN2.QA.NetLog
-    AERN2.QA.Strategy.CachedUnsafe
-    AERN2.QA.Strategy.Cached.NetState
-    AERN2.QA.Strategy.Cached.Arrow
-    AERN2.QA.Strategy.Cached
-    AERN2.QA.Strategy.Parallel
-    AERN2.AccuracySG
-    AERN2.WithGlobalParam.Type
-    AERN2.WithGlobalParam.Helpers
-    AERN2.WithGlobalParam.Comparison
-    AERN2.WithGlobalParam.Branching
-    AERN2.WithGlobalParam.Ring
-    AERN2.WithGlobalParam.Field
-    AERN2.WithGlobalParam.Elementary
-    AERN2.WithGlobalParam
-    AERN2.MPBallWithGlobalPrec
-    AERN2.Sequence.Type
-    AERN2.Sequence.Helpers
-    AERN2.Sequence.Comparison
-    AERN2.Sequence.Branching
-    AERN2.Sequence.Ring
-    AERN2.Sequence.Field
-    AERN2.Sequence.Elementary
-    AERN2.Sequence.PreludeOps
-    AERN2.Sequence
-    AERN2.Real.Type
-    AERN2.Real.Arithmetic
-    AERN2.Real.Tests
-    AERN2.Real
-    AERN2.Limit
+      AERN2.Complex
+      AERN2.Real
+      AERN2.Real.CKleenean
+      AERN2.Real.Comparisons
+      AERN2.Real.Elementary
+      AERN2.Real.Field
+      AERN2.Real.Limit
+      AERN2.Real.Tests
+      AERN2.Real.Type
+      AERN2.Real.Examples.ClosestPairDist
+      AERN2.Real.Examples.Introduction
+  other-modules:
+      Paths_aern2_real
+  hs-source-dirs:
+      src
+      examples
+  default-extensions:
+      RebindableSyntax,
+      ScopedTypeVariables,
+      TypeFamilies,
+      TypeOperators,
+      ConstraintKinds,
+      DefaultSignatures,
+      MultiParamTypeClasses,
+      FlexibleContexts,
+      FlexibleInstances,
+      UndecidableInstances
+  other-extensions:
+      TemplateHaskell
+  ghc-options: -Wall
+  build-depends:
+      QuickCheck
+    , aern2-mp >=0.2.5
+    , base ==4.*
+    , collect-errors >=0.1.5
+    , hspec
+    , integer-logarithms
+    , mixed-types-num >=0.5.5
+  default-language: Haskell2010
 
-test-suite spec
-  type:
-      exitcode-stdio-1.0
-  ghc-options:
-      -Wall
-  extensions:
-    RebindableSyntax,
-    PostfixOperators,
-    ScopedTypeVariables,
-    FlexibleContexts
+test-suite aern2-real-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      AERN2.RealSpec
+      Paths_aern2_real
   hs-source-dirs:
       test
-  main-is:
-      Spec.hs
-  other-modules:
-    AERN2.RealSpec
+  default-extensions:
+      RebindableSyntax,
+      ScopedTypeVariables,
+      TypeFamilies,
+      TypeOperators,
+      ConstraintKinds,
+      DefaultSignatures,
+      MultiParamTypeClasses,
+      FlexibleContexts,
+      FlexibleInstances,
+      UndecidableInstances
+  other-extensions:
+      TemplateHaskell
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:
-    base == 4.*
-    -- , mixed-types-num >= 0.3.1 && < 0.4
-    -- , aern2-mp
+      QuickCheck
+    , aern2-mp >=0.2.5
     , aern2-real
-    , hspec >= 2.1
-    -- , hspec-smallcheck >= 0.3 && < 0.5
-    , QuickCheck >= 2.7
-
-executable aern2-real-benchOp
-  ghc-options:
-      -Wall
-  extensions:
-    RebindableSyntax,
-    PostfixOperators,
-    ScopedTypeVariables,
-    FlexibleContexts,
-    TypeSynonymInstances
-  hs-source-dirs:
-      bench
-  main-is:
-      aern2-real-benchOp.hs
-  build-depends:
-    base == 4.*
-    , mixed-types-num >= 0.3.1
-    , aern2-mp == 0.1.*
-    , aern2-real
-    , random
-    , QuickCheck
-
-executable aern2-real-simpleOp
-  ghc-options:
-      -Wall
-  extensions:
-    RebindableSyntax,
-    PostfixOperators,
-    ScopedTypeVariables,
-    FlexibleContexts,
-    TypeSynonymInstances
-  hs-source-dirs:
-      bench
-  main-is:
-      aern2-real-simpleOp.hs
-  build-depends:
-    base == 4.*
-    , mixed-types-num >= 0.3.1
-    , aern2-mp == 0.1.*
-    , aern2-real
-
-executable aern2-real-cdar-simpleOp
-  ghc-options:
-      -Wall
-  extensions:
-    RebindableSyntax,
-    PostfixOperators,
-    ScopedTypeVariables,
-    FlexibleContexts,
-    TypeSynonymInstances
-  hs-source-dirs:
-      bench
-  main-is:
-      aern2-real-cdar-simpleOp.hs
-  build-depends:
-    base == 4.*
-    , cdar
-
--- executable aern2-generate-netlog-elm
---   ghc-options:
---       -Wall
---   extensions:
---     RebindableSyntax,
---     PostfixOperators,
---     ScopedTypeVariables,
---     FlexibleContexts,
---     TypeSynonymInstances
---   hs-source-dirs:
---       tools
---   main-is:
---       aern2-generate-netlog.hs
---   build-depends:
---     base == 4.*
---     , elm-bridge
---     , mixed-types-num >= 0.3.1
---     , aern2-mp == 0.1.*
---     , aern2-real
+    , base ==4.*
+    , collect-errors >=0.1.5
+    , hspec
+    , integer-logarithms
+    , mixed-types-num >=0.5.5
+  default-language: Haskell2010

@@ -17,4 +17,4 @@ import AERN2.Real.Tests
 import Test.Hspec
 
 spec :: Spec
-spec = specCauchyReal
+spec = specCReal

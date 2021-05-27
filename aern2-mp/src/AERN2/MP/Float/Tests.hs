@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-|
     Module      :  AERN2.MP.Float.Tests
     Description :  Tests for operations on arbitrary precision floats
@@ -13,10 +14,15 @@
     To run the tests using stack, execute:
 
     @
+    stack test aern2-mp --test-arguments "-a 1000"
+    @
+
+    Or to run only MPFloat tests, execute:
+
+    @
     stack test aern2-mp --test-arguments "-a 1000 -m MPFloat"
     @
 -}
-
 module AERN2.MP.Float.Tests
   (
     specMPFloat, tMPFloat
@@ -30,13 +36,13 @@ import MixedTypesNumPrelude
 -- import qualified Prelude as P
 -- import Data.Ratio
 import Text.Printf
--- import Data.Maybe
+import Data.Maybe ( catMaybes )
 
 import Test.Hspec
 import Test.QuickCheck
 -- import qualified Test.Hspec.SmallCheck as SC
 
-import Control.CollectErrors
+-- import qualified Numeric.CollectErrors as CN
 
 import AERN2.Norm
 import AERN2.MP.Precision
@@ -62,7 +68,7 @@ instance Arbitrary MPFloat where
           (p :: Precision) <- arbitrary
           (s :: Integer) <- arbitrary
           ex <- choose (-20,10)
-          let resultR = s * (10.0^!ex)
+          let resultR = s * (10.0^ex)
           let result = ceduCentre $ fromRationalCEDU p resultR
           return result
 
@@ -88,7 +94,7 @@ enforceRangeMP (Just l_, Just u_) a
     where
     l = mpFloat l_
     u = mpFloat u_
-    b = l +^ ((abs a) `modNoCN` (u-^l))
+    b = l +^ ((abs a) `mod` (u-^l))
 enforceRangeMP (Just l_, _) a
     | isInfinite a = abs a
     | l < a = a
@@ -105,21 +111,20 @@ enforceRangeMP (_, Just u_) a
     u = mpFloat u_
 enforceRangeMP _ a = a
 
-instance CanEnsureCE NumErrors MPFloat
-
 instance CanDivIMod MPFloat MPFloat where
-  divIMod x m 
-    | (not (isFinite m)) = (errM (d :: Integer), errM xm)
-    | (not (isFinite x)) = (errX (d :: Integer), errX xm)
-    | m > zero = (cn d, cn xm)
-    | otherwise = (errM (d :: Integer), errM xm)
+  type DivIType MPFloat MPFloat = Integer
+  divIMod x m
+    | (not (isFinite m)) = ((d :: Integer), xm)
+    | (not (isFinite x)) = ((d :: Integer), xm)
+    | m > zero = (d, xm)
+    | otherwise = ((d :: Integer), xm)
     where
     d = floor (x /^ m)
     xm = x -^ (mpFloat d)*^m
-    errM :: (CanEnsureCN t) => t -> EnsureCN t
-    errM s = noValueNumErrorCertainECN (Just s) $ OutOfRange $ "modulus not finite and positive: " ++ show m
-    errX :: (CanEnsureCN t) => t -> EnsureCN t
-    errX s = noValueNumErrorCertainECN (Just s) $ OutOfRange $ "modulus input not finite: " ++ show x
+    -- errM :: (CanEnsureCN t) => t -> EnsureCN t
+    -- errM s = CN.noValueNumErrorCertain $ CN.OutOfDomain $ "modulus not finite and positive: " ++ show m
+    -- errX :: (CanEnsureCN t) => t -> EnsureCN t
+    -- errX s = CN.noValueNumErrorCertain$ CN.OutOfDomain $ "modulus input not finite: " ++ show x
 
 
 {- approximate comparison -}
@@ -145,20 +150,20 @@ approxEqual e x y
   | isNaN x || isNaN y = False
   | isInfinite x || isInfinite y = x == y
   | otherwise =
-      abs (x -. y) <= 0.5^!e
+      abs (x -. y) <= 0.5^e
 
 {-|
-  Assert equality of two MPFloat's with tolerance derived from the size and precision
-  of the given list of input and intermediate values.
-  The result is expected to have at least as many significant digits
-  as the (highest) nominal precision of the input and intermediate numbers
+  Assert equality of two MPFloat's with tolerance derived from the given list of input and intermediate values
+  and their differentials (ie the derivative of the result wrt this value).
+  The difference in the left and right results is expected to share at least as many significant digits
+  as the worst error step among the input and intermediate numbers shifted by the slope of the differential
   minus the given precision loss parameter.
 
   When the assertion fails, report the given values using the given names.
 -}
 approxEqualWithArgs ::
   Integer {-^ bits of extra precision loss allowed -} ->
-  [(MPFloat, String)] {-^ intermediate values from which to determine tolerance, their names to report when the equality fails -} ->
+  [(MPFloat, MPFloat, String)] {-^ intermediate values from which to determine tolerance, their names to report when the equality fails -} ->
   MPFloat {-^ LHS of equation-} ->
   MPFloat {-^ RHS of equation -}->
   Property
@@ -169,31 +174,25 @@ approxEqualWithArgs precLoss args l r =
     printf "args:\n%s tolerance: <= 2^(%d)" argsS (-e)
   argsS =
     unlines
-      [printf "    %s = %s (p=%s)" argS (show arg) (show $ getPrecision arg) 
-      | (arg, argS) <- args ++ [(l, "L"), (r, "R"), (abs(r-.l), "|R-L|")]
+      [printf "    %s = %s ~ %s bits (dR/d%s = %s ~ %s bits)" 
+                argS (show arg) (show $ getErrorStepSizeLog arg) 
+                                      argS (showMPFloat argD) (show $ getNormLog argD)
+      | (arg, argD, argS) <- argsLR
       ]
-
-  e = p - resNorm - precLoss
-  resNorm =
-    case (getNormLog l, getNormLog r) of
-     (NormBits nl, NormBits nr) -> nl `max` nr; 
-     (NormBits nl, _) -> nl
-     (_, NormBits nr) -> nr
-     _ -> 0
-  p = foldl max 2 $ map (integer . getPrecision . fst) args
-
-  {-
-    args = argsPre ++ [(l, "L"), (r, "R"), (abs (l-.r),"|L-R|")]
-    e =
-      (foldl min 1000000 $ catMaybes $ map getAbsPrecBits args)
-      - (length argsPre)
-    getAbsPrecBits (x,_) =
-      case getNormLog x of
-        NormZero -> Nothing -- ideally infinity
-        NormBits b -> Just (pI-b-precLoss)
-      where
-      pI = integer $ getPrecision x
-  -}
+  argsLR = args ++ [(l, one, "L"), (r, one, "R"), (abs(r-.l), zero, "|R-L|")]
+  e = 0 - maxStepLoss - precLoss
+  maxStepLoss = sum $ map (max 1) $ (catMaybes $ map stepLoss argsLR)
+  stepLoss (arg, argD, _argS) =
+    case (getNormLog argD, getErrorStepSizeLog arg) of
+      (NormBits dbits, Just stepBits) -> Just $ dbits + stepBits
+      _ -> Nothing
+  -- resNorm =
+  --   case (getNormLog l, getNormLog r) of
+  --    (NormBits nl, NormBits nr) -> nl `max` nr; 
+  --    (NormBits nl, _) -> nl
+  --    (_, NormBits nr) -> nr
+  --    _ -> 0
+  -- p = foldl max 2 $ map (integer . getPrecision . fst) args
 
 {-|
   A runtime representative of type @MPFloat@.
@@ -228,7 +227,7 @@ specMPFloat =
   in
   describe ("MPFloat") $ do
     specCanSetPrecision tMPFloat 
-      (printArgsIfFails2 "=~=" (\xPrec x -> approxEqualWithArgs 1 [(xPrec, "xPrec")] x xPrec))
+      (printArgsIfFails2 "=~=" (\xPrec x -> approxEqualWithArgs 1 [(xPrec, one, "xPrec")] x xPrec))
     specCanRound tMPFloat
     specCanNegNum tMPFloat
     specCanAbs tMPFloat
@@ -254,7 +253,7 @@ specMPFloat =
       it "up ~ down" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
           let
-            (=~~=) = approxEqualWithArgs 1 [(x,"x"), (y,"y")]
+            (=~~=) = approxEqualWithArgs 1 [(x,one,"x"), (y,one,"y")]
             infix 4 =~~=
           in
           x +. y =~~= x +^ y
@@ -279,7 +278,7 @@ specMPFloat =
       it "up ~ down" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
           let
-            (=~~=) = approxEqualWithArgs 1 [(x,"x"), (y,"y")]
+            (=~~=) = approxEqualWithArgs 1 [(x,one,"x"), (y,one,"y")]
             infix 4 =~~=
           in
           x -. y =~~= x -^ y
@@ -295,7 +294,7 @@ specMPFloat =
       it "up ~ down" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
           let
-            (=~~=) = approxEqualWithArgs 1 [(x,"x"), (y,"y")]
+            (=~~=) = approxEqualWithArgs 1 [(x,y,"x"), (y,x,"y")]
             infix 4 =~~=
           in
           x *. y =~~= x *^ y
@@ -332,7 +331,7 @@ specMPFloat =
       it "up ~ down" $ do
         property $ \ (x :: MPFloat) (y :: MPFloat) ->
           let
-            (=~~=) = approxEqualWithArgs 10 [(x,"x"), (y,"y"), (x /. y,"x/.y"), (x /^ y,"x/^y")]
+            (=~~=) = approxEqualWithArgs 10 [(x,one/^y,"x"), (y,-(x/^y)/^y,"y")]
             infix 4 =~~=
           in
           isFinite y && y /= 0
@@ -371,7 +370,7 @@ specMPFloat =
         property $ \ (x_ :: MPFloat) ->
           let 
             x = enforceRangeMP (Just 0, Nothing) x_ 
-            (=~~=) = approxEqualWithArgs 2 [(x,"x")]
+            (=~~=) = approxEqualWithArgs 7 [(x,(one/^(sqrtUp x))/^two,"x")]
             infix 4 =~~=
           in
           sqrtDown x =~~= sqrtUp x
@@ -382,7 +381,7 @@ specMPFloat =
       it "sqrt(x)^2 ~ x" $ do
         property $ \ (x_ :: MPFloat) ->
           let x = enforceRangeMP (Just 0, Nothing) x_ in
-          (sqrtDown x) *. (sqrtDown x) <=% x
+          (max zero $ sqrtDown x) *. (max zero $ sqrtDown x) <=% x
           &&
           (sqrtUp x) *^ (sqrtUp x) >=% x
     describe "approximate exp" $ do
@@ -394,7 +393,7 @@ specMPFloat =
         property $ \ (x_ :: MPFloat) ->
           let x = enforceRangeMP (Just (-1000000), Just 1000000) x_ in
           let
-            (=~~=) = approxEqualWithArgs 3 [(x,"x")]
+            (=~~=) = approxEqualWithArgs 4 [(x,expUp x,"x")]
             infix 4 =~~=
           in
           expDown x =~~= expUp x
@@ -416,15 +415,14 @@ specMPFloat =
         property $ \ (x_ :: MPFloat) ->
           let x = enforceRangeMP (Just 0, Nothing) x_ in
           logDown x <=% logUp x
-      -- TODO: fix accuracy of CDAR mBounds logA x for x near 1
-      -- it "up ~ down" $ do
-      --   property $ \ (x_ :: MPFloat) ->
-      --     let x = enforceRangeMP (Just 0, Nothing) x_ in
-      --     let
-      --       (=~~=) = approxEqualWithArgs 10 [(x,"x")]
-      --       infix 4 =~~=
-      --     in
-      --     logDown x =~~= logUp x
+      it "up ~ down" $ do
+        property $ \ (x_ :: MPFloat) ->
+          let x = enforceRangeMP (Just 0, Nothing) x_ in
+          let
+            (=~~=) = approxEqualWithArgs 4 [(x,one/^x,"x")]
+            infix 4 =~~=
+          in
+          logDown x =~~= logUp x
       it "log(1/x) == -(log x)" $ do
         property $ \ (x_ :: MPFloat) ->
           let x = enforceRangeMP (Just 0, Nothing) x_ in
@@ -450,22 +448,22 @@ specMPFloat =
           let x = enforceRangeMP (Just (-1000000), Just 1000000) x_ in
           sinDown x <=% sinUp x
       -- TODO: fix accuracy of CDAR mBounds sine
-      -- it "up ~ down" $ do
-      --   property $ \ (x_ :: MPFloat) ->
-      --     let x = enforceRangeMP (Just (-1000000), Just 1000000) x_ in
-      --     let
-      --       (=~~=) = approxEqualWithArgs 1 [(x,"x")]
-      --       infix 4 =~~=
-      --     in
-      --     sinDown x =~~= sinUp x
-      -- it "sin(pi/2) ~ 1" $ do
-      --   property $ \ (p :: Precision) ->
-      --     let
-      --       piA = ceduCentre $ piCEDU p
-      --       (=~~=) = approxEqualWithArgs 1 [(piA,"pi")]
-      --       infix 4 =~~=
-      --     in
-      --     sinUp(piA/.(setPrecision (p+10) $ mpFloat 2)) =~~= one
+      it "up ~ down" $ do
+        property $ \ (x_ :: MPFloat) ->
+          let x = enforceRangeMP (Just (-1000000), Just 1000000) x_ in
+          let
+            (=~~=) = approxEqualWithArgs 2 [(x,cosUp x,"x")]
+            infix 4 =~~=
+          in
+          sinDown x =~~= sinUp x
+      it "sin(pi/2) ~ 1" $ do
+        property $ \ (p :: Precision) ->
+          let
+            piA = ceduCentre $ piCEDU p
+            (=~~=) = approxEqualWithArgs 2 []
+            infix 4 =~~=
+          in
+          sinUp(piA/.(setPrecision (p+10) $ mpFloat 2)) =~~= one
       it "in [-1,1]" $ do
         property $ \ (x_ :: MPFloat) ->
           let x = enforceRangeMP (Just (-1000000), Just 1000000) x_ in
@@ -477,15 +475,14 @@ specMPFloat =
         property $ \ (x_ :: MPFloat) ->
           let x = enforceRangeMP (Just (-1000000), Just 1000000) x_ in
           cosDown x <=% cosUp x
-      -- TODO: fix accuracy of CDAR mBounds cosine
-      -- it "up ~ down" $ do
-      --   property $ \ (x_ :: MPFloat) ->
-      --     let x = enforceRangeMP (Just (-1000000), Just 1000000) x_ in
-      --     let
-      --       (=~~=) = approxEqualWithArgs 1 [(x,"x")]
-      --       infix 4 =~~=
-      --     in
-      --     cosDown x =~~= cosUp x
+      it "up ~ down" $ do
+        property $ \ (x_ :: MPFloat) ->
+          let x = enforceRangeMP (Just (-1000000), Just 1000000) x_ in
+          let
+            (=~~=) = approxEqualWithArgs 2 [(x,-(sinUp x),"x")]
+            infix 4 =~~=
+          in
+          cosDown x =~~= cosUp x
       it "in [-1,1]" $ do
         property $ \ (x_ :: MPFloat) ->
           let x = enforceRangeMP (Just (-1000000), Just 1000000) x_ in
@@ -496,7 +493,7 @@ specMPFloat =
         property $ \ (p :: Precision) ->
           let
             piA = ceduCentre $ piCEDU p
-            (=~~=) = approxEqualWithArgs 1 [(piA,"pi")]
+            (=~~=) = approxEqualWithArgs 2 []
             infix 4 =~~=
           in
           cosUp(piA) =~~= (-one)

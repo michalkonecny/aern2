@@ -80,8 +80,8 @@ data Ball t = Ball { ball_value :: t, ball_radius :: ErrorBound }
 instance (Show t) => Show (Ball t) where
   show (Ball c e) = "Ball " ++ (show c) ++ "+-" ++ (show e)
 
-instance (SuitableForCE es) => CanEnsureCE es (Ball t)
-instance (SuitableForCE es) => CanExtractCE es Ball where
+instance (CanBeErrors es) => CanEnsureCE es (Ball t)
+instance (CanBeErrors es) => CanExtractCE es Ball where
   extractCE sample_es (Ball cCE e) =
     case ensureNoCE sample_es cCE of
       (Just c, es) -> CollectErrors (Just (Ball c e)) es

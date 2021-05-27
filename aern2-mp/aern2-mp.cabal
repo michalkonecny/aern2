@@ -1,128 +1,139 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: f380106cebd760457afe30f95f96a4613a687aa0d3f908c17172376defe10224
+
 name:           aern2-mp
-version:        0.1.4
-cabal-version:  >= 1.9.2
-build-type:     Simple
-homepage:       https://github.com/michalkonecny/aern2
+version:        0.2.5.0
+synopsis:       Multi-precision ball (interval) arithmetic
+description:    Please see the README on GitHub at <https://github.com/michalkonecny/aern2/#readme>
+category:       Math
+homepage:       https://github.com/michalkonecny/aern2#readme
+bug-reports:    https://github.com/michalkonecny/aern2/issues
 author:         Michal Konecny
-maintainer:     Michal Konecny <mikkonecny@gmail.com>
-copyright:      (c) 2015-2019 Michal Konecny
+maintainer:     mikkonecny@gmail.com
+copyright:      2015-2021 Michal Konecny
 license:        BSD3
 license-file:   LICENSE
-extra-source-files:  changelog.md
-stability:      experimental
-category:       Math
-synopsis:       Multi-precision ball (interval) arithmetic
-Description:
-  This package provides the following types:
-  .
-  * Dyadic:  variable-precision floats with exact ring operations
-  .
-  * MPBall: float ± error bound with field & elementary interval-like operations
-  .
-  The types have instances of both <https://hackage.haskell.org/package/mixed-types-num MixedTypeNumPrelude> 
-  type classes as well as with traditional Prelude type classes.
-  .
-  There is a plan to add an Integer-only backend so that aern2-mp can
-  be used without MPFR.
+build-type:     Simple
+extra-source-files:
+    README.md
+    changelog.md
 
 source-repository head
-  type:     git
-  location: https://github.com/mikkonecny/aern2.git
-  subdir: aern2-mp
-
-flag UseCDAR
-  Description: Use CDAR (mBound branch) as an Integer-only backend instead of MPFR
-  Default:     False
+  type: git
+  location: https://github.com/michalkonecny/aern2
 
 library
-  hs-source-dirs:  src
-  build-depends:
-    base == 4.*
-    , integer-logarithms
-    -- , convertible
-    , regex-tdfa
-    , hspec
-    -- , hspec-smallcheck >= 0.3
-    , QuickCheck
-    , lens
-    , template-haskell
-    , mixed-types-num >= 0.4
-  if flag(UseCDAR)
-    hs-source-dirs:  src-cdar
-    build-depends:
-      cdar
-  else
-    hs-source-dirs:  src-rounded
-    build-depends:
-      rounded == 0.3
-  ghc-options:     -Wall -fno-warn-orphans
-  extensions:
-    RebindableSyntax,
-    PostfixOperators,
-    ScopedTypeVariables,
-    DeriveGeneric,
-    GeneralizedNewtypeDeriving,
-    TypeFamilies,
-    TypeOperators,
-    ConstraintKinds,
-    DefaultSignatures,
-    MultiParamTypeClasses,
-    FlexibleContexts,
-    FlexibleInstances,
-    UndecidableInstances
-  if !flag(UseCDAR)
-    exposed-modules:
-      AERN2.MP.Float.RoundedAdaptor
   exposed-modules:
-    -- modules that depend on backend choice:
-    AERN2.MP.Float.Type
-    AERN2.MP.Float.Arithmetic
-    AERN2.MP.Float.Conversions
-    -- modules common to all backends:
-    AERN2.Utils.Bench
-    AERN2.Normalize
-    AERN2.Norm
-    AERN2.MP.Precision
-    AERN2.MP.Accuracy
-    AERN2.MP.Enclosure
-    AERN2.MP.ErrorBound
-    AERN2.MP.Float.Auxi
-    AERN2.MP.Float.Operators
-    AERN2.MP.Float.Tests
-    AERN2.MP.Float
-    AERN2.MP.Dyadic
-    AERN2.MP.Ball.Type
-    AERN2.MP.Ball.Conversions
-    AERN2.MP.Ball.Comparisons
-    AERN2.MP.Ball.Field
-    AERN2.MP.Ball.Elementary
-    AERN2.MP.Ball.PreludeOps
-    AERN2.MP.Ball
-    AERN2.MP.Ball.Tests
-    AERN2.MP
+      AERN2.Kleenean
+      AERN2.Limit
+      AERN2.MP
+      AERN2.MP.Accuracy
+      AERN2.MP.Ball
+      AERN2.MP.Ball.Comparisons
+      AERN2.MP.Ball.Conversions
+      AERN2.MP.Ball.Elementary
+      AERN2.MP.Ball.Field
+      AERN2.MP.Ball.Limit
+      AERN2.MP.Ball.PreludeOps
+      AERN2.MP.Ball.Tests
+      AERN2.MP.Ball.Type
+      AERN2.MP.Dyadic
+      AERN2.MP.Enclosure
+      AERN2.MP.ErrorBound
+      AERN2.MP.Float
+      AERN2.MP.Float.Arithmetic
+      AERN2.MP.Float.Auxi
+      AERN2.MP.Float.Conversions
+      AERN2.MP.Float.Operators
+      AERN2.MP.Float.Tests
+      AERN2.MP.Float.Type
+      AERN2.MP.Precision
+      AERN2.MP.WithCurrentPrec
+      AERN2.MP.WithCurrentPrec.Comparisons
+      AERN2.MP.WithCurrentPrec.Elementary
+      AERN2.MP.WithCurrentPrec.Field
+      AERN2.MP.WithCurrentPrec.Limit
+      AERN2.MP.WithCurrentPrec.PreludeInstances
+      AERN2.MP.WithCurrentPrec.Type
+      AERN2.Norm
+      AERN2.Normalize
+      AERN2.Select
+      AERN2.Utils.Bench
+  other-modules:
+      Paths_aern2_mp
+  hs-source-dirs:
+      src
+  default-extensions:
+      RebindableSyntax,
+      ScopedTypeVariables,
+      DeriveGeneric,
+      TypeFamilies,
+      TypeOperators,
+      ConstraintKinds,
+      DefaultSignatures,
+      MultiParamTypeClasses,
+      FlexibleContexts,
+      FlexibleInstances,
+      UndecidableInstances
+  other-extensions:
+      TemplateHaskell
+  ghc-options: -Wall
+  build-depends:
+      QuickCheck
+    , base ==4.*
+    , cdar-mBound >=0.1.0.0
+    , collect-errors >=0.1.3
+    , deepseq
+    , hspec
+    , integer-logarithms
+    , mixed-types-num >=0.5.5
+    , reflection
+    , regex-tdfa
+    , template-haskell
 
-test-suite spec
-  type:
-      exitcode-stdio-1.0
-  ghc-options:
-      -Wall
-  extensions:
-    RebindableSyntax,
-    PostfixOperators,
-    ScopedTypeVariables,
-    FlexibleContexts
+  default-language: Haskell2010
+
+test-suite aern2-mp-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      AERN2.MP.BallSpec
+      AERN2.MP.DyadicSpec
+      AERN2.MP.FloatSpec
+      Paths_aern2_mp
   hs-source-dirs:
       test
-  main-is:
-      Spec.hs
-  other-modules:
-    AERN2.MP.BallSpec
-    AERN2.MP.DyadicSpec
-    AERN2.MP.FloatSpec
+  default-extensions:
+      RebindableSyntax,
+      ScopedTypeVariables,
+      DeriveGeneric,
+      TypeFamilies,
+      TypeOperators,
+      ConstraintKinds,
+      DefaultSignatures,
+      MultiParamTypeClasses,
+      FlexibleContexts,
+      FlexibleInstances,
+      UndecidableInstances
+  other-extensions:
+      TemplateHaskell
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:
-    base == 4.*
-    -- , mixed-types-num >= 0.3.1 && < 0.4
+      QuickCheck
     , aern2-mp
-    , hspec >= 2.1
-    -- , hspec-smallcheck >= 0.3
-    , QuickCheck >= 2.7
+    , base ==4.*
+    , cdar-mBound >=0.1.0.0
+    , collect-errors >=0.1.3
+    , deepseq
+    , hspec
+    , integer-logarithms
+    , mixed-types-num >=0.5.5
+    , reflection
+    , regex-tdfa
+    , template-haskell
+  default-language: Haskell2010
