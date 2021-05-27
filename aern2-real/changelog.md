@@ -1,5 +1,7 @@
 # Change log for aern2-real
 
+* v 0.2.5 2021-05-XXXX
+  * CanSelect moved to aern2-mp
 * v 0.2.4 2021-05-26
   * overhaul README and examples
   * stop "very inaccurate" errors breaking ? (bits n) queries
