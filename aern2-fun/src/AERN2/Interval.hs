@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-|
     Module      :  AERN2.Interval
     Description :  Intervals for use as function domains
@@ -11,7 +12,6 @@
 
     Intervals for use as function domains
 -}
-
 module AERN2.Interval
 (
   Interval(..), singleton
@@ -25,11 +25,15 @@ module AERN2.Interval
 where
 
 import MixedTypesNumPrelude
+-- import Numeric.CollectErrors (NumErrors, CanTakeErrors(..))
+import qualified Numeric.CollectErrors as CN
+
 import qualified Prelude as P
 import Text.Printf
 -- import Text.Regex.TDFA
 
 -- import Data.Maybe
+
 
 import GHC.Generics
 import Data.Typeable
@@ -39,11 +43,10 @@ import Data.Typeable
 -- import Test.Hspec
 import Test.QuickCheck
 
-
-
+import AERN2.MP.Enclosure
 import AERN2.MP.Dyadic
 import AERN2.MP.Ball hiding (intersect)
-import qualified AERN2.MP.Ball as MPBall
+-- import qualified AERN2.MP.Ball as MPBall
 
 import AERN2.Real
 
@@ -150,14 +153,14 @@ $(declForTypes
 
 instance
   (CanSubSameType e, CanAddSubMulBy t e
-  , HasIntegerBounds t, CanSubThis t Integer, CanDivCNBy t Integer)
+  , HasIntegerBounds t, CanSubThis t Integer, CanDivBy t Integer)
   =>
   CanMapInside (Interval e e) t
   where
   mapInside (Interval l r) x =
     l + xUnit * (r - l)
     where
-    xUnit = (x - xL) /! (max 1 $ xU - xL)
+    xUnit = (x - xL) / (max 1 $ xU - xL)
     (xL,xU) = integerBounds x
 
 {- intersection -}
@@ -170,18 +173,18 @@ instance
   type IntersectionType (Interval l r) (Interval l r) = CN (Interval l r)
   intersect (Interval l1 r1) (Interval l2 r2)
     | l !<=! r = pure (Interval l r)
-    | l !>! r = noValueNumErrorCertainCN err
-    | otherwise = prependErrorsCN [(ErrorPotential, err)] $ pure (Interval l r)
+    | l !>! r = CN.noValueNumErrorCertain err
+    | otherwise = CN.prependErrorPotential err $ cn (Interval l r)
     where
     l = l1 `max` l2
     r = r1 `min` r2
-    err = NumError "empty intersection"
+    err = CN.NumError "empty intersection"
 
 intersects ::
   (CanMinMaxSameType l, CanMinMaxSameType r, HasOrderCertainly l r)
   =>
   Interval l r -> Interval l r -> Bool
-intersects i1 i2 = null $ getErrorsCN $ intersect i1 i2
+intersects i1 i2 = not . CN.hasError $ intersect i1 i2
 
 {- comparison -}
 
@@ -241,17 +244,17 @@ instance ConvertibleExactly DyadicInterval MPBall where
 
 {- CauchyReal intervals -}
 
-type RealInterval = Interval CauchyReal CauchyReal
+type RealInterval = Interval CReal CReal
 type CanBeRealInterval t = ConvertibleExactly t RealInterval
 
 realInterval :: (CanBeRealInterval t) => t -> RealInterval
 realInterval = convertExactly
 
 instance
-  (CanBeReal l, CanBeReal r, HasOrderCertainly l r, Show l, Show r,
+  (CanBeCReal l, CanBeCReal r, HasOrderCertainly l r, Show l, Show r,
    Typeable l, Typeable r)
   =>
   ConvertibleExactly (l, r) RealInterval where
   safeConvertExactly (l,r)
-    | l !<=! r = Right $ Interval (real l) (real r)
+    | l !<=! r = Right $ Interval (creal l) (creal r)
     | otherwise = convError "endpoints are not in the correct order" (l,r)

@@ -1,5 +1,7 @@
 {-# LANGUAGE CPP #-}
 -- #define DEBUG
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 {-|
     Module      :  AERN2.RealFun.SineCosine
     Description :  Pointwise sine and cosine for functions
@@ -12,7 +14,6 @@
 
     Pointwise sine and cosine for functions
 -}
-
 module AERN2.RealFun.SineCosine
 -- (
 -- )
@@ -61,54 +62,15 @@ import AERN2.RealFun.Operations
 -}
 
 sineWithAccuracyGuide ::
-  (HasDomain f
-  -- , CanApplyApprox f (Domain f)
-  -- , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
-  , CanMaximiseOverDom f (Domain f)
-  , CanMinimiseOverDom f (Domain f)
-  , MinimumOverDomType f (Domain f) ~ MaximumOverDomType f (Domain f)
-  , ConvertibleExactly (MinimumOverDomType f (Domain f)) MPBall
-  , CanNegSameType f, CanAddSameType f, CanMulSameType f
-  , CanAddSubMulDivCNBy f Integer, CanAddSubMulDivCNBy f CauchyReal
-  , HasAccuracy f, CanSetAccuracyGuide f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
-  , IsBall f
-  , Show f)
-  =>
-  Accuracy -> f -> f
+  _ => Accuracy -> f -> f
 sineWithAccuracyGuide = sineCosineWithAccuracyGuide True
 
 cosineWithAccuracyGuide ::
-  (HasDomain f
-  -- , CanApplyApprox f (Domain f)
-  -- , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
-  , CanMaximiseOverDom f (Domain f)
-  , CanMinimiseOverDom f (Domain f)
-  , MinimumOverDomType f (Domain f) ~ MaximumOverDomType f (Domain f)
-  , ConvertibleExactly (MinimumOverDomType f (Domain f)) MPBall
-  , CanNegSameType f, CanAddSameType f, CanMulSameType f
-  , CanAddSubMulDivCNBy f Integer, CanAddSubMulDivCNBy f CauchyReal
-  , HasAccuracy f, CanSetAccuracyGuide f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
-  , IsBall f
-  , Show f)
-  =>
-  Accuracy -> f -> f
+  _ => Accuracy -> f -> f
 cosineWithAccuracyGuide = sineCosineWithAccuracyGuide False
 
 sineCosineWithAccuracyGuide ::
-  (HasDomain f
-  -- , CanApplyApprox f (Domain f)
-  -- , ConvertibleExactly (ApplyApproxType f (Domain f)) MPBall
-  , CanMaximiseOverDom f (Domain f)
-  , CanMinimiseOverDom f (Domain f)
-  , MinimumOverDomType f (Domain f) ~ MaximumOverDomType f (Domain f)
-  , ConvertibleExactly (MinimumOverDomType f (Domain f)) MPBall
-  , CanNegSameType f, CanAddSameType f, CanMulSameType f
-  , CanAddSubMulDivCNBy f Integer, CanAddSubMulDivCNBy f CauchyReal
-  , HasAccuracy f, CanSetAccuracyGuide f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
-  , IsBall f
-  , Show f)
-  =>
-  Bool -> Accuracy -> f -> f
+  _ => Bool -> Accuracy -> f -> f
 sineCosineWithAccuracyGuide isSine acGuide x =
     maybeTrace
     (
@@ -150,12 +112,12 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     rC = centreAsBall r :: MPBall
 
     -- compute k = round(rC/(pi/2)):
-    k = fst $ integerBounds $ 0.5 + (2*rC /! pi)
+    k = fst $ integerBounds $ 0.5 + (2*rC / pi)
 
     -- shift xC near 0 using multiples of pi/2:
-    txC ac = (setAccuracyGuide ac $ setPrecisionAtLeastAccuracy (ac) xC) - k * pi /! 2
+    txC ac = (setPrecisionAtLeastAccuracy (ac) xC) - k * pi / 2
     -- work out an absolute range bound for txC:
-    (_, trM) = endpointsAsIntervals $ abs $ r - k * pi /! 2
+    (_, trM) = endpointsAsIntervals $ abs $ r - k * pi / 2
 
     -- compute sin or cos of txC = xC-k*pi/2 using Taylor series:
     (taylorSum, taylorSumE, n)
@@ -164,7 +126,7 @@ sineCosineWithAccuracyGuide isSine acGuide x =
         | otherwise = cosineTaylorSum txC trM acGuide
     -- if k mod 4 = 2 then negate result,
     -- if k mod 4 = 3 then negate result:
-    km4 = k `modNoCN` 4
+    km4 = k `mod` 4
     resC
         | isSine && 2 <= km4 && km4 <= 3 = -taylorSum
         | isCosine && 1 <= km4 && km4 <= 2 = -taylorSum
@@ -178,11 +140,7 @@ sineCosineWithAccuracyGuide isSine acGuide x =
     it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
 sineTaylorSum ::
-  (CanAddSameType f, CanMulSameType f, CanAddSubMulDivCNBy f Integer
-  , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
-  , Show f)
-  =>
-  (Accuracy -> f) -> MPBall -> Accuracy -> (f, ErrorBound, Integer)
+  _ => (Accuracy -> f) -> MPBall -> Accuracy -> (f, ErrorBound, Integer)
 sineTaylorSum = sineCosineTaylorSum True
 
 {-|
@@ -190,20 +148,11 @@ sineTaylorSum = sineCosineTaylorSum True
     it together with its error bound @e@ and the degree of the polynomial @n@.
 -}
 cosineTaylorSum ::
-  (CanAddSameType f, CanMulSameType f, CanAddSubMulDivCNBy f Integer
-  , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
-  , Show f)
-  =>
-  (Accuracy -> f) -> MPBall -> Accuracy -> (f, ErrorBound, Integer)
+  _ => (Accuracy -> f) -> MPBall -> Accuracy -> (f, ErrorBound, Integer)
 cosineTaylorSum = sineCosineTaylorSum False
 
 sineCosineTaylorSum ::
-  (CanAddSameType f, CanMulSameType f, CanAddSubMulDivCNBy f Integer
-  , HasAccuracy f, CanSetPrecision f, CanReduceSizeUsingAccuracyGuide f
-  , Show f)
-  =>
-  Bool ->
-  (Accuracy -> f) -> MPBall -> Accuracy -> (f, ErrorBound, Integer)
+  _ => Bool -> (Accuracy -> f) -> MPBall -> Accuracy -> (f, ErrorBound, Integer)
 sineCosineTaylorSum isSine (xAC :: Accuracy -> f) xM acGuidePre =
     let
     acGuide = acGuidePre + 4
@@ -222,8 +171,8 @@ sineCosineTaylorSum isSine (xAC :: Accuracy -> f) xM acGuidePre =
         where aux i fc_i = (i,fc_i) : aux (i+1) (fc_i*(i+1))
       addE (i, fc_i) = (i, (fc_i, xM_i, e_i))
         where
-        e_i = errorBound $ xM_i/!fc_i
-        xM_i = xM^!i
+        e_i = errorBound $ xM_i/fc_i
+        xM_i = xM^i
       takeUntilAccurate (t_i@(i,(_fc_i, _xM_i,e_i)):rest)
         | getAccuracy e_i > acGuide && (even i == isSine) = [t_i]
         | otherwise = t_i : takeUntilAccurate rest
@@ -277,7 +226,7 @@ sineCosineTaylorSum isSine (xAC :: Accuracy -> f) xM acGuidePre =
             powerACs
         where
         updateAC k ac_k = Map.adjust (max ac_k) k
-        j = i `divINoCN` 2
+        j = i `divI` 2
         log_x = getLogXM 1
         log_pw_j = getLogXM j
         log_pw_jU = getLogXM (j+1)
@@ -348,7 +297,7 @@ sineCosineTaylorSum isSine (xAC :: Accuracy -> f) xM acGuidePre =
       --   showAAA (i,(pa0,pa,p)) =
       --     printf "power %d: accuracy req 0: %s, accuracy req: %s, actual accuracy: %s" -- , degree: %d"
       --       i (show pa0) (show pa) (show $ getAccuracy p) -- (terms_degree $  poly_coeffs $ chPoly_poly p)
-      reduce i = reduceSizeUsingAccuracyGuide ac_i . setPrecisionAtLeastAccuracy (ac_i + 10)
+      reduce i = setPrecisionAtLeastAccuracy (ac_i + 10)
         where
         ac_i = case Map.lookup i powerAccuracies of
           Just ac -> ac
@@ -369,9 +318,9 @@ sineCosineTaylorSum isSine (xAC :: Accuracy -> f) xM acGuidePre =
       initNum | isSine = 0
               | otherwise = 1
     makeTerm i pwr (fact,_,_e) =
-      sign * pwr/!fact -- alternate signs
+      sign * pwr/fact -- alternate signs
       where
-      sign = if (even $ i `divINoCN` 2) then 1 else -1
+      sign = if (even $ i `divI` 2) then 1 else -1
     in
     (termSum, termSumEB, n)
 --

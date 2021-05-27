@@ -1,5 +1,7 @@
 {-# LANGUAGE CPP #-}
 -- #define DEBUG
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 {-|
     Module      :  AERN2.RealFun.Operations
     Description :  Classes for real number function operations
@@ -12,7 +14,6 @@
 
     Classes for real number function operations
 -}
-
 module AERN2.RealFun.Operations
 (
   HasDomain(..)
@@ -111,8 +112,8 @@ sampledRange (Interval l r) depth f =
     samplePointsT = map convertExactly samplePoints
     _ = minValue : samplePointsT
     samplePoints :: [Dyadic]
-    samplePoints = [(l*i + r*(size - i))*(dyadic (1/!size)) | i <- [0..size]]
-    size = 2^!depth
+    samplePoints = [(l*i + r*(size - i))*(dyadic (1/size)) | i <- [0..size]]
+    size = round $ 2^depth
 
 
 {- constructing basic functions -}
@@ -128,15 +129,7 @@ constFn :: (HasConstFunctions t f) => (FnConstructorInfo f) -> t -> f
 constFn = curry convertExactly
 
 specEvalConstFn ::
-  (HasConstFunctions c f
-  , HasDomain f
-  , CanMapInside (Domain f) x
-  , CanApply f x
-  , HasEqCertainly c (ApplyType f x)
-  , Arbitrary c, Arbitrary f, Arbitrary (FnConstructorInfo f), Arbitrary x
-  , Show c, Show f, Show (FnConstructorInfo f), Show x)
-  =>
-  T c-> T f -> T x -> Spec
+  _ => T c-> T f -> T x -> Spec
 specEvalConstFn (T cName :: T c) (T fName :: T f) (T xName :: T x) =
   it (printf "Evaluating %s-constant functions %s on %s" cName fName xName) $
     property $
@@ -155,14 +148,7 @@ class HasVars f where
     f
 
 specEvalUnaryVarFn ::
-  (HasVars f, Var f ~ ()
-  , HasDomain f, CanMapInside (Domain f) x
-  , CanApply f x
-  , HasEqCertainly x (ApplyType f x)
-  , Arbitrary (FnConstructorInfo f), Arbitrary x
-  , Show f, Show x, Show (FnConstructorInfo f))
-  =>
-  T f -> T x -> Spec
+  _ => T f -> T x -> Spec
 specEvalUnaryVarFn (T fName :: T f) (T xName :: T x) =
   it (printf "Evaluating variable functions %s on %s" fName xName) $ property $
     \ (constrInfo :: FnConstructorInfo f) (xPres :: [x]) ->
@@ -183,13 +169,7 @@ class CanMinimiseOverDom f d where
   minimumOverDom :: f -> d -> MinimumOverDomType f d
 
 -- specCanMaximiseOverDom ::
---   (HasDomain f, Domain f ~ Interval e e
---   , CanAddSameType e, CanMulBy e Dyadic -- for splitting the domain
---   , CanMaximiseOverDom f (Domain f)
---   , HasOrderCertainly (MaximumOverDomType f (Domain f)) (MaximumOverDomType f (Domain f))
---   , Arbitrary f, Show f)
---   =>
---   (T f) -> Spec
+--   _ => (T f) -> Spec
 -- specCanMaximiseOverDom (T fName :: T f) =
 --   describe ("CanMaximiseOverDom " ++ fName) $ do
 --     it "is consistent over a split domain" $ property $
@@ -204,13 +184,7 @@ class CanMinimiseOverDom f d where
 --           maxOnDom ?>=? maxOnDom2
 
 specCanMaximiseOverDom ::
-  (HasDomain f, CanMapInside (Domain f) x
-  , CanApply f x, ApplyType f x ~ v
-  , CanMaximiseOverDom f (Domain f)
-  , HasOrderCertainly v (MaximumOverDomType f (Domain f))
-  , Arbitrary f, Show f, Arbitrary x, Show x)
-  =>
-  (T f) -> (T x) -> Spec
+  _ => (T f) -> (T x) -> Spec
 specCanMaximiseOverDom (T fName :: T f) (T _xName :: T x) =
   describe ("CanMaximiseOverDom " ++ fName) $ do
     it "is consistent with evaluation" $ property $

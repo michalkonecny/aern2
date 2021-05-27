@@ -1,64 +1,97 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
 name:           aern2-fun
-version:        0.1.0.0
-cabal-version:  >= 1.9.2
-build-type:     Simple
-homepage:       https://github.com/michalkonecny/aern2
+version:        0.2.5.0
+synopsis:       Real numbers as sequences of MPBalls
+description:    Please see the README on GitHub at <https://github.com/michalkonecny/aern2/#readme>
+category:       Math
+homepage:       https://github.com/michalkonecny/aern2#readme
+bug-reports:    https://github.com/michalkonecny/aern2/issues
 author:         Michal Konecny, Eike Neumann
-maintainer:     Michal Konecny <mikkonecny@gmail.com>
-copyright:      (c) 2015-2019 Michal Konecny, Eike Neumann
+maintainer:     mikkonecny@gmail.com
+copyright:      2015-2021 Michal Konecny, Eike Neumann
 license:        BSD3
 license-file:   LICENSE
-stability:      experimental
-category:       Math
-synopsis:       Exact real functions
-Description:
-  TODO
+build-type:     Simple
+extra-source-files:
+    README.md
+    changelog.md
 
 source-repository head
-  type:     git
-  location: https://github.com/mikkonecny/aern2.git
-  subdir: aern2-fun
+  type: git
+  location: https://github.com/michalkonecny/aern2
 
 library
-  hs-source-dirs:  src
-  build-depends:
-    base == 4.*
-    , containers >= 0.5
-    , psqueues >= 0.2
-    -- , integer-logarithms >= 1.0
-    -- , convertible >= 1.1.1.0
-    -- , regex-tdfa >= 1.2.1
-    -- , bytestring >= 0.10
-    , hspec >= 2.1
-    -- , hspec-smallcheck >= 0.3 && < 0.5
-    , QuickCheck >= 2.7
-    -- , transformers >= 0.4
-    -- , lens >= 4.13
-    , mixed-types-num >= 0.4
-    , aern2-mp == 0.1.*
-    , aern2-real == 0.1.*
-    -- , vector
-    -- , memoize
-
-  ghc-options:     -Wall -fno-warn-orphans
-  extensions:
-    RebindableSyntax,
-    PostfixOperators,
-    ScopedTypeVariables,
-    DeriveGeneric,
-    GeneralizedNewtypeDeriving,
-    TypeFamilies,
-    TypeOperators,
-    ConstraintKinds,
-    DefaultSignatures,
-    MultiParamTypeClasses,
-    FlexibleContexts,
-    FlexibleInstances,
-    UndecidableInstances,
-    Arrows
   exposed-modules:
-    AERN2.PQueue
-    AERN2.Interval
-    AERN2.RealFun.Operations
-    AERN2.RealFun.Tests
-    AERN2.RealFun.SineCosine
+      AERN2.Interval
+      AERN2.PQueue
+      AERN2.RealFun.Operations
+      AERN2.RealFun.SineCosine
+      AERN2.RealFun.Tests
+  other-modules:
+      Paths_aern2_fun
+  hs-source-dirs:
+      src
+      examples
+  default-extensions:
+      RebindableSyntax,
+      ScopedTypeVariables,
+      TypeFamilies,
+      TypeOperators,
+      ConstraintKinds,
+      DefaultSignatures,
+      MultiParamTypeClasses,
+      FlexibleContexts,
+      FlexibleInstances,
+      UndecidableInstances
+  other-extensions:
+      TemplateHaskell
+  ghc-options: -Wall
+  build-depends:
+      QuickCheck
+    , aern2-mp >=0.2.5
+    , aern2-real >=0.2.5
+    , base ==4.*
+    , collect-errors >=0.1.5
+    , containers
+    , hspec
+    , mixed-types-num >=0.5.5
+    , psqueues
+  default-language: Haskell2010
+
+test-suite aern2-real-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_aern2_fun
+  hs-source-dirs:
+      test
+  default-extensions:
+      RebindableSyntax,
+      ScopedTypeVariables,
+      TypeFamilies,
+      TypeOperators,
+      ConstraintKinds,
+      DefaultSignatures,
+      MultiParamTypeClasses,
+      FlexibleContexts,
+      FlexibleInstances,
+      UndecidableInstances
+  other-extensions:
+      TemplateHaskell
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
+  build-depends:
+      QuickCheck
+    , aern2-mp >=0.2.5
+    , aern2-real
+    , base ==4.*
+    , collect-errors >=0.1.5
+    , containers
+    , hspec
+    , mixed-types-num >=0.5.5
+    , psqueues
+  default-language: Haskell2010
