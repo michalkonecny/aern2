@@ -1,41 +1,38 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 module AERN2.AD.GenericOperations where
 
 import MixedTypesNumPrelude
 import AERN2.AD.Type
 
 instance 
-    (CanDiv a a, CanSubSameType a, CanMulSameType a, HasIntegers a, CanAddSameType a,
-    CanSubSameType (DivType a a), CanSubSameType (DivTypeNoCN a a)) =>
+    (CanDiv a a, CanSubSameType a, CanMulSameType a, CanMulBy a Integer, CanAddSameType a,
+    CanSubSameType (DivType a a)) 
+    =>
     CanDiv (Differential a) (Differential a)
     where
-    type DivTypeNoCN (Differential a) (Differential a) = Differential (DivTypeNoCN a a)
     type DivType     (Differential a) (Differential a) = Differential (DivType a a)
-    divideNoCN a b =
-        case min (order a) (order b) of
-            2 -> 
-                let
-                    dtDiff    = (dxt a * x b - x a * dxt b)
-                    ySqrd     = x b * x b
-                    exp0      = d2x a * x b + dxt a * dx b - dxt b * dx a - x a * d2x b
-                    (ta :: a) = convertExactly 2
-                in
-                OrderTwo  (x a /! x b) ((dx a * x b - x a * dx b)/!ySqrd) (dtDiff/!ySqrd) 
-                          (exp0/!ySqrd - (ta*dx b * dtDiff) /! (ySqrd * x b))
-            1 -> OrderOne  (x a /! x b) ((dx a * x b - x a * dx b)/!(x b * x b)) 
-            0 -> OrderZero (x a /! x b)
     divide a b =
         case min (order a) (order b) of
             2 -> 
                 let
-                    dtDiff    = (dxt a * x b - x a * dxt b)
-                    ySqrd     = x b * x b
-                    exp0      = d2x a * x b + dxt a * dx b - dxt b * dx a - x a * d2x b
-                    (ta :: a) = convertExactly 2
+                    dtDiff    = (a_dxt * b_x - a_x * b_dxt)
+                    ySqrd     = b_x * b_x
+                    exp0      = a_d2x * b_x + a_dxt * b_dx - b_dxt * a_dx - a_x * b_d2x
                 in
-                OrderTwo  (x a / x b) ((dx a * x b - x a * dx b)/ySqrd) (dtDiff/ySqrd) 
-                          (exp0/ySqrd - (ta*dx b * dtDiff) / (ySqrd * x b))
-            1 -> OrderOne  (x a / x b) ((dx a * x b - x a * dx b)/(x b * x b)) 
-            0 -> OrderZero (x a / x b)
+                OrderTwo  (a_x / b_x) ((a_dx * b_x - a_x * b_dx)/ySqrd) (dtDiff/ySqrd) 
+                          (exp0/ySqrd - (2*b_dx * dtDiff) / (ySqrd * b_x))
+            1 -> OrderOne  (a_x / b_x) ((a_dx * b_x - a_x * b_dx)/(b_x * b_x)) 
+            0 -> OrderZero (a_x / b_x)
+            _ -> error "illegal Differential order"
+        where
+        a_x = diff_x a
+        b_x = diff_x b
+        a_dx = diff_dx a
+        b_dx = diff_dx b
+        a_dxt = diff_dxt a
+        b_dxt = diff_dxt b
+        a_d2x = diff_d2x a
+        b_d2x = diff_d2x b
 
 instance 
     (CanExpSameType a, CanMulSameType a, CanAddSameType a) =>
@@ -55,19 +52,21 @@ clampedSin :: (CanSinCosSameType a, CanMinMaxSameType a, HasIntegers a) => a -> 
 clampedSin (x :: a) = max (convertExactly $ -1 :: a) $ min ((convertExactly 1) :: a) (sin x)
 
 instance 
-    (CanSinCosSameType a, CanMulSameType a, CanNegSameType a, CanSubSameType a, CanAddSameType a, HasIntegers a, CanMinMaxSameType a) =>
+    (CanSinCosSameType a, CanMulSameType a, CanNegSameType a, CanSubSameType a, CanAddSameType a
+    , HasIntegers a, CanMinMaxSameType a) 
+    =>
     CanSinCos (Differential a)
     where
     type SinCosType (Differential a) = Differential a
     cos (OrderZero x)            = OrderZero (clampedCos x)
     cos (OrderOne  x dx)         = OrderOne  (clampedCos x) (-dx * clampedSin x)
     cos (OrderTwo  x dx dxt d2x) = OrderTwo  (clampedCos x) (-dx * clampedSin x) (-dxt * clampedSin x) 
-                                             (-dxt * dx * clampedCos x - d2x * clampedSin x)
+                                                (-dxt * dx * clampedCos x - d2x * clampedSin x)
     
     sin (OrderZero x)            = OrderZero (clampedSin x)
     sin (OrderOne x dx)          = OrderOne  (clampedSin x) (dx * clampedCos x)
     sin (OrderTwo x dx dxt d2x)  = OrderTwo  (clampedSin x) (dx * clampedCos x) (dxt * clampedCos x)
-                                             (d2x * clampedCos x - dxt * dx * clampedSin x)
+                                                (d2x * clampedCos x - dxt * dx * clampedSin x)
 
 instance 
     (CanAddSameType a) => 
@@ -76,21 +75,41 @@ instance
     type AddType (Differential a) (Differential a) = Differential a
     add a b =
         case min (order a) (order b) of
-            2 -> OrderTwo  (x a + x b) (dx a + dx b) (dxt a + dxt b) (d2x a + d2x b)
-            1 -> OrderOne  (x a + x b) (dx a + dx b)
-            0 -> OrderZero (x a + x b)
-
+            2 -> OrderTwo  (a_x + b_x) (a_dx + b_dx) (a_dxt + b_dxt) (a_d2x + b_d2x)
+            1 -> OrderOne  (a_x + b_x) (a_dx + b_dx)
+            0 -> OrderZero (a_x + b_x)
+            _ -> error "illegal Differential order"
+        where
+        a_x = diff_x a
+        b_x = diff_x b
+        a_dx = diff_dx a
+        b_dx = diff_dx b
+        a_dxt = diff_dxt a
+        b_dxt = diff_dxt b
+        a_d2x = diff_d2x a
+        b_d2x = diff_d2x b
+        
 instance 
-    (CanMulSameType a, CanAddSameType a, HasIntegers a) =>
+    (CanMulSameType a, CanAddSameType a) =>
     CanMulAsymmetric (Differential a) (Differential a)
     where
     type MulType (Differential a) (Differential a) = Differential a
     mul a b =
         case min (order a) (order b) of
-            2 -> OrderTwo  (x a * x b) (dx a * x b + x a * dx b) (x a * dxt b + x b * dxt a) 
-                           (x a * d2x b + dx a * dxt b + dxt a * dx b + d2x a * x b)
-            1 -> OrderOne  (x a * x b) (dx a * x b + x a * dx b)
-            0 -> OrderZero (x a * x b)
+            2 -> OrderTwo  (a_x * b_x) (a_dx * b_x + a_x * b_dx) (a_x * b_dxt + b_x * a_dxt) 
+                           (a_x * b_d2x + a_dx * b_dxt + a_dxt * b_dx + a_d2x * b_x)
+            1 -> OrderOne  (a_x * b_x) (a_dx * b_x + a_x * b_dx)
+            0 -> OrderZero (a_x * b_x)
+            _ -> error "illegal Differential order"
+        where
+        a_x = diff_x a
+        b_x = diff_x b
+        a_dx = diff_dx a
+        b_dx = diff_dx b
+        a_dxt = diff_dxt a
+        b_dxt = diff_dxt b
+        a_d2x = diff_d2x a
+        b_d2x = diff_d2x b
 
 instance 
     (CanSubSameType a) =>
@@ -99,9 +118,19 @@ instance
     type SubType (Differential a) (Differential a) = Differential a
     sub a b = 
         case min (order a) (order b) of
-            2 -> OrderTwo  (x a - x b) (dx a - dx b) (dxt a - dxt b) (d2x a - d2x b)
-            1 -> OrderOne  (x a - x b) (dx a - dx b)
-            0 -> OrderZero (x a - x b)
+            2 -> OrderTwo  (a_x - b_x) (a_dx - b_dx) (a_dxt - b_dxt) (a_d2x - b_d2x)
+            1 -> OrderOne  (a_x - b_x) (a_dx - b_dx)
+            0 -> OrderZero (a_x - b_x)
+            _ -> error "illegal Differential order"
+        where
+        a_x = diff_x a
+        b_x = diff_x b
+        a_dx = diff_dx a
+        b_dx = diff_dx b
+        a_dxt = diff_dxt a
+        b_dxt = diff_dxt b
+        a_d2x = diff_d2x a
+        b_d2x = diff_d2x b
 
 instance 
     (CanNeg a) =>
@@ -111,17 +140,21 @@ instance
     negate = fmap negate
 
 instance 
-    (CanSqrtSameType a, CanMulSameType a, CanNegSameType a, CanAddSameType a, HasIntegers a, CanDivSameType a) =>
+    (CanSqrtSameType a, CanMulSameType a, CanNegSameType a, CanAddSameType a, CanMulBy a Integer, CanRecipSameType a) 
+    =>
     CanSqrt (Differential a)
     where
     type SqrtType (Differential a) = Differential a
     sqrt (OrderZero x)             = OrderZero (sqrt x)
-    sqrt (OrderOne x dx)           = OrderOne  (sqrt x) (dx * sqrtx')                  where sqrtx' = (convertExactly 1 :: a) / ((convertExactly 2 :: a) * sqrt x)
+    sqrt (OrderOne x dx)           = OrderOne  (sqrt x) (dx * sqrtx')
+                                        where sqrtx' = recip (2 * sqrt x)
     sqrt (OrderTwo x dx dxt d2x)   = OrderTwo  (sqrt x) (dx * sqrtx') (dxt * sqrtx') 
-                                               ((d2x * sqrtx') + (dx * dxt * sqrtx'')) where sqrtx'  = (convertExactly 1 :: a) / ((convertExactly 2 :: a) * sqrt x) 
-                                                                                             sqrtx'' = (convertExactly (-1) :: a) / ((convertExactly 4 :: a) * x * sqrt x)  
-                                                                                             -- sqrtx'  == -1 / (2 * sqrt(x))
-                                                                                             -- sqrtx'' == -1 / (4 * x * sqrt(x)) == -1 / (4 * x^(3/2))
+                                               ((d2x * sqrtx') + (dx * dxt * sqrtx'')) 
+                                        where 
+                                        sqrtx'  = recip (2 * sqrt x)
+                                        sqrtx'' = negate $ recip (4 * x * sqrt x)
+                                            -- sqrtx'  == 1 / (2 * sqrt(x))
+                                            -- sqrtx'' == -1 / (4 * x * sqrt(x)) == -1 / (4 * x^(3/2))
 
 -- instance
 --     (CanMinMaxSameType a, HasIntegers a) =>
@@ -130,16 +163,16 @@ instance
 --     type MinMaxType (Differential a) (Differential a) = Differential a
 --     min a b = 
 --         case min (order a) (order b) of
---             2 -> OrderTwo  (min (x a) (x b)) (min (dx a) (dx b)) (min (dxt a) (dxt b)) 
---                            (min (d2x a) (d2x b))
---             1 -> OrderOne  (min (x a) (x b)) (min (dx a) (dx b))
---             0 -> OrderZero (min (x a) (x b))
+--             2 -> OrderTwo  (min (a_x) (b_x)) (min (a_dx) (b_dx)) (min (a_dxt) (b_dxt)) 
+--                            (min (a_d2x) (b_d2x))
+--             1 -> OrderOne  (min (a_x) (b_x)) (min (a_dx) (b_dx))
+--             0 -> OrderZero (min (a_x) (b_x))
 --     max a b =
 --         case min (order a) (order b) of
---             2 -> OrderTwo  (max (x a) (x b)) (max (dx a) (dx b)) (max (dxt a) (dxt b)) 
---                            (max (d2x a) (d2x b))
---             1 -> OrderOne  (max (x a) (x b)) (max (dx a) (dx b))
---             0 -> OrderZero (max (x a) (x b))
+--             2 -> OrderTwo  (max (a_x) (b_x)) (max (a_dx) (b_dx)) (max (a_dxt) (b_dxt)) 
+--                            (max (a_d2x) (b_d2x))
+--             1 -> OrderOne  (max (a_x) (b_x)) (max (a_dx) (b_dx))
+--             0 -> OrderZero (max (a_x) (b_x))
 
 -- instance
 --     (CanAbsSameType a) =>

@@ -1,40 +1,39 @@
-module AERN2.Linear.Matrix.Inverse where
+module AERN2.Linear.Matrix.Inverse 
+(inverse) 
+where
 
 import MixedTypesNumPrelude
+-- import Numeric.CollectErrors (NumErrors, CanTakeErrors(..))
+import qualified Numeric.CollectErrors as CN
+
 import AERN2.Linear.Matrix.Type
 import qualified AERN2.Linear.Vector.Type as V
-import AERN2.Linear.Vector.Type (Vector, (!))
 import Data.Maybe
 import AERN2.MP.Float
 import AERN2.MP.Dyadic
-import AERN2.MP.Ball
+import AERN2.MP
 
 inverse :: Matrix (CN MPBall) -> Maybe (Matrix (CN MPBall))
 inverse m = 
-    if  not mOK
-    ||  (not $ isJust maybeY)
-    ||  (not $ definitelySmaller nerr (pure $ mpBall 1 :: CN MPBall)) then
+    if  CN.hasError m
+    ||  (isNothing maybeY)
+    ||  (not $ nerr !<! 1) then
         Nothing
     else
         Just $ aux x0
-        --Just $ (it . it . it . it) x0 -- TODO: stopping criterion
     where
-    mOK    = V.foldl' (&&) True $ V.map (isJust . fst . ensureNoCN) (entries m)
-    cm     = Matrix (width m) (V.map (\x -> mpFloat $ centre $ (~!) x) $ entries m)
-    id     = identity (width m) (width m)                    :: Matrix (CN MPBall)
+    cm     = Matrix (width m) (V.map (\x -> mpFloat $ centre $ unCN x) $ entries m)
+    idM    = identity (width m) (width m)                    :: Matrix (CN MPBall)
     maybeY = inverseGauss cm
-    y      = fmap (pure . mpBall . dyadic) $ fromJust maybeY :: Matrix (CN MPBall)   
-    yid    = y * id
+    y      = fmap (cn . mpBall . dyadic) $ fromJust maybeY
+    yid    = y * idM
     nye    = V.map V.inftyNorm (columns yid)
-    err    = id - y * m
+    err    = idM - y * m
     nerr   = inftyNorm err
     ui     = cn $ fromEndpointsAsIntervals (mpBall $ -1) (mpBall 1)
-    x0     = create (width m) (width m) (\_ j -> (ui *  (nye ! j)) / (1 - nerr))
+    x0     = create (width m) (width m) (\_ j -> (ui *  (nye V.! j)) / (1 - nerr))
     aux x  = let x' = it x in if getAccuracy x' <= getAccuracy x then x' else aux x'
-    it x   = intersection x $ yid + err * x
-
-    definitelySmaller x y = 
-        (Just $ Just True) == (fst $ ensureNoCN $ x < y)
+    it x   = intersect x $ yid + err * x
 
 inverseGauss :: Matrix MPFloat -> Maybe (Matrix MPFloat)
 inverseGauss m = 

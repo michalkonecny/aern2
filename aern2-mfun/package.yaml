@@ -1,0 +1,72 @@
+name:                aern2-mfun
+version:             0.2.5.0
+github:              "michalkonecny/aern2"
+license:             BSD3
+author:              "Eike Neumann, Junaid Rasheed"
+maintainer:          "mikkonecny@gmail.com"
+copyright:           "2019-2021 Eike Neumann, Junaid Rasheed"
+
+extra-source-files:
+- README.md
+- changelog.md
+
+# Metadata used when publishing your package
+synopsis:            Multi-variate real function optimisation and proving
+category:            Math
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/michalkonecny/aern2/#readme>
+
+dependencies:
+- base == 4.*
+- parallel
+- process
+# - binary
+- containers
+- vector
+- psqueues
+- integer-logarithms
+# - hspec
+# - QuickCheck
+- collect-errors >= 0.1.5
+- mixed-types-num >= 0.5.5
+- aern2-mp >= 0.2.5
+- aern2-real >= 0.2.5
+- aern2-fun >= 0.2.5
+- simplex-haskell
+
+default-extensions:
+- RebindableSyntax,
+- ScopedTypeVariables,
+- TypeFamilies,
+- TypeOperators,
+- ConstraintKinds,
+- DefaultSignatures,
+- MultiParamTypeClasses,
+- FlexibleContexts,
+- FlexibleInstances,
+- UndecidableInstances
+
+other-extensions:
+- TemplateHaskell
+
+library:
+  source-dirs: 
+  - src
+  - examples
+  ghc-options:
+  - -Wall
+
+tests:
+  aern2-real-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    dependencies:
+    - aern2-real

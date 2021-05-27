@@ -1,164 +1,128 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
 name:           aern2-mfun
-version:        0.1.0.0
-cabal-version:  >= 1.9.2
-build-type:     Simple
-homepage:       https://github.com/michalkonecny/aern2
-author:         Eike Neumann
-maintainer:     Eike Neumann
-copyright:      (c) 2019 Eike Neumann
-license:        BSD3
-stability:      experimental
+version:        0.2.5.0
+synopsis:       Multi-variate real function optimisation and proving
+description:    Please see the README on GitHub at <https://github.com/michalkonecny/aern2/#readme>
 category:       Math
-synopsis:       Exact real functions
-Description:
-  
+homepage:       https://github.com/michalkonecny/aern2#readme
+bug-reports:    https://github.com/michalkonecny/aern2/issues
+author:         Eike Neumann, Junaid Rasheed
+maintainer:     mikkonecny@gmail.com
+copyright:      2019-2021 Eike Neumann, Junaid Rasheed
+license:        BSD3
+build-type:     Simple
+extra-source-files:
+    README.md
+    changelog.md
 
 source-repository head
-  type:     git
-  location: https://github.com/mikkonecny/aern2.git
-  subdir: aern2-mfun
+  type: git
+  location: https://github.com/michalkonecny/aern2
 
 library
-  hs-source-dirs:  src
-  build-depends:
-    base == 4.*
-    , containers >= 0.5
-    , psqueues >= 0.2
-    , integer-logarithms >= 1.0
-    , convertible >= 1.1.1.0
-    , regex-tdfa >= 1.2.1
-    , bytestring >= 0.10
-    , hspec >= 2.1
-    -- , hspec-smallcheck >= 0.3 && < 0.5
-    , QuickCheck >= 2.7
-    , transformers >= 0.4
-    , lens >= 4.13
-    , mixed-types-num == 0.4.*
-    , aern2-mp == 0.1.*
-    , aern2-real == 0.1.*
-    , aern2-fun == 0.1.*
-    , vector
-    , stm
-    , parallel
-    , simplex-haskell == 0.1.*
-    , smt2-parser
-    , binary
-    , scientific
-    , process
--- TODO: delete below eventually
-    , async
-    , text
-
-  ghc-options:     -Wall -fno-warn-orphans -O2 -threaded
-  extensions:
-    RebindableSyntax,
-    PostfixOperators,
-    ScopedTypeVariables,
-    DeriveGeneric,
-    GeneralizedNewtypeDeriving,
-    TypeFamilies,
-    TypeOperators,
-    ConstraintKinds,
-    DefaultSignatures,
-    MultiParamTypeClasses,
-    FlexibleContexts,
-    FlexibleInstances,
-    UndecidableInstances,
-    Arrows
   exposed-modules:
-    AERN2.Util.Util
-    AERN2.AD.Type
-    AERN2.AD.GenericOperations
-    AERN2.AD.MPBallOperations
-    AERN2.AD.Differential
-    AERN2.Linear.Vector.Type
-    AERN2.Linear.Matrix.Type
-    AERN2.Linear.Matrix.Inverse
-    -- AERN2.MP.Float
-    AERN2.BoxFun.Box
-    AERN2.BoxFun.Type
-    AERN2.BoxFun.TestFunctions
-    AERN2.BoxFun.Optimisation   
-    AERN2.BoxFunMinMax.Type
-    AERN2.BoxFunMinMax.Optimisation
-    AERN2.BoxFunMinMax.VarMap
-    AERN2.BoxFunMinMax.Expressions.DeriveBounds
-    AERN2.BoxFunMinMax.Expressions.Eliminator
-    AERN2.BoxFunMinMax.Expressions.TestFunctions
-    AERN2.BoxFunMinMax.Expressions.Type
-    AERN2.BoxFunMinMax.Expressions.Translators.BoxFun
-    AERN2.BoxFunMinMax.Expressions.Translators.DReal
-    AERN2.BoxFunMinMax.Expressions.Translators.MetiTarski
-    AERN2.BoxFunMinMax.Expressions.Translators.FPTaylor
-    AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.DataTypes
-    AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.Parser
-    AERN2.BoxFunMinMax.Expressions.Parsers.Smt
-    AERN2.BoxFunMinMax.Expressions.Parsers.EliminateFloats
-    -- AERN2.BoxFun.OptimisationConcurrent 
-
--- executable aern2-mfun-benchmark
---   ghc-options:
---       -Wall -O2 -threaded
---   extensions:
---     RebindableSyntax,
---     TypeFamilies,
---     PostfixOperators,
---     ScopedTypeVariables,
---     FlexibleContexts,
---     TypeSynonymInstances
---   hs-source-dirs:
---       src/AERN2/Benchmark
---   main-is:
---       OptimisationBenchmark.hs
---   build-depends:
---     base == 4.*
---     , bytestring
---     , regex-tdfa
---     , zlib
---     , mixed-types-num == 0.4.*
---     , aern2-mp == 0.1.*
---     , aern2-mfun == 0.1.*
---     , aern2-real == 0.1.*
---     , QuickCheck
---     , clock
---     , async
-
-executable aern2-mfun-heron-benchmark
-  ghc-options:
-      -Wall -O2 -threaded -rtsopts +RTS -N6 -RTS
-  extensions:
-    RebindableSyntax,
-    TypeFamilies,
-    PostfixOperators,
-    ScopedTypeVariables,
-    FlexibleContexts,
-    TypeSynonymInstances
+      AERN2.AD.Differential
+      AERN2.AD.GenericOperations
+      AERN2.AD.MPBallOperations
+      AERN2.AD.Type
+      AERN2.Benchmark.OptimisationBenchmark
+      AERN2.BoxFun.Box
+      AERN2.BoxFun.Optimisation
+      AERN2.BoxFun.TestFunctions
+      AERN2.BoxFun.Type
+      AERN2.BoxFunMinMax.Benchmark.Heron
+      AERN2.BoxFunMinMax.Expressions.DeriveBounds
+      AERN2.BoxFunMinMax.Expressions.EliminateFloats
+      AERN2.BoxFunMinMax.Expressions.Eliminator
+      AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.DataTypes
+      AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.Parser
+      AERN2.BoxFunMinMax.Expressions.Parsers.Smt
+      AERN2.BoxFunMinMax.Expressions.TestFunctions
+      AERN2.BoxFunMinMax.Expressions.Translators.BoxFun
+      AERN2.BoxFunMinMax.Expressions.Translators.DReal
+      AERN2.BoxFunMinMax.Expressions.Translators.FPTaylor
+      AERN2.BoxFunMinMax.Expressions.Translators.MetiTarski
+      AERN2.BoxFunMinMax.Expressions.Type
+      AERN2.BoxFunMinMax.Optimisation
+      AERN2.BoxFunMinMax.Type
+      AERN2.BoxFunMinMax.VarMap
+      AERN2.Linear.Matrix.Inverse
+      AERN2.Linear.Matrix.Type
+      AERN2.Linear.Vector.Type
+      AERN2.Util.Util
+  other-modules:
+      Paths_aern2_mfun
   hs-source-dirs:
-      src/AERN2/BoxFunMinMax/Benchmark
-  main-is:
-      Heron.hs
+      src
+      examples
+  default-extensions:
+      RebindableSyntax,
+      ScopedTypeVariables,
+      TypeFamilies,
+      TypeOperators,
+      ConstraintKinds,
+      DefaultSignatures,
+      MultiParamTypeClasses,
+      FlexibleContexts,
+      FlexibleInstances,
+      UndecidableInstances
+  other-extensions:
+      TemplateHaskell
+  ghc-options: -Wall
   build-depends:
-    base == 4.*
-    , containers >= 0.5
-    , psqueues >= 0.2
-    , integer-logarithms >= 1.0
-    , convertible >= 1.1.1.0
-    , regex-tdfa >= 1.2.1
-    , bytestring >= 0.10
-    , hspec >= 2.1
-    -- , hspec-smallcheck >= 0.3 && < 0.5
-    , QuickCheck >= 2.7
-    , transformers >= 0.4
-    , lens >= 4.13
-    , mixed-types-num == 0.4.*
-    , aern2-mp == 0.1.*
-    , aern2-real == 0.1.*
-    , aern2-fun == 0.1.*
-    , aern2-mfun == 0.1.*
-    , vector
-    , stm
+      aern2-fun >=0.2.5
+    , aern2-mp >=0.2.5
+    , aern2-real >=0.2.5
+    , base ==4.*
+    , collect-errors >=0.1.5
+    , containers
+    , integer-logarithms
+    , mixed-types-num >=0.5.5
     , parallel
-    -- TODO: delete below eventually
-    , async
-    , binary
-    , ghc
+    , process
+    , psqueues
+    , simplex-haskell
+    , vector
+  default-language: Haskell2010
+
+test-suite aern2-real-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_aern2_mfun
+  hs-source-dirs:
+      test
+  default-extensions:
+      RebindableSyntax,
+      ScopedTypeVariables,
+      TypeFamilies,
+      TypeOperators,
+      ConstraintKinds,
+      DefaultSignatures,
+      MultiParamTypeClasses,
+      FlexibleContexts,
+      FlexibleInstances,
+      UndecidableInstances
+  other-extensions:
+      TemplateHaskell
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
+  build-depends:
+      aern2-fun >=0.2.5
+    , aern2-mp >=0.2.5
+    , aern2-real
+    , base ==4.*
+    , collect-errors >=0.1.5
+    , containers
+    , integer-logarithms
+    , mixed-types-num >=0.5.5
+    , parallel
+    , process
+    , psqueues
+    , simplex-haskell
+    , vector
+  default-language: Haskell2010
