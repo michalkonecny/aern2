@@ -1,6 +1,6 @@
 # Change log for aern2-mp
 
-* v 0.2.5 2021-05-XXXXXXXXX
+* v 0.2.5 2021-05-27
   * add generic multivalued select + Kleenean instances
   * WithCurrentPrec: add MixedTypesNumPrelude class instances
 * v 0.2.4 2021-05-26
