@@ -1,5 +1,8 @@
 # Change log for aern2-mp
 
+* v 0.2.5 2021-05-27
+  * add generic multivalued select + Kleenean instances
+  * WithCurrentPrec: add MixedTypesNumPrelude class instances
 * v 0.2.4 2021-05-26
   * use endpoint multiplication in integer power to avoid crossing 0
 * v 0.2.3 2021-05-22

@@ -46,7 +46,6 @@ A convergent sequence must be error-free from some point onwards.
 A sequence is allowed not to converge, but only if all its elements contain the same error.  
 Such a sequence can be thought of as converging to this error.
 
-
 ## 2. Usage with Prelude
 
 First, let us load the package with **Prelude** operations:
@@ -214,7 +213,7 @@ Therefore, an invalid input leads to a normal `CReal` value, and the error is de
 ...> bad1 ? (prec 100)
 {{ERROR: out of domain: negative sqrt argument}}
 ```
- 
+
 and sometimes an error cannot be determined with certainty:
 
 ```Text

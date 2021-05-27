@@ -26,6 +26,8 @@ import qualified Numeric.CollectErrors as CN
 
 import qualified Data.List as List
 
+import AERN2.Select
+
 import AERN2.MP
 
 import AERN2.Real.Type
@@ -51,16 +53,6 @@ instance (CanAndOrAsymmetric t1 t2) => CanAndOrAsymmetric (CSequence t1) (CSeque
   and2 = lift2 and2
   or2 = lift2 or2
 
--- select:
-
-class (IsBool (SelectType k)) => CanSelect k where
-  {-| Must be Bool or similar -}
-  type SelectType k 
-  {-|
-    Execute two lazy computations "in parallel" until one of them succeeds. 
-  -}
-  select :: k -> k -> (SelectType k) {-^ True means that the first computation succeeded. -}
-
 instance CanSelect CKleenean where
   type SelectType CKleenean = Bool
   select (CSequence s1) (CSequence s2) = aux s1 s2
@@ -72,25 +64,6 @@ instance CanSelect CKleenean where
         (Right CertainFalse, Right CertainFalse) -> error "select: Both branches failed!"
         _ -> aux rest1 rest2
     aux _ _ = error "select: internal error"
-
-instance CanSelect Kleenean where
-  type SelectType Kleenean = CN Bool
-  select CertainTrue _ = cn True
-  select _ CertainTrue = cn False
-  select CertainFalse CertainFalse =
-    CN.noValueNumErrorPotential $ 
-      CN.NumError "select (Kleenean): Both branches failed!"
-  select _ _ = 
-    CN.noValueNumErrorPotential $ 
-      CN.NumError "select (Kleenean): Insufficient information to determine selection."
-
-instance CanSelect (CN Kleenean) where
-  type SelectType (CN Kleenean) = CN Bool
-  select cnk1 cnk2 =
-    do
-    k1 <- cnk1
-    k2 <- cnk2
-    select k1 k2
 
 instance (CanUnionCNSameType t) =>
   HasIfThenElse CKleenean (CSequence t)

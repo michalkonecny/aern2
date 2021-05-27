@@ -1,5 +1,7 @@
 # Change log for aern2-real
 
+* v 0.2.5 2021-05-27
+  * CanSelect moved to aern2-mp
 * v 0.2.4 2021-05-26
   * overhaul README and examples
   * stop "very inaccurate" errors breaking ? (bits n) queries
@@ -28,4 +30,3 @@
   * arrow-based networks of nodes communicating via query-answer protocols
   * networks executable with cached and parallel strategies
   * network execution can be visualised in browser using an Elm frontend
-
