@@ -6,7 +6,7 @@ cabal-version: 1.12
 
 name:           aern2-fun
 version:        0.2.5.0
-synopsis:       Real numbers as sequences of MPBalls
+synopsis:       Generic operations for real functions
 description:    Please see the README on GitHub at <https://github.com/michalkonecny/aern2/#readme>
 category:       Math
 homepage:       https://github.com/michalkonecny/aern2#readme
