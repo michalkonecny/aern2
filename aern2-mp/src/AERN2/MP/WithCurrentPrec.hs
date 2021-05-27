@@ -22,6 +22,7 @@ module AERN2.MP.WithCurrentPrec
 (
     WithCurrentPrec(..), runWithPrec, HasCurrentPrecision(..)
     , WithAnyPrec(..)
+    , mpBallCP
     , piCP
     -- , _example1 , _example2 , _example3
     -- , _example1P , _example2P , _example3P

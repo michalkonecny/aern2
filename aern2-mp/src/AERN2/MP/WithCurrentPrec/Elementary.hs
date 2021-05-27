@@ -18,7 +18,10 @@
     WithCurrentPrec elementary operations
 -}
 module AERN2.MP.WithCurrentPrec.Elementary
-(piCP)
+(   
+    piCP
+    , _example1 , _example2 , _example3
+)
 where
 
 import MixedTypesNumPrelude
@@ -33,7 +36,26 @@ import AERN2.MP.Ball
 
 import AERN2.MP.WithCurrentPrec.Type
 
+import AERN2.MP.WithCurrentPrec.Field ()
+
 piCP :: (KnownNat p) => WithCurrentPrec (CN MPBall) p
 piCP = r 
     where
     r = WithCurrentPrec $ cn $ piBallP (getCurrentPrecision r)
+
+instance
+    (CanSqrt t)
+    =>
+    CanSqrt (WithCurrentPrec t p)
+    where
+    type SqrtType (WithCurrentPrec t p) = WithCurrentPrec (SqrtType t) p
+    sqrt = lift1 sqrt
+
+_example1 :: CN MPBall
+_example1 = runWithPrec (prec 1000) piCP
+
+_example2 :: CN MPBall
+_example2 = runWithPrec (prec 1000) $ piCP - piCP
+
+_example3 :: CN MPBall
+_example3 = runWithPrec (prec 1000) $ sqrt (mpBallCP 2)

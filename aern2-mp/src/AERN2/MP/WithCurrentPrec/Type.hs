@@ -30,9 +30,7 @@ import Data.Proxy
 import Data.Reflection
 import GHC.TypeLits
 
--- import Data.Complex
-
-import AERN2.MP.Precision
+import AERN2.MP
 
 class HasCurrentPrecision p where
     getCurrentPrecision :: proxy p -> Precision
@@ -51,7 +49,6 @@ An existential type wrapper for convenient conversions, eg using aern2-real:
 > _r_x = creal $ WithAnyPrec _x
 
 -}
-
 newtype WithAnyPrec t = WithAnyPrec (forall p. (KnownNat p) => WithCurrentPrec t p)
 
 -- data PrecAdd10 (p :: *)
@@ -93,3 +90,7 @@ liftT1 f v1 (WithCurrentPrec v2) = WithCurrentPrec (f v1 v2)
 liftT1P :: (t1 -> t2 -> t3) -> t1 -> (WithCurrentPrec t2 p2) -> t3
 liftT1P f v1 (WithCurrentPrec v2) = f v1 v2
 
+mpBallCP :: (CanBeMPBallP t, KnownNat p) => t -> WithCurrentPrec (CN MPBall) p
+mpBallCP v = r 
+    where
+    r = WithCurrentPrec $ cn $ mpBallP (getCurrentPrecision r) v

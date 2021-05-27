@@ -18,7 +18,7 @@
 -}
 module AERN2.MP.WithCurrentPrec.PreludeInstances
 (
-    -- _example1P , _example2P , _example3P
+    _example1P , _example2P , _example3P
 )
 where
 
@@ -94,4 +94,4 @@ _example2P :: CN MPBall
 _example2P = runWithPrec (prec 1000) $ pi - pi
 
 _example3P :: CN MPBall
-_example3P = runWithPrec (prec 1000) $ sqrt (fromInteger 2)
+_example3P = runWithPrec (prec 1000) $ sqrt 2
