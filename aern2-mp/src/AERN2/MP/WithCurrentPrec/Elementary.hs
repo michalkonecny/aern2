@@ -44,12 +44,71 @@ piCP = r
     r = WithCurrentPrec $ cn $ piBallP (getCurrentPrecision r)
 
 instance
+    (CanSinCos t)
+    =>
+    CanSinCos (WithCurrentPrec t p)
+    where
+    type SinCosType (WithCurrentPrec t p) = WithCurrentPrec (SinCosType t) p
+    sin = lift1 sin
+    cos = lift1 cos
+
+instance
     (CanSqrt t)
     =>
     CanSqrt (WithCurrentPrec t p)
     where
     type SqrtType (WithCurrentPrec t p) = WithCurrentPrec (SqrtType t) p
     sqrt = lift1 sqrt
+
+instance
+    (CanExp t)
+    =>
+    CanExp (WithCurrentPrec t p)
+    where
+    type ExpType (WithCurrentPrec t p) = WithCurrentPrec (ExpType t) p
+    exp = lift1 exp
+
+instance
+    (CanLog t)
+    =>
+    CanLog (WithCurrentPrec t p)
+    where
+    type LogType (WithCurrentPrec t p) = WithCurrentPrec (LogType t) p
+    log = lift1 log
+
+instance
+    (CanPow t1 t2, p1~p2)
+    =>
+    (CanPow (WithCurrentPrec t1 p1) (WithCurrentPrec t2 p2)) where
+    type PowType (WithCurrentPrec t1 p1) (WithCurrentPrec t2 p2) = WithCurrentPrec (PowType t1 t2) p1
+    pow = lift2 pow
+
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |]]
+  (\ e -> [d|
+
+  instance 
+    (CanPow b $e)
+    =>
+    CanPow (WithCurrentPrec b p) $e 
+    where
+    type PowType (WithCurrentPrec b p) $e = WithCurrentPrec (PowType b $e) p
+    pow = lift1T pow
+
+  |]))
+
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |]]
+  (\ b -> [d|
+
+  instance 
+    (CanPow $b e, HasOrderCertainly e Integer, CanTestInteger e)
+    =>
+    CanPow $b (WithCurrentPrec e p) 
+    where
+    type PowType $b (WithCurrentPrec e p) = WithCurrentPrec (PowType $b e) p
+    pow = liftT1 pow
+  |]))
 
 _example1 :: CN MPBall
 _example1 = runWithPrec (prec 1000) piCP
