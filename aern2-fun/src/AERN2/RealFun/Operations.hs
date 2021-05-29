@@ -113,7 +113,7 @@ sampledRange (Interval l r) depth f =
     _ = minValue : samplePointsT
     samplePoints :: [Dyadic]
     samplePoints = [(l*i + r*(size - i))*(dyadic (1/size)) | i <- [0..size]]
-    size = round $ 2^depth
+    size = 2^depth
 
 
 {- constructing basic functions -}

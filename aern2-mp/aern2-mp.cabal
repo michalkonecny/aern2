@@ -3,11 +3,9 @@ cabal-version: 1.12
 -- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: f380106cebd760457afe30f95f96a4613a687aa0d3f908c17172376defe10224
 
 name:           aern2-mp
-version:        0.2.5.0
+version:        0.2.6.0
 synopsis:       Multi-precision ball (interval) arithmetic
 description:    Please see the README on GitHub at <https://github.com/michalkonecny/aern2/#readme>
 category:       Math
@@ -91,11 +89,10 @@ library
     , deepseq
     , hspec
     , integer-logarithms
-    , mixed-types-num >=0.5.5
+    , mixed-types-num >=0.5.7
     , reflection
     , regex-tdfa
     , template-haskell
-
   default-language: Haskell2010
 
 test-suite aern2-mp-test
@@ -132,7 +129,7 @@ test-suite aern2-mp-test
     , deepseq
     , hspec
     , integer-logarithms
-    , mixed-types-num >=0.5.5
+    , mixed-types-num >=0.5.7
     , reflection
     , regex-tdfa
     , template-haskell

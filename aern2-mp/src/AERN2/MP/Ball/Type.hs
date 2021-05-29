@@ -99,6 +99,8 @@ instance ShowWithAccuracy MPBall where
     showAC NoInformation = "(oo)"
     showAC ac = " ~2^(" ++ show (negate $ fromAccuracy ac) ++ ")"
     
+instance CanTestIsIntegerType MPBall -- False by default
+
 -- instance CanTestValid MPBall where
 --   isValid = isFinite
 

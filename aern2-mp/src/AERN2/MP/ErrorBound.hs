@@ -29,8 +29,6 @@ import Test.QuickCheck
 
 -- import Data.Convertible
 
-import Data.Ratio (numerator)
-
 import Math.NumberTheory.Logarithms (integerLog2)
 
 import AERN2.MP.Precision
@@ -228,6 +226,6 @@ instance Arbitrary ErrorBound where
         | otherwise =
           do
           (s :: Integer) <- arbitrary
-          let resultR = ((abs s) `P.mod` (numerator $ 2^35))/(2^32)
+          let resultR = ((abs s) `P.mod` (2^35))/(2^32)
           let result = convert resultR
           return result

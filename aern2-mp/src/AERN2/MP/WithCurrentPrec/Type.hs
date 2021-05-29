@@ -60,6 +60,7 @@ newtype WithCurrentPrec t p = WithCurrentPrec { unWithCurrentPrec :: t }
     deriving (Show)
 
 deriving instance (CanTakeErrors NumErrors t) => (CanTakeErrors NumErrors (WithCurrentPrec t p))
+deriving instance (CanTestIsIntegerType t) => (CanTestIsIntegerType (WithCurrentPrec t p))
 
 runWithPrec :: Precision -> (forall n. (KnownNat n) => WithCurrentPrec t n) -> t
 runWithPrec p (wfp :: (forall n. (KnownNat n) => WithCurrentPrec t n)) = 

@@ -70,24 +70,28 @@ instance
 
 instance
   (CanPow b e, HasOrderCertainly b Integer, HasOrderCertainly e Integer,
-   HasEqCertainly b Integer, CanTestInteger e) 
+   HasEqCertainly b Integer, CanTestInteger e, CanTestIsIntegerType b, CanTestIsIntegerType e)
   =>
   CanPow (CSequence b) (CSequence e) 
   where
   type PowType (CSequence b) (CSequence e) = CSequence (PowType b e)
   pow = lift2 pow
+  type PPowType (CSequence b) (CSequence e) = CSequence (PPowType b e)
+  ppow = lift2 ppow
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |]]
   (\ e -> [d|
 
   instance 
-    (CanPow b $e, HasOrderCertainly b Integer, HasEqCertainly b Integer)
+    (CanPow b $e, HasOrderCertainly b Integer, HasEqCertainly b Integer, CanTestIsIntegerType b)
     =>
     CanPow (CSequence b) $e 
     where
     type PowType (CSequence b) $e = CSequence (PowType b $e)
     pow = lift1T pow
+    type PPowType (CSequence b) $e = CSequence (PPowType b $e)
+    ppow = lift1T ppow
 
   |]))
 
@@ -96,12 +100,14 @@ $(declForTypes
   (\ b -> [d|
 
   instance 
-    (CanPow $b e, HasOrderCertainly e Integer, CanTestInteger e)
+    (CanPow $b e, HasOrderCertainly e Integer, CanTestIsIntegerType e, CanTestInteger e)
     =>
     CanPow $b (CSequence e) 
     where
     type PowType $b (CSequence e) = CSequence (PowType $b e)
     pow = liftT1 pow
+    type PPowType $b (CSequence e) = CSequence (PPowType $b e)
+    ppow = liftT1 ppow
   |]))
 
 ---------------------------------------------------
