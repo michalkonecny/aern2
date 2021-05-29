@@ -110,7 +110,7 @@ minimumAboveN2 f box ac initialPrecision n =
     initialRange     = apply f boxp
     initialSearchBox = SearchBox boxp initialRange
     initialQueue     = Q.singleton initialSearchBox
-    dummyBox         = SearchBox (V.fromList [cn $ mpBall $ 10^!6]) initialRange -- TODO: hack...
+    dummyBox         = SearchBox (V.fromList [cn $ mpBall $ 10^6]) initialRange -- TODO: hack...
 
     aux q steps (SearchBox _lastBox rng) =  
         case Q.minView q of
@@ -204,7 +204,7 @@ minimumAboveN f box ac initialPrecision widthCutoff n =
     initialRange     = apply f boxp
     initialSearchBox = SearchBox boxp initialRange
     initialQueue     = Q.singleton initialSearchBox
-    dummyBox         = SearchBox (V.fromList [cn $ mpBall $ 10^!6]) initialRange -- TODO: hack...
+    dummyBox         = SearchBox (V.fromList [cn $ mpBall $ 10^6]) initialRange -- TODO: hack...
 
     aux q steps (SearchBox _lastBox rng) =  
         case Q.minView q of

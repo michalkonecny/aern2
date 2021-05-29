@@ -13,20 +13,21 @@
 module AERN2.BoxFunMinMax.Expressions.DeriveBounds where
 
 import MixedTypesNumPrelude
+import qualified Numeric.CollectErrors as CN
 
 import qualified Prelude as P
 
 import qualified Data.Set as Set
 import qualified Data.Map as Map
 import qualified Data.List as List
-import qualified Data.Bifunctor as Bifunctor
+-- import qualified Data.Bifunctor as Bifunctor
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
 import AERN2.BoxFunMinMax.Expressions.Type
 import AERN2.BoxFunMinMax.VarMap
 
-import Debug.Trace
+-- import Debug.Trace
 
 type VarName = String
 
@@ -34,22 +35,22 @@ deriveBounds :: F -> (VarMap, [VarName])
 deriveBounds form =
   let (derivedRanges, underivedRanges) = List.partition isGood varRanges
   in (map removeJust derivedRanges, map fst underivedRanges)
-    -- | allGood =
-    --     Right (map removeJust varRanges)
-    -- | otherwise = 
-    --     trace (show varRanges) $ Left errorMessage
+    ---- | allGood =
+    ----     Right (map removeJust varRanges)
+    ---- | otherwise = 
+    ----     trace (show varRanges) $ Left errorMessage
     where
-    allGood = and $ map isGood varRanges
+    -- allGood = and $ map isGood varRanges
     removeJust (v, (Just l, Just r)) = (v, (l, r))
     removeJust _ = error "deriveBounds: removeJust failed"
     varRanges = Map.toList box
     isGood (_v, (Just _,Just _)) = True
     isGood _ = False
-    errorMessage =
-        unlines $ map reportBadVar $ filter (not . isGood) varRanges
-        where
-        reportBadVar (v, _) =
-            "Failed to derive a bound for variable " ++ v ++ " in formula " ++ show form 
+    -- errorMessage =
+    --     unlines $ map reportBadVar $ filter (not . isGood) varRanges
+    --     where
+    --     reportBadVar (v, _) =
+    --         "Failed to derive a bound for variable " ++ v ++ " in formula " ++ show form 
     varSet = getFreeVarsF form
     initBox
         = Map.fromAscList $ zip (Set.toAscList varSet) (repeat (Nothing, Nothing))
@@ -121,7 +122,7 @@ scanHypothesis (FComp Le (EUnOp Abs (Var v)) e) intervals =
     Map.insertWith updateLower v bounds $ Map.insertWith updateUpper v bounds intervals
     where
     (eValL, eValR) = evalE_Rational intervals e
-    bounds         = (-eValL, eValR)
+    bounds         = (fmap negate eValL, eValR)
 -- reduce Le, Geq, Ge on equivalent Leq (note that we treat strict and non-strict the same way):
 -- Fixme: Some way to treat strict/non-strict with integer variables differently
 scanHypothesis (FComp Lt e1 e2) intervals = scanHypothesis (FComp Le e1 e2) intervals 
@@ -137,12 +138,12 @@ evalE_Rational intervals =
   intervalsMPBall = Map.map toMPBall intervals
   toMPBall :: (Maybe Rational, Maybe Rational) -> CN MPBall
   toMPBall (Just l, Just r) = cn $ (mpBallP p l) `hullMPBall` (mpBallP p r) 
-  toMPBall _ = noValueCN []
+  toMPBall _ = CN.noValueNumErrorCertain $ CN.NumError "no bounds"
   p = prec 100
   rationalBounds :: CN MPBall -> (Maybe Rational, Maybe Rational)
   rationalBounds cnBall =
-    case getMaybeValueCN cnBall of
-      Just ball -> 
+    case CN.toEither cnBall of
+      Right ball -> 
         let (l,r) = endpoints ball in
         (Just (rational l), Just (rational r)) 
       _ -> (Nothing, Nothing)
@@ -194,9 +195,9 @@ getFreeVarsE _ = Set.empty
 -- | compute the value of E with Vars at specified points
 -- | (a generalised version of computeE)
 evalE :: 
-  (Field v, EnsureCN v ~ v,
+  (Field v,
    CanMinMaxSameType v, CanAbsSameType v, 
-   CanPowCNBy v v, CanSqrtSameType v, CanSinCosSameType v,
+   CanPowBy v v, CanSqrtSameType v, CanSinCosSameType v,
    IsInterval v, CanAddThis v Integer, HasDyadics v, CanMinMaxSameType (IntervalEndpoint v)
   ) 
   =>
@@ -225,27 +226,27 @@ evalE fromR (varMap :: Map.Map VarName v) = evalVM
     case Map.lookup v varMap of
       Nothing -> 
         error ("evalE: varMap does not contain variable " ++ show v)
-      Just r -> cn r
+      Just r -> r
   evalVM (Lit i) = (fromR i)
   evalVM (PowI e i) = evalVM e  ^ i
   evalVM (Float32 _ e) = (onePlusMinusEpsilon * (evalVM e)) + zeroPlusMinusEpsilon
     where
       eps :: v
-      eps = convertExactly $ dyadic $ 1/!(2^!23)
+      eps = convertExactly $ dyadic $ 0.5^23
       onePlusMinusEpsilon :: v
       onePlusMinusEpsilon = fromEndpointsAsIntervals (1 + (-eps)) (1 + eps)
       epsD :: v
-      epsD = convertExactly $ dyadic $ 1/!(2^!149)
+      epsD = convertExactly $ dyadic $ 0.5^149
       zeroPlusMinusEpsilon :: v
       zeroPlusMinusEpsilon = fromEndpointsAsIntervals (-epsD) epsD
   evalVM (Float64 _ e) = (onePlusMinusEpsilon * (evalVM e)) + zeroPlusMinusEpsilon
     where
       eps :: v
-      eps = convertExactly $ dyadic $ 1/!(2^!52)
+      eps = convertExactly $ dyadic $ 0.5^52
       onePlusMinusEpsilon :: v
       onePlusMinusEpsilon = fromEndpointsAsIntervals  (1 + (-eps)) (1 + eps)
       epsD :: v
-      epsD = convertExactly $ dyadic $ 1/!(2^!1074)
+      epsD = convertExactly $ dyadic $ 0.5^1074
       zeroPlusMinusEpsilon :: v
       zeroPlusMinusEpsilon = fromEndpointsAsIntervals (-epsD) epsD
   evalVM e = error $ "evalE: undefined for: " ++ show e

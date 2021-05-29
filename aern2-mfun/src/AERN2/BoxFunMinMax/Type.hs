@@ -1,7 +1,8 @@
 module AERN2.BoxFunMinMax.Type where
 
-import AERN2.MP.Ball
 import MixedTypesNumPrelude
+import qualified Numeric.CollectErrors as CN
+import AERN2.MP.Ball
 import AERN2.BoxFun.Type
 import AERN2.BoxFun.Optimisation
 import AERN2.BoxFunMinMax.Optimisation
@@ -75,7 +76,7 @@ checkECNF cnf vMapInit p =
           case filterOutFalseEsUsingApply of
             []  -> (Just False, Just (toSearchBox vMap (maximum (map snd esWithRanges))))
             -- [(i,e)] -> 
-            --   case globalMinimumAboveN f' ac p (cn (mpBallP p (1 /! 10000000))) (cn (mpBallP p 0.0)) of
+            --   case globalMinimumAboveN f' ac p (cn (mpBallP p (1 / 10000000))) (cn (mpBallP p 0.0)) of
             --     r@(Just True, _) -> trace (vMapToJSON (i+4) vMap j) r
             --     o -> o
             --     where
@@ -126,7 +127,7 @@ checkECNF cnf vMapInit p =
           case filterOutFalseEsUsingApply of
             []  -> (Just False, Just (toSearchBox vMap (maximum (map snd esWithRanges))))
             -- [(i,e)] -> 
-            --   case globalMinimumAboveN f' ac p (cn (mpBallP p (1 /! 10000000))) (cn (mpBallP p 0.0)) of
+            --   case globalMinimumAboveN f' ac p (cn (mpBallP p (1 / 10000000))) (cn (mpBallP p 0.0)) of
             --     r@(Just True, _) -> trace (vMapToJSON (i+4) vMap j) r
             --     o -> o
             --     where
@@ -388,7 +389,7 @@ checkECNFSimplex (disjunction : disjunctions) varMap maxWidthCutoff relativeImpr
     r@(Just False, _)              -> r
     (Nothing, Just indeterminateArea) ->
       let
-        areaToSearch = intersectVarMap varMap $ increaseRadius indeterminateArea ((maxWidth indeterminateArea) /! 10.0) --TODO: Parameterise
+        areaToSearch = intersectVarMap varMap $ increaseRadius indeterminateArea ((maxWidth indeterminateArea) / 10.0) --TODO: Parameterise
                                                                                                                         --TODO: Could be better to increase the radius of each variable seperately
         
         checkIndeterminateArea areaToCheck = decideDisjunctionWithSimplex (map (\e -> (e, expressionToBoxFun e areaToCheck p)) disjunction) areaToCheck (maxWidth areaToCheck) relativeImprovementCutoff p
@@ -633,7 +634,7 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth dept
 
       checkSimplex
         -- If we can calculate all derivatives
-        | and (concatMap (\ (_, _, c) -> V.toList (V.map (not . hasErrorCN) c)) cornerRangesWithDerivatives) = 
+        | and (concatMap (\ (_, _, c) -> V.toList (V.map (not . CN.hasError) c)) cornerRangesWithDerivatives) = 
           case decideWithSimplex cornerRangesWithDerivatives varMap of
             r@(Just True, _) -> trace "proved true with simplex" r
             (Nothing, Just newVarMap) -> 
@@ -701,7 +702,7 @@ decideDisjunctionWithSimplex expressionsWithFunctions varMap maxWidthCutoff rela
           (Just True, Nothing)
         else 
           -- Only call decideWithSimplex if all derivatives can be calculated
-          if and (concatMap (\(_, _, c) -> V.toList (V.map (not . hasErrorCN) c)) cornerRangesWithDerivatives)
+          if and (concatMap (\(_, _, c) -> V.toList (V.map (not . CN.hasError) c)) cornerRangesWithDerivatives)
             then 
               case decideWithSimplex cornerRangesWithDerivatives varMap of
                 r@(Just True, _) -> 
@@ -874,10 +875,10 @@ encloseFunctionCounterExamples ((leftCornerValue, rightCornerValue, derivatives)
     -- S.LEQ (zip [1..] lowerDerivatives) (foldl add (-rightU - lowerSubst - eps) lowerDerivativesTimesRightCorner)
   : encloseFunctionCounterExamples values leftCorner rightCorner substVars
   where
-    eps = 1/!100000000000000000000000000000
+    eps = 1/100000000000000000000000000000
 
     mpBallToRational :: CN MPBall -> (Rational, Rational)
-    mpBallToRational = bimap (rational . (~!)) (rational . (~!)) . endpoints . reducePrecionIfInaccurate . (~!)
+    mpBallToRational = bimap rational rational . endpoints . reducePrecionIfInaccurate . unCN
       -- bimap (endpoints . reducePrecionIfInaccurate)
 
     -- Get the lower and upper bounds of the function applied at the bottom left corner of the box
@@ -972,7 +973,7 @@ createFunctionConstraints ((leftCornerValue, rightCornerValue, derivatives) : va
   )
   where
     mpBallToRational :: CN MPBall -> (Rational, Rational)
-    mpBallToRational = bimap (rational . (~!)) (rational . (~!)) . endpoints . reducePrecionIfInaccurate . (~!)
+    mpBallToRational = bimap rational rational . endpoints . reducePrecionIfInaccurate . unCN
       -- bimap (endpoints . reducePrecionIfInaccurate)
 
     -- Get the lower and upper bounds of the function applied at the bottom left corner of the box

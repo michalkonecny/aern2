@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           aern2-mfun
-version:        0.2.5.0
+version:        0.2.6.0
 synopsis:       Multi-variate real function optimisation and proving
 description:    Please see the README on GitHub at <https://github.com/michalkonecny/aern2/#readme>
 category:       Math
@@ -16,9 +16,6 @@ maintainer:     mikkonecny@gmail.com
 copyright:      2019-2021 Eike Neumann, Junaid Rasheed
 license:        BSD3
 build-type:     Simple
-extra-source-files:
-    README.md
-    changelog.md
 
 source-repository head
   type: git
@@ -30,12 +27,10 @@ library
       AERN2.AD.GenericOperations
       AERN2.AD.MPBallOperations
       AERN2.AD.Type
-      AERN2.Benchmark.OptimisationBenchmark
       AERN2.BoxFun.Box
       AERN2.BoxFun.Optimisation
       AERN2.BoxFun.TestFunctions
       AERN2.BoxFun.Type
-      AERN2.BoxFunMinMax.Benchmark.Heron
       AERN2.BoxFunMinMax.Expressions.DeriveBounds
       AERN2.BoxFunMinMax.Expressions.EliminateFloats
       AERN2.BoxFunMinMax.Expressions.Eliminator
@@ -59,7 +54,6 @@ library
       Paths_aern2_mfun
   hs-source-dirs:
       src
-      examples
   default-extensions:
       RebindableSyntax,
       ScopedTypeVariables,
@@ -81,22 +75,21 @@ library
     , base ==4.*
     , collect-errors >=0.1.5
     , containers
+    , ghc
     , integer-logarithms
-    , mixed-types-num >=0.5.5
+    , mixed-types-num >=0.5.7
     , parallel
     , process
     , psqueues
+    , scientific
     , simplex-haskell
     , vector
   default-language: Haskell2010
 
-test-suite aern2-real-test
-  type: exitcode-stdio-1.0
-  main-is: Spec.hs
+executable aern2-mfun-benchmark-heron
+  main-is: bench/Heron.hs
   other-modules:
       Paths_aern2_mfun
-  hs-source-dirs:
-      test
   default-extensions:
       RebindableSyntax,
       ScopedTypeVariables,
@@ -113,16 +106,56 @@ test-suite aern2-real-test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:
       aern2-fun >=0.2.5
+    , aern2-mfun
     , aern2-mp >=0.2.5
-    , aern2-real
+    , aern2-real >=0.2.5
     , base ==4.*
     , collect-errors >=0.1.5
     , containers
+    , ghc
     , integer-logarithms
-    , mixed-types-num >=0.5.5
+    , mixed-types-num >=0.5.7
     , parallel
     , process
     , psqueues
+    , scientific
+    , simplex-haskell
+    , vector
+  default-language: Haskell2010
+
+executable aern2-mfun-benchmark-optimisation
+  main-is: bench/OptimisationBenchmark.hs
+  other-modules:
+      Paths_aern2_mfun
+  default-extensions:
+      RebindableSyntax,
+      ScopedTypeVariables,
+      TypeFamilies,
+      TypeOperators,
+      ConstraintKinds,
+      DefaultSignatures,
+      MultiParamTypeClasses,
+      FlexibleContexts,
+      FlexibleInstances,
+      UndecidableInstances
+  other-extensions:
+      TemplateHaskell
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
+  build-depends:
+      aern2-fun >=0.2.5
+    , aern2-mfun
+    , aern2-mp >=0.2.5
+    , aern2-real >=0.2.5
+    , base ==4.*
+    , collect-errors >=0.1.5
+    , containers
+    , ghc
+    , integer-logarithms
+    , mixed-types-num >=0.5.7
+    , parallel
+    , process
+    , psqueues
+    , scientific
     , simplex-haskell
     , vector
   default-language: Haskell2010

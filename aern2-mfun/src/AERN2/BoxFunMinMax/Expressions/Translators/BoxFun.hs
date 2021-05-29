@@ -53,7 +53,7 @@ expressionToBoxFun e domain p =
       case elemIndex e variableOrder of
         Nothing -> error $ "Variable: " ++ show e ++ " not found in varMap: " ++ show domain ++ " when translating expression: " ++ show e 
         Just i -> v V.! (fromIntegral i)
-    expressionToDifferential (PowI e i) v = expressionToDifferential e v ^! i
+    expressionToDifferential (PowI e i) v = expressionToDifferential e v ^ i
     expressionToDifferential (Float32 _ e) v = expressionToDifferential e v
     expressionToDifferential (Float64 _ e) v = expressionToDifferential e v
 

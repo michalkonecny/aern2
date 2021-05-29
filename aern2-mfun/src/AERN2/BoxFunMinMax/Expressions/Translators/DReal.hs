@@ -81,4 +81,4 @@ runDRealTranslatorCNF cnf = do
       num <- getLine
       putStr (message ++ " denominator? ")
       den <- getLine
-      return ((read num :: Integer) /! (read den :: Integer))
+      return ((read num :: Integer) / (read den :: Integer))

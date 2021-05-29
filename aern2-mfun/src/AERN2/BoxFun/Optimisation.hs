@@ -2,6 +2,7 @@ module AERN2.BoxFun.Optimisation where
 
 import qualified Prelude as Prelude
 import MixedTypesNumPrelude
+import qualified Numeric.CollectErrors as CN
 import AERN2.MP.Dyadic
 import AERN2.MP.Ball
 -- import AERN2.MP.Float
@@ -9,9 +10,9 @@ import AERN2.BoxFun.Box (Box)
 import qualified AERN2.BoxFun.Box as Box
 import AERN2.BoxFun.Type
 -- import AERN2.AD.Differential ()
-import Data.Maybe
+import AERN2.Kleenean
 
-import AERN2.Linear.Vector.Type (Vector, (!))
+-- import AERN2.Linear.Vector.Type ((!))
 import AERN2.Linear.Vector.Type as V
 import AERN2.Linear.Matrix.Type
 import AERN2.Linear.Matrix.Inverse
@@ -57,11 +58,11 @@ instance Prelude.Eq SearchBox where
 
 instance Prelude.Ord SearchBox where
     (<=) (SearchBox _ min0) (SearchBox _ min1) = 
-        case (fst $ ensureNoCN $ (lowerBound min0 :: CN MPBall), fst $ ensureNoCN $ (lowerBound min1 :: CN MPBall)) of
-            (Nothing, Nothing) -> True
-            (Nothing, Just _ ) -> True
-            (Just _ , Nothing) -> False
-            (Just m0, Just m1) -> 
+        case (CN.toEither $ (lowerBound min0 :: CN MPBall), CN.toEither $ (lowerBound min1 :: CN MPBall)) of
+            (Left _, Left _) -> True
+            (Left _, Right _ ) -> True
+            (Right _ , Left _) -> False
+            (Right m0, Right m1) -> 
                 centre m0 - (dyadic $ radius m0) <= centre m1 - (dyadic $ radius m1) -- TODO: radius should be 0
 
 ---
@@ -104,7 +105,7 @@ bestLocalMinimumWithCutoff f box ac initialCutoff initialPrecision =
     initialRange     = apply f boxp
     initialSearchBox = SearchBox boxp initialRange
     initialQueue     = Q.singleton initialSearchBox
-    dummyBox         = SearchBox (V.fromList [cn $ mpBall $ 10^!6]) initialRange -- TODO: hack...
+    dummyBox         = SearchBox (V.fromList [cn $ mpBall $ 10^6]) initialRange -- TODO: hack...
 
     aux q cutoff steps (SearchBox _lastBox rng) =  
         case Q.minView q of
@@ -246,20 +247,20 @@ split f dfb cutoff bxe =
     diff    = bxe - centre bxe
     dir i   = (fmap dyadic) $ (fmap radius) $ (dfb ! i) * (diff ! i) :: CN Dyadic
     dirs    = V.map dir $ V.enumFromTo 0 (V.length bxe - 1)
-    dirsDefined = V.foldl' (&&) True $ V.map (isJust . fst . ensureNoCN) dirs
+    dirsDefined = V.foldl' (&&) True $ V.map (not . CN.hasError) dirs
     aux k j d = 
         if k == V.length bxe then 
             j 
         else 
             let
-                d' = (~!) $ dirs ! k
+                d' = unCN $ dirs ! k
             in
             if d' > d then 
                 aux (k + 1) k d'
             else
                 aux (k + 1) j d
     splittingIndex = 
-        if dirsDefined then (aux 1 0 ((~!) $ dirs ! 0)) else Box.widestDirection bxe
+        if dirsDefined then (aux 1 0 (unCN $ dirs ! 0)) else Box.widestDirection bxe
     (a , b)    = Box.bisect splittingIndex bxe
     (fa, dfa') = valueGradient f a
     (fb, dfb') = valueGradient f b
@@ -285,7 +286,7 @@ split f dfb cutoff bxe =
 maxBoxFunGreaterThanN :: BoxFun -> BoxFun -> CN Rational -> Precision -> Bool
 maxBoxFunGreaterThanN f g n initialPrecision =
     case Box.getEndpoints fbox == Box.getEndpoints gbox of
-        Just True ->
+        CertainTrue ->
             checkMaxAboveN f g ||
                 (Box.width fboxp !>! cutoff && Box.width gboxp !>! cutoff) &&
                     let

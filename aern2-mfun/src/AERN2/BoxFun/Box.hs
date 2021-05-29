@@ -1,27 +1,29 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 module AERN2.BoxFun.Box where
 
 import qualified Prelude as Prelude
 import MixedTypesNumPrelude
+-- import AERN2.Kleenean
 import AERN2.MP.Dyadic
 import AERN2.MP.Ball
 import AERN2.Linear.Vector.Type (Vector, (!))
 import qualified AERN2.Linear.Vector.Type as V
-import AERN2.MP.Float
-import Data.Maybe
-import Debug.Trace
-import AERN2.MP.Enclosure
+-- import AERN2.MP.Float
+-- import Data.Maybe
+-- import Debug.Trace
+-- import AERN2.MP.Enclosure
 
 import AERN2.Util.Util
 
 type Box = Vector (CN MPBall)
 
-instance HasEqAsymmetric Box Box where
-    type EqCompareType Box Box = Maybe (CN Bool)
-    equalTo box0 box1 = 
-        V.foldl' (&&) (Just $ cn True) $ V.zipWith equalTo box0 box1
+-- instance HasEqAsymmetric Box Box where
+--     type EqCompareType Box Box = (CN Kleenean)
+--     equalTo box0 box1 = 
+--         V.foldl' (&&) (cn CertainTrue) $ V.zipWith equalTo box0 box1
 
-intersection :: Box -> Box -> Maybe Box
-intersection = undefined
+-- intersection :: Box -> Box -> Maybe Box
+-- intersection = undefined
 
 intersectionCertainlyEmpty :: Box -> Box -> Bool
 intersectionCertainlyEmpty vx vy =
@@ -43,15 +45,15 @@ instance IsBall Box where
 
 inftyNorm :: Box -> CN MPBall
 inftyNorm box = 
-    V.foldl' (\n x -> max n (abs x)) (cn mpBall 0) box
+    V.foldl' (\n x -> max n (abs x)) (cn $ mpBall 0) box
 
 ellOneNorm :: Box -> CN MPBall
 ellOneNorm box = 
-    V.foldl' (\n x -> n + (abs x)) (cn mpBall 0) box
+    V.foldl' (\n x -> n + (abs x)) (cn $ mpBall 0) box
 
 width :: Box -> CN MPBall
 width box = 
-    V.foldl' (\n x -> max n (2 * ((fmap mpBall) $ (fmap radius) x) ) ) (cn mpBall 0) box
+    V.foldl' (\n x -> max n (2 * ((fmap mpBall) $ (fmap radius) x) ) ) (cn $ mpBall 0) box
 
 widestDirection :: Box -> Integer
 widestDirection box =
@@ -64,7 +66,7 @@ widestDirection box =
             let 
                 x    = box ! k
                 lth' = 
-                    (~!) $ 2 * ((fmap dyadic) $ (fmap radius) x) -- TODO: unsafe
+                    2 * (dyadic $ radius $ unCN x) -- TODO: unsafe
             in
                 if (lth' > lth) then 
                     aux (k - 1) k lth'
@@ -74,19 +76,19 @@ widestDirection box =
 
 bisect :: Integer -> Box -> (Box, Box)
 bisect k box =
-    if exponent > 0
-    && ((~!) $ abs $ mc - lbc) < (dyadic 0.5)^!exponent then
+    if exponent_ > 0
+    && (abs $ mc - lbc) < (dyadic 0.5)^exponent_ then
         (setPrecision (increasePrecision p) lb, setPrecision (increasePrecision p) rb)
     else 
         (lb, rb)
     where
-    exponent      = integer p - ilog
+    exponent_      = integer p - ilog
     NormBits ilog = 2 + (getNormLog $  mpBall $ 1 + abs lbc )
-    lbc = (centre $ (~!) $ lb ! k)
-    rbc = (centre $ (~!) $ rb ! k)
-    mc  = (centre $ (~!) m)
-    increasePrecision p =
-        p + (prec $ (integer p) `Prelude.div` 2)
+    lbc = unCN (centre $ lb ! k)
+    -- rbc = unCN (centre $ rb ! k)
+    mc  = unCN (centre $ m)
+    increasePrecision p1 =
+        p1 + (prec $ (integer p1) `Prelude.div` 2)
     lb = setPrecision p leftBox
     rb = setPrecision p rightBox
     p   = getPrecision box
@@ -115,7 +117,7 @@ getEndpoints :: Box -> [(MPBall, MPBall)]
 getEndpoints b  = 
     case V.length b of
         0 -> []
-        _ -> endpointsAsIntervals ((b ! 0) ~!) : getEndpoints (V.drop (fromIntegral 1) b)
+        _ -> endpointsAsIntervals (unCN (b ! 0)) : getEndpoints (V.drop (int 1) b)
 
 lowerBounds :: Box -> Box
 lowerBounds = V.map lowerBound

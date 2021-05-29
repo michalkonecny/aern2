@@ -1,18 +1,18 @@
 module AERN2.BoxFun.Type where
 
-import qualified Prelude as P
+import MixedTypesNumPrelude
+-- import qualified Prelude as P
 
 
 import AERN2.Linear.Vector.Type (Vector, (!))
 import qualified AERN2.Linear.Vector.Type as V
 import AERN2.MP.Ball
-import MixedTypesNumPrelude
 import AERN2.AD.Differential
 import qualified AERN2.Linear.Matrix.Type as M
 import AERN2.Util.Util
 import AERN2.BoxFun.Box
 
-import Debug.Trace
+-- import Debug.Trace
 
 data BoxFun =
     BoxFun
@@ -23,7 +23,7 @@ data BoxFun =
     }
 
 instance Show BoxFun where
-    show (BoxFun d f b) = show d ++ " dimensional BoxFun, domain: " ++ show b
+    show (BoxFun d _f b) = show d ++ " dimensional BoxFun, domain: " ++ show b
 
 boundaryRestrictions :: BoxFun -> [BoxFun]
 boundaryRestrictions (BoxFun d ev dom) =
@@ -59,9 +59,9 @@ valueGradientHessian (BoxFun d e _) v =
     triangle =  
         V.map (\i-> V.map (\j -> vgh i j) $ V.enumFromTo 0 i) $ V.enumFromTo 0 (d - 1)
 
-    value = x $ (triangle ! 0) ! 0
-    grad  = V.map (\i -> dx $ (triangle ! i) ! 0) $ V.enumFromTo 0 (d - 1)
-    hess  = M.create d d (\i j -> d2x $ if i > j then (triangle ! i) ! j else (triangle ! j) ! i)
+    value = diff_x $ (triangle ! 0) ! 0
+    grad  = V.map (\i -> diff_dx $ (triangle ! i) ! 0) $ V.enumFromTo 0 (d - 1)
+    hess  = M.create d d (\i j -> diff_d2x $ if i > j then (triangle ! i) ! j else (triangle ! j) ! i)
 
     w i j = V.imap (\k x -> OrderTwo x (delta i k) (delta j k) (pure $ mpBall 0)) v
     delta :: Integer -> Integer -> CN MPBall
@@ -77,21 +77,21 @@ valueGradient (BoxFun d e _) v =
         let
             etk = e (tangent k)
         in 
-            (x etk, dx etk)
+            (diff_x etk, diff_dx etk)
     aux k ret val =
         if k < 0 then
             (val, V.fromList ret)
         else 
             let
-                (val,g) = valgrad k
+                (val2,g) = valgrad k
             in
-            aux (k - 1) (g : ret) val
+            aux (k - 1) (g : ret) val2
     delta :: Integer -> Integer -> CN MPBall
     delta i k = if i == k then (cn $ mpBall 1) else (cn $ mpBall 0)
 
 apply :: BoxFun -> Vector (CN MPBall) -> CN MPBall
-apply (BoxFun d e _) v = 
-    x (e v')
+apply (BoxFun _d e _) v = 
+    diff_x (e v')
     where
     v' = V.map (\x -> differential 0 x) v
 
@@ -114,7 +114,7 @@ gradient (BoxFun d e _) v =
     tangent k = 
         V.imap (\i x -> OrderOne x (delta i k)) v
     grad k =
-        dx $ e (tangent k)
+        diff_dx $ e (tangent k)
     aux k ret =
         if k < 0 then
             V.fromList ret
@@ -127,7 +127,7 @@ hessian :: BoxFun -> Vector (CN MPBall) -> M.Matrix (CN MPBall)
 hessian (BoxFun d e _) v = 
     M.create d d a
     where
-    a i j = d2x $ e (w i j)
+    a i j = diff_d2x $ e (w i j)
     w i j = V.imap (\k x -> OrderTwo x (delta i k) (delta j k) (pure $ mpBall 0)) v
     delta :: Integer -> Integer -> CN MPBall
     delta i k = if i == k then (cn $ mpBall 1) else (cn $ mpBall 0)
@@ -138,7 +138,7 @@ jacobian fs v =
     where
     highestDiminseionInFs = maximum (map dimension fs)
 
-    a i j = dx $ bf_eval (fs!!i) (w j)
+    a i j = diff_dx $ bf_eval (fs!!i) (w j)
     w j = V.imap (\k x -> OrderOne x (delta j k)) v
     delta :: Integer -> Integer -> CN MPBall
     delta i k = if i == k then (cn $ mpBall 1) else (cn $ mpBall 0)

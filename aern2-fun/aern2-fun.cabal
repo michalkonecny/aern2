@@ -33,7 +33,6 @@ library
       Paths_aern2_fun
   hs-source-dirs:
       src
-      examples
   default-extensions:
       RebindableSyntax,
       ScopedTypeVariables,
