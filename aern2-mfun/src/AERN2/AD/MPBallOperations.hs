@@ -1,8 +1,9 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 module AERN2.AD.MPBallOperations where
 
 import MixedTypesNumPrelude
 
-import AERN2.AD.Type hiding (x,dx,dxt,d2x)
+import AERN2.AD.Type
 import AERN2.AD.GenericOperations ()
 import AERN2.MP.Ball
 
@@ -117,33 +118,25 @@ instance
 instance 
     CanDiv Integer (Differential (CN MPBall))
     where
-    type DivTypeNoCN Integer (Differential (CN MPBall)) = Differential (CN MPBall)
     type DivType     Integer (Differential (CN MPBall)) = Differential (CN MPBall)
-    divideNoCN a b = divideNoCN (differential (order b) (cn $ mpBall a)) b
     divide     a b = divide     (differential (order b) (cn $ mpBall a)) b
     
 instance 
     CanDiv (Differential (CN MPBall)) Integer
     where
-    type DivTypeNoCN (Differential (CN MPBall)) Integer = Differential (CN MPBall)
     type DivType     (Differential (CN MPBall)) Integer = Differential (CN MPBall)
-    divideNoCN b a = divideNoCN b (differential (order b) (cn $ mpBall a))
     divide     b a = divide     b (differential (order b) (cn $ mpBall a))        
 
 instance 
     CanDiv MPBall (Differential (CN MPBall))
     where
-    type DivTypeNoCN MPBall (Differential (CN MPBall)) = Differential (CN MPBall)
     type DivType     MPBall (Differential (CN MPBall)) = Differential (CN MPBall)
-    divideNoCN a b = divideNoCN (differential (order b) (cn a)) b
     divide     a b = divide     (differential (order b) (cn a)) b
     
 instance 
     CanDiv (Differential (CN MPBall)) MPBall
     where
-    type DivTypeNoCN (Differential (CN MPBall)) MPBall = Differential (CN MPBall)
     type DivType     (Differential (CN MPBall)) MPBall = Differential (CN MPBall)
-    divideNoCN b a = divideNoCN b (differential (order b) (cn a))
     divide     b a = divide     b (differential (order b) (cn a))        
 
 instance 
@@ -164,27 +157,21 @@ instance
     (CanBeMPBall a) =>
     CanDiv (CN a) (Differential (CN MPBall))
     where
-    type DivTypeNoCN (CN a) (Differential (CN MPBall)) = Differential (CN MPBall)
     type DivType     (CN a) (Differential (CN MPBall)) = Differential (CN MPBall)
-    divideNoCN a b = divideNoCN (differential (order b) (fmap mpBall a)) b
     divide     a b = divide     (differential (order b) (fmap mpBall a)) b
 
 instance 
     (CanBeMPBall a) =>
     CanDiv (Differential (CN MPBall)) (CN a) 
     where
-    type DivTypeNoCN (Differential (CN MPBall)) (CN a) = Differential (CN MPBall)
     type DivType     (Differential (CN MPBall)) (CN a) = Differential (CN MPBall)
-    divideNoCN b a = divideNoCN b (differential (order b) (fmap mpBall a))
     divide     b a = divide     b (differential (order b) (fmap mpBall a))
 
 
 instance 
     CanPow (Differential (CN MPBall)) Integer
     where
-        type PowTypeNoCN (Differential (CN MPBall)) Integer = (Differential (CN MPBall))
         type PowType     (Differential (CN MPBall)) Integer = (Differential (CN MPBall))
-        powNoCN = pow
         pow (OrderZero x) n =
             OrderZero p
             where

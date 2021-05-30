@@ -2,16 +2,17 @@ module AERN2.Linear.Matrix.Type where
 
 import qualified Prelude as P
 import MixedTypesNumPrelude
+import qualified Numeric.CollectErrors as CN
 import AERN2.Linear.Vector.Type (Vector, (!))
 import qualified AERN2.Linear.Vector.Type as V
 import qualified Data.List as List
-import Data.Maybe
+-- import Data.Maybe
 
-import Debug.Trace
+-- import Debug.Trace
 
 import AERN2.MP.Ball
-import AERN2.MP.Float
-import AERN2.MP.Dyadic
+-- import AERN2.MP.Float
+-- import AERN2.MP.Dyadic
 
 data (Matrix a) = 
     Matrix
@@ -48,55 +49,21 @@ create :: Integer -> Integer -> (Integer -> Integer -> a) -> Matrix a
 create m n f =
     Matrix n $ V.map (\x -> f (i x) (j x)) $ V.enumFromTo 0 (m*n - 1)
     where
-    j x = (~!) $ x `mod` n
+    j x = x `mod` n
     i x = (x - j x) `P.div` n
 
 imap :: (Integer -> Integer -> a -> a) -> Matrix a -> Matrix a
 imap f (Matrix w ents) =
     Matrix w (V.imap g ents)
     where
-    j x = (~!) $ x `mod` w
+    j x = x `mod` w
     i x = (x - j x) `P.div` w
     g k x = f (i k) (j k) x
 
-intersection :: Matrix (CN MPBall) -> Matrix (CN MPBall) -> Matrix (CN MPBall)
-intersection (Matrix w0 v0) (Matrix w1 v1) =
-    Matrix w0 $ V.zipWith ballIntersection v0 v1
-    where
-    lowerBound x = 
-        ((fmap (mpBallP p)) $ (fmap centre) x) - ((fmap (mpBallP p)) $ (fmap dyadic) $ (fmap radius) x)
-        where
-        p = getPrecision x
-    
-    upperBound x = 
-        ((fmap (mpBallP p)) $ (fmap centre) x) + ((fmap (mpBallP p)) $ (fmap dyadic) $ (fmap radius) x)
-        where
-        p = getPrecision x
-    
-    mpFromBounds l r = 
-        case (fst ncnl, fst ncnr) of
-            (Nothing, Nothing) -> l -- TODO: safe?
-            (Nothing, Just _ ) -> l
-            (Just _, Nothing ) -> r
-            (Just  x, Just y ) -> pure (fromEndpointsAsIntervals x y)
-        where
-        ncnl = ensureNoCN l
-        ncnr = ensureNoCN r 
-    ballIntersection x y = 
-        case (fst $ ensureNoCN x, fst $ ensureNoCN y) of 
-            (Nothing, Nothing) -> x
-            (Just a , Nothing) -> pure a
-            (Nothing, Just b ) -> pure b
-            (Just _ , Just _ ) ->
-                setPrecision p $ mpFromBounds l r
-                where
-                p  = getPrecision x
-                lx = lowerBound x
-                rx = upperBound x
-                ly = lowerBound y
-                ry = upperBound y
-                l  = max lx ly 
-                r  = min rx ry
+instance CanIntersectAsymmetric (Matrix (CN MPBall)) (Matrix (CN MPBall)) where
+    type IntersectionType (Matrix (CN MPBall)) (Matrix (CN MPBall)) = Matrix (CN MPBall)
+    intersect (Matrix w0 v0) (Matrix _w1 v1) =
+        Matrix w0 $ V.zipWith intersect v0 v1
 
 inftyNorm :: (CanAddSameType a, CanSubSameType a, CanAbsSameType a, HasIntegers a, CanMinMaxSameType a) => Matrix a -> a
 inftyNorm (m :: Matrix a) = 
@@ -149,7 +116,7 @@ instance
     CanMulAsymmetric (Matrix a) (Vector a)
     where
     type MulType (Matrix a) (Vector a) = Vector a
-    mul m@(Matrix w e) v =
+    mul m@(Matrix _w _e) v =
         V.fromList [r * v| r <- rows m]
 
 instance 
@@ -163,3 +130,8 @@ instance
     where
     getPrecision m = 
         V.foldl' max (prec 2) $ V.map getPrecision (entries m)
+
+instance 
+    (CN.CanTestErrorsPresent a) => CN.CanTestErrorsPresent (Matrix a)
+    where
+    hasError m = V.foldl' (||) False $ V.map (CN.hasError) (entries m)

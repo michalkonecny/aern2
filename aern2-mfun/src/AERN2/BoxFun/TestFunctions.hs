@@ -4,7 +4,7 @@ import MixedTypesNumPrelude
 import AERN2.MP.Ball
 import qualified Data.List as List
 
-import AERN2.AD.Differential hiding (x)
+import AERN2.AD.Differential
 -- import AERN2.Util.Util
 import AERN2.BoxFun.Type
 import AERN2.Linear.Vector.Type ((!), Vector)
@@ -200,8 +200,8 @@ heron1p =
         let
             x = v!0
             y = v!1
-            p = getPrecision v
-            eps = 1/2^(23)
+            _p = getPrecision v
+            _eps = 1/2^(23)
         in
             (y - sqrt x)
      )
@@ -233,8 +233,8 @@ heron2p =
         let
             x = v!0
             y = v!1
-            p = getPrecision v
-            eps = 1/2^(23)
+            _p = getPrecision v
+            _eps = 1/2^(23)
         in
             (sqrt x - y)
     )
@@ -266,8 +266,8 @@ heron3p =
         let
             x = v!0
             y = v!1
-            p = getPrecision v
-            eps = 1/2^(23)
+            _p = getPrecision v
+            _eps = 1/2^(23)
         in
             ((y + x/y)/2 - sqrt x)
     )
@@ -297,9 +297,9 @@ heron3p2 =
         let
             x = v!0
             y = v!1
-            p = getPrecision v
-            eps = 1/2^(23)
-            i = 4
+            _p = getPrecision v
+            _eps = 1/2^(23)
+            _i = 4
         in
             ((y + x/y)/2 - sqrt x)
     )
@@ -315,7 +315,7 @@ heron3q2 =
             y = v!1
             p = getPrecision v
             eps = 1/2^(23)
-            i = 4
+            _i = 4
         in
             (- (sqrt x - (y+x/y)/2) + (mpBallP p 1/2)^(2^i) + (mpBallP p 6) * eps * (i-1))
     )
@@ -329,8 +329,8 @@ heron4p =
         let
             x = v!0
             y = v!1
-            p = getPrecision v
-            eps = 1/2^(23)
+            _p = getPrecision v
+            _eps = 1/2^(23)
         in
             (sqrt x - (y+x/y)/2)
     )
@@ -378,7 +378,7 @@ mxp1 =
     (\v ->
         let
             x = v!0
-            y = v!1
+            -- y = v!1
         in
             -x+1
 
@@ -392,7 +392,7 @@ xm1 =
     (\v ->
         let
             x = v!0
-            y = v!1
+            -- y = v!1
         in
             x-1
 
@@ -406,7 +406,7 @@ xe2p1 =
     (\v ->
         let
             x = v!0
-            y = v!1
+            -- y = v!1
         in
             x^2+1
     )
@@ -419,7 +419,7 @@ xe2m1 =
     (\v ->
         let
             x = v!0
-            y = v!1
+            -- y = v!1
         in
             x^2-1
     )

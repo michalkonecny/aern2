@@ -1,17 +1,17 @@
-name:                aern2-real
+name:                aern2-mfun
 version:             0.2.6.0
 github:              "michalkonecny/aern2"
 license:             BSD3
-author:              "Michal Konecny"
+author:              "Eike Neumann, Junaid Rasheed"
 maintainer:          "mikkonecny@gmail.com"
-copyright:           "2015-2021 Michal Konecny"
+copyright:           "2019-2021 Eike Neumann, Junaid Rasheed"
 
-extra-source-files:
-- README.md
-- changelog.md
+# extra-source-files:
+# - README.md
+# - changelog.md
 
 # Metadata used when publishing your package
-synopsis:            Real numbers as sequences of MPBalls
+synopsis:            Multi-variate real function optimisation and proving
 category:            Math
 
 # To avoid duplicated efforts in documentation and dealing with the
@@ -21,12 +21,24 @@ description:         Please see the README on GitHub at <https://github.com/mich
 
 dependencies:
 - base == 4.*
-- hspec
-- QuickCheck
+- parallel
+- process
+# - binary
+- containers
+- vector
+- psqueues
+- integer-logarithms
+# - hspec
+# - QuickCheck
 - collect-errors >= 0.1.5
 - mixed-types-num >= 0.5.7
-- integer-logarithms
-- aern2-mp >= 0.2.6
+- aern2-mp >= 0.2.5
+- aern2-real >= 0.2.5
+- aern2-fun >= 0.2.5
+- simplex-haskell
+- scientific
+# - smt2-parser
+- ghc
 
 default-extensions:
 - RebindableSyntax,
@@ -46,18 +58,37 @@ other-extensions:
 library:
   source-dirs: 
   - src
-  - examples
   ghc-options:
   - -Wall
 
-tests:
-  aern2-real-test:
-    main:                Spec.hs
-    source-dirs:         test
+executables:
+  aern2-mfun-benchmark-optimisation:
+    main: bench/OptimisationBenchmark.hs
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
     - -Wall
     dependencies:
-    - aern2-real
+    - aern2-mfun
+  aern2-mfun-benchmark-heron:
+    main: bench/Heron.hs
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    dependencies:
+    - aern2-mfun
+
+# tests:
+#   aern2-mfun-test:
+#     main:                Spec.hs
+#     source-dirs:         test
+#     ghc-options:
+#     - -threaded
+#     - -rtsopts
+#     - -with-rtsopts=-N
+#     - -Wall
+#     dependencies:
+#     - aern2-mfun

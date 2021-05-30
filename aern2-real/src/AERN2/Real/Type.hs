@@ -42,6 +42,9 @@ instance Show t => Show (CSequence t) where
     where
     p = cseqPrecisions !! cseqShowDefaultIndex
 
+instance (CanTestIsIntegerType t) => CanTestIsIntegerType (CSequence t) where
+  isIntegerType (CSequence s) = isIntegerType (head s)
+
 cseqShowDefaultIndex :: Integer
 cseqShowDefaultIndex = 7
 

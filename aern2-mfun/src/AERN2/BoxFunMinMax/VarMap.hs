@@ -9,7 +9,7 @@ import AERN2.BoxFun.Box (Box)
 import qualified AERN2.Linear.Vector.Type as V
 
 
-import Debug.Trace
+-- import Debug.Trace
 
 -- | An assosciation list mapping variable names to rational interval domains
 type VarMap = [(String, (Rational, Rational))]
@@ -30,7 +30,7 @@ increaseDiameter ((v, (l, r)) : vs) d = ((v, (l - d, r + d)) : vs)
 
 -- | Increase the radius of all variables in a varMap by the given rational
 increaseRadius :: VarMap -> Rational -> VarMap
-increaseRadius vm r = increaseDiameter vm (r/!2)
+increaseRadius vm r = increaseDiameter vm (r/2)
 
 -- | Bisect all elements in a given VarMap
 fullBisect :: VarMap -> [VarMap]
@@ -50,7 +50,7 @@ fullBisect vMap = case L.length vMap of
 bisectInterval :: (String, (Rational, Rational)) -> ((String, (Rational, Rational)), (String, (Rational, Rational)))
 bisectInterval vMap = bisectedVar
   where
-    varCentre = fst dom + (snd dom - fst dom) /! 2 where dom = snd vMap
+    varCentre = fst dom + (snd dom - fst dom) / 2 where dom = snd vMap
     bisectedVar = ((var, (fst dom, varCentre)), (var, (varCentre, snd dom)))
       where 
         var = fst vMap
@@ -90,11 +90,11 @@ toSearchBox :: VarMap -> CN MPBall -> SearchBox
 toSearchBox vMap = SearchBox (fromListDomain (map snd vMap))
 
 centre :: VarMap -> VarMap
-centre = map (\(x,(dL,dR)) -> (x, ((dR+dL)/!2,(dR+dL)/!2)))
+centre = map (\(x,(dL,dR)) -> (x, ((dR+dL)/2,(dR+dL)/2)))
 
 -- Precondition, box and varNames have same length
 fromBox :: Box -> [String] -> VarMap
-fromBox box varNames = zip varNames $ V.toList $ V.map (\i -> both (\x -> rational ((~!) x)) (endpoints i)) box
+fromBox box varNames = zip varNames $ V.toList $ V.map (\i -> both (\x -> rational (unCN x)) (endpoints i)) box
   where
     -- From https://hackage.haskell.org/package/extra-1.7.4/docs/src/Data.Tuple.Extra.html#both
     both :: (a -> b) -> (a, a) -> (b, b)

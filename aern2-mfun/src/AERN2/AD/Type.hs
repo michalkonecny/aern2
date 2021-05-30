@@ -4,9 +4,9 @@ import MixedTypesNumPrelude
 import AERN2.MP.Precision
 
 data Differential a =
-    OrderZero  {x :: a}
-    | OrderOne {x :: a, dx :: a}
-    | OrderTwo {x :: a, dx :: a, dxt :: a, d2x :: a}
+    OrderZero  {diff_x :: a}
+    | OrderOne {diff_x :: a, diff_dx :: a}
+    | OrderTwo {diff_x :: a, diff_dx :: a, diff_dxt :: a, diff_d2x :: a}
     deriving (Show)
 
 order :: Differential a -> Integer
@@ -33,13 +33,14 @@ instance Functor Differential where
 instance 
     (HasPrecision a) => (HasPrecision (Differential a))
     where
-    getPrecision a = getPrecision (x a) -- TODO: safe?
+    getPrecision a = getPrecision (diff_x a) -- TODO: safe?
 
 instance 
     (CanSetPrecision a) => (CanSetPrecision (Differential a))
     where
     setPrecision p = fmap (setPrecision p)
 
-setValue (OrderZero x)           v = OrderZero v
-setValue (OrderOne x dx)         v = OrderOne  v dx
-setValue (OrderTwo x dx dxt d2x) v = OrderTwo  v dx dxt d2x
+setValue :: Differential a -> a -> Differential a
+setValue (OrderZero _x)           v = OrderZero v
+setValue (OrderOne _x dx)         v = OrderOne  v dx
+setValue (OrderTwo _x dx dxt d2x) v = OrderTwo  v dx dxt d2x
