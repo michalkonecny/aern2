@@ -22,12 +22,12 @@ data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String | PowI E In
 data Comp = Gt | Ge | Lt | Le | Eq
   deriving (Show, P.Eq)
 
-data Conn = And | Or | Impl
+data Conn = And | Or | Impl | Equiv
   deriving (Show, P.Eq)
 
 -- | The F type is used to specify comparisons between E types
 -- and logical connectives between F types
-data F = FComp Comp E E | FConn Conn F F | FNot F
+data F = FComp Comp E E | FConn Conn F F | FNot F | FTrue | FFalse
   deriving (Show, P.Eq)
 
 -- | Translate F to a single expression (E)
@@ -43,14 +43,18 @@ fToE (FComp op e1 e2)   = case op of
   Gt ->
     EBinOp Sub e1 e2
   Eq -> fToE $ FConn And (FComp Ge e1 e2) (FComp Le e1 e2) -- f1 = f2 == f1 >= f2 /\ f1 <= f2
-fToE (FConn op e1 e2)   = case op of
+fToE (FConn op f1 f2)   = case op of
   And ->
-    EBinOp Min (fToE e1) (fToE e2)
+    EBinOp Min (fToE f1) (fToE f2)
   Or ->
-    EBinOp Max (fToE e1) (fToE e2)
+    EBinOp Max (fToE f1) (fToE f2)
   Impl -> 
-    EBinOp Max (EUnOp Negate (fToE e1)) (fToE e2) -- !f1 \/ f2 = max(!f1, f2)
+    EBinOp Max (EUnOp Negate (fToE f1)) (fToE f2) -- !f1 \/ f2 = max(!f1, f2)
+  Equiv -> fToE $ FComp Eq (fToE f1) (fToE f2)
 fToE (FNot f) = EUnOp Negate (fToE f)
+fToE FTrue    = error "fToE for FTrue undefined"  $ Lit 1.0
+fToE FFalse   = error "fToE for FFalse undefined" $ Lit $ -1.0
+
 
 fToECNF :: F -> [[E]]
 fToECNF (FComp op e1 e2)   = case op of
@@ -67,7 +71,10 @@ fToECNF (FConn op f1 f2)   = case op of
   And -> fToECNF f1 ++ fToECNF f2 -- [e1 /\ e2 /\ (e3 \/ e4)] ++ [p1 /\ (p2 \/ p3) /\ p4] = [e1 /\ e2 /\ (e3 \/ e4) /\ p1 /\ (p2 \/ p3) /\ p4]
   Or ->  [d1 ++ d2 | d1 <- fToECNF f1, d2 <- fToECNF f2] -- [e1 /\ e2 /\ (e3 \/ e4)] \/ [p1 /\ (p2 \/ p3) /\ p4] 
   Impl -> [d1 ++ d2 | d1 <- map (map (EUnOp Negate)) (fToECNF f1), d2 <- fToECNF f2]
+  Equiv -> fToECNF $ FComp Eq (fToE f1) (fToE f2)
 fToECNF (FNot f) = map (map (EUnOp Negate)) (fToECNF f)
+fToECNF FTrue    = error "fToECNF for FTrue undefined"  $ Lit 1.0
+fToECNF FFalse   = error "fToECNF for FFalse undefined" $ Lit $ -1.0
 
 -- | Add bounds for any Float expressions
 -- addRoundingBounds :: E -> [[E]]
@@ -100,14 +107,48 @@ simplifyE (EUnOp op e)             = EUnOp op (simplifyE e)
 simplifyE e                        = e
 
 simplifyF :: F -> F
+-- Simplify Or
 simplifyF f@(FConn Or (FComp Lt f1l f1r) (FComp Eq f2l f2r)) = if f1l P.== f2l P.&& f1r P.== f2r then FComp Le f1l f1r else f
 simplifyF (FConn Or (FComp Eq f1l f1r) (FComp Lt f2l f2r))   = simplifyF $ FConn Or (FComp Lt f2l f2r) (FComp Eq f1l f1r)
 simplifyF f@(FConn Or (FComp Gt f1l f1r) (FComp Eq f2l f2r)) = if f1l P.== f2l P.&& f1r P.== f2r then FComp Ge f1l f1r else f
 simplifyF (FConn Or (FComp Eq f1l f1r) (FComp Gt f2l f2r))   = simplifyF $ FConn Or (FComp Gt f2l f2r) (FComp Eq f1l f1r)
+
+-- Boolean Rules
+-- Equiv
+simplifyF (FConn Equiv FTrue FFalse)                         = FFalse
+simplifyF (FConn Equiv FFalse FTrue)                         = FFalse
+simplifyF (FConn Equiv FFalse FFalse)                        = FFalse
+simplifyF (FConn Equiv FTrue FTrue)                          = FTrue
+simplifyF (FConn Equiv f FTrue)                              = simplifyF f
+simplifyF (FConn Equiv FTrue f)                              = simplifyF f
+simplifyF (FConn Equiv f FFalse)                             = simplifyF $ FNot f
+simplifyF (FConn Equiv FFalse f)                             = simplifyF $ FNot f
+-- And
+simplifyF (FConn And _ FFalse)                               = FFalse
+simplifyF (FConn And FFalse _)                               = FFalse
+simplifyF (FConn And f FTrue)                                = f
+simplifyF (FConn And FTrue f)                                = f
+-- Or
+simplifyF (FConn Or _ FTrue)                                 = FTrue
+simplifyF (FConn Or FTrue _)                                 = FTrue
+simplifyF (FConn Or f FFalse)                                = f
+simplifyF (FConn Or FFalse f)                                = f
+-- Impl
+simplifyF (FConn Impl FFalse _)                              = FTrue
+simplifyF (FConn Impl _ FTrue)                               = FTrue
+simplifyF (FConn Impl f FFalse)                              = simplifyF (FNot f)
+simplifyF (FConn Impl FTrue f)                               = simplifyF f
+
+-- Eliminate double not
+simplifyF (FNot (FNot f))                                    = simplifyF f
+
 simplifyF (FConn op f1 f2)                                   = FConn op (simplifyF f1) (simplifyF f2)
 simplifyF (FComp op e1 e2)                                   = FComp op (simplifyE e1) (simplifyE e2)
-simplifyF (FNot (FNot f))                                    = simplifyF f
+simplifyF FTrue                                              = FTrue
+simplifyF FFalse                                             = FFalse
 simplifyF (FNot f)                                           = FNot (simplifyF f)
+-- simplifyF FTrue = error "FTrue was not eliminated"
+-- simplifyF FFalse = error "FFalse was not eliminated"
 
 simplifyECNF :: [[E]] -> [[E]]
 simplifyECNF = map (map simplifyE) 

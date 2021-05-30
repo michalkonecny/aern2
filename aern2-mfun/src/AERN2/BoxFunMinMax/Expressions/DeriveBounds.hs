@@ -179,6 +179,7 @@ getFreeVarsF (FConn _ f1 f2) =
   (getFreeVarsF f1) `Set.union` (getFreeVarsF f2)
 getFreeVarsF (FNot f) =
   getFreeVarsF f
+getFreeVarsF _ = Set.empty
 -- | extract all variables from an expression
 getFreeVarsE :: E -> Set.Set VarName
 getFreeVarsE (Var v) = 
