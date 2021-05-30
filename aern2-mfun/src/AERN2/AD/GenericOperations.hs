@@ -93,6 +93,25 @@ instance
             0 -> OrderZero (x a * x b)
 
 instance 
+    (CanMulSameType a, CanSubSameType a, CanAddSameType a, CanPowBy a a, HasIntegers a, CanLogSameType a, CanDivSameType a) =>
+    CanPow (Differential a) (Differential a)
+    where
+    type PowTypeNoCN    (Differential a) (Differential a) = (Differential a)
+    type PowType        (Differential a) (Differential a) = (Differential a)
+    pow a b =
+        case min (order a) (order b) of
+            -- 2 -> OrderTwo   (x a ^ x b) 
+            --                 ((x a ^ (x b - (convertExactly 1 :: a))) * (x b * dx a + x a * log (x a) * dx b)) 
+            --                 ((x a ^ (x b - (convertExactly 1 :: a))) * (x b * dxt a + x a * log (x a) * dxt b))
+            --                 (x a)
+                            
+            --                 where
+            --                     ta = convertExactly 2 :: a
+            1 -> OrderOne  (x a ^ x b) ((x a ^ (x b - (convertExactly 1 :: a))) * (x b * dx a + x a * log (x a) * dx b))
+            0 -> OrderZero (x a ^ x b)
+            _ -> undefined
+
+instance 
     (CanSubSameType a) =>
     CanSub (Differential a) (Differential a)
     where
@@ -120,7 +139,7 @@ instance
     sqrt (OrderTwo x dx dxt d2x)   = OrderTwo  (sqrt x) (dx * sqrtx') (dxt * sqrtx') 
                                                ((d2x * sqrtx') + (dx * dxt * sqrtx'')) where sqrtx'  = (convertExactly 1 :: a) / ((convertExactly 2 :: a) * sqrt x) 
                                                                                              sqrtx'' = (convertExactly (-1) :: a) / ((convertExactly 4 :: a) * x * sqrt x)  
-                                                                                             -- sqrtx'  == -1 / (2 * sqrt(x))
+                                                                                             -- sqrtx'  == 1 / (2 * sqrt(x))
                                                                                              -- sqrtx'' == -1 / (4 * x * sqrt(x)) == -1 / (4 * x^(3/2))
 
 -- instance

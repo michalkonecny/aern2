@@ -36,7 +36,7 @@ expressionToBoxFun e domain p =
       case op of
         Min -> undefined
         Max -> undefined
-        Pow -> undefined
+        Pow -> pow (expressionToDifferential e1 v) (expressionToDifferential e2 v)
         Add -> expressionToDifferential e1 v + expressionToDifferential e2 v
         Sub -> expressionToDifferential e1 v - expressionToDifferential e2 v
         Mul -> expressionToDifferential e1 v * expressionToDifferential e2 v
