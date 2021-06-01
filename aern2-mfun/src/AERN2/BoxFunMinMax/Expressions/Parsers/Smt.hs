@@ -97,12 +97,12 @@ termToF (LD.Application (LD.Variable operator) [op]) = -- Single param operators
     Just e ->
       case operator of
         "fp.isFinite32" ->
-          let maxFloat = (2.0 - (1/!(2^!23))) * (2^!127)
+          let maxFloat = (2.0 - (1/(2^23))) * (2^127)
               minFloat = negate maxFloat
           in
             Just $ FConn And (FComp Le (Lit minFloat) e)  (FComp Le e (Lit maxFloat))
         "fp.isFinite64" ->
-          let maxFloat = (2.0 - (1/!(2^!52))) * (2^!1023)
+          let maxFloat = (2.0 - (1/(2^52))) * (2^1023)
               minFloat = negate maxFloat
           in
             Just $ FConn And (FComp Le (Lit minFloat) e)  (FComp Le e (Lit maxFloat))
@@ -261,7 +261,7 @@ termToE (LD.Application (LD.Variable "fp") [LD.Variable sSign, LD.Variable sExpo
     -- The digit parameter denotes the current digit, should be equal to length of the first param at all times
     readBits :: String -> Integer -> Integer
     readBits [] _ = 0
-    readBits (bit : bits) digit = digitToInt bit * (2 ^! (digit - 1)) + readBits bits (digit - 1) 
+    readBits (bit : bits) digit = digitToInt bit * (2 ^ (digit - 1)) + readBits bits (digit - 1) 
     
     bitsToWord8 :: String -> [Word8]
     bitsToWord8 bits =
