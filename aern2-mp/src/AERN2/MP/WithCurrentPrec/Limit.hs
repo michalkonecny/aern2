@@ -26,6 +26,8 @@ import MixedTypesNumPrelude
 
 -- import qualified Numeric.CollectErrors as CN
 
+import GHC.TypeLits
+
 import AERN2.MP.Ball
 
 import AERN2.Limit
@@ -35,17 +37,17 @@ import AERN2.MP.WithCurrentPrec.Type
 instance 
     (HasLimits ix (CN MPBall -> CN MPBall)
     , LimitType ix (CN MPBall -> CN MPBall) ~ (CN MPBall -> CN MPBall)
-    ,HasCurrentPrecision p)
+    , KnownNat p)
     => 
-    HasLimits ix (WithCurrentPrec (CN MPBall) p) 
+    HasLimits ix (WithCurrentPrec p (CN MPBall)) 
     where
-    type LimitType ix (WithCurrentPrec (CN MPBall) p) = WithCurrentPrec (CN MPBall) p
-    limit (s :: ix -> (WithCurrentPrec (CN MPBall) p)) = 
+    type LimitType ix (WithCurrentPrec p (CN MPBall)) = WithCurrentPrec p (CN MPBall)
+    limit (s :: ix -> (WithCurrentPrec p (CN MPBall))) = 
         WithCurrentPrec $ limit (snop) $ sample
         where
         sample :: CN MPBall
         sample = setPrecision (getCurrentPrecision sampleP) (cn $ mpBall 0)
-        sampleP :: WithCurrentPrec MPBall p
+        sampleP :: WithCurrentPrec p MPBall
         sampleP = error "sampleP is not defined, it is only a type proxy"
         snop :: ix -> (CN MPBall -> CN MPBall)
         snop ix _sample = unWithCurrentPrec $ s ix

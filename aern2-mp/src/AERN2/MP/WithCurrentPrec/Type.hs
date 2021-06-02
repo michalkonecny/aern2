@@ -32,11 +32,15 @@ import GHC.TypeLits
 
 import AERN2.MP
 
-class HasCurrentPrecision p where
-    getCurrentPrecision :: proxy p -> Precision
+newtype WithCurrentPrec p t = WithCurrentPrec { unWithCurrentPrec :: t }
+    deriving (Show)
 
-instance KnownNat n => HasCurrentPrecision n where
-    getCurrentPrecision p = max (prec 2) . min maximumPrecision $ prec (natVal p)
+deriving instance (CanTakeErrors NumErrors t) => (CanTakeErrors NumErrors (WithCurrentPrec p t))
+deriving instance (CanTestIsIntegerType t) => (CanTestIsIntegerType (WithCurrentPrec p t))
+
+getCurrentPrecision :: (KnownNat p) => WithCurrentPrec p t -> Precision
+getCurrentPrecision (_ :: (WithCurrentPrec p t)) =
+    max (prec 2) . min maximumPrecision $ prec (natVal (undefined :: Proxy p))
 
 {-|
 
@@ -49,49 +53,42 @@ An existential type wrapper for convenient conversions, eg using aern2-real:
 > _r_x = creal $ WithAnyPrec _x
 
 -}
-newtype WithAnyPrec t = WithAnyPrec (forall p. (KnownNat p) => WithCurrentPrec t p)
+newtype WithAnyPrec t = WithAnyPrec (forall p. (KnownNat p) => WithCurrentPrec p t)
 
--- data PrecAdd10 (p :: *)
-
--- instance (HasCurrentPrecision p) => HasCurrentPrecision (PrecAdd10 p) where
---     isPrecision (_ :: proxy _) = 10 + isPrecision (undefined :: proxy p)
-
-newtype WithCurrentPrec t p = WithCurrentPrec { unWithCurrentPrec :: t }
-    deriving (Show)
-
-deriving instance (CanTakeErrors NumErrors t) => (CanTakeErrors NumErrors (WithCurrentPrec t p))
-deriving instance (CanTestIsIntegerType t) => (CanTestIsIntegerType (WithCurrentPrec t p))
-
-runWithPrec :: Precision -> (forall n. (KnownNat n) => WithCurrentPrec t n) -> t
-runWithPrec p (wfp :: (forall n. (KnownNat n) => WithCurrentPrec t n)) = 
+{-| 
+    Run a WithCurrentPrec computation with a specific precision.
+-}
+runWithPrec :: Precision -> (forall p. (KnownNat p) => WithCurrentPrec p t) -> t
+runWithPrec p (wfp :: (forall p. (KnownNat p) => WithCurrentPrec p t)) = 
     reifyNat (integer p) withNat
     where
-    withNat :: KnownNat n => Proxy n -> t
-    withNat (_ :: Proxy n) = 
-        unWithCurrentPrec (wfp :: WithCurrentPrec t n)
+    withNat :: KnownNat p => Proxy p -> t
+    withNat (_ :: Proxy p) = 
+        unWithCurrentPrec (wfp :: WithCurrentPrec p t)
 
-lift1 :: (t1 -> t2) -> (WithCurrentPrec t1 p) -> (WithCurrentPrec t2 p)
-lift1 f (WithCurrentPrec v1) = WithCurrentPrec (f v1)
-
-lift2 :: (p1 ~ p2) => (t1 -> t2 -> t3) -> (WithCurrentPrec t1 p1) -> (WithCurrentPrec t2 p2) -> (WithCurrentPrec t3 p1)
-lift2 f (WithCurrentPrec v1) (WithCurrentPrec v2) = WithCurrentPrec (f v1 v2)
-
-lift2P :: (p1 ~ p2) => (t1 -> t2 -> t3) -> (WithCurrentPrec t1 p1) -> (WithCurrentPrec t2 p2) -> t3
-lift2P f (WithCurrentPrec v1) (WithCurrentPrec v2) = f v1 v2
-
-lift1T :: (t1 -> t2 -> t3) -> (WithCurrentPrec t1 p1) -> t2 -> (WithCurrentPrec t3 p1)
-lift1T f (WithCurrentPrec v1) v2 = WithCurrentPrec (f v1 v2)
-
-lift1TP :: (t1 -> t2 -> t3) -> (WithCurrentPrec t1 p1) -> t2 -> t3
-lift1TP f (WithCurrentPrec v1) v2 = f v1 v2
-
-liftT1 :: (t1 -> t2 -> t3) -> t1 -> (WithCurrentPrec t2 p2) -> (WithCurrentPrec t3 p1)
-liftT1 f v1 (WithCurrentPrec v2) = WithCurrentPrec (f v1 v2)
-
-liftT1P :: (t1 -> t2 -> t3) -> t1 -> (WithCurrentPrec t2 p2) -> t3
-liftT1P f v1 (WithCurrentPrec v2) = f v1 v2
-
-mpBallCP :: (CanBeMPBallP t, KnownNat p) => t -> WithCurrentPrec (CN MPBall) p
+mpBallCP :: (CanBeMPBallP t, KnownNat p) => t -> WithCurrentPrec p (CN MPBall)
 mpBallCP v = r 
     where
     r = WithCurrentPrec $ cn $ mpBallP (getCurrentPrecision r) v
+
+lift1 :: (t1 -> t2) -> (WithCurrentPrec p t1) -> (WithCurrentPrec p t2)
+lift1 f (WithCurrentPrec v1) = WithCurrentPrec (f v1)
+
+lift2 :: (p1 ~ p2) => (t1 -> t2 -> t3) -> (WithCurrentPrec p1 t1) -> (WithCurrentPrec p2 t2) -> (WithCurrentPrec p1 t3)
+lift2 f (WithCurrentPrec v1) (WithCurrentPrec v2) = WithCurrentPrec (f v1 v2)
+
+lift2P :: (p1 ~ p2) => (t1 -> t2 -> t3) -> (WithCurrentPrec p1 t1) -> (WithCurrentPrec p2 t2) -> t3
+lift2P f (WithCurrentPrec v1) (WithCurrentPrec v2) = f v1 v2
+
+lift1T :: (t1 -> t2 -> t3) -> (WithCurrentPrec p1 t1) -> t2 -> (WithCurrentPrec p1 t3)
+lift1T f (WithCurrentPrec v1) v2 = WithCurrentPrec (f v1 v2)
+
+lift1TP :: (t1 -> t2 -> t3) -> (WithCurrentPrec p1 t1) -> t2 -> t3
+lift1TP f (WithCurrentPrec v1) v2 = f v1 v2
+
+liftT1 :: (t1 -> t2 -> t3) -> t1 -> (WithCurrentPrec p2 t2) -> (WithCurrentPrec p1 t3)
+liftT1 f v1 (WithCurrentPrec v2) = WithCurrentPrec (f v1 v2)
+
+liftT1P :: (t1 -> t2 -> t3) -> t1 -> (WithCurrentPrec p2 t2) -> t3
+liftT1P f v1 (WithCurrentPrec v2) = f v1 v2
+

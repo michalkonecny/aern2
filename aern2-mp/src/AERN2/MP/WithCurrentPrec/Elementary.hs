@@ -38,7 +38,7 @@ import AERN2.MP.WithCurrentPrec.Type
 
 import AERN2.MP.WithCurrentPrec.Field ()
 
-piCP :: (KnownNat p) => WithCurrentPrec (CN MPBall) p
+piCP :: (KnownNat p) => WithCurrentPrec p (CN MPBall)
 piCP = r 
     where
     r = WithCurrentPrec $ cn $ piBallP (getCurrentPrecision r)
@@ -46,41 +46,41 @@ piCP = r
 instance
     (CanSinCos t)
     =>
-    CanSinCos (WithCurrentPrec t p)
+    CanSinCos (WithCurrentPrec p t)
     where
-    type SinCosType (WithCurrentPrec t p) = WithCurrentPrec (SinCosType t) p
+    type SinCosType (WithCurrentPrec p t) = WithCurrentPrec p (SinCosType t)
     sin = lift1 sin
     cos = lift1 cos
 
 instance
     (CanSqrt t)
     =>
-    CanSqrt (WithCurrentPrec t p)
+    CanSqrt (WithCurrentPrec p t)
     where
-    type SqrtType (WithCurrentPrec t p) = WithCurrentPrec (SqrtType t) p
+    type SqrtType (WithCurrentPrec p t) = WithCurrentPrec p (SqrtType t)
     sqrt = lift1 sqrt
 
 instance
     (CanExp t)
     =>
-    CanExp (WithCurrentPrec t p)
+    CanExp (WithCurrentPrec p t)
     where
-    type ExpType (WithCurrentPrec t p) = WithCurrentPrec (ExpType t) p
+    type ExpType (WithCurrentPrec p t) = WithCurrentPrec p (ExpType t)
     exp = lift1 exp
 
 instance
     (CanLog t)
     =>
-    CanLog (WithCurrentPrec t p)
+    CanLog (WithCurrentPrec p t)
     where
-    type LogType (WithCurrentPrec t p) = WithCurrentPrec (LogType t) p
+    type LogType (WithCurrentPrec p t) = WithCurrentPrec p (LogType t)
     log = lift1 log
 
 instance
     (CanPow t1 t2, p1~p2)
     =>
-    (CanPow (WithCurrentPrec t1 p1) (WithCurrentPrec t2 p2)) where
-    type PowType (WithCurrentPrec t1 p1) (WithCurrentPrec t2 p2) = WithCurrentPrec (PowType t1 t2) p1
+    (CanPow (WithCurrentPrec p1 t1) (WithCurrentPrec p2 t2)) where
+    type PowType (WithCurrentPrec p1 t1) (WithCurrentPrec p2 t2) = WithCurrentPrec p1 (PowType t1 t2)
     pow = lift2 pow
 
 $(declForTypes
@@ -90,9 +90,9 @@ $(declForTypes
   instance 
     (CanPow b $e)
     =>
-    CanPow (WithCurrentPrec b p) $e 
+    CanPow (WithCurrentPrec p b) $e 
     where
-    type PowType (WithCurrentPrec b p) $e = WithCurrentPrec (PowType b $e) p
+    type PowType (WithCurrentPrec p b) $e = WithCurrentPrec p (PowType b $e)
     pow = lift1T pow
 
   |]))
@@ -104,9 +104,9 @@ $(declForTypes
   instance 
     (CanPow $b e, HasOrderCertainly e Integer, CanTestInteger e)
     =>
-    CanPow $b (WithCurrentPrec e p) 
+    CanPow $b (WithCurrentPrec p e) 
     where
-    type PowType $b (WithCurrentPrec e p) = WithCurrentPrec (PowType $b e) p
+    type PowType $b (WithCurrentPrec p e) = WithCurrentPrec p (PowType $b e)
     pow = liftT1 pow
   |]))
 

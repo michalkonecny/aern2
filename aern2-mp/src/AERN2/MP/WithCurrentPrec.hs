@@ -4,6 +4,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-|
     Module      :  AERN2.MP.WithCurrentPrec
     Description :  Type wrapper setting default precision
@@ -20,7 +21,7 @@
 -}
 module AERN2.MP.WithCurrentPrec
 (
-    WithCurrentPrec(..), runWithPrec, HasCurrentPrecision(..)
+    WithCurrentPrec(..), runWithPrec
     , WithAnyPrec(..)
     , mpBallCP
     , piCP
@@ -29,12 +30,18 @@ module AERN2.MP.WithCurrentPrec
 )
 where
 
--- import MixedTypesNumPrelude
+import MixedTypesNumPrelude
 -- import qualified Prelude as P
 -- import Text.Printf
+
+import GHC.TypeNats
 
 import AERN2.MP.WithCurrentPrec.Type
 import AERN2.MP.WithCurrentPrec.Comparisons ()
 import AERN2.MP.WithCurrentPrec.Field ()
 import AERN2.MP.WithCurrentPrec.Elementary (piCP)
 import AERN2.MP.WithCurrentPrec.PreludeInstances ()
+
+import AERN2.MP.Ball
+
+-- instance (KnownNat p) => Field (WithCurrentPrec p (CN MPBall))

@@ -27,6 +27,8 @@ import Prelude
 
 import Numeric.CollectErrors (cn, CN)
 
+import GHC.TypeLits
+
 import AERN2.MP.Precision
 import AERN2.MP.Ball
 
@@ -38,15 +40,15 @@ Instances of Prelude classes
 ********************************
 -}
 
-instance Eq t => Eq (WithCurrentPrec t p) where
+instance Eq t => Eq (WithCurrentPrec p t) where
     (==) = lift2P (==)
-instance Ord t => Ord (WithCurrentPrec t p) where
+instance Ord t => Ord (WithCurrentPrec p t) where
     compare = lift2P compare
 
 instance 
-    (HasCurrentPrecision p, Num t, ConvertibleWithPrecision Integer t) 
+    (KnownNat p, Num t, ConvertibleWithPrecision Integer t) 
     => 
-    Num (WithCurrentPrec t p) 
+    Num (WithCurrentPrec p t) 
     where
     fromInteger n = r
         where   
@@ -58,10 +60,10 @@ instance
     signum = lift1 signum
 
 instance 
-    (HasCurrentPrecision p, Fractional t
+    (KnownNat p, Fractional t
     , ConvertibleWithPrecision Integer t, ConvertibleWithPrecision Rational t) 
     => 
-    Fractional (WithCurrentPrec t p) 
+    Fractional (WithCurrentPrec p t) 
     where
     fromRational q = r
         where   
@@ -69,7 +71,7 @@ instance
     recip = lift1 recip
     (/) = lift2 (/)
 
-instance (HasCurrentPrecision p) => Floating (WithCurrentPrec (CN MPBall) p) where
+instance (KnownNat p) => Floating (WithCurrentPrec p (CN MPBall)) where
     pi = r 
         where
         r = WithCurrentPrec $ cn $ piBallP (getCurrentPrecision r)
