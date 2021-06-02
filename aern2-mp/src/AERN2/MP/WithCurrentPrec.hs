@@ -40,6 +40,7 @@ import AERN2.MP.WithCurrentPrec.Type
 import AERN2.MP.WithCurrentPrec.Comparisons ()
 import AERN2.MP.WithCurrentPrec.Field ()
 import AERN2.MP.WithCurrentPrec.Elementary (piCP)
+import AERN2.MP.WithCurrentPrec.Limit ()
 import AERN2.MP.WithCurrentPrec.PreludeInstances ()
 
 import AERN2.MP.Ball
