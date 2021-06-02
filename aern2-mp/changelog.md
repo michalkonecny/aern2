@@ -1,6 +1,6 @@
 # Change log for aern2-mp
 
-* v 0.2.7 2021-06-XXXXX
+* v 0.2.7 2021-06-02
   * make WithCurrentPrec p (CN MPBall) a Field
   * simplify WithCurrentPrec, swap its parameters
 * v 0.2.6 2021-05-29

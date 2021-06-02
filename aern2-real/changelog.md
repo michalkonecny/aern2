@@ -1,5 +1,9 @@
 # Change log for aern2-real
 
+* v 0.2.7 2021-06-02
+  * add RealNumber type class
+* v 0.2.6 2021-05-29
+  * adapt to new ppow operations
 * v 0.2.5 2021-05-27
   * CanSelect moved to aern2-mp
 * v 0.2.4 2021-05-26
