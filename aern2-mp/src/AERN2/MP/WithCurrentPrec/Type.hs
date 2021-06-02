@@ -66,10 +66,16 @@ runWithPrec p (wfp :: (forall p. (KnownNat p) => WithCurrentPrec p t)) =
     withNat (_ :: Proxy p) = 
         unWithCurrentPrec (wfp :: WithCurrentPrec p t)
 
-mpBallCP :: (CanBeMPBallP t, KnownNat p) => t -> WithCurrentPrec p (CN MPBall)
-mpBallCP v = r 
-    where
-    r = WithCurrentPrec $ cn $ mpBallP (getCurrentPrecision r) v
+instance (ConvertibleWithPrecision t1 t2, KnownNat p) => ConvertibleExactly t1 (WithCurrentPrec p t2) where
+    safeConvertExactly v = Right r
+        where
+        r = WithCurrentPrec $ convertP (getCurrentPrecision r) v
+
+-- mpBallCP :: (CanBeMPBallP t, KnownNat p) => t -> WithCurrentPrec p MPBall
+-- mpBallCP = convertExactly 
+
+cnmpBallCP :: (CanBeMPBallP t, KnownNat p) => t -> WithCurrentPrec p (CN MPBall)
+cnmpBallCP = lift1 cn . convertExactly 
 
 lift1 :: (t1 -> t2) -> (WithCurrentPrec p t1) -> (WithCurrentPrec p t2)
 lift1 f (WithCurrentPrec v1) = WithCurrentPrec (f v1)

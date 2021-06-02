@@ -117,4 +117,4 @@ _example2 :: CN MPBall
 _example2 = runWithPrec (prec 1000) $ piCP - piCP
 
 _example3 :: CN MPBall
-_example3 = runWithPrec (prec 1000) $ sqrt (mpBallCP 2)
+_example3 = runWithPrec (prec 1000) $ sqrt (cnmpBallCP 2)

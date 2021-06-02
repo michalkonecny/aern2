@@ -32,6 +32,14 @@ import AERN2.MP.Dyadic
 import AERN2.MP.WithCurrentPrec.Type
 
 instance
+    (CanNeg t)
+    =>
+    CanNeg (WithCurrentPrec p t)
+    where
+    type NegType (WithCurrentPrec p t) = WithCurrentPrec p (NegType t)
+    negate = lift1 negate
+
+instance
     (CanAddAsymmetric t1 t2, p1~p2)
     =>
     (CanAddAsymmetric (WithCurrentPrec p1 t1) (WithCurrentPrec p2 t2)) where

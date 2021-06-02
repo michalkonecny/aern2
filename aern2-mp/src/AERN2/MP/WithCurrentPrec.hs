@@ -23,7 +23,7 @@ module AERN2.MP.WithCurrentPrec
 (
     WithCurrentPrec(..), runWithPrec
     , WithAnyPrec(..)
-    , mpBallCP
+    , cnmpBallCP
     , piCP
     -- , _example1 , _example2 , _example3
     -- , _example1P , _example2P , _example3P
@@ -44,4 +44,7 @@ import AERN2.MP.WithCurrentPrec.PreludeInstances ()
 
 import AERN2.MP.Ball
 
--- instance (KnownNat p) => Field (WithCurrentPrec p (CN MPBall))
+instance (KnownNat p) => Ring (WithCurrentPrec p (CN MPBall))
+instance (KnownNat p) => Field (WithCurrentPrec p (CN MPBall))
+instance (KnownNat p) => OrderedRing (WithCurrentPrec p (CN MPBall))
+instance (KnownNat p) => OrderedField (WithCurrentPrec p (CN MPBall))
