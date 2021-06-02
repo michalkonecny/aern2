@@ -14,7 +14,6 @@
 module AERN2.Real.CKleenean
 (
   CKleenean, CanBeCKleenean, ckleenean
-  , CanSelect(..)
 )
 where
 

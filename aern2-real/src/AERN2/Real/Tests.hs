@@ -41,8 +41,9 @@ import AERN2.MP
 import AERN2.MP.Dyadic
 
 import AERN2.Limit
+import AERN2.Select
 import AERN2.Real.Type
-import AERN2.Real.CKleenean
+-- import AERN2.Real.CKleenean
 import AERN2.Real.Field ()
 import AERN2.Real.Elementary ()
 import AERN2.Real.Limit ()

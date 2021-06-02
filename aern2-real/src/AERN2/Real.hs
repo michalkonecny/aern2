@@ -16,19 +16,25 @@ module AERN2.Real
    CReal, 
    CSequence (..), 
    creal, HasCReals, CanBeCReal,
-   cseqPrecisions, cseqIndexForPrecision,
+   cseqPrecisions, cseqIndexForPrecision, 
+   cseqFromWithCurrentPrec, cseqFromPrecFunction,
    pi,
+   crealFromWithCurrentPrec, crealFromPrecFunction,
    -- * limits
    HasLimits(..),
    -- * lazy Kleeneans
    CKleenean, CanBeCKleenean, ckleenean, CanSelect(..),
    -- * extracting approximations
-   CanExtractApproximation(..), (?), realWithAccuracy, bits, prec
+   CanExtractApproximation(..), (?), bits, prec,
+   -- * abstract real numbers
+   RealNumber
 )
 where
 
-import AERN2.MP ( bits, prec )
 import AERN2.Limit
+import AERN2.Select
+import AERN2.MP
+import AERN2.MP.WithCurrentPrec
 import AERN2.Real.Type
 import AERN2.Real.Comparisons ()
 import AERN2.Real.CKleenean
@@ -37,58 +43,24 @@ import AERN2.Real.Limit ()
 import AERN2.Real.Elementary (pi)
 -- import AERN2.Real.Tests ()
 
--- imports used in examples below:
-
--- import MixedTypesNumPrelude
--- -- import qualified Prelude as P
+import MixedTypesNumPrelude
+-- import qualified Prelude as P
+import GHC.TypeLits
 
 -- import Text.Printf
 -- -- import AERN2.MP.Dyadic
 
+class
+    (OrderedField r
+    , HasLimits Int r
+    , HasLimits Integer r
+    , HasLimits Rational r
+    , CanSelect (OrderCompareType r r)
+    , (CanTestCertainly (SelectType (OrderCompareType r r))))
+    => 
+    RealNumber r
 
--- {- parallel branching -}
-
--- _example_pif :: CauchyReal -> CauchyRealCN
--- _example_pif r =
---   if r < 0 then -r else r -- abs via parallel if
-
--- _example_pif0 :: MPBall -> CN MPBall
--- _example_pif0 r =
---   if r < 0 then -r else r -- abs via parallel if
-
--- _nsection ::
---   Integer ->
---   (Rational -> CauchyReal) ->
---   (Rational,Rational) ->
---   CauchyRealCN
--- _nsection n f (l,r) =
---   newSeqSimple (cn $ mpBall 0) $ withAccuracy
---   where
---   withAccuracy (me,_) ac@(AccuracySG _ acG) =
---     onSegment (l,r)
---     where
---     onSegment (a,b) =
---       let ab = mpBallP p ((a+b)/!2, (b-a)/!2) in
---       if getAccuracy ab >= ac
---         then cn ab
---         else pick me (map withMidpoint midpoints)
---       where
---       midpoints = [ (i*a + (n-i)*b)/!n | i <- [1..n-1] ]
---       withMidpoint :: Rational -> Sequence (Maybe (CN MPBall))
---       withMidpoint m = newSeqSimple Nothing withAC
---         where
---         withAC (meF, _) acF
---           | fa * fm !<! 0 = Just $ onSegment (a, m)
---           | fm * fb !<! 0 = Just $ onSegment (m, b)
---           | fa * fb !>=! 0 = Just $ err
---           | otherwise = Nothing
---           where
---           fa = ((f a) ?<- meF) acF
---           fm = ((f m) ?<- meF) acF
---           fb = ((f b) ?<- meF) acF
---       err :: CN MPBall
---       err =
---         noValueNumErrorCertainCN $
---           NumError $
---             printf "n-section: function does not have opposite signs on points %s %s" (show a) (show b)
---     p = prec $ fromAccuracy acG + 8
+instance RealNumber CReal
+instance
+    (KnownNat p) => 
+    RealNumber (WithCurrentPrec p (CN MPBall))

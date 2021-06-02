@@ -72,8 +72,8 @@ cseqIndexForPrecision p =
 cseqFromPrecFunction :: (Precision -> CN b) -> CSequence b
 cseqFromPrecFunction withP = CSequence $ map withP cseqPrecisions
 
-cseqFromWithCurrentPrec :: (forall p. (KnownNat p) => WithCurrentPrec (CN b) p) -> CSequence b
-cseqFromWithCurrentPrec (withCurrentP :: (forall p. (KnownNat p) => WithCurrentPrec (CN b) p)) = 
+cseqFromWithCurrentPrec :: (forall p. (KnownNat p) => WithCurrentPrec p (CN b)) -> CSequence b
+cseqFromWithCurrentPrec (withCurrentP :: (forall p. (KnownNat p) => WithCurrentPrec p (CN b))) = 
   CSequence $ map withP cseqPrecisions
   where
   withP p = runWithPrec p withCurrentP :: CN b
@@ -100,6 +100,9 @@ creal = convertExactly
 
 crealFromPrecFunction :: (Precision -> CN MPBall) -> CReal
 crealFromPrecFunction = cseqFromPrecFunction
+
+crealFromWithCurrentPrec :: (forall p. (KnownNat p) => WithCurrentPrec p (CN MPBall)) -> CSequence MPBall
+crealFromWithCurrentPrec = cseqFromWithCurrentPrec
 
 {- Extracting approximations -}
 
@@ -131,10 +134,6 @@ instance (HasAccuracy t) => CanExtractApproximation (CSequence t) Accuracy where
         CN.noValueNumErrorPotential $ 
           CN.NumError "failed to find an approximation with sufficient accuracy"
   
-{-| Get a ball approximation of the real number with at least the specified accuracy -}
-realWithAccuracy :: CReal -> Accuracy -> CN MPBall
-realWithAccuracy = extractApproximation
-
 instance CanExtractApproximation (CSequence t) Precision where
   type ExtractedApproximation (CSequence t) Precision = CN t
   extractApproximation (CSequence s) p =
