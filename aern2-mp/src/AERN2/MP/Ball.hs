@@ -57,15 +57,11 @@ import AERN2.MP.Ball.PreludeOps ()
 
 instance Ring MPBall
 instance Ring (CN MPBall)
-instance Field MPBall
-instance Field (CN MPBall)
 
 instance OrderedRing MPBall
 instance OrderedRing (CN MPBall)
-instance OrderedField MPBall
-instance OrderedField (CN MPBall)
 
 instance OrderedCertainlyRing MPBall
 instance OrderedCertainlyRing (CN MPBall)
-instance OrderedCertainlyField MPBall
-instance OrderedCertainlyField (CN MPBall)
+
+-- Field instances available only with the WithCurrentPrec wrapper so thta Rationals can be cleanly embedded

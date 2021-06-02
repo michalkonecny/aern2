@@ -89,7 +89,7 @@ library
     , deepseq
     , hspec
     , integer-logarithms
-    , mixed-types-num >=0.5.7
+    , mixed-types-num >=0.5.8
     , reflection
     , regex-tdfa
     , template-haskell
@@ -129,7 +129,7 @@ test-suite aern2-mp-test
     , deepseq
     , hspec
     , integer-logarithms
-    , mixed-types-num >=0.5.7
+    , mixed-types-num >=0.5.8
     , reflection
     , regex-tdfa
     , template-haskell
