@@ -31,6 +31,7 @@ import MixedTypesNumPrelude
 import qualified Numeric.CollectErrors as CN
 
 import AERN2.MP
+import AERN2.MP.WithCurrentPrec
 import AERN2.Real
 
 -- import Debug.Trace
@@ -263,20 +264,27 @@ select_run1 = absR2 (pi-pi)
 
 -}
 
------------------------------------------
--- Cauchy reals vs iRRAM style execution
------------------------------------------
 
-logistic1 :: _ => Rational -> Integer -> t -> t
-logistic1 c n x0 =
+logistic :: (RealNumber t) => Rational -> Integer -> t -> t
+logistic c n x0 =
   (foldl1 (.) (replicate n lg)) x0
   where
   lg x = c * x * (1-x)
 
-logistic1_CReal_run :: Integer -> CReal
-logistic1_CReal_run n = logistic1 3.82 n (creal 0.5)
+logistic1 :: (RealNumber t) => Integer -> t
+logistic1 n = logistic 3.82 n (convertExactly 0.5)
 
--- TODO: define logistic1_iter
+logistic1_CReal_run :: Integer -> CReal
+logistic1_CReal_run n = 
+  logistic1 n
+
+logistic1_WithCurrentPrec_run :: Integer -> CReal
+logistic1_WithCurrentPrec_run n = 
+  crealFromWithCurrentPrec $ logistic1 n
+
+logistic1_WithCurrentPrec_p_run :: Integer -> Precision -> CN MPBall
+logistic1_WithCurrentPrec_p_run n p = 
+  runWithPrec p $ logistic1 n
 
 {-  Example uses:
 
@@ -286,6 +294,14 @@ logistic1_CReal_run n = logistic1 3.82 n (creal 0.5)
 *AERN2.Real.Examples.Introduction> logistic1_CReal_run 10000 ? (bits 100)
 [0.20775682944252359241450861... ± ~0.0000 ~2^(-2566)]
 (2.06 secs, 2,970,188,704 bytes)
+
+*AERN2.Real.Examples.Introduction> logistic1_WithCurrentPrec_run 10000 ? (bits 100)
+[0.20775682944252359241450861... ± ~0.0000 ~2^(-2566)]
+(2.02 secs, 2,897,034,816 bytes)
+
+*AERN2.Real.Examples.Introduction> logistic1_WithCurrentPrec_p_run 10000 (prec 20000)
+[0.20775682944252359241450861... ± ~1.0317e-200 ~2^(-664)]
+(1.05 secs, 1,421,858,848 bytes)
 
 -}
 
