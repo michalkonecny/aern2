@@ -10,19 +10,22 @@ developed within the CID EU project in 2017-2020.
 module ERC.Logic where
 
 import Prelude
+import qualified MixedTypesNumPrelude as MX
 
 import Control.Monad.ST.Trans
 
 import Data.List
 
+import AERN2.Kleenean
+
 import ERC.Monad
 
-type KLEENEAN = Maybe Bool
+type KLEENEAN = Kleenean
 
 kTrue, kFalse, kUnknown :: KLEENEAN
-kTrue = Just True
-kFalse = Just False
-kUnknown = Nothing
+kTrue = CertainTrue 
+kFalse = CertainFalse 
+kUnknown = TrueOrFalse
 
 boolToKleenean :: Bool -> KLEENEAN
 boolToKleenean True = kTrue
@@ -32,14 +35,9 @@ declareKLEENEAN :: ERC s KLEENEAN -> ERC s (STRef s KLEENEAN)
 declareKLEENEAN k = k >>= newSTRef
 
 (&&?) :: ERC s KLEENEAN -> ERC s KLEENEAN -> ERC s KLEENEAN
-a &&? b = checkK $ andK <$> a <*> b
-  where
-  andK (Just False) _ = Just False
-  andK _ (Just False) = Just False
-  andK (Just True) (Just True) = Just True
-  andK _ _ = Nothing
+a &&? b = checkK $ (MX.&&) <$> a <*> b
 
-infix 3 &&? -- TODO: check fixity level
+infix 3 &&?
 
 choose :: [ERC s KLEENEAN] -> ERC s Integer
 choose optionsERC =
@@ -57,8 +55,8 @@ parallelIfThenElse condERC branch1 branch2 =
   do
   cond <- condERC
   case cond of
-    Just True -> branch1
-    Just False -> branch2
+    CertainTrue  -> branch1
+    CertainFalse -> branch2
     _ -> do
       branch1 `hull` branch2
 

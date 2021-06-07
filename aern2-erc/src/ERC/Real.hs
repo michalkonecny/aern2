@@ -9,7 +9,7 @@ import Control.Monad.ST.Trans
 
 import AERN2.MP
 import AERN2.MP.Ball (hullMPBall)
-import qualified Numeric.MixedTypes.Ord as MixOrd
+import qualified MixedTypesNumPrelude as MX
 
 import ERC.Monad
 import ERC.Variables
@@ -35,10 +35,10 @@ runERC_REAL :: Integer -> (forall s. ERC s REAL) -> MPBall
 runERC_REAL ac = runERC (\result -> getAccuracy result >= bits ac)
 
 ltREAL, leqREAL, geqREAL, gtREAL :: ERC s REAL -> ERC s REAL -> ERC s KLEENEAN
-ltREAL a b = checkK $ (MixOrd.<) <$> a <*> b
-leqREAL a b = checkK $ ((MixOrd.<=) <$> a <*> b)
-geqREAL a b = checkK $ ((MixOrd.>=) <$> a <*> b)
-gtREAL a b = checkK $ ((MixOrd.>) <$> a <*> b)
+ltREAL  a b = checkK $ (MX.<)  <$> a <*> b
+leqREAL a b = checkK $ (MX.<=) <$> a <*> b
+geqREAL a b = checkK $ (MX.>=) <$> a <*> b
+gtREAL  a b = checkK $ (MX.>)  <$> a <*> b
 
 (<*),(<=*),(>*),(>=*) :: ERC s REAL -> ERC s REAL -> ERC s KLEENEAN
 (<*) = ltREAL
@@ -77,7 +77,7 @@ instance Fractional (ERC s REAL) where
     checkR $ do
     a_ <- a
     b_ <- b
-    case b_ MixOrd.!>! (0 :: MPBall) || b_ MixOrd.!<! (0 :: MPBall) of
+    case b_ MX.!>! (0 :: MPBall) || b_ MX.!<! (0 :: MPBall) of
       True -> pure $ a_ / b_
       _ -> insufficientPrecision dummyReal
 

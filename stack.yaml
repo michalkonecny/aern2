@@ -41,7 +41,7 @@ packages:
 # - 'aern2-bench-chart'
 - 'aern2-mp'
 - 'aern2-real'
-# - 'aern2-erc'
+- 'aern2-erc'
 # - 'aern2-net'
 - 'aern2-fun'
 # - 'aern2-fun-univariate'
