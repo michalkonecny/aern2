@@ -4,7 +4,7 @@ A set of Haskell packages for approximating exact real numbers and other validat
 
 - [A quick start](#a-quick-start)
 - [Libraries](#libraries)
-- [Executables](#executables)
+- [Other components](#other-components)
 - [Significant dependencies](#significant-dependencies)
 - [Other references](#other-references)
 
@@ -23,13 +23,15 @@ A set of Haskell packages for approximating exact real numbers and other validat
 - [aern2-fun](aern2-fun):
   Generic operations for real functions
 - aern2-fun-univariate:
-  Continuous real functions of one variable and their polynomial enclosures (currently broken, not built by default)
-- *other packages* (currently broken)
+  Continuous real functions of one variable and their polynomial enclosures (currently broken, working version on branch [fnreps2020](https://github.com/michalkonecny/aern2/tree/fnreps2020/aern2-fun))
 
-## Executables
+## Other components
 
+- [aern2-erc](aern2-erc):
+  A prototype implementation of the language ERC (Exact Real Computation) as defined in [Park, Sewon, et al. "Foundation of Computer (Algebra) ANALYSIS Systems: Semantics, Logic, Programming, Verification." arXiv e-prints (2016): arXiv-1608](https://arxiv.org/abs/1608.05787).
+  
 - aern2-fnreps:
-  Benchmarks evaluating various representations of univariate continuous real functions (working version on branch [fnreps2020](https://github.com/michalkonecny/aern2/tree/fnreps2020/aern2-fnreps))
+  Benchmarks evaluating various representations of univariate continuous real functions (currently broken, working version on branch [fnreps2020](https://github.com/michalkonecny/aern2/tree/fnreps2020/aern2-fnreps))
 
 ## Significant dependencies
 
