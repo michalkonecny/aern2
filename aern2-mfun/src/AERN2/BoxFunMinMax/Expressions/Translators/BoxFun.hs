@@ -31,11 +31,13 @@ expressionToBoxFun e domain p =
 
     -- TODO: Change to bfEval
     expressionToDifferential :: E -> V.Vector (Differential (CN MPBall)) -> Differential (CN MPBall)
-    expressionToDifferential (Float e significand) v = undefined
+    expressionToDifferential (Float _ _) _   = undefined
+    expressionToDifferential (Float32 _ _) _ = undefined
+    expressionToDifferential (Float64 _ _) _ = undefined
     expressionToDifferential (EBinOp op e1 e2) v = 
       case op of
-        Min -> undefined
-        Max -> undefined
+        Min -> min (expressionToDifferential e1 v) (expressionToDifferential e2 v) --TODO: Could define these for degree 0
+        Max -> max (expressionToDifferential e1 v) (expressionToDifferential e2 v)
         Pow -> pow (expressionToDifferential e1 v) (expressionToDifferential e2 v)
         Add -> expressionToDifferential e1 v + expressionToDifferential e2 v
         Sub -> expressionToDifferential e1 v - expressionToDifferential e2 v
@@ -54,8 +56,6 @@ expressionToBoxFun e domain p =
         Nothing -> error $ "Variable: " ++ show e ++ " not found in varMap: " ++ show domain ++ " when translating expression: " ++ show e 
         Just i -> v V.! (fromIntegral i)
     expressionToDifferential (PowI e i) v = expressionToDifferential e v ^ i
-    expressionToDifferential (Float32 _ e) v = expressionToDifferential e v
-    expressionToDifferential (Float64 _ e) v = expressionToDifferential e v
 
 
     variableOrder = map fst domain
