@@ -27,7 +27,7 @@ import AERN2.MP.Dyadic
 import AERN2.BoxFunMinMax.Expressions.Type
 import AERN2.BoxFunMinMax.VarMap
 
--- import Debug.Trace
+import Debug.Trace
 
 type VarName = String
 
@@ -72,6 +72,7 @@ scanHypotheses (FConn Impl h c) =
     scanHypotheses c . scanHypothesis h 
 scanHypotheses _ = id
 
+-- FIXME: We need FNot here
 scanHypothesis :: F -> VarBoundMap -> VarBoundMap
 scanHypothesis (FConn And h1 h2) intervals = 
     (scanHypothesis h1 . scanHypothesis h2) intervals
@@ -81,7 +82,8 @@ scanHypothesis (FConn Or h1 h2) intervals =
     box1 = scanHypothesis h1 intervals 
     box2 = scanHypothesis h2 intervals
     mergeWorse (l1,r1) (l2,r2) = (min <$> l1 <*> l2, max <$> r1 <*> r2)
-    
+scanHypothesis (FConn Impl h1 h2) intervals = scanHypothesis (FConn Or (FNot h1) h2) intervals
+scanHypothesis (FConn Equiv h1 h2) intervals = scanHypothesis (FConn Or (FConn And h1 h2) (FConn And (FNot h1) (FNot h2))) intervals 
 -- We need: data Comp = Gt | Ge | Lt | Le | Eq
 scanHypothesis (FComp Eq _e1@(Var v1) _e2@(Var v2)) intervals = 
     Map.insert v1 val $
