@@ -183,6 +183,15 @@ instance
                                             -- sqrtx'  == 1 / (2 * sqrt(x))
                                             -- sqrtx'' == -1 / (4 * x * sqrt(x)) == -1 / (4 * x^(3/2))
 
+instance
+    CanMinMaxSameType a =>
+    CanMinMaxAsymmetric (Differential a) (Differential a)
+    where
+    type MinMaxType (Differential a) (Differential a) = Differential a
+    min a b = OrderZero (min (diff_x a) (diff_x b))
+    max a b = OrderZero (max (diff_x a) (diff_x b))
+
+
 -- instance
 --     (CanMinMaxSameType a, HasIntegers a) =>
 --     CanMinMaxAsymmetric (Differential a) (Differential a)
