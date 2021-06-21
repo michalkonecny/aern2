@@ -1,8 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.33.0.
 --
 -- see: https://github.com/sol/hpack
+--
+-- hash: a9938a02be7238b66d82ae77663d1a45d659e1b113e60f07489229fc78d2097f
 
 name:           aern2-mfun
 version:        0.2.6.0
@@ -37,6 +39,7 @@ library
       AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.DataTypes
       AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.Parser
       AERN2.BoxFunMinMax.Expressions.Parsers.Smt
+      AERN2.BoxFunMinMax.Expressions.Tester
       AERN2.BoxFunMinMax.Expressions.TestFunctions
       AERN2.BoxFunMinMax.Expressions.Translators.BoxFun
       AERN2.BoxFunMinMax.Expressions.Translators.DReal
@@ -54,25 +57,17 @@ library
       Paths_aern2_mfun
   hs-source-dirs:
       src
-  default-extensions:
-      RebindableSyntax,
-      ScopedTypeVariables,
-      TypeFamilies,
-      TypeOperators,
-      ConstraintKinds,
-      DefaultSignatures,
-      MultiParamTypeClasses,
-      FlexibleContexts,
-      FlexibleInstances,
-      UndecidableInstances
-  other-extensions:
-      TemplateHaskell
+  default-extensions: RebindableSyntax, ScopedTypeVariables, TypeFamilies, TypeOperators, ConstraintKinds, DefaultSignatures, MultiParamTypeClasses, FlexibleContexts, FlexibleInstances, UndecidableInstances
+  other-extensions: TemplateHaskell
   ghc-options: -Wall
   build-depends:
-      aern2-fun >=0.2.5
+      QuickCheck
+    , aern2-fun >=0.2.5
     , aern2-mp >=0.2.5
     , aern2-real >=0.2.5
     , base ==4.*
+    , binary
+    , bytestring
     , collect-errors >=0.1.5
     , containers
     , ghc
@@ -83,37 +78,27 @@ library
     , psqueues
     , scientific
     , simplex-haskell
-    , vector
-    , text
-    , bytestring
-    , binary
     , smt2-parser
+    , text
+    , vector
   default-language: Haskell2010
 
 executable aern2-mfun-benchmark-heron
   main-is: bench/Heron.hs
   other-modules:
       Paths_aern2_mfun
-  default-extensions:
-      RebindableSyntax,
-      ScopedTypeVariables,
-      TypeFamilies,
-      TypeOperators,
-      ConstraintKinds,
-      DefaultSignatures,
-      MultiParamTypeClasses,
-      FlexibleContexts,
-      FlexibleInstances,
-      UndecidableInstances
-  other-extensions:
-      TemplateHaskell
+  default-extensions: RebindableSyntax, ScopedTypeVariables, TypeFamilies, TypeOperators, ConstraintKinds, DefaultSignatures, MultiParamTypeClasses, FlexibleContexts, FlexibleInstances, UndecidableInstances
+  other-extensions: TemplateHaskell
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:
-      aern2-fun >=0.2.5
+      QuickCheck
+    , aern2-fun >=0.2.5
     , aern2-mfun
     , aern2-mp >=0.2.5
     , aern2-real >=0.2.5
     , base ==4.*
+    , binary
+    , bytestring
     , collect-errors >=0.1.5
     , containers
     , ghc
@@ -124,6 +109,8 @@ executable aern2-mfun-benchmark-heron
     , psqueues
     , scientific
     , simplex-haskell
+    , smt2-parser
+    , text
     , vector
   default-language: Haskell2010
 
@@ -131,26 +118,18 @@ executable aern2-mfun-benchmark-optimisation
   main-is: bench/OptimisationBenchmark.hs
   other-modules:
       Paths_aern2_mfun
-  default-extensions:
-      RebindableSyntax,
-      ScopedTypeVariables,
-      TypeFamilies,
-      TypeOperators,
-      ConstraintKinds,
-      DefaultSignatures,
-      MultiParamTypeClasses,
-      FlexibleContexts,
-      FlexibleInstances,
-      UndecidableInstances
-  other-extensions:
-      TemplateHaskell
+  default-extensions: RebindableSyntax, ScopedTypeVariables, TypeFamilies, TypeOperators, ConstraintKinds, DefaultSignatures, MultiParamTypeClasses, FlexibleContexts, FlexibleInstances, UndecidableInstances
+  other-extensions: TemplateHaskell
   ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
   build-depends:
-      aern2-fun >=0.2.5
+      QuickCheck
+    , aern2-fun >=0.2.5
     , aern2-mfun
     , aern2-mp >=0.2.5
     , aern2-real >=0.2.5
     , base ==4.*
+    , binary
+    , bytestring
     , collect-errors >=0.1.5
     , containers
     , ghc
@@ -161,5 +140,7 @@ executable aern2-mfun-benchmark-optimisation
     , psqueues
     , scientific
     , simplex-haskell
+    , smt2-parser
+    , text
     , vector
   default-language: Haskell2010
