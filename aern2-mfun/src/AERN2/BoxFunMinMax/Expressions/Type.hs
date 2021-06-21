@@ -5,6 +5,9 @@ import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import qualified Data.Map as Map
+import Data.List (nub)
+
+import Test.QuickCheck
 
 import Debug.Trace (trace)
 
@@ -29,6 +32,93 @@ data Conn = And | Or | Impl | Equiv
 -- and logical connectives between F types
 data F = FComp Comp E E | FConn Conn F F | FNot F | FTrue | FFalse
   deriving (Show, P.Eq)
+
+newtype Name = Name String deriving Show
+
+instance Arbitrary Name where
+  arbitrary = 
+    oneof 
+    [
+      return (Name "a"),
+      return (Name "b"),
+      return (Name "c"),
+      return (Name "d"),
+      return (Name "e"),
+      return (Name "f"),
+      return (Name "g"),
+      return (Name "h"),
+      return (Name "i"),
+      return (Name "j"),
+      return (Name "k"),
+      return (Name "l")
+    ]
+
+instance Arbitrary UnOp where
+  arbitrary =
+    oneof [return Negate, return Abs, return Sin, return Cos]
+
+instance Arbitrary BinOp where
+  arbitrary =
+    oneof [return Add, return Sub, return Mul, return Div, return Min, return Max]
+
+instance Arbitrary RoundingMode where
+  arbitrary =
+    oneof [return RNE, return RTP, return RTN, return RTN]
+instance Arbitrary E where
+  arbitrary = sized eGenerator
+    where
+      varName :: Gen Name
+      varName = arbitrary
+
+      eGenerator :: Int -> Gen E
+      eGenerator n | n>0 =
+        oneof 
+        [
+          Lit     <$> fmap toRational (arbitrary :: Gen Integer), 
+          Var     <$> show <$> varName,
+          EUnOp   <$> arbitrary <*> subE,
+          EUnOp Sqrt . Lit      <$> fmap getPositive (arbitrary :: Gen (Positive Rational)),
+          EBinOp  <$> arbitrary <*> subE <*> subE
+          -- PowI    <$> subE <*> fmap getPositive (arbitrary :: Gen (Positive Integer)) -- We do not allow Floats here
+        ]
+        where
+          subE = eGenerator (int (floor (n / 20)))
+          sqrtG x = EUnOp Sqrt (Lit x)
+      eGenerator _        = oneof [Lit <$> (fmap toRational (arbitrary :: Gen Integer)), Var <$> show <$> varName]
+          -- subE = eGenerator (pred n)
+
+-- data Comp = Gt | Ge | Lt | Le | Eq
+--   deriving (Show, P.Eq)
+
+-- data Conn = And | Or | Impl | Equiv
+--   deriving (Show, P.Eq)
+
+-- -- | The F type is used to specify comparisons between E types
+-- -- and logical connectives between F types
+-- data F = FComp Comp E E | FConn Conn F F | FNot F | FTrue | FFalse
+--   deriving (Show, P.Eq)
+
+instance Arbitrary Comp where
+  arbitrary = oneof [return Gt, return Ge, return Lt, return Le, return Eq]
+
+instance Arbitrary Conn where
+  arbitrary = oneof [return And, return Or, return Impl, return Equiv]
+
+instance Arbitrary F where
+  arbitrary = sized fGenerator
+    where
+      fGenerator :: Int -> Gen F
+      fGenerator 0 = oneof [FComp <$> arbitrary <*> arbitrary <*> arbitrary]
+      fGenerator n =
+        oneof
+        [
+          FComp <$> arbitrary <*> arbitrary <*> arbitrary,
+          FConn <$> arbitrary <*> subF <*> subF,
+          FNot  <$> subF
+        ]
+        where
+          subF = fGenerator (int (floor (n / 20)))
+-- Note, does not generate FTrue, FFalse
 
 -- | Translate F to a single expression (E)
 -- Removes implications, logical connectives
@@ -292,3 +382,31 @@ prettyShowConn And   = "AND"
 prettyShowConn Or    = "OR"
 prettyShowConn Impl  = "IMPL"
 prettyShowConn Equiv = "EQUIV"
+
+-- |Extract all variables in an expression
+-- Will not return duplicationes
+extractVariablesE :: E -> [String]
+extractVariablesE = nub . findAllVars
+  where
+    findAllVars (Lit _)          = []
+    findAllVars (Var v)          = [v]
+    findAllVars (EUnOp _ e)      = findAllVars e
+    findAllVars (EBinOp _ e1 e2) = findAllVars e1 ++ findAllVars e2
+    findAllVars (PowI e _)       = findAllVars e
+    findAllVars (Float32 _ e)    = findAllVars e
+    findAllVars (Float64 _ e)    = findAllVars e
+    findAllVars (Float _ e)      = findAllVars e
+
+-- |Extract all variables in an expression
+-- Will not return duplicationes
+extractVariablesF :: F -> [String]
+extractVariablesF = nub . findAllVars
+  where
+    findAllVars (FComp _ e1 e2) = extractVariablesE e1 ++ extractVariablesE e2
+    findAllVars (FConn _ f1 f2) = findAllVars f1 ++ findAllVars f2
+    findAllVars (FNot f)        = findAllVars f
+    findAllVars FTrue           = []
+    findAllVars FFalse          = []
+
+extractVariablesECNF :: [[E]] -> [String]
+extractVariablesECNF = nub . concatMap (concatMap extractVariablesE) 
