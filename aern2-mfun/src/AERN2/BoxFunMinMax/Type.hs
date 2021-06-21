@@ -11,6 +11,7 @@ import AERN2.BoxFunMinMax.Expressions.Translators.BoxFun
 import qualified AERN2.BoxFunMinMax.Expressions.Type as E
 import AERN2.BoxFun.Box (createEnclosingBox, Box, fromVarMap, intersectionCertainlyEmpty, nonEmptyIntersection, lowerBounds, upperBounds)
 import qualified AERN2.Linear.Vector.Type as V
+import AERN2.Kleenean
 import Control.Parallel.Strategies
 import Data.Bifunctor
 import qualified Simplex as S
@@ -23,7 +24,7 @@ import AERN2.MP.Dyadic (Dyadic, dyadic)
 import qualified Debug.Trace as T
 
 import Data.Maybe
-
+import Control.CollectErrors
 trace a x = x
 
 -- | Check a CNF (Conjunctive Normal Form) of Expressions in the form of a list of lists
@@ -268,6 +269,47 @@ disjunctionRangesBelowZero = all rangeBelowZero
 conjunctionRangesBelowZero :: [[CN MPBall]] -> Bool
 conjunctionRangesBelowZero = all disjunctionRangesBelowZero
 
+checkFWithApply :: E.F -> VarMap -> Precision -> CN Kleenean
+checkFWithApply (E.FComp op e1 e2) varMap p = 
+  case op of
+    E.Ge -> e1Val >= e2Val
+    E.Gt -> e1Val >  e2Val
+    E.Le -> e1Val <= e2Val
+    E.Lt -> e1Val <  e2Val
+    E.Eq -> e1Val == e2Val
+  where
+    e1Val = applyExpression e1 varMap p
+    e2Val = applyExpression e2 varMap p
+checkFWithApply (E.FConn op f1 f2) varMap p =
+  case op of
+    E.And   -> f1Val && f2Val
+    E.Or    -> f1Val || f2Val
+    E.Equiv -> 
+      case f1Val of
+        (CollectErrors (Just CertainTrue) error1) ->
+          case f2Val of
+            (CollectErrors (Just CertainTrue) error2)  -> prependErrors error2 $ CollectErrors (Just CertainTrue) error1
+            (CollectErrors (Just CertainFalse) error2) -> prependErrors error2 $ CollectErrors (Just CertainFalse) error1
+            (CollectErrors (Just TrueOrFalse) error2)  -> prependErrors error2 $ CollectErrors (Just TrueOrFalse) error1
+            (CollectErrors Nothing error2)             -> prependErrors error2 $ CollectErrors Nothing error1
+        (CollectErrors (Just CertainFalse) error1) ->
+          case f2Val of
+            (CollectErrors (Just CertainTrue) error2)  -> prependErrors error2 $ CollectErrors (Just CertainFalse) error1
+            (CollectErrors (Just CertainFalse) error2) -> prependErrors error2 $ CollectErrors (Just CertainTrue) error1
+            (CollectErrors (Just TrueOrFalse) error2)  -> prependErrors error2 $ CollectErrors (Just TrueOrFalse) error1
+            (CollectErrors Nothing error2)             -> prependErrors error2 $ CollectErrors Nothing error1
+        (CollectErrors (Just TrueOrFalse) error1) ->
+          case f2Val of
+            (CollectErrors Nothing error2)             -> prependErrors error2 $ CollectErrors Nothing error1
+            (CollectErrors _ error2)                   -> prependErrors error2 $ CollectErrors (Just TrueOrFalse) error1
+        (CollectErrors Nothing error1)                 -> CollectErrors Nothing error1
+    E.Impl  -> not f1Val || f2Val
+  where
+    f1Val = checkFWithApply f1 varMap p
+    f2Val = checkFWithApply f2 varMap p
+checkFWithApply (E.FNot f) varMap p = not $ checkFWithApply f varMap p
+checkFWithApply E.FTrue _ _         = cn CertainTrue
+checkFWithApply E.FFalse _ _        = cn CertainFalse
 
 filterOutFalseTermsInDisjunction :: [E.E] -> VarMap -> Precision -> [E.E]
 filterOutFalseTermsInDisjunction expressions varMap p = filter (\e -> not (applyExpressionLipschitz e varMap p !>=! cnMPBallP p (cn 0))) expressions
