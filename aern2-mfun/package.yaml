@@ -37,7 +37,6 @@ dependencies:
 - aern2-fun >= 0.2.5
 - simplex-haskell
 - scientific
-- smt2-parser
 - ghc
 - text
 - bytestring
