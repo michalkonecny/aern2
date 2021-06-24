@@ -11,7 +11,7 @@
     Deriving ranges for variables from hypotheses inside a formula
 -}
 module AERN2.BoxFunMinMax.Expressions.DeriveBounds 
--- (deriveBoundsAndSimplify)
+(deriveBoundsAndSimplify)
 where
 
 import MixedTypesNumPrelude
@@ -19,14 +19,11 @@ import qualified Numeric.CollectErrors as CN
 
 import qualified Prelude as P
 
-import qualified Data.Set as Set
 import qualified Data.Map as Map
 import qualified Data.List as List
 -- import qualified Data.Bifunctor as Bifunctor
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
-
-import AERN2.Kleenean
 
 import AERN2.BoxFunMinMax.Expressions.Type
 import AERN2.BoxFunMinMax.VarMap
