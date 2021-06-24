@@ -10,7 +10,9 @@
 
     Deriving ranges for variables from hypotheses inside a formula
 -}
-module AERN2.BoxFunMinMax.Expressions.DeriveBounds where
+module AERN2.BoxFunMinMax.Expressions.DeriveBounds 
+-- (deriveBoundsAndSimplify)
+where
 
 import MixedTypesNumPrelude
 import qualified Numeric.CollectErrors as CN
@@ -31,12 +33,33 @@ import AERN2.BoxFunMinMax.VarMap
 
 import Debug.Trace ()
 
+-- examples:
+
+_f1 :: F -- eliminates "x"
+_f1 = FConn Impl (FConn And (FComp Le (Var "x") (Lit 1.0)) (FComp Le (Lit 0.0) (Var "x"))) (FComp Eq (Lit 0.0) (Lit 0.0))
+
+_f2 :: F
+_f2 = FConn Impl (FConn And (FComp Le (Var "x") (Lit 1.0)) (FComp Le (Lit 0.0) (Var "x"))) (FComp Eq (Var "x") (Lit 0.0))
+
+_f3 :: F -- underivable "x"
+_f3 = FConn Impl (FConn And (FComp Le (Var "x") (Lit 1.0)) (FComp Le (Var "x") (Lit 0.0))) (FComp Eq (Var "x") (Lit 0.0))
+
+_f4 :: F -- nested implication containing bound on "x" guarded by a condition on "n"
+_f4 =
+  FConn Impl 
+    (FConn And 
+      (FConn And 
+        (FComp Le (Var "x") (Lit 1.0)) 
+        (FComp Eq (Var "n") (Lit 1.0)))
+      (FConn Impl (FComp Eq (Var "n") (Lit 1.0)) (FComp Le (Lit 0.0) (Var "x"))))
+    (FComp Eq (Var "x") (Lit 0.0))
+
 type VarName = String
 
-deriveBounds :: F -> (VarMap, [VarName])
-deriveBounds form =
+deriveBoundsAndSimplify :: F -> (F, VarMap, [VarName])
+deriveBoundsAndSimplify form =
   let (derivedRanges, underivedRanges) = List.partition isGood varRanges
-  in (map removeJust derivedRanges, map fst underivedRanges)
+  in (simplifiedF, map removeJust derivedRanges, map fst underivedRanges)
     ---- | allGood =
     ----     Right (map removeJust varRanges)
     ---- | otherwise = 
@@ -53,19 +76,19 @@ deriveBounds form =
     --     where
     --     reportBadVar (v, _) =
     --         "Failed to derive a bound for variable " ++ v ++ " in formula " ++ show form 
-    varSet = getFreeVarsF form
-    initBox
-        = Map.fromAscList $ zip (Set.toAscList varSet) (repeat (Nothing, Nothing))
-    box = 
-        findRepeat initBox $ tail $ boxSeq
-    boxSeq = 
-        iterate (scanHypotheses form) initBox
-
-findRepeat :: (P.Eq a, Show a) => a -> [a] -> a
-findRepeat prev (next:rest)
-    | prev P.== next = prev
-    | otherwise = findRepeat next rest
-findRepeat prev [] = prev
+    initBox = Map.fromList $ zip (extractVariablesF form) (repeat (Nothing, Nothing))
+    (box, simplifiedF) = aux initBox $ form
+      where
+      aux b f 
+        | b P.== b2 = (b, f2)
+        | otherwise = aux b2 f2
+        where
+        f2 = simplifyF $ evalF_comparisons b f 
+              -- simplify where possible with the knowledge we are restricted to box b
+        b' = Map.intersection b $ Map.fromList $ zip (extractVariablesF f2) (repeat ())
+              -- remove variables that do not appear in f2
+        b2 = scanHypotheses f2 b'
+              -- attempt to improve the bounds on the variables
 
 type VarBoundMap = Map.Map VarName (Maybe Rational, Maybe Rational)
 
@@ -153,8 +176,31 @@ scanHypothesis (FComp Ge e1 e2) False intervals = scanHypothesis (FComp Le e2 e1
 scanHypothesis (FComp Gt e1 e2) False intervals = scanHypothesis (FComp Le e2 e1) False intervals
 scanHypothesis _ _False intervals = intervals
 
--- evalF_Rational :: VarBoundMap -> F -> Kleenean
--- evalF_Rational intervals 
+{-|
+  Replace within a formula some comparisons with FTrue/FFalse, namely
+  those comparisons that on the given box can be easily seen to be true/false.
+  -}
+evalF_comparisons :: VarBoundMap -> F -> F
+evalF_comparisons intervals = eC
+  where
+  eC FTrue  = FTrue
+  eC FFalse = FFalse
+  eC (FNot f) = FNot (eC f)
+  eC (FConn op f1 f2) = FConn op (eC f1) (eC f2)
+  eC (FComp Gt e1 e2) = eC $ FComp Lt e2 e1
+  eC (FComp Ge e1 e2) = eC $ FComp Le e2 e1
+  eC (FComp Eq e1 e2) = eC $ FConn And (FComp Le e2 e1) (FComp Le e1 e2)
+  eC f@(FComp Le e1 e2) =
+    case (eE e1, eE e2) of
+      ((_, Just e1R), (Just e2L, _)) | e1R <= e2L -> FTrue
+      ((Just e1L, _), (_, Just e2R)) | e2R <  e1L -> FFalse 
+      _ -> f
+  eC f@(FComp Lt e1 e2) =
+    case (eE e1, eE e2) of
+      ((_, Just e1R), (Just e2L, _)) | e1R <  e2L -> FTrue
+      ((Just e1L, _), (_, Just e2R)) | e2R <= e1L -> FFalse 
+      _ -> f
+  eE = evalE_Rational intervals
 
 evalE_Rational :: 
   VarBoundMap -> E -> (Maybe Rational, Maybe Rational)
@@ -191,10 +237,6 @@ updateLower (Just l2,_) (Nothing,u) = (Just $ l2, u)
 updateLower (Nothing,_) (Just l1,u) = (Just $ l1, u)
 updateLower (Nothing,_) (Nothing,u) = (Nothing, u)
 --updateLower _ _ = error "DeriveBounds: updateLower failed"
-
--- | extract all variables from a formula
-getFreeVarsF :: F -> Set.Set VarName
-getFreeVarsF = Set.fromList . extractVariablesF
 
 -- | compute the value of E with Vars at specified points
 -- | (a generalised version of computeE)

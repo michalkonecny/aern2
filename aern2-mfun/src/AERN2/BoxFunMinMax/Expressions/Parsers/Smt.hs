@@ -423,7 +423,7 @@ deriveVCRanges vc@(FConn Impl contextCNF goal) =
         Just filteredContext  -> Just (FConn Impl filteredContext goal, derivedVarMap)
         Nothing               -> Just                            (goal, derivedVarMap)
   where
-    (derivedVarMap, underivableVariables) = deriveBounds vc
+    (simplifiedF, derivedVarMap, underivableVariables) = deriveBoundsAndSimplify vc
 
     filterCNF :: F -> Maybe F
     filterCNF (FConn And f1 f2) = 
