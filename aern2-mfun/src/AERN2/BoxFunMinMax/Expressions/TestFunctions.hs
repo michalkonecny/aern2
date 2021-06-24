@@ -116,14 +116,15 @@ testXs2 = [EBinOp Sub (Var "X") (Lit (2.0))]
 testXp2s4 = [EBinOp Sub (EBinOp Mul (Var "X") (Var "X")) (Lit (4.0))]
 
 testXY = [EBinOp Mul (Var "X") (Var "Y")]
-testXp2 = [EBinOp Mul (Var "X") (Var "X")]
+testXp2 = [EBinOp Add (EBinOp Mul (Var "X") (Var "X")) (Lit testEps)]
 testXp3 = [EBinOp Mul (Var "X") (EBinOp Mul (Var "X") (Var "X"))]
+testMXp3 :: [E]
 testMXp3 = [EBinOp Mul (EUnOp Negate (Var "X")) (EBinOp Mul (EUnOp Negate (Var "X")) (EUnOp Negate (Var "X")))]
 
 -- testXp3Float = [Float (EBinOp Mul (Var "X") (EBinOp Mul (Var "X") (Var "X"))) 2]
 
 testEps :: Rational
-testEps = (-1) % 100
+testEps = (1) % 1000000
 
 -- [("X", (0.5, 2.0))]
 -- heronInit1PlusXDiv1 = Float (EBinOp Add (Lit 1.0) (Float (EBinOp Div (Var "X") (Lit 1.0)) 24)) 24
@@ -292,6 +293,37 @@ heronPreservationExact i1 =
         (Lit 1.192093e-07)
         -- (Lit 0.1)
 
+heronPreservationExactIVar :: [[E]]
+heronPreservationExactIVar =
+  [negatedContext ++ [goal]]
+  where
+    negatedContext = map (EUnOp Negate) context   
+    context = 
+      [
+        EBinOp Add (EBinOp Add (EBinOp Sub (Lit 0.0) (EUnOp Abs (EBinOp Sub (EUnOp Sqrt (Var "X")) (Var "Y1")))) (EBinOp Div (Lit 1.0) (EBinOp Pow (Lit 2.0) (EBinOp Pow (Lit 2.0) (Var "i"))))) (EBinOp Mul (EBinOp Mul (Lit 6.0) (Var "i")) (Lit (1/8388608))),
+        EBinOp Add (EBinOp Sub (EBinOp Div (EBinOp Add (Var "Y1") (EBinOp Div (Var "X") (Var "Y1"))) (Lit 2.0)) (Lit 0.699999988079071044921875)) (Lit 1.192093e-07),
+        EBinOp Add (EBinOp Add (EBinOp Sub (Lit 0.0) (EBinOp Div (EBinOp Add (Var "Y1") (EBinOp Div (Var "X") (Var "Y1"))) (Lit 2.0))) (Lit 1.79999995231628417968750)) (Lit 1.192093e-07),
+        EBinOp Add (EBinOp Add (EBinOp Sub (Lit 0.0) (EBinOp Div (Var "X") (Lit 1.0))) (Lit maxFloat)) (Lit 5.960464e-08),
+        EBinOp Add (EBinOp Sub (EBinOp Div (Var "X") (Lit 1.0)) (Lit (-maxFloat))) (Lit 5.960464e-08),
+        EBinOp Add (EBinOp Add (EBinOp Sub (Lit 0.0) (EBinOp Add (Lit 1.0) (EBinOp Div (Var "X") (Lit 1.0)))) (Lit maxFloat)) (Lit 1.788139e-07),
+        EBinOp Add (EBinOp Sub (EBinOp Add (Lit 1.0) (EBinOp Div (Var "X") (Lit 1.0))) (Lit (-maxFloat))) (Lit 1.788139e-07),
+        EBinOp Add (EBinOp Add (EBinOp Sub (Lit 0.0) (EBinOp Div (Var "X") (Var "Y1"))) (Lit maxFloat)) (Lit 1.192093e-07),
+        EBinOp Add (EBinOp Sub (EBinOp Div (Var "X") (Var "Y1")) (Lit (-maxFloat))) (Lit 1.192093e-07),
+        EBinOp Add (EBinOp Add (EBinOp Sub (Lit 0.0) (EBinOp Add (Var "Y1") (EBinOp Div (Var "X") (Var "Y1")))) (Lit maxFloat)) (Lit 2.384186e-07),
+        EBinOp Add (EBinOp Sub (EBinOp Add (Var "Y1") (EBinOp Div (Var "X") (Var "Y1"))) (Lit (-maxFloat))) (Lit 2.384186e-07)
+      ]
+      
+    goal =
+      EBinOp Sub
+        (EBinOp Add
+          (EBinOp Sub (Lit 0.0) 
+            (EUnOp Abs (EBinOp Sub (EUnOp Sqrt (Var "X"))
+                       (EBinOp Div (EBinOp Add (Var "Y1") (EBinOp Div (Var "X") (Var "Y1"))) (Lit 2.0)))))
+          (EBinOp Add 
+            (EBinOp Div (Lit 1.0) (EBinOp Pow (Lit 2.0) (EBinOp Pow (Lit 2.0) (EBinOp Add (Var "i") (Lit 1.0))))) 
+            (EBinOp Mul (Lit 6.0) (EBinOp Mul (EBinOp Add (Var "i") (Lit 1.0)) (Lit (1/8388608))))))
+        (Lit 1.192093e-07)
+ 
 heronPreservationExactSwap :: Integer -> [[E]]
 heronPreservationExactSwap i1 =
   [negatedContext ++ [goal]]
@@ -542,17 +574,6 @@ testDisjunction = [EBinOp Sub (PowI (Var "X") 3) (Lit 1.0), EBinOp Sub (PowI (Va
 testDisjunction2 = [EBinOp Sub (PowI (EBinOp Sub (Var "X") (Lit 2.0)) 2) (Lit 1.0),
                     EBinOp Add (EBinOp Mul (PowI (Var "X") 3) (Lit (-1.0))) (Lit 2.0)]
 
-checkHeronInitExact = T.checkECNF heronInitExact [("X", (0.5, 2.0))] (prec 100)
-
-checkHeronPreservationExact i = T.checkECNF (heronPreservationExact i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (prec 100)
-
-checkHeronPreservationExactYGE i = T.checkECNF (heronPreservationExactYGE i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (prec 100)
-
-checkHeronPreservationExactYLE i = T.checkECNF (heronPreservationExactYLE i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (prec 100)
-
-checkSineVC = T.checkECNF sineVC [("X", (-1.0, 1.0))] (prec 100)
-
-checkSineVC2 = T.checkECNF yannickSineVC [("X", (-3.1, -3.0))] (prec 100)
 
 checkBisectionRootFinder = T.checkECNF bisectionRootFinder [("A", (1.0001, 5.0)), ("B", (1.0001, 5.0))] (prec 100)
 
@@ -830,7 +851,7 @@ square2p =
       -- FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "Y1")) 2) (PowI (EBinOp Sub (Var "X2") (Var "Y2")) 2)))) (EBinOp Add (EUnOp Sqrt (Lit 2.0)) (Lit epsC))
       -- (X1 - X2)^2 + (Y1 - Y2)^2 <= 2 + eps
 
-      -- (X1 - X2) ^ 2 + (Y1 - Y2) ^ 2 <= 2 + eps
+      -- (X1 - X2) ^ 2 + (Y1 - Y2) ^ 2 <= 0.1
       FComp Le ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y2")) 2))) (EBinOp Add ((Lit 2.0)) (Lit epsC))
 
 -- -2X1 + 2*X2
@@ -966,7 +987,24 @@ testInf =
     -- 2 + eps - (X1 - X2)^2 - (Y1 - Y2) >= 0
     goal = [EBinOp Add (EBinOp Add (EBinOp Add (PowI (Var "X") 3) (PowI (Var "Y") 3)) (PowI (Var "Z") 3)) (PowI (Var "A") 3)]
 
-      
+testBug = EBinOp Add (EBinOp Mul (EUnOp Sqrt (PowI (Var "x") 4)) (Var "y")) (Lit 1.0)
+-- testBug = EBinOp Add (EBinOp Mul (EUnOp Sqrt (Var "x")) (EUnOp Negate (Var "y"))) (Lit 2.0)
 -- Create dReal files
 -- writeFile "points3.smt2" $ cnfExpressionAndDomainsToDreal square3p [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0)), ("Z1", (0.0, 1.0)), ("Z2", (0.0, 1.0))] [] 0.0
 -- writeFile "points4.smt2" $ cnfExpressionAndDomainsToDreal square3p [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0)), ("Z1", (0.0, 1.0)), ("Z2", (0.0, 1.0)), ("A1", (0.0, 1.0)), ("A2", (0.0, 1.0))] [] 0.0
+
+checkHeronInitExact = T.checkECNF heronInitExact [("X", (0.5, 2.0))] (prec 100)
+checkHeronPreservationExact i = T.checkECNF (heronPreservationExact i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (prec 100)
+checkHeronPreservationExactGE i = T.checkECNF (heronPreservationExactYGE i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (prec 100)
+checkHeronPreservationExactLE i = T.checkECNF (heronPreservationExactYLE i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] (prec 100)
+checkSineVC = T.checkECNF sineVC [("X", (-1.0, 1.0))] (prec 100)
+checkSineVC2 = T.checkECNF yannickSineVC [("X", (-3.1, -3.0))] (prec 100)
+
+checkHeronInitExactCE = T.checkECNF heronInitExact [("X", (0.5, 2.0))] (prec 100)
+checkHeronPreservationExactCE i = T.checkECNFCE (heronPreservationExact i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] 30 500 1.2 (prec 100)
+checkHeronPreservationExactGECE i = T.checkECNFCE (heronPreservationExactYGE i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] 30 500 1.2 (prec 100)
+checkHeronPreservationExactLECE i = T.checkECNFCE (heronPreservationExactYLE i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] 30 500 1.2 (prec 100)
+checkSineVCCE = T.checkECNFCE sineVC [("X", (-1.0, 1.0))] 30 500 1.2 (prec 100)
+checkSineVC2CE = T.checkECNFCE yannickSineVC [("X", (-3.1, -3.0))] 30 500 1.2 (prec 100)
+
+checkHeronPreservationExactIVarCE = T.checkECNFCE (heronPreservationExactIVar) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750)), ("i", (1.0, 3.0))] 30 500 1.2 (prec 100)

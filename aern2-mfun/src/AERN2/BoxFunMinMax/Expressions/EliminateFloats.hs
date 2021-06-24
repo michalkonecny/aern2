@@ -11,6 +11,16 @@ import System.Exit
 fpTaylorPath :: FilePath 
 fpTaylorPath = "/home/junaid/Research/git/FPTaylor/fptaylor"
 
+removeFloats :: E -> E
+removeFloats (Float _ e)       = removeFloats e
+removeFloats (Float32 _ e)     = removeFloats e
+removeFloats (Float64 _ e)     = removeFloats e
+removeFloats (EBinOp op e1 e2) = EBinOp op (removeFloats e1) (removeFloats e2)
+removeFloats (EUnOp op e)      = EUnOp op (removeFloats e)
+removeFloats (PowI e i)        = PowI (removeFloats e) i
+removeFloats (Lit v)           = Lit v
+removeFloats (Var v)           = Var v
+
 eliminateFloatsF :: F -> VarMap -> Bool -> F
 eliminateFloatsF (FConn op f1 f2) varMap addError = FConn op (eliminateFloatsF f1 varMap addError) (eliminateFloatsF f2 varMap addError)
 eliminateFloatsF (FComp op e1 e2) varMap addError = FComp op (eliminateFloats e1 varMap addError) (eliminateFloats e2 varMap addError)
@@ -18,12 +28,20 @@ eliminateFloatsF (FNot f) varMap addError         = FNot (eliminateFloatsF f var
 
 eliminateFloats :: E -> VarMap -> Bool -> E
 eliminateFloats e@(Float _ _) _ _ = error $ "Cannot eliminate Float, precision unknown. Expression: " ++ show e
-eliminateFloats floatE@(Float32 _ e) varMap addError = if addError then EBinOp Add e (Lit absoluteError) else EBinOp Sub e (Lit absoluteError) 
+eliminateFloats floatE@(Float32 _ e) varMap addError = 
+  if addError 
+    then EBinOp Add eWithotFloats (Lit absoluteError) 
+    else EBinOp Sub eWithotFloats (Lit absoluteError) 
   where
     absoluteError = unsafePerformIO $ findAbsoluteErrorUsingFPTaylor floatE varMap
-eliminateFloats floatE@(Float64 _ e) varMap addError = if addError then EBinOp Add e (Lit absoluteError) else EBinOp Sub e (Lit absoluteError) 
+    eWithotFloats = removeFloats e
+eliminateFloats floatE@(Float64 _ e) varMap addError = 
+  if addError 
+    then EBinOp Add eWithotFloats (Lit absoluteError) 
+    else EBinOp Sub eWithotFloats (Lit absoluteError) 
   where
     absoluteError = unsafePerformIO $ findAbsoluteErrorUsingFPTaylor floatE varMap
+    eWithotFloats = removeFloats e
 eliminateFloats (EBinOp op e1 e2) varMap addError = EBinOp op (eliminateFloats e1 varMap addError) (eliminateFloats e2 varMap addError)
 eliminateFloats (EUnOp op e) varMap addError = EUnOp op (eliminateFloats e varMap addError)
 eliminateFloats (Lit v) _ _ = Lit v

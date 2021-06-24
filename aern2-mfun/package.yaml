@@ -29,7 +29,7 @@ dependencies:
 - psqueues
 - integer-logarithms
 # - hspec
-# - QuickCheck
+- QuickCheck
 - collect-errors >= 0.1.5
 - mixed-types-num >= 0.5.7
 - aern2-mp >= 0.2.5
@@ -37,8 +37,11 @@ dependencies:
 - aern2-fun >= 0.2.5
 - simplex-haskell
 - scientific
-# - smt2-parser
+- smt2-parser
 - ghc
+- text
+- bytestring
+- binary
 
 default-extensions:
 - RebindableSyntax,

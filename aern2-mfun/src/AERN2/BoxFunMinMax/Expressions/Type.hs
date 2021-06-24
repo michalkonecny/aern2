@@ -5,6 +5,9 @@ import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import qualified Data.Map as Map
+import Data.List (nub)
+
+import Test.QuickCheck
 
 import Debug.Trace (trace)
 
@@ -29,6 +32,93 @@ data Conn = And | Or | Impl | Equiv
 -- and logical connectives between F types
 data F = FComp Comp E E | FConn Conn F F | FNot F | FTrue | FFalse
   deriving (Show, P.Eq)
+
+newtype Name = Name String deriving Show
+
+instance Arbitrary Name where
+  arbitrary = 
+    oneof 
+    [
+      return (Name "a"),
+      return (Name "b"),
+      return (Name "c"),
+      return (Name "d"),
+      return (Name "e"),
+      return (Name "f"),
+      return (Name "g"),
+      return (Name "h"),
+      return (Name "i"),
+      return (Name "j"),
+      return (Name "k"),
+      return (Name "l")
+    ]
+
+instance Arbitrary UnOp where
+  arbitrary =
+    oneof [return Negate, return Abs, return Sin, return Cos]
+
+instance Arbitrary BinOp where
+  arbitrary =
+    oneof [return Add, return Sub, return Mul, return Div, return Min, return Max]
+
+instance Arbitrary RoundingMode where
+  arbitrary =
+    oneof [return RNE, return RTP, return RTN, return RTN]
+instance Arbitrary E where
+  arbitrary = sized eGenerator
+    where
+      varName :: Gen Name
+      varName = arbitrary
+
+      eGenerator :: Int -> Gen E
+      eGenerator n | n>0 =
+        oneof 
+        [
+          Lit     <$> fmap toRational (arbitrary :: Gen Integer), 
+          Var     <$> show <$> varName,
+          EUnOp   <$> arbitrary <*> subE,
+          EUnOp Sqrt . Lit      <$> fmap getPositive (arbitrary :: Gen (Positive Rational)),
+          EBinOp  <$> arbitrary <*> subE <*> subE
+          -- PowI    <$> subE <*> fmap getPositive (arbitrary :: Gen (Positive Integer)) -- We do not allow Floats here
+        ]
+        where
+          subE = eGenerator (int (floor (n / 20)))
+          sqrtG x = EUnOp Sqrt (Lit x)
+      eGenerator _        = oneof [Lit <$> (fmap toRational (arbitrary :: Gen Integer)), Var <$> show <$> varName]
+          -- subE = eGenerator (pred n)
+
+-- data Comp = Gt | Ge | Lt | Le | Eq
+--   deriving (Show, P.Eq)
+
+-- data Conn = And | Or | Impl | Equiv
+--   deriving (Show, P.Eq)
+
+-- -- | The F type is used to specify comparisons between E types
+-- -- and logical connectives between F types
+-- data F = FComp Comp E E | FConn Conn F F | FNot F | FTrue | FFalse
+--   deriving (Show, P.Eq)
+
+instance Arbitrary Comp where
+  arbitrary = oneof [return Gt, return Ge, return Lt, return Le, return Eq]
+
+instance Arbitrary Conn where
+  arbitrary = oneof [return And, return Or, return Impl, return Equiv]
+
+instance Arbitrary F where
+  arbitrary = sized fGenerator
+    where
+      fGenerator :: Int -> Gen F
+      fGenerator 0 = oneof [FComp <$> arbitrary <*> arbitrary <*> arbitrary]
+      fGenerator n =
+        oneof
+        [
+          FComp <$> arbitrary <*> arbitrary <*> arbitrary,
+          FConn <$> arbitrary <*> subF <*> subF,
+          FNot  <$> subF
+        ]
+        where
+          subF = fGenerator (int (floor (n / 20)))
+-- Note, does not generate FTrue, FFalse
 
 -- | Translate F to a single expression (E)
 -- Removes implications, logical connectives
@@ -57,24 +147,38 @@ fToE FFalse   = error "fToE for FFalse undefined" $ Lit $ -1.0
 
 
 fToECNF :: F -> [[E]]
-fToECNF (FComp op e1 e2)   = case op of
-  Le ->
-    [[EBinOp Add (EUnOp Negate e1) e2]] -- f1 <= f2 == f1 - f2 <= 0 == -f1 + f2 >= 0
-  Lt ->
-    [[EBinOp Add (EUnOp Negate e1) e2]]
-  Ge ->
-    [[EBinOp Sub e1 e2]] -- f1 >= f2 == f1 - f2 >= 0 == 
-  Gt ->
-    [[EBinOp Sub e1 e2]]
-  Eq -> fToECNF $ FConn And (FComp Ge e1 e2) (FComp Le e1 e2) -- f1 = f2 == f1 >= f2 /\ f1 <= f2
-fToECNF (FConn op f1 f2)   = case op of
-  And -> fToECNF f1 ++ fToECNF f2 -- [e1 /\ e2 /\ (e3 \/ e4)] ++ [p1 /\ (p2 \/ p3) /\ p4] = [e1 /\ e2 /\ (e3 \/ e4) /\ p1 /\ (p2 \/ p3) /\ p4]
-  Or ->  [d1 ++ d2 | d1 <- fToECNF f1, d2 <- fToECNF f2] -- [e1 /\ e2 /\ (e3 \/ e4)] \/ [p1 /\ (p2 \/ p3) /\ p4] 
-  Impl -> [d1 ++ d2 | d1 <- map (map (EUnOp Negate)) (fToECNF f1), d2 <- fToECNF f2]
-  Equiv -> fToECNF $ FComp Eq (fToE f1) (fToE f2)
-fToECNF (FNot f) = map (map (EUnOp Negate)) (fToECNF f)
-fToECNF FTrue    = error "fToECNF for FTrue undefined"  $ Lit 1.0
-fToECNF FFalse   = error "fToECNF for FFalse undefined" $ Lit $ -1.0
+fToECNF = fToECNFB False 
+  where
+    fToECNFB :: Bool -> F -> [[E]]
+    fToECNFB isNegated (FNot f) = fToECNFB (not isNegated) f
+    fToECNFB True (FComp op e1 e2)   = case op of
+      Le -> fToECNFB False (FComp Gt e1 e2) -- !(f1 <= f2) -> (f1 > f2)
+      Lt -> fToECNFB False (FComp Ge e1 e2)
+      Ge -> fToECNFB False (FComp Lt e1 e2)
+      Gt -> fToECNFB False (FComp Le e1 e2)
+      Eq -> fToECNFB True $ FConn And (FComp Ge e1 e2) (FComp Le e1 e2) -- !(f1 = f2)
+    fToECNFB False (FComp op e1 e2)   = case op of
+      Le ->
+        [[EBinOp Add (EUnOp Negate e1) e2]] -- f1 <= f2 == f1 - f2 <= 0 == -f1 + f2 >= 0
+      Lt ->
+        [[EBinOp Add (EUnOp Negate e1) e2]]
+      Ge ->
+        [[EBinOp Sub e1 e2]] -- f1 >= f2 == f1 - f2 >= 0 == 
+      Gt ->
+        [[EBinOp Sub e1 e2]]
+      Eq -> fToECNFB False $ FConn And (FComp Ge e1 e2) (FComp Le e1 e2) -- f1 = f2 == f1 >= f2 /\ f1 <= f2
+    fToECNFB True (FConn op f1 f2)   = case op of
+      And     -> [d1 ++ d2 | d1 <- fToECNFB True f1, d2 <- fToECNFB True f2] 
+      Or      -> fToECNFB True f1 ++ fToECNFB True f2
+      Impl    -> fToECNFB False f1 ++ fToECNFB True f2 -- !(!p \/ q) == p /\ !q
+      Equiv   -> fToECNFB True $ FConn And (FConn Impl f1 f2) (FConn Impl f2 f1)
+    fToECNFB False (FConn op f1 f2)   = case op of
+      And     -> fToECNFB False f1 ++ fToECNFB False f2 -- [e1 /\ e2 /\ (e3 \/ e4)] ++ [p1 /\ (p2 \/ p3) /\ p4] = [e1 /\ e2 /\ (e3 \/ e4) /\ p1 /\ (p2 \/ p3) /\ p4]
+      Or      -> [d1 ++ d2 | d1 <- fToECNFB False f1, d2 <- fToECNFB False f2] -- [e1 /\ e2 /\ (e3 \/ e4)] \/ [p1 /\ (p2 \/ p3) /\ p4] 
+      Impl    -> [d1 ++ d2 | d1 <- fToECNFB True f1, d2 <- fToECNFB False f2]
+      Equiv   -> fToECNFB False $ FConn And (FConn Impl f1 f2) (FConn Impl f2 f1)
+    fToECNFB isNegated FTrue    = error "fToECNFB for FTrue undefined"  $ Lit 1.0
+    fToECNFB isNegated FFalse   = error "fToECNFB for FFalse undefined" $ Lit $ -1.0
 
 -- | Add bounds for any Float expressions
 -- addRoundingBounds :: E -> [[E]]
@@ -117,7 +221,7 @@ simplifyF (FConn Or (FComp Eq f1l f1r) (FComp Gt f2l f2r))   = simplifyF $ FConn
 -- Equiv
 simplifyF (FConn Equiv FTrue FFalse)                         = FFalse
 simplifyF (FConn Equiv FFalse FTrue)                         = FFalse
-simplifyF (FConn Equiv FFalse FFalse)                        = FFalse
+simplifyF (FConn Equiv FFalse FFalse)                        = FTrue
 simplifyF (FConn Equiv FTrue FTrue)                          = FTrue
 simplifyF (FConn Equiv f FTrue)                              = simplifyF f
 simplifyF (FConn Equiv FTrue f)                              = simplifyF f
@@ -126,13 +230,13 @@ simplifyF (FConn Equiv FFalse f)                             = simplifyF $ FNot 
 -- And
 simplifyF (FConn And _ FFalse)                               = FFalse
 simplifyF (FConn And FFalse _)                               = FFalse
-simplifyF (FConn And f FTrue)                                = f
-simplifyF (FConn And FTrue f)                                = f
+simplifyF (FConn And f FTrue)                                = simplifyF f
+simplifyF (FConn And FTrue f)                                = simplifyF f
 -- Or
 simplifyF (FConn Or _ FTrue)                                 = FTrue
 simplifyF (FConn Or FTrue _)                                 = FTrue
-simplifyF (FConn Or f FFalse)                                = f
-simplifyF (FConn Or FFalse f)                                = f
+simplifyF (FConn Or f FFalse)                                = simplifyF f
+simplifyF (FConn Or FFalse f)                                = simplifyF f
 -- Impl
 simplifyF (FConn Impl FFalse _)                              = FTrue
 simplifyF (FConn Impl _ FTrue)                               = FTrue
@@ -259,3 +363,50 @@ prettyShowECNF cnf =
     prettyShowDisjunction es  = 
       "OR" ++ concatMap (\e -> "\n\t\t" ++ prettyShowE e ++ " > 0") es
 
+prettyShowF :: F -> String
+prettyShowF (FComp op e1 e2) = "(" ++ prettyShowE e1 ++ ") " ++ prettyShowComp op ++ " (" ++ prettyShowE e2 ++ ")"
+prettyShowF (FConn op f1 f2) = prettyShowConn op ++ " ((" ++ prettyShowF f1 ++ "), (" ++ prettyShowF f2 ++ "))"
+prettyShowF (FNot f)         = "Not(" ++ prettyShowF f ++ ")"
+prettyShowF FTrue            = "True"
+prettyShowF FFalse           = "False"
+
+prettyShowComp :: Comp -> String
+prettyShowComp Gt = ">"
+prettyShowComp Ge = ">="
+prettyShowComp Lt = "<"
+prettyShowComp Le = "<="
+prettyShowComp Eq = "=="
+
+prettyShowConn :: Conn -> String
+prettyShowConn And   = "AND"
+prettyShowConn Or    = "OR"
+prettyShowConn Impl  = "IMPL"
+prettyShowConn Equiv = "EQUIV"
+
+-- |Extract all variables in an expression
+-- Will not return duplicationes
+extractVariablesE :: E -> [String]
+extractVariablesE = nub . findAllVars
+  where
+    findAllVars (Lit _)          = []
+    findAllVars (Var v)          = [v]
+    findAllVars (EUnOp _ e)      = findAllVars e
+    findAllVars (EBinOp _ e1 e2) = findAllVars e1 ++ findAllVars e2
+    findAllVars (PowI e _)       = findAllVars e
+    findAllVars (Float32 _ e)    = findAllVars e
+    findAllVars (Float64 _ e)    = findAllVars e
+    findAllVars (Float _ e)      = findAllVars e
+
+-- |Extract all variables in an expression
+-- Will not return duplicationes
+extractVariablesF :: F -> [String]
+extractVariablesF = nub . findAllVars
+  where
+    findAllVars (FComp _ e1 e2) = extractVariablesE e1 ++ extractVariablesE e2
+    findAllVars (FConn _ f1 f2) = findAllVars f1 ++ findAllVars f2
+    findAllVars (FNot f)        = findAllVars f
+    findAllVars FTrue           = []
+    findAllVars FFalse          = []
+
+extractVariablesECNF :: [[E]] -> [String]
+extractVariablesECNF = nub . concatMap (concatMap extractVariablesE) 

@@ -11,6 +11,7 @@ import AERN2.BoxFunMinMax.Expressions.Translators.BoxFun
 import qualified AERN2.BoxFunMinMax.Expressions.Type as E
 import AERN2.BoxFun.Box (createEnclosingBox, Box, fromVarMap, intersectionCertainlyEmpty, nonEmptyIntersection, lowerBounds, upperBounds)
 import qualified AERN2.Linear.Vector.Type as V
+import AERN2.Kleenean
 import Control.Parallel.Strategies
 import Data.Bifunctor
 import qualified Simplex as S
@@ -18,12 +19,12 @@ import qualified Simplex as S
 import Data.List (find, intercalate)
 import qualified Data.Sequence as Seq
 
-import AERN2.MP.Dyadic (Dyadic)
+import AERN2.MP.Dyadic (Dyadic, dyadic)
 
 import qualified Debug.Trace as T
 
 import Data.Maybe
-
+import Control.CollectErrors
 trace a x = x
 
 -- | Check a CNF (Conjunctive Normal Form) of Expressions in the form of a list of lists
@@ -268,6 +269,47 @@ disjunctionRangesBelowZero = all rangeBelowZero
 conjunctionRangesBelowZero :: [[CN MPBall]] -> Bool
 conjunctionRangesBelowZero = all disjunctionRangesBelowZero
 
+checkFWithApply :: E.F -> VarMap -> Precision -> CN Kleenean
+checkFWithApply (E.FComp op e1 e2) varMap p = 
+  case op of
+    E.Ge -> e1Val >= e2Val
+    E.Gt -> e1Val >  e2Val
+    E.Le -> e1Val <= e2Val
+    E.Lt -> e1Val <  e2Val
+    E.Eq -> e1Val == e2Val
+  where
+    e1Val = applyExpression e1 varMap p
+    e2Val = applyExpression e2 varMap p
+checkFWithApply (E.FConn op f1 f2) varMap p =
+  case op of
+    E.And   -> f1Val && f2Val
+    E.Or    -> f1Val || f2Val
+    E.Equiv -> 
+      case f1Val of
+        (CollectErrors (Just CertainTrue) error1) ->
+          case f2Val of
+            (CollectErrors (Just CertainTrue) error2)  -> prependErrors error2 $ CollectErrors (Just CertainTrue) error1
+            (CollectErrors (Just CertainFalse) error2) -> prependErrors error2 $ CollectErrors (Just CertainFalse) error1
+            (CollectErrors (Just TrueOrFalse) error2)  -> prependErrors error2 $ CollectErrors (Just TrueOrFalse) error1
+            (CollectErrors Nothing error2)             -> prependErrors error2 $ CollectErrors Nothing error1
+        (CollectErrors (Just CertainFalse) error1) ->
+          case f2Val of
+            (CollectErrors (Just CertainTrue) error2)  -> prependErrors error2 $ CollectErrors (Just CertainFalse) error1
+            (CollectErrors (Just CertainFalse) error2) -> prependErrors error2 $ CollectErrors (Just CertainTrue) error1
+            (CollectErrors (Just TrueOrFalse) error2)  -> prependErrors error2 $ CollectErrors (Just TrueOrFalse) error1
+            (CollectErrors Nothing error2)             -> prependErrors error2 $ CollectErrors Nothing error1
+        (CollectErrors (Just TrueOrFalse) error1) ->
+          case f2Val of
+            (CollectErrors Nothing error2)             -> prependErrors error2 $ CollectErrors Nothing error1
+            (CollectErrors _ error2)                   -> prependErrors error2 $ CollectErrors (Just TrueOrFalse) error1
+        (CollectErrors Nothing error1)                 -> CollectErrors Nothing error1
+    E.Impl  -> not f1Val || f2Val
+  where
+    f1Val = checkFWithApply f1 varMap p
+    f2Val = checkFWithApply f2 varMap p
+checkFWithApply (E.FNot f) varMap p = not $ checkFWithApply f varMap p
+checkFWithApply E.FTrue _ _         = cn CertainTrue
+checkFWithApply E.FFalse _ _        = cn CertainFalse
 
 filterOutFalseTermsInDisjunction :: [E.E] -> VarMap -> Precision -> [E.E]
 filterOutFalseTermsInDisjunction expressions varMap p = filter (\e -> not (applyExpressionLipschitz e varMap p !>=! cnMPBallP p (cn 0))) expressions
@@ -593,13 +635,18 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth dept
   | checkIfEsTrueUsingApply = 
     trace "proved true with apply" 
     (Just True, Nothing)
+  -- | greatestCentre !<! 0.0 =
+  --   trace "checking BFS" $
+  --   case decideDisjunctionBFS [varMap] filteredExpressions 0 bfsBoxesCutoff relativeImprovementCutoff p of
+  --     r@(Just False, _) -> r
+  --     (_, _) -> checkSimplex
   | otherwise = checkSimplex
   where
       box  = fromVarMap varMap p
       boxL = lowerBounds box
       boxU = upperBounds box
 
-      esWithRanges            = map (\ (e, f) -> ((e, f), apply f box)) expressionsWithFunctions
+      esWithRanges            = parMap rseq (\ (e, f) -> ((e, f), apply f box)) expressionsWithFunctions
       filterOutFalseTerms     = filter (\ (_, range) -> not (range !<! 0)) esWithRanges
       greatestCentre          = maximum $ map (AERN2.MP.Ball.centre . snd) esWithRanges
       checkIfEsTrueUsingApply = any (\ (_, range) -> range !>=! 0) filterOutFalseTerms
@@ -609,7 +656,7 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth dept
 
       -- (rangeAtLeftCornerOfBox, rangeAtRightCornerOfBox, firstDerivativesOverBox) for each filtered expression
       cornerRangesWithDerivatives = 
-        map
+        parMap rseq
         (\ ((_, f), _) -> (apply f boxL, apply f boxU, gradient f box))
         filterOutFalseTerms
 
@@ -638,12 +685,18 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth dept
           case decideWithSimplex cornerRangesWithDerivatives varMap of
             r@(Just True, _) -> trace "proved true with simplex" r
             (Nothing, Just newVarMap) -> 
-              case findFalsePointWithSimplex cornerRangesWithDerivatives newVarMap of
-                Nothing -> recurseOnVarMap newVarMap
-                Just counterExample -> 
-                  if disjunctionRangesBelowZero (applyDisjunction filteredExpressions counterExample p) 
-                    then (Just False, Just counterExample)
-                    else recurseOnVarMap newVarMap
+              let 
+                newBox  = fromVarMap newVarMap p
+                newBoxL = lowerBounds box
+                newBoxU = upperBounds box
+                newCornerRangesWithDerivatives =
+                  parMap rseq
+                  (\ ((_, f), _) -> (apply f newBoxL, apply f newBoxU, gradient f newBox))
+                  filterOutFalseTerms
+              in
+                case findFalsePointWithSimplex newCornerRangesWithDerivatives newVarMap of
+                  Nothing             -> recurseOnVarMap newVarMap
+                  Just counterExample -> (Just False, Just counterExample)
             _ -> undefined
         | currentDepth !<! depthCutoff = 
           trace ("bisecting without simplex " ++ show varMap) $
@@ -875,10 +928,17 @@ encloseFunctionCounterExamples ((leftCornerValue, rightCornerValue, derivatives)
     -- S.LEQ (zip [1..] lowerDerivatives) (foldl add (-rightU - lowerSubst - eps) lowerDerivativesTimesRightCorner)
   : encloseFunctionCounterExamples values leftCorner rightCorner substVars
   where
-    eps = 1/100000000000000000000000000000
+    -- eps = 1/100000000000000000000000000000
+
+    -- mpBallToRational :: CN MPBall -> (Rational, Rational)
+    -- mpBallToRational = bimap rational rational . endpoints . reducePrecionIfInaccurate . unCN
+    eps = 1/1000000000000
 
     mpBallToRational :: CN MPBall -> (Rational, Rational)
-    mpBallToRational = bimap rational rational . endpoints . reducePrecionIfInaccurate . unCN
+    -- mpBallToRational v = 
+      -- let (l, r) = (endpointsAsIntervals . reducePrecionIfInaccurate . (~!)) v
+      -- in ((rational . snd .  endpoints) l, (rational . fst . endpoints) r)
+    mpBallToRational = bimap rational rational . endpoints . unCN
       -- bimap (endpoints . reducePrecionIfInaccurate)
 
     -- Get the lower and upper bounds of the function applied at the bottom left corner of the box
@@ -890,7 +950,8 @@ encloseFunctionCounterExamples ((leftCornerValue, rightCornerValue, derivatives)
     We use upperbounds for derivatives, this also looks correct
     -}
 
-    (_, leftU) = mpBallToRational leftCornerValue
+    (leftL, leftU) = mpBallToRational leftCornerValue
+    -- leftU = (rational . snd . endpoints . snd . endpointsAsIntervals . (~!)) leftCornerValue
     (_, rightU) = mpBallToRational rightCornerValue
     
     -- Get the first derivatives as rationals
@@ -898,6 +959,7 @@ encloseFunctionCounterExamples ((leftCornerValue, rightCornerValue, derivatives)
     
     lowerDerivatives = V.toList $ V.map fst firstDerivatives
     upperDerivatives = V.toList $ V.map snd firstDerivatives
+    -- upperDerivatives = V.toList $ V.map (rational . snd . endpoints . snd . endpointsAsIntervals . (~!)) derivatives
 
     negatedLowerDerivatives  = map negate lowerDerivatives
     negatedUpperDerivatives  = map negate upperDerivatives
@@ -942,35 +1004,34 @@ createFunctionConstraints
   -> [S.PolyConstraint] -- ^ Each item is a constraint for each function
 createFunctionConstraints [] _ _ _ _ = []
 createFunctionConstraints ((leftCornerValue, rightCornerValue, derivatives) : values) leftCorner rightCorner currentIndex substVars = 
-  (
-      -- Here, we set the coefficient for the variable representing the current function to be 1
-      -- We then append a list of the lower and upper bounds of the first derivatives for each
-      -- respective constraint
-      -- On the right hand side of each constraint, we add:
-      --   the negation of the lower/upper bound of the function applied at the bottom left corner of the box.
-      --   the values of the lower/upper derivatives multiplied by the values of the bottom left corner of the box.
-      --   any transformations that need to take place as a result of shifting the constraints for the domain
-      --     the above transformation only occurs when at least one domain is partly negative.
-          [
-            S.LEQ ((currentIndex, 1.0) : zip [1..] lowerDerivatives) (foldl add (-leftL - lowerSubst) lowerDerivativesTimesLeftCorner),
-            -- S.GEQ ((currentIndex, 1.0) : zip [1..] upperDerivatives) (foldl add (-leftU - upperSubst) upperDerivativesTimesLeftCorner),
-            -- FIXME: Swap order of subtraction for the right corner case, and then use the original order of constraints
-            -- -y + (dx_1L * x_1) >= -yl + (dx_1L * x_1r)
-            -- S.GEQ ((currentIndex, 1.0) : zip [1..] lowerDerivatives) (foldl add (-rightL - lowerSubst) lowerDerivativesTimesRightCorner),
-            -- S.LEQ ((currentIndex, 1.0) : zip [1..] upperDerivatives) (foldl add (-rightU - upperSubst) upperDerivativesTimesRightCorner)
-            -- S.LEQ ((currentIndex, 1.0) : zip [1..] (map (\v -> v * (-1)) lowerDerivatives)) (foldl add (-rightL + lowerSubst) lowerDerivativesTimesRightCorner),
-            -- S.GEQ ((currentIndex, 1.0) : zip [1..] (map (\v -> v * (-1)) upperDerivatives)) (foldl add (-rightU + upperSubst) upperDerivativesTimesRightCorner)
-            -- y + (dx_1L * x_1) >= yl + (dx_1L * x_1r)
-            -- S.GEQ ((currentIndex, -1.0) : zip [1..] lowerDerivatives) (foldl add (rightL - lowerSubst) lowerDerivativesTimesRightCorner),
-            -- S.LEQ ((currentIndex, -1.0) : zip [1..] upperDerivatives) (foldl add (rightU - upperSubst) upperDerivativesTimesRightCorner)
-            -- y + (x_1 * (-dx_1R)) >= yl + (x_1r * (-dx_1R))
-            S.GEQ ((currentIndex, -1.0) : zip [1..] negatedUpperDerivatives) (foldl add (rightL + upperSubst) negatedUpperDerivativesTimesRightCorner)
-            -- S.LEQ ((currentIndex, -1.0) : zip [1..] negatedLowerDerivatives) (foldl add (rightU + lowerSubst) negatedLowerDerivativesTimesRightCorner)
-            
-          ]
-    ++
-    createFunctionConstraints values leftCorner rightCorner (currentIndex + 1) substVars
-  )
+  -- Here, we set the coefficient for the variable representing the current function to be 1
+  -- We then append a list of the lower and upper bounds of the first derivatives for each
+  -- respective constraint
+  -- On the right hand side of each constraint, we add:
+  --   the negation of the lower/upper bound of the function applied at the bottom left corner of the box.
+  --   the values of the lower/upper derivatives multiplied by the values of the bottom left corner of the box.
+  --   any transformations that need to take place as a result of shifting the constraints for the domain
+  --     the above transformation only occurs when at least one domain is partly negative.
+  [
+    S.LEQ ((currentIndex, 1.0) : zip [1..] lowerDerivatives) (foldl add (-leftL - lowerSubst) lowerDerivativesTimesLeftCorner),
+    -- S.GEQ ((currentIndex, 1.0) : zip [1..] upperDerivatives) (foldl add (-leftU - upperSubst) upperDerivativesTimesLeftCorner),
+    -- FIXME: Swap order of subtraction for the right corner case, and then use the original order of constraints
+    -- -y + (dx_1L * x_1) >= -yl + (dx_1L * x_1r)
+    -- S.GEQ ((currentIndex, 1.0) : zip [1..] lowerDerivatives) (foldl add (-rightL - lowerSubst) lowerDerivativesTimesRightCorner),
+    -- S.LEQ ((currentIndex, 1.0) : zip [1..] upperDerivatives) (foldl add (-rightU - upperSubst) upperDerivativesTimesRightCorner)
+    -- S.LEQ ((currentIndex, 1.0) : zip [1..] (map (\v -> v * (-1)) lowerDerivatives)) (foldl add (-rightL + lowerSubst) lowerDerivativesTimesRightCorner),
+    -- S.GEQ ((currentIndex, 1.0) : zip [1..] (map (\v -> v * (-1)) upperDerivatives)) (foldl add (-rightU + upperSubst) upperDerivativesTimesRightCorner)
+    -- y + (dx_1L * x_1) >= yl + (dx_1L * x_1r)
+    -- S.GEQ ((currentIndex, -1.0) : zip [1..] lowerDerivatives) (foldl add (rightL - lowerSubst) lowerDerivativesTimesRightCorner),
+    -- S.LEQ ((currentIndex, -1.0) : zip [1..] upperDerivatives) (foldl add (rightU - upperSubst) upperDerivativesTimesRightCorner)
+    -- y + (x_1 * (-dx_1R)) >= yl + (x_1r * (-dx_1R))
+    S.GEQ ((currentIndex, -1.0) : zip [1..] negatedUpperDerivatives) (foldl add (rightL + upperSubst) negatedUpperDerivativesTimesRightCorner)
+    -- S.LEQ ((currentIndex, -1.0) : zip [1..] negatedLowerDerivatives) (foldl add (rightU + lowerSubst) negatedLowerDerivativesTimesRightCorner)
+    
+  ]
+  ++
+  createFunctionConstraints values leftCorner rightCorner (currentIndex + 1) substVars
+  
   where
     mpBallToRational :: CN MPBall -> (Rational, Rational)
     mpBallToRational = bimap rational rational . endpoints . reducePrecionIfInaccurate . unCN
@@ -1025,7 +1086,7 @@ encloseAreaUnderZeroWithSimplex
                       is feasible. The new VarMap may be the same as the old VarMap, which means
                       that the simplex was not able to shrink the original VarMap. -}
 encloseAreaUnderZeroWithSimplex cornerValuesWithDerivatives varMap = 
-  -- trace (show completeSystem) $
+  -- T.trace (show completeSystem) $ 
   --trace (show substVars) $
   -- If the first result from the list returned by the simplex method is empty,
   -- the system is infeasible, so we return nothing
