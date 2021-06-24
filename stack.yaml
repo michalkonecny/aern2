@@ -46,7 +46,7 @@ packages:
 - 'aern2-fun'
 # - 'aern2-fun-univariate'
 # - 'aern2-fnreps'
-# - 'aern2-mfun'
+- 'aern2-mfun'
 
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)

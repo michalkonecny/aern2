@@ -27,7 +27,7 @@ import AERN2.MP.Dyadic
 import AERN2.BoxFunMinMax.Expressions.Type
 import AERN2.BoxFunMinMax.VarMap
 
-import Debug.Trace
+import Debug.Trace ()
 
 type VarName = String
 
@@ -217,7 +217,7 @@ getFreeVarsE _ = Set.empty
 -- | compute the value of E with Vars at specified points
 -- | (a generalised version of computeE)
 evalE :: 
-  (Field v,
+  (Ring v, CanDivSameType v, CanPowBy v Integer,
    CanMinMaxSameType v, CanAbsSameType v, 
    CanPowBy v v, CanSqrtSameType v, CanSinCosSameType v,
    IsInterval v, CanAddThis v Integer, HasDyadics v, CanMinMaxSameType (IntervalEndpoint v)
