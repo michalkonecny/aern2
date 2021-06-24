@@ -24,6 +24,8 @@ import qualified Data.List as List
 import AERN2.MP.Ball
 import AERN2.MP.Dyadic
 
+import AERN2.Kleenean
+
 import AERN2.BoxFunMinMax.Expressions.Type
 import AERN2.BoxFunMinMax.VarMap
 
@@ -151,6 +153,9 @@ scanHypothesis (FComp Ge e1 e2) False intervals = scanHypothesis (FComp Le e2 e1
 scanHypothesis (FComp Gt e1 e2) False intervals = scanHypothesis (FComp Le e2 e1) False intervals
 scanHypothesis _ _False intervals = intervals
 
+-- evalF_Rational :: VarBoundMap -> F -> Kleenean
+-- evalF_Rational intervals 
+
 evalE_Rational :: 
   VarBoundMap -> E -> (Maybe Rational, Maybe Rational)
 evalE_Rational intervals =
@@ -187,32 +192,9 @@ updateLower (Nothing,_) (Just l1,u) = (Just $ l1, u)
 updateLower (Nothing,_) (Nothing,u) = (Nothing, u)
 --updateLower _ _ = error "DeriveBounds: updateLower failed"
 
-
-{-
-  TODO: move the following to more appropriate modules.
-  -}
-
 -- | extract all variables from a formula
 getFreeVarsF :: F -> Set.Set VarName
-getFreeVarsF (FComp _ e1 e2) = 
-  (getFreeVarsE e1) `Set.union` (getFreeVarsE e2)
-getFreeVarsF (FConn _ f1 f2) = 
-  (getFreeVarsF f1) `Set.union` (getFreeVarsF f2)
-getFreeVarsF (FNot f) =
-  getFreeVarsF f
-getFreeVarsF _ = Set.empty
--- | extract all variables from an expression
-getFreeVarsE :: E -> Set.Set VarName
-getFreeVarsE (Var v) = 
-  Set.singleton v
-getFreeVarsE (EBinOp _ e1 e2) = 
-  (getFreeVarsE e1) `Set.union` (getFreeVarsE e2)
-getFreeVarsE (EUnOp _ e) =
-  getFreeVarsE e
-getFreeVarsE (PowI e _) =
-  getFreeVarsE e
-getFreeVarsE _ = Set.empty
-
+getFreeVarsF = Set.fromList . extractVariablesF
 
 -- | compute the value of E with Vars at specified points
 -- | (a generalised version of computeE)
