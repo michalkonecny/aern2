@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a9938a02be7238b66d82ae77663d1a45d659e1b113e60f07489229fc78d2097f
+-- hash: fb17925708aa83422edda4118776800b979b012a17504fc5f2eab970696b6bf4
 
 name:           aern2-mfun
 version:        0.2.6.0
@@ -78,7 +78,6 @@ library
     , psqueues
     , scientific
     , simplex-haskell
-    , smt2-parser
     , text
     , vector
   default-language: Haskell2010
@@ -109,7 +108,6 @@ executable aern2-mfun-benchmark-heron
     , psqueues
     , scientific
     , simplex-haskell
-    , smt2-parser
     , text
     , vector
   default-language: Haskell2010
@@ -140,7 +138,6 @@ executable aern2-mfun-benchmark-optimisation
     , psqueues
     , scientific
     , simplex-haskell
-    , smt2-parser
     , text
     , vector
   default-language: Haskell2010

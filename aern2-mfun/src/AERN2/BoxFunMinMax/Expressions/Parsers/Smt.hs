@@ -2,8 +2,6 @@ module AERN2.BoxFunMinMax.Expressions.Parsers.Smt where
 
 import MixedTypesNumPrelude
 import qualified Prelude as P
-import Language.SMT2.Parser
-import Language.SMT2.Syntax
 import qualified Data.Text.IO
 import qualified Data.Text.Internal
 import System.IO.Unsafe
@@ -32,17 +30,6 @@ parser = LP.analyzeExpressionSequence . LP.parseSequence . LP.tokenize
 
 parseSMT2 :: FilePath -> [LD.Expression]
 parseSMT2 filePath = parser . unsafePerformIO $ P.readFile filePath
-
-{-
-parsedtmp = parseSMT "/home/junaid/Research/git/aern2-base/aern2/aern2-mfun/src/AERN2/BoxFunMinMax/Expressions/Parsers/heron__heron-Heron__heron__subprogram_def-VC_def1.smt2"
-parsed = Data.List.head (rights [parsedtmp])
-goals = findGoals parsed
-fGoal = goalToF (Data.List.head goals) 
--}
-parseSMT :: FilePath -> Either Data.Text.Internal.Text Script
-parseSMT filePath = parseFileMsg script fileAsText
-  where
-    fileAsText = unsafePerformIO $ Data.Text.IO.readFile filePath
 
 -- |Find assertions in a parsed expression
 -- Assertions are Application types with the operator being a Variable equal to "assert"
@@ -88,7 +75,7 @@ takeGoalFromAssertions :: [LD.Expression] -> (LD.Expression, [LD.Expression])
 takeGoalFromAssertions asserts = (goal, assertsWithoutGoal)
   where
     numberOfAssertions = length asserts
-    goal = last asserts
+    goal = last asserts -- FIXME: Unsafe. If asserts is emoty, this will fail
     assertsWithoutGoal = take (numberOfAssertions - 1) asserts
 
 termToF :: LD.Expression -> Maybe F
@@ -150,8 +137,8 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) = -- Two param operat
                                                                                             (FConn Impl (FNot condF) (FComp Le elseTermE e2))
                       | n `elem` ["<",  "fp.lt", "olt", "olt__logic"]   -> Just $ FConn And (FConn Impl condF (FComp Lt thenTermE e2))
                                                                                             (FConn Impl (FNot condF) (FComp Lt elseTermE e2))
-                      | n `elem` ["=",  "fp.eq"]                        -> Just $ FConn And (FConn Impl condF (FComp Gt thenTermE e2))
-                                                                                            (FConn Impl (FNot condF) (FComp Gt elseTermE e2))
+                      | n `elem` ["=",  "fp.eq"]                        -> Just $ FConn And (FConn Impl condF (FComp Eq thenTermE e2))
+                                                                                            (FConn Impl (FNot condF) (FComp Eq elseTermE e2))
                     _ -> Nothing
                 (_, _, _) -> Nothing
             (_, _) ->
@@ -169,8 +156,8 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) = -- Two param operat
                                                                                                 (FConn Impl (FNot condF) (FComp Le e1 elseTermE))
                           | n `elem` ["<",  "fp.lt", "olt", "olt__logic"]   -> Just $ FConn And (FConn Impl condF (FComp Lt e1 thenTermE))
                                                                                                 (FConn Impl (FNot condF) (FComp Lt e1 elseTermE))
-                          | n `elem` ["=",  "fp.eq"]                        -> Just $ FConn And (FConn Impl condF (FComp Gt e1 thenTermE))
-                                                                                                (FConn Impl (FNot condF) (FComp Gt e1 elseTermE))
+                          | n `elem` ["=",  "fp.eq"]                        -> Just $ FConn And (FConn Impl condF (FComp Eq e1 thenTermE))
+                                                                                                (FConn Impl (FNot condF) (FComp Eq e1 elseTermE))
                         _ -> Nothing
                     (_, _, _) -> Nothing
                 (_, _) -> Nothing
@@ -427,6 +414,8 @@ processVC parsedExpressions =
 -- If the goal contains underivable variables, return Nothing
 deriveVCRanges :: F -> Maybe (F, VarMap)
 deriveVCRanges vc@(FConn Impl contextCNF goal) =
+  trace (show underivableVariables) $
+  trace (show goal) $
   if fContainsVars underivableVariables goal
     then Nothing
     else
