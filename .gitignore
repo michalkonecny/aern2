@@ -5,4 +5,8 @@ stack.yaml.lock
 aern2-fun-plot/client/elm-stuff
 aern2-fun-plot/aern2-fun-plot-example
 aern2-fun-plot/assets/index.html
-
+aern-mp/*.cabal
+aern-real/*.cabal
+aern-erc/*.cabal
+aern-fun/*.cabal
+aern-mfun/*.cabal
