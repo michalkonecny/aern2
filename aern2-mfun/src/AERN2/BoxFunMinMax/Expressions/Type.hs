@@ -204,6 +204,9 @@ simplifyE unsimplifiedE = if unsimplifiedE P.== simplifiedE then simplifiedE els
     simplify (EUnOp Negate (Lit 0.0)) = Lit 0.0
     simplify (EUnOp Sqrt (Lit 0.0))   = Lit 0.0
     simplify (EUnOp Sqrt (Lit 1.0))   = Lit 1.0
+    simplify (EUnOp Abs (Lit v))      = Lit (abs v)
+    simplify (EBinOp Min e1 e2)       = if e1 P.== e2 then e1 else EBinOp Min (simplifyE e1) (simplifyE e2)
+    simplify (EBinOp Max e1 e2)       = if e1 P.== e2 then e1 else EBinOp Max (simplifyE e1) (simplifyE e2)
     simplify (EBinOp op e1 e2)        = EBinOp op (simplify e1) (simplify e2)
     simplify (EUnOp op e)             = EUnOp op (simplify e)
     simplify e                        = e
