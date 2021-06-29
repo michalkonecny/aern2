@@ -127,7 +127,7 @@ fToE (FComp op e1 e2)   = case op of
   Le ->
     EBinOp Add (EUnOp Negate e1) e2 -- f1 <= f2 == f1 - f2 <= 0 == -f1 + f2 >= 0
   Lt ->
-    EBinOp Add (EUnOp Negate e1) e2
+    EBinOp Add (EUnOp Negate e1) e2 -- FIXME: Use epsilon when translating to non-strict
   Ge ->
     EBinOp Sub e1 e2 -- f1 >= f2 == f1 - f2 >= 0 == 
   Gt ->
@@ -190,69 +190,77 @@ fToECNF = fToECNFB False
 
 -- | Various rules to simplify expressions
 simplifyE :: E -> E
-simplifyE (EBinOp Div e (Lit 1.0)) = e
-simplifyE (EBinOp Div (Lit 0.0) _) = Lit 0.0
-simplifyE (EBinOp Mul (Lit 0.0) _) = Lit 0.0
-simplifyE (EBinOp Mul _ (Lit 0.0)) = Lit 0.0
-simplifyE (EBinOp Mul (Lit 1.0) e) = e
-simplifyE (EBinOp Mul e (Lit 1.0)) = e
-simplifyE (EBinOp Add (Lit 0.0) e) = e
-simplifyE (EBinOp Add e (Lit 0.0)) = e
-simplifyE (EBinOp Sub e (Lit 0.0)) = e
-simplifyE (EBinOp Pow _ (Lit 0.0)) = Lit 1.0
-simplifyE (EBinOp Pow e (Lit 1.0)) = e
-simplifyE (PowI _e 0)              = Lit 1.0
-simplifyE (PowI e 1)               = e
-simplifyE (EUnOp Negate (Lit 0.0)) = Lit 0.0
-simplifyE (EUnOp Sqrt (Lit 0.0))   = Lit 0.0
-simplifyE (EUnOp Sqrt (Lit 1.0))   = Lit 1.0
-simplifyE (EBinOp op e1 e2)        = EBinOp op (simplifyE e1) (simplifyE e2)
-simplifyE (EUnOp op e)             = EUnOp op (simplifyE e)
-simplifyE e                        = e
+simplifyE unsimplifiedE = if unsimplifiedE P.== simplifiedE then simplifiedE else simplifyE simplifiedE
+  where
+    simplifiedE = simplify unsimplifiedE
+
+    simplify (EBinOp Div e (Lit 1.0)) = e
+    simplify (EBinOp Div (Lit 0.0) _) = Lit 0.0
+    simplify (EBinOp Mul (Lit 0.0) _) = Lit 0.0
+    simplify (EBinOp Mul _ (Lit 0.0)) = Lit 0.0
+    simplify (EBinOp Mul (Lit 1.0) e) = e
+    simplify (EBinOp Mul e (Lit 1.0)) = e
+    simplify (EBinOp Add (Lit 0.0) e) = e
+    simplify (EBinOp Add e (Lit 0.0)) = e
+    simplify (EBinOp Sub e (Lit 0.0)) = e
+    simplify (EBinOp Pow _ (Lit 0.0)) = Lit 1.0
+    simplify (EBinOp Pow e (Lit 1.0)) = e
+    simplify (PowI _e 0)              = Lit 1.0
+    simplify (PowI e 1)               = e
+    simplify (EUnOp Negate (Lit 0.0)) = Lit 0.0
+    simplify (EUnOp Sqrt (Lit 0.0))   = Lit 0.0
+    simplify (EUnOp Sqrt (Lit 1.0))   = Lit 1.0
+    simplify (EBinOp op e1 e2)        = EBinOp op (simplify e1) (simplify e2)
+    simplify (EUnOp op e)             = EUnOp op (simplify e)
+    simplify e                        = e
 
 simplifyF :: F -> F
 -- Simplify Or
-simplifyF f@(FConn Or (FComp Lt f1l f1r) (FComp Eq f2l f2r)) = if f1l P.== f2l P.&& f1r P.== f2r then FComp Le f1l f1r else f
-simplifyF (FConn Or (FComp Eq f1l f1r) (FComp Lt f2l f2r))   = simplifyF $ FConn Or (FComp Lt f2l f2r) (FComp Eq f1l f1r)
-simplifyF f@(FConn Or (FComp Gt f1l f1r) (FComp Eq f2l f2r)) = if f1l P.== f2l P.&& f1r P.== f2r then FComp Ge f1l f1r else f
-simplifyF (FConn Or (FComp Eq f1l f1r) (FComp Gt f2l f2r))   = simplifyF $ FConn Or (FComp Gt f2l f2r) (FComp Eq f1l f1r)
+simplifyF unsimplifiedF = if unsimplifiedF P.== simplifiedF then simplifiedF else simplifyF simplifiedF
+  where
+    simplifiedF = simplify unsimplifiedF
 
--- Boolean Rules
--- Equiv
-simplifyF (FConn Equiv FTrue FFalse)                         = FFalse
-simplifyF (FConn Equiv FFalse FTrue)                         = FFalse
-simplifyF (FConn Equiv FFalse FFalse)                        = FTrue
-simplifyF (FConn Equiv FTrue FTrue)                          = FTrue
-simplifyF (FConn Equiv f FTrue)                              = simplifyF f
-simplifyF (FConn Equiv FTrue f)                              = simplifyF f
-simplifyF (FConn Equiv f FFalse)                             = simplifyF $ FNot f
-simplifyF (FConn Equiv FFalse f)                             = simplifyF $ FNot f
--- And
-simplifyF (FConn And _ FFalse)                               = FFalse
-simplifyF (FConn And FFalse _)                               = FFalse
-simplifyF (FConn And f FTrue)                                = simplifyF f
-simplifyF (FConn And FTrue f)                                = simplifyF f
--- Or
-simplifyF (FConn Or _ FTrue)                                 = FTrue
-simplifyF (FConn Or FTrue _)                                 = FTrue
-simplifyF (FConn Or f FFalse)                                = simplifyF f
-simplifyF (FConn Or FFalse f)                                = simplifyF f
--- Impl
-simplifyF (FConn Impl FFalse _)                              = FTrue
-simplifyF (FConn Impl _ FTrue)                               = FTrue
-simplifyF (FConn Impl f FFalse)                              = simplifyF (FNot f)
-simplifyF (FConn Impl FTrue f)                               = simplifyF f
+    simplify f@(FConn Or (FComp Lt f1l f1r) (FComp Eq f2l f2r)) = if f1l P.== f2l P.&& f1r P.== f2r then FComp Le f1l f1r else f
+    simplify (FConn Or (FComp Eq f1l f1r) (FComp Lt f2l f2r))   = simplify $ FConn Or (FComp Lt f2l f2r) (FComp Eq f1l f1r)
+    simplify f@(FConn Or (FComp Gt f1l f1r) (FComp Eq f2l f2r)) = if f1l P.== f2l P.&& f1r P.== f2r then FComp Ge f1l f1r else f
+    simplify (FConn Or (FComp Eq f1l f1r) (FComp Gt f2l f2r))   = simplify $ FConn Or (FComp Gt f2l f2r) (FComp Eq f1l f1r)
 
--- Eliminate double not
-simplifyF (FNot (FNot f))                                    = simplifyF f
+    -- Boolean Rules
+    -- Equiv
+    simplify (FConn Equiv FTrue FFalse)                         = FFalse
+    simplify (FConn Equiv FFalse FTrue)                         = FFalse
+    simplify (FConn Equiv FFalse FFalse)                        = FTrue
+    simplify (FConn Equiv FTrue FTrue)                          = FTrue
+    simplify (FConn Equiv f FTrue)                              = simplify f
+    simplify (FConn Equiv FTrue f)                              = simplify f
+    simplify (FConn Equiv f FFalse)                             = simplify $ FNot f
+    simplify (FConn Equiv FFalse f)                             = simplify $ FNot f
+    -- And
+    simplify (FConn And _ FFalse)                               = FFalse
+    simplify (FConn And FFalse _)                               = FFalse
+    simplify (FConn And f FTrue)                                = simplify f
+    simplify (FConn And FTrue f)                                = simplify f
+    -- Or
+    simplify (FConn Or _ FTrue)                                 = FTrue
+    simplify (FConn Or FTrue _)                                 = FTrue
+    simplify (FConn Or f FFalse)                                = simplify f
+    simplify (FConn Or FFalse f)                                = simplify f
+    -- Impl
+    simplify (FConn Impl FFalse _)                              = FTrue
+    simplify (FConn Impl _ FTrue)                               = FTrue
+    simplify (FConn Impl f FFalse)                              = simplify (FNot f)
+    simplify (FConn Impl FTrue f)                               = simplify f
 
-simplifyF (FConn op f1 f2)                                   = FConn op (simplifyF f1) (simplifyF f2)
-simplifyF (FComp op e1 e2)                                   = FComp op (simplifyE e1) (simplifyE e2)
-simplifyF FTrue                                              = FTrue
-simplifyF FFalse                                             = FFalse
-simplifyF (FNot f)                                           = FNot (simplifyF f)
--- simplifyF FTrue = error "FTrue was not eliminated"
--- simplifyF FFalse = error "FFalse was not eliminated"
+    -- Eliminate double not
+    simplify (FNot (FNot f))                                    = simplify f
+
+    simplify (FConn op f1 f2)                                   = FConn op (simplify f1) (simplify f2)
+    simplify (FComp op e1 e2)                                   = FComp op (simplifyE e1) (simplifyE e2)
+    simplify FTrue                                              = FTrue
+    simplify FFalse                                             = FFalse
+    simplify (FNot f)                                           = FNot (simplify f)
+    -- simplifyF FTrue = error "FTrue was not eliminated"
+    -- simplifyF FFalse = error "FFalse was not eliminated"
 
 simplifyECNF :: [[E]] -> [[E]]
 simplifyECNF = map (map simplifyE) 
