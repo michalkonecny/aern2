@@ -846,7 +846,7 @@ square2p =
     negatedContext = map (EUnOp Negate) context
     context = []
     -- sqrt((X1 - Y1)^2 + (X2 - Y2)^2) <= sqrt(2) + eps
-    goal = [fToE goalF]
+    goal = [fToE goalF testEps]
     goalF = 
       -- FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "Y1")) 2) (PowI (EBinOp Sub (Var "X2") (Var "Y2")) 2)))) (EBinOp Add (EUnOp Sqrt (Lit 2.0)) (Lit epsC))
       -- (X1 - X2)^2 + (Y1 - Y2)^2 <= 2 + eps
@@ -902,7 +902,7 @@ square3p =
     negatedContext = map (EUnOp Negate) context
     context = []
     -- 2 + eps - (X1 - X2)^2 - (Y1 - Y2) >= 0
-    goal = map fToE goalF
+    goal = map (`fToE` testEps) goalF
     goalF = --dist(x,y) <= dn \/ dist(x,z) <= dn \/ dist(y,z) <= dn
       [
         FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y2")) 2)))) (EBinOp Add (EBinOp Sub (EUnOp Sqrt (Lit 6.0)) (EUnOp Sqrt (Lit 2.0))) (Lit epsC)),
@@ -918,7 +918,7 @@ square4p =
     negatedContext = map (EUnOp Negate) context
     context = []
     -- 2 + eps - (X1 - X2)^2 - (Y1 - Y2) >= 0
-    goal = map fToE goalF
+    goal = map (`fToE` testEps) goalF
     goalF = 
       [
         FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y2")) 2)))) (EBinOp Add (Lit 1.0) (Lit epsC)),
@@ -937,7 +937,7 @@ square5p =
     negatedContext = map (EUnOp Negate) context
     context = []
     -- 2 + eps - (X1 - X2)^2 - (Y1 - Y2) >= 0
-    goal = map fToE goalF
+    goal = map (`fToE` testEps) goalF
     goalF = 
       [
         FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y2")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 2.0)) (Lit 2.0)) (Lit epsC)),
@@ -959,7 +959,7 @@ square6p =
     negatedContext = map (EUnOp Negate) context
     context = []
     -- 2 + eps - (X1 - X2)^2 - (Y1 - Y2) >= 0
-    goal = map fToE goalF
+    goal = map (`fToE` testEps) goalF
     goalF = 
       [
         FComp Le (EUnOp Sqrt ((EBinOp Add (PowI (EBinOp Sub (Var "X1") (Var "X2")) 2) (PowI (EBinOp Sub (Var "Y1") (Var "Y2")) 2)))) (EBinOp Add (EBinOp Div (EUnOp Sqrt (Lit 13.0)) (Lit 6.0)) (Lit epsC)),

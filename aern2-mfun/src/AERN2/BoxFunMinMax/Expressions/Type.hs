@@ -122,63 +122,57 @@ instance Arbitrary F where
 
 -- | Translate F to a single expression (E)
 -- Removes implications, logical connectives
-fToE :: F -> E
-fToE (FComp op e1 e2)   = case op of
-  Le ->
-    EBinOp Add (EUnOp Negate e1) e2 -- f1 <= f2 == f1 - f2 <= 0 == -f1 + f2 >= 0
-  Lt ->
-    EBinOp Add (EUnOp Negate e1) e2 -- FIXME: Use epsilon when translating to non-strict
-  Ge ->
-    EBinOp Sub e1 e2 -- f1 >= f2 == f1 - f2 >= 0 == 
-  Gt ->
-    EBinOp Sub e1 e2
-  Eq -> fToE $ FConn And (FComp Ge e1 e2) (FComp Le e1 e2) -- f1 = f2 == f1 >= f2 /\ f1 <= f2
-fToE (FConn op f1 f2)   = case op of
+fToE :: F -> Rational -> E
+fToE (FComp op e1 e2) eps = case op of
+  Le -> fToE (FComp Ge e2 e1) eps
+    -- EBinOp Add (EUnOp Negate e1) e2                        -- f1 <  f2 == f1 - f2 <  0 == -f1 + f2 >= 0
+  Lt -> fToE (FComp Gt e2 e1) eps
+    -- EBinOp Sub (EBinOp Add (EUnOp Negate e1) e2) (Lit eps) -- f1 <= f2 == f1 - f2 <= 0 == -f1 + f2 >  0 == -f1 + f2 - eps >= 0
+  Ge -> EBinOp Sub e1 e2                                          -- f1 >= f2 == f1 - f2 >= 0 
+  Gt -> EBinOp Sub (EBinOp Sub e1 e2) (Lit eps)                   -- f1 >  f2 == f1 - f2 >  0 == f1 - f2 - eps >= 0
+  Eq -> fToE (FConn And (FComp Ge e1 e2) (FComp Le e1 e2)) eps -- f1 = f2 == f1 >= f2 /\ f1 <= f2
+fToE (FConn op f1 f2) eps  = case op of
   And ->
-    EBinOp Min (fToE f1) (fToE f2)
+    EBinOp Min (fToE f1 eps) (fToE f2 eps)
   Or ->
-    EBinOp Max (fToE f1) (fToE f2)
+    EBinOp Max (fToE f1 eps) (fToE f2 eps)
   Impl -> 
-    EBinOp Max (EUnOp Negate (fToE f1)) (fToE f2) -- !f1 \/ f2 = max(!f1, f2)
-  Equiv -> fToE $ FComp Eq (fToE f1) (fToE f2)
-fToE (FNot f) = EUnOp Negate (fToE f)
-fToE FTrue    = error "fToE for FTrue undefined"  $ Lit 1.0
-fToE FFalse   = error "fToE for FFalse undefined" $ Lit $ -1.0
+    EBinOp Max (EUnOp Negate (fToE f1 eps)) (fToE f2 eps) -- !f1 \/ f2 = max(!f1, f2)
+  Equiv -> fToE (FComp Eq (fToE f1 eps) (fToE f2 eps)) eps
+fToE (FNot f) eps = EUnOp Negate (fToE f eps)
+fToE FTrue  _     = error "fToE for FTrue undefined"  $ Lit 1.0
+fToE FFalse _     = error "fToE for FFalse undefined" $ Lit $ -1.0
 
 
-fToECNF :: F -> [[E]]
+fToECNF :: F -> Rational -> [[E]]
 fToECNF = fToECNFB False 
   where
-    fToECNFB :: Bool -> F -> [[E]]
-    fToECNFB isNegated (FNot f) = fToECNFB (not isNegated) f
-    fToECNFB True (FComp op e1 e2)   = case op of
-      Le -> fToECNFB False (FComp Gt e1 e2) -- !(f1 <= f2) -> (f1 > f2)
-      Lt -> fToECNFB False (FComp Ge e1 e2)
-      Ge -> fToECNFB False (FComp Lt e1 e2)
-      Gt -> fToECNFB False (FComp Le e1 e2)
-      Eq -> fToECNFB True $ FConn And (FComp Ge e1 e2) (FComp Le e1 e2) -- !(f1 = f2)
-    fToECNFB False (FComp op e1 e2)   = case op of
-      Le ->
-        [[EBinOp Add (EUnOp Negate e1) e2]] -- f1 <= f2 == f1 - f2 <= 0 == -f1 + f2 >= 0
-      Lt ->
-        [[EBinOp Add (EUnOp Negate e1) e2]]
-      Ge ->
-        [[EBinOp Sub e1 e2]] -- f1 >= f2 == f1 - f2 >= 0 == 
-      Gt ->
-        [[EBinOp Sub e1 e2]]
-      Eq -> fToECNFB False $ FConn And (FComp Ge e1 e2) (FComp Le e1 e2) -- f1 = f2 == f1 >= f2 /\ f1 <= f2
-    fToECNFB True (FConn op f1 f2)   = case op of
-      And     -> [d1 ++ d2 | d1 <- fToECNFB True f1, d2 <- fToECNFB True f2] 
-      Or      -> fToECNFB True f1 ++ fToECNFB True f2
-      Impl    -> fToECNFB False f1 ++ fToECNFB True f2 -- !(!p \/ q) == p /\ !q
-      Equiv   -> fToECNFB True $ FConn And (FConn Impl f1 f2) (FConn Impl f2 f1)
-    fToECNFB False (FConn op f1 f2)   = case op of
-      And     -> fToECNFB False f1 ++ fToECNFB False f2 -- [e1 /\ e2 /\ (e3 \/ e4)] ++ [p1 /\ (p2 \/ p3) /\ p4] = [e1 /\ e2 /\ (e3 \/ e4) /\ p1 /\ (p2 \/ p3) /\ p4]
-      Or      -> [d1 ++ d2 | d1 <- fToECNFB False f1, d2 <- fToECNFB False f2] -- [e1 /\ e2 /\ (e3 \/ e4)] \/ [p1 /\ (p2 \/ p3) /\ p4] 
-      Impl    -> [d1 ++ d2 | d1 <- fToECNFB True f1, d2 <- fToECNFB False f2]
-      Equiv   -> fToECNFB False $ FConn And (FConn Impl f1 f2) (FConn Impl f2 f1)
-    fToECNFB isNegated FTrue    = error "fToECNFB for FTrue undefined"  $ Lit 1.0
-    fToECNFB isNegated FFalse   = error "fToECNFB for FFalse undefined" $ Lit $ -1.0
+    fToECNFB :: Bool -> F -> Rational -> [[E]]
+    fToECNFB isNegated (FNot f) eps = fToECNFB (not isNegated) f eps
+    fToECNFB True (FComp op e1 e2) eps  = case op of
+      Le -> fToECNFB False (FComp Gt e1 e2) eps -- !(f1 <= f2) -> (f1 > f2)
+      Lt -> fToECNFB False (FComp Ge e1 e2) eps
+      Ge -> fToECNFB False (FComp Lt e1 e2) eps
+      Gt -> fToECNFB False (FComp Le e1 e2) eps
+      Eq -> fToECNFB True (FConn And (FComp Ge e1 e2) (FComp Le e1 e2)) eps -- !(f1 = f2)
+    fToECNFB False (FComp op e1 e2) eps = case op of
+      Le -> fToECNFB False (FComp Ge e2 e1) eps -- f1 <  f2 == f1 - f2 <  0 == -f1 + f2 >= 0
+      Lt -> fToECNFB False (FComp Gt e2 e1) eps -- f1 <= f2 == f1 - f2 <= 0 == -f1 + f2 >  0 == -f1 + f2 - eps >= 0
+      Ge -> [[EBinOp Sub e1 e2]]                -- f1 >= f2 == f1 - f2 >= 0 
+      Gt -> [[EBinOp Sub (EBinOp Sub e1 e2) (Lit eps)]]                -- f1 >  f2 == f1 - f2 >  0 == f1 - f2 - eps >= 0
+      Eq -> fToECNFB False (FConn And (FComp Ge e1 e2) (FComp Le e1 e2)) eps -- f1 = f2 == f1 >= f2 /\ f1 <= f2
+    fToECNFB True (FConn op f1 f2) eps  = case op of
+      And     -> [d1 ++ d2 | d1 <- fToECNFB True f1 eps, d2 <- fToECNFB True f2 eps] 
+      Or      -> fToECNFB True f1 eps ++ fToECNFB True f2 eps
+      Impl    -> fToECNFB False f1 eps ++ fToECNFB True f2 eps -- !(!p \/ q) == p /\ !q
+      Equiv   -> fToECNFB True (FConn And (FConn Impl f1 f2) (FConn Impl f2 f1)) eps
+    fToECNFB False (FConn op f1 f2) eps  = case op of
+      And     -> fToECNFB False f1 eps ++ fToECNFB False f2 eps -- [e1 /\ e2 /\ (e3 \/ e4)] ++ [p1 /\ (p2 \/ p3) /\ p4] = [e1 /\ e2 /\ (e3 \/ e4) /\ p1 /\ (p2 \/ p3) /\ p4]
+      Or      -> [d1 ++ d2 | d1 <- fToECNFB False f1 eps, d2 <- fToECNFB False f2 eps] -- [e1 /\ e2 /\ (e3 \/ e4)] \/ [p1 /\ (p2 \/ p3) /\ p4] 
+      Impl    -> [d1 ++ d2 | d1 <- fToECNFB True f1 eps, d2 <- fToECNFB False f2 eps]
+      Equiv   -> fToECNFB False (FConn And (FConn Impl f1 f2) (FConn Impl f2 f1)) eps
+    fToECNFB isNegated FTrue  _  = error "fToECNFB for FTrue undefined"  $ Lit 1.0
+    fToECNFB isNegated FFalse _  = error "fToECNFB for FFalse undefined" $ Lit $ -1.0
 
 -- | Add bounds for any Float expressions
 -- addRoundingBounds :: E -> [[E]]

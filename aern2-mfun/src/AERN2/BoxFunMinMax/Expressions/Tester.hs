@@ -15,6 +15,9 @@ import AERN2.BoxFunMinMax.Expressions.Eliminator
 -- type VarMap = [(String, (Rational, Rational))]
 import qualified Debug.Trace as T
 
+epsilon :: Rational
+epsilon = 1/(2^112)
+
 hasMinMaxE :: E -> Bool 
 hasMinMaxE (EBinOp Min _ _) = True
 hasMinMaxE (EBinOp Max _ _) = True
@@ -64,7 +67,7 @@ prop_simplifyE e =
         eValAtVarMap           = evalE_Rational varMap e
         simplifiedEValAtVarMap = evalE_Rational varMap (simplifyE e)
       in
-        counterexample ("Simplified and unsimplified expressions agree: Expression: " ++ show e ++ " Domain: " ++ show varMap) $ eValAtVarMap == simplifiedEValAtVarMap
+        counterexample ("Simplified and unsimplified expressions disagree: Expression: " ++ show e ++ " Domain: " ++ show varMap) $ eValAtVarMap == simplifiedEValAtVarMap
         -- e P.== e
         -- not (hasError eValAtVarMap) ==>
           -- case unCN $ eValAtVarMap == simplifiedEValAtVarMap of
@@ -131,26 +134,25 @@ prop_fToECNF f =
         varMap = map (\(i, v) -> (v, (rational (points !! i), rational (points !! i)))) (zip [0..] variables)
         -- strictF           = makeFStrict f
         fResult           = checkFWithApply f varMap (prec 10)
-        eRanges           = map (map (\e -> applyExpression e varMap (prec 10))) (fToECNF f)
-        -- noTouching        :: Bool
-        hasTouching       = any (any (!==! 0)) eRanges -- TODO: Should we use ?==?, think about this
-        eResult           = map (map (> 0)) eRanges
+        eRanges           = map (map (\e -> applyExpression e varMap (prec 10))) (fToECNF f epsilon)
+        eResult           = map (map (>= 0)) eRanges
         eResult2          = foldl and2 (cn CertainTrue) $ map (foldl or2 (cn CertainFalse)) eResult
       in
-        not (hasError fResult) && not hasTouching ==>
+        not (hasError fResult) ==>
           case unCN fResult of
             CertainTrue -> 
               case unCN eResult2 of
-                CertainTrue  -> label "Simplified and unsimplified f are both true" True
-                _            -> counterexample ("Unsimplified says true, but simplified says false/undecideable: Function: " ++ show f ++ " Domain: " ++ show varMap) False
+                CertainTrue  -> label "original F and CNF are both true" True
+                _            -> counterexample ("original F true, but CNF false/undecideable: Function: " ++ show f ++ " Domain: " ++ show varMap) False
             CertainFalse ->
               case unCN eResult2 of
-                CertainFalse -> label "Simplified and unsimplified f are both false" True
-                _            -> counterexample ("Unsimplified says false, but simplified says true/undecideable: Function: " ++ show f ++ " Domain: " ++ show varMap) False
+                CertainFalse -> label "original F and CNF are both false" True
+                _            -> counterexample ("original F false, but CNF true/undecideable: Function: " ++ show f ++ " Domain: " ++ show varMap) False
             TrueOrFalse ->
               case unCN eResult2 of
-                TrueOrFalse -> label "Simplified and unsimplified f are both undecideable" True
-                _           -> counterexample ("Unsimplified says undecideable, but simplified says true/false: Function: " ++ show f ++ " Domain: " ++ show varMap) False
+                TrueOrFalse  -> label "original F and CNF are both undecideable" True
+                CertainFalse -> label "original F indeterminate and CNF false" True -- This will happen sometimes due to the way we deal with strict inequalities
+                _            -> counterexample ("orignal F indeterminate, but CNF says true: Function: " ++ show f ++ " Domain: " ++ show varMap) False
 
         -- e P.== e
         -- not (hasError eValAtVarMap) ==>
@@ -185,8 +187,8 @@ prop_fVCToECNF fContext fGoal =
           [
             contextEs ++ goalEs 
             | 
-            contextEs <- fToECNF (FNot contextF),
-            goalEs    <- fToECNF goalF
+            contextEs <- fToECNF (FNot contextF) epsilon,
+            goalEs    <- fToECNF goalF epsilon
           ]
   --         [
   --   contextEs ++ goalEs 
@@ -197,25 +199,24 @@ prop_fVCToECNF fContext fGoal =
 
         fResult           = checkFWithApply f varMap (prec 10)
         eRanges           = map (map (\e -> applyExpression e varMap (prec 10))) vcECNF
-        -- noTouching        :: Bool
-        hasTouching       = any (any (!==! 0)) eRanges
-        eResult           = map (map (> 0)) eRanges
+        eResult           = map (map (>= 0)) eRanges
         eResult2          = foldl and2 (cn CertainTrue) $ map (foldl or2 (cn CertainFalse)) eResult
       in
-        not (hasError fResult) && not hasTouching ==>
+        not (hasError fResult) ==>
           case unCN fResult of
             CertainTrue -> 
               case unCN eResult2 of
-                CertainTrue  -> label "Simplified and unsimplified f are both true" True
-                _            -> counterexample ("Unsimplified says true, but simplified says false/undecideable: Function: " ++ show f ++ " Domain: " ++ show varMap) False
+                CertainTrue  -> label "original F and CNF are both true" True
+                _            -> counterexample ("original F true, but CNF false/undecideable: Function: " ++ show f ++ " Domain: " ++ show varMap) False
             CertainFalse ->
               case unCN eResult2 of
-                CertainFalse -> label "Simplified and unsimplified f are both false" True
-                _            -> counterexample ("Unsimplified says false, but simplified says true/undecideable: Function: " ++ show f ++ " Domain: " ++ show varMap) False
+                CertainFalse -> label "original F and CNF are both false" True
+                _            -> counterexample ("original F false, but CNF true/undecideable: Function: " ++ show f ++ " Domain: " ++ show varMap) False
             TrueOrFalse ->
               case unCN eResult2 of
-                TrueOrFalse -> label "Simplified and unsimplified f are both undecideable" True
-                _           -> counterexample ("Unsimplified says undecideable, but simplified says true/false: Function: " ++ show f ++ " Domain: " ++ show varMap) False
+                TrueOrFalse  -> label "original F and CNF are both undecideable" True
+                CertainFalse -> label "original F indeterminate and CNF false" True -- This will happen sometimes due to the way we deal with strict inequalities
+                _            -> counterexample ("orignal F indeterminate, but CNF says true: Function: " ++ show f ++ " Domain: " ++ show varMap) False
   where
     variables = extractVariablesF f
 
@@ -233,11 +234,11 @@ prop_minMaxAbsEliminatorECNF cnf =
     let
       varMap          = map (\(i, v) -> (v, (rational (points !! i), rational (points !! i)))) (zip [0..] variables)
       eRanges         = map (map (\e -> applyExpression e varMap (prec 10))) cnf
-      eResult         = map (map (> 0)) eRanges
+      eResult         = map (map (>= 0)) eRanges
       eResultKleenean = foldl and2 (cn CertainTrue) $ map (foldl or2 (cn CertainFalse)) eResult
 
       eRangesEliminator         = map (map (\e -> applyExpression e varMap (prec 10))) $ minMaxAbsEliminatorECNF cnf
-      eResultEliminator         = map (map (> 0)) eRangesEliminator
+      eResultEliminator         = map (map (>= 0)) eRangesEliminator
       eResultEliminatorKleenean = foldl and2 (cn CertainTrue) $ map (foldl or2 (cn CertainFalse)) eResultEliminator
 
       eRangesHasError = any (any hasError) eRanges 
@@ -263,39 +264,39 @@ prop_minMaxAbsEliminatorECNF cnf =
     variablePoints :: Gen [Integer]
     variablePoints = vectorOf (int (length variables)) arbitrary
 
+-- Bug: FComp Le (EBinOp Min (EUnOp Abs (Var "Name \"e\"")) (EBinOp Min (Var "Name \"e\"") (Var "Name \"e\""))) (Var "Name \"g\"")
+--  VM: [("Name \"e\"",(1 % 1,1 % 1)),("Name \"g\"",((-2) % 1,(-2) % 1))]
+-- Original is False
+-- fToECNF is False
+-- but minMaxAbsEliminatorECNF says true
 prop_fToECNFAndMinMaxAbsEliminatorECNF :: F -> Property
 prop_fToECNFAndMinMaxAbsEliminatorECNF f = 
   forAllBlind variablePoints $ \points ->
     let
-      fStrict = makeFStrict f
-
-      cnf             = (minMaxAbsEliminatorECNF . fToECNF) fStrict
+      cnf             = minMaxAbsEliminatorECNF $ fToECNF f epsilon
 
       varMap          = map (\(i, v) -> (v, (rational (points !! i), rational (points !! i)))) (zip [0..] variables)
 
       eRanges         = map (map (\e -> applyExpression e varMap (prec 10))) cnf
-      eResult         = map (map (> 0)) eRanges
+      eResult         = map (map (>= 0)) eRanges
       eResultKleenean = foldl and2 (cn CertainTrue) $ map (foldl or2 (cn CertainFalse)) eResult
 
-      fResult         = checkFWithApply fStrict varMap (prec 10)
-      -- eRangesEliminator         = map (map (\e -> applyExpression e varMap (prec 10))) $ minMaxAbsEliminatorECNF cnf
-      -- eResultEliminator         = map (map (> 0)) eRangesEliminator
-      -- eResultEliminatorKleenean = foldl and2 (cn CertainTrue) $ map (foldl or2 (cn CertainFalse)) eResultEliminator
+      fResult         = checkFWithApply f varMap (prec 10)
     in
       not (hasError fResult) ==>
         case unCN fResult of
           CertainTrue ->
             case unCN eResultKleenean of
               CertainTrue -> label "Both F and cnf are true" True
-              _           -> counterexample ("F true but cnf false/undecideable: CNF " ++ show cnf ++ " Domain: " ++ show varMap) False
+              _           -> counterexample ("F true but cnf false/undecideable: Function " ++ show f ++ " Domain: " ++ show varMap) False
           CertainFalse ->
             case unCN eResultKleenean of
               CertainFalse -> label "Both F and cnf are false" True
-              _           -> counterexample ("F false but eliminated true/undecideable: CNF " ++ show cnf ++ " Domain: " ++ show varMap) False
+              _           -> counterexample ("F false but eliminated true/undecideable: Function " ++ show f ++ " Domain: " ++ show varMap) False
           TrueOrFalse ->
             case unCN eResultKleenean of
               TrueOrFalse -> label "Both F and cnf are indeterminate" True
-              _           -> counterexample ("F indeterminate but eliminated false/true: CNF " ++ show cnf ++ " Domain: " ++ show varMap) False
+              _           -> counterexample ("F indeterminate but eliminated false/true: Function " ++ show f ++ " Domain: " ++ show varMap) False
   where
     variables = extractVariablesF f
 
@@ -311,8 +312,6 @@ prop_verifyCheckECNF cnf =
       varMap          = map (\(i, v) -> (v, (rational (fst (orderedDomains !! i)), rational (snd (orderedDomains !! i))))) (zip [0..] variables)
       checkECNFResult = checkECNFCE cnf varMap 10 100 1.2 (prec 10)
       eRanges         = map (map (\e -> applyExpression e varMap (prec 10))) cnf
-      -- eResult         = map (map (> 0)) eRanges
-      -- eResultKleenean = foldl and2 (cn CertainTrue) $ map (foldl or2 (cn CertainFalse)) eResult
       eRangesHasError = any (any hasError) eRanges 
     in
       not eRangesHasError ==>
@@ -320,7 +319,7 @@ prop_verifyCheckECNF cnf =
           (Just False, Just counterExampleDomain) -> 
             let
               eRangesC         = map (map (\e -> applyExpression e varMap (prec 10))) cnf
-              eResultC         = map (map (> 0)) eRangesC
+              eResultC         = map (map (>= 0)) eRangesC
               eResultKleeneanC = foldl and2 (cn CertainTrue) $ map (foldl or2 (cn CertainFalse)) eResultC
             in
               case unCN eResultKleeneanC of
@@ -352,15 +351,13 @@ prop_verifyCheckECNFF f =
   forAllBlind variableDomains $ \domains ->
     let
       vc              = f
-      cnf             = minMaxAbsEliminatorECNF $ fToECNF vc 
+      cnf             = minMaxAbsEliminatorECNF $ fToECNF vc epsilon
       orderedDomains  = map (\(x, y) -> (min x y, max x y)) domains
       varMap          = map (\(i, v) -> (v, (rational (fst (orderedDomains !! i)), rational (snd (orderedDomains !! i))))) (zip [0..] variables)
       checkECNFResult = checkECNFCE cnf varMap 10 100 1.2 (prec 10)
       eRanges         = map (map (\e -> applyExpression e varMap (prec 10))) cnf
 
       eRangesHasError = any (any hasError) eRanges 
-      -- eResult         = map (map (> 0)) eRanges
-      -- eResultKleenean = foldl and2 (cn CertainTrue) $ map (foldl or2 (cn CertainFalse)) eResult
     in
       -- T.trace "-----------------"
       -- T.trace (show f)
@@ -375,7 +372,7 @@ prop_verifyCheckECNFF f =
           (Just False, Just counterExampleDomain) -> 
             let
               eRangesC         = map (map (\e -> applyExpression e varMap (prec 10))) cnf
-              eResultC         = map (map (> 0)) eRangesC
+              eResultC         = map (map (>= 0)) eRangesC
               eResultKleeneanC = foldl and2 (cn CertainTrue) $ map (foldl or2 (cn CertainFalse)) eResultC
             in
               case unCN eResultKleeneanC of
@@ -407,13 +404,11 @@ prop_verifyCheckECNFVC context goal =
   forAllBlind variableDomains $ \domains ->
     let
       vc              = FConn Impl context goal
-      cnf             = minMaxAbsEliminatorECNF $ fToECNF vc 
+      cnf             = minMaxAbsEliminatorECNF $ fToECNF vc epsilon
       orderedDomains  = map (\(x, y) -> (min x y, max x y)) domains
       varMap          = map (\(i, v) -> (v, (rational (fst (orderedDomains !! i)), rational (snd (orderedDomains !! i))))) (zip [0..] variables)
-      checkECNFResult = checkECNFCE cnf varMap 10 100 1.2 (prec 10)
-      eRanges         = map (map (\e -> applyExpression e varMap (prec 10))) cnf
-      -- eResult         = map (map (> 0)) eRanges
-      -- eResultKleenean = foldl and2 (cn CertainTrue) $ map (foldl or2 (cn CertainFalse)) eResult
+      checkECNFResult = checkECNFCE cnf varMap 10 100 1.2 (prec 100)
+      eRanges         = map (map (\e -> applyExpression e varMap (prec 100))) cnf
 
       eRangesHasError = any (any hasError) eRanges 
     in
@@ -421,8 +416,8 @@ prop_verifyCheckECNFVC context goal =
         case checkECNFResult of
           (Just False, Just counterExampleDomain) -> 
             let
-              eRangesC         = map (map (\e -> applyExpression e varMap (prec 10))) cnf
-              eResultC         = map (map (> 0)) eRangesC
+              eRangesC         = map (map (\e -> applyExpression e counterExampleDomain (prec 100))) cnf
+              eResultC         = map (map (>= 0)) eRangesC
               eResultKleeneanC = foldl and2 (cn CertainTrue) $ map (foldl or2 (cn CertainFalse)) eResultC
             in
               case unCN eResultKleeneanC of

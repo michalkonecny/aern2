@@ -20,7 +20,7 @@ import qualified Data.ByteString.Lazy as B
 import Data.Binary.Get
 import Data.Maybe (mapMaybe)
 
-import AERN2.BoxFunMinMax.VarMap
+import AERN2.BoxFunMinMax.VarMap ( VarMap )
 import AERN2.BoxFunMinMax.Expressions.DeriveBounds
 import AERN2.BoxFunMinMax.Expressions.EliminateFloats
 import AERN2.BoxFunMinMax.Expressions.Eliminator (minMaxAbsEliminatorECNF)
@@ -460,7 +460,10 @@ eliminateFloatsAndConvertVCToECNF (FConn Impl context goal) varMap =
   [
     contextEs ++ goalEs 
     | 
-    contextEs <- map (map (\e -> eliminateFloats e varMap True)) (fToECNF (FNot context)), 
-    goalEs    <- map (map (\e -> eliminateFloats e varMap False)) (fToECNF goal)
+    contextEs <- map (map (\e -> eliminateFloats e varMap True)) (fToECNF (FNot context) inequalityEpsilon), 
+    goalEs    <- map (map (\e -> eliminateFloats e varMap False)) (fToECNF goal inequalityEpsilon)
   ]
+  where
+    inequalityEpsilon = 1/(2^52)  -- Epsilon for double precision floats
+    -- inequalityEpsilon = 1/(2^112) -- Epsilon for quad precision floats
 eliminateFloatsAndConvertVCToECNF _ _ = error "This function should only be called on implications (FConn Impl leftTerm rightTerm)"

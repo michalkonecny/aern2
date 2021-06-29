@@ -11,7 +11,7 @@
     Deriving ranges for variables from hypotheses inside a formula
 -}
 module AERN2.BoxFunMinMax.Expressions.DeriveBounds 
-(deriveBoundsAndSimplify)
+(deriveBoundsAndSimplify, evalE_Rational)
 where
 
 import MixedTypesNumPrelude
