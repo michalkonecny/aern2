@@ -456,7 +456,7 @@ deriveVCRanges _ = Nothing
 -- |Convert a VC to ECNF, eliminating any floats. 
 eliminateFloatsAndConvertVCToECNF :: F -> VarMap -> [[E]]
 eliminateFloatsAndConvertVCToECNF (FConn Impl context goal) varMap =
-  minMaxAbsEliminatorECNF $
+  minMaxAbsEliminatorECNF inequalityEpsilon $
   [
     contextEs ++ goalEs 
     | 

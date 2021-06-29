@@ -73,8 +73,8 @@ minMaxAbsEliminator e@(Var _)             = [([],e)]
 -- [[[[E]]]] where [[E]] = [e1 /\ (e2 \/ e3) /\ e4]
 -- [[[e1 /\ (e2 \/ e3) /\ e4]] \/ [e1 /\ (e2 \/ e3) /\ e4]]
 -- [[[[e1 /\ (e2 \/ e3) /\ e4]] \/ [e1 /\ (e2 \/ e3) /\ e4]] /\ [[[e1 /\ (e2 \/ e3) /\ e4]] \/ [e1 /\ (e2 \/ e3) /\ e4]]]
-minMaxAbsEliminatorECNF :: [[E]] -> [[E]]
-minMaxAbsEliminatorECNF ecnf = and $ map or (map (map (qualifiedEsToCNF2 . minMaxAbsEliminator)) ecnf)
+minMaxAbsEliminatorECNF :: Rational -> [[E]] -> [[E]]
+minMaxAbsEliminatorECNF epsilon ecnf = and $ map or (map (map ((qualifiedEsToCNF2 epsilon) . minMaxAbsEliminator)) ecnf)
   where
     and2 = (++)
     or2 ecnf1 ecnf2 = [d1 ++ d2 | d1 <- ecnf1, d2 <- ecnf2]
@@ -90,23 +90,23 @@ minMaxAbsEliminatorECNF ecnf = and $ map or (map (map (qualifiedEsToCNF2 . minMa
 -- 
 -- This can be rewritten to
 -- (-p1 >= 0 \/ - p2 >= 0 \/ -p3 >= 0 \/ q1 >= 0)
--- ???
-qualifiedEsToCNF :: [([E],E)] -> E
-qualifiedEsToCNF []               = undefined
-qualifiedEsToCNF [([], q)]        = q
-qualifiedEsToCNF [(ps, q)]        = EBinOp Max (buildPs ps) q
-  where
-    buildPs :: [E] -> E
-    buildPs []  = undefined
-    buildPs [p] = (EUnOp Negate p)
-    buildPs (p : ps) = EBinOp Max (EUnOp Negate p) (buildPs ps) 
-qualifiedEsToCNF ((ps, q) : es) = EBinOp Min (qualifiedEsToCNF [(ps, q)]) (qualifiedEsToCNF es)
+-- This is incorrect, strictness is not dealt with correctly
+-- qualifiedEsToCNF :: [([E],E)] -> E
+-- qualifiedEsToCNF []               = undefined
+-- qualifiedEsToCNF [([], q)]        = q
+-- qualifiedEsToCNF [(ps, q)]        = EBinOp Max (buildPs ps) q
+--   where
+--     buildPs :: [E] -> E
+--     buildPs []  = undefined
+--     buildPs [p] = (EUnOp Negate p)
+--     buildPs (p : ps) = EBinOp Max (EUnOp Negate p) (buildPs ps) 
+-- qualifiedEsToCNF ((ps, q) : es) = EBinOp Min (qualifiedEsToCNF [(ps, q)]) (qualifiedEsToCNF es)
 
 -- | Convert a list of qualified Es to a list of lists where
 -- the outer list is a conjunction and the inner list is a disjunction,
 -- AKA a CNF
-qualifiedEsToCNF2 :: [([E],E)] -> [[E]]
-qualifiedEsToCNF2 = map (\(ps,q) -> q : map (EUnOp Negate) ps)
+qualifiedEsToCNF2 :: Rational -> [([E],E)] -> [[E]]
+qualifiedEsToCNF2 epsilon = map (\(ps,q) -> q : map (\p -> EBinOp Sub (EUnOp Negate p) (Lit epsilon)) ps) -- This is wrong, the negation of ps turns it into < 0
 
 
 -- TODO:

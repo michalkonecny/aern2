@@ -237,7 +237,7 @@ prop_minMaxAbsEliminatorECNF cnf =
       eResult         = map (map (>= 0)) eRanges
       eResultKleenean = foldl and2 (cn CertainTrue) $ map (foldl or2 (cn CertainFalse)) eResult
 
-      eRangesEliminator         = map (map (\e -> applyExpression e varMap (prec 10))) $ minMaxAbsEliminatorECNF cnf
+      eRangesEliminator         = map (map (\e -> applyExpression e varMap (prec 10))) $ minMaxAbsEliminatorECNF epsilon cnf
       eResultEliminator         = map (map (>= 0)) eRangesEliminator
       eResultEliminatorKleenean = foldl and2 (cn CertainTrue) $ map (foldl or2 (cn CertainFalse)) eResultEliminator
 
@@ -269,11 +269,14 @@ prop_minMaxAbsEliminatorECNF cnf =
 -- Original is False
 -- fToECNF is False
 -- but minMaxAbsEliminatorECNF says true
+-- Another one: FComp Eq (EUnOp Abs (Lit (0 % 1))) (EUnOp Sqrt (Lit (5034822885953 % 7657538426026)))
+-- No varmap
+-- These bugs have been fixed
 prop_fToECNFAndMinMaxAbsEliminatorECNF :: F -> Property
-prop_fToECNFAndMinMaxAbsEliminatorECNF f = 
+prop_fToECNFAndMinMaxAbsEliminatorECNF f1 = 
   forAllBlind variablePoints $ \points ->
     let
-      cnf             = minMaxAbsEliminatorECNF $ fToECNF f epsilon
+      cnf             = minMaxAbsEliminatorECNF epsilon $ fToECNF f epsilon
 
       varMap          = map (\(i, v) -> (v, (rational (points !! i), rational (points !! i)))) (zip [0..] variables)
 
@@ -298,6 +301,7 @@ prop_fToECNFAndMinMaxAbsEliminatorECNF f =
               TrueOrFalse -> label "Both F and cnf are indeterminate" True
               _           -> counterexample ("F indeterminate but eliminated false/true: Function " ++ show f ++ " Domain: " ++ show varMap) False
   where
+    f = simplifyF f1
     variables = extractVariablesF f
 
 
@@ -351,7 +355,7 @@ prop_verifyCheckECNFF f =
   forAllBlind variableDomains $ \domains ->
     let
       vc              = f
-      cnf             = minMaxAbsEliminatorECNF $ fToECNF vc epsilon
+      cnf             = minMaxAbsEliminatorECNF epsilon $ fToECNF vc epsilon
       orderedDomains  = map (\(x, y) -> (min x y, max x y)) domains
       varMap          = map (\(i, v) -> (v, (rational (fst (orderedDomains !! i)), rational (snd (orderedDomains !! i))))) (zip [0..] variables)
       checkECNFResult = checkECNFCE cnf varMap 10 100 1.2 (prec 10)
@@ -404,7 +408,7 @@ prop_verifyCheckECNFVC context goal =
   forAllBlind variableDomains $ \domains ->
     let
       vc              = FConn Impl context goal
-      cnf             = minMaxAbsEliminatorECNF $ fToECNF vc epsilon
+      cnf             = minMaxAbsEliminatorECNF epsilon $ fToECNF vc epsilon
       orderedDomains  = map (\(x, y) -> (min x y, max x y)) domains
       varMap          = map (\(i, v) -> (v, (rational (fst (orderedDomains !! i)), rational (snd (orderedDomains !! i))))) (zip [0..] variables)
       checkECNFResult = checkECNFCE cnf varMap 10 100 1.2 (prec 100)
