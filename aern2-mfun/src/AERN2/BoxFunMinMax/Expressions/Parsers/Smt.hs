@@ -413,15 +413,19 @@ processVC parsedExpressions =
 -- Remove anything which refers to a variable for which we cannot derive ranges
 -- If the goal contains underivable variables, return Nothing
 deriveVCRanges :: F -> Maybe (F, VarMap)
-deriveVCRanges vc@(FConn Impl contextCNF goal) =
-  trace (show underivableVariables) $
-  trace (show goal) $
-  if fContainsVars underivableVariables goal
-    then Nothing
-    else
-      case filterCNF contextCNF of
-        Just filteredContext  -> Just (FConn Impl filteredContext goal, derivedVarMap)
-        Nothing               -> Just                            (goal, derivedVarMap)
+deriveVCRanges vc =
+  case simplifiedF of
+    FConn Impl contextCNF goal ->
+      if fContainsVars underivableVariables goal
+        then Nothing
+        else
+          case filterCNF contextCNF of
+            Just filteredContext  -> Just (FConn Impl filteredContext goal, derivedVarMap)
+            Nothing               -> Just                            (goal, derivedVarMap)
+    goal ->
+      if fContainsVars underivableVariables goal
+        then Nothing
+        else Just (goal, derivedVarMap)
   where
     (simplifiedF, derivedVarMap, underivableVariables) = deriveBoundsAndSimplify vc
 
@@ -451,7 +455,9 @@ deriveVCRanges vc@(FConn Impl contextCNF goal) =
     fContainsVars vars (FNot f)         = fContainsVars vars f
     fContainsVars _ FTrue               = False
     fContainsVars _ FFalse              = False
-deriveVCRanges _ = Nothing
+
+inequalityEpsilon :: Rational
+inequalityEpsilon = 1/(2^52)  -- Epsilon for double precision floats
 
 -- |Convert a VC to ECNF, eliminating any floats. 
 eliminateFloatsAndConvertVCToECNF :: F -> VarMap -> [[E]]
@@ -463,7 +469,11 @@ eliminateFloatsAndConvertVCToECNF (FConn Impl context goal) varMap =
     contextEs <- map (map (\e -> eliminateFloats e varMap True)) (fToECNF (FNot context) inequalityEpsilon), 
     goalEs    <- map (map (\e -> eliminateFloats e varMap False)) (fToECNF goal inequalityEpsilon)
   ]
-  where
-    inequalityEpsilon = 1/(2^52)  -- Epsilon for double precision floats
-    -- inequalityEpsilon = 1/(2^112) -- Epsilon for quad precision floats
-eliminateFloatsAndConvertVCToECNF _ _ = error "This function should only be called on implications (FConn Impl leftTerm rightTerm)"
+-- |If there is no implication, we have a goal with no context
+eliminateFloatsAndConvertVCToECNF goal varMap = 
+  minMaxAbsEliminatorECNF inequalityEpsilon $
+  [
+    goalEs
+    |
+    goalEs <- map (map (\e -> eliminateFloats e varMap False)) (fToECNF goal inequalityEpsilon)
+  ]
