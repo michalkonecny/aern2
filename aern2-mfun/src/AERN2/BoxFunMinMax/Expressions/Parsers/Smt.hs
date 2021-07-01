@@ -25,6 +25,8 @@ import AERN2.BoxFunMinMax.Expressions.DeriveBounds
 import AERN2.BoxFunMinMax.Expressions.EliminateFloats
 import AERN2.BoxFunMinMax.Expressions.Eliminator (minMaxAbsEliminatorECNF)
 
+data ParsingMode = Why3 | CNF
+
 parser :: String -> [LD.Expression]
 parser = LP.analyzeExpressionSequence . LP.parseSequence . LP.tokenize
 
@@ -381,12 +383,15 @@ parseRoundingMode (LD.Variable mode) =
     _                                         -> Nothing
 parseRoundingMode _ = Nothing
 
--- |Process a parsed list of expressions to a VC. Everything in the context implies the goal.
--- If the goal cannot be determined, we return Nothing
-processVC  :: [LD.Expression] -> Maybe F
-processVC parsedExpressions = 
-  trace (show (maybe Nothing termToF mGoal)) $
-  trace (show variablesWithTypes) $
+-- |Process a parsed list of expressions to a VC. 
+-- 
+-- If the parsing mode is Why3, everything in the context implies the goal (empty context means we only have a goal). 
+-- If the goal cannot be parsed, we return Nothing.
+-- 
+-- If the parsing mode is CNF, parse all assertions into a CNF. If any assertion cannot be parsed, return Nothing.
+-- If any assertion contains Floats, return Nothing.
+processVC  :: [LD.Expression] -> ParsingMode -> Maybe F
+processVC parsedExpressions Why3 = 
   case mGoalF of
     Just goalF  -> if null contextF then Just goalF else Just $ FConn Impl (foldContextF contextF) goalF
     Nothing     -> Nothing
@@ -406,7 +411,21 @@ processVC parsedExpressions =
     foldContextF []       = error "processVC - foldContextF: Empty list given"
     foldContextF [f]      = f
     foldContextF (f : fs) = FConn And f (foldContextF fs)
+processVC parsedExpressions CNF = trace (show mAssertionsF) $ if any hasFloatF assertionsF then Nothing else assertionsF
+  where
+    assertions = findAssertions parsedExpressions
+    mAssertionsF = map termToF assertions
 
+    assertionsF = foldAssertionsF mAssertionsF
+
+    foldAssertionsF :: [Maybe F] -> Maybe F
+    foldAssertionsF []             = Nothing
+    foldAssertionsF [f]            = f
+    foldAssertionsF (Nothing : _)  = Nothing
+    foldAssertionsF (Just f : mfs) = 
+      case foldAssertionsF mfs of
+        Just fs -> Just $ FConn And f fs
+        Nothing -> Nothing
     -- contextFAnd = foldl
 
 -- |Derive ranges for a VC (Implication where a CNF implies a goal)
@@ -477,3 +496,7 @@ eliminateFloatsAndConvertVCToECNF goal varMap =
     |
     goalEs <- map (map (\e -> eliminateFloats e varMap False)) (fToECNF goal inequalityEpsilon)
   ]
+
+parseVCToECNF :: FilePath -> ParsingMode -> Maybe ([[E]], VarMap)
+parseVCToECNF filePath mode =
+  (\(f, vm) -> (simplifyECNF (eliminateFloatsAndConvertVCToECNF f vm), vm)) <$> (deriveVCRanges . simplifyF =<< (processVC . parseSMT2) filePath mode)
