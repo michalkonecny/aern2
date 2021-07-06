@@ -1,7 +1,9 @@
 # Change log for aern2-mp
 
+* v ???
+  * add limits for CN (WithCurrentPrec p (CN MPBall))
 * v 0.2.7 2021-06-02
-  * make WithCurrentPrec p (CN MPBall) a Field
+  * make (WithCurrentPrec p (CN MPBall)) a Field
   * simplify WithCurrentPrec, swap its parameters
 * v 0.2.6 2021-05-29
   * adapt to new ppow operations
