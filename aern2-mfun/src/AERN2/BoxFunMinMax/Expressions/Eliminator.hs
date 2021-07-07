@@ -106,8 +106,9 @@ minMaxAbsEliminatorECNF epsilon ecnf = and $ map or (map (map ((qualifiedEsToCNF
 -- the outer list is a conjunction and the inner list is a disjunction,
 -- AKA a CNF
 qualifiedEsToCNF2 :: Rational -> [([E],E)] -> [[E]]
-qualifiedEsToCNF2 epsilon = map (\(ps,q) -> q : map (\p -> EBinOp Sub (EUnOp Negate p) (Lit epsilon)) ps) -- This is wrong, the negation of ps turns it into < 0
-
+qualifiedEsToCNF2 epsilon = map (\(ps,q) -> q : map (\p -> EBinOp Sub (EUnOp Negate p) (Lit epsilon)) ps) 
+  -- The negation of ps turns it into ps < 0, which is equivalent to -ps > 0
+  -- So we subtract an epsilon to turn this strict inequality into a non-strict inequality
 
 -- TODO:
 
