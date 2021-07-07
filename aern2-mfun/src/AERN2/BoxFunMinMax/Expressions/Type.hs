@@ -140,8 +140,8 @@ fToE (FConn op f1 f2) eps  = case op of
     EBinOp Max (EUnOp Negate (fToE f1 eps)) (fToE f2 eps) -- !f1 \/ f2 = max(!f1, f2)
   Equiv -> fToE (FComp Eq (fToE f1 eps) (fToE f2 eps)) eps
 fToE (FNot f) eps = EUnOp Negate (fToE f eps)
-fToE FTrue  _     = error "fToE for FTrue undefined"  $ Lit 1.0
-fToE FFalse _     = error "fToE for FFalse undefined" $ Lit $ -1.0
+fToE FTrue  _     = Lit 1.0
+fToE FFalse _     = Lit $ -1.0
 
 
 fToECNF :: F -> Rational -> [[E]]
@@ -171,8 +171,12 @@ fToECNF = fToECNFB False
       Or      -> [d1 ++ d2 | d1 <- fToECNFB False f1 eps, d2 <- fToECNFB False f2 eps] -- [e1 /\ e2 /\ (e3 \/ e4)] \/ [p1 /\ (p2 \/ p3) /\ p4] 
       Impl    -> [d1 ++ d2 | d1 <- fToECNFB True f1 eps, d2 <- fToECNFB False f2 eps]
       Equiv   -> fToECNFB False (FConn And (FConn Impl f1 f2) (FConn Impl f2 f1)) eps
-    fToECNFB isNegated FTrue  _  = error "fToECNFB for FTrue undefined"  $ Lit 1.0
-    fToECNFB isNegated FFalse _  = error "fToECNFB for FFalse undefined" $ Lit $ -1.0
+    -- fToECNFB isNegated FTrue  _  = error "fToECNFB for FTrue undefined"  $ Lit 1.0
+    -- fToECNFB isNegated FFalse _  = error "fToECNFB for FFalse undefined" $ Lit $ -1.0
+    fToECNFB True  FTrue  eps  = fToECNFB False FFalse eps 
+    fToECNFB True  FFalse eps  = fToECNFB False FTrue eps 
+    fToECNFB False FTrue  _    = [[Lit 1.0]]
+    fToECNFB False FFalse _    = [[Lit (-1.0)]]
 
 -- | Add bounds for any Float expressions
 -- addRoundingBounds :: E -> [[E]]
@@ -415,3 +419,20 @@ extractVariablesF = nub . findAllVars
 
 extractVariablesECNF :: [[E]] -> [String]
 extractVariablesECNF = nub . concatMap (concatMap extractVariablesE) 
+
+hasFloatE :: E -> Bool
+hasFloatE (Float _ _)      = True
+hasFloatE (Float32 _ _)    = True
+hasFloatE (Float64 _ _)    = True
+hasFloatE (EBinOp _ e1 e2) = hasFloatE e1 || hasFloatE e2
+hasFloatE (EUnOp _ e)      = hasFloatE e
+hasFloatE (PowI e _)       = hasFloatE e
+hasFloatE (Lit _)          = False
+hasFloatE (Var _)          = False
+
+hasFloatF :: F -> Bool
+hasFloatF (FConn _ f1 f2) = hasFloatF f1 || hasFloatF f2
+hasFloatF (FComp _ e1 e2) = hasFloatE e1 || hasFloatE e2
+hasFloatF (FNot f)        = hasFloatF f
+hasFloatF FTrue           = False
+hasFloatF FFalse          = False
