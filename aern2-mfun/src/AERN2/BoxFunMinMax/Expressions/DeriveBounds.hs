@@ -53,26 +53,18 @@ _f4 =
 
 type VarName = String
 
-deriveBoundsAndSimplify :: F -> (F, VarMap, [VarName])
-deriveBoundsAndSimplify form =
+deriveBoundsAndSimplify :: F -> Bool -> (F, VarMap, [VarName])
+deriveBoundsAndSimplify form' isCNF =
   let (derivedRanges, underivedRanges) = List.partition isGood varRanges
   in (simplifiedF, map removeJust derivedRanges, map fst underivedRanges)
-    ---- | allGood =
-    ----     Right (map removeJust varRanges)
-    ---- | otherwise = 
-    ----     trace (show varRanges) $ Left errorMessage
     where
-    -- allGood = and $ map isGood varRanges
+    form = if isCNF then FConn Impl form' FFalse else form'
+    -- If given a CNF, make it imply False
     removeJust (v, (Just l, Just r)) = (v, (l, r))
     removeJust _ = error "deriveBounds: removeJust failed"
     varRanges = Map.toList box
     isGood (_v, (Just _,Just _)) = True
     isGood _ = False
-    -- errorMessage =
-    --     unlines $ map reportBadVar $ filter (not . isGood) varRanges
-    --     where
-    --     reportBadVar (v, _) =
-    --         "Failed to derive a bound for variable " ++ v ++ " in formula " ++ show form 
     initBox = Map.fromList $ zip (extractVariablesF form) (repeat (Nothing, Nothing))
     (box, simplifiedF) = aux initBox $ form
       where
@@ -80,8 +72,12 @@ deriveBoundsAndSimplify form =
         | b P.== b2 = (b, f2)
         | otherwise = aux b2 f2
         where
-        f2 = simplifyF $ evalF_comparisons b f 
+        f2 = 
+          if isCNF 
+            then (\(FConn Impl context goal) -> FConn Impl (simplifyF context) goal) (evalF_comparisons b f) 
+            else simplifyF $ evalF_comparisons b f
               -- simplify where possible with the knowledge we are restricted to box b
+              -- If we are dealing with a CNF, only simplify the context (the goal will be FFalse)
         b' = Map.intersection b $ Map.fromList $ zip (extractVariablesF f2) (repeat ())
               -- remove variables that do not appear in f2
         b2 = scanHypotheses f2 b'

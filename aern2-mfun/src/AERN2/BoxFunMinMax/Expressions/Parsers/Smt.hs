@@ -431,22 +431,30 @@ processVC parsedExpressions CNF = trace (show mAssertionsF) $ if any hasFloatF a
 -- |Derive ranges for a VC (Implication where a CNF implies a goal)
 -- Remove anything which refers to a variable for which we cannot derive ranges
 -- If the goal contains underivable variables, return Nothing
-deriveVCRanges :: F -> Maybe (F, VarMap)
-deriveVCRanges vc =
-  case simplifiedF of
-    FConn Impl contextCNF goal ->
-      if fContainsVars underivableVariables goal
-        then Nothing
-        else
-          case filterCNF contextCNF of
-            Just filteredContext  -> Just (FConn Impl filteredContext goal, derivedVarMap)
-            Nothing               -> Just                            (goal, derivedVarMap)
-    goal ->
-      if fContainsVars underivableVariables goal
-        then Nothing
-        else Just (goal, derivedVarMap)
+deriveVCRanges :: F -> ParsingMode -> Maybe (F, VarMap)
+deriveVCRanges vc mode =
+  if isModeCNF && not (null underivableVariables)
+    then Nothing -- We cannot deal with a CNF if any variable is underivable
+    else
+      case simplifiedF of
+        FConn Impl contextCNF goal ->
+          if fContainsVars underivableVariables goal
+            then Nothing
+            else
+              case filterCNF contextCNF of
+                Just filteredContext  -> Just (FConn Impl filteredContext goal, derivedVarMap)
+                Nothing               -> Just                            (goal, derivedVarMap)
+        goal ->
+          if fContainsVars underivableVariables goal
+            then Nothing
+            else Just (goal, derivedVarMap)
   where
-    (simplifiedF, derivedVarMap, underivableVariables) = deriveBoundsAndSimplify vc
+    (simplifiedF, derivedVarMap, underivableVariables) = deriveBoundsAndSimplify vc isModeCNF
+
+    isModeCNF = 
+      case mode of
+        Why3 -> False
+        CNF  -> True 
 
     filterCNF :: F -> Maybe F
     filterCNF (FConn And f1 f2) = 
@@ -476,7 +484,8 @@ deriveVCRanges vc =
     fContainsVars _ FFalse              = False
 
 inequalityEpsilon :: Rational
-inequalityEpsilon = 1/(2^52)  -- Epsilon for double precision floats
+inequalityEpsilon = 0.000000001
+-- inequalityEpsilon = 1/(2^23)
 
 -- |Convert a VC to ECNF, eliminating any floats. 
 eliminateFloatsAndConvertVCToECNF :: F -> VarMap -> [[E]]
@@ -488,7 +497,7 @@ eliminateFloatsAndConvertVCToECNF (FConn Impl context goal) varMap =
     contextEs <- map (map (\e -> eliminateFloats e varMap True)) (fToECNF (FNot context) inequalityEpsilon), 
     goalEs    <- map (map (\e -> eliminateFloats e varMap False)) (fToECNF goal inequalityEpsilon)
   ]
--- |If there is no implication, we have a goal with no context
+-- |If there is no implication, we have a goal with no context or a CNF. We deal with these in the same way
 eliminateFloatsAndConvertVCToECNF goal varMap = 
   minMaxAbsEliminatorECNF inequalityEpsilon $
   [
@@ -499,4 +508,4 @@ eliminateFloatsAndConvertVCToECNF goal varMap =
 
 parseVCToECNF :: FilePath -> ParsingMode -> Maybe ([[E]], VarMap)
 parseVCToECNF filePath mode =
-  (\(f, vm) -> (simplifyECNF (eliminateFloatsAndConvertVCToECNF f vm), vm)) <$> (deriveVCRanges . simplifyF =<< (processVC . parseSMT2) filePath mode)
+  (\(f, vm) -> (simplifyECNF (eliminateFloatsAndConvertVCToECNF (simplifyF f) vm), vm)) <$> ((`deriveVCRanges` mode) . simplifyF =<< (processVC . parseSMT2) filePath mode)
