@@ -9,7 +9,7 @@ import AERN2.BoxFun.Box (Box)
 import qualified AERN2.Linear.Vector.Type as V
 
 
--- import Debug.Trace
+import Debug.Trace as T
 
 -- | An assosciation list mapping variable names to rational interval domains
 type VarMap = [(String, (Rational, Rational))]
@@ -48,13 +48,10 @@ fullBisect vMap = case L.length vMap of
 -- | Bisect the domain of the given interval, resulting in a pair
 -- Vars
 bisectInterval :: (String, (Rational, Rational)) -> ((String, (Rational, Rational)), (String, (Rational, Rational)))
-bisectInterval vMap = bisectedVar
+bisectInterval (var, (lower, upper)) = bisectedVar
   where
-    varCentre = fst dom + (snd dom - fst dom) / 2 where dom = snd vMap
-    bisectedVar = ((var, (fst dom, varCentre)), (var, (varCentre, snd dom)))
-      where 
-        var = fst vMap
-        dom = snd vMap
+    varCentre = (lower + upper) / 2
+    bisectedVar = ((var, (lower, varCentre)), (var, (varCentre, upper)))
 
 -- | Bisect the given dimension of the given VarMap,
 -- resulting in a pair of VarMaps
