@@ -23,6 +23,8 @@ import AERN2.MP.Dyadic (Dyadic, dyadic)
 
 import qualified Debug.Trace as T
 
+import qualified Data.PQueue.Prio.Min as Q
+
 import Data.Maybe
 import Control.CollectErrors
 trace a x = x
@@ -618,6 +620,7 @@ decideDisjunctionBFS :: [VarMap] -> [E.E] -> Integer -> Integer -> Rational -> P
 decideDisjunctionBFS [] _ _ _ _ _ = (Just True, Nothing)
 decideDisjunctionBFS (varMap : varMaps) expressions numberOfBoxesExamined numberOfBoxesCutoff relativeImprovementCutoff p =
   if numberOfBoxesExamined !<! numberOfBoxesCutoff then
+    T.trace ("b: " ++ show numberOfBoxesExamined) $
     case decideDisjunctionWithSimplexCE (map (\e -> (e, expressionToBoxFun e varMap p)) expressions) varMap 0 0 0 relativeImprovementCutoff p of
       (Just True, _) -> decideDisjunctionBFS varMaps expressions (numberOfBoxesExamined + 1) numberOfBoxesCutoff relativeImprovementCutoff p 
       r@(Just False, _) -> r
@@ -626,6 +629,55 @@ decideDisjunctionBFS (varMap : varMaps) expressions numberOfBoxesExamined number
         in decideDisjunctionBFS (varMaps ++ [leftVarMap, rightVarMap]) expressions (numberOfBoxesExamined + 1) numberOfBoxesCutoff relativeImprovementCutoff p
       (Nothing, Nothing) -> undefined
   else (Nothing, Just varMap) -- TODO: 'best' indeterminate area?
+
+mean :: [CN Dyadic] -> CN Rational
+mean xs = sum xs / length xs
+
+decideDisjunctionBestFirst :: Q.MinPQueue (CN Dyadic) VarMap -> [(E.E, BoxFun)] -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
+decideDisjunctionBestFirst queue expressionsWithFunctions numberOfBoxesExamined numberOfBoxesCutoff relativeImprovementCutoff p =
+  case Q.minView queue of
+    Just (varMap, queueWithoutVarMap) ->
+      if numberOfBoxesExamined !<! numberOfBoxesCutoff then
+        T.trace (show numberOfBoxesExamined) $
+        case decideDisjunctionWithSimplexCE expressionsWithFunctions varMap 0 0 0 relativeImprovementCutoff p of
+          (Just True, _) -> decideDisjunctionBestFirst queueWithoutVarMap expressionsWithFunctions (numberOfBoxesExamined + 1) numberOfBoxesCutoff relativeImprovementCutoff p 
+          r@(Just False, _) -> r
+          (Nothing, Just indeterminateVarMap) -> T.trace "h" $
+            let 
+              -- esWithRanges = parMap rseq (\ (e, f) -> ((e, f), apply f (fromVarMap indeterminateVarMap p))) expressionsWithFunctions
+              -- filteredExpressionsWithFunctions = map fst $ filter (\ (_, range) -> not (range !<! 0)) esWithRanges
+              filteredExpressionsWithFunctions = -- Can't recurse with this. Maybe add this to the queue? Each box would have expressions to check. Inefficient?
+                [
+                  notFalseTerms | 
+                  notFalseTerms@(_, f) <- expressionsWithFunctions,
+                  not (apply f (fromVarMap indeterminateVarMap p) !<! 0)
+                ]
+
+              (leftVarMap, rightVarMap) = T.trace "bisecting" bisectVar indeterminateVarMap (fst (widestInterval (tail varMap) (head varMap)))
+              -- [leftVarMapWithMean, rightVarMapWithMean] = 
+              --   [
+              --     [(apply f (fromVarMap leftVarMap p), leftVarMap), (apply f (fromVarMap rightVarMap p), rightVarMap)]
+              --     |
+              --     (e, f) <- filteredExpressionsWithFunctions,
+              --     let tmp = apply f (fromVarMap leftVarMap p)
+              --   ]
+              leftVarMapWithMean  = T.trace (show (map fst expressionsWithFunctions)) $ T.trace "left"
+                (
+                  maximum $ map (\(_, f) -> AERN2.MP.Ball.centre (apply f (fromVarMap leftVarMap p))) expressionsWithFunctions, 
+                  leftVarMap
+                )
+              rightVarMapWithMean = T.trace "right"
+                (
+                  maximum $ map (\(_, f) -> AERN2.MP.Ball.centre (apply f (fromVarMap rightVarMap p))) expressionsWithFunctions, 
+                  rightVarMap
+                )
+            in 
+              decideDisjunctionBestFirst 
+              (uncurry Q.insert rightVarMapWithMean (uncurry Q.insert leftVarMapWithMean queueWithoutVarMap))
+              expressionsWithFunctions (numberOfBoxesExamined + 1) numberOfBoxesCutoff relativeImprovementCutoff p
+          (Nothing, Nothing) -> error "Got nothing with indeterminate varMap in decideDisjunctionBestFirst"
+      else (Nothing, Just varMap)   -- Reached number of boxes cutoff
+    Nothing -> (Just True, Nothing) -- All areas in queue verified
 
 decideDisjunctionWithSimplexCE :: [(E.E, BoxFun)] -> VarMap -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
 decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
@@ -648,7 +700,7 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth dept
 
       esWithRanges            = parMap rseq (\ (e, f) -> ((e, f), apply f box)) expressionsWithFunctions
       filterOutFalseTerms     = filter (\ (_, range) -> not (range !<! 0)) esWithRanges
-      greatestCentre          = maximum $ map (AERN2.MP.Ball.centre . snd) esWithRanges
+      -- greatestCentre          = maximum $ map (AERN2.MP.Ball.centre . snd) esWithRanges
       checkIfEsTrueUsingApply = any (\ (_, range) -> range !>=! 0) filterOutFalseTerms
 
       filteredExpressionsWithFunctions = map fst filterOutFalseTerms
@@ -659,6 +711,31 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth dept
         parMap rseq
         (\ ((_, f), _) -> (apply f boxL, apply f boxU, gradient f box))
         filterOutFalseTerms
+
+      -- Keep the functions where we can calculate all derivatives
+      filteredCornerRangesWithDerivatives =
+        filter
+        (\(_, _, c) -> not (V.any hasError c)) -- Filter out functions where any partial derivative contains an error TODO: check corners as well?
+        cornerRangesWithDerivatives
+
+      breadthFirstCheck varMapToCheck =
+        decideDisjunctionBFS 
+        [varMapToCheck]
+        filteredExpressions
+        0
+        bfsBoxesCutoff
+        relativeImprovementCutoff
+        p
+    
+
+      bestFirstCheck varMapToCheck =
+        decideDisjunctionBestFirst 
+          (Q.singleton (maximum (map (\(_, f) -> AERN2.MP.Ball.centre (apply f (fromVarMap varMapToCheck p))) filteredExpressionsWithFunctions)) varMapToCheck)
+          filteredExpressionsWithFunctions
+          0
+          bfsBoxesCutoff
+          relativeImprovementCutoff
+          p
 
       bisectWidestDimensionAndRecurse varMapToBisect = 
         let
@@ -679,12 +756,46 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth dept
                 r -> r
             r -> r
 
+      bestFirstCheckThenBisect varMapToCheck =
+        if currentDepth !<! depthCutoff -- Best first
+          then
+            if rangeMean !<! 0.0 then -- Trigger best-first search only if this succeeds
+              -- T.trace "best first" $
+              case bestFirstCheck varMapToCheck of
+                (Just True, _) -> (Just True, Nothing)
+                r@(Just False, _) -> r
+                (Nothing, _) -> bisectWidestDimensionAndRecurse varMapToCheck -- Wasted effort here
+            else
+              bisectWidestDimensionAndRecurse varMapToCheck
+          else
+            bestFirstCheck varMapToCheck --Last ditch bestFirst check
+        where
+          rangeMean = maximum $ map (AERN2.MP.Ball.centre . snd) filterOutFalseTerms
+
+        -- if currentDepth !<! depthCutoff -- Original
+        --   then
+        --     -- if rangeMean !<! 0.1 then -- Trigger best-first search only if this succeeds
+        --     --   T.trace "best first" $
+        --     --   case bestFirstCheck varMapToCheck of
+        --     --     (Just True, _) -> (Just True, Nothing)
+        --     --     r@(Just False, _) -> r
+        --     --     (Nothing, _) -> bisectWidestDimensionAndRecurse varMapToCheck -- Wasted effort here
+        --     -- else
+        --     bisectWidestDimensionAndRecurse varMapToCheck
+        --   else
+        --     breadthFirstCheck varMapToCheck --Last ditch bestFirst check
+        -- where
+        --   rangeMean = maximum $ map (AERN2.MP.Ball.centre . snd) filterOutFalseTerms
+
+
+
       checkSimplex
         -- If we can calculate all derivatives
-        | and (concatMap (\ (_, _, c) -> V.toList (V.map (not . CN.hasError) c)) cornerRangesWithDerivatives) = 
-          case decideWithSimplex cornerRangesWithDerivatives varMap of
-            r@(Just True, _) -> trace "proved true with simplex" r
-            (Nothing, Just newVarMap) -> 
+        -- | and (concatMap (\ (_, _, c) -> V.toList (V.map (not . CN.hasError) c)) cornerRangesWithDerivatives) = T.trace "decideWithSimplex start" $
+        | (not . null) filteredCornerRangesWithDerivatives = T.trace "decideWithSimplex start" $
+          case decideWithSimplex filteredCornerRangesWithDerivatives varMap of
+            r@(Just True, _) -> T.trace "decideWithSimplex true" r
+            (Nothing, Just newVarMap) -> T.trace "decideWithSimplex indet" $
               let 
                 newBox  = fromVarMap newVarMap p
                 newBoxL = lowerBounds box
@@ -693,28 +804,20 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap currentDepth dept
                   parMap rseq
                   (\ ((_, f), _) -> (apply f newBoxL, apply f newBoxU, gradient f newBox))
                   filterOutFalseTerms
-              in
+                varNames = map fst newVarMap
+                roundedVarMap = fromBox newBox varNames --FIXME: this is unsafe
+              in T.trace "findFalsePointWithSimplex start" $
                 case findFalsePointWithSimplex newCornerRangesWithDerivatives newVarMap of
-                  Nothing             -> recurseOnVarMap newVarMap
-                  Just counterExample -> (Just False, Just counterExample)
+                  Nothing             -> T.trace "findFalsePointWithSimplex indet" recurseOnVarMap newVarMap
+                  Just counterExample -> T.trace "findFalsePointWithSimplex false" (Just False, Just counterExample)
             _ -> undefined
-        | currentDepth !<! depthCutoff = 
-          trace ("bisecting without simplex " ++ show varMap) $
-          bisectWidestDimensionAndRecurse varMap
-        | otherwise = 
-          trace ("depth cutoff reached without simplex " ++ show varMap) $
-          decideDisjunctionBFS [varMap] filteredExpressions 0 bfsBoxesCutoff relativeImprovementCutoff p -- Last ditch BFS attempt
+        | otherwise = bestFirstCheckThenBisect varMap
 
       recurseOnVarMap newVarMap
         | taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff = 
           trace ("recursing with simplex with varMap: " ++ show newVarMap) $ 
           decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions newVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
-        | currentDepth !<! depthCutoff = 
-          trace ("bisecting with varMap from Simplex: " ++ show newVarMap) $ 
-          bisectWidestDimensionAndRecurse newVarMap
-        | otherwise = 
-          trace ("depth cutoff reached, starting BFS search " ++ show newVarMap) $ 
-          decideDisjunctionBFS [newVarMap] filteredExpressions 0 bfsBoxesCutoff relativeImprovementCutoff p
+        | otherwise = bestFirstCheckThenBisect newVarMap
 
 setupSystem :: [E.E] -> VarMap -> ([(CN MPBall, CN MPBall, Box)])
 setupSystem expressions varMap = 
@@ -920,25 +1023,25 @@ createDomainConstraints ((_, (l, r)) : xs) currentIndex =
     else
       (([S.GEQ [(currentIndex, rational 1)] l, S.LEQ [(currentIndex, rational 1)] r] ++ resultsL, resultsR), nextAvailableVar)
 
-encloseFunctionCounterExamples :: [(CN MPBall, CN MPBall, Box)] -> [Rational] -> [Rational] -> [(Integer, Rational)] -> [S.PolyConstraint]
-encloseFunctionCounterExamples [] _ _ _ = []
-encloseFunctionCounterExamples ((leftCornerValue, rightCornerValue, derivatives) : values) leftCorner rightCorner substVars =
+findFunctionCounterExample :: [(CN MPBall, CN MPBall, Box)] -> [Rational] -> [Rational] -> [(Integer, Rational)] -> [S.PolyConstraint]
+findFunctionCounterExample [] _ _ _ = []
+findFunctionCounterExample ((leftCornerValue, rightCornerValue, derivatives) : values) leftCorner rightCorner substVars =
   S.LEQ (zip [1..] upperDerivatives) (foldl add (-leftU - upperSubst - eps) upperDerivativesTimesLeftCorner)
     -- S.LEQ (zip [1..] negatedLowerDerivatives) (foldl add (rightU + lowerSubst) negatedLowerDerivativesTimesRightCorner)
     -- S.LEQ (zip [1..] lowerDerivatives) (foldl add (-rightU - lowerSubst - eps) lowerDerivativesTimesRightCorner)
-  : encloseFunctionCounterExamples values leftCorner rightCorner substVars
+  : findFunctionCounterExample values leftCorner rightCorner substVars
   where
     -- eps = 1/100000000000000000000000000000
 
-    -- mpBallToRational :: CN MPBall -> (Rational, Rational)
-    -- mpBallToRational = bimap rational rational . endpoints . reducePrecionIfInaccurate . unCN
+    mpBallToRational :: CN MPBall -> (Rational, Rational)
+    mpBallToRational = bimap rational rational . endpoints . reducePrecionIfInaccurate . unCN
     eps = 1/1000000000000
 
-    mpBallToRational :: CN MPBall -> (Rational, Rational)
+    -- mpBallToRational :: CN MPBall -> (Rational, Rational)
     -- mpBallToRational v = 
       -- let (l, r) = (endpointsAsIntervals . reducePrecionIfInaccurate . (~!)) v
       -- in ((rational . snd .  endpoints) l, (rational . fst . endpoints) r)
-    mpBallToRational = bimap rational rational . endpoints . unCN
+    -- mpBallToRational = bimap rational rational . endpoints . unCN
       -- bimap (endpoints . reducePrecionIfInaccurate)
 
     -- Get the lower and upper bounds of the function applied at the bottom left corner of the box
@@ -1206,7 +1309,7 @@ findFalsePointWithSimplex cornerValuesWithDerivatives varMap =
     leftCorner = map (fst . snd) varMap
     rightCorner = map (snd . snd) varMap
 
-    functionConstraints = encloseFunctionCounterExamples cornerValuesWithDerivatives leftCorner rightCorner substVars
+    functionConstraints = findFunctionCounterExample cornerValuesWithDerivatives leftCorner rightCorner substVars
 
     -- Map integer variables to their respective varMap
     indexedVarMap = zip variables varMap

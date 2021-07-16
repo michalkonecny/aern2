@@ -41,6 +41,8 @@ dependencies:
 - text
 - bytestring
 - binary
+- pqueue
+- foldl
 
 default-extensions:
 - RebindableSyntax,
