@@ -78,6 +78,11 @@ zip = V.zip
 null :: Vector a -> Bool
 null = V.null
 
+any :: (a -> Bool) -> V.Vector a -> Bool
+any = V.any
+
+all :: (a -> Bool) -> V.Vector a -> Bool
+all = V.all
 instance 
     (HasAccuracy a, HasPrecision a) => HasAccuracy (Vector a)
     where
