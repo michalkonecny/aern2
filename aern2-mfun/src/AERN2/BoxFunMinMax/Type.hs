@@ -238,14 +238,16 @@ decideDisjunctionBestFirst queue expressionsWithFunctions numberOfBoxesExamined 
 decideDisjunctionDepthFirstWithApply :: [(E.E, BoxFun)] -> VarMap -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
 decideDisjunctionDepthFirstWithApply expressionsWithFunctions varMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
   | null filterOutFalseTerms = 
-    trace ("proved false with apply " ++ show varMap)
-    (Just False, Just varMap)
+    trace ("proved false with apply " ++ show roundedVarMap)
+    (Just False, Just roundedVarMap)
   | checkIfEsTrueUsingApply = 
     trace "proved true with apply" 
     (Just True, Nothing)
-  | otherwise = bisectUntilCutoff varMap
+  | otherwise = bisectUntilCutoff roundedVarMap
   where
       box  = fromVarMap varMap p
+      varNames = map fst varMap
+      roundedVarMap = fromBox box varNames
 
       esWithRanges            = parMap rseq (\ (e, f) -> ((e, f), apply f box)) expressionsWithFunctions
       filterOutFalseTerms     = filterOutFalseExpressions esWithRanges
@@ -283,14 +285,16 @@ decideDisjunctionDepthFirstWithApply expressionsWithFunctions varMap currentDept
 decideDisjunctionDepthFirstWithSimplex :: [(E.E, BoxFun)] -> VarMap -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
 decideDisjunctionDepthFirstWithSimplex expressionsWithFunctions varMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
   | null filterOutFalseTerms = 
-    T.trace ("proved false with apply " ++ show varMap)
-    (Just False, Just varMap)
+    trace ("proved false with apply " ++ show roundedVarMap)
+    (Just False, Just roundedVarMap)
   | checkIfEsTrueUsingApply = 
     trace "proved true with apply" 
     (Just True, Nothing)
   | otherwise = checkSimplex
   where
       box  = fromVarMap varMap p
+      varNames = map fst varMap
+      roundedVarMap = fromBox box varNames
 
       esWithRanges            = parMap rseq (\ (e, f) -> ((e, f), apply f box)) expressionsWithFunctions
       filterOutFalseTerms     = filterOutFalseExpressions esWithRanges
@@ -330,29 +334,31 @@ decideDisjunctionDepthFirstWithSimplex expressionsWithFunctions varMap currentDe
       checkSimplex
         -- If we can calculate any derivatives
         | (not . null) filteredCornerRangesWithDerivatives = trace "decideWithSimplex start" $
-          case decideWithSimplex filteredCornerRangesWithDerivatives varMap of
-            r@(Just True, _) -> trace ("decideWithSimplex true: " ++ show varMap) r
+          case decideWithSimplex filteredCornerRangesWithDerivatives roundedVarMap of
+            r@(Just True, _) -> trace ("decideWithSimplex true: " ++ show roundedVarMap) r
             (Nothing, Just newVarMap) -> trace "decideWithSimplex indet" $ recurseOnVarMap newVarMap
             _ -> undefined
-        | otherwise = bisectUntilCutoff varMap
+        | otherwise = bisectUntilCutoff roundedVarMap
 
-      recurseOnVarMap newVarMap
-        | taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff = 
-          trace ("recursing with simplex with varMap: " ++ show newVarMap) $ 
-          decideDisjunctionDepthFirstWithSimplex filteredExpressionsWithFunctions newVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
-        | otherwise = bisectUntilCutoff newVarMap
+      recurseOnVarMap recurseVarMap
+        | taxicabWidth roundedVarMap / taxicabWidth recurseVarMap !>=! cn relativeImprovementCutoff = 
+          trace ("recursing with simplex with roundedVarMap: " ++ show recurseVarMap) $ 
+          decideDisjunctionDepthFirstWithSimplex filteredExpressionsWithFunctions recurseVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
+        | otherwise = bisectUntilCutoff recurseVarMap
 
 decideDisjunctionWithSimplexCE :: [(E.E, BoxFun)] -> VarMap -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
 decideDisjunctionWithSimplexCE expressionsWithFunctions varMap relativeImprovementCutoff p
   | null filterOutFalseTerms = 
-    trace ("proved false with apply " ++ show varMap)
-    (Just False, Just varMap)
+    trace ("proved false with apply " ++ show roundedVarMap)
+    (Just False, Just roundedVarMap)
   | checkIfEsTrueUsingApply = 
     trace "proved true with apply" 
     (Just True, Nothing)
   | otherwise = checkSimplex
   where
       box  = fromVarMap varMap p
+      varNames = map fst varMap
+      roundedVarMap = fromBox box varNames
 
       esWithRanges            = parMap rseq (\ (e, f) -> ((e, f), apply f box)) expressionsWithFunctions
       filterOutFalseTerms     = filterOutFalseExpressions esWithRanges
@@ -365,7 +371,7 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap relativeImproveme
       checkSimplex
         -- If we can calculate any derivatives
         | (not . null) filteredCornerRangesWithDerivatives = trace "decideWithSimplex start" $
-          case decideWithSimplex filteredCornerRangesWithDerivatives varMap of
+          case decideWithSimplex filteredCornerRangesWithDerivatives roundedVarMap of
             r@(Just True, _) -> trace "decideWithSimplex true" r
             (Nothing, Just newVarMap) -> trace "decideWithSimplex indet" $
               let 
@@ -376,19 +382,23 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap relativeImproveme
                   parMap rseq
                   (\ ((_, f), _) -> (apply f newBoxL, apply f newBoxU, gradient f newBox))
                   filterOutFalseTerms
+                roundedNewVarMap = fromBox newBox varNames
               in trace "findFalsePointWithSimplex start" $
-                case findFalsePointWithSimplex newCornerRangesWithDerivatives newVarMap of
-                  Nothing             -> trace "findFalsePointWithSimplex indet" recurseOnVarMap newVarMap
-                  Just counterExample -> trace "findFalsePointWithSimplex false" (Just False, Just counterExample)
+                case findFalsePointWithSimplex newCornerRangesWithDerivatives roundedNewVarMap of
+                  Nothing             -> trace "findFalsePointWithSimplex indet" recurseOnVarMap roundedNewVarMap
+                  Just counterExample -> trace "findFalsePointWithSimplex false" $
+                    if disjunctionRangesBelowZero (applyDisjunction (map (fst . fst) filterOutFalseTerms) counterExample (prec 1000)) -- maybe use higher p than the one passed in? i.e. * (3/2)
+                      then (Just False, Just counterExample)
+                      else T.trace "counterexample incorrect" recurseOnVarMap roundedNewVarMap
                     -- (Just False, Just counterExample)
             _ -> undefined
-        | otherwise = (Nothing, Just varMap)
+        | otherwise = (Nothing, Just roundedVarMap)
 
-      recurseOnVarMap newVarMap
-        | taxicabWidth varMap / taxicabWidth newVarMap !>=! cn relativeImprovementCutoff = 
-          trace ("recursing with simplex with varMap: " ++ show newVarMap) $ 
-          decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions newVarMap relativeImprovementCutoff p
-        | otherwise = (Nothing, Just newVarMap)
+      recurseOnVarMap recurseVarMap
+        | taxicabWidth roundedVarMap / taxicabWidth recurseVarMap !>=! cn relativeImprovementCutoff = 
+          trace ("recursing with simplex with box: " ++ show recurseVarMap) $ 
+          decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions recurseVarMap relativeImprovementCutoff p
+        | otherwise = (Nothing, Just recurseVarMap)
 
 decideWithSimplex :: [(CN MPBall, CN MPBall, Box)] -> VarMap -> (Maybe Bool, Maybe VarMap)
 decideWithSimplex cornerValuesWithDerivatives varMap =
@@ -544,7 +554,7 @@ createFunctionConstraints ((leftCornerValue, rightCornerValue, derivatives) : va
     -- S.GEQ ((currentIndex, -1.0) : zip [1..] lowerDerivatives) (foldl add (rightL - lowerSubst) lowerDerivativesTimesRightCorner),
     -- S.LEQ ((currentIndex, -1.0) : zip [1..] upperDerivatives) (foldl add (rightU - upperSubst) upperDerivativesTimesRightCorner)
     -- y + (x_1 * (-dx_1R)) >= yl + (x_1r * (-dx_1R))
-    S.GEQ ((currentIndex, -1.0) : zip [1..] negatedUpperDerivatives) (foldl add (rightL + upperSubst) negatedUpperDerivativesTimesRightCorner)
+    S.GEQ ((currentIndex, 1.0) : zip [1..] negatedUpperDerivatives) (foldl add (rightL + upperSubst) negatedUpperDerivativesTimesRightCorner)
     -- S.LEQ ((currentIndex, -1.0) : zip [1..] negatedLowerDerivatives) (foldl add (rightU + lowerSubst) negatedLowerDerivativesTimesRightCorner)
     
   ]
