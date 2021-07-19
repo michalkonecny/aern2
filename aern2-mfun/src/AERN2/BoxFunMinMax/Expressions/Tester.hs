@@ -314,7 +314,7 @@ prop_verifyCheckECNF cnf =
     let
       orderedDomains     = map (\(x, y) -> (min x y, max x y)) domains
       varMap          = map (\(i, v) -> (v, (rational (fst (orderedDomains !! i)), rational (snd (orderedDomains !! i))))) (zip [0..] variables)
-      checkECNFResult = checkECNFCE cnf varMap 10 100 1.2 (prec 10)
+      checkECNFResult = checkECNFDepthFirstWithSimplex cnf varMap 10 100 1.2 (prec 10)
       eRanges         = map (map (\e -> applyExpression e varMap (prec 10))) cnf
       eRangesHasError = any (any hasError) eRanges 
     in
@@ -358,7 +358,7 @@ prop_verifyCheckECNFF f =
       cnf             = minMaxAbsEliminatorECNF epsilon $ fToECNF vc epsilon
       orderedDomains  = map (\(x, y) -> (min x y, max x y)) domains
       varMap          = map (\(i, v) -> (v, (rational (fst (orderedDomains !! i)), rational (snd (orderedDomains !! i))))) (zip [0..] variables)
-      checkECNFResult = checkECNFCE cnf varMap 10 100 1.2 (prec 10)
+      checkECNFResult = checkECNFDepthFirstWithSimplex cnf varMap 10 100 1.2 (prec 10)
       eRanges         = map (map (\e -> applyExpression e varMap (prec 10))) cnf
 
       eRangesHasError = any (any hasError) eRanges 
@@ -411,7 +411,7 @@ prop_verifyCheckECNFVC context goal =
       cnf             = minMaxAbsEliminatorECNF epsilon $ fToECNF vc epsilon
       orderedDomains  = map (\(x, y) -> (min x y, max x y)) domains
       varMap          = map (\(i, v) -> (v, (rational (fst (orderedDomains !! i)), rational (snd (orderedDomains !! i))))) (zip [0..] variables)
-      checkECNFResult = checkECNFCE cnf varMap 10 100 1.2 (prec 100)
+      checkECNFResult = checkECNFDepthFirstWithSimplex cnf varMap 10 100 1.2 (prec 100)
       eRanges         = map (map (\e -> applyExpression e varMap (prec 100))) cnf
 
       eRangesHasError = any (any hasError) eRanges 

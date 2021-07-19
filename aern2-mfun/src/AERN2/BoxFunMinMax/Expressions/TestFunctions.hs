@@ -575,7 +575,7 @@ testDisjunction2 = [EBinOp Sub (PowI (EBinOp Sub (Var "X") (Lit 2.0)) 2) (Lit 1.
                     EBinOp Add (EBinOp Mul (PowI (Var "X") 3) (Lit (-1.0))) (Lit 2.0)]
 
 
--- checkBisectionRootFinder = T.checkECNFCE bisectionRootFinder [("A", (1.0001, 5.0)), ("B", (1.0001, 5.0))] (prec 100)
+-- checkBisectionRootFinder = T.checkECNFDepthFirstWithSimplex bisectionRootFinder [("A", (1.0001, 5.0)), ("B", (1.0001, 5.0))] (prec 100)
 
 -- generateHeronInitMetiTarski =
 --   writeFile
@@ -993,18 +993,18 @@ testBug = EBinOp Add (EBinOp Mul (EUnOp Sqrt (PowI (Var "x") 4)) (Var "y")) (Lit
 -- writeFile "points3.smt2" $ cnfExpressionAndDomainsToDreal square3p [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0)), ("Z1", (0.0, 1.0)), ("Z2", (0.0, 1.0))] [] 0.0
 -- writeFile "points4.smt2" $ cnfExpressionAndDomainsToDreal square3p [("X1", (0.0, 1.0)), ("X2", (0.0, 1.0)), ("Y1", (0.0, 1.0)), ("Y2", (0.0, 1.0)), ("Z1", (0.0, 1.0)), ("Z2", (0.0, 1.0)), ("A1", (0.0, 1.0)), ("A2", (0.0, 1.0))] [] 0.0
 
-checkHeronInitExact = T.checkECNFCE heronInitExact [("X", (0.5, 2.0))] 30 500 1.2 (prec 100)
-checkHeronPreservationExact i = T.checkECNFCE (heronPreservationExact i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] 30 500 1.2 (prec 100)
-checkHeronPreservationExactGE i = T.checkECNFCE (heronPreservationExactYGE i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] 30 500 1.2 (prec 100)
-checkHeronPreservationExactLE i = T.checkECNFCE (heronPreservationExactYLE i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] 30 500 1.2 (prec 100)
-checkSineVC = T.checkECNFCE sineVC [("X", (-1.0, 1.0))] 30 500 1.2 (prec 100)
-checkSineVC2 = T.checkECNFCE yannickSineVC [("X", (-3.1, -3.0))] 30 500 1.2 (prec 100)
+checkHeronInitExact = T.checkECNFDepthFirstWithSimplex heronInitExact [("X", (0.5, 2.0))] 30 500 1.2 (prec 100)
+checkHeronPreservationExact i = T.checkECNFDepthFirstWithSimplex (heronPreservationExact i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] 30 500 1.2 (prec 100)
+checkHeronPreservationExactGE i = T.checkECNFDepthFirstWithSimplex (heronPreservationExactYGE i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] 30 500 1.2 (prec 100)
+checkHeronPreservationExactLE i = T.checkECNFDepthFirstWithSimplex (heronPreservationExactYLE i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] 30 500 1.2 (prec 100)
+checkSineVC = T.checkECNFDepthFirstWithSimplex sineVC [("X", (-1.0, 1.0))] 30 500 1.2 (prec 100)
+checkSineVC2 = T.checkECNFDepthFirstWithSimplex yannickSineVC [("X", (-3.1, -3.0))] 30 500 1.2 (prec 100)
 
-checkHeronInitExactCE = T.checkECNFCE heronInitExact [("X", (0.5, 2.0))] 30 500 1.2 (prec 100)
-checkHeronPreservationExactCE i = T.checkECNFCE (heronPreservationExact i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] 30 500 1.2 (prec 100)
-checkHeronPreservationExactGECE i = T.checkECNFCE (heronPreservationExactYGE i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] 30 500 1.2 (prec 100)
-checkHeronPreservationExactLECE i = T.checkECNFCE (heronPreservationExactYLE i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] 30 500 1.2 (prec 100)
-checkSineVCCE = T.checkECNFCE sineVC [("X", (-1.0, 1.0))] 30 500 1.2 (prec 100)
-checkSineVC2CE = T.checkECNFCE yannickSineVC [("X", (-3.1, -3.0))] 30 500 1.2 (prec 100)
+checkHeronInitExactCE = T.checkECNFDepthFirstWithSimplex heronInitExact [("X", (0.5, 2.0))] 30 500 1.2 (prec 100)
+checkHeronPreservationExactCE i = T.checkECNFDepthFirstWithSimplex (heronPreservationExact i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] 30 500 1.2 (prec 100)
+checkHeronPreservationExactGECE i = T.checkECNFDepthFirstWithSimplex (heronPreservationExactYGE i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] 30 500 1.2 (prec 100)
+checkHeronPreservationExactLECE i = T.checkECNFDepthFirstWithSimplex (heronPreservationExactYLE i) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750))] 30 500 1.2 (prec 100)
+checkSineVCCE = T.checkECNFDepthFirstWithSimplex sineVC [("X", (-1.0, 1.0))] 30 500 1.2 (prec 100)
+checkSineVC2CE = T.checkECNFDepthFirstWithSimplex yannickSineVC [("X", (-3.1, -3.0))] 30 500 1.2 (prec 100)
 
-checkHeronPreservationExactIVarCE = T.checkECNFCE (heronPreservationExactIVar) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750)), ("i", (1.0, 3.0))] 30 500 1.2 (prec 100)
+checkHeronPreservationExactIVarCE = T.checkECNFDepthFirstWithSimplex (heronPreservationExactIVar) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750)), ("i", (1.0, 3.0))] 30 500 1.2 (prec 100)
