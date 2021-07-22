@@ -541,7 +541,7 @@ createFunctionConstraints ((leftCornerValue, rightCornerValue, derivatives) : va
   --   any transformations that need to take place as a result of shifting the constraints for the domain
   --     the above transformation only occurs when at least one domain is partly negative.
   [
-    S.LEQ ((currentIndex, 1.0) : zip [1..] lowerDerivatives) (foldl add (-leftL - lowerSubst) lowerDerivativesTimesLeftCorner),
+    S.LEQ ((currentIndex, 1.0) : zip [1..] lowerDerivatives) (foldl add (-leftL - lowerSubst) lowerDerivativesTimesLeftCorner)
     -- S.GEQ ((currentIndex, 1.0) : zip [1..] upperDerivatives) (foldl add (-leftU - upperSubst) upperDerivativesTimesLeftCorner),
     -- FIXME: Swap order of subtraction for the right corner case, and then use the original order of constraints
     -- -y + (dx_1L * x_1) >= -yl + (dx_1L * x_1r)
@@ -553,7 +553,7 @@ createFunctionConstraints ((leftCornerValue, rightCornerValue, derivatives) : va
     -- S.GEQ ((currentIndex, -1.0) : zip [1..] lowerDerivatives) (foldl add (rightL - lowerSubst) lowerDerivativesTimesRightCorner),
     -- S.LEQ ((currentIndex, -1.0) : zip [1..] upperDerivatives) (foldl add (rightU - upperSubst) upperDerivativesTimesRightCorner)
     -- y + (x_1 * (-dx_1R)) >= yl + (x_1r * (-dx_1R))
-    S.GEQ ((currentIndex, 1.0) : zip [1..] negatedUpperDerivatives) (foldl add (rightL + upperSubst) negatedUpperDerivativesTimesRightCorner)
+    -- S.GEQ ((currentIndex, 1.0) : zip [1..] negatedUpperDerivatives) (foldl add (rightL + upperSubst) negatedUpperDerivativesTimesRightCorner)
     -- S.LEQ ((currentIndex, -1.0) : zip [1..] negatedLowerDerivatives) (foldl add (rightU + lowerSubst) negatedLowerDerivativesTimesRightCorner)
     
   ]
@@ -622,7 +622,7 @@ encloseAreaUnderZeroWithSimplex cornerValuesWithDerivatives varMap =
   case mNewPoints of
     Just newPoints ->
       case head newPoints of
-        (_, (Nothing, _)) ->
+        (_, (Nothing)) ->
           Nothing -- Should never get here
         _ ->
           let
@@ -644,10 +644,19 @@ encloseAreaUnderZeroWithSimplex cornerValuesWithDerivatives varMap =
               (v,
               case lookup v indexedVariables of
                 Just iv -> -- Get the integer variable for the current string variable 
-                  case lookup iv substVars of -- Check if any transformation needs to be done to get the final result
-                    Just c -> (bimap ((add c) . extractResult) ((add c) . extractResult) r) -- Add any needed transformation to lower/upper bounds
-                    Nothing -> bimap extractResult extractResult r
+                    case lookup v varMap of
+                      Just (_, upperBound) ->
+                        case lookup iv substVars of -- Check if any transformation needs to be done to get the final result
+                              Just c -> (c + extractResult r, upperBound) -- Add any needed transformation to lower/upper bounds
+                              Nothing -> (extractResult r, upperBound)
+                      Nothing -> undefined
                 Nothing -> undefined -- Should never get here
+              -- case lookup v indexedVariables of
+              --   Just iv -> -- Get the integer variable for the current string variable 
+              --     case lookup iv substVars of -- Check if any transformation needs to be done to get the final result
+              --       Just c -> (bimap ((add c) . extractResult) ((add c) . extractResult) r) -- Add any needed transformation to lower/upper bounds
+              --       Nothing -> bimap extractResult extractResult r
+              --   Nothing -> undefined -- Should never get here
               )
             )
             newPoints
@@ -714,20 +723,20 @@ encloseAreaUnderZeroWithSimplex cornerValuesWithDerivatives varMap =
     -- Call the simplex method twice for each variable (setting the objective function to Min/Max of each
     -- variable). Map each (String) variable to a pair. The pair is the results determined by the simplex
     -- method when Min/Maxing the key variable. 
-    newPoints :: [(String, (Maybe (Integer, [(Integer, Rational)]), Maybe (Integer, [(Integer, Rational)])))]
-    newPoints =
-      map
-      (\v -> 
-        case lookup v indexedVarMap of
-          Just (sv, _) -> (sv, (S.twoPhaseSimplex (S.Min [(v, 1.0)]) completeSystem, S.twoPhaseSimplex (S.Max [(v, 1.0)]) completeSystem))
-          Nothing -> undefined
-      )
-      variables
+    -- newPoints :: [(String, (Maybe (Integer, [(Integer, Rational)]), Maybe (Integer, [(Integer, Rational)])))]
+    -- newPoints =
+    --   map
+    --   (\v -> 
+    --     case lookup v indexedVarMap of
+    --       Just (sv, _) -> (sv, (S.twoPhaseSimplex (S.Min [(v, 1.0)]) completeSystem, S.twoPhaseSimplex (S.Max [(v, 1.0)]) completeSystem))
+    --       Nothing -> undefined
+    --   )
+    --   variables
 
     -- Call the simplex method twice for each variable (setting the objective function to Min/Max of each
     -- variable). Map each (String) variable to a pair. The pair is the results determined by the simplex
     -- method when Min/Maxing the key variable. 
-    mNewPoints :: Maybe [(String, (Maybe (Integer, [(Integer, Rational)]), Maybe (Integer, [(Integer, Rational)])))]
+    mNewPoints :: Maybe [(String, (Maybe (Integer, [(Integer, Rational)])))]
     mNewPoints =
       case S.findFeasibleSolution completeSystem of
         Just (feasibleSystem, slackVars, artificialVars, objectiveVar) ->
@@ -735,7 +744,8 @@ encloseAreaUnderZeroWithSimplex cornerValuesWithDerivatives varMap =
           map
           (\v -> 
             case lookup v indexedVarMap of
-              Just (sv, _) -> (sv, (S.optimizeFeasibleSystem (S.Min [(v, 1.0)]) feasibleSystem slackVars artificialVars objectiveVar, S.optimizeFeasibleSystem (S.Max [(v, 1.0)]) feasibleSystem slackVars artificialVars objectiveVar))
+              -- Just (sv, _) -> (sv, (S.optimizeFeasibleSystem (S.Min [(v, 1.0)]) feasibleSystem slackVars artificialVars objectiveVar, S.optimizeFeasibleSystem (S.Max [(v, 1.0)]) feasibleSystem slackVars artificialVars objectiveVar))
+              Just (sv, _) -> (sv, S.optimizeFeasibleSystem (S.Min [(v, 1.0)]) feasibleSystem slackVars artificialVars objectiveVar)
               Nothing -> undefined
           )
           variables
