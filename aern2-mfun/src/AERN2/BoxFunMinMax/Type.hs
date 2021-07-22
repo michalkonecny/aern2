@@ -389,7 +389,7 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions varMap relativeImproveme
                   Just counterExample -> trace "findFalsePointWithSimplex false" $
                     if disjunctionRangesBelowZero (applyDisjunction (map (fst . fst) filterOutFalseTerms) counterExample (prec 1000)) -- maybe use higher p than the one passed in? i.e. * (3/2)
                       then (Just False, Just counterExample)
-                      else T.trace "counterexample incorrect" recurseOnVarMap roundedNewVarMap
+                      else trace "counterexample incorrect" recurseOnVarMap roundedNewVarMap
                     -- (Just False, Just counterExample)
             _ -> undefined
         | otherwise = (Nothing, Just roundedVarMap)
@@ -433,24 +433,23 @@ decideWithSimplex cornerValuesWithDerivatives varMap =
 createDomainConstraints 
   :: VarMap -- ^ The domains to create constraints for
   -> Integer -- ^ The next available variable
-  -> (([S.PolyConstraint], [(Integer, Rational)]), Integer) {- ^  The first item in the pair is the system of constraints created from the VarMap.
-                                                                  The first item in the second item part of the pair stores the amount a variable
-                                                                  has been shifted from the LHS.
-                                                                  The second item in the second pair denotes the next integer variable available. -} 
-createDomainConstraints [] nextAvailableVar = (([], []), nextAvailableVar)
+  -> ([S.PolyConstraint], [(Integer, Rational)], Integer) {- ^  The first element is the system of constraints created from the VarMap.
+                                                                  The second element stores the amount a variable has been shifted from the LHS.
+                                                                  The third element denotes the next integer variable available. -} 
+createDomainConstraints [] nextAvailableVar = trace "finished domain constraints" ([], [], nextAvailableVar)
 createDomainConstraints ((_, (l, r)) : xs) currentIndex =
   let
-    ((resultsL, resultsR), nextAvailableVar) = createDomainConstraints xs (currentIndex + 1)
+    (resultsL, resultsR, nextAvailableVar) = createDomainConstraints xs (currentIndex + 1)
   in
     if l < 0 then -- If the current domain is under zero, transform the domain by subtracting the left bound
                   -- This will make the left bound equal to zero and will make the right bound above zero
                   -- Store this transformation in resultsR
-      (([S.GEQ [(currentIndex, rational 1)] (l - l), S.LEQ [(currentIndex, rational 1)] (r - l)] ++ resultsL, (currentIndex, l) : resultsR), nextAvailableVar)
+      ([S.GEQ [(currentIndex, rational 1)] (l - l), S.LEQ [(currentIndex, rational 1)] (r - l)] ++ resultsL, (currentIndex, l) : resultsR, nextAvailableVar)
     else
-      (([S.GEQ [(currentIndex, rational 1)] l, S.LEQ [(currentIndex, rational 1)] r] ++ resultsL, resultsR), nextAvailableVar)
+      ([S.GEQ [(currentIndex, rational 1)] l, S.LEQ [(currentIndex, rational 1)] r] ++ resultsL, resultsR, nextAvailableVar)
 
 findFunctionCounterExample :: [(CN MPBall, CN MPBall, Box)] -> [Rational] -> [Rational] -> [(Integer, Rational)] -> [S.PolyConstraint]
-findFunctionCounterExample [] _ _ _ = []
+findFunctionCounterExample [] _ _ _ = trace "finished function constraints" []
 findFunctionCounterExample ((leftCornerValue, rightCornerValue, derivatives) : values) leftCorner rightCorner substVars =
   S.LEQ (zip [1..] upperDerivatives) (foldl add (-leftU - upperSubst - eps) upperDerivativesTimesLeftCorner)
     -- S.LEQ (zip [1..] negatedLowerDerivatives) (foldl add (rightU + lowerSubst) negatedLowerDerivativesTimesRightCorner)
@@ -616,39 +615,63 @@ encloseAreaUnderZeroWithSimplex
                       that the simplex was not able to shrink the original VarMap. -}
 encloseAreaUnderZeroWithSimplex cornerValuesWithDerivatives varMap = 
   -- trace (show completeSystem) $ 
+  -- trace (show variables) $
   --trace (show substVars) $
   -- If the first result from the list returned by the simplex method is empty,
   -- the system is infeasible, so we return nothing
-  case head newPoints of
-    (_, (Nothing, _)) ->
-      Nothing
-    _ -> 
-      let
-        -- Should never get an undefined result if the first resuls in newPoints is feasible
-        extractResult :: Maybe (Integer, [(Integer, Rational)]) -> Rational
-        extractResult mr =
-          case mr of
-            Just (v, rs) -> -- v refers to the objective variable. We extract the value of the objective
-                            -- variable from rs (the result determined by the simplex method)
-              case lookup v rs of
-                Just r -> r
+  case mNewPoints of
+    Just newPoints ->
+      case head newPoints of
+        (_, (Nothing, _)) ->
+          Nothing -- Should never get here
+        _ ->
+          let
+            -- Should never get an undefined result if the first resuls in newPoints is feasible
+            extractResult :: Maybe (Integer, [(Integer, Rational)]) -> Rational
+            extractResult mr =
+              case mr of
+                Just (v, rs) -> -- v refers to the objective variable. We extract the value of the objective
+                                -- variable from rs (the result determined by the simplex method)
+                  case lookup v rs of
+                    Just r -> r
+                    Nothing -> undefined 
                 Nothing -> undefined 
-            Nothing -> undefined 
-      in
-        Just $
-        map
-        (\(v, r) ->
-          --trace (show r)
-          (v, 
-          case lookup v indexedVariables of
-            Just iv -> -- Get the integer variable for the current string variable 
-              case lookup iv substVars of -- Check if any transformation needs to be done to get the final result
-                Just c -> (bimap ((add c) . extractResult) ((add c) . extractResult) r) -- Add any needed transformation to lower/upper bounds
-                Nothing -> bimap extractResult extractResult r
-            Nothing -> undefined -- Should never get here
-          )  
-        )
-        newPoints
+          in
+            Just $
+            map
+            (\(v, r) ->
+              --trace (show r)
+              (v,
+              case lookup v indexedVariables of
+                Just iv -> -- Get the integer variable for the current string variable 
+                  case lookup iv substVars of -- Check if any transformation needs to be done to get the final result
+                    Just c -> (bimap ((add c) . extractResult) ((add c) . extractResult) r) -- Add any needed transformation to lower/upper bounds
+                    Nothing -> bimap extractResult extractResult r
+                Nothing -> undefined -- Should never get here
+              )
+            )
+            newPoints
+    Nothing -> Nothing
+  -- case mNewPoints of
+  --   (Nothing, Just _) -> error "Max feasible, but Min infeasible"
+  --   (Just _, Nothing) -> error "Min feasible, but Max infeasible"
+  --   (Nothing, Nothing) -> Nothing
+  --   (Just (_, newPointsL), Just (_, newPointsR)) -> 
+  --     Just
+  --     $
+  --     map
+  --     (\(iv, (v, (originalL, originalR))) ->
+  --       case lookup iv newPointsL of
+  --         Just newL ->
+  --           case lookup iv newPointsR of
+  --             Just newR -> let c = fromMaybe 0.0 (lookup iv substVars) in (v, (newL + c, newR + c))
+  --             Nothing   -> let c = fromMaybe 0.0 (lookup iv substVars) in (v, (newL + c, c))
+  --         Nothing ->
+  --           case lookup iv newPointsR of
+  --             Just newR -> let c = fromMaybe 0.0 (lookup iv substVars) in (v, (c, newR + c))
+  --             Nothing   -> let c = fromMaybe 0.0 (lookup iv substVars) in (v, (c, c))
+  --     )
+  --     indexedVarMap
   where
     -- Get the bottom left corner of the varMap
 
@@ -656,7 +679,7 @@ encloseAreaUnderZeroWithSimplex cornerValuesWithDerivatives varMap =
 
     -- Create constraints for the domain
     -- substVars stores any variable transformations (for the LHS)
-    ((domainConstraints, substVars), nextAvailableVar) = createDomainConstraints varMap 1
+    (domainConstraints, substVars, nextAvailableVar) = trace "creating domain constraints" createDomainConstraints varMap 1
 
     numberOfFunctions = length cornerValuesWithDerivatives
 
@@ -668,7 +691,7 @@ encloseAreaUnderZeroWithSimplex cornerValuesWithDerivatives varMap =
     leftCorner = map (fst . snd) varMap
     rightCorner = map (snd . snd) varMap
 
-    functionConstraints = createFunctionConstraints cornerValuesWithDerivatives leftCorner rightCorner nextAvailableVar substVars
+    functionConstraints = trace "creating function constraints" createFunctionConstraints cornerValuesWithDerivatives leftCorner rightCorner nextAvailableVar substVars
 
     -- Map integer variables to their respective varMap
     indexedVarMap = zip variables varMap
@@ -681,12 +704,12 @@ encloseAreaUnderZeroWithSimplex cornerValuesWithDerivatives varMap =
     -- for each variable, so we use GEQ [(functionVariable, 1.0)] 0.0 instead, and make the
     -- appropriate changes in createFunctionConstraints to effectively contain the area
     -- under zero for each function.
-    underZeroConstraints =
+    underZeroConstraints = trace "creating underZero constraints"
       map
       (\v -> S.GEQ [(v, 1.0)] 0.0)
       functions
 
-    completeSystem = domainConstraints ++ functionConstraints ++ underZeroConstraints
+    completeSystem = trace "creating system" domainConstraints ++ functionConstraints ++ underZeroConstraints
 
     -- Call the simplex method twice for each variable (setting the objective function to Min/Max of each
     -- variable). Map each (String) variable to a pair. The pair is the results determined by the simplex
@@ -696,10 +719,31 @@ encloseAreaUnderZeroWithSimplex cornerValuesWithDerivatives varMap =
       map
       (\v -> 
         case lookup v indexedVarMap of
-          Just (sv, _) -> (sv, ((S.twoPhaseSimplex (S.Min [(v, 1.0)]) completeSystem), (S.twoPhaseSimplex (S.Max [(v, 1.0)]) completeSystem)))
+          Just (sv, _) -> (sv, (S.twoPhaseSimplex (S.Min [(v, 1.0)]) completeSystem, S.twoPhaseSimplex (S.Max [(v, 1.0)]) completeSystem))
           Nothing -> undefined
       )
       variables
+
+    -- Call the simplex method twice for each variable (setting the objective function to Min/Max of each
+    -- variable). Map each (String) variable to a pair. The pair is the results determined by the simplex
+    -- method when Min/Maxing the key variable. 
+    mNewPoints :: Maybe [(String, (Maybe (Integer, [(Integer, Rational)]), Maybe (Integer, [(Integer, Rational)])))]
+    mNewPoints =
+      case S.findFeasibleSolution completeSystem of
+        Just (feasibleSystem, slackVars, artificialVars, objectiveVar) ->
+          Just $
+          map
+          (\v -> 
+            case lookup v indexedVarMap of
+              Just (sv, _) -> (sv, (S.optimizeFeasibleSystem (S.Min [(v, 1.0)]) feasibleSystem slackVars artificialVars objectiveVar, S.optimizeFeasibleSystem (S.Max [(v, 1.0)]) feasibleSystem slackVars artificialVars objectiveVar))
+              Nothing -> undefined
+          )
+          variables
+        Nothing -> Nothing
+
+
+    -- mNewPoints :: (Maybe (Integer, [(Integer, Rational)]), Maybe (Integer, [(Integer, Rational)]))
+    -- mNewPoints = (S.twoPhaseSimplex (S.Min (map (\v -> (v, 1.0)) variables)) completeSystem, S.twoPhaseSimplex (S.Max (map (\v -> (v, 1.0)) variables)) completeSystem)
 
 findFalsePointWithSimplex  
   :: [(CN MPBall, CN MPBall, Box)] -- ^ [(valueOfFunctionAtLeftCorner, valueOfFunctionAtRightCorner, derivativesOfFunction)]
@@ -709,6 +753,7 @@ findFalsePointWithSimplex cornerValuesWithDerivatives varMap =
   -- trace (show completeSystem) $
   case mNewPoints of
     Just newPoints ->
+      trace "counterexample found"
       -- trace "========================"
       -- trace (Data.List.intercalate "\n "(map S.prettyShowPolyConstraint completeSystem))
       -- trace "========================"
@@ -717,10 +762,10 @@ findFalsePointWithSimplex cornerValuesWithDerivatives varMap =
       (\(s, v) ->
         case lookup v newPoints of
           Just r -> let c = fromMaybe 0.0 (lookup v substVars) in (s, (r + c, r + c))
-          Nothing -> let c = fromMaybe 0.0 (lookup v substVars) in (s, (c, c)) 
+          Nothing -> let c = fromMaybe 0.0 (lookup v substVars) in (s, (c, c)) --FIXME: is this correct, shouldn't it be originalVal? Or does Nothing mean that this value is 0?
       )
       indexedVariables
-    Nothing -> Nothing
+    Nothing -> trace "no counterexample" Nothing
   where
     -- Get the bottom left corner of the varMap
 
@@ -728,14 +773,14 @@ findFalsePointWithSimplex cornerValuesWithDerivatives varMap =
 
     -- Create constraints for the domain
     -- substVars stores any variable transformations (for the LHS)
-    ((domainConstraints, substVars), nextAvailableVar) = createDomainConstraints varMap 1
+    (domainConstraints, substVars, nextAvailableVar) = trace "creating domain constraints" createDomainConstraints varMap 1
 
     variables = [1 .. (nextAvailableVar - 1)]
 
     leftCorner = map (fst . snd) varMap
     rightCorner = map (snd . snd) varMap
 
-    functionConstraints = findFunctionCounterExample cornerValuesWithDerivatives leftCorner rightCorner substVars
+    functionConstraints = trace "creating function constraints" findFunctionCounterExample cornerValuesWithDerivatives leftCorner rightCorner substVars
 
     -- Map integer variables to their respective varMap
     indexedVarMap = zip variables varMap
@@ -743,11 +788,11 @@ findFalsePointWithSimplex cornerValuesWithDerivatives varMap =
     -- Map string variables to their respective integer variable
     indexedVariables = zip (map fst varMap) variables
 
-    completeSystem = domainConstraints ++ functionConstraints
+    completeSystem = trace "creating system" domainConstraints ++ functionConstraints
 
     -- Get a feasible solution for this system
     mNewPoints :: Maybe [(Integer, Rational)]
-    mNewPoints = S.findFeasibleSolution completeSystem
+    mNewPoints = S.displayDictionaryResults . (\(feasibleSystem,_,_,_) -> feasibleSystem) <$> S.findFeasibleSolution completeSystem
 
 checkECNFVerify :: [[E.E]] -> VarMap -> Integer -> Integer -> Rational -> Precision -> Bool
 checkECNFVerify cnf varMap depthCutoff bfsBoxesCutoff relativeImprovementCutoff p =
