@@ -488,24 +488,24 @@ inequalityEpsilon = 0.000000001
 -- inequalityEpsilon = 1/(2^23)
 
 -- |Convert a VC to ECNF, eliminating any floats. 
-eliminateFloatsAndConvertVCToECNF :: F -> VarMap -> [[E]]
+eliminateFloatsAndConvertVCToECNF :: F -> VarMap -> [[ESafe]]
 eliminateFloatsAndConvertVCToECNF (FConn Impl context goal) varMap =
-  minMaxAbsEliminatorECNF inequalityEpsilon $
+  minMaxAbsEliminatorECNF $
   [
     contextEs ++ goalEs 
     | 
-    contextEs <- map (map (\e -> eliminateFloats e varMap True)) (fToECNF (FNot context) inequalityEpsilon), 
-    goalEs    <- map (map (\e -> eliminateFloats e varMap False)) (fToECNF goal inequalityEpsilon)
+    contextEs <- map (map (fmapESafe (\e -> eliminateFloats e varMap True))) (fToECNF (FNot context)), 
+    goalEs    <- map (map (fmapESafe (\e -> eliminateFloats e varMap False))) (fToECNF goal)
   ]
 -- |If there is no implication, we have a goal with no context or a CNF. We deal with these in the same way
 eliminateFloatsAndConvertVCToECNF goal varMap = 
-  minMaxAbsEliminatorECNF inequalityEpsilon $
+  minMaxAbsEliminatorECNF $
   [
     goalEs
     |
-    goalEs <- map (map (\e -> eliminateFloats e varMap False)) (fToECNF goal inequalityEpsilon)
+    goalEs <- map (map (fmapESafe (\e -> eliminateFloats e varMap False))) (fToECNF goal)
   ]
 
-parseVCToECNF :: FilePath -> ParsingMode -> Maybe ([[E]], VarMap)
+parseVCToECNF :: FilePath -> ParsingMode -> Maybe ([[ESafe]], VarMap)
 parseVCToECNF filePath mode =
-  (\(f, vm) -> (simplifyECNF (eliminateFloatsAndConvertVCToECNF (simplifyF f) vm), vm)) <$> ((`deriveVCRanges` mode) . simplifyF =<< (processVC . parseSMT2) filePath mode)
+  (\(f, vm) -> (simplifyESafeCNF (eliminateFloatsAndConvertVCToECNF (simplifyF f) vm), vm)) <$> ((`deriveVCRanges` mode) . simplifyF =<< (processVC . parseSMT2) filePath mode)

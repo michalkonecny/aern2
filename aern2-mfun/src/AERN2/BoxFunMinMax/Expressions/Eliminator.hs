@@ -25,15 +25,15 @@ import AERN2.BoxFunMinMax.Expressions.Type
 -- If we come across any other operator, recursively call the eliminator on any
 -- expressions, add any resulting premises, and set the qualified value to be
 -- the operator called on the resulting Es 
-minMaxAbsEliminator :: E -> [([E],E)]
-minMaxAbsEliminator (EBinOp op e1 e2) =
+minMaxAbsEliminator :: ESafe -> [([ESafe],ESafe)]
+minMaxAbsEliminator (ENonStrict (EBinOp op e1 e2)) =
   case op of
     Min ->
       concat 
       [
         [
-          (nub ((p1 ++ p2) ++ [EBinOp Sub e2' e1']), e1'), -- e2' >= e1'
-          (nub ((p2 ++ p1) ++ [EBinOp Sub e1' e2']), e2')  -- e1' >= e2'
+          (nub ((p1 ++ p2) ++ [ENonStrict (EBinOp Sub (extractSafeE e2') (extractSafeE e1'))]), e1'), -- e2' >= e1'
+          (nub ((p2 ++ p1) ++ [ENonStrict (EBinOp Sub (extractSafeE e1') (extractSafeE e2'))]), e2')  -- e1' >= e2'
         ] 
         | 
         (p1, e1') <- branch1, (p2, e2') <- branch2
@@ -42,45 +42,90 @@ minMaxAbsEliminator (EBinOp op e1 e2) =
       concat 
       [
         [
-          (nub ((p1 ++ p2) ++ [EBinOp Sub e1' e2']), e1'), -- e1' >= e2'
-          (nub ((p2 ++ p1) ++ [EBinOp Sub e2' e1']), e2')  -- e2' >= e1'
+          (nub ((p1 ++ p2) ++ [ENonStrict (EBinOp Sub (extractSafeE e1') (extractSafeE e2'))]), e1'), -- e1' >= e2'
+          (nub ((p2 ++ p1) ++ [ENonStrict (EBinOp Sub (extractSafeE e2') (extractSafeE e1'))]), e2')  -- e2' >= e1'
         ] 
         | 
         (p1, e1') <- branch1, (p2, e2') <- branch2
       ]
     op' ->
-      [(nub (p1 ++ p2), EBinOp op' e1' e2') | (p1, e1') <- branch1, (p2, e2') <- branch2]
+      [(nub (p1 ++ p2), ENonStrict (EBinOp op' (extractSafeE e1') (extractSafeE e2'))) | (p1, e1') <- branch1, (p2, e2') <- branch2]
   where
-    branch1 = minMaxAbsEliminator e1
-    branch2 = minMaxAbsEliminator e2
-minMaxAbsEliminator (EUnOp op e) =
+    branch1 = minMaxAbsEliminator (ENonStrict e1)
+    branch2 = minMaxAbsEliminator (ENonStrict e2)
+minMaxAbsEliminator (ENonStrict (EUnOp op e)) =
   case op of
     Abs -> 
-      minMaxAbsEliminator (EBinOp Max e (EUnOp Negate e))
+      minMaxAbsEliminator (ENonStrict (EBinOp Max e (EUnOp Negate e)))
     op' ->
-      [(p, EUnOp op' e') | (p, e') <- minMaxAbsEliminator e]
-minMaxAbsEliminator (PowI e i)            =
-  [(p, PowI e' i) | (p, e') <- minMaxAbsEliminator e]
-minMaxAbsEliminator (Float mode e)        =
-  [(p, Float mode e') | (p, e') <- minMaxAbsEliminator e]
-minMaxAbsEliminator (Float32 mode e)        =
-  [(p, Float32 mode e') | (p, e') <- minMaxAbsEliminator e]
-minMaxAbsEliminator (Float64 mode e)        =
-  [(p, Float64 mode e') | (p, e') <- minMaxAbsEliminator e]
-minMaxAbsEliminator e@(Lit _)             = [([],e)]
-minMaxAbsEliminator e@(Var _)             = [([],e)]
+      [(p, ENonStrict (EUnOp op' (extractSafeE e'))) | (p, e') <- minMaxAbsEliminator (ENonStrict e)]
+minMaxAbsEliminator (ENonStrict (PowI e i))            =
+  [(p, ENonStrict (PowI (extractSafeE e') i)) | (p, e') <- minMaxAbsEliminator (ENonStrict e)]
+minMaxAbsEliminator (ENonStrict (Float mode e))        =
+  [(p, ENonStrict (Float mode (extractSafeE e'))) | (p, e') <- minMaxAbsEliminator (ENonStrict e)]
+minMaxAbsEliminator (ENonStrict (Float32 mode e))        =
+  [(p, ENonStrict (Float32 mode (extractSafeE e'))) | (p, e') <- minMaxAbsEliminator (ENonStrict e)]
+minMaxAbsEliminator (ENonStrict (Float64 mode e))        =
+  [(p, ENonStrict (Float64 mode (extractSafeE e'))) | (p, e') <- minMaxAbsEliminator (ENonStrict e)]
+minMaxAbsEliminator e@(ENonStrict (Lit _))             = [([],e)]
+minMaxAbsEliminator e@(ENonStrict (Var _))             = [([],e)]
+
+minMaxAbsEliminator (EStrict (EBinOp op e1 e2)) =
+  case op of
+    Min ->
+      concat 
+      [
+        [                      --Min/Max should always be non-strict here
+          (nub ((p1 ++ p2) ++ [ENonStrict (EBinOp Sub (extractSafeE e2') (extractSafeE e1'))]), e1'), -- e2' > e1'
+          (nub ((p2 ++ p1) ++ [ENonStrict (EBinOp Sub (extractSafeE e1') (extractSafeE e2'))]), e2')  -- e1' > e2'
+        ] 
+        | 
+        (p1, e1') <- branch1, (p2, e2') <- branch2
+      ]
+    Max ->
+      concat 
+      [
+        [
+          (nub ((p1 ++ p2) ++ [ENonStrict (EBinOp Sub (extractSafeE e1') (extractSafeE e2'))]), e1'), -- e1' > e2'
+          (nub ((p2 ++ p1) ++ [ENonStrict (EBinOp Sub (extractSafeE e2') (extractSafeE e1'))]), e2')  -- e2' > e1'
+        ] 
+        | 
+        (p1, e1') <- branch1, (p2, e2') <- branch2
+      ]
+    op' ->
+      [(nub (p1 ++ p2), EStrict (EBinOp op' (extractSafeE e1') (extractSafeE e2'))) | (p1, e1') <- branch1, (p2, e2') <- branch2]
+  where
+    branch1 = minMaxAbsEliminator (EStrict e1)
+    branch2 = minMaxAbsEliminator (EStrict e2)
+minMaxAbsEliminator (EStrict (EUnOp op e)) =
+  case op of
+    Abs -> 
+      minMaxAbsEliminator (EStrict (EBinOp Max e (EUnOp Negate e)))
+    op' ->
+      [(p, EStrict (EUnOp op' (extractSafeE e'))) | (p, e') <- minMaxAbsEliminator (EStrict e)]
+minMaxAbsEliminator (EStrict (PowI e i))            =
+  [(p, EStrict (PowI (extractSafeE e') i)) | (p, e') <- minMaxAbsEliminator (EStrict e)]
+minMaxAbsEliminator (EStrict (Float mode e))        =
+  [(p, EStrict (Float mode (extractSafeE e'))) | (p, e') <- minMaxAbsEliminator (EStrict e)]
+minMaxAbsEliminator (EStrict (Float32 mode e))        =
+  [(p, EStrict (Float32 mode (extractSafeE e'))) | (p, e') <- minMaxAbsEliminator (EStrict e)]
+minMaxAbsEliminator (EStrict (Float64 mode e))        =
+  [(p, EStrict (Float64 mode (extractSafeE e'))) | (p, e') <- minMaxAbsEliminator (EStrict e)]
+minMaxAbsEliminator e@(EStrict (Lit _))             = [([],e)]
+minMaxAbsEliminator e@(EStrict (Var _))             = [([],e)]
+-- If we extractSafeE, then strictness does not matter
 
 -- [[[[E]]]] where [[E]] = [e1 /\ (e2 \/ e3) /\ e4]
 -- [[[e1 /\ (e2 \/ e3) /\ e4]] \/ [e1 /\ (e2 \/ e3) /\ e4]]
 -- [[[[e1 /\ (e2 \/ e3) /\ e4]] \/ [e1 /\ (e2 \/ e3) /\ e4]] /\ [[[e1 /\ (e2 \/ e3) /\ e4]] \/ [e1 /\ (e2 \/ e3) /\ e4]]]
-minMaxAbsEliminatorECNF :: Rational -> [[E]] -> [[E]]
-minMaxAbsEliminatorECNF epsilon ecnf = and $ map or (map (map ((qualifiedEsToCNF2 epsilon) . minMaxAbsEliminator)) ecnf)
+minMaxAbsEliminatorECNF :: [[ESafe]] -> [[ESafe]]
+minMaxAbsEliminatorECNF ecnf = and $ map or (map (map (qualifiedEsToCNF2 . minMaxAbsEliminator)) ecnf)
   where
     and2 = (++)
     or2 ecnf1 ecnf2 = [d1 ++ d2 | d1 <- ecnf1, d2 <- ecnf2]
-    and :: [[[E]]] -> [[E]]
+    and :: [[[ESafe]]] -> [[ESafe]]
     and = foldl and2 []
-    or :: [[[E]]] -> [[E]]
+    or :: [[[ESafe]]] -> [[ESafe]]
     or = foldl or2 [[]]
 
 -- | Translate the qualified Es list to a single expression
@@ -105,10 +150,13 @@ minMaxAbsEliminatorECNF epsilon ecnf = and $ map or (map (map ((qualifiedEsToCNF
 -- | Convert a list of qualified Es to a list of lists where
 -- the outer list is a conjunction and the inner list is a disjunction,
 -- AKA a CNF
-qualifiedEsToCNF2 :: Rational -> [([E],E)] -> [[E]]
-qualifiedEsToCNF2 epsilon = map (\(ps,q) -> q : map (\p -> EBinOp Sub (EUnOp Negate p) (Lit epsilon)) ps) 
+qualifiedEsToCNF2 :: [([ESafe],ESafe)] -> [[ESafe]]
+qualifiedEsToCNF2 = 
+  map 
+  (\(ps,q) -> 
+    q : map negateSafeE ps
+  )
   -- The negation of ps turns it into ps < 0, which is equivalent to -ps > 0
-  -- So we subtract an epsilon to turn this strict inequality into a non-strict inequality
 
 -- TODO:
 

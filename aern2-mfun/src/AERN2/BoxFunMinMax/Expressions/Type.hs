@@ -22,11 +22,16 @@ data RoundingMode = RNE | RTP | RTN | RTZ deriving (Show, P.Eq, P.Ord)
 data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String | PowI E Integer | Float32 RoundingMode E | Float64 RoundingMode E | Float RoundingMode E -- Float Expression Significand
   deriving (Show, P.Eq, P.Ord)
 
+data ESafe = EStrict E | ENonStrict E
+  deriving (Show, P.Eq, P.Ord)
 data Comp = Gt | Ge | Lt | Le | Eq
   deriving (Show, P.Eq)
 
 data Conn = And | Or | Impl | Equiv
   deriving (Show, P.Eq)
+
+-- TODO: Could make prover work on 'Comp E E' (call it EComp)
+-- Other method, add flag to E, whether or not it is strict
 
 -- | The F type is used to specify comparisons between E types
 -- and logical connectives between F types
@@ -120,63 +125,57 @@ instance Arbitrary F where
           subF = fGenerator (int (floor (n / 20)))
 -- Note, does not generate FTrue, FFalse
 
--- | Translate F to a single expression (E)
--- Removes implications, logical connectives
-fToE :: F -> Rational -> E
-fToE (FComp op e1 e2) eps = case op of
-  Le -> fToE (FComp Ge e2 e1) eps
-    -- EBinOp Add (EUnOp Negate e1) e2                        -- f1 <  f2 == f1 - f2 <  0 == -f1 + f2 >= 0
-  Lt -> fToE (FComp Gt e2 e1) eps
-    -- EBinOp Sub (EBinOp Add (EUnOp Negate e1) e2) (Lit eps) -- f1 <= f2 == f1 - f2 <= 0 == -f1 + f2 >  0 == -f1 + f2 - eps >= 0
-  Ge -> EBinOp Sub e1 e2                                          -- f1 >= f2 == f1 - f2 >= 0 
-  Gt -> EBinOp Sub (EBinOp Sub e1 e2) (Lit eps)                   -- f1 >  f2 == f1 - f2 >  0 == f1 - f2 - eps >= 0
-  Eq -> fToE (FConn And (FComp Ge e1 e2) (FComp Le e1 e2)) eps -- f1 = f2 == f1 >= f2 /\ f1 <= f2
-fToE (FConn op f1 f2) eps  = case op of
-  And ->
-    EBinOp Min (fToE f1 eps) (fToE f2 eps)
-  Or ->
-    EBinOp Max (fToE f1 eps) (fToE f2 eps)
-  Impl -> 
-    EBinOp Max (EUnOp Negate (fToE f1 eps)) (fToE f2 eps) -- !f1 \/ f2 = max(!f1, f2)
-  Equiv -> fToE (FComp Eq (fToE f1 eps) (fToE f2 eps)) eps
-fToE (FNot f) eps = EUnOp Negate (fToE f eps)
-fToE FTrue  _     = Lit 1.0
-fToE FFalse _     = Lit $ -1.0
+flipStrictness :: ESafe -> ESafe
+flipStrictness (EStrict e)    = ENonStrict e
+flipStrictness (ENonStrict e) = EStrict e
 
+-- | Equivalent to E * -1
+-- Example: ENonStrict e == e >= 0. negateSafeE (ENonStrict e) == e < 0 == -e > 0 == (EStrict (EUnOp Negate e))
+negateSafeE :: ESafe -> ESafe
+negateSafeE (EStrict e)     = ENonStrict (EUnOp Negate e)
+negateSafeE (ENonStrict e)  = EStrict    (EUnOp Negate e)
 
-fToECNF :: F -> Rational -> [[E]]
+extractSafeE :: ESafe -> E
+extractSafeE (EStrict e)    = e
+extractSafeE (ENonStrict e) = e
+
+fmapESafe :: (E -> E) -> ESafe -> ESafe
+fmapESafe f (EStrict e)    = EStrict $ f e
+fmapESafe f (ENonStrict e) = ENonStrict $ f e
+
+fToECNF :: F -> [[ESafe]]
 fToECNF = fToECNFB False 
   where
-    fToECNFB :: Bool -> F -> Rational -> [[E]]
-    fToECNFB isNegated (FNot f) eps = fToECNFB (not isNegated) f eps
-    fToECNFB True (FComp op e1 e2) eps  = case op of
-      Le -> fToECNFB False (FComp Gt e1 e2) eps -- !(f1 <= f2) -> (f1 > f2)
-      Lt -> fToECNFB False (FComp Ge e1 e2) eps
-      Ge -> fToECNFB False (FComp Lt e1 e2) eps
-      Gt -> fToECNFB False (FComp Le e1 e2) eps
-      Eq -> fToECNFB True (FConn And (FComp Ge e1 e2) (FComp Le e1 e2)) eps -- !(f1 = f2)
-    fToECNFB False (FComp op e1 e2) eps = case op of
-      Le -> fToECNFB False (FComp Ge e2 e1) eps -- f1 <  f2 == f1 - f2 <  0 == -f1 + f2 >= 0
-      Lt -> fToECNFB False (FComp Gt e2 e1) eps -- f1 <= f2 == f1 - f2 <= 0 == -f1 + f2 >  0 == -f1 + f2 - eps >= 0
-      Ge -> [[EBinOp Sub e1 e2]]                -- f1 >= f2 == f1 - f2 >= 0 
-      Gt -> [[EBinOp Sub (EBinOp Sub e1 e2) (Lit eps)]]                -- f1 >  f2 == f1 - f2 >  0 == f1 - f2 - eps >= 0
-      Eq -> fToECNFB False (FConn And (FComp Ge e1 e2) (FComp Le e1 e2)) eps -- f1 = f2 == f1 >= f2 /\ f1 <= f2
-    fToECNFB True (FConn op f1 f2) eps  = case op of
-      And     -> [d1 ++ d2 | d1 <- fToECNFB True f1 eps, d2 <- fToECNFB True f2 eps] 
-      Or      -> fToECNFB True f1 eps ++ fToECNFB True f2 eps
-      Impl    -> fToECNFB False f1 eps ++ fToECNFB True f2 eps -- !(!p \/ q) == p /\ !q
-      Equiv   -> fToECNFB True (FConn And (FConn Impl f1 f2) (FConn Impl f2 f1)) eps
-    fToECNFB False (FConn op f1 f2) eps  = case op of
-      And     -> fToECNFB False f1 eps ++ fToECNFB False f2 eps -- [e1 /\ e2 /\ (e3 \/ e4)] ++ [p1 /\ (p2 \/ p3) /\ p4] = [e1 /\ e2 /\ (e3 \/ e4) /\ p1 /\ (p2 \/ p3) /\ p4]
-      Or      -> [d1 ++ d2 | d1 <- fToECNFB False f1 eps, d2 <- fToECNFB False f2 eps] -- [e1 /\ e2 /\ (e3 \/ e4)] \/ [p1 /\ (p2 \/ p3) /\ p4] 
-      Impl    -> [d1 ++ d2 | d1 <- fToECNFB True f1 eps, d2 <- fToECNFB False f2 eps]
-      Equiv   -> fToECNFB False (FConn And (FConn Impl f1 f2) (FConn Impl f2 f1)) eps
+    fToECNFB :: Bool -> F -> [[ESafe]]
+    fToECNFB isNegated (FNot f) = fToECNFB (not isNegated) f
+    fToECNFB True (FComp op e1 e2)  = case op of
+      Le -> fToECNFB False (FComp Gt e1 e2) -- !(f1 <= f2) -> (f1 > f2)
+      Lt -> fToECNFB False (FComp Ge e1 e2)
+      Ge -> fToECNFB False (FComp Lt e1 e2)
+      Gt -> fToECNFB False (FComp Le e1 e2)
+      Eq -> fToECNFB True (FConn And (FComp Ge e1 e2) (FComp Le e1 e2)) -- !(f1 = f2)
+    fToECNFB False (FComp op e1 e2) = case op of
+      Le -> fToECNFB False (FComp Ge e2 e1) -- f1 <  f2 == f1 - f2 <  0 == -f1 + f2 >= 0
+      Lt -> fToECNFB False (FComp Gt e2 e1) -- f1 <= f2 == f1 - f2 <= 0 == -f1 + f2 >  0
+      Ge -> [[ENonStrict (EBinOp Sub e1 e2)]]                -- f1 >= f2 == f1 - f2 >= 0 
+      Gt -> [[EStrict (EBinOp Sub e1 e2)]]      -- f1 >  f2 == f1 - f2 >  0 
+      Eq -> fToECNFB False (FConn And (FComp Ge e1 e2) (FComp Le e1 e2)) -- f1 = f2 == f1 >= f2 /\ f1 <= f2
+    fToECNFB True (FConn op f1 f2)  = case op of
+      And     -> [d1 ++ d2 | d1 <- fToECNFB True f1, d2 <- fToECNFB True f2] 
+      Or      -> fToECNFB True f1 ++ fToECNFB True f2
+      Impl    -> fToECNFB False f1 ++ fToECNFB True f2 -- !(!p \/ q) == p /\ !q
+      Equiv   -> fToECNFB True (FConn And (FConn Impl f1 f2) (FConn Impl f2 f1))
+    fToECNFB False (FConn op f1 f2)  = case op of
+      And     -> fToECNFB False f1 ++ fToECNFB False f2 -- [e1 /\ e2 /\ (e3 \/ e4)] ++ [p1 /\ (p2 \/ p3) /\ p4] = [e1 /\ e2 /\ (e3 \/ e4) /\ p1 /\ (p2 \/ p3) /\ p4]
+      Or      -> [d1 ++ d2 | d1 <- fToECNFB False f1, d2 <- fToECNFB False f2] -- [e1 /\ e2 /\ (e3 \/ e4)] \/ [p1 /\ (p2 \/ p3) /\ p4] 
+      Impl    -> [d1 ++ d2 | d1 <- fToECNFB True f1, d2 <- fToECNFB False f2]
+      Equiv   -> fToECNFB False (FConn And (FConn Impl f1 f2) (FConn Impl f2 f1))
     -- fToECNFB isNegated FTrue  _  = error "fToECNFB for FTrue undefined"  $ Lit 1.0
     -- fToECNFB isNegated FFalse _  = error "fToECNFB for FFalse undefined" $ Lit $ -1.0
-    fToECNFB True  FTrue  eps  = fToECNFB False FFalse eps 
-    fToECNFB True  FFalse eps  = fToECNFB False FTrue eps 
-    fToECNFB False FTrue  _    = [[Lit 1.0]]
-    fToECNFB False FFalse _    = [[Lit (-1.0)]]
+    fToECNFB True  FTrue   = fToECNFB False FFalse 
+    fToECNFB True  FFalse  = fToECNFB False FTrue 
+    fToECNFB False FTrue     = [[ENonStrict (Lit 1.0)]]
+    fToECNFB False FFalse    = [[ENonStrict (Lit (-1.0))]]
 
 -- | Add bounds for any Float expressions
 -- addRoundingBounds :: E -> [[E]]
@@ -265,6 +264,9 @@ simplifyF unsimplifiedF = if unsimplifiedF P.== simplifiedF then simplifiedF els
 
 simplifyECNF :: [[E]] -> [[E]]
 simplifyECNF = map (map simplifyE) 
+
+simplifyESafeCNF :: [[ESafe]] -> [[ESafe]]
+simplifyESafeCNF = map (map (fmapESafe simplifyE))
 
 -- | compute the value of E with Vars at specified points
 computeE :: E -> [(String, Rational)] -> CN Double
