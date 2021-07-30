@@ -143,7 +143,7 @@ instance
     CanSub (Differential a) (Differential a)
     where
     type SubType (Differential a) (Differential a) = Differential a
-    sub a b = 
+    sub a b =
         case min (order a) (order b) of
             2 -> OrderTwo  (a_x - b_x) (a_dx - b_dx) (a_dxt - b_dxt) (a_d2x - b_d2x)
             1 -> OrderOne  (a_x - b_x) (a_dx - b_dx)

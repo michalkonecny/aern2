@@ -1,3 +1,5 @@
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 {-|
     Module      :  AERN2.BoxFunMinMax.Expressions.DeriveBounds
     Description :  Deriving ranges for variables from hypotheses inside a formula
@@ -11,7 +13,7 @@
     Deriving ranges for variables from hypotheses inside a formula
 -}
 module AERN2.BoxFunMinMax.Expressions.DeriveBounds 
-(deriveBoundsAndSimplify, evalE_Rational)
+(deriveBoundsAndSimplify, evalE_Rational, roundMPBall)
 where
 
 import MixedTypesNumPrelude
@@ -72,7 +74,7 @@ deriveBoundsAndSimplify form' isCNF =
         | b P.== b2 = (b, f2)
         | otherwise = aux b2 f2
         where
-        f2 = 
+        f2 = -- TODO: if this is an implication, we could just do \(FConn Impl context goal) -> FConn Impl (simplifyF context) (simplifyF goal)
           if isCNF 
             then (\(FConn Impl context goal) -> FConn Impl (simplifyF context) goal) (evalF_comparisons b f) 
             else simplifyF $ evalF_comparisons b f
@@ -237,7 +239,7 @@ evalE ::
   (Ring v, CanDivSameType v, CanPowBy v Integer,
    CanMinMaxSameType v, CanAbsSameType v, 
    CanPowBy v v, CanSqrtSameType v, CanSinCosSameType v,
-   IsInterval v, CanAddThis v Integer, HasDyadics v, CanMinMaxSameType (IntervalEndpoint v)
+   IsInterval v, CanAddThis v Integer, HasDyadics v, CanMinMaxSameType (IntervalEndpoint v), _
   ) 
   =>
   (Rational -> v) ->
@@ -288,4 +290,41 @@ evalE fromR (varMap :: Map.Map VarName v) = evalVM
       epsD = convertExactly $ dyadic $ 0.5^1074
       zeroPlusMinusEpsilon :: v
       zeroPlusMinusEpsilon = fromEndpointsAsIntervals (-epsD) epsD
+  -- evalVM (RoundToInteger mode e) = fmap (roundMPBall mode) (evalVM e)
   evalVM e = error $ "evalE: undefined for: " ++ show e
+
+roundMPBall :: (Real (IntervalEndpoint i), IsInterval i, IsInterval p,
+ ConvertibleExactly Integer (IntervalEndpoint p)) =>
+  RoundingMode -> i -> p
+roundMPBall mode i =
+        let 
+          (l', r') = endpoints i
+          l = toRational l'
+          r = toRational r'
+          lFloor = floor l
+          lCeil = ceiling l
+          rFloor = floor r
+          rCeil = ceiling r
+        in case mode of
+          RNE ->
+            fromEndpoints
+              (if l - lFloor == 0.5
+                then (if even lFloor then convertExactly lFloor else convertExactly lCeil) 
+                else (if l - lFloor < 0.5 then convertExactly lFloor else convertExactly lCeil))
+              (if r - rFloor == 0.5
+                then (if even rFloor then convertExactly rFloor else convertExactly rCeil)
+                else (if r - rFloor < 0.5 then convertExactly rFloor else convertExactly rCeil))
+          RTP -> fromEndpoints (convertExactly lCeil)  (convertExactly rCeil)
+          RTN -> fromEndpoints (convertExactly lFloor) (convertExactly rFloor)
+          RTZ -> 
+            fromEndpoints 
+              (if isCertainlyPositive l then convertExactly lFloor else convertExactly lCeil)
+              (if isCertainlyPositive r then convertExactly rFloor else convertExactly rCeil)
+          RNA ->
+            fromEndpoints
+              (if l - lFloor == 0.5
+                then (if isCertainlyPositive l then convertExactly lCeil else convertExactly lFloor) 
+                else (if l - lFloor < 0.5 then convertExactly lFloor else convertExactly lCeil))
+              (if r  - rFloor == 0.5
+                then (if isCertainlyPositive r then convertExactly rCeil else convertExactly rFloor)
+                else (if r - rFloor < 0.5 then convertExactly rFloor else convertExactly rCeil))

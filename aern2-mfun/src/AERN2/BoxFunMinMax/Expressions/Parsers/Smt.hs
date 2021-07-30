@@ -219,7 +219,17 @@ termToE (LD.Application (LD.Variable "round") [mode, operand]) =
   case (parseRoundingMode mode, termToE operand) of
     (Just roundingMode, Just e) -> Just $ Float roundingMode e
     (_, _) -> Nothing
-    
+-- to_int/from_int float functions
+termToE (LD.Application (LD.Variable "fp.roundToIntegral") [mode, operand]) =
+  Nothing
+  -- case (parseRoundingMode mode, termToE operand) of
+  --   (Just roundingMode, Just e) -> Just $ RoundToInteger roundingMode e
+  --   (_, _) -> Nothing
+termToE (LD.Application (LD.Variable "to_int") [mode, operand]) = termToE (LD.Application (LD.Variable "fp.roundToIntegral") [mode, operand])
+termToE (LD.Application (LD.Variable "to_int1") [mode, operand]) = termToE (LD.Application (LD.Variable "fp.roundToIntegral") [mode, operand])
+termToE (LD.Application (LD.Variable "of_int") [_mode, operand]) = 
+  termToE operand --TODO: Is this safe?
+termToE (LD.Application (LD.Variable "of_int1") [_mode, operand]) = termToE operand --TODO: Is this safe?
 -- two param functions where op1 and op2 can be parsed to the E type.
 -- Functions with two params which need special handling (i.e. round) should be
 -- placed before here
@@ -330,6 +340,9 @@ determineFloatTypeE (Float32 r e)     varTypeMap  = case determineFloatTypeE e v
 determineFloatTypeE (Float64 r e)     varTypeMap  = case determineFloatTypeE e varTypeMap of
                                                       Just p -> Just $ Float64 r p
                                                       Nothing -> Nothing
+-- determineFloatTypeE (RoundToInteger r e) varTypeMap = case determineFloatTypeE e varTypeMap of
+--                                                         Just p -> Just $ RoundToInteger r p
+--                                                         Nothing -> Nothing
 determineFloatTypeE (Var v)           _           = Just (Var v)
 determineFloatTypeE (Lit n)           _           = Just (Lit n)
 
@@ -369,6 +382,7 @@ findVariablesInExpressions (PowI e _) = findVariablesInExpressions e
 findVariablesInExpressions (Float _ e) = findVariablesInExpressions e
 findVariablesInExpressions (Float32 _ e) = findVariablesInExpressions e
 findVariablesInExpressions (Float64 _ e) = findVariablesInExpressions e
+-- findVariablesInExpressions (RoundToInteger _ e) = findVariablesInExpressions e
 findVariablesInExpressions (Var v) = [v]
 findVariablesInExpressions (Lit _) = []
 
@@ -380,6 +394,7 @@ parseRoundingMode (LD.Variable mode) =
       | m `elem` ["RTP", "Up"]                -> Just RTP
       | m `elem` ["RTN", "Down"]              -> Just RTN
       | m `elem` ["RTZ", "ToZero"]            -> Just RTZ
+      | m `elem` ["RNA"]                      -> Just RNA
     _                                         -> Nothing
 parseRoundingMode _ = Nothing
 
@@ -392,6 +407,7 @@ parseRoundingMode _ = Nothing
 -- If any assertion contains Floats, return Nothing.
 processVC  :: [LD.Expression] -> ParsingMode -> Maybe F
 processVC parsedExpressions Why3 = 
+  trace (show mGoal) $
   case mGoalF of
     Just goalF  -> if null contextF then Just goalF else Just $ FConn Impl (foldContextF contextF) goalF
     Nothing     -> Nothing
@@ -475,6 +491,7 @@ deriveVCRanges vc mode =
     eContainsVars vars (Float32 _ e)    = eContainsVars vars e  
     eContainsVars vars (Float64 _ e)    = eContainsVars vars e  
     eContainsVars vars (Float _ e)      = eContainsVars vars e  
+    -- eContainsVars vars (RoundToInteger _ e) = eContainsVars vars e  
 
     fContainsVars :: [String] -> F -> Bool
     fContainsVars vars (FConn _ f1 f2)  = fContainsVars vars f1 || fContainsVars vars f2
@@ -489,7 +506,7 @@ inequalityEpsilon = 0.000000001
 
 -- |Convert a VC to ECNF, eliminating any floats. 
 eliminateFloatsAndConvertVCToECNF :: F -> VarMap -> [[ESafe]]
-eliminateFloatsAndConvertVCToECNF (FConn Impl context goal) varMap =
+eliminateFloatsAndConvertVCToECNF (FConn Impl context goal) varMap = -- TODO: Save results from FPTaylor, then lookup
   minMaxAbsEliminatorECNF $
   [
     contextEs ++ goalEs 

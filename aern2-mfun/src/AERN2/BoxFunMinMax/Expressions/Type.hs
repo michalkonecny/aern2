@@ -16,10 +16,10 @@ data BinOp = Add | Sub | Mul | Div | Min | Max | Pow
 data UnOp  = Sqrt | Negate | Abs | Sin | Cos
   deriving (Show, P.Eq, P.Ord)
 
-data RoundingMode = RNE | RTP | RTN | RTZ deriving (Show, P.Eq, P.Ord)
+data RoundingMode = RNE | RTP | RTN | RTZ | RNA deriving (Show, P.Eq, P.Ord)
 -- | The E type represents the inequality: expression :: E >= 0
 -- TODO: Add rounding operator with certain epsilon/floating-point type
-data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String | PowI E Integer | Float32 RoundingMode E | Float64 RoundingMode E | Float RoundingMode E -- Float Expression Significand
+data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String | PowI E Integer | Float32 RoundingMode E | Float64 RoundingMode E | Float RoundingMode E -- | RoundToInteger RoundingMode E 
   deriving (Show, P.Eq, P.Ord)
 
 data ESafe = EStrict E | ENonStrict E
@@ -317,6 +317,12 @@ computeEDisjunction es varMap = map (`computeE` varMap) es
 computeECNF :: [[E]] -> [(String, Rational)] -> [[CN Double]]
 computeECNF cnf varMap = map (`computeEDisjunction` varMap) cnf
 
+prettyShowESafeCNF :: [[ESafe]] -> String
+prettyShowESafeCNF es = prettyShowECNF $ map (map (eSafeToE)) es
+  where
+    eSafeToE (EStrict e) = e
+    eSafeToE (ENonStrict e) = e
+
 -- |Show an expression in a human-readable format
 -- Rationals are converted into doubles
 prettyShowE :: E -> String
@@ -327,36 +333,46 @@ prettyShowE (EBinOp op e1 e2) =
     Div -> "(" ++ prettyShowE e1 ++ " / " ++ prettyShowE e2 ++ ")"
     Mul -> "(" ++ prettyShowE e1 ++ " * " ++ prettyShowE e2 ++ ")"
     Pow -> "(" ++ prettyShowE e1 ++ " ^ " ++ prettyShowE e2 ++ ")"
-    Min -> "min(" ++ prettyShowE e1 ++ ", " ++ prettyShowE e2 ++ ")"
-    Max -> "max(" ++ prettyShowE e1 ++ ", " ++ prettyShowE e2 ++ ")"
+    Min -> "(min " ++ prettyShowE e1 ++ ", " ++ prettyShowE e2 ++ ")"
+    Max -> "(max " ++ prettyShowE e1 ++ ", " ++ prettyShowE e2 ++ ")"
 prettyShowE (EUnOp op e) =
   case op of
     Abs    -> "|" ++ prettyShowE e ++ "|"
-    Sqrt   -> "sqrt(" ++ prettyShowE e ++ ")"
+    Sqrt   -> "(sqrt " ++ prettyShowE e ++ ")"
     Negate -> "(-1 * " ++ prettyShowE e ++ ")"
-    Sin    -> "sin(" ++ prettyShowE e ++ ")"
-    Cos    -> "cos(" ++ prettyShowE e ++ ")"
+    Sin    -> "(sin " ++ prettyShowE e ++ ")"
+    Cos    -> "(cos " ++ prettyShowE e ++ ")"
 prettyShowE (PowI e i) = "(" ++ prettyShowE e ++ " ^ " ++ show i ++ ")"
 prettyShowE (Var v) = v
 prettyShowE (Lit v) = show (double v)
 prettyShowE (Float32 m e) = 
   case m of
-    RNE -> "rnd32_ne(" ++ prettyShowE e ++ ")"
-    RTP -> "rnd32_tp(" ++ prettyShowE e ++ ")"
-    RTN -> "rnd32_tn(" ++ prettyShowE e ++ ")"
-    RTZ -> "rnd32_tz(" ++ prettyShowE e ++ ")"
+    RNE -> "(rnd32_ne " ++ prettyShowE e ++ ")"
+    RTP -> "(rnd32_tp " ++ prettyShowE e ++ ")"
+    RTN -> "(rnd32_tn " ++ prettyShowE e ++ ")"
+    RTZ -> "(rnd32_tz " ++ prettyShowE e ++ ")"
+    RNA -> "(rnd32_na " ++ prettyShowE e ++ ")"
 prettyShowE (Float64 m e) = 
   case m of
-    RNE -> "rnd64_ne(" ++ prettyShowE e ++ ")"
-    RTP -> "rnd64_tp(" ++ prettyShowE e ++ ")"
-    RTN -> "rnd64_tn(" ++ prettyShowE e ++ ")"
-    RTZ -> "rnd64_tz(" ++ prettyShowE e ++ ")"
+    RNE -> "(rnd64_ne " ++ prettyShowE e ++ ")"
+    RTP -> "(rnd64_tp " ++ prettyShowE e ++ ")"
+    RTN -> "(rnd64_tn " ++ prettyShowE e ++ ")"
+    RTZ -> "(rnd64_tz " ++ prettyShowE e ++ ")"
+    RNA -> "(rnd64_na " ++ prettyShowE e ++ ")"
 prettyShowE (Float m e) = 
   case m of
-    RNE -> "rnd_ne(" ++ prettyShowE e ++ ")"
-    RTP -> "rnd_tp(" ++ prettyShowE e ++ ")"
-    RTN -> "rnd_tn(" ++ prettyShowE e ++ ")"
-    RTZ -> "rnd_tz(" ++ prettyShowE e ++ ")"
+    RNE -> "(rnd_ne " ++ prettyShowE e ++ ")"
+    RTP -> "(rnd_tp " ++ prettyShowE e ++ ")"
+    RTN -> "(rnd_tn " ++ prettyShowE e ++ ")"
+    RTZ -> "(rnd_tz " ++ prettyShowE e ++ ")"
+    RNA -> "(rnd_na " ++ prettyShowE e ++ ")"
+-- prettyShowE (RoundToInteger m e) = 
+--   case m of
+--     RNE -> "(rndToInt_ne " ++ prettyShowE e ++ ")"
+--     RTP -> "(rndToInt_tp " ++ prettyShowE e ++ ")"
+--     RTN -> "(rndToInt_tn " ++ prettyShowE e ++ ")"
+--     RTZ -> "(rndToInt_tz " ++ prettyShowE e ++ ")"
+--     RNA -> "(rndToInt_ta " ++ prettyShowE e ++ ")"
 
 -- |Show a conjunction of expressions in a human-readable format
 -- This is shown as an AND with each disjunction tabbed in with an OR
@@ -374,12 +390,12 @@ prettyShowECNF cnf =
     prettyShowDisjunction es  = 
       "OR" ++ concatMap (\e -> "\n\t\t" ++ prettyShowE e ++ " > 0") es
 
-prettyShowF :: F -> String
-prettyShowF (FComp op e1 e2) = "(" ++ prettyShowE e1 ++ ") " ++ prettyShowComp op ++ " (" ++ prettyShowE e2 ++ ")"
-prettyShowF (FConn op f1 f2) = prettyShowConn op ++ " ((" ++ prettyShowF f1 ++ "), (" ++ prettyShowF f2 ++ "))"
-prettyShowF (FNot f)         = "Not(" ++ prettyShowF f ++ ")"
-prettyShowF FTrue            = "True"
-prettyShowF FFalse           = "False"
+prettyShowF :: F -> Integer -> String
+prettyShowF (FComp op e1 e2) numTabs = "\n" ++ concat (replicate numTabs "\t") ++ prettyShowE e1 ++ " " ++ prettyShowComp op ++ " " ++ prettyShowE e2
+prettyShowF (FConn op f1 f2) numTabs = "\n" ++ concat (replicate numTabs "\t") ++ prettyShowConn op ++ prettyShowF f1 (numTabs + 1) ++ prettyShowF f2 (numTabs + 1)
+prettyShowF (FNot f)         numTabs = "\n" ++ concat (replicate numTabs "\t") ++ "NOT" ++ prettyShowF f (numTabs + 1)
+prettyShowF FTrue            numTabs = "\n" ++ concat (replicate numTabs "\t") ++ "True"
+prettyShowF FFalse           numTabs = "\n" ++ concat (replicate numTabs "\t") ++ "False"
 
 prettyShowComp :: Comp -> String
 prettyShowComp Gt = ">"
@@ -407,6 +423,7 @@ extractVariablesE = nub . findAllVars
     findAllVars (Float32 _ e)    = findAllVars e
     findAllVars (Float64 _ e)    = findAllVars e
     findAllVars (Float _ e)      = findAllVars e
+    -- findAllVars (RoundToInteger _ e) = findAllVars e
 
 -- |Extract all variables in an expression
 -- Will not return duplicationes
@@ -431,6 +448,7 @@ hasFloatE (EUnOp _ e)      = hasFloatE e
 hasFloatE (PowI e _)       = hasFloatE e
 hasFloatE (Lit _)          = False
 hasFloatE (Var _)          = False
+-- hasFloatE (RoundToInteger _ e) = hasFloatE e
 
 hasFloatF :: F -> Bool
 hasFloatF (FConn _ f1 f2) = hasFloatF f1 || hasFloatF f2

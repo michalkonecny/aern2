@@ -20,6 +20,7 @@ removeFloats (EUnOp op e)      = EUnOp op (removeFloats e)
 removeFloats (PowI e i)        = PowI (removeFloats e) i
 removeFloats (Lit v)           = Lit v
 removeFloats (Var v)           = Var v
+-- removeFloats (RoundToInteger m e) = RoundToInteger m (removeFloats e)
 
 eliminateFloatsF :: F -> VarMap -> Bool -> F
 eliminateFloatsF (FConn op f1 f2) varMap addError = FConn op (eliminateFloatsF f1 varMap addError) (eliminateFloatsF f2 varMap addError)
@@ -47,12 +48,13 @@ eliminateFloats (EUnOp op e) varMap addError = EUnOp op (eliminateFloats e varMa
 eliminateFloats (Lit v) _ _ = Lit v
 eliminateFloats (Var v) _ _ = Var v
 eliminateFloats (PowI e i) _ _ = PowI e i
+-- eliminateFloats (RoundToInteger m e) varMap addError = RoundToInteger m (eliminateFloats e varMap addError)
 
 -- |Made for Float32/64 expressions
 findAbsoluteErrorUsingFPTaylor :: E -> VarMap -> IO Rational
 findAbsoluteErrorUsingFPTaylor e varMap =
   do
-    writeFile fptaylorFile fptaylorInput
+    writeFile fptaylorFile fptaylorInput --TODO: Make this safer by either writing to different files on repeated calls, or by sending the input directly to FPTaylor
     (exitCode, output, errDetails) <- readProcessWithExitCode fpTaylorPath [fptaylorFile] []
     -- removeFile fptaylorFile
     case exitCode of

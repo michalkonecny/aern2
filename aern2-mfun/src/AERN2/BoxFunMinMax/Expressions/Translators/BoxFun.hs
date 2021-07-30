@@ -8,16 +8,19 @@ import AERN2.BoxFun.TestFunctions (fromListDomain)
 import AERN2.BoxFunMinMax.Expressions.Type
 import AERN2.BoxFunMinMax.VarMap
 import AERN2.MP.Ball
-
+import AERN2.MP.Float
 import qualified AERN2.Linear.Vector.Type as V
-
+import qualified Prelude as P
 import Data.List
+import Numeric.CollectErrors
+import AERN2.BoxFunMinMax.Expressions.DeriveBounds
+
 
 expressionToBoxFun :: E -> VarMap -> Precision -> BoxFun
-expressionToBoxFun e domain p =
+expressionToBoxFun expression domain p =
   BoxFun
     (fromIntegral (Data.List.length domain))
-    (expressionToDifferential e)
+    (expressionToDifferential expression)
     vectorDomain
   where
 
@@ -34,6 +37,14 @@ expressionToBoxFun e domain p =
     expressionToDifferential (Float _ _) _   = undefined
     expressionToDifferential (Float32 _ _) _ = undefined
     expressionToDifferential (Float64 _ _) _ = undefined
+    -- expressionToDifferential (RoundToInteger mode e) v = --expressionToDifferential e v
+    --   case expressionToDifferential e v of
+    --     OrderZero x      -> OrderZero $ roundMPBall mode x
+    --     OrderOne x _     -> OrderOne (roundMPBall mode x) err
+    --     OrderTwo x _ _ _ -> OrderTwo (roundMPBall mode x) err err err
+    --     where
+    --       err = noValueNumErrorCertain $ NumError "No derivatives after rounding to integer"
+
     expressionToDifferential (EBinOp op e1 e2) v = 
       case op of
         Min -> min (expressionToDifferential e1 v) (expressionToDifferential e2 v) --TODO: Could define these for degree 0
@@ -56,7 +67,6 @@ expressionToBoxFun e domain p =
         Nothing -> error $ "Variable: " ++ show e ++ " not found in varMap: " ++ show domain ++ " when translating expression: " ++ show e 
         Just i -> v V.! (fromIntegral i)
     expressionToDifferential (PowI e i) v = expressionToDifferential e v ^ i
-
 
     variableOrder = map fst domain
     vectorDomain  = fromListDomain (map snd domain)

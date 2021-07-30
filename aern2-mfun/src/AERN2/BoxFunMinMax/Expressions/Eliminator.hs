@@ -67,6 +67,8 @@ minMaxAbsEliminator (ENonStrict (Float32 mode e))        =
   [(p, ENonStrict (Float32 mode (extractSafeE e'))) | (p, e') <- minMaxAbsEliminator (ENonStrict e)]
 minMaxAbsEliminator (ENonStrict (Float64 mode e))        =
   [(p, ENonStrict (Float64 mode (extractSafeE e'))) | (p, e') <- minMaxAbsEliminator (ENonStrict e)]
+-- minMaxAbsEliminator (ENonStrict (RoundToInteger mode e)) =
+--   [(p, ENonStrict (RoundToInteger mode (extractSafeE e'))) | (p, e') <- minMaxAbsEliminator (ENonStrict e)]
 minMaxAbsEliminator e@(ENonStrict (Lit _))             = [([],e)]
 minMaxAbsEliminator e@(ENonStrict (Var _))             = [([],e)]
 
@@ -111,6 +113,8 @@ minMaxAbsEliminator (EStrict (Float32 mode e))        =
   [(p, EStrict (Float32 mode (extractSafeE e'))) | (p, e') <- minMaxAbsEliminator (EStrict e)]
 minMaxAbsEliminator (EStrict (Float64 mode e))        =
   [(p, EStrict (Float64 mode (extractSafeE e'))) | (p, e') <- minMaxAbsEliminator (EStrict e)]
+-- minMaxAbsEliminator (EStrict (RoundToInteger mode e)) =
+--   [(p, EStrict (RoundToInteger mode (extractSafeE e'))) | (p, e') <- minMaxAbsEliminator (ENonStrict e)]
 minMaxAbsEliminator e@(EStrict (Lit _))             = [([],e)]
 minMaxAbsEliminator e@(EStrict (Var _))             = [([],e)]
 -- If we extractSafeE, then strictness does not matter

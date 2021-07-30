@@ -43,13 +43,16 @@ expressionToFPTaylor (Float32 mode e) =
     RTP -> "rnd32_up(" ++ expressionToFPTaylor e ++ ")"
     RTN -> "rnd32_down(" ++ expressionToFPTaylor e ++ ")"
     RTZ -> "rnd32_0(" ++ expressionToFPTaylor e ++ ")"
+    RNA -> error "Round nearest away not supported in FPTaylor"
 expressionToFPTaylor (Float64 mode e) = 
   case mode of
     RNE -> "rnd64(" ++ expressionToFPTaylor e ++ ")"
     RTP -> "rnd64_up(" ++ expressionToFPTaylor e ++ ")"
     RTN -> "rnd64_down(" ++ expressionToFPTaylor e ++ ")"
     RTZ -> "rnd64_0(" ++ expressionToFPTaylor e ++ ")"
+    RNA -> error "Round nearest away not supported in FPTaylor"
 expressionToFPTaylor e@(Float _ _) = error "Float type with no precision found when translating to FPTaylor: " ++ show e
+-- expressionToFPTaylor (RoundToInteger mode e) = error "giveup" --FIXME: give up here, use evalVM to round
 -- expressionToFPTaylor (Float e s) = "rnd32(" ++ expressionToFPTaylor e ++ ")" --TODO: FPTaylor only supports 16,32,64,128 floats. Use these numbers in PP2?
 
 variableBoundsToFPTaylor :: VarMap -> String
