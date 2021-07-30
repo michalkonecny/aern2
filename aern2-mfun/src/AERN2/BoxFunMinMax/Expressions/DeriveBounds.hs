@@ -57,9 +57,34 @@ type VarName = String
 
 deriveBoundsAndSimplify :: F -> Bool -> (F, VarMap, [VarName])
 deriveBoundsAndSimplify form' isCNF =
-  let (derivedRanges, underivedRanges) = List.partition isGood varRanges
-  in (simplifiedF, map removeJust derivedRanges, map fst underivedRanges)
+  (finalSimplifiedF, derivedRangesWithoutPoints, map fst underivedRanges)
     where
+    finalSimplifiedF = simplifyF simplifiedFWithSubstitutedPoints
+
+    simplifiedFWithSubstitutedPoints = substitutePoints simplifiedF varsWithPoints
+
+    (derivedRangesWithoutPoints, varsWithPoints) = seperatePoints derivedRanges
+
+    derivedRanges = map removeJust mDerivedRanges
+
+    (mDerivedRanges, underivedRanges) = List.partition isGood varRanges
+
+    isPoint (l, r) = l == r
+
+
+    substitutePoints :: F -> [(String, Rational)] -> F
+    substitutePoints f [] = f
+    substitutePoints f ((var, val) : varPoints) = substitutePoints (substituteVarF f var val) varPoints
+
+    seperatePoints :: VarMap -> (VarMap, [(String, Rational)])
+    seperatePoints [] = ([], [])
+    seperatePoints ((var, bounds) : varMap) = 
+      if isPoint bounds
+        then (resultingVarMap, (var, fst bounds) : resultingPoints)
+        else ((var, bounds) : resultingVarMap, resultingPoints)
+      where
+        (resultingVarMap, resultingPoints) = seperatePoints varMap
+
     form = if isCNF then FConn Impl form' FFalse else form'
     -- If given a CNF, make it imply False
     removeJust (v, (Just l, Just r)) = (v, (l, r))

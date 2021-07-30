@@ -456,3 +456,20 @@ hasFloatF (FComp _ e1 e2) = hasFloatE e1 || hasFloatE e2
 hasFloatF (FNot f)        = hasFloatF f
 hasFloatF FTrue           = False
 hasFloatF FFalse          = False
+
+substituteVarE :: E -> String -> Rational -> E
+substituteVarE (Var x) varToSubstitue valToSubstitute = if x == varToSubstitue then Lit valToSubstitute else Var x
+substituteVarE l@(Lit _) _ _ = l
+substituteVarE (EBinOp op e1 e2) var val = EBinOp op (substituteVarE e1 var val) (substituteVarE e2 var val) 
+substituteVarE (EUnOp op e) var val = EUnOp op (substituteVarE e var val) 
+substituteVarE (PowI e i) var val = PowI (substituteVarE e var val) i
+substituteVarE (Float m e) var val = Float m (substituteVarE e var val)
+substituteVarE (Float32 m e) var val = Float32 m (substituteVarE e var val)
+substituteVarE (Float64 m e) var val = Float64 m (substituteVarE e var val)
+
+substituteVarF :: F -> String -> Rational -> F
+substituteVarF (FConn op f1 f2) var val = FConn op (substituteVarF f1 var val) (substituteVarF f2 var val) 
+substituteVarF (FComp op e1 e2) var val = FComp op (substituteVarE e1 var val) (substituteVarE e2 var val) 
+substituteVarF (FNot f)         var val = FNot (substituteVarF f var val)
+substituteVarF FTrue  _ _ = FTrue
+substituteVarF FFalse _ _ = FFalse
