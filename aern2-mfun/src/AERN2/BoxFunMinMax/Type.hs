@@ -156,7 +156,7 @@ decideDisjunctionFalse expressionsWithFunctions varMap p =
   expressionsWithFunctions
 
 decideConjunctionFalse :: [[(E.ESafe, BoxFun)]] -> VarMap -> Precision -> Bool
-decideConjunctionFalse c v p = all (\d -> decideDisjunctionFalse d v p) c
+decideConjunctionFalse c v p = any (\d -> decideDisjunctionFalse d v p) c
 
 bisectWidestInterval :: VarMap -> (VarMap, VarMap)
 bisectWidestInterval [] = error "Given empty box to bisect"
