@@ -64,7 +64,7 @@ class IsBall t where
     where
     (c, r) = centreAsBallAndRadius v
 
-instance (IsBall t => IsBall (CN t)) where
+instance IsBall t => IsBall (CN t) where
     type CentreType (CN t) = CN (CentreType t)
     centre = fmap centre
     updateRadius f = fmap (updateRadius f)

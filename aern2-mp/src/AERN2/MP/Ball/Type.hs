@@ -146,30 +146,6 @@ instance CanGiveUpIfVeryInaccurate MPBall where
       | e > 1000 = CN.noValueNumErrorPotential $ numErrorVeryInaccurate "MPBall" ""
       | otherwise = cn b
 
-instance CanTestContains MPBall MPBall where
-  contains (MPBall xLarge eLarge) (MPBall xSmall eSmall) =
-    xLargeDy - eLargeDy <= xSmallDy - eSmallDy
-    &&
-    xSmallDy + eSmallDy <= xLargeDy + eLargeDy
-    where
-    xLargeDy = dyadic xLarge
-    eLargeDy = dyadic eLarge
-    xSmallDy = dyadic xSmall
-    eSmallDy = dyadic eSmall
-
-$(declForTypes
-  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
-  (\ t -> [d|
-    instance CanTestContains MPBall $t where
-      contains (MPBall c e) x =
-        l <= x && x <= r
-        where
-        l = cDy - eDy
-        r = cDy + eDy
-        cDy = dyadic c
-        eDy = dyadic e
-  |]))
-
 {- ball construction/extraction functions -}
 
 instance IsInterval MPBall where
@@ -277,3 +253,28 @@ absRaw b
   | otherwise = -b
   where
   (l,r) = endpoints b
+
+instance CanTestContains MPBall MPBall where
+  contains (MPBall xLarge eLarge) (MPBall xSmall eSmall) =
+    xLargeDy - eLargeDy <= xSmallDy - eSmallDy
+    &&
+    xSmallDy + eSmallDy <= xLargeDy + eLargeDy
+    where
+    xLargeDy = dyadic xLarge
+    eLargeDy = dyadic eLarge
+    xSmallDy = dyadic xSmall
+    eSmallDy = dyadic eSmall
+
+$(declForTypes
+  [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
+  (\ t -> [d|
+    instance CanTestContains MPBall $t where
+      contains (MPBall c e) x =
+        l <= x && x <= r
+        where
+        l = cDy - eDy
+        r = cDy + eDy
+        cDy = dyadic c
+        eDy = dyadic e
+  |]))
+
