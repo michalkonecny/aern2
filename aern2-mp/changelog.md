@@ -1,6 +1,7 @@
 # Change log for aern2-mp
 
-* v ???
+* v 0.2.8 2021-08-04
+  * compatibility with ghc 9.0.1
   * add limits for CN (WithCurrentPrec p (CN MPBall))
 * v 0.2.7 2021-06-02
   * make (WithCurrentPrec p (CN MPBall)) a Field
