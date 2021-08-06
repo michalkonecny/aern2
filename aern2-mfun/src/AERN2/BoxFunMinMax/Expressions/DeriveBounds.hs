@@ -30,7 +30,7 @@ import AERN2.MP.Dyadic
 import AERN2.BoxFunMinMax.Expressions.Type
 import AERN2.BoxFunMinMax.VarMap
 
-import Debug.Trace ()
+import Debug.Trace (trace)
 
 -- examples:
 
@@ -120,6 +120,8 @@ scanHypotheses _ = id
 -- FIXME: We need FNot here
 scanHypothesis :: F -> Bool -> VarBoundMap -> VarBoundMap
 scanHypothesis (FNot h) isNegated intervals = scanHypothesis h (not isNegated) intervals 
+scanHypothesis (FConn And (FConn Impl cond1 branch1) (FConn Impl (FNot cond2) branch2)) False intervals 
+  | cond1 P.== cond2 = scanHypothesis (FConn Or branch1 branch2) False intervals
 scanHypothesis (FConn And h1 h2) isNegated intervals = 
   if isNegated
     then scanHypothesis (FConn Or (FNot h1) (FNot h2)) False intervals
@@ -129,9 +131,18 @@ scanHypothesis (FConn Or h1 h2) isNegated intervals =
     then scanHypothesis (FConn And (FNot h1) (FNot h2)) False intervals
     else Map.unionWith mergeWorse box1 box2
       where
-      box1 = scanHypothesis h1 isNegated intervals
-      box2 = scanHypothesis h2 isNegated intervals
+      box1 = iterateUntilNoChange (scanHypothesis h1 isNegated) intervals
+      box2 = iterateUntilNoChange (scanHypothesis h2 isNegated) intervals
       mergeWorse (l1,r1) (l2,r2) = (min <$> l1 <*> l2, max <$> r1 <*> r2)
+
+      iterateUntilNoChange refineBox b1
+        | b1 P.== b2 = b1
+        | otherwise = trace (show b1) iterateUntilNoChange refineBox b2
+        where
+          b2 = refineBox b1
+      -- iterateUntilNoChange b1 f
+      --   | b1 P.== b2 = b1
+      --   | otherwise = scanHypothesis f isNegated b1
 scanHypothesis (FConn Impl h1 h2) isNegated intervals = scanHypothesis (FConn Or (FNot h1) h2) isNegated intervals
 scanHypothesis (FConn Equiv h1 h2) isNegated intervals = scanHypothesis (FConn Or (FConn And h1 h2) (FConn And (FNot h1) (FNot h2))) isNegated intervals 
 -- We need: data Comp = Gt | Ge | Lt | Le | Eq
