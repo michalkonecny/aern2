@@ -24,7 +24,7 @@ import AERN2.BoxFunMinMax.VarMap ( VarMap )
 import AERN2.BoxFunMinMax.Expressions.DeriveBounds
 import AERN2.BoxFunMinMax.Expressions.EliminateFloats
 import AERN2.BoxFunMinMax.Expressions.Eliminator (minMaxAbsEliminatorECNF)
-
+import Data.List (nub)
 data ParsingMode = Why3 | CNF
 
 parser :: String -> [LD.Expression]
@@ -374,7 +374,16 @@ findVariableType (v: vs) varTypeMap mFoundType =
         Just f -> if f == t then findVariableType vs varTypeMap (Just t) else Nothing
         Nothing -> findVariableType vs varTypeMap (Just t)
     Nothing -> Nothing
-    
+
+findVariablesInFormula :: F -> [String]
+findVariablesInFormula f = nub $ findVars f
+  where
+    findVars (FConn _ f1 f2) = findVars f1 ++ findVars f2
+    findVars (FComp _ e1 e2) = findVariablesInExpressions e1 ++ findVariablesInExpressions e2
+    findVars (FNot f1)       = findVars f1
+    findVars FTrue           = []
+    findVars FFalse          = []
+
 findVariablesInExpressions :: E -> [String]
 findVariablesInExpressions (EBinOp _ e1 e2) = findVariablesInExpressions e1 ++ findVariablesInExpressions e2
 findVariablesInExpressions (EUnOp _ e) = findVariablesInExpressions e
@@ -457,9 +466,31 @@ deriveVCRanges vc mode =
           if fContainsVars underivableVariables goal
             then Nothing
             else
-              case filterCNF contextCNF of
-                Just filteredContext  -> Just (FConn Impl filteredContext goal, derivedVarMap)
-                Nothing               -> Just                            (goal, derivedVarMap)
+              let
+                varsInGoal = findVariablesInFormula goal
+
+                dependentVars = findDependentVars contextCNF
+
+                findDependentVars :: F -> [String]
+                findDependentVars (FConn And f1 f2) = nub $ findDependentVars f1 ++ findDependentVars f2
+                findDependentVars f1 = if fContainsVars varsInGoal f1 then findVariablesInFormula f1 else [] 
+
+                relevantVars   = nub $ dependentVars ++ varsInGoal
+                irrelevantVars = map fst $ filter (\(v, _) -> v `notElem` relevantVars) derivedVarMap
+
+                relevantDerivedVarMap = filter (\(v, _) -> v `elem` relevantVars) derivedVarMap
+
+                filterCNF (FConn And f1 f2) varsToFilterOut = --FIXME, will check AND AND AND
+                  case (filterCNF f1 varsToFilterOut, filterCNF f2 varsToFilterOut) of
+                    (Just filteredF1, Just filteredF2) -> Just (FConn And filteredF1 filteredF2)
+                    (Just filteredF1, _)               -> Just filteredF1
+                    (_, Just filteredF2)               -> Just filteredF2
+                    (Nothing, Nothing)                 -> Nothing
+                filterCNF f varsToFilterOut = if fContainsVars varsToFilterOut f then Nothing else Just f
+              in trace (show irrelevantVars) $
+              case filterCNF contextCNF (underivableVariables ++ irrelevantVars) of
+                Just filteredContext  -> Just (FConn Impl filteredContext goal, relevantDerivedVarMap)
+                Nothing               -> Just                            (goal, relevantDerivedVarMap)
         goal ->
           if fContainsVars underivableVariables goal
             then Nothing
@@ -471,16 +502,6 @@ deriveVCRanges vc mode =
       case mode of
         Why3 -> False
         CNF  -> True 
-
-    filterCNF :: F -> Maybe F
-    filterCNF (FConn And f1 f2) = 
-      if fContainsVars underivableVariables f1 
-        then filterCNF f2 
-        else 
-          case filterCNF f2 of
-            Just goodF2 -> Just $ FConn And f1 goodF2
-            Nothing     -> Just f1
-    filterCNF f = if fContainsVars underivableVariables f then Nothing else Just f
 
     eContainsVars :: [String] -> E -> Bool
     eContainsVars vars (Var var)        = var `elem` vars
