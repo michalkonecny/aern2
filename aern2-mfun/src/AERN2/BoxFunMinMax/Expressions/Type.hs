@@ -258,6 +258,8 @@ simplifyF unsimplifiedF = if unsimplifiedF P.== simplifiedF then simplifiedF els
     simplify (FComp op e1 e2)                                   = FComp op (simplifyE e1) (simplifyE e2)
     simplify FTrue                                              = FTrue
     simplify FFalse                                             = FFalse
+    simplify (FNot FTrue)                                       = FFalse
+    simplify (FNot FFalse)                                      = FTrue
     simplify (FNot f)                                           = FNot (simplify f)
     -- simplifyF FTrue = error "FTrue was not eliminated"
     -- simplifyF FFalse = error "FFalse was not eliminated"
