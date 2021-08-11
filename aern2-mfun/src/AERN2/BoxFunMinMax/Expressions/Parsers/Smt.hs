@@ -1,3 +1,4 @@
+{-# LANGUAGE TupleSections #-}
 module AERN2.BoxFunMinMax.Expressions.Parsers.Smt where
 
 import MixedTypesNumPrelude
@@ -24,7 +25,7 @@ import AERN2.BoxFunMinMax.VarMap ( VarMap )
 import AERN2.BoxFunMinMax.Expressions.DeriveBounds
 import AERN2.BoxFunMinMax.Expressions.EliminateFloats
 import AERN2.BoxFunMinMax.Expressions.Eliminator (minMaxAbsEliminatorECNF)
-import Data.List (nub)
+import Data.List (nub, sort)
 data ParsingMode = Why3 | CNF
 
 parser :: String -> [LD.Expression]
@@ -467,20 +468,26 @@ deriveVCRanges vc mode =
             then Nothing
             else
               let
-                varsInGoal = findVariablesInFormula goal
+                varsInGoal = sort $ findVariablesInFormula goal
 
-                dependentVars = findDependentVars contextCNF
+                findDependentVars :: F -> [String] -> [String]
+                findDependentVars f dependingVars = 
+                  if dependingVars == foundVarsWithDependingVars 
+                    then foundVarsWithDependingVars 
+                    else findDependentVars f foundVarsWithDependingVars
+                  where
+                    foundVarsWithDependingVars = sort . nub $ dependingVars ++ foundVars
+                    foundVars = aux f dependingVars
 
-                findDependentVars :: F -> [String]
-                findDependentVars (FConn And f1 f2) = nub $ findDependentVars f1 ++ findDependentVars f2
-                findDependentVars f1 = if fContainsVars varsInGoal f1 then findVariablesInFormula f1 else [] 
+                    aux (FConn And f1 f2) vars = findDependentVars f1 vars ++ findDependentVars f2 vars
+                    aux f1 vars = if fContainsVars vars f1 then findVariablesInFormula f1 else [] 
 
-                relevantVars   = nub $ dependentVars ++ varsInGoal
+                relevantVars   = findDependentVars contextCNF varsInGoal
                 irrelevantVars = map fst $ filter (\(v, _) -> v `notElem` relevantVars) derivedVarMap
 
                 relevantDerivedVarMap = filter (\(v, _) -> v `elem` relevantVars) derivedVarMap
 
-                filterCNF (FConn And f1 f2) varsToFilterOut = --FIXME, will check AND AND AND
+                filterCNF (FConn And f1 f2) varsToFilterOut =
                   case (filterCNF f1 varsToFilterOut, filterCNF f2 varsToFilterOut) of
                     (Just filteredF1, Just filteredF2) -> Just (FConn And filteredF1 filteredF2)
                     (Just filteredF1, _)               -> Just filteredF1
@@ -546,4 +553,7 @@ eliminateFloatsAndConvertVCToECNF goal varMap =
 
 parseVCToECNF :: FilePath -> ParsingMode -> Maybe ([[ESafe]], VarMap)
 parseVCToECNF filePath mode =
-  (\(f, vm) -> (simplifyESafeCNF (eliminateFloatsAndConvertVCToECNF (simplifyF f) vm), vm)) <$> ((`deriveVCRanges` mode) . simplifyF =<< (processVC . parseSMT2) filePath mode)
+  (\(f, vm) -> 
+    (simplifyESafeCNF (eliminateFloatsAndConvertVCToECNF (simplifyF f) vm), vm)) 
+    <$> -- VC as F with derived ranges
+    ((\f -> deriveVCRanges (simplifyF f) mode) =<< (processVC . parseSMT2) filePath mode)
