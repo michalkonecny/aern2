@@ -10,8 +10,11 @@ import System.IO.Unsafe (unsafePerformIO)
 import AERN2.BoxFunMinMax.VarMap
 
 import System.IO
-
+import Debug.Trace
 import Data.Scientific
+import AERN2.MP.Precision
+import AERN2.MP.Ball (piBallP)
+import Data.Bifunctor
 
 expressionToFPTaylorFile :: E -> FilePath -> IO ()
 expressionToFPTaylorFile e filePath = writeFile filePath $ expressionToFPTaylor e
@@ -34,6 +37,9 @@ expressionToFPTaylor (EUnOp op e) =
     Abs -> "|" ++ expressionToFPTaylor e ++ "|"
     Sin -> "sin(" ++ expressionToFPTaylor e ++ ")"
     Cos -> "cos(" ++ expressionToFPTaylor e ++ ")"
+expressionToFPTaylor Pi         = 
+  --TODO: Unsafe? We use abs error bounds so this might be ok
+  "3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446"
 expressionToFPTaylor (PowI e i) = expressionToFPTaylor e ++ " ^ " ++ show i
 expressionToFPTaylor (Lit r) = showFrac r
 expressionToFPTaylor (Var v) = v
@@ -52,7 +58,9 @@ expressionToFPTaylor (Float64 mode e) =
     RTZ -> "rnd64_0(" ++ expressionToFPTaylor e ++ ")"
     RNA -> error "Round nearest away not supported in FPTaylor"
 expressionToFPTaylor e@(Float _ _) = error "Float type with no precision found when translating to FPTaylor: " ++ show e
--- expressionToFPTaylor (RoundToInteger mode e) = error "giveup" --FIXME: give up here, use evalVM to round
+expressionToFPTaylor (RoundToInteger mode e) = expressionToFPTaylor e -- FIXME: is this ok because we are calculating abs error?
+                                                                      -- alternative solution: manually add rounding logic for each case. possible without Ifs?
+                                                                      -- This is ok for now
 -- expressionToFPTaylor (Float e s) = "rnd32(" ++ expressionToFPTaylor e ++ ")" --TODO: FPTaylor only supports 16,32,64,128 floats. Use these numbers in PP2?
 
 variableBoundsToFPTaylor :: VarMap -> String
@@ -89,8 +97,10 @@ expressionWithVarMapToFPTaylor e vm =
 --  divide integer using position of dot and length of string to get the rational we want
 
 parseFPTaylorRational :: String -> Maybe Rational
-parseFPTaylorRational output = toRational . (read :: String -> Scientific) <$> findErrorBound outputList
+parseFPTaylorRational output = trace (show (fmap double mr)) mr
   where
+    mr = toRational . (read :: String -> Scientific) <$> findErrorBound outputList
+
     outputList = words output
 
     findErrorBound :: [String] -> Maybe String
