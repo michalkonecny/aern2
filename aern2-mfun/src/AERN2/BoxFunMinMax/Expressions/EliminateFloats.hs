@@ -20,12 +20,44 @@ removeFloats (EUnOp op e)      = EUnOp op (removeFloats e)
 removeFloats (PowI e i)        = PowI (removeFloats e) i
 removeFloats (Lit v)           = Lit v
 removeFloats (Var v)           = Var v
--- removeFloats (RoundToInteger m e) = RoundToInteger m (removeFloats e)
+removeFloats Pi                = Pi
+removeFloats (RoundToInteger m e) = RoundToInteger m (removeFloats e)
 
+-- Bool True means 'strengthen' the formula, i.e. rnd(x) >= rnd(y) becomes x - rndErrorX >= y + rndErrorY.
+-- Bool False means 'weaken' the formula , i.e. rnd(x) >= rnd(y) becomes x + rndErrorX >= y - rndErrorY
+-- Eqs are turned into <= and >=, and then floats are eliminated
+-- TODO: Test Max,Min
 eliminateFloatsF :: F -> VarMap -> Bool -> F
-eliminateFloatsF (FConn op f1 f2) varMap addError = FConn op (eliminateFloatsF f1 varMap addError) (eliminateFloatsF f2 varMap addError)
-eliminateFloatsF (FComp op e1 e2) varMap addError = FComp op (eliminateFloats e1 varMap addError) (eliminateFloats e2 varMap addError)
-eliminateFloatsF (FNot f) varMap addError         = FNot (eliminateFloatsF f varMap addError)
+eliminateFloatsF (FConn op f1 f2) varMap strengthenFormula = FConn op (eliminateFloatsF f1 varMap strengthenFormula) (eliminateFloatsF f2 varMap strengthenFormula)
+eliminateFloatsF (FNot f) varMap strengthenFormula = FNot (eliminateFloatsF f varMap strengthenFormula)
+eliminateFloatsF (FComp op e1 e2) varMap True = 
+  case op of
+    Gt -> FComp op (eliminateFloats e1 varMap False) (eliminateFloats e2 varMap True)
+    Ge -> FComp op (eliminateFloats e1 varMap False) (eliminateFloats e2 varMap True)
+    Lt -> FComp op (eliminateFloats e1 varMap True) (eliminateFloats e2 varMap False)
+    Le -> FComp op (eliminateFloats e1 varMap True) (eliminateFloats e2 varMap False)
+    Eq -> 
+      eliminateFloatsF
+      (FConn And
+        (FComp Ge e1 e2)
+        (FComp Le e1 e2))
+      varMap
+      True
+eliminateFloatsF (FComp op e1 e2) varMap False = 
+  case op of
+    Gt -> FComp op (eliminateFloats e1 varMap True) (eliminateFloats e2 varMap False)
+    Ge -> FComp op (eliminateFloats e1 varMap True) (eliminateFloats e2 varMap False)
+    Lt -> FComp op (eliminateFloats e1 varMap False) (eliminateFloats e2 varMap True)
+    Le -> FComp op (eliminateFloats e1 varMap False) (eliminateFloats e2 varMap True)
+    Eq -> 
+      eliminateFloatsF
+      (FConn And
+        (FComp Ge e1 e2)
+        (FComp Le e1 e2))
+      varMap
+      False
+eliminateFloatsF FTrue _ _ = FTrue
+eliminateFloatsF FFalse _ _ = FFalse 
 
 eliminateFloats :: E -> VarMap -> Bool -> E
 eliminateFloats e@(Float _ _) _ _ = error $ "Cannot eliminate Float, precision unknown. Expression: " ++ show e
@@ -47,8 +79,9 @@ eliminateFloats (EBinOp op e1 e2) varMap addError = EBinOp op (eliminateFloats e
 eliminateFloats (EUnOp op e) varMap addError = EUnOp op (eliminateFloats e varMap addError)
 eliminateFloats (Lit v) _ _ = Lit v
 eliminateFloats (Var v) _ _ = Var v
+eliminateFloats Pi      _ _ = Pi
 eliminateFloats (PowI e i) _ _ = PowI e i
--- eliminateFloats (RoundToInteger m e) varMap addError = RoundToInteger m (eliminateFloats e varMap addError)
+eliminateFloats (RoundToInteger m e) varMap addError = RoundToInteger m (eliminateFloats e varMap addError)
 
 -- |Made for Float32/64 expressions
 findAbsoluteErrorUsingFPTaylor :: E -> VarMap -> IO Rational
