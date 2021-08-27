@@ -31,6 +31,7 @@ import AERN2.BoxFunMinMax.Expressions.Type
 import AERN2.BoxFunMinMax.VarMap
 
 import Debug.Trace (trace)
+import Data.List
 
 -- examples:
 
@@ -122,6 +123,8 @@ scanHypothesis :: F -> Bool -> VarBoundMap -> VarBoundMap
 scanHypothesis (FNot h) isNegated intervals = scanHypothesis h (not isNegated) intervals 
 scanHypothesis (FConn And (FConn Impl cond1 branch1) (FConn Impl (FNot cond2) branch2)) False intervals 
   | cond1 P.== cond2 = scanHypothesis (FConn Or branch1 branch2) False intervals
+scanHypothesis (FConn And (FConn Impl cond1 branch1) (FConn Impl (FNot cond2) branch2)) False intervals 
+  | sort (simplifyESafeCNF (fToECNF (simplifyF cond1))) P.== sort (simplifyESafeCNF (fToECNF (simplifyF cond2))) = scanHypothesis (FConn Or branch1 branch2) False intervals
 scanHypothesis (FConn And h1 h2) isNegated intervals = 
   if isNegated
     then scanHypothesis (FConn Or (FNot h1) (FNot h2)) False intervals
@@ -137,7 +140,7 @@ scanHypothesis (FConn Or h1 h2) isNegated intervals =
 
       iterateUntilNoChange refineBox b1
         | b1 P.== b2 = b1
-        | otherwise = trace (show b1) iterateUntilNoChange refineBox b2
+        | otherwise = iterateUntilNoChange refineBox b2
         where
           b2 = refineBox b1
       -- iterateUntilNoChange b1 f
@@ -304,6 +307,7 @@ evalE fromR (varMap :: Map.Map VarName v) = evalVM
       Nothing -> 
         error ("evalE: varMap does not contain variable " ++ show v)
       Just r -> r
+  evalVM Pi      = cn (piBallP (prec 1000))
   evalVM (Lit i) = (fromR i)
   evalVM (PowI e i) = evalVM e  ^ i
   evalVM (Float32 _ e) = (onePlusMinusEpsilon * (evalVM e)) + zeroPlusMinusEpsilon
@@ -326,7 +330,7 @@ evalE fromR (varMap :: Map.Map VarName v) = evalVM
       epsD = convertExactly $ dyadic $ 0.5^1074
       zeroPlusMinusEpsilon :: v
       zeroPlusMinusEpsilon = fromEndpointsAsIntervals (-epsD) epsD
-  -- evalVM (RoundToInteger mode e) = fmap (roundMPBall mode) (evalVM e)
+  evalVM (RoundToInteger mode e) = fmap (roundMPBall mode) (evalVM e)
   evalVM e = error $ "evalE: undefined for: " ++ show e
 
 roundMPBall :: (Real (IntervalEndpoint i), IsInterval i, IsInterval p,
@@ -354,12 +358,12 @@ roundMPBall mode i =
           RTN -> fromEndpoints (convertExactly lFloor) (convertExactly rFloor)
           RTZ -> 
             fromEndpoints 
-              (if isCertainlyPositive l then convertExactly lFloor else convertExactly lCeil)
+              (if isCertainlyPositive l then convertExactly lFloor else convertExactly lCeil) -- FIXME: check isCertainNegative?
               (if isCertainlyPositive r then convertExactly rFloor else convertExactly rCeil)
           RNA ->
             fromEndpoints
               (if l - lFloor == 0.5
-                then (if isCertainlyPositive l then convertExactly lCeil else convertExactly lFloor) 
+                then (if isCertainlyPositive l then convertExactly lCeil else convertExactly lFloor) -- FIXME: check isCertainNegative?
                 else (if l - lFloor < 0.5 then convertExactly lFloor else convertExactly lCeil))
               (if r  - rFloor == 0.5
                 then (if isCertainlyPositive r then convertExactly rCeil else convertExactly rFloor)
