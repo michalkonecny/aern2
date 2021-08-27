@@ -19,7 +19,7 @@ data UnOp  = Sqrt | Negate | Abs | Sin | Cos
 data RoundingMode = RNE | RTP | RTN | RTZ | RNA deriving (Show, P.Eq, P.Ord)
 -- | The E type represents the inequality: expression :: E >= 0
 -- TODO: Add rounding operator with certain epsilon/floating-point type
-data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String | PowI E Integer | Float32 RoundingMode E | Float64 RoundingMode E | Float RoundingMode E -- | RoundToInteger RoundingMode E 
+data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String | PowI E Integer | Float32 RoundingMode E | Float64 RoundingMode E | Float RoundingMode E | Pi | RoundToInteger RoundingMode E 
   deriving (Show, P.Eq, P.Ord)
 
 data ESafe = EStrict E | ENonStrict E
@@ -41,8 +41,8 @@ data F = FComp Comp E E | FConn Conn F F | FNot F | FTrue | FFalse
 newtype Name = Name String deriving Show
 
 instance Arbitrary Name where
-  arbitrary = 
-    oneof 
+  arbitrary =
+    oneof
     [
       return (Name "a"),
       return (Name "b"),
@@ -77,9 +77,9 @@ instance Arbitrary E where
 
       eGenerator :: Int -> Gen E
       eGenerator n | n>0 =
-        oneof 
+        oneof
         [
-          Lit     <$> fmap toRational (arbitrary :: Gen Integer), 
+          Lit     <$> fmap toRational (arbitrary :: Gen Integer),
           Var     <$> show <$> varName,
           EUnOp   <$> arbitrary <*> subE,
           EUnOp Sqrt . Lit      <$> fmap getPositive (arbitrary :: Gen (Positive Rational)),
@@ -144,7 +144,7 @@ fmapESafe f (EStrict e)    = EStrict $ f e
 fmapESafe f (ENonStrict e) = ENonStrict $ f e
 
 fToECNF :: F -> [[ESafe]]
-fToECNF = fToECNFB False 
+fToECNF = fToECNFB False
   where
     fToECNFB :: Bool -> F -> [[ESafe]]
     fToECNFB isNegated (FNot f) = fToECNFB (not isNegated) f
@@ -235,26 +235,55 @@ simplifyF unsimplifiedF = if unsimplifiedF P.== simplifiedF then simplifiedF els
     simplify (FConn Equiv FTrue f)                              = simplify f
     simplify (FConn Equiv f FFalse)                             = simplify $ FNot f
     simplify (FConn Equiv FFalse f)                             = simplify $ FNot f
+    -- Equiv contradictions and tautologies
+    simplify (FConn Equiv f1 fn2@(FNot f2))                     = if f1 P.== f2 then FFalse else FConn Equiv (simplify f1) (simplify fn2)
+    simplify (FConn Equiv fn1@(FNot f1) f2)                     = if f1 P.== f2 then FFalse else FConn Equiv (simplify fn1) (simplify f2)
+    simplify (FConn Equiv f1 f2)                                = if f1 P.== f2 then FTrue else FConn Equiv (simplify f1) (simplify f2)
     -- And
     simplify (FConn And _ FFalse)                               = FFalse
     simplify (FConn And FFalse _)                               = FFalse
     simplify (FConn And f FTrue)                                = simplify f
     simplify (FConn And FTrue f)                                = simplify f
+    -- And contradictions and eliminations
+    simplify (FConn And f1 fn2@(FNot f2))                       = if f1 P.== f2 then FFalse else FConn And (simplify f1) (simplify fn2)
+    simplify (FConn And fn1@(FNot f1) f2)                       = if f1 P.== f2 then FFalse else FConn And (simplify fn1) (simplify f2)
+    simplify (FConn And f1 f2)                                  = if f1 P.== f2 then simplify f1 else FConn And (simplify f1) (simplify f2)
     -- Or
     simplify (FConn Or _ FTrue)                                 = FTrue
     simplify (FConn Or FTrue _)                                 = FTrue
     simplify (FConn Or f FFalse)                                = simplify f
     simplify (FConn Or FFalse f)                                = simplify f
+    -- Or tautologies and eliminations
+
+    simplify (FConn Or f1 (FConn And (FNot f2) f3))
+      | f1 P.== f2 = simplify $ FConn Or f1 f3
+      | otherwise = FConn Or (simplify f1) (FConn And (simplify (FNot f2)) (simplify f3))
+    simplify (FConn Or f1 (FConn And f3 (FNot f2)))             = simplify (FConn Or f1 (FConn And (FNot f2) f3)) -- Less efficient but easier to maintain
+    simplify (FConn Or (FConn And (FNot f2) f3) f1)             = simplify (FConn Or f1 (FConn And (FNot f2) f3))
+    simplify (FConn Or (FConn And f3 (FNot f2)) f1)             = simplify (FConn Or f1 (FConn And (FNot f2) f3))
+
+    simplify (FConn Or f1 (FConn And f2 f3))
+      | f1 P.== f2 = simplify $ FConn And f1 f3
+      | f1 P.== f3 = simplify $ FConn And f1 f2
+      | otherwise = FConn Or (simplify f1) (FConn And (simplify f2) (simplify f3))  
+    simplify (FConn Or (FConn And f2 f3) f1)                    = simplify (FConn Or f1 (FConn And f2 f3)) 
+    
+    simplify (FConn Or f1 fn2@(FNot f2))                        = if f1 P.== f2 then FTrue else FConn Or (simplify f1) (simplify fn2)
+    simplify (FConn Or fn1@(FNot f1) f2)                        = if f1 P.== f2 then FTrue else FConn Or (simplify fn1) (simplify f2)
+    simplify (FConn Or f1 f2)                                   = if f1 P.== f2 then simplify f1 else FConn Or (simplify f1) (simplify f2)
     -- Impl
     simplify (FConn Impl FFalse _)                              = FTrue
     simplify (FConn Impl _ FTrue)                               = FTrue
     simplify (FConn Impl f FFalse)                              = simplify (FNot f)
     simplify (FConn Impl FTrue f)                               = simplify f
+    -- Impl tautologies and eliminations
+    simplify (FConn Impl f1 fn2@(FNot f2))                      = if f1 P.== f2 then simplify (FNot f1) else FConn Impl (simplify f1) (simplify fn2)
+    simplify (FConn Impl fn1@(FNot f1) f2)                      = if f1 P.== f2 then simplify f1 else FConn Impl (simplify fn1) (simplify f2)
+    simplify (FConn Impl f1 f2)                                 = if f1 P.== f2 then FTrue else FConn Impl (simplify f1) (simplify f2)
 
+    -- Comp tautologies and eliminations
     -- Eliminate double not
     simplify (FNot (FNot f))                                    = simplify f
-
-    simplify (FConn op f1 f2)                                   = FConn op (simplify f1) (simplify f2)
     simplify (FComp op e1 e2)                                   = FComp op (simplifyE e1) (simplifyE e2)
     simplify FTrue                                              = FTrue
     simplify FFalse                                             = FFalse
@@ -265,14 +294,14 @@ simplifyF unsimplifiedF = if unsimplifiedF P.== simplifiedF then simplifiedF els
     -- simplifyF FFalse = error "FFalse was not eliminated"
 
 simplifyECNF :: [[E]] -> [[E]]
-simplifyECNF = map (map simplifyE) 
+simplifyECNF = map (map simplifyE)
 
 simplifyESafeCNF :: [[ESafe]] -> [[ESafe]]
 simplifyESafeCNF = map (map (fmapESafe simplifyE))
 
 -- | compute the value of E with Vars at specified points
 computeE :: E -> [(String, Rational)] -> CN Double
-computeE (EBinOp op e1 e2) varMap = 
+computeE (EBinOp op e1 e2) varMap =
   case op of
     Min -> computeE e1 varMap `min` computeE e2 varMap
     Max -> computeE e1 varMap `max` computeE e2 varMap
@@ -280,7 +309,7 @@ computeE (EBinOp op e1 e2) varMap =
     Sub -> computeE e1 varMap - computeE e2 varMap
     Mul -> computeE e1 varMap * computeE e2 varMap
     Div -> computeE e1 varMap / computeE e2 varMap
-    Pow -> computeE e1 varMap ^ computeE e2 varMap 
+    Pow -> computeE e1 varMap ^ computeE e2 varMap
 computeE (EUnOp op e) varMap =
   case op of
     Abs -> abs (computeE e varMap)
@@ -288,9 +317,9 @@ computeE (EUnOp op e) varMap =
     Negate -> negate (computeE e varMap)
     Sin -> sin (computeE e varMap)
     Cos -> cos (computeE e varMap)
-computeE (Var v) varMap = 
+computeE (Var v) varMap =
   case Map.lookup v (Map.fromList varMap) of
-    Nothing -> 
+    Nothing ->
       trace ("map does not contain variable " ++ show v)
       undefined
     Just r -> cn (double r)
@@ -347,34 +376,35 @@ prettyShowE (EUnOp op e) =
 prettyShowE (PowI e i) = "(" ++ prettyShowE e ++ " ^ " ++ show i ++ ")"
 prettyShowE (Var v) = v
 prettyShowE (Lit v) = show (double v)
-prettyShowE (Float32 m e) = 
+prettyShowE (Float32 m e) =
   case m of
     RNE -> "(rnd32_ne " ++ prettyShowE e ++ ")"
     RTP -> "(rnd32_tp " ++ prettyShowE e ++ ")"
     RTN -> "(rnd32_tn " ++ prettyShowE e ++ ")"
     RTZ -> "(rnd32_tz " ++ prettyShowE e ++ ")"
     RNA -> "(rnd32_na " ++ prettyShowE e ++ ")"
-prettyShowE (Float64 m e) = 
+prettyShowE (Float64 m e) =
   case m of
     RNE -> "(rnd64_ne " ++ prettyShowE e ++ ")"
     RTP -> "(rnd64_tp " ++ prettyShowE e ++ ")"
     RTN -> "(rnd64_tn " ++ prettyShowE e ++ ")"
     RTZ -> "(rnd64_tz " ++ prettyShowE e ++ ")"
     RNA -> "(rnd64_na " ++ prettyShowE e ++ ")"
-prettyShowE (Float m e) = 
+prettyShowE (Float m e) =
   case m of
     RNE -> "(rnd_ne " ++ prettyShowE e ++ ")"
     RTP -> "(rnd_tp " ++ prettyShowE e ++ ")"
     RTN -> "(rnd_tn " ++ prettyShowE e ++ ")"
     RTZ -> "(rnd_tz " ++ prettyShowE e ++ ")"
     RNA -> "(rnd_na " ++ prettyShowE e ++ ")"
--- prettyShowE (RoundToInteger m e) = 
---   case m of
---     RNE -> "(rndToInt_ne " ++ prettyShowE e ++ ")"
---     RTP -> "(rndToInt_tp " ++ prettyShowE e ++ ")"
---     RTN -> "(rndToInt_tn " ++ prettyShowE e ++ ")"
---     RTZ -> "(rndToInt_tz " ++ prettyShowE e ++ ")"
---     RNA -> "(rndToInt_ta " ++ prettyShowE e ++ ")"
+prettyShowE Pi = "Pi"
+prettyShowE (RoundToInteger m e) = 
+  case m of
+    RNE -> "(rndToInt_ne " ++ prettyShowE e ++ ")"
+    RTP -> "(rndToInt_tp " ++ prettyShowE e ++ ")"
+    RTN -> "(rndToInt_tn " ++ prettyShowE e ++ ")"
+    RTZ -> "(rndToInt_tz " ++ prettyShowE e ++ ")"
+    RNA -> "(rndToInt_ta " ++ prettyShowE e ++ ")"
 
 -- |Show a conjunction of expressions in a human-readable format
 -- This is shown as an AND with each disjunction tabbed in with an OR
@@ -389,7 +419,7 @@ prettyShowECNF cnf =
     prettyShowDisjunction :: [E] -> String
     prettyShowDisjunction []  = []
     prettyShowDisjunction [e] = prettyShowE e
-    prettyShowDisjunction es  = 
+    prettyShowDisjunction es  =
       "OR" ++ concatMap (\e -> "\n\t\t" ++ prettyShowE e ++ " > 0") es
 
 prettyShowF :: F -> Integer -> String
@@ -418,6 +448,7 @@ extractVariablesE :: E -> [String]
 extractVariablesE = nub . findAllVars
   where
     findAllVars (Lit _)          = []
+    findAllVars Pi               = []
     findAllVars (Var v)          = [v]
     findAllVars (EUnOp _ e)      = findAllVars e
     findAllVars (EBinOp _ e1 e2) = findAllVars e1 ++ findAllVars e2
@@ -425,7 +456,7 @@ extractVariablesE = nub . findAllVars
     findAllVars (Float32 _ e)    = findAllVars e
     findAllVars (Float64 _ e)    = findAllVars e
     findAllVars (Float _ e)      = findAllVars e
-    -- findAllVars (RoundToInteger _ e) = findAllVars e
+    findAllVars (RoundToInteger _ e) = findAllVars e
 
 -- |Extract all variables in an expression
 -- Will not return duplicationes
@@ -439,7 +470,7 @@ extractVariablesF = nub . findAllVars
     findAllVars FFalse          = []
 
 extractVariablesECNF :: [[E]] -> [String]
-extractVariablesECNF = nub . concatMap (concatMap extractVariablesE) 
+extractVariablesECNF = nub . concatMap (concatMap extractVariablesE)
 
 hasFloatE :: E -> Bool
 hasFloatE (Float _ _)      = True
@@ -450,7 +481,8 @@ hasFloatE (EUnOp _ e)      = hasFloatE e
 hasFloatE (PowI e _)       = hasFloatE e
 hasFloatE (Lit _)          = False
 hasFloatE (Var _)          = False
--- hasFloatE (RoundToInteger _ e) = hasFloatE e
+hasFloatE Pi               = False
+hasFloatE (RoundToInteger _ e) = hasFloatE e
 
 hasFloatF :: F -> Bool
 hasFloatF (FConn _ f1 f2) = hasFloatF f1 || hasFloatF f2
@@ -461,17 +493,19 @@ hasFloatF FFalse          = False
 
 substituteVarE :: E -> String -> Rational -> E
 substituteVarE (Var x) varToSubstitue valToSubstitute = if x == varToSubstitue then Lit valToSubstitute else Var x
+substituteVarE (RoundToInteger m e) var val = RoundToInteger m (substituteVarE e var val)
+substituteVarE Pi _ _ = Pi
 substituteVarE l@(Lit _) _ _ = l
-substituteVarE (EBinOp op e1 e2) var val = EBinOp op (substituteVarE e1 var val) (substituteVarE e2 var val) 
-substituteVarE (EUnOp op e) var val = EUnOp op (substituteVarE e var val) 
+substituteVarE (EBinOp op e1 e2) var val = EBinOp op (substituteVarE e1 var val) (substituteVarE e2 var val)
+substituteVarE (EUnOp op e) var val = EUnOp op (substituteVarE e var val)
 substituteVarE (PowI e i) var val = PowI (substituteVarE e var val) i
 substituteVarE (Float m e) var val = Float m (substituteVarE e var val)
 substituteVarE (Float32 m e) var val = Float32 m (substituteVarE e var val)
 substituteVarE (Float64 m e) var val = Float64 m (substituteVarE e var val)
 
 substituteVarF :: F -> String -> Rational -> F
-substituteVarF (FConn op f1 f2) var val = FConn op (substituteVarF f1 var val) (substituteVarF f2 var val) 
-substituteVarF (FComp op e1 e2) var val = FComp op (substituteVarE e1 var val) (substituteVarE e2 var val) 
+substituteVarF (FConn op f1 f2) var val = FConn op (substituteVarF f1 var val) (substituteVarF f2 var val)
+substituteVarF (FComp op e1 e2) var val = FComp op (substituteVarE e1 var val) (substituteVarE e2 var val)
 substituteVarF (FNot f)         var val = FNot (substituteVarF f var val)
 substituteVarF FTrue  _ _ = FTrue
 substituteVarF FFalse _ _ = FFalse
