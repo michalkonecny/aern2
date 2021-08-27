@@ -37,13 +37,13 @@ expressionToBoxFun expression domain p =
     expressionToDifferential (Float _ _) _   = undefined
     expressionToDifferential (Float32 _ _) _ = undefined
     expressionToDifferential (Float64 _ _) _ = undefined
-    -- expressionToDifferential (RoundToInteger mode e) v = --expressionToDifferential e v
-    --   case expressionToDifferential e v of
-    --     OrderZero x      -> OrderZero $ roundMPBall mode x
-    --     OrderOne x _     -> OrderOne (roundMPBall mode x) err
-    --     OrderTwo x _ _ _ -> OrderTwo (roundMPBall mode x) err err err
-    --     where
-    --       err = noValueNumErrorCertain $ NumError "No derivatives after rounding to integer"
+    expressionToDifferential (RoundToInteger mode e) v = --expressionToDifferential e v
+      case expressionToDifferential e v of
+        OrderZero x      -> OrderZero $ roundMPBall mode x
+        OrderOne x _     -> OrderOne (roundMPBall mode x) err
+        OrderTwo x _ _ _ -> OrderTwo (roundMPBall mode x) err err err
+        where
+          err = noValueNumErrorCertain $ NumError "No derivatives after rounding to integer"
 
     expressionToDifferential (EBinOp op e1 e2) v = 
       case op of
@@ -66,6 +66,7 @@ expressionToBoxFun expression domain p =
       case elemIndex e variableOrder of
         Nothing -> error $ "Variable: " ++ show e ++ " not found in varMap: " ++ show domain ++ " when translating expression: " ++ show e 
         Just i -> v V.! (fromIntegral i)
+    expressionToDifferential Pi _ = differential 1 $ cn (piBallP p)
     expressionToDifferential (PowI e i) v = expressionToDifferential e v ^ i
 
     variableOrder = map fst domain
