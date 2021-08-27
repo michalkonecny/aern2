@@ -1,10 +1,10 @@
+{-# LANGUAGE LambdaCase #-}
 module AERN2.BoxFunMinMax.Expressions.Translators.DReal where
 
 import MixedTypesNumPrelude
 
 import AERN2.BoxFunMinMax.Expressions.Type
 
-import Data.List
 import Data.Ratio
 import System.IO.Unsafe (unsafePerformIO)
 
@@ -36,24 +36,45 @@ expressionToSMT (Float _ _)   = error "dReal translator does not support Floats"
 expressionToSMT (Float32 _ _) = error "dReal translator does not support Floats"
 expressionToSMT (Float64 _ _) = error "dReal translator does not support Floats"
 
-disjunctionExpressionsToSMT :: [E] -> String
-disjunctionExpressionsToSMT es = "(or " ++ concatMap (\e -> "(>= " ++ expressionToSMT e ++ "(+ 0 1e-300))") es ++ ")"
+disjunctionExpressionsToSMT :: [ESafe] -> String
+disjunctionExpressionsToSMT es = 
+  "\n\t\t\t(or " ++ 
+    concatMap 
+    (\case
+      EStrict e    -> "\n\t\t\t\t(> " ++ expressionToSMT e ++ " 0)"
+      ENonStrict e -> "\n\t\t\t\t(>= " ++ expressionToSMT e ++ " 0)"
+    ) 
+    es ++ 
+  ")"
 
-cnfExpressionsToSMT :: [[E]] -> String
-cnfExpressionsToSMT disjunctions = "(and " ++ concatMap disjunctionExpressionsToSMT disjunctions ++ ")"
+cnfExpressionsToSMT :: [[ESafe]] -> String
+cnfExpressionsToSMT disjunctions = "\n\t\t(and " ++ concatMap disjunctionExpressionsToSMT disjunctions ++ ")"
 
-cnfExpressionAndDomainsToDreal :: [[E]] -> [(String, (Rational, Rational))] -> [(String, (Rational, Rational))] -> String
+cnfExpressionAndDomainsToDreal :: [[ESafe]] -> [(String, (Rational, Rational))] -> [(String, (Rational, Rational))] -> String
 cnfExpressionAndDomainsToDreal cnf realDomains intDomains =
   "(set-option :precision 1e-300)" ++
-  "(assert " ++ forAll (cnfExpressionsToSMT cnf) ++ ")(check-sat)(exit)"
+  "\n(assert " ++ forAll (cnfExpressionsToSMT cnf) ++ ")\n(check-sat)\n(exit)"
   where
     forAll vc =
-      "(forall (" ++ concatMap (\(v, (_, _)) -> "(" ++ v ++ " Real)") realDomains ++ concatMap (\(v, (_, _)) -> "(" ++ v ++ " Int)") intDomains ++ ")" ++ 
-      "(=>" ++ 
-      "(and " ++ concatMap (\(v, (vL, vR)) -> "(>= " ++ v ++ " " ++ expressionToSMT (Lit vL) ++ ")(<= " ++ v ++ " " ++ expressionToSMT (Lit vR) ++ ")") (realDomains ++ intDomains) ++ ")" ++
-      vc ++ "))"
+      "\n(forall (" ++ concatMap (\(v, (_, _)) -> "\n\t(" ++ v ++ " Real)") realDomains ++ concatMap (\(v, (_, _)) -> "\n\t(" ++ v ++ " Int)") intDomains ++ "\n)" ++ 
+      "\n\t(=>" ++ 
+      "\n\t\t(and " ++ concatMap (\(v, (vL, vR)) -> "\n\t\t\t(>= " ++ v ++ " " ++ expressionToSMT (Lit vL) ++ ") (<= " ++ v ++ " " ++ expressionToSMT (Lit vR) ++ ")") (realDomains ++ intDomains) ++ "\n\t\t)" ++
+      vc ++ "))"   
+    -- forAll vc =
+    --   "(forall (" ++ concatMap (\(v, (_, _)) -> "(" ++ v ++ " Real)") realDomains ++ concatMap (\(v, (_, _)) -> "(" ++ v ++ " Int)") intDomains ++ ")" ++ 
+    --   "(=>" ++ 
+    --   "(and " ++ concatMap (\(v, (vL, vR)) -> "(>= " ++ v ++ " " ++ expressionToSMT (Lit vL) ++ ")(<= " ++ v ++ " " ++ expressionToSMT (Lit vR) ++ ")") (realDomains ++ intDomains) ++ ")" ++
+    --   vc ++ "))"
 
-runDRealTranslatorCNF :: [[E]] -> IO ()
+runDRealTranslatorCNFWithVarMap :: [[ESafe]] -> [(String, (Rational, Rational))] -> [(String, (Rational, Rational))] -> IO ()
+runDRealTranslatorCNFWithVarMap cnf realVarMap intVarMap =
+  do
+  putStrLn "Running Haskell to dReal translator for Expressions"
+  putStr "Enter target file name: "
+  fileName <- getLine
+  writeFile fileName $ cnfExpressionAndDomainsToDreal cnf realVarMap intVarMap
+
+runDRealTranslatorCNF :: [[ESafe]] -> IO ()
 runDRealTranslatorCNF cnf = do
   putStrLn "Running Haskell to dReal translator for Expressions"
   -- PutStr "Enter tool: "
