@@ -52,6 +52,10 @@ applyDisjunction expressions varMap p =
 applyECNF :: [[E.E]] -> VarMap -> Precision -> [[CN MPBall]]
 applyECNF cnf varMap p = map (\d -> applyDisjunction d varMap p) cnf
 
+applyESafeCNF :: [[E.ESafe]] -> VarMap -> Precision -> [[CN MPBall]]
+applyESafeCNF cnf varMap p = applyECNF (map (map (E.extractSafeE)) cnf) varMap p
+
+
 rangeAboveZero :: CN MPBall -> Bool
 rangeAboveZero r = r !>! 0
 
@@ -158,6 +162,9 @@ decideDisjunctionFalse expressionsWithFunctions varMap p =
 decideConjunctionFalse :: [[(E.ESafe, BoxFun)]] -> VarMap -> Precision -> Bool
 decideConjunctionFalse c v p = any (\d -> decideDisjunctionFalse d v p) c
 
+decideESafeCNFFalse :: [[E.ESafe]] -> VarMap -> Precision -> Bool
+decideESafeCNFFalse c v p = decideConjunctionFalse (map (map (\t -> (t, expressionToBoxFun (E.extractSafeE t) v p))) c) v p
+
 bisectWidestInterval :: VarMap -> (VarMap, VarMap)
 bisectWidestInterval [] = error "Given empty box to bisect"
 bisectWidestInterval vm = bisectVar vm widestVar
@@ -219,6 +226,14 @@ checkConjunctionResults (result : results) mIndeterminateArea =
     (Nothing, indeterminateArea@(Just _)) -> checkConjunctionResults results indeterminateArea
     (Nothing, Nothing) -> undefined
 
+-- checkConjunctionResults :: [(Maybe Bool, Maybe VarMap)] -> (Maybe Bool, Maybe VarMap)
+-- checkConjunctionResults [] = (Just True, Nothing)
+-- checkConjunctionResults (result : results) =
+--   case result of
+--     (Just True, _) -> T.trace "proved" checkConjunctionResults results 
+--     r@(Just False, _) -> r
+--     r@(Nothing, _) -> r
+
 checkECNFDepthFirstWithApply :: [[E.ESafe]] -> VarMap -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
 checkECNFDepthFirstWithApply disjunctions varMap depthCutoff bfsBoxesCutoff relativeImprovementCutoff p =
   checkConjunctionResults disjunctionResults Nothing
@@ -270,6 +285,9 @@ safeMaximumCentre (f : fs) box mCurrentMax =
     range = apply f box
     rangeCentre = AERN2.MP.Ball.centre range
 
+-- TODO: Make this more efficient
+-- Return filteredFunctions from decideDisjunctionWithSimplexCE
+-- Add these filtered functions to the queue
 decideDisjunctionBestFirst :: Q.MinPQueue (CN Dyadic) VarMap -> [(E.ESafe, BoxFun)] -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe VarMap)
 decideDisjunctionBestFirst queue expressionsWithFunctions numberOfBoxesExamined numberOfBoxesCutoff relativeImprovementCutoff p =
   case Q.minView queue of
