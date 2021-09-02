@@ -6,6 +6,7 @@ import AERN2.BoxFunMinMax.Expressions.Type
 
 import Data.List
 import Data.Ratio
+import Data.Char (toUpper)
 
 expressionToTptp :: E -> String
 expressionToTptp (EBinOp op e1 e2) =
@@ -14,8 +15,8 @@ expressionToTptp (EBinOp op e1 e2) =
     Sub -> "(" ++ expressionToTptp e1 ++ " - " ++ expressionToTptp e2 ++ ")"
     Mul -> "(" ++ expressionToTptp e1 ++ " * " ++ expressionToTptp e2 ++ ")"
     Div -> "(" ++ expressionToTptp e1 ++ " / " ++ expressionToTptp e2 ++ ")"
-    Min -> undefined
-    Max -> undefined
+    Min -> "(min(" ++ expressionToTptp e1 ++ "," ++ expressionToTptp e2 ++ "))"
+    Max -> "(max(" ++ expressionToTptp e1 ++ "," ++ expressionToTptp e2 ++ "))"
     Pow -> undefined
 expressionToTptp (EUnOp op e) =
   case op of
@@ -24,7 +25,13 @@ expressionToTptp (EUnOp op e) =
     Abs -> "(abs(" ++ expressionToTptp e ++ "))"
     Sin -> "(sin(" ++ expressionToTptp e ++ "))"
     Cos -> "(cos(" ++ expressionToTptp e ++ "))"
-    
+expressionToTptp (RoundToInteger m e) = 
+  case m of
+    RNE -> "round(" ++ expressionToTptp e ++ ")"
+    RTP -> "ceiling(" ++ expressionToTptp e ++ ")"
+    RTN -> "floor(" ++ expressionToTptp e ++ ")"
+    RTZ -> error "Round Towards Zero not supported in TPTP"
+    RNA -> error "Round Nearest Away not supported in TPTP"
 expressionToTptp (PowI e i) = "(" ++ expressionToTptp e ++ " ^ " ++ show i ++ ")"
 expressionToTptp (Var e) = e
 expressionToTptp (Lit e) = 
@@ -32,6 +39,7 @@ expressionToTptp (Lit e) =
     1 -> show (numerator e)
     _ ->
       "(" ++ show (numerator e) ++ " / " ++ show (denominator e) ++ ")"
+expressionToTptp Pi = "pi"
 expressionToTptp (Float _ _)   = "MetiTarski translator does not support Floats"
 expressionToTptp (Float32 _ _) = "MetiTarski translator does not support Floats"
 expressionToTptp (Float64 _ _) = "MetiTarski translator does not support Floats"
@@ -46,28 +54,40 @@ expressionToTptp (Float64 _ _) = "MetiTarski translator does not support Floats"
 -- cnfExpressionsToSMT [e]       = disjunctionExpressionsToSMT e
 -- cnfExpressionsToSMT (e : es)  = "(min " ++ disjunctionExpressionsToSMT e ++ cnfExpressionsToSMT es ++ ")"
 
-disjunctionExpressionsToTptp :: [E] -> String
+disjunctionExpressionsToTptp :: [ESafe] -> String
 disjunctionExpressionsToTptp []        = ""
-disjunctionExpressionsToTptp [e]       = "(" ++ expressionToTptp e ++ " >= 0.0)"
-disjunctionExpressionsToTptp (e : es)  = disjunctionExpressionsToTptp [e] ++ " | " ++ disjunctionExpressionsToTptp es
+disjunctionExpressionsToTptp [eSafe]       = 
+  case eSafe of
+    EStrict e    -> "\n\t\t\t" ++ expressionToTptp e ++ " > 0.0"
+    ENonStrict e -> "\n\t\t\t" ++ expressionToTptp e ++ " >= 0.0"
+disjunctionExpressionsToTptp (e : es)  = disjunctionExpressionsToTptp [e] ++ "\n\t\t\t|" ++ disjunctionExpressionsToTptp es
 
-cnfExpressionsToTptp :: [[E]] -> String
+cnfExpressionsToTptp :: [[ESafe]] -> String
 cnfExpressionsToTptp []        = ""
-cnfExpressionsToTptp [e]       = "(" ++ disjunctionExpressionsToTptp e ++ ")"
-cnfExpressionsToTptp (e : es)  = cnfExpressionsToTptp [e] ++ " & " ++ cnfExpressionsToTptp es
+cnfExpressionsToTptp [e]       = "\n\t\t(" ++ disjunctionExpressionsToTptp e ++ "\n\t\t)"
+cnfExpressionsToTptp (e : es)  = "\n\t\t(" ++ disjunctionExpressionsToTptp e ++ "\n\t\t)" ++ "\n\t\t&" ++ cnfExpressionsToTptp es
 
-cnfExpressionAndDomainsToMetiTarski :: [[E]] -> [(String, (Rational, Rational))] -> Rational -> String
-cnfExpressionAndDomainsToMetiTarski cnf realDomains epsilon =
-  "cnf(eps, axiom, (eps=" ++ show (numerator epsilon) ++ "/" ++ show (denominator epsilon) ++ "))." ++
-  "fof(vc,conjecture, ! [" ++ (intercalate "," (map fst realDomains)) ++ "] : " ++
-  "(" ++
+cnfExpressionAndDomainsToMetiTarski :: [[ESafe]] -> [(String, (Rational, Rational))] -> String
+cnfExpressionAndDomainsToMetiTarski cnf realDomains =
+  "fof(vc,conjecture, " ++
+  "\n\t! [" ++ intercalate "," (map (\(v,_) -> map toUpper v) realDomains) ++ "] : " ++
+  "\n\t(" ++
   case Data.List.length realDomains of
     0 ->       
       cnfExpressionsToTptp cnf ++
-      "))."
+      "\n\t))."
     _ ->
-      "(" ++ 
-       (intercalate " & " (map (\(x,(l,u))->show (numerator l) ++ "/" ++ show (denominator l) ++ " <= " ++ x ++ " & " ++ x ++ "<=" ++ show (numerator u) ++ "/" ++ show (denominator u)) realDomains)) ++
-      ") =>" ++
-      cnfExpressionsToTptp cnf ++
-      "))."
+      "\n\t(" ++ 
+       intercalate "\n\t& " (map (\(x',(l,u)) -> let x = map toUpper x' in show (numerator l) ++ "/" ++ show (denominator l) ++ " <= " ++ x ++ " & " ++ x ++ " <= " ++ show (numerator u) ++ "/" ++ show (denominator u)) realDomains) ++
+      "\n\t) =>" ++
+      "\n\t(" ++ cnfExpressionsToTptp cnf ++
+      "\n\t)" ++
+      "\n\t))."
+
+runMetiTarskiTranslatorCNFWithVarMap :: [[ESafe]] -> [(String, (Rational, Rational))] -> IO ()
+runMetiTarskiTranslatorCNFWithVarMap cnf realVarMap =
+  do
+  putStrLn "Running Haskell to dReal translator for Expressions"
+  putStr "Enter target file name: "
+  fileName <- getLine
+  writeFile fileName $ cnfExpressionAndDomainsToMetiTarski cnf realVarMap
