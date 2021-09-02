@@ -61,12 +61,12 @@ expressionToBoxFun expression domain p =
         Negate -> negate (expressionToDifferential e v)
         Sin -> sin (expressionToDifferential e v)
         Cos -> cos (expressionToDifferential e v)
-    expressionToDifferential (Lit e) _ = differential 1 $ cn (mpBallP p e)
+    expressionToDifferential (Lit e) _ = differential 2 $ cn (mpBallP p e)
     expressionToDifferential (Var e) v = 
       case elemIndex e variableOrder of
         Nothing -> error $ "Variable: " ++ show e ++ " not found in varMap: " ++ show domain ++ " when translating expression: " ++ show e 
         Just i -> v V.! (fromIntegral i)
-    expressionToDifferential Pi _ = differential 1 $ cn (piBallP p)
+    expressionToDifferential Pi _ = differential 2 $ cn (piBallP p)
     expressionToDifferential (PowI e i) v = expressionToDifferential e v ^ i
 
     variableOrder = map fst domain

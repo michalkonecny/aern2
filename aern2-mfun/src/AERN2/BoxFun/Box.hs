@@ -149,9 +149,6 @@ createEnclosingBox box1 box2 =
                     fromEndpointsAsIntervals newL newR)
             indexedBox1
 
-fromVarMap :: [(String, (Rational, Rational))] -> Precision -> Box
-fromVarMap vs p = V.fromList $ map (\(_,(l,r)) -> fromEndpointsAsIntervals (cn (mpBallP p l)) (cn (mpBallP p r))) vs
-
 intersectList :: [Box] -> Box
 intersectList []            = V.empty
 intersectList [b]           = b

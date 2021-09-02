@@ -1,23 +1,50 @@
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE LambdaCase #-}
+
 module AERN2.BoxFunMinMax.VarMap where
 
 import MixedTypesNumPrelude
 import Data.List as L
 import AERN2.BoxFun.Optimisation
-import AERN2.MP.Ball (MPBall, endpoints)
+import AERN2.MP.Ball (MPBall, endpoints, fromEndpointsAsIntervals, mpBallP)
 import AERN2.BoxFun.TestFunctions (fromListDomain)
 import AERN2.BoxFun.Box (Box)
 import qualified AERN2.Linear.Vector.Type as V
-
+import Data.Tuple.Extra
 
 import Debug.Trace as T
+import Prelude (Ord)
+import qualified Prelude as P
+import qualified Data.Functor.Contravariant as P
+import qualified Data.Functor.Contravariant as P
+import AERN2.MP.Precision
+import Data.Ratio
+-- data VarType = Integer | Real 
+  -- deriving (Show, P.Eq, P.Ord) 
 
+-- TODO: Add VarType to VarMap, or make new VarMap type
 -- | An assosciation list mapping variable names to rational interval domains
-type VarMap = [(String, (Rational, Rational))]
+data VarType = Real | Integer
+  deriving (Show, P.Eq, P.Ord)
+
+data TypedVarInterval = TypedVar (String, (Rational, Rational)) VarType
+  deriving (Show, P.Eq, P.Ord)
+
+type TypedVarMap = [TypedVarInterval]
+
+type VarInterval = (String, (Rational, Rational))
+
+type VarMap = [VarInterval]
+
+-- instance P.Contravariant VarInterval where
 
 -- | Get the width of the widest interval
 -- Fixme: maxWidth
 maxWidth :: VarMap -> Rational
 maxWidth vMap = L.maximum (map (\(_, ds) -> snd ds - fst ds) vMap)
+
+typedMaxWidth :: TypedVarMap -> Rational
+typedMaxWidth vMap = L.maximum (map (\(TypedVar (_, ds) _) -> snd ds - fst ds) vMap)
 
 -- | Get the sum of the width of each interval
 taxicabWidth :: VarMap -> Rational
@@ -53,10 +80,20 @@ bisectInterval (var, (lower, upper)) = bisectedVar
     varCentre = (lower + upper) / 2
     bisectedVar = ((var, (lower, varCentre)), (var, (varCentre, upper)))
 
+bisectTypedInterval :: (String, (Rational, Rational)) -> VarType -> ((String, (Rational, Rational)), (String, (Rational, Rational)))
+bisectTypedInterval (var, (lower, upper)) Real = bisectedVar
+  where
+    varCentre = (lower + upper) / 2
+    bisectedVar = ((var, (lower, varCentre)), (var, (varCentre, upper)))
+bisectTypedInterval (var, (lower, upper)) Integer = bisectedVar
+  where
+    varCentre = (lower + upper) / 2
+    bisectedVar = ((var, (lower, floor varCentre % 1)), (var, (ceiling varCentre % 1, upper)))
+
 -- | Bisect the given dimension of the given VarMap,
 -- resulting in a pair of VarMaps
 bisectN :: Integer ->  VarMap -> (VarMap, VarMap)
-bisectN n vMap = 
+bisectN n vMap =
   (
     map (\v -> if fst v == fst fstBisect then fstBisect else v) vMap,
     map (\v -> if fst v == fst sndBisect then sndBisect else v) vMap
@@ -67,12 +104,30 @@ bisectN n vMap =
 bisectVar :: VarMap -> String -> (VarMap, VarMap)
 bisectVar [] _ = ([], [])
 bisectVar (v@(currentVar, (_, _)) : vm) bisectionVar =
-  if currentVar == bisectionVar 
-    then ((leftBisection : vm), (rightBisection : vm))
-    else ((v : leftList), (v : rightList))
+  if currentVar == bisectionVar
+    then (leftBisection : vm, rightBisection : vm)
+    else (v : leftList, v : rightList)
   where
     (leftBisection, rightBisection) = bisectInterval v
     (leftList, rightList) = bisectVar vm bisectionVar
+
+bisectTypedVar :: TypedVarMap -> String -> (TypedVarMap, TypedVarMap)
+bisectTypedVar [] _ = ([], [])
+bisectTypedVar (v@((TypedVar i@(currentVar, (_, _)) Real)) : vm) bisectionVar =
+  if currentVar == bisectionVar
+    then (TypedVar leftBisection Real : vm, TypedVar rightBisection Real : vm)
+    else (v : leftList, v : rightList)
+  where
+    (leftBisection, rightBisection) = bisectTypedInterval i Real
+    (leftList, rightList) = bisectTypedVar vm bisectionVar
+bisectTypedVar (v@((TypedVar i@(currentVar, (_, _)) Integer)) : vm) bisectionVar =
+  if currentVar == bisectionVar
+    then (TypedVar leftBisection Integer : vm, TypedVar rightBisection Integer : vm)
+    else (v : leftList, v : rightList)
+  where
+    (leftBisection, rightBisection) = bisectTypedInterval i Integer
+    (leftList, rightList) = bisectTypedVar vm bisectionVar
+
 
 -- | Check whether or not v1 contain v2.
 contains :: VarMap -> VarMap -> Bool
@@ -89,19 +144,53 @@ toSearchBox vMap = SearchBox (fromListDomain (map snd vMap))
 centre :: VarMap -> VarMap
 centre = map (\(x,(dL,dR)) -> (x, ((dR+dL)/2,(dR+dL)/2)))
 
+varMapToBox :: VarMap -> Precision -> Box
+varMapToBox vs p = V.fromList $ map (\(_,(l,r)) -> fromEndpointsAsIntervals (cn (mpBallP p l)) (cn (mpBallP p r))) vs
+
+typedVarMapToBox :: TypedVarMap -> Precision -> Box
+typedVarMapToBox vs p = V.fromList $ map
+  (\case
+    TypedVar (_,(l,r)) _ -> fromEndpointsAsIntervals (cn (mpBallP p l)) (cn (mpBallP p r)))
+  vs
+
 -- Precondition, box and varNames have same length
-fromBox :: Box -> [String] -> VarMap
-fromBox box varNames = zip varNames $ V.toList $ V.map (\i -> both (\x -> rational (unCN x)) (endpoints i)) box
-  where
-    -- From https://hackage.haskell.org/package/extra-1.7.4/docs/src/Data.Tuple.Extra.html#both
-    both :: (a -> b) -> (a, a) -> (b, b)
-    both f (x,y) = (f x, f y)
+boxToVarMap :: Box -> [String] -> VarMap
+boxToVarMap box varNames = zip varNames $ V.toList $ V.map (both (rational . unCN) . endpoints) box
+
+boxToTypedVarMap :: Box -> [(String, VarType)] -> TypedVarMap
+boxToTypedVarMap box varNamesWithTypes =
+  zipWith
+  (\(varName, varType) varBounds ->
+    case varType of
+      Real -> TypedVar (varName, varBounds) Real
+      Integer -> TypedVar (varName, both (\r -> floor r % 1) varBounds) Integer
+  )
+  varNamesWithTypes $ V.toList $ V.map (both (rational . unCN) . endpoints) box
+
+typedVarMapToVarMap :: TypedVarMap -> VarMap
+typedVarMapToVarMap =
+  map
+  (\case TypedVar vm _ -> vm)
+
+varMapToTypedVarMap :: VarMap -> [(String, VarType)] -> TypedVarMap
+varMapToTypedVarMap [] _ = []
+varMapToTypedVarMap ((v, (l, r)) : vs) varTypes =
+  case lookup v varTypes of
+    Just Real    -> TypedVar (v, (l, r)) Real : varMapToTypedVarMap vs varTypes
+    Just Integer -> TypedVar (v, (floor l % 1, floor r % 1)) Integer : varMapToTypedVarMap vs varTypes
+    Nothing      -> TypedVar (v, (l, r)) Real : varMapToTypedVarMap vs varTypes
+
+getVarNamesWithTypes :: TypedVarMap -> [(String, VarType)]
+getVarNamesWithTypes = map
+  (\case
+    TypedVar (v, (_,_)) t -> (v,t)
+  )
 
 getCorners :: VarMap -> [VarMap]
-getCorners vm = 
+getCorners vm =
   nub . map sort $ map (\vm'@(v,_) -> vm' : filter (\(v',_) -> v /= v') rights)  lefts
                    ++ map (\vm'@(v,_) -> vm' : filter (\(v',_) -> v /= v') lefts)  lefts
-                   ++ map (\vm'@(v,_) -> vm' : filter (\(v',_) -> v /= v') rights) rights 
+                   ++ map (\vm'@(v,_) -> vm' : filter (\(v',_) -> v /= v') rights) rights
                    ++ map (\vm'@(v,_) -> vm' : filter (\(v',_) -> v /= v') lefts)  rights
   where
     lefts  = map (\(v,(l,_)) -> (v,(l,l))) vm
@@ -109,9 +198,9 @@ getCorners vm =
 
 -- Order for two dimension VarMap, left bottom right top
 getEdges :: VarMap -> [VarMap]
-getEdges vm = 
+getEdges vm =
   nub . map sort $ map (\vm'@(v,_) -> vm' : filter (\(v',_) -> v /= v') vm)  lefts
-                ++ map (\vm'@(v,_) -> vm' : filter (\(v',_) -> v /= v') vm) rights 
+                ++ map (\vm'@(v,_) -> vm' : filter (\(v',_) -> v /= v') vm) rights
   where
     lefts  = map (\(v,(l,_)) -> (v,(l,l))) vm
     rights = map (\(v,(_,r)) -> (v,(r,r))) vm
@@ -127,15 +216,15 @@ lowerbound = map (\(v,(l,_)) -> (v, (l, l)))
 -- This assumes that both VarMaps have the same variables in the same order
 intersectVarMap :: VarMap -> VarMap -> VarMap
 intersectVarMap =
-  zipWith 
-    (\(v, (l1, r1)) (_, (l2, r2)) -> 
+  zipWith
+    (\(v, (l1, r1)) (_, (l2, r2)) ->
       (v,
       (
         max l1 l2,
         min r1 r2
       )
       )
-    ) 
+    )
 
 -- | Returns the widest interval in the given VarMap
 widestInterval :: VarMap -> (String, (Rational, Rational)) -> (String, (Rational, Rational))
@@ -146,6 +235,16 @@ widestInterval (current@(_, (cL, cR)) : vm) widest@(_, (wL, wR)) =
     widestDist = abs(wR - wL)
     currentDist = abs(cR - cL)
 
+widestTypedInterval :: TypedVarMap -> (String, (Rational, Rational)) -> (String, (Rational, Rational))
+widestTypedInterval [] widest = widest
+widestTypedInterval (TypedVar current@(_, (cL,cR)) _ : vm) widest@(_, (wL, wR)) =
+  if widestDist >= currentDist then widestTypedInterval vm widest else widestTypedInterval vm current
+  where
+    widestDist = abs(wR - wL)
+    currentDist = abs(cR - cL)
+
+typedVarIntervalToVarInterval :: TypedVarInterval -> VarInterval
+typedVarIntervalToVarInterval (TypedVar vi _) = vi
 
 -- | Get all the possible edges of a given VarMap as a list of VarMaps
 -- Examples:
@@ -180,22 +279,22 @@ widestInterval (current@(_, (cL, cR)) : vm) widest@(_, (wL, wR)) =
 --       -- joinEdges . sortAllEdges $ map endpoints vs
 --       -- trace (show vsEndpoints) $
 --       [l : leftEndpoints] ++ [r : leftEndpoints] ++ [l : rightEndpoints] ++ [r : rightEndpoints]
-      
+
 --   where
 --     leftEndpoints = map fst (tail vsEndpoints)
 --     rightEndpoints = map snd (tail vsEndpoints)
 --     vsEndpoints = map endpoints vs
 --     (l, r) = head vsEndpoints
-    
+
 --     -- fun [] = []
 --     -- fun xs@(l',r') = case L.length xs of
 --       -- 0 -> []
 --       -- 1 -> [l, r]
-      
+
 
 --     -- vsEdges = (map (\v -> [endpoints v]) vs)
 --     filterOutVar x xs = filter (\(x',_) -> x /= x') xs
-    
+
 --     -- joinVM vm (l, r) = (l : vm)
 
 --     endpoints (v, (l, r)) = ((v, (l, l)), (v, (r, r)))

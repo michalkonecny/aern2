@@ -19,7 +19,7 @@ import qualified Data.ByteString.Lazy as B
 import Data.Binary.Get
 import Data.Maybe (mapMaybe)
 
-import AERN2.BoxFunMinMax.VarMap ( VarMap )
+import AERN2.BoxFunMinMax.VarMap 
 import AERN2.BoxFunMinMax.Expressions.DeriveBounds
 import AERN2.BoxFunMinMax.Expressions.EliminateFloats
 import AERN2.BoxFunMinMax.Expressions.Eliminator (minMaxAbsEliminatorECNF)
@@ -59,6 +59,13 @@ findVariables (LD.Application (LD.Variable "declare-const") [LD.Variable varName
 findVariables (LD.Application (LD.Variable "declare-fun") [LD.Variable varName, LD.Null, LD.Variable varType] : expressions)
   = (varName, varType) : findVariables expressions
 findVariables (_ : expressions) = findVariables expressions
+
+findIntegerVariables :: [(String, String)] -> [(String, VarType)]
+findIntegerVariables []           = []
+findIntegerVariables ((v,t) : vs) =
+  if "Int" `isPrefixOf` t || "int" `isPrefixOf` t
+    then (v, Integer) : findIntegerVariables vs
+    else findIntegerVariables vs
 
 -- |Finds goals in assertion operands
 -- Goals are S-Expressions with a top level 'not'
@@ -385,9 +392,12 @@ findVariableType [] _ mFoundType = mFoundType
 findVariableType (v: vs) varTypeMap mFoundType =
   case lookup v varTypeMap of
     Just t  ->
-      case mFoundType of
-        Just f -> if f == t then findVariableType vs varTypeMap (Just t) else Nothing
-        Nothing -> findVariableType vs varTypeMap (Just t)
+      if "Int" `isPrefixOf` t then
+        findVariableType vs varTypeMap mFoundType
+        else
+          case mFoundType of
+            Just f -> if f == t then findVariableType vs varTypeMap (Just t) else Nothing
+            Nothing -> findVariableType vs varTypeMap (Just t)
     Nothing -> Nothing
 
 findVariablesInFormula :: F -> [String]
@@ -430,15 +440,16 @@ parseRoundingMode _ = Nothing
 -- 
 -- If the parsing mode is CNF, parse all assertions into a CNF. If any assertion cannot be parsed, return Nothing.
 -- If any assertion contains Floats, return Nothing.
-processVC  :: [LD.Expression] -> ParsingMode -> Maybe F
+processVC  :: [LD.Expression] -> ParsingMode -> Maybe (F, [(String, String)])
 processVC parsedExpressions Why3 =
+  trace "pi" $
   trace (show mGoal) $
   case mGoalF of
-    Just goalF  ->
+    Just goalF  -> trace "hi" $
       if null contextF
-        then Just goalF
+        then Just (goalF, variablesWithTypes)
         else
-          Just $ FConn Impl (foldContextF filteredContextF) goalF
+          Just (FConn Impl (foldContextF filteredContextF) goalF, variablesWithTypes)
           where
             filteredContextF =
               filter
@@ -464,7 +475,7 @@ processVC parsedExpressions Why3 =
                   if fContainsVars vs x
                     then findVars xs $ vs ++ findVariablesInFormula x
                     else findVars xs vs
-    Nothing     -> Nothing
+    Nothing     -> trace "li" Nothing
   where
     (goalWithNot, context) = (takeGoalFromAssertions . findAssertions) parsedExpressions
 
@@ -481,12 +492,16 @@ processVC parsedExpressions Why3 =
     foldContextF []       = error "processVC - foldContextF: Empty list given"
     foldContextF [f]      = f
     foldContextF (f : fs) = FConn And f (foldContextF fs)
-processVC parsedExpressions CNF = trace (show mAssertionsF) $ if any hasFloatF assertionsF then Nothing else assertionsF
+processVC parsedExpressions CNF = trace (show mAssertionsF) $ if any hasFloatF assertionsF then Nothing else fmap (`pair` variablesWithTypes) assertionsF
   where
+    pair a b = (a, b)
+
     assertions = findAssertions parsedExpressions
     mAssertionsF = map termToF assertions
 
     assertionsF = foldAssertionsF mAssertionsF
+
+    variablesWithTypes = findVariables parsedExpressions
 
     foldAssertionsF :: [Maybe F] -> Maybe F
     foldAssertionsF []             = Nothing
@@ -498,11 +513,12 @@ processVC parsedExpressions CNF = trace (show mAssertionsF) $ if any hasFloatF a
         Nothing -> Nothing
     -- contextFAnd = foldl
 
+
 -- |Derive ranges for a VC (Implication where a CNF implies a goal)
 -- Remove anything which refers to a variable for which we cannot derive ranges
 -- If the goal contains underivable variables, return Nothing
-deriveVCRanges :: F -> ParsingMode -> Maybe (F, VarMap)
-deriveVCRanges vc mode =
+deriveVCRanges :: F -> [(String, String)] -> ParsingMode -> Maybe (F, TypedVarMap)
+deriveVCRanges vc varsWithTypes mode =
   if isModeCNF && not (null underivableVariables)
     then Nothing -- We cannot deal with a CNF if any variable is underivable
     else
@@ -540,13 +556,15 @@ deriveVCRanges vc mode =
                 filterCNF f varsToKeep = if fContainsVars varsToKeep f then Just f else Nothing
               in trace (show irrelevantVars) $
               case filterCNF contextCNF (map fst relevantDerivedVarMap) of
-                Just filteredContext  -> Just (FConn Impl filteredContext goal, relevantDerivedVarMap)
-                Nothing               -> Just                            (goal, relevantDerivedVarMap)
+                Just filteredContext  -> Just (FConn Impl filteredContext goal, varMapToTypedVarMap relevantDerivedVarMap integerVariables)
+                Nothing               -> Just                            (goal, varMapToTypedVarMap relevantDerivedVarMap integerVariables)
         goal ->
           if fContainsVars underivableVariables goal
             then Nothing
-            else Just (goal, derivedVarMap)
+            else Just (goal, varMapToTypedVarMap derivedVarMap integerVariables)
   where
+    integerVariables = findIntegerVariables varsWithTypes
+
     (simplifiedF, derivedVarMap, underivableVariables) = deriveBoundsAndSimplify vc isModeCNF
 
     isModeCNF =
@@ -579,14 +597,14 @@ inequalityEpsilon = 0.000000001
 -- inequalityEpsilon = 1/(2^23)
 
 -- |Convert a VC to ECNF, eliminating any floats. 
-eliminateFloatsAndConvertVCToECNF :: F -> VarMap -> [[ESafe]]
+eliminateFloatsAndConvertVCToECNF :: F -> TypedVarMap -> [[ESafe]]
 eliminateFloatsAndConvertVCToECNF (FConn Impl context goal) varMap = -- TODO: Save results from FPTaylor, then lookup
   minMaxAbsEliminatorECNF $
   [
     contextEs ++ goalEs
     |
-    contextEs <- map (map (fmapESafe (\e -> eliminateFloats e varMap True))) (fToECNF (FNot context)),
-    goalEs    <- map (map (fmapESafe (\e -> eliminateFloats e varMap False))) (fToECNF goal)
+    contextEs <- map (map (fmapESafe (\e -> eliminateFloats e (typedVarMapToVarMap varMap) True))) (fToECNF (FNot context)),
+    goalEs    <- map (map (fmapESafe (\e -> eliminateFloats e (typedVarMapToVarMap varMap) False))) (fToECNF goal)
   ]
 -- |If there is no implication, we have a goal with no context or a CNF. We deal with these in the same way
 eliminateFloatsAndConvertVCToECNF goal varMap =
@@ -594,12 +612,12 @@ eliminateFloatsAndConvertVCToECNF goal varMap =
   [
     goalEs
     |
-    goalEs <- map (map (fmapESafe (\e -> eliminateFloats e varMap False))) (fToECNF goal)
+    goalEs <- map (map (fmapESafe (\e -> eliminateFloats e (typedVarMapToVarMap varMap) False))) (fToECNF goal)
   ]
 
-parseVCToECNF :: FilePath -> ParsingMode -> Maybe ([[ESafe]], VarMap)
+parseVCToECNF :: FilePath -> ParsingMode -> Maybe ([[ESafe]], TypedVarMap)
 parseVCToECNF filePath mode =
   (\(f, vm) ->
     (simplifyESafeCNF (eliminateFloatsAndConvertVCToECNF (simplifyF f) vm), vm))
     <$> -- VC as F with derived ranges
-    ((\f -> deriveVCRanges (simplifyF f) mode) =<< (processVC . parseSMT2) filePath mode)
+    ((\(f, vt) -> deriveVCRanges (simplifyF f) vt mode) =<< (processVC . parseSMT2) filePath mode)
