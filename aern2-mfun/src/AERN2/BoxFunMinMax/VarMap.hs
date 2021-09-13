@@ -27,14 +27,15 @@ import Data.Ratio
 data VarType = Real | Integer
   deriving (Show, P.Eq, P.Ord)
 
-data TypedVarInterval = TypedVar (String, (Rational, Rational)) VarType
+type VarInterval = (String, (Rational, Rational))
+
+data TypedVarInterval = TypedVar VarInterval VarType
   deriving (Show, P.Eq, P.Ord)
+
+type VarMap = [VarInterval]
 
 type TypedVarMap = [TypedVarInterval]
 
-type VarInterval = (String, (Rational, Rational))
-
-type VarMap = [VarInterval]
 
 -- instance P.Contravariant VarInterval where
 
@@ -157,28 +158,62 @@ typedVarMapToBox vs p = V.fromList $ map
 boxToVarMap :: Box -> [String] -> VarMap
 boxToVarMap box varNames = zip varNames $ V.toList $ V.map (both (rational . unCN) . endpoints) box
 
-boxToTypedVarMap :: Box -> [(String, VarType)] -> TypedVarMap
-boxToTypedVarMap box varNamesWithTypes =
+unsafeBoxToTypedVarMap :: Box -> [(String, VarType)] -> TypedVarMap
+unsafeBoxToTypedVarMap box varNamesWithTypes =
   zipWith
   (\(varName, varType) varBounds ->
     case varType of
       Real -> TypedVar (varName, varBounds) Real
-      Integer -> TypedVar (varName, both (\r -> floor r % 1) varBounds) Integer
+      Integer -> TypedVar (varName, (\(l,r) -> (ceiling l % 1, floor r % 1)) varBounds) Integer -- FIXME: may result in inverted interval
   )
   varNamesWithTypes $ V.toList $ V.map (both (rational . unCN) . endpoints) box
+
+safeBoxToTypedVarMap :: Box -> [(String, VarType)] -> Maybe TypedVarMap
+safeBoxToTypedVarMap box varNamesWithTypes =
+  if any (\(TypedVar (_,(l, r)) _) -> l > r) unsafeTypedVarMap then Nothing else Just unsafeTypedVarMap
+  where
+    unsafeTypedVarMap = unsafeBoxToTypedVarMap box varNamesWithTypes
 
 typedVarMapToVarMap :: TypedVarMap -> VarMap
 typedVarMapToVarMap =
   map
   (\case TypedVar vm _ -> vm)
 
-varMapToTypedVarMap :: VarMap -> [(String, VarType)] -> TypedVarMap
-varMapToTypedVarMap [] _ = []
-varMapToTypedVarMap ((v, (l, r)) : vs) varTypes =
+unsafeVarMapToTypedVarMap :: VarMap -> [(String, VarType)] -> TypedVarMap
+unsafeVarMapToTypedVarMap [] _ = []
+unsafeVarMapToTypedVarMap ((v, (l, r)) : vs) varTypes =
   case lookup v varTypes of
-    Just Real    -> TypedVar (v, (l, r)) Real : varMapToTypedVarMap vs varTypes
-    Just Integer -> TypedVar (v, (floor l % 1, floor r % 1)) Integer : varMapToTypedVarMap vs varTypes
-    Nothing      -> TypedVar (v, (l, r)) Real : varMapToTypedVarMap vs varTypes
+    Just Real    -> TypedVar (v, (l, r)) Real : unsafeVarMapToTypedVarMap vs varTypes
+    Just Integer -> TypedVar (v, (ceiling l % 1, floor r % 1)) Integer : unsafeVarMapToTypedVarMap vs varTypes
+    Nothing      -> TypedVar (v, (l, r)) Real : unsafeVarMapToTypedVarMap vs varTypes
+
+safeVarMapToTypedVarMap :: VarMap -> [(String, VarType)] -> Maybe TypedVarMap
+safeVarMapToTypedVarMap [] _ = Just []
+safeVarMapToTypedVarMap ((v, (l, r)) : vs) varTypes =
+  case lookup v varTypes of
+    Just Real    ->
+      case safeVarMapToTypedVarMap vs varTypes of
+        Just rs -> Just $ TypedVar (v, (l, r)) Real : rs
+        Nothing -> Nothing
+    Just Integer ->
+      if ceiling l > floor r
+        then Nothing
+        else
+          case safeVarMapToTypedVarMap vs varTypes of
+            Just rs -> Just $ TypedVar (v, (ceiling l % 1, floor r % 1)) Integer : rs
+            Nothing -> Nothing
+    Nothing      ->
+      case safeVarMapToTypedVarMap vs varTypes of
+        Just rs -> Just $ TypedVar (v, (l, r)) Real : rs
+        Nothing -> Nothing
+
+isVarMapInverted :: VarMap -> Bool
+isVarMapInverted []                 = False
+isVarMapInverted ((_, (l, r)) : vs) = l > r || isVarMapInverted vs
+
+isTypedVarMapInverted :: TypedVarMap -> Bool
+isTypedVarMapInverted []                              = False
+isTypedVarMapInverted ((TypedVar (_, (l, r)) _) : vs) = l > r || isTypedVarMapInverted vs
 
 getVarNamesWithTypes :: TypedVarMap -> [(String, VarType)]
 getVarNamesWithTypes = map

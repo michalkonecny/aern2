@@ -19,7 +19,7 @@ import qualified Data.ByteString.Lazy as B
 import Data.Binary.Get
 import Data.Maybe (mapMaybe)
 
-import AERN2.BoxFunMinMax.VarMap 
+import AERN2.BoxFunMinMax.VarMap
 import AERN2.BoxFunMinMax.Expressions.DeriveBounds
 import AERN2.BoxFunMinMax.Expressions.EliminateFloats
 import AERN2.BoxFunMinMax.Expressions.Eliminator (minMaxAbsEliminatorECNF)
@@ -39,6 +39,12 @@ findAssertions :: [LD.Expression] -> [LD.Expression]
 findAssertions [] = []
 findAssertions ((LD.Application (LD.Variable "assert") [operands]) : expressions) = operands : findAssertions expressions
 findAssertions (_ : expressions) = findAssertions expressions
+
+findFunctionOutputs :: [LD.Expression] -> [(String, String)]
+findFunctionOutputs [] = []
+findFunctionOutputs ((LD.Application (LD.Variable "declare-fun") [LD.Variable fName, _fInputs, LD.Variable fOutputs]) : expressions) = 
+  (fName, fOutputs) : findFunctionOutputs expressions
+findFunctionOutputs (_ : expressions) = findFunctionOutputs expressions
 
 -- |Find function declarations in a parsed expression
 -- Function declarations are Application types with the operator being a Variable equal to "declare-fun"
@@ -86,9 +92,9 @@ takeGoalFromAssertions asserts = (goal, assertsWithoutGoal)
     goal = last asserts -- FIXME: Unsafe. If asserts is emoty, this will fail
     assertsWithoutGoal = take (numberOfAssertions - 1) asserts
 
-termToF :: LD.Expression -> Maybe F
-termToF (LD.Application (LD.Variable operator) [op]) = -- Single param operators
-  case termToE op of -- Ops with E params
+termToF :: LD.Expression -> [(String, String)] -> Maybe F
+termToF (LD.Application (LD.Variable operator) [op]) functionsWithOutputs = -- Single param operators
+  case termToE op functionsWithOutputs of -- Ops with E params
     Just e ->
       case operator of
         "fp.isFinite32" ->
@@ -103,14 +109,14 @@ termToF (LD.Application (LD.Variable operator) [op]) = -- Single param operators
             Just $ FConn And (FComp Le (Lit minFloat) e)  (FComp Le e (Lit maxFloat))
         _ -> Nothing
     Nothing ->
-      case termToF op of
+      case termToF op functionsWithOutputs of
         Just f ->
           case operator of
             "not" -> Just $ FNot f -- TODO: Do we need an FNot for E as well? Answer: We could simply Negate, but we don't need it.
             _ -> Nothing
         _ -> Nothing
-termToF (LD.Application (LD.Variable operator) [op1, op2]) = -- Two param operations
-  case (termToE op1, termToE op2) of
+termToF (LD.Application (LD.Variable operator) [op1, op2]) functionsWithOutputs = -- Two param operations
+  case (termToE op1 functionsWithOutputs, termToE op2 functionsWithOutputs) of
     (Just e1, Just e2) ->
       case operator of
         n
@@ -123,7 +129,7 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) = -- Two param operat
           | "user_eq" `isPrefixOf` n ->  Just $ FComp Eq e1 e2
         _ -> Nothing
     (_, _) ->
-      case (termToF op1, termToF op2) of
+      case (termToF op1 functionsWithOutputs, termToF op2 functionsWithOutputs) of
         (Just f1, Just f2) ->
           case operator of
             "and" -> Just $ FConn And f1 f2
@@ -136,9 +142,9 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) = -- Two param operat
             _ -> Nothing
         -- Parse ite where it is used as an expression
         (_, _) ->
-          case (op1, termToE op2) of
+          case (op1, termToE op2 functionsWithOutputs) of
             (LD.Application (LD.Variable "ite") [cond, thenTerm, elseTerm], Just e2) ->
-              case (termToF cond, termToE thenTerm, termToE elseTerm) of
+              case (termToF cond functionsWithOutputs, termToE thenTerm functionsWithOutputs, termToE elseTerm functionsWithOutputs) of
                 (Just condF, Just thenTermE, Just elseTermE) ->
                   case operator of
                     n
@@ -159,9 +165,9 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) = -- Two param operat
                     _ -> Nothing
                 (_, _, _) -> Nothing
             (_, _) ->
-              case (termToE op1, op2) of
+              case (termToE op1 functionsWithOutputs, op2) of
                 (Just e1, LD.Application (LD.Variable "ite") [cond, thenTerm, elseTerm]) ->
-                  case (termToF cond, termToE thenTerm, termToE elseTerm) of
+                  case (termToF cond functionsWithOutputs, termToE thenTerm functionsWithOutputs, termToE elseTerm functionsWithOutputs) of
                     (Just condF, Just thenTermE, Just elseTermE) ->
                       case operator of
                         n -- TODO: Change these to AND
@@ -183,26 +189,26 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) = -- Two param operat
                     (_, _, _) -> Nothing
                 (_, _) -> Nothing
 
-termToF (LD.Application (LD.Variable "ite") [condition, thenTerm, elseTerm]) = -- if-then-else operator with F types
-  case (termToF condition, termToF thenTerm, termToF elseTerm) of
+termToF (LD.Application (LD.Variable "ite") [condition, thenTerm, elseTerm]) functionsWithOutputs = -- if-then-else operator with F types
+  case (termToF condition functionsWithOutputs, termToF thenTerm functionsWithOutputs, termToF elseTerm functionsWithOutputs) of
     (Just conditionF, Just thenTermF, Just elseTermF) -> Just $ FConn And (FConn Impl conditionF thenTermF) (FConn Impl (FNot conditionF) elseTermF)
     (_, _, _) -> Nothing
-termToF (LD.Variable "true")  = Just FTrue
-termToF (LD.Variable "false") = Just FFalse
-termToF _ = Nothing
+termToF (LD.Variable "true") functionsWithOutputs  = Just FTrue
+termToF (LD.Variable "false") functionsWithOutputs = Just FFalse
+termToF _ _ = Nothing
 
-termToE :: LD.Expression -> Maybe E
+termToE :: LD.Expression -> [(String, String)] -> Maybe E
 -- Symbols/Literals
-termToE (LD.Variable "true")  = Nothing -- These should be parsed to F
-termToE (LD.Variable "false") = Nothing -- These should be parsed to F
-termToE (LD.Variable var)     =
+termToE (LD.Variable "true")  functionsWithOutputs = Nothing -- These should be parsed to F
+termToE (LD.Variable "false") functionsWithOutputs = Nothing -- These should be parsed to F
+termToE (LD.Variable var) functionsWithOutputs    =
   if length var <= 3 && "pi" `isPrefixOf` var
     then Just Pi
     else Just $ Var var
-termToE (LD.Number   num)     = Just $ Lit num
+termToE (LD.Number   num) functionsWithOutputs    = Just $ Lit num
 -- one param functions
-termToE (LD.Application (LD.Variable operator) [op]) =
-  case termToE op of
+termToE (LD.Application (LD.Variable operator) [op]) functionsWithOutputs =
+  case termToE op functionsWithOutputs of
     Nothing -> Nothing
     Just e -> case operator of
       "abs"             -> Just $ EUnOp Abs e -- Haven't seen this, but added
@@ -237,25 +243,40 @@ termToE (LD.Application (LD.Variable operator) [op]) =
       "fp.isIntegral64" -> Nothing
       _                 -> Nothing
 -- Why3 round function
-termToE (LD.Application (LD.Variable "round") [mode, operand]) =
-  case (parseRoundingMode mode, termToE operand) of
+termToE (LD.Application (LD.Variable "round") [mode, operand]) functionsWithOutputs =
+  case (parseRoundingMode mode, termToE operand functionsWithOutputs) of
     (Just roundingMode, Just e) -> Just $ Float roundingMode e
     (_, _) -> Nothing
 -- to_int/from_int float functions
-termToE (LD.Application (LD.Variable "fp.roundToIntegral") [mode, operand]) =
-  case (parseRoundingMode mode, termToE operand) of
+termToE (LD.Application (LD.Variable "fp.roundToIntegral") [mode, operand]) functionsWithOutputs =
+  case (parseRoundingMode mode, termToE operand functionsWithOutputs) of
     (Just roundingMode, Just e) -> Just $ RoundToInteger roundingMode e
     (_, _) -> Nothing
-termToE (LD.Application (LD.Variable "to_int") [mode, operand]) = termToE (LD.Application (LD.Variable "fp.roundToIntegral") [mode, operand])
-termToE (LD.Application (LD.Variable "to_int1") [mode, operand]) = termToE (LD.Application (LD.Variable "fp.roundToIntegral") [mode, operand])
-termToE (LD.Application (LD.Variable "of_int") [_mode, operand]) =
-  termToE operand --TODO: Is this safe?
-termToE (LD.Application (LD.Variable "of_int1") [_mode, operand]) = termToE operand --TODO: Is this safe?
+termToE (LD.Application (LD.Variable "to_int") [mode, operand]) functionsWithOutputs = termToE (LD.Application (LD.Variable "fp.roundToIntegral") [mode, operand]) functionsWithOutputs
+termToE (LD.Application (LD.Variable "to_int1") [mode, operand]) functionsWithOutputs = termToE (LD.Application (LD.Variable "fp.roundToIntegral") [mode, operand]) functionsWithOutputs
+termToE (LD.Application (LD.Variable "of_int") [mode, operand]) functionsWithOutputs = -- FIXME: Change these to match with prefix
+  case (parseRoundingMode mode, termToE operand functionsWithOutputs) of
+    (Just roundingMode, Just e) -> 
+      case lookup "of_int" functionsWithOutputs of
+        Just outputType ->
+          if outputType `elem` ["Float32", "single"] then Just $ Float32 roundingMode e else
+          if outputType `elem` ["Float64", "double"] then Just $ Float64 roundingMode e else Nothing
+        Nothing -> Nothing
+    (_, _) -> Nothing
+termToE (LD.Application (LD.Variable "of_int1") [mode, operand]) functionsWithOutputs =
+  case (parseRoundingMode mode, termToE operand functionsWithOutputs) of
+    (Just roundingMode, Just e) -> 
+      case lookup "of_int" functionsWithOutputs of
+        Just outputType ->
+          if outputType `elem` ["Float32", "single"] then Just $ Float32 roundingMode e else
+          if outputType `elem` ["Float64", "double"] then Just $ Float64 roundingMode e else Nothing
+        Nothing -> Nothing
+    (_, _) -> Nothing
 -- two param functions where op1 and op2 can be parsed to the E type.
 -- Functions with two params which need special handling (i.e. round) should be
 -- placed before here
-termToE (LD.Application (LD.Variable operator) [op1, op2]) =
-  case (termToE op1, termToE op2) of
+termToE (LD.Application (LD.Variable operator) [op1, op2]) functionsWithOutputs =
+  case (termToE op1 functionsWithOutputs, termToE op2 functionsWithOutputs) of
     (Just e1, Just e2) ->
       case operator of
         n
@@ -264,12 +285,13 @@ termToE (LD.Application (LD.Variable operator) [op1, op2]) =
           | n `elem` ["-", "osubtract", "osubtract__logic"] -> Just $ EBinOp Sub e1 e2
           | n `elem` ["*", "omultiply", "omultiply__logic"] -> Just $ EBinOp Mul e1 e2
           | n `elem` ["/", "odivide", "odivide__logic"]     -> Just $ EBinOp Div e1 e2
-          | n `elem` ["power", "pow"]                       -> Just $ EBinOp Pow e1 e2
+          | "pow" `isPrefixOf` n                            -> Just $ EBinOp Pow e1 e2
+          | "mod" `isPrefixOf` n                            -> Just $ EBinOp Mod e1 e2
         _                                                   -> Nothing
     (_, _) -> Nothing
 
 -- Float bits to Rational
-termToE (LD.Application (LD.Variable "fp") [LD.Variable sSign, LD.Variable sExponent, LD.Variable sMantissa]) =
+termToE (LD.Application (LD.Variable "fp") [LD.Variable sSign, LD.Variable sExponent, LD.Variable sMantissa]) functionsWithOutputs =
   let
     bSign     = drop 2 sSign
     bExponent = drop 2 sExponent
@@ -298,16 +320,16 @@ termToE (LD.Application (LD.Variable "fp") [LD.Variable sSign, LD.Variable sExpo
         case length bFull of
           32 -> Just $ Lit $ toRational $ runGet getFloatbe bsFloat  -- Check if finite
           64 -> Just $ Lit $ toRational $ runGet getDoublebe bsFloat -- Check if finite
-          _       -> Nothing
+          _  -> Nothing
       else Nothing
 
 -- Float functions, three params. Other three param functions should be placed before here
-termToE (LD.Application (LD.Variable operator) [roundingMode, op1, op2]) =
+termToE (LD.Application (LD.Variable operator) [roundingMode, op1, op2]) functionsWithOutputs =
   -- case operator of
   --   -- SPARK Reals
   --   "fp.to_real" -> Nothing 
   --   _ -> -- Known ops
-  case (termToE op1, termToE op2) of
+  case (termToE op1 functionsWithOutputs, termToE op2 functionsWithOutputs) of
     (Just e1, Just e2) ->
       case parseRoundingMode roundingMode of -- Floating-point ops
         Just mode ->
@@ -319,11 +341,10 @@ termToE (LD.Application (LD.Variable operator) [roundingMode, op1, op2]) =
             _        -> Nothing
         Nothing -> Nothing
     (_, _) -> Nothing
+termToE _ _ = Nothing
 
-termToE _ = Nothing
-
-termsToF :: [LD.Expression] -> [F]
-termsToF = mapMaybe termToF
+termsToF :: [LD.Expression] -> [(String, String)] -> [F]
+termsToF es fs = mapMaybe (`termToF` fs) es
 
 determineFloatTypeE :: E -> [(String, String)] -> Maybe E
 determineFloatTypeE (EBinOp op e1 e2) varTypeMap  = case determineFloatTypeE e1 varTypeMap of
@@ -353,8 +374,11 @@ determineFloatTypeE (Float r e)       varTypeMap  = case mVariableType of
                                                           _ -> Nothing
                                                       Nothing -> Nothing
                                                     where
-                                                      vars = findVariablesInExpressions e
-                                                      mVariableType = findVariableType vars varTypeMap Nothing
+                                                      allVars = findVariablesInExpressions e
+                                                      knownVarsWithPrecision = knownFloatVars e
+                                                      knownVars = map fst knownVarsWithPrecision
+                                                      unknownVars = filter (`notElem` knownVars) allVars
+                                                      mVariableType = findVariableType unknownVars varTypeMap knownVarsWithPrecision Nothing
 determineFloatTypeE (Float32 r e)     varTypeMap  = case determineFloatTypeE e varTypeMap of
                                                       Just p -> Just $ Float32 r p
                                                       Nothing -> Nothing
@@ -387,18 +411,53 @@ determineFloatTypeF FFalse _ = Just FFalse
 -- |Find the type for the given variables
 -- Type is looked for in the supplied map
 -- If all found types match, return this type
-findVariableType :: [String] -> [(String, String)] -> Maybe String -> Maybe String
-findVariableType [] _ mFoundType = mFoundType
-findVariableType (v: vs) varTypeMap mFoundType =
+findVariableType :: [String] -> [(String, String)] -> [(String, Integer)] -> Maybe String -> Maybe String
+findVariableType [] _ [] mFoundType  = mFoundType
+findVariableType [] _ ((_, precision) : vars) mFoundType =
+  case mFoundType of
+    Just t ->
+      if (t `elem` ["Float32", "single"] && precision == 32) || ((t `elem` ["Float64", "double"]) && (precision == 64)) 
+        then findVariableType [] [] vars mFoundType 
+        else Nothing
+    Nothing ->
+      case precision of
+        32 -> findVariableType [] [] vars (Just "Float32")
+        64 -> findVariableType [] [] vars (Just "Float64")
+        _ -> Nothing
+
+findVariableType (v: vs) varTypeMap knownVarsWithPrecision mFoundType =
   case lookup v varTypeMap of
     Just t  ->
       if "Int" `isPrefixOf` t then
-        findVariableType vs varTypeMap mFoundType
+        findVariableType vs varTypeMap knownVarsWithPrecision mFoundType
         else
           case mFoundType of
-            Just f -> if f == t then findVariableType vs varTypeMap (Just t) else Nothing
-            Nothing -> findVariableType vs varTypeMap (Just t)
+            Just f -> if f == t then findVariableType vs varTypeMap knownVarsWithPrecision (Just t) else Nothing
+            Nothing -> findVariableType vs varTypeMap knownVarsWithPrecision (Just t)
     Nothing -> Nothing
+
+knownFloatVars :: E -> [(String, Integer)]
+knownFloatVars e = removeConflictingVars . nub $ findAllFloatVars e
+  where
+    removeConflictingVars :: [(String, Integer)] -> [(String, Integer)]
+    removeConflictingVars [] = []
+    removeConflictingVars ((v, t) : vs) =
+      if v `elem` map fst vs
+        then removeConflictingVars $ filter (\(v', _) -> v /= v') vs
+        else (v, t) : removeConflictingVars vs
+
+    findAllFloatVars (EBinOp _ e1 e2) = knownFloatVars e1 ++ knownFloatVars e2
+    findAllFloatVars (EUnOp _ e) = knownFloatVars e
+    findAllFloatVars (PowI e _) = knownFloatVars e
+    findAllFloatVars (Float _ e) = knownFloatVars e
+    findAllFloatVars (Float32 _ (Var v)) = [(v, 32)]
+    findAllFloatVars (Float64 _ (Var v)) = [(v, 64)]
+    findAllFloatVars (Float32 _ e) = knownFloatVars e
+    findAllFloatVars (Float64 _ e) = knownFloatVars e
+    findAllFloatVars (RoundToInteger _ e) = knownFloatVars e
+    findAllFloatVars (Var _) = []
+    findAllFloatVars (Lit _) = []
+    findAllFloatVars Pi = []
 
 findVariablesInFormula :: F -> [String]
 findVariablesInFormula f = nub $ findVars f
@@ -484,9 +543,10 @@ processVC parsedExpressions Why3 =
         LD.Application (LD.Variable "not") [operand] -> Just operand -- Goals in SMT look like this
         _ -> Nothing
 
-    contextF            = mapMaybe (`determineFloatTypeF` variablesWithTypes) $ termsToF context
-    mGoalF              = maybe Nothing (`determineFloatTypeF` variablesWithTypes) $ maybe Nothing termToF mGoal
+    contextF            = mapMaybe (`determineFloatTypeF` variablesWithTypes) $ termsToF context functionsWithOutputs
+    mGoalF              = maybe Nothing (`determineFloatTypeF` variablesWithTypes) $ maybe Nothing (`termToF` functionsWithOutputs) mGoal
     variablesWithTypes  = findVariables parsedExpressions
+    functionsWithOutputs = findFunctionOutputs parsedExpressions
 
     foldContextF :: [F] -> F
     foldContextF []       = error "processVC - foldContextF: Empty list given"
@@ -497,7 +557,7 @@ processVC parsedExpressions CNF = trace (show mAssertionsF) $ if any hasFloatF a
     pair a b = (a, b)
 
     assertions = findAssertions parsedExpressions
-    mAssertionsF = map termToF assertions
+    mAssertionsF = map (`termToF` variablesWithTypes) assertions
 
     assertionsF = foldAssertionsF mAssertionsF
 
@@ -556,12 +616,12 @@ deriveVCRanges vc varsWithTypes mode =
                 filterCNF f varsToKeep = if fContainsVars varsToKeep f then Just f else Nothing
               in trace (show irrelevantVars) $
               case filterCNF contextCNF (map fst relevantDerivedVarMap) of
-                Just filteredContext  -> Just (FConn Impl filteredContext goal, varMapToTypedVarMap relevantDerivedVarMap integerVariables)
-                Nothing               -> Just                            (goal, varMapToTypedVarMap relevantDerivedVarMap integerVariables)
+                Just filteredContext  -> Just (FConn Impl filteredContext goal, unsafeVarMapToTypedVarMap relevantDerivedVarMap integerVariables)
+                Nothing               -> Just                            (goal, unsafeVarMapToTypedVarMap relevantDerivedVarMap integerVariables)
         goal ->
           if fContainsVars underivableVariables goal
             then Nothing
-            else Just (goal, varMapToTypedVarMap derivedVarMap integerVariables)
+            else Just (goal, unsafeVarMapToTypedVarMap derivedVarMap integerVariables)
   where
     integerVariables = findIntegerVariables varsWithTypes
 
@@ -583,7 +643,7 @@ eContainsVars vars (PowI e _)       = eContainsVars vars e
 eContainsVars vars (Float32 _ e)    = eContainsVars vars e
 eContainsVars vars (Float64 _ e)    = eContainsVars vars e
 eContainsVars vars (Float _ e)      = eContainsVars vars e
-eContainsVars vars (RoundToInteger _ e) = eContainsVars vars e  
+eContainsVars vars (RoundToInteger _ e) = eContainsVars vars e
 
 fContainsVars :: [String] -> F -> Bool
 fContainsVars vars (FConn _ f1 f2)  = fContainsVars vars f1 || fContainsVars vars f2

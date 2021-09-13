@@ -27,6 +27,7 @@ expressionToFPTaylor (EBinOp op e1 e2) =
     Sub -> "(" ++ expressionToFPTaylor e1 ++ " - " ++ expressionToFPTaylor e2 ++ ")"
     Mul -> "(" ++ expressionToFPTaylor e1 ++ " * " ++ expressionToFPTaylor e2 ++ ")"
     Div -> "(" ++ expressionToFPTaylor e1 ++ " / " ++ expressionToFPTaylor e2 ++ ")"
+    Mod -> "(" ++ expressionToFPTaylor e1 ++ " / " ++ expressionToFPTaylor e2 ++ ")" -- TODO: safe?
     Min -> undefined
     Max -> undefined
     Pow -> undefined
@@ -37,9 +38,7 @@ expressionToFPTaylor (EUnOp op e) =
     Abs -> "|" ++ expressionToFPTaylor e ++ "|"
     Sin -> "sin(" ++ expressionToFPTaylor e ++ ")"
     Cos -> "cos(" ++ expressionToFPTaylor e ++ ")"
-expressionToFPTaylor Pi         = 
-  --TODO: Unsafe? We use abs error bounds so this might be ok
-  "3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679821480865132823066470938446"
+expressionToFPTaylor Pi         = "(4 * atan(1))"
 expressionToFPTaylor (PowI e i) = expressionToFPTaylor e ++ " ^ " ++ show i
 expressionToFPTaylor (Lit r) = showFrac r
 expressionToFPTaylor (Var v) = v

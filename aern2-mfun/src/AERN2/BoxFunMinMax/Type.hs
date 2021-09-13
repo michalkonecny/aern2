@@ -357,8 +357,10 @@ decideDisjunctionDepthFirstWithApply expressionsWithFunctions typedVarMap curren
   where
       box  = typedVarMapToBox typedVarMap p
       varNamesWithTypes = getVarNamesWithTypes typedVarMap
-      roundedVarMap = boxToTypedVarMap box varNamesWithTypes
-      untypedRoundedVarMap = typedVarMapToVarMap roundedVarMap
+      roundedVarMap = 
+        case safeBoxToTypedVarMap box varNamesWithTypes of
+          Just rvm -> rvm
+          Nothing -> error $ "Rounded the following varMap makes it inverted: " ++ show typedVarMap 
 
       esWithRanges            = parMap rseq (\ (e, f) -> ((e, f), apply f box)) expressionsWithFunctions
       filterOutFalseTerms     = filterOutFalseExpressions esWithRanges
@@ -405,7 +407,10 @@ decideDisjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap curr
   where
       box  = typedVarMapToBox typedVarMap p
       varNamesWithTypes = getVarNamesWithTypes typedVarMap
-      roundedVarMap = boxToTypedVarMap box varNamesWithTypes
+      roundedVarMap = 
+        case safeBoxToTypedVarMap box varNamesWithTypes of
+          Just rvm -> rvm
+          Nothing -> error $ "Rounded the following varMap makes it inverted: " ++ show typedVarMap 
       untypedRoundedVarMap = typedVarMapToVarMap roundedVarMap
 
       esWithRanges            = parMap rseq (\ (e, f) -> ((e, f), apply f box)) expressionsWithFunctions
@@ -448,7 +453,10 @@ decideDisjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap curr
         | (not . null) filteredCornerRangesWithDerivatives = trace "decideWithSimplex start" $
           case decideWithSimplex filteredCornerRangesWithDerivatives untypedRoundedVarMap of
             (Just True, _) -> trace ("decideWithSimplex true: " ++ show roundedVarMap) (Just True, Nothing)
-            (Nothing, Just newVarMap) -> trace "decideWithSimplex indet" $ recurseOnVarMap $ varMapToTypedVarMap newVarMap varNamesWithTypes
+            (Nothing, Just newVarMap) -> trace "decideWithSimplex indet" $ 
+              case safeVarMapToTypedVarMap newVarMap varNamesWithTypes of
+                Just nvm -> recurseOnVarMap nvm
+                Nothing -> (Just True, Nothing) -- This will only happen when all integers in the varMap have been verified
             _ -> undefined
         | otherwise = bisectUntilCutoff roundedVarMap
 
@@ -470,7 +478,10 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions typedVarMap relativeImpr
   where
       box  = typedVarMapToBox typedVarMap p
       varNamesWithTypes = getVarNamesWithTypes typedVarMap
-      roundedVarMap = boxToTypedVarMap box varNamesWithTypes
+      roundedVarMap = 
+        case safeBoxToTypedVarMap box varNamesWithTypes of
+          Just rvm -> rvm
+          Nothing -> error $ "Rounded the following varMap makes it inverted: " ++ show typedVarMap 
       untypedRoundedVarMap = typedVarMapToVarMap roundedVarMap
 
       esWithRanges            = parMap rseq (\ (e, f) -> ((e, f), apply f box)) expressionsWithFunctions
@@ -490,18 +501,27 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions typedVarMap relativeImpr
               let
                 newBox  = varMapToBox newVarMap p
                 newCornerRangesWithDerivatives = computeCornerValuesAndDerivatives filterOutFalseTerms newBox
-                roundedNewVarMap = boxToTypedVarMap newBox varNamesWithTypes
-                untypedRoundedNewVarMap = typedVarMapToVarMap roundedNewVarMap
               in trace "findFalsePointWithSimplex start" $
-                case findFalsePointWithSimplex newCornerRangesWithDerivatives untypedRoundedNewVarMap of
-                  Nothing             -> trace "findFalsePointWithSimplex indet" recurseOnVarMap roundedNewVarMap
-                  Just counterExample -> trace "findFalsePointWithSimplex false" $
-                    let
-                      typedCounterExample = varMapToTypedVarMap counterExample varNamesWithTypes
-                    in
-                      if decideDisjunctionFalse (map fst filterOutFalseTerms) typedCounterExample (prec 1000) -- maybe use higher p than the one passed in? i.e. * (3/2)
-                        then (Just False, Just typedCounterExample)
-                        else trace "counterexample incorrect" recurseOnVarMap roundedNewVarMap
+                case safeBoxToTypedVarMap newBox varNamesWithTypes of
+                  Just roundedNewVarMap ->
+                    case findFalsePointWithSimplex newCornerRangesWithDerivatives (typedVarMapToVarMap roundedNewVarMap) of
+                      Nothing             -> trace "findFalsePointWithSimplex indet" recurseOnVarMap roundedNewVarMap
+                      Just counterExample -> trace "findFalsePointWithSimplex false" $
+                        let
+                          -- This is safe because all intervals in the counterexample are singletons
+                          roundCounterExample = 
+                            map 
+                            (\(v, (l, _)) ->
+                              case lookup v varNamesWithTypes of
+                                Just Integer -> TypedVar (v, (round l % 1, round l % 1)) Integer
+                                _            -> TypedVar (v, (l, l)) Real
+                            )
+                            counterExample
+                        in
+                          if decideDisjunctionFalse (map fst filterOutFalseTerms) roundCounterExample (prec 1000) -- maybe use higher p than the one passed in? i.e. * (3/2)
+                            then (Just False, Just roundCounterExample)
+                            else trace "counterexample incorrect" recurseOnVarMap roundedNewVarMap
+                  Nothing -> (Just True, Nothing)
             _ -> undefined
         | otherwise = (Nothing, Just roundedVarMap)
 

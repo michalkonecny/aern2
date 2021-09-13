@@ -37,7 +37,7 @@ expressionToBoxFun expression domain p =
     expressionToDifferential (Float _ _) _   = undefined
     expressionToDifferential (Float32 _ _) _ = undefined
     expressionToDifferential (Float64 _ _) _ = undefined
-    expressionToDifferential (RoundToInteger mode e) v = --expressionToDifferential e v
+    expressionToDifferential (RoundToInteger mode e) v = 
       case expressionToDifferential e v of
         OrderZero x      -> OrderZero $ roundMPBall mode x
         OrderOne x _     -> OrderOne (roundMPBall mode x) err
@@ -47,13 +47,14 @@ expressionToBoxFun expression domain p =
 
     expressionToDifferential (EBinOp op e1 e2) v = 
       case op of
-        Min -> min (expressionToDifferential e1 v) (expressionToDifferential e2 v) --TODO: Could define these for degree 0
+        Min -> min (expressionToDifferential e1 v) (expressionToDifferential e2 v)
         Max -> max (expressionToDifferential e1 v) (expressionToDifferential e2 v)
         Pow -> pow (expressionToDifferential e1 v) (expressionToDifferential e2 v)
         Add -> expressionToDifferential e1 v + expressionToDifferential e2 v
         Sub -> expressionToDifferential e1 v - expressionToDifferential e2 v
         Mul -> expressionToDifferential e1 v * expressionToDifferential e2 v
         Div -> expressionToDifferential e1 v / expressionToDifferential e2 v
+        Mod -> expressionToDifferential e1 v `mod` expressionToDifferential e2 v
     expressionToDifferential (EUnOp op e) v = 
       case op of
         Abs -> abs (expressionToDifferential e v)

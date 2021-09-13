@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase #-}
 module AERN2.BoxFunMinMax.Expressions.Type where
 
 import MixedTypesNumPrelude
@@ -11,7 +13,7 @@ import Test.QuickCheck
 
 import Debug.Trace (trace)
 
-data BinOp = Add | Sub | Mul | Div | Min | Max | Pow
+data BinOp = Add | Sub | Mul | Div | Min | Max | Pow | Mod
   deriving (Show, P.Eq, P.Ord)
 data UnOp  = Sqrt | Negate | Abs | Sin | Cos
   deriving (Show, P.Eq, P.Ord)
@@ -19,7 +21,7 @@ data UnOp  = Sqrt | Negate | Abs | Sin | Cos
 data RoundingMode = RNE | RTP | RTN | RTZ | RNA deriving (Show, P.Eq, P.Ord)
 -- | The E type represents the inequality: expression :: E >= 0
 -- TODO: Add rounding operator with certain epsilon/floating-point type
-data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String | PowI E Integer | Float32 RoundingMode E | Float64 RoundingMode E | Float RoundingMode E | Pi | RoundToInteger RoundingMode E 
+data E = EBinOp BinOp E E | EUnOp UnOp E | Lit Rational | Var String | PowI E Integer | Float32 RoundingMode E | Float64 RoundingMode E | Float RoundingMode E | Pi | RoundToInteger RoundingMode E
   deriving (Show, P.Eq, P.Ord)
 
 data ESafe = EStrict E | ENonStrict E
@@ -349,10 +351,25 @@ computeECNF :: [[E]] -> [(String, Rational)] -> [[CN Double]]
 computeECNF cnf varMap = map (`computeEDisjunction` varMap) cnf
 
 prettyShowESafeCNF :: [[ESafe]] -> String
-prettyShowESafeCNF es = prettyShowECNF $ map (map (eSafeToE)) es
+prettyShowESafeCNF cnf = "AND" ++ concatMap (\d -> "\n\t" ++ prettyShowDisjunction d) cnf
   where
-    eSafeToE (EStrict e) = e
-    eSafeToE (ENonStrict e) = e
+    -- |Show a disjunction of expressions > 0 in a human-readable format
+    -- This is shown as an OR with each term tabbed in
+    -- If there is only one term, the expression is shown without an OR 
+    prettyShowDisjunction :: [ESafe] -> String
+    prettyShowDisjunction []  = []
+    prettyShowDisjunction [e'] = 
+      case e' of
+        EStrict e -> prettyShowE e ++ " > 0"
+        ENonStrict e -> prettyShowE e ++ " >= 0"
+    prettyShowDisjunction es  =
+      "OR" ++ 
+      concatMap 
+      (\case
+        EStrict e -> "\n\t\t" ++ prettyShowE e ++ " > 0" 
+        ENonStrict e -> "\n\t\t" ++ prettyShowE e ++ " >= 0")
+      es
+
 
 -- |Show an expression in a human-readable format
 -- Rationals are converted into doubles
@@ -366,6 +383,7 @@ prettyShowE (EBinOp op e1 e2) =
     Pow -> "(" ++ prettyShowE e1 ++ " ^ " ++ prettyShowE e2 ++ ")"
     Min -> "(min " ++ prettyShowE e1 ++ ", " ++ prettyShowE e2 ++ ")"
     Max -> "(max " ++ prettyShowE e1 ++ ", " ++ prettyShowE e2 ++ ")"
+    Mod -> "(mod " ++ prettyShowE e1 ++ ", " ++ prettyShowE e2 ++ ")"
 prettyShowE (EUnOp op e) =
   case op of
     Abs    -> "|" ++ prettyShowE e ++ "|"
