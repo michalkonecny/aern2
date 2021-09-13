@@ -6,6 +6,9 @@ import MixedTypesNumPrelude
 import AERN2.AD.Type
 import AERN2.AD.GenericOperations ()
 import AERN2.MP.Ball
+import Numeric.MixedTypes.Round (CanDivIMod)
+import Control.CollectErrors (CanTestErrorsCertain(hasCertainError))
+import Numeric.CollectErrors.Type (ErrorCertaintyLevel(ErrorCertain), prependErrorCertain, noValueNumErrorCertain, NumError (NumError))
 
 {-- addition --}
 
@@ -210,3 +213,13 @@ instance
                 dx_ <- dx
                 pure $ (hullMPBall dx_ (-dx_))
     abs (OrderTwo _ _ _ _) = error "Abs for differential order two undefined"
+
+instance 
+    CanDivIMod (Differential (CN MPBall)) (Differential (CN MPBall))
+    where
+    type DivIType (Differential (CN MPBall)) (Differential (CN MPBall)) = (Differential (CN MPBall))
+    divIMod a b = (OrderTwo (divide ax bx) err err err, OrderTwo (mod ax bx) err err err)
+        where   
+            ax = diff_x a
+            bx = diff_x b    
+            err = noValueNumErrorCertain $ NumError "No derivatives after modulus"
