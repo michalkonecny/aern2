@@ -23,7 +23,7 @@ import AERN2.BoxFunMinMax.VarMap
 import AERN2.BoxFunMinMax.Expressions.DeriveBounds
 import AERN2.BoxFunMinMax.Expressions.EliminateFloats
 import AERN2.BoxFunMinMax.Expressions.Eliminator (minMaxAbsEliminatorECNF)
-import Data.List (nub, sort, isPrefixOf)
+import Data.List (nub, sort, isPrefixOf, sortBy, partition)
 data ParsingMode = Why3 | CNF
 
 parser :: String -> [LD.Expression]
@@ -42,7 +42,7 @@ findAssertions (_ : expressions) = findAssertions expressions
 
 findFunctionOutputs :: [LD.Expression] -> [(String, String)]
 findFunctionOutputs [] = []
-findFunctionOutputs ((LD.Application (LD.Variable "declare-fun") [LD.Variable fName, _fInputs, LD.Variable fOutputs]) : expressions) = 
+findFunctionOutputs ((LD.Application (LD.Variable "declare-fun") [LD.Variable fName, _fInputs, LD.Variable fOutputs]) : expressions) =
   (fName, fOutputs) : findFunctionOutputs expressions
 findFunctionOutputs (_ : expressions) = findFunctionOutputs expressions
 
@@ -256,7 +256,7 @@ termToE (LD.Application (LD.Variable "to_int") [mode, operand]) functionsWithOut
 termToE (LD.Application (LD.Variable "to_int1") [mode, operand]) functionsWithOutputs = termToE (LD.Application (LD.Variable "fp.roundToIntegral") [mode, operand]) functionsWithOutputs
 termToE (LD.Application (LD.Variable "of_int") [mode, operand]) functionsWithOutputs = -- FIXME: Change these to match with prefix
   case (parseRoundingMode mode, termToE operand functionsWithOutputs) of
-    (Just roundingMode, Just e) -> 
+    (Just roundingMode, Just e) ->
       case lookup "of_int" functionsWithOutputs of
         Just outputType ->
           if outputType `elem` ["Float32", "single"] then Just $ Float32 roundingMode e else
@@ -265,7 +265,7 @@ termToE (LD.Application (LD.Variable "of_int") [mode, operand]) functionsWithOut
     (_, _) -> Nothing
 termToE (LD.Application (LD.Variable "of_int1") [mode, operand]) functionsWithOutputs =
   case (parseRoundingMode mode, termToE operand functionsWithOutputs) of
-    (Just roundingMode, Just e) -> 
+    (Just roundingMode, Just e) ->
       case lookup "of_int" functionsWithOutputs of
         Just outputType ->
           if outputType `elem` ["Float32", "single"] then Just $ Float32 roundingMode e else
@@ -416,8 +416,8 @@ findVariableType [] _ [] mFoundType  = mFoundType
 findVariableType [] _ ((_, precision) : vars) mFoundType =
   case mFoundType of
     Just t ->
-      if (t `elem` ["Float32", "single"] && precision == 32) || ((t `elem` ["Float64", "double"]) && (precision == 64)) 
-        then findVariableType [] [] vars mFoundType 
+      if (t `elem` ["Float32", "single"] && precision == 32) || ((t `elem` ["Float64", "double"]) && (precision == 64))
+        then findVariableType [] [] vars mFoundType
         else Nothing
     Nothing ->
       case precision of
@@ -656,6 +656,54 @@ inequalityEpsilon :: Rational
 inequalityEpsilon = 0.000000001
 -- inequalityEpsilon = 1/(2^23)
 
+findVarEqualities :: F -> [(String, E)]
+findVarEqualities (FConn And f1 f2)     = findVarEqualities f1 ++ findVarEqualities f2
+findVarEqualities FConn {}              = []
+findVarEqualities (FComp Eq (Var v) e2) = [(v, e2)]
+findVarEqualities (FComp Eq e1 (Var v)) = [(v, e1)]
+findVarEqualities FComp {}              = []
+findVarEqualities (FNot _)              = [] -- Not EQ, means we can't do anything here?
+findVarEqualities FTrue                 = []
+findVarEqualities FFalse                = []
+
+-- |Filter out var equalities which rely on themselves
+filterOutCircularVarEqualities :: [(String, E)] -> [(String, E)]
+filterOutCircularVarEqualities = filter (\(v, e) -> v `notElem` findVariablesInExpressions e)
+
+-- |Filter out var equalities which occur multiple times by choosing the var equality with the smallest length
+filterOutDuplicateVarEqualities :: [(String, E)] -> [(String, E)]
+filterOutDuplicateVarEqualities [] = []
+filterOutDuplicateVarEqualities ((v, e) : vs) =
+  case partition (\(v',_) -> v == v')  vs of
+    ([], _) -> (v, e) : filterOutDuplicateVarEqualities vs
+    (matchingEqualities, otherEqualities) -> 
+      let shortestVarEquality = head $ sortBy (\(_, e1) (_, e2) -> P.compare (lengthE e1) (lengthE e2)) $ (v, e) : matchingEqualities
+      in shortestVarEquality : filterOutDuplicateVarEqualities otherEqualities
+
+substAllEqualities :: F -> F
+substAllEqualities = recursivelySubstVars
+  where
+    recursivelySubstVars f@(FConn Impl context _) =
+      case filteredVarEqualities of
+        [] -> f
+        _  -> if f P.== substitutedF then f else recursivelySubstVars . simplifyF $ substitutedF -- TODO: make this a var
+      where
+        substitutedF = substVars filteredVarEqualities f
+        filteredVarEqualities = (filterOutDuplicateVarEqualities . filterOutCircularVarEqualities) varEqualities
+        varEqualities = findVarEqualities context
+
+    recursivelySubstVars f =
+      case filteredVarEqualities of
+        [] -> f
+        _  -> if f P.== substitutedF then f else  recursivelySubstVars . simplifyF $ substitutedF
+      where
+        substitutedF = substVars filteredVarEqualities f
+        filteredVarEqualities = (filterOutDuplicateVarEqualities . filterOutCircularVarEqualities) varEqualities
+        varEqualities = findVarEqualities f
+  
+    substVars [] f = f
+    substVars ((v, e) : _) f = substVarFWithE v f e
+
 -- |Convert a VC to ECNF, eliminating any floats. 
 eliminateFloatsAndConvertVCToECNF :: F -> TypedVarMap -> [[ESafe]]
 eliminateFloatsAndConvertVCToECNF (FConn Impl context goal) varMap = -- TODO: Save results from FPTaylor, then lookup
@@ -680,4 +728,4 @@ parseVCToECNF filePath mode =
   (\(f, vm) ->
     (simplifyESafeCNF (eliminateFloatsAndConvertVCToECNF (simplifyF f) vm), vm))
     <$> -- VC as F with derived ranges
-    ((\(f, vt) -> deriveVCRanges (simplifyF f) vt mode) =<< (processVC . parseSMT2) filePath mode)
+    ((\(f, vt) -> deriveVCRanges (substAllEqualities (simplifyF f)) vt mode) =<< (processVC . parseSMT2) filePath mode)
