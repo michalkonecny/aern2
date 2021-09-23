@@ -27,7 +27,7 @@ expressionToFPTaylor (EBinOp op e1 e2) =
     Sub -> "(" ++ expressionToFPTaylor e1 ++ " - " ++ expressionToFPTaylor e2 ++ ")"
     Mul -> "(" ++ expressionToFPTaylor e1 ++ " * " ++ expressionToFPTaylor e2 ++ ")"
     Div -> "(" ++ expressionToFPTaylor e1 ++ " / " ++ expressionToFPTaylor e2 ++ ")"
-    Mod -> "(" ++ expressionToFPTaylor e1 ++ " / " ++ expressionToFPTaylor e2 ++ ")" -- TODO: safe?
+    Mod -> "(" ++ expressionToFPTaylor e1 ++ " / " ++ expressionToFPTaylor e2 ++ ")" -- FIXME: not safe
     Min -> undefined
     Max -> undefined
     Pow -> undefined
