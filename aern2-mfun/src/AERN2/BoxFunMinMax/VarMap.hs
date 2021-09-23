@@ -207,6 +207,30 @@ safeVarMapToTypedVarMap ((v, (l, r)) : vs) varTypes =
         Just rs -> Just $ TypedVar (v, (l, r)) Real : rs
         Nothing -> Nothing
 
+safeIntersectVarMap :: TypedVarMap -> TypedVarMap -> Maybe TypedVarMap
+safeIntersectVarMap vm1 vm2 = 
+  if isTypedVarMapInverted intersectedVm then Nothing else Just intersectedVm
+  where
+    -- Sort varMaps by varNames
+    sortedVm1 = sortBy (\(TypedVar (v1, _) _ ) (TypedVar (v2, _) _ ) -> P.compare v1 v2) vm1
+    sortedVm2 = sortBy (\(TypedVar (v1, _) _ ) (TypedVar (v2, _) _ ) -> P.compare v1 v2) vm1
+    intersectedVm = unsafeIntersectVarMap sortedVm1 sortedVm2
+
+-- |Assumes varMaps have vars appearing in the same order
+unsafeIntersectVarMap :: TypedVarMap -> TypedVarMap -> TypedVarMap
+unsafeIntersectVarMap [] [] = []
+unsafeIntersectVarMap [] _ = undefined
+unsafeIntersectVarMap _ [] = undefined
+unsafeIntersectVarMap ((TypedVar (v1, (l1, r1)) t1) : vm1) ((TypedVar (v2, (l2, r2)) t2) : vm2) =
+  if v1 P./= v2 || t1 P./= t2
+    then error $ 
+      "unsafeIntersectVarMap : varMaps have a different variable/variable type in the same position; vm1: " 
+      ++ show v1 ++ ":: " ++ show t1 ++ ", vm2: " ++ show v2 ++ ":: " ++ show t2
+    else TypedVar (v1, (newL, newR)) t1 : unsafeIntersectVarMap vm1 vm2
+  where
+    newL = max l1 l2
+    newR = min r1 r2
+
 isVarMapInverted :: VarMap -> Bool
 isVarMapInverted []                 = False
 isVarMapInverted ((_, (l, r)) : vs) = l > r || isVarMapInverted vs
@@ -281,6 +305,13 @@ widestTypedInterval (TypedVar current@(_, (cL,cR)) _ : vm) widest@(_, (wL, wR)) 
 typedVarIntervalToVarInterval :: TypedVarInterval -> VarInterval
 typedVarIntervalToVarInterval (TypedVar vi _) = vi
 
+prettyShowVarMap :: VarMap -> String
+prettyShowVarMap [] = []
+prettyShowVarMap ((v, (l, r)) : vs) = show v ++ ": \n\t" ++ "[" ++ show (double l) ++ ", " ++ show (double r) ++ "]" ++ "\n" ++ prettyShowVarMap vs
+
+prettyShowTypedVarMap :: TypedVarMap -> String
+prettyShowTypedVarMap [] = []
+prettyShowTypedVarMap (TypedVar (v, (l, r)) t : vs) = show v ++ " (" ++ show t ++ "): \n\t" ++ "[" ++ show (double l) ++ ", " ++ show (double r) ++ "]" ++ "\n" ++ prettyShowTypedVarMap vs
 -- | Get all the possible edges of a given VarMap as a list of VarMaps
 -- Examples:
 -- edges [("x", (0.5, 2.0))]                    = 

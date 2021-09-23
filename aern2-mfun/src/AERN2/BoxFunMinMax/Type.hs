@@ -28,6 +28,7 @@ import qualified Data.PQueue.Prio.Min as Q
 import Data.Maybe
 import Control.CollectErrors
 import TcHoleErrors (TypedHole)
+import GHC.Arr (Ix(range))
 trace a x = x
 
 applyExpression :: E.E -> VarMap -> Precision -> CN MPBall
@@ -233,6 +234,17 @@ checkConjunctionResults (result : results) mIndeterminateArea =
     (Nothing, indeterminateArea@(Just _)) -> checkConjunctionResults results indeterminateArea
     (Nothing, Nothing) -> undefined
 
+checkConjunctionResults2 :: [(Maybe Bool, Maybe a, Maybe b)] -> Maybe a -> Maybe b-> (Maybe Bool, Maybe a, Maybe b)
+checkConjunctionResults2 [] Nothing _ = (Just True, Nothing, Nothing)
+checkConjunctionResults2 [] indeterminateArea@(Just _) indeterminateDisjunction = (Nothing, indeterminateArea, indeterminateDisjunction)
+checkConjunctionResults2 (result : results) mIndeterminateArea mIndeterminateDisjunction =
+  case result of
+    (Just True, _, _) -> checkConjunctionResults2 results mIndeterminateArea mIndeterminateDisjunction
+    r@(Just False, _, _) -> r
+    (Nothing, indeterminateArea@(Just _), indeterminateDisjunction) -> checkConjunctionResults2 results indeterminateArea indeterminateDisjunction
+    (Nothing, Nothing, _) -> undefined
+
+
 -- checkConjunctionResults :: [(Maybe Bool, Maybe VarMap)] -> (Maybe Bool, Maybe VarMap)
 -- checkConjunctionResults [] = (Just True, Nothing)
 -- checkConjunctionResults (result : results) =
@@ -248,9 +260,9 @@ checkECNFDepthFirstWithApply disjunctions typedVarMap depthCutoff bfsBoxesCutoff
     varMap = typedVarMapToVarMap typedVarMap
     disjunctionResults = parMap rseq (\disjunction ->  decideDisjunctionDepthFirstWithApply (map (\e -> (e, expressionToBoxFun (E.extractSafeE e) varMap p)) disjunction) typedVarMap 0 depthCutoff bfsBoxesCutoff relativeImprovementCutoff p) disjunctions
 
-checkECNFDepthFirstWithSimplex :: [[E.ESafe]] -> TypedVarMap -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap)
+checkECNFDepthFirstWithSimplex :: [[E.ESafe]] -> TypedVarMap -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap, Maybe [E.ESafe])
 checkECNFDepthFirstWithSimplex disjunctions typedVarMap depthCutoff bfsBoxesCutoff relativeImprovementCutoff p =
-  checkConjunctionResults disjunctionResults Nothing
+  checkConjunctionResults2 disjunctionResults Nothing Nothing
   where
     varMap = typedVarMapToVarMap typedVarMap
     disjunctionResults = parMap rseq (\disjunction ->  decideDisjunctionDepthFirstWithSimplex (map (\e -> (e, expressionToBoxFun (E.extractSafeE e) varMap p)) disjunction) typedVarMap 0 depthCutoff bfsBoxesCutoff relativeImprovementCutoff p) disjunctions
@@ -286,9 +298,9 @@ safeMaximumCentre (f : fs) box mCurrentMax =
     then safeMaximumCentre fs box mCurrentMax
     else
       case mCurrentMax of
-        Just currentMax -> 
-          if currentMax !>=! rangeCentre 
-            then safeMaximumCentre fs box mCurrentMax 
+        Just currentMax ->
+          if currentMax !>=! rangeCentre
+            then safeMaximumCentre fs box mCurrentMax
             else safeMaximumCentre fs box (Just rangeCentre)
         Nothing -> safeMaximumCentre fs box (Just rangeCentre)
   where
@@ -357,10 +369,10 @@ decideDisjunctionDepthFirstWithApply expressionsWithFunctions typedVarMap curren
   where
       box  = typedVarMapToBox typedVarMap p
       varNamesWithTypes = getVarNamesWithTypes typedVarMap
-      roundedVarMap = 
+      roundedVarMap =
         case safeBoxToTypedVarMap box varNamesWithTypes of
           Just rvm -> rvm
-          Nothing -> error $ "Rounded the following varMap makes it inverted: " ++ show typedVarMap 
+          Nothing -> error $ "Rounded the following varMap makes it inverted: " ++ show typedVarMap
 
       esWithRanges            = parMap rseq (\ (e, f) -> ((e, f), apply f box)) expressionsWithFunctions
       filterOutFalseTerms     = filterOutFalseExpressions esWithRanges
@@ -395,27 +407,29 @@ decideDisjunctionDepthFirstWithApply expressionsWithFunctions typedVarMap curren
                 r -> r
             r -> r
 
-decideDisjunctionDepthFirstWithSimplex :: [(E.ESafe, BoxFun)] -> TypedVarMap -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap)
+decideDisjunctionDepthFirstWithSimplex :: [(E.ESafe, BoxFun)] -> TypedVarMap -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap, Maybe [E.ESafe])
 decideDisjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
   | null filterOutFalseTerms =
     trace ("proved false with apply " ++ show roundedVarMap)
-    (Just False, Just roundedVarMap)
+    (Just False, Just roundedVarMap, Just indeterminateExpressions)
   | checkIfEsTrueUsingApply =
     trace "proved true with apply"
-    (Just True, Nothing)
+    (Just True, Nothing, Nothing)
   | otherwise = checkSimplex
   where
       box  = typedVarMapToBox typedVarMap p
       varNamesWithTypes = getVarNamesWithTypes typedVarMap
-      roundedVarMap = 
+      roundedVarMap =
         case safeBoxToTypedVarMap box varNamesWithTypes of
           Just rvm -> rvm
-          Nothing -> error $ "Rounded the following varMap makes it inverted: " ++ show typedVarMap 
+          Nothing -> error $ "Rounded the following varMap makes it inverted: " ++ show typedVarMap
       untypedRoundedVarMap = typedVarMapToVarMap roundedVarMap
 
       esWithRanges            = parMap rseq (\ (e, f) -> ((e, f), apply f box)) expressionsWithFunctions
-      filterOutFalseTerms     = filterOutFalseExpressions esWithRanges
+      filterOutFalseTerms     = filterOutFalseExpressions esWithRanges --FIXME: Filtering out true cases
       checkIfEsTrueUsingApply = decideDisjunctionRangesTrue filterOutFalseTerms
+
+      indeterminateExpressions = map (fst . fst) filterOutFalseTerms
 
       filteredExpressionsWithFunctions = map fst filterOutFalseTerms
 
@@ -425,7 +439,8 @@ decideDisjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap curr
 
       bisectWidestDimensionAndRecurse varMapToBisect =
         let
-          (leftVarMap, rightVarMap) = bisectWidestTypedInterval varMapToBisect
+          (leftVarMap, rightVarMap) = bimap (`unsafeIntersectVarMap` varMapToBisect) (`unsafeIntersectVarMap` varMapToBisect) $ bisectWidestTypedInterval varMapToBisect
+
           (leftR, rightR) =
             withStrategy
             (parTuple2 rseq rseq)
@@ -435,9 +450,9 @@ decideDisjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap curr
             )
         in
           case leftR of
-            (Just True, _)
+            (Just True, _, _)
               -> case rightR of
-                (Just True, _) -> (Just True, Nothing)
+                (Just True, _, _) -> (Just True, Nothing, Nothing)
                 r -> r
             r -> r
 
@@ -446,17 +461,18 @@ decideDisjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap curr
           then
               bisectWidestDimensionAndRecurse varMapToCheck
           else
-            bestFirstCheck varMapToCheck --Last ditch bestFirst check
+            (Nothing, Just varMapToCheck, Just indeterminateExpressions)
+            -- bestFirstCheck varMapToCheck --Last ditch bestFirst check
 
       checkSimplex
         -- If we can calculate any derivatives
         | (not . null) filteredCornerRangesWithDerivatives = trace "decideWithSimplex start" $
           case decideWithSimplex filteredCornerRangesWithDerivatives untypedRoundedVarMap of
-            (Just True, _) -> trace ("decideWithSimplex true: " ++ show roundedVarMap) (Just True, Nothing)
-            (Nothing, Just newVarMap) -> trace "decideWithSimplex indet" $ 
+            (Just True, _) -> trace ("decideWithSimplex true: " ++ show roundedVarMap) (Just True, Nothing, Nothing)
+            (Nothing, Just newVarMap) -> trace "decideWithSimplex indet" $
               case safeVarMapToTypedVarMap newVarMap varNamesWithTypes of
-                Just nvm -> recurseOnVarMap nvm
-                Nothing -> (Just True, Nothing) -- This will only happen when all integers in the varMap have been verified
+                Just nvm -> recurseOnVarMap $ unsafeIntersectVarMap nvm roundedVarMap
+                Nothing -> (Just True, Nothing, Nothing) -- This will only happen when all integers in the varMap have been verified
             _ -> undefined
         | otherwise = bisectUntilCutoff roundedVarMap
 
@@ -478,10 +494,10 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions typedVarMap relativeImpr
   where
       box  = typedVarMapToBox typedVarMap p
       varNamesWithTypes = getVarNamesWithTypes typedVarMap
-      roundedVarMap = 
+      roundedVarMap =
         case safeBoxToTypedVarMap box varNamesWithTypes of
           Just rvm -> rvm
-          Nothing -> error $ "Rounded the following varMap makes it inverted: " ++ show typedVarMap 
+          Nothing -> error $ "Rounded the following varMap makes it inverted: " ++ show typedVarMap
       untypedRoundedVarMap = typedVarMapToVarMap roundedVarMap
 
       esWithRanges            = parMap rseq (\ (e, f) -> ((e, f), apply f box)) expressionsWithFunctions
@@ -509,8 +525,8 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions typedVarMap relativeImpr
                       Just counterExample -> trace "findFalsePointWithSimplex false" $
                         let
                           -- This is safe because all intervals in the counterexample are singletons
-                          roundCounterExample = 
-                            map 
+                          roundCounterExample =
+                            map
                             (\(v, (l, _)) ->
                               case lookup v varNamesWithTypes of
                                 Just Integer -> TypedVar (v, (round l % 1, round l % 1)) Integer
