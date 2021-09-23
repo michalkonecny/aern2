@@ -40,6 +40,25 @@ data Conn = And | Or | Impl | Equiv
 data F = FComp Comp E E | FConn Conn F F | FNot F | FTrue | FFalse
   deriving (Show, P.Eq)
 
+lengthF :: F -> Integer
+lengthF (FConn _ f1 f2) = lengthF f1 + lengthF f2
+lengthF (FComp _ e1 e2) = lengthE e1 + lengthE e2
+lengthF (FNot f)        = lengthF f
+lengthF FTrue           = 1
+lengthF FFalse          = 1
+
+lengthE :: E -> Integer
+lengthE (EBinOp _ e1 e2) = lengthE e1 + lengthE e2
+lengthE (EUnOp _ e)      = lengthE e
+lengthE (Var _) = 1
+lengthE (Lit _) = 1
+lengthE (PowI e _) = lengthE e
+lengthE (Float _ e) = lengthE e
+lengthE (Float32 _ e) = lengthE e
+lengthE (Float64 _ e) = lengthE e
+lengthE Pi = 1
+lengthE (RoundToInteger _ e) = lengthE e
+
 newtype Name = Name String deriving Show
 
 instance Arbitrary Name where
@@ -381,9 +400,9 @@ prettyShowE (EBinOp op e1 e2) =
     Div -> "(" ++ prettyShowE e1 ++ " / " ++ prettyShowE e2 ++ ")"
     Mul -> "(" ++ prettyShowE e1 ++ " * " ++ prettyShowE e2 ++ ")"
     Pow -> "(" ++ prettyShowE e1 ++ " ^ " ++ prettyShowE e2 ++ ")"
-    Min -> "(min " ++ prettyShowE e1 ++ ", " ++ prettyShowE e2 ++ ")"
-    Max -> "(max " ++ prettyShowE e1 ++ ", " ++ prettyShowE e2 ++ ")"
-    Mod -> "(mod " ++ prettyShowE e1 ++ ", " ++ prettyShowE e2 ++ ")"
+    Min -> "(min " ++ prettyShowE e1 ++ " " ++ prettyShowE e2 ++ ")"
+    Max -> "(max " ++ prettyShowE e1 ++ " " ++ prettyShowE e2 ++ ")"
+    Mod -> "(mod " ++ prettyShowE e1 ++ " " ++ prettyShowE e2 ++ ")"
 prettyShowE (EUnOp op e) =
   case op of
     Abs    -> "|" ++ prettyShowE e ++ "|"
@@ -509,21 +528,40 @@ hasFloatF (FNot f)        = hasFloatF f
 hasFloatF FTrue           = False
 hasFloatF FFalse          = False
 
-substituteVarE :: E -> String -> Rational -> E
-substituteVarE (Var x) varToSubstitue valToSubstitute = if x == varToSubstitue then Lit valToSubstitute else Var x
-substituteVarE (RoundToInteger m e) var val = RoundToInteger m (substituteVarE e var val)
-substituteVarE Pi _ _ = Pi
-substituteVarE l@(Lit _) _ _ = l
-substituteVarE (EBinOp op e1 e2) var val = EBinOp op (substituteVarE e1 var val) (substituteVarE e2 var val)
-substituteVarE (EUnOp op e) var val = EUnOp op (substituteVarE e var val)
-substituteVarE (PowI e i) var val = PowI (substituteVarE e var val) i
-substituteVarE (Float m e) var val = Float m (substituteVarE e var val)
-substituteVarE (Float32 m e) var val = Float32 m (substituteVarE e var val)
-substituteVarE (Float64 m e) var val = Float64 m (substituteVarE e var val)
+substVarEWithLit :: E -> String -> Rational -> E
+substVarEWithLit (Var x) varToSubst valToSubst = if x == varToSubst then Lit valToSubst else Var x
+substVarEWithLit (RoundToInteger m e) var val = RoundToInteger m (substVarEWithLit e var val)
+substVarEWithLit Pi _ _ = Pi
+substVarEWithLit l@(Lit _) _ _ = l
+substVarEWithLit (EBinOp op e1 e2) var val = EBinOp op (substVarEWithLit e1 var val) (substVarEWithLit e2 var val)
+substVarEWithLit (EUnOp op e) var val = EUnOp op (substVarEWithLit e var val)
+substVarEWithLit (PowI e i) var val = PowI (substVarEWithLit e var val) i
+substVarEWithLit (Float m e) var val = Float m (substVarEWithLit e var val)
+substVarEWithLit (Float32 m e) var val = Float32 m (substVarEWithLit e var val)
+substVarEWithLit (Float64 m e) var val = Float64 m (substVarEWithLit e var val)
 
-substituteVarF :: F -> String -> Rational -> F
-substituteVarF (FConn op f1 f2) var val = FConn op (substituteVarF f1 var val) (substituteVarF f2 var val)
-substituteVarF (FComp op e1 e2) var val = FComp op (substituteVarE e1 var val) (substituteVarE e2 var val)
-substituteVarF (FNot f)         var val = FNot (substituteVarF f var val)
-substituteVarF FTrue  _ _ = FTrue
-substituteVarF FFalse _ _ = FFalse
+substVarFWithLit :: F -> String -> Rational -> F
+substVarFWithLit (FConn op f1 f2) var val = FConn op (substVarFWithLit f1 var val) (substVarFWithLit f2 var val)
+substVarFWithLit (FComp op e1 e2) var val = FComp op (substVarEWithLit e1 var val) (substVarEWithLit e2 var val)
+substVarFWithLit (FNot f)         var val = FNot (substVarFWithLit f var val)
+substVarFWithLit FTrue  _ _ = FTrue
+substVarFWithLit FFalse _ _ = FFalse
+
+substVarEWithE :: String -> E -> E -> E
+substVarEWithE varToSubst (EBinOp op e1 e2)       eToSubst  = EBinOp op (substVarEWithE varToSubst e1 eToSubst) (substVarEWithE varToSubst e2 eToSubst)
+substVarEWithE varToSubst (EUnOp op e)            eToSubst  = EUnOp op (substVarEWithE varToSubst e eToSubst)
+substVarEWithE varToSubst (Float mode e)          eToSubst  = Float mode $ substVarEWithE varToSubst e eToSubst
+substVarEWithE varToSubst (Float32 mode e)        eToSubst  = Float32 mode $ substVarEWithE varToSubst e eToSubst
+substVarEWithE varToSubst (Float64 mode e)        eToSubst  = Float64 mode $ substVarEWithE varToSubst e eToSubst
+substVarEWithE varToSubst (RoundToInteger mode e) eToSubst  = RoundToInteger mode $ substVarEWithE varToSubst e eToSubst
+substVarEWithE varToSubst (PowI e i)              eToSubst  = PowI (substVarEWithE varToSubst e eToSubst) i
+substVarEWithE _           Pi                     eToSubst  = Pi
+substVarEWithE _           e@(Lit _)              eToSubst  = e
+substVarEWithE varToSubst (Var y)                 eToSubst  = if varToSubst == y then eToSubst else Var y
+
+substVarFWithE :: String -> F -> E -> F
+substVarFWithE varToSubst (FConn op f1 f2) eToSubst = FConn op (substVarFWithE varToSubst f1 eToSubst) (substVarFWithE varToSubst f2 eToSubst)
+substVarFWithE varToSubst (FComp op e1 e2) eToSubst = FComp op (substVarEWithE varToSubst e1 eToSubst) (substVarEWithE varToSubst e2 eToSubst)
+substVarFWithE varToSubst (FNot f)         eToSubst = FNot $ substVarFWithE varToSubst f eToSubst
+substVarFWithE _ FTrue                     _        = FTrue
+substVarFWithE _ FFalse                    _        = FFalse

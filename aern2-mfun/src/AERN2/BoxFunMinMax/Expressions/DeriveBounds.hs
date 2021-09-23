@@ -75,7 +75,7 @@ deriveBoundsAndSimplify form' isCNF =
 
     substitutePoints :: F -> [(String, Rational)] -> F
     substitutePoints f [] = f
-    substitutePoints f ((var, val) : varPoints) = substitutePoints (substituteVarF f var val) varPoints
+    substitutePoints f ((var, val) : varPoints) = substitutePoints (substVarFWithLit f var val) varPoints
 
     seperatePoints :: VarMap -> (VarMap, [(String, Rational)])
     seperatePoints [] = ([], [])
@@ -118,7 +118,6 @@ scanHypotheses (FConn Impl h c) =
     scanHypotheses c . scanHypothesis h False 
 scanHypotheses _ = id
 
--- FIXME: We need FNot here
 scanHypothesis :: F -> Bool -> VarBoundMap -> VarBoundMap
 scanHypothesis (FNot h) isNegated intervals = scanHypothesis h (not isNegated) intervals 
 scanHypothesis (FConn And (FConn Impl cond1 branch1) (FConn Impl (FNot cond2) branch2)) False intervals 
@@ -295,6 +294,7 @@ evalE fromR (varMap :: Map.Map VarName v) = evalVM
       Mul -> evalVM e1 * evalVM e2
       Div -> evalVM e1 / evalVM e2
       Pow -> evalVM e1 ^ evalVM e2 
+      Mod -> evalVM e1 `mod` evalVM e2
   evalVM (EUnOp op e) =
     case op of
       Abs -> abs (evalVM e)
@@ -345,7 +345,7 @@ roundMPBall mode i =
           lCeil = ceiling l
           rFloor = floor r
           rCeil = ceiling r
-        in case mode of
+        in case mode of 
           RNE ->
             fromEndpoints
               (if l - lFloor == 0.5
