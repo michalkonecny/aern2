@@ -43,6 +43,7 @@ dependencies:
 - binary
 - pqueue
 - foldl
+- extra
 
 default-extensions:
 - RebindableSyntax,
