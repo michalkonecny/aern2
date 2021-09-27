@@ -730,6 +730,9 @@ createFunctionConstraints ((leftCornerValue, rightCornerValue, derivatives) : va
     lowerDerivativesTimesLeftCorner = zipWith mul leftCorner lowerDerivatives
     upperDerivativesTimesLeftCorner = zipWith mul leftCorner upperDerivatives
 
+    negatedLowerDerivativesTimesLeftCorner = zipWith mul leftCorner negatedLowerDerivatives
+    negatedUpperDerivativesTimesLeftCorner = zipWith mul leftCorner negatedUpperDerivatives
+
     lowerDerivativesTimesRightCorner = zipWith mul rightCorner lowerDerivatives
     upperDerivativesTimesRightCorner = zipWith mul rightCorner upperDerivatives
 
