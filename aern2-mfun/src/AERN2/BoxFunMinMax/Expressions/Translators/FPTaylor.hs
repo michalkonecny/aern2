@@ -16,9 +16,6 @@ import AERN2.MP.Precision
 import AERN2.MP.Ball (piBallP)
 import Data.Bifunctor
 
-expressionToFPTaylorFile :: E -> FilePath -> IO ()
-expressionToFPTaylorFile e filePath = writeFile filePath $ expressionToFPTaylor e
-
 -- | All variables must appear in the VarMap
 expressionToFPTaylor :: E -> String
 expressionToFPTaylor (EBinOp op e1 e2) =

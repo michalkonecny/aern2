@@ -44,6 +44,7 @@ dependencies:
 - pqueue
 - foldl
 - extra
+- temporary
 
 default-extensions:
 - RebindableSyntax,
@@ -76,8 +77,6 @@ executables:
     - -Wall
     dependencies:
     - aern2-mfun
-  aern2-mfun-benchmark-heron:
-    main: bench/Heron.hs
     ghc-options:
     - -threaded
     - -rtsopts

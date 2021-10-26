@@ -1,4 +1,6 @@
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE LambdaCase #-}
 module AERN2.BoxFunMinMax.Expressions.Parsers.Smt where
 
 import MixedTypesNumPrelude
@@ -22,15 +24,16 @@ import Data.Maybe (mapMaybe)
 import AERN2.BoxFunMinMax.VarMap
 import AERN2.BoxFunMinMax.Expressions.DeriveBounds
 import AERN2.BoxFunMinMax.Expressions.EliminateFloats
-import AERN2.BoxFunMinMax.Expressions.Eliminator (minMaxAbsEliminatorECNF)
-import Data.List (nub, sort, isPrefixOf, sortBy, partition)
+import AERN2.BoxFunMinMax.Expressions.Eliminator (minMaxAbsEliminatorECNF, minMaxAbsEliminator)
+import Data.List (nub, sort, isPrefixOf, sortBy, partition, foldl')
+import Control.Arrow ((&&&))
 data ParsingMode = Why3 | CNF
 
 parser :: String -> [LD.Expression]
 parser = LP.analyzeExpressionSequence . LP.parseSequence . LP.tokenize
 
-parseSMT2 :: FilePath -> [LD.Expression]
-parseSMT2 filePath = parser . unsafePerformIO $ P.readFile filePath
+parseSMT2 :: FilePath -> IO [LD.Expression]
+parseSMT2 filePath = fmap parser $ P.readFile filePath
 
 -- |Find assertions in a parsed expression
 -- Assertions are Application types with the operator being a Variable equal to "assert"
@@ -573,7 +576,6 @@ processVC parsedExpressions CNF = trace (show mAssertionsF) $ if any hasFloatF a
         Nothing -> Nothing
     -- contextFAnd = foldl
 
-
 -- |Derive ranges for a VC (Implication where a CNF implies a goal)
 -- Remove anything which refers to a variable for which we cannot derive ranges
 -- If the goal contains underivable variables, return Nothing
@@ -676,10 +678,11 @@ filterOutDuplicateVarEqualities [] = []
 filterOutDuplicateVarEqualities ((v, e) : vs) =
   case partition (\(v',_) -> v == v')  vs of
     ([], _) -> (v, e) : filterOutDuplicateVarEqualities vs
-    (matchingEqualities, otherEqualities) -> 
+    (matchingEqualities, otherEqualities) ->
       let shortestVarEquality = head $ sortBy (\(_, e1) (_, e2) -> P.compare (lengthE e1) (lengthE e2)) $ (v, e) : matchingEqualities
       in shortestVarEquality : filterOutDuplicateVarEqualities otherEqualities
 
+-- FIXME: Filter out mismatching var types?
 substAllEqualities :: F -> F
 substAllEqualities = recursivelySubstVars
   where
@@ -700,32 +703,59 @@ substAllEqualities = recursivelySubstVars
         substitutedF = substVars filteredVarEqualities f
         filteredVarEqualities = (filterOutDuplicateVarEqualities . filterOutCircularVarEqualities) varEqualities
         varEqualities = findVarEqualities f
-  
+
     substVars [] f = f
     substVars ((v, e) : _) f = substVarFWithE v f e
 
 -- |Convert a VC to ECNF, eliminating any floats. 
-eliminateFloatsAndConvertVCToECNF :: F -> TypedVarMap -> [[ESafe]]
-eliminateFloatsAndConvertVCToECNF (FConn Impl context goal) varMap = -- TODO: Save results from FPTaylor, then lookup
-  minMaxAbsEliminatorECNF $
-  [
-    contextEs ++ goalEs
-    |
-    contextEs <- map (map (fmapESafe (\e -> eliminateFloats e (typedVarMapToVarMap varMap) True))) (fToECNF (FNot context)),
-    goalEs    <- map (map (fmapESafe (\e -> eliminateFloats e (typedVarMapToVarMap varMap) False))) (fToECNF goal)
-  ]
--- |If there is no implication, we have a goal with no context or a CNF. We deal with these in the same way
-eliminateFloatsAndConvertVCToECNF goal varMap =
-  minMaxAbsEliminatorECNF $
-  [
-    goalEs
-    |
-    goalEs <- map (map (fmapESafe (\e -> eliminateFloats e (typedVarMapToVarMap varMap) False))) (fToECNF goal)
-  ]
+eliminateFloatsAndConvertVCToECNF :: F -> TypedVarMap -> IO [[ESafe]]
+eliminateFloatsAndConvertVCToECNF vc varMap = -- TODO: Save results from FPTaylor, then lookup
+  case vc of
+    FConn Impl context goal ->
+      let
+        eliminateExpressionsWithFloats =
+          [
+            contextEs ++ goalEs
+            |
+            contextEs <- map (map (fmapESafeIO (\e -> eliminateFloats e (typedVarMapToVarMap varMap) True))) (fToECNF (FNot context)),
+            goalEs    <- map (map (fmapESafeIO (\e -> eliminateFloats e (typedVarMapToVarMap varMap) False))) (fToECNF goal)
+          ] 
+        in
+          do
+            ecnfWithoutFloats <- sequence $ map sequence eliminateExpressionsWithFloats
+            return $ minMaxAbsEliminatorECNF ecnfWithoutFloats
+    goal -> -- If there is no implication, we have a goal with no context or a CNF. We deal with these in the same way
+      let
+        eliminateExpressionsWithFloats =   
+          [
+            goalEs
+            |
+            goalEs <- map (map (fmapESafeIO (\e -> eliminateFloats e (typedVarMapToVarMap varMap) False))) (fToECNF goal)
+          ]
+      in 
+        do
+          ecnfWithoutFloats <- sequence $ map sequence eliminateExpressionsWithFloats
+          return $ minMaxAbsEliminatorECNF ecnfWithoutFloats
+  where
+    fmapESafeIO :: (E -> IO E) -> ESafe -> IO ESafe
+    fmapESafeIO action (EStrict e)    = fmap EStrict    $ action e
+    fmapESafeIO action (ENonStrict e) = fmap ENonStrict $ action e
 
-parseVCToECNF :: FilePath -> ParsingMode -> Maybe ([[ESafe]], TypedVarMap)
-parseVCToECNF filePath mode =
-  (\(f, vm) ->
-    (simplifyESafeCNF (eliminateFloatsAndConvertVCToECNF (simplifyF f) vm), vm))
-    <$> -- VC as F with derived ranges
-    ((\(f, vt) -> deriveVCRanges (substAllEqualities (simplifyF f)) vt mode) =<< (processVC . parseSMT2) filePath mode)
+parseVCToECNF :: FilePath -> ParsingMode -> IO (Maybe ([[ESafe]], TypedVarMap))
+parseVCToECNF filePath mode = 
+  do
+    parsedFile  <- parseSMT2 filePath
+
+    case processVC parsedFile mode of
+      Just (vc, varTypes) -> 
+        let
+          simplifiedVC = substAllEqualities (simplifyF vc)
+          mDerivedVCWithRanges = deriveVCRanges simplifiedVC varTypes mode
+        in
+        case mDerivedVCWithRanges of
+          Just (derivedVC, derivedRanges) ->
+            do
+              vcWithoutFloatsAsECNF <- eliminateFloatsAndConvertVCToECNF (simplifyF derivedVC) derivedRanges
+              return $ Just (simplifyESafeCNF vcWithoutFloatsAsECNF, derivedRanges)
+          Nothing -> return Nothing
+      Nothing -> return Nothing
