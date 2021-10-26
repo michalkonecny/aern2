@@ -708,8 +708,8 @@ substAllEqualities = recursivelySubstVars
     substVars ((v, e) : _) f = substVarFWithE v f e
 
 -- |Convert a VC to ECNF, eliminating any floats. 
-eliminateFloatsAndConvertVCToECNF :: F -> TypedVarMap -> IO [[ESafe]]
-eliminateFloatsAndConvertVCToECNF vc varMap = -- TODO: Save results from FPTaylor, then lookup
+eliminateFloatsAndConvertVCToECNF :: F -> TypedVarMap -> FilePath-> IO [[ESafe]]
+eliminateFloatsAndConvertVCToECNF vc varMap fptaylorPath = -- TODO: Save results from FPTaylor, then lookup
   case vc of
     FConn Impl context goal ->
       let
@@ -717,8 +717,8 @@ eliminateFloatsAndConvertVCToECNF vc varMap = -- TODO: Save results from FPTaylo
           [
             contextEs ++ goalEs
             |
-            contextEs <- map (map (fmapESafeIO (\e -> eliminateFloats e (typedVarMapToVarMap varMap) True))) (fToECNF (FNot context)),
-            goalEs    <- map (map (fmapESafeIO (\e -> eliminateFloats e (typedVarMapToVarMap varMap) False))) (fToECNF goal)
+            contextEs <- map (map (fmapESafeIO (\e -> eliminateFloats e (typedVarMapToVarMap varMap) True fptaylorPath))) (fToECNF (FNot context)),
+            goalEs    <- map (map (fmapESafeIO (\e -> eliminateFloats e (typedVarMapToVarMap varMap) False fptaylorPath))) (fToECNF goal)
           ] 
         in
           do
@@ -730,7 +730,7 @@ eliminateFloatsAndConvertVCToECNF vc varMap = -- TODO: Save results from FPTaylo
           [
             goalEs
             |
-            goalEs <- map (map (fmapESafeIO (\e -> eliminateFloats e (typedVarMapToVarMap varMap) False))) (fToECNF goal)
+            goalEs <- map (map (fmapESafeIO (\e -> eliminateFloats e (typedVarMapToVarMap varMap) False fptaylorPath))) (fToECNF goal)
           ]
       in 
         do
@@ -741,8 +741,8 @@ eliminateFloatsAndConvertVCToECNF vc varMap = -- TODO: Save results from FPTaylo
     fmapESafeIO action (EStrict e)    = fmap EStrict    $ action e
     fmapESafeIO action (ENonStrict e) = fmap ENonStrict $ action e
 
-parseVCToECNF :: FilePath -> ParsingMode -> IO (Maybe ([[ESafe]], TypedVarMap))
-parseVCToECNF filePath mode = 
+parseVCToECNF :: FilePath -> ParsingMode -> FilePath -> IO (Maybe ([[ESafe]], TypedVarMap))
+parseVCToECNF filePath mode fptaylorPath = 
   do
     parsedFile  <- parseSMT2 filePath
 
@@ -755,7 +755,7 @@ parseVCToECNF filePath mode =
         case mDerivedVCWithRanges of
           Just (derivedVC, derivedRanges) ->
             do
-              vcWithoutFloatsAsECNF <- eliminateFloatsAndConvertVCToECNF (simplifyF derivedVC) derivedRanges
+              vcWithoutFloatsAsECNF <- eliminateFloatsAndConvertVCToECNF (simplifyF derivedVC) derivedRanges fptaylorPath
               return $ Just (simplifyESafeCNF vcWithoutFloatsAsECNF, derivedRanges)
           Nothing -> return Nothing
       Nothing -> return Nothing

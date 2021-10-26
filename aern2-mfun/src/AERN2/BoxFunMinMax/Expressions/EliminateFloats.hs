@@ -10,10 +10,6 @@ import System.Exit
 import System.IO.Temp
 import GHC.IO.Handle
 
--- FIXME: Use system var which points to fptaylor bin
-fpTaylorPath :: FilePath 
-fpTaylorPath = "/home/junaid/Research/git/FPTaylor/fptaylor"
-
 removeFloats :: E -> E
 removeFloats (Float _ e)       = removeFloats e
 removeFloats (Float32 _ e)     = removeFloats e
@@ -30,15 +26,15 @@ removeFloats (RoundToInteger m e) = RoundToInteger m (removeFloats e)
 -- Bool False means 'weaken' the formula , i.e. rnd(x) >= rnd(y) becomes x + rndErrorX >= y - rndErrorY
 -- Eqs are turned into <= and >=, and then floats are eliminated
 -- TODO: Test Max,Min
-eliminateFloatsF :: F -> VarMap -> Bool -> IO F
-eliminateFloatsF (FConn op f1 f2) varMap strengthenFormula = FConn op <$> eliminateFloatsF f1 varMap strengthenFormula <*> eliminateFloatsF f2 varMap strengthenFormula
-eliminateFloatsF (FNot f) varMap strengthenFormula = FNot <$> eliminateFloatsF f varMap strengthenFormula
-eliminateFloatsF (FComp op e1 e2) varMap True = 
+eliminateFloatsF :: F -> VarMap -> Bool -> FilePath -> IO F
+eliminateFloatsF (FConn op f1 f2) varMap strengthenFormula fptaylorPath = FConn op <$> eliminateFloatsF f1 varMap strengthenFormula fptaylorPath <*> eliminateFloatsF f2 varMap strengthenFormula fptaylorPath
+eliminateFloatsF (FNot f) varMap strengthenFormula fptaylorPath = FNot <$> eliminateFloatsF f varMap strengthenFormula fptaylorPath
+eliminateFloatsF (FComp op e1 e2) varMap True fptaylorPath = 
   case op of
-    Gt -> FComp op <$> eliminateFloats e1 varMap False <*> eliminateFloats e2 varMap True
-    Ge -> FComp op <$> eliminateFloats e1 varMap False <*> eliminateFloats e2 varMap True
-    Lt -> FComp op <$> eliminateFloats e1 varMap True <*> eliminateFloats e2 varMap False
-    Le -> FComp op <$> eliminateFloats e1 varMap True <*> eliminateFloats e2 varMap False
+    Gt -> FComp op <$> eliminateFloats e1 varMap False fptaylorPath <*> eliminateFloats e2 varMap True fptaylorPath
+    Ge -> FComp op <$> eliminateFloats e1 varMap False fptaylorPath <*> eliminateFloats e2 varMap True fptaylorPath
+    Lt -> FComp op <$> eliminateFloats e1 varMap True fptaylorPath <*> eliminateFloats e2 varMap False fptaylorPath
+    Le -> FComp op <$> eliminateFloats e1 varMap True fptaylorPath <*> eliminateFloats e2 varMap False fptaylorPath
     Eq -> 
       eliminateFloatsF
       (FConn And
@@ -46,12 +42,13 @@ eliminateFloatsF (FComp op e1 e2) varMap True =
         (FComp Le e1 e2))
       varMap
       True
-eliminateFloatsF (FComp op e1 e2) varMap False = 
+      fptaylorPath
+eliminateFloatsF (FComp op e1 e2) varMap False fptaylorPath = 
   case op of
-    Gt -> FComp op <$> eliminateFloats e1 varMap True <*> eliminateFloats e2 varMap False
-    Ge -> FComp op <$> eliminateFloats e1 varMap True <*> eliminateFloats e2 varMap False
-    Lt -> FComp op <$> eliminateFloats e1 varMap False <*> eliminateFloats e2 varMap True
-    Le -> FComp op <$> eliminateFloats e1 varMap False <*> eliminateFloats e2 varMap True
+    Gt -> FComp op <$> eliminateFloats e1 varMap True fptaylorPath <*> eliminateFloats e2 varMap False fptaylorPath
+    Ge -> FComp op <$> eliminateFloats e1 varMap True fptaylorPath <*> eliminateFloats e2 varMap False fptaylorPath
+    Lt -> FComp op <$> eliminateFloats e1 varMap False fptaylorPath <*> eliminateFloats e2 varMap True fptaylorPath
+    Le -> FComp op <$> eliminateFloats e1 varMap False fptaylorPath <*> eliminateFloats e2 varMap True fptaylorPath
     Eq -> 
       eliminateFloatsF
       (FConn And
@@ -59,36 +56,37 @@ eliminateFloatsF (FComp op e1 e2) varMap False =
         (FComp Le e1 e2))
       varMap
       False
-eliminateFloatsF FTrue _ _ = return FTrue
-eliminateFloatsF FFalse _ _ = return FFalse 
+      fptaylorPath
+eliminateFloatsF FTrue _ _ _ = return FTrue
+eliminateFloatsF FFalse _ _ _ = return FFalse 
 
-eliminateFloats :: E -> VarMap -> Bool -> IO E
-eliminateFloats e@(Float _ _) _ _ = error $ "Cannot eliminate Float, precision unknown. Expression: " ++ show e
-eliminateFloats floatE@(Float32 _ e) varMap addError = do
-  absoluteError <- findAbsoluteErrorUsingFPTaylor floatE varMap
+eliminateFloats :: E -> VarMap -> Bool -> FilePath -> IO E
+eliminateFloats e@(Float _ _) _ _ _ = error $ "Cannot eliminate Float, precision unknown. Expression: " ++ show e
+eliminateFloats floatE@(Float32 _ e) varMap addError fptaylorPath = do
+  absoluteError <- findAbsoluteErrorUsingFPTaylor floatE varMap fptaylorPath
   if addError 
     then return $ EBinOp Add eWithotFloats (Lit absoluteError) 
     else return $ EBinOp Sub eWithotFloats (Lit absoluteError) 
   where
     eWithotFloats = removeFloats e
-eliminateFloats floatE@(Float64 _ e) varMap addError = do
-  absoluteError <- findAbsoluteErrorUsingFPTaylor floatE varMap
+eliminateFloats floatE@(Float64 _ e) varMap addError fptaylorPath = do
+  absoluteError <- findAbsoluteErrorUsingFPTaylor floatE varMap fptaylorPath
   if addError 
     then return $ EBinOp Add eWithotFloats (Lit absoluteError)
     else return $ EBinOp Sub eWithotFloats (Lit absoluteError) 
   where
     eWithotFloats = removeFloats e
-eliminateFloats (EBinOp op e1 e2) varMap addError = EBinOp op <$> eliminateFloats e1 varMap addError <*> eliminateFloats e2 varMap addError
-eliminateFloats (EUnOp op e) varMap addError = EUnOp op <$> eliminateFloats e varMap addError
-eliminateFloats (Lit v) _ _ = return $ Lit v
-eliminateFloats (Var v) _ _ = return $ Var v
-eliminateFloats Pi      _ _ = return Pi
-eliminateFloats (PowI e i) _ _ = return $ PowI e i
-eliminateFloats (RoundToInteger m e) varMap addError = RoundToInteger m <$> eliminateFloats e varMap addError
+eliminateFloats (EBinOp op e1 e2) varMap addError fptaylorPath = EBinOp op <$> eliminateFloats e1 varMap addError fptaylorPath <*> eliminateFloats e2 varMap addError fptaylorPath
+eliminateFloats (EUnOp op e) varMap addError fptaylorPath = EUnOp op <$> eliminateFloats e varMap addError fptaylorPath
+eliminateFloats (Lit v) _ _ _ = return $ Lit v
+eliminateFloats (Var v) _ _ _ = return $ Var v
+eliminateFloats Pi      _ _ _ = return Pi
+eliminateFloats (PowI e i) _ _ _ = return $ PowI e i
+eliminateFloats (RoundToInteger m e) varMap addError fptaylorPath = RoundToInteger m <$> eliminateFloats e varMap addError fptaylorPath
 
 -- |Made for Float32/64 expressions
-findAbsoluteErrorUsingFPTaylor :: E -> VarMap -> IO Rational
-findAbsoluteErrorUsingFPTaylor e varMap =
+findAbsoluteErrorUsingFPTaylor :: E -> VarMap -> FilePath -> IO Rational
+findAbsoluteErrorUsingFPTaylor e varMap fptaylorPath =
   do
     (exitCode, output, errDetails) <- withSystemTempFile "fptaylor" handleFPTaylorFile 
     case exitCode of
@@ -104,6 +102,6 @@ findAbsoluteErrorUsingFPTaylor e varMap =
       do 
         hPutStr fileHandle fptaylorInput
         _ <- hGetContents fileHandle -- Ensure handler is finished writing before calling FPTaylor
-        readProcessWithExitCode fpTaylorPath [filePath] []
+        readProcessWithExitCode fptaylorPath [filePath] []
 
 

@@ -19,7 +19,6 @@ import AERN2.BoxFunMinMax.Expressions.Parsers.Smt (parseVCToECNF, ParsingMode (W
 import Options.Applicative
 import Data.Semigroup ((<>))
 import System.Directory
-
 data ProverOptions = ProverOptions
   {
     why3Mode :: Bool,
@@ -93,34 +92,38 @@ main =
 runProver :: ProverOptions -> IO ()
 runProver (ProverOptions why3Mode ceMode depthCutoff bestFirstSearchCutoff p filePath) =
   do 
-    mParsedVC <- parseVCToECNF filePath (if why3Mode then Why3 else CNF)
-    case mParsedVC of
-      Just (ecnf, typedVarMap) -> do
-        result <- 
-          if ceMode
-            then
-              return $ checkECNFBestFirstWithSimplexCE ecnf typedVarMap bestFirstSearchCutoff 1.2 (prec p)
-            else
-              return $ checkECNFDepthFirstWithSimplex ecnf typedVarMap depthCutoff 0 1.2 (prec p)
-        if why3Mode
-          then do
-            case result of
-              (Just True, _) -> putStrLn "unsat"
-              (Just False, Just counterExample) -> do
-                putStrLn "sat"
-                print counterExample
-              (_, indeterminateExample) -> do
-                putStrLn "unknown"
-                print indeterminateExample
-          else do
-            case result of
-              (Just True, _) -> putStrLn "sat"
-              (Just False, Just counterExample) -> do
-                putStrLn "unsat"
-                print counterExample
-              (_, indeterminateExample) -> do
-                putStrLn "unknown"
-                print indeterminateExample
-      Nothing -> do
-        putStrLn "Issue parsing file"
-        putStrLn "unknown"
+    mFptaylorPath <- findExecutable "fptaylor"
+    case mFptaylorPath of
+      Nothing -> putStrLn "error - fptaylor executable not in path"
+      Just fptaylorPath -> do
+        mParsedVC <- parseVCToECNF filePath (if why3Mode then Why3 else CNF) fptaylorPath
+        case mParsedVC of
+          Just (ecnf, typedVarMap) -> do
+            result <- 
+              if ceMode
+                then
+                  return $ checkECNFBestFirstWithSimplexCE ecnf typedVarMap bestFirstSearchCutoff 1.2 (prec p)
+                else
+                  return $ checkECNFDepthFirstWithSimplex ecnf typedVarMap depthCutoff 0 1.2 (prec p)
+            if why3Mode
+              then do
+                case result of
+                  (Just True, _) -> putStrLn "unsat"
+                  (Just False, Just counterExample) -> do
+                    putStrLn "sat"
+                    print counterExample
+                  (_, indeterminateExample) -> do
+                    putStrLn "unknown"
+                    print indeterminateExample
+              else do
+                case result of
+                  (Just True, _) -> putStrLn "sat"
+                  (Just False, Just counterExample) -> do
+                    putStrLn "unsat"
+                    print counterExample
+                  (_, indeterminateExample) -> do
+                    putStrLn "unknown"
+                    print indeterminateExample
+          Nothing -> do
+            putStrLn "Issue parsing file"
+            putStrLn "unknown"
