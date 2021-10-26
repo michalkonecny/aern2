@@ -45,6 +45,9 @@ dependencies:
 - foldl
 - extra
 - temporary
+- fast-logger
+- optparse-applicative
+- directory
 
 default-extensions:
 - RebindableSyntax,
@@ -77,6 +80,17 @@ executables:
     - -Wall
     dependencies:
     - aern2-mfun
+  # aern2-mfun-benchmark-heron:
+  #   main: bench/Heron.hs
+  #   ghc-options:
+  #   - -threaded
+  #   - -rtsopts
+  #   - -with-rtsopts=-N
+  #   - -Wall
+  #   dependencies:
+  #   - aern2-mfun
+  lppaver:
+    main: LPPaver.hs
     ghc-options:
     - -threaded
     - -rtsopts
