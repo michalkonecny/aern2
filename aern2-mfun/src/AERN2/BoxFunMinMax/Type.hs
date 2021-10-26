@@ -1,3 +1,4 @@
+
 module AERN2.BoxFunMinMax.Type where
 
 import MixedTypesNumPrelude
@@ -29,7 +30,20 @@ import Data.Maybe
 import Control.CollectErrors
 import TcHoleErrors (TypedHole)
 import GHC.Arr (Ix(range))
+import System.Log.FastLogger
+import System.Log.FastLogger.Date (simpleTimeFormat)
 trace a x = x
+
+
+log :: TimedFastLogger -> LogStr -> IO ()
+log logger msg = logger (\time -> toLogStr (show time) <> toLogStr " " <> msg <> toLogStr "\n")
+
+log1 msg = 
+  do
+    clock <- newTimeCache simpleTimeFormat -- Do YYYY-MM-DD HH:MM:SS: time
+    (logger, cleanup) <- newTimedFastLogger clock (LogStdout defaultBufSize)
+    logger (\time -> toLogStr time <> toLogStr " " <> msg <> toLogStr "\n")
+    cleanup
 
 applyExpression :: E.E -> VarMap -> Precision -> CN MPBall
 applyExpression expression varMap p =
@@ -260,9 +274,9 @@ checkECNFDepthFirstWithApply disjunctions typedVarMap depthCutoff bfsBoxesCutoff
     varMap = typedVarMapToVarMap typedVarMap
     disjunctionResults = parMap rseq (\disjunction ->  decideDisjunctionDepthFirstWithApply (map (\e -> (e, expressionToBoxFun (E.extractSafeE e) varMap p)) disjunction) typedVarMap 0 depthCutoff bfsBoxesCutoff relativeImprovementCutoff p) disjunctions
 
-checkECNFDepthFirstWithSimplex :: [[E.ESafe]] -> TypedVarMap -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap, Maybe [E.ESafe])
+checkECNFDepthFirstWithSimplex :: [[E.ESafe]] -> TypedVarMap -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap)
 checkECNFDepthFirstWithSimplex disjunctions typedVarMap depthCutoff bfsBoxesCutoff relativeImprovementCutoff p =
-  checkConjunctionResults2 disjunctionResults Nothing Nothing
+  checkConjunctionResults disjunctionResults Nothing
   where
     varMap = typedVarMapToVarMap typedVarMap
     disjunctionResults = parMap rseq (\disjunction ->  decideDisjunctionDepthFirstWithSimplex (map (\e -> (e, expressionToBoxFun (E.extractSafeE e) varMap p)) disjunction) typedVarMap 0 depthCutoff bfsBoxesCutoff relativeImprovementCutoff p) disjunctions
@@ -407,14 +421,14 @@ decideDisjunctionDepthFirstWithApply expressionsWithFunctions typedVarMap curren
                 r -> r
             r -> r
 
-decideDisjunctionDepthFirstWithSimplex :: [(E.ESafe, BoxFun)] -> TypedVarMap -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap, Maybe [E.ESafe])
+decideDisjunctionDepthFirstWithSimplex :: [(E.ESafe, BoxFun)] -> TypedVarMap -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap)
 decideDisjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
   | null filterOutFalseTerms =
     trace ("proved false with apply " ++ show roundedVarMap)
-    (Just False, Just roundedVarMap, Just indeterminateExpressions)
+    (Just False, Just roundedVarMap)
   | checkIfEsTrueUsingApply =
     trace "proved true with apply"
-    (Just True, Nothing, Nothing)
+    (Just True, Nothing)
   | otherwise = checkSimplex
   where
       box  = typedVarMapToBox typedVarMap p
@@ -450,9 +464,9 @@ decideDisjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap curr
             )
         in
           case leftR of
-            (Just True, _, _)
+            (Just True, _)
               -> case rightR of
-                (Just True, _, _) -> (Just True, Nothing, Nothing)
+                (Just True, _) -> (Just True, Nothing)
                 r -> r
             r -> r
 
@@ -461,18 +475,18 @@ decideDisjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap curr
           then
               bisectWidestDimensionAndRecurse varMapToCheck
           else
-            (Nothing, Just varMapToCheck, Just indeterminateExpressions)
+            (Nothing, Just varMapToCheck)
             -- bestFirstCheck varMapToCheck --Last ditch bestFirst check
 
       checkSimplex
         -- If we can calculate any derivatives
         | (not . null) filteredCornerRangesWithDerivatives = trace "decideWithSimplex start" $
           case decideWithSimplex filteredCornerRangesWithDerivatives untypedRoundedVarMap of
-            (Just True, _) -> trace ("decideWithSimplex true: " ++ show roundedVarMap) (Just True, Nothing, Nothing)
+            (Just True, _) -> trace ("decideWithSimplex true: " ++ show roundedVarMap) (Just True, Nothing)
             (Nothing, Just newVarMap) -> trace "decideWithSimplex indet" $
               case safeVarMapToTypedVarMap newVarMap varNamesWithTypes of
                 Just nvm -> recurseOnVarMap $ unsafeIntersectVarMap nvm roundedVarMap
-                Nothing -> (Just True, Nothing, Nothing) -- This will only happen when all integers in the varMap have been verified
+                Nothing -> (Just True, Nothing) -- This will only happen when all integers in the varMap have been verified
             _ -> undefined
         | otherwise = bisectUntilCutoff roundedVarMap
 
