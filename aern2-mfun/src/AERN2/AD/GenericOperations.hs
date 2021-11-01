@@ -118,6 +118,7 @@ instance
     type PowType        (Differential a) (Differential a) = (Differential a)
     pow a b =
         case min (order a) (order b) of
+            2 -> OrderOne  (a_x ^ b_x) ((a_x ^ (b_x - 1)) * (b_x * a_dx + a_x * (log a_x) * b_dx)) --FIXME: Add real OrderTwo definition here
             -- 2 -> OrderTwo   (x a ^ x b) 
             --                 ((x a ^ (x b - (convertExactly 1 :: a))) * (x b * dx a + x a * log (x a) * dx b)) 
             --                 ((x a ^ (x b - (convertExactly 1 :: a))) * (x b * dxt a + x a * log (x a) * dxt b))
