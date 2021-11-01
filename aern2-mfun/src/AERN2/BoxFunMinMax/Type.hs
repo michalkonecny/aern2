@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 
 module AERN2.BoxFunMinMax.Type where
 
@@ -17,12 +18,12 @@ import Control.Parallel.Strategies
 import Data.Bifunctor
 import qualified Simplex as S
 
-import Data.List (find, intercalate)
+import Data.List (find, intercalate, nub)
 import qualified Data.Sequence as Seq
 
 import AERN2.MP.Dyadic (Dyadic, dyadic)
 
-import qualified Debug.Trace as T
+-- import qualified Debug.Trace as T
 
 import qualified Data.PQueue.Prio.Min as Q
 
@@ -32,13 +33,14 @@ import TcHoleErrors (TypedHole)
 import GHC.Arr (Ix(range))
 import System.Log.FastLogger
 import System.Log.FastLogger.Date (simpleTimeFormat)
+import qualified Data.Map as M
 trace a x = x
 
 
 log :: TimedFastLogger -> LogStr -> IO ()
 log logger msg = logger (\time -> toLogStr (show time) <> toLogStr " " <> msg <> toLogStr "\n")
 
-log1 msg = 
+log1 msg =
   do
     clock <- newTimeCache simpleTimeFormat -- Do YYYY-MM-DD HH:MM:SS: time
     (logger, cleanup) <- newTimedFastLogger clock (LogStdout defaultBufSize)
@@ -563,12 +565,127 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions typedVarMap relativeImpr
 
 decideWithSimplex :: [(CN MPBall, CN MPBall, Box)] -> VarMap -> (Maybe Bool, Maybe VarMap)
 decideWithSimplex cornerValuesWithDerivatives varMap =
-  case encloseAreaUnderZeroWithSimplex cornerValuesWithDerivatives varMap of
-    Just newVarMap -> (Nothing, Just newVarMap)
-      -- if newVarMap == varMap 
-        -- then trace (show newVarMap) (Nothing, Just newVarMap)
-        -- else trace "recurse" $ decideWithSimplex expressions newVarMap p
-    Nothing -> (Just True, Nothing)
+  case mOptimizedVars of
+    Just optimizedVars -> (Nothing, Just optimizedVars)
+    Nothing            -> (Just True, Nothing)
+  where
+    -- Create the system for the simplex method, store stringVar -> intVar map
+    (simplexSystem, stringIntVarMap) = constraintsToSimplexConstraints $ createConstraintsToEncloseAreaUnderZero cornerValuesWithDerivatives varMap
+
+    vars = map fst varMap
+
+    mFeasibleSolution = S.findFeasibleSolution simplexSystem
+
+    extractSimplexResult :: Maybe (Integer, [(Integer, Rational)]) -> Rational
+    extractSimplexResult maybeResult =
+      case maybeResult of
+        Just (optimizedIntVar, result) -> -- optimizedIntVar refers to the objective variable. We extract the value of the objective
+                                          -- variable from the result
+          case lookup optimizedIntVar result of
+            Just optimizedVarResult -> optimizedVarResult
+            Nothing -> error "Extracting simplex result after finding feasible solution resulted in an infeasible result. This should not happen"
+        Nothing -> undefined
+
+    mOptimizedVars =
+      case mFeasibleSolution of
+        Just (feasibleSystem, slackVars, artificialVars, objectiveVar) ->
+          Just $
+          map -- Optimize (minimize and maximize) all variables in the varMap
+          (\var ->
+            case M.lookup var stringIntVarMap of
+              Just intVar -> 
+                case lookup var varMap of
+                  Just (originalL, _) -> -- In the simplex system, the original lower bound of each var was shifted to 0. We undo this shift after optimization.
+                    (
+                      var, 
+                      (
+                        originalL + extractSimplexResult (S.optimizeFeasibleSystem (S.Min [(intVar, 1.0)]) feasibleSystem slackVars artificialVars objectiveVar), 
+                        originalL + extractSimplexResult (S.optimizeFeasibleSystem (S.Max [(intVar, 1.0)]) feasibleSystem slackVars artificialVars objectiveVar)
+                      )
+                    )
+                  Nothing -> error "Optimized var not found in original varMap. This should not happen."
+              Nothing -> error "Integer version of var not found. This should not happen."
+          )
+          vars
+        Nothing -> Nothing
+  -- case encloseAreaUnderZeroWithSimplex cornerValuesWithDerivatives varMap of
+  --   Just newVarMap -> (Nothing, Just newVarMap)
+  --     -- if newVarMap == varMap 
+  --       -- then trace (show newVarMap) (Nothing, Just newVarMap)
+  --       -- else trace "recurse" $ decideWithSimplex expressions newVarMap p
+  --   Nothing -> (Just True, Nothing)
+
+data Constraint = GEQ [(String, Rational)] Rational | LEQ [(String, Rational)] Rational
+
+constraintLeftSide :: Constraint -> [(String, Rational)]
+constraintLeftSide (GEQ lhs _) = lhs
+constraintLeftSide (LEQ lhs _) = lhs
+
+constraintVars :: [Constraint] -> [String]
+constraintVars cs = nub $ aux cs
+  where
+    aux :: [Constraint] -> [String]
+    aux [] = []
+    aux (x : xs) = map fst (constraintLeftSide x) ++ aux xs 
+
+constraintsToSimplexConstraints :: [Constraint] -> ([S.PolyConstraint], M.Map String Integer)
+constraintsToSimplexConstraints constraints =
+  (
+    map
+    (\case
+      GEQ varsWithCoeffs rhs -> S.GEQ (map (\(stringVar, coeff) -> (fromJust (M.lookup stringVar stringIntVarMap), coeff)) varsWithCoeffs) rhs
+      LEQ varsWithCoeffs rhs -> S.LEQ (map (\(stringVar, coeff) -> (fromJust (M.lookup stringVar stringIntVarMap), coeff)) varsWithCoeffs) rhs
+    )
+    constraints,
+    stringIntVarMap
+  )
+  where
+    stringVars = constraintVars constraints
+    stringIntVarMap = M.fromList $ zip stringVars [1..]
+
+createConstraintsToEncloseAreaUnderZero :: [(CN MPBall, CN MPBall, Box)] -> VarMap -> [Constraint]
+createConstraintsToEncloseAreaUnderZero cornerValuesWithDerivatives varMap =
+  domainConstraints ++ functionConstraints
+  where
+    vars = map fst varMap
+    varsNewUpperBounds = map (\(_, (l, r)) -> r - l) varMap
+    -- intVarMap = zip [1..] $ map snd varMap
+
+    domainConstraints =
+      map
+      (\(var, (varLower, varUpper)) -> 
+        -- Lowerbound not needed, varLower - varLower = 0, and var >= 0 is assumed by the simplex method
+        LEQ [(var, 1.0)] $ varUpper - varLower
+      )
+      varMap
+
+    functionConstraints =
+      concatMap
+      (\(fnInt, (fLeftRange, fRightRange, fPartialDerivatives)) ->
+        let
+          fPartialDerivativesLowerBounds = map (fst . mpBallToRational) $ V.toList fPartialDerivatives
+          fLeftLowerBound = fst $ mpBallToRational fLeftRange
+          fRightLowerBound = fst $ mpBallToRational fRightRange
+
+          fNegN = "fNeg" ++ show fnInt
+        in
+          [
+            LEQ 
+              ((fNegN, 1.0) : zip vars fPartialDerivativesLowerBounds)
+              (-fLeftLowerBound), -- Partial derivatives multiplied with left corner is omitted because left corner is 0
+            LEQ 
+              ((fNegN, 1.0) : zip vars fPartialDerivativesLowerBounds)
+              $ foldl add (-fRightLowerBound) $ zipWith mul varsNewUpperBounds fPartialDerivativesLowerBounds
+            -- fNegN >= 0 will be assumed by the simplex method
+          ]
+      )
+      $
+      zip
+      [1..]
+      cornerValuesWithDerivatives
+
+    mpBallToRational :: CN MPBall -> (Rational, Rational)
+    mpBallToRational = bimap rational rational . endpoints . reducePrecionIfInaccurate . unCN
 
 -- |Create constraints for the given domains
 --
