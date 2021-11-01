@@ -92,6 +92,8 @@ main =
 runProver :: ProverOptions -> IO ()
 runProver (ProverOptions why3Mode ceMode depthCutoff bestFirstSearchCutoff p filePath) =
   do 
+    -- PATH needs to include folder containing FPTaylor binary after make
+    -- symlink to the binary in somewhere like ~/.local/bin will NOT work reliably
     mFptaylorPath <- findExecutable "fptaylor"
     case mFptaylorPath of
       Nothing -> putStrLn "error - fptaylor executable not in path"
@@ -111,19 +113,32 @@ runProver (ProverOptions why3Mode ceMode depthCutoff bestFirstSearchCutoff p fil
                   (Just True, _) -> putStrLn "unsat"
                   (Just False, Just counterExample) -> do
                     putStrLn "sat"
-                    print counterExample
-                  (_, indeterminateExample) -> do
+                    prettyPrintCounterExample counterExample
+                  (_, Just indeterminateExample) -> do
                     putStrLn "unknown"
-                    print indeterminateExample
+                    prettyPrintCounterExample indeterminateExample
+                  (_, _) -> putStrLn "unknown"
               else do
                 case result of
                   (Just True, _) -> putStrLn "sat"
                   (Just False, Just counterExample) -> do
                     putStrLn "unsat"
-                    print counterExample
-                  (_, indeterminateExample) -> do
+                    prettyPrintCounterExample counterExample
+                  (_, Just indeterminateExample) -> do
                     putStrLn "unknown"
-                    print indeterminateExample
+                    prettyPrintCounterExample indeterminateExample
+                  (_, _) -> putStrLn "unknown"
           Nothing -> do
             putStrLn "Issue parsing file"
             putStrLn "unknown"
+
+prettyPrintCounterExample :: TypedVarMap -> IO ()
+prettyPrintCounterExample [] = return ()
+prettyPrintCounterExample ((TypedVar (v, (l, r)) t) : vs) = 
+  if l == r
+    then do 
+      putStrLn (v ++ " = " ++ show (double l))
+      prettyPrintCounterExample vs
+    else do
+      putStrLn (v ++ " = [" ++ show (double l) ++ ", " ++ show (double r) ++ "]")
+      prettyPrintCounterExample vs
