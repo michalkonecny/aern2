@@ -93,7 +93,7 @@ expressionWithVarMapToFPTaylor e vm =
 --  divide integer using position of dot and length of string to get the rational we want
 
 parseFPTaylorRational :: String -> Maybe Rational
-parseFPTaylorRational output = trace (show (fmap double mr)) mr
+parseFPTaylorRational output = mr
   where
     mr = toRational . (read :: String -> Scientific) <$> findErrorBound outputList
 

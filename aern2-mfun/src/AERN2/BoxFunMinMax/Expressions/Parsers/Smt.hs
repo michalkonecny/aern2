@@ -9,8 +9,6 @@ import System.IO.Unsafe
 
 import AERN2.BoxFunMinMax.Expressions.Type
 
-import Debug.Trace
-
 import qualified AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.Parser as LP
 import qualified AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.DataTypes as LD
 
@@ -504,10 +502,8 @@ parseRoundingMode _ = Nothing
 -- If any assertion contains Floats, return Nothing.
 processVC  :: [LD.Expression] -> ParsingMode -> Maybe (F, [(String, String)])
 processVC parsedExpressions Why3 =
-  trace "pi" $
-  trace (show mGoal) $
   case mGoalF of
-    Just goalF  -> trace "hi" $
+    Just goalF  ->
       if null contextF
         then Just (goalF, variablesWithTypes)
         else
@@ -537,7 +533,7 @@ processVC parsedExpressions Why3 =
                   if fContainsVars vs x
                     then findVars xs $ vs ++ findVariablesInFormula x
                     else findVars xs vs
-    Nothing     -> trace "li" Nothing
+    Nothing     -> Nothing
   where
     (goalWithNot, context) = (takeGoalFromAssertions . findAssertions) parsedExpressions
 
@@ -555,7 +551,7 @@ processVC parsedExpressions Why3 =
     foldContextF []       = error "processVC - foldContextF: Empty list given"
     foldContextF [f]      = f
     foldContextF (f : fs) = FConn And f (foldContextF fs)
-processVC parsedExpressions CNF = trace (show mAssertionsF) $ if any hasFloatF assertionsF then Nothing else fmap (`pair` variablesWithTypes) assertionsF
+processVC parsedExpressions CNF = if any hasFloatF assertionsF then Nothing else fmap (`pair` variablesWithTypes) assertionsF
   where
     pair a b = (a, b)
 
@@ -616,7 +612,7 @@ deriveVCRanges vc varsWithTypes mode =
                     (_, Just filteredF2)               -> Just filteredF2
                     (Nothing, Nothing)                 -> Nothing
                 filterCNF f varsToKeep = if fContainsVars varsToKeep f then Just f else Nothing
-              in trace (show irrelevantVars) $
+              in
               case filterCNF contextCNF (map fst relevantDerivedVarMap) of
                 Just filteredContext  -> Just (FConn Impl filteredContext goal, unsafeVarMapToTypedVarMap relevantDerivedVarMap integerVariables)
                 Nothing               -> Just                            (goal, unsafeVarMapToTypedVarMap relevantDerivedVarMap integerVariables)

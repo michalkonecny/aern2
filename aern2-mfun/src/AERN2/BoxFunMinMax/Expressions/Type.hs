@@ -340,9 +340,7 @@ computeE (EUnOp op e) varMap =
     Cos -> cos (computeE e varMap)
 computeE (Var v) varMap =
   case Map.lookup v (Map.fromList varMap) of
-    Nothing ->
-      trace ("map does not contain variable " ++ show v)
-      undefined
+    Nothing -> error ("map does not contain variable " ++ show v)
     Just r -> cn (double r)
 computeE (Lit i) _ = cn (double i)
 computeE (PowI e i) varMap = computeE e varMap  ^ i
