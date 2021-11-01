@@ -25,8 +25,18 @@ expressionToFPTaylor (EBinOp op e1 e2) =
     Mul -> "(" ++ expressionToFPTaylor e1 ++ " * " ++ expressionToFPTaylor e2 ++ ")"
     Div -> "(" ++ expressionToFPTaylor e1 ++ " / " ++ expressionToFPTaylor e2 ++ ")"
     Mod -> "(" ++ expressionToFPTaylor e1 ++ " / " ++ expressionToFPTaylor e2 ++ ")" -- FIXME: not safe
-    Min -> undefined
-    Max -> undefined
+    Min ->
+      let
+        fpE1 = expressionToFPTaylor e1
+        fpE2 = expressionToFPTaylor e2
+      in
+        "((" ++ fpE1 ++ " + " ++ fpE2 ++ " - " ++ "|" ++ fpE1 ++ " - " ++ fpE2 ++ "|) / 2)"
+    Max ->
+      let
+        fpE1 = expressionToFPTaylor e1
+        fpE2 = expressionToFPTaylor e2
+      in
+        "((" ++ fpE1 ++ " + " ++ fpE2 ++ " + " ++ "|" ++ fpE1 ++ " - " ++ fpE2 ++ "|) / 2)"
     Pow -> undefined
 expressionToFPTaylor (EUnOp op e) =
     case op of
