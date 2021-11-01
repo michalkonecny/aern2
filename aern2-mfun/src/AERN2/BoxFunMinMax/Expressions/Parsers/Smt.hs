@@ -705,37 +705,25 @@ substAllEqualities = recursivelySubstVars
 
 -- |Convert a VC to ECNF, eliminating any floats. 
 eliminateFloatsAndConvertVCToECNF :: F -> TypedVarMap -> FilePath-> IO [[ESafe]]
-eliminateFloatsAndConvertVCToECNF vc varMap fptaylorPath = -- TODO: Save results from FPTaylor, then lookup
+eliminateFloatsAndConvertVCToECNF vc typedVarMap fptaylorPath = -- TODO: Save results from FPTaylor, then lookup
   case vc of
     FConn Impl context goal ->
-      let
-        eliminateExpressionsWithFloats =
+      do
+        contextF <- eliminateFloatsF (FNot context) varMap False fptaylorPath
+        goalF <- eliminateFloatsF goal varMap True fptaylorPath
+        return $ minMaxAbsEliminatorECNF 
           [
             contextEs ++ goalEs
             |
-            contextEs <- map (map (fmapESafeIO (\e -> eliminateFloats e (typedVarMapToVarMap varMap) True fptaylorPath))) (fToECNF (FNot context)),
-            goalEs    <- map (map (fmapESafeIO (\e -> eliminateFloats e (typedVarMapToVarMap varMap) False fptaylorPath))) (fToECNF goal)
-          ] 
-        in
-          do
-            ecnfWithoutFloats <- sequence $ map sequence eliminateExpressionsWithFloats
-            return $ minMaxAbsEliminatorECNF ecnfWithoutFloats
-    goal -> -- If there is no implication, we have a goal with no context or a CNF. We deal with these in the same way
-      let
-        eliminateExpressionsWithFloats =   
-          [
-            goalEs
-            |
-            goalEs <- map (map (fmapESafeIO (\e -> eliminateFloats e (typedVarMapToVarMap varMap) False fptaylorPath))) (fToECNF goal)
+            contextEs <- fToECNF contextF,
+            goalEs <- fToECNF goalF
           ]
-      in 
-        do
-          ecnfWithoutFloats <- sequence $ map sequence eliminateExpressionsWithFloats
-          return $ minMaxAbsEliminatorECNF ecnfWithoutFloats
+    goal -> -- If there is no implication, we have a goal with no context or a CNF. We deal with these in the same way
+      do
+        goalF <- eliminateFloatsF goal varMap True fptaylorPath 
+        return $ minMaxAbsEliminatorECNF $ fToECNF goalF
   where
-    fmapESafeIO :: (E -> IO E) -> ESafe -> IO ESafe
-    fmapESafeIO action (EStrict e)    = fmap EStrict    $ action e
-    fmapESafeIO action (ENonStrict e) = fmap ENonStrict $ action e
+    varMap = typedVarMapToVarMap typedVarMap
 
 parseVCToECNF :: FilePath -> ParsingMode -> FilePath -> IO (Maybe ([[ESafe]], TypedVarMap))
 parseVCToECNF filePath mode fptaylorPath = 
