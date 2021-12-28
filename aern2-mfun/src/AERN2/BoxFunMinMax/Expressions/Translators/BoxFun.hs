@@ -34,9 +34,9 @@ expressionToBoxFun expression domain p =
 
     -- TODO: Change to bfEval
     expressionToDifferential :: E -> V.Vector (Differential (CN MPBall)) -> Differential (CN MPBall)
-    expressionToDifferential (Float _ _) _   = undefined
-    expressionToDifferential (Float32 _ _) _ = undefined
-    expressionToDifferential (Float64 _ _) _ = undefined
+    expressionToDifferential e@(Float _ _) _   = error $ "Cannot translate expression containing float to BoxFun: " ++ prettyShowE e
+    expressionToDifferential e@(Float32 _ _) _ = error $ "Cannot translate expression containing float32 to BoxFun: " ++ prettyShowE e
+    expressionToDifferential e@(Float64 _ _) _ = error $ "Cannot translate expression containing float64 to BoxFun: " ++ prettyShowE e
     expressionToDifferential (RoundToInteger mode e) v = 
       case expressionToDifferential e v of
         OrderZero x      -> OrderZero $ roundMPBall mode x
