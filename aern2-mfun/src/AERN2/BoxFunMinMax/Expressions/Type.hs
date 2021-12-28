@@ -12,6 +12,7 @@ import Data.List (nub)
 import Test.QuickCheck
 
 import Debug.Trace (trace)
+import Test.QuickCheck.State (State(randomSeed))
 
 data BinOp = Add | Sub | Mul | Div | Min | Max | Pow | Mod
   deriving (Show, P.Eq, P.Ord)
@@ -112,6 +113,14 @@ instance Arbitrary E where
           sqrtG x = EUnOp Sqrt (Lit x)
       eGenerator _        = oneof [Lit <$> (fmap toRational (arbitrary :: Gen Integer)), Var <$> show <$> varName]
           -- subE = eGenerator (pred n)
+
+instance Arbitrary ESafe where
+  arbitrary = randomStrictness <*> randomE
+    where
+      randomE :: Gen E
+      randomE = arbitrary
+
+      randomStrictness = oneof [return EStrict, return ENonStrict]
 
 -- data Comp = Gt | Ge | Lt | Le | Eq
 --   deriving (Show, P.Eq)
@@ -221,6 +230,7 @@ simplifyE unsimplifiedE = if unsimplifiedE P.== simplifiedE then simplifiedE els
     simplify (EBinOp Add (Lit 0.0) e) = e
     simplify (EBinOp Add e (Lit 0.0)) = e
     simplify (EBinOp Sub e (Lit 0.0)) = e
+    simplify (EBinOp Sub e1 e2)       = if e1 P.== e2 then Lit 0.0 else EBinOp Sub (simplifyE e1) (simplifyE e2)
     simplify (EBinOp Pow _ (Lit 0.0)) = Lit 1.0
     simplify (EBinOp Pow e (Lit 1.0)) = e
     simplify (PowI _e 0)              = Lit 1.0
@@ -386,7 +396,6 @@ prettyShowESafeCNF cnf = "AND" ++ concatMap (\d -> "\n\t" ++ prettyShowDisjuncti
         EStrict e -> "\n\t\t" ++ prettyShowE e ++ " > 0" 
         ENonStrict e -> "\n\t\t" ++ prettyShowE e ++ " >= 0")
       es
-
 
 -- |Show an expression in a human-readable format
 -- Rationals are converted into doubles
