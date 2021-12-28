@@ -37,7 +37,13 @@ expressionToFPTaylor (EBinOp op e1 e2) =
         fpE2 = expressionToFPTaylor e2
       in
         "((" ++ fpE1 ++ " + " ++ fpE2 ++ " + " ++ "|" ++ fpE1 ++ " - " ++ fpE2 ++ "|) / 2)"
-    Pow -> undefined
+    Pow -> error "FPTaylor does not support powers"
+      -- case e2 of
+      --   Lit rat -> 
+      --     if denominator rat == 1
+      --       then expressionToFPTaylor (PowI e1 (numerator rat)) 
+      --       else error "FPTaylor does not support non-integer powers"
+      --   _ ->     error "FPTaylor does not support non-integer powers"
 expressionToFPTaylor (EUnOp op e) =
     case op of
     Sqrt -> "sqrt(" ++ expressionToFPTaylor e ++ ")"
@@ -46,7 +52,7 @@ expressionToFPTaylor (EUnOp op e) =
     Sin -> "sin(" ++ expressionToFPTaylor e ++ ")"
     Cos -> "cos(" ++ expressionToFPTaylor e ++ ")"
 expressionToFPTaylor Pi         = "(4 * atan(1))"
-expressionToFPTaylor (PowI e i) = expressionToFPTaylor e ++ " ^ " ++ show i
+expressionToFPTaylor (PowI e i) = error "FPTaylor does not support powers" --TODO: Is it safe to change these to the equivalent with multiplications? A: Depends on SPARK power definition
 expressionToFPTaylor (Lit r) = showFrac r
 expressionToFPTaylor (Var v) = v
 expressionToFPTaylor (Float32 mode e) = 
