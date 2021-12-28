@@ -11,6 +11,7 @@ import AERN2.AD.Differential
 import qualified AERN2.Linear.Matrix.Type as M
 import AERN2.Util.Util
 import AERN2.BoxFun.Box
+import Numeric.CollectErrors
 
 -- import Debug.Trace
 
@@ -114,7 +115,10 @@ gradient (BoxFun d e _) v =
     tangent k = 
         V.imap (\i x -> OrderOne x (delta i k)) v
     grad k =
-        diff_dx $ e (tangent k)
+        -- diff_dx $ e (tangent k)
+        case e (tangent k) of
+            OrderZero _ -> noValueNumErrorCertain (NumError "details")
+            val -> diff_dx $ val
     aux k ret =
         if k < 0 then
             V.fromList ret
