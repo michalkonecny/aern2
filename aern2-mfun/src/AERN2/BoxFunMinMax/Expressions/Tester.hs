@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 module AERN2.BoxFunMinMax.Expressions.Tester where
 
 import AERN2.BoxFunMinMax.Expressions.Type 
@@ -14,6 +15,7 @@ import Data.List (nub)
 import AERN2.BoxFunMinMax.Expressions.Eliminator
 -- type VarMap = [(String, (Rational, Rational))]
 import qualified Debug.Trace as T
+import AERN2.BoxFunMinMax.VarMap
 
 epsilon :: Rational
 epsilon = 1/(2^112)
@@ -308,46 +310,109 @@ prop_simplifyF f =
 --     variablePoints :: Gen [Integer]
 --     variablePoints = vectorOf (int (length variables)) arbitrary
 
--- prop_verifyCheckECNF :: [[E]] -> Property
--- prop_verifyCheckECNF cnf = 
---   forAllBlind variableDomains $ \domains ->
---     let
---       orderedDomains     = map (\(x, y) -> (min x y, max x y)) domains
---       varMap          = map (\(i, v) -> (v, (rational (fst (orderedDomains !! i)), rational (snd (orderedDomains !! i))))) (zip [0..] variables)
---       checkECNFResult = checkECNFDepthFirstWithSimplex cnf varMap 10 100 1.2 (prec 10)
---       eRanges         = map (map (\e -> applyExpression e varMap (prec 10))) cnf
---       eRangesHasError = any (any hasError) eRanges 
---     in
---       not eRangesHasError ==>
---         case checkECNFResult of
---           (Just False, Just counterExampleDomain) -> 
---             let
---               eRangesC         = map (map (\e -> applyExpression e varMap (prec 10))) cnf
---               eResultC         = map (map (>= 0)) eRangesC
---               eResultKleeneanC = foldl and2 (cn CertainTrue) $ map (foldl or2 (cn CertainFalse)) eResultC
---             in
---               case unCN eResultKleeneanC of
---                 CertainFalse -> label "Counterexample verified false" True
---                 CertainTrue  -> 
---                   counterexample 
---                   ("Counterexample proven to be wrong: CNF " 
---                   ++ show cnf ++ " Domain: " 
---                   ++ show varMap
---                    ++ " Counterexample: " 
---                    ++ show counterExampleDomain)
---                    False
---                 TrueOrFalse  -> 
---                   label 
---                   "Counterexample verification returned indeterminate result"
---                   True
---           (Just True, _)  -> label "checkECNFCE returned a true result" True
---           (Nothing, _)    -> label "checkECNFCE returned an indeterminate result" True
---           (Just False, _) -> label "False returned without a counterexample, which should never happen" False
---   where
---     variables = extractVariablesECNF cnf
+prop_verifyCheckECNFDepthFirst :: [[ESafe]] -> Property
+prop_verifyCheckECNFDepthFirst cnf = 
+  forAllBlind variableDomains $ \domains ->
+    let
+      eliminatedCNF   = minMaxAbsEliminatorECNF cnf
+      orderedDomains  = map (\(x, y) -> (min x y, max x y)) domains
+      varMap          = map (\(i, v) -> (v, (rational (fst (orderedDomains !! i)), rational (snd (orderedDomains !! i))))) (zip [0..] variables)
+      typedVarMap     = map (\i -> TypedVar i Real) varMap
+      checkECNFResult = checkECNFDepthFirstWithSimplex eliminatedCNF typedVarMap 10 100 1.2 (prec 100)
+      eRanges         = map (map (\e -> applyExpression (extractSafeE e) varMap (prec 100))) eliminatedCNF
+      eRangesHasError = any (any hasError) eRanges 
+    in
+      not eRangesHasError ==>
+        case checkECNFResult of
+          (Just False, Just counterExampleDomain) -> 
+            let
+              eRangesC         = map (map (\e -> applyExpression (extractSafeE e) varMap (prec 100))) cnf
+              eResultC2         = map (map (>= 0)) eRangesC
+              eResultC        = 
+                map 
+                (map 
+                (\case
+                  EStrict e    -> applyExpression e varMap (prec 100) > 0
+                  ENonStrict e -> applyExpression e varMap (prec 100) >= 0)
+                )
+                eliminatedCNF
 
---     variableDomains :: Gen [(Rational, Rational)]
---     variableDomains = vectorOf (int (length variables)) arbitrary
+              eResultKleeneanC = foldl and2 (cn CertainTrue) $ map (foldl or2 (cn CertainFalse)) eResultC
+            in
+              case unCN eResultKleeneanC of
+                CertainFalse -> label "Counterexample verified false" True
+                CertainTrue  -> 
+                  counterexample 
+                  ("Counterexample proven to be wrong: CNF " 
+                  ++ show cnf ++ " Domain: " 
+                  ++ show varMap
+                   ++ " Counterexample: " 
+                   ++ show counterExampleDomain)
+                   False
+                TrueOrFalse  -> 
+                  label 
+                  "Counterexample verification returned indeterminate result"
+                  True
+          (Just True, _)  -> label "checkECNFCE returned a true result" True
+          (Nothing, _)    -> label "checkECNFCE returned an indeterminate result" True
+          (Just False, _) -> label "False returned without a counterexample, which should never happen" False
+  where
+    variables = extractVariablesECNF  $ map (map extractSafeE) cnf
+
+    variableDomains :: Gen [(Rational, Rational)]
+    variableDomains = vectorOf (int (length variables)) arbitrary
+
+prop_verifyCheckECNFBestFirst :: [[ESafe]] -> Property
+prop_verifyCheckECNFBestFirst cnf = 
+  forAllBlind variableDomains $ \domains ->
+    let
+      eliminatedCNF   = minMaxAbsEliminatorECNF cnf
+      orderedDomains  = map (\(x, y) -> (min x y, max x y)) domains
+      varMap          = map (\(i, v) -> (v, (rational (fst (orderedDomains !! i)), rational (snd (orderedDomains !! i))))) (zip [0..] variables)
+      typedVarMap     = map (\i -> TypedVar i Real) varMap
+      checkECNFResult = checkECNFBestFirstWithSimplexCE eliminatedCNF typedVarMap 500 1.2 (prec 100)
+      eRanges         = map (map (\e -> applyExpression (extractSafeE e) varMap (prec 100))) eliminatedCNF
+      eRangesHasError = any (any hasError) eRanges 
+    in
+      not eRangesHasError ==>
+        case checkECNFResult of
+          (Just False, Just counterExampleDomain) -> 
+            let
+              eRangesC         = map (map (\e -> applyExpression (extractSafeE e) varMap (prec 100))) cnf
+              eResultC2         = map (map (>= 0)) eRangesC
+              eResultC        = 
+                map 
+                (map 
+                (\case
+                  EStrict e    -> applyExpression e varMap (prec 100) > 0
+                  ENonStrict e -> applyExpression e varMap (prec 100) >= 0)
+                )
+                eliminatedCNF
+
+              eResultKleeneanC = foldl and2 (cn CertainTrue) $ map (foldl or2 (cn CertainFalse)) eResultC
+            in
+              case unCN eResultKleeneanC of
+                CertainFalse -> label "Counterexample verified false" True
+                CertainTrue  -> 
+                  counterexample 
+                  ("Counterexample proven to be wrong: CNF " 
+                  ++ show cnf ++ " Domain: " 
+                  ++ show varMap
+                   ++ " Counterexample: " 
+                   ++ show counterExampleDomain)
+                   False
+                TrueOrFalse  -> 
+                  label 
+                  "Counterexample verification returned indeterminate result"
+                  True
+          (Just True, _)  -> label "checkECNFCE returned a true result" True
+          (Nothing, _)    -> label "checkECNFCE returned an indeterminate result" True
+          (Just False, _) -> label "False returned without a counterexample, which should never happen" False
+  where
+    variables = extractVariablesECNF  $ map (map extractSafeE) cnf
+
+    variableDomains :: Gen [(Rational, Rational)]
+    variableDomains = vectorOf (int (length variables)) arbitrary
 
 -- |A version of prop_verifyCheckECNF which specifically checks VCs (FConn Impl _ _)
 -- prop_verifyCheckECNFF :: F-> Property
