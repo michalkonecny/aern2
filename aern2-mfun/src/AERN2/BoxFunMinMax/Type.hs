@@ -34,6 +34,7 @@ import GHC.Arr (Ix(range))
 import System.Log.FastLogger
 import System.Log.FastLogger.Date (simpleTimeFormat)
 import qualified Data.Map as M
+import qualified Prelude as P
 trace a x = x
 
 
@@ -209,7 +210,9 @@ ensureVarMapWithinVarMap _ _ = error "Different sized varMaps"
 setupBestFirstCheck :: [(E.ESafe, BoxFun)] -> TypedVarMap -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap)
 setupBestFirstCheck expressionsWithFunctions typedVarMap bfsBoxesCutoff relativeImprovementCutoff p =
   decideDisjunctionBestFirst
-    (Q.singleton (maximum (map (\(_, f) -> AERN2.MP.Ball.centre (apply f (typedVarMapToBox typedVarMap p))) expressionsWithFunctions)) typedVarMap)
+    -- (Q.singleton (maximum (map (\(_, f) -> (snd . endpointsAsIntervals) (apply f (typedVarMapToBox typedVarMap p))) expressionsWithFunctions)) typedVarMap)
+    (Q.singleton (maximum (map (\(_, f) -> (fst . endpointsAsIntervals) (apply f (typedVarMapToBox typedVarMap p))) expressionsWithFunctions)) typedVarMap)
+    -- (Q.singleton (maximum (map (\(_, f) -> AERN2.MP.Ball.centre (apply f (typedVarMapToBox typedVarMap p))) expressionsWithFunctions)) typedVarMap)
     expressionsWithFunctions
     0
     bfsBoxesCutoff
@@ -308,25 +311,57 @@ safeCentre :: (CanTestErrorsPresent t, IsBall t, CentreType t ~ CollectErrors CN
 safeCentre r = if hasError r then cn (dyadic (-1048576)) else AERN2.MP.Ball.centre r
 
 safeMaximumCentre :: [BoxFun] -> Box -> Maybe (CN Dyadic) -> Maybe (CN Dyadic)
-safeMaximumCentre []       _   mCurrentMax = mCurrentMax
-safeMaximumCentre (f : fs) box mCurrentMax =
+safeMaximumCentre []       _   mCurrentCentre = mCurrentCentre
+safeMaximumCentre (f : fs) box mCurrentCentre =
   if hasError range
-    then safeMaximumCentre fs box mCurrentMax
+    then safeMaximumCentre fs box mCurrentCentre
     else
-      case mCurrentMax of
+      case mCurrentCentre of
         Just currentMax ->
           if currentMax !>=! rangeCentre
-            then safeMaximumCentre fs box mCurrentMax
+            then safeMaximumCentre fs box mCurrentCentre
             else safeMaximumCentre fs box (Just rangeCentre)
         Nothing -> safeMaximumCentre fs box (Just rangeCentre)
   where
     range = apply f box
     rangeCentre = AERN2.MP.Ball.centre range
 
+safeMaximumMinimum :: [BoxFun] -> Box -> Maybe (CN MPBall) -> Maybe (CN MPBall)
+safeMaximumMinimum []       _   mCurrentMin = mCurrentMin
+safeMaximumMinimum (f : fs) box mCurrentMin =
+  if hasError range
+    then safeMaximumMinimum fs box mCurrentMin
+    else
+      case mCurrentMin of
+        Just currentMin ->
+          if currentMin !>=! rangeMin
+            then safeMaximumMinimum fs box mCurrentMin
+            else safeMaximumMinimum fs box (Just rangeMin)
+        Nothing -> safeMaximumMinimum fs box (Just rangeMin)
+  where
+    range = apply f box
+    rangeMin = fst $ endpointsAsIntervals range
+
+safeMaximumMaximum :: [BoxFun] -> Box -> Maybe (CN MPBall) -> Maybe (CN MPBall)
+safeMaximumMaximum []       _   mCurrentMax = mCurrentMax
+safeMaximumMaximum (f : fs) box mCurrentMax =
+  if hasError range
+    then safeMaximumMaximum fs box mCurrentMax
+    else
+      case mCurrentMax of
+        Just currentMax ->
+          if currentMax !>=! rangeMax
+            then safeMaximumMinimum fs box mCurrentMax
+            else safeMaximumMinimum fs box (Just rangeMax)
+        Nothing -> safeMaximumMinimum fs box (Just rangeMax)
+  where
+    range = apply f box
+    rangeMax = snd $ endpointsAsIntervals range
+
 -- TODO: Make this more efficient
 -- Return filteredFunctions from decideDisjunctionWithSimplexCE
 -- Add these filtered functions to the queue
-decideDisjunctionBestFirst :: Q.MinPQueue (CN Dyadic) TypedVarMap -> [(E.ESafe, BoxFun)] -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap)
+decideDisjunctionBestFirst :: Q.MinPQueue (CN MPBall) TypedVarMap -> [(E.ESafe, BoxFun)] -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap)
 decideDisjunctionBestFirst queue expressionsWithFunctions numberOfBoxesExamined numberOfBoxesCutoff relativeImprovementCutoff p =
   case Q.minView queue of
     Just (typedVarMap, queueWithoutVarMap) ->
@@ -357,12 +392,16 @@ decideDisjunctionBestFirst queue expressionsWithFunctions numberOfBoxesExamined 
               --   ]
               leftVarMapWithMean  = trace (show (map fst expressionsWithFunctions)) $ trace "left"
                 (
-                  fromMaybe (cn (dyadic 1048576)) (safeMaximumCentre functions (typedVarMapToBox leftVarMap p) Nothing),
+                  fromMaybe (cn (mpBallP p 1000000000000)) (safeMaximumMinimum functions (typedVarMapToBox leftVarMap p) Nothing),
+                  -- fromMaybe (cn (mpBallP p 100000000000)) (safeMaximumMaximum functions (typedVarMapToBox leftVarMap p) Nothing),
+                  -- fromMaybe (cn (dyadic 1048576)) (safeMaximumCentre functions (typedVarMapToBox leftVarMap p) Nothing),
                   leftVarMap
                 )
               rightVarMapWithMean = trace "right"
                 (
-                  fromMaybe (cn (dyadic 1048576)) (safeMaximumCentre functions (typedVarMapToBox rightVarMap p) Nothing),
+                  fromMaybe (cn (mpBallP p 1000000000000)) (safeMaximumMinimum functions (typedVarMapToBox rightVarMap p) Nothing),
+                  -- fromMaybe (cn (mpBallP p 100000000000)) (safeMaximumMaximum functions (typedVarMapToBox rightVarMap p) Nothing),
+                  -- fromMaybe (cn (dyadic 1048576)) (safeMaximumCentre functions (typedVarMapToBox rightVarMap p) Nothing),
                   rightVarMap
                 )
             in
@@ -493,7 +532,8 @@ decideDisjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap curr
         | otherwise = bisectUntilCutoff roundedVarMap
 
       recurseOnVarMap recurseVarMap
-        | typedMaxWidth roundedVarMap / typedMaxWidth recurseVarMap !>=! cn relativeImprovementCutoff =
+        | typedMaxWidth recurseVarMap == 0 = (Nothing, Just recurseVarMap)
+        | typedMaxWidth roundedVarMap / typedMaxWidth recurseVarMap >= relativeImprovementCutoff =
           trace ("recursing with simplex with roundedVarMap: " ++ show recurseVarMap) $
           decideDisjunctionDepthFirstWithSimplex filteredExpressionsWithFunctions recurseVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
         | otherwise = bisectUntilCutoff recurseVarMap
@@ -558,6 +598,7 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions typedVarMap relativeImpr
         | otherwise = (Nothing, Just roundedVarMap)
 
       recurseOnVarMap recurseVarMap
+        | typedMaxWidth recurseVarMap == 0 = (Nothing, Just recurseVarMap)
         | typedMaxWidth roundedVarMap / typedMaxWidth recurseVarMap !>=! cn relativeImprovementCutoff =
           trace ("recursing with simplex with box: " ++ show recurseVarMap) $
           decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions recurseVarMap relativeImprovementCutoff p
@@ -664,6 +705,7 @@ createConstraintsToEncloseAreaUnderZero cornerValuesWithDerivatives varMap =
       (\(fnInt, (fLeftRange, fRightRange, fPartialDerivatives)) ->
         let
           fPartialDerivativesLowerBounds = map (fst . mpBallToRational) $ V.toList fPartialDerivatives
+          fPartialDerivativesUpperBounds = map (snd . mpBallToRational) $ V.toList fPartialDerivatives
           fLeftLowerBound = fst $ mpBallToRational fLeftRange
           fRightLowerBound = fst $ mpBallToRational fRightRange
 
@@ -674,8 +716,11 @@ createConstraintsToEncloseAreaUnderZero cornerValuesWithDerivatives varMap =
               ((fNegN, 1.0) : zip vars fPartialDerivativesLowerBounds)
               (-fLeftLowerBound), -- Partial derivatives multiplied with left corner is omitted because left corner is 0
             LEQ 
-              ((fNegN, 1.0) : zip vars fPartialDerivativesLowerBounds)
-              $ foldl add (-fRightLowerBound) $ zipWith mul varsNewUpperBounds fPartialDerivativesLowerBounds
+              ((fNegN, 1.0) : zip vars fPartialDerivativesUpperBounds)
+              $ foldl add (-fRightLowerBound) $ zipWith mul varsNewUpperBounds fPartialDerivativesUpperBounds
+            -- LEQ 
+            --   ((fNegN, 1.0) : zip vars fPartialDerivativesLowerBounds)
+            --   $ foldl add (-fRightLowerBound) $ zipWith mul varsNewUpperBounds fPartialDerivativesLowerBounds
             -- fNegN >= 0 will be assumed by the simplex method
           ]
       )
