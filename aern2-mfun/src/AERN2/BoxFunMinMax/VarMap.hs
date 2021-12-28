@@ -42,9 +42,11 @@ type TypedVarMap = [TypedVarInterval]
 -- | Get the width of the widest interval
 -- Fixme: maxWidth
 maxWidth :: VarMap -> Rational
+maxWidth [] = 0.0
 maxWidth vMap = L.maximum (map (\(_, ds) -> snd ds - fst ds) vMap)
 
 typedMaxWidth :: TypedVarMap -> Rational
+typedMaxWidth [] = 0.0
 typedMaxWidth vMap = L.maximum (map (\(TypedVar (_, ds) _) -> snd ds - fst ds) vMap)
 
 -- | Get the sum of the width of each interval
