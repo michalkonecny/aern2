@@ -98,6 +98,15 @@ executables:
     - -Wall
     dependencies:
     - aern2-mfun
+  dreal-translator:
+    main: DReal.hs
+    dependencies:
+    - aern2-mfun
+  metitarski-translator:
+    main: MetiTarski.hs
+    dependencies:
+    - aern2-mfun
+  
 
 # tests:
 #   aern2-mfun-test:

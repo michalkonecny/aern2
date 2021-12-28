@@ -7,6 +7,25 @@ import AERN2.BoxFunMinMax.Expressions.Type
 
 import Data.Ratio
 import System.IO.Unsafe (unsafePerformIO)
+import AERN2.BoxFunMinMax.VarMap (TypedVarInterval, TypedVarInterval(TypedVar), VarType (Real, Integer), TypedVarMap)
+
+formulaToSMT :: F -> Integer -> String
+formulaToSMT (FConn op f1 f2) numTabs = 
+  case op of
+    And   -> "\n" ++ concat (replicate numTabs "\t") ++ "(and " ++ formulaToSMT f1 (numTabs + 1) ++ " " ++ formulaToSMT f2 (numTabs + 1) ++ ")"
+    Or    -> "\n" ++ concat (replicate numTabs "\t") ++ "(or " ++ formulaToSMT f1 (numTabs + 1) ++ " " ++ formulaToSMT f2 (numTabs + 1) ++ ")"
+    Impl  -> "\n" ++ concat (replicate numTabs "\t") ++ "(or " ++ formulaToSMT (FNot f1) (numTabs + 1) ++ formulaToSMT f2 (numTabs + 1) ++ ")"
+    Equiv -> "\n" ++ concat (replicate numTabs "\t") ++ "(= " ++ formulaToSMT f1 (numTabs + 1) ++ " " ++ formulaToSMT f2 (numTabs + 1) ++ ")"
+formulaToSMT (FComp op e1 e2) numTabs = 
+  case op of
+    Ge -> "\n" ++ concat (replicate numTabs "\t") ++ "(>= " ++ "\n" ++ concat (replicate (numTabs + 1) "\t") ++ expressionToSMT e1 ++ "\n" ++ concat (replicate (numTabs + 1) "\t") ++ expressionToSMT e2 ++ ")"
+    Gt -> "\n" ++ concat (replicate numTabs "\t") ++ "(> "  ++ "\n" ++ concat (replicate (numTabs + 1) "\t") ++ expressionToSMT e1 ++ "\n" ++ concat (replicate (numTabs + 1) "\t") ++ expressionToSMT e2 ++ ")"
+    Lt -> "\n" ++ concat (replicate numTabs "\t") ++ "(< "  ++ "\n" ++ concat (replicate (numTabs + 1) "\t") ++ expressionToSMT e1 ++ "\n" ++ concat (replicate (numTabs + 1) "\t") ++ expressionToSMT e2 ++ ")"
+    Le -> "\n" ++ concat (replicate numTabs "\t") ++ "(<= " ++ "\n" ++ concat (replicate (numTabs + 1) "\t") ++ expressionToSMT e1 ++ "\n" ++ concat (replicate (numTabs + 1) "\t") ++ expressionToSMT e2 ++ ")"
+    Eq -> "\n" ++ concat (replicate numTabs "\t") ++ "(= "  ++ "\n" ++ concat (replicate (numTabs + 1) "\t") ++ expressionToSMT e1 ++ "\n" ++ concat (replicate (numTabs + 1) "\t") ++ expressionToSMT e2 ++ ")"
+formulaToSMT (FNot f) numTabs = "\n" ++ concat (replicate numTabs "\t") ++ "(not " ++ formulaToSMT f (numTabs + 1) ++ ")"
+formulaToSMT FTrue numTabs = "\n" ++ concat (replicate numTabs "\t") ++ "true"
+formulaToSMT FFalse numTabs = "\n" ++ concat (replicate numTabs "\t") ++ "false"
 
 expressionToSMT :: E -> String
 expressionToSMT (EBinOp op e1 e2) =
@@ -18,6 +37,7 @@ expressionToSMT (EBinOp op e1 e2) =
     Min -> "(min " ++ expressionToSMT e1 ++ " " ++ expressionToSMT e2 ++ ")"
     Max -> "(max " ++ expressionToSMT e1 ++ " " ++ expressionToSMT e2 ++ ")"
     Pow -> "(^ "  ++ expressionToSMT e1 ++ " " ++ expressionToSMT e2 ++ ")"
+    Mod -> error "Modulo division is not supported in dReal"
 expressionToSMT (EUnOp op e) =
   case op of
     Sqrt -> "(sqrt " ++ expressionToSMT e ++ ")"
@@ -32,9 +52,31 @@ expressionToSMT (Lit e) =
     1 -> show (numerator e)
     _ ->
       "(/ " ++ show (numerator e) ++ " " ++ show (denominator e) ++ ")"
+expressionToSMT Pi = "(* 4.0 (atan 1.0))" -- Equivalent to pi
+expressionToSMT (RoundToInteger _ _) = error "dReal translator does not support rounding to integer" -- TODO: Check if there is rounding in dReal, most likely not
 expressionToSMT (Float _ _)   = error "dReal translator does not support Floats"
 expressionToSMT (Float32 _ _) = error "dReal translator does not support Floats"
 expressionToSMT (Float64 _ _) = error "dReal translator does not support Floats"
+
+formulaAndVarMapToDReal :: F -> TypedVarMap -> String
+formulaAndVarMapToDReal f typedVarMap =
+  "(set-logic QF_NRA)\n" ++
+  variablesAsString typedVarMap ++
+  "(assert " ++ formulaToSMT f 1 ++ ")\n" ++
+  "(check-sat)\n" ++
+  "(get-model)\n" ++
+  "(exit)\n"
+  where
+    showVarType Integer = "Int"
+    showVarType Real = "Real"
+      
+    showRational x = "(/ " ++ show (numerator x) ++ " " ++ show (denominator x) ++ ")"
+
+    variablesAsString [] = ""
+    variablesAsString ((TypedVar (varName, (leftBound, rightBound)) varType) : typedVarIntervals) =
+      "(declare-fun " ++ varName ++ " () " ++ showVarType varType ++ ")\n" ++
+      "(assert (<= " ++ showRational leftBound ++ " " ++ varName ++ "))\n" ++
+      "(assert (<= " ++ varName ++ " " ++ showRational rightBound ++ "))\n" ++ variablesAsString typedVarIntervals
 
 disjunctionExpressionsToSMT :: [ESafe] -> String
 disjunctionExpressionsToSMT es = 
