@@ -19,6 +19,7 @@ import AERN2.BoxFunMinMax.Expressions.Parsers.Smt (parseVCToECNF, ParsingMode (W
 import Options.Applicative
 import Data.Semigroup ((<>))
 import System.Directory
+import Data.Ratio
 data ProverOptions = ProverOptions
   {
     why3Mode :: Bool,
@@ -29,6 +30,12 @@ data ProverOptions = ProverOptions
     -- relativeImprovementCutoff :: Rational, make this a flag, as a double is probably easier
     fileName :: String
   }
+
+-- data DRealOptions = DRealOptions
+--   {
+--     dRealFileName :: String,
+--     dRealTargetName :: String
+--   }
 
 proverOptions :: Parser ProverOptions
 proverOptions = ProverOptions
@@ -113,9 +120,11 @@ runProver (ProverOptions why3Mode ceMode depthCutoff bestFirstSearchCutoff p fil
                   (Just True, _) -> putStrLn "unsat"
                   (Just False, Just counterExample) -> do
                     putStrLn "sat"
+                    printSMTModel counterExample
                     prettyPrintCounterExample counterExample
                   (_, Just indeterminateExample) -> do
                     putStrLn "unknown"
+                    printSMTModel indeterminateExample
                     prettyPrintCounterExample indeterminateExample
                   (_, _) -> putStrLn "unknown"
               else do
@@ -129,8 +138,8 @@ runProver (ProverOptions why3Mode ceMode depthCutoff bestFirstSearchCutoff p fil
                     prettyPrintCounterExample indeterminateExample
                   (_, _) -> putStrLn "unknown"
           Nothing -> do
-            putStrLn "Issue parsing file"
             putStrLn "unknown"
+            putStrLn "Issue parsing file"
 
 prettyPrintCounterExample :: TypedVarMap -> IO ()
 prettyPrintCounterExample [] = return ()
@@ -142,3 +151,22 @@ prettyPrintCounterExample ((TypedVar (v, (l, r)) t) : vs) =
     else do
       putStrLn (v ++ " = [" ++ show (double l) ++ ", " ++ show (double r) ++ "]")
       prettyPrintCounterExample vs
+
+printSMTModel :: TypedVarMap -> IO ()
+printSMTModel typedVarMap =
+  do
+    putStrLn "(model"
+    printModels typedVarMap
+    putStrLn ")"
+  where
+    printModels [] = return ()
+    printModels ((TypedVar (v, (l, r)) t) : vs) = do
+      putStrLn $ "(define-fun " ++ v ++ " () " ++ show t ++ " " ++ showNum (l) ++ ")"
+      putStrLn $ "(define-fun " ++ v ++ "_vc_constant" ++ " () " ++ show t ++ " " ++ showNum (l) ++ ")"
+      printModels vs
+
+    showNum :: Rational -> String
+    showNum num =
+      if num < 0
+        then "(/ " ++ "(" ++ show (numerator num) ++ ") " ++ show (denominator num) ++ ")"
+        else "(/ " ++ show (numerator num) ++ " " ++ show (denominator num) ++ ")"
