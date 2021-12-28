@@ -25,8 +25,9 @@ import AERN2.BoxFunMinMax.Expressions.EliminateFloats
 import AERN2.BoxFunMinMax.Expressions.Eliminator (minMaxAbsEliminatorECNF, minMaxAbsEliminator)
 import Data.List (nub, sort, isPrefixOf, sortBy, partition, foldl')
 import Control.Arrow ((&&&))
+import Debug.Trace
+import AERN2.BoxFunMinMax.Expressions.Translators.DReal (formulaAndVarMapToDReal)
 data ParsingMode = Why3 | CNF
-
 parser :: String -> [LD.Expression]
 parser = LP.analyzeExpressionSequence . LP.parseSequence . LP.tokenize
 
@@ -582,7 +583,7 @@ deriveVCRanges vc varsWithTypes mode =
     else
       case simplifiedF of
         FConn Impl contextCNF goal ->
-          if fContainsVars underivableVariables goal
+          if fContainsVars underivableVariables goal --FIXME: check formulas containing dependent variables
             then Nothing
             else
               let
@@ -601,7 +602,7 @@ deriveVCRanges vc varsWithTypes mode =
                     aux f1 vars = if fContainsVars vars f1 then findVariablesInFormula f1 else []
 
                 relevantVars   = findDependentVars contextCNF varsInGoal
-                irrelevantVars = map fst $ filter (\(v, _) -> v `notElem` relevantVars) derivedVarMap
+                irrelevantVars = map fst $ filter (\(v, _) -> v `notElem` relevantVars) derivedVarMap --FIXME: Stop this filtering
 
                 relevantDerivedVarMap = filter (\(v, _) -> v `elem` relevantVars) derivedVarMap
 
@@ -611,7 +612,8 @@ deriveVCRanges vc varsWithTypes mode =
                     (Just filteredF1, _)               -> Just filteredF1
                     (_, Just filteredF2)               -> Just filteredF2
                     (Nothing, Nothing)                 -> Nothing
-                filterCNF f varsToKeep = if fContainsVars varsToKeep f then Just f else Nothing
+                -- filterCNF f varsToKeep = if fContainsVars varsToKeep f then Just f else Nothing
+                filterCNF f varsToKeep = if fContainsVars varsToKeep f && not (fContainsVars underivableVariables f) then Just f else Nothing
               in
               case filterCNF contextCNF (map fst relevantDerivedVarMap) of
                 Just filteredContext  -> Just (FConn Impl filteredContext goal, unsafeVarMapToTypedVarMap relevantDerivedVarMap integerVariables)
@@ -706,25 +708,15 @@ substAllEqualities = recursivelySubstVars
 -- |Convert a VC to ECNF, eliminating any floats. 
 eliminateFloatsAndConvertVCToECNF :: F -> TypedVarMap -> FilePath-> IO [[ESafe]]
 eliminateFloatsAndConvertVCToECNF vc typedVarMap fptaylorPath = -- TODO: Save results from FPTaylor, then lookup
-  case vc of
-    FConn Impl context goal ->
-      do
-        contextF <- eliminateFloatsF (FNot context) varMap False fptaylorPath
-        goalF <- eliminateFloatsF goal varMap True fptaylorPath
-        return $ minMaxAbsEliminatorECNF 
-          [
-            contextEs ++ goalEs
-            |
-            contextEs <- fToECNF contextF,
-            goalEs <- fToECNF goalF
-          ]
-    goal -> -- If there is no implication, we have a goal with no context or a CNF. We deal with these in the same way
-      do
-        goalF <- eliminateFloatsF goal varMap True fptaylorPath 
-        return $ minMaxAbsEliminatorECNF $ fToECNF goalF
+  do
+    vcWithoutFloats <- eliminateFloatsF vc varMap True fptaylorPath 
+    return $ minMaxAbsEliminatorECNF $ fToECNF vcWithoutFloats
   where
     varMap = typedVarMapToVarMap typedVarMap
 
+--FIXME: When parsing FP operations and F->R ops, need to put all args in Float
+-- e.g. fp.add x + y currently becomes Float (x + y) but should be Float(Float(x) + Float(y))
+-- Rf(1.0) is currently parsed to 1.0 but should be Float32(1.0)
 parseVCToECNF :: FilePath -> ParsingMode -> FilePath -> IO (Maybe ([[ESafe]], TypedVarMap))
 parseVCToECNF filePath mode fptaylorPath = 
   do
@@ -742,4 +734,26 @@ parseVCToECNF filePath mode fptaylorPath =
               vcWithoutFloatsAsECNF <- eliminateFloatsAndConvertVCToECNF (simplifyF derivedVC) derivedRanges fptaylorPath
               return $ Just (simplifyESafeCNF vcWithoutFloatsAsECNF, derivedRanges)
           Nothing -> return Nothing
+      Nothing -> return Nothing
+
+parseVCToSolver :: FilePath -> ParsingMode -> FilePath -> (F -> TypedVarMap -> String) -> Bool -> IO (Maybe String)
+parseVCToSolver filePath mode fptaylorPath proverTranslator proveContradiction =
+  do
+    parsedFile <- parseSMT2 filePath
+    
+    case processVC parsedFile mode of
+      Just (vc, varTypes) ->
+        let
+          simplifiedVC = substAllEqualities (simplifyF vc)
+          mDerivedVCWithRanges = deriveVCRanges simplifiedVC varTypes mode
+        in
+          case mDerivedVCWithRanges of
+            Just (derivedVC, derivedRanges) ->
+              do
+                vcWithoutFloats <- eliminateFloatsF derivedVC (typedVarMapToVarMap derivedRanges) True fptaylorPath
+                return $ Just (proverTranslator (if proveContradiction then (FNot vcWithoutFloats) else vcWithoutFloats) derivedRanges)
+                -- case vcWithoutFloats of -- Re-add not FIXME: add support for CNF
+                --   FConn Impl context goal -> return $ Just (formulaAndVarMapToDReal (FConn Impl context (FNot goal)) derivedRanges)
+                --   goal                    -> return $ Just (formulaAndVarMapToDReal                     (FNot goal)  derivedRanges)
+            Nothing -> return Nothing
       Nothing -> return Nothing
