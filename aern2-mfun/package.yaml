@@ -48,6 +48,7 @@ dependencies:
 - fast-logger
 - optparse-applicative
 - directory
+- regex-tdfa
 
 default-extensions:
 - RebindableSyntax,
@@ -102,8 +103,16 @@ executables:
     main: DReal.hs
     dependencies:
     - aern2-mfun
+  dreal-runner:
+    main: DRealRunner.hs
+    dependencies:
+    - aern2-mfun
   metitarski-translator:
     main: MetiTarski.hs
+    dependencies:
+    - aern2-mfun
+  metitarski-runner:
+    main: MetiTarskiRunner.hs
     dependencies:
     - aern2-mfun
   
