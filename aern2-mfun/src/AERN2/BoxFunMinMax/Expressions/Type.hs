@@ -13,6 +13,7 @@ import Test.QuickCheck
 
 import Debug.Trace (trace)
 import Test.QuickCheck.State (State(randomSeed))
+import Data.Ratio
 
 data BinOp = Add | Sub | Mul | Div | Min | Max | Pow | Mod
   deriving (Show, P.Eq, P.Ord)
@@ -233,6 +234,7 @@ simplifyE unsimplifiedE = if unsimplifiedE P.== simplifiedE then simplifiedE els
     simplify (EBinOp Sub e1 e2)       = if e1 P.== e2 then Lit 0.0 else EBinOp Sub (simplifyE e1) (simplifyE e2)
     simplify (EBinOp Pow _ (Lit 0.0)) = Lit 1.0
     simplify (EBinOp Pow e (Lit 1.0)) = e
+    simplify (EBinOp Pow e (Lit n))   = if denominator n == 1 then PowI e (numerator n) else EBinOp Pow e (Lit n)
     simplify (PowI _e 0)              = Lit 1.0
     simplify (PowI e 1)               = e
     simplify (EUnOp Negate (Lit 0.0)) = Lit 0.0
@@ -315,6 +317,7 @@ simplifyF unsimplifiedF = if unsimplifiedF P.== simplifiedF then simplifiedF els
     -- Comp tautologies and eliminations
     -- Eliminate double not
     simplify (FNot (FNot f))                                    = simplify f
+    simplify (FComp Eq e1 e2)                                   = if e1 P.== e2 || simplifyE e1 P.== simplifyE e2 then FTrue else FComp Eq (simplifyE e1) (simplifyE e2)
     simplify (FComp op e1 e2)                                   = FComp op (simplifyE e1) (simplifyE e2)
     simplify FTrue                                              = FTrue
     simplify FFalse                                             = FFalse
@@ -396,6 +399,97 @@ prettyShowESafeCNF cnf = "AND" ++ concatMap (\d -> "\n\t" ++ prettyShowDisjuncti
         EStrict e -> "\n\t\t" ++ prettyShowE e ++ " > 0" 
         ENonStrict e -> "\n\t\t" ++ prettyShowE e ++ " >= 0")
       es
+
+-- latexShowESafeCNF :: [[ESafe]] -> String
+-- latexShowESafeCNF cnf = "AND" ++ concatMap (\d -> "\n\t" ++ prettyShowDisjunction d) cnf
+--   where
+--     -- |Show a disjunction of expressions > 0 in a human-readable format
+--     -- This is shown as an OR with each term tabbed in
+--     -- If there is only one term, the expression is shown without an OR 
+--     prettyShowDisjunction :: [ESafe] -> String
+--     prettyShowDisjunction []  = []
+--     prettyShowDisjunction [e'] = 
+--       case e' of
+--         EStrict e -> prettyShowE e ++ " > 0"
+--         ENonStrict e -> prettyShowE e ++ " >= 0"
+--     prettyShowDisjunction es  =
+--       "OR" ++ 
+--       concatMap 
+--       (\case
+--         EStrict e -> "\n\t\t" ++ prettyShowE e ++ " > 0" 
+--         ENonStrict e -> "\n\t\t" ++ prettyShowE e ++ " >= 0")
+--       es
+
+latexShowE :: E -> String
+latexShowE (EBinOp op e1 e2) =
+  case op of
+    Add -> "$(" ++ latexShowE e1 ++ " + " ++ latexShowE e2 ++ ")$"
+    Sub -> "$(" ++ latexShowE e1 ++ " - " ++ latexShowE e2 ++ ")$"
+    Div -> "$(" ++ latexShowE e1 ++ " \\div " ++ latexShowE e2 ++ ")$"
+    Mul -> "$(" ++ latexShowE e1 ++ " \\times " ++ latexShowE e2 ++ ")$"
+    Pow -> "$(" ++ latexShowE e1 ++ "_{" ++ latexShowE e2 ++ ")}$"
+    Min -> "$(min " ++ latexShowE e1 ++ " " ++ latexShowE e2 ++ ")$"
+    Max -> "$(max " ++ latexShowE e1 ++ " " ++ latexShowE e2 ++ ")$"
+    Mod -> "$(mod " ++ latexShowE e1 ++ " " ++ latexShowE e2 ++ ")$"
+latexShowE (EUnOp op e) =
+  case op of
+    Abs    -> "$|" ++ latexShowE e ++ "|$"
+    Sqrt   -> "$\\sqrt{" ++ latexShowE e ++ ")}"
+    Negate -> "$(-1 \\times " ++ latexShowE e ++ ")$"
+    Sin    -> "$(sin " ++ latexShowE e ++ ")$"
+    Cos    -> "$(cos " ++ latexShowE e ++ ")$"
+latexShowE (PowI e i) = "(" ++ latexShowE e ++ " ^ " ++ show i ++ ")"
+latexShowE (Var v) = v
+latexShowE (Lit v) = show (double v)
+latexShowE (Float32 m e) =
+  case m of
+    RNE -> "(rnd32_ne " ++ latexShowE e ++ ")"
+    RTP -> "(rnd32_tp " ++ latexShowE e ++ ")"
+    RTN -> "(rnd32_tn " ++ latexShowE e ++ ")"
+    RTZ -> "(rnd32_tz " ++ latexShowE e ++ ")"
+    RNA -> "(rnd32_na " ++ latexShowE e ++ ")"
+latexShowE (Float64 m e) =
+  case m of
+    RNE -> "(rnd64_ne " ++ latexShowE e ++ ")"
+    RTP -> "(rnd64_tp " ++ latexShowE e ++ ")"
+    RTN -> "(rnd64_tn " ++ latexShowE e ++ ")"
+    RTZ -> "(rnd64_tz " ++ latexShowE e ++ ")"
+    RNA -> "(rnd64_na " ++ latexShowE e ++ ")"
+latexShowE (Float m e) =
+  case m of
+    RNE -> "(rnd_ne " ++ latexShowE e ++ ")"
+    RTP -> "(rnd_tp " ++ latexShowE e ++ ")"
+    RTN -> "(rnd_tn " ++ latexShowE e ++ ")"
+    RTZ -> "(rnd_tz " ++ latexShowE e ++ ")"
+    RNA -> "(rnd_na " ++ latexShowE e ++ ")"
+latexShowE Pi = "$\\pi$"
+latexShowE (RoundToInteger m e) = 
+  case m of
+    RNE -> "(rndToInt_ne " ++ latexShowE e ++ ")"
+    RTP -> "(rndToInt_tp " ++ latexShowE e ++ ")"
+    RTN -> "(rndToInt_tn " ++ latexShowE e ++ ")"
+    RTZ -> "(rndToInt_tz " ++ latexShowE e ++ ")"
+    RNA -> "(rndToInt_ta " ++ latexShowE e ++ ")"
+
+latexShowF :: F -> Integer -> String
+latexShowF (FComp op e1 e2) numTabs = "\n" ++ concat (replicate numTabs "\t") ++ latexShowE e1 ++ " " ++ latexShowComp op ++ " " ++ latexShowE e2
+latexShowF (FConn op f1 f2) numTabs = "\n" ++ concat (replicate numTabs "\t") ++ latexShowF f1 numTabs ++ " " ++ latexShowConn op ++ latexShowF f2 (numTabs + 1)
+latexShowF (FNot f)         numTabs = "\n" ++ concat (replicate numTabs "\t") ++ "$\\lnot$" ++ latexShowF f (numTabs + 1)
+latexShowF FTrue            numTabs = "\n" ++ concat (replicate numTabs "\t") ++ "$\\top$"
+latexShowF FFalse           numTabs = "\n" ++ concat (replicate numTabs "\t") ++ "$\\bot$"
+
+latexShowComp :: Comp -> String
+latexShowComp Gt = "$>$"
+latexShowComp Ge = "$\\ge$"
+latexShowComp Lt = "$<$"
+latexShowComp Le = "$\\le$"
+latexShowComp Eq = "$=$"
+
+latexShowConn :: Conn -> String
+latexShowConn And   = "$\\wedge$"
+latexShowConn Or    = "$\\vee$"
+latexShowConn Impl  = "$\\implies$"
+latexShowConn Equiv = "$\\equiv$"
 
 -- |Show an expression in a human-readable format
 -- Rationals are converted into doubles
