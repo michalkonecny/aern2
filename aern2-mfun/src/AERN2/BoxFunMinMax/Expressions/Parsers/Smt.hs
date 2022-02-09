@@ -3,7 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 module AERN2.BoxFunMinMax.Expressions.Parsers.Smt where
 
-import MixedTypesNumPrelude
+import MixedTypesNumPrelude hiding (unzip)
 import qualified Prelude as P
 import System.IO.Unsafe
 
@@ -24,9 +24,13 @@ import AERN2.BoxFunMinMax.Expressions.DeriveBounds
 import AERN2.BoxFunMinMax.Expressions.EliminateFloats
 import AERN2.BoxFunMinMax.Expressions.Eliminator (minMaxAbsEliminatorECNF, minMaxAbsEliminator)
 import Data.List (nub, sort, isPrefixOf, sortBy, partition, foldl')
+import Data.List.NonEmpty (unzip)
 import Control.Arrow ((&&&))
 import Debug.Trace
 import AERN2.BoxFunMinMax.Expressions.Translators.DReal (formulaAndVarMapToDReal)
+import Text.Regex.TDFA ( (=~) )
+import Data.Ratio
+
 data ParsingMode = Why3 | CNF
 parser :: String -> [LD.Expression]
 parser = LP.analyzeExpressionSequence . LP.parseSequence . LP.tokenize
@@ -42,11 +46,16 @@ findAssertions [] = []
 findAssertions ((LD.Application (LD.Variable "assert") [operands]) : expressions) = operands : findAssertions expressions
 findAssertions (_ : expressions) = findAssertions expressions
 
-findFunctionOutputs :: [LD.Expression] -> [(String, String)]
-findFunctionOutputs [] = []
-findFunctionOutputs ((LD.Application (LD.Variable "declare-fun") [LD.Variable fName, _fInputs, LD.Variable fOutputs]) : expressions) =
-  (fName, fOutputs) : findFunctionOutputs expressions
-findFunctionOutputs (_ : expressions) = findFunctionOutputs expressions
+findFunctionInputsAndOutputs :: [LD.Expression] -> [(String, ([String], String))]
+findFunctionInputsAndOutputs [] = []
+findFunctionInputsAndOutputs ((LD.Application (LD.Variable "declare-fun") [LD.Variable fName, fInputsAsExpressions, LD.Variable fOutputs]) : expressions) =
+  (fName, (expressionInputsAsString fInputsAsExpressions, fOutputs)) : findFunctionInputsAndOutputs expressions
+  where
+    expressionInputsAsString :: LD.Expression -> [String]
+    expressionInputsAsString (LD.Application (LD.Variable inputTypeAsString) remainingInputsAsExpression) = inputTypeAsString : concatMap expressionInputsAsString remainingInputsAsExpression
+    expressionInputsAsString (LD.Variable inputTypeAsString) = [inputTypeAsString]
+    expressionInputsAsString _ = []
+findFunctionInputsAndOutputs (_ : expressions) = findFunctionInputsAndOutputs expressions
 
 -- |Find function declarations in a parsed expression
 -- Function declarations are Application types with the operator being a Variable equal to "declare-fun"
@@ -91,12 +100,17 @@ takeGoalFromAssertions :: [LD.Expression] -> (LD.Expression, [LD.Expression])
 takeGoalFromAssertions asserts = (goal, assertsWithoutGoal)
   where
     numberOfAssertions = length asserts
-    goal = last asserts -- FIXME: Unsafe. If asserts is emoty, this will fail
+    goal = last asserts -- FIXME: Unsafe. If asserts is empty, this will fail
     assertsWithoutGoal = take (numberOfAssertions - 1) asserts
 
-termToF :: LD.Expression -> [(String, String)] -> Maybe F
-termToF (LD.Application (LD.Variable operator) [op]) functionsWithOutputs = -- Single param operators
-  case termToE op functionsWithOutputs of -- Ops with E params
+-- safelyTypeExpression :: String -> [(String, ([String], String))] -> E -> E
+-- safelyTypeExpression smtFunction functionsWithInputsAndOutputs exactExpression =
+--   case lookup smtFunction functionsWithInputsAndOutputs of
+--     Just (inputs, output)
+
+termToF :: LD.Expression -> [(String, ([String], String))] -> Maybe F
+termToF (LD.Application (LD.Variable operator) [op]) functionsWithInputsAndOutputs = -- Single param operators
+  case termToE op functionsWithInputsAndOutputs of -- Ops with E params
     Just e ->
       case operator of
         "fp.isFinite32" ->
@@ -111,14 +125,14 @@ termToF (LD.Application (LD.Variable operator) [op]) functionsWithOutputs = -- S
             Just $ FConn And (FComp Le (Lit minFloat) e)  (FComp Le e (Lit maxFloat))
         _ -> Nothing
     Nothing ->
-      case termToF op functionsWithOutputs of
+      case termToF op functionsWithInputsAndOutputs of
         Just f ->
           case operator of
-            "not" -> Just $ FNot f -- TODO: Do we need an FNot for E as well? Answer: We could simply Negate, but we don't need it.
+            "not" -> Just $ FNot f
             _ -> Nothing
         _ -> Nothing
-termToF (LD.Application (LD.Variable operator) [op1, op2]) functionsWithOutputs = -- Two param operations
-  case (termToE op1 functionsWithOutputs, termToE op2 functionsWithOutputs) of
+termToF (LD.Application (LD.Variable operator) [op1, op2]) functionsWithInputsAndOutputs = -- Two param operations
+  case (termToE op1 functionsWithInputsAndOutputs, termToE op2 functionsWithInputsAndOutputs) of
     (Just e1, Just e2) ->
       case operator of
         n
@@ -131,7 +145,7 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) functionsWithOutputs 
           | "user_eq" `isPrefixOf` n ->  Just $ FComp Eq e1 e2
         _ -> Nothing
     (_, _) ->
-      case (termToF op1 functionsWithOutputs, termToF op2 functionsWithOutputs) of
+      case (termToF op1 functionsWithInputsAndOutputs, termToF op2 functionsWithInputsAndOutputs) of
         (Just f1, Just f2) ->
           case operator of
             "and" -> Just $ FConn And f1 f2
@@ -144,9 +158,9 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) functionsWithOutputs 
             _ -> Nothing
         -- Parse ite where it is used as an expression
         (_, _) ->
-          case (op1, termToE op2 functionsWithOutputs) of
+          case (op1, termToE op2 functionsWithInputsAndOutputs) of
             (LD.Application (LD.Variable "ite") [cond, thenTerm, elseTerm], Just e2) ->
-              case (termToF cond functionsWithOutputs, termToE thenTerm functionsWithOutputs, termToE elseTerm functionsWithOutputs) of
+              case (termToF cond functionsWithInputsAndOutputs, termToE thenTerm functionsWithInputsAndOutputs, termToE elseTerm functionsWithInputsAndOutputs) of
                 (Just condF, Just thenTermE, Just elseTermE) ->
                   case operator of
                     n
@@ -167,9 +181,9 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) functionsWithOutputs 
                     _ -> Nothing
                 (_, _, _) -> Nothing
             (_, _) ->
-              case (termToE op1 functionsWithOutputs, op2) of
+              case (termToE op1 functionsWithInputsAndOutputs, op2) of
                 (Just e1, LD.Application (LD.Variable "ite") [cond, thenTerm, elseTerm]) ->
-                  case (termToF cond functionsWithOutputs, termToE thenTerm functionsWithOutputs, termToE elseTerm functionsWithOutputs) of
+                  case (termToF cond functionsWithInputsAndOutputs, termToE thenTerm functionsWithInputsAndOutputs, termToE elseTerm functionsWithInputsAndOutputs) of
                     (Just condF, Just thenTermE, Just elseTermE) ->
                       case operator of
                         n -- TODO: Change these to AND
@@ -191,36 +205,30 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) functionsWithOutputs 
                     (_, _, _) -> Nothing
                 (_, _) -> Nothing
 
-termToF (LD.Application (LD.Variable "ite") [condition, thenTerm, elseTerm]) functionsWithOutputs = -- if-then-else operator with F types
-  case (termToF condition functionsWithOutputs, termToF thenTerm functionsWithOutputs, termToF elseTerm functionsWithOutputs) of
+termToF (LD.Application (LD.Variable "ite") [condition, thenTerm, elseTerm]) functionsWithInputsAndOutputs = -- if-then-else operator with F types
+  case (termToF condition functionsWithInputsAndOutputs, termToF thenTerm functionsWithInputsAndOutputs, termToF elseTerm functionsWithInputsAndOutputs) of
     (Just conditionF, Just thenTermF, Just elseTermF) -> Just $ FConn And (FConn Impl conditionF thenTermF) (FConn Impl (FNot conditionF) elseTermF)
     (_, _, _) -> Nothing
-termToF (LD.Variable "true") functionsWithOutputs  = Just FTrue
-termToF (LD.Variable "false") functionsWithOutputs = Just FFalse
+termToF (LD.Variable "true") functionsWithInputsAndOutputs  = Just FTrue
+termToF (LD.Variable "false") functionsWithInputsAndOutputs = Just FFalse
 termToF _ _ = Nothing
 
-termToE :: LD.Expression -> [(String, String)] -> Maybe E
+termToE :: LD.Expression -> [(String, ([String], String))] -> Maybe E
 -- Symbols/Literals
-termToE (LD.Variable "true")  functionsWithOutputs = Nothing -- These should be parsed to F
-termToE (LD.Variable "false") functionsWithOutputs = Nothing -- These should be parsed to F
-termToE (LD.Variable var) functionsWithOutputs    =
-  if length var <= 3 && "pi" `isPrefixOf` var
-    then Just Pi
-    else Just $ Var var
-termToE (LD.Number   num) functionsWithOutputs    = Just $ Lit num
+termToE (LD.Variable "true")  functionsWithInputsAndOutputs = Nothing -- These should be parsed to F
+termToE (LD.Variable "false") functionsWithInputsAndOutputs = Nothing -- These should be parsed to F
+termToE (LD.Variable var) functionsWithInputsAndOutputs = Just $ Var var
+termToE (LD.Number   num) functionsWithInputsAndOutputs    = Just $ Lit num
 -- one param functions
-termToE (LD.Application (LD.Variable operator) [op]) functionsWithOutputs =
-  case termToE op functionsWithOutputs of
+termToE (LD.Application (LD.Variable operator) [op]) functionsWithInputsAndOutputs =
+  case termToE op functionsWithInputsAndOutputs of
     Nothing -> Nothing
     Just e -> case operator of
-      "abs"             -> Just $ EUnOp Abs e -- Haven't seen this, but added
-      "abs1"            -> Just $ EUnOp Abs e -- Seems to be real version of Abs
-      "sin"             -> Just $ EUnOp Sin e
-      "sin1"            -> Just $ EUnOp Sin e
-      "cos"             -> Just $ EUnOp Cos e
-      "cos1"            -> Just $ EUnOp Cos e
-      "sqrt"            -> Just $ EUnOp Sqrt e
-      "sqrt1"           -> Just $ EUnOp Sqrt e
+      n
+        | (n =~ "^abs$|^abs[0-9]+$" :: Bool)   -> deriveTypeForOneArgFunctions n (EUnOp Abs) e
+        | (n =~ "^sin$|^sin[0-9]+$" :: Bool)   -> deriveTypeForOneArgFunctions n (EUnOp Sin) e
+        | (n =~ "^cos$|^cos[0-9]+$" :: Bool)   -> deriveTypeForOneArgFunctions n (EUnOp Cos) e
+        | (n =~ "^sqrt$|^sqrt[0-9]+$" :: Bool) -> deriveTypeForOneArgFunctions n (EUnOp Sqrt) e
       "-"               -> Just $ EUnOp Negate e
       -- SPARK Reals functions
       "from_int"        -> Just e
@@ -244,56 +252,99 @@ termToE (LD.Application (LD.Variable operator) [op]) functionsWithOutputs =
       "fp.isIntegral32" -> Nothing
       "fp.isIntegral64" -> Nothing
       _                 -> Nothing
--- Why3 round function
-termToE (LD.Application (LD.Variable "round") [mode, operand]) functionsWithOutputs =
-  case (parseRoundingMode mode, termToE operand functionsWithOutputs) of
-    (Just roundingMode, Just e) -> Just $ Float roundingMode e
-    (_, _) -> Nothing
--- to_int/from_int float functions
-termToE (LD.Application (LD.Variable "fp.roundToIntegral") [mode, operand]) functionsWithOutputs =
-  case (parseRoundingMode mode, termToE operand functionsWithOutputs) of
-    (Just roundingMode, Just e) -> Just $ RoundToInteger roundingMode e
-    (_, _) -> Nothing
-termToE (LD.Application (LD.Variable "to_int") [mode, operand]) functionsWithOutputs = termToE (LD.Application (LD.Variable "fp.roundToIntegral") [mode, operand]) functionsWithOutputs
-termToE (LD.Application (LD.Variable "to_int1") [mode, operand]) functionsWithOutputs = termToE (LD.Application (LD.Variable "fp.roundToIntegral") [mode, operand]) functionsWithOutputs
-termToE (LD.Application (LD.Variable "of_int") [mode, operand]) functionsWithOutputs = -- FIXME: Change these to match with prefix
-  case (parseRoundingMode mode, termToE operand functionsWithOutputs) of
+  where
+    deriveTypeForOneArgFunctions :: String -> (E -> E) -> E -> Maybe E
+    deriveTypeForOneArgFunctions functionName functionAsExpression functionArg =
+      -- case lookup functionName functionsWithInputsAndOutputs of
+        -- Just ([inputType], outputType) ->
+      let
+        (mInputTypes, mOutputType) = unzip $ lookup functionName functionsWithInputsAndOutputs
+          -- case lookup functionName functionsWithInputsAndOutputs of
+          --   Just (inputTypes, outputType) -> (Just inputTypes, Just outputType)
+          --   Nothing -> (Nothing, Nothing)
+
+        newFunctionArg = functionArg
+          -- case mInputTypes of
+          --   Just [inputType] ->
+          --     case inputType of
+          --       -- "Float32" -> Float32 RNE functionArg
+          --       -- "Float64" -> Float64 RNE functionArg
+          --   _ -> functionArg -- Do not deal with multiple param args for one param functions. TODO: Check if these can occur, i.e. something like RoundingMode Float32
+            
+        mNewFunctionAsExpression =
+          case mOutputType of
+            Just outputType ->
+              case outputType of
+                -- "Float32" -> Float32 RNE . functionAsExpression -- TODO: Make these Nothing if we can't deal with them
+                -- "Float64" -> Float64 RNE . functionAsExpression -- TODO: Make these Nothing if we can't deal with them
+                "Real" -> Just functionAsExpression --FIXME: Should match on other possible names. Real/real Int/int/integer, etc. I've only seen these alt names in function definitions/axioms, not assertions, but would still be more safe.
+                "Int" -> Just functionAsExpression -- FIXME: Round here?
+                _ -> Nothing -- These should be floats, which we cannot deal with for now
+            Nothing -> Nothing
+      in
+        case mNewFunctionAsExpression of
+          Just newFunctionAsExpression -> Just $ newFunctionAsExpression newFunctionArg
+          Nothing -> Nothing
+        -- Nothing -> functionAsExpression functionArg
+
+-- two param functions 
+-- params are either two different E types, or one param is a rounding mode and another is the arg
+termToE (LD.Application (LD.Variable operator) [op1, op2]) functionsWithInputsAndOutputs =
+  case (parseRoundingMode op1, termToE op2 functionsWithInputsAndOutputs) of
     (Just roundingMode, Just e) ->
-      case lookup "of_int" functionsWithOutputs of
-        Just outputType ->
-          if outputType `elem` ["Float32", "single"] then Just $ Float32 roundingMode e else
-          if outputType `elem` ["Float64", "double"] then Just $ Float64 roundingMode e else Nothing
-        Nothing -> Nothing
-    (_, _) -> Nothing
-termToE (LD.Application (LD.Variable "of_int1") [mode, operand]) functionsWithOutputs =
-  case (parseRoundingMode mode, termToE operand functionsWithOutputs) of
-    (Just roundingMode, Just e) ->
-      case lookup "of_int" functionsWithOutputs of
-        Just outputType ->
-          if outputType `elem` ["Float32", "single"] then Just $ Float32 roundingMode e else
-          if outputType `elem` ["Float64", "double"] then Just $ Float64 roundingMode e else Nothing
-        Nothing -> Nothing
-    (_, _) -> Nothing
--- two param functions where op1 and op2 can be parsed to the E type.
--- Functions with two params which need special handling (i.e. round) should be
--- placed before here
-termToE (LD.Application (LD.Variable operator) [op1, op2]) functionsWithOutputs =
-  case (termToE op1 functionsWithOutputs, termToE op2 functionsWithOutputs) of
-    (Just e1, Just e2) ->
       case operator of
         n
-          -- "o..." functions are from SPARK Reals
-          | n `elem` ["+", "oadd", "oadd__logic"]           -> Just $ EBinOp Add e1 e2
-          | n `elem` ["-", "osubtract", "osubtract__logic"] -> Just $ EBinOp Sub e1 e2
-          | n `elem` ["*", "omultiply", "omultiply__logic"] -> Just $ EBinOp Mul e1 e2
-          | n `elem` ["/", "odivide", "odivide__logic"]     -> Just $ EBinOp Div e1 e2
-          | "pow" `isPrefixOf` n                            -> Just $ EBinOp Pow e1 e2
-          | "mod" `isPrefixOf` n                            -> Just $ EBinOp Mod e1 e2
-        _                                                   -> Nothing
-    (_, _) -> Nothing
+          | (n =~ "^round$|^round[0-9]+$" :: Bool)   -> Just $ Float roundingMode e
+          | (n =~ "^to_int$|^to_int[0-9]+$" :: Bool) -> Just $ RoundToInteger roundingMode e
+          | (n =~ "^of_int$|^of_int[0-9]+$" :: Bool) -> 
+            case lookup n functionsWithInputsAndOutputs of
+              Just (_, outputType) ->
+                case outputType of
+                  o
+                    | o `elem` ["Float32", "single"] -> Just $ Float32 roundingMode e
+                    | o `elem` ["Float64", "double"] -> Just $ Float64 roundingMode e
+                  _ -> Nothing
+              _ -> Nothing
+        "fp.roundToIntegral" -> Just $ RoundToInteger roundingMode e
+        _ -> Nothing
+    _ ->
+      case (termToE op1 functionsWithInputsAndOutputs, termToE op2 functionsWithInputsAndOutputs) of
+        (Just e1, Just e2) ->
+          case operator of
+            n
+              -- "o..." functions are from SPARK Reals
+              | n `elem` ["+", "oadd", "oadd__logic"]                    -> Just $ EBinOp Add e1 e2
+              | n `elem` ["-", "osubtract", "osubtract__logic"]          -> Just $ EBinOp Sub e1 e2
+              | n `elem` ["*", "omultiply", "omultiply__logic"]          -> Just $ EBinOp Mul e1 e2
+              | n `elem` ["/", "odivide", "odivide__logic"]              -> Just $ EBinOp Div e1 e2
+              | (n =~ "^pow$|^pow[0-9]+$|^power$|^power[0-9]+$" :: Bool) ->
+                case lookup n functionsWithInputsAndOutputs of
+                  Just (["Real", "Real"], "Real") -> Just $ EBinOp Pow e1 e2
+                  Just ([input1, "Int"], output) ->
+                    let 
+                      mExactPowExpression =
+                        if input1 == "Int" || input1 == "Real" 
+                          then case e2 of
+                            Lit l2 -> if denominator l2 == 1.0 then Just $ PowI e1 (numerator l2) else Just $ EBinOp Pow e1 e2
+                            _      -> Just $ EBinOp Pow e1 e2
+                          else Nothing
+                    in case mExactPowExpression of
+                      Just exactPowExpression -> case output of
+                        "Real" -> Just exactPowExpression
+                        "Int"  -> Just $ RoundToInteger RNE exactPowExpression
+                        _      -> Nothing
+                      Nothing -> Nothing
+                  _ -> Nothing
+              | (n =~ "^mod$|^mod[0-9]+$" :: Bool)                       ->
+                case lookup n functionsWithInputsAndOutputs of
+                  Just (["Real", "Real"], "Real") -> Just $ EBinOp Mod e1 e2
+                  Just (["Int", "Int"], "Int") -> Just $ RoundToInteger RNE $ EBinOp Mod e1 e2 --TODO: If this occurs, might be worth implementing Int Mod
+                  _ -> Nothing
+            _                                                            -> Nothing
+        (_, _) -> Nothing
 
 -- Float bits to Rational
-termToE (LD.Application (LD.Variable "fp") [LD.Variable sSign, LD.Variable sExponent, LD.Variable sMantissa]) functionsWithOutputs =
+termToE (LD.Application (LD.Variable "fp") [LD.Variable sSign, LD.Variable sExponent, LD.Variable sMantissa]) functionsWithInputsAndOutputs =
   let
     bSign     = drop 2 sSign
     bExponent = drop 2 sExponent
@@ -320,18 +371,20 @@ termToE (LD.Application (LD.Variable "fp") [LD.Variable sSign, LD.Variable sExpo
     if all (`elem` "01") bFull
       then
         case length bFull of
-          32 -> Just $ Lit $ toRational $ runGet getFloatbe bsFloat  -- Check if finite
-          64 -> Just $ Lit $ toRational $ runGet getDoublebe bsFloat -- Check if finite
+          32 -> Just $ Lit $ toRational $ runGet getFloatbe bsFloat 
+          64 -> Just $ Lit $ toRational $ runGet getDoublebe bsFloat
+          -- 32 -> Just $ Float32 RNE $ Lit $ toRational $ runGet getFloatbe bsFloat 
+          -- 64 -> Just $ Float64 RNE $ Lit $ toRational $ runGet getDoublebe bsFloat
           _  -> Nothing
       else Nothing
 
 -- Float functions, three params. Other three param functions should be placed before here
-termToE (LD.Application (LD.Variable operator) [roundingMode, op1, op2]) functionsWithOutputs =
+termToE (LD.Application (LD.Variable operator) [roundingMode, op1, op2]) functionsWithInputsAndOutputs =
   -- case operator of
   --   -- SPARK Reals
   --   "fp.to_real" -> Nothing 
   --   _ -> -- Known ops
-  case (termToE op1 functionsWithOutputs, termToE op2 functionsWithOutputs) of
+  case (termToE op1 functionsWithInputsAndOutputs, termToE op2 functionsWithInputsAndOutputs) of
     (Just e1, Just e2) ->
       case parseRoundingMode roundingMode of -- Floating-point ops
         Just mode ->
@@ -345,7 +398,7 @@ termToE (LD.Application (LD.Variable operator) [roundingMode, op1, op2]) functio
     (_, _) -> Nothing
 termToE _ _ = Nothing
 
-termsToF :: [LD.Expression] -> [(String, String)] -> [F]
+termsToF :: [LD.Expression] -> [(String, ([String], String))] -> [F]
 termsToF es fs = mapMaybe (`termToF` fs) es
 
 determineFloatTypeE :: E -> [(String, String)] -> Maybe E
@@ -391,8 +444,15 @@ determineFloatTypeE (RoundToInteger r e) varTypeMap = case determineFloatTypeE e
                                                         Just p -> Just $ RoundToInteger r p
                                                         Nothing -> Nothing
 determineFloatTypeE Pi                _           = Just Pi
-determineFloatTypeE (Var v)           _           = Just (Var v)
-determineFloatTypeE (Lit n)           _           = Just (Lit n)
+determineFloatTypeE (Var v)           varTypeMap  = case lookup v varTypeMap of 
+                                                      Just variableType ->
+                                                        case variableType of
+                                                          -- t
+                                                          --   | t `elem` ["Float32", "single"] -> Just $ Float32 RNE $ Var v
+                                                          --   | t `elem` ["Float64", "double"] -> Just $ Float64 RNE $ Var v
+                                                          _ -> Just $ Var v -- It is safe to treat integers and rationals as reals
+                                                      _ -> Just $ Var v
+determineFloatTypeE (Lit n)           _           = Just $ Lit n
 
 -- |Tries to determine whether a Float operation is single or double precision
 -- by searching for the type of all variables appearing in the function. If the
@@ -543,10 +603,14 @@ processVC parsedExpressions Why3 =
         LD.Application (LD.Variable "not") [operand] -> Just operand -- Goals in SMT look like this
         _ -> Nothing
 
-    contextF            = mapMaybe (`determineFloatTypeF` variablesWithTypes) $ termsToF context functionsWithOutputs
-    mGoalF              = maybe Nothing (`determineFloatTypeF` variablesWithTypes) $ maybe Nothing (`termToF` functionsWithOutputs) mGoal
+    -- Convert SMT parsed expressions to F type
+    -- For every converted expression, attempt to infer the types for floating-point operations
+    -- Will also round floating-point variables wherever they occur
+    contextF            = mapMaybe (`determineFloatTypeF` variablesWithTypes) $ termsToF context functionsWithInputsAndOutputs
+    mGoalF              = maybe Nothing (`determineFloatTypeF` variablesWithTypes) $ maybe Nothing (`termToF` functionsWithInputsAndOutputs) mGoal
+    
     variablesWithTypes  = findVariables parsedExpressions
-    functionsWithOutputs = findFunctionOutputs parsedExpressions
+    functionsWithInputsAndOutputs = findFunctionInputsAndOutputs parsedExpressions
 
     foldContextF :: [F] -> F
     foldContextF []       = error "processVC - foldContextF: Empty list given"
@@ -557,11 +621,12 @@ processVC parsedExpressions CNF = if any hasFloatF assertionsF then Nothing else
     pair a b = (a, b)
 
     assertions = findAssertions parsedExpressions
-    mAssertionsF = map (`termToF` variablesWithTypes) assertions
+    mAssertionsF = map (`termToF` functionsWithInputsAndOutputs) assertions
 
     assertionsF = foldAssertionsF mAssertionsF
 
     variablesWithTypes = findVariables parsedExpressions
+    functionsWithInputsAndOutputs = findFunctionInputsAndOutputs parsedExpressions
 
     foldAssertionsF :: [Maybe F] -> Maybe F
     foldAssertionsF []             = Nothing
@@ -583,7 +648,7 @@ deriveVCRanges vc varsWithTypes mode =
     else
       case simplifiedF of
         FConn Impl contextCNF goal ->
-          if fContainsVars underivableVariables goal --FIXME: check formulas containing dependent variables
+          if fContainsVars underivableVariables goal
             then Nothing
             else
               let
@@ -602,7 +667,7 @@ deriveVCRanges vc varsWithTypes mode =
                     aux f1 vars = if fContainsVars vars f1 then findVariablesInFormula f1 else []
 
                 relevantVars   = findDependentVars contextCNF varsInGoal
-                irrelevantVars = map fst $ filter (\(v, _) -> v `notElem` relevantVars) derivedVarMap --FIXME: Stop this filtering
+                -- irrelevantVars = map fst $ filter (\(v, _) -> v `notElem` relevantVars) derivedVarMap 
 
                 relevantDerivedVarMap = filter (\(v, _) -> v `elem` relevantVars) derivedVarMap
 
@@ -625,12 +690,35 @@ deriveVCRanges vc varsWithTypes mode =
   where
     integerVariables = findIntegerVariables varsWithTypes
 
-    (simplifiedF, derivedVarMap, underivableVariables) = deriveBoundsAndSimplify vc isModeCNF
+    (simplifiedFUnchecked, derivedVarMapUnchecked, underivableVariables) = deriveBoundsAndSimplify vc isModeCNF
+
+    (piVars, derivedVarMap) = findRealPiVars derivedVarMapUnchecked
+ 
+    simplifiedF = substVarsWithPi piVars simplifiedFUnchecked
 
     isModeCNF =
       case mode of
         Why3 -> False
         CNF  -> True
+    
+    -- TODO: Would be good to include a warning when this happens
+    -- Could also make this an option
+    findRealPiVars :: VarMap -> ([String], VarMap)
+    findRealPiVars [] = ([], [])
+    findRealPiVars (varWithBounds@(var, (l, r)) : vars) =
+      if 
+        -- If variable is pi or pi# where # is a number
+        (var =~ "^pi$|^pi[0-9]+$" :: Bool) &&
+        -- And bounds are equal or better than the bounds given by Why3 for Pi
+        l >= (7074237752028440.0 / 2251799813685248.0) && r <= (7074237752028441.0 / 2251799813685248.0) &&
+        -- And the type of the variable is Real
+        (lookup var varsWithTypes == Just "Real") 
+          then (\(foundPiVars, varMapWithoutPi) -> ((var : foundPiVars), varMapWithoutPi))           $ findRealPiVars vars
+          else (\(foundPiVars, varMapWithoutPi) -> (foundPiVars, (varWithBounds : varMapWithoutPi))) $ findRealPiVars vars
+    
+    substVarsWithPi :: [String] -> F -> F
+    substVarsWithPi [] f = f
+    substVarsWithPi (v : _) f = substVarFWithE v f Pi
 
 eContainsVars :: [String] -> E -> Bool
 eContainsVars vars (Var var)        = var `elem` vars
@@ -680,7 +768,6 @@ filterOutDuplicateVarEqualities ((v, e) : vs) =
       let shortestVarEquality = head $ sortBy (\(_, e1) (_, e2) -> P.compare (lengthE e1) (lengthE e2)) $ (v, e) : matchingEqualities
       in shortestVarEquality : filterOutDuplicateVarEqualities otherEqualities
 
--- FIXME: Filter out mismatching var types?
 substAllEqualities :: F -> F
 substAllEqualities = recursivelySubstVars
   where
@@ -714,9 +801,8 @@ eliminateFloatsAndConvertVCToECNF vc typedVarMap fptaylorPath = -- TODO: Save re
   where
     varMap = typedVarMapToVarMap typedVarMap
 
---FIXME: When parsing FP operations and F->R ops, need to put all args in Float
--- e.g. fp.add x + y currently becomes Float (x + y) but should be Float(Float(x) + Float(y))
--- Rf(1.0) is currently parsed to 1.0 but should be Float32(1.0)
+--FIXME: Rf(0.1) is currently parsed to ~0.1 where ~0.1 is the closest floating-point number to 0.1
+--To resolve this, we need to encourage users to do something like Ri(1) / Ri(10)
 parseVCToECNF :: FilePath -> ParsingMode -> FilePath -> IO (Maybe ([[ESafe]], TypedVarMap))
 parseVCToECNF filePath mode fptaylorPath = 
   do
