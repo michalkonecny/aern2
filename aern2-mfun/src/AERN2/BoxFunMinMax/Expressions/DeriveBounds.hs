@@ -238,13 +238,13 @@ evalF_comparisons intervals = eC
 evalE_Rational :: 
   VarBoundMap -> E -> (Maybe Rational, Maybe Rational)
 evalE_Rational intervals =
-  rationalBounds . evalE (cn . mpBallP p) intervalsMPBall
+  rationalBounds . evalE (cn . mpBallP p) intervalsMPBall p
   where
   intervalsMPBall = Map.map toMPBall intervals
   toMPBall :: (Maybe Rational, Maybe Rational) -> CN MPBall
   toMPBall (Just l, Just r) = cn $ (mpBallP p l) `hullMPBall` (mpBallP p r) 
   toMPBall _ = CN.noValueNumErrorCertain $ CN.NumError "no bounds"
-  p = prec 100
+  p = prec 50
   rationalBounds :: CN MPBall -> (Maybe Rational, Maybe Rational)
   rationalBounds cnBall =
     case CN.toEither cnBall of
@@ -281,8 +281,8 @@ evalE ::
   ) 
   =>
   (Rational -> v) ->
-  Map.Map VarName v -> E -> v
-evalE fromR (varMap :: Map.Map VarName v) = evalVM
+  Map.Map VarName v -> Precision -> E -> v
+evalE fromR (varMap :: Map.Map VarName v) p = evalVM
   where
   evalVM :: E -> v
   evalVM (EBinOp op e1 e2) = 
@@ -307,7 +307,7 @@ evalE fromR (varMap :: Map.Map VarName v) = evalVM
       Nothing -> 
         error ("evalE: varMap does not contain variable " ++ show v)
       Just r -> r
-  evalVM Pi      = cn (piBallP (prec 1000))
+  evalVM Pi      = cn (piBallP p)
   evalVM (Lit i) = (fromR i)
   evalVM (PowI e i) = evalVM e  ^ i
   evalVM (Float32 _ e) = (onePlusMinusEpsilon * (evalVM e)) + zeroPlusMinusEpsilon
