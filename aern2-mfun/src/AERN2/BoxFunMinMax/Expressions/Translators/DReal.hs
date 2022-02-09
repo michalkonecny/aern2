@@ -37,7 +37,7 @@ expressionToSMT (EBinOp op e1 e2) =
     Min -> "(min " ++ expressionToSMT e1 ++ " " ++ expressionToSMT e2 ++ ")"
     Max -> "(max " ++ expressionToSMT e1 ++ " " ++ expressionToSMT e2 ++ ")"
     Pow -> "(^ "  ++ expressionToSMT e1 ++ " " ++ expressionToSMT e2 ++ ")"
-    Mod -> error "Modulo division is not supported in dReal"
+    Mod -> "(mod "  ++ expressionToSMT e1 ++ " " ++ expressionToSMT e2 ++ ")" --TODO: Warn dreal users
 expressionToSMT (EUnOp op e) =
   case op of
     Sqrt -> "(sqrt " ++ expressionToSMT e ++ ")"
@@ -53,10 +53,38 @@ expressionToSMT (Lit e) =
     _ ->
       "(/ " ++ show (numerator e) ++ " " ++ show (denominator e) ++ ")"
 expressionToSMT Pi = "(* 4.0 (atan 1.0))" -- Equivalent to pi
-expressionToSMT (RoundToInteger _ _) = error "dReal translator does not support rounding to integer" -- TODO: Check if there is rounding in dReal, most likely not
-expressionToSMT (Float _ _)   = error "dReal translator does not support Floats"
-expressionToSMT (Float32 _ _) = error "dReal translator does not support Floats"
-expressionToSMT (Float64 _ _) = error "dReal translator does not support Floats"
+expressionToSMT (RoundToInteger mode e) = 
+  -- TODO: Warn about non-standard SMT
+  case mode of
+    RNE -> "(to_int_rne " ++ expressionToSMT e ++ ")"
+    RTP -> "(to_int_rtp " ++ expressionToSMT e ++ ")"
+    RTN -> "(to_int_rtn " ++ expressionToSMT e ++ ")"
+    RTZ -> "(to_int_rtz " ++ expressionToSMT e ++ ")"
+    RNA -> "(to_int_rna " ++ expressionToSMT e ++ ")"
+expressionToSMT (Float mode e)   = error "Float with unknown precision not supported"
+  -- TODO: Warn about non-standard SMT
+--   case mode of
+--     RNE -> "(float_rne " ++ expressionToSMT e ++ ")"
+--     RTP -> "(float_rtp " ++ expressionToSMT e ++ ")"
+--     RTN -> "(float_rtn " ++ expressionToSMT e ++ ")"
+--     RTZ -> "(float_rtz " ++ expressionToSMT e ++ ")"
+--     RNA -> "(float_rne " ++ expressionToSMT e ++ ")"
+expressionToSMT (Float32 mode e) =
+  -- TODO: Warn about non-standard SMT
+  case mode of
+    RNE -> "(float32_rne " ++ expressionToSMT e ++ ")"
+    RTP -> "(float32_rtp " ++ expressionToSMT e ++ ")"
+    RTN -> "(float32_rtn " ++ expressionToSMT e ++ ")"
+    RTZ -> "(float32_rtz " ++ expressionToSMT e ++ ")"
+    RNA -> "(float32_rne " ++ expressionToSMT e ++ ")"
+expressionToSMT (Float64 mode e) =
+  -- TODO: Warn about non-standard SMT
+  case mode of
+    RNE -> "(float64_rne " ++ expressionToSMT e ++ ")"
+    RTP -> "(float64_rtp " ++ expressionToSMT e ++ ")"
+    RTN -> "(float64_rtn " ++ expressionToSMT e ++ ")"
+    RTZ -> "(float64_rtz " ++ expressionToSMT e ++ ")"
+    RNA -> "(float64_rne " ++ expressionToSMT e ++ ")"
 
 formulaAndVarMapToDReal :: F -> TypedVarMap -> String
 formulaAndVarMapToDReal f typedVarMap =
