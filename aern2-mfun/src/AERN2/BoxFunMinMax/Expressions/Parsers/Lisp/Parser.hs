@@ -10,7 +10,7 @@ import Prelude
 import Util (readRational)
 -- Constants.
 symbolCharacters :: String
-symbolCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_!?-+*/%<>#.="
+symbolCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_!?-+*/%<>#.=^"
 
 numberCharacters :: String
 numberCharacters = "0123456789."
