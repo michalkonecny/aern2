@@ -50,7 +50,7 @@ runMetiTarski (ProverOptions filePath metiTarskiPath metiTarskiLibraries) =
     case mFptaylorPath of
       Nothing -> error "fptaylor executable not in path"
       Just fptaylorPath -> do
-        mMetiTarskiInput <- parseVCToSolver filePath Why3 fptaylorPath formulaAndVarMapToMetiTarski False
+        mMetiTarskiInput <- parseVCToSolver filePath fptaylorPath formulaAndVarMapToMetiTarski False
         case mMetiTarskiInput of
           Just metiTarskiInput -> do
             (exitCode, output, errDetails) <- withSystemTempFile "metitarski.tptp" handleMetiTarskiFile

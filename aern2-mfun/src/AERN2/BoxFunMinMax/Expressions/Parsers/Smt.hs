@@ -561,148 +561,44 @@ parseRoundingMode _ = Nothing
 -- 
 -- If the parsing mode is CNF, parse all assertions into a CNF. If any assertion cannot be parsed, return Nothing.
 -- If any assertion contains Floats, return Nothing.
-processVC  :: [LD.Expression] -> ParsingMode -> Maybe (F, [(String, String)])
-processVC parsedExpressions Why3 =
-  case mGoalF of
-    Just goalF  ->
-      if null contextF
-        then Just (goalF, variablesWithTypes)
-        else
-          Just (FConn Impl (foldContextF filteredContextF) goalF, variablesWithTypes)
-          where
-            filteredContextF =
-              filter
-              (fContainsVars relevantVars)
-              contextF
-
-            relevantVars = findDependentVars contextF goalVars
-
-            goalVars = sort $ findVariablesInFormula goalF
-
-            findDependentVars :: [F] -> [String] -> [String]
-            findDependentVars [] varsToKeep = varsToKeep
-            findDependentVars fs varsToKeep =
-              if varsToKeep == foundVars
-                then varsToKeep
-                else findDependentVars fs foundVars
-              where
-                foundVars = sort . nub $ findVars fs varsToKeep
-
-                findVars :: [F] -> [String] -> [String]
-                findVars [] vs = vs
-                findVars (x : xs) vs =
-                  if fContainsVars vs x
-                    then findVars xs $ vs ++ findVariablesInFormula x
-                    else findVars xs vs
-    Nothing     -> Nothing
+processVC :: [LD.Expression] -> Maybe (F, [(String, String)])
+processVC parsedExpressions =
+  Just (foldAssertionsF assertionsF, variablesWithTypes)
   where
-    (goalWithNot, context) = (takeGoalFromAssertions . findAssertions) parsedExpressions
+    assertions  = findAssertions parsedExpressions
+    assertionsF = mapMaybe (`determineFloatTypeF` variablesWithTypes) $ termsToF assertions functionsWithInputsAndOutputs
 
-    mGoal =
-      case goalWithNot of
-        LD.Application (LD.Variable "not") [operand] -> Just operand -- Goals in SMT look like this
-        _ -> Nothing
-
-    -- Convert SMT parsed expressions to F type
-    -- For every converted expression, attempt to infer the types for floating-point operations
-    -- Will also round floating-point variables wherever they occur
-    contextF            = mapMaybe (`determineFloatTypeF` variablesWithTypes) $ termsToF context functionsWithInputsAndOutputs
-    mGoalF              = maybe Nothing (`determineFloatTypeF` variablesWithTypes) $ maybe Nothing (`termToF` functionsWithInputsAndOutputs) mGoal
-    
     variablesWithTypes  = findVariables parsedExpressions
     functionsWithInputsAndOutputs = findFunctionInputsAndOutputs parsedExpressions
 
-    foldContextF :: [F] -> F
-    foldContextF []       = error "processVC - foldContextF: Empty list given"
-    foldContextF [f]      = f
-    foldContextF (f : fs) = FConn And f (foldContextF fs)
-processVC parsedExpressions CNF = if any hasFloatF assertionsF then Nothing else fmap (`pair` variablesWithTypes) assertionsF
-  where
-    pair a b = (a, b)
 
-    assertions = findAssertions parsedExpressions
-    mAssertionsF = map (`termToF` functionsWithInputsAndOutputs) assertions
 
-    assertionsF = foldAssertionsF mAssertionsF
-
-    variablesWithTypes = findVariables parsedExpressions
-    functionsWithInputsAndOutputs = findFunctionInputsAndOutputs parsedExpressions
-
-    foldAssertionsF :: [Maybe F] -> Maybe F
-    foldAssertionsF []             = Nothing
-    foldAssertionsF [f]            = f
-    foldAssertionsF (Nothing : _)  = Nothing
-    foldAssertionsF (Just f : mfs) =
-      case foldAssertionsF mfs of
-        Just fs -> Just $ FConn And f fs
-        Nothing -> Nothing
-    -- contextFAnd = foldl
+    foldAssertionsF :: [F] -> F
+    foldAssertionsF []       = error "processVC - foldAssertionsF: Empty list given"
+    foldAssertionsF [f]      = f
+    foldAssertionsF (f : fs) = FConn And f (foldAssertionsF fs)
 
 -- |Derive ranges for a VC (Implication where a CNF implies a goal)
 -- Remove anything which refers to a variable for which we cannot derive ranges
 -- If the goal contains underivable variables, return Nothing
-deriveVCRanges :: F -> [(String, String)] -> ParsingMode -> Maybe (F, TypedVarMap)
-deriveVCRanges vc varsWithTypes mode =
-  if isModeCNF && not (null underivableVariables)
-    then Nothing -- We cannot deal with a CNF if any variable is underivable
-    else
-      case simplifiedF of
-        FConn Impl contextCNF goal ->
-          if fContainsVars underivableVariables goal
-            then Nothing
-            else
-              let
-                varsInGoal = sort $ findVariablesInFormula goal
-
-                findDependentVars :: F -> [String] -> [String]
-                findDependentVars f dependingVars =
-                  if dependingVars == foundVarsWithDependingVars
-                    then foundVarsWithDependingVars
-                    else findDependentVars f foundVarsWithDependingVars
-                  where
-                    foundVarsWithDependingVars = sort . nub $ dependingVars ++ foundVars
-                    foundVars = aux f dependingVars
-
-                    aux (FConn And f1 f2) vars = findDependentVars f1 vars ++ findDependentVars f2 vars
-                    aux f1 vars = if fContainsVars vars f1 then findVariablesInFormula f1 else []
-
-                relevantVars   = findDependentVars contextCNF varsInGoal
-                -- irrelevantVars = map fst $ filter (\(v, _) -> v `notElem` relevantVars) derivedVarMap 
-
-                relevantDerivedVarMap = filter (\(v, _) -> v `elem` relevantVars) derivedVarMap
-
-                filterCNF (FConn And f1 f2) varsToKeep =
-                  case (filterCNF f1 varsToKeep, filterCNF f2 varsToKeep) of
-                    (Just filteredF1, Just filteredF2) -> Just (FConn And filteredF1 filteredF2)
-                    (Just filteredF1, _)               -> Just filteredF1
-                    (_, Just filteredF2)               -> Just filteredF2
-                    (Nothing, Nothing)                 -> Nothing
-                -- filterCNF f varsToKeep = if fContainsVars varsToKeep f then Just f else Nothing
-                filterCNF f varsToKeep = if fContainsVars varsToKeep f && not (fContainsVars underivableVariables f) then Just f else Nothing
-              in
-              case filterCNF contextCNF (map fst relevantDerivedVarMap) of
-                Just filteredContext  -> Just (FConn Impl filteredContext goal, unsafeVarMapToTypedVarMap relevantDerivedVarMap integerVariables)
-                Nothing               -> Just                            (goal, unsafeVarMapToTypedVarMap relevantDerivedVarMap integerVariables)
-        goal ->
-          if fContainsVars underivableVariables goal
-            then Nothing
-            else Just (goal, unsafeVarMapToTypedVarMap derivedVarMap integerVariables)
+deriveVCRanges :: F -> [(String, String)] -> Maybe (F, TypedVarMap)
+deriveVCRanges vc varsWithTypes =
+  case filterOutVars simplifiedF underivableVariables False of
+    Just filteredF -> Just (filteredF, unsafeVarMapToTypedVarMap derivedVarMap integerVariables)
+    Nothing -> Nothing
   where
     integerVariables = findIntegerVariables varsWithTypes
 
-    (simplifiedFUnchecked, derivedVarMapUnchecked, underivableVariables) = deriveBoundsAndSimplify vc isModeCNF
+    (simplifiedFUnchecked, derivedVarMapUnchecked, underivableVariables) = deriveBoundsAndSimplify vc
 
     (piVars, derivedVarMap) = findRealPiVars derivedVarMapUnchecked
  
     simplifiedF = substVarsWithPi piVars simplifiedFUnchecked
 
-    isModeCNF =
-      case mode of
-        Why3 -> False
-        CNF  -> True
-    
     -- TODO: Would be good to include a warning when this happens
     -- Could also make this an option
+    -- First elem are the variables which can be assumed to be real pi
+    -- Second elem is the varMap without the real pi vars
     findRealPiVars :: VarMap -> ([String], VarMap)
     findRealPiVars [] = ([], [])
     findRealPiVars (varWithBounds@(var, (l, r)) : vars) =
@@ -719,6 +615,57 @@ deriveVCRanges vc varsWithTypes mode =
     substVarsWithPi :: [String] -> F -> F
     substVarsWithPi [] f = f
     substVarsWithPi (v : _) f = substVarFWithE v f Pi
+
+
+    -- |Safely filter our terms that contain underivable variables.
+    -- Need to preserve unsat terms, so we can safely remove x in FConn And x y if x contains underivable variables.
+    -- We cannot safely remove x from FConn Or x y if x contains underivable variables
+    -- (since x may be sat and y may be unsat, filtering out x would give an incorrect unsat result), so we remove the whole term
+    -- Reverse logic as appropriate when a term is negated
+    filterOutVars :: F -> [String] -> Bool -> Maybe F
+    filterOutVars (FConn And f1 f2) vars False =
+      case (filterOutVars f1 vars False, filterOutVars f2 vars False) of
+        (Just ff1, Just ff2) -> Just $ FConn And ff1 ff2
+        (Just ff1, _)        -> Just ff1
+        (_, Just ff2)        -> Just ff2
+        (_, _)               -> Nothing
+    filterOutVars (FConn Or f1 f2) vars False =
+      case (filterOutVars f1 vars False, filterOutVars f2 vars False) of
+        (Just ff1, Just ff2) -> Just $ FConn Or ff1 ff2
+        (_, _)               -> Nothing
+    filterOutVars (FConn Impl f1 f2) vars False =
+      case (filterOutVars f1 vars False, filterOutVars f2 vars False) of
+        (Just ff1, Just ff2) -> Just $ FConn Impl ff1 ff2
+        (_, _)               -> Nothing
+    filterOutVars (FConn And f1 f2) vars True =
+      case (filterOutVars f1 vars True, filterOutVars f2 vars True) of
+        (Just ff1, Just ff2) -> Just $ FConn And ff1 ff2
+        (_, _)               -> Nothing
+    filterOutVars (FConn Or f1 f2) vars True =
+      case (filterOutVars f1 vars True, filterOutVars f2 vars True) of
+        (Just ff1, Just ff2) -> Just $ FConn Or ff1 ff2
+        (Just ff1, _)        -> Just ff1
+        (_, Just ff2)        -> Just ff2
+        (_, _)               -> Nothing
+    filterOutVars (FConn Impl f1 f2) vars True =
+      case (filterOutVars f1 vars True, filterOutVars f2 vars True) of
+        (Just ff1, Just ff2) -> Just $ FConn Impl ff1 ff2
+        (Just ff1, _)        -> Just ff1
+        (_, Just ff2)        -> Just ff2
+        (_, _)               -> Nothing
+    filterOutVars (FConn Equiv f1 f2) vars isNegated = 
+      case (filterOutVars f1 vars isNegated, filterOutVars f2 vars isNegated) of
+        (Just ff1, Just ff2) -> Just $ FConn Equiv ff1 ff2
+        (_, _)               -> Nothing
+    filterOutVars (FNot f) vars isNegated = FNot <$> filterOutVars f vars (not isNegated)
+
+    filterOutVars (FComp op e1 e2) vars _isNegated =
+      if eContainsVars vars e1 || eContainsVars vars e2
+        then Nothing
+        else Just (FComp op e1 e2)
+    
+    filterOutVars FTrue  _ _ = Just FTrue
+    filterOutVars FFalse _ _ = Just FFalse
 
 eContainsVars :: [String] -> E -> Bool
 eContainsVars vars (Var var)        = var `elem` vars
@@ -801,45 +748,40 @@ eliminateFloatsAndConvertVCToECNF vc typedVarMap fptaylorPath = -- TODO: Save re
   where
     varMap = typedVarMapToVarMap typedVarMap
 
---FIXME: Rf(0.1) is currently parsed to ~0.1 where ~0.1 is the closest floating-point number to 0.1
---To resolve this, we need to encourage users to do something like Ri(1) / Ri(10)
-parseVCToECNF :: FilePath -> ParsingMode -> FilePath -> IO (Maybe ([[ESafe]], TypedVarMap))
-parseVCToECNF filePath mode fptaylorPath = 
+parseVCToECNF :: FilePath -> FilePath -> IO (Maybe ([[ESafe]], TypedVarMap))
+parseVCToECNF filePath fptaylorPath = 
   do
     parsedFile  <- parseSMT2 filePath
 
-    case processVC parsedFile mode of
+    case processVC parsedFile of
       Just (vc, varTypes) -> 
         let
           simplifiedVC = substAllEqualities (simplifyF vc)
-          mDerivedVCWithRanges = deriveVCRanges simplifiedVC varTypes mode
+          mDerivedVCWithRanges = deriveVCRanges simplifiedVC varTypes
         in
         case mDerivedVCWithRanges of
           Just (derivedVC, derivedRanges) ->
             do
-              vcWithoutFloatsAsECNF <- eliminateFloatsAndConvertVCToECNF (simplifyF derivedVC) derivedRanges fptaylorPath
+              vcWithoutFloatsAsECNF <- eliminateFloatsAndConvertVCToECNF (simplifyF (FNot derivedVC)) derivedRanges fptaylorPath ---TODO: Remove FNot, do this in lppaver exe
               return $ Just (simplifyESafeCNF vcWithoutFloatsAsECNF, derivedRanges)
           Nothing -> return Nothing
       Nothing -> return Nothing
 
-parseVCToSolver :: FilePath -> ParsingMode -> FilePath -> (F -> TypedVarMap -> String) -> Bool -> IO (Maybe String)
-parseVCToSolver filePath mode fptaylorPath proverTranslator proveContradiction =
+parseVCToSolver :: FilePath -> FilePath -> (F -> TypedVarMap -> String) -> Bool -> IO (Maybe String)
+parseVCToSolver filePath fptaylorPath proverTranslator proveContradiction =
   do
     parsedFile <- parseSMT2 filePath
     
-    case processVC parsedFile mode of
+    case processVC parsedFile of
       Just (vc, varTypes) ->
         let
           simplifiedVC = substAllEqualities (simplifyF vc)
-          mDerivedVCWithRanges = deriveVCRanges simplifiedVC varTypes mode
+          mDerivedVCWithRanges = deriveVCRanges simplifiedVC varTypes
         in
           case mDerivedVCWithRanges of
             Just (derivedVC, derivedRanges) ->
               do
                 vcWithoutFloats <- eliminateFloatsF derivedVC (typedVarMapToVarMap derivedRanges) True fptaylorPath
-                return $ Just (proverTranslator (if proveContradiction then (FNot vcWithoutFloats) else vcWithoutFloats) derivedRanges)
-                -- case vcWithoutFloats of -- Re-add not FIXME: add support for CNF
-                --   FConn Impl context goal -> return $ Just (formulaAndVarMapToDReal (FConn Impl context (FNot goal)) derivedRanges)
-                --   goal                    -> return $ Just (formulaAndVarMapToDReal                     (FNot goal)  derivedRanges)
+                return $ Just (proverTranslator (if proveContradiction then FNot vcWithoutFloats else vcWithoutFloats) derivedRanges)
             Nothing -> return Nothing
       Nothing -> return Nothing

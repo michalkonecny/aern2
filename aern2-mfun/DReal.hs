@@ -38,7 +38,7 @@ runDRealTranslator (ProverOptions filePath targetPath) =
     case mFptaylorPath of
       Nothing -> putStrLn "error - fptaylor executable not in path"
       Just fptaylorPath -> do
-        mDRealInput <- parseVCToSolver filePath Why3 fptaylorPath formulaAndVarMapToDReal True
+        mDRealInput <- parseVCToSolver filePath fptaylorPath formulaAndVarMapToDReal False
         case mDRealInput of
           Just dRealInput -> writeFile targetPath dRealInput
           Nothing         -> error "Issue generating input for dReal"

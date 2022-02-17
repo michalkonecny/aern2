@@ -42,7 +42,7 @@ runDReal (ProverOptions filePath dRealPath) =
     case mFptaylorPath of
       Nothing -> error "fptaylor executable not in path"
       Just fptaylorPath -> do
-        mdRealInput <- parseVCToSolver filePath Why3 fptaylorPath formulaAndVarMapToDReal True
+        mdRealInput <- parseVCToSolver filePath fptaylorPath formulaAndVarMapToDReal False
         case mdRealInput of
           Just dRealInput -> do
             (exitCode, output, errDetails) <- withSystemTempFile "dreal.smt2" handleDRealFile
