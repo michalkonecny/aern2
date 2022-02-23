@@ -38,7 +38,7 @@ runMetiTarskiTranslator (ProverOptions filePath targetPath) =
     case mFptaylorPath of
       Nothing -> putStrLn "error - fptaylor executable not in path"
       Just fptaylorPath -> do
-        mMetiTarskiInput <- parseVCToSolver filePath fptaylorPath formulaAndVarMapToMetiTarski False
+        mMetiTarskiInput <- parseVCToSolver filePath fptaylorPath formulaAndVarMapToMetiTarski True -- Negate the VC, MetiTarski does not give unsat, only sat or gave up, so make MetiTarski prove the contradiction
         case mMetiTarskiInput of
           Just metiTarskiInput -> writeFile targetPath metiTarskiInput
           Nothing         -> error "Issue generating input for MetiTarski"
