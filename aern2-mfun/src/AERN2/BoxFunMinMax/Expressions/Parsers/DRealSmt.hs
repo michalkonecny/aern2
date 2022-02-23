@@ -57,6 +57,7 @@ parseDRealVariables parsedExpressions = (parsedExpressions, [])
 termDRealToF :: LD.Expression -> Maybe F
 -- FConn
 termDRealToF (LD.Application (LD.Variable "and") [p1, p2]) = FConn And <$> termDRealToF p1 <*> termDRealToF p2
+-- termDRealToF (LD.Application (LD.Variable "or") [LD.Application (LD.Variable "not") [p1], p2])  = FConn Impl <$> termDRealToF p1 <*> termDRealToF p2
 termDRealToF (LD.Application (LD.Variable "or") [p1, p2])  = FConn Or <$> termDRealToF p1 <*> termDRealToF p2 --TODO: parse OR (NOT p1) p2 as impl? possible but is there any benefit?
 -- Special case for =
 termDRealToF (LD.Application (LD.Variable "=") [p1, p2])   = 
