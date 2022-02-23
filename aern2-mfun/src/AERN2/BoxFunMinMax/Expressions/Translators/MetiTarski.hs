@@ -49,7 +49,7 @@ expressionToTPTP (EUnOp op e) =
 expressionToTPTP (RoundToInteger m e) = 
   case m of
     RNE -> "round(" ++ expressionToTPTP e ++ ")"
-    RTP -> "ceiling(" ++ expressionToTPTP e ++ ")"
+    RTP -> error "Round Towards Ceiling not supported in TPTP" -- "ceiling(" ++ expressionToTPTP e ++ ")"
     RTN -> "floor(" ++ expressionToTPTP e ++ ")"
     RTZ -> error "Round Towards Zero not supported in TPTP"
     RNA -> error "Round Nearest Away not supported in TPTP"
