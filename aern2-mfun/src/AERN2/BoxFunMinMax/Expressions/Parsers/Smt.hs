@@ -30,6 +30,8 @@ import Debug.Trace
 import AERN2.BoxFunMinMax.Expressions.Translators.DReal (formulaAndVarMapToDReal)
 import Text.Regex.TDFA ( (=~) )
 import Data.Ratio
+import AERN2.BoxFunMinMax.Expressions.DeriveBounds
+import qualified Data.Map as M
 
 data ParsingMode = Why3 | CNF
 parser :: String -> [LD.Expression]
@@ -744,7 +746,7 @@ eliminateFloatsAndConvertVCToECNF :: F -> TypedVarMap -> FilePath-> IO [[ESafe]]
 eliminateFloatsAndConvertVCToECNF vc typedVarMap fptaylorPath = -- TODO: Save results from FPTaylor, then lookup
   do
     vcWithoutFloats <- eliminateFloatsF vc varMap True fptaylorPath 
-    return $ minMaxAbsEliminatorECNF $ fToECNF vcWithoutFloats
+    return $ minMaxAbsEliminatorECNF . fToECNF . simplifyF $ vcWithoutFloats
   where
     varMap = typedVarMapToVarMap typedVarMap
 
@@ -782,6 +784,8 @@ parseVCToSolver filePath fptaylorPath proverTranslator proveContradiction =
             Just (derivedVC, derivedRanges) ->
               do
                 vcWithoutFloats <- eliminateFloatsF derivedVC (typedVarMapToVarMap derivedRanges) True fptaylorPath
-                return $ Just (proverTranslator (if proveContradiction then FNot vcWithoutFloats else vcWithoutFloats) derivedRanges)
+                let derivedMap = M.fromList $ map (\(TypedVar (varName, (leftBound, rightBound)) _) -> (varName, (Just leftBound, Just rightBound))) derivedRanges
+                let simplifiedVCWithoutFloats = (simplifyF . evalF_comparisons derivedMap) vcWithoutFloats
+                return $ Just (proverTranslator (if proveContradiction then simplifyF (FNot simplifiedVCWithoutFloats) else simplifiedVCWithoutFloats) derivedRanges)
             Nothing -> return Nothing
       Nothing -> return Nothing
