@@ -8,6 +8,8 @@ import AERN2.BoxFunMinMax.Expressions.Type
 import Data.Ratio
 import System.IO.Unsafe (unsafePerformIO)
 import AERN2.BoxFunMinMax.VarMap (TypedVarInterval, TypedVarInterval(TypedVar), VarType (Real, Integer), TypedVarMap)
+import qualified Data.Scientific as Scientific
+import qualified Prelude as P
 
 formulaToSMT :: F -> Integer -> String
 formulaToSMT (FConn op f1 f2) numTabs = 
@@ -48,10 +50,21 @@ expressionToSMT (EUnOp op e) =
 expressionToSMT (PowI e i) = "(^ " ++ expressionToSMT e ++ " " ++ show i ++ ")"
 expressionToSMT (Var e) = e
 expressionToSMT (Lit e) = 
+  --TODO: dReal throws errors if a number is larger than 9007199254740992 or smaller than -9007199254740992 (2^53).
+  -- Check if this is the same on other OSs Depends on c function numeric_limits<double>::digits
+  -- https://github.com/dreal/dreal4/blob/db12dd0ff02c34701aec8f7061947c6706d217db/dreal/util/math.cc#L49
+  -- https://github.com/dreal/dreal4/blob/7c2c563546b0d3e7ada91a30f11e52e77a5fd2b5/dreal/smt2/scanner.ll#L191
   case denominator e of
-    1 -> show (numerator e)
-    _ ->
-      "(/ " ++ show (numerator e) ++ " " ++ show (denominator e) ++ ")"
+    1 -> safeShowNumE
+    _ -> "(/ " ++ safeShowNumE ++ " " ++ safeShowDenE ++ ")"
+    where
+      numE = numerator e
+      denE = denominator e
+      sciNumE = P.fromInteger numE :: Scientific.Scientific
+      sciDenE = P.fromInteger denE :: Scientific.Scientific
+      safeShowNumE = if isSafeForDReal numE then show numE else show sciNumE 
+      safeShowDenE = if isSafeForDReal denE then show denE else show sciDenE 
+      isSafeForDReal x = -9007199254740992 <= x && x <= 9007199254740992
 expressionToSMT Pi = "(* 4.0 (atan 1.0))" -- Equivalent to pi
 expressionToSMT (RoundToInteger mode e) = 
   -- TODO: Warn about non-standard SMT

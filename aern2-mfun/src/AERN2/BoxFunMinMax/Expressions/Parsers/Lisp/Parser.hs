@@ -4,10 +4,12 @@ module AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.Parser
 , parseSequence
 , analyzeExpression
 , analyzeExpressionSequence
-) where
+, isScientificNumber) where
 import AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.DataTypes
 import Prelude
 import Util (readRational)
+import qualified Data.Scientific as S
+import qualified Data.List as L
 -- Constants.
 symbolCharacters :: String
 symbolCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_!?-+*/%<>#.=^"
@@ -24,11 +26,28 @@ isNumberCharacter ch = elem ch numberCharacters
 isSymbol :: String -> Bool
 isSymbol = all isSymbolCharacter
 
+-- Fixed issue with parsing -.1, multiple decimal points
 isNumber :: String -> Bool
 isNumber [] = True
 isNumber [c] = elem c "0123456789"
-isNumber (c : cs) = elem c "0123456789-" && all isNumberCharacter cs
+isNumber ('-' : cs) = isNumber cs
+isNumber (c : cs) = elem c "0123456789" && all isNumberCharacter cs && L.length (L.filter ('.' ==) cs) <= 1 
 
+isScientificNumber :: String -> Bool
+isScientificNumber [] = True
+isScientificNumber [_c] = False
+isScientificNumber ('-' : cs) = isScientificNumber cs
+isScientificNumber (c : cs) = 
+  elem c "0123456789"  &&
+  case L.break (== 'e') cs of
+    (_, []) -> False -- e is not in cs
+    (beforeE, _e : afterE) ->
+      all isNumberCharacter beforeE &&
+      case afterE of
+        []          -> False
+        ('-' : ecs) -> all (`elem` "0123456789") ecs
+        ecs         -> all (`elem` "0123456789") ecs
+  && L.length (L.filter ('.' ==) cs) <= 1 
 -- The "tokenize" function is the first phase of converting the source code of
 -- a Lisp program into an abstract syntax tree. It performs lexical analysis on
 -- a String representation of a Lisp program by extracting a list of tokens.
@@ -38,14 +57,15 @@ tokenize (x:xs)
   | x == ';' = tokenize $ dropWhile (/= '\n') xs -- Remove comments
   | x == '(' = [x] : tokenize xs
   | x == ')' = [x] : tokenize xs
-  | isNumberCharacter x = tokenizeNumber (x:xs) ""
+  | isNumberCharacter x = tokenizeNumber (x:xs) "" False
   | isSymbolCharacter x = tokenizeSymbol (x:xs) ""
   | otherwise = tokenize xs
 
-tokenizeNumber :: String -> String -> [String]
-tokenizeNumber [] number = [number]
-tokenizeNumber (x:xs) number
-  | isNumberCharacter x = tokenizeNumber xs (number ++ [x])
+tokenizeNumber :: String -> String -> Bool -> [String]
+tokenizeNumber [] number foundE = [number]
+tokenizeNumber (x:xs) number foundE
+  | isNumberCharacter x = tokenizeNumber xs (number ++ [x]) foundE
+  | ('e' == x) && not foundE = tokenizeNumber xs (number ++ [x]) True -- Support scientific numbers
   | otherwise = number : tokenize (x:xs)
 
 tokenizeSymbol :: String -> String -> [String]
@@ -68,6 +88,7 @@ parse (x:xs)
   | "#t" == x = ((Boolean True), xs)
   | "#f" == x = ((Boolean False), xs)
   | "null" == x = ((Null), xs)
+  | isScientificNumber x = ((Number (toRational (read x :: S.Scientific))), xs)
   | isNumber x = ((Number (readRational x)), xs)
   | isSymbol x = ((Variable x), xs)
   | otherwise = (Null, [])
