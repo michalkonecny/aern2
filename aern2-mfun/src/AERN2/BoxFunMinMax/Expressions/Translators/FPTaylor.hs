@@ -61,14 +61,14 @@ expressionToFPTaylor (Float32 mode e) =
     RTP -> "rnd32_up(" ++ expressionToFPTaylor e ++ ")"
     RTN -> "rnd32_down(" ++ expressionToFPTaylor e ++ ")"
     RTZ -> "rnd32_0(" ++ expressionToFPTaylor e ++ ")"
-    RNA -> "rnd32(" ++ expressionToFPTaylor e ++ ")" -- FIXME: safe? error "Round nearest away not supported in FPTaylor"
+    RNA -> "rnd32(" ++ expressionToFPTaylor e ++ ")" -- We can treat RNA like RNE. See Rounding section here: https://github.com/soarlab/FPTaylor/blob/develop/REFERENCE.md
 expressionToFPTaylor (Float64 mode e) = 
   case mode of
     RNE -> "rnd64(" ++ expressionToFPTaylor e ++ ")"
     RTP -> "rnd64_up(" ++ expressionToFPTaylor e ++ ")"
     RTN -> "rnd64_down(" ++ expressionToFPTaylor e ++ ")"
     RTZ -> "rnd64_0(" ++ expressionToFPTaylor e ++ ")"
-    RNA -> "rnd(" ++ expressionToFPTaylor e ++ ")" -- FIXME: safe? error "Round nearest away not supported in FPTaylor"
+    RNA -> "rnd(" ++ expressionToFPTaylor e ++ ")" -- We can treat RNA like RNE. See Rounding section here: https://github.com/soarlab/FPTaylor/blob/develop/REFERENCE.md
 expressionToFPTaylor e@(Float _ _) = error "Float type with no precision found when translating to FPTaylor: " ++ show e
 expressionToFPTaylor (RoundToInteger mode e) = expressionToFPTaylor e -- FIXME: is this ok because we are calculating abs error?
                                                                       -- alternative solution: manually add rounding logic for each case. possible without Ifs?
