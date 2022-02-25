@@ -7,6 +7,7 @@ import MixedTypesNumPrelude
 import AERN2.BoxFunMinMax.Expressions.Type
 import qualified AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.DataTypes as LD
 import AERN2.BoxFunMinMax.VarMap
+import AERN2.BoxFunMinMax.Expressions.Parsers.Smt
 
 -- | Parser for SMT files produced by the dReal Translator.
 -- 
@@ -23,10 +24,15 @@ import AERN2.BoxFunMinMax.VarMap
 -- The rest of the file can be ignored (it will be (check-sat), (get-model), and (exit))
 parseDRealSmtToF :: [LD.Expression] -> (Maybe F, TypedVarMap)
 parseDRealSmtToF parsedExpressions =
-  (parseDRealVC (head parsedVC), typedVarMap)
+  (parseDRealVCs (findAssertions parsedVC), typedVarMap)
   where
    (_smtLogic : varsWithParsedVC) = parsedExpressions
    (parsedVC, typedVarMap) = parseDRealVariables varsWithParsedVC
+
+parseDRealVCs :: [LD.Expression] -> Maybe F
+parseDRealVCs []        = error "Processed parser: Given empty list of assertions"
+parseDRealVCs [p1]      = termDRealToF p1
+parseDRealVCs (p1 : p2) = FConn And <$> termDRealToF p1 <*> parseDRealVCs p2
 
 parseDRealVC :: LD.Expression -> Maybe F
 parseDRealVC (LD.Application (LD.Variable "assert") [parsedVC]) = termDRealToF parsedVC

@@ -340,7 +340,7 @@ termToE (LD.Application (LD.Variable operator) [op1, op2]) functionsWithInputsAn
               | (n =~ "^mod$|^mod[0-9]+$" :: Bool)                       ->
                 case lookup n functionsWithInputsAndOutputs of
                   Just (["Real", "Real"], "Real") -> Just $ EBinOp Mod e1 e2
-                  Just (["Int", "Int"], "Int") -> Just $ RoundToInteger RNE $ EBinOp Mod e1 e2 --TODO: If this occurs, might be worth implementing Int Mod
+                  Just (["Int", "Int"], "Int") -> Just $ RoundToInteger RNE $ EBinOp Mod e1 e2 --TODO: might be worth implementing Int Mod
                   _ -> Nothing
             _                                                            -> Nothing
         (_, _) -> Nothing
