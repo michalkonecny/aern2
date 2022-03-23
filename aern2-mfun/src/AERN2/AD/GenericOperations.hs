@@ -161,11 +161,11 @@ instance
         b_d2x = diff_d2x b
 
 instance 
-    (CanNeg a) =>
+    (CanMulBy (Differential a) Integer) =>
     CanNeg (Differential a)
     where
-    type NegType (Differential a) = Differential (NegType a)
-    negate = fmap negate
+    type NegType (Differential a) = Differential a
+    negate x = (-1) * x
 
 instance 
     (CanSqrtSameType a, CanMulSameType a, CanNegSameType a, CanAddSameType a, CanMulBy a Integer, CanRecipSameType a) 
