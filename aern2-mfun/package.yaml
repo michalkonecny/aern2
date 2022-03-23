@@ -49,6 +49,7 @@ dependencies:
 - optparse-applicative
 - directory
 - regex-tdfa
+- random
 
 default-extensions:
 - RebindableSyntax,

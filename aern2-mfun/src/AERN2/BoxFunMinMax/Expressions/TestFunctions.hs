@@ -1,13 +1,18 @@
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
 module AERN2.BoxFunMinMax.Expressions.TestFunctions where
 
--- import MixedTypesNumPrelude
+import MixedTypesNumPrelude
 -- -- import AERN2.BoxFunMinMax.Expressions.Eliminator
--- import AERN2.BoxFunMinMax.Expressions.Type
+import AERN2.BoxFunMinMax.Expressions.Type
+import AERN2.BoxFunMinMax.VarMap
 -- -- import AERN2.BoxFunMinMax.Expressions.Translators.DReal
 -- -- import AERN2.BoxFunMinMax.Expressions.Translators.MetiTarski
 -- import qualified AERN2.BoxFunMinMax.Type as T
--- import AERN2.MP.Precision (prec)
+import AERN2.MP.Precision (prec)
+import System.Random
+import AERN2.MP
+import AERN2.BoxFunMinMax.Type
+import Debug.Trace
 
 -- simpleMax = EBinOp Max (Lit 1.0) (EUnOp Negate (Lit 1.0))
 -- simpleMin = EBinOp Min (Lit 1.0) (EUnOp Negate (Lit 1.0))
@@ -1008,3 +1013,518 @@ module AERN2.BoxFunMinMax.Expressions.TestFunctions where
 -- checkSineVC2CE = T.checkECNFDepthFirstWithSimplex yannickSineVC [("X", (-3.1, -3.0))] 30 500 1.2 (prec 100)
 
 -- checkHeronPreservationExactIVarCE = T.checkECNFDepthFirstWithSimplex (heronPreservationExactIVar) [("X", (0.5, 2.0)), ("Y1", (0.699999988079071044921875, 1.79999995231628417968750)), ("i", (1.0, 3.0))] 30 500 1.2 (prec 100)
+
+sinSinFun :: E
+sinSinFun =
+  EUnOp Abs (EBinOp Sub (EUnOp Sin (EUnOp Sin x)) taylorSinTaylorSinX)
+  where
+    x = Var "x"
+    taylorSinX = EBinOp Sub x (EBinOp Div (EBinOp Mul (EBinOp Mul x x) x) (Lit 6.0))
+    taylorSinTaylorSinX = EBinOp Sub taylorSinX (EBinOp Div (EBinOp Mul (EBinOp Mul taylorSinX taylorSinX) taylorSinX) (Lit 6.0))
+
+taylorSinFun :: E
+taylorSinDomain :: VarMap 
+(taylorSinFun, taylorSinDomain) =
+  (EUnOp Abs (EBinOp Sub (EUnOp Sin x) taylorSinX), [("x", (-0.5, 0.5))])
+  where
+    x = Var "x"
+    taylorSinX = EBinOp Sub x (EBinOp Div (EBinOp Mul (EBinOp Mul x x) x) (Lit 6.0))
+
+-- (approxCosFun, approxCosDomain) :: (E, VarMap)
+approxCosFun :: E
+approxCosDomain :: VarMap
+(approxCosFun, approxCosDomain) = 
+  (EUnOp Abs (EBinOp Sub (EUnOp Cos x) h4), [("x", (-6851933 % 8388608, 6851933 % 8388608))])
+  where
+    x = Var "x"
+    g = EBinOp Mul x x
+    h0 = Lit (6699511 % 274877906944)
+    h1 = EBinOp Sub (EBinOp Mul h0 g) (Lit (2982539 % 2147483648))
+    h2 = EBinOp Add (EBinOp Mul h1 g) (Lit (2796199 % 67108864))
+    h3 = EBinOp Sub (EBinOp Mul h2 g) (Lit 0.5)
+    h4 = EBinOp Add (EBinOp Mul h3 g) (Lit 1.0)
+
+approxSinFunThen :: E
+approxSinFunElse :: E
+approxSinDomainThen :: VarMap
+approxSinDomainElse1 :: VarMap
+approxSinDomainElse2 :: VarMap
+(approxSinFunThen, approxSinFunElse, approxSinDomainThen, approxSinDomainElse1, approxSinDomainElse2) = 
+  (
+    EUnOp Abs (EBinOp Sub (EUnOp Sin x) x), 
+    EUnOp Abs (EBinOp Sub (EUnOp Sin x) (EBinOp Add (EBinOp Mul x (EBinOp Mul h2 g)) x)), 
+    [("x", (-1 % 67108864, 1 % 67108864))], 
+    [("x", (-6851933 % 8388608, -1 % 67108864))], 
+    [("x", (1 % 67108864, 6851933 % 8388608))]
+  )
+  where
+    x = Var "x"
+    g = EBinOp Mul x x
+    h0 = Lit (-3350387 % 17179869184)
+    h1 = EBinOp Add (EBinOp Mul h0 g) (Lit (4473217 % 536870912))
+    h2 = EBinOp Sub (EBinOp Mul h1 g) (Lit (349525 % 2097152))
+
+reduceHalfPiFun :: E 
+reduceHalfPiDomain :: VarMap
+(reduceHalfPiFun, reduceHalfPiDomain) =
+  (
+    EUnOp Abs (EBinOp Sub model exact),
+    [("x", (0 % 1, 802 % 1))]
+  )
+  where
+    x = Var "x"
+    k = Lit $ 13176795 % 8388608
+    c1 = Lit $ 25735 % 16384
+    c2 = Lit $ 3797 % 67108864
+    c3 = Lit $ 17453 % 17592186044416
+    c4 = Lit $ 12727493 % 2361183241434822606848
+    r = RoundToInteger RNA $ EBinOp Div x k -- Not fully correct, x / k should be in float
+    model = EBinOp Sub (EBinOp Sub (EBinOp Sub (EBinOp Sub x (EBinOp Mul r c1)) (EBinOp Mul r c2)) (EBinOp Mul r c3)) (EBinOp Mul r c4)
+    exact = EBinOp Sub x (EBinOp Mul r (EBinOp Div Pi (Lit 2.0)))
+
+sinFunDomainLt0 :: VarMap
+sinFunDomainLt0 = [("x", (-801 % 1, -1 % 67108864))]
+sinFunDomainLt0N0 :: VarMap
+sinFunDomainLt0N0 = [("x", (-1 % 67108864, 0 % 1))]
+sinFunDomainGt0N0 :: VarMap
+sinFunDomainGt0N0 = [("x", (0 % 1, 1 % 67108864))]
+sinFunDomainGt0 :: VarMap
+sinFunDomainGt0 = [("x", (1 % 67108864, 801 % 1))]
+sinFunXLt0Q0 :: E
+sinFunXLt0Q0 =
+  EUnOp Abs (EBinOp Sub finalResult (EUnOp Sin x)) 
+  where
+    x = Var ("x")
+    y = reduceHalfPiWithin (EUnOp Negate x)
+    result = sinWithin y
+    finalResult = EUnOp Negate result
+    sinWithin x' =
+      model
+      where
+        g = EBinOp Mul x' x'
+        h0 = Lit (-3350387 % 17179869184)
+        h1 = EBinOp Add (EBinOp Mul h0 g) (Lit (4473217 % 536870912))
+        h2 = EBinOp Sub (EBinOp Mul h1 g) (Lit (349525 % 2097152))
+        model = EBinOp Add (EBinOp Mul x' (EBinOp Mul h2 g)) x'
+    reduceHalfPiWithin x' =
+      model
+      where
+        k = Lit $ 13176795 % 8388608
+        c1 = Lit $ 25735 % 16384
+        c2 = Lit $ 3797 % 67108864
+        c3 = Lit $ 17453 % 17592186044416
+        c4 = Lit $ 12727493 % 2361183241434822606848
+        r = RoundToInteger RNA $ EBinOp Div x' k
+        model = EBinOp Sub (EBinOp Sub (EBinOp Sub (EBinOp Sub x' (EBinOp Mul r c1)) (EBinOp Mul r c2)) (EBinOp Mul r c3)) (EBinOp Mul r c4)
+sinFunXLt0Q1 :: E
+sinFunXLt0Q1 =
+  EUnOp Abs (EBinOp Sub finalResult (EUnOp Sin x)) 
+  where
+    x = Var ("x")
+    y = reduceHalfPiWithin (EUnOp Negate x)
+    result = cosWithin y
+    finalResult = EUnOp Negate result
+    cosWithin x' =
+      model
+      where
+        g = EBinOp Mul x' x'
+        h0 = Lit (6699511 % 274877906944)
+        h1 = EBinOp Sub (EBinOp Mul h0 g) (Lit (2982539 % 2147483648))
+        h2 = EBinOp Add (EBinOp Mul h1 g) (Lit (2796199 % 67108864))
+        h3 = EBinOp Sub (EBinOp Mul h2 g) (Lit 0.5)
+        h4 = EBinOp Add (EBinOp Mul h3 g) (Lit 1.0)
+        model = h4
+    reduceHalfPiWithin x' =
+      model
+      where
+        k = Lit $ 13176795 % 8388608
+        c1 = Lit $ 25735 % 16384
+        c2 = Lit $ 3797 % 67108864
+        c3 = Lit $ 17453 % 17592186044416
+        c4 = Lit $ 12727493 % 2361183241434822606848
+        r = RoundToInteger RNA $ EBinOp Div x' k
+        model = EBinOp Sub (EBinOp Sub (EBinOp Sub (EBinOp Sub x' (EBinOp Mul r c1)) (EBinOp Mul r c2)) (EBinOp Mul r c3)) (EBinOp Mul r c4)
+sinFunXLt0Q2 :: E
+sinFunXLt0Q2 =
+  EUnOp Abs (EBinOp Sub finalResult (EUnOp Sin x)) 
+  where
+    x = Var ("x")
+    y = reduceHalfPiWithin (EUnOp Negate x)
+    result = sinWithin y
+    finalResult = result
+    sinWithin x' =
+      model
+      where
+        g = EBinOp Mul x' x'
+        h0 = Lit (-3350387 % 17179869184)
+        h1 = EBinOp Add (EBinOp Mul h0 g) (Lit (4473217 % 536870912))
+        h2 = EBinOp Sub (EBinOp Mul h1 g) (Lit (349525 % 2097152))
+        model = EBinOp Add (EBinOp Mul x' (EBinOp Mul h2 g)) x'
+    reduceHalfPiWithin x' =
+      model
+      where
+        k = Lit $ 13176795 % 8388608
+        c1 = Lit $ 25735 % 16384
+        c2 = Lit $ 3797 % 67108864
+        c3 = Lit $ 17453 % 17592186044416
+        c4 = Lit $ 12727493 % 2361183241434822606848
+        r = RoundToInteger RNA $ EBinOp Div x' k
+        model = EBinOp Sub (EBinOp Sub (EBinOp Sub (EBinOp Sub x' (EBinOp Mul r c1)) (EBinOp Mul r c2)) (EBinOp Mul r c3)) (EBinOp Mul r c4)
+sinFunXLt0Q3 :: E
+sinFunXLt0Q3 =
+  EUnOp Abs (EBinOp Sub finalResult (EUnOp Sin x)) 
+  where
+    x = Var ("x")
+    y = reduceHalfPiWithin (EUnOp Negate x)
+    result = cosWithin y
+    finalResult = result
+    cosWithin x' =
+      model
+      where
+        g = EBinOp Mul x' x'
+        h0 = Lit (6699511 % 274877906944)
+        h1 = EBinOp Sub (EBinOp Mul h0 g) (Lit (2982539 % 2147483648))
+        h2 = EBinOp Add (EBinOp Mul h1 g) (Lit (2796199 % 67108864))
+        h3 = EBinOp Sub (EBinOp Mul h2 g) (Lit 0.5)
+        h4 = EBinOp Add (EBinOp Mul h3 g) (Lit 1.0)
+        model = h4
+    reduceHalfPiWithin x' =
+      model
+      where
+        k = Lit $ 13176795 % 8388608
+        c1 = Lit $ 25735 % 16384
+        c2 = Lit $ 3797 % 67108864
+        c3 = Lit $ 17453 % 17592186044416
+        c4 = Lit $ 12727493 % 2361183241434822606848
+        r = RoundToInteger RNA $ EBinOp Div x' k
+        model = EBinOp Sub (EBinOp Sub (EBinOp Sub (EBinOp Sub x' (EBinOp Mul r c1)) (EBinOp Mul r c2)) (EBinOp Mul r c3)) (EBinOp Mul r c4)
+sinFunXGt0Q0 :: E
+sinFunXGt0Q0 =
+  EUnOp Abs (EBinOp Sub finalResult (EUnOp Sin x)) 
+  where
+    x = Var ("x")
+    y = reduceHalfPiWithin x
+    result = sinWithin y
+    finalResult = result
+    sinWithin x' =
+      model
+      where
+        g = EBinOp Mul x' x'
+        h0 = Lit (-3350387 % 17179869184)
+        h1 = EBinOp Add (EBinOp Mul h0 g) (Lit (4473217 % 536870912))
+        h2 = EBinOp Sub (EBinOp Mul h1 g) (Lit (349525 % 2097152))
+        model = EBinOp Add (EBinOp Mul x' (EBinOp Mul h2 g)) x'
+    reduceHalfPiWithin x' =
+      model
+      where
+        k = Lit $ 13176795 % 8388608
+        c1 = Lit $ 25735 % 16384
+        c2 = Lit $ 3797 % 67108864
+        c3 = Lit $ 17453 % 17592186044416
+        c4 = Lit $ 12727493 % 2361183241434822606848
+        r = RoundToInteger RNA $ EBinOp Div x' k
+        model = EBinOp Sub (EBinOp Sub (EBinOp Sub (EBinOp Sub x' (EBinOp Mul r c1)) (EBinOp Mul r c2)) (EBinOp Mul r c3)) (EBinOp Mul r c4)
+sinFunXGt0Q1 :: E
+sinFunXGt0Q1 =
+  EUnOp Abs (EBinOp Sub finalResult (EUnOp Sin x)) 
+  where
+    x = Var ("x")
+    y = reduceHalfPiWithin x
+    result = cosWithin y
+    finalResult = result
+    cosWithin x' =
+      model
+      where
+        g = EBinOp Mul x' x'
+        h0 = Lit (6699511 % 274877906944)
+        h1 = EBinOp Sub (EBinOp Mul h0 g) (Lit (2982539 % 2147483648))
+        h2 = EBinOp Add (EBinOp Mul h1 g) (Lit (2796199 % 67108864))
+        h3 = EBinOp Sub (EBinOp Mul h2 g) (Lit 0.5)
+        h4 = EBinOp Add (EBinOp Mul h3 g) (Lit 1.0)
+        model = h4
+    reduceHalfPiWithin x' =
+      model
+      where
+        k = Lit $ 13176795 % 8388608
+        c1 = Lit $ 25735 % 16384
+        c2 = Lit $ 3797 % 67108864
+        c3 = Lit $ 17453 % 17592186044416
+        c4 = Lit $ 12727493 % 2361183241434822606848
+        r = RoundToInteger RNA $ EBinOp Div x' k
+        model = EBinOp Sub (EBinOp Sub (EBinOp Sub (EBinOp Sub x' (EBinOp Mul r c1)) (EBinOp Mul r c2)) (EBinOp Mul r c3)) (EBinOp Mul r c4)
+sinFunXGt0Q2 :: E
+sinFunXGt0Q2 =
+  EUnOp Abs (EBinOp Sub finalResult (EUnOp Sin x)) 
+  where
+    x = Var ("x")
+    y = reduceHalfPiWithin x
+    result = sinWithin y
+    finalResult = EUnOp Negate result
+    sinWithin x' =
+      model
+      where
+        g = EBinOp Mul x' x'
+        h0 = Lit (-3350387 % 17179869184)
+        h1 = EBinOp Add (EBinOp Mul h0 g) (Lit (4473217 % 536870912))
+        h2 = EBinOp Sub (EBinOp Mul h1 g) (Lit (349525 % 2097152))
+        model = EBinOp Add (EBinOp Mul x' (EBinOp Mul h2 g)) x'
+    reduceHalfPiWithin x' =
+      model
+      where
+        k = Lit $ 13176795 % 8388608
+        c1 = Lit $ 25735 % 16384
+        c2 = Lit $ 3797 % 67108864
+        c3 = Lit $ 17453 % 17592186044416
+        c4 = Lit $ 12727493 % 2361183241434822606848
+        r = RoundToInteger RNA $ EBinOp Div x' k
+        model = EBinOp Sub (EBinOp Sub (EBinOp Sub (EBinOp Sub x' (EBinOp Mul r c1)) (EBinOp Mul r c2)) (EBinOp Mul r c3)) (EBinOp Mul r c4)
+sinFunXGt0Q3 :: E
+sinFunXGt0Q3 =
+  EUnOp Abs (EBinOp Sub finalResult (EUnOp Sin x)) 
+  where
+    x = Var ("x")
+    y = reduceHalfPiWithin x
+    result = cosWithin y
+    finalResult = EUnOp Negate result
+    cosWithin x' =
+      model
+      where
+        g = EBinOp Mul x' x'
+        h0 = Lit (6699511 % 274877906944)
+        h1 = EBinOp Sub (EBinOp Mul h0 g) (Lit (2982539 % 2147483648))
+        h2 = EBinOp Add (EBinOp Mul h1 g) (Lit (2796199 % 67108864))
+        h3 = EBinOp Sub (EBinOp Mul h2 g) (Lit 0.5)
+        h4 = EBinOp Add (EBinOp Mul h3 g) (Lit 1.0)
+        model = h4
+    reduceHalfPiWithin x' =
+      model
+      where
+        k = Lit $ 13176795 % 8388608
+        c1 = Lit $ 25735 % 16384
+        c2 = Lit $ 3797 % 67108864
+        c3 = Lit $ 17453 % 17592186044416
+        c4 = Lit $ 12727493 % 2361183241434822606848
+        r = RoundToInteger RNA $ EBinOp Div x' k
+        model = EBinOp Sub (EBinOp Sub (EBinOp Sub (EBinOp Sub x' (EBinOp Mul r c1)) (EBinOp Mul r c2)) (EBinOp Mul r c3)) (EBinOp Mul r c4)
+sinFunXLt0Q0N0 :: E
+sinFunXLt0Q0N0 =
+  EUnOp Abs (EBinOp Sub finalResult (EUnOp Sin x)) 
+  where
+    x = Var ("x")
+    y = reduceHalfPiWithin (EUnOp Negate x)
+    result = sinWithin y
+    finalResult = EUnOp Negate result
+    sinWithin x' =
+      model
+      where
+        model = x'
+    reduceHalfPiWithin x' =
+      model
+      where
+        k = Lit $ 13176795 % 8388608
+        c1 = Lit $ 25735 % 16384
+        c2 = Lit $ 3797 % 67108864
+        c3 = Lit $ 17453 % 17592186044416
+        c4 = Lit $ 12727493 % 2361183241434822606848
+        r = RoundToInteger RNA $ EBinOp Div x' k
+        model = EBinOp Sub (EBinOp Sub (EBinOp Sub (EBinOp Sub x' (EBinOp Mul r c1)) (EBinOp Mul r c2)) (EBinOp Mul r c3)) (EBinOp Mul r c4)
+sinFunXLt0Q2N0 :: E
+sinFunXLt0Q2N0 =
+  EUnOp Abs (EBinOp Sub finalResult (EUnOp Sin x)) 
+  where
+    x = Var ("x")
+    y = reduceHalfPiWithin (EUnOp Negate x)
+    result = sinWithin y
+    finalResult = result
+    sinWithin x' =
+      model
+      where
+        model = x'
+    reduceHalfPiWithin x' =
+      model
+      where
+        k = Lit $ 13176795 % 8388608
+        c1 = Lit $ 25735 % 16384
+        c2 = Lit $ 3797 % 67108864
+        c3 = Lit $ 17453 % 17592186044416
+        c4 = Lit $ 12727493 % 2361183241434822606848
+        r = RoundToInteger RNA $ EBinOp Div x' k
+        model = EBinOp Sub (EBinOp Sub (EBinOp Sub (EBinOp Sub x' (EBinOp Mul r c1)) (EBinOp Mul r c2)) (EBinOp Mul r c3)) (EBinOp Mul r c4)
+sinFunXGt0Q0N0 :: E
+sinFunXGt0Q0N0 =
+  EUnOp Abs (EBinOp Sub finalResult (EUnOp Sin x)) 
+  where
+    x = Var ("x")
+    y = reduceHalfPiWithin x
+    result = sinWithin y
+    finalResult = result
+    sinWithin x' =
+      model
+      where
+        model = x'
+    reduceHalfPiWithin x' =
+      model
+      where
+        k = Lit $ 13176795 % 8388608
+        c1 = Lit $ 25735 % 16384
+        c2 = Lit $ 3797 % 67108864
+        c3 = Lit $ 17453 % 17592186044416
+        c4 = Lit $ 12727493 % 2361183241434822606848
+        r = RoundToInteger RNA $ EBinOp Div x' k
+        model = EBinOp Sub (EBinOp Sub (EBinOp Sub (EBinOp Sub x' (EBinOp Mul r c1)) (EBinOp Mul r c2)) (EBinOp Mul r c3)) (EBinOp Mul r c4)
+sinFunXGt0Q2N0 :: E
+sinFunXGt0Q2N0 =
+  EUnOp Abs (EBinOp Sub finalResult (EUnOp Sin x)) 
+  where
+    x = Var ("x")
+    y = reduceHalfPiWithin x
+    result = sinWithin y
+    finalResult = EUnOp Negate result
+    sinWithin x' =
+      model
+      where
+        model = x'
+    reduceHalfPiWithin x' =
+      model
+      where
+        k = Lit $ 13176795 % 8388608
+        c1 = Lit $ 25735 % 16384
+        c2 = Lit $ 3797 % 67108864
+        c3 = Lit $ 17453 % 17592186044416
+        c4 = Lit $ 12727493 % 2361183241434822606848
+        r = RoundToInteger RNA $ EBinOp Div x' k
+        model = EBinOp Sub (EBinOp Sub (EBinOp Sub (EBinOp Sub x' (EBinOp Mul r c1)) (EBinOp Mul r c2)) (EBinOp Mul r c3)) (EBinOp Mul r c4)
+
+sinFunXLt0 :: E
+sinFunXLt0 =
+  EBinOp Min 
+    (EBinOp Min 
+      (EUnOp Abs (EBinOp Sub sinResult (EUnOp Sin x))) 
+      (EUnOp Abs (EBinOp Sub sinNResult (EUnOp Sin x)))) 
+    (EBinOp Min 
+      (EUnOp Abs (EBinOp Sub cosResult (EUnOp Sin x))) 
+      (EUnOp Abs (EBinOp Sub cosNResult (EUnOp Sin x))))
+  where
+    x = Var ("x")
+    y = reduceHalfPiWithin (EUnOp Negate x)
+    sinResult = sinWithin y
+    sinNResult = EUnOp Negate sinResult
+    cosResult = cosWithin y
+    cosNResult = EUnOp Negate cosResult
+    sinWithin x' =
+      model
+      where
+        g = EBinOp Mul x' x'
+        h0 = Lit (-3350387 % 17179869184)
+        h1 = EBinOp Add (EBinOp Mul h0 g) (Lit (4473217 % 536870912))
+        h2 = EBinOp Sub (EBinOp Mul h1 g) (Lit (349525 % 2097152))
+        model = EBinOp Add (EBinOp Mul x' (EBinOp Mul h2 g)) x'
+    cosWithin x' =
+      model
+      where
+        g = EBinOp Mul x' x'
+        h0 = Lit (6699511 % 274877906944)
+        h1 = EBinOp Sub (EBinOp Mul h0 g) (Lit (2982539 % 2147483648))
+        h2 = EBinOp Add (EBinOp Mul h1 g) (Lit (2796199 % 67108864))
+        h3 = EBinOp Sub (EBinOp Mul h2 g) (Lit 0.5)
+        h4 = EBinOp Add (EBinOp Mul h3 g) (Lit 1.0)
+        model = h4
+    reduceHalfPiWithin x' =
+      model
+      where
+        k = Lit $ 13176795 % 8388608
+        c1 = Lit $ 25735 % 16384
+        c2 = Lit $ 3797 % 67108864
+        c3 = Lit $ 17453 % 17592186044416
+        c4 = Lit $ 12727493 % 2361183241434822606848
+        r = RoundToInteger RNA $ EBinOp Div x' k
+        model = EBinOp Sub (EBinOp Sub (EBinOp Sub (EBinOp Sub x' (EBinOp Mul r c1)) (EBinOp Mul r c2)) (EBinOp Mul r c3)) (EBinOp Mul r c4)
+        
+heronDom :: VarMap
+heronDom = [("x", (0.5, 2.0))]
+heronFun :: Integer -> E
+heronFun n = 
+  if n < 1 
+    then error "n must be at least 1"
+    else EUnOp Abs (EBinOp Sub (y n) (EUnOp Sqrt x))
+  where
+    x = Var "x"
+
+    y 0 = Lit 1.0
+    y n' = 
+      let yPrev = y (n' - 1) in
+        EBinOp Div (EBinOp Add yPrev (EBinOp Div x yPrev)) (Lit 2.0)
+
+
+  --  function Certified_Heron (X : Float; N : Integer) return Float is
+  --     Y : Float := 1.0;
+  --  begin
+   
+  --     for i in 1 .. N loop
+  --        Y := (Y + X/Y) / 2.0;
+   
+  --        pragma Loop_Invariant (Y >= 0.7);
+  --        pragma Loop_Invariant (Y <= 1.8);
+  --        pragma Loop_Invariant
+  --          (Rabs (Real_Square_Root (Rf(X)) - Rf(Y))
+  --           <=  (Ri(1) / (Real_Pow(Ri(2), Real_Pow(Ri(2), Ri(i)))) + Ri(6 * i) * (Ri(1) / Ri(8388608))));
+   
+  --     end loop;
+   
+  --     return Y;
+  --  end Certified_Heron;
+chooseRandomPoints :: VarMap -> IO VarMap
+chooseRandomPoints [] = return []
+chooseRandomPoints vm@((v, (l, r)) : vs) =
+  do
+    randNum <- toRational <$> randomRIO (double l, double r)
+    remainingPoints <- chooseRandomPoints vs
+    if randNum < l || randNum > r
+      then Debug.Trace.trace "w" chooseRandomPoints vm
+      else return ((v, (randNum, randNum)) : remainingPoints)
+
+-- Only works with positive MPBalls
+maxEVMNTimes :: E -> VarMap -> Integer -> IO (CN MPBall)
+maxEVMNTimes _ _  0 = return (cn (mpBallP (prec 100) 0.0))
+maxEVMNTimes e vm n =
+  do
+    randomVM <- chooseRandomPoints vm
+    let thisVal = applyExpression e randomVM (prec 100)
+    -- return randomVal
+    otherMax <- maxEVMNTimes e vm (n - 1)
+    return (max thisVal otherMax)
+
+testEVMNTimes :: E -> VarMap -> Integer -> IO [CN MPBall]
+testEVMNTimes _ _ 0 = return []
+testEVMNTimes e vm n =
+  do
+    randomVM <- chooseRandomPoints vm
+    let randomVal = applyExpression e randomVM (prec 10000)
+    remainingVals <- testEVMNTimes e vm (n - 1)
+    return (randomVal : remainingVals)
+
+-- ranETester :: E -> VarMap -> a
+-- ranETester e vars = undefined
+
+-- approxCos =
+--     BoxFun
+--     1
+--     (\v ->
+--         let
+--             x = v!0
+--             g = x * x
+--             h0 = mpb (6699511 / 274877906944) -- 2.4372679e-5
+--             h1 = (h0 * g) - mpb (2982539 / 2147483648) -- 1.388853e-3
+--             h2 = (h1 * g) + mpb (2796199 / 67108864) -- 4.1666612e-2
+--             h3 = (h2 * g) - mpb 0.5
+--             h4 = (h3 * g) + mpb 1.0
+--             p = getPrecision v
+--             mpb = mpBallP p
+--         in
+--             (h4 - cos x)
+--     )
+--     (V.fromList 
+--         [fromEndpointsAsIntervals 
+--             (cnMPBallP (prec 100) (cn (-6851933 / 8388608))) (cnMPBallP (prec 100) (cn (6851933 / 8388608)))
+--         ]
+--     )
