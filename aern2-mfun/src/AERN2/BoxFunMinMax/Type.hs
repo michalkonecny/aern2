@@ -108,25 +108,6 @@ checkFWithApply (E.FConn op f1 f2) varMap p =
   case op of
     E.And   -> f1Val && f2Val
     E.Or    -> f1Val || f2Val
-    E.Equiv ->
-      case f1Val of
-        (CollectErrors (Just CertainTrue) error1) ->
-          case f2Val of
-            (CollectErrors (Just CertainTrue) error2)  -> prependErrors error2 $ CollectErrors (Just CertainTrue) error1
-            (CollectErrors (Just CertainFalse) error2) -> prependErrors error2 $ CollectErrors (Just CertainFalse) error1
-            (CollectErrors (Just TrueOrFalse) error2)  -> prependErrors error2 $ CollectErrors (Just TrueOrFalse) error1
-            (CollectErrors Nothing error2)             -> prependErrors error2 $ CollectErrors Nothing error1
-        (CollectErrors (Just CertainFalse) error1) ->
-          case f2Val of
-            (CollectErrors (Just CertainTrue) error2)  -> prependErrors error2 $ CollectErrors (Just CertainFalse) error1
-            (CollectErrors (Just CertainFalse) error2) -> prependErrors error2 $ CollectErrors (Just CertainTrue) error1
-            (CollectErrors (Just TrueOrFalse) error2)  -> prependErrors error2 $ CollectErrors (Just TrueOrFalse) error1
-            (CollectErrors Nothing error2)             -> prependErrors error2 $ CollectErrors Nothing error1
-        (CollectErrors (Just TrueOrFalse) error1) ->
-          case f2Val of
-            (CollectErrors Nothing error2)             -> prependErrors error2 $ CollectErrors Nothing error1
-            (CollectErrors _ error2)                   -> prependErrors error2 $ CollectErrors (Just TrueOrFalse) error1
-        (CollectErrors Nothing error1)                 -> CollectErrors Nothing error1
     E.Impl  -> not f1Val || f2Val
   where
     f1Val = checkFWithApply f1 varMap p

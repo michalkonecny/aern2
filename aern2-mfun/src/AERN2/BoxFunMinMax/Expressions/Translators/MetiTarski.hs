@@ -16,7 +16,6 @@ formulaToTPTP (FConn op f1 f2) numTabs =
     And     -> "\n" ++ concat (replicate numTabs "\t") ++ "(" ++ formulaToTPTP f1 (numTabs + 1) ++ "\n" ++ concat (replicate numTabs "\t") ++ "&"  ++ formulaToTPTP f2 (numTabs + 1) ++ "\n" ++ concat (replicate numTabs "\t") ++ ")"
     Or      -> "\n" ++ concat (replicate numTabs "\t") ++ "(" ++ formulaToTPTP f1 (numTabs + 1) ++ "\n" ++ concat (replicate numTabs "\t") ++ "|"  ++ formulaToTPTP f2 (numTabs + 1) ++ "\n" ++ concat (replicate numTabs "\t") ++ ")"
     Impl    -> "\n" ++ concat (replicate numTabs "\t") ++ "(" ++ formulaToTPTP f1 (numTabs + 1) ++ "\n" ++ concat (replicate numTabs "\t") ++ "=>" ++ formulaToTPTP f2 (numTabs + 1) ++ "\n" ++ concat (replicate numTabs "\t") ++ ")"
-    Equiv   -> "\n" ++ concat (replicate numTabs "\t") ++ "(" ++ formulaToTPTP f1 (numTabs + 1) ++ "\n" ++ concat (replicate numTabs "\t") ++ "="  ++ formulaToTPTP f2 (numTabs + 1) ++ "\n" ++ concat (replicate numTabs "\t") ++ ")"
 formulaToTPTP (FComp op e1 e2) numTabs =
   case op of
     Ge -> "\n" ++ concat (replicate numTabs "\t") ++ "(" ++ "\n" ++ concat (replicate (numTabs + 1) "\t") ++ expressionToTPTP e1 ++ "\n" ++ concat (replicate numTabs "\t") ++ ">=" ++ "\n" ++ concat (replicate (numTabs + 1) "\t") ++ expressionToTPTP e2 ++ "\n" ++ concat (replicate numTabs "\t") ++ ")"

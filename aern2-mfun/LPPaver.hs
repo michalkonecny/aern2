@@ -15,12 +15,13 @@ import AERN2.BoxFunMinMax.Expressions.Eliminator
 import AERN2.BoxFunMinMax.Expressions.TestFunctions
 import System.Environment
 import AERN2.BoxFunMinMax.VarMap
-import AERN2.BoxFunMinMax.Expressions.Parsers.Smt (parseSMT2, parseVCToECNF, ParsingMode (Why3, CNF))
+import AERN2.BoxFunMinMax.Expressions.Parsers.Smt (parseSMT2, parseVCToF, ParsingMode (Why3, CNF))
 import AERN2.BoxFunMinMax.Expressions.Parsers.DRealSmt
 import Options.Applicative
 import Data.Semigroup ((<>))
 import System.Directory
 import Data.Ratio
+import Debug.Trace
 data ProverOptions = ProverOptions
   {
     provingProcessDone :: Bool,
@@ -86,7 +87,6 @@ proverOptions = ProverOptions
       <> help "path to smt2 file to be checked"
       <> metavar "filePath"
     )
-
 main :: IO ()
 main = 
   do 
@@ -116,10 +116,12 @@ runProver proverOptions@(ProverOptions provingProcessDone ceMode depthCutoff bes
         case mFptaylorPath of
           Nothing -> putStrLn "Error - fptaylor executable not in path"
           Just fptaylorPath -> do
-            mParsedVC <- parseVCToECNF filePath fptaylorPath
+            mParsedVC <- parseVCToF filePath fptaylorPath
             case mParsedVC of
-              Just (ecnf, typedVarMap) -> do
-                decideECNFWithVarMap ecnf typedVarMap proverOptions
+              Just (vc, typedVarMap) ->
+                let ecnf = minMaxAbsEliminatorECNF . fToECNF . simplifyF $ FNot vc -- Prove a contradiction
+                in do
+                  decideECNFWithVarMap ecnf typedVarMap proverOptions
               Nothing -> do
                 putStrLn "unknown"
                 putStrLn "Issue parsing file"

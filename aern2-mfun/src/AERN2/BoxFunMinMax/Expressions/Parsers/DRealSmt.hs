@@ -68,7 +68,7 @@ termDRealToF (LD.Application (LD.Variable "or") [p1, p2])  = FConn Or <$> termDR
 -- Special case for =
 termDRealToF (LD.Application (LD.Variable "=") [p1, p2])   = 
   case (termDRealToF p1, termDRealToF p2) of
-    (Just f1, Just f2) -> Just $ FConn Equiv f1 f2
+    (Just f1, Just f2) -> Just $ FConn And (FConn Impl f1 f2) (FConn Impl f2 f1)
     (Nothing, Nothing) ->
       case (termDRealToE p1, termDRealToE p2) of
         (Just e1, Just e2) -> Just $ FComp Eq e1 e2

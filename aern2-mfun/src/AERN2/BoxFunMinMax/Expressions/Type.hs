@@ -31,7 +31,7 @@ data ESafe = EStrict E | ENonStrict E
 data Comp = Gt | Ge | Lt | Le | Eq
   deriving (Show, P.Eq)
 
-data Conn = And | Or | Impl | Equiv
+data Conn = And | Or | Impl
   deriving (Show, P.Eq)
 
 -- TODO: Could make prover work on 'Comp E E' (call it EComp)
@@ -138,7 +138,7 @@ instance Arbitrary Comp where
   arbitrary = oneof [return Gt, return Ge, return Lt, return Le, return Eq]
 
 instance Arbitrary Conn where
-  arbitrary = oneof [return And, return Or, return Impl, return Equiv]
+  arbitrary = oneof [return And, return Or, return Impl]
 
 instance Arbitrary F where
   arbitrary = sized fGenerator
@@ -195,12 +195,10 @@ fToECNF = fToECNFB False
       And     -> [d1 ++ d2 | d1 <- fToECNFB True f1, d2 <- fToECNFB True f2] 
       Or      -> fToECNFB True f1 ++ fToECNFB True f2
       Impl    -> fToECNFB False f1 ++ fToECNFB True f2 -- !(!p \/ q) == p /\ !q
-      Equiv   -> fToECNFB True (FConn And (FConn Impl f1 f2) (FConn Impl f2 f1))
     fToECNFB False (FConn op f1 f2)  = case op of
       And     -> fToECNFB False f1 ++ fToECNFB False f2 -- [e1 /\ e2 /\ (e3 \/ e4)] ++ [p1 /\ (p2 \/ p3) /\ p4] = [e1 /\ e2 /\ (e3 \/ e4) /\ p1 /\ (p2 \/ p3) /\ p4]
       Or      -> [d1 ++ d2 | d1 <- fToECNFB False f1, d2 <- fToECNFB False f2] -- [e1 /\ e2 /\ (e3 \/ e4)] \/ [p1 /\ (p2 \/ p3) /\ p4] 
       Impl    -> [d1 ++ d2 | d1 <- fToECNFB True f1, d2 <- fToECNFB False f2]
-      Equiv   -> fToECNFB False (FConn And (FConn Impl f1 f2) (FConn Impl f2 f1))
     -- fToECNFB isNegated FTrue  _  = error "fToECNFB for FTrue undefined"  $ Lit 1.0
     -- fToECNFB isNegated FFalse _  = error "fToECNFB for FFalse undefined" $ Lit $ -1.0
     fToECNFB True  FTrue   = fToECNFB False FFalse 
@@ -259,19 +257,6 @@ simplifyF unsimplifiedF = if unsimplifiedF P.== simplifiedF then simplifiedF els
     simplify (FConn Or (FComp Eq f1l f1r) (FComp Gt f2l f2r))   = simplify $ FConn Or (FComp Gt f2l f2r) (FComp Eq f1l f1r)
 
     -- Boolean Rules
-    -- Equiv
-    simplify (FConn Equiv FTrue FFalse)                         = FFalse
-    simplify (FConn Equiv FFalse FTrue)                         = FFalse
-    simplify (FConn Equiv FFalse FFalse)                        = FTrue
-    simplify (FConn Equiv FTrue FTrue)                          = FTrue
-    simplify (FConn Equiv f FTrue)                              = simplify f
-    simplify (FConn Equiv FTrue f)                              = simplify f
-    simplify (FConn Equiv f FFalse)                             = simplify $ FNot f
-    simplify (FConn Equiv FFalse f)                             = simplify $ FNot f
-    -- Equiv contradictions and tautologies
-    simplify (FConn Equiv f1 fn2@(FNot f2))                     = if f1 P.== f2 then FFalse else FConn Equiv (simplify f1) (simplify fn2)
-    simplify (FConn Equiv fn1@(FNot f1) f2)                     = if f1 P.== f2 then FFalse else FConn Equiv (simplify fn1) (simplify f2)
-    simplify (FConn Equiv f1 f2)                                = if f1 P.== f2 then FTrue else FConn Equiv (simplify f1) (simplify f2)
     -- And
     simplify (FConn And _ FFalse)                               = FFalse
     simplify (FConn And FFalse _)                               = FFalse
@@ -489,7 +474,6 @@ latexShowConn :: Conn -> String
 latexShowConn And   = "$\\wedge$"
 latexShowConn Or    = "$\\vee$"
 latexShowConn Impl  = "$\\implies$"
-latexShowConn Equiv = "$\\equiv$"
 
 -- |Show an expression in a human-readable format
 -- Rationals are converted into doubles
@@ -578,7 +562,6 @@ prettyShowConn :: Conn -> String
 prettyShowConn And   = "AND"
 prettyShowConn Or    = "OR"
 prettyShowConn Impl  = "IMPL"
-prettyShowConn Equiv = "EQUIV"
 
 -- |Extract all variables in an expression
 -- Will not return duplicationes
@@ -666,3 +649,12 @@ substVarFWithE varToSubst (FComp op e1 e2) eToSubst = FComp op (substVarEWithE v
 substVarFWithE varToSubst (FNot f)         eToSubst = FNot $ substVarFWithE varToSubst f eToSubst
 substVarFWithE _ FTrue                     _        = FTrue
 substVarFWithE _ FFalse                    _        = FFalse
+
+-- Replaces implications with ORs, i.e. p -> q becomes !p \/ q
+transformImplications :: F -> F
+transformImplications (FConn Impl f1 f2) = FConn Or (transformImplications (FNot f1)) (transformImplications f2)
+transformImplications (FConn op f1 f2) = FConn op (transformImplications f1) (transformImplications f2)
+transformImplications f@(FComp op e1 e2) = f
+transformImplications (FNot f) = FNot $ transformImplications f
+transformImplications FTrue = FTrue
+transformImplications FFalse = FFalse

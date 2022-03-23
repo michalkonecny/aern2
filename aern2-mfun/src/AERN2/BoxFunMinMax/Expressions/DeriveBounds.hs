@@ -147,7 +147,6 @@ scanHypothesis (FConn Or h1 h2) isNegated intervals =
       --   | b1 P.== b2 = b1
       --   | otherwise = scanHypothesis f isNegated b1
 scanHypothesis (FConn Impl h1 h2) isNegated intervals = scanHypothesis (FConn Or (FNot h1) h2) isNegated intervals
-scanHypothesis (FConn Equiv h1 h2) isNegated intervals = scanHypothesis (FConn Or (FConn And h1 h2) (FConn And (FNot h1) (FNot h2))) isNegated intervals 
 -- We need: data Comp = Gt | Ge | Lt | Le | Eq
 scanHypothesis (FComp Eq _ _) True intervals = intervals
 scanHypothesis (FComp Eq _e1@(Var v1) _e2@(Var v2)) False intervals = 

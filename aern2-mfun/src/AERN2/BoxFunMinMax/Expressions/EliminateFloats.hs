@@ -47,12 +47,12 @@ eliminateFloatsF f varMap strengthenFormula fptaylorPath =
     aux FTrue  _ = return FTrue
     aux FFalse _ = return FFalse
 
-    eliminateFloatsFromExpression e strengthenExpression = 
+    eliminateFloatsFromExpression e subtractError = 
       if hasFloatE e 
         then do
           absError <- findAbsoluteErrorUsingFPTaylor e varMap fptaylorPath
           let eWithoutFloats = removeFloats e
-          if strengthenExpression 
+          if subtractError 
             then return $ EBinOp Sub eWithoutFloats $ Lit absError
             else return $ EBinOp Add eWithoutFloats $ Lit absError
         else

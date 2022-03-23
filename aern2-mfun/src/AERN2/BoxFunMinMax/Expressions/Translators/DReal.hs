@@ -25,7 +25,6 @@ formulaToSMT (FConn op f1 f2) numTabs =
     And   -> "\n" ++ concat (replicate numTabs "\t") ++ "(and " ++ formulaToSMT f1 (numTabs + 1) ++ " " ++ formulaToSMT f2 (numTabs + 1) ++ ")"
     Or    -> "\n" ++ concat (replicate numTabs "\t") ++ "(or " ++ formulaToSMT f1 (numTabs + 1) ++ " " ++ formulaToSMT f2 (numTabs + 1) ++ ")"
     Impl  -> "\n" ++ concat (replicate numTabs "\t") ++ "(or " ++ formulaToSMT (FNot f1) (numTabs + 1) ++ formulaToSMT f2 (numTabs + 1) ++ ")"
-    Equiv -> "\n" ++ concat (replicate numTabs "\t") ++ "(= " ++ formulaToSMT f1 (numTabs + 1) ++ " " ++ formulaToSMT f2 (numTabs + 1) ++ ")"
 formulaToSMT (FComp op e1 e2) numTabs = 
   case op of
     Ge -> "\n" ++ concat (replicate numTabs "\t") ++ "(>= " ++ "\n" ++ concat (replicate (numTabs + 1) "\t") ++ expressionToSMT e1 ++ "\n" ++ concat (replicate (numTabs + 1) "\t") ++ expressionToSMT e2 ++ ")"

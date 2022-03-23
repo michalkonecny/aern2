@@ -153,10 +153,10 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) functionsWithInputsAn
             "and" -> Just $ FConn And f1 f2
             "or"  -> Just $ FConn Or f1 f2
             "=>"  -> Just $ FConn Impl f1 f2
-            "="   -> Just $ FConn Equiv f1 f2
+            "="   -> Just $ FConn And (FConn Impl f1 f2) (FConn Impl f2 f1)
             n
-              | "bool_eq" `isPrefixOf` n ->  Just $ FConn Equiv f1 f2
-              | "user_eq" `isPrefixOf` n ->  Just $ FConn Equiv f1 f2
+              | "bool_eq" `isPrefixOf` n ->  Just $ FConn And (FConn Impl f1 f2) (FConn Impl f2 f1)
+              | "user_eq" `isPrefixOf` n ->  Just $ FConn And (FConn Impl f1 f2) (FConn Impl f2 f1)
             _ -> Nothing
         -- Parse ite where it is used as an expression
         (_, _) ->
@@ -655,10 +655,6 @@ deriveVCRanges vc varsWithTypes =
         (Just ff1, _)        -> Just ff1
         (_, Just ff2)        -> Just ff2
         (_, _)               -> Nothing
-    filterOutVars (FConn Equiv f1 f2) vars isNegated = 
-      case (filterOutVars f1 vars isNegated, filterOutVars f2 vars isNegated) of
-        (Just ff1, Just ff2) -> Just $ FConn Equiv ff1 ff2
-        (_, _)               -> Nothing
     filterOutVars (FNot f) vars isNegated = FNot <$> filterOutVars f vars (not isNegated)
 
     filterOutVars (FComp op e1 e2) vars _isNegated =
@@ -741,17 +737,17 @@ substAllEqualities = recursivelySubstVars
     substVars [] f = f
     substVars ((v, e) : _) f = substVarFWithE v f e
 
--- |Convert a VC to ECNF, eliminating any floats. 
-eliminateFloatsAndConvertVCToECNF :: F -> TypedVarMap -> FilePath-> IO [[ESafe]]
-eliminateFloatsAndConvertVCToECNF vc typedVarMap fptaylorPath = -- TODO: Save results from FPTaylor, then lookup
+eliminateFloatsAndSimplifyVC :: F -> TypedVarMap -> Bool -> FilePath -> IO F
+eliminateFloatsAndSimplifyVC vc typedVarMap strengthenVC fptaylorPath = 
   do
-    vcWithoutFloats <- eliminateFloatsF vc varMap True fptaylorPath 
-    return $ minMaxAbsEliminatorECNF . fToECNF . simplifyF $ vcWithoutFloats
-  where
-    varMap = typedVarMapToVarMap typedVarMap
+    vcWithoutFloats <- eliminateFloatsF vc (typedVarMapToVarMap typedVarMap) strengthenVC fptaylorPath
+    let typedVarMapAsMap = M.fromList $ map (\(TypedVar (varName, (leftBound, rightBound)) _) -> (varName, (Just leftBound, Just rightBound))) typedVarMap
+    -- If a statement is still present after evalF_comparisons, and it does not contain variables, it is indeterminate, so we remove them
+    let simplifiedVCWithoutFloatsAndVarFreeFormulae = (simplifyF . removeVariableFreeComparisons . simplifyF . evalF_comparisons typedVarMapAsMap) vcWithoutFloats
+    return simplifiedVCWithoutFloatsAndVarFreeFormulae
 
-parseVCToECNF :: FilePath -> FilePath -> IO (Maybe ([[ESafe]], TypedVarMap))
-parseVCToECNF filePath fptaylorPath = 
+parseVCToF :: FilePath -> FilePath -> IO (Maybe (F, TypedVarMap))
+parseVCToF filePath fptaylorPath =
   do
     parsedFile  <- parseSMT2 filePath
 
@@ -764,13 +760,15 @@ parseVCToECNF filePath fptaylorPath =
         case mDerivedVCWithRanges of
           Just (derivedVC, derivedRanges) ->
             do
-              vcWithoutFloatsAsECNF <- eliminateFloatsAndConvertVCToECNF (simplifyF (FNot derivedVC)) derivedRanges fptaylorPath ---TODO: Remove FNot, do this in lppaver exe
-              return $ Just (simplifyESafeCNF vcWithoutFloatsAsECNF, derivedRanges)
+              -- The file we are given is assumed to be a contradiction, so weaken the VC
+              let strengthenVC = False
+              simplifiedVCWithoutFloatsWithoutFreeVars <- eliminateFloatsAndSimplifyVC derivedVC derivedRanges strengthenVC fptaylorPath
+              return $ Just (simplifiedVCWithoutFloatsWithoutFreeVars, derivedRanges)
           Nothing -> return Nothing
       Nothing -> return Nothing
 
 parseVCToSolver :: FilePath -> FilePath -> (F -> TypedVarMap -> String) -> Bool -> IO (Maybe String)
-parseVCToSolver filePath fptaylorPath proverTranslator proveContradiction =
+parseVCToSolver filePath fptaylorPath proverTranslator negateVC =
   do
     parsedFile <- parseSMT2 filePath
     
@@ -783,9 +781,39 @@ parseVCToSolver filePath fptaylorPath proverTranslator proveContradiction =
           case mDerivedVCWithRanges of
             Just (derivedVC, derivedRanges) ->
               do
-                vcWithoutFloats <- eliminateFloatsF derivedVC (typedVarMapToVarMap derivedRanges) True fptaylorPath
-                let derivedMap = M.fromList $ map (\(TypedVar (varName, (leftBound, rightBound)) _) -> (varName, (Just leftBound, Just rightBound))) derivedRanges
-                let simplifiedVCWithoutFloats = (simplifyF . evalF_comparisons derivedMap) vcWithoutFloats
-                return $ Just (proverTranslator (if proveContradiction then simplifyF (FNot simplifiedVCWithoutFloats) else simplifiedVCWithoutFloats) derivedRanges)
+                let strengthenVC = False
+                simplifiedVCWithoutFloatsWithoutFreeVars <- eliminateFloatsAndSimplifyVC derivedVC derivedRanges strengthenVC fptaylorPath
+                return $ Just (proverTranslator (if negateVC then simplifyF (FNot simplifiedVCWithoutFloatsWithoutFreeVars) else simplifiedVCWithoutFloatsWithoutFreeVars) derivedRanges)
             Nothing -> return Nothing
       Nothing -> return Nothing
+
+removeVariableFreeComparisons :: F -> F
+removeVariableFreeComparisons f = 
+  aux f False
+  where
+    expressionContainsVars :: E -> Bool
+    expressionContainsVars (EBinOp _ e1 e2)     = expressionContainsVars e1 || expressionContainsVars e2
+    expressionContainsVars (EUnOp _ e)          = expressionContainsVars e
+    expressionContainsVars (PowI e _)           = expressionContainsVars e
+    expressionContainsVars (Float _ e)          = expressionContainsVars e
+    expressionContainsVars (Float32 _ e)        = expressionContainsVars e
+    expressionContainsVars (Float64 _ e)        = expressionContainsVars e
+    expressionContainsVars (RoundToInteger _ e) = expressionContainsVars e
+    expressionContainsVars (Lit _)              = False
+    expressionContainsVars Pi                   = False
+    expressionContainsVars (Var _)              = True
+
+
+    -- When we say False (unsat), the VC MUST be False
+    -- When we say True (sat), the VC might not be True
+    aux f'@(FConn And f1 f2) isNegated = FConn And (aux f1 isNegated) (aux f2 isNegated)
+    aux f'@(FConn Or f1 f2) isNegated = FConn Or (aux f1 isNegated) (aux f2 isNegated)
+    aux f'@(FConn Impl f1 f2) isNegated = FConn Impl (aux f1 (not isNegated)) (aux f2 isNegated)
+    aux f'@(FComp _ e1 e2) isNegated = 
+      case (expressionContainsVars e1, expressionContainsVars e2) of
+        (True, _) -> f'
+        (_, True) -> f'
+        _         -> if isNegated then FFalse else FTrue
+    aux (FNot f') isNegated = FNot (aux f' (not isNegated))
+    aux FTrue  _ = FTrue
+    aux FFalse _ = FFalse
