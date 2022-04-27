@@ -32,6 +32,7 @@ import Text.Regex.TDFA ( (=~) )
 import Data.Ratio
 import AERN2.BoxFunMinMax.Expressions.DeriveBounds
 import qualified Data.Map as M
+import AERN2.MP (endpoints, mpBallP, prec)
 
 data ParsingMode = Why3 | CNF
 parser :: String -> [LD.Expression]
@@ -296,7 +297,7 @@ termToE (LD.Application (LD.Variable operator) [op1, op2]) functionsWithInputsAn
     (Just roundingMode, Just e) ->
       case operator of
         n
-          | (n =~ "^round$|^round[0-9]+$" :: Bool)   -> Just $ Float roundingMode e
+          | (n =~ "^round$|^round[0-9]+$" :: Bool)   -> Just $ Float roundingMode e --FIXME: remove this? not used with cvc4 driver?
           | (n =~ "^to_int$|^to_int[0-9]+$" :: Bool) -> Just $ RoundToInteger roundingMode e
           | (n =~ "^of_int$|^of_int[0-9]+$" :: Bool) -> 
             case lookup n functionsWithInputsAndOutputs of
@@ -586,7 +587,7 @@ processVC parsedExpressions =
 deriveVCRanges :: F -> [(String, String)] -> Maybe (F, TypedVarMap)
 deriveVCRanges vc varsWithTypes =
   case filterOutVars simplifiedF underivableVariables False of
-    Just filteredF -> Just (filteredF, unsafeVarMapToTypedVarMap derivedVarMap integerVariables)
+    Just filteredF -> Just (filteredF, safelyRoundTypedVarMap typedDerivedVarMap)
     Nothing -> Nothing
   where
     integerVariables = findIntegerVariables varsWithTypes
@@ -594,6 +595,18 @@ deriveVCRanges vc varsWithTypes =
     (simplifiedFUnchecked, derivedVarMapUnchecked, underivableVariables) = deriveBoundsAndSimplify vc
 
     (piVars, derivedVarMap) = findRealPiVars derivedVarMapUnchecked
+
+    typedDerivedVarMap = unsafeVarMapToTypedVarMap derivedVarMap integerVariables
+
+    safelyRoundTypedVarMap [] = []
+    safelyRoundTypedVarMap ((TypedVar (varName, (leftBound, rightBound)) Real) : vars)    = 
+      let
+        leftBoundRoundedDown = rational . fst . endpoints $ mpBallP (prec 23) leftBound
+        rightBoundRoundedUp = rational . snd . endpoints $ mpBallP (prec 23) rightBound
+        newBound = TypedVar (varName, (leftBoundRoundedDown, rightBoundRoundedUp)) Real
+      in
+        newBound : safelyRoundTypedVarMap vars
+    safelyRoundTypedVarMap (vi@(TypedVar _                               Integer) : vars) = vi : safelyRoundTypedVarMap vars
  
     simplifiedF = substVarsWithPi piVars simplifiedFUnchecked
 
