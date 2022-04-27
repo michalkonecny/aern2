@@ -54,6 +54,12 @@ applyExpression expression varMap p =
   where
     f = expressionToBoxFun expression varMap p
 
+gradientExpression :: E.E -> VarMap -> Precision -> V.Vector (CN MPBall)
+gradientExpression expression varMap p =
+  gradient f (varMapToBox varMap p)
+  where
+    f = expressionToBoxFun expression varMap p
+
 applyExpressionLipschitz :: E.E -> VarMap -> Precision -> CN MPBall
 applyExpressionLipschitz expression varMap p =
   applyLipschitz f (varMapToBox varMap p)
@@ -68,12 +74,23 @@ applyDisjunction expressions varMap p =
   where
     box = varMapToBox varMap p
 
+gradientDisjunction :: [E.E] -> VarMap -> Precision -> [V.Vector (CN MPBall)]
+gradientDisjunction expressions varMap p =
+  map
+  (\e -> gradientExpression e varMap p)
+  expressions
+
 applyECNF :: [[E.E]] -> VarMap -> Precision -> [[CN MPBall]]
 applyECNF cnf varMap p = map (\d -> applyDisjunction d varMap p) cnf
 
-applyESafeCNF :: [[E.ESafe]] -> VarMap -> Precision -> [[CN MPBall]]
-applyESafeCNF cnf varMap p = applyECNF (map (map (E.extractSafeE)) cnf) varMap p
+gradientEDoubleList :: [[E.E]] -> VarMap -> Precision -> [[V.Vector (CN MPBall)]]
+gradientEDoubleList cnf varMap p = map (\d -> gradientDisjunction d varMap p) cnf
 
+applyESafeCNF :: [[E.ESafe]] -> VarMap -> Precision -> [[CN MPBall]]
+applyESafeCNF cnf  = applyECNF (map (map E.extractSafeE) cnf)
+
+gradientESafeDoubleList :: [[E.ESafe]] -> VarMap -> Precision -> [[V.Vector (CN MPBall)]]
+gradientESafeDoubleList cnf = gradientEDoubleList (map (map E.extractSafeE) cnf)
 
 rangeAboveZero :: CN MPBall -> Bool
 rangeAboveZero r = r !>! 0
@@ -125,8 +142,27 @@ filterOutFalseExpressions =
       E.ENonStrict _ -> hasError range || not (range !<! 0)
   )
 
+filterOutTrueExpressions :: [((E.ESafe, BoxFun), CN MPBall)] -> [((E.ESafe, BoxFun), CN MPBall)]
+filterOutTrueExpressions =
+  filter
+  (\((safeE, _), range) ->
+    case safeE of
+      E.EStrict _ ->    hasError range || not (range !>! 0) -- We cannot decide on ranges with errors, so do not filter them out
+      E.ENonStrict _ -> hasError range || not (range !>=! 0)
+  )
+
 decideRangesGEZero :: [((E.E, BoxFun), CN MPBall)] -> Bool
 decideRangesGEZero = any (\(_, range) -> not (hasError range) && range !>=! 0)
+
+decideConjunctionRangesFalse :: [((E.ESafe, BoxFun), CN MPBall)] -> Bool
+decideConjunctionRangesFalse =
+  any
+  (\((safeE, _), range) ->
+    case safeE of
+      E.EStrict _     -> not (hasError range) && range !<=! 0
+      E.ENonStrict _  -> not (hasError range) && range !<! 0
+  )
+
 
 decideDisjunctionRangesTrue :: [((E.ESafe, BoxFun), CN MPBall)] -> Bool
 decideDisjunctionRangesTrue =
@@ -224,6 +260,16 @@ computeCornerValuesAndDerivatives esWithRanges box = filteredCornerRangesWithDer
       (\(l, r, c) -> not (hasError l || hasError r || V.any hasError c)) -- Filter out functions where any partial derivative or corners contain an error
       cornerRangesWithDerivatives
 
+checkDisjunctionResults :: [(Maybe Bool, Maybe a)] -> Maybe a -> (Maybe Bool, Maybe a)
+checkDisjunctionResults [] Nothing = (Just False, Nothing)
+checkDisjunctionResults [] indeterminateArea@(Just _) = (Nothing, indeterminateArea)
+checkDisjunctionResults (result : results) mIndeterminateArea =
+  case result of
+    r@(Just True, _) -> r
+    (Just False, _) -> checkDisjunctionResults results mIndeterminateArea
+    (Nothing, indeterminateArea@(Just _)) -> checkDisjunctionResults results indeterminateArea
+    (Nothing, Nothing) -> undefined
+
 checkConjunctionResults :: [(Maybe Bool, Maybe a)] -> Maybe a -> (Maybe Bool, Maybe a)
 checkConjunctionResults [] Nothing = (Just True, Nothing)
 checkConjunctionResults [] indeterminateArea@(Just _) = (Nothing, indeterminateArea)
@@ -273,6 +319,59 @@ checkECNFBestFirstWithSimplexCE disjunctions typedVarMap bfsBoxesCutoff relative
   where --FIXME, best first...
     varMap = typedVarMapToVarMap typedVarMap
     disjunctionResults = parMap rseq (\disjunction -> setupBestFirstCheck (map (\e -> (e, expressionToBoxFun (E.extractSafeE e) varMap p)) disjunction) typedVarMap bfsBoxesCutoff relativeImprovementCutoff p) disjunctions
+
+checkEDNFDepthFirstWithSimplex :: [[E.ESafe]] -> TypedVarMap -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap)
+checkEDNFDepthFirstWithSimplex conjunctions typedVarMap depthCutoff bfsBoxesCutoff relativeImprovementCutoff p =
+  checkDisjunctionResults disjunctionResults Nothing
+  where
+    varMap = typedVarMapToVarMap typedVarMap
+    disjunctionResults = parMap rseq (\disjunction ->  decideConjunctionDepthFirstWithSimplex (map (\e -> (e, expressionToBoxFun (E.extractSafeE e) varMap p)) disjunction) typedVarMap 0 depthCutoff bfsBoxesCutoff relativeImprovementCutoff p) conjunctions
+
+checkEDNFDepthFirstWithSimplexQueue :: [[E.ESafe]] -> TypedVarMap -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap)
+checkEDNFDepthFirstWithSimplexQueue disjunctions typedVarMap depthCutoff bfsBoxesCutoff relativeImprovementCutoff p =
+  -- aux $ map (\c -> ) conjunctions
+  aux disjunctionResults []
+  where
+    disjunctionWithBoxFun = map (\conjunction -> (map (\e -> (e, expressionToBoxFun  (E.extractSafeE e) varMap p)) conjunction, (typedVarMap, 0))) disjunctions
+    varMap = typedVarMapToVarMap typedVarMap
+
+    disjunctionResults = parMap rseq 
+      (\(conjunctionWithBoxFun, (currentVarMap, currentDepth)) -> 
+        computeConjunctionWithBoxFunWithVarMapAndDepth conjunctionWithBoxFun currentVarMap currentDepth
+      )
+      disjunctionWithBoxFun
+    
+    computeConjunctionWithBoxFunWithVarMapAndDepth cWithBF vm cd =
+      decideConjunctionDepthFirstWithSimplexQueue cWithBF vm cd depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
+
+    aux [] [] = (Just False, Nothing)
+    aux [] newConjunctions =
+      aux
+      (
+        parMap rseq 
+        (\(conjunctionWithBoxFun, (currentVarMap, currentDepth)) ->
+          computeConjunctionWithBoxFunWithVarMapAndDepth conjunctionWithBoxFun currentVarMap currentDepth
+        )
+        newConjunctions
+      )
+      []
+    aux (result : results) newConjunctions =
+      case result of
+        (Just True, Just satArea, _) -> (Just True, Just satArea)
+        (Just False, _, _)           -> aux results newConjunctions
+        (Nothing, _, Just (newConjunctionWithBoxFun, (bisectedLeftVarMap, bisectedRightVarMap), newDepth)) ->
+          -- let
+          --   (resultL, resultR) =
+          --     withStrategy
+          --     (parTuple2 rseq rseq)
+          --     (
+          --       decideConjunctionDepthFirstWithSimplexQueue newConjunctionWithBoxFun bisectedLeftVarMap newDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p,
+          --       decideConjunctionDepthFirstWithSimplexQueue newConjunctionWithBoxFun bisectedRightVarMap newDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
+          --     )
+          -- in
+          aux results (newConjunctions ++ [(newConjunctionWithBoxFun, (bisectedLeftVarMap, newDepth)), (newConjunctionWithBoxFun, (bisectedRightVarMap, newDepth))])
+        (Nothing, Just indeterminateArea, Nothing) -> (Nothing, Just indeterminateArea)
+        (_, _, _) -> error "what"
 
 mean :: [CN Dyadic] -> CN Rational
 mean xs = sum xs / length xs
@@ -443,6 +542,133 @@ decideDisjunctionDepthFirstWithApply expressionsWithFunctions typedVarMap curren
                 r -> r
             r -> r
 
+decideConjunctionDepthFirstWithSimplexQueue :: [(E.ESafe, BoxFun)] -> TypedVarMap -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap, Maybe ([(E.ESafe, BoxFun)], (TypedVarMap, TypedVarMap), Integer))
+decideConjunctionDepthFirstWithSimplexQueue expressionsWithFunctions typedVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
+  | null filterOutTrueTerms =
+    trace ("proved sat with apply " ++ show roundedVarMap)
+    (Just True, Just roundedVarMap, Nothing)
+  | checkIfEsFalseUsingApply =
+    trace "proved false with apply"
+    (Just False, Nothing, Nothing)
+  | otherwise = checkSimplex
+  where
+      box  = typedVarMapToBox typedVarMap p
+      varNamesWithTypes = getVarNamesWithTypes typedVarMap
+      roundedVarMap =
+        case safeBoxToTypedVarMap box varNamesWithTypes of
+          Just rvm -> rvm
+          Nothing -> error $ "Rounded the following varMap makes it inverted: " ++ show typedVarMap
+      untypedRoundedVarMap = typedVarMapToVarMap roundedVarMap
+
+      esWithRanges             = parMap rseq (\ (e, f) -> ((e, f), apply f box)) expressionsWithFunctions
+      filterOutTrueTerms       = filterOutTrueExpressions esWithRanges
+      checkIfEsFalseUsingApply = decideConjunctionRangesFalse filterOutTrueTerms
+
+      filteredExpressionsWithFunctions = map fst filterOutTrueTerms
+
+      filteredCornerRangesWithDerivatives = computeCornerValuesAndDerivatives filterOutTrueTerms box
+
+      bisectAndReturn varMapToBisect =
+        if currentDepth !<! depthCutoff
+          then
+            let bisectedPair = bimap (`unsafeIntersectVarMap` varMapToBisect) (`unsafeIntersectVarMap` varMapToBisect) $ bisectWidestTypedInterval varMapToBisect
+            in (Nothing, Just varMapToBisect, Just (filteredExpressionsWithFunctions, bisectedPair, currentDepth + 1))
+          else (Nothing, Just varMapToBisect, Nothing)
+
+      checkSimplex
+        -- If we can calculate any derivatives
+        | (not . null) filteredCornerRangesWithDerivatives = trace "decideWithSimplex start" $
+          case removeConjunctionUnsatAreaWithSimplex filteredCornerRangesWithDerivatives untypedRoundedVarMap of
+            (Just False, _) -> trace ("decideWithSimplex true: " ++ show roundedVarMap) (Just False, Nothing, Nothing)
+            (Nothing, Just newVarMap) -> trace "decideWithSimplex indet" $
+              case safeVarMapToTypedVarMap newVarMap varNamesWithTypes of
+                Just nvm -> recurseOnVarMap $ unsafeIntersectVarMap nvm roundedVarMap
+                Nothing -> (Just False, Nothing, Nothing) -- This will only happen when all integers in an integer-only varMap have been decided
+            _ -> undefined
+        | otherwise = bisectAndReturn roundedVarMap
+
+      recurseOnVarMap recurseVarMap
+        | typedMaxWidth recurseVarMap == 0 = error "no" --FIXME: shouldn't happen, error here?
+        | typedMaxWidth roundedVarMap / typedMaxWidth recurseVarMap >= relativeImprovementCutoff =
+          trace ("recursing with simplex with roundedVarMap: " ++ show recurseVarMap) $
+          decideConjunctionDepthFirstWithSimplexQueue filteredExpressionsWithFunctions recurseVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
+        | otherwise = bisectAndReturn recurseVarMap
+
+decideConjunctionDepthFirstWithSimplex :: [(E.ESafe, BoxFun)] -> TypedVarMap -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap)
+decideConjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
+  | null filterOutTrueTerms =
+    trace ("proved sat with apply " ++ show roundedVarMap)
+    (Just True, Just roundedVarMap)
+  | checkIfEsFalseUsingApply =
+    trace "proved false with apply"
+    (Just False, Nothing)
+  | otherwise = checkSimplex
+  where
+      box  = typedVarMapToBox typedVarMap p
+      varNamesWithTypes = getVarNamesWithTypes typedVarMap
+      roundedVarMap =
+        case safeBoxToTypedVarMap box varNamesWithTypes of
+          Just rvm -> rvm
+          Nothing -> error $ "Rounded the following varMap makes it inverted: " ++ show typedVarMap
+      untypedRoundedVarMap = typedVarMapToVarMap roundedVarMap
+
+      esWithRanges             = parMap rseq (\ (e, f) -> ((e, f), apply f box)) expressionsWithFunctions
+      filterOutTrueTerms       = filterOutTrueExpressions esWithRanges
+      checkIfEsFalseUsingApply = decideConjunctionRangesFalse filterOutTrueTerms
+
+      indeterminateExpressions = map (fst . fst) filterOutTrueTerms
+
+      filteredExpressionsWithFunctions = map fst filterOutTrueTerms
+
+      filteredCornerRangesWithDerivatives = computeCornerValuesAndDerivatives filterOutTrueTerms box
+
+      bestFirstCheck varMapToCheck = setupBestFirstCheck filteredExpressionsWithFunctions varMapToCheck bfsBoxesCutoff relativeImprovementCutoff p
+
+      bisectWidestDimensionAndRecurse varMapToBisect =
+        let
+          (leftVarMap, rightVarMap) = bimap (`unsafeIntersectVarMap` varMapToBisect) (`unsafeIntersectVarMap` varMapToBisect) $ bisectWidestTypedInterval varMapToBisect
+
+          (leftR, rightR) =
+            withStrategy
+            (parTuple2 rseq rseq)
+            (
+              decideConjunctionDepthFirstWithSimplex filteredExpressionsWithFunctions leftVarMap (currentDepth + 1) depthCutoff bfsBoxesCutoff relativeImprovementCutoff p,
+              decideConjunctionDepthFirstWithSimplex filteredExpressionsWithFunctions rightVarMap (currentDepth + 1) depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
+            )
+        in
+          case leftR of
+            (Just False, _)
+              -> case rightR of
+                (Just False, _) -> (Just False, Nothing)
+                r -> r
+            r -> r
+
+      bisectUntilCutoff varMapToCheck =
+        if currentDepth !<! depthCutoff -- Best first
+          then
+              bisectWidestDimensionAndRecurse varMapToCheck
+          else
+            (Nothing, Just varMapToCheck)
+
+      checkSimplex
+        -- If we can calculate any derivatives
+        | (not . null) filteredCornerRangesWithDerivatives = trace "decideWithSimplex start" $
+          case removeConjunctionUnsatAreaWithSimplex filteredCornerRangesWithDerivatives untypedRoundedVarMap of
+            (Just False, _) -> trace ("decideWithSimplex true: " ++ show roundedVarMap) (Just False, Nothing)
+            (Nothing, Just newVarMap) -> trace "decideWithSimplex indet" $
+              case safeVarMapToTypedVarMap newVarMap varNamesWithTypes of
+                Just nvm -> recurseOnVarMap $ unsafeIntersectVarMap nvm roundedVarMap
+                Nothing -> (Just False, Nothing) -- This will only happen when all integers in an integer-only varMap have been decided
+            _ -> undefined
+        | otherwise = bisectUntilCutoff roundedVarMap
+
+      recurseOnVarMap recurseVarMap
+        | typedMaxWidth recurseVarMap == 0 = (Nothing, Just recurseVarMap)
+        | typedMaxWidth roundedVarMap / typedMaxWidth recurseVarMap >= relativeImprovementCutoff =
+          trace ("recursing with simplex with roundedVarMap: " ++ show recurseVarMap) $
+          decideConjunctionDepthFirstWithSimplex filteredExpressionsWithFunctions recurseVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
+        | otherwise = bisectUntilCutoff recurseVarMap
+
 decideDisjunctionDepthFirstWithSimplex :: [(E.ESafe, BoxFun)] -> TypedVarMap -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap)
 decideDisjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
   | null filterOutFalseTerms =
@@ -585,6 +811,51 @@ decideDisjunctionWithSimplexCE expressionsWithFunctions typedVarMap relativeImpr
           decideDisjunctionWithSimplexCE filteredExpressionsWithFunctions recurseVarMap relativeImprovementCutoff p
         | otherwise = (Nothing, Just recurseVarMap)
 
+removeConjunctionUnsatAreaWithSimplex :: [(CN MPBall, CN MPBall, Box)] -> VarMap -> (Maybe Bool, Maybe VarMap)
+removeConjunctionUnsatAreaWithSimplex cornerValuesWithDerivatives varMap =
+  case mOptimizedVars of
+    Just optimizedVars -> (Nothing, Just optimizedVars)
+    Nothing            -> (Just False, Nothing)
+  where
+    (simplexSystem, stringIntVarMap) = constraintsToSimplexConstraints $ createConstraintsToRemoveConjunctionUnsatArea cornerValuesWithDerivatives varMap
+
+    vars = map fst varMap
+
+    mFeasibleSolution = S.findFeasibleSolution simplexSystem
+
+
+    extractSimplexResult :: Maybe (Integer, [(Integer, Rational)]) -> Rational
+    extractSimplexResult maybeResult =
+      case maybeResult of
+        Just (optimizedIntVar, result) -> -- optimizedIntVar refers to the objective variable. We extract the value of the objective
+                                          -- variable from the result
+          case lookup optimizedIntVar result of
+            Just optimizedVarResult -> optimizedVarResult
+            Nothing -> error "Extracting simplex result after finding feasible solution resulted in an infeasible result. This should not happen"
+        Nothing -> undefined
+
+    mOptimizedVars =
+      case mFeasibleSolution of
+        Just (feasibleSystem, slackVars, artificialVars, objectiveVar) ->
+          Just $
+          map -- Optimize (minimize and maximize) all variables in the varMap
+          (\var ->
+            case M.lookup var stringIntVarMap of
+              Just intVar ->
+                case lookup var varMap of
+                  Just (originalL, _) -> -- In the simplex system, the original lower bound of each var was shifted to 0. We undo this shift after optimization.
+                    (
+                      var,
+                      (
+                        originalL + extractSimplexResult (S.optimizeFeasibleSystem (S.Min [(intVar, 1.0)]) feasibleSystem slackVars artificialVars objectiveVar),
+                        originalL + extractSimplexResult (S.optimizeFeasibleSystem (S.Max [(intVar, 1.0)]) feasibleSystem slackVars artificialVars objectiveVar)
+                      )
+                    )
+                  Nothing -> error "Optimized var not found in original varMap. This should not happen."
+              Nothing -> error "Integer version of var not found. This should not happen."
+          )
+          vars
+        Nothing -> Nothing
 decideWithSimplex :: [(CN MPBall, CN MPBall, Box)] -> VarMap -> (Maybe Bool, Maybe VarMap)
 decideWithSimplex cornerValuesWithDerivatives varMap =
   case mOptimizedVars of
@@ -615,13 +886,13 @@ decideWithSimplex cornerValuesWithDerivatives varMap =
           map -- Optimize (minimize and maximize) all variables in the varMap
           (\var ->
             case M.lookup var stringIntVarMap of
-              Just intVar -> 
+              Just intVar ->
                 case lookup var varMap of
                   Just (originalL, _) -> -- In the simplex system, the original lower bound of each var was shifted to 0. We undo this shift after optimization.
                     (
-                      var, 
+                      var,
                       (
-                        originalL + extractSimplexResult (S.optimizeFeasibleSystem (S.Min [(intVar, 1.0)]) feasibleSystem slackVars artificialVars objectiveVar), 
+                        originalL + extractSimplexResult (S.optimizeFeasibleSystem (S.Min [(intVar, 1.0)]) feasibleSystem slackVars artificialVars objectiveVar),
                         originalL + extractSimplexResult (S.optimizeFeasibleSystem (S.Max [(intVar, 1.0)]) feasibleSystem slackVars artificialVars objectiveVar)
                       )
                     )
@@ -648,7 +919,7 @@ constraintVars cs = nub $ aux cs
   where
     aux :: [Constraint] -> [String]
     aux [] = []
-    aux (x : xs) = map fst (constraintLeftSide x) ++ aux xs 
+    aux (x : xs) = map fst (constraintLeftSide x) ++ aux xs
 
 constraintsToSimplexConstraints :: [Constraint] -> ([S.PolyConstraint], M.Map String Integer)
 constraintsToSimplexConstraints constraints =
@@ -665,6 +936,65 @@ constraintsToSimplexConstraints constraints =
     stringVars = constraintVars constraints
     stringIntVarMap = M.fromList $ zip stringVars [1..]
 
+createConstraintsToRemoveConjunctionUnsatArea :: [(CN MPBall, CN MPBall, Box)] -> VarMap -> [Constraint]
+createConstraintsToRemoveConjunctionUnsatArea cornerValuesWithDerivatives varMap =
+  domainConstraints ++ functionConstraints
+  where
+    vars = map fst varMap
+    varsNewUpperBounds = map (\(_, (l, r)) -> r - l) varMap
+
+    -- var >= varLower - varLower && var <= varUpper - varLower
+    -- Since var >= 0 is assumed by the simplex method, var >= varLower - varLower is not needed
+    domainConstraints =
+      map
+      (\(var, (varLower, varUpper)) ->
+        LEQ [(var, 1.0)] $ varUpper - varLower
+      )
+      varMap
+
+    -- for sat version...  
+    --  fn - (fnx1GradientL * x1) - .. - (fnxnGradientL * xn) <= fnLeftCorner  - (fnx1GradientL * x1L) - .. - (fnx1GradientL * x1L)
+    --  fn - (fnx1GradientR * x1) - .. - (fnxnGradientR * xn) <= fnRightCorner - (fnx1GradientR * x1R) - .. - (fnx1GradientR * x1R)
+
+    -- The following constraints in this variable are...
+    --  fn - (fnx1GradientR * x1) - .. - (fnxnGradientR * xn) <= fnLeftCorner + (fnx1GradientR * -x1L) + .. + (fnxnGradientR * -xnL)
+    --  fn - (fnx1GradientL * x1) - .. - (fnxnGradientL * xn) <= fnRightCorner + (-fnx1GradientL * x1R) + .. + (-fnxnGradientL * xnR)
+    -- and these are equivalent to...
+    --  fn <= fnLeftCorner  + (fnx1GradientR  * (x1 - x1L)) + .. + (fnxnGradientR * (xn - xnL))
+    --  fn <= fnRightCorner + (-fnx1GradientL * (x1R - x1)) + .. + (-fnxnGradientL * (xnR - xn))
+    -- 
+    functionConstraints =
+      concatMap
+      (\(fnInt, (fLeftRange, fRightRange, fPartialDerivatives)) ->
+        let
+          fNegatedPartialDerivativesLowerBounds = map (negate . fst . mpBallToRational) $ V.toList fPartialDerivatives
+          fNegatedPartialDerivativesUpperBounds = map (negate . snd . mpBallToRational) $ V.toList fPartialDerivatives
+          fLeftUpperBound = snd $ mpBallToRational fLeftRange
+          fRightUpperBound = snd $ mpBallToRational fRightRange
+
+          --FIXME: make this safe. Check if vars contain ^fSimplex[0-9]+$. If so, try ^fSimplex1[0-9]+$ or something
+          fSimplexN = "fSimplex" ++ show fnInt
+        in
+          [
+            -- f is definitely below this line from the left corner
+            -- Multiplication with left corner and partial derivatives omitted, since left corner is zero
+            LEQ ((fSimplexN, 1.0) : zip vars fNegatedPartialDerivativesUpperBounds)
+              fLeftUpperBound,
+            -- f is definitely below this line from the right corner
+            LEQ ((fSimplexN, 1.0) : zip vars fNegatedPartialDerivativesLowerBounds)
+              $ foldl add fRightUpperBound $ zipWith mul varsNewUpperBounds fNegatedPartialDerivativesLowerBounds
+
+            -- LEQ ((fSimplexN, 1.0) : zip vars fNegatedPartialDerivativesLowerBounds) fLeftUpperBound, this is for sat version
+          ]
+      )
+      $
+      zip
+      [1..]
+      cornerValuesWithDerivatives
+
+    mpBallToRational :: CN MPBall -> (Rational, Rational)
+    mpBallToRational = bimap rational rational . endpoints . reducePrecionIfInaccurate . unCN
+
 createConstraintsToEncloseAreaUnderZero :: [(CN MPBall, CN MPBall, Box)] -> VarMap -> [Constraint]
 createConstraintsToEncloseAreaUnderZero cornerValuesWithDerivatives varMap =
   domainConstraints ++ functionConstraints
@@ -675,7 +1005,7 @@ createConstraintsToEncloseAreaUnderZero cornerValuesWithDerivatives varMap =
 
     domainConstraints =
       map
-      (\(var, (varLower, varUpper)) -> 
+      (\(var, (varLower, varUpper)) ->
         -- Lowerbound not needed, varLower - varLower = 0, and var >= 0 is assumed by the simplex method
         LEQ [(var, 1.0)] $ varUpper - varLower
       )
@@ -693,10 +1023,10 @@ createConstraintsToEncloseAreaUnderZero cornerValuesWithDerivatives varMap =
           fNegN = "fNeg" ++ show fnInt
         in
           [
-            LEQ 
+            LEQ
               ((fNegN, 1.0) : zip vars fPartialDerivativesLowerBounds)
               (-fLeftLowerBound), -- Partial derivatives multiplied with left corner is omitted because left corner is 0
-            LEQ 
+            LEQ
               ((fNegN, 1.0) : zip vars fPartialDerivativesUpperBounds)
               $ foldl add (-fRightLowerBound) $ zipWith mul varsNewUpperBounds fPartialDerivativesUpperBounds
             -- LEQ 

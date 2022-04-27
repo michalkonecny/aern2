@@ -154,9 +154,10 @@ minMaxAbsEliminatorECNF ecnf = and $ map or (map (map (qualifiedEsToCNF2 . minMa
 --     buildPs (p : ps) = EBinOp Max (EUnOp Negate p) (buildPs ps) 
 -- qualifiedEsToCNF ((ps, q) : es) = EBinOp Min (qualifiedEsToCNF [(ps, q)]) (qualifiedEsToCNF es)
 
--- | Convert a list of qualified Es to a list of lists where
--- the outer list is a conjunction and the inner list is a disjunction,
--- AKA a CNF
+minMaxAbsEliminatorEDNF :: [[ESafe]] -> [[ESafe]]
+minMaxAbsEliminatorEDNF ednf = (map (concatMap (qualifiedEsToConjunctions . minMaxAbsEliminator)) ednf)
+
+-- | Convert a list of qualified Es to a CNF represented as a list of lists
 qualifiedEsToCNF2 :: [([ESafe],ESafe)] -> [[ESafe]]
 qualifiedEsToCNF2 = 
   map 
@@ -165,6 +166,26 @@ qualifiedEsToCNF2 =
   )
   -- The negation of ps turns it into ps < 0, which is equivalent to -ps > 0
 
+-- Convert a list of qualified Es to a conjunction represented as a list
+-- Since the qualifiedEs are a conjunction of implications, we can trivially turn this to a conjunction of conjunctions
+-- Note that if the context is empty,  we do not have an implication, just a statement, which is kept as is
+-- Since conjunctions are commutative, we can concat to get a single list of conjunctions
+qualifiedEsToConjunctions :: [([ESafe], ESafe)] -> [ESafe]
+qualifiedEsToConjunctions =
+  concatMap
+  (\(ps, q) ->
+    case MixedTypesNumPrelude.length ps of
+      0 -> [q]
+      _ -> negateSafeE q : ps
+  )
+
+qualifiedEToF :: ([ESafe], ESafe) -> F
+qualifiedEToF ([],      goal) = eSafeToF goal
+qualifiedEToF (context, goal) = FConn Impl (aux context) $ eSafeToF goal
+  where
+    aux []       = undefined
+    aux [c]      = eSafeToF c
+    aux (c : cs) = FConn And (eSafeToF c) (aux cs)
 -- TODO:
 
 -- Translate to this type

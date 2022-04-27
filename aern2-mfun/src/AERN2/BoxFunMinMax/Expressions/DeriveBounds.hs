@@ -124,7 +124,7 @@ scanHypothesis (FNot h) isNegated intervals = scanHypothesis h (not isNegated) i
 scanHypothesis (FConn And (FConn Impl cond1 branch1) (FConn Impl (FNot cond2) branch2)) False intervals 
   | cond1 P.== cond2 = scanHypothesis (FConn Or branch1 branch2) False intervals
 scanHypothesis (FConn And (FConn Impl cond1 branch1) (FConn Impl (FNot cond2) branch2)) False intervals 
-  | sort (simplifyESafeCNF (fToECNF (simplifyF cond1))) P.== sort (simplifyESafeCNF (fToECNF (simplifyF cond2))) = scanHypothesis (FConn Or branch1 branch2) False intervals
+  | sort (simplifyESafeDoubleList (fToECNF (simplifyF cond1))) P.== sort (simplifyESafeDoubleList (fToECNF (simplifyF cond2))) = scanHypothesis (FConn Or branch1 branch2) False intervals
 scanHypothesis (FConn And h1 h2) isNegated intervals = 
   if isNegated
     then scanHypothesis (FConn Or (FNot h1) (FNot h2)) False intervals

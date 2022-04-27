@@ -206,6 +206,57 @@ fToECNF = fToECNFB False
     fToECNFB False FTrue     = [[ENonStrict (Lit 1.0)]]
     fToECNFB False FFalse    = [[ENonStrict (Lit (-1.0))]]
 
+fToEDNF :: F -> [[ESafe]]
+fToEDNF = fToEDNFB False
+  where
+    fToEDNFB :: Bool -> F -> [[ESafe]]
+    fToEDNFB isNegated (FNot f) = fToEDNFB (not isNegated) f
+    fToEDNFB True (FComp op e1 e2) = case op of
+      Le -> fToEDNFB False (FComp Gt e1 e2)
+      Lt -> fToEDNFB False (FComp Ge e1 e2)
+      Ge -> fToEDNFB False (FComp Lt e1 e2)
+      Gt -> fToEDNFB False (FComp Le e1 e2)
+      Eq -> fToEDNFB True (FConn And (FComp Ge e1 e2) (FComp Le e1 e2)) -- !(f1 = f2)
+    fToEDNFB False (FComp op e1 e2) = case op of
+      Le -> fToEDNFB False (FComp Ge e2 e1)
+      Lt -> fToEDNFB False (FComp Gt e2 e1)
+      Ge -> [[ENonStrict (EBinOp Sub e1 e2)]]
+      Gt -> [[EStrict (EBinOp Sub e1 e2)]]
+      Eq -> fToEDNFB False (FConn And (FComp Ge e1 e2) (FComp Le e1 e2))
+    fToEDNFB True (FConn op f1 f2) = case op of
+      And  -> fToEDNFB True f1 ++ fToEDNFB True f2
+      Or   -> [d1 ++ d2 | d1 <- fToEDNFB True f1, d2 <- fToEDNFB True f2]
+      Impl -> [d1 ++ d2 | d1 <- fToEDNFB False f1, d2 <- fToEDNFB True f2]
+    fToEDNFB False (FConn op f1 f2) = case op of
+      And  -> [d1 ++ d2 | d1 <- fToEDNFB False f1, d2 <- fToEDNFB False f2]
+      Or   -> fToEDNFB False f1 ++ fToEDNFB False f2
+      Impl -> fToEDNFB True f1 ++ fToEDNFB False f2
+    fToEDNFB True  FTrue   = fToEDNFB False FFalse 
+    fToEDNFB True  FFalse  = fToEDNFB False FTrue 
+    fToEDNFB False FTrue     = [[ENonStrict (Lit 1.0)]]
+    fToEDNFB False FFalse    = [[ENonStrict (Lit (-1.0))]]
+
+eSafeToF :: ESafe -> F
+eSafeToF (EStrict e)    = FComp Gt e (Lit 0.0)
+eSafeToF (ENonStrict e) = FComp Ge e (Lit 0.0)
+
+eSafeDisjToF :: [ESafe] -> F
+eSafeDisjToF []       = error "empty disjunction given to eSafeDisjToF" -- Alternatively, this can be false?
+eSafeDisjToF [e]      = eSafeToF e 
+eSafeDisjToF (e : es) = FConn Or (eSafeToF e) (eSafeDisjToF es)
+
+eSafeCNFToF :: [[ESafe]] -> F
+eSafeCNFToF []             = error "empty disjunction given to eSafeCNFToF" -- Alternatively, this can be true?
+eSafeCNFToF [disj]         = eSafeDisjToF disj
+eSafeCNFToF (disj : disjs) = FConn And (eSafeDisjToF disj) (eSafeCNFToF disjs) 
+
+eSafeCNFToDNF :: [[ESafe]] -> [[ESafe]]
+eSafeCNFToDNF = fToEDNF . eSafeCNFToF
+
+-- eSafeCNFToESafeDNF :: [[ESafe]] -> [[ESafe]]
+-- eSafeCNFToESafeDNF [] = []
+-- eSafeCNFToESafeDNF [disjunction] = map (\term -> [term]) disjunction
+
 -- | Add bounds for any Float expressions
 -- addRoundingBounds :: E -> [[E]]
 -- addRoundingBounds (Float e significand) = [[exactExpression - machineEpsilon], [exactExpression + machineEpsilon]]
@@ -271,20 +322,6 @@ simplifyF unsimplifiedF = if unsimplifiedF P.== simplifiedF then simplifiedF els
     simplify (FConn Or FTrue _)                                 = FTrue
     simplify (FConn Or f FFalse)                                = simplify f
     simplify (FConn Or FFalse f)                                = simplify f
-    -- Or tautologies and eliminations
-
-    simplify (FConn Or f1 (FConn And (FNot f2) f3))
-      | f1 P.== f2 = simplify $ FConn Or f1 f3
-      | otherwise = FConn Or (simplify f1) (FConn And (simplify (FNot f2)) (simplify f3))
-    simplify (FConn Or f1 (FConn And f3 (FNot f2)))             = simplify (FConn Or f1 (FConn And (FNot f2) f3)) -- Less efficient but easier to maintain
-    simplify (FConn Or (FConn And (FNot f2) f3) f1)             = simplify (FConn Or f1 (FConn And (FNot f2) f3))
-    simplify (FConn Or (FConn And f3 (FNot f2)) f1)             = simplify (FConn Or f1 (FConn And (FNot f2) f3))
-
-    simplify (FConn Or f1 (FConn And f2 f3))
-      | f1 P.== f2 = simplify $ FConn And f1 f3
-      | f1 P.== f3 = simplify $ FConn And f1 f2
-      | otherwise = FConn Or (simplify f1) (FConn And (simplify f2) (simplify f3))  
-    simplify (FConn Or (FConn And f2 f3) f1)                    = simplify (FConn Or f1 (FConn And f2 f3)) 
     
     simplify (FConn Or f1 fn2@(FNot f2))                        = if f1 P.== f2 then FTrue else FConn Or (simplify f1) (simplify fn2)
     simplify (FConn Or fn1@(FNot f1) f2)                        = if f1 P.== f2 then FTrue else FConn Or (simplify fn1) (simplify f2)
@@ -312,11 +349,11 @@ simplifyF unsimplifiedF = if unsimplifiedF P.== simplifiedF then simplifiedF els
     -- simplifyF FTrue = error "FTrue was not eliminated"
     -- simplifyF FFalse = error "FFalse was not eliminated"
 
-simplifyECNF :: [[E]] -> [[E]]
-simplifyECNF = map (map simplifyE)
+simplifyEDoubleList :: [[E]] -> [[E]]
+simplifyEDoubleList = nub . map (nub . map simplifyE)
 
-simplifyESafeCNF :: [[ESafe]] -> [[ESafe]]
-simplifyESafeCNF = map (map (fmapESafe simplifyE))
+simplifyESafeDoubleList :: [[ESafe]] -> [[ESafe]]
+simplifyESafeDoubleList = nub . map (nub . map (fmapESafe simplifyE))
 
 -- | compute the value of E with Vars at specified points
 computeE :: E -> [(String, Rational)] -> CN Double
@@ -384,6 +421,27 @@ prettyShowESafeCNF cnf = "AND" ++ concatMap (\d -> "\n\t" ++ prettyShowDisjuncti
         EStrict e -> "\n\t\t" ++ prettyShowE e ++ " > 0" 
         ENonStrict e -> "\n\t\t" ++ prettyShowE e ++ " >= 0")
       es
+
+prettyShowESafeDNF :: [[ESafe]] -> String
+prettyShowESafeDNF cnf = "OR" ++ concatMap (\d -> "\n\t" ++ prettyShowDisjunction d) cnf
+  where
+    -- |Show a disjunction of expressions > 0 in a human-readable format
+    -- This is shown as an OR with each term tabbed in
+    -- If there is only one term, the expression is shown without an OR 
+    prettyShowDisjunction :: [ESafe] -> String
+    prettyShowDisjunction []  = []
+    prettyShowDisjunction [e'] = 
+      case e' of
+        EStrict e -> prettyShowE e ++ " > 0"
+        ENonStrict e -> prettyShowE e ++ " >= 0"
+    prettyShowDisjunction es  =
+      "AND" ++ 
+      concatMap 
+      (\case
+        EStrict e -> "\n\t\t" ++ prettyShowE e ++ " > 0" 
+        ENonStrict e -> "\n\t\t" ++ prettyShowE e ++ " >= 0")
+      es
+
 
 -- latexShowESafeCNF :: [[ESafe]] -> String
 -- latexShowESafeCNF cnf = "AND" ++ concatMap (\d -> "\n\t" ++ prettyShowDisjunction d) cnf
