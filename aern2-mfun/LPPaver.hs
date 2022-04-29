@@ -22,6 +22,8 @@ import Data.Semigroup ((<>))
 import System.Directory
 import Data.Ratio
 import Debug.Trace
+import AERN2.BoxFunMinMax.Expressions.Type (eSafeCNFToDNF)
+import AERN2.BoxFunMinMax.Expressions.DeriveBounds (evalF_comparisons)
 data ProverOptions = ProverOptions
   {
     provingProcessDone :: Bool,
@@ -105,9 +107,12 @@ runProver proverOptions@(ProverOptions provingProcessDone ceMode depthCutoff bes
         parsedFile <- parseSMT2 filePath
         case parseDRealSmtToF parsedFile of
           (Just vc, typedVarMap) ->
-            let ecnf = minMaxAbsEliminatorECNF . fToECNF . simplifyF $ FNot vc -- Prove a contradiction
+            let 
+              -- If there are variable free comparisons here, we could not deal with them earlier in the proving process.
+              -- LPPaver cannot perform any better with these so we safely remove them.
+              ednf = simplifyESafeDoubleList . minMaxAbsEliminatorEDNF . fToEDNF . simplifyF . removeVariableFreeComparisons $ vc
             in do
-              decideECNFWithVarMap ecnf typedVarMap proverOptions
+              decideEDNFWithVarMap ednf typedVarMap proverOptions
           (_, _) -> error "Error - Issue parsing given SMT file"
       else do
         -- PATH needs to include folder containing FPTaylor binary after make
@@ -119,33 +124,36 @@ runProver proverOptions@(ProverOptions provingProcessDone ceMode depthCutoff bes
             mParsedVC <- parseVCToF filePath fptaylorPath
             case mParsedVC of
               Just (vc, typedVarMap) ->
-                let ecnf = minMaxAbsEliminatorECNF . fToECNF . simplifyF $ FNot vc -- Prove a contradiction
+                let 
+                  -- If there are variable free comparisons here, we could not deal with them earlier in the proving process.
+                  -- LPPaver cannot perform any better with these so we safely remove them.
+                  ednf = simplifyESafeDoubleList . minMaxAbsEliminatorEDNF . fToEDNF . simplifyF . removeVariableFreeComparisons $ vc
                 in do
-                  decideECNFWithVarMap ecnf typedVarMap proverOptions
+                  decideEDNFWithVarMap ednf typedVarMap proverOptions
               Nothing -> do
                 putStrLn "unknown"
                 putStrLn "Issue parsing file"
 
-decideECNFWithVarMap :: [[ESafe]] -> TypedVarMap -> ProverOptions -> IO ()
-decideECNFWithVarMap ecnf typedVarMap (ProverOptions provingProcessDone ceMode depthCutoff bestFirstSearchCutoff p filePath) = do
-  result <- 
-    if ceMode
-      then
-        return $ checkECNFBestFirstWithSimplexCE ecnf typedVarMap bestFirstSearchCutoff 1.2 (prec p)
-      else
-        return $ checkECNFDepthFirstWithSimplex ecnf typedVarMap depthCutoff 0 1.2 (prec p)
+decideEDNFWithVarMap :: [[ESafe]] -> TypedVarMap -> ProverOptions -> IO ()
+decideEDNFWithVarMap ednf typedVarMap (ProverOptions provingProcessDone ceMode depthCutoff bestFirstSearchCutoff p filePath) = do
+  let result =
+        if ceMode
+          then checkEDNFBestFirstWithSimplexCE ednf typedVarMap bestFirstSearchCutoff 1.2 (prec p)
+          else checkEDNFDepthFirstWithSimplex  ednf typedVarMap depthCutoff 0         1.2 (prec p)
   -- Since we prove a negation of the VC, present results as appropriate
   case result of
-    (Just True, _) -> putStrLn "unsat"
-    (Just False, Just counterExample) -> do
+    (Just True, Just model) -> do
       putStrLn "sat"
-      printSMTModel counterExample
-      prettyPrintCounterExample counterExample
-    (_, Just indeterminateExample) -> do
+      printSMTModel model
+      prettyPrintCounterExample model
+    (Just False, _) -> do
+      putStrLn "unsat"
+    r@(_, Just indeterminateExample) -> do
       putStrLn "unknown"
       printSMTModel indeterminateExample
       prettyPrintCounterExample indeterminateExample
-    (_, _) -> putStrLn "unknown"
+    r@(_, _) -> do
+      putStrLn "unknown"
 
 prettyPrintCounterExample :: TypedVarMap -> IO ()
 prettyPrintCounterExample [] = return ()
@@ -168,7 +176,7 @@ printSMTModel typedVarMap =
     printModels [] = return ()
     printModels ((TypedVar (v, (l, r)) t) : vs) = do
       putStrLn $ "(define-fun " ++ v ++ " () " ++ show t ++ " " ++ showNum (l) ++ ")"
-      putStrLn $ "(define-fun " ++ v ++ "_vc_constant" ++ " () " ++ show t ++ " " ++ showNum (l) ++ ")"
+      putStrLn $ "(define-fun " ++ v ++ "_vc_constant" ++ " () " ++ show t ++ " " ++ showNum (l) ++ ")" --FIXME: Only do this with a Why3 or similar flag?
       printModels vs
 
     showNum :: Rational -> String

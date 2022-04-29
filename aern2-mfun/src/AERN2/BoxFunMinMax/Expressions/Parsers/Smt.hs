@@ -755,9 +755,8 @@ eliminateFloatsAndSimplifyVC vc typedVarMap strengthenVC fptaylorPath =
   do
     vcWithoutFloats <- eliminateFloatsF vc (typedVarMapToVarMap typedVarMap) strengthenVC fptaylorPath
     let typedVarMapAsMap = M.fromList $ map (\(TypedVar (varName, (leftBound, rightBound)) _) -> (varName, (Just leftBound, Just rightBound))) typedVarMap
-    -- If a statement is still present after evalF_comparisons, and it does not contain variables, it is indeterminate, so we remove them
-    let simplifiedVCWithoutFloatsAndVarFreeFormulae = (simplifyF . removeVariableFreeComparisons . simplifyF . evalF_comparisons typedVarMapAsMap) vcWithoutFloats
-    return simplifiedVCWithoutFloatsAndVarFreeFormulae
+    let simplifiedVCWithoutFloats = (simplifyF . evalF_comparisons typedVarMapAsMap) vcWithoutFloats
+    return simplifiedVCWithoutFloats
 
 parseVCToF :: FilePath -> FilePath -> IO (Maybe (F, TypedVarMap))
 parseVCToF filePath fptaylorPath =
@@ -775,8 +774,8 @@ parseVCToF filePath fptaylorPath =
             do
               -- The file we are given is assumed to be a contradiction, so weaken the VC
               let strengthenVC = False
-              simplifiedVCWithoutFloatsWithoutFreeVars <- eliminateFloatsAndSimplifyVC derivedVC derivedRanges strengthenVC fptaylorPath
-              return $ Just (simplifiedVCWithoutFloatsWithoutFreeVars, derivedRanges)
+              simplifiedVCWithoutFloats <- eliminateFloatsAndSimplifyVC derivedVC derivedRanges strengthenVC fptaylorPath
+              return $ Just (simplifiedVCWithoutFloats, derivedRanges)
           Nothing -> return Nothing
       Nothing -> return Nothing
 
@@ -795,38 +794,7 @@ parseVCToSolver filePath fptaylorPath proverTranslator negateVC =
             Just (derivedVC, derivedRanges) ->
               do
                 let strengthenVC = False
-                simplifiedVCWithoutFloatsWithoutFreeVars <- eliminateFloatsAndSimplifyVC derivedVC derivedRanges strengthenVC fptaylorPath
-                return $ Just (proverTranslator (if negateVC then simplifyF (FNot simplifiedVCWithoutFloatsWithoutFreeVars) else simplifiedVCWithoutFloatsWithoutFreeVars) derivedRanges)
+                simplifiedVCWithoutFloats <- eliminateFloatsAndSimplifyVC derivedVC derivedRanges strengthenVC fptaylorPath
+                return $ Just (proverTranslator (if negateVC then simplifyF (FNot simplifiedVCWithoutFloats) else simplifiedVCWithoutFloats) derivedRanges)
             Nothing -> return Nothing
       Nothing -> return Nothing
-
-removeVariableFreeComparisons :: F -> F
-removeVariableFreeComparisons f = 
-  aux f False
-  where
-    expressionContainsVars :: E -> Bool
-    expressionContainsVars (EBinOp _ e1 e2)     = expressionContainsVars e1 || expressionContainsVars e2
-    expressionContainsVars (EUnOp _ e)          = expressionContainsVars e
-    expressionContainsVars (PowI e _)           = expressionContainsVars e
-    expressionContainsVars (Float _ e)          = expressionContainsVars e
-    expressionContainsVars (Float32 _ e)        = expressionContainsVars e
-    expressionContainsVars (Float64 _ e)        = expressionContainsVars e
-    expressionContainsVars (RoundToInteger _ e) = expressionContainsVars e
-    expressionContainsVars (Lit _)              = False
-    expressionContainsVars Pi                   = False
-    expressionContainsVars (Var _)              = True
-
-
-    -- When we say False (unsat), the VC MUST be False
-    -- When we say True (sat), the VC might not be True
-    aux f'@(FConn And f1 f2) isNegated = FConn And (aux f1 isNegated) (aux f2 isNegated)
-    aux f'@(FConn Or f1 f2) isNegated = FConn Or (aux f1 isNegated) (aux f2 isNegated)
-    aux f'@(FConn Impl f1 f2) isNegated = FConn Impl (aux f1 (not isNegated)) (aux f2 isNegated)
-    aux f'@(FComp _ e1 e2) isNegated = 
-      case (expressionContainsVars e1, expressionContainsVars e2) of
-        (True, _) -> f'
-        (_, True) -> f'
-        _         -> if isNegated then FFalse else FTrue
-    aux (FNot f') isNegated = FNot (aux f' (not isNegated))
-    aux FTrue  _ = FTrue
-    aux FFalse _ = FFalse
