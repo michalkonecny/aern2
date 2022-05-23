@@ -13,7 +13,6 @@
     Deriving ranges for variables from hypotheses inside a formula
 -}
 module AERN2.BoxFunMinMax.Expressions.DeriveBounds 
-(deriveBoundsAndSimplify, evalE_Rational, roundMPBall, evalF_comparisons)
 where
 
 import MixedTypesNumPrelude
@@ -53,6 +52,35 @@ _f4 =
         (FComp Eq (Var "n") (Lit 1.0)))
       (FConn Impl (FComp Eq (Var "n") (Lit 1.0)) (FComp Le (Lit 0.0) (Var "x"))))
     (FComp Eq (Var "x") (Lit 0.0))
+
+_f5 :: F -- two opposing implications which contain the same bound on "x"
+_f5 =
+  FConn And
+  (
+    FConn And
+      (FConn And
+        (FComp Ge (Var "n") (Lit 0.0))
+        (FComp Le (Var "n") (Lit 2.0))
+      )
+      (FConn And
+        (FConn Impl
+          (FComp Le (Var "n") (Lit 1.0))
+          (FConn And
+            (FComp Ge (Var "x") (Lit (-1.0)))
+            (FComp Le (Var "x") (Lit 1.0))
+          )
+        )
+        (FConn Impl
+          ((FComp Gt (Var "n") (Lit 1.0)))
+          (FConn And
+            (FComp Ge (Var "x") (Lit (-1.0)))
+            (FComp Le (Var "x") (Lit 1.0))
+          )
+        )
+      )
+  )
+  $
+  FComp Ge (EUnOp Sin (Var "x")) (Lit 0.0)
 
 type VarName = String
 
@@ -123,8 +151,23 @@ scanHypothesis :: F -> Bool -> VarBoundMap -> VarBoundMap
 scanHypothesis (FNot h) isNegated intervals = scanHypothesis h (not isNegated) intervals 
 scanHypothesis (FConn And (FConn Impl cond1 branch1) (FConn Impl (FNot cond2) branch2)) False intervals 
   | cond1 P.== cond2 = scanHypothesis (FConn Or branch1 branch2) False intervals
-scanHypothesis (FConn And (FConn Impl cond1 branch1) (FConn Impl (FNot cond2) branch2)) False intervals 
-  | sort (simplifyESafeDoubleList (fToECNF (simplifyF cond1))) P.== sort (simplifyESafeDoubleList (fToECNF (simplifyF cond2))) = scanHypothesis (FConn Or branch1 branch2) False intervals
+  | sort (simplifyESafeDoubleList (fToEDNF (simplifyF cond1))) P.== sort (simplifyESafeDoubleList (fToEDNF (simplifyF cond2))) = scanHypothesis (FConn Or branch1 branch2) False intervals
+-- scanHypothesis f@(FConn And h1@(FConn Impl cond1 branch1) h2@(FConn Impl cond2 branch2)) False intervals 
+--   =
+--   trace (show f) $
+--   trace (show intervals) $
+--   trace (show (checkFWithEval cond1 intervals)) $
+--   trace (show (checkFWithEval cond2 intervals)) $
+--   -- doesn't work because cond1/2 is indeterminate most of the time
+--   case checkFWithEval cond1 intervals of
+--     Nothing -> (scanHypothesis h1 False . scanHypothesis h2 False) intervals
+--     result1 -> 
+--       case checkFWithEval cond2 intervals of
+--         Nothing -> (scanHypothesis h1 False . scanHypothesis h2 False) intervals
+--         result2 ->
+--           if result1 P./= result2
+--             then scanHypothesis (FConn Or branch1 branch2) False intervals
+--             else (scanHypothesis h1 False . scanHypothesis h2 False) intervals
 scanHypothesis (FConn And h1 h2) isNegated intervals = 
   if isNegated
     then scanHypothesis (FConn Or (FNot h1) (FNot h2)) False intervals
@@ -137,6 +180,12 @@ scanHypothesis (FConn Or h1 h2) isNegated intervals =
       box1 = iterateUntilNoChange (scanHypothesis h1 isNegated) intervals
       box2 = iterateUntilNoChange (scanHypothesis h2 isNegated) intervals
       mergeWorse (l1,r1) (l2,r2) = (min <$> l1 <*> l2, max <$> r1 <*> r2)
+
+      -- mergeWorse (l1,r1) (l2,r2) = 
+      --   case (l1, r1, l2, r2) of
+      --     (Nothing, Nothing, Just _, Just _) -> (l2, r2) -- FIXME: hack, should only do this if variable of interest only exists in one branch
+      --     (Just _, Just _, Nothing, Nothing) -> (l1, r1) -- FIXME: hack, should only do this if variable of interest only exists in one branch
+      --     _ -> (min <$> l1 <*> l2, max <$> r1 <*> r2)
 
       iterateUntilNoChange refineBox b1
         | b1 P.== b2 = b1
@@ -242,7 +291,7 @@ evalE_Rational intervals =
   where
   intervalsMPBall = Map.map toMPBall intervals
   toMPBall :: (Maybe Rational, Maybe Rational) -> CN MPBall
-  toMPBall (Just l, Just r) = cn $ (mpBallP p l) `hullMPBall` (mpBallP p r) 
+  toMPBall (Just l, Just r) = cn $ (mpBallP p l) `hullMPBall` (mpBallP p r) --FIXME: deal with contradictions directly
   toMPBall _ = CN.noValueNumErrorCertain $ CN.NumError "no bounds"
   p = prec 53 -- Needs to be at least 53 for turning double pi from Why3 into real pi
   rationalBounds :: CN MPBall -> (Maybe Rational, Maybe Rational)
@@ -368,3 +417,54 @@ roundMPBall mode i =
               (if r  - rFloor == 0.5
                 then (if isCertainlyPositive r then convertExactly rCeil else convertExactly rFloor)
                 else (if r - rFloor < 0.5 then convertExactly rFloor else convertExactly rCeil))
+
+checkFWithEval :: F -> VarBoundMap -> Maybe Bool
+checkFWithEval f' varBoundMap = aux f'
+  where
+    aux (FComp op e1 e2) =
+      case (mE1L, mE1R, mE2L, mE2R) of
+        (Just e1L, Just e1R, Just e2L, Just e2R) -> decideKleenean op (e1L, e1R) (e2L, e2R)
+        (_, _, _, _) -> Nothing
+      where
+        (mE1L, mE1R) = evalE_Rational varBoundMap e1
+        (mE2L, mE2R) = evalE_Rational varBoundMap e2
+
+        decideKleenean Lt (l1, r1) (l2, r2)
+          | r1 < l2   = Just True
+          | r2 <= l1  = Just False
+          | otherwise = Nothing
+        decideKleenean Le (l1, r1) (l2, r2)
+          | r1 <= l2  = Just True
+          | r2 < l1   = Just False
+          | otherwise = Nothing
+        decideKleenean Ge x y = decideKleenean Le y x
+        decideKleenean Gt x y = decideKleenean Lt y x
+        decideKleenean Eq x y = --TODO: Use guards here
+          case decideKleenean Ge y x of
+            Just False -> Just False
+            Just True  -> decideKleenean Le y x
+            Nothing    -> 
+              case decideKleenean Le y x of
+                Just False -> Just False
+                _          -> Nothing
+        
+    aux (FConn op f1 f2) =
+      case op of
+        And   -> 
+          case (f1Val, f2Val) of
+            (Just r1, Just r2) -> Just $ r1 && r2
+            (_, _)             -> Nothing
+        Or    -> 
+          case (f1Val, f2Val) of
+            (Just r1, Just r2) -> Just $ r1 || r2
+            (_, _)             -> Nothing
+        Impl  -> 
+          case (f1Val, f2Val) of
+            (Just r1, Just r2) -> Just $ not r1 || r2
+            (_, _)             -> Nothing
+      where
+        f1Val = aux f1
+        f2Val = aux f2
+    aux (FNot f) = not <$> aux f
+    aux FTrue    = Just True
+    aux FFalse   = Just False
