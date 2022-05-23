@@ -218,8 +218,8 @@ instance
     CanDivIMod (Differential (CN MPBall)) (Differential (CN MPBall))
     where
     type DivIType (Differential (CN MPBall)) (Differential (CN MPBall)) = (Differential (CN MPBall))
-    divIMod a b = (OrderTwo (divide ax bx) err err err, OrderTwo (mod ax bx) err err err)
+    divIMod a b = (error "Integer division for Differential (CN MPBall) undefined", OrderTwo (mod ax bx) err err err)
         where   
             ax = diff_x a
-            bx = diff_x b    
+            bx = diff_x b
             err = noValueNumErrorCertain $ NumError "No derivatives after modulus"
