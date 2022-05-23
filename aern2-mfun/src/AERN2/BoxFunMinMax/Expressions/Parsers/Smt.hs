@@ -177,9 +177,9 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) functionsWithInputsAn
                                                                                             (FConn Impl (FNot condF) (FComp Lt elseTermE e2))
                       | n `elem` ["=",  "fp.eq"]                        -> Just $ FConn And (FConn Impl condF (FComp Eq thenTermE e2))
                                                                                             (FConn Impl (FNot condF) (FComp Eq elseTermE e2))
-                      | "bool_eq" `isPrefixOf` n                        ->  Just $ FConn And (FConn Impl condF (FComp Eq thenTermE e2))
+                      | "bool_eq" `isPrefixOf` n                        -> Just $ FConn And (FConn Impl condF (FComp Eq thenTermE e2))
                                                                                             (FConn Impl (FNot condF) (FComp Eq elseTermE e2))
-                      | "user_eq" `isPrefixOf` n                        ->  Just $ FConn And (FConn Impl condF (FComp Eq thenTermE e2))
+                      | "user_eq" `isPrefixOf` n                        -> Just $ FConn And (FConn Impl condF (FComp Eq thenTermE e2))
                                                                                             (FConn Impl (FNot condF) (FComp Eq elseTermE e2))
                     _ -> Nothing
                 (_, _, _) -> Nothing
@@ -273,7 +273,7 @@ termToE (LD.Application (LD.Variable operator) [op]) functionsWithInputsAndOutpu
           --       -- "Float32" -> Float32 RNE functionArg
           --       -- "Float64" -> Float64 RNE functionArg
           --   _ -> functionArg -- Do not deal with multiple param args for one param functions. TODO: Check if these can occur, i.e. something like RoundingMode Float32
-            
+
         mNewFunctionAsExpression =
           case mOutputType of
             Just outputType ->
@@ -283,7 +283,7 @@ termToE (LD.Application (LD.Variable operator) [op]) functionsWithInputsAndOutpu
                 "Real" -> Just functionAsExpression --FIXME: Should match on other possible names. Real/real Int/int/integer, etc. I've only seen these alt names in function definitions/axioms, not assertions, but would still be more safe.
                 "Int" -> Just functionAsExpression -- FIXME: Round here?
                 _ -> Nothing -- These should be floats, which we cannot deal with for now
-            Nothing -> Nothing
+            Nothing -> Just functionAsExpression -- No type given, assume real
       in
         case mNewFunctionAsExpression of
           Just newFunctionAsExpression -> Just $ newFunctionAsExpression newFunctionArg
@@ -299,7 +299,7 @@ termToE (LD.Application (LD.Variable operator) [op1, op2]) functionsWithInputsAn
         n
           | (n =~ "^round$|^round[0-9]+$" :: Bool)   -> Just $ Float roundingMode e --FIXME: remove this? not used with cvc4 driver?
           | (n =~ "^to_int$|^to_int[0-9]+$" :: Bool) -> Just $ RoundToInteger roundingMode e
-          | (n =~ "^of_int$|^of_int[0-9]+$" :: Bool) -> 
+          | (n =~ "^of_int$|^of_int[0-9]+$" :: Bool) ->
             case lookup n functionsWithInputsAndOutputs of
               Just (_, outputType) ->
                 case outputType of
@@ -320,13 +320,13 @@ termToE (LD.Application (LD.Variable operator) [op1, op2]) functionsWithInputsAn
               | n `elem` ["-", "osubtract", "osubtract__logic"]          -> Just $ EBinOp Sub e1 e2
               | n `elem` ["*", "omultiply", "omultiply__logic"]          -> Just $ EBinOp Mul e1 e2
               | n `elem` ["/", "odivide", "odivide__logic"]              -> Just $ EBinOp Div e1 e2
-              | (n =~ "^pow$|^pow[0-9]+$|^power$|^power[0-9]+$" :: Bool) ->
+              | (n =~ "^pow$|^pow[0-9]+$|^power$|^power[0-9]+$" :: Bool) -> --FIXME: remove int pow? only use int pow if actually specified?
                 case lookup n functionsWithInputsAndOutputs of
                   Just (["Real", "Real"], "Real") -> Just $ EBinOp Pow e1 e2
                   Just ([input1, "Int"], output) ->
-                    let 
+                    let
                       mExactPowExpression =
-                        if input1 == "Int" || input1 == "Real" 
+                        if input1 == "Int" || input1 == "Real"
                           then case e2 of
                             Lit l2 -> if denominator l2 == 1.0 then Just $ PowI e1 (numerator l2) else Just $ EBinOp Pow e1 e2
                             _      -> Just $ EBinOp Pow e1 e2
@@ -335,13 +335,20 @@ termToE (LD.Application (LD.Variable operator) [op1, op2]) functionsWithInputsAn
                       Just exactPowExpression -> case output of
                         "Real" -> Just exactPowExpression
                         "Int"  -> Just $ RoundToInteger RNE exactPowExpression
+
                         _      -> Nothing
                       Nothing -> Nothing
+                  Nothing -> -- No input/output, treat as real pow
+                    case e2 of
+                      Lit l2 -> if denominator l2 == 1.0 then Just $ PowI e1 (numerator l2) else Just $ EBinOp Pow e1 e2
+                      _      -> Just $ EBinOp Pow e1 e2
                   _ -> Nothing
               | (n =~ "^mod$|^mod[0-9]+$" :: Bool)                       ->
                 case lookup n functionsWithInputsAndOutputs of
                   Just (["Real", "Real"], "Real") -> Just $ EBinOp Mod e1 e2
                   Just (["Int", "Int"], "Int") -> Just $ RoundToInteger RNE $ EBinOp Mod e1 e2 --TODO: might be worth implementing Int Mod
+                  -- No input/output, treat as real mod
+                  Nothing -> Just $ EBinOp Mod e1 e2
                   _ -> Nothing
             _                                                            -> Nothing
         (_, _) -> Nothing
@@ -374,7 +381,7 @@ termToE (LD.Application (LD.Variable "fp") [LD.Variable sSign, LD.Variable sExpo
     if all (`elem` "01") bFull
       then
         case length bFull of
-          32 -> Just $ Lit $ toRational $ runGet getFloatbe bsFloat 
+          32 -> Just $ Lit $ toRational $ runGet getFloatbe bsFloat
           64 -> Just $ Lit $ toRational $ runGet getDoublebe bsFloat
           -- 32 -> Just $ Float32 RNE $ Lit $ toRational $ runGet getFloatbe bsFloat 
           -- 64 -> Just $ Float64 RNE $ Lit $ toRational $ runGet getDoublebe bsFloat
@@ -400,6 +407,29 @@ termToE (LD.Application (LD.Variable operator) [roundingMode, op1, op2]) functio
         Nothing -> Nothing
     (_, _) -> Nothing
 termToE _ _ = Nothing
+
+collapseOrs :: [LD.Expression] -> [LD.Expression]
+collapseOrs = map collapseOr
+
+collapseOr :: LD.Expression -> LD.Expression
+collapseOr orig@(LD.Application (LD.Variable "or") [LD.Application (LD.Variable "<") args1, LD.Application (LD.Variable "=") args2]) =
+  if args1 P.== args2 
+    then LD.Application (LD.Variable "<=") args1
+    else orig
+collapseOr orig@(LD.Application (LD.Variable "or") [LD.Application (LD.Variable "=") args1, LD.Application (LD.Variable "<") args2]) =
+  if args1 P.== args2 
+    then LD.Application (LD.Variable "<=") args1
+    else orig
+collapseOr orig@(LD.Application (LD.Variable "or") [LD.Application (LD.Variable ">") args1, LD.Application (LD.Variable "=") args2]) =
+  if args1 P.== args2 
+    then LD.Application (LD.Variable ">=") args1
+    else orig
+collapseOr orig@(LD.Application (LD.Variable "or") [LD.Application (LD.Variable "=") args1, LD.Application (LD.Variable ">") args2]) =
+  if args1 P.== args2 
+    then LD.Application (LD.Variable ">=") args1
+    else orig
+collapseOr (LD.Application operator args) = LD.Application operator (collapseOrs args)
+collapseOr e = e
 
 termsToF :: [LD.Expression] -> [(String, ([String], String))] -> [F]
 termsToF es fs = mapMaybe (`termToF` fs) es
@@ -447,7 +477,7 @@ determineFloatTypeE (RoundToInteger r e) varTypeMap = case determineFloatTypeE e
                                                         Just p -> Just $ RoundToInteger r p
                                                         Nothing -> Nothing
 determineFloatTypeE Pi                _           = Just Pi
-determineFloatTypeE (Var v)           varTypeMap  = case lookup v varTypeMap of 
+determineFloatTypeE (Var v)           varTypeMap  = case lookup v varTypeMap of
                                                       Just variableType ->
                                                         case variableType of
                                                           -- t
@@ -569,7 +599,7 @@ processVC parsedExpressions =
   Just (foldAssertionsF assertionsF, variablesWithTypes)
   where
     assertions  = findAssertions parsedExpressions
-    assertionsF = mapMaybe (`determineFloatTypeF` variablesWithTypes) $ termsToF assertions functionsWithInputsAndOutputs
+    assertionsF = mapMaybe (`determineFloatTypeF` variablesWithTypes) $ (termsToF . collapseOrs)  assertions functionsWithInputsAndOutputs
 
     variablesWithTypes  = findVariables parsedExpressions
     functionsWithInputsAndOutputs = findFunctionInputsAndOutputs parsedExpressions
@@ -599,7 +629,7 @@ deriveVCRanges vc varsWithTypes =
     typedDerivedVarMap = unsafeVarMapToTypedVarMap derivedVarMap integerVariables
 
     safelyRoundTypedVarMap [] = []
-    safelyRoundTypedVarMap ((TypedVar (varName, (leftBound, rightBound)) Real) : vars)    = 
+    safelyRoundTypedVarMap ((TypedVar (varName, (leftBound, rightBound)) Real) : vars)    =
       let
         leftBoundRoundedDown = rational . fst . endpoints $ mpBallP (prec 23) leftBound
         rightBoundRoundedUp = rational . snd . endpoints $ mpBallP (prec 23) rightBound
@@ -607,7 +637,7 @@ deriveVCRanges vc varsWithTypes =
       in
         newBound : safelyRoundTypedVarMap vars
     safelyRoundTypedVarMap (vi@(TypedVar _                               Integer) : vars) = vi : safelyRoundTypedVarMap vars
- 
+
     simplifiedF = substVarsWithPi piVars simplifiedFUnchecked
 
     -- TODO: Would be good to include a warning when this happens
@@ -617,16 +647,16 @@ deriveVCRanges vc varsWithTypes =
     findRealPiVars :: VarMap -> ([String], VarMap)
     findRealPiVars [] = ([], [])
     findRealPiVars (varWithBounds@(var, (l, r)) : vars) =
-      if 
+      if
         -- If variable is pi or pi# where # is a number
         (var =~ "^pi$|^pi[0-9]+$" :: Bool) &&
         -- And bounds are equal or better than the bounds given by Why3 for Pi
         l >= (7074237752028440.0 / 2251799813685248.0) && r <= (7074237752028441.0 / 2251799813685248.0) &&
         -- And the type of the variable is Real
-        (lookup var varsWithTypes == Just "Real") 
+        (lookup var varsWithTypes == Just "Real")
           then (\(foundPiVars, varMapWithoutPi) -> ((var : foundPiVars), varMapWithoutPi))           $ findRealPiVars vars
           else (\(foundPiVars, varMapWithoutPi) -> (foundPiVars, (varWithBounds : varMapWithoutPi))) $ findRealPiVars vars
-    
+
     substVarsWithPi :: [String] -> F -> F
     substVarsWithPi [] f = f
     substVarsWithPi (v : _) f = substVarFWithE v f Pi
@@ -674,7 +704,7 @@ deriveVCRanges vc varsWithTypes =
       if eContainsVars vars e1 || eContainsVars vars e2
         then Nothing
         else Just (FComp op e1 e2)
-    
+
     filterOutVars FTrue  _ _ = Just FTrue
     filterOutVars FFalse _ _ = Just FFalse
 
@@ -751,7 +781,7 @@ substAllEqualities = recursivelySubstVars
     substVars ((v, e) : _) f = substVarFWithE v f e
 
 eliminateFloatsAndSimplifyVC :: F -> TypedVarMap -> Bool -> FilePath -> IO F
-eliminateFloatsAndSimplifyVC vc typedVarMap strengthenVC fptaylorPath = 
+eliminateFloatsAndSimplifyVC vc typedVarMap strengthenVC fptaylorPath =
   do
     vcWithoutFloats <- eliminateFloatsF vc (typedVarMapToVarMap typedVarMap) strengthenVC fptaylorPath
     let typedVarMapAsMap = M.fromList $ map (\(TypedVar (varName, (leftBound, rightBound)) _) -> (varName, (Just leftBound, Just rightBound))) typedVarMap
@@ -764,7 +794,7 @@ parseVCToF filePath fptaylorPath =
     parsedFile  <- parseSMT2 filePath
 
     case processVC parsedFile of
-      Just (vc, varTypes) -> 
+      Just (vc, varTypes) ->
         let
           simplifiedVC = substAllEqualities (simplifyF vc)
           mDerivedVCWithRanges = deriveVCRanges simplifiedVC varTypes
@@ -783,7 +813,7 @@ parseVCToSolver :: FilePath -> FilePath -> (F -> TypedVarMap -> String) -> Bool 
 parseVCToSolver filePath fptaylorPath proverTranslator negateVC =
   do
     parsedFile <- parseSMT2 filePath
-    
+
     case processVC parsedFile of
       Just (vc, varTypes) ->
         let
