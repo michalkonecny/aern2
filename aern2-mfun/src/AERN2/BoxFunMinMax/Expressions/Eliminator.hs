@@ -1,9 +1,89 @@
 module AERN2.BoxFunMinMax.Expressions.Eliminator where
 
 import MixedTypesNumPrelude
-
+import qualified Prelude as P
 import Data.List
 import AERN2.BoxFunMinMax.Expressions.Type
+
+minMaxAbsEliminatorF :: F -> F
+minMaxAbsEliminatorF f' = aux f'
+  where
+    replaceEInE :: E -> E -> E -> E
+    replaceEInE eContainingE eToFind eToReplace =
+      if eContainingE P.== eToFind
+        then eToReplace
+        else
+          case eContainingE of
+            EBinOp op e1 e2      -> EBinOp  op  (replaceEInE e1 eToFind eToReplace) (replaceEInE e2 eToFind eToReplace)
+            EUnOp op e           -> EUnOp   op  (replaceEInE e eToFind eToReplace)
+            Float32 rnd e        -> Float32 rnd (replaceEInE e eToFind eToReplace)
+            Float64 rnd e        -> Float64 rnd (replaceEInE e eToFind eToReplace)
+            Float rnd e          -> Float64 rnd (replaceEInE e eToFind eToReplace)
+            RoundToInteger rnd e -> RoundToInteger rnd (replaceEInE e eToFind eToReplace)
+            PowI e i             -> PowI (replaceEInE e eToFind eToReplace) i
+            Lit _                -> eContainingE
+            Var _                -> eContainingE
+            Pi                   -> eContainingE
+
+
+    replaceEInF :: F -> E -> E -> F
+    replaceEInF fContainingE eToFind eToReplace =
+      case fContainingE of
+        FConn op f1 f2 -> FConn op (replaceEInF f1 eToFind eToReplace) (replaceEInF f2 eToFind eToReplace)
+        FComp op e1 e2 -> FComp op (replaceEInE e1 eToFind eToReplace) (replaceEInE e2 eToFind eToReplace)
+        FNot f         -> FNot $ replaceEInF f eToFind eToReplace
+        FTrue          -> FTrue
+        FFalse         -> FFalse
+
+    -- hasMinMaxAbsE could be removed
+    aux :: F -> F
+    aux fToElim =
+      case fToElim of
+        FConn conn f1 f2 -> FConn conn (aux f1) (aux f2)
+        FComp comp e1 e2 ->
+          let
+            qualifiedE1s = minMaxAbsEliminator $ ENonStrict e1
+            qualifiedE2s = minMaxAbsEliminator $ ENonStrict e2
+
+            eListToConjunction [] = error "undefined"
+            eListToConjunction [ENonStrict e] = FComp Ge e (Lit 0.0)
+            eListToConjunction [EStrict e]    = FComp Gt e (Lit 0.0)
+            eListToConjunction (e : es)       = FConn And (eListToConjunction [e]) (eListToConjunction es)
+
+            fListToConjunction [] = error "undefined"
+            fListToConjunction [f]      = f
+            fListToConjunction (f : fs) = FConn And f (fListToConjunction fs)
+
+            build :: ([ESafe], ESafe) -> [([ESafe], ESafe)] -> F
+            build _                        [] = error "Empty qualified list given in minMaxAbsEliminator"
+            build e1Q@(e1C, e1G) [(e2C, e2G)] =
+              let
+                combinedL = e1C ++ e2C
+                combinedF = eListToConjunction (nub combinedL)
+                combinedG = FComp comp (extractSafeE e1G) (extractSafeE e2G)
+                combinedQ = FConn Impl combinedF combinedG
+              in
+                if null combinedL
+                  then combinedG
+                  else combinedQ
+            build e1Q@(e1C, e1G) ((e2C, e2G) : e2Qs) =
+              let
+                combinedL = e1C ++ e2C
+                combinedF = eListToConjunction (nub combinedL)
+                combinedG = FComp comp (extractSafeE e1G) (extractSafeE e2G)
+                combinedQ = FConn Impl combinedF combinedG
+              in
+                if null combinedL
+                  then combinedG
+                  else FConn And combinedQ $ build e1Q e2Qs
+
+            combinedQualifiedEsAsF = fListToConjunction $ map (`build` qualifiedE2s) qualifiedE1s
+          in
+            combinedQualifiedEsAsF
+
+        FNot f -> FNot (aux f)
+        FTrue  -> FTrue
+        FFalse -> FFalse
 
 -- | Given an expression, eliminate all Min, Max, and Abs
 -- occurences. This is done by:
@@ -29,23 +109,23 @@ minMaxAbsEliminator :: ESafe -> [([ESafe],ESafe)]
 minMaxAbsEliminator (ENonStrict (EBinOp op e1 e2)) =
   case op of
     Min ->
-      concat 
+      concat
       [
         [
           (nub ((p1 ++ p2) ++ [ENonStrict (EBinOp Sub (extractSafeE e2') (extractSafeE e1'))]), e1'), -- e2' >= e1'
           (nub ((p2 ++ p1) ++ [ENonStrict (EBinOp Sub (extractSafeE e1') (extractSafeE e2'))]), e2')  -- e1' >= e2'
-        ] 
-        | 
+        ]
+        |
         (p1, e1') <- branch1, (p2, e2') <- branch2
       ]
     Max ->
-      concat 
+      concat
       [
         [
           (nub ((p1 ++ p2) ++ [ENonStrict (EBinOp Sub (extractSafeE e1') (extractSafeE e2'))]), e1'), -- e1' >= e2'
           (nub ((p2 ++ p1) ++ [ENonStrict (EBinOp Sub (extractSafeE e2') (extractSafeE e1'))]), e2')  -- e2' >= e1'
-        ] 
-        | 
+        ]
+        |
         (p1, e1') <- branch1, (p2, e2') <- branch2
       ]
     op' ->
@@ -55,7 +135,7 @@ minMaxAbsEliminator (ENonStrict (EBinOp op e1 e2)) =
     branch2 = minMaxAbsEliminator (ENonStrict e2)
 minMaxAbsEliminator (ENonStrict (EUnOp op e)) =
   case op of
-    Abs -> 
+    Abs ->
       minMaxAbsEliminator (ENonStrict (EBinOp Max e (EUnOp Negate e)))
     op' ->
       [(p, ENonStrict (EUnOp op' (extractSafeE e'))) | (p, e') <- minMaxAbsEliminator (ENonStrict e)]
@@ -77,23 +157,23 @@ minMaxAbsEliminator e@(ENonStrict Pi)                  = [([],e)]
 minMaxAbsEliminator (EStrict (EBinOp op e1 e2)) =
   case op of
     Min ->
-      concat 
+      concat
       [
         [                      --Min/Max should always be non-strict here
           (nub ((p1 ++ p2) ++ [ENonStrict (EBinOp Sub (extractSafeE e2') (extractSafeE e1'))]), e1'), -- e2' > e1'
           (nub ((p2 ++ p1) ++ [ENonStrict (EBinOp Sub (extractSafeE e1') (extractSafeE e2'))]), e2')  -- e1' > e2'
-        ] 
-        | 
+        ]
+        |
         (p1, e1') <- branch1, (p2, e2') <- branch2
       ]
     Max ->
-      concat 
+      concat
       [
         [
           (nub ((p1 ++ p2) ++ [ENonStrict (EBinOp Sub (extractSafeE e1') (extractSafeE e2'))]), e1'), -- e1' > e2'
           (nub ((p2 ++ p1) ++ [ENonStrict (EBinOp Sub (extractSafeE e2') (extractSafeE e1'))]), e2')  -- e2' > e1'
-        ] 
-        | 
+        ]
+        |
         (p1, e1') <- branch1, (p2, e2') <- branch2
       ]
     op' ->
@@ -103,7 +183,7 @@ minMaxAbsEliminator (EStrict (EBinOp op e1 e2)) =
     branch2 = minMaxAbsEliminator (EStrict e2)
 minMaxAbsEliminator (EStrict (EUnOp op e)) =
   case op of
-    Abs -> 
+    Abs ->
       minMaxAbsEliminator (EStrict (EBinOp Max e (EUnOp Negate e)))
     op' ->
       [(p, EStrict (EUnOp op' (extractSafeE e'))) | (p, e') <- minMaxAbsEliminator (EStrict e)]
@@ -154,30 +234,24 @@ minMaxAbsEliminatorECNF ecnf = and $ map or (map (map (qualifiedEsToCNF2 . minMa
 --     buildPs (p : ps) = EBinOp Max (EUnOp Negate p) (buildPs ps) 
 -- qualifiedEsToCNF ((ps, q) : es) = EBinOp Min (qualifiedEsToCNF [(ps, q)]) (qualifiedEsToCNF es)
 
-minMaxAbsEliminatorEDNF :: [[ESafe]] -> [[ESafe]]
-minMaxAbsEliminatorEDNF ednf = (map (concatMap (qualifiedEsToConjunctions . minMaxAbsEliminator)) ednf)
-
 -- | Convert a list of qualified Es to a CNF represented as a list of lists
 qualifiedEsToCNF2 :: [([ESafe],ESafe)] -> [[ESafe]]
-qualifiedEsToCNF2 = 
-  map 
-  (\(ps,q) -> 
+qualifiedEsToCNF2 =
+  map
+  (\(ps,q) ->
     q : map negateSafeE ps
   )
   -- The negation of ps turns it into ps < 0, which is equivalent to -ps > 0
 
--- Convert a list of qualified Es to a conjunction represented as a list
--- Since the qualifiedEs are a conjunction of implications, we can trivially turn this to a conjunction of conjunctions
--- Note that if the context is empty,  we do not have an implication, just a statement, which is kept as is
--- Since conjunctions are commutative, we can concat to get a single list of conjunctions
-qualifiedEsToConjunctions :: [([ESafe], ESafe)] -> [ESafe]
-qualifiedEsToConjunctions =
-  concatMap
-  (\(ps, q) ->
-    case MixedTypesNumPrelude.length ps of
-      0 -> [q]
-      _ -> negateSafeE q : ps
-  )
+-- Disjunction of Conjunction of Disjunction 
+
+qualifiedEsToDisjunction :: ([ESafe], ESafe) -> [ESafe]
+qualifiedEsToDisjunction (context, goal) = goal : map negateSafeE context
+
+qualifiedEsToF :: [([ESafe], ESafe)] -> F
+qualifiedEsToF []                         = undefined
+qualifiedEsToF [qualifiedE]               = qualifiedEToF qualifiedE
+qualifiedEsToF (qualifiedE : qualifiedEs) = FConn And (qualifiedEToF qualifiedE) (qualifiedEsToF qualifiedEs)
 
 qualifiedEToF :: ([ESafe], ESafe) -> F
 qualifiedEToF ([],      goal) = eSafeToF goal
