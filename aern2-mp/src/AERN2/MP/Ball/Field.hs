@@ -38,6 +38,7 @@ import AERN2.MP.Ball.Comparisons (hullMPBall)
 import Numeric.MixedTypes.Div (CanDiv)
 import Numeric.MixedTypes.Round (CanDivIMod)
 import qualified Data.Bifunctor
+import Data.Ratio (denominator)
 {- addition -}
 
 instance CanAddAsymmetric MPBall MPBall where
@@ -307,7 +308,8 @@ instance
   where
   type DivIType MPBall MPBall = Integer
   divIMod x m
-    | m !>! 0 = (dL, xm') --FIXME: Integer division ignores right interval endpoint. Turning the return type into a pair will break some tests.
+    --  | radius m == 0 && (denominator . rational . centre) m == 1 = divIMod x $ integer . floor . centre $ m -- safe as radius is 0 and denominator at centre is 1
+    | m !>! 0 = (error "Integer division for MPBall undefined", xm')
     | otherwise = error $ "modulus not positive: " ++ show m
     where
     (l, r) = endpoints $ x / m
@@ -316,4 +318,3 @@ instance
     xmR = x - m*dR
     xm = hullMPBall xmL xmR
     xm' = min (max 0 xm) m
-  
