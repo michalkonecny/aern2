@@ -22,8 +22,10 @@ import Data.Semigroup ((<>))
 import System.Directory
 import Data.Ratio
 import Debug.Trace
-import AERN2.BoxFunMinMax.Expressions.Type (eSafeCNFToDNF)
+import AERN2.BoxFunMinMax.Expressions.Type (eSafeCNFToDNF, fDNFToEDNF)
 import AERN2.BoxFunMinMax.Expressions.DeriveBounds (evalF_comparisons)
+import Debug.Trace
+
 data ProverOptions = ProverOptions
   {
     provingProcessDone :: Bool,
@@ -110,7 +112,7 @@ runProver proverOptions@(ProverOptions provingProcessDone ceMode depthCutoff bes
             let 
               -- If there are variable free comparisons here, we could not deal with them earlier in the proving process.
               -- LPPaver cannot perform any better with these so we safely remove them.
-              ednf = simplifyESafeDoubleList . minMaxAbsEliminatorEDNF . fToEDNF . simplifyF . removeVariableFreeComparisons $ vc
+              ednf = fDNFToEDNF . simplifyFDNF . fToFDNF . simplifyF . minMaxAbsEliminatorF . simplifyF . removeVariableFreeComparisons $ vc
             in do
               decideEDNFWithVarMap ednf typedVarMap proverOptions
           (_, _) -> error "Error - Issue parsing given SMT file"
@@ -127,7 +129,7 @@ runProver proverOptions@(ProverOptions provingProcessDone ceMode depthCutoff bes
                 let 
                   -- If there are variable free comparisons here, we could not deal with them earlier in the proving process.
                   -- LPPaver cannot perform any better with these so we safely remove them.
-                  ednf = simplifyESafeDoubleList . minMaxAbsEliminatorEDNF . fToEDNF . simplifyF . removeVariableFreeComparisons $ vc
+                  ednf = fDNFToEDNF . simplifyFDNF . fToFDNF . simplifyF . minMaxAbsEliminatorF . simplifyF . removeVariableFreeComparisons $ vc
                 in do
                   decideEDNFWithVarMap ednf typedVarMap proverOptions
               Nothing -> do
@@ -140,7 +142,6 @@ decideEDNFWithVarMap ednf typedVarMap (ProverOptions provingProcessDone ceMode d
         if ceMode
           then checkEDNFBestFirstWithSimplexCE ednf typedVarMap bestFirstSearchCutoff 1.2 (prec p)
           else checkEDNFDepthFirstWithSimplex  ednf typedVarMap depthCutoff 0         1.2 (prec p)
-  -- Since we prove a negation of the VC, present results as appropriate
   case result of
     (Just True, Just model) -> do
       putStrLn "sat"
