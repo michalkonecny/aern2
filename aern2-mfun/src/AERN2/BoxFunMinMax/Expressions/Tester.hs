@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 module AERN2.BoxFunMinMax.Expressions.Tester where
 
-import AERN2.BoxFunMinMax.Expressions.Type 
+import AERN2.BoxFunMinMax.Expressions.Type
 import AERN2.BoxFunMinMax.Type
 import Test.QuickCheck
 import MixedTypesNumPrelude
@@ -20,7 +20,7 @@ import AERN2.BoxFunMinMax.VarMap
 epsilon :: Rational
 epsilon = 1/(2^112)
 
-hasMinMaxE :: E -> Bool 
+hasMinMaxE :: E -> Bool
 hasMinMaxE (EBinOp Min _ _) = True
 hasMinMaxE (EBinOp Max _ _) = True
 hasMinMaxE (EBinOp _ e1 e2) = hasMinMaxE e1 || hasMinMaxE e2
@@ -31,8 +31,11 @@ hasMinMaxE (Float _ e) = hasMinMaxE e
 hasMinMaxE (PowI e _) = hasMinMaxE e
 hasMinMaxE (Lit _) = False
 hasMinMaxE (Var _) = False
+hasMinMaxE Pi = False
+hasMinMaxE (RoundToInteger _ e) = hasMinMaxE e
 
-hasMinMaxF :: F -> Bool 
+
+hasMinMaxF :: F -> Bool
 hasMinMaxF (FComp _ e1 e2) = hasMinMaxE e1 || hasMinMaxE e2
 hasMinMaxF (FConn _ f1 f2) = hasMinMaxF f1 || hasMinMaxF f2
 hasMinMaxF (FNot f)        = hasMinMaxF f
@@ -58,7 +61,7 @@ hasMinMaxF FFalse          = False
 -- I'm pretty sure that the tests are not hanging because of the size of expressions, because I ran a test
 -- comparing equality between generated expressions. This test never hanged
 prop_simplifyE :: E -> Property
-prop_simplifyE e = 
+prop_simplifyE e =
   -- not (hasMinMaxE e) ==>
     forAllBlind variablePoints $ \points ->
       let
@@ -96,7 +99,7 @@ prop_simplifyF f =
       in
         not (hasError fResult) ==>
           case unCN fResult of
-            CertainTrue -> 
+            CertainTrue ->
               case unCN simplifiedFResult of
                 CertainTrue  -> label "Simplified and unsimplified f are both true" True
                 _            -> counterexample ("Unsimplified says true, but simplified says false/undecideable: Function: " ++ show f ++ " Domain: " ++ show varMap) False
@@ -120,6 +123,112 @@ prop_simplifyF f =
 
     variablePoints :: Gen [Integer]
     variablePoints = vectorOf (int (length variables)) arbitrary
+
+prop_minMaxAbsEliminatorF :: F -> Property
+prop_minMaxAbsEliminatorF f =
+  hasMinMaxAbsF f ==>
+    forAllBlind variablePoints $ \points ->
+      let
+        varMap = map (\(i, v) -> (v, (rational (points !! i), rational (points !! i)))) (zip [0..] variables)
+        varBoundMap = Map.fromList (map (\(v, (l, r)) -> (v, (Just l, Just r))) varMap)
+        mFResult           = checkFWithEval f varBoundMap
+        eliminatedF        = minMaxAbsEliminatorF f
+        mEliminatedFResult = checkFWithEval eliminatedF varBoundMap
+        -- varMap            = Map.fromList $ map (\(i, v) -> (v, (rational (points !! i), rational (points !! i)))) (zip [0..] variables)
+        -- fResult           = evalF_Rational varMap f
+        -- simplifiedFResult = evalF_Rational varMap (simplifyF f)
+      in
+        if hasMinMaxAbsF eliminatedF
+          then counterexample ("eliminated still has min/max/abs: Function: " ++ show f ++ " Domain: " ++ show varMap) False
+          else case (mFResult, mEliminatedFResult) of
+            (Just fResult, Just eliminatedFResult) -> 
+              if fResult
+                then if eliminatedFResult 
+                  then label "Eliminated and non-eliminated f are both true" True 
+                  else counterexample ("non-eliminated says true, but eliminated says false: Function: " ++ show f ++ " Domain: " ++ show varMap) False
+                else if eliminatedFResult 
+                  then counterexample ("non-eliminated says false, but eliminated says true: Function: " ++ show f ++ " Domain: " ++ show varMap) False 
+                  else label "Eliminated and non-eliminated f are both false" True
+            (Nothing, Nothing)   -> label "Eliminated and non-eliminated f are both indeterminate" True
+            (Nothing, Just bool) -> counterexample ("non-eliminated says indeterminate, but eliminated says " ++ show bool) True
+            (Just bool, Nothing) -> counterexample ("eliminated says indeterminate, but non-eliminated says " ++ show bool) True
+
+        -- e P.== e
+        -- not (hasError eValAtVarMap) ==>
+          -- case unCN $ fResult == fResult of
+          --   CertainTrue  -> label "Simplified and unsimplified expressions agree" True
+          --   CertainFalse -> counterexample (show e) False
+          --   TrueOrFalse  -> label "Simplified and unsimplified undecideable" True
+  where
+    variables = extractVariablesF f
+
+    variablePoints :: Gen [Integer]
+    variablePoints = vectorOf (int (length variables)) arbitrary
+
+prop_fToEDNF :: F -> Property
+prop_fToEDNF f =
+  forAllBlind variablePoints $ \points ->
+    let
+      varMap = map (\(i, v) -> (v, (rational (points !! i), rational (points !! i)))) (zip [0..] variables)
+      varBoundMap = Map.fromList (map (\(v, (l, r)) -> (v, (Just l, Just r))) varMap)
+      mFResult           = checkFWithEval f varBoundMap
+      fDNF               = fToEDNF f
+
+      mFDNFResult = checkDNF fDNF False
+
+      checkDNF [] True  = Nothing
+      checkDNF [] False = Just False
+      checkDNF (c : cs) foundIndeterminate = 
+        case checkConjunction c False of
+          Just True  -> Just True
+          Just False -> checkDNF cs foundIndeterminate
+          Nothing    -> checkDNF cs True
+
+      checkConjunction [] False = Just True
+      checkConjunction [] True  = Nothing
+      checkConjunction (e : es) foundIndeterminate  = 
+        case e of
+          EStrict e' ->
+            case evalE_Rational varBoundMap e' of
+              (Just l, Just r) -> if l > 0.0  then checkConjunction es foundIndeterminate else if r <= 0.0 then Just False else checkConjunction es True
+              (Just l, _)      -> if l > 0.0  then checkConjunction es foundIndeterminate                                  else checkConjunction es True
+              (_, Just r)      ->                                                              if r <= 0.0 then Just False else checkConjunction es True
+              (_, _)      -> checkConjunction es True
+          ENonStrict e' ->
+            case evalE_Rational varBoundMap e' of
+              (Just l, Just r) -> if l >= 0.0  then checkConjunction es foundIndeterminate else if r < 0.0 then Just False else checkConjunction es True
+              (Just l, _)      -> if l >= 0.0  then checkConjunction es foundIndeterminate                                 else checkConjunction es True
+              (_, Just r) ->                                                                    if r < 0.0 then Just False else checkConjunction es True
+              (_, _)      -> checkConjunction es True
+      -- varMap            = Map.fromList $ map (\(i, v) -> (v, (rational (points !! i), rational (points !! i)))) (zip [0..] variables)
+      -- fResult           = evalF_Rational varMap f
+      -- simplifiedFResult = evalF_Rational varMap (simplifyF f)
+    in
+      case (mFResult, mFDNFResult) of
+        (Just fResult, Just fDNFResult) -> 
+          if fResult
+            then if fDNFResult 
+              then label "dnf and non-dnf f are both true" True 
+              else counterexample ("non-dnf says true, but dnf says false: Function: " ++ show f ++ " Domain: " ++ show varMap) False
+            else if fDNFResult 
+              then counterexample ("non-dnf says false, but dnf says true: Function: " ++ show f ++ " Domain: " ++ show varMap) False 
+              else label "dnf and non-dnf f are both false" True
+        (Nothing, Nothing)   -> label "dnf and non-dnf f are both indeterminate" True
+        (Nothing, Just bool) -> counterexample ("non-dnf says indeterminate, but dnf says " ++ show bool) True
+        (Just bool, Nothing) -> counterexample ("dnf says indeterminate, but non-dnf says " ++ show bool) True
+
+        -- e P.== e
+        -- not (hasError eValAtVarMap) ==>
+          -- case unCN $ fResult == fResult of
+          --   CertainTrue  -> label "Simplified and unsimplified expressions agree" True
+          --   CertainFalse -> counterexample (show e) False
+          --   TrueOrFalse  -> label "Simplified and unsimplified undecideable" True
+  where
+    variables = extractVariablesF f
+
+    variablePoints :: Gen [Integer]
+    variablePoints = vectorOf (int (length variables)) arbitrary
+
 
 -- CE: FNot (FComp Ge (EUnOp Negate (Var "Name \"f\"")) (Var "Name \"e\"")) Domain: [("Name \"f\"",((-3) % 1,(-3) % 1)),("Name \"e\"",(3 % 1,3 % 1))]
 -- because ECNF checks strictly... ignores non-strict constraint
@@ -311,7 +420,7 @@ prop_simplifyF f =
 --     variablePoints = vectorOf (int (length variables)) arbitrary
 
 prop_verifyCheckECNFDepthFirst :: [[ESafe]] -> Property
-prop_verifyCheckECNFDepthFirst cnf = 
+prop_verifyCheckECNFDepthFirst cnf =
   forAllBlind variableDomains $ \domains ->
     let
       eliminatedCNF   = minMaxAbsEliminatorECNF cnf
@@ -320,17 +429,17 @@ prop_verifyCheckECNFDepthFirst cnf =
       typedVarMap     = map (\i -> TypedVar i Real) varMap
       checkECNFResult = checkECNFDepthFirstWithSimplex eliminatedCNF typedVarMap 10 100 1.2 (prec 100)
       eRanges         = map (map (\e -> applyExpression (extractSafeE e) varMap (prec 100))) eliminatedCNF
-      eRangesHasError = any (any hasError) eRanges 
+      eRangesHasError = any (any hasError) eRanges
     in
       not eRangesHasError ==>
         case checkECNFResult of
-          (Just False, Just counterExampleDomain) -> 
+          (Just False, Just counterExampleDomain) ->
             let
               eRangesC         = map (map (\e -> applyExpression (extractSafeE e) varMap (prec 100))) cnf
               eResultC2         = map (map (>= 0)) eRangesC
-              eResultC        = 
-                map 
-                (map 
+              eResultC        =
+                map
+                (map
                 (\case
                   EStrict e    -> applyExpression e varMap (prec 100) > 0
                   ENonStrict e -> applyExpression e varMap (prec 100) >= 0)
@@ -341,16 +450,16 @@ prop_verifyCheckECNFDepthFirst cnf =
             in
               case unCN eResultKleeneanC of
                 CertainFalse -> label "Counterexample verified false" True
-                CertainTrue  -> 
-                  counterexample 
-                  ("Counterexample proven to be wrong: CNF " 
-                  ++ show cnf ++ " Domain: " 
+                CertainTrue  ->
+                  counterexample
+                  ("Counterexample proven to be wrong: CNF "
+                  ++ show cnf ++ " Domain: "
                   ++ show varMap
-                   ++ " Counterexample: " 
+                   ++ " Counterexample: "
                    ++ show counterExampleDomain)
                    False
-                TrueOrFalse  -> 
-                  label 
+                TrueOrFalse  ->
+                  label
                   "Counterexample verification returned indeterminate result"
                   True
           (Just True, _)  -> label "checkECNFCE returned a true result" True
@@ -363,7 +472,7 @@ prop_verifyCheckECNFDepthFirst cnf =
     variableDomains = vectorOf (int (length variables)) arbitrary
 
 prop_verifyCheckECNFBestFirst :: [[ESafe]] -> Property
-prop_verifyCheckECNFBestFirst cnf = 
+prop_verifyCheckECNFBestFirst cnf =
   forAllBlind variableDomains $ \domains ->
     let
       eliminatedCNF   = minMaxAbsEliminatorECNF cnf
@@ -372,17 +481,17 @@ prop_verifyCheckECNFBestFirst cnf =
       typedVarMap     = map (\i -> TypedVar i Real) varMap
       checkECNFResult = checkECNFBestFirstWithSimplexCE eliminatedCNF typedVarMap 500 1.2 (prec 100)
       eRanges         = map (map (\e -> applyExpression (extractSafeE e) varMap (prec 100))) eliminatedCNF
-      eRangesHasError = any (any hasError) eRanges 
+      eRangesHasError = any (any hasError) eRanges
     in
       not eRangesHasError ==>
         case checkECNFResult of
-          (Just False, Just counterExampleDomain) -> 
+          (Just False, Just counterExampleDomain) ->
             let
               eRangesC         = map (map (\e -> applyExpression (extractSafeE e) varMap (prec 100))) cnf
               eResultC2         = map (map (>= 0)) eRangesC
-              eResultC        = 
-                map 
-                (map 
+              eResultC        =
+                map
+                (map
                 (\case
                   EStrict e    -> applyExpression e varMap (prec 100) > 0
                   ENonStrict e -> applyExpression e varMap (prec 100) >= 0)
@@ -393,16 +502,16 @@ prop_verifyCheckECNFBestFirst cnf =
             in
               case unCN eResultKleeneanC of
                 CertainFalse -> label "Counterexample verified false" True
-                CertainTrue  -> 
-                  counterexample 
-                  ("Counterexample proven to be wrong: CNF " 
-                  ++ show cnf ++ " Domain: " 
+                CertainTrue  ->
+                  counterexample
+                  ("Counterexample proven to be wrong: CNF "
+                  ++ show cnf ++ " Domain: "
                   ++ show varMap
-                   ++ " Counterexample: " 
+                   ++ " Counterexample: "
                    ++ show counterExampleDomain)
                    False
-                TrueOrFalse  -> 
-                  label 
+                TrueOrFalse  ->
+                  label
                   "Counterexample verification returned indeterminate result"
                   True
           (Just True, _)  -> label "checkECNFCE returned a true result" True
@@ -523,5 +632,5 @@ makeFStrict (FComp op e1 e2) =
     Eq -> FComp Eq e1 e2
 makeFStrict (FConn op f1 f2) = FConn op (makeFStrict f1) (makeFStrict f2)
 makeFStrict (FNot f)         = FNot (makeFStrict f)
-makeFStrict FTrue            = FTrue 
+makeFStrict FTrue            = FTrue
 makeFStrict FFalse           = FFalse
