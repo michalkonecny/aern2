@@ -8,6 +8,7 @@ module AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.DataTypes
 , pairToList
 ) where
 import qualified Data.Map as Map
+import qualified Data.List as List
 import Prelude
 
 -- A frame contains mappings from variable names to Lisp values.
@@ -35,6 +36,23 @@ data Expression = Null
 instance Show Expression where
   show = showExpression
 
+instance Eq Expression where
+  x == y = eqExpression x y
+
+eqExpression :: Expression -> Expression -> Bool
+eqExpression (Pair x1 x2) (Pair y1 y2) = eqExpression x1 y1 && eqExpression x2 y2
+eqExpression (Lambda x1s x2) (Lambda y1s y2) = and (List.zipWith eqExpression x1s y1s) && eqExpression x2 y2
+eqExpression (Application x1 y1s) (Application x2 y2s) = eqExpression x1 x2 && and (List.zipWith eqExpression y1s y2s)
+eqExpression (Definition x1 y1) (Definition x2 y2) = eqExpression x1 y1 && eqExpression x2 y2
+eqExpression (If x1 y1 z1) (If x2 y2 z2) = eqExpression x1 y1 && eqExpression x2 y2 && eqExpression z1 z2
+eqExpression Null Null = True
+eqExpression Null _ = False
+eqExpression _ Null = False
+eqExpression (Number x) (Number y) = x == y
+eqExpression (Boolean x) (Boolean y) = x == y
+eqExpression (Variable x) (Variable y) = x == y
+eqExpression (Exception x) (Exception y) = x == y
+eqExpression _ _ = False
 -- A function that recursively converts a Lisp Expression to a
 -- String representation.
 showExpression :: Expression -> String
