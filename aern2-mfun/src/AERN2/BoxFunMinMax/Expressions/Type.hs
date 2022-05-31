@@ -1077,3 +1077,30 @@ hasMinMaxAbsF (FConn _ f1 f2) = hasMinMaxAbsF f1 || hasMinMaxAbsF f2
 hasMinMaxAbsF (FNot f)        = hasMinMaxAbsF f
 hasMinMaxAbsF FTrue           = False
 hasMinMaxAbsF FFalse          = False
+
+replaceEInE :: E -> E -> E -> E
+replaceEInE eContainingE eToFind eToReplace =
+  if eContainingE P.== eToFind
+    then eToReplace
+    else
+      case eContainingE of
+        EBinOp op e1 e2      -> EBinOp  op  (replaceEInE e1 eToFind eToReplace) (replaceEInE e2 eToFind eToReplace)
+        EUnOp op e           -> EUnOp   op  (replaceEInE e eToFind eToReplace)
+        Float32 rnd e        -> Float32 rnd (replaceEInE e eToFind eToReplace)
+        Float64 rnd e        -> Float64 rnd (replaceEInE e eToFind eToReplace)
+        Float rnd e          -> Float64 rnd (replaceEInE e eToFind eToReplace)
+        RoundToInteger rnd e -> RoundToInteger rnd (replaceEInE e eToFind eToReplace)
+        PowI e i             -> PowI (replaceEInE e eToFind eToReplace) i
+        Lit _                -> eContainingE
+        Var _                -> eContainingE
+        Pi                   -> eContainingE
+
+
+replaceEInF :: F -> E -> E -> F
+replaceEInF fContainingE eToFind eToReplace =
+  case fContainingE of
+    FConn op f1 f2 -> FConn op (replaceEInF f1 eToFind eToReplace) (replaceEInF f2 eToFind eToReplace)
+    FComp op e1 e2 -> FComp op (replaceEInE e1 eToFind eToReplace) (replaceEInE e2 eToFind eToReplace)
+    FNot f         -> FNot $ replaceEInF f eToFind eToReplace
+    FTrue          -> FTrue
+    FFalse         -> FFalse
