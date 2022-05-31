@@ -7,7 +7,7 @@ import MixedTypesNumPrelude
 import qualified Prelude as P
 
 import qualified Data.Map as Map
-import Data.List (nub)
+import Data.List (nub, delete)
 
 import Test.QuickCheck
 
@@ -193,7 +193,7 @@ fToECNF = fToECNFB False
       Gt -> [[EStrict (EBinOp Sub e1 e2)]]      -- f1 >  f2 == f1 - f2 >  0 
       Eq -> fToECNFB False (FConn And (FComp Ge e1 e2) (FComp Le e1 e2)) -- f1 = f2 == f1 >= f2 /\ f1 <= f2
     fToECNFB True (FConn op f1 f2)  = case op of
-      And     -> [d1 ++ d2 | d1 <- fToECNFB True f1, d2 <- fToECNFB True f2] 
+      And     -> [d1 ++ d2 | d1 <- fToECNFB True f1, d2 <- fToECNFB True f2]
       Or      -> fToECNFB True f1 ++ fToECNFB True f2
       Impl    -> fToECNFB False f1 ++ fToECNFB True f2 -- !(!p \/ q) == p /\ !q
     fToECNFB False (FConn op f1 f2)  = case op of
@@ -202,8 +202,8 @@ fToECNF = fToECNFB False
       Impl    -> [d1 ++ d2 | d1 <- fToECNFB True f1, d2 <- fToECNFB False f2]
     -- fToECNFB isNegated FTrue  _  = error "fToECNFB for FTrue undefined"  $ Lit 1.0
     -- fToECNFB isNegated FFalse _  = error "fToECNFB for FFalse undefined" $ Lit $ -1.0
-    fToECNFB True  FTrue   = fToECNFB False FFalse 
-    fToECNFB True  FFalse  = fToECNFB False FTrue 
+    fToECNFB True  FTrue   = fToECNFB False FFalse
+    fToECNFB True  FFalse  = fToECNFB False FTrue
     fToECNFB False FTrue     = [[ENonStrict (Lit 1.0)]]
     fToECNFB False FFalse    = [[ENonStrict (Lit (-1.0))]]
 
@@ -234,8 +234,8 @@ fToEDNF = fToEDNFB False
       And  -> [d1 ++ d2 | d1 <- fToEDNFB False f1, d2 <- fToEDNFB False f2]
       Or   -> fToEDNFB False f1 ++ fToEDNFB False f2
       Impl -> fToEDNFB True f1 ++ fToEDNFB False f2
-    fToEDNFB True  FTrue   = fToEDNFB False FFalse 
-    fToEDNFB True  FFalse  = fToEDNFB False FTrue 
+    fToEDNFB True  FTrue   = fToEDNFB False FFalse
+    fToEDNFB True  FFalse  = fToEDNFB False FTrue
     fToEDNFB False FTrue   = [[ENonStrict (Lit 1.0)]]
     fToEDNFB False FFalse  = [[ENonStrict (Lit (-1.0))]]
 
@@ -247,9 +247,26 @@ fToFDNF = fToFDNFB False
   where
     fToFDNFB :: Bool -> F -> [[F]]
     fToFDNFB isNegated (FNot f) = fToFDNFB (not isNegated) f
-    -- fToFDNFB isNegated (FComp Eq e1 e2) = fToFDNFB isNegated (FConn And (FComp Ge e1 e2) (FComp Le e1 e2))
-    fToFDNFB True  f@FComp {} = [[FNot f]]
-    fToFDNFB False f@FComp {} = [[f]]
+    fToFDNFB True f@FComp {} =
+      case f of
+        -- e1 < e2
+        FComp Ge e1 e2 -> [[FComp Gt e2 e1]]
+        -- e1 <= e2
+        FComp Gt e1 e2 -> [[FComp Ge e2 e1]]
+        -- e1 > e2
+        FComp Le e1 e2 -> [[FComp Gt e1 e2]]
+        -- e1 >= e2
+        FComp Lt e1 e2 -> [[FComp Ge e1 e2]]
+        FComp Eq e1 e2 -> fToFDNFB False $ FConn Or (FComp Gt e1 e2) (FComp Gt e2 e1)
+    fToFDNFB False f@FComp {} =
+      case f of
+        FComp Ge _ _ -> [[f]]
+        FComp Gt _ _ -> [[f]]
+        FComp Le e1 e2 -> [[FComp Ge e2 e1]]
+        FComp Lt e1 e2 -> [[FComp Gt e2 e1]]
+        FComp Eq e1 e2 -> [[FComp Ge e1 e2, FComp Ge e2 e1]]
+    -- fToFDNFB True  f@FComp {} = [[FNot f]]
+    -- fToFDNFB False f@FComp {} = [[f]]
     fToFDNFB True (FConn op f1 f2) = case op of
       And  -> fToFDNFB True f1 ++ fToFDNFB True f2
       Or   -> [d1 ++ d2 | d1 <- fToFDNFB True f1, d2 <- fToFDNFB True f2]
@@ -258,8 +275,8 @@ fToFDNF = fToFDNFB False
       And  -> [d1 ++ d2 | d1 <- fToFDNFB False f1, d2 <- fToFDNFB False f2]
       Or   -> fToFDNFB False f1 ++ fToFDNFB False f2
       Impl -> fToFDNFB True f1 ++ fToFDNFB False f2
-    fToFDNFB True  FTrue   = fToFDNFB False FFalse 
-    fToFDNFB True  FFalse  = fToFDNFB False FTrue 
+    fToFDNFB True  FTrue   = fToFDNFB False FFalse
+    fToFDNFB True  FFalse  = fToFDNFB False FTrue
     fToFDNFB False FTrue     = [[FTrue]]
     fToFDNFB False FFalse    = [[FFalse]]
 
@@ -269,13 +286,13 @@ eSafeToF (ENonStrict e) = FComp Ge e (Lit 0.0)
 
 eSafeDisjToF :: [ESafe] -> F
 eSafeDisjToF []       = error "empty disjunction given to eSafeDisjToF" -- Alternatively, this can be false?
-eSafeDisjToF [e]      = eSafeToF e 
+eSafeDisjToF [e]      = eSafeToF e
 eSafeDisjToF (e : es) = FConn Or (eSafeToF e) (eSafeDisjToF es)
 
 eSafeCNFToF :: [[ESafe]] -> F
 eSafeCNFToF []             = error "empty disjunction given to eSafeCNFToF" -- Alternatively, this can be true?
 eSafeCNFToF [disj]         = eSafeDisjToF disj
-eSafeCNFToF (disj : disjs) = FConn And (eSafeDisjToF disj) (eSafeCNFToF disjs) 
+eSafeCNFToF (disj : disjs) = FConn And (eSafeDisjToF disj) (eSafeCNFToF disjs)
 
 eSafeCNFToDNF :: [[ESafe]] -> [[ESafe]]
 eSafeCNFToDNF = fToEDNF . eSafeCNFToF
@@ -301,6 +318,7 @@ simplifyE unsimplifiedE = if unsimplifiedE P.== simplifiedE then simplifiedE els
     simplify (EBinOp Div e (Lit 1.0)) = e
     simplify (EBinOp Div (Lit 0.0) _) = Lit 0.0
     simplify (EBinOp Mul (Lit (-1.0)) e) = simplify (EUnOp Negate e)
+    simplify (EBinOp Mul e (Lit (-1.0))) = simplify (EUnOp Negate e)
     simplify (EBinOp Mul (Lit 0.0) _) = Lit 0.0
     simplify (EBinOp Mul _ (Lit 0.0)) = Lit 0.0
     simplify (EBinOp Mul (Lit 1.0) e) = e
@@ -360,7 +378,7 @@ simplifyF unsimplifiedF = if unsimplifiedF P.== simplifiedF then simplifiedF els
     simplify (FConn Or FTrue _)                                 = FTrue
     simplify (FConn Or f FFalse)                                = simplify f
     simplify (FConn Or FFalse f)                                = simplify f
-    
+
     simplify (FConn Or f1 fn2@(FNot f2))                        = if f1 P.== f2 then FTrue else FConn Or (simplify f1) (simplify fn2)
     simplify (FConn Or fn1@(FNot f1) f2)                        = if f1 P.== f2 then FTrue else FConn Or (simplify fn1) (simplify f2)
 
@@ -376,7 +394,7 @@ simplifyF unsimplifiedF = if unsimplifiedF P.== simplifiedF then simplifiedF els
     simplify (FConn Impl f1 f2)                                 = if f1 P.== f2 then FTrue else FConn Impl (simplify f1) (simplify f2)
 
     -- Evaluate rational comparisons
-    simplify (FComp op (Lit l1) (Lit l2)) = 
+    simplify (FComp op (Lit l1) (Lit l2)) =
       case op of
         Gt -> boolToF $ l1 >  l2
         Ge -> boolToF $ l1 >= l2
@@ -413,97 +431,197 @@ simplifyEDoubleList = nub . map (nub . map simplifyE)
 simplifyFDNF :: [[F]] -> [[F]]
 simplifyFDNF [] = []
 simplifyFDNF (c : cs) =
-  if containsFalse checkedConjunction
-    then simplifyFDNF cs
-    else 
-      checkedConjunction : simplifyFDNF cs
-  -- case simplifyFConjunction c of
-  --   [] -> simplifyFDNF cs
-  --   simplifiedC -> simplifiedC : simplifyFDNF cs
-  where
-    simplifyFConjunction :: [F] -> [F]
-    simplifyFConjunction [] = []
-    simplifyFConjunction (simplifiedConjunctionHead : simplifiedConjunctionTail) = 
+  case simplifyFConjunction c of
+    Nothing -> simplifyFDNF cs
+    Just [] -> simplifyFDNF cs
+    Just [checkedConjunctionHead] -> [checkedConjunctionHead] : simplifyFDNF cs
+    Just checkedConjunction@(checkedConjunctionHead : checkedConjunctionTail) ->
       let
-        -- isNegated bool
-        aux :: Bool -> F -> [F] -> [F] -> [F]
-        aux isNegated (FNot f1) fs        conj   = aux (not isNegated) f1 fs conj
-        aux isNegated       f1  []        []     = [if isNegated then FNot f1 else f1]
-        aux isNegated       f1  []        (f : conj) = (if isNegated then FNot f1 else f1) : aux False f conj conj
-        aux False           f1  (f2 : fs) conj =
-          case f2 of
-            FNot f2' -> if f1 P.== f2' then [FFalse] else aux False f1 fs conj
-            FComp Eq l2 r2 ->
-              case f1 of
-                FComp Eq l1 r1 ->
-                  case ((l1, r1), (l2, r2)) of
-                    -- Negate
-                    ((Var vl1, Var vr1), (Var vl2, EUnOp Negate (Var vr2))) -> if (vl1 P.== vl2 && vr1 P.== vr2) || (vl1 P.== vr2) && (vr1 P.== vl2) then [FFalse] else aux False f1 fs conj
-                    ((Var vl1, Var vr1), (EUnOp Negate (Var vl2), Var vr2)) -> if (vl1 P.== vl2 && vr1 P.== vr2) || (vl1 P.== vr2) && (vr1 P.== vl2) then [FFalse] else aux False f1 fs conj
-                    ((Var vl1, EUnOp Negate (Var vr1)), (Var vl2, Var vr2)) -> if (vl1 P.== vl2 && vr1 P.== vr2) || (vl1 P.== vr2) && (vr1 P.== vl2) then [FFalse] else aux False f1 fs conj
-                    ((EUnOp Negate (Var vl1), Var vr1), (Var vl2, Var vr2)) -> if (vl1 P.== vl2 && vr1 P.== vr2) || (vl1 P.== vr2) && (vr1 P.== vl2) then [FFalse] else aux False f1 fs conj
-                    
-                    -- ((Var v1, e1), (Var v2, EUnOp Negate e2)) -> if v1 P.== v2 && e1 P.== e2 then [FFalse] else aux False f1 fs conj
-                    -- ((Var v1, e1), (EUnOp Negate e2, Var v2)) -> if v1 P.== v2 && e1 P.== e2 then [FFalse] else aux False f1 fs conj
-                    -- ((e1, Var v1), (Var v2, EUnOp Negate e2)) -> if v1 P.== v2 && e1 P.== e2 then [FFalse] else aux False f1 fs conj
-                    -- ((e1, Var v1), (EUnOp Negate e2, Var v2)) -> if v1 P.== v2 && e1 P.== e2 then [FFalse] else aux False f1 fs conj
-
-                    -- ((Var v1, EUnOp Negate e1), (Var v2, e2)) -> if v1 P.== v2 && e1 P.== e2 then [FFalse] else aux False f1 fs conj
-                    -- ((Var v1, EUnOp Negate e1), (e2, Var v2)) -> if v1 P.== v2 && e1 P.== e2 then [FFalse] else aux False f1 fs conj
-                    -- ((EUnOp Negate e1, Var v1), (Var v2, e2)) -> if v1 P.== v2 && e1 P.== e2 then [FFalse] else aux False f1 fs conj
-                    -- ((EUnOp Negate e1, Var v1), (e2, Var v2)) -> if v1 P.== v2 && e1 P.== e2 then [FFalse] else aux False f1 fs conj
-                    
-                    _ -> aux False f1 fs conj
-                _ -> aux False f1 fs conj
-            _ -> aux False f1 fs conj
-        aux True            f1  (f2 : fs) conj =
-          case f2 of
-            FNot f2' -> 
-              case f2' of
-                FComp Eq l2 r2 ->
-                  case f1 of
-                    FComp Eq l1 r1 ->
-                      case ((l1, r1), (l2, r2)) of
-                        -- Negate
-                        ((Var vl1, Var vr1), (Var vl2, EUnOp Negate (Var vr2))) -> if (vl1 P.== vl2 && vr1 P.== vr2) || (vl1 P.== vr2) && (vr1 P.== vl2) then [FFalse] else aux True f1 fs conj
-                        ((Var vl1, Var vr1), (EUnOp Negate (Var vl2), Var vr2)) -> if (vl1 P.== vl2 && vr1 P.== vr2) || (vl1 P.== vr2) && (vr1 P.== vl2) then [FFalse] else aux True f1 fs conj
-                        ((Var vl1, EUnOp Negate (Var vr1)), (Var vl2, Var vr2)) -> if (vl1 P.== vl2 && vr1 P.== vr2) || (vl1 P.== vr2) && (vr1 P.== vl2) then [FFalse] else aux True f1 fs conj
-                        ((EUnOp Negate (Var vl1), Var vr1), (Var vl2, Var vr2)) -> if (vl1 P.== vl2 && vr1 P.== vr2) || (vl1 P.== vr2) && (vr1 P.== vl2) then [FFalse] else aux True f1 fs conj
-                        _ -> aux True f1 fs conj
-                    _ -> aux True f1 fs conj
-                _ -> aux True f1 fs conj
-            _ -> if f1 P.== f2 then [FFalse] else aux True f1 fs conj
+        currentEqualities = findEqualities checkedConjunctionHead checkedConjunctionTail checkedConjunctionTail
       in
-        nub $ aux False simplifiedConjunctionHead simplifiedConjunctionTail simplifiedConjunctionTail
+        case currentEqualities of
+          []     -> checkedConjunction : simplifyFDNF cs
+          [_eq1] -> checkedConjunction : simplifyFDNF cs
+          (currentEqualitiesHead : currentEqualitiesTail)  ->
+            let
+              newEqualities = findEqZero currentEqualitiesHead currentEqualitiesTail currentEqualitiesTail
+            in
+              nub (checkedConjunction ++ newEqualities) : simplifyFDNF cs
+  where
 
-    containsFalse :: [F] -> Bool
-    containsFalse [] = False
-    containsFalse (FFalse : _) = True 
-    containsFalse (_ : fs) = containsFalse fs
+    -- look for equalities like x == y and x == -y
+    -- x == 0, y == 0
+    findEqZero :: (E,E) -> [(E,E)] -> [(E,E)] -> [F]
+    findEqZero _ [] [] = []
+    findEqZero _ [] (eq : conj) = findEqZero eq conj conj
+    findEqZero eq1 (eq2 : eqs) conj =
+      case eq1 of
+        (EUnOp Negate l1, EUnOp Negate r1) ->
+          case eq2 of
+            (EUnOp Negate l2, r2)
+              | l1 P.== l2 && r1 P.== r2 -> [FComp Ge l1 (Lit 0.0), FComp Ge (Lit 0.0) l1, FComp Ge r1 (Lit 0.0), FComp Ge (Lit 0.0) r1] ++ findEqZero eq1 eqs conj
+              | l1 P.== r2 && r1 P.== l2 -> [FComp Ge l1 (Lit 0.0), FComp Ge (Lit 0.0) l1, FComp Ge r1 (Lit 0.0), FComp Ge (Lit 0.0) r1] ++ findEqZero eq1 eqs conj
+              | otherwise -> findEqZero eq1 eqs conj
+            (l2, EUnOp Negate r2)
+              | l1 P.== l2 && r1 P.== r2 -> [FComp Ge l1 (Lit 0.0), FComp Ge (Lit 0.0) l1, FComp Ge r1 (Lit 0.0), FComp Ge (Lit 0.0) r1] ++ findEqZero eq1 eqs conj
+              | l1 P.== r2 && r1 P.== l2 -> [FComp Ge l1 (Lit 0.0), FComp Ge (Lit 0.0) l1, FComp Ge r1 (Lit 0.0), FComp Ge (Lit 0.0) r1] ++ findEqZero eq1 eqs conj
+              | otherwise -> findEqZero eq1 eqs conj
+            _ -> findEqZero eq1 eqs conj
+        (EUnOp Negate l1, r1) ->
+          case eq2 of
+            (EUnOp Negate l2, EUnOp Negate r2)
+              | l1 P.== l2 && r1 P.== r2 -> [FComp Ge l1 (Lit 0.0), FComp Ge (Lit 0.0) l1, FComp Ge r1 (Lit 0.0), FComp Ge (Lit 0.0) r1] ++ findEqZero eq1 eqs conj
+              | l1 P.== r2 && r1 P.== l2 -> [FComp Ge l1 (Lit 0.0), FComp Ge (Lit 0.0) l1, FComp Ge r1 (Lit 0.0), FComp Ge (Lit 0.0) r1] ++ findEqZero eq1 eqs conj
+              | otherwise -> findEqZero eq1 eqs conj
+            (l2, r2)
+              | l1 P.== l2 && r1 P.== r2 -> [FComp Ge l1 (Lit 0.0), FComp Ge (Lit 0.0) l1, FComp Ge r1 (Lit 0.0), FComp Ge (Lit 0.0) r1] ++ findEqZero eq1 eqs conj
+              | l1 P.== r2 && r1 P.== l2 -> [FComp Ge l1 (Lit 0.0), FComp Ge (Lit 0.0) l1, FComp Ge r1 (Lit 0.0), FComp Ge (Lit 0.0) r1] ++ findEqZero eq1 eqs conj
+              | otherwise -> findEqZero eq1 eqs conj
+        (l1, EUnOp Negate r1) ->
+          case eq2 of
+            (EUnOp Negate l2, EUnOp Negate r2)
+              | l1 P.== l2 && r1 P.== r2 -> [FComp Ge l1 (Lit 0.0), FComp Ge (Lit 0.0) l1, FComp Ge r1 (Lit 0.0), FComp Ge (Lit 0.0) r1] ++ findEqZero eq1 eqs conj
+              | l1 P.== r2 && r1 P.== l2 -> [FComp Ge l1 (Lit 0.0), FComp Ge (Lit 0.0) l1, FComp Ge r1 (Lit 0.0), FComp Ge (Lit 0.0) r1] ++ findEqZero eq1 eqs conj
+              | otherwise -> findEqZero eq1 eqs conj
+            (l2, r2)
+              | l1 P.== l2 && r1 P.== r2 -> [FComp Ge l1 (Lit 0.0), FComp Ge (Lit 0.0) l1, FComp Ge r1 (Lit 0.0), FComp Ge (Lit 0.0) r1] ++ findEqZero eq1 eqs conj
+              | l1 P.== r2 && r1 P.== l2 -> [FComp Ge l1 (Lit 0.0), FComp Ge (Lit 0.0) l1, FComp Ge r1 (Lit 0.0), FComp Ge (Lit 0.0) r1] ++ findEqZero eq1 eqs conj
+              | otherwise -> findEqZero eq1 eqs conj
+        (l1, r1) ->
+          case eq2 of
+            (l2, EUnOp Negate r2)
+              | l1 P.== l2 && r1 P.== r2 -> [FComp Ge l1 (Lit 0.0), FComp Ge (Lit 0.0) l1, FComp Ge r1 (Lit 0.0), FComp Ge (Lit 0.0) r1] ++ findEqZero eq1 eqs conj
+              | l1 P.== r2 && r1 P.== l2 -> [FComp Ge l1 (Lit 0.0), FComp Ge (Lit 0.0) l1, FComp Ge r1 (Lit 0.0), FComp Ge (Lit 0.0) r1] ++ findEqZero eq1 eqs conj
+              | otherwise -> findEqZero eq1 eqs conj
+            (EUnOp Negate l2, r2)
+              | l1 P.== l2 && r1 P.== r2 -> [FComp Ge l1 (Lit 0.0), FComp Ge (Lit 0.0) l1, FComp Ge r1 (Lit 0.0), FComp Ge (Lit 0.0) r1] ++ findEqZero eq1 eqs conj
+              | l1 P.== r2 && r1 P.== l2 -> [FComp Ge l1 (Lit 0.0), FComp Ge (Lit 0.0) l1, FComp Ge r1 (Lit 0.0), FComp Ge (Lit 0.0) r1] ++ findEqZero eq1 eqs conj
+              | otherwise -> findEqZero eq1 eqs conj
+            _ -> findEqZero eq1 eqs conj
 
-    checkedConjunction = simplifyFConjunction c
+
+    -- finds equalities in a conjunction (x >= y and y >= x)
+    findEqualities :: F -> [F] -> [F] -> [(E, E)]
+    findEqualities _ [] [] = []
+    findEqualities _ [] (f : conj) = findEqualities f conj conj
+    findEqualities f1 (f2 : fs) conj =
+      case f1 of
+        -- say we have x >=y
+        FComp Ge l1 r1 ->
+          case f2 of
+            -- y >= x is an equality
+            FComp Ge l2 r2 ->
+              if l1 P.== r2 && r1 P.== l2
+                then (l1, r1) : findEqualities f1 fs conj
+                else findEqualities f1 fs conj
+            _ -> findEqualities f1 fs conj
+        _ -> findEqualities f1 fs conj
+
+
+    simplifyFConjunction :: [F] -> Maybe [F]
+    simplifyFConjunction [] = Just []
+    simplifyFConjunction (simplifiedConjunctionHead : simplifiedConjunctionTail) =
+      let
+        -- Returns Nothing if a conjunction contains a contradiction
+        removeContradictions :: F -> [F] -> [F] -> Maybe [F]
+        removeContradictions f1 [] [] = Just [f1]
+        removeContradictions f1 [] (f : conj) = (f1 :) <$> removeContradictions f conj conj
+        removeContradictions f1 (f2 : fs) conj =
+          -- Can be Ge or Gt
+          case f1 of
+            -- say this is x >= y
+            FComp Ge l1 r1 ->
+              case f2 of
+                -- possible contradictions
+                --  y > x
+                FComp Gt l2 r2 ->
+                  if l1 P.== r2 && r1 P.== l2 then Nothing else removeContradictions f1 fs conj
+                -- possible = 0
+                -- y >= x (then x and y = 0)
+                -- FComp Ge l2 r2 ->
+                --   if l1 P.== r2 && r1 P.== l2 
+                --     then ([FComp Ge l1 (Lit 0.0), FComp Ge (Lit 0.0) l1, FComp Ge l2 (Lit 0.0), FComp Ge (Lit 0.0) l2] ++) <$> aux f1 fs conj
+                --     else aux f1 fs conj
+                _ -> removeContradictions f1 fs conj
+            -- say this is x > y
+            FComp Gt l1 r1 ->
+              case f2 of
+                -- possible contradictions
+                -- y >  x
+                -- y >= x
+                FComp Ge l2 r2 ->
+                  if l1 P.== r2 && r1 P.== l2 then Nothing else removeContradictions f1 fs conj
+                FComp Gt l2 r2 ->
+                  if l1 P.== r2 && r1 P.== l2 then Nothing else removeContradictions f1 fs conj
+                _ -> removeContradictions f1 fs conj
+            _ -> removeContradictions f1 fs conj
+      in
+        nub <$> removeContradictions simplifiedConjunctionHead simplifiedConjunctionTail simplifiedConjunctionTail
+
+fDNFToFDNFWithoutEq :: [[F]] -> [[F]] -> [[F]]
+fDNFToFDNFWithoutEq [] dnf = dnf
+fDNFToFDNFWithoutEq (c : cs) dnf =
+  case mNewDNF of -- Same length means no FNot (FComp Eq _ _)
+    Just newDNF -> fDNFToFDNFWithoutEq newDNF []
+    Nothing -> fDNFToFDNFWithoutEq cs (cWithoutEq : dnf)
+  where
+    cWithoutEq = elimEq False c
+    mNewDNF = elimNotEq cWithoutEq
+
+    elimNotEq [] = Nothing
+    elimNotEq (f@(FNot (FComp Eq e1 e2)) : _) = Just newDNF
+      where
+        currentDNF = c : cs ++ dnf
+        currentDNFWithoutF = map (delete f) currentDNF
+        newF1 = FNot (FComp Ge e1 e2)
+        newF2 = FNot (FComp Ge e2 e1)
+
+        newDNF = map (newF1 :) currentDNFWithoutF ++ map (newF2 :) currentDNFWithoutF
+        -- cWithoutEqWithoutF = delete f cWithoutEq
+        -- currentDNFWithoutC = cs ++ dnf
+        -- newC1 = FNot (FComp Ge e1 e2) : cWithoutEqWithoutF
+        -- newC2 = FNot (FComp Ge e2 e1) : cWithoutEqWithoutF
+        -- newDNF = (newC1 : currentDNFWithoutC) ++ (newC2 : currentDNFWithoutC)
+    elimNotEq (_ : fs) = elimNotEq fs
+
+    elimEq _ [] = []
+    elimEq isNegated (FNot f : fs) = elimEq (not isNegated) (f : fs)
+    elimEq False (FComp Eq e1 e2 : fs) = FComp Ge e1 e2 : FComp Ge e2 e1 : elimEq False fs
+    elimEq True (f : fs) = FNot f : elimEq False fs
+    elimEq False (f : fs) = f : elimEq False fs
 
 fDNFToEDNF :: [[F]] -> [[ESafe]]
-fDNFToEDNF = map (fConjToE False)
+fDNFToEDNF = map fConjToE
+-- fDNFToEDNF = map (fConjToE False)
   where
-    fConjToE :: Bool -> [F] -> [ESafe]
-    fConjToE _ [] = []
-    fConjToE True  (FComp Eq e1 e2 : fs) = error "Negated FComp with Eq found in DNF" --FIXME: Not difficult to implement, duplicate disjunctions, add 1 term to each duplicate
-    fConjToE False (FComp Eq e1 e2 : fs) = fConjToE False $ [FComp Ge e1 e2, FComp Ge e2 e1] ++ fs
-    fConjToE False (FComp Ge e1 e2 : fs) = ENonStrict (EBinOp Sub e1 e2)   : fConjToE False fs
-    fConjToE False (FComp Gt e1 e2 : fs) = EStrict    (EBinOp Sub e1 e2)   : fConjToE False fs
-    fConjToE False (FComp Le e1 e2 : fs) = fConjToE False $ FComp Ge e2 e1 : fs
-    fConjToE False (FComp Lt e1 e2 : fs) = fConjToE False $ FComp Gt e2 e1 : fs
-    fConjToE True  (FComp Ge e1 e2 : fs) = fConjToE False $ FComp Lt e1 e2 : fs
-    fConjToE True  (FComp Gt e1 e2 : fs) = fConjToE False $ FComp Le e1 e2 : fs
-    fConjToE True  (FComp Le e1 e2 : fs) = fConjToE False $ FComp Gt e1 e2 : fs
-    fConjToE True  (FComp Lt e1 e2 : fs) = fConjToE False $ FComp Ge e1 e2 : fs
-    fConjToE _ (FConn {} : _)           = error "non-atomic f found in DNF"
-    fConjToE isNegated (FNot f : fs)     = fConjToE (not isNegated) (f : fs)
-    fConjToE False (FTrue : fs)            = ENonStrict (Lit 1.0) : fConjToE False fs
-    fConjToE False (FFalse : fs)           = ENonStrict (Lit (-1.0)) : fConjToE False fs 
-    fConjToE True (FTrue : fs)             = ENonStrict (Lit (-1.0)) : fConjToE False fs 
-    fConjToE True (FFalse : fs)            = ENonStrict (Lit 1.0) : fConjToE False fs
+    fConjToE :: [F] -> [ESafe]
+    fConjToE [] = []
+    fConjToE (FComp Ge e1 e2 : fs) = ENonStrict (EBinOp Sub e1 e2)   : fConjToE fs
+    fConjToE (FComp Gt e1 e2 : fs) = EStrict    (EBinOp Sub e1 e2)   : fConjToE fs
+    fConjToE (FComp {} : _)        = error "Non-normalized FComp found in DNF"
+    fConjToE (FConn {} : _)        = error "Non-atomic F found in DNF"
+    fConjToE (FNot f : fs)         = error "Negated f found in DNF"
+    fConjToE (FTrue : fs)          = ENonStrict (Lit 1.0)    : fConjToE fs
+    fConjToE (FFalse : fs)         = ENonStrict (Lit (-1.0)) : fConjToE fs
+
+    -- fConjToE :: Bool -> [F] -> [ESafe]
+    -- fConjToE _ [] = []
+    -- fConjToE True  (FComp Eq e1 e2 : fs) = error "Negated FComp with Eq found in DNF" --FIXME: Not difficult to implement, duplicate disjunctions, add 1 term to each duplicate (if we have x != y, x > y or x < y)
+    -- fConjToE False (FComp Eq e1 e2 : fs) = fConjToE False $ [FComp Ge e1 e2, FComp Ge e2 e1] ++ fs
+    -- fConjToE False (FComp Ge e1 e2 : fs) = ENonStrict (EBinOp Sub e1 e2)   : fConjToE False fs
+    -- fConjToE False (FComp Gt e1 e2 : fs) = EStrict    (EBinOp Sub e1 e2)   : fConjToE False fs
+    -- fConjToE False (FComp Le e1 e2 : fs) = fConjToE False $ FComp Ge e2 e1 : fs
+    -- fConjToE False (FComp Lt e1 e2 : fs) = fConjToE False $ FComp Gt e2 e1 : fs
+    -- fConjToE True  (FComp Ge e1 e2 : fs) = fConjToE False $ FComp Lt e1 e2 : fs
+    -- fConjToE True  (FComp Gt e1 e2 : fs) = fConjToE False $ FComp Le e1 e2 : fs
+    -- fConjToE True  (FComp Le e1 e2 : fs) = fConjToE False $ FComp Gt e1 e2 : fs
+    -- fConjToE True  (FComp Lt e1 e2 : fs) = fConjToE False $ FComp Ge e1 e2 : fs
+    -- fConjToE _ (FConn {} : _)           = error "non-atomic f found in DNF"
+    -- fConjToE isNegated (FNot f : fs)     = fConjToE (not isNegated) (f : fs)
+    -- fConjToE False (FTrue : fs)            = ENonStrict (Lit 1.0) : fConjToE False fs
+    -- fConjToE False (FFalse : fs)           = ENonStrict (Lit (-1.0)) : fConjToE False fs
+    -- fConjToE True (FTrue : fs)             = ENonStrict (Lit (-1.0)) : fConjToE False fs
+    -- fConjToE True (FFalse : fs)            = ENonStrict (Lit 1.0) : fConjToE False fs
 
     compFToE :: Bool -> F -> ESafe
     compFToE _     (FComp Eq _ _)   = error "FComp with Eq found in DNF"
@@ -521,7 +639,7 @@ fDNFToEDNF = map (fConjToE False)
     compFToE False FFalse           = ENonStrict $ Lit $ -1.0
     compFToE True FTrue             = ENonStrict $ Lit $ -1.0
     compFToE True FFalse            = ENonStrict $ Lit 1.0
-    
+
 
 simplifyFDoubleList :: [[F]] -> [[F]]
 simplifyFDoubleList = nub . map (nub . map simplifyF)
@@ -584,15 +702,15 @@ prettyShowESafeCNF cnf = "AND" ++ concatMap (\d -> "\n\t" ++ prettyShowDisjuncti
     -- If there is only one term, the expression is shown without an OR 
     prettyShowDisjunction :: [ESafe] -> String
     prettyShowDisjunction []  = []
-    prettyShowDisjunction [e'] = 
+    prettyShowDisjunction [e'] =
       case e' of
         EStrict e -> prettyShowE e ++ " > 0"
         ENonStrict e -> prettyShowE e ++ " >= 0"
     prettyShowDisjunction es  =
-      "OR" ++ 
-      concatMap 
+      "OR" ++
+      concatMap
       (\case
-        EStrict e -> "\n\t\t" ++ prettyShowE e ++ " > 0" 
+        EStrict e -> "\n\t\t" ++ prettyShowE e ++ " > 0"
         ENonStrict e -> "\n\t\t" ++ prettyShowE e ++ " >= 0")
       es
 
@@ -604,15 +722,15 @@ prettyShowESafeDNF cnf = "OR" ++ concatMap (\d -> "\n\t" ++ prettyShowDisjunctio
     -- If there is only one term, the expression is shown without an OR 
     prettyShowDisjunction :: [ESafe] -> String
     prettyShowDisjunction []  = []
-    prettyShowDisjunction [e'] = 
+    prettyShowDisjunction [e'] =
       case e' of
         EStrict e -> prettyShowE e ++ " > 0"
         ENonStrict e -> prettyShowE e ++ " >= 0"
     prettyShowDisjunction es  =
-      "AND" ++ 
-      concatMap 
+      "AND" ++
+      concatMap
       (\case
-        EStrict e -> "\n\t\t" ++ prettyShowE e ++ " > 0" 
+        EStrict e -> "\n\t\t" ++ prettyShowE e ++ " > 0"
         ENonStrict e -> "\n\t\t" ++ prettyShowE e ++ " >= 0")
       es
 
@@ -626,8 +744,8 @@ prettyShowFSafeDNF dnf = "OR" ++ concatMap (\c -> "\n\t" ++ prettyShowConjunctio
     prettyShowConjunction []  = []
     prettyShowConjunction [f] = prettyShowF f 2
     prettyShowConjunction fs  =
-      "AND" ++ 
-      concatMap 
+      "AND" ++
+      concatMap
       (\f -> "\n\t\t" ++ prettyShowF f 3)
       fs
 
@@ -695,7 +813,7 @@ latexShowE (Float m e) =
     RTZ -> "(rnd_tz " ++ latexShowE e ++ ")"
     RNA -> "(rnd_na " ++ latexShowE e ++ ")"
 latexShowE Pi = "$\\pi$"
-latexShowE (RoundToInteger m e) = 
+latexShowE (RoundToInteger m e) =
   case m of
     RNE -> "(rndToInt_ne " ++ latexShowE e ++ ")"
     RTP -> "(rndToInt_tp " ++ latexShowE e ++ ")"
@@ -767,7 +885,7 @@ prettyShowE (Float m e) =
     RTZ -> "(rnd_tz " ++ prettyShowE e ++ ")"
     RNA -> "(rnd_na " ++ prettyShowE e ++ ")"
 prettyShowE Pi = "Pi"
-prettyShowE (RoundToInteger m e) = 
+prettyShowE (RoundToInteger m e) =
   case m of
     RNE -> "(rndToInt_ne " ++ prettyShowE e ++ ")"
     RTP -> "(rndToInt_tp " ++ prettyShowE e ++ ")"
@@ -907,7 +1025,7 @@ transformImplications FTrue = FTrue
 transformImplications FFalse = FFalse
 
 removeVariableFreeComparisons :: F -> F
-removeVariableFreeComparisons f = 
+removeVariableFreeComparisons f =
   aux f False
   where
     expressionContainsVars :: E -> Bool
@@ -929,7 +1047,7 @@ removeVariableFreeComparisons f =
     aux f'@(FConn And f1 f2)  isNegated = FConn And  (aux f1 isNegated)       (aux f2 isNegated)
     aux f'@(FConn Or f1 f2)   isNegated = FConn Or   (aux f1 isNegated)       (aux f2 isNegated)
     aux f'@(FConn Impl f1 f2) isNegated = FConn Impl (aux f1 (not isNegated)) (aux f2 isNegated)
-    aux f'@(FComp _ e1 e2)    isNegated = 
+    aux f'@(FComp _ e1 e2)    isNegated =
       case (expressionContainsVars e1, expressionContainsVars e2) of
         (True, _) -> f'
         (_, True) -> f'
