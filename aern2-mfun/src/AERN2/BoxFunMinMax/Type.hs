@@ -18,7 +18,7 @@ import Control.Parallel.Strategies
 import Data.Bifunctor
 import qualified Simplex as S
 
-import Data.List (find, intercalate, nub)
+import Data.List (find, intercalate, nub, sortBy)
 import qualified Data.Sequence as Seq
 
 import AERN2.MP.Dyadic (Dyadic, dyadic)
@@ -386,13 +386,125 @@ checkECNFBestFirstWithSimplexCE disjunctions typedVarMap bfsBoxesCutoff relative
     varMap = typedVarMapToVarMap typedVarMap
     disjunctionResults = parMap rseq (\disjunction -> setupBestFirstCheck (map (\e -> (e, expressionToBoxFun (E.extractSafeE e) varMap p)) disjunction) typedVarMap bfsBoxesCutoff relativeImprovementCutoff p) disjunctions
 
+substituteConjunctionEqualities :: [E.ESafe] -> [E.ESafe]
+substituteConjunctionEqualities [] = []
+substituteConjunctionEqualities conjunction@(conjunctionHead : conjunctionTail) = nub $ substituteAllEqualities equalities conjunction
+  where
+    -- substituteChosenEquality :: 
+
+    substituteAllEqualities :: [(E.E, E.E)] -> [E.ESafe] -> [E.ESafe]
+    substituteAllEqualities [] conj = conj
+    substituteAllEqualities (eq : eqs) conj = substituteAllEqualities nonDupes substitutedConj
+      where
+        substitutedConj = substEquality selectedDupe conj
+
+        substEquality :: (E.E, E.E) -> [E.ESafe] -> [E.ESafe]
+        substEquality _ [] = []
+        substEquality (x, y) (e : c) = E.fmapESafe (\nonSafeE -> E.simplifyE (E.replaceEInE nonSafeE x y)) e : substEquality (x, y) c
+
+        (dupes, nonDupes) = findDuplicateEqualities eq eqs
+
+        -- If a var is equal to a literal, select the literal to replace the var
+        -- else, select the shortest symbolic statement equal to the var
+        selectedDupe =
+          case 
+            filter 
+            (\(_, y) ->
+              case y of
+                E.Lit _ -> True
+                _ -> False    
+            ) 
+            sortedDupes
+          of
+            (litEquality : _) -> litEquality
+            _ -> head sortedDupes
+
+        -- shortest equality appears first
+        sortedDupes = sortBy (\(_, y1) (_, y2) -> P.compare y1 y2) (eq : dupes)
+
+        findDuplicateEqualities :: (E.E, E.E) -> [(E.E, E.E)] -> ([(E.E, E.E)], [(E.E, E.E)])
+        findDuplicateEqualities _ [] = ([],[])
+        findDuplicateEqualities (x1, y1) ((x2, y2) : es)
+          | x1 P.== x2 =
+            first ((x2, y2) :) $ findDuplicateEqualities (x1, y1) es
+            -- first ((x2, y2) :) $ findDuplicateEqualities (x1, y1) es
+            --  (x2, y2) : findDuplicateEqualities (x1, y1) eqs
+          -- -- | x1 P.== y2 =
+          -- --   first ((y2, x2) :) $ findDuplicateEqualities (x1, y1) es
+          -- -- (y2, x2) : findDuplicateEqualities (x1, y1) eqs
+          | otherwise =
+            second ((x2, y2) :) $ findDuplicateEqualities (x1, y1) es
+            -- findDuplicateEqualities (x1, y1) eqs
+
+    -- these equalities will not have any contradictions, they should already have been dealt with by deriveBounds and simplifyFDNF.
+    equalities = findEqualities conjunctionHead conjunctionTail conjunctionTail
+
+    findEqualities :: E.ESafe -> [E.ESafe] -> [E.ESafe] -> [(E.E, E.E)]
+    findEqualities _ [] [] = []
+    findEqualities _ [] (e : conj) = findEqualities e conj conj
+    findEqualities e1 (e2 : es) conj =
+      case e1 of
+        -- x1 - y1 >= 0
+        E.ENonStrict (E.EBinOp E.Sub v@(E.Var x1) y1) ->
+          -- ignore circular equalities
+          if v P.== y1 then findEqualities e1 es conj else
+          case e2 of
+            -- x2 - y2 >= 0
+            E.ENonStrict (E.EBinOp E.Sub x2 (E.Var y2)) ->
+              -- if we have x - y >= 0 && y - x >= 0, then y - x = 0, so y = x
+              if x1 P.== y2 && y1 P.== x2
+                then
+                  (v, y1) : findEqualities e1 es conj
+                else findEqualities e1 es conj
+            _ -> findEqualities e1 es conj
+        -- y1 - x1 >= 0
+        E.ENonStrict (E.EBinOp E.Sub y1 v@(E.Var x1)) ->
+          -- ignore circular equalities
+          if v P.== y1 then findEqualities e1 es conj else 
+          case e2 of
+            -- y2 - x2 >= 0
+            E.ENonStrict (E.EBinOp E.Sub (E.Var y2) x2) ->
+              -- if we have y - x >= 0 && x - y >= 0, then y - x = 0, so y = x
+              if x1 P.== y2 && y1 P.== x2
+                then
+                  (v, y1) : findEqualities e1 es conj
+                else findEqualities e1 es conj
+            _ -> findEqualities e1 es conj
+        -- x >= 0
+        E.ENonStrict v1@(E.Var x1) ->
+          case e2 of
+            -- -x >= 0
+            E.ENonStrict (E.EUnOp E.Negate (E.Var x2)) -> if x1 P.== x2 then (v1, E.Lit 0.0) : findEqualities e1 es conj else findEqualities e1 es conj 
+            -- 0 - x
+            E.ENonStrict (E.EBinOp E.Sub (E.Lit 0.0) (E.Var x2)) -> if x1 P.== x2 then (v1, E.Lit 0.0) : findEqualities e1 es conj else findEqualities e1 es conj 
+            -- -1 * x
+            E.ENonStrict (E.EBinOp E.Mul (E.Lit (-1.0)) (E.Var x2)) -> if x1 P.== x2 then (v1, E.Lit 0.0) : findEqualities e1 es conj else findEqualities e1 es conj 
+            -- (-(1)) * x
+            E.ENonStrict (E.EBinOp E.Mul (E.EUnOp E.Negate (E.Lit (1.0))) (E.Var x2)) -> if x1 P.== x2 then (v1, E.Lit 0.0) : findEqualities e1 es conj else findEqualities e1 es conj 
+            _ -> findEqualities e1 es conj
+        _ -> findEqualities e1 es conj
+
+
 checkEDNFDepthFirstWithSimplex :: [[E.ESafe]] -> TypedVarMap -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap)
 checkEDNFDepthFirstWithSimplex conjunctions typedVarMap depthCutoff bfsBoxesCutoff relativeImprovementCutoff p =
   checkDisjunctionResults conjunctionResults Nothing
   where
     indexedConjunctions = zip conjunctions [0..]
     varMap = typedVarMapToVarMap typedVarMap
-    conjunctionResults = parMap rseq (\disjunction -> decideConjunctionDepthFirstWithSimplex (map (\e -> (e, expressionToBoxFun (E.extractSafeE e) varMap p)) disjunction) typedVarMap 0 depthCutoff bfsBoxesCutoff relativeImprovementCutoff p) conjunctions
+    conjunctionResults =
+      parMap rseq
+      (\conjunction ->
+        let
+          substitutedConjunction = substituteConjunctionEqualities conjunction
+          substitutedConjunctionVars = nub $ concatMap (E.extractVariablesE . E.extractSafeE) substitutedConjunction
+          filteredTypedVarMap =
+            filter
+            (\(TypedVar (v, (_, _)) _) -> v `elem` substitutedConjunctionVars)
+            typedVarMap
+          filteredVarMap = typedVarMapToVarMap filteredTypedVarMap
+        in
+          decideConjunctionDepthFirstWithSimplex (map (\e -> (e, expressionToBoxFun (E.extractSafeE e) filteredVarMap p)) substitutedConjunction) filteredTypedVarMap 0 depthCutoff bfsBoxesCutoff relativeImprovementCutoff p)
+      conjunctions
 
 checkEDNFBestFirstWithSimplexCE :: [[E.ESafe]] -> TypedVarMap -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap)
 checkEDNFBestFirstWithSimplexCE conjunctions typedVarMap bfsBoxesCutoff relativeImprovementCutoff p =
