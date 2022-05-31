@@ -392,7 +392,7 @@ checkEDNFDepthFirstWithSimplex conjunctions typedVarMap depthCutoff bfsBoxesCuto
   where
     indexedConjunctions = zip conjunctions [0..]
     varMap = typedVarMapToVarMap typedVarMap
-    conjunctionResults = parMap rseq (\(disjunction, index) -> decideConjunctionDepthFirstWithSimplex (map (\e -> (e, expressionToBoxFun (E.extractSafeE e) varMap p)) disjunction) typedVarMap 0 depthCutoff bfsBoxesCutoff relativeImprovementCutoff p index) indexedConjunctions
+    conjunctionResults = parMap rseq (\disjunction -> decideConjunctionDepthFirstWithSimplex (map (\e -> (e, expressionToBoxFun (E.extractSafeE e) varMap p)) disjunction) typedVarMap 0 depthCutoff bfsBoxesCutoff relativeImprovementCutoff p) conjunctions
 
 checkEDNFBestFirstWithSimplexCE :: [[E.ESafe]] -> TypedVarMap -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap)
 checkEDNFBestFirstWithSimplexCE conjunctions typedVarMap bfsBoxesCutoff relativeImprovementCutoff p =
@@ -705,8 +705,8 @@ decideConjunctionDepthFirstWithSimplexQueue expressionsWithFunctions typedVarMap
           decideConjunctionDepthFirstWithSimplexQueue filteredExpressionsWithFunctions recurseVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
         | otherwise = bisectAndReturn recurseVarMap
 
-decideConjunctionDepthFirstWithSimplex :: [(E.ESafe, BoxFun)] -> TypedVarMap -> Integer -> Integer -> Integer -> Rational -> Precision -> Integer -> (Maybe Bool, Maybe TypedVarMap)
-decideConjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p debugCounter
+decideConjunctionDepthFirstWithSimplex :: [(E.ESafe, BoxFun)] -> TypedVarMap -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap)
+decideConjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
   | null filterOutTrueTerms =
     trace ("proved sat with apply " ++ show roundedVarMap)
     (Just True, Just roundedVarMap)
@@ -743,8 +743,8 @@ decideConjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap curr
             withStrategy
             (parTuple2 rseq rseq)
             (
-              decideConjunctionDepthFirstWithSimplex filteredExpressionsWithFunctions leftVarMap (currentDepth + 1) depthCutoff bfsBoxesCutoff relativeImprovementCutoff p debugCounter,
-              decideConjunctionDepthFirstWithSimplex filteredExpressionsWithFunctions rightVarMap (currentDepth + 1) depthCutoff bfsBoxesCutoff relativeImprovementCutoff p debugCounter
+              decideConjunctionDepthFirstWithSimplex filteredExpressionsWithFunctions leftVarMap (currentDepth + 1) depthCutoff bfsBoxesCutoff relativeImprovementCutoff p,
+              decideConjunctionDepthFirstWithSimplex filteredExpressionsWithFunctions rightVarMap (currentDepth + 1) depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
             )
         in
           case leftR of
@@ -759,7 +759,7 @@ decideConjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap curr
           then
               bisectWidestDimensionAndRecurse varMapToCheck
           else
-            error ("indet (cutoff reached)" ++ show varMapToCheck ++ show debugCounter) (Nothing, Just varMapToCheck)
+            (Nothing, Just varMapToCheck)
 
       checkSimplex
         -- If we can calculate any derivatives
@@ -777,7 +777,7 @@ decideConjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap curr
         | typedMaxWidth recurseVarMap == 0 = (Nothing, Just recurseVarMap)
         | typedMaxWidth roundedVarMap / typedMaxWidth recurseVarMap >= relativeImprovementCutoff =
           trace ("recursing with simplex with roundedVarMap: " ++ show recurseVarMap) $
-          decideConjunctionDepthFirstWithSimplex filteredExpressionsWithFunctions recurseVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p debugCounter
+          decideConjunctionDepthFirstWithSimplex filteredExpressionsWithFunctions recurseVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
         | otherwise = bisectUntilCutoff recurseVarMap
 
 decideConjunctionWithSimplexCE :: [(E.ESafe, BoxFun)] -> TypedVarMap -> Rational -> Precision -> Bool -> (Maybe Bool, Maybe TypedVarMap, Maybe [(E.ESafe, BoxFun)], Maybe Bool)
