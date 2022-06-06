@@ -98,6 +98,7 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     - -Wall
+    - -O2
     dependencies:
     - aern2-mfun
   dreal-translator:
