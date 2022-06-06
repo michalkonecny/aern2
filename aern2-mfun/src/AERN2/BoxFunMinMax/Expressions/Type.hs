@@ -84,11 +84,11 @@ instance Arbitrary Name where
 
 instance Arbitrary UnOp where
   arbitrary =
-    oneof [return Negate, return Abs, return Sin, return Cos]
+    frequency [(int 11, return Negate), (int 1, return Abs), (int 4, return Sin), (int 4, return Cos)]
 
 instance Arbitrary BinOp where
   arbitrary =
-    oneof [return Add, return Sub, return Mul, return Div, return Min, return Max]
+    frequency [(int 10, return Add), (int 10, return Sub), (int 10, return Mul), (int 10, return Div), (int 1, return Min), (int 1, return Max)]
 
 instance Arbitrary RoundingMode where
   arbitrary =
@@ -144,14 +144,18 @@ instance Arbitrary Conn where
 instance Arbitrary F where
   arbitrary = sized fGenerator
     where
+      varName :: Gen Name
+      varName = arbitrary
+
       fGenerator :: Int -> Gen F
       fGenerator 0 = oneof [FComp <$> arbitrary <*> arbitrary <*> arbitrary]
       fGenerator n =
-        oneof
+        frequency
         [
-          FComp <$> arbitrary <*> arbitrary <*> arbitrary,
-          FConn <$> arbitrary <*> subF <*> subF,
-          FNot  <$> subF
+          (int 10, FComp Eq <$> Var <$> show <$> varName <*> arbitrary),
+          (int 30, FComp <$> arbitrary <*> arbitrary <*> arbitrary),
+          (int 30, FConn <$> arbitrary <*> subF <*> subF),
+          (int 30, FNot  <$> subF)
         ]
         where
           subF = fGenerator (int (floor (n / 20)))
@@ -957,6 +961,25 @@ extractVariablesF = nub . findAllVars
 
 extractVariablesECNF :: [[E]] -> [String]
 extractVariablesECNF = nub . concatMap (concatMap extractVariablesE)
+
+hasVarsE :: E -> Bool
+hasVarsE (Float _ _)      = False
+hasVarsE (Float32 _ _)    = False
+hasVarsE (Float64 _ _)    = False
+hasVarsE (EBinOp _ e1 e2) = hasFloatE e1 || hasFloatE e2
+hasVarsE (EUnOp _ e)      = hasFloatE e
+hasVarsE (PowI e _)       = hasFloatE e
+hasVarsE (Lit _)          = False
+hasVarsE (Var _)          = True
+hasVarsE Pi               = False
+hasVarsE (RoundToInteger _ e) = hasFloatE e
+
+hasVarsF :: F -> Bool
+hasVarsF (FConn _ f1 f2) = hasVarsF f1 || hasVarsF f2
+hasVarsF (FComp _ e1 e2) = hasVarsE e1 || hasVarsE e2
+hasVarsF (FNot f)        = hasVarsF f
+hasVarsF FTrue           = False
+hasVarsF FFalse          = False
 
 hasFloatE :: E -> Bool
 hasFloatE (Float _ _)      = True
