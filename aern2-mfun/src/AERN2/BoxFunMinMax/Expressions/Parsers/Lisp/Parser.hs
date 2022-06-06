@@ -7,7 +7,7 @@ module AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.Parser
 , isScientificNumber) where
 import AERN2.BoxFunMinMax.Expressions.Parsers.Lisp.DataTypes
 import Prelude
-import Util (readRational)
+import GHC.Utils.Misc (readRational)
 import qualified Data.Scientific as S
 import qualified Data.List as L
 -- Constants.

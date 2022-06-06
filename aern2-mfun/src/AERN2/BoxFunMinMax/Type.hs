@@ -29,7 +29,6 @@ import qualified Data.PQueue.Prio.Min as Q
 
 import Data.Maybe
 import Control.CollectErrors
-import TcHoleErrors (TypedHole)
 import GHC.Arr (Ix(range))
 import System.Log.FastLogger
 import System.Log.FastLogger.Date (simpleTimeFormat)

@@ -14,7 +14,6 @@ import Test.QuickCheck
 import Debug.Trace (trace)
 import Test.QuickCheck.State (State(randomSeed))
 import Data.Ratio
-import SimplUtils (DupFlag(Simplified))
 
 data BinOp = Add | Sub | Mul | Div | Min | Max | Pow | Mod
   deriving (Show, P.Eq, P.Ord)
