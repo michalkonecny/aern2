@@ -483,8 +483,6 @@ checkEDNFDepthFirstWithSimplex :: [[E.ESafe]] -> TypedVarMap -> Integer -> Integ
 checkEDNFDepthFirstWithSimplex conjunctions typedVarMap depthCutoff bfsBoxesCutoff relativeImprovementCutoff p =
   checkDisjunctionResults conjunctionResults Nothing
   where
-    indexedConjunctions = zip conjunctions [0..]
-    varMap = typedVarMapToVarMap typedVarMap
     conjunctionResults =
       parMap rseq
       (\conjunction ->
@@ -504,8 +502,21 @@ checkEDNFBestFirstWithSimplexCE :: [[E.ESafe]] -> TypedVarMap -> Integer -> Rati
 checkEDNFBestFirstWithSimplexCE conjunctions typedVarMap bfsBoxesCutoff relativeImprovementCutoff p =
   checkDisjunctionResults conjunctionResults Nothing
   where
-    varMap = typedVarMapToVarMap typedVarMap
-    conjunctionResults = parMap rseq (\disjunction -> setupBestFirstCheckDNF (map (\e -> (e, expressionToBoxFun (E.extractSafeE e) varMap p)) disjunction) typedVarMap bfsBoxesCutoff relativeImprovementCutoff p) conjunctions
+    conjunctionResults = 
+      parMap rseq 
+      (\conjunction -> 
+        let
+          substitutedConjunction = substituteConjunctionEqualities conjunction
+          substitutedConjunctionVars = nub $ concatMap (E.extractVariablesE . E.extractSafeE) substitutedConjunction
+          filteredTypedVarMap =
+            filter
+            (\(TypedVar (v, (_, _)) _) -> v `elem` substitutedConjunctionVars)
+            typedVarMap
+          filteredVarMap = typedVarMapToVarMap filteredTypedVarMap
+        in
+          setupBestFirstCheckDNF (map (\e -> (e, expressionToBoxFun (E.extractSafeE e) filteredVarMap p)) substitutedConjunction) filteredTypedVarMap bfsBoxesCutoff relativeImprovementCutoff p
+      )
+      conjunctions
 
 checkEDNFDepthFirstWithSimplexQueue :: [[E.ESafe]] -> TypedVarMap -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap)
 checkEDNFDepthFirstWithSimplexQueue disjunctions typedVarMap depthCutoff bfsBoxesCutoff relativeImprovementCutoff p =
@@ -811,6 +822,17 @@ decideConjunctionDepthFirstWithSimplexQueue expressionsWithFunctions typedVarMap
           decideConjunctionDepthFirstWithSimplexQueue filteredExpressionsWithFunctions recurseVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
         | otherwise = bisectAndReturn recurseVarMap
 
+decideConjunctionWithApply :: [(E.ESafe, BoxFun)] -> Box -> Maybe Bool
+decideConjunctionWithApply expressionsWithFunctions box
+  | null filterOutTrueTerms  = Just True
+  | checkIfEsFalseUsingApply = Just False
+  | otherwise                = Nothing
+  where
+    esWithRanges             = parMap rseq (\ (e, f) -> ((e, f), apply f box)) expressionsWithFunctions
+    -- filterOutTrueTerms       = esWithRanges
+    filterOutTrueTerms       = filterOutTrueExpressions esWithRanges
+    checkIfEsFalseUsingApply = decideConjunctionRangesFalse filterOutTrueTerms
+
 decideConjunctionDepthFirstWithSimplex :: [(E.ESafe, BoxFun)] -> TypedVarMap -> Integer -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap)
 decideConjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
   | null filterOutTrueTerms =
@@ -880,7 +902,11 @@ decideConjunctionDepthFirstWithSimplex expressionsWithFunctions typedVarMap curr
         | otherwise = bisectUntilCutoff roundedVarMap
 
       recurseOnVarMap recurseVarMap
-        | typedMaxWidth recurseVarMap == 0 = (Nothing, Just recurseVarMap)
+        | typedMaxWidth recurseVarMap == 0 = 
+          case decideConjunctionWithApply filteredExpressionsWithFunctions (typedVarMapToBox recurseVarMap p) of
+            Just True  -> (Just True, Just recurseVarMap)
+            Just False -> (Just False, Nothing)
+            Nothing    -> (Nothing, Just recurseVarMap)
         | typedMaxWidth roundedVarMap / typedMaxWidth recurseVarMap >= relativeImprovementCutoff =
           trace ("recursing with simplex with roundedVarMap: " ++ show recurseVarMap) $
           decideConjunctionDepthFirstWithSimplex filteredExpressionsWithFunctions recurseVarMap currentDepth depthCutoff bfsBoxesCutoff relativeImprovementCutoff p
@@ -951,7 +977,11 @@ decideConjunctionWithSimplexCE expressionsWithFunctions typedVarMap relativeImpr
         | otherwise = recurseOnVarMap roundedVarMap
 
       recurseOnVarMap recurseVarMap
-        | typedMaxWidth recurseVarMap == 0 = (Nothing, Just recurseVarMap, Just filteredExpressionsWithFunctions, Just isLeftCorner)
+        | typedMaxWidth recurseVarMap == 0 = 
+          case decideConjunctionWithApply filteredExpressionsWithFunctions (typedVarMapToBox recurseVarMap p) of
+            Just True  -> (Just True, Just recurseVarMap, Just filteredExpressionsWithFunctions, Just isLeftCorner)
+            Just False -> (Just False, Nothing, Just filteredExpressionsWithFunctions, Just isLeftCorner)
+            Nothing    -> (Nothing, Just recurseVarMap, Just filteredExpressionsWithFunctions, Just isLeftCorner)
         | typedMaxWidth roundedVarMap / typedMaxWidth recurseVarMap >= relativeImprovementCutoff =
           trace ("recursing with simplex with roundedVarMap: " ++ show recurseVarMap) $
           decideConjunctionWithSimplexCE filteredExpressionsWithFunctions recurseVarMap relativeImprovementCutoff p (not isLeftCorner)
