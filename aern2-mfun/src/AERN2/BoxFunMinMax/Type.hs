@@ -390,96 +390,93 @@ checkECNFBestFirstWithSimplexCE disjunctions typedVarMap bfsBoxesCutoff relative
 -- could probably subst -> simplify -> subst
 substituteConjunctionEqualities :: [E.ESafe] -> [E.ESafe]
 substituteConjunctionEqualities [] = []
-substituteConjunctionEqualities conjunction@(conjunctionHead : conjunctionTail) = nub $ substituteAllEqualities equalities conjunction
+substituteConjunctionEqualities conjunction@(conjunctionHead : conjunctionTail) = 
+  case equations of
+    [] -> nub $ conjunction
+    _  -> substituteConjunctionEqualities substConj
   where
-    -- substituteChosenEquality :: 
-
-    substituteAllEqualities :: [(String, E.E)] -> [E.ESafe] -> [E.ESafe]
-    substituteAllEqualities [] conj = conj
-    substituteAllEqualities (eq : eqs) conj = substituteAllEqualities nonDupes substitutedConj
-      where
-        substitutedConj = substEquality selectedDupe conj
-
-        substEquality :: (String, E.E) -> [E.ESafe] -> [E.ESafe]
-        substEquality _ [] = []
-        substEquality (x, y) (e : c) = E.fmapESafe (\nonSafeE -> E.simplifyE (E.replaceEInE nonSafeE (E.Var x) y)) e : substEquality (x, y) c
-
-        -- FIXME: equalities -> definingEquations
-        (dupes, nonDupes) = findDuplicateEqualities eq eqs
-
-        sortedDupes = sortBy (\(_, y1) (_, y2) -> P.compare y1 y2) (eq : dupes)
-
-        (varFreeDupes, varContainingDupes) = partition (\(_, e) -> E.hasVarsE e) sortedDupes
-
-        -- Select an equality to substitute
-        -- Selects the shortest var-free equality or, if a var-free equality does not exist, the shortest equality
-        selectedDupe = head $ varFreeDupes ++ varContainingDupes
-
-        findDuplicateEqualities :: (String, E.E) -> [(String, E.E)] -> ([(String, E.E)], [(String, E.E)])
-        findDuplicateEqualities _ [] = ([],[])
-        findDuplicateEqualities (x1, y1) ((x2, y2) : es)
-          | x1 P.== x2 =
-            first ((x2, y2) :) $ findDuplicateEqualities (x1, y1) es
-            -- first ((x2, y2) :) $ findDuplicateEqualities (x1, y1) es
-            --  (x2, y2) : findDuplicateEqualities (x1, y1) eqs
-          -- -- | x1 P.== y2 =
-          -- --   first ((y2, x2) :) $ findDuplicateEqualities (x1, y1) es
-          -- -- (y2, x2) : findDuplicateEqualities (x1, y1) eqs
-          | otherwise =
-            second ((x2, y2) :) $ findDuplicateEqualities (x1, y1) es
-            -- findDuplicateEqualities (x1, y1) eqs
-
     -- these equalities will not have any contradictions, they should already have been dealt with by deriveBounds and simplifyFDNF.
-    equalities = findEqualities conjunctionHead conjunctionTail conjunctionTail
+    equations = findVarDefiningEquations conjunctionHead conjunctionTail conjunctionTail 
+    (eq : eqs) = equations
 
-    -- Find var equalities
+    substConj = substituteAndSimplifyChosenEquation selectedDupe conjunction
+    -- simplifiedSubstitutedConjunction = map (E.fmapESafe E.simplifyE) conjunction
+
+    -- find duplicates for the first equation
+    (dupes, nonDupes) = findDuplicateEquations eq eqs
+
+    -- sort duplicates based on length
+    sortedDupes = sortBy (\(_, y1) (_, y2) -> P.compare y1 y2) (eq : dupes)
+
+    -- partition duplicates based on whether or not they contain variables
+    (varFreeDupes, varContainingDupes) = partition (\(_, e) -> E.hasVarsE e) sortedDupes
+
+    -- Select an equality to substitute
+    -- Selects the shortest var-free equality or, if a var-free equality does not exist, the shortest equality
+    selectedDupe = head $ varFreeDupes ++ varContainingDupes
+
+    -- Find other var-defining equations for the var in the given equation
+    findDuplicateEquations :: (String, E.E) -> [(String, E.E)] -> ([(String, E.E)], [(String, E.E)])
+    findDuplicateEquations _ [] = ([],[])
+    findDuplicateEquations (x1, y1) ((x2, y2) : es)
+      | x1 P.== x2 =
+        first ((x2, y2) :) $ findDuplicateEquations (x1, y1) es
+      | otherwise =
+        second ((x2, y2) :) $ findDuplicateEquations (x1, y1) es
+
+    -- substitute the given equation in the given conjunction
+    substituteAndSimplifyChosenEquation :: (String, E.E) -> [E.ESafe] -> [E.ESafe]
+    substituteAndSimplifyChosenEquation _ [] = []
+    substituteAndSimplifyChosenEquation (x, y) (e : c) = E.fmapESafe (\nonSafeE -> E.simplifyE (E.replaceEInE nonSafeE (E.Var x) y)) e : substituteAndSimplifyChosenEquation (x, y) c
+
+    -- Find var equations
     -- Essentially, find Es in the conjunction of the form Var v >= e, Var v <= e
     -- The e is ignored if it contains Var v
     -- Else, store this equality as v, e in the resulting list 
-    findEqualities :: E.ESafe -> [E.ESafe] -> [E.ESafe] -> [(String, E.E)]
-    findEqualities _ [] [] = []
-    findEqualities _ [] (e : conj) = findEqualities e conj conj
-    findEqualities e1 (e2 : es) conj =
+    findVarDefiningEquations :: E.ESafe -> [E.ESafe] -> [E.ESafe] -> [(String, E.E)]
+    findVarDefiningEquations _ [] [] = []
+    findVarDefiningEquations _ [] (e : conj) = findVarDefiningEquations e conj conj
+    findVarDefiningEquations e1 (e2 : es) conj =
       case e1 of
         -- x1 - y1 >= 0
         E.ENonStrict (E.EBinOp E.Sub v@(E.Var x1) y1) ->
           -- ignore circular equalities
-          if x1 `notElem` findVariablesInExpressions y1 then findEqualities e1 es conj else
+          if x1 `elem` findVariablesInExpressions y1 then findVarDefiningEquations e1 es conj else
           case e2 of
             -- x2 - y2 >= 0
             E.ENonStrict (E.EBinOp E.Sub x2 (E.Var y2)) ->
               -- if we have x - y >= 0 && y - x >= 0, then y - x = 0, so y = x
               if x1 P.== y2 && y1 P.== x2
                 then
-                  (x1, y1) : findEqualities e1 es conj
-                else findEqualities e1 es conj
-            _ -> findEqualities e1 es conj
+                  (x1, y1) : findVarDefiningEquations e1 es conj
+                else findVarDefiningEquations e1 es conj
+            _ -> findVarDefiningEquations e1 es conj
         -- y1 - x1 >= 0
         E.ENonStrict (E.EBinOp E.Sub y1 v@(E.Var x1)) ->
           -- ignore circular equalities
-          if x1 `notElem` findVariablesInExpressions y1 then findEqualities e1 es conj else 
+          if x1 `elem` findVariablesInExpressions y1 then findVarDefiningEquations e1 es conj else 
           case e2 of
             -- y2 - x2 >= 0
             E.ENonStrict (E.EBinOp E.Sub (E.Var y2) x2) ->
               -- if we have y - x >= 0 && x - y >= 0, then y - x = 0, so y = x
               if x1 P.== y2 && y1 P.== x2
                 then
-                  (x1, y1) : findEqualities e1 es conj
-                else findEqualities e1 es conj
-            _ -> findEqualities e1 es conj
+                  (x1, y1) : findVarDefiningEquations e1 es conj
+                else findVarDefiningEquations e1 es conj
+            _ -> findVarDefiningEquations e1 es conj
         -- x >= 0
         E.ENonStrict v1@(E.Var x1) ->
           case e2 of
             -- -x >= 0
-            E.ENonStrict (E.EUnOp E.Negate (E.Var x2)) -> if x1 P.== x2 then (x1, E.Lit 0.0) : findEqualities e1 es conj else findEqualities e1 es conj 
+            E.ENonStrict (E.EUnOp E.Negate (E.Var x2)) -> if x1 P.== x2 then (x1, E.Lit 0.0) : findVarDefiningEquations e1 es conj else findVarDefiningEquations e1 es conj 
             -- 0 - x
-            E.ENonStrict (E.EBinOp E.Sub (E.Lit 0.0) (E.Var x2)) -> if x1 P.== x2 then (x1, E.Lit 0.0) : findEqualities e1 es conj else findEqualities e1 es conj 
+            E.ENonStrict (E.EBinOp E.Sub (E.Lit 0.0) (E.Var x2)) -> if x1 P.== x2 then (x1, E.Lit 0.0) : findVarDefiningEquations e1 es conj else findVarDefiningEquations e1 es conj 
             -- -1 * x
-            E.ENonStrict (E.EBinOp E.Mul (E.Lit (-1.0)) (E.Var x2)) -> if x1 P.== x2 then (x1, E.Lit 0.0) : findEqualities e1 es conj else findEqualities e1 es conj 
+            E.ENonStrict (E.EBinOp E.Mul (E.Lit (-1.0)) (E.Var x2)) -> if x1 P.== x2 then (x1, E.Lit 0.0) : findVarDefiningEquations e1 es conj else findVarDefiningEquations e1 es conj 
             -- (-(1)) * x
-            E.ENonStrict (E.EBinOp E.Mul (E.EUnOp E.Negate (E.Lit (1.0))) (E.Var x2)) -> if x1 P.== x2 then (x1, E.Lit 0.0) : findEqualities e1 es conj else findEqualities e1 es conj 
-            _ -> findEqualities e1 es conj
-        _ -> findEqualities e1 es conj
+            E.ENonStrict (E.EBinOp E.Mul (E.EUnOp E.Negate (E.Lit (1.0))) (E.Var x2)) -> if x1 P.== x2 then (x1, E.Lit 0.0) : findVarDefiningEquations e1 es conj else findVarDefiningEquations e1 es conj 
+            _ -> findVarDefiningEquations e1 es conj
+        _ -> findVarDefiningEquations e1 es conj
 
 
 checkEDNFDepthFirstWithSimplex :: [[E.ESafe]] -> TypedVarMap -> Integer -> Integer -> Rational -> Precision -> (Maybe Bool, Maybe TypedVarMap)
