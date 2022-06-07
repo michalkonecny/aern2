@@ -63,7 +63,7 @@ proverOptions = ProverOptions
       <> short 'd'
       <> help "How hard the prover 'works' until giving up. This option is ignored when ce-mode is on"
       <> showDefault
-      <> value 50
+      <> value 100
       <> metavar "INT"
     )
   <*> option auto
