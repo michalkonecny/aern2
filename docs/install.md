@@ -2,12 +2,15 @@
 
 ## Installing official releases
 
-The packages [aern2-mp](https://hackage.haskell.org/package/aern2-mp) and [aern2-real](https://hackage.haskell.org/package/aern2-real) are available via Hackage and Stackage.  Tools such as cabal-install and stack will install these packages automatically if they are listed among dependencies.
+The packages [aern2-mp](https://hackage.haskell.org/package/aern2-mp) and [aern2-real](https://hackage.haskell.org/package/aern2-real) are available via Hackage and Stackage.  
+
+Tools such as cabal-install and stack will install these packages automatically if they are listed among dependencies.
 
 ## Installing from GitHub sources
 
-- Install [GHCUP](https://www.haskell.org/ghcup/)
-- Using GHCUP, install ghc 9.02, stack, and HLS if needed for IDE support
+- Install a Haskell compiler and Haskell stack.  The following method has been tested:
+  - Install [GHCup](https://www.haskell.org/ghcup/)
+  - Using GHCup, install ghc 9.02, stack, and HLS if needed for IDE support
 - git clone `https://github.com/michalkonecny/aern2.git`
 - Build the packages using stack:
   - (optional) Check that the provided `stack.yaml` meets your needs.
