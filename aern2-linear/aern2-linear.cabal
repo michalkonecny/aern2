@@ -26,6 +26,7 @@ source-repository head
 
 library
   exposed-modules:
+      AERN2.Linear.Matrix
       AERN2.Linear.MatrixTest
   other-modules:
       Paths_aern2_linear
