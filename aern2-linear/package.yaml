@@ -1,0 +1,68 @@
+name:                aern2-linear
+version:             0.2.8.0
+github:              "michalkonecny/aern2"
+license:             BSD3
+author:              "Michal Konecny"
+maintainer:          "mikkonecny@gmail.com"
+copyright:           "2022 Michal Konecny"
+
+extra-source-files:
+- README.md
+- changelog.md
+
+# Metadata used when publishing your package
+synopsis:            Interval/exact basic linear algebra
+category:            Math
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/michalkonecny/aern2/#readme>
+
+dependencies:
+- base == 4.*
+- containers
+- vector
+- matrix
+- linear
+# - hspec
+# - QuickCheck
+- collect-errors
+- mixed-types-num
+# - integer-logarithms
+- aern2-mp >= 0.2.8
+- aern2-real >= 0.2.8
+
+default-extensions:
+- RebindableSyntax,
+- ScopedTypeVariables,
+- TypeFamilies,
+- TypeOperators,
+- ConstraintKinds,
+- DefaultSignatures,
+- MultiParamTypeClasses,
+- FlexibleContexts,
+- FlexibleInstances,
+- UndecidableInstances
+
+other-extensions:
+- TemplateHaskell
+
+library:
+  source-dirs: 
+  - src
+  - examples
+  ghc-options:
+  - -Wall
+
+tests:
+  aern2-linear-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -Wall
+    dependencies:
+    - aern2-linear
