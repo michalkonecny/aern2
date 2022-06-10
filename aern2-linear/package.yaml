@@ -23,8 +23,8 @@ dependencies:
 - base == 4.*
 - containers
 - vector
-- matrix
 - linear
+# - matrix
 # - hspec
 # - QuickCheck
 - collect-errors
