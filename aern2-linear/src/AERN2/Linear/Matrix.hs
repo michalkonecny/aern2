@@ -42,8 +42,8 @@ instance (Show e, Typeable e, KnownNat rn, KnownNat cn) => ConvertibleExactly [[
         _ -> convError "convertExactly to MatrixRC: row of incorrect length" row
 
 detLaplace :: 
-  (HasIntegers e, CanMulBy e Integer, CanAddSameType e, CanMulSameType e) =>
-  MatrixRC rn cn e -> e
+  (HasIntegers e, CanMulBy e Integer, CanAddSameType e, CanMulSameType e, CanTestCertainly (EqCompareType e Integer), HasEq e Integer) =>
+  MatrixRC n n e -> e
 detLaplace mx = 
   -- fst $ aux submatrixResults0 mask0 0 1 rowsV
   doRows alternatingSigns (toList mx)
@@ -60,6 +60,7 @@ detLaplace mx =
     where
     doItem item itemSign submask
       | itemSign == 0 = fromInteger_ 0
+      | item !==! 0 = fromInteger_ 0
       | otherwise = 
         item * itemSign * (doRows submask rest)
   submasks mask = aux mask
@@ -74,14 +75,15 @@ detLaplace mx =
   {-
     recurse from top row downwards, 
     going over all columns whose elements are not certainly zero, 
-    each sub-matrix identified by: number of dropped top rows + a Boolean vector showing active columns
+    each sub-matrix identified by:
+      a vector of signs (-1,0,1) showing inactive columns and, eventualy, the sign of the permutation
     memoizing results for all sub-matrices to be reused when the same sub-matrix is needed again
   -}
 
 {- mini test -}
 
 n1 :: Integer
-n1 = 9
+n1 = 15
 
 rows1I :: [[Integer]]
 rows1I = [[ item i j  | j <- [1..n1] ] | i <- [1..n1]]
@@ -97,7 +99,7 @@ rows1D = map (map double) rows1I
 rows1R :: [[CReal]]
 rows1R = map (map creal) rows1I
 
-type VN1 = LV.V 9
+type VN1 = LV.V 15
 
 m1D :: VN1 (VN1 Double)
 m1D = matrixRC rows1D
