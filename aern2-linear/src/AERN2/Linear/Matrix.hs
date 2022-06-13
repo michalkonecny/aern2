@@ -9,7 +9,9 @@ import MixedTypesNumPrelude
 -- import qualified Numeric.CollectErrors as CN
 
 -- import qualified Prelude as P
--- import Text.Printf
+
+-- import qualified Debug.Trace as Debug
+-- import Text.Printf (printf)
 
 import qualified Linear.V as LV
 import qualified Linear as L
@@ -18,7 +20,7 @@ import GHC.TypeLits (KnownNat, Nat)
 import Data.Typeable (Typeable)
 import AERN2.Real (CReal, creal)
 import Data.Foldable (Foldable(toList))
--- import qualified Data.Map as Map
+import qualified Data.Map as Map
 
 type MatrixRC rn cn e = LV.V (rn :: Nat) (LV.V (cn :: Nat) e)
 
@@ -42,27 +44,40 @@ instance (Show e, Typeable e, KnownNat rn, KnownNat cn) => ConvertibleExactly [[
         _ -> convError "convertExactly to MatrixRC: row of incorrect length" row
 
 detLaplace :: 
-  (HasIntegers e, CanMulBy e Integer, CanAddSameType e, CanMulSameType e, CanTestCertainly (EqCompareType e Integer), HasEq e Integer) =>
+  (KnownNat n, HasIntegers e, CanMulBy e Integer, CanAddSameType e, CanMulSameType e, CanTestCertainly (EqCompareType e Integer), HasEq e Integer, Show e) =>
   MatrixRC n n e -> e
 detLaplace mx = 
-  -- fst $ aux submatrixResults0 mask0 0 1 rowsV
-  doRows alternatingSigns (toList mx)
+  fst $ doRows submatrixResults0 mask0 (toList mx)
   where
+  mask0 = take (LV.dim mx) alternatingSigns
   alternatingSigns :: [Integer]
   alternatingSigns = 1 : aux
     where
     aux = (-1) : alternatingSigns
-  -- submatrixResults0 = Map.empty
+  submatrixResults0 = Map.empty
   -- aux submatrixResults mask n s [] = (fromInteger_ s, submatrixResults)
-  doRows _mask [] = fromInteger_ 1
-  doRows mask (row:rest) =
-    sum $ zipWith3 doItem (toList row) mask (submasks mask)
+  doRows submatrixResults _mask [] = (fromInteger_ 1, submatrixResults)
+  doRows submatrixResults mask (row:restRows) =
+    foldl doItem (fromInteger_ 0, submatrixResults) $ zip3 (toList row) mask (submasks mask)
     where
-    doItem item itemSign submask
-      | itemSign == 0 = fromInteger_ 0
-      | item !==! 0 = fromInteger_ 0
+    doItem (value_prev, submatrixResults_prev) (item, itemSign, submask)
+      | itemSign == 0 || item !==! 0 = 
+          (value_prev, submatrixResults_prev)
       | otherwise = 
-        item * itemSign * (doRows submask rest)
+          (value_prev + item * itemSign * determinantValue, submatrixResults_next)
+      where
+      (determinantValue, submatrixResults_next) =
+        -- Debug.trace (printf "mask: %s\n" (show mask)) $
+        case Map.lookup submask submatrixResults_prev of
+          Just v  -> 
+            -- Debug.trace (printf "LOOKED UP: submask = %s,, value = %s\n" (show submask) (show v)) $
+            (v, submatrixResults_prev) -- use the memoized determinant
+          _ -> 
+            -- Debug.trace (printf "ADDING: submask = %s, value = %s\n" (show submask) (show v_item)) $
+            (v_item, Map.insert submask v_item submatrixResults_item)
+            where
+            (v_item, submatrixResults_item) = doRows submatrixResults_prev submask restRows
+        
   submasks mask = aux mask
     where
     aux [] = []
@@ -83,7 +98,7 @@ detLaplace mx =
 {- mini test -}
 
 n1 :: Integer
-n1 = 15
+n1 = 100
 
 rows1I :: [[Integer]]
 rows1I = [[ item i j  | j <- [1..n1] ] | i <- [1..n1]]
@@ -99,7 +114,7 @@ rows1D = map (map double) rows1I
 rows1R :: [[CReal]]
 rows1R = map (map creal) rows1I
 
-type VN1 = LV.V 15
+type VN1 = LV.V 100
 
 m1D :: VN1 (VN1 Double)
 m1D = matrixRC rows1D
