@@ -18,9 +18,10 @@ import qualified Linear as L
 import qualified Data.Vector as Vector
 import GHC.TypeLits (KnownNat, Nat)
 import Data.Typeable (Typeable)
-import AERN2.Real (CReal, creal)
+import AERN2.Real (CReal, creal, prec, (?), bits)
 import Data.Foldable (Foldable(toList))
 import qualified Data.Map as Map
+import AERN2.MP (MPBall)
 
 type MatrixRC rn cn e = LV.V (rn :: Nat) (LV.V (cn :: Nat) e)
 
@@ -44,9 +45,10 @@ instance (Show e, Typeable e, KnownNat rn, KnownNat cn) => ConvertibleExactly [[
         _ -> convError "convertExactly to MatrixRC: row of incorrect length" row
 
 detLaplace :: 
-  (KnownNat n, HasIntegers e, CanMulBy e Integer, CanAddSameType e, CanMulSameType e, CanTestCertainly (EqCompareType e Integer), HasEq e Integer, Show e) =>
+  (KnownNat n, HasIntegers e, CanMulBy e Integer, CanAddSameType e, CanMulSameType e, Show e) =>
+  (e -> Bool) -> 
   MatrixRC n n e -> e
-detLaplace mx = 
+detLaplace isZero mx = 
   fst $ doRows submatrixResults0 mask0 (toList mx)
   where
   mask0 = take (LV.dim mx) alternatingSigns
@@ -61,7 +63,7 @@ detLaplace mx =
     foldl doItem (fromInteger_ 0, submatrixResults) $ zip3 (toList row) mask (submasks mask)
     where
     doItem (value_prev, submatrixResults_prev) (item, itemSign, submask)
-      | itemSign == 0 || item !==! 0 = 
+      | itemSign == 0 || isZero item = 
           (value_prev, submatrixResults_prev)
       | otherwise = 
           (value_prev + item * itemSign * determinantValue, submatrixResults_next)
@@ -122,9 +124,14 @@ m1D = matrixRC rows1D
 m1DetLU :: Double
 m1DetLU = L.luDetFinite m1D
 
-m1DetLaplace :: Double
-m1DetLaplace = detLaplace m1D
+m1DLaplace :: Double
+m1DLaplace = detLaplace (== 0) m1D
 
 m1R :: VN1 (VN1 CReal)
 m1R = matrixRC rows1R
 
+m1RLaplace :: CReal
+m1RLaplace = detLaplace (\(e :: CReal) -> (e ? (prec 10))!==! 0) m1R
+
+m1RLaplaceBits :: CN MPBall
+m1RLaplaceBits = m1RLaplace ? (bits 10)
