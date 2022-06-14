@@ -1,5 +1,7 @@
 # Change log for aern2-real
 
+* current
+  * more instances for if-then-else with CKleenean
 * v 0.2.8 2021-08-04
   * compatibility with ghc 9.0.1
 * v 0.2.7 2021-06-02

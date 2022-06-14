@@ -20,6 +20,8 @@ where
 import Numeric.MixedTypes.PreludeHiding
 import qualified Prelude as P
 
+import qualified Control.CollectErrors as CE
+
 -- import Test.SmallCheck.Series
 import GHC.Generics
 
@@ -87,6 +89,25 @@ instance CanAndOrAsymmetric Kleenean Bool
   type AndOrType Kleenean Bool = Kleenean
   and2 k b = and2 k (kleenean b)
   or2 k b = or2 k (kleenean b)
+
+instance
+  (CanAndOrAsymmetric t1 Kleenean, CE.CanBeErrors es)
+  =>
+  CanAndOrAsymmetric (CE.CollectErrors es t1) Kleenean
+  where
+  type AndOrType (CE.CollectErrors es t1) Kleenean = CE.CollectErrors es (AndOrType t1 Kleenean)
+  and2 = CE.lift1T and2
+  or2 = CE.lift1T or2
+
+instance
+  (CanAndOrAsymmetric Kleenean t2, CE.CanBeErrors es)
+  =>
+  CanAndOrAsymmetric Kleenean (CE.CollectErrors es t2)
+  where
+  type AndOrType Kleenean (CE.CollectErrors es t2) = CE.CollectErrors es (AndOrType Kleenean t2)
+  and2 = CE.liftT1 and2
+  or2 = CE.liftT1 or2
+
 
 _testAndOr1 :: Kleenean
 _testAndOr1 = TrueOrFalse && False
