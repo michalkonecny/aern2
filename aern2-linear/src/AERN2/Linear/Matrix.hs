@@ -100,15 +100,15 @@ detLaplace isZero mx =
 {- mini test -}
 
 n1 :: Integer
-n1 = 100
+n1 = 1000
 
-rows1I :: [[Integer]]
+rows1I :: [[Rational]]
 rows1I = [[ item i j  | j <- [1..n1] ] | i <- [1..n1]]
   where
   item i j
-    | i == j = n1 + i - 1
-    | j > i + 1 = 0
-    | otherwise = 1
+    | i == j = rational 1
+    | j > i + 1 = rational 0
+    | otherwise = 1/(i+j)
 
 rows1D :: [[Double]]
 rows1D = map (map double) rows1I
@@ -116,7 +116,7 @@ rows1D = map (map double) rows1I
 rows1R :: [[CReal]]
 rows1R = map (map creal) rows1I
 
-type VN1 = LV.V 100
+type VN1 = LV.V 1000
 
 m1D :: VN1 (VN1 Double)
 m1D = matrixRC rows1D
