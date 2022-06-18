@@ -36,48 +36,48 @@ import AERN2.MP.Float.Type
 {- common functions -}
 
 instance CanNeg MPFloat where
-  negate = P.negate
+  negate = lift1 P.negate
 
 instance CanAbs MPFloat where
-  abs = P.abs
+  abs = lift1 P.abs
 
 addCEDU :: MPFloat -> MPFloat -> BoundsCEDU MPFloat
-addCEDU = binaryCEDU (P.+)
+addCEDU = binaryCEDU $ lift2 (P.+)
 
 subCEDU :: MPFloat -> MPFloat -> BoundsCEDU MPFloat
-subCEDU = binaryCEDU (P.-)
+subCEDU = binaryCEDU $ lift2 (P.-)
 
 mulCEDU :: MPFloat -> MPFloat -> BoundsCEDU MPFloat
-mulCEDU = binaryCEDU (P.*)
+mulCEDU = binaryCEDU $ lift2 (P.*)
 
 divCEDU :: MPFloat -> MPFloat -> BoundsCEDU MPFloat
 divCEDU x y 
-    | y P.== (P.fromInteger 0) = getBoundsCEDU MPLow.Bottom
-    | otherwise = binaryCEDU (P./) x y
+    | unMPFloat y P.== (P.fromInteger 0) = getBoundsCEDU (MPFloat MPLow.Bottom)
+    | otherwise = binaryCEDU (lift2 (P./)) x y
 
 recipCEDU :: MPFloat -> BoundsCEDU MPFloat
-recipCEDU = unaryCEDU P.recip
+recipCEDU = unaryCEDU $ lift1 P.recip
 
 {- special constants and functions -}
 
 piCEDU :: Precision -> BoundsCEDU MPFloat
 piCEDU pp = 
-    getBoundsCEDU $ MPLow.piA (p2cdarPrec pp)
+    getBoundsCEDU $ MPFloat (MPLow.piA (p2cdarPrec pp))
 
 cosCEDU :: MPFloat -> BoundsCEDU MPFloat
-cosCEDU = unaryCEDU MPLow.cosA
+cosCEDU = unaryCEDU $ lift1 MPLow.cosA
 
 sinCEDU :: MPFloat -> BoundsCEDU MPFloat
-sinCEDU = unaryCEDU MPLow.sinA
+sinCEDU = unaryCEDU $ lift1 MPLow.sinA
             
 sqrtCEDU :: MPFloat -> BoundsCEDU MPFloat
-sqrtCEDU = unaryCEDU MPLow.sqrtA
+sqrtCEDU = unaryCEDU $ lift1 MPLow.sqrtA
             
 expCEDU :: MPFloat -> BoundsCEDU MPFloat
-expCEDU = unaryCEDU MPLow.expA
+expCEDU = unaryCEDU $ lift1 MPLow.expA
 
 logCEDU :: MPFloat -> BoundsCEDU MPFloat
-logCEDU = unaryCEDU MPLow.logA
+logCEDU = unaryCEDU $ lift1 MPLow.logA
 
 {- auxiliary functions to automatically determine result precision from operand precisions -}
 

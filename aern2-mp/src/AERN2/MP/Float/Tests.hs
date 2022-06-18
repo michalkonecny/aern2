@@ -175,15 +175,15 @@ approxEqualWithArgs precLoss args l r =
   argsS =
     unlines
       [printf "    %s = %s ~ %s bits (dR/d%s = %s ~ %s bits)" 
-                argS (show arg) (show $ getErrorStepSizeLog arg) 
-                                      argS (showMPFloat argD) (show $ getNormLog argD)
+                argS (show arg) (show $ getErrorStepSizeLog $ unMPFloat arg) 
+                                      argS (show argD) (show $ getNormLog argD)
       | (arg, argD, argS) <- argsLR
       ]
   argsLR = args ++ [(l, one, "L"), (r, one, "R"), (abs(r-.l), zero, "|R-L|")]
   e = 0 - maxStepLoss - precLoss
   maxStepLoss = sum $ map (max 1) $ (catMaybes $ map stepLoss argsLR)
   stepLoss (arg, argD, _argS) =
-    case (getNormLog argD, getErrorStepSizeLog arg) of
+    case (getNormLog argD, getErrorStepSizeLog $ unMPFloat arg) of
       (NormBits dbits, Just stepBits) -> Just $ dbits + stepBits
       _ -> Nothing
   -- resNorm =

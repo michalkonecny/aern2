@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
+{-# LANGUAGE StandaloneDeriving #-}
 {-|
     Module      :  AERN2.MP.Float.Conversions
     Description :  Conversions and comparisons of arbitrary precision floats
@@ -49,23 +50,26 @@ mpFloat = convertExactly
 
 instance ConvertibleExactly Integer MPFloat where
     safeConvertExactly =
-      Right . P.fromInteger
+      Right . MPFloat . P.fromInteger
 
 instance ConvertibleExactly Int MPFloat where
     safeConvertExactly = safeConvertExactly . integer
 
 fromIntegerCEDU :: Precision -> Integer -> BoundsCEDU MPFloat
 fromIntegerCEDU pp =
-  setPrecisionCEDU pp . P.fromInteger
+  setPrecisionCEDU pp . MPFloat . P.fromInteger
 
 fromRationalCEDU :: Precision -> Rational -> BoundsCEDU MPFloat
 fromRationalCEDU pp =
-  setPrecisionCEDU pp . (MPLow.toApproxMB (p2cdarPrec pp))
+  setPrecisionCEDU pp . (MPFloat . MPLow.toApproxMB (p2cdarPrec pp))
 
 {- conversions from MPFloat -}
 
-instance ConvertibleExactly MPFloat Rational where
+instance ConvertibleExactly MPLow.Approx Rational where
   safeConvertExactly = Right . P.toRational
+
+instance ConvertibleExactly MPFloat Rational where
+  safeConvertExactly = safeConvertExactly . unMPFloat
     
 toDouble :: MPFloat -> Double
 toDouble = P.fromRational . rational
@@ -79,15 +83,19 @@ instance Convertible MPFloat Double where
 
 
 instance CanRound MPFloat where
-  properFraction x = (n,f)
+  properFraction (MPFloat x) = (n,f)
     where
       r = rational x
       n = (numerator r) `P.quot` (denominator r)
-      f =  ceduCentre $ x `subCEDU` (P.fromInteger n)
+      f =  ceduCentre $ (MPFloat x) `subCEDU` (MPFloat $ P.fromInteger n)
   
 {- comparisons -}
 
-instance HasEqAsymmetric MPFloat MPFloat
+deriving instance P.Eq MPFloat
+deriving instance P.Ord MPFloat
+instance HasEqAsymmetric MPLow.Approx MPLow.Approx
+instance HasEqAsymmetric MPFloat MPFloat where
+  equalTo = lift2R equalTo
 instance HasEqAsymmetric MPFloat Integer where
   equalTo = convertSecond equalTo
 instance HasEqAsymmetric Integer MPFloat where
@@ -103,7 +111,10 @@ instance HasEqAsymmetric Rational MPFloat where
 
 instance CanTestZero MPFloat
 
-instance HasOrderAsymmetric MPFloat MPFloat
+instance HasOrderAsymmetric MPLow.Approx MPLow.Approx
+instance HasOrderAsymmetric MPFloat MPFloat where
+  lessThan = lift2R lessThan
+  leq = lift2R leq
 instance HasOrderAsymmetric MPFloat Integer where
   lessThan = convertSecond lessThan
   leq = convertSecond leq
@@ -132,11 +143,11 @@ instance CanMinMaxAsymmetric MPFloat MPFloat where
   max x y
     | isNaN x = x
     | isNaN y = y
-    | otherwise = P.max x y
+    | otherwise = lift2 P.max x y
   min x y
     | isNaN x = x
     | isNaN y = y
-    | otherwise = P.min x y
+    | otherwise = lift2 P.min x y
 
 {- constants -}
 
@@ -146,11 +157,11 @@ one = mpFloat 1
 two = mpFloat 2
 
 nan, infinity :: MPFloat
-nan = MPLow.Bottom
+nan = MPFloat MPLow.Bottom
 infinity = nan
 
 itisNaN :: MPFloat -> Bool
-itisNaN MPLow.Bottom = True
+itisNaN (MPFloat MPLow.Bottom) = True
 itisNaN _ = False
 
 instance CanTestFinite MPFloat where
