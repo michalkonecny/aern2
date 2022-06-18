@@ -60,7 +60,7 @@ import Math.NumberTheory.Logarithms (integerLog2)
 import AERN2.Norm
 import AERN2.MP.Precision
 import AERN2.MP.Accuracy
-import AERN2.MP.Float
+import AERN2.MP.Float hiding (lift1, lift2)
 
 {-| Exact dyadic type based on MPFloat. -}
 newtype Dyadic = Dyadic { dyadicMPFloat :: MPFloat }

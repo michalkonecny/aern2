@@ -15,8 +15,8 @@
 module AERN2.MP.Float.Type
   (
    -- * MPFloat numbers and their basic operations
-   MPFloat
-   , showMPFloat
+   MPFloat(..)
+   , lift1, lift2, lift2R
    , getErrorStepSizeLog
    , setPrecisionCEDU
    , p2cdarPrec
@@ -35,26 +35,44 @@ import AERN2.MP.Precision
 import AERN2.MP.Float.Auxi
 
 import qualified Data.CDAR as MPLow
+import Control.DeepSeq (NFData)
+import GHC.Generics (Generic)
 
 {-| Multiple-precision floating-point type based on CDAR.Approx with 0 radius. -}
-type MPFloat = MPLow.Approx
+newtype MPFloat = MPFloat { unMPFloat :: MPLow.Approx }
+  deriving (Generic)
 
-showMPFloat :: MPFloat -> String
-showMPFloat x = MPLow.showA x
+lift1 :: (MPLow.Approx -> MPLow.Approx) -> MPFloat -> MPFloat
+lift1 f (MPFloat a) = MPFloat (f a)
+
+lift2 :: 
+  (MPLow.Approx -> MPLow.Approx -> MPLow.Approx) -> 
+  (MPFloat -> MPFloat -> MPFloat)
+lift2 f (MPFloat a1) (MPFloat a2) = MPFloat (f a1 a2)
+
+lift2R :: 
+  (MPLow.Approx -> MPLow.Approx -> t) -> 
+  (MPFloat -> MPFloat -> t)
+lift2R f (MPFloat a1) (MPFloat a2) = f a1 a2
+
+instance Show MPFloat where
+  show x = MPLow.showA $ unMPFloat x
 
 deriving instance (Typeable MPFloat)
+instance NFData MPFloat
 
 p2cdarPrec :: Precision -> MPLow.Precision
 p2cdarPrec = P.fromInteger . integer
 
 getBoundsCEDU :: MPFloat -> BoundsCEDU MPFloat
-getBoundsCEDU (MPLow.Approx mb m e s) = 
+getBoundsCEDU (MPFloat (MPLow.Approx mb m e s)) = 
   BoundsCEDU 
-    (MPLow.Approx mb m 0 s) (MPLow.approxMB eb_mb e 0 s)
-    (MPLow.Approx mb (m-e) 0 s) (MPLow.Approx mb (m+e) 0 s)
-getBoundsCEDU MPLow.Bottom =
+    (MPFloat $ MPLow.Approx mb m 0 s) (MPFloat $ MPLow.approxMB eb_mb e 0 s)
+    (MPFloat $ MPLow.Approx mb (m-e) 0 s) (MPFloat $ MPLow.Approx mb (m+e) 0 s)
+getBoundsCEDU (MPFloat MPLow.Bottom) =
   BoundsCEDU
-    MPLow.Bottom MPLow.Bottom MPLow.Bottom MPLow.Bottom
+    (MPFloat MPLow.Bottom) (MPFloat MPLow.Bottom) 
+    (MPFloat MPLow.Bottom) (MPFloat MPLow.Bottom)
 
 {-| The bit-size bound for the error bound in CEDU -}
 eb_prec :: Precision
@@ -65,18 +83,19 @@ eb_mb :: Int
 eb_mb = int $ integer eb_prec
 
 instance HasPrecision MPFloat where
-  getPrecision (MPLow.Approx mb _ _ _) = prec (P.toInteger $ mb)
-  getPrecision MPLow.Bottom = error "illegal MPFloat (Bottom)"
+  getPrecision (MPFloat (MPLow.Approx mb _ _ _)) = prec (P.toInteger $ mb)
+  getPrecision (MPFloat MPLow.Bottom) = error "illegal MPFloat (Bottom)"
   
 instance CanSetPrecision MPFloat where
   setPrecision p = ceduCentre . setPrecisionCEDU p
 
 setPrecisionCEDU :: Precision -> MPFloat -> BoundsCEDU MPFloat
-setPrecisionCEDU pp = getBoundsCEDU . MPLow.enforceMB . MPLow.setMB (p2cdarPrec pp)
+setPrecisionCEDU pp = 
+  getBoundsCEDU . lift1 MPLow.enforceMB . lift1 (MPLow.setMB (p2cdarPrec pp))
 
 instance HasNorm MPFloat where
-  getNormLog (MPLow.Approx _ m _ s) = (getNormLog m) + (integer s)
-  getNormLog MPLow.Bottom = error "getNormLog undefined for Bottom"
+  getNormLog (MPFloat (MPLow.Approx _ m _ s)) = (getNormLog m) + (integer s)
+  getNormLog (MPFloat MPLow.Bottom) = error "getNormLog undefined for Bottom"
 
 {-|
   Returns @s@ such that @2^s@ is the distance to the nearest other number with the same precision.
