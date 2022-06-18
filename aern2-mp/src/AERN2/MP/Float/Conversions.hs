@@ -1,5 +1,4 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
-{-# LANGUAGE StandaloneDeriving #-}
 {-|
     Module      :  AERN2.MP.Float.Conversions
     Description :  Conversions and comparisons of arbitrary precision floats
@@ -91,8 +90,6 @@ instance CanRound MPFloat where
   
 {- comparisons -}
 
-deriving instance P.Eq MPFloat
-deriving instance P.Ord MPFloat
 instance HasEqAsymmetric MPLow.Approx MPLow.Approx
 instance HasEqAsymmetric MPFloat MPFloat where
   equalTo = lift2R equalTo

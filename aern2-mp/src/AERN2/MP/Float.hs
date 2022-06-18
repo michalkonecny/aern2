@@ -42,6 +42,7 @@ import AERN2.MP.Float.Arithmetic as Arithmetic
 import AERN2.MP.Float.Conversions as Conversions
 
 import AERN2.MP.Float.Operators as Operators
+import AERN2.MP.Float.PreludeNum ()
 import AERN2.MP.Float.Tests as Tests
 
 -- | Computes an upper bound to the distance @|x - y|@ of @x@ and @y@.
