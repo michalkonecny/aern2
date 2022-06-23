@@ -413,19 +413,19 @@ collapseOrs = map collapseOr
 
 collapseOr :: LD.Expression -> LD.Expression
 collapseOr orig@(LD.Application (LD.Variable "or") [LD.Application (LD.Variable "<") args1, LD.Application (LD.Variable "=") args2]) =
-  if args1 P.== args2 
+  if args1 P.== args2
     then LD.Application (LD.Variable "<=") args1
     else orig
 collapseOr orig@(LD.Application (LD.Variable "or") [LD.Application (LD.Variable "=") args1, LD.Application (LD.Variable "<") args2]) =
-  if args1 P.== args2 
+  if args1 P.== args2
     then LD.Application (LD.Variable "<=") args1
     else orig
 collapseOr orig@(LD.Application (LD.Variable "or") [LD.Application (LD.Variable ">") args1, LD.Application (LD.Variable "=") args2]) =
-  if args1 P.== args2 
+  if args1 P.== args2
     then LD.Application (LD.Variable ">=") args1
     else orig
 collapseOr orig@(LD.Application (LD.Variable "or") [LD.Application (LD.Variable "=") args1, LD.Application (LD.Variable ">") args2]) =
-  if args1 P.== args2 
+  if args1 P.== args2
     then LD.Application (LD.Variable ">=") args1
     else orig
 collapseOr (LD.Application operator args) = LD.Application operator (collapseOrs args)
@@ -611,6 +611,47 @@ processVC parsedExpressions =
     foldAssertionsF [f]      = f
     foldAssertionsF (f : fs) = FConn And f (foldAssertionsF fs)
 
+-- |Looks for pi vars (vars named pi/pi{i} where {i} is some integer) and symbolic bounds.
+-- If the bounds are better than those given to the real pi in Why3, replace the variable with exact pi.
+symbolicallySubstitutePiVars :: F -> F
+symbolicallySubstitutePiVars f = substVarsWithPi piVars f
+  where
+    piVars = nub (aux f)
+
+    substVarsWithPi :: [String] -> F -> F
+    substVarsWithPi [] f' = f'
+    substVarsWithPi (v : _) f' = substVarFWithE v f' Pi
+
+    aux :: F -> [String]
+    aux (FConn And f1 f2) = aux f1 ++ aux f2
+    aux (FComp Lt (EBinOp Div (Lit numer) (Lit denom)) (Var var)) =
+      [var | 
+        -- If variable is pi or pi# where # is a number
+        (var =~ "^pi$|^pi[0-9]+$" :: Bool) &&
+        -- And bounds are equal or better than the bounds given by Why3 for Pi
+        lb >= (7074237752028440.0 / 2251799813685248.0) &&
+        hasUB var f]
+      where
+        lb = numer / denom
+    aux (FComp {}) = []
+    aux (FConn {}) = []
+    aux (FNot _) = []
+    aux FTrue = []
+    aux FFalse = []
+
+    hasUB :: String -> F -> Bool
+    hasUB piVar (FComp Lt (Var otherVar) (EBinOp Div (Lit numer) (Lit denom))) = 
+      piVar == otherVar && ub <= (7074237752028441.0 / 2251799813685248.0)
+      where
+        ub = numer / denom
+    hasUB piVar (FConn And f1 f2) = hasUB piVar f1 || hasUB piVar f2
+    hasUB _ (FComp {}) = False
+    hasUB _ (FConn {}) = False
+    hasUB _ (FNot _) = False
+    hasUB _ FTrue = False
+    hasUB _ FFalse = False
+
+
 -- |Derive ranges for a VC (Implication where a CNF implies a goal)
 -- Remove anything which refers to a variable for which we cannot derive ranges
 -- If the goal contains underivable variables, return Nothing
@@ -624,10 +665,12 @@ deriveVCRanges vc varsWithTypes =
 
     (simplifiedFUnchecked, derivedVarMapUnchecked, underivableVariables) = deriveBoundsAndSimplify vc
 
-    (piVars, derivedVarMap) = findRealPiVars derivedVarMapUnchecked
+    -- (piVars, derivedVarMap) = findRealPiVars derivedVarMapUnchecked
+    (piVars, derivedVarMap) = ([], derivedVarMapUnchecked)
 
     typedDerivedVarMap = unsafeVarMapToTypedVarMap derivedVarMap integerVariables
 
+    -- safelyRoundTypedVarMap = id
     safelyRoundTypedVarMap [] = []
     safelyRoundTypedVarMap ((TypedVar (varName, (leftBound, rightBound)) Real) : vars)    =
       let
@@ -638,7 +681,8 @@ deriveVCRanges vc varsWithTypes =
         newBound : safelyRoundTypedVarMap vars
     safelyRoundTypedVarMap (vi@(TypedVar _                               Integer) : vars) = vi : safelyRoundTypedVarMap vars
 
-    simplifiedF = substVarsWithPi piVars simplifiedFUnchecked
+    -- simplifiedF = substVarsWithPi piVars simplifiedFUnchecked
+    simplifiedF = simplifiedFUnchecked
 
     -- TODO: Would be good to include a warning when this happens
     -- Could also make this an option
@@ -756,6 +800,7 @@ filterOutDuplicateVarEqualities ((v, e) : vs) =
       let shortestVarEquality = head $ sortBy (\(_, e1) (_, e2) -> P.compare (lengthE e1) (lengthE e2)) $ (v, e) : matchingEqualities
       in shortestVarEquality : filterOutDuplicateVarEqualities otherEqualities
 
+-- FIXME: subst one at a time
 substAllEqualities :: F -> F
 substAllEqualities = recursivelySubstVars
   where
@@ -780,6 +825,12 @@ substAllEqualities = recursivelySubstVars
     substVars [] f = f
     substVars ((v, e) : _) f = substVarFWithE v f e
 
+addVarMapBoundsToF :: F -> TypedVarMap -> F
+addVarMapBoundsToF f [] = f
+addVarMapBoundsToF f (TypedVar (v, (l, r)) _ : vm) = FConn And boundAsF $ addVarMapBoundsToF f vm
+  where
+    boundAsF = FConn And (FComp Ge (Var v) (Lit l)) (FComp Le (Var v) (Lit r))
+
 eliminateFloatsAndSimplifyVC :: F -> TypedVarMap -> Bool -> FilePath -> IO F
 eliminateFloatsAndSimplifyVC vc typedVarMap strengthenVC fptaylorPath =
   do
@@ -796,7 +847,7 @@ parseVCToF filePath fptaylorPath =
     case processVC parsedFile of
       Just (vc, varTypes) ->
         let
-          simplifiedVC = substAllEqualities (simplifyF vc)
+          simplifiedVC = (symbolicallySubstitutePiVars . substAllEqualities . simplifyF) vc
           mDerivedVCWithRanges = deriveVCRanges simplifiedVC varTypes
         in
         case mDerivedVCWithRanges of
@@ -804,8 +855,11 @@ parseVCToF filePath fptaylorPath =
             do
               -- The file we are given is assumed to be a contradiction, so weaken the VC
               let strengthenVC = False
-              simplifiedVCWithoutFloats <- eliminateFloatsAndSimplifyVC derivedVC derivedRanges strengthenVC fptaylorPath
-              return $ Just (simplifiedVCWithoutFloats, derivedRanges)
+              vcWithoutFloats <- eliminateFloatsF derivedVC (typedVarMapToVarMap derivedRanges) strengthenVC fptaylorPath
+              let vcWithoutFloatsWithBounds = addVarMapBoundsToF vcWithoutFloats derivedRanges
+              case deriveVCRanges vcWithoutFloatsWithBounds varTypes of
+                Just (simplifiedVCWithoutFloats, finalDerivedRanges) -> return $ Just (simplifiedVCWithoutFloats, finalDerivedRanges)
+                Nothing -> error "Error deriving bounds again after floating-point elimination"
           Nothing -> return Nothing
       Nothing -> return Nothing
 
@@ -817,14 +871,30 @@ parseVCToSolver filePath fptaylorPath proverTranslator negateVC =
     case processVC parsedFile of
       Just (vc, varTypes) ->
         let
-          simplifiedVC = substAllEqualities (simplifyF vc)
+          simplifiedVC = (symbolicallySubstitutePiVars . substAllEqualities . simplifyF) vc
           mDerivedVCWithRanges = deriveVCRanges simplifiedVC varTypes
         in
           case mDerivedVCWithRanges of
             Just (derivedVC, derivedRanges) ->
               do
                 let strengthenVC = False
-                simplifiedVCWithoutFloats <- eliminateFloatsAndSimplifyVC derivedVC derivedRanges strengthenVC fptaylorPath
-                return $ Just (proverTranslator (if negateVC then simplifyF (FNot simplifiedVCWithoutFloats) else simplifiedVCWithoutFloats) derivedRanges)
+                vcWithoutFloats <- eliminateFloatsF derivedVC (typedVarMapToVarMap derivedRanges) strengthenVC fptaylorPath
+                let vcWithoutFloatsWithBounds = addVarMapBoundsToF vcWithoutFloats derivedRanges
+                case deriveVCRanges vcWithoutFloatsWithBounds varTypes of
+                  Just (simplifiedVCWithoutFloats, finalDerivedRanges) ->
+                    return $ Just (
+                      proverTranslator
+                      (
+                        if negateVC
+                          then
+                            case simplifiedVCWithoutFloats of
+                              FNot f -> f -- Eliminate double not
+                              _      -> FNot simplifiedVCWithoutFloats
+                          else simplifiedVCWithoutFloats
+                      )
+                      finalDerivedRanges
+                    )
+                  Nothing -> error "Error deriving bounds again after floating-point elimination"
+                -- return $ Just (proverTranslator (if negateVC then simplifyF (FNot simplifiedVCWithoutFloats) else simplifiedVCWithoutFloats) derivedRanges)
             Nothing -> return Nothing
       Nothing -> return Nothing
