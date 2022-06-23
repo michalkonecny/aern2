@@ -283,6 +283,10 @@ evalF_comparisons intervals = eC
       ((Just e1L, _), (_, Just e2R)) | e2R <= e1L -> FFalse 
       _ -> f
   eE = evalE_Rational intervals
+-- x is inconsistent
+-- since we have exists x in empty set
+-- x > y is False 
+-- we use exists instead of forall because we're looking for a model for x
 
 evalE_Rational :: 
   VarBoundMap -> E -> (Maybe Rational, Maybe Rational)
@@ -291,9 +295,11 @@ evalE_Rational intervals =
   where
   intervalsMPBall = Map.map toMPBall intervals
   toMPBall :: (Maybe Rational, Maybe Rational) -> CN MPBall
-  toMPBall (Just l, Just r) = cn $ (mpBallP p l) `hullMPBall` (mpBallP p r) --FIXME: deal with contradictions directly
+  toMPBall (Just l, Just r) = cn $ (mpBallP p l) `hullMPBall` (mpBallP p r) --FIXME: deal with contradictions, inconsistent intervals, directly
+  -- If we have an overlapping interval, turn conjunction into False
+  -- l = 1, r = 0
   toMPBall _ = CN.noValueNumErrorCertain $ CN.NumError "no bounds"
-  p = prec 53 -- Needs to be at least 53 for turning double pi from Why3 into real pi
+  p = prec 60 -- Needs to be at least 54 for turning double pi from Why3 into real pi FIXME: behaviour with very high prec (say prec 1000)?
   rationalBounds :: CN MPBall -> (Maybe Rational, Maybe Rational)
   rationalBounds cnBall =
     case CN.toEither cnBall of
