@@ -21,7 +21,8 @@ import Data.Typeable (Typeable)
 import AERN2.Real (CReal, creal, prec, (?), bits)
 import Data.Foldable (Foldable(toList))
 import qualified Data.Map as Map
-import AERN2.MP (MPBall)
+import AERN2.MP (MPBall (ball_value), mpBallP)
+import AERN2.MP.Float (MPFloat)
 
 type MatrixRC rn cn e = LV.V (rn :: Nat) (LV.V (cn :: Nat) e)
 
@@ -110,28 +111,46 @@ rows1I = [[ item i j  | j <- [1..n1] ] | i <- [1..n1]]
     | j > i + 1 = rational 0
     | otherwise = 1/(i+j)
 
+type VN1 = LV.V 100
+
+--------------------
+
 rows1D :: [[Double]]
 rows1D = map (map double) rows1I
-
-rows1R :: [[CReal]]
-rows1R = map (map creal) rows1I
-
-type VN1 = LV.V 100
 
 m1D :: VN1 (VN1 Double)
 m1D = matrixRC rows1D
 
-m1DetLU :: Double
-m1DetLU = L.luDetFinite m1D
+m1D_detLU :: Double
+m1D_detLU = L.luDetFinite m1D
 
-m1DLaplace :: Double
-m1DLaplace = detLaplace (== 0) m1D
+m1D_detLaplace :: Double
+m1D_detLaplace = detLaplace (== 0) m1D
+
+--------------------
+
+rows1MP :: [[MPFloat]]
+rows1MP = map (map (ball_value . mpBallP (prec 1000))) rows1I
+
+m1MP :: VN1 (VN1 MPFloat)
+m1MP = matrixRC rows1MP
+
+m1MP_detLU :: MPFloat
+m1MP_detLU = L.luDetFinite m1MP
+
+-- m1MP_detLaplace :: MPFloat
+-- m1MP_detLaplace = detLaplace (== 0) m1MP
+
+--------------------
+
+rows1R :: [[CReal]]
+rows1R = map (map creal) rows1I
 
 m1R :: VN1 (VN1 CReal)
 m1R = matrixRC rows1R
 
-m1RLaplace :: CReal
-m1RLaplace = detLaplace (\(e :: CReal) -> (e ? (prec 10))!==! 0) m1R
+m1R_detLaplace :: CReal
+m1R_detLaplace = detLaplace (\(e :: CReal) -> (e ? (prec 10))!==! 0) m1R
 
-m1RLaplaceBits :: CN MPBall
-m1RLaplaceBits = m1RLaplace ? (bits 10)
+m1R_detLaplaceBits :: CN MPBall
+m1R_detLaplaceBits = m1R_detLaplace ? (bits 1000)
