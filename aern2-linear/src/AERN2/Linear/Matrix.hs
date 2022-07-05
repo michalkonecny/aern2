@@ -22,7 +22,14 @@ import AERN2.Real (CReal, creal, prec, (?), bits)
 import Data.Foldable (Foldable(toList))
 import qualified Data.Map as Map
 import AERN2.MP (MPBall (ball_value), mpBallP)
-import AERN2.MP.Float (MPFloat)
+import AERN2.MP.Float (MPFloat) 
+
+instance (Show e, Typeable e, KnownNat n) => ConvertibleExactly [e] (LV.V n e) 
+  where
+  safeConvertExactly es =
+      case LV.fromVector $ Vector.fromList es of
+        Just v -> return v
+        _ -> convError "convertExactly to V: list of incorrect length" es
 
 type MatrixRC rn cn e = LV.V (rn :: Nat) (LV.V (cn :: Nat) e)
 
@@ -34,16 +41,10 @@ matrixRC = convertExactly
 instance (Show e, Typeable e, KnownNat rn, KnownNat cn) => ConvertibleExactly [[e]] (MatrixRC rn cn e) where
   safeConvertExactly rows =
     do
-    rowsV <- mapM convertRow rows
+    rowsV <- mapM safeConvertExactly rows
     case LV.fromVector $ Vector.fromList rowsV of
       Just v -> return v
       _ -> convError "convertExactly to MatrixRC: incorrect number of rows" rows
-    where
-    convertRow :: (Show e, KnownNat cn) => [e] -> Either ConvertError (LV.V (cn :: Nat) e)
-    convertRow row =
-      case LV.fromVector $ Vector.fromList row of
-        Just v -> return v
-        _ -> convError "convertExactly to MatrixRC: row of incorrect length" row
 
 detLaplace :: 
   (KnownNat n, HasIntegers e, CanMulBy e Integer, CanAddSameType e, CanMulSameType e, Show e) =>
@@ -154,3 +155,7 @@ m1R_detLaplace = detLaplace (\(e :: CReal) -> (e ? (prec 10))!==! 0) m1R
 
 m1R_detLaplaceBits :: CN MPBall
 m1R_detLaplaceBits = m1R_detLaplace ? (bits 1000)
+
+--------------------
+
+-- b1R :: VN1 CReal
