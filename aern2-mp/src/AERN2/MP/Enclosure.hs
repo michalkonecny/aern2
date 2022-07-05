@@ -40,6 +40,7 @@ import qualified Numeric.CollectErrors as CN
 
 import AERN2.Kleenean
 import AERN2.MP.ErrorBound
+import Control.CollectErrors (CollectErrors(getMaybeValue))
 -- import AERN2.MP.Accuracy
 
 {- ball-specific operations -}
@@ -67,6 +68,7 @@ class IsBall t where
 instance IsBall t => IsBall (CN t) where
     type CentreType (CN t) = CN (CentreType t)
     centre = fmap centre
+    centreAsBall = fmap centreAsBall
     updateRadius f = fmap (updateRadius f)
     centreAsBallAndRadius = error $ "centreAsBallAndRadius not defined for CN types"
 
@@ -177,6 +179,13 @@ intervalFunctionByEndpointsUpDown fDown fUp x =
 class CanTestContains dom e where
   {-| Test if @e@ is inside @dom@. -}
   contains :: dom {-^ @dom@ -} -> e  {-^ @e@ -} -> Bool
+
+instance (CanTestContains dom e) => CanTestContains (CN dom) (CN e) where
+  contains domCN aCN =
+
+    case (getMaybeValue domCN, getMaybeValue aCN) of
+      (Just dom, Just a) -> dom `contains` a
+      _ -> False
 
 class CanMapInside dom e where
   {-| Return some value contained in @dom@.
