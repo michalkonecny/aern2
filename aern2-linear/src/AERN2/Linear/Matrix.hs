@@ -1,5 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE PartialTypeSignatures #-}
 module AERN2.Linear.Matrix
 -- ()
 where
@@ -14,6 +16,7 @@ import MixedTypesNumPrelude
 -- import Text.Printf (printf)
 
 import qualified Linear.V as LV
+import Linear.V (V)
 import qualified Linear as L
 import qualified Data.Vector as Vector
 import GHC.TypeLits (KnownNat, Nat)
@@ -23,28 +26,38 @@ import Data.Foldable (Foldable(toList))
 import qualified Data.Map as Map
 import AERN2.MP (MPBall (ball_value), mpBallP)
 import AERN2.MP.Float (MPFloat) 
+import Linear (luSolve)
 
-instance (Show e, Typeable e, KnownNat n) => ConvertibleExactly [e] (LV.V n e) 
+type CanBeVN n e t = ConvertibleExactly t (V (n :: Nat) e)
+
+vectorN :: CanBeVN n e t => t -> V n e
+vectorN = convertExactly
+
+instance (KnownNat n, Show e1, Typeable e1, Typeable e2, ConvertibleExactly e1 e2) => ConvertibleExactly [e1] (V n e2) 
   where
-  safeConvertExactly es =
-      case LV.fromVector $ Vector.fromList es of
-        Just v -> return v
-        _ -> convError "convertExactly to V: list of incorrect length" es
+  safeConvertExactly e1s =
+    do
+    e2s <- mapM safeConvertExactly e1s
+    case LV.fromVector $ Vector.fromList e2s of
+      Just v -> return v
+      _ -> convError "convertExactly to V: list of incorrect length" e1s
 
-type MatrixRC rn cn e = LV.V (rn :: Nat) (LV.V (cn :: Nat) e)
+type MatrixRC rn cn e = (V (rn :: Nat) (V (cn :: Nat) e))
 
-type CanBeMatrixRC rn cn e t = ConvertibleExactly t (MatrixRC rn cn e)
-
-matrixRC :: CanBeMatrixRC rn cn e t => t -> MatrixRC rn cn e
-matrixRC = convertExactly
-
-instance (Show e, Typeable e, KnownNat rn, KnownNat cn) => ConvertibleExactly [[e]] (MatrixRC rn cn e) where
-  safeConvertExactly rows =
+matrixRC :: (Show e1, Typeable e1, Typeable e2,
+                   ConvertibleExactly e1 e2, KnownNat cn, KnownNat rn) => 
+            [[e1]] -> MatrixRC rn cn e2
+matrixRC rows =
+  case aux of
+    Right mx -> mx
+    _ -> error "convertExactly to MatrixRC: incorrect number of rows"
+  where 
+  aux =
     do
     rowsV <- mapM safeConvertExactly rows
     case LV.fromVector $ Vector.fromList rowsV of
       Just v -> return v
-      _ -> convError "convertExactly to MatrixRC: incorrect number of rows" rows
+      _ -> error "convertExactly to MatrixRC: incorrect number of rows"
 
 detLaplace :: 
   (KnownNat n, HasIntegers e, CanMulBy e Integer, CanAddSameType e, CanMulSameType e, Show e) =>
@@ -104,6 +117,11 @@ detLaplace isZero mx =
 n1 :: Integer
 n1 = 100
 
+-- type VN e = forall n. KnownNat n => V n e
+
+-- onesV :: (HasIntegers e, Typeable e) => Integer -> VN e
+-- onesV n = vectorN $ replicate n 1
+
 rows1I :: [[Rational]]
 rows1I = [[ item i j  | j <- [1..n1] ] | i <- [1..n1]]
   where
@@ -112,7 +130,7 @@ rows1I = [[ item i j  | j <- [1..n1] ] | i <- [1..n1]]
     | j > i + 1 = rational 0
     | otherwise = 1/(i+j)
 
-type VN1 = LV.V 100
+type VN1 = V 100
 
 --------------------
 
@@ -158,4 +176,8 @@ m1R_detLaplaceBits = m1R_detLaplace ? (bits 1000)
 
 --------------------
 
--- b1R :: VN1 CReal
+b1D :: VN1 Double
+b1D = vectorN $ replicate n1 (double 1)
+
+m1b1_solLU :: VN1 Double
+m1b1_solLU = luSolve m1D b1D
