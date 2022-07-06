@@ -12,7 +12,7 @@ import MixedTypesNumPrelude
 -- import Numeric.CollectErrors (NumErrors, CanTakeErrors(..))
 -- import qualified Numeric.CollectErrors as CN
 
--- import qualified Prelude as P
+import qualified Prelude as P
 
 -- import qualified Debug.Trace as Debug
 -- import Text.Printf (printf)
@@ -36,7 +36,7 @@ import Control.Applicative (Applicative(liftA2))
 -- hiding type Nat type parameters 
 ----------------------
 
-data VN e = forall n. KnownNat n => VN (V n e)
+data VN e = forall n. (KnownNat n) => VN (V n e)
   
 deriving instance (Show e) => (Show (VN e))
 
@@ -91,6 +91,14 @@ luSolveFinite (MatrixRC (a :: V rn_t (V cn_t e))) (VN (b :: V n_t e))
   cn_v = natVal (Proxy :: Proxy cn_t)
   aNN = unsafeCoerce a :: V n_t (V n_t e)
 
+trace :: (P.Num e)=> MatrixRC e -> e
+trace (MatrixRC (a :: V rn_t (V cn_t e)))
+  | rn_v == cn_v = L.trace aNN
+  | otherwise = error "trace called for a non-square matrix"
+  where
+  rn_v = natVal (Proxy :: Proxy rn_t)
+  cn_v = natVal (Proxy :: Proxy cn_t)
+  aNN = unsafeCoerce a :: V rn_t (V rn_t e)
 
 liftV2 :: (KnownNat n1, KnownNat n2) => 
   (e1 -> e2 -> e3) -> (V n1 e1) -> (V n2 e2) -> (V n1 e3)
@@ -101,6 +109,16 @@ liftV2 f (v1 :: V n1_t e1) (v2 :: V n2_t e2)
   n1_v = natVal (Proxy :: Proxy n1_t)
   n2_v = natVal (Proxy :: Proxy n2_t)
   v2_n1 = (unsafeCoerce v2) :: V n1_t e2
+
+mulVV :: (KnownNat rn1, KnownNat cn1, KnownNat rn2, KnownNat cn2, P.Num e) => 
+  (V rn1 (V cn1 e)) -> (V rn2 (V cn2 e)) -> (V rn1 (V cn2 e))
+mulVV (rows1 :: V rn1_t (V cn1_t e)) (rows2 :: V rn2_t (V cn2_t e))
+  | cn1_v == rn2_v = rows1 L.!*! rows2_cn1
+  | otherwise = error "mulVV: the matrices have incompatible sizes"
+  where
+  cn1_v = natVal (Proxy :: Proxy cn1_t)
+  rn2_v = natVal (Proxy :: Proxy rn2_t)
+  rows2_cn1 = (unsafeCoerce rows2) :: V cn1_t (V cn2_t e)
 
 {-
   Basic vector and matrix operations
@@ -131,6 +149,10 @@ instance (CanSub e1 e2) => CanSub (MatrixRC e1) (MatrixRC e2) where
 instance (CanNeg e1) => CanNeg (MatrixRC e1) where
   type NegType (MatrixRC e1)= MatrixRC (NegType e1)
   negate (MatrixRC rows1) = MatrixRC (fmap (fmap negate) rows1)
+
+instance (P.Num e1, e1~e2) => CanMulAsymmetric (MatrixRC e1) (MatrixRC e2) where
+  type MulType (MatrixRC e1) (MatrixRC e2) = MatrixRC e1
+  mul (MatrixRC rows1) (MatrixRC rows2) = MatrixRC (mulVV rows1 rows2)
 
 {-
   Determinant using the Laplace method.
