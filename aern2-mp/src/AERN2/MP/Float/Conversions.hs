@@ -47,6 +47,10 @@ type CanBeMPFloat t = ConvertibleExactly t MPFloat
 mpFloat :: (CanBeMPFloat t) => t -> MPFloat
 mpFloat = convertExactly
 
+instance ConvertibleExactly MPFloat MPFloat where
+    safeConvertExactly =
+      Right . id
+
 instance ConvertibleExactly Integer MPFloat where
     safeConvertExactly =
       Right . MPFloat . P.fromInteger
