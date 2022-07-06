@@ -2,6 +2,8 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE PartialTypeSignatures #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE StandaloneDeriving #-}
 module AERN2.Linear.Matrix
 -- ()
 where
@@ -19,51 +21,75 @@ import qualified Linear.V as LV
 import Linear.V (V)
 import qualified Linear as L
 import qualified Data.Vector as Vector
-import GHC.TypeLits (KnownNat, Nat)
-import Data.Typeable (Typeable)
+import GHC.TypeLits (KnownNat, SomeNat (SomeNat), someNatVal, natVal)
+import Data.Typeable (Typeable, Proxy (Proxy))
 import AERN2.Real (CReal, creal, prec, (?), bits)
 import Data.Foldable (Foldable(toList))
 import qualified Data.Map as Map
 import AERN2.MP (MPBall (ball_value), mpBallP)
 import AERN2.MP.Float (MPFloat) 
-import Linear (luSolve)
+import GHC.Real (Fractional)
+import Unsafe.Coerce (unsafeCoerce)
 
-type CanBeVN n e t = ConvertibleExactly t (V (n :: Nat) e)
+----------------------
+-- hiding type Nat type parameters 
+----------------------
 
-vectorN :: CanBeVN n e t => t -> V n e
-vectorN = convertExactly
+data VN e = forall n. KnownNat n => VN (V n e)
+  
+deriving instance (Show e) => (Show (VN e))
 
-instance (KnownNat n, Show e1, Typeable e1, Typeable e2, ConvertibleExactly e1 e2) => ConvertibleExactly [e1] (V n e2) 
+vNFromList :: (Typeable e, Show e) => [e] -> VN e
+vNFromList (es :: [e]) = 
+  case someNatVal (length es) of
+    Nothing -> error "internal error in vNFromList"
+    Just (SomeNat (_ :: Proxy n)) ->
+      VN (vectorN es :: V n e)
+
+vectorN :: (KnownNat n) => [e] -> V n e
+vectorN es =
+    case LV.fromVector $ Vector.fromList es of
+      Just v -> v
+      _ -> error "convertExactly to V: list of incorrect length"
+
+data MatrixRC e = forall rn cn. (KnownNat rn, KnownNat cn) => MatrixRC (V rn (V cn e))
+
+deriving instance (Show e) => (Show (MatrixRC e))
+
+matrixRCFromList :: (Typeable e, Show e) => [[e]] -> MatrixRC e
+matrixRCFromList [] = error "matrixRCFromList called with the empty list"
+matrixRCFromList rows@((row1 :: [e]):_) =
+  case (someNatVal (length rows), someNatVal (length row1)) of
+    (Just (SomeNat (_ :: Proxy rn)), Just (SomeNat (_ :: Proxy cn))) ->
+      MatrixRC (matrixRC rows :: V rn (V cn e))
+    _ -> error "internal error in matrixRCFromList"
   where
-  safeConvertExactly e1s =
-    do
-    e2s <- mapM safeConvertExactly e1s
-    case LV.fromVector $ Vector.fromList e2s of
-      Just v -> return v
-      _ -> convError "convertExactly to V: list of incorrect length" e1s
-
-type MatrixRC rn cn e = (V (rn :: Nat) (V (cn :: Nat) e))
-
-matrixRC :: (Show e1, Typeable e1, Typeable e2,
-                   ConvertibleExactly e1 e2, KnownNat cn, KnownNat rn) => 
-            [[e1]] -> MatrixRC rn cn e2
-matrixRC rows =
-  case aux of
-    Right mx -> mx
-    _ -> error "convertExactly to MatrixRC: incorrect number of rows"
-  where 
-  aux =
-    do
-    rowsV <- mapM safeConvertExactly rows
-    case LV.fromVector $ Vector.fromList rowsV of
-      Just v -> return v
+  matrixRC :: (Typeable e, KnownNat cn, KnownNat rn) => 
+              [[e]] -> V rn (V cn e)
+  matrixRC rows2 =
+    case LV.fromVector $ Vector.fromList (map vectorN rows2) of
+      Just v -> v
       _ -> error "convertExactly to MatrixRC: incorrect number of rows"
 
+luDetFinite :: (Fractional e) => MatrixRC e -> e
+luDetFinite (MatrixRC (mx :: V rn_t (V cn_t e))) 
+  | rn_v == cn_v = L.luDetFinite (unsafeCoerce mx :: V rn_t (V rn_t e))
+  | otherwise = error "luDetFinite called for a non-square matrix"
+  where
+  rn_v = natVal (Proxy :: Proxy rn_t)
+  cn_v = natVal (Proxy :: Proxy cn_t)
+
+
+{-
+  Determinant using the Laplace method.
+  
+  This works OK for sparse matrices and signular matrices.
+-}
+
 detLaplace :: 
-  (KnownNat n, HasIntegers e, CanMulBy e Integer, CanAddSameType e, CanMulSameType e, Show e) =>
-  (e -> Bool) -> 
-  MatrixRC n n e -> e
-detLaplace isZero mx = 
+  (HasIntegers e, CanMulBy e Integer, CanAddSameType e, CanMulSameType e, Show e) =>
+  (e -> Bool) -> MatrixRC e -> e
+detLaplace isZero (MatrixRC mx) = 
   fst $ doRows submatrixResults0 mask0 (toList mx)
   where
   mask0 = take (LV.dim mx) alternatingSigns
@@ -112,15 +138,10 @@ detLaplace isZero mx =
     memoizing results for all sub-matrices to be reused when the same sub-matrix is needed again
   -}
 
-{- mini test -}
+{- mini tests -}
 
 n1 :: Integer
 n1 = 100
-
--- type VN e = forall n. KnownNat n => V n e
-
--- onesV :: (HasIntegers e, Typeable e) => Integer -> VN e
--- onesV n = vectorN $ replicate n 1
 
 rows1I :: [[Rational]]
 rows1I = [[ item i j  | j <- [1..n1] ] | i <- [1..n1]]
@@ -130,18 +151,16 @@ rows1I = [[ item i j  | j <- [1..n1] ] | i <- [1..n1]]
     | j > i + 1 = rational 0
     | otherwise = 1/(i+j)
 
-type VN1 = V 100
-
 --------------------
 
 rows1D :: [[Double]]
 rows1D = map (map double) rows1I
 
-m1D :: VN1 (VN1 Double)
-m1D = matrixRC rows1D
+m1D :: MatrixRC Double
+m1D = matrixRCFromList rows1D
 
 m1D_detLU :: Double
-m1D_detLU = L.luDetFinite m1D
+m1D_detLU = luDetFinite m1D
 
 m1D_detLaplace :: Double
 m1D_detLaplace = detLaplace (== 0) m1D
@@ -151,11 +170,11 @@ m1D_detLaplace = detLaplace (== 0) m1D
 rows1MP :: [[MPFloat]]
 rows1MP = map (map (ball_value . mpBallP (prec 1000))) rows1I
 
-m1MP :: VN1 (VN1 MPFloat)
-m1MP = matrixRC rows1MP
+m1MP :: MatrixRC MPFloat
+m1MP = matrixRCFromList rows1MP
 
 m1MP_detLU :: MPFloat
-m1MP_detLU = L.luDetFinite m1MP
+m1MP_detLU = luDetFinite m1MP
 
 -- m1MP_detLaplace :: MPFloat
 -- m1MP_detLaplace = detLaplace (== 0) m1MP
@@ -165,8 +184,8 @@ m1MP_detLU = L.luDetFinite m1MP
 rows1R :: [[CReal]]
 rows1R = map (map creal) rows1I
 
-m1R :: VN1 (VN1 CReal)
-m1R = matrixRC rows1R
+m1R :: MatrixRC CReal
+m1R = matrixRCFromList rows1R
 
 m1R_detLaplace :: CReal
 m1R_detLaplace = detLaplace (\(e :: CReal) -> (e ? (prec 10))!==! 0) m1R
@@ -176,8 +195,8 @@ m1R_detLaplaceBits = m1R_detLaplace ? (bits 1000)
 
 --------------------
 
-b1D :: VN1 Double
-b1D = vectorN $ replicate n1 (double 1)
+b1D :: VN Double
+b1D = vNFromList $ replicate n1 (double 1)
 
-m1b1_solLU :: VN1 Double
-m1b1_solLU = luSolve m1D b1D
+-- m1b1_solLU = case luSolve m1D b1D
+
