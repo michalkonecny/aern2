@@ -30,6 +30,7 @@ import AERN2.MP (MPBall (ball_value), mpBallP)
 import AERN2.MP.Float (MPFloat) 
 import GHC.Real (Fractional)
 import Unsafe.Coerce (unsafeCoerce)
+import Control.Applicative (Applicative(liftA2))
 
 ----------------------
 -- hiding type Nat type parameters 
@@ -71,14 +72,65 @@ matrixRCFromList rows@((row1 :: [e]):_) =
       Just v -> v
       _ -> error "convertExactly to MatrixRC: incorrect number of rows"
 
+
 luDetFinite :: (Fractional e) => MatrixRC e -> e
 luDetFinite (MatrixRC (mx :: V rn_t (V cn_t e))) 
-  | rn_v == cn_v = L.luDetFinite (unsafeCoerce mx :: V rn_t (V rn_t e))
+  | rn_v == cn_v = L.luDetFinite mxRR
   | otherwise = error "luDetFinite called for a non-square matrix"
   where
   rn_v = natVal (Proxy :: Proxy rn_t)
   cn_v = natVal (Proxy :: Proxy cn_t)
+  mxRR = unsafeCoerce mx :: V rn_t (V rn_t e)
 
+luSolveFinite :: (Fractional e) => MatrixRC e -> VN e -> VN e
+luSolveFinite (MatrixRC (a :: V rn_t (V cn_t e))) (VN (b :: V n_t e))
+  | rn_v == cn_v = VN $ L.luSolveFinite aNN b
+  | otherwise = error "luDetFinite called for a non-square matrix"
+  where
+  rn_v = natVal (Proxy :: Proxy rn_t)
+  cn_v = natVal (Proxy :: Proxy cn_t)
+  aNN = unsafeCoerce a :: V n_t (V n_t e)
+
+
+liftV2 :: (KnownNat n1, KnownNat n2) => 
+  (e1 -> e2 -> e3) -> (V n1 e1) -> (V n2 e2) -> (V n1 e3)
+liftV2 f (v1 :: V n1_t e1) (v2 :: V n2_t e2) 
+  | n1_v == n2_v = liftA2 f v1 v2_n1
+  | otherwise = error "lift2V: the vectors have different lengths"
+  where
+  n1_v = natVal (Proxy :: Proxy n1_t)
+  n2_v = natVal (Proxy :: Proxy n2_t)
+  v2_n1 = (unsafeCoerce v2) :: V n1_t e2
+
+{-
+  Basic vector and matrix operations
+-}
+
+instance (CanAddAsymmetric e1 e2) => CanAddAsymmetric (VN e1) (VN e2) where
+  type AddType (VN e1) (VN e2) = VN (AddType e1 e2)
+  add (VN v1) (VN v2) = VN (liftV2 (+) v1 v2)
+
+instance (CanSub e1 e2) => CanSub (VN e1) (VN e2) where
+  type SubType (VN e1) (VN e2) = VN (SubType e1 e2)
+  sub (VN v1) (VN v2) = VN (liftV2 (-) v1 v2)
+
+instance (CanNeg e1) => CanNeg (VN e1) where
+  type NegType (VN e1) = VN (NegType e1)
+  negate (VN v1) = VN (fmap negate v1)
+
+
+
+instance (CanAddAsymmetric e1 e2) => CanAddAsymmetric (MatrixRC e1) (MatrixRC e2) where
+  type AddType (MatrixRC e1) (MatrixRC e2) = MatrixRC (AddType e1 e2)
+  add (MatrixRC rows1) (MatrixRC rows2) = MatrixRC (liftV2 (liftV2 (+)) rows1 rows2)
+
+instance (CanSub e1 e2) => CanSub (MatrixRC e1) (MatrixRC e2) where
+  type SubType (MatrixRC e1) (MatrixRC e2) = MatrixRC (SubType e1 e2)
+  sub (MatrixRC rows1) (MatrixRC rows2) = MatrixRC (liftV2 (liftV2 (-)) rows1 rows2)
+
+instance (CanNeg e1) => CanNeg (MatrixRC e1) where
+  type NegType (MatrixRC e1)= MatrixRC (NegType e1)
+  negate (MatrixRC rows1) = MatrixRC (fmap (fmap negate) rows1)
 
 {-
   Determinant using the Laplace method.
@@ -165,6 +217,12 @@ m1D_detLU = luDetFinite m1D
 m1D_detLaplace :: Double
 m1D_detLaplace = detLaplace (== 0) m1D
 
+b1D :: VN Double
+b1D = vNFromList $ replicate n1 (double 1)
+
+m1b1D_solLU :: VN Double
+m1b1D_solLU = luSolveFinite m1D b1D
+
 --------------------
 
 rows1MP :: [[MPFloat]]
@@ -176,8 +234,26 @@ m1MP = matrixRCFromList rows1MP
 m1MP_detLU :: MPFloat
 m1MP_detLU = luDetFinite m1MP
 
+-- The following needs (Ring MPFloat)
 -- m1MP_detLaplace :: MPFloat
 -- m1MP_detLaplace = detLaplace (== 0) m1MP
+
+b1MP :: VN MPFloat
+b1MP = vNFromList $ replicate n1 (ball_value $ mpBallP (prec 1000) 1)
+
+m1b1MP_solLU :: VN MPFloat
+m1b1MP_solLU = luSolveFinite m1MP b1MP
+
+--------------------
+
+rows1B :: [[MPBall]]
+rows1B = map (map (mpBallP (prec 1000))) rows1I
+
+m1B :: MatrixRC MPBall
+m1B = matrixRCFromList rows1B
+
+m1B_detLaplace :: MPBall
+m1B_detLaplace = detLaplace (!==! 0) m1B
 
 --------------------
 
@@ -188,15 +264,8 @@ m1R :: MatrixRC CReal
 m1R = matrixRCFromList rows1R
 
 m1R_detLaplace :: CReal
-m1R_detLaplace = detLaplace (\(e :: CReal) -> (e ? (prec 10))!==! 0) m1R
+m1R_detLaplace = detLaplace (\e -> (e ? (prec 10))!==! 0) m1R
 
 m1R_detLaplaceBits :: CN MPBall
 m1R_detLaplaceBits = m1R_detLaplace ? (bits 1000)
-
---------------------
-
-b1D :: VN Double
-b1D = vNFromList $ replicate n1 (double 1)
-
--- m1b1_solLU = case luSolve m1D b1D
 
