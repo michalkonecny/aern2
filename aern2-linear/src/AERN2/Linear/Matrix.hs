@@ -4,6 +4,7 @@
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# OPTIONS_GHC -Wno-partial-type-signatures #-}
 module AERN2.Linear.Matrix
 -- ()
 where
@@ -28,7 +29,6 @@ import Data.Foldable (Foldable(toList))
 import qualified Data.Map as Map
 import AERN2.MP (MPBall (ball_value), mpBallP)
 import AERN2.MP.Float (MPFloat) 
-import GHC.Real (Fractional)
 import Unsafe.Coerce (unsafeCoerce)
 import Control.Applicative (Applicative(liftA2))
 
@@ -64,8 +64,21 @@ checkVVSameSizeAs (_ :: V rn1_t (V cn1_t e1)) (mx2 :: V rn2_t (V cn2_t e2))
   rn2_v = natVal (Proxy :: Proxy rn2_t)
   cn2_v = natVal (Proxy :: Proxy cn2_t)
 
+vFromList :: (KnownNat n) => [e] -> V n e
+vFromList es =
+    case LV.fromVector $ Vector.fromList es of
+      Just v -> v
+      _ -> error "convertExactly to V: list of incorrect length"
+
+vvFromList :: (Typeable e, KnownNat cn, KnownNat rn) => 
+            [[e]] -> V rn (V cn e)
+vvFromList rows2 =
+  case LV.fromVector $ Vector.fromList (map vFromList rows2) of
+    Just v -> v
+    _ -> error "convertExactly to MatrixRC: incorrect number of rows"
+
 ----------------------
--- hiding size type parameters 
+-- vectors of all sizes (hiding size type parameters)
 ----------------------
 
 data VN e = forall n. (KnownNat n) => VN (V n e)
@@ -77,13 +90,10 @@ vNFromList (es :: [e]) =
   case someNatVal (length es) of
     Nothing -> error "internal error in vNFromList"
     Just (SomeNat (_ :: Proxy n)) ->
-      VN (vectorN es :: V n e)
-
-vectorN :: (KnownNat n) => [e] -> V n e
-vectorN es =
-    case LV.fromVector $ Vector.fromList es of
-      Just v -> v
-      _ -> error "convertExactly to V: list of incorrect length"
+      VN (vFromList es :: V n e)
+  
+instance Functor VN where
+  fmap f (VN v) = VN (fmap f v)
 
 liftVN1 :: (e1 -> e2) -> (VN e1) -> (VN e2)
 liftVN1 f (VN v) = VN (fmap f v)
@@ -92,44 +102,62 @@ liftVN2 :: (e1 -> e2 -> e3) -> (VN e1) -> (VN e2) -> (VN e3)
 liftVN2 f (VN (v1 :: V n1_t e1)) (VN (v2 :: V n2_t e2)) =
   VN $ liftA2 f v1 (checkVSameSizeAs v1 v2)
 
+----------------------
+-- matrices of all sizes (hiding size type parameters)
+----------------------
+
 data MatrixRC e = forall rn cn. (KnownNat rn, KnownNat cn) => MatrixRC (V rn (V cn e))
 
 deriving instance (Show e) => (Show (MatrixRC e))
+
+identity :: (P.Num e) => Integer -> MatrixRC e
+identity n =
+  case someNatVal n of
+    Just (SomeNat (_ :: Proxy n)) -> MatrixRC (L.identity :: V n (V n _))
+    _ -> error "identity: internal error"
 
 matrixRCFromList :: (Typeable e, Show e) => [[e]] -> MatrixRC e
 matrixRCFromList [] = error "matrixRCFromList called with the empty list"
 matrixRCFromList rows@((row1 :: [e]):_) =
   case (someNatVal (length rows), someNatVal (length row1)) of
     (Just (SomeNat (_ :: Proxy rn)), Just (SomeNat (_ :: Proxy cn))) ->
-      MatrixRC (matrixRC rows :: V rn (V cn e))
+      MatrixRC (vvFromList rows :: V rn (V cn e))
     _ -> error "internal error in matrixRCFromList"
-  where
-  matrixRC :: (Typeable e, KnownNat cn, KnownNat rn) => 
-              [[e]] -> V rn (V cn e)
-  matrixRC rows2 =
-    case LV.fromVector $ Vector.fromList (map vectorN rows2) of
-      Just v -> v
-      _ -> error "convertExactly to MatrixRC: incorrect number of rows"
 
-liftMatrixRC1 :: (e1 -> e2) -> (MatrixRC e1) -> (MatrixRC e2)
-liftMatrixRC1 f (MatrixRC mx) = MatrixRC (fmap (fmap f) mx)
+instance Functor MatrixRC where
+  fmap f (MatrixRC mx) = MatrixRC (fmap (fmap f) mx)
 
 liftMatrixRC2 :: (e1 -> e2 -> e3) -> (MatrixRC e1) -> (MatrixRC e2) -> (MatrixRC e3)
 liftMatrixRC2 f (MatrixRC mx1) (MatrixRC mx2) =
   MatrixRC $ liftA2 (liftA2 f) mx1 ((checkVVSameSizeAs mx1) mx2)
 
-luDetFinite :: (Fractional e) => MatrixRC e -> e
-luDetFinite (MatrixRC mx) = L.luDetFinite (checkVVSquare mx)
+-- wrappers for Linear functions
 
-luSolveFinite :: (Fractional e) => MatrixRC e -> VN e -> VN e
-luSolveFinite (MatrixRC a) (VN b) =
+luSolve :: (P.Fractional e) => MatrixRC e -> VN e -> VN e
+luSolve (MatrixRC a) (VN b) =
   VN $ L.luSolveFinite (checkVVSquare a) ((checkVSameSizeAs a) b)
 
-trace :: (P.Num e)=> MatrixRC e -> e
+luInv :: (P.Fractional e) => MatrixRC e -> MatrixRC e
+luInv (MatrixRC a) = MatrixRC $ L.luInvFinite (checkVVSquare a)
+
+luDet :: (P.Fractional e) => MatrixRC e -> e
+luDet (MatrixRC a) = L.luDetFinite (checkVVSquare a)
+
+trace :: (P.Num e) => MatrixRC e -> e
 trace (MatrixRC a) = L.trace (checkVVSquare a)
 
-mulMatrixRC :: (P.Num e) => (MatrixRC e) -> (MatrixRC e) -> (MatrixRC e)
-mulMatrixRC (MatrixRC a) (MatrixRC b) = MatrixRC (a L.!*! (checkVSameSizeAs (L.transpose a) b))
+diagonal :: (P.Num e) => MatrixRC e -> VN e
+diagonal (MatrixRC a) = VN $ L.diagonal (checkVVSquare a)
+
+maxnormVN :: _ => VN e -> e
+maxnormVN (VN (v :: V _ e)) = 
+  foldl max (fromInteger_ 0 :: e) $ fmap abs v
+
+maxnorm :: _ => MatrixRC e -> e
+maxnorm (MatrixRC (a :: V _ (V _ e))) = 
+  foldl max (fromInteger_ 0 :: e) $ fmap maxnormV a
+  where
+  maxnormV v = foldl max (fromInteger_ 0 :: e) $ fmap abs v
 
 {-
   Basic vector and matrix operations
@@ -159,11 +187,11 @@ instance (CanSub e1 e2) => CanSub (MatrixRC e1) (MatrixRC e2) where
 
 instance (CanNeg e1) => CanNeg (MatrixRC e1) where
   type NegType (MatrixRC e1)= MatrixRC (NegType e1)
-  negate = liftMatrixRC1 negate
+  negate = fmap negate
 
 instance (P.Num e1, e1~e2) => CanMulAsymmetric (MatrixRC e1) (MatrixRC e2) where
   type MulType (MatrixRC e1) (MatrixRC e2) = MatrixRC e1
-  mul = mulMatrixRC
+  mul (MatrixRC a) (MatrixRC b) = MatrixRC (a L.!*! (checkVSameSizeAs (L.transpose a) b))
 
 {-
   Determinant using the Laplace method.
@@ -245,7 +273,7 @@ m1D :: MatrixRC Double
 m1D = matrixRCFromList rows1D
 
 m1D_detLU :: Double
-m1D_detLU = luDetFinite m1D
+m1D_detLU = luDet m1D
 
 m1D_detLaplace :: Double
 m1D_detLaplace = detLaplace (== 0) m1D
@@ -254,7 +282,7 @@ b1D :: VN Double
 b1D = vNFromList $ replicate n1 (double 1)
 
 m1b1D_solLU :: VN Double
-m1b1D_solLU = luSolveFinite m1D b1D
+m1b1D_solLU = luSolve m1D b1D
 
 --------------------
 
@@ -265,7 +293,7 @@ m1MP :: MatrixRC MPFloat
 m1MP = matrixRCFromList rows1MP
 
 m1MP_detLU :: MPFloat
-m1MP_detLU = luDetFinite m1MP
+m1MP_detLU = luDet m1MP
 
 -- The following needs (Ring MPFloat)
 -- m1MP_detLaplace :: MPFloat
@@ -275,7 +303,7 @@ b1MP :: VN MPFloat
 b1MP = vNFromList $ replicate n1 (ball_value $ mpBallP (prec 1000) 1)
 
 m1b1MP_solLU :: VN MPFloat
-m1b1MP_solLU = luSolveFinite m1MP b1MP
+m1b1MP_solLU = luSolve m1MP b1MP
 
 --------------------
 
