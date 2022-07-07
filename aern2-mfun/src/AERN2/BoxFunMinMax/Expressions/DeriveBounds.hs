@@ -151,6 +151,7 @@ scanHypothesis :: F -> Bool -> VarBoundMap -> VarBoundMap
 scanHypothesis (FNot h) isNegated intervals = scanHypothesis h (not isNegated) intervals 
 scanHypothesis (FConn And (FConn Impl cond1 branch1) (FConn Impl (FNot cond2) branch2)) False intervals 
   | cond1 P.== cond2 = scanHypothesis (FConn Or branch1 branch2) False intervals
+  | normalizeBoolean cond1 P.== normalizeBoolean cond2 = scanHypothesis (FConn Or branch1 branch2) False intervals
   | sort (simplifyESafeDoubleList (fToEDNF (simplifyF cond1))) P.== sort (simplifyESafeDoubleList (fToEDNF (simplifyF cond2))) = scanHypothesis (FConn Or branch1 branch2) False intervals
 -- scanHypothesis f@(FConn And h1@(FConn Impl cond1 branch1) h2@(FConn Impl cond2 branch2)) False intervals 
 --   =
