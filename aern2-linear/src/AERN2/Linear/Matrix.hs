@@ -125,11 +125,10 @@ trace (MatrixRC (a :: V rn_t (V cn_t e)))
   cn_v = natVal (Proxy :: Proxy cn_t)
   aNN = unsafeCoerce a :: V rn_t (V rn_t e)
 
-mulVV :: (KnownNat rn1, KnownNat cn1, KnownNat rn2, KnownNat cn2, P.Num e) => 
-  (V rn1 (V cn1 e)) -> (V rn2 (V cn2 e)) -> (V rn1 (V cn2 e))
-mulVV (rows1 :: V rn1_t (V cn1_t e)) (rows2 :: V rn2_t (V cn2_t e))
-  | cn1_v == rn2_v = rows1 L.!*! rows2_cn1
-  | otherwise = error "mulVV: the matrices have incompatible sizes"
+mulMatrixRC :: (P.Num e) => (MatrixRC e) -> (MatrixRC e) -> (MatrixRC e)
+mulMatrixRC (MatrixRC (rows1 :: V rn1_t (V cn1_t e))) (MatrixRC (rows2 :: V rn2_t (V cn2_t e)))
+  | cn1_v == rn2_v = MatrixRC $ rows1 L.!*! rows2_cn1
+  | otherwise = error "mulMatrixRC: the matrices have incompatible sizes"
   where
   cn1_v = natVal (Proxy :: Proxy cn1_t)
   rn2_v = natVal (Proxy :: Proxy rn2_t)
@@ -167,7 +166,7 @@ instance (CanNeg e1) => CanNeg (MatrixRC e1) where
 
 instance (P.Num e1, e1~e2) => CanMulAsymmetric (MatrixRC e1) (MatrixRC e2) where
   type MulType (MatrixRC e1) (MatrixRC e2) = MatrixRC e1
-  mul (MatrixRC rows1) (MatrixRC rows2) = MatrixRC (mulVV rows1 rows2)
+  mul = mulMatrixRC
 
 {-
   Determinant using the Laplace method.
