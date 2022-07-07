@@ -53,6 +53,18 @@ vectorN es =
       Just v -> v
       _ -> error "convertExactly to V: list of incorrect length"
 
+liftVN1 :: (e1 -> e2) -> (VN e1) -> (VN e2)
+liftVN1 f (VN v) = VN (fmap f v)
+
+liftVN2 :: (e1 -> e2 -> e3) -> (VN e1) -> (VN e2) -> (VN e3)
+liftVN2 f (VN (v1 :: V n1_t e1)) (VN (v2 :: V n2_t e2)) 
+  | n1_v == n2_v = VN $ liftA2 f v1 v2_n1
+  | otherwise = error "liftVN2: the vectors have different lengths"
+  where
+  n1_v = natVal (Proxy :: Proxy n1_t)
+  n2_v = natVal (Proxy :: Proxy n2_t)
+  v2_n1 = (unsafeCoerce v2) :: V n1_t e2
+
 data MatrixRC e = forall rn cn. (KnownNat rn, KnownNat cn) => MatrixRC (V rn (V cn e))
 
 deriving instance (Show e) => (Show (MatrixRC e))
@@ -72,6 +84,19 @@ matrixRCFromList rows@((row1 :: [e]):_) =
       Just v -> v
       _ -> error "convertExactly to MatrixRC: incorrect number of rows"
 
+liftMatrixRC1 :: (e1 -> e2) -> (MatrixRC e1) -> (MatrixRC e2)
+liftMatrixRC1 f (MatrixRC mx) = MatrixRC (fmap (fmap f) mx)
+
+liftMatrixRC2 :: (e1 -> e2 -> e3) -> (MatrixRC e1) -> (MatrixRC e2) -> (MatrixRC e3)
+liftMatrixRC2 f (MatrixRC (mx1 :: V rn1_t (V cn1_t e1))) (MatrixRC (mx2 :: V rn2_t (V cn2_t e2)))  
+  | (rn1_v, cn1_v) == (rn2_v, cn2_v) = MatrixRC $ liftA2 (liftA2 f) mx1 mx2_cast
+  | otherwise = error "liftMatrixRC2: the matrices have different dimensions"
+  where
+  rn1_v = natVal (Proxy :: Proxy rn1_t)
+  cn1_v = natVal (Proxy :: Proxy cn1_t)
+  rn2_v = natVal (Proxy :: Proxy rn2_t)
+  cn2_v = natVal (Proxy :: Proxy cn2_t)
+  mx2_cast = (unsafeCoerce mx2) :: V rn1_t (V cn1_t e2)
 
 luDetFinite :: (Fractional e) => MatrixRC e -> e
 luDetFinite (MatrixRC (mx :: V rn_t (V cn_t e))) 
@@ -100,16 +125,6 @@ trace (MatrixRC (a :: V rn_t (V cn_t e)))
   cn_v = natVal (Proxy :: Proxy cn_t)
   aNN = unsafeCoerce a :: V rn_t (V rn_t e)
 
-liftV2 :: (KnownNat n1, KnownNat n2) => 
-  (e1 -> e2 -> e3) -> (V n1 e1) -> (V n2 e2) -> (V n1 e3)
-liftV2 f (v1 :: V n1_t e1) (v2 :: V n2_t e2) 
-  | n1_v == n2_v = liftA2 f v1 v2_n1
-  | otherwise = error "lift2V: the vectors have different lengths"
-  where
-  n1_v = natVal (Proxy :: Proxy n1_t)
-  n2_v = natVal (Proxy :: Proxy n2_t)
-  v2_n1 = (unsafeCoerce v2) :: V n1_t e2
-
 mulVV :: (KnownNat rn1, KnownNat cn1, KnownNat rn2, KnownNat cn2, P.Num e) => 
   (V rn1 (V cn1 e)) -> (V rn2 (V cn2 e)) -> (V rn1 (V cn2 e))
 mulVV (rows1 :: V rn1_t (V cn1_t e)) (rows2 :: V rn2_t (V cn2_t e))
@@ -126,29 +141,29 @@ mulVV (rows1 :: V rn1_t (V cn1_t e)) (rows2 :: V rn2_t (V cn2_t e))
 
 instance (CanAddAsymmetric e1 e2) => CanAddAsymmetric (VN e1) (VN e2) where
   type AddType (VN e1) (VN e2) = VN (AddType e1 e2)
-  add (VN v1) (VN v2) = VN (liftV2 (+) v1 v2)
+  add = liftVN2 add
 
 instance (CanSub e1 e2) => CanSub (VN e1) (VN e2) where
   type SubType (VN e1) (VN e2) = VN (SubType e1 e2)
-  sub (VN v1) (VN v2) = VN (liftV2 (-) v1 v2)
+  sub = liftVN2 sub
 
 instance (CanNeg e1) => CanNeg (VN e1) where
   type NegType (VN e1) = VN (NegType e1)
-  negate (VN v1) = VN (fmap negate v1)
+  negate = liftVN1 negate
 
 
 
 instance (CanAddAsymmetric e1 e2) => CanAddAsymmetric (MatrixRC e1) (MatrixRC e2) where
   type AddType (MatrixRC e1) (MatrixRC e2) = MatrixRC (AddType e1 e2)
-  add (MatrixRC rows1) (MatrixRC rows2) = MatrixRC (liftV2 (liftV2 (+)) rows1 rows2)
+  add = liftMatrixRC2 add
 
 instance (CanSub e1 e2) => CanSub (MatrixRC e1) (MatrixRC e2) where
   type SubType (MatrixRC e1) (MatrixRC e2) = MatrixRC (SubType e1 e2)
-  sub (MatrixRC rows1) (MatrixRC rows2) = MatrixRC (liftV2 (liftV2 (-)) rows1 rows2)
+  sub = liftMatrixRC2 sub
 
 instance (CanNeg e1) => CanNeg (MatrixRC e1) where
   type NegType (MatrixRC e1)= MatrixRC (NegType e1)
-  negate (MatrixRC rows1) = MatrixRC (fmap (fmap negate) rows1)
+  negate = liftMatrixRC1 negate
 
 instance (P.Num e1, e1~e2) => CanMulAsymmetric (MatrixRC e1) (MatrixRC e2) where
   type MulType (MatrixRC e1) (MatrixRC e2) = MatrixRC e1
