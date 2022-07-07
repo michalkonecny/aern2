@@ -14,6 +14,8 @@ import Test.QuickCheck
 import Debug.Trace (trace)
 import Test.QuickCheck.State (State(randomSeed))
 import Data.Ratio
+import AERN2.BoxFunMinMax.VarMap
+import AERN2.Normalize (CanNormalize(normalize))
 
 data BinOp = Add | Sub | Mul | Div | Min | Max | Pow | Mod
   deriving (Show, P.Eq, P.Ord)
@@ -752,6 +754,54 @@ prettyShowFSafeDNF dnf = "OR" ++ concatMap (\c -> "\n\t" ++ prettyShowConjunctio
       (\f -> "\n\t\t" ++ prettyShowF f 3)
       fs
 
+-- prettyShowF :: F -> Integer -> String
+-- prettyShowF (FComp op e1 e2) numTabs = "\n" ++ concat (replicate numTabs "\t") ++ prettyShowE e1 ++ " " ++ prettyShowComp op ++ " " ++ prettyShowE e2
+-- prettyShowF (FConn op f1 f2) numTabs = "\n" ++ concat (replicate numTabs "\t") ++ prettyShowConn op ++ prettyShowF f1 (numTabs + 1) ++ prettyShowF f2 (numTabs + 1)
+-- prettyShowF (FNot f)         numTabs = "\n" ++ concat (replicate numTabs "\t") ++ "NOT" ++ prettyShowF f (numTabs + 1)
+-- prettyShowF FTrue            numTabs = "\n" ++ concat (replicate numTabs "\t") ++ "True"
+-- prettyShowF FFalse           numTabs = "\n" ++ concat (replicate numTabs "\t") ++ "False"
+
+-- pretty show a Why3 VC which is typically a bunch of conjunctions
+prettyShowVC :: F -> TypedVarMap -> String
+prettyShowVC vc vm =
+  "Bounds on variables: \n" ++
+  prettyShowRanges vm ++ "\n" ++
+  "exact NVC: \n" ++
+  prettyShowConjunction (conjunctionToList vc)
+  where
+    prettyShowRanges :: TypedVarMap -> String
+    prettyShowRanges [] = ""
+    prettyShowRanges ((TypedVar (vName, (vLower, vUpper)) vType) : vm) =
+      vName ++ " (" ++ show vType ++ ")" ++ " in [" ++ showRational vLower ++ ", " ++ showRational vUpper ++ "]" ++ "\n" ++ prettyShowRanges vm
+
+    showRational r =
+      let
+        numer = numerator r
+        denom = denominator r
+      in
+        if denom == 1
+          then show numer
+          else show numer ++ " / " ++ show denom
+
+    conjunctionToList :: F -> [F]
+    conjunctionToList (FConn And f1 f2) = conjunctionToList f1 ++ conjunctionToList f2
+    conjunctionToList f = [f]
+
+    prettyShowConjunction :: [F] -> String
+    prettyShowConjunction []  = []
+    prettyShowConjunction [f] = prettyShowF f 2
+    prettyShowConjunction fs  =
+      concatMap
+      (\f -> prettyShowAssert f 0 ++ "\n\n")
+      fs
+
+    prettyShowAssert :: F -> Integer -> String
+    prettyShowAssert (FComp op e1 e2) indentTracker = concat (replicate indentTracker "  ") ++ prettyShowE e1 ++ " " ++ prettyShowComp op ++ " " ++ prettyShowE e2
+    prettyShowAssert (FConn Impl f1 f2) indentTracker = concat (replicate indentTracker "  ") ++ prettyShowConn Impl ++ "\n" ++ prettyShowAssert f1 (indentTracker + 1) ++ "\n" ++ concat (replicate (indentTracker + 1) "  ") ++ "===========>\n" ++ prettyShowAssert f2 (indentTracker + 1)
+    prettyShowAssert (FConn op f1 f2) indentTracker = concat (replicate indentTracker "  ") ++ prettyShowConn op ++ "\n" ++ prettyShowAssert f1 (indentTracker + 1) ++ "\n" ++ prettyShowAssert f2 (indentTracker + 1)
+    prettyShowAssert (FNot f)         indentTracker = concat (replicate indentTracker "  ") ++ "NOT" ++ "\n" ++ prettyShowAssert f (indentTracker + 1)
+    prettyShowAssert FTrue            indentTracker = concat (replicate indentTracker "  ") ++ "True"
+    prettyShowAssert FFalse           indentTracker = concat (replicate indentTracker "  ") ++ "False"
 
 -- latexShowESafeCNF :: [[ESafe]] -> String
 -- latexShowESafeCNF cnf = "AND" ++ concatMap (\d -> "\n\t" ++ prettyShowDisjunction d) cnf
@@ -865,7 +915,13 @@ prettyShowE (EUnOp op e) =
     Cos    -> "(cos " ++ prettyShowE e ++ ")"
 prettyShowE (PowI e i) = "(" ++ prettyShowE e ++ " ^ " ++ show i ++ ")"
 prettyShowE (Var v) = v
-prettyShowE (Lit v) = show (double v)
+prettyShowE (Lit v) =
+  if denom == 1
+    then show numer
+    else show numer ++ " / " ++ show denom
+  where
+    numer = numerator v
+    denom = denominator v
 prettyShowE (Float32 m e) =
   case m of
     RNE -> "(rnd32_ne " ++ prettyShowE e ++ ")"
@@ -1126,3 +1182,50 @@ replaceEInF fContainingE eToFind eToReplace =
     FNot f         -> FNot $ replaceEInF f eToFind eToReplace
     FTrue          -> FTrue
     FFalse         -> FFalse
+
+-- normalize to and or or
+-- aggressively apply elimination rules
+normalizeBoolean :: F -> F
+normalizeBoolean form = 
+  if form P.== simplifiedForm
+    then simplifiedForm
+    else normalizeBoolean simplifiedForm
+  where
+    simplifiedForm = aggressiveSimplify $ simplifyF $ normalizeToOr $ aux $ simplifyF form
+
+    -- Turn and/or into or using demorgans laws
+    normalizeToOr f =
+      let
+        -- convertAndToNegatedOr (FConn And (FNot x) y) = FNot $ FConn Or x $ convertAndToNegatedOr y
+        convertAndToOr (FConn And x y) = FNot $ FConn Or (FNot x) $ convertAndToOr (FNot y)
+        convertAndToOr (FConn Or x y) = FConn Or (convertAndToOr x) (convertAndToOr y)
+        -- convertAndToNegatedOr (FNot y) = y
+        convertAndToOr y = y
+      in
+        convertAndToOr f
+
+    -- Aggressively simplify Ors
+    aggressiveSimplify (FConn Or x f@(FNot (FConn Or y z)))
+      | x P.== y  = aggressiveSimplify (FConn Or x (FNot z))
+      | x P.== z  = aggressiveSimplify (FConn Or x (FNot y))
+      | otherwise = FConn Or (aggressiveSimplify x) (aggressiveSimplify f)
+    aggressiveSimplify (FConn Or f@(FNot (FConn Or y z)) x)
+      | x P.== y  = aggressiveSimplify (FConn Or (FNot z) x)
+      | x P.== z  = aggressiveSimplify (FConn Or (FNot y) x)
+      | otherwise = FConn Or (aggressiveSimplify f) (aggressiveSimplify x) 
+    aggressiveSimplify (FNot (FNot f)) = aggressiveSimplify f
+    -- aggressiveSimplify (FConn Or x f@(FConn And (FNot x') y)) = if x P.== x' then aggressiveSimplify (FConn Or x y) else (FConn Or (aggressiveSimplify x) (aggressiveSimplify f))
+    -- aggressiveSimplify (FConn Or x f@(FConn And y (FNot x'))) = if x P.== x' then aggressiveSimplify (FConn Or x y) else (FConn Or (aggressiveSimplify x) (aggressiveSimplify f))
+    -- aggressiveSimplify (FConn Or f@(FConn And (FNot x') y) x) = if x P.== x' then aggressiveSimplify (FConn Or x y) else (FConn Or (aggressiveSimplify f) (aggressiveSimplify x))
+    -- aggressiveSimplify (FConn Or f@(FConn And y (FNot x')) x) = if x P.== x' then aggressiveSimplify (FConn Or x y) else (FConn Or (aggressiveSimplify f) (aggressiveSimplify x))
+    aggressiveSimplify f = f
+
+    -- aux (FConn Or x f@(FConn And (FNot x') y)) = if x P.== x' then FConn And x y else FConn Or (aux x) (aux f)
+    aux (FConn Impl x y) = aux $ FConn Or (FNot x) y
+    aux (FNot f@(FConn Impl x y)) = aux (FNot (aux f))
+    aux (FNot (FConn Or x y)) = aux (FConn And (FNot x) (FNot y))
+    aux (FNot (FConn And x y)) = aux (FConn Or (FNot x) (FNot y))
+    aux (FConn Or x y) = FConn Or (aux x) (aux y)
+    aux (FConn And x y) = FConn And (aux x) (aux y)
+    aux (FNot (FNot f)) = aux f
+    aux f = f
