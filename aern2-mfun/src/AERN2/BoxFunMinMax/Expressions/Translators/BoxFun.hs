@@ -37,7 +37,7 @@ expressionToBoxFun expression domain p =
     expressionToDifferential e@(Float _ _) _   = error $ "Cannot translate expression containing float to BoxFun: " ++ prettyShowE e
     expressionToDifferential e@(Float32 _ _) _ = error $ "Cannot translate expression containing float32 to BoxFun: " ++ prettyShowE e
     expressionToDifferential e@(Float64 _ _) _ = error $ "Cannot translate expression containing float64 to BoxFun: " ++ prettyShowE e
-    expressionToDifferential (RoundToInteger mode e) v = 
+    expressionToDifferential (RoundToInteger mode e) v = --FIXME: add round to AD
       case expressionToDifferential e v of
         OrderZero x      -> OrderZero $ roundMPBall mode x
         OrderOne x _     -> OrderOne (roundMPBall mode x) err
