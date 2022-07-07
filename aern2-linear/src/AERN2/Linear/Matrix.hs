@@ -33,7 +33,39 @@ import Unsafe.Coerce (unsafeCoerce)
 import Control.Applicative (Applicative(liftA2))
 
 ----------------------
--- hiding type Nat type parameters 
+-- checking sizes of vectors and matrices
+----------------------
+
+checkVVSquare :: (KnownNat rn, KnownNat cn) => V rn (V cn e) -> V rn (V rn e)
+checkVVSquare (mx :: V rn_t (V cn_t e))
+  | rn_v == cn_v = unsafeCoerce mx
+  | otherwise = error "expecting a square matrix, but got a non-square matrix"
+  where
+  rn_v = natVal (Proxy :: Proxy rn_t)
+  cn_v = natVal (Proxy :: Proxy cn_t)
+
+checkVSameSizeAs :: (KnownNat n1, KnownNat n2) => (V n1 e1) -> (V n2 e2) -> (V n1 e2)
+checkVSameSizeAs (_ :: V n1_t e1) (v2 :: V n2_t e2)
+  | n1_v == n2_v = unsafeCoerce v2
+  | otherwise = error "expecting a vector of matching size, but got one of a different size"
+  where
+  n1_v = natVal (Proxy :: Proxy n1_t)
+  n2_v = natVal (Proxy :: Proxy n2_t)
+
+checkVVSameSizeAs :: 
+  (KnownNat rn1, KnownNat cn1, KnownNat rn2, KnownNat cn2) => 
+  (V rn1 (V cn1 e1)) -> (V rn2 (V cn2 e2)) -> (V rn1 (V cn1 e2))
+checkVVSameSizeAs (_ :: V rn1_t (V cn1_t e1)) (mx2 :: V rn2_t (V cn2_t e2))
+  | (rn1_v, cn1_v) == (rn2_v, cn2_v) = unsafeCoerce mx2
+  | otherwise = error "expecting a matrix of matching size, but got one of a different size"
+  where
+  rn1_v = natVal (Proxy :: Proxy rn1_t)
+  cn1_v = natVal (Proxy :: Proxy cn1_t)
+  rn2_v = natVal (Proxy :: Proxy rn2_t)
+  cn2_v = natVal (Proxy :: Proxy cn2_t)
+
+----------------------
+-- hiding size type parameters 
 ----------------------
 
 data VN e = forall n. (KnownNat n) => VN (V n e)
@@ -57,13 +89,8 @@ liftVN1 :: (e1 -> e2) -> (VN e1) -> (VN e2)
 liftVN1 f (VN v) = VN (fmap f v)
 
 liftVN2 :: (e1 -> e2 -> e3) -> (VN e1) -> (VN e2) -> (VN e3)
-liftVN2 f (VN (v1 :: V n1_t e1)) (VN (v2 :: V n2_t e2)) 
-  | n1_v == n2_v = VN $ liftA2 f v1 v2_n1
-  | otherwise = error "liftVN2: the vectors have different lengths"
-  where
-  n1_v = natVal (Proxy :: Proxy n1_t)
-  n2_v = natVal (Proxy :: Proxy n2_t)
-  v2_n1 = (unsafeCoerce v2) :: V n1_t e2
+liftVN2 f (VN (v1 :: V n1_t e1)) (VN (v2 :: V n2_t e2)) =
+  VN $ liftA2 f v1 (checkVSameSizeAs v1 v2)
 
 data MatrixRC e = forall rn cn. (KnownNat rn, KnownNat cn) => MatrixRC (V rn (V cn e))
 
@@ -88,51 +115,21 @@ liftMatrixRC1 :: (e1 -> e2) -> (MatrixRC e1) -> (MatrixRC e2)
 liftMatrixRC1 f (MatrixRC mx) = MatrixRC (fmap (fmap f) mx)
 
 liftMatrixRC2 :: (e1 -> e2 -> e3) -> (MatrixRC e1) -> (MatrixRC e2) -> (MatrixRC e3)
-liftMatrixRC2 f (MatrixRC (mx1 :: V rn1_t (V cn1_t e1))) (MatrixRC (mx2 :: V rn2_t (V cn2_t e2)))  
-  | (rn1_v, cn1_v) == (rn2_v, cn2_v) = MatrixRC $ liftA2 (liftA2 f) mx1 mx2_cast
-  | otherwise = error "liftMatrixRC2: the matrices have different dimensions"
-  where
-  rn1_v = natVal (Proxy :: Proxy rn1_t)
-  cn1_v = natVal (Proxy :: Proxy cn1_t)
-  rn2_v = natVal (Proxy :: Proxy rn2_t)
-  cn2_v = natVal (Proxy :: Proxy cn2_t)
-  mx2_cast = (unsafeCoerce mx2) :: V rn1_t (V cn1_t e2)
+liftMatrixRC2 f (MatrixRC mx1) (MatrixRC mx2) =
+  MatrixRC $ liftA2 (liftA2 f) mx1 ((checkVVSameSizeAs mx1) mx2)
 
 luDetFinite :: (Fractional e) => MatrixRC e -> e
-luDetFinite (MatrixRC (mx :: V rn_t (V cn_t e))) 
-  | rn_v == cn_v = L.luDetFinite mxRR
-  | otherwise = error "luDetFinite called for a non-square matrix"
-  where
-  rn_v = natVal (Proxy :: Proxy rn_t)
-  cn_v = natVal (Proxy :: Proxy cn_t)
-  mxRR = unsafeCoerce mx :: V rn_t (V rn_t e)
+luDetFinite (MatrixRC mx) = L.luDetFinite (checkVVSquare mx)
 
 luSolveFinite :: (Fractional e) => MatrixRC e -> VN e -> VN e
-luSolveFinite (MatrixRC (a :: V rn_t (V cn_t e))) (VN (b :: V n_t e))
-  | rn_v == cn_v = VN $ L.luSolveFinite aNN b
-  | otherwise = error "luDetFinite called for a non-square matrix"
-  where
-  rn_v = natVal (Proxy :: Proxy rn_t)
-  cn_v = natVal (Proxy :: Proxy cn_t)
-  aNN = unsafeCoerce a :: V n_t (V n_t e)
+luSolveFinite (MatrixRC a) (VN b) =
+  VN $ L.luSolveFinite (checkVVSquare a) ((checkVSameSizeAs a) b)
 
 trace :: (P.Num e)=> MatrixRC e -> e
-trace (MatrixRC (a :: V rn_t (V cn_t e)))
-  | rn_v == cn_v = L.trace aNN
-  | otherwise = error "trace called for a non-square matrix"
-  where
-  rn_v = natVal (Proxy :: Proxy rn_t)
-  cn_v = natVal (Proxy :: Proxy cn_t)
-  aNN = unsafeCoerce a :: V rn_t (V rn_t e)
+trace (MatrixRC a) = L.trace (checkVVSquare a)
 
 mulMatrixRC :: (P.Num e) => (MatrixRC e) -> (MatrixRC e) -> (MatrixRC e)
-mulMatrixRC (MatrixRC (rows1 :: V rn1_t (V cn1_t e))) (MatrixRC (rows2 :: V rn2_t (V cn2_t e)))
-  | cn1_v == rn2_v = MatrixRC $ rows1 L.!*! rows2_cn1
-  | otherwise = error "mulMatrixRC: the matrices have incompatible sizes"
-  where
-  cn1_v = natVal (Proxy :: Proxy cn1_t)
-  rn2_v = natVal (Proxy :: Proxy rn2_t)
-  rows2_cn1 = (unsafeCoerce rows2) :: V cn1_t (V cn2_t e)
+mulMatrixRC (MatrixRC a) (MatrixRC b) = MatrixRC (a L.!*! (checkVSameSizeAs (L.transpose a) b))
 
 {-
   Basic vector and matrix operations

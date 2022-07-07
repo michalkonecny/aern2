@@ -24,7 +24,7 @@ dependencies:
 - containers
 - vector
 - linear
-# - matrix
+# - lens
 # - hspec
 # - QuickCheck
 - collect-errors
