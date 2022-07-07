@@ -46,8 +46,10 @@ parseSMT2 filePath = fmap parser $ P.readFile filePath
 -- Assertions only have one 'operands'
 findAssertions :: [LD.Expression] -> [LD.Expression]
 findAssertions [] = []
+-- findAssertions [LD.Application (LD.Variable "assert") [operands]] = [operands]
 findAssertions ((LD.Application (LD.Variable "assert") [operands]) : expressions) = operands : findAssertions expressions
-findAssertions (_ : expressions) = findAssertions expressions
+-- findAssertions ((LD.Application (LD.Variable var) [operands]) : expressions) = operands : findAssertions expressions
+findAssertions (e : expressions) = findAssertions expressions
 
 findFunctionInputsAndOutputs :: [LD.Expression] -> [(String, ([String], String))]
 findFunctionInputsAndOutputs [] = []
@@ -139,13 +141,12 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) functionsWithInputsAn
     (Just e1, Just e2) ->
       case operator of
         n
-          | n `elem` [">=", "fp.geq", "oge", "oge__logic"] -> Just $ FComp Ge e1 e2
-          | n `elem` [">",  "fp.gt", "ogt", "ogt__logic"]  -> Just $ FComp Gt e1 e2
-          | n `elem` ["<=", "fp.leq", "ole", "ole__logic"] -> Just $ FComp Le e1 e2
-          | n `elem` ["<",  "fp.lt", "olt", "olt__logic"]  -> Just $ FComp Lt e1 e2
+          | n `elem` [">=", "fp.geq", "oge", "oge__logic"] || (n =~ "^bool_ge$|^bool_ge[0-9]+$" :: Bool) -> Just $ FComp Ge e1 e2
+          | n `elem` [">",  "fp.gt", "ogt", "ogt__logic"] || (n =~ "^bool_gt$|^bool_gt[0-9]+$" :: Bool)  -> Just $ FComp Gt e1 e2
+          | n `elem` ["<=", "fp.leq", "ole", "ole__logic"] || (n =~ "^bool_le$|^bool_le[0-9]+$" :: Bool) -> Just $ FComp Le e1 e2
+          | n `elem` ["<",  "fp.lt", "olt", "olt__logic"] || (n =~ "^bool_lt$|^bool_lt[0-9]+$" :: Bool) -> Just $ FComp Lt e1 e2
           | n `elem` ["=",  "fp.eq"]  -> Just $ FComp Eq e1 e2
-          | "bool_eq" `isPrefixOf` n ->  Just $ FComp Eq e1 e2
-          | "user_eq" `isPrefixOf` n ->  Just $ FComp Eq e1 e2
+          | (n =~ "^bool_eq$|^bool_eq[0-9]+$|^user_eq$|^user_eq[0-9]+$" :: Bool) ->  Just $ FComp Eq e1 e2
         _ -> Nothing
     (_, _) ->
       case (termToF op1 functionsWithInputsAndOutputs, termToF op2 functionsWithInputsAndOutputs) of
@@ -157,6 +158,7 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) functionsWithInputsAn
             "="   -> Just $ FConn And (FConn Impl f1 f2) (FConn Impl f2 f1)
             n
               | "bool_eq" `isPrefixOf` n ->  Just $ FConn And (FConn Impl f1 f2) (FConn Impl f2 f1)
+              | "bool_neq" `isPrefixOf` n ->  Just $ FNot $ FConn And (FConn Impl f1 f2) (FConn Impl f2 f1)
               | "user_eq" `isPrefixOf` n ->  Just $ FConn And (FConn Impl f1 f2) (FConn Impl f2 f1)
             _ -> Nothing
         -- Parse ite where it is used as an expression
@@ -167,19 +169,17 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) functionsWithInputsAn
                 (Just condF, Just thenTermE, Just elseTermE) ->
                   case operator of
                     n
-                      | n `elem` [">=", "fp.geq", "oge", "oge__logic"]  -> Just $ FConn And (FConn Impl condF (FComp Ge thenTermE e2))
+                      | n `elem` [">=", "fp.geq", "oge", "oge__logic"] || (n =~ "^bool_ge$|^bool_ge[0-9]+$" :: Bool)  -> Just $ FConn And (FConn Impl condF (FComp Ge thenTermE e2))
                                                                                             (FConn Impl (FNot condF) (FComp Ge elseTermE e2))
-                      | n `elem` [">",  "fp.gt", "ogt", "ogt__logic"]   -> Just $ FConn And (FConn Impl condF (FComp Gt thenTermE e2))
+                      | n `elem` [">",  "fp.gt", "ogt", "ogt__logic"] || (n =~ "^bool_gt$|^bool_gt[0-9]+$" :: Bool)   -> Just $ FConn And (FConn Impl condF (FComp Gt thenTermE e2))
                                                                                             (FConn Impl (FNot condF) (FComp Gt elseTermE e2))
-                      | n `elem` ["<=", "fp.leq", "ole", "ole__logic"]  -> Just $ FConn And (FConn Impl condF (FComp Le thenTermE e2))
+                      | n `elem` ["<=", "fp.leq", "ole", "ole__logic"] || (n =~ "^bool_le$|^bool_le[0-9]+$" :: Bool)  -> Just $ FConn And (FConn Impl condF (FComp Le thenTermE e2))
                                                                                             (FConn Impl (FNot condF) (FComp Le elseTermE e2))
-                      | n `elem` ["<",  "fp.lt", "olt", "olt__logic"]   -> Just $ FConn And (FConn Impl condF (FComp Lt thenTermE e2))
+                      | n `elem` ["<",  "fp.lt", "olt", "olt__logic"] || (n =~ "^bool_lt$|^bool_lt[0-9]+$" :: Bool)   -> Just $ FConn And (FConn Impl condF (FComp Lt thenTermE e2))
                                                                                             (FConn Impl (FNot condF) (FComp Lt elseTermE e2))
-                      | n `elem` ["=",  "fp.eq"]                        -> Just $ FConn And (FConn Impl condF (FComp Eq thenTermE e2))
+                      | n `elem` ["=",  "fp.eq"] || (n =~ "^bool_eq$|^bool_eq[0-9]+$|^user_eq$|^user_eq[0-9]+$" :: Bool)                       -> Just $ FConn And (FConn Impl condF (FComp Eq thenTermE e2))
                                                                                             (FConn Impl (FNot condF) (FComp Eq elseTermE e2))
-                      | "bool_eq" `isPrefixOf` n                        -> Just $ FConn And (FConn Impl condF (FComp Eq thenTermE e2))
-                                                                                            (FConn Impl (FNot condF) (FComp Eq elseTermE e2))
-                      | "user_eq" `isPrefixOf` n                        -> Just $ FConn And (FConn Impl condF (FComp Eq thenTermE e2))
+                      | "bool_neq" `isPrefixOf` n                        -> Just $ FNot $ FConn And (FConn Impl condF (FComp Eq thenTermE e2))
                                                                                             (FConn Impl (FNot condF) (FComp Eq elseTermE e2))
                     _ -> Nothing
                 (_, _, _) -> Nothing
@@ -190,20 +190,18 @@ termToF (LD.Application (LD.Variable operator) [op1, op2]) functionsWithInputsAn
                     (Just condF, Just thenTermE, Just elseTermE) ->
                       case operator of
                         n -- TODO: Change these to AND
-                          | n `elem` [">=", "fp.geq", "oge", "oge__logic"]  -> Just $ FConn And (FConn Impl condF (FComp Ge e1 thenTermE))
+                          | n `elem` [">=", "fp.geq", "oge", "oge__logic"] || (n =~ "^bool_ge$|^bool_ge[0-9]+$" :: Bool)  -> Just $ FConn And (FConn Impl condF (FComp Ge e1 thenTermE))
                                                                                                 (FConn Impl (FNot condF) (FComp Ge e1 elseTermE))
-                          | n `elem` [">",  "fp.gt", "ogt", "ogt__logic"]   -> Just $ FConn And (FConn Impl condF (FComp Gt e1 thenTermE))
+                          | n `elem` [">",  "fp.gt", "ogt", "ogt__logic"] || (n =~ "^bool_gt$|^bool_gt[0-9]+$" :: Bool)   -> Just $ FConn And (FConn Impl condF (FComp Gt e1 thenTermE))
                                                                                                 (FConn Impl (FNot condF) (FComp Gt e1 elseTermE))
-                          | n `elem` ["<=", "fp.leq", "ole", "ole__logic"]  -> Just $ FConn And (FConn Impl condF (FComp Le e1 thenTermE))
+                          | n `elem` ["<=", "fp.leq", "ole", "ole__logic"] || (n =~ "^bool_le$|^bool_le[0-9]+$" :: Bool)  -> Just $ FConn And (FConn Impl condF (FComp Le e1 thenTermE))
                                                                                                 (FConn Impl (FNot condF) (FComp Le e1 elseTermE))
-                          | n `elem` ["<",  "fp.lt", "olt", "olt__logic"]   -> Just $ FConn And (FConn Impl condF (FComp Lt e1 thenTermE))
+                          | n `elem` ["<",  "fp.lt", "olt", "olt__logic"] || (n =~ "^bool_lt$|^bool_lt[0-9]+$" :: Bool)   -> Just $ FConn And (FConn Impl condF (FComp Lt e1 thenTermE))
                                                                                                 (FConn Impl (FNot condF) (FComp Lt e1 elseTermE))
-                          | n `elem` ["=",  "fp.eq"]                        -> Just $ FConn And (FConn Impl condF (FComp Eq e1 thenTermE))
+                          | n `elem` ["=",  "fp.eq"] || (n =~ "^bool_eq$|^bool_eq[0-9]+$|^user_eq$|^user_eq[0-9]+$" :: Bool)                       -> Just $ FConn And (FConn Impl condF (FComp Eq e1 thenTermE))
                                                                                                 (FConn Impl (FNot condF) (FComp Eq e1 elseTermE))
-                          | "bool_eq" `isPrefixOf` n                        -> Just $ FConn And (FConn Impl condF (FComp Eq e1 thenTermE))
-                                                                                                (FConn Impl (FNot condF) (FComp Eq e1 elseTermE))
-                          | "user_eq" `isPrefixOf` n                        -> Just $ FConn And (FConn Impl condF (FComp Eq e1 thenTermE))
-                                                                                                (FConn Impl (FNot condF) (FComp Eq e1 elseTermE))
+                          | "bool_neq" `isPrefixOf` n                        -> Just $ FNot $ FConn And (FConn Impl condF (FComp Eq e1 thenTermE))
+                                                                                  (FConn Impl (FNot condF) (FComp Eq e1 elseTermE))
                         _ -> Nothing
                     (_, _, _) -> Nothing
                 (_, _) -> Nothing
@@ -228,10 +226,12 @@ termToE (LD.Application (LD.Variable operator) [op]) functionsWithInputsAndOutpu
     Nothing -> Nothing
     Just e -> case operator of
       n
-        | (n =~ "^abs$|^abs[0-9]+$" :: Bool)   -> deriveTypeForOneArgFunctions n (EUnOp Abs) e
-        | (n =~ "^sin$|^sin[0-9]+$" :: Bool)   -> deriveTypeForOneArgFunctions n (EUnOp Sin) e
-        | (n =~ "^cos$|^cos[0-9]+$" :: Bool)   -> deriveTypeForOneArgFunctions n (EUnOp Cos) e
-        | (n =~ "^sqrt$|^sqrt[0-9]+$" :: Bool) -> deriveTypeForOneArgFunctions n (EUnOp Sqrt) e
+        | (n =~ "^real_pi$|^real_pi[0-9]+$" :: Bool) -> Just Pi
+        | (n =~ "^abs$|^abs[0-9]+$" :: Bool)   -> Just $ EUnOp Abs e
+        | (n =~ "^sin$|^sin[0-9]+$|^real_sin$|^real_sin[0-9]+$" :: Bool)   -> Just $ EUnOp Sin e
+        | (n =~ "^cos$|^cos[0-9]+$|^real_cos$|^real_cos[0-9]+$" :: Bool)   -> Just $ EUnOp Cos e
+        | (n =~ "^sqrt$|^sqrt[0-9]+$|^real_square_root$|^real_square_root[0-9]+$" :: Bool) -> Just $ EUnOp Sqrt e
+        | (n =~ "^fp.to_real$|^fp.to_real[0-9]+$|^to_real$|^to_real[0-9]+$" :: Bool) -> Just e
       "-"               -> Just $ EUnOp Negate e
       -- SPARK Reals functions
       "from_int"        -> Just e
@@ -242,9 +242,9 @@ termToE (LD.Application (LD.Variable operator) [op]) functionsWithInputsAndOutpu
       -- Float functions
       "fp.abs"          -> Just $ EUnOp Abs e
       "fp.neg"          -> Just $ EUnOp Negate e
-      "fp.to_real"      -> Just e
-      "to_real"         -> Just e
-      "value"           -> Just e
+      -- "fp.to_real"      -> Just e
+      -- "to_real"         -> Just e
+      -- "value"           -> Just e
       -- Undefined functions
       "fp.isNormal"     -> Nothing
       "fp.isSubnormal"  -> Nothing
@@ -303,9 +303,10 @@ termToE (LD.Application (LD.Variable operator) [op1, op2]) functionsWithInputsAn
             case lookup n functionsWithInputsAndOutputs of
               Just (_, outputType) ->
                 case outputType of
-                  o
+                  o -- Why3 will type check that the input is an integer, making these safe
                     | o `elem` ["Float32", "single"] -> Just $ Float32 roundingMode e
                     | o `elem` ["Float64", "double"] -> Just $ Float64 roundingMode e
+                    | o `elem` ["Real", "real"] -> Just e
                   _ -> Nothing
               _ -> Nothing
         "fp.roundToIntegral" -> Just $ RoundToInteger roundingMode e
@@ -320,36 +321,36 @@ termToE (LD.Application (LD.Variable operator) [op1, op2]) functionsWithInputsAn
               | n `elem` ["-", "osubtract", "osubtract__logic"]          -> Just $ EBinOp Sub e1 e2
               | n `elem` ["*", "omultiply", "omultiply__logic"]          -> Just $ EBinOp Mul e1 e2
               | n `elem` ["/", "odivide", "odivide__logic"]              -> Just $ EBinOp Div e1 e2
-              | (n =~ "^pow$|^pow[0-9]+$|^power$|^power[0-9]+$" :: Bool) -> --FIXME: remove int pow? only use int pow if actually specified?
-                case lookup n functionsWithInputsAndOutputs of
-                  Just (["Real", "Real"], "Real") -> Just $ EBinOp Pow e1 e2
-                  Just ([input1, "Int"], output) ->
-                    let
-                      mExactPowExpression =
-                        if input1 == "Int" || input1 == "Real"
-                          then case e2 of
-                            Lit l2 -> if denominator l2 == 1.0 then Just $ PowI e1 (numerator l2) else Just $ EBinOp Pow e1 e2
-                            _      -> Just $ EBinOp Pow e1 e2
-                          else Nothing
-                    in case mExactPowExpression of
-                      Just exactPowExpression -> case output of
-                        "Real" -> Just exactPowExpression
-                        "Int"  -> Just $ RoundToInteger RNE exactPowExpression
+              | (n =~ "^pow$|^pow[0-9]+$|^power$|^power[0-9]+$" :: Bool) -> Just $ EBinOp Pow e1 e2 --FIXME: remove int pow? only use int pow if actually specified?
+                -- case lookup n functionsWithInputsAndOutputs of
+                --   Just (["Real", "Real"], "Real") -> Just $ EBinOp Pow e1 e2
+                --   Just ([input1, "Int"], output) ->
+                --     let
+                --       mExactPowExpression =
+                --         if input1 == "Int" || input1 == "Real"
+                --           then case e2 of
+                --             Lit l2 -> if denominator l2 == 1.0 then Just $ PowI e1 (numerator l2) else Just $ EBinOp Pow e1 e2
+                --             _      -> Just $ EBinOp Pow e1 e2
+                --           else Nothing
+                --     in case mExactPowExpression of
+                --       Just exactPowExpression -> case output of
+                --         "Real" -> Just exactPowExpression
+                --         "Int"  -> Just $ RoundToInteger RNE exactPowExpression
 
-                        _      -> Nothing
-                      Nothing -> Nothing
-                  Nothing -> -- No input/output, treat as real pow
-                    case e2 of
-                      Lit l2 -> if denominator l2 == 1.0 then Just $ PowI e1 (numerator l2) else Just $ EBinOp Pow e1 e2
-                      _      -> Just $ EBinOp Pow e1 e2
-                  _ -> Nothing
-              | (n =~ "^mod$|^mod[0-9]+$" :: Bool)                       ->
-                case lookup n functionsWithInputsAndOutputs of
-                  Just (["Real", "Real"], "Real") -> Just $ EBinOp Mod e1 e2
-                  Just (["Int", "Int"], "Int") -> Just $ RoundToInteger RNE $ EBinOp Mod e1 e2 --TODO: might be worth implementing Int Mod
-                  -- No input/output, treat as real mod
-                  Nothing -> Just $ EBinOp Mod e1 e2
-                  _ -> Nothing
+                --         _      -> Nothing
+                --       Nothing -> Nothing
+                --   Nothing -> -- No input/output, treat as real pow
+                --     case e2 of
+                --       Lit l2 -> if denominator l2 == 1.0 then Just $ PowI e1 (numerator l2) else Just $ EBinOp Pow e1 e2
+                --       _      -> Just $ EBinOp Pow e1 e2
+                --   _ -> Nothing
+              | (n =~ "^mod$|^mod[0-9]+$" :: Bool)                       -> Just $ EBinOp Mod e1 e2
+                -- case lookup n functionsWithInputsAndOutputs of
+                --   Just (["Real", "Real"], "Real") -> Just $ EBinOp Mod e1 e2
+                --   Just (["Int", "Int"], "Int") -> Just $ RoundToInteger RNE $ EBinOp Mod e1 e2 --TODO: might be worth implementing Int Mod
+                --   -- No input/output, treat as real mod
+                --   Nothing -> Just $ EBinOp Mod e1 e2
+                --   _ -> Nothing
             _                                                            -> Nothing
         (_, _) -> Nothing
 
@@ -430,6 +431,26 @@ collapseOr orig@(LD.Application (LD.Variable "or") [LD.Application (LD.Variable 
     else orig
 collapseOr (LD.Application operator args) = LD.Application operator (collapseOrs args)
 collapseOr e = e
+
+-- |Replace function guards which are known to be always true with true.
+eliminateKnownFunctionGuards :: [LD.Expression] -> [LD.Expression]
+eliminateKnownFunctionGuards = map eliminateKnownFunctionGuard
+
+-- |Replace function guard which is known to be always true with true.
+eliminateKnownFunctionGuard :: LD.Expression -> LD.Expression
+eliminateKnownFunctionGuard orig@(LD.Application operator@(LD.Variable var) args@(guardedFunction : _)) =
+  let
+    knownGuardsRegex = 
+      "^real_sin__function_guard$|^real_sin__function_guard[0-9]+$|" ++
+      "^real_cos__function_guard$|^real_cos__function_guard[0-9]+$|" ++
+      "^real_square_root__function_guard$|^real_square_root__function_guard[0-9]+$|" ++
+      "^real_pi__function_guard$|^real_pi__function_guard[0-9]+$"
+  in
+    if (var =~ knownGuardsRegex :: Bool)
+      then LD.Variable "true"
+      else LD.Application operator (eliminateKnownFunctionGuards args)
+eliminateKnownFunctionGuard (LD.Application operator args) = LD.Application operator (eliminateKnownFunctionGuards args)
+eliminateKnownFunctionGuard e = e
 
 termsToF :: [LD.Expression] -> [(String, ([String], String))] -> [F]
 termsToF es fs = mapMaybe (`termToF` fs) es
@@ -599,12 +620,10 @@ processVC parsedExpressions =
   Just (foldAssertionsF assertionsF, variablesWithTypes)
   where
     assertions  = findAssertions parsedExpressions
-    assertionsF = mapMaybe (`determineFloatTypeF` variablesWithTypes) $ (termsToF . collapseOrs)  assertions functionsWithInputsAndOutputs
+    assertionsF = mapMaybe (`determineFloatTypeF` variablesWithTypes) $ (termsToF . eliminateKnownFunctionGuards . collapseOrs)  assertions functionsWithInputsAndOutputs
 
     variablesWithTypes  = findVariables parsedExpressions
     functionsWithInputsAndOutputs = findFunctionInputsAndOutputs parsedExpressions
-
-
 
     foldAssertionsF :: [F] -> F
     foldAssertionsF []       = error "processVC - foldAssertionsF: Empty list given"
@@ -871,7 +890,7 @@ parseVCToSolver filePath fptaylorPath proverTranslator negateVC =
     case processVC parsedFile of
       Just (vc, varTypes) ->
         let
-          simplifiedVC = (symbolicallySubstitutePiVars . substAllEqualities . simplifyF) vc
+          simplifiedVC = (substAllEqualities . simplifyF) vc
           mDerivedVCWithRanges = deriveVCRanges simplifiedVC varTypes
         in
           case mDerivedVCWithRanges of
