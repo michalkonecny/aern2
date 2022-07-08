@@ -53,6 +53,7 @@ library
     , base ==4.*
     , collect-errors
     , containers
+    , lens
     , linear
     , mixed-types-num
     , vector
@@ -86,6 +87,7 @@ test-suite aern2-linear-test
     , base ==4.*
     , collect-errors
     , containers
+    , lens
     , linear
     , mixed-types-num
     , vector

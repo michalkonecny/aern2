@@ -24,13 +24,20 @@ import qualified Linear as L
 import qualified Data.Vector as Vector
 import GHC.TypeLits (KnownNat, SomeNat (SomeNat), someNatVal, natVal)
 import Data.Typeable (Typeable, Proxy (Proxy))
-import AERN2.Real (CReal, creal, prec, (?), bits)
+import AERN2.Real
 import Data.Foldable (Foldable(toList))
 import qualified Data.Map as Map
-import AERN2.MP (MPBall (ball_value), mpBallP)
-import AERN2.MP.Float (MPFloat) 
+import AERN2.MP
+    ( mpBallP,
+      errorBound,
+      MPBall(MPBall, ball_value),
+      IsBall(centre),
+      HasPrecision(getPrecision),
+      Precision )
+import AERN2.MP.Float (MPFloat, mpFloat)
 import Unsafe.Coerce (unsafeCoerce)
 import Control.Applicative (Applicative(liftA2))
+import Control.Lens
 
 ----------------------
 -- checking sizes of vectors and matrices
@@ -307,14 +314,47 @@ m1b1MP_solLU = luSolve m1MP b1MP
 
 --------------------
 
+p1 :: Precision
+p1 = prec 1000
+
 rows1B :: [[MPBall]]
-rows1B = map (map (mpBallP (prec 1000))) rows1I
+rows1B = map (map (mpBallP p1)) rows1I
 
 m1B :: MatrixRC MPBall
 m1B = matrixRCFromList rows1B
 
 m1B_detLaplace :: MPBall
 m1B_detLaplace = detLaplace (!==! 0) m1B
+
+solveViaFP :: MatrixRC MPBall -> VN MPBall -> VN MPBall
+solveViaFP a b@(VN bv) =
+  xFB -- TODO
+  where
+  -- solve approximately in FP arithmetic:
+  aF = fmap centreMPF a
+  bF = fmap centreMPF b
+  xF = luSolve aF bF
+  xFB = fmap mpF2mpB xF
+
+  -- approximate inverse of a:
+  rF = luInv aF
+  rFB = fmap mpF2mpB rF
+
+  -- bound the residual:
+
+  -- conversions:
+  centreMPF :: MPBall -> MPFloat
+  centreMPF x = mpFloat $ centre x
+  mpF2mpB :: MPFloat  -> MPBall
+  mpF2mpB x = MPBall x (errorBound 0)
+  p = getPrecision b0
+  Just b0 = (bv ^? ix (int 0))
+
+b1B :: VN MPBall
+b1B = vNFromList $ replicate n1 (mpBallP p1 1)
+
+m1b1B_solveViaFP :: VN MPBall
+m1b1B_solveViaFP = solveViaFP m1B b1B
 
 --------------------
 
