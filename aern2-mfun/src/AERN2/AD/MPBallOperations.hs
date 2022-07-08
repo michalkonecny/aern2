@@ -6,9 +6,7 @@ import MixedTypesNumPrelude
 import AERN2.AD.Type
 import AERN2.AD.GenericOperations ()
 import AERN2.MP.Ball
-import Numeric.MixedTypes.Round (CanDivIMod)
-import Control.CollectErrors (CanTestErrorsCertain(hasCertainError))
-import Numeric.CollectErrors.Type (ErrorCertaintyLevel(ErrorCertain), prependErrorCertain, noValueNumErrorCertain, NumError (NumError))
+import Numeric.CollectErrors.Type (noValueNumErrorCertain, NumError (NumError))
 
 {-- addition --}
 

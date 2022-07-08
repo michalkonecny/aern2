@@ -3,16 +3,10 @@ module AERN2.BoxFun.Box where
 
 import qualified Prelude as Prelude
 import MixedTypesNumPrelude
--- import AERN2.Kleenean
 import AERN2.MP.Dyadic
 import AERN2.MP.Ball
 import AERN2.Linear.Vector.Type (Vector, (!))
 import qualified AERN2.Linear.Vector.Type as V
--- import AERN2.MP.Float
--- import Data.Maybe
--- import Debug.Trace
--- import AERN2.MP.Enclosure
-
 import AERN2.Util.Util
 
 type Box = Vector (CN MPBall)

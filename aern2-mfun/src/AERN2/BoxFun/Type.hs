@@ -1,8 +1,6 @@
 module AERN2.BoxFun.Type where
 
 import MixedTypesNumPrelude
--- import qualified Prelude as P
-
 
 import AERN2.Linear.Vector.Type (Vector, (!))
 import qualified AERN2.Linear.Vector.Type as V
@@ -12,8 +10,6 @@ import qualified AERN2.Linear.Matrix.Type as M
 import AERN2.Util.Util
 import AERN2.BoxFun.Box
 import Numeric.CollectErrors
-
--- import Debug.Trace
 
 data BoxFun =
     BoxFun

@@ -3,7 +3,6 @@ module AERN2.Linear.Matrix.Inverse
 where
 
 import MixedTypesNumPrelude
--- import Numeric.CollectErrors (NumErrors, CanTakeErrors(..))
 import qualified Numeric.CollectErrors as CN
 
 import AERN2.Linear.Matrix.Type
