@@ -21,35 +21,11 @@ description:         Please see the README on GitHub at <https://github.com/mich
 
 dependencies:
 - base == 4.*
-- parallel
-- process
-# - binary
-- containers
 - vector
-- psqueues
-- integer-logarithms
-# - hspec
-- QuickCheck
 - collect-errors >= 0.1.5
 - mixed-types-num >= 0.5.7
 - aern2-mp >= 0.2.5
-- aern2-real >= 0.2.5
 - aern2-fun >= 0.2.5
-- simplex-haskell
-- scientific
-- ghc
-- text
-- bytestring
-- binary
-- pqueue
-- foldl
-- extra
-- temporary
-- fast-logger
-- optparse-applicative
-- directory
-- regex-tdfa
-- random
 
 default-extensions:
 - RebindableSyntax,
