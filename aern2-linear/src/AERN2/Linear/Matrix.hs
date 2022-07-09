@@ -28,16 +28,12 @@ import AERN2.Real
 import Data.Foldable (Foldable(toList))
 import qualified Data.Map as Map
 import AERN2.MP
-    ( mpBallP,
-      errorBound,
-      MPBall(MPBall, ball_value),
-      IsBall(centre),
-      HasPrecision(getPrecision),
-      Precision )
 import AERN2.MP.Float (MPFloat, mpFloat)
 import Unsafe.Coerce (unsafeCoerce)
 import Control.Applicative (Applicative(liftA2))
-import Control.Lens
+import Control.Lens hiding (Contains(..))
+import qualified Debug.Trace as D
+import Text.Printf (printf)
 
 ----------------------
 -- checking sizes of vectors and matrices
@@ -102,12 +98,14 @@ vNFromList (es :: [e]) =
 instance Functor VN where
   fmap f (VN v) = VN (fmap f v)
 
-liftVN1 :: (e1 -> e2) -> (VN e1) -> (VN e2)
-liftVN1 f (VN v) = VN (fmap f v)
-
 liftVN2 :: (e1 -> e2 -> e3) -> (VN e1) -> (VN e2) -> (VN e3)
 liftVN2 f (VN (v1 :: V n1_t e1)) (VN (v2 :: V n2_t e2)) =
   VN $ liftA2 f v1 (checkVSameSizeAs v1 v2)
+
+instance CanTestContains e1 e2 => CanTestContains (VN e1) (VN e2) where
+  contains (VN v1) (VN v2) = 
+    foldl (&&) True $ liftA2 contains v1 (checkVSameSizeAs v1 v2)
+    
 
 ----------------------
 -- matrices of all sizes (hiding size type parameters)
@@ -180,7 +178,7 @@ instance (CanSub e1 e2) => CanSub (VN e1) (VN e2) where
 
 instance (CanNeg e1) => CanNeg (VN e1) where
   type NegType (VN e1) = VN (NegType e1)
-  negate = liftVN1 negate
+  negate = fmap negate
 
 
 
@@ -199,6 +197,10 @@ instance (CanNeg e1) => CanNeg (MatrixRC e1) where
 instance (P.Num e1, e1~e2) => CanMulAsymmetric (MatrixRC e1) (MatrixRC e2) where
   type MulType (MatrixRC e1) (MatrixRC e2) = MatrixRC e1
   mul (MatrixRC a) (MatrixRC b) = MatrixRC (a L.!*! (checkVSameSizeAs (L.transpose a) b))
+
+instance (P.Num e1, e1~e2) => CanMulAsymmetric (MatrixRC e1) (VN e2) where
+  type MulType (MatrixRC e1) (VN e2) = VN e1
+  mul (MatrixRC a) (VN b) = VN (a L.!* (checkVSameSizeAs (L.transpose a) b))
 
 {-
   Determinant using the Laplace method.
@@ -267,9 +269,9 @@ rows1I :: [[Rational]]
 rows1I = [[ item i j  | j <- [1..n1] ] | i <- [1..n1]]
   where
   item i j
-    | i == j = rational 1
-    | j > i + 1 = rational 0
-    | otherwise = 1/(i+j)
+    -- | i == j = rational 1
+    -- | j > i + 1 = rational 0
+    | otherwise = 1/(n1*(i-1)+j)
 
 --------------------
 
@@ -285,16 +287,22 @@ m1D_detLU = luDet m1D
 m1D_detLaplace :: Double
 m1D_detLaplace = detLaplace (== 0) m1D
 
+x1D :: VN Double
+x1D = vNFromList $ replicate n1 (double 1)
+
 b1D :: VN Double
-b1D = vNFromList $ replicate n1 (double 1)
+b1D = m1D * x1D
 
 m1b1D_solLU :: VN Double
 m1b1D_solLU = luSolve m1D b1D
 
 --------------------
 
+p1 :: Precision
+p1 = prec 1500
+
 rows1MP :: [[MPFloat]]
-rows1MP = map (map (ball_value . mpBallP (prec 1000))) rows1I
+rows1MP = map (map (ball_value . mpBallP p1)) rows1I
 
 m1MP :: MatrixRC MPFloat
 m1MP = matrixRCFromList rows1MP
@@ -306,16 +314,16 @@ m1MP_detLU = luDet m1MP
 -- m1MP_detLaplace :: MPFloat
 -- m1MP_detLaplace = detLaplace (== 0) m1MP
 
+x1MP :: VN MPFloat
+x1MP = vNFromList $ replicate n1 (ball_value $ mpBallP p1 1)
+
 b1MP :: VN MPFloat
-b1MP = vNFromList $ replicate n1 (ball_value $ mpBallP (prec 1000) 1)
+b1MP = m1MP * x1MP
 
 m1b1MP_solLU :: VN MPFloat
 m1b1MP_solLU = luSolve m1MP b1MP
 
 --------------------
-
-p1 :: Precision
-p1 = prec 1000
 
 rows1B :: [[MPBall]]
 rows1B = map (map (mpBallP p1)) rows1I
@@ -326,23 +334,44 @@ m1B = matrixRCFromList rows1B
 m1B_detLaplace :: MPBall
 m1B_detLaplace = detLaplace (!==! 0) m1B
 
-solveViaFP :: MatrixRC MPBall -> VN MPBall -> VN MPBall
-solveViaFP a b@(VN bv) =
-  xFB -- TODO
+{-
+  Following Algorithm 10.7 from:
+  S. Rump 2010: Verification methods: Rigorous results using floating-point arithmetic
+-}
+solveBViaFP :: MatrixRC MPBall -> VN MPBall -> Maybe (VN MPBall)
+solveBViaFP aB bB@(VN bv) =
+  iterateUntilInclusion 15 zB
   where
-  -- solve approximately in FP arithmetic:
-  aF = fmap centreMPF a
-  bF = fmap centreMPF b
-  xF = luSolve aF bF
-  xFB = fmap mpF2mpB xF
-
   -- approximate inverse of a:
   rF = luInv aF
   rFB = fmap mpF2mpB rF
 
-  -- bound the residual:
+  -- solve approximately in FP arithmetic:
+  aF = fmap centreMPF aB
+  bF = fmap centreMPF bB
+  xF = luSolve aF bF
+  xFB = fmap mpF2mpB xF
 
-  -- conversions:
+  -- C = I - R*A
+  iB = (identity n1) :: MatrixRC MPBall
+  cB = iB - rFB*aB
+
+  zB = rFB *(bB - aB*xFB)
+
+  -- attempt to bound the residual:
+  iterateUntilInclusion i xBprev
+    | i <= 0 = Nothing
+    | yB `contains` xB = Just $ xFB + xB
+    | otherwise = 
+      D.trace (printf "i = %d\n xB = %s\n yB = %s\n" i (show xB) (show yB)) $
+      iterateUntilInclusion (i-1) xB
+    where
+    yB = fmap widenCentre xBprev
+    widenCentre = (* (mpBallP p (0.9,1.1))) . updateRadius (+ eps)
+    eps = errorBound $ 0.5^((integer p))
+    xB = zB + cB*yB
+
+  -- conversion functions:
   centreMPF :: MPBall -> MPFloat
   centreMPF x = mpFloat $ centre x
   mpF2mpB :: MPFloat  -> MPBall
@@ -350,11 +379,14 @@ solveViaFP a b@(VN bv) =
   p = getPrecision b0
   Just b0 = (bv ^? ix (int 0))
 
-b1B :: VN MPBall
-b1B = vNFromList $ replicate n1 (mpBallP p1 1)
+x1B :: VN MPBall
+x1B = vNFromList $ replicate n1 (mpBallP p1 1)
 
-m1b1B_solveViaFP :: VN MPBall
-m1b1B_solveViaFP = solveViaFP m1B b1B
+b1B :: VN MPBall
+b1B = m1B * x1B
+
+m1b1B_solveViaFP :: Maybe (VN MPBall)
+m1b1B_solveViaFP = solveBViaFP m1B b1B
 
 --------------------
 
@@ -370,3 +402,15 @@ m1R_detLaplace = detLaplace (\e -> (e ? (prec 10))!==! 0) m1R
 m1R_detLaplaceBits :: CN MPBall
 m1R_detLaplaceBits = m1R_detLaplace ? (bits 1000)
 
+solveRViaFP :: MatrixRC CReal -> VN CReal -> VN CReal
+solveRViaFP a b =
+  undefined -- TODO
+
+x1R :: VN CReal
+x1R = vNFromList $ replicate n1 (creal 1)
+
+b1R :: VN CReal
+b1R = m1R * x1R
+
+m1b1R_solveViaFP :: VN CReal
+m1b1R_solveViaFP = solveRViaFP m1R b1R
