@@ -18,7 +18,7 @@ import qualified Prelude as P
 import AERN2.Real
 import GHC.Num (integerLog2)
 import qualified AERN2.Real.Type as Real
-import AERN2.MP (MPBall, HasPrecision (getPrecision), CanTestContains (contains), IsBall (centreAsBall), updateRadius)
+import AERN2.MP (MPBall, HasPrecision (getPrecision), CanTestContains (contains), updateRadius)
 import AERN2.MP.ErrorBound ( errorBound )
 import Numeric.CollectErrors (noValueNumErrorPotential, NumError (NumError))
 
@@ -29,11 +29,11 @@ restr_sqrt_limit :: CReal -> CReal
 restr_sqrt_limit x = limit $ sqrt_approx_fast x
   where    
   sqrt_approx_fast :: _ => t -> Integer -> t
-  sqrt_approx_fast x n =
-    sqrt_approx x (1 + (P.fromIntegral (integerLog2 (n+1)) :: Integer))    
+  sqrt_approx_fast x2 n =
+    sqrt_approx x2 (1 + (P.fromIntegral (integerLog2 (n+1)) :: Integer))    
   sqrt_approx :: _ => t -> Integer -> t
-  sqrt_approx x n =
-    (iterate (sqrt_step x) (fromInteger_ 1)) !! n
+  sqrt_approx x2 n =
+    (iterate (sqrt_step x2) (fromInteger_ 1)) !! n
 
 restr_sqrt_incl :: CReal -> CReal
 restr_sqrt_incl = Real.lift1 restr_sqrt_MPBall
