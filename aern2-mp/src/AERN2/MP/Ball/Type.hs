@@ -101,8 +101,8 @@ instance ShowWithAccuracy MPBall where
     
 instance CanTestIsIntegerType MPBall -- False by default
 
--- instance CanTestValid MPBall where
---   isValid = isFinite
+instance CanTestValid MPBall where
+  isValid = isFinite
 
 instance CanTestNaN MPBall where
   isNaN = not . isFinite
