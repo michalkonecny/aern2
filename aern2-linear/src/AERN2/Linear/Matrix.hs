@@ -109,6 +109,17 @@ instance CanTestContains e1 e2 => CanTestContains (VN e1) (VN e2) where
   contains (VN v1) (VN v2) = 
     foldl (&&) True $ liftA2 contains v1 (checkVSameSizeAs v1 v2)
     
+instance CanGiveUpIfVeryInaccurate b => CanGiveUpIfVeryInaccurate (VN b) where
+  giveUpIfVeryInaccurate vnCN = do
+    (VN v) <- vnCN
+    fmap VN $ mapM (giveUpIfVeryInaccurate . cn) v
+
+instance HasPrecision e => HasPrecision (VN e) where
+  getPrecision (VN v) = foldl min maximumPrecision $ fmap getPrecision v 
+
+instance (HasAccuracy e, HasPrecision e) => HasAccuracy (VN e) where
+  getAccuracy (VN v) = foldl min Exact $ fmap getAccuracy v 
+
 
 ----------------------
 -- matrices of all sizes (hiding size type parameters)
@@ -138,6 +149,19 @@ instance Functor MatrixRC where
 liftMatrixRC2 :: (e1 -> e2 -> e3) -> (MatrixRC e1) -> (MatrixRC e2) -> (MatrixRC e3)
 liftMatrixRC2 f (MatrixRC mx1) (MatrixRC mx2) =
   MatrixRC $ liftA2 (liftA2 f) mx1 ((checkVVSameSizeAs mx1) mx2)
+
+instance CanGiveUpIfVeryInaccurate e => CanGiveUpIfVeryInaccurate (MatrixRC e) where
+  giveUpIfVeryInaccurate mrcCN = do
+    (MatrixRC m) <- mrcCN
+    fmap MatrixRC $ mapM (mapM (giveUpIfVeryInaccurate . cn)) m
+
+instance HasPrecision e => HasPrecision (MatrixRC e) where
+  getPrecision (MatrixRC a) = 
+    foldl (foldl min) maximumPrecision $ fmap (fmap getPrecision) a
+
+instance (HasAccuracy e, HasPrecision e) => HasAccuracy (MatrixRC e) where
+  getAccuracy (MatrixRC a) = foldl (foldl min) Exact $ fmap (fmap getAccuracy) a 
+
 
 -- wrappers for Linear functions
 
@@ -266,7 +290,7 @@ detLaplace isZero (MatrixRC mx) =
 {- mini tests -}
 
 n1 :: Integer
-n1 = 70
+n1 = 95
 
 rows1Q :: [[Rational]]
 rows1Q = [[ item i j  | j <- [1..n1] ] | i <- [1..n1]]
@@ -302,7 +326,7 @@ m1b1D_solLU = luSolve m1D b1D
 --------------------
 
 p1 :: Precision
-p1 = prec 1500
+p1 = prec 2
 
 rows1MP :: [[MPFloat]]
 rows1MP = map (map (ball_value . mpBallP p1)) rows1Q
@@ -338,29 +362,29 @@ solveBViaFP aB bB@(VN bv) =
   where
   -- approximate inverse of a:
   rF = luInv aF
-  rFB = fmap mpF2mpB rF
+  rFB = cn $ fmap mpF2mpB rF
 
   -- solve approximately in FP arithmetic:
   aF = fmap centreMPF aB
   bF = fmap centreMPF bB
   xF = luSolve aF bF
-  xFB = fmap mpF2mpB xF
+  xFB = cn $ fmap mpF2mpB xF
 
   -- C = I - R*A
-  iB = (identity n1) :: MatrixRC MPBall
-  cB = iB - rFB*aB
+  iB = cn $ (identity n1) :: CN (MatrixRC MPBall)
+  cB = iB - rFB*(cn aB)
 
-  zB = rFB *(bB - aB*xFB)
+  zB = rFB *((cn bB) - (cn aB)*xFB)
 
   -- attempt to bound the residual:
   iterateUntilInclusion i xBprev
     | i <= 0 = CN.noValueNumErrorPotential $ NumError "interval linear solver: failed to bound residual"
-    | yB `contains` xB = cn $ xFB + xB
+    | yB `contains` xB = xFB + xB
     | otherwise = 
       -- D.trace (printf "i = %d\n xB = %s\n yB = %s\n" i (show xB) (show yB)) $
       iterateUntilInclusion (i-1) xB
     where
-    yB = fmap widenCentre xBprev
+    yB = fmap (fmap widenCentre) xBprev
     widenCentre = (* (mpBallP p (0.9,1.1))) . updateRadius (+ eps)
     eps = errorBound $ 0.5^((integer p))
     xB = zB + cB*yB
@@ -395,17 +419,6 @@ m1b1B_solveViaFP = solveBViaFP m1B b1B
 
 type CVN = CSequence (VN MPBall)
 type CMatrixRC = CSequence (MatrixRC MPBall)
-
-instance CanGiveUpIfVeryInaccurate b => CanGiveUpIfVeryInaccurate (VN b) where
-  giveUpIfVeryInaccurate vnCN = do
-    (VN v) <- vnCN
-    fmap VN $ mapM (giveUpIfVeryInaccurate . cn) v
-
-instance HasPrecision e => HasPrecision (VN e) where
-  getPrecision (VN v) = foldl min maximumPrecision $ fmap getPrecision v 
-
-instance (HasAccuracy e, HasPrecision e) => HasAccuracy (VN e) where
-  getAccuracy (VN v) = foldl min Exact $ fmap getAccuracy v 
 
 solveRViaFP :: CMatrixRC -> CVN -> CVN
 solveRViaFP aR bR =
