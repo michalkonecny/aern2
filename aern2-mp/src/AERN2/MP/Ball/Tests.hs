@@ -85,24 +85,31 @@ specMPBall =
       specHasOrder tInt tMPBall tRational
     describe "min/max/abs" $ do
       specCanNegNum tMPBall
+      specResultIsValid1 abs "abs" tMPBall
       specCanAbs tMPBall
+      specResultIsValid2 min "min" tMPBall tMPBall
+      specResultIsValid2 max "max" tMPBall tMPBall
       specCanMinMaxNotMixed tMPBall
       specCanMinMax tMPBall tInteger tMPBall
     describe "ring" $ do
+      specResultIsValid2 add "add" tMPBall tMPBall
       specCanAddNotMixed tMPBall
       specCanAddSameType tMPBall
       specCanAdd tInt tMPBall tRational
       specCanAdd tInteger tMPBall tInt
+      specResultIsValid2 sub "sub" tMPBall tMPBall
       specCanSubNotMixed tMPBall
       specCanSub tMPBall tInteger
       specCanSub tInteger tMPBall
       specCanSub tMPBall tInt
       specCanSub tInt tMPBall
+      specResultIsValid2 mul "mul" tMPBall tMPBall
       specCanMulNotMixed tMPBall
       specCanMulSameType tMPBall
       specCanMul tInt tMPBall tRational
       -- specCanPow tMPBall tInteger
     describe "field" $ do
+      specResultIsValid2Pre (\_ y -> isCertainlyNonZero y) divide "divide" tMPBall tMPBall
       specCanDivNotMixed tMPBall
       specCanDiv tInteger tMPBall
       specCanDiv tMPBall tInt
