@@ -105,6 +105,16 @@ liftVN2 :: (e1 -> e2 -> e3) -> (VN e1) -> (VN e2) -> (VN e3)
 liftVN2 f (VN (v1 :: V n1_t e1)) (VN (v2 :: V n2_t e2)) =
   VN $ liftA2 f v1 (checkVSameSizeAs v1 v2)
 
+instance Foldable VN where
+  foldl f z (VN as) = foldl f z as
+  {-# INLINE foldl #-}
+  foldr f z (VN as) = foldr f z as
+  {-# INLINE foldr #-}
+
+instance Traversable VN where
+  traverse f (VN as) = VN <$> traverse f as
+  {-# INLINE traverse #-}
+
 instance CanTestContains e1 e2 => CanTestContains (VN e1) (VN e2) where
   contains (VN v1) (VN v2) = 
     foldl (&&) True $ liftA2 contains v1 (checkVSameSizeAs v1 v2)
@@ -145,6 +155,16 @@ matrixRCFromList rows@((row1 :: [e]):_) =
 
 instance Functor MatrixRC where
   fmap f (MatrixRC mx) = MatrixRC (fmap (fmap f) mx)
+
+instance Foldable MatrixRC where
+  foldl f z (MatrixRC as) = foldl (foldl f) z as
+  {-# INLINE foldl #-}
+  foldr f z (MatrixRC as) = foldr (flip $ foldr f) z as
+  {-# INLINE foldr #-}
+
+instance Traversable MatrixRC where
+  traverse f (MatrixRC rows) = MatrixRC <$> traverse (traverse f) rows
+  {-# INLINE traverse #-}
 
 liftMatrixRC2 :: (e1 -> e2 -> e3) -> (MatrixRC e1) -> (MatrixRC e2) -> (MatrixRC e3)
 liftMatrixRC2 f (MatrixRC mx1) (MatrixRC mx2) =
@@ -290,7 +310,7 @@ detLaplace isZero (MatrixRC mx) =
 {- mini tests -}
 
 n1 :: Integer
-n1 = 95
+n1 = 100
 
 rows1Q :: [[Rational]]
 rows1Q = [[ item i j  | j <- [1..n1] ] | i <- [1..n1]]
@@ -326,7 +346,7 @@ m1b1D_solLU = luSolve m1D b1D
 --------------------
 
 p1 :: Precision
-p1 = prec 2
+p1 = prec 1000
 
 rows1MP :: [[MPFloat]]
 rows1MP = map (map (ball_value . mpBallP p1)) rows1Q
@@ -362,13 +382,13 @@ solveBViaFP aB bB@(VN bv) =
   where
   -- approximate inverse of a:
   rF = luInv aF
-  rFB = cn $ fmap mpF2mpB rF
+  rFB = sequence $ fmap mpF2mpB rF
 
   -- solve approximately in FP arithmetic:
   aF = fmap centreMPF aB
   bF = fmap centreMPF bB
   xF = luSolve aF bF
-  xFB = cn $ fmap mpF2mpB xF
+  xFB = sequence $ fmap mpF2mpB xF
 
   -- C = I - R*A
   iB = cn $ (identity n1) :: CN (MatrixRC MPBall)
@@ -392,8 +412,10 @@ solveBViaFP aB bB@(VN bv) =
   -- conversion functions:
   centreMPF :: MPBall -> MPFloat
   centreMPF x = mpFloat $ centre x
-  mpF2mpB :: MPFloat  -> MPBall
-  mpF2mpB x = MPBall x (errorBound 0)
+  mpF2mpB :: MPFloat  -> CN MPBall
+  mpF2mpB x 
+    | isFinite x = cn $ MPBall x (errorBound 0)
+    | otherwise = CN.noValueNumErrorCertain $ NumError "NumError"
   p = getPrecision b0
   Just b0 = (bv ^? ix (int 0))
 
