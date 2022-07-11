@@ -25,6 +25,7 @@ import qualified Data.Vector as Vector
 import GHC.TypeLits (KnownNat, SomeNat (SomeNat), someNatVal, natVal)
 import Data.Typeable (Typeable, Proxy (Proxy))
 import AERN2.Real
+import qualified AERN2.Real.Type as Real
 import Data.Foldable (Foldable(toList))
 import qualified Data.Map as Map
 import AERN2.MP
@@ -32,8 +33,10 @@ import AERN2.MP.Float (MPFloat, mpFloat)
 import Unsafe.Coerce (unsafeCoerce)
 import Control.Applicative (Applicative(liftA2))
 import Control.Lens hiding (Contains(..))
-import qualified Debug.Trace as D
-import Text.Printf (printf)
+-- import qualified Debug.Trace as D
+-- import Text.Printf (printf)
+import qualified Numeric.CollectErrors as CN
+import Numeric.CollectErrors (NumError(NumError))
 
 ----------------------
 -- checking sizes of vectors and matrices
@@ -263,10 +266,10 @@ detLaplace isZero (MatrixRC mx) =
 {- mini tests -}
 
 n1 :: Integer
-n1 = 100
+n1 = 70
 
-rows1I :: [[Rational]]
-rows1I = [[ item i j  | j <- [1..n1] ] | i <- [1..n1]]
+rows1Q :: [[Rational]]
+rows1Q = [[ item i j  | j <- [1..n1] ] | i <- [1..n1]]
   where
   item i j
     -- | i == j = rational 1
@@ -276,7 +279,7 @@ rows1I = [[ item i j  | j <- [1..n1] ] | i <- [1..n1]]
 --------------------
 
 rows1D :: [[Double]]
-rows1D = map (map double) rows1I
+rows1D = map (map double) rows1Q
 
 m1D :: MatrixRC Double
 m1D = matrixRCFromList rows1D
@@ -302,7 +305,7 @@ p1 :: Precision
 p1 = prec 1500
 
 rows1MP :: [[MPFloat]]
-rows1MP = map (map (ball_value . mpBallP p1)) rows1I
+rows1MP = map (map (ball_value . mpBallP p1)) rows1Q
 
 m1MP :: MatrixRC MPFloat
 m1MP = matrixRCFromList rows1MP
@@ -325,20 +328,11 @@ m1b1MP_solLU = luSolve m1MP b1MP
 
 --------------------
 
-rows1B :: [[MPBall]]
-rows1B = map (map (mpBallP p1)) rows1I
-
-m1B :: MatrixRC MPBall
-m1B = matrixRCFromList rows1B
-
-m1B_detLaplace :: MPBall
-m1B_detLaplace = detLaplace (!==! 0) m1B
-
 {-
   Following Algorithm 10.7 from:
   S. Rump 2010: Verification methods: Rigorous results using floating-point arithmetic
 -}
-solveBViaFP :: MatrixRC MPBall -> VN MPBall -> Maybe (VN MPBall)
+solveBViaFP :: MatrixRC MPBall -> VN MPBall -> CN (VN MPBall)
 solveBViaFP aB bB@(VN bv) =
   iterateUntilInclusion 15 zB
   where
@@ -360,10 +354,10 @@ solveBViaFP aB bB@(VN bv) =
 
   -- attempt to bound the residual:
   iterateUntilInclusion i xBprev
-    | i <= 0 = Nothing
-    | yB `contains` xB = Just $ xFB + xB
+    | i <= 0 = CN.noValueNumErrorPotential $ NumError "interval linear solver: failed to bound residual"
+    | yB `contains` xB = cn $ xFB + xB
     | otherwise = 
-      D.trace (printf "i = %d\n xB = %s\n yB = %s\n" i (show xB) (show yB)) $
+      -- D.trace (printf "i = %d\n xB = %s\n yB = %s\n" i (show xB) (show yB)) $
       iterateUntilInclusion (i-1) xB
     where
     yB = fmap widenCentre xBprev
@@ -379,38 +373,71 @@ solveBViaFP aB bB@(VN bv) =
   p = getPrecision b0
   Just b0 = (bv ^? ix (int 0))
 
+rows1B :: [[MPBall]]
+rows1B = map (map (mpBallP p1)) rows1Q
+
+m1B :: MatrixRC MPBall
+m1B = matrixRCFromList rows1B
+
+m1B_detLaplace :: MPBall
+m1B_detLaplace = detLaplace (!==! 0) m1B
+
 x1B :: VN MPBall
 x1B = vNFromList $ replicate n1 (mpBallP p1 1)
 
 b1B :: VN MPBall
 b1B = m1B * x1B
 
-m1b1B_solveViaFP :: Maybe (VN MPBall)
+m1b1B_solveViaFP :: CN (VN MPBall)
 m1b1B_solveViaFP = solveBViaFP m1B b1B
 
 --------------------
 
-rows1R :: [[CReal]]
-rows1R = map (map creal) rows1I
+type CVN = CSequence (VN MPBall)
+type CMatrixRC = CSequence (MatrixRC MPBall)
 
-m1R :: MatrixRC CReal
-m1R = matrixRCFromList rows1R
+instance CanGiveUpIfVeryInaccurate b => CanGiveUpIfVeryInaccurate (VN b) where
+  giveUpIfVeryInaccurate vnCN = do
+    (VN v) <- vnCN
+    fmap VN $ mapM (giveUpIfVeryInaccurate . cn) v
+
+instance HasPrecision e => HasPrecision (VN e) where
+  getPrecision (VN v) = foldl min maximumPrecision $ fmap getPrecision v 
+
+instance (HasAccuracy e, HasPrecision e) => HasAccuracy (VN e) where
+  getAccuracy (VN v) = foldl min Exact $ fmap getAccuracy v 
+
+solveRViaFP :: CMatrixRC -> CVN -> CVN
+solveRViaFP aR bR =
+  Real.lift2 solve aR bR
+  where
+  solve aCN bCN = do
+    a <- aCN
+    b <- bCN
+    solveBViaFP a b
+
+m1R :: CMatrixRC
+m1R = cseqFromPrecFunction $ \p -> 
+  cn $ matrixRCFromList $ 
+    map (map (mpBallP p)) rows1Q
 
 m1R_detLaplace :: CReal
-m1R_detLaplace = detLaplace (\e -> (e ? (prec 10))!==! 0) m1R
+m1R_detLaplace = 
+  Real.lift1 (fmap $ detLaplace (!==! 0)) m1R
 
 m1R_detLaplaceBits :: CN MPBall
 m1R_detLaplaceBits = m1R_detLaplace ? (bits 1000)
 
-solveRViaFP :: MatrixRC CReal -> VN CReal -> VN CReal
-solveRViaFP a b =
-  undefined -- TODO
+x1R :: CVN
+x1R = cseqFromPrecFunction $ \p ->
+  cn $ vNFromList $ 
+    replicate n1 (mpBallP p 1)
 
-x1R :: VN CReal
-x1R = vNFromList $ replicate n1 (creal 1)
-
-b1R :: VN CReal
+b1R :: CVN
 b1R = m1R * x1R
 
-m1b1R_solveViaFP :: VN CReal
+m1b1R_solveViaFP :: CVN
 m1b1R_solveViaFP = solveRViaFP m1R b1R
+
+m1b1R_solveViaFPBits :: CN (VN MPBall)
+m1b1R_solveViaFPBits = m1b1R_solveViaFP ? (bits 100)
