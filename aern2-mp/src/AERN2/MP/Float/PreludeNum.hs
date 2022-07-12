@@ -68,3 +68,5 @@ c2 ::
     (t1 -> t2 -> MPFloat)
 c2 op x y = ceduCentre $ op x y
 
+instance P.Real MPFloat where
+    toRational (MPFloat a) = toRational a
