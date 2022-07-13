@@ -1,10 +1,10 @@
 name:                aern2-mfun
-version:             0.2.6.0
+version:             0.2.9.0
 github:              "michalkonecny/aern2"
 license:             BSD3
 author:              "Eike Neumann, Junaid Rasheed"
 maintainer:          "mikkonecny@gmail.com"
-copyright:           "2019-2021 Eike Neumann, Junaid Rasheed"
+copyright:           "2019-2022 Eike Neumann, Junaid Rasheed"
 
 # extra-source-files:
 # - README.md
@@ -23,9 +23,9 @@ dependencies:
 - base == 4.*
 - vector
 - collect-errors >= 0.1.5
-- mixed-types-num >= 0.5.7
-- aern2-mp >= 0.2.5
-- aern2-fun >= 0.2.5
+- mixed-types-num >= 0.5.9
+- aern2-mp >= 0.2.9
+- aern2-fun >= 0.2.9
 
 default-extensions:
 - RebindableSyntax,

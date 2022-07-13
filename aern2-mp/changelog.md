@@ -1,6 +1,8 @@
 # Change log for aern2-mp
 
-* current
+* v 0.2.9 2022-07-13
+  * testing basic ops produce valid MPBalls
+  * more instances for CN Kleenean
   * Num MPFloat (unspecified rounding mode)
 * v 0.2.8 2021-08-04
   * compatibility with ghc 9.0.1

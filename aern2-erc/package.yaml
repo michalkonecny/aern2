@@ -1,5 +1,5 @@
 name:                aern2-erc
-version:             0.2.7.0
+version:             0.2.9.0
 github:              "michalkonecny/aern2"
 license:             BSD3
 author:              "Michal Konecny"
@@ -26,9 +26,9 @@ dependencies:
 - mtl
 - STMonadTrans
 - collect-errors >= 0.1.5
-- mixed-types-num >= 0.5.8
+- mixed-types-num >= 0.5.9
 # - integer-logarithms
-- aern2-mp >= 0.2.7
+- aern2-mp >= 0.2.9
 
 default-extensions:
 - PostfixOperators
