@@ -118,6 +118,7 @@ instance
     type PowType        (Differential a) (Differential a) = (Differential a)
     pow a b =
         case min (order a) (order b) of
+            2 -> OrderOne  (a_x ^ b_x) ((a_x ^ (b_x - 1)) * (b_x * a_dx + a_x * (log a_x) * b_dx)) --FIXME: Add real OrderTwo definition here
             -- 2 -> OrderTwo   (x a ^ x b) 
             --                 ((x a ^ (x b - (convertExactly 1 :: a))) * (x b * dx a + x a * log (x a) * dx b)) 
             --                 ((x a ^ (x b - (convertExactly 1 :: a))) * (x b * dxt a + x a * log (x a) * dxt b))
@@ -143,7 +144,7 @@ instance
     CanSub (Differential a) (Differential a)
     where
     type SubType (Differential a) (Differential a) = Differential a
-    sub a b = 
+    sub a b =
         case min (order a) (order b) of
             2 -> OrderTwo  (a_x - b_x) (a_dx - b_dx) (a_dxt - b_dxt) (a_d2x - b_d2x)
             1 -> OrderOne  (a_x - b_x) (a_dx - b_dx)
@@ -160,11 +161,11 @@ instance
         b_d2x = diff_d2x b
 
 instance 
-    (CanNeg a) =>
+    (CanMulBy (Differential a) Integer) =>
     CanNeg (Differential a)
     where
-    type NegType (Differential a) = Differential (NegType a)
-    negate = fmap negate
+    type NegType (Differential a) = Differential a
+    negate x = (-1) * x
 
 instance 
     (CanSqrtSameType a, CanMulSameType a, CanNegSameType a, CanAddSameType a, CanMulBy a Integer, CanRecipSameType a) 

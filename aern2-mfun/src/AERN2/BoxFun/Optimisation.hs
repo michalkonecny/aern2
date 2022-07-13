@@ -1,18 +1,14 @@
 module AERN2.BoxFun.Optimisation where
 
-import qualified Prelude as Prelude
+import qualified Prelude
 import MixedTypesNumPrelude
 import qualified Numeric.CollectErrors as CN
 import AERN2.MP.Dyadic
 import AERN2.MP.Ball
--- import AERN2.MP.Float
 import AERN2.BoxFun.Box (Box)
 import qualified AERN2.BoxFun.Box as Box
 import AERN2.BoxFun.Type
--- import AERN2.AD.Differential ()
 import AERN2.Kleenean
-
--- import AERN2.Linear.Vector.Type ((!))
 import AERN2.Linear.Vector.Type as V
 import AERN2.Linear.Matrix.Type
 import AERN2.Linear.Matrix.Inverse

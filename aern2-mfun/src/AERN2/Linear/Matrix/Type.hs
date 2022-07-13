@@ -6,13 +6,8 @@ import qualified Numeric.CollectErrors as CN
 import AERN2.Linear.Vector.Type (Vector, (!))
 import qualified AERN2.Linear.Vector.Type as V
 import qualified Data.List as List
--- import Data.Maybe
-
--- import Debug.Trace
 
 import AERN2.MP.Ball
--- import AERN2.MP.Float
--- import AERN2.MP.Dyadic
 
 data (Matrix a) = 
     Matrix

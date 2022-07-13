@@ -5,7 +5,6 @@ import AERN2.MP.Ball
 import qualified Data.List as List
 
 import AERN2.AD.Differential
--- import AERN2.Util.Util
 import AERN2.BoxFun.Type
 import AERN2.Linear.Vector.Type ((!), Vector)
 import qualified AERN2.Linear.Vector.Type as V

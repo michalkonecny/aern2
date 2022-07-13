@@ -34,7 +34,7 @@ import AERN2.MP.Precision
 
 import AERN2.MP.Ball.Type
 import AERN2.MP.Ball.Conversions ()
-import AERN2.MP.Ball.Comparisons ()
+import AERN2.MP.Ball.Comparisons (hullMPBall)
 
 {- addition -}
 
@@ -136,10 +136,10 @@ mulBalls (MPBall x1 e1) (MPBall x2 e2) =
     (x12C, e12) = MPFloat.ceduCentreErr $ MPFloat.mulCEDU x1 x2
 
 mulByEndpoints :: MPBall -> MPBall -> MPBall
-mulByEndpoints b1 b2 = 
+mulByEndpoints b1 b2 =
   fromEndpoints l r
   where
-  (l,r) 
+  (l,r)
     | 0 <= l1 && 0 <= l2 = (l1*.l2, r1*^r2) -- 0 <= l1 <= r1, 0 <= l2 <= r2
     | r1 <= 0 && r2 <= 0 = (r1*.r2, l1*^l2) -- l1 <= r1 <= 0, l2 <= r2 <= 0
     | 0 <= l1 && r2 <= 0 = (r1*.l2, l1*^r2) -- l2 <= r2 <= 0 <= l1 <= r1
@@ -279,8 +279,8 @@ instance CanPow MPBall Int where
   pow = powUsingMulRecipCutNeg (mpBall 1)
 
 powUsingMulRecipCutNeg :: _ => MPBall -> MPBall -> e -> MPBall
-powUsingMulRecipCutNeg one x e 
-  | even e = 
+powUsingMulRecipCutNeg one x e
+  | even e =
       max 0 $ powUsingMulRecip one mulByEndpoints recip x e
   | otherwise = powUsingMulRecip one mulByEndpoints recip x e
 
@@ -304,9 +304,13 @@ instance
   CanDivIMod MPBall MPBall
   where
   type DivIType MPBall MPBall = Integer
-  divIMod x m 
-    | m !>! 0 = (d, xm)
+  divIMod x m
+    | m !>! 0 = (error "Integer division for MPBall undefined", xm')
     | otherwise = error $ "modulus not positive: " ++ show m
     where
-    d = floor $ centre $ (centreAsBall x) / (centreAsBall m)
-    xm = x - m*d
+    (l, r) = endpoints $ x / m
+    (dL, dR) = (floor l, floor r) 
+    xmL = x - m*dL
+    xmR = x - m*dR
+    xm = hullMPBall xmL xmR
+    xm' = min (max 0 xm) m
