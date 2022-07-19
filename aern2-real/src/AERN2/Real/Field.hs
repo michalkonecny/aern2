@@ -22,6 +22,7 @@ where
 
 import MixedTypesNumPrelude
 import qualified Prelude as P
+import GHC.Base (liftA2)
 
 import AERN2.MP.Ball
 -- import AERN2.MP.Dyadic
@@ -43,7 +44,7 @@ instance
   CanAddAsymmetric (CSequence t1) (CSequence t2) 
   where
   type AddType (CSequence t1) (CSequence t2) = CSequence (AddType t1 t2)
-  add = lift2 add
+  add = liftA2 add
 
 instance
   (CanSub t1 t2)
@@ -51,7 +52,7 @@ instance
   CanSub (CSequence t1) (CSequence t2) 
   where
   type SubType (CSequence t1) (CSequence t2) = CSequence (SubType t1 t2)
-  sub = lift2 sub
+  sub = liftA2 sub
 
 instance
   (CanMulAsymmetric t1 t2, CanGiveUpIfVeryInaccurate (MulType t1 t2))
@@ -59,7 +60,7 @@ instance
   CanMulAsymmetric (CSequence t1) (CSequence t2) 
   where
   type MulType (CSequence t1) (CSequence t2) = CSequence (MulType t1 t2)
-  mul = lift2 mul
+  mul = liftA2 mul
 
 instance
   (CanDiv t1 t2, CanTestZero t2)

@@ -18,6 +18,7 @@ module AERN2.Real.Type where
 
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
+import GHC.Base (liftA2)
 
 import qualified Numeric.CollectErrors as CN
 
@@ -47,6 +48,13 @@ instance (CanTestIsIntegerType t) => CanTestIsIntegerType (CSequence t) where
 
 cseqShowDefaultIndex :: Integer
 cseqShowDefaultIndex = 7
+
+instance Functor CSequence where
+  fmap f (CSequence a1) = CSequence (map (fmap f) a1)
+
+instance Applicative CSequence where
+  pure x = CSequence (repeat $ cn x)
+  liftA2 f (CSequence xs) (CSequence ys) = CSequence (zipWith (liftA2 f) xs ys)
 
 lift1 :: (CN t1 -> CN t2) -> CSequence t1 -> CSequence t2
 lift1 f (CSequence a1) = CSequence (map f a1)
@@ -116,7 +124,7 @@ infix 1 ?
 (?) :: CanExtractApproximation e q => e -> q -> ExtractedApproximation e q
 (?) = extractApproximation
 
-instance (HasAccuracy t) => CanExtractApproximation (CSequence t) Accuracy where
+instance (HasAccuracy t, Show t) => CanExtractApproximation (CSequence t) Accuracy where
   type ExtractedApproximation (CSequence t) Accuracy = CN t
   extractApproximation (CSequence s) ac = 
     aux $ drop (cseqIndexForPrecision p - 1) s
@@ -127,6 +135,7 @@ instance (HasAccuracy t) => CanExtractApproximation (CSequence t) Accuracy where
         NoInformation -> prec 2
         _ -> ac2prec ac
     aux (bCN : rest) 
+      | (length (show bCN) < 0) = error "in extractApproximation: this should never happen..."
       | CN.hasCertainError bCN = bCN
       | getAccuracy bCN >= ac = bCN
       | otherwise = aux rest
