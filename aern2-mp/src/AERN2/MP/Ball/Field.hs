@@ -19,15 +19,13 @@ module AERN2.MP.Ball.Field
 where
 
 import MixedTypesNumPrelude
--- import qualified Prelude as P
+import qualified Prelude as P
 
 import qualified Numeric.CollectErrors as CN
 
 import AERN2.Normalize
 
 import AERN2.MP.Dyadic (Dyadic)
-import qualified AERN2.MP.Float as MPFloat
-import AERN2.MP.Float (mpFloat)
 import AERN2.MP.Float.Operators
 import AERN2.MP.Precision
 -- import qualified AERN2.MP.ErrorBound as EB
@@ -40,10 +38,7 @@ import AERN2.MP.Ball.Comparisons (hullMPBall)
 
 instance CanAddAsymmetric MPBall MPBall where
   type AddType MPBall MPBall = MPBall
-  add (MPBall x1 e1) (MPBall x2 e2) =
-    normalize $ MPBall sumC (e1 + e2 + sumErr)
-    where
-    (sumC, sumErr) = MPFloat.ceduCentreErr $ MPFloat.addCEDU x1 x2
+  add (MPBall a1) (MPBall a2) = normalize $ (MPBall (a1 P.+ a2))
 
 instance CanAddAsymmetric MPBall Int where
   type AddType MPBall Int = MPBall
@@ -128,12 +123,7 @@ instance CanMulAsymmetric MPBall MPBall where
   -- mul = mulByEndpoints
 
 mulBalls :: MPBall -> MPBall -> MPBall
-mulBalls (MPBall x1 e1) (MPBall x2 e2) =
-    normalize $ MPBall x12C (e12 + e1*(abs x2) + e2*(abs x1) + e1*e2)
-      -- the mixed operations above automatically convert
-      -- MPFloat to ErrorBound, checking non-negativity
-    where
-    (x12C, e12) = MPFloat.ceduCentreErr $ MPFloat.mulCEDU x1 x2
+mulBalls (MPBall a1) (MPBall a2) = normalize $ (MPBall (a1 P.* a2))
 
 mulByEndpoints :: MPBall -> MPBall -> MPBall
 mulByEndpoints b1 b2 =
@@ -204,33 +194,7 @@ instance
 
 instance CanDiv MPBall MPBall where
   type DivType MPBall MPBall = MPBall
-  divide (MPBall x1 e1) (MPBall x2 e2) = normalize $ MPBall x12C err
-    where
-    (x12C, e12) = MPFloat.ceduCentreErr $ MPFloat.divCEDU x1 x2
-    x12AbsUp = (abs x12C) +^ e12
-    x2abs = abs x2
-    err =
-        ((e12 *^ x2abs) -- e12 * |x2|
-         +
-         e1
-         +
-         (e2 * x12AbsUp) -- e2 * |x|
-        )
-        *
-        ((mpFloat 1) /^ (x2abs -. (mpFloat e2)))
-            -- 1/(|x2| - e2) rounded upwards
-{-
-A derivation of the above formula for an upper bound on the error:
-
-    * e =
-        * = max ( (x1 ± e1) / (x2 ± e2) - x )
-        * = max ( ( x1 ± e1 - (x*(x2 ± e2) ) / (x2 ± e2) )
-        * ≤ max ( ( x1 ± e1 - ((x1/x2) ± e12)x2 ± x*e2 ) / (x2 ± e2) )
-        * = max ( ( x1 ± e1 - x1 ± e12*x2 ± x*e2 ) / (x2 ± e2) )
-        * = max ( ( ± e1 ± e12*x2 ± x*e2 ) / (x2 ± e2) )
-        * ≤ (e1 + e12*|x2| + |x|*e2 ) / (|x2| - e2)
-        * ≤ (e1 +^ e12*^|x2| +^ |x|*^e2 ) /^ (|x2| -. e2)
--}
+  divide (MPBall a1) (MPBall a2) = normalize $ (MPBall (a1 P./ a2))
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Dyadic |]]

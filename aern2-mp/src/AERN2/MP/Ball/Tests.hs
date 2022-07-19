@@ -41,13 +41,15 @@ import AERN2.MP.Ball.Type
 import AERN2.MP.Ball.Comparisons ()
 import AERN2.MP.Ball.Field ()
 import AERN2.MP.Ball.Elementary ()
+import AERN2.MP.ErrorBound ( ErrorBound )
+import AERN2.MP.Float (MPFloat)
 
 instance Arbitrary MPBall where
   arbitrary =
     do
-      c <- finiteMPFloat
-      e <- smallEB
-      return (reducePrecionIfInaccurate $ MPBall c e)
+      (c :: MPFloat) <- finiteMPFloat
+      (e :: ErrorBound) <- smallEB
+      return (reducePrecionIfInaccurate $ mpBall (c,e))
     where
       smallEB =
         do

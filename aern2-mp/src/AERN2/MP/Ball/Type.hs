@@ -19,7 +19,8 @@ module AERN2.MP.Ball.Type
   , module AERN2.MP.Accuracy
   , module AERN2.MP.Enclosure
   -- * The Ball type
-  , MPBall(..), CanBeMPBall, mpBall, cnMPBall
+  , MPBall(..), ball_value, ball_error, ball_valueError
+  , CanBeMPBall, mpBall, cnMPBall
   , CanBeMPBallP, mpBallP, cnMPBallP
   , reducePrecionIfInaccurate
   -- * Ball construction/extraction functions
@@ -29,7 +30,7 @@ module AERN2.MP.Ball.Type
 where
 
 import MixedTypesNumPrelude
--- import qualified Prelude as P
+import qualified Prelude as P
 
 import qualified Numeric.CollectErrors as CN
 
@@ -46,21 +47,31 @@ import AERN2.Norm
 
 import AERN2.MP.Dyadic
 import qualified AERN2.MP.Float as MPFloat
-import AERN2.MP.Float (MPFloat, mpFloat)
+import qualified Data.CDAR as CDAR
+import AERN2.MP.Float (MPFloat(..), mpFloat)
 import AERN2.MP.Float.Operators
 import AERN2.MP.Precision
 import AERN2.MP.Accuracy
 import AERN2.MP.ErrorBound (ErrorBound, errorBound)
 import AERN2.MP.Enclosure
 
-data MPBall = MPBall
-  { ball_value :: MPFloat
-  , ball_error :: ErrorBound
-  }
+newtype MPBall = MPBall { unMPBall :: CDAR.Approx }
   -- { ball_value :: {-# UNPACK #-} ! MPFloat
   -- , ball_error :: {-# UNPACK #-} ! ErrorBound
   -- }
   deriving (Generic)
+
+ball_value :: MPBall -> MPFloat
+ball_value = fst . ball_valueError
+
+ball_error :: MPBall -> ErrorBound
+ball_error = snd . ball_valueError
+
+ball_valueError :: MPBall -> (MPFloat, ErrorBound)
+ball_valueError (MPBall CDAR.Bottom) = error "ball_valueError: illegal MPBall"
+ball_valueError (MPBall (CDAR.Approx mb m e s)) = 
+  (              MPFloat (CDAR.Approx mb m 0 s)
+  , errorBound $ MPFloat (CDAR.Approx mb e 0 s))
 
 instance NFData MPBall
 
@@ -68,11 +79,12 @@ instance Show MPBall where
   show  = showWithAccuracy (bits 50)
 
 instance ShowWithAccuracy MPBall where
-  showWithAccuracy displayAC b@(MPBall x e) =
+  showWithAccuracy displayAC b = -- @(MPBall x e) =
     -- printf "[%s ± %s](prec=%s)" (show x) (showAC $ getAccuracy b) (show $ integer $ getPrecision b)
     printf "[%s ± %s%s]" (dropSomeDigits $ show x) eDS (showAC $ getAccuracy b)
     -- "[" ++ show x ++ " ± " ++ show e ++ "](prec=" ++ (show $ integer $ getPrecision x) ++ ")"
     where
+    (x,e) = ball_valueError b
     eDS 
       | e == 0 = "0"
       | otherwise  =
@@ -108,7 +120,8 @@ instance CanTestNaN MPBall where
   isNaN = not . isFinite
 instance CanTestFinite MPBall where
   isInfinite = const False
-  isFinite (MPBall x e) = isFinite x && isFinite (mpFloat e)
+  isFinite (MPBall CDAR.Bottom) = False
+  isFinite _ = True
 
 instance CanNormalize MPBall where
   normalize b
@@ -126,13 +139,14 @@ instance CanNormalize MPBall where
     unless the ulp is already lower than this.
 -}
 reducePrecionIfInaccurate :: MPBall -> MPBall
-reducePrecionIfInaccurate b@(MPBall x _) =
+reducePrecionIfInaccurate b =
     case (bAcc, bNorm) of
         (Exact, _) -> b
         (_, NormZero) -> b
         _ | p_e_nb < p_x -> setPrecision p_e_nb b
         _ -> b
     where
+    x = ball_value b
     bAcc = getAccuracy b
     bNorm = getNormLog b
     p_x = getPrecision x
@@ -142,23 +156,27 @@ reducePrecionIfInaccurate b@(MPBall x _) =
 instance CanGiveUpIfVeryInaccurate MPBall where
   giveUpIfVeryInaccurate = (aux =<<)
     where
-    aux b@(MPBall _ e)
+    aux b -- @(MPBall _ e)
       | e > 1000000 = CN.noValueNumErrorPotential $ numErrorVeryInaccurate "MPBall" ""
       | otherwise = cn b
+      where
+      e = ball_error b
 
 {- ball construction/extraction functions -}
 
 instance IsInterval MPBall where
   type IntervalEndpoint MPBall = MPFloat
-  fromEndpoints l u
+  fromEndpoints l@(MPFloat lA) u@(MPFloat uA)
     | u < l = fromEndpoints u l
-    | otherwise =
-      MPBall c (errorBound e)
+    | otherwise = MPBall a
+    where
+    a = CDAR.endToApprox mb (CDAR.lowerBound lA) (CDAR.upperBound uA)
+    mb = CDAR.mBound lA `max` CDAR.mBound uA
+      -- c = (l +. u) *. (mpFloat $ dyadic 0.5)
+      -- e = (u -^ c) `max` (c -^ l)
+  endpoints b = (l, u)
       where
-      c = (l +. u) *. (mpFloat $ dyadic 0.5)
-      e = (u -^ c) `max` (c -^ l)
-  endpoints (MPBall x e) = (l, u)
-      where
+      (x,e) = ball_valueError b
       eFl = mpFloat e
       l   = x -. eFl
       u   = x +^ eFl
@@ -174,13 +192,19 @@ mpBallEndpoints = endpointsAsIntervals
 
 instance IsBall MPBall where
   type CentreType MPBall = Dyadic
-  centre (MPBall cMP _e) = dyadic cMP
-  centreAsBallAndRadius x = (cB,e)
+  centre = dyadic . ball_value
+  centreAsBallAndRadius b@(MPBall bA) = 
+    (MPBall (CDAR.centreA bA), ball_error b)
+  radius = ball_error
+  updateRadius updateFn (MPBall (CDAR.Approx mb m e s)) 
+    | s == s' = MPBall $ CDAR.Approx mb m e' s
+    | s < s' = MPBall $ CDAR.Approx mb m (CDAR.scale e' (s' P.- s)) s
+    | otherwise = MPBall $ CDAR.Approx mb (CDAR.scale m (s P.- s')) e' s'
     where
-    (MPBall cMP e) = x
-    cB = MPBall cMP (errorBound 0)
-  radius (MPBall _ e) = e
-  updateRadius updateFn (MPBall c e) = MPBall c (updateFn e)
+    -- (c, e) = centreAsBallAndRadius b
+    MPFloat (CDAR.Approx _ e' 0 s') =  
+      mpFloat $ updateFn $ errorBound $ MPFloat (CDAR.Approx mb e 0 s)
+  updateRadius _ _ = error "internal error in updateRadius: Bottom"
 
 {--- constructing a ball with a given precision ---}
 
@@ -209,15 +233,16 @@ instance HasAccuracy MPBall where
     getAccuracy = getAccuracy . ball_error
 
 instance HasNorm MPBall where
-    getNormLog ball = getNormLog boundMP
+    getNormLog ball = getNormLog (MPFloat boundA)
         where
-        (_, MPBall boundMP _) = mpBallEndpoints $ absRaw ball
+        (_, MPBall boundA) = mpBallEndpoints $ absRaw ball
 
 instance HasApproximate MPBall where
     type Approximate MPBall = (MPFloat, Bool)
-    getApproximate ac b@(MPBall x e) =
+    getApproximate ac b =
         (approx, isAccurate)
         where
+        (x,e) = ball_valueError b
         isAccurate = getAccuracy b < ac
         approx
             | closeToN = n
@@ -227,20 +252,18 @@ instance HasApproximate MPBall where
             closeToN = ((abs $ x -^ n) <= e)
 
 instance HasPrecision MPBall where
-    getPrecision  = getPrecision . ball_value
+  getPrecision (MPBall (CDAR.Approx mb _ _ _)) = prec (P.toInteger $ mb)
+  getPrecision (MPBall CDAR.Bottom) = error "getPrecision: illegal MPBall (Bottom)"
 
 instance CanSetPrecision MPBall where
-    setPrecision p (MPBall x e)
-        | p >= pPrev = MPBall xC e
-        | otherwise  = MPBall xC (e + (xErr))
-        where
-        pPrev = MPFloat.getPrecision x
-        (xC, xErr) = MPFloat.ceduCentreErr $ MPFloat.setPrecisionCEDU p x
+    setPrecision p (MPBall aA) = MPBall aA'
+      where
+      aA' = CDAR.enforceMB $ CDAR.setMB (MPFloat.p2cdarPrec p) aA
 
 {- negation & abs -}
 
 instance CanNeg MPBall where
-  negate (MPBall x e) = MPBall (-x) e
+  negate (MPBall a) = MPBall (P.negate a)
 
 instance CanAbs MPBall where
   abs = normalize . absRaw
@@ -255,26 +278,18 @@ absRaw b
   (l,r) = endpoints b
 
 instance CanTestContains MPBall MPBall where
-  contains (MPBall xLarge eLarge) (MPBall xSmall eSmall) =
-    xLargeDy - eLargeDy <= xSmallDy - eSmallDy
-    &&
-    xSmallDy + eSmallDy <= xLargeDy + eLargeDy
-    where
-    xLargeDy = dyadic xLarge
-    eLargeDy = dyadic eLarge
-    xSmallDy = dyadic xSmall
-    eSmallDy = dyadic eSmall
+  contains (MPBall aLarge) (MPBall aSmall) =
+    aSmall `CDAR.better` aLarge
 
 $(declForTypes
   [[t| Integer |], [t| Int |], [t| Rational |], [t| Dyadic |]]
   (\ t -> [d|
     instance CanTestContains MPBall $t where
-      contains (MPBall c e) x =
-        l <= x && x <= r
+      contains b x =
+        lD <= x && x <= rD
         where
-        l = cDy - eDy
-        r = cDy + eDy
-        cDy = dyadic c
-        eDy = dyadic e
+        (l,r) = endpoints b
+        lD = dyadic l
+        rD = dyadic r
   |]))
 

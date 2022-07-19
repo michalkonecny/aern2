@@ -91,6 +91,9 @@ type CanBeErrorBound t = Convertible t ErrorBound
 errorBound :: (CanBeErrorBound t) => t -> ErrorBound
 errorBound = convert
 
+instance Convertible ErrorBound ErrorBound where
+  safeConvert = Right
+
 instance Convertible Rational ErrorBound where
   safeConvert x
     | x >= 0 = Right $ ErrorBound $ MPFloat.fromRationalUp errorBoundPrecision x

@@ -28,7 +28,7 @@ import AERN2.Normalize
 
 import AERN2.MP.Dyadic (Dyadic)
 import qualified AERN2.MP.Float as MPFloat
-import AERN2.MP.Float (MPFloat, mpFloat, ceduCentreErr)
+import AERN2.MP.Float (MPFloat, mpFloat)
 -- import AERN2.MP.Float.Operators
 import AERN2.MP.Precision
 -- import qualified AERN2.MP.ErrorBound as EB
@@ -38,12 +38,13 @@ import AERN2.MP.Ball.Type
 import AERN2.MP.Ball.Conversions ()
 import AERN2.MP.Ball.Comparisons ()
 import AERN2.MP.Ball.Field (mulByEndpoints)
+import qualified Data.CDAR as CDAR
 
 
 {- trigonometrics -}
 
 piBallP :: Precision -> MPBall
-piBallP p = MPBall piC (errorBound piErr)
+piBallP p = mpBall (piC, piErr)
   where
   (piC, piErr) = MPFloat.ceduCentreErr $ MPFloat.piCEDU p
 
@@ -106,9 +107,10 @@ instance CanLog MPBall where
     p = getPrecision x
     x_ = reducePrecionIfInaccurate x
     err = error $ "log: argument must be > 0: " ++ show x
-    log_ (MPBall c e) = MPBall lc (e + (errorBound le))
-      where
-      (lc, le) = ceduCentreErr $ MPFloat.logCEDU c
+    log_ (MPBall a) = MPBall (CDAR.logA a)
+    -- log_ (MPBall c e) = MPBall lc (e + (errorBound le))
+    --   where
+    --   (lc, le) = ceduCentreErr $ MPFloat.logCEDU c
     logLip y = errorBound $ (1/y)
 
 instance CanPow MPBall MPBall where
@@ -143,13 +145,15 @@ fromApproxWithLipschitz ::
     (MPFloat -> MPFloat.BoundsCEDU MPFloat) {-^ @fCEDU@: a version of @f@ on MPFloat returning rigorous bounds -} ->
     MPFloat {-^ @lip@ a Lipschitz constant for @f@, @lip > 0@ -} ->
     (MPBall -> MPBall) {-^ @f@ on MPBall rounding *outwards* -}
-fromApproxWithLipschitz fCEDU lip _x@(MPBall xc xe) =
-    normalize $ MPBall fxCP err
+fromApproxWithLipschitz fCEDU lip x =
+    normalize $ mpBall (fxCP, err)
     where
+    (xc,xe) = ball_valueError x
     (fxC, fxErr) = MPFloat.ceduCentreErr $ fCEDU xc
-    (MPBall fxCP fxe) =
-      setPrecision (getPrecision xc) $ -- beware, some MPFloat functions may increase precision, eg sine and cosine
-        (MPBall fxC (errorBound fxErr))
+    (fxCP, fxe) = 
+      ball_valueError $
+        setPrecision (getPrecision xc) $ -- beware, some MPFloat functions may increase precision, eg sine and cosine
+          mpBall (fxC, fxErr)
     err = (errorBound lip) * xe  +  fxe
 
 $(declForTypes
