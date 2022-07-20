@@ -69,7 +69,7 @@ bench benchS benchParams implS ac =
             ("det", [n]) ->
                 case implS of
                     "MPFloat" -> show (taskLUDet mpFloat_AC n)
-                    "MPBall" -> showB (taskLUDet cnMPBall_AC n)
+                    "MPBall" -> showB (taskLUDet_MTN cnMPBall_AC n)
                     -- "MPFloat_Lap" -> show (taskLapDet (== 0) mpFloat_AC n)
                     "MPBall_Lap" -> show (taskLapDet (!==! 0) cnMPBall_AC n)
                     _ -> error $ "unknown implementation: " ++ implS
@@ -123,6 +123,12 @@ taskLUDet ::
   (Rational -> t) -> Integer -> t
 taskLUDet fromQ n = 
   MRC.luDet (taskMatrix fromQ n)
+
+taskLUDet_MTN ::
+  (P.Fractional t, Typeable t, Show t, Ring t, CanDivSameType t) => 
+  (Rational -> t) -> Integer -> t
+taskLUDet_MTN fromQ n = 
+  MRC.luDet_MTN (taskMatrix fromQ n)
 
 taskLapDet ::
   (Ring t, Typeable t, Show t) => 

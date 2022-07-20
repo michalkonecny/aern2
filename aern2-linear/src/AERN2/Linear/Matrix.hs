@@ -5,6 +5,7 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# OPTIONS_GHC -Wno-partial-type-signatures #-}
+{-# LANGUAGE BangPatterns #-}
 module AERN2.Linear.Matrix
 -- (VN(..), MatrixRC(..), identity)
 where
@@ -114,8 +115,13 @@ luSolve (MatrixRC a) (VN b) =
 luInv :: (P.Fractional e) => MatrixRC e -> MatrixRC e
 luInv (MatrixRC a) = MatrixRC $ L.luInvFinite (checkVVSquare a)
 
+luDet_MTN :: (P.Fractional e, Ring e, CanDivSameType e) => MatrixRC e -> e
+luDet_MTN (MatrixRC a) = 
+  luDet_vv (checkVVSquare a)
+
 luDet :: (P.Fractional e) => MatrixRC e -> e
-luDet (MatrixRC a) = L.luDetFinite (checkVVSquare a)
+luDet (MatrixRC a) = 
+  L.luDetFinite (checkVVSquare a)
 
 {- Basic operations -}
 
@@ -321,3 +327,92 @@ solveBViaFP aB bB@(VN bv) =
     | otherwise = CN.noValueNumErrorCertain $ NumError "NumError"
   p = getPrecision b0
   Just b0 = (bv ^? ix (int 0))
+
+{-|
+    Adaptation of lu from Linear.Matrix, package "linear" by E. Kmett
+-}
+lu :: ( CanAddSubMulBy a a, P.Num a
+      , CanDivSameType a
+      , Foldable m
+      , Traversable m
+      , Applicative m
+      , L.Additive m
+      , Ixed (m a)
+      , Ixed (m (m a))
+      , i ~ Index (m a)
+      , i ~ Index (m (m a))
+      , HasEq i i, EqCompareType i i ~ Bool
+      , P.Integral i, CanAddThis Integer i
+      , a ~ IxValue (m a)
+      , m a ~ IxValue (m (m a))
+      , P.Num (m a)
+      ) =>
+   m (m a) -> 
+   (m (m a), m (m a))
+lu a =
+    let n = fI (length a)
+        fI :: (P.Integral a, P.Num b) => a -> b
+        fI = P.fromIntegral
+        initU = L.identity
+        initL = L.zero
+        buildLVal !i !j !l !u =
+            let go !k !s
+                    | k P.== j = s
+                    | otherwise = go (fI $ k + 1)
+                                     ( s
+                                      + ( (l ^?! ix i ^?! ix k)
+                                        * (u ^?! ix k ^?! ix j)
+                                        )
+                                      )
+                s' = go (P.fromInteger 0) (P.fromInteger 0)
+            in l & (ix i . ix j) .~ ((a ^?! ix i ^?! ix j) P.- s')
+        buildL !i !j !l !u
+            | i P.== n = l
+            | otherwise = buildL (fI $ i+1) j (buildLVal i j l u) u
+        buildUVal !i !j !l !u =
+            let go !k !s
+                    | k == j = s
+                    | otherwise = go (fI $ k+1)
+                                     ( s
+                                     P.+ ( (l ^?! ix j ^?! ix k)
+                                       P.* (u ^?! ix k ^?! ix i)
+                                       )
+                                     )
+                s' = go (P.fromInteger 0) (P.fromInteger 0)
+            in u & (ix j . ix i) .~ ( ((a ^?! ix j ^?! ix i) - s')
+                                    / (l ^?! ix j ^?! ix j)
+                                    )
+        buildU !i !j !l !u
+            | i == n = u
+            | otherwise = buildU (fI $ i+1) j l (buildUVal i j l u)
+        buildLU !j !l !u
+            | j == n = (l, u)
+            | otherwise =
+                let l' = buildL j j l u
+                    u' = buildU j j l' u
+                in buildLU (fI $ j+1) l' u'
+    in buildLU (P.fromInteger 0) initL initU
+
+luDet_vv :: ( CanAddSubMulBy a a, P.Num a
+      , CanDivSameType a
+      , Foldable m
+      , Traversable m
+      , Applicative m
+      , L.Additive m
+      , L.Trace m
+      , Ixed (m a)
+      , Ixed (m (m a))
+      , i ~ Index (m a)
+      , i ~ Index (m (m a))
+      , HasEq i i, EqCompareType i i ~ Bool
+      , P.Integral i, CanAddThis Integer i
+      , a ~ IxValue (m a)
+      , m a ~ IxValue (m (m a))
+      , P.Num (m a)
+      ) =>
+   m (m a) -> a
+luDet_vv (a :: m (m a)) =
+    let (l, u) = lu a
+        detl   = Foldable.foldl (*) (P.fromInteger 1 :: a) (L.diagonal l)
+        detu   = Foldable.foldl (*) (P.fromInteger 1 :: a) (L.diagonal u)
+    in detl * detu
