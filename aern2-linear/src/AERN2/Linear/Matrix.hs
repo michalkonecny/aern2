@@ -27,6 +27,7 @@ import Data.Foldable (Foldable(toList))
 import qualified Data.Map as Map
 import AERN2.MP
 import AERN2.MP.Float (MPFloat, mpFloat)
+import qualified AERN2.MP.Float as MPFloat
 import Control.Applicative (Applicative(liftA2))
 import Control.Lens hiding (Contains(..))
 -- import qualified Debug.Trace as D
@@ -36,6 +37,7 @@ import Numeric.CollectErrors (NumError(NumError))
 
 import qualified AERN2.Linear.Vector as VN
 import AERN2.Linear.Vector (VN(..), checkVVSquare, checkVSameSizeAs, vvFromList, checkVVSameSizeAs)
+import qualified Data.Foldable as Foldable
 
 
 ----------------------
@@ -117,6 +119,14 @@ luDet (MatrixRC a) = L.luDetFinite (checkVVSquare a)
 
 {- Basic operations -}
 
+instance (CanNeg e1) => CanNeg (MatrixRC e1) where
+  type NegType (MatrixRC e1)= MatrixRC (NegType e1)
+  negate = fmap negate
+
+instance (CanAbs e1) => CanAbs (MatrixRC e1) where
+  type AbsType (MatrixRC e1) = MatrixRC (AbsType e1)
+  abs = fmap abs
+
 instance (CanAddAsymmetric e1 e2) => CanAddAsymmetric (MatrixRC e1) (MatrixRC e2) where
   type AddType (MatrixRC e1) (MatrixRC e2) = MatrixRC (AddType e1 e2)
   add = lift2 add
@@ -125,18 +135,86 @@ instance (CanSub e1 e2) => CanSub (MatrixRC e1) (MatrixRC e2) where
   type SubType (MatrixRC e1) (MatrixRC e2) = MatrixRC (SubType e1 e2)
   sub = lift2 sub
 
-instance (CanNeg e1) => CanNeg (MatrixRC e1) where
-  type NegType (MatrixRC e1)= MatrixRC (NegType e1)
-  negate = fmap negate
-
-instance (P.Num e1, e1~e2) => CanMulAsymmetric (MatrixRC e1) (MatrixRC e2) where
-  type MulType (MatrixRC e1) (MatrixRC e2) = MatrixRC e1
+instance CanMulAsymmetric (MatrixRC MPFloat) (MatrixRC MPFloat) where
+  type MulType (MatrixRC MPFloat) (MatrixRC MPFloat) = MatrixRC MPFloat
   mul (MatrixRC a) (MatrixRC b) = MatrixRC (a L.!*! (checkVSameSizeAs (L.transpose a) b))
 
 instance (P.Num e1, e1~e2) => CanMulAsymmetric (MatrixRC e1) (VN e2) where
   type MulType (MatrixRC e1) (VN e2) = VN e1
   mul (MatrixRC a) (VN b) = VN (a L.!* (checkVSameSizeAs (L.transpose a) b))
 
+{- Operations specialised to MPFloat rounded up/down -}
+
+addMPF_Up :: MatrixRC MPFloat -> MatrixRC MPFloat -> MatrixRC MPFloat
+addMPF_Up = lift2 (MPFloat.+^)
+
+addMPF_Down :: MatrixRC MPFloat -> MatrixRC MPFloat -> MatrixRC MPFloat
+addMPF_Down = lift2 (MPFloat.+.)
+
+subMPF_Up :: MatrixRC MPFloat -> MatrixRC MPFloat -> MatrixRC MPFloat
+subMPF_Up = lift2 (MPFloat.-^)
+
+subMPF_Down :: MatrixRC MPFloat -> MatrixRC MPFloat -> MatrixRC MPFloat
+subMPF_Down = lift2 (MPFloat.-.)
+
+mulMPF_Up :: MatrixRC MPFloat -> MatrixRC MPFloat -> MatrixRC MPFloat
+mulMPF_Up (MatrixRC f) (MatrixRC g) = 
+  MatrixRC $ 
+    -- the following line is has been adapted from Linear.Matrix, package "linear" by E. Kmett
+    fmap (\ f' -> Foldable.foldl' vAddUp L.zero $ L.liftI2 vScaleUp f' gChecked) f
+  where
+  gChecked = checkVSameSizeAs (L.transpose f) g
+  vAddUp :: (Applicative f) => f MPFloat -> f MPFloat -> f MPFloat
+  vAddUp = liftA2 (MPFloat.+^)
+  vScaleUp :: (Functor f) => MPFloat -> f MPFloat -> f MPFloat
+  vScaleUp a = fmap (a MPFloat.*^)
+
+mulMPF_Down :: MatrixRC MPFloat -> MatrixRC MPFloat -> MatrixRC MPFloat
+mulMPF_Down (MatrixRC f) (MatrixRC g) = 
+  MatrixRC $ 
+    -- the following line is has been adapted from Linear.Matrix, package "linear" by E. Kmett
+    fmap (\ f' -> Foldable.foldl' vAddUp L.zero $ L.liftI2 vScaleUp f' gChecked) f
+  where
+  gChecked = checkVSameSizeAs (L.transpose f) g
+  vAddUp :: (Applicative f) => f MPFloat -> f MPFloat -> f MPFloat
+  vAddUp = liftA2 (MPFloat.+.)
+  vScaleUp :: (Functor f) => MPFloat -> f MPFloat -> f MPFloat
+  vScaleUp a = fmap (a MPFloat.*.)
+
+instance CanMulAsymmetric (MatrixRC MPBall) (MatrixRC MPBall) where
+  type MulType (MatrixRC MPBall) (MatrixRC MPBall) = MatrixRC MPBall
+  mul (MatrixRC a) (MatrixRC b) = 
+    MatrixRC (a L.!*! (checkVSameSizeAs (L.transpose a) b))
+  -- the Rump 2010 approach is unfortunately slower in the following implementation:
+  -- mul a b = 
+  --   -- following Rump 2010, equation (9.14) on page 329 (43 of 163):
+  --   lift2 (\ m r -> mpBall (m,r)) mC_Up rC
+  --   where
+  --   -- matrix product of midpoints:
+  --   mA = fmap (mpFloat . centre) a
+  --   mB = fmap (mpFloat . centre) b
+  --   mC_Up = mA *^ mB
+  --   mC_Down = mA *. mB
+  --   mC_Err = mC_Up -^ mC_Down
+
+  --   -- calculate new radius:
+  --   rA = fmap (mpFloat . radius) a
+  --   rB = fmap (mpFloat . radius) b
+  --   rC = (rA *^ ((abs mB) +^ rB)) +^ ((abs mA) *^ rB) +^ mC_Err
+
+  --   (*^) = mulMPF_Up
+  --   (*.) = mulMPF_Down
+  --   (+^) = addMPF_Up
+  --   (-^) = subMPF_Up
+
+instance CanMulAsymmetric (MatrixRC (CN MPBall)) (MatrixRC (CN MPBall)) where
+  type MulType (MatrixRC (CN MPBall)) (MatrixRC (CN MPBall)) = MatrixRC (CN MPBall)
+  mul aCN bCN = fmap cn $ a * b
+    where
+    a = fmap unCN aCN -- TODO: deal with errors more gracefully
+    b = fmap unCN bCN
+
+  
 {-
   Determinant using the Laplace method.
   
