@@ -1,5 +1,5 @@
 name:                aern2-linear
-version:             0.2.8.0
+version:             0.2.9.0
 github:              "michalkonecny/aern2"
 license:             BSD3
 author:              "Michal Konecny"
@@ -51,18 +51,29 @@ other-extensions:
 library:
   source-dirs: 
   - src
-  - examples
+  # - examples
   ghc-options:
-  - -Wall
+  - -O2 -Wall
 
-tests:
-  aern2-linear-test:
-    main:                Spec.hs
-    source-dirs:         test
+executables:
+  aern2-linear-matrix-benchmark:
+    source-dirs: 
+    - bench
+    - src
+    main: matrix-benchmark.hs
     ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    - -Wall
-    dependencies:
-    - aern2-linear
+    - -O2 -Wall -rtsopts
+    # dependencies:
+    # - aern2-linear
+
+# tests:
+#   aern2-linear-test:
+#     main:                Spec.hs
+#     source-dirs:         test
+#     ghc-options:
+#     - -threaded
+#     - -rtsopts
+#     - -with-rtsopts=-N
+#     - -Wall
+#     dependencies:
+#     - aern2-linear
