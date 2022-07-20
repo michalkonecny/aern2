@@ -41,6 +41,8 @@ bench benchS benchParams implS ac =
               printf "|M*M| where M is the %dx%d matrix [1,1/2,1/3,...] (ac = %s)" n n (show ac)
             ("inverse", [n]) -> 
               printf "|I/M| where M is the %dx%d matrix [1,1/2,1/3,...] (ac = %s)" n n (show ac)
+            ("det", [n]) -> 
+              printf "det(M) where M is the %dx%d matrix [1,1/2,1/3,...] (ac = %s)" n n (show ac)
             ("systemRHS", [n]) ->
               printf "|M*1| where M is the %dx%d matrix [1,1/2,1/3,...] (ac = %s)" n n (show ac)
             ("solve", [n]) ->
@@ -63,6 +65,13 @@ bench benchS benchParams implS ac =
                 case implS of
                     "MPFloat" -> show (MRC.inftyNorm $ taskInverse mpFloat_AC n)
                     "MPBall" -> showB (MRC.inftyNorm $ taskInverse cnMPBall_AC n)
+                    _ -> error $ "unknown implementation: " ++ implS
+            ("det", [n]) ->
+                case implS of
+                    "MPFloat" -> show (taskLUDet mpFloat_AC n)
+                    "MPBall" -> showB (taskLUDet cnMPBall_AC n)
+                    -- "MPFloat_Lap" -> show (taskLapDet (== 0) mpFloat_AC n)
+                    "MPBall_Lap" -> show (taskLapDet (!==! 0) cnMPBall_AC n)
                     _ -> error $ "unknown implementation: " ++ implS
             ("systemRHS", [n]) ->
                 case implS of
@@ -97,7 +106,7 @@ taskMatrix fromQ n =
   m = MRC.fromList $ map (map fromQ) rowsQ
 
 taskProduct :: 
-  (P.Num t, Typeable t, Show t) => 
+  (CanMulSameType (MatrixRC t), Typeable t, Show t) => 
   (Rational -> t) -> Integer -> MatrixRC t
 taskProduct fromQ n = m * m
   where
@@ -108,6 +117,18 @@ taskInverse ::
   (Rational -> t) -> Integer -> MatrixRC t
 taskInverse fromQ n = 
   MRC.luInv (taskMatrix fromQ n)
+
+taskLUDet ::
+  (P.Fractional t, Typeable t, Show t) => 
+  (Rational -> t) -> Integer -> t
+taskLUDet fromQ n = 
+  MRC.luDet (taskMatrix fromQ n)
+
+taskLapDet ::
+  (Ring t, Typeable t, Show t) => 
+  (t -> Bool) -> (Rational -> t) -> Integer -> t
+taskLapDet test0 fromQ n = 
+  MRC.detLaplace test0 (taskMatrix fromQ n)
 
 -- | Compute b such that the solution of M*x = b is x = 1.
 taskSystemRHS :: 
