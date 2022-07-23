@@ -128,14 +128,18 @@
         var times = [];
         var mems = [];
 
+        lastN = 0
         recs.forEach(rec => {
-          ns.push(rec.param)
-          times.push(rec.utime + rec.stime)
-          mems.push(rec.mem)
+          if (rec.param > lastN) {
+            lastN = rec.param
+            ns.push(lastN)
+            times.push(rec.utime + rec.stime)
+            mems.push(rec.mem)
+          }
         });
 
         dataTime.push({ x: ns, y: times, type: 'scatter', name: method })
-        dataMem.push({ x: ns, y: mems, type: 'scatter', mode: "lines", name: method })
+        dataMem.push({ x: ns, y: mems, type: 'scatter', name: method })
       });
 
 
@@ -180,7 +184,7 @@
         });
 
         dataTime.push({ x: bitss, y: times, type: 'scatter', name: method })
-        dataMem.push({ x: bitss, y: mems, type: 'scatter', mode: "lines", name: method })
+        dataMem.push({ x: bitss, y: mems, type: 'scatter', name: method })
       });
 
 
