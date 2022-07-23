@@ -26,6 +26,7 @@ source-repository head
 
 library
   exposed-modules:
+      AERN2.Linear.AdaptedLinear
       AERN2.Linear.Matrix
       AERN2.Linear.Vector
       AERN2.TestApprox
@@ -62,6 +63,7 @@ library
 executable aern2-linear-matrix-benchmark
   main-is: matrix-benchmark.hs
   other-modules:
+      AERN2.Linear.AdaptedLinear
       AERN2.Linear.Matrix
       AERN2.Linear.Vector
       AERN2.TestApprox

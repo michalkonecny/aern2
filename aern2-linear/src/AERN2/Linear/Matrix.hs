@@ -24,6 +24,7 @@ import Linear.V (V)
 import qualified Linear as L
 import GHC.TypeLits (KnownNat, SomeNat (SomeNat), someNatVal)
 import Data.Typeable (Typeable, Proxy)
+import qualified Data.Foldable as Foldable
 import Data.Foldable (Foldable(toList))
 import qualified Data.Map as Map
 import AERN2.MP
@@ -38,7 +39,7 @@ import Numeric.CollectErrors (NumError(NumError))
 
 import qualified AERN2.Linear.Vector as VN
 import AERN2.Linear.Vector (VN(..), checkVVSquare, checkVSameSizeAs, vvFromList, checkVVSameSizeAs)
-import qualified Data.Foldable as Foldable
+import qualified AERN2.Linear.AdaptedLinear as LAdapted
 
 
 ----------------------
@@ -112,12 +113,16 @@ luSolve :: (P.Fractional e) => MatrixRC e -> VN e -> VN e
 luSolve (MatrixRC a) (VN b) =
   VN $ L.luSolveFinite (checkVVSquare a) ((checkVSameSizeAs a) b)
 
+luSolve_MTN :: (P.Fractional e, Ring e, CanDivSameType e) => MatrixRC e -> VN e -> VN e
+luSolve_MTN (MatrixRC a) (VN b) =
+  VN $ LAdapted.luSolve (checkVVSquare a) ((checkVSameSizeAs a) b)
+
 luInv :: (P.Fractional e) => MatrixRC e -> MatrixRC e
 luInv (MatrixRC a) = MatrixRC $ L.luInvFinite (checkVVSquare a)
 
 luDet_MTN :: (P.Fractional e, Ring e, CanDivSameType e) => MatrixRC e -> e
 luDet_MTN (MatrixRC a) = 
-  luDet_vv (checkVVSquare a)
+  LAdapted.luDet (checkVVSquare a)
 
 luDet :: (P.Fractional e) => MatrixRC e -> e
 luDet (MatrixRC a) = 
@@ -191,27 +196,28 @@ instance CanMulAsymmetric (MatrixRC MPBall) (MatrixRC MPBall) where
   type MulType (MatrixRC MPBall) (MatrixRC MPBall) = MatrixRC MPBall
   mul (MatrixRC a) (MatrixRC b) = 
     MatrixRC (a L.!*! (checkVSameSizeAs (L.transpose a) b))
-  -- the Rump 2010 approach is unfortunately slower in the following implementation:
-  -- mul a b = 
-  --   -- following Rump 2010, equation (9.14) on page 329 (43 of 163):
-  --   lift2 (\ m r -> mpBall (m,r)) mC_Up rC
-  --   where
-  --   -- matrix product of midpoints:
-  --   mA = fmap (mpFloat . centre) a
-  --   mB = fmap (mpFloat . centre) b
-  --   mC_Up = mA *^ mB
-  --   mC_Down = mA *. mB
-  --   mC_Err = mC_Up -^ mC_Down
 
-  --   -- calculate new radius:
-  --   rA = fmap (mpFloat . radius) a
-  --   rB = fmap (mpFloat . radius) b
-  --   rC = (rA *^ ((abs mB) +^ rB)) +^ ((abs mA) *^ rB) +^ mC_Err
+--  the Rump 2010 approach is unfortunately slower in the following implementation:
+mulViaFP a b = 
+  -- following Rump 2010, equation (9.14) on page 329 (43 of 163):
+  lift2 (\ m r -> mpBall (m,r)) mC_Up rC
+  where
+  -- matrix product of midpoints:
+  mA = fmap (mpFloat . centre) a
+  mB = fmap (mpFloat . centre) b
+  mC_Up = mA *^ mB
+  mC_Down = mA *. mB
+  mC_Err = mC_Up -^ mC_Down
 
-  --   (*^) = mulMPF_Up
-  --   (*.) = mulMPF_Down
-  --   (+^) = addMPF_Up
-  --   (-^) = subMPF_Up
+  -- calculate new radius:
+  rA = fmap (mpFloat . radius) a
+  rB = fmap (mpFloat . radius) b
+  rC = (rA *^ ((abs mB) +^ rB)) +^ ((abs mA) *^ rB) +^ mC_Err
+
+  (*^) = mulMPF_Up
+  (*.) = mulMPF_Down
+  (+^) = addMPF_Up
+  (-^) = subMPF_Up
 
 instance CanMulAsymmetric (MatrixRC (CN MPBall)) (MatrixRC (CN MPBall)) where
   type MulType (MatrixRC (CN MPBall)) (MatrixRC (CN MPBall)) = MatrixRC (CN MPBall)
@@ -328,91 +334,3 @@ solveBViaFP aB bB@(VN bv) =
   p = getPrecision b0
   Just b0 = (bv ^? ix (int 0))
 
-{-|
-    Adaptation of lu from Linear.Matrix, package "linear" by E. Kmett
--}
-lu :: ( CanAddSubMulBy a a, P.Num a
-      , CanDivSameType a
-      , Foldable m
-      , Traversable m
-      , Applicative m
-      , L.Additive m
-      , Ixed (m a)
-      , Ixed (m (m a))
-      , i ~ Index (m a)
-      , i ~ Index (m (m a))
-      , HasEq i i, EqCompareType i i ~ Bool
-      , P.Integral i, CanAddThis Integer i
-      , a ~ IxValue (m a)
-      , m a ~ IxValue (m (m a))
-      , P.Num (m a)
-      ) =>
-   m (m a) -> 
-   (m (m a), m (m a))
-lu a =
-    let n = fI (length a)
-        fI :: (P.Integral a, P.Num b) => a -> b
-        fI = P.fromIntegral
-        initU = L.identity
-        initL = L.zero
-        buildLVal !i !j !l !u =
-            let go !k !s
-                    | k P.== j = s
-                    | otherwise = go (fI $ k + 1)
-                                     ( s
-                                      + ( (l ^?! ix i ^?! ix k)
-                                        * (u ^?! ix k ^?! ix j)
-                                        )
-                                      )
-                s' = go (P.fromInteger 0) (P.fromInteger 0)
-            in l & (ix i . ix j) .~ ((a ^?! ix i ^?! ix j) P.- s')
-        buildL !i !j !l !u
-            | i P.== n = l
-            | otherwise = buildL (fI $ i+1) j (buildLVal i j l u) u
-        buildUVal !i !j !l !u =
-            let go !k !s
-                    | k == j = s
-                    | otherwise = go (fI $ k+1)
-                                     ( s
-                                     P.+ ( (l ^?! ix j ^?! ix k)
-                                       P.* (u ^?! ix k ^?! ix i)
-                                       )
-                                     )
-                s' = go (P.fromInteger 0) (P.fromInteger 0)
-            in u & (ix j . ix i) .~ ( ((a ^?! ix j ^?! ix i) - s')
-                                    / (l ^?! ix j ^?! ix j)
-                                    )
-        buildU !i !j !l !u
-            | i == n = u
-            | otherwise = buildU (fI $ i+1) j l (buildUVal i j l u)
-        buildLU !j !l !u
-            | j == n = (l, u)
-            | otherwise =
-                let l' = buildL j j l u
-                    u' = buildU j j l' u
-                in buildLU (fI $ j+1) l' u'
-    in buildLU (P.fromInteger 0) initL initU
-
-luDet_vv :: ( CanAddSubMulBy a a, P.Num a
-      , CanDivSameType a
-      , Foldable m
-      , Traversable m
-      , Applicative m
-      , L.Additive m
-      , L.Trace m
-      , Ixed (m a)
-      , Ixed (m (m a))
-      , i ~ Index (m a)
-      , i ~ Index (m (m a))
-      , HasEq i i, EqCompareType i i ~ Bool
-      , P.Integral i, CanAddThis Integer i
-      , a ~ IxValue (m a)
-      , m a ~ IxValue (m (m a))
-      , P.Num (m a)
-      ) =>
-   m (m a) -> a
-luDet_vv (a :: m (m a)) =
-    let (l, u) = lu a
-        detl   = Foldable.foldl (*) (P.fromInteger 1 :: a) (L.diagonal l)
-        detu   = Foldable.foldl (*) (P.fromInteger 1 :: a) (L.diagonal u)
-    in detl * detu

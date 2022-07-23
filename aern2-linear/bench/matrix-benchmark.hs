@@ -60,6 +60,7 @@ bench benchS benchParams implS ac =
                 case implS of
                     "MPFloat" -> show (MRC.inftyNorm $ taskProduct mpFloat_AC n)
                     "MPBall" -> showB (MRC.inftyNorm $ taskProduct cnMPBall_AC n)
+                    "MPBallViaFP" -> showB (MRC.inftyNorm $ taskProductViaFP mpBall_AC n)
                     _ -> error $ "unknown implementation: " ++ implS
             ("inverse", [n]) ->
                 case implS of
@@ -81,15 +82,15 @@ bench benchS benchParams implS ac =
             ("solve", [n]) ->
                 case implS of
                     "MPFloat" -> show (VN.inftyNorm $ taskSolve mpFloat_AC n)
-                    "MPBall" -> showB (VN.inftyNorm $ taskSolve cnMPBall_AC n)
+                    "MPBall" -> showB (VN.inftyNorm $ taskSolve_MTN cnMPBall_AC n)
                     "MPBallViaFP" -> showB (fmap VN.inftyNorm $ taskSolveViaFP mpBall_AC n)
                     _ -> error $ "unknown implementation: " ++ implS
             _ -> error ""
     mpFloat_AC = ball_value . mpBall_AC
     cnMPBall_AC = cn . mpBall_AC
     mpBall_AC = mpBallP (ac2prec ac)
-    showB :: CN MPBall -> String
-    showB b = printf "value = %s (accuracy = %s)" (show b) (show $ getAccuracy b)
+    -- showB :: CN MPBall -> String
+    showB b = printf "value = %s (accuracy: %s)" (show b) (show $ getAccuracy b)
 
 taskMatrix :: 
   (Typeable t, Show t) => 
@@ -109,6 +110,12 @@ taskProduct ::
   (CanMulSameType (MatrixRC t), Typeable t, Show t) => 
   (Rational -> t) -> Integer -> MatrixRC t
 taskProduct fromQ n = m * m
+  where
+  m = taskMatrix fromQ n
+
+taskProductViaFP :: 
+  (Rational -> MPBall) -> Integer -> MatrixRC MPBall
+taskProductViaFP fromQ n = m `MRC.mulViaFP` m
   where
   m = taskMatrix fromQ n
 
@@ -150,6 +157,12 @@ taskSolve ::
   (Rational -> t) -> Integer -> VN t
 taskSolve fromQ n = 
   MRC.luSolve (taskMatrix fromQ n) (taskSystemRHS fromQ n)
+  
+taskSolve_MTN :: 
+  (P.Fractional t, Typeable t, Show t, Ring t, CanDivSameType t) => 
+  (Rational -> t) -> Integer -> VN t
+taskSolve_MTN fromQ n = 
+  MRC.luSolve_MTN (taskMatrix fromQ n) (taskSystemRHS fromQ n)
   
 taskSolveViaFP :: (Rational -> MPBall) -> Integer -> CN (VN MPBall)
 taskSolveViaFP fromQ n = 
