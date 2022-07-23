@@ -58,9 +58,9 @@ function getDataFromRunlog
   mem=`grep "Maximum resident set size (kbytes)" $runlog | sed 's/^.*: //'`
   exact=`grep -i "accuracy: Exact" $runlog | sed 's/accuracy: Exact/exact/'`
   prec=`grep -i "ac = bits " $runlog | sed 's/^.*ac = bits \([0-9]*\).*$/\1/'`
-  bits=`grep -i "accuracy" $runlog | sed 's/^.*bits \([0-9]*\).*$/\1/'`
+  bits=`grep -i "accuracy" $runlog | grep "bits" | sed 's/^.*bits \([0-9]*\).*$/\1/'`
   now=`date`
-  echo "{time: \"$now\", bench: \"$bench\", param: $benchParams, method: \"$method\", prec: $prec, bits: $bits, utime: ${utime/0.00/0.01}, stime: ${stime/0.00/0.01}, mem: $mem }," >> $results_file
+  echo "{time: \"$now\", bench: \"$bench\", param: $benchParams, method: \"$method\", prec: $prec, bits: ${bits:--10000000}, utime: ${utime/0.00/0.01}, stime: ${stime/0.00/0.01}, mem: $mem }," >> $results_file
 }
 
 # Time,Bench,BenchParams,Method,AccuracyTarget(bits),Accuracy(bits),UTime(s),STime(s),Mem(kB)
@@ -101,7 +101,7 @@ function productAllMethods
 function solveAllMethods
 {
   dims="10 20 30 50 80 130 210"
-  precs="200 300 500 800 1300 2100 3400 5500";
+  precs="200 300 500 800 1300 2100 3400 5500 8900";
 
   method_MPFloat_bparamss="$dims";
   method_MPBall_bparamss="$dims";

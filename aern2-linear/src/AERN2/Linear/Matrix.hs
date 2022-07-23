@@ -197,7 +197,8 @@ instance CanMulAsymmetric (MatrixRC MPBall) (MatrixRC MPBall) where
   mul (MatrixRC a) (MatrixRC b) = 
     MatrixRC (a L.!*! (checkVSameSizeAs (L.transpose a) b))
 
---  the Rump 2010 approach is unfortunately slower in the following implementation:
+--  the Rump 2010 approach:
+mulViaFP :: MatrixRC MPBall -> MatrixRC MPBall -> MatrixRC MPBall
 mulViaFP a b = 
   -- following Rump 2010, equation (9.14) on page 329 (43 of 163):
   lift2 (\ m r -> mpBall (m,r)) mC_Up rC
