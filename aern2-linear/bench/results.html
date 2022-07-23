@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script type="text/javascript" async
+    src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-MML-AM_CHTML">
+    </script>
+  <script src="./all.js"></script>
+</head>
+
+<body>
+  <h1>Matrix benchmark results</h1>
+
+  In the following we use the ill-conditioned matrix
+  \(M =
+  \left[
+  \begin{array}{cccc}
+  1&\frac{1}{2}&\frac{1}{3}&\cdots\\
+  \frac{1}{n+1}&\frac{1}{n+2}&\ddots\\
+  \vdots&\vdots&&\frac{1}{n^2}
+  \end{array}
+  \right]
+  \)
+
+  <h2>Product</h2>
+
+  <p>
+    \(M\cdot M\)
+  </p>
+
+  <h3>By dimension \(n\)</h3>
+
+  <table style="width:100%">
+    <tr>
+      <td>
+        <div id="productTimePlot"></div>
+      </td>
+      <td>
+        <div id="productMemPlot"></div>
+      </td>
+    </tr>
+  </table>
+
+  <h3>By accuracy, for \(n = 80\)</h3>
+
+  <table style="width:100%">
+    <tr>
+      <td>
+        <div id="product80TimePlot"></div>
+      </td>
+      <td>
+        <div id="product80MemPlot"></div>
+      </td>
+    </tr>
+  </table>
+
+  <h2>Linear solver</h2>
+
+  <p>
+    Solving \(M\cdot x = b\) where \(b = M \cdot 1\).
+  </p>
+
+  <h3>By dimension \(n\)</h3>
+
+  <table style="width:100%">
+    <tr>
+      <td>
+        <div id="solveTimePlot"></div>
+      </td>
+      <td>
+        <div id="solveMemPlot"></div>
+      </td>
+    </tr>
+  </table>
+
+  <h3>By accuracy, for \(n = 80\)</h3>
+
+  <table style="width:100%">
+    <tr>
+      <td>
+        <div id="solve80TimePlot"></div>
+      </td>
+      <td>
+        <div id="solve80MemPlot"></div>
+      </td>
+    </tr>
+  </table>
+
+  <script>
+    const config = { responsive: true }
+
+    // index the data by benchmark and method:
+    var dataByBenchMethod = {}
+    allData.forEach(rec => {
+      // fetch/create matching benchmark dictionary
+      if (dataByBenchMethod[rec.bench] == undefined) {
+        dataByBenchMethod[rec.bench] = {}
+      }
+      const benchDict = dataByBenchMethod[rec.bench]
+
+      if (rec.method == "MPFloat" || rec.bits > 30) {
+        // fetch/create matching method list
+        if (benchDict[rec.method] == undefined) {
+          benchDict[rec.method] = []
+        }
+        const benchMethodList = benchDict[rec.method]
+
+        // add this record to the list:
+        benchMethodList.push(rec)
+      }
+    });
+
+    // console.log(dataByBenchMethod);
+
+    function plotBenchTimeMemByN(bench, benchLabel) {
+      const dataByMethod = dataByBenchMethod[bench]
+
+      var dataTime = []
+      var dataMem = []
+
+      // for each method:
+      Object.keys(dataByMethod).forEach(method => {
+        const recs = dataByMethod[method]
+
+        // extract from all records the plot data:
+        var ns = [];
+        var times = [];
+        var mems = [];
+
+        recs.forEach(rec => {
+          ns.push(rec.param)
+          times.push(rec.utime + rec.stime)
+          mems.push(rec.mem)
+        });
+
+        dataTime.push({ x: ns, y: times, type: 'scatter', name: method })
+        dataMem.push({ x: ns, y: mems, type: 'scatter', mode: "lines", name: method })
+      });
+
+
+      const layoutTime = {
+        xaxis: { title: "n", type: "log" },
+        yaxis: { title: "Execution time (s)", type: "log" },
+        title: benchLabel + " (execution time)"
+      };
+
+      const layoutMem = {
+        xaxis: { title: "n", type: "log" },
+        yaxis: { title: "Space usage (kB)", type: "log" },
+        title: benchLabel + " (space usage)"
+      };
+
+      // Display using Plotly
+      Plotly.newPlot(bench + "TimePlot", dataTime, layoutTime, config);
+      Plotly.newPlot(bench + "MemPlot", dataMem, layoutMem, config);
+    }
+
+    function plotBenchTimeMemByBits(bench, n, benchLabel) {
+      const dataByMethod = dataByBenchMethod[bench]
+
+      var dataTime = []
+      var dataMem = []
+
+      // for each method:
+      Object.keys(dataByMethod).forEach(method => {
+        const recs = dataByMethod[method]
+
+        // extract from all records the plot data:
+        var bitss = [];
+        var times = [];
+        var mems = [];
+
+        recs.forEach(rec => {
+          if (rec.param == n && rec.bits > 30) {
+            bitss.push(rec.bits)
+            times.push(rec.utime + rec.stime)
+            mems.push(rec.mem)
+          }
+        });
+
+        dataTime.push({ x: bitss, y: times, type: 'scatter', name: method })
+        dataMem.push({ x: bitss, y: mems, type: 'scatter', mode: "lines", name: method })
+      });
+
+
+      const layoutTime = {
+        xaxis: { title: "bits", type: "log" },
+        yaxis: { title: "Execution time (s)", type: "log" },
+        title: benchLabel + " (execution time)"
+      };
+
+      const layoutMem = {
+        xaxis: { title: "bits", type: "log" },
+        yaxis: { title: "Space usage (kB)", type: "log" },
+        title: benchLabel + " (space usage)"
+      };
+
+      // Display using Plotly
+      Plotly.newPlot(bench + n + "TimePlot", dataTime, layoutTime, config);
+      Plotly.newPlot(bench + n + "MemPlot", dataMem, layoutMem, config);
+    }
+
+    plotBenchTimeMemByN("product", "")
+    plotBenchTimeMemByBits("product", 80, "")
+    plotBenchTimeMemByN("solve", "")
+    plotBenchTimeMemByBits("solve", 80, "")
+
+  </script>
+
+  <h2>Setup</h2>
+
+  <ul>
+    <li>
+      Hardware:
+      <!-- Lenovo T440p with 16GB RAM,
+Intel(R) Core(TM) i7-4710MQ CPU @ 2.50GHz running Ubuntu 20.04. -->
+      HP PC with 16GB RAM,
+      Intel(R) Core(TM) i7-2600 CPU @ 3.40GHz
+    </li>
+    <li>
+      OS: Ubuntu 20.04
+    </li>
+    <li>
+      Compiler: ghc-9.0.2
+    </li>
+  </ul>
+
+</body>
+
+</html>
