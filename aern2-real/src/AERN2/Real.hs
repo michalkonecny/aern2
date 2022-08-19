@@ -56,6 +56,7 @@ class
     , HasLimits Integer r
     , HasLimits Rational r
     , CanSelect (OrderCompareType r r)
+    , HasIfThenElseSameType (SelectType (OrderCompareType r r)) r
     , (CanTestCertainly (SelectType (OrderCompareType r r))))
     => 
     RealNumber r
