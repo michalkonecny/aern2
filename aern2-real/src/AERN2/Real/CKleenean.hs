@@ -53,16 +53,17 @@ instance (CanAndOrAsymmetric t1 t2) => CanAndOrAsymmetric (CSequence t1) (CSeque
   or2 = lift2 or2
 
 instance CanSelect CKleenean where
-  type SelectType CKleenean = Bool
+  type SelectType CKleenean = CN Bool
   select (CSequence s1) (CSequence s2) = aux s1 s2
     where
     aux (k1 : rest1) (k2 : rest2) =
       case (CN.toEither k1, CN.toEither k2) of
-        (Right CertainTrue, _) -> True 
-        (_, Right CertainTrue) -> False
-        (Right CertainFalse, Right CertainFalse) -> error "select: Both branches failed!"
+        (Right CertainTrue, _) -> cn True 
+        (_, Right CertainTrue) -> cn False
+        (Right CertainFalse, Right CertainFalse) -> 
+          CN.noValueNumErrorCertain $ CN.NumError "select: Both branches failed!"
         _ -> aux rest1 rest2
-    aux _ _ = error "select: internal error"
+    aux _ _ = CN.noValueNumErrorCertain $ CN.NumError "select: internal error"
 
 instance (CanUnionCNSameType t) =>
   HasIfThenElse CKleenean (CSequence t)
