@@ -26,7 +26,7 @@ dependencies:
 - collect-errors >= 0.1.5
 - mixed-types-num >= 0.5.10
 - integer-logarithms
-- aern2-mp >= 0.2.9.3
+- aern2-mp >= 0.2.10.0
 
 default-extensions:
 - RebindableSyntax,
