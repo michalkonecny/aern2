@@ -59,19 +59,20 @@ class
     , HasLimitsSameType Rational r
     , CanTakeCNErrors r
     , CanSelectCNBool (OrderCompareType r r)
-    , OrderCompareType r r ~ OrderCompareType Integer r
-    , OrderCompareType r r ~ OrderCompareType r Integer
-    , OrderCompareType r r ~ OrderCompareType Int r
-    , OrderCompareType r r ~ OrderCompareType r Int
-    , OrderCompareType r r ~ OrderCompareType Rational r
-    , OrderCompareType r r ~ OrderCompareType r Rational
-    , EqCompareType r r ~ OrderCompareType r r
-    , EqCompareType r r ~ EqCompareType Integer r
-    , EqCompareType r r ~ EqCompareType r Integer
-    , EqCompareType r r ~ EqCompareType Int r
-    , EqCompareType r r ~ EqCompareType r Int
-    , EqCompareType r r ~ EqCompareType Rational r
-    , EqCompareType r r ~ EqCompareType r Rational)
+    , EqCompareType Integer r ~ OrderCompareType r r
+    , EqCompareType r Integer ~ OrderCompareType r r
+    , EqCompareType Int r ~ OrderCompareType r r
+    , EqCompareType r Int ~ OrderCompareType r r
+    , EqCompareType Rational r ~ OrderCompareType r r
+    , EqCompareType r Rational ~ OrderCompareType r r
+    , OrderCompareType Integer r ~ OrderCompareType r r
+    , OrderCompareType r Integer ~ OrderCompareType r r
+    , OrderCompareType Int r ~ OrderCompareType r r
+    , OrderCompareType r Int ~ OrderCompareType r r
+    , OrderCompareType Rational r ~ OrderCompareType r r
+    , OrderCompareType r Rational ~ OrderCompareType r r
+    -- , HasIfThenElseSameType (OrderCompareType r r) r
+    )
     => 
     RealNumber r
 
