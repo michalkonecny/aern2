@@ -1,5 +1,7 @@
 # Change log for aern2-real
 
+* v 0.2.11 2022-08-25
+  * left-first and/or for CKleeneans
 * v 0.2.10 2022-08-20
   * add to RealNumber: HasLimitsSameType, CanSelectCNBool, same compare types
   * SelectType CKleenean = CN Bool
