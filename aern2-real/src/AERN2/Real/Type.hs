@@ -33,7 +33,7 @@ import GHC.TypeNats
 
 {- Convergent partial sequences -}
 
-newtype CSequence t = CSequence [CN t]
+newtype CSequence t = CSequence { unCSequence :: [CN t] }
 
 instance Show t => Show (CSequence t) where
   show (CSequence s) = 
@@ -53,6 +53,11 @@ lift1 f (CSequence a1) = CSequence (map f a1)
 
 lift2 :: (CN t1 -> CN t2 -> CN t3) -> CSequence t1 -> CSequence t2 -> CSequence t3
 lift2 f (CSequence a1) (CSequence a2) = CSequence (zipWith f a1 a2)
+
+lift2LeftFirst :: (CN t1 -> CN t2 -> CN t3) -> CSequence t1 -> CSequence t2 -> CSequence t3
+lift2LeftFirst f (CSequence a1) s2 = CSequence (map f' $ zip a1 [0..])
+  where
+  f' (b1, i) = f b1 (unCSequence s2 !! i)
 
 lift1T :: (CN t1 -> t2 -> CN t3) -> CSequence t1 -> t2 -> CSequence t3
 lift1T f (CSequence a1) a2 = CSequence (map (flip f a2) a1)

@@ -67,12 +67,12 @@ _testNeg1 = not CertainTrue
 instance CanAndOrAsymmetric Kleenean Kleenean
   where
   type AndOrType Kleenean Kleenean = Kleenean
-  and2 CertainTrue CertainTrue = CertainTrue
   and2 CertainFalse _ = CertainFalse
+  and2 CertainTrue CertainTrue = CertainTrue
   and2 _ CertainFalse = CertainFalse
   and2 _ _ = TrueOrFalse
-  or2 CertainFalse CertainFalse = CertainFalse
   or2 CertainTrue _ = CertainTrue
+  or2 CertainFalse CertainFalse = CertainFalse
   or2 _ CertainTrue = CertainTrue
   or2 _ _ = TrueOrFalse
 

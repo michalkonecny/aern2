@@ -47,10 +47,12 @@ instance (CanNeg t) => CanNeg (CSequence t) where
   type NegType (CSequence t) = CSequence (NegType t)
   negate = lift1 negate
 
-instance (CanAndOrAsymmetric t1 t2) => CanAndOrAsymmetric (CSequence t1) (CSequence t2) where
+instance (CanAndOrAsymmetric t1 t2, CanTestCertainly t1, HasBools t2) => 
+  CanAndOrAsymmetric (CSequence t1) (CSequence t2) 
+  where
   type AndOrType (CSequence t1)  (CSequence t2) = CSequence (AndOrType t1 t2)
-  and2 = lift2 and2
-  or2 = lift2 or2
+  and2 = lift2LeftFirst and2
+  or2 = lift2LeftFirst or2
 
 instance CanSelect CKleenean where
   type SelectType CKleenean = CN Bool

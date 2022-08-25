@@ -30,7 +30,7 @@ import AERN2.Real.CKleenean ()
 -- equality:
 
 instance
-  (HasEqAsymmetric t1 t2, IsBool (CSequence (EqCompareType t1 t2)))
+  (HasEqAsymmetric t1 t2, IsBool (CSequence (EqCompareType t1 t2)), CanTestCertainly (EqCompareType t1 t2))
   => 
   HasEqAsymmetric (CSequence t1) (CSequence t2) 
   where
@@ -40,7 +40,7 @@ instance
 -- order:
 
 instance 
-  (HasOrderAsymmetric t1 t2, IsBool (CSequence (OrderCompareType t1 t2)))
+  (HasOrderAsymmetric t1 t2, IsBool (CSequence (OrderCompareType t1 t2)), CanTestCertainly (OrderCompareType t1 t2))
   => 
   HasOrderAsymmetric (CSequence t1) (CSequence t2) 
   where
@@ -111,7 +111,7 @@ instance
 
 
 instance
-  (HasEqAsymmetric a MPBall)
+  (HasEqAsymmetric a MPBall, CanTestCertainly (EqCompareType a MPBall))
   => 
   HasEqAsymmetric (CSequence a) MPBall
   where
@@ -120,7 +120,7 @@ instance
   notEqualTo s a = notEqualTo (s ? (getPrecision a)) (cn a)
 
 instance
-  (HasEqAsymmetric a MPBall)
+  (HasEqAsymmetric a MPBall, CanTestCertainly (EqCompareType a MPBall))
   => 
   HasEqAsymmetric (CSequence a) (CN MPBall)
   where
@@ -129,7 +129,7 @@ instance
   notEqualTo s a = notEqualTo (s ? (getPrecision a)) a
 
 instance
-  (HasEqAsymmetric MPBall b)
+  (HasEqAsymmetric MPBall b, CanTestCertainly (EqCompareType MPBall b))
   => 
   HasEqAsymmetric MPBall (CSequence b)
   where
@@ -138,7 +138,7 @@ instance
   notEqualTo a s = notEqualTo (cn a) (s ? (getPrecision a))
 
 instance
-  (HasEqAsymmetric MPBall b)
+  (HasEqAsymmetric MPBall b, CanTestCertainly (EqCompareType MPBall b))
   => 
   HasEqAsymmetric (CN MPBall) (CSequence b)
   where
@@ -147,7 +147,7 @@ instance
   notEqualTo a s = notEqualTo a (s ? (getPrecision a))
 
 instance
-  (HasOrderAsymmetric a MPBall)
+  (HasOrderAsymmetric a MPBall, CanTestCertainly (OrderCompareType a MPBall))
   => 
   HasOrderAsymmetric (CSequence a) MPBall
   where
@@ -158,7 +158,7 @@ instance
   geq s a = geq (s ? (getPrecision a)) (cn a)
 
 instance
-  (HasOrderAsymmetric a MPBall)
+  (HasOrderAsymmetric a MPBall, CanTestCertainly (OrderCompareType a MPBall))
   => 
   HasOrderAsymmetric (CSequence a) (CN MPBall)
   where
@@ -169,7 +169,7 @@ instance
   geq s a = geq (s ? (getPrecision a)) a
 
 instance
-  (HasOrderAsymmetric MPBall b)
+  (HasOrderAsymmetric MPBall b, CanTestCertainly (OrderCompareType MPBall b))
   => 
   HasOrderAsymmetric MPBall (CSequence b)
   where
@@ -180,7 +180,7 @@ instance
   geq a s = geq (cn a) (s ? (getPrecision a))
 
 instance
-  (HasOrderAsymmetric MPBall b)
+  (HasOrderAsymmetric MPBall b, CanTestCertainly (OrderCompareType MPBall b))
   => 
   HasOrderAsymmetric (CN MPBall) (CSequence b)
   where
@@ -231,7 +231,7 @@ $(declForTypes
       max = liftT1 max
 
     instance
-      (HasEqAsymmetric a $t, IsBool (CSequence (EqCompareType a $t)))
+      (HasEqAsymmetric a $t, IsBool (CSequence (EqCompareType a $t)), CanTestCertainly (EqCompareType a $t))
       => 
       HasEqAsymmetric (CSequence a) $t
       where
@@ -240,7 +240,7 @@ $(declForTypes
       notEqualTo = lift1T (/=)
 
     instance
-      (HasEqAsymmetric a $t, IsBool (CSequence (EqCompareType a $t)))
+      (HasEqAsymmetric a $t, IsBool (CSequence (EqCompareType a $t)), CanTestCertainly (EqCompareType a $t))
       => 
       HasEqAsymmetric (CSequence a) (CN $t)
       where
@@ -249,7 +249,7 @@ $(declForTypes
       notEqualTo = lift1T (/=)
 
     instance
-      (HasEqAsymmetric $t a, IsBool (CSequence (EqCompareType $t a)))
+      (HasEqAsymmetric $t a, IsBool (CSequence (EqCompareType $t a)), CanTestCertainly (EqCompareType $t a))
       =>
       HasEqAsymmetric $t (CSequence a)
       where
@@ -258,7 +258,7 @@ $(declForTypes
       notEqualTo = liftT1 (/=)
 
     instance
-      (HasEqAsymmetric $t a, IsBool (CSequence (EqCompareType $t a)))
+      (HasEqAsymmetric $t a, IsBool (CSequence (EqCompareType $t a)), CanTestCertainly (EqCompareType $t a))
       =>
       HasEqAsymmetric (CN $t) (CSequence a)
       where
@@ -267,7 +267,7 @@ $(declForTypes
       notEqualTo = liftT1 (/=)
 
     instance
-      (HasOrderAsymmetric a $t, IsBool (CSequence (OrderCompareType a $t)))
+      (HasOrderAsymmetric a $t, IsBool (CSequence (OrderCompareType a $t)), CanTestCertainly (OrderCompareType a $t))
       => 
       HasOrderAsymmetric (CSequence a) $t
       where
@@ -278,7 +278,7 @@ $(declForTypes
       geq = lift1T geq
 
     instance
-      (HasOrderAsymmetric a $t, IsBool (CSequence (OrderCompareType a $t)))
+      (HasOrderAsymmetric a $t, IsBool (CSequence (OrderCompareType a $t)), CanTestCertainly (OrderCompareType a $t))
       => 
       HasOrderAsymmetric (CSequence a) (CN $t)
       where
@@ -289,7 +289,7 @@ $(declForTypes
       geq = lift1T geq
 
     instance
-      (HasOrderAsymmetric $t a, IsBool (CSequence (OrderCompareType $t a)))
+      (HasOrderAsymmetric $t a, IsBool (CSequence (OrderCompareType $t a)), CanTestCertainly (OrderCompareType $t a))
       =>
       HasOrderAsymmetric $t (CSequence a)
       where
@@ -300,7 +300,7 @@ $(declForTypes
       geq = liftT1 geq
 
     instance
-      (HasOrderAsymmetric $t a, IsBool (CSequence (OrderCompareType $t a)))
+      (HasOrderAsymmetric $t a, IsBool (CSequence (OrderCompareType $t a)), CanTestCertainly (OrderCompareType $t a))
       =>
       HasOrderAsymmetric (CN $t) (CSequence a)
       where
