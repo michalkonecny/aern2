@@ -24,3 +24,4 @@ class HasLimits ix s where
   type LimitType ix s
   limit :: (ix -> s) -> LimitType ix s
 
+type HasLimitsSameType ix s = (HasLimits ix s, LimitType ix s ~ s)

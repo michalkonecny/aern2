@@ -1,6 +1,10 @@
 # Change log for aern2-mp
 
-* current
+* v 0.2.11 2022-08-25
+  * left-first Kleenean and/or
+* v 0.2.10 2022-08-20
+  * add HasLimitsSameType, CanSelectBool, CanSelectCNBool
+* v 0.2.9 2022-07-13
   * testing basic ops produce valid MPBalls
   * more instances for CN Kleenean
   * Num MPFloat (unspecified rounding mode)

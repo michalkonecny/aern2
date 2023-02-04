@@ -80,6 +80,7 @@ instance HasEqAsymmetric Dyadic MPBall where
 instance
   (HasEqAsymmetric MPBall b
   , IsBool (EqCompareType MPBall b)
+  , CanTestCertainly (EqCompareType MPBall b)
   , CanBeErrors es)
   =>
   HasEqAsymmetric MPBall (CollectErrors es b)
@@ -91,6 +92,7 @@ instance
 instance
   (HasEqAsymmetric a MPBall
   , IsBool (EqCompareType a MPBall)
+  , CanTestCertainly (EqCompareType a MPBall)
   , CanBeErrors es)
   =>
   HasEqAsymmetric (CollectErrors es a) MPBall
@@ -184,6 +186,7 @@ instance HasOrderAsymmetric Rational MPBall where
 instance
   (HasOrderAsymmetric MPBall b
   , IsBool (OrderCompareType MPBall b)
+  , CanTestCertainly (OrderCompareType MPBall b)
   , CanBeErrors es)
   =>
   HasOrderAsymmetric MPBall (CollectErrors es  b)
@@ -198,6 +201,7 @@ instance
 instance
   (HasOrderAsymmetric a MPBall
   , IsBool (OrderCompareType a MPBall)
+  , CanTestCertainly (OrderCompareType a MPBall)
   , CanBeErrors es)
   =>
   HasOrderAsymmetric (CollectErrors es a) MPBall

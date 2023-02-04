@@ -47,10 +47,12 @@ instance (CanNeg t) => CanNeg (CSequence t) where
   type NegType (CSequence t) = CSequence (NegType t)
   negate = lift1 negate
 
-instance (CanAndOrAsymmetric t1 t2) => CanAndOrAsymmetric (CSequence t1) (CSequence t2) where
+instance (CanAndOrAsymmetric t1 t2, CanTestCertainly t1, HasBools t2) => 
+  CanAndOrAsymmetric (CSequence t1) (CSequence t2) 
+  where
   type AndOrType (CSequence t1)  (CSequence t2) = CSequence (AndOrType t1 t2)
-  and2 = lift2 and2
-  or2 = lift2 or2
+  and2 = lift2LeftFirst and2
+  or2 = lift2LeftFirst or2
 
 instance (CanAndOrAsymmetric Bool t2) => CanAndOrAsymmetric Bool (CSequence t2) where
   type AndOrType Bool  (CSequence t2) = CSequence (AndOrType Bool t2)
@@ -73,16 +75,17 @@ instance (CanAndOrAsymmetric t1 Kleenean) => CanAndOrAsymmetric (CSequence t1) K
   or2 = lift1T or2
 
 instance CanSelect CKleenean where
-  type SelectType CKleenean = Bool
+  type SelectType CKleenean = CN Bool
   select (CSequence s1) (CSequence s2) = aux s1 s2
     where
     aux (k1 : rest1) (k2 : rest2) =
       case (CN.toEither k1, CN.toEither k2) of
-        (Right CertainTrue, _) -> True 
-        (_, Right CertainTrue) -> False
-        (Right CertainFalse, Right CertainFalse) -> error "select: Both branches failed!"
+        (Right CertainTrue, _) -> cn True 
+        (_, Right CertainTrue) -> cn False
+        (Right CertainFalse, Right CertainFalse) -> 
+          CN.noValueNumErrorCertain $ CN.NumError "select: Both branches failed!"
         _ -> aux rest1 rest2
-    aux _ _ = error "select: internal error"
+    aux _ _ = CN.noValueNumErrorCertain $ CN.NumError "select: internal error"
 
 instance (CanUnionCNSameType t) =>
   HasIfThenElse CKleenean (CSequence t)

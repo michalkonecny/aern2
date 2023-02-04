@@ -23,7 +23,8 @@ module AERN2.Real
    -- * limits
    HasLimits(..),
    -- * lazy Kleeneans
-   CKleenean, CanBeCKleenean, ckleenean, CanSelect(..),
+   CKleenean, CanBeCKleenean, ckleenean, 
+   CanSelect(..), CanSelectBool, CanSelectCNBool,
    -- * extracting approximations
    CanExtractApproximation(..), (?), bits, prec,
    -- * abstract real numbers
@@ -45,18 +46,33 @@ import AERN2.Real.Elementary (pi)
 
 import MixedTypesNumPrelude
 -- import qualified Prelude as P
-import GHC.TypeLits
+import GHC.TypeLits ( KnownNat )
+import Numeric.CollectErrors (CanTakeCNErrors)
 
 -- import Text.Printf
 -- -- import AERN2.MP.Dyadic
 
 class
     (OrderedField r
-    , HasLimits Int r
-    , HasLimits Integer r
-    , HasLimits Rational r
-    , CanSelect (OrderCompareType r r)
-    , (CanTestCertainly (SelectType (OrderCompareType r r))))
+    , HasLimitsSameType Int r
+    , HasLimitsSameType Integer r
+    , HasLimitsSameType Rational r
+    , CanTakeCNErrors r
+    , CanSelectCNBool (OrderCompareType r r)
+    , EqCompareType Integer r ~ OrderCompareType r r
+    , EqCompareType r Integer ~ OrderCompareType r r
+    , EqCompareType Int r ~ OrderCompareType r r
+    , EqCompareType r Int ~ OrderCompareType r r
+    , EqCompareType Rational r ~ OrderCompareType r r
+    , EqCompareType r Rational ~ OrderCompareType r r
+    , OrderCompareType Integer r ~ OrderCompareType r r
+    , OrderCompareType r Integer ~ OrderCompareType r r
+    , OrderCompareType Int r ~ OrderCompareType r r
+    , OrderCompareType r Int ~ OrderCompareType r r
+    , OrderCompareType Rational r ~ OrderCompareType r r
+    , OrderCompareType r Rational ~ OrderCompareType r r
+    -- , HasIfThenElseSameType (OrderCompareType r r) r
+    )
     => 
     RealNumber r
 

@@ -2,6 +2,14 @@
 
 * current
   * more instances for if-then-else with CKleenean
+* v 0.2.11 2022-08-25
+  * left-first and/or for CKleeneans
+* v 0.2.10 2022-08-20
+  * add to RealNumber: HasLimitsSameType, CanSelectCNBool, same compare types
+  * SelectType CKleenean = CN Bool
+* v 0.2.9.2 2022-08-19
+  * add to RealNumber: HasIfThenElse for its SelectType
+* v 0.2.9 2022-07-13 (update in aern2-mp)
 * v 0.2.8 2021-08-04
   * compatibility with ghc 9.0.1
 * v 0.2.7 2021-06-02

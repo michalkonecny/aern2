@@ -26,6 +26,9 @@ class (IsBool (SelectType k)) => CanSelect k where
   -}
   select :: k -> k -> (SelectType k) {-^ True means that the first computation succeeded. -}
 
+type CanSelectBool k = (CanSelect k, SelectType k ~ Bool)
+type CanSelectCNBool k = (CanSelect k, SelectType k ~ CN Bool)
+
 instance CanSelect Kleenean where
   type SelectType Kleenean = CN Bool
   select CertainTrue _ = cn True
