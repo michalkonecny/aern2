@@ -13,7 +13,7 @@
 -}
 module AERN2.Real.CKleenean
 (
-  CKleenean, CanBeCKleenean, ckleenean
+  CKleenean, CanBeCKleenean, ckleenean, CanAndOrCountable(..)
 )
 where
 
@@ -73,6 +73,34 @@ instance (CanAndOrAsymmetric t1 Kleenean) => CanAndOrAsymmetric (CSequence t1) K
   type AndOrType (CSequence t1)  Kleenean = CSequence (AndOrType t1 Kleenean)
   and2 = lift1T and2
   or2 = lift1T or2
+
+class CanAndOrCountable t where
+  or_countable :: (Integer -> t) -> t
+  and_countable :: (Integer -> t) -> t
+
+instance 
+  CanAndOrCountable CKleenean
+  where
+  or_countable = lift_countable or2
+  and_countable = lift_countable and2
+
+lift_countable :: (CN Kleenean -> CN Kleenean -> CN Kleenean) -> (Integer -> CKleenean) -> CKleenean
+lift_countable op s = CSequence $ map withFuel [0..]
+    where
+    withFuel n = 
+      -- try the n'th result of the first n CKleenean's
+      -- s00  s01 ... *s0n*
+      -- s10  s11 ... *s1n*
+      -- ...  ...     ...
+      -- sn0  sn1 ... *snn*
+      (foldl op (cn TrueOrFalse) (map ((!! n) . unCSequence . s) [0..(n-1)]))
+      `op`
+      -- try first n results of the n'th CKleenean
+      -- .  s00    s01  ...  s0n
+      -- .  s10    s11  ...  s1n
+      -- .  ...    ...       ...
+      -- . *sn0*  *sn1* ... *snn*
+      (foldl op (cn TrueOrFalse) (take (n+1) (unCSequence $ s n)))
 
 instance CanSelect CKleenean where
   type SelectType CKleenean = CN Bool
