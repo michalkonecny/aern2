@@ -146,8 +146,8 @@ instance (CanSub e1 e2) => CanSub (MatrixRC e1) (MatrixRC e2) where
   type SubType (MatrixRC e1) (MatrixRC e2) = MatrixRC (SubType e1 e2)
   sub = lift2 sub
 
-instance CanMulAsymmetric (MatrixRC MPFloat) (MatrixRC MPFloat) where
-  type MulType (MatrixRC MPFloat) (MatrixRC MPFloat) = MatrixRC MPFloat
+instance (P.Num e1, e1~e2) => CanMulAsymmetric (MatrixRC e1) (MatrixRC e2) where
+  type MulType (MatrixRC e1) (MatrixRC e2) = MatrixRC e1
   mul (MatrixRC a) (MatrixRC b) = MatrixRC (a L.!*! (checkVSameSizeAs (L.transpose a) b))
 
 instance (P.Num e1, e1~e2) => CanMulAsymmetric (MatrixRC e1) (VN e2) where
@@ -192,10 +192,10 @@ mulMPF_Down (MatrixRC f) (MatrixRC g) =
   vScaleUp :: (Functor f) => MPFloat -> f MPFloat -> f MPFloat
   vScaleUp a = fmap (a MPFloat.*.)
 
-instance CanMulAsymmetric (MatrixRC MPBall) (MatrixRC MPBall) where
-  type MulType (MatrixRC MPBall) (MatrixRC MPBall) = MatrixRC MPBall
-  mul (MatrixRC a) (MatrixRC b) = 
-    MatrixRC (a L.!*! (checkVSameSizeAs (L.transpose a) b))
+-- instance CanMulAsymmetric (MatrixRC MPBall) (MatrixRC MPBall) where
+--   type MulType (MatrixRC MPBall) (MatrixRC MPBall) = MatrixRC MPBall
+--   mul (MatrixRC a) (MatrixRC b) = 
+--     MatrixRC (a L.!*! (checkVSameSizeAs (L.transpose a) b))
 
 --  the Rump 2010 approach:
 mulViaFP :: MatrixRC MPBall -> MatrixRC MPBall -> MatrixRC MPBall
@@ -220,12 +220,12 @@ mulViaFP a b =
   (+^) = addMPF_Up
   (-^) = subMPF_Up
 
-instance CanMulAsymmetric (MatrixRC (CN MPBall)) (MatrixRC (CN MPBall)) where
-  type MulType (MatrixRC (CN MPBall)) (MatrixRC (CN MPBall)) = MatrixRC (CN MPBall)
-  mul aCN bCN = fmap cn $ a * b
-    where
-    a = fmap unCN aCN -- TODO: deal with errors more gracefully
-    b = fmap unCN bCN
+-- instance CanMulAsymmetric (MatrixRC (CN MPBall)) (MatrixRC (CN MPBall)) where
+--   type MulType (MatrixRC (CN MPBall)) (MatrixRC (CN MPBall)) = MatrixRC (CN MPBall)
+--   mul aCN bCN = fmap cn $ a * b
+--     where
+--     a = fmap unCN aCN -- TODO: deal with errors more gracefully
+--     b = fmap unCN bCN
 
   
 {-
