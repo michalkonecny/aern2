@@ -1,7 +1,9 @@
 # Change log for aern2-real
 
 * current
+* v 0.2.12 2023-04-07
   * more instances for if-then-else with CKleenean
+  * or_countable and and_countable for CKleenean
 * v 0.2.11 2022-08-25
   * left-first and/or for CKleeneans
 * v 0.2.10 2022-08-20
