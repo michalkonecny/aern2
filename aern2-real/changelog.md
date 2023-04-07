@@ -1,6 +1,8 @@
 # Change log for aern2-real
 
 * current
+* v 0.2.13 2023-04-07
+  * unsafeApproximationExtension
 * v 0.2.12 2023-04-07
   * more instances for if-then-else with CKleenean
   * or_countable and and_countable for CKleenean
