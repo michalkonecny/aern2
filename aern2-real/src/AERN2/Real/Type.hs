@@ -83,6 +83,11 @@ cseqFromWithCurrentPrec (withCurrentP :: (forall p. (KnownNat p) => WithCurrentP
   where
   withP p = runWithPrec p withCurrentP :: CN b
 
+unsafeApproximationExtension :: (CSequence b -> t) -> (CN b -> t)
+unsafeApproximationExtension f b = f (CSequence $ repeat b) 
+  -- a sequence that does not converge unless b is exact
+  -- (eg a fake real number given by an interval)
+
 {- Error handling -}
 
 instance CN.CanTakeErrors CN.NumErrors (CSequence t) where

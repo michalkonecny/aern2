@@ -12,12 +12,14 @@
 -}
 module AERN2.Real
 (
-   -- * real numbers and conversions
-   CReal, 
+   -- * sequences of approximants
    CSequence (..), 
-   creal, HasCReals, CanBeCReal,
    cseqPrecisions, cseqIndexForPrecision, 
    cseqFromWithCurrentPrec, cseqFromPrecFunction,
+   unsafeApproximationExtension,
+   -- * real numbers and conversions
+   CReal, 
+   creal, HasCReals, CanBeCReal,
    pi,
    crealFromWithCurrentPrec, crealFromPrecFunction,
    -- * limits
@@ -25,6 +27,7 @@ module AERN2.Real
    -- * lazy Kleeneans
    CKleenean, CanBeCKleenean, ckleenean, 
    CanSelect(..), CanSelectBool, CanSelectCNBool,
+   CanAndOrCountable(..),
    -- * extracting approximations
    CanExtractApproximation(..), (?), bits, prec,
    -- * abstract real numbers
