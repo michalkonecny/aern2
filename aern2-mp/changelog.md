@@ -1,5 +1,7 @@
 # Change log for aern2-mp
 
+* v 0.2.14 2023-04-10
+  * minor improvements supporting aern2-linear and aern2-real
 * v 0.2.11 2022-08-25
   * left-first Kleenean and/or
 * v 0.2.10 2022-08-20
