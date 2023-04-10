@@ -1,0 +1,98 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           aern2-linear
+version:        0.2.9.0
+synopsis:       Interval/exact basic linear algebra
+description:    Please see the README on GitHub at <https://github.com/michalkonecny/aern2/#readme>
+category:       Math
+homepage:       https://github.com/michalkonecny/aern2#readme
+bug-reports:    https://github.com/michalkonecny/aern2/issues
+author:         Michal Konecny
+maintainer:     mikkonecny@gmail.com
+copyright:      2022 Michal Konecny
+license:        BSD3
+build-type:     Simple
+extra-source-files:
+    README.md
+    changelog.md
+
+source-repository head
+  type: git
+  location: https://github.com/michalkonecny/aern2
+
+library
+  exposed-modules:
+      AERN2.Linear.AdaptedLinear
+      AERN2.Linear.Matrix
+      AERN2.Linear.Vector
+      AERN2.TestApprox
+  other-modules:
+      Paths_aern2_linear
+  hs-source-dirs:
+      src
+  default-extensions:
+      RebindableSyntax,
+      ScopedTypeVariables,
+      TypeFamilies,
+      TypeOperators,
+      ConstraintKinds,
+      DefaultSignatures,
+      MultiParamTypeClasses,
+      FlexibleContexts,
+      FlexibleInstances,
+      UndecidableInstances
+  other-extensions:
+      TemplateHaskell
+  ghc-options: -O2 -Wall
+  build-depends:
+      aern2-mp >=0.2.8
+    , aern2-real >=0.2.8
+    , base ==4.*
+    , collect-errors
+    , containers
+    , lens
+    , linear
+    , mixed-types-num
+    , vector
+  default-language: Haskell2010
+
+executable aern2-linear-matrix-benchmark
+  main-is: matrix-benchmark.hs
+  other-modules:
+      AERN2.Linear.AdaptedLinear
+      AERN2.Linear.Matrix
+      AERN2.Linear.Vector
+      AERN2.TestApprox
+      Paths_aern2_linear
+  hs-source-dirs:
+      bench
+      src
+  default-extensions:
+      RebindableSyntax,
+      ScopedTypeVariables,
+      TypeFamilies,
+      TypeOperators,
+      ConstraintKinds,
+      DefaultSignatures,
+      MultiParamTypeClasses,
+      FlexibleContexts,
+      FlexibleInstances,
+      UndecidableInstances
+  other-extensions:
+      TemplateHaskell
+  ghc-options: -O2 -Wall -rtsopts
+  build-depends:
+      aern2-mp >=0.2.8
+    , aern2-real >=0.2.8
+    , base ==4.*
+    , collect-errors
+    , containers
+    , lens
+    , linear
+    , mixed-types-num
+    , vector
+  default-language: Haskell2010

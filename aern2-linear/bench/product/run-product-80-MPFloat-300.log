@@ -1,0 +1,25 @@
+|M*M| where M is the 80x80 matrix [1,1/2,1/3,...] (ac = bits 300)
+MPFloat: 1.0122440667711899467581356000406752571546354999477304832172354793474339654002760226101068973060047772121108110302612894146992317624261846139418593271000990574936565559761488061185391477345831875177713932274679294711754649517257697394245763934111953411356867619085304245414245828137325589483436826520476605980637663240173651502118445932865142822265625
+	Command being timed: "aern2-linear-matrix-benchmark product 80 MPFloat 300"
+	User time (seconds): 0.47
+	System time (seconds): 0.00
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.47
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 14240
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 2272
+	Voluntary context switches: 1
+	Involuntary context switches: 1
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

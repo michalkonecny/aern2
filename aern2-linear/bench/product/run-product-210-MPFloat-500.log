@@ -1,0 +1,25 @@
+|M*M| where M is the 210x210 matrix [1,1/2,1/3,...] (ac = bits 500)
+MPFloat: 1.0047246648163361298511558596279706696285066625533179637687141924463673319394956436374986311931854602701492687690368745308143591061422282991839304295802591307391513265536946061952837128220187334649345285840644802367702913348472171739479154759906952780850158840108224319608042755988643508015607832639928642592585799771859517893244061094976711685615714723888319883973571522594517930800237438193111651872272804240757377095938013805192899955779505352808262158009285218185776900153694458326919572380489181578043511589015679419389925897121429443359375
+	Command being timed: "aern2-linear-matrix-benchmark product 210 MPFloat 500"
+	User time (seconds): 9.42
+	System time (seconds): 0.01
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:09.43
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 60532
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 13805
+	Voluntary context switches: 1
+	Involuntary context switches: 101
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

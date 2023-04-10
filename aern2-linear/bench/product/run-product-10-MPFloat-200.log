@@ -1,0 +1,25 @@
+|M*M| where M is the 10x10 matrix [1,1/2,1/3,...] (ac = bits 200)
+MPFloat: 1.084111227059663443049389384830535489357264514823556439686928849865776140637927029154918937082991623493139587351978970568470632673947901154941440089206260120169518033175867579983108167974398542151651057808235678603381302309571765363216400146484375
+	Command being timed: "aern2-linear-matrix-benchmark product 10 MPFloat 200"
+	User time (seconds): 0.00
+	System time (seconds): 0.00
+	Percent of CPU this job got: 22%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.03
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 7144
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 36
+	Minor (reclaiming a frame) page faults: 485
+	Voluntary context switches: 40
+	Involuntary context switches: 0
+	Swaps: 0
+	File system inputs: 8616
+	File system outputs: 8
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

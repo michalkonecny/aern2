@@ -122,3 +122,34 @@ instance (CanUnionCNSameType t) =>
   ifThenElse (CSequence sc) (CSequence s1) (CSequence s2) = (CSequence r)
     where
     r = zipWith3 ifThenElse sc s1 s2
+
+instance (HasIfThenElse CKleenean t1, HasIfThenElse CKleenean t2) =>
+  HasIfThenElse CKleenean (t1, t2)
+  where
+  type IfThenElseType CKleenean (t1, t2) = (IfThenElseType CKleenean t1, IfThenElseType CKleenean t2)
+  ifThenElse s (a1, b1) (a2, b2) =
+    (ifThenElse s a1 a2, ifThenElse s b1 b2)
+
+instance (HasIfThenElse CKleenean t) =>
+  HasIfThenElse CKleenean (Maybe t)
+  where
+  type IfThenElseType CKleenean (Maybe t) = Maybe (IfThenElseType CKleenean t)
+  ifThenElse _s Nothing Nothing = Nothing
+  ifThenElse s (Just v1) (Just v2) = Just (ifThenElse s v1 v2)
+  ifThenElse _ _ _ = 
+    error "ifThenElse with a sequence of Kleeneans and Maybe: branches clash: Just vs Nothing"
+
+instance (HasIfThenElse CKleenean t) =>
+  HasIfThenElse CKleenean [t]
+  where
+  type IfThenElseType CKleenean [t] = [IfThenElseType CKleenean t]
+  ifThenElse _s [] [] = []
+  ifThenElse s (h1:t1) (h2:t2) = (ifThenElse s h1 h2) : (ifThenElse s t1 t2)
+  ifThenElse _ _ _ = 
+    error "ifThenElse with a sequence of Kleeneans and lists: branches clash: lists of different lengths"
+
+instance (HasIfThenElse CKleenean v) =>
+  HasIfThenElse CKleenean (k -> v)
+  where
+  type IfThenElseType CKleenean (k -> v) = k -> (IfThenElseType CKleenean v)
+  ifThenElse s f1 f2 = \k -> ifThenElse s (f1 k) (f2 k)
