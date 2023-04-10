@@ -73,7 +73,7 @@ instance (CanAndOrAsymmetric t1 Kleenean) => CanAndOrAsymmetric (CSequence t1) K
   type AndOrType (CSequence t1)  Kleenean = CSequence (AndOrType t1 Kleenean)
   and2 = lift1T and2
   or2 = lift1T or2
-
+  
 class CanAndOrCountable t where
   or_countable :: (Integer -> t) -> t
   and_countable :: (Integer -> t) -> t
