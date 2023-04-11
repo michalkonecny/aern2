@@ -48,4 +48,32 @@ instance CanSelect (CN Kleenean) where
     k2 <- cnk2
     select k1 k2
 
+class CanSelectCountable k where
+  {-| Must be Integer or similar -}
+  type SelectCountableType k 
+  {-|
+    Execute a sequence of lazy computations "in parallel" until one of them succeeds
+    and return the index of a succeeding computation. 
+  -}
+  selectCountable :: (Integer -> k) -> SelectCountableType k
 
+type CanSelectCountableInteger k = (CanSelectCountable k, SelectCountableType k ~ Integer)
+type CanSelectCountableCNInteger k = (CanSelectCountable k, SelectCountableType k ~ CN Integer)
+
+instance CanSelectCountable Kleenean where
+  type SelectCountableType Kleenean = Integer
+  selectCountable kleeneans = aux 0
+    where
+    aux i = case kleeneans i of
+      CertainTrue -> i
+      _ -> aux (i + 1)
+
+instance CanSelectCountable (CN Kleenean) where
+  type SelectCountableType (CN Kleenean) = CN Integer
+  selectCountable cnkleeneans = aux 0
+    where
+    aux i = do
+      ki <- cnkleeneans i
+      case ki of
+        CertainTrue -> cn i
+        _ -> aux (i + 1)
