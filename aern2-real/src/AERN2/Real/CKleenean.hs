@@ -30,6 +30,7 @@ import AERN2.Select
 import AERN2.MP
 
 import AERN2.Real.Type
+import Data.List (uncons)
 
 type CKleenean = CSequence Kleenean
 
@@ -114,6 +115,49 @@ instance CanSelect CKleenean where
           CN.noValueNumErrorCertain $ CN.NumError "select: Both branches failed!"
         _ -> aux rest1 rest2
     aux _ _ = CN.noValueNumErrorCertain $ CN.NumError "select: internal error"
+
+instance CanSelectCountable CKleenean where
+  type SelectCountableType CKleenean = Integer
+  selectCountable ckleeneans = 
+    findTrue $ concatInfiniteLists (map (unCSequence . ckleeneans) [0..])
+    where
+    findTrue ((ki, i) : rest) =
+      case (CN.toEither ki) of
+        Right CertainTrue -> i
+        _ -> findTrue rest
+    findTrue [] = error "selectCountable: internal error"
+
+{-|
+  Take an infinite list of infinite lists and concatenate all the elements
+  in a single infinite list in such a way that no element is lost.
+  Moreoved, each element has the number of the original list added to it
+  so that it is possible to work out which of the lists it came from.
+
+  This function orders the elements as follows (where each item corresponds
+  to one of the lists and the numbers show the positions in the result list):
+
+  * 1 3 6 10 ... 
+  * 2 5 9 ... 
+  * 4 8 ...
+  * 7 ...
+  * ...
+
+-}
+concatInfiniteLists :: [[t]] -> [(t, Integer)]
+concatInfiniteLists lists = 
+  aux [] listsWithNumbers 
+  where
+  aux openedLists (nextList:remainingLists) =
+    heads ++ (aux tails remainingLists)
+    where
+    (heads, tails) = unzip (map (removeJust . uncons) (nextList:openedLists))
+  aux _ [] = e
+  removeJust (Just x) = x
+  removeJust Nothing = e
+  e = error "concatInfiniteLists can be applied only to a list of infinite lists"
+  listsWithNumbers = 
+    [zip list (repeat listNumber) 
+      | (list, listNumber) <- zip lists [0..]]
 
 instance (CanUnionCNSameType t) =>
   HasIfThenElse CKleenean (CSequence t)

@@ -1,6 +1,8 @@
 # Change log for aern2-real
 
 * current
+* v 0.2.15 2023-04-11
+  * CanSelectCountable instance for CKleenean
 * v 0.2.14.1 2023-04-10
   * fix compilation errors
 * v 0.2.13 2023-04-07
