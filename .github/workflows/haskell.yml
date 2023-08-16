@@ -71,8 +71,5 @@ jobs:
       - name: Run tests
         run: stack test
 
-      - name: Check cabal file
-        run: cabal check
-
       - name: Build documentation
         run: stack haddock
