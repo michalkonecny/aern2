@@ -1,0 +1,78 @@
+name: Haskell CI
+
+on:
+  push:
+    branches: [ "master", "dev" ]
+  pull_request:
+    branches: [ "master" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: GHC ${{ matrix.ghc-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        ghc-version: ['9.6', '9.4', '9.2', '9.0']
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up GHC ${{ matrix.ghc-version }}
+        uses: haskell/actions/setup@v2
+        id: setup
+        with:
+          ghc-version: ${{ matrix.ghc-version }}
+          enable-stack: true
+
+      - name: Installed minor versions of GHC, Cabal, and Stack
+        shell: bash
+        run: |
+          GHC_VERSION=$(ghc --numeric-version)
+          CABAL_VERSION=$(cabal --numeric-version)
+          STACK_VERSION=$(stack --numeric-version)
+          echo "GHC_VERSION=${GHC_VERSION}"     >> "${GITHUB_ENV}"
+          echo "CABAL_VERSION=${CABAL_VERSION}" >> "${GITHUB_ENV}"
+          echo "STACK_VERSION=${STACK_VERSION}" >> "${GITHUB_ENV}"
+
+      - name: Configure the build
+        run: |
+          stack build --test --bench --no-haddock --dry-run
+
+      - name: Restore cached dependencies
+        uses: actions/cache/restore@v3
+        id: cache
+        with:
+          path: .stack-work
+          key: ${{ runner.os }}-ghc-${{ env.GHC_VERSION }}-stack-${{ env.STACK_VERSION }}-plan-${{ hashFiles('**/plan.json') }}
+          restore-keys: |
+            ${{ runner.os }}-ghc-${{ env.GHC_VERSION }}-stack-${{ env.STACK_VERSION }}-
+
+      - name: Install dependencies
+        run: stack build --only-dependencies
+
+      # Cache dependencies already here, so that we do not have to rebuild them should the subsequent steps fail.
+      - name: Save cached dependencies
+        uses: actions/cache/save@v3
+        # Caches are immutable, trying to save with the same key would error.
+        if: ${{ !steps.cache.outputs.cache-hit
+          || steps.cache.outputs.cache-primary-key != steps.cache.outputs.cache-matched-key }}
+        with:
+          path: .stack-work
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+
+      - name: Build
+        run: stack build
+
+      - name: Run tests
+        run: stack test
+
+      - name: Check cabal file
+        run: cabal check
+
+      - name: Build documentation
+        run: stack haddock

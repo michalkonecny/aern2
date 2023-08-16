@@ -16,7 +16,8 @@
 #  name: custom-snapshot
 #  location: "./custom-snapshot.yaml"
 
-resolver: lts-19.7
+resolver: nightly-2023-08-14
+# resolver: lts-21.6
 system-ghc: true # needed for GHCUP
 
 # User packages to be built.
@@ -53,8 +54,8 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - cdar-mBound-0.1.0.4
-- collect-errors-0.1.5.0
-- mixed-types-num-0.5.11
+# - collect-errors-0.1.5.0
+- mixed-types-num-0.5.12
 # - memoize-0.8.1
 # - rounded-0.1.0.1
 # - long-double-0.1
