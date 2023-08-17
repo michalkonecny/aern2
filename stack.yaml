@@ -18,6 +18,8 @@
 
 resolver: nightly-2023-08-14
 # resolver: lts-21.6
+# resolver: lts-20.25
+# resolver: lts-19.20
 system-ghc: true # needed for GHCUP
 
 # User packages to be built.
@@ -42,7 +44,7 @@ packages:
 # - 'aern2-bench-chart'
 - 'aern2-mp'
 - 'aern2-real'
-- 'aern2-linear'
+# - 'aern2-linear'
 # - 'aern2-erc'
 # - 'aern2-net'
 # - 'aern2-fun'
