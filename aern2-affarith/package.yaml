@@ -1,0 +1,42 @@
+name:                aern2-affarith
+version:             0.2.15.0
+github:              "michalkonecny/aern2"
+license:             BSD3
+author:              "Michal Konecny"
+maintainer:          "mikkonecny@gmail.com"
+copyright:           "2024 Michal Konecny"
+
+# extra-source-files:
+# - README.md
+# - changelog.md
+
+# Metadata used when publishing your package
+synopsis:            Arbitrary precision affine arithmetic
+category:            Math
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/michalkonecny/aern2/#readme>
+
+dependencies:
+- base == 4.*
+- containers
+- hashable
+- hspec
+- QuickCheck
+- collect-errors >= 0.1.5
+- mixed-types-num >= 0.5.9
+- cdar-mBound >= 0.1.0.0
+- aern2-mp >= 0.2.9
+
+default-extensions:
+- RebindableSyntax
+
+executables:
+  aern2-affarith-spike:
+    source-dirs: 
+    - spikes
+    main: AffArithSpike.hs
+    ghc-options:
+    - -O2 -Wall -rtsopts

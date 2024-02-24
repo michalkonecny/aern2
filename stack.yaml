@@ -16,10 +16,10 @@
 #  name: custom-snapshot
 #  location: "./custom-snapshot.yaml"
 
-resolver: nightly-2023-08-14
-# resolver: lts-21.6
-# resolver: lts-20.25
-# resolver: lts-19.20
+# resolver: nightly-2023-08-14
+# resolver: lts-21.13 # ghc 9.4.8
+resolver: lts-20.25 # ghc 9.2.8
+# resolver: lts-19.20 # ghc 9.0.2
 system-ghc: true # needed for GHCUP
 
 # User packages to be built.
@@ -43,6 +43,7 @@ system-ghc: true # needed for GHCUP
 packages:
 # - 'aern2-bench-chart'
 - 'aern2-mp'
+- 'aern2-affarith'
 - 'aern2-real'
 # - 'aern2-linear'
 # - 'aern2-erc'
