@@ -26,9 +26,9 @@ dependencies:
 - hspec
 - QuickCheck
 - collect-errors >= 0.1.5
-- mixed-types-num >= 0.5.9
+- mixed-types-num >= 0.5.11
 - cdar-mBound >= 0.1.0.0
-- aern2-mp >= 0.2.9
+- aern2-mp >= 0.2.15
 
 default-extensions:
 - RebindableSyntax

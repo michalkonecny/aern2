@@ -32,12 +32,12 @@ executable aern2-affarith-spike
   ghc-options: -O2 -Wall -rtsopts
   build-depends:
       QuickCheck
-    , aern2-mp >=0.2.9
+    , aern2-mp >=0.2.15
     , base ==4.*
     , cdar-mBound >=0.1.0.0
     , collect-errors >=0.1.5
     , containers
     , hashable
     , hspec
-    , mixed-types-num >=0.5.9
+    , mixed-types-num >=0.5.11
   default-language: Haskell2010
