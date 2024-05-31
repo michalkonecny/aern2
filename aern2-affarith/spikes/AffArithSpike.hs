@@ -4,13 +4,16 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use logBase" #-}
 
 module Main where
 
-import AERN2.MP (ErrorBound, MPBall, ShowWithAccuracy (..), ac2prec, bits, errorBound)
+import AERN2.MP (ErrorBound, MPBall (MPBall), ShowWithAccuracy (..), ac2prec, bits, errorBound, mpBall)
 import AERN2.MP.Accuracy (Accuracy (..))
 import AERN2.MP.Dyadic (dyadic)
 import AERN2.MP.Float
@@ -21,6 +24,7 @@ import qualified Data.List as List
 import qualified Data.Map as Map
 import GHC.Exts (sortWith)
 import GHC.Generics (Generic)
+import GHC.Records
 import MixedTypesNumPrelude
 import Text.Printf (printf)
 import qualified Prelude as P
@@ -94,7 +98,7 @@ instance ShowWithAccuracy MPAffine where
         case displayAC of
           Exact -> 1000000000
           NoInformation -> 0
-          _ -> round $ (log (double 2) / log (double 10)) * (integer $ ac2prec displayAC)
+          _ -> round $ (log (double 2) / log (double 10)) * integer (ac2prec displayAC)
 
 {-
   Basic operations
@@ -118,6 +122,14 @@ mpAffNormalise aff@(MPAffine {config, terms})
     newTermCoeff = foldl' (+) (errorBound 0) $ map snd termsToRemove -- sum, rounding upwards
     newTerms = Map.fromList ((newTermId, newTermCoeff) : termsToKeep) -- maxTerms-many terms
 
+instance ConvertibleExactly MPAffine MPBall where
+  safeConvertExactly :: MPAffine -> ConvertResult MPBall
+  safeConvertExactly mpAffine = Right $ MPBall centre e
+    where
+      mpAffineFlattened = mpAffNormalise $ mpAffine {config = mpAffine.config {maxTerms = int 1}}
+      (MPAffine {centre, terms}) = mpAffineFlattened
+      e = snd $ head (Map.toList terms) -- should have one term only
+
 _mpaff1 :: MPAffine
 _mpaff1 =
   MPAffine
@@ -131,9 +143,7 @@ _mpaff1 =
           ]
     }
 
-instance Convertible MPAffine MPBall where
-  safeConvert :: MPAffine -> ConvertResult MPBall
-  safeConvert (MPAffine {}) = undefined
+t = mpBall _mpaff1
 
 {-  TODO
 
