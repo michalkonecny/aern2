@@ -1,6 +1,9 @@
+{-# HLINT ignore "Use logBase" #-}
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -9,14 +12,13 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-{-# HLINT ignore "Use logBase" #-}
 
-module Main where
+module Main (main) where
 
-import AERN2.MP (ErrorBound, MPBall (MPBall), ShowWithAccuracy (..), ac2prec, bits, errorBound, mpBall)
+import AERN2.MP (ErrorBound, MPBall (MPBall), ShowWithAccuracy (..), ac2prec, bits, errorBound, mpBallP, prec)
 import AERN2.MP.Accuracy (Accuracy (..))
 import AERN2.MP.Dyadic (dyadic)
-import AERN2.MP.Float
+import AERN2.MP.Float (MPFloat, mpFloat)
 import Data.CDAR (Approx (..))
 import Data.Foldable (Foldable (foldl'))
 import Data.Hashable
@@ -50,7 +52,8 @@ newtype ErrorTermId = ErrorTermId Int
 instance Hashable ErrorTermId
 
 data MPAffineConfig = MPAffineConfig
-  { maxTerms :: Int
+  { maxTerms :: Int,
+    precision :: Integer -- used only when converting from integers, rationals etc
   }
   deriving (P.Eq, Generic, Show)
 
@@ -83,7 +86,7 @@ instance ShowWithAccuracy MPAffine where
             | e == 0 = "0"
             | otherwise =
                 case safeConvert (dyadic e) of
-                  Right (eD :: Double) -> printf "~%.4g" $ eD
+                  Right (eD :: Double) -> printf "~%.4g" eD
                   _ -> ""
       dropSomeDigits s =
         maybe s withDotIx (List.elemIndex '.' s)
@@ -119,21 +122,51 @@ mpAffNormalise aff@(MPAffine {config, terms})
     (termsToRemove, termsToKeep) = splitAt (termsSize - maxTerms + 1) termsAscending
 
     newTermId = ErrorTermId (hash aff)
-    newTermCoeff = foldl' (+) (errorBound 0) $ map snd termsToRemove -- sum, rounding upwards
+    newTermCoeff = foldl' (+) (errorBound 0) coeffsToRemove -- sum, rounding upwards
+      where
+        coeffsToRemove = map snd termsToRemove
     newTerms = Map.fromList ((newTermId, newTermCoeff) : termsToKeep) -- maxTerms-many terms
 
 instance ConvertibleExactly MPAffine MPBall where
   safeConvertExactly :: MPAffine -> ConvertResult MPBall
-  safeConvertExactly mpAffine = Right $ MPBall centre e
+  safeConvertExactly aff = Right $ MPBall centre e
     where
-      mpAffineFlattened = mpAffNormalise $ mpAffine {config = mpAffine.config {maxTerms = int 1}}
+      mpAffineFlattened = mpAffNormalise $ aff {config = aff.config {maxTerms = int 1}}
       (MPAffine {centre, terms}) = mpAffineFlattened
       e = snd $ head (Map.toList terms) -- should have one term only
+
+type CanBeMPAffine t = ConvertibleExactly (MPAffineConfig, t) MPAffine
+
+mpAffine :: (CanBeMPAffine t) => MPAffineConfig -> t -> MPAffine
+mpAffine config t = convertExactly (config, t)
+
+instance ConvertibleExactly (MPAffineConfig, (ErrorTermId, MPBall)) MPAffine where
+  safeConvertExactly :: (MPAffineConfig, (ErrorTermId, MPBall)) -> ConvertResult MPAffine
+  safeConvertExactly (config, (key, MPBall c e)) =
+    Right $ MPAffine {config, centre = c, terms = Map.singleton key e}
+
+mpAffineFromBall :: (Hashable errIdItem) => MPAffineConfig -> errIdItem -> MPBall -> MPAffine
+mpAffineFromBall config errIdItem b =
+  mpAffine config (ErrorTermId (hash errIdItem), b)
+
+instance ConvertibleExactly (MPAffineConfig, Integer) MPAffine where
+  safeConvertExactly :: (MPAffineConfig, Integer) -> ConvertResult MPAffine
+  safeConvertExactly (config, n) =
+    Right $ mpAffineFromBall config n (mpBallP p n)
+    where
+      p = prec config.precision
+
+instance ConvertibleExactly (MPAffineConfig, Rational) MPAffine where
+  safeConvertExactly :: (MPAffineConfig, Rational) -> ConvertResult MPAffine
+  safeConvertExactly (config, q) =
+    Right $ mpAffineFromBall config q (mpBallP p q)
+    where
+      p = prec config.precision
 
 _mpaff1 :: MPAffine
 _mpaff1 =
   MPAffine
-    { config = (MPAffineConfig {maxTerms = int 2}),
+    { config = (MPAffineConfig {maxTerms = int 2, precision = 100}),
       centre = mpFloat 1,
       terms =
         Map.fromList
@@ -142,14 +175,3 @@ _mpaff1 =
             (ErrorTermId (int 3), errorBound 1)
           ]
     }
-
-t = mpBall _mpaff1
-
-{-  TODO
-
-  conversion to MPBall
-  define CanBeMPAffine (similar to CanBeMPBall)
-  define mpAffine
-  instances to create mpAffine from integers and configs
-
--}
