@@ -10,6 +10,7 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
@@ -57,6 +58,13 @@ data MPAffineConfig = MPAffineConfig
   }
   deriving (P.Eq, Generic, Show)
 
+instance Semigroup MPAffineConfig where
+  config1 <> config2 =
+    MPAffineConfig
+      { maxTerms = max config1.maxTerms config2.maxTerms,
+        precision = max config1.precision config2.precision
+      }
+
 data MPAffine = MPAffine
   { config :: MPAffineConfig,
     centre :: MPFloat,
@@ -103,29 +111,34 @@ instance ShowWithAccuracy MPAffine where
           NoInformation -> 0
           _ -> round $ (log (double 2) / log (double 10)) * integer (ac2prec displayAC)
 
-{-
-  Basic operations
--}
-
 mpAffNormalise :: MPAffine -> MPAffine
 mpAffNormalise aff@(MPAffine {config, terms})
-  | termsSize > maxTerms = aff {terms = newTerms}
+  | termsNoZeroesSize > maxTerms = aff {terms = newTerms}
+  | hasSomeZeroes = aff {terms = termsNoZeroes}
   | otherwise = aff
   where
-    termsSize = Map.size terms
+    termsNoZeroes = Map.filter (> 0) terms
+
+    termsNoZeroesSize = Map.size termsNoZeroes
+    hasSomeZeroes = termsNoZeroesSize < Map.size terms
+
     (MPAffineConfig {maxTerms}) = config
 
     -- sort terms by their coefficients, smallest to largest (they are positive):
-    termsAscending = sortWith snd (Map.toList terms)
+    termsAscending = sortWith snd (Map.toList termsNoZeroes)
 
     -- keep maxTerms - 1 terms, then replace the others with 1 new term:
-    (termsToRemove, termsToKeep) = splitAt (termsSize - maxTerms + 1) termsAscending
+    (termsToRemove, termsToKeep) = splitAt (termsNoZeroesSize - maxTerms + 1) termsAscending
 
     newTermId = ErrorTermId (hash aff)
     newTermCoeff = foldl' (+) (errorBound 0) coeffsToRemove -- sum, rounding upwards
       where
         coeffsToRemove = map snd termsToRemove
     newTerms = Map.fromList ((newTermId, newTermCoeff) : termsToKeep) -- maxTerms-many terms
+
+{-
+  Conversions
+-}
 
 instance ConvertibleExactly MPAffine MPBall where
   safeConvertExactly :: MPAffine -> ConvertResult MPBall
@@ -142,8 +155,11 @@ mpAffine config t = convertExactly (config, t)
 
 instance ConvertibleExactly (MPAffineConfig, (ErrorTermId, MPBall)) MPAffine where
   safeConvertExactly :: (MPAffineConfig, (ErrorTermId, MPBall)) -> ConvertResult MPAffine
-  safeConvertExactly (config, (key, MPBall c e)) =
-    Right $ MPAffine {config, centre = c, terms = Map.singleton key e}
+  safeConvertExactly (config, (key, MPBall c e))
+    | e == 0 =
+        Right $ MPAffine {config, centre = c, terms = Map.empty}
+    | otherwise =
+        Right $ MPAffine {config, centre = c, terms = Map.singleton key e}
 
 mpAffineFromBall :: (Hashable errIdItem) => MPAffineConfig -> errIdItem -> MPBall -> MPAffine
 mpAffineFromBall config errIdItem b =
@@ -163,15 +179,64 @@ instance ConvertibleExactly (MPAffineConfig, Rational) MPAffine where
     where
       p = prec config.precision
 
+{-
+  Basic operations
+-}
+
+instance CanNeg MPAffine where
+  type NegType MPAffine = MPAffine
+  negate aff = aff {centre = negate aff.centre}
+
+instance CanAddAsymmetric MPAffine MPAffine where
+  type AddType MPAffine MPAffine = MPAffine
+  add aff1 aff2 =
+    mpAffNormalise
+      $ MPAffine {config, centre, terms}
+    where
+      config = aff1.config <> aff2.config
+      MPBall centre e = MPBall aff1.centre z + MPBall aff2.centre z
+      z = errorBound 0
+      termsAdded = Map.unionWith (+) aff1.terms aff2.terms
+      newTermId = ErrorTermId (hash ("+", aff1, aff2))
+      terms
+        | e == 0 = termsAdded
+        | otherwise = Map.insert newTermId e termsAdded
+
+instance CanSub MPAffine MPAffine -- Use the default instance via add and sub.
+
+{-
+  Ad-hoc tests
+-}
+
+_conf :: MPAffineConfig
+_conf = MPAffineConfig {maxTerms = int 2, precision = 100}
+
 _mpaff1 :: MPAffine
 _mpaff1 =
   MPAffine
-    { config = (MPAffineConfig {maxTerms = int 2, precision = 100}),
+    { config = _conf,
       centre = mpFloat 1,
       terms =
         Map.fromList
           [ (ErrorTermId (int 1), errorBound 1),
-            (ErrorTermId (int 2), errorBound 1),
+            (ErrorTermId (int 2), errorBound 1)
+          ]
+    }
+
+_mpaff2 :: MPAffine
+_mpaff2 =
+  MPAffine
+    { config = _conf,
+      centre = mpFloat 1,
+      terms =
+        Map.fromList
+          [ (ErrorTermId (int 1), errorBound 1),
             (ErrorTermId (int 3), errorBound 1)
           ]
     }
+
+_a100 :: MPAffine
+_a100 = mpAffine _conf 100
+
+_aThird :: MPAffine
+_aThird = mpAffine _conf (1 / 3)
