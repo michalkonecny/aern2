@@ -122,8 +122,8 @@ instance ShowWithAccuracy MPAffine where
                 case safeConvert (dyadic e) of
                   Right (eD :: Double) ->
                     if eD < 0
-                      then printf "- ~%.4g" eD
-                      else printf "+ ~%.4g" eD
+                      then printf "-%.4g" (- eD)
+                      else printf "+%.4g" eD
                   _ -> ""
       dropSomeDigits s =
         maybe s withDotIx (List.elemIndex '.' s)
