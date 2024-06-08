@@ -19,12 +19,13 @@ module Main (main) where
 import AERN2.MP (ErrorBound, MPBall (MPBall), ShowWithAccuracy (..), ac2prec, bits, errorBound, mpBallP, prec)
 import AERN2.MP.Accuracy (Accuracy (..))
 import AERN2.MP.Dyadic (dyadic)
-import AERN2.MP.Float (MPFloat, mpFloat)
+import AERN2.MP.Float (MPFloat, mpFloat, (+^))
 import Data.CDAR (Approx (..))
-import Data.Foldable (Foldable (foldl'))
 import Data.Hashable
+import Data.List (foldl1')
 import qualified Data.List as List
 import qualified Data.Map as Map
+import Data.Maybe (isNothing)
 import GHC.Exts (sortWith)
 import GHC.Generics (Generic)
 import GHC.Records
@@ -65,12 +66,37 @@ instance Semigroup MPAffineConfig where
         precision = max config1.precision config2.precision
       }
 
+-- |
+--  An affine form representing a real number with imprecision given
+--  by linear terms in a number of error variables.
+--  All the error variables have the range [-1,1].
+--  The linear coefficients of the error variables combine the magnitude
+--  of the error and effects of the same error variable being combined
+--  via arithmetic operations used to compute this number.
+--
+--  @x - x@ should always be 0 with no imprecision as the linear error terms
+--  within @x@ get cancelled.
+--
+--  @x*y - y*x@ may contain some imprecision as the imprecision arising from the two
+--  products are not seen as identical and thus do not get cancelled.
+--
+--  The affine form contains a copy of configuration object specifying
+--  the maximum number of error terms allowed and the default MPFloat precision
+--  for the centre and the coefficients.
+--
+--  ⚠️ Warning: Arithmetic over these affine forms is safe only as far as
+--  the hash function behaves injectively.  We use @hash@ to determine
+--  the ID of each error variable.  It is essential that only identical sources
+--  of error have the same error variable ID.
 data MPAffine = MPAffine
   { config :: MPAffineConfig,
     centre :: MPFloat,
-    terms :: Map.Map ErrorTermId ErrorBound -- the term coefficients must be positive
+    -- | error variables and their coefficients
+    errTerms :: MPAffineErrorTerms
   }
   deriving (P.Eq, Generic)
+
+type MPAffineErrorTerms = Map.Map ErrorTermId MPFloat
 
 instance Hashable MPAffineConfig
 
@@ -80,21 +106,24 @@ instance Show MPAffine where
   show = showWithAccuracy (bits 10)
 
 instance ShowWithAccuracy MPAffine where
-  showWithAccuracy displayAC (MPAffine {centre, terms}) =
+  showWithAccuracy displayAC (MPAffine {centre, errTerms}) =
     -- printf "[%s ± %s](prec=%s)" (show x) (showAC $ getAccuracy b) (show $ integer $ getPrecision b)
     printf "[%s%s]" (dropSomeDigits $ show centre) (termsS :: String)
     where
-      termsS = concatMap showTerm (Map.toList terms)
-      showTerm (ErrorTermId h, e :: ErrorBound) =
-        printf " ± %s{H%s}" eDS hSTrimmed
+      termsS = concatMap showTerm (Map.toList errTerms)
+      showTerm (ErrorTermId h, e :: MPFloat) =
+        printf " %s{H%s}" eDS hSTrimmed
         where
           hSTrimmed = take 3 hS
           hS = show (abs h)
           eDS
-            | e == 0 = "0"
+            | e == 0 = "+ 0"
             | otherwise =
                 case safeConvert (dyadic e) of
-                  Right (eD :: Double) -> printf "~%.4g" eD
+                  Right (eD :: Double) ->
+                    if eD < 0
+                      then printf "- ~%.4g" eD
+                      else printf "+ ~%.4g" eD
                   _ -> ""
       dropSomeDigits s =
         maybe s withDotIx (List.elemIndex '.' s)
@@ -112,29 +141,53 @@ instance ShowWithAccuracy MPAffine where
           _ -> round $ (log (double 2) / log (double 10)) * integer (ac2prec displayAC)
 
 mpAffNormalise :: MPAffine -> MPAffine
-mpAffNormalise aff@(MPAffine {config, terms})
-  | termsNoZeroesSize > maxTerms = aff {terms = newTerms}
-  | hasSomeZeroes = aff {terms = termsNoZeroes}
+mpAffNormalise aff@(MPAffine {config, errTerms})
+  | termsNoZeroesSize > maxTerms = aff {errTerms = newTerms}
+  | hasSomeZeroes = aff {errTerms = termsNoZeroes}
   | otherwise = aff
   where
-    termsNoZeroes = Map.filter (> 0) terms
+    termsNoZeroes = Map.filter (/= 0) errTerms
 
     termsNoZeroesSize = Map.size termsNoZeroes
-    hasSomeZeroes = termsNoZeroesSize < Map.size terms
+    hasSomeZeroes = termsNoZeroesSize < Map.size errTerms
 
     (MPAffineConfig {maxTerms}) = config
 
-    -- sort terms by their coefficients, smallest to largest (they are positive):
-    termsAscending = sortWith snd (Map.toList termsNoZeroes)
+    -- sort terms by their coefficients' abs values, smallest to largest:
+    termsAscending = sortWith (abs . snd) (Map.toList termsNoZeroes)
 
     -- keep maxTerms - 1 terms, then replace the others with 1 new term:
     (termsToRemove, termsToKeep) = splitAt (termsNoZeroesSize - maxTerms + 1) termsAscending
 
     newTermId = ErrorTermId (hash aff)
-    newTermCoeff = foldl' (+) (errorBound 0) coeffsToRemove -- sum, rounding upwards
+    newTermCoeff = foldl1' (+^) coeffsToRemove -- sum, rounding upwards, at least 2 coeffs to remove
       where
         coeffsToRemove = map snd termsToRemove
     newTerms = Map.fromList ((newTermId, newTermCoeff) : termsToKeep) -- maxTerms-many terms
+
+{-
+  Arithmetic helpers
+-}
+
+mpBallOpOnMPFloat2 ::
+  (MPBall -> MPBall -> MPBall) ->
+  (MPFloat -> MPFloat -> (MPFloat, ErrorBound))
+mpBallOpOnMPFloat2 op x y = (c, e)
+  where
+    MPBall c e = op (MPBall x e0) (MPBall y e0)
+    e0 = errorBound 0
+
+addErrTerms :: MPAffineErrorTerms -> MPAffineErrorTerms -> (MPAffineErrorTerms, ErrorBound)
+addErrTerms terms1 terms2 =
+  (Map.unions [terms1NotIn2, terms2NotIn1, combinedTerms], e)
+  where
+    terms1NotIn2 = Map.filterWithKey (\errId _ -> isNothing (terms2 Map.!? errId)) terms1
+    terms2NotIn1 = Map.filterWithKey (\errId _ -> isNothing (terms1 Map.!? errId)) terms2
+
+    combinedTermsWithErrors = Map.intersectionWith (mpBallOpOnMPFloat2 (+)) terms1 terms2
+    combinedTerms = Map.map fst combinedTermsWithErrors
+    combinationErrors = map snd $ Map.elems combinedTermsWithErrors
+    e = List.foldl' (+) (errorBound 0) combinationErrors
 
 {-
   Conversions
@@ -145,8 +198,8 @@ instance ConvertibleExactly MPAffine MPBall where
   safeConvertExactly aff = Right $ MPBall centre e
     where
       mpAffineFlattened = mpAffNormalise $ aff {config = aff.config {maxTerms = int 1}}
-      (MPAffine {centre, terms}) = mpAffineFlattened
-      e = snd $ head (Map.toList terms) -- should have one term only
+      (MPAffine {centre, errTerms}) = mpAffineFlattened
+      e = errorBound $ abs $ snd $ head (Map.toList errTerms) -- should have one term only
 
 type CanBeMPAffine t = ConvertibleExactly (MPAffineConfig, t) MPAffine
 
@@ -157,9 +210,9 @@ instance ConvertibleExactly (MPAffineConfig, (ErrorTermId, MPBall)) MPAffine whe
   safeConvertExactly :: (MPAffineConfig, (ErrorTermId, MPBall)) -> ConvertResult MPAffine
   safeConvertExactly (config, (key, MPBall c e))
     | e == 0 =
-        Right $ MPAffine {config, centre = c, terms = Map.empty}
+        Right $ MPAffine {config, centre = c, errTerms = Map.empty}
     | otherwise =
-        Right $ MPAffine {config, centre = c, terms = Map.singleton key e}
+        Right $ MPAffine {config, centre = c, errTerms = Map.singleton key (mpFloat e)}
 
 mpAffineFromBall :: (Hashable errIdItem) => MPAffineConfig -> errIdItem -> MPBall -> MPAffine
 mpAffineFromBall config errIdItem b =
@@ -185,22 +238,28 @@ instance ConvertibleExactly (MPAffineConfig, Rational) MPAffine where
 
 instance CanNeg MPAffine where
   type NegType MPAffine = MPAffine
-  negate aff = aff {centre = negate aff.centre}
+  negate aff =
+    aff
+      { centre = negate aff.centre,
+        errTerms = fmap negate aff.errTerms
+      }
 
 instance CanAddAsymmetric MPAffine MPAffine where
   type AddType MPAffine MPAffine = MPAffine
   add aff1 aff2 =
-    mpAffNormalise
-      $ MPAffine {config, centre, terms}
+    mpAffNormalise $ MPAffine {config, centre, errTerms}
     where
       config = aff1.config <> aff2.config
-      MPBall centre e = MPBall aff1.centre z + MPBall aff2.centre z
-      z = errorBound 0
-      termsAdded = Map.unionWith (+) aff1.terms aff2.terms
+      (centre, eCentre) = mpBallOpOnMPFloat2 (+) aff1.centre aff2.centre
+
+      -- add coeffs with common error variables, tracking any new errors introduced through that
+
+      (termsAdded, eTerms) = addErrTerms aff1.errTerms aff2.errTerms
       newTermId = ErrorTermId (hash ("+", aff1, aff2))
-      terms
+      e = eCentre + eTerms
+      errTerms
         | e == 0 = termsAdded
-        | otherwise = Map.insert newTermId e termsAdded
+        | otherwise = Map.insert newTermId (mpFloat e) termsAdded
 
 instance CanSub MPAffine MPAffine -- Use the default instance via add and sub.
 
@@ -216,10 +275,10 @@ _mpaff1 =
   MPAffine
     { config = _conf,
       centre = mpFloat 1,
-      terms =
+      errTerms =
         Map.fromList
-          [ (ErrorTermId (int 1), errorBound 1),
-            (ErrorTermId (int 2), errorBound 1)
+          [ (ErrorTermId (int 1), mpFloat 1),
+            (ErrorTermId (int 2), mpFloat 1)
           ]
     }
 
@@ -228,10 +287,10 @@ _mpaff2 =
   MPAffine
     { config = _conf,
       centre = mpFloat 1,
-      terms =
+      errTerms =
         Map.fromList
-          [ (ErrorTermId (int 1), errorBound 1),
-            (ErrorTermId (int 3), errorBound 1)
+          [ (ErrorTermId (int 1), mpFloat 1),
+            (ErrorTermId (int 3), mpFloat 1)
           ]
     }
 
