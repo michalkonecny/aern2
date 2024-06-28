@@ -233,7 +233,7 @@ instance ConvertibleExactly (MPAffineConfig, Rational) MPAffine where
       p = prec config.precision
 
 {-
-  Basic operations
+  Addition and subtraction
 -}
 
 instance CanNeg MPAffine where
@@ -261,8 +261,6 @@ instance CanAddAsymmetric MPAffine MPAffine where
         | e == 0 = termsAdded
         | otherwise = Map.insert newTermId (mpFloat e) termsAdded
 
-instance CanSub MPAffine MPAffine -- Use the default instance via add and sub.
-
 instance CanAddAsymmetric MPAffine Integer where
   type AddType MPAffine Integer = MPAffine
   add aff n = add aff (mpAffine aff.config n)
@@ -278,6 +276,13 @@ instance CanAddAsymmetric Integer MPAffine where
 instance CanAddAsymmetric Rational MPAffine where
   type AddType Rational MPAffine = MPAffine
   add q aff = add (mpAffine aff.config q) aff
+
+-- Subtraction defined using the default instances via add and neg:
+instance CanSub MPAffine MPAffine
+instance CanSub Integer MPAffine
+instance CanSub MPAffine Integer
+instance CanSub Rational MPAffine
+instance CanSub MPAffine Rational
 
 {-
   Ad-hoc tests
