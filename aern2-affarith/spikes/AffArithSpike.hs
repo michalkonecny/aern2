@@ -179,18 +179,6 @@ mpBallOpOnMPFloat2 op x y = (c, e)
     MPBall c e = op (MPBall x e0) (MPBall y e0)
     e0 = errorBound 0
 
-addErrTerms :: MPAffineErrorTerms -> MPAffineErrorTerms -> (MPAffineErrorTerms, ErrorBound)
-addErrTerms terms1 terms2 =
-  (Map.unions [terms1NotIn2, terms2NotIn1, combinedTerms], e)
-  where
-    terms1NotIn2 = Map.filterWithKey (\errId _ -> isNothing (terms2 Map.!? errId)) terms1
-    terms2NotIn1 = Map.filterWithKey (\errId _ -> isNothing (terms1 Map.!? errId)) terms2
-
-    combinedTermsWithErrors = Map.intersectionWith (mpBallOpOnMPFloat2 (+)) terms1 terms2
-    combinedTerms = Map.map fst combinedTermsWithErrors
-    combinationErrors = map snd $ Map.elems combinedTermsWithErrors
-    e = List.foldl' (+) (errorBound 0) combinationErrors
-
 {-
   Conversions
 -}
@@ -263,6 +251,30 @@ instance CanAddAsymmetric MPAffine MPAffine where
         | e == 0 = termsAdded
         | otherwise = Map.insert newTermId (mpFloat e) termsAdded
 
+addErrTerms :: MPAffineErrorTerms -> MPAffineErrorTerms -> (MPAffineErrorTerms, ErrorBound)
+addErrTerms terms1 terms2 =
+  ( separateTerms `Map.union` combinedTerms,
+    sumErrorBounds combinationErrors
+  )
+  where
+    -- terms for variables that appear in only one of the operands go in unchanged:
+    separateTerms = mapIntersectionComplement terms1 terms2
+
+    -- variables that have coefficients in both operands need to be added:
+    combinedTermsWithErrors = Map.intersectionWith (mpBallOpOnMPFloat2 (+)) terms1 terms2
+    combinedTerms = Map.map fst combinedTermsWithErrors
+    combinationErrors = map snd $ Map.elems combinedTermsWithErrors
+
+sumErrorBounds :: [ErrorBound] -> ErrorBound
+sumErrorBounds = foldl' (+) (errorBound 0)
+
+mapIntersectionComplement :: (P.Ord k) => Map.Map k v -> Map.Map k v -> Map.Map k v
+mapIntersectionComplement map1 map2 =
+  map1minus2 `Map.union` map2minus1
+  where
+    map1minus2 = Map.filterWithKey (\errId _ -> isNothing (map2 Map.!? errId)) map1
+    map2minus1 = Map.filterWithKey (\errId _ -> isNothing (map1 Map.!? errId)) map2
+
 instance CanAddAsymmetric MPAffine Integer where
   type AddType MPAffine Integer = MPAffine
   add aff n = add aff (mpAffine aff.config n)
@@ -281,9 +293,13 @@ instance CanAddAsymmetric Rational MPAffine where
 
 -- Subtraction defined using the default instances via add and neg:
 instance CanSub MPAffine MPAffine
+
 instance CanSub Integer MPAffine
+
 instance CanSub MPAffine Integer
+
 instance CanSub Rational MPAffine
+
 instance CanSub MPAffine Rational
 
 {-
@@ -301,27 +317,40 @@ instance CanMulAsymmetric MPBall MPAffine where
       affCentreBall = MPBall aff.centre (errorBound 0)
       MPBall centre eCentre = b * affCentreBall
 
-      -- scale all coeffs, tracking all new rounding errors:
-      scaledTermsBalls = Map.map scaleCoeff aff.errTerms
-      scaleCoeff coeff = b * MPBall coeff (errorBound 0)
-      scaledTerms = Map.map (\(MPBall c _) -> c) scaledTermsBalls
-      eTerms = foldl' (+) (errorBound 0) $ map (\(MPBall _ ce) -> ce) (Map.elems scaledTermsBalls)
+      -- scale all coeffs, bounding all rounding errors:
+      (scaledTerms, eTerms) = scaleErrTerms b aff.errTerms
 
-      newTermId = ErrorTermId (hash ("*", b, aff))
-      e = eCentre + eTerms
+      -- assemble the new error terms from the scaled terms and a new term for rounding errors incurred while scaling:
       errTerms
         | e == 0 = scaledTerms
         | otherwise = Map.insert newTermId (mpFloat e) scaledTerms
+        where
+          newTermId = ErrorTermId (hash ("*", b, aff))
+          e = eCentre + eTerms
+
+scaleErrTerms :: MPBall -> MPAffineErrorTerms -> (MPAffineErrorTerms, ErrorBound)
+scaleErrTerms b terms = (scaledTerms, sumErrorBounds scalingErrors)
+  where
+    -- scale the error terms as MPBalls:
+    scaledTermsBalls = Map.map scaleCoeff terms
+      where
+        scaleCoeff coeff = b * MPBall coeff (errorBound 0)
+
+    -- separate the centres and error bounds:
+    scaledTerms = Map.map (\(MPBall centre _) -> centre) scaledTermsBalls
+    scalingErrors = map (\(MPBall _ ce) -> ce) (Map.elems scaledTermsBalls)
 
 instance CanMulAsymmetric Integer MPAffine where
   type MulType Integer MPAffine = MPAffine
   mul n aff = mul (mpBallP p n) aff
-    where p = prec aff.config.precision
+    where
+      p = prec aff.config.precision
 
 instance CanMulAsymmetric Rational MPAffine where
   type MulType Rational MPAffine = MPAffine
   mul q aff = mul (mpBallP p q) aff
-    where p = prec aff.config.precision
+    where
+      p = prec aff.config.precision
 
 instance CanMulAsymmetric MPAffine MPBall where
   type MulType MPAffine MPBall = MPAffine
@@ -334,7 +363,6 @@ instance CanMulAsymmetric MPAffine Integer where
 instance CanMulAsymmetric MPAffine Rational where
   type MulType MPAffine Rational = MPAffine
   mul q aff = mul aff q -- using commutativity of multiplication
-
 
 {-
   Multiplication
