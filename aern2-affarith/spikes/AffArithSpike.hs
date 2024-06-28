@@ -122,7 +122,7 @@ instance ShowWithAccuracy MPAffine where
                 case safeConvert (dyadic e) of
                   Right (eD :: Double) ->
                     if eD < 0
-                      then printf "-%.4g" (- eD)
+                      then printf "-%.4g" (-eD)
                       else printf "+%.4g" eD
                   _ -> ""
       dropSomeDigits s =
@@ -262,6 +262,22 @@ instance CanAddAsymmetric MPAffine MPAffine where
         | otherwise = Map.insert newTermId (mpFloat e) termsAdded
 
 instance CanSub MPAffine MPAffine -- Use the default instance via add and sub.
+
+instance CanAddAsymmetric MPAffine Integer where
+  type AddType MPAffine Integer = MPAffine
+  add aff n = add aff (mpAffine aff.config n)
+
+instance CanAddAsymmetric MPAffine Rational where
+  type AddType MPAffine Rational = MPAffine
+  add aff q = add aff (mpAffine aff.config q)
+
+instance CanAddAsymmetric Integer MPAffine where
+  type AddType Integer MPAffine = MPAffine
+  add n aff = add (mpAffine aff.config n) aff
+
+instance CanAddAsymmetric Rational MPAffine where
+  type AddType Rational MPAffine = MPAffine
+  add q aff = add (mpAffine aff.config q) aff
 
 {-
   Ad-hoc tests
