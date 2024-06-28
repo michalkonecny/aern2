@@ -22,7 +22,7 @@ import AERN2.MP.Dyadic (dyadic)
 import AERN2.MP.Float (MPFloat, mpFloat, (+^))
 import Data.CDAR (Approx (..))
 import Data.Hashable
-import Data.List (foldl1')
+import Data.List (foldl', foldl1')
 import qualified Data.List as List
 import qualified Data.Map as Map
 import Data.Maybe (isNothing)
@@ -45,6 +45,8 @@ deriving instance Generic Approx
 instance Hashable Approx
 
 instance Hashable MPFloat
+
+instance Hashable MPBall
 
 instance Hashable ErrorBound
 
@@ -271,11 +273,11 @@ instance CanAddAsymmetric MPAffine Rational where
 
 instance CanAddAsymmetric Integer MPAffine where
   type AddType Integer MPAffine = MPAffine
-  add n aff = add (mpAffine aff.config n) aff
+  add n aff = add aff n -- use commutativity of addition
 
 instance CanAddAsymmetric Rational MPAffine where
   type AddType Rational MPAffine = MPAffine
-  add q aff = add (mpAffine aff.config q) aff
+  add q aff = add aff q -- use commutativity of addition
 
 -- Subtraction defined using the default instances via add and neg:
 instance CanSub MPAffine MPAffine
@@ -283,6 +285,62 @@ instance CanSub Integer MPAffine
 instance CanSub MPAffine Integer
 instance CanSub Rational MPAffine
 instance CanSub MPAffine Rational
+
+{-
+  Scaling
+-}
+
+instance CanMulAsymmetric MPBall MPAffine where
+  type MulType MPBall MPAffine = MPAffine
+  mul b aff =
+    mpAffNormalise $ MPAffine {config, centre, errTerms}
+    where
+      config = aff.config
+
+      -- scale the centre, note the error:
+      affCentreBall = MPBall aff.centre (errorBound 0)
+      MPBall centre eCentre = b * affCentreBall
+
+      -- scale all coeffs, tracking all new rounding errors:
+      scaledTermsBalls = Map.map scaleCoeff aff.errTerms
+      scaleCoeff coeff = b * MPBall coeff (errorBound 0)
+      scaledTerms = Map.map (\(MPBall c _) -> c) scaledTermsBalls
+      eTerms = foldl' (+) (errorBound 0) $ map (\(MPBall _ ce) -> ce) (Map.elems scaledTermsBalls)
+
+      newTermId = ErrorTermId (hash ("*", b, aff))
+      e = eCentre + eTerms
+      errTerms
+        | e == 0 = scaledTerms
+        | otherwise = Map.insert newTermId (mpFloat e) scaledTerms
+
+instance CanMulAsymmetric Integer MPAffine where
+  type MulType Integer MPAffine = MPAffine
+  mul n aff = mul (mpBallP p n) aff
+    where p = prec aff.config.precision
+
+instance CanMulAsymmetric Rational MPAffine where
+  type MulType Rational MPAffine = MPAffine
+  mul q aff = mul (mpBallP p q) aff
+    where p = prec aff.config.precision
+
+instance CanMulAsymmetric MPAffine MPBall where
+  type MulType MPAffine MPBall = MPAffine
+  mul b aff = mul aff b -- using commutativity of multiplication
+
+instance CanMulAsymmetric MPAffine Integer where
+  type MulType MPAffine Integer = MPAffine
+  mul n aff = mul aff n -- using commutativity of multiplication
+
+instance CanMulAsymmetric MPAffine Rational where
+  type MulType MPAffine Rational = MPAffine
+  mul q aff = mul aff q -- using commutativity of multiplication
+
+
+{-
+  Multiplication
+-}
+
+-- TODO
 
 {-
   Ad-hoc tests
