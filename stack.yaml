@@ -42,7 +42,7 @@ system-ghc: true # needed for GHCUP
 packages:
 # - 'aern2-bench-chart'
 - 'aern2-mp'
-# - 'aern2/aern2-affarith'
+- 'aern2-affarith'
 - 'aern2-real'
 # - 'aern2-linear'
 # - 'aern2-erc'
