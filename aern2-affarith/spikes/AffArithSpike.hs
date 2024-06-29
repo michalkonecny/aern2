@@ -19,7 +19,7 @@ module Main (main) where
 import AERN2.MP (ErrorBound, MPBall (MPBall), ShowWithAccuracy (..), ac2prec, bits, errorBound, mpBallP, prec)
 import AERN2.MP.Accuracy (Accuracy (..))
 import AERN2.MP.Dyadic (dyadic)
-import AERN2.MP.Float (MPFloat, mpFloat, (+^))
+import AERN2.MP.Float (MPFloat, mpFloat, (*^), (+^))
 import Data.CDAR (Approx (..))
 import Data.Hashable
 import Data.List (foldl', foldl1')
@@ -242,14 +242,15 @@ instance CanAddAsymmetric MPAffine MPAffine where
       config = aff1.config <> aff2.config
       (centre, eCentre) = mpBallOpOnMPFloat2 (+) aff1.centre aff2.centre
 
-      -- add coeffs with common error variables, tracking any new errors introduced through that
-
+      -- add coeffs with common error variables, tracking any new errors introduced through that:
       (termsAdded, eTerms) = addErrTerms aff1.errTerms aff2.errTerms
-      newTermId = ErrorTermId (hash ("+", aff1, aff2))
-      e = eCentre + eTerms
+
       errTerms
         | e == 0 = termsAdded
         | otherwise = Map.insert newTermId (mpFloat e) termsAdded
+        where
+          newTermId = ErrorTermId (hash ("+", aff1, aff2))
+          e = eCentre + eTerms
 
 addErrTerms :: MPAffineErrorTerms -> MPAffineErrorTerms -> (MPAffineErrorTerms, ErrorBound)
 addErrTerms terms1 terms2 =
@@ -368,6 +369,48 @@ instance CanMulAsymmetric MPAffine Rational where
   Multiplication
 -}
 
+instance CanMulAsymmetric MPAffine MPAffine where
+  type MulType MPAffine MPAffine = MPAffine
+  mul aff1 aff2 =
+    mpAffNormalise $ MPAffine {config, centre, errTerms}
+    where
+      config = aff1.config <> aff2.config
+
+      {-
+          (centre1 + terms1) * (centre2 + terms2)
+            = centre1*centre2 + centre1*terms2 + centre2*terms1 + terms1*terms2
+
+          (quadratic) terms1*terms2 -> one error bound
+      -}
+
+      -- new centre:
+      centre1Ball = MPBall aff1.centre (errorBound 0)
+      centre2Ball = MPBall aff2.centre (errorBound 0)
+      MPBall centre eCentre = centre1Ball * centre2Ball
+
+      -- scaling linear terms:
+      (scaledTerms1, eScaled1) = scaleErrTerms centre2Ball aff1.errTerms
+      (scaledTerms2, eScaled2) = scaleErrTerms centre1Ball aff2.errTerms
+      (scaledTerms, eScaledAdd) = addErrTerms scaledTerms1 scaledTerms2
+
+      -- bounds for quadratic terms:
+      {-
+          |(v1*c1 + ... + vn*cn) * (w1*d1 + ... + wm*dm)|
+            = |Sum_{i<=n,j<=m} vi*ci*wj*dj|
+            <= Sum_{i<=n,j<=m} |ci|*|dj|
+            = (|c1| + ... + |cn|) * (|d1| + ... + |dm|)
+      -}
+      terms1Bound = foldl' (+^) (mpFloat 0) $ map abs $ Map.elems aff1.errTerms
+      terms2Bound = foldl' (+^) (mpFloat 0) $ map abs $ Map.elems aff2.errTerms
+      quadraticTermsBound = terms1Bound *^ terms2Bound
+
+      errTerms
+        | e == 0 = scaledTerms
+        | otherwise = Map.insert newTermId e scaledTerms
+        where
+          newTermId = ErrorTermId (hash ("*", aff1, aff2))
+          e = quadraticTermsBound +^ mpFloat (eCentre + eScaled1 + eScaled2 + eScaledAdd)
+
 -- TODO
 
 {-
@@ -375,7 +418,7 @@ instance CanMulAsymmetric MPAffine Rational where
 -}
 
 _conf :: MPAffineConfig
-_conf = MPAffineConfig {maxTerms = int 2, precision = 100}
+_conf = MPAffineConfig {maxTerms = int 4, precision = 100}
 
 _mpaff1 :: MPAffine
 _mpaff1 =
@@ -384,8 +427,8 @@ _mpaff1 =
       centre = mpFloat 1,
       errTerms =
         Map.fromList
-          [ (ErrorTermId (int 1), mpFloat 1),
-            (ErrorTermId (int 2), mpFloat 1)
+          [ (ErrorTermId (int 1), mpFloat (dyadic (-0.5))),
+            (ErrorTermId (int 2), mpFloat (dyadic 0.5))
           ]
     }
 
@@ -396,8 +439,8 @@ _mpaff2 =
       centre = mpFloat 1,
       errTerms =
         Map.fromList
-          [ (ErrorTermId (int 1), mpFloat 1),
-            (ErrorTermId (int 3), mpFloat 1)
+          [ (ErrorTermId (int 1), mpFloat (dyadic 0.5)),
+            (ErrorTermId (int 3), mpFloat (dyadic 0.5))
           ]
     }
 
