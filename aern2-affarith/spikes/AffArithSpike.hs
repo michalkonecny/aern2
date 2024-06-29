@@ -164,7 +164,7 @@ mpAffNormalise aff@(MPAffine {config, errTerms})
     newTermId = ErrorTermId (hash aff)
     newTermCoeff = foldl1' (+^) coeffsToRemove -- sum, rounding upwards, at least 2 coeffs to remove
       where
-        coeffsToRemove = map snd termsToRemove
+        coeffsToRemove = map (abs . snd) termsToRemove
     newTerms = Map.fromList ((newTermId, newTermCoeff) : termsToKeep) -- maxTerms-many terms
 
 {-
