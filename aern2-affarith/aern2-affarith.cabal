@@ -21,15 +21,19 @@ source-repository head
   type: git
   location: https://github.com/michalkonecny/aern2
 
-executable aern2-affarith-spike
-  main-is: AffArithSpike.hs
+library
+  exposed-modules:
+      AERN2.AffArith
+      AERN2.AffArith.Conversions
+      AERN2.AffArith.Ring
+      AERN2.AffArith.Type
   other-modules:
       Paths_aern2_affarith
   hs-source-dirs:
-      spikes
+      src
   default-extensions:
       RebindableSyntax
-  ghc-options: -O2 -Wall -rtsopts
+  ghc-options: -O2 -Wall
   build-depends:
       QuickCheck
     , aern2-mp >=0.2.15

@@ -33,10 +33,7 @@ dependencies:
 default-extensions:
 - RebindableSyntax
 
-executables:
-  aern2-affarith-spike:
-    source-dirs: 
-    - spikes
-    main: AffArithSpike.hs
-    ghc-options:
-    - -O2 -Wall -rtsopts
+library:
+  source-dirs: src
+  ghc-options:
+  - -O2 -Wall
