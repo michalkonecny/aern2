@@ -1,17 +1,10 @@
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies #-}
-
 module AERN2.AffArith
   ( module AERN2.AffArith.Conversions,
     module AERN2.AffArith.Type,
   )
 where
 
+import AERN2.AffArith.Comparison ()
 import AERN2.AffArith.Conversions
 import AERN2.AffArith.Ring ()
 import AERN2.AffArith.Type

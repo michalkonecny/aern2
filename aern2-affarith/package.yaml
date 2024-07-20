@@ -32,6 +32,16 @@ dependencies:
 
 default-extensions:
 - RebindableSyntax
+- ConstraintKinds
+- DuplicateRecordFields
+- FlexibleContexts
+- FlexibleInstances
+- InstanceSigs
+- MultiParamTypeClasses
+- NamedFieldPuns
+- OverloadedRecordDot
+- ScopedTypeVariables
+- TypeFamilies
 
 library:
   source-dirs: src

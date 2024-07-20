@@ -1,20 +1,14 @@
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE OverloadedRecordDot #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# HLINT ignore "Use logBase" #-}
 {-# OPTIONS_GHC -Wno-orphans #-}
+{-# HLINT ignore "Use logBase" #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
 module AERN2.AffArith.Type
-  ( 
-    MPAffineConfig(..),
-    ErrorTermId(..),
+  ( MPAffineConfig (..),
+    ErrorTermId (..),
     MPAffineErrorTerms,
-    MPAffine(..),
+    MPAffine (..),
     mpBallOpOnMPFloat2,
     mpAffNormalise,
   )

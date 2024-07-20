@@ -24,6 +24,7 @@ source-repository head
 library
   exposed-modules:
       AERN2.AffArith
+      AERN2.AffArith.Comparison
       AERN2.AffArith.Conversions
       AERN2.AffArith.Ring
       AERN2.AffArith.Type
@@ -33,6 +34,16 @@ library
       src
   default-extensions:
       RebindableSyntax
+      ConstraintKinds
+      DuplicateRecordFields
+      FlexibleContexts
+      FlexibleInstances
+      InstanceSigs
+      MultiParamTypeClasses
+      NamedFieldPuns
+      OverloadedRecordDot
+      ScopedTypeVariables
+      TypeFamilies
   ghc-options: -O2 -Wall
   build-depends:
       QuickCheck
