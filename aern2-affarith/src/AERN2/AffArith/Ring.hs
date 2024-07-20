@@ -7,7 +7,7 @@ where
 
 import AERN2.AffArith.Conversions
 import AERN2.AffArith.Type
-import AERN2.MP (ErrorBound, MPBall (MPBall), errorBound, mpBallP, prec)
+import AERN2.MP (ErrorBound, MPBall (MPBall), errorBound, mpBallP, prec, Kleenean, mpBall)
 import AERN2.MP.Float (mpFloat, (*^), (+^))
 import Data.Hashable
 import Data.List (foldl')
@@ -71,12 +71,20 @@ instance CanAddAsymmetric MPAffine Integer where
   type AddType MPAffine Integer = MPAffine
   add aff n = add aff (mpAffine aff.config n)
 
+instance CanAddAsymmetric MPAffine Int where
+  type AddType MPAffine Int = MPAffine
+  add aff n = add aff (integer n)
+
 instance CanAddAsymmetric MPAffine Rational where
   type AddType MPAffine Rational = MPAffine
   add aff q = add aff (mpAffine aff.config q)
 
 instance CanAddAsymmetric Integer MPAffine where
   type AddType Integer MPAffine = MPAffine
+  add n aff = add aff n -- use commutativity of addition
+
+instance CanAddAsymmetric Int MPAffine where
+  type AddType Int MPAffine = MPAffine
   add n aff = add aff n -- use commutativity of addition
 
 instance CanAddAsymmetric Rational MPAffine where
@@ -89,6 +97,10 @@ instance CanSub MPAffine MPAffine
 instance CanSub Integer MPAffine
 
 instance CanSub MPAffine Integer
+
+instance CanSub Int MPAffine
+
+instance CanSub MPAffine Int
 
 instance CanSub Rational MPAffine
 
@@ -138,6 +150,9 @@ instance CanMulAsymmetric Integer MPAffine where
     where
       p = prec aff.config.precision
 
+instance CanMulAsymmetric Int MPAffine where
+  type MulType Int MPAffine = MPAffine
+  mul n = mul (integer n)
 instance CanMulAsymmetric Rational MPAffine where
   type MulType Rational MPAffine = MPAffine
   mul q aff = mul (mpBallP p q) aff
@@ -150,6 +165,10 @@ instance CanMulAsymmetric MPAffine MPBall where
 
 instance CanMulAsymmetric MPAffine Integer where
   type MulType MPAffine Integer = MPAffine
+  mul n aff = mul aff n -- using commutativity of multiplication
+
+instance CanMulAsymmetric MPAffine Int where
+  type MulType MPAffine Int = MPAffine
   mul n aff = mul aff n -- using commutativity of multiplication
 
 instance CanMulAsymmetric MPAffine Rational where
@@ -201,3 +220,33 @@ instance CanMulAsymmetric MPAffine MPAffine where
         where
           newTermId = ErrorTermId (hash ("*", aff1, aff2))
           e = quadraticTermsBound +^ mpFloat (eCentre + eScaled1 + eScaled2 + eScaledAdd)
+
+instance HasEqAsymmetric MPAffine MPAffine where
+  type EqCompareType MPAffine MPAffine = Kleenean
+  equalTo aff1 aff2 = mpBall (aff1 - aff2) == 0
+
+instance HasEqAsymmetric MPAffine Integer where
+  type EqCompareType MPAffine Integer = Kleenean
+  equalTo aff1 n = mpBall aff1 == n
+
+instance HasEqAsymmetric Integer MPAffine where
+  type EqCompareType Integer MPAffine = Kleenean
+  equalTo n aff2 = n == mpBall aff2
+
+instance HasEqAsymmetric MPAffine Int where
+  type EqCompareType MPAffine Int = Kleenean
+  equalTo aff1 n = mpBall aff1 == n
+
+instance HasEqAsymmetric Int MPAffine where
+  type EqCompareType Int MPAffine = Kleenean
+  equalTo n aff2 = n == mpBall aff2
+
+instance HasEqAsymmetric MPAffine Rational where
+  type EqCompareType MPAffine Rational = Kleenean
+  equalTo aff1 q = mpBall aff1 == q
+
+instance HasEqAsymmetric Rational MPAffine where
+  type EqCompareType Rational MPAffine = Kleenean
+  equalTo q aff2 = q == mpBall aff2
+
+-- instance Ring MPAffine

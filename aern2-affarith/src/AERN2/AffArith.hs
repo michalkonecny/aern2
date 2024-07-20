@@ -4,7 +4,7 @@ module AERN2.AffArith
   )
 where
 
-import AERN2.AffArith.Comparison ()
+import AERN2.AffArith.Order ()
 import AERN2.AffArith.Conversions
 import AERN2.AffArith.Ring ()
 import AERN2.AffArith.Type
