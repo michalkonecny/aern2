@@ -31,16 +31,10 @@ dependencies:
 - aern2-mp >= 0.2.15
 
 default-extensions:
+- GHC2021
 - RebindableSyntax
-- ConstraintKinds
 - DuplicateRecordFields
-- FlexibleContexts
-- FlexibleInstances
-- InstanceSigs
-- MultiParamTypeClasses
-- NamedFieldPuns
 - OverloadedRecordDot
-- ScopedTypeVariables
 - TypeFamilies
 
 library:

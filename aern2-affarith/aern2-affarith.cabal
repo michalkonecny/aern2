@@ -33,16 +33,10 @@ library
   hs-source-dirs:
       src
   default-extensions:
+      GHC2021
       RebindableSyntax
-      ConstraintKinds
       DuplicateRecordFields
-      FlexibleContexts
-      FlexibleInstances
-      InstanceSigs
-      MultiParamTypeClasses
-      NamedFieldPuns
       OverloadedRecordDot
-      ScopedTypeVariables
       TypeFamilies
   ghc-options: -O2 -Wall
   build-depends:
