@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -Wno-orphans #-}
-
 module AERN2.AffArith.Ring
   (
   )
@@ -249,4 +247,5 @@ instance HasEqAsymmetric Rational MPAffine where
   type EqCompareType Rational MPAffine = Kleenean
   equalTo q aff2 = q == mpBall aff2
 
--- instance Ring MPAffine
+-- instance Ring MPAffine 
+-- ^^^this needs a change in mixed-types-num: conversion from integers with a sample

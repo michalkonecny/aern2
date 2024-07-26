@@ -38,7 +38,7 @@ library
       DuplicateRecordFields
       OverloadedRecordDot
       TypeFamilies
-  ghc-options: -O2 -Wall
+  ghc-options: -O2 -Wall -Wno-orphans
   build-depends:
       QuickCheck
     , aern2-mp >=0.2.15

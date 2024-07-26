@@ -1,6 +1,3 @@
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# OPTIONS_GHC -Wno-orphans #-}
 {-# HLINT ignore "Use logBase" #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 

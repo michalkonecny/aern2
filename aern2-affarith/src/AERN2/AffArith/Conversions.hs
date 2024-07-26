@@ -1,5 +1,3 @@
-{-# OPTIONS_GHC -Wno-orphans #-}
-
 module AERN2.AffArith.Conversions
   ( CanBeMPAffine,
     mpAffine,
