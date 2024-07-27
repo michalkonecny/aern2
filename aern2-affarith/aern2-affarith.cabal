@@ -25,6 +25,7 @@ library
   exposed-modules:
       AERN2.AffArith
       AERN2.AffArith.Conversions
+      AERN2.AffArith.Field
       AERN2.AffArith.Order
       AERN2.AffArith.Ring
       AERN2.AffArith.Type

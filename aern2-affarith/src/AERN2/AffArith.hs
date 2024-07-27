@@ -7,6 +7,7 @@ where
 import AERN2.AffArith.Order ()
 import AERN2.AffArith.Conversions
 import AERN2.AffArith.Ring ()
+import AERN2.AffArith.Field ()
 import AERN2.AffArith.Type
 import AERN2.MP.Dyadic (dyadic)
 import AERN2.MP.Float (mpFloat)

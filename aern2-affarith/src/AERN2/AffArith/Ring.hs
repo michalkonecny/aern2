@@ -5,15 +5,15 @@ where
 
 import AERN2.AffArith.Conversions
 import AERN2.AffArith.Type
-import AERN2.MP (ErrorBound, MPBall (MPBall), errorBound, mpBallP, prec, Kleenean, mpBall)
+import AERN2.MP (ErrorBound, Kleenean, MPBall (MPBall), errorBound, mpBall, mpBallP, prec)
 import AERN2.MP.Float (mpFloat, (*^), (+^))
 import Data.Hashable
 import Data.List (foldl')
-import qualified Data.Map as Map
+import Data.Map qualified as Map
 import Data.Maybe (isNothing)
 import GHC.Records
 import MixedTypesNumPrelude
-import qualified Prelude as P
+import Prelude qualified as P
 
 instance CanNeg MPAffine where
   type NegType MPAffine = MPAffine
@@ -65,6 +65,10 @@ mapIntersectionComplement map1 map2 =
     map1minus2 = Map.filterWithKey (\errId _ -> isNothing (map2 Map.!? errId)) map1
     map2minus1 = Map.filterWithKey (\errId _ -> isNothing (map1 Map.!? errId)) map2
 
+instance CanAddAsymmetric MPAffine MPBall where
+  type AddType MPAffine MPBall = MPAffine
+  add aff b = add aff (mpAffineFromBall aff.config b b)
+
 instance CanAddAsymmetric MPAffine Integer where
   type AddType MPAffine Integer = MPAffine
   add aff n = add aff (mpAffine aff.config n)
@@ -76,6 +80,10 @@ instance CanAddAsymmetric MPAffine Int where
 instance CanAddAsymmetric MPAffine Rational where
   type AddType MPAffine Rational = MPAffine
   add aff q = add aff (mpAffine aff.config q)
+
+instance CanAddAsymmetric MPBall MPAffine where
+  type AddType MPBall MPAffine = MPAffine
+  add b aff = add aff b -- use commutativity of addition
 
 instance CanAddAsymmetric Integer MPAffine where
   type AddType Integer MPAffine = MPAffine
@@ -151,6 +159,7 @@ instance CanMulAsymmetric Integer MPAffine where
 instance CanMulAsymmetric Int MPAffine where
   type MulType Int MPAffine = MPAffine
   mul n = mul (integer n)
+
 instance CanMulAsymmetric Rational MPAffine where
   type MulType Rational MPAffine = MPAffine
   mul q aff = mul (mpBallP p q) aff
@@ -159,19 +168,38 @@ instance CanMulAsymmetric Rational MPAffine where
 
 instance CanMulAsymmetric MPAffine MPBall where
   type MulType MPAffine MPBall = MPAffine
-  mul b aff = mul aff b -- using commutativity of multiplication
+  mul aff b = mul b aff -- using commutativity of multiplication
 
 instance CanMulAsymmetric MPAffine Integer where
   type MulType MPAffine Integer = MPAffine
-  mul n aff = mul aff n -- using commutativity of multiplication
+  mul aff n = mul n aff -- using commutativity of multiplication
 
 instance CanMulAsymmetric MPAffine Int where
   type MulType MPAffine Int = MPAffine
-  mul n aff = mul aff n -- using commutativity of multiplication
+  mul aff n = mul n aff -- using commutativity of multiplication
 
 instance CanMulAsymmetric MPAffine Rational where
   type MulType MPAffine Rational = MPAffine
-  mul q aff = mul aff q -- using commutativity of multiplication
+  mul aff q = mul q aff -- using commutativity of multiplication
+
+
+-- dividing by a constant is also scaling:
+
+instance CanDiv MPAffine MPBall where
+  type DivType MPAffine MPBall = MPAffine
+  divide aff b = mul aff (1/b)
+
+instance CanDiv MPAffine Integer where
+  type DivType MPAffine Integer = MPAffine
+  divide aff n = mul aff (1/n)
+
+instance CanDiv MPAffine Int where
+  type DivType MPAffine Int = MPAffine
+  divide aff n = mul aff (1/n)
+
+instance CanDiv MPAffine Rational where
+  type DivType MPAffine Rational = MPAffine
+  divide aff q = mul aff (1/q)
 
 {-
   Multiplication
@@ -219,6 +247,10 @@ instance CanMulAsymmetric MPAffine MPAffine where
           newTermId = ErrorTermId (hash ("*", aff1, aff2))
           e = quadraticTermsBound +^ mpFloat (eCentre + eScaled1 + eScaled2 + eScaledAdd)
 
+{-
+  Equality testing
+-}
+
 instance HasEqAsymmetric MPAffine MPAffine where
   type EqCompareType MPAffine MPAffine = Kleenean
   equalTo aff1 aff2 = mpBall (aff1 - aff2) == 0
@@ -246,6 +278,6 @@ instance HasEqAsymmetric MPAffine Rational where
 instance HasEqAsymmetric Rational MPAffine where
   type EqCompareType Rational MPAffine = Kleenean
   equalTo q aff2 = q == mpBall aff2
+-- instance Ring MPAffine
 
--- instance Ring MPAffine 
--- ^^^this needs a change in mixed-types-num: conversion from integers with a sample
+-- ^ ^^this needs a change in mixed-types-num: conversion from integers with a sample
