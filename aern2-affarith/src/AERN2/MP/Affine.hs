@@ -1,17 +1,17 @@
-module AERN2.AffArith
-  ( module AERN2.AffArith.Conversions,
-    module AERN2.AffArith.Type,
+module AERN2.MP.Affine
+  ( module AERN2.MP.Affine.Type,
+    module AERN2.MP.Affine.Conversions,
   )
 where
 
-import AERN2.AffArith.Order ()
-import AERN2.AffArith.Conversions
-import AERN2.AffArith.Ring ()
-import AERN2.AffArith.Field ()
-import AERN2.AffArith.Type
+import AERN2.MP.Affine.Conversions
+import AERN2.MP.Affine.Field ()
+import AERN2.MP.Affine.Order ()
+import AERN2.MP.Affine.Ring ()
+import AERN2.MP.Affine.Type
 import AERN2.MP.Dyadic (dyadic)
 import AERN2.MP.Float (mpFloat)
-import qualified Data.Map as Map
+import Data.Map qualified as Map
 import MixedTypesNumPrelude
 
 {-

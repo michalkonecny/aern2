@@ -23,12 +23,13 @@ source-repository head
 
 library
   exposed-modules:
-      AERN2.AffArith
-      AERN2.AffArith.Conversions
-      AERN2.AffArith.Field
-      AERN2.AffArith.Order
-      AERN2.AffArith.Ring
-      AERN2.AffArith.Type
+      AERN2.MP.Affine
+      AERN2.MP.Affine.Conversions
+      AERN2.MP.Affine.Field
+      AERN2.MP.Affine.Order
+      AERN2.MP.Affine.Ring
+      AERN2.MP.Affine.Tests
+      AERN2.MP.Affine.Type
   other-modules:
       Paths_aern2_affarith
   hs-source-dirs:
@@ -42,6 +43,34 @@ library
   ghc-options: -O2 -Wall -Wno-orphans
   build-depends:
       QuickCheck
+    , aern2-mp >=0.2.15
+    , base ==4.*
+    , cdar-mBound >=0.1.0.0
+    , collect-errors >=0.1.5
+    , containers
+    , hashable
+    , hspec
+    , mixed-types-num >=0.5.11
+  default-language: Haskell2010
+
+test-suite aern2-affarith-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      AERN2.MP.AffineSpec
+      Paths_aern2_affarith
+  hs-source-dirs:
+      test
+  default-extensions:
+      GHC2021
+      RebindableSyntax
+      DuplicateRecordFields
+      OverloadedRecordDot
+      TypeFamilies
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -Wall
+  build-depends:
+      QuickCheck
+    , aern2-affarith
     , aern2-mp >=0.2.15
     , base ==4.*
     , cdar-mBound >=0.1.0.0

@@ -1,7 +1,7 @@
 {-# HLINT ignore "Use logBase" #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
-module AERN2.AffArith.Type
+module AERN2.MP.Affine.Type
   ( MPAffineConfig (..),
     ErrorTermId (..),
     MPAffineErrorTerms,

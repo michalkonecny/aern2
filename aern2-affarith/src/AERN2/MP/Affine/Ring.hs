@@ -1,10 +1,10 @@
-module AERN2.AffArith.Ring
+module AERN2.MP.Affine.Ring
   (
   )
 where
 
-import AERN2.AffArith.Conversions
-import AERN2.AffArith.Type
+import AERN2.MP.Affine.Conversions
+import AERN2.MP.Affine.Type
 import AERN2.MP (ErrorBound, Kleenean, MPBall (MPBall), errorBound, mpBall, mpBallP, prec)
 import AERN2.MP.Float (mpFloat, (*^), (+^))
 import Data.Hashable

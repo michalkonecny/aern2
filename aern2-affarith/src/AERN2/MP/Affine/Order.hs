@@ -1,11 +1,11 @@
-module AERN2.AffArith.Order
+module AERN2.MP.Affine.Order
   (
   )
 where
 
-import AERN2.AffArith.Conversions ()
-import AERN2.AffArith.Ring ()
-import AERN2.AffArith.Type (MPAffine)
+import AERN2.MP.Affine.Conversions ()
+import AERN2.MP.Affine.Ring ()
+import AERN2.MP.Affine.Type (MPAffine)
 import AERN2.MP (Kleenean, mpBall)
 import MixedTypesNumPrelude
 -- import qualified Prelude as P

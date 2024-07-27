@@ -1,11 +1,11 @@
-module AERN2.AffArith.Conversions
+module AERN2.MP.Affine.Conversions
   ( CanBeMPAffine,
     mpAffine,
     mpAffineFromBall
   )
 where
 
-import AERN2.AffArith.Type
+import AERN2.MP.Affine.Type
 import AERN2.MP (MPBall (MPBall), errorBound, mpBallP, prec)
 import AERN2.MP.Float (mpFloat)
 import Data.Hashable
