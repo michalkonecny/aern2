@@ -19,7 +19,9 @@ instance ConvertibleExactly MPAffine MPBall where
     where
       mpAffineFlattened = mpAffNormalise $ aff {config = aff.config {maxTerms = int 1}}
       (MPAffine {centre, errTerms}) = mpAffineFlattened
-      e = errorBound $ abs $ snd $ head (Map.toList errTerms) -- should have one term only
+      e = case Map.toList errTerms of
+          [] -> errorBound 0
+          ((_, coeff):_) -> errorBound (abs coeff) -- should have at most one term
 
 type CanBeMPAffine t = ConvertibleExactly (MPAffineConfig, t) MPAffine
 
