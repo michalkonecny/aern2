@@ -16,7 +16,7 @@ import MixedTypesNumPrelude
 -- |
 --    Apply a predicate to a `CSequence`, assuming it returns True
 --    and return the largest index in the sequence that was accessed during the computation.
---    Index 0 means that the sequence was not accessed at all, 
+--    Index 0 means that the sequence was not accessed at all,
 --    1 means the first element was accessed, etc.
 maxSeqIndexUsed :: (CSequence t -> CKleenean) -> CSequence t -> Integer
 maxSeqIndexUsed = maxEffortUsed addCSequenceAccessMonitor
@@ -24,7 +24,7 @@ maxSeqIndexUsed = maxEffortUsed addCSequenceAccessMonitor
 -- |
 --    Apply a predicate to a convergent sequence, assuming it returns True
 --    and return the largest index in the sequence that was accessed during the computation.
---    Index 0 means that the sequence was not accessed at all, 
+--    Index 0 means that the sequence was not accessed at all,
 --    1 means the sequence was called only with index 0, etc.
 maxIntParamUsed :: ((Integer -> t) -> CKleenean) -> (Integer -> t) -> Integer
 maxIntParamUsed = maxEffortUsed addCallMonitor
@@ -69,6 +69,5 @@ testNever = maxSeqIndexUsed (> 0) (pi - pi) -- loop forever
 test0 :: Integer
 test0 = maxSeqIndexUsed (> 0) (pi - pi + creal (1 / 1000000000)) -- 8
 
-
 test1 :: Integer
-test1 = maxIntParamUsed (\x -> CSequence (map (\n -> cn (kleenean (n > 3*(x n)))) [0..])) (const 3) -- 11
+test1 = maxIntParamUsed (\x -> CSequence (map (\n -> cn (kleenean (n > 3 * x n))) [0 ..])) (const 3) -- 11
