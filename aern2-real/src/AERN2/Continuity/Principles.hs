@@ -63,11 +63,11 @@ waitForTrue (h : t)
   | isCertainlyTrue h = h
   | otherwise = waitForTrue t
 
-testNever :: Integer
-testNever = maxSeqIndexUsed (> 0) (pi - pi) -- loop forever
+_testNever :: Integer
+_testNever = maxSeqIndexUsed (> 0) (pi - pi) -- loop forever
 
-test0 :: Integer
-test0 = maxSeqIndexUsed (> 0) (pi - pi + creal (1 / 1000000000)) -- 8
+_test0 :: Integer
+_test0 = maxSeqIndexUsed (> 0) (pi - pi + creal (1 / 1000000000)) -- 8
 
-test1 :: Integer
-test1 = maxIntParamUsed (\x -> CSequence (map (\n -> cn (kleenean (n > 3 * x n))) [0 ..])) (const 3) -- 11
+_test1 :: Integer
+_test1 = maxIntParamUsed (\x -> CSequence (map (\n -> cn (kleenean (n > 3 * x n))) [0 ..])) (const 3) -- 11
