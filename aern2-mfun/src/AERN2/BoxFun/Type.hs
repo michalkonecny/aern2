@@ -19,6 +19,22 @@ data BoxFun =
         ,   domain    :: Vector (CN MPBall)
     }
 
+{-
+    `bf_eval`  encodes how the function changes values and how it composes functions computing its parameters
+    in terms of the first and second differentials.
+
+    Order 1:
+    point x in Rn and direction dx in Rn 
+    |-> 
+    y and dy
+
+    Order 2:
+    order 1 +
+    another direction dxt (usually equal to dx) and a direction showing how the direction is changing
+    |->
+    dyt and d2y
+-}
+
 instance Show BoxFun where
     show (BoxFun d _f b) = show d ++ " dimensional BoxFun, domain: " ++ show b
 
