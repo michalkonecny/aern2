@@ -143,6 +143,9 @@ instance HasIntegerBounds Dyadic where
 instance ConvertibleExactly Integer Dyadic where
   safeConvertExactly = fmap Dyadic . safeConvertExactly
 
+instance ConvertibleExactly (WithSample Dyadic Integer) Dyadic where
+  safeConvertExactly (WithSample _ value) = safeConvertExactly value
+
 instance ConvertibleExactly Int Dyadic where
   safeConvertExactly = fmap Dyadic . safeConvertExactly
 
