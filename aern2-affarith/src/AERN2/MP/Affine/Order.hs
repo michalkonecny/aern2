@@ -44,3 +44,5 @@ instance HasOrderAsymmetric Rational MPAffine where
   type OrderCompareType Rational MPAffine = Kleenean
   lessThan q aff2 = q < mpBall aff2
   leq q aff2 = q <= mpBall aff2
+
+instance CanTestPosNeg MPAffine where

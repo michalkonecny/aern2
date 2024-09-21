@@ -73,29 +73,29 @@ specMPAffine =
 --     --   specResultIsValid2 max "max" tMPAffine tMPAffine
 --     --   specCanMinMaxNotMixed tMPAffine
 --     --   specCanMinMax tMPAffine tInteger tMPAffine
---     describe "ring" $ do
---     --   specResultIsValid2 add "add" tMPAffine tMPAffine
---       specCanAddNotMixed tMPAffine
---       specCanAddSameType tMPAffine
---       specCanAdd tInt tMPAffine tRational
---       specCanAdd tInteger tMPAffine tInt
---     --   specResultIsValid2 sub "sub" tMPAffine tMPAffine
---       specCanSubNotMixed tMPAffine
---       specCanSub tMPAffine tInteger
---       specCanSub tInteger tMPAffine
---       specCanSub tMPAffine tInt
---       specCanSub tInt tMPAffine
+    describe "ring" $ do
+    --   specResultIsValid2 add "add" tMPAffine tMPAffine
+      -- specCanAddNotMixed tMPAffine
+      -- specCanAddSameType tMPAffine
+      specCanAdd tInt tMPAffine tRational
+      specCanAdd tInteger tMPAffine tInt
+    --   specResultIsValid2 sub "sub" tMPAffine tMPAffine
+      -- specCanSubNotMixed tMPAffine
+      -- specCanSub tMPAffine tInteger
+      specCanSub tInteger tMPAffine
+      -- specCanSub tMPAffine tInt
+      specCanSub tInt tMPAffine
 --     --   specResultIsValid2 mul "mul" tMPAffine tMPAffine
---       specCanMulNotMixed tMPAffine
---       specCanMulSameType tMPAffine
---       specCanMul tInt tMPAffine tRational
+      -- specCanMulNotMixed tMPAffine
+      -- specCanMulSameType tMPAffine
+      -- specCanMul tInt tMPAffine tRational
 --     -- specCanPow tMPAffine tInteger
 --     describe "field" $ do
 --     --   specResultIsValid2Pre (\_ y -> isCertainlyNonZero y) divide "divide" tMPAffine tMPAffine
---       specCanDivNotMixed tMPAffine
---       specCanDiv tInteger tMPAffine
---       specCanDiv tMPAffine tInt
---       specCanDiv tMPAffine tRational
+      -- specCanDivNotMixed tMPAffine
+      -- specCanDiv tInteger tMPAffine
+      -- specCanDiv tMPAffine tInt
+      -- specCanDiv tMPAffine tRational
 
 -- -- describe "elementary" $ do
 -- --   specCanExpReal tMPAffine
