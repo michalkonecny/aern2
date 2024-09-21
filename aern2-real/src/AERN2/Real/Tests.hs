@@ -47,6 +47,7 @@ import AERN2.Real.Type
 import AERN2.Real.Field ()
 import AERN2.Real.Elementary ()
 import AERN2.Real.Limit ()
+import AERN2.MP.Ball (CentreRadius(..))
 
 instance Arbitrary CReal where
   arbitrary =
@@ -61,7 +62,7 @@ instance Arbitrary CReal where
       signedBinary2Real sbits =
         crealFromPrecFunction $ \ p -> cn $ balls !! p
         where
-        balls = nextBit (mpBall (0,1)) $ zip sbits (map prec [10..])
+        balls = nextBit (mpBall (CentreRadius 0 1)) $ zip sbits (map prec [10..])
         nextBit ball ((sbit, p):rest) =
           ball : nextBit newBall rest
           where

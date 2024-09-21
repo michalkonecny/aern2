@@ -57,6 +57,7 @@ import Numeric.CollectErrors (CanTakeCNErrors)
 
 class
     (OrderedField r
+    , HasIntegers r
     , HasLimitsSameType Int r
     , HasLimitsSameType Integer r
     , HasLimitsSameType Rational r
