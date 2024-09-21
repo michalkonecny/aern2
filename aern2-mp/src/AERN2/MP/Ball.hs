@@ -21,6 +21,7 @@ module AERN2.MP.Ball
   , module AERN2.MP.Enclosure
   -- * The Ball type
   , MPBall(..), CanBeMPBall, mpBall, cnMPBall, CanBeMPBallP, mpBallP, cnMPBallP
+  , CentreRadius(..)
   , reducePrecionIfInaccurate
   , giveUpIfVeryInaccurate
   {-
@@ -48,7 +49,7 @@ import AERN2.MP.Enclosure
 import AERN2.MP.ErrorBound (ErrorBound, CanBeErrorBound, errorBound)
 
 import AERN2.MP.Ball.Type
-import AERN2.MP.Ball.Conversions ()
+import AERN2.MP.Ball.Conversions (CentreRadius(..))
 import AERN2.MP.Ball.Comparisons
 import AERN2.MP.Ball.Field ()
 import AERN2.MP.Ball.Limit ()

@@ -161,8 +161,14 @@ instance ConvertibleExactly Rational CReal where
   safeConvertExactly x =
     Right $ crealFromPrecFunction (cn . flip mpBallP x)
 
+instance ConvertibleExactly (WithSample CReal Rational) CReal where
+  safeConvertExactly (WithSample _ value) = safeConvertExactly value
+
 instance ConvertibleExactly Integer CReal where
   safeConvertExactly = safeConvertExactly . rational
+
+instance ConvertibleExactly (WithSample CReal Integer) CReal where
+  safeConvertExactly (WithSample _ value) = safeConvertExactly value
 
 instance ConvertibleExactly Int CReal where
   safeConvertExactly = safeConvertExactly . rational

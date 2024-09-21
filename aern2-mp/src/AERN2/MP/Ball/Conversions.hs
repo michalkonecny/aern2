@@ -13,7 +13,7 @@
 -}
 module AERN2.MP.Ball.Conversions
 (
-  integerBounds
+  CentreRadius(..)
 )
 where
 
@@ -61,13 +61,15 @@ instance ConvertibleExactly Dyadic MPBall where
 instance ConvertibleExactly ErrorBound MPBall where
   safeConvertExactly eb = Right $ MPBall (mpFloat eb) (errorBound 0)
 
+data CentreRadius c e = CentreRadius c e
+
 instance
   (ConvertibleExactly c Dyadic, ConvertibleExactly e Dyadic
   , Show c, Show e, Typeable c, Typeable e)
   =>
-  ConvertibleExactly (c, e) MPBall
+  ConvertibleExactly (CentreRadius c e) MPBall
   where
-  safeConvertExactly (c,e)
+  safeConvertExactly (CentreRadius c e)
     | isFinite b = Right b
     | otherwise = convError "too large to convert to MPBall" (c,e)
     where
@@ -79,6 +81,9 @@ instance ConvertibleExactly Integer MPBall where
     | otherwise = convError "too large to convert to MPBall" x
     where
       b = MPBall (mpFloat x) (errorBound 0)
+
+instance ConvertibleExactly (WithSample MPBall Integer) MPBall where
+  safeConvertExactly (WithSample _ value) = safeConvertExactly value
 
 instance ConvertibleExactly Int MPBall where
   safeConvertExactly x = Right $ MPBall (mpFloat x) (errorBound 0)
@@ -111,14 +116,17 @@ instance ConvertibleWithPrecision Rational MPBall where
     b = MPBall xC (errorBound xErr)
     (xC, xErr) = MPFloat.ceduCentreErr $ MPFloat.fromRationalCEDU p x
 
-instance ConvertibleWithPrecision (Rational, Rational) MPBall where
-  safeConvertP p (x,e)
+instance ConvertibleWithPrecision (CentreRadius Rational Rational) MPBall where
+  safeConvertP p (CentreRadius x e)
     | isFinite b = Right b
     | otherwise = convError ("too large to convert to MPBall with precision " ++ show p) x
     where
     b = MPBall xFlt (xe + eUp) -- beware, precision may be too high relative to accuracy
     (MPBall xFlt xe) = mpBallP p x
     eUp = errorBound e
+
+instance ConvertibleExactly (WithSample MPBall Rational) MPBall where
+  safeConvertExactly (WithSample sample value) = safeConvertP (getPrecision sample) value
 
 {--- constructing a fat ball ---}
 

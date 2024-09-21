@@ -16,9 +16,9 @@
 #  name: custom-snapshot
 #  location: "./custom-snapshot.yaml"
 
-# resolver: lts-22.23 # ghc 9.6.5 as of 2024-05-25
-# resolver: lts-21.13 # ghc 9.4.8 (final)
-resolver: lts-20.25 # ghc 9.2.8 (final)
+# resolver: lts-22.34 # ghc 9.6.5 as of 2024-09-21
+# resolver: lts-21.25 # ghc 9.4.8 (final?)
+resolver: lts-20.25 # ghc 9.2.8 (final?)
 system-ghc: true # needed for GHCUP
 
 # User packages to be built.
@@ -57,7 +57,7 @@ packages:
 extra-deps:
 - cdar-mBound-0.1.0.4
 - collect-errors-0.1.6.0
-- mixed-types-num-0.5.12
+- mixed-types-num-0.6.1
 # - memoize-0.8.1
 # - rounded-0.1.0.1
 # - long-double-0.1
