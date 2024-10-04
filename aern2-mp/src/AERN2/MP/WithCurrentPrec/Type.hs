@@ -71,6 +71,10 @@ instance (ConvertibleWithPrecision t1 t2, KnownNat p) => ConvertibleExactly t1 (
         where
         r = WithCurrentPrec $ convertP (getCurrentPrecision r) v
 
+instance (ConvertibleWithPrecision t1 t2, KnownNat p) => 
+    ConvertibleWithPrecision (WithSample (WithCurrentPrec p t2) t1) t2 where
+    safeConvertP _ (WithSample withPrec v) = safeConvertP (getCurrentPrecision withPrec) v
+
 -- mpBallCP :: (CanBeMPBallP t, KnownNat p) => t -> WithCurrentPrec p MPBall
 -- mpBallCP = convertExactly 
 

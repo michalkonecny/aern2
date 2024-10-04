@@ -1,7 +1,9 @@
 # Change log for aern2-real
 
 * current
-* v 0.2.15.1 2024-??
+* v 0.2.16.0 2024-09-21
+  * adapt to int / rat conversion with sample
+* v 0.2.15.1 2024-09-20
   * an implementation of continuity principles for coq-aern
 * v 0.2.15 2023-04-11
   * CanSelectCountable instance for CKleenean

@@ -271,20 +271,24 @@ logistic c n x0 =
   where
   lg x = c * x * (1-x)
 
-logistic1 :: (RealNumber t) => Integer -> t
-logistic1 n = logistic 3.82 n (convertExactly 0.5)
+logistic1 :: (RealNumber t) => t -> Integer -> t
+logistic1 sample n = logistic 3.82 n (convertExactly (WithSample sample 0.5))
 
 logistic1_CReal_run :: Integer -> CReal
 logistic1_CReal_run n = 
-  logistic1 n
+  logistic1 (creal 0) n
 
 logistic1_WithCurrentPrec_run :: Integer -> CReal
 logistic1_WithCurrentPrec_run n = 
-  crealFromWithCurrentPrec $ logistic1 n
+  crealFromWithCurrentPrec $ logistic1 sample n
+  where
+    sample = undefined
 
 logistic1_WithCurrentPrec_p_run :: Integer -> Precision -> CN MPBall
 logistic1_WithCurrentPrec_p_run n p = 
-  runWithPrec p $ logistic1 n
+  runWithPrec p $ logistic1 sample n
+  where
+    sample = undefined
 
 {-  Example uses:
 
