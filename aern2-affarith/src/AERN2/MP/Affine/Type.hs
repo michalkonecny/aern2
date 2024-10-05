@@ -91,6 +91,12 @@ instance Hashable MPAffineConfig
 
 instance Hashable MPAffine
 
+instance CanTestFinite MPAffine where
+  isInfinite aff = 
+    isInfinite aff.centre
+    || (or $ map isInfinite $ Map.elems aff.errTerms)
+  isFinite = not . isInfinite
+
 instance Show MPAffine where
   show = showWithAccuracy (bits 10)
 

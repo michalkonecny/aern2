@@ -57,7 +57,7 @@ packages:
 extra-deps:
 - cdar-mBound-0.1.0.4
 - collect-errors-0.1.6.0
-- mixed-types-num-0.6.1
+- mixed-types-num-0.6.2
 # - memoize-0.8.1
 # - rounded-0.1.0.1
 # - long-double-0.1
