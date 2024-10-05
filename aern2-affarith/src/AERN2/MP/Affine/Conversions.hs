@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedRecordDot #-}
 module AERN2.MP.Affine.Conversions
   ( CanBeMPAffine,
     mpAffine,
@@ -12,6 +13,7 @@ import Data.Hashable
 import qualified Data.Map as Map
 import GHC.Records
 import MixedTypesNumPrelude
+import Test.QuickCheck ()
 
 instance ConvertibleExactly MPAffine MPBall where
   safeConvertExactly :: MPAffine -> ConvertResult MPBall
@@ -23,33 +25,35 @@ instance ConvertibleExactly MPAffine MPBall where
           [] -> errorBound 0
           ((_, coeff):_) -> errorBound (abs coeff) -- should have at most one term
 
-type CanBeMPAffine t = ConvertibleExactly (MPAffineConfig, t) MPAffine
+type CanBeMPAffine t = ConvertibleExactly (WithSample MPAffine t) MPAffine
 
-mpAffine :: (CanBeMPAffine t) => MPAffineConfig -> t -> MPAffine
-mpAffine config t = convertExactly (config, t)
+mpAffine :: (CanBeMPAffine t) => MPAffine -> t -> MPAffine
+mpAffine sample t = convertExactly (WithSample sample t)
 
-instance ConvertibleExactly (MPAffineConfig, (ErrorTermId, MPBall)) MPAffine where
-  safeConvertExactly :: (MPAffineConfig, (ErrorTermId, MPBall)) -> ConvertResult MPAffine
-  safeConvertExactly (config, (key, MPBall c e))
+instance ConvertibleExactly (WithSample MPAffine (ErrorTermId, MPBall)) MPAffine where
+  safeConvertExactly :: (WithSample MPAffine (ErrorTermId, MPBall)) -> ConvertResult MPAffine
+  safeConvertExactly (WithSample sample (key, MPBall c e))
     | e == 0 =
         Right $ MPAffine {config, centre = c, errTerms = Map.empty}
     | otherwise =
         Right $ MPAffine {config, centre = c, errTerms = Map.singleton key (mpFloat e)}
-
-mpAffineFromBall :: (Hashable errIdItem) => MPAffineConfig -> errIdItem -> MPBall -> MPAffine
-mpAffineFromBall config errIdItem b =
-  mpAffine config (ErrorTermId (hash errIdItem), b)
-
-instance ConvertibleExactly (MPAffineConfig, Integer) MPAffine where
-  safeConvertExactly :: (MPAffineConfig, Integer) -> ConvertResult MPAffine
-  safeConvertExactly (config, n) =
-    Right $ mpAffineFromBall config n (mpBallP p n)
     where
-      p = prec config.precision
+      config = sample.config
 
-instance ConvertibleExactly (MPAffineConfig, Rational) MPAffine where
-  safeConvertExactly :: (MPAffineConfig, Rational) -> ConvertResult MPAffine
-  safeConvertExactly (config, q) =
-    Right $ mpAffineFromBall config q (mpBallP p q)
+mpAffineFromBall :: (Hashable errIdItem) => MPAffine -> errIdItem -> MPBall -> MPAffine
+mpAffineFromBall sample errIdItem b =
+  mpAffine sample (ErrorTermId (hash errIdItem), b)
+
+instance ConvertibleExactly (WithSample MPAffine Integer) MPAffine where
+  safeConvertExactly :: (WithSample MPAffine Integer) -> ConvertResult MPAffine
+  safeConvertExactly (WithSample sample n) =
+    Right $ mpAffineFromBall sample n (mpBallP p n)
     where
-      p = prec config.precision
+      p = prec sample.config.precision
+
+instance ConvertibleExactly (WithSample MPAffine Rational) MPAffine where
+  safeConvertExactly :: (WithSample MPAffine Rational) -> ConvertResult MPAffine
+  safeConvertExactly (WithSample sample q) =
+    Right $ mpAffineFromBall sample q (mpBallP p q)
+    where
+      p = prec sample.config.precision

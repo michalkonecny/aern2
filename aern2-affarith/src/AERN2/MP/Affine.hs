@@ -45,8 +45,11 @@ _mpaff2 =
           ]
     }
 
+_sample :: MPAffine
+_sample = _mpaff1
+
 _a100 :: MPAffine
-_a100 = mpAffine _conf 100
+_a100 = mpAffine _sample 100
 
 _aThird :: MPAffine
-_aThird = mpAffine _conf (1 / 3)
+_aThird = mpAffine _sample (1 / 3)

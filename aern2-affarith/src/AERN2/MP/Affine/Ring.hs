@@ -15,6 +15,8 @@ import GHC.Records
 import MixedTypesNumPrelude
 import Prelude qualified as P
 
+instance Ring MPAffine
+
 instance CanNeg MPAffine where
   type NegType MPAffine = MPAffine
   negate aff =
@@ -67,11 +69,11 @@ mapIntersectionComplement map1 map2 =
 
 instance CanAddAsymmetric MPAffine MPBall where
   type AddType MPAffine MPBall = MPAffine
-  add aff b = add aff (mpAffineFromBall aff.config b b)
+  add aff b = add aff (mpAffineFromBall aff b b)
 
 instance CanAddAsymmetric MPAffine Integer where
   type AddType MPAffine Integer = MPAffine
-  add aff n = add aff (mpAffine aff.config n)
+  add aff n = add aff (mpAffine aff n)
 
 instance CanAddAsymmetric MPAffine Int where
   type AddType MPAffine Int = MPAffine
@@ -79,7 +81,7 @@ instance CanAddAsymmetric MPAffine Int where
 
 instance CanAddAsymmetric MPAffine Rational where
   type AddType MPAffine Rational = MPAffine
-  add aff q = add aff (mpAffine aff.config q)
+  add aff q = add aff (mpAffine aff q)
 
 instance CanAddAsymmetric MPBall MPAffine where
   type AddType MPBall MPAffine = MPAffine
@@ -278,6 +280,3 @@ instance HasEqAsymmetric MPAffine Rational where
 instance HasEqAsymmetric Rational MPAffine where
   type EqCompareType Rational MPAffine = Kleenean
   equalTo q aff2 = q == mpBall aff2
--- instance Ring MPAffine
-
--- ^ ^^this needs a change in mixed-types-num: conversion from integers with a sample

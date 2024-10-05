@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           aern2-affarith
-version:        0.2.15.0
+version:        0.2.16.0
 synopsis:       Arbitrary precision affine arithmetic
 description:    Please see the README on GitHub at <https://github.com/michalkonecny/aern2/#readme>
 category:       Math
@@ -43,14 +43,14 @@ library
   ghc-options: -O2 -Wall -Wno-orphans
   build-depends:
       QuickCheck
-    , aern2-mp >=0.2.15
+    , aern2-mp >=0.2.16
     , base ==4.*
     , cdar-mBound >=0.1.0.0
     , collect-errors >=0.1.5
     , containers
     , hashable
     , hspec
-    , mixed-types-num >=0.5.11
+    , mixed-types-num >=0.6.2
   default-language: Haskell2010
 
 test-suite aern2-affarith-test
@@ -71,12 +71,12 @@ test-suite aern2-affarith-test
   build-depends:
       QuickCheck
     , aern2-affarith
-    , aern2-mp >=0.2.15
+    , aern2-mp >=0.2.16
     , base ==4.*
     , cdar-mBound >=0.1.0.0
     , collect-errors >=0.1.5
     , containers
     , hashable
     , hspec
-    , mixed-types-num >=0.5.11
+    , mixed-types-num >=0.6.2
   default-language: Haskell2010

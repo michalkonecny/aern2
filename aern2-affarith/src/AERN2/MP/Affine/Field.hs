@@ -13,6 +13,9 @@ import AERN2.MP.Affine.Type
 import GHC.Records
 import MixedTypesNumPrelude
 
+
+-- instance Field MPAffine
+
 instance (CanTestZero MPAffine) where
   isCertainlyZero = isCertainlyZero . mpBall
   isCertainlyNonZero = isCertainlyNonZero . mpBall
@@ -57,7 +60,7 @@ recipAff aff
     -- if a == b, return 1/a
     affIsExact = aF == bF
     aRecip = 1 / a :: MPBall
-    aRecipAff = mpAffineFromBall aff.config aRecip aRecip
+    aRecipAff = mpAffineFromBall aff aRecip aRecip
 
     -- if b < 0, reduce to positive aff
     isNegative = bF < 0

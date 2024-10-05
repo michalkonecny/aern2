@@ -62,34 +62,34 @@ specMPAffine =
     describe "order" $ do
       specHasEqNotMixed tMPAffine
       specHasEq tInt tMPAffine tRational
-      --   specCanTestZero tMPAffine
+      specCanTestZero tMPAffine
       specHasOrderNotMixed tMPAffine
       specHasOrder tInt tMPAffine tRational
-      -- describe "min/max/abs" $ do
---       specCanNegNum tMPAffine
---     --   specResultIsValid1 abs "abs" tMPAffine
---     --   specCanAbs tMPAffine
---     --   specResultIsValid2 min "min" tMPAffine tMPAffine
---     --   specResultIsValid2 max "max" tMPAffine tMPAffine
---     --   specCanMinMaxNotMixed tMPAffine
---     --   specCanMinMax tMPAffine tInteger tMPAffine
+    describe "min/max/abs" $ do
+      specCanNegNum tMPAffine
+    --   specResultIsValid1 abs "abs" tMPAffine
+    --   specCanAbs tMPAffine
+    --   specResultIsValid2 min "min" tMPAffine tMPAffine
+    --   specResultIsValid2 max "max" tMPAffine tMPAffine
+    --   specCanMinMaxNotMixed tMPAffine
+    --   specCanMinMax tMPAffine tInteger tMPAffine
     describe "ring" $ do
-    --   specResultIsValid2 add "add" tMPAffine tMPAffine
-      -- specCanAddNotMixed tMPAffine
-      -- specCanAddSameType tMPAffine
+      -- specResultIsValid2 add "add" tMPAffine tMPAffine
+      specCanAddNotMixed tMPAffine
+      specCanAddSameType tMPAffine
       specCanAdd tInt tMPAffine tRational
       specCanAdd tInteger tMPAffine tInt
     --   specResultIsValid2 sub "sub" tMPAffine tMPAffine
-      -- specCanSubNotMixed tMPAffine
-      -- specCanSub tMPAffine tInteger
+      specCanSubNotMixed tMPAffine
+      specCanSub tMPAffine tInteger
       specCanSub tInteger tMPAffine
-      -- specCanSub tMPAffine tInt
+      specCanSub tMPAffine tInt
       specCanSub tInt tMPAffine
---     --   specResultIsValid2 mul "mul" tMPAffine tMPAffine
-      -- specCanMulNotMixed tMPAffine
-      -- specCanMulSameType tMPAffine
-      -- specCanMul tInt tMPAffine tRational
---     -- specCanPow tMPAffine tInteger
+    --   specResultIsValid2 mul "mul" tMPAffine tMPAffine
+      specCanMulNotMixed tMPAffine
+      specCanMulSameType tMPAffine
+      specCanMul tInt tMPAffine tRational
+    -- specCanPow tMPAffine tInteger
 --     describe "field" $ do
 --     --   specResultIsValid2Pre (\_ y -> isCertainlyNonZero y) divide "divide" tMPAffine tMPAffine
       -- specCanDivNotMixed tMPAffine
