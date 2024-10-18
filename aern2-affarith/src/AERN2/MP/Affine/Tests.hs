@@ -57,8 +57,6 @@ tMPAffine = T "MPAffine"
 specMPAffine :: Spec
 specMPAffine =
   describe "MPAffine" $ do
-    -- specCanSetPrecision tMPAffine (printArgsIfFails2 "`contains`" contains)
-    -- specConversion tInteger tMPAffine mpAffine (fst . integerBounds)
     describe "order" $ do
       specHasEqNotMixed tMPAffine
       specHasEq tInt tMPAffine tRational
@@ -90,12 +88,12 @@ specMPAffine =
       specCanMulSameType tMPAffine
       specCanMul tInt tMPAffine tRational
     -- specCanPow tMPAffine tInteger
---     describe "field" $ do
---     --   specResultIsValid2Pre (\_ y -> isCertainlyNonZero y) divide "divide" tMPAffine tMPAffine
-      -- specCanDivNotMixed tMPAffine
-      -- specCanDiv tInteger tMPAffine
-      -- specCanDiv tMPAffine tInt
-      -- specCanDiv tMPAffine tRational
+    describe "field" $ do
+    --   specResultIsValid2Pre (\_ y -> isCertainlyNonZero y) divide "divide" tMPAffine tMPAffine
+      specCanDivNotMixed tMPAffine
+      specCanDiv tInteger tMPAffine
+      specCanDiv tMPAffine tInt
+      specCanDiv tMPAffine tRational
 
 -- -- describe "elementary" $ do
 -- --   specCanExpReal tMPAffine
