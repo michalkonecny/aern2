@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 module AERN2.MP.Affine.Conversions
   ( CanBeMPAffine,
-    mpAffine,
+    mpAffineWithSample,
     mpAffineFromBall
   )
 where
@@ -27,8 +27,8 @@ instance ConvertibleExactly MPAffine MPBall where
 
 type CanBeMPAffine t = ConvertibleExactly (WithSample MPAffine t) MPAffine
 
-mpAffine :: (CanBeMPAffine t) => MPAffine -> t -> MPAffine
-mpAffine sample t = convertExactly (WithSample sample t)
+mpAffineWithSample :: (CanBeMPAffine t) => MPAffine -> t -> MPAffine
+mpAffineWithSample sample t = convertExactly (WithSample sample t)
 
 instance ConvertibleExactly (WithSample MPAffine (ErrorTermId, MPBall)) MPAffine where
   safeConvertExactly :: (WithSample MPAffine (ErrorTermId, MPBall)) -> ConvertResult MPAffine
@@ -42,7 +42,7 @@ instance ConvertibleExactly (WithSample MPAffine (ErrorTermId, MPBall)) MPAffine
 
 mpAffineFromBall :: (Hashable errIdItem) => MPAffine -> errIdItem -> MPBall -> MPAffine
 mpAffineFromBall sample errIdItem b =
-  mpAffine sample (ErrorTermId (hash errIdItem), b)
+  mpAffineWithSample sample (ErrorTermId (hash errIdItem), b)
 
 instance ConvertibleExactly (WithSample MPAffine Integer) MPAffine where
   safeConvertExactly :: (WithSample MPAffine Integer) -> ConvertResult MPAffine

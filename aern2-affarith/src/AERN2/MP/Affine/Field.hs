@@ -72,3 +72,11 @@ recipAff aff
     upperIntercept = (a + b) / ab
     intercept = fromEndpointsAsIntervals lowerIntercept upperIntercept :: MPBall
     tightEnclosure = slope + intercept -- aff/-ab + [ 2/sqrt(ab), (a+b)/ab ]
+
+instance CanPow MPAffine Integer where
+  type PowType MPAffine Integer = MPAffine
+  pow aff n = powUsingMulRecip (mpAffineWithSample aff 1) (*) recip aff n
+
+instance CanPow MPAffine Int where
+  type PowType MPAffine Int = MPAffine
+  pow aff n = pow aff (integer n)
