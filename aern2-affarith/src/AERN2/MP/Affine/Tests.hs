@@ -1,3 +1,21 @@
+{-|
+    Module      :  AERN2.MP.Affine.Tests
+    Description :  Tests for arbitrary precision affine arithmetic
+    Copyright   :  (c) Michal Konecny
+    License     :  BSD3
+
+    Maintainer  :  mikkonecny@gmail.com
+    Stability   :  experimental
+    Portability :  portable
+
+    Tests for arbitrary precision affine arithmetic
+
+    To run the tests using stack, execute:
+
+    @
+    stack test aern2-affarith --test-arguments "-a 1000"
+    @
+-}
 module AERN2.MP.Affine.Tests
   ( specMPAffine,
     tMPAffine,
@@ -8,6 +26,7 @@ import AERN2.MP (ErrorBound, defaultPrecision, mpBall)
 import AERN2.MP.Affine.Type (ErrorTermId (..), MPAffine (..), MPAffineConfig (..), mpAffNormalise)
 import AERN2.MP.Affine.Ring ()
 import AERN2.MP.Affine.Field ()
+import AERN2.MP.Affine.Sqrt ()
 import AERN2.MP.Affine.Order ()
 import AERN2.MP.Float (mpFloat)
 import Data.Map qualified as Map
@@ -95,8 +114,8 @@ specMPAffine =
       specCanDiv tMPAffine tInt
       specCanDiv tMPAffine tRational
 
--- -- describe "elementary" $ do
+    describe "elementary" $ do
 -- --   specCanExpReal tMPAffine
 -- --   specCanLogReal tMPAffine
--- --   specCanSqrtReal tMPAffine
+      specCanSqrtReal tMPAffine
 -- --   specCanSinCosReal tMPAffine

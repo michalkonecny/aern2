@@ -8,6 +8,7 @@ import AERN2.MP.Affine.Conversions
 import AERN2.MP.Affine.Field ()
 import AERN2.MP.Affine.Order ()
 import AERN2.MP.Affine.Ring ()
+import AERN2.MP.Affine.Sqrt ()
 import AERN2.MP.Affine.Type
 import AERN2.MP.Dyadic (dyadic)
 import AERN2.MP.Float (mpFloat)
@@ -49,7 +50,7 @@ _sample :: MPAffine
 _sample = _mpaff1
 
 _a100 :: MPAffine
-_a100 = mpAffine _sample 100
+_a100 = mpAffineWithSample _sample 100
 
 _aThird :: MPAffine
-_aThird = mpAffine _sample (1 / 3)
+_aThird = mpAffineWithSample _sample (1 / 3)

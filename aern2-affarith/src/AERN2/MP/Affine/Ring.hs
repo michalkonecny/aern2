@@ -1,5 +1,6 @@
 module AERN2.MP.Affine.Ring
   (
+    scaleErrTerms
   )
 where
 
@@ -73,7 +74,7 @@ instance CanAddAsymmetric MPAffine MPBall where
 
 instance CanAddAsymmetric MPAffine Integer where
   type AddType MPAffine Integer = MPAffine
-  add aff n = add aff (mpAffine aff n)
+  add aff n = add aff (mpAffineWithSample aff n)
 
 instance CanAddAsymmetric MPAffine Int where
   type AddType MPAffine Int = MPAffine
@@ -81,7 +82,7 @@ instance CanAddAsymmetric MPAffine Int where
 
 instance CanAddAsymmetric MPAffine Rational where
   type AddType MPAffine Rational = MPAffine
-  add aff q = add aff (mpAffine aff q)
+  add aff q = add aff (mpAffineWithSample aff q)
 
 instance CanAddAsymmetric MPBall MPAffine where
   type AddType MPBall MPAffine = MPAffine

@@ -28,6 +28,7 @@ library
       AERN2.MP.Affine.Field
       AERN2.MP.Affine.Order
       AERN2.MP.Affine.Ring
+      AERN2.MP.Affine.Sqrt
       AERN2.MP.Affine.Tests
       AERN2.MP.Affine.Type
   other-modules:

@@ -6,8 +6,9 @@ module AERN2.MP.Affine.Type
     ErrorTermId (..),
     MPAffineErrorTerms,
     MPAffine (..),
-    mpBallOpOnMPFloat2,
     mpAffNormalise,
+    mpBallOpOnMPFloat1,
+    mpBallOpOnMPFloat2,
   )
 where
 
@@ -166,6 +167,14 @@ mpAffNormalise aff@(MPAffine {config, errTerms})
 {-
   Arithmetic helpers
 -}
+
+mpBallOpOnMPFloat1 ::
+  (MPBall -> MPBall) ->
+  (MPFloat -> (MPFloat, ErrorBound))
+mpBallOpOnMPFloat1 op x = (c, e)
+  where
+    MPBall c e = op (MPBall x e0)
+    e0 = errorBound 0
 
 mpBallOpOnMPFloat2 ::
   (MPBall -> MPBall -> MPBall) ->
