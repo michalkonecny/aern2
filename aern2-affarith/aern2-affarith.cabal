@@ -25,6 +25,7 @@ library
   exposed-modules:
       AERN2.MP.Affine
       AERN2.MP.Affine.Conversions
+      AERN2.MP.Affine.Exp
       AERN2.MP.Affine.Field
       AERN2.MP.Affine.Order
       AERN2.MP.Affine.Ring

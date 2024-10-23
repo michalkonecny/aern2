@@ -1,21 +1,20 @@
-{-|
-    Module      :  AERN2.MP.Affine.Tests
-    Description :  Tests for arbitrary precision affine arithmetic
-    Copyright   :  (c) Michal Konecny
-    License     :  BSD3
-
-    Maintainer  :  mikkonecny@gmail.com
-    Stability   :  experimental
-    Portability :  portable
-
-    Tests for arbitrary precision affine arithmetic
-
-    To run the tests using stack, execute:
-
-    @
-    stack test aern2-affarith --test-arguments "-a 1000"
-    @
--}
+-- |
+--    Module      :  AERN2.MP.Affine.Tests
+--    Description :  Tests for arbitrary precision affine arithmetic
+--    Copyright   :  (c) Michal Konecny
+--    License     :  BSD3
+--
+--    Maintainer  :  mikkonecny@gmail.com
+--    Stability   :  experimental
+--    Portability :  portable
+--
+--    Tests for arbitrary precision affine arithmetic
+--
+--    To run the tests using stack, execute:
+--
+--    @
+--    stack test aern2-affarith --test-arguments "-a 1000"
+--    @
 module AERN2.MP.Affine.Tests
   ( specMPAffine,
     tMPAffine,
@@ -23,11 +22,12 @@ module AERN2.MP.Affine.Tests
 where
 
 import AERN2.MP (ErrorBound, defaultPrecision, mpBall)
-import AERN2.MP.Affine.Type (ErrorTermId (..), MPAffine (..), MPAffineConfig (..), mpAffNormalise)
-import AERN2.MP.Affine.Ring ()
+import AERN2.MP.Affine.Exp ()
 import AERN2.MP.Affine.Field ()
-import AERN2.MP.Affine.Sqrt ()
 import AERN2.MP.Affine.Order ()
+import AERN2.MP.Affine.Ring ()
+import AERN2.MP.Affine.Sqrt ()
+import AERN2.MP.Affine.Type (ErrorTermId (..), MPAffine (..), MPAffineConfig (..), mpAffNormalise)
 import AERN2.MP.Float (mpFloat)
 import Data.Map qualified as Map
 import MixedTypesNumPrelude
@@ -96,26 +96,27 @@ specMPAffine =
       specCanAddSameType tMPAffine
       specCanAdd tInt tMPAffine tRational
       specCanAdd tInteger tMPAffine tInt
-    --   specResultIsValid2 sub "sub" tMPAffine tMPAffine
+      --   specResultIsValid2 sub "sub" tMPAffine tMPAffine
       specCanSubNotMixed tMPAffine
       specCanSub tMPAffine tInteger
       specCanSub tInteger tMPAffine
       specCanSub tMPAffine tInt
       specCanSub tInt tMPAffine
-    --   specResultIsValid2 mul "mul" tMPAffine tMPAffine
+      --   specResultIsValid2 mul "mul" tMPAffine tMPAffine
       specCanMulNotMixed tMPAffine
       specCanMulSameType tMPAffine
       specCanMul tInt tMPAffine tRational
     -- specCanPow tMPAffine tInteger
     describe "field" $ do
-    --   specResultIsValid2Pre (\_ y -> isCertainlyNonZero y) divide "divide" tMPAffine tMPAffine
+      --   specResultIsValid2Pre (\_ y -> isCertainlyNonZero y) divide "divide" tMPAffine tMPAffine
       specCanDivNotMixed tMPAffine
       specCanDiv tInteger tMPAffine
       specCanDiv tMPAffine tInt
       specCanDiv tMPAffine tRational
 
     describe "elementary" $ do
--- --   specCanExpReal tMPAffine
--- --   specCanLogReal tMPAffine
+      -- specCanExpReal tMPAffine
+      -- specCanLogReal tMPAffine
       specCanSqrtReal tMPAffine
+
 -- --   specCanSinCosReal tMPAffine

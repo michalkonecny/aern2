@@ -5,6 +5,7 @@ module AERN2.MP.Affine
 where
 
 import AERN2.MP.Affine.Conversions
+import AERN2.MP.Affine.Exp ()
 import AERN2.MP.Affine.Field ()
 import AERN2.MP.Affine.Order ()
 import AERN2.MP.Affine.Ring ()

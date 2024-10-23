@@ -1,23 +1,23 @@
 {-# LANGUAGE RecordWildCards #-}
+
 module AERN2.MP.Affine.Sqrt
   (
   )
 where
 
-import GHC.Records
-import MixedTypesNumPrelude
 -- import Prelude qualified as P
 
+import AERN2.MP (MPBall (MPBall), errorBound, mpBall)
 import AERN2.MP.Affine.Conversions (mpAffineFromBall)
-import AERN2.MP.Affine.Type
-import AERN2.MP.Affine.Ring (scaleErrTerms)
 import AERN2.MP.Affine.Order ()
-
-import AERN2.MP (MPBall(MPBall), mpBall, errorBound)
+import AERN2.MP.Affine.Ring (scaleErrTerms)
+import AERN2.MP.Affine.Type
 import AERN2.MP.Ball.Type (mpBallEndpoints)
-import Data.Hashable (Hashable(hash))
-import qualified Data.Map as Map
 import AERN2.MP.Float (mpFloat)
+import Data.Hashable (Hashable (hash))
+import Data.Map qualified as Map
+import GHC.Records
+import MixedTypesNumPrelude
 
 {-
 
@@ -41,7 +41,7 @@ err(1) = sqrt(a) + e/(2*sqrt(a)) - sqrt(a + e)
 
 t = max(err(1),err(-1))
 
-err(1) < err(-1) 
+err(1) < err(-1)
     <=>
     + e/(2*sqrt(a)) - sqrt(a + e) < - e/(2*sqrt(a)) - sqrt(a - e)
     <=>
@@ -51,7 +51,7 @@ err(1) < err(-1)
     <=>
     e < sqrt(a)(sqrt(a + e) - sqrt(a - e))
 
-sqrt(a + ex) \in sqrt(a) + ex/(2*sqrt(a)) + [-t, 0] 
+sqrt(a + ex) \in sqrt(a) + ex/(2*sqrt(a)) + [-t, 0]
 
 new error variable accounting for
 - truncation error t/2
@@ -61,19 +61,18 @@ new error variable accounting for
 -}
 
 instance CanSqrt MPAffine where
-    type (SqrtType MPAffine) = MPAffine
-    sqrt = mpAffineSqrt
-
+  type SqrtType MPAffine = MPAffine
+  sqrt = mpAffineSqrt
 
 mpAffineSqrt :: MPAffine -> MPAffine
 mpAffineSqrt aff
-    | isCertainlyPositive range_Min_Ball && isCertainlyNonNegative resultAff = 
-        -- Accept a proper affine enclosure only if it exludes negative values
-        resultAff
-    | otherwise = 
-        -- Denegerate to interval arithmetic to avoid including negative values due to approximation errors near 0.
-        mpAffineFromBall aff newTermId (sqrt range_Ball)
-    where
+  | isCertainlyPositive range_Min_Ball && isCertainlyNonNegative resultAff =
+      -- Accept a proper affine enclosure only if it exludes negative values
+      resultAff
+  | otherwise =
+      -- Denegerate to interval arithmetic to avoid including negative values due to approximation errors near 0.
+      mpAffineFromBall aff newTermId (sqrt range_Ball)
+  where
     -- calculate range of aff
     range_Ball = mpBall aff
     (MPBall a e) = range_Ball
@@ -87,16 +86,15 @@ mpAffineSqrt aff
 
     -- calculate new (scaled) error terms
     recip_2_sqrt_a_Ball = recip (2 * sqrt_a_Ball) -- 1/(2*sqrt(a))
-
     ex = aff.errTerms
     (scaled_ex, err_scaling_ex) = scaleErrTerms recip_2_sqrt_a_Ball ex -- ex/(2*sqrt(a))
 
     -- err(-1) = sqrt(a) - e/(2*sqrt(a)) - sqrt(a - e)
-    tL = sqrt_a_Ball - (e_Ball * recip_2_sqrt_a_Ball)  - sqrt range_Min_Ball
+    tL = sqrt_a_Ball - (e_Ball * recip_2_sqrt_a_Ball) - sqrt range_Min_Ball
     -- err(1) = sqrt(a) + e/(2*sqrt(a)) - sqrt(a + e)
-    tR = sqrt_a_Ball + (e_Ball * recip_2_sqrt_a_Ball)  - sqrt range_Max_Ball
+    tR = sqrt_a_Ball + (e_Ball * recip_2_sqrt_a_Ball) - sqrt range_Max_Ball
     t = max tL tR
-    err_trunc = errorBound (t/2)
+    err_trunc = errorBound (t / 2)
 
     -- new centre
     centre_Ball = sqrt_a_Ball - t / 2
@@ -105,8 +103,7 @@ mpAffineSqrt aff
     -- overall new error
     newTermId = ErrorTermId (hash ("sqrt", aff))
     errTerms = Map.insert newTermId (mpFloat newError) scaled_ex
-        where
+      where
         newError = err_trunc + err_scaling_ex + err_centre
 
-    resultAff = MPAffine { config = aff.config, .. }
-
+    resultAff = MPAffine {config = aff.config, ..}
