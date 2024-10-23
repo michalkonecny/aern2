@@ -55,8 +55,25 @@ instance ConvertibleExactly Integer MPFloat where
     safeConvertExactly =
       Right . MPFloat . P.fromInteger
 
+instance ConvertibleExactly (WithSample MPFloat Integer) MPFloat where
+    safeConvertExactly (WithSample sampleMPFloat n) =
+      fmap increasePrecisionToP (safeConvertExactly n)
+      where
+        p = if isFinite sampleMPFloat then getPrecision sampleMPFloat else (prec 2)
+        increasePrecisionToP v 
+          | vp >= p = v
+          | otherwise = setPrecision p v
+          where
+            vp = getPrecision v
+           
 instance ConvertibleExactly Int MPFloat where
     safeConvertExactly = safeConvertExactly . integer
+
+instance ConvertibleExactly (WithSample MPFloat Int) MPFloat where
+    safeConvertExactly (WithSample sampleMPFloat n) =
+      fmap (setPrecision p) (safeConvertExactly n)
+      where
+        p = getPrecision sampleMPFloat
 
 fromIntegerCEDU :: Precision -> Integer -> BoundsCEDU MPFloat
 fromIntegerCEDU pp =

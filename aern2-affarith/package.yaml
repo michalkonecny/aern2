@@ -1,17 +1,17 @@
-name:                aern2-real
-version:             0.2.16.1
+name:                aern2-affarith
+version:             0.2.16.0
 github:              "michalkonecny/aern2"
 license:             BSD3
 author:              "Michal Konecny"
 maintainer:          "mikkonecny@gmail.com"
-copyright:           "2015-2024 Michal Konecny"
+copyright:           "2024 Michal Konecny"
 
-extra-source-files:
-- README.md
-- changelog.md
+# extra-source-files:
+# - README.md
+# - changelog.md
 
 # Metadata used when publishing your package
-synopsis:            Real numbers as convergent sequences of intervals
+synopsis:            Arbitrary precision affine arithmetic
 category:            Math
 
 # To avoid duplicated efforts in documentation and dealing with the
@@ -21,37 +21,30 @@ description:         Please see the README on GitHub at <https://github.com/mich
 
 dependencies:
 - base == 4.*
+- containers
+- hashable
 - hspec
 - QuickCheck
 - collect-errors >= 0.1.5
 - mixed-types-num >= 0.6.2
-- integer-logarithms
-- aern2-mp >= 0.2.16.0
+- cdar-mBound >= 0.1.0.0
+- aern2-mp >= 0.2.16.1
 
 default-extensions:
-- RebindableSyntax,
-- ScopedTypeVariables,
-- TypeFamilies,
-- TypeOperators,
-- ConstraintKinds,
-- DefaultSignatures,
-- MultiParamTypeClasses,
-- FlexibleContexts,
-- FlexibleInstances,
-- UndecidableInstances
-
-other-extensions:
-- TemplateHaskell
+- GHC2021
+- RebindableSyntax
+- DuplicateRecordFields
+- OverloadedRecordDot
+- TypeFamilies
 
 library:
-  source-dirs: 
-  - src
-  - examples
+  source-dirs: src
   ghc-options:
-  - -Wall
+  - -O2 -Wall
+  - -Wno-orphans
 
 tests:
-  aern2-real-test:
+  aern2-affarith-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -60,4 +53,4 @@ tests:
     - -with-rtsopts=-N
     - -Wall
     dependencies:
-    - aern2-real
+    - aern2-affarith
