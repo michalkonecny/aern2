@@ -3,11 +3,12 @@ module AERN2.MP.Affine.Order
   )
 where
 
-import AERN2.MP.Affine.Conversions ()
+import AERN2.MP.Affine.Conversions (mpAffineFromBall)
 import AERN2.MP.Affine.Ring ()
-import AERN2.MP.Affine.Type (MPAffine)
+import AERN2.MP.Affine.Type (MPAffine, ErrorTermId (..))
 import AERN2.MP (Kleenean, mpBall)
 import MixedTypesNumPrelude
+import Data.Hashable (Hashable(hash))
 -- import qualified Prelude as P
 
 instance HasOrderAsymmetric MPAffine MPAffine where
@@ -46,3 +47,11 @@ instance HasOrderAsymmetric Rational MPAffine where
   leq q aff2 = q <= mpBall aff2
 
 instance CanTestPosNeg MPAffine where
+
+instance CanAbs MPAffine where
+  abs aff 
+    | aff !>=! 0 = aff
+    | aff !<! 0 = -aff
+    | otherwise = mpAffineFromBall aff newTermId (abs (mpBall aff))
+    where
+      newTermId = ErrorTermId (hash ("abs", aff))

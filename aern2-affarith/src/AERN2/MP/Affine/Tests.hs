@@ -85,7 +85,7 @@ specMPAffine =
     describe "min/max/abs" $ do
       specCanNegNum tMPAffine
     --   specResultIsValid1 abs "abs" tMPAffine
-    --   specCanAbs tMPAffine
+      specCanAbs tMPAffine
     --   specResultIsValid2 min "min" tMPAffine tMPAffine
     --   specResultIsValid2 max "max" tMPAffine tMPAffine
     --   specCanMinMaxNotMixed tMPAffine
