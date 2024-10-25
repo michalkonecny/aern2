@@ -3,7 +3,7 @@ module AERN2.MP.Affine.Order
   )
 where
 
-import AERN2.MP.Affine.Conversions (mpAffineFromBall)
+import AERN2.MP.Affine.Conversions (mpAffineFromBall, mpAffineWithSample)
 import AERN2.MP.Affine.Ring ()
 import AERN2.MP.Affine.Type (MPAffine, ErrorTermId (..))
 import AERN2.MP (Kleenean, mpBall)
@@ -55,3 +55,21 @@ instance CanAbs MPAffine where
     | otherwise = mpAffineFromBall aff newTermId (abs (mpBall aff))
     where
       newTermId = ErrorTermId (hash ("abs", aff))
+
+instance CanMinMaxAsymmetric MPAffine MPAffine where
+  min aff1 aff2
+    | aff1 !<=! aff2 = aff1
+    | aff2 !<=! aff1 = aff2
+    | otherwise = mpAffineFromBall aff1 newTermId (min (mpBall aff1) (mpBall aff2))
+    where
+      newTermId = ErrorTermId (hash ("min", aff1, aff2))
+  max aff1 aff2 = negate $ min (-aff1) (-aff2)
+
+instance CanMinMaxAsymmetric MPAffine Integer where
+  min aff n = min aff (mpAffineWithSample aff n)
+  max aff n = max aff (mpAffineWithSample aff n) 
+
+instance CanMinMaxAsymmetric Integer MPAffine where
+  type MinMaxType Integer MPAffine = MPAffine
+  min n aff = min (mpAffineWithSample aff n) aff
+  max n aff = max (mpAffineWithSample aff n) aff

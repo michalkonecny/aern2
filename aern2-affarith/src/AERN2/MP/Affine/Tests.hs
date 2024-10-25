@@ -88,8 +88,8 @@ specMPAffine =
       specCanAbs tMPAffine
     --   specResultIsValid2 min "min" tMPAffine tMPAffine
     --   specResultIsValid2 max "max" tMPAffine tMPAffine
-    --   specCanMinMaxNotMixed tMPAffine
-    --   specCanMinMax tMPAffine tInteger tMPAffine
+      specCanMinMaxNotMixed tMPAffine
+      specCanMinMax tMPAffine tInteger tMPAffine
     describe "ring" $ do
       -- specResultIsValid2 add "add" tMPAffine tMPAffine
       specCanAddNotMixed tMPAffine
