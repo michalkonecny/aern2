@@ -1,3 +1,4 @@
+{-# LANGUAGE RecordWildCards #-}
 {-# HLINT ignore "Use logBase" #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
@@ -12,21 +13,21 @@ module AERN2.MP.Affine.Type
   )
 where
 
-import AERN2.MP (ErrorBound, MPBall (MPBall), ShowWithAccuracy (..), ac2prec, bits, errorBound)
+import AERN2.MP (CanSetPrecision (setPrecision), ErrorBound, MPBall (MPBall), ShowWithAccuracy (..), ac2prec, bits, errorBound)
 import AERN2.MP.Accuracy (Accuracy (..))
 import AERN2.MP.Dyadic (dyadic)
-import AERN2.MP.Float (MPFloat, (+^))
+import AERN2.MP.Float (MPFloat, (+^), mpFloat)
 import Data.CDAR (Approx (..))
 import Data.Hashable (Hashable (hash))
-import Data.List (foldl1')
-import qualified Data.List as List
-import qualified Data.Map as Map
+import Data.List (foldl', foldl1')
+import Data.List qualified as List
+import Data.Map qualified as Map
 import GHC.Exts (sortWith)
 import GHC.Generics (Generic)
 import GHC.Records
 import MixedTypesNumPrelude
 import Text.Printf (printf)
-import qualified Prelude as P
+import Prelude qualified as P
 
 deriving instance Generic Approx
 
@@ -93,10 +94,26 @@ instance Hashable MPAffineConfig
 instance Hashable MPAffine
 
 instance CanTestFinite MPAffine where
-  isInfinite aff = 
+  isInfinite aff =
     isInfinite aff.centre
-    || (or $ map isInfinite $ Map.elems aff.errTerms)
+      || (or $ map isInfinite $ Map.elems aff.errTerms)
   isFinite = not . isInfinite
+
+instance CanSetPrecision MPAffine where
+  setPrecision p aff = MPAffine {..}
+    where
+      pI = integer p
+      config = aff.config {precision = pI}
+      setP = mpBallOpOnMPFloat1 (setPrecision p)
+      (centre, centre_err) = setP aff.centre
+      errTermsPWithErrs = Map.map setP aff.errTerms
+      errTermsP = Map.map fst errTermsPWithErrs
+      errTerms_err = foldl' (+) (errorBound 0) $ map snd $ Map.elems errTermsPWithErrs
+      newTermId = ErrorTermId (hash ("setPrecision", aff, pI))
+      newErr = mpFloat $ centre_err + errTerms_err
+      errTerms 
+        | newErr == 0 = errTermsP
+        | otherwise = Map.insert newTermId newErr errTermsP
 
 instance Show MPAffine where
   show = showWithAccuracy (bits 10)
