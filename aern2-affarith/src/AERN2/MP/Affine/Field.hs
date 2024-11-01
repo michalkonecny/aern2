@@ -6,12 +6,14 @@ module AERN2.MP.Affine.Field
   )
 where
 
-import AERN2.MP (IsInterval (endpoints), MPBall (MPBall), errorBound, fromEndpointsAsIntervals, mpBall)
+import AERN2.MP (IsInterval (endpoints), MPBall (MPBall), errorBound, fromEndpointsAsIntervals, mpBall, HasPrecision (getPrecision), CanSetPrecision (setPrecision))
 import AERN2.MP.Affine.Conversions
+import AERN2.MP.Affine.Order ()
 import AERN2.MP.Affine.Ring ()
 import AERN2.MP.Affine.Type
-import GHC.Records
+-- import GHC.Records
 import MixedTypesNumPrelude
+import Data.Hashable (Hashable(hash))
 
 
 -- instance Field MPAffine
@@ -43,14 +45,16 @@ instance CanDiv Rational MPAffine where
 recipAff :: MPAffine -> MPAffine
 recipAff aff
   | admitsZero = error "MPAffine: potential division by zero"
-  | affIsExact = aRecipAff
+  | affIsExact = recipViaMPBall
   | isNegative = negate (recipAff (negate aff)) -- 1/-x = -(1/x)
-  | otherwise -- i.e. aff is positive
-    =
-      tightEnclosure
+  -- below, aff is positive, not exact
+  | ab !>! 0 && sqrtab !>! 0 = tightEnclosure
+  -- internal overflows, revert to recip via MPBall
+  | otherwise = recipViaMPBall
   where
     -- find a <= aff <= b
-    (aF, bF) = endpoints (mpBall aff)
+    affBall = mpBall aff
+    (aF, bF) = endpoints affBall
     a = MPBall aF (errorBound 0)
     b = MPBall bF (errorBound 0)
 
@@ -59,17 +63,22 @@ recipAff aff
 
     -- if a == b, return 1/a
     affIsExact = aF == bF
-    aRecip = 1 / a :: MPBall
-    aRecipAff = mpAffineFromBall aff aRecip aRecip
+    affBallRecip = 1 / affBall :: MPBall
+    recipViaMPBall = mpAffineFromBall aff affBallRecip affBallRecip
 
     -- if b < 0, reduce to positive aff
     isNegative = bF < 0
 
-    -- otherwise (i.e. 0 < a < b) build an aff tightly enclosing the 1/x curve over [a,b]
-    ab = a * b
-    slope = aff / (-ab) :: MPAffine
-    lowerIntercept = 2 / (sqrt ab)
-    upperIntercept = (a + b) / ab
+    -- otherwise (i.e. 0 < a < b) build an aff tightly enclosing the 1/x curve over [a,b]:
+
+    -- temporarily double the MPBall precision
+    ap = getPrecision a
+    aHigherPrec = setPrecision (2*ap + 10) a
+    ab = aHigherPrec * b
+    slope = setPrecision ap (aff / (-ab)) :: MPAffine
+    sqrtab = setPrecision ap $ sqrt ab
+    lowerIntercept = 2 / sqrtab
+    upperIntercept = setPrecision ap $ (a + b) / ab
     intercept = fromEndpointsAsIntervals lowerIntercept upperIntercept :: MPBall
     tightEnclosure = slope + intercept -- aff/-ab + [ 2/sqrt(ab), (a+b)/ab ]
 
@@ -80,3 +89,13 @@ instance CanPow MPAffine Integer where
 instance CanPow MPAffine Int where
   type PowType MPAffine Int = MPAffine
   pow aff n = pow aff (integer n)
+
+instance CanDivIMod MPAffine MPAffine
+  where
+  type DivIType MPAffine MPAffine = Integer
+  divIMod aff m
+    | m !>! 0 = (error "Integer division for MPAffine undefined", xmAff)
+    | otherwise = error $ "modulus not positive: " ++ show m
+    where
+      xmAff = mpAffineFromBall aff newTermId ((mpBall aff) `mod` (mpBall m))
+      newTermId = ErrorTermId (hash ("mod", aff, m))

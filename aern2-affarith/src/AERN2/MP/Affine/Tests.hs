@@ -115,7 +115,7 @@ specMPAffine =
       specCanDiv tMPAffine tRational
 
     describe "elementary" $ do
-      -- specCanExpReal tMPAffine
+      specCanExpReal tMPAffine
       -- specCanLogReal tMPAffine
       specCanSqrtReal tMPAffine
 
