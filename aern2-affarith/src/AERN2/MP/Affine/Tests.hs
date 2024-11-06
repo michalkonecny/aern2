@@ -27,6 +27,7 @@ import AERN2.MP.Affine.Field ()
 import AERN2.MP.Affine.Order ()
 import AERN2.MP.Affine.Ring ()
 import AERN2.MP.Affine.Sqrt ()
+import AERN2.MP.Affine.SinCos ()
 import AERN2.MP.Affine.Type (ErrorTermId (..), MPAffine (..), MPAffineConfig (..), mpAffNormalise)
 import AERN2.MP.Float (mpFloat)
 import Data.Map qualified as Map
@@ -118,5 +119,4 @@ specMPAffine =
       specCanExpReal tMPAffine
       -- specCanLogReal tMPAffine
       specCanSqrtReal tMPAffine
-
--- --   specCanSinCosReal tMPAffine
+      specCanSinCosReal tMPAffine

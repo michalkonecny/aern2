@@ -9,6 +9,7 @@ import AERN2.MP.Affine.Exp ()
 import AERN2.MP.Affine.Field ()
 import AERN2.MP.Affine.Order ()
 import AERN2.MP.Affine.Ring ()
+import AERN2.MP.Affine.SinCos ()
 import AERN2.MP.Affine.Sqrt ()
 import AERN2.MP.Affine.Type
 import AERN2.MP.Dyadic (dyadic)
