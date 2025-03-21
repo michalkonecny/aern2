@@ -1,7 +1,7 @@
 # Change log for aern2-real
 
 * current
-* v 0.2.16.0 2024-09-21
+* v 0.2.16.1 2024-10-06
   * adapt to int / rat conversion with sample
 * v 0.2.15.1 2024-09-20
   * an implementation of continuity principles for coq-aern
