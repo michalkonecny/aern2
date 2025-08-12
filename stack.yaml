@@ -16,9 +16,9 @@
 #  name: custom-snapshot
 #  location: "./custom-snapshot.yaml"
 
-# resolver: lts-22.34 # ghc 9.6.5 as of 2024-09-21
+resolver: lts-22.44 # ghc 9.6.5 (final?)
 # resolver: lts-21.25 # ghc 9.4.8 (final?)
-resolver: lts-20.25 # ghc 9.2.8 (final?)
+# resolver: lts-20.25 # ghc 9.2.8 (final?)
 system-ghc: true # needed for GHCUP
 
 # User packages to be built.
