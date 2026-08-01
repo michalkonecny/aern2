@@ -128,6 +128,9 @@ instance ConvertibleWithPrecision (CentreRadius Rational Rational) MPBall where
 instance ConvertibleExactly (WithSample MPBall Rational) MPBall where
   safeConvertExactly (WithSample sample value) = safeConvertP (getPrecision sample) value
 
+instance ConvertibleExactly (WithSample (CN MPBall) Rational) (CN MPBall) where
+  safeConvertExactly (WithSample sample value) = safeConvertP (getPrecision sample) value
+
 {--- constructing a fat ball ---}
 
 instance (CanBeErrorBound t) => CanPlusMinus MPBall t where
