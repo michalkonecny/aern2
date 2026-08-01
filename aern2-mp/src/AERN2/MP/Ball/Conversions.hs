@@ -1,4 +1,6 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Redundant bracket" #-}
 {-|
     Module      :  AERN2.MP.Ball.Conversions
     Description :  Conversions of arbitrary precision dyadic balls
@@ -83,6 +85,9 @@ instance ConvertibleExactly Integer MPBall where
       b = MPBall (mpFloat x) (errorBound 0)
 
 instance ConvertibleExactly (WithSample MPBall Integer) MPBall where
+  safeConvertExactly (WithSample _ value) = safeConvertExactly value
+
+instance ConvertibleExactly (WithSample (CN MPBall) Integer) (CN MPBall) where
   safeConvertExactly (WithSample _ value) = safeConvertExactly value
 
 instance ConvertibleExactly Int MPBall where
