@@ -1,5 +1,7 @@
 # Change log for aern2-mp
 
+* v 0.2.16.2 2026-08-01
+  * conversions with sample to CN MPBall
 * v 0.2.16.1 2024-10-06
   * adapt to int / rat conversion with sample
 * v 0.2.15 2023-04-11

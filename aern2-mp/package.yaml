@@ -1,10 +1,10 @@
 name:                aern2-mp
-version:             0.2.16.1
+version:             0.2.16.2
 github:              "michalkonecny/aern2"
 license:             BSD3
 author:              "Michal Konecny"
 maintainer:          "mikkonecny@gmail.com"
-copyright:           "2015-2024 Michal Konecny"
+copyright:           "2015-2026 Michal Konecny"
 
 extra-source-files:
 - README.md
