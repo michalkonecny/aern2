@@ -87,9 +87,6 @@ instance ConvertibleExactly Integer MPBall where
 instance ConvertibleExactly (WithSample MPBall Integer) MPBall where
   safeConvertExactly (WithSample _ value) = safeConvertExactly value
 
-instance ConvertibleExactly (WithSample (CN MPBall) Integer) (CN MPBall) where
-  safeConvertExactly (WithSample _ value) = safeConvertExactly value
-
 instance ConvertibleExactly Int MPBall where
   safeConvertExactly x = Right $ MPBall (mpFloat x) (errorBound 0)
 
