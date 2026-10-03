@@ -22,10 +22,10 @@ jobs:
                   - os: windows-latest
                     ghc-version: '9.4'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up GHC ${{ matrix.ghc-version }}
-        uses: haskell/actions/setup@v2
+        uses: haskell-actions/setup@v2
         id: setup
         with:
           ghc-version: ${{ matrix.ghc-version }}
@@ -46,7 +46,7 @@ jobs:
           stack build --test --bench --no-haddock --dry-run
 
       - name: Restore cached dependencies
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         id: cache
         with:
           path: .stack-work
@@ -59,7 +59,7 @@ jobs:
 
       # Cache dependencies already here, so that we do not have to rebuild them should the subsequent steps fail.
       - name: Save cached dependencies
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         # Caches are immutable, trying to save with the same key would error.
         if: ${{ !steps.cache.outputs.cache-hit
           || steps.cache.outputs.cache-primary-key != steps.cache.outputs.cache-matched-key }}
