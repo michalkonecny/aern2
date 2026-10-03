@@ -108,7 +108,7 @@ instance ConvertibleWithPrecision Dyadic MPBall where
     | isFinite b = Right b
     | otherwise = convError ("too large to convert to MPBall with precision " ++ show p) x
     where
-    b = mpBall x
+    b = setPrecision p (mpBall x)
 
 instance ConvertibleWithPrecision Rational MPBall where
   safeConvertP p x
