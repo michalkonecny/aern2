@@ -116,6 +116,7 @@ specMPAffine =
       specCanDiv tInteger tMPAffine
       specCanDiv tMPAffine tInt
       specCanDiv tMPAffine tRational
+      specRecipIndependentErrors
 
     describe "elementary" $ do
       specCanExpReal tMPAffine
@@ -145,6 +146,32 @@ evalAffAt eps aff =
   foldl (+) (exact aff.centre) [exact coeff * eps var | (var, coeff) <- Map.toList aff.errTerms]
   where
     exact c = raisePrecisionIfBelow defaultPrecision (MPBall c (errorBound 0))
+
+{-|
+  Results of recip on arguments with identical ranges but independent errors
+  must not share error variables, even when computed by falling back on MPBall.
+  This fallback is used for very small or very large arguments.
+-}
+specRecipIndependentErrors :: Spec
+specRecipIndependentErrors =
+  describe "recip with independent arguments of equal range" $ do
+    it "1/x - 1/y contains 2^1000 for x, y in 2^(-1000) +- 2^(-1001)" $ do
+      let x = affWithOneTerm (1 / (rational (2 ^ 1000))) (1 / (rational (2 ^ 1001))) 1
+      let y = affWithOneTerm (1 / (rational (2 ^ 1000))) (1 / (rational (2 ^ 1001))) 2
+      (mpBall (recip x - recip y) ?==? (mpBallP defaultPrecision (2 ^ 1000))) `shouldBe` True
+    it "1/x - 1/x is exactly 0 for x in 2^(-1000) +- 2^(-1001)" $ do
+      let x = affWithOneTerm (1 / (rational (2 ^ 1000))) (1 / (rational (2 ^ 1001))) 1
+      (mpBall (recip x - recip x) !==! 0) `shouldBe` True
+    it "1/x - 1/y contains 1/x(-1) - 1/y(0) for x, y independent in s*2^k +- m*2^(k-3)" $ do
+      property $
+        forAll (choose (-1500, 1500)) $ \(k :: Integer) ->
+          forAll (elements [1, -1]) $ \(s :: Integer) ->
+            forAll (choose (1, 7)) $ \(m :: Integer) ->
+              let c = s * (rational 2) ^ k
+                  r = m * (rational 2) ^ (k - 3)
+                  x = affWithOneTerm c r 1
+                  y = affWithOneTerm c r 2
+               in mpBall (recip x - recip y) ?==? (recip (evalAffAt (const (-1)) x) - recip (evalAffAt (const 0) y))
 
 {-|
   Results of sin/cos on arguments with identical ranges but independent errors

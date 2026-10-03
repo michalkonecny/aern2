@@ -64,7 +64,9 @@ recipAff aff
     -- if a == b, return 1/a
     affIsExact = aF == bF
     affBallRecip = 1 / affBall :: MPBall
-    recipViaMPBall = mpAffineFromBall aff affBallRecip affBallRecip
+    -- Equal output ranges do not imply correlated errors: retain the operation
+    -- and its affine operand.
+    recipViaMPBall = mpAffineFromBall aff ("recip", "fallback", aff) affBallRecip
 
     -- if b < 0, reduce to positive aff
     isNegative = bF < 0
