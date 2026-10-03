@@ -79,7 +79,7 @@ mpAffineCos :: MPAffine -> MPAffine
 mpAffineCos = mpAffineSinCos "cos" cos (negate . sin) mpAffineCosNegated
 
 mpAffineCosNegated :: MPAffine -> MPAffine
-mpAffineCosNegated = mpAffineSinCos "cos" (negate . cos) sin mpAffineCos
+mpAffineCosNegated = mpAffineSinCos "-cos" (negate . cos) sin mpAffineCos
 
 mpAffineSinCos :: String -> (MPBall -> MPBall) -> (MPBall -> MPBall) -> (MPAffine -> MPAffine) -> (MPAffine -> MPAffine)
 mpAffineSinCos fName f f' fNegated aff
@@ -100,7 +100,9 @@ mpAffineSinCos fName f f' fNegated aff
     fIsIncreasing = f'_affRange !>! 0
     fIsDecreasing = f'_affRange !<! 0
 
-    viaMPBall :: MPAffine = mpAffineFromBall aff f_affRange f_affRange
+    -- Equal output ranges do not imply correlated errors: retain the operation
+    -- and its affine operand, just as in the tangent case below.
+    viaMPBall :: MPAffine = mpAffineFromBall aff (fName, "fallback", aff) f_affRange
 
     -- calculate range of aff
     (MPBall a e) = affRange
@@ -142,6 +144,6 @@ mpAffineSinCos fName f f' fNegated aff
             (scaledTerms, errScalingTerms) = scaleErrTerms f'a ex -- ex*f'(a)
 
             -- overall new error
-            newTermId = ErrorTermId (hash (fName, aff))
+            newTermId = ErrorTermId (hash (fName, "tangent", aff))
             newError = errTrunc + errScalingTerms + errCentre
             errTrunc = errorBound radius
