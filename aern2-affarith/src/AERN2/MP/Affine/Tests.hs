@@ -21,7 +21,7 @@ module AERN2.MP.Affine.Tests
   )
 where
 
-import AERN2.MP (ErrorBound, MPBall (MPBall), defaultPrecision, errorBound, mpBall, mpBallP, raisePrecisionIfBelow, setPrecision)
+import AERN2.MP (ErrorBound, MPBall (MPBall), contains, defaultPrecision, errorBound, mpBall, mpBallP, prec, raisePrecisionIfBelow, setPrecision)
 import AERN2.MP.Dyadic (dyadic)
 import AERN2.MP.Affine.Exp ()
 import AERN2.MP.Affine.Field ()
@@ -117,6 +117,7 @@ specMPAffine =
       specCanDiv tMPAffine tInt
       specCanDiv tMPAffine tRational
       specRecipIndependentErrors
+      specRecipInterceptErrors
 
     describe "elementary" $ do
       specCanExpReal tMPAffine
@@ -172,6 +173,54 @@ specRecipIndependentErrors =
                   x = affWithOneTerm c r 1
                   y = affWithOneTerm c r 2
                in mpBall (recip x - recip y) ?==? (recip (evalAffAt (const (-1)) x) - recip (evalAffAt (const 0) y))
+
+{-|
+  Cancelling the secant slope leaves only the nonlinear reciprocal error.
+  Independent arguments must retain independent errors even when their ranges
+  and intercept enclosures coincide.  Checking the whole range of 1/x - 1/y
+  alone can miss an invalid correlation with the original input variables.
+-}
+specRecipInterceptErrors :: Spec
+specRecipInterceptErrors =
+  describe "recip nonlinear error provenance" $ do
+    it "retains independent intercept errors for positive arguments" $ do
+      let x = affWithOneTerm 1.5 0.5 1
+      let y = affWithOneTerm 1.5 0.5 2
+      -- At x = 3/2, y = 1 this expression is -1/12, not zero.
+      (mpBall (recip x + x / 2 - (recip y + y / 2)) `contains` (rational (-1) / 12)) `shouldBe` True
+    it "retains independent intercept errors for negative arguments" $ do
+      let x = affWithOneTerm (-1.5) 0.5 1
+      let y = affWithOneTerm (-1.5) 0.5 2
+      (mpBall (recip x + x / 2 - (recip y + y / 2)) `contains` (rational 1 / 12)) `shouldBe` True
+    it "preserves cancellation of repeated positive and negative reciprocals" $ do
+      let cancels c =
+            let x = affWithOneTerm c 0.5 1
+             in mpBall (recip x - recip x) !==! 0
+      all cancels [1.5, -1.5] `shouldBe` True
+    it "encloses rounded reciprocals of exact arguments and preserves reuse" $ do
+      let encloses c =
+            let x = affWithOneTerm c 0.0 1
+             in (mpBall (recip x) `contains` recip c) && (mpBall (recip x - recip x) !==! 0)
+      all encloses [3.0, -3.0, 4.0, -4.0] `shouldBe` True
+    it "encloses compensated reciprocals across precisions, scales and term limits" $ do
+      property $
+        forAll (elements [8, 20, 53]) $ \(p :: Integer) ->
+          forAll (elements (map int [1, 2, 5])) $ \(maxTerms :: Int) ->
+            forAll (choose (-20, 20)) $ \(k :: Integer) ->
+              forAll (elements [1, -1]) $ \(s :: Integer) ->
+                forAll (choose (4, 8)) $ \(i :: Integer) ->
+                  forAll (choose (4, 8)) $ \(j :: Integer) ->
+                    let magnitude = (rational 2) ^ k
+                        input var = setPrecision (prec p) $
+                          let aff = affWithOneTerm (s * 1.5 * magnitude) (0.5 * magnitude) var
+                           in aff {config = aff.config {maxTerms}}
+                        x = input 1
+                        y = input 2
+                        compensate t = recip t + t / (2 * magnitude * magnitude)
+                        value n =
+                          let q = s * n * magnitude / 4
+                           in recip q + q / (2 * magnitude * magnitude)
+                     in mpBall (compensate x - compensate y) `contains` (value i - value j)
 
 {-|
   Results of sin/cos on arguments with identical ranges but independent errors
