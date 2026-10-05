@@ -82,7 +82,9 @@ recipAff aff
     lowerIntercept = 2 / sqrtab
     upperIntercept = setPrecision ap $ (a + b) / ab
     intercept = fromEndpointsAsIntervals lowerIntercept upperIntercept :: MPBall
-    tightEnclosure = slope + intercept -- aff/-ab + [ 2/sqrt(ab), (a+b)/ab ]
+    -- The nonlinear intercept error depends on the operand, not just its range.
+    interceptAff = mpAffineFromBall aff ("recip", "intercept", aff) intercept
+    tightEnclosure = slope + interceptAff -- aff/-ab + [ 2/sqrt(ab), (a+b)/ab ]
 
 instance CanPow MPAffine Integer where
   type PowType MPAffine Integer = MPAffine
